@@ -133,18 +133,6 @@ EOF
     exit
 fi
 
-# Configure screen
-cat >~/.screenrc <<EOF
-hardstatus on
-hardstatus alwayslastline
-hardstatus string "%{.bW}%-w%{.rW}%n %t%{-}%+w %=%{..G}%H %{..Y}%d/%m %c"
-
-defscrollback 1024
-
-vbell off
-startup_message off
-EOF
-
 NL=`echo -ne '\015'`
 
 function screen_it {

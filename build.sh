@@ -11,7 +11,7 @@ rm -rf $DEST
 # build a proto image - natty + packages that will install (optimization)
 if [ ! -d proto ]; then
     debootstrap natty proto
-    cp sources.list proto/etc/apt/sources.list
+    cp files/sources.list proto/etc/apt/sources.list
     chroot proto apt-get update
     chroot proto apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin)"`
     chroot proto pip install `cat pips/*`
@@ -33,17 +33,21 @@ echo "127.0.0.1 localhost $NAME" > $DEST/etc/hosts
 # copy kernel modules
 cp -pr /lib/modules/`uname -r` $DEST/lib/modules
 
+# helpful screenrc
+cp files/screenrc $DEST/root/.screenrc
+
 # copy openstack installer and requirement lists to a new directory.
 mkdir -p $DEST/opt
 cp stack.sh $DEST/opt/stack.sh
 cp -r pips $DEST/opt
 cp -r apts $DEST/opt
 
-# injecting root's ssh key
-# FIXME: only do this if id_rsa.pub exists
-mkdir $DEST/root/.ssh
-chmod 700 $DEST/root/.ssh
-cp /root/.ssh/id_rsa.pub $DEST/root/.ssh/authorized_keys
+# injecting root's public ssh key if it exists
+if [ -f /root/.ssh/id_rsa.pub ]; then
+    mkdir $DEST/root/.ssh
+    chmod 700 $DEST/root/.ssh
+    cp /root/.ssh/id_rsa.pub $DEST/root/.ssh/authorized_keys
+fi
 
 # set root password to password
 echo root:password | chroot $DEST chpasswd
