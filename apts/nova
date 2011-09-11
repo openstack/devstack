@@ -11,9 +11,13 @@ libvirt-bin
 vlan
 curl
 rabbitmq-server
-socat
+erlang-base # install erlang deps for rabbit explicitly since we don't install rabbit during bootstrap
+erlang-ssl 
+erlang-nox
+erlang-inets
+erlang-mnesia
+socat # used by ajaxterm
 python-mox
-python-ipy
 python-paste
 python-migrate
 python-gflags

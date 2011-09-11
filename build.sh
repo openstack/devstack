@@ -15,8 +15,8 @@ if [ ! -d nfs ]; then
     debootstrap natty nfs
     cp sources.list nfs/etc/apt/sources.list
     chroot nfs apt-get update
-    chroot nfs apt-get install -y `cat apts/* | egrep -v "(rabbitmq|libvirt)"`
-    chroot nfs pip install `cat pips/*`
+    chroot nfs apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt)"`
+    chroot nfs pip install `cat pips/* | cut -d\# -f1`
     git clone https://github.com/cloudbuilders/nova.git nfs/opt/nova
     git clone https://github.com/cloudbuilders/openstackx.git nfs/opt/openstackx
     git clone https://github.com/cloudbuilders/noVNC.git nfs/opt/noVNC
