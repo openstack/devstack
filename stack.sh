@@ -54,10 +54,10 @@ function clone_or_up {
 # You should only have to run this once
 if [ "$CMD" == "install" ]; then
     # install apt requirements
-    apt-get install -y -q `cat $DIR/apts/*`
+    apt-get install -y -q `cat $DIR/apts/* | cut -d\# -f1`
 
     # install python requirements
-    pip install -r $DIR/pips/dash
+    pip install `cat $DIR/pips/*`
 
     # TODO: kill openstackx
     clone_or_up https://github.com/cloudbuilders/nova.git $NOVA_DIR

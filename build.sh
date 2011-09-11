@@ -9,12 +9,12 @@ DEST="/nfs/$NAME"
 rm -rf $DEST
 
 # build a proto image - natty + packages that will install (optimization)
-if [ ! -d nfs ]; then
+if [ ! -d proto ]; then
     debootstrap natty proto
     cp sources.list proto/etc/apt/sources.list
     chroot proto apt-get update
-    chroot proto apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt)"`
-    chroot proto pip install `cat pips/* | cut -d\# -f1`
+    chroot proto apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin)"`
+    chroot proto pip install `cat pips/*`
     git clone https://github.com/cloudbuilders/nova.git proto/opt/nova
     git clone https://github.com/cloudbuilders/openstackx.git proto/opt/openstackx
     git clone https://github.com/cloudbuilders/noVNC.git proto/opt/noVNC
