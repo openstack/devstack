@@ -1,0 +1,7 @@
+Tool to build nfs export openstack environments.  This is useful for development
+
+* todo: move as much from run to install as possible
+  * issue: HOST_IP will be different on each machine - might need to update / change stuff
+* todo: use local disk on nfs boots for instances
+* idea: create a live-cd / vmware preview image using this?
+* idea: use lxc to make the proto-image have everything?  so launching a new server is just turn on / updating / run?

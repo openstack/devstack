@@ -1,0 +1,11 @@
+pep8
+pylint
+python-pip
+screen
+unzip
+wget
+psmisc
+git-core
+lsof
+openssh-server
+vim
