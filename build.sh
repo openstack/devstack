@@ -3,30 +3,28 @@
 # TODO: make dest not hardcoded
 
 NAME=$1
-DEST="/boxes/$NAME/nfs"
-
-mkdir -p /boxes/$NAME
+DEST="/nfs/$NAME"
 
 # remove old nfs filesystem if one exists
 rm -rf $DEST
 
 # build a proto image - natty + packages that will install (optimization)
 if [ ! -d nfs ]; then
-    debootstrap natty nfs
-    cp sources.list nfs/etc/apt/sources.list
-    chroot nfs apt-get update
-    chroot nfs apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt)"`
-    chroot nfs pip install `cat pips/* | cut -d\# -f1`
-    git clone https://github.com/cloudbuilders/nova.git nfs/opt/nova
-    git clone https://github.com/cloudbuilders/openstackx.git nfs/opt/openstackx
-    git clone https://github.com/cloudbuilders/noVNC.git nfs/opt/noVNC
-    git clone https://github.com/cloudbuilders/openstack-dashboard.git nfs/opt/dash
-    git clone https://github.com/cloudbuilders/python-novaclient.git nfs/opt/python-novaclient
-    git clone https://github.com/cloudbuilders/keystone.git nfs/opt/keystone
-    git clone https://github.com/cloudbuilders/glance.git nfs/opt/glance
+    debootstrap natty proto
+    cp sources.list proto/etc/apt/sources.list
+    chroot proto apt-get update
+    chroot proto apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt)"`
+    chroot proto pip install `cat pips/* | cut -d\# -f1`
+    git clone https://github.com/cloudbuilders/nova.git proto/opt/nova
+    git clone https://github.com/cloudbuilders/openstackx.git proto/opt/openstackx
+    git clone https://github.com/cloudbuilders/noVNC.git proto/opt/noVNC
+    git clone https://github.com/cloudbuilders/openstack-dashboard.git proto/opt/dash
+    git clone https://github.com/cloudbuilders/python-novaclient.git proto/opt/python-novaclient
+    git clone https://github.com/cloudbuilders/keystone.git proto/opt/keystone
+    git clone https://github.com/cloudbuilders/glance.git proto/opt/glance
 fi
 
-cp -pr nfs $DEST
+cp -pr proto $DEST
 
 # set hostname
 echo $NAME > $DEST/etc/hostname
