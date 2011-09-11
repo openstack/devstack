@@ -53,12 +53,7 @@ function clone_or_up {
 
 # You should only have to run this once
 if [ "$CMD" == "install" ]; then
-    #apt-get install -y python-software-properties
-    # FIXME: do we still need this?
-    # DELETEME: add-apt-repository ppa:nova-core/trunk
-    # DELETEME: apt-get update -qq
-
-    # fixme: do we need: python-boto
+    # install apt requirements
     apt-get install -y -q `cat $DIR/apts/*`
 
     # install python requirements
@@ -83,12 +78,11 @@ if [ "$CMD" == "install" ]; then
     cd $API_DIR; python setup.py develop
     cd $DASH_DIR/django-openstack; python setup.py develop
     cd $DASH_DIR/openstack-dashboard; python setup.py develop
-    # dash currently imports quantum even if you aren't using it
+    # HACK: dash currently imports quantum even if you aren't using it
     cd $DASH_DIR/openstack-dashboard
     mkdir quantum
     touch quantum/__init__.py
     touch quantum/client.py
-
 
     # attempt to load kvm and nbd modules
     modprobe kvm || true
@@ -98,26 +92,13 @@ if [ "$CMD" == "install" ]; then
     # install dashboard
     cd $DASH_DIR/openstack-dashboard
     cp local/local_settings.py.example local/local_settings.py
-#    python tools/install_venv.py
     dashboard/manage.py syncdb
     # setup apache
     mkdir $DASH_DIR/.blackhole
 
-#    cat > $DASH_DIR/openstack-dashboard/dashboard/wsgi/local.wsgi <<EOF
-#import sys
-#sys.path.append('/$DASH_DIR/openstack-dashboard/.dashboard-venv/lib/python2.6/site-packages/')
-#sys.path.append('/$DASH_DIR/openstack-dashboard/.dashboard-venv/lib/python2.7/site-packages/')
-#sys.path.append('/$DASH_DIR/openstack-dashboard/')
-#sys.path.append('/$DASH_DIR/django-openstack/')
-#sys.path.append('/$API_DIR')
-#sys.path.append('/$DASH_DIR/openstack-dashboard/.dashboard-venv/src/openstack')
-#
-#EOF
-    cat $DASH_DIR/openstack-dashboard/dashboard/wsgi/django.wsgi >> $DASH_DIR/openstack-dashboard/dashboard/wsgi/local.wsgi
-
     cat > /etc/apache2/sites-enabled/000-default <<EOF
 <VirtualHost *:80>
-    WSGIScriptAlias / $DASH_DIR/openstack-dashboard/dashboard/wsgi/local.wsgi
+    WSGIScriptAlias / $DASH_DIR/openstack-dashboard/dashboard/wsgi/django.wsgi
     WSGIDaemonProcess dashboard user=www-data group=www-data processes=3 threads=10
     WSGIProcessGroup dashboard
 
@@ -234,9 +215,8 @@ if [ "$CMD" == "run" ] || [ "$CMD" == "run_detached" ]; then
     screen_it net "$NOVA_DIR/bin/nova-network"
     screen_it sched "$NOVA_DIR/bin/nova-scheduler"
     screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_DIR/etc/keystone.conf"
-    screen_it dash "/etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
     screen_it vnc "$NOVA_DIR/bin/nova-vncproxy"
-    screen_it test ""
+    screen_it dash "/etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
 
     # FIXME: switch to just importing images
     # remove previously converted images
