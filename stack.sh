@@ -43,9 +43,10 @@ SQL_CONN=sqlite:///$NOVA_DIR/nova.sqlite
 # exists, fetch and checkout remote master
 function clone_or_up {
     if [ -d $2 ]; then
-        cd $2
-        git fetch origin
-        git checkout origin/master
+        echo commenting out update for now for speed
+        # cd $2
+        # git fetch origin
+        # git checkout origin/master
     else
         git clone $1 $2
     fi
@@ -127,9 +128,12 @@ EOF
 
     mkdir -p /var/log/glance
 
+    if [ ! -f $DEST/tty.tgz ]; then
+        wget -c http://images.ansolabs.com/tty.tgz -O $DEST/tty.tgz
+    fi
+
     mkdir -p $DEST/images
-    wget -c http://images.ansolabs.com/tty.tgz
-    tar -C $DEST/images -zxf tty.tgz
+    tar -C $DEST/images -zxf $DEST/tty.tgz
     exit
 fi
 
@@ -172,6 +176,7 @@ if [ "$CMD" == "run" ] || [ "$CMD" == "run_detached" ]; then
     screen -d -m -S nova -t nova
     sleep 1
     rm -f $NOVA_DIR/nova.sqlite
+    # TODO(ja): mount local partition nova-instances (can we use labels?)
     rm -rf $NOVA_DIR/instances
     mkdir -p $NOVA_DIR/instances
     rm -rf $NOVA_DIR/networks
@@ -190,12 +195,11 @@ if [ "$CMD" == "run" ] || [ "$CMD" == "run_detached" ]; then
     # create some floating ips
     $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
-    # nova api crashes if we start it with a regular screen command,
-    # so send the start command by forcing text into the window.
-
     rm -rf /var/lib/glance/images/*
     rm -f $GLANCE_DIR/glance.sqlite
 
+    # nova api crashes if we start it with a regular screen command,
+    # so send the start command by forcing text into the window.
     screen_it n-api "$NOVA_DIR/bin/nova-api"
     screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
     screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
