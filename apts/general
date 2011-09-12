@@ -6,6 +6,7 @@ unzip
 wget
 psmisc
 git-core
-lsof
+lsof # useful when debugging
 openssh-server
 vim
+locate # useful when debugging
