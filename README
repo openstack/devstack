@@ -1,6 +1,6 @@
 Tool to build (nfs export) openstack dev environments
 
-## Tod
+## Todo
 
 * move back to using sudo
 * Add volume support
@@ -9,6 +9,7 @@ Tool to build (nfs export) openstack dev environments
 * allow changing of git locations (specify different tag/branch or repos)
 * change method of invoking stack.sh to ./stack.sh all _or_ ./stack.sh nova-compute,nova-network,nova-api,nova-volume
 * allow sql/rabbit connection to be specified via environment variables with sensible defaults
+* Create and upload images
 
 # Future
 
