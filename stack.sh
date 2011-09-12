@@ -176,9 +176,13 @@ if [ "$CMD" == "run" ] || [ "$CMD" == "run_detached" ]; then
     screen -d -m -S nova -t nova
     sleep 1
     rm -f $NOVA_DIR/nova.sqlite
-    # TODO(ja): mount local partition nova-instances (can we use labels?)
-    rm -rf $NOVA_DIR/instances
+    rm -rf $NOVA_DIR/instances/*
     mkdir -p $NOVA_DIR/instances
+    # if there is a partition labeled nova-instances use it (ext filesystems
+    # can be labeled via e2label)
+    if [ -L /dev/disk/by-label/nova-instances ]; then
+        mount -L nova-instances /$NOVA_DIR/instances
+    fi
     rm -rf $NOVA_DIR/networks
     mkdir -p $NOVA_DIR/networks
 
