@@ -34,8 +34,8 @@ echo "127.0.0.1 localhost $NAME" > $DEST/etc/hosts
 # copy kernel modules
 cp -pr /lib/modules/`uname -r` $DEST/lib/modules
 
-# helpful screenrc
-cp files/screenrc $DEST/root/.screenrc
+# inject stack.sh files
+cp -r files $DEST/opt/files
 
 # copy openstack installer and requirement lists to a new directory.
 mkdir -p $DEST/opt

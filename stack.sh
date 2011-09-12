@@ -97,32 +97,8 @@ if [ "$CMD" == "install" ]; then
     # setup apache
     mkdir $DASH_DIR/.blackhole
 
-    cat > /etc/apache2/sites-enabled/000-default <<EOF
-<VirtualHost *:80>
-    WSGIScriptAlias / $DASH_DIR/openstack-dashboard/dashboard/wsgi/django.wsgi
-    WSGIDaemonProcess dashboard user=www-data group=www-data processes=3 threads=10
-    WSGIProcessGroup dashboard
-
-    DocumentRoot $DASH_DIR/.blackhole/
-    Alias /media $DASH_DIR/openstack-dashboard/media
-
-    <Directory />
-        Options FollowSymLinks
-        AllowOverride None
-    </Directory>
-
-    <Directory $DASH_DIR/>
-        Options Indexes FollowSymLinks MultiViews
-        AllowOverride None
-        Order allow,deny
-        allow from all
-    </Directory>
-
-    ErrorLog /var/log/apache2/error.log
-    LogLevel warn
-    CustomLog /var/log/apache2/access.log combined
-</VirtualHost>
-EOF
+    # FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
+    cat $DIR/files/000-default.template | sed "s/%DASH_DIR%/\/opt\/dash/g" > /etc/apache2/sites-enabled/000-default
 
     chown -R www-data:www-data $DASH_DIR
 
@@ -134,6 +110,9 @@ EOF
 
     mkdir -p $DEST/images
     tar -C $DEST/images -zxf $DEST/tty.tgz
+
+    # add useful screenrc
+    cp $DIR/files/screenrc ~/.screenrc
     exit
 fi
 

@@ -1,0 +1,25 @@
+<VirtualHost *:80>
+    WSGIScriptAlias / %DASH_DIR%/openstack-dashboard/dashboard/wsgi/django.wsgi
+    WSGIDaemonProcess dashboard user=www-data group=www-data processes=3 threads=10
+    WSGIProcessGroup dashboard
+
+    DocumentRoot %DASH_DIR%/.blackhole/
+    Alias /media %DASH_DIR%/openstack-dashboard/media
+
+    <Directory />
+        Options FollowSymLinks
+        AllowOverride None
+    </Directory>
+
+    <Directory %DASH_DIR%/>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride None
+        Order allow,deny
+        allow from all
+    </Directory>
+
+    ErrorLog /var/log/apache2/error.log
+    LogLevel warn
+    CustomLog /var/log/apache2/access.log combined
+</VirtualHost>
+
