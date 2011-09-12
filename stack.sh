@@ -39,11 +39,6 @@ NET_MAN=${NET_MAN:-VlanManager}
 
 SQL_CONN=sqlite:///$NOVA_DIR/nova.sqlite
 
-# clone a git repository to a location
-function ginstall {
-    git clone $1 $2
-}
-
 # You should only have to run this once
 if [ "$CMD" == "install" ]; then
     # install apt requirements
@@ -52,21 +47,21 @@ if [ "$CMD" == "install" ]; then
     # install python requirements
     pip install `cat $DIR/pips/*`
 
-    # vm service
-    ginstall https://github.com/cloudbuilders/nova.git $NOVA_DIR
-    # a websockets/html5 or flash powered VNC console for vm instances
-    ginstall https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
-    # django powered web control panel for openstack
-    ginstall https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
-    # python client library to nova that dashboard (and others) use
-    ginstall https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
+    # compute service
+    git clone https://github.com/cloudbuilders/nova.git $NOVA_DIR
+    # image catalog service
+    git clone https://github.com/cloudbuilders/glance.git $GLANCE_DIR
     # unified auth system (manages accounts/tokens)
-    ginstall https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
-    # image catalog
-    ginstall https://github.com/cloudbuilders/glance.git $GLANCE_DIR
+    git clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
+    # a websockets/html5 or flash powered VNC console for vm instances
+    git clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
+    # django powered web control panel for openstack
+    git clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
+    # python client library to nova that dashboard (and others) use
+    git clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
     # openstackx is a collection of extensions to openstack.compute & nova 
     # that is *deprecated*.  The code is being moved into python-novaclient & nova.
-    ginstall https://github.com/cloudbuilders/openstackx.git $API_DIR
+    git clone https://github.com/cloudbuilders/openstackx.git $API_DIR
 
     # setup our checkouts so they are installed into python path
     # allowing `import nova` or `import glance.client`
@@ -106,7 +101,7 @@ if [ "$CMD" == "install" ]; then
     cp local/local_settings.py.example local/local_settings.py
     dashboard/manage.py syncdb
 
-    # *Setup Apache*
+    # # Setup Apache
     # create an empty directory to use as our 
     mkdir $DASH_DIR/.blackhole
     # FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
