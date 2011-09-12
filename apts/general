@@ -8,5 +8,5 @@ psmisc
 git-core
 lsof # useful when debugging
 openssh-server
-vim
+vim-nox
 locate # useful when debugging
