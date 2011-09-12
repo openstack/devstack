@@ -4,7 +4,6 @@ django-nose==0.1.2
 django-mailer
 django-registration==0.7
 kombu
-nova-adminclient
 python-cloudfiles
 python-dateutil
 routes
