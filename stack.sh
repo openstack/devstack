@@ -37,7 +37,11 @@ NET_MAN=${NET_MAN:-VlanManager}
 #             ip or you risk breaking things.
 # FLAT_INTERFACE=eth0
 
+# TODO: set rabbitmq conn string explicitly as well
+# TODO: switch to mysql for all services
 SQL_CONN=sqlite:///$NOVA_DIR/nova.sqlite
+
+# FIXME: commands should be: stack.sh all or list of services to install/run
 
 # You should only have to run this once
 if [ "$CMD" == "install" ]; then
@@ -105,7 +109,7 @@ if [ "$CMD" == "install" ]; then
     # create an empty directory to use as our 
     mkdir $DASH_DIR/.blackhole
     # FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
-    cat $DIR/files/000-default.template | sed "s/%DASH_DIR%/\/opt\/dash/g" > /etc/apache2/sites-enabled/000-default
+    cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /etc/apache2/sites-enabled/000-default
 
     chown -R www-data:www-data $DASH_DIR
 
@@ -121,6 +125,8 @@ if [ "$CMD" == "install" ]; then
 
     # add useful screenrc
     cp $DIR/files/screenrc ~/.screenrc
+
+    # TODO: update current user to allow sudo for all commands in files/sudo/*
     exit
 fi
 
