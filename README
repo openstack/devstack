@@ -1,15 +1,16 @@
 Tool to build (nfs export) openstack dev environments
 
-## Todo
+# Todo
 
+* change method of invoking stack.sh to ./stack.sh all _or_ ./stack.sh nova-compute,nova-network,nova-api,nova-volume
 * move back to using sudo
+* move to mysql
+* Create and upload images
 * Add volume support
 * Add quantum support
 * Add python-novaclient cli support
 * allow changing of git locations (specify different tag/branch or repos)
-* change method of invoking stack.sh to ./stack.sh all _or_ ./stack.sh nova-compute,nova-network,nova-api,nova-volume
 * allow sql/rabbit connection to be specified via environment variables with sensible defaults
-* Create and upload images
 
 # Future
 
