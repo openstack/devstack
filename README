@@ -13,5 +13,6 @@ Tool to build (nfs export) openstack dev environments
 
 # Future
 
+* idea: move from screen to tmux?
 * idea: create a live-cd / vmware preview image using this?
 * idea: use lxc to make the proto-image have everything?  so launching a new server is just turn on / updating / run?
