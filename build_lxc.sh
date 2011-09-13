@@ -10,16 +10,19 @@ NAMESERVER=${NAMESERVER:-192.168.1.1}
 COPYENV=${COPYENV:-1}
 WARMCACHE=${WARMCACHE:-0}
 
-# Destroy any existing container
+# Shutdown any existing container
 lxc-stop -n $CONTAINER
 sleep 1
+# This prevents zombie containers
 cgdelete -r cpu,net_cls:$CONTAINER
 sleep 1
+# Destroy the old container
 lxc-destroy -n $CONTAINER
 sleep 1
 
+# Warm the base image on first run or when WARMCACHE=1
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [ "$WARMCACHE" = "1" ]; then
+if [ "$WARMCACHE" = "1" ] || [ ! -d $CACHEDIR ]; then
     if [ -d $CACHEDIR ]; then
         # Pre-cache files
         chroot $CACHEDIR apt-get update
@@ -29,17 +32,18 @@ if [ "$WARMCACHE" = "1" ]; then
 fi
 
 # Create network configuration
-NET_CONF=/tmp/net.conf
-cat > $NET_CONF <<EOF
+LXC_CONF=/tmp/net.conf
+cat > $LXC_CONF <<EOF
 lxc.network.type = veth
 lxc.network.link = $BRIDGE
 lxc.network.flags = up
 lxc.network.ipv4 = $CONTAINER_CIDR
+# allow tap/tun devices
 lxc.cgroup.devices.allow = c 10:200 rwm
 EOF
 
 # Configure the network
-lxc-create -n $CONTAINER -t natty -f $NET_CONF
+lxc-create -n $CONTAINER -t natty -f $LXC_CONF
 sleep 2
 
 # Where our container lives
