@@ -26,13 +26,6 @@ set -o xtrace
 DIR=`pwd`
 DEST=/opt
 
-# Provide option to move aside any old code
-if [ "$CLEAN" = "1"]; then
-    TMPDIR=/tmp/stackbak_`date +%s`
-    mkdir $TMPDIR
-    mv $DEST/* $TMPDIR
-fi
-
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
 DASH_DIR=$DEST/dash

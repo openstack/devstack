@@ -64,12 +64,6 @@ echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
 
 # Copy over your ssh keys and env if desired
 if [ "$COPYENV" = "1" ]; then
-    cp -pr ~/.ssh $ROOTFS/root/.ssh
-    cp -p ~/.ssh/id_rsa.pub $ROOTFS/root/.ssh/authorized_keys
-    cp -pr ~/.gitconfig $ROOTFS/root/.gitconfig
-    cp -pr ~/.vimrc $ROOTFS/root/.vimrc
-    cp -pr ~/.bashrc $ROOTFS/root/.bashrc
-
     cp -pr ~/.ssh $ROOTFS/opt/.ssh
     cp -p ~/.ssh/id_rsa.pub $ROOTFS/opt/.ssh/authorized_keys
     cp -pr ~/.gitconfig $ROOTFS/opt/.gitconfig
@@ -125,12 +119,3 @@ mount none -t cgroup /cgroup
 
 # Start our container
 lxc-start -d -n $CONTAINER
-
-cat << EOF > /bin/remove_dead_cgroup.shecho
-"Removing dead cgroup .$CONTAINER." >> /var/log/cgroup
-rmdir /cgroup/$CONTAINER >> /var/log/cgroup 2>&1
-echo "return value was $?" >> /var/log/cgroup
-EOF
-chmod 755 /bin/remove_dead_cgroup.sh
-echo /bin/remove_dead_cgroup.sh > /cgroup/release_agent
-echo 1 > /cgroup/notify_on_release
