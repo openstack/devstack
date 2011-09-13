@@ -4,12 +4,17 @@
 
 # FIXME: commands should be: stack.sh should allow specifying a subset of services
 
+# Settings/Options
+# ----------------
+
 # Quit script on error
 set -o errexit
 
 # Log commands as they are run for debugging
 set -o xtrace
 
+# Important paths: `DIR` is where we are executing from and `DEST` is where we 
+# are installing openstack.
 DIR=`pwd`
 DEST=/opt
 
@@ -33,6 +38,7 @@ FLOATING_RANGE=${FLOATING_RANGE:-10.6.0.0/27}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
 NET_MAN=${NET_MAN:-VlanManager}
+
 # NOTE(vish): If you are using FlatDHCP on multiple hosts, set the interface
 #             below but make sure that the interface doesn't already have an
 #             ip or you risk breaking things.
@@ -42,6 +48,11 @@ NET_MAN=${NET_MAN:-VlanManager}
 MYSQL_PASS=${MYSQL_PASS:-nova}
 SQL_CONN=${SQL_CONN:-mysql://root:$MYSQL_PASS@localhost/nova}
 # TODO: set rabbitmq conn string explicitly as well
+
+# Install Packages
+# ----------------
+#
+# Openstack uses a fair number of other projects.
 
 # seed configuration with mysql password
 cat <<MYSQL_PRESEED | sudo debconf-set-selections
@@ -78,6 +89,9 @@ git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
 # openstackx is a collection of extensions to openstack.compute & nova 
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 git_clone https://github.com/cloudbuilders/openstackx.git $API_DIR
+
+# Initialization
+# --------------
 
 # setup our checkouts so they are installed into python path
 # allowing `import nova` or `import glance.client`
@@ -123,7 +137,7 @@ cd $DASH_DIR/openstack-dashboard
 cp local/local_settings.py.example local/local_settings.py
 dashboard/manage.py syncdb
 
-# ---- Setup Apache ----
+# setup apache
 # create an empty directory to use as our 
 mkdir $DASH_DIR/.blackhole
 
@@ -208,6 +222,9 @@ sudo chown -R `whoami` /var/lib/glance
 rm -rf /var/lib/glance/images/*
 rm -f $GLANCE_DIR/glance.sqlite
 
+# Launching Services
+# ------------------
+
 # nova api crashes if we start it with a regular screen command,
 # so send the start command by forcing text into the window.
 function screen_it {
@@ -227,12 +244,14 @@ screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "$NOVA_DIR/bin/nova-vncproxy"
 screen_it dash "sudo /etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
 
+# Installing Images
+# -----------------
 
-# ---- download an install images ----
+# Downloads a tty image (ami/aki/ari style), then extracts it.  Upon extraction 
+# we upload to glance with the glance cli tool.
 
 mkdir -p $DEST/images
 cd $DEST/images
-# prepare initial images for loading into glance
 if [ ! -f $DEST/tty.tgz ]; then
     wget -c http://images.ansolabs.com/tty.tgz -O $DEST/tty.tgz
 fi
