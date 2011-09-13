@@ -53,9 +53,15 @@ fi
 # set root password to password
 echo root:pass | chroot $DEST chpasswd
 
-# create a stack user
-chroot $DEST useradd stack -s /bin/bash -d /opt
+# Create a stack user that is a member of the libvirtd group so that stack 
+# is able to interact with libvirt.
+chroot $DEST groupadd libvirtd
+chroot $DEST useradd stack -s /bin/bash -d /opt -G libvirtd
+# a simple password - pass
 echo stack:pass | chroot $DEST chpasswd
+# give stack ownership over /opt so it may do the work needed
 chroot $DEST chown -R stack /opt
 
+# and has sudo ability (in the future this should be limited to only what 
+# stack requires)
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $DEST/etc/sudoers

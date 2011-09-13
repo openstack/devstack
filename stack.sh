@@ -92,6 +92,8 @@ cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
 # device - used to manage qcow images)
 sudo modprobe nbd || true
 sudo modprobe kvm || true
+# user needs to be member of libvirtd group for nova-compute to use libvirt
+sudo usermod -a -G libvirtd `whoami`
 # if kvm wasn't running before we need to restart libvirt to enable it
 sudo /etc/init.d/libvirt-bin restart
 
@@ -105,6 +107,7 @@ mkdir -p $NOVA_DIR/instances
 # FIXME: if already mounted this blows up...
 if [ -L /dev/disk/by-label/nova-instances ]; then
     sudo mount -L nova-instances $NOVA_DIR/instances
+    sudo chown -R `whoami` $NOVA_DIR/instances
 fi
 
 # *Dashboard*: setup django application to serve via apache/wsgi
@@ -187,6 +190,8 @@ $NOVA_DIR/bin/nova-manage db sync
 
 # initialize keystone with default users/endpoints
 rm -f /opt/keystone/keystone.db
+# FIXME keystone creates a keystone.log wherever you run it from (bugify)
+cd /tmp
 BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
 
 # create a small network
@@ -197,7 +202,10 @@ $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
 # delete existing glance images/database.  Glance will recreate the db
 # when it is ran.
-#rm -rf /var/lib/glance/images/*
+# FIXME: configure glance not to shove files in /var/lib/glance?
+sudo mkdir -p /var/lib/glance
+sudo chown -R `whoami` /var/lib/glance
+rm -rf /var/lib/glance/images/*
 rm -f $GLANCE_DIR/glance.sqlite
 
 # nova api crashes if we start it with a regular screen command,
@@ -209,13 +217,15 @@ function screen_it {
 
 screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
-screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_DIR/etc/keystone.conf"
+# keystone drops a keystone.log where if it is run, so change the path to
+# where it can write
+screen_it key "cd /tmp; $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_DIR/etc/keystone.conf"
 screen_it n-api "$NOVA_DIR/bin/nova-api"
 screen_it n-cpu "$NOVA_DIR/bin/nova-compute"
 screen_it n-net "$NOVA_DIR/bin/nova-network"
 screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "$NOVA_DIR/bin/nova-vncproxy"
-screen_it dash "/etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
+screen_it dash "sudo /etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
 
 
 # ---- download an install images ----

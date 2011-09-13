@@ -10,3 +10,9 @@ erlang-ssl
 erlang-nox
 erlang-inets
 erlang-mnesia
+libhtml-template-perl
+gettext-base
+libavahi-client3
+libxml2-utils
+libpciaccess0
+libparted0debian1
