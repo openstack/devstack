@@ -12,9 +12,19 @@ WARMCACHE=${WARMCACHE:-0}
 
 # Destroy any existing container
 lxc-stop -n $CONTAINER
-sleep 1
+sleep 2
 lxc-destroy -n $CONTAINER
-sleep 1
+sleep 2
+
+CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
+if [ "$WARMCACHE" = "1" ]; then
+    if [ -d $CACHEDIR ]; then
+        # Pre-cache files
+        chroot $CACHEDIR apt-get update
+        chroot $CACHEDIR apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+        chroot $CACHEDIR pip install `cat pips/*`
+    fi
+fi
 
 # Create network configuration
 NET_CONF=/tmp/net.conf
@@ -27,14 +37,7 @@ EOF
 
 # Configure the network
 lxc-create -n $CONTAINER -t natty -f $NET_CONF
-
-if [ "$WARMCACHE" = "1" ]; then
-    # Pre-cache files
-    BASECACHE=/var/cache/lxc/natty/rootfs-amd64
-    chroot $BASECACHE apt-get update
-    chroot $BASECACHE apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-    chroot $BASECACHE pip install `cat pips/*`
-fi
+sleep 2
 
 # Where our container lives
 ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
@@ -67,9 +70,27 @@ cat > $INSTALL_SH <<EOF
 #!/bin/bash
 echo "nameserver $NAMESERVER" | resolvconf -a eth0
 sleep 1
+# Create a stack user that is a member of the libvirtd group so that stack 
+# is able to interact with libvirt.
+groupadd libvirtd
+useradd stack -s /bin/bash -d /opt -G libvirtd
+
+# a simple password - pass
+echo stack:pass | chpasswd
+
+# give stack ownership over /opt so it may do the work needed
+chown -R stack /opt
+
+# and has sudo ability (in the future this should be limited to only what 
+# stack requires)
+
+echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Install and run stack.sh
 apt-get update
 apt-get -y --force-yes install git-core vim-nox sudo
-git clone git://github.com/cloudbuilders/nfs-stack.git /root/nfs-stack
+su -c "git clone git://github.com/cloudbuilders/nfs-stack.git /opt/nfs-stack" stack
+su -c "cd /opt/nfs-stack && ./stack.sh" stack
 EOF
 
 chmod 700 $INSTALL_SH
@@ -81,20 +102,9 @@ cat > $RC_LOCAL <<EOF
 /root/install.sh
 EOF
 
-# Setup cache
-# FIXME - use proper fstab mount
-CWD=`pwd`
-CACHEDIR=$CWD/cache/
-mkdir -p $CACHEDIR/apt
-mkdir -p $CACHEDIR/pip
-cp -pr $CACHEDIR/apt/* $ROOTFS/var/cache/apt/
-cp -pr $CACHEDIR/pip/* $ROOTFS/var/cache/pip/
-
 # Configure cgroup directory
-if [ ! -d /cgroup ] ; then
-    mkdir -p /cgroup
-    mount none -t cgroup /cgroup
-fi
+mkdir -p /cgroup
+mount none -t cgroup /cgroup
 
 # Start our container
 lxc-start -d -n $CONTAINER
