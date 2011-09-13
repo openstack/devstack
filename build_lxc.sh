@@ -8,30 +8,9 @@ CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
 CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
 NAMESERVER=${NAMESERVER:-192.168.1.1}
 COPYENV=${COPYENV:-1}
-WARMCACHE=${WARMCACHE:-0}
 
-# Shutdown any existing container
-lxc-stop -n $CONTAINER
-
-# This prevents zombie containers
-cgdelete -r cpu,net_cls:$CONTAINER
-
-# Destroy the old container
-lxc-destroy -n $CONTAINER
-
-# Warm the base image on first run or when WARMCACHE=1
-CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [ "$WARMCACHE" = "1" ] || [ ! -d $CACHEDIR ]; then
-    if [ -d $CACHEDIR ]; then
-        # Pre-cache files
-        chroot $CACHEDIR apt-get update
-        chroot $CACHEDIR apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-        chroot $CACHEDIR pip install `cat pips/*`
-    fi
-fi
-
-# Create network configuration
-LXC_CONF=/tmp/net.conf
+# Create lxc configuration
+LXC_CONF=/tmp/$CONTAINER.conf
 cat > $LXC_CONF <<EOF
 lxc.network.type = veth
 lxc.network.link = $BRIDGE
@@ -40,6 +19,25 @@ lxc.network.ipv4 = $CONTAINER_CIDR
 # allow tap/tun devices
 lxc.cgroup.devices.allow = c 10:200 rwm
 EOF
+
+# Shutdown any existing container
+lxc-stop -n $CONTAINER
+
+# This prevents zombie containers
+cgdelete -r cpu,net_cls:$CONTAINER
+
+# Warm the base image on first install
+CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
+if [ ! -d $CACHEDIR ]; then
+    # trigger the initial debootstrap
+    lxc-create -n $CONTAINER -t natty -f $LXC_CONF
+    chroot $CACHEDIR apt-get update
+    chroot $CACHEDIR apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $CACHEDIR pip install `cat pips/*`
+fi
+
+# Destroy the old container
+lxc-destroy -n $CONTAINER
 
 # Create the container
 lxc-create -n $CONTAINER -t natty -f $LXC_CONF
