@@ -2,7 +2,6 @@ Tool to build (nfs export) openstack dev environments
 
 # Todo
 
-* move back to using sudo
 * Add python-novaclient cli support
 * move to mysql
 * Add volume support
@@ -11,10 +10,14 @@ Tool to build (nfs export) openstack dev environments
 * change method of invoking stack.sh to ./stack.sh all _or_ ./stack.sh nova-compute,nova-network,nova-api,nova-volume
 * Add quantum support
 * allow rabbit connection to be specified via environment variables with sensible defaults
+* syslog
+* munin
+* check puppet recipes to see if anything else is missing
 
 # Done
 
 * sqlconn can be set via env
+* move back to using sudo
 
 # Future
 
