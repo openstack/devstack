@@ -44,17 +44,17 @@ SQL_CONN=${SQL_CONN:-mysql://root:$MYSQL_PASS@localhost/nova}
 # TODO: set rabbitmq conn string explicitly as well
 
 # seed configuration with mysql password
-cat <<MYSQL_PRESEED | debconf-set-selections
+cat <<MYSQL_PRESEED | sudo debconf-set-selections
 mysql-server-5.1 mysql-server/root_password password $MYSQL_PASS
 mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASS
 mysql-server-5.1 mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
 
 # install apt requirements
-apt-get install -y -q `cat $DIR/apts/* | cut -d\# -f1`
+sudo apt-get install -y -q `cat $DIR/apts/* | cut -d\# -f1`
 
 # install python requirements
-pip install `cat $DIR/pips/*`
+sudo pip install `cat $DIR/pips/*`
 
 # git clone only if directory doesn't exist already
 function git_clone {
@@ -81,19 +81,19 @@ git_clone https://github.com/cloudbuilders/openstackx.git $API_DIR
 
 # setup our checkouts so they are installed into python path
 # allowing `import nova` or `import glance.client`
-cd $NOVACLIENT_DIR; python setup.py develop
-cd $KEYSTONE_DIR; python setup.py develop
-cd $GLANCE_DIR; python setup.py develop
-cd $API_DIR; python setup.py develop
-cd $DASH_DIR/django-openstack; python setup.py develop
-cd $DASH_DIR/openstack-dashboard; python setup.py develop
+cd $NOVACLIENT_DIR; sudo python setup.py develop
+cd $KEYSTONE_DIR; sudo python setup.py develop
+cd $GLANCE_DIR; sudo python setup.py develop
+cd $API_DIR; sudo python setup.py develop
+cd $DASH_DIR/django-openstack; sudo python setup.py develop
+cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
 
 # attempt to load modules: kvm (hardware virt) and nbd (network block 
 # device - used to manage qcow images)
-modprobe nbd || true
-modprobe kvm || true
+sudo modprobe nbd || true
+sudo modprobe kvm || true
 # if kvm wasn't running before we need to restart libvirt to enable it
-/etc/init.d/libvirt-bin restart
+sudo /etc/init.d/libvirt-bin restart
 
 # FIXME(ja): should LIBVIRT_TYPE be kvm if kvm module is loaded?
 
@@ -104,7 +104,7 @@ mkdir -p $NOVA_DIR/instances
 # can be labeled via e2label)
 # FIXME: if already mounted this blows up...
 if [ -L /dev/disk/by-label/nova-instances ]; then
-    mount -L nova-instances $NOVA_DIR/instances
+    sudo mount -L nova-instances $NOVA_DIR/instances
 fi
 
 # *Dashboard*: setup django application to serve via apache/wsgi
@@ -120,13 +120,18 @@ cd $DASH_DIR/openstack-dashboard
 cp local/local_settings.py.example local/local_settings.py
 dashboard/manage.py syncdb
 
-# ## Setup Apache
+# ---- Setup Apache ----
 # create an empty directory to use as our 
 mkdir $DASH_DIR/.blackhole
 
 # FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
-cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /etc/apache2/sites-enabled/000-default
-chown -R www-data:www-data $DASH_DIR
+cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /tmp/000-default
+sudo mv /tmp/000-default /etc/apache2/sites-enabled
+
+# `python setup.py develop` left some files owned by root in $DASH_DIR and
+# others by the original owner.  We need to change the owner to apache so
+# dashboard can run
+sudo chown -R www-data:www-data $DASH_DIR
 
 mkdir -p /var/log/glance
 
@@ -175,8 +180,8 @@ rm -rf $NOVA_DIR/networks
 mkdir -p $NOVA_DIR/networks
 
 # (re)create nova database
-mysql -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
-mysql -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
+mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
 $NOVA_DIR/bin/nova-manage db sync
 
 # initialize keystone with default users/endpoints

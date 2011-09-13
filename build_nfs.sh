@@ -51,5 +51,11 @@ if [ -f /root/.ssh/id_rsa.pub ]; then
 fi
 
 # set root password to password
-echo root:password | chroot $DEST chpasswd
+echo root:pass | chroot $DEST chpasswd
 
+# create a stack user
+chroot $DEST useradd stack -s /bin/bash -d /opt
+echo stack:pass | chroot $DEST chpasswd
+chroot $DEST chown -R stack /opt
+
+echo "stack ALL=(ALL) NOPASSWD: ALL" >> $DEST/etc/sudoers

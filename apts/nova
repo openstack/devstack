@@ -1,8 +1,6 @@
 dnsmasq-base
 kpartx
 mysql-server
-mysql-common # install mysql-common/client explicitly since mysql-server isn't bootstrapped
-mysql-client-5.1
 python-mysqldb
 kvm
 gawk
@@ -15,11 +13,6 @@ libvirt-bin
 vlan
 curl
 rabbitmq-server
-erlang-base # install erlang deps for rabbit explicitly since we don't install rabbit during bootstrap
-erlang-ssl 
-erlang-nox
-erlang-inets
-erlang-mnesia
 socat # used by ajaxterm
 python-mox
 python-paste
