@@ -133,7 +133,8 @@ sudo mv /tmp/000-default /etc/apache2/sites-enabled
 # dashboard can run
 sudo chown -R www-data:www-data $DASH_DIR
 
-mkdir -p /var/log/glance
+sudo mkdir -p /var/log/glance
+sudo chown `whoami` /var/log/glance 
 
 # add useful screenrc
 cp $DIR/files/screenrc ~/.screenrc
@@ -196,7 +197,7 @@ $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
 # delete existing glance images/database.  Glance will recreate the db
 # when it is ran.
-rm -rf /var/lib/glance/images/*
+#rm -rf /var/lib/glance/images/*
 rm -f $GLANCE_DIR/glance.sqlite
 
 # nova api crashes if we start it with a regular screen command,
