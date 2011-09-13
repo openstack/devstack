@@ -37,7 +37,7 @@ NOVNC_DIR=$DEST/noVNC
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
-    HOST_IP=`LC_ALL=C ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
+    HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
 
 # Nova network configuration
@@ -145,16 +145,16 @@ fi
 # of installing quantum we can create a simple module that will pass the 
 # initial imports
 mkdir $DASH_DIR/openstack-dashboard/quantum || true
-touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
-touch $DASH_DIR/openstack-dashboard/quantum/client.py
+touch $DASH_DIR/openstack-dashboard/quantum/__init__.py || true
+touch $DASH_DIR/openstack-dashboard/quantum/client.py || true
 
 cd $DASH_DIR/openstack-dashboard
-cp local/local_settings.py.example local/local_settings.py
+[ ! -r local/local_settings.py ] && cp local/local_settings.py.example local/local_settings.py
 dashboard/manage.py syncdb
 
 # setup apache
 # create an empty directory to use as our 
-mkdir $DASH_DIR/.blackhole
+mkdir -p $DASH_DIR/.blackhole
 
 # FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
 cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /tmp/000-default
