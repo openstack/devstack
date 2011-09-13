@@ -13,6 +13,16 @@ COPYENV=${COPYENV:-1}
 lxc-stop -n $CONTAINER
 lxc-destroy -n $CONTAINER
 
+FSTAB=/tmp/fstab
+cat > $FSTAB <<EOF
+none /var/lib/lxc/$CONTAINER/dev/pts devpts defaults 0 0
+none /var/lib/lxc/$CONTAINER/proc proc defaults 0 0
+none /var/lib/lxc/$CONTAINER/sys sysfs defaults 0 0
+none /var/lib/lxc/$CONTAINER/var/lock tmpfs defaults 0 0
+none /var/lib/lxc/$CONTAINER/var/run tmpfs defaults 0 0
+/var/cache/apt/ $APTCACHEDIR none bind 0 0
+EOF
+
 # Create network configuration
 NET_CONF=/tmp/net.conf
 cat > $NET_CONF <<EOF
@@ -20,6 +30,7 @@ lxc.network.type = veth
 lxc.network.link = $BRIDGE
 lxc.network.flags = up
 lxc.network.ipv4 = $CONTAINER_CIDR
+lxc.mount = $FSTAB
 EOF
 
 # Configure the network
@@ -55,7 +66,8 @@ cat > $INSTALL_SH <<EOF
 #!/bin/bash
 echo "nameserver $NAMESERVER" | resolvconf -a eth0
 sleep 1
-apt-get -y --force-yes install git-core vim-nox
+apt-get update
+apt-get -y --force-yes install git-core vim-nox sudo
 git clone git://github.com/cloudbuilders/nfs-stack.git /root/nfs-stack
 EOF
 
@@ -67,6 +79,13 @@ cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
 /root/install.sh
 EOF
+
+# Setup apt cache
+# FIXME - use proper fstab mount
+CWD=`pwd`
+APTCACHEDIR=$CWD/cache/apt
+mkdir -p $APTCACHEDIR
+cp -pr $APTCACHEDIR/* $ROOTFS/var/cache/apt/
 
 # Configure cgroup directory
 mkdir -p /cgroup
