@@ -35,6 +35,7 @@ lxc.network.type = veth
 lxc.network.link = $BRIDGE
 lxc.network.flags = up
 lxc.network.ipv4 = $CONTAINER_CIDR
+lxc.cgroup.devices.allow = c 10:200 rwm
 EOF
 
 # Configure the network
