@@ -38,10 +38,17 @@ NET_MAN=${NET_MAN:-VlanManager}
 #             ip or you risk breaking things.
 # FLAT_INTERFACE=eth0
 
-# TODO: set rabbitmq conn string explicitly as well
 # TODO: switch to mysql for all services
-SQL_CONN=${SQL_CONN:-sqlite:///$NOVA_DIR/nova.sqlite}
+MYSQL_PASS=${MYSQL_PASS:-nova}
+SQL_CONN=${SQL_CONN:-mysql://root:$MYSQL_PASS@localhost/nova}
+# TODO: set rabbitmq conn string explicitly as well
 
+# seed configuration with mysql password
+cat <<MYSQL_PRESEED | debconf-set-selections
+mysql-server-5.1 mysql-server/root_password password $MYSQL_PASS
+mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASS
+mysql-server-5.1 mysql-server/start_on_boot boolean true
+MYSQL_PRESEED
 
 # install apt requirements
 apt-get install -y -q `cat $DIR/apts/* | cut -d\# -f1`
@@ -107,7 +114,7 @@ fi
 mkdir $DASH_DIR/openstack-dashboard/quantum
 touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
 touch $DASH_DIR/openstack-dashboard/quantum/client.py
-# local_settings has 
+
 cd $DASH_DIR/openstack-dashboard
 cp local/local_settings.py.example local/local_settings.py
 dashboard/manage.py syncdb
@@ -115,9 +122,9 @@ dashboard/manage.py syncdb
 # ## Setup Apache
 # create an empty directory to use as our 
 mkdir $DASH_DIR/.blackhole
+
 # FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
 cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /etc/apache2/sites-enabled/000-default
-
 chown -R www-data:www-data $DASH_DIR
 
 mkdir -p /var/log/glance
@@ -129,12 +136,6 @@ cp $DIR/files/screenrc ~/.screenrc
 
 NL=`echo -ne '\015'`
 
-function screen_it {
-    # nova api crashes if we start it with a regular screen command,
-    # so send the start command by forcing text into the window.
-    screen -S nova -X screen -t $1
-    screen -S nova -p $1 -X stuff "$2$NL"
-}
 
 function add_nova_flag {
     echo "$1" >> $NOVA_DIR/bin/nova.conf
@@ -173,7 +174,8 @@ rm -rf $NOVA_DIR/networks
 mkdir -p $NOVA_DIR/networks
 
 # (re)create nova database
-rm -f $NOVA_DIR/nova.sqlite
+mysql -p$MYSQL_PASS -e 'DROP DATABASE nova;'
+mysql -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
 $NOVA_DIR/bin/nova-manage db sync
 
 # initialize keystone with default users/endpoints
@@ -191,6 +193,13 @@ $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 rm -rf /var/lib/glance/images/*
 rm -f $GLANCE_DIR/glance.sqlite
 
+# nova api crashes if we start it with a regular screen command,
+# so send the start command by forcing text into the window.
+function screen_it {
+    screen -S nova -X screen -t $1
+    screen -S nova -p $1 -X stuff "$2$NL"
+}
+
 screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
 screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_DIR/etc/keystone.conf"
@@ -200,7 +209,6 @@ screen_it n-net "$NOVA_DIR/bin/nova-network"
 screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "$NOVA_DIR/bin/nova-vncproxy"
 screen_it dash "/etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
-
 
 
 # ---- download an install images ----

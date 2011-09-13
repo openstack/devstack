@@ -13,7 +13,7 @@ if [ ! -d proto ]; then
     debootstrap natty proto
     cp files/sources.list proto/etc/apt/sources.list
     chroot proto apt-get update
-    chroot proto apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin)"`
+    chroot proto apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot proto pip install `cat pips/*`
     git clone https://github.com/cloudbuilders/nova.git proto/opt/nova
     git clone https://github.com/cloudbuilders/openstackx.git proto/opt/openstackx

@@ -1,5 +1,7 @@
 dnsmasq-base
 kpartx
+mysql-server
+python-mysqldb
 kvm
 gawk
 iptables
