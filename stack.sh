@@ -2,14 +2,27 @@
 
 # **stack.sh** is rackspace cloudbuilder's opinionated openstack dev installation.
 
-# FIXME: commands should be: stack.sh should allow specifying a subset of services
+# Settings/Options
+# ================
 
-# Quit script on error
+# This script is customizable through setting environment variables.  If you
+# want to override a setting you can either::
+#
+#     export MYSQL_PASS=anothersecret
+#     ./stack.sh
+#
+# or run on a single line ``MYSQL_PASS=simple ./stack.sh``
+
+# This script exits on an error so that errors don't compound and you see 
+# only the first error that occured.
 set -o errexit
 
-# Log commands as they are run for debugging
+# Print the commands being run so that we can see the command that triggers 
+# an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
+# Important paths: ``DIR`` is where we are executing from and ``DEST`` is 
+# where we are installing openstack.
 DIR=`pwd`
 DEST=/opt
 
@@ -22,28 +35,38 @@ NOVACLIENT_DIR=$DEST/python-novaclient
 API_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
 
-# Use the first IP unless an explicit is set by a HOST_IP environment variable
+# Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
 
-# NOVA network / hypervisor configuration
+# Nova network configuration
 INTERFACE=${INTERFACE:-eth0}
 FLOATING_RANGE=${FLOATING_RANGE:-10.6.0.0/27}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
-LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
 NET_MAN=${NET_MAN:-VlanManager}
-# NOTE(vish): If you are using FlatDHCP on multiple hosts, set the interface
-#             below but make sure that the interface doesn't already have an
-#             ip or you risk breaking things.
+
+# If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
+# variable but make sure that the interface doesn't already have an
+# ip or you risk breaking things.
 # FLAT_INTERFACE=eth0
+
+# Nova hypervisor configuration
+LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
+
 
 # TODO: switch to mysql for all services
 MYSQL_PASS=${MYSQL_PASS:-nova}
 SQL_CONN=${SQL_CONN:-mysql://root:$MYSQL_PASS@localhost/nova}
 # TODO: set rabbitmq conn string explicitly as well
 
-# seed configuration with mysql password
+# Install Packages
+# ================
+#
+# Openstack uses a fair number of other projects.
+
+# Seed configuration with mysql password so that apt-get install doesn't 
+# prompt us for a password upon install.
 cat <<MYSQL_PRESEED | sudo debconf-set-selections
 mysql-server-5.1 mysql-server/root_password password $MYSQL_PASS
 mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASS
@@ -79,8 +102,11 @@ git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 git_clone https://github.com/cloudbuilders/openstackx.git $API_DIR
 
+# Initialization
+# ==============
+
 # setup our checkouts so they are installed into python path
-# allowing `import nova` or `import glance.client`
+# allowing ``import nova`` or ``import glance.client``
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $KEYSTONE_DIR; sudo python setup.py develop
 cd $GLANCE_DIR; sudo python setup.py develop
@@ -110,7 +136,10 @@ if [ -L /dev/disk/by-label/nova-instances ]; then
     sudo chown -R `whoami` $NOVA_DIR/instances
 fi
 
-# *Dashboard*: setup django application to serve via apache/wsgi
+# Dashboard
+# ---------
+#
+# Setup the django application to serve via apache/wsgi
 
 # Dash currently imports quantum even if you aren't using it.  Instead 
 # of installing quantum we can create a simple module that will pass the 
@@ -123,7 +152,7 @@ cd $DASH_DIR/openstack-dashboard
 cp local/local_settings.py.example local/local_settings.py
 dashboard/manage.py syncdb
 
-# ---- Setup Apache ----
+# setup apache
 # create an empty directory to use as our 
 mkdir $DASH_DIR/.blackhole
 
@@ -131,10 +160,13 @@ mkdir $DASH_DIR/.blackhole
 cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /tmp/000-default
 sudo mv /tmp/000-default /etc/apache2/sites-enabled
 
-# `python setup.py develop` left some files owned by root in $DASH_DIR and
+# ``python setup.py develop`` left some files owned by root in $DASH_DIR and
 # others by the original owner.  We need to change the owner to apache so
 # dashboard can run
 sudo chown -R www-data:www-data $DASH_DIR
+
+# Glance
+# ------
 
 sudo mkdir -p /var/log/glance
 sudo chown `whoami` /var/log/glance 
@@ -143,6 +175,9 @@ sudo chown `whoami` /var/log/glance
 cp $DIR/files/screenrc ~/.screenrc
 
 # TODO: update current user to allow sudo for all commands in files/sudo/*
+
+# Nova
+# ----
 
 NL=`echo -ne '\015'`
 
@@ -208,6 +243,9 @@ sudo chown -R `whoami` /var/lib/glance
 rm -rf /var/lib/glance/images/*
 rm -f $GLANCE_DIR/glance.sqlite
 
+# Launch Services
+# ===============
+
 # nova api crashes if we start it with a regular screen command,
 # so send the start command by forcing text into the window.
 function screen_it {
@@ -227,12 +265,14 @@ screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "$NOVA_DIR/bin/nova-vncproxy"
 screen_it dash "sudo /etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
 
+# Install Images
+# ==============
 
-# ---- download an install images ----
+# Downloads a tty image (ami/aki/ari style), then extracts it.  Upon extraction 
+# we upload to glance with the glance cli tool.
 
 mkdir -p $DEST/images
 cd $DEST/images
-# prepare initial images for loading into glance
 if [ ! -f $DEST/tty.tgz ]; then
     wget -c http://images.ansolabs.com/tty.tgz -O $DEST/tty.tgz
 fi
