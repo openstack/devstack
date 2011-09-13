@@ -102,8 +102,9 @@ mkdir -p $NOVA_DIR/instances
 
 # if there is a partition labeled nova-instances use it (ext filesystems
 # can be labeled via e2label)
+# FIXME: if already mounted this blows up...
 if [ -L /dev/disk/by-label/nova-instances ]; then
-    mount -L nova-instances /$NOVA_DIR/instances
+    mount -L nova-instances $NOVA_DIR/instances
 fi
 
 # *Dashboard*: setup django application to serve via apache/wsgi
@@ -111,7 +112,7 @@ fi
 # Dash currently imports quantum even if you aren't using it.  Instead 
 # of installing quantum we can create a simple module that will pass the 
 # initial imports
-mkdir $DASH_DIR/openstack-dashboard/quantum
+mkdir $DASH_DIR/openstack-dashboard/quantum || true
 touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
 touch $DASH_DIR/openstack-dashboard/quantum/client.py
 
@@ -174,7 +175,7 @@ rm -rf $NOVA_DIR/networks
 mkdir -p $NOVA_DIR/networks
 
 # (re)create nova database
-mysql -p$MYSQL_PASS -e 'DROP DATABASE nova;'
+mysql -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
 mysql -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
 $NOVA_DIR/bin/nova-manage db sync
 

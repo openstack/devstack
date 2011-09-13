@@ -1,6 +1,8 @@
 dnsmasq-base
 kpartx
 mysql-server
+mysql-common # install mysql-common/client explicitly since mysql-server isn't bootstrapped
+mysql-client-5.1
 python-mysqldb
 kvm
 gawk
