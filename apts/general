@@ -10,3 +10,4 @@ lsof # useful when debugging
 openssh-server
 vim-nox
 locate # useful when debugging
+munin

@@ -34,6 +34,7 @@ KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 API_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
+MUNIN_DIR=$DEST/openstack-munin
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
@@ -101,12 +102,15 @@ git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
 # openstackx is a collection of extensions to openstack.compute & nova 
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 git_clone https://github.com/cloudbuilders/openstackx.git $API_DIR
+# openstack-munin is a collection of munin plugins for monitoring the stack
+git_clone https://github.com/cloudbuilders/openstack-munin.git $MUNIN_DIR
 
 # Initialization
 # ==============
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
+cd $NOVA_DIR; sudo python setup.py develop
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $KEYSTONE_DIR; sudo python setup.py develop
 cd $GLANCE_DIR; sudo python setup.py develop
@@ -164,6 +168,30 @@ sudo mv /tmp/000-default /etc/apache2/sites-enabled
 # others by the original owner.  We need to change the owner to apache so
 # dashboard can run
 sudo chown -R www-data:www-data $DASH_DIR
+
+# Munin
+# -----
+
+# allow connections from other hosts
+sudo sed -i -e '/Allow from localhost/s/localhost.*$/all/' /etc/munin/apache.conf
+
+cat >/tmp/nova <<EOF
+[keystone_*]
+user stack
+
+[nova_*]
+user stack
+EOF
+sudo mv /tmp/nova /etc/munin/plugin-conf.d/nova
+
+# configure Munin for Nova plugins
+PLUGINS="keystone_stats nova_floating_ips nova_instance_launched nova_instance_ nova_instance_timing nova_services"
+for i in $PLUGINS; do
+  sudo cp -p $MUNIN_DIR/$i /usr/share/munin/plugins
+  sudo ln -sf /usr/share/munin/plugins/$i /etc/munin/plugins
+done
+sudo mv /etc/munin/plugins/nova_instance_ /etc/munin/plugins/nova_instance_launched
+sudo restart munin-node
 
 # Glance
 # ------
@@ -264,7 +292,7 @@ screen_it n-net "$NOVA_DIR/bin/nova-network"
 screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
 # nova-vncproxy binds a privileged port, and so needs sudo
 screen_it n-vnc "sudo $NOVA_DIR/bin/nova-vncproxy"
-screen_it dash "sudo /etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
+screen_it dash "sudo /etc/init.d/apache2 restart; sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
 # ==============
