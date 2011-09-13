@@ -222,12 +222,15 @@ mkdir -p $NOVA_DIR/networks
 # (re)create nova database
 mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
 mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE keystone;' || true
+mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
 $NOVA_DIR/bin/nova-manage db sync
 
+# FIXME (anthony) keystone should use keystone.conf.example
+KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
+cp $DIR/files/keystone.conf $KEYSTONE_CONF
+
 # initialize keystone with default users/endpoints
-rm -f /opt/keystone/keystone.db
-# FIXME keystone creates a keystone.log wherever you run it from (bugify)
-cd /tmp
 BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
 
 # create a small network
@@ -261,7 +264,7 @@ screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.con
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
 # keystone drops a keystone.log where if it is run, so change the path to
 # where it can write
-screen_it key "cd /tmp; $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_DIR/etc/keystone.conf"
+screen_it key "cd /tmp; $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
 screen_it n-api "$NOVA_DIR/bin/nova-api"
 screen_it n-cpu "$NOVA_DIR/bin/nova-compute"
 screen_it n-net "$NOVA_DIR/bin/nova-network"
