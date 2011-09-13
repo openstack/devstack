@@ -54,7 +54,7 @@ MYSQL_PRESEED
 sudo apt-get install -y -q `cat $DIR/apts/* | cut -d\# -f1`
 
 # install python requirements
-sudo pip install `cat $DIR/pips/*`
+sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $DIR/pips/*`
 
 # git clone only if directory doesn't exist already
 function git_clone {
