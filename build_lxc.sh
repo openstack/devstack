@@ -12,13 +12,12 @@ WARMCACHE=${WARMCACHE:-0}
 
 # Shutdown any existing container
 lxc-stop -n $CONTAINER
-sleep 1
+
 # This prevents zombie containers
 cgdelete -r cpu,net_cls:$CONTAINER
-sleep 1
+
 # Destroy the old container
 lxc-destroy -n $CONTAINER
-sleep 1
 
 # Warm the base image on first run or when WARMCACHE=1
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
@@ -42,12 +41,26 @@ lxc.network.ipv4 = $CONTAINER_CIDR
 lxc.cgroup.devices.allow = c 10:200 rwm
 EOF
 
-# Configure the network
+# Create the container
 lxc-create -n $CONTAINER -t natty -f $LXC_CONF
-sleep 2
 
-# Where our container lives
+# Specify where our container lives
 ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
+
+# set root password to password
+echo root:pass | chroot $ROOTFS chpasswd
+
+# Create a stack user that is a member of the libvirtd group so that stack 
+# is able to interact with libvirt.
+chroot $ROOTFS groupadd libvirtd
+chroot $ROOTFS useradd stack -s /bin/bash -d /opt -G libvirtd
+
+# a simple password - pass
+echo stack:pass | chroot $ROOTFS chpasswd
+
+# and has sudo ability (in the future this should be limited to only what 
+# stack requires)
+echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
 
 # Copy over your ssh keys and env if desired
 if [ "$COPYENV" = "1" ]; then
@@ -56,7 +69,16 @@ if [ "$COPYENV" = "1" ]; then
     cp -pr ~/.gitconfig $ROOTFS/root/.gitconfig
     cp -pr ~/.vimrc $ROOTFS/root/.vimrc
     cp -pr ~/.bashrc $ROOTFS/root/.bashrc
+
+    cp -pr ~/.ssh $ROOTFS/opt/.ssh
+    cp -p ~/.ssh/id_rsa.pub $ROOTFS/opt/.ssh/authorized_keys
+    cp -pr ~/.gitconfig $ROOTFS/opt/.gitconfig
+    cp -pr ~/.vimrc $ROOTFS/opt/.vimrc
+    cp -pr ~/.bashrc $ROOTFS/opt/.bashrc
 fi
+
+# give stack ownership over /opt so it may do the work needed
+chroot $ROOTFS chown -R stack /opt
 
 # Configure instance network
 INTERFACES=$ROOTFS/etc/network/interfaces
@@ -75,24 +97,11 @@ EOF
 INSTALL_SH=$ROOTFS/root/install.sh
 cat > $INSTALL_SH <<EOF
 #!/bin/bash
+# Disable startup script
 echo \#\!/bin/sh -e > /etc/rc.local
+# Make sure dns is set up
 echo "nameserver $NAMESERVER" | resolvconf -a eth0
 sleep 1
-# Create a stack user that is a member of the libvirtd group so that stack 
-# is able to interact with libvirt.
-groupadd libvirtd
-useradd stack -s /bin/bash -d /opt -G libvirtd
-
-# a simple password - pass
-echo stack:pass | chpasswd
-
-# give stack ownership over /opt so it may do the work needed
-chown -R stack /opt
-
-# and has sudo ability (in the future this should be limited to only what 
-# stack requires)
-
-echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Install and run stack.sh
 apt-get update
