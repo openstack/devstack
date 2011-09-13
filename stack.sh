@@ -38,7 +38,7 @@ NET_MAN=${NET_MAN:-VlanManager}
 
 # TODO: set rabbitmq conn string explicitly as well
 # TODO: switch to mysql for all services
-SQL_CONN=sqlite:///$NOVA_DIR/nova.sqlite
+SQL_CONN=${SQL_CONN:-sqlite:///$NOVA_DIR/nova.sqlite}
 
 # FIXME: commands should be: stack.sh should allow specifying a subset of services
 
@@ -188,14 +188,14 @@ $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 rm -rf /var/lib/glance/images/*
 rm -f $GLANCE_DIR/glance.sqlite
 
-screen_it n-api "$NOVA_DIR/bin/nova-api"
 screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
-screen_it cpu "$NOVA_DIR/bin/nova-compute"
-screen_it net "$NOVA_DIR/bin/nova-network"
-screen_it sched "$NOVA_DIR/bin/nova-scheduler"
 screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_DIR/etc/keystone.conf"
-screen_it vnc "$NOVA_DIR/bin/nova-vncproxy"
+screen_it n-api "$NOVA_DIR/bin/nova-api"
+screen_it n-cpu "$NOVA_DIR/bin/nova-compute"
+screen_it n-net "$NOVA_DIR/bin/nova-network"
+screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
+screen_it n-vnc "$NOVA_DIR/bin/nova-vncproxy"
 screen_it dash "/etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
 
 
