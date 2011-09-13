@@ -124,18 +124,13 @@ sudo usermod -a -G libvirtd `whoami`
 # if kvm wasn't running before we need to restart libvirt to enable it
 sudo /etc/init.d/libvirt-bin restart
 
-# FIXME(ja): should LIBVIRT_TYPE be kvm if kvm module is loaded?
+## FIXME(ja): should LIBVIRT_TYPE be kvm if kvm module is loaded?
 
-# setup nova instance directory
-mkdir -p $NOVA_DIR/instances
+# add useful screenrc
+cp $DIR/files/screenrc ~/.screenrc
 
-# if there is a partition labeled nova-instances use it (ext filesystems
-# can be labeled via e2label)
-# FIXME: if already mounted this blows up...
-if [ -L /dev/disk/by-label/nova-instances ]; then
-    sudo mount -L nova-instances $NOVA_DIR/instances
-    sudo chown -R `whoami` $NOVA_DIR/instances
-fi
+# TODO: update current user to allow sudo for all commands in files/sudo/*
+
 
 # Dashboard
 # ---------
@@ -153,35 +148,36 @@ cd $DASH_DIR/openstack-dashboard
 cp local/local_settings.py.example local/local_settings.py
 dashboard/manage.py syncdb
 
-# setup apache
-# create an empty directory to use as our 
+# create an empty directory that apache uses as docroot
 mkdir $DASH_DIR/.blackhole
 
-# FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
+## FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
 cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /tmp/000-default
 sudo mv /tmp/000-default /etc/apache2/sites-enabled
 
-# ``python setup.py develop`` left some files owned by root in $DASH_DIR and
+# ``python setup.py develop`` left some files owned by root in ``DASH_DIR`` and
 # others by the original owner.  We need to change the owner to apache so
 # dashboard can run
 sudo chown -R www-data:www-data $DASH_DIR
 
+
 # Glance
 # ------
 
+# Glance uses ``/var/lib/glance`` and ``/var/log/glance`` by default, so
+# we need to insure that our user has permissions to use them.
 sudo mkdir -p /var/log/glance
-sudo chown `whoami` /var/log/glance 
+sudo chown -R `whoami` /var/log/glance 
+sudo mkdir -p /var/lib/glance
+sudo chown -R `whoami` /var/lib/glance
 
-# add useful screenrc
-cp $DIR/files/screenrc ~/.screenrc
+# Delete existing images/database as glance will recreate the db on startup
+rm -rf /var/lib/glance/images/*
+rm -f $GLANCE_DIR/glance.sqlite
 
-# TODO: update current user to allow sudo for all commands in files/sudo/*
 
 # Nova
 # ----
-
-NL=`echo -ne '\015'`
-
 
 function add_nova_flag {
     echo "$1" >> $NOVA_DIR/bin/nova.conf
@@ -211,6 +207,17 @@ fi
 screen -d -m -S nova -t nova
 sleep 1
 
+# setup nova instance directory
+mkdir -p $NOVA_DIR/instances
+
+# if there is a partition labeled nova-instances use it (ext filesystems
+# can be labeled via e2label)
+## FIXME: if already mounted this blows up...
+if [ -L /dev/disk/by-label/nova-instances ]; then
+    sudo mount -L nova-instances $NOVA_DIR/instances
+    sudo chown -R `whoami` $NOVA_DIR/instances
+fi
+
 # Clean out the instances directory
 rm -rf $NOVA_DIR/instances/*
 
@@ -239,21 +246,17 @@ $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
 # create some floating ips
 $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
-# delete existing glance images/database.  Glance will recreate the db
-# when it is ran.
-# FIXME: configure glance not to shove files in /var/lib/glance?
-sudo mkdir -p /var/lib/glance
-sudo chown -R `whoami` /var/lib/glance
-rm -rf /var/lib/glance/images/*
-rm -f $GLANCE_DIR/glance.sqlite
 
 # Launch Services
 # ===============
 
 # nova api crashes if we start it with a regular screen command,
 # so send the start command by forcing text into the window.
+# Only run the services specified in ``ENABLED_SERVICES``
+
+NL=`echo -ne '\015'`
+
 function screen_it {
-    # only run the services specified in $ENABLED_SERVICES
     if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
         screen -S nova -X screen -t $1
         screen -S nova -p $1 -X stuff "$2$NL"
