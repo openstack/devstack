@@ -12,9 +12,11 @@ WARMCACHE=${WARMCACHE:-0}
 
 # Destroy any existing container
 lxc-stop -n $CONTAINER
-sleep 2
+sleep 1
+cgdelete -r cpu,net_cls:$CONTAINER
+sleep 1
 lxc-destroy -n $CONTAINER
-sleep 2
+sleep 1
 
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
 if [ "$WARMCACHE" = "1" ]; then
@@ -68,6 +70,7 @@ EOF
 INSTALL_SH=$ROOTFS/root/install.sh
 cat > $INSTALL_SH <<EOF
 #!/bin/bash
+echo \#\!/bin/sh -e > /etc/rc.local
 echo "nameserver $NAMESERVER" | resolvconf -a eth0
 sleep 1
 # Create a stack user that is a member of the libvirtd group so that stack 
@@ -108,3 +111,12 @@ mount none -t cgroup /cgroup
 
 # Start our container
 lxc-start -d -n $CONTAINER
+
+cat << EOF > /bin/remove_dead_cgroup.shecho
+"Removing dead cgroup .$CONTAINER." >> /var/log/cgroup
+rmdir /cgroup/$CONTAINER >> /var/log/cgroup 2>&1
+echo "return value was $?" >> /var/log/cgroup
+EOF
+chmod 755 /bin/remove_dead_cgroup.sh
+echo /bin/remove_dead_cgroup.sh > /cgroup/release_agent
+echo 1 > /cgroup/notify_on_release
