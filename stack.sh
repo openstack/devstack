@@ -48,21 +48,28 @@ apt-get install -y -q `cat $DIR/apts/* | cut -d\# -f1`
 # install python requirements
 pip install `cat $DIR/pips/*`
 
+# git clone only if directory doesn't exist already
+function git_clone {
+    if [ ! -d $2 ]; then
+        git clone $1 $2
+    fi
+}
+
 # compute service
-git clone https://github.com/cloudbuilders/nova.git $NOVA_DIR
+git_clone https://github.com/cloudbuilders/nova.git $NOVA_DIR
 # image catalog service
-git clone https://github.com/cloudbuilders/glance.git $GLANCE_DIR
+git_clone https://github.com/cloudbuilders/glance.git $GLANCE_DIR
 # unified auth system (manages accounts/tokens)
-git clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
+git_clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
 # a websockets/html5 or flash powered VNC console for vm instances
-git clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
+git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
 # django powered web control panel for openstack
-git clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
+git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
 # python client library to nova that dashboard (and others) use
-git clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
+git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
 # openstackx is a collection of extensions to openstack.compute & nova 
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
-git clone https://github.com/cloudbuilders/openstackx.git $API_DIR
+git_clone https://github.com/cloudbuilders/openstackx.git $API_DIR
 
 # setup our checkouts so they are installed into python path
 # allowing `import nova` or `import glance.client`
