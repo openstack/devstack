@@ -2,6 +2,8 @@
 
 # **stack.sh** is rackspace cloudbuilder's opinionated openstack dev installation.
 
+# FIXME: commands should be: stack.sh should allow specifying a subset of services
+
 # Quit script on error
 set -o errexit
 
@@ -25,7 +27,7 @@ if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
 
-# NOVA CONFIGURATION
+# NOVA network / hypervisor configuration
 INTERFACE=${INTERFACE:-eth0}
 FLOATING_RANGE=${FLOATING_RANGE:-10.6.0.0/27}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
@@ -40,7 +42,6 @@ NET_MAN=${NET_MAN:-VlanManager}
 # TODO: switch to mysql for all services
 SQL_CONN=${SQL_CONN:-sqlite:///$NOVA_DIR/nova.sqlite}
 
-# FIXME: commands should be: stack.sh should allow specifying a subset of services
 
 # install apt requirements
 apt-get install -y -q `cat $DIR/apts/* | cut -d\# -f1`
@@ -86,6 +87,8 @@ modprobe nbd || true
 modprobe kvm || true
 # if kvm wasn't running before we need to restart libvirt to enable it
 /etc/init.d/libvirt-bin restart
+
+# FIXME(ja): should LIBVIRT_TYPE be kvm if kvm module is loaded?
 
 # setup nova instance directory
 mkdir -p $NOVA_DIR/instances
@@ -206,14 +209,14 @@ mkdir -p $DEST/images
 cd $DEST/images
 # prepare initial images for loading into glance
 if [ ! -f $DEST/tty.tgz ]; then
-    wget -c http://images.ansolabs.com/tty.tgz -O tty.tgz
+    wget -c http://images.ansolabs.com/tty.tgz -O $DEST/tty.tgz
 fi
 
 # extract ami-tty/image, aki-tty/image & ari-tty/image
-tar -zxf tty.tgz
+tar -zxf $DEST/tty.tgz
 
-# import into glance 
-# FIXME(kernel/ramdisk is hardcoded - should look at result of first two commands?)
+# add images to glance 
+# FIXME: kernel/ramdisk is hardcoded - use return result from add
 glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < aki-tty/image 
 glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < ari-tty/image 
 glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < ami-tty/image
