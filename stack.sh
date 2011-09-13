@@ -174,10 +174,8 @@ rm -f $NOVA_DIR/nova.sqlite
 $NOVA_DIR/bin/nova-manage db sync
 
 # initialize keystone with default users/endpoints
-# FIXME(ja): move initial_data.sh into this script
 rm -f /opt/keystone/keystone.db
-curl -OL https://raw.github.com/cloudbuilders/deploy.sh/master/initial_data.sh
-BIN_DIR=$KEYSTONE_DIR/bin bash initial_data.sh
+BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
 
 # create a small network
 $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
