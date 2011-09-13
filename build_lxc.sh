@@ -77,7 +77,7 @@ if [ "$COPYENV" = "1" ]; then
     cp -pr ~/.bashrc $ROOTFS/opt/.bashrc
 fi
 
-# give stack ownership over /opt so it may do the work needed
+# Give stack ownership over /opt so it may do the work needed
 chroot $ROOTFS chown -R stack /opt
 
 # Configure instance network

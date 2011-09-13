@@ -26,6 +26,13 @@ set -o xtrace
 DIR=`pwd`
 DEST=/opt
 
+# Provide option to move aside any old code
+if [ "$CLEAN" = "1"]; then
+    TMPDIR=/tmp/stackbak_`date +%s`
+    mkdir $TMPDIR
+    mv $DEST/* $TMPDIR
+fi
+
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
 DASH_DIR=$DEST/dash
@@ -249,7 +256,6 @@ rm -f $GLANCE_DIR/glance.sqlite
 
 # nova api crashes if we start it with a regular screen command,
 # so send the start command by forcing text into the window.
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash
 function screen_it {
     screen -S nova -X screen -t $1
     # only run the services specified in $ENABLED_SERVICES
