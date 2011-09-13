@@ -264,7 +264,7 @@ screen_it n-net "$NOVA_DIR/bin/nova-network"
 screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
 # nova-vncproxy binds a privileged port, and so needs sudo
 screen_it n-vnc "sudo $NOVA_DIR/bin/nova-vncproxy"
-screen_it dash "sudo /etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
+screen_it dash "sudo /etc/init.d/apache2 restart; sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
 # ==============
