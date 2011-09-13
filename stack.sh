@@ -229,9 +229,20 @@ mkdir -p $NOVA_DIR/networks
 # (re)create nova database
 mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
 mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+$NOVA_DIR/bin/nova-manage db sync
+
+# create a small network
+$NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
+
+# create some floating ips
+$NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+
+# Keystone
+# --------
+
+# (re)create keystone database
 mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE keystone;' || true
 mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
-$NOVA_DIR/bin/nova-manage db sync
 
 # FIXME (anthony) keystone should use keystone.conf.example
 KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
@@ -239,12 +250,6 @@ cp $DIR/files/keystone.conf $KEYSTONE_CONF
 
 # initialize keystone with default users/endpoints
 BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
-
-# create a small network
-$NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
-
-# create some floating ips
-$NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
 
 # Launch Services
