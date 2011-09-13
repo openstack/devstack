@@ -34,6 +34,7 @@ KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 API_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
+ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
@@ -248,9 +249,13 @@ rm -f $GLANCE_DIR/glance.sqlite
 
 # nova api crashes if we start it with a regular screen command,
 # so send the start command by forcing text into the window.
+ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash
 function screen_it {
     screen -S nova -X screen -t $1
-    screen -S nova -p $1 -X stuff "$2$NL"
+    # only run the services specified in $ENABLED_SERVICES
+    if [[ $ENABLED_SERVICES == *$2* ]] then
+        screen -S nova -p $1 -X stuff "$2$NL"
+    fi
 }
 
 screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"

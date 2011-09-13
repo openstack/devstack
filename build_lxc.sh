@@ -97,8 +97,8 @@ echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 # Install and run stack.sh
 apt-get update
 apt-get -y --force-yes install git-core vim-nox sudo
-su -c "git clone git://github.com/cloudbuilders/nfs-stack.git /opt/nfs-stack" stack
-su -c "cd /opt/nfs-stack && ./stack.sh" stack
+su -c "git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack" stack
+su -c "cd ~/nfs-stack && ./stack.sh" stack
 EOF
 
 chmod 700 $INSTALL_SH
