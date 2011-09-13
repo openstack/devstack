@@ -251,10 +251,7 @@ rm -f $GLANCE_DIR/glance.sqlite
 # so send the start command by forcing text into the window.
 function screen_it {
     screen -S nova -X screen -t $1
-    # only run the services specified in $ENABLED_SERVICES
-    if [[ $ENABLED_SERVICES == *$2* ]]; then
-        screen -S nova -p $1 -X stuff "$2$NL"
-    fi
+    screen -S nova -p $1 -X stuff "$2$NL"
 }
 
 screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
