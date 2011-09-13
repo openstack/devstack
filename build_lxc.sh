@@ -42,11 +42,8 @@ lxc-destroy -n $CONTAINER
 # Create the container
 lxc-create -n $CONTAINER -t natty -f $LXC_CONF
 
-# Specify where our container lives
+# Specify where our container rootfs lives
 ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
-
-# set root password to password
-echo root:pass | chroot $ROOTFS chpasswd
 
 # Create a stack user that is a member of the libvirtd group so that stack 
 # is able to interact with libvirt.
