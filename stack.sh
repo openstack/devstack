@@ -199,7 +199,7 @@ add_nova_flag "--sql_connection=$SQL_CONN"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--osapi_extensions_path=$API_DIR/extensions"
 add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
-add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/noVNC/noVNC"
+add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
 add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 if [ -n "$FLAT_INTERFACE" ]; then
@@ -262,7 +262,8 @@ screen_it n-api "$NOVA_DIR/bin/nova-api"
 screen_it n-cpu "$NOVA_DIR/bin/nova-compute"
 screen_it n-net "$NOVA_DIR/bin/nova-network"
 screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
-screen_it n-vnc "$NOVA_DIR/bin/nova-vncproxy"
+# nova-vncproxy binds a privileged port, and so needs sudo
+screen_it n-vnc "sudo $NOVA_DIR/bin/nova-vncproxy"
 screen_it dash "sudo /etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
 
 # Install Images
