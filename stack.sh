@@ -119,14 +119,6 @@ chown -R www-data:www-data $DASH_DIR
 
 mkdir -p /var/log/glance
 
-# prepare initial images for loading into glance
-if [ ! -f $DEST/tty.tgz ]; then
-    wget -c http://images.ansolabs.com/tty.tgz -O $DEST/tty.tgz
-fi
-
-mkdir -p $DEST/images
-tar -C $DEST/images -zxf $DEST/tty.tgz
-
 # add useful screenrc
 cp $DIR/files/screenrc ~/.screenrc
 
@@ -208,8 +200,23 @@ screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_DIR/etc/keysto
 screen_it vnc "$NOVA_DIR/bin/nova-vncproxy"
 screen_it dash "/etc/init.d/apache2 restart; tail -f /var/log/apache2/error.log"
 
-# FIXME: switch to just importing images
-# remove previously converted images
-rm -rf $DIR/images/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]
-$NOVA_DIR/bin/nova-manage image convert $DIR/images
+
+
+# ---- download an install images ----
+
+mkdir -p $DEST/images
+cd $DEST/images
+# prepare initial images for loading into glance
+if [ ! -f $DEST/tty.tgz ]; then
+    wget -c http://images.ansolabs.com/tty.tgz -O tty.tgz
+fi
+
+# extract ami-tty/image, aki-tty/image & ari-tty/image
+tar -zxf tty.tgz
+
+# import into glance 
+# FIXME(kernel/ramdisk is hardcoded - should look at result of first two commands?)
+glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < aki-tty/image 
+glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < ari-tty/image 
+glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < ami-tty/image
 
