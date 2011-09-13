@@ -8,10 +8,13 @@ CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
 CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
 NAMESERVER=${NAMESERVER:-192.168.1.1}
 COPYENV=${COPYENV:-1}
+WARMCACHE=${WARMCACHE:-0}
 
 # Destroy any existing container
 lxc-stop -n $CONTAINER
+sleep 1
 lxc-destroy -n $CONTAINER
+sleep 1
 
 # Create network configuration
 NET_CONF=/tmp/net.conf
@@ -25,12 +28,21 @@ EOF
 # Configure the network
 lxc-create -n $CONTAINER -t natty -f $NET_CONF
 
+if [ "$WARMCACHE" = "1" ]; then
+    # Pre-cache files
+    BASECACHE=/var/cache/lxc/natty/rootfs-amd64
+    chroot $BASECACHE apt-get update
+    chroot $BASECACHE apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $BASECACHE pip install `cat pips/*`
+fi
+
 # Where our container lives
 ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
 
-# Copy over your ssh keys if desired
-if [ $COPYENV ]; then
+# Copy over your ssh keys and env if desired
+if [ "$COPYENV" = "1" ]; then
     cp -pr ~/.ssh $ROOTFS/root/.ssh
+    cp -p ~/.ssh/id_rsa.pub $ROOTFS/root/.ssh/authorized_keys
     cp -pr ~/.gitconfig $ROOTFS/root/.gitconfig
     cp -pr ~/.vimrc $ROOTFS/root/.vimrc
     cp -pr ~/.bashrc $ROOTFS/root/.bashrc
@@ -79,8 +91,10 @@ cp -pr $CACHEDIR/apt/* $ROOTFS/var/cache/apt/
 cp -pr $CACHEDIR/pip/* $ROOTFS/var/cache/pip/
 
 # Configure cgroup directory
-mkdir -p /cgroup
-mount none -t cgroup /cgroup
+if [ ! -d /cgroup ] ; then
+    mkdir -p /cgroup
+    mount none -t cgroup /cgroup
+fi
 
 # Start our container
 lxc-start -d -n $CONTAINER
