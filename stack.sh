@@ -252,7 +252,7 @@ rm -f $GLANCE_DIR/glance.sqlite
 function screen_it {
     screen -S nova -X screen -t $1
     # only run the services specified in $ENABLED_SERVICES
-    if [[ $ENABLED_SERVICES == *$2* ]] then
+    if [[ $ENABLED_SERVICES == *$2* ]]; then
         screen -S nova -p $1 -X stuff "$2$NL"
     fi
 }
