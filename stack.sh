@@ -173,8 +173,11 @@ sudo chown -R `whoami` /var/lib/glance
 
 # Delete existing images/database as glance will recreate the db on startup
 rm -rf /var/lib/glance/images/*
-rm -f $GLANCE_DIR/glance.sqlite
-
+# (re)create glance database
+mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE glance;' || true
+mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
+# Copy over our glance-registry.conf
+cp $DIR/files/glance-registry.conf $GLANCE_DIR/etc/glance-registry.conf
 
 # Nova
 # ----
