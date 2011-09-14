@@ -153,7 +153,7 @@ mkdir $DASH_DIR/.blackhole
 
 ## Configure apache's 000-default to run dashboard
 sudo cp $DIR/files/000-default.template /etc/apache2/sites-enabled/000-default
-sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i $/etc/apache2/sites-enabled/000-default
+sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 
 # ``python setup.py develop`` left some files owned by root in ``DASH_DIR`` and
 # others by the original owner.  We need to change the owner to apache so
