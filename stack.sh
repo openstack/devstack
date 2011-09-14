@@ -168,6 +168,9 @@ sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 # dashboard can run
 sudo chown -R www-data:www-data $DASH_DIR
 
+# Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
+sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
+sudo service mysql restart
 
 # Glance
 # ------
