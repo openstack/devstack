@@ -178,7 +178,7 @@ rm -rf /var/lib/glance/images/*
 mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE glance;' || true
 mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
 # Copy over our glance-registry.conf
-$GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
+GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
 cp $DIR/files/glance-registry.conf $GLANCE_CONF
 sudo sed -e "s,%MYSQL_PASS%,$MYSQL_PASS,g" -i $GLANCE_CONF
 
