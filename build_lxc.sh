@@ -120,33 +120,33 @@ iface eth0 inet static
 EOF
 
 # Configure the runner
-RUN_SH=$ROOTFS/root/run.sh
+RUN_SH=$ROOTFS/opt/run.sh
 cat > $RUN_SH <<EOF
 #!/bin/bash
 # Make sure dns is set up
-echo "nameserver $NAMESERVER" | resolvconf -a eth0
+echo "nameserver $NAMESERVER" | sudo resolvconf -a eth0
 sleep 1
 
 # Kill any existing screens
-sudo -c "killall screen" stack
+su -c "killall screen" stack
 
 # Install and run stack.sh
-apt-get update
-apt-get -y --force-yes install git-core vim-nox sudo
+sudo apt-get update
+sudo apt-get -y --force-yes install git-core vim-nox sudo
 if [ ! -d "/opt/nfs-stack" ]; then
-    su -c "git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack" stack
+    git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack
 fi
-su -c "cd ~/nfs-stack && $STACKSH_PARAMS ./stack.sh" stack > /opt/run.sh.log
+cd /opt/nfs-stack && $STACKSH_PARAMS ./stack.sh > /opt/run.sh.log
 EOF
 
 # Make the run.sh executable
-chmod 700 $RUN_SH
+chmod 755 $RUN_SH
 
 # Make runner launch on boot
 RC_LOCAL=$ROOTFS/etc/rc.local
 cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
-/root/run.sh
+su -c "/opt/run.sh" stack
 EOF
 
 # Configure cgroup directory
