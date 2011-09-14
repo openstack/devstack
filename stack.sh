@@ -37,7 +37,7 @@ API_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
 
 # Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash}
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
