@@ -51,7 +51,7 @@ fi
 
 # Warm the base image on first install
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [  -d $CACHEDIR ]; then
+if [ ! -d $CACHEDIR ]; then
     # trigger the initial debootstrap
     lxc-create -n $CONTAINER -t natty -f $LXC_CONF
     chroot $CACHEDIR apt-get update
