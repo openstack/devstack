@@ -308,4 +308,3 @@ tar -zxf $DEST/tty.tgz
 glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < aki-tty/image 
 glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < ari-tty/image 
 glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < ami-tty/image
-
