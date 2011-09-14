@@ -1,58 +1,110 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Configurable params
 BRIDGE=${BRIDGE:-br0}
-CONTAINER=${CONTAINER:-TESTER}
+CONTAINER=${CONTAINER:-STACK}
 CONTAINER_IP=${CONTAINER_IP:-192.168.1.50}
 CONTAINER_CIDR=${CONTAINER_CIDR:-$CONTAINER_IP/24}
 CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
 CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
-NAMESERVER=${NAMESERVER:-192.168.1.1}
+NAMESERVER=${NAMESERVER:-$CONTAINER_GATEWAY}
 COPYENV=${COPYENV:-1}
-WARMCACHE=${WARMCACHE:-0}
 
-# Destroy any existing container
-lxc-stop -n $CONTAINER
-sleep 1
-cgdelete -r cpu,net_cls:$CONTAINER
-sleep 1
-lxc-destroy -n $CONTAINER
-sleep 1
+# Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
+STACKSH_PARAMS=${STACKSH_PARAMS:-}
 
-CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [ "$WARMCACHE" = "1" ]; then
-    if [ -d $CACHEDIR ]; then
-        # Pre-cache files
-        chroot $CACHEDIR apt-get update
-        chroot $CACHEDIR apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-        chroot $CACHEDIR pip install `cat pips/*`
-    fi
+# Warn users who aren't on natty
+if ! grep -q natty /etc/lsb-release; then
+    echo "WARNING: this script has only been tested on natty"
 fi
 
-# Create network configuration
-NET_CONF=/tmp/net.conf
-cat > $NET_CONF <<EOF
+# Install deps
+apt-get install lxc debootstrap
+
+# Install cgroup-bin from source, since the packaging is buggy and possibly incompatible with our setup
+if ! which cgdelete | grep -q cgdelete; then
+    apt-get install g++ bison flex libpam0g-dev
+    wget http://sourceforge.net/projects/libcg/files/libcgroup/v0.37.1/libcgroup-0.37.1.tar.bz2/download -O /tmp/libcgroup-0.37.1.tar.bz2 
+    cd /tmp && bunzip2 libcgroup-0.37.1.tar.bz2  && tar xfv libcgroup-0.37.1.tar
+    cd libcgroup-0.37.1
+    ./configure
+    make install
+fi
+
+# Create lxc configuration
+LXC_CONF=/tmp/$CONTAINER.conf
+cat > $LXC_CONF <<EOF
 lxc.network.type = veth
 lxc.network.link = $BRIDGE
 lxc.network.flags = up
 lxc.network.ipv4 = $CONTAINER_CIDR
+# allow tap/tun devices
 lxc.cgroup.devices.allow = c 10:200 rwm
 EOF
 
-# Configure the network
-lxc-create -n $CONTAINER -t natty -f $NET_CONF
-sleep 2
+# Shutdown any existing container
+lxc-stop -n $CONTAINER
 
-# Where our container lives
+# This kills zombie containers
+if [ -d /cgroup/$CONTAINER ]; then
+    cgdelete -r cpu,net_cls:$CONTAINER
+fi
+
+# Warm the base image on first install
+CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
+if [  -d $CACHEDIR ]; then
+    # trigger the initial debootstrap
+    lxc-create -n $CONTAINER -t natty -f $LXC_CONF
+    chroot $CACHEDIR apt-get update
+    chroot $CACHEDIR apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $CACHEDIR pip install `cat pips/*`
+    git clone https://github.com/cloudbuilders/nova.git $CACHEDIR/opt/nova
+    git clone https://github.com/cloudbuilders/openstackx.git $CACHEDIR/opt/openstackx
+    git clone https://github.com/cloudbuilders/noVNC.git $CACHEDIR/opt/noVNC
+    git clone https://github.com/cloudbuilders/openstack-dashboard.git $CACHEDIR/opt/dash
+    git clone https://github.com/cloudbuilders/python-novaclient.git $CACHEDIR/opt/python-novaclient
+    git clone https://github.com/cloudbuilders/keystone.git $CACHEDIR/opt/keystone
+    git clone https://github.com/cloudbuilders/glance.git $CACHEDIR/opt/glance
+fi
+
+# Destroy the old container
+lxc-destroy -n $CONTAINER
+
+# Create the container
+lxc-create -n $CONTAINER -t natty -f $LXC_CONF
+
+# Specify where our container rootfs lives
 ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
+
+# Create a stack user that is a member of the libvirtd group so that stack 
+# is able to interact with libvirt.
+chroot $ROOTFS groupadd libvirtd
+chroot $ROOTFS useradd stack -s /bin/bash -d /opt -G libvirtd
+
+# a simple password - pass
+echo stack:pass | chroot $ROOTFS chpasswd
+
+# and has sudo ability (in the future this should be limited to only what 
+# stack requires)
+echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
+
+# Gracefully cp only if source file/dir exists
+function cp_it {
+    if [ -e $1 ] || [ -d $1 ]; then
+        cp -pr $1 $2
+    fi
+}
 
 # Copy over your ssh keys and env if desired
 if [ "$COPYENV" = "1" ]; then
-    cp -pr ~/.ssh $ROOTFS/root/.ssh
-    cp -p ~/.ssh/id_rsa.pub $ROOTFS/root/.ssh/authorized_keys
-    cp -pr ~/.gitconfig $ROOTFS/root/.gitconfig
-    cp -pr ~/.vimrc $ROOTFS/root/.vimrc
-    cp -pr ~/.bashrc $ROOTFS/root/.bashrc
+    cp_it ~/.ssh $ROOTFS/opt/.ssh
+    cp_it ~/.ssh/id_rsa.pub $ROOTFS/opt/.ssh/authorized_keys
+    cp_it ~/.gitconfig $ROOTFS/opt/.gitconfig
+    cp_it ~/.vimrc $ROOTFS/opt/.vimrc
+    cp_it ~/.bashrc $ROOTFS/opt/.bashrc
 fi
+
+# Give stack ownership over /opt so it may do the work needed
+chroot $ROOTFS chown -R stack /opt
 
 # Configure instance network
 INTERFACES=$ROOTFS/etc/network/interfaces
@@ -67,57 +119,41 @@ iface eth0 inet static
         gateway $CONTAINER_GATEWAY
 EOF
 
-# Configure the first run installer
-INSTALL_SH=$ROOTFS/root/install.sh
-cat > $INSTALL_SH <<EOF
+# Configure the runner
+RUN_SH=$ROOTFS/opt/run.sh
+cat > $RUN_SH <<EOF
 #!/bin/bash
-echo \#\!/bin/sh -e > /etc/rc.local
-echo "nameserver $NAMESERVER" | resolvconf -a eth0
+# Make sure dns is set up
+echo "nameserver $NAMESERVER" | sudo resolvconf -a eth0
 sleep 1
-# Create a stack user that is a member of the libvirtd group so that stack 
-# is able to interact with libvirt.
-groupadd libvirtd
-useradd stack -s /bin/bash -d /opt -G libvirtd
 
-# a simple password - pass
-echo stack:pass | chpasswd
-
-# give stack ownership over /opt so it may do the work needed
-chown -R stack /opt
-
-# and has sudo ability (in the future this should be limited to only what 
-# stack requires)
-
-echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+# Kill any existing screens
+killall screen
 
 # Install and run stack.sh
-apt-get update
-apt-get -y --force-yes install git-core vim-nox sudo
-su -c "git clone git://github.com/cloudbuilders/nfs-stack.git /opt/nfs-stack" stack
-su -c "cd /opt/nfs-stack && ./stack.sh" stack
+sudo apt-get update
+sudo apt-get -y --force-yes install git-core vim-nox sudo
+if [ ! -d "/opt/nfs-stack" ]; then
+    git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack
+fi
+cd /opt/nfs-stack && $STACKSH_PARAMS ./stack.sh > /opt/run.sh.log
 EOF
 
-chmod 700 $INSTALL_SH
+# Make the run.sh executable
+chmod 755 $RUN_SH
 
-# Make installer run on boot
+# Make runner launch on boot
 RC_LOCAL=$ROOTFS/etc/rc.local
 cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
-/root/install.sh
+su -c "/opt/run.sh" stack
 EOF
 
 # Configure cgroup directory
-mkdir -p /cgroup
-mount none -t cgroup /cgroup
+if ! mount | grep -q cgroup; then
+    mkdir -p /cgroup
+    mount none -t cgroup /cgroup
+fi
 
 # Start our container
 lxc-start -d -n $CONTAINER
-
-cat << EOF > /bin/remove_dead_cgroup.shecho
-"Removing dead cgroup .$CONTAINER." >> /var/log/cgroup
-rmdir /cgroup/$CONTAINER >> /var/log/cgroup 2>&1
-echo "return value was $?" >> /var/log/cgroup
-EOF
-chmod 755 /bin/remove_dead_cgroup.sh
-echo /bin/remove_dead_cgroup.sh > /cgroup/release_agent
-echo 1 > /cgroup/notify_on_release

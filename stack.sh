@@ -12,6 +12,7 @@
 #     ./stack.sh
 #
 # or run on a single line ``MYSQL_PASS=simple ./stack.sh``
+# or simply ``./stack.sh``
 
 # This script exits on an error so that errors don't compound and you see 
 # only the first error that occured.
@@ -36,6 +37,9 @@ API_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
 MUNIN_DIR=$DEST/openstack-munin
 
+# Specify which services to launch.  These generally correspond to screen tabs
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash}
+
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
@@ -46,6 +50,7 @@ INTERFACE=${INTERFACE:-eth0}
 FLOATING_RANGE=${FLOATING_RANGE:-10.6.0.0/27}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 NET_MAN=${NET_MAN:-VlanManager}
+EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
@@ -55,11 +60,15 @@ NET_MAN=${NET_MAN:-VlanManager}
 # Nova hypervisor configuration
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
 
-
-# TODO: switch to mysql for all services
+# Mysql connection info
+MYSQL_USER=${MYSQL_USER:-root}
 MYSQL_PASS=${MYSQL_PASS:-nova}
-SQL_CONN=${SQL_CONN:-mysql://root:$MYSQL_PASS@localhost/nova}
-# TODO: set rabbitmq conn string explicitly as well
+MYSQL_HOST=${MYSQL_HOST:-localhost}
+# don't specify /db in this string, so we can use it for multiple services
+BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}
+
+# Rabbit connection info
+RABBIT_HOST=${RABBIT_HOST:-localhost}
 
 # Install Packages
 # ================
@@ -127,18 +136,13 @@ sudo usermod -a -G libvirtd `whoami`
 # if kvm wasn't running before we need to restart libvirt to enable it
 sudo /etc/init.d/libvirt-bin restart
 
-# FIXME(ja): should LIBVIRT_TYPE be kvm if kvm module is loaded?
+## FIXME(ja): should LIBVIRT_TYPE be kvm if kvm module is loaded?
 
-# setup nova instance directory
-mkdir -p $NOVA_DIR/instances
+# add useful screenrc
+cp $DIR/files/screenrc ~/.screenrc
 
-# if there is a partition labeled nova-instances use it (ext filesystems
-# can be labeled via e2label)
-# FIXME: if already mounted this blows up...
-if [ -L /dev/disk/by-label/nova-instances ]; then
-    sudo mount -L nova-instances $NOVA_DIR/instances
-    sudo chown -R `whoami` $NOVA_DIR/instances
-fi
+# TODO: update current user to allow sudo for all commands in files/sudo/*
+
 
 # Dashboard
 # ---------
@@ -148,26 +152,32 @@ fi
 # Dash currently imports quantum even if you aren't using it.  Instead 
 # of installing quantum we can create a simple module that will pass the 
 # initial imports
-mkdir $DASH_DIR/openstack-dashboard/quantum || true
-touch $DASH_DIR/openstack-dashboard/quantum/__init__.py || true
-touch $DASH_DIR/openstack-dashboard/quantum/client.py || true
+sudo mkdir -p  $DASH_DIR/openstack-dashboard/quantum || true
+sudo touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
+sudo touch $DASH_DIR/openstack-dashboard/quantum/client.py
 
 cd $DASH_DIR/openstack-dashboard
-[ ! -r local/local_settings.py ] && cp local/local_settings.py.example local/local_settings.py
+sudo cp local/local_settings.py.example local/local_settings.py
 dashboard/manage.py syncdb
 
-# setup apache
-# create an empty directory to use as our 
-mkdir -p $DASH_DIR/.blackhole
+# create an empty directory that apache uses as docroot
+sudo mkdir -p $DASH_DIR/.blackhole
 
-# FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
-cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /tmp/000-default
-sudo mv /tmp/000-default /etc/apache2/sites-enabled
+## Configure apache's 000-default to run dashboard
+sudo cp $DIR/files/000-default.template /etc/apache2/sites-enabled/000-default
+sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 
-# ``python setup.py develop`` left some files owned by root in $DASH_DIR and
+# ``python setup.py develop`` left some files owned by root in ``DASH_DIR`` and
 # others by the original owner.  We need to change the owner to apache so
 # dashboard can run
 sudo chown -R www-data:www-data $DASH_DIR
+
+# Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
+sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' WITH GRANT OPTION;"
+
+# Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
+sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
+sudo service mysql restart
 
 # Munin
 # -----
@@ -196,19 +206,25 @@ sudo restart munin-node
 # Glance
 # ------
 
+# Glance uses ``/var/lib/glance`` and ``/var/log/glance`` by default, so
+# we need to insure that our user has permissions to use them.
 sudo mkdir -p /var/log/glance
-sudo chown `whoami` /var/log/glance 
+sudo chown -R `whoami` /var/log/glance 
+sudo mkdir -p /var/lib/glance
+sudo chown -R `whoami` /var/lib/glance
 
-# add useful screenrc
-cp $DIR/files/screenrc ~/.screenrc
-
-# TODO: update current user to allow sudo for all commands in files/sudo/*
+# Delete existing images/database as glance will recreate the db on startup
+rm -rf /var/lib/glance/images/*
+# (re)create glance database
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE glance;' || true
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
+# Copy over our glance-registry.conf
+GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
+cp $DIR/files/glance-registry.conf $GLANCE_CONF
+sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
 
 # Nova
 # ----
-
-NL=`echo -ne '\015'`
-
 
 function add_nova_flag {
     echo "$1" >> $NOVA_DIR/bin/nova.conf
@@ -223,13 +239,16 @@ add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$INTERFACE"
 add_nova_flag "--vlan_interface=$INTERFACE"
-add_nova_flag "--sql_connection=$SQL_CONN"
+add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--osapi_extensions_path=$API_DIR/extensions"
 add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
 add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
 add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
+add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
+add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
+add_nova_flag "--rabbit_host=$RABBIT_HOST"
 if [ -n "$FLAT_INTERFACE" ]; then
     add_nova_flag "--flat_interface=$FLAT_INTERFACE"
 fi
@@ -237,6 +256,17 @@ fi
 # create a new named screen to store things in
 screen -d -m -S nova -t nova
 sleep 1
+
+# setup nova instance directory
+mkdir -p $NOVA_DIR/instances
+
+# if there is a partition labeled nova-instances use it (ext filesystems
+# can be labeled via e2label)
+## FIXME: if already mounted this blows up...
+if [ -L /dev/disk/by-label/nova-instances ]; then
+    sudo mount -L nova-instances $NOVA_DIR/instances
+    sudo chown -R `whoami` $NOVA_DIR/instances
+fi
 
 # Clean out the instances directory
 rm -rf $NOVA_DIR/instances/*
@@ -247,15 +277,9 @@ rm -rf $NOVA_DIR/networks
 mkdir -p $NOVA_DIR/networks
 
 # (re)create nova database
-mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
-mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
 $NOVA_DIR/bin/nova-manage db sync
-
-# initialize keystone with default users/endpoints
-rm -f /opt/keystone/keystone.db
-# FIXME keystone creates a keystone.log wherever you run it from (bugify)
-cd /tmp
-BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
 
 # create a small network
 $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
@@ -263,29 +287,43 @@ $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
 # create some floating ips
 $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
-# delete existing glance images/database.  Glance will recreate the db
-# when it is ran.
-# FIXME: configure glance not to shove files in /var/lib/glance?
-sudo mkdir -p /var/lib/glance
-sudo chown -R `whoami` /var/lib/glance
-rm -rf /var/lib/glance/images/*
-rm -f $GLANCE_DIR/glance.sqlite
+# Keystone
+# --------
+
+# (re)create keystone database
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE keystone;' || true
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
+
+# FIXME (anthony) keystone should use keystone.conf.example
+KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
+cp $DIR/files/keystone.conf $KEYSTONE_CONF
+sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
+
+# initialize keystone with default users/endpoints
+BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
+
 
 # Launch Services
 # ===============
 
 # nova api crashes if we start it with a regular screen command,
 # so send the start command by forcing text into the window.
+# Only run the services specified in ``ENABLED_SERVICES``
+
+NL=`echo -ne '\015'`
+
 function screen_it {
-    screen -S nova -X screen -t $1
-    screen -S nova -p $1 -X stuff "$2$NL"
+    if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
+        screen -S nova -X screen -t $1
+        screen -S nova -p $1 -X stuff "$2$NL"
+    fi
 }
 
 screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
 # keystone drops a keystone.log where if it is run, so change the path to
 # where it can write
-screen_it key "cd /tmp; $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_DIR/etc/keystone.conf"
+screen_it key "cd /tmp; $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
 screen_it n-api "$NOVA_DIR/bin/nova-api"
 screen_it n-cpu "$NOVA_DIR/bin/nova-compute"
 screen_it n-net "$NOVA_DIR/bin/nova-network"
@@ -314,4 +352,3 @@ tar -zxf $DEST/tty.tgz
 glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < aki-tty/image 
 glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < ari-tty/image 
 glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < ami-tty/image
-
