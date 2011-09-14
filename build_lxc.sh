@@ -99,6 +99,7 @@ su -c "git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack" stack
 su -c "cd ~/nfs-stack && ./stack.sh" stack
 EOF
 
+# Make the install.sh executable
 chmod 700 $INSTALL_SH
 
 # Make installer run on boot

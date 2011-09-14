@@ -151,9 +151,9 @@ dashboard/manage.py syncdb
 # create an empty directory that apache uses as docroot
 mkdir $DASH_DIR/.blackhole
 
-## FIXME(ja): can't figure out how to make $DASH_DIR work in sed, also install to available/a2e it 
-cat $DIR/files/000-default.template | sed 's/%DASH_DIR%/\/opt\/dash/g' > /tmp/000-default
-sudo mv /tmp/000-default /etc/apache2/sites-enabled
+## Configure apache's 000-default to run dashboard
+sudo cp $DIR/files/000-default.template /etc/apache2/sites-enabled/000-default
+sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i $/etc/apache2/sites-enabled/000-default
 
 # ``python setup.py develop`` left some files owned by root in ``DASH_DIR`` and
 # others by the original owner.  We need to change the owner to apache so
