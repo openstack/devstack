@@ -35,13 +35,14 @@ KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 API_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
+MUNIN_DIR=$DEST/openstack-munin
 
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash}
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
-    HOST_IP=`LC_ALL=C ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
+    HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
 
 # Nova network configuration
@@ -113,12 +114,15 @@ git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
 # openstackx is a collection of extensions to openstack.compute & nova 
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 git_clone https://github.com/cloudbuilders/openstackx.git $API_DIR
+# openstack-munin is a collection of munin plugins for monitoring the stack
+git_clone https://github.com/cloudbuilders/openstack-munin.git $MUNIN_DIR
 
 # Initialization
 # ==============
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
+cd $NOVA_DIR; sudo python setup.py develop
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $KEYSTONE_DIR; sudo python setup.py develop
 cd $GLANCE_DIR; sudo python setup.py develop
@@ -177,6 +181,30 @@ sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'
 # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
 sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
 sudo service mysql restart
+
+# Munin
+# -----
+
+# allow connections from other hosts
+sudo sed -i -e '/Allow from localhost/s/localhost.*$/all/' /etc/munin/apache.conf
+
+cat >/tmp/nova <<EOF
+[keystone_*]
+user `whoami`
+
+[nova_*]
+user `whoami`
+EOF
+sudo mv /tmp/nova /etc/munin/plugin-conf.d/nova
+
+# configure Munin for Nova plugins
+PLUGINS="keystone_stats nova_floating_ips nova_instance_launched nova_instance_ nova_instance_timing nova_services"
+for i in $PLUGINS; do
+  sudo cp -p $MUNIN_DIR/$i /usr/share/munin/plugins
+  sudo ln -sf /usr/share/munin/plugins/$i /etc/munin/plugins
+done
+sudo mv /etc/munin/plugins/nova_instance_ /etc/munin/plugins/nova_instance_launched
+sudo restart munin-node
 
 # Glance
 # ------
