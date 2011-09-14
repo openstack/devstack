@@ -133,10 +133,10 @@ killall screen
 # Install and run stack.sh
 sudo apt-get update
 sudo apt-get -y --force-yes install git-core vim-nox sudo
-if [ ! -d "/opt/nfs-stack" ]; then
-    git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack
+if [ ! -d "/opt/devstack" ]; then
+    git clone git://github.com/cloudbuilders/devstack.git ~/devstack
 fi
-cd /opt/nfs-stack && $STACKSH_PARAMS ./stack.sh > /opt/run.sh.log
+cd /opt/devstack && $STACKSH_PARAMS ./stack.sh > /opt/run.sh.log
 EOF
 
 # Make the run.sh executable
