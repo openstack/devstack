@@ -122,7 +122,7 @@ EOF
 # Configure the runner
 RUN_SH=$ROOTFS/opt/run.sh
 cat > $RUN_SH <<EOF
-#!/bin/bash
+#!/usr/bin/env bash
 # Make sure dns is set up
 echo "nameserver $NAMESERVER" | sudo resolvconf -a eth0
 sleep 1
