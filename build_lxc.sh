@@ -67,13 +67,19 @@ echo stack:pass | chroot $ROOTFS chpasswd
 # stack requires)
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
 
+function cp_it {
+    if [ -e $1 ] || [ -d $1 ]; then
+        cp -pr $1 $2
+    fi
+}
+
 # Copy over your ssh keys and env if desired
 if [ "$COPYENV" = "1" ]; then
-    cp -pr ~/.ssh $ROOTFS/opt/.ssh
-    cp -p ~/.ssh/id_rsa.pub $ROOTFS/opt/.ssh/authorized_keys
-    cp -pr ~/.gitconfig $ROOTFS/opt/.gitconfig
-    cp -pr ~/.vimrc $ROOTFS/opt/.vimrc
-    cp -pr ~/.bashrc $ROOTFS/opt/.bashrc
+    cp_it ~/.ssh $ROOTFS/opt/.ssh
+    cp_it ~/.ssh/id_rsa.pub $ROOTFS/opt/.ssh/authorized_keys
+    cp_it ~/.gitconfig $ROOTFS/opt/.gitconfig
+    cp_it ~/.vimrc $ROOTFS/opt/.vimrc
+    cp_it ~/.bashrc $ROOTFS/opt/.bashrc
 fi
 
 # Give stack ownership over /opt so it may do the work needed
@@ -93,8 +99,8 @@ iface eth0 inet static
 EOF
 
 # Configure the runner
-INSTALL_SH=$ROOTFS/root/install.sh
-cat > $INSTALL_SH <<EOF
+RUN_SH=$ROOTFS/root/run.sh
+cat > $RUN_SH <<EOF
 #!/bin/bash
 # Make sure dns is set up
 echo "nameserver $NAMESERVER" | resolvconf -a eth0
@@ -109,14 +115,14 @@ fi
 su -c "cd ~/nfs-stack && $STACKSH_PARAMS ./stack.sh" stack
 EOF
 
-# Make the install.sh executable
-chmod 700 $INSTALL_SH
+# Make the run.sh executable
+chmod 700 $RUN_SH
 
-# Make installer run on boot
+# Make runner launch on boot
 RC_LOCAL=$ROOTFS/etc/rc.local
 cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
-/root/install.sh
+/root/run.sh
 EOF
 
 # Configure cgroup directory
