@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Configurable params
 BRIDGE=${BRIDGE:-br0}
 CONTAINER=${CONTAINER:-STACK}
@@ -11,6 +11,11 @@ COPYENV=${COPYENV:-1}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 STACKSH_PARAMS=${STACKSH_PARAMS:-}
+
+# Install cgroup-bin if we don't have it yet
+if ! which cgdelete | grep -q cgdelete; then
+    apt-get install cgroup-bin
+fi
 
 # Create lxc configuration
 LXC_CONF=/tmp/$CONTAINER.conf
@@ -26,8 +31,10 @@ EOF
 # Shutdown any existing container
 lxc-stop -n $CONTAINER
 
-# This prevents zombie containers
-cgdelete -r cpu,net_cls:$CONTAINER
+# This kills zombie containers
+if [ -d /cgroup/$CONTAINER ]; then
+    cgdelete -r cpu,net_cls:$CONTAINER
+fi
 
 # Warm the base image on first install
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
@@ -113,8 +120,10 @@ cat > $RC_LOCAL <<EOF
 EOF
 
 # Configure cgroup directory
-mkdir -p /cgroup
-mount none -t cgroup /cgroup
+if ! mount | grep -q cgroup; then
+    mkdir -p /cgroup
+    mount none -t cgroup /cgroup
+fi
 
 # Start our container
 lxc-start -d -n $CONTAINER
