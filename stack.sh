@@ -60,8 +60,8 @@ EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
 
 # Mysql connection info
-MYSQL_PASS=${MYSQL_PASS:-nova}
 MYSQL_USER=${MYSQL_USER:-root}
+MYSQL_PASS=${MYSQL_PASS:-nova}
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 # don't specify /db in this string, so we can use it for multiple services
 BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}

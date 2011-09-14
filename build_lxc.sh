@@ -9,6 +9,9 @@ CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
 NAMESERVER=${NAMESERVER:-192.168.1.1}
 COPYENV=${COPYENV:-1}
 
+# Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
+STACKSH_PARAMS=${STACKSH_PARAMS:-}
+
 # Create lxc configuration
 LXC_CONF=/tmp/$CONTAINER.conf
 cat > $LXC_CONF <<EOF
@@ -82,12 +85,10 @@ iface eth0 inet static
         gateway $CONTAINER_GATEWAY
 EOF
 
-# Configure the first run installer
+# Configure the runner
 INSTALL_SH=$ROOTFS/root/install.sh
 cat > $INSTALL_SH <<EOF
 #!/bin/bash
-# Disable startup script
-echo \#\!/bin/sh -e > /etc/rc.local
 # Make sure dns is set up
 echo "nameserver $NAMESERVER" | resolvconf -a eth0
 sleep 1
@@ -95,8 +96,10 @@ sleep 1
 # Install and run stack.sh
 apt-get update
 apt-get -y --force-yes install git-core vim-nox sudo
-su -c "git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack" stack
-su -c "cd ~/nfs-stack && ./stack.sh" stack
+if [ ! -d "~/nfs-stack" ]
+    su -c "git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack" stack
+fi
+su -c "cd ~/nfs-stack && $STACKSH_PARAMS ./stack.sh" stack
 EOF
 
 # Make the install.sh executable
