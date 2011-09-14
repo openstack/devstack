@@ -128,7 +128,7 @@ echo "nameserver $NAMESERVER" | sudo resolvconf -a eth0
 sleep 1
 
 # Kill any existing screens
-su -c "killall screen" stack
+killall screen
 
 # Install and run stack.sh
 sudo apt-get update
