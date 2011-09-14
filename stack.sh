@@ -177,10 +177,10 @@ sudo sed -i -e '/Allow from localhost/s/localhost.*$/all/' /etc/munin/apache.con
 
 cat >/tmp/nova <<EOF
 [keystone_*]
-user stack
+user `whoami`
 
 [nova_*]
-user stack
+user `whoami`
 EOF
 sudo mv /tmp/nova /etc/munin/plugin-conf.d/nova
 
