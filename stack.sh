@@ -140,16 +140,16 @@ cp $DIR/files/screenrc ~/.screenrc
 # Dash currently imports quantum even if you aren't using it.  Instead 
 # of installing quantum we can create a simple module that will pass the 
 # initial imports
-mkdir $DASH_DIR/openstack-dashboard/quantum || true
-touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
-touch $DASH_DIR/openstack-dashboard/quantum/client.py
+sudo mkdir -p  $DASH_DIR/openstack-dashboard/quantum || true
+sudo touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
+sudo touch $DASH_DIR/openstack-dashboard/quantum/client.py
 
 cd $DASH_DIR/openstack-dashboard
-cp local/local_settings.py.example local/local_settings.py
+sudo cp local/local_settings.py.example local/local_settings.py
 dashboard/manage.py syncdb
 
 # create an empty directory that apache uses as docroot
-mkdir $DASH_DIR/.blackhole
+sudo mkdir -p $DASH_DIR/.blackhole
 
 ## Configure apache's 000-default to run dashboard
 sudo cp $DIR/files/000-default.template /etc/apache2/sites-enabled/000-default
