@@ -69,6 +69,9 @@ BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}
 # Rabbit connection info
 RABBIT_HOST=${RABBIT_HOST:-localhost}
 
+# Glance connection info.  Note the port must be specified.
+GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-0.0.0.0:9292}
+
 # Install Packages
 # ================
 #
@@ -221,6 +224,7 @@ add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
+add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
 if [ -n "$FLAT_INTERFACE" ]; then
     add_nova_flag "--flat_interface=$FLAT_INTERFACE"
 fi
