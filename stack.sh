@@ -178,7 +178,9 @@ rm -rf /var/lib/glance/images/*
 mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE glance;' || true
 mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
 # Copy over our glance-registry.conf
-cp $DIR/files/glance-registry.conf $GLANCE_DIR/etc/glance-registry.conf
+$GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
+cp $DIR/files/glance-registry.conf $GLANCE_CONF
+sudo sed -e "s,%MYSQL_PASS%,$MYSQL_PASS,g" -i $GLANCE_CONF
 
 # Nova
 # ----
@@ -251,6 +253,7 @@ mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
 # FIXME (anthony) keystone should use keystone.conf.example
 KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
 cp $DIR/files/keystone.conf $KEYSTONE_CONF
+sudo sed -e "s,%MYSQL_PASS%,$MYSQL_PASS,g" -i $KEYSTONE_CONF
 
 # initialize keystone with default users/endpoints
 BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
