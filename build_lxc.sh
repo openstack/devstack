@@ -126,7 +126,7 @@ apt-get -y --force-yes install git-core vim-nox sudo
 if [ ! -d "~/nfs-stack" ]; then
     su -c "git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack" stack
 fi
-su -c "cd ~/nfs-stack && $STACKSH_PARAMS ./stack.sh" stack
+su -c "cd ~/nfs-stack && $STACKSH_PARAMS ./stack.sh" stack >> /opt/run.sh.log
 EOF
 
 # Make the run.sh executable
