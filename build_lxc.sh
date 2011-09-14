@@ -123,7 +123,7 @@ sleep 1
 # Install and run stack.sh
 apt-get update
 apt-get -y --force-yes install git-core vim-nox sudo
-if [ ! -d "~/nfs-stack" ]
+if [ ! -d "~/nfs-stack" ]; then
     su -c "git clone git://github.com/cloudbuilders/nfs-stack.git ~/nfs-stack" stack
 fi
 su -c "cd ~/nfs-stack && $STACKSH_PARAMS ./stack.sh" stack
