@@ -60,7 +60,7 @@ EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
 
 # Mysql connection info
-MYSQL_USER=${MYSQL_USER:-root}
+MYSQL_USER=${MYSQL_USER:-nova}
 MYSQL_PASS=${MYSQL_PASS:-nova}
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 # don't specify /db in this string, so we can use it for multiple services
@@ -167,6 +167,9 @@ sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 # others by the original owner.  We need to change the owner to apache so
 # dashboard can run
 sudo chown -R www-data:www-data $DASH_DIR
+
+# Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
+sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' WITH GRANT OPTION;"
 
 # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
 sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf

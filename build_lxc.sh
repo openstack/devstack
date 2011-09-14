@@ -51,12 +51,19 @@ fi
 
 # Warm the base image on first install
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [ ! -d $CACHEDIR ]; then
+if [  -d $CACHEDIR ]; then
     # trigger the initial debootstrap
     lxc-create -n $CONTAINER -t natty -f $LXC_CONF
     chroot $CACHEDIR apt-get update
     chroot $CACHEDIR apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot $CACHEDIR pip install `cat pips/*`
+    git clone https://github.com/cloudbuilders/nova.git $CACHEDIR/opt/nova
+    git clone https://github.com/cloudbuilders/openstackx.git $CACHEDIR/opt/openstackx
+    git clone https://github.com/cloudbuilders/noVNC.git $CACHEDIR/opt/noVNC
+    git clone https://github.com/cloudbuilders/openstack-dashboard.git $CACHEDIR/opt/dash
+    git clone https://github.com/cloudbuilders/python-novaclient.git $CACHEDIR/opt/python-novaclient
+    git clone https://github.com/cloudbuilders/keystone.git $CACHEDIR/opt/keystone
+    git clone https://github.com/cloudbuilders/glance.git $CACHEDIR/opt/glance
 fi
 
 # Destroy the old container
