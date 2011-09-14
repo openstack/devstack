@@ -12,6 +12,7 @@
 #     ./stack.sh
 #
 # or run on a single line ``MYSQL_PASS=simple ./stack.sh``
+# or simply ``./stack.sh``
 
 # This script exits on an error so that errors don't compound and you see 
 # only the first error that occured.
