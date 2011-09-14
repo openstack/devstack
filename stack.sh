@@ -61,9 +61,10 @@ LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
 
 # Mysql connection info
 MYSQL_PASS=${MYSQL_PASS:-nova}
+MYSQL_USER=${MYSQL_USER:-root}
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 # don't specify /db in this string, so we can use it for multiple services
-BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://root:$MYSQL_PASS@$MYSQL_HOST}
+BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}
 
 # Rabbit connection info
 RABBIT_HOST=${RABBIT_HOST:-localhost}
@@ -181,8 +182,8 @@ sudo chown -R `whoami` /var/lib/glance
 # Delete existing images/database as glance will recreate the db on startup
 rm -rf /var/lib/glance/images/*
 # (re)create glance database
-mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE glance;' || true
-mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE glance;' || true
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
 # Copy over our glance-registry.conf
 GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
 cp $DIR/files/glance-registry.conf $GLANCE_CONF
@@ -242,8 +243,8 @@ rm -rf $NOVA_DIR/networks
 mkdir -p $NOVA_DIR/networks
 
 # (re)create nova database
-mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
-mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
 $NOVA_DIR/bin/nova-manage db sync
 
 # create a small network
@@ -256,8 +257,8 @@ $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 # --------
 
 # (re)create keystone database
-mysql -uroot -p$MYSQL_PASS -e 'DROP DATABASE keystone;' || true
-mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE keystone;' || true
+mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
 
 # FIXME (anthony) keystone should use keystone.conf.example
 KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
