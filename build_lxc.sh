@@ -12,6 +12,11 @@ COPYENV=${COPYENV:-1}
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 STACKSH_PARAMS=${STACKSH_PARAMS:-}
 
+# Warn users who aren't on natty
+if ! grep -q natty /etc/lsb-release; then
+    echo "WARNING: this script has only been tested on natty"
+fi
+
 # Install deps
 apt-get install lxc debootstrap
 
