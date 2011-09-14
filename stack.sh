@@ -35,6 +35,8 @@ KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 API_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
+
+# Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
@@ -47,6 +49,7 @@ INTERFACE=${INTERFACE:-eth0}
 FLOATING_RANGE=${FLOATING_RANGE:-10.6.0.0/27}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 NET_MAN=${NET_MAN:-VlanManager}
+EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
@@ -56,11 +59,14 @@ NET_MAN=${NET_MAN:-VlanManager}
 # Nova hypervisor configuration
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
 
-
-# TODO: switch to mysql for all services
+# Mysql connection info
 MYSQL_PASS=${MYSQL_PASS:-nova}
-SQL_CONN=${SQL_CONN:-mysql://root:$MYSQL_PASS@localhost/nova}
-# TODO: set rabbitmq conn string explicitly as well
+MYSQL_HOST=${MYSQL_HOST:-localhost}
+# don't specify /db in this string, so we can use it for multiple services
+BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://root:$MYSQL_PASS@$MYSQL_HOST}
+
+# Rabbit connection info
+RABBIT_HOST=${RABBIT_HOST:-localhost}
 
 # Install Packages
 # ================
@@ -180,7 +186,7 @@ mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
 # Copy over our glance-registry.conf
 GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
 cp $DIR/files/glance-registry.conf $GLANCE_CONF
-sudo sed -e "s,%MYSQL_PASS%,$MYSQL_PASS,g" -i $GLANCE_CONF
+sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
 
 # Nova
 # ----
@@ -198,13 +204,16 @@ add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$INTERFACE"
 add_nova_flag "--vlan_interface=$INTERFACE"
-add_nova_flag "--sql_connection=$SQL_CONN"
+add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--osapi_extensions_path=$API_DIR/extensions"
 add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
 add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
 add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
+add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
+add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
+add_nova_flag "--rabbit_host=$RABBIT_HOST"
 if [ -n "$FLAT_INTERFACE" ]; then
     add_nova_flag "--flat_interface=$FLAT_INTERFACE"
 fi
@@ -253,7 +262,7 @@ mysql -uroot -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
 # FIXME (anthony) keystone should use keystone.conf.example
 KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
 cp $DIR/files/keystone.conf $KEYSTONE_CONF
-sudo sed -e "s,%MYSQL_PASS%,$MYSQL_PASS,g" -i $KEYSTONE_CONF
+sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
 
 # initialize keystone with default users/endpoints
 BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
