@@ -4,21 +4,53 @@
 
 # we will use the ``nova`` cli tool provided by the ``python-novaclient``
 # package
+#
 
-# Settings/Options
-# ================
+
+# This script exits on an error so that errors don't compound and you see 
+# only the first error that occured.
+set -o errexit
+
+# Print the commands being run so that we can see the command that triggers 
+# an error.  It is also useful for following allowing as the install occurs.
+set -o xtrace
+
+
+# Settings
+# ========
 
 HOST=${HOST:-localhost}
-export NOVA_PROJECT_ID=${TENANT:-admin}
-export NOVA_USERNAME=${USERNAME:-admin}
-export NOVA_API_KEY=${PASS:-secrete}
 
-# keystone is the authentication system.  We use the **auth** 2.0 protocol.
-# Upon successful authentication, we are return a token and catalog of 
-# endpoints (for openstack services)
-export NOVA_URL="http://$HOST:5000/v2.0/"
+# Nova original used project_id as the *account* that owned resources (servers,
+# ip address, ...)   With the addition of Keystone we have standardized on the
+# term **tenant** as the entity that owns the resources.  **novaclient** still
+# uses the old deprecated terms project_id.
+export NOVA_PROJECT_ID=${TENANT:-demo}
+
+# In addition to the owning entity (tenant), nova stores the entity performing
+# the action as the **user**.
+export NOVA_USERNAME=${USERNAME:-demo}
+
+# With Keystone you pass the keystone password instead of an api key.
+export NOVA_API_KEY=${PASSWORD:-secrete}
+
+# With the addition of Keystone, to use an openstack cloud you should 
+# authenticate against keystone, which returns a **Token** and **Service 
+# Catalog**.  The catalog contains the endpoint for all services the user/tenant 
+# has access to - including nova, glance, keystone, swift, ...  We currently 
+# recommend using the 2.0 *auth api*.  
+#
+# *NOTE*: Using the 2.0 *auth api* does mean that compute api is 2.0.  We will
+# use the 1.1 *compute api*
+export NOVA_URL=${NOVA_URL:-http://$HOST:5000/v2.0/}
+
+# Currently novaclient needs you to specify the *compute api* version.  This
+# needs to match the config of your catalog returned by Keystone.
 export NOVA_VERSION=1.1
 
-export
 
+# Servers
+# =======
+
+# retreive a list of servers for our tenant
 nova list
