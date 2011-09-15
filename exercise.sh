@@ -49,8 +49,26 @@ export NOVA_URL=${NOVA_URL:-http://$HOST:5000/v2.0/}
 export NOVA_VERSION=1.1
 
 
-# Servers
-# =======
+# Launching a server
+# ==================
 
-# retreive a list of servers for our tenant
+# List servers for tenant:
 nova list
+
+# List of flavors:
+nova flavor-list
+
+# Images
+# ------
+
+# Nova has a **deprecated** way of listing images.
+nova image-list
+
+# But we recommend using glance directly
+glance index
+
+# show details of the active servers::
+#
+#     nova show 1234
+#
+nova list | grep ACTIVE | cut -d \| -f2 | xargs -n1 nova show
