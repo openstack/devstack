@@ -14,11 +14,10 @@ $BIN_DIR/keystone-manage $* role add Member
 $BIN_DIR/keystone-manage $* role grant Admin admin
 
 #endpointTemplates
-$BIN_DIR/keystone-manage $* endpointTemplates add RegionOne swift http://localhost:8080/v1/AUTH_%tenant_id% http://localhost:8080/ http://localhost:8080/v1/AUTH_%tenant_id% 1 1
+# $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne swift http://localhost:8080/v1/AUTH_%tenant_id% http://localhost:8080/ http://localhost:8080/v1/AUTH_%tenant_id% 1 1
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne nova_compat http://localhost:8774/v1.0/ http://localhost:8774/v1.0  http://localhost:8774/v1.0 1 1
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne nova http://localhost:8774/v1.1/%tenant_id% http://localhost:8774/v1.1/%tenant_id%  http://localhost:8774/v1.1/%tenant_id% 1 1
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne glance http://localhost:9292/v1.1/%tenant_id% http://localhost:9292/v1.1/%tenant_id% http://localhost:9292/v1.1/%tenant_id% 1 1
-$BIN_DIR/keystone-manage $* endpointTemplates add RegionOne keystone http://localhost:8080/v2.0 http://localhost:8081/v2.0 http://localhost:8080/v2.0 1 1
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne identity http://localhost:5000/v2.0 http://localhost:5001/v2.0 http://localhost:5000/v2.0 1 1
 
 # Tokens
