@@ -13,8 +13,8 @@ if [ ! -d proto ]; then
     debootstrap natty proto
     cp files/sources.list proto/etc/apt/sources.list
     chroot proto apt-get update
-    chroot proto apt-get install -y `cat apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-    chroot proto pip install `cat pips/*`
+    chroot proto apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot proto pip install `cat files/pips/*`
     git clone https://github.com/cloudbuilders/nova.git proto/opt/nova
     git clone https://github.com/cloudbuilders/openstackx.git proto/opt/openstackx
     git clone https://github.com/cloudbuilders/noVNC.git proto/opt/noVNC
@@ -34,14 +34,13 @@ echo "127.0.0.1 localhost $NAME" > $DEST/etc/hosts
 # copy kernel modules
 cp -pr /lib/modules/`uname -r` $DEST/lib/modules
 
-# inject stack.sh files
-cp -r files $DEST/opt/files
 
 # copy openstack installer and requirement lists to a new directory.
 mkdir -p $DEST/opt
+
+# inject stack.sh and dependant files
+cp -r files $DEST/opt/files
 cp stack.sh $DEST/opt/stack.sh
-cp -r pips $DEST/opt
-cp -r apts $DEST/opt
 
 # injecting root's public ssh key if it exists
 if [ -f /root/.ssh/id_rsa.pub ]; then
