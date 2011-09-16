@@ -15,10 +15,19 @@ DATABASES = {
 
 CACHE_BACKEND = 'dummy://'
 
-# Add nixon to dash installation.
+# Add nixon + other apps to dash installation.
 INSTALLED_APPS = (
-'dashboard.nixon',
+    'dashboard',
+    'dashboard.nixon',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django_openstack',
+    'django_openstack.templatetags',
+    'mailer',
 )
+
 
 # Send email to the console by default
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
