@@ -237,7 +237,7 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "munin" ]]; then
     # allow connections from other hosts
-    sudo sed -i -e '/Allow from localhost/s/localhost.*$/all/' /etc/munin/apache.conf
+    sudo sed -i -e 's/Allow from localhost/Allow from all/g' /etc/munin/apache.conf
 
     cat >/tmp/nova <<EOF
 [keystone_*]
