@@ -69,6 +69,11 @@ fi
 # Destroy the old container
 lxc-destroy -n $CONTAINER
 
+# If this call is to TERMINATE the container then exit
+if [ "$TERMINATE" = "1" ]; then
+    exit
+fi
+
 # Create the container
 lxc-create -n $CONTAINER -t natty -f $LXC_CONF
 
