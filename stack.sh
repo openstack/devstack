@@ -2,6 +2,11 @@
 
 # **stack.sh** is rackspace cloudbuilder's opinionated openstack dev installation.
 
+# To keep this script simple we assume you are running on an **Ubuntu 11.04 i
+# Natty** machine.  It should work in a VM or physical server.  Additionally we
+# put the list of *apt* and *pip* dependencies and other configuration files in
+# this repo.  So start by grabbing this script and the dependencies.
+
 # Settings/Options
 # ================
 
@@ -23,6 +28,7 @@ set -o errexit
 set -o xtrace
 
 # Warn users who aren't on natty
+## TODO: alter flow to exit unless the user sets environment FORCE=true
 if ! grep -q natty /etc/lsb-release; then
     echo "WARNING: this script has only been tested on natty"
 fi
@@ -141,15 +147,29 @@ cp $DIR/files/screenrc ~/.screenrc
 # TODO: update current user to allow sudo for all commands in files/sudo/*
 
 
+# Mysql
+# ---------
+#
+if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+    # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
+    sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASS';"
+
+    # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
+    sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
+    sudo service mysql restart
+fi
+
+
 # Dashboard
 # ---------
 #
 # Setup the django application to serve via apache/wsgi
 
-# Dash currently imports quantum even if you aren't using it.  Instead 
-# of installing quantum we can create a simple module that will pass the 
-# initial imports
 if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
+
+    # Dash currently imports quantum even if you aren't using it.  Instead 
+    # of installing quantum we can create a simple module that will pass the 
+    # initial imports
     sudo mkdir -p  $DASH_DIR/openstack-dashboard/quantum || true
     sudo touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
     sudo touch $DASH_DIR/openstack-dashboard/quantum/client.py
@@ -172,22 +192,10 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
 fi
 
 
-# Mysql
-# ---------
-#
-if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
-    # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
-    sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASS';"
-
-    # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
-    sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
-    sudo service mysql restart
-fi
-
-
 # Munin
 # -----
 
+# Munin is accessable via apache and was configured in the dashboard section.
 
 if [[ "$ENABLED_SERVICES" =~ "munin" ]]; then
     # allow connections from other hosts
@@ -380,4 +388,19 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < aki-tty/image 
     glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < ari-tty/image 
     glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < ami-tty/image
+fi
+
+# Using the cloud
+# ===============
+
+# If you installed the dashboard on this server, then you should be able
+# to access the site using your browser.  
+if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
+    echo "dashboard is now available at http://$HOST_IP/"
+fi
+
+# If keystone is present, you can point nova cli to this server
+if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+    echo "keystone is serving at http://$HOST_IP:5000/v2.0/"
+    echo "examples on using novaclient command line is in exercise.sh"
 fi
