@@ -22,7 +22,8 @@ if [ ! -d proto ]; then
     git clone https://github.com/cloudbuilders/python-novaclient.git proto/opt/python-novaclient
     git clone https://github.com/cloudbuilders/keystone.git proto/opt/keystone
     git clone https://github.com/cloudbuilders/glance.git proto/opt/glance
-    wget -c http://images.ansolabs.com/tty.tgz -O proto/opt/tty.tgz
+    chroot proto mkdir -p /opt/files
+    wget -c http://images.ansolabs.com/tty.tgz -O proto/opt/files/tty.tgz
 fi
 
 cp -pr proto $DEST
