@@ -117,7 +117,7 @@ mysql-server-5.1 mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
 
 # install apt requirements
-sudo apt-get install -y -q `cat $DEVSTACK/apts/* | cut -d\# -f1`
+sudo apt-get install -y -q `cat $DEVSTACK/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
 
 # install python requirements
 sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $DEVSTACK/pips/*`
@@ -166,11 +166,20 @@ cp $DEVSTACK/files/screenrc ~/.screenrc
 
 ## TODO: update current user to allow sudo for all commands in files/sudo/*
 
+# Rabbit
+# ---------
+#
+if [[ "$ENABLED_SERVICES" =~ "rabbit" ]]; then
+    # Install and start rabbitmq-server
+    sudo apt-get install rabbitmq-server
+fi
 
 # Mysql
 # ---------
 #
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+    # Install and start mysql-server
+    sudo apt-get install mysql-server
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
     sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASS';"
 
