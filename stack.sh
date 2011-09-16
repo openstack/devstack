@@ -308,6 +308,9 @@ add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
 if [ -n "$FLAT_INTERFACE" ]; then
     add_nova_flag "--flat_interface=$FLAT_INTERFACE"
 fi
+if [ -n "$MULTI_HOST" ]; then
+    add_nova_flag "--multi_host=$MULTI_HOST"
+fi
 
 # create a new named screen to store things in
 screen -d -m -S nova -t nova
@@ -319,7 +322,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # device - used to manage qcow images)
     sudo modprobe nbd || true
     sudo modprobe kvm || true
-    # user needs to be member of libvirtd group for nova-compute to use libvirt
+    # User needs to be member of libvirtd group for nova-compute to use libvirt.
     sudo usermod -a -G libvirtd `whoami`
     # if kvm wasn't running before we need to restart libvirt to enable it
     sudo /etc/init.d/libvirt-bin restart
@@ -386,9 +389,9 @@ fi
 # so send the start command by forcing text into the window.
 # Only run the services specified in ``ENABLED_SERVICES``
 
-NL=`echo -ne '\015'`
-
+# our screen helper to launch a service in a hidden named screen
 function screen_it {
+    NL=`echo -ne '\015'`
     if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
         screen -S nova -X screen -t $1
         screen -S nova -p $1 -X stuff "$2$NL"
@@ -399,7 +402,13 @@ screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.con
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
 screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
 screen_it n-api "$NOVA_DIR/bin/nova-api"
-screen_it n-cpu "$NOVA_DIR/bin/nova-compute"
+# Launching nova-compute should be as simple as running ``nova-compute`` but 
+# have to do a little more than that in our script.  Since we add the group 
+# ``libvirtd`` to our user in this script, when nova-compute is run it is
+# within the context of our original shell (so our groups won't be updated). 
+# We can send the command nova-compute to the ``newgrp`` command to execute
+# in a specific context.
+screen_it n-cpu "echo $NOVA_DIR/bin/nova-compute | newgrp libvirtd"
 screen_it n-net "$NOVA_DIR/bin/nova-network"
 screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
 # nova-vncproxy binds a privileged port, and so needs sudo
@@ -418,14 +427,13 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
 
     # extract ami-tty/image, aki-tty/image & ari-tty/image
     mkdir -p $FILES/images
-    cd $FILES/images
-    tar -zxf $DEST/tty.tgz
+    tar -zxf $FILES/tty.tgz -C $FILES/images
 
     # add images to glance 
     # FIXME: kernel/ramdisk is hardcoded - use return result from add
-    glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < aki-tty/image 
-    glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < ari-tty/image 
-    glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < ami-tty/image
+    glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image 
+    glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image 
+    glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
 fi
 
 # Using the cloud
