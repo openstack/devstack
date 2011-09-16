@@ -322,9 +322,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # device - used to manage qcow images)
     sudo modprobe nbd || true
     sudo modprobe kvm || true
-    # user needs to be member of libvirtd group for nova-compute to use libvirt
-    ## FIXME: this doesn't affect the current shell so you end up with a failed
-    ## launch of nova-compute
+    # User needs to be member of libvirtd group for nova-compute to use libvirt.
     sudo usermod -a -G libvirtd `whoami`
     # if kvm wasn't running before we need to restart libvirt to enable it
     sudo /etc/init.d/libvirt-bin restart
@@ -404,7 +402,10 @@ screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.con
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
 screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
 screen_it n-api "$NOVA_DIR/bin/nova-api"
-screen_it n-cpu "$NOVA_DIR/bin/nova-compute"
+# launch nova-compute with a new bash, since user won't be a member of libvirtd 
+# group in the current shell context (due to how linux works).  
+# TODO: newgrp might work instead...
+screen_it n-cpu "bash -c $NOVA_DIR/bin/nova-compute"
 screen_it n-net "$NOVA_DIR/bin/nova-network"
 screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
 # nova-vncproxy binds a privileged port, and so needs sudo
