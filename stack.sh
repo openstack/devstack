@@ -320,6 +320,8 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     sudo modprobe nbd || true
     sudo modprobe kvm || true
     # user needs to be member of libvirtd group for nova-compute to use libvirt
+    ## FIXME: this doesn't affect the current shell so you end up with a failed
+    ## launch of nova-compute
     sudo usermod -a -G libvirtd `whoami`
     # if kvm wasn't running before we need to restart libvirt to enable it
     sudo /etc/init.d/libvirt-bin restart
