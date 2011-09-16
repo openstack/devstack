@@ -21,7 +21,7 @@ function run_lxc {
 run_lxc STACKMASTER $HEAD_HOST "ENABLED_SERVICES=g-api,g-reg,key,n-api,n-sch,n-vnc,dash,mysql,rabbit"
 
 # Wait till the head node is up
-while ! wget -O - http://$HEAD_HOST | grep -q username; do
+while ! wget -q -O- http://$HEAD_HOST | grep -q username; do
     echo "Waiting for head node ($HEAD_HOST) to start..."
     sleep 5
 done
