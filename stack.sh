@@ -308,6 +308,9 @@ add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
 if [ -n "$FLAT_INTERFACE" ]; then
     add_nova_flag "--flat_interface=$FLAT_INTERFACE"
 fi
+if [ -n "$MULTI_HOST" ]; then
+    add_nova_flag "--multi_host=$MULTI_HOST"
+fi
 
 # create a new named screen to store things in
 screen -d -m -S nova -t nova
