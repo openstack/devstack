@@ -141,7 +141,7 @@ git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
 # django powered web control panel for openstack
 git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
 # add nixon, will use this to show munin graphs in dashboard 
-git clone https://github.com/jakedahn/nixon.git $NIXON_DIR
+git_clone https://github.com/cloudbuilders/nixon.git $NIXON_DIR
 # python client library to nova that dashboard (and others) use
 git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
 # openstackx is a collection of extensions to openstack.compute & nova 
