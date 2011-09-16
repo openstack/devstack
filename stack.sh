@@ -122,9 +122,13 @@ sudo apt-get install -y -q `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-s
 # install python requirements
 sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 
-# git clone only if directory doesn't exist already
+# git clone only if directory doesn't exist already.  Since ``DEST`` might not
+# be owned by the installation user, we create the directory and change the
+# ownership to the proper user.
 function git_clone {
     if [ ! -d $2 ]; then
+        sudo mkdir $2
+        sudo chown `whoami` $2
         git clone $1 $2
     fi
 }
@@ -408,13 +412,13 @@ screen_it dash "sudo /etc/init.d/apache2 restart; sudo tail -f /var/log/apache2/
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Downloads a tty image (ami/aki/ari style), then extracts it.  Upon extraction 
     # we upload to glance with the glance cli tool.
-    mkdir -p $DEST/images
-    cd $DEST/images
-    if [ ! -f $DEST/tty.tgz ]; then
-        wget -c http://images.ansolabs.com/tty.tgz -O $DEST/tty.tgz
+    if [ ! -f $FILES/tty.tgz ]; then
+        wget -c http://images.ansolabs.com/tty.tgz -O $FILES/tty.tgz
     fi
 
     # extract ami-tty/image, aki-tty/image & ari-tty/image
+    mkdir -p $FILES/images
+    cd $FILES/images
     tar -zxf $DEST/tty.tgz
 
     # add images to glance 
