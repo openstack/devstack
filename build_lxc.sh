@@ -103,6 +103,10 @@ if [ "$COPYENV" = "1" ]; then
     cp_it ~/.bashrc $ROOTFS/opt/.bashrc
 fi
 
+# Make our ip address hostnames look nice at the command prompt
+echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS/opt/.bashrc
+echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS/etc/profile
+
 # Give stack ownership over /opt so it may do the work needed
 chroot $ROOTFS chown -R stack /opt
 
