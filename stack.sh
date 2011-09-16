@@ -158,10 +158,6 @@ git_clone https://github.com/cloudbuilders/openstack-munin.git $MUNIN_DIR
 # ==============
 
 
-# create a new named screen to store things in
-screen -d -m -S nova -t nova
-sleep 1
-
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
 cd $NOVA_DIR; sudo python setup.py develop
@@ -404,6 +400,10 @@ function screen_it {
         screen -S nova -p $1 -X stuff "$2$NL"
     fi
 }
+
+# create a new named screen to run processes in
+screen -d -m -S nova -t nova
+sleep 1
 
 screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
