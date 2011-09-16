@@ -7,8 +7,33 @@
 # put the list of *apt* and *pip* dependencies and other configuration files in
 # this repo.  So start by grabbing this script and the dependencies.
 
-# Settings/Options
-# ================
+
+# Sanity Check
+# ============
+
+# Warn users who aren't on natty, but allow they to override check and attempt
+# installation with ``FORCE=yes ./stack``
+#
+if ! grep -q natty /etc/lsb-release; then
+    echo "WARNING: this script has only been tested on natty"
+    if [[ "$FORCE" != "yes" ]]; then
+        echo "If you wish to run this script anyway run with FORCE=yes"
+        exit 1
+    fi
+fi
+
+# stack.sh keeps the list of **apt** and **pip** dependencies in files.  
+# Additionally we have a few config templates and other useful files useful 
+# installation.  They are needed to be located at ``apts``, ``files`` and 
+# ``pips`` in the same directory as this script.
+DEVSTACK=`pwd`
+if [ ! -d $DEVSTACK/apts ] || [ ! -d $DEVSTACK/files ] || [ ! -d $DEVSTACK/pips ]; then
+    echo "ERROR: missing devstack files - did you grab more than just stack.sh?"
+    exit 1
+fi
+
+# Settings
+# ========
 
 # This script is customizable through setting environment variables.  If you
 # want to override a setting you can either::
@@ -16,29 +41,21 @@
 #     export MYSQL_PASS=anothersecret
 #     ./stack.sh
 #
-# or run on a single line ``MYSQL_PASS=simple ./stack.sh``
-# or simply ``./stack.sh``
+# You can also pass options on a single line ``MYSQL_PASS=simple ./stack.sh``
+#
+# We try to have sensible defaults, so you should be able to run ``./stack.sh``
+# in most cases.
 
-# This script exits on an error so that errors don't compound and you see 
-# only the first error that occured.
+# So that errors don't compound we exit on any errors so you see only the
+# first error that occured.
 set -o errexit
 
 # Print the commands being run so that we can see the command that triggers 
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
-# Warn users who aren't on natty
-## TODO: alter flow to exit unless the user sets environment FORCE=true
-## TODO: warn user if apts, pips and other files don't exist that they
-## need more than just this script
-if ! grep -q natty /etc/lsb-release; then
-    echo "WARNING: this script has only been tested on natty"
-fi
-
-# Important paths: ``DIR`` is where we are executing from and ``DEST`` is 
-# where we are installing openstack.
-DIR=`pwd`
-DEST=/opt
+# Destination path for installation ``DEST``
+DEST=${DEST:-/opt}
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
@@ -101,10 +118,10 @@ mysql-server-5.1 mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
 
 # install apt requirements
-sudo apt-get install -y -q `cat $DIR/apts/* | cut -d\# -f1`
+sudo apt-get install -y -q `cat $DEVSTACK/apts/* | cut -d\# -f1`
 
 # install python requirements
-sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $DIR/pips/*`
+sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $DEVSTACK/pips/*`
 
 # git clone only if directory doesn't exist already
 function git_clone {
@@ -146,10 +163,11 @@ cd $API_DIR; sudo python setup.py develop
 cd $DASH_DIR/django-openstack; sudo python setup.py develop
 cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
 
-# add useful screenrc
-cp $DIR/files/screenrc ~/.screenrc
+# Add a useful screenrc.  This isn't required to run openstack but is we do
+# it since we are going to run the services in screen for simple 
+cp $DEVSTACK/files/screenrc ~/.screenrc
 
-# TODO: update current user to allow sudo for all commands in files/sudo/*
+## TODO: update current user to allow sudo for all commands in files/sudo/*
 
 
 # Mysql
@@ -188,7 +206,7 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo mkdir -p $DASH_DIR/.blackhole
 
     ## Configure apache's 000-default to run dashboard
-    sudo cp $DIR/files/000-default.template /etc/apache2/sites-enabled/000-default
+    sudo cp $DEVSTACK/files/000-default.template /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 
     # ``python setup.py develop`` left some files owned by root in ``DASH_DIR`` and
@@ -243,7 +261,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
     # Copy over our glance-registry.conf
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
-    cp $DIR/files/glance-registry.conf $GLANCE_CONF
+    cp $DEVSTACK/files/glance-registry.conf $GLANCE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
 fi
 
@@ -339,11 +357,11 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
 
     # FIXME (anthony) keystone should use keystone.conf.example
     KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
-    cp $DIR/files/keystone.conf $KEYSTONE_CONF
+    cp $DEVSTACK/files/keystone.conf $KEYSTONE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
 
     # initialize keystone with default users/endpoints
-    BIN_DIR=$KEYSTONE_DIR/bin bash $DIR/files/keystone_data.sh
+    BIN_DIR=$KEYSTONE_DIR/bin bash $DEVSTACK/files/keystone_data.sh
 fi
 
 
