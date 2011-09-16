@@ -59,6 +59,7 @@ DEST=${DEST:-/opt}
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
 DASH_DIR=$DEST/dash
+NIXON_DIR=$DEST/dash/openstack-dashboard/dashboard/nixon
 GLANCE_DIR=$DEST/glance
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
@@ -138,6 +139,8 @@ git_clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
 git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
 # django powered web control panel for openstack
 git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
+# add nixon, will use this to show munin graphs in dashboard 
+git_clone https://github.com/cloudbuilders/nixon.git $NIXON_DIR
 # python client library to nova that dashboard (and others) use
 git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
 # openstackx is a collection of extensions to openstack.compute & nova 
@@ -194,7 +197,10 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo touch $DASH_DIR/openstack-dashboard/quantum/client.py
 
     cd $DASH_DIR/openstack-dashboard
-    sudo cp local/local_settings.py.example local/local_settings.py
+    
+    # Includes settings for Nixon, to expose munin charts.
+    sudo cp $DIR/files/dash_settings.py local/local_settings.py
+
     dashboard/manage.py syncdb
 
     # create an empty directory that apache uses as docroot
