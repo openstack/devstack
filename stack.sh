@@ -87,8 +87,9 @@ EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 # ip or you risk breaking things.
 # FLAT_INTERFACE=eth0
 
-# Nova hypervisor configuration
-LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
+# Nova hypervisor configuration.  We default to **kvm** but will drop back to 
+# **qemu** if we are unable to load the kvm module.
+LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 
 # Mysql connection info
 MYSQL_USER=${MYSQL_USER:-root}
@@ -155,6 +156,11 @@ git_clone https://github.com/cloudbuilders/openstack-munin.git $MUNIN_DIR
 
 # Initialization
 # ==============
+
+
+# create a new named screen to store things in
+screen -d -m -S nova -t nova
+sleep 1
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
@@ -282,52 +288,20 @@ fi
 # Nova
 # ----
 
-function add_nova_flag {
-    echo "$1" >> $NOVA_DIR/bin/nova.conf
-}
-
-# (re)create nova.conf
-rm -f $NOVA_DIR/bin/nova.conf
-add_nova_flag "--verbose"
-add_nova_flag "--nodaemon"
-add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
-add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
-add_nova_flag "--my_ip=$HOST_IP"
-add_nova_flag "--public_interface=$INTERFACE"
-add_nova_flag "--vlan_interface=$INTERFACE"
-add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
-add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
-add_nova_flag "--osapi_extensions_path=$API_DIR/extensions"
-add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
-add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
-add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
-add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
-add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
-add_nova_flag "--rabbit_host=$RABBIT_HOST"
-add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
-if [ -n "$FLAT_INTERFACE" ]; then
-    add_nova_flag "--flat_interface=$FLAT_INTERFACE"
-fi
-if [ -n "$MULTI_HOST" ]; then
-    add_nova_flag "--multi_host=$MULTI_HOST"
-fi
-
-# create a new named screen to store things in
-screen -d -m -S nova -t nova
-sleep 1
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
-    # attempt to load modules: kvm (hardware virt) and nbd (network block 
-    # device - used to manage qcow images)
+    # attempt to load modules: nbd (network block device - used to manage 
+    # qcow images) and kvm (hardware based virtualization).  If unable to 
+    # load kvm, set the libvirt type to qemu.
     sudo modprobe nbd || true
-    sudo modprobe kvm || true
+    if ! sudo modprobe kvm; then
+        LIBVIRT_TYPE=qemu
+    fi
     # User needs to be member of libvirtd group for nova-compute to use libvirt.
     sudo usermod -a -G libvirtd `whoami`
     # if kvm wasn't running before we need to restart libvirt to enable it
     sudo /etc/init.d/libvirt-bin restart
-
-    ## FIXME(ja): should LIBVIRT_TYPE be kvm if kvm module is loaded?
 
     # setup nova instance directory
     mkdir -p $NOVA_DIR/instances
@@ -362,6 +336,36 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
 
     # create some floating ips
     $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+fi
+
+function add_nova_flag {
+    echo "$1" >> $NOVA_DIR/bin/nova.conf
+}
+
+# (re)create nova.conf
+rm -f $NOVA_DIR/bin/nova.conf
+add_nova_flag "--verbose"
+add_nova_flag "--nodaemon"
+add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
+add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
+add_nova_flag "--my_ip=$HOST_IP"
+add_nova_flag "--public_interface=$INTERFACE"
+add_nova_flag "--vlan_interface=$INTERFACE"
+add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
+add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
+add_nova_flag "--osapi_extensions_path=$API_DIR/extensions"
+add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
+add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
+add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
+add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
+add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
+add_nova_flag "--rabbit_host=$RABBIT_HOST"
+add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
+if [ -n "$FLAT_INTERFACE" ]; then
+    add_nova_flag "--flat_interface=$FLAT_INTERFACE"
+fi
+if [ -n "$MULTI_HOST" ]; then
+    add_nova_flag "--multi_host=$MULTI_HOST"
 fi
 
 # Keystone
