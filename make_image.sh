@@ -3,7 +3,7 @@
 #
 # make_image.sh release format
 #
-# Supported formats: qcow (kvm), vmdk (vmserver), vdi (vbox), vhd (vpc)
+# Supported formats: qcow (kvm), vmdk (vmserver), vdi (vbox), vhd (vpc), raw
 #
 # Requires sudo to root
 
@@ -36,22 +36,29 @@ FORMAT=$2
 
 case $FORMAT in
     kvm|qcow2)  FORMAT=qcow2
-                TARGET=kvm
+                QFORMAT=qcow2
+                HYPER=kvm
                 ;;
     vmserver|vmdk)
                 FORMAT=vmdk
-                TARGET=vmserver
+                QFORMAT=vmdk
+                HYPER=vmserver
                 ;;
-    vbox|vdi)   FORMAT=qcow2
-                TARGET=kvm
-                FINAL_FORMAT=vdi
+    vbox|vdi)   FORMAT=vdi
+                QFORMAT=vdi
+                HYPER=kvm
                 ;;
-    vhd|vpc)    FORMAT=qcow2
-                TARGET=kvm
-                FINAL_FORMAT=vhd
+    vhd|vpc)    FORMAT=vhd
+                QFORMAT=vpc
+                HYPER=kvm
                 ;;
     xen)        FORMAT=raw
-                TARGET=xen
+                QFORMAT=raw
+                HYPER=xen
+                ;;
+    raw)        FORMAT=raw
+                QFORMAT=raw
+                HYPER=kvm
                 ;;
     *)          echo "Unknown format: $FORMAT"
                 usage
@@ -74,24 +81,23 @@ if [ -z `which vmbuilder` ]; then
 fi
 
 # Build the image
-sudo vmbuilder $TARGET ubuntu --suite $RELEASE \
+TMPDISK=`mktemp imgXXXXXXXX`
+SIZE=$[$ROOTSIZE+$SWAPSIZE+1]
+dd if=/dev/null of=$TMPDISK bs=1M seek=$SIZE
+sudo vmbuilder $HYPER ubuntu --suite $RELEASE \
   -o \
   --rootsize=$ROOTSIZE \
   --swapsize=$SWAPSIZE \
   --tmpfs - \
   --addpkg=openssh-server \
+  --raw=$TMPDISK \
 
-#  --mirror=$MIRROR \
-
-if [ -z "$FINAL_FORMAT" ]; then
+if [ "$FORMAT" = "raw" ]; then
     # Get image
-    mv ubuntu-$TARGET/tmp*.$FORMAT $RELEASE.$FORMAT
+    mv $TMPDISK $RELEASE.$FORMAT
 else
     # Convert image
-    tgt=$FINAL_FORMAT
-    if [ "$tgt" = "vhd" ]; then
-        tgt=vpc
-    fi
-    qemu-img convert -O $tgt ubuntu-$TARGET/tmp*.$FORMAT $RELEASE.$FINAL_FORMAT
+    qemu-img convert -O $QFORMAT $TMPDISK $RELEASE.$FORMAT
+    rm $TMPDISK
 fi
-rm -rf ubuntu-$TARGET
+rm -rf ubuntu-$HYPER

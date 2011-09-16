@@ -63,6 +63,7 @@ if [ -z "$GLANCE" ]; then
         # Look for stack.sh's install
         GLANCE="/opt/glance/bin/glance"
     else
+        # Install Glance client in /opt
         echo "Glance not found, must install client"
         OWD=`pwd`
         cd /opt
@@ -79,9 +80,10 @@ fi
 # Create image if it doesn't exist
 if [ ! -r $RELEASE.$FORMAT ]; then
     DIR=`dirname $0`
-    echo "$RELEASE.$FORMAT not found, creating...must be root to do this:"
+    echo "$RELEASE.$FORMAT not found, creating..."
     $DIR/make_image.sh $RELEASE $FORMAT
 fi
 
 # Upload the image
+echo "Uploading image $RELEASE.$FORMAT to $HOST"
 $GLANCE add name=$RELEASE.$FORMAT is_public=true disk_format=$FORMAT --host $HOST --port $PORT <$RELEASE.$FORMAT
