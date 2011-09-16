@@ -2,7 +2,7 @@
 
 # **stack.sh** is rackspace cloudbuilder's opinionated openstack dev installation.
 
-# To keep this script simple we assume you are running on an **Ubuntu 11.04 i
+# To keep this script simple we assume you are running on an **Ubuntu 11.04
 # Natty** machine.  It should work in a VM or physical server.  Additionally we
 # put the list of *apt* and *pip* dependencies and other configuration files in
 # this repo.  So start by grabbing this script and the dependencies.
@@ -11,9 +11,8 @@
 # Sanity Check
 # ============
 
-# Warn users who aren't on natty, but allow they to override check and attempt
+# Warn users who aren't on natty, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
-#
 if ! grep -q natty /etc/lsb-release; then
     echo "WARNING: this script has only been tested on natty"
     if [[ "$FORCE" != "yes" ]]; then
@@ -25,7 +24,7 @@ fi
 # stack.sh keeps the list of **apt** and **pip** dependencies in files.  
 # Additionally we have a few config templates and other useful files useful 
 # installation.  They are needed to be located at ``apts``, ``files`` and 
-# ``pips`` in the same directory as this script.
+# ``pips`` in the ``DEVSTACK`` directory (next to this script).
 DEVSTACK=`pwd`
 if [ ! -d $DEVSTACK/apts ] || [ ! -d $DEVSTACK/files ] || [ ! -d $DEVSTACK/pips ]; then
     echo "ERROR: missing devstack files - did you grab more than just stack.sh?"
@@ -60,6 +59,7 @@ DEST=${DEST:-/opt}
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
 DASH_DIR=$DEST/dash
+NIXON_DIR=$DEST/dash/openstack-dashboard/dashboard/nixon
 GLANCE_DIR=$DEST/glance
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
@@ -139,6 +139,8 @@ git_clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
 git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
 # django powered web control panel for openstack
 git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
+# add nixon, will use this to show munin graphs in dashboard 
+git_clone https://github.com/cloudbuilders/nixon.git $NIXON_DIR
 # python client library to nova that dashboard (and others) use
 git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
 # openstackx is a collection of extensions to openstack.compute & nova 
@@ -204,7 +206,10 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo touch $DASH_DIR/openstack-dashboard/quantum/client.py
 
     cd $DASH_DIR/openstack-dashboard
-    sudo cp local/local_settings.py.example local/local_settings.py
+    
+    # Includes settings for Nixon, to expose munin charts.
+    sudo cp $DIR/files/dash_settings.py local/local_settings.py
+
     dashboard/manage.py syncdb
 
     # create an empty directory that apache uses as docroot
