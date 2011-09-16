@@ -173,7 +173,7 @@ cp $DEVSTACK/files/screenrc ~/.screenrc
 #
 if [[ "$ENABLED_SERVICES" =~ "rabbit" ]]; then
     # Install and start rabbitmq-server
-    sudo apt-get install rabbitmq-server
+    sudo apt-get install -y -q rabbitmq-server
 fi
 
 # Mysql
@@ -181,7 +181,7 @@ fi
 #
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # Install and start mysql-server
-    sudo apt-get install mysql-server
+    sudo apt-get -y -q install mysql-server
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
     sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASS';"
 
