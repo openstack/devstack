@@ -379,8 +379,11 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     cp $FILES/keystone.conf $KEYSTONE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
 
+    KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
+    cp $FILES/keystone_data.sh $KEYSTONE_DATA
+    sudo sed -e "s,%HOST_IP%,$HOST_IP,g" -i $KEYSTONE_DATA
     # initialize keystone with default users/endpoints
-    BIN_DIR=$KEYSTONE_DIR/bin bash $FILES/keystone_data.sh
+    BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
 fi
 
 
