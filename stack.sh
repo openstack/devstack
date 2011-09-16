@@ -122,9 +122,13 @@ sudo apt-get install -y -q `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-s
 # install python requirements
 sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 
-# git clone only if directory doesn't exist already
+# git clone only if directory doesn't exist already.  Since ``DEST`` might not
+# be owned by the installation user, we create the directory and change the
+# ownership to the proper user.
 function git_clone {
     if [ ! -d $2 ]; then
+        sudo mkdir $2
+        sudo chown `whoami` $2
         git clone $1 $2
     fi
 }
