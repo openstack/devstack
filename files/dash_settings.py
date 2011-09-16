@@ -6,6 +6,8 @@ PROD = False
 USE_SSL = False
 
 LOCAL_PATH = os.path.dirname(os.path.abspath(__file__))
+
+# FIXME: We need to change this to mysql, instead of sqlite.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -43,7 +45,7 @@ MAILER_EMAIL_BACKEND = EMAIL_BACKEND
 # EMAIL_HOST_USER = 'djangomail'
 # EMAIL_HOST_PASSWORD = 'top-secret!'
 
-
+# FIXME: This needs to be changed to allow for multi-node setup.
 OPENSTACK_ADMIN_TOKEN = "999888777666"
 OPENSTACK_KEYSTONE_URL = "http://localhost:5000/v2.0/"
 OPENSTACK_KEYSTONE_DEFAULT_ROLE = "Member"
@@ -53,7 +55,7 @@ OPENSTACK_KEYSTONE_DEFAULT_ROLE = "Member"
 SWIFT_ENABLED = False
 
 # Configure quantum connection details for networking
-QUANTUM_ENABLED = True
+QUANTUM_ENABLED = False
 QUANTUM_URL = '127.0.0.1'
 QUANTUM_PORT = '9696'
 QUANTUM_TENANT = '1234'

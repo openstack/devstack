@@ -140,7 +140,7 @@ git_clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
 git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
 # django powered web control panel for openstack
 git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
-# add nixon, the iframing dashboard extension 
+# add nixon, will use this to show munin graphs in dashboard 
 git clone https://github.com/jakedahn/nixon.git $NIXON_DIR
 # python client library to nova that dashboard (and others) use
 git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
@@ -198,6 +198,8 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo touch $DASH_DIR/openstack-dashboard/quantum/client.py
 
     cd $DASH_DIR/openstack-dashboard
+    
+    # Includes settings for Nixon, to expose munin charts.
     sudo cp $DIR/files/dash_settings.py local/local_settings.py
 
     dashboard/manage.py syncdb
