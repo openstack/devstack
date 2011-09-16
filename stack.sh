@@ -2,7 +2,7 @@
 
 # **stack.sh** is rackspace cloudbuilder's opinionated openstack dev installation.
 
-# To keep this script simple we assume you are running on an **Ubuntu 11.04 i
+# To keep this script simple we assume you are running on an **Ubuntu 11.04
 # Natty** machine.  It should work in a VM or physical server.  Additionally we
 # put the list of *apt* and *pip* dependencies and other configuration files in
 # this repo.  So start by grabbing this script and the dependencies.
@@ -11,9 +11,8 @@
 # Sanity Check
 # ============
 
-# Warn users who aren't on natty, but allow they to override check and attempt
+# Warn users who aren't on natty, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
-#
 if ! grep -q natty /etc/lsb-release; then
     echo "WARNING: this script has only been tested on natty"
     if [[ "$FORCE" != "yes" ]]; then
@@ -25,7 +24,7 @@ fi
 # stack.sh keeps the list of **apt** and **pip** dependencies in files.  
 # Additionally we have a few config templates and other useful files useful 
 # installation.  They are needed to be located at ``apts``, ``files`` and 
-# ``pips`` in the same directory as this script.
+# ``pips`` in the ``DEVSTACK`` directory (next to this script).
 DEVSTACK=`pwd`
 if [ ! -d $DEVSTACK/apts ] || [ ! -d $DEVSTACK/files ] || [ ! -d $DEVSTACK/pips ]; then
     echo "ERROR: missing devstack files - did you grab more than just stack.sh?"
