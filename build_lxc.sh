@@ -134,7 +134,7 @@ killall screen
 sudo apt-get update
 sudo apt-get -y --force-yes install git-core vim-nox sudo
 if [ ! -d "/opt/devstack" ]; then
-    git clone git://github.com/cloudbuilders/devstack.git ~/devstack
+    git clone git://github.com/cloudbuilders/devstack.git /opt/devstack
 fi
 cd /opt/devstack && $STACKSH_PARAMS ./stack.sh > /opt/run.sh.log
 EOF
