@@ -29,6 +29,8 @@ set -o xtrace
 
 # Warn users who aren't on natty
 ## TODO: alter flow to exit unless the user sets environment FORCE=true
+## TODO: warn user if apts, pips and other files don't exist that they
+## need more than just this script
 if ! grep -q natty /etc/lsb-release; then
     echo "WARNING: this script has only been tested on natty"
 fi
