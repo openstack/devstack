@@ -208,7 +208,7 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     cd $DASH_DIR/openstack-dashboard
     
     # Includes settings for Nixon, to expose munin charts.
-    sudo cp $DIR/files/dash_settings.py local/local_settings.py
+    sudo cp $DEVSTACK/files/dash_settings.py local/local_settings.py
 
     dashboard/manage.py syncdb
 
