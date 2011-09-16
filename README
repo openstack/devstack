@@ -9,7 +9,6 @@ Tool to build (nfs export) openstack dev environments
 * check openstack-puppet recipes to see if anything else is missing
 * allow rabbit connection to be specified via environment variables with sensible defaults
 * Add volume support
-* extract image upload to a seperate script that supports generating images via debootstrap (ubuntu-vm-builder?)
 * allow changing of git locations (specify different tag/branch or repos)
 * change method of invoking stack.sh to ./stack.sh all _or_ ./stack.sh nova-compute,nova-network,nova-api,nova-volume
 * Add quantum support
@@ -19,6 +18,7 @@ Tool to build (nfs export) openstack dev environments
 * sqlconn can be set via env
 * move back to using sudo
 * move nova to mysql
+* create images via vmbuilder and upload images via glance
 
 # Future
 

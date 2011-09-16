@@ -19,14 +19,14 @@ usage() {
 
 while getopts hm:r:s: c; do
     case $c in
-        h)	usage
-		;;
-	m)	MIRROR=$OPTARG
-		;;
-	r)	ROOTSIZE=$OPTARG
-		;;
-	s)	SWAPSIZE=$OPTARG
-		;;
+        h)  usage
+            ;;
+        m)  MIRROR=$OPTARG
+            ;;
+        r)  ROOTSIZE=$OPTARG
+            ;;
+        s)  SWAPSIZE=$OPTARG
+            ;;
     esac
 done
 shift `expr $OPTIND - 1`
@@ -34,38 +34,43 @@ shift `expr $OPTIND - 1`
 RELEASE=$1
 FORMAT=$2
 
-case $RELEASE in
-    natty)	;;
-    maverick)	;;
-    lucid)	;;
-    karmic)	;;
-    jaunty)	;;
-    *)		echo "Unknown release: $RELEASE"
-		usage
+case $FORMAT in
+    kvm|qcow2)  FORMAT=qcow2
+                TARGET=kvm
+                ;;
+    vmserver|vmdk)
+                FORMAT=vmdk
+                TARGET=vmserver
+                ;;
+    vbox|vdi)   FORMAT=qcow2
+                TARGET=kvm
+                FINAL_FORMAT=vdi
+                ;;
+    vhd|vpc)    FORMAT=qcow2
+                TARGET=kvm
+                FINAL_FORMAT=vhd
+                ;;
+    xen)        FORMAT=raw
+                TARGET=xen
+                ;;
+    *)          echo "Unknown format: $FORMAT"
+                usage
 esac
 
-case $FORMAT in
-    kvm|qcow2)	FORMAT=qcow2
-		TARGET=kvm
-		;;
-    vmserver|vmdk)	FORMAT=vmdk
-		TARGET=vmserver
-		;;
-    vbox|vdi)	FORMAT=qcow2
-		TARGET=kvm
-		FINAL_FORMAT=vdi
-		;;
-    vhd|vpc)	FORMAT=qcow2
-		TARGET=kvm
-		FINAL_FORMAT=vpc
-		;;
-    *)		echo "Unknown format: $FORMAT"
-		usage
+case $RELEASE in
+    natty)      ;;
+    maverick)   ;;
+    lucid)      ;;
+    karmic)     ;;
+    jaunty)     ;;
+    *)          echo "Unknown release: $RELEASE"
+                usage
+                ;;
 esac
 
 # Install stuff if necessary
 if [ -z `which vmbuilder` ]; then
-	sudo apt-get install ubuntu-vm-builder
+    sudo apt-get install ubuntu-vm-builder
 fi
 
 # Build the image
@@ -83,6 +88,10 @@ if [ -z "$FINAL_FORMAT" ]; then
     mv ubuntu-$TARGET/tmp*.$FORMAT $RELEASE.$FORMAT
 else
     # Convert image
-    qemu-img convert -O $FINAL_FORMAT ubuntu-$TARGET/tmp*.$FORMAT $RELEASE.$FINAL_FORMAT
+    tgt=$FINAL_FORMAT
+    if [ "$tgt" = "vhd" ]; then
+        tgt=vpc
+    fi
+    qemu-img convert -O $tgt ubuntu-$TARGET/tmp*.$FORMAT $RELEASE.$FINAL_FORMAT
 fi
 rm -rf ubuntu-$TARGET
