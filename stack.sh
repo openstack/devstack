@@ -22,6 +22,11 @@ set -o errexit
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
+# Warn users who aren't on natty
+if ! grep -q natty /etc/lsb-release; then
+    echo "WARNING: this script has only been tested on natty"
+fi
+
 # Important paths: ``DIR`` is where we are executing from and ``DEST`` is 
 # where we are installing openstack.
 DIR=`pwd`
