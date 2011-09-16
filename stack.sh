@@ -24,10 +24,10 @@ fi
 # stack.sh keeps the list of **apt** and **pip** dependencies in external 
 # files, along with config templates and other useful files.  You can find these
 # in the ``files`` directory (next to this script).  We will reference this 
-# directory using the ``DEVSTACK`` variable in this script.
-DEVSTACK=`pwd`/files
-if [ ! -d $DEVSTACK ]; then
-    echo "ERROR: missing devstack files - did you grab more than just stack.sh?"
+# directory using the ``FILES`` variable in this script.
+FILES=`pwd`/files
+if [ ! -d $FILES ]; then
+    echo "ERROR: missing devstack/files - did you grab more than just stack.sh?"
     exit 1
 fi
 
@@ -117,10 +117,10 @@ mysql-server-5.1 mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
 
 # install apt requirements
-sudo apt-get install -y -q `cat $DEVSTACK/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
+sudo apt-get install -y -q `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
 
 # install python requirements
-sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $DEVSTACK/pips/*`
+sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 
 # git clone only if directory doesn't exist already
 function git_clone {
@@ -164,7 +164,7 @@ cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
 
 # Add a useful screenrc.  This isn't required to run openstack but is we do
 # it since we are going to run the services in screen for simple 
-cp $DEVSTACK/screenrc ~/.screenrc
+cp $FILES/screenrc ~/.screenrc
 
 ## TODO: update current user to allow sudo for all commands in files/sudo/*
 
@@ -208,7 +208,7 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     cd $DASH_DIR/openstack-dashboard
     
     # Includes settings for Nixon, to expose munin charts.
-    sudo cp $DEVSTACK/dash_settings.py local/local_settings.py
+    sudo cp $FILES/dash_settings.py local/local_settings.py
 
     dashboard/manage.py syncdb
 
@@ -216,7 +216,7 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo mkdir -p $DASH_DIR/.blackhole
 
     ## Configure apache's 000-default to run dashboard
-    sudo cp $DEVSTACK/000-default.template /etc/apache2/sites-enabled/000-default
+    sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 
     # ``python setup.py develop`` left some files owned by root in ``DASH_DIR`` 
@@ -271,7 +271,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
     # Copy over our glance-registry.conf
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
-    cp $DEVSTACK/glance-registry.conf $GLANCE_CONF
+    cp $FILES/glance-registry.conf $GLANCE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
 fi
 
@@ -367,11 +367,11 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
 
     # FIXME (anthony) keystone should use keystone.conf.example
     KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
-    cp $DEVSTACK/keystone.conf $KEYSTONE_CONF
+    cp $FILES/keystone.conf $KEYSTONE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
 
     # initialize keystone with default users/endpoints
-    BIN_DIR=$KEYSTONE_DIR/bin bash $DEVSTACK/keystone_data.sh
+    BIN_DIR=$KEYSTONE_DIR/bin bash $FILES/keystone_data.sh
 fi
 
 
