@@ -26,7 +26,7 @@ while ! wget -q -O- http://$HEAD_HOST | grep -q username; do
     sleep 5
 done
 
+# Launch the compute hosts
 for compute_host in ${COMPUTE_HOSTS//,/ }; do
-    # Launch the compute hosts
     run_lxc $compute_host $compute_host "ENABLED_SERVICES=n-cpu,n-net,n-api"
 done
