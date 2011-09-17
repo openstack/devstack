@@ -321,19 +321,6 @@ if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
     mkdir -p $NOVA_DIR/networks
 fi
 
-if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
-    # (re)create nova database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
-    $NOVA_DIR/bin/nova-manage db sync
-
-    # create a small network
-    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
-
-    # create some floating ips
-    $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
-fi
-
 function add_nova_flag {
     echo "$1" >> $NOVA_DIR/bin/nova.conf
 }
@@ -363,6 +350,20 @@ fi
 if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
 fi
+
+if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+    # (re)create nova database
+    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
+    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+    $NOVA_DIR/bin/nova-manage db sync
+
+    # create a small network
+    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
+
+    # create some floating ips
+    $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+fi
+
 
 # Keystone
 # --------
