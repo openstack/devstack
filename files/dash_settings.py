@@ -61,14 +61,8 @@ QUANTUM_PORT = '9696'
 QUANTUM_TENANT = '1234'
 QUANTUM_CLIENT_VERSION='0.1'
 
-# If you have external monitoring links
-EXTERNAL_MONITORING = [
-    ['Nagios','http://foo.com'],
-    ['Ganglia','http://bar.com'],
-]
-
-# If you do not have external monitoring links
-# EXTERNAL_MONITORING = []
+# We use nixon to embed instead of external monitoring links
+EXTERNAL_MONITORING = []
 
 # Uncomment the following segment to silence most logging
 # django.db and boto DEBUG logging is extremely verbose.
