@@ -291,7 +291,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # qcow images) and kvm (hardware based virtualization).  If unable to 
     # load kvm, set the libvirt type to qemu.
     sudo modprobe nbd || true
-    if ! sudo modprobe kvm; then
+    if ! -e /dev/kvm; then
         LIBVIRT_TYPE=qemu
     fi
     # User needs to be member of libvirtd group for nova-compute to use libvirt.
