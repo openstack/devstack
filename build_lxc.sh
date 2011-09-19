@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # Configurable params
 BRIDGE=${BRIDGE:-br0}
 CONTAINER=${CONTAINER:-STACK}
@@ -49,9 +50,13 @@ if [ -d /cgroup/$CONTAINER ]; then
     cgdelete -r cpu,net_cls:$CONTAINER
 fi
 
+
 # Warm the base image on first install
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
 if [ ! -d $CACHEDIR ]; then
+    # by deleting the container, we force lxc-create to re-bootstrap (lxc is
+    # lazy and doesn't do anything if a container already exists)
+    lxc-destroy -n $CONTAINER
     # trigger the initial debootstrap
     lxc-create -n $CONTAINER -t natty -f $LXC_CONF
     chroot $CACHEDIR apt-get update
