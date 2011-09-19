@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-# **stack.sh** is rackspace cloudbuilder's opinionated openstack dev installation.
+# **stack.sh** is an opinionated openstack dev installation.
 
 # To keep this script simple we assume you are running on an **Ubuntu 11.04
 # Natty** machine.  It should work in a VM or physical server.  Additionally we
 # put the list of *apt* and *pip* dependencies and other configuration files in
 # this repo.  So start by grabbing this script and the dependencies.
 
+# You can grab the most recent version of this script and files from Rackspace 
+# Cloud Builders at https://github.com/cloudbuilders/devstack
 
 # Sanity Check
 # ============
@@ -87,8 +89,9 @@ EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 # ip or you risk breaking things.
 # FLAT_INTERFACE=eth0
 
-# Nova hypervisor configuration
-LIBVIRT_TYPE=${LIBVIRT_TYPE:-qemu}
+# Nova hypervisor configuration.  We default to **kvm** but will drop back to 
+# **qemu** if we are unable to load the kvm module.
+LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 
 # Mysql connection info
 MYSQL_USER=${MYSQL_USER:-root}
@@ -155,6 +158,7 @@ git_clone https://github.com/cloudbuilders/openstack-munin.git $MUNIN_DIR
 
 # Initialization
 # ==============
+
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
@@ -237,7 +241,7 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "munin" ]]; then
     # allow connections from other hosts
-    sudo sed -i -e '/Allow from localhost/s/localhost.*$/all/' /etc/munin/apache.conf
+    sudo sed -i -e 's/Allow from localhost/Allow from all/g' /etc/munin/apache.conf
 
     cat >/tmp/nova <<EOF
 [keystone_*]
@@ -282,6 +286,43 @@ fi
 # Nova
 # ----
 
+
+if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
+
+    # attempt to load modules: nbd (network block device - used to manage 
+    # qcow images) and kvm (hardware based virtualization).  If unable to 
+    # load kvm, set the libvirt type to qemu.
+    sudo modprobe nbd || true
+    if ! sudo modprobe kvm; then
+        LIBVIRT_TYPE=qemu
+    fi
+    # User needs to be member of libvirtd group for nova-compute to use libvirt.
+    sudo usermod -a -G libvirtd `whoami`
+    # if kvm wasn't running before we need to restart libvirt to enable it
+    sudo /etc/init.d/libvirt-bin restart
+
+    # setup nova instance directory
+    mkdir -p $NOVA_DIR/instances
+
+    # if there is a partition labeled nova-instances use it (ext filesystems
+    # can be labeled via e2label)
+    ## FIXME: if already mounted this blows up...
+    if [ -L /dev/disk/by-label/nova-instances ]; then
+        sudo mount -L nova-instances $NOVA_DIR/instances
+        sudo chown -R `whoami` $NOVA_DIR/instances
+    fi
+
+    # Clean out the instances directory
+    rm -rf $NOVA_DIR/instances/*
+fi
+
+if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
+    # delete traces of nova networks from prior runs
+    killall dnsmasq || true
+    rm -rf $NOVA_DIR/networks
+    mkdir -p $NOVA_DIR/networks
+fi
+
 function add_nova_flag {
     echo "$1" >> $NOVA_DIR/bin/nova.conf
 }
@@ -312,45 +353,6 @@ if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
 fi
 
-# create a new named screen to store things in
-screen -d -m -S nova -t nova
-sleep 1
-
-if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
-
-    # attempt to load modules: kvm (hardware virt) and nbd (network block 
-    # device - used to manage qcow images)
-    sudo modprobe nbd || true
-    sudo modprobe kvm || true
-    # User needs to be member of libvirtd group for nova-compute to use libvirt.
-    sudo usermod -a -G libvirtd `whoami`
-    # if kvm wasn't running before we need to restart libvirt to enable it
-    sudo /etc/init.d/libvirt-bin restart
-
-    ## FIXME(ja): should LIBVIRT_TYPE be kvm if kvm module is loaded?
-
-    # setup nova instance directory
-    mkdir -p $NOVA_DIR/instances
-
-    # if there is a partition labeled nova-instances use it (ext filesystems
-    # can be labeled via e2label)
-    ## FIXME: if already mounted this blows up...
-    if [ -L /dev/disk/by-label/nova-instances ]; then
-        sudo mount -L nova-instances $NOVA_DIR/instances
-        sudo chown -R `whoami` $NOVA_DIR/instances
-    fi
-
-    # Clean out the instances directory
-    rm -rf $NOVA_DIR/instances/*
-fi
-
-if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
-    # delete traces of nova networks from prior runs
-    killall dnsmasq || true
-    rm -rf $NOVA_DIR/networks
-    mkdir -p $NOVA_DIR/networks
-fi
-
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # (re)create nova database
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
@@ -363,6 +365,7 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # create some floating ips
     $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 fi
+
 
 # Keystone
 # --------
@@ -377,8 +380,11 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     cp $FILES/keystone.conf $KEYSTONE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
 
+    KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
+    cp $FILES/keystone_data.sh $KEYSTONE_DATA
+    sudo sed -e "s,%HOST_IP%,$HOST_IP,g" -i $KEYSTONE_DATA
     # initialize keystone with default users/endpoints
-    BIN_DIR=$KEYSTONE_DIR/bin bash $FILES/keystone_data.sh
+    BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
 fi
 
 
@@ -397,6 +403,10 @@ function screen_it {
         screen -S nova -p $1 -X stuff "$2$NL"
     fi
 }
+
+# create a new named screen to run processes in
+screen -d -m -S nova -t nova
+sleep 1
 
 screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
 screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
