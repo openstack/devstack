@@ -467,9 +467,9 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
 
     # add images to glance 
     # FIXME: kernel/ramdisk is hardcoded - use return result from add
-    glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image 
-    glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image 
-    glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
+    glance add -A 999888777666 name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image 
+    glance add -A 999888777666 name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image 
+    glance add -A 999888777666 name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
 fi
 
 # Using the cloud
