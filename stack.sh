@@ -7,7 +7,7 @@
 # put the list of *apt* and *pip* dependencies and other configuration files in
 # this repo.  So start by grabbing this script and the dependencies.
 
-# You can grab the most recent version of this script and files from Rackspace 
+# You can grab the most recent version of this script and files from Rackspace
 # Cloud Builders at https://github.com/cloudbuilders/devstack
 
 # Sanity Check
@@ -23,9 +23,13 @@ if ! grep -q natty /etc/lsb-release; then
     fi
 fi
 
-# stack.sh keeps the list of **apt** and **pip** dependencies in external 
+#The following makes fresh mininmal installs (i.e. LXCs) happy
+apt-get update
+apt-get install -y sudo
+
+# stack.sh keeps the list of **apt** and **pip** dependencies in external
 # files, along with config templates and other useful files.  You can find these
-# in the ``files`` directory (next to this script).  We will reference this 
+# in the ``files`` directory (next to this script).  We will reference this
 # directory using the ``FILES`` variable in this script.
 FILES=`pwd`/files
 if [ ! -d $FILES ]; then
@@ -51,7 +55,7 @@ fi
 # first error that occured.
 set -o errexit
 
-# Print the commands being run so that we can see the command that triggers 
+# Print the commands being run so that we can see the command that triggers
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
@@ -91,7 +95,7 @@ FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
 # ip or you risk breaking things.
 # FLAT_INTERFACE=eth0
 
-# Nova hypervisor configuration.  We default to **kvm** but will drop back to 
+# Nova hypervisor configuration.  We default to **kvm** but will drop back to
 # **qemu** if we are unable to load the kvm module.
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 
@@ -113,7 +117,7 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 #
 # Openstack uses a fair number of other projects.
 
-# Seed configuration with mysql password so that apt-get install doesn't 
+# Seed configuration with mysql password so that apt-get install doesn't
 # prompt us for a password upon install.
 cat <<MYSQL_PRESEED | sudo debconf-set-selections
 mysql-server-5.1 mysql-server/root_password password $MYSQL_PASS
@@ -148,11 +152,11 @@ git_clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
 git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
 # django powered web control panel for openstack
 git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
-# add nixon, will use this to show munin graphs in dashboard 
+# add nixon, will use this to show munin graphs in dashboard
 git_clone https://github.com/cloudbuilders/nixon.git $NIXON_DIR
 # python client library to nova that dashboard (and others) use
 git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
-# openstackx is a collection of extensions to openstack.compute & nova 
+# openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 git_clone https://github.com/cloudbuilders/openstackx.git $API_DIR
 # openstack-munin is a collection of munin plugins for monitoring the stack
@@ -173,7 +177,7 @@ cd $DASH_DIR/django-openstack; sudo python setup.py develop
 cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
 
 # Add a useful screenrc.  This isn't required to run openstack but is we do
-# it since we are going to run the services in screen for simple 
+# it since we are going to run the services in screen for simple
 cp $FILES/screenrc ~/.screenrc
 
 ## TODO: update current user to allow sudo for all commands in files/sudo/*
@@ -208,15 +212,15 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
 
-    # Dash currently imports quantum even if you aren't using it.  Instead 
-    # of installing quantum we can create a simple module that will pass the 
+    # Dash currently imports quantum even if you aren't using it.  Instead
+    # of installing quantum we can create a simple module that will pass the
     # initial imports
     sudo mkdir -p  $DASH_DIR/openstack-dashboard/quantum || true
     sudo touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
     sudo touch $DASH_DIR/openstack-dashboard/quantum/client.py
 
     cd $DASH_DIR/openstack-dashboard
-    
+
     # Includes settings for Nixon, to expose munin charts.
     sudo cp $FILES/dash_settings.py local/local_settings.py
 
@@ -229,8 +233,8 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 
-    # ``python setup.py develop`` left some files owned by root in ``DASH_DIR`` 
-    # and others are owned by the user you are using to run this script.  
+    # ``python setup.py develop`` left some files owned by root in ``DASH_DIR``
+    # and others are owned by the user you are using to run this script.
     # We need to change the owner to apache for dashboard to run.
     sudo chown -R www-data:www-data $DASH_DIR
 fi
@@ -275,7 +279,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     mkdir -p $GLANCE_IMAGE_DIR
 
     # (re)create glance database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE glance;' || true
+    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS glance;'
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
     # Copy over our glance-registry.conf
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
@@ -294,8 +298,8 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
-    # attempt to load modules: nbd (network block device - used to manage 
-    # qcow images) and kvm (hardware based virtualization).  If unable to 
+    # attempt to load modules: nbd (network block device - used to manage
+    # qcow images) and kvm (hardware based virtualization).  If unable to
     # load kvm, set the libvirt type to qemu.
     sudo modprobe nbd || true
     if ! -e /dev/kvm; then
@@ -361,7 +365,7 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # (re)create nova database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE nova;' || true
+    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS nova;'
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
     $NOVA_DIR/bin/nova-manage db sync
 
@@ -378,7 +382,7 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     # (re)create keystone database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE keystone;' || true
+    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS keystone;'
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
 
     # FIXME (anthony) keystone should use keystone.conf.example
@@ -441,10 +445,10 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
         sleep 1
     done
 fi
-# Launching nova-compute should be as simple as running ``nova-compute`` but 
-# have to do a little more than that in our script.  Since we add the group 
+# Launching nova-compute should be as simple as running ``nova-compute`` but
+# have to do a little more than that in our script.  Since we add the group
 # ``libvirtd`` to our user in this script, when nova-compute is run it is
-# within the context of our original shell (so our groups won't be updated). 
+# within the context of our original shell (so our groups won't be updated).
 # We can send the command nova-compute to the ``newgrp`` command to execute
 # in a specific context.
 screen_it n-cpu "cd $NOVA_DIR && echo $NOVA_DIR/bin/nova-compute | newgrp libvirtd"
@@ -458,7 +462,7 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 # ==============
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
-    # Downloads a tty image (ami/aki/ari style), then extracts it.  Upon extraction 
+    # Downloads a tty image (ami/aki/ari style), then extracts it.  Upon extraction
     # we upload to glance with the glance cli tool.
     if [ ! -f $FILES/tty.tgz ]; then
         wget -c http://images.ansolabs.com/tty.tgz -O $FILES/tty.tgz
@@ -468,10 +472,10 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     mkdir -p $FILES/images
     tar -zxf $FILES/tty.tgz -C $FILES/images
 
-    # add images to glance 
+    # add images to glance
     # FIXME: kernel/ramdisk is hardcoded - use return result from add
-    glance add -A 999888777666 name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image 
-    glance add -A 999888777666 name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image 
+    glance add -A 999888777666 name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image
+    glance add -A 999888777666 name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image
     glance add -A 999888777666 name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
 fi
 
@@ -479,7 +483,7 @@ fi
 # ===============
 
 # If you installed the dashboard on this server, then you should be able
-# to access the site using your browser.  
+# to access the site using your browser.
 if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     echo "dashboard is now available at http://$HOST_IP/"
 fi
