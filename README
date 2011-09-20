@@ -18,7 +18,7 @@ Tool to quickly deploy openstack dev environments
 * move back to using sudo
 * move nova to mysql
 * munin
-* extract image upload to a seperate script that supports generating images via debootstrap (ubuntu-vm-builder?)
+* image upload with a script that supports generating images via debootstrap (ubuntu-vm-builder)
 
 # Future
 

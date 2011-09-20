@@ -3,7 +3,7 @@
 #
 # make_image.sh release format
 #
-# Supported formats: qcow (kvm), vmdk (vmserver), vdi (vbox), vhd (vpc)
+# Supported formats: qcow (kvm), vmdk (vmserver), vdi (vbox), vhd (vpc), raw
 #
 # Requires sudo to root
 
@@ -19,14 +19,14 @@ usage() {
 
 while getopts hm:r:s: c; do
     case $c in
-        h)	usage
-		;;
-	m)	MIRROR=$OPTARG
-		;;
-	r)	ROOTSIZE=$OPTARG
-		;;
-	s)	SWAPSIZE=$OPTARG
-		;;
+        h)  usage
+            ;;
+        m)  MIRROR=$OPTARG
+            ;;
+        r)  ROOTSIZE=$OPTARG
+            ;;
+        s)  SWAPSIZE=$OPTARG
+            ;;
     esac
 done
 shift `expr $OPTIND - 1`
@@ -34,55 +34,70 @@ shift `expr $OPTIND - 1`
 RELEASE=$1
 FORMAT=$2
 
-case $RELEASE in
-    natty)	;;
-    maverick)	;;
-    lucid)	;;
-    karmic)	;;
-    jaunty)	;;
-    *)		echo "Unknown release: $RELEASE"
-		usage
+case $FORMAT in
+    kvm|qcow2)  FORMAT=qcow2
+                QFORMAT=qcow2
+                HYPER=kvm
+                ;;
+    vmserver|vmdk)
+                FORMAT=vmdk
+                QFORMAT=vmdk
+                HYPER=vmserver
+                ;;
+    vbox|vdi)   FORMAT=vdi
+                QFORMAT=vdi
+                HYPER=kvm
+                ;;
+    vhd|vpc)    FORMAT=vhd
+                QFORMAT=vpc
+                HYPER=kvm
+                ;;
+    xen)        FORMAT=raw
+                QFORMAT=raw
+                HYPER=xen
+                ;;
+    raw)        FORMAT=raw
+                QFORMAT=raw
+                HYPER=kvm
+                ;;
+    *)          echo "Unknown format: $FORMAT"
+                usage
 esac
 
-case $FORMAT in
-    kvm|qcow2)	FORMAT=qcow2
-		TARGET=kvm
-		;;
-    vmserver|vmdk)	FORMAT=vmdk
-		TARGET=vmserver
-		;;
-    vbox|vdi)	FORMAT=qcow2
-		TARGET=kvm
-		FINAL_FORMAT=vdi
-		;;
-    vhd|vpc)	FORMAT=qcow2
-		TARGET=kvm
-		FINAL_FORMAT=vpc
-		;;
-    *)		echo "Unknown format: $FORMAT"
-		usage
+case $RELEASE in
+    natty)      ;;
+    maverick)   ;;
+    lucid)      ;;
+    karmic)     ;;
+    jaunty)     ;;
+    *)          echo "Unknown release: $RELEASE"
+                usage
+                ;;
 esac
 
 # Install stuff if necessary
 if [ -z `which vmbuilder` ]; then
-	sudo apt-get install ubuntu-vm-builder
+    sudo apt-get install ubuntu-vm-builder
 fi
 
 # Build the image
-sudo vmbuilder $TARGET ubuntu --suite $RELEASE \
+TMPDISK=`mktemp imgXXXXXXXX`
+SIZE=$[$ROOTSIZE+$SWAPSIZE+1]
+dd if=/dev/null of=$TMPDISK bs=1M seek=$SIZE
+sudo vmbuilder $HYPER ubuntu --suite $RELEASE \
   -o \
   --rootsize=$ROOTSIZE \
   --swapsize=$SWAPSIZE \
   --tmpfs - \
   --addpkg=openssh-server \
+  --raw=$TMPDISK \
 
-#  --mirror=$MIRROR \
-
-if [ -z "$FINAL_FORMAT" ]; then
+if [ "$FORMAT" = "raw" ]; then
     # Get image
-    mv ubuntu-$TARGET/tmp*.$FORMAT $RELEASE.$FORMAT
+    mv $TMPDISK $RELEASE.$FORMAT
 else
     # Convert image
-    qemu-img convert -O $FINAL_FORMAT ubuntu-$TARGET/tmp*.$FORMAT $RELEASE.$FINAL_FORMAT
+    qemu-img convert -O $QFORMAT $TMPDISK $RELEASE.$FORMAT
+    rm $TMPDISK
 fi
-rm -rf ubuntu-$TARGET
+rm -rf ubuntu-$HYPER
