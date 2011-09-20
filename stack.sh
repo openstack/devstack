@@ -267,7 +267,7 @@ fi
 # ------
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
-    GLANCE_IMAGE_DIR= $DEST/glance/images
+    GLANCE_IMAGE_DIR=$DEST/glance/images
     # Delete existing images
     rm -rf $GLANCE_IMAGE_DIR
 
