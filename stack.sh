@@ -321,7 +321,7 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
     # delete traces of nova networks from prior runs
-    killall dnsmasq || true
+    sudo killall dnsmasq || true
     rm -rf $NOVA_DIR/networks
     mkdir -p $NOVA_DIR/networks
 fi
