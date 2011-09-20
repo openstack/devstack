@@ -19,11 +19,11 @@ if ! grep -q natty /etc/lsb-release; then
 fi
 
 # Install deps
-apt-get install lxc debootstrap
+apt-get install -y lxc debootstrap
 
 # Install cgroup-bin from source, since the packaging is buggy and possibly incompatible with our setup
 if ! which cgdelete | grep -q cgdelete; then
-    apt-get install g++ bison flex libpam0g-dev
+    apt-get install -y g++ bison flex libpam0g-dev
     wget http://sourceforge.net/projects/libcg/files/libcgroup/v0.37.1/libcgroup-0.37.1.tar.bz2/download -O /tmp/libcgroup-0.37.1.tar.bz2 
     cd /tmp && bunzip2 libcgroup-0.37.1.tar.bz2  && tar xfv libcgroup-0.37.1.tar
     cd libcgroup-0.37.1
