@@ -62,7 +62,9 @@ if [ ! -d $CACHEDIR ]; then
     chroot $CACHEDIR apt-get update
     chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot $CACHEDIR pip install `cat files/pips/*`
-    git clone https://github.com/cloudbuilders/nova.git $CACHEDIR/opt/nova
+    # FIXME (anthony) - provide ability to vary source locations
+    #git clone https://github.com/cloudbuilders/nova.git $CACHEDIR/opt/nova
+    bzr clone lp:~hudson-openstack/nova/milestone-proposed/ $CACHEDIR/opt/nova
     git clone https://github.com/cloudbuilders/openstackx.git $CACHEDIR/opt/openstackx
     git clone https://github.com/cloudbuilders/noVNC.git $CACHEDIR/opt/noVNC
     git clone https://github.com/cloudbuilders/openstack-dashboard.git $CACHEDIR/opt/dash
