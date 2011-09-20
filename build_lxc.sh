@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # Configurable params
 BRIDGE=${BRIDGE:-br0}
 CONTAINER=${CONTAINER:-STACK}
@@ -18,11 +19,11 @@ if ! grep -q natty /etc/lsb-release; then
 fi
 
 # Install deps
-apt-get install lxc debootstrap
+apt-get install -y lxc debootstrap
 
 # Install cgroup-bin from source, since the packaging is buggy and possibly incompatible with our setup
 if ! which cgdelete | grep -q cgdelete; then
-    apt-get install g++ bison flex libpam0g-dev
+    apt-get install -y g++ bison flex libpam0g-dev
     wget http://sourceforge.net/projects/libcg/files/libcgroup/v0.37.1/libcgroup-0.37.1.tar.bz2/download -O /tmp/libcgroup-0.37.1.tar.bz2 
     cd /tmp && bunzip2 libcgroup-0.37.1.tar.bz2  && tar xfv libcgroup-0.37.1.tar
     cd libcgroup-0.37.1
@@ -49,15 +50,21 @@ if [ -d /cgroup/$CONTAINER ]; then
     cgdelete -r cpu,net_cls:$CONTAINER
 fi
 
+
 # Warm the base image on first install
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
 if [ ! -d $CACHEDIR ]; then
+    # by deleting the container, we force lxc-create to re-bootstrap (lxc is
+    # lazy and doesn't do anything if a container already exists)
+    lxc-destroy -n $CONTAINER
     # trigger the initial debootstrap
     lxc-create -n $CONTAINER -t natty -f $LXC_CONF
     chroot $CACHEDIR apt-get update
-    chroot $CACHEDIR apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot $CACHEDIR pip install `cat files/pips/*`
-    git clone https://github.com/cloudbuilders/nova.git $CACHEDIR/opt/nova
+    # FIXME (anthony) - provide ability to vary source locations
+    #git clone https://github.com/cloudbuilders/nova.git $CACHEDIR/opt/nova
+    bzr clone lp:~hudson-openstack/nova/milestone-proposed/ $CACHEDIR/opt/nova
     git clone https://github.com/cloudbuilders/openstackx.git $CACHEDIR/opt/openstackx
     git clone https://github.com/cloudbuilders/noVNC.git $CACHEDIR/opt/noVNC
     git clone https://github.com/cloudbuilders/openstack-dashboard.git $CACHEDIR/opt/dash

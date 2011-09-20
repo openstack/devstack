@@ -5,8 +5,8 @@ $BIN_DIR/keystone-manage $* tenant add admin
 $BIN_DIR/keystone-manage $* tenant add demo
 
 # Users
-$BIN_DIR/keystone-manage $* user add demo secrete demo
-$BIN_DIR/keystone-manage $* user add admin secrete admin
+$BIN_DIR/keystone-manage $* user add admin secrete 1
+$BIN_DIR/keystone-manage $* user add demo secrete 2
 
 # Roles
 $BIN_DIR/keystone-manage $* role add Admin
@@ -21,21 +21,21 @@ $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne glance http://%HOST_
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne identity http://%HOST_IP%:5000/v2.0 http://%HOST_IP%:5001/v2.0 http://%HOST_IP%:5000/v2.0 1 1
 
 # Tokens
-$BIN_DIR/keystone-manage $* token add 999888777666 admin admin 2015-02-05T00:00
+$BIN_DIR/keystone-manage $* token add 999888777666 1 1 2015-02-05T00:00
 
 #Tenant endpoints
-$BIN_DIR/keystone-manage $* endpoint add admin 1
-$BIN_DIR/keystone-manage $* endpoint add admin 2
-$BIN_DIR/keystone-manage $* endpoint add admin 3
-$BIN_DIR/keystone-manage $* endpoint add admin 4
-$BIN_DIR/keystone-manage $* endpoint add admin 5
-$BIN_DIR/keystone-manage $* endpoint add admin 6
+$BIN_DIR/keystone-manage $* endpoint add 1 1
+$BIN_DIR/keystone-manage $* endpoint add 1 2
+$BIN_DIR/keystone-manage $* endpoint add 1 3
+$BIN_DIR/keystone-manage $* endpoint add 1 4
+$BIN_DIR/keystone-manage $* endpoint add 1 5
+$BIN_DIR/keystone-manage $* endpoint add 1 6
 
-$BIN_DIR/keystone-manage $* endpoint add demo 1
-$BIN_DIR/keystone-manage $* endpoint add demo 2
-$BIN_DIR/keystone-manage $* endpoint add demo 3
-$BIN_DIR/keystone-manage $* endpoint add demo 4
-$BIN_DIR/keystone-manage $* endpoint add demo 5
-$BIN_DIR/keystone-manage $* endpoint add demo 6
+$BIN_DIR/keystone-manage $* endpoint add 2 1
+$BIN_DIR/keystone-manage $* endpoint add 2 2
+$BIN_DIR/keystone-manage $* endpoint add 2 3
+$BIN_DIR/keystone-manage $* endpoint add 2 4
+$BIN_DIR/keystone-manage $* endpoint add 2 5
+$BIN_DIR/keystone-manage $* endpoint add 2 6
 
 $BIN_DIR/keystone-manage $* credentials add admin EC2 'admin:admin' admin admin || echo "no support for adding credentials"

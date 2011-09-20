@@ -281,6 +281,9 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
     cp $FILES/glance-registry.conf $GLANCE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
+
+    GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
+    cp $FILES/glance-api.conf $GLANCE_API_CONF
 fi
 
 # Nova
@@ -293,7 +296,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # qcow images) and kvm (hardware based virtualization).  If unable to 
     # load kvm, set the libvirt type to qemu.
     sudo modprobe nbd || true
-    if ! sudo modprobe kvm; then
+    if ! -e /dev/kvm; then
         LIBVIRT_TYPE=qemu
     fi
     # User needs to be member of libvirtd group for nova-compute to use libvirt.
@@ -318,7 +321,7 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
     # delete traces of nova networks from prior runs
-    killall dnsmasq || true
+    sudo killall dnsmasq || true
     rm -rf $NOVA_DIR/networks
     mkdir -p $NOVA_DIR/networks
 fi
@@ -408,10 +411,33 @@ function screen_it {
 screen -d -m -S nova -t nova
 sleep 1
 
-screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
-screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
-screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
-screen_it n-api "$NOVA_DIR/bin/nova-api"
+if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
+    screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
+fi
+
+if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
+    screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
+    while ! wget -q -O- http://$GLANCE_HOSTPORT; do
+        echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
+        sleep 1
+    done
+fi
+
+if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+    screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
+    while ! wget -q -O- http://127.0.0.1:5000; do
+        echo "Waiting for keystone to start..."
+        sleep 1
+    done
+fi
+
+if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
+    screen_it n-api "$NOVA_DIR/bin/nova-api"
+    while ! wget -q -O- http://127.0.0.1:8774; do
+        echo "Waiting for nova-api to start..."
+        sleep 1
+    done
+fi
 # Launching nova-compute should be as simple as running ``nova-compute`` but 
 # have to do a little more than that in our script.  Since we add the group 
 # ``libvirtd`` to our user in this script, when nova-compute is run it is
@@ -441,9 +467,9 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
 
     # add images to glance 
     # FIXME: kernel/ramdisk is hardcoded - use return result from add
-    glance add name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image 
-    glance add name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image 
-    glance add name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
+    glance add -A 999888777666 name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image 
+    glance add -A 999888777666 name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image 
+    glance add -A 999888777666 name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
 fi
 
 # Using the cloud
