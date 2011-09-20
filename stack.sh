@@ -267,15 +267,13 @@ fi
 # ------
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
-    # Glance uses ``/var/lib/glance`` and ``/var/log/glance`` by default, so
-    # we need to insure that our user has permissions to use them.
-    sudo mkdir -p /var/log/glance
-    sudo chown -R `whoami` /var/log/glance 
-    sudo mkdir -p /var/lib/glance
-    sudo chown -R `whoami` /var/lib/glance
+    GLANCE_IMAGE_DIR= $DEST/glance/images
+    # Delete existing images
+    rm -rf $GLANCE_IMAGE_DIR
 
-    # Delete existing images/database as glance will recreate the db on startup
-    rm -rf /var/lib/glance/images/*
+    # Use local glance directories
+    mkdir -p $GLANCE_IMAGE_DIR
+
     # (re)create glance database
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE glance;' || true
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
@@ -283,9 +281,11 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
     cp $FILES/glance-registry.conf $GLANCE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
+    sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_CONF
 
     GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
     cp $FILES/glance-api.conf $GLANCE_API_CONF
+    sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_API_CONF
 fi
 
 # Nova
