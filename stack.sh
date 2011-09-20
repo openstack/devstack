@@ -78,11 +78,13 @@ if [ ! -n "$HOST_IP" ]; then
 fi
 
 # Nova network configuration
-INTERFACE=${INTERFACE:-eth0}
+PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
+VLAN_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE}
 FLOATING_RANGE=${FLOATING_RANGE:-10.6.0.0/27}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 NET_MAN=${NET_MAN:-VlanManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
+FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
@@ -104,7 +106,7 @@ BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}
 RABBIT_HOST=${RABBIT_HOST:-localhost}
 
 # Glance connection info.  Note the port must be specified.
-GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-0.0.0.0:9292}
+GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 
 # Install Packages
 # ================
@@ -337,8 +339,8 @@ add_nova_flag "--nodaemon"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
 add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
 add_nova_flag "--my_ip=$HOST_IP"
-add_nova_flag "--public_interface=$INTERFACE"
-add_nova_flag "--vlan_interface=$INTERFACE"
+add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
+add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
 add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--osapi_extensions_path=$API_DIR/extensions"
@@ -349,6 +351,7 @@ add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
 add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
+add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
 if [ -n "$FLAT_INTERFACE" ]; then
     add_nova_flag "--flat_interface=$FLAT_INTERFACE"
 fi
