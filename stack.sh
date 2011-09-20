@@ -281,6 +281,9 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
     cp $FILES/glance-registry.conf $GLANCE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
+
+    GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
+    cp $FILES/glance-api.conf $GLANCE_API_CONF
 fi
 
 # Nova
