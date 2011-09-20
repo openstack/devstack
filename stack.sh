@@ -427,7 +427,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    screen_it key "$KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
+    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
     while ! wget -q -O- http://127.0.0.1:5000; do
         echo "Waiting for keystone to start..."
         sleep 1
@@ -435,7 +435,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
-    screen_it n-api "$NOVA_DIR/bin/nova-api"
+    screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
     while ! wget -q -O- http://127.0.0.1:8774; do
         echo "Waiting for nova-api to start..."
         sleep 1
@@ -447,12 +447,12 @@ fi
 # within the context of our original shell (so our groups won't be updated). 
 # We can send the command nova-compute to the ``newgrp`` command to execute
 # in a specific context.
-screen_it n-cpu "echo $NOVA_DIR/bin/nova-compute | newgrp libvirtd"
-screen_it n-net "$NOVA_DIR/bin/nova-network"
-screen_it n-sch "$NOVA_DIR/bin/nova-scheduler"
+screen_it n-cpu "cd $NOVA_DIR && echo $NOVA_DIR/bin/nova-compute | newgrp libvirtd"
+screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
+screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 # nova-vncproxy binds a privileged port, and so needs sudo
-screen_it n-vnc "sudo $NOVA_DIR/bin/nova-vncproxy"
-screen_it dash "sudo /etc/init.d/apache2 restart; sudo tail -f /var/log/apache2/error.log"
+screen_it n-vnc "cd $NOVA_DIR && sudo $NOVA_DIR/bin/nova-vncproxy"
+screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
 # ==============
