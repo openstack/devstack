@@ -74,7 +74,7 @@ NOVNC_DIR=$DEST/noVNC
 MUNIN_DIR=$DEST/openstack-munin
 
 # Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit}
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit,munin}
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
@@ -302,7 +302,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # qcow images) and kvm (hardware based virtualization).  If unable to
     # load kvm, set the libvirt type to qemu.
     sudo modprobe nbd || true
-    if ! -e /dev/kvm; then
+    if [ ! -e /dev/kvm ]; then
         LIBVIRT_TYPE=qemu
     fi
     # User needs to be member of libvirtd group for nova-compute to use libvirt.
