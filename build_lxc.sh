@@ -29,6 +29,7 @@ if ! which cgdelete | grep -q cgdelete; then
     cd libcgroup-0.37.1
     ./configure
     make install
+    ldconfig
 fi
 
 # Create lxc configuration
@@ -98,6 +99,11 @@ echo stack:pass | chroot $ROOTFS chpasswd
 # and has sudo ability (in the future this should be limited to only what 
 # stack requires)
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
+
+# Copy kernel modules
+mkdir -p $ROOTFS/lib/modules/`uname -r`/kernel
+cp -p /lib/modules/`uname -r`/modules.dep $ROOTFS/lib/modules/`uname -r`/
+cp -pR /lib/modules/`uname -r`/kernel/net $ROOTFS/lib/modules/`uname -r`/kernel/
 
 # Gracefully cp only if source file/dir exists
 function cp_it {
