@@ -12,3 +12,4 @@ openssh-server
 vim-nox
 locate # useful when debugging
 munin
+python-virtualenv

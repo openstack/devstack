@@ -431,7 +431,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF"
+    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF -d"
     while ! wget -q -O- http://127.0.0.1:5000; do
         echo "Waiting for keystone to start..."
         sleep 1
