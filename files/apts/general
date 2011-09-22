@@ -13,3 +13,4 @@ vim-nox
 locate # useful when debugging
 munin
 python-virtualenv
+python-unittest2
