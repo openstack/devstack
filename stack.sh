@@ -157,7 +157,7 @@ git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
 # django powered web control panel for openstack
 git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
 # FIXME - need to factor out logic like this
-cd $DASH_DIR && sudo git pull && sudo git checkout keystone_diablo
+cd $DASH_DIR && sudo git fetch && sudo git checkout origin/keystone_diablo
 # add nixon, will use this to show munin graphs in dashboard
 git_clone https://github.com/cloudbuilders/nixon.git $NIXON_DIR
 # python client library to nova that dashboard (and others) use
