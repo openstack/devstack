@@ -143,7 +143,11 @@ function git_clone {
 }
 
 # compute service
-git_clone https://github.com/cloudbuilders/nova.git $NOVA_DIR
+# FIXME - need to factor out these repositories
+# git_clone https://github.com/cloudbuilders/nova.git $NOVA_DIR
+if [ ! -d $NOVA_DIR ]; then
+    bzr clone lp:~hudson-openstack/nova/milestone-proposed/ $NOVA_DIR
+fi
 # image catalog service
 git_clone https://github.com/cloudbuilders/glance.git $GLANCE_DIR
 # unified auth system (manages accounts/tokens)
@@ -152,6 +156,8 @@ git_clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
 git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
 # django powered web control panel for openstack
 git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
+# FIXME - need to factor out logic like this
+cd $DASH_DIR && sudo git pull && sudo git checkout keystone_diablo
 # add nixon, will use this to show munin graphs in dashboard
 git_clone https://github.com/cloudbuilders/nixon.git $NIXON_DIR
 # python client library to nova that dashboard (and others) use
