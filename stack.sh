@@ -84,16 +84,16 @@ fi
 # Nova network configuration
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
 VLAN_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE}
-FLOATING_RANGE=${FLOATING_RANGE:-10.6.0.0/27}
-FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
-NET_MAN=${NET_MAN:-VlanManager}
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.1/28}
+FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/16}
+NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
 # ip or you risk breaking things.
-# FLAT_INTERFACE=eth0
+FLAT_INTERFACE=eth0
 
 # Nova hypervisor configuration.  We default to **kvm** but will drop back to
 # **qemu** if we are unable to load the kvm module.
