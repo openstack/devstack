@@ -83,17 +83,18 @@ fi
 
 # Nova network configuration
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
-VLAN_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE}
+VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.1/28}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/16}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
+SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
 # ip or you risk breaking things.
-FLAT_INTERFACE=eth0
+FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
 # Nova hypervisor configuration.  We default to **kvm** but will drop back to
 # **qemu** if we are unable to load the kvm module.
@@ -346,6 +347,7 @@ function add_nova_flag {
 rm -f $NOVA_DIR/bin/nova.conf
 add_nova_flag "--verbose"
 add_nova_flag "--nodaemon"
+add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
 add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
 add_nova_flag "--my_ip=$HOST_IP"
