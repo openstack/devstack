@@ -85,7 +85,8 @@ fi
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
 VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.1/28}
-FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/16}
+FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
+FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
@@ -378,7 +379,7 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     $NOVA_DIR/bin/nova-manage db sync
 
     # create a small network
-    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 32
+    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE 
 
     # create some floating ips
     $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
