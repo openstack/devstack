@@ -10,6 +10,9 @@ fi
 # Source params
 source ./stackrc
 
+# Store cwd
+CWD=`pwd`
+
 # Configurable params
 BRIDGE=${BRIDGE:-br0}
 CONTAINER=${CONTAINER:-STACK}
@@ -105,7 +108,7 @@ git_clone $MUNIN_REPO $CACHEDIR/opt/openstack-munin $MUNIN_BRANCH
 # Use this version of devstack?
 if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
     rm -rf $CACHEDIR/opt/devstack
-    cp -pr . $CACHEDIR/opt/devstack
+    cp -pr $CWD $CACHEDIR/opt/devstack
 fi
 
 # Destroy the old container
