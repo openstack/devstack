@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Source params
+source ./stackrc
+
 # TODO: make dest not hardcoded
 
 NAME=$1
@@ -15,13 +18,15 @@ if [ ! -d proto ]; then
     chroot proto apt-get update
     chroot proto apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot proto pip install `cat files/pips/*`
-    git clone https://github.com/cloudbuilders/nova.git proto/opt/nova
-    git clone https://github.com/cloudbuilders/openstackx.git proto/opt/openstackx
-    git clone https://github.com/cloudbuilders/noVNC.git proto/opt/noVNC
-    git clone https://github.com/cloudbuilders/openstack-dashboard.git proto/opt/dash
-    git clone https://github.com/cloudbuilders/python-novaclient.git proto/opt/python-novaclient
-    git clone https://github.com/cloudbuilders/keystone.git proto/opt/keystone
-    git clone https://github.com/cloudbuilders/glance.git proto/opt/glance
+    git_clone $NOVA_REPO proto/opt/nova $NOVA_BRANCH
+    git_clone $GLANCE_REPO proto/opt/glance $GLANCE_BRANCH
+    git_clone $KEYSTONE_REPO proto/opt/keystone $KEYSTONE_BRANCH
+    git_clone $NOVNC_REPO proto/opt/novnc $NOVNC_BRANCH
+    git_clone $DASH_REPO proto/opt/dash $DASH_BRANCH $DASH_TAG
+    git_clone $NIXON_REPO proto/opt/nixon $NIXON_BRANCH
+    git_clone $NOVACLIENT_REPO proto/opt/python-novaclient $NOVACLIENT_BRANCH
+    git_clone $OPENSTACKX_REPO proto/opt/openstackx $OPENSTACKX_BRANCH
+    git_clone $MUNIN_REPO proto/opt/openstack-munin $MUNIN_BRANCH
     chroot proto mkdir -p /opt/files
     wget -c http://images.ansolabs.com/tty.tgz -O proto/opt/files/tty.tgz
 fi

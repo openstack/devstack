@@ -59,6 +59,9 @@ set -o errexit
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
+# Import variables
+source ./stackrc
+
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt}
 
@@ -69,7 +72,7 @@ NIXON_DIR=$DEST/dash/openstack-dashboard/dashboard/nixon
 GLANCE_DIR=$DEST/glance
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
-API_DIR=$DEST/openstackx
+OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
 MUNIN_DIR=$DEST/openstack-munin
 
@@ -140,34 +143,30 @@ function git_clone {
         sudo mkdir $2
         sudo chown `whoami` $2
         git clone $1 $2
+        cd $2
+        git checkout $3
     fi
 }
 
 # compute service
-# FIXME - need to factor out these repositories
-# git_clone https://github.com/cloudbuilders/nova.git $NOVA_DIR
-if [ ! -d $NOVA_DIR ]; then
-    bzr clone lp:~hudson-openstack/nova/milestone-proposed/ $NOVA_DIR
-fi
+git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 # image catalog service
-git_clone https://github.com/cloudbuilders/glance.git $GLANCE_DIR
+git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
 # unified auth system (manages accounts/tokens)
-git_clone https://github.com/cloudbuilders/keystone.git $KEYSTONE_DIR
+git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
 # a websockets/html5 or flash powered VNC console for vm instances
-git_clone https://github.com/cloudbuilders/noVNC.git $NOVNC_DIR
+git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
 # django powered web control panel for openstack
-git_clone https://github.com/cloudbuilders/openstack-dashboard.git $DASH_DIR
-# FIXME - need to factor out logic like this
-cd $DASH_DIR && sudo git fetch && sudo git checkout origin/keystone_diablo
+git_clone $DASH_REPO $DASH_DIR $DASH_BRANCH $DASH_TAG
 # add nixon, will use this to show munin graphs in dashboard
-git_clone https://github.com/cloudbuilders/nixon.git $NIXON_DIR
+git_clone $NIXON_REPO $NIXON_DIR $NIXON_BRANCH
 # python client library to nova that dashboard (and others) use
-git_clone https://github.com/cloudbuilders/python-novaclient.git $NOVACLIENT_DIR
+git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
-git_clone https://github.com/cloudbuilders/openstackx.git $API_DIR
+git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
 # openstack-munin is a collection of munin plugins for monitoring the stack
-git_clone https://github.com/cloudbuilders/openstack-munin.git $MUNIN_DIR
+git_clone $MUNIN_REPO $MUNIN_DIR $MUNIN_BRANCH
 
 # Initialization
 # ==============
@@ -179,7 +178,7 @@ cd $NOVA_DIR; sudo python setup.py develop
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $KEYSTONE_DIR; sudo python setup.py develop
 cd $GLANCE_DIR; sudo python setup.py develop
-cd $API_DIR; sudo python setup.py develop
+cd $OPENSTACKX_DIR; sudo python setup.py develop
 cd $DASH_DIR/django-openstack; sudo python setup.py develop
 cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
 
@@ -355,7 +354,7 @@ add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
 add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
 add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
-add_nova_flag "--osapi_extensions_path=$API_DIR/extensions"
+add_nova_flag "--osapi_extensions_path=$OPENSTACKX_DIR/extensions"
 add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
 add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
 add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
