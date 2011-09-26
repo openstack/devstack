@@ -70,7 +70,7 @@ function git_clone {
 
 # Warm the base image on first install
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [ ! -d $CACHEDIR/ ]; then
+if [ ! -d $CACHEDIR ]; then
     # by deleting the container, we force lxc-create to re-bootstrap (lxc is
     # lazy and doesn't do anything if a container already exists)
     lxc-destroy -n $CONTAINER
