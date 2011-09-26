@@ -144,6 +144,7 @@ function git_clone {
         sudo chown `whoami` $2
         git clone $1 $2
         cd $2
+        # This checkout syntax works for both branches and tags
         git checkout $3
     fi
 }

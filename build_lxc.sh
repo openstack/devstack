@@ -70,7 +70,7 @@ function git_clone {
 
 # Warm the base image on first install
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [ ! -d $CACHEDIR/opt/nova ]; then
+if [ ! -d $CACHEDIR/ ]; then
     # by deleting the container, we force lxc-create to re-bootstrap (lxc is
     # lazy and doesn't do anything if a container already exists)
     lxc-destroy -n $CONTAINER
@@ -79,17 +79,18 @@ if [ ! -d $CACHEDIR/opt/nova ]; then
     chroot $CACHEDIR apt-get update
     chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot $CACHEDIR pip install `cat files/pips/*`
-
-    git_clone $NOVA_REPO $CACHEDIR/opt/nova $NOVA_BRANCH
-    git_clone $GLANCE_REPO $CACHEDIR/opt/glance $GLANCE_BRANCH
-    git_clone $KEYSTONE_REPO $CACHEDIR/opt/keystone $KEYSTONE_BRANCH
-    git_clone $NOVNC_REPO $CACHEDIR/opt/novnc $NOVNC_BRANCH
-    git_clone $DASH_REPO $CACHEDIR/opt/dash $DASH_BRANCH $DASH_TAG
-    git_clone $NIXON_REPO $CACHEDIR/opt/nixon $NIXON_BRANCH
-    git_clone $NOVACLIENT_REPO $CACHEDIR/opt/python-novaclient $NOVACLIENT_BRANCH
-    git_clone $OPENSTACKX_REPO $CACHEDIR/opt/openstackx $OPENSTACKX_BRANCH
-    git_clone $MUNIN_REPO $CACHEDIR/opt/openstack-munin $MUNIN_BRANCH
 fi
+
+# Cache openstack code
+git_clone $NOVA_REPO $CACHEDIR/opt/nova $NOVA_BRANCH
+git_clone $GLANCE_REPO $CACHEDIR/opt/glance $GLANCE_BRANCH
+git_clone $KEYSTONE_REPO $CACHEDIR/opt/keystone $KEYSTONE_BRANCH
+git_clone $NOVNC_REPO $CACHEDIR/opt/novnc $NOVNC_BRANCH
+git_clone $DASH_REPO $CACHEDIR/opt/dash $DASH_BRANCH $DASH_TAG
+git_clone $NIXON_REPO $CACHEDIR/opt/nixon $NIXON_BRANCH
+git_clone $NOVACLIENT_REPO $CACHEDIR/opt/python-novaclient $NOVACLIENT_BRANCH
+git_clone $OPENSTACKX_REPO $CACHEDIR/opt/openstackx $OPENSTACKX_BRANCH
+git_clone $MUNIN_REPO $CACHEDIR/opt/openstack-munin $MUNIN_BRANCH
 
 # Destroy the old container
 lxc-destroy -n $CONTAINER
