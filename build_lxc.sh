@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+# Use stackrc.example if stackrc is missing
+if [ ! -e ./stackrc ]; then
+    read -n1 -p "No stackrc present.  Copy stackrc.example to stackrc? (y/n) "
+    echo
+    [[ $REPLY = [yY] ]] && cp stackrc.example stackrc|| { echo "Aborting:  Missing stackrc"; exit 1; }
+fi
+
+# Source params
+source ./stackrc
+
 # Configurable params
 BRIDGE=${BRIDGE:-br0}
 CONTAINER=${CONTAINER:-STACK}
@@ -12,6 +22,9 @@ COPYENV=${COPYENV:-1}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 STACKSH_PARAMS=${STACKSH_PARAMS:-}
+
+# Option to use the version of devstack on which we are currently working
+USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
 
 # Warn users who aren't on natty
 if ! grep -q natty /etc/lsb-release; then
@@ -51,6 +64,19 @@ if [ -d /cgroup/$CONTAINER ]; then
     cgdelete -r cpu,net_cls:$CONTAINER
 fi
 
+# git clone only if directory doesn't exist already.  Since ``DEST`` might not
+# be owned by the installation user, we create the directory and change the
+# ownership to the proper user.
+function git_clone {
+    if [ ! -d $2 ]; then
+        sudo mkdir $2
+        sudo chown `whoami` $2
+        git clone $1 $2
+        cd $2
+        # This checkout syntax works for both branches and tags
+        git checkout $3
+    fi
+}
 
 # Warm the base image on first install
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
@@ -63,15 +89,23 @@ if [ ! -d $CACHEDIR ]; then
     chroot $CACHEDIR apt-get update
     chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot $CACHEDIR pip install `cat files/pips/*`
-    # FIXME (anthony) - provide ability to vary source locations
-    #git clone https://github.com/cloudbuilders/nova.git $CACHEDIR/opt/nova
-    bzr clone lp:~hudson-openstack/nova/milestone-proposed/ $CACHEDIR/opt/nova
-    git clone https://github.com/cloudbuilders/openstackx.git $CACHEDIR/opt/openstackx
-    git clone https://github.com/cloudbuilders/noVNC.git $CACHEDIR/opt/noVNC
-    git clone https://github.com/cloudbuilders/openstack-dashboard.git $CACHEDIR/opt/dash
-    git clone https://github.com/cloudbuilders/python-novaclient.git $CACHEDIR/opt/python-novaclient
-    git clone https://github.com/cloudbuilders/keystone.git $CACHEDIR/opt/keystone
-    git clone https://github.com/cloudbuilders/glance.git $CACHEDIR/opt/glance
+fi
+
+# Cache openstack code
+git_clone $NOVA_REPO $CACHEDIR/opt/nova $NOVA_BRANCH
+git_clone $GLANCE_REPO $CACHEDIR/opt/glance $GLANCE_BRANCH
+git_clone $KEYSTONE_REPO $CACHEDIR/opt/keystone $KEYSTONE_BRANCH
+git_clone $NOVNC_REPO $CACHEDIR/opt/novnc $NOVNC_BRANCH
+git_clone $DASH_REPO $CACHEDIR/opt/dash $DASH_BRANCH $DASH_TAG
+git_clone $NIXON_REPO $CACHEDIR/opt/nixon $NIXON_BRANCH
+git_clone $NOVACLIENT_REPO $CACHEDIR/opt/python-novaclient $NOVACLIENT_BRANCH
+git_clone $OPENSTACKX_REPO $CACHEDIR/opt/openstackx $OPENSTACKX_BRANCH
+git_clone $MUNIN_REPO $CACHEDIR/opt/openstack-munin $MUNIN_BRANCH
+
+# Use this version of devstack?
+if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
+    rm -rf $CACHEDIR/opt/devstack
+    cp -pr . $CACHEDIR/opt/devstack
 fi
 
 # Destroy the old container
