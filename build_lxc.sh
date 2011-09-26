@@ -23,6 +23,9 @@ COPYENV=${COPYENV:-1}
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 STACKSH_PARAMS=${STACKSH_PARAMS:-}
 
+# Option to use the version of devstack on which we are currently working
+USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
+
 # Warn users who aren't on natty
 if ! grep -q natty /etc/lsb-release; then
     echo "WARNING: this script has only been tested on natty"
@@ -98,6 +101,12 @@ git_clone $NIXON_REPO $CACHEDIR/opt/nixon $NIXON_BRANCH
 git_clone $NOVACLIENT_REPO $CACHEDIR/opt/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $CACHEDIR/opt/openstackx $OPENSTACKX_BRANCH
 git_clone $MUNIN_REPO $CACHEDIR/opt/openstack-munin $MUNIN_BRANCH
+
+# Use this version of devstack?
+if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
+    rm -rf $CACHEDIR/opt/devstack
+    cp -pr . $CACHEDIR/opt/devstack
+fi
 
 # Destroy the old container
 lxc-destroy -n $CONTAINER
