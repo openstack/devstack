@@ -25,7 +25,7 @@ HOST=${HOST:-localhost}
 # ip address, ...)   With the addition of Keystone we have standardized on the
 # term **tenant** as the entity that owns the resources.  **novaclient** still
 # uses the old deprecated terms project_id.
-export NOVA_PROJECT_ID=${TENANT:-demo}
+export NOVA_PROJECT_ID=${TENANT:-2}
 
 # In addition to the owning entity (tenant), nova stores the entity performing
 # the action as the **user**.
@@ -47,6 +47,9 @@ export NOVA_URL=${NOVA_URL:-http://$HOST:5000/v2.0/}
 # Currently novaclient needs you to specify the *compute api* version.  This
 # needs to match the config of your catalog returned by Keystone.
 export NOVA_VERSION=1.1
+
+# FIXME - why does this need to be specified?
+export NOVA_REGION_NAME=RegionOne
 
 
 # Launching a server
