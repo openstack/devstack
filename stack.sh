@@ -249,11 +249,6 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     ## Configure apache's 000-default to run dashboard
     sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
-
-    # ``python setup.py develop`` left some files owned by root in ``DASH_DIR``
-    # and others are owned by the user you are using to run this script.
-    # We need to change the owner to apache for dashboard to run.
-    sudo chown -R www-data:www-data $DASH_DIR
 fi
 
 

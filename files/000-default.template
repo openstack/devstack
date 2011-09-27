@@ -1,6 +1,8 @@
 <VirtualHost *:80>
     WSGIScriptAlias / %DASH_DIR%/openstack-dashboard/dashboard/wsgi/django.wsgi
-    WSGIDaemonProcess dashboard user=www-data group=www-data processes=3 threads=10
+    WSGIDaemonProcess dashboard user=stack group=stack processes=3 threads=10
+    SetEnv APACHE_RUN_USER stack
+    SetEnv APACHE_RUN_GROUP stack
     WSGIProcessGroup dashboard
 
     DocumentRoot %DASH_DIR%/.blackhole/
