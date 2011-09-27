@@ -169,8 +169,8 @@ fi
 echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS/$DEST/.bashrc
 echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS/etc/profile
 
-# Give stack ownership over /$DEST so it may do the work needed
-chroot $ROOTFS chown -R stack /$DEST
+# Give stack ownership over $DEST so it may do the work needed
+chroot $ROOTFS chown -R stack $DEST
 
 # Configure instance network
 INTERFACES=$ROOTFS/etc/network/interfaces
@@ -199,10 +199,10 @@ killall screen
 # Install and run stack.sh
 sudo apt-get update
 sudo apt-get -y --force-yes install git-core vim-nox sudo
-if [ ! -d "/$DEST/devstack" ]; then
-    git clone git://github.com/cloudbuilders/devstack.git /$DEST/devstack
+if [ ! -d "$DEST/devstack" ]; then
+    git clone git://github.com/cloudbuilders/devstack.git $DEST/devstack
 fi
-cd /$DEST/devstack && $STACKSH_PARAMS ./stack.sh > /$DEST/run.sh.log
+cd $DEST/devstack && $STACKSH_PARAMS ./stack.sh > /$DEST/run.sh.log
 EOF
 
 # Make the run.sh executable
@@ -212,7 +212,7 @@ chmod 755 $RUN_SH
 RC_LOCAL=$ROOTFS/etc/rc.local
 cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
-su -c "/$DEST/run.sh" stack
+su -c "$DEST/run.sh" stack
 EOF
 
 # Configure cgroup directory
