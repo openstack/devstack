@@ -16,7 +16,7 @@ NOVNC_BRANCH=master
 
 # django powered web control panel for openstack
 DASH_REPO=https://github.com/cloudbuilders/openstack-dashboard.git
-DASH_BRANCH=master
+DASH_BRANCH=service_catalog_compute
 
 # add nixon, will use this to show munin graphs in dashboard
 NIXON_REPO=https://github.com/cloudbuilders/nixon.git
@@ -24,7 +24,7 @@ NIXON_BRANCH=diablo
 
 # python client library to nova that dashboard (and others) use
 NOVACLIENT_REPO=https://github.com/cloudbuilders/python-novaclient.git
-NOVACLIENT_BRANCH=master
+NOVACLIENT_BRANCH=rackspace_master
 
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.

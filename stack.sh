@@ -59,13 +59,6 @@ set -o errexit
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
-# Use stackrc.example if stackrc is missing
-if [ ! -e ./stackrc ]; then
-    read -n1 -p "No stackrc present.  Copy stackrc.example to stackrc? (y/n) "
-    echo
-    [[ $REPLY = [yY] ]] && cp stackrc.example stackrc|| { echo "Aborting:  Missing stackrc"; exit 1; }
-fi
-
 # Import variables
 source ./stackrc
 

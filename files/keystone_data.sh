@@ -22,7 +22,7 @@ $BIN_DIR/keystone-manage $* role grant KeystoneServiceAdmin admin
 
 # Services
 $BIN_DIR/keystone-manage $* service add nova_compat nova_compat nova_compat
-$BIN_DIR/keystone-manage $* service add nova nova nova
+$BIN_DIR/keystone-manage $* service add compute compute compute
 $BIN_DIR/keystone-manage $* service add glance glance glance
 $BIN_DIR/keystone-manage $* service add identity identity identity
 

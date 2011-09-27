@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# Use stackrc.example if stackrc is missing
-if [ ! -e ./stackrc ]; then
-    read -n1 -p "No stackrc present.  Copy stackrc.example to stackrc? (y/n) "
-    echo
-    [[ $REPLY = [yY] ]] && cp stackrc.example stackrc|| { echo "Aborting:  Missing stackrc"; exit 1; }
-fi
-
 # Source params
 source ./stackrc
 
