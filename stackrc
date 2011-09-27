@@ -24,7 +24,7 @@ NIXON_BRANCH=diablo
 
 # python client library to nova that dashboard (and others) use
 NOVACLIENT_REPO=https://github.com/cloudbuilders/python-novaclient.git
-NOVACLIENT_BRANCH=rackspace_master
+NOVACLIENT_BRANCH=master
 
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
