@@ -97,7 +97,7 @@ fi
 
 # Clean out code repos if directed to do so
 if [ "$CLEAN" = "1" ]; then
-    rm -rf $NOVA_REPO $CACHEDIR/$DEST
+    rm -rf $CACHEDIR/$DEST
 fi
 
 # Cache openstack code
