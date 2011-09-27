@@ -12,6 +12,7 @@ usage() {
 
 HOST=${HOST:-localhost}
 PORT=${PORT:-9292}
+DEST=${DEST:-/opt/stack}
 
 while getopts h:p: c; do
     case $c in
@@ -59,14 +60,14 @@ esac
 
 GLANCE=`which glance`
 if [ -z "$GLANCE" ]; then
-    if [ -x "/opt/glance/bin/glance" ]; then
+    if [ -x "$DEST/glance/bin/glance" ]; then
         # Look for stack.sh's install
-        GLANCE="/opt/glance/bin/glance"
+        GLANCE="$DEST/glance/bin/glance"
     else
-        # Install Glance client in /opt
+        # Install Glance client in $DEST
         echo "Glance not found, must install client"
         OWD=`pwd`
-        cd /opt
+        cd $DEST
         sudo apt-get install python-pip python-eventlet python-routes python-greenlet python-argparse python-sqlalchemy python-wsgiref python-pastedeploy python-xattr
         sudo pip install kombu
         sudo git clone https://github.com/cloudbuilders/glance.git

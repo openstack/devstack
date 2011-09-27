@@ -70,7 +70,9 @@ fi
 source ./stackrc
 
 # Destination path for installation ``DEST``
-DEST=${DEST:-/opt}
+DEST=${DEST:-/opt/stack}
+sudo mkdir -p $DEST
+sudo chown `whoami` $DEST
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
@@ -405,6 +407,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
     cp $FILES/keystone.conf $KEYSTONE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
+    sudo sed -e "s,%DEST%,$DEST,g" -i $KEYSTONE_CONF
 
     KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
     cp $FILES/keystone_data.sh $KEYSTONE_DATA
