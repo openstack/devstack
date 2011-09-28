@@ -37,6 +37,15 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
+# you need to run this as a regular user with sudo priviledges
+if [[ $EUID -eq 0 ]]; then
+   echo "This script cannot be run as root." 1>&2
+   echo "You should run this script as the user you wish openstack to run as" 1>&2
+   echo "The user will need to be a sudoer (without password)" 1>&2
+   exit 1
+fi
+
+
 # Settings
 # ========
 
