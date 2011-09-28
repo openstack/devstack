@@ -1,10 +1,9 @@
 #!/bin/bash
 
-
 # Print some usage info
 function usage {
   echo "Usage: $0 [OPTION] [host_ip]"
-  echo "Set up networking for LXC"
+  echo "Set up temporary networking for LXC"
   echo ""
   echo "  -n, --dry-run            Just print the commands that would execute."
   echo "  -h, --help               Print this usage message."
