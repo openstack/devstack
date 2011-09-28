@@ -75,9 +75,16 @@ function git_clone {
     fi
 }
 
-# Warm the base image on first install
+# Location of the base image directory
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [ ! -d $CACHEDIR ]; then
+
+# Provide option to do totally clean install
+if [ "$CLEAR_LXC_CACHE" = "1" ]; then
+    rm -rf $CACHEDIR
+fi
+
+# Warm the base image on first install
+if [ ! -f $CACHEDIR/bootstrapped ]; then
     # by deleting the container, we force lxc-create to re-bootstrap (lxc is
     # lazy and doesn't do anything if a container already exists)
     lxc-destroy -n $CONTAINER
@@ -86,6 +93,7 @@ if [ ! -d $CACHEDIR ]; then
     chroot $CACHEDIR apt-get update
     chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server|munin-node)"`
     chroot $CACHEDIR pip install `cat files/pips/*`
+    touch $CACHEDIR/bootstrapped
 fi
 
 # Clean out code repos if directed to do so
