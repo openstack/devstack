@@ -153,7 +153,7 @@ cp -pR /lib/modules/`uname -r`/kernel/net $ROOTFS/lib/modules/`uname -r`/kernel/
 # Gracefully cp only if source file/dir exists
 function cp_it {
     if [ -e $1 ] || [ -d $1 ]; then
-        cp -pr $1 $2
+        cp -pRL $1 $2
     fi
 }
 
