@@ -35,5 +35,7 @@ OPENSTACKX_BRANCH=diablo
 MUNIN_REPO=https://github.com/cloudbuilders/openstack-munin.git
 MUNIN_BRANCH=master
 
-# allow local overwrites
-[ -f ./localrc ] && source ./localrc
+# allow local overrides of env variables
+if [ -f ./localrc ]; then
+    source ./localrc
+fi
