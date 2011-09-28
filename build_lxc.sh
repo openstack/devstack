@@ -33,8 +33,8 @@ apt-get install -y lxc debootstrap
 
 # Install cgroup-bin from source, since the packaging is buggy and possibly incompatible with our setup
 if ! which cgdelete | grep -q cgdelete; then
-    apt-get install -y g++ bison flex libpam0g-dev
-    wget http://sourceforge.net/projects/libcg/files/libcgroup/v0.37.1/libcgroup-0.37.1.tar.bz2/download -O /tmp/libcgroup-0.37.1.tar.bz2 
+    apt-get install -y g++ bison flex libpam0g-dev make
+    wget http://sourceforge.net/projects/libcg/files/libcgroup/v0.37.1/libcgroup-0.37.1.tar.bz2/download -O /tmp/libcgroup-0.37.1.tar.bz2
     cd /tmp && bunzip2 libcgroup-0.37.1.tar.bz2  && tar xfv libcgroup-0.37.1.tar
     cd libcgroup-0.37.1
     ./configure
@@ -125,7 +125,7 @@ lxc-create -n $CONTAINER -t natty -f $LXC_CONF
 # Specify where our container rootfs lives
 ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
 
-# Create a stack user that is a member of the libvirtd group so that stack 
+# Create a stack user that is a member of the libvirtd group so that stack
 # is able to interact with libvirt.
 chroot $ROOTFS groupadd libvirtd
 chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
@@ -133,7 +133,7 @@ chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
 # a simple password - pass
 echo stack:pass | chroot $ROOTFS chpasswd
 
-# and has sudo ability (in the future this should be limited to only what 
+# and has sudo ability (in the future this should be limited to only what
 # stack requires)
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
 
