@@ -241,6 +241,7 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
 
     ## Configure apache's 000-default to run dashboard
     sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
+    sudo sed -e "s,%USER%,$USER,g" -i /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 fi
 
@@ -461,8 +462,7 @@ fi
 screen_it n-cpu "cd $NOVA_DIR && echo $NOVA_DIR/bin/nova-compute | newgrp libvirtd"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
-# nova-vncproxy binds a privileged port, and so needs sudo
-screen_it n-vnc "cd $NOVA_DIR && sudo $NOVA_DIR/bin/nova-vncproxy"
+screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web ."
 screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
