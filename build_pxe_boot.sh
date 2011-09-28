@@ -1,10 +1,10 @@
 #!/bin/bash
-# make_pxe.sh - Create a PXE boot environment
+# build_pxe_boot.sh - Create a PXE boot environment
 #
-# make_pxe.sh destdir
+# build_pxe_boot.sh destdir
 #
 # Assumes syslinux is installed
-# Configues PXE for Ubuntu Natty and FreeDOS
+# Only needs to run as root if the destdir permissions require it
 
 UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu/dists/natty/main/installer-amd64/current/images/netboot/ubuntu-installer/amd64
 
@@ -24,17 +24,10 @@ done
 DEFAULT=$DEST_DIR/pxelinux.cfg/default
 cat >$DEFAULT <<EOF
 default menu.c32
-#display pxelinux.cfg/menu.txt
 prompt 0
-#timeout 0
+timeout 0
 
 MENU TITLE PXE Boot Menu
-
-EOF
-
-MENU=$DEST_DIR/pxelinux.cfg/menu.txt
-cat >$MENU <<EOF
-PXE Boot Menu
 
 EOF
 
@@ -50,9 +43,6 @@ LABEL ubuntu
 	KERNEL ubuntu/linux
 	APPEND initrd=ubuntu/initrd.gz
 EOF
-cat >>$MENU <<EOF
-ubuntu - Ubuntu Natty
-EOF
 
 # Get Memtest
 cd $DEST_DIR
@@ -65,9 +55,6 @@ cat >>$DEFAULT <<EOF
 LABEL memtest
     MENU LABEL Memtest86+
     KERNEL $MEMTEST_BIN
-EOF
-cat >>$MENU <<EOF
-memtest - Memtest86+
 EOF
 
 # Get FreeDOS
@@ -82,9 +69,6 @@ LABEL freedos
 	KERNEL memdisk
 	APPEND initrd=freedos/FDSTD.288
 EOF
-cat >>$MENU <<EOF
-freedos - FreeDOS
-EOF
 
 # Local disk boot
 cat >>$DEFAULT <<EOF
@@ -94,7 +78,3 @@ LABEL local
     MENU DEFAULT
     LOCALBOOT 0
 EOF
-cat >>$MENU <<EOF
-local - Local disk boot
-EOF
-
