@@ -8,8 +8,18 @@
 
 UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu/dists/natty/main/installer-amd64/current/images/netboot/ubuntu-installer/amd64
 
-DEST_DIR=${1:-/tmp/tftpboot}
+MEMTEST_VER=4.10
+MEMTEST_BIN=memtest86+-${MEMTEST_VER}.bin
+MEMTEST_URL=http://www.memtest.org/download/${MEMTEST_VER}/
+
+DEST_DIR=${1:-/tmp}/tftpboot
 OPWD=`pwd`
+
+mkdir -p $DEST_DIR/pxelinux.cfg
+cd $DEST_DIR
+for i in memdisk menu.c32 pxelinux.0; do
+	cp -p /usr/lib/syslinux/$i $DEST_DIR
+done
 
 DEFAULT=$DEST_DIR/pxelinux.cfg/default
 cat >$DEFAULT <<EOF
@@ -28,11 +38,6 @@ PXE Boot Menu
 
 EOF
 
-mkdir -p $DEST_DIR/pxelinux.cfg
-cd $DEST_DIR
-cp -p /usr/lib/syslinux/memdisk $DEST_DIR
-cp -p /usr/lib/syslinux/pxelinux.0 $DEST_DIR
-
 # Get Ubuntu netboot
 mkdir -p $DEST_DIR/ubuntu
 cd $DEST_DIR/ubuntu
@@ -47,6 +52,22 @@ LABEL ubuntu
 EOF
 cat >>$MENU <<EOF
 ubuntu - Ubuntu Natty
+EOF
+
+# Get Memtest
+cd $DEST_DIR
+if [ ! -r $MEMTEST_BIN ]; then
+    wget -N --quiet ${MEMTEST_URL}/${MEMTEST_BIN}.gz
+    gunzip $MEMTEST_BIN
+fi
+cat >>$DEFAULT <<EOF
+
+LABEL memtest
+    MENU LABEL Memtest86+
+    KERNEL $MEMTEST_BIN
+EOF
+cat >>$MENU <<EOF
+memtest - Memtest86+
 EOF
 
 # Get FreeDOS
@@ -64,3 +85,16 @@ EOF
 cat >>$MENU <<EOF
 freedos - FreeDOS
 EOF
+
+# Local disk boot
+cat >>$DEFAULT <<EOF
+
+LABEL local
+    MENU LABEL Local disk
+    MENU DEFAULT
+    LOCALBOOT 0
+EOF
+cat >>$MENU <<EOF
+local - Local disk boot
+EOF
+
