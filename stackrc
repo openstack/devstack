@@ -16,7 +16,7 @@ NOVNC_BRANCH=master
 
 # django powered web control panel for openstack
 DASH_REPO=https://github.com/cloudbuilders/openstack-dashboard.git
-DASH_BRANCH=master
+DASH_BRANCH=glance_type_image
 
 # add nixon, will use this to show munin graphs in dashboard
 NIXON_REPO=https://github.com/cloudbuilders/nixon.git
