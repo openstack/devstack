@@ -13,6 +13,9 @@
 # Sanity Check
 # ============
 
+# Start our timer
+START_TIME=`python -c "import time; print time.time()"`
+
 # Warn users who aren't on natty, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
 if ! grep -q natty /etc/lsb-release; then
@@ -514,3 +517,11 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "keystone is serving at http://$HOST_IP:5000/v2.0/"
     echo "examples on using novaclient command line is in exercise.sh"
 fi
+
+# Summary
+# =======
+
+# End our timer and give a timing summary
+END_TIME=`python -c "import time; print time.time()"`
+ELAPSED=`python -c "print $END_TIME - $START_TIME"`
+echo "stack.sh completed in $ELAPSED seconds."
