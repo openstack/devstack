@@ -204,6 +204,9 @@ if [ ! -d "$DEST/devstack" ]; then
     git clone git://github.com/cloudbuilders/devstack.git $DEST/devstack
 fi
 cd $DEST/devstack && $STACKSH_PARAMS ./stack.sh > /$DEST/run.sh.log
+echo >> /$DEST/run.sh.log
+echo >> /$DEST/run.sh.log
+echo "All done! Time to start clicking." >> /$DEST/run.sh.log
 EOF
 
 # Make the run.sh executable
@@ -224,3 +227,20 @@ fi
 
 # Start our container
 lxc-start -d -n $CONTAINER
+
+# Done creating the container, let's tail the log
+echo
+echo "============================================================="
+echo "                          -- YAY! --"
+echo "============================================================="
+echo
+echo "We're done creating the container, about to start tailing the"
+echo "stack.sh log. It will take a second or two to start."
+echo
+echo "Just CTRL-C at any time to stop tailing."
+
+while [ ! -e "$ROOTFS/$DEST/run.sh.log" ]; do
+  sleep 1
+done
+
+tail -F $ROOTFS/$DEST/run.sh.log
