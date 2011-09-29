@@ -57,6 +57,11 @@ fi
 #
 # You can also pass options on a single line ``MYSQL_PASS=simple ./stack.sh``
 #
+# Additionally, you can put any local variables into a ``localrc`` file, like::
+#
+#     MYSQL_PASS=anothersecret
+#     MYSQL_USER=hellaroot
+#
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
 # in most cases.
 
@@ -386,7 +391,7 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     $NOVA_DIR/bin/nova-manage db sync
 
     # create a small network
-    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE 
+    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
 
     # create some floating ips
     $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
