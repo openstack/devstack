@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+# Sanity check
+if [ "$EUID" -ne "0" ]; then
+  echo "This script must be run with root privileges."
+  exit 1
+fi
+
+# Warn users who aren't on natty
+if ! grep -q natty /etc/lsb-release; then
+    echo "WARNING: this script has only been tested on natty"
+fi
+
 # Source params
 source ./stackrc
 
@@ -23,10 +34,6 @@ STACKSH_PARAMS=${STACKSH_PARAMS:-}
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
 
-# Warn users who aren't on natty
-if ! grep -q natty /etc/lsb-release; then
-    echo "WARNING: this script has only been tested on natty"
-fi
 
 # Install deps
 apt-get install -y lxc debootstrap
