@@ -89,8 +89,8 @@ BASE=build.$$
 IMG=$BASE.img
 MNT=$BASE/
 
-# create a 2GB blank filesystem
-dd if=/dev/zero of=$IMG bs=1024k count=2048
+# (quickly) create a 2GB blank filesystem
+dd bs=1 count=1 seek=$((2*1024*1024*1024)) if=/dev/zero of=$IMG
 # force it to be initialized as ext2
 mkfs.ext2 -F $IMG
 
