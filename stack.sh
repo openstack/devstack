@@ -26,10 +26,6 @@ if ! grep -q natty /etc/lsb-release; then
     fi
 fi
 
-#The following makes fresh mininmal installs (i.e. LXCs) happy
-apt-get update
-apt-get install -y sudo
-
 # stack.sh keeps the list of **apt** and **pip** dependencies in external
 # files, along with config templates and other useful files.  You can find these
 # in the ``files`` directory (next to this script).  We will reference this
@@ -40,12 +36,26 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
-# you need to run this as a regular user with sudo priviledges
+# If stack.sh is run as root, it automatically creates a stack user with
+# sudo privileges and runs as that user.
 if [[ $EUID -eq 0 ]]; then
-   echo "This script cannot be run as root." 1>&2
-   echo "You should run this script as the user you wish openstack to run as" 1>&2
-   echo "The user will need to be a sudoer (without password)" 1>&2
-   exit 1
+   echo "You are running this script as root."
+   apt-get update
+   apt-get install -y sudo
+   if ! getent passwd | grep -q stack; then
+       echo "Creating a user called stack"
+       useradd -g sudo -s /bin/bash -m stack
+    fi
+    echo "Making sure stack has passwordless sudo"
+    sed -i "/^%sudo/ { / ALL/ { s/ ALL/ NOPASSWD:ALL/ }}" /etc/sudoers
+    echo "Copying files to stack user"
+    cp -r -f `pwd` /home/stack/
+    THIS_DIR=$(basename $(dirname $(readlink -f $0)))
+    chown -R stack:sudo /home/stack/$THIS_DIR
+    echo "Running the script as stack in 3 seconds..."
+    sleep 3
+    exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
+    exit 0
 fi
 
 
