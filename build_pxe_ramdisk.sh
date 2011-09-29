@@ -6,17 +6,19 @@ if [ ! "$#" -eq "1" ]; then
     exit 1
 fi
 
+PROGDIR=`dirname $0`
+
 # Source params
 source ./stackrc
 
 # clean install of natty
 if [ ! -d natty-base ]; then
-    debootstrap natty natty-base
+    $PROGDIR/make_image.sh -C natty natty-base
     # copy kernel modules...  
     # NOTE(ja): is there a better way to do this?
     cp -pr /lib/modules/`uname -r` natty-base/lib/modules
-    cp files/sources.list natty-base/etc/apt/sources.list
-    chroot natty-base apt-get update
+    # a simple password - pass
+    echo root:pass | chroot natty-base chpasswd
 fi
 
 # prime natty with as many apt/pips as we can
