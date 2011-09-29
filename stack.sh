@@ -13,6 +13,9 @@
 # Sanity Check
 # ============
 
+# Start our timer
+START_TIME=`python -c "import time; print time.time()"`
+
 # Warn users who aren't on natty, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
 if ! grep -q natty /etc/lsb-release; then
@@ -37,6 +40,15 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
+# you need to run this as a regular user with sudo priviledges
+if [[ $EUID -eq 0 ]]; then
+   echo "This script cannot be run as root." 1>&2
+   echo "You should run this script as the user you wish openstack to run as" 1>&2
+   echo "The user will need to be a sudoer (without password)" 1>&2
+   exit 1
+fi
+
+
 # Settings
 # ========
 
@@ -47,6 +59,11 @@ fi
 #     ./stack.sh
 #
 # You can also pass options on a single line ``MYSQL_PASS=simple ./stack.sh``
+#
+# Additionally, you can put any local variables into a ``localrc`` file, like::
+#
+#     MYSQL_PASS=anothersecret
+#     MYSQL_USER=hellaroot
 #
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
 # in most cases.
@@ -377,7 +394,7 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     $NOVA_DIR/bin/nova-manage db sync
 
     # create a small network
-    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE 
+    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
 
     # create some floating ips
     $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
@@ -500,3 +517,11 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "keystone is serving at http://$HOST_IP:5000/v2.0/"
     echo "examples on using novaclient command line is in exercise.sh"
 fi
+
+# Summary
+# =======
+
+# End our timer and give a timing summary
+END_TIME=`python -c "import time; print time.time()"`
+ELAPSED=`python -c "print $END_TIME - $START_TIME"`
+echo "stack.sh completed in $ELAPSED seconds."

@@ -1,6 +1,6 @@
 # compute service
-NOVA_REPO=https://github.com/openstack/nova.git
-NOVA_BRANCH=2011.3
+NOVA_REPO=https://github.com/cloudbuilders/nova.git
+NOVA_BRANCH=diablo
 
 # image catalog service
 GLANCE_REPO=https://github.com/cloudbuilders/glance.git
@@ -34,3 +34,8 @@ OPENSTACKX_BRANCH=diablo
 # openstack-munin is a collection of munin plugins for monitoring the stack
 MUNIN_REPO=https://github.com/cloudbuilders/openstack-munin.git
 MUNIN_BRANCH=master
+
+# allow local overrides of env variables
+if [ -f ./localrc ]; then
+    source ./localrc
+fi

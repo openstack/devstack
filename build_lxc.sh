@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+# Sanity check
+if [ "$EUID" -ne "0" ]; then
+  echo "This script must be run with root privileges."
+  exit 1
+fi
+
+# Warn users who aren't on natty
+if ! grep -q natty /etc/lsb-release; then
+    echo "WARNING: this script has only been tested on natty"
+fi
+
 # Source params
 source ./stackrc
 
@@ -23,18 +34,14 @@ STACKSH_PARAMS=${STACKSH_PARAMS:-}
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
 
-# Warn users who aren't on natty
-if ! grep -q natty /etc/lsb-release; then
-    echo "WARNING: this script has only been tested on natty"
-fi
 
 # Install deps
 apt-get install -y lxc debootstrap
 
 # Install cgroup-bin from source, since the packaging is buggy and possibly incompatible with our setup
 if ! which cgdelete | grep -q cgdelete; then
-    apt-get install -y g++ bison flex libpam0g-dev
-    wget http://sourceforge.net/projects/libcg/files/libcgroup/v0.37.1/libcgroup-0.37.1.tar.bz2/download -O /tmp/libcgroup-0.37.1.tar.bz2 
+    apt-get install -y g++ bison flex libpam0g-dev make
+    wget http://sourceforge.net/projects/libcg/files/libcgroup/v0.37.1/libcgroup-0.37.1.tar.bz2/download -O /tmp/libcgroup-0.37.1.tar.bz2
     cd /tmp && bunzip2 libcgroup-0.37.1.tar.bz2  && tar xfv libcgroup-0.37.1.tar
     cd libcgroup-0.37.1
     ./configure
@@ -75,17 +82,25 @@ function git_clone {
     fi
 }
 
-# Warm the base image on first install
+# Location of the base image directory
 CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
-if [ ! -d $CACHEDIR ]; then
+
+# Provide option to do totally clean install
+if [ "$CLEAR_LXC_CACHE" = "1" ]; then
+    rm -rf $CACHEDIR
+fi
+
+# Warm the base image on first install
+if [ ! -f $CACHEDIR/bootstrapped ]; then
     # by deleting the container, we force lxc-create to re-bootstrap (lxc is
     # lazy and doesn't do anything if a container already exists)
     lxc-destroy -n $CONTAINER
     # trigger the initial debootstrap
     lxc-create -n $CONTAINER -t natty -f $LXC_CONF
     chroot $CACHEDIR apt-get update
-    chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server|munin-node)"`
     chroot $CACHEDIR pip install `cat files/pips/*`
+    touch $CACHEDIR/bootstrapped
 fi
 
 # Clean out code repos if directed to do so
@@ -125,7 +140,7 @@ lxc-create -n $CONTAINER -t natty -f $LXC_CONF
 # Specify where our container rootfs lives
 ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
 
-# Create a stack user that is a member of the libvirtd group so that stack 
+# Create a stack user that is a member of the libvirtd group so that stack
 # is able to interact with libvirt.
 chroot $ROOTFS groupadd libvirtd
 chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
@@ -133,7 +148,7 @@ chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
 # a simple password - pass
 echo stack:pass | chroot $ROOTFS chpasswd
 
-# and has sudo ability (in the future this should be limited to only what 
+# and has sudo ability (in the future this should be limited to only what
 # stack requires)
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
 
@@ -145,7 +160,7 @@ cp -pR /lib/modules/`uname -r`/kernel/net $ROOTFS/lib/modules/`uname -r`/kernel/
 # Gracefully cp only if source file/dir exists
 function cp_it {
     if [ -e $1 ] || [ -d $1 ]; then
-        cp -pr $1 $2
+        cp -pRL $1 $2
     fi
 }
 
@@ -196,6 +211,9 @@ if [ ! -d "$DEST/devstack" ]; then
     git clone git://github.com/cloudbuilders/devstack.git $DEST/devstack
 fi
 cd $DEST/devstack && $STACKSH_PARAMS ./stack.sh > /$DEST/run.sh.log
+echo >> /$DEST/run.sh.log
+echo >> /$DEST/run.sh.log
+echo "All done! Time to start clicking." >> /$DEST/run.sh.log
 EOF
 
 # Make the run.sh executable
@@ -216,3 +234,20 @@ fi
 
 # Start our container
 lxc-start -d -n $CONTAINER
+
+# Done creating the container, let's tail the log
+echo
+echo "============================================================="
+echo "                          -- YAY! --"
+echo "============================================================="
+echo
+echo "We're done creating the container, about to start tailing the"
+echo "stack.sh log. It will take a second or two to start."
+echo
+echo "Just CTRL-C at any time to stop tailing."
+
+while [ ! -e "$ROOTFS/$DEST/run.sh.log" ]; do
+  sleep 1
+done
+
+tail -F $ROOTFS/$DEST/run.sh.log
