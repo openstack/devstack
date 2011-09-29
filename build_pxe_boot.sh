@@ -44,16 +44,17 @@ mkdir -p $DEST_DIR/ubuntu
 if [ ! -d $OPWD/pxe ]; then
     mkdir -p $OPWD/pxe
 fi
-if [ ! -r $OPWD/pxe/vmlinuz-${KVER}-generic ]; then
-    if [ ! -r /boot/vmlinuz-${KVER}-generic ]; then
+if [ ! -r $OPWD/pxe/vmlinuz-${KVER} ]; then
+    sudo chmod 644 /boot/vmlinuz-${KVER}
+    if [ ! -r /boot/vmlinuz-${KVER} ]; then
         echo "No kernel found"
     else
-        cp -p /boot/vmlinuz-${KVER}-generic $OPWD/pxe
+        cp -p /boot/vmlinuz-${KVER} $OPWD/pxe
     fi
 fi
-cp -p $OPWD/pxe/vmlinuz-${KVER}-generic $DEST_DIR/ubuntu
+cp -p $OPWD/pxe/vmlinuz-${KVER} $DEST_DIR/ubuntu
 if [ ! -r $OPWD/pxe/stack-initrd.gz ]; then
-    $PROGDIR/build_pxe_ramdisk.sh $OPWD/pxe/stack-initrd.gz
+    sudo $PROGDIR/build_pxe_ramdisk.sh $OPWD/pxe/stack-initrd.gz
 fi
 cp -p $OPWD/pxe/stack-initrd.gz $DEST_DIR/ubuntu
 cat >>$DEFAULT <<EOF
