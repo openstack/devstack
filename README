@@ -1,4 +1,11 @@
-Tool to quickly deploy openstack dev environments
+Tool to quickly deploy openstack dev environments.
+
+# Goals
+
+* To quickly build dev openstack environments in clean natty environments
+* To describe working configurations of openstack (which code branches work together?  what do config files look like for those branches?)
+* To make it easier for developers to dive into openstack so that they can productively contribute without having to understand every part of the system at once
+* To make it easy to prototype cross-project features
 
 Be sure to carefully read these scripts before you run them as they install software and may alter your networking configuration.
 
@@ -6,34 +13,30 @@ Be sure to carefully read these scripts before you run them as they install soft
 
     ./stack.sh
 
+If working correctly, you should be able to access openstack endpoints, like:
+
+* Dashboard: http://myhost/
+* Keystone: http://myhost:5000/v2.0/
+
 # To start a dev cloud in an lxc container:
 
     ./build_lxc.sh
 
 You will need to configure a bridge and network on your host machine (by default br0) before starting build_lxc.sh.  A sample host-only network configuration can be found in lxc_network_hostonlyplusnat.sh.
 
+# Customizing
+
+You can tweak environment variables by creating file name 'localrc' should you need to override defaults.  It is likely that you will need to do this to tweak your networking configuration should you need to access your cloud from a different host.
+
 # Todo
 
 * Add python-novaclient cli support
-* move keystone/glance/dash to mysql
 * syslog
-* check openstack-puppet recipes to see if anything else is missing
 * allow rabbit connection to be specified via environment variables with sensible defaults
 * Add volume support
-* allow changing of git locations (specify different tag/branch or repos)
-* change method of invoking stack.sh to ./stack.sh all _or_ ./stack.sh nova-compute,nova-network,nova-api,nova-volume
 * Add quantum support
-
-# Done
-
-* sqlconn can be set via env
-* move back to using sudo
-* move nova to mysql
-* munin
-* image upload with a script that supports generating images via debootstrap (ubuntu-vm-builder)
 
 # Future
 
 * idea: move from screen to tmux?
 * idea: create a live-cd / vmware preview image using this?
-* idea: use lxc to make the proto-image have everything?  so launching a new server is just turn on / updating / run?
