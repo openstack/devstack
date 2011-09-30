@@ -1,5 +1,17 @@
 Tool to quickly deploy openstack dev environments
 
+Be sure to carefully read these scripts before you run them as they install software and may alter your networking configuration.
+
+# To start a dev cloud on your local machine (installing on a dedicated vm is safer!):
+
+    ./stack.sh
+
+# To start a dev cloud in an lxc container:
+
+    ./build_lxc.sh
+
+You will need to configure a bridge and network on your host machine (by default br0) before starting build_lxc.sh.  A sample host-only network configuration can be found in lxc_network_hostonlyplusnat.sh.
+
 # Todo
 
 * Add python-novaclient cli support
