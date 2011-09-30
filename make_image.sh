@@ -1,27 +1,40 @@
 #!/bin/bash
 # make_image.sh - Create Ubuntu images in various formats
 #
-# make_image.sh release format
-#
 # Supported formats: qcow (kvm), vmdk (vmserver), vdi (vbox), vhd (vpc), raw
 #
 # Requires sudo to root
 
 ROOTSIZE=${ROOTSIZE:-8192}
 SWAPSIZE=${SWAPSIZE:-1024}
+MIN_PKGS=${MIN_PKGS:-"apt-utils gpgv openssh-server"}
 
 usage() {
-    echo "$0 - Create Ubuntu images"
+    echo "Usage: $0 - Create Ubuntu images"
     echo ""
-    echo "$0 [-r rootsize] [-s swapsize] release format"
+    echo "$0 [-m] [-r rootsize] [-s swapsize] release format"
+    echo "$0 -C [-m] release chrootdir"
+    echo "$0 -I [-r rootsize] [-s swapsize] chrootdir format"
+    echo ""
+    echo "-C        - Create the initial chroot dir"
+    echo "-I        - Create the final image from a chroot"
+    echo "-m        - minimal installation"
+    echo "-r size   - root fs size in MB"
+    echo "-s size   - swap fs size in MB"
+    echo "release   - Ubuntu release: jaunty - oneric"
+    echo "format    - image format: qcow2, vmdk, vdi, vhd, xen, raw, fs"
     exit 1
 }
 
-while getopts hm:r:s: c; do
+while getopts CIhmr:s: c; do
     case $c in
+        C)  CHROOTONLY=1
+            ;;
+        I)  IMAGEONLY=1
+            ;;
         h)  usage
             ;;
-        m)  MIRROR=$OPTARG
+        m)  MINIMAL=1
             ;;
         r)  ROOTSIZE=$OPTARG
             ;;
@@ -31,8 +44,26 @@ while getopts hm:r:s: c; do
 done
 shift `expr $OPTIND - 1`
 
+if [ ! "$#" -eq "2" -o -n "$CHROOTONLY" -a -n "$IMAGEONLY" ]; then
+    usage
+fi
+
+# Default args
 RELEASE=$1
 FORMAT=$2
+CHROOTDIR=""
+
+if [ -n "$CHROOTONLY" ]; then
+    RELEASE=$1
+    CHROOTDIR=$2
+    FORMAT="pass"
+fi
+
+if [ -n "$IMAGEONLY" ]; then
+    CHROOTDIR=$1
+    FORMAT=$2
+    RELEASE="pass"
+fi
 
 case $FORMAT in
     kvm|qcow2)  FORMAT=qcow2
@@ -60,6 +91,7 @@ case $FORMAT in
                 QFORMAT=raw
                 HYPER=kvm
                 ;;
+    pass)       ;;
     *)          echo "Unknown format: $FORMAT"
                 usage
 esac
@@ -70,6 +102,7 @@ case $RELEASE in
     lucid)      ;;
     karmic)     ;;
     jaunty)     ;;
+    pass)       ;;
     *)          echo "Unknown release: $RELEASE"
                 usage
                 ;;
@@ -80,17 +113,59 @@ if [ -z `which vmbuilder` ]; then
     sudo apt-get install ubuntu-vm-builder
 fi
 
+if [ -n "$CHROOTONLY" ]; then
+    # Build a chroot directory
+    HYPER=kvm
+    if [ "$MINIMAL" = 1 ]; then
+        ARGS="--variant=minbase"
+        for i in $MIN_PKGS; do
+            ARGS="$ARGS --addpkg=$i"
+        done
+    fi
+    sudo vmbuilder $HYPER ubuntu $ARGS \
+      --suite $RELEASE \
+      --only-chroot \
+      --chroot-dir=$CHROOTDIR \
+      --overwrite \
+      --addpkg=$MIN_PKGS \
+
+    sudo cp -p files/sources.list $CHROOTDIR/etc/apt/sources.list
+    sudo chroot $CHROOTDIR apt-get update
+
+    exit 0
+fi
+
 # Build the image
+TMPDIR=tmp
 TMPDISK=`mktemp imgXXXXXXXX`
 SIZE=$[$ROOTSIZE+$SWAPSIZE+1]
-dd if=/dev/null of=$TMPDISK bs=1M seek=$SIZE
-sudo vmbuilder $HYPER ubuntu --suite $RELEASE \
-  -o \
-  --rootsize=$ROOTSIZE \
-  --swapsize=$SWAPSIZE \
-  --tmpfs - \
-  --addpkg=openssh-server \
-  --raw=$TMPDISK \
+dd if=/dev/null of=$TMPDISK bs=1M seek=$SIZE count=1
+
+if [ -n "$IMAGEONLY" ]; then
+    # Build image from chroot
+    sudo vmbuilder $HYPER ubuntu $ARGS \
+      --existing-chroot=$CHR \
+      --overwrite \
+      --rootsize=$ROOTSIZE \
+      --swapsize=$SWAPSIZE \
+      --tmpfs - \
+      --raw=$TMPDISK \
+
+else
+    # Do the whole shebang in one pass
+        ARGS="--variant=minbase"
+        for i in $MIN_PKGS; do
+            ARGS="$ARGS --addpkg=$i"
+        done
+    sudo vmbuilder $HYPER ubuntu $ARGS \
+      --suite $RELEASE \
+      --overwrite \
+      --rootsize=$ROOTSIZE \
+      --swapsize=$SWAPSIZE \
+      --tmpfs - \
+      --raw=$TMPDISK \
+
+fi
 
 if [ "$FORMAT" = "raw" ]; then
     # Get image
