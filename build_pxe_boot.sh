@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 # build_pxe_boot.sh - Create a PXE boot environment
 #
 # build_pxe_boot.sh [-k kernel-version] destdir
@@ -54,6 +54,7 @@ if [ ! -r $OPWD/pxe/vmlinuz-${KVER} ]; then
 fi
 cp -p $OPWD/pxe/vmlinuz-${KVER} $DEST_DIR/ubuntu
 if [ ! -r $OPWD/pxe/stack-initrd.gz ]; then
+    cd $OPWD
     sudo $PROGDIR/build_pxe_ramdisk.sh $OPWD/pxe/stack-initrd.gz
 fi
 cp -p $OPWD/pxe/stack-initrd.gz $DEST_DIR/ubuntu
@@ -62,19 +63,19 @@ cat >>$DEFAULT <<EOF
 LABEL devstack
     MENU LABEL ^devstack
     MENU DEFAULT
-    KERNEL ubuntu/vmlinuz-$KVER-generic
+    KERNEL ubuntu/vmlinuz-$KVER
     APPEND initrd=ubuntu/stack-initrd.gz ramdisk_size=2109600 root=/dev/ram0
 EOF
 
 # Get Ubuntu
 if [ -d $OPWD/pxe ]; then
-    cp -p $OPWD/pxe/natty-min-initrd.gz $DEST_DIR/ubuntu
+    cp -p $OPWD/pxe/natty-base-initrd.gz $DEST_DIR/ubuntu
 fi
 cat >>$DEFAULT <<EOF
 
 LABEL ubuntu
     MENU LABEL ^Ubuntu Natty
-    KERNEL ubuntu/vmlinuz-$KVER-generic
+    KERNEL ubuntu/vmlinuz-$KVER
     APPEND initrd=ubuntu/natty-base-initrd.gz ramdisk_size=419600 root=/dev/ram0
 EOF
 
