@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 # build_pxe_boot.sh - Create a PXE boot environment
 #
 # build_pxe_boot.sh [-k kernel-version] destdir
@@ -54,6 +54,7 @@ if [ ! -r $OPWD/pxe/vmlinuz-${KVER} ]; then
 fi
 cp -p $OPWD/pxe/vmlinuz-${KVER} $DEST_DIR/ubuntu
 if [ ! -r $OPWD/pxe/stack-initrd.gz ]; then
+    cd $OPWD
     sudo $PROGDIR/build_pxe_ramdisk.sh $OPWD/pxe/stack-initrd.gz
 fi
 cp -p $OPWD/pxe/stack-initrd.gz $DEST_DIR/ubuntu

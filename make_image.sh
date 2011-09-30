@@ -44,7 +44,7 @@ while getopts CIhmr:s: c; do
 done
 shift `expr $OPTIND - 1`
 
-if [ ! "$#" -eq "2" -o -n $CHROOTONLY -a -n $IMAGEONLY ]; then
+if [ ! "$#" -eq "2" -o -n "$CHROOTONLY" -a -n "$IMAGEONLY" ]; then
     usage
 fi
 
