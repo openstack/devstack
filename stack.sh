@@ -44,7 +44,7 @@ if [[ $EUID -eq 0 ]]; then
    apt-get install -y sudo
    if ! getent passwd | grep -q stack; then
        echo "Creating a user called stack"
-       useradd -g sudo -s /bin/bash -m stack
+       useradd -G sudo -s /bin/bash -m stack
     fi
     echo "Making sure stack has passwordless sudo"
     sed -i "/^%sudo/ { / ALL/ { s/ ALL/ NOPASSWD:ALL/ }}" /etc/sudoers
