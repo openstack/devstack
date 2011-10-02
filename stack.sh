@@ -4,6 +4,8 @@
 
 # This script installs and configures *nova*, *glance*, *dashboard* and *keystone*
 
+# FIXME: talk about single or multi-node installs
+
 # To keep this script simple we assume you are running on an **Ubuntu 11.04
 # Natty** machine.  It should work in a VM or physical server.  Additionally we
 # put the list of *apt* and *pip* dependencies and other configuration files in
@@ -14,7 +16,7 @@
 # Sanity Check
 # ============
 
-# Start our timer
+# Record the start time.  This allows us to print how long this script takes to run.
 START_TIME=`python -c "import time; print time.time()"`
 
 # Warn users who aren't on natty, but allow them to override check and attempt
@@ -37,28 +39,41 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
-# If stack.sh is run as root, it automatically creates a stack user with
+# OpenStack is designed to be run as a regular user (Dashboard will fail to run
+# as root, since apache refused to startup serve content from root user).  If
+# stack.sh is run as root, it automatically creates a stack user with
 # sudo privileges and runs as that user.
 if [[ $EUID -eq 0 ]]; then
    echo "You are running this script as root."
+
+   # ensure sudo
    apt-get update
    apt-get install -y sudo
+
    if ! getent passwd | grep -q stack; then
        echo "Creating a user called stack"
        useradd -U -G sudo -s /bin/bash -m stack
     fi
-    echo "Making sure stack has passwordless sudo"
+    echo "Giving stack user passwordless sudo priviledges"
     echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
     echo "Copying files to stack user"
     cp -r -f `pwd` /home/stack/
     THIS_DIR=$(basename $(dirname $(readlink -f $0)))
-    chown -R stack:sudo /home/stack/$THIS_DIR
+    chown -R stack /home/stack/$THIS_DIR
     echo "Running the script as stack in 3 seconds..."
     sleep 3
     exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
     exit 0
 fi
 
+# So that errors don't compound we exit on any errors so you see only the
+# first error that occured.
+set -o errexit
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following allowing as the install occurs.
+set -o xtrace
 
 # Settings
 # ========
@@ -79,13 +94,8 @@ fi
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
 # in most cases.
 
-# So that errors don't compound we exit on any errors so you see only the
-# first error that occured.
-set -o errexit
 
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following allowing as the install occurs.
-set -o xtrace
+# FIXME: TALK ABOUT stackrc and localrc
 
 # Import variables
 source ./stackrc
@@ -107,12 +117,21 @@ NOVNC_DIR=$DEST/noVNC
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit}
 
+# Nova hypervisor configuration.  We default to **kvm** but will drop back to
+# **qemu** if we are unable to load the kvm module.  Stack.sh can also install
+# an **LXC** based system.
+LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
+
+SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
+
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
 
-# Nova network configuration
+# Nova Network Configuration
+# --------------------------
+
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
 VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.1/28}
@@ -121,21 +140,28 @@ FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
-SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
 # ip or you risk breaking things.
 FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
-# Nova hypervisor configuration.  We default to **kvm** but will drop back to
-# **qemu** if we are unable to load the kvm module.
-LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 
-# Mysql connection info
+# MySQL & RabbitMQ
+# ----------------
+
+# We configure Nova, Dashboard, Glance and Keystone to use MySQL as their 
+# database server.  While they share a single server, each has their own
+# database and tables.
+
+# By default this script will install and configure MySQL.  If you want to 
+# use an existing server, you can pass in the user/password/host parameters.
+# You will need to send the same ``MYSQL_PASS`` to every host if you are doing
+# a multi-node devstack installation.
 MYSQL_USER=${MYSQL_USER:-root}
 MYSQL_PASS=${MYSQL_PASS:-`openssl rand -hex 12`}
 MYSQL_HOST=${MYSQL_HOST:-localhost}
+
 # don't specify /db in this string, so we can use it for multiple services
 BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}
 
@@ -145,6 +171,9 @@ RABBIT_PASSWORD=${RABBIT_PASSWORD:-`openssl rand -hex 12`}
 
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
+
+# Keystone
+# --------
 
 # Service Token - Openstack components need to have an admin token
 # to validate user tokens.
