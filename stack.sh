@@ -43,10 +43,12 @@ fi
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
 # sudo privileges and runs as that user.
+
 if [[ $EUID -eq 0 ]]; then
    echo "You are running this script as root."
 
-   # ensure sudo
+   # since this script runs as a normal user, we need to give that user
+   # ability to run sudo
    apt-get update
    apt-get install -y sudo
 
@@ -122,6 +124,8 @@ ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-v
 # an **LXC** based system.
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 
+# nova supports pluggable schedulers.  ``SimpleScheduler`` should work in most
+# cases unless you are working on multi-zone mode.
 SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
@@ -133,18 +137,25 @@ fi
 # --------------------------
 
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
-VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
-FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.1/28}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.1/28}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
+VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
+
+# Multi-host is a mode where each compute node runs its own network node.  This
+# allows network operations and routing for a VM to occur on the server that is
+# running the VM - removing a SPOF and bandwidth bottleneck.
+MULTI_HOST=${MULTI_HOST:-0}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
 # ip or you risk breaking things.
 FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
+
+## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
 
 
 # MySQL & RabbitMQ
@@ -186,13 +197,6 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 12`}
 #
 # Openstack uses a fair number of other projects.
 
-# Seed configuration with mysql password so that apt-get install doesn't
-# prompt us for a password upon install.
-cat <<MYSQL_PRESEED | sudo debconf-set-selections
-mysql-server-5.1 mysql-server/root_password password $MYSQL_PASS
-mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASS
-mysql-server-5.1 mysql-server/start_on_boot boolean true
-MYSQL_PRESEED
 
 # install apt requirements
 sudo apt-get install -y -q `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
@@ -252,7 +256,7 @@ cp $FILES/screenrc ~/.screenrc
 
 # Rabbit
 # ---------
-#
+
 if [[ "$ENABLED_SERVICES" =~ "rabbit" ]]; then
     # Install and start rabbitmq-server
     sudo apt-get install -y -q rabbitmq-server
@@ -262,8 +266,17 @@ fi
 
 # Mysql
 # ---------
-#
+
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+
+    # Seed configuration with mysql password so that apt-get install doesn't
+    # prompt us for a password upon install.
+    cat <<MYSQL_PRESEED | sudo debconf-set-selections
+mysql-server-5.1 mysql-server/root_password password $MYSQL_PASS
+mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASS
+mysql-server-5.1 mysql-server/start_on_boot boolean true
+MYSQL_PRESEED
+
     # Install and start mysql-server
     sudo apt-get -y -q install mysql-server
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
@@ -277,22 +290,23 @@ fi
 
 # Dashboard
 # ---------
-#
-# Setup the django application to serve via apache/wsgi
+
+# Setup the django dashboard application to serve via apache/wsgi
 
 if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
 
     # Dash currently imports quantum even if you aren't using it.  Instead
     # of installing quantum we can create a simple module that will pass the
     # initial imports
-    sudo mkdir -p  $DASH_DIR/openstack-dashboard/quantum || true
-    sudo touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
-    sudo touch $DASH_DIR/openstack-dashboard/quantum/client.py
+    mkdir -p  $DASH_DIR/openstack-dashboard/quantum || true
+    touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
+    touch $DASH_DIR/openstack-dashboard/quantum/client.py
+
+
+    # ``local_settings.py`` is used to override dashboard default settings.
+    cp $FILES/dash_settings.py $DASH_DIR/openstack-dashboard/local/local_settings.py
 
     cd $DASH_DIR/openstack-dashboard
-
-    sudo cp $FILES/dash_settings.py local/local_settings.py
-
     dashboard/manage.py syncdb
 
     # create an empty directory that apache uses as docroot
@@ -335,28 +349,42 @@ fi
 # Nova
 # ----
 
+# We are going to use the sample http middleware configuration from the keystone
+# project to launch nova.  This paste config adds the configuration required
+# for nova to validate keystone tokens - except we need to switch the config
+# to use our admin token instead (instead of the token from their sample data).
 sudo sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $KEYSTONE_DIR/examples/paste/nova-api-paste.ini
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
-    # attempt to load modules: nbd (network block device - used to manage
-    # qcow images) and kvm (hardware based virtualization).  If unable to
-    # load kvm, set the libvirt type to qemu.
+    # Virtualization Configuration
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    # attempt to load modules: network block device - used to manage qcow images
     sudo modprobe nbd || true
 
+    # Check for kvm (hardware based virtualization).  If unable to load kvm, 
+    # set the libvirt type to qemu.  Note: many systems come with hardware 
+    # virtualization disabled in BIOS.
     if [[ "$LIBVIRT_TYPE" -eq "kvm" ]]; then
+        sudo modprobe kvm || true
         if [ ! -e /dev/kvm ]; then
+            echo "WARNING: Switching to QEMU"
             LIBVIRT_TYPE=qemu
         fi
     fi
 
+    # Install and configure **LXC** if specified.  LXC is another approach to
+    # splitting a system into many smaller parts.  LXC uses cgroups and chroot
+    # to simulate multiple systems.
     if [[ "$LIBVIRT_TYPE" -eq "lxc" ]]; then
         sudo apt-get install lxc -y
+        # lxc requires cgroups to be configured on /cgroup
         sudo mkdir -p /cgroup
-        sudo mount none -t cgroup -o cpuacct,memory,devices,cpu,freezer,blkio /cgroup
         if ! grep -q cgroup /etc/fstab; then
             echo none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0 | sudo tee -a /etc/fstab
         fi
+        sudo mount /cgroup
     fi
 
     # User needs to be member of libvirtd group for nova-compute to use libvirt.
@@ -364,7 +392,11 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # if kvm wasn't running before we need to restart libvirt to enable it
     sudo /etc/init.d/libvirt-bin restart
 
-    # setup nova instance directory
+
+    # Instance Storage
+    # ~~~~~~~~~~~~~~~~
+
+    # Nova stores each instance in its own directory.
     mkdir -p $NOVA_DIR/instances
 
     # if there is a partition labeled nova-instances use it (ext filesystems
@@ -375,7 +407,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
         sudo chown -R `whoami` $NOVA_DIR/instances
     fi
 
-    # Clean out the instances directory
+    # Clean out the instances directory.
     rm -rf $NOVA_DIR/instances/*
 fi
 
@@ -419,10 +451,18 @@ if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
 fi
 
+# Nova Database
+# ~~~~~~~~~~~~~
+
+# All nova components talk to a central database.  We will need to do this step
+# only once for an entire cluster.
+
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # (re)create nova database
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS nova;'
     mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+
+    # (re)create nova database
     $NOVA_DIR/bin/nova-manage db sync
 
     # create a small network
@@ -447,6 +487,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
     sudo sed -e "s,%DEST%,$DEST,g" -i $KEYSTONE_CONF
 
+    # keystone_data.sh creates our admin user and our ``SERVICE_TOKEN``.
     KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
     cp $FILES/keystone_data.sh $KEYSTONE_DATA
     sudo sed -e "s,%HOST_IP%,$HOST_IP,g" -i $KEYSTONE_DATA
