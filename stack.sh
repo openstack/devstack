@@ -334,6 +334,7 @@ fi
 # Nova
 # ----
 
+sudo sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $KEYSTONE_DIR/examples/paste/nova-api-paste.ini
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
