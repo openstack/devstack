@@ -140,6 +140,7 @@ BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}
 
 # Rabbit connection info
 RABBIT_HOST=${RABBIT_HOST:-localhost}
+RABBIT_PASSWORD=${RABBIT_PASSWORD:-`openssl rand -hex 12`}
 
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
@@ -148,6 +149,7 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 # to validate user tokens.
 SERVICE_TOKEN=${SERVICE_TOKEN:-`uuidgen`}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 12`}
+
 
 # Install Packages
 # ================
@@ -224,6 +226,8 @@ cp $FILES/screenrc ~/.screenrc
 if [[ "$ENABLED_SERVICES" =~ "rabbit" ]]; then
     # Install and start rabbitmq-server
     sudo apt-get install -y -q rabbitmq-server
+    # change the rabbit password since the default is "guest"
+    sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
 fi
 
 # Mysql
@@ -375,6 +379,7 @@ add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.in
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
+add_nova_flag "--rabbit_password=$RABBIT_PASSWORD"
 add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
 add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
 if [ -n "$FLAT_INTERFACE" ]; then
