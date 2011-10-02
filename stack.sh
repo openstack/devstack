@@ -518,10 +518,12 @@ function screen_it {
 screen -d -m -S nova -t nova
 sleep 1
 
+# launch the glance registery service
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
 fi
 
+# launch the glance api and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
     while ! wget -q -O- http://$GLANCE_HOSTPORT; do
@@ -530,6 +532,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     done
 fi
 
+# launch the keystone and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF -d"
     while ! wget -q -O- http://127.0.0.1:5000; do
@@ -538,6 +541,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     done
 fi
 
+# launch the nova-api and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
     while ! wget -q -O- http://127.0.0.1:8774; do
@@ -571,11 +575,14 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     mkdir -p $FILES/images
     tar -zxf $FILES/tty.tgz -C $FILES/images
 
-    # add images to glance
-    # FIXME: kernel/ramdisk is hardcoded - use return result from add
-    glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image
-    glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image
-    glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
+    # add a debugging images to glance
+    KERNEL_ID=glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true \
+        container_format=aki disk_format=aki < $FILES/images/aki-tty/image
+    RAMDISK_ID=glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true \
+        container_format=ari disk_format=ari < $FILES/images/ari-tty/image
+    glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami \
+        disk_format=ami kernel_id=$KERNEL_ID \
+        ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
 fi
 
 # Using the cloud
