@@ -34,7 +34,7 @@ $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne keystone http://%HOS
 # $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne swift http://%HOST_IP%:8080/v1/AUTH_%tenant_id% http://%HOST_IP%:8080/ http://%HOST_IP%:8080/v1/AUTH_%tenant_id% 1 1
 
 # Tokens
-$BIN_DIR/keystone-manage $* token add 999888777666 admin admin 2015-02-05T00:00
+$BIN_DIR/keystone-manage $* token add %SERVICE_TOKEN% admin admin 2015-02-05T00:00
 
 # EC2 related creds
 $BIN_DIR/keystone-manage $* credentials add admin EC2 'admin:admin' admin admin || echo "no support for adding credentials"

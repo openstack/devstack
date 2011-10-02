@@ -146,6 +146,10 @@ RABBIT_HOST=${RABBIT_HOST:-localhost}
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 
+# Service Token - Openstack components need to have an admin token
+# to validate user tokens.
+SERVICE_TOKEN=${SERVICE_TOKEN:-`uuidgen`}
+
 # Install Packages
 # ================
 #
@@ -318,11 +322,13 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
     cp $FILES/glance-registry.conf $GLANCE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
+    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $GLANCE_CONF
     sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_CONF
 
     GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
     cp $FILES/glance-api.conf $GLANCE_API_CONF
     sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_API_CONF
+    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $GLANCE_API_CONF
 fi
 
 # Nova
@@ -428,6 +434,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
     cp $FILES/keystone_data.sh $KEYSTONE_DATA
     sudo sed -e "s,%HOST_IP%,$HOST_IP,g" -i $KEYSTONE_DATA
+    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_DATA
     # initialize keystone with default users/endpoints
     BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
 fi
@@ -508,9 +515,9 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
 
     # add images to glance
     # FIXME: kernel/ramdisk is hardcoded - use return result from add
-    glance add -A 999888777666 name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image
-    glance add -A 999888777666 name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image
-    glance add -A 999888777666 name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
+    glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image
+    glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image
+    glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=1 ramdisk_id=2 < $FILES/images/ami-tty/image
 fi
 
 # Using the cloud
