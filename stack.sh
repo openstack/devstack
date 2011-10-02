@@ -320,7 +320,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
         sudo mkdir -p /cgroup
         sudo mount none -t cgroup -o cpuacct,memory,devices,cpu,freezer,blkio /cgroup
         if ! grep -q cgroup /etc/fstab; then
-            sudo echo none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0 >> /etc/fstab
+            echo none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0 | sudo tee -a /etc/fstab
         fi
     fi
 
