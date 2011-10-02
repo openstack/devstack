@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
-# **stack.sh** is an opinionated openstack dev installation.
+# **stack.sh** is an opinionated openstack developer installation.
+
+# This script installs and configures *nova*, *glance*, *dashboard* and *keystone*
 
 # To keep this script simple we assume you are running on an **Ubuntu 11.04
 # Natty** machine.  It should work in a VM or physical server.  Additionally we
 # put the list of *apt* and *pip* dependencies and other configuration files in
 # this repo.  So start by grabbing this script and the dependencies.
 
-# You can grab the most recent version of this script and files from Rackspace
-# Cloud Builders at https://github.com/cloudbuilders/devstack
+# Learn more and get the most recent version at http://devstack.org
 
 # Sanity Check
 # ============
