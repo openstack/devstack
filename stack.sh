@@ -147,6 +147,7 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 # Service Token - Openstack components need to have an admin token
 # to validate user tokens.
 SERVICE_TOKEN=${SERVICE_TOKEN:-`uuidgen`}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 12`}
 
 # Install Packages
 # ================
@@ -415,6 +416,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     cp $FILES/keystone_data.sh $KEYSTONE_DATA
     sudo sed -e "s,%HOST_IP%,$HOST_IP,g" -i $KEYSTONE_DATA
     sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_DATA
+    sudo sed -e "s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g" -i $KEYSTONE_DATA
     # initialize keystone with default users/endpoints
     BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
 fi
@@ -513,6 +515,8 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "keystone is serving at http://$HOST_IP:5000/v2.0/"
     echo "examples on using novaclient command line is in exercise.sh"
+    echo "the default users are: admin and demo"
+    echo "the password: $ADMIN_PASSWORD"
 fi
 
 # Summary
