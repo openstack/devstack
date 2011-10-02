@@ -316,7 +316,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     fi
 
     if [[ "$LIBVIRT_TYPE" -eq "lxc" ]]; then
-        apt-get install lxc -y
+        sudo apt-get install lxc -y
         sudo mkdir -p /cgroup
         sudo mount none -t cgroup -o cpuacct,memory,devices,cpu,freezer,blkio /cgroup
         if ! grep -q cgroup /etc/fstab; then
