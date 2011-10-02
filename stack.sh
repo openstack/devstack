@@ -97,16 +97,14 @@ sudo chown `whoami` $DEST
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
 DASH_DIR=$DEST/dash
-NIXON_DIR=$DEST/dash/openstack-dashboard/dashboard/nixon
 GLANCE_DIR=$DEST/glance
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
-MUNIN_DIR=$DEST/openstack-munin
 
 # Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit,munin}
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit}
 
 # Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
@@ -193,15 +191,11 @@ git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
 # django powered web control panel for openstack
 git_clone $DASH_REPO $DASH_DIR $DASH_BRANCH $DASH_TAG
-# add nixon, will use this to show munin graphs in dashboard
-git_clone $NIXON_REPO $NIXON_DIR $NIXON_BRANCH
 # python client library to nova that dashboard (and others) use
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
-# openstack-munin is a collection of munin plugins for monitoring the stack
-git_clone $MUNIN_REPO $MUNIN_DIR $MUNIN_BRANCH
 
 # Initialization
 # ==============
@@ -262,7 +256,6 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
 
     cd $DASH_DIR/openstack-dashboard
 
-    # Includes settings for Nixon, to expose munin charts.
     sudo cp $FILES/dash_settings.py local/local_settings.py
 
     dashboard/manage.py syncdb
@@ -276,33 +269,6 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
 fi
 
-
-# Munin
-# -----
-
-# Munin is accessable via apache and was configured in the dashboard section.
-
-if [[ "$ENABLED_SERVICES" =~ "munin" ]]; then
-    # allow connections from other hosts
-    sudo sed -i -e 's/Allow from localhost/Allow from all/g' /etc/munin/apache.conf
-
-    cat >/tmp/nova <<EOF
-[keystone_*]
-user `whoami`
-
-[nova_*]
-user `whoami`
-EOF
-    sudo mv /tmp/nova /etc/munin/plugin-conf.d/nova
-    # configure Munin for Nova plugins
-    PLUGINS="keystone_stats nova_floating_ips nova_instance_launched nova_instance_ nova_instance_timing nova_services"
-    for i in $PLUGINS; do
-      sudo cp -p $MUNIN_DIR/$i /usr/share/munin/plugins
-      sudo ln -sf /usr/share/munin/plugins/$i /etc/munin/plugins
-    done
-    sudo mv /etc/munin/plugins/nova_instance_ /etc/munin/plugins/nova_instance_launched
-    sudo restart munin-node
-fi
 
 # Glance
 # ------

@@ -98,7 +98,7 @@ if [ ! -f $CACHEDIR/bootstrapped ]; then
     # trigger the initial debootstrap
     lxc-create -n $CONTAINER -t natty -f $LXC_CONF
     chroot $CACHEDIR apt-get update
-    chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server|munin-node)"`
+    chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot $CACHEDIR pip install `cat files/pips/*`
     touch $CACHEDIR/bootstrapped
 fi
@@ -115,10 +115,8 @@ git_clone $GLANCE_REPO $CACHEDIR/$DEST/glance $GLANCE_BRANCH
 git_clone $KEYSTONE_REPO $CACHEDIR/$DESTkeystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $CACHEDIR/$DEST/novnc $NOVNC_BRANCH
 git_clone $DASH_REPO $CACHEDIR/$DEST/dash $DASH_BRANCH $DASH_TAG
-git_clone $NIXON_REPO $CACHEDIR/$DEST/nixon $NIXON_BRANCH
 git_clone $NOVACLIENT_REPO $CACHEDIR/$DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $CACHEDIR/$DEST/openstackx $OPENSTACKX_BRANCH
-git_clone $MUNIN_REPO $CACHEDIR/$DEST/openstack-munin $MUNIN_BRANCH
 
 # Use this version of devstack?
 if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then

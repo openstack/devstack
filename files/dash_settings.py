@@ -17,10 +17,9 @@ DATABASES = {
 
 CACHE_BACKEND = 'dummy://'
 
-# Add nixon + other apps to dash installation.
+# Add apps to dash installation.
 INSTALLED_APPS = (
     'dashboard',
-    'dashboard.nixon',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -61,7 +60,7 @@ QUANTUM_PORT = '9696'
 QUANTUM_TENANT = '1234'
 QUANTUM_CLIENT_VERSION='0.1'
 
-# We use nixon to embed instead of external monitoring links
+# No monitoring links currently
 EXTERNAL_MONITORING = []
 
 # Uncomment the following segment to silence most logging

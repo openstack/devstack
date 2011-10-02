@@ -81,10 +81,8 @@ git_clone $GLANCE_REPO /opt/stack/glance $GLANCE_BRANCH
 git_clone $KEYSTONE_REPO /opt/stack/keystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO /opt/stack/novnc $NOVNC_BRANCH
 git_clone $DASH_REPO /opt/stack/dash $DASH_BRANCH
-git_clone $NIXON_REPO /opt/stack/nixon $NIXON_BRANCH
 git_clone $NOVACLIENT_REPO /opt/stack/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO /opt/stack/openstackx $OPENSTACKX_BRANCH
-git_clone $MUNIN_REPO /opt/stack/openstack-munin $MUNIN_BRANCH
 
 # build a new image
 BASE=build.$$

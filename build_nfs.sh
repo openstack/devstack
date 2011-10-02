@@ -23,10 +23,8 @@ if [ ! -d proto ]; then
     git_clone $KEYSTONE_REPO proto/opt/keystone $KEYSTONE_BRANCH
     git_clone $NOVNC_REPO proto/opt/novnc $NOVNC_BRANCH
     git_clone $DASH_REPO proto/opt/dash $DASH_BRANCH $DASH_TAG
-    git_clone $NIXON_REPO proto/opt/nixon $NIXON_BRANCH
     git_clone $NOVACLIENT_REPO proto/opt/python-novaclient $NOVACLIENT_BRANCH
     git_clone $OPENSTACKX_REPO proto/opt/openstackx $OPENSTACKX_BRANCH
-    git_clone $MUNIN_REPO proto/opt/openstack-munin $MUNIN_BRANCH
     chroot proto mkdir -p /opt/files
     wget -c http://images.ansolabs.com/tty.tgz -O proto/opt/files/tty.tgz
 fi
