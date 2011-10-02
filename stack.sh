@@ -308,9 +308,22 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # qcow images) and kvm (hardware based virtualization).  If unable to
     # load kvm, set the libvirt type to qemu.
     sudo modprobe nbd || true
-    if [ ! -e /dev/kvm ]; then
-        LIBVIRT_TYPE=qemu
+
+    if [[ "$LIBVIRT_TYPE" -eq "kvm" ]]; then
+        if [ ! -e /dev/kvm ]; then
+            LIBVIRT_TYPE=qemu
+        fi
     fi
+
+    if [[ "$LIBVIRT_TYPE" -eq "lxc" ]]; then
+        apt-get install lxc -y
+        sudo mkdir -p /cgroup
+        sudo mount none -t cgroup -o cpuacct,memory,devices,cpu,freezer,blkio /cgroup
+        if ! grep -q cgroup /etc/fstab; then
+            sudo echo none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0 >> /etc/fstab
+        fi
+    fi
+
     # User needs to be member of libvirtd group for nova-compute to use libvirt.
     sudo usermod -a -G libvirtd `whoami`
     # if kvm wasn't running before we need to restart libvirt to enable it
