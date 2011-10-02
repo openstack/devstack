@@ -47,7 +47,7 @@ if [[ $EUID -eq 0 ]]; then
        useradd -U -G sudo -s /bin/bash -m stack
     fi
     echo "Making sure stack has passwordless sudo"
-    sed -i "/^%sudo/ { / ALL/ { s/ ALL/ NOPASSWD:ALL/ }}" /etc/sudoers
+    echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
     echo "Copying files to stack user"
     cp -r -f `pwd` /home/stack/
     THIS_DIR=$(basename $(dirname $(readlink -f $0)))
