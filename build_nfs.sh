@@ -6,10 +6,12 @@ CHROOTCACHE=${CHROOTCACHE:-/root/cache}
 # Source params
 source ./stackrc
 
-# TODO: make dest not hardcoded
+# Store cwd
+CWD=`pwd`
 
 NAME=$1
-DEST="/nfs/$NAME"
+NFSDIR="/nfs/$NAME"
+DEST=${DEST:-/opt/stack}
 
 # remove old nfs filesystem if one exists
 rm -rf $DEST
@@ -92,26 +94,21 @@ git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
 chroot $CHROOTCACHE/natty-stack mkdir -p $DEST/files
 wget -c http://images.ansolabs.com/tty.tgz -O $CHROOTCACHE/natty-stack$DEST/files/tty.tgz
 
-cp -pr $CHROOTCACHE/natty-stack $DEST
+# Use this version of devstack?
+if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
+    rm -rf $$CHROOTCACHE/natty-stack/$DEST/devstack
+    cp -pr $CWD $CHROOTCACHE/natty-stack/$DEST/devstack
+fi
+
+cp -pr $CHROOTCACHE/natty-stack $NFSDIR
 
 # set hostname
-echo $NAME > $DEST/etc/hostname
-echo "127.0.0.1 localhost $NAME" > $DEST/etc/hosts
-
-# copy kernel modules
-cp -pr /lib/modules/`uname -r` $DEST/lib/modules
-
-
-# copy openstack installer and requirement lists to a new directory.
-mkdir -p $DEST/opt
-
-# inject stack.sh and dependant files
-cp -r files $DEST/opt/files
-cp stack.sh $DEST/opt/stack.sh
+echo $NAME > $NFSDIR/etc/hostname
+echo "127.0.0.1 localhost $NAME" > $NFSDIR/etc/hosts
 
 # injecting root's public ssh key if it exists
 if [ -f /root/.ssh/id_rsa.pub ]; then
-    mkdir $DEST/root/.ssh
-    chmod 700 $DEST/root/.ssh
-    cp /root/.ssh/id_rsa.pub $DEST/root/.ssh/authorized_keys
+    mkdir $NFSDIR/root/.ssh
+    chmod 700 $NFSDIR/root/.ssh
+    cp /root/.ssh/id_rsa.pub $NFSDIR/root/.ssh/authorized_keys
 fi

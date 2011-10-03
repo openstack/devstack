@@ -12,6 +12,9 @@ CHROOTCACHE=${CHROOTCACHE:-/root/cache}
 # Source params
 source ./stackrc
 
+# Store cwd
+CWD=`pwd`
+
 DEST=${DEST:-/opt/stack}
 
 # clean install of natty
@@ -88,6 +91,12 @@ git_clone $NOVNC_REPO $DEST/novnc $NOVNC_BRANCH
 git_clone $DASH_REPO $DEST/dash $DASH_BRANCH
 git_clone $NOVACLIENT_REPO $DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
+
+# Use this version of devstack?
+if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
+    rm -rf $CACHEDIR/$DEST/devstack
+    cp -pr $CWD $CACHEDIR/$DEST/devstack
+fi
 
 # build a new image
 BASE=build.$$
