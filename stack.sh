@@ -4,7 +4,11 @@
 
 # This script installs and configures *nova*, *glance*, *dashboard* and *keystone*
 
-# FIXME: talk about single or multi-node installs
+# This script allows you to specify configuration options of what git 
+# repositories to use, enabled services, network configuration and various
+# passwords.  If you are crafty you can run the script on multiple nodes using
+# shared settings for common resources (mysql, rabbitmq) and build a multi-node
+# developer install.
 
 # To keep this script simple we assume you are running on an **Ubuntu 11.04
 # Natty** machine.  It should work in a VM or physical server.  Additionally we
@@ -95,11 +99,16 @@ set -o xtrace
 #
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
 # in most cases.
-
-
-# FIXME: TALK ABOUT stackrc and localrc
-
-# Import variables
+#
+# We our settings from ``stackrc``.  This file is distributed with devstack and
+# contains locations for what repositories to use.  If you want to use other 
+# repositories and branches, you can add your own settings with another file 
+# called ``localrc``
+#
+# If ``localrc`` exists, then ``stackrc`` will load those settings.  This is 
+# useful for changing a branch or repostiory to test other versions.  Also you
+# can store your other settings like **MYSQL_PASS** or **ADMIN_PASSWORD** instead
+# of letting devstack generate random ones for you.
 source ./stackrc
 
 # Destination path for installation ``DEST``
@@ -136,6 +145,9 @@ fi
 # Nova Network Configuration
 # --------------------------
 
+# FIXME: more documentation about why these are important flags.  Also 
+# we should make sure we use the same variable names as the flag names.
+
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
@@ -153,6 +165,17 @@ MULTI_HOST=${MULTI_HOST:-0}
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
 # ip or you risk breaking things.
+#
+# **DHCP Warning**:  If your flat interface device uses DHCP, there will be a 
+# hiccup while the network is moved from the flat interface to the flat network 
+# bridge.  This will happen when you launch your first instance.  Upon launch 
+# you will lose all connectivity to the node, and the vm launch will probably 
+# fail.
+# 
+# If you are running on a single node and don't need to access the VMs from 
+# devices other than that node, you can set the flat interface to the same
+# value as ``FLAT_NETWORK_BRIDGE``.  This will stop the network hiccup from 
+# occuring.
 FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
@@ -568,14 +591,20 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 # lets you login to it with username/password of user/password.  TTY is useful 
 # for basic functionality.  We all include an Ubuntu cloud build of **Natty**.
 # Natty uses cloud-init, supporting login via keypair and sending scripts as
-# userdata.  Read more about cloud-init at https://help.ubuntu.com/community/CloudInit
+# userdata.  
+#
+# Read more about cloud-init at https://help.ubuntu.com/community/CloudInit
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # create a directory for the downloadedthe images tarballs.
     mkdir -p $FILES/images
 
-    # Downloads a tty image (ami/aki/ari style), then extracts it.  Upon extraction
-    # we upload to glance with the glance cli tool.
+    # Debug Image (TTY)
+    # -----------------
+
+    # Downloads the image (ami/aki/ari style), then extracts it.  Upon extraction
+    # we upload to glance with the glance cli tool.  TTY is a stripped down 
+    # version of ubuntu.
     if [ ! -f $FILES/tty.tgz ]; then
         wget -c http://images.ansolabs.com/tty.tgz -O $FILES/tty.tgz
     fi
@@ -583,17 +612,20 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # extract ami-tty/image, aki-tty/image & ari-tty/image
     tar -zxf $FILES/tty.tgz -C $FILES/images
 
-    # add a debugging images to glance
+    # Use glance client to add the kernel, ramdisk and finally the root 
+    # filesystem.  We parse the results of the uploads to get glance IDs of the
+    # ramdisk and kernel and use them for the root filesystem.
     RVAL=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
     KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
     RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
     RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
     glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
 
+    # Ubuntu 11.04 aka Natty
+    # ----------------------
 
-    # Ubuntu 11.04 aka Natty - downloaded from ubuntu enterprise cloud images.  This
+    # Downloaded from ubuntu enterprise cloud images.  This
     # image doesn't use the ramdisk functionality
-   
     if [ ! -f $FILES/natty.tgz ]; then
         wget -c http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz -O $FILES/natty.tgz
     fi
@@ -623,8 +655,8 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "the password: $ADMIN_PASSWORD"
 fi
 
-# Summary
-# =======
+# Fin
+# ===
 
 # End our timer and give a timing summary
 END_TIME=`python -c "import time; print time.time()"`
