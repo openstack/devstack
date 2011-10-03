@@ -564,8 +564,14 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 # Install Images
 # ==============
 
-if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
+# Upload a couple images to glance.  **TTY** is a simple small image that use the 
+# lets you login to it with username/password of user/password.  TTY is useful 
+# for basic functionality.  We all include an Ubuntu cloud build of **Natty**.
+# Natty uses cloud-init, supporting login via keypair and sending scripts as
+# userdata.  Read more about cloud-init at https://help.ubuntu.com/community/CloudInit
 
+if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
+    # create a directory for the downloadedthe images tarballs.
     mkdir -p $FILES/images
 
     # Downloads a tty image (ami/aki/ari style), then extracts it.  Upon extraction
