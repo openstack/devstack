@@ -565,6 +565,9 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 # ==============
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
+
+    mkdir -p $FILES/images
+
     # Downloads a tty image (ami/aki/ari style), then extracts it.  Upon extraction
     # we upload to glance with the glance cli tool.
     if [ ! -f $FILES/tty.tgz ]; then
@@ -572,7 +575,6 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     fi
 
     # extract ami-tty/image, aki-tty/image & ari-tty/image
-    mkdir -p $FILES/images
     tar -zxf $FILES/tty.tgz -C $FILES/images
 
     # add a debugging images to glance
@@ -581,6 +583,21 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
     RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
     glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
+
+
+    # Ubuntu 11.04 aka Natty - downloaded from ubuntu enterprise cloud images.  This
+    # image doesn't use the ramdisk functionality
+   
+    if [ ! -f $FILES/natty.tgz ]; then
+        wget -c http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz -O $FILES/natty.tgz
+    fi
+    
+    tar -zxf $FILES/natty.tgz -C $FILES/images
+
+    RVAL=`glance add -A $SERVICE_TOKEN name="uec-natty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/natty-server-cloudimg-amd64-vmlinuz-virtual`
+    KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+    glance add -A $SERVICE_TOKEN name="uec-natty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/natty-server-cloudimg-amd64.img
+
 fi
 
 # Using the cloud
