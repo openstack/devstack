@@ -99,7 +99,7 @@ wget -c http://images.ansolabs.com/tty.tgz -O $CHROOTCACHE/natty-stack$DEST/file
 
 # Use this version of devstack?
 if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
-    rm -rf $$CHROOTCACHE/natty-stack/$DEST/devstack
+    rm -rf $CHROOTCACHE/natty-stack/$DEST/devstack
     cp -pr $CWD $CHROOTCACHE/natty-stack/$DEST/devstack
 fi
 
