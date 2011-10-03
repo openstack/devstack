@@ -12,6 +12,8 @@ CHROOTCACHE=${CHROOTCACHE:-/root/cache}
 # Source params
 source ./stackrc
 
+DEST=${DEST:-/opt/stack}
+
 # clean install of natty
 if [ ! -d $CHROOTCACHE/natty-base ]; then
     $PROGDIR/make_image.sh -C natty $CHROOTCACHE/natty-base
@@ -31,7 +33,9 @@ if [ ! -d $CHROOTCACHE/natty-dev ]; then
     # Create a stack user that is a member of the libvirtd group so that stack 
     # is able to interact with libvirt.
     chroot $CHROOTCACHE/natty-dev groupadd libvirtd
-    chroot $CHROOTCACHE/natty-dev useradd stack -s /bin/bash -d /opt -G libvirtd
+    chroot $CHROOTCACHE/natty-dev useradd stack -s /bin/bash -d $DEST -G libvirtd
+    mkdir -p $CHROOTCACHE/natty-dev/$DEST
+    chown stack $CHROOTCACHE/natty-dev/$DEST
 
     # a simple password - pass
     echo stack:pass | chroot $CHROOTCACHE/natty-dev chpasswd
@@ -77,13 +81,13 @@ function git_clone {
     chroot $CHROOTCACHE/natty-stack/ chown -R stack $2
 }
 
-git_clone $NOVA_REPO /opt/stack/nova $NOVA_BRANCH
-git_clone $GLANCE_REPO /opt/stack/glance $GLANCE_BRANCH
-git_clone $KEYSTONE_REPO /opt/stack/keystone $KEYSTONE_BRANCH
-git_clone $NOVNC_REPO /opt/stack/novnc $NOVNC_BRANCH
-git_clone $DASH_REPO /opt/stack/dash $DASH_BRANCH
-git_clone $NOVACLIENT_REPO /opt/stack/python-novaclient $NOVACLIENT_BRANCH
-git_clone $OPENSTACKX_REPO /opt/stack/openstackx $OPENSTACKX_BRANCH
+git_clone $NOVA_REPO $DEST/nova $NOVA_BRANCH
+git_clone $GLANCE_REPO $DEST/glance $GLANCE_BRANCH
+git_clone $KEYSTONE_REPO $DEST/keystone $KEYSTONE_BRANCH
+git_clone $NOVNC_REPO $DEST/novnc $NOVNC_BRANCH
+git_clone $DASH_REPO $DEST/dash $DASH_BRANCH
+git_clone $NOVACLIENT_REPO $DEST/python-novaclient $NOVACLIENT_BRANCH
+git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
 
 # build a new image
 BASE=build.$$
