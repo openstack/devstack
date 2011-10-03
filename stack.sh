@@ -576,10 +576,10 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     tar -zxf $FILES/tty.tgz -C $FILES/images
 
     # add a debugging images to glance
-    KERNEL_ID=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
-    KERNEL_ID=1 # FIXME: parse glance results
-    RAMDISK_ID=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
-    RAMDISK_ID=2 # FIXME: parse glance results
+    RVAL=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
+    KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+    RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
+    RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
     glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
 fi
 
