@@ -55,7 +55,7 @@ if [ ! -r $PXEDIR/vmlinuz-${KVER} ]; then
 fi
 cp -p $PXEDIR/vmlinuz-${KVER} $DEST_DIR/ubuntu
 if [ ! -r $PXEDIR/stack-initrd.gz ]; then
-    cd $PXEDIR
+    cd $OPWD
     sudo $PROGDIR/build_pxe_ramdisk.sh $PXEDIR/stack-initrd.gz
 fi
 cp -p $PXEDIR/stack-initrd.gz $DEST_DIR/ubuntu

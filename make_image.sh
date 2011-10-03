@@ -144,7 +144,7 @@ dd if=/dev/null of=$TMPDISK bs=1M seek=$SIZE count=1
 if [ -n "$IMAGEONLY" ]; then
     # Build image from chroot
     sudo vmbuilder $HYPER ubuntu $ARGS \
-      --existing-chroot=$CHR \
+      --existing-chroot=$CHROOTDIR \
       --overwrite \
       --rootsize=$ROOTSIZE \
       --swapsize=$SWAPSIZE \
