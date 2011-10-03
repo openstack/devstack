@@ -17,6 +17,9 @@ CWD=`pwd`
 
 DEST=${DEST:-/opt/stack}
 
+# Option to use the version of devstack on which we are currently working
+USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
+
 # clean install of natty
 if [ ! -d $CHROOTCACHE/natty-base ]; then
     $PROGDIR/make_image.sh -C natty $CHROOTCACHE/natty-base
