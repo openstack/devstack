@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CHROOTCACHE=${CHROOTCACHE:-/root/cache}
+
 # Source params
 source ./stackrc
 
@@ -12,24 +14,24 @@ DEST="/nfs/$NAME"
 rm -rf $DEST
 
 # build a proto image - natty + packages that will install (optimization)
-if [ ! -d proto ]; then
-    debootstrap natty proto
-    cp files/sources.list proto/etc/apt/sources.list
-    chroot proto apt-get update
-    chroot proto apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-    chroot proto pip install `cat files/pips/*`
-    git_clone $NOVA_REPO proto/opt/nova $NOVA_BRANCH
-    git_clone $GLANCE_REPO proto/opt/glance $GLANCE_BRANCH
-    git_clone $KEYSTONE_REPO proto/opt/keystone $KEYSTONE_BRANCH
-    git_clone $NOVNC_REPO proto/opt/novnc $NOVNC_BRANCH
-    git_clone $DASH_REPO proto/opt/dash $DASH_BRANCH $DASH_TAG
-    git_clone $NOVACLIENT_REPO proto/opt/python-novaclient $NOVACLIENT_BRANCH
-    git_clone $OPENSTACKX_REPO proto/opt/openstackx $OPENSTACKX_BRANCH
-    chroot proto mkdir -p /opt/files
-    wget -c http://images.ansolabs.com/tty.tgz -O proto/opt/files/tty.tgz
+if [ ! -d $CHROOTCACHE/proto ]; then
+    debootstrap natty $CHROOTCACHE/proto
+    cp files/sources.list $CHROOTCACHE/proto/etc/apt/sources.list
+    chroot $CHROOTCACHE/proto apt-get update
+    chroot $CHROOTCACHE/proto apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $CHROOTCACHE/proto pip install `cat files/pips/*`
+    git_clone $NOVA_REPO $CHROOTCACHE/proto/opt/nova $NOVA_BRANCH
+    git_clone $GLANCE_REPO $CHROOTCACHE/proto/opt/glance $GLANCE_BRANCH
+    git_clone $KEYSTONE_REPO $CHROOTCACHE/proto/opt/keystone $KEYSTONE_BRANCH
+    git_clone $NOVNC_REPO $CHROOTCACHE/proto/opt/novnc $NOVNC_BRANCH
+    git_clone $DASH_REPO $CHROOTCACHE/proto/opt/dash $DASH_BRANCH $DASH_TAG
+    git_clone $NOVACLIENT_REPO $CHROOTCACHE/proto/opt/python-novaclient $NOVACLIENT_BRANCH
+    git_clone $OPENSTACKX_REPO $CHROOTCACHE/proto/opt/openstackx $OPENSTACKX_BRANCH
+    chroot $CHROOTCACHE/proto mkdir -p /opt/files
+    wget -c http://images.ansolabs.com/tty.tgz -O $CHROOTCACHE/proto/opt/files/tty.tgz
 fi
 
-cp -pr proto $DEST
+cp -pr $CHROOTCACHE/proto $DEST
 
 # set hostname
 echo $NAME > $DEST/etc/hostname

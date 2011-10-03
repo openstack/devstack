@@ -7,44 +7,45 @@ if [ ! "$#" -eq "1" ]; then
 fi
 
 PROGDIR=`dirname $0`
+CHROOTCACHE=${CHROOTCACHE:-/root/cache}
 
 # Source params
 source ./stackrc
 
 # clean install of natty
-if [ ! -d natty-base ]; then
-    $PROGDIR/make_image.sh -C natty natty-base
+if [ ! -d $CHROOTCACHE/natty-base ]; then
+    $PROGDIR/make_image.sh -C natty $CHROOTCACHE/natty-base
     # copy kernel modules...  
     # NOTE(ja): is there a better way to do this?
-    cp -pr /lib/modules/`uname -r` natty-base/lib/modules
+    cp -pr /lib/modules/`uname -r` $CHROOTCACHE/natty-base/lib/modules
     # a simple password - pass
-    echo root:pass | chroot natty-base chpasswd
+    echo root:pass | chroot $CHROOTCACHE/natty-base chpasswd
 fi
 
 # prime natty with as many apt/pips as we can
-if [ ! -d primed ]; then
-    rsync -azH natty-base/ primed/
-    chroot primed apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-    chroot primed pip install `cat files/pips/*`
+if [ ! -d $CHROOTCACHE/natty-dev ]; then
+    rsync -azH $CHROOTCACHE/natty-base/ $CHROOTCACHE/natty-dev/
+    chroot $CHROOTCACHE/natty-dev apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $CHROOTCACHE/natty-dev pip install `cat files/pips/*`
 
     # Create a stack user that is a member of the libvirtd group so that stack 
     # is able to interact with libvirt.
-    chroot primed groupadd libvirtd
-    chroot primed useradd stack -s /bin/bash -d /opt -G libvirtd
+    chroot $CHROOTCACHE/natty-dev groupadd libvirtd
+    chroot $CHROOTCACHE/natty-dev useradd stack -s /bin/bash -d /opt -G libvirtd
 
     # a simple password - pass
-    echo stack:pass | chroot primed chpasswd
+    echo stack:pass | chroot $CHROOTCACHE/natty-dev chpasswd
 
     # and has sudo ability (in the future this should be limited to only what 
     # stack requires)
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> primed/etc/sudoers
+    echo "stack ALL=(ALL) NOPASSWD: ALL" >> $CHROOTCACHE/natty-dev/etc/sudoers
 fi
 
 # clone git repositories onto the system
 # ======================================
 
-if [ ! -d cloned ]; then
-    rsync -azH primed/ cloned/
+if [ ! -d $CHROOTCACHE/natty-stack ]; then
+    rsync -azH $CHROOTCACHE/natty-dev/ $CHROOTCACHE/natty-stack/
 fi
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
@@ -53,7 +54,7 @@ fi
 function git_clone {
 
     # clone new copy or fetch latest changes
-    CHECKOUT=cloned$2
+    CHECKOUT=$CHROOTCACHE/natty-stack$2
     if [ ! -d $CHECKOUT ]; then
         mkdir -p $CHECKOUT
         git clone $1 $CHECKOUT
@@ -73,7 +74,7 @@ function git_clone {
     popd
 
     # give ownership to the stack user
-    chroot cloned/ chown -R stack $2
+    chroot $CHROOTCACHE/natty-stack/ chown -R stack $2
 }
 
 git_clone $NOVA_REPO /opt/stack/nova $NOVA_BRANCH
@@ -97,7 +98,7 @@ mkfs.ext2 -F $IMG
 # mount blank image loopback and load it
 mkdir -p $MNT
 mount -o loop $IMG $MNT
-rsync -azH cloned/ $MNT
+rsync -azH $CHROOTCACHE/natty-stack/ $MNT
 
 # umount and cleanup
 umount $MNT
