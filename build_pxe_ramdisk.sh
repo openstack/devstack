@@ -94,8 +94,8 @@ git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
 
 # Use this version of devstack?
 if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
-    rm -rf $CACHEDIR/$DEST/devstack
-    cp -pr $CWD $CACHEDIR/$DEST/devstack
+    rm -rf $$CHROOTCACHE/natty-stack/$DEST/devstack
+    cp -pr $CWD $CHROOTCACHE/natty-stack/$DEST/devstack
 fi
 
 # build a new image
