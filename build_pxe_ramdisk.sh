@@ -101,6 +101,16 @@ if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
     cp -pr $CWD $CHROOTCACHE/natty-stack/$DEST/devstack
 fi
 
+# Configure host network for DHCP
+mkdir -p $CHROOTCACHE/natty-stack/etc/network
+cat > $$CHROOTCACHE/natty-stack/etc/network/interfaces <<EOF
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+EOF
+
 # build a new image
 BASE=$CHROOTCACHE/build.$$
 IMG=$BASE.img
