@@ -25,7 +25,7 @@ NOVACLIENT_BRANCH=master
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 OPENSTACKX_REPO=https://github.com/cloudbuilders/openstackx.git
-OPENSTACKX_BRANCH=diablo
+OPENSTACKX_BRANCH=master
 
 # allow local overrides of env variables
 if [ -f ./localrc ]; then
