@@ -389,7 +389,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # Check for kvm (hardware based virtualization).  If unable to load kvm, 
     # set the libvirt type to qemu.  Note: many systems come with hardware 
     # virtualization disabled in BIOS.
-    if [[ "$LIBVIRT_TYPE" -eq "kvm" ]]; then
+    if [[ "$LIBVIRT_TYPE" == "kvm" ]]; then
         sudo modprobe kvm || true
         if [ ! -e /dev/kvm ]; then
             echo "WARNING: Switching to QEMU"
@@ -400,7 +400,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # Install and configure **LXC** if specified.  LXC is another approach to
     # splitting a system into many smaller parts.  LXC uses cgroups and chroot
     # to simulate multiple systems.
-    if [[ "$LIBVIRT_TYPE" -eq "lxc" ]]; then
+    if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
         sudo apt-get install lxc -y
         # lxc requires cgroups to be configured on /cgroup
         sudo mkdir -p /cgroup
