@@ -20,7 +20,7 @@ if [ "$1" = "-k" ]; then
 fi
 
 DEST_DIR=${1:-/tmp}/tftpboot
-PXEDIR=${PXEDIR:-/root/pxe}
+PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
 OPWD=`pwd`
 PROGDIR=`dirname $0`
 

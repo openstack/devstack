@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROGDIR=`dirname $0`
-CHROOTCACHE=${CHROOTCACHE:-/root/cache}
+CHROOTCACHE=${CHROOTCACHE:-/var/cache/devstack}
 
 # Source params
 source ./stackrc

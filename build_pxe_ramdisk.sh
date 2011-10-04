@@ -7,7 +7,7 @@ if [ ! "$#" -eq "1" ]; then
 fi
 
 PROGDIR=`dirname $0`
-CHROOTCACHE=${CHROOTCACHE:-/root/cache}
+CHROOTCACHE=${CHROOTCACHE:-/var/cache/devstack}
 
 # Source params
 source ./stackrc
@@ -103,7 +103,7 @@ fi
 
 # Configure host network for DHCP
 mkdir -p $CHROOTCACHE/natty-stack/etc/network
-cat > $$CHROOTCACHE/natty-stack/etc/network/interfaces <<EOF
+cat > $CHROOTCACHE/natty-stack/etc/network/interfaces <<EOF
 auto lo
 iface lo inet loopback
 
