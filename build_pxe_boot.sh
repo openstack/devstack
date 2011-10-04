@@ -20,6 +20,7 @@ if [ "$1" = "-k" ]; then
 fi
 
 DEST_DIR=${1:-/tmp}/tftpboot
+PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
 OPWD=`pwd`
 PROGDIR=`dirname $0`
 
@@ -41,23 +42,23 @@ EOF
 
 # Setup devstack boot
 mkdir -p $DEST_DIR/ubuntu
-if [ ! -d $OPWD/pxe ]; then
-    mkdir -p $OPWD/pxe
+if [ ! -d $PXEDIR ]; then
+    mkdir -p $PXEDIR
 fi
-if [ ! -r $OPWD/pxe/vmlinuz-${KVER} ]; then
+if [ ! -r $PXEDIR/vmlinuz-${KVER} ]; then
     sudo chmod 644 /boot/vmlinuz-${KVER}
     if [ ! -r /boot/vmlinuz-${KVER} ]; then
         echo "No kernel found"
     else
-        cp -p /boot/vmlinuz-${KVER} $OPWD/pxe
+        cp -p /boot/vmlinuz-${KVER} $PXEDIR
     fi
 fi
-cp -p $OPWD/pxe/vmlinuz-${KVER} $DEST_DIR/ubuntu
-if [ ! -r $OPWD/pxe/stack-initrd.gz ]; then
+cp -p $PXEDIR/vmlinuz-${KVER} $DEST_DIR/ubuntu
+if [ ! -r $PXEDIR/stack-initrd.gz ]; then
     cd $OPWD
-    sudo $PROGDIR/build_pxe_ramdisk.sh $OPWD/pxe/stack-initrd.gz
+    sudo $PROGDIR/build_pxe_ramdisk.sh $PXEDIR/stack-initrd.gz
 fi
-cp -p $OPWD/pxe/stack-initrd.gz $DEST_DIR/ubuntu
+cp -p $PXEDIR/stack-initrd.gz $DEST_DIR/ubuntu
 cat >>$DEFAULT <<EOF
 
 LABEL devstack
@@ -68,8 +69,8 @@ LABEL devstack
 EOF
 
 # Get Ubuntu
-if [ -d $OPWD/pxe ]; then
-    cp -p $OPWD/pxe/natty-base-initrd.gz $DEST_DIR/ubuntu
+if [ -d $PXEDIR ]; then
+    cp -p $PXEDIR/natty-base-initrd.gz $DEST_DIR/ubuntu
 fi
 cat >>$DEFAULT <<EOF
 
