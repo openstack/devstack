@@ -212,7 +212,9 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 # Service Token - Openstack components need to have an admin token
 # to validate user tokens.
 SERVICE_TOKEN=${SERVICE_TOKEN:-`openssl rand -hex 12`}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 12`}
+# Dash currently truncates usernames and passwords at 20 characters
+# so use 10 bytes
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 10`}
 
 
 # Install Packages
