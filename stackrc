@@ -16,7 +16,7 @@ NOVNC_BRANCH=master
 
 # django powered web control panel for openstack
 DASH_REPO=https://github.com/cloudbuilders/openstack-dashboard.git
-DASH_BRANCH=diablo
+DASH_BRANCH=master
 
 # python client library to nova that dashboard (and others) use
 NOVACLIENT_REPO=https://github.com/cloudbuilders/python-novaclient.git
@@ -25,7 +25,7 @@ NOVACLIENT_BRANCH=master
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 OPENSTACKX_REPO=https://github.com/cloudbuilders/openstackx.git
-OPENSTACKX_BRANCH=master
+OPENSTACKX_BRANCH=diablo
 
 # allow local overrides of env variables
 if [ -f ./localrc ]; then
