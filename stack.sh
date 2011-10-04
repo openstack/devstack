@@ -49,16 +49,16 @@ fi
 # sudo privileges and runs as that user.
 
 if [[ $EUID -eq 0 ]]; then
-   echo "You are running this script as root."
+    echo "You are running this script as root."
 
-   # since this script runs as a normal user, we need to give that user
-   # ability to run sudo
-   apt-get update
-   apt-get install -y sudo
+    # since this script runs as a normal user, we need to give that user
+    # ability to run sudo
+    apt-get update
+    apt-get install -y sudo
 
-   if ! getent passwd | grep -q stack; then
-       echo "Creating a user called stack"
-       useradd -U -G sudo -s /bin/bash -m stack
+    if ! getent passwd | grep -q stack; then
+        echo "Creating a user called stack"
+        useradd -U -G sudo -s /bin/bash -m stack
     fi
     echo "Giving stack user passwordless sudo priviledges"
     echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
