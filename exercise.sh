@@ -24,8 +24,9 @@ HOST=${HOST:-localhost}
 # Nova original used project_id as the *account* that owned resources (servers,
 # ip address, ...)   With the addition of Keystone we have standardized on the
 # term **tenant** as the entity that owns the resources.  **novaclient** still
-# uses the old deprecated terms project_id.
-export NOVA_PROJECT_ID=${TENANT:-2}
+# uses the old deprecated terms project_id.  Note that this field should now be
+# set to tenant_name, not tenant_id.
+export NOVA_PROJECT_ID=${TENANT:-demo}
 
 # In addition to the owning entity (tenant), nova stores the entity performing
 # the action as the **user**.
