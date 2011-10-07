@@ -93,29 +93,31 @@ set -o xtrace
 
 if [[ $EUID -eq 0 ]]; then
     echo "You are running this script as root."
+    echo "In 10 seconds, we will create a user 'stack' and run as that user"
+    sleep 10 
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
     apt-get update
     apt-get install -y sudo
 
-    if ! getent passwd | grep -q stack; then
+    if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
         useradd -U -G sudo -s /bin/bash -m stack
     fi
+
     echo "Giving stack user passwordless sudo priviledges"
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    ( umask 226 && echo "stack ALL=(ALL) NOPASSWD: ALL" \
+        >> /etc/sudoers.d/50_stack_sh )
 
     echo "Copying files to stack user"
-    cp -r -f `pwd` /home/stack/
-    THIS_DIR=$(basename $(dirname $(readlink -f $0)))
-    chown -R stack /home/stack/$THIS_DIR
-    echo "Running the script as stack in 3 seconds..."
-    sleep 3
+    STACK_DIR="/home/stack/${PWD%/*}"
+    cp -r -f "$PWD" "$STACK_DIR"
+    chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
-        exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
+        exec su -ec "cd $STACK_DIR; bash stack.sh; bash" stack
     else
-        exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh" stack
+        exec su -ec "cd $STACK_DIR; bash stack.sh" stack
     fi
     exit 0
 fi
