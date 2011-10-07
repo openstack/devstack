@@ -235,6 +235,7 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 10`}
 
 
 # install apt requirements
+sudo apt-get update
 sudo apt-get install -qqy `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
 
 # install python requirements
