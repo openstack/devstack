@@ -40,48 +40,6 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
-# OpenStack is designed to be run as a regular user (Dashboard will fail to run
-# as root, since apache refused to startup serve content from root user).  If
-# stack.sh is run as root, it automatically creates a stack user with
-# sudo privileges and runs as that user.
-
-if [[ $EUID -eq 0 ]]; then
-    echo "You are running this script as root."
-
-    # since this script runs as a normal user, we need to give that user
-    # ability to run sudo
-    apt-get update
-    apt-get install -qqy sudo
-
-    if ! getent passwd | grep -q stack; then
-        echo "Creating a user called stack"
-        useradd -U -G sudo -s /bin/bash -m stack
-    fi
-    echo "Giving stack user passwordless sudo priviledges"
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-
-    echo "Copying files to stack user"
-    cp -r -f `pwd` /home/stack/
-    THIS_DIR=$(basename $(dirname $(readlink -f $0)))
-    chown -R stack /home/stack/$THIS_DIR
-    echo "Running the script as stack in 3 seconds..."
-    sleep 3
-    if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
-	exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
-    else
-	exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh" stack
-    fi
-    exit 0
-fi
-
-# So that errors don't compound we exit on any errors so you see only the
-# first error that occured.
-set -o errexit
-
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following allowing as the install occurs.
-set -o xtrace
-
 # Settings
 # ========
 
@@ -111,6 +69,56 @@ set -o xtrace
 # can store your other settings like **MYSQL_PASS** or **ADMIN_PASSWORD** instead
 # of letting devstack generate random ones for you.
 source ./stackrc
+
+LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
+(
+# So that errors don't compound we exit on any errors so you see only the
+# first error that occured.
+trap failed ERR
+failed() {
+    local r=$?
+    set +o xtrace
+    [ -n "$LOGFILE" ] && echo "${0##*/} failed: full log in $LOGFILE"
+    exit $r
+}
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+# OpenStack is designed to be run as a regular user (Dashboard will fail to run
+# as root, since apache refused to startup serve content from root user).  If
+# stack.sh is run as root, it automatically creates a stack user with
+# sudo privileges and runs as that user.
+
+if [[ $EUID -eq 0 ]]; then
+    echo "You are running this script as root."
+
+    # since this script runs as a normal user, we need to give that user
+    # ability to run sudo
+    apt-get update
+    apt-get install -y sudo
+
+    if ! getent passwd | grep -q stack; then
+        echo "Creating a user called stack"
+        useradd -U -G sudo -s /bin/bash -m stack
+    fi
+    echo "Giving stack user passwordless sudo priviledges"
+    echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+    echo "Copying files to stack user"
+    cp -r -f `pwd` /home/stack/
+    THIS_DIR=$(basename $(dirname $(readlink -f $0)))
+    chown -R stack /home/stack/$THIS_DIR
+    echo "Running the script as stack in 3 seconds..."
+    sleep 3
+    if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
+        exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
+    else
+        exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh" stack
+    fi
+    exit 0
+fi
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
@@ -663,5 +671,16 @@ fi
 # Fin
 # ===
 
+
+) 2>&1 | tee "${LOGFILE}"
+
+# because of the way pipes work, the left side of the pipe may
+# have failed, but 'tee' will succeed.  We need to check that.
+for ret in "${PIPESTATUS[@]}"; do
+	[ $ret -eq 0 ] || exit $ret
+done
+
 # indicate how long this took to run (bash maintained variable 'SECONDS')
-echo "stack.sh completed in $SECONDS seconds."
+echo "stack.sh completed in $SECONDS seconds." | tee -a "${LOGFILE}"
+
+exit 0
