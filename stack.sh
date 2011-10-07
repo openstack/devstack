@@ -409,7 +409,9 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
         if ! grep -q cgroup /etc/fstab; then
             echo none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0 | sudo tee -a /etc/fstab
         fi
-        sudo mount /cgroup
+        if ! mount -n | grep -q cgroup; then
+            sudo mount /cgroup
+        fi
     fi
 
     # User needs to be member of libvirtd group for nova-compute to use libvirt.
