@@ -654,6 +654,16 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
 
 fi
 
+# Fin
+# ===
+
+
+) 2>&1 | tee "${LOGFILE}"
+
+# Check that the left side of the above pipe succeeded
+for ret in "${PIPESTATUS[@]}"; do [ $ret -eq 0 ] || exit $ret; done
+
+(
 # Using the cloud
 # ===============
 
@@ -671,19 +681,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "the password: $ADMIN_PASSWORD"
 fi
 
-# Fin
-# ===
-
-
-) 2>&1 | tee "${LOGFILE}"
-
-# because of the way pipes work, the left side of the pipe may
-# have failed, but 'tee' will succeed.  We need to check that.
-for ret in "${PIPESTATUS[@]}"; do
-	[ $ret -eq 0 ] || exit $ret
-done
-
 # indicate how long this took to run (bash maintained variable 'SECONDS')
-echo "stack.sh completed in $SECONDS seconds." | tee -a "${LOGFILE}"
+echo "stack.sh completed in $SECONDS seconds."
 
-exit 0
+) | tee -a "$LOGFILE"
