@@ -20,9 +20,6 @@
 # Sanity Check
 # ============
 
-# Record the start time.  This allows us to print how long this script takes to run.
-START_TIME=`python -c "import time; print time.time()"`
-
 # Warn users who aren't on natty, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
 if ! grep -q natty /etc/lsb-release; then
@@ -666,7 +663,5 @@ fi
 # Fin
 # ===
 
-# End our timer and give a timing summary
-END_TIME=`python -c "import time; print time.time()"`
-ELAPSED=`python -c "print $END_TIME - $START_TIME"`
-echo "stack.sh completed in $ELAPSED seconds."
+# indicate how long this took to run (bash maintained variable 'SECONDS')
+echo "stack.sh completed in $SECONDS seconds."
