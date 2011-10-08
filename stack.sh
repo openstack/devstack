@@ -40,52 +40,6 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
-# Settings
-# ========
-
-# This script is customizable through setting environment variables.  If you
-# want to override a setting you can either::
-#
-#     export MYSQL_PASS=anothersecret
-#     ./stack.sh
-#
-# You can also pass options on a single line ``MYSQL_PASS=simple ./stack.sh``
-#
-# Additionally, you can put any local variables into a ``localrc`` file, like::
-#
-#     MYSQL_PASS=anothersecret
-#     MYSQL_USER=hellaroot
-#
-# We try to have sensible defaults, so you should be able to run ``./stack.sh``
-# in most cases.
-#
-# We our settings from ``stackrc``.  This file is distributed with devstack and
-# contains locations for what repositories to use.  If you want to use other 
-# repositories and branches, you can add your own settings with another file 
-# called ``localrc``
-#
-# If ``localrc`` exists, then ``stackrc`` will load those settings.  This is 
-# useful for changing a branch or repostiory to test other versions.  Also you
-# can store your other settings like **MYSQL_PASS** or **ADMIN_PASSWORD** instead
-# of letting devstack generate random ones for you.
-source ./stackrc
-
-LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
-(
-# So that errors don't compound we exit on any errors so you see only the
-# first error that occured.
-trap failed ERR
-failed() {
-    local r=$?
-    set +o xtrace
-    [ -n "$LOGFILE" ] && echo "${0##*/} failed: full log in $LOGFILE"
-    exit $r
-}
-
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following along as the install occurs.
-set -o xtrace
-
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
@@ -119,13 +73,42 @@ if [[ $EUID -eq 0 ]]; then
     else
         exec su -ec "cd $STACK_DIR; bash stack.sh" stack
     fi
-    exit 0
+    exit 1
 fi
+
+
+# Settings
+# ========
+
+# This script is customizable through setting environment variables.  If you
+# want to override a setting you can either::
+#
+#     export MYSQL_PASS=anothersecret
+#     ./stack.sh
+#
+# You can also pass options on a single line ``MYSQL_PASS=simple ./stack.sh``
+#
+# Additionally, you can put any local variables into a ``localrc`` file, like::
+#
+#     MYSQL_PASS=anothersecret
+#     MYSQL_USER=hellaroot
+#
+# We try to have sensible defaults, so you should be able to run ``./stack.sh``
+# in most cases.
+#
+# We our settings from ``stackrc``.  This file is distributed with devstack and
+# contains locations for what repositories to use.  If you want to use other 
+# repositories and branches, you can add your own settings with another file 
+# called ``localrc``
+#
+# If ``localrc`` exists, then ``stackrc`` will load those settings.  This is 
+# useful for changing a branch or repostiory to test other versions.  Also you
+# can store your other settings like **MYSQL_PASS** or **ADMIN_PASSWORD** instead
+# of letting devstack generate random ones for you.
+source ./stackrc
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
-sudo mkdir -p $DEST
-sudo chown `whoami` $DEST
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
@@ -227,6 +210,24 @@ SERVICE_TOKEN=${SERVICE_TOKEN:-`openssl rand -hex 12`}
 # so use 10 bytes
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 10`}
 
+LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
+(
+# So that errors don't compound we exit on any errors so you see only the
+# first error that occured.
+trap failed ERR
+failed() {
+    local r=$?
+    set +o xtrace
+    [ -n "$LOGFILE" ] && echo "${0##*/} failed: full log in $LOGFILE"
+    exit $r
+}
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+sudo mkdir -p $DEST
+sudo chown `whoami` $DEST
 
 # Install Packages
 # ================
