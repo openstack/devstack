@@ -54,7 +54,7 @@ if [[ $EUID -eq 0 ]]; then
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
     apt-get update
-    apt-get install -y sudo
+    apt-get install -qqy sudo
 
     if ! getent passwd | grep -q stack; then
         echo "Creating a user called stack"
@@ -224,7 +224,7 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 10`}
 
 
 # install apt requirements
-sudo apt-get install -y -q `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
+sudo apt-get install -qqy `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
 
 # install python requirements
 sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
@@ -435,7 +435,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     fi
 
     # Clean out the instances directory.
-    rm -rf $NOVA_DIR/instances/*
+    sudo rm -rf $NOVA_DIR/instances/*
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
