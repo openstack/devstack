@@ -69,7 +69,11 @@ if [[ $EUID -eq 0 ]]; then
     chown -R stack /home/stack/$THIS_DIR
     echo "Running the script as stack in 3 seconds..."
     sleep 3
-    exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
+    if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
+	exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
+    else
+	exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh" stack
+    fi
     exit 0
 fi
 
