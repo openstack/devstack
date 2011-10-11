@@ -84,9 +84,10 @@ DEST=${DEST:-/opt/stack}
 # sudo privileges and runs as that user.
 
 if [[ $EUID -eq 0 ]]; then
+    ROOTSLEEP=${ROOTSLEEP:-10}
     echo "You are running this script as root."
-    echo "In 10 seconds, we will create a user 'stack' and run as that user"
-    sleep 10 
+    echo "In $ROOTSLEEP seconds, we will create a user 'stack' and run as that user"
+    sleep $ROOTSLEEP
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
@@ -385,7 +386,7 @@ EOF
     # Install and start mysql-server
     sudo apt-get -y -q install mysql-server
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
-    sudo mysql -uroot -p$MYSQL_PASSWORD -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';"
+    sudo mysql -uroot -p$MYSQL_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';"
 
     # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
     sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
@@ -642,28 +643,31 @@ fi
 # launch the glance api and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
-    while ! wget -q -O- http://$GLANCE_HOSTPORT; do
-        echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-        sleep 1
-    done
+    echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
+    if ! timeout 600 sh -c "while ! wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
+      echo "g-api did not start"
+      exit 1
+    fi
 fi
 
 # launch the keystone and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF -d"
-    while ! wget -q -O- http://127.0.0.1:5000; do
-        echo "Waiting for keystone to start..."
-        sleep 1
-    done
+    echo "Waiting for keystone to start..."
+    if ! timeout 600 sh -c "while ! wget -q -O- http://127.0.0.1:5000; do sleep 1; done"; then
+      echo "keystone did not start"
+      exit 1
+    fi
 fi
 
 # launch the nova-api and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
-    while ! wget -q -O- http://127.0.0.1:8774; do
-        echo "Waiting for nova-api to start..."
-        sleep 1
-    done
+    echo "Waiting for nova-api to start..."
+    if ! timeout 600 sh -c "while ! wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
+      echo "nova-api did not start"
+      exit 1
+    fi
 fi
 # Launching nova-compute should be as simple as running ``nova-compute`` but
 # have to do a little more than that in our script.  Since we add the group
