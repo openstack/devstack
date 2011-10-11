@@ -53,6 +53,10 @@ export NOVA_VERSION=1.1
 export NOVA_REGION_NAME=RegionOne
 
 
+# Get a token for clients that don't support service catalog
+# ==========================================================
+SERVICE_TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$NOVA_PROJECT_ID\", \"password\": \"$NOVA_API_KEY\"}}}" -H "Content-type: application/json" http://$HOST:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
+
 # Launching a server
 # ==================
 
@@ -69,7 +73,7 @@ nova flavor-list
 nova image-list
 
 # But we recommend using glance directly
-glance index
+glance -A $SERVICE_TOKEN index
 
 # show details of the active servers::
 #
