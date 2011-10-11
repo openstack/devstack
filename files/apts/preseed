@@ -1,0 +1,18 @@
+# a collection of packages that speed up installation as they are dependencies
+# of packages we can't install during bootstraping (rabbitmq-server, 
+# mysql-server, libvirt-bin)
+#
+# NOTE: only add packages to this file that aren't needed directly
+mysql-common
+mysql-client-5.1
+erlang-base
+erlang-ssl 
+erlang-nox
+erlang-inets
+erlang-mnesia
+libhtml-template-perl
+gettext-base
+libavahi-client3
+libxml2-utils
+libpciaccess0
+libparted0debian1
