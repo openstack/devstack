@@ -4,7 +4,6 @@
 # build_usb_boot.sh [-k kernel-version] destdev
 #
 # Assumes syslinux is installed
-# Assumes devstack files are in `pwd`/pxe
 # Needs to run as root
 
 KVER=`uname -r`
@@ -95,7 +94,6 @@ cat >>$CFG <<EOF
 
 LABEL local
     MENU LABEL ^Local disk
-    MENU DEFAULT
     LOCALBOOT 0
 EOF
 
