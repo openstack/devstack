@@ -43,8 +43,8 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
-# Keep track of the current working directory.
-CWD=`pwd`
+# Keep track of the current devstack directory.
+TOP_DIR=$(cd $(dirname "$0") && pwd)
 
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
@@ -155,34 +155,32 @@ function read_password {
     var=$1; msg=$2
     pw=${!var}
 
-    localrc=$CWD/localrc
+    localrc=$TOP_DIR/localrc
 
     # If the password is not defined yet, proceed to prompt user for a password.
     if [ ! $pw ]; then
         # If there is no localrc file, create one
-        if [ ! -e localrc ]; then
-            touch localrc
+        if [ ! -e $localrc ]; then
+            touch $localrc
         fi
 
         # Presumably if we got this far it can only be that our localrc is missing 
         # the required password.  Prompt user for a password and write to localrc.
-        if ! grep -q $1 localrc; then
-            echo ''
-            echo '################################################################################'
-            echo $msg
-            echo '################################################################################'
-            echo "This value will be written to your localrc file so you don't have to enter it again."
-            echo "It is probably best to avoid spaces and weird characters."
-            echo "If you leave this blank, a random default value will be used."
-            echo "Enter a password now:"
-            read $var
-            pw=${!var}
-            if [ ! $pw ]; then
-                pw=`openssl rand -hex 10`
-            fi
-            eval "$var=$pw"
-            echo "$var=$pw" >> localrc
+        echo ''
+        echo '################################################################################'
+        echo $msg
+        echo '################################################################################'
+        echo "This value will be written to your localrc file so you don't have to enter it again."
+        echo "It is probably best to avoid spaces and weird characters."
+        echo "If you leave this blank, a random default value will be used."
+        echo "Enter a password now:"
+        read $var
+        pw=${!var}
+        if [ ! $pw ]; then
+            pw=`openssl rand -hex 10`
         fi
+        eval "$var=$pw"
+        echo "$var=$pw" >> $localrc
     fi
     set -o xtrace
 }
