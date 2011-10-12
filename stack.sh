@@ -43,6 +43,9 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
+# Keep track of the current working directory.
+CWD=`pwd`
+
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
@@ -151,6 +154,8 @@ function read_password {
     set +o xtrace
     var=$1; msg=$2
     pw=${!var}
+
+    localrc=$CWD/localrc
 
     # If the password is not defined yet, proceed to prompt user for a password.
     if [ ! $pw ]; then
