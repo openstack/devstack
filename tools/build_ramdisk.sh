@@ -100,6 +100,8 @@ git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
 if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
     rm -rf $CHROOTCACHE/natty-stack/$DEST/devstack
     cp -pr $CWD $CHROOTCACHE/natty-stack/$DEST/devstack
+else
+    git_clone $DEVSTACK_REPO $DEST/devstack $DEVSTACK_BRANCH
 fi
 
 # Configure host network for DHCP
