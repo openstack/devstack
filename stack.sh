@@ -171,7 +171,7 @@ function read_password {
             echo '################################################################################'
             echo $msg
             echo '################################################################################'
-            echo "This value will be written to your localrc file."
+            echo "This value will be written to your localrc file so you don't have to enter it again."
             echo "It is probably best to avoid spaces and weird characters."
             echo "If you leave this blank, a random default value will be used."
             echo "Enter a password now:"
