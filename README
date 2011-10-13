@@ -7,6 +7,8 @@ Tool to quickly deploy openstack dev environments.
 * To make it easier for developers to dive into openstack so that they can productively contribute without having to understand every part of the system at once
 * To make it easy to prototype cross-project features
 
+Read more at http://devstack.org (built from the gh-pages branch)
+
 Be sure to carefully read these scripts before you run them as they install software and may alter your networking configuration.
 
 # To start a dev cloud on your local machine (installing on a dedicated vm is safer!):
@@ -32,7 +34,6 @@ You can tweak environment variables by creating file name 'localrc' should you n
 
 * Add python-novaclient cli support
 * syslog
-* allow rabbit connection to be specified via environment variables with sensible defaults
 * Add volume support
 * Add quantum support
 
