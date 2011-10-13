@@ -69,9 +69,9 @@ if [[ $EUID -eq 0 ]]; then
     cp -r -f "$PWD" "$STACK_DIR"
     chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
-        exec su -ec "cd $STACK_DIR; bash stack.sh; bash" stack
+        exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
     else
-        exec su -ec "cd $STACK_DIR; bash stack.sh" stack
+        exec su -c "set -e; cd $STACK_DIR; bash stack.sh" stack
     fi
     exit 1
 fi
