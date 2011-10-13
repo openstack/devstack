@@ -318,6 +318,9 @@ mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASS
 mysql-server-5.1 mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
 
+    # while ``.my.cnf`` is not needed for openstack to function, it is useful
+    # as it allows you to access the mysql databases via ``mysql nova`` instead
+    # of having to specify the username/password each time.
     if [[ ! -e $HOME/.my.cnf ]]; then
         cat <<EOF >$HOME/.my.cnf
 [client]
