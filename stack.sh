@@ -61,6 +61,9 @@ if [[ $EUID -eq 0 ]]; then
     fi
 
     echo "Giving stack user passwordless sudo priviledges"
+    # natty uec images sudoers does not have a '#includedir'. add one.
+    grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+        echo "#includedir /etc/sudoers.d" >> /etc/sudoers
     ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
         > /etc/sudoers.d/50_stack_sh )
 
