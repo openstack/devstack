@@ -45,7 +45,7 @@ if [ ! -d $CHROOTCACHE/natty-dev ]; then
     chroot $CHROOTCACHE/natty-dev groupadd libvirtd
     chroot $CHROOTCACHE/natty-dev useradd stack -s /bin/bash -d $DEST -G libvirtd
     mkdir -p $CHROOTCACHE/natty-dev/$DEST
-    chown stack $CHROOTCACHE/natty-dev/$DEST
+    chroot $CHROOTCACHE/natty-dev chown stack $DEST
 
     # a simple password - pass
     echo stack:pass | chroot $CHROOTCACHE/natty-dev chpasswd
@@ -114,6 +114,10 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet dhcp
 EOF
+
+# Set hostname
+echo "ramstack" >$CHROOTCACHE/natty-stack/etc/hostname
+echo "127.0.0.1		localhost	ramstack" >$CHROOTCACHE/natty-stack/etc/hosts
 
 # Configure the runner
 RUN_SH=$CHROOTCACHE/natty-stack/$DEST/run.sh
