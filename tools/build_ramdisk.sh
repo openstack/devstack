@@ -120,8 +120,14 @@ RUN_SH=$CHROOTCACHE/natty-stack/$DEST/run.sh
 cat > $RUN_SH <<EOF
 #!/usr/bin/env bash
 
+# Get IP range
+set \`ip addr show dev eth0 | grep inet\`
+PREFIX=\`echo \$2 | cut -d. -f1,2,3\`
+export FLOATING_RANGE="\$PREFIX.224/27"
+
 # Pre-empt download of natty image
 tar czf $DEST/devstack/files/natty.tgz /etc/hosts
+mkdir -p $DEST/devstack/files/images
 touch $DEST/devstack/files/images/natty-server-cloudimg-amd64-vmlinuz-virtual
 touch $DEST/devstack/files/images/natty-server-cloudimg-amd64.img
 
@@ -137,6 +143,7 @@ EOF
 
 # Make the run.sh executable
 chmod 755 $RUN_SH
+chroot $CHROOTCACHE/natty-stack chown stack $DEST/run.sh
 
 # build a new image
 BASE=$CHROOTCACHE/build.$$
