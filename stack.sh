@@ -20,9 +20,6 @@
 # Sanity Check
 # ============
 
-# Record the start time.  This allows us to print how long this script takes to run.
-START_TIME=`python -c "import time; print time.time()"`
-
 # Warn users who aren't on natty, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
 if ! grep -q natty /etc/lsb-release; then
@@ -53,40 +50,38 @@ TOP_DIR=$(cd $(dirname "$0") && pwd)
 
 if [[ $EUID -eq 0 ]]; then
     echo "You are running this script as root."
+    echo "In 10 seconds, we will create a user 'stack' and run as that user"
+    sleep 10 
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
     apt-get update
-    apt-get install -qqy sudo
+    apt-get install -y sudo
 
-    if ! getent passwd | grep -q stack; then
+    if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
         useradd -U -G sudo -s /bin/bash -m stack
     fi
+
     echo "Giving stack user passwordless sudo priviledges"
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    # natty uec images sudoers does not have a '#includedir'. add one.
+    grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+        echo "#includedir /etc/sudoers.d" >> /etc/sudoers
+    ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+        > /etc/sudoers.d/50_stack_sh )
 
     echo "Copying files to stack user"
-    cp -r -f `pwd` /home/stack/
-    THIS_DIR=$(basename $(dirname $(readlink -f $0)))
-    chown -R stack /home/stack/$THIS_DIR
-    echo "Running the script as stack in 3 seconds..."
-    sleep 3
+    STACK_DIR="/home/stack/${PWD##*/}"
+    cp -r -f "$PWD" "$STACK_DIR"
+    chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
-	exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
+        exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
     else
-	exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh" stack
+        exec su -c "set -e; cd $STACK_DIR; bash stack.sh" stack
     fi
-    exit 0
+    exit 1
 fi
 
-# So that errors don't compound we exit on any errors so you see only the
-# first error that occured.
-set -o errexit
-
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following allowing as the install occurs.
-set -o xtrace
 
 # Settings
 # ========
@@ -120,8 +115,6 @@ source ./stackrc
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
-sudo mkdir -p $DEST
-sudo chown `whoami` $DEST
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
@@ -261,6 +254,24 @@ read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN 
 # Dash currently truncates usernames and passwords at 20 characters
 read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR DASH AND KEYSTONE (20 CHARS OR LESS)."
 
+LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
+(
+# So that errors don't compound we exit on any errors so you see only the
+# first error that occured.
+trap failed ERR
+failed() {
+    local r=$?
+    set +o xtrace
+    [ -n "$LOGFILE" ] && echo "${0##*/} failed: full log in $LOGFILE"
+    exit $r
+}
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+sudo mkdir -p $DEST
+sudo chown `whoami` $DEST
 
 # Install Packages
 # ================
@@ -269,6 +280,7 @@ read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR DASH AND KEYSTONE (20 
 
 
 # install apt requirements
+sudo apt-get update
 sudo apt-get install -qqy `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
 
 # install python requirements
@@ -346,6 +358,19 @@ mysql-server-5.1 mysql-server/root_password password $MYSQL_PASSWORD
 mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASSWORD
 mysql-server-5.1 mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
+
+    # while ``.my.cnf`` is not needed for openstack to function, it is useful
+    # as it allows you to access the mysql databases via ``mysql nova`` instead
+    # of having to specify the username/password each time.
+    if [[ ! -e $HOME/.my.cnf ]]; then
+        cat <<EOF >$HOME/.my.cnf
+[client]
+user=$MYSQL_USER
+password=$MYSQL_PASS    
+host=$MYSQL_HOST
+EOF
+        chmod 0600 $HOME/.my.cnf
+    fi
 
     # Install and start mysql-server
     sudo apt-get -y -q install mysql-server
@@ -625,9 +650,8 @@ fi
 # have to do a little more than that in our script.  Since we add the group
 # ``libvirtd`` to our user in this script, when nova-compute is run it is
 # within the context of our original shell (so our groups won't be updated).
-# We can send the command nova-compute to the ``newgrp`` command to execute
-# in a specific context.
-screen_it n-cpu "cd $NOVA_DIR && echo $NOVA_DIR/bin/nova-compute | newgrp libvirtd"
+# Use 'sg' to execute nova-compute as a member of the libvirtd group.
+screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web . --flagfile=../nova/bin/nova.conf"
@@ -687,6 +711,16 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
 
 fi
 
+# Fin
+# ===
+
+
+) 2>&1 | tee "${LOGFILE}"
+
+# Check that the left side of the above pipe succeeded
+for ret in "${PIPESTATUS[@]}"; do [ $ret -eq 0 ] || exit $ret; done
+
+(
 # Using the cloud
 # ===============
 
@@ -704,10 +738,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "the password: $ADMIN_PASSWORD"
 fi
 
-# Fin
-# ===
+# indicate how long this took to run (bash maintained variable 'SECONDS')
+echo "stack.sh completed in $SECONDS seconds."
 
-# End our timer and give a timing summary
-END_TIME=`python -c "import time; print time.time()"`
-ELAPSED=`python -c "print $END_TIME - $START_TIME"`
-echo "stack.sh completed in $ELAPSED seconds."
+) | tee -a "$LOGFILE"

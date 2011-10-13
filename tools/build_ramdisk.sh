@@ -1,4 +1,5 @@
 #!/bin/bash
+# build_ramdisk.sh - Build RAM disk images
 
 if [ ! "$#" -eq "1" ]; then
     echo "$0 builds a gziped natty openstack install"
