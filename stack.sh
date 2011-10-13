@@ -366,7 +366,7 @@ MYSQL_PRESEED
         cat <<EOF >$HOME/.my.cnf
 [client]
 user=$MYSQL_USER
-password=$MYSQL_PASS    
+password=$MYSQL_PASSWORD
 host=$MYSQL_HOST
 EOF
         chmod 0600 $HOME/.my.cnf
