@@ -61,8 +61,8 @@ if [[ $EUID -eq 0 ]]; then
     fi
 
     echo "Giving stack user passwordless sudo priviledges"
-    ( umask 226 && echo "stack ALL=(ALL) NOPASSWD: ALL" \
-        >> /etc/sudoers.d/50_stack_sh )
+    ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+        > /etc/sudoers.d/50_stack_sh )
 
     echo "Copying files to stack user"
     STACK_DIR="/home/stack/${PWD##*/}"
