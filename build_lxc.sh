@@ -255,4 +255,4 @@ while [ ! -e "$ROOTFS/$DEST/run.sh.log" ]; do
   sleep 1
 done
 
-tail -F $ROOTFS/$DEST/devstack/stack.sh.*.log
+tail -F $ROOTFS/$DEST/run.sh.log
