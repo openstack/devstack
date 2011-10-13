@@ -637,36 +637,19 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Downloads the image (ami/aki/ari style), then extracts it.  Upon extraction
     # we upload to glance with the glance cli tool.  TTY is a stripped down 
     # version of ubuntu.
-    if [ ! -f $FILES/tty.tgz ]; then
-        wget -c http://images.ansolabs.com/tty.tgz -O $FILES/tty.tgz
+    IMAGE_URL=http://smoser.brickies.net/ubuntu/ttylinux-uec/ttylinux-uec-amd64-11.2_2.6.35-15_1.tar.gz
+    IMAGE_FNAME=`echo "$IMAGE_URL" | python -c "import sys; print sys.stdin.read().split('/')[-1]"`
+    IMAGE_NAME=`echo "$IMAGE_FNAME" | python -c "import sys; print sys.stdin.read().split('.tar.gz')[0].split('.tgz')[0]"`
+    if [ ! -f $FILES/$IMAGE_FNAME ]; then
+        wget -c $IMAGE_URL -O $FILES/$IMAGE_FNAME
     fi
 
     # extract ami-tty/image, aki-tty/image & ari-tty/image
-    tar -zxf $FILES/tty.tgz -C $FILES/images
+    tar -zxf $FILES/$IMAGE_FNAME -C $FILES/images
 
-    # Use glance client to add the kernel, ramdisk and finally the root 
-    # filesystem.  We parse the results of the uploads to get glance IDs of the
-    # ramdisk and kernel and use them for the root filesystem.
-    RVAL=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
+    RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/$IMAGE_NAME-vmlinuz*`
     KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-    RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
-    RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-    glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
-
-    # Ubuntu 11.04 aka Natty
-    # ----------------------
-
-    # Downloaded from ubuntu enterprise cloud images.  This
-    # image doesn't use the ramdisk functionality
-    if [ ! -f $FILES/natty.tgz ]; then
-        wget -c http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz -O $FILES/natty.tgz
-    fi
-    
-    tar -zxf $FILES/natty.tgz -C $FILES/images
-
-    RVAL=`glance add -A $SERVICE_TOKEN name="uec-natty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/natty-server-cloudimg-amd64-vmlinuz-virtual`
-    KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-    glance add -A $SERVICE_TOKEN name="uec-natty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/natty-server-cloudimg-amd64.img
+    glance add -A $SERVICE_TOKEN name="$IMAGE_NAME" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/$IMAGE_NAME.img
 
 fi
 
