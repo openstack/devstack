@@ -35,6 +35,7 @@ CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
 NAMESERVER=${NAMESERVER:-$CONTAINER_GATEWAY}
 COPYENV=${COPYENV:-1}
 DEST=${DEST:-/opt/stack}
+WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 STACKSH_PARAMS=${STACKSH_PARAMS:-}
@@ -260,19 +261,39 @@ fi
 # Start our container
 lxc-start -d -n $CONTAINER
 
-# Done creating the container, let's tail the log
-echo
-echo "============================================================="
-echo "                          -- YAY! --"
-echo "============================================================="
-echo
-echo "We're done creating the container, about to start tailing the"
-echo "stack.sh log. It will take a second or two to start."
-echo
-echo "Just CTRL-C at any time to stop tailing."
+if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
+    # Done creating the container, let's tail the log
+    echo
+    echo "============================================================="
+    echo "                          -- YAY! --"
+    echo "============================================================="
+    echo
+    echo "We're done creating the container, about to start tailing the"
+    echo "stack.sh log. It will take a second or two to start."
+    echo
+    echo "Just CTRL-C at any time to stop tailing."
 
-while [ ! -e "$ROOTFS/$DEST/run.sh.log" ]; do
-  sleep 1
-done
+    while [ ! -e "$ROOTFS/$DEST/run.sh.log" ]; do
+      sleep 1
+    done
 
-tail -F $ROOTFS/$DEST/run.sh.log
+    tail -F $ROOTFS/$DEST/run.sh.log &
+
+    TAIL_PID=$!
+
+    function kill_tail() {
+        exit 1
+    }
+ 
+    # Let Ctrl-c kill tail and exit
+    trap kill_tail SIGINT
+
+    echo "Waiting stack.sh to finish..."
+    while ! cat $ROOTFS/$DEST/run.sh.log | grep -q 'All done' ; do
+        sleep 5
+    done
+
+    kill $TAIL_PID
+    echo ""
+    echo "Finished - Zip-a-dee Doo-dah!"
+fi
