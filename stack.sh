@@ -660,38 +660,37 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 # Install Images
 # ==============
 
-# Upload a couple images to glance.  **TTY** is a simple small image that use the 
-# lets you login to it with username/password of user/password.  TTY is useful 
-# for basic functionality.  We all include an Ubuntu cloud build of **Natty**.
-# Natty uses cloud-init, supporting login via keypair and sending scripts as
-# userdata.  
+# Upload an image to glance.
 #
-# Read more about cloud-init at https://help.ubuntu.com/community/CloudInit
+# The default image is a small ***TTY*** testing image, which lets you login
+# the username/password of root/password.
+#
+# TTY also uses cloud-init, supporting login via keypair and sending scripts as
+# userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
+#
+# Override IMAGE_URL if you would to launch a different image.  Some other options:
+#   natty: http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
-    # create a directory for the downloadedthe images tarballs.
+    # Create a directory for the downloadedthe images tarballs.
     mkdir -p $FILES/images
 
-    # Debug Image (TTY)
-    # -----------------
-
-    # Downloads the image (ami/aki/ari style), then extracts it.  Upon extraction
-    # we upload to glance with the glance cli tool.  TTY is a stripped down 
-    # version of ubuntu.
-    IMAGE_URL=http://smoser.brickies.net/ubuntu/ttylinux-uec/ttylinux-uec-amd64-11.2_2.6.35-15_1.tar.gz
+    # Downloads the image (uec ami+aki style), then extracts it.
     IMAGE_FNAME=`echo "$IMAGE_URL" | python -c "import sys; print sys.stdin.read().split('/')[-1]"`
     IMAGE_NAME=`echo "$IMAGE_FNAME" | python -c "import sys; print sys.stdin.read().split('.tar.gz')[0].split('.tgz')[0]"`
     if [ ! -f $FILES/$IMAGE_FNAME ]; then
         wget -c $IMAGE_URL -O $FILES/$IMAGE_FNAME
     fi
 
-    # extract ami-tty/image, aki-tty/image & ari-tty/image
+    # Extract ami and aki files
     tar -zxf $FILES/$IMAGE_FNAME -C $FILES/images
 
+    # Use glance client to add the kernel the root filesystem.
+    # We parse the results of the first upload to get the glance ID of the
+    # kernel for use when uploading the root filesystem.
     RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/$IMAGE_NAME-vmlinuz*`
     KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
     glance add -A $SERVICE_TOKEN name="$IMAGE_NAME" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/$IMAGE_NAME.img
-
 fi
 
 # Fin
