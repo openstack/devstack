@@ -674,7 +674,7 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 #   oneiric: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
-    # Create a directory for the downloadedthe images tarballs.
+    # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
 
     for image_url in ${IMAGE_URLS//,/ }; do
