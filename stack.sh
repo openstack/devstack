@@ -668,29 +668,33 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 # TTY also uses cloud-init, supporting login via keypair and sending scripts as
 # userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
 #
-# Override IMAGE_URL if you would to launch a different image.  Some other options:
+# Override IMAGE_URLS if you would to launch a different image(s).  
+# Specify IMAGE_URLS as a comma-separated list of uec urls.  Some other options include:
 #   natty: http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz
+#   oneiric: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Create a directory for the downloadedthe images tarballs.
     mkdir -p $FILES/images
 
-    # Downloads the image (uec ami+aki style), then extracts it.
-    IMAGE_FNAME=`echo "$IMAGE_URL" | python -c "import sys; print sys.stdin.read().split('/')[-1]"`
-    IMAGE_NAME=`echo "$IMAGE_FNAME" | python -c "import sys; print sys.stdin.read().split('.tar.gz')[0].split('.tgz')[0]"`
-    if [ ! -f $FILES/$IMAGE_FNAME ]; then
-        wget -c $IMAGE_URL -O $FILES/$IMAGE_FNAME
-    fi
+    for image_url in ${IMAGE_URLS//,/ }; do
+        # Downloads the image (uec ami+aki style), then extracts it.
+        IMAGE_FNAME=`echo "$image_url" | python -c "import sys; print sys.stdin.read().split('/')[-1]"`
+        IMAGE_NAME=`echo "$IMAGE_FNAME" | python -c "import sys; print sys.stdin.read().split('.tar.gz')[0].split('.tgz')[0]"`
+        if [ ! -f $FILES/$IMAGE_FNAME ]; then
+            wget -c $image_url -O $FILES/$IMAGE_FNAME
+        fi
 
-    # Extract ami and aki files
-    tar -zxf $FILES/$IMAGE_FNAME -C $FILES/images
+        # Extract ami and aki files
+        tar -zxf $FILES/$IMAGE_FNAME -C $FILES/images
 
-    # Use glance client to add the kernel the root filesystem.
-    # We parse the results of the first upload to get the glance ID of the
-    # kernel for use when uploading the root filesystem.
-    RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/$IMAGE_NAME-vmlinuz*`
-    KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-    glance add -A $SERVICE_TOKEN name="$IMAGE_NAME" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/$IMAGE_NAME.img
+        # Use glance client to add the kernel the root filesystem.
+        # We parse the results of the first upload to get the glance ID of the
+        # kernel for use when uploading the root filesystem.
+        RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/$IMAGE_NAME-vmlinuz*`
+        KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        glance add -A $SERVICE_TOKEN name="$IMAGE_NAME" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/$IMAGE_NAME.img
+    done
 fi
 
 # Fin
