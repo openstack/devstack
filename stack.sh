@@ -685,7 +685,9 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Extract ami and aki files
     tar -zxf $FILES/$IMAGE_FNAME -C $FILES/images
 
-    # Upload to glance with the glance cli tool.
+    # Use glance client to add the kernel the root filesystem.
+    # We parse the results of the first upload to get the glance ID of the
+    # kernel for use when uploading the root filesystem.
     RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/$IMAGE_NAME-vmlinuz*`
     KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
     glance add -A $SERVICE_TOKEN name="$IMAGE_NAME" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/$IMAGE_NAME.img
