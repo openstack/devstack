@@ -40,6 +40,9 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
+# Keep track of the current devstack directory.
+TOP_DIR=$(cd $(dirname "$0") && pwd)
+
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
@@ -86,14 +89,14 @@ fi
 # This script is customizable through setting environment variables.  If you
 # want to override a setting you can either::
 #
-#     export MYSQL_PASS=anothersecret
+#     export MYSQL_PASSWORD=anothersecret
 #     ./stack.sh
 #
-# You can also pass options on a single line ``MYSQL_PASS=simple ./stack.sh``
+# You can also pass options on a single line ``MYSQL_PASSWORD=simple ./stack.sh``
 #
 # Additionally, you can put any local variables into a ``localrc`` file, like::
 #
-#     MYSQL_PASS=anothersecret
+#     MYSQL_PASSWORD=anothersecret
 #     MYSQL_USER=hellaroot
 #
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
@@ -106,7 +109,7 @@ fi
 #
 # If ``localrc`` exists, then ``stackrc`` will load those settings.  This is 
 # useful for changing a branch or repostiory to test other versions.  Also you
-# can store your other settings like **MYSQL_PASS** or **ADMIN_PASSWORD** instead
+# can store your other settings like **MYSQL_PASSWORD** or **ADMIN_PASSWORD** instead
 # of letting devstack generate random ones for you.
 source ./stackrc
 
@@ -138,6 +141,43 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
+
+# Generic helper to configure passwords
+function read_password {
+    set +o xtrace
+    var=$1; msg=$2
+    pw=${!var}
+
+    localrc=$TOP_DIR/localrc
+
+    # If the password is not defined yet, proceed to prompt user for a password.
+    if [ ! $pw ]; then
+        # If there is no localrc file, create one
+        if [ ! -e $localrc ]; then
+            touch $localrc
+        fi
+
+        # Presumably if we got this far it can only be that our localrc is missing 
+        # the required password.  Prompt user for a password and write to localrc.
+        echo ''
+        echo '################################################################################'
+        echo $msg
+        echo '################################################################################'
+        echo "This value will be written to your localrc file so you don't have to enter it again."
+        echo "It is probably best to avoid spaces and weird characters."
+        echo "If you leave this blank, a random default value will be used."
+        echo "Enter a password now:"
+        read $var
+        pw=${!var}
+        if [ ! $pw ]; then
+            pw=`openssl rand -hex 10`
+        fi
+        eval "$var=$pw"
+        echo "$var=$pw" >> $localrc
+    fi
+    set -o xtrace
+}
+
 
 # Nova Network Configuration
 # --------------------------
@@ -187,31 +227,32 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
 # By default this script will install and configure MySQL.  If you want to 
 # use an existing server, you can pass in the user/password/host parameters.
-# You will need to send the same ``MYSQL_PASS`` to every host if you are doing
+# You will need to send the same ``MYSQL_PASSWORD`` to every host if you are doing
 # a multi-node devstack installation.
 MYSQL_USER=${MYSQL_USER:-root}
-MYSQL_PASS=${MYSQL_PASS:-`openssl rand -hex 12`}
+read_password MYSQL_PASSWORD "ENTER A PASSWORD TO USE FOR MYSQL."
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 
 # don't specify /db in this string, so we can use it for multiple services
-BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}
+BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST}
 
 # Rabbit connection info
 RABBIT_HOST=${RABBIT_HOST:-localhost}
 RABBIT_PASSWORD=${RABBIT_PASSWORD:-`openssl rand -hex 12`}
+read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
+
 
 # Keystone
 # --------
 
 # Service Token - Openstack components need to have an admin token
 # to validate user tokens.
-SERVICE_TOKEN=${SERVICE_TOKEN:-`openssl rand -hex 12`}
+read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
 # Dash currently truncates usernames and passwords at 20 characters
-# so use 10 bytes
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 10`}
+read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR DASH AND KEYSTONE (20 CHARS OR LESS)."
 
 LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
 (
@@ -313,8 +354,8 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # Seed configuration with mysql password so that apt-get install doesn't
     # prompt us for a password upon install.
     cat <<MYSQL_PRESEED | sudo debconf-set-selections
-mysql-server-5.1 mysql-server/root_password password $MYSQL_PASS
-mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASS
+mysql-server-5.1 mysql-server/root_password password $MYSQL_PASSWORD
+mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASSWORD
 mysql-server-5.1 mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
 
@@ -325,7 +366,7 @@ MYSQL_PRESEED
         cat <<EOF >$HOME/.my.cnf
 [client]
 user=$MYSQL_USER
-password=$MYSQL_PASS    
+password=$MYSQL_PASSWORD
 host=$MYSQL_HOST
 EOF
         chmod 0600 $HOME/.my.cnf
@@ -334,7 +375,7 @@ EOF
     # Install and start mysql-server
     sudo apt-get -y -q install mysql-server
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
-    sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASS';"
+    sudo mysql -uroot -p$MYSQL_PASSWORD -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';"
 
     # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
     sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
@@ -385,8 +426,8 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     mkdir -p $GLANCE_IMAGE_DIR
 
     # (re)create glance database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS glance;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS glance;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE glance;'
     # Copy over our glance-registry.conf
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
     cp $FILES/glance-registry.conf $GLANCE_CONF
@@ -515,8 +556,8 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # (re)create nova database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS nova;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS nova;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE nova;'
 
     # (re)create nova database
     $NOVA_DIR/bin/nova-manage db sync
@@ -534,8 +575,8 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     # (re)create keystone database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS keystone;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone;'
 
     # FIXME (anthony) keystone should use keystone.conf.example
     KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf

@@ -11,6 +11,13 @@ if ! grep -q natty /etc/lsb-release; then
     echo "WARNING: this script has only been tested on natty"
 fi
 
+# Abort if localrc is not set
+if [ ! -e ./localrc ]; then
+    echo "You must have a localrc with ALL necessary passwords defined before proceeding."
+    echo "See stack.sh for required passwords."
+    exit 1
+fi
+
 # Source params
 source ./stackrc
 
