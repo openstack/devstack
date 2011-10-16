@@ -106,7 +106,13 @@ nova show $NAME | grep status | grep -q ACTIVE
 IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
 
 # ping it once (timeout of a second)
-ping -c1 -w1 $IP
+ping -c1 -w1 $IP || true
+
+# sometimes the first ping fails (10 seconds isn't enough time for the VM's 
+# network to respond?), so let's wait 5 seconds and really test ping
+sleep 5
+
+ping -c1 -w1 $IP 
 
 # shutdown the server
 nova delete $NAME
