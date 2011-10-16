@@ -70,9 +70,6 @@ TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$NOVA_U
 # List servers for tenant:
 nova list
 
-# List of flavors:
-nova flavor-list
-
 # Images
 # ------
 
@@ -82,8 +79,38 @@ nova image-list
 # But we recommend using glance directly
 glance -A $TOKEN index
 
-# show details of the active servers::
-#
-#     nova show 1234
-#
-nova list | grep ACTIVE | cut -d \| -f2 | xargs -n1 nova show
+# Let's grab the id of the first AMI image to launch
+IMAGE=`glance -A $TOKEN index | egrep ami | cut -d" " -f1`
+
+
+# Flavors
+# -------
+
+# List of flavors:
+nova flavor-list
+
+# and grab the first flavor in the list to launch
+FLAVOR=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
+
+NAME="firstpost"
+
+nova boot --flavor $FLAVOR --image $IMAGE $NAME
+
+# let's give it 10 seconds to launch
+sleep 10
+
+# check that the status is active
+nova show $NAME | grep status | grep -q ACTIVE
+
+# get the IP of the server
+IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
+
+# ping it once (timeout of a second)
+ping -c1 -w1 $IP
+
+# shutdown the server
+nova delete $NAME
+
+# FIXME: validate shutdown within 5 seconds 
+# (nova show $NAME returns 1 or status != ACTIVE)?
+
