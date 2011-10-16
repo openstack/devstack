@@ -80,7 +80,7 @@ nova flavor-list
 nova image-list
 
 # But we recommend using glance directly
-glance -A $SERVICE_TOKEN index
+glance -A $TOKEN index
 
 # show details of the active servers::
 #
