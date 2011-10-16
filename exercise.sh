@@ -52,10 +52,17 @@ export NOVA_VERSION=1.1
 # FIXME - why does this need to be specified?
 export NOVA_REGION_NAME=RegionOne
 
+# set log level to DEBUG (helps debug issues)
+export NOVACLIENT_DEBUG=1
 
 # Get a token for clients that don't support service catalog
 # ==========================================================
-SERVICE_TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$NOVA_USERNAME\", \"password\": \"$NOVA_API_KEY\"}}}" -H "Content-type: application/json" http://$HOST:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
+
+# manually create a token by querying keystone (sending JSON data).  Keystone 
+# returns a token and catalog of endpoints.  We use python to parse the token
+# and save it.
+
+TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$NOVA_USERNAME\", \"password\": \"$NOVA_API_KEY\"}}}" -H "Content-type: application/json" http://$HOST:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
 
 # Launching a server
 # ==================
