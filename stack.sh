@@ -290,6 +290,13 @@ sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
 function git_clone {
+    # if there is an existing checkout, move it out of the way
+    if [[ "$RECLONE" == "yes" ]]; then
+        if [ -d $2 ]; then
+            mv $2 /tmp/stack.`date +%s`
+        fi
+    fi
+
     if [ ! -d $2 ]; then
         sudo mkdir $2
         sudo chown `whoami` $2
@@ -297,13 +304,6 @@ function git_clone {
         cd $2
         # This checkout syntax works for both branches and tags
         git checkout $3
-    elif [[ "$RESET_BRANCHES" == "yes" ]]; then
-        cd $2
-        git remote set-url origin $1
-        git fetch origin
-        git checkout origin/$3
-        git branch -D $3
-        git checkout -b $3
     fi
 }
 
