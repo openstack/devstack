@@ -125,6 +125,7 @@ fi
 # Make sure that base requirements are installed
 chroot $CACHEDIR apt-get update
 chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+chroot $CACHEDIR apt-get install -y --download-only rabbitmq-server libvirt-bin mysql-server
 chroot $CACHEDIR pip install `cat files/pips/*`
 
 # Clean out code repos if directed to do so
@@ -141,6 +142,8 @@ git_clone $NOVNC_REPO $CACHEDIR/$DEST/novnc $NOVNC_BRANCH
 git_clone $DASH_REPO $CACHEDIR/$DEST/dash $DASH_BRANCH $DASH_TAG
 git_clone $NOVACLIENT_REPO $CACHEDIR/$DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $CACHEDIR/$DEST/openstackx $OPENSTACKX_BRANCH
+git_clone $KEYSTONE_REPO $CACHEDIR/$DEST/keystone $KEYSTONE_BRANCH
+git_clone $NOVNC_REPO $CACHEDIR/$DEST/novnc $NOVNC_BRANCH
 
 # Use this version of devstack?
 if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
