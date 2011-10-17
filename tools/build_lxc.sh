@@ -32,7 +32,7 @@ CONTAINER_IP=${CONTAINER_IP:-192.168.1.50}
 CONTAINER_CIDR=${CONTAINER_CIDR:-$CONTAINER_IP/24}
 CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
 CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
-NAMESERVER=${NAMESERVER:-$CONTAINER_GATEWAY}
+NAMESERVER=${NAMESERVER:-`cat /etc/resolv.conf | grep nameserver | head -1 | cut -d " " -f2`}
 COPYENV=${COPYENV:-1}
 DEST=${DEST:-/opt/stack}
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
@@ -119,11 +119,13 @@ if [ ! -f $CACHEDIR/bootstrapped ]; then
     lxc-destroy -n $CONTAINER
     # trigger the initial debootstrap
     create_lxc
-    chroot $CACHEDIR apt-get update
-    chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-    chroot $CACHEDIR pip install `cat files/pips/*`
     touch $CACHEDIR/bootstrapped
 fi
+
+# Make sure that base requirements are installed
+chroot $CACHEDIR apt-get update
+chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+chroot $CACHEDIR pip install `cat files/pips/*`
 
 # Clean out code repos if directed to do so
 if [ "$CLEAN" = "1" ]; then
@@ -282,6 +284,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     TAIL_PID=$!
 
     function kill_tail() {
+        kill $TAIL_PID
         exit 1
     }
  

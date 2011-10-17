@@ -297,6 +297,13 @@ function git_clone {
         cd $2
         # This checkout syntax works for both branches and tags
         git checkout $3
+    elif [[ "$RESET_BRANCHES" == "yes" ]]; then
+        cd $2
+        git remote set-url origin $1
+        git fetch origin
+        git checkout origin/$3
+        git branch -D $3
+        git checkout -b $3
     fi
 }
 
@@ -322,10 +329,10 @@ git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
-cd $NOVA_DIR; sudo python setup.py develop
-cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $KEYSTONE_DIR; sudo python setup.py develop
 cd $GLANCE_DIR; sudo python setup.py develop
+cd $NOVACLIENT_DIR; sudo python setup.py develop
+cd $NOVA_DIR; sudo python setup.py develop
 cd $OPENSTACKX_DIR; sudo python setup.py develop
 cd $DASH_DIR/django-openstack; sudo python setup.py develop
 cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
