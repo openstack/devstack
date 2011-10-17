@@ -119,11 +119,13 @@ if [ ! -f $CACHEDIR/bootstrapped ]; then
     lxc-destroy -n $CONTAINER
     # trigger the initial debootstrap
     create_lxc
-    chroot $CACHEDIR apt-get update
-    chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-    chroot $CACHEDIR pip install `cat files/pips/*`
     touch $CACHEDIR/bootstrapped
 fi
+
+# Make sure that base requirements are installed
+chroot $CACHEDIR apt-get update
+chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+chroot $CACHEDIR pip install `cat files/pips/*`
 
 # Clean out code repos if directed to do so
 if [ "$CLEAN" = "1" ]; then
