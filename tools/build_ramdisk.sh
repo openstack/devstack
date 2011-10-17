@@ -129,12 +129,6 @@ set \`ip addr show dev eth0 | grep inet\`
 PREFIX=\`echo \$2 | cut -d. -f1,2,3\`
 export FLOATING_RANGE="\$PREFIX.224/27"
 
-# Pre-empt download of natty image
-tar czf $DEST/devstack/files/natty.tgz /etc/hosts
-mkdir -p $DEST/devstack/files/images
-touch $DEST/devstack/files/images/natty-server-cloudimg-amd64-vmlinuz-virtual
-touch $DEST/devstack/files/images/natty-server-cloudimg-amd64.img
-
 # Kill any existing screens
 killall screen
 
