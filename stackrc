@@ -27,10 +27,6 @@ NOVACLIENT_BRANCH=master
 OPENSTACKX_REPO=https://github.com/cloudbuilders/openstackx.git
 OPENSTACKX_BRANCH=diablo
 
-# devstack is this collection of scripts
-DEVSTACK_REPO=https://github.com/cloudbuilders/devstack.git
-DEVSTACK_BRANCH=master
-
 # allow local overrides of env variables
 if [ -f ./localrc ]; then
     source ./localrc
