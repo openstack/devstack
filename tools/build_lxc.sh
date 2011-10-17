@@ -282,6 +282,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     TAIL_PID=$!
 
     function kill_tail() {
+        kill $TAIL_PID
         exit 1
     }
  
