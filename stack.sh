@@ -43,45 +43,6 @@ fi
 # Keep track of the current devstack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
-# OpenStack is designed to be run as a regular user (Dashboard will fail to run
-# as root, since apache refused to startup serve content from root user).  If
-# stack.sh is run as root, it automatically creates a stack user with
-# sudo privileges and runs as that user.
-
-if [[ $EUID -eq 0 ]]; then
-    echo "You are running this script as root."
-    echo "In 10 seconds, we will create a user 'stack' and run as that user"
-    sleep 10 
-
-    # since this script runs as a normal user, we need to give that user
-    # ability to run sudo
-    apt-get update
-    apt-get install -y sudo
-
-    if ! getent passwd stack >/dev/null; then
-        echo "Creating a user called stack"
-        useradd -U -G sudo -s /bin/bash -m stack
-    fi
-
-    echo "Giving stack user passwordless sudo priviledges"
-    # natty uec images sudoers does not have a '#includedir'. add one.
-    grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
-        echo "#includedir /etc/sudoers.d" >> /etc/sudoers
-    ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
-        > /etc/sudoers.d/50_stack_sh )
-
-    echo "Copying files to stack user"
-    STACK_DIR="/home/stack/${PWD##*/}"
-    cp -r -f "$PWD" "$STACK_DIR"
-    chown -R stack "$STACK_DIR"
-    if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
-        exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
-    else
-        exec su -c "set -e; cd $STACK_DIR; bash stack.sh" stack
-    fi
-    exit 1
-fi
-
 
 # Settings
 # ========
@@ -115,6 +76,45 @@ source ./stackrc
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
+
+# OpenStack is designed to be run as a regular user (Dashboard will fail to run
+# as root, since apache refused to startup serve content from root user).  If
+# stack.sh is run as root, it automatically creates a stack user with
+# sudo privileges and runs as that user.
+
+if [[ $EUID -eq 0 ]]; then
+    echo "You are running this script as root."
+    echo "In 10 seconds, we will create a user 'stack' and run as that user"
+    sleep 10 
+
+    # since this script runs as a normal user, we need to give that user
+    # ability to run sudo
+    apt-get update
+    apt-get install -y sudo
+
+    if ! getent passwd stack >/dev/null; then
+        echo "Creating a user called stack"
+        useradd -U -G sudo -s /bin/bash -d $DEST -m stack
+    fi
+
+    echo "Giving stack user passwordless sudo priviledges"
+    # natty uec images sudoers does not have a '#includedir'. add one.
+    grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+        echo "#includedir /etc/sudoers.d" >> /etc/sudoers
+    ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+        > /etc/sudoers.d/50_stack_sh )
+
+    echo "Copying files to stack user"
+    STACK_DIR="$DEST/${PWD##*/}"
+    cp -r -f "$PWD" "$STACK_DIR"
+    chown -R stack "$STACK_DIR"
+    if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
+        exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
+    else
+        exec su -c "set -e; cd $STACK_DIR; bash stack.sh" stack
+    fi
+    exit 1
+fi
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
