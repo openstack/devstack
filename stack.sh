@@ -297,7 +297,7 @@ function git_clone {
         cd $2
         # This checkout syntax works for both branches and tags
         git checkout $3
-    elif [[ "$RECLONE" == "yes" ]]; then
+    elif [[ "$RESET_BRANCHES" == "yes" ]]; then
         cd $2
         git remote set-url origin $1
         git fetch origin
