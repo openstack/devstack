@@ -6,9 +6,17 @@ if [ "$EUID" -ne "0" ]; then
   exit 1
 fi
 
-# Warn users who aren't on natty
-if ! grep -q natty /etc/lsb-release; then
-    echo "WARNING: this script has only been tested on natty"
+# Keep track of ubuntu version
+UBUNTU_VERSION=`cat /etc/lsb-release | grep CODENAME | sed 's/.*=//g'`
+
+# Move to top devstack dir
+cd ..
+
+# Abort if localrc is not set
+if [ ! -e ./localrc ]; then
+    echo "You must have a localrc with ALL necessary passwords defined before proceeding."
+    echo "See stack.sh for required passwords."
+    exit 1
 fi
 
 # Source params
@@ -27,6 +35,7 @@ CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
 NAMESERVER=${NAMESERVER:-$CONTAINER_GATEWAY}
 COPYENV=${COPYENV:-1}
 DEST=${DEST:-/opt/stack}
+WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 STACKSH_PARAMS=${STACKSH_PARAMS:-}
@@ -82,8 +91,21 @@ function git_clone {
     fi
 }
 
+# Helper to create the container
+function create_lxc {
+    if [ "natty" = "$UBUNTU_VERSION" ]; then
+        lxc-create -n $CONTAINER -t natty -f $LXC_CONF
+    else
+        lxc-create -n $CONTAINER -t ubuntu -f $LXC_CONF
+    fi
+}
+
 # Location of the base image directory
-CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
+if [ "natty" = "$UBUNTU_VERSION" ]; then
+    CACHEDIR=/var/cache/lxc/natty/rootfs-amd64
+else
+    CACHEDIR=/var/cache/lxc/oneiric/rootfs-amd64
+fi
 
 # Provide option to do totally clean install
 if [ "$CLEAR_LXC_CACHE" = "1" ]; then
@@ -96,7 +118,7 @@ if [ ! -f $CACHEDIR/bootstrapped ]; then
     # lazy and doesn't do anything if a container already exists)
     lxc-destroy -n $CONTAINER
     # trigger the initial debootstrap
-    lxc-create -n $CONTAINER -t natty -f $LXC_CONF
+    create_lxc
     chroot $CACHEDIR apt-get update
     chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot $CACHEDIR pip install `cat files/pips/*`
@@ -133,7 +155,7 @@ if [ "$TERMINATE" = "1" ]; then
 fi
 
 # Create the container
-lxc-create -n $CONTAINER -t natty -f $LXC_CONF
+create_lxc
 
 # Specify where our container rootfs lives
 ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
@@ -197,6 +219,10 @@ cat > $RUN_SH <<EOF
 #!/usr/bin/env bash
 # Make sure dns is set up
 echo "nameserver $NAMESERVER" | sudo resolvconf -a eth0
+# Make there is a default route - needed for natty
+if ! route | grep -q default; then
+    sudo ip route add default via $CONTAINER_GATEWAY
+fi
 sleep 1
 
 # Kill any existing screens
@@ -208,7 +234,7 @@ sudo apt-get -y --force-yes install git-core vim-nox sudo
 if [ ! -d "$DEST/devstack" ]; then
     git clone git://github.com/cloudbuilders/devstack.git $DEST/devstack
 fi
-cd $DEST/devstack && $STACKSH_PARAMS ./stack.sh > /$DEST/run.sh.log
+cd $DEST/devstack && $STACKSH_PARAMS FORCE=yes ./stack.sh > /$DEST/run.sh.log
 echo >> /$DEST/run.sh.log
 echo >> /$DEST/run.sh.log
 echo "All done! Time to start clicking." >> /$DEST/run.sh.log
@@ -218,11 +244,13 @@ EOF
 chmod 755 $RUN_SH
 
 # Make runner launch on boot
-RC_LOCAL=$ROOTFS/etc/rc.local
+RC_LOCAL=$ROOTFS/etc/init.d/local
 cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
 su -c "$DEST/run.sh" stack
 EOF
+chmod +x $RC_LOCAL
+chroot $ROOTFS sudo update-rc.d local defaults 80
 
 # Configure cgroup directory
 if ! mount | grep -q cgroup; then
@@ -233,19 +261,39 @@ fi
 # Start our container
 lxc-start -d -n $CONTAINER
 
-# Done creating the container, let's tail the log
-echo
-echo "============================================================="
-echo "                          -- YAY! --"
-echo "============================================================="
-echo
-echo "We're done creating the container, about to start tailing the"
-echo "stack.sh log. It will take a second or two to start."
-echo
-echo "Just CTRL-C at any time to stop tailing."
+if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
+    # Done creating the container, let's tail the log
+    echo
+    echo "============================================================="
+    echo "                          -- YAY! --"
+    echo "============================================================="
+    echo
+    echo "We're done creating the container, about to start tailing the"
+    echo "stack.sh log. It will take a second or two to start."
+    echo
+    echo "Just CTRL-C at any time to stop tailing."
 
-while [ ! -e "$ROOTFS/$DEST/run.sh.log" ]; do
-  sleep 1
-done
+    while [ ! -e "$ROOTFS/$DEST/run.sh.log" ]; do
+      sleep 1
+    done
 
-tail -F $ROOTFS/$DEST/run.sh.log
+    tail -F $ROOTFS/$DEST/run.sh.log &
+
+    TAIL_PID=$!
+
+    function kill_tail() {
+        exit 1
+    }
+ 
+    # Let Ctrl-c kill tail and exit
+    trap kill_tail SIGINT
+
+    echo "Waiting stack.sh to finish..."
+    while ! cat $ROOTFS/$DEST/run.sh.log | grep -q 'All done' ; do
+        sleep 5
+    done
+
+    kill $TAIL_PID
+    echo ""
+    echo "Finished - Zip-a-dee Doo-dah!"
+fi

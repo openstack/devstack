@@ -52,19 +52,23 @@ export NOVA_VERSION=1.1
 # FIXME - why does this need to be specified?
 export NOVA_REGION_NAME=RegionOne
 
+# set log level to DEBUG (helps debug issues)
+export NOVACLIENT_DEBUG=1
 
 # Get a token for clients that don't support service catalog
 # ==========================================================
-SERVICE_TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$NOVA_PROJECT_ID\", \"password\": \"$NOVA_API_KEY\"}}}" -H "Content-type: application/json" http://$HOST:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
+
+# manually create a token by querying keystone (sending JSON data).  Keystone 
+# returns a token and catalog of endpoints.  We use python to parse the token
+# and save it.
+
+TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$NOVA_USERNAME\", \"password\": \"$NOVA_API_KEY\"}}}" -H "Content-type: application/json" http://$HOST:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
 
 # Launching a server
 # ==================
 
 # List servers for tenant:
 nova list
-
-# List of flavors:
-nova flavor-list
 
 # Images
 # ------
@@ -73,10 +77,46 @@ nova flavor-list
 nova image-list
 
 # But we recommend using glance directly
-glance -A $SERVICE_TOKEN index
+glance -A $TOKEN index
 
-# show details of the active servers::
-#
-#     nova show 1234
-#
-nova list | grep ACTIVE | cut -d \| -f2 | xargs -n1 nova show
+# Let's grab the id of the first AMI image to launch
+IMAGE=`glance -A $TOKEN index | egrep ami | cut -d" " -f1`
+
+
+# Flavors
+# -------
+
+# List of flavors:
+nova flavor-list
+
+# and grab the first flavor in the list to launch
+FLAVOR=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
+
+NAME="firstpost"
+
+nova boot --flavor $FLAVOR --image $IMAGE $NAME
+
+# let's give it 10 seconds to launch
+sleep 10
+
+# check that the status is active
+nova show $NAME | grep status | grep -q ACTIVE
+
+# get the IP of the server
+IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
+
+# ping it once (timeout of a second)
+ping -c1 -w1 $IP || true
+
+# sometimes the first ping fails (10 seconds isn't enough time for the VM's 
+# network to respond?), so let's wait 5 seconds and really test ping
+sleep 5
+
+ping -c1 -w1 $IP 
+
+# shutdown the server
+nova delete $NAME
+
+# FIXME: validate shutdown within 5 seconds 
+# (nova show $NAME returns 1 or status != ACTIVE)?
+

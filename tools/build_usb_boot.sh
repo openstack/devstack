@@ -1,10 +1,10 @@
 #!/bin/bash -e
-# build_pxe_boot.sh - Create a PXE boot environment
+# build_usb_boot.sh - Create a syslinux boot environment
 #
-# build_pxe_boot.sh [-k kernel-version] destdir
+# build_usb_boot.sh [-k kernel-version] destdev
 #
 # Assumes syslinux is installed
-# Only needs to run as root if the destdir permissions require it
+# Needs to run as root
 
 KVER=`uname -r`
 if [ "$1" = "-k" ]; then
@@ -12,24 +12,40 @@ if [ "$1" = "-k" ]; then
     shift;shift
 fi
 
-DEST_DIR=${1:-/tmp}/tftpboot
+DEST_DIR=${1:-/tmp/syslinux-boot}
 PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
 OPWD=`pwd`
 PROGDIR=`dirname $0`
 
-mkdir -p $DEST_DIR/pxelinux.cfg
-cd $DEST_DIR
-for i in memdisk menu.c32 pxelinux.0; do
-	cp -p /usr/lib/syslinux/$i $DEST_DIR
+if [ -b $DEST_DIR ]; then
+    # We have a block device, install syslinux and mount it
+    DEST_DEV=$DEST_DIR
+    DEST_DIR=`mktemp -d mntXXXXXX`
+
+    # Install syslinux on the device
+    syslinux --install --directory syslinux $DEST_DEV
+
+    mount $DEST_DEV $DEST_DIR
+else
+    # We have a directory (for sanity checking output)
+	DEST_DEV=""
+	if [ ! -d $DEST_DIR/syslinux ]; then
+	    mkdir -p $DEST_DIR/syslinux
+	fi
+fi
+
+# Get some more stuff from syslinux
+for i in memdisk menu.c32; do
+	cp -p /usr/lib/syslinux/$i $DEST_DIR/syslinux
 done
 
-CFG=$DEST_DIR/pxelinux.cfg/default
+CFG=$DEST_DIR/syslinux/syslinux.cfg
 cat >$CFG <<EOF
-default menu.c32
+default /syslinux/menu.c32
 prompt 0
 timeout 0
 
-MENU TITLE PXE Boot Menu
+MENU TITLE Boot Menu
 
 EOF
 
@@ -57,8 +73,8 @@ cat >>$CFG <<EOF
 LABEL devstack
     MENU LABEL ^devstack
     MENU DEFAULT
-    KERNEL ubuntu/vmlinuz-$KVER
-    APPEND initrd=ubuntu/stack-initrd.gz ramdisk_size=2109600 root=/dev/ram0
+    KERNEL /ubuntu/vmlinuz-$KVER
+    APPEND initrd=/ubuntu/stack-initrd.gz ramdisk_size=2109600 root=/dev/ram0
 EOF
 
 # Get Ubuntu
@@ -68,8 +84,8 @@ if [ -d $PXEDIR -a -r $PXEDIR/natty-base-initrd.gz ]; then
 
 LABEL ubuntu
     MENU LABEL ^Ubuntu Natty
-    KERNEL ubuntu/vmlinuz-$KVER
-    APPEND initrd=ubuntu/natty-base-initrd.gz ramdisk_size=419600 root=/dev/ram0
+    KERNEL /ubuntu/vmlinuz-$KVER
+    APPEND initrd=/ubuntu/natty-base-initrd.gz ramdisk_size=419600 root=/dev/ram0
 EOF
 fi
 
@@ -80,3 +96,8 @@ LABEL local
     MENU LABEL ^Local disk
     LOCALBOOT 0
 EOF
+
+if [ -n "$DEST_DEV" ]; then
+    umount $DEST_DIR
+    rmdir $DEST_DIR
+fi

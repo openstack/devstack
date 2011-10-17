@@ -20,9 +20,6 @@
 # Sanity Check
 # ============
 
-# Record the start time.  This allows us to print how long this script takes to run.
-START_TIME=`python -c "import time; print time.time()"`
-
 # Warn users who aren't on natty, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
 if ! grep -q natty /etc/lsb-release; then
@@ -43,6 +40,9 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
+# Keep track of the current devstack directory.
+TOP_DIR=$(cd $(dirname "$0") && pwd)
+
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
@@ -50,40 +50,38 @@ fi
 
 if [[ $EUID -eq 0 ]]; then
     echo "You are running this script as root."
+    echo "In 10 seconds, we will create a user 'stack' and run as that user"
+    sleep 10 
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
     apt-get update
-    apt-get install -qqy sudo
+    apt-get install -y sudo
 
-    if ! getent passwd | grep -q stack; then
+    if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
         useradd -U -G sudo -s /bin/bash -m stack
     fi
+
     echo "Giving stack user passwordless sudo priviledges"
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    # natty uec images sudoers does not have a '#includedir'. add one.
+    grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+        echo "#includedir /etc/sudoers.d" >> /etc/sudoers
+    ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+        > /etc/sudoers.d/50_stack_sh )
 
     echo "Copying files to stack user"
-    cp -r -f `pwd` /home/stack/
-    THIS_DIR=$(basename $(dirname $(readlink -f $0)))
-    chown -R stack /home/stack/$THIS_DIR
-    echo "Running the script as stack in 3 seconds..."
-    sleep 3
+    STACK_DIR="/home/stack/${PWD##*/}"
+    cp -r -f "$PWD" "$STACK_DIR"
+    chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
-	exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh; bash" stack
+        exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
     else
-	exec su -c "cd /home/stack/$THIS_DIR/; bash stack.sh" stack
+        exec su -c "set -e; cd $STACK_DIR; bash stack.sh" stack
     fi
-    exit 0
+    exit 1
 fi
 
-# So that errors don't compound we exit on any errors so you see only the
-# first error that occured.
-set -o errexit
-
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following allowing as the install occurs.
-set -o xtrace
 
 # Settings
 # ========
@@ -91,14 +89,14 @@ set -o xtrace
 # This script is customizable through setting environment variables.  If you
 # want to override a setting you can either::
 #
-#     export MYSQL_PASS=anothersecret
+#     export MYSQL_PASSWORD=anothersecret
 #     ./stack.sh
 #
-# You can also pass options on a single line ``MYSQL_PASS=simple ./stack.sh``
+# You can also pass options on a single line ``MYSQL_PASSWORD=simple ./stack.sh``
 #
 # Additionally, you can put any local variables into a ``localrc`` file, like::
 #
-#     MYSQL_PASS=anothersecret
+#     MYSQL_PASSWORD=anothersecret
 #     MYSQL_USER=hellaroot
 #
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
@@ -111,14 +109,12 @@ set -o xtrace
 #
 # If ``localrc`` exists, then ``stackrc`` will load those settings.  This is 
 # useful for changing a branch or repostiory to test other versions.  Also you
-# can store your other settings like **MYSQL_PASS** or **ADMIN_PASSWORD** instead
+# can store your other settings like **MYSQL_PASSWORD** or **ADMIN_PASSWORD** instead
 # of letting devstack generate random ones for you.
 source ./stackrc
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
-sudo mkdir -p $DEST
-sudo chown `whoami` $DEST
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
@@ -145,6 +141,43 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
+
+# Generic helper to configure passwords
+function read_password {
+    set +o xtrace
+    var=$1; msg=$2
+    pw=${!var}
+
+    localrc=$TOP_DIR/localrc
+
+    # If the password is not defined yet, proceed to prompt user for a password.
+    if [ ! $pw ]; then
+        # If there is no localrc file, create one
+        if [ ! -e $localrc ]; then
+            touch $localrc
+        fi
+
+        # Presumably if we got this far it can only be that our localrc is missing 
+        # the required password.  Prompt user for a password and write to localrc.
+        echo ''
+        echo '################################################################################'
+        echo $msg
+        echo '################################################################################'
+        echo "This value will be written to your localrc file so you don't have to enter it again."
+        echo "It is probably best to avoid spaces and weird characters."
+        echo "If you leave this blank, a random default value will be used."
+        echo "Enter a password now:"
+        read $var
+        pw=${!var}
+        if [ ! $pw ]; then
+            pw=`openssl rand -hex 10`
+        fi
+        eval "$var=$pw"
+        echo "$var=$pw" >> $localrc
+    fi
+    set -o xtrace
+}
+
 
 # Nova Network Configuration
 # --------------------------
@@ -194,32 +227,51 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
 # By default this script will install and configure MySQL.  If you want to 
 # use an existing server, you can pass in the user/password/host parameters.
-# You will need to send the same ``MYSQL_PASS`` to every host if you are doing
+# You will need to send the same ``MYSQL_PASSWORD`` to every host if you are doing
 # a multi-node devstack installation.
 MYSQL_USER=${MYSQL_USER:-root}
-MYSQL_PASS=${MYSQL_PASS:-`openssl rand -hex 12`}
+read_password MYSQL_PASSWORD "ENTER A PASSWORD TO USE FOR MYSQL."
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 
 # don't specify /db in this string, so we can use it for multiple services
-BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASS@$MYSQL_HOST}
+BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST}
 
 # Rabbit connection info
 RABBIT_HOST=${RABBIT_HOST:-localhost}
 RABBIT_PASSWORD=${RABBIT_PASSWORD:-`openssl rand -hex 12`}
+read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
+
 
 # Keystone
 # --------
 
 # Service Token - Openstack components need to have an admin token
 # to validate user tokens.
-SERVICE_TOKEN=${SERVICE_TOKEN:-`openssl rand -hex 12`}
+read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
 # Dash currently truncates usernames and passwords at 20 characters
-# so use 10 bytes
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 10`}
+read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR DASH AND KEYSTONE (20 CHARS OR LESS)."
 
+LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
+(
+# So that errors don't compound we exit on any errors so you see only the
+# first error that occured.
+trap failed ERR
+failed() {
+    local r=$?
+    set +o xtrace
+    [ -n "$LOGFILE" ] && echo "${0##*/} failed: full log in $LOGFILE"
+    exit $r
+}
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+sudo mkdir -p $DEST
+sudo chown `whoami` $DEST
 
 # Install Packages
 # ================
@@ -228,6 +280,7 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-`openssl rand -hex 10`}
 
 
 # install apt requirements
+sudo apt-get update
 sudo apt-get install -qqy `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
 
 # install python requirements
@@ -301,15 +354,28 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # Seed configuration with mysql password so that apt-get install doesn't
     # prompt us for a password upon install.
     cat <<MYSQL_PRESEED | sudo debconf-set-selections
-mysql-server-5.1 mysql-server/root_password password $MYSQL_PASS
-mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASS
+mysql-server-5.1 mysql-server/root_password password $MYSQL_PASSWORD
+mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASSWORD
 mysql-server-5.1 mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
+
+    # while ``.my.cnf`` is not needed for openstack to function, it is useful
+    # as it allows you to access the mysql databases via ``mysql nova`` instead
+    # of having to specify the username/password each time.
+    if [[ ! -e $HOME/.my.cnf ]]; then
+        cat <<EOF >$HOME/.my.cnf
+[client]
+user=$MYSQL_USER
+password=$MYSQL_PASSWORD
+host=$MYSQL_HOST
+EOF
+        chmod 0600 $HOME/.my.cnf
+    fi
 
     # Install and start mysql-server
     sudo apt-get -y -q install mysql-server
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
-    sudo mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASS';"
+    sudo mysql -uroot -p$MYSQL_PASSWORD -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';"
 
     # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
     sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
@@ -360,8 +426,8 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     mkdir -p $GLANCE_IMAGE_DIR
 
     # (re)create glance database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS glance;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE glance;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS glance;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE glance;'
     # Copy over our glance-registry.conf
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
     cp $FILES/glance-registry.conf $GLANCE_CONF
@@ -490,8 +556,8 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # (re)create nova database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS nova;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE nova;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS nova;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE nova;'
 
     # (re)create nova database
     $NOVA_DIR/bin/nova-manage db sync
@@ -509,8 +575,8 @@ fi
 
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     # (re)create keystone database
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'DROP DATABASE IF EXISTS keystone;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASS -e 'CREATE DATABASE keystone;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone;'
 
     # FIXME (anthony) keystone should use keystone.conf.example
     KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
@@ -584,9 +650,8 @@ fi
 # have to do a little more than that in our script.  Since we add the group
 # ``libvirtd`` to our user in this script, when nova-compute is run it is
 # within the context of our original shell (so our groups won't be updated).
-# We can send the command nova-compute to the ``newgrp`` command to execute
-# in a specific context.
-screen_it n-cpu "cd $NOVA_DIR && echo $NOVA_DIR/bin/nova-compute | newgrp libvirtd"
+# Use 'sg' to execute nova-compute as a member of the libvirtd group.
+screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web . --flagfile=../nova/bin/nova.conf"
@@ -595,57 +660,53 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 # Install Images
 # ==============
 
-# Upload a couple images to glance.  **TTY** is a simple small image that use the 
-# lets you login to it with username/password of user/password.  TTY is useful 
-# for basic functionality.  We all include an Ubuntu cloud build of **Natty**.
-# Natty uses cloud-init, supporting login via keypair and sending scripts as
-# userdata.  
+# Upload an image to glance.
 #
-# Read more about cloud-init at https://help.ubuntu.com/community/CloudInit
+# The default image is a small ***TTY*** testing image, which lets you login
+# the username/password of root/password.
+#
+# TTY also uses cloud-init, supporting login via keypair and sending scripts as
+# userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
+#
+# Override IMAGE_URLS if you would to launch a different image(s).  
+# Specify IMAGE_URLS as a comma-separated list of uec urls.  Some other options include:
+#   natty: http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz
+#   oneiric: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
-    # create a directory for the downloadedthe images tarballs.
+    # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
 
-    # Debug Image (TTY)
-    # -----------------
+    for image_url in ${IMAGE_URLS//,/ }; do
+        # Downloads the image (uec ami+aki style), then extracts it.
+        IMAGE_FNAME=`echo "$image_url" | python -c "import sys; print sys.stdin.read().split('/')[-1]"`
+        IMAGE_NAME=`echo "$IMAGE_FNAME" | python -c "import sys; print sys.stdin.read().split('.tar.gz')[0].split('.tgz')[0]"`
+        if [ ! -f $FILES/$IMAGE_FNAME ]; then
+            wget -c $image_url -O $FILES/$IMAGE_FNAME
+        fi
 
-    # Downloads the image (ami/aki/ari style), then extracts it.  Upon extraction
-    # we upload to glance with the glance cli tool.  TTY is a stripped down 
-    # version of ubuntu.
-    if [ ! -f $FILES/tty.tgz ]; then
-        wget -c http://images.ansolabs.com/tty.tgz -O $FILES/tty.tgz
-    fi
+        # Extract ami and aki files
+        tar -zxf $FILES/$IMAGE_FNAME -C $FILES/images
 
-    # extract ami-tty/image, aki-tty/image & ari-tty/image
-    tar -zxf $FILES/tty.tgz -C $FILES/images
-
-    # Use glance client to add the kernel, ramdisk and finally the root 
-    # filesystem.  We parse the results of the uploads to get glance IDs of the
-    # ramdisk and kernel and use them for the root filesystem.
-    RVAL=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
-    KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-    RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
-    RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-    glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
-
-    # Ubuntu 11.04 aka Natty
-    # ----------------------
-
-    # Downloaded from ubuntu enterprise cloud images.  This
-    # image doesn't use the ramdisk functionality
-    if [ ! -f $FILES/natty.tgz ]; then
-        wget -c http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz -O $FILES/natty.tgz
-    fi
-    
-    tar -zxf $FILES/natty.tgz -C $FILES/images
-
-    RVAL=`glance add -A $SERVICE_TOKEN name="uec-natty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/natty-server-cloudimg-amd64-vmlinuz-virtual`
-    KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-    glance add -A $SERVICE_TOKEN name="uec-natty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/natty-server-cloudimg-amd64.img
-
+        # Use glance client to add the kernel the root filesystem.
+        # We parse the results of the first upload to get the glance ID of the
+        # kernel for use when uploading the root filesystem.
+        RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/$IMAGE_NAME-vmlinuz*`
+        KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        glance add -A $SERVICE_TOKEN name="$IMAGE_NAME" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/$IMAGE_NAME.img
+    done
 fi
 
+# Fin
+# ===
+
+
+) 2>&1 | tee "${LOGFILE}"
+
+# Check that the left side of the above pipe succeeded
+for ret in "${PIPESTATUS[@]}"; do [ $ret -eq 0 ] || exit $ret; done
+
+(
 # Using the cloud
 # ===============
 
@@ -663,10 +724,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "the password: $ADMIN_PASSWORD"
 fi
 
-# Fin
-# ===
+# indicate how long this took to run (bash maintained variable 'SECONDS')
+echo "stack.sh completed in $SECONDS seconds."
 
-# End our timer and give a timing summary
-END_TIME=`python -c "import time; print time.time()"`
-ELAPSED=`python -c "print $END_TIME - $START_TIME"`
-echo "stack.sh completed in $ELAPSED seconds."
+) | tee -a "$LOGFILE"
