@@ -301,8 +301,9 @@ function git_clone {
         cd $2
         git remote set-url origin $1
         git fetch origin
+        git checkout origin/$3
         git branch -D $3
-        git checkout $3
+        git checkout -b $3
     fi
 }
 
