@@ -19,6 +19,9 @@ set -o xtrace
 # Settings
 # ========
 
+# Use stackrc and localrc for settings
+source ./stackrc
+
 HOST=${HOST:-localhost}
 
 # Nova original used project_id as the *account* that owned resources (servers,
@@ -33,7 +36,7 @@ export NOVA_PROJECT_ID=${TENANT:-demo}
 export NOVA_USERNAME=${USERNAME:-demo}
 
 # With Keystone you pass the keystone password instead of an api key.
-export NOVA_API_KEY=${PASSWORD:-secrete}
+export NOVA_API_KEY=${ADMIN_PASSWORD:-secrete}
 
 # With the addition of Keystone, to use an openstack cloud you should 
 # authenticate against keystone, which returns a **Token** and **Service 
@@ -82,6 +85,15 @@ glance -A $TOKEN index
 # Let's grab the id of the first AMI image to launch
 IMAGE=`glance -A $TOKEN index | egrep ami | cut -d" " -f1`
 
+# Security Groups
+# ---------------
+SECGROUP=test_secgroup
+
+# List of secgroups:
+nova secgroup-list
+
+# Create a secgroup
+nova secgroup-create $SECGROUP "test_secgroup description"
 
 # Flavors
 # -------
@@ -92,9 +104,9 @@ nova flavor-list
 # and grab the first flavor in the list to launch
 FLAVOR=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
 
-NAME="firstpost"
+NAME="myserver"
 
-nova boot --flavor $FLAVOR --image $IMAGE $NAME
+nova boot --flavor $FLAVOR --image $IMAGE $NAME --security_groups=$SECGROUP
 
 # let's give it 10 seconds to launch
 sleep 10
@@ -113,10 +125,47 @@ ping -c1 -w1 $IP || true
 sleep 5
 
 ping -c1 -w1 $IP 
+# allow icmp traffic
+nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
+
+# List rules for a secgroup
+nova secgroup-list-rules $SECGROUP
+
+# allocate a floating ip
+nova floating-ip-create
+
+# store  floating address
+FIP=`nova floating-ip-list | grep None | head -1 | cut -d '|' -f2 | sed 's/ //g'`
+
+# add floating ip to our server
+nova add-floating-ip $NAME $FIP
+
+# sleep for a smidge
+sleep 1
+
+# ping our fip
+ping -c1 -w1 $FIP
+
+# dis-allow icmp traffic
+nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
+
+# sleep for a smidge
+sleep 1
+
+# ping our fip
+if ( ping -c1 -w1 $FIP); then
+    print "Security group failure - ping should not be allowed!"
+    exit 1
+fi
+
+# de-allocate the floating ip
+nova floating-ip-delete $FIP
 
 # shutdown the server
 nova delete $NAME
 
+# Delete a secgroup
+nova secgroup-delete $SECGROUP
+
 # FIXME: validate shutdown within 5 seconds 
 # (nova show $NAME returns 1 or status != ACTIVE)?
-
