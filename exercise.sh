@@ -19,6 +19,9 @@ set -o xtrace
 # Settings
 # ========
 
+# Use stackrc and localrc for settings
+source ./stackrc
+
 HOST=${HOST:-localhost}
 
 # Nova original used project_id as the *account* that owned resources (servers,
@@ -33,7 +36,7 @@ export NOVA_PROJECT_ID=${TENANT:-demo}
 export NOVA_USERNAME=${USERNAME:-demo}
 
 # With Keystone you pass the keystone password instead of an api key.
-export NOVA_API_KEY=${PASSWORD:-secrete}
+export NOVA_API_KEY=${ADMIN_PASSWORD:-secrete}
 
 # With the addition of Keystone, to use an openstack cloud you should 
 # authenticate against keystone, which returns a **Token** and **Service 
