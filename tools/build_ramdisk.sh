@@ -42,7 +42,7 @@ if [ ! -d $CHROOTCACHE/natty-dev ]; then
     chroot $CHROOTCACHE/natty-dev groupadd libvirtd
     chroot $CHROOTCACHE/natty-dev useradd stack -s /bin/bash -d $DEST -G libvirtd
     mkdir -p $CHROOTCACHE/natty-dev/$DEST
-    chown stack $CHROOTCACHE/natty-dev/$DEST
+    chroot $CHROOTCACHE/natty-dev chown stack $DEST
 
     # a simple password - pass
     echo stack:pass | chroot $CHROOTCACHE/natty-dev chpasswd
