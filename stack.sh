@@ -230,16 +230,15 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 # use an existing server, you can pass in the user/password/host parameters.
 # You will need to send the same ``MYSQL_PASSWORD`` to every host if you are doing
 # a multi-node devstack installation.
+MYSQL_HOST=${MYSQL_HOST:-localhost}
 MYSQL_USER=${MYSQL_USER:-root}
 read_password MYSQL_PASSWORD "ENTER A PASSWORD TO USE FOR MYSQL."
-MYSQL_HOST=${MYSQL_HOST:-localhost}
 
 # don't specify /db in this string, so we can use it for multiple services
 BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST}
 
 # Rabbit connection info
 RABBIT_HOST=${RABBIT_HOST:-localhost}
-RABBIT_PASSWORD=${RABBIT_PASSWORD:-`openssl rand -hex 12`}
 read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 
 # Glance connection info.  Note the port must be specified.
