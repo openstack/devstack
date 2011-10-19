@@ -271,8 +271,11 @@ failed() {
 # an error.  It is also useful for following along as the install occurs.
 set -o xtrace
 
+# create the destination directory and ensure it is writable by the user
 sudo mkdir -p $DEST
-sudo chown `whoami` $DEST
+if [ ! -w $DEST ]; then
+    sudo chown `whoami` $DEST
+fi
 
 # Install Packages
 # ================
