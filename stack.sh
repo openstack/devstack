@@ -30,18 +30,19 @@ if ! grep -q natty /etc/lsb-release; then
     fi
 fi
 
+# Keep track of the current devstack directory.
+TOP_DIR=$(cd $(dirname "$0") && pwd)
+
 # stack.sh keeps the list of **apt** and **pip** dependencies in external
 # files, along with config templates and other useful files.  You can find these
 # in the ``files`` directory (next to this script).  We will reference this
 # directory using the ``FILES`` variable in this script.
-FILES=`pwd`/files
+FILES=$TOP_DIR/files
 if [ ! -d $FILES ]; then
     echo "ERROR: missing devstack/files - did you grab more than just stack.sh?"
     exit 1
 fi
 
-# Keep track of the current devstack directory.
-TOP_DIR=$(cd $(dirname "$0") && pwd)
 
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
@@ -292,6 +293,8 @@ sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 function git_clone {
     # if there is an existing checkout, move it out of the way
     if [[ "$RECLONE" == "yes" ]]; then
+        # FIXME(ja): if we were smarter we could speed up RECLONE by
+        # using the old git repo as the basis of our new clone...
         if [ -d $2 ]; then
             mv $2 /tmp/stack.`date +%s`
         fi
@@ -408,6 +411,8 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     # ``local_settings.py`` is used to override dashboard default settings.
     cp $FILES/dash_settings.py $DASH_DIR/openstack-dashboard/local/local_settings.py
 
+    # Initialize the dashboard database (it stores sessions and notices shown to
+    # users).  The user system is external (keystone).
     cd $DASH_DIR/openstack-dashboard
     dashboard/manage.py syncdb
 
@@ -435,7 +440,8 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # (re)create glance database
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS glance;'
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE glance;'
-    # Copy over our glance-registry.conf
+
+    # Copy over our glance configurations and update them
     GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
     cp $FILES/glance-registry.conf $GLANCE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
@@ -454,7 +460,7 @@ fi
 # We are going to use the sample http middleware configuration from the keystone
 # project to launch nova.  This paste config adds the configuration required
 # for nova to validate keystone tokens - except we need to switch the config
-# to use our admin token instead (instead of the token from their sample data).
+# to use our service token instead (instead of the invalid token 999888777666).
 sudo sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $KEYSTONE_DIR/examples/paste/nova-api-paste.ini
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
@@ -465,9 +471,9 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # attempt to load modules: network block device - used to manage qcow images
     sudo modprobe nbd || true
 
-    # Check for kvm (hardware based virtualization).  If unable to load kvm, 
-    # set the libvirt type to qemu.  Note: many systems come with hardware 
-    # virtualization disabled in BIOS.
+    # Check for kvm (hardware based virtualization).  If unable to initialize 
+    # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems 
+    # come with hardware virtualization disabled in BIOS.
     if [[ "$LIBVIRT_TYPE" == "kvm" ]]; then
         sudo modprobe kvm || true
         if [ ! -e /dev/kvm ]; then
@@ -481,7 +487,8 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # to simulate multiple systems.
     if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
         sudo apt-get install lxc -y
-        # lxc requires cgroups to be configured on /cgroup
+        # lxc uses cgroups (a kernel interface via virtual filesystem) configured
+        # and mounted to ``/cgroup``
         sudo mkdir -p /cgroup
         if ! grep -q cgroup /etc/fstab; then
             echo none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0 | sudo tee -a /etc/fstab
@@ -491,9 +498,12 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
         fi
     fi
 
-    # User needs to be member of libvirtd group for nova-compute to use libvirt.
+    # The user that nova runs as needs to be member of libvirtd group otherwise
+    # nova-compute will be unable to use libvirt.
     sudo usermod -a -G libvirtd `whoami`
-    # if kvm wasn't running before we need to restart libvirt to enable it
+    # libvirt detects various settings on startup, as we potentially changed 
+    # the system configuration (modules, filesystems), we need to restart
+    # libvirt to detect those changes.
     sudo /etc/init.d/libvirt-bin restart
 
 
@@ -503,12 +513,14 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # Nova stores each instance in its own directory.
     mkdir -p $NOVA_DIR/instances
 
-    # if there is a partition labeled nova-instances use it (ext filesystems
-    # can be labeled via e2label)
-    ## FIXME: if already mounted this blows up...
+    # You can specify a different disk to be mounted and used for backing the
+    # virtual machines.  If there is a partition labeled nova-instances we 
+    # mount it (ext filesystems can be labeled via e2label).
     if [ -L /dev/disk/by-label/nova-instances ]; then
-        sudo mount -L nova-instances $NOVA_DIR/instances
-        sudo chown -R `whoami` $NOVA_DIR/instances
+        if ! mount -n | grep -q nova-instances; then
+            sudo mount -L nova-instances $NOVA_DIR/instances
+            sudo chown -R `whoami` $NOVA_DIR/instances
+        fi
     fi
 
     # Clean out the instances directory.
