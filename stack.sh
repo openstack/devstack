@@ -675,10 +675,10 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 # TTY also uses cloud-init, supporting login via keypair and sending scripts as
 # userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
 #
-# Override IMAGE_URLS if you would to launch a different image(s).  
-# Specify IMAGE_URLS as a comma-separated list of uec urls.  Some other options include:
-#   natty: http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz
-#   oneiric: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
+# Override ``IMAGE_URLS`` with a comma-seperated list of uec images.
+#
+#  * **natty**: http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz
+#  * **oneiric**: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
 
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Create a directory for the downloaded image tarballs.
