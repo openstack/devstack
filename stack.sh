@@ -301,8 +301,6 @@ function git_clone {
     fi
 
     if [ ! -d $2 ]; then
-        sudo mkdir $2
-        sudo chown `whoami` $2
         git clone $1 $2
         cd $2
         # This checkout syntax works for both branches and tags
