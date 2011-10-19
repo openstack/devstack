@@ -146,6 +146,7 @@ cat > $LIBVIRT_XML <<EOF
     <memory>1524288</memory>
     <os>
             <type>hvm</type>
+            <bootmenu enable='yes'/>
 <!--
             <kernel>$VM_DIR/kernel</kernel>
                 <cmdline>root=/dev/vda console=ttyS0</cmdline>
@@ -280,6 +281,8 @@ chroot $ROOTFS chown -R stack $DEST
 
 chmod +x $RC_LOCAL
 chroot $ROOTFS sudo update-rc.d local defaults 80
+
+sudo sed -e "s/quiet splash/splash console=ttyS0 console=ttyS1,19200n8/g" -i $ROOTFS/boot/grub/menu.lst
 
 umount $ROOTFS
 qemu-nbd -d /dev/nbd5
