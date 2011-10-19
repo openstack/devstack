@@ -270,8 +270,11 @@ failed() {
 # an error.  It is also useful for following along as the install occurs.
 set -o xtrace
 
+# create the destination directory and ensure it is writable by the user
 sudo mkdir -p $DEST
-sudo chown `whoami` $DEST
+if [ ! -w $DEST ]; then
+    sudo chown `whoami` $DEST
+fi
 
 # Install Packages
 # ================
@@ -300,8 +303,6 @@ function git_clone {
     fi
 
     if [ ! -d $2 ]; then
-        sudo mkdir $2
-        sudo chown `whoami` $2
         git clone $1 $2
         cd $2
         # This checkout syntax works for both branches and tags
