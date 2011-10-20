@@ -175,9 +175,8 @@ cat > $LIBVIRT_XML <<EOF
     <name>$VM_NAME</name>
     <memory>1524288</memory>
     <os>
-            <type>hvm</type>
-            <boot dev='hd'/>
-            <bootmenu enable='yes'/>
+        <type>hvm</type>
+        <bootmenu enable='yes'/>
     </os>
     <features>
         <acpi/>
@@ -287,6 +286,7 @@ cd $DEST/devstack && $STACKSH_PARAMS FORCE=yes ./stack.sh > /$DEST/run.sh.log
 echo >> /$DEST/run.sh.log
 echo >> /$DEST/run.sh.log
 echo "All done! Time to start clicking." >> /$DEST/run.sh.log
+cat $DEST/run.sh.log
 EOF
 chmod 755 $RUN_SH
 
@@ -297,13 +297,14 @@ cat > $RC_LOCAL <<EOF
 # Reboot if this is our first run to enable console log on natty :(
 if [ ! -e /root/firstlaunch ]; then
     touch /root/firstlaunch
-#    reboot
+    reboot -f
     exit 0
 fi
 su -c "$DEST/run.sh" stack
 EOF
 chmod +x $RC_LOCAL
 chroot $ROOTFS sudo update-rc.d local defaults 80
+#chroot $ROOTFS update-rc.d local start 80 2 . stop 80 0 1 6
 
 # Make our ip address hostnames look nice at the command prompt
 echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS/$DEST/.bashrc
@@ -314,6 +315,8 @@ chroot $ROOTFS chown -R stack $DEST
 
 # Change boot params so that we get a console log
 sudo sed -e "s/quiet splash/splash console=ttyS0 console=ttyS1,19200n8/g" -i $ROOTFS/boot/grub/menu.lst
+sudo sed -e "s/^hiddenmenu//g" -i $ROOTFS/boot/grub/menu.lst
+#chroot $ROOTFS grub-install /dev/vda
 
 # Unmount
 umount $ROOTFS || echo 'ok'
@@ -323,7 +326,7 @@ qemu-nbd -d /dev/nbd5
 cd $VM_DIR && virsh create libvirt.xml
 
 # Tail the console log till we are done
-WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-0}
+WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     # Done creating the container, let's tail the log
     echo
@@ -353,7 +356,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     trap kill_tail SIGINT
 
     echo "Waiting stack.sh to finish..."
-    while ! cat $VM_DIR/console.log | grep -q 'stack.sh completed' ; do
+    while ! cat $VM_DIR/console.log | grep -q 'All done' ; do
         sleep 5
     done
 
