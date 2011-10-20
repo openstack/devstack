@@ -355,7 +355,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
         kill $TAIL_PID
         exit 1
     }
- 
+
     # Let Ctrl-c kill tail and exit
     trap kill_tail SIGINT
 

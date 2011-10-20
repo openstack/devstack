@@ -4,7 +4,7 @@
 
 # This script installs and configures *nova*, *glance*, *dashboard* and *keystone*
 
-# This script allows you to specify configuration options of what git 
+# This script allows you to specify configuration options of what git
 # repositories to use, enabled services, network configuration and various
 # passwords.  If you are crafty you can run the script on multiple nodes using
 # shared settings for common resources (mysql, rabbitmq) and build a multi-node
@@ -65,11 +65,11 @@ fi
 # in most cases.
 #
 # We our settings from ``stackrc``.  This file is distributed with devstack and
-# contains locations for what repositories to use.  If you want to use other 
-# repositories and branches, you can add your own settings with another file 
+# contains locations for what repositories to use.  If you want to use other
+# repositories and branches, you can add your own settings with another file
 # called ``localrc``
 #
-# If ``localrc`` exists, then ``stackrc`` will load those settings.  This is 
+# If ``localrc`` exists, then ``stackrc`` will load those settings.  This is
 # useful for changing a branch or repostiory to test other versions.  Also you
 # can store your other settings like **MYSQL_PASSWORD** or **ADMIN_PASSWORD** instead
 # of letting devstack generate random ones for you.
@@ -86,7 +86,7 @@ DEST=${DEST:-/opt/stack}
 if [[ $EUID -eq 0 ]]; then
     echo "You are running this script as root."
     echo "In 10 seconds, we will create a user 'stack' and run as that user"
-    sleep 10 
+    sleep 10
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
@@ -158,7 +158,7 @@ function read_password {
             touch $localrc
         fi
 
-        # Presumably if we got this far it can only be that our localrc is missing 
+        # Presumably if we got this far it can only be that our localrc is missing
         # the required password.  Prompt user for a password and write to localrc.
         echo ''
         echo '################################################################################'
@@ -183,7 +183,7 @@ function read_password {
 # Nova Network Configuration
 # --------------------------
 
-# FIXME: more documentation about why these are important flags.  Also 
+# FIXME: more documentation about why these are important flags.  Also
 # we should make sure we use the same variable names as the flag names.
 
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
@@ -204,15 +204,15 @@ MULTI_HOST=${MULTI_HOST:-0}
 # variable but make sure that the interface doesn't already have an
 # ip or you risk breaking things.
 #
-# **DHCP Warning**:  If your flat interface device uses DHCP, there will be a 
-# hiccup while the network is moved from the flat interface to the flat network 
-# bridge.  This will happen when you launch your first instance.  Upon launch 
-# you will lose all connectivity to the node, and the vm launch will probably 
+# **DHCP Warning**:  If your flat interface device uses DHCP, there will be a
+# hiccup while the network is moved from the flat interface to the flat network
+# bridge.  This will happen when you launch your first instance.  Upon launch
+# you will lose all connectivity to the node, and the vm launch will probably
 # fail.
-# 
-# If you are running on a single node and don't need to access the VMs from 
+#
+# If you are running on a single node and don't need to access the VMs from
 # devices other than that node, you can set the flat interface to the same
-# value as ``FLAT_NETWORK_BRIDGE``.  This will stop the network hiccup from 
+# value as ``FLAT_NETWORK_BRIDGE``.  This will stop the network hiccup from
 # occuring.
 FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
@@ -222,11 +222,11 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 # MySQL & RabbitMQ
 # ----------------
 
-# We configure Nova, Dashboard, Glance and Keystone to use MySQL as their 
+# We configure Nova, Dashboard, Glance and Keystone to use MySQL as their
 # database server.  While they share a single server, each has their own
 # database and tables.
 
-# By default this script will install and configure MySQL.  If you want to 
+# By default this script will install and configure MySQL.  If you want to
 # use an existing server, you can pass in the user/password/host parameters.
 # You will need to send the same ``MYSQL_PASSWORD`` to every host if you are doing
 # a multi-node devstack installation.
@@ -471,8 +471,8 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # attempt to load modules: network block device - used to manage qcow images
     sudo modprobe nbd || true
 
-    # Check for kvm (hardware based virtualization).  If unable to initialize 
-    # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems 
+    # Check for kvm (hardware based virtualization).  If unable to initialize
+    # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems
     # come with hardware virtualization disabled in BIOS.
     if [[ "$LIBVIRT_TYPE" == "kvm" ]]; then
         sudo modprobe kvm || true
@@ -501,7 +501,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # The user that nova runs as needs to be member of libvirtd group otherwise
     # nova-compute will be unable to use libvirt.
     sudo usermod -a -G libvirtd `whoami`
-    # libvirt detects various settings on startup, as we potentially changed 
+    # libvirt detects various settings on startup, as we potentially changed
     # the system configuration (modules, filesystems), we need to restart
     # libvirt to detect those changes.
     sudo /etc/init.d/libvirt-bin restart
@@ -514,7 +514,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     mkdir -p $NOVA_DIR/instances
 
     # You can specify a different disk to be mounted and used for backing the
-    # virtual machines.  If there is a partition labeled nova-instances we 
+    # virtual machines.  If there is a partition labeled nova-instances we
     # mount it (ext filesystems can be labeled via e2label).
     if [ -L /dev/disk/by-label/nova-instances ]; then
         if ! mount -n | grep -q nova-instances; then
