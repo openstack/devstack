@@ -37,7 +37,7 @@ $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne keystone http://%HOS
 $BIN_DIR/keystone-manage $* token add %SERVICE_TOKEN% admin admin 2015-02-05T00:00
 
 # EC2 related creds - note we are setting the token to user_password
-# but keystone doesn't parse them - it is just a blob from keystone's 
+# but keystone doesn't parse them - it is just a blob from keystone's
 # point of view
 $BIN_DIR/keystone-manage $* credentials add admin EC2 'admin_%ADMIN_PASSWORD%' admin admin || echo "no support for adding credentials"
 $BIN_DIR/keystone-manage $* credentials add demo EC2 'demo_%ADMIN_PASSWORD%' demo demo || echo "no support for adding credentials"

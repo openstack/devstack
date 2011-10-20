@@ -22,7 +22,7 @@ rm -rf $DEST
 # clean install of natty
 if [ ! -d $CHROOTCACHE/natty-base ]; then
     $PROGDIR/make_image.sh -C natty $CHROOTCACHE/natty-base
-    # copy kernel modules...  
+    # copy kernel modules...
     # NOTE(ja): is there a better way to do this?
     cp -pr /lib/modules/`uname -r` $CHROOTCACHE/natty-base/lib/modules
     # a simple password - pass
@@ -35,7 +35,7 @@ if [ ! -d $CHROOTCACHE/natty-dev ]; then
     chroot $CHROOTCACHE/natty-dev apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
     chroot $CHROOTCACHE/natty-dev pip install `cat files/pips/*`
 
-    # Create a stack user that is a member of the libvirtd group so that stack 
+    # Create a stack user that is a member of the libvirtd group so that stack
     # is able to interact with libvirt.
     chroot $CHROOTCACHE/natty-dev groupadd libvirtd
     chroot $CHROOTCACHE/natty-dev useradd stack -s /bin/bash -d $DEST -G libvirtd
@@ -45,7 +45,7 @@ if [ ! -d $CHROOTCACHE/natty-dev ]; then
     # a simple password - pass
     echo stack:pass | chroot $CHROOTCACHE/natty-dev chpasswd
 
-    # and has sudo ability (in the future this should be limited to only what 
+    # and has sudo ability (in the future this should be limited to only what
     # stack requires)
     echo "stack ALL=(ALL) NOPASSWD: ALL" >> $CHROOTCACHE/natty-dev/etc/sudoers
 fi

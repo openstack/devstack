@@ -7,11 +7,11 @@
 #
 
 
-# This script exits on an error so that errors don't compound and you see 
+# This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
 set -o errexit
 
-# Print the commands being run so that we can see the command that triggers 
+# Print the commands being run so that we can see the command that triggers
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
@@ -25,7 +25,7 @@ source ./openrc
 # Get a token for clients that don't support service catalog
 # ==========================================================
 
-# manually create a token by querying keystone (sending JSON data).  Keystone 
+# manually create a token by querying keystone (sending JSON data).  Keystone
 # returns a token and catalog of endpoints.  We use python to parse the token
 # and save it.
 
@@ -84,11 +84,11 @@ IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
 # ping it once (timeout of a second)
 ping -c1 -w1 $IP || true
 
-# sometimes the first ping fails (10 seconds isn't enough time for the VM's 
+# sometimes the first ping fails (10 seconds isn't enough time for the VM's
 # network to respond?), so let's wait 5 seconds and really test ping
 sleep 5
 
-ping -c1 -w1 $IP 
+ping -c1 -w1 $IP
 # allow icmp traffic
 nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
@@ -131,5 +131,5 @@ nova delete $NAME
 # Delete a secgroup
 nova secgroup-delete $SECGROUP
 
-# FIXME: validate shutdown within 5 seconds 
+# FIXME: validate shutdown within 5 seconds
 # (nova show $NAME returns 1 or status != ACTIVE)?
