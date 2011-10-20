@@ -18,6 +18,9 @@ CWD=`pwd`
 
 DEST=${DEST:-/opt/stack}
 
+# Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
+STACKSH_PARAMS=${STACKSH_PARAMS:-}
+
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
 
@@ -42,7 +45,7 @@ if [ ! -d $CHROOTCACHE/natty-dev ]; then
     chroot $CHROOTCACHE/natty-dev groupadd libvirtd
     chroot $CHROOTCACHE/natty-dev useradd stack -s /bin/bash -d $DEST -G libvirtd
     mkdir -p $CHROOTCACHE/natty-dev/$DEST
-    chown stack $CHROOTCACHE/natty-dev/$DEST
+    chroot $CHROOTCACHE/natty-dev chown stack $DEST
 
     # a simple password - pass
     echo stack:pass | chroot $CHROOTCACHE/natty-dev chpasswd
@@ -111,6 +114,34 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet dhcp
 EOF
+
+# Set hostname
+echo "ramstack" >$CHROOTCACHE/natty-stack/etc/hostname
+echo "127.0.0.1		localhost	ramstack" >$CHROOTCACHE/natty-stack/etc/hosts
+
+# Configure the runner
+RUN_SH=$CHROOTCACHE/natty-stack/$DEST/run.sh
+cat > $RUN_SH <<EOF
+#!/usr/bin/env bash
+
+# Get IP range
+set \`ip addr show dev eth0 | grep inet\`
+PREFIX=\`echo \$2 | cut -d. -f1,2,3\`
+export FLOATING_RANGE="\$PREFIX.224/27"
+
+# Kill any existing screens
+killall screen
+
+# Run stack.sh
+cd $DEST/devstack && \$STACKSH_PARAMS ./stack.sh > $DEST/run.sh.log
+echo >> $DEST/run.sh.log
+echo >> $DEST/run.sh.log
+echo "All done! Time to start clicking." >> $DEST/run.sh.log
+EOF
+
+# Make the run.sh executable
+chmod 755 $RUN_SH
+chroot $CHROOTCACHE/natty-stack chown stack $DEST/run.sh
 
 # build a new image
 BASE=$CHROOTCACHE/build.$$
