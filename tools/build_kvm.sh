@@ -231,7 +231,6 @@ rm -f $VM_DIR/disk
 # Create our instance fs
 qemu-img create -f qcow2 -b $BASE_IMAGE_COPY disk
 
-
 # Mount the instance
 qemu-nbd -c $NBD disk
 mount $NBD $ROOTFS -o offset=32256 -t ext4
