@@ -644,7 +644,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-    if ! timeout 600 sh -c "while ! wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
+    if ! timeout 60 sh -c "while ! wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
       echo "g-api did not start"
       exit 1
     fi
@@ -654,7 +654,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF -d"
     echo "Waiting for keystone to start..."
-    if ! timeout 600 sh -c "while ! wget -q -O- http://127.0.0.1:5000; do sleep 1; done"; then
+    if ! timeout 60 sh -c "while ! wget -q -O- http://127.0.0.1:5000; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
@@ -664,7 +664,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
     echo "Waiting for nova-api to start..."
-    if ! timeout 600 sh -c "while ! wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
+    if ! timeout 60 sh -c "while ! wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
       echo "nova-api did not start"
       exit 1
     fi

@@ -18,7 +18,7 @@ run_bm STACKMASTER $HEAD_HOST "ENABLED_SERVICES=g-api,g-reg,key,n-api,n-sch,n-vn
 # Wait till the head node is up
 if [ ! "$TERMINATE" = "1" ]; then
     echo "Waiting for head node ($HEAD_HOST) to start..."
-    if ! timeout 600 sh -c "while ! wget -q -O- http://$HEAD_HOST | grep -q username; do sleep 1; done"; then
+    if ! timeout 60 sh -c "while ! wget -q -O- http://$HEAD_HOST | grep -q username; do sleep 1; done"; then
       echo "Head node did not start"
       exit 1
     fi
