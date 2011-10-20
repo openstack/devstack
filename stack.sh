@@ -90,8 +90,8 @@ if [[ $EUID -eq 0 ]]; then
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
-    apt-get update
-    apt-get install -y sudo
+    apt_get update
+    apt_get install sudo
 
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
@@ -142,6 +142,14 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
+
+# apt-get wrapper to just get arguments set correctly
+function apt_get() {
+    local sudo="sudo"
+    [ "$(id -u)" = "0" ] && sudo=""
+    $sudo DEBIAN_FRONTEND=noninteractive apt-get \
+        --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
+}
 
 # Generic helper to configure passwords
 function read_password {
@@ -283,8 +291,8 @@ fi
 
 
 # install apt requirements
-sudo apt-get update
-sudo apt-get install -qqy `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
+apt_get update
+apt_get install `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
 
 # install python requirements
 sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
@@ -351,7 +359,11 @@ cp $FILES/screenrc ~/.screenrc
 
 if [[ "$ENABLED_SERVICES" =~ "rabbit" ]]; then
     # Install and start rabbitmq-server
-    sudo apt-get install -y -q rabbitmq-server
+    # the temp file is necessary due to LP: #878600
+    tfile=$(mktemp)
+    apt_get install rabbitmq-server > "$tfile" 2>&1
+    cat "$tfile"
+    rm -f "$tfile"
     # change the rabbit password since the default is "guest"
     sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
 fi
@@ -383,7 +395,7 @@ EOF
     fi
 
     # Install and start mysql-server
-    sudo apt-get -y -q install mysql-server
+    apt_get install mysql-server
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
     sudo mysql -uroot -p$MYSQL_PASSWORD -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';"
 
@@ -486,7 +498,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # splitting a system into many smaller parts.  LXC uses cgroups and chroot
     # to simulate multiple systems.
     if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
-        sudo apt-get install lxc -y
+        apt_get install lxc
         # lxc uses cgroups (a kernel interface via virtual filesystem) configured
         # and mounted to ``/cgroup``
         sudo mkdir -p /cgroup
