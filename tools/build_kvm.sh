@@ -52,7 +52,6 @@ BASE_IMAGE_COPY=$IMAGES_DIR/$DIST_NAME.raw.copy
 VM_NAME=${VM_NAME:-kvmstack}
 
 # Mop up after previous runs
-virsh shutdown $VM_NAME
 virsh destroy $VM_NAME
 
 # Where this vm is stored
@@ -222,13 +221,16 @@ mkdir -p $ROOTFS
 # Make sure we have nbd-ness
 modprobe nbd max_part=63
 
+# Which NBD device to use?
+NBD=${NBD:-/dev/nbd5}
+
 # Clean up from previous runs
 umount $ROOTFS || echo 'ok'
-qemu-nbd -d /dev/nbd5 || echo 'ok'
+qemu-nbd -d $NBD || echo 'ok'
 
 # Mount the instance
-qemu-nbd -c /dev/nbd5 disk
-mount /dev/nbd5 $ROOTFS -o offset=32256 -t ext4
+qemu-nbd -c $NBD disk
+mount $NBD $ROOTFS -o offset=32256 -t ext4
 
 # Configure instance network
 INTERFACES=$ROOTFS/etc/network/interfaces
@@ -304,7 +306,6 @@ su -c "$DEST/run.sh" stack
 EOF
 chmod +x $RC_LOCAL
 chroot $ROOTFS sudo update-rc.d local defaults 80
-#chroot $ROOTFS update-rc.d local start 80 2 . stop 80 0 1 6
 
 # Make our ip address hostnames look nice at the command prompt
 echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS/$DEST/.bashrc
@@ -320,7 +321,7 @@ sudo sed -e "s/^hiddenmenu//g" -i $ROOTFS/boot/grub/menu.lst
 
 # Unmount
 umount $ROOTFS || echo 'ok'
-qemu-nbd -d /dev/nbd5
+qemu-nbd -d $NBD
 
 # Create the instance
 cd $VM_DIR && virsh create libvirt.xml
