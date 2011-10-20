@@ -162,13 +162,15 @@ CONTAINER_CIDR=${CONTAINER_CIDR:-$CONTAINER_IP/24}
 CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
 CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
 CONTAINER_MAC=${CONTAINER_MAC:-"02:16:3e:07:69:`printf '%02X' $(echo $CONTAINER_IP | sed "s/.*\.//")`"}
+CONTAINER_RAM=${CONTAINER_RAM:-1524288}
+CONTAINER_CORES=${CONTAINER_CORES:-1}
 
 # libvirt.xml configuration
 LIBVIRT_XML=libvirt.xml
 cat > $LIBVIRT_XML <<EOF
 <domain type='kvm'>
     <name>$CONTAINER_NAME</name>
-    <memory>1524288</memory>
+    <memory>$CONTAINER_RAM</memory>
     <os>
         <type>hvm</type>
         <bootmenu enable='yes'/>
@@ -176,7 +178,7 @@ cat > $LIBVIRT_XML <<EOF
     <features>
         <acpi/>
     </features>
-    <vcpu>1</vcpu>
+    <vcpu>$CONTAINER_CORES</vcpu>
     <devices>
         <disk type='file'>
             <driver type='qcow2'/>
