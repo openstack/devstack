@@ -148,18 +148,11 @@ git_clone $OPENSTACKX_REPO $COPY_DIR/$DEST/openstackx $OPENSTACKX_BRANCH
 git_clone $KEYSTONE_REPO $COPY_DIR/$DEST/keystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $COPY_DIR/$DEST/noVNC $NOVNC_BRANCH
 
-# Back to devstack
-cd $TOP_DIR
-
 # Unmount the filesystems
 unmount_images
 
-# Clean up old runs
-cd $VM_DIR
-rm -f $VM_DIR/disk
-
-# Clean up old instance data
-qemu-img create -f qcow2 -b $BASE_IMAGE_COPY disk
+# Back to devstack
+cd $TOP_DIR
 
 # Network configuration variables
 BRIDGE=${BRIDGE:-br0}
@@ -230,6 +223,14 @@ NBD=${NBD:-/dev/nbd5}
 # Clean up from previous runs
 umount $ROOTFS || echo 'ok'
 qemu-nbd -d $NBD || echo 'ok'
+
+# Clean up old runs
+cd $VM_DIR
+rm -f $VM_DIR/disk
+
+# Create our instance fs
+qemu-img create -f qcow2 -b $BASE_IMAGE_COPY disk
+
 
 # Mount the instance
 qemu-nbd -c $NBD disk
