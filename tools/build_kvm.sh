@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
+# Make sure that we have the proper version of ubuntu
 UBUNTU_VERSION=`cat /etc/lsb-release | grep CODENAME | sed 's/.*=//g'`
 if [ ! "oneiric" = "$UBUNTU_VERSION" ]; then
-    echo "This script only works with oneiric"
-    exit 1
+    if [ ! "natty" = "$UBUNTU_VERSION" ]; then
+        echo "This script only works with oneiric and natty"
+        exit 1
+    fi
 fi
 
 # Echo commands
