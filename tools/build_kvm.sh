@@ -52,13 +52,13 @@ BASE_IMAGE=$KVMSTACK_DIR/images/natty.raw
 BASE_IMAGE_COPY=$IMAGES_DIR/$DIST_NAME.raw.copy
 
 # Name of our instance, used by libvirt
-VM_NAME=${VM_NAME:-kvmstack}
+CONTAINER_NAME=${CONTAINER_NAME:-kvmstack}
 
 # Mop up after previous runs
-virsh destroy $VM_NAME
+virsh destroy $CONTAINER_NAME
 
 # Where this vm is stored
-VM_DIR=$KVMSTACK_DIR/instances/$VM_NAME
+VM_DIR=$KVMSTACK_DIR/instances/$CONTAINER_NAME
 
 # Create vm dir
 mkdir -p $VM_DIR
@@ -168,13 +168,13 @@ CONTAINER_IP=${CONTAINER_IP:-192.168.1.50}
 CONTAINER_CIDR=${CONTAINER_CIDR:-$CONTAINER_IP/24}
 CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
 CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
-CONTAINER_MAC=${CONTAINER_MAC:-02:16:3e:07:70:d7}
+CONTAINER_MAC=${CONTAINER_MAC:-"02:16:3e:07:69:`printf '%02X' $(echo $CONTAINER_IP | sed "s/.*\.//")`"}
 
 # libvirt.xml configuration
 LIBVIRT_XML=libvirt.xml
 cat > $LIBVIRT_XML <<EOF
 <domain type='kvm'>
-    <name>$VM_NAME</name>
+    <name>$CONTAINER_NAME</name>
     <memory>1524288</memory>
     <os>
         <type>hvm</type>
