@@ -110,7 +110,7 @@ esac
 
 # Install stuff if necessary
 if [ -z `which vmbuilder` ]; then
-    sudo apt-get install ubuntu-vm-builder
+    sudo apt-get install -y ubuntu-vm-builder
 fi
 
 if [ -n "$CHROOTONLY" ]; then
