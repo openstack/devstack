@@ -45,14 +45,14 @@ source ./stackrc
 DIST_NAME=${DIST_NAME:-natty}
 IMAGE_FNAME=$DIST_NAME.raw
 
+# Name of our instance, used by libvirt
+CONTAINER_NAME=${CONTAINER_NAME:-kvmstack}
+
 # Original version of built image
 BASE_IMAGE=$KVMSTACK_DIR/images/natty.raw
 
 # Copy of base image, which we pre-install with tasty treats
-BASE_IMAGE_COPY=$IMAGES_DIR/$DIST_NAME.raw.copy
-
-# Name of our instance, used by libvirt
-CONTAINER_NAME=${CONTAINER_NAME:-kvmstack}
+BASE_IMAGE_COPY=$IMAGES_DIR/$DIST_NAME.$CONTAINER_NAME.raw.copy
 
 # Mop up after previous runs
 virsh destroy $CONTAINER_NAME
