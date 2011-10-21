@@ -49,7 +49,7 @@ IMAGE_FNAME=$DIST_NAME.raw
 CONTAINER_NAME=${CONTAINER_NAME:-kvmstack}
 
 # Original version of built image
-BASE_IMAGE=$KVMSTACK_DIR/images/natty.raw
+BASE_IMAGE=$KVMSTACK_DIR/images/$DIST_NAME.raw
 
 # Copy of base image, which we pre-install with tasty treats
 BASE_IMAGE_COPY=$IMAGES_DIR/$DIST_NAME.$CONTAINER_NAME.raw.copy
@@ -70,8 +70,8 @@ mkdir -p $COPY_DIR
 # Create the base image if it does not yet exist
 if [ ! -e $IMAGES_DIR/$IMAGE_FNAME ]; then
     cd $TOOLS_DIR
-    ./make_image.sh -m -r 5000  natty raw
-    mv natty.raw $BASE_IMAGE
+    ./make_image.sh -m -r 5000  $DIST_NAME raw
+    mv $DIST_NAME.raw $BASE_IMAGE
     cd $TOP_DIR
 fi
 
@@ -306,7 +306,7 @@ chmod 755 $RUN_SH
 RC_LOCAL=$ROOTFS/etc/init.d/local
 cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
-# Reboot if this is our first run to enable console log on natty :(
+# Reboot if this is our first run to enable console log on $DIST_NAME :(
 if [ ! -e /root/firstlaunch ]; then
     touch /root/firstlaunch
     reboot -f
