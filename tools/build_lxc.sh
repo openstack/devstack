@@ -38,7 +38,8 @@ DEST=${DEST:-/opt/stack}
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
-STACKSH_PARAMS=${STACKSH_PARAMS:-}
+# By default, n-vol is disabled for lxc, as iscsitarget doesn't work properly in lxc
+STACKSH_PARAMS=${STACKSH_PARAMS:-"ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit"}
 
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}

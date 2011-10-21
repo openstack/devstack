@@ -547,6 +547,31 @@ if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
     mkdir -p $NOVA_DIR/networks
 fi
 
+# Volume Service
+# --------------
+
+if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
+    #
+    # Configure a default volume group called 'nova-volumes' for the nova-volume
+    # service if it does not yet exist.  If you don't wish to use a file backed
+    # volume group, create your own volume group called 'nova-volumes' before
+    # invoking stack.sh.
+    #
+    # By default, the backing file is 2G in size, and is stored in /opt/stack.
+    #
+    if ! sudo vgdisplay | grep -q nova-volumes; then
+        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-/opt/stack/nova-volumes-backing-file}
+        VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
+        truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
+        DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
+        sudo vgcreate nova-volumes $DEV
+    fi
+
+    # Configure iscsitarget
+    sudo sed 's/ISCSITARGET_ENABLE=false/ISCSITARGET_ENABLE=true/' -i /etc/default/iscsitarget
+    sudo /etc/init.d/iscsitarget restart
+fi
+
 function add_nova_flag {
     echo "$1" >> $NOVA_DIR/bin/nova.conf
 }
@@ -687,6 +712,7 @@ fi
 # within the context of our original shell (so our groups won't be updated).
 # Use 'sg' to execute nova-compute as a member of the libvirtd group.
 screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
+screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web . --flagfile=../nova/bin/nova.conf"
