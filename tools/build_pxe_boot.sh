@@ -20,7 +20,7 @@ PROGDIR=`dirname $0`
 mkdir -p $DEST_DIR/pxelinux.cfg
 cd $DEST_DIR
 for i in memdisk menu.c32 pxelinux.0; do
-	cp -p /usr/lib/syslinux/$i $DEST_DIR
+    cp -p /usr/lib/syslinux/$i $DEST_DIR
 done
 
 CFG=$DEST_DIR/pxelinux.cfg/default

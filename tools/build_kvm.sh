@@ -52,13 +52,13 @@ BASE_IMAGE=$KVMSTACK_DIR/images/natty.raw
 BASE_IMAGE_COPY=$IMAGES_DIR/$DIST_NAME.raw.copy
 
 # Name of our instance, used by libvirt
-VM_NAME=${VM_NAME:-kvmstack}
+CONTAINER_NAME=${CONTAINER_NAME:-kvmstack}
 
 # Mop up after previous runs
-virsh destroy $VM_NAME
+virsh destroy $CONTAINER_NAME
 
 # Where this vm is stored
-VM_DIR=$KVMSTACK_DIR/instances/$VM_NAME
+VM_DIR=$KVMSTACK_DIR/instances/$CONTAINER_NAME
 
 # Create vm dir
 mkdir -p $VM_DIR
@@ -148,18 +148,11 @@ git_clone $OPENSTACKX_REPO $COPY_DIR/$DEST/openstackx $OPENSTACKX_BRANCH
 git_clone $KEYSTONE_REPO $COPY_DIR/$DEST/keystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $COPY_DIR/$DEST/noVNC $NOVNC_BRANCH
 
-# Back to devstack
-cd $TOP_DIR
-
 # Unmount the filesystems
 unmount_images
 
-# Clean up old runs
-cd $VM_DIR
-rm -f $VM_DIR/disk
-
-# Clean up old instance data
-qemu-img create -f qcow2 -b $BASE_IMAGE_COPY disk
+# Back to devstack
+cd $TOP_DIR
 
 # Network configuration variables
 BRIDGE=${BRIDGE:-br0}
@@ -168,14 +161,16 @@ CONTAINER_IP=${CONTAINER_IP:-192.168.1.50}
 CONTAINER_CIDR=${CONTAINER_CIDR:-$CONTAINER_IP/24}
 CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
 CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
-CONTAINER_MAC=${CONTAINER_MAC:-02:16:3e:07:70:d7}
+CONTAINER_MAC=${CONTAINER_MAC:-"02:16:3e:07:69:`printf '%02X' $(echo $CONTAINER_IP | sed "s/.*\.//")`"}
+CONTAINER_RAM=${CONTAINER_RAM:-1524288}
+CONTAINER_CORES=${CONTAINER_CORES:-1}
 
 # libvirt.xml configuration
 LIBVIRT_XML=libvirt.xml
 cat > $LIBVIRT_XML <<EOF
 <domain type='kvm'>
-    <name>$VM_NAME</name>
-    <memory>1524288</memory>
+    <name>$CONTAINER_NAME</name>
+    <memory>$CONTAINER_RAM</memory>
     <os>
         <type>hvm</type>
         <bootmenu enable='yes'/>
@@ -183,7 +178,7 @@ cat > $LIBVIRT_XML <<EOF
     <features>
         <acpi/>
     </features>
-    <vcpu>1</vcpu>
+    <vcpu>$CONTAINER_CORES</vcpu>
     <devices>
         <disk type='file'>
             <driver type='qcow2'/>
@@ -231,8 +226,20 @@ NBD=${NBD:-/dev/nbd5}
 umount $ROOTFS || echo 'ok'
 qemu-nbd -d $NBD || echo 'ok'
 
-# Mount the instance
+# Clean up old runs
+cd $VM_DIR
+rm -f $VM_DIR/disk
+
+# Create our instance fs
+qemu-img create -f qcow2 -b $BASE_IMAGE_COPY disk
+
+sleep 5
+
 qemu-nbd -c $NBD disk
+
+sleep 5
+
+# Mount the instance
 mount $NBD $ROOTFS -o offset=32256 -t ext4
 
 # Configure instance network
@@ -355,7 +362,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
         kill $TAIL_PID
         exit 1
     }
- 
+
     # Let Ctrl-c kill tail and exit
     trap kill_tail SIGINT
 
