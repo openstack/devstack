@@ -26,8 +26,8 @@ export NOVA_API_KEY=${ADMIN_PASSWORD:-secrete}
 # has access to - including nova, glance, keystone, swift, ...  We currently
 # recommend using the 2.0 *auth api*.
 #
-# *NOTE*: Using the 2.0 *auth api* does mean that compute api is 2.0.  We will
-# use the 1.1 *compute api*
+# *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We 
+# will use the 1.1 *compute api*
 export NOVA_URL=${NOVA_URL:-http://$HOST:5000/v2.0/}
 
 # Currently novaclient needs you to specify the *compute api* version.  This
