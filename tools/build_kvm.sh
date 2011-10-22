@@ -166,7 +166,7 @@ CONTAINER_RAM=${CONTAINER_RAM:-1524288}
 CONTAINER_CORES=${CONTAINER_CORES:-1}
 
 # libvirt.xml configuration
-LIBVIRT_XML=libvirt.xml
+LIBVIRT_XML=$VM_DIR/libvirt.xml
 cat > $LIBVIRT_XML <<EOF
 <domain type='kvm'>
     <name>$CONTAINER_NAME</name>
