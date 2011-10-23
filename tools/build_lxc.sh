@@ -27,7 +27,7 @@ CWD=`pwd`
 
 # Configurable params
 BRIDGE=${BRIDGE:-br0}
-CONTAINER=${CONTAINER:-STACK}
+CONTAINER_NAME=${CONTAINER_NAME:-STACK}
 CONTAINER_IP=${CONTAINER_IP:-192.168.1.50}
 CONTAINER_CIDR=${CONTAINER_CIDR:-$CONTAINER_IP/24}
 CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
@@ -60,7 +60,7 @@ if ! which cgdelete | grep -q cgdelete; then
 fi
 
 # Create lxc configuration
-LXC_CONF=/tmp/$CONTAINER.conf
+LXC_CONF=/tmp/$CONTAINER_NAME.conf
 cat > $LXC_CONF <<EOF
 lxc.network.type = veth
 lxc.network.link = $BRIDGE
@@ -71,11 +71,11 @@ lxc.cgroup.devices.allow = c 10:200 rwm
 EOF
 
 # Shutdown any existing container
-lxc-stop -n $CONTAINER
+lxc-stop -n $CONTAINER_NAME
 
 # This kills zombie containers
-if [ -d /cgroup/$CONTAINER ]; then
-    cgdelete -r cpu,net_cls:$CONTAINER
+if [ -d /cgroup/$CONTAINER_NAME ]; then
+    cgdelete -r cpu,net_cls:$CONTAINER_NAME
 fi
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
@@ -95,9 +95,9 @@ function git_clone {
 # Helper to create the container
 function create_lxc {
     if [ "natty" = "$UBUNTU_VERSION" ]; then
-        lxc-create -n $CONTAINER -t natty -f $LXC_CONF
+        lxc-create -n $CONTAINER_NAME -t natty -f $LXC_CONF
     else
-        lxc-create -n $CONTAINER -t ubuntu -f $LXC_CONF
+        lxc-create -n $CONTAINER_NAME -t ubuntu -f $LXC_CONF
     fi
 }
 
@@ -117,7 +117,7 @@ fi
 if [ ! -f $CACHEDIR/bootstrapped ]; then
     # by deleting the container, we force lxc-create to re-bootstrap (lxc is
     # lazy and doesn't do anything if a container already exists)
-    lxc-destroy -n $CONTAINER
+    lxc-destroy -n $CONTAINER_NAME
     # trigger the initial debootstrap
     create_lxc
     touch $CACHEDIR/bootstrapped
@@ -153,7 +153,7 @@ if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
 fi
 
 # Destroy the old container
-lxc-destroy -n $CONTAINER
+lxc-destroy -n $CONTAINER_NAME
 
 # If this call is to TERMINATE the container then exit
 if [ "$TERMINATE" = "1" ]; then
@@ -164,7 +164,7 @@ fi
 create_lxc
 
 # Specify where our container rootfs lives
-ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
+ROOTFS=/var/lib/lxc/$CONTAINER_NAME/rootfs/
 
 # Create a stack user that is a member of the libvirtd group so that stack
 # is able to interact with libvirt.
@@ -265,7 +265,7 @@ if ! mount | grep -q cgroup; then
 fi
 
 # Start our container
-lxc-start -d -n $CONTAINER
+lxc-start -d -n $CONTAINER_NAME
 
 if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     # Done creating the container, let's tail the log
