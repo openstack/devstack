@@ -46,19 +46,19 @@ DIST_NAME=${DIST_NAME:-natty}
 IMAGE_FNAME=$DIST_NAME.raw
 
 # Name of our instance, used by libvirt
-CONTAINER_NAME=${CONTAINER_NAME:-kvmstack}
+GUEST_NAME=${GUEST_NAME:-kvmstack}
 
 # Original version of built image
 BASE_IMAGE=$KVMSTACK_DIR/images/$DIST_NAME.raw
 
 # Copy of base image, which we pre-install with tasty treats
-VM_IMAGE=$IMAGES_DIR/$DIST_NAME.$CONTAINER_NAME.raw
+VM_IMAGE=$IMAGES_DIR/$DIST_NAME.$GUEST_NAME.raw
 
 # Mop up after previous runs
-virsh destroy $CONTAINER_NAME
+virsh destroy $GUEST_NAME
 
 # Where this vm is stored
-VM_DIR=$KVMSTACK_DIR/instances/$CONTAINER_NAME
+VM_DIR=$KVMSTACK_DIR/instances/$GUEST_NAME
 
 # Create vm dir
 mkdir -p $VM_DIR
@@ -156,21 +156,20 @@ cd $TOP_DIR
 
 # Network configuration variables
 BRIDGE=${BRIDGE:-br0}
-CONTAINER=${CONTAINER:-STACK}
-CONTAINER_IP=${CONTAINER_IP:-192.168.1.50}
-CONTAINER_CIDR=${CONTAINER_CIDR:-$CONTAINER_IP/24}
-CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
-CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
-CONTAINER_MAC=${CONTAINER_MAC:-"02:16:3e:07:69:`printf '%02X' $(echo $CONTAINER_IP | sed "s/.*\.//")`"}
-CONTAINER_RAM=${CONTAINER_RAM:-1524288}
-CONTAINER_CORES=${CONTAINER_CORES:-1}
+GUEST_IP=${GUEST_IP:-192.168.1.50}
+GUEST_CIDR=${GUEST_CIDR:-$GUEST_IP/24}
+GUEST_NETMASK=${GUEST_NETMASK:-255.255.255.0}
+GUEST_GATEWAY=${GUEST_GATEWAY:-192.168.1.1}
+GUEST_MAC=${GUEST_MAC:-"02:16:3e:07:69:`printf '%02X' $(echo $GUEST_IP | sed "s/.*\.//")`"}
+GUEST_RAM=${GUEST_RAM:-1524288}
+GUEST_CORES=${GUEST_CORES:-1}
 
 # libvirt.xml configuration
 LIBVIRT_XML=$VM_DIR/libvirt.xml
 cat > $LIBVIRT_XML <<EOF
 <domain type='kvm'>
-    <name>$CONTAINER_NAME</name>
-    <memory>$CONTAINER_RAM</memory>
+    <name>$GUEST_NAME</name>
+    <memory>$GUEST_RAM</memory>
     <os>
         <type>hvm</type>
         <bootmenu enable='yes'/>
@@ -178,7 +177,7 @@ cat > $LIBVIRT_XML <<EOF
     <features>
         <acpi/>
     </features>
-    <vcpu>$CONTAINER_CORES</vcpu>
+    <vcpu>$GUEST_CORES</vcpu>
     <devices>
         <disk type='file'>
             <driver type='qcow2'/>
@@ -188,7 +187,7 @@ cat > $LIBVIRT_XML <<EOF
 
         <interface type='bridge'>
             <source bridge='$BRIDGE'/>
-            <mac address='$CONTAINER_MAC'/>
+            <mac address='$GUEST_MAC'/>
         </interface>
 
         <!-- The order is significant here.  File must be defined first -->
@@ -250,9 +249,9 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
-        address $CONTAINER_IP
-        netmask $CONTAINER_NETMASK
-        gateway $CONTAINER_GATEWAY
+        address $GUEST_IP
+        netmask $GUEST_NETMASK
+        gateway $GUEST_GATEWAY
 EOF
 
 # User configuration for the instance
