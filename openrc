@@ -38,4 +38,4 @@ export NOVA_VERSION=${NOVA_VERSION:-1.1}
 export NOVA_REGION_NAME=${NOVA_REGION_NAME:-RegionOne}
 
 # set log level to DEBUG (helps debug issues)
-export NOVACLIENT_DEBUG=${NOVACLIENT_DEBUG:-0}
+# export NOVACLIENT_DEBUG=1
