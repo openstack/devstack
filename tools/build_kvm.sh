@@ -235,8 +235,12 @@ rm -f $VM_DIR/disk
 # Create our instance fs
 qemu-img create -f qcow2 -b $VM_IMAGE disk
 
+# FIXME: we are sleeping because these qemu commands appear to not complete
+# before they return...  We should apply fix that is done in nova's disk.py
 sleep 5
 
+# FIXME: we are sleeping because these qemu commands appear to not complete
+# before they return...  We should apply fix that is done in nova's disk.py
 qemu-nbd -c $NBD disk
 
 sleep 5
