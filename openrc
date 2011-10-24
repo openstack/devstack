@@ -4,7 +4,7 @@
 source ./stackrc
 
 # Set api host endpoint
-HOST=${HOST:-localhost}
+HOST_IP=${HOST_IP:-127.0.0.1}
 
 # Nova original used project_id as the *account* that owned resources (servers,
 # ip address, ...)   With the addition of Keystone we have standardized on the
@@ -28,7 +28,7 @@ export NOVA_API_KEY=${ADMIN_PASSWORD:-secrete}
 #
 # *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We 
 # will use the 1.1 *compute api*
-export NOVA_URL=${NOVA_URL:-http://$HOST:5000/v2.0/}
+export NOVA_URL=${NOVA_URL:-http://$HOST_IP:5000/v2.0/}
 
 # Currently novaclient needs you to specify the *compute api* version.  This
 # needs to match the config of your catalog returned by Keystone.
