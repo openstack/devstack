@@ -97,6 +97,7 @@ case $FORMAT in
 esac
 
 case $RELEASE in
+    oneric)     ;;
     natty)      ;;
     maverick)   ;;
     lucid)      ;;
