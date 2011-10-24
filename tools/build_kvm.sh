@@ -148,11 +148,11 @@ git_clone $OPENSTACKX_REPO $COPY_DIR/$DEST/openstackx $OPENSTACKX_BRANCH
 git_clone $KEYSTONE_REPO $COPY_DIR/$DEST/keystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $COPY_DIR/$DEST/noVNC $NOVNC_BRANCH
 
-# Unmount the filesystems
-unmount_images
-
 # Back to devstack
 cd $TOP_DIR
+
+# Unmount the filesystems
+unmount_images
 
 # Network configuration variables
 BRIDGE=${BRIDGE:-br0}
