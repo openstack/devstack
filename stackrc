@@ -12,7 +12,7 @@ KEYSTONE_BRANCH=diablo
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/cloudbuilders/noVNC.git
-NOVNC_BRANCH=master
+NOVNC_BRANCH=diablo
 
 # django powered web control panel for openstack
 DASH_REPO=https://github.com/cloudbuilders/openstack-dashboard.git
