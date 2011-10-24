@@ -58,7 +58,7 @@ BASE_IMAGE=$KVMSTACK_DIR/images/$DIST_NAME.raw
 VM_IMAGE=$IMAGES_DIR/$DIST_NAME.$GUEST_NAME.raw
 
 # Mop up after previous runs
-virsh destroy $GUEST_NAME
+virsh destroy $GUEST_NAME || true
 
 # Where this vm is stored
 VM_DIR=$KVMSTACK_DIR/instances/$GUEST_NAME
