@@ -26,7 +26,7 @@ export NOVA_API_KEY=${ADMIN_PASSWORD:-secrete}
 # has access to - including nova, glance, keystone, swift, ...  We currently
 # recommend using the 2.0 *auth api*.
 #
-# *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We 
+# *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We
 # will use the 1.1 *compute api*
 export NOVA_URL=${NOVA_URL:-http://$HOST_IP:5000/v2.0/}
 
@@ -37,5 +37,15 @@ export NOVA_VERSION=${NOVA_VERSION:-1.1}
 # FIXME - why does this need to be specified?
 export NOVA_REGION_NAME=${NOVA_REGION_NAME:-RegionOne}
 
+# Set the ec2 url so euca2ools works
+export EC2_URL=${EC2_URL:-http://$HOST_IP:8773/services/Cloud}
+
+# Access key is set in the initial keystone data to be the same as username
+export EC2_ACCESS_KEY=${USERNAME:-demo}
+
+# Secret key is set in the initial keystone data to the admin password
+export EC2_SECRET_KEY=${ADMIN_PASSWORD:-secrete}
+
 # set log level to DEBUG (helps debug issues)
 # export NOVACLIENT_DEBUG=1
+
