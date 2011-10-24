@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# exit on error to stop unexpected errors
+set -o errexit
+
 # Make sure that we have the proper version of ubuntu
 UBUNTU_VERSION=`cat /etc/lsb-release | grep CODENAME | sed 's/.*=//g'`
 if [ ! "oneiric" = "$UBUNTU_VERSION" ]; then
