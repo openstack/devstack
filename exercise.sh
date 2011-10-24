@@ -147,3 +147,9 @@ nova secgroup-delete $SECGROUP
 
 # FIXME: validate shutdown within 5 seconds
 # (nova show $NAME returns 1 or status != ACTIVE)?
+
+# Testing Euca2ools
+# ==================
+
+# make sure that we can describe instances
+euca-describe-instances
