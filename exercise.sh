@@ -59,8 +59,8 @@ nova secgroup-list
 # Create a secgroup
 nova secgroup-create $SECGROUP "test_secgroup description"
 
-# Flavors
-# -------
+# determine flavor
+# ----------------
 
 # List of flavors:
 nova flavor-list
@@ -71,6 +71,16 @@ FLAVOR=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
 NAME="myserver"
 
 nova boot --flavor $FLAVOR --image $IMAGE $NAME --security_groups=$SECGROUP
+
+# Testing
+# =======
+
+# First check if it spins up (becomes active and responds to ping on
+# internal ip).  If you run this script from a nova node, you should
+# bypass security groups and have direct access to the server.
+
+# Waiting for boot
+# ----------------
 
 # let's give it 10 seconds to launch
 sleep 10
@@ -89,7 +99,11 @@ ping -c1 -w1 $IP || true
 sleep 5
 
 ping -c1 -w1 $IP
-# allow icmp traffic
+
+# Security Groups & Floating IPs
+# ------------------------------
+
+# allow icmp traffic (ping)
 nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
 # List rules for a secgroup
@@ -99,31 +113,31 @@ nova secgroup-list-rules $SECGROUP
 nova floating-ip-create
 
 # store  floating address
-FIP=`nova floating-ip-list | grep None | head -1 | cut -d '|' -f2 | sed 's/ //g'`
+FLOATING_IP=`nova floating-ip-list | grep None | head -1 | cut -d '|' -f2 | sed 's/ //g'`
 
 # add floating ip to our server
-nova add-floating-ip $NAME $FIP
+nova add-floating-ip $NAME $FLOATING_IP
 
 # sleep for a smidge
 sleep 1
 
-# ping our fip
-ping -c1 -w1 $FIP
+# ping our floating ip
+ping -c1 -w1 $FLOATING_IP
 
-# dis-allow icmp traffic
+# dis-allow icmp traffic (ping)
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
 # sleep for a smidge
 sleep 1
 
-# ping our fip
-if ( ping -c1 -w1 $FIP); then
+# ping our floating ip
+if ( ping -c1 -w1 $FLOATING_IP ); then
     print "Security group failure - ping should not be allowed!"
     exit 1
 fi
 
 # de-allocate the floating ip
-nova floating-ip-delete $FIP
+nova floating-ip-delete $FLOATING_IP
 
 # shutdown the server
 nova delete $NAME
