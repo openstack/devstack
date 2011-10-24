@@ -20,7 +20,7 @@ TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$TOOLS_DIR/..
 
 # Configure the root password of the vm
-ROOT_PASSWORD=${ROOT_PASSWORD:password}
+ROOT_PASSWORD=${ROOT_PASSWORD:-password}
 
 # Where to store files and instances
 KVMSTACK_DIR=${KVMSTACK_DIR:-/opt/kvmstack}
