@@ -303,26 +303,31 @@ sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 # ownership to the proper user.
 function git_clone {
 
+    GIT_REMOTE=$1
+    GIT_DEST=$2
+    GIT_BRANCH=$3
+
     # do a full clone only if the directory doesn't exist
-    if [ ! -d $2 ]; then
-        git clone $1 $2
+    if [ ! -d $GIT_DEST ]; then
+        git clone $GIT_REMOTE $GIT_DEST
         cd $2
         # This checkout syntax works for both branches and tags
-        git checkout $3
+        git checkout $GIT_BRANCH
     elif [[ "$RECLONE" == "yes" ]]; then
         # if it does exist then simulate what clone does if asked to RECLONE
-        cd $2
+        cd $GIT_BRANCH
         # set the url to pull from and fetch
-        git remote set-url origin $1
+        git remote set-url origin $GIT_REMOTE
         git fetch origin
         # if we don't delete the local content, then our system has pyc files 
         # from the previous branch leading to breakage (due to the py files 
         # having older timestamps than our pyc, so python thinks the pyc files
         # are correct using them)
         rm -rf *
-        git checkout -f origin/$3
-        git branch -D $3
-        git checkout -b $3
+        git checkout -f origin/$GIT_BRANCH
+        # a local branch might not exist for $3
+        git branch -D $GIT_BRANCH || true
+        git checkout -b $GIT_BRANCH
     fi
 }
 
