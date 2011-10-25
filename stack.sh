@@ -603,6 +603,7 @@ if [ -n "$FLAT_INTERFACE" ]; then
 fi
 if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
+    add_nova_flag "--send_arp_for_ha=1"
 fi
 
 # Nova Database
