@@ -315,7 +315,7 @@ function git_clone {
         git checkout $GIT_BRANCH
     elif [[ "$RECLONE" == "yes" ]]; then
         # if it does exist then simulate what clone does if asked to RECLONE
-        cd $GIT_BRANCH
+        cd $GIT_DEST
         # set the url to pull from and fetch
         git remote set-url origin $GIT_REMOTE
         git fetch origin
