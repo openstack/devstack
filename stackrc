@@ -1,30 +1,30 @@
 # compute service
-NOVA_REPO=git://github.com/cloudbuilders/nova.git
+NOVA_REPO=https://github.com/cloudbuilders/nova.git
 NOVA_BRANCH=diablo
 
 # image catalog service
-GLANCE_REPO=git://github.com/cloudbuilders/glance.git
+GLANCE_REPO=https://github.com/cloudbuilders/glance.git
 GLANCE_BRANCH=diablo
 
 # unified auth system (manages accounts/tokens)
-KEYSTONE_REPO=git://github.com/cloudbuilders/keystone.git
+KEYSTONE_REPO=https://github.com/cloudbuilders/keystone.git
 KEYSTONE_BRANCH=diablo
 
 # a websockets/html5 or flash powered VNC console for vm instances
-NOVNC_REPO=git://github.com/cloudbuilders/noVNC.git
+NOVNC_REPO=https://github.com/cloudbuilders/noVNC.git
 NOVNC_BRANCH=diablo
 
 # django powered web control panel for openstack
-DASH_REPO=git://github.com/cloudbuilders/openstack-dashboard.git
+DASH_REPO=https://github.com/cloudbuilders/openstack-dashboard.git
 DASH_BRANCH=diablo
 
 # python client library to nova that dashboard (and others) use
-NOVACLIENT_REPO=git://github.com/rackspace/python-novaclient.git
+NOVACLIENT_REPO=https://github.com/rackspace/python-novaclient.git
 NOVACLIENT_BRANCH=master
 
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
-OPENSTACKX_REPO=git://github.com/cloudbuilders/openstackx.git
+OPENSTACKX_REPO=https://github.com/cloudbuilders/openstackx.git
 OPENSTACKX_BRANCH=diablo
 
 # Specify a comma-separated list of uec images to download and install into glance.
