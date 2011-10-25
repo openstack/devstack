@@ -235,15 +235,13 @@ rm -f $VM_DIR/disk
 # Create our instance fs
 qemu-img create -f qcow2 -b $VM_IMAGE disk
 
-# FIXME: we are sleeping because these qemu commands appear to not complete
-# before they return...  We should apply fix that is done in nova's disk.py
-sleep 5
-
-# FIXME: we are sleeping because these qemu commands appear to not complete
-# before they return...  We should apply fix that is done in nova's disk.py
+# Connect our nbd and wait till it is mountable
 qemu-nbd -c $NBD disk
-
-sleep 5
+NBD_DEV=`basename $NBD`
+if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
+    echo "Couldn't connect $NBD"
+    exit 1
+fi
 
 # Mount the instance
 mount $NBD $ROOTFS -o offset=32256 -t ext4
