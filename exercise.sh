@@ -123,7 +123,7 @@ FLOATING_IP=`nova floating-ip-list | grep None | head -1 | cut -d '|' -f2 | sed 
 nova add-floating-ip $NAME $FLOATING_IP
 
 # sleep for a smidge
-sleep 1
+sleep 5
 
 # ping our floating ip
 ping -c1 -w1 $FLOATING_IP
@@ -132,7 +132,7 @@ ping -c1 -w1 $FLOATING_IP
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
 # sleep for a smidge
-sleep 1
+sleep 5
 
 # ping our floating ip
 if ( ping -c1 -w1 $FLOATING_IP ); then
