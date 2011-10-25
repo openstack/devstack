@@ -319,11 +319,10 @@ function git_clone {
         # set the url to pull from and fetch
         git remote set-url origin $GIT_REMOTE
         git fetch origin
-        # if we don't delete the local content, then our system has pyc files 
-        # from the previous branch leading to breakage (due to the py files 
-        # having older timestamps than our pyc, so python thinks the pyc files
-        # are correct using them)
-        sudo rm -rf *
+        # remove the existing ignored files (like pyc) as they cause breakage
+        # (due to the py files having older timestamps than our pyc, so python
+        # thinks the pyc files are correct using them)
+        sudo git clean -f -d
         git checkout -f origin/$GIT_BRANCH
         # a local branch might not exist for $3
         git branch -D $GIT_BRANCH || true
