@@ -324,7 +324,7 @@ function git_clone {
         # thinks the pyc files are correct using them)
         sudo git clean -f -d
         git checkout -f origin/$GIT_BRANCH
-        # a local branch might not exist for $3
+        # a local branch might not exist
         git branch -D $GIT_BRANCH || true
         git checkout -b $GIT_BRANCH
     fi
