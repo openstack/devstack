@@ -323,7 +323,7 @@ function git_clone {
         # from the previous branch leading to breakage (due to the py files 
         # having older timestamps than our pyc, so python thinks the pyc files
         # are correct using them)
-        rm -rf *
+        sudo rm -rf *
         git checkout -f origin/$GIT_BRANCH
         # a local branch might not exist for $3
         git branch -D $GIT_BRANCH || true
