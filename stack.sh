@@ -740,8 +740,8 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
 
     for image_url in ${IMAGE_URLS//,/ }; do
         # Downloads the image (uec ami+aki style), then extracts it.
-        IMAGE_FNAME=`echo "$image_url" | python -c "import sys; print sys.stdin.read().split('/')[-1]"`
-        IMAGE_NAME=`echo "$IMAGE_FNAME" | python -c "import sys; print sys.stdin.read().split('.tar.gz')[0].split('.tgz')[0]"`
+        IMAGE_FNAME=`basename "$image_url"`
+        IMAGE_NAME=`basename -s .tar.gz "$IMAGE_FNAME"`
         if [ ! -f $FILES/$IMAGE_FNAME ]; then
             wget -c $image_url -O $FILES/$IMAGE_FNAME
         fi
