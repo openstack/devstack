@@ -91,14 +91,18 @@ nova show $NAME | grep status | grep -q ACTIVE
 # get the IP of the server
 IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
 
-# ping it once (timeout of a second)
-ping -c1 -w1 $IP || true
+# for single node deployments, we can ping private ips
+MULTI_HOST=${MULTI_HOST:-0}
+if [ "$MULTI_HOST" = "0"]; then
+    # ping it once (timeout of a second)
+    ping -c1 -w1 $IP || true
 
-# sometimes the first ping fails (10 seconds isn't enough time for the VM's
-# network to respond?), so let's wait 5 seconds and really test ping
-sleep 5
+    # sometimes the first ping fails (10 seconds isn't enough time for the VM's
+    # network to respond?), so let's wait 5 seconds and really test ping
+    sleep 5
 
-ping -c1 -w1 $IP
+    ping -c1 -w1 $IP
+fi
 
 # Security Groups & Floating IPs
 # ------------------------------
