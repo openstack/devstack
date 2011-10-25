@@ -302,20 +302,27 @@ sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
 function git_clone {
-    # if there is an existing checkout, move it out of the way
-    if [[ "$RECLONE" == "yes" ]]; then
-        # FIXME(ja): if we were smarter we could speed up RECLONE by
-        # using the old git repo as the basis of our new clone...
-        if [ -d $2 ]; then
-            mv $2 /tmp/stack.`date +%s`
-        fi
-    fi
 
+    # do a full clone only if the directory doesn't exist
     if [ ! -d $2 ]; then
         git clone $1 $2
         cd $2
         # This checkout syntax works for both branches and tags
         git checkout $3
+    elif [[ "$RECLONE" == "yes" ]]; then
+        # if it does exist then simulate what clone does if asked to RECLONE
+        cd $2
+        # set the url to pull from and fetch
+        git remote set-url origin $1
+        git fetch origin
+        # if we don't delete the local content, then our system has pyc files 
+        # from the previous branch leading to breakage (due to the py files 
+        # having older timestamps than our pyc, so python thinks the pyc files
+        # are correct using them)
+        rm -rf *
+        git checkout -f origin/$3
+        git branch -D $3
+        git checkout -b $3
     fi
 }
 
