@@ -101,8 +101,8 @@ function kill_unmount() {
     exit 1
 }
 
-# Install deps
-apt-get install -y --force-yes kvm libvirt-bin kpartx
+# Install deps if needed
+dpkg -l kvm libvirt-bin kpartx || apt-get install -y --force-yes kvm libvirt-bin kpartx
 
 # Let Ctrl-c kill tail and exit
 trap kill_unmount SIGINT
