@@ -378,6 +378,10 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     done
 
     kill $TAIL_PID
+
+    if grep -q "stack.sh failed" $VM_DIR/console.log; then
+        exit 1
+    fi
     echo ""
     echo "Finished - Zip-a-dee Doo-dah!"
 fi
