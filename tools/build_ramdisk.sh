@@ -7,6 +7,8 @@ if [ ! "$#" -eq "1" ]; then
     exit 1
 fi
 
+IMG_FILE=$1
+
 PROGDIR=`dirname $0`
 CHROOTCACHE=${CHROOTCACHE:-/var/cache/devstack}
 
@@ -24,43 +26,71 @@ STACKSH_PARAMS=${STACKSH_PARAMS:-}
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
 
+# Set up nbd
+modprobe nbd max_part=63
+NBD=${NBD:-/dev/nbd9}
+NBD_DEV=`basename $NBD`
+
 # clean install of natty
-if [ ! -d $CHROOTCACHE/natty-base ]; then
-    $PROGDIR/make_image.sh -C natty $CHROOTCACHE/natty-base
-    # copy kernel modules...
-    # NOTE(ja): is there a better way to do this?
-    cp -pr /lib/modules/`uname -r` $CHROOTCACHE/natty-base/lib/modules
-    # a simple password - pass
-    echo root:pass | chroot $CHROOTCACHE/natty-base chpasswd
+if [ ! -r $CHROOTCACHE/natty-base.img ]; then
+    $PROGDIR/get_uec_image.sh natty $CHROOTCACHE/natty-base.img
+#    # copy kernel modules...
+#    # NOTE(ja): is there a better way to do this?
+#    cp -pr /lib/modules/`uname -r` $CHROOTCACHE/natty-base/lib/modules
+#    # a simple password - pass
+#    echo root:pass | chroot $CHROOTCACHE/natty-base chpasswd
 fi
 
 # prime natty with as many apt/pips as we can
-if [ ! -d $CHROOTCACHE/natty-dev ]; then
-    rsync -azH $CHROOTCACHE/natty-base/ $CHROOTCACHE/natty-dev/
-    chroot $CHROOTCACHE/natty-dev apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-    chroot $CHROOTCACHE/natty-dev pip install `cat files/pips/*`
+if [ ! -r $CHROOTCACHE/natty-dev.img ]; then
+    cp -p $CHROOTCACHE/natty-base.img $CHROOTCACHE/natty-dev.img
+
+    qemu-nbd -c $NBD $CHROOTCACHE/natty-dev.img
+    if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
+        echo "Couldn't connect $NBD"
+        exit 1
+    fi
+    MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
+    mount -t ext4 ${NBD}p1 $MNTDIR
+    cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
+
+    chroot $MNTDIR apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $MNTDIR pip install `cat files/pips/*`
 
     # Create a stack user that is a member of the libvirtd group so that stack
     # is able to interact with libvirt.
-    chroot $CHROOTCACHE/natty-dev groupadd libvirtd
-    chroot $CHROOTCACHE/natty-dev useradd stack -s /bin/bash -d $DEST -G libvirtd
-    mkdir -p $CHROOTCACHE/natty-dev/$DEST
-    chroot $CHROOTCACHE/natty-dev chown stack $DEST
+    chroot $MNTDIR groupadd libvirtd
+    chroot $MNTDIR useradd stack -s /bin/bash -d $DEST -G libvirtd
+    mkdir -p $MNTDIR/$DEST
+    chroot $MNTDIR chown stack $DEST
 
     # a simple password - pass
-    echo stack:pass | chroot $CHROOTCACHE/natty-dev chpasswd
+    echo stack:pass | chroot $MNTDIR chpasswd
 
     # and has sudo ability (in the future this should be limited to only what
     # stack requires)
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> $CHROOTCACHE/natty-dev/etc/sudoers
+    echo "stack ALL=(ALL) NOPASSWD: ALL" >> $MNTDIR/etc/sudoers
+
+    umount $MNTDIR
+    rmdir $MNTDIR
+    qemu-nbd -d $NBD
 fi
 
 # clone git repositories onto the system
 # ======================================
 
-if [ ! -d $CHROOTCACHE/natty-stack ]; then
-    rsync -azH $CHROOTCACHE/natty-dev/ $CHROOTCACHE/natty-stack/
+if [ ! -r $IMG_FILE ]; then
+    qemu-img convert -O raw $CHROOTCACHE/natty-dev.img $IMG_FILE
 fi
+
+qemu-nbd -c $NBD $IMG_FILE
+if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
+    echo "Couldn't connect $NBD"
+    exit 1
+fi
+MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
+mount -t ext4 ${NBD}p1 $MNTDIR
+cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
@@ -68,7 +98,7 @@ fi
 function git_clone {
 
     # clone new copy or fetch latest changes
-    CHECKOUT=$CHROOTCACHE/natty-stack$2
+    CHECKOUT=${MNTDIR}$2
     if [ ! -d $CHECKOUT ]; then
         mkdir -p $CHECKOUT
         git clone $1 $CHECKOUT
@@ -88,7 +118,7 @@ function git_clone {
     popd
 
     # give ownership to the stack user
-    chroot $CHROOTCACHE/natty-stack/ chown -R stack $2
+    chroot $MNTDIR chown -R stack $2
 }
 
 git_clone $NOVA_REPO $DEST/nova $NOVA_BRANCH
@@ -100,13 +130,13 @@ git_clone $NOVACLIENT_REPO $DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
 
 # Use this version of devstack
-rm -rf $CHROOTCACHE/natty-stack/$DEST/devstack
-cp -pr $CWD $CHROOTCACHE/natty-stack/$DEST/devstack
-chroot $CHROOTCACHE/natty-stack chown -R stack $DEST/devstack
+rm -rf $MNTDIR/$DEST/devstack
+cp -pr $CWD $MNTDIR/$DEST/devstack
+chroot $MNTDIR chown -R stack $DEST/devstack
 
 # Configure host network for DHCP
-mkdir -p $CHROOTCACHE/natty-stack/etc/network
-cat > $CHROOTCACHE/natty-stack/etc/network/interfaces <<EOF
+mkdir -p $MNTDIR/etc/network
+cat > $MNTDIR/etc/network/interfaces <<EOF
 auto lo
 iface lo inet loopback
 
@@ -115,11 +145,11 @@ iface eth0 inet dhcp
 EOF
 
 # Set hostname
-echo "ramstack" >$CHROOTCACHE/natty-stack/etc/hostname
-echo "127.0.0.1		localhost	ramstack" >$CHROOTCACHE/natty-stack/etc/hosts
+echo "ramstack" >$MNTDIR/etc/hostname
+echo "127.0.0.1		localhost	ramstack" >$MNTDIR/etc/hosts
 
 # Configure the runner
-RUN_SH=$CHROOTCACHE/natty-stack/$DEST/run.sh
+RUN_SH=$MNTDIR/$DEST/run.sh
 cat > $RUN_SH <<EOF
 #!/usr/bin/env bash
 
@@ -140,27 +170,10 @@ EOF
 
 # Make the run.sh executable
 chmod 755 $RUN_SH
-chroot $CHROOTCACHE/natty-stack chown stack $DEST/run.sh
+chroot $MNTDIR chown stack $DEST/run.sh
 
-# build a new image
-BASE=$CHROOTCACHE/build.$$
-IMG=$BASE.img
-MNT=$BASE/
+umount $MNTDIR
+rmdir $MNTDIR
+qemu-nbd -d $NBD
 
-# (quickly) create a 2GB blank filesystem
-dd bs=1 count=1 seek=$((2*1024*1024*1024)) if=/dev/zero of=$IMG
-# force it to be initialized as ext2
-mkfs.ext2 -F $IMG
-
-# mount blank image loopback and load it
-mkdir -p $MNT
-mount -o loop $IMG $MNT
-rsync -azH $CHROOTCACHE/natty-stack/ $MNT
-
-# umount and cleanup
-umount $MNT
-rmdir $MNT
-
-# gzip into final location
-gzip -1 $IMG -c > $1
-
+gzip -1 $IMG_FILE
