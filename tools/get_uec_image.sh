@@ -3,7 +3,7 @@
 #
 # Supported formats: qcow (kvm), vmdk (vmserver), vdi (vbox), vhd (vpc), raw
 #
-# Requires to run as root
+# Required to run as root
 
 CACHEDIR=${CACHEDIR:-/var/cache/devstack}
 FORMAT=${FORMAT:-qcow2}
@@ -18,7 +18,7 @@ usage() {
     echo "-f format - image format: qcow2 (default), vmdk, vdi, vhd, xen, raw, fs"
     echo "-r size   - root fs size in MB (min 2000MB)"
     echo "release   - Ubuntu release: jaunty - oneric"
-    echo "imagefile - output image file
+    echo "imagefile - output image file"
     exit 1
 }
 
