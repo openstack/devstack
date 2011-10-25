@@ -470,11 +470,15 @@ fi
 # Nova
 # ----
 
-# We are going to use the sample http middleware configuration from the keystone
-# project to launch nova.  This paste config adds the configuration required
-# for nova to validate keystone tokens - except we need to switch the config
-# to use our service token instead (instead of the invalid token 999888777666).
-sudo sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $KEYSTONE_DIR/examples/paste/nova-api-paste.ini
+if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
+    # We are going to use the sample http middleware configuration from the
+    # keystone project to launch nova.  This paste config adds the configuration
+    # required for nova to validate keystone tokens - except we need to switch
+    # the config to use our service token instead (instead of the invalid token
+    # 999888777666).
+    cp $KEYSTONE_DIR/examples/paste/nova-api-paste.ini $NOVA_DIR/bin
+    sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
+fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
@@ -591,7 +595,7 @@ add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--osapi_extensions_path=$OPENSTACKX_DIR/extensions"
 add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
 add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
-add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
+add_nova_flag "--api_paste_config=$NOVA_DIR/bint/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
