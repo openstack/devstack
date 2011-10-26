@@ -93,7 +93,7 @@ IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
 
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
-if [ "$MULTI_HOST" = "0"]; then
+if [ "$MULTI_HOST" = "0" ]; then
     # ping it once (timeout of a second)
     ping -c1 -w1 $IP || true
 
