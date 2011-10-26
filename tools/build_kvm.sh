@@ -290,6 +290,7 @@ for image_url in ${IMAGE_URLS//,/ }; do
     if [ ! -f $IMAGES_DIR/$IMAGE_FNAME ]; then
         wget -c $image_url -O $IMAGES_DIR/$IMAGE_FNAME
     fi
+    mkdir -p $ROOTFS/$DEST/devstack/files/images
     cp $IMAGES_DIR/$IMAGE_FNAME $ROOTFS/$DEST/devstack/files/images
 done
 
