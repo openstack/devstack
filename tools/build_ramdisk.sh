@@ -81,7 +81,7 @@ fi
 
 if [ ! -r $IMG_FILE ]; then
     qemu-nbd -c $NBD $CHROOTCACHE/natty-dev.img
-    if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
+    if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
         echo "Couldn't connect $NBD"
         exit 1
     fi
@@ -101,7 +101,7 @@ mount -t ext4 -o loop $IMG_FILE $MNTDIR
 cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
 
 # We need to install a non-virtual kernel and modules to boot from
-if [ ! -r `ls $MNTDIR/boot/vmlinuz-2.6.*-generic | head -1` ]; then
+if [ ! -r "`ls $MNTDIR/boot/vmlinuz-*-generic | head -1`" ]; then
     chroot $MNTDIR apt-get install -y linux-generic
 fi
 
@@ -187,5 +187,3 @@ chroot $MNTDIR chown stack $DEST/run.sh
 
 umount $MNTDIR
 rmdir $MNTDIR
-
-gzip -1 $IMG_FILE
