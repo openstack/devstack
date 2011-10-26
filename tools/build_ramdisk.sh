@@ -80,16 +80,24 @@ fi
 # ======================================
 
 if [ ! -r $IMG_FILE ]; then
-    qemu-img convert -O raw $CHROOTCACHE/natty-dev.img $IMG_FILE
+    qemu-nbd -c $NBD $CHROOTCACHE/natty-dev.img
+    if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
+        echo "Couldn't connect $NBD"
+        exit 1
+    fi
+
+    # Pre-create the image file
+    # FIXME(dt): This should really get the partition size to
+    #            pre-create the image file
+    dd if=/dev/zero of=$IMG_FILE bs=1 count=1 seek=$((2*1024*1024*1024))
+    # Create filesystem image for RAM disk
+    dd if=${NBD}p1 of=$IMG_FILE bs=1M
+
+    qemu-nbd -d $NBD
 fi
 
-qemu-nbd -c $NBD $IMG_FILE
-if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
-    echo "Couldn't connect $NBD"
-    exit 1
-fi
 MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
-mount -t ext4 ${NBD}p1 $MNTDIR
+mount -t ext4 -o loop $IMG_FILE $MNTDIR
 cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
@@ -174,6 +182,5 @@ chroot $MNTDIR chown stack $DEST/run.sh
 
 umount $MNTDIR
 rmdir $MNTDIR
-qemu-nbd -d $NBD
 
 gzip -1 $IMG_FILE
