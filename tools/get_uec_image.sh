@@ -131,16 +131,17 @@ fi
 if [ $ROOTSIZE -gt 2000 ]; then
     # Resize the container
     qemu-img resize $IMG_FILE +$((ROOTSIZE - 2000))M
+fi
 
-    # Connect to nbd and wait till it is ready
-    qemu-nbd -c $NBD $IMG_FILE
-    if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
-        echo "Couldn't connect $NBD"
-        exit 1
-    fi
+# Connect to nbd and wait till it is ready
+qemu-nbd -c $NBD $IMG_FILE
+if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
+echo "Couldn't connect $NBD"
+    exit 1
+fi
 
-    # Resize partition 1 to full size of the disk image
-    echo "d
+# Resize partition 1 to full size of the disk image
+echo "d
 n
 p
 1
@@ -152,8 +153,7 @@ a
 1
 w
 " | fdisk $NBD
-    fsck -t ext4 -f ${NBD}p1
-    resize2fs ${NBD}p1
+fsck -t ext4 -f ${NBD}p1
+resize2fs ${NBD}p1
 
-    qemu-nbd -d $NBD
-fi
+qemu-nbd -d $NBD
