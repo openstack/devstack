@@ -33,7 +33,7 @@ fi
 
 # Get some more stuff from syslinux
 for i in memdisk menu.c32; do
-    cp -p /usr/lib/syslinux/$i $DEST_DIR/syslinux
+    cp -pu /usr/lib/syslinux/$i $DEST_DIR/syslinux
 done
 
 CFG=$DEST_DIR/syslinux/syslinux.cfg
@@ -60,7 +60,7 @@ fi
 if [ ! -r $PXEDIR/stack-initrd.gz ]; then
     gzip -1 -c $PXEDIR/stack-initrd.img >$PXEDIR/stack-initrd.gz
 fi
-#cp -p $PXEDIR/stack-initrd.gz $DEST_DIR/ubuntu
+cp -pu $PXEDIR/stack-initrd.gz $DEST_DIR/ubuntu
 
 if [ ! -r $PXEDIR/vmlinuz-*-generic ]; then
     MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
@@ -76,7 +76,7 @@ if [ ! -r $PXEDIR/vmlinuz-*-generic ]; then
         fi
         exit 1
     else
-        cp -p $MNTDIR/boot/vmlinuz-*-generic $PXEDIR
+        cp -pu $MNTDIR/boot/vmlinuz-*-generic $PXEDIR
     fi
     umount $MNTDIR
     rmdir $MNTDIR
@@ -85,7 +85,7 @@ fi
 # Get generic kernel version
 KNAME=`basename $PXEDIR/vmlinuz-*-generic`
 KVER=${KNAME#vmlinuz-}
-cp -p $PXEDIR/vmlinuz-$KVER $DEST_DIR/ubuntu
+cp -pu $PXEDIR/vmlinuz-$KVER $DEST_DIR/ubuntu
 cat >>$CFG <<EOF
 
 LABEL devstack
@@ -97,7 +97,7 @@ EOF
 
 # Get Ubuntu
 if [ -d $PXEDIR -a -r $PXEDIR/natty-base-initrd.gz ]; then
-    cp -p $PXEDIR/natty-base-initrd.gz $DEST_DIR/ubuntu
+    cp -pu $PXEDIR/natty-base-initrd.gz $DEST_DIR/ubuntu
     cat >>$CFG <<EOF
 
 LABEL ubuntu
