@@ -19,9 +19,6 @@ set -o xtrace
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$TOOLS_DIR/..
 
-# Configure the root password of the vm
-ROOT_PASSWORD=${ROOT_PASSWORD:-password}
-
 # Where to store files and instances
 KVMSTACK_DIR=${KVMSTACK_DIR:-/opt/kvmstack}
 
@@ -43,6 +40,10 @@ fi
 
 # Source params
 source ./stackrc
+
+# Configure the root password of the vm to be the same as ``ADMIN_PASSWORD``
+ROOT_PASSWORD=${ADMIN_PASSWORD:-password}
+
 
 # Base image (natty by default)
 DIST_NAME=${DIST_NAME:-natty}
@@ -260,7 +261,7 @@ iface eth0 inet static
 EOF
 
 # User configuration for the instance
-chroot $ROOTFS groupadd libvirtd
+chroot $ROOTFS groupadd libvirtd || true
 chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
 cp -pr $TOOLS_DIR/.. $ROOTFS/$DEST/devstack
 echo "root:$ROOT_PASSWORD" | chroot $ROOTFS chpasswd
@@ -283,6 +284,15 @@ if [ "$COPYENV" = "1" ]; then
     cp_it ~/.vimrc $ROOTFS/$DEST/.vimrc
     cp_it ~/.bashrc $ROOTFS/$DEST/.bashrc
 fi
+
+# pre-cache uec images
+for image_url in ${IMAGE_URLS//,/ }; do
+    IMAGE_FNAME=`basename "$image_url"`
+    if [ ! -f $IMAGES_DIR/$IMAGE_FNAME ]; then
+        wget -c $image_url -O $IMAGES_DIR/$IMAGE_FNAME
+    fi
+    cp $IMAGES_DIR/$IMAGE_FNAME $ROOTFS/$DEST/devstack/files
+done
 
 # Configure the runner
 RUN_SH=$ROOTFS/$DEST/run.sh

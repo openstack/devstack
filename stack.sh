@@ -302,20 +302,31 @@ sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
 function git_clone {
-    # if there is an existing checkout, move it out of the way
-    if [[ "$RECLONE" == "yes" ]]; then
-        # FIXME(ja): if we were smarter we could speed up RECLONE by
-        # using the old git repo as the basis of our new clone...
-        if [ -d $2 ]; then
-            mv $2 /tmp/stack.`date +%s`
-        fi
-    fi
 
-    if [ ! -d $2 ]; then
-        git clone $1 $2
+    GIT_REMOTE=$1
+    GIT_DEST=$2
+    GIT_BRANCH=$3
+
+    # do a full clone only if the directory doesn't exist
+    if [ ! -d $GIT_DEST ]; then
+        git clone $GIT_REMOTE $GIT_DEST
         cd $2
         # This checkout syntax works for both branches and tags
-        git checkout $3
+        git checkout $GIT_BRANCH
+    elif [[ "$RECLONE" == "yes" ]]; then
+        # if it does exist then simulate what clone does if asked to RECLONE
+        cd $GIT_DEST
+        # set the url to pull from and fetch
+        git remote set-url origin $GIT_REMOTE
+        git fetch origin
+        # remove the existing ignored files (like pyc) as they cause breakage
+        # (due to the py files having older timestamps than our pyc, so python
+        # thinks the pyc files are correct using them)
+        sudo git clean -f -d
+        git checkout -f origin/$GIT_BRANCH
+        # a local branch might not exist
+        git branch -D $GIT_BRANCH || true
+        git checkout -b $GIT_BRANCH
     fi
 }
 
@@ -470,11 +481,15 @@ fi
 # Nova
 # ----
 
-# We are going to use the sample http middleware configuration from the keystone
-# project to launch nova.  This paste config adds the configuration required
-# for nova to validate keystone tokens - except we need to switch the config
-# to use our service token instead (instead of the invalid token 999888777666).
-sudo sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $KEYSTONE_DIR/examples/paste/nova-api-paste.ini
+if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
+    # We are going to use the sample http middleware configuration from the
+    # keystone project to launch nova.  This paste config adds the configuration
+    # required for nova to validate keystone tokens - except we need to switch
+    # the config to use our service token instead (instead of the invalid token
+    # 999888777666).
+    cp $KEYSTONE_DIR/examples/paste/nova-api-paste.ini $NOVA_DIR/bin
+    sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
+fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
@@ -591,7 +606,7 @@ add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--osapi_extensions_path=$OPENSTACKX_DIR/extensions"
 add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
 add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
-add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
+add_nova_flag "--api_paste_config=$NOVA_DIR/bin/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"

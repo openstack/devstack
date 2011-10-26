@@ -301,6 +301,11 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     done
 
     kill $TAIL_PID
+
+    if grep -q "stack.sh failed" $ROOTFS/$DEST/run.sh.log; then
+        exit 1
+    fi
+
     echo ""
     echo "Finished - Zip-a-dee Doo-dah!"
 fi
