@@ -100,6 +100,11 @@ MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
 mount -t ext4 -o loop $IMG_FILE $MNTDIR
 cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
 
+# We need to install a non-virtual kernel and modules to boot from
+if [ ! -r `ls $MNTDIR/boot/vmlinuz-2.6.*-generic | head -1` ]; then
+    chroot $MNTDIR apt-get install -y linux-generic
+fi
+
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
