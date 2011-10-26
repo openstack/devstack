@@ -291,7 +291,7 @@ for image_url in ${IMAGE_URLS//,/ }; do
         wget -c $image_url -O $IMAGES_DIR/$IMAGE_FNAME
     fi
     cp $IMAGES_DIR/$IMAGE_FNAME $ROOTFS/$DEST/devstack/files/images
-fi
+done
 
 # Configure the runner
 RUN_SH=$ROOTFS/$DEST/run.sh
