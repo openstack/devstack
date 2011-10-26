@@ -65,6 +65,13 @@ if [ -n "$IMAGEONLY" ]; then
     RELEASE="pass"
 fi
 
+# Make sure that we have the proper version of ubuntu
+UBUNTU_VERSION=`cat /etc/lsb-release | grep CODENAME | sed 's/.*=//g'`
+if [ "$UBUNTU_VERSION" = "natty" -a "$RELEASE" = "oneiric" ]; then
+    echo "natty installs can't build oneiric images"
+    exit 1
+fi
+
 case $FORMAT in
     kvm|qcow2)  FORMAT=qcow2
                 QFORMAT=qcow2
@@ -97,6 +104,7 @@ case $FORMAT in
 esac
 
 case $RELEASE in
+    oneiric)    ;;
     natty)      ;;
     maverick)   ;;
     lucid)      ;;

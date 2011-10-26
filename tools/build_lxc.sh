@@ -27,18 +27,19 @@ CWD=`pwd`
 
 # Configurable params
 BRIDGE=${BRIDGE:-br0}
-CONTAINER=${CONTAINER:-STACK}
-CONTAINER_IP=${CONTAINER_IP:-192.168.1.50}
-CONTAINER_CIDR=${CONTAINER_CIDR:-$CONTAINER_IP/24}
-CONTAINER_NETMASK=${CONTAINER_NETMASK:-255.255.255.0}
-CONTAINER_GATEWAY=${CONTAINER_GATEWAY:-192.168.1.1}
+GUEST_NAME=${GUEST_NAME:-STACK}
+GUEST_IP=${GUEST_IP:-192.168.1.50}
+GUEST_CIDR=${GUEST_CIDR:-$GUEST_IP/24}
+GUEST_NETMASK=${GUEST_NETMASK:-255.255.255.0}
+GUEST_GATEWAY=${GUEST_GATEWAY:-192.168.1.1}
 NAMESERVER=${NAMESERVER:-`cat /etc/resolv.conf | grep nameserver | head -1 | cut -d " " -f2`}
 COPYENV=${COPYENV:-1}
 DEST=${DEST:-/opt/stack}
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
-STACKSH_PARAMS=${STACKSH_PARAMS:-}
+# By default, n-vol is disabled for lxc, as iscsitarget doesn't work properly in lxc
+STACKSH_PARAMS=${STACKSH_PARAMS:-"ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit"}
 
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
@@ -59,22 +60,22 @@ if ! which cgdelete | grep -q cgdelete; then
 fi
 
 # Create lxc configuration
-LXC_CONF=/tmp/$CONTAINER.conf
+LXC_CONF=/tmp/$GUEST_NAME.conf
 cat > $LXC_CONF <<EOF
 lxc.network.type = veth
 lxc.network.link = $BRIDGE
 lxc.network.flags = up
-lxc.network.ipv4 = $CONTAINER_CIDR
+lxc.network.ipv4 = $GUEST_CIDR
 # allow tap/tun devices
 lxc.cgroup.devices.allow = c 10:200 rwm
 EOF
 
 # Shutdown any existing container
-lxc-stop -n $CONTAINER
+lxc-stop -n $GUEST_NAME
 
 # This kills zombie containers
-if [ -d /cgroup/$CONTAINER ]; then
-    cgdelete -r cpu,net_cls:$CONTAINER
+if [ -d /cgroup/$GUEST_NAME ]; then
+    cgdelete -r cpu,net_cls:$GUEST_NAME
 fi
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
@@ -94,9 +95,9 @@ function git_clone {
 # Helper to create the container
 function create_lxc {
     if [ "natty" = "$UBUNTU_VERSION" ]; then
-        lxc-create -n $CONTAINER -t natty -f $LXC_CONF
+        lxc-create -n $GUEST_NAME -t natty -f $LXC_CONF
     else
-        lxc-create -n $CONTAINER -t ubuntu -f $LXC_CONF
+        lxc-create -n $GUEST_NAME -t ubuntu -f $LXC_CONF
     fi
 }
 
@@ -116,7 +117,7 @@ fi
 if [ ! -f $CACHEDIR/bootstrapped ]; then
     # by deleting the container, we force lxc-create to re-bootstrap (lxc is
     # lazy and doesn't do anything if a container already exists)
-    lxc-destroy -n $CONTAINER
+    lxc-destroy -n $GUEST_NAME
     # trigger the initial debootstrap
     create_lxc
     touch $CACHEDIR/bootstrapped
@@ -152,7 +153,7 @@ if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
 fi
 
 # Destroy the old container
-lxc-destroy -n $CONTAINER
+lxc-destroy -n $GUEST_NAME
 
 # If this call is to TERMINATE the container then exit
 if [ "$TERMINATE" = "1" ]; then
@@ -163,7 +164,7 @@ fi
 create_lxc
 
 # Specify where our container rootfs lives
-ROOTFS=/var/lib/lxc/$CONTAINER/rootfs/
+ROOTFS=/var/lib/lxc/$GUEST_NAME/rootfs/
 
 # Create a stack user that is a member of the libvirtd group so that stack
 # is able to interact with libvirt.
@@ -213,9 +214,9 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
-        address $CONTAINER_IP
-        netmask $CONTAINER_NETMASK
-        gateway $CONTAINER_GATEWAY
+        address $GUEST_IP
+        netmask $GUEST_NETMASK
+        gateway $GUEST_GATEWAY
 EOF
 
 # Configure the runner
@@ -226,7 +227,7 @@ cat > $RUN_SH <<EOF
 echo "nameserver $NAMESERVER" | sudo resolvconf -a eth0
 # Make there is a default route - needed for natty
 if ! route | grep -q default; then
-    sudo ip route add default via $CONTAINER_GATEWAY
+    sudo ip route add default via $GUEST_GATEWAY
 fi
 sleep 1
 
@@ -264,7 +265,7 @@ if ! mount | grep -q cgroup; then
 fi
 
 # Start our container
-lxc-start -d -n $CONTAINER
+lxc-start -d -n $GUEST_NAME
 
 if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     # Done creating the container, let's tail the log
@@ -300,6 +301,11 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     done
 
     kill $TAIL_PID
+
+    if grep -q "stack.sh failed" $ROOTFS/$DEST/run.sh.log; then
+        exit 1
+    fi
+
     echo ""
     echo "Finished - Zip-a-dee Doo-dah!"
 fi
