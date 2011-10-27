@@ -166,22 +166,6 @@ cp $FILES_DIR/hvc0.conf $STAGING_DIR/etc/init/
 # Put the VPX into UTC.
 rm -f $STAGING_DIR/etc/localtime
 
-# Helper to set hostname
-function set_hostname() {
-    echo $1 > $STAGING_DIR/etc/hostname
-}
-
-# We need a resolvable host name for rabbit to launch
-if ! grep -q $GUEST_NAME $STAGING_DIR/etc/hosts; then
-    echo "$MGT_IP $GUEST_NAME" >> $STAGING_DIR/etc/hosts
-fi
-
-# Configure hosts file
-cat <<EOF >$STAGING_DIR/etc/hosts
-$MGT_IP $GUEST_NAME
-127.0.0.1 localhost localhost.localdomain
-EOF
-
 # Configure dns (use same dns as dom0)
 cp /etc/resolv.conf $STAGING_DIR/etc/resolv.conf
 
@@ -260,8 +244,16 @@ fi
 # Clean old xva. In the future may not do this every time.
 rm -f $XVA
 
+# Configure the hostname
+echo $GUEST_NAME > $STAGING_DIR/etc/hostname
+
+# Hostname must resolve for rabbit
+cat <<EOF >$STAGING_DIR/etc/hosts
+$MGT_IP $GUEST_NAME
+127.0.0.1 localhost localhost.localdomain
+EOF
+
 # Configure the network
-set_hostname $GUEST_NAME
 INTERFACES=$STAGING_DIR/etc/network/interfaces
 cp $TEMPLATES_DIR/interfaces.in  $INTERFACES
 sed -e "s,@ETH1_IP@,$VM_IP,g" -i $INTERFACES
