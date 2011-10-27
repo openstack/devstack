@@ -6,7 +6,10 @@ some pointers on how to get started.
 
 Step 1: Install Xenserver
 ------------------------
-Install XenServer 5.6 on a clean box.
+Install XenServer 5.6 on a clean box. You can get XenServer by signing
+up for an account on citrix.com, and then visiting:
+https://www.citrix.com/English/ss/downloads/details.asp?downloadId=2311504&productId=683148
+
 Here are some sample Xenserver network settings for when you are just
 getting started (I use settings like this with a lappy + cheap wifi router):
 
