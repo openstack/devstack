@@ -1,1 +1,47 @@
-socat
+Cmnd_Alias NOVACMDS = /bin/chmod /var/lib/nova/tmp/*/root/.ssh, \
+                      /bin/chown /var/lib/nova/tmp/*/root/.ssh, \
+                      /bin/chown,                               \
+                      /bin/chmod,                               \
+                      /bin/dd,                                  \
+                      /sbin/ifconfig,                           \
+                      /sbin/ip,                                 \
+                      /sbin/route,                              \
+                      /sbin/iptables,                           \
+                      /sbin/iptables-save,                      \
+                      /sbin/iptables-restore,                   \
+                      /sbin/ip6tables-save,                     \
+                      /sbin/ip6tables-restore,                  \
+                      /sbin/kpartx,                             \
+                      /sbin/losetup,                            \
+                      /sbin/lvcreate,                           \
+                      /sbin/lvdisplay,                          \
+                      /sbin/lvremove,                           \
+                      /bin/mkdir,                               \
+                      /bin/mount,                               \
+                      /sbin/pvcreate,                           \
+                      /usr/bin/tee,                             \
+                      /sbin/tune2fs,                            \
+                      /bin/umount,                              \
+                      /sbin/vgcreate,                           \
+                      /usr/bin/virsh,                           \
+                      /usr/bin/qemu-nbd,                        \
+                      /usr/sbin/brctl,                          \
+                      /sbin/brctl,                              \
+                      /usr/sbin/radvd,                          \
+                      /usr/sbin/vblade-persist,                 \
+                      /sbin/pvcreate,                           \
+                      /sbin/aoe-discover,                       \
+                      /sbin/vgcreate,                           \
+                      /bin/aoe-stat,                            \
+                      /bin/kill,                                \
+                      /sbin/vconfig,                            \
+                      /usr/sbin/ietadm,                         \
+                      /sbin/vgs,                                \
+                      /sbin/iscsiadm,                           \
+                      /usr/bin/socat,                           \
+                      /sbin/parted,                             \
+                      /usr/sbin/dnsmasq,                        \
+                      /usr/bin/arping
+
+%USER% ALL = (root) NOPASSWD: SETENV: NOVACMDS
+

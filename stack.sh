@@ -116,6 +116,14 @@ if [[ $EUID -eq 0 ]]; then
         exec su -c "set -e; cd $STACK_DIR; bash stack.sh" stack
     fi
     exit 1
+else
+    # Our user needs passwordless priviledges for certain commands which nova 
+    # uses internally.
+    # Natty uec images sudoers does not have a '#includedir'. add one.
+    sudo grep -q "^#includedir.*/etc/nsudoers.d" /etc/sudoers ||
+        echo "#includedir /etc/nsudoers.d" | sudo tee -a /etc/sudoers
+    sudo cp $FILES/sudo/nova /etc/sudoers.d/stack_sh_nova
+    sudo sed -e "s,%USER%,$USER,g" -i /etc/sudoers.d/stack_sh_nova
 fi
 
 # Set the destination directories for openstack projects
@@ -363,8 +371,6 @@ cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
 # Add a useful screenrc.  This isn't required to run openstack but is we do
 # it since we are going to run the services in screen for simple
 cp $FILES/screenrc ~/.screenrc
-
-## TODO: update current user to allow sudo for all commands in files/sudo/*
 
 # Rabbit
 # ---------
