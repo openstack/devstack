@@ -127,8 +127,6 @@ if ! timeout 10 sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; the
     exit 1
 fi
 
-ping -c1 -w1 $FLOATING_IP
-
 # dis-allow icmp traffic (ping)
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
