@@ -35,8 +35,6 @@ Devstack uses a localrc for user-specific configuration.  Note that
 the XENAPI_PASSWORD must be your dom0 root password.
 Of course, use real passwords if this machine is exposed.
 
-    cd /root/devstack
-    
     cat > /root/devstack/localrc <<EOF
     MYSQL_PASSWORD=my_super_secret
     SERVICE_TOKEN=my_super_secret
