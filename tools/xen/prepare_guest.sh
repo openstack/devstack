@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configurable nuggets
-PASSWORD=${PASSWORD:-secrete}
+GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 STAGING_DIR=${STAGING_DIR:-stage}
 DO_TGZ=${DO_TGZ:-1}
 KERNEL_VERSION=3.0.0-12-virtual
@@ -46,7 +46,7 @@ echo a | chroot $STAGING_DIR cracklib-packer
 
 # Make /etc/shadow, and set the root password
 chroot $STAGING_DIR "pwconv"
-echo "root:$PASSWORD" | chroot $STAGING_DIR chpasswd
+echo "root:$GUEST_PASSWORD" | chroot $STAGING_DIR chpasswd
 
 # Put the VPX into UTC.
 rm -f $STAGING_DIR/etc/localtime
@@ -54,7 +54,7 @@ rm -f $STAGING_DIR/etc/localtime
 # Add stack user
 chroot $STAGING_DIR groupadd libvirtd
 chroot $STAGING_DIR useradd stack -s /bin/bash -d /opt/stack -G libvirtd
-echo stack:$PASSWORD | chroot $STAGING_DIR chpasswd
+echo stack:$GUEST_PASSWORD | chroot $STAGING_DIR chpasswd
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $STAGING_DIR/etc/sudoers
 
 # Give ownership of /opt/stack to stack user

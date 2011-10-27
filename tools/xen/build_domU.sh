@@ -143,6 +143,7 @@ fi
 
 # Directory where our conf files are stored
 FILES_DIR=$TOP_DIR/files
+TEMPLATES_DIR=$TOP_DIR/templates
 
 # Directory for supporting script files
 SCRIPT_DIR=$TOP_DIR/scripts
@@ -154,7 +155,7 @@ KERNEL_VERSION=`ls $STAGING_DIR/boot/vmlinuz* | head -1 | sed "s/.*vmlinuz-//"`
 # Setup fake grub
 rm -rf $STAGING_DIR/boot/grub/
 mkdir -p $STAGING_DIR/boot/grub/
-cp $FILES_DIR/menu.lst.in $STAGING_DIR/boot/grub/menu.lst
+cp $TEMPLATES_DIR/menu.lst.in $STAGING_DIR/boot/grub/menu.lst
 sed -e "s,@KERNEL_VERSION@,$KERNEL_VERSION,g" -i $STAGING_DIR/boot/grub/menu.lst
 
 # Setup fstab, tty, and other system stuff
@@ -197,7 +198,7 @@ PRODUCT_VERSION=${PRODUCT_VERSION:-001}
 BUILD_NUMBER=${BUILD_NUMBER:-001}
 LABEL="$PRODUCT_BRAND $PRODUCT_VERSION-$BUILD_NUMBER"
 OVA=$STAGING_DIR/tmp/ova.xml
-cp templates/ova.xml.in  $OVA
+cp $TEMPLATES_DIR/ova.xml.in  $OVA
 sed -e "s,@VDI_SIZE@,$VDI_SIZE,g" -i $OVA
 sed -e "s,@PRODUCT_BRAND@,$PRODUCT_BRAND,g" -i $OVA
 sed -e "s,@PRODUCT_VERSION@,$PRODUCT_VERSION,g" -i $OVA
@@ -222,8 +223,7 @@ fi
 
 # Run devstack on launch
 cat <<EOF >$STAGING_DIR/etc/rc.local
-STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh
-STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh
+GUEST_PASSWORD=$GUEST_PASSWORD $STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh
 su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" stack
 exit 0
 EOF
@@ -262,7 +262,7 @@ rm -f $XVA
 # Configure the network
 set_hostname $GUEST_NAME
 INTERFACES=$STAGING_DIR/etc/network/interfaces
-cp templates/interfaces.in  $INTERFACES
+cp $TEMPLATES_DIR/interfaces.in  $INTERFACES
 sed -e "s,@ETH1_NETMASK@,$VM_NETMASK,g" -i $INTERFACES
 sed -e "s,@ETH2_IP@,$MGT_IP,g" -i $INTERFACES
 sed -e "s,@ETH2_NETMASK@,$MGT_NETMASK,g" -i $INTERFACES
@@ -286,3 +286,15 @@ fi
 
 # Start guest
 $TOP_DIR/scripts/install-os-vpx.sh -f $XVA -v $VM_BR -m $MGT_BR -p $PUB_BR
+
+echo "################################################################################"
+echo ""
+echo "All Finished!"
+echo "Now, you can monitor the progress of the stack.sh installation by "
+echo "tailing /opt/stack/run.sh.log from within your domU."
+echo ""
+echo "ssh into your domU now: 'ssh stack@$PUB_IP' using your password"
+echo "and then do: 'tail -f /opt/stack/run.sh.log'"
+echo ""
+echo "When the script completes, you can then visit the OpenStack Dashboard"
+echo "at http://$PUB_IP, and contact other services at the usual ports."
