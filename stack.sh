@@ -629,7 +629,7 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     add_nova_flag "--xenapi_connection_password=$XENAPI_PASSWORD"
     add_nova_flag "--flat_injected=False"
     add_nova_flag "--flat_interface=eth1"
-    add_nova_flag "--flat_network_bridge=xapi1"
+    add_nova_flag "--flat_network_bridge=xenbr1"
     add_nova_flag "--public_interface=eth3"
 else
     add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"

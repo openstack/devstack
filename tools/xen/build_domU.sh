@@ -27,12 +27,12 @@ PUB_NETMASK=${PUB_NETMASK:-255.255.255.0}
 
 # VM network params
 VM_NETMASK=${VM_NETMASK:-255.255.255.0}
-VM_BR=${VM_BR:-xapi1}
+VM_BR=${VM_BR:-xenbr1}
 VM_VLAN=${VM_VLAN:-100}
 
 # MGMT network params
 MGT_NETMASK=${MGT_NETMASK:-255.255.255.0}
-MGT_BR=${MGT_BR:-xapi2}
+MGT_BR=${MGT_BR:-xenbr2}
 MGT_VLAN=${MGT_VLAN:-101}
 
 # VM Password
