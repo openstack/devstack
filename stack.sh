@@ -78,6 +78,9 @@ source ./stackrc
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
 
+# Configure services to syslog instead of writing to individual log files
+SYSLOG=${SYSLOG:-False}
+
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
@@ -478,11 +481,13 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
     sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $GLANCE_CONF
     sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_CONF
+    sudo sed -e "s,%SYSLOG%,$SYSLOG,g" -i $GLANCE_CONF
 
     GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
     cp $FILES/glance-api.conf $GLANCE_API_CONF
     sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_API_CONF
     sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $GLANCE_API_CONF
+    sudo sed -e "s,%SYSLOG%,$SYSLOG,g" -i $GLANCE_API_CONF
 fi
 
 # Nova
@@ -626,6 +631,9 @@ fi
 if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
     add_nova_flag "--send_arp_for_ha=1"
+fi
+if [ "$SYSLOG" != "False" ]; then
+    add_nova_flag "--use_syslog=1"
 fi
 
 # Nova Database
