@@ -117,7 +117,7 @@ if [[ $EUID -eq 0 ]]; then
     fi
     exit 1
 else
-    # Our user needs passwordless priviledges for certain commands which nova 
+    # Our user needs passwordless priviledges for certain commands which nova
     # uses internally.
     # Natty uec images sudoers does not have a '#includedir'. add one.
     sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
@@ -602,6 +602,7 @@ function add_nova_flag {
 rm -f $NOVA_DIR/bin/nova.conf
 add_nova_flag "--verbose"
 add_nova_flag "--nodaemon"
+add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
 add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
