@@ -17,7 +17,8 @@ GUEST_NAME=${GUEST_NAME:-ALLINONE}
 HOST_IP=${HOST_IP:-`ifconfig xenbr0 | grep "inet addr" | cut -d ":" -f2 | sed "s/ .*//"`}
 
 # Our nova host's network info 
-MGT_IP=${MGT_IP:-172.16.100.1}
+VM_IP=${VM_IP:-10.255.255.255} # A host-only ip that let's the interface come up, otherwise unused
+MGT_IP=${MGT_IP:-172.16.100.55}
 PUB_IP=${PUB_IP:-192.168.1.55}
 
 # Public network
@@ -263,6 +264,7 @@ rm -f $XVA
 set_hostname $GUEST_NAME
 INTERFACES=$STAGING_DIR/etc/network/interfaces
 cp $TEMPLATES_DIR/interfaces.in  $INTERFACES
+sed -e "s,@ETH1_IP@,$VM_IP,g" -i $INTERFACES
 sed -e "s,@ETH1_NETMASK@,$VM_NETMASK,g" -i $INTERFACES
 sed -e "s,@ETH2_IP@,$MGT_IP,g" -i $INTERFACES
 sed -e "s,@ETH2_NETMASK@,$MGT_NETMASK,g" -i $INTERFACES

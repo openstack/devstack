@@ -6,10 +6,8 @@ iface eth0 inet dhcp
 
 auto eth1
 iface eth1 inet static
-        # A host-only ip that let's the interface come up, otherwise unused
-        address 10.255.255.255
+        address @ETH1_IP@
         netmask @ETH1_NETMASK@
-up ifconfig eth1 up
 post-up ethtool -K eth1 tx off
 
 auto eth2
