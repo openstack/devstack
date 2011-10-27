@@ -1,5 +1,6 @@
 dnsmasq-base
 kpartx
+parted
 mysql-server
 python-mysqldb
 kvm

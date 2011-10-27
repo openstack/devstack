@@ -130,9 +130,10 @@ NOVNC_DIR=$DEST/noVNC
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit}
 
-# Nova hypervisor configuration.  We default to **kvm** but will drop back to
-# **qemu** if we are unable to load the kvm module.  Stack.sh can also install
-# an **LXC** based system.
+# Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
+# drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
+# also install an **LXC** based system.
+VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 
 # nova supports pluggable schedulers.  ``SimpleScheduler`` should work in most
@@ -572,12 +573,28 @@ add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
 add_nova_flag "--rabbit_password=$RABBIT_PASSWORD"
 add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
-add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
-if [ -n "$FLAT_INTERFACE" ]; then
-    add_nova_flag "--flat_interface=$FLAT_INTERFACE"
-fi
 if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
+fi
+
+# XenServer
+# ---------
+
+if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
+    add_nova_flag "--connection_type=xenapi"
+    add_nova_flag "--xenapi_connection_url=http://169.254.0.1"
+    add_nova_flag "--xenapi_connection_username=root"
+    add_nova_flag "--xenapi_connection_password=$XENAPI_PASSWORD"
+    add_nova_flag "--flat_injected=False"
+    add_nova_flag "--flat_interface=eth1"
+    add_nova_flag "--flat_network_bridge=xapi1"
+    add_nova_flag "--public_interface=eth3"
+else
+    add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
+    if [ -n "$FLAT_INTERFACE" ]; then
+        add_nova_flag "--flat_interface=$FLAT_INTERFACE"
+    fi
 fi
 
 # Nova Database
@@ -711,6 +728,20 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
+
+    # Option to upload legacy ami-tty, which works with xenserver
+    if [ $UPLOAD_LEGACY_TTY ]; then
+        if [ ! -f $FILES/tty.tgz ]; then
+            wget -c http://images.ansolabs.com/tty.tgz -O $FILES/tty.tgz
+        fi
+
+        tar -zxf $FILES/tty.tgz -C $FILES/images
+        RVAL=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
+        KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
+        RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
+    fi
 
     for image_url in ${IMAGE_URLS//,/ }; do
         # Downloads the image (uec ami+aki style), then extracts it.
