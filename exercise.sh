@@ -128,6 +128,23 @@ sleep 5
 # ping our floating ip
 ping -c1 -w1 $FLOATING_IP
 
+# pause the VM and verify we can't ping it anymore
+nova pause $NAME
+
+sleep 1
+
+if ( ping -c1 -w1 $FLOATING_IP ); then
+    echo "Pause failure - ping shouldn't work"
+    exit 1
+fi
+
+# unpause the VM and verify we can ping it again
+nova unpause $NAME
+
+sleep 1
+
+ping -c1 -w1 $FLOATING_IP
+
 # dis-allow icmp traffic (ping)
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
