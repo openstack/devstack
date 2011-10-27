@@ -152,6 +152,15 @@ if [ "$USE_CURRENT_DEVSTACK" = "1" ]; then
     cp -pr $CWD $CACHEDIR/$DEST/devstack
 fi
 
+# pre-cache uec images
+for image_url in ${IMAGE_URLS//,/ }; do
+    IMAGE_FNAME=`basename "$image_url"`
+    if [ ! -f $CACHEDIR/$IMAGE_FNAME ]; then
+        wget -c $image_url -O $CACHEDIR/$IMAGE_FNAME
+    fi
+    cp $CACHEDIR/$IMAGE_FNAME $CACHEDIR/$DEST/devstack/files
+done
+
 # Destroy the old container
 lxc-destroy -n $GUEST_NAME
 
