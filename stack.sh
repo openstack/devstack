@@ -124,6 +124,7 @@ else
         echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
     sudo cp $FILES/sudo/nova /etc/sudoers.d/stack_sh_nova
     sudo sed -e "s,%USER%,$USER,g" -i /etc/sudoers.d/stack_sh_nova
+    sudo chmod 0440 /etc/sudoers.d/stack_sh_nova
 fi
 
 # Set the destination directories for openstack projects
