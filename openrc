@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+# Load local configuration
+source ./stackrc
+
+# Set api host endpoint
+HOST_IP=${HOST_IP:-127.0.0.1}
+
+# Nova original used project_id as the *account* that owned resources (servers,
+# ip address, ...)   With the addition of Keystone we have standardized on the
+# term **tenant** as the entity that owns the resources.  **novaclient** still
+# uses the old deprecated terms project_id.  Note that this field should now be
+# set to tenant_name, not tenant_id.
+export NOVA_PROJECT_ID=${TENANT:-demo}
+
+# In addition to the owning entity (tenant), nova stores the entity performing
+# the action as the **user**.
+export NOVA_USERNAME=${USERNAME:-demo}
+
+# With Keystone you pass the keystone password instead of an api key.
+export NOVA_API_KEY=${ADMIN_PASSWORD:-secrete}
+
+# With the addition of Keystone, to use an openstack cloud you should
+# authenticate against keystone, which returns a **Token** and **Service
+# Catalog**.  The catalog contains the endpoint for all services the user/tenant
+# has access to - including nova, glance, keystone, swift, ...  We currently
+# recommend using the 2.0 *auth api*.
+#
+# *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We
+# will use the 1.1 *compute api*
+export NOVA_URL=${NOVA_URL:-http://$HOST_IP:5000/v2.0/}
+
+# Currently novaclient needs you to specify the *compute api* version.  This
+# needs to match the config of your catalog returned by Keystone.
+export NOVA_VERSION=${NOVA_VERSION:-1.1}
+
+# FIXME - why does this need to be specified?
+export NOVA_REGION_NAME=${NOVA_REGION_NAME:-RegionOne}
+
+# Set the ec2 url so euca2ools works
+export EC2_URL=${EC2_URL:-http://$HOST_IP:8773/services/Cloud}
+
+# Access key is set in the initial keystone data to be the same as username
+export EC2_ACCESS_KEY=${USERNAME:-demo}
+
+# Secret key is set in the initial keystone data to the admin password
+export EC2_SECRET_KEY=${ADMIN_PASSWORD:-secrete}
+
+# set log level to DEBUG (helps debug issues)
+# export NOVACLIENT_DEBUG=1
+

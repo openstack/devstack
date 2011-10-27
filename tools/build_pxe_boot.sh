@@ -1,16 +1,10 @@
 #!/bin/bash -e
 # build_pxe_boot.sh - Create a PXE boot environment
 #
-# build_pxe_boot.sh [-k kernel-version] destdir
+# build_pxe_boot.sh destdir
 #
 # Assumes syslinux is installed
 # Only needs to run as root if the destdir permissions require it
-
-KVER=`uname -r`
-if [ "$1" = "-k" ]; then
-    KVER=$2
-    shift;shift
-fi
 
 DEST_DIR=${1:-/tmp}/tftpboot
 PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
@@ -20,7 +14,7 @@ PROGDIR=`dirname $0`
 mkdir -p $DEST_DIR/pxelinux.cfg
 cd $DEST_DIR
 for i in memdisk menu.c32 pxelinux.0; do
-    cp -p /usr/lib/syslinux/$i $DEST_DIR
+    cp -pu /usr/lib/syslinux/$i $DEST_DIR
 done
 
 CFG=$DEST_DIR/pxelinux.cfg/default
@@ -38,20 +32,37 @@ mkdir -p $DEST_DIR/ubuntu
 if [ ! -d $PXEDIR ]; then
     mkdir -p $PXEDIR
 fi
-if [ ! -r $PXEDIR/vmlinuz-${KVER} ]; then
-    sudo chmod 644 /boot/vmlinuz-${KVER}
-    if [ ! -r /boot/vmlinuz-${KVER} ]; then
-        echo "No kernel found"
-    else
-        cp -p /boot/vmlinuz-${KVER} $PXEDIR
-    fi
-fi
-cp -p $PXEDIR/vmlinuz-${KVER} $DEST_DIR/ubuntu
-if [ ! -r $PXEDIR/stack-initrd.gz ]; then
+
+# Get image into place
+if [ ! -r $PXEDIR/stack-initrd.img ]; then
     cd $OPWD
-    sudo $PROGDIR/build_ramdisk.sh $PXEDIR/stack-initrd.gz
+    $PROGDIR/build_ramdisk.sh $PXEDIR/stack-initrd.img
 fi
-cp -p $PXEDIR/stack-initrd.gz $DEST_DIR/ubuntu
+if [ ! -r $PXEDIR/stack-initrd.gz ]; then
+    gzip -1 -c $PXEDIR/stack-initrd.img >$PXEDIR/stack-initrd.gz
+fi
+cp -pu $PXEDIR/stack-initrd.gz $DEST_DIR/ubuntu
+
+if [ ! -r $PXEDIR/vmlinuz-*-generic ]; then
+    MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
+    mount -t ext4 -o loop $PXEDIR/stack-initrd.img $MNTDIR
+
+    if [ ! -r $MNTDIR/boot/vmlinuz-*-generic ]; then
+        echo "No kernel found"
+        umount $MNTDIR
+        rmdir $MNTDIR
+        exit 1
+    else
+        cp -pu $MNTDIR/boot/vmlinuz-*-generic $PXEDIR
+    fi
+    umount $MNTDIR
+    rmdir $MNTDIR
+fi
+
+# Get generic kernel version
+KNAME=`basename $PXEDIR/vmlinuz-*-generic`
+KVER=${KNAME#vmlinuz-}
+cp -pu $PXEDIR/vmlinuz-$KVER $DEST_DIR/ubuntu
 cat >>$CFG <<EOF
 
 LABEL devstack
@@ -63,7 +74,7 @@ EOF
 
 # Get Ubuntu
 if [ -d $PXEDIR -a -r $PXEDIR/natty-base-initrd.gz ]; then
-    cp -p $PXEDIR/natty-base-initrd.gz $DEST_DIR/ubuntu
+    cp -pu $PXEDIR/natty-base-initrd.gz $DEST_DIR/ubuntu
     cat >>$CFG <<EOF
 
 LABEL ubuntu

@@ -34,3 +34,7 @@ python-suds
 python-lockfile
 python-m2crypto
 python-boto
+
+# Stuff for diablo volumes
+iscsitarget
+lvm2

@@ -1,16 +1,10 @@
 #!/bin/bash -e
 # build_usb_boot.sh - Create a syslinux boot environment
 #
-# build_usb_boot.sh [-k kernel-version] destdev
+# build_usb_boot.sh destdev
 #
 # Assumes syslinux is installed
 # Needs to run as root
-
-KVER=`uname -r`
-if [ "$1" = "-k" ]; then
-    KVER=$2
-    shift;shift
-fi
 
 DEST_DIR=${1:-/tmp/syslinux-boot}
 PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
@@ -20,7 +14,7 @@ PROGDIR=`dirname $0`
 if [ -b $DEST_DIR ]; then
     # We have a block device, install syslinux and mount it
     DEST_DEV=$DEST_DIR
-    DEST_DIR=`mktemp -d mntXXXXXX`
+    DEST_DIR=`mktemp -d --tmpdir mntXXXXXX`
     mount $DEST_DEV $DEST_DIR
 
     if [ ! -d $DEST_DIR/syslinux ]; then
@@ -39,7 +33,7 @@ fi
 
 # Get some more stuff from syslinux
 for i in memdisk menu.c32; do
-    cp -p /usr/lib/syslinux/$i $DEST_DIR/syslinux
+    cp -pu /usr/lib/syslinux/$i $DEST_DIR/syslinux
 done
 
 CFG=$DEST_DIR/syslinux/syslinux.cfg
@@ -57,20 +51,41 @@ mkdir -p $DEST_DIR/ubuntu
 if [ ! -d $PXEDIR ]; then
     mkdir -p $PXEDIR
 fi
-if [ ! -r $PXEDIR/vmlinuz-${KVER} ]; then
-    sudo chmod 644 /boot/vmlinuz-${KVER}
-    if [ ! -r /boot/vmlinuz-${KVER} ]; then
-        echo "No kernel found"
-    else
-        cp -p /boot/vmlinuz-${KVER} $PXEDIR
-    fi
-fi
-cp -p $PXEDIR/vmlinuz-${KVER} $DEST_DIR/ubuntu
-if [ ! -r $PXEDIR/stack-initrd.gz ]; then
+
+# Get image into place
+if [ ! -r $PXEDIR/stack-initrd.img ]; then
     cd $OPWD
-    sudo $PROGDIR/build_ramdisk.sh $PXEDIR/stack-initrd.gz
+    $PROGDIR/build_ramdisk.sh $PXEDIR/stack-initrd.img
 fi
-cp -p $PXEDIR/stack-initrd.gz $DEST_DIR/ubuntu
+if [ ! -r $PXEDIR/stack-initrd.gz ]; then
+    gzip -1 -c $PXEDIR/stack-initrd.img >$PXEDIR/stack-initrd.gz
+fi
+cp -pu $PXEDIR/stack-initrd.gz $DEST_DIR/ubuntu
+
+if [ ! -r $PXEDIR/vmlinuz-*-generic ]; then
+    MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
+    mount -t ext4 -o loop $PXEDIR/stack-initrd.img $MNTDIR
+
+    if [ ! -r $MNTDIR/boot/vmlinuz-*-generic ]; then
+        echo "No kernel found"
+        umount $MNTDIR
+        rmdir $MNTDIR
+        if [ -n "$DEST_DEV" ]; then
+            umount $DEST_DIR
+            rmdir $DEST_DIR
+        fi
+        exit 1
+    else
+        cp -pu $MNTDIR/boot/vmlinuz-*-generic $PXEDIR
+    fi
+    umount $MNTDIR
+    rmdir $MNTDIR
+fi
+
+# Get generic kernel version
+KNAME=`basename $PXEDIR/vmlinuz-*-generic`
+KVER=${KNAME#vmlinuz-}
+cp -pu $PXEDIR/vmlinuz-$KVER $DEST_DIR/ubuntu
 cat >>$CFG <<EOF
 
 LABEL devstack
@@ -82,7 +97,7 @@ EOF
 
 # Get Ubuntu
 if [ -d $PXEDIR -a -r $PXEDIR/natty-base-initrd.gz ]; then
-    cp -p $PXEDIR/natty-base-initrd.gz $DEST_DIR/ubuntu
+    cp -pu $PXEDIR/natty-base-initrd.gz $DEST_DIR/ubuntu
     cat >>$CFG <<EOF
 
 LABEL ubuntu

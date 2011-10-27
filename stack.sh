@@ -303,20 +303,31 @@ sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
 function git_clone {
-    # if there is an existing checkout, move it out of the way
-    if [[ "$RECLONE" == "yes" ]]; then
-        # FIXME(ja): if we were smarter we could speed up RECLONE by
-        # using the old git repo as the basis of our new clone...
-        if [ -d $2 ]; then
-            mv $2 /tmp/stack.`date +%s`
-        fi
-    fi
 
-    if [ ! -d $2 ]; then
-        git clone $1 $2
+    GIT_REMOTE=$1
+    GIT_DEST=$2
+    GIT_BRANCH=$3
+
+    # do a full clone only if the directory doesn't exist
+    if [ ! -d $GIT_DEST ]; then
+        git clone $GIT_REMOTE $GIT_DEST
         cd $2
         # This checkout syntax works for both branches and tags
-        git checkout $3
+        git checkout $GIT_BRANCH
+    elif [[ "$RECLONE" == "yes" ]]; then
+        # if it does exist then simulate what clone does if asked to RECLONE
+        cd $GIT_DEST
+        # set the url to pull from and fetch
+        git remote set-url origin $GIT_REMOTE
+        git fetch origin
+        # remove the existing ignored files (like pyc) as they cause breakage
+        # (due to the py files having older timestamps than our pyc, so python
+        # thinks the pyc files are correct using them)
+        sudo git clean -f -d
+        git checkout -f origin/$GIT_BRANCH
+        # a local branch might not exist
+        git branch -D $GIT_BRANCH || true
+        git checkout -b $GIT_BRANCH
     fi
 }
 
@@ -471,11 +482,15 @@ fi
 # Nova
 # ----
 
-# We are going to use the sample http middleware configuration from the keystone
-# project to launch nova.  This paste config adds the configuration required
-# for nova to validate keystone tokens - except we need to switch the config
-# to use our service token instead (instead of the invalid token 999888777666).
-sudo sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $KEYSTONE_DIR/examples/paste/nova-api-paste.ini
+if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
+    # We are going to use the sample http middleware configuration from the
+    # keystone project to launch nova.  This paste config adds the configuration
+    # required for nova to validate keystone tokens - except we need to switch
+    # the config to use our service token instead (instead of the invalid token
+    # 999888777666).
+    cp $KEYSTONE_DIR/examples/paste/nova-api-paste.ini $NOVA_DIR/bin
+    sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
+fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
@@ -548,6 +563,31 @@ if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
     mkdir -p $NOVA_DIR/networks
 fi
 
+# Volume Service
+# --------------
+
+if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
+    #
+    # Configure a default volume group called 'nova-volumes' for the nova-volume
+    # service if it does not yet exist.  If you don't wish to use a file backed
+    # volume group, create your own volume group called 'nova-volumes' before
+    # invoking stack.sh.
+    #
+    # By default, the backing file is 2G in size, and is stored in /opt/stack.
+    #
+    if ! sudo vgdisplay | grep -q nova-volumes; then
+        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-/opt/stack/nova-volumes-backing-file}
+        VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
+        truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
+        DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
+        sudo vgcreate nova-volumes $DEV
+    fi
+
+    # Configure iscsitarget
+    sudo sed 's/ISCSITARGET_ENABLE=false/ISCSITARGET_ENABLE=true/' -i /etc/default/iscsitarget
+    sudo /etc/init.d/iscsitarget restart
+fi
+
 function add_nova_flag {
     echo "$1" >> $NOVA_DIR/bin/nova.conf
 }
@@ -567,7 +607,7 @@ add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--osapi_extensions_path=$OPENSTACKX_DIR/extensions"
 add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
 add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
-add_nova_flag "--api_paste_config=$KEYSTONE_DIR/examples/paste/nova-api-paste.ini"
+add_nova_flag "--api_paste_config=$NOVA_DIR/bin/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
@@ -575,6 +615,7 @@ add_nova_flag "--rabbit_password=$RABBIT_PASSWORD"
 add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
 if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
+    add_nova_flag "--send_arp_for_ha=1"
 fi
 
 # XenServer
@@ -704,6 +745,7 @@ fi
 # within the context of our original shell (so our groups won't be updated).
 # Use 'sg' to execute nova-compute as a member of the libvirtd group.
 screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
+screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web . --flagfile=../nova/bin/nova.conf"
@@ -745,8 +787,8 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
 
     for image_url in ${IMAGE_URLS//,/ }; do
         # Downloads the image (uec ami+aki style), then extracts it.
-        IMAGE_FNAME=`echo "$image_url" | python -c "import sys; print sys.stdin.read().split('/')[-1]"`
-        IMAGE_NAME=`echo "$IMAGE_FNAME" | python -c "import sys; print sys.stdin.read().split('.tar.gz')[0].split('.tgz')[0]"`
+        IMAGE_FNAME=`basename "$image_url"`
+        IMAGE_NAME=`basename "$IMAGE_FNAME" .tar.gz`
         if [ ! -f $FILES/$IMAGE_FNAME ]; then
             wget -c $image_url -O $FILES/$IMAGE_FNAME
         fi
