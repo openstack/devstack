@@ -120,8 +120,8 @@ else
     # Our user needs passwordless priviledges for certain commands which nova 
     # uses internally.
     # Natty uec images sudoers does not have a '#includedir'. add one.
-    sudo grep -q "^#includedir.*/etc/nsudoers.d" /etc/sudoers ||
-        echo "#includedir /etc/nsudoers.d" | sudo tee -a /etc/sudoers
+    sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+        echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
     sudo cp $FILES/sudo/nova /etc/sudoers.d/stack_sh_nova
     sudo sed -e "s,%USER%,$USER,g" -i /etc/sudoers.d/stack_sh_nova
 fi
