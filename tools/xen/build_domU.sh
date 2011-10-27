@@ -175,7 +175,7 @@ if ! grep -q $GUEST_NAME $STAGING_DIR/etc/hosts; then
     echo "$MGT_IP $GUEST_NAME" >> $STAGING_DIR/etc/hosts
 fi
 
-# Configre hosts file
+# Configure hosts file
 cat <<EOF >$STAGING_DIR/etc/hosts
 $MGT_IP $GUEST_NAME
 127.0.0.1 localhost localhost.localdomain
