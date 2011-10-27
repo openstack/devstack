@@ -82,8 +82,8 @@ nova boot --flavor $FLAVOR --image $IMAGE $NAME --security_groups=$SECGROUP
 # Waiting for boot
 # ----------------
 
-# let's give it 10 seconds to launch
-sleep 10
+# let's give it 5 seconds to launch
+sleep 5
 
 # check that the status is active
 nova show $NAME | grep status | grep -q ACTIVE
@@ -94,14 +94,13 @@ IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
 if [ "$MULTI_HOST" = "0" ]; then
-    # ping it once (timeout of a second)
-    ping -c1 -w1 $IP || true
-
     # sometimes the first ping fails (10 seconds isn't enough time for the VM's
-    # network to respond?), so let's wait 5 seconds and really test ping
-    sleep 5
-
-    ping -c1 -w1 $IP
+    # network to respond?), so let's for 15 seconds pinging with a timeout
+    # of a second.
+    if ! timeout 15 sh -c "while ! ping -c1 -w1 $IP; do sleep 1; done"; then
+        echo "Couldn't ping server"
+        exit 1
+    fi
 fi
 
 # Security Groups & Floating IPs
