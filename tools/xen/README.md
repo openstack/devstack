@@ -8,7 +8,7 @@ Step 1: Install Xenserver
 ------------------------
 Install XenServer 5.6 on a clean box.
 Here are some sample Xenserver network settings for when you are just
-getting started (I used settings like this using a lappy + cheap wifi router):
+getting started (I use settings like this with a lappy + cheap wifi router):
 
 * XenServer Host IP: 192.168.1.10
 * XenServer Netmask: 255.255.255.0
