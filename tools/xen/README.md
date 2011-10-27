@@ -47,5 +47,5 @@ This script does a lot of stuff, it is probably best to read it in its entirety.
 But in a nutshell, it performs the following:
 
 * Configures bridges and vlans for public, private, and management nets
-* Creates XVAs for a HEAD and COMPUTE host
-* Launches those 2 instances into an HA FlatDHCP Configuration
+* Creates and installs a OpenStack all-in-one domU in an HA-FlatDHCP configuration
+** A script to create a multi-domU (ie. head node separated from compute) configuration is coming soon!
