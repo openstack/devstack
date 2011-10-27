@@ -447,6 +447,7 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%USER%,$USER,g" -i /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
+    sudo /sbin/service apache2 restart
 fi
 
 
