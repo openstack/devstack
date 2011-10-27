@@ -95,7 +95,7 @@ IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
 MULTI_HOST=${MULTI_HOST:-0}
 if [ "$MULTI_HOST" = "0" ]; then
     # sometimes the first ping fails (10 seconds isn't enough time for the VM's
-    # network to respond?), so let's for 15 seconds pinging with a timeout
+    # network to respond?), so let's ping for 15 seconds with a timeout
     # of a second.
     if ! timeout 15 sh -c "while ! ping -c1 -w1 $IP; do sleep 1; done"; then
         echo "Couldn't ping server"
