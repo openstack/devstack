@@ -35,7 +35,7 @@ MGT_BR=${MGT_BR:-xapi2}
 MGT_VLAN=${MGT_VLAN:-101}
 
 # VM Password
-PASSWORD=${PASSWORD:-secrete}
+GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 
 # Size of image
 VDI_MB=${VDI_MB:-2500}
