@@ -137,6 +137,11 @@ if ( ping -c1 -w1 $IP); then
     exit 1
 fi
 
+if ( ping -c1 -w1 $FLOATING_IP); then
+    echo "Pause failure - ping floating ips shouldn't work"
+    exit 1
+fi
+
 # unpause the VM and verify we can ping it again
 nova unpause $NAME
 
