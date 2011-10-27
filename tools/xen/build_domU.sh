@@ -224,7 +224,7 @@ fi
 
 # Run devstack on launch
 cat <<EOF >$STAGING_DIR/etc/rc.local
-GUEST_PASSWORD=$GUEST_PASSWORD $STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh
+GUEST_PASSWORD=$GUEST_PASSWORD STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh
 su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" stack
 exit 0
 EOF
