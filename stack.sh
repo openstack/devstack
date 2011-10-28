@@ -81,6 +81,15 @@ DEST=${DEST:-/opt/stack}
 # Configure services to syslog instead of writing to individual log files
 SYSLOG=${SYSLOG:-False}
 
+# apt-get wrapper to just get arguments set correctly
+function apt_get() {
+    local sudo="sudo"
+    [ "$(id -u)" = "0" ] && sudo="env"
+    $sudo DEBIAN_FRONTEND=noninteractive apt-get \
+        --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
+}
+
+
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
@@ -125,9 +134,12 @@ else
     # Natty uec images sudoers does not have a '#includedir'. add one.
     sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
         echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
-    sudo cp $FILES/sudo/nova /etc/sudoers.d/stack_sh_nova
-    sudo sed -e "s,%USER%,$USER,g" -i /etc/sudoers.d/stack_sh_nova
-    sudo chmod 0440 /etc/sudoers.d/stack_sh_nova
+    TEMPFILE=`mktemp`
+    cat $FILES/sudo/nova > $TEMPFILE
+    sed -e "s,%USER%,$USER,g" -i $TEMPFILE
+    chmod 0440 $TEMPFILE
+    sudo chown root:root $TEMPFILE
+    sudo mv $TEMPFILE /etc/sudoers.d/stack_sh_nova
 fi
 
 # Set the destination directories for openstack projects
@@ -142,9 +154,10 @@ NOVNC_DIR=$DEST/noVNC
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit}
 
-# Nova hypervisor configuration.  We default to **kvm** but will drop back to
-# **qemu** if we are unable to load the kvm module.  Stack.sh can also install
-# an **LXC** based system.
+# Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
+# drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
+# also install an **LXC** based system.
+VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 
 # nova supports pluggable schedulers.  ``SimpleScheduler`` should work in most
@@ -155,14 +168,6 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
-
-# apt-get wrapper to just get arguments set correctly
-function apt_get() {
-    local sudo="sudo"
-    [ "$(id -u)" = "0" ] && sudo=""
-    $sudo DEBIAN_FRONTEND=noninteractive apt-get \
-        --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
-}
 
 # Generic helper to configure passwords
 function read_password {
@@ -210,7 +215,7 @@ function read_password {
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
-FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.1/28}
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
@@ -457,6 +462,7 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%USER%,$USER,g" -i /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
+    sudo service apache2 restart
 fi
 
 
@@ -624,19 +630,34 @@ add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
 add_nova_flag "--rabbit_password=$RABBIT_PASSWORD"
 add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
-add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
 if [ -n "$INSTANCES_PATH" ]; then
     add_nova_flag "--instances_path=$INSTANCES_PATH"
-fi
-if [ -n "$FLAT_INTERFACE" ]; then
-    add_nova_flag "--flat_interface=$FLAT_INTERFACE"
-fi
 if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
     add_nova_flag "--send_arp_for_ha=1"
 fi
 if [ "$SYSLOG" != "False" ]; then
     add_nova_flag "--use_syslog=1"
+fi
+
+# XenServer
+# ---------
+
+if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
+    add_nova_flag "--connection_type=xenapi"
+    add_nova_flag "--xenapi_connection_url=http://169.254.0.1"
+    add_nova_flag "--xenapi_connection_username=root"
+    add_nova_flag "--xenapi_connection_password=$XENAPI_PASSWORD"
+    add_nova_flag "--flat_injected=False"
+    add_nova_flag "--flat_interface=eth1"
+    add_nova_flag "--flat_network_bridge=xenbr1"
+    add_nova_flag "--public_interface=eth3"
+else
+    add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
+    if [ -n "$FLAT_INTERFACE" ]; then
+        add_nova_flag "--flat_interface=$FLAT_INTERFACE"
+    fi
 fi
 
 # Nova Database
@@ -750,7 +771,7 @@ screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web . --flagfile=../nova/bin/nova.conf"
-screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /var/log/apache2/error.log"
+screen_it dash "cd $DASH_DIR && sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
 # ==============
@@ -771,6 +792,20 @@ screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
+
+    # Option to upload legacy ami-tty, which works with xenserver
+    if [ $UPLOAD_LEGACY_TTY ]; then
+        if [ ! -f $FILES/tty.tgz ]; then
+            wget -c http://images.ansolabs.com/tty.tgz -O $FILES/tty.tgz
+        fi
+
+        tar -zxf $FILES/tty.tgz -C $FILES/images
+        RVAL=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
+        KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
+        RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
+    fi
 
     for image_url in ${IMAGE_URLS//,/ }; do
         # Downloads the image (uec ami+aki style), then extracts it.

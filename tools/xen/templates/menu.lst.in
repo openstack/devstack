@@ -1,0 +1,6 @@
+default 0
+
+title default
+        root (hd0,0)
+        kernel /boot/vmlinuz-@KERNEL_VERSION@ ro root=LABEL=vpxroot console=xvc0
+        initrd /boot/initrd.img-@KERNEL_VERSION@
