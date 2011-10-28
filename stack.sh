@@ -81,6 +81,15 @@ DEST=${DEST:-/opt/stack}
 # Configure services to syslog instead of writing to individual log files
 SYSLOG=${SYSLOG:-False}
 
+# apt-get wrapper to just get arguments set correctly
+function apt_get() {
+    local sudo="sudo"
+    [ "$(id -u)" = "0" ] && sudo="env"
+    $sudo DEBIAN_FRONTEND=noninteractive apt-get \
+        --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
+}
+
+
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
@@ -125,9 +134,13 @@ else
     # Natty uec images sudoers does not have a '#includedir'. add one.
     sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
         echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
-    sudo cp $FILES/sudo/nova /etc/sudoers.d/stack_sh_nova
-    sudo sed -e "s,%USER%,$USER,g" -i /etc/sudoers.d/stack_sh_nova
-    sudo chmod 0440 /etc/sudoers.d/stack_sh_nova
+    TEMPFILE=`mktemp`
+    cat $FILES/sudo/nova > $TEMPFILE
+    sed -e "s,%USER%,$USER,g" -i $TEMPFILE
+    chmod 0440 $TEMPFILE
+    sudo chown root:root $TEMPFILE
+    sudo cp -p $TEMPFILE /etc/sudoers.d/stack_sh_nova
+    sudo rm $TEMPFILE
 fi
 
 # Set the destination directories for openstack projects
@@ -156,14 +169,6 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
-
-# apt-get wrapper to just get arguments set correctly
-function apt_get() {
-    local sudo="sudo"
-    [ "$(id -u)" = "0" ] && sudo=""
-    $sudo DEBIAN_FRONTEND=noninteractive apt-get \
-        --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
-}
 
 # Generic helper to configure passwords
 function read_password {
