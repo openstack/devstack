@@ -78,6 +78,9 @@ source ./stackrc
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
 
+# Configure services to syslog instead of writing to individual log files
+SYSLOG=${SYSLOG:-False}
+
 # OpenStack is designed to be run as a regular user (Dashboard will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
@@ -116,6 +119,15 @@ if [[ $EUID -eq 0 ]]; then
         exec su -c "set -e; cd $STACK_DIR; bash stack.sh" stack
     fi
     exit 1
+else
+    # Our user needs passwordless priviledges for certain commands which nova 
+    # uses internally.
+    # Natty uec images sudoers does not have a '#includedir'. add one.
+    sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+        echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
+    sudo cp $FILES/sudo/nova /etc/sudoers.d/stack_sh_nova
+    sudo sed -e "s,%USER%,$USER,g" -i /etc/sudoers.d/stack_sh_nova
+    sudo chmod 0440 /etc/sudoers.d/stack_sh_nova
 fi
 
 # Set the destination directories for openstack projects
@@ -199,7 +211,7 @@ function read_password {
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-eth0}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
-FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.1/28}
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
@@ -365,8 +377,6 @@ cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
 # it since we are going to run the services in screen for simple
 cp $FILES/screenrc ~/.screenrc
 
-## TODO: update current user to allow sudo for all commands in files/sudo/*
-
 # Rabbit
 # ---------
 
@@ -472,11 +482,13 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
     sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $GLANCE_CONF
     sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_CONF
+    sudo sed -e "s,%SYSLOG%,$SYSLOG,g" -i $GLANCE_CONF
 
     GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
     cp $FILES/glance-api.conf $GLANCE_API_CONF
     sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_API_CONF
     sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $GLANCE_API_CONF
+    sudo sed -e "s,%SYSLOG%,$SYSLOG,g" -i $GLANCE_API_CONF
 fi
 
 # Nova
@@ -616,6 +628,9 @@ add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
 if [ -n "$MULTI_HOST" ]; then
     add_nova_flag "--multi_host=$MULTI_HOST"
     add_nova_flag "--send_arp_for_ha=1"
+fi
+if [ "$SYSLOG" != "False" ]; then
+    add_nova_flag "--use_syslog=1"
 fi
 
 # XenServer

@@ -82,11 +82,11 @@ nova boot --flavor $FLAVOR --image $IMAGE $NAME --security_groups=$SECGROUP
 # Waiting for boot
 # ----------------
 
-# let's give it 10 seconds to launch
-sleep 10
-
-# check that the status is active
-nova show $NAME | grep status | grep -q ACTIVE
+# check that the status is active within 10 seconds
+if ! timeout 10 sh -c "while ! nova show $NAME | grep status | grep -q ACTIVE; do sleep 1; done"; then
+    echo "server didn't become active!"
+    exit 1
+fi
 
 # get the IP of the server
 IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
@@ -94,14 +94,13 @@ IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
 if [ "$MULTI_HOST" = "0" ]; then
-    # ping it once (timeout of a second)
-    ping -c1 -w1 $IP || true
-
     # sometimes the first ping fails (10 seconds isn't enough time for the VM's
-    # network to respond?), so let's wait 5 seconds and really test ping
-    sleep 5
-
-    ping -c1 -w1 $IP
+    # network to respond?), so let's ping for 15 seconds with a timeout
+    # of a second.
+    if ! timeout 15 sh -c "while ! ping -c1 -w1 $IP; do sleep 1; done"; then
+        echo "Couldn't ping server"
+        exit 1
+    fi
 fi
 
 # Security Groups & Floating IPs
@@ -122,21 +121,19 @@ FLOATING_IP=`nova floating-ip-list | grep None | head -1 | cut -d '|' -f2 | sed 
 # add floating ip to our server
 nova add-floating-ip $NAME $FLOATING_IP
 
-# sleep for a smidge
-sleep 5
-
-# ping our floating ip
-ping -c1 -w1 $FLOATING_IP
+# test we can ping our floating ip within 10 seconds
+if ! timeout 10 sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
+    echo "Couldn't ping server with floating ip"
+    exit 1
+fi
 
 # dis-allow icmp traffic (ping)
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
-# sleep for a smidge
-sleep 5
-
-# ping our floating ip
-if ( ping -c1 -w1 $FLOATING_IP ); then
+# test we can aren't able to ping our floating ip within 10 seconds
+if ! timeout 10 sh -c "while ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
     print "Security group failure - ping should not be allowed!"
+    echo "Couldn't ping server with floating ip"
     exit 1
 fi
 

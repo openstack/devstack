@@ -341,7 +341,14 @@ chroot $ROOTFS chown -R stack $DEST
 # Change boot params so that we get a console log
 sudo sed -e "s/quiet splash/splash console=ttyS0 console=ttyS1,19200n8/g" -i $ROOTFS/boot/grub/menu.lst
 sudo sed -e "s/^hiddenmenu//g" -i $ROOTFS/boot/grub/menu.lst
-#chroot $ROOTFS grub-install /dev/vda
+
+# Set the hostname
+echo $GUEST_NAME > $ROOTFS/etc/hostname
+
+# We need the hostname to resolve for rabbit to launch
+if ! grep -q $GUEST_NAME $ROOTFS/etc/hosts; then
+    echo "$GUEST_IP $GUEST_NAME" >> $ROOTFS/etc/hosts
+fi
 
 # Unmount
 umount $ROOTFS || echo 'ok'
