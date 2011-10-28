@@ -447,7 +447,7 @@ if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
     sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%USER%,$USER,g" -i /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
-    sudo /sbin/service apache2 restart
+    sudo service apache2 restart
 fi
 
 
@@ -733,7 +733,7 @@ screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web . --flagfile=../nova/bin/nova.conf"
-screen_it dash "cd $DASH_DIR && sudo /etc/init.d/apache2 restart; sudo tail -f /var/log/apache2/error.log"
+screen_it dash "cd $DASH_DIR && sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
 # ==============
