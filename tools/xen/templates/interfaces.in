@@ -1,0 +1,21 @@
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+
+auto eth1
+iface eth1 inet static
+        address @ETH1_IP@
+        netmask @ETH1_NETMASK@
+post-up ethtool -K eth1 tx off
+
+auto eth2
+iface eth2 inet static
+        address @ETH2_IP@
+        netmask @ETH2_NETMASK@
+
+auto eth3
+iface eth3 inet static
+        address @ETH3_IP@
+        netmask @ETH3_NETMASK@
