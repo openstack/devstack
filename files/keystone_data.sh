@@ -14,8 +14,12 @@ $BIN_DIR/keystone-manage $* role add Admin
 $BIN_DIR/keystone-manage $* role add Member
 $BIN_DIR/keystone-manage $* role add KeystoneAdmin
 $BIN_DIR/keystone-manage $* role add KeystoneServiceAdmin
+$BIN_DIR/keystone-manage $* role add sysadmin
+$BIN_DIR/keystone-manage $* role add netadmin
 $BIN_DIR/keystone-manage $* role grant Admin admin admin
 $BIN_DIR/keystone-manage $* role grant Member demo demo
+$BIN_DIR/keystone-manage $* role grant sysadmin demo demo
+$BIN_DIR/keystone-manage $* role grant netadmin demo demo
 $BIN_DIR/keystone-manage $* role grant Member demo invisible_to_admin
 $BIN_DIR/keystone-manage $* role grant Admin admin demo
 $BIN_DIR/keystone-manage $* role grant Admin admin
