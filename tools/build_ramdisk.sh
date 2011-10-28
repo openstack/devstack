@@ -138,7 +138,7 @@ git_clone $NOVA_REPO $DEST/nova $NOVA_BRANCH
 git_clone $GLANCE_REPO $DEST/glance $GLANCE_BRANCH
 git_clone $KEYSTONE_REPO $DEST/keystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $DEST/novnc $NOVNC_BRANCH
-git_clone $DASH_REPO $DEST/dash $DASH_BRANCH
+git_clone $HORIZON_REPO $DEST/horizon $HORIZON_BRANCH
 git_clone $NOVACLIENT_REPO $DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
 

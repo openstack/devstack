@@ -23,7 +23,7 @@ function run_lxc {
 
 # Launch the head node - headnode uses a non-ip domain name,
 # because rabbit won't launch with an ip addr hostname :(
-run_lxc STACKMASTER $HEAD_HOST "ENABLED_SERVICES=g-api,g-reg,key,n-api,n-sch,n-vnc,dash,mysql,rabbit"
+run_lxc STACKMASTER $HEAD_HOST "ENABLED_SERVICES=g-api,g-reg,key,n-api,n-sch,n-vnc,horizon,mysql,rabbit"
 
 # Wait till the head node is up
 if [ ! "$TERMINATE" = "1" ]; then

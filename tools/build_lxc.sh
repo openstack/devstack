@@ -39,7 +39,7 @@ WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 # By default, n-vol is disabled for lxc, as iscsitarget doesn't work properly in lxc
-STACKSH_PARAMS=${STACKSH_PARAMS:-"ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit"}
+STACKSH_PARAMS=${STACKSH_PARAMS:-"ENABLED_SERVICES=g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit"}
 
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
@@ -140,7 +140,7 @@ git_clone $NOVA_REPO $CACHEDIR/$DEST/nova $NOVA_BRANCH
 git_clone $GLANCE_REPO $CACHEDIR/$DEST/glance $GLANCE_BRANCH
 git_clone $KEYSTONE_REPO $CACHEDIR/$DESTkeystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $CACHEDIR/$DEST/noVNC $NOVNC_BRANCH
-git_clone $DASH_REPO $CACHEDIR/$DEST/dash $DASH_BRANCH $DASH_TAG
+git_clone $HORIZON_REPO $CACHEDIR/$DEST/horizon $HORIZON_BRANCH $HORIZON_TAG
 git_clone $NOVACLIENT_REPO $CACHEDIR/$DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $CACHEDIR/$DEST/openstackx $OPENSTACKX_BRANCH
 git_clone $KEYSTONE_REPO $CACHEDIR/$DEST/keystone $KEYSTONE_BRANCH

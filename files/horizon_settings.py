@@ -17,7 +17,7 @@ DATABASES = {
 
 CACHE_BACKEND = 'dummy://'
 
-# Add apps to dash installation.
+# Add apps to horizon installation.
 INSTALLED_APPS = (
     'dashboard',
     'django.contrib.contenttypes',

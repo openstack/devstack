@@ -2,7 +2,7 @@
 
 # **stack.sh** is an opinionated openstack developer installation.
 
-# This script installs and configures *nova*, *glance*, *dashboard* and *keystone*
+# This script installs and configures *nova*, *glance*, *horizon* and *keystone*
 
 # This script allows you to specify configuration options of what git
 # repositories to use, enabled services, network configuration and various
@@ -90,7 +90,7 @@ function apt_get() {
 }
 
 
-# OpenStack is designed to be run as a regular user (Dashboard will fail to run
+# OpenStack is designed to be run as a regular user (Horizon will fail to run
 # as root, since apache refused to startup serve content from root user).  If
 # stack.sh is run as root, it automatically creates a stack user with
 # sudo privileges and runs as that user.
@@ -129,7 +129,7 @@ if [[ $EUID -eq 0 ]]; then
     fi
     exit 1
 else
-    # Our user needs passwordless priviledges for certain commands which nova 
+    # Our user needs passwordless priviledges for certain commands which nova
     # uses internally.
     # Natty uec images sudoers does not have a '#includedir'. add one.
     sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
@@ -144,7 +144,7 @@ fi
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
-DASH_DIR=$DEST/dash
+HORIZON_DIR=$DEST/horizon
 GLANCE_DIR=$DEST/glance
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
@@ -152,7 +152,7 @@ OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
 
 # Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,dash,mysql,rabbit}
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit}
 
 # Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
@@ -248,7 +248,7 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 # MySQL & RabbitMQ
 # ----------------
 
-# We configure Nova, Dashboard, Glance and Keystone to use MySQL as their
+# We configure Nova, Horizon, Glance and Keystone to use MySQL as their
 # database server.  While they share a single server, each has their own
 # database and tables.
 
@@ -277,8 +277,8 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 # Service Token - Openstack components need to have an admin token
 # to validate user tokens.
 read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
-# Dash currently truncates usernames and passwords at 20 characters
-read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR DASH AND KEYSTONE (20 CHARS OR LESS)."
+# Horizon currently truncates usernames and passwords at 20 characters
+read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (20 CHARS OR LESS)."
 
 LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
 (
@@ -356,8 +356,8 @@ git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
 # a websockets/html5 or flash powered VNC console for vm instances
 git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
 # django powered web control panel for openstack
-git_clone $DASH_REPO $DASH_DIR $DASH_BRANCH $DASH_TAG
-# python client library to nova that dashboard (and others) use
+git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+# python client library to nova that horizon (and others) use
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
@@ -374,8 +374,8 @@ cd $GLANCE_DIR; sudo python setup.py develop
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $NOVA_DIR; sudo python setup.py develop
 cd $OPENSTACKX_DIR; sudo python setup.py develop
-cd $DASH_DIR/django-openstack; sudo python setup.py develop
-cd $DASH_DIR/openstack-dashboard; sudo python setup.py develop
+cd $HORIZON_DIR/django-openstack; sudo python setup.py develop
+cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
 
 # Add a useful screenrc.  This isn't required to run openstack but is we do
 # it since we are going to run the services in screen for simple
@@ -432,36 +432,36 @@ EOF
 fi
 
 
-# Dashboard
+# Horizon
 # ---------
 
-# Setup the django dashboard application to serve via apache/wsgi
+# Setup the django horizon application to serve via apache/wsgi
 
-if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
 
-    # Dash currently imports quantum even if you aren't using it.  Instead
+    # Horizon currently imports quantum even if you aren't using it.  Instead
     # of installing quantum we can create a simple module that will pass the
     # initial imports
-    mkdir -p  $DASH_DIR/openstack-dashboard/quantum || true
-    touch $DASH_DIR/openstack-dashboard/quantum/__init__.py
-    touch $DASH_DIR/openstack-dashboard/quantum/client.py
+    mkdir -p  $HORIZON_DIR/openstack-dashboard/quantum || true
+    touch $HORIZON_DIR/openstack-dashboard/quantum/__init__.py
+    touch $HORIZON_DIR/openstack-dashboard/quantum/client.py
 
 
-    # ``local_settings.py`` is used to override dashboard default settings.
-    cp $FILES/dash_settings.py $DASH_DIR/openstack-dashboard/local/local_settings.py
+    # ``local_settings.py`` is used to override horizon default settings.
+    cp $FILES/horizon_settings.py $HORIZON_DIR/openstack-dashboard/local/local_settings.py
 
-    # Initialize the dashboard database (it stores sessions and notices shown to
+    # Initialize the horizon database (it stores sessions and notices shown to
     # users).  The user system is external (keystone).
-    cd $DASH_DIR/openstack-dashboard
+    cd $HORIZON_DIR/openstack-dashboard
     dashboard/manage.py syncdb
 
     # create an empty directory that apache uses as docroot
-    sudo mkdir -p $DASH_DIR/.blackhole
+    sudo mkdir -p $HORIZON_DIR/.blackhole
 
-    ## Configure apache's 000-default to run dashboard
+    ## Configure apache's 000-default to run horizon
     sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
     sudo sed -e "s,%USER%,$USER,g" -i /etc/apache2/sites-enabled/000-default
-    sudo sed -e "s,%DASH_DIR%,$DASH_DIR,g" -i /etc/apache2/sites-enabled/000-default
+    sudo sed -e "s,%HORIZON_DIR%,$HORIZON_DIR,g" -i /etc/apache2/sites-enabled/000-default
     sudo service apache2 restart
 fi
 
@@ -769,7 +769,7 @@ screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web . --flagfile=../nova/bin/nova.conf"
-screen_it dash "cd $DASH_DIR && sudo tail -f /var/log/apache2/error.log"
+screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
 # ==============
@@ -838,10 +838,10 @@ for ret in "${PIPESTATUS[@]}"; do [ $ret -eq 0 ] || exit $ret; done
 # Using the cloud
 # ===============
 
-# If you installed the dashboard on this server, then you should be able
+# If you installed the horizon on this server, then you should be able
 # to access the site using your browser.
-if [[ "$ENABLED_SERVICES" =~ "dash" ]]; then
-    echo "dashboard is now available at http://$HOST_IP/"
+if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
+    echo "horizon is now available at http://$HOST_IP/"
 fi
 
 # If keystone is present, you can point nova cli to this server
