@@ -139,8 +139,7 @@ else
     sed -e "s,%USER%,$USER,g" -i $TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
-    sudo cp -p $TEMPFILE /etc/sudoers.d/stack_sh_nova
-    sudo rm $TEMPFILE
+    sudo mv $TEMPFILE /etc/sudoers.d/stack_sh_nova
 fi
 
 # Set the destination directories for openstack projects
