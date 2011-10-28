@@ -792,8 +792,8 @@ if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
         if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum;'
         else
-	    echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
-	    exit 1
+            echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
+            exit 1
         fi
     fi
 
@@ -817,10 +817,8 @@ if [[ "$ENABLED_SERVICES" =~ "q-agt" ]]; then
     screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_DIR/quantum/plugins/openvswitch/ovs_quantum_plugin.ini -v"
 fi
 
-# NOTE(bgh): I moved the network creation here because Quantum has to be up
-# and running before we can communicate with it if we're using Quantum for
-# networking (i.e. q-svc is enabled).
-
+# If we're using Quantum (i.e. q-svc is enabled), network creation has to
+# happen after we've started the Quantum service.
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     # create a small network
     $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
