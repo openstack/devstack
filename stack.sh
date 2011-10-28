@@ -150,6 +150,10 @@ KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
+QUANTUM_DIR=$DEST/quantum
+
+# Default Quantum Plugin
+Q_PLUGIN=${Q_PLUGIN:-openvswitch}
 
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit}
@@ -243,6 +247,17 @@ MULTI_HOST=${MULTI_HOST:-0}
 FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
+
+# Using Quantum networking:
+#
+# Make sure that q-svc is enabled in ENABLED_SERVICES.  If it is the network
+# manager will be set to the QuantumManager.
+#
+# If you're planning to use the Quantum openvswitch plugin, set Q_PLUGIN to
+# "openvswitch" and make sure the q-agt service is enabled in
+# ENABLED_SERVICES.
+#
+# With Quantum networking the NET_MAN variable is ignored.
 
 
 # MySQL & RabbitMQ
@@ -362,6 +377,8 @@ git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
+# quantum
+git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 
 # Initialization
 # ==============
@@ -376,6 +393,7 @@ cd $NOVA_DIR; sudo python setup.py develop
 cd $OPENSTACKX_DIR; sudo python setup.py develop
 cd $HORIZON_DIR/django-openstack; sudo python setup.py develop
 cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
+cd $QUANTUM_DIR; sudo python setup.py develop
 
 # Add a useful screenrc.  This isn't required to run openstack but is we do
 # it since we are going to run the services in screen for simple
@@ -616,8 +634,16 @@ add_nova_flag "--nodaemon"
 add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
-add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
 add_nova_flag "--fixed_range=$FIXED_RANGE"
+if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
+    add_nova_flag "--network_manager=nova.network.quantum.manager.QuantumManager"
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        add_nova_flag "--libvirt_vif_type=ethernet"
+        add_nova_flag "--libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
+    fi
+else
+    add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
+fi
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
 add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
@@ -676,12 +702,6 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
 
     # (re)create nova database
     $NOVA_DIR/bin/nova-manage db sync
-
-    # create a small network
-    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
-
-    # create some floating ips
-    $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 fi
 
 
@@ -764,6 +784,55 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
       exit 1
     fi
 fi
+
+# Quantum
+if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
+    # Create database for the plugin/agent
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum;'
+        else
+	    echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
+	    exit 1
+        fi
+    fi
+
+    QUANTUM_PLUGIN_INI_FILE=$QUANTUM_DIR/quantum/plugins.ini
+    # Make sure we're using the openvswitch plugin
+    sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
+    screen_it q-svc "cd $QUANTUM_DIR && export PYTHONPATH=.:$PYTHONPATH; python $QUANTUM_DIR/bin/quantum $QUANTUM_DIR/etc/quantum.conf"
+fi
+
+# Quantum agent (for compute nodes)
+if [[ "$ENABLED_SERVICES" =~ "q-agt" ]]; then
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        # Set up integration bridge
+        OVS_BRIDGE=${OVS_BRIDGE:-br-int}
+        sudo ovs-vsctl --no-wait -- --if-exists del-br $OVS_BRIDGE
+        sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
+        sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
+    fi
+
+    # Start up the quantum <-> openvswitch agent
+    screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_DIR/quantum/plugins/openvswitch/ovs_quantum_plugin.ini -v"
+fi
+
+# NOTE(bgh): I moved the network creation here because Quantum has to be up
+# and running before we can communicate with it if we're using Quantum for
+# networking (i.e. q-svc is enabled).
+
+if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+    # create a small network
+    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
+
+    if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
+        echo "Not creating floating IPs (not supported by QuantumManager)"
+    else
+        # create some floating ips
+        $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+    fi
+fi
+
 # Launching nova-compute should be as simple as running ``nova-compute`` but
 # have to do a little more than that in our script.  Since we add the group
 # ``libvirtd`` to our user in this script, when nova-compute is run it is
