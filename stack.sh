@@ -613,6 +613,7 @@ function add_nova_flag {
 rm -f $NOVA_DIR/bin/nova.conf
 add_nova_flag "--verbose"
 add_nova_flag "--nodaemon"
+add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
 add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
