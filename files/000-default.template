@@ -1,19 +1,19 @@
 <VirtualHost *:80>
-    WSGIScriptAlias / %DASH_DIR%/openstack-dashboard/dashboard/wsgi/django.wsgi
-    WSGIDaemonProcess dashboard user=%USER% group=%USER% processes=3 threads=10
+    WSGIScriptAlias / %HORIZON_DIR%/openstack-dashboard/dashboard/wsgi/django.wsgi
+    WSGIDaemonProcess horizon user=%USER% group=%USER% processes=3 threads=10
     SetEnv APACHE_RUN_USER %USER%
     SetEnv APACHE_RUN_GROUP %USER%
-    WSGIProcessGroup dashboard
+    WSGIProcessGroup horizon
 
-    DocumentRoot %DASH_DIR%/.blackhole/
-    Alias /media %DASH_DIR%/openstack-dashboard/media
+    DocumentRoot %HORIZON_DIR%/.blackhole/
+    Alias /media %HORIZON_DIR%/openstack-dashboard/media
 
     <Directory />
         Options FollowSymLinks
         AllowOverride None
     </Directory>
 
-    <Directory %DASH_DIR%/>
+    <Directory %HORIZON_DIR%/>
         Options Indexes FollowSymLinks MultiViews
         AllowOverride None
         Order allow,deny

@@ -25,13 +25,13 @@ need to run devstack (like git).  Do this to install required software:
 
     wget --no-check-certificate https://github.com/cloudbuilders/devstack/raw/xen/tools/xen/prepare_dom0.sh
     chmod 755 prepare_dom0.sh
-    ./prepare_dom0.sh 
+    ./prepare_dom0.sh
 
 This script will also clone devstack in /root/devstack
 
 Step 3: Configure your localrc
 -----------------------------
-Devstack uses a localrc for user-specific configuration.  Note that 
+Devstack uses a localrc for user-specific configuration.  Note that
 the XENAPI_PASSWORD must be your dom0 root password.
 Of course, use real passwords if this machine is exposed.
 
@@ -59,6 +59,6 @@ But in a nutshell, it performs the following:
 
 Step 5: Do cloudy stuff!
 --------------------------
-* Play with dashboard
+* Play with horizon
 * Play with the CLI
 * Log bugs to devstack and core projects, and submit fixes!

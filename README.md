@@ -17,7 +17,7 @@ Be sure to carefully read these scripts before you run them as they install soft
 
 If working correctly, you should be able to access openstack endpoints, like:
 
-* Dashboard: http://myhost/
+* Horizon: http://myhost/
 * Keystone: http://myhost:5000/v2.0/
 
 # To start a dev cloud in an lxc container:
