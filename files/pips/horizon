@@ -6,7 +6,6 @@ django-registration==0.7
 kombu
 python-cloudfiles
 python-dateutil
-routes
 webob
 sqlalchemy
 paste
