@@ -99,29 +99,6 @@ NBD_DEV=`basename $NBD`
 UEC_NAME=$DIST_NAME-server-cloudimg-amd64
 if [ ! -e $CACHEDIR/$UEC_NAME-disk1.img ]; then
     (cd $CACHEDIR && wget -N http://uec-images.ubuntu.com/$DIST_NAME/current/$UEC_NAME-disk1.img)
-
-
-    # Connect to nbd and wait till it is ready
-    qemu-nbd -d $NBD
-    qemu-nbd -c $NBD $CACHEDIR/$UEC_NAME-disk1.img
-    if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
-        echo "Couldn't connect $NBD"
-        exit 1
-    fi
-    MNTDIR=`mktemp -d mntXXXXXXXX`
-    mount -t ext4 ${NBD}p1 $MNTDIR
-
-    # Install our required packages
-    cp -p $TOP_DIR/files/sources.list $MNTDIR/etc/apt/sources.list
-    sed -e "s,%DIST%,$DIST_NAME,g" -i $MNTDIR/etc/apt/sources.list
-    cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
-    chroot $MNTDIR apt-get update
-    chroot $MNTDIR apt-get install -y $MIN_PKGS
-    rm -f $MNTDIR/etc/resolv.conf
-
-    umount $MNTDIR
-    rmdir $MNTDIR
-    qemu-nbd -d $NBD
 fi
 
 if [ "$FORMAT" = "qcow2" ]; then
@@ -161,4 +138,17 @@ w
 fsck -t ext4 -f ${NBD}p1
 resize2fs ${NBD}p1
 
+Do some preliminary installs
+MNTDIR=`mktemp -d mntXXXXXXXX`
+mount -t ext4 ${NBD}p1 $MNTDIR
+
+# Install our required packages
+cp -p files/sources.list $MNTDIR/etc/apt/sources.list
+cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
+chroot $MNTDIR apt-get update
+chroot $MNTDIR apt-get install -y $MIN_PKGS
+rm -f $MNTDIR/etc/resolv.conf
+
+umount $MNTDIR
+rmdir $MNTDIR
 qemu-nbd -d $NBD
