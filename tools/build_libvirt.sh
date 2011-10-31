@@ -329,12 +329,6 @@ chmod 755 $RUN_SH
 RC_LOCAL=$ROOTFS/etc/init.d/zlocal
 cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
-# Reboot if this is our first run to enable console log on $DIST_NAME :(
-if [ ! -e /root/firstlaunch ]; then
-    touch /root/firstlaunch
-    reboot -f
-    exit 0
-fi
 # cloud-init overwrites the hostname with ubuntuhost
 echo $GUEST_NAME > /etc/hostname
 hostname $GUEST_NAME
