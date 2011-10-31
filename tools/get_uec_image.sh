@@ -144,6 +144,7 @@ mount -t ext4 ${NBD}p1 $MNTDIR
 
 # Install our required packages
 cp -p files/sources.list $MNTDIR/etc/apt/sources.list
+sed -e "s,%DIST%,$DIST_NAME,g" -i $MNTDIR/etc/apt/sources.list
 cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
 chroot $MNTDIR apt-get update
 chroot $MNTDIR apt-get install -y $MIN_PKGS
