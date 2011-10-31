@@ -10,6 +10,10 @@ FORMAT=${FORMAT:-qcow2}
 ROOTSIZE=${ROOTSIZE:-2000}
 MIN_PKGS=${MIN_PKGS:-"apt-utils gpgv openssh-server"}
 
+# Keep track of the current directory
+TOOLS_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+
 usage() {
     echo "Usage: $0 - Prepare Ubuntu images"
     echo ""
@@ -31,7 +35,7 @@ while getopts f:hmr: c; do
         m)  MINIMAL=1
             ;;
         r)  ROOTSIZE=$OPTARG
-            if $(( ROOTSIZE < 2000 )); then
+            if [[ $ROOTSIZE < 2000 ]]; then
                 echo "root size must be greater than 2000MB"
                 exit 1
             fi
@@ -108,7 +112,7 @@ if [ ! -e $CACHEDIR/$UEC_NAME-disk1.img ]; then
     mount -t ext4 ${NBD}p1 $MNTDIR
 
     # Install our required packages
-    cp -p files/sources.list $MNTDIR/etc/apt/sources.list
+    cp -p $TOP_DIR/files/sources.list $MNTDIR/etc/apt/sources.list
     sed -e "s,%DIST%,$DIST_NAME,g" -i $MNTDIR/etc/apt/sources.list
     cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
     chroot $MNTDIR apt-get update
