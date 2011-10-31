@@ -263,6 +263,23 @@ sed -e "s,@ETH2_NETMASK@,$MGT_NETMASK,g" -i $INTERFACES
 sed -e "s,@ETH3_IP@,$PUB_IP,g" -i $INTERFACES
 sed -e "s,@ETH3_NETMASK@,$PUB_NETMASK,g" -i $INTERFACES
 
+# Gracefully cp only if source file/dir exists
+function cp_it {
+    if [ -e $1 ] || [ -d $1 ]; then
+        cp -pRL $1 $2
+    fi
+}
+
+# Copy over your ssh keys and env if desired
+COPYENV=${COPYENV:-1}
+if [ "$COPYENV" = "1" ]; then
+    cp_it ~/.ssh $STAGING_DIR/opt/stack/.ssh
+    cp_it ~/.ssh/id_rsa.pub $STAGING_DIR/opt/stack/.ssh/authorized_keys
+    cp_it ~/.gitconfig $STAGING_DIR/opt/stack/.gitconfig
+    cp_it ~/.vimrc $STAGING_DIR/opt/stack/.vimrc
+    cp_it ~/.bashrc $STAGING_DIR/opt/stack/.bashrc
+fi
+
 # Configure run.sh
 cat <<EOF >$STAGING_DIR/opt/stack/run.sh
 #!/bin/bash
