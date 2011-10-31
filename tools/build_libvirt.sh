@@ -335,6 +335,9 @@ if [ ! -e /root/firstlaunch ]; then
     reboot -f
     exit 0
 fi
+# cloud-init overwrites the hostname with ubuntuhost
+echo $GUEST_NAME > /etc/hostname
+hostname $GUEST_NAME
 su -c "$DEST/run.sh" stack
 EOF
 chmod +x $RC_LOCAL
@@ -356,7 +359,6 @@ sudo sed -e "s/^hiddenmenu//g" -i $ROOTFS/boot/grub/menu.lst
 
 # Set the hostname
 echo $GUEST_NAME > $ROOTFS/etc/hostname
-echo $GUEST_NAME > $ROOTFS/etc/hostname1
 
 # We need the hostname to resolve for rabbit to launch
 if ! grep -q $GUEST_NAME $ROOTFS/etc/hosts; then
