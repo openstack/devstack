@@ -20,7 +20,7 @@ TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
 # Where to store files and instances
-WORK_DIR=${WORK_DIR:-$TOP_DIR/work}
+WORK_DIR=${WORK_DIR:-/opt/kvmstack}
 
 # Where to store images
 IMAGES_DIR=$WORK_DIR/images
@@ -51,7 +51,7 @@ IMAGE_FNAME=$DIST_NAME.raw
 GUEST_NAME=${GUEST_NAME:-devstack}
 
 # Original version of built image
-BASE_IMAGE=$WORK_DIR/images/$DIST_NAME.raw
+BASE_IMAGE=$IMAGES_DIR/$DIST_NAME.raw
 
 # Copy of base image, which we pre-install with tasty treats
 VM_IMAGE=$IMAGES_DIR/$DIST_NAME.$GUEST_NAME.raw
@@ -69,12 +69,9 @@ mkdir -p $VM_DIR
 COPY_DIR=$VM_DIR/copy
 mkdir -p $COPY_DIR
 
-# Create the base image if it does not yet exist
-if [ ! -e $IMAGES_DIR/$IMAGE_FNAME ]; then
-    cd $TOOLS_DIR
-    ./make_image.sh -m -r 5000  $DIST_NAME raw
-    mv $DIST_NAME.raw $BASE_IMAGE
-    cd $TOP_DIR
+# Get the base image if it does not yet exist
+if [ ! -e $BASE_IMAGE ]; then
+    $TOOLS_DIR/get_uec_image.sh -f raw -r 5000 $DIST_NAME $BASE_IMAGE
 fi
 
 # Create a copy of the base image
@@ -110,7 +107,8 @@ trap kill_unmount SIGINT
 DEST=${DEST:-/opt/stack}
 
 # Mount the file system
-mount -o loop,offset=32256 $VM_IMAGE  $COPY_DIR
+# For some reason, UEC-based images want 255 heads * 63 sectors * 512 byte sectors = 8225280
+mount -t ext4 -o loop,offset=8225280 $VM_IMAGE $COPY_DIR
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
@@ -250,14 +248,13 @@ qemu-img create -f qcow2 -b $VM_IMAGE disk
 
 # Connect our nbd and wait till it is mountable
 qemu-nbd -c $NBD disk
-NBD_DEV=`basename $NBD`
-if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
+if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
     echo "Couldn't connect $NBD"
     exit 1
 fi
 
 # Mount the instance
-mount $NBD $ROOTFS -o offset=32256 -t ext4
+mount ${NBD}p1 $ROOTFS
 
 # Configure instance network
 INTERFACES=$ROOTFS/etc/network/interfaces
@@ -275,7 +272,7 @@ EOF
 # User configuration for the instance
 chroot $ROOTFS groupadd libvirtd || true
 chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
-rsync -av --exclude=work $TOP_DIR $ROOTFS/$DEST/devstack
+cp -pr $TOP_DIR $ROOTFS/$DEST/devstack
 echo "root:$ROOT_PASSWORD" | chroot $ROOTFS chpasswd
 echo "stack:pass" | chroot $ROOTFS chpasswd
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
@@ -329,7 +326,7 @@ EOF
 chmod 755 $RUN_SH
 
 # Make runner launch on boot
-RC_LOCAL=$ROOTFS/etc/init.d/local
+RC_LOCAL=$ROOTFS/etc/init.d/zlocal
 cat > $RC_LOCAL <<EOF
 #!/bin/sh -e
 # Reboot if this is our first run to enable console log on $DIST_NAME :(
@@ -338,10 +335,13 @@ if [ ! -e /root/firstlaunch ]; then
     reboot -f
     exit 0
 fi
+# cloud-init overwrites the hostname with ubuntuhost
+echo $GUEST_NAME > /etc/hostname
+hostname $GUEST_NAME
 su -c "$DEST/run.sh" stack
 EOF
 chmod +x $RC_LOCAL
-chroot $ROOTFS sudo update-rc.d local defaults 80
+chroot $ROOTFS sudo update-rc.d zlocal defaults 99
 
 # Make our ip address hostnames look nice at the command prompt
 echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS/$DEST/.bashrc
@@ -349,6 +349,9 @@ echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS
 
 # Give stack ownership over $DEST so it may do the work needed
 chroot $ROOTFS chown -R stack $DEST
+
+# GRUB 2 wants to see /dev
+mount -o bind /dev $ROOTFS/dev
 
 # Change boot params so that we get a console log
 sudo sed -e "s/quiet splash/splash console=ttyS0 console=ttyS1,19200n8/g" -i $ROOTFS/boot/grub/menu.lst
@@ -361,6 +364,22 @@ echo $GUEST_NAME > $ROOTFS/etc/hostname
 if ! grep -q $GUEST_NAME $ROOTFS/etc/hosts; then
     echo "$GUEST_IP $GUEST_NAME" >> $ROOTFS/etc/hosts
 fi
+
+# Change boot params so that we get a console log
+G_DEV_UUID=`blkid -t LABEL=cloudimg-rootfs -s UUID -o value | head -1`
+sed -e "s/GRUB_TIMEOUT=.*$/GRUB_TIMEOUT=3/" -i $ROOTFS/etc/default/grub
+sed -e "s,GRUB_CMDLINE_LINUX_DEFAULT=.*$,GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 console=tty0 ds=nocloud ubuntu-pass=pass\",g" -i $ROOTFS/etc/default/grub
+sed -e 's/[#]*GRUB_TERMINAL=.*$/GRUB_TERMINAL="serial console"/' -i $ROOTFS/etc/default/grub
+echo 'GRUB_SERIAL_COMMAND="serial --unit=0"' >>$ROOTFS/etc/default/grub
+echo 'GRUB_DISABLE_OS_PROBER=true' >>$ROOTFS/etc/default/grub
+echo "GRUB_DEVICE_UUID=$G_DEV_UUID" >>$ROOTFS/etc/default/grub
+
+chroot $ROOTFS update-grub
+umount $ROOTFS/dev
+
+# Pre-generate ssh host keys and allow password login
+chroot $ROOTFS dpkg-reconfigure openssh-server
+sed -e 's/^PasswordAuthentication.*$/PasswordAuthentication yes/' -i $ROOTFS/etc/ssh/sshd_config
 
 # Unmount
 umount $ROOTFS || echo 'ok'

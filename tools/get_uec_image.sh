@@ -94,7 +94,7 @@ NBD_DEV=`basename $NBD`
 # Get the UEC image
 UEC_NAME=$DIST_NAME-server-cloudimg-amd64
 if [ ! -e $CACHEDIR/$UEC_NAME-disk1.img ]; then
-    (cd $CACHEDIR; wget -N http://uec-images.ubuntu.com/$DIST_NAME/current/$UEC_NAME-disk1.img)
+    (cd $CACHEDIR && wget -N http://uec-images.ubuntu.com/$DIST_NAME/current/$UEC_NAME-disk1.img)
 
 
     # Connect to nbd and wait till it is ready
