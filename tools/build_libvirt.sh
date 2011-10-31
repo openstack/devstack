@@ -275,7 +275,7 @@ EOF
 # User configuration for the instance
 chroot $ROOTFS groupadd libvirtd || true
 chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
-rsync -av --exclude=$WORK_DIR $TOP_DIR $ROOTFS/$DEST/devstack
+rsync -av --exclude=work $TOP_DIR $ROOTFS/$DEST/devstack
 echo "root:$ROOT_PASSWORD" | chroot $ROOTFS chpasswd
 echo "stack:pass" | chroot $ROOTFS chpasswd
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
