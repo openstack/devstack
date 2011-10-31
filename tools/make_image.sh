@@ -138,6 +138,7 @@ if [ -n "$CHROOTONLY" ]; then
       --addpkg=$MIN_PKGS \
 
     sudo cp -p files/sources.list $CHROOTDIR/etc/apt/sources.list
+    sed -e "s,%DIST%,$RELEASE,g" -i $CHROOTDIR/etc/apt/sources.list
     sudo chroot $CHROOTDIR apt-get update
 
     exit 0
