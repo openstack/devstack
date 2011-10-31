@@ -365,7 +365,7 @@ fi
 # Change boot params so that we get a console log
 G_DEV_UUID=`blkid -t LABEL=cloudimg-rootfs -s UUID -o value | head -1`
 sed -e "s/GRUB_TIMEOUT=.*$/GRUB_TIMEOUT=3/" -i $ROOTFS/etc/default/grub
-sed -e "s,GRUB_CMDLINE_LINUX_DEFAULT=.*$,GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 console=tty0 ds=nocloud ubuntu-pass=pass h=$GUEST_NAME\",g" -i $ROOTFS/etc/default/grub
+sed -e "s,GRUB_CMDLINE_LINUX_DEFAULT=.*$,GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 console=tty0 ds=nocloud;h=$GUEST_NAME ubuntu-pass=pass\",g" -i $ROOTFS/etc/default/grub
 sed -e 's/[#]*GRUB_TERMINAL=.*$/GRUB_TERMINAL="serial console"/' -i $ROOTFS/etc/default/grub
 echo 'GRUB_SERIAL_COMMAND="serial --unit=0"' >>$ROOTFS/etc/default/grub
 echo 'GRUB_DISABLE_OS_PROBER=true' >>$ROOTFS/etc/default/grub
