@@ -229,15 +229,8 @@ EOF
 ROOTFS=$VM_DIR/root
 mkdir -p $ROOTFS
 
-# Make sure we have nbd-ness
-modprobe nbd max_part=63
-
-# Which NBD device to use?
-NBD=${NBD:-/dev/nbd$GUEST_NETWORK}
-
 # Clean up from previous runs
 umount $ROOTFS || echo 'ok'
-qemu-nbd -d $NBD || echo 'ok'
 
 # Clean up old runs
 cd $VM_DIR
@@ -246,12 +239,28 @@ rm -f $VM_DIR/disk
 # Create our instance fs
 qemu-img create -f qcow2 -b $VM_IMAGE disk
 
-# Connect our nbd and wait till it is mountable
-qemu-nbd -c $NBD disk
-if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
-    echo "Couldn't connect $NBD"
+# Make sure we have nbd-ness
+modprobe nbd max_part=63
+
+# Set up nbd
+modprobe nbd max_part=63
+for i in `seq 1 15`; do
+    if [ ! -e /sys/block/nbd$i/pid ]; then
+        NBD=/dev/nbd$i
+        # Connect to nbd and wait till it is ready
+        qemu-nbd -c $NBD disk
+        if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
+            echo "Couldn't connect $NBD"
+            exit 1
+        fi
+        break
+    fi
+done
+if [ -z "$NBD" ]; then
+    echo "No free NBD slots"
     exit 1
 fi
+NBD_DEV=`basename $NBD`
 
 # Mount the instance
 mount ${NBD}p1 $ROOTFS
