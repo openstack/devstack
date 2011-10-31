@@ -156,7 +156,6 @@ cd $TOP_DIR
 unmount_images
 
 # Network configuration variables
-BRIDGE=${BRIDGE:-br0}
 GUEST_NETWORK=${GUEST_NETWORK:-1}
 
 GUEST_IP=${GUEST_IP:-192.168.$GUEST_NETWORK.50}
