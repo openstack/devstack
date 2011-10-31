@@ -82,8 +82,17 @@ nova boot --flavor $FLAVOR --image $IMAGE $NAME --security_groups=$SECGROUP
 # Waiting for boot
 # ----------------
 
-# check that the status is active within 10 seconds
-if ! timeout 10 sh -c "while ! nova show $NAME | grep status | grep -q ACTIVE; do sleep 1; done"; then
+# Max time to wait while vm goes from build to active state
+ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-10}
+
+# Max time till the vm is bootable
+BOOT_TIMEOUT=${BOOT_TIMEOUT:-15}
+
+# Max time to wait for proper association and dis-association.
+ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-10}
+
+# check that the status is active within ACTIVE_TIMEOUT seconds
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $NAME | grep status | grep -q ACTIVE; do sleep 1; done"; then
     echo "server didn't become active!"
     exit 1
 fi
@@ -95,12 +104,15 @@ IP=`nova show $NAME | grep "private network" | cut -d"|" -f3`
 MULTI_HOST=${MULTI_HOST:-0}
 if [ "$MULTI_HOST" = "0" ]; then
     # sometimes the first ping fails (10 seconds isn't enough time for the VM's
-    # network to respond?), so let's ping for 15 seconds with a timeout
-    # of a second.
-    if ! timeout 15 sh -c "while ! ping -c1 -w1 $IP; do sleep 1; done"; then
+    # network to respond?), so let's ping for a default of 15 seconds with a
+    # timeout of a second for each ping.
+    if ! timeout $BOOT_TIMEOUT sh -c "while ! ping -c1 -w1 $IP; do sleep 1; done"; then
         echo "Couldn't ping server"
         exit 1
     fi
+else
+    # On a multi-host system, without vm net access, do a sleep to wait for the boot
+    sleep $BOOT_TIMEOUT
 fi
 
 # Security Groups & Floating IPs
@@ -121,8 +133,8 @@ FLOATING_IP=`nova floating-ip-list | grep None | head -1 | cut -d '|' -f2 | sed 
 # add floating ip to our server
 nova add-floating-ip $NAME $FLOATING_IP
 
-# test we can ping our floating ip within 10 seconds
-if ! timeout 10 sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
+# test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
+if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
     echo "Couldn't ping server with floating ip"
     exit 1
 fi
@@ -152,8 +164,8 @@ ping -c1 -w1 $IP
 # dis-allow icmp traffic (ping)
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
-# test we can aren't able to ping our floating ip within 10 seconds
-if ! timeout 10 sh -c "while ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
+# test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
+if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
     print "Security group failure - ping should not be allowed!"
     echo "Couldn't ping server with floating ip"
     exit 1
