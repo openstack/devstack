@@ -51,6 +51,7 @@ fi
 # Default args
 DIST_NAME=$1
 IMG_FILE=$2
+IMG_FILE_TMP=`mktemp $IMG_FILE.XXXXXX`
 
 case $FORMAT in
     kvm|qcow2)  FORMAT=qcow2
@@ -88,11 +89,6 @@ case $DIST_NAME in
                 ;;
 esac
 
-# Set up nbd
-modprobe nbd max_part=63
-NBD=${NBD:-/dev/nbd9}
-NBD_DEV=`basename $NBD`
-
 # Prepare the base image
 
 # Get the UEC image
@@ -103,24 +99,37 @@ fi
 
 if [ "$FORMAT" = "qcow2" ]; then
     # Just copy image
-    cp -p $CACHEDIR/$UEC_NAME-disk1.img $IMG_FILE
+    cp -p $CACHEDIR/$UEC_NAME-disk1.img $IMG_FILE_TMP
 else
     # Convert image
-    qemu-img convert -O $QFORMAT $CACHEDIR/$UEC_NAME-disk1.img $IMG_FILE
+    qemu-img convert -O $QFORMAT $CACHEDIR/$UEC_NAME-disk1.img $IMG_FILE_TMP
 fi
 
 # Resize the image if necessary
 if [ $ROOTSIZE -gt 2000 ]; then
     # Resize the container
-    qemu-img resize $IMG_FILE +$((ROOTSIZE - 2000))M
+    qemu-img resize $IMG_FILE_TMP +$((ROOTSIZE - 2000))M
 fi
 
-# Connect to nbd and wait till it is ready
-qemu-nbd -c $NBD $IMG_FILE
-if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
-echo "Couldn't connect $NBD"
+# Set up nbd
+modprobe nbd max_part=63
+for i in `seq 1 15`; do
+    if [ ! -e /sys/block/nbd$i/pid ]; then
+        NBD=/dev/nbd$i
+        # Connect to nbd and wait till it is ready
+        qemu-nbd -c $NBD $IMG_FILE_TMP
+        if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
+            echo "Couldn't connect $NBD"
+            exit 1
+        fi
+        break
+    fi
+done
+if [ -z "$NBD" ]; then
+    echo "No free NBD slots"
     exit 1
 fi
+NBD_DEV=`basename $NBD`
 
 # Resize partition 1 to full size of the disk image
 echo "d
@@ -153,3 +162,5 @@ rm -f $MNTDIR/etc/resolv.conf
 umount $MNTDIR
 rmdir $MNTDIR
 qemu-nbd -d $NBD
+
+mv $IMG_FILE_TMP $IMG_FILE
