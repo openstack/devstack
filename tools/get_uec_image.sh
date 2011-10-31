@@ -135,7 +135,7 @@ a
 1
 w
 " | fdisk $NBD
-fsck -t ext4 -f ${NBD}p1
+e2fsck -f -p ${NBD}p1
 resize2fs ${NBD}p1
 
 # Do some preliminary installs
