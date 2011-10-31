@@ -773,7 +773,7 @@ screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
 screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
-screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py 6080 --web . --flagfile=../nova/bin/nova.conf"
+screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py --flagfile $NOVA_DIR/bin/nova.conf --web . 6080"
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
