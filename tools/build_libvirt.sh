@@ -233,7 +233,7 @@ mkdir -p $ROOTFS
 modprobe nbd max_part=63
 
 # Which NBD device to use?
-NBD=${NBD:-/dev/nbd5}
+NBD=${NBD:-/dev/nbd$GUEST_NETWORK}
 
 # Clean up from previous runs
 umount $ROOTFS || echo 'ok'
