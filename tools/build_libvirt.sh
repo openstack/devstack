@@ -406,7 +406,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
       sleep 1
     done
 
-    tail -F $VM_DIR/console.log &
+    tail -n +1 -F $VM_DIR/console.log &
 
     TAIL_PID=$!
 
