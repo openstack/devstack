@@ -353,10 +353,6 @@ chroot $ROOTFS chown -R stack $DEST
 # GRUB 2 wants to see /dev
 mount -o bind /dev $ROOTFS/dev
 
-# Change boot params so that we get a console log
-sudo sed -e "s/quiet splash/splash console=ttyS0 console=ttyS1,19200n8/g" -i $ROOTFS/boot/grub/menu.lst
-sudo sed -e "s/^hiddenmenu//g" -i $ROOTFS/boot/grub/menu.lst
-
 # Set the hostname
 echo $GUEST_NAME > $ROOTFS/etc/hostname
 
