@@ -23,7 +23,7 @@
 # Warn users who aren't on natty, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
 if ! egrep -q 'natty|oneiric' /etc/lsb-release; then
-    echo "WARNING: this script has only been tested on natty"
+    echo "WARNING: this script has only been tested on natty and oneiric"
     if [[ "$FORCE" != "yes" ]]; then
         echo "If you wish to run this script anyway run with FORCE=yes"
         exit 1
