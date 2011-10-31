@@ -356,6 +356,7 @@ sudo sed -e "s/^hiddenmenu//g" -i $ROOTFS/boot/grub/menu.lst
 
 # Set the hostname
 echo $GUEST_NAME > $ROOTFS/etc/hostname
+echo $GUEST_NAME > $ROOTFS/etc/hostname1
 
 # We need the hostname to resolve for rabbit to launch
 if ! grep -q $GUEST_NAME $ROOTFS/etc/hosts; then
@@ -365,7 +366,7 @@ fi
 # Change boot params so that we get a console log
 G_DEV_UUID=`blkid -t LABEL=cloudimg-rootfs -s UUID -o value | head -1`
 sed -e "s/GRUB_TIMEOUT=.*$/GRUB_TIMEOUT=3/" -i $ROOTFS/etc/default/grub
-sed -e "s,GRUB_CMDLINE_LINUX_DEFAULT=.*$,GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 console=tty0 ds=nocloud-net;h=$GUEST_NAME ubuntu-pass=pass\",g" -i $ROOTFS/etc/default/grub
+sed -e "s,GRUB_CMDLINE_LINUX_DEFAULT=.*$,GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 console=tty0 ds=nocloud ubuntu-pass=pass\",g" -i $ROOTFS/etc/default/grub
 sed -e 's/[#]*GRUB_TERMINAL=.*$/GRUB_TERMINAL="serial console"/' -i $ROOTFS/etc/default/grub
 echo 'GRUB_SERIAL_COMMAND="serial --unit=0"' >>$ROOTFS/etc/default/grub
 echo 'GRUB_DISABLE_OS_PROBER=true' >>$ROOTFS/etc/default/grub
