@@ -17,7 +17,7 @@ set -o xtrace
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
-TOP_DIR=$TOOLS_DIR/..
+TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
 # Where to store files and instances
 WORK_DIR=${WORK_DIR:-$TOP_DIR/work}
