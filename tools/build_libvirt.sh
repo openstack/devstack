@@ -20,7 +20,7 @@ TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
 # Where to store files and instances
-WORK_DIR=${WORK_DIR:-$TOP_DIR/work}
+WORK_DIR=${WORK_DIR:-/opt/kvmstack}
 
 # Where to store images
 IMAGES_DIR=$WORK_DIR/images
@@ -272,7 +272,7 @@ EOF
 # User configuration for the instance
 chroot $ROOTFS groupadd libvirtd || true
 chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
-rsync -av --exclude=work $TOP_DIR $ROOTFS/$DEST/devstack
+cp -pr $TOPDIR $ROOTFS/$DEST/devstack
 echo "root:$ROOT_PASSWORD" | chroot $ROOTFS chpasswd
 echo "stack:pass" | chroot $ROOTFS chpasswd
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
