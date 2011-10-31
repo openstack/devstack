@@ -272,7 +272,7 @@ EOF
 # User configuration for the instance
 chroot $ROOTFS groupadd libvirtd || true
 chroot $ROOTFS useradd stack -s /bin/bash -d $DEST -G libvirtd
-cp -pr $TOPDIR $ROOTFS/$DEST/devstack
+cp -pr $TOP_DIR $ROOTFS/$DEST/devstack
 echo "root:$ROOT_PASSWORD" | chroot $ROOTFS chpasswd
 echo "stack:pass" | chroot $ROOTFS chpasswd
 echo "stack ALL=(ALL) NOPASSWD: ALL" >> $ROOTFS/etc/sudoers
