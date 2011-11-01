@@ -623,10 +623,18 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
         sudo mount ${s}
     fi
 
+    for x in {1..4}; do sudo ln -sf $s/$x ${SWIFT_LOCATION}/$x; done
+    
     # Create directories
-    sudo install -g stack -o stack -d /etc/swift /etc/swift/{object,container,account}-server \
-        ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ${s}/{1..4}
+    tmpd=""
+    for d in /etc/swift /etc/swift/{object,container,account}-server \
+        ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ${s}/{1..4};do
+        [[ -d $d ]] && continue
+        sudo install -g stack -o stack -d $d
+    done
 
+    sudo chown -R stack: ${SWIFT_LOCATION}/{1..4}/node
+    
     # Adjust rc.local to always have a /var/run/swift on reboot
     # created and chown to our user.
     # TODO (chmou): We may not have a "exit 0"
@@ -638,8 +646,9 @@ exit 0
 EOF
 
    # Add rsync file
-   sed -e "s/%SWIFT_LOCATION%/$SWIFT_LOCATION/" $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
-
+   sed -e "s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
+   sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
+   
    # Copy proxy-server configuration
    cp $FILES/swift-proxy-server.conf /etc/swift/proxy-server.conf
 
@@ -673,6 +682,9 @@ EOF
    sudo install -m755 $FILES/swift-startmain /usr/local/bin/
    sudo chmod +x /usr/local/bin/swift-*
 
+   # Start rsync
+   sudo /etc/init.d/rsync restart || :
+      
    # Create ring
    /usr/local/bin/swift-remakerings
 
