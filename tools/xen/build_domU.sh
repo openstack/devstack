@@ -298,14 +298,63 @@ fi
 # Start guest
 $TOP_DIR/scripts/install-os-vpx.sh -f $XVA -v $VM_BR -m $MGT_BR -p $PUB_BR
 
-echo "################################################################################"
-echo ""
-echo "All Finished!"
-echo "Now, you can monitor the progress of the stack.sh installation by "
-echo "tailing /opt/stack/run.sh.log from within your domU."
-echo ""
-echo "ssh into your domU now: 'ssh stack@$PUB_IP' using your password"
-echo "and then do: 'tail -f /opt/stack/run.sh.log'"
-echo ""
-echo "When the script completes, you can then visit the OpenStack Dashboard"
-echo "at http://$PUB_IP, and contact other services at the usual ports."
+# If we have copied our ssh credentials, use ssh to monitor while the installation runs
+WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
+if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" = "1" ]; then
+    # Done creating the container, let's tail the log
+    echo
+    echo "============================================================="
+    echo "                          -- YAY! --"
+    echo "============================================================="
+    echo
+    echo "We're done launching the vm, about to start tailing the"
+    echo "stack.sh log. It will take a second or two to start."
+    echo
+    echo "Just CTRL-C at any time to stop tailing."
+
+    set +o xtrace
+
+    while ! ssh -q stack@$PUB_IP "[ -e run.sh.log ]"; do
+      sleep 1
+    done
+
+    ssh stack@$PUB_IP 'tail -f run.sh.log' &
+
+    TAIL_PID=$!
+
+    function kill_tail() {
+        kill $TAIL_PID
+        exit 1
+    }
+
+    # Let Ctrl-c kill tail and exit
+    trap kill_tail SIGINT
+
+    echo "Waiting stack.sh to finish..."
+    while ! ssh -q stack@$PUB_IP "grep -q 'stack.sh completed in' run.sh.log" ; do
+        sleep 1
+    done
+
+    kill $TAIL_PID
+
+    if ! ssh -q stack@$PUB_IP "grep -q 'stack.sh failed' run.sh.log" ; then
+        exit 1
+    fi
+    echo ""
+    echo "Finished - Zip-a-dee Doo-dah!"
+    echo "You can then visit the OpenStack Dashboard"
+    echo "at http://$PUB_IP, and contact other services at the usual ports."
+else
+    echo "################################################################################"
+    echo ""
+    echo "All Finished!"
+    echo "Now, you can monitor the progress of the stack.sh installation by "
+    echo "tailing /opt/stack/run.sh.log from within your domU."
+    echo ""
+    echo "ssh into your domU now: 'ssh stack@$PUB_IP' using your password"
+    echo "and then do: 'tail -f /opt/stack/run.sh.log'"
+    echo ""
+    echo "When the script completes, you can then visit the OpenStack Dashboard"
+    echo "at http://$PUB_IP, and contact other services at the usual ports."
+
+fi

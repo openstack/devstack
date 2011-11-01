@@ -46,6 +46,12 @@ Of course, use real passwords if this machine is exposed.
     XENAPI_PASSWORD=my_super_secret
     # Do not download the usual images yet!
     IMAGE_URLS=""
+    # Explicitly set virt driver here
+    VIRT_DRIVER=xenserver
+    # Explicitly set multi-host
+    MULTI_HOST=1
+    # Give extra time for boot
+    ACTIVE_TIMEOUT=45
     EOF
 
 Step 4: Run ./build_domU.sh
