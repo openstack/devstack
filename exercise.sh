@@ -188,4 +188,3 @@ nova secgroup-delete $SECGROUP
 
 # make sure that we can describe instances
 euca-describe-instances
-Mon Oct 31 15:18:21 PDT 2011
