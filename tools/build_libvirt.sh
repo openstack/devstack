@@ -243,8 +243,7 @@ qemu-img create -f qcow2 -b $VM_IMAGE disk
 modprobe nbd max_part=63
 
 # Set up nbd
-modprobe nbd max_part=63
-for i in `seq 1 15`; do
+for i in `seq 0 15`; do
     if [ ! -e /sys/block/nbd$i/pid ]; then
         NBD=/dev/nbd$i
         # Connect to nbd and wait till it is ready
@@ -353,9 +352,6 @@ echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS
 # Give stack ownership over $DEST so it may do the work needed
 chroot $ROOTFS chown -R stack $DEST
 
-# GRUB 2 wants to see /dev
-mount -o bind /dev $ROOTFS/dev
-
 # Set the hostname
 echo $GUEST_NAME > $ROOTFS/etc/hostname
 
@@ -363,6 +359,9 @@ echo $GUEST_NAME > $ROOTFS/etc/hostname
 if ! grep -q $GUEST_NAME $ROOTFS/etc/hosts; then
     echo "$GUEST_IP $GUEST_NAME" >> $ROOTFS/etc/hosts
 fi
+
+# GRUB 2 wants to see /dev
+mount -o bind /dev $ROOTFS/dev
 
 # Change boot params so that we get a console log
 G_DEV_UUID=`blkid -t LABEL=cloudimg-rootfs -s UUID -o value | head -1`
