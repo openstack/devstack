@@ -17,7 +17,9 @@ set -o xtrace
 # ========
 
 # Use openrc + stackrc + localrc for settings
+pushd $(cd $(dirname "$0")/.. && pwd)
 source ./openrc
+popd
 
 # Max time till the vm is bootable
 BOOT_TIMEOUT=${BOOT_TIMEOUT:-15}

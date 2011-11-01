@@ -20,7 +20,9 @@ set -o xtrace
 # ========
 
 # Use openrc + stackrc + localrc for settings
+pushd $(cd $(dirname "$0")/.. && pwd)
 source ./openrc
+popd
 
 # Get a token for clients that don't support service catalog
 # ==========================================================
