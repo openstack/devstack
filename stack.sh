@@ -655,7 +655,7 @@ EOF
    # Generate swift.conf, we need to have the swift-hash being random
    # and unique.
    swift_hash=$(od -t x8 -N 8 -A n </dev/random)
-   sed -e "s/%sWIFT_HASH%/$swift_hash/" $FILES/swift.conf > /etc/swift/swift.conf
+   sed -e "s/%SWIFT_HASH%/$swift_hash/" $FILES/swift.conf > /etc/swift/swift.conf
 
    # We need to generate a object/account/proxy configuration
    # emulating 4 nodes on different ports we have a litle function
