@@ -229,15 +229,8 @@ EOF
 ROOTFS=$VM_DIR/root
 mkdir -p $ROOTFS
 
-# Make sure we have nbd-ness
-modprobe nbd max_part=63
-
-# Which NBD device to use?
-NBD=${NBD:-/dev/nbd$GUEST_NETWORK}
-
 # Clean up from previous runs
 umount $ROOTFS || echo 'ok'
-qemu-nbd -d $NBD || echo 'ok'
 
 # Clean up old runs
 cd $VM_DIR
@@ -246,12 +239,27 @@ rm -f $VM_DIR/disk
 # Create our instance fs
 qemu-img create -f qcow2 -b $VM_IMAGE disk
 
-# Connect our nbd and wait till it is mountable
-qemu-nbd -c $NBD disk
-if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
-    echo "Couldn't connect $NBD"
+# Make sure we have nbd-ness
+modprobe nbd max_part=63
+
+# Set up nbd
+for i in `seq 0 15`; do
+    if [ ! -e /sys/block/nbd$i/pid ]; then
+        NBD=/dev/nbd$i
+        # Connect to nbd and wait till it is ready
+        qemu-nbd -c $NBD disk
+        if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
+            echo "Couldn't connect $NBD"
+            exit 1
+        fi
+        break
+    fi
+done
+if [ -z "$NBD" ]; then
+    echo "No free NBD slots"
     exit 1
 fi
+NBD_DEV=`basename $NBD`
 
 # Mount the instance
 mount ${NBD}p1 $ROOTFS
@@ -344,9 +352,6 @@ echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $ROOTFS
 # Give stack ownership over $DEST so it may do the work needed
 chroot $ROOTFS chown -R stack $DEST
 
-# GRUB 2 wants to see /dev
-mount -o bind /dev $ROOTFS/dev
-
 # Set the hostname
 echo $GUEST_NAME > $ROOTFS/etc/hostname
 
@@ -354,6 +359,9 @@ echo $GUEST_NAME > $ROOTFS/etc/hostname
 if ! grep -q $GUEST_NAME $ROOTFS/etc/hosts; then
     echo "$GUEST_IP $GUEST_NAME" >> $ROOTFS/etc/hosts
 fi
+
+# GRUB 2 wants to see /dev
+mount -o bind /dev $ROOTFS/dev
 
 # Change boot params so that we get a console log
 G_DEV_UUID=`blkid -t LABEL=cloudimg-rootfs -s UUID -o value | head -1`
