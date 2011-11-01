@@ -4,7 +4,7 @@ NOVA_BRANCH=diablo
 
 # storage service
 SWIFT_REPO=https://github.com/openstack/swift.git
-SWIFT_BRANCH=diablo
+SWIFT_BRANCH=1.4.3
 
 # image catalog service
 GLANCE_REPO=https://github.com/cloudbuilders/glance.git

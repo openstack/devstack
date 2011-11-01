@@ -594,51 +594,56 @@ fi
 
 # Storage Service
 if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
-    mkdir -p ${SWIFT_LOCATION}/drives
-    local s=${SWIFT_LOCATION}/drives/sdb1 # Shortcut variable
+    sudo mkdir -p ${SWIFT_LOCATION}/drives
+    sudo chown -R stack: ${SWIFT_LOCATION}/drives
+    s=${SWIFT_LOCATION}/drives/sdb1 # Shortcut variable
     
     # Create a loopback disk and format it with XFS.
     if [[ ! -e ${SWIFT_LOCATION}/swift-disk ]];then
+        sudo touch ${SWIFT_LOCATION}/swift-disk
+        sudo chown stack: ${SWIFT_LOCATION}/swift-disk
+        
         dd if=/dev/zero of=${SWIFT_LOCATION}/swift-disk bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
         mkfs.xfs -f -i size=1024 ${SWIFT_LOCATION}/swift-disk
     fi
 
     # Add the mountpoint to fstab
     if ! egrep -q "^${SWIFT_LOCATION}/swift-disk" /etc/fstab;then
-        echo "# Added by devstack" | tee -a /etc/fstab
+        echo "# Added by devstack" | sudo tee -a /etc/fstab
         echo "${SWIFT_LOCATION}/swift-disk ${s} xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" | \
-            tee -a /etc/fstab
+            sudo tee -a /etc/fstab
     fi
 
     # Create and mount drives.
     mkdir -p ${s} 
-    mount ${s}
-    mkdir ${s}/{1..4}
+    if ! egrep -q "$s" /proc/mounts;then
+        sudo mount ${s}
+    fi
 
     # Create directories
-    install -g stack -o stack -d /etc/swift/{object,container,account}-server \
-        ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift
+    sudo install -g stack -o stack -d /etc/swift /etc/swift/{object,container,account}-server \
+        ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ${s}/{1..4}
 
     # Adjust rc.local to always have a /var/run/swift on reboot
     # created and chown to our user.
     # TODO (chmou): We may not have a "exit 0"
-    sed -i '/^exit 0/d' /etc/rc.local
-cat <<EOF>>/etc/rc.local
+    sudo sed -i '/^exit 0/d' /etc/rc.local
+cat <<EOF | sudo tee -a /etc/rc.local
 mkdir -p /var/run/swift
 chown stack: /var/run/swift
 exit 0
 EOF
 
    # Add rsync file
-   sed -e "s/%SWIFT_LOCATION%/$SWIFT_LOCATION/" $FILES/swift-rsyncd.conf > /etc/rsyncd.conf
+   sed -e "s/%SWIFT_LOCATION%/$SWIFT_LOCATION/" $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
 
    # Copy proxy-server configuration
    cp $FILES/swift-proxy-server.conf /etc/swift/
 
    # Generate swift.conf, we need to have the swift-hash being random
    # and unique.
-   local SWIFT_HASH=$(od -t x8 -N 8 -A n </dev/random)
-   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift.conf > /etc/swift/swift.conf
+   swift_hash=$(od -t x8 -N 8 -A n </dev/random)
+   sed -e "s/%sWIFT_HASH%/$swift_hash/" $FILES/swift.conf > /etc/swift/swift.conf
 
    # We need to generate a object/account/proxy configuration
    # emulating 4 nodes on different ports we have a litle function
@@ -658,6 +663,8 @@ EOF
    generate_swift_configuration object 6010 2
    generate_swift_configuration container 6011 2
    generate_swift_configuration account 6012 2
+
+   unset s swift_hasH
    
 fi
 
