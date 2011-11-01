@@ -150,9 +150,10 @@ KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
+SWIFT_DIR=$DEST/swift
 
 # Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit}
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit,swift}
 
 # Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
@@ -270,6 +271,14 @@ read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 
+# SWIFT
+# -----
+#
+# Location of SWIFT drives
+SWIFT_DRIVE_LOCATION=${SWIFT_DRIVE_LOCATION:-/srv}
+
+# Size of the loopback disks
+SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 
 # Keystone
 # --------
@@ -349,6 +358,8 @@ function git_clone {
 
 # compute service
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
+# storage service
+git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
 # image catalog service
 git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
 # unified auth system (manages accounts/tokens)
@@ -370,6 +381,7 @@ git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
 cd $KEYSTONE_DIR; sudo python setup.py develop
+cd $SWIFT_DIR; sudo python setup.py develop
 cd $GLANCE_DIR; sudo python setup.py develop
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $NOVA_DIR; sudo python setup.py develop
@@ -578,6 +590,75 @@ if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
     sudo killall dnsmasq || true
     rm -rf $NOVA_DIR/networks
     mkdir -p $NOVA_DIR/networks
+fi
+
+# Storage Service
+if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
+    mkdir -p ${SWIFT_DRIVE_LOCATION}/drives
+    local s=${SWIFT_DRIVE_LOCATION}/drives/sdb1 # Shortcut variable
+    
+    # Create a loopback disk and format it with XFS.
+    if [[ ! -e ${SWIFT_DRIVE_LOCATION}/swift-disk ]];then
+        dd if=/dev/zero of=${SWIFT_DRIVE_LOCATION}/swift-disk bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
+        mkfs.xfs -f -i size=1024 ${SWIFT_DRIVE_LOCATION}/swift-disk
+    fi
+
+    # Add the mountpoint to fstab
+    if ! egrep -q "^${SWIFT_DRIVE_LOCATION}/swift-disk" /etc/fstab;then
+        echo "# Added by devstack" | tee -a /etc/fstab
+        echo "${SWIFT_DRIVE_LOCATION}/swift-disk ${s} xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" | \
+            tee -a /etc/fstab
+    fi
+
+    # Create and mount drives.
+    mkdir -p ${s} 
+    mount ${s}
+    mkdir ${s}/{1..4}
+
+    # Create directories
+    install -g stack -o stack -d /etc/swift/{object,container,account}-server \
+        ${SWIFT_DRIVE_LOCATION}/{1..4}/node/sdb1 /var/run/swift
+
+    # Adjust rc.local to always have a /var/run/swift on reboot
+    # created and chown to our user.
+    # TODO (chmou): We may not have a "exit 0"
+    sed -i '/^exit 0/d' /etc/rc.local
+cat <<EOF>>/etc/rc.local
+mkdir -p /var/run/swift
+chown stack: /var/run/swift
+exit 0
+EOF
+
+   # Add rsync file
+   sed -e "s/%SWIFT_LOOPBACK_DISK_SIZE%/$SWIFT_DRIVE_LOCATION/" $FILES/swift-rsyncd.conf > /etc/rsyncd.conf
+
+   # Copy proxy-server configuration
+   cp $FILES/swift-proxy-server.conf /etc/swift/
+
+   # Generate swift.conf, we need to have the swift-hash being random
+   # and unique.
+   local SWIFT_HASH=$(od -t x8 -N 8 -A n </dev/random)
+   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift.conf > /etc/swift/swift.conf
+
+   # We need to generate a object/account/proxy configuration
+   # emulating 4 nodes on different ports we have a litle function
+   # that help us doing that.
+   function generate_swift_configuration() {
+       local server_type=$1
+       local bind_port=$2
+       local log_facility=$3
+       for node_number in {1..4};do
+           node_path=${SWIFT_DRIVE_LOCATION}/${node_number}/node
+           sed -e "s/%NODE_PATH%/${node_path}/;s/%BIND_PORT%/${bind_port}/;s/%LOG_FACILITY%/${log_facility}/" \
+               $FILES/swift-${server_type}-server.conf > /etc/swift/${server_type}-server/${node_number}.conf
+           bind_port=$(( ${bind_port} + 10 ))
+           log_facility=$(( ${log_facility} + 1 ))
+       done
+   }
+   generate_swift_configuration object 6010 2
+   generate_swift_configuration container 6011 2
+   generate_swift_configuration account 6012 2
+   
 fi
 
 # Volume Service
