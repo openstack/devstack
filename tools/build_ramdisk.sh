@@ -10,6 +10,9 @@ if [ ! "$#" -eq "1" ]; then
     exit 1
 fi
 
+# Set up nbd
+modprobe nbd max_part=63
+
 # Echo commands
 set -o xtrace
 
@@ -43,30 +46,42 @@ STACKSH_PARAMS=${STACKSH_PARAMS:-}
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
 
-# Set up nbd
-modprobe nbd max_part=63
-NBD=${NBD:-/dev/nbd9}
-NBD_DEV=`basename $NBD`
-
 # clean install
 if [ ! -r $CACHEDIR/$DIST_NAME-base.img ]; then
     $TOOLS_DIR/get_uec_image.sh $DIST_NAME $CACHEDIR/$DIST_NAME-base.img
-#    # copy kernel modules...
-#    # NOTE(ja): is there a better way to do this?
-#    cp -pr /lib/modules/`uname -r` $CACHEDIR/$DIST_NAME-base/lib/modules
-#    # a simple password - pass
-#    echo root:pass | chroot $CACHEDIR/$DIST_NAME-base chpasswd
 fi
 
-# prime image with as many apt/pips as we can
-if [ ! -r $CACHEDIR/$DIST_NAME-dev.img ]; then
-    cp -p $CACHEDIR/$DIST_NAME-base.img $CACHEDIR/$DIST_NAME-dev.img
-
-    qemu-nbd -c $NBD $CACHEDIR/$DIST_NAME-dev.img
-    if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
-        echo "Couldn't connect $NBD"
+# Finds the next available NBD device
+# Exits script if error connecting or none free
+# map_nbd image
+# returns full nbd device path
+function map_nbd {
+    for i in `seq 0 15`; do
+        if [ ! -e /sys/block/nbd$i/pid ]; then
+            NBD=/dev/nbd$i
+            # Connect to nbd and wait till it is ready
+            qemu-nbd -c $NBD $1
+            if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
+                echo "Couldn't connect $NBD"
+                exit 1
+            fi
+            break
+        fi
+    done
+    if [ -z "$NBD" ]; then
+        echo "No free NBD slots"
         exit 1
     fi
+    echo $NBD
+}
+
+# prime image with as many apt/pips as we can
+DEV_FILE=$CACHEDIR/$DIST_NAME-dev.img
+DEV_FILE_TMP=`mktemp $DEV_FILE.XXXXXX`
+if [ ! -r $DEV_FILE ]; then
+    cp -p $CACHEDIR/$DIST_NAME-base.img $DEV_FILE_TMP
+
+    NBD=`map_nbd $DEV_FILE_TMP`
     MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
     mount -t ext4 ${NBD}p1 $MNTDIR
     cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
@@ -82,7 +97,8 @@ if [ ! -r $CACHEDIR/$DIST_NAME-dev.img ]; then
     chroot $MNTDIR chown stack $DEST
 
     # a simple password - pass
-    echo stack:$ROOT_PASSWORD | chroot $MNTDIR chpasswd
+    echo stack:pass | chroot $MNTDIR chpasswd
+    echo root:$ROOT_PASSWORD | chroot $MNTDIR chpasswd
 
     # and has sudo ability (in the future this should be limited to only what
     # stack requires)
@@ -91,27 +107,29 @@ if [ ! -r $CACHEDIR/$DIST_NAME-dev.img ]; then
     umount $MNTDIR
     rmdir $MNTDIR
     qemu-nbd -d $NBD
+    mv $DEV_FILE_TMP $DEV_FILE
 fi
+rm -f $DEV_FILE_TMP
 
 # clone git repositories onto the system
 # ======================================
 
+IMG_FILE_TMP=`mktemp $IMG_FILE.XXXXXX`
+
 if [ ! -r $IMG_FILE ]; then
-    qemu-nbd -c $NBD $CACHEDIR/$DIST_NAME-dev.img
-    if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
-        echo "Couldn't connect $NBD"
-        exit 1
-    fi
+    NBD=`map_nbd $DEV_FILE`
 
     # Pre-create the image file
     # FIXME(dt): This should really get the partition size to
     #            pre-create the image file
-    dd if=/dev/zero of=$IMG_FILE bs=1 count=1 seek=$((2*1024*1024*1024))
+    dd if=/dev/zero of=$IMG_FILE_TMP bs=1 count=1 seek=$((2*1024*1024*1024))
     # Create filesystem image for RAM disk
-    dd if=${NBD}p1 of=$IMG_FILE bs=1M
+    dd if=${NBD}p1 of=$IMG_FILE_TMP bs=1M
 
     qemu-nbd -d $NBD
+    mv $IMG_FILE_TMP $IMG_FILE
 fi
+rm -f $IMG_FILE_TMP
 
 MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
 mount -t ext4 -o loop $IMG_FILE $MNTDIR

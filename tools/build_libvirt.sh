@@ -239,26 +239,35 @@ rm -f $VM_DIR/disk
 # Create our instance fs
 qemu-img create -f qcow2 -b $VM_IMAGE disk
 
+# Finds the next available NBD device
+# Exits script if error connecting or none free
+# map_nbd image
+# returns full nbd device path
+function map_nbd {
+    for i in `seq 0 15`; do
+        if [ ! -e /sys/block/nbd$i/pid ]; then
+            NBD=/dev/nbd$i
+            # Connect to nbd and wait till it is ready
+            qemu-nbd -c $NBD $1
+            if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
+                echo "Couldn't connect $NBD"
+                exit 1
+            fi
+            break
+        fi
+    done
+    if [ -z "$NBD" ]; then
+        echo "No free NBD slots"
+        exit 1
+    fi
+    echo $NBD
+}
+
 # Make sure we have nbd-ness
 modprobe nbd max_part=63
 
 # Set up nbd
-for i in `seq 0 15`; do
-    if [ ! -e /sys/block/nbd$i/pid ]; then
-        NBD=/dev/nbd$i
-        # Connect to nbd and wait till it is ready
-        qemu-nbd -c $NBD disk
-        if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
-            echo "Couldn't connect $NBD"
-            exit 1
-        fi
-        break
-    fi
-done
-if [ -z "$NBD" ]; then
-    echo "No free NBD slots"
-    exit 1
-fi
+NBD=`map_nbd disk`
 NBD_DEV=`basename $NBD`
 
 # Mount the instance
