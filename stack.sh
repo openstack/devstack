@@ -627,8 +627,8 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
     
     # Create directories
     tmpd=""
-    for d in /etc/swift /etc/swift/{object,container,account}-server \
-        ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ${s}/{1..4};do
+    for d in ${s}/{1..4} /etc/swift /etc/swift/{object,container,account}-server \
+        ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
         [[ -d $d ]] && continue
         sudo install -g stack -o stack -d $d
     done
