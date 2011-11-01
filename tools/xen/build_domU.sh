@@ -331,13 +331,13 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
     trap kill_tail SIGINT
 
     echo "Waiting stack.sh to finish..."
-    while ! ssh -q stack@$PUB_IP "grep -q 'stack.sh completed in' run.sh.log" ; do
+    while ! ssh -q stack@$PUB_IP "grep -q 'stack.sh completed in' run.sh.log"; do
         sleep 1
     done
 
     kill $TAIL_PID
 
-    if ! ssh -q stack@$PUB_IP "grep -q 'stack.sh failed' run.sh.log" ; then
+    if ssh -q stack@$PUB_IP "grep -q 'stack.sh failed' run.sh.log"; then
         exit 1
     fi
     echo ""
