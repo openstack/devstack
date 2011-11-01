@@ -151,6 +151,7 @@ NOVACLIENT_DIR=$DEST/python-novaclient
 OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
 SWIFT_DIR=$DEST/swift
+SWIFT_KEYSTONE_DIR=$DEST/swift-keystone2
 
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit,swift}
@@ -363,6 +364,8 @@ function git_clone {
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 # storage service
 git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
+# swift + keystone middleware
+git_clone $SWIFT_KEYSTONE_REPO $SWIFT_KEYSTONE_DIR $SWIFT_KEYSTONE_BRANCH
 # image catalog service
 git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
 # unified auth system (manages accounts/tokens)
@@ -385,6 +388,7 @@ git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
 # allowing ``import nova`` or ``import glance.client``
 cd $KEYSTONE_DIR; sudo python setup.py develop
 cd $SWIFT_DIR; sudo python setup.py develop
+cd $SWIFT_KEYSTONE_DIR; sudo python setup.py develop
 cd $GLANCE_DIR; sudo python setup.py develop
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $NOVA_DIR; sudo python setup.py develop
@@ -648,9 +652,18 @@ EOF
    # Add rsync file
    sed -e "s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
    sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
-   
-   # Copy proxy-server configuration
-   cp $FILES/swift-proxy-server.conf /etc/swift/proxy-server.conf
+
+   if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+       swift_auth_server=keystone
+       # Temporary until we get this integrated in swift.
+       sudo curl -s -o/usr/local/bin/swift \
+           'https://review.openstack.org/gitweb?p=openstack/swift.git;a=blob_plain;f=bin/swift;hb=48bfda6e2fdf3886c98bd15649887d54b9a2574e'
+   else
+       swift_auth_server=tempauth
+   fi
+
+   sed "s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
+       $FILES/swift-proxy-server.conf|sudo tee  /etc/swift/proxy-server.conf
 
    # Generate swift.conf, we need to have the swift-hash being random
    # and unique.
@@ -664,6 +677,8 @@ EOF
        local server_type=$1
        local bind_port=$2
        local log_facility=$3
+       local node_number
+       
        for node_number in {1..4};do
            node_path=${SWIFT_LOCATION}/${node_number}
            sed -e "s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
@@ -693,8 +708,7 @@ EOF
    
    # This should work (tempauth)
    # swift -A http://127.0.0.1:8080/auth/v1.0 -U test:tester -K testing stat
-   unset s swift_hasH
-   
+   unset s swift_hash swift_auth_server tmpd
 fi
 
 # Volume Service
@@ -976,6 +990,10 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "examples on using novaclient command line is in exercise.sh"
     echo "the default users are: admin and demo"
     echo "the password: $ADMIN_PASSWORD"
+    if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+        echo "Swift: swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin:admin -K $ADMIN_PASSWORD stat"
+    fi
+
 fi
 
 # indicate how long this took to run (bash maintained variable 'SECONDS')
