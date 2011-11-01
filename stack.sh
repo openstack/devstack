@@ -641,7 +641,7 @@ EOF
    sed -e "s/%SWIFT_LOCATION%/$SWIFT_LOCATION/" $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
 
    # Copy proxy-server configuration
-   cp $FILES/swift-proxy-server.conf /etc/swift/
+   cp $FILES/swift-proxy-server.conf /etc/swift/proxy-server.conf
 
    # Generate swift.conf, we need to have the swift-hash being random
    # and unique.
@@ -656,8 +656,8 @@ EOF
        local bind_port=$2
        local log_facility=$3
        for node_number in {1..4};do
-           node_path=${SWIFT_LOCATION}/${node_number}/node
-           sed -e "s/%NODE_PATH%/${node_path}/;s/%BIND_PORT%/${bind_port}/;s/%LOG_FACILITY%/${log_facility}/" \
+           node_path=${SWIFT_LOCATION}/${node_number}
+           sed -e "s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
                $FILES/swift-${server_type}-server.conf > /etc/swift/${server_type}-server/${node_number}.conf
            bind_port=$(( ${bind_port} + 10 ))
            log_facility=$(( ${log_facility} + 1 ))
@@ -673,6 +673,14 @@ EOF
    sudo install -m755 $FILES/swift-startmain /usr/local/bin/
    sudo chmod +x /usr/local/bin/swift-*
 
+   # Create ring
+   /usr/local/bin/swift-remakerings
+
+   # Start everything
+   /usr/local/bin/swift-startmain || :
+   
+   # This should work (tempauth)
+   # swift -A http://127.0.0.1:8080/auth/v1.0 -U test:tester -K testing stat
    unset s swift_hasH
    
 fi
