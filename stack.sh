@@ -275,7 +275,7 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 # -----
 #
 # Location of SWIFT drives
-SWIFT_DRIVE_LOCATION=${SWIFT_DRIVE_LOCATION:-/srv}
+SWIFT_LOCATION=${SWIFT_LOCATION:-/srv}
 
 # Size of the loopback disks
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
@@ -594,19 +594,19 @@ fi
 
 # Storage Service
 if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
-    mkdir -p ${SWIFT_DRIVE_LOCATION}/drives
-    local s=${SWIFT_DRIVE_LOCATION}/drives/sdb1 # Shortcut variable
+    mkdir -p ${SWIFT_LOCATION}/drives
+    local s=${SWIFT_LOCATION}/drives/sdb1 # Shortcut variable
     
     # Create a loopback disk and format it with XFS.
-    if [[ ! -e ${SWIFT_DRIVE_LOCATION}/swift-disk ]];then
-        dd if=/dev/zero of=${SWIFT_DRIVE_LOCATION}/swift-disk bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
-        mkfs.xfs -f -i size=1024 ${SWIFT_DRIVE_LOCATION}/swift-disk
+    if [[ ! -e ${SWIFT_LOCATION}/swift-disk ]];then
+        dd if=/dev/zero of=${SWIFT_LOCATION}/swift-disk bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
+        mkfs.xfs -f -i size=1024 ${SWIFT_LOCATION}/swift-disk
     fi
 
     # Add the mountpoint to fstab
-    if ! egrep -q "^${SWIFT_DRIVE_LOCATION}/swift-disk" /etc/fstab;then
+    if ! egrep -q "^${SWIFT_LOCATION}/swift-disk" /etc/fstab;then
         echo "# Added by devstack" | tee -a /etc/fstab
-        echo "${SWIFT_DRIVE_LOCATION}/swift-disk ${s} xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" | \
+        echo "${SWIFT_LOCATION}/swift-disk ${s} xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" | \
             tee -a /etc/fstab
     fi
 
@@ -617,7 +617,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
 
     # Create directories
     install -g stack -o stack -d /etc/swift/{object,container,account}-server \
-        ${SWIFT_DRIVE_LOCATION}/{1..4}/node/sdb1 /var/run/swift
+        ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift
 
     # Adjust rc.local to always have a /var/run/swift on reboot
     # created and chown to our user.
@@ -630,7 +630,7 @@ exit 0
 EOF
 
    # Add rsync file
-   sed -e "s/%SWIFT_LOOPBACK_DISK_SIZE%/$SWIFT_DRIVE_LOCATION/" $FILES/swift-rsyncd.conf > /etc/rsyncd.conf
+   sed -e "s/%SWIFT_LOCATION%/$SWIFT_LOCATION/" $FILES/swift-rsyncd.conf > /etc/rsyncd.conf
 
    # Copy proxy-server configuration
    cp $FILES/swift-proxy-server.conf /etc/swift/
@@ -648,7 +648,7 @@ EOF
        local bind_port=$2
        local log_facility=$3
        for node_number in {1..4};do
-           node_path=${SWIFT_DRIVE_LOCATION}/${node_number}/node
+           node_path=${SWIFT_LOCATION}/${node_number}/node
            sed -e "s/%NODE_PATH%/${node_path}/;s/%BIND_PORT%/${bind_port}/;s/%LOG_FACILITY%/${log_facility}/" \
                $FILES/swift-${server_type}-server.conf > /etc/swift/${server_type}-server/${node_number}.conf
            bind_port=$(( ${bind_port} + 10 ))
