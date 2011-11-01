@@ -1,24 +1,41 @@
 #!/bin/bash
 # build_ramdisk.sh - Build RAM disk images
 
+# exit on error to stop unexpected errors
+set -o errexit
+
 if [ ! "$#" -eq "1" ]; then
-    echo "$0 builds a gziped natty openstack install"
+    echo "$0 builds a gziped Ubuntu OpenStack install"
     echo "usage: $0 dest"
     exit 1
 fi
 
+# Echo commands
+set -o xtrace
+
 IMG_FILE=$1
 
-PROGDIR=`dirname $0`
-CHROOTCACHE=${CHROOTCACHE:-/var/cache/devstack}
-
-# Source params
-source ./stackrc
+# Keep track of the current directory
+TOOLS_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
 # Store cwd
 CWD=`pwd`
 
+cd $TOP_DIR
+
+# Source params
+source ./stackrc
+
+CACHEDIR=${CACHEDIR:-/var/cache/devstack}
+
 DEST=${DEST:-/opt/stack}
+
+# Configure the root password of the vm to be the same as ``ADMIN_PASSWORD``
+ROOT_PASSWORD=${ADMIN_PASSWORD:-password}
+
+# Base image (natty by default)
+DIST_NAME=${DIST_NAME:-natty}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 STACKSH_PARAMS=${STACKSH_PARAMS:-}
@@ -31,21 +48,21 @@ modprobe nbd max_part=63
 NBD=${NBD:-/dev/nbd9}
 NBD_DEV=`basename $NBD`
 
-# clean install of natty
-if [ ! -r $CHROOTCACHE/natty-base.img ]; then
-    $PROGDIR/get_uec_image.sh natty $CHROOTCACHE/natty-base.img
+# clean install
+if [ ! -r $CACHEDIR/$DIST_NAME-base.img ]; then
+    $TOOLS_DIR/get_uec_image.sh $DIST_NAME $CACHEDIR/$DIST_NAME-base.img
 #    # copy kernel modules...
 #    # NOTE(ja): is there a better way to do this?
-#    cp -pr /lib/modules/`uname -r` $CHROOTCACHE/natty-base/lib/modules
+#    cp -pr /lib/modules/`uname -r` $CACHEDIR/$DIST_NAME-base/lib/modules
 #    # a simple password - pass
-#    echo root:pass | chroot $CHROOTCACHE/natty-base chpasswd
+#    echo root:pass | chroot $CACHEDIR/$DIST_NAME-base chpasswd
 fi
 
-# prime natty with as many apt/pips as we can
-if [ ! -r $CHROOTCACHE/natty-dev.img ]; then
-    cp -p $CHROOTCACHE/natty-base.img $CHROOTCACHE/natty-dev.img
+# prime image with as many apt/pips as we can
+if [ ! -r $CACHEDIR/$DIST_NAME-dev.img ]; then
+    cp -p $CACHEDIR/$DIST_NAME-base.img $CACHEDIR/$DIST_NAME-dev.img
 
-    qemu-nbd -c $NBD $CHROOTCACHE/natty-dev.img
+    qemu-nbd -c $NBD $CACHEDIR/$DIST_NAME-dev.img
     if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
         echo "Couldn't connect $NBD"
         exit 1
@@ -65,7 +82,7 @@ if [ ! -r $CHROOTCACHE/natty-dev.img ]; then
     chroot $MNTDIR chown stack $DEST
 
     # a simple password - pass
-    echo stack:pass | chroot $MNTDIR chpasswd
+    echo stack:$ROOT_PASSWORD | chroot $MNTDIR chpasswd
 
     # and has sudo ability (in the future this should be limited to only what
     # stack requires)
@@ -80,7 +97,7 @@ fi
 # ======================================
 
 if [ ! -r $IMG_FILE ]; then
-    qemu-nbd -c $NBD $CHROOTCACHE/natty-dev.img
+    qemu-nbd -c $NBD $CACHEDIR/$DIST_NAME-dev.img
     if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
         echo "Couldn't connect $NBD"
         exit 1
