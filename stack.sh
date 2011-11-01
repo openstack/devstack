@@ -280,6 +280,9 @@ SWIFT_LOCATION=${SWIFT_LOCATION:-/srv}
 # Size of the loopback disks
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 
+# Default partition power size (bigger is slower)
+SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
+
 # Keystone
 # --------
 
@@ -663,6 +666,12 @@ EOF
    generate_swift_configuration object 6010 2
    generate_swift_configuration container 6011 2
    generate_swift_configuration account 6012 2
+
+   # Install swift helper scripts to remake the rings and start all services.
+   sed -e "s/%SWIFT_PARTITION_POWER_SIZE%/$SWIFT_PARTITION_POWER_SIZE/" $FILES/swift-remakerings | \
+       sudo tee /usr/local/bin/swift-remakerings
+   sudo install -m755 $FILES/swift-startmain /usr/local/bin/
+   sudo chmod +x /usr/local/bin/swift-*
 
    unset s swift_hasH
    
