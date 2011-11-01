@@ -10,6 +10,33 @@ if [ ! "$#" -eq "1" ]; then
     exit 1
 fi
 
+# Clean up any resources that may be in use
+cleanup() {
+    set +o errexit
+
+    # Mop up temporary files
+    if [ -n "$MNTDIR" -a -d "$MNTDIR" ]; then
+        umount $MNTDIR
+        rmdir $MNTDIR
+    fi
+    if [ -n "$DEV_FILE_TMP" -a -e "$DEV_FILE_TMP "]; then
+        rm -f $DEV_FILE_TMP
+    fi
+    if [ -n "$IMG_FILE_TMP" -a -e "$IMG_FILE_TMP" ]; then
+        rm -f $IMG_FILE_TMP
+    fi
+
+    # Release NBD devices
+    if [ -n "$NBD" ]; then
+        qemu-nbd -d $NBD
+    fi
+
+    # Kill ourselves to signal any calling process
+    trap 2; kill -2 $$
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
+
 # Set up nbd
 modprobe nbd max_part=63
 
@@ -107,6 +134,7 @@ if [ ! -r $DEV_FILE ]; then
     umount $MNTDIR
     rmdir $MNTDIR
     qemu-nbd -d $NBD
+    NBD=""
     mv $DEV_FILE_TMP $DEV_FILE
 fi
 rm -f $DEV_FILE_TMP
@@ -127,6 +155,7 @@ if [ ! -r $IMG_FILE ]; then
     dd if=${NBD}p1 of=$IMG_FILE_TMP bs=1M
 
     qemu-nbd -d $NBD
+    NBD=""
     mv $IMG_FILE_TMP $IMG_FILE
 fi
 rm -f $IMG_FILE_TMP

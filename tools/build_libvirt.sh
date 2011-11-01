@@ -12,6 +12,27 @@ if [ ! "oneiric" = "$UBUNTU_VERSION" ]; then
     fi
 fi
 
+# Clean up any resources that may be in use
+cleanup() {
+    set +o errexit
+    unmount_images
+
+    if [ -n "$ROOTFS" ]; then
+        umount $ROOTFS/dev
+        umount $ROOTFS
+    fi
+
+    # Release NBD devices
+    if [ -n "$NBD" ]; then
+        qemu-nbd -d $NBD
+    fi
+
+    # Kill ourselves to signal any calling process
+    trap 2; kill -2 $$
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
+
 # Echo commands
 set -o xtrace
 
@@ -99,9 +120,6 @@ function kill_unmount() {
 
 # Install deps if needed
 dpkg -l kvm libvirt-bin kpartx || apt-get install -y --force-yes kvm libvirt-bin kpartx
-
-# Let Ctrl-c kill tail and exit
-trap kill_unmount SIGINT
 
 # Where Openstack code will live in image
 DEST=${DEST:-/opt/stack}
@@ -390,7 +408,9 @@ sed -e 's/^PasswordAuthentication.*$/PasswordAuthentication yes/' -i $ROOTFS/etc
 
 # Unmount
 umount $ROOTFS || echo 'ok'
+ROOTFS=""
 qemu-nbd -d $NBD
+NBD=""
 
 # Create the instance
 cd $VM_DIR && virsh create libvirt.xml

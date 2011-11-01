@@ -26,6 +26,24 @@ usage() {
     exit 1
 }
 
+# Clean up any resources that may be in use
+cleanup() {
+    set +o errexit
+
+    # Mop up temporary files
+    if [ -n "$IMG_FILE_TMP" -a -e "$IMG_FILE_TMP" ]; then
+        rm -f $IMG_FILE_TMP
+    fi
+
+    # Release NBD devices
+    if [ -n "$NBD" ]; then
+        qemu-nbd -d $NBD
+    fi
+
+    # Kill ourselves to signal any calling process
+    trap 2; kill -2 $$
+}
+
 while getopts f:hmr: c; do
     case $c in
         f)  FORMAT=$OPTARG
@@ -88,6 +106,8 @@ case $DIST_NAME in
                 usage
                 ;;
 esac
+
+trap cleanup SIGHUP SIGINT SIGTERM
 
 # Prepare the base image
 
@@ -170,5 +190,6 @@ rm -f $MNTDIR/etc/resolv.conf
 umount $MNTDIR
 rmdir $MNTDIR
 qemu-nbd -d $NBD
+NBD=""
 
 mv $IMG_FILE_TMP $IMG_FILE

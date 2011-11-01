@@ -11,6 +11,22 @@ PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
 OPWD=`pwd`
 PROGDIR=`dirname $0`
 
+# Clean up any resources that may be in use
+cleanup() {
+    set +o errexit
+
+    # Mop up temporary files
+    if [ -n "$MNTDIR" -a -d "$MNTDIR" ]; then
+        umount $MNTDIR
+        rmdir $MNTDIR
+    fi
+
+    # Kill ourselves to signal any calling process
+    trap 2; kill -2 $$
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
+
 mkdir -p $DEST_DIR/pxelinux.cfg
 cd $DEST_DIR
 for i in memdisk menu.c32 pxelinux.0; do
