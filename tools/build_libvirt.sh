@@ -427,7 +427,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
 
     kill $TAIL_PID
 
-    if grep -q "stack.sh failed" $VM_DIR/console.log; then
+    if ! grep -q "^stack.sh completed in" $VM_DIR/console.log; then
         exit 1
     fi
     echo ""
