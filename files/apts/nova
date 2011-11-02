@@ -1,6 +1,7 @@
 dnsmasq-base
 kpartx
 parted
+arping # used for send_arp_for_ha option in nova-network
 mysql-server
 python-mysqldb
 kvm
