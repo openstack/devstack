@@ -646,7 +646,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
 
     # We then create link to that mounted location so swift would know
     # where to go.
-    for x in {1..4}; do sudo ln -sf $s/$x ${SWIFT_LOCATION}/$x; done
+    for x in {1..4}; do sudo ln -sf ${SWIFT_LOCATION}/drives/sdb1/$x ${SWIFT_LOCATION}/$x; done
     
     # We now have to emulate a few different servers into one we
     # create all the directories needed for swift 
