@@ -721,13 +721,13 @@ fi
 function screen_it {
     NL=`echo -ne '\015'`
     if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
-        screen -S nova -X screen -t $1
-        screen -S nova -p $1 -X stuff "$2$NL"
+        screen -S stack -X screen -t $1
+        screen -S stack -p $1 -X stuff "$2$NL"
     fi
 }
 
 # create a new named screen to run processes in
-screen -d -m -S nova -t nova
+screen -d -m -S stack -t stack
 sleep 1
 
 # launch the glance registery service
