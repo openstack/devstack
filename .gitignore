@@ -1,3 +1,5 @@
 proto
 *~
+*.log
+src
 localrc
