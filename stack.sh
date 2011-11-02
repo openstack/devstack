@@ -619,17 +619,10 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
         mkfs.xfs -f -i size=1024 ${SWIFT_LOCATION}/swift-disk
     fi
 
-    # Add the mountpoint to fstab
-    if ! egrep -q "^${SWIFT_LOCATION}/swift-disk" /etc/fstab;then
-        echo "# Added by devstack" | sudo tee -a /etc/fstab
-        echo "${SWIFT_LOCATION}/swift-disk ${s} xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" | \
-            sudo tee -a /etc/fstab
-    fi
-
     # Create and mount drives.
     mkdir -p ${s} 
     if ! egrep -q "$s" /proc/mounts;then
-        sudo mount ${s}
+        sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8 ${s}
     fi
 
     for x in {1..4}; do sudo ln -sf $s/$x ${SWIFT_LOCATION}/$x; done
