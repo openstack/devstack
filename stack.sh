@@ -274,9 +274,9 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 
 # SWIFT
 # -----
-#
+
 # Location of SWIFT drives
-SWIFT_LOCATION=${SWIFT_LOCATION:-/srv}
+SWIFT_LOCATION=${SWIFT_LOCATION:-${SWIFT_DIR}/data}
 
 # Size of the loopback disks
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
@@ -611,18 +611,21 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
     s=${SWIFT_LOCATION}/drives/sdb1 # Shortcut variable
     
     # Create a loopback disk and format it with XFS.
-    if [[ ! -e ${SWIFT_LOCATION}/swift-disk ]];then
-        sudo touch ${SWIFT_LOCATION}/swift-disk
-        sudo chown $USER: ${SWIFT_LOCATION}/swift-disk
+    if [[ ! -e ${SWIFT_LOCATION}/drives/images/swift.img ]];then
+        mkdir -p  ${SWIFT_LOCATION}/drives/images
+        sudo touch  ${SWIFT_LOCATION}/drives/images/swift.img
+        sudo chown $USER: ${SWIFT_LOCATION}/drives/images/swift.img
         
-        dd if=/dev/zero of=${SWIFT_LOCATION}/swift-disk bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
-        mkfs.xfs -f -i size=1024 ${SWIFT_LOCATION}/swift-disk
+        dd if=/dev/zero of=${SWIFT_LOCATION}/drives/images/swift.img \
+            bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
+        mkfs.xfs -f -i size=1024  ${SWIFT_LOCATION}/drives/images/swift.img
     fi
 
     # Create and mount drives.
     mkdir -p ${s} 
     if ! egrep -q "$s" /proc/mounts;then
-        sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8 ${s}
+        sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
+            ${SWIFT_LOCATION}/drives/images/swift.img ${s}
     fi
 
     for x in {1..4}; do sudo ln -sf $s/$x ${SWIFT_LOCATION}/$x; done
