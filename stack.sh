@@ -637,20 +637,10 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
     for d in ${s}/{1..4} /etc/swift /etc/swift/{object,container,account}-server \
         ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
         [[ -d $d ]] && continue
-        sudo install -g stack -o stack -d $d
+        sudo install -o ${USER} -d $d
     done
 
     sudo chown -R stack: ${SWIFT_LOCATION}/{1..4}/node
-    
-    # Adjust rc.local to always have a /var/run/swift on reboot
-    # created and chown to our user.
-    # TODO (chmou): We may not have a "exit 0"
-    sudo sed -i '/^exit 0/d' /etc/rc.local
-cat <<EOF | sudo tee -a /etc/rc.local
-mkdir -p /var/run/swift
-chown stack: /var/run/swift
-exit 0
-EOF
 
    # Add rsync file
    sed -e "s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
