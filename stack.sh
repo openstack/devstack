@@ -655,7 +655,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
        swift_auth_server=tempauth
    fi
 
-   sed "s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
+   sed "s/%USER%/$USER/;s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
        $FILES/swift-proxy-server.conf|sudo tee  /etc/swift/proxy-server.conf
 
    # Generate swift.conf, we need to have the swift-hash being random
@@ -673,7 +673,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
        
        for node_number in {1..4};do
            node_path=${SWIFT_LOCATION}/${node_number}
-           sed -e "s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
+           sed -e "s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
                $FILES/swift-${server_type}-server.conf > /etc/swift/${server_type}-server/${node_number}.conf
            bind_port=$(( ${bind_port} + 10 ))
            log_facility=$(( ${log_facility} + 1 ))
