@@ -174,6 +174,7 @@ unmount_images
 
 # Network configuration variables
 GUEST_NETWORK=${GUEST_NETWORK:-1}
+GUEST_RECREATE_NET=${GUEST_RECREATE_NET:-yes}
 
 GUEST_IP=${GUEST_IP:-192.168.$GUEST_NETWORK.50}
 GUEST_CIDR=${GUEST_CIDR:-$GUEST_IP/24}
@@ -194,8 +195,10 @@ cat > $NET_XML <<EOF
 </network>
 EOF
 
-virsh net-destroy devstack-$GUEST_NETWORK || true
-virsh net-create $VM_DIR/net.xml
+if [[ "$GUEST_RECREATE_NET" == "yes" ]]; then
+    virsh net-destroy devstack-$GUEST_NETWORK || true
+    virsh net-create $VM_DIR/net.xml
+fi
 
 # libvirt.xml configuration
 LIBVIRT_XML=$VM_DIR/libvirt.xml
