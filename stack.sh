@@ -1011,10 +1011,6 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     echo "examples on using novaclient command line is in exercise.sh"
     echo "the default users are: admin and demo"
     echo "the password: $ADMIN_PASSWORD"
-    if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
-        echo "Swift: swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin:admin -K $ADMIN_PASSWORD stat"
-    fi
-
 fi
 
 # indicate how long this took to run (bash maintained variable 'SECONDS')
