@@ -843,6 +843,10 @@ for ret in "${PIPESTATUS[@]}"; do [ $ret -eq 0 ] || exit $ret; done
 # Using the cloud
 # ===============
 
+echo ""
+echo ""
+echo ""
+
 # If you installed the horizon on this server, then you should be able
 # to access the site using your browser.
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
