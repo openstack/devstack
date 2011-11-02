@@ -70,7 +70,7 @@ fi
 # called ``localrc``
 #
 # If ``localrc`` exists, then ``stackrc`` will load those settings.  This is
-# useful for changing a branch or repostiory to test other versions.  Also you
+# useful for changing a branch or repository to test other versions.  Also you
 # can store your other settings like **MYSQL_PASSWORD** or **ADMIN_PASSWORD** instead
 # of letting devstack generate random ones for you.
 source ./stackrc
@@ -241,7 +241,7 @@ MULTI_HOST=${MULTI_HOST:-0}
 # If you are running on a single node and don't need to access the VMs from
 # devices other than that node, you can set the flat interface to the same
 # value as ``FLAT_NETWORK_BRIDGE``.  This will stop the network hiccup from
-# occuring.
+# occurring.
 FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
@@ -274,17 +274,31 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 
 # SWIFT
 # -----
+# TODO: implement glance support
+# TODO: add logging to different location.
 
-# Location of SWIFT drives
+# By default the location of swift drives and objects is located inside
+# the swift source directory. SWIFT_LOCATION variable allow you to redefine
+# this.
 SWIFT_LOCATION=${SWIFT_LOCATION:-${SWIFT_DIR}/data}
 
-# Size of the loopback disks
+# devstack will create a loop-back disk formatted as XFS to store the
+# swift data. By default the disk size is 1 gigabyte. The variable
+# SWIFT_LOOPBACK_DISK_SIZE specified in bytes allow you to change
+# that.
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 
-# Default partition power size (bigger is slower)
+# The ring uses a configurable number of bits from a path’s MD5 hash as
+# a partition index that designates a device. The number of bits kept
+# from the hash is known as the partition power, and 2 to the partition
+# power indicates the partition count. Partitioning the full MD5 hash
+# ring allows other parts of the cluster to work in batches of items at
+# once which ends up either more efficient or at least less complex than
+# working with each item separately or the entire cluster all at once.
+# By default we define 9 for the partition count (which mean 512).
 SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 
-# Swift hash, this must be unique
+# SWIFT_HASH is a random unique string for a swift cluster that can never change.
 read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
 
 # Keystone
@@ -299,7 +313,7 @@ read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (
 LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
 (
 # So that errors don't compound we exit on any errors so you see only the
-# first error that occured.
+# first error that occurred.
 trap failed ERR
 failed() {
     local r=$?
@@ -604,13 +618,14 @@ fi
 
 # Storage Service
 if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
+    # We first do a bit of setup by creating the directories and
+    # changing the permissions so we can run it as our user.
+
     USER_GROUP=$(id -g)
-    
     sudo mkdir -p ${SWIFT_LOCATION}/drives
-    sudo chown -R $USER: ${SWIFT_LOCATION}/drives
-    s=${SWIFT_LOCATION}/drives/sdb1 # Shortcut variable
+    sudo chown -R $USER:${USER_GROUP} ${SWIFT_LOCATION}/drives
     
-    # Create a loopback disk and format it with XFS.
+    # We then create a loopback disk and format it to XFS.
     if [[ ! -e ${SWIFT_LOCATION}/drives/images/swift.img ]];then
         mkdir -p  ${SWIFT_LOCATION}/drives/images
         sudo touch  ${SWIFT_LOCATION}/drives/images/swift.img
@@ -621,18 +636,22 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
         mkfs.xfs -f -i size=1024  ${SWIFT_LOCATION}/drives/images/swift.img
     fi
 
-    # Create and mount drives.
-    mkdir -p ${s} 
-    if ! egrep -q "$s" /proc/mounts;then
+    # After the drive being created we mount the disk with a few mount
+    # options to make it most efficient as possible for swift.
+    mkdir -p ${SWIFT_LOCATION}/drives/sdb1
+    if ! egrep -q ${SWIFT_LOCATION}/drives/sdb1 /proc/mounts;then
         sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
-            ${SWIFT_LOCATION}/drives/images/swift.img ${s}
+            ${SWIFT_LOCATION}/drives/images/swift.img ${SWIFT_LOCATION}/drives/sdb1
     fi
 
+    # We then create link to that mounted location so swift would know
+    # where to go.
     for x in {1..4}; do sudo ln -sf $s/$x ${SWIFT_LOCATION}/$x; done
     
-    # Create directories
+    # We now have to emulate a few different servers into one we
+    # create all the directories needed for swift 
     tmpd=""
-    for d in ${s}/{1..4} /etc/swift /etc/swift/{object,container,account}-server \
+    for d in ${SWIFT_LOCATION}/drives/sdb1/{1..4} /etc/swift /etc/swift/{object,container,account}-server \
         ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
         [[ -d $d ]] && continue
         sudo install -o ${USER} -g $USER_GROUP -d $d
@@ -640,28 +659,35 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
 
     sudo chown -R $USER: ${SWIFT_LOCATION}/{1..4}/node
 
-   # Add rsync file
+   # Swift use rsync to syncronize between all the different
+   # partitions (which make more sense when you have a multi-node
+   # setup) we configure it with our version of rsync.
    sed -e "s/%GROUP%/${USER_GROUP}/;s/%USER%/$USER/;s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
    sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
 
+   # By default Swift will be installed with the tempauth middleware
+   # which has some default username and password if you have
+   # configured keystone it will checkout the directory.
    if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
        swift_auth_server=keystone
-       # Temporary until we get this integrated in swift.
+       # We need a special version of bin/swift which understand the
+       # OpenStack api 2.0, we download it until this is getting
+       # integrated in swift.
        sudo curl -s -o/usr/local/bin/swift \
            'https://review.openstack.org/gitweb?p=openstack/swift.git;a=blob_plain;f=bin/swift;hb=48bfda6e2fdf3886c98bd15649887d54b9a2574e'
    else
        swift_auth_server=tempauth
    fi
 
+   # We do the install of the proxy-server and swift configuration
+   # replacing a few directives to match our configuration.
    sed "s/%USER%/$USER/;s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
        $FILES/swift-proxy-server.conf|sudo tee  /etc/swift/proxy-server.conf
 
-   # Generate swift.conf, we need to have the swift-hash being random
-   # and unique.
    sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift.conf > /etc/swift/swift.conf
 
    # We need to generate a object/account/proxy configuration
-   # emulating 4 nodes on different ports we have a litle function
+   # emulating 4 nodes on different ports we have a little function
    # that help us doing that.
    function generate_swift_configuration() {
        local server_type=$1
@@ -681,23 +707,28 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
    generate_swift_configuration container 6011 2
    generate_swift_configuration account 6012 2
 
-   # Install swift helper scripts to remake the rings and start all services.
+   # We create two helper scripts :
+   #
+   # - swift-remakerings
+   #   Allow to recreate rings from scratch.
+   # - swift-startmain
+   #   Restart your full cluster.
+   #
    sed -e "s/%SWIFT_PARTITION_POWER_SIZE%/$SWIFT_PARTITION_POWER_SIZE/" $FILES/swift-remakerings | \
        sudo tee /usr/local/bin/swift-remakerings
    sudo install -m755 $FILES/swift-startmain /usr/local/bin/
    sudo chmod +x /usr/local/bin/swift-*
 
-   # Start rsync
+   # We then can start rsync.
    sudo /etc/init.d/rsync restart || :
       
-   # Create ring
+   # Create our ring for the object/container/account.
    /usr/local/bin/swift-remakerings
 
-   # Start everything
+   # And now we launch swift-startmain to get our cluster running
+   # ready to be tested.
    /usr/local/bin/swift-startmain || :
    
-   # This should work (tempauth)
-   # swift -A http://127.0.0.1:8080/auth/v1.0 -U test:tester -K testing stat
    unset s swift_hash swift_auth_server tmpd
 fi
 
@@ -851,7 +882,7 @@ function screen_it {
 screen -d -m -S stack -t stack
 sleep 1
 
-# launch the glance registery service
+# launch the glance registry service
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
 fi
@@ -908,7 +939,7 @@ screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
 # TTY also uses cloud-init, supporting login via keypair and sending scripts as
 # userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
 #
-# Override ``IMAGE_URLS`` with a comma-seperated list of uec images.
+# Override ``IMAGE_URLS`` with a comma-separated list of uec images.
 #
 #  * **natty**: http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz
 #  * **oneiric**: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
