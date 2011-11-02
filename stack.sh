@@ -284,6 +284,9 @@ SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 # Default partition power size (bigger is slower)
 SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 
+# Swift hash, this must be unique
+read_password SWIFT_HASH "ENTER A RANDOM HASH SHARED BETWEEN ALL PROCESSES."
+
 # Keystone
 # --------
 
@@ -667,7 +670,6 @@ EOF
 
    # Generate swift.conf, we need to have the swift-hash being random
    # and unique.
-   swift_hash=$(od -t x8 -N 8 -A n </dev/random)
    sed -e "s/%SWIFT_HASH%/$swift_hash/" $FILES/swift.conf > /etc/swift/swift.conf
 
    # We need to generate a object/account/proxy configuration
