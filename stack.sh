@@ -617,7 +617,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
 fi
 
 # Storage Service
-if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
+if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     # We first do a bit of setup by creating the directories and
     # changing the permissions so we can run it as our user.
 
@@ -662,7 +662,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
    # Swift use rsync to syncronize between all the different
    # partitions (which make more sense when you have a multi-node
    # setup) we configure it with our version of rsync.
-   sed -e "s/%GROUP%/${USER_GROUP}/;s/%USER%/$USER/;s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
+   sed -e "s/%GROUP%/${USER_GROUP}/;s/%USER%/$USER/;s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
    sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
 
    # By default Swift will be installed with the tempauth middleware
@@ -682,9 +682,9 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
    # We do the install of the proxy-server and swift configuration
    # replacing a few directives to match our configuration.
    sed "s/%USER%/$USER/;s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
-       $FILES/swift-proxy-server.conf|sudo tee  /etc/swift/proxy-server.conf
+       $FILES/swift/proxy-server.conf|sudo tee  /etc/swift/proxy-server.conf
 
-   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift.conf > /etc/swift/swift.conf
+   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > /etc/swift/swift.conf
 
    # We need to generate a object/account/proxy configuration
    # emulating 4 nodes on different ports we have a little function
@@ -698,7 +698,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
        for node_number in {1..4};do
            node_path=${SWIFT_LOCATION}/${node_number}
            sed -e "s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
-               $FILES/swift-${server_type}-server.conf > /etc/swift/${server_type}-server/${node_number}.conf
+               $FILES/swift/${server_type}-server.conf > /etc/swift/${server_type}-server/${node_number}.conf
            bind_port=$(( ${bind_port} + 10 ))
            log_facility=$(( ${log_facility} + 1 ))
        done
@@ -714,9 +714,9 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
    # - swift-startmain
    #   Restart your full cluster.
    #
-   sed -e "s/%SWIFT_PARTITION_POWER_SIZE%/$SWIFT_PARTITION_POWER_SIZE/" $FILES/swift-remakerings | \
+   sed -e "s/%SWIFT_PARTITION_POWER_SIZE%/$SWIFT_PARTITION_POWER_SIZE/" $FILES/swift/swift-remakerings | \
        sudo tee /usr/local/bin/swift-remakerings
-   sudo install -m755 $FILES/swift-startmain /usr/local/bin/
+   sudo install -m755 $FILES/swift/swift-startmain /usr/local/bin/
    sudo chmod +x /usr/local/bin/swift-*
 
    # We then can start rsync.
