@@ -209,4 +209,4 @@ swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWOR
 
 # And we may want to delete them now that we have tested that
 # everything works.
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD delete --all testcontainer
+swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD delete testcontainer
