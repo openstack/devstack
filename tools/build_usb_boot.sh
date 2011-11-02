@@ -11,6 +11,26 @@ PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
 OPWD=`pwd`
 PROGDIR=`dirname $0`
 
+# Clean up any resources that may be in use
+cleanup() {
+    set +o errexit
+
+    # Mop up temporary files
+    if [ -n "$DEST_DEV" ]; then
+        umount $DEST_DIR
+        rmdir $DEST_DIR
+    fi
+    if [ -n "$MNTDIR" -a -d "$MNTDIR" ]; then
+        umount $MNTDIR
+        rmdir $MNTDIR
+    fi
+
+    # Kill ourselves to signal any calling process
+    trap 2; kill -2 $$
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
+
 if [ -b $DEST_DIR ]; then
     # We have a block device, install syslinux and mount it
     DEST_DEV=$DEST_DIR
