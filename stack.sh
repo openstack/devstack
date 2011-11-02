@@ -655,7 +655,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
 
    # Generate swift.conf, we need to have the swift-hash being random
    # and unique.
-   sed -e "s/%SWIFT_HASH%/$swift_hash/" $FILES/swift.conf > /etc/swift/swift.conf
+   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift.conf > /etc/swift/swift.conf
 
    # We need to generate a object/account/proxy configuration
    # emulating 4 nodes on different ports we have a litle function
