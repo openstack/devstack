@@ -121,7 +121,7 @@ if [[ $EUID -eq 0 ]]; then
     echo "Copying files to stack user"
     STACK_DIR="$DEST/${PWD##*/}"
     cp -r -f "$PWD" "$STACK_DIR"
-    chown -R stack "$STACK_DIR"
+    chown -R $USER "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
         exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
     else
@@ -604,14 +604,16 @@ fi
 
 # Storage Service
 if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
+    USER_GROUP=$(id -g)
+    
     sudo mkdir -p ${SWIFT_LOCATION}/drives
-    sudo chown -R stack: ${SWIFT_LOCATION}/drives
+    sudo chown -R $USER: ${SWIFT_LOCATION}/drives
     s=${SWIFT_LOCATION}/drives/sdb1 # Shortcut variable
     
     # Create a loopback disk and format it with XFS.
     if [[ ! -e ${SWIFT_LOCATION}/swift-disk ]];then
         sudo touch ${SWIFT_LOCATION}/swift-disk
-        sudo chown stack: ${SWIFT_LOCATION}/swift-disk
+        sudo chown $USER: ${SWIFT_LOCATION}/swift-disk
         
         dd if=/dev/zero of=${SWIFT_LOCATION}/swift-disk bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
         mkfs.xfs -f -i size=1024 ${SWIFT_LOCATION}/swift-disk
@@ -637,13 +639,13 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]];then
     for d in ${s}/{1..4} /etc/swift /etc/swift/{object,container,account}-server \
         ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
         [[ -d $d ]] && continue
-        sudo install -o ${USER} -d $d
+        sudo install -o ${USER} -g $USER_GROUP -d $d
     done
 
-    sudo chown -R stack: ${SWIFT_LOCATION}/{1..4}/node
+    sudo chown -R $USER: ${SWIFT_LOCATION}/{1..4}/node
 
    # Add rsync file
-   sed -e "s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
+   sed -e "s/%GROUP%/${USER_GROUP}/;s/%USER%/$USER/;s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift-rsyncd.conf | sudo tee /etc/rsyncd.conf
    sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
 
    if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
