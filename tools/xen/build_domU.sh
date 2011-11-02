@@ -7,6 +7,12 @@ if [ ! -e ../../localrc ]; then
     exit 1
 fi
 
+# This directory
+TOP_DIR=$(cd $(dirname "$0") && pwd)
+
+# Source params
+cd ../.. && source ./stackrc && cd $TOP_DIR
+
 # Echo commands
 set -o xtrace
 
@@ -40,9 +46,6 @@ GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 
 # Size of image
 VDI_MB=${VDI_MB:-2500}
-
-# This directory
-TOP_DIR=$(cd $(dirname "$0") && pwd)
 
 # Make sure we have git
 if ! which git; then
