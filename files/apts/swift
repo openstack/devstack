@@ -1,6 +1,6 @@
 curl
 gcc
-memcached
+memcached # NOPRIME
 python-configobj
 python-coverage
 python-dev

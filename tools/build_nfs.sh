@@ -32,8 +32,9 @@ fi
 # prime natty with as many apt/pips as we can
 if [ ! -d $CHROOTCACHE/natty-dev ]; then
     rsync -azH $CHROOTCACHE/natty-base/ $CHROOTCACHE/natty-dev/
-    chroot $CHROOTCACHE/natty-dev apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
-    chroot $CHROOTCACHE/natty-dev pip install `cat files/pips/*`
+    chroot $CHROOTCACHE apt-get install -y --download-only `cat files/apts/* | grep NOPRIME | cut -d\# -f1`
+    chroot $CHROOTCACHE apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1`
+    chroot $CHROOTCACHE pip install `cat files/pips/*`
 
     # Create a stack user that is a member of the libvirtd group so that stack
     # is able to interact with libvirt.
