@@ -313,9 +313,13 @@ SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 # By default we define 9 for the partition count (which mean 512).
 SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 
-# SWIFT_HASH is a random unique string for a swift cluster that can never change.
-read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
-
+# We only ask for Swift Hash if we have enabled swift service.
+if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+    # SWIFT_HASH is a random unique string for a swift cluster that
+    # can never change.
+    read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
+fi
+    
 # Keystone
 # --------
 
