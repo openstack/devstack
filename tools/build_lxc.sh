@@ -125,7 +125,7 @@ fi
 
 # Make sure that base requirements are installed
 chroot $CACHEDIR apt-get update
-chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server|memcached)"`
 chroot $CACHEDIR apt-get install -y --download-only rabbitmq-server libvirt-bin mysql-server
 chroot $CACHEDIR pip install `cat files/pips/*`
 
