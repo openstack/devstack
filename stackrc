@@ -4,7 +4,7 @@ NOVA_BRANCH=diablo
 
 # storage service
 SWIFT_REPO=https://github.com/openstack/swift.git
-SWIFT_BRANCH=1.4.3
+SWIFT_BRANCH=stable/diablo
 
 # swift and keystone integration
 SWIFT_KEYSTONE_REPO=https://github.com/cloudbuilders/swift-keystone2.git
