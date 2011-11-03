@@ -778,7 +778,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
     # By default, the backing file is 2G in size, and is stored in /opt/stack.
     #
     if ! sudo vgdisplay | grep -q nova-volumes; then
-        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-/opt/stack/nova-volumes-backing-file}
+        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
         VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
         truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
         DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
