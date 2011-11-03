@@ -293,9 +293,9 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 # TODO: add logging to different location.
 
 # By default the location of swift drives and objects is located inside
-# the swift source directory. SWIFT_LOCATION variable allow you to redefine
+# the swift source directory. SWIFT_DATA_LOCATION variable allow you to redefine
 # this.
-SWIFT_LOCATION=${SWIFT_LOCATION:-${SWIFT_DIR}/data}
+SWIFT_DATA_LOCATION=${SWIFT_DATA_LOCATION:-${SWIFT_DIR}/data}
 
 # devstack will create a loop-back disk formatted as XFS to store the
 # swift data. By default the disk size is 1 gigabyte. The variable
@@ -640,47 +640,47 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     # changing the permissions so we can run it as our user.
 
     USER_GROUP=$(id -g)
-    sudo mkdir -p ${SWIFT_LOCATION}/drives
-    sudo chown -R $USER:${USER_GROUP} ${SWIFT_LOCATION}/drives
+    sudo mkdir -p ${SWIFT_DATA_LOCATION}/drives
+    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_LOCATION}/drives
     
     # We then create a loopback disk and format it to XFS.
-    if [[ ! -e ${SWIFT_LOCATION}/drives/images/swift.img ]];then
-        mkdir -p  ${SWIFT_LOCATION}/drives/images
-        sudo touch  ${SWIFT_LOCATION}/drives/images/swift.img
-        sudo chown $USER: ${SWIFT_LOCATION}/drives/images/swift.img
+    if [[ ! -e ${SWIFT_DATA_LOCATION}/drives/images/swift.img ]];then
+        mkdir -p  ${SWIFT_DATA_LOCATION}/drives/images
+        sudo touch  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
+        sudo chown $USER: ${SWIFT_DATA_LOCATION}/drives/images/swift.img
         
-        dd if=/dev/zero of=${SWIFT_LOCATION}/drives/images/swift.img \
+        dd if=/dev/zero of=${SWIFT_DATA_LOCATION}/drives/images/swift.img \
             bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
-        mkfs.xfs -f -i size=1024  ${SWIFT_LOCATION}/drives/images/swift.img
+        mkfs.xfs -f -i size=1024  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
     fi
 
     # After the drive being created we mount the disk with a few mount
     # options to make it most efficient as possible for swift.
-    mkdir -p ${SWIFT_LOCATION}/drives/sdb1
-    if ! egrep -q ${SWIFT_LOCATION}/drives/sdb1 /proc/mounts;then
+    mkdir -p ${SWIFT_DATA_LOCATION}/drives/sdb1
+    if ! egrep -q ${SWIFT_DATA_LOCATION}/drives/sdb1 /proc/mounts;then
         sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
-            ${SWIFT_LOCATION}/drives/images/swift.img ${SWIFT_LOCATION}/drives/sdb1
+            ${SWIFT_DATA_LOCATION}/drives/images/swift.img ${SWIFT_DATA_LOCATION}/drives/sdb1
     fi
 
     # We then create link to that mounted location so swift would know
     # where to go.
-    for x in {1..4}; do sudo ln -sf ${SWIFT_LOCATION}/drives/sdb1/$x ${SWIFT_LOCATION}/$x; done
+    for x in {1..4}; do sudo ln -sf ${SWIFT_DATA_LOCATION}/drives/sdb1/$x ${SWIFT_DATA_LOCATION}/$x; done
     
     # We now have to emulate a few different servers into one we
     # create all the directories needed for swift 
     tmpd=""
-    for d in ${SWIFT_LOCATION}/drives/sdb1/{1..4} /etc/swift /etc/swift/{object,container,account}-server \
-        ${SWIFT_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
+    for d in ${SWIFT_DATA_LOCATION}/drives/sdb1/{1..4} /etc/swift /etc/swift/{object,container,account}-server \
+        ${SWIFT_DATA_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
         [[ -d $d ]] && continue
         sudo install -o ${USER} -g $USER_GROUP -d $d
     done
 
-    sudo chown -R $USER: ${SWIFT_LOCATION}/{1..4}/node
+    sudo chown -R $USER: ${SWIFT_DATA_LOCATION}/{1..4}/node
 
    # Swift use rsync to syncronize between all the different
    # partitions (which make more sense when you have a multi-node
    # setup) we configure it with our version of rsync.
-   sed -e "s/%GROUP%/${USER_GROUP}/;s/%USER%/$USER/;s,%SWIFT_LOCATION%,$SWIFT_LOCATION," $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
+   sed -e "s/%GROUP%/${USER_GROUP}/;s/%USER%/$USER/;s,%SWIFT_DATA_LOCATION%,$SWIFT_DATA_LOCATION," $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
    sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
 
    # By default Swift will be installed with the tempauth middleware
@@ -714,7 +714,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
        local node_number
        
        for node_number in {1..4};do
-           node_path=${SWIFT_LOCATION}/${node_number}
+           node_path=${SWIFT_DATA_LOCATION}/${node_number}
            sed -e "s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
                $FILES/swift/${server_type}-server.conf > /etc/swift/${server_type}-server/${node_number}.conf
            bind_port=$(( ${bind_port} + 10 ))
