@@ -787,6 +787,10 @@ fi
 
 # Quantum
 if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
+    # Install deps
+    # FIXME add to file/apts/quantum, but don't install if not needed!
+    apt_get install -y openvswitch-switch openvswitch-datapath-dkms
+
     # Create database for the plugin/agent
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
