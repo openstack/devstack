@@ -91,7 +91,7 @@ image_id = 1
 [keystone]
 service_host = $HOST_IP
 service_port = 5000
-apiver = v1.1
+apiver = v2.0
 user = admin
 password = $ADMIN_PASSWORD
 tenant_id = 1
