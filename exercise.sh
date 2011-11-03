@@ -192,21 +192,23 @@ nova secgroup-delete $SECGROUP
 # make sure that we can describe instances
 euca-describe-instances
 
-# Testing Swift
-# =============
+if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+    # Testing Swift
+    # =============
 
-# Check if we have to swift via keystone
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD stat
+    # Check if we have to swift via keystone
+    swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD stat
 
-# We start by creating a test container
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD post testcontainer
+    # We start by creating a test container
+    swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD post testcontainer
 
-# add some files into it.
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD upload testcontainer /etc/issue
+    # add some files into it.
+    swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD upload testcontainer /etc/issue
 
-# list them
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD list testcontainer 
+    # list them
+    swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD list testcontainer 
 
-# And we may want to delete them now that we have tested that
-# everything works.
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD delete testcontainer
+    # And we may want to delete them now that we have tested that
+    # everything works.
+    swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD delete testcontainer
+fi
