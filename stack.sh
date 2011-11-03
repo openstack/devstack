@@ -297,6 +297,10 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 # this.
 SWIFT_DATA_LOCATION=${SWIFT_DATA_LOCATION:-${SWIFT_DIR}/data}
 
+# We are going to have the configuration files inside the source
+# directory, change SWIFT_CONFIG_LOCATION if you want to adjust that.
+SWIFT_CONFIG_LOCATION=${SWIFT_CONFIG_LOCATION:-${SWIFT_DIR}/config}
+
 # devstack will create a loop-back disk formatted as XFS to store the
 # swift data. By default the disk size is 1 gigabyte. The variable
 # SWIFT_LOOPBACK_DISK_SIZE specified in bytes allow you to change
@@ -669,14 +673,21 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     # We now have to emulate a few different servers into one we
     # create all the directories needed for swift 
     tmpd=""
-    for d in ${SWIFT_DATA_LOCATION}/drives/sdb1/{1..4} /etc/swift /etc/swift/{object,container,account}-server \
+    for d in ${SWIFT_DATA_LOCATION}/drives/sdb1/{1..4} \
+        ${SWIFT_CONFIG_LOCATION}/{object,container,account}-server \
         ${SWIFT_DATA_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
         [[ -d $d ]] && continue
         sudo install -o ${USER} -g $USER_GROUP -d $d
     done
 
-    sudo chown -R $USER: ${SWIFT_DATA_LOCATION}/{1..4}/node
+   # We do want to make sure this is all owned by our user.
+   sudo chown -R $USER: ${SWIFT_DATA_LOCATION}/{1..4}/node
+   sudo chown -R $USER: ${SWIFT_CONFIG_LOCATION}
 
+   # swift-init has a bug using /etc/swift until bug #885595 is fixed
+   # we have to create a link
+   sudo ln -s ${SWIFT_CONFIG_LOCATION} /etc/swift
+   
    # Swift use rsync to syncronize between all the different
    # partitions (which make more sense when you have a multi-node
    # setup) we configure it with our version of rsync.
@@ -699,10 +710,10 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
 
    # We do the install of the proxy-server and swift configuration
    # replacing a few directives to match our configuration.
-   sed "s/%USER%/$USER/;s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
-       $FILES/swift/proxy-server.conf|sudo tee  /etc/swift/proxy-server.conf
+   sed "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s/%USER%/$USER/;s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
+       $FILES/swift/proxy-server.conf|sudo tee  ${SWIFT_CONFIG_LOCATION}/proxy-server.conf
 
-   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > /etc/swift/swift.conf
+   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > ${SWIFT_CONFIG_LOCATION}/swift.conf
 
    # We need to generate a object/account/proxy configuration
    # emulating 4 nodes on different ports we have a little function
@@ -715,8 +726,8 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
        
        for node_number in {1..4};do
            node_path=${SWIFT_DATA_LOCATION}/${node_number}
-           sed -e "s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
-               $FILES/swift/${server_type}-server.conf > /etc/swift/${server_type}-server/${node_number}.conf
+           sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
+               $FILES/swift/${server_type}-server.conf > ${SWIFT_CONFIG_LOCATION}/${server_type}-server/${node_number}.conf
            bind_port=$(( ${bind_port} + 10 ))
            log_facility=$(( ${log_facility} + 1 ))
        done
@@ -732,7 +743,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
    # - swift-startmain
    #   Restart your full cluster.
    #
-   sed -e "s/%SWIFT_PARTITION_POWER_SIZE%/$SWIFT_PARTITION_POWER_SIZE/" $FILES/swift/swift-remakerings | \
+   sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s/%SWIFT_PARTITION_POWER_SIZE%/$SWIFT_PARTITION_POWER_SIZE/" $FILES/swift/swift-remakerings | \
        sudo tee /usr/local/bin/swift-remakerings
    sudo install -m755 $FILES/swift/swift-startmain /usr/local/bin/
    sudo chmod +x /usr/local/bin/swift-*
