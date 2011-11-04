@@ -21,9 +21,6 @@ pushd $(cd $(dirname "$0")/.. && pwd)
 source ./openrc
 popd
 
-# Max time till the vm is bootable
-BOOT_TIMEOUT=${BOOT_TIMEOUT:-15}
-
 # find a machine image to boot
 IMAGE=`euca-describe-images | grep machine | cut -f2`
 
