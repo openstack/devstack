@@ -145,8 +145,8 @@ function git_clone {
 # Make sure that base requirements are installed
 cp /etc/resolv.conf $COPY_DIR/etc/resolv.conf
 chroot $COPY_DIR apt-get update
-chroot $COPY_DIR apt-get install -y --force-yes `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server|memcached)"`
-chroot $COPY_DIR apt-get install -y --download-only rabbitmq-server libvirt-bin mysql-server
+chroot $COPY_DIR apt-get install -y --download-only `cat files/apts/* | grep NOPRIME | cut -d\# -f1`
+chroot $COPY_DIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1`
 chroot $COPY_DIR pip install `cat files/pips/*`
 
 # Clean out code repos if directed to do so

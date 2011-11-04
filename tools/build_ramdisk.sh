@@ -113,7 +113,8 @@ if [ ! -r $DEV_FILE ]; then
     mount -t ext4 ${NBD}p1 $MNTDIR
     cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
 
-    chroot $MNTDIR apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $MNTDIR apt-get install -y --download-only `cat files/apts/* | grep NOPRIME | cut -d\# -f1`
+    chroot $MNTDIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1`
     chroot $MNTDIR pip install `cat files/pips/*`
 
     # Create a stack user that is a member of the libvirtd group so that stack
