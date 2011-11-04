@@ -48,6 +48,8 @@ source ./stackrc
 # Where Openstack code lives
 DEST=${DEST:-/opt/stack}
 
+DIST_NAME=${DIST_NAME:-natty}
+
 # Process network configuration vars
 GUEST_NETWORK=${GUEST_NETWORK:-1}
 GUEST_RECREATE_NET=${GUEST_RECREATE_NET:-yes}
@@ -78,9 +80,9 @@ GLANCE_PORT=$2
 CONFIG_FILE_TMP=$(mktemp $CONFIG_FILE.XXXXXX)
 cat >$CONFIG_FILE_TMP <<EOF
 [environment]
-aki_location = include/sample_vm/natty-server-cloudimg-amd64-vmlinuz-virtual
-#ari_location = include/sample_vm/natty-server-cloudimg-amd64-loader
-ami_location = include/sample_vm/natty-server-cloudimg-amd64.img
+aki_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64-vmlinuz-virtual
+#ari_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64-loader
+ami_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64.img
 
 [glance]
 host = $GLANCE_HOST
@@ -102,7 +104,7 @@ port = 8774
 apiver = v1.1
 project = admin
 user = admin
-key = $SERVICE_TOKEN
+key = $ADMIN_PASSWORD
 ssh_timeout = 300
 build_timeout = 300
 flavor_ref = 1
