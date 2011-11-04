@@ -25,7 +25,7 @@ popd
 IMAGE=`euca-describe-images | grep machine | cut -f2`
 
 # launch it
-INSTANCE=`euca-run-instance $IMAGE | grep INSTANCE | cut -f2`
+INSTANCE=`euca-run-instances $IMAGE | grep INSTANCE | cut -f2`
 
 # assure it has booted within a reasonable time
 if ! timeout $BOOT_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then

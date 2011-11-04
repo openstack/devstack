@@ -6,19 +6,41 @@
 # to refrain from exercising euca.sh use SKIP_EXERCISES=euca
 SKIP_EXERCISES=${SKIP_EXERCISES:-""}
 
+# Locate the scripts we should run
 EXERCISE_DIR=$(dirname "$0")/exercises
 basenames=$(for b in `ls $EXERCISE_DIR/*.sh` ; do basename $b .sh ; done)
 
+# Track the state of each script
+passes=""
+failures=""
+skips=""
+
+# Loop over each possible script (by basename)
 for script in $basenames ; do
     if [[ "$SKIP_EXERCISES" =~ $script ]] ; then
-        echo SKIPPING $script
+        skips="$skips $script"
     else
+        echo =========================
         echo Running $script
-        $EXERCISE_DIR/$script.sh 2> $script.log
+        echo =========================
+        $EXERCISE_DIR/$script.sh
         if [[ $? -ne 0 ]] ; then
-            echo FAILED.  See $script.log
+            failures="$failures $script"
         else
-            rm $script.log
+            passes="$passes $script"
         fi
     fi
+done
+
+# output status of exercise run
+echo =========================
+echo =========================
+for script in $skips ; do
+    echo SKIP $script
+done
+for script in $passes ; do
+    echo PASS $script
+done
+for script in $failures ; do
+    echo FAILED $script
 done
