@@ -230,7 +230,7 @@ xe sr-param-set uuid=$SR_UUID other-config:i18n-key=local-storage
 # Shutdown previous runs
 DO_SHUTDOWN=${DO_SHUTDOWN:-1}
 if [ "$DO_SHUTDOWN" = "1" ]; then
-    # Uninstall previous runs
+    # Shutdown all domU's that created previously
     xe vm-list --minimal name-label="$LABEL" | xargs ./scripts/uninstall-os-vpx.sh
 
     # Destroy any instances that were launched
