@@ -78,12 +78,27 @@ GLANCE_HOST=$1
 GLANCE_PORT=$2
 
 CONFIG_FILE_TMP=$(mktemp $CONFIG_FILE.XXXXXX)
-cat >$CONFIG_FILE_TMP <<EOF
+if [ "$UPLOAD_LEGACY_TTY" ]; then
+    cat >$CONFIG_FILE_TMP <<EOF
+[environment]
+aki_location = $DEST/devstack/files/images/aki-tty/image
+ari_location = $DEST/devstack/files/images/ari-tty/image
+ami_location = $DEST/devstack/files/images/ami-tty/image
+image_ref = 1
+flavor_ref = 1
+EOF
+else
+    cat >$CONFIG_FILE_TMP <<EOF
 [environment]
 aki_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64-vmlinuz-virtual
 #ari_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64-loader
 ami_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64.img
+image_ref = 1
+flavor_ref = 1
+EOF
+fi
 
+cat >>$CONFIG_FILE_TMP <<EOF
 [glance]
 host = $GLANCE_HOST
 apiver = v1
