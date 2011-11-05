@@ -86,9 +86,10 @@ ami_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-se
 
 [glance]
 host = $GLANCE_HOST
-apiver = v1.0
+apiver = v1
 port = $GLANCE_PORT
 image_id = 1
+tenant_id = 1
 
 [keystone]
 service_host = $HOST_IP
