@@ -28,8 +28,8 @@ IMAGE=`euca-describe-images | grep machine | cut -f2`
 INSTANCE=`euca-run-instances $IMAGE | grep INSTANCE | cut -f2`
 
 # assure it has booted within a reasonable time
-if ! timeout $BOOT_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
-    echo "server didn't become active within $BOOT_TIMEOUT seconds"
+if ! timeout $RUNNING_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
+    echo "server didn't become active within $RUNNING_TIMEOUT seconds"
     exit 1
 fi
 

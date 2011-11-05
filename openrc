@@ -55,5 +55,8 @@ export BOOT_TIMEOUT=${BOOT_TIMEOUT:-15}
 # Max time to wait while vm goes from build to active state
 export ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-10}
 
+# Max time from run instance command until it is running
+export RUNNING_TIMEOUT=${RUNNING_TIMEOUT:-$(($BOOT_TIMEOUT + $ACTIVE_TIMEOUT))}
+
 # Max time to wait for proper IP association and dis-association.
 export ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-10}
