@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-# Make sure that we have the proper version of ubuntu
+# Ubuntu distro to install
+DIST_NAME=${DIST_NAME:-oneiric}
+
+# Make sure that we have the proper version of ubuntu (only works on natty/oneiric)
 UBUNTU_VERSION=`cat /etc/lsb-release | grep CODENAME | sed 's/.*=//g'`
 if [ ! "oneiric" = "$UBUNTU_VERSION" ]; then
     if [ ! "natty" = "$UBUNTU_VERSION" ]; then
@@ -9,12 +12,13 @@ if [ ! "oneiric" = "$UBUNTU_VERSION" ]; then
     fi
 fi
 
-# exit on error to stop unexpected errors
-set -o errexit
-
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+
+# exit on error to stop unexpected errors
+set -o errexit
+set -o xtrace
 
 # Abort if localrc is not set
 if [ ! -e $TOP_DIR/localrc ]; then
@@ -30,18 +34,19 @@ dpkg -l kvm libvirt-bin kpartx || apt-get install -y --force-yes kvm libvirt-bin
 WORK_DIR=${WORK_DIR:-/opt/kvmstack}
 
 # Where to store images
-IMAGES_DIR=$WORK_DIR/images
+image_dir=$WORK_DIR/images/$DIST_NAME
+mkdir -p $image_dir
 
 # Original version of built image
-DIST_NAME=${DIST_NAME:oneiric}
-UEC_NAME=$DIST_NAME-server-cloudimg-amd64
-UEC_URL=http://uec-images.ubuntu.com/$DIST_NAME/current/$UEC_NAME-disk1.img
-BASE_IMAGE=$IMAGES_DIR/$DIST_NAME.raw
+uec_url=http://uec-images.ubuntu.com/$DIST_NAME/current/$DIST_NAME-server-cloudimg-amd64.tar.gz
+tarball=$image_dir/$(basename $UEC_URL)
 
 # download the base uec image if we haven't already
-if [ ! -e $BASE_IMAGE ]; then
-    mkdir -p $IMAGES_DIR
-    curl $UEC_URL -O $BASE_IMAGE
+if [ ! -f $tarball ]; then
+    curl $uec_url -o $tarball
+    tar -Sxvzf $tarball $image_dir
+    cp $image_dir/*.img $image_dir/disk
+    cp $image_dir/*-vmlinuz-virtual $image_dir/kernel
 fi
 
 cd $TOP_DIR
@@ -59,14 +64,16 @@ GUEST_NAME=${GUEST_NAME:-devstack}
 virsh destroy $GUEST_NAME || true
 
 # Where this vm is stored
-VM_DIR=$WORK_DIR/instances/$GUEST_NAME
+vm_dir=$WORK_DIR/instances/$GUEST_NAME
 
 # Create vm dir and remove old disk
-mkdir -p $VM_DIR
-rm -f $VM_DIR/disk.img
+mkdir -p $vm_dir
+rm -f $vm_dir/disk
 
 # Create a copy of the base image
-qemu-img create -f qcow2 -b ${BASE_IMAGE} $VM_DIR/disk.img
+# qemu-img create -f qcow2 -b ${BASE_IMAGE} $vm_dir/disk
+cp $image_dir/disk $vm_dir/disk
+cp $image_dir/kernel $vm_dir/kernel
 
 # Back to devstack
 cd $TOP_DIR
@@ -82,7 +89,7 @@ GUEST_RAM=${GUEST_RAM:-1524288}
 GUEST_CORES=${GUEST_CORES:-1}
 
 # libvirt.xml configuration
-NET_XML=$VM_DIR/net.xml
+NET_XML=$vm_dir/net.xml
 cat > $NET_XML <<EOF
 <network>
   <name>devstack-$GUEST_NETWORK</name>
@@ -94,20 +101,19 @@ EOF
 
 if [[ "$GUEST_RECREATE_NET" == "yes" ]]; then
     virsh net-destroy devstack-$GUEST_NETWORK || true
-    virsh net-create $VM_DIR/net.xml
+    virsh net-create $vm_dir/net.xml
 fi
 
 # libvirt.xml configuration
-LIBVIRT_XML=$VM_DIR/libvirt.xml
+LIBVIRT_XML=$vm_dir/libvirt.xml
 cat > $LIBVIRT_XML <<EOF
 <domain type='kvm'>
   <name>$GUEST_NAME</name>
   <memory>$GUEST_RAM</memory>
   <os>
-    <type arch='i686' machine='pc'>hvm</type>
-    <boot dev='hd'/>
-    <kernel>$VM_DIR/kernel</kernel>
-    <cmdline>root=/dev/vda ro init=/usr/lib/cloud-init/uncloud-init ds=nocloud ubuntu-pass=ubuntu</cmdline>
+    <type>hvm</type>
+    <kernel>$vm_dir/kernel</kernel>
+    <cmdline>root=/dev/vda console=ttyS0 init=/usr/lib/cloud-init/uncloud-init ds=nocloud ubuntu-pass=ubuntu</cmdline>
   </os>
   <features>
     <acpi/>
@@ -117,7 +123,7 @@ cat > $LIBVIRT_XML <<EOF
   <devices>
     <disk type='file'>
       <driver type='qcow2'/>
-      <source file='$VM_DIR/disk.img'/>
+      <source file='$vm_dir/disk'/>
       <target dev='vda' bus='virtio'/>
     </disk>
 
@@ -127,7 +133,7 @@ cat > $LIBVIRT_XML <<EOF
         
     <!-- The order is significant here.  File must be defined first -->
     <serial type="file">
-      <source path='$VM_DIR/console.log'/>
+      <source path='$vm_dir/console.log'/>
       <target port='1'/>
     </serial>
 
@@ -147,11 +153,12 @@ cat > $LIBVIRT_XML <<EOF
 EOF
 
 # Create the instance
-cd $VM_DIR && virsh create libvirt.xml
+cd $vm_dir && virsh create libvirt.xml
 
 # Tail the console log till we are done
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
+    set +o xtrace
     # Done creating the container, let's tail the log
     echo
     echo "============================================================="
@@ -163,11 +170,11 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     echo
     echo "Just CTRL-C at any time to stop tailing."
 
-    while [ ! -e "$VM_DIR/console.log" ]; do
+    while [ ! -e "$vm_dir/console.log" ]; do
       sleep 1
     done
 
-    tail -F $VM_DIR/console.log &
+    tail -F $vm_dir/console.log &
 
     TAIL_PID=$!
 
@@ -179,10 +186,8 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     # Let Ctrl-c kill tail and exit
     trap kill_tail SIGINT
 
-    set +o xtrace
-
     echo "Waiting stack.sh to finish..."
-    while ! cat $VM_DIR/console.log | grep -q 'All done' ; do
+    while ! cat $vm_dir/console.log | grep -q 'All done' ; do
         sleep 1
     done
 
@@ -190,7 +195,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
 
     kill $TAIL_PID
 
-    if ! grep -q "^stack.sh completed in" $VM_DIR/console.log; then
+    if ! grep -q "^stack.sh completed in" $vm_dir/console.log; then
         exit 1
     fi
     echo ""
