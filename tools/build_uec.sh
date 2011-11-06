@@ -157,6 +157,8 @@ EOF
 rm -rf $vm_dir/uec
 cp -r $TOOLS_DIR/uec $vm_dir/uec
 
+# (re)start a metadata service
+`lsof -i -n | grep 192.168.$GUEST_NETWORK.1:4567 | awk '{print $2}' | xargs -n1 kill -9`
 cd $vm_dir/uec
 python meta.py 192.168.$GUEST_NETWORK.1:4567 &
 
