@@ -172,6 +172,9 @@ cat > $vm_dir/uec/user-data<<EOF
 apt_update: true
 apt_upgrade: true
 packages: [ vim-nox, git-core ]
+password: pass
+chpasswd: { expire: False }
+disable_root: false
 EOF
 
 # (re)start a metadata service
