@@ -181,6 +181,7 @@ cat > localrc <<LOCAL_EOF
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
 ./stack.sh
+echo "All done"
 EOF
 
 # (re)start a metadata service
