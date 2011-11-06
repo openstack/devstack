@@ -45,7 +45,7 @@ tarball=$image_dir/$(basename $uec_url)
 if [ ! -f $tarball ]; then
     curl $uec_url -o $tarball
     (cd $image_dir && tar -Sxvzf $tarball)
-    cp $image_dir/*.img $image_dir/disk
+    resize-part-image $image_dir/*.img 10G $image_dir/disk
     cp $image_dir/*-vmlinuz-virtual $image_dir/kernel
 fi
 
