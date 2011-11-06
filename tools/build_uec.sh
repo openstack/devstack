@@ -175,6 +175,8 @@ packages: [ vim-nox, git-core ]
 password: pass
 chpasswd: { expire: False }
 disable_root: false
+runcmd:
+ - [ git, clone, https://github.com/cloudbuilders/devstack.git ]
 EOF
 
 # (re)start a metadata service
