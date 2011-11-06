@@ -154,6 +154,7 @@ cat > $LIBVIRT_XML <<EOF
 </domain>
 EOF
 
+rm -rf $vm_dir/uec
 cp -r $TOOLS_DIR/uec $vm_dir/uec
 
 cd $vm_dir/uec
