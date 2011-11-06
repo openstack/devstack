@@ -562,15 +562,12 @@ fi
 # ----
 
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
-    # We are going to use the sample http middleware configuration from the
-    # keystone project to launch nova.  This paste config adds the configuration
-    # required for nova to validate keystone tokens - except we need to switch
-    # the config to use our service token instead (instead of the invalid token
-    # 999888777666).
-    if [ ! -e $NOVA_DIR/bin/nova-api-paste.ini ]; then
-        cp $FILES/nova-api-paste.ini $NOVA_DIR/bin
-        sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
-    fi
+    # We are going to use a sample http middleware configuration based on the
+    # one from the keystone project to launch nova.  This paste config adds
+    # the configuration required for nova to validate keystone tokens. We add
+    # our own service token to the configuration.
+    cp $FILES/nova-api-paste.ini $NOVA_DIR/bin
+    sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
