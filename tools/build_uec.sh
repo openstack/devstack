@@ -171,13 +171,14 @@ EOF
 cat > $vm_dir/uec/user-data<<EOF
 #!/bin/bash
 apt-get update
-apt-get install git -y
+apt-get install git sudo -y
 git clone https://github.com/cloudbuilders/devstack.git
 cd devstack
 git remote set-url origin `cd $TOP_DIR; git remote show origin | grep Fetch | awk '{print $3}'`
 git fetch
 git checkout `git rev-parse HEAD`
 cat > localrc <<LOCAL_EOF
+ROOTSLEEP=0
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
 ./stack.sh

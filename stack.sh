@@ -103,8 +103,7 @@ if [[ $EUID -eq 0 ]]; then
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
-    apt_get update
-    apt_get install sudo
+    dpkg -l sudo || apt_get update && apt_get install sudo
 
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
