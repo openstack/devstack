@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Ubuntu distro to install
-DIST_NAME=${DIST_NAME:-oneiric}
-
 # Make sure that we have the proper version of ubuntu (only works on natty/oneiric)
 UBUNTU_VERSION=`cat /etc/lsb-release | grep CODENAME | sed 's/.*=//g'`
 if [ ! "oneiric" = "$UBUNTU_VERSION" ]; then
@@ -15,6 +12,14 @@ fi
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+
+cd $TOP_DIR
+
+# Source params
+source ./stackrc
+
+# Ubuntu distro to install
+DIST_NAME=${DIST_NAME:-oneiric}
 
 # exit on error to stop unexpected errors
 set -o errexit
@@ -49,10 +54,6 @@ if [ ! -f $tarball ]; then
     cp $image_dir/*-vmlinuz-virtual $image_dir/kernel
 fi
 
-cd $TOP_DIR
-
-# Source params
-source ./stackrc
 
 # Configure the root password of the vm to be the same as ``ADMIN_PASSWORD``
 ROOT_PASSWORD=${ADMIN_PASSWORD:-password}
