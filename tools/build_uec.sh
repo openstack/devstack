@@ -93,7 +93,11 @@ cat > $NET_XML <<EOF
   <name>devstack-$GUEST_NETWORK</name>
   <bridge name="stackbr%d" />
   <forward/>
-  <ip address="$GUEST_GATEWAY" netmask="$GUEST_NETMASK" />
+  <ip address="$GUEST_GATEWAY" netmask="$GUEST_NETMASK">
+    <dhcp>
+      <range start='192.168.$GUEST_NETWORK.2' end='192.168.$GUEST_NETWORK.32' />
+    </dhcp>
+  </ip>
 </network>
 EOF
 
