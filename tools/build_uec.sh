@@ -39,7 +39,7 @@ mkdir -p $image_dir
 
 # Original version of built image
 uec_url=http://uec-images.ubuntu.com/$DIST_NAME/current/$DIST_NAME-server-cloudimg-amd64.tar.gz
-tarball=$image_dir/$(basename $UEC_URL)
+tarball=$image_dir/$(basename $uec_url)
 
 # download the base uec image if we haven't already
 if [ ! -f $tarball ]; then
