@@ -166,6 +166,14 @@ instance-type: m1.large
 local-hostname: $GUEST_NAME.local
 EOF
 
+# set metadata
+cat > $vm_dir/uec/user-data<<EOF
+#cloud-config
+apt_update: true
+apt_upgrade: true
+packages: [ vim-nox, git-core ]
+EOF
+
 # (re)start a metadata service
 (
   pid=`lsof -iTCP@192.168.$GUEST_NETWORK.1:4567 -n | awk '{print $2}' | tail -1`
