@@ -173,6 +173,9 @@ apt-get update
 apt-get install git -y
 git clone https://github.com/cloudbuilders/devstack.git
 cd devstack
+git remote set-url origin `cd $TOP_DIR; git remote show origin | grep Fetch | awk '{print $3}'`
+git fetch
+git checkout $GIT_COMMIT
 cat > localrc <<EOF
 `cat $TOP_DIR/localrc`
 EOF
