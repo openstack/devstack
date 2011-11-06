@@ -166,7 +166,10 @@ instance-type: m1.large
 EOF
 
 # (re)start a metadata service
-lsof -iTCP@192.168.$GUEST_NETWORK.1:4567 -n | awk '{print $2}' | xargs -n1 kill -9
+(
+  pid=`lsof -iTCP@192.168.$GUEST_NETWORK.1:4567 -n | awk '{print $2}' | tail -1`
+  [ "$pid" == "PID" ] || kill -9 $pid
+)
 cd $vm_dir/uec
 python meta.py 192.168.$GUEST_NETWORK.1:4567 &
 
