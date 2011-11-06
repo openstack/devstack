@@ -154,11 +154,20 @@ cat > $LIBVIRT_XML <<EOF
 </domain>
 EOF
 
+
 rm -rf $vm_dir/uec
 cp -r $TOOLS_DIR/uec $vm_dir/uec
 
+# set metadata
+cat > $vm_dir/uec/meta-data<<EOF
+hostname: $GUEST_NAME
+instance-id: i-87018aed
+instance-type: m1.large
+EOF
+
 # (re)start a metadata service
-`lsof -i -n | grep 192.168.$GUEST_NETWORK.1:4567 | awk '{print $2}' | xargs -n1 kill -9`
+#lsof -iTCP:4567 -sTCP:LISTEN -n 
+lsof -i -n | grep 192.168.$GUEST_NETWORK.1:4567 | awk '{print $2}' | xargs -n1 kill -9
 cd $vm_dir/uec
 python meta.py 192.168.$GUEST_NETWORK.1:4567 &
 
