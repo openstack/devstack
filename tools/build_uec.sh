@@ -44,7 +44,7 @@ tarball=$image_dir/$(basename $uec_url)
 # download the base uec image if we haven't already
 if [ ! -f $tarball ]; then
     curl $uec_url -o $tarball
-    tar -Sxvzf $tarball $image_dir
+    (cd $image_dir && tar -Sxvzf $tarball)
     cp $image_dir/*.img $image_dir/disk
     cp $image_dir/*-vmlinuz-virtual $image_dir/kernel
 fi
