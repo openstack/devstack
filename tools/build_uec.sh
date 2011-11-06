@@ -156,7 +156,8 @@ EOF
 
 cp -r $TOOLS_DIR/uec $vm_dir/uec
 
-(cd $vm_dir/uec; python meta.py 192.168.$GUEST_NETWORK.1:4567 &)
+cd $vm_dir/uec
+python meta.py 192.168.$GUEST_NETWORK.1:4567 &
 
 # Create the instance
 virsh create $vm_dir/libvirt.xml
