@@ -168,15 +168,18 @@ EOF
 
 # set metadata
 cat > $vm_dir/uec/user-data<<EOF
-#cloud-config
-apt_update: true
-apt_upgrade: true
-packages: [ vim-nox, git-core ]
-password: pass
-chpasswd: { expire: False }
-disable_root: false
-runcmd:
- - [ git, clone, https://github.com/cloudbuilders/devstack.git ]
+#!/bin/bash
+apt-get update
+apt-get install git -y
+git clone https://github.com/cloudbuilders/devstack.git
+cd devstack
+echo DASH_BRANCH=instance-overview > localrc
+echo ADMIN_PASSWORD=golfing >> localrc
+echo MYSQL_PASSWORD=golfing >> localrc
+echo RABBIT_PASSWORD=golfing >> localrc
+echo SERVICE_TOKEN=123124123124 >> localrc
+echo FLAT_INTERFACE=br100 >> localrc
+./stack.sh
 EOF
 
 # (re)start a metadata service
