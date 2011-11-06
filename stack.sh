@@ -909,6 +909,7 @@ function screen_it {
     NL=`echo -ne '\015'`
     if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
         screen -S stack -X screen -t $1
+        sleep 0.5
         screen -S stack -p $1 -X stuff "$2$NL"
     fi
 }
