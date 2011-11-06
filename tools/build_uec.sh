@@ -115,7 +115,7 @@ cat > $LIBVIRT_XML <<EOF
   <os>
     <type>hvm</type>
     <kernel>$image_dir/kernel</kernel>
-    <cmdline>root=/dev/vda ro console=ttyS0 init=/usr/lib/cloud-init/uncloud-init ds=nocloud-net;s=http://192.168.$GUEST.1:4567/ ubuntu-pass=ubuntu</cmdline>
+    <cmdline>root=/dev/vda ro console=ttyS0 init=/usr/lib/cloud-init/uncloud-init ds=nocloud-net;s=http://192.168.$GUEST_NETWORK.1:4567/ ubuntu-pass=ubuntu</cmdline>
   </os>
   <features>
     <acpi/>
