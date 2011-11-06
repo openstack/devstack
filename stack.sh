@@ -121,7 +121,7 @@ if [[ $EUID -eq 0 ]]; then
     echo "Copying files to stack user"
     STACK_DIR="$DEST/${PWD##*/}"
     cp -r -f "$PWD" "$STACK_DIR"
-    chown -R $USER "$STACK_DIR"
+    chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
         exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
     else
