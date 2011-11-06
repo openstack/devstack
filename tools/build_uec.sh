@@ -163,6 +163,7 @@ cat > $vm_dir/uec/meta-data<<EOF
 hostname: $GUEST_NAME
 instance-id: i-87018aed
 instance-type: m1.large
+local-hostname: $GUEST_NAME.local
 EOF
 
 # (re)start a metadata service
