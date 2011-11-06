@@ -71,9 +71,7 @@ mkdir -p $vm_dir
 rm -f $vm_dir/disk
 
 # Create a copy of the base image
-# qemu-img create -f qcow2 -b ${BASE_IMAGE} $vm_dir/disk
-cp $image_dir/disk $vm_dir/disk
-cp $image_dir/kernel $vm_dir/kernel
+qemu-img create -f qcow2 -b $image_dir/disk $vm_dir/disk
 
 # Back to devstack
 cd $TOP_DIR
@@ -112,8 +110,8 @@ cat > $LIBVIRT_XML <<EOF
   <memory>$GUEST_RAM</memory>
   <os>
     <type>hvm</type>
-    <kernel>$vm_dir/kernel</kernel>
-    <cmdline>root=/dev/vda console=ttyS0 init=/usr/lib/cloud-init/uncloud-init ds=nocloud ubuntu-pass=ubuntu</cmdline>
+    <kernel>$image_dir/kernel</kernel>
+    <cmdline>root=/dev/vda ro console=ttyS0 init=/usr/lib/cloud-init/uncloud-init ds=nocloud ubuntu-pass=ubuntu</cmdline>
   </os>
   <features>
     <acpi/>
