@@ -171,7 +171,7 @@ EOF
 cat > $vm_dir/uec/user-data<<EOF
 #!/bin/bash
 # hostname needs to resolve for rabbit
-sed -i "s/127.0.0.1/127.0.0.1 `hostname`/" /etc/hosts
+sed -i "s/127.0.0.1/127.0.0.1 \`hostname\`/" /etc/hosts
 apt-get update
 apt-get install git sudo -y
 git clone https://github.com/cloudbuilders/devstack.git
