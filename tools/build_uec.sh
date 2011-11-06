@@ -104,6 +104,8 @@ EOF
 
 if [[ "$GUEST_RECREATE_NET" == "yes" ]]; then
     virsh net-destroy devstack-$GUEST_NETWORK || true
+    # destroying the network isn't enough to delete the leases
+    rm -f /var/lib/libvirt/dnsmasq/devstack-$GUEST_NETWORK.leases
     virsh net-create $vm_dir/net.xml
 fi
 
