@@ -115,7 +115,7 @@ cat > $LIBVIRT_XML <<EOF
   <os>
     <type>hvm</type>
     <kernel>$image_dir/kernel</kernel>
-    <cmdline>root=/dev/vda ro console=ttyS0 init=/usr/lib/cloud-init/uncloud-init ds=nocloud ubuntu-pass=ubuntu</cmdline>
+    <cmdline>root=/dev/vda ro console=ttyS0 init=/usr/lib/cloud-init/uncloud-init ds=nocloud-net;s=http://192.168.$GUEST.1:4567/ ubuntu-pass=ubuntu</cmdline>
   </os>
   <features>
     <acpi/>
@@ -153,6 +153,10 @@ cat > $LIBVIRT_XML <<EOF
   </devices>
 </domain>
 EOF
+
+cp -r $TOOLS_DIR/uec $vm_dir/uec
+
+(cd $vm_dir/uec; python meta.py 192.168.$GUEST_NETWORK.1:4567 &)
 
 # Create the instance
 virsh create $vm_dir/libvirt.xml
