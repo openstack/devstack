@@ -227,7 +227,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     trap kill_tail SIGINT
 
     echo "Waiting stack.sh to finish..."
-    while ! cat $vm_dir/console.log | grep -q '^stack.sh (completed|failed)' ; do
+    while ! egrep -q '^stack.sh (completed|failed)' $vm_dir/console.log ; do
         sleep 1
     done
 
