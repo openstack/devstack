@@ -95,7 +95,7 @@ cat > $NET_XML <<EOF
   <forward/>
   <ip address="$GUEST_GATEWAY" netmask="$GUEST_NETMASK">
     <dhcp>
-      <range start='192.168.$GUEST_NETWORK.2' end='192.168.$GUEST_NETWORK.32' />
+      <range start='192.168.$GUEST_NETWORK.100' end='192.168.$GUEST_NETWORK.120' />
     </dhcp>
   </ip>
 </network>
@@ -155,7 +155,7 @@ cat > $LIBVIRT_XML <<EOF
 EOF
 
 # Create the instance
-cd $vm_dir && virsh create libvirt.xml
+virsh create $vm_dir/libvirt.xml
 
 # Tail the console log till we are done
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
