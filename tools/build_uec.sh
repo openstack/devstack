@@ -176,9 +176,9 @@ cd devstack
 git remote set-url origin `cd $TOP_DIR; git remote show origin | grep Fetch | awk '{print $3}'`
 git fetch
 git checkout $GIT_COMMIT
-cat > localrc <<EOF
+cat > localrc <<LOCAL_EOF
 `cat $TOP_DIR/localrc`
-EOF
+LOCAL_EOF
 ./stack.sh
 EOF
 
