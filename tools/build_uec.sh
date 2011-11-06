@@ -96,7 +96,7 @@ cat > $NET_XML <<EOF
   <forward/>
   <ip address="$GUEST_GATEWAY" netmask="$GUEST_NETMASK">
     <dhcp>
-      <range start='192.168.$GUEST_NETWORK.100' end='192.168.$GUEST_NETWORK.120' />
+      <range start='192.168.$GUEST_NETWORK.2' end='192.168.$GUEST_NETWORK.127' />
     </dhcp>
   </ip>
 </network>
