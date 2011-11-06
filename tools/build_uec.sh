@@ -175,7 +175,7 @@ git clone https://github.com/cloudbuilders/devstack.git
 cd devstack
 git remote set-url origin `cd $TOP_DIR; git remote show origin | grep Fetch | awk '{print $3}'`
 git fetch
-git checkout $GIT_COMMIT
+git checkout `git rev-parse HEAD`
 cat > localrc <<LOCAL_EOF
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
