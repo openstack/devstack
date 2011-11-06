@@ -166,8 +166,7 @@ instance-type: m1.large
 EOF
 
 # (re)start a metadata service
-#lsof -iTCP:4567 -sTCP:LISTEN -n 
-lsof -i -n | grep 192.168.$GUEST_NETWORK.1:4567 | awk '{print $2}' | xargs -n1 kill -9
+lsof -iTCP@192.168.$GUEST_NETWORK.1:4567 -n | awk '{print $2}' | xargs -n1 kill -9
 cd $vm_dir/uec
 python meta.py 192.168.$GUEST_NETWORK.1:4567 &
 
