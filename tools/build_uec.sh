@@ -173,12 +173,9 @@ apt-get update
 apt-get install git -y
 git clone https://github.com/cloudbuilders/devstack.git
 cd devstack
-echo DASH_BRANCH=instance-overview > localrc
-echo ADMIN_PASSWORD=golfing >> localrc
-echo MYSQL_PASSWORD=golfing >> localrc
-echo RABBIT_PASSWORD=golfing >> localrc
-echo SERVICE_TOKEN=123124123124 >> localrc
-echo FLAT_INTERFACE=br100 >> localrc
+cat > localrc <<EOF
+`cat $TOP_DIR/localrc`
+EOF
 ./stack.sh
 EOF
 
