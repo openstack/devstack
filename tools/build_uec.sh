@@ -182,7 +182,6 @@ ROOTSLEEP=0
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
 ./stack.sh
-echo "All done"
 EOF
 
 # (re)start a metadata service
@@ -228,7 +227,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     trap kill_tail SIGINT
 
     echo "Waiting stack.sh to finish..."
-    while ! cat $vm_dir/console.log | grep -q 'All done' ; do
+    while ! cat $vm_dir/console.log | grep -q '^stack.sh (completed|failed)' ; do
         sleep 1
     done
 
