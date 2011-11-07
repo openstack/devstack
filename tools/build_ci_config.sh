@@ -48,7 +48,7 @@ source ./stackrc
 # Where Openstack code lives
 DEST=${DEST:-/opt/stack}
 
-DIST_NAME=${DIST_NAME:-natty}
+DIST_NAME=${DIST_NAME:-oneiric}
 
 # Process network configuration vars
 GUEST_NETWORK=${GUEST_NETWORK:-1}
