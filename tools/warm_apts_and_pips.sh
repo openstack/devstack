@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# echo commands
+set -o xtrace
+
+# exit on error to stop unexpected errors
+set -o errexit
+
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=`cd $TOOLS_DIR/..; pwd`
@@ -19,6 +25,12 @@ if ! qemu-img info $1 | grep -q "file format: raw"; then
     usage
     exit 1
 fi
+
+# Make sure we are in the correct dir
+if [ ! -d files/apts ]; then
+    echo "Please run this script from devstack/tools/"
+    exit 1
+fi 
 
 # Mount the image
 STAGING_DIR=`mktemp -d uec.XXXXXXXXXX`
