@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 
 # Make sure that we have the proper version of ubuntu (only works on natty/oneiric)
-UBUNTU_VERSION=`cat /etc/lsb-release | grep CODENAME | sed 's/.*=//g'`
-if [ ! "oneiric" = "$UBUNTU_VERSION" ]; then
-    if [ ! "natty" = "$UBUNTU_VERSION" ]; then
-        echo "This script only works with oneiric and natty"
-        exit 1
-    fi
+if ! egrep -q "oneiric|natty" /etc/lsb-release; then
+    echo "This script only works with ubuntu oneiric and natty"
+    exit 1
 fi
 
 # Keep track of the current directory
@@ -21,6 +18,9 @@ source ./stackrc
 # Ubuntu distro to install
 DIST_NAME=${DIST_NAME:-oneiric}
 
+# Configure how large the VM should be
+GUEST_SIZE=${GUEST_SIZE:-10G}
+
 # exit on error to stop unexpected errors
 set -o errexit
 set -o xtrace
@@ -33,7 +33,8 @@ if [ ! -e $TOP_DIR/localrc ]; then
 fi
 
 # Install deps if needed
-dpkg -l kvm libvirt-bin kpartx || apt-get install -y --force-yes kvm libvirt-bin kpartx
+DEPS="kvm libvirt-bin kpartx"
+dpkg -l $DEPS || apt-get install -y --force-yes $DEPS
 
 # Where to store files and instances
 WORK_DIR=${WORK_DIR:-/opt/kvmstack}
@@ -50,7 +51,7 @@ tarball=$image_dir/$(basename $uec_url)
 if [ ! -f $tarball ]; then
     curl $uec_url -o $tarball
     (cd $image_dir && tar -Sxvzf $tarball)
-    resize-part-image $image_dir/*.img 10G $image_dir/disk
+    resize-part-image $image_dir/*.img $GUEST_SIZE $image_dir/disk
     cp $image_dir/*-vmlinuz-virtual $image_dir/kernel
 fi
 
@@ -164,8 +165,8 @@ cp -r $TOOLS_DIR/uec $vm_dir/uec
 # set metadata
 cat > $vm_dir/uec/meta-data<<EOF
 hostname: $GUEST_NAME
-instance-id: i-87018aed
-instance-type: m1.large
+instance-id: i-hop
+instance-type: m1.ignore
 local-hostname: $GUEST_NAME.local
 EOF
 
