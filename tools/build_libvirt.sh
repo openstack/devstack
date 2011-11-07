@@ -31,7 +31,7 @@ cleanup() {
     trap 2; kill -2 $$
 }
 
-trap cleanup SIGHUP SIGINT SIGTERM
+trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT
 
 # Echo commands
 set -o xtrace
@@ -165,6 +165,16 @@ git_clone $NOVACLIENT_REPO $COPY_DIR/$DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $COPY_DIR/$DEST/openstackx $OPENSTACKX_BRANCH
 git_clone $KEYSTONE_REPO $COPY_DIR/$DEST/keystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $COPY_DIR/$DEST/noVNC $NOVNC_BRANCH
+git_clone $CITEST_REPO $COPY_DIR/$DEST/openstack-integration-tests $CITEST_BRANCH
+
+# Pre-load an image for testing
+UEC_NAME=$DIST_NAME-server-cloudimg-amd64
+CIVMDIR=${COPY_DIR}${DEST}/openstack-integration-tests/include/sample_vm
+if [ ! -e $CIVMDIR/$UEC_NAME.tar.gz ]; then
+    mkdir -p $CIVMDIR
+    (cd $CIVMDIR && wget -N http://uec-images.ubuntu.com/$DIST_NAME/current/$UEC_NAME.tar.gz;
+        tar xzf $UEC_NAME.tar.gz;)
+fi
 
 # Back to devstack
 cd $TOP_DIR
