@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-# echo commands
+# Echo commands
 set -o xtrace
 
-# exit on error to stop unexpected errors
+# Exit on error to stop unexpected errors
 set -o errexit
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
-# cd to top of devstack
+# Change dir to top of devstack
 cd $TOP_DIR
 
 # Echo usage
