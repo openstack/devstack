@@ -103,8 +103,7 @@ if [[ $EUID -eq 0 ]]; then
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
-    apt_get update
-    apt_get install sudo
+    dpkg -l sudo || apt_get update && apt_get install sudo
 
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
@@ -121,7 +120,7 @@ if [[ $EUID -eq 0 ]]; then
     echo "Copying files to stack user"
     STACK_DIR="$DEST/${PWD##*/}"
     cp -r -f "$PWD" "$STACK_DIR"
-    chown -R $USER "$STACK_DIR"
+    chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
         exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
     else
@@ -912,6 +911,10 @@ function screen_it {
     NL=`echo -ne '\015'`
     if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
         screen -S stack -X screen -t $1
+        # sleep to allow bash to be ready to be send the command - we are
+        # creating a new window in screen and then sends characters, so if
+        # bash isn't running by the time we send the command, nothing happens
+        sleep 1
         screen -S stack -p $1 -X stuff "$2$NL"
     fi
 }
