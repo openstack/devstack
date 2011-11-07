@@ -172,7 +172,7 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 # Use the eth0 IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig eth0 | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
-    if [ "$HOST_IP" = "" ];
+    if [ "$HOST_IP" = "" ]; then
         echo "Could not determine host ip address.  Please specify HOST_IP in your localrc."
         exit 1
     fi
