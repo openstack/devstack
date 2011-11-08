@@ -103,8 +103,7 @@ if [[ $EUID -eq 0 ]]; then
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
-    apt_get update
-    apt_get install sudo
+    dpkg -l sudo || apt_get update && apt_get install sudo
 
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
@@ -121,7 +120,7 @@ if [[ $EUID -eq 0 ]]; then
     echo "Copying files to stack user"
     STACK_DIR="$DEST/${PWD##*/}"
     cp -r -f "$PWD" "$STACK_DIR"
-    chown -R $USER "$STACK_DIR"
+    chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
         exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
     else
@@ -174,6 +173,9 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
+
+# Service startup timeout
+SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 
 # Generic helper to configure passwords
 function read_password {
@@ -230,7 +232,7 @@ VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
 # Multi-host is a mode where each compute node runs its own network node.  This
 # allows network operations and routing for a VM to occur on the server that is
 # running the VM - removing a SPOF and bandwidth bottleneck.
-MULTI_HOST=${MULTI_HOST:-0}
+MULTI_HOST=${MULTI_HOST:-False}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
@@ -323,7 +325,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     # can never change.
     read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
 fi
-    
+
 # Keystone
 # --------
 
@@ -562,13 +564,12 @@ fi
 # ----
 
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
-    # We are going to use the sample http middleware configuration from the
-    # keystone project to launch nova.  This paste config adds the configuration
-    # required for nova to validate keystone tokens - except we need to switch
-    # the config to use our service token instead (instead of the invalid token
-    # 999888777666).
-    cp $KEYSTONE_DIR/examples/paste/nova-api-paste.ini $NOVA_DIR/bin
-    sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
+    # We are going to use a sample http middleware configuration based on the
+    # one from the keystone project to launch nova.  This paste config adds
+    # the configuration required for nova to validate keystone tokens. We add
+    # our own service token to the configuration.
+    cp $FILES/nova-api-paste.ini $NOVA_DIR/bin
+    sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
@@ -650,13 +651,13 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     USER_GROUP=$(id -g)
     sudo mkdir -p ${SWIFT_DATA_LOCATION}/drives
     sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_LOCATION}/drives
-    
+
     # We then create a loopback disk and format it to XFS.
     if [[ ! -e ${SWIFT_DATA_LOCATION}/drives/images/swift.img ]];then
         mkdir -p  ${SWIFT_DATA_LOCATION}/drives/images
         sudo touch  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
         sudo chown $USER: ${SWIFT_DATA_LOCATION}/drives/images/swift.img
-        
+
         dd if=/dev/zero of=${SWIFT_DATA_LOCATION}/drives/images/swift.img \
             bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
         mkfs.xfs -f -i size=1024  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
@@ -673,9 +674,9 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     # We then create link to that mounted location so swift would know
     # where to go.
     for x in {1..4}; do sudo ln -sf ${SWIFT_DATA_LOCATION}/drives/sdb1/$x ${SWIFT_DATA_LOCATION}/$x; done
-    
+
     # We now have to emulate a few different servers into one we
-    # create all the directories needed for swift 
+    # create all the directories needed for swift
     tmpd=""
     for d in ${SWIFT_DATA_LOCATION}/drives/sdb1/{1..4} \
         ${SWIFT_CONFIG_LOCATION}/{object,container,account}-server \
@@ -691,7 +692,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
    # swift-init has a bug using /etc/swift until bug #885595 is fixed
    # we have to create a link
    sudo ln -s ${SWIFT_CONFIG_LOCATION} /etc/swift
-   
+
    # Swift use rsync to syncronize between all the different
    # partitions (which make more sense when you have a multi-node
    # setup) we configure it with our version of rsync.
@@ -727,7 +728,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
        local bind_port=$2
        local log_facility=$3
        local node_number
-       
+
        for node_number in {1..4};do
            node_path=${SWIFT_DATA_LOCATION}/${node_number}
            sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
@@ -754,14 +755,14 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
 
    # We then can start rsync.
    sudo /etc/init.d/rsync restart || :
-      
+
    # Create our ring for the object/container/account.
    /usr/local/bin/swift-remakerings
 
    # And now we launch swift-startmain to get our cluster running
    # ready to be tested.
    /usr/local/bin/swift-startmain || :
-   
+
    unset s swift_hash swift_auth_server tmpd
 fi
 
@@ -828,12 +829,12 @@ add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
 if [ -n "$INSTANCES_PATH" ]; then
     add_nova_flag "--instances_path=$INSTANCES_PATH"
 fi
-if [ -n "$MULTI_HOST" ]; then
-    add_nova_flag "--multi_host=$MULTI_HOST"
-    add_nova_flag "--send_arp_for_ha=1"
+if [ "$MULTI_HOST" != "False" ]; then
+    add_nova_flag "--multi_host"
+    add_nova_flag "--send_arp_for_ha"
 fi
 if [ "$SYSLOG" != "False" ]; then
-    add_nova_flag "--use_syslog=1"
+    add_nova_flag "--use_syslog"
 fi
 
 # XenServer
@@ -909,6 +910,10 @@ function screen_it {
     NL=`echo -ne '\015'`
     if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
         screen -S stack -X screen -t $1
+        # sleep to allow bash to be ready to be send the command - we are
+        # creating a new window in screen and then sends characters, so if
+        # bash isn't running by the time we send the command, nothing happens
+        sleep 1
         screen -S stack -p $1 -X stuff "$2$NL"
     fi
 }
@@ -926,7 +931,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-    if ! timeout 60 sh -c "while ! wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
       echo "g-api did not start"
       exit 1
     fi
@@ -936,7 +941,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF -d"
     echo "Waiting for keystone to start..."
-    if ! timeout 60 sh -c "while ! wget -q -O- http://127.0.0.1:5000; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://127.0.0.1:5000; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
@@ -946,7 +951,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
     echo "Waiting for nova-api to start..."
-    if ! timeout 60 sh -c "while ! wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
       echo "nova-api did not start"
       exit 1
     fi

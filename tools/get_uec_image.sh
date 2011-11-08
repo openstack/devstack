@@ -14,6 +14,9 @@ MIN_PKGS=${MIN_PKGS:-"apt-utils gpgv openssh-server"}
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
+# exit on error to stop unexpected errors
+set -o errexit
+
 usage() {
     echo "Usage: $0 - Prepare Ubuntu images"
     echo ""
@@ -42,6 +45,14 @@ cleanup() {
 
     # Kill ourselves to signal any calling process
     trap 2; kill -2 $$
+}
+
+# apt-get wrapper to just get arguments set correctly
+function apt_get() {
+    local sudo="sudo"
+    [ "$(id -u)" = "0" ] && sudo="env"
+    $sudo DEBIAN_FRONTEND=noninteractive apt-get \
+        --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
 }
 
 while getopts f:hmr: c; do
@@ -107,7 +118,14 @@ case $DIST_NAME in
                 ;;
 esac
 
-trap cleanup SIGHUP SIGINT SIGTERM
+trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT
+
+# Check for dependencies
+
+if [ ! -x "`which qemu-img`" -o ! -x "`which qemu-nbd`" ]; then
+    # Missing KVM?
+    apt_get install qemu-kvm
+fi
 
 # Prepare the base image
 

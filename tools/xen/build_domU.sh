@@ -226,16 +226,21 @@ mkdir -p /boot/guest
 SR_UUID=`xe sr-list --minimal name-label="Local storage"`
 xe sr-param-set uuid=$SR_UUID other-config:i18n-key=local-storage
 
-# Uninstall previous runs
-xe vm-list --minimal name-label="$LABEL" | xargs ./scripts/uninstall-os-vpx.sh
 
-# Destroy any instances that were launched
-for uuid in `xe vm-list | grep -1 instance | grep uuid | sed "s/.*\: //g"`; do
-    echo "Shutting down nova instance $uuid"
-    xe vm-unpause uuid=$uuid || true
-    xe vm-shutdown uuid=$uuid
-    xe vm-destroy uuid=$uuid
-done
+# Shutdown previous runs
+DO_SHUTDOWN=${DO_SHUTDOWN:-1}
+if [ "$DO_SHUTDOWN" = "1" ]; then
+    # Shutdown all domU's that created previously
+    xe vm-list --minimal name-label="$LABEL" | xargs ./scripts/uninstall-os-vpx.sh
+
+    # Destroy any instances that were launched
+    for uuid in `xe vm-list | grep -1 instance | grep uuid | sed "s/.*\: //g"`; do
+        echo "Shutting down nova instance $uuid"
+        xe vm-unpause uuid=$uuid || true
+        xe vm-shutdown uuid=$uuid
+        xe vm-destroy uuid=$uuid
+    done
+fi
 
 # Path to head xva.  By default keep overwriting the same one to save space
 USE_SEPARATE_XVAS=${USE_SEPARATE_XVAS:-0}
