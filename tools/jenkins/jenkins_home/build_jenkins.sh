@@ -52,14 +52,17 @@ if ! su -c "ls $CUR_DIR" jenkins; then
     exit 1
 fi
 
-# Set up jobs symlink
+# Move aside old jobs, if present
 if [ ! -h /var/lib/jenkins/jobs ]; then
     echo "Installing jobs symlink"
     if [ -d /var/lib/jenkins/jobs ]; then
         mv /var/lib/jenkins/jobs /var/lib/jenkins/jobs.old
     fi
-    ln -s $CUR_DIR/jobs /var/lib/jenkins/jobs
 fi
+
+# Set up jobs symlink
+rm -f /var/lib/jenkins/jobs
+ln -s $CUR_DIR/jobs /var/lib/jenkins/jobs
 
 # List of plugins
 PLUGINS=http://hudson-ci.org/downloads/plugins/build-timeout/1.6/build-timeout.hpi,http://mirrors.jenkins-ci.org/plugins/git/1.1.12/git.hpi,http://hudson-ci.org/downloads/plugins/global-build-stats/1.2/global-build-stats.hpi,http://hudson-ci.org/downloads/plugins/greenballs/1.10/greenballs.hpi,http://download.hudson-labs.org/plugins/console-column-plugin/1.0/console-column-plugin.hpi
