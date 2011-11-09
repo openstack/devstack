@@ -14,7 +14,7 @@ fi
 CUR_DIR=$(cd $(dirname "$0") && pwd)
 
 # Install software
-DEPS="jenkins"
+DEPS="jenkins cloud-utils"
 apt-get install -y --force-yes $DEPS
 
 # Install jenkins
