@@ -44,6 +44,14 @@ EOF
 # Set ownership to jenkins
 chown -R jenkins $CUR_DIR
 
+# Make sure this directory is accessible to jenkins
+if ! su -c "ls $CUR_DIR" jenkins; then
+    echo "Your devstack directory is not accessible by jenkins."
+    echo "There is a decent chance you are trying to run this from a directory in /root."
+    echo "If so, try moving devstack elsewhere (eg. /opt/devstack)."
+    exit 1
+fi
+
 # Set up jobs symlink
 if [ ! -h /var/lib/jenkins/jobs ]; then
     echo "Installing jobs symlink"
