@@ -2,7 +2,7 @@
 
 # Make sure that we have the proper version of ubuntu (only works on oneiric)
 if ! egrep -q "oneiric" /etc/lsb-release; then
-    echo "This script only works with ubuntu oneiric and natty"
+    echo "This script only works with ubuntu oneiric."
     exit 1
 fi
 
