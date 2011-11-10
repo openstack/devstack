@@ -206,6 +206,8 @@ grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
     echo "#includedir /etc/sudoers.d" >> /etc/sudoers
 ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
     > /etc/sudoers.d/50_stack_sh )
+# Disable byobu
+byobu-disable
 EOF
 fi
 
