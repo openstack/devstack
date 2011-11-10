@@ -58,7 +58,7 @@
     <hudson.tasks.Shell>
       <command>set -o errexit
 cd tools/jenkins
-sudo ./build_configuration.sh $EXECUTOR_NUMBER kvm</command>
+sudo ./build_configuration.sh $EXECUTOR_NUMBER kvm $ADAPTER</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
       <command>set -o errexit
