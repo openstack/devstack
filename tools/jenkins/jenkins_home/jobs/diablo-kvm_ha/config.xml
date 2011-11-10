@@ -3,7 +3,17 @@
   <actions/>
   <description></description>
   <keepDependencies>false</keepDependencies>
-  <properties/>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>RC</name>
+          <description></description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
   <scm class="hudson.plugins.git.GitSCM">
     <configVersion>2</configVersion>
     <userRemoteConfigs>
@@ -58,12 +68,12 @@
     <hudson.tasks.Shell>
       <command>set -o errexit
 cd tools/jenkins
-sudo ./build_configuration.sh $EXECUTOR_NUMBER kvm $ADAPTER</command>
+sudo ./build_configuration.sh $EXECUTOR_NUMBER kvm $ADAPTER &quot;$RC&quot;</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
       <command>set -o errexit
 cd tools/jenkins
-sudo ./run_test.sh $EXECUTOR_NUMBER $ADAPTER</command>
+sudo ./run_test.sh $EXECUTOR_NUMBER $ADAPTER $RC &quot;$RC&quot;</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>
