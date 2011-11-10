@@ -49,3 +49,6 @@ $RC
 EOF
 cd tools
 sudo ./build_uec.sh
+
+# Make the address of the instances available to test runners
+echo HEAD=`cat /var/lib/libvirt/dnsmasq/$BASE_NAME.leases | cut -d " " -f3` > $TOP_DIR/addresses

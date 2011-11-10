@@ -187,6 +187,29 @@ cat > localrc <<LOCAL_EOF
 ROOTSLEEP=0
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
+EOF
+
+# Setup stack user with our key
+if [ -e ~/.ssh/id_rsa.pub ]; then
+    cat > $vm_dir/uec/user-data<<EOF
+mkdir -p /opt/stack
+useradd stack -s /bin/bash -d /opt/stack -G libvirtd || true
+echo stack:pass | chpasswd
+mkdir -p /opt/stack/.ssh
+echo `cat ~/.ssh/id_rsa.pub` > /opt/stack/.ssh/authorized_keys
+chown -R stack /opt/stack
+chmod 700 /opt/stack/.ssh
+chmod 600 /opt/stack/.ssh/authorized_keys
+
+grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+    echo "#includedir /etc/sudoers.d" >> /etc/sudoers
+( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+    > /etc/sudoers.d/50_stack_sh )
+EOF
+fi
+
+# Run stack.sh
+cat > $vm_dir/uec/user-data<<EOF
 ./stack.sh
 EOF
 

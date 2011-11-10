@@ -10,6 +10,13 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# Make sure user has configured an ssh pubkey
+if [ ! -e /root/.ssh/id_rsa.pub ]; then
+   echo "Public key is missing.  This is used to ssh into your instances."
+   echo "Please run ssh-keygen before proceeding"
+   exit 1
+fi
+
 # This directory
 CUR_DIR=$(cd $(dirname "$0") && pwd)
 
