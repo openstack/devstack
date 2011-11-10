@@ -26,7 +26,8 @@ TOP_DIR=(pwd)
 # Name test instance based on executor
 BASE_NAME=executor-`printf "%02d" $EXECUTOR_NUMBER`
 GUEST_NAME=$BASE_NAME.$ADAPTER
-virsh destroy `virsh list | grep $BASE_NAME | cut -d " " -f1` || true
+virsh list | grep $BASE_NAME | cut -d " " -f1 | xargs -n 1 virsh destroy || true
+virsh net-list | grep $BASE_NAME | cut -d " " -f1 | xargs -n 1 virsh net-destroy || true
 
 # Configure localrc
 cat <<EOF >localrc
