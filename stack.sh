@@ -691,7 +691,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
 
    # swift-init has a bug using /etc/swift until bug #885595 is fixed
    # we have to create a link
-   sudo ln -s ${SWIFT_CONFIG_LOCATION} /etc/swift
+   sudo ln -sf ${SWIFT_CONFIG_LOCATION} /etc/swift
 
    # Swift use rsync to syncronize between all the different
    # partitions (which make more sense when you have a multi-node
