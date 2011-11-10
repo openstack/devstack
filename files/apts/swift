@@ -1,0 +1,17 @@
+curl
+gcc
+memcached # NOPRIME
+python-configobj
+python-coverage
+python-dev
+python-eventlet
+python-greenlet
+python-netifaces
+python-nose
+python-pastedeploy
+python-setuptools
+python-simplejson
+python-webob
+python-xattr
+sqlite3
+xfsprogs

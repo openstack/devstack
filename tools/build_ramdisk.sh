@@ -1,24 +1,71 @@
 #!/bin/bash
 # build_ramdisk.sh - Build RAM disk images
 
+# exit on error to stop unexpected errors
+set -o errexit
+
 if [ ! "$#" -eq "1" ]; then
-    echo "$0 builds a gziped natty openstack install"
+    echo "$0 builds a gziped Ubuntu OpenStack install"
     echo "usage: $0 dest"
     exit 1
 fi
 
+# Clean up any resources that may be in use
+cleanup() {
+    set +o errexit
+
+    # Mop up temporary files
+    if [ -n "$MNTDIR" -a -d "$MNTDIR" ]; then
+        umount $MNTDIR
+        rmdir $MNTDIR
+    fi
+    if [ -n "$DEV_FILE_TMP" -a -e "$DEV_FILE_TMP "]; then
+        rm -f $DEV_FILE_TMP
+    fi
+    if [ -n "$IMG_FILE_TMP" -a -e "$IMG_FILE_TMP" ]; then
+        rm -f $IMG_FILE_TMP
+    fi
+
+    # Release NBD devices
+    if [ -n "$NBD" ]; then
+        qemu-nbd -d $NBD
+    fi
+
+    # Kill ourselves to signal any calling process
+    trap 2; kill -2 $$
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
+
+# Set up nbd
+modprobe nbd max_part=63
+
+# Echo commands
+set -o xtrace
+
 IMG_FILE=$1
 
-PROGDIR=`dirname $0`
-CHROOTCACHE=${CHROOTCACHE:-/var/cache/devstack}
-
-# Source params
-source ./stackrc
+# Keep track of the current directory
+TOOLS_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
 # Store cwd
 CWD=`pwd`
 
+cd $TOP_DIR
+
+# Source params
+source ./stackrc
+
+CACHEDIR=${CACHEDIR:-/var/cache/devstack}
+
 DEST=${DEST:-/opt/stack}
+
+# Configure the root password of the vm to be the same as ``ADMIN_PASSWORD``
+ROOT_PASSWORD=${ADMIN_PASSWORD:-password}
+
+# Base image (natty by default)
+DIST_NAME=${DIST_NAME:-natty}
 
 # Param string to pass to stack.sh.  Like "EC2_DMZ_HOST=192.168.1.1 MYSQL_USER=nova"
 STACKSH_PARAMS=${STACKSH_PARAMS:-}
@@ -26,35 +73,48 @@ STACKSH_PARAMS=${STACKSH_PARAMS:-}
 # Option to use the version of devstack on which we are currently working
 USE_CURRENT_DEVSTACK=${USE_CURRENT_DEVSTACK:-1}
 
-# Set up nbd
-modprobe nbd max_part=63
-NBD=${NBD:-/dev/nbd9}
-NBD_DEV=`basename $NBD`
-
-# clean install of natty
-if [ ! -r $CHROOTCACHE/natty-base.img ]; then
-    $PROGDIR/get_uec_image.sh natty $CHROOTCACHE/natty-base.img
-#    # copy kernel modules...
-#    # NOTE(ja): is there a better way to do this?
-#    cp -pr /lib/modules/`uname -r` $CHROOTCACHE/natty-base/lib/modules
-#    # a simple password - pass
-#    echo root:pass | chroot $CHROOTCACHE/natty-base chpasswd
+# clean install
+if [ ! -r $CACHEDIR/$DIST_NAME-base.img ]; then
+    $TOOLS_DIR/get_uec_image.sh $DIST_NAME $CACHEDIR/$DIST_NAME-base.img
 fi
 
-# prime natty with as many apt/pips as we can
-if [ ! -r $CHROOTCACHE/natty-dev.img ]; then
-    cp -p $CHROOTCACHE/natty-base.img $CHROOTCACHE/natty-dev.img
-
-    qemu-nbd -c $NBD $CHROOTCACHE/natty-dev.img
-    if ! timeout 60 sh -c "while ! [ -e /sys/block/$NBD_DEV/pid ]; do sleep 1; done"; then
-        echo "Couldn't connect $NBD"
+# Finds the next available NBD device
+# Exits script if error connecting or none free
+# map_nbd image
+# returns full nbd device path
+function map_nbd {
+    for i in `seq 0 15`; do
+        if [ ! -e /sys/block/nbd$i/pid ]; then
+            NBD=/dev/nbd$i
+            # Connect to nbd and wait till it is ready
+            qemu-nbd -c $NBD $1
+            if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
+                echo "Couldn't connect $NBD"
+                exit 1
+            fi
+            break
+        fi
+    done
+    if [ -z "$NBD" ]; then
+        echo "No free NBD slots"
         exit 1
     fi
+    echo $NBD
+}
+
+# prime image with as many apt/pips as we can
+DEV_FILE=$CACHEDIR/$DIST_NAME-dev.img
+DEV_FILE_TMP=`mktemp $DEV_FILE.XXXXXX`
+if [ ! -r $DEV_FILE ]; then
+    cp -p $CACHEDIR/$DIST_NAME-base.img $DEV_FILE_TMP
+
+    NBD=`map_nbd $DEV_FILE_TMP`
     MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
     mount -t ext4 ${NBD}p1 $MNTDIR
     cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
 
-    chroot $MNTDIR apt-get install -y `cat files/apts/* | cut -d\# -f1 | egrep -v "(rabbitmq|libvirt-bin|mysql-server)"`
+    chroot $MNTDIR apt-get install -y --download-only `cat files/apts/* | grep NOPRIME | cut -d\# -f1`
+    chroot $MNTDIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1`
     chroot $MNTDIR pip install `cat files/pips/*`
 
     # Create a stack user that is a member of the libvirtd group so that stack
@@ -66,6 +126,7 @@ if [ ! -r $CHROOTCACHE/natty-dev.img ]; then
 
     # a simple password - pass
     echo stack:pass | chroot $MNTDIR chpasswd
+    echo root:$ROOT_PASSWORD | chroot $MNTDIR chpasswd
 
     # and has sudo ability (in the future this should be limited to only what
     # stack requires)
@@ -74,27 +135,31 @@ if [ ! -r $CHROOTCACHE/natty-dev.img ]; then
     umount $MNTDIR
     rmdir $MNTDIR
     qemu-nbd -d $NBD
+    NBD=""
+    mv $DEV_FILE_TMP $DEV_FILE
 fi
+rm -f $DEV_FILE_TMP
 
 # clone git repositories onto the system
 # ======================================
 
+IMG_FILE_TMP=`mktemp $IMG_FILE.XXXXXX`
+
 if [ ! -r $IMG_FILE ]; then
-    qemu-nbd -c $NBD $CHROOTCACHE/natty-dev.img
-    if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
-        echo "Couldn't connect $NBD"
-        exit 1
-    fi
+    NBD=`map_nbd $DEV_FILE`
 
     # Pre-create the image file
     # FIXME(dt): This should really get the partition size to
     #            pre-create the image file
-    dd if=/dev/zero of=$IMG_FILE bs=1 count=1 seek=$((2*1024*1024*1024))
+    dd if=/dev/zero of=$IMG_FILE_TMP bs=1 count=1 seek=$((2*1024*1024*1024))
     # Create filesystem image for RAM disk
-    dd if=${NBD}p1 of=$IMG_FILE bs=1M
+    dd if=${NBD}p1 of=$IMG_FILE_TMP bs=1M
 
     qemu-nbd -d $NBD
+    NBD=""
+    mv $IMG_FILE_TMP $IMG_FILE
 fi
+rm -f $IMG_FILE_TMP
 
 MNTDIR=`mktemp -d --tmpdir mntXXXXXXXX`
 mount -t ext4 -o loop $IMG_FILE $MNTDIR

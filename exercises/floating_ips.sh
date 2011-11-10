@@ -84,6 +84,15 @@ nova boot --flavor $FLAVOR --image $IMAGE $NAME --security_groups=$SECGROUP
 # Waiting for boot
 # ----------------
 
+# Max time to wait while vm goes from build to active state
+ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-10}
+
+# Max time till the vm is bootable
+BOOT_TIMEOUT=${BOOT_TIMEOUT:-15}
+
+# Max time to wait for proper association and dis-association.
+ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-10}
+
 # check that the status is active within ACTIVE_TIMEOUT seconds
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $NAME | grep status | grep -q ACTIVE; do sleep 1; done"; then
     echo "server didn't become active!"
@@ -158,7 +167,7 @@ ping -c1 -w1 $IP
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
 # FIXME (anthony): make xs support security groups
-if [ "$VIRT_DRIVER" != "xenserver"]; then
+if [ "$VIRT_DRIVER" != "xenserver" ]; then
     # test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
     if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
         print "Security group failure - ping should not be allowed!"

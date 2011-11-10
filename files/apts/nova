@@ -1,7 +1,9 @@
 dnsmasq-base
+dnsmasq-utils # for dhcp_release
 kpartx
 parted
-mysql-server
+arping # used for send_arp_for_ha option in nova-network
+mysql-server # NOPRIME
 python-mysqldb
 kvm
 gawk
@@ -10,10 +12,10 @@ ebtables
 sqlite3
 sudo
 kvm
-libvirt-bin
+libvirt-bin # NOPRIME
 vlan
 curl
-rabbitmq-server
+rabbitmq-server # NOPRIME
 socat # used by ajaxterm
 python-mox
 python-paste

@@ -70,7 +70,7 @@ fi
 # called ``localrc``
 #
 # If ``localrc`` exists, then ``stackrc`` will load those settings.  This is
-# useful for changing a branch or repostiory to test other versions.  Also you
+# useful for changing a branch or repository to test other versions.  Also you
 # can store your other settings like **MYSQL_PASSWORD** or **ADMIN_PASSWORD** instead
 # of letting devstack generate random ones for you.
 source ./stackrc
@@ -103,8 +103,7 @@ if [[ $EUID -eq 0 ]]; then
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
-    apt_get update
-    apt_get install sudo
+    dpkg -l sudo || apt_get update && apt_get install sudo
 
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
@@ -150,6 +149,12 @@ KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
+SWIFT_DIR=$DEST/swift
+SWIFT_KEYSTONE_DIR=$DEST/swift-keystone2
+QUANTUM_DIR=$DEST/quantum
+
+# Default Quantum Plugin
+Q_PLUGIN=${Q_PLUGIN:-openvswitch}
 
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit}
@@ -168,6 +173,9 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 if [ ! -n "$HOST_IP" ]; then
     HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
 fi
+
+# Service startup timeout
+SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 
 # Generic helper to configure passwords
 function read_password {
@@ -224,7 +232,7 @@ VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
 # Multi-host is a mode where each compute node runs its own network node.  This
 # allows network operations and routing for a VM to occur on the server that is
 # running the VM - removing a SPOF and bandwidth bottleneck.
-MULTI_HOST=${MULTI_HOST:-0}
+MULTI_HOST=${MULTI_HOST:-False}
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
@@ -239,10 +247,21 @@ MULTI_HOST=${MULTI_HOST:-0}
 # If you are running on a single node and don't need to access the VMs from
 # devices other than that node, you can set the flat interface to the same
 # value as ``FLAT_NETWORK_BRIDGE``.  This will stop the network hiccup from
-# occuring.
+# occurring.
 FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
+
+# Using Quantum networking:
+#
+# Make sure that q-svc is enabled in ENABLED_SERVICES.  If it is the network
+# manager will be set to the QuantumManager.
+#
+# If you're planning to use the Quantum openvswitch plugin, set Q_PLUGIN to
+# "openvswitch" and make sure the q-agt service is enabled in
+# ENABLED_SERVICES.
+#
+# With Quantum networking the NET_MAN variable is ignored.
 
 
 # MySQL & RabbitMQ
@@ -270,6 +289,42 @@ read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
 
+# SWIFT
+# -----
+# TODO: implement glance support
+# TODO: add logging to different location.
+
+# By default the location of swift drives and objects is located inside
+# the swift source directory. SWIFT_DATA_LOCATION variable allow you to redefine
+# this.
+SWIFT_DATA_LOCATION=${SWIFT_DATA_LOCATION:-${SWIFT_DIR}/data}
+
+# We are going to have the configuration files inside the source
+# directory, change SWIFT_CONFIG_LOCATION if you want to adjust that.
+SWIFT_CONFIG_LOCATION=${SWIFT_CONFIG_LOCATION:-${SWIFT_DIR}/config}
+
+# devstack will create a loop-back disk formatted as XFS to store the
+# swift data. By default the disk size is 1 gigabyte. The variable
+# SWIFT_LOOPBACK_DISK_SIZE specified in bytes allow you to change
+# that.
+SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
+
+# The ring uses a configurable number of bits from a path’s MD5 hash as
+# a partition index that designates a device. The number of bits kept
+# from the hash is known as the partition power, and 2 to the partition
+# power indicates the partition count. Partitioning the full MD5 hash
+# ring allows other parts of the cluster to work in batches of items at
+# once which ends up either more efficient or at least less complex than
+# working with each item separately or the entire cluster all at once.
+# By default we define 9 for the partition count (which mean 512).
+SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
+
+# We only ask for Swift Hash if we have enabled swift service.
+if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+    # SWIFT_HASH is a random unique string for a swift cluster that
+    # can never change.
+    read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
+fi
 
 # Keystone
 # --------
@@ -283,7 +338,7 @@ read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (
 LOGFILE=${LOGFILE:-"$PWD/stack.sh.$$.log"}
 (
 # So that errors don't compound we exit on any errors so you see only the
-# first error that occured.
+# first error that occurred.
 trap failed ERR
 failed() {
     local r=$?
@@ -310,7 +365,7 @@ fi
 
 # install apt requirements
 apt_get update
-apt_get install `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server"`
+apt_get install `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server|memcached"`
 
 # install python requirements
 sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
@@ -349,6 +404,10 @@ function git_clone {
 
 # compute service
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
+# storage service
+git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
+# swift + keystone middleware
+git_clone $SWIFT_KEYSTONE_REPO $SWIFT_KEYSTONE_DIR $SWIFT_KEYSTONE_BRANCH
 # image catalog service
 git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
 # unified auth system (manages accounts/tokens)
@@ -362,6 +421,8 @@ git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
+# quantum
+git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 
 # Initialization
 # ==============
@@ -370,12 +431,15 @@ git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
 cd $KEYSTONE_DIR; sudo python setup.py develop
+cd $SWIFT_DIR; sudo python setup.py develop
+cd $SWIFT_KEYSTONE_DIR; sudo python setup.py develop
 cd $GLANCE_DIR; sudo python setup.py develop
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $NOVA_DIR; sudo python setup.py develop
 cd $OPENSTACKX_DIR; sudo python setup.py develop
 cd $HORIZON_DIR/django-openstack; sudo python setup.py develop
 cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
+cd $QUANTUM_DIR; sudo python setup.py develop
 
 # Add a useful screenrc.  This isn't required to run openstack but is we do
 # it since we are going to run the services in screen for simple
@@ -500,13 +564,12 @@ fi
 # ----
 
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
-    # We are going to use the sample http middleware configuration from the
-    # keystone project to launch nova.  This paste config adds the configuration
-    # required for nova to validate keystone tokens - except we need to switch
-    # the config to use our service token instead (instead of the invalid token
-    # 999888777666).
-    cp $KEYSTONE_DIR/examples/paste/nova-api-paste.ini $NOVA_DIR/bin
-    sed -e "s,999888777666,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
+    # We are going to use a sample http middleware configuration based on the
+    # one from the keystone project to launch nova.  This paste config adds
+    # the configuration required for nova to validate keystone tokens. We add
+    # our own service token to the configuration.
+    cp $FILES/nova-api-paste.ini $NOVA_DIR/bin
+    sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
@@ -580,6 +643,129 @@ if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
     mkdir -p $NOVA_DIR/networks
 fi
 
+# Storage Service
+if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+    # We first do a bit of setup by creating the directories and
+    # changing the permissions so we can run it as our user.
+
+    USER_GROUP=$(id -g)
+    sudo mkdir -p ${SWIFT_DATA_LOCATION}/drives
+    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_LOCATION}/drives
+
+    # We then create a loopback disk and format it to XFS.
+    if [[ ! -e ${SWIFT_DATA_LOCATION}/drives/images/swift.img ]];then
+        mkdir -p  ${SWIFT_DATA_LOCATION}/drives/images
+        sudo touch  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
+        sudo chown $USER: ${SWIFT_DATA_LOCATION}/drives/images/swift.img
+
+        dd if=/dev/zero of=${SWIFT_DATA_LOCATION}/drives/images/swift.img \
+            bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
+        mkfs.xfs -f -i size=1024  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
+    fi
+
+    # After the drive being created we mount the disk with a few mount
+    # options to make it most efficient as possible for swift.
+    mkdir -p ${SWIFT_DATA_LOCATION}/drives/sdb1
+    if ! egrep -q ${SWIFT_DATA_LOCATION}/drives/sdb1 /proc/mounts;then
+        sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
+            ${SWIFT_DATA_LOCATION}/drives/images/swift.img ${SWIFT_DATA_LOCATION}/drives/sdb1
+    fi
+
+    # We then create link to that mounted location so swift would know
+    # where to go.
+    for x in {1..4}; do sudo ln -sf ${SWIFT_DATA_LOCATION}/drives/sdb1/$x ${SWIFT_DATA_LOCATION}/$x; done
+
+    # We now have to emulate a few different servers into one we
+    # create all the directories needed for swift
+    tmpd=""
+    for d in ${SWIFT_DATA_LOCATION}/drives/sdb1/{1..4} \
+        ${SWIFT_CONFIG_LOCATION}/{object,container,account}-server \
+        ${SWIFT_DATA_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
+        [[ -d $d ]] && continue
+        sudo install -o ${USER} -g $USER_GROUP -d $d
+    done
+
+   # We do want to make sure this is all owned by our user.
+   sudo chown -R $USER: ${SWIFT_DATA_LOCATION}/{1..4}/node
+   sudo chown -R $USER: ${SWIFT_CONFIG_LOCATION}
+
+   # swift-init has a bug using /etc/swift until bug #885595 is fixed
+   # we have to create a link
+   sudo ln -s ${SWIFT_CONFIG_LOCATION} /etc/swift
+
+   # Swift use rsync to syncronize between all the different
+   # partitions (which make more sense when you have a multi-node
+   # setup) we configure it with our version of rsync.
+   sed -e "s/%GROUP%/${USER_GROUP}/;s/%USER%/$USER/;s,%SWIFT_DATA_LOCATION%,$SWIFT_DATA_LOCATION," $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
+   sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
+
+   # By default Swift will be installed with the tempauth middleware
+   # which has some default username and password if you have
+   # configured keystone it will checkout the directory.
+   if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+       swift_auth_server=keystone
+       # We need a special version of bin/swift which understand the
+       # OpenStack api 2.0, we download it until this is getting
+       # integrated in swift.
+       sudo curl -s -o/usr/local/bin/swift \
+           'https://review.openstack.org/gitweb?p=openstack/swift.git;a=blob_plain;f=bin/swift;hb=48bfda6e2fdf3886c98bd15649887d54b9a2574e'
+   else
+       swift_auth_server=tempauth
+   fi
+
+   # We do the install of the proxy-server and swift configuration
+   # replacing a few directives to match our configuration.
+   sed "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s/%USER%/$USER/;s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
+       $FILES/swift/proxy-server.conf|sudo tee  ${SWIFT_CONFIG_LOCATION}/proxy-server.conf
+
+   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > ${SWIFT_CONFIG_LOCATION}/swift.conf
+
+   # We need to generate a object/account/proxy configuration
+   # emulating 4 nodes on different ports we have a little function
+   # that help us doing that.
+   function generate_swift_configuration() {
+       local server_type=$1
+       local bind_port=$2
+       local log_facility=$3
+       local node_number
+
+       for node_number in {1..4};do
+           node_path=${SWIFT_DATA_LOCATION}/${node_number}
+           sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
+               $FILES/swift/${server_type}-server.conf > ${SWIFT_CONFIG_LOCATION}/${server_type}-server/${node_number}.conf
+           bind_port=$(( ${bind_port} + 10 ))
+           log_facility=$(( ${log_facility} + 1 ))
+       done
+   }
+   generate_swift_configuration object 6010 2
+   generate_swift_configuration container 6011 2
+   generate_swift_configuration account 6012 2
+
+   # We create two helper scripts :
+   #
+   # - swift-remakerings
+   #   Allow to recreate rings from scratch.
+   # - swift-startmain
+   #   Restart your full cluster.
+   #
+   sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s/%SWIFT_PARTITION_POWER_SIZE%/$SWIFT_PARTITION_POWER_SIZE/" $FILES/swift/swift-remakerings | \
+       sudo tee /usr/local/bin/swift-remakerings
+   sudo install -m755 $FILES/swift/swift-startmain /usr/local/bin/
+   sudo chmod +x /usr/local/bin/swift-*
+
+   # We then can start rsync.
+   sudo /etc/init.d/rsync restart || :
+
+   # Create our ring for the object/container/account.
+   /usr/local/bin/swift-remakerings
+
+   # And now we launch swift-startmain to get our cluster running
+   # ready to be tested.
+   /usr/local/bin/swift-startmain || :
+
+   unset s swift_hash swift_auth_server tmpd
+fi
+
 # Volume Service
 # --------------
 
@@ -593,7 +779,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
     # By default, the backing file is 2G in size, and is stored in /opt/stack.
     #
     if ! sudo vgdisplay | grep -q nova-volumes; then
-        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-/opt/stack/nova-volumes-backing-file}
+        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
         VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
         truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
         DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
@@ -616,8 +802,16 @@ add_nova_flag "--nodaemon"
 add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
-add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
 add_nova_flag "--fixed_range=$FIXED_RANGE"
+if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
+    add_nova_flag "--network_manager=nova.network.quantum.manager.QuantumManager"
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        add_nova_flag "--libvirt_vif_type=ethernet"
+        add_nova_flag "--libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
+    fi
+else
+    add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
+fi
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
 add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
@@ -632,15 +826,16 @@ add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
 add_nova_flag "--rabbit_password=$RABBIT_PASSWORD"
 add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
+add_nova_flag "--force_dhcp_release"
 if [ -n "$INSTANCES_PATH" ]; then
     add_nova_flag "--instances_path=$INSTANCES_PATH"
 fi
-if [ -n "$MULTI_HOST" ]; then
-    add_nova_flag "--multi_host=$MULTI_HOST"
-    add_nova_flag "--send_arp_for_ha=1"
+if [ "$MULTI_HOST" != "False" ]; then
+    add_nova_flag "--multi_host"
+    add_nova_flag "--send_arp_for_ha"
 fi
 if [ "$SYSLOG" != "False" ]; then
-    add_nova_flag "--use_syslog=1"
+    add_nova_flag "--use_syslog"
 fi
 
 # XenServer
@@ -676,12 +871,6 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
 
     # (re)create nova database
     $NOVA_DIR/bin/nova-manage db sync
-
-    # create a small network
-    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
-
-    # create some floating ips
-    $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 fi
 
 
@@ -721,16 +910,20 @@ fi
 function screen_it {
     NL=`echo -ne '\015'`
     if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
-        screen -S nova -X screen -t $1
-        screen -S nova -p $1 -X stuff "$2$NL"
+        screen -S stack -X screen -t $1
+        # sleep to allow bash to be ready to be send the command - we are
+        # creating a new window in screen and then sends characters, so if
+        # bash isn't running by the time we send the command, nothing happens
+        sleep 1
+        screen -S stack -p $1 -X stuff "$2$NL"
     fi
 }
 
 # create a new named screen to run processes in
-screen -d -m -S nova -t nova
+screen -d -m -S stack -t stack
 sleep 1
 
-# launch the glance registery service
+# launch the glance registry service
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
 fi
@@ -739,7 +932,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-    if ! timeout 60 sh -c "while ! wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
       echo "g-api did not start"
       exit 1
     fi
@@ -749,7 +942,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF -d"
     echo "Waiting for keystone to start..."
-    if ! timeout 60 sh -c "while ! wget -q -O- http://127.0.0.1:5000; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://127.0.0.1:5000; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
@@ -759,11 +952,62 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
     echo "Waiting for nova-api to start..."
-    if ! timeout 60 sh -c "while ! wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
       echo "nova-api did not start"
       exit 1
     fi
 fi
+
+# Quantum
+if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
+    # Install deps
+    # FIXME add to files/apts/quantum, but don't install if not needed!
+    apt_get install openvswitch-switch openvswitch-datapath-dkms
+
+    # Create database for the plugin/agent
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum;'
+        else
+            echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
+            exit 1
+        fi
+    fi
+
+    QUANTUM_PLUGIN_INI_FILE=$QUANTUM_DIR/quantum/plugins.ini
+    # Make sure we're using the openvswitch plugin
+    sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
+    screen_it q-svc "cd $QUANTUM_DIR && export PYTHONPATH=.:$PYTHONPATH; python $QUANTUM_DIR/bin/quantum $QUANTUM_DIR/etc/quantum.conf"
+fi
+
+# Quantum agent (for compute nodes)
+if [[ "$ENABLED_SERVICES" =~ "q-agt" ]]; then
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        # Set up integration bridge
+        OVS_BRIDGE=${OVS_BRIDGE:-br-int}
+        sudo ovs-vsctl --no-wait -- --if-exists del-br $OVS_BRIDGE
+        sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
+        sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
+    fi
+
+    # Start up the quantum <-> openvswitch agent
+    screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_DIR/quantum/plugins/openvswitch/ovs_quantum_plugin.ini -v"
+fi
+
+# If we're using Quantum (i.e. q-svc is enabled), network creation has to
+# happen after we've started the Quantum service.
+if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+    # create a small network
+    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
+
+    if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
+        echo "Not creating floating IPs (not supported by QuantumManager)"
+    else
+        # create some floating ips
+        $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+    fi
+fi
+
 # Launching nova-compute should be as simple as running ``nova-compute`` but
 # have to do a little more than that in our script.  Since we add the group
 # ``libvirtd`` to our user in this script, when nova-compute is run it is
@@ -787,7 +1031,7 @@ screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
 # TTY also uses cloud-init, supporting login via keypair and sending scripts as
 # userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
 #
-# Override ``IMAGE_URLS`` with a comma-seperated list of uec images.
+# Override ``IMAGE_URLS`` with a comma-separated list of uec images.
 #
 #  * **natty**: http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz
 #  * **oneiric**: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
@@ -842,6 +1086,10 @@ for ret in "${PIPESTATUS[@]}"; do [ $ret -eq 0 ] || exit $ret; done
 (
 # Using the cloud
 # ===============
+
+echo ""
+echo ""
+echo ""
 
 # If you installed the horizon on this server, then you should be able
 # to access the site using your browser.

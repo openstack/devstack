@@ -30,12 +30,13 @@ $BIN_DIR/keystone-manage $* role grant KeystoneServiceAdmin admin
 $BIN_DIR/keystone-manage $* service add nova compute "Nova Compute Service"
 $BIN_DIR/keystone-manage $* service add glance image "Glance Image Service"
 $BIN_DIR/keystone-manage $* service add keystone identity "Keystone Identity Service"
+$BIN_DIR/keystone-manage $* service add swift object-store "Swift Service"
 
 #endpointTemplates
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne nova http://%HOST_IP%:8774/v1.1/%tenant_id% http://%HOST_IP%:8774/v1.1/%tenant_id%  http://%HOST_IP%:8774/v1.1/%tenant_id% 1 1
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne glance http://%HOST_IP%:9292/v1.1/%tenant_id% http://%HOST_IP%:9292/v1.1/%tenant_id% http://%HOST_IP%:9292/v1.1/%tenant_id% 1 1
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne keystone http://%HOST_IP%:5000/v2.0 http://%HOST_IP%:35357/v2.0 http://%HOST_IP%:5000/v2.0 1 1
-# $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne swift http://%HOST_IP%:8080/v1/AUTH_%tenant_id% http://%HOST_IP%:8080/ http://%HOST_IP%:8080/v1/AUTH_%tenant_id% 1 1
+$BIN_DIR/keystone-manage $* endpointTemplates add RegionOne swift http://%HOST_IP%:8080/v1/AUTH_%tenant_id% http://%HOST_IP%:8080/ http://%HOST_IP%:8080/v1/AUTH_%tenant_id% 1 1
 
 # Tokens
 $BIN_DIR/keystone-manage $* token add %SERVICE_TOKEN% admin admin 2015-02-05T00:00

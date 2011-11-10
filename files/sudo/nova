@@ -41,7 +41,7 @@ Cmnd_Alias NOVACMDS = /bin/chmod /var/lib/nova/tmp/*/root/.ssh, \
                       /usr/bin/socat,                           \
                       /sbin/parted,                             \
                       /usr/sbin/dnsmasq,                        \
-                      /usr/bin/arping
+                      /usr/sbin/arping
 
 %USER% ALL = (root) NOPASSWD: SETENV: NOVACMDS
 
