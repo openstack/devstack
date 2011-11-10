@@ -40,8 +40,14 @@ mkdir -p $STAGING_DIR/$DEST
 chroot $STAGING_DIR groupadd libvirtd || true
 chroot $STAGING_DIR useradd stack -s /bin/bash -d $DEST -G libvirtd || true
 
-# a simple password - pass
+# Add a simple password - pass
 echo stack:pass | chroot $STAGING_DIR chpasswd
+
+# Configure sudo
+grep -q "^#includedir.*/etc/sudoers.d" $STAGING_DIR/etc/sudoers ||
+    echo "#includedir /etc/sudoers.d" | sudo tee -a $STAGING_DIR/etc/sudoers
+cp $TOP_DIR/files/sudo/* $STAGING_DIR/etc/sudoers.d/
+sed -e "s,%USER%,$USER,g" -i $STAGING_DIR/etc/sudoers.d/*
 
 # and has sudo ability (in the future this should be limited to only what
 # stack requires)
@@ -64,3 +70,5 @@ cp_it ~/.bashrc $STAGING_DIR/$DEST/.bashrc
 # Give stack ownership over $DEST so it may do the work needed
 chroot $STAGING_DIR chown -R stack $DEST
 
+# Unmount
+umount $STAGING_DIR

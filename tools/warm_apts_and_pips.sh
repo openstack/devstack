@@ -48,4 +48,6 @@ chroot $STAGING_DIR apt-get install -y --download-only `cat files/apts/* | grep 
 chroot $STAGING_DIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1` || true
 mkdir -p $STAGING_DIR/var/cache/pip
 PIP_DOWNLOAD_CACHE=/var/cache/pip chroot $STAGING_DIR pip install `cat files/pips/*` || true
+
+# Unmount
 umount $STAGING_DIR
