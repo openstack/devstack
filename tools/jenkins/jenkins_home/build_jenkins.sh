@@ -42,7 +42,8 @@ cat > $JENKINS_GITCONF <<EOF
 EOF
 
 # Add build numbers
-for job in ${`ls jobs`// / }; do
+JOBS=`ls jobs`
+for job in ${JOBS// / }; do
     if [ ! -e jobs/$job/nextBuildNumber ]; then
         echo 1 > jobs/$job/nextBuildNumber
     fi
