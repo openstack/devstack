@@ -47,7 +47,7 @@
       <name>ADAPTER</name>
       <values>
         <string>euca</string>
-        <string>floatingips</string>
+        <string>floating_ips</string>
       </values>
     </hudson.matrix.TextAxis>
   </axes>

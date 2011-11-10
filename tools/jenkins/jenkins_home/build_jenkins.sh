@@ -41,6 +41,13 @@ cat > $JENKINS_GITCONF <<EOF
 </hudson.plugins.git.GitSCM_-DescriptorImpl>
 EOF
 
+# Add build numbers
+for job in ${`ls jobs`// / }; do
+    if [ ! -e jobs/$job/nextBuildNumber ]; then
+        echo 1 > jobs/$job/nextBuildNumber
+    fi
+done
+
 # Set ownership to jenkins
 chown -R jenkins $CUR_DIR
 
