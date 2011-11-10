@@ -171,7 +171,7 @@ instance-type: m1.ignore
 local-hostname: $GUEST_NAME.local
 EOF
 
-# set metadata
+# set user-data
 cat > $vm_dir/uec/user-data<<EOF
 #!/bin/bash
 # hostname needs to resolve for rabbit
@@ -191,7 +191,7 @@ EOF
 
 # Setup stack user with our key
 if [ -e ~/.ssh/id_rsa.pub ]; then
-    cat > $vm_dir/uec/user-data<<EOF
+    cat >> $vm_dir/uec/user-data<<EOF
 mkdir -p /opt/stack
 useradd stack -s /bin/bash -d /opt/stack -G libvirtd || true
 echo stack:pass | chpasswd
@@ -209,7 +209,7 @@ EOF
 fi
 
 # Run stack.sh
-cat > $vm_dir/uec/user-data<<EOF
+cat >> $vm_dir/uec/user-data<<EOF
 ./stack.sh
 EOF
 
