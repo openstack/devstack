@@ -22,7 +22,7 @@ CUR_DIR=$(cd $(dirname "$0") && pwd)
 
 # devstack directory
 cd ../../..
-TOP_DIR=(pwd)
+TOP_DIR=$(pwd)
 
 # Name test instance based on executor
 BASE_NAME=executor-`printf "%02d" $EXECUTOR_NUMBER`
