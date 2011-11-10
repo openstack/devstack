@@ -43,7 +43,7 @@ SERVICE_TOKEN=chicken
 ADMIN_PASSWORD=chicken
 USERNAME=admin
 TENANT=admin
-NET_NAME=$GUEST_NAME
+NET_NAME=$BASE_NAME
 EOF
 cd tools
 sudo ./build_uec.sh
