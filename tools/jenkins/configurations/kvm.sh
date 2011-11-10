@@ -12,7 +12,7 @@ function usage() {
 }
 
 # Validate inputs
-if [[ "$EXECUTOR_NUMBER" = "" || "$CONFIGURATION" = ""  || "$ADAPTER" = ""]]; then
+if [[ "$EXECUTOR_NUMBER" = "" || "$CONFIGURATION" = ""  || "$ADAPTER" = "" ]]; then
     usage
 fi
 
