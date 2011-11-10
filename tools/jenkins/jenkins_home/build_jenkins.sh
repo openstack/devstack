@@ -84,4 +84,5 @@ for plugin in ${PLUGINS//,/ }; do
 done
 
 # Restart jenkins
-restart jenkins
+stop jenkins || true
+start jenkins
