@@ -191,12 +191,13 @@ EOF
 
 # Setup stack user with our key
 if [ -e ~/.ssh/id_rsa.pub ]; then
+    PUB_KEY=`cat  ~/.ssh/id_rsa.pub`
     cat >> $vm_dir/uec/user-data<<EOF
 mkdir -p /opt/stack
 useradd stack -s /bin/bash -d /opt/stack -G libvirtd || true
 echo stack:pass | chpasswd
 mkdir -p /opt/stack/.ssh
-echo "`cat ~/.ssh/id_rsa.pub`" > /opt/stack/.ssh/authorized_keys
+echo "$PUB_KEY" > /opt/stack/.ssh/authorized_keys
 chown -R stack /opt/stack
 chmod 700 /opt/stack/.ssh
 chmod 600 /opt/stack/.ssh/authorized_keys
