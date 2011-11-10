@@ -4,7 +4,7 @@
 set -o errexit
 
 if [ ! "$FORCE" = "yes" ]; then
-    echo "FORCE not set to 1.  Make sure this is something you really want to do.  Exiting."
+    echo "FORCE not set to 'yes'.  Make sure this is something you really want to do.  Exiting."
     exit 1
 fi
 
