@@ -135,7 +135,7 @@ cat > $LIBVIRT_XML <<EOF
     </disk>
 
     <interface type='network'>
-      <source network='devstack-$GUEST_NETWORK'/>
+      <source network='$NET_NAME'/>
     </interface>
         
     <!-- The order is significant here.  File must be defined first -->
