@@ -1,4 +1,5 @@
 dnsmasq-base
+dnsmasq-utils # for dhcp_release
 kpartx
 parted
 arping # used for send_arp_for_ha option in nova-network
