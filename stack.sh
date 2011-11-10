@@ -704,6 +704,11 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
    # configured keystone it will checkout the directory.
    if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
        swift_auth_server=keystone
+
+       # We install the memcache server as this is will be used by the
+       # middleware to cache the tokens auths for a long this is needed.
+       apt_get install memcached
+
        # We need a special version of bin/swift which understand the
        # OpenStack api 2.0, we download it until this is getting
        # integrated in swift.
