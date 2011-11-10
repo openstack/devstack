@@ -90,9 +90,10 @@ GUEST_CORES=${GUEST_CORES:-1}
 
 # libvirt.xml configuration
 NET_XML=$vm_dir/net.xml
+NET_NAME=${NET_NAME:-devstack-$GUEST_NETWORK}
 cat > $NET_XML <<EOF
 <network>
-  <name>devstack-$GUEST_NETWORK</name>
+  <name>$NET_NAME</name>
   <bridge name="stackbr%d" />
   <forward/>
   <ip address="$GUEST_GATEWAY" netmask="$GUEST_NETMASK">
@@ -104,9 +105,9 @@ cat > $NET_XML <<EOF
 EOF
 
 if [[ "$GUEST_RECREATE_NET" == "yes" ]]; then
-    virsh net-destroy devstack-$GUEST_NETWORK || true
+    virsh net-destroy $NET_NAME || true
     # destroying the network isn't enough to delete the leases
-    rm -f /var/lib/libvirt/dnsmasq/devstack-$GUEST_NETWORK.leases
+    rm -f /var/lib/libvirt/dnsmasq/$NET_NAME.leases
     virsh net-create $vm_dir/net.xml
 fi
 

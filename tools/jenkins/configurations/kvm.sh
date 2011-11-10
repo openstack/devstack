@@ -27,7 +27,6 @@ TOP_DIR=(pwd)
 BASE_NAME=executor-`printf "%02d" $EXECUTOR_NUMBER`
 GUEST_NAME=$BASE_NAME.$ADAPTER
 virsh destroy `virsh list | grep $BASE_NAME | cut -d " " -f1` || true
-rm -f /var/lib/libvirt/dnsmasq/$BASE_NAME*.leases
 
 # Configure localrc
 cat <<EOF >localrc
@@ -43,6 +42,7 @@ SERVICE_TOKEN=chicken
 ADMIN_PASSWORD=chicken
 USERNAME=admin
 TENANT=admin
+NET_NAME=$GUEST_NAME
 EOF
 cd tools
 sudo ./build_uec.sh
