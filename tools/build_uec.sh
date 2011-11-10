@@ -187,10 +187,13 @@ cat > localrc <<LOCAL_EOF
 ROOTSLEEP=0
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
+# Disable byobu
+byobu-disable
 EOF
 
 # Setup stack user with our key
-if [ -e ~/.ssh/id_rsa.pub ]; then
+CONFIGURE_STACK_USER=${CONFIGURE_STACK_USER:-yes}
+if [[ -e ~/.ssh/id_rsa.pub  && "$CONFIGURE_STACK_USER" = "yes" ]]; then
     PUB_KEY=`cat  ~/.ssh/id_rsa.pub`
     cat >> $vm_dir/uec/user-data<<EOF
 mkdir -p /opt/stack
@@ -206,8 +209,6 @@ grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
     echo "#includedir /etc/sudoers.d" >> /etc/sudoers
 ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
     > /etc/sudoers.d/50_stack_sh )
-# Disable byobu
-byobu-disable
 EOF
 fi
 
