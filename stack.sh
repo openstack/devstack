@@ -405,25 +405,39 @@ function git_clone {
 
 # compute service
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
-# storage service
-git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
-# swift + keystone middleware
-git_clone $SWIFT_KEYSTONE_REPO $SWIFT_KEYSTONE_DIR $SWIFT_KEYSTONE_BRANCH
-# image catalog service
-git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
-# unified auth system (manages accounts/tokens)
-git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
-# a websockets/html5 or flash powered VNC console for vm instances
-git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
-# django powered web control panel for openstack
-git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
 # python client library to nova that horizon (and others) use
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
-# openstackx is a collection of extensions to openstack.compute & nova
-# that is *deprecated*.  The code is being moved into python-novaclient & nova.
-git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
-# quantum
-git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
+if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+    # storage service
+    git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
+    # swift + keystone middleware
+    git_clone $SWIFT_KEYSTONE_REPO $SWIFT_KEYSTONE_DIR $SWIFT_KEYSTONE_BRANCH
+fi
+if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
+    # image catalog service
+    git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
+fi
+if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+    # unified auth system (manages accounts/tokens)
+    git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
+fi
+if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
+    # a websockets/html5 or flash powered VNC console for vm instances
+    git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
+fi
+if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
+    # django powered web control panel for openstack
+    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+fi
+if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
+    # openstackx is a collection of extensions to openstack.compute & nova
+    # that is *deprecated*.  The code is being moved into python-novaclient & nova.
+    git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
+fi
+if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
+    # quantum
+    git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
+fi
 
 # Initialization
 # ==============
@@ -431,16 +445,28 @@ git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
-cd $KEYSTONE_DIR; sudo python setup.py develop
-cd $SWIFT_DIR; sudo python setup.py develop
-cd $SWIFT_KEYSTONE_DIR; sudo python setup.py develop
-cd $GLANCE_DIR; sudo python setup.py develop
+if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+    cd $KEYSTONE_DIR; sudo python setup.py develop
+fi
+if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+    cd $SWIFT_DIR; sudo python setup.py develop
+    cd $SWIFT_KEYSTONE_DIR; sudo python setup.py develop
+fi
+if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
+    cd $GLANCE_DIR; sudo python setup.py develop
+fi
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $NOVA_DIR; sudo python setup.py develop
-cd $OPENSTACKX_DIR; sudo python setup.py develop
-cd $HORIZON_DIR/django-openstack; sudo python setup.py develop
-cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
-cd $QUANTUM_DIR; sudo python setup.py develop
+if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
+    cd $OPENSTACKX_DIR; sudo python setup.py develop
+fi
+if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
+    cd $HORIZON_DIR/django-openstack; sudo python setup.py develop
+    cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
+fi
+if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
+    cd $QUANTUM_DIR; sudo python setup.py develop
+fi
 
 # Add a useful screenrc.  This isn't required to run openstack but is we do
 # it since we are going to run the services in screen for simple
@@ -819,9 +845,13 @@ add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
 add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
 add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
-add_nova_flag "--osapi_extensions_path=$OPENSTACKX_DIR/extensions"
-add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
-add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
+if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
+    add_nova_flag "--osapi_extensions_path=$OPENSTACKX_DIR/extensions"
+fi
+if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
+    add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
+    add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
+fi
 add_nova_flag "--api_paste_config=$NOVA_DIR/bin/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
@@ -1014,8 +1044,12 @@ screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
 screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
-screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py --flagfile $NOVA_DIR/bin/nova.conf --web . 6080"
-screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
+if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
+    screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py --flagfile $NOVA_DIR/bin/nova.conf --web . 6080"
+fi
+if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
+    screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
+fi
 
 # Install Images
 # ==============
