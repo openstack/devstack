@@ -33,8 +33,10 @@ if [ ! -d files/apts ]; then
 fi 
 
 # Mount the image
-STAGING_DIR=`mktemp -d uec.XXXXXXXXXX`
+STAGING_DIR=/tmp/`echo $1 | sed  "s/\//_/g"`.stage
 mkdir -p $STAGING_DIR
+umount $STAGING_DIR || true
+sleep 1
 mount -t ext4 -o loop $1 $STAGING_DIR
 
 # Make sure that base requirements are installed
@@ -43,6 +45,7 @@ cp /etc/resolv.conf $STAGING_DIR/etc/resolv.conf
 # Perform caching on the base image to speed up subsequent runs
 chroot $STAGING_DIR apt-get update
 chroot $STAGING_DIR apt-get install -y --download-only `cat files/apts/* | grep NOPRIME | cut -d\# -f1`
-chroot $STAGING_DIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1`
-chroot $STAGING_DIR pip install `cat files/pips/*`
-umount $STAGING_DIR && rm -rf $STAGING_DIR
+chroot $STAGING_DIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1` || true
+mkdir -p $STAGING_DIR/var/cache/pip
+PIP_DOWNLOAD_CACHE=/var/cache/pip chroot $STAGING_DIR pip install `cat files/pips/*` || true
+umount $STAGING_DIR
