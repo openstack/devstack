@@ -3,11 +3,12 @@
 EXECUTOR_NUMBER=$1
 CONFIGURATION=$2
 ADAPTER=$3
+RC=$4
 
 function usage() {
     echo "Usage: $0 - Build a test configuration"
     echo ""
-    echo "$0 [EXECUTOR_NUMBER] [CONFIGURATION] [ADAPTER]"
+    echo "$0 [EXECUTOR_NUMBER] [CONFIGURATION] [ADAPTER] [RC (optional)]"
     exit 1
 }
 
@@ -44,6 +45,7 @@ ADMIN_PASSWORD=chicken
 USERNAME=admin
 TENANT=admin
 NET_NAME=$BASE_NAME
+$RC
 EOF
 cd tools
 sudo ./build_uec.sh
