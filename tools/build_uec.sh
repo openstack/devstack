@@ -33,7 +33,7 @@ if [ ! -e $TOP_DIR/localrc ]; then
 fi
 
 # Install deps if needed
-DEPS="kvm libvirt-bin kpartx cloud-utils"
+DEPS="kvm libvirt-bin kpartx cloud-utils curl"
 dpkg -l $DEPS || apt-get install -y --force-yes $DEPS
 
 # Where to store files and instances
