@@ -97,5 +97,5 @@ for plugin in ${PLUGINS//,/ }; do
 done
 
 # Restart jenkins
-stop jenkins || true
-start jenkins
+/etc/init.d/jenkins stop || true
+/etc/init.d/jenkins start
