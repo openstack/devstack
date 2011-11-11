@@ -240,6 +240,11 @@ if [ "$DO_SHUTDOWN" = "1" ]; then
         xe vm-shutdown uuid=$uuid
         xe vm-destroy uuid=$uuid
     done
+
+    # Destroy orphaned vdis
+    for uuid in `xe vdi-list | grep -1 Glance | grep uuid | sed "s/.*\: //g"`; do
+        xe vdi-destroy uuid=$uuid
+    done
 fi
 
 # Path to head xva.  By default keep overwriting the same one to save space
