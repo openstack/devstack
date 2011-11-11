@@ -25,6 +25,13 @@ echo "deb http://pkg.jenkins-ci.org/debian binary/" > /etc/apt/sources.list.d/je
 wget -q -O - http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key | sudo apt-key add -
 apt-get update
 
+
+# Clean out old jenkins - useful if you are having issues upgrading
+CLEAN_JENKINS=${CLEAN_JENKINS:-no}
+if [ "$CLEAN_JENKINS" = "yes" ] then;
+    apt-get remove jenkins jenkins-common
+fi
+
 # Install software
 DEPS="jenkins cloud-utils"
 apt-get install -y --force-yes $DEPS
