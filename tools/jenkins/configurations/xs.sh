@@ -28,7 +28,7 @@ if [ ! -e $XENRC ]; then
 fi
 
 # Move to top of devstack
-cd ../..
+cd ../../..
 
 # Use xenrc as the start of our localrc
 cp $XENRC localrc
