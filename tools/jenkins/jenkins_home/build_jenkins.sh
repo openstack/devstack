@@ -20,6 +20,11 @@ fi
 # This directory
 CUR_DIR=$(cd $(dirname "$0") && pwd)
 
+# Configure trunk jenkins!
+echo "deb http://pkg.jenkins-ci.org/debian binary/" > /etc/apt/sources.list.d/jenkins.list
+wget -q -O - http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key | sudo apt-key add -
+apt-get update
+
 # Install software
 DEPS="jenkins cloud-utils"
 apt-get install -y --force-yes $DEPS
