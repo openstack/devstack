@@ -34,7 +34,7 @@ fi
 
 # Install deps if needed
 DEPS="kvm libvirt-bin kpartx cloud-utils curl"
-dpkg -l $DEPS || apt-get install -y --force-yes $DEPS
+apt-get install -y --force-yes $DEPS
 
 # Where to store files and instances
 WORK_DIR=${WORK_DIR:-/opt/kvmstack}
