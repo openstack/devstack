@@ -188,7 +188,7 @@ ROOTSLEEP=0
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
 # Disable byobu
-byobu-disable
+/usr/bin/byobu-disable
 EOF
 
 # Setup stack user with our key
