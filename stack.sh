@@ -397,7 +397,7 @@ function git_clone {
         # remove the existing ignored files (like pyc) as they cause breakage
         # (due to the py files having older timestamps than our pyc, so python
         # thinks the pyc files are correct using them)
-        sudo git clean -f -d
+        find $GIT_DEST -name '*.pyc' -delete
         git checkout -f origin/$GIT_BRANCH
         # a local branch might not exist
         git branch -D $GIT_BRANCH || true
