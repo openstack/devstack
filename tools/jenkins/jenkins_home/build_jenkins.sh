@@ -28,7 +28,7 @@ apt-get update
 
 # Clean out old jenkins - useful if you are having issues upgrading
 CLEAN_JENKINS=${CLEAN_JENKINS:-no}
-if [ "$CLEAN_JENKINS" = "yes" ] then;
+if [ "$CLEAN_JENKINS" = "yes" ]; then
     apt-get remove jenkins jenkins-common
 fi
 
