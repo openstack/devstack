@@ -24,8 +24,6 @@ and install the the jenkins public key on that server.  You then need to create 
     RABBIT_PASSWORD=secrete
     # This is the password for your guest (for both stack and root users)
     GUEST_PASSWORD=secrete
-    # IMPORTANT: The following must be set to your dom0 root password!
-    XENAPI_PASSWORD='MY_XEN_ROOT_PW'
     # Do not download the usual images yet!
     IMAGE_URLS=""
     FLOATING_RANGE=192.168.1.224/28
@@ -34,4 +32,7 @@ and install the the jenkins public key on that server.  You then need to create 
     MULTI_HOST=1
     # Give extra time for boot
     ACTIVE_TIMEOUT=45
-    XEN_IP=50.56.12.203
+    #  IMPORTANT: This is the ip of your xenserver
+    XEN_IP=10.5.5.1
+    # IMPORTANT: The following must be set to your dom0 root password!
+    XENAPI_PASSWORD='MY_XEN_ROOT_PW'
