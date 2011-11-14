@@ -377,38 +377,38 @@ function get_packages() {
     
     for service in ${ENABLED_SERVICES//,/ }; do
         if [[ $service == n-* ]]; then
-            if [[ ! $file_to_parse =~ nova ]];then
+            if [[ ! $file_to_parse =~ nova ]]; then
                 file_to_parse="${file_to_parse} nova"
             fi
-        elif [[ $service == g-* ]];then
-            if [[ ! $file_to_parse =~ glance ]];then
+        elif [[ $service == g-* ]]; then
+            if [[ ! $file_to_parse =~ glance ]]; then
                 file_to_parse="${file_to_parse} glance"
             fi
-        elif [[ $service == key* ]];then
-            if [[ ! $file_to_parse =~ keystone ]];then
+        elif [[ $service == key* ]]; then
+            if [[ ! $file_to_parse =~ keystone ]]; then
                 file_to_parse="${file_to_parse} keystone"
             fi
-        elif [[ -e $FILES/apts/${service} ]];then
+        elif [[ -e $FILES/apts/${service} ]]; then
             file_to_parse="${file_to_parse} $service"
         fi
     done
 
-    for file in ${file_to_parse};do
+    for file in ${file_to_parse}; do
         local fname=${FILES}/apts/${file}
         local OIFS line package distros distro
         [[ -e $fname ]] || { echo "missing: $fname"; exit 1 ;}
 
         OIFS=$IFS
         IFS=$'\n'
-        for line in $(cat ${fname});do
-            if [[ $line =~ "NOPRIME" ]];then
+        for line in $(cat ${fname}); do
+            if [[ $line =~ "NOPRIME" ]]; then
                 continue
             fi
 
-            if [[ $line =~ (.*)#.*dist:([^ ]*) ]];then # We are using BASH regexp matching feature.
+            if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then # We are using BASH regexp matching feature.
                         package=${BASH_REMATCH[1]}
                         distros=${BASH_REMATCH[2]}
-                        for distro in ${distros//,/ };do  #In bash ${VAR,,} will lowecase VAR
+                        for distro in ${distros//,/ }; do  #In bash ${VAR,,} will lowecase VAR
                             [[ ${distro,,} == ${DISTRO,,} ]] && echo $package
                         done
                         continue
@@ -710,7 +710,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_LOCATION}/drives
 
     # We then create a loopback disk and format it to XFS.
-    if [[ ! -e ${SWIFT_DATA_LOCATION}/drives/images/swift.img ]];then
+    if [[ ! -e ${SWIFT_DATA_LOCATION}/drives/images/swift.img ]]; then
         mkdir -p  ${SWIFT_DATA_LOCATION}/drives/images
         sudo touch  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
         sudo chown $USER: ${SWIFT_DATA_LOCATION}/drives/images/swift.img
@@ -723,7 +723,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     # After the drive being created we mount the disk with a few mount
     # options to make it most efficient as possible for swift.
     mkdir -p ${SWIFT_DATA_LOCATION}/drives/sdb1
-    if ! egrep -q ${SWIFT_DATA_LOCATION}/drives/sdb1 /proc/mounts;then
+    if ! egrep -q ${SWIFT_DATA_LOCATION}/drives/sdb1 /proc/mounts; then
         sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
             ${SWIFT_DATA_LOCATION}/drives/images/swift.img ${SWIFT_DATA_LOCATION}/drives/sdb1
     fi
@@ -737,7 +737,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     tmpd=""
     for d in ${SWIFT_DATA_LOCATION}/drives/sdb1/{1..4} \
         ${SWIFT_CONFIG_LOCATION}/{object,container,account}-server \
-        ${SWIFT_DATA_LOCATION}/{1..4}/node/sdb1 /var/run/swift ;do
+        ${SWIFT_DATA_LOCATION}/{1..4}/node/sdb1 /var/run/swift; do
         [[ -d $d ]] && continue
         sudo install -o ${USER} -g $USER_GROUP -d $d
     done
@@ -786,7 +786,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
        local log_facility=$3
        local node_number
 
-       for node_number in {1..4};do
+       for node_number in {1..4}; do
            node_path=${SWIFT_DATA_LOCATION}/${node_number}
            sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
                $FILES/swift/${server_type}-server.conf > ${SWIFT_CONFIG_LOCATION}/${server_type}-server/${node_number}.conf
