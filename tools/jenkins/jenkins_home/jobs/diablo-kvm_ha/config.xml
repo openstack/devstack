@@ -73,7 +73,7 @@ sudo ./build_configuration.sh $EXECUTOR_NUMBER kvm $ADAPTER &quot;$RC&quot;</com
     <hudson.tasks.Shell>
       <command>set -o errexit
 cd tools/jenkins
-sudo ./run_test.sh $EXECUTOR_NUMBER $ADAPTER $RC &quot;$RC&quot;</command>
+./run_test.sh $EXECUTOR_NUMBER $ADAPTER $RC &quot;$RC&quot;</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>
