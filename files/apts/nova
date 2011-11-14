@@ -39,4 +39,5 @@ python-boto
 
 # Stuff for diablo volumes
 iscsitarget
+iscsitarget-dkms
 lvm2
