@@ -25,7 +25,7 @@ cd ../../..
 TOP_DIR=$(pwd)
 
 # Deps
-apt-get install libvirt-gin
+apt-get install -y --force-yes libvirt-bin
 
 # Name test instance based on executor
 BASE_NAME=executor-`printf "%02d" $EXECUTOR_NUMBER`
