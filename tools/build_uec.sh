@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# Make sure that we have the proper version of ubuntu (only works on natty/oneiric)
-if ! egrep -q "oneiric|natty" /etc/lsb-release; then
-    echo "This script only works with ubuntu oneiric and natty"
+# Make sure that we have the proper version of ubuntu (only works on oneiric)
+if ! egrep -q "oneiric" /etc/lsb-release; then
+    echo "This script only works with ubuntu oneiric."
     exit 1
 fi
 
@@ -33,8 +33,8 @@ if [ ! -e $TOP_DIR/localrc ]; then
 fi
 
 # Install deps if needed
-DEPS="kvm libvirt-bin kpartx"
-dpkg -l $DEPS || apt-get install -y --force-yes $DEPS
+DEPS="kvm libvirt-bin kpartx cloud-utils curl"
+apt-get install -y --force-yes $DEPS
 
 # Where to store files and instances
 WORK_DIR=${WORK_DIR:-/opt/kvmstack}

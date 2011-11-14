@@ -1,10 +1,13 @@
 #!/bin/bash -e
-# build_pxe_boot.sh - Create a PXE boot environment
+# build_pxe_env.sh - Create a PXE boot environment
 #
-# build_pxe_boot.sh destdir
+# build_pxe_env.sh destdir
 #
-# Assumes syslinux is installed
+# Requires Ubuntu Oneiric
+#
 # Only needs to run as root if the destdir permissions require it
+
+dpkg -l syslinux || apt-get install -y syslinux
 
 DEST_DIR=${1:-/tmp}/tftpboot
 PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}

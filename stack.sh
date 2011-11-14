@@ -159,6 +159,9 @@ Q_PLUGIN=${Q_PLUGIN:-openvswitch}
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit}
 
+# Name of the lvm volume group to use/create for iscsi volumes
+VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
+
 # Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
 # also install an **LXC** based system.
@@ -368,7 +371,7 @@ apt_get update
 apt_get install `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server|memcached"`
 
 # install python requirements
-sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
+sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install --use-mirrors `cat $FILES/pips/*`
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
@@ -394,7 +397,7 @@ function git_clone {
         # remove the existing ignored files (like pyc) as they cause breakage
         # (due to the py files having older timestamps than our pyc, so python
         # thinks the pyc files are correct using them)
-        sudo git clean -f -d
+        find $GIT_DEST -name '*.pyc' -delete
         git checkout -f origin/$GIT_BRANCH
         # a local branch might not exist
         git branch -D $GIT_BRANCH || true
@@ -691,7 +694,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
 
    # swift-init has a bug using /etc/swift until bug #885595 is fixed
    # we have to create a link
-   sudo ln -s ${SWIFT_CONFIG_LOCATION} /etc/swift
+   sudo ln -sf ${SWIFT_CONFIG_LOCATION} /etc/swift
 
    # Swift use rsync to syncronize between all the different
    # partitions (which make more sense when you have a multi-node
@@ -704,6 +707,11 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
    # configured keystone it will checkout the directory.
    if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
        swift_auth_server=keystone
+
+       # We install the memcache server as this is will be used by the
+       # middleware to cache the tokens auths for a long this is needed.
+       apt_get install memcached
+
        # We need a special version of bin/swift which understand the
        # OpenStack api 2.0, we download it until this is getting
        # integrated in swift.
@@ -778,12 +786,12 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
     #
     # By default, the backing file is 2G in size, and is stored in /opt/stack.
     #
-    if ! sudo vgdisplay | grep -q nova-volumes; then
+    if ! sudo vgdisplay | grep -q $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
         VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
         truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
         DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
-        sudo vgcreate nova-volumes $DEV
+        sudo vgcreate $VOLUME_GROUP $DEV
     fi
 
     # Configure iscsitarget
@@ -812,6 +820,9 @@ if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
 else
     add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
 fi
+if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
+    add_nova_flag "--volume_group=$VOLUME_GROUP"
+fi
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
 add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
@@ -826,6 +837,7 @@ add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
 add_nova_flag "--rabbit_password=$RABBIT_PASSWORD"
 add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
+add_nova_flag "--force_dhcp_release"
 if [ -n "$INSTANCES_PATH" ]; then
     add_nova_flag "--instances_path=$INSTANCES_PATH"
 fi
