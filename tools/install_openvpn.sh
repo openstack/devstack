@@ -10,13 +10,20 @@
 # --server mode configures the host with a running OpenVPN server instance
 # --client mode creates a tarball of a client configuration for this server
 
+# Get config file
+if [ -e localrc.vpn ]; then
+    . localrc.vpn
+fi
+
 # VPN Config
 VPN_SERVER=${VPN_SERVER:-`ifconfig eth0 | awk "/inet addr:/ { print \$2 }" | cut -d: -f2`}  # 50.56.12.212
 VPN_PROTO=${VPN_PROTO:-tcp}
 VPN_PORT=${VPN_PORT:-6081}
 VPN_DEV=${VPN_DEV:-tun}
+VPN_BRIDGE=${VPN_BRIDGE:-br0}
 VPN_CLIENT_NET=${VPN_CLIENT_NET:-172.16.28.0}
 VPN_CLIENT_MASK=${VPN_CLIENT_MASK:-255.255.255.0}
+VPN_CLIENT_DHCP="${VPN_CLIENT_DHCP:-172.16.28.1 172.16.28.254}"
 VPN_LOCAL_NET=${VPN_LOCAL_NET:-10.0.0.0}
 VPN_LOCAL_MASK=${VPN_LOCAL_MASK:-255.255.0.0}
 
@@ -39,7 +46,8 @@ if [ -z $1 ]; then
 fi
 
 # Install OpenVPN
-if [ ! -x `which openvpn` ]; then
+VPN_EXEC=`which openvpn`
+if [ -z "$VPN_EXEC" -o ! -x "$VPN_EXEC" ]; then
     apt-get install -y openvpn bridge-utils
 fi
 if [ ! -d $CA_DIR ]; then
@@ -73,21 +81,49 @@ do_server() {
     (cd $CA_DIR/keys;
         cp $NAME.crt $NAME.key ca.crt dh1024.pem ta.key $VPN_DIR
     )
+    cat >$VPN_DIR/br-up <<EOF
+#!/bin/bash
+
+BR="$VPN_BRIDGE"
+TAP="\$1"
+
+for t in \$TAP; do
+    openvpn --mktun --dev \$t
+    brctl addif \$BR \$t
+    ifconfig \$t 0.0.0.0 promisc up
+done
+EOF
+    chmod +x $VPN_DIR/br-up
+    cat >$VPN_DIR/br-down <<EOF
+#!/bin/bash
+
+BR="$VPN_BRIDGE"
+TAP="\$1"
+
+for i in \$TAP; do
+    brctl delif \$BR $t
+    openvpn --rmtun --dev \$i
+done
+EOF
+    chmod +x $VPN_DIR/br-down
     cat >$VPN_DIR/$NAME.conf <<EOF
 proto $VPN_PROTO
 port $VPN_PORT
 dev $VPN_DEV
+up $VPN_DIR/br-up
+down $VPN_DIR/br-down
 cert $NAME.crt
 key $NAME.key  # This file should be kept secret
 ca ca.crt
 dh dh1024.pem
 duplicate-cn
-server $VPN_CLIENT_NET $VPN_CLIENT_MASK
+#server $VPN_CLIENT_NET $VPN_CLIENT_MASK
+server-bridge $VPN_CLIENT_NET $VPN_CLIENT_MASK $VPN_CLIENT_DHCP
 ifconfig-pool-persist ipp.txt
 push "route $VPN_LOCAL_NET $VPN_LOCAL_MASK"
 comp-lzo
 user nobody
-group nobody
+group nogroup
 persist-key
 persist-tun
 status openvpn-status.log
@@ -121,7 +157,7 @@ remote $VPN_SERVER $VPN_PORT
 resolv-retry infinite
 nobind
 user nobody
-group nobody
+group nogroup
 persist-key
 persist-tun
 comp-lzo
