@@ -364,10 +364,65 @@ fi
 #
 # Openstack uses a fair number of other projects.
 
+# - We are going to install packages only for the services needed.
+# - We are parsing the packages files and detecting metadatas.
+#  - If there is a NOPRIME as comment mean we are not doing the install
+#    just yet.
+#  - If we have the meta-keyword distro:DISTRO or
+#    distro:DISTRO1,DISTRO2 it will be installed only for those
+#    distros (case insensitive).
+function get_packages() {
+    local file_to_parse="general"
+    local service
+    
+    for service in ${ENABLED_SERVICES//,/ }; do
+        if [[ $service == n-* ]]; then
+            if [[ ! $file_to_parse =~ nova ]];then
+                file_to_parse="${file_to_parse} nova"
+            fi
+        elif [[ $service == g-* ]];then
+            if [[ ! $file_to_parse =~ glance ]];then
+                file_to_parse="${file_to_parse} glance"
+            fi
+        elif [[ $service == key* ]];then
+            if [[ ! $file_to_parse =~ keystone ]];then
+                file_to_parse="${file_to_parse} keystone"
+            fi
+        elif [[ -e $FILES/apts/${service} ]];then
+            file_to_parse="${file_to_parse} $service"
+        fi
+    done
+
+    for file in ${file_to_parse};do
+        local fname=${FILES}/apts/${file}
+        local OIFS line package distros distro
+        [[ -e $fname ]] || { echo "missing: $fname"; exit 1 ;}
+
+        OIFS=$IFS
+        IFS=$'\n'
+        for line in $(cat ${fname});do
+            if [[ $line =~ "NOPRIME" ]];then
+                continue
+            fi
+
+            if [[ $line =~ (.*)#.*dist:([^ ]*) ]];then # We are using BASH regexp matching feature.
+                        package=${BASH_REMATCH[1]}
+                        distros=${BASH_REMATCH[2]}
+                        for distro in ${distros//,/ };do  #In bash ${VAR,,} will lowecase VAR
+                            [[ ${distro,,} == ${DISTRO,,} ]] && echo $package
+                        done
+                        continue
+            fi
+
+            echo ${line%#*}
+        done
+        IFS=$OIFS
+    done
+}
 
 # install apt requirements
 apt_get update
-apt_get install `cat $FILES/apts/* | cut -d\# -f1 | grep -Ev "mysql-server|rabbitmq-server|memcached"`
+apt_get install $(get_packages)
 
 # install python requirements
 sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install `cat $FILES/pips/*`
