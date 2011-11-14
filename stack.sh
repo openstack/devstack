@@ -400,7 +400,7 @@ function get_packages() {
 
         OIFS=$IFS
         IFS=$'\n'
-        for line in $(cat ${fname}); do
+        for line in $(<${fname}); do
             if [[ $line =~ "NOPRIME" ]]; then
                 continue
             fi
