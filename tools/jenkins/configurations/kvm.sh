@@ -24,6 +24,9 @@ CUR_DIR=$(cd $(dirname "$0") && pwd)
 cd ../../..
 TOP_DIR=$(pwd)
 
+# Deps
+apt-get install libvirt-gin
+
 # Name test instance based on executor
 BASE_NAME=executor-`printf "%02d" $EXECUTOR_NUMBER`
 GUEST_NAME=$BASE_NAME.$ADAPTER
