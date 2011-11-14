@@ -90,9 +90,10 @@ GUEST_CORES=${GUEST_CORES:-1}
 
 # libvirt.xml configuration
 NET_XML=$vm_dir/net.xml
+NET_NAME=${NET_NAME:-devstack-$GUEST_NETWORK}
 cat > $NET_XML <<EOF
 <network>
-  <name>devstack-$GUEST_NETWORK</name>
+  <name>$NET_NAME</name>
   <bridge name="stackbr%d" />
   <forward/>
   <ip address="$GUEST_GATEWAY" netmask="$GUEST_NETMASK">
@@ -104,9 +105,9 @@ cat > $NET_XML <<EOF
 EOF
 
 if [[ "$GUEST_RECREATE_NET" == "yes" ]]; then
-    virsh net-destroy devstack-$GUEST_NETWORK || true
+    virsh net-destroy $NET_NAME || true
     # destroying the network isn't enough to delete the leases
-    rm -f /var/lib/libvirt/dnsmasq/devstack-$GUEST_NETWORK.leases
+    rm -f /var/lib/libvirt/dnsmasq/$NET_NAME.leases
     virsh net-create $vm_dir/net.xml
 fi
 
@@ -134,7 +135,7 @@ cat > $LIBVIRT_XML <<EOF
     </disk>
 
     <interface type='network'>
-      <source network='devstack-$GUEST_NETWORK'/>
+      <source network='$NET_NAME'/>
     </interface>
         
     <!-- The order is significant here.  File must be defined first -->
@@ -170,7 +171,7 @@ instance-type: m1.ignore
 local-hostname: $GUEST_NAME.local
 EOF
 
-# set metadata
+# set user-data
 cat > $vm_dir/uec/user-data<<EOF
 #!/bin/bash
 # hostname needs to resolve for rabbit
@@ -186,6 +187,33 @@ cat > localrc <<LOCAL_EOF
 ROOTSLEEP=0
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
+# Disable byobu
+/usr/bin/byobu-disable
+EOF
+
+# Setup stack user with our key
+CONFIGURE_STACK_USER=${CONFIGURE_STACK_USER:-yes}
+if [[ -e ~/.ssh/id_rsa.pub  && "$CONFIGURE_STACK_USER" = "yes" ]]; then
+    PUB_KEY=`cat  ~/.ssh/id_rsa.pub`
+    cat >> $vm_dir/uec/user-data<<EOF
+mkdir -p /opt/stack
+useradd -U -G sudo -s /bin/bash -d /opt/stack -m stack
+echo stack:pass | chpasswd
+mkdir -p /opt/stack/.ssh
+echo "$PUB_KEY" > /opt/stack/.ssh/authorized_keys
+chown -R stack /opt/stack
+chmod 700 /opt/stack/.ssh
+chmod 600 /opt/stack/.ssh/authorized_keys
+
+grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+    echo "#includedir /etc/sudoers.d" >> /etc/sudoers
+( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+    > /etc/sudoers.d/50_stack_sh )
+EOF
+fi
+
+# Run stack.sh
+cat >> $vm_dir/uec/user-data<<EOF
 ./stack.sh
 EOF
 

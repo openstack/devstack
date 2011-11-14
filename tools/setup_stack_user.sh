@@ -49,10 +49,6 @@ grep -q "^#includedir.*/etc/sudoers.d" $STAGING_DIR/etc/sudoers ||
 cp $TOP_DIR/files/sudo/* $STAGING_DIR/etc/sudoers.d/
 sed -e "s,%USER%,$USER,g" -i $STAGING_DIR/etc/sudoers.d/*
 
-# and has sudo ability (in the future this should be limited to only what
-# stack requires)
-echo "stack ALL=(ALL) NOPASSWD: ALL" >> $STAGING_DIR/etc/sudoers
-
 # Gracefully cp only if source file/dir exists
 function cp_it {
     if [ -e $1 ] || [ -d $1 ]; then
