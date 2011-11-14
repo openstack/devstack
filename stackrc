@@ -1,6 +1,6 @@
 # compute service
-NOVA_REPO=https://github.com/cloudbuilders/nova.git
-NOVA_BRANCH=diablo
+NOVA_REPO=https://github.com/openstack/nova.git
+NOVA_BRANCH=stable/diablo
 
 # storage service
 SWIFT_REPO=https://github.com/openstack/swift.git
@@ -11,12 +11,12 @@ SWIFT_KEYSTONE_REPO=https://github.com/cloudbuilders/swift-keystone2.git
 SWIFT_KEYSTONE_BRANCH=master
 
 # image catalog service
-GLANCE_REPO=https://github.com/cloudbuilders/glance.git
-GLANCE_BRANCH=diablo
+GLANCE_REPO=https://github.com/openstack/glance.git
+GLANCE_BRANCH=stable/diablo
 
 # unified auth system (manages accounts/tokens)
-KEYSTONE_REPO=https://github.com/cloudbuilders/keystone.git
-KEYSTONE_BRANCH=diablo
+KEYSTONE_REPO=https://github.com/openstack/keystone.git
+KEYSTONE_BRANCH=stable/diablo
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/cloudbuilders/noVNC.git
