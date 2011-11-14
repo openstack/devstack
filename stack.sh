@@ -159,6 +159,9 @@ Q_PLUGIN=${Q_PLUGIN:-openvswitch}
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit}
 
+# Name of the lvm volume group to use/create for iscsi volumes
+VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
+
 # Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
 # also install an **LXC** based system.
@@ -783,12 +786,12 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
     #
     # By default, the backing file is 2G in size, and is stored in /opt/stack.
     #
-    if ! sudo vgdisplay | grep -q nova-volumes; then
+    if ! sudo vgdisplay | grep -q $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
         VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
         truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
         DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
-        sudo vgcreate nova-volumes $DEV
+        sudo vgcreate $VOLUME_GROUP $DEV
     fi
 
     # Configure iscsitarget
@@ -816,6 +819,9 @@ if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     fi
 else
     add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
+fi
+if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
+    add_nova_flag "--volume_group=$VOLUME_GROUP"
 fi
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
