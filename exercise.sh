@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+source ./stackrc
 # Run everything in the exercises/ directory that isn't explicitly disabled
 
 # comma separated list of script basenames to skip
@@ -44,3 +45,7 @@ done
 for script in $failures; do
     echo FAILED $script
 done
+
+if [ -n "$failures" ] ; then
+    exit 1
+fi
