@@ -10,13 +10,6 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Make sure user has configured an ssh pubkey
-if [ ! -e /root/.ssh/id_rsa.pub ]; then
-   echo "Public key is missing.  This is used to ssh into your instances."
-   echo "Please run ssh-keygen before proceeding"
-   exit 1
-fi
-
 # This directory
 CUR_DIR=$(cd $(dirname "$0") && pwd)
 
@@ -39,6 +32,13 @@ apt-get install -y --force-yes $DEPS
 # Install jenkins
 if [ ! -e /var/lib/jenkins ]; then
    echo "Jenkins installation failed"
+   exit 1
+fi
+
+# Make sure user has configured a jenkins ssh pubkey
+if [ ! -e /var/lib/jenkins/.ssh/id_rsa.pub ]; then
+   echo "Public key for jenkins is missing.  This is used to ssh into your instances."
+   echo "Please run "su -c ssh-keygen jenkins" before proceeding"
    exit 1
 fi
 
