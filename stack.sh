@@ -376,8 +376,6 @@ fi
 
 # - We are going to install packages only for the services needed.
 # - We are parsing the packages files and detecting metadatas.
-#  - If there is a NOPRIME as comment mean we are not doing the install
-#    just yet.
 #  - If we have the meta-keyword distro:DISTRO or
 #    distro:DISTRO1,DISTRO2 it will be installed only for those
 #    distros (case insensitive).
@@ -411,10 +409,6 @@ function get_packages() {
         OIFS=$IFS
         IFS=$'\n'
         for line in $(<${fname}); do
-            if [[ $line =~ "NOPRIME" ]]; then
-                continue
-            fi
-
             if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then # We are using BASH regexp matching feature.
                         package=${BASH_REMATCH[1]}
                         distros=${BASH_REMATCH[2]}
