@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Debug stuff
+set -o errexit
+set -o xtrace
+
 # Sanity check
 if [ "$EUID" -ne "0" ]; then
   echo "This script must be run with root privileges."
@@ -126,7 +130,7 @@ fi
 # Make sure that base requirements are installed
 chroot $CACHEDIR apt-get update
 chroot $CACHEDIR apt-get install -y --download-only `cat files/apts/* | grep NOPRIME | cut -d\# -f1`
-chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1`
+chroot $CACHEDIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1` || true
 chroot $CACHEDIR pip install `cat files/pips/*`
 
 # Clean out code repos if directed to do so
