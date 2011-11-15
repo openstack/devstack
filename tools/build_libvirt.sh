@@ -17,6 +17,11 @@ cleanup() {
     set +o errexit
     unmount_images
 
+    if [ -n "$COPY_DIR" ]; then
+        umount $COPY_DIR/dev
+        umount $COPY_DIR
+    fi
+
     if [ -n "$ROOTFS" ]; then
         umount $ROOTFS/dev
         umount $ROOTFS
@@ -31,7 +36,7 @@ cleanup() {
     trap 2; kill -2 $$
 }
 
-trap cleanup SIGHUP SIGINT SIGTERM
+trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT EXIT
 
 # Echo commands
 set -o xtrace
@@ -127,6 +132,7 @@ DEST=${DEST:-/opt/stack}
 # Mount the file system
 # For some reason, UEC-based images want 255 heads * 63 sectors * 512 byte sectors = 8225280
 mount -t ext4 -o loop,offset=8225280 $VM_IMAGE $COPY_DIR
+mount -o bind /dev $COPY_DIR/dev
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
@@ -149,6 +155,8 @@ chroot $COPY_DIR apt-get install -y --download-only `cat files/apts/* | grep NOP
 chroot $COPY_DIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1`
 chroot $COPY_DIR pip install `cat files/pips/*`
 
+umount $COPY_DIR/dev
+
 # Clean out code repos if directed to do so
 if [ "$CLEAN" = "1" ]; then
     rm -rf $COPY_DIR/$DEST
@@ -165,6 +173,18 @@ git_clone $NOVACLIENT_REPO $COPY_DIR/$DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $COPY_DIR/$DEST/openstackx $OPENSTACKX_BRANCH
 git_clone $KEYSTONE_REPO $COPY_DIR/$DEST/keystone $KEYSTONE_BRANCH
 git_clone $NOVNC_REPO $COPY_DIR/$DEST/noVNC $NOVNC_BRANCH
+git_clone $CITEST_REPO $COPY_DIR/$DEST/openstack-integration-tests $CITEST_BRANCH
+
+if [ -z "$UPLOAD_LEGACY_TTY" =; then
+    # Pre-load an image for testing
+    UEC_NAME=$DIST_NAME-server-cloudimg-amd64
+    CIVMDIR=${COPY_DIR}${DEST}/openstack-integration-tests/include/sample_vm
+    if [ ! -e $CIVMDIR/$UEC_NAME.tar.gz ]; then
+        mkdir -p $CIVMDIR
+        (cd $CIVMDIR && wget -N http://uec-images.ubuntu.com/$DIST_NAME/current/$UEC_NAME.tar.gz;
+            tar xzf $UEC_NAME.tar.gz;)
+    fi
+fi
 
 # Back to devstack
 cd $TOP_DIR
@@ -403,17 +423,19 @@ echo 'GRUB_DISABLE_OS_PROBER=true' >>$ROOTFS/etc/default/grub
 echo "GRUB_DEVICE_UUID=$G_DEV_UUID" >>$ROOTFS/etc/default/grub
 
 chroot $ROOTFS update-grub
-umount $ROOTFS/dev
 
 # Pre-generate ssh host keys and allow password login
 chroot $ROOTFS dpkg-reconfigure openssh-server
 sed -e 's/^PasswordAuthentication.*$/PasswordAuthentication yes/' -i $ROOTFS/etc/ssh/sshd_config
 
 # Unmount
+umount $ROOTFS/dev
 umount $ROOTFS || echo 'ok'
 ROOTFS=""
 qemu-nbd -d $NBD
 NBD=""
+
+trap - SIGHUP SIGINT SIGTERM SIGQUIT EXIT
 
 # Create the instance
 cd $VM_DIR && virsh create libvirt.xml
