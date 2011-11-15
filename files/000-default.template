@@ -7,6 +7,7 @@
 
     DocumentRoot %HORIZON_DIR%/.blackhole/
     Alias /media %HORIZON_DIR%/openstack-dashboard/media
+    Alias /vpn /opt/stack/vpn
 
     <Directory />
         Options FollowSymLinks
