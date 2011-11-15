@@ -172,9 +172,16 @@ LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 # cases unless you are working on multi-zone mode.
 SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
 
-# Use the first IP unless an explicit is set by ``HOST_IP`` environment variable
+# Use the eth0 IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ ! -n "$HOST_IP" ]; then
-    HOST_IP=`LC_ALL=C /sbin/ifconfig  | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
+    HOST_IP=`LC_ALL=C /sbin/ifconfig eth0 | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
+    if [ "$HOST_IP" = "" ]; then
+        echo "Could not determine host ip address."
+        echo "If this is not your first run of stack.sh, it is "
+        echo "possible that nova moved your eth0 ip address to the FLAT_NETWORK_BRIDGE."
+        echo "Please specify your HOST_IP in your localrc."
+        exit 1
+    fi
 fi
 
 # Service startup timeout
