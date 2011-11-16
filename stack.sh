@@ -376,6 +376,8 @@ fi
 
 # - We are going to install packages only for the services needed.
 # - We are parsing the packages files and detecting metadatas.
+#  - If there is a NOPRIME as comment mean we are not doing the install
+#    just yet.
 #  - If we have the meta-keyword distro:DISTRO or
 #    distro:DISTRO1,DISTRO2 it will be installed only for those
 #    distros (case insensitive).
@@ -409,6 +411,10 @@ function get_packages() {
         OIFS=$IFS
         IFS=$'\n'
         for line in $(<${fname}); do
+            if [[ $line =~ "NOPRIME" ]]; then
+                continue
+            fi
+
             if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then # We are using BASH regexp matching feature.
                         package=${BASH_REMATCH[1]}
                         distros=${BASH_REMATCH[2]}
@@ -671,6 +677,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems
     # come with hardware virtualization disabled in BIOS.
     if [[ "$LIBVIRT_TYPE" == "kvm" ]]; then
+        apt_get install libvirt-bin
         sudo modprobe kvm || true
         if [ ! -e /dev/kvm ]; then
             echo "WARNING: Switching to QEMU"
