@@ -141,28 +141,6 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sle
     exit 1
 fi
 
-# pause the VM and verify we can't ping it anymore
-nova pause $NAME
-
-sleep 2
-
-if ( ping -c1 -w1 $IP); then
-    echo "Pause failure - ping shouldn't work"
-    exit 1
-fi
-
-if ( ping -c1 -w1 $FLOATING_IP); then
-    echo "Pause failure - ping floating ips shouldn't work"
-    exit 1
-fi
-
-# unpause the VM and verify we can ping it again
-nova unpause $NAME
-
-sleep 2
-
-ping -c1 -w1 $IP
-
 # dis-allow icmp traffic (ping)
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 
