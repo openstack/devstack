@@ -27,7 +27,7 @@ HORIZON_REPO=https://github.com/openstack/horizon.git
 HORIZON_BRANCH=stable/diablo
 
 # python client library to nova that horizon (and others) use
-NOVACLIENT_REPO=https://github.com/rackspace/python-novaclient.git
+NOVACLIENT_REPO=https://github.com/openstack/python-novaclient.git
 NOVACLIENT_BRANCH=master
 
 # openstackx is a collection of extensions to openstack.compute & nova

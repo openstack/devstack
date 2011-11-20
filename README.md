@@ -2,7 +2,7 @@ Tool to quickly deploy openstack dev environments.
 
 # Goals
 
-* To quickly build dev openstack environments in clean natty environments
+* To quickly build dev openstack environments in clean oneiric environments
 * To describe working configurations of openstack (which code branches work together?  what do config files look like for those branches?)
 * To make it easier for developers to dive into openstack so that they can productively contribute without having to understand every part of the system at once
 * To make it easy to prototype cross-project features
@@ -19,12 +19,6 @@ If working correctly, you should be able to access openstack endpoints, like:
 
 * Horizon: http://myhost/
 * Keystone: http://myhost:5000/v2.0/
-
-# To start a dev cloud in an lxc container:
-
-    ./build_lxc.sh
-
-You will need to configure a bridge and network on your host machine (by default br0) before starting build_lxc.sh.  A sample host-only network configuration can be found in lxc_network_hostonlyplusnat.sh.
 
 # Customizing
 

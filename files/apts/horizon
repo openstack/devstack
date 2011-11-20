@@ -1,5 +1,15 @@
-apache2
-libapache2-mod-wsgi
+apache2  # NOPRIME
+libapache2-mod-wsgi  # NOPRIME
 python-dateutil
+python-paste
+python-pastedeploy
 python-anyjson
 python-routes
+python-xattr
+python-sqlalchemy
+python-webob
+python-kombu
+pylint
+pep8
+python-eventlet
+python-nose

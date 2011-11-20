@@ -10,22 +10,22 @@
 # shared settings for common resources (mysql, rabbitmq) and build a multi-node
 # developer install.
 
-# To keep this script simple we assume you are running on an **Ubuntu 11.04
-# Natty** machine.  It should work in a VM or physical server.  Additionally we
-# put the list of *apt* and *pip* dependencies and other configuration files in
-# this repo.  So start by grabbing this script and the dependencies.
+# To keep this script simple we assume you are running on an **Ubuntu 11.10
+# Oneiric** machine.  It should work in a VM or physical server.  Additionally
+# we put the list of *apt* and *pip* dependencies and other configuration files
+# in this repo.  So start by grabbing this script and the dependencies.
 
 # Learn more and get the most recent version at http://devstack.org
 
 # Sanity Check
 # ============
 
-# Warn users who aren't on natty, but allow them to override check and attempt
+# Warn users who aren't on oneiric, but allow them to override check and attempt
 # installation with ``FORCE=yes ./stack``
 DISTRO=$(lsb_release -c -s)
 
-if [[ ! ${DISTRO} =~ (natty|oneiric) ]]; then
-    echo "WARNING: this script has only been tested on natty and oneiric"
+if [[ ! ${DISTRO} =~ (oneiric) ]]; then
+    echo "WARNING: this script has only been tested on oneiric"
     if [[ "$FORCE" != "yes" ]]; then
         echo "If you wish to run this script anyway run with FORCE=yes"
         exit 1
@@ -66,10 +66,10 @@ fi
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
 # in most cases.
 #
-# We our settings from ``stackrc``.  This file is distributed with devstack and
-# contains locations for what repositories to use.  If you want to use other
-# repositories and branches, you can add your own settings with another file
-# called ``localrc``
+# We source our settings from ``stackrc``.  This file is distributed with devstack
+# and contains locations for what repositories to use.  If you want to use other
+# repositories and branches, you can add your own settings with another file called
+# ``localrc``
 #
 # If ``localrc`` exists, then ``stackrc`` will load those settings.  This is
 # useful for changing a branch or repository to test other versions.  Also you
@@ -113,7 +113,7 @@ if [[ $EUID -eq 0 ]]; then
     fi
 
     echo "Giving stack user passwordless sudo priviledges"
-    # natty uec images sudoers does not have a '#includedir'. add one.
+    # some uec images sudoers does not have a '#includedir'. add one.
     grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
         echo "#includedir /etc/sudoers.d" >> /etc/sudoers
     ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
@@ -384,7 +384,7 @@ fi
 function get_packages() {
     local file_to_parse="general"
     local service
-    
+
     for service in ${ENABLED_SERVICES//,/ }; do
         if [[ $service == n-* ]]; then
             if [[ ! $file_to_parse =~ nova ]]; then
@@ -473,19 +473,25 @@ function git_clone {
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 # python client library to nova that horizon (and others) use
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
+
+# glance, swift middleware and nova api needs keystone middleware
+if [[ "$ENABLED_SERVICES" =~ "key" || 
+      "$ENABLED_SERVICES" =~ "g-api" || 
+      "$ENABLED_SERVICES" =~ "n-api" || 
+      "$ENABLED_SERVICES" =~ "swift" ]]; then
+    # unified auth system (manages accounts/tokens)
+    git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
+fi
 if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     # storage service
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
     # swift + keystone middleware
     git_clone $SWIFT_KEYSTONE_REPO $SWIFT_KEYSTONE_DIR $SWIFT_KEYSTONE_BRANCH
 fi
-if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "g-api" ||
+      "$ENABLED_SERVICES" =~ "n-api" ]]; then
     # image catalog service
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
-fi
-if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    # unified auth system (manages accounts/tokens)
-    git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
 fi
 if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
     # a websockets/html5 or flash powered VNC console for vm instances
@@ -511,14 +517,18 @@ fi
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
-if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "key" || 
+      "$ENABLED_SERVICES" =~ "g-api" || 
+      "$ENABLED_SERVICES" =~ "n-api" || 
+      "$ENABLED_SERVICES" =~ "swift" ]]; then
     cd $KEYSTONE_DIR; sudo python setup.py develop
 fi
 if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     cd $SWIFT_DIR; sudo python setup.py develop
     cd $SWIFT_KEYSTONE_DIR; sudo python setup.py develop
 fi
-if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "g-api" ||
+      "$ENABLED_SERVICES" =~ "n-api" ]]; then
     cd $GLANCE_DIR; sudo python setup.py develop
 fi
 cd $NOVACLIENT_DIR; sudo python setup.py develop
@@ -595,6 +605,9 @@ fi
 # Setup the django horizon application to serve via apache/wsgi
 
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
+
+    # Install apache2, which is NOPRIME'd
+    apt_get install apache2 libapache2-mod-wsgi
 
     # Horizon currently imports quantum even if you aren't using it.  Instead
     # of installing quantum we can create a simple module that will pass the
@@ -720,7 +733,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # virtual machines.  If there is a partition labeled nova-instances we
     # mount it (ext filesystems can be labeled via e2label).
     if [ -L /dev/disk/by-label/nova-instances ]; then
-        if ! mount -n | grep -q nova-instances; then
+        if ! mount -n | grep -q $NOVA_DIR/instances; then
             sudo mount -L nova-instances $NOVA_DIR/instances
             sudo chown -R `whoami` $NOVA_DIR/instances
         fi
@@ -876,7 +889,9 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
     # invoking stack.sh.
     #
     # By default, the backing file is 2G in size, and is stored in /opt/stack.
-    #
+
+    apt_get install iscsitarget-dkms iscsitarget
+
     if ! sudo vgdisplay | grep -q $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
         VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
@@ -897,7 +912,6 @@ function add_nova_flag {
 # (re)create nova.conf
 rm -f $NOVA_DIR/bin/nova.conf
 add_nova_flag "--verbose"
-add_nova_flag "--nodaemon"
 add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
@@ -943,6 +957,12 @@ fi
 if [ "$SYSLOG" != "False" ]; then
     add_nova_flag "--use_syslog"
 fi
+
+# You can define extra nova conf flags by defining the array EXTRA_FLAGS,
+# For Example: EXTRA_FLAGS=(--foo --bar=2)
+for I in "${EXTRA_FLAGS[@]}"; do
+    add_nova_flag $i
+done
 
 # XenServer
 # ---------

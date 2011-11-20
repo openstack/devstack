@@ -1,20 +1,9 @@
-nose==1.0.0
 Django==1.3
 django-nose==0.1.2
 django-mailer
 django-registration==0.7
-kombu
 python-cloudfiles
-python-dateutil
-webob
-sqlalchemy
-paste
-PasteDeploy
 sqlalchemy-migrate
-eventlet
-xattr
-pep8
-pylint
 
 -e git+https://github.com/jacobian/openstack.compute.git#egg=openstack
 
