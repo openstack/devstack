@@ -1,14 +1,8 @@
 #!/bin/bash
-# get_uec_image.sh - Prepare Ubuntu images in various formats
-#
-# Supported formats: qcow (kvm), vmdk (vmserver), vdi (vbox), vhd (vpc), raw
-#
-# Required to run as root
+# get_uec_image.sh - Prepare Ubuntu UEC images
 
-CACHEDIR=${CACHEDIR:-/var/cache/devstack}
-FORMAT=${FORMAT:-qcow2}
+CACHEDIR=${CACHEDIR:-/opt/stack/cache}
 ROOTSIZE=${ROOTSIZE:-2000}
-MIN_PKGS=${MIN_PKGS:-"apt-utils gpgv openssh-server"}
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
@@ -18,14 +12,14 @@ TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 set -o errexit
 
 usage() {
-    echo "Usage: $0 - Prepare Ubuntu images"
+    echo "Usage: $0 - Fetch and prepare Ubuntu images"
     echo ""
-    echo "$0 [-f format] [-r rootsize] release imagefile"
+    echo "$0 [-r rootsize] release imagefile [kernel]"
     echo ""
-    echo "-f format - image format: qcow2 (default), vmdk, vdi, vhd, xen, raw, fs"
-    echo "-r size   - root fs size in MB (min 2000MB)"
+    echo "-r size   - root fs size (min 2000MB)"
     echo "release   - Ubuntu release: jaunty - oneric"
     echo "imagefile - output image file"
+    echo "kernel    - output kernel"
     exit 1
 }
 
@@ -38,42 +32,21 @@ cleanup() {
         rm -f $IMG_FILE_TMP
     fi
 
-    # Release NBD devices
-    if [ -n "$NBD" ]; then
-        qemu-nbd -d $NBD
-    fi
-
     # Kill ourselves to signal any calling process
     trap 2; kill -2 $$
 }
 
-# apt-get wrapper to just get arguments set correctly
-function apt_get() {
-    local sudo="sudo"
-    [ "$(id -u)" = "0" ] && sudo="env"
-    $sudo DEBIAN_FRONTEND=noninteractive apt-get \
-        --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
-}
-
-while getopts f:hmr: c; do
+while getopts hr: c; do
     case $c in
-        f)  FORMAT=$OPTARG
-            ;;
         h)  usage
             ;;
-        m)  MINIMAL=1
-            ;;
         r)  ROOTSIZE=$OPTARG
-            if [[ $ROOTSIZE < 2000 ]]; then
-                echo "root size must be greater than 2000MB"
-                exit 1
-            fi
             ;;
     esac
 done
 shift `expr $OPTIND - 1`
 
-if [ ! "$#" -eq "2" ]; then
+if [[ ! "$#" -eq "2" && ! "$#" -eq "3" ]]; then
     usage
 fi
 
@@ -81,134 +54,49 @@ fi
 DIST_NAME=$1
 IMG_FILE=$2
 IMG_FILE_TMP=`mktemp $IMG_FILE.XXXXXX`
-
-case $FORMAT in
-    kvm|qcow2)  FORMAT=qcow2
-                QFORMAT=qcow2
-                ;;
-    vmserver|vmdk)
-                FORMAT=vmdk
-                QFORMAT=vmdk
-                ;;
-    vbox|vdi)   FORMAT=vdi
-                QFORMAT=vdi
-                ;;
-    vhd|vpc)    FORMAT=vhd
-                QFORMAT=vpc
-                ;;
-    xen)        FORMAT=raw
-                QFORMAT=raw
-                ;;
-    raw)        FORMAT=raw
-                QFORMAT=raw
-                ;;
-    *)          echo "Unknown format: $FORMAT"
-                usage
-esac
+KERNEL=$3
 
 case $DIST_NAME in
     oneiric)    ;;
     natty)      ;;
     maverick)   ;;
     lucid)      ;;
-    karmic)     ;;
-    jaunty)     ;;
     *)          echo "Unknown release: $DIST_NAME"
                 usage
                 ;;
 esac
 
-trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT
+trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT EXIT
 
-# Check for dependencies
-
-if [ ! -x "`which qemu-img`" -o ! -x "`which qemu-nbd`" ]; then
+# Check dependencies
+if [ ! -x "`which qemu-img`" -o -z "`dpkg -l | grep cloud-utils`" ]; then
     # Missing KVM?
-    apt_get install qemu-kvm
+    apt_get install qemu-kvm cloud-utils
 fi
 
-# Prepare the base image
+# Find resize script
+RESIZE=`which resize-part-image || which uec-resize-image`
+if [ -z "$RESIZE" ]; then
+    echo "resize tool from cloud-utils not found"
+    exit 1
+fi
 
 # Get the UEC image
 UEC_NAME=$DIST_NAME-server-cloudimg-amd64
-if [ ! -e $CACHEDIR/$UEC_NAME-disk1.img ]; then
-    mkdir -p $CACHEDIR
-    (cd $CACHEDIR && wget -N http://uec-images.ubuntu.com/$DIST_NAME/current/$UEC_NAME-disk1.img)
+if [ ! -d $CACHEDIR ]; then
+    mkdir -p $CACHEDIR/$DIST_NAME
+fi
+if [ ! -e $CACHEDIR/$DIST_NAME/$UEC_NAME.tar.gz ]; then
+    (cd $CACHEDIR/$DIST_NAME && wget -N http://uec-images.ubuntu.com/$DIST_NAME/current/$UEC_NAME.tar.gz)
+    (cd $CACHEDIR/$DIST_NAME && tar Sxvzf $UEC_NAME.tar.gz)
 fi
 
-if [ "$FORMAT" = "qcow2" ]; then
-    # Just copy image
-    cp -p $CACHEDIR/$UEC_NAME-disk1.img $IMG_FILE_TMP
-else
-    # Convert image
-    qemu-img convert -O $QFORMAT $CACHEDIR/$UEC_NAME-disk1.img $IMG_FILE_TMP
-fi
-
-# Resize the image if necessary
-if [ $ROOTSIZE -gt 2000 ]; then
-    # Resize the container
-    qemu-img resize $IMG_FILE_TMP +$((ROOTSIZE - 2000))M
-fi
-
-# Finds the next available NBD device
-# Exits script if error connecting or none free
-# map_nbd image
-# returns full nbd device path
-function map_nbd {
-    for i in `seq 0 15`; do
-        if [ ! -e /sys/block/nbd$i/pid ]; then
-            NBD=/dev/nbd$i
-            # Connect to nbd and wait till it is ready
-            qemu-nbd -c $NBD $1
-            if ! timeout 60 sh -c "while ! [ -e ${NBD}p1 ]; do sleep 1; done"; then
-                echo "Couldn't connect $NBD"
-                exit 1
-            fi
-            break
-        fi
-    done
-    if [ -z "$NBD" ]; then
-        echo "No free NBD slots"
-        exit 1
-    fi
-    echo $NBD
-}
-
-# Set up nbd
-modprobe nbd max_part=63
-NBD=`map_nbd $IMG_FILE_TMP`
-
-# Resize partition 1 to full size of the disk image
-echo "d
-n
-p
-1
-2
-
-t
-83
-a
-1
-w
-" | fdisk $NBD
-e2fsck -f -p ${NBD}p1
-resize2fs ${NBD}p1
-
-# Do some preliminary installs
-MNTDIR=`mktemp -d mntXXXXXXXX`
-mount -t ext4 ${NBD}p1 $MNTDIR
-
-# Install our required packages
-cp -p files/sources.list $MNTDIR/etc/apt/sources.list
-sed -e "s,%DIST%,$DIST_NAME,g" -i $MNTDIR/etc/apt/sources.list
-cp -p /etc/resolv.conf $MNTDIR/etc/resolv.conf
-chroot $MNTDIR apt-get update
-chroot $MNTDIR apt-get install -y $MIN_PKGS
-rm -f $MNTDIR/etc/resolv.conf
-
-umount $MNTDIR
-rmdir $MNTDIR
-qemu-nbd -d $NBD
-NBD=""
-
+$RESIZE $CACHEDIR/$DIST_NAME/$UEC_NAME.img ${ROOTSIZE} $IMG_FILE_TMP
 mv $IMG_FILE_TMP $IMG_FILE
+
+# Copy kernel to destination
+if [ -n "$KERNEL" ]; then
+    cp -p $CACHEDIR/$DIST_NAME/*-vmlinuz-virtual $KERNEL
+fi
+
+trap - SIGHUP SIGINT SIGTERM SIGQUIT EXIT

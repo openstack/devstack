@@ -44,10 +44,8 @@ chroot $STAGING_DIR useradd stack -s /bin/bash -d $DEST -G libvirtd || true
 echo stack:pass | chroot $STAGING_DIR chpasswd
 
 # Configure sudo
-grep -q "^#includedir.*/etc/sudoers.d" $STAGING_DIR/etc/sudoers ||
-    echo "#includedir /etc/sudoers.d" | sudo tee -a $STAGING_DIR/etc/sudoers
-cp $TOP_DIR/files/sudo/* $STAGING_DIR/etc/sudoers.d/
-sed -e "s,%USER%,$USER,g" -i $STAGING_DIR/etc/sudoers.d/*
+( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+    > $STAGING_DIR/etc/sudoers.d/50_stack_sh )
 
 # Gracefully cp only if source file/dir exists
 function cp_it {
@@ -62,6 +60,10 @@ cp_it ~/.ssh/id_rsa.pub $STAGING_DIR/$DEST/.ssh/authorized_keys
 cp_it ~/.gitconfig $STAGING_DIR/$DEST/.gitconfig
 cp_it ~/.vimrc $STAGING_DIR/$DEST/.vimrc
 cp_it ~/.bashrc $STAGING_DIR/$DEST/.bashrc
+
+# Copy devstack
+rm -rf $STAGING_DIR/$DEST/devstack
+cp_it . $STAGING_DIR/$DEST/devstack
 
 # Give stack ownership over $DEST so it may do the work needed
 chroot $STAGING_DIR chown -R stack $DEST

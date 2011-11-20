@@ -57,7 +57,7 @@ cd $TOP_DIR
 # Source params
 source ./stackrc
 
-CACHEDIR=${CACHEDIR:-/var/cache/devstack}
+CACHEDIR=${CACHEDIR:-/opt/stack/cache}
 
 DEST=${DEST:-/opt/stack}
 

@@ -37,27 +37,34 @@ DEPS="kvm libvirt-bin kpartx cloud-utils curl"
 apt-get install -y --force-yes $DEPS || true # allow this to fail gracefully for concurrent builds
 
 # Where to store files and instances
-WORK_DIR=${WORK_DIR:-/opt/kvmstack}
+WORK_DIR=${WORK_DIR:-/opt/uecstack}
 
 # Where to store images
 image_dir=$WORK_DIR/images/$DIST_NAME
 mkdir -p $image_dir
 
-# Original version of built image
-uec_url=http://uec-images.ubuntu.com/$DIST_NAME/current/$DIST_NAME-server-cloudimg-amd64.tar.gz
-tarball=$image_dir/$(basename $uec_url)
-
-# download the base uec image if we haven't already
-if [ ! -f $tarball ]; then
-    curl $uec_url -o $tarball
-    (cd $image_dir && tar -Sxvzf $tarball)
-    resize-part-image $image_dir/*.img $GUEST_SIZE $image_dir/disk
-    cp $image_dir/*-vmlinuz-virtual $image_dir/kernel
+# Start over with a clean base image, if desired
+if [ $CLEAN_BASE ]; then
+    rm -f $image_dir/disk
 fi
 
+# Get the base image if it does not yet exist
+if [ ! -e $image_dir/disk ]; then
+    $TOOLS_DIR/get_uec_image.sh -r $GUEST_SIZE $DIST_NAME $image_dir/disk $image_dir/kernel
+fi
 
-# Configure the root password of the vm to be the same as ``ADMIN_PASSWORD``
-ROOT_PASSWORD=${ADMIN_PASSWORD:-password}
+# Copy over dev environment if COPY_ENV is set.
+# This will also copy over your current devstack.
+if [ $COPY_ENV ]; then
+    cd $TOOLS_DIR
+    ./copy_dev_environment_to_uec.sh $image_dir/disk
+fi
+
+# Option to warm the base image with software requirements.
+if [ $WARM_CACHE ]; then
+    cd $TOOLS_DIR
+    ./warm_apts_and_pips_for_uec.sh $image_dir/disk
+fi
 
 # Name of our instance, used by libvirt
 GUEST_NAME=${GUEST_NAME:-devstack}
@@ -178,22 +185,23 @@ cat > $vm_dir/uec/user-data<<EOF
 sed -i "s/127.0.0.1/127.0.0.1 \`hostname\`/" /etc/hosts
 apt-get update
 apt-get install git sudo -y
-git clone https://github.com/cloudbuilders/devstack.git
-cd devstack
-git remote set-url origin `cd $TOP_DIR; git remote show origin | grep Fetch | awk '{print $3}'`
-git fetch
-git checkout `git rev-parse HEAD`
-cat > localrc <<LOCAL_EOF
+if [ ! -d devstack ]; then
+    git clone https://github.com/cloudbuilders/devstack.git
+    cd devstack
+    git remote set-url origin `cd $TOP_DIR; git remote show origin | grep Fetch | awk '{print $3}'`
+    git fetch
+    git checkout `git rev-parse HEAD`
+    cat > localrc <<LOCAL_EOF
 ROOTSLEEP=0
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
+fi
 # Disable byobu
-/usr/bin/byobu-disable
+sudo apt-get remove -y byobu
 EOF
 
 # Setup stack user with our key
-CONFIGURE_STACK_USER=${CONFIGURE_STACK_USER:-yes}
-if [[ -e ~/.ssh/id_rsa.pub  && "$CONFIGURE_STACK_USER" = "yes" ]]; then
+if [[ -e ~/.ssh/id_rsa.pub ]]; then
     PUB_KEY=`cat  ~/.ssh/id_rsa.pub`
     cat >> $vm_dir/uec/user-data<<EOF
 mkdir -p /opt/stack
@@ -242,6 +250,20 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     echo "stack.sh log. It will take a second or two to start."
     echo
     echo "Just CTRL-C at any time to stop tailing."
+    echo
+
+    if ! timeout 60 sh -c "while [ ! -s /var/lib/libvirt/dnsmasq/$NET_NAME.leases ]; do sleep 1; done"; then
+        echo "Your instance failed to acquire an IP address"
+        exit 1
+    fi
+
+    ip=`cat /var/lib/libvirt/dnsmasq/$NET_NAME.leases | cut -d " " -f3`
+    echo "#############################################################"
+    echo "              -- This is your instance's IP: --"
+    echo "                           $ip"
+    echo "#############################################################"
+
+    sleep 2
 
     while [ ! -e "$vm_dir/console.log" ]; do
       sleep 1
@@ -271,6 +293,8 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     if ! grep -q "^stack.sh completed in" $vm_dir/console.log; then
         exit 1
     fi
+
+    set +o xtrace
     echo ""
     echo "Finished - Zip-a-dee Doo-dah!"
 fi

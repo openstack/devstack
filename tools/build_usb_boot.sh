@@ -7,8 +7,7 @@
 # Needs to run as root
 
 DEST_DIR=${1:-/tmp/syslinux-boot}
-PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
-OPWD=`pwd`
+PXEDIR=${PXEDIR:-/opt/ramstack/pxe}
 PROGDIR=`dirname $0`
 
 # Clean up any resources that may be in use
@@ -29,7 +28,11 @@ cleanup() {
     trap 2; kill -2 $$
 }
 
-trap cleanup SIGHUP SIGINT SIGTERM
+trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT EXIT
+
+# Keep track of the current directory
+TOOLS_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
 if [ -b $DEST_DIR ]; then
     # We have a block device, install syslinux and mount it
@@ -62,7 +65,7 @@ default /syslinux/menu.c32
 prompt 0
 timeout 0
 
-MENU TITLE Boot Menu
+MENU TITLE devstack Boot Menu
 
 EOF
 
@@ -74,8 +77,8 @@ fi
 
 # Get image into place
 if [ ! -r $PXEDIR/stack-initrd.img ]; then
-    cd $OPWD
-    $PROGDIR/build_ramdisk.sh $PXEDIR/stack-initrd.img
+    cd $TOP_DIR
+    $PROGDIR/build_uec_ramdisk.sh $PXEDIR/stack-initrd.img
 fi
 if [ ! -r $PXEDIR/stack-initrd.gz ]; then
     gzip -1 -c $PXEDIR/stack-initrd.img >$PXEDIR/stack-initrd.gz
@@ -139,3 +142,5 @@ if [ -n "$DEST_DEV" ]; then
     umount $DEST_DIR
     rmdir $DEST_DIR
 fi
+
+trap - SIGHUP SIGINT SIGTERM SIGQUIT EXIT

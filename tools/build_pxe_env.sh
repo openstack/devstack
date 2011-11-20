@@ -10,8 +10,7 @@
 dpkg -l syslinux || apt-get install -y syslinux
 
 DEST_DIR=${1:-/tmp}/tftpboot
-PXEDIR=${PXEDIR:-/var/cache/devstack/pxe}
-OPWD=`pwd`
+PXEDIR=${PXEDIR:-/opt/ramstack/pxe}
 PROGDIR=`dirname $0`
 
 # Clean up any resources that may be in use
@@ -28,7 +27,11 @@ cleanup() {
     trap 2; kill -2 $$
 }
 
-trap cleanup SIGHUP SIGINT SIGTERM
+trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT EXIT
+
+# Keep track of the current directory
+TOOLS_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
 mkdir -p $DEST_DIR/pxelinux.cfg
 cd $DEST_DIR
@@ -42,7 +45,7 @@ default menu.c32
 prompt 0
 timeout 0
 
-MENU TITLE PXE Boot Menu
+MENU TITLE devstack PXE Boot Menu
 
 EOF
 
@@ -54,7 +57,7 @@ fi
 
 # Get image into place
 if [ ! -r $PXEDIR/stack-initrd.img ]; then
-    cd $OPWD
+    cd $TOP_DIR
     $PROGDIR/build_ramdisk.sh $PXEDIR/stack-initrd.img
 fi
 if [ ! -r $PXEDIR/stack-initrd.gz ]; then
@@ -110,3 +113,5 @@ LABEL local
     MENU LABEL ^Local disk
     LOCALBOOT 0
 EOF
+
+trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT EXIT
