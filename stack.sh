@@ -80,9 +80,6 @@ source ./stackrc
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
 
-# Configure services to syslog instead of writing to individual log files
-SYSLOG=${SYSLOG:-False}
-
 # apt-get wrapper to just get arguments set correctly
 function apt_get() {
     local sudo="sudo"
@@ -185,6 +182,23 @@ if [ ! -n "$HOST_IP" ]; then
         exit 1
     fi
 fi
+
+# Normalize config values to True or False
+# VAR=`trueorfalse default-value test-value`
+function trueorfalse() {
+    local default=$1
+    local testval=$2
+
+    [[ -z "$testval" ]] && { echo "$default"; return; }
+    [[ "0 no false" =~ "$testval" ]] && { echo "False"; return; }
+    [[ "1 yes true" =~ "$testval" ]] && { echo "True"; return; }
+    echo "$default"
+}
+
+# Configure services to syslog instead of writing to individual log files
+SYSLOG=`trueorfalse False $SYSLOG`
+SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
+SYSLOG_PORT=${SYSLOG_PORT:-516}
 
 # Service startup timeout
 SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
@@ -547,6 +561,28 @@ fi
 # Add a useful screenrc.  This isn't required to run openstack but is we do
 # it since we are going to run the services in screen for simple
 cp $FILES/screenrc ~/.screenrc
+
+# Syslog
+# ---------
+
+if [[ $SYSLOG != "False" ]]; then
+    apt_get install -y rsyslog-relp
+    if [[ "$SYSLOG_HOST" = "$HOST_IP" ]]; then
+        # Configure the master host to receive
+        cat <<EOF >/tmp/90-stack-m.conf
+\$ModLoad imrelp
+\$InputRELPServerRun $SYSLOG_PORT
+EOF
+        sudo mv /tmp/90-stack-m.conf /etc/rsyslog.d
+    else
+        # Set rsyslog to send to remote host
+        cat <<EOF >/tmp/90-stack-s.conf
+*.*		:omrelp:$SYSLOG_HOST:$SYSLOG_PORT
+EOF
+        sudo mv /tmp/90-stack-s.conf /etc/rsyslog.d
+    fi
+    sudo /usr/sbin/service rsyslog restart
+fi
 
 # Rabbit
 # ---------
@@ -1032,6 +1068,16 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     sudo sed -e "s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g" -i $KEYSTONE_DATA
     # initialize keystone with default users/endpoints
     ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
+
+    if [ "$SYSLOG" != "False" ]; then
+        sed -i -e '/^handlers=devel$/s/=devel/=production/' \
+            $KEYSTONE_DIR/etc/logging.cnf
+        sed -i -e "
+            /^log_file/s/log_file/\#log_file/; \
+            /^log_config/d;/^\[DEFAULT\]/a\
+            log_config=$KEYSTONE_DIR/etc/logging.cnf" \
+            $KEYSTONE_DIR/etc/keystone.conf
+    fi
 fi
 
 
