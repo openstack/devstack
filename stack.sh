@@ -757,9 +757,10 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
 
     USER_GROUP=$(id -g)
     sudo mkdir -p ${SWIFT_DATA_LOCATION}/drives
-    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_LOCATION}/drives
+    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_LOCATION}
 
     # We then create a loopback disk and format it to XFS.
+    # TODO: Reset disks on new pass.
     if [[ ! -e ${SWIFT_DATA_LOCATION}/drives/images/swift.img ]]; then
         mkdir -p  ${SWIFT_DATA_LOCATION}/drives/images
         sudo touch  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
@@ -853,6 +854,17 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
    generate_swift_configuration container 6011 2
    generate_swift_configuration account 6012 2
 
+
+   # We have some specific configuration for swift for rsyslog. See
+   # the file /etc/rsyslog.d/10-swift.conf for more info.
+   swift_log_dir=${SWIFT_DATA_LOCATION}/logs
+   rm -rf ${swift_log_dir}
+   mkdir -p ${swift_log_dir}/hourly
+   sudo chown -R syslog:adm ${swift_log_dir}
+   sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
+       tee /etc/rsyslog.d/10-swift.conf
+   sudo restart rsyslog
+   
    # We create two helper scripts :
    #
    # - swift-remakerings
