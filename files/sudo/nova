@@ -1,4 +1,4 @@
-Cmnd_Alias NOVACMDS = /bin/chmod /var/lib/nova/tmp/*/root/.ssh, \
+Cmnd_Alias NOVADEVCMDS = /bin/chmod /var/lib/nova/tmp/*/root/.ssh, \
                       /bin/chown /var/lib/nova/tmp/*/root/.ssh, \
                       /bin/chown,                               \
                       /bin/chmod,                               \
@@ -43,5 +43,5 @@ Cmnd_Alias NOVACMDS = /bin/chmod /var/lib/nova/tmp/*/root/.ssh, \
                       /usr/sbin/dnsmasq,                        \
                       /usr/sbin/arping
 
-%USER% ALL = (root) NOPASSWD: SETENV: NOVACMDS
+%USER% ALL = (root) NOPASSWD: SETENV: NOVADEVCMDS
 
