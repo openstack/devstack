@@ -1,10 +1,10 @@
 # compute service
 NOVA_REPO=https://github.com/openstack/nova.git
-NOVA_BRANCH=stable/diablo
+NOVA_BRANCH=master
 
 # storage service
 SWIFT_REPO=https://github.com/openstack/swift.git
-SWIFT_BRANCH=stable/diablo
+SWIFT_BRANCH=master
 
 # swift and keystone integration
 SWIFT_KEYSTONE_REPO=https://github.com/cloudbuilders/swift-keystone2.git
@@ -12,7 +12,7 @@ SWIFT_KEYSTONE_BRANCH=master
 
 # image catalog service
 GLANCE_REPO=https://github.com/openstack/glance.git
-GLANCE_BRANCH=stable/diablo
+GLANCE_BRANCH=master
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=https://github.com/openstack/keystone.git
@@ -20,11 +20,11 @@ KEYSTONE_BRANCH=stable/diablo
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/cloudbuilders/noVNC.git
-NOVNC_BRANCH=diablo
+NOVNC_BRANCH=master
 
 # django powered web control panel for openstack
 HORIZON_REPO=https://github.com/openstack/horizon.git
-HORIZON_BRANCH=stable/diablo
+HORIZON_BRANCH=master
 
 # python client library to nova that horizon (and others) use
 NOVACLIENT_REPO=https://github.com/openstack/python-novaclient.git
@@ -33,11 +33,11 @@ NOVACLIENT_BRANCH=master
 # openstackx is a collection of extensions to openstack.compute & nova
 # that is *deprecated*.  The code is being moved into python-novaclient & nova.
 OPENSTACKX_REPO=https://github.com/cloudbuilders/openstackx.git
-OPENSTACKX_BRANCH=diablo
+OPENSTACKX_BRANCH=master
 
 # quantum service
 QUANTUM_REPO=https://github.com/openstack/quantum
-QUANTUM_BRANCH=stable/diablo
+QUANTUM_BRANCH=master
 
 # CI test suite
 CITEST_REPO=https://github.com/openstack/openstack-integration-tests.git

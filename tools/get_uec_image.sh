@@ -10,6 +10,7 @@ TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
 # exit on error to stop unexpected errors
 set -o errexit
+set -o xtrace
 
 usage() {
     echo "Usage: $0 - Fetch and prepare Ubuntu images"
