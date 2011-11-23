@@ -475,9 +475,9 @@ git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 
 # glance, swift middleware and nova api needs keystone middleware
-if [[ "$ENABLED_SERVICES" =~ "key" || 
-      "$ENABLED_SERVICES" =~ "g-api" || 
-      "$ENABLED_SERVICES" =~ "n-api" || 
+if [[ "$ENABLED_SERVICES" =~ "key" ||
+      "$ENABLED_SERVICES" =~ "g-api" ||
+      "$ENABLED_SERVICES" =~ "n-api" ||
       "$ENABLED_SERVICES" =~ "swift" ]]; then
     # unified auth system (manages accounts/tokens)
     git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
@@ -517,9 +517,9 @@ fi
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
-if [[ "$ENABLED_SERVICES" =~ "key" || 
-      "$ENABLED_SERVICES" =~ "g-api" || 
-      "$ENABLED_SERVICES" =~ "n-api" || 
+if [[ "$ENABLED_SERVICES" =~ "key" ||
+      "$ENABLED_SERVICES" =~ "g-api" ||
+      "$ENABLED_SERVICES" =~ "n-api" ||
       "$ENABLED_SERVICES" =~ "swift" ]]; then
     cd $KEYSTONE_DIR; sudo python setup.py develop
 fi
@@ -961,7 +961,7 @@ fi
 # You can define extra nova conf flags by defining the array EXTRA_FLAGS,
 # For Example: EXTRA_FLAGS=(--foo --bar=2)
 for I in "${EXTRA_FLAGS[@]}"; do
-    add_nova_flag $i
+    add_nova_flag $I
 done
 
 # XenServer
