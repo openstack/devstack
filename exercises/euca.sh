@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# we will use the ``euca2ools`` cli tool that wraps the python boto 
+# we will use the ``euca2ools`` cli tool that wraps the python boto
 # library to test ec2 compatibility
 #
 
@@ -22,7 +22,7 @@ source ./openrc
 popd
 
 # find a machine image to boot
-IMAGE=`euca-describe-images | grep machine | cut -f2`
+IMAGE=`euca-describe-images | grep machine | cut -f2 | head -n1`
 
 # launch it
 INSTANCE=`euca-run-instances $IMAGE | grep INSTANCE | cut -f2`

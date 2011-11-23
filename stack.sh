@@ -537,7 +537,7 @@ if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
     cd $OPENSTACKX_DIR; sudo python setup.py develop
 fi
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
-    cd $HORIZON_DIR/django-openstack; sudo python setup.py develop
+    cd $HORIZON_DIR/horizon; sudo python setup.py develop
     cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
 fi
 if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
@@ -618,7 +618,13 @@ if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
 
 
     # ``local_settings.py`` is used to override horizon default settings.
-    cp $FILES/horizon_settings.py $HORIZON_DIR/openstack-dashboard/local/local_settings.py
+    local_settings=$HORIZON_DIR/openstack-dashboard/local/local_settings.py
+    cp $FILES/horizon_settings.py $local_settings
+
+    # Enable quantum in dashboard, if requested
+    if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
+        sudo sed -e "s,QUANTUM_ENABLED = False,QUANTUM_ENABLED = True,g" -i $local_settings
+    fi
 
     # Initialize the horizon database (it stores sessions and notices shown to
     # users).  The user system is external (keystone).
@@ -934,10 +940,12 @@ add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
 add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
-    add_nova_flag "--osapi_extensions_path=$OPENSTACKX_DIR/extensions"
+    add_nova_flag "--osapi_extension=nova.api.openstack.v2.contrib.standard_extensions"
+    add_nova_flag "--osapi_extension=extensions.admin.Admin"
 fi
 if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
-    add_nova_flag "--vncproxy_url=http://$HOST_IP:6080"
+    VNCPROXY_URL=${VNCPROXY_URL:-"http://$HOST_IP:6080"}
+    add_nova_flag "--vncproxy_url=$VNCPROXY_URL"
     add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
 fi
 add_nova_flag "--api_paste_config=$NOVA_DIR/bin/nova-api-paste.ini"
@@ -1008,7 +1016,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone;'
 
-    # FIXME (anthony) keystone should use keystone.conf.example
+    # Configure keystone.conf
     KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
     cp $FILES/keystone.conf $KEYSTONE_CONF
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
@@ -1021,7 +1029,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_DATA
     sudo sed -e "s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g" -i $KEYSTONE_DATA
     # initialize keystone with default users/endpoints
-    BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
+    ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
 fi
 
 

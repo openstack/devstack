@@ -12,23 +12,13 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(LOCAL_PATH, 'dashboard_openstack.sqlite3'),
+        'TEST_NAME': os.path.join(LOCAL_PATH, 'test.sqlite3'),
     },
 }
 
+# The default values for these two settings seem to cause issues with apache
 CACHE_BACKEND = 'dummy://'
-
-# Add apps to horizon installation.
-INSTALLED_APPS = (
-    'dashboard',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_openstack',
-    'django_openstack.templatetags',
-    'mailer',
-)
-
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 # Send email to the console by default
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -44,32 +34,40 @@ MAILER_EMAIL_BACKEND = EMAIL_BACKEND
 # EMAIL_HOST_USER = 'djangomail'
 # EMAIL_HOST_PASSWORD = 'top-secret!'
 
-# FIXME: This needs to be changed to allow for multi-node setup.
-OPENSTACK_KEYSTONE_URL = "http://localhost:5000/v2.0/"
-OPENSTACK_KEYSTONE_ADMIN_URL = "http://localhost:35357/v2.0"
+HORIZON_CONFIG = {
+    'dashboards': ('nova', 'syspanel', 'settings',),
+    'default_dashboard': 'nova',
+    'user_home': 'dashboard.views.user_home',
+}
+
+OPENSTACK_HOST = "127.0.0.1"
+OPENSTACK_KEYSTONE_URL = "http://%s:5000/v2.0" % OPENSTACK_HOST
+# FIXME: this is only needed until keystone fixes its GET /tenants call
+# so that it doesn't return everything for admins
+OPENSTACK_KEYSTONE_ADMIN_URL = "http://%s:35357/v2.0" % OPENSTACK_HOST
 OPENSTACK_KEYSTONE_DEFAULT_ROLE = "Member"
 
-# NOTE(tres): Available services should come from the service
-#             catalog in Keystone.
-SWIFT_ENABLED = False
+SWIFT_PAGINATE_LIMIT = 100
 
 # Configure quantum connection details for networking
 QUANTUM_ENABLED = False
-QUANTUM_URL = '127.0.0.1'
+QUANTUM_URL = '%s'  % OPENSTACK_HOST
 QUANTUM_PORT = '9696'
 QUANTUM_TENANT = '1234'
 QUANTUM_CLIENT_VERSION='0.1'
 
-# No monitoring links currently
-EXTERNAL_MONITORING = []
+# If you have external monitoring links, eg:
+# EXTERNAL_MONITORING = [
+#     ['Nagios','http://foo.com'],
+#     ['Ganglia','http://bar.com'],
+# ]
 
-# Uncomment the following segment to silence most logging
-# django.db and boto DEBUG logging is extremely verbose.
 #LOGGING = {
 #        'version': 1,
-#        # set to True will disable all logging except that specified, unless
-#        # nothing is specified except that django.db.backends will still log,
-#        # even when set to True, so disable explicitly
+#        # When set to True this will disable all logging except
+#        # for loggers specified in this configuration dictionary. Note that
+#        # if nothing is specified here and disable_existing_loggers is True,
+#        # django.db.backends will still log unless it is disabled explicitly.
 #        'disable_existing_loggers': False,
 #        'handlers': {
 #            'null': {
@@ -77,20 +75,34 @@ EXTERNAL_MONITORING = []
 #                'class': 'django.utils.log.NullHandler',
 #                },
 #            'console': {
-#                'level': 'DEBUG',
+#                # Set the level to "DEBUG" for verbose output logging.
+#                'level': 'INFO',
 #                'class': 'logging.StreamHandler',
 #                },
 #            },
 #        'loggers': {
-#            # Comment or Uncomment these to turn on/off logging output
+#            # Logging from django.db.backends is VERY verbose, send to null
+#            # by default.
 #            'django.db.backends': {
 #                'handlers': ['null'],
 #                'propagate': False,
 #                },
-#            'django_openstack': {
-#                'handlers': ['null'],
+#            'horizon': {
+#                'handlers': ['console'],
 #                'propagate': False,
 #            },
+#            'novaclient': {
+#                'handlers': ['console'],
+#                'propagate': False,
+#            },
+#            'keystoneclient': {
+#                'handlers': ['console'],
+#                'propagate': False,
+#            },
+#            'nose.plugins.manager': {
+#                'handlers': ['console'],
+#                'propagate': False,
+#            }
 #        }
 #}
 
