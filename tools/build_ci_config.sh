@@ -6,17 +6,13 @@
 function usage {
     echo "$0 - Build config.ini for openstack-integration-tests"
     echo ""
-    echo "Usage: $0 configdir"
+    echo "Usage: $0 [configdir]"
     exit 1
 }
 
-if [ ! "$#" -eq "1" ]; then
+if [ "$1" = "-h" ]; then
     usage
 fi
-
-CONFIG_DIR=$1
-CONFIG_CONF=$CONFIG_DIR/storm.conf
-CONFIG_INI=$CONFIG_DIR/config.ini
 
 # Clean up any resources that may be in use
 cleanup() {
@@ -53,7 +49,50 @@ source ./stackrc
 # Where Openstack code lives
 DEST=${DEST:-/opt/stack}
 
+CITEST_DIR=$DEST/openstack-integration-tests
+
+CONFIG_DIR=${1:-$CITEST_DIR/etc}
+CONFIG_CONF=$CONFIG_DIR/storm.conf
+CONFIG_INI=$CONFIG_DIR/config.ini
+
 DIST_NAME=${DIST_NAME:-oneiric}
+
+# git clone only if directory doesn't exist already.  Since ``DEST`` might not
+# be owned by the installation user, we create the directory and change the
+# ownership to the proper user.
+function git_clone {
+
+    GIT_REMOTE=$1
+    GIT_DEST=$2
+    GIT_BRANCH=$3
+
+    # do a full clone only if the directory doesn't exist
+    if [ ! -d $GIT_DEST ]; then
+        git clone $GIT_REMOTE $GIT_DEST
+        cd $2
+        # This checkout syntax works for both branches and tags
+        git checkout $GIT_BRANCH
+    elif [[ "$RECLONE" == "yes" ]]; then
+        # if it does exist then simulate what clone does if asked to RECLONE
+        cd $GIT_DEST
+        # set the url to pull from and fetch
+        git remote set-url origin $GIT_REMOTE
+        git fetch origin
+        # remove the existing ignored files (like pyc) as they cause breakage
+        # (due to the py files having older timestamps than our pyc, so python
+        # thinks the pyc files are correct using them)
+        find $GIT_DEST -name '*.pyc' -delete
+        git checkout -f origin/$GIT_BRANCH
+        # a local branch might not exist
+        git branch -D $GIT_BRANCH || true
+        git checkout -b $GIT_BRANCH
+    fi
+}
+
+# Install tests and prerequisites
+sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install --use-mirrors `cat $TOP_DIR/files/pips/openstack-integration-tests`
+
+git_clone $CITEST_REPO $CITEST_DIR $CITEST_BRANCH
 
 if [ ! -f $DEST/.ramdisk ]; then
     # Process network configuration vars
