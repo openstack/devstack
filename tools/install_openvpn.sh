@@ -11,24 +11,41 @@
 # --client mode creates a tarball of a client configuration for this server
 
 # Get config file
-if [ -e localrc.vpn ]; then
-    . localrc.vpn
+if [ -e localrc ]; then
+    . localrc
 fi
+if [ -e vpnrc ]; then
+    . vpnrc
+fi
+
+# Do some IP manipulation
+function cidr2netmask() {
+    set -- $(( 5 - ($1 / 8) )) 255 255 255 255 $(( (255 << (8 - ($1 % 8))) & 255 )) 0 0 0
+    if [[ $1 -gt 1 ]]; then
+        shift $1
+    else
+        shift
+    fi
+    echo ${1-0}.${2-0}.${3-0}.${4-0}
+}
+
+FIXED_NET=`echo $FIXED_RANGE | cut -d'/' -f1`
+FIXED_CIDR=`echo $FIXED_RANGE | cut -d'/' -f2`
+FIXED_MASK=`cidr2netmask $FIXED_CIDR`
 
 # VPN Config
 VPN_SERVER=${VPN_SERVER:-`ifconfig eth0 | awk "/inet addr:/ { print \$2 }" | cut -d: -f2`}  # 50.56.12.212
 VPN_PROTO=${VPN_PROTO:-tcp}
 VPN_PORT=${VPN_PORT:-6081}
-VPN_DEV=${VPN_DEV:-tun}
-VPN_BRIDGE=${VPN_BRIDGE:-br0}
-VPN_CLIENT_NET=${VPN_CLIENT_NET:-172.16.28.0}
-VPN_CLIENT_MASK=${VPN_CLIENT_MASK:-255.255.255.0}
-VPN_CLIENT_DHCP="${VPN_CLIENT_DHCP:-172.16.28.1 172.16.28.254}"
-VPN_LOCAL_NET=${VPN_LOCAL_NET:-10.0.0.0}
-VPN_LOCAL_MASK=${VPN_LOCAL_MASK:-255.255.0.0}
+VPN_DEV=${VPN_DEV:-tap0}
+VPN_BRIDGE=${VPN_BRIDGE:-br100}
+VPN_BRIDGE_IF=${VPN_BRIDGE_IF:-$FLAT_INTERFACE}
+VPN_CLIENT_NET=${VPN_CLIENT_NET:-$FIXED_NET}
+VPN_CLIENT_MASK=${VPN_CLIENT_MASK:-$FIXED_MASK}
+VPN_CLIENT_DHCP="${VPN_CLIENT_DHCP:-net.1 net.254}"
 
 VPN_DIR=/etc/openvpn
-CA_DIR=/etc/openvpn/easy-rsa
+CA_DIR=$VPN_DIR/easy-rsa
 
 usage() {
     echo "$0 - OpenVPN install and certificate generation"
@@ -54,7 +71,16 @@ if [ ! -d $CA_DIR ]; then
     cp -pR /usr/share/doc/openvpn/examples/easy-rsa/2.0/ $CA_DIR
 fi
 
-OPWD=`pwd`
+# Keep track of the current directory
+TOOLS_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $TOOLS_DIR/.. && pwd)
+
+WEB_DIR=$TOP_DIR/../vpn
+if [[ ! -d $WEB_DIR ]]; then
+    mkdir -p $WEB_DIR
+fi
+WEB_DIR=$(cd $TOP_DIR/../vpn && pwd)
+
 cd $CA_DIR
 source ./vars
 
@@ -87,6 +113,10 @@ do_server() {
 BR="$VPN_BRIDGE"
 TAP="\$1"
 
+if [[ ! -d /sys/class/net/\$BR ]]; then
+    brctl addbr \$BR
+fi
+
 for t in \$TAP; do
     openvpn --mktun --dev \$t
     brctl addif \$BR \$t
@@ -117,10 +147,8 @@ key $NAME.key  # This file should be kept secret
 ca ca.crt
 dh dh1024.pem
 duplicate-cn
-#server $VPN_CLIENT_NET $VPN_CLIENT_MASK
 server-bridge $VPN_CLIENT_NET $VPN_CLIENT_MASK $VPN_CLIENT_DHCP
 ifconfig-pool-persist ipp.txt
-push "route $VPN_LOCAL_NET $VPN_LOCAL_MASK"
 comp-lzo
 user nobody
 group nogroup
@@ -163,9 +191,9 @@ persist-tun
 comp-lzo
 verb 3
 EOF
-    (cd $TMP_DIR; tar cf $OPWD/$NAME.tar *)
+    (cd $TMP_DIR; tar cf $WEB_DIR/$NAME.tar *)
     rm -rf $TMP_DIR
-    echo "Client certificate and configuration is in $OPWD/$NAME.tar"
+    echo "Client certificate and configuration is in $WEB_DIR/$NAME.tar"
 }
 
 # Process command line args
