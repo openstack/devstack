@@ -3,13 +3,10 @@ django-mailer
 django-nose==0.1.2
 django-nose-selenium
 django-registration==0.7
-glance==2011.3
 pycrypto==2.3
-quantum
 sqlalchemy-migrate
 python-cloudfiles
 
 -e git+https://github.com/cloudbuilders/openstackx.git#egg=openstackx
 -e git+https://github.com/jacobian/openstack.compute.git#egg=openstack
--e git+https://github.com/rackspace/python-novaclient.git#egg=python-novaclient
 -e git+https://github.com/4P/python-keystoneclient.git#egg=python-keystoneclient
