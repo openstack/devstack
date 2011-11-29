@@ -214,7 +214,7 @@ function read_password {
         echo "It is probably best to avoid spaces and weird characters."
         echo "If you leave this blank, a random default value will be used."
         echo "Enter a password now:"
-        read $var
+        read -e $var
         pw=${!var}
         if [ ! $pw ]; then
             pw=`openssl rand -hex 10`
