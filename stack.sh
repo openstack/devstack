@@ -927,6 +927,8 @@ if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         add_nova_flag "--libvirt_vif_type=ethernet"
         add_nova_flag "--libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
+        add_nova_flag "--linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver"
+        add_nova_flag "--quantum-use-dhcp"
     fi
 else
     add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
@@ -1113,10 +1115,10 @@ if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
         fi
     fi
 
-    QUANTUM_PLUGIN_INI_FILE=$QUANTUM_DIR/quantum/plugins.ini
+    QUANTUM_PLUGIN_INI_FILE=$QUANTUM_DIR/etc/plugins.ini
     # Make sure we're using the openvswitch plugin
     sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
-    screen_it q-svc "cd $QUANTUM_DIR && export PYTHONPATH=.:$PYTHONPATH; python $QUANTUM_DIR/bin/quantum $QUANTUM_DIR/etc/quantum.conf"
+    screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_DIR/etc/quantum.conf"
 fi
 
 # Quantum agent (for compute nodes)
@@ -1130,7 +1132,7 @@ if [[ "$ENABLED_SERVICES" =~ "q-agt" ]]; then
     fi
 
     # Start up the quantum <-> openvswitch agent
-    screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_DIR/quantum/plugins/openvswitch/ovs_quantum_plugin.ini -v"
+    screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini -v"
 fi
 
 # If we're using Quantum (i.e. q-svc is enabled), network creation has to
