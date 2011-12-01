@@ -40,7 +40,7 @@ QUANTUM_REPO=https://github.com/openstack/quantum
 QUANTUM_BRANCH=master
 
 # CI test suite
-CITEST_REPO=https://github.com/openstack/openstack-integration-tests.git
+CITEST_REPO=https://github.com/openstack/tempest.git
 CITEST_BRANCH=master
 
 # Specify a comma-separated list of uec images to download and install into glance.

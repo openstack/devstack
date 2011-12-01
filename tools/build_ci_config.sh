@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# build_ci_config.sh - Build a config.ini for openstack-integration-tests
-#                      (https://github.com/openstack/openstack-integration-tests)
+# build_ci_config.sh - Build a config.ini for tempest (openstack-integration-tests)
+#                      (https://github.com/openstack/tempest.git)
 
 function usage {
-    echo "$0 - Build config.ini for openstack-integration-tests"
+    echo "$0 - Build config.ini for tempest"
     echo ""
     echo "Usage: $0 [configdir]"
     exit 1
@@ -49,7 +49,7 @@ source ./stackrc
 # Where Openstack code lives
 DEST=${DEST:-/opt/stack}
 
-CITEST_DIR=$DEST/openstack-integration-tests
+CITEST_DIR=$DEST/tempest
 
 CONFIG_DIR=${1:-$CITEST_DIR/etc}
 CONFIG_CONF=$CONFIG_DIR/storm.conf
@@ -90,7 +90,7 @@ function git_clone {
 }
 
 # Install tests and prerequisites
-sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install --use-mirrors `cat $TOP_DIR/files/pips/openstack-integration-tests`
+sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install --use-mirrors `cat $TOP_DIR/files/pips/tempest`
 
 git_clone $CITEST_REPO $CITEST_DIR $CITEST_BRANCH
 

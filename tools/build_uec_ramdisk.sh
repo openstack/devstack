@@ -149,7 +149,7 @@ git_clone $NOVNC_REPO $DEST/novnc $NOVNC_BRANCH
 git_clone $HORIZON_REPO $DEST/horizon $HORIZON_BRANCH
 git_clone $NOVACLIENT_REPO $DEST/python-novaclient $NOVACLIENT_BRANCH
 git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
-git_clone $CITEST_REPO $DEST/openstack-integration-tests $CITEST_BRANCH
+git_clone $CITEST_REPO $DEST/tempest $CITEST_BRANCH
 
 # Use this version of devstack
 rm -rf $MNT_DIR/$DEST/devstack
