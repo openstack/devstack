@@ -160,6 +160,7 @@ ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-v
 
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
+VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
 # Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
@@ -947,12 +948,29 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
 
     apt_get install iscsitarget-dkms iscsitarget
 
-    if ! sudo vgdisplay | grep -q $VOLUME_GROUP; then
+    if ! sudo vgs $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
         VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
-        truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
+        # Only create if the file doesn't already exists
+        [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
         DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
-        sudo vgcreate $VOLUME_GROUP $DEV
+        # Only create if the loopback device doesn't contain $VOLUME_GROUP
+        if ! sudo vgs $VOLUME_GROUP; then sudo vgcreate $VOLUME_GROUP $DEV; fi
+    fi
+
+    if sudo vgs $VOLUME_GROUP; then
+        # Clean out existing volumes
+        for lv in `sudo lvs --noheadings -o lv_name $VOLUME_GROUP`; do
+            # VOLUME_NAME_PREFIX prefixes the LVs we want
+            if [[ "${lv#$VOLUME_NAME_PREFIX}" != "$lv" ]]; then
+                tid=`egrep "^tid.+$lv" /proc/net/iet/volume | cut -f1 -d' ' | tr ':' '='`
+                if [[ -n "$tid" ]]; then
+                    lun=`egrep "lun.+$lv" /proc/net/iet/volume | cut -f1 -d' ' | tr ':' '=' | tr -d '\t'`
+                    sudo ietadm --op delete --$tid --$lun
+                fi
+                sudo lvremove -f $VOLUME_GROUP/$lv
+            fi
+        done
     fi
 
     # Configure iscsitarget
@@ -984,6 +1002,7 @@ else
 fi
 if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
     add_nova_flag "--volume_group=$VOLUME_GROUP"
+    add_nova_flag "--volume_name_template=${VOLUME_NAME_PREFIX}%08x"
 fi
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
