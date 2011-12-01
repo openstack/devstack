@@ -386,6 +386,10 @@ function get_packages() {
     local service
 
     for service in ${ENABLED_SERVICES//,/ }; do
+        # Allow individual services to specify dependencies
+        if [[ -e $FILES/apts/${service} ]]; then
+            file_to_parse="${file_to_parse} $service"
+        fi
         if [[ $service == n-* ]]; then
             if [[ ! $file_to_parse =~ nova ]]; then
                 file_to_parse="${file_to_parse} nova"
@@ -398,8 +402,6 @@ function get_packages() {
             if [[ ! $file_to_parse =~ keystone ]]; then
                 file_to_parse="${file_to_parse} keystone"
             fi
-        elif [[ -e $FILES/apts/${service} ]]; then
-            file_to_parse="${file_to_parse} $service"
         fi
     done
 
