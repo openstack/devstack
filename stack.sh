@@ -448,26 +448,35 @@ function git_clone {
     GIT_DEST=$2
     GIT_BRANCH=$3
 
-    # do a full clone only if the directory doesn't exist
-    if [ ! -d $GIT_DEST ]; then
-        git clone $GIT_REMOTE $GIT_DEST
-        cd $2
-        # This checkout syntax works for both branches and tags
-        git checkout $GIT_BRANCH
-    elif [[ "$RECLONE" == "yes" ]]; then
-        # if it does exist then simulate what clone does if asked to RECLONE
+    if echo $GIT_BRANCH | egrep -q "^refs"; then
+        # If our branch name is a gerrit style refs/changes/...
+        if [ ! -d $GIT_DEST ]; then
+            git clone $GIT_REMOTE $GIT_DEST
+        fi
         cd $GIT_DEST
-        # set the url to pull from and fetch
-        git remote set-url origin $GIT_REMOTE
-        git fetch origin
-        # remove the existing ignored files (like pyc) as they cause breakage
-        # (due to the py files having older timestamps than our pyc, so python
-        # thinks the pyc files are correct using them)
-        find $GIT_DEST -name '*.pyc' -delete
-        git checkout -f origin/$GIT_BRANCH
-        # a local branch might not exist
-        git branch -D $GIT_BRANCH || true
-        git checkout -b $GIT_BRANCH
+        git fetch $GIT_REMOTE $GIT_BRANCH && git checkout FETCH_HEAD
+    else
+        # do a full clone only if the directory doesn't exist
+        if [ ! -d $GIT_DEST ]; then
+            git clone $GIT_REMOTE $GIT_DEST
+            cd $GIT_DEST
+            # This checkout syntax works for both branches and tags
+            git checkout $GIT_BRANCH
+        elif [[ "$RECLONE" == "yes" ]]; then
+            # if it does exist then simulate what clone does if asked to RECLONE
+            cd $GIT_DEST
+            # set the url to pull from and fetch
+            git remote set-url origin $GIT_REMOTE
+            git fetch origin
+            # remove the existing ignored files (like pyc) as they cause breakage
+            # (due to the py files having older timestamps than our pyc, so python
+            # thinks the pyc files are correct using them)
+            find $GIT_DEST -name '*.pyc' -delete
+            git checkout -f origin/$GIT_BRANCH
+            # a local branch might not exist
+            git branch -D $GIT_BRANCH || true
+            git checkout -b $GIT_BRANCH
+        fi
     fi
 }
 
