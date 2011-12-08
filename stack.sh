@@ -699,6 +699,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
     # Virtualization Configuration
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    apt_get install libvirt-bin
 
     # attempt to load modules: network block device - used to manage qcow images
     sudo modprobe nbd || true
@@ -707,7 +708,6 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems
     # come with hardware virtualization disabled in BIOS.
     if [[ "$LIBVIRT_TYPE" == "kvm" ]]; then
-        apt_get install libvirt-bin
         sudo modprobe kvm || true
         if [ ! -e /dev/kvm ]; then
             echo "WARNING: Switching to QEMU"
