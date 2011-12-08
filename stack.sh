@@ -719,15 +719,17 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     # splitting a system into many smaller parts.  LXC uses cgroups and chroot
     # to simulate multiple systems.
     if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
-        apt_get install lxc
-        # lxc uses cgroups (a kernel interface via virtual filesystem) configured
-        # and mounted to ``/cgroup``
-        sudo mkdir -p /cgroup
-        if ! grep -q cgroup /etc/fstab; then
-            echo none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0 | sudo tee -a /etc/fstab
-        fi
-        if ! mount -n | grep -q cgroup; then
-            sudo mount /cgroup
+        if [[ "$DISTRO" > natty ]]; then
+            apt_get install cgroup-lite
+        else
+            cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
+            sudo mkdir -p /cgroup
+            if ! grep -q cgroup /etc/fstab; then
+                echo "$cgline" | sudo tee -a /etc/fstab
+            fi
+            if ! mount -n | grep -q cgroup; then
+                sudo mount /cgroup
+            fi
         fi
     fi
 
