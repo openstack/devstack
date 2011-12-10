@@ -569,10 +569,6 @@ if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
     cd $QUANTUM_DIR; sudo python setup.py develop
 fi
 
-# Add a useful screenrc.  This isn't required to run openstack but is we do
-# it since we are going to run the services in screen for simple
-cp $FILES/screenrc ~/.screenrc
-
 # Syslog
 # ---------
 
@@ -1122,6 +1118,8 @@ function screen_it {
 # create a new named screen to run processes in
 screen -d -m -S stack -t stack
 sleep 1
+# set a reasonable statusbar
+screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"
 
 # launch the glance registry service
 if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
