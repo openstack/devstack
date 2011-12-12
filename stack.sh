@@ -154,6 +154,10 @@ QUANTUM_DIR=$DEST/quantum
 
 # Default Quantum Plugin
 Q_PLUGIN=${Q_PLUGIN:-openvswitch}
+# Default Quantum Port
+Q_PORT=${Q_PORT:-9696}
+# Default Quantum Host
+Q_HOST=${Q_HOST:-localhost}
 
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit,openstackx}
@@ -280,8 +284,9 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 
 # Using Quantum networking:
 #
-# Make sure that q-svc is enabled in ENABLED_SERVICES.  If it is the network
-# manager will be set to the QuantumManager.
+# Make sure that quantum is enabled in ENABLED_SERVICES.  If it is the network
+# manager will be set to the QuantumManager.  If you want to run Quantum on
+# this host, make sure that q-svc is also in ENABLED_SERVICES.
 #
 # If you're planning to use the Quantum openvswitch plugin, set Q_PLUGIN to
 # "openvswitch" and make sure the q-agt service is enabled in
@@ -531,7 +536,7 @@ if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
     # that is *deprecated*.  The code is being moved into python-novaclient & nova.
     git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
 fi
-if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     # quantum
     git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 fi
@@ -565,7 +570,7 @@ if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
     cd $HORIZON_DIR/horizon; sudo python setup.py develop
     cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
 fi
-if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     cd $QUANTUM_DIR; sudo python setup.py develop
 fi
 
@@ -967,9 +972,11 @@ add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
 add_nova_flag "--fixed_range=$FIXED_RANGE"
-if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
     add_nova_flag "--network_manager=nova.network.quantum.manager.QuantumManager"
-    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+    add_nova_flag "--quantum_connection_host=$Q_HOST"
+    add_nova_flag "--quantum_connection_port=$Q_PORT"
+    if [[ "$ENABLED_SERVICES" =~ "q-svc" && "$Q_PLUGIN" = "openvswitch" ]]; then
         add_nova_flag "--libvirt_vif_type=ethernet"
         add_nova_flag "--libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
         add_nova_flag "--linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver"
@@ -1156,25 +1163,23 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     fi
 fi
 
-# Quantum
+# Quantum service
 if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
-    # Install deps
-    # FIXME add to files/apts/quantum, but don't install if not needed!
-    apt_get install openvswitch-switch openvswitch-datapath-dkms
-
-    # Create database for the plugin/agent
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        # Install deps
+        # FIXME add to files/apts/quantum, but don't install if not needed!
+        apt_get install openvswitch-switch openvswitch-datapath-dkms
+        # Create database for the plugin/agent
         if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum;'
         else
             echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
             exit 1
         fi
+        QUANTUM_PLUGIN_INI_FILE=$QUANTUM_DIR/etc/plugins.ini
+        # Make sure we're using the openvswitch plugin
+        sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
     fi
-
-    QUANTUM_PLUGIN_INI_FILE=$QUANTUM_DIR/etc/plugins.ini
-    # Make sure we're using the openvswitch plugin
-    sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
     screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_DIR/etc/quantum.conf"
 fi
 
