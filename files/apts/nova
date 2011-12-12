@@ -39,8 +39,3 @@ python-lockfile
 python-m2crypto
 python-boto
 python-kombu
-
-# Stuff for diablo volumes
-iscsitarget  # NOPRIME
-iscsitarget-dkms  # NOPRIME
-lvm2
