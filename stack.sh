@@ -1259,20 +1259,55 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     for image_url in ${IMAGE_URLS//,/ }; do
         # Downloads the image (uec ami+aki style), then extracts it.
         IMAGE_FNAME=`basename "$image_url"`
-        IMAGE_NAME=`basename "$IMAGE_FNAME" .tar.gz`
         if [ ! -f $FILES/$IMAGE_FNAME ]; then
             wget -c $image_url -O $FILES/$IMAGE_FNAME
         fi
 
-        # Extract ami and aki files
-        tar -zxf $FILES/$IMAGE_FNAME -C $FILES/images
+        KERNEL=""
+        RAMDISK=""
+        case "$IMAGE_FNAME" in
+            *.tar.gz|*.tgz)
+                # Extract ami and aki files
+                [ "${IMAGE_FNAME%.tar.gz}" != "$IMAGE_FNAME" ] &&
+                    IMAGE_NAME="${IMAGE_FNAME%.tar.gz}" ||
+                    IMAGE_NAME="${IMAGE_FNAME%.tgz}"
+                xdir="$FILES/images/$IMAGE_NAME"
+                rm -Rf "$xdir";
+                mkdir "$xdir"
+                tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
+                KERNEL=$(for f in "$xdir/"*-vmlinuz*; do
+                         [ -f "$f" ] && echo "$f" && break; done; true)
+                RAMDISK=$(for f in "$xdir/"*-initrd*; do
+                         [ -f "$f" ] && echo "$f" && break; done; true)
+                IMAGE=$(for f in "$xdir/"*.img; do
+                         [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -n "$IMAGE_NAME" ]
+                IMAGE_NAME=$(basename "$IMAGE" ".img")
+                ;;
+            *.img)
+                IMAGE="$FILES/$IMAGE_FNAME";
+                IMAGE_NAME=$(basename "$IMAGE" ".img")
+                ;;
+            *.img.gz)
+                IMAGE="$FILES/${IMAGE_FNAME}"
+                IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
+                ;;
+            *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
+        esac
 
         # Use glance client to add the kernel the root filesystem.
         # We parse the results of the first upload to get the glance ID of the
         # kernel for use when uploading the root filesystem.
-        RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/$IMAGE_NAME-vmlinuz*`
-        KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-        glance add -A $SERVICE_TOKEN name="$IMAGE_NAME" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID < $FILES/images/$IMAGE_NAME.img
+        KERNEL_ID=""; RAMDISK_ID="";
+        if [ -n "$KERNEL" ]; then
+            RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < "$KERNEL"`
+            KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        fi
+        if [ -n "$RAMDISK" ]; then
+            RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-ramdisk" is_public=true container_format=ari disk_format=ari < "$RAMDISK"`
+            RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        fi
+        glance add -A $SERVICE_TOKEN name="${IMAGE_NAME%.img}" is_public=true container_format=ami disk_format=ami ${KERNEL_ID:+kernel_id=$KERNEL_ID} ${RAMDISK_ID:+ramdisk_id=$RAMDISK_ID} < <(zcat --force "${IMAGE}")
     done
 fi
 
