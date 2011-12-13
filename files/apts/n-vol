@@ -1,0 +1,3 @@
+iscsitarget  # NOPRIME
+iscsitarget-dkms  # NOPRIME
+lvm2
