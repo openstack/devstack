@@ -39,3 +39,4 @@ python-lockfile
 python-m2crypto
 python-boto
 python-kombu
+python-feedparser
