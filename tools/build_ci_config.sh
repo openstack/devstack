@@ -199,7 +199,7 @@ service_port = 5000
 apiver = v2.0
 user = admin
 password = $ADMIN_PASSWORD
-tenant_id = 1
+tenant_name = admin
 
 [nova]
 host = $HOST_IP
