@@ -118,7 +118,7 @@ if [[ $EUID -eq 0 ]]; then
 
     echo "Copying files to stack user"
     STACK_DIR="$DEST/${PWD##*/}"
-    cp -r -f "$PWD" "$STACK_DIR"
+    cp -r -f -T "$PWD" "$STACK_DIR"
     chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
         exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
@@ -398,8 +398,8 @@ fi
 # - We are parsing the packages files and detecting metadatas.
 #  - If there is a NOPRIME as comment mean we are not doing the install
 #    just yet.
-#  - If we have the meta-keyword distro:DISTRO or
-#    distro:DISTRO1,DISTRO2 it will be installed only for those
+#  - If we have the meta-keyword dist:DISTRO or
+#    dist:DISTRO1,DISTRO2 it will be installed only for those
 #    distros (case insensitive).
 function get_packages() {
     local file_to_parse="general"
