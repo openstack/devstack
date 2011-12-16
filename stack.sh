@@ -195,8 +195,8 @@ function trueorfalse() {
     local testval=$2
 
     [[ -z "$testval" ]] && { echo "$default"; return; }
-    [[ "0 no false" =~ "$testval" ]] && { echo "False"; return; }
-    [[ "1 yes true" =~ "$testval" ]] && { echo "True"; return; }
+    [[ "0 no false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
+    [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
     echo "$default"
 }
 
