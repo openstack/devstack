@@ -82,6 +82,7 @@ DEST=${DEST:-/opt/stack}
 
 # apt-get wrapper to just get arguments set correctly
 function apt_get() {
+    [[ "$OFFLINE" = "True" ]] && return
     local sudo="sudo"
     [ "$(id -u)" = "0" ] && sudo="env"
     $sudo DEBIAN_FRONTEND=noninteractive apt-get \
@@ -147,6 +148,23 @@ else
     sudo mv $TEMPFILE /etc/sudoers.d/stack_sh_nova
 fi
 
+# Normalize config values to True or False
+# VAR=`trueorfalse default-value test-value`
+function trueorfalse() {
+    local default=$1
+    local testval=$2
+
+    [[ -z "$testval" ]] && { echo "$default"; return; }
+    [[ "0 no false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
+    [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
+    echo "$default"
+}
+
+# Set True to configure stack.sh to run cleanly without Internet access.
+# stack.sh must have been previously run with Internet access to install
+# prerequisites and initialize $DEST.
+OFFLINE=`trueorfalse False $OFFLINE`
+
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
 HORIZON_DIR=$DEST/horizon
@@ -195,18 +213,6 @@ if [ ! -n "$HOST_IP" ]; then
         exit 1
     fi
 fi
-
-# Normalize config values to True or False
-# VAR=`trueorfalse default-value test-value`
-function trueorfalse() {
-    local default=$1
-    local testval=$2
-
-    [[ -z "$testval" ]] && { echo "$default"; return; }
-    [[ "0 no false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
-    [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
-    echo "$default"
-}
 
 # Configure services to syslog instead of writing to individual log files
 SYSLOG=`trueorfalse False $SYSLOG`
@@ -460,17 +466,23 @@ function get_packages() {
     done
 }
 
+function pip_install {
+    [[ "$OFFLINE" = "True" ]] && return
+    sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install --use-mirrors $@
+}
+
 # install apt requirements
 apt_get update
 apt_get install $(get_packages)
 
 # install python requirements
-sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install --use-mirrors `cat $FILES/pips/*`
+pip_install `cat $FILES/pips/* | uniq`
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
 function git_clone {
+    [[ "$OFFLINE" = "True" ]] && return
 
     GIT_REMOTE=$1
     GIT_DEST=$2
