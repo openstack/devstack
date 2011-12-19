@@ -88,6 +88,13 @@ function apt_get() {
         --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
 }
 
+# Check to see if we are already running a stack.sh
+if screen -ls | egrep -q "[0-9].stack"; then
+    echo "You are already running a stack.sh session."
+    echo "To rejoin this session type 'screen -x stack'."
+    echo "To destroy this session, kill the running screen."
+    exit 1
+fi
 
 # OpenStack is designed to be run as a regular user (Horizon will fail to run
 # as root, since apache refused to startup serve content from root user).  If
@@ -165,6 +172,7 @@ ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-v
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
+INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
 
 # Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
@@ -733,6 +741,18 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
 fi
 
+# Helper to clean iptables rules
+function clean_iptables() {
+    # Delete rules
+    sudo iptables -S -v | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" | grep "\-A" |  sed "s/-A/-D/g" | awk '{print "sudo iptables",$0}' | bash
+    # Delete nat rules
+    sudo iptables -S -v -t nat | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" |  grep "\-A" | sed "s/-A/-D/g" | awk '{print "sudo iptables -t nat",$0}' | bash
+    # Delete chains
+    sudo iptables -S -v | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" | grep "\-N" |  sed "s/-N/-X/g" | awk '{print "sudo iptables",$0}' | bash
+    # Delete nat chains
+    sudo iptables -S -v -t nat | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" |  grep "\-N" | sed "s/-N/-X/g" | awk '{print "sudo iptables -t nat",$0}' | bash
+}
+
 if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
     # Virtualization Configuration
@@ -796,13 +816,24 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
         fi
     fi
 
+    # Clean iptables from previous runs
+    clean_iptables
+
+    # Destroy old instances
+    instances=`virsh list | grep $INSTANCE_NAME_PREFIX | cut -d " " -f3`
+    if [ ! $instances = "" ]; then
+        echo $instances | xargs -n1 virsh destroy
+        echo $instances | xargs -n1 virsh undefine
+    fi
+
     # Clean out the instances directory.
     sudo rm -rf $NOVA_DIR/instances/*
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "n-net" ]]; then
-    # delete traces of nova networks from prior runs
+    # Delete traces of nova networks from prior runs
     sudo killall dnsmasq || true
+    clean_iptables
     rm -rf $NOVA_DIR/networks
     mkdir -p $NOVA_DIR/networks
 fi
@@ -1012,6 +1043,7 @@ add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
 add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
 add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
+add_nova_flag "--instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
 if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
     add_nova_flag "--osapi_extension=nova.api.openstack.v2.contrib.standard_extensions"
     add_nova_flag "--osapi_extension=extensions.admin.Admin"
