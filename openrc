@@ -3,8 +3,9 @@
 # Load local configuration
 source ./stackrc
 
-# Set api host endpoint
+# Set api host endpoint, defaulting to HOST_IP but allowing override by SERVICE_HOST
 HOST_IP=${HOST_IP:-127.0.0.1}
+SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
 
 # Nova original used project_id as the *account* that owned resources (servers,
 # ip address, ...)   With the addition of Keystone we have standardized on the
@@ -29,7 +30,7 @@ export NOVA_PASSWORD=${ADMIN_PASSWORD:-secrete}
 #
 # *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We
 # will use the 1.1 *compute api*
-export NOVA_URL=${NOVA_URL:-http://$HOST_IP:5000/v2.0/}
+export NOVA_URL=${NOVA_URL:-http://$SERVICE_HOST:5000/v2.0/}
 
 # Currently novaclient needs you to specify the *compute api* version.  This
 # needs to match the config of your catalog returned by Keystone.
@@ -39,7 +40,7 @@ export NOVA_VERSION=${NOVA_VERSION:-1.1}
 export NOVA_REGION_NAME=${NOVA_REGION_NAME:-RegionOne}
 
 # Set the ec2 url so euca2ools works
-export EC2_URL=${EC2_URL:-http://$HOST_IP:8773/services/Cloud}
+export EC2_URL=${EC2_URL:-http://$SERVICE_HOST:8773/services/Cloud}
 
 # Access key is set in the initial keystone data to be the same as username
 export EC2_ACCESS_KEY=${USERNAME:-demo}
