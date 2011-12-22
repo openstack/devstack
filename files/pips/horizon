@@ -3,4 +3,4 @@ pycrypto==2.3
 
 -e git+https://github.com/cloudbuilders/openstackx.git#egg=openstackx
 -e git+https://github.com/jacobian/openstack.compute.git#egg=openstack
--e git+https://github.com/4P/python-keystoneclient.git#egg=python-keystoneclient
+-e git+https://review.openstack.org/p/openstack/python-keystoneclient#egg=python-keystoneclient
