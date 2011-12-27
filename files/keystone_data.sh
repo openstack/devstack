@@ -34,7 +34,7 @@ $BIN_DIR/keystone-manage $* service add swift object-store "Swift Service"
 
 #endpointTemplates
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne nova http://%SERVICE_HOST%:8774/v1.1/%tenant_id% http://%SERVICE_HOST%:8774/v1.1/%tenant_id%  http://%SERVICE_HOST%:8774/v1.1/%tenant_id% 1 1
-$BIN_DIR/keystone-manage $* endpointTemplates add RegionOne glance http://%SERVICE_HOST%:9292/v1.1/%tenant_id% http://%SERVICE_HOST%:9292/v1.1/%tenant_id% http://%SERVICE_HOST%:9292/v1.1/%tenant_id% 1 1
+$BIN_DIR/keystone-manage $* endpointTemplates add RegionOne glance http://%SERVICE_HOST%:9292/v1 http://%SERVICE_HOST%:9292/v1 http://%SERVICE_HOST%:9292/v1 1 1
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne keystone http://%SERVICE_HOST%:5000/v2.0 http://%SERVICE_HOST%:35357/v2.0 http://%SERVICE_HOST%:5000/v2.0 1 1
 $BIN_DIR/keystone-manage $* endpointTemplates add RegionOne swift http://%SERVICE_HOST%:8080/v1/AUTH_%tenant_id% http://%SERVICE_HOST%:8080/ http://%SERVICE_HOST%:8080/v1/AUTH_%tenant_id% 1 1
 
