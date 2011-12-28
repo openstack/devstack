@@ -171,6 +171,7 @@ HORIZON_DIR=$DEST/horizon
 GLANCE_DIR=$DEST/glance
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
+KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
 SWIFT_DIR=$DEST/swift
@@ -551,6 +552,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
     # django powered web control panel for openstack
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+    git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
 fi
 if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
     # openstackx is a collection of extensions to openstack.compute & nova
@@ -588,6 +590,7 @@ if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
     cd $OPENSTACKX_DIR; sudo python setup.py develop
 fi
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
+    cd $KEYSTONECLIENT_DIR; sudo python setup.py develop
     cd $HORIZON_DIR/horizon; sudo python setup.py develop
     cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
 fi
