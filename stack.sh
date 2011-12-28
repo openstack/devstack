@@ -214,6 +214,9 @@ if [ ! -n "$HOST_IP" ]; then
     fi
 fi
 
+# Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
+SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+
 # Configure services to syslog instead of writing to individual log files
 SYSLOG=`trueorfalse False $SYSLOG`
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
@@ -270,7 +273,7 @@ FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
-EC2_DMZ_HOST=${EC2_DMZ_HOST:-$HOST_IP}
+EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
 VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
 
@@ -333,7 +336,7 @@ RABBIT_HOST=${RABBIT_HOST:-localhost}
 read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 
 # Glance connection info.  Note the port must be specified.
-GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$HOST_IP:9292}
+GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
 
 # SWIFT
 # -----
@@ -1061,7 +1064,7 @@ if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
     add_nova_flag "--osapi_extension=extensions.admin.Admin"
 fi
 if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
-    VNCPROXY_URL=${VNCPROXY_URL:-"http://$HOST_IP:6080"}
+    VNCPROXY_URL=${VNCPROXY_URL:-"http://$SERVICE_HOST:6080"}
     add_nova_flag "--vncproxy_url=$VNCPROXY_URL"
     add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
 fi
@@ -1142,7 +1145,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     # keystone_data.sh creates our admin user and our ``SERVICE_TOKEN``.
     KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
     cp $FILES/keystone_data.sh $KEYSTONE_DATA
-    sudo sed -e "s,%HOST_IP%,$HOST_IP,g" -i $KEYSTONE_DATA
+    sudo sed -e "s,%SERVICE_HOST%,$SERVICE_HOST,g" -i $KEYSTONE_DATA
     sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_DATA
     sudo sed -e "s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g" -i $KEYSTONE_DATA
     # initialize keystone with default users/endpoints
@@ -1399,18 +1402,21 @@ echo ""
 # If you installed the horizon on this server, then you should be able
 # to access the site using your browser.
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
-    echo "horizon is now available at http://$HOST_IP/"
+    echo "horizon is now available at http://$SERVICE_HOST/"
 fi
 
 # If keystone is present, you can point nova cli to this server
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    echo "keystone is serving at http://$HOST_IP:5000/v2.0/"
+    echo "keystone is serving at http://$SERVICE_HOST:5000/v2.0/"
     echo "examples on using novaclient command line is in exercise.sh"
     echo "the default users are: admin and demo"
     echo "the password: $ADMIN_PASSWORD"
 fi
 
-# indicate how long this took to run (bash maintained variable 'SECONDS')
+# Echo HOST_IP - useful for build_uec.sh, which uses dhcp to give the instance an address
+echo "This is your host ip: $HOST_IP"
+
+# Indicate how long this took to run (bash maintained variable 'SECONDS')
 echo "stack.sh completed in $SECONDS seconds."
 
 ) | tee -a "$LOGFILE"
