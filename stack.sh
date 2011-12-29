@@ -244,12 +244,17 @@ function read_password {
         echo '################################################################################'
         echo $msg
         echo '################################################################################'
-        echo "This value will be written to your localrc file so you don't have to enter it again."
-        echo "It is probably best to avoid spaces and weird characters."
+        echo "This value will be written to your localrc file so you don't have to enter it "
+        echo "again.  Use only alphanumeric characters."
         echo "If you leave this blank, a random default value will be used."
-        echo "Enter a password now:"
-        read -e $var
-        pw=${!var}
+        pw=" "
+        while true; do
+            echo "Enter a password now:"
+            read -e $var
+            pw=${!var}
+            [[ "$pw" = "`echo $pw | tr -cd [:alnum:]`" ]] && break
+            echo "Invalid chars in password.  Try again:"
+        done
         if [ ! $pw ]; then
             pw=`openssl rand -hex 10`
         fi
