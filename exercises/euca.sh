@@ -33,7 +33,7 @@ euca-add-group -d description $SECGROUP
 INSTANCE=`euca-run-instances -g $SECGROUP -t m1.tiny $IMAGE | grep INSTANCE | cut -f2`
 
 # Assure it has booted within a reasonable time
-if ! timeout $RUNNING_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
+if ! timeout $RUNNING_TIMEOUT sh -c "while ! euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
     echo "server didn't become active within $RUNNING_TIMEOUT seconds"
     exit 1
 fi
@@ -48,10 +48,10 @@ euca-associate-address -i $INSTANCE $FLOATING_IP
 # Authorize pinging
 euca-authorize -P icmp -s 0.0.0.0/0 -t -1:-1 $SECGROUP
 
-# Max time till the vm is bootable
-BOOT_TIMEOUT=${BOOT_TIMEOUT:-15}
-if ! timeout $BOOT_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
-    echo "Couldn't ping server"
+# Test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
+ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-10}
+if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
+    echo "Couldn't ping server with floating ip"
     exit 1
 fi
 
@@ -66,6 +66,12 @@ euca-disassociate-address $FLOATING_IP
 
 # Release floating address
 euca-release-address $FLOATING_IP
+
+# Wait just a tick for everything above to complete so terminate doesn't fail
+if ! timeout $ASSOCIATE_TIMEOUT sh -c "while euca-describe-addresses | grep -q $FLOATING_IP; do sleep 1; done"; then
+    echo "Floating ip $FLOATING_IP not released within $ASSOCIATE_TIMEOUT seconds"
+    exit 1
+fi
 
 # Terminate instance
 euca-terminate-instances $INSTANCE
