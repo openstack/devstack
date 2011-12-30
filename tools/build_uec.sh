@@ -185,17 +185,6 @@ cat > $vm_dir/uec/user-data<<EOF
 sed -i "s/127.0.0.1/127.0.0.1 \`hostname\`/" /etc/hosts
 apt-get update
 apt-get install git sudo -y
-if [ ! -d devstack ]; then
-    git clone https://github.com/cloudbuilders/devstack.git
-    cd devstack
-    git remote set-url origin `cd $TOP_DIR; git remote show origin | grep Fetch | awk '{print $3}'`
-    git fetch
-    git checkout `git rev-parse HEAD`
-    cat > localrc <<LOCAL_EOF
-ROOTSLEEP=0
-`cat $TOP_DIR/localrc`
-LOCAL_EOF
-fi
 # Disable byobu
 sudo apt-get remove -y byobu
 EOF
@@ -205,6 +194,14 @@ if [[ -e ~/.ssh/id_rsa.pub ]]; then
     PUB_KEY=`cat  ~/.ssh/id_rsa.pub`
     cat >> $vm_dir/uec/user-data<<EOF
 mkdir -p /opt/stack
+if [ ! -d /opt/stack/devstack ]; then
+    git clone https://github.com/cloudbuilders/devstack.git /opt/stack/devstack
+    cd /opt/stack/devstack
+    cat > localrc <<LOCAL_EOF
+ROOTSLEEP=0
+`cat $TOP_DIR/localrc`
+LOCAL_EOF
+fi
 useradd -U -G sudo -s /bin/bash -d /opt/stack -m stack
 echo stack:pass | chpasswd
 mkdir -p /opt/stack/.ssh
@@ -222,7 +219,7 @@ fi
 
 # Run stack.sh
 cat >> $vm_dir/uec/user-data<<EOF
-./stack.sh
+su -c "cd /opt/stack/devstack && ./stack.sh" stack
 EOF
 
 # (re)start a metadata service
