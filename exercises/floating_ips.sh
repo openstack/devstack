@@ -67,12 +67,16 @@ nova secgroup-create $SECGROUP "test_secgroup description"
 # List of flavors:
 nova flavor-list
 
-# and grab the first flavor in the list to launch
-FLAVOR=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
+DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
+INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | cut -d"|" -f2`
+if [[ -z "$INSTANCE_TYPE" ]]; then
+    # grab the first flavor in the list to launch if default doesn't exist
+   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
+fi
 
 NAME="myserver"
 
-nova boot --flavor $FLAVOR --image $IMAGE $NAME --security_groups=$SECGROUP
+nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP
 
 # Testing
 # =======

@@ -52,10 +52,10 @@ IMAGE=`glance -A $TOKEN index | egrep ami | head -1 | cut -d" " -f1`
 # List of instance types:
 nova flavor-list
 
-INSTANCE_NAME=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
-INSTANCE_TYPE=`nova flavor-list | grep $INSTANCE_NAME | cut -d"|" -f2`
-if [[ -z "`nova flavor-list | grep $INSTANCE_NAME | cut -d"|" -f2`" ]]; then
-    # and grab the first flavor in the list to launch
+DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
+INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | cut -d"|" -f2`
+if [[ -z "$INSTANCE_TYPE" ]]; then
+    # grab the first flavor in the list to launch if default doesn't exist
    INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
 fi
 

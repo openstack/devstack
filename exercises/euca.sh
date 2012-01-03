@@ -30,7 +30,8 @@ SECGROUP=euca_secgroup
 euca-add-group -d description $SECGROUP
 
 # Launch it
-INSTANCE=`euca-run-instances -g $SECGROUP -t m1.tiny $IMAGE | grep INSTANCE | cut -f2`
+DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
+INSTANCE=`euca-run-instances -g $SECGROUP -t $DEFAULT_INSTANCE_TYPE $IMAGE | grep INSTANCE | cut -f2`
 
 # Assure it has booted within a reasonable time
 if ! timeout $RUNNING_TIMEOUT sh -c "while ! euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
