@@ -843,10 +843,10 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     clean_iptables
 
     # Destroy old instances
-    instances=`virsh list | grep $INSTANCE_NAME_PREFIX | cut -d " " -f3`
+    instances=`virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
     if [ ! $instances = "" ]; then
-        echo $instances | xargs -n1 virsh destroy
-        echo $instances | xargs -n1 virsh undefine
+        echo $instances | xargs -n1 virsh destroy || true
+        echo $instances | xargs -n1 virsh undefine || true
     fi
 
     # Clean out the instances directory.
