@@ -709,7 +709,7 @@ if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
     # Initialize the horizon database (it stores sessions and notices shown to
     # users).  The user system is external (keystone).
     cd $HORIZON_DIR/openstack-dashboard
-    dashboard/manage.py syncdb
+    python manage.py syncdb
 
     # create an empty directory that apache uses as docroot
     sudo mkdir -p $HORIZON_DIR/.blackhole
