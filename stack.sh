@@ -283,6 +283,11 @@ EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
 VLAN_INTERFACE=${VLAN_INTERFACE:-$PUBLIC_INTERFACE}
 
+# Test floating pool and range are used for testing.  They are defined
+# here until the admin APIs can replace nova-manage
+TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
+TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
+
 # Multi-host is a mode where each compute node runs its own network node.  This
 # allows network operations and routing for a VM to occur on the server that is
 # running the VM - removing a SPOF and bandwidth bottleneck.
@@ -1327,6 +1332,9 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
     else
         # create some floating ips
         $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+
+        # create a second pool
+        $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
     fi
 fi
 

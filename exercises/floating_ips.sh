@@ -24,6 +24,11 @@ pushd $(cd $(dirname "$0")/.. && pwd)
 source ./openrc
 popd
 
+# Set some defaults
+
+DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
+TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
+
 # Get a token for clients that don't support service catalog
 # ==========================================================
 
@@ -130,11 +135,14 @@ nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
 # List rules for a secgroup
 nova secgroup-list-rules $SECGROUP
 
-# allocate a floating ip
-nova floating-ip-create
+# allocate a floating ip from default pool
+FLOATING_IP=`nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | cut -d '|' -f2`
 
-# store  floating address
-FLOATING_IP=`nova floating-ip-list | grep None | head -1 | cut -d '|' -f2 | sed 's/ //g'`
+# list floating addresses
+if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $FLOATING_IP; do sleep 1; done"; then
+    echo "Floating IP not allocated"
+    exit 1
+fi
 
 # add floating ip to our server
 nova add-floating-ip $NAME $FLOATING_IP
@@ -142,6 +150,15 @@ nova add-floating-ip $NAME $FLOATING_IP
 # test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
     echo "Couldn't ping server with floating ip"
+    exit 1
+fi
+
+# Allocate an IP from it
+TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | cut -d '|' -f2`
+
+# list floating addresses
+if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TEST_FLOATING_POOL | grep -q $TEST_FLOATING_IP; do sleep 1; done"; then
+    echo "Floating IP not allocated"
     exit 1
 fi
 
@@ -160,6 +177,9 @@ fi
 
 # de-allocate the floating ip
 nova floating-ip-delete $FLOATING_IP
+
+# Delete second floating IP
+nova floating-ip-delete $TEST_FLOATING_IP
 
 # shutdown the server
 nova delete $NAME
