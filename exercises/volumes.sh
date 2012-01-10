@@ -19,6 +19,21 @@ pushd $(cd $(dirname "$0")/.. && pwd)
 source ./openrc
 popd
 
+# Max time to wait while vm goes from build to active state
+ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
+
+# Max time till the vm is bootable
+BOOT_TIMEOUT=${BOOT_TIMEOUT:-30}
+
+# Max time to wait for proper association and dis-association.
+ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-15}
+
+# Instance type to create
+DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
+
+# Boot this image, use first AMi image if unset
+DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
+
 # Get a token for clients that don't support service catalog
 # ==========================================================
 
@@ -41,10 +56,10 @@ nova list
 nova image-list
 
 # But we recommend using glance directly
-glance -A $TOKEN index
+glance -f -A $TOKEN index
 
-# Let's grab the id of the first AMI image to launch
-IMAGE=`glance -A $TOKEN index | egrep ami | head -1 | cut -d" " -f1`
+# Grab the id of the image to launch
+IMAGE=`glance -f -A $TOKEN index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
 
 # determinine instance type
 # -------------------------
@@ -52,7 +67,6 @@ IMAGE=`glance -A $TOKEN index | egrep ami | head -1 | cut -d" " -f1`
 # List of instance types:
 nova flavor-list
 
-DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | cut -d"|" -f2`
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
@@ -73,24 +87,14 @@ VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_group
 # Waiting for boot
 # ----------------
 
-# Max time to wait while vm goes from build to active state
-ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
-
-# Max time till the vm is bootable
-BOOT_TIMEOUT=${BOOT_TIMEOUT:-15}
-
-# Max time to wait for proper association and dis-association.
-ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-10}
-
 # check that the status is active within ACTIVE_TIMEOUT seconds
-if ! timeout $BOOT_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
     echo "server didn't become active!"
     exit 1
 fi
 
 # get the IP of the server
 IP=`nova show $VM_UUID | grep "private network" | cut -d"|" -f3`
-#VM_UUID=`nova list | grep $NAME | head -1 | cut -d'|' -f2 | sed 's/ //g'`
 
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
