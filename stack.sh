@@ -1372,7 +1372,7 @@ fi
 
 # launch the keystone and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d"
+    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
     echo "Waiting for keystone to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/; do sleep 1; done"; then
       echo "keystone did not start"
@@ -1532,6 +1532,10 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
 
+    ADMIN_USER=admin
+    ADMIN_TENANT=admin
+    TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$ADMIN_USER\", \"password\": \"$ADMIN_PASSWORD\"}, \"tenantName\": \"$ADMIN_TENANT\"}}" -H "Content-type: application/json" http://$HOST_IP:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
+
     # Option to upload legacy ami-tty, which works with xenserver
     if [ $UPLOAD_LEGACY_TTY ]; then
         if [ ! -f $FILES/tty.tgz ]; then
@@ -1539,11 +1543,11 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
         fi
 
         tar -zxf $FILES/tty.tgz -C $FILES/images
-        RVAL=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
+        RVAL=`glance add -A $TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
         KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-        RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
+        RVAL=`glance add -A $TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
         RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-        glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
+        glance add -A $TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
     fi
 
     for image_url in ${IMAGE_URLS//,/ }; do
@@ -1590,14 +1594,14 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
         # kernel for use when uploading the root filesystem.
         KERNEL_ID=""; RAMDISK_ID="";
         if [ -n "$KERNEL" ]; then
-            RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < "$KERNEL"`
+            RVAL=`glance add -A $TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < "$KERNEL"`
             KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
         fi
         if [ -n "$RAMDISK" ]; then
-            RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-ramdisk" is_public=true container_format=ari disk_format=ari < "$RAMDISK"`
+            RVAL=`glance add -A $TOKEN name="$IMAGE_NAME-ramdisk" is_public=true container_format=ari disk_format=ari < "$RAMDISK"`
             RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
         fi
-        glance add -A $SERVICE_TOKEN name="${IMAGE_NAME%.img}" is_public=true container_format=ami disk_format=ami ${KERNEL_ID:+kernel_id=$KERNEL_ID} ${RAMDISK_ID:+ramdisk_id=$RAMDISK_ID} < <(zcat --force "${IMAGE}")
+        glance add -A $TOKEN name="${IMAGE_NAME%.img}" is_public=true container_format=ami disk_format=ami ${KERNEL_ID:+kernel_id=$KERNEL_ID} ${RAMDISK_ID:+ramdisk_id=$RAMDISK_ID} < <(zcat --force "${IMAGE}")
     done
 fi
 
