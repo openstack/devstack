@@ -1,8 +1,7 @@
 #!/bin/bash
 BIN_DIR=${BIN_DIR:-.}
 # Tenants
-ADMIN_TENANT=`$BIN_DIR/keystone-manage tenant --ks-id-only
-                                       create \
+ADMIN_TENANT=`$BIN_DIR/keystone-manage tenant --ks-id-only create \
                                        tenant_name=admin`
 DEMO_TENANT=`$BIN_DIR/keystone-manage tenant --ks-id-only create \
                                       tenant_name=demo`

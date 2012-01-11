@@ -1297,56 +1297,6 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
 fi
 
 
-# Keystone
-# --------
-
-if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    # (re)create keystone database
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone;'
-
-    # Configure keystone.conf
-    KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
-    cp $FILES/keystone.conf $KEYSTONE_CONF
-    sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
-    sudo sed -e "s,%DEST%,$DEST,g" -i $KEYSTONE_CONF
-    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_CONF
-
-    KEYSTONE_CATALOG=$KEYSTONE_DIR/etc/default_catalog.template
-    cp $FILES/default_catalog.template $KEYSTONE_CATALOG
-    sudo sed -e "s,%SERVICE_HOST%,$SERVICE_HOST,g" -i $KEYSTONE_CATALOG
-
-    # keystone_data.sh creates our admin user and our ``SERVICE_TOKEN``.
-    KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
-    cp $FILES/keystone_data.sh $KEYSTONE_DATA
-    sudo sed -e "
-        s,%KEYSTONE_AUTH_HOST%,$KEYSTONE_AUTH_HOST,g;
-        s,%KEYSTONE_AUTH_PORT%,$KEYSTONE_AUTH_PORT,g;
-        s,%KEYSTONE_AUTH_PROTOCOL%,$KEYSTONE_AUTH_PROTOCOL,g;
-        s,%KEYSTONE_SERVICE_HOST%,$KEYSTONE_SERVICE_HOST,g;
-        s,%KEYSTONE_SERVICE_PORT%,$KEYSTONE_SERVICE_PORT,g;
-        s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
-        s,%SERVICE_HOST%,$SERVICE_HOST,g;
-        s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
-        s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g;
-    " -i $KEYSTONE_DATA
-
-    # Prepare up the database
-    $KEYSTONE_DIR/bin/keystone-manage sync_database
-
-    # initialize keystone with default users/endpoints
-    ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
-
-    if [ "$SYSLOG" != "False" ]; then
-        sed -i -e '/^handlers=devel$/s/=devel/=production/' \
-            $KEYSTONE_DIR/etc/logging.cnf
-        sed -i -e "/^log_file/s/log_file/\#log_file/" \
-            $KEYSTONE_DIR/etc/keystone.conf
-        KEYSTONE_LOG_CONFIG="--log-config $KEYSTONE_DIR/etc/logging.cnf"
-    fi
-fi
-
-
 # Launch Services
 # ===============
 
@@ -1362,18 +1312,18 @@ function screen_it {
             tmux new-window -t stack -a -n "$1" "bash"
             tmux send-keys "$2" C-M
         else
-            screen -S stack -X screen -t $1
+            screen -L -S stack -X screen -t $1
             # sleep to allow bash to be ready to be send the command - we are
             # creating a new window in screen and then sends characters, so if
             # bash isn't running by the time we send the command, nothing happens
             sleep 1.5
-            screen -S stack -p $1 -X stuff "$2$NL"
+            screen -L -S stack -p $1 -X stuff "$2$NL"
         fi
     fi
 }
 
 # create a new named screen to run processes in
-screen -d -m -S stack -t stack
+screen -L -d -m -S stack -t stack
 sleep 1
 # set a reasonable statusbar
 screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"
@@ -1393,15 +1343,61 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     fi
 fi
 
+if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+    # (re)create keystone database
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone;'
+
+    # Configure keystone.conf
+    KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
+    cp $FILES/keystone.conf $KEYSTONE_CONF
+    sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
+    sudo sed -e "s,%DEST%,$DEST,g" -i $KEYSTONE_CONF
+    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_CONF
+
+    KEYSTONE_CATALOG=$KEYSTONE_DIR/etc/default_catalog.templates
+    cp $FILES/default_catalog.templates $KEYSTONE_CATALOG
+    sudo sed -e "s,%SERVICE_HOST%,$SERVICE_HOST,g" -i $KEYSTONE_CATALOG
+
+
+    if [ "$SYSLOG" != "False" ]; then
+        sed -i -e '/^handlers=devel$/s/=devel/=production/' \
+            $KEYSTONE_DIR/etc/logging.cnf
+        sed -i -e "/^log_file/s/log_file/\#log_file/" \
+            $KEYSTONE_DIR/etc/keystone.conf
+        KEYSTONE_LOG_CONFIG="--log-config $KEYSTONE_DIR/etc/logging.cnf"
+    fi
+fi
+
 # launch the keystone and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d"
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
+
+    # keystone_data.sh creates our admin user and our ``SERVICE_TOKEN``.
+    KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
+    cp $FILES/keystone_data.sh $KEYSTONE_DATA
+    sudo sed -e "
+        s,%KEYSTONE_AUTH_HOST%,$KEYSTONE_AUTH_HOST,g;
+        s,%KEYSTONE_AUTH_PORT%,$KEYSTONE_AUTH_PORT,g;
+        s,%KEYSTONE_AUTH_PROTOCOL%,$KEYSTONE_AUTH_PROTOCOL,g;
+        s,%KEYSTONE_SERVICE_HOST%,$KEYSTONE_SERVICE_HOST,g;
+        s,%KEYSTONE_SERVICE_PORT%,$KEYSTONE_SERVICE_PORT,g;
+        s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
+        s,%SERVICE_HOST%,$SERVICE_HOST,g;
+        s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
+        s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g;
+    " -i $KEYSTONE_DATA
+
+    # initialize keystone with default users/endpoints
+    $KEYSTONE_DIR/bin/keystone-manage db_sync
+    ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
 fi
+
 
 # launch the nova-api and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
