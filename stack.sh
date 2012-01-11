@@ -1354,6 +1354,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
     sudo sed -e "s,%DEST%,$DEST,g" -i $KEYSTONE_CONF
     sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_CONF
+    sudo sed -e "s,%KEYSTONE_DIR%,$KEYSTONE_DIR,g" -i $KEYSTONE_CONF
 
     KEYSTONE_CATALOG=$KEYSTONE_DIR/etc/default_catalog.templates
     cp $FILES/default_catalog.templates $KEYSTONE_CATALOG
