@@ -66,6 +66,12 @@ fi
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
 # in most cases.
 #
+# We support HTTP and HTTPS proxy servers via the usual environment variables
+# http_proxy and https_proxy.  They can be set in localrc if necessary or
+# on the command line::
+#
+#     http_proxy=http://proxy.example.com:3128/ ./stack.sh
+#
 # We source our settings from ``stackrc``.  This file is distributed with devstack
 # and contains locations for what repositories to use.  If you want to use other
 # repositories and branches, you can add your own settings with another file called
@@ -85,8 +91,9 @@ function apt_get() {
     [[ "$OFFLINE" = "True" ]] && return
     local sudo="sudo"
     [ "$(id -u)" = "0" ] && sudo="env"
-    $sudo DEBIAN_FRONTEND=noninteractive apt-get \
-        --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
+    $sudo DEBIAN_FRONTEND=noninteractive \
+        http_proxy=$http_proxy https_proxy=$https_proxy \
+        apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
 }
 
 # Check to see if we are already running a stack.sh
@@ -513,7 +520,10 @@ function get_packages() {
 
 function pip_install {
     [[ "$OFFLINE" = "True" ]] && return
-    sudo PIP_DOWNLOAD_CACHE=/var/cache/pip pip install --use-mirrors $@
+    sudo PIP_DOWNLOAD_CACHE=/var/cache/pip \
+        HTTP_PROXY=$http_proxy \
+        HTTPS_PROXY=$https_proxy \
+        pip install --use-mirrors $@
 }
 
 # install apt requirements
@@ -1007,7 +1017,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
        # We need a special version of bin/swift which understand the
        # OpenStack api 2.0, we download it until this is getting
        # integrated in swift.
-       sudo curl -s -o/usr/local/bin/swift \
+       sudo https_proxy=$https_proxy curl -s -o/usr/local/bin/swift \
            'https://review.openstack.org/gitweb?p=openstack/swift.git;a=blob_plain;f=bin/swift;hb=48bfda6e2fdf3886c98bd15649887d54b9a2574e'
    else
        swift_auth_server=tempauth
@@ -1309,7 +1319,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
       echo "g-api did not start"
       exit 1
     fi
@@ -1319,7 +1329,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d"
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
@@ -1329,7 +1339,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
     echo "Waiting for nova-api to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
       echo "nova-api did not start"
       exit 1
     fi
