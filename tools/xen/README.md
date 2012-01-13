@@ -54,7 +54,16 @@ Of course, use real passwords if this machine is exposed.
     ACTIVE_TIMEOUT=45
     EOF
 
-Step 4: Run ./build_domU.sh
+Step 4: Run ./build_xva.sh
+--------------------------
+This script prpares your nova xva image.  This script can be run on a separate machine
+and copied to dom0.  If you run this on a different machine, copy the resulting xva
+file to tools/xen/xvas/[GUEST_NAME].xva (by default tools/xen/xvas/ALLINONE.xva)
+
+It is likely that for XS6 you will need to build_xva.sh on a separate machine due
+to dom0 space constraints.
+
+Step 5: Run ./build_domU.sh
 --------------------------
 This script does a lot of stuff, it is probably best to read it in its entirety.
 But in a nutshell, it performs the following:
@@ -63,7 +72,7 @@ But in a nutshell, it performs the following:
 * Creates and installs a OpenStack all-in-one domU in an HA-FlatDHCP configuration
 * A script to create a multi-domU (ie. head node separated from compute) configuration is coming soon!
 
-Step 5: Do cloudy stuff!
+Step 6: Do cloudy stuff!
 --------------------------
 * Play with horizon
 * Play with the CLI
