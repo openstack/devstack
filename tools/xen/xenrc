@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Name of this guest
+GUEST_NAME=${GUEST_NAME:-ALLINONE}
+
+# Size of image
+VDI_MB=${VDI_MB:-2500}
+
+# VM Password
+GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
+
+# Our nova host's network info 
+VM_IP=${VM_IP:-10.255.255.255} # A host-only ip that let's the interface come up, otherwise unused
+MGT_IP=${MGT_IP:-172.16.100.55}
+PUB_IP=${PUB_IP:-192.168.1.55}
+
+# Public network
+PUB_BR=${PUB_BR:-xenbr0}
+PUB_NETMASK=${PUB_NETMASK:-255.255.255.0}
+
+# VM network params
+VM_NETMASK=${VM_NETMASK:-255.255.255.0}
+VM_BR=${VM_BR:-xapi1}
+VM_VLAN=${VM_VLAN:-100}
+
+# MGMT network params
+MGT_NETMASK=${MGT_NETMASK:-255.255.255.0}
+MGT_BR=${MGT_BR:-xapi2}
+MGT_VLAN=${MGT_VLAN:-101}
+
+# XVA Directory
+XVA_DIR=${XVA_DIR:-xvas}
+
+# Path to xva file
+XVA=${XVA:-$XVA_DIR/$GUEST_NAME.xva }
+
+# Source params
+cd ../.. && source ./stackrc && cd $TOP_DIR
