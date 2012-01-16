@@ -1104,7 +1104,7 @@ if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
         add_nova_flag "--libvirt_vif_type=ethernet"
         add_nova_flag "--libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
         add_nova_flag "--linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver"
-        add_nova_flag "--quantum-use-dhcp"
+        add_nova_flag "--quantum_use_dhcp"
     fi
 else
     add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
@@ -1315,10 +1315,13 @@ if [[ "$ENABLED_SERVICES" =~ "q-agt" ]]; then
         sudo ovs-vsctl --no-wait -- --if-exists del-br $OVS_BRIDGE
         sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
         sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
+
+       # Start up the quantum <-> openvswitch agent
+       QUANTUM_OVS_CONFIG_FILE=$QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+       sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum/g" $QUANTUM_OVS_CONFIG_FILE
+       screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_OVS_CONFIG_FILE -v"
     fi
 
-    # Start up the quantum <-> openvswitch agent
-    screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini -v"
 fi
 
 # If we're using Quantum (i.e. q-svc is enabled), network creation has to
