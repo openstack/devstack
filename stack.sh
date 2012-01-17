@@ -186,7 +186,7 @@ Q_PORT=${Q_PORT:-9696}
 Q_HOST=${Q_HOST:-localhost}
 
 # Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-vnc,horizon,mysql,rabbit,openstackx}
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit,openstackx}
 
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
@@ -589,7 +589,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ||
     # image catalog service
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
 fi
-if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "n-novnc" ]]; then
     # a websockets/html5 or flash powered VNC console for vm instances
     git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
 fi
@@ -1163,11 +1163,20 @@ if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
     add_nova_flag "--osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
     add_nova_flag "--osapi_compute_extension=extensions.admin.Admin"
 fi
-if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
-    VNCPROXY_URL=${VNCPROXY_URL:-"http://$SERVICE_HOST:6080"}
-    add_nova_flag "--vncproxy_url=$VNCPROXY_URL"
-    add_nova_flag "--vncproxy_wwwroot=$NOVNC_DIR/"
+if [[ "$ENABLED_SERVICES" =~ "n-novnc" ]]; then
+    NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
+    add_nova_flag "--novncproxy_base_url=$NOVNCPROXY_URL"
 fi
+if [[ "$ENABLED_SERVICES" =~ "n-xvnc" ]]; then
+    XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
+    add_nova_flag "--xvpvncproxy_base_url=$XVPVNCPROXY_URL"
+fi
+if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
+else
+    VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
+fi
+add_nova_flag "--vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
 add_nova_flag "--api_paste_config=$NOVA_DIR/bin/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
@@ -1205,6 +1214,9 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     add_nova_flag "--flat_interface=eth1"
     add_nova_flag "--flat_network_bridge=xapi1"
     add_nova_flag "--public_interface=eth3"
+    # Need to avoid crash due to new firewall support
+    XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
+    add_nova_flag "--firewall_driver=$XEN_FIREWALL_DRIVER"
 else
     add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
     if [ -n "$FLAT_INTERFACE" ]; then
@@ -1288,7 +1300,7 @@ function screen_it {
             # sleep to allow bash to be ready to be send the command - we are
             # creating a new window in screen and then sends characters, so if
             # bash isn't running by the time we send the command, nothing happens
-            sleep 1
+            sleep 1.5
             screen -S stack -p $1 -X stuff "$2$NL"
         fi
     fi
@@ -1398,8 +1410,14 @@ screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
 screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
-if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
-    screen_it n-vnc "cd $NOVNC_DIR && ./utils/nova-wsproxy.py --flagfile $NOVA_DIR/bin/nova.conf --web . 6080"
+if [[ "$ENABLED_SERVICES" =~ "n-novnc" ]]; then
+    screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --flagfile $NOVA_DIR/bin/nova.conf --web ."
+fi
+if [[ "$ENABLED_SERVICES" =~ "n-xvnc" ]]; then
+    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --flagfile $NOVA_DIR/bin/nova.conf"
+fi
+if [[ "$ENABLED_SERVICES" =~ "n-cauth" ]]; then
+    screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
 fi
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
     screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
