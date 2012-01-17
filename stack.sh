@@ -395,6 +395,14 @@ read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN 
 # Horizon currently truncates usernames and passwords at 20 characters
 read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (20 CHARS OR LESS)."
 
+# Set Keystone interface configuration
+KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
+KEYSTONE_AUTH_PORT=${KEYSTONE_AUTH_PORT:-35357}
+KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-http}
+KEYSTONE_SERVICE_HOST=${KEYSTONE_SERVICE_HOST:-$SERVICE_HOST}
+KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
+KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-http}
+
 # Log files
 # ---------
 
@@ -765,19 +773,47 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS glance;'
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE glance;'
 
+    function glance_config {
+        sudo sed -e "
+            s,%KEYSTONE_AUTH_HOST%,$KEYSTONE_AUTH_HOST,g;
+            s,%KEYSTONE_AUTH_PORT%,$KEYSTONE_AUTH_PORT,g;
+            s,%KEYSTONE_AUTH_PROTOCOL%,$KEYSTONE_AUTH_PROTOCOL,g;
+            s,%KEYSTONE_SERVICE_HOST%,$KEYSTONE_SERVICE_HOST,g;
+            s,%KEYSTONE_SERVICE_PORT%,$KEYSTONE_SERVICE_PORT,g;
+            s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
+            s,%SQL_CONN%,$BASE_SQL_CONN/glance,g;
+            s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
+            s,%DEST%,$DEST,g;
+            s,%SYSLOG%,$SYSLOG,g;
+        " -i $1
+    }
+
     # Copy over our glance configurations and update them
-    GLANCE_CONF=$GLANCE_DIR/etc/glance-registry.conf
-    cp $FILES/glance-registry.conf $GLANCE_CONF
-    sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/glance,g" -i $GLANCE_CONF
-    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $GLANCE_CONF
-    sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_CONF
-    sudo sed -e "s,%SYSLOG%,$SYSLOG,g" -i $GLANCE_CONF
+    GLANCE_REGISTRY_CONF=$GLANCE_DIR/etc/glance-registry.conf
+    cp $FILES/glance-registry.conf $GLANCE_REGISTRY_CONF
+    glance_config $GLANCE_REGISTRY_CONF
+
+    if [[ -e $FILES/glance-registry-paste.ini ]]; then
+        GLANCE_REGISTRY_PASTE_INI=$GLANCE_DIR/etc/glance-registry-paste.ini
+        cp $FILES/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
+        glance_config $GLANCE_REGISTRY_PASTE_INI
+        # During the transition for Glance to the split config files
+        # we cat them together to handle both pre- and post-merge
+        cat $GLANCE_REGISTRY_PASTE_INI >>$GLANCE_REGISTRY_CONF
+    fi
 
     GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
     cp $FILES/glance-api.conf $GLANCE_API_CONF
-    sudo sed -e "s,%DEST%,$DEST,g" -i $GLANCE_API_CONF
-    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $GLANCE_API_CONF
-    sudo sed -e "s,%SYSLOG%,$SYSLOG,g" -i $GLANCE_API_CONF
+    glance_config $GLANCE_API_CONF
+
+    if [[ -e $FILES/glance-api-paste.ini ]]; then
+        GLANCE_API_PASTE_INI=$GLANCE_DIR/etc/glance-api-paste.ini
+        cp $FILES/glance-api-paste.ini $GLANCE_API_PASTE_INI
+        glance_config $GLANCE_API_PASTE_INI
+        # During the transition for Glance to the split config files
+        # we cat them together to handle both pre- and post-merge
+        cat $GLANCE_API_PASTE_INI >>$GLANCE_API_CONF
+    fi
 fi
 
 # Nova
@@ -1209,9 +1245,17 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     # keystone_data.sh creates our admin user and our ``SERVICE_TOKEN``.
     KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
     cp $FILES/keystone_data.sh $KEYSTONE_DATA
-    sudo sed -e "s,%SERVICE_HOST%,$SERVICE_HOST,g" -i $KEYSTONE_DATA
-    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_DATA
-    sudo sed -e "s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g" -i $KEYSTONE_DATA
+    sudo sed -e "
+        s,%KEYSTONE_AUTH_HOST%,$KEYSTONE_AUTH_HOST,g;
+        s,%KEYSTONE_AUTH_PORT%,$KEYSTONE_AUTH_PORT,g;
+        s,%KEYSTONE_AUTH_PROTOCOL%,$KEYSTONE_AUTH_PROTOCOL,g;
+        s,%KEYSTONE_SERVICE_HOST%,$KEYSTONE_SERVICE_HOST,g;
+        s,%KEYSTONE_SERVICE_PORT%,$KEYSTONE_SERVICE_PORT,g;
+        s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
+        s,%SERVICE_HOST%,$SERVICE_HOST,g;
+        s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
+        s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g;
+    " -i $KEYSTONE_DATA
     # initialize keystone with default users/endpoints
     ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
 
@@ -1275,7 +1319,7 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d"
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- http://127.0.0.1:5000; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
@@ -1470,7 +1514,7 @@ fi
 
 # If keystone is present, you can point nova cli to this server
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    echo "keystone is serving at http://$SERVICE_HOST:5000/v2.0/"
+    echo "keystone is serving at $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/"
     echo "examples on using novaclient command line is in exercise.sh"
     echo "the default users are: admin and demo"
     echo "the password: $ADMIN_PASSWORD"
