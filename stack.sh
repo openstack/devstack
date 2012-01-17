@@ -1124,8 +1124,8 @@ add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
 if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
-    add_nova_flag "--osapi_extension=nova.api.openstack.v2.contrib.standard_extensions"
-    add_nova_flag "--osapi_extension=extensions.admin.Admin"
+    add_nova_flag "--osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
+    add_nova_flag "--osapi_compute_extension=extensions.admin.Admin"
 fi
 if [[ "$ENABLED_SERVICES" =~ "n-vnc" ]]; then
     VNCPROXY_URL=${VNCPROXY_URL:-"http://$SERVICE_HOST:6080"}
