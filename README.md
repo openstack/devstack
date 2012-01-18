@@ -57,6 +57,22 @@ If the EC2 API is your cup-o-tea, you can create credentials and use euca2ools:
 
 You can override environment variables used in `stack.sh` by creating file name `localrc`.  It is likely that you will need to do this to tweak your networking configuration should you need to access your cloud from a different host.
 
+# RPC Backend
+
+Multiple RPC backends are available. Currently, this
+includes RabbitMQ (default), Qpid, and ZeroMQ. Your backend of
+choice may be selected via the `localrc`.
+
+Note that selecting more than one RPC backend will result in a failure.
+
+Example (ZeroMQ):
+
+    ENABLED_SERVICES="$ENABLED_SERVICES,-rabbit,-qpid,zeromq"
+
+Example (Qpid):
+
+    ENABLED_SERVICES="$ENABLED_SERVICES,-rabbit,-zeromq,qpid"
+
 # Swift
 
 Swift is not installed by default, you can enable easily by adding this to your `localrc`:

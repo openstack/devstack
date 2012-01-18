@@ -142,6 +142,23 @@ if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].stack"; then
     exit 1
 fi
 
+# Make sure we only have one rpc backend enabled.
+rpc_backend_cnt=0
+for svc in qpid zeromq rabbit; do
+    is_service_enabled $svc &&
+        ((rpc_backend_cnt++))
+done
+if [ "$rpc_backend_cnt" -gt 1 ]; then
+    echo "ERROR: only one rpc backend may be enabled,"
+    echo "       set only one of 'rabbit', 'qpid', 'zeromq'"
+    echo "       via ENABLED_SERVICES."
+elif [ "$rpc_backend_cnt" == 0 ]; then
+    echo "ERROR: at least one rpc backend must be enabled,"
+    echo "       set one of 'rabbit', 'qpid', 'zeromq'"
+    echo "       via ENABLED_SERVICES."
+fi
+unset rpc_backend_cnt
+
 # Make sure we only have one volume service enabled.
 if is_service_enabled cinder && is_service_enabled n-vol; then
     echo "ERROR: n-vol and cinder must not be enabled at the same time"
@@ -655,6 +672,12 @@ elif is_service_enabled qpid; then
     else
         install_package qpidd
     fi
+elif is_service_enabled zeromq; then
+    if [[ "$os_PACKAGE" = "rpm" ]]; then
+        install_package zeromq python-zmq
+    else
+        install_package libzmq1 python-zmq
+    fi
 fi
 
 if is_service_enabled mysql; then
@@ -893,8 +916,8 @@ EOF
 fi
 
 
-# Rabbit or Qpid
-# --------------
+# Finalize queue instllation
+# --------------------------
 
 if is_service_enabled rabbit; then
     # Start rabbitmq-server
@@ -1274,6 +1297,8 @@ if is_service_enabled quantum; then
     iniset $Q_CONF_FILE DEFAULT control_exchange quantum
     if is_service_enabled qpid ; then
         iniset $Q_CONF_FILE DEFAULT rpc_backend quantum.openstack.common.rpc.impl_qpid
+    elif is_service_enabled zeromq; then
+        iniset $Q_CONF_FILE DEFAULT rpc_backend quantum.openstack.common.rpc.impl_zmq
     elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
         iniset $Q_CONF_FILE DEFAULT rabbit_host $RABBIT_HOST
         iniset $Q_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
@@ -1898,7 +1923,9 @@ add_nova_opt "vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
 add_nova_opt "api_paste_config=$NOVA_CONF_DIR/api-paste.ini"
 add_nova_opt "image_service=nova.image.glance.GlanceImageService"
 add_nova_opt "ec2_dmz_host=$EC2_DMZ_HOST"
-if is_service_enabled qpid ; then
+if is_service_enabled zeromq; then
+    add_nova_opt "rpc_backend=nova.openstack.common.rpc.impl_zmq"
+elif is_service_enabled qpid; then
     add_nova_opt "rpc_backend=nova.rpc.impl_qpid"
 elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
     add_nova_opt "rabbit_host=$RABBIT_HOST"
@@ -2141,6 +2168,8 @@ if is_service_enabled key; then
         add_nova_opt "s3_affix_tenant=True"
     fi
 fi
+
+screen_it zeromq "cd $NOVA_DIR && $NOVA_DIR/bin/nova-rpc-zmq-receiver"
 
 # Launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
