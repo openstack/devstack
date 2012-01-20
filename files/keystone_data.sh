@@ -10,19 +10,19 @@ $BIN_DIR/keystone-manage user add admin %ADMIN_PASSWORD%
 $BIN_DIR/keystone-manage user add demo %ADMIN_PASSWORD%
 
 # Roles
-$BIN_DIR/keystone-manage role add Admin
+$BIN_DIR/keystone-manage role add admin
 $BIN_DIR/keystone-manage role add Member
 $BIN_DIR/keystone-manage role add KeystoneAdmin
 $BIN_DIR/keystone-manage role add KeystoneServiceAdmin
 $BIN_DIR/keystone-manage role add sysadmin
 $BIN_DIR/keystone-manage role add netadmin
-$BIN_DIR/keystone-manage role grant Admin admin admin
+$BIN_DIR/keystone-manage role grant admin admin admin
 $BIN_DIR/keystone-manage role grant Member demo demo
 $BIN_DIR/keystone-manage role grant sysadmin demo demo
 $BIN_DIR/keystone-manage role grant netadmin demo demo
 $BIN_DIR/keystone-manage role grant Member demo invisible_to_admin
-$BIN_DIR/keystone-manage role grant Admin admin demo
-$BIN_DIR/keystone-manage role grant Admin admin
+$BIN_DIR/keystone-manage role grant admin admin demo
+$BIN_DIR/keystone-manage role grant admin admin
 $BIN_DIR/keystone-manage role grant KeystoneAdmin admin
 $BIN_DIR/keystone-manage role grant KeystoneServiceAdmin admin
 
