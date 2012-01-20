@@ -930,7 +930,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
 
     # Destroy old instances
     instances=`virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
-    if [ ! $instances = "" ]; then
+    if [ ! "$instances" = "" ]; then
         echo $instances | xargs -n1 virsh destroy || true
         echo $instances | xargs -n1 virsh undefine || true
     fi
