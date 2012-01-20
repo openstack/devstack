@@ -5,7 +5,7 @@
                         @PRODUCT_BRAND@ @PRODUCT_VERSION@-@BUILD_NUMBER@
                 </label>
                 <shortdesc></shortdesc>
-                <config mem_set="671088640" vcpus="1"/>
+                <config mem_set="1073741824" vcpus="1"/>
                 <hacks is_hvm="false"/>
                 <vbd device="xvda" function="root" mode="w" vdi="vdi_xvda"/>
         </vm>
