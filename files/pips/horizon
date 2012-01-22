@@ -1,4 +1,2 @@
 django-nose-selenium
 pycrypto==2.3
-
--e git+https://github.com/jacobian/openstack.compute.git#egg=openstack
