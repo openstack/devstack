@@ -46,6 +46,14 @@ QUANTUM_CLIENT_BRANCH=master
 TEMPEST_REPO=https://github.com/openstack/tempest.git
 TEMPEST_BRANCH=master
 
+# melange service
+MELANGE_REPO=https://github.com/openstack/melange.git
+MELANGE_BRANCH=master
+
+# python melange client library
+MELANGECLIENT_REPO=https://github.com/openstack/python-melangeclient.git
+MELANGECLIENT_BRANCH=master
+
 # Specify a comma-separated list of uec images to download and install into glance.
 # supported urls here are:
 #  * "uec-style" images:
@@ -56,7 +64,7 @@ TEMPEST_BRANCH=master
 #  * disk image (*.img,*.img.gz)
 #    if file ends in .img, then it will be uploaded and registered as a to
 #    glance as a disk image.  If it ends in .gz, it is uncompressed first.
-#    example: 
+#    example:
 #      http://cloud-images.ubuntu.com/releases/oneiric/release/ubuntu-11.10-server-cloudimg-armel-disk1.img
 #      http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-rootfs.img.gz
 #IMAGE_URLS="http://smoser.brickies.net/ubuntu/ttylinux-uec/ttylinux-uec-amd64-11.2_2.6.35-15_1.tar.gz" # old ttylinux-uec image

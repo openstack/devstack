@@ -184,6 +184,8 @@ SWIFT_DIR=$DEST/swift
 SWIFT_KEYSTONE_DIR=$DEST/swift-keystone2
 QUANTUM_DIR=$DEST/quantum
 QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
+MELANGE_DIR=$DEST/melange
+MELANGECLIENT_DIR=$DEST/python-melangeclient
 
 # Default Quantum Plugin
 Q_PLUGIN=${Q_PLUGIN:-openvswitch}
@@ -191,6 +193,13 @@ Q_PLUGIN=${Q_PLUGIN:-openvswitch}
 Q_PORT=${Q_PORT:-9696}
 # Default Quantum Host
 Q_HOST=${Q_HOST:-localhost}
+
+# Default Melange Port
+M_PORT=${M_PORT:-9898}
+# Default Melange Host
+M_HOST=${M_HOST:-localhost}
+# Melange MAC Address Range
+M_MAC_RANGE=${M_MAC_RANGE:-404040/24}
 
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit}
@@ -329,6 +338,13 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
 # ENABLED_SERVICES.
 #
 # With Quantum networking the NET_MAN variable is ignored.
+
+# Using Melange IPAM:
+#
+# Make sure that quantum and melange are enabled in ENABLED_SERVICES.
+# If they are then the melange IPAM lib will be set in the QuantumManager.
+# Adding m-svc to ENABLED_SERVICES will start the melange service on this
+# host.
 
 
 # MySQL & RabbitMQ
@@ -622,6 +638,15 @@ if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
 fi
 
+if [[ "$ENABLED_SERVICES" =~ "m-svc" ]]; then
+    # melange
+    git_clone $MELANGE_REPO $MELANGE_DIR $MELANGE_BRANCH
+fi
+
+if [[ "$ENABLED_SERVICES" =~ "melange" ]]; then
+    git_clone $MELANGECLIENT_REPO $MELANGECLIENT_DIR $MELANGECLIENT_BRANCH
+fi
+
 # Initialization
 # ==============
 
@@ -651,6 +676,12 @@ if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
 fi
 if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     cd $QUANTUM_DIR; sudo python setup.py develop
+fi
+if [[ "$ENABLED_SERVICES" =~ "m-svc" ]]; then
+    cd $MELANGE_DIR; sudo python setup.py develop
+fi
+if [[ "$ENABLED_SERVICES" =~ "melange" ]]; then
+    cd $MELANGECLIENT_DIR; sudo python setup.py develop
 fi
 
 # Syslog
@@ -1153,6 +1184,13 @@ if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
     add_nova_flag "--network_manager=nova.network.quantum.manager.QuantumManager"
     add_nova_flag "--quantum_connection_host=$Q_HOST"
     add_nova_flag "--quantum_connection_port=$Q_PORT"
+
+    if [[ "$ENABLED_SERVICES" =~ "melange" ]]; then
+        add_nova_flag "--quantum_ipam_lib=nova.network.quantum.melange_ipam_lib"
+        add_nova_flag "--use_melange_mac_generation"
+        add_nova_flag "--melange_host=$M_HOST"
+        add_nova_flag "--melange_port=$M_PORT"
+    fi
     if [[ "$ENABLED_SERVICES" =~ "q-svc" && "$Q_PLUGIN" = "openvswitch" ]]; then
         add_nova_flag "--libvirt_vif_type=ethernet"
         add_nova_flag "--libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
@@ -1408,6 +1446,28 @@ if [[ "$ENABLED_SERVICES" =~ "q-agt" ]]; then
 
 fi
 
+# Melange service
+if [[ "$ENABLED_SERVICES" =~ "m-svc" ]]; then
+    if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS melange;'
+        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE melange;'
+    else
+        echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
+        exit 1
+    fi
+    MELANGE_CONFIG_FILE=$MELANGE_DIR/etc/melange/melange.conf
+    cp $MELANGE_CONFIG_FILE.sample $MELANGE_CONFIG_FILE
+    sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/melange/g" $MELANGE_CONFIG_FILE
+    cd $MELANGE_DIR && PYTHONPATH=.:$PYTHONPATH python $MELANGE_DIR/bin/melange-manage --config-file=$MELANGE_CONFIG_FILE db_sync
+    screen_it m-svc "cd $MELANGE_DIR && PYTHONPATH=.:$PYTHONPATH python $MELANGE_DIR/bin/melange-server --config-file=$MELANGE_CONFIG_FILE"
+    echo "Waiting for melange to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:9898; do sleep 1; done"; then
+      echo "melange-server did not start"
+      exit 1
+    fi
+    melange mac_address_range create cidr=$M_MAC_RANGE
+fi
+
 # If we're using Quantum (i.e. q-svc is enabled), network creation has to
 # happen after we've started the Quantum service.
 if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
@@ -1424,6 +1484,7 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
         $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
     fi
 fi
+
 
 # Launching nova-compute should be as simple as running ``nova-compute`` but
 # have to do a little more than that in our script.  Since we add the group
