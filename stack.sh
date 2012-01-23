@@ -1365,6 +1365,7 @@ if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
         apt_get install openvswitch-switch openvswitch-datapath-dkms
         # Create database for the plugin/agent
         if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
+            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum;'
         else
             echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
