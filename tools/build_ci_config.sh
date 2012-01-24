@@ -123,6 +123,33 @@ set `echo $GLANCE_HOSTPORT | tr ':' ' '`
 GLANCE_HOST=$1
 GLANCE_PORT=$2
 
+# Set up downloaded images
+# Defaults to use first image
+
+IMAGE_DIR=""
+for imagedir in $TOP_DIR/files/images/*; do
+    KERNEL=""
+    RAMDISK=""
+    IMAGE=""
+    IMAGE_RAMDISK=""
+    KERNEL=$(for f in "$imagedir/"*-vmlinuz*; do
+        [ -f "$f" ] && echo "$f" && break; done; true)
+    [ -n "$KERNEL" ] && ln -sf $KERNEL $imagedir/kernel
+    RAMDISK=$(for f in "$imagedir/"*-initrd*; do
+        [ -f "$f" ] && echo "$f" && break; done; true)
+    [ -n "$RAMDISK" ] && ln -sf $RAMDISK $imagedir/ramdisk && \
+                         IMAGE_RAMDISK="ari_location = $imagedir/ramdisk"
+    IMAGE=$(for f in "$imagedir/"*.img; do
+        [ -f "$f" ] && echo "$f" && break; done; true)
+    if [ -n "$IMAGE" ]; then
+        ln -sf $IMAGE $imagedir/disk
+        # Save the first image directory that contains a disk image link
+        if [ -z "$IMAGE_DIR" ]; then
+            IMAGE_DIR=$imagedir
+        fi
+    fi
+done
+
 # Create storm.conf
 
 CONFIG_CONF_TMP=$(mktemp $CONFIG_CONF.XXXXXX)
@@ -154,9 +181,9 @@ CONFIG_INI_TMP=$(mktemp $CONFIG_INI.XXXXXX)
 if [ "$UPLOAD_LEGACY_TTY" ]; then
     cat >$CONFIG_INI_TMP <<EOF
 [environment]
-aki_location = $DEST/devstack/files/images/aki-tty/image
-ari_location = $DEST/devstack/files/images/ari-tty/image
-ami_location = $DEST/devstack/files/images/ami-tty/image
+aki_location = $TOP_DIR/files/images/aki-tty/image
+ari_location = $TOP_DIR/files/images/ari-tty/image
+ami_location = $TOP_DIR/files/images/ami-tty/image
 image_ref = 3
 image_ref_alt = 3
 flavor_ref = 1
@@ -173,9 +200,9 @@ EOF
 else
     cat >$CONFIG_INI_TMP <<EOF
 [environment]
-aki_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64-vmlinuz-virtual
-#ari_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64-loader
-ami_location = $DEST/openstack-integration-tests/include/sample_vm/$DIST_NAME-server-cloudimg-amd64.img
+aki_location = $IMAGE_DIR/kernel
+ami_location = $IMAGE_DIR/disk
+$IMAGE_RAMDISK
 image_ref = 2
 image_ref_alt = 2
 flavor_ref = 1
@@ -185,8 +212,8 @@ flavor_ref_alt = 2
 host = $GLANCE_HOST
 apiver = v1
 port = $GLANCE_PORT
-image_id = 1
-image_id_alt = 1
+image_id = 2
+image_id_alt = 2
 tenant_id = 1
 EOF
 fi
