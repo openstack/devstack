@@ -410,6 +410,14 @@ KEYSTONE_SERVICE_HOST=${KEYSTONE_SERVICE_HOST:-$SERVICE_HOST}
 KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
 KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-http}
 
+# Horizon
+# -------
+
+# Allow overriding the default Apache user and group, default both to
+# current user.
+APACHE_USER=${APACHE_USER:-$USER}
+APACHE_GROUP=${APACHE_GROUP:-$APACHE_USER}
+
 # Log files
 # ---------
 
@@ -762,8 +770,11 @@ if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
 
     ## Configure apache's 000-default to run horizon
     sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
-    sudo sed -e "s,%USER%,$USER,g" -i /etc/apache2/sites-enabled/000-default
-    sudo sed -e "s,%HORIZON_DIR%,$HORIZON_DIR,g" -i /etc/apache2/sites-enabled/000-default
+    sudo sed -e "
+        s,%USER%,$APACHE_USER,g;
+        s,%GROUP%,$APACHE_GROUP,g;
+        s,%HORIZON_DIR%,$HORIZON_DIR,g;
+    " -i /etc/apache2/sites-enabled/000-default
     sudo service apache2 restart
 fi
 
