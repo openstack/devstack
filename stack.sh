@@ -834,7 +834,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     # the configuration required for nova to validate keystone tokens.
 
     # First we add a some extra data to the default paste config from nova
-    cat $NOVA_DIR/etc/nova/api-paste.ini $FILES/nova-api-paste.ini > $NOVA_DIR/bin/nova-api-paste.ini
+    cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_DIR/bin/nova-api-paste.ini
 
     # Then we add our own service token to the configuration
     sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
@@ -843,9 +843,8 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     function replace_pipeline() {
         sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_DIR/bin/nova-api-paste.ini
     }
-    replace_pipeline "ec2cloud" "ec2faultwrap logrequest totoken authtoken keystonecontext cloudrequest authorizer ec2executor"
+    replace_pipeline "ec2cloud" "ec2faultwrap logrequest totoken authtoken keystonecontext cloudrequest authorizer validator ec2executor"
     replace_pipeline "ec2admin" "ec2faultwrap logrequest totoken authtoken keystonecontext adminrequest authorizer ec2executor"
-    replace_pipeline "openstack_api_v2" "faultwrap authtoken keystonecontext ratelimit osapi_app_v2"
     replace_pipeline "openstack_compute_api_v2" "faultwrap authtoken keystonecontext ratelimit osapi_compute_app_v2"
     replace_pipeline "openstack_volume_api_v1" "faultwrap authtoken keystonecontext ratelimit osapi_volume_app_v1"
 fi
