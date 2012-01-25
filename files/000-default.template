@@ -1,8 +1,8 @@
 <VirtualHost *:80>
     WSGIScriptAlias / %HORIZON_DIR%/openstack-dashboard/dashboard/wsgi/django.wsgi
-    WSGIDaemonProcess horizon user=%USER% group=%USER% processes=3 threads=10
+    WSGIDaemonProcess horizon user=%USER% group=%GROUP% processes=3 threads=10
     SetEnv APACHE_RUN_USER %USER%
-    SetEnv APACHE_RUN_GROUP %USER%
+    SetEnv APACHE_RUN_GROUP %GROUP%
     WSGIProcessGroup horizon
 
     DocumentRoot %HORIZON_DIR%/.blackhole/
