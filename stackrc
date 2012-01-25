@@ -43,6 +43,10 @@ OPENSTACKX_BRANCH=master
 QUANTUM_REPO=https://github.com/openstack/quantum
 QUANTUM_BRANCH=master
 
+# quantum client
+QUANTUM_CLIENT_REPO=https://github.com/openstack/python-quantumclient
+QUANTUM_CLIENT_BRANCH=master
+
 # CI test suite
 CITEST_REPO=https://github.com/openstack/tempest.git
 CITEST_BRANCH=master
