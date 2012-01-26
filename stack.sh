@@ -1198,6 +1198,10 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
 else
     VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
 fi
+# Address on which instance vncservers will listen on compute hosts.
+# For multi-host, this should be the management ip of the compute host.
+VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
+add_nova_flag "--vncserver_listen=$VNCSERVER_LISTEN"
 add_nova_flag "--vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
 add_nova_flag "--api_paste_config=$NOVA_DIR/bin/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
