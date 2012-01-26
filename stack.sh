@@ -1291,6 +1291,10 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
         s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
         s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g;
     " -i $KEYSTONE_DATA
+
+    # Prepare up the database
+    $KEYSTONE_DIR/bin/keystone-manage sync_database
+
     # initialize keystone with default users/endpoints
     ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
 
