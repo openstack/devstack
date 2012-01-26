@@ -749,6 +749,8 @@ if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
     rm -fr ${HORIZON_DIR}/openstack-dashboard/quantum
     ln -s ${QUANTUM_CLIENT_DIR}/quantum ${HORIZON_DIR}/openstack-dashboard/quantum
 
+    # Remove stale session database.
+    rm -f $HORIZON_DIR/openstack-dashboard/local/dashboard_openstack.sqlite3
 
     # ``local_settings.py`` is used to override horizon default settings.
     local_settings=$HORIZON_DIR/openstack-dashboard/local/local_settings.py
