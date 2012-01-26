@@ -194,7 +194,7 @@ Q_PORT=${Q_PORT:-9696}
 Q_HOST=${Q_HOST:-localhost}
 
 # Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-cpu,n-net,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit,openstackx}
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit,openstackx}
 
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
@@ -1153,6 +1153,9 @@ add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
 add_nova_flag "--fixed_range=$FIXED_RANGE"
+if [[ "$ENABLED_SERVICES" =~ "n-obj" ]]; then
+    add_nova_flag "--s3_host=$SERVICE_HOST"
+fi
 if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
     add_nova_flag "--network_manager=nova.network.quantum.manager.QuantumManager"
     add_nova_flag "--quantum_connection_host=$Q_HOST"
@@ -1428,6 +1431,8 @@ fi
 # within the context of our original shell (so our groups won't be updated).
 # Use 'sg' to execute nova-compute as a member of the libvirtd group.
 screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
+screen_it n-crt "cd $NOVA_DIR && $NOVA_DIR/bin/nova-cert"
+screen_it n-obj "cd $NOVA_DIR && $NOVA_DIR/bin/nova-objectstore"
 screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
