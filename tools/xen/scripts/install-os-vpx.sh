@@ -38,7 +38,7 @@ usage()
 cat << EOF
 
   Usage: $0 [-f FILE_PATH] [-d DISK_SIZE] [-v BRIDGE_NAME] [-m BRIDGE_NAME] [-p BRIDGE_NAME]
-            [-k PARAMS] [-r RAM] [-i|-c] [-w] [-b]
+            [-k PARAMS] [-r RAM] [-i|-c] [-w] [-b] [-l NAME_LABEL]
 
   Installs XenServer OpenStack VPX.
 
@@ -60,6 +60,7 @@ cat << EOF
      -k params    Specifies kernel parameters.
      -r MiB       Specifies RAM used by the VPX, in MiB.
                   By default it will take the value from the XVA.
+     -l name      Specifies the name label for the VM.
 
   EXAMPLES:
 
@@ -87,7 +88,7 @@ EOF
 
 get_params()
 {
-  while getopts "hicwbf:d:v:m:p:k:r:" OPTION; 
+  while getopts "hicwbf:d:v:m:p:k:r:l:" OPTION; 
   do
     case $OPTION in
       h) usage
@@ -125,6 +126,9 @@ get_params()
          ;;
       v)
          BRIDGE_V=$OPTARG
+         ;;
+     l)
+         NAME_LABEL=$OPTARG
          ;;
       ?)
          usage
@@ -443,7 +447,7 @@ else
 
   renumber_system_disk "$vm_uuid"
 
-  nl=$(xe_min vm-list params=name-label uuid=$vm_uuid)
+  nl=${NAME_LABEL:-$(xe_min vm-list params=name-label uuid=$vm_uuid)}
   xe vm-param-set \
     "name-label=${nl/ import/}" \
     other-config:os-vpx=true \
