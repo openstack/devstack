@@ -34,11 +34,6 @@ NOVACLIENT_BRANCH=master
 KEYSTONECLIENT_REPO=https://github.com/openstack/python-keystoneclient
 KEYSTONECLIENT_BRANCH=master
 
-# openstackx is a collection of extensions to openstack.compute & nova
-# that is *deprecated*.  The code is being moved into python-novaclient & nova.
-OPENSTACKX_REPO=https://github.com/cloudbuilders/openstackx.git
-OPENSTACKX_BRANCH=master
-
 # quantum service
 QUANTUM_REPO=https://github.com/openstack/quantum
 QUANTUM_BRANCH=master

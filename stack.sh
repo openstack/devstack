@@ -179,7 +179,6 @@ GLANCE_DIR=$DEST/glance
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
-OPENSTACKX_DIR=$DEST/openstackx
 NOVNC_DIR=$DEST/noVNC
 SWIFT_DIR=$DEST/swift
 SWIFT_KEYSTONE_DIR=$DEST/swift-keystone2
@@ -194,7 +193,7 @@ Q_PORT=${Q_PORT:-9696}
 Q_HOST=${Q_HOST:-localhost}
 
 # Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit,openstackx}
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit}
 
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
@@ -617,11 +616,6 @@ if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
     git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
 fi
-if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
-    # openstackx is a collection of extensions to openstack.compute & nova
-    # that is *deprecated*.  The code is being moved into python-novaclient & nova.
-    git_clone $OPENSTACKX_REPO $OPENSTACKX_DIR $OPENSTACKX_BRANCH
-fi
 if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     # quantum
     git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
@@ -650,9 +644,6 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ||
 fi
 cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $NOVA_DIR; sudo python setup.py develop
-if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
-    cd $OPENSTACKX_DIR; sudo python setup.py develop
-fi
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
     cd $KEYSTONECLIENT_DIR; sudo python setup.py develop
     cd $HORIZON_DIR/horizon; sudo python setup.py develop
@@ -1175,16 +1166,13 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
     # oneiric no longer supports ietadm
     add_nova_flag "--iscsi_helper=tgtadm"
 fi
+add_nova_flag "--osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
 add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
 add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
-if [[ "$ENABLED_SERVICES" =~ "openstackx" ]]; then
-    add_nova_flag "--osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
-    add_nova_flag "--osapi_compute_extension=extensions.admin.Admin"
-fi
 if [[ "$ENABLED_SERVICES" =~ "n-novnc" ]]; then
     NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
     add_nova_flag "--novncproxy_base_url=$NOVNCPROXY_URL"
