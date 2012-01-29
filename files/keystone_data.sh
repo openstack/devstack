@@ -1,36 +1,36 @@
 #!/bin/bash
 BIN_DIR=${BIN_DIR:-.}
 # Tenants
-ADMIN_TENANT=`$BIN_DIR/keystone-manage tenant --ks-id-only create \
+ADMIN_TENANT=`$BIN_DIR/keystone-manage tenant --id-only create \
                                        tenant_name=admin`
-DEMO_TENANT=`$BIN_DIR/keystone-manage tenant --ks-id-only create \
+DEMO_TENANT=`$BIN_DIR/keystone-manage tenant --id-only create \
                                       tenant_name=demo`
-INVIS_TENANT=`$BIN_DIR/keystone-manage tenant --ks-id-only create \
+INVIS_TENANT=`$BIN_DIR/keystone-manage tenant --id-only create \
                                        tenant_name=invisible_to_admin`
 
 
 # Users
-ADMIN_USER=`$BIN_DIR/keystone-manage user --ks-id-only create \
+ADMIN_USER=`$BIN_DIR/keystone-manage user --id-only create \
                                           name=admin \
                                           "password=%ADMIN_PASSWORD%" \
                                           email=admin@example.com`
-DEMO_USER=`$BIN_DIR/keystone-manage user --ks-id-only create \
+DEMO_USER=`$BIN_DIR/keystone-manage user --id-only create \
                                          name=demo \
                                          "password=%ADMIN_PASSWORD%" \
                                          email=demo@example.com`
 
 # Roles
-ADMIN_ROLE=`$BIN_DIR/keystone-manage role --ks-id-only create \
+ADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
                                           name=Admin`
-MEMBER_ROLE=`$BIN_DIR/keystone-manage role --ks-id-only create \
+MEMBER_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
                                            name=Member`
-KEYSTONEADMIN_ROLE=`$BIN_DIR/keystone-manage role --ks-id-only create \
+KEYSTONEADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
                                                   name=KeystoneAdmin`
-KEYSTONESERVICE_ROLE=`$BIN_DIR/keystone-manage role --ks-id-only create \
+KEYSTONESERVICE_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
                                                          name=KeystoneServiceAdmin`
-SYSADMIN_ROLE=`$BIN_DIR/keystone-manage role --ks-id-only create \
+SYSADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
                                              name=sysadmin`
-NETADMIN_ROLE=`$BIN_DIR/keystone-manage role --ks-id-only create \
+NETADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
                                              name=netadmin`
 
 
