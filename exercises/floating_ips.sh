@@ -70,10 +70,10 @@ nova list
 nova image-list
 
 # But we recommend using glance directly
-glance -f -A $TOKEN index
+glance -f -A $TOKEN -H $GLANCE_HOST index
 
 # Grab the id of the image to launch
-IMAGE=`glance -f -A $TOKEN index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
+IMAGE=`glance -f -A $TOKEN -H $GLANCE_HOST index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
 
 # Security Groups
 # ---------------

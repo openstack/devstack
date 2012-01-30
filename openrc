@@ -8,6 +8,10 @@ source ./stackrc
 HOST_IP=${HOST_IP:-127.0.0.1}
 SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
 
+# Some exercises call glance directly.  On a single-node installation, Glance
+# should be listening on HOST_IP.  If its running elsewhere, it can be set here
+GLANCE_HOST=${GLANCE_HOST:-$HOST_IP}
+
 # Nova original used project_id as the *account* that owned resources (servers,
 # ip address, ...)   With the addition of Keystone we have standardized on the
 # term **tenant** as the entity that owns the resources.  **novaclient** still
