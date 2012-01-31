@@ -1235,6 +1235,8 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     add_nova_flag "--firewall_driver=$XEN_FIREWALL_DRIVER"
 else
     add_nova_flag "--connection_type=libvirt"
+    LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
+    add_nova_flag "--firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
     add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
     if [ -n "$FLAT_INTERFACE" ]; then
         add_nova_flag "--flat_interface=$FLAT_INTERFACE"
