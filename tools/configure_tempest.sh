@@ -30,7 +30,10 @@ trap cleanup SIGHUP SIGINT SIGTERM SIGQUIT EXIT
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
-TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
+
+# Import common functions
+. $TOP_DIR/functions
 
 # Abort if localrc is not set
 if [ ! -e $TOP_DIR/localrc ]; then
