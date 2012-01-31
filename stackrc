@@ -42,9 +42,9 @@ QUANTUM_BRANCH=master
 QUANTUM_CLIENT_REPO=https://github.com/openstack/python-quantumclient
 QUANTUM_CLIENT_BRANCH=master
 
-# CI test suite
-CITEST_REPO=https://github.com/openstack/tempest.git
-CITEST_BRANCH=master
+# Tempest test suite
+TEMPEST_REPO=https://github.com/openstack/tempest.git
+TEMPEST_BRANCH=master
 
 # Specify a comma-separated list of uec images to download and install into glance.
 # supported urls here are:
