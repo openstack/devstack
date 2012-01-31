@@ -8,7 +8,10 @@ fi
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
-TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
+
+# Import common functions
+. $TOP_DIR/functions
 
 cd $TOP_DIR
 
@@ -34,7 +37,7 @@ fi
 
 # Install deps if needed
 DEPS="kvm libvirt-bin kpartx cloud-utils curl"
-apt-get install -y --force-yes $DEPS || true # allow this to fail gracefully for concurrent builds
+apt_get install -y --force-yes $DEPS || true # allow this to fail gracefully for concurrent builds
 
 # Where to store files and instances
 WORK_DIR=${WORK_DIR:-/opt/uecstack}

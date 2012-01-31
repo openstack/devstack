@@ -35,6 +35,9 @@ fi
 # Keep track of the current devstack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
+# Import common functions
+. $TOP_DIR/functions
+
 # stack.sh keeps the list of **apt** and **pip** dependencies in external
 # files, along with config templates and other useful files.  You can find these
 # in the ``files`` directory (next to this script).  We will reference this
@@ -85,16 +88,6 @@ source ./stackrc
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
-
-# apt-get wrapper to just get arguments set correctly
-function apt_get() {
-    [[ "$OFFLINE" = "True" ]] && return
-    local sudo="sudo"
-    [ "$(id -u)" = "0" ] && sudo="env"
-    $sudo DEBIAN_FRONTEND=noninteractive \
-        http_proxy=$http_proxy https_proxy=$https_proxy \
-        apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
-}
 
 # Check to see if we are already running a stack.sh
 if screen -ls | egrep -q "[0-9].stack"; then
@@ -154,18 +147,6 @@ else
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/stack_sh_nova
 fi
-
-# Normalize config values to True or False
-# VAR=`trueorfalse default-value test-value`
-function trueorfalse() {
-    local default=$1
-    local testval=$2
-
-    [[ -z "$testval" ]] && { echo "$default"; return; }
-    [[ "0 no false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
-    [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
-    echo "$default"
-}
 
 # Set True to configure stack.sh to run cleanly without Internet access.
 # stack.sh must have been previously run with Internet access to install
@@ -526,62 +507,12 @@ function get_packages() {
     done
 }
 
-function pip_install {
-    [[ "$OFFLINE" = "True" ]] && return
-    sudo PIP_DOWNLOAD_CACHE=/var/cache/pip \
-        HTTP_PROXY=$http_proxy \
-        HTTPS_PROXY=$https_proxy \
-        pip install --use-mirrors $@
-}
-
 # install apt requirements
 apt_get update
 apt_get install $(get_packages)
 
 # install python requirements
 pip_install `cat $FILES/pips/* | uniq`
-
-# git clone only if directory doesn't exist already.  Since ``DEST`` might not
-# be owned by the installation user, we create the directory and change the
-# ownership to the proper user.
-function git_clone {
-    [[ "$OFFLINE" = "True" ]] && return
-
-    GIT_REMOTE=$1
-    GIT_DEST=$2
-    GIT_BRANCH=$3
-
-    if echo $GIT_BRANCH | egrep -q "^refs"; then
-        # If our branch name is a gerrit style refs/changes/...
-        if [ ! -d $GIT_DEST ]; then
-            git clone $GIT_REMOTE $GIT_DEST
-        fi
-        cd $GIT_DEST
-        git fetch $GIT_REMOTE $GIT_BRANCH && git checkout FETCH_HEAD
-    else
-        # do a full clone only if the directory doesn't exist
-        if [ ! -d $GIT_DEST ]; then
-            git clone $GIT_REMOTE $GIT_DEST
-            cd $GIT_DEST
-            # This checkout syntax works for both branches and tags
-            git checkout $GIT_BRANCH
-        elif [[ "$RECLONE" == "yes" ]]; then
-            # if it does exist then simulate what clone does if asked to RECLONE
-            cd $GIT_DEST
-            # set the url to pull from and fetch
-            git remote set-url origin $GIT_REMOTE
-            git fetch origin
-            # remove the existing ignored files (like pyc) as they cause breakage
-            # (due to the py files having older timestamps than our pyc, so python
-            # thinks the pyc files are correct using them)
-            find $GIT_DEST -name '*.pyc' -delete
-            git checkout -f origin/$GIT_BRANCH
-            # a local branch might not exist
-            git branch -D $GIT_BRANCH || true
-            git checkout -b $GIT_BRANCH
-        fi
-    fi
-}
 
 # compute service
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH

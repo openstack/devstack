@@ -6,7 +6,10 @@ ROOTSIZE=${ROOTSIZE:-2000}
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
-TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
+
+# Import common functions
+. $TOP_DIR/functions
 
 # exit on error to stop unexpected errors
 set -o errexit

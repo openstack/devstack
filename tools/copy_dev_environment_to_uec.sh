@@ -8,7 +8,10 @@ set -o errexit
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
-TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
+
+# Import common functions
+. $TOP_DIR/functions
 
 # Change dir to top of devstack
 cd $TOP_DIR
@@ -46,13 +49,6 @@ echo stack:pass | chroot $STAGING_DIR chpasswd
 # Configure sudo
 ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
     > $STAGING_DIR/etc/sudoers.d/50_stack_sh )
-
-# Gracefully cp only if source file/dir exists
-function cp_it {
-    if [ -e $1 ] || [ -d $1 ]; then
-        cp -pRL $1 $2
-    fi
-}
 
 # Copy over your ssh keys and env if desired
 cp_it ~/.ssh $STAGING_DIR/$DEST/.ssh
