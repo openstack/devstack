@@ -46,3 +46,6 @@ if ! timeout $REGISTER_TIMEOUT sh -c "while euca-describe-images | grep '$AMI' |
     echo "Image $AMI not available within $REGISTER_TIMEOUT seconds"
     exit 1
 fi
+
+# Clean up
+euca-deregister $AMI
