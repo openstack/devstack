@@ -52,18 +52,13 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "key" ]] ; then
         STATUS_KEYSTONE="Skipped"
     else
-        if [[ -n "$VERIFY" ]]; then
-            # Save original environment
-            xOS_AUTH_URL=$OS_AUTH_URL
-            xOS_TENANT_NAME=$OS_TENANT_NAME
-            xOS_USERNAME=$OS_USERNAME
-            xOS_PASSWORD=$OS_PASSWORD
-            # keystone can't handle a trailing '/'
-            export OS_AUTH_URL=${OS_AUTH_URL%/}
-            # does any non-admin request work?
-            export OS_USERNAME=admin
-            export OS_TENANT_NAME=admin
-        fi
+        # We need to run the keystone test as admin since there doesn't
+        # seem to be anything to test the cli vars that runs as a user
+        # tenant-list should do that, it isn't implemented (yet)
+        xOS_TENANT_NAME=$OS_TENANT_NAME
+        xOS_USERNAME=$OS_USERNAME
+        export OS_USERNAME=admin
+        export OS_TENANT_NAME=admin
 
         echo -e "\nTest Keystone"
         if keystone service-list; then
@@ -72,13 +67,9 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
             STATUS_KEYSTONE="Failed"
             RETURN=1
         fi
-        if [[ -n "$VERIFY" ]]; then
-            # Save original environment
-            OS_AUTH_URL=$xOS_AUTH_URL
-            OS_TENANT_NAME=$xOS_TENANT_NAME
-            OS_USERNAME=$xOS_USERNAME
-            OS_PASSWORD=$xOS_PASSWORD
-        fi
+
+        OS_TENANT_NAME=$xOS_TENANT_NAME
+        OS_USERNAME=$xOS_USERNAME
     fi
 fi
 
@@ -89,12 +80,6 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "n-api" ]] ; then
         STATUS_NOVA="Skipped"
     else
-        if [[ -n "$VERIFY" ]]; then
-            # Known novaclient breakage:
-            #  NOVA_VERSION must be set or nova silently fails
-            export NOVA_VERSION=2
-        fi
-
         echo -e "\nTest Nova"
         if nova flavor-list; then
             STATUS_NOVA="Succeeded"
@@ -112,14 +97,6 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "g-api" ]] ; then
         STATUS_GLANCE="Skipped"
     else
-        if [[ -n "$VERIFY" ]]; then
-            # Known glance client differage:
-            export OS_AUTH_TENANT=$OS_TENANT_NAME
-            export OS_AUTH_USER=$OS_USERNAME
-            export OS_AUTH_KEY=$OS_PASSWORD
-            export OS_AUTH_STRATEGY=keystone
-        fi
-
         echo -e "\nTest Glance"
         if glance index; then
             STATUS_GLANCE="Succeeded"
@@ -138,8 +115,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
         STATUS_SWIFT="Skipped"
     else
         echo -e "\nTest Swift"
-        # FIXME(dtroyer): implement swift test
-        if true; then
+        if swift stat; then
             STATUS_SWIFT="Succeeded"
         else
             STATUS_SWIFT="Failed"
