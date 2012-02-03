@@ -34,8 +34,3 @@ if ! which git; then
     make install
 fi
 
-# Clone devstack
-DEVSTACK=/root/devstack
-if [ ! -d $DEVSTACK ]; then
-    git clone git://github.com/cloudbuilders/devstack.git $DEVSTACK
-fi
