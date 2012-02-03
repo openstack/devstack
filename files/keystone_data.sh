@@ -36,40 +36,40 @@ NETADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
 
 # Add Roles to Users in Tenants
 
-$BIN_DIR/keystone-manage role add_user_to_tenant \
-                              role_id=$ADMIN_ROLE \
-                              user_id=$ADMIN_USER \
-                              tenant_id=$ADMIN_TENANT
-$BIN_DIR/keystone-manage role add_user_to_tenant \
-                              role_id=$MEMBER_ROLE \
-                              user_id=$DEMO_USER \
-                              tenant_id=$DEMO_TENANT
-$BIN_DIR/keystone-manage role add_user_to_tenant \
-                              role_id=$SYSADMIN_ROLE \
-                              user_id=$DEMO_USER \
-                              tenant_id=$DEMO_TENANT
-$BIN_DIR/keystone-manage role add_user_to_tenant \
-                              role_id=$NETADMIN_ROLE \
-                              user_id=$DEMO_USER \
-                              tenant_id=$DEMO_TENANT
-$BIN_DIR/keystone-manage role add_user_to_tenant \
-                              role_id=$MEMBER_ROLE \
-                              user_id=$DEMO_USER \
-                              tenant_id=$INVIS_TENANT
-$BIN_DIR/keystone-manage role add_user_to_tenant \
-                              role_id=$ADMIN_ROLE \
-                              user_id=$ADMIN_USER \
-                              tenant_id=$DEMO_TENANT
+$BIN_DIR/keystone-manage role add_user_role \
+                              role=$ADMIN_ROLE \
+                              user=$ADMIN_USER \
+                              tenant=$ADMIN_TENANT
+$BIN_DIR/keystone-manage role add_user_role \
+                              role=$MEMBER_ROLE \
+                              user=$DEMO_USER \
+                              tenant=$DEMO_TENANT
+$BIN_DIR/keystone-manage role add_user_role \
+                              role=$SYSADMIN_ROLE \
+                              user=$DEMO_USER \
+                              tenant=$DEMO_TENANT
+$BIN_DIR/keystone-manage role add_user_role \
+                              role=$NETADMIN_ROLE \
+                              user=$DEMO_USER \
+                              tenant=$DEMO_TENANT
+$BIN_DIR/keystone-manage role add_user_role \
+                              role=$MEMBER_ROLE \
+                              user=$DEMO_USER \
+                              tenant=$INVIS_TENANT
+$BIN_DIR/keystone-manage role add_user_role \
+                              role=$ADMIN_ROLE \
+                              user=$ADMIN_USER \
+                              tenant=$DEMO_TENANT
 
 # TODO(termie): these two might be dubious
-$BIN_DIR/keystone-manage role add_user_to_tenant \
-                              role_id=$KEYSTONEADMIN_ROLE \
-                              user_id=$ADMIN_USER \
-                              tenant_id=$ADMIN_TENANT
-$BIN_DIR/keystone-manage role add_user_to_tenant \
-                              role_id=$KEYSTONESERVICE_ROLE \
-                              user_id=$ADMIN_USER \
-                              tenant_id=$ADMIN_TENANT
+$BIN_DIR/keystone-manage role add_user_role \
+                              role=$KEYSTONEADMIN_ROLE \
+                              user=$ADMIN_USER \
+                              tenant=$ADMIN_TENANT
+$BIN_DIR/keystone-manage role add_user_role \
+                              role=$KEYSTONESERVICE_ROLE \
+                              user=$ADMIN_USER \
+                              tenant=$ADMIN_TENANT
 
 # Services
 $BIN_DIR/keystone-manage service create \
