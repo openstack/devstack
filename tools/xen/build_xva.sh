@@ -104,7 +104,7 @@ sed -e "s,@BUILD_NUMBER@,$BUILD_NUMBER,g" -i $OVA
 cat <<EOF >$STAGING_DIR/etc/rc.local
 # network restart required for getting the right gateway
 /etc/init.d/networking restart
-GUEST_PASSWORD=$GUEST_PASSWORD STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh
+GUEST_PASSWORD=$GUEST_PASSWORD STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh > /opt/stack/prepare_guest.log 2>&1
 su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" stack
 exit 0
 EOF
