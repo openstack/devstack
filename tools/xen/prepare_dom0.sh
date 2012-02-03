@@ -1,9 +1,9 @@
-#!/bin/sh
+#i!/bin/sh
 set -o xtrace
 set -o errexit
 
 # Install basics for vi and git
-yum -y  --enablerepo=base install gcc make vim-enhanced zlib-devel openssl-devel
+yum -y  --enablerepo=base install gcc make vim-enhanced zlib-devel openssl-devel curl-devel.i386
 
 # Simple but usable vimrc
 if [ ! -e /root/.vimrc ]; then
@@ -30,7 +30,7 @@ if ! which git; then
     wget http://git-core.googlecode.com/files/git-1.7.7.tar.gz
     tar xfv git-1.7.7.tar.gz
     cd $GITDIR
-    ./configure
+    ./configure --with-curl --with-expat
     make install
 fi
 
