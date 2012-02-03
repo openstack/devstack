@@ -40,7 +40,10 @@ DEST_FILE=$1
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
-TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
+
+# Import common functions
+. $TOP_DIR/functions
 
 cd $TOP_DIR
 
@@ -68,7 +71,7 @@ fi
 
 # Install deps if needed
 DEPS="kvm libvirt-bin kpartx cloud-utils curl"
-apt-get install -y --force-yes $DEPS
+apt_get install -y --force-yes $DEPS
 
 # Where to store files and instances
 CACHEDIR=${CACHEDIR:-/opt/stack/cache}
@@ -112,35 +115,6 @@ touch $MNT_DIR/$DEST/.ramdisk
 if [ ! -r "`ls $MNT_DIR/boot/vmlinuz-*-generic | head -1`" ]; then
     chroot $MNT_DIR apt-get install -y linux-generic
 fi
-
-# git clone only if directory doesn't exist already.  Since ``DEST`` might not
-# be owned by the installation user, we create the directory and change the
-# ownership to the proper user.
-function git_clone {
-
-    # clone new copy or fetch latest changes
-    CHECKOUT=${MNT_DIR}$2
-    if [ ! -d $CHECKOUT ]; then
-        mkdir -p $CHECKOUT
-        git clone $1 $CHECKOUT
-    else
-        pushd $CHECKOUT
-        git fetch
-        popd
-    fi
-
-    # FIXME(ja): checkout specified version (should works for branches and tags)
-
-    pushd $CHECKOUT
-    # checkout the proper branch/tag
-    git checkout $3
-    # force our local version to be the same as the remote version
-    git reset --hard origin/$3
-    popd
-
-    # give ownership to the stack user
-    chroot $MNT_DIR chown -R stack $2
-}
 
 git_clone $NOVA_REPO $DEST/nova $NOVA_BRANCH
 git_clone $GLANCE_REPO $DEST/glance $GLANCE_BRANCH
