@@ -1141,11 +1141,11 @@ add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
 add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
-if [[ "$ENABLED_SERVICES" =~ "n-novnc" ]]; then
+# All nova-compute workers need to know the vnc configuration options
+# These settings don't hurt anything if n-xvnc and n-novnc are disabled
+if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
     NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
     add_nova_flag "--novncproxy_base_url=$NOVNCPROXY_URL"
-fi
-if [[ "$ENABLED_SERVICES" =~ "n-xvnc" ]]; then
     XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
     add_nova_flag "--xvpvncproxy_base_url=$XVPVNCPROXY_URL"
 fi
