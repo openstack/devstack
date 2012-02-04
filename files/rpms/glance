@@ -1,0 +1,8 @@
+python-argparse
+python-eventlet
+python-greenlet
+python-paste-deploy
+python-routes
+python-sqlalchemy
+python-wsgiref
+pyxattr

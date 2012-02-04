@@ -2,7 +2,7 @@ DevStack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
 
 # Goals
 
-* To quickly build dev OpenStack environments in a clean Oneiric or Precise environment
+* To quickly build dev OpenStack environments in a clean Ubuntu or Fedora environment
 * To describe working configurations of OpenStack (which code branches work together?  what do config files look like for those branches?)
 * To make it easier for developers to dive into OpenStack so that they can productively contribute without having to understand every part of the system at once
 * To make it easy to prototype cross-project features

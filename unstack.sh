@@ -49,7 +49,7 @@ if is_service_enabled n-vol; then
         echo "iSCSI target cleanup needed:"
         echo "$TARGETS"
     fi
-    sudo stop tgt
+    stop_service tgt
 fi
 
 if [[ -n "$UNSTACK_ALL" ]]; then
