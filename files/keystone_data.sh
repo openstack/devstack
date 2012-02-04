@@ -21,7 +21,7 @@ DEMO_USER=`$BIN_DIR/keystone-manage user --id-only create \
 
 # Roles
 ADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
-                                          name=Admin`
+                                          name=admin`
 MEMBER_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
                                            name=Member`
 KEYSTONEADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
