@@ -1398,7 +1398,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     # initialize keystone with default users/endpoints
     pushd $KEYSTONE_DIR
     $KEYSTONE_DIR/bin/keystone-manage db_sync
-    ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
+    DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
     popd
 fi
 

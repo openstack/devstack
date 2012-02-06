@@ -98,6 +98,25 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
                                      "description=Swift Service"
 fi
 
+# create ec2 creds and parse the secret and access key returned
+RESULT=`$BIN_DIR/keystone-manage ec2 create user_id=$ADMIN_USER tenant_id=$ADMIN_TENANT`
+ADMIN_ACCESS=`echo $RESULT | python -c "import sys; import json; result = json.loads(sys.stdin.read()); print result['access'];"`
+ADMIN_SECRET=`echo $RESULT | python -c "import sys; import json; result = json.loads(sys.stdin.read()); print result['secret'];"`
+
+
+RESULT=`$BIN_DIR/keystone-manage ec2 create user_id=$DEMO_USER tenant_id=$DEMO_TENANT`
+DEMO_ACCESS=`echo $RESULT | python -c "import sys; import json; result = json.loads(sys.stdin.read()); print result['access'];"`
+DEMO_SECRET=`echo $RESULT | python -c "import sys; import json; result = json.loads(sys.stdin.read()); print result['secret'];"`
+
+# write the secret and access to ec2rc
+cat > $DEVSTACK_DIR/ec2rc <<EOF
+ADMIN_ACCESS=$ADMIN_ACCESS
+ADMIN_SECRET=$ADMIN_SECRET
+DEMO_ACCESS=$DEMO_ACCESS
+DEMO_SECRET=$DEMO_SECRET
+EOF
+
+
 #endpointTemplates
 #$BIN_DIR/keystone-manage $* endpointTemplates add \
 #      RegionOne nova
@@ -130,8 +149,3 @@ fi
 # Tokens
 #$BIN_DIR/keystone-manage token add %SERVICE_TOKEN% admin admin 2015-02-05T00:00
 
-# EC2 related creds - note we are setting the secret key to ADMIN_PASSWORD
-# but keystone doesn't parse them - it is just a blob from keystone's
-# point of view
-#$BIN_DIR/keystone-manage credentials add admin EC2 'admin' '%ADMIN_PASSWORD%' admin || echo "no support for adding credentials"
-#$BIN_DIR/keystone-manage credentials add demo EC2 'demo' '%ADMIN_PASSWORD%' demo || echo "no support for adding credentials"
