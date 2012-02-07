@@ -90,7 +90,7 @@ source ./stackrc
 DEST=${DEST:-/opt/stack}
 
 # Check to see if we are already running a stack.sh
-if screen -ls | egrep -q "[0-9].stack"; then
+if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].stack"; then
     echo "You are already running a stack.sh session."
     echo "To rejoin this session type 'screen -x stack'."
     echo "To destroy this session, kill the running screen."
