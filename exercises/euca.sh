@@ -39,9 +39,9 @@ IMAGE=`euca-describe-images | grep machine | cut -f2 | head -n1`
 SECGROUP=euca_secgroup
 
 # Add a secgroup
-if ! euca-describe-group | grep -q $SECGROUP; then
+if ! euca-describe-groups | grep -q $SECGROUP; then
     euca-add-group -d "$SECGROUP description" $SECGROUP
-    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! euca-describe-group | grep -q $SECGROUP; do sleep 1; done"; then
+    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! euca-describe-groups | grep -q $SECGROUP; do sleep 1; done"; then
         echo "Security group not created"
         exit 1
     fi
