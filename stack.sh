@@ -1077,15 +1077,12 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
     fi
 
     if sudo vgs $VOLUME_GROUP; then
+        # Remove nova iscsi targets
+        sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
         # Clean out existing volumes
         for lv in `sudo lvs --noheadings -o lv_name $VOLUME_GROUP`; do
             # VOLUME_NAME_PREFIX prefixes the LVs we want
             if [[ "${lv#$VOLUME_NAME_PREFIX}" != "$lv" ]]; then
-                tid=`egrep "^tid.+$lv" /proc/net/iet/volume | cut -f1 -d' ' | tr ':' '='`
-                if [[ -n "$tid" ]]; then
-                    lun=`egrep "lun.+$lv" /proc/net/iet/volume | cut -f1 -d' ' | tr ':' '=' | tr -d '\t'`
-                    sudo ietadm --op delete --$tid --$lun
-                fi
                 sudo lvremove -f $VOLUME_GROUP/$lv
             fi
         done
