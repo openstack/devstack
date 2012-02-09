@@ -1246,7 +1246,7 @@ function screen_it {
 }
 
 # create a new named screen to run processes in
-screen -L -d -m -S stack -t stack
+screen -d -m -S stack -t stack -s /bin/bash
 sleep 1
 # set a reasonable statusbar
 screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"
