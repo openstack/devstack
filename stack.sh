@@ -1284,17 +1284,12 @@ fi
 function screen_it {
     NL=`echo -ne '\015'`
     if [[ "$ENABLED_SERVICES" =~ "$1" ]]; then
-        if [[ "$USE_TMUX" =~ "yes" ]]; then
-            tmux new-window -t stack -a -n "$1" "bash"
-            tmux send-keys "$2" C-M
-        else
-            screen -S stack -X screen -t $1
-            # sleep to allow bash to be ready to be send the command - we are
-            # creating a new window in screen and then sends characters, so if
-            # bash isn't running by the time we send the command, nothing happens
-            sleep 1.5
-            screen -S stack -p $1 -X stuff "$2$NL"
-        fi
+        screen -S stack -X screen -t $1
+        # sleep to allow bash to be ready to be send the command - we are
+        # creating a new window in screen and then sends characters, so if
+        # bash isn't running by the time we send the command, nothing happens
+        sleep 1.5
+        screen -S stack -p $1 -X stuff "$2$NL"
     fi
 }
 
