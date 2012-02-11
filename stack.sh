@@ -899,6 +899,10 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
         echo $instances | xargs -n1 virsh undefine || true
     fi
 
+    # Logout and delete iscsi sessions
+    sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d " " -f2 | xargs sudo iscsiadm --mode node --logout || true
+    sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d " " -f2 | sudo iscsiadm --mode node --op delete || true
+
     # Clean out the instances directory.
     sudo rm -rf $NOVA_DIR/instances/*
 fi
