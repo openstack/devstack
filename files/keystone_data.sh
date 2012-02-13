@@ -32,7 +32,6 @@ NETADMIN_ROLE=`get_id keystone role-create --name=netadmin`
 
 
 # Add Roles to Users in Tenants
-
 keystone add-user-role $ADMIN_USER $ADMIN_ROLE $ADMIN_TENANT
 keystone add-user-role $DEMO_USER $MEMBER_ROLE $DEMO_TENANT
 keystone add-user-role $DEMO_USER $SYSADMIN_ROLE $DEMO_TENANT
@@ -69,6 +68,12 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
                                  --name=swift \
                                  --type="object-store" \
                                  --description="Swift Service"
+fi
+if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
+    keystone service-create \
+                                 --name=quantum \
+                                 --type=network \
+                                 --description="Quantum Service"
 fi
 
 # create ec2 creds and parse the secret and access key returned
