@@ -42,7 +42,7 @@ export OS_PASSWORD=${NOVA_PASSWORD}
 #
 # *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We
 # will use the 1.1 *compute api*
-export NOVA_URL=${NOVA_URL:-http://$SERVICE_HOST:5000/v2.0/}
+export NOVA_URL=${NOVA_URL:-http://$SERVICE_HOST:5000/v2.0}
 export OS_AUTH_URL=${NOVA_URL}
 
 # Currently novaclient needs you to specify the *compute api* version.  This

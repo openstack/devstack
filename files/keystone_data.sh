@@ -1,112 +1,86 @@
 #!/bin/bash
-BIN_DIR=${BIN_DIR:-.}
 # Tenants
-ADMIN_TENANT=`$BIN_DIR/keystone-manage tenant --id-only create \
-                                       tenant_name=admin`
-DEMO_TENANT=`$BIN_DIR/keystone-manage tenant --id-only create \
-                                      tenant_name=demo`
-INVIS_TENANT=`$BIN_DIR/keystone-manage tenant --id-only create \
-                                       tenant_name=invisible_to_admin`
+export SERVICE_TOKEN=$SERVICE_TOKEN
+export SERVICE_ENDPOINT=$SERVICE_ENDPOINT
+
+function get_id () {
+    echo `$@ | grep id | awk '{print $4}'`
+}
+
+ADMIN_TENANT=`get_id keystone tenant-create --name=admin`
+DEMO_TENANT=`get_id keystone tenant-create --name=demo`
+INVIS_TENANT=`get_id keystone tenant-create --name=invisible_to_admin`
 
 
 # Users
-ADMIN_USER=`$BIN_DIR/keystone-manage user --id-only create \
-                                          name=admin \
-                                          "password=%ADMIN_PASSWORD%" \
-                                          email=admin@example.com`
-DEMO_USER=`$BIN_DIR/keystone-manage user --id-only create \
-                                         name=demo \
-                                         "password=%ADMIN_PASSWORD%" \
-                                         email=demo@example.com`
+ADMIN_USER=`get_id keystone user-create \
+                                 --name=admin \
+                                 --pass="$ADMIN_PASSWORD" \
+                                 --email=admin@example.com`
+DEMO_USER=`get_id keystone user-create \
+                                 --name=demo \
+                                 --pass="$ADMIN_PASSWORD" \
+                                 --email=admin@example.com`
 
 # Roles
-ADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
-                                          name=admin`
-MEMBER_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
-                                           name=Member`
-KEYSTONEADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
-                                                  name=KeystoneAdmin`
-KEYSTONESERVICE_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
-                                                         name=KeystoneServiceAdmin`
-SYSADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
-                                             name=sysadmin`
-NETADMIN_ROLE=`$BIN_DIR/keystone-manage role --id-only create \
-                                             name=netadmin`
+ADMIN_ROLE=`get_id keystone role-create --name=admin`
+MEMBER_ROLE=`get_id keystone role-create --name=Member`
+KEYSTONEADMIN_ROLE=`get_id keystone role-create --name=KeystoneAdmin`
+KEYSTONESERVICE_ROLE=`get_id keystone role-create --name=KeystoneServiceAdmin`
+SYSADMIN_ROLE=`get_id keystone role-create --name=sysadmin`
+NETADMIN_ROLE=`get_id keystone role-create --name=netadmin`
 
 
 # Add Roles to Users in Tenants
 
-$BIN_DIR/keystone-manage role add_user_role \
-                              role=$ADMIN_ROLE \
-                              user=$ADMIN_USER \
-                              tenant=$ADMIN_TENANT
-$BIN_DIR/keystone-manage role add_user_role \
-                              role=$MEMBER_ROLE \
-                              user=$DEMO_USER \
-                              tenant=$DEMO_TENANT
-$BIN_DIR/keystone-manage role add_user_role \
-                              role=$SYSADMIN_ROLE \
-                              user=$DEMO_USER \
-                              tenant=$DEMO_TENANT
-$BIN_DIR/keystone-manage role add_user_role \
-                              role=$NETADMIN_ROLE \
-                              user=$DEMO_USER \
-                              tenant=$DEMO_TENANT
-$BIN_DIR/keystone-manage role add_user_role \
-                              role=$MEMBER_ROLE \
-                              user=$DEMO_USER \
-                              tenant=$INVIS_TENANT
-$BIN_DIR/keystone-manage role add_user_role \
-                              role=$ADMIN_ROLE \
-                              user=$ADMIN_USER \
-                              tenant=$DEMO_TENANT
+keystone add-user-role $ADMIN_USER $ADMIN_ROLE $ADMIN_TENANT
+keystone add-user-role $DEMO_USER $MEMBER_ROLE $DEMO_TENANT
+keystone add-user-role $DEMO_USER $SYSADMIN_ROLE $DEMO_TENANT
+keystone add-user-role $DEMO_USER $NETADMIN_ROLE $DEMO_TENANT
+keystone add-user-role $DEMO_USER $MEMBER_ROLE $INVIS_TENANT
+keystone add-user-role $ADMIN_USER $ADMIN_ROLE $DEMO_TENANT
 
 # TODO(termie): these two might be dubious
-$BIN_DIR/keystone-manage role add_user_role \
-                              role=$KEYSTONEADMIN_ROLE \
-                              user=$ADMIN_USER \
-                              tenant=$ADMIN_TENANT
-$BIN_DIR/keystone-manage role add_user_role \
-                              role=$KEYSTONESERVICE_ROLE \
-                              user=$ADMIN_USER \
-                              tenant=$ADMIN_TENANT
+keystone add-user-role $ADMIN_USER $KEYSTONEADMIN_ROLE $ADMIN_TENANT
+keystone add-user-role $ADMIN_USER $KEYSTONESERVICE_ROLE $ADMIN_TENANT
 
 # Services
-$BIN_DIR/keystone-manage service create \
-                                 name=nova \
-                                 service_type=compute \
-                                 "description=Nova Compute Service"
+keystone service-create \
+                                 --name=nova \
+                                 --type=compute \
+                                 --description="Nova Compute Service"
 
-$BIN_DIR/keystone-manage service create \
-                                 name=ec2 \
-                                 service_type=ec2 \
-                                 "description=EC2 Compatibility Layer"
+keystone service-create \
+                                 --name=ec2 \
+                                 --type=ec2 \
+                                 --description="EC2 Compatibility Layer"
 
-$BIN_DIR/keystone-manage service create \
-                                 name=glance \
-                                 service_type=image \
-                                 "description=Glance Image Service"
+keystone service-create \
+                                 --name=glance \
+                                 --type=image \
+                                 --description="Glance Image Service"
 
-$BIN_DIR/keystone-manage service create \
-                                 name=keystone \
-                                 service_type=identity \
-                                 "description=Keystone Identity Service"
+keystone service-create \
+                                 --name=keystone \
+                                 --type=identity \
+                                 --description="Keystone Identity Service"
 if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
-    $BIN_DIR/keystone-manage service create \
-                                     name=swift \
-                                     service_type=object-store \
-                                     "description=Swift Service"
+    keystone service-create \
+                                 --name=swift \
+                                 --type="object-store" \
+                                 --description="Swift Service"
 fi
 
 # create ec2 creds and parse the secret and access key returned
-RESULT=`$BIN_DIR/keystone-manage ec2 create user_id=$ADMIN_USER tenant_id=$ADMIN_TENANT`
-ADMIN_ACCESS=`echo $RESULT | python -c "import sys; import json; result = json.loads(sys.stdin.read()); print result['access'];"`
-ADMIN_SECRET=`echo $RESULT | python -c "import sys; import json; result = json.loads(sys.stdin.read()); print result['secret'];"`
+RESULT=`keystone ec2-create-credentials --tenant_id=$ADMIN_TENANT --user_id=$ADMIN_USER`
+    echo `$@ | grep id | awk '{print $4}'`
+ADMIN_ACCESS=`echo "$RESULT" | grep access | awk '{print $4}'`
+ADMIN_SECRET=`echo "$RESULT" | grep secret | awk '{print $4}'`
 
 
-RESULT=`$BIN_DIR/keystone-manage ec2 create user_id=$DEMO_USER tenant_id=$DEMO_TENANT`
-DEMO_ACCESS=`echo $RESULT | python -c "import sys; import json; result = json.loads(sys.stdin.read()); print result['access'];"`
-DEMO_SECRET=`echo $RESULT | python -c "import sys; import json; result = json.loads(sys.stdin.read()); print result['secret'];"`
+RESULT=`keystone ec2-create-credentials --tenant_id=$DEMO_TENANT --user_id=$DEMO_USER`
+DEMO_ACCESS=`echo "$RESULT" | grep access | awk '{print $4}'`
+DEMO_SECRET=`echo "$RESULT" | grep secret | awk '{print $4}'`
 
 # write the secret and access to ec2rc
 cat > $DEVSTACK_DIR/ec2rc <<EOF
@@ -115,37 +89,3 @@ ADMIN_SECRET=$ADMIN_SECRET
 DEMO_ACCESS=$DEMO_ACCESS
 DEMO_SECRET=$DEMO_SECRET
 EOF
-
-
-#endpointTemplates
-#$BIN_DIR/keystone-manage $* endpointTemplates add \
-#      RegionOne nova
-#      http://%SERVICE_HOST%:8774/v1.1/%tenant_id%
-#      http://%SERVICE_HOST%:8774/v1.1/%tenant_id%
-#      http://%SERVICE_HOST%:8774/v1.1/%tenant_id% 1 1
-#$BIN_DIR/keystone-manage $* endpointTemplates add
-#      RegionOne ec2
-#      http://%SERVICE_HOST%:8773/services/Cloud
-#      http://%SERVICE_HOST%:8773/services/Admin
-#      http://%SERVICE_HOST%:8773/services/Cloud 1 1
-#$BIN_DIR/keystone-manage $* endpointTemplates add
-#      RegionOne glance
-#      http://%SERVICE_HOST%:9292/v1
-#      http://%SERVICE_HOST%:9292/v1
-#      http://%SERVICE_HOST%:9292/v1 1 1
-#$BIN_DIR/keystone-manage $* endpointTemplates add
-#      RegionOne keystone
-#      http://%SERVICE_HOST%:5000/v2.0
-#      http://%SERVICE_HOST%:35357/v2.0
-#      http://%SERVICE_HOST%:5000/v2.0 1 1
-#if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
-#    $BIN_DIR/keystone-manage $* endpointTemplates add
-#        RegionOne swift
-#        http://%SERVICE_HOST%:8080/v1/AUTH_%tenant_id%
-#        http://%SERVICE_HOST%:8080/
-#        http://%SERVICE_HOST%:8080/v1/AUTH_%tenant_id% 1 1
-#fi
-
-# Tokens
-#$BIN_DIR/keystone-manage token add %SERVICE_TOKEN% admin admin 2015-02-05T00:00
-

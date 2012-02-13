@@ -1311,26 +1311,14 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
       exit 1
     fi
 
-    # keystone_data.sh creates our admin user and our ``SERVICE_TOKEN``.
-    KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
-    cp $FILES/keystone_data.sh $KEYSTONE_DATA
-    sudo sed -e "
-        s,%KEYSTONE_AUTH_HOST%,$KEYSTONE_AUTH_HOST,g;
-        s,%KEYSTONE_AUTH_PORT%,$KEYSTONE_AUTH_PORT,g;
-        s,%KEYSTONE_AUTH_PROTOCOL%,$KEYSTONE_AUTH_PROTOCOL,g;
-        s,%KEYSTONE_SERVICE_HOST%,$KEYSTONE_SERVICE_HOST,g;
-        s,%KEYSTONE_SERVICE_PORT%,$KEYSTONE_SERVICE_PORT,g;
-        s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
-        s,%SERVICE_HOST%,$SERVICE_HOST,g;
-        s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
-        s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g;
-    " -i $KEYSTONE_DATA
-
     # initialize keystone with default users/endpoints
     pushd $KEYSTONE_DIR
     $KEYSTONE_DIR/bin/keystone-manage db_sync
-    DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
     popd
+
+    # keystone_data.sh creates services, admin and demo users, and roles.
+    SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES bash $FILES/keystone_data.sh
 fi
 
 
