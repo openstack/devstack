@@ -793,20 +793,28 @@ fi
 
 # Nova
 # ----
+
+# Put config files in /etc/nova for everyone to find
+NOVA_CONF=/etc/nova
+if [[ ! -d $NOVA_CONF ]]; then
+    sudo mkdir -p $NOVA_CONF
+fi
+sudo chown `whoami` $NOVA_CONF
+
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     # We are going to use a sample http middleware configuration based on the
     # one from the keystone project to launch nova.  This paste config adds
     # the configuration required for nova to validate keystone tokens.
 
     # First we add a some extra data to the default paste config from nova
-    cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_DIR/bin/nova-api-paste.ini
+    cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF
 
     # Then we add our own service token to the configuration
-    sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
+    sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_CONF/api-paste.ini
 
     # Finally, we change the pipelines in nova to use keystone
     function replace_pipeline() {
-        sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_DIR/bin/nova-api-paste.ini
+        sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_CONF/api-paste.ini
     }
     replace_pipeline "ec2cloud" "ec2faultwrap logrequest totoken authtoken keystonecontext cloudrequest authorizer validator ec2executor"
     replace_pipeline "ec2admin" "ec2faultwrap logrequest totoken authtoken keystonecontext adminrequest authorizer ec2executor"
@@ -1093,11 +1101,11 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
 fi
 
 function add_nova_flag {
-    echo "$1" >> $NOVA_DIR/bin/nova.conf
+    echo "$1" >> $NOVA_CONF/nova.conf
 }
 
 # (re)create nova.conf
-rm -f $NOVA_DIR/bin/nova.conf
+rm -f $NOVA_CONF/nova.conf
 add_nova_flag "--verbose"
 add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
@@ -1157,7 +1165,7 @@ fi
 VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
 add_nova_flag "--vncserver_listen=$VNCSERVER_LISTEN"
 add_nova_flag "--vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
-add_nova_flag "--api_paste_config=$NOVA_DIR/bin/nova-api-paste.ini"
+add_nova_flag "--api_paste_config=$NOVA_CONF/api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
