@@ -533,6 +533,7 @@ pip_install `cat $FILES/pips/* | uniq`
 # compute service
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 # python client library to nova that horizon (and others) use
+git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 
 # glance, swift middleware and nova api needs keystone middleware
@@ -561,7 +562,6 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
     # django powered web control panel for openstack
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
-    git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
 fi
 if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     # quantum
@@ -584,6 +584,8 @@ fi
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
+cd $KEYSTONECLIENT_DIR; sudo python setup.py develop
+cd $NOVACLIENT_DIR; sudo python setup.py develop
 if [[ "$ENABLED_SERVICES" =~ "key" ||
       "$ENABLED_SERVICES" =~ "g-api" ||
       "$ENABLED_SERVICES" =~ "n-api" ||
@@ -598,10 +600,8 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ||
       "$ENABLED_SERVICES" =~ "n-api" ]]; then
     cd $GLANCE_DIR; sudo python setup.py develop
 fi
-cd $NOVACLIENT_DIR; sudo python setup.py develop
 cd $NOVA_DIR; sudo python setup.py develop
 if [[ "$ENABLED_SERVICES" =~ "horizon" ]]; then
-    cd $KEYSTONECLIENT_DIR; sudo python setup.py develop
     cd $HORIZON_DIR/horizon; sudo python setup.py develop
     cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
 fi
@@ -793,28 +793,20 @@ fi
 
 # Nova
 # ----
-
-# Put config files in /etc/nova for everyone to find
-NOVA_CONF=/etc/nova
-if [[ ! -d $NOVA_CONF ]]; then
-    sudo mkdir -p $NOVA_CONF
-fi
-sudo chown `whoami` $NOVA_CONF
-
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     # We are going to use a sample http middleware configuration based on the
     # one from the keystone project to launch nova.  This paste config adds
     # the configuration required for nova to validate keystone tokens.
 
     # First we add a some extra data to the default paste config from nova
-    cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF
+    cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_DIR/bin/nova-api-paste.ini
 
     # Then we add our own service token to the configuration
-    sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_CONF/api-paste.ini
+    sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_DIR/bin/nova-api-paste.ini
 
     # Finally, we change the pipelines in nova to use keystone
     function replace_pipeline() {
-        sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_CONF/api-paste.ini
+        sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_DIR/bin/nova-api-paste.ini
     }
     replace_pipeline "ec2cloud" "ec2faultwrap logrequest totoken authtoken keystonecontext cloudrequest authorizer validator ec2executor"
     replace_pipeline "ec2admin" "ec2faultwrap logrequest totoken authtoken keystonecontext adminrequest authorizer ec2executor"
@@ -1101,11 +1093,11 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
 fi
 
 function add_nova_flag {
-    echo "$1" >> $NOVA_CONF/nova.conf
+    echo "$1" >> $NOVA_DIR/bin/nova.conf
 }
 
 # (re)create nova.conf
-rm -f $NOVA_CONF/nova.conf
+rm -f $NOVA_DIR/bin/nova.conf
 add_nova_flag "--verbose"
 add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
@@ -1165,7 +1157,7 @@ fi
 VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
 add_nova_flag "--vncserver_listen=$VNCSERVER_LISTEN"
 add_nova_flag "--vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
-add_nova_flag "--api_paste_config=$NOVA_CONF/api-paste.ini"
+add_nova_flag "--api_paste_config=$NOVA_DIR/bin/nova-api-paste.ini"
 add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
 add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
 add_nova_flag "--rabbit_host=$RABBIT_HOST"
@@ -1231,51 +1223,6 @@ if [[ "$ENABLED_SERVICES" =~ "mysql" ]]; then
 fi
 
 
-# Keystone
-# --------
-
-if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    # (re)create keystone database
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone;'
-
-    # Configure keystone.conf
-    KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
-    cp $FILES/keystone.conf $KEYSTONE_CONF
-    sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
-    sudo sed -e "s,%DEST%,$DEST,g" -i $KEYSTONE_CONF
-
-    # keystone_data.sh creates our admin user and our ``SERVICE_TOKEN``.
-    KEYSTONE_DATA=$KEYSTONE_DIR/bin/keystone_data.sh
-    cp $FILES/keystone_data.sh $KEYSTONE_DATA
-    sudo sed -e "
-        s,%KEYSTONE_AUTH_HOST%,$KEYSTONE_AUTH_HOST,g;
-        s,%KEYSTONE_AUTH_PORT%,$KEYSTONE_AUTH_PORT,g;
-        s,%KEYSTONE_AUTH_PROTOCOL%,$KEYSTONE_AUTH_PROTOCOL,g;
-        s,%KEYSTONE_SERVICE_HOST%,$KEYSTONE_SERVICE_HOST,g;
-        s,%KEYSTONE_SERVICE_PORT%,$KEYSTONE_SERVICE_PORT,g;
-        s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
-        s,%SERVICE_HOST%,$SERVICE_HOST,g;
-        s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
-        s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g;
-    " -i $KEYSTONE_DATA
-
-    # Prepare up the database
-    $KEYSTONE_DIR/bin/keystone-manage sync_database
-
-    # initialize keystone with default users/endpoints
-    ENABLED_SERVICES=$ENABLED_SERVICES BIN_DIR=$KEYSTONE_DIR/bin bash $KEYSTONE_DATA
-
-    if [ "$SYSLOG" != "False" ]; then
-        sed -i -e '/^handlers=devel$/s/=devel/=production/' \
-            $KEYSTONE_DIR/etc/logging.cnf
-        sed -i -e "/^log_file/s/log_file/\#log_file/" \
-            $KEYSTONE_DIR/etc/keystone.conf
-        KEYSTONE_LOG_CONFIG="--log-config $KEYSTONE_DIR/etc/logging.cnf"
-    fi
-fi
-
-
 # Launch Services
 # ===============
 
@@ -1317,15 +1264,53 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     fi
 fi
 
+if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
+    # (re)create keystone database
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone;'
+
+    # Configure keystone.conf
+    KEYSTONE_CONF=$KEYSTONE_DIR/etc/keystone.conf
+    cp $FILES/keystone.conf $KEYSTONE_CONF
+    sudo sed -e "s,%SQL_CONN%,$BASE_SQL_CONN/keystone,g" -i $KEYSTONE_CONF
+    sudo sed -e "s,%DEST%,$DEST,g" -i $KEYSTONE_CONF
+    sudo sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $KEYSTONE_CONF
+    sudo sed -e "s,%KEYSTONE_DIR%,$KEYSTONE_DIR,g" -i $KEYSTONE_CONF
+
+    KEYSTONE_CATALOG=$KEYSTONE_DIR/etc/default_catalog.templates
+    cp $FILES/default_catalog.templates $KEYSTONE_CATALOG
+    sudo sed -e "s,%SERVICE_HOST%,$SERVICE_HOST,g" -i $KEYSTONE_CATALOG
+
+
+    if [ "$SYSLOG" != "False" ]; then
+        cp $KEYSTONE_DIR/etc/logging.conf.sample $KEYSTONE_DIR/etc/logging.conf
+        sed -i -e '/^handlers=devel$/s/=devel/=production/' \
+            $KEYSTONE_DIR/etc/logging.conf
+        sed -i -e "/^log_file/s/log_file/\#log_file/" \
+            $KEYSTONE_DIR/etc/keystone.conf
+        KEYSTONE_LOG_CONFIG="--log-config $KEYSTONE_DIR/etc/logging.conf"
+    fi
+fi
+
 # launch the keystone and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d"
+    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
+
+    # initialize keystone with default users/endpoints
+    pushd $KEYSTONE_DIR
+    $KEYSTONE_DIR/bin/keystone-manage db_sync
+    popd
+
+    # keystone_data.sh creates services, admin and demo users, and roles.
+    SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES bash $FILES/keystone_data.sh
 fi
+
 
 # launch the nova-api and wait for it to answer before continuing
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
@@ -1459,6 +1444,10 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
 
+    ADMIN_USER=admin
+    ADMIN_TENANT=admin
+    TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$ADMIN_USER\", \"password\": \"$ADMIN_PASSWORD\"}, \"tenantName\": \"$ADMIN_TENANT\"}}" -H "Content-type: application/json" http://$HOST_IP:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
+
     # Option to upload legacy ami-tty, which works with xenserver
     if [ $UPLOAD_LEGACY_TTY ]; then
         if [ ! -f $FILES/tty.tgz ]; then
@@ -1466,11 +1455,11 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
         fi
 
         tar -zxf $FILES/tty.tgz -C $FILES/images
-        RVAL=`glance add -A $SERVICE_TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
+        RVAL=`glance add -A $TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
         KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-        RVAL=`glance add -A $SERVICE_TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
+        RVAL=`glance add -A $TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
         RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-        glance add -A $SERVICE_TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
+        glance add -A $TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
     fi
 
     for image_url in ${IMAGE_URLS//,/ }; do
@@ -1517,14 +1506,14 @@ if [[ "$ENABLED_SERVICES" =~ "g-reg" ]]; then
         # kernel for use when uploading the root filesystem.
         KERNEL_ID=""; RAMDISK_ID="";
         if [ -n "$KERNEL" ]; then
-            RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < "$KERNEL"`
+            RVAL=`glance add -A $TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < "$KERNEL"`
             KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
         fi
         if [ -n "$RAMDISK" ]; then
-            RVAL=`glance add -A $SERVICE_TOKEN name="$IMAGE_NAME-ramdisk" is_public=true container_format=ari disk_format=ari < "$RAMDISK"`
+            RVAL=`glance add -A $TOKEN name="$IMAGE_NAME-ramdisk" is_public=true container_format=ari disk_format=ari < "$RAMDISK"`
             RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
         fi
-        glance add -A $SERVICE_TOKEN name="${IMAGE_NAME%.img}" is_public=true container_format=ami disk_format=ami ${KERNEL_ID:+kernel_id=$KERNEL_ID} ${RAMDISK_ID:+ramdisk_id=$RAMDISK_ID} < <(zcat --force "${IMAGE}")
+        glance add -A $TOKEN name="${IMAGE_NAME%.img}" is_public=true container_format=ami disk_format=ami ${KERNEL_ID:+kernel_id=$KERNEL_ID} ${RAMDISK_ID:+ramdisk_id=$RAMDISK_ID} < <(zcat --force "${IMAGE}")
     done
 fi
 

@@ -16,7 +16,7 @@ GLANCE_BRANCH=master
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=https://github.com/openstack/keystone.git
-KEYSTONE_BRANCH=master
+KEYSTONE_BRANCH=redux
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/cloudbuilders/noVNC.git
@@ -75,6 +75,11 @@ case "$LIBVIRT_TYPE" in
     *)  # otherwise, use the uec style image (with kernel, ramdisk, disk)
         IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz";;
 esac
+
+# use stored ec2 env variables
+if [ -f ./ec2rc ]; then
+    source ./ec2rc
+fi
 
 # allow local overrides of env variables
 if [ -f ./localrc ]; then
