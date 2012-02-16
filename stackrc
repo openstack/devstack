@@ -16,7 +16,7 @@ GLANCE_BRANCH=master
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=https://github.com/openstack/keystone.git
-KEYSTONE_BRANCH=redux
+KEYSTONE_BRANCH=master
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/cloudbuilders/noVNC.git
