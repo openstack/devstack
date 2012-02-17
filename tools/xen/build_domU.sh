@@ -31,7 +31,7 @@ if ! which git; then
     wget http://git-core.googlecode.com/files/git-1.7.7.tar.gz
     tar xfv git-1.7.7.tar.gz
     cd $GITDIR
-    ./configure
+    ./configure --with-curl --with-expat
     make install
     cd $TOP_DIR
 fi
@@ -141,7 +141,7 @@ fi
 
 # Checkout nova
 if [ ! -d $TOP_DIR/nova ]; then
-    git clone $NOVA_REPO
+    env GIT_SSL_NO_VERIFY=true git clone $NOVA_REPO
     cd $TOP_DIR/nova
     git checkout $NOVA_BRANCH
 fi 
