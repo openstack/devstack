@@ -42,6 +42,7 @@ Cmnd_Alias NOVADEVCMDS = /bin/chmod /var/lib/nova/tmp/*/root/.ssh, \
                       /sbin/parted,                             \
                       /usr/sbin/dnsmasq,                        \
                       /usr/bin/ovs-vsctl,                       \
+                      /usr/bin/ovs-ofctl,                       \
                       /usr/sbin/arping
 
 %USER% ALL = (root) NOPASSWD: SETENV: NOVADEVCMDS
