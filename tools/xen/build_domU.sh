@@ -37,50 +37,84 @@ if ! which git; then
 fi
 
 # Helper to create networks
+# Uses echo trickery to return network uuid
 function create_network() {
-    if ! xe network-list | grep bridge | grep -q $1; then
-        echo "Creating bridge $1"
-        xe network-create name-label=$1
+    br=$1
+    dev=$2
+    vlan=$3
+    netname=$4
+    if [ -z $br ]
+    then
+        pif=$(xe pif-list --minimal device=$dev VLAN=$vlan)
+        if [ -z $pif ]
+        then
+            net=$(xe network-create name-label=$netname)
+        else
+            net=$(xe network-list --minimal PIF-uuids=$pif)
+        fi
+        echo $net
+        return 0
+    fi
+    if [ ! $(xe network-list --minimal params=bridge | grep -w --only-matching $br) ]
+    then
+        echo "Specified bridge $br does not exist"
+        echo "If you wish to use defaults, please keep the bridge name empty"
+        exit 1
+    else
+        net=$(xe network-list --minimal bridge=$br)
+        echo $net
+    fi
+}
+
+function errorcheck() {
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+        exit $rc
     fi
 }
 
 # Create host, vm, mgmt, pub networks
-create_network xapi0
-create_network $VM_BR
-create_network $MGT_BR
-create_network $PUB_BR
-
-# Get the uuid for our physical (public) interface
-PIF=`xe pif-list --minimal device=eth0`
-
-# Create networks/bridges for vm and management
-VM_NET=`xe network-list --minimal bridge=$VM_BR`
-MGT_NET=`xe network-list --minimal bridge=$MGT_BR`
+VM_NET=$(create_network "$VM_BR" "$VM_DEV" "$VM_VLAN" "vmbr")
+errorcheck
+MGT_NET=$(create_network "$MGT_BR" "$MGT_DEV" "$MGT_VLAN" "mgtbr")
+errorcheck
+PUB_NET=$(create_network "$PUB_BR" "$PUB_DEV" "$PUB_VLAN" "pubbr")
+errorcheck
 
 # Helper to create vlans
 function create_vlan() {
-    pif=$1
+    dev=$1
     vlan=$2
     net=$3
-    if ! xe vlan-list | grep tag | grep -q $vlan; then
-        xe vlan-create pif-uuid=$pif vlan=$vlan network-uuid=$net
+    # VLAN -1 refers to no VLAN (physical network)
+    if [ $vlan -eq -1 ]
+    then
+        return
+    fi
+    if [ -z $(xe vlan-list --minimal tag=$vlan) ]
+    then
+        pif=$(xe pif-list --minimal network-uuid=$net)
+        # We created a brand new network this time
+        if [ -z $pif ]
+        then
+            pif=$(xe pif-list --minimal device=$dev VLAN=-1)
+            xe vlan-create pif-uuid=$pif vlan=$vlan network-uuid=$net
+        else
+            echo "VLAN does not exist but PIF attached to this network"
+            echo "How did we reach here?"
+            exit 1
+        fi
     fi
 }
 
 # Create vlans for vm and management
-create_vlan $PIF $VM_VLAN $VM_NET
-create_vlan $PIF $MGT_VLAN $MGT_NET
+create_vlan $PUB_DEV $PUB_VLAN $PUB_NET
+create_vlan $VM_DEV $VM_VLAN $VM_NET
+create_vlan $MGT_DEV $MGT_VLAN $MGT_NET
 
 # dom0 ip
 HOST_IP=${HOST_IP:-`ifconfig xenbr0 | grep "inet addr" | cut -d ":" -f2 | sed "s/ .*//"`}
-
-# Setup host-only nat rules
-HOST_NET=169.254.0.0/16
-if ! iptables -L -v -t nat | grep -q $HOST_NET; then
-    iptables -t nat -A POSTROUTING -s $HOST_NET -j SNAT --to-source $HOST_IP
-    iptables -I FORWARD 1 -s $HOST_NET -j ACCEPT
-    /etc/init.d/iptables save
-fi
 
 # Set up ip forwarding
 if ! grep -q "FORWARD_IPV4=YES" /etc/sysconfig/network; then
@@ -139,7 +173,16 @@ if [ "$DO_SHUTDOWN" = "1" ]; then
 fi
 
 # Start guest
-$TOP_DIR/scripts/install-os-vpx.sh -f $XVA -v $VM_BR -m $MGT_BR -p $PUB_BR
+if [ -z $VM_BR ]; then
+    VM_BR=$(xe network-list --minimal uuid=$VM_NET params=bridge)
+fi
+if [ -z $MGT_BR ]; then
+    MGT_BR=$(xe network-list --minimal uuid=$MGT_NET params=bridge)
+fi
+if [ -z $PUB_BR ]; then
+    PUB_BR=$(xe network-list --minimal uuid=$PUB_NET params=bridge)
+fi
+$TOP_DIR/scripts/install-os-vpx.sh -f $XVA -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -w
 
 # If we have copied our ssh credentials, use ssh to monitor while the installation runs
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}

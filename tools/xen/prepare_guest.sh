@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # Configurable nuggets
 GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 STAGING_DIR=${STAGING_DIR:-stage}

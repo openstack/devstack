@@ -62,7 +62,7 @@ XVA_DIR=$TOP_DIR/xvas
 mkdir -p $XVA_DIR
 
 # Path to xva
-XVA=$XVA_DIR/$GUEST_NAME.xva 
+XVA=$XVA_DIR/$GUEST_NAME.xva
 
 # Setup fake grub
 rm -rf $STAGING_DIR/boot/grub/
@@ -102,7 +102,9 @@ sed -e "s,@BUILD_NUMBER@,$BUILD_NUMBER,g" -i $OVA
 
 # Run devstack on launch
 cat <<EOF >$STAGING_DIR/etc/rc.local
-GUEST_PASSWORD=$GUEST_PASSWORD STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh
+# network restart required for getting the right gateway
+/etc/init.d/networking restart
+GUEST_PASSWORD=$GUEST_PASSWORD STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh > /opt/stack/prepare_guest.log 2>&1
 su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" stack
 exit 0
 EOF
@@ -122,12 +124,36 @@ EOF
 # Configure the network
 INTERFACES=$STAGING_DIR/etc/network/interfaces
 cp $TEMPLATES_DIR/interfaces.in  $INTERFACES
-sed -e "s,@ETH1_IP@,$VM_IP,g" -i $INTERFACES
-sed -e "s,@ETH1_NETMASK@,$VM_NETMASK,g" -i $INTERFACES
-sed -e "s,@ETH2_IP@,$MGT_IP,g" -i $INTERFACES
-sed -e "s,@ETH2_NETMASK@,$MGT_NETMASK,g" -i $INTERFACES
-sed -e "s,@ETH3_IP@,$PUB_IP,g" -i $INTERFACES
-sed -e "s,@ETH3_NETMASK@,$PUB_NETMASK,g" -i $INTERFACES
+if [ $VM_IP == "dhcp" ]; then
+    echo 'eth1 on dhcp'
+    sed -e "s,iface eth1 inet static,iface eth1 inet dhcp,g" -i $INTERFACES
+    sed -e '/@ETH1_/d' -i $INTERFACES
+else
+    sed -e "s,@ETH1_IP@,$VM_IP,g" -i $INTERFACES
+    sed -e "s,@ETH1_NETMASK@,$VM_NETMASK,g" -i $INTERFACES
+fi
+
+if [ $MGT_IP == "dhcp" ]; then
+    echo 'eth2 on dhcp'
+    sed -e "s,iface eth2 inet static,iface eth2 inet dhcp,g" -i $INTERFACES
+    sed -e '/@ETH2_/d' -i $INTERFACES
+else
+    sed -e "s,@ETH2_IP@,$MGT_IP,g" -i $INTERFACES
+    sed -e "s,@ETH2_NETMASK@,$MGT_NETMASK,g" -i $INTERFACES
+fi
+
+if [ $PUB_IP == "dhcp" ]; then
+    echo 'eth3 on dhcp'
+    sed -e "s,iface eth3 inet static,iface eth3 inet dhcp,g" -i $INTERFACES
+    sed -e '/@ETH3_/d' -i $INTERFACES
+else
+    sed -e "s,@ETH3_IP@,$PUB_IP,g" -i $INTERFACES
+    sed -e "s,@ETH3_NETMASK@,$PUB_NETMASK,g" -i $INTERFACES
+fi
+
+if [ -h $STAGING_DIR/sbin/dhclient3 ]; then
+    rm -f $STAGING_DIR/sbin/dhclient3
+fi
 
 # Gracefully cp only if source file/dir exists
 function cp_it {
@@ -151,7 +177,7 @@ cat <<EOF >$STAGING_DIR/opt/stack/run.sh
 #!/bin/bash
 cd /opt/stack/devstack
 killall screen
-UPLOAD_LEGACY_TTY=yes HOST_IP=$PUB_IP VIRT_DRIVER=xenserver FORCE=yes MULTI_HOST=1 $STACKSH_PARAMS ./stack.sh
+UPLOAD_LEGACY_TTY=yes HOST_IP=$PUB_IP VIRT_DRIVER=xenserver FORCE=yes MULTI_HOST=1 HOST_IP_IFACE=$HOST_IP_IFACE $STACKSH_PARAMS ./stack.sh
 EOF
 chmod 755 $STAGING_DIR/opt/stack/run.sh
 
