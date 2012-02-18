@@ -41,3 +41,4 @@ python-m2crypto
 python-boto
 python-kombu
 python-feedparser
+python-iso8601

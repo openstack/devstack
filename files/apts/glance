@@ -6,3 +6,4 @@ python-sqlalchemy
 python-wsgiref
 python-pastedeploy
 python-xattr
+python-iso8601
