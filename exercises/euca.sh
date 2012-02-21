@@ -74,9 +74,6 @@ fi
 # Revoke pinging
 euca-revoke -P icmp -s 0.0.0.0/0 -t -1:-1 $SECGROUP
 
-# Delete group
-euca-delete-group $SECGROUP
-
 # Release floating address
 euca-disassociate-address $FLOATING_IP
 
@@ -97,3 +94,6 @@ fi
 
 # Terminate instance
 euca-terminate-instances $INSTANCE
+
+# Delete group
+euca-delete-group $SECGROUP
