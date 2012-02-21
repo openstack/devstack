@@ -784,9 +784,6 @@ if is_service_enabled g-reg; then
         GLANCE_REGISTRY_PASTE_INI=$GLANCE_DIR/etc/glance-registry-paste.ini
         cp $FILES/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
         glance_config $GLANCE_REGISTRY_PASTE_INI
-        # During the transition for Glance to the split config files
-        # we cat them together to handle both pre- and post-merge
-        cat $GLANCE_REGISTRY_PASTE_INI >>$GLANCE_REGISTRY_CONF
     fi
 
     GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
@@ -797,9 +794,6 @@ if is_service_enabled g-reg; then
         GLANCE_API_PASTE_INI=$GLANCE_DIR/etc/glance-api-paste.ini
         cp $FILES/glance-api-paste.ini $GLANCE_API_PASTE_INI
         glance_config $GLANCE_API_PASTE_INI
-        # During the transition for Glance to the split config files
-        # we cat them together to handle both pre- and post-merge
-        cat $GLANCE_API_PASTE_INI >>$GLANCE_API_CONF
     fi
 fi
 
