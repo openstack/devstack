@@ -582,6 +582,8 @@ fi
 if is_service_enabled q-svc; then
     # quantum
     git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
+fi
+if is_service_enabled q-svc horizon; then
     git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
 fi
 
@@ -619,6 +621,9 @@ if is_service_enabled horizon; then
 fi
 if is_service_enabled q-svc; then
     cd $QUANTUM_DIR; sudo python setup.py develop
+fi
+if is_service_enabled q-svc horizon; then
+    cd $QUANTUM_CLIENT_DIR; sudo python setup.py develop
 fi
 if is_service_enabled m-svc; then
     cd $MELANGE_DIR; sudo python setup.py develop
