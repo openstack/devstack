@@ -95,5 +95,11 @@ fi
 # Terminate instance
 euca-terminate-instances $INSTANCE
 
+# Assure it has terminated within a reasonable time
+if ! timeout $TERMINATE_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
+    echo "server didn't terminate within $TERMINATE_TIMEOUT seconds"
+    exit 1
+fi
+
 # Delete group
 euca-delete-group $SECGROUP
