@@ -1115,7 +1115,7 @@ rm -f $NOVA_CONF/nova.conf
 add_nova_flag "--verbose"
 add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
-add_nova_flag "--dhcpbridge_flagfile=$NOVA_DIR/bin/nova.conf"
+add_nova_flag "--dhcpbridge_flagfile=$NOVA_CONF/nova.conf"
 add_nova_flag "--fixed_range=$FIXED_RANGE"
 if is_service_enabled n-obj; then
     add_nova_flag "--s3_host=$SERVICE_HOST"
@@ -1426,10 +1426,10 @@ screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 if is_service_enabled n-novnc; then
-    screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --flagfile $NOVA_DIR/bin/nova.conf --web ."
+    screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --flagfile $NOVA_CONF/nova.conf --web ."
 fi
 if is_service_enabled n-xvnc; then
-    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --flagfile $NOVA_DIR/bin/nova.conf"
+    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --flagfile $NOVA_CONF/nova.conf"
 fi
 if is_service_enabled n-cauth; then
     screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
