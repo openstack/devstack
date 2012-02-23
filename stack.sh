@@ -817,6 +817,9 @@ if is_service_enabled n-api; then
     # one from the keystone project to launch nova.  This paste config adds
     # the configuration required for nova to validate keystone tokens.
 
+    # Remove legacy paste config
+    rm -f $NOVA_DIR/bin/nova-api-paste.ini
+
     # First we add a some extra data to the default paste config from nova
     cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF
 
@@ -1114,6 +1117,9 @@ fi
 function add_nova_flag {
     echo "$1" >> $NOVA_CONF/nova.conf
 }
+
+# remove legacy nova.conf
+rm -f $NOVA_DIR/bin/nova.conf
 
 # (re)create nova.conf
 rm -f $NOVA_CONF/nova.conf
