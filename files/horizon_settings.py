@@ -49,13 +49,6 @@ OPENSTACK_KEYSTONE_DEFAULT_ROLE = "Member"
 
 SWIFT_PAGINATE_LIMIT = 100
 
-# Configure quantum connection details for networking
-QUANTUM_ENABLED = False
-QUANTUM_URL = '%s'  % OPENSTACK_HOST
-QUANTUM_PORT = '9696'
-QUANTUM_TENANT = '1234'
-QUANTUM_CLIENT_VERSION='0.1'
-
 # If you have external monitoring links, eg:
 # EXTERNAL_MONITORING = [
 #     ['Nagios','http://foo.com'],

@@ -22,15 +22,3 @@ catalog.RegionOne.image.publicURL = http://%SERVICE_HOST%:9292/v1
 catalog.RegionOne.image.adminURL = http://%SERVICE_HOST%:9292/v1
 catalog.RegionOne.image.internalURL = http://%SERVICE_HOST%:9292/v1
 catalog.RegionOne.image.name = 'Image Service'
-
-
-catalog.RegionOne.object_store.publicURL = http://%SERVICE_HOST%:8080/v1/AUTH_$(tenant_id)s
-catalog.RegionOne.object_store.adminURL = http://%SERVICE_HOST%:8080/
-catalog.RegionOne.object_store.internalURL = http://%SERVICE_HOST%:8080/v1/AUTH_$(tenant_id)s
-catalog.RegionOne.object_store.name = 'Swift Service'
-
-
-catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:9696/
-catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:9696/
-catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:9696/
-catalog.RegionOne.network.name = 'Quantum Service'
