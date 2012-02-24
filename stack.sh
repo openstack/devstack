@@ -1249,10 +1249,31 @@ fi
 # so send the start command by forcing text into the window.
 # Only run the services specified in ``ENABLED_SERVICES``
 
-# our screen helper to launch a service in a hidden named screen
+# Our screenrc file builder
+function screen_rc {
+    SCREENRC=$TOP_DIR/stack-screenrc
+    if [[ ! -e $SCREENRC ]]; then
+        # Name the screen session
+        echo "sessionname stack" > $SCREENRC
+        # Set a reasonable statusbar
+        echo 'hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"' >> $SCREENRC
+        echo "screen -t stack bash" >> $SCREENRC
+    fi
+    # If this service doesn't already exist in the screenrc file
+    if ! grep $1 $SCREENRC 2>&1 > /dev/null; then
+        NL=`echo -ne '\015'`
+        echo "screen -t $1 bash" >> $SCREENRC
+        echo "stuff \"$2$NL\"" >> $SCREENRC
+    fi
+}
+
+# Our screen helper to launch a service in a hidden named screen
 function screen_it {
     NL=`echo -ne '\015'`
     if is_service_enabled $1; then
+        # Append the service to the screen rc file
+        screen_rc "$1" "$2"
+
         screen -S stack -X screen -t $1
         # sleep to allow bash to be ready to be send the command - we are
         # creating a new window in screen and then sends characters, so if
