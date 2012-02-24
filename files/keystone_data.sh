@@ -88,6 +88,14 @@ keystone service-create \
                                  --name=keystone \
                                  --type=identity \
                                  --description="Keystone Identity Service"
+
+if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
+    keystone service-create \
+                                 --name="nova-volume" \
+                                 --type=volume \
+                                 --description="Nova Volume Service"
+fi
+
 if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     keystone service-create \
                                  --name=swift \
