@@ -403,6 +403,12 @@ SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 # By default we define 9 for the partition count (which mean 512).
 SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 
+# This variable allows you to configure how many replicas you want to be
+# configured for your Swift cluster.  By default the three replicas would need a
+# bit of IO and Memory on a VM you may want to lower that to 1 if you want to do
+# only some quick testing.
+SWIFT_REPLICAS=${SWIFT_REPLICAS:-3}
+
 # We only ask for Swift Hash if we have enabled swift service.
 if is_service_enabled swift; then
     # SWIFT_HASH is a random unique string for a swift cluster that
@@ -968,21 +974,24 @@ if is_service_enabled swift; then
 
     # We then create link to that mounted location so swift would know
     # where to go.
-    for x in {1..4}; do sudo ln -sf ${SWIFT_DATA_LOCATION}/drives/sdb1/$x ${SWIFT_DATA_LOCATION}/$x; done
+    for x in $(seq ${SWIFT_REPLICAS}); do
+        sudo ln -sf ${SWIFT_DATA_LOCATION}/drives/sdb1/$x ${SWIFT_DATA_LOCATION}/$x; done
 
     # We now have to emulate a few different servers into one we
     # create all the directories needed for swift
-    tmpd=""
-    for d in ${SWIFT_DATA_LOCATION}/drives/sdb1/{1..4} \
-        ${SWIFT_CONFIG_LOCATION}/{object,container,account}-server \
-        ${SWIFT_DATA_LOCATION}/{1..4}/node/sdb1 /var/run/swift; do
-        [[ -d $d ]] && continue
-        sudo install -o ${USER} -g $USER_GROUP -d $d
+    for x in $(seq ${SWIFT_REPLICAS}); do
+            drive=${SWIFT_DATA_LOCATION}/drives/sdb1/${x}
+            node=${SWIFT_DATA_LOCATION}/${x}/node
+            node_device=${node}/sdb1
+            [[ -d $node ]] && continue
+            [[ -d $drive ]] && continue
+            sudo install -o ${USER} -g $USER_GROUP -d $drive
+            sudo install -o ${USER} -g $USER_GROUP -d $node_device
+            sudo chown -R $USER: ${node}
     done
 
-   # We do want to make sure this is all owned by our user.
-   sudo chown -R $USER: ${SWIFT_DATA_LOCATION}/{1..4}/node
-   sudo chown -R $USER: ${SWIFT_CONFIG_LOCATION}
+   sudo mkdir -p ${SWIFT_CONFIG_LOCATION}/{object,container,account}-server /var/run/swift
+   sudo chown -R $USER: ${SWIFT_CONFIG_LOCATION} /var/run/swift
 
    # swift-init has a bug using /etc/swift until bug #885595 is fixed
    # we have to create a link
@@ -1023,7 +1032,7 @@ if is_service_enabled swift; then
        local log_facility=$3
        local node_number
 
-       for node_number in {1..4}; do
+       for node_number in $(seq ${SWIFT_REPLICAS}); do
            node_path=${SWIFT_DATA_LOCATION}/${node_number}
            sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
                $FILES/swift/${server_type}-server.conf > ${SWIFT_CONFIG_LOCATION}/${server_type}-server/${node_number}.conf
@@ -1046,29 +1055,48 @@ if is_service_enabled swift; then
        tee /etc/rsyslog.d/10-swift.conf
    sudo restart rsyslog
 
-   # We create two helper scripts :
-   #
-   # - swift-remakerings
-   #   Allow to recreate rings from scratch.
-   # - swift-startmain
-   #   Restart your full cluster.
-   #
-   sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s/%SWIFT_PARTITION_POWER_SIZE%/$SWIFT_PARTITION_POWER_SIZE/" $FILES/swift/swift-remakerings | \
-       sudo tee /usr/local/bin/swift-remakerings
-   sudo install -m755 $FILES/swift/swift-startmain /usr/local/bin/
+   # This is where we create three different rings for swift with
+   # different object servers binding on different ports.
+   pushd ${SWIFT_CONFIG_LOCATION} >/dev/null && {
+
+       rm -f *.builder *.ring.gz backups/*.builder backups/*.ring.gz
+
+       port_number=6010
+       swift-ring-builder object.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+       for x in $(seq ${SWIFT_REPLICAS}); do
+           swift-ring-builder object.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
+           port_number=$[port_number + 10]
+       done
+       swift-ring-builder object.builder rebalance
+
+       port_number=6011
+       swift-ring-builder container.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+       for x in $(seq ${SWIFT_REPLICAS}); do
+           swift-ring-builder container.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
+           port_number=$[port_number + 10]
+       done
+       swift-ring-builder container.builder rebalance
+
+       port_number=6012
+       swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+       for x in $(seq ${SWIFT_REPLICAS}); do
+           swift-ring-builder account.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
+           port_number=$[port_number + 10]
+       done
+       swift-ring-builder account.builder rebalance
+
+   } && popd >/dev/null
+
    sudo chmod +x /usr/local/bin/swift-*
 
    # We then can start rsync.
    sudo /etc/init.d/rsync restart || :
 
-   # Create our ring for the object/container/account.
-   /usr/local/bin/swift-remakerings
+   # TODO: Bring some services in foreground.
+   # Launch all services.
+   swift-init all start
 
-   # And now we launch swift-startmain to get our cluster running
-   # ready to be tested.
-   /usr/local/bin/swift-startmain || :
-
-   unset s swift_hash swift_auth_server tmpd
+   unset s swift_hash swift_auth_server
 fi
 
 # Volume Service
