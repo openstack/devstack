@@ -1,7 +1,39 @@
 #!/usr/bin/env bash
+#
+# source openrc [username] [tenantname]
+#
+# Configure a set of credentials for $TENANT/$USERNAME:
+#   Set TENANT to override the default tenant 'demo'
+#   Set USERNAME to override the default user name 'demo'
+#   Set ADMIN_PASSWORD to set the password for 'admin' and 'demo'
+
+# NOTE: support for the old NOVA_* novaclient environment variables has
+# been removed.
+
+if [[ -n "$1" ]]; then
+    USERNAME=$1
+fi
+if [[ -n "$2" ]]; then
+    TENANT=$2
+fi
 
 # Load local configuration
 source ./stackrc
+
+# The introduction of Keystone to the OpenStack ecosystem has standardized the
+# term **tenant** as the entity that owns resources.  In some places references
+# still exist to the original Nova term **project** for this use.  Also,
+# **tenant_name** is prefered to **tenant_id**.
+export OS_TENANT_NAME=${TENANT:-demo}
+
+# In addition to the owning entity (tenant), nova stores the entity performing
+# the action as the **user**.
+export OS_USERNAME=${USERNAME:-demo}
+
+# With Keystone you pass the keystone password instead of an api key.
+# Recent versions of novaclient use OS_PASSWORD instead of NOVA_API_KEYs
+# or NOVA_PASSWORD.
+export OS_PASSWORD=${ADMIN_PASSWORD:-secrete}
 
 # Set api HOST_IP endpoint.  SERVICE_HOST may also be used to specify the endpoint,
 # which is convenient for some localrc configurations.
@@ -12,45 +44,20 @@ SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
 # should be listening on HOST_IP.  If its running elsewhere, it can be set here
 GLANCE_HOST=${GLANCE_HOST:-$HOST_IP}
 
-# novaclient now supports the new OS_* configuration variables in addition to
-# the older NOVA_* variables.  Set them both for now...
-
-# Nova original used project_id as the *account* that owned resources (servers,
-# ip address, ...)   With the addition of Keystone we have standardized on the
-# term **tenant** as the entity that owns the resources.  **novaclient** still
-# uses the old deprecated terms project_id.  Note that this field should now be
-# set to tenant_name, not tenant_id.
-export NOVA_PROJECT_ID=${TENANT:-demo}
-export OS_TENANT_NAME=${NOVA_PROJECT_ID}
-
-# In addition to the owning entity (tenant), nova stores the entity performing
-# the action as the **user**.
-export NOVA_USERNAME=${USERNAME:-demo}
-export OS_USERNAME=${NOVA_USERNAME}
-
-# With Keystone you pass the keystone password instead of an api key.
-# Recent versions of novaclient use NOVA_PASSWORD instead of NOVA_API_KEY
-# The most recent versions of novaclient use OS_PASSWORD in addition to NOVA_PASSWORD
-export NOVA_PASSWORD=${ADMIN_PASSWORD:-secrete}
-export OS_PASSWORD=${NOVA_PASSWORD}
-
-# With the addition of Keystone, to use an openstack cloud you should
-# authenticate against keystone, which returns a **Token** and **Service
-# Catalog**.  The catalog contains the endpoint for all services the user/tenant
-# has access to - including nova, glance, keystone, swift, ...  We currently
-# recommend using the 2.0 *auth api*.
+# Authenticating against an Openstack cloud using Keystone returns a **Token**
+# and **Service Catalog**.  The catalog contains the endpoints for all services
+# the user/tenant has access to - including nova, glance, keystone, swift, ...
+# We currently recommend using the 2.0 *identity api*.
 #
-# *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We
+# *NOTE*: Using the 2.0 *identity api* does not mean that compute api is 2.0.  We
 # will use the 1.1 *compute api*
-export NOVA_URL=${NOVA_URL:-http://$SERVICE_HOST:5000/v2.0}
-export OS_AUTH_URL=${NOVA_URL}
+export OS_AUTH_URL=http://$SERVICE_HOST:5000/v2.0
 
 # Currently novaclient needs you to specify the *compute api* version.  This
 # needs to match the config of your catalog returned by Keystone.
 export NOVA_VERSION=${NOVA_VERSION:-1.1}
-
-# FIXME - why does this need to be specified?
-export NOVA_REGION_NAME=${NOVA_REGION_NAME:-RegionOne}
+# In the future this will change names:
+export COMPUTE_API_VERSION=${COMPUTE_API_VERSION:-$NOVA_VERSION}
 
 # Set the ec2 url so euca2ools works
 export EC2_URL=${EC2_URL:-http://$SERVICE_HOST:8773/services/Cloud}
