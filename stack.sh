@@ -1328,9 +1328,9 @@ if is_service_enabled key; then
 
     # Add swift endpoints to service catalog if swift is enabled
     if is_service_enabled swift; then
-        echo "catalog.RegionOne.object_store.publicURL = http://%SERVICE_HOST%:8080/v1/AUTH_$(tenant_id)s" >> $KEYSTONE_CATALOG
+        echo "catalog.RegionOne.object_store.publicURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
         echo "catalog.RegionOne.object_store.adminURL = http://%SERVICE_HOST%:8080/" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.object_store.internalURL = http://%SERVICE_HOST%:8080/v1/AUTH_$(tenant_id)s" >> $KEYSTONE_CATALOG
+        echo "catalog.RegionOne.object_store.internalURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
         echo "catalog.RegionOne.object_store.name = 'Swift Service'" >> $KEYSTONE_CATALOG
     fi
 
