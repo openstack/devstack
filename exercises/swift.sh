@@ -23,18 +23,22 @@ popd
 # Testing Swift
 # =============
 
+# FIXME(chmou): when review https://review.openstack.org/#change,3712
+# is merged we would be able to use the common openstack options and
+# remove the trailing slash to v2.0 auth url.
+#
 # Check if we have to swift via keystone
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD stat
+swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD stat
 
 # We start by creating a test container
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD post testcontainer
+swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD post testcontainer
 
 # add some files into it.
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD upload testcontainer /etc/issue
+swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD upload testcontainer /etc/issue
 
 # list them
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD list testcontainer
+swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD list testcontainer
 
 # And we may want to delete them now that we have tested that
 # everything works.
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0 -U admin -K $ADMIN_PASSWORD delete testcontainer
+swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD delete testcontainer
