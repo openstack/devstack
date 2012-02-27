@@ -55,18 +55,33 @@ IMAGE=`glance -f index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
 # determinine instance type
 # -------------------------
 
+# Helper function to grab a numbered field from python novaclient cli result
+# Fields are numbered starting with 1
+# Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
+function get_field () {
+    while read data
+    do
+        if [ "$1" -lt 0 ]; then
+            field="(\$(NF$1))"
+        else
+            field="\$$(($1 + 1))"
+        fi
+        echo "$data" | awk -F'[ \t]*\\|[ \t]*' "{print $field}"
+    done
+}
+
 # List of instance types:
 nova flavor-list
 
-INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | cut -d"|" -f2`
+INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1`
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
+   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | get_field 1`
 fi
 
 NAME="myserver"
 
-VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
+VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | get_field 2`
 
 # Testing
 # =======
@@ -85,7 +100,7 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | g
 fi
 
 # get the IP of the server
-IP=`nova show $VM_UUID | grep "private network" | cut -d"|" -f3`
+IP=`nova show $VM_UUID | grep "private network" | get_field 2`
 
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
@@ -108,7 +123,7 @@ fi
 VOL_NAME="myvol-$(openssl rand -hex 4)"
 
 # Verify it doesn't exist
-if [[ -n "`nova volume-list | grep $VOL_NAME | head -1 | cut -d'|' -f3 | sed 's/ //g'`" ]]; then
+if [[ -n "`nova volume-list | grep $VOL_NAME | head -1 | get_field 2`" ]]; then
     echo "Volume $VOL_NAME already exists"
     exit 1
 fi
@@ -121,7 +136,7 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | 
 fi
 
 # Get volume ID
-VOL_ID=`nova volume-list | grep $VOL_NAME | head -1 | cut -d'|' -f2 | sed 's/ //g'`
+VOL_ID=`nova volume-list | grep $VOL_NAME | head -1 | get_field 1`
 
 # Attach to server
 DEVICE=/dev/vdb
@@ -131,7 +146,7 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | 
     exit 1
 fi
 
-VOL_ATTACH=`nova volume-list | grep $VOL_NAME | head -1 | cut -d'|' -f6 | sed 's/ //g'`
+VOL_ATTACH=`nova volume-list | grep $VOL_NAME | head -1 | get_field -1`
 if [[ "$VOL_ATTACH" != $VM_UUID ]]; then
     echo "Volume not attached to correct instance"
     exit 1
