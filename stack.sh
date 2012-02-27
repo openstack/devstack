@@ -162,7 +162,6 @@ NOVACLIENT_DIR=$DEST/python-novaclient
 KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 NOVNC_DIR=$DEST/noVNC
 SWIFT_DIR=$DEST/swift
-SWIFT_KEYSTONE_DIR=$DEST/swift-keystone2
 QUANTUM_DIR=$DEST/quantum
 QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
 MELANGE_DIR=$DEST/melange
@@ -570,8 +569,6 @@ fi
 if is_service_enabled swift; then
     # storage service
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
-    # swift + keystone middleware
-    git_clone $SWIFT_KEYSTONE_REPO $SWIFT_KEYSTONE_DIR $SWIFT_KEYSTONE_BRANCH
 fi
 if is_service_enabled g-api n-api; then
     # image catalog service
@@ -615,7 +612,6 @@ if is_service_enabled key g-api n-api swift; then
 fi
 if is_service_enabled swift; then
     cd $SWIFT_DIR; sudo python setup.py develop
-    cd $SWIFT_KEYSTONE_DIR; sudo python setup.py develop
 fi
 if is_service_enabled g-api n-api; then
     cd $GLANCE_DIR; sudo python setup.py develop
@@ -1007,19 +1003,24 @@ if is_service_enabled swift; then
    # which has some default username and password if you have
    # configured keystone it will checkout the directory.
    if is_service_enabled key; then
-       swift_auth_server=keystone
-
-       # We install the memcache server as this is will be used by the
-       # middleware to cache the tokens auths for a long this is needed.
-       apt_get install memcached
+       swift_auth_server="s3token tokenauth keystone"
    else
        swift_auth_server=tempauth
    fi
 
    # We do the install of the proxy-server and swift configuration
    # replacing a few directives to match our configuration.
-   sed "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s/%USER%/$USER/;s/%SERVICE_TOKEN%/${SERVICE_TOKEN}/;s/%AUTH_SERVER%/${swift_auth_server}/" \
-       $FILES/swift/proxy-server.conf|sudo tee  ${SWIFT_CONFIG_LOCATION}/proxy-server.conf
+   sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},g;
+        s,%USER%,$USER,g;
+        s,%SERVICE_TOKEN%,${SERVICE_TOKEN},g;
+        s,%KEYSTONE_SERVICE_PORT%,${KEYSTONE_SERVICE_PORT},g;
+        s,%KEYSTONE_SERVICE_HOST%,${KEYSTONE_SERVICE_HOST},g;
+        s,%KEYSTONE_AUTH_PORT%,${KEYSTONE_AUTH_PORT},g;
+        s,%KEYSTONE_AUTH_HOST%,${KEYSTONE_AUTH_HOST},g;
+        s,%KEYSTONE_AUTH_PROTOCOL%,${KEYSTONE_AUTH_PROTOCOL},g;
+        s/%AUTH_SERVER%/${swift_auth_server}/g;" \
+          $FILES/swift/proxy-server.conf | \
+       sudo tee  ${SWIFT_CONFIG_LOCATION}/proxy-server.conf
 
    sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > ${SWIFT_CONFIG_LOCATION}/swift.conf
 
