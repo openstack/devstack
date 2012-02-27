@@ -62,7 +62,7 @@ export EC2_ACCESS_KEY=${DEMO_ACCESS}
 export EC2_SECRET_KEY=${DEMO_SECRET}
 
 # Euca2ools Certificate stuff for uploading bundles
-# You can get your certs using ./tools/get_certs.sh
+# See exercises/bundle.sh to see how to get certs using nova cli
 NOVARC=$(readlink -f "${BASH_SOURCE:-${0}}" 2>/dev/null) ||
         NOVARC=$(python -c 'import os,sys; print os.path.abspath(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE:-${0}}")
 NOVA_KEY_DIR=${NOVARC%/*}
