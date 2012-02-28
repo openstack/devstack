@@ -17,6 +17,7 @@ if keystone help | grep -q user-role-add; then
 fi
 
 ADMIN_TENANT=`get_id keystone tenant-create --name=admin`
+SERVICE_TENANT=`get_id keystone tenant-create --name=$SERVICE_TENANT_NAME`
 DEMO_TENANT=`get_id keystone tenant-create --name=demo`
 INVIS_TENANT=`get_id keystone tenant-create --name=invisible_to_admin`
 
@@ -73,6 +74,14 @@ keystone service-create \
                                  --name=nova \
                                  --type=compute \
                                  --description="Nova Compute Service"
+NOVA_USER=`get_id keystone user-create \
+                                 --name=nova \
+                                 --pass="$SERVICE_PASSWORD" \
+                                 --tenant_id $SERVICE_TENANT \
+                                 --email=nova@example.com`
+keystone user-role-add --tenant_id $SERVICE_TENANT \
+                                 --user $NOVA_USER \
+                                 --role $ADMIN_ROLE
 
 keystone service-create \
                                  --name=ec2 \
@@ -83,6 +92,14 @@ keystone service-create \
                                  --name=glance \
                                  --type=image \
                                  --description="Glance Image Service"
+GLANCE_USER=`get_id keystone user-create \
+                                 --name=glance \
+                                 --pass="$SERVICE_PASSWORD" \
+                                 --tenant_id $SERVICE_TENANT \
+                                 --email=glance@example.com`
+keystone user-role-add --tenant_id $SERVICE_TENANT \
+                                 --user $GLANCE_USER \
+                                 --role $ADMIN_ROLE
 
 keystone service-create \
                                  --name=keystone \
@@ -101,12 +118,28 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
                                  --name=swift \
                                  --type="object-store" \
                                  --description="Swift Service"
+    SWIFT_USER=`get_id keystone user-create \
+                                 --name=swift \
+                                 --pass="$SERVICE_PASSWORD" \
+                                 --tenant_id $SERVICE_TENANT \
+                                 --email=swift@example.com`
+    keystone user-role-add --tenant_id $SERVICE_TENANT \
+                                 --user $SWIFT_USER \
+                                 --role $ADMIN_ROLE
 fi
 if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
     keystone service-create \
                                  --name=quantum \
                                  --type=network \
                                  --description="Quantum Service"
+    QUANTUM_USER=`get_id keystone user-create \
+                                 --name=quantum \
+                                 --pass="$SERVICE_PASSWORD" \
+                                 --tenant_id $SERVICE_TENANT \
+                                 --email=quantum@example.com`
+    keystone user-role-add --tenant_id $SERVICE_TENANT \
+                                 --user $QUANTUM_USER \
+                                 --role $ADMIN_ROLE
 fi
 
 # create ec2 creds and parse the secret and access key returned

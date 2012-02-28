@@ -421,10 +421,16 @@ fi
 # Service Token - Openstack components need to have an admin token
 # to validate user tokens.
 read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
+# Services authenticate to Identity with servicename/SERVICE_PASSWORD
+read_password SERVICE_PASSWORD "ENTER A SERVICE_PASSWORD TO USE FOR THE SERVICE AUTHENTICATION."
 # Horizon currently truncates usernames and passwords at 20 characters
 read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (20 CHARS OR LESS)."
 
+# Set the tenant for service accounts in Keystone
+SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}
+
 # Set Keystone interface configuration
+KEYSTONE_API_PORT=${KEYSTONE_API_PORT:-5000}
 KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
 KEYSTONE_AUTH_PORT=${KEYSTONE_AUTH_PORT:-35357}
 KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-http}
@@ -768,6 +774,7 @@ if is_service_enabled g-reg; then
 
     function glance_config {
         sudo sed -e "
+            s,%KEYSTONE_API_PORT%,$KEYSTONE_API_PORT,g;
             s,%KEYSTONE_AUTH_HOST%,$KEYSTONE_AUTH_HOST,g;
             s,%KEYSTONE_AUTH_PORT%,$KEYSTONE_AUTH_PORT,g;
             s,%KEYSTONE_AUTH_PROTOCOL%,$KEYSTONE_AUTH_PROTOCOL,g;
@@ -775,6 +782,9 @@ if is_service_enabled g-reg; then
             s,%KEYSTONE_SERVICE_PORT%,$KEYSTONE_SERVICE_PORT,g;
             s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
             s,%SQL_CONN%,$BASE_SQL_CONN/glance,g;
+            s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
+            s,%SERVICE_USERNAME%,glance,g;
+            s,%SERVICE_PASSWORD%,$SERVICE_PASSWORD,g;
             s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
             s,%DEST%,$DEST,g;
             s,%SYSLOG%,$SYSLOG,g;
@@ -825,7 +835,14 @@ if is_service_enabled n-api; then
     cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF
 
     # Then we add our own service token to the configuration
-    sed -e "s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g" -i $NOVA_CONF/api-paste.ini
+    sed -e "
+        /^admin_token/i admin_tenant_name = $SERVICE_TENANT_NAME
+        /admin_tenant_name/s/^.*$/admin_tenant_name = $SERVICE_TENANT_NAME/;
+        /admin_user/s/^.*$/admin_user = nova/;
+        /admin_password/s/^.*$/admin_password = $SERVICE_PASSWORD/;
+        s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
+        s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
+    " -i $NOVA_CONF/api-paste.ini
 
     # Finally, we change the pipelines in nova to use keystone
     function replace_pipeline() {
@@ -1011,16 +1028,21 @@ if is_service_enabled swift; then
 
    # We do the install of the proxy-server and swift configuration
    # replacing a few directives to match our configuration.
-   sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},g;
-        s,%USER%,$USER,g;
-        s,%SERVICE_TOKEN%,${SERVICE_TOKEN},g;
-        s,%KEYSTONE_SERVICE_PORT%,${KEYSTONE_SERVICE_PORT},g;
-        s,%KEYSTONE_SERVICE_HOST%,${KEYSTONE_SERVICE_HOST},g;
-        s,%KEYSTONE_AUTH_PORT%,${KEYSTONE_AUTH_PORT},g;
-        s,%KEYSTONE_AUTH_HOST%,${KEYSTONE_AUTH_HOST},g;
-        s,%KEYSTONE_AUTH_PROTOCOL%,${KEYSTONE_AUTH_PROTOCOL},g;
-        s/%AUTH_SERVER%/${swift_auth_server}/g;" \
-          $FILES/swift/proxy-server.conf | \
+   sed -e "
+       s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},g;
+       s,%USER%,$USER,g;
+       s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
+       s,%SERVICE_USERNAME%,swift,g;
+       s,%SERVICE_PASSWORD%,$SERVICE_PASSWORD,g;
+       s,%SERVICE_TOKEN%,${SERVICE_TOKEN},g;
+       s,%KEYSTONE_SERVICE_PORT%,${KEYSTONE_SERVICE_PORT},g;
+       s,%KEYSTONE_SERVICE_HOST%,${KEYSTONE_SERVICE_HOST},g;
+       s,%KEYSTONE_API_PORT%,${KEYSTONE_API_PORT},g;
+       s,%KEYSTONE_AUTH_HOST%,${KEYSTONE_AUTH_HOST},g;
+       s,%KEYSTONE_AUTH_PORT%,${KEYSTONE_AUTH_PORT},g;
+       s,%KEYSTONE_AUTH_PROTOCOL%,${KEYSTONE_AUTH_PROTOCOL},g;
+       s/%AUTH_SERVER%/${swift_auth_server}/g;
+    " $FILES/swift/proxy-server.conf | \
        sudo tee  ${SWIFT_CONFIG_LOCATION}/proxy-server.conf
 
    sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > ${SWIFT_CONFIG_LOCATION}/swift.conf
@@ -1389,7 +1411,7 @@ fi
 if is_service_enabled key; then
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
@@ -1401,7 +1423,8 @@ if is_service_enabled key; then
 
     # keystone_data.sh creates services, admin and demo users, and roles.
     SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
-    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES bash $FILES/keystone_data.sh
+    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES \
+        bash $FILES/keystone_data.sh
 fi
 
 
@@ -1630,7 +1653,7 @@ fi
 
 # If keystone is present, you can point nova cli to this server
 if is_service_enabled key; then
-    echo "keystone is serving at $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/"
+    echo "keystone is serving at $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/"
     echo "examples on using novaclient command line is in exercise.sh"
     echo "the default users are: admin and demo"
     echo "the password: $ADMIN_PASSWORD"
