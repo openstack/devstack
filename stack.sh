@@ -834,8 +834,10 @@ if is_service_enabled n-api; then
     }
     replace_pipeline "ec2cloud" "ec2faultwrap logrequest totoken authtoken keystonecontext cloudrequest authorizer validator ec2executor"
     replace_pipeline "ec2admin" "ec2faultwrap logrequest totoken authtoken keystonecontext adminrequest authorizer ec2executor"
-    replace_pipeline "openstack_compute_api_v2" "faultwrap authtoken keystonecontext ratelimit osapi_compute_app_v2"
-    replace_pipeline "openstack_volume_api_v1" "faultwrap authtoken keystonecontext ratelimit osapi_volume_app_v1"
+    # allow people to turn off rate limiting for testing, like when using tempest, by setting OSAPI_RATE_LIMIT=" "
+    OSAPI_RATE_LIMIT=${OSAPI_RATE_LIMIT:-"ratelimit"}
+    replace_pipeline "openstack_compute_api_v2" "faultwrap authtoken keystonecontext $OSAPI_RATE_LIMIT osapi_compute_app_v2"
+    replace_pipeline "openstack_volume_api_v1" "faultwrap authtoken keystonecontext $OSAPI_RATE_LIMIT osapi_volume_app_v1"
 fi
 
 # Helper to clean iptables rules
