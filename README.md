@@ -40,3 +40,13 @@ We also provide an environment file that you can use to interact with your cloud
 # Customizing
 
 You can override environment variables used in stack.sh by creating file name 'localrc'.  It is likely that you will need to do this to tweak your networking configuration should you need to access your cloud from a different host.
+
+# Swift
+
+Swift is not installed by default, you need to add the **swift** keyword in the ENABLED_SERVICES variable to get it installed.
+
+If you have keystone enabled, Swift will authenticate against it, make sure to use the keystone URL to auth against.
+
+At this time Swift is not started in a screen session but as daemon you need to use the **swift-init** CLI to manage the swift daemons.
+
+By default Swift will configure 3 replicas (and one spare) which could be IO intensive on a small vm, if you only want to do some quick testing of the API you can choose to only have one replica by customizing the variable SWIFT_REPLICAS in your localrc.
