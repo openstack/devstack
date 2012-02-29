@@ -1,12 +1,12 @@
 <VirtualHost *:80>
-    WSGIScriptAlias / %HORIZON_DIR%/openstack-dashboard/dashboard/wsgi/django.wsgi
+    WSGIScriptAlias / %HORIZON_DIR%/openstack_dashboard/wsgi/django.wsgi
     WSGIDaemonProcess horizon user=%USER% group=%GROUP% processes=3 threads=10
     SetEnv APACHE_RUN_USER %USER%
     SetEnv APACHE_RUN_GROUP %GROUP%
     WSGIProcessGroup horizon
 
     DocumentRoot %HORIZON_DIR%/.blackhole/
-    Alias /media %HORIZON_DIR%/openstack-dashboard/dashboard/static
+    Alias /media %HORIZON_DIR%/openstack_dashboard/static
     Alias /vpn /opt/stack/vpn
 
     <Directory />

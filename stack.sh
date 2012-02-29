@@ -618,8 +618,7 @@ if is_service_enabled g-api n-api; then
 fi
 cd $NOVA_DIR; sudo python setup.py develop
 if is_service_enabled horizon; then
-    cd $HORIZON_DIR/horizon; sudo python setup.py develop
-    cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
+    cd $HORIZON_DIR; sudo python setup.py develop
 fi
 if is_service_enabled q-svc; then
     cd $QUANTUM_DIR; sudo python setup.py develop
@@ -718,14 +717,14 @@ if is_service_enabled horizon; then
     apt_get install apache2 libapache2-mod-wsgi
 
     # Link to quantum client directory.
-    rm -fr ${HORIZON_DIR}/openstack-dashboard/quantum
-    ln -s ${QUANTUM_CLIENT_DIR}/quantum ${HORIZON_DIR}/openstack-dashboard/quantum
+    rm -fr ${HORIZON_DIR}/openstack_dashboard/quantum
+    ln -s ${QUANTUM_CLIENT_DIR}/quantum ${HORIZON_DIR}/openstack_dashboard/quantum
 
     # Remove stale session database.
-    rm -f $HORIZON_DIR/openstack-dashboard/local/dashboard_openstack.sqlite3
+    rm -f $HORIZON_DIR/openstack_dashboard/local/dashboard_openstack.sqlite3
 
     # ``local_settings.py`` is used to override horizon default settings.
-    local_settings=$HORIZON_DIR/openstack-dashboard/local/local_settings.py
+    local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $FILES/horizon_settings.py $local_settings
 
     # Enable quantum in dashboard, if requested
@@ -735,7 +734,7 @@ if is_service_enabled horizon; then
 
     # Initialize the horizon database (it stores sessions and notices shown to
     # users).  The user system is external (keystone).
-    cd $HORIZON_DIR/openstack-dashboard
+    cd $HORIZON_DIR
     python manage.py syncdb
 
     # create an empty directory that apache uses as docroot
