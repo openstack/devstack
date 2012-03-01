@@ -187,4 +187,5 @@ if [ ! -e $XVA ]; then
     UID=0 $SCRIPT_DIR/mkxva -o $XVA -t xva -x $OVA $STAGING_DIR $VDI_MB /tmp/
 fi
 
-echo "Built $XVA.  If your dom0 is on a different machine, copy this to [devstackdir]/tools/xen/$XVA"
+echo "Built $(basename $XVA).  If your dom0 is on a different machine, copy this to [devstackdir]/tools/xen/$(basename $XVA)"
+echo "Also copy your localrc to [devstackdir]"

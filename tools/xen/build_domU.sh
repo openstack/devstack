@@ -184,6 +184,10 @@ if [ -z $PUB_BR ]; then
 fi
 $TOP_DIR/scripts/install-os-vpx.sh -f $XVA -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -w -k "flat_network_bridge=${VM_BR}"
 
+if [ $PUB_IP == "dhcp" ]; then
+    PUB_IP=$(xe vm-list --minimal name-label=$GUEST_NAME params=networks |  sed -ne 's,^.*3/ip: \([0-9.]*\).*$,\1,p')
+fi
+
 # If we have copied our ssh credentials, use ssh to monitor while the installation runs
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" = "1" ]; then

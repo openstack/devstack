@@ -4,11 +4,18 @@ The purpose of the code in this directory it to help developers bootstrap
 a XenServer 5.6 + Openstack development environment.  This file gives
 some pointers on how to get started.
 
+Xenserver is a Type 1 hypervisor, so it needs to be installed on bare metal.
+The Openstack services are configured to run within a "privileged" virtual
+machine on the Xenserver host (called OS domU). The VM uses the XAPI toolstack
+to communicate with the host.
+
 Step 1: Install Xenserver
 ------------------------
-Install XenServer 5.6 on a clean box. You can get XenServer by signing
+Install XenServer 5.6+ on a clean box. You can get XenServer by signing
 up for an account on citrix.com, and then visiting:
 https://www.citrix.com/English/ss/downloads/details.asp?downloadId=2311504&productId=683148
+
+For details on installation, see: http://wiki.openstack.org/XenServer/Install
 
 Here are some sample Xenserver network settings for when you are just
 getting started (I use settings like this with a lappy + cheap wifi router):
@@ -18,16 +25,25 @@ getting started (I use settings like this with a lappy + cheap wifi router):
 * XenServer Gateway: 192.168.1.1
 * XenServer DNS: 192.168.1.1
 
+Note:
+------
+It is advisable (and necessary if you are using Xenserver 6.0, due to space
+limitations), to create the above mentioned OS domU, on a separate dev machine.
+To do this, you will need to run Steps 2 on the dev machine (if required) as
+well as the Xenserver host. Steps 3 and 4 should be run on the dev machine.
+This process requires you to be root on the dev machine.
+
 Step 2: Prepare DOM0
 -------------------
-At this point, your server is missing some critical software that you will
+At this point, your host is missing some critical software that you will
 need to run devstack (like git).  Do this to install required software:
 
-    wget --no-check-certificate https://github.com/cloudbuilders/devstack/raw/xen/tools/xen/prepare_dom0.sh
+    wget --no-check-certificate https://raw.github.com/openstack-dev/devstack/master/tools/xen/prepare_dom0.sh
     chmod 755 prepare_dom0.sh
     ./prepare_dom0.sh
 
-This script will also clone devstack in /root/devstack
+This step will also clone devstack in $DEVSTACKSRCROOT/devstack.
+$DEVSTACKSRCROOT=/root by default.
 
 Step 3: Configure your localrc
 -----------------------------
@@ -35,7 +51,7 @@ Devstack uses a localrc for user-specific configuration.  Note that
 the XENAPI_PASSWORD must be your dom0 root password.
 Of course, use real passwords if this machine is exposed.
 
-    cat > /root/devstack/localrc <<EOF
+    cat > $DEVSTACKSRCROOT/devstack/localrc <<EOF
     MYSQL_PASSWORD=my_super_secret
     SERVICE_TOKEN=my_super_secret
     ADMIN_PASSWORD=my_super_secret
@@ -52,16 +68,20 @@ Of course, use real passwords if this machine is exposed.
     MULTI_HOST=1
     # Give extra time for boot
     ACTIVE_TIMEOUT=45
+    # Interface on which you would like to access services
+    HOST_IP_IFACE=ethX
     EOF
 
 Step 4: Run ./build_xva.sh
 --------------------------
-This script prpares your nova xva image.  This script can be run on a separate machine
-and copied to dom0.  If you run this on a different machine, copy the resulting xva
-file to tools/xen/xvas/[GUEST_NAME].xva (by default tools/xen/xvas/ALLINONE.xva)
+This script prepares your nova xva image. If you run this on a different machine,
+copy the resulting xva file to tools/xen/xvas/[GUEST_NAME].xva
+(by default tools/xen/xvas/ALLINONE.xva) on the Xenserver host.
 
-It is likely that for XS6 you will need to build_xva.sh on a separate machine due
-to dom0 space constraints.
+cd $DEVSTACKSRCROOT/devstack/tools/xen
+./build_xva.sh
+
+You will also need to copy your localrc to the Xenserver host.
 
 Step 5: Run ./build_domU.sh
 --------------------------
@@ -71,6 +91,9 @@ But in a nutshell, it performs the following:
 * Configures bridges and vlans for public, private, and management nets
 * Creates and installs a OpenStack all-in-one domU in an HA-FlatDHCP configuration
 * A script to create a multi-domU (ie. head node separated from compute) configuration is coming soon!
+
+cd $DEVSTACKSRCROOT/devstack/tools/xen
+./build_domU.sh
 
 Step 6: Do cloudy stuff!
 --------------------------
