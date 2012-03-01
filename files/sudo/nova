@@ -41,6 +41,7 @@ Cmnd_Alias NOVADEVCMDS = /bin/chmod /var/lib/nova/tmp/*/root/.ssh, \
                       /usr/bin/socat,                           \
                       /sbin/parted,                             \
                       /usr/sbin/dnsmasq,                        \
+                      /usr/sbin/tgtadm,                         \
                       /usr/bin/ovs-vsctl,                       \
                       /usr/bin/ovs-ofctl,                       \
                       /usr/sbin/arping
