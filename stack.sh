@@ -1262,6 +1262,8 @@ done
 # ---------
 
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    # Get the VM bridge
+    FLAT_NETWORK_BRIDGE=$(grep -o 'flat_network_bridge=[^.]*' /proc/cmdline | cut -d= -f 2)
     read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
     add_nova_flag "--connection_type=xenapi"
     add_nova_flag "--xenapi_connection_url=http://169.254.0.1"
@@ -1269,8 +1271,8 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     add_nova_flag "--xenapi_connection_password=$XENAPI_PASSWORD"
     add_nova_flag "--noflat_injected"
     add_nova_flag "--flat_interface=eth1"
-    add_nova_flag "--flat_network_bridge=xapi1"
-    add_nova_flag "--public_interface=eth3"
+    add_nova_flag "--flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
+    add_nova_flag "--public_interface=${HOST_IP_IFACE}"
     # Need to avoid crash due to new firewall support
     XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
     add_nova_flag "--firewall_driver=$XEN_FIREWALL_DRIVER"
