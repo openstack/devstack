@@ -6,6 +6,7 @@ Devstack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
 * To describe working configurations of OpenStack (which code branches work together?  what do config files look like for those branches?)
 * To make it easier for developers to dive into OpenStack so that they can productively contribute without having to understand every part of the system at once
 * To make it easy to prototype cross-project features
+* To sanity-check OpenStack builds (used in gating commits to the primary repos)
 
 Read more at http://devstack.org (built from the gh-pages branch)
 
@@ -13,13 +14,19 @@ IMPORTANT: Be sure to carefully read stack.sh and any other scripts you execute 
 
 # Versions
 
-The devstack master branch generally points to trunk versions of OpenStack components.  For older, stable versions, look for branches named stable/[mil
-estone].  For example, you can do the following to create a diablo OpenStack cloud:
+The devstack master branch generally points to trunk versions of OpenStack components.  For older, stable versions, look for branches named stable/[release].  For example, you can do the following to create a diablo OpenStack cloud:
 
     git checkout stable/diablo
     ./stack.sh
 
-# To start a dev cloud (Installing in a dedicated, disposable vm is safer than installing on your dev machine!):
+Milestone builds are also available in this manner:
+
+    git checkout essex-3
+    ./stack.sh
+
+# Start A Dev Cloud
+
+Installing in a dedicated disposable vm is safer than installing on your dev machine!  To start a dev cloud:
 
     ./stack.sh
 
