@@ -290,14 +290,26 @@ function is_service_enabled() {
 # FIXME: more documentation about why these are important flags.  Also
 # we should make sure we use the same variable names as the flag names.
 
+if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    PUBLIC_INTERFACE_DEFAULT=eth3
+    # allow build_domU.sh to specify the flat network bridge via kernel args
+    FLAT_NETWORK_BRIDGE_DEFAULT=$(grep -o 'flat_network_bridge=[^.]*' /proc/cmdline | cut -d= -f 2)
+    GUEST_INTERFACE_DEFAULT=eth1
+else
+    PUBLIC_INTERFACE_DEFAULT=br100
+    FLAT_NETWORK_BRIDGE_DEFAULT=br100
+    GUEST_INTERFACE_DEFAULT=eth0
+fi
+
+PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-br100}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
-FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-br100}
-VLAN_INTERFACE=${VLAN_INTERFACE:-eth0}
+FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
+VLAN_INTERFACE=${VLAN_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 
 # Test floating pool and range are used for testing.  They are defined
 # here until the admin APIs can replace nova-manage
@@ -323,7 +335,7 @@ MULTI_HOST=${MULTI_HOST:-False}
 # devices other than that node, you can set the flat interface to the same
 # value as ``FLAT_NETWORK_BRIDGE``.  This will stop the network hiccup from
 # occurring.
-FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
+FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
 
@@ -1213,6 +1225,10 @@ add_nova_flag "--osapi_compute_extension=nova.api.openstack.compute.contrib.stan
 add_nova_flag "--my_ip=$HOST_IP"
 add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
 add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
+add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
+if [ -n "$FLAT_INTERFACE" ]; then
+    add_nova_flag "--flat_interface=$FLAT_INTERFACE"
+fi
 add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
 add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
 add_nova_flag "--instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
@@ -1262,17 +1278,12 @@ done
 # ---------
 
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-    # Get the VM bridge
-    FLAT_NETWORK_BRIDGE=$(grep -o 'flat_network_bridge=[^.]*' /proc/cmdline | cut -d= -f 2)
     read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
     add_nova_flag "--connection_type=xenapi"
     add_nova_flag "--xenapi_connection_url=http://169.254.0.1"
     add_nova_flag "--xenapi_connection_username=root"
     add_nova_flag "--xenapi_connection_password=$XENAPI_PASSWORD"
     add_nova_flag "--noflat_injected"
-    add_nova_flag "--flat_interface=eth1"
-    add_nova_flag "--flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
-    add_nova_flag "--public_interface=${HOST_IP_IFACE}"
     # Need to avoid crash due to new firewall support
     XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
     add_nova_flag "--firewall_driver=$XEN_FIREWALL_DRIVER"
@@ -1280,10 +1291,6 @@ else
     add_nova_flag "--connection_type=libvirt"
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
     add_nova_flag "--firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
-    add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
-    if [ -n "$FLAT_INTERFACE" ]; then
-        add_nova_flag "--flat_interface=$FLAT_INTERFACE"
-    fi
 fi
 
 # Nova Database
