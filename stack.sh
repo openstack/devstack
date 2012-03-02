@@ -829,11 +829,11 @@ fi
 # ----
 
 # Put config files in /etc/nova for everyone to find
-NOVA_CONF=/etc/nova
-if [[ ! -d $NOVA_CONF ]]; then
-    sudo mkdir -p $NOVA_CONF
+NOVA_CONF_DIR=/etc/nova
+if [[ ! -d $NOVA_CONF_DIR ]]; then
+    sudo mkdir -p $NOVA_CONF_DIR
 fi
-sudo chown `whoami` $NOVA_CONF
+sudo chown `whoami` $NOVA_CONF_DIR
 
 if is_service_enabled n-api; then
     # We are going to use a sample http middleware configuration based on the
@@ -844,7 +844,7 @@ if is_service_enabled n-api; then
     rm -f $NOVA_DIR/bin/nova-api-paste.ini
 
     # First we add a some extra data to the default paste config from nova
-    cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF
+    cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
 
     # Then we add our own service token to the configuration
     sed -e "
@@ -854,11 +854,11 @@ if is_service_enabled n-api; then
         /admin_password/s/^.*$/admin_password = $SERVICE_PASSWORD/;
         s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
         s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
-    " -i $NOVA_CONF/api-paste.ini
+    " -i $NOVA_CONF_DIR/api-paste.ini
 
     # Finally, we change the pipelines in nova to use keystone
     function replace_pipeline() {
-        sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_CONF/api-paste.ini
+        sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_CONF_DIR/api-paste.ini
     }
     replace_pipeline "ec2cloud" "ec2faultwrap logrequest totoken authtoken keystonecontext cloudrequest authorizer validator ec2executor"
     replace_pipeline "ec2admin" "ec2faultwrap logrequest totoken authtoken keystonecontext adminrequest authorizer ec2executor"
@@ -1178,68 +1178,69 @@ if is_service_enabled n-vol; then
     sudo start tgt
 fi
 
-function add_nova_flag {
-    echo "$1" >> $NOVA_CONF/nova.conf
+NOVA_CONF=nova.conf
+function add_nova_opt {
+    echo "$1" >> $NOVA_CONF_DIR/$NOVA_CONF
 }
 
 # remove legacy nova.conf
 rm -f $NOVA_DIR/bin/nova.conf
 
 # (re)create nova.conf
-rm -f $NOVA_CONF/nova.conf
-add_nova_flag "--verbose"
-add_nova_flag "--allow_admin_api"
-add_nova_flag "--allow_resize_to_same_host"
-add_nova_flag "--scheduler_driver=$SCHEDULER"
-add_nova_flag "--dhcpbridge_flagfile=$NOVA_CONF/nova.conf"
-add_nova_flag "--fixed_range=$FIXED_RANGE"
+rm -f $NOVA_CONF_DIR/$NOVA_CONF
+add_nova_opt "[DEFAULT]"
+add_nova_opt "verbose=True"
+add_nova_opt "allow_resize_to_same_host=True"
+add_nova_opt "scheduler_driver=$SCHEDULER"
+add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF_DIR/$NOVA_CONF"
+add_nova_opt "fixed_range=$FIXED_RANGE"
 if is_service_enabled n-obj; then
-    add_nova_flag "--s3_host=$SERVICE_HOST"
+    add_nova_opt "s3_host=$SERVICE_HOST"
 fi
 if is_service_enabled quantum; then
-    add_nova_flag "--network_manager=nova.network.quantum.manager.QuantumManager"
-    add_nova_flag "--quantum_connection_host=$Q_HOST"
-    add_nova_flag "--quantum_connection_port=$Q_PORT"
+    add_nova_opt "network_manager=nova.network.quantum.manager.QuantumManager"
+    add_nova_opt "quantum_connection_host=$Q_HOST"
+    add_nova_opt "quantum_connection_port=$Q_PORT"
 
     if is_service_enabled melange; then
-        add_nova_flag "--quantum_ipam_lib=nova.network.quantum.melange_ipam_lib"
-        add_nova_flag "--use_melange_mac_generation"
-        add_nova_flag "--melange_host=$M_HOST"
-        add_nova_flag "--melange_port=$M_PORT"
+        add_nova_opt "quantum_ipam_lib=nova.network.quantum.melange_ipam_lib"
+        add_nova_opt "use_melange_mac_generation=True"
+        add_nova_opt "melange_host=$M_HOST"
+        add_nova_opt "melange_port=$M_PORT"
     fi
     if is_service_enabled q-svc && [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        add_nova_flag "--libvirt_vif_type=ethernet"
-        add_nova_flag "--libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
-        add_nova_flag "--linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver"
-        add_nova_flag "--quantum_use_dhcp"
+        add_nova_opt "libvirt_vif_type=ethernet"
+        add_nova_opt "libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
+        add_nova_opt "linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver"
+        add_nova_opt "quantum_use_dhcp=True"
     fi
 else
-    add_nova_flag "--network_manager=nova.network.manager.$NET_MAN"
+    add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
 fi
 if is_service_enabled n-vol; then
-    add_nova_flag "--volume_group=$VOLUME_GROUP"
-    add_nova_flag "--volume_name_template=${VOLUME_NAME_PREFIX}%08x"
+    add_nova_opt "volume_group=$VOLUME_GROUP"
+    add_nova_opt "volume_name_template=${VOLUME_NAME_PREFIX}%08x"
     # oneiric no longer supports ietadm
-    add_nova_flag "--iscsi_helper=tgtadm"
+    add_nova_opt "iscsi_helper=tgtadm"
 fi
-add_nova_flag "--osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
-add_nova_flag "--my_ip=$HOST_IP"
-add_nova_flag "--public_interface=$PUBLIC_INTERFACE"
-add_nova_flag "--vlan_interface=$VLAN_INTERFACE"
-add_nova_flag "--flat_network_bridge=$FLAT_NETWORK_BRIDGE"
+add_nova_opt "osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
+add_nova_opt "my_ip=$HOST_IP"
+add_nova_opt "public_interface=$PUBLIC_INTERFACE"
+add_nova_opt "vlan_interface=$VLAN_INTERFACE"
+add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
 if [ -n "$FLAT_INTERFACE" ]; then
-    add_nova_flag "--flat_interface=$FLAT_INTERFACE"
+    add_nova_opt "flat_interface=$FLAT_INTERFACE"
 fi
-add_nova_flag "--sql_connection=$BASE_SQL_CONN/nova"
-add_nova_flag "--libvirt_type=$LIBVIRT_TYPE"
-add_nova_flag "--instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
+add_nova_opt "sql_connection=$BASE_SQL_CONN/nova"
+add_nova_opt "libvirt_type=$LIBVIRT_TYPE"
+add_nova_opt "instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
 # All nova-compute workers need to know the vnc configuration options
 # These settings don't hurt anything if n-xvnc and n-novnc are disabled
 if is_service_enabled n-cpu; then
     NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
-    add_nova_flag "--novncproxy_base_url=$NOVNCPROXY_URL"
+    add_nova_opt "novncproxy_base_url=$NOVNCPROXY_URL"
     XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
-    add_nova_flag "--xvpvncproxy_base_url=$XVPVNCPROXY_URL"
+    add_nova_opt "xvpvncproxy_base_url=$XVPVNCPROXY_URL"
 fi
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
@@ -1249,30 +1250,36 @@ fi
 # Address on which instance vncservers will listen on compute hosts.
 # For multi-host, this should be the management ip of the compute host.
 VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
-add_nova_flag "--vncserver_listen=$VNCSERVER_LISTEN"
-add_nova_flag "--vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
-add_nova_flag "--api_paste_config=$NOVA_CONF/api-paste.ini"
-add_nova_flag "--image_service=nova.image.glance.GlanceImageService"
-add_nova_flag "--ec2_dmz_host=$EC2_DMZ_HOST"
-add_nova_flag "--rabbit_host=$RABBIT_HOST"
-add_nova_flag "--rabbit_password=$RABBIT_PASSWORD"
-add_nova_flag "--glance_api_servers=$GLANCE_HOSTPORT"
-add_nova_flag "--force_dhcp_release"
+add_nova_opt "vncserver_listen=$VNCSERVER_LISTEN"
+add_nova_opt "vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
+add_nova_opt "api_paste_config=$NOVA_CONF_DIR/api-paste.ini"
+add_nova_opt "image_service=nova.image.glance.GlanceImageService"
+add_nova_opt "ec2_dmz_host=$EC2_DMZ_HOST"
+add_nova_opt "rabbit_host=$RABBIT_HOST"
+add_nova_opt "rabbit_password=$RABBIT_PASSWORD"
+add_nova_opt "glance_api_servers=$GLANCE_HOSTPORT"
+add_nova_opt "force_dhcp_release=True"
 if [ -n "$INSTANCES_PATH" ]; then
-    add_nova_flag "--instances_path=$INSTANCES_PATH"
+    add_nova_opt "instances_path=$INSTANCES_PATH"
 fi
 if [ "$MULTI_HOST" != "False" ]; then
-    add_nova_flag "--multi_host"
-    add_nova_flag "--send_arp_for_ha"
+    add_nova_opt "multi_host=True"
+    add_nova_opt "send_arp_for_ha=True"
 fi
 if [ "$SYSLOG" != "False" ]; then
-    add_nova_flag "--use_syslog"
+    add_nova_opt "use_syslog=True"
 fi
 
-# You can define extra nova conf flags by defining the array EXTRA_FLAGS,
-# For Example: EXTRA_FLAGS=(--foo --bar=2)
-for I in "${EXTRA_FLAGS[@]}"; do
-    add_nova_flag $I
+# Provide some transition from EXTRA_FLAGS to EXTRA_OPTS
+if [[ -z "$EXTRA_OPTS" && -n "$EXTRA_FLAGS" ]]; then
+	EXTRA_OPTS=$EXTRA_FLAGS
+fi
+
+# You can define extra nova conf flags by defining the array EXTRA_OPTS,
+# For Example: EXTRA_OPTS=(foo=true bar=2)
+for I in "${EXTRA_OPTS[@]}"; do
+    # Attempt to convert flags to options
+    add_nova_opt ${I//-}
 done
 
 # XenServer
@@ -1280,19 +1287,19 @@ done
 
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
-    add_nova_flag "--connection_type=xenapi"
+    add_nova_opt "connection_type=xenapi"
     XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
-    add_nova_flag "--xenapi_connection_url=$XENAPI_CONNECTION_URL"
-    add_nova_flag "--xenapi_connection_username=root"
-    add_nova_flag "--xenapi_connection_password=$XENAPI_PASSWORD"
-    add_nova_flag "--noflat_injected"
+    add_nova_opt "xenapi_connection_url=$XENAPI_CONNECTION_URL"
+    add_nova_opt "xenapi_connection_username=root"
+    add_nova_opt "xenapi_connection_password=$XENAPI_PASSWORD"
+    add_nova_opt "flat_injected=False"
     # Need to avoid crash due to new firewall support
     XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
-    add_nova_flag "--firewall_driver=$XEN_FIREWALL_DRIVER"
+    add_nova_opt "firewall_driver=$XEN_FIREWALL_DRIVER"
 else
-    add_nova_flag "--connection_type=libvirt"
+    add_nova_opt "connection_type=libvirt"
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
-    add_nova_flag "--firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
+    add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
 fi
 
 # Nova Database
@@ -1539,10 +1546,10 @@ screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 if is_service_enabled n-novnc; then
-    screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --flagfile $NOVA_CONF/nova.conf --web ."
+    screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
 fi
 if is_service_enabled n-xvnc; then
-    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --flagfile $NOVA_CONF/nova.conf"
+    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
 fi
 if is_service_enabled n-cauth; then
     screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
@@ -1672,6 +1679,11 @@ fi
 
 # Echo HOST_IP - useful for build_uec.sh, which uses dhcp to give the instance an address
 echo "This is your host ip: $HOST_IP"
+
+# Warn that EXTRA_FLAGS needs to be converted to EXTRA_OPTS
+if [[ -n "$EXTRA_FLAGS" ]]; then
+    echo "WARNING: EXTRA_FLAGS is defined and may need to be converted to EXTRA_OPTS"
+fi
 
 # Indicate how long this took to run (bash maintained variable 'SECONDS')
 echo "stack.sh completed in $SECONDS seconds."
