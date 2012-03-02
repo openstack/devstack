@@ -22,6 +22,48 @@ function cp_it {
 }
 
 
+# Checks the exit code of the last command and prints "message"
+# if it is non-zero and exits
+# die_if_error "message"
+function die_if_error() {
+    local exitcode=$?
+    if [ $exitcode != 0 ]; then
+        echo $@
+        exit $exitcode
+    fi
+}
+
+
+# Checks an environment variable is not set or has length 0 OR if the
+# exit code is non-zero and prints "message" and exits
+# NOTE: env-var is the variable name without a '$'
+# die_if_not_set env-var "message"
+function die_if_not_set() {
+    local exitcode=$?
+    local evar=$1; shift
+    if ! is_set $evar || [ $exitcode != 0 ]; then
+        echo $@
+        exit 99
+    fi
+}
+
+
+# Grab a numbered field from python prettytable output
+# Fields are numbered starting with 1
+# Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
+# get_field field-number
+function get_field() {
+    while read data; do
+        if [ "$1" -lt 0 ]; then
+            field="(\$(NF$1))"
+        else
+            field="\$$(($1 + 1))"
+        fi
+        echo "$data" | awk -F'[ \t]*\\|[ \t]*' "{print $field}"
+    done
+}
+
+
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
@@ -64,6 +106,18 @@ function git_clone {
             git checkout -b $GIT_BRANCH
         fi
     fi
+}
+
+
+
+# Test if the named environment variable is set and not zero length
+# is_set env-var
+function is_set() {
+    local var=\$"$1"
+    if eval "[ -z $var ]"; then
+        return 1
+    fi
+    return 0
 }
 
 

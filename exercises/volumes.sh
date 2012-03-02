@@ -2,6 +2,10 @@
 
 # Test nova volumes with the nova command from python-novaclient
 
+echo "**************************************************"
+echo "Begin DevStack Exercise: $0"
+echo "**************************************************"
+
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
 set -o errexit
@@ -15,9 +19,14 @@ set -o xtrace
 # ========
 
 # Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd)
+pushd $(cd $(dirname "$0")/.. && pwd) >/dev/null
+
+# Import common functions
+source ./functions
+
+# Import configuration
 source ./openrc
-popd
+popd >/dev/null
 
 # Max time to wait while vm goes from build to active state
 ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
@@ -55,21 +64,6 @@ IMAGE=`glance -f index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
 # determinine instance type
 # -------------------------
 
-# Helper function to grab a numbered field from python novaclient cli result
-# Fields are numbered starting with 1
-# Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
-function get_field () {
-    while read data
-    do
-        if [ "$1" -lt 0 ]; then
-            field="(\$(NF$1))"
-        else
-            field="\$$(($1 + 1))"
-        fi
-        echo "$data" | awk -F'[ \t]*\\|[ \t]*' "{print $field}"
-    done
-}
-
 # List of instance types:
 nova flavor-list
 
@@ -79,9 +73,11 @@ if [[ -z "$INSTANCE_TYPE" ]]; then
    INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | get_field 1`
 fi
 
-NAME="myserver"
+NAME="ex-vol"
 
 VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | get_field 2`
+die_if_not_set VM_UUID "Failure launching $NAME"
+
 
 # Testing
 # =======
@@ -101,6 +97,7 @@ fi
 
 # get the IP of the server
 IP=`nova show $VM_UUID | grep "private network" | get_field 2`
+die_if_not_set IP "Failure retrieving IP address"
 
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
@@ -130,6 +127,10 @@ fi
 
 # Create a new volume
 nova volume-create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" 1
+if [[ $? != 0 ]]; then
+    echo "Failure creating volume $VOL_NAME"
+    exit 1
+fi
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
     exit 1
@@ -137,16 +138,19 @@ fi
 
 # Get volume ID
 VOL_ID=`nova volume-list | grep $VOL_NAME | head -1 | get_field 1`
+die_if_not_set VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 
 # Attach to server
 DEVICE=/dev/vdb
 nova volume-attach $VM_UUID $VOL_ID $DEVICE
+die_if_error "Failure attaching volume $VOL_NAME to $NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
     echo "Volume $VOL_NAME not attached to $NAME"
     exit 1
 fi
 
 VOL_ATTACH=`nova volume-list | grep $VOL_NAME | head -1 | get_field -1`
+die_if_not_set VOL_ATTACH "Failure retrieving $VOL_NAME status"
 if [[ "$VOL_ATTACH" != $VM_UUID ]]; then
     echo "Volume not attached to correct instance"
     exit 1
@@ -154,6 +158,7 @@ fi
 
 # Detach volume
 nova volume-detach $VM_UUID $VOL_ID
+die_if_error "Failure detaching volume $VOL_NAME from $NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not detached from $NAME"
     exit 1
@@ -161,6 +166,7 @@ fi
 
 # Delete volume
 nova volume-delete $VOL_ID
+die_if_error "Failure deleting volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
     exit 1
@@ -168,3 +174,9 @@ fi
 
 # shutdown the server
 nova delete $NAME
+die_if_error "Failure deleting instance $NAME"
+
+set +o xtrace
+echo "**************************************************"
+echo "End DevStack Exercise: $0"
+echo "**************************************************"

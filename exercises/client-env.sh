@@ -2,6 +2,10 @@
 
 # Test OpenStack client enviroment variable handling
 
+echo "**************************************************"
+echo "Begin DevStack Exercise: $0"
+echo "**************************************************"
+
 # Verify client workage
 VERIFY=${1:-""}
 
@@ -10,6 +14,11 @@ VERIFY=${1:-""}
 
 # Use openrc + stackrc + localrc for settings
 pushd $(cd $(dirname "$0")/.. && pwd) >/dev/null
+
+# Import common functions
+source ./functions
+
+# Import configuration
 source ./openrc
 popd >/dev/null
 
@@ -23,19 +32,10 @@ unset NOVA_URL
 unset NOVA_USERNAME
 unset NOVA_VERSION
 
-# Make sure we have the vars we are expecting
-function is_set() {
-    local var=\$"$1"
-    eval echo $1=$var
-    if eval "[ -z $var ]"; then
-        return 1
-    fi
-    return 0
-}
-
 for i in OS_TENANT_NAME OS_USERNAME OS_PASSWORD OS_AUTH_URL; do
     is_set $i
     if [[ $? -ne 0 ]]; then
+        echo "$i expected to be set"
         ABORT=1
     fi
 done
@@ -52,14 +52,6 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "key" ]] ; then
         STATUS_KEYSTONE="Skipped"
     else
-        # We need to run the keystone test as admin since there doesn't
-        # seem to be anything to test the cli vars that runs as a user
-        # tenant-list should do that, it isn't implemented (yet)
-        xOS_TENANT_NAME=$OS_TENANT_NAME
-        xOS_USERNAME=$OS_USERNAME
-        export OS_USERNAME=admin
-        export OS_TENANT_NAME=admin
-
         echo -e "\nTest Keystone"
         if keystone service-list; then
             STATUS_KEYSTONE="Succeeded"
@@ -67,9 +59,6 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
             STATUS_KEYSTONE="Failed"
             RETURN=1
         fi
-
-        OS_TENANT_NAME=$xOS_TENANT_NAME
-        OS_USERNAME=$xOS_USERNAME
     fi
 fi
 
@@ -138,5 +127,9 @@ report "Keystone" $STATUS_KEYSTONE
 report "Nova" $STATUS_NOVA
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT
+
+echo "**************************************************"
+echo "End DevStack Exercise: $0"
+echo "**************************************************"
 
 exit $RETURN

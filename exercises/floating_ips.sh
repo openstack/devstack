@@ -7,6 +7,10 @@
 #
 
 
+echo "**************************************************"
+echo "Begin DevStack Exercise: $0"
+echo "**************************************************"
+
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
 set -o errexit
@@ -20,9 +24,14 @@ set -o xtrace
 # ========
 
 # Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd)
+pushd $(cd $(dirname "$0")/.. && pwd) >/dev/null
+
+# Import common functions
+source ./functions
+
+# Import configuration
 source ./openrc
-popd
+popd >/dev/null
 
 # Max time to wait while vm goes from build to active state
 ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
@@ -87,15 +96,16 @@ fi
 # List of instance types:
 nova flavor-list
 
-INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | cut -d"|" -f2`
+INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1`
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
+   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | get_field 1`
 fi
 
-NAME="myserver"
+NAME="ex-float"
 
-VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
+VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | get_field 2`
+die_if_not_set VM_UUID "Failure launching $NAME"
 
 # Testing
 # =======
@@ -114,7 +124,8 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | g
 fi
 
 # get the IP of the server
-IP=`nova show $VM_UUID | grep "private network" | cut -d"|" -f3`
+IP=`nova show $VM_UUID | grep "private network" | get_field 2`
+die_if_not_set IP "Failure retrieving IP address"
 
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
@@ -147,7 +158,8 @@ fi
 nova secgroup-list-rules $SECGROUP
 
 # allocate a floating ip from default pool
-FLOATING_IP=`nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | cut -d '|' -f2`
+FLOATING_IP=`nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | get_field 1`
+die_if_not_set FLOATING_IP "Failure creating floating IP"
 
 # list floating addresses
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $FLOATING_IP; do sleep 1; done"; then
@@ -157,6 +169,7 @@ fi
 
 # add floating ip to our server
 nova add-floating-ip $VM_UUID $FLOATING_IP
+die_if_error "Failure adding floating IP $FLOATING_IP to $NAME"
 
 # test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
@@ -165,7 +178,8 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sle
 fi
 
 # Allocate an IP from second floating pool
-TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | cut -d '|' -f2`
+TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1`
+die_if_not_set TEST_FLOATING_IP "Failure creating floating IP in $TEST_FLOATING_POOL"
 
 # list floating addresses
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TEST_FLOATING_POOL | grep -q $TEST_FLOATING_IP; do sleep 1; done"; then
@@ -175,6 +189,7 @@ fi
 
 # dis-allow icmp traffic (ping)
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
+die_if_error "Failure deleting security group rule from $SECGROUP"
 
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "xenserver" ]; then
@@ -188,12 +203,15 @@ fi
 
 # de-allocate the floating ip
 nova floating-ip-delete $FLOATING_IP
+die_if_error "Failure deleting floating IP $FLOATING_IP"
 
 # Delete second floating IP
 nova floating-ip-delete $TEST_FLOATING_IP
+die_if_error "Failure deleting floating IP $TEST_FLOATING_IP"
 
 # shutdown the server
 nova delete $VM_UUID
+die_if_error "Failure deleting instance $NAME"
 
 # make sure the VM shuts down within a reasonable time
 if ! timeout $TERMINATE_TIMEOUT sh -c "while nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
@@ -203,3 +221,9 @@ fi
 
 # Delete a secgroup
 nova secgroup-delete $SECGROUP
+die_if_error "Failure deleting security group $SECGROUP"
+
+set +o xtrace
+echo "**************************************************"
+echo "End DevStack Exercise: $0"
+echo "**************************************************"
