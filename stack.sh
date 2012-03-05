@@ -1189,6 +1189,7 @@ rm -f $NOVA_DIR/bin/nova.conf
 rm -f $NOVA_CONF/nova.conf
 add_nova_flag "--verbose"
 add_nova_flag "--allow_admin_api"
+add_nova_flag "--allow_resize_to_same_host"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_CONF/nova.conf"
 add_nova_flag "--fixed_range=$FIXED_RANGE"
