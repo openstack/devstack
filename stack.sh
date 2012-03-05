@@ -465,23 +465,44 @@ APACHE_GROUP=${APACHE_GROUP:-$APACHE_USER}
 # Set LOGFILE to turn on logging
 # We append '.xxxxxxxx' to the given name to maintain history
 # where xxxxxxxx is a representation of the date the file was created
+if [[ -n "$LOGFILE" || -n "$SCREEN_LOGDIR" ]]; then
+    LOGDAYS=${LOGDAYS:-7}
+    TIMESTAMP_FORMAT=${TIMESTAMP_FORMAT:-"%F-%H%M%S"}
+    CURRENT_LOG_TIME=$(date "+$TIMESTAMP_FORMAT")
+fi
+
 if [[ -n "$LOGFILE" ]]; then
     # First clean up old log files.  Use the user-specified LOGFILE
     # as the template to search for, appending '.*' to match the date
     # we added on earlier runs.
-    LOGDAYS=${LOGDAYS:-7}
     LOGDIR=$(dirname "$LOGFILE")
     LOGNAME=$(basename "$LOGFILE")
     mkdir -p $LOGDIR
     find $LOGDIR -maxdepth 1 -name $LOGNAME.\* -mtime +$LOGDAYS -exec rm {} \;
 
-    TIMESTAMP_FORMAT=${TIMESTAMP_FORMAT:-"%F-%H%M%S"}
-    LOGFILE=$LOGFILE.$(date "+$TIMESTAMP_FORMAT")
+    LOGFILE=$LOGFILE.${CURRENT_LOG_TIME}
     # Redirect stdout/stderr to tee to write the log file
     exec 1> >( tee "${LOGFILE}" ) 2>&1
     echo "stack.sh log $LOGFILE"
     # Specified logfile name always links to the most recent log
     ln -sf $LOGFILE $LOGDIR/$LOGNAME
+fi
+
+# Set up logging of screen windows
+# Set SCREEN_LOGDIR to turn on logging of screen windows to the
+# directory specified in SCREEN_LOGDIR, we will log to the the file
+# screen-$SERVICE_NAME-$TIMESTAMP.log in that dir and have a link
+# screen-$SERVICE_NAME.log to the latest log file.
+# Logs are kept for as long specified in LOGDAYS.
+if [[ -n "$SCREEN_LOGDIR" ]]; then
+
+    # We make sure the directory is created.
+    if [[ -d "$SCREEN_LOGDIR" ]]; then
+        # We cleanup the old logs
+        find $SCREEN_LOGDIR -maxdepth 1 -name screen-\*.log -mtime +$LOGDAYS -exec rm {} \;
+    else
+        mkdir -p $SCREEN_LOGDIR
+    fi
 fi
 
 # So that errors don't compound we exit on any errors so you see only the
@@ -1357,6 +1378,12 @@ function screen_it {
         # creating a new window in screen and then sends characters, so if
         # bash isn't running by the time we send the command, nothing happens
         sleep 1.5
+
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            screen -S stack -p $1 -X logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log
+            screen -S stack -p $1 -X log on
+            ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
+        fi
         screen -S stack -p $1 -X stuff "$2$NL"
     fi
 }
