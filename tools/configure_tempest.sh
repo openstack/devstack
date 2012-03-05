@@ -133,7 +133,7 @@ fi
 
 sed -e "
     /^api_key=/s|=.*\$|=$ADMIN_PASSWORD|;
-    /^auth_url=/s|=.*\$|=${OS_AUTH_URL%/}/tokens/|;
+    /^auth_url=/s|=.*\$|=${OS_AUTH_URL%/}/|;
     /^host=/s|=.*\$|=$HOST_IP|;
     /^image_ref=/s|=.*\$|=$IMAGE_UUID|;
     /^password=/s|=.*\$|=$ADMIN_PASSWORD|;
