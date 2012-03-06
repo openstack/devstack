@@ -195,9 +195,9 @@ INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
 VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 
-# nova supports pluggable schedulers.  ``SimpleScheduler`` should work in most
-# cases unless you are working on multi-zone mode.
-SCHEDULER=${SCHEDULER:-nova.scheduler.simple.SimpleScheduler}
+# Nova supports pluggable schedulers.  ``FilterScheduler`` should work in most
+# cases.
+SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
 
 HOST_IP_IFACE=${HOST_IP_IFACE:-eth0}
 # Use the eth0 IP unless an explicit is set by ``HOST_IP`` environment variable
@@ -1192,7 +1192,7 @@ add_nova_opt "[DEFAULT]"
 add_nova_opt "verbose=True"
 add_nova_opt "auth_strategy=keystone"
 add_nova_opt "allow_resize_to_same_host=True"
-add_nova_opt "scheduler_driver=$SCHEDULER"
+add_nova_opt "compute_scheduler_driver=$SCHEDULER"
 add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF_DIR/$NOVA_CONF"
 add_nova_opt "fixed_range=$FIXED_RANGE"
 if is_service_enabled n-obj; then
