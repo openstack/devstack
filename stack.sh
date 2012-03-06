@@ -588,7 +588,7 @@ if is_service_enabled swift; then
     # storage service
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
 fi
-if is_service_enabled g-api n-api; then
+if is_service_enabled g-api n-api n-vol; then
     # image catalog service
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
 fi
