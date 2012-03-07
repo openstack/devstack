@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-# **stack.sh** is an opinionated openstack developer installation.
+# **stack.sh** is an opinionated OpenStack developer installation.
 
-# This script installs and configures *nova*, *glance*, *horizon* and *keystone*
+# This script installs and configures various combinations of *Glance*,
+# *Horizon*, *Keystone*, *Melange*, *Nova*, *Quantum* and *Swift*
 
 # This script allows you to specify configuration options of what git
 # repositories to use, enabled services, network configuration and various
@@ -16,6 +17,7 @@
 # in this repo.  So start by grabbing this script and the dependencies.
 
 # Learn more and get the most recent version at http://devstack.org
+
 
 # Sanity Check
 # ============
@@ -49,19 +51,18 @@ if [ ! -d $FILES ]; then
 fi
 
 
-
 # Settings
 # ========
 
-# This script is customizable through setting environment variables.  If you
-# want to override a setting you can either::
+# ``stack.sh`` is customizable through setting environment variables.  If you
+# want to override a setting you can set and export it::
 #
 #     export MYSQL_PASSWORD=anothersecret
 #     ./stack.sh
 #
 # You can also pass options on a single line ``MYSQL_PASSWORD=simple ./stack.sh``
 #
-# Additionally, you can put any local variables into a ``localrc`` file, like::
+# Additionally, you can put any local variables into a ``localrc`` file::
 #
 #     MYSQL_PASSWORD=anothersecret
 #     MYSQL_USER=hellaroot
@@ -69,22 +70,17 @@ fi
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
 # in most cases.
 #
+# DevStack distributes ``stackrc`` which contains locations for the OpenStack
+# repositories and branches to configure.  ``stackrc`` sources ``localrc`` to
+# allow you to override those settings and not have your changes overwritten
+# when updating DevStack.
+
 # We support HTTP and HTTPS proxy servers via the usual environment variables
-# http_proxy and https_proxy.  They can be set in localrc if necessary or
+# **http_proxy** and **https_proxy**.  They can be set in ``localrc`` if necessary or
 # on the command line::
 #
 #     http_proxy=http://proxy.example.com:3128/ ./stack.sh
-#
-# We source our settings from ``stackrc``.  This file is distributed with devstack
-# and contains locations for what repositories to use.  If you want to use other
-# repositories and branches, you can add your own settings with another file called
-# ``localrc``
-#
-# If ``localrc`` exists, then ``stackrc`` will load those settings.  This is
-# useful for changing a branch or repository to test other versions.  Also you
-# can store your other settings like **MYSQL_PASSWORD** or **ADMIN_PASSWORD** instead
-# of letting devstack generate random ones for you. You can customize
-# which services to install as well in your localrc.
+
 source ./stackrc
 
 # Destination path for installation ``DEST``
@@ -100,7 +96,7 @@ fi
 
 # OpenStack is designed to be run as a regular user (Horizon will fail to run
 # as root, since apache refused to startup serve content from root user).  If
-# stack.sh is run as root, it automatically creates a stack user with
+# ``stack.sh`` is run as **root**, it automatically creates a **stack** user with
 # sudo privileges and runs as that user.
 
 if [[ $EUID -eq 0 ]]; then
@@ -162,9 +158,9 @@ else
     sudo rm -f /etc/sudoers.d/stack_sh_nova
 fi
 
-# Set True to configure stack.sh to run cleanly without Internet access.
-# stack.sh must have been previously run with Internet access to install
-# prerequisites and initialize $DEST.
+# Set True to configure ``stack.sh`` to run cleanly without Internet access.
+# ``stack.sh`` must have been previously run with Internet access to install
+# prerequisites and initialize ``$DEST``.
 OFFLINE=`trueorfalse False $OFFLINE`
 
 # Set the destination directories for openstack projects
@@ -200,8 +196,8 @@ VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
 
-# Nova hypervisor configuration.  We default to libvirt whth  **kvm** but will
-# drop back to **qemu** if we are unable to load the kvm module.  Stack.sh can
+# Nova hypervisor configuration.  We default to libvirt with **kvm** but will
+# drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
 # also install an **LXC** based system.
 VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
@@ -224,7 +220,7 @@ fi
 # Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
 SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
 
-# Configure services to syslog instead of writing to individual log files
+# Configure services to use syslog instead of writing to individual log files
 SYSLOG=`trueorfalse False $SYSLOG`
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
 SYSLOG_PORT=${SYSLOG_PORT:-516}
@@ -273,17 +269,18 @@ function read_password {
     set -o xtrace
 }
 
-# This function will check if the service(s) specified in argument is
-# enabled by the user in ENABLED_SERVICES.
+# is_service_enabled() checks if the service(s) specified as arguments are
+# enabled by the user in **ENABLED_SERVICES**.
 #
-# If there is multiple services specified as argument it will act as a
+# If there are multiple services specified as arguments the test performs a
 # boolean OR or if any of the services specified on the command line
 # return true.
 #
-# There is a special cases for some 'catch-all' services :
-#      nova would catch if any service enabled start by n-
-#    glance would catch if any service enabled start by g-
-#   quantum would catch if any service enabled start by q-
+# There is a special cases for some 'catch-all' services::
+#   **nova** returns true if any service enabled start with **n-**
+#   **glance** returns true if any service enabled start with **g-**
+#   **quantum** returns true if any service enabled start with **q-**
+
 function is_service_enabled() {
     services=$@
     for service in ${services}; do
@@ -295,11 +292,12 @@ function is_service_enabled() {
     return 1
 }
 
+
 # Nova Network Configuration
 # --------------------------
 
-# FIXME: more documentation about why these are important flags.  Also
-# we should make sure we use the same variable names as the flag names.
+# FIXME: more documentation about why these are important options.  Also
+# we should make sure we use the same variable names as the option names.
 
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     PUBLIC_INTERFACE_DEFAULT=eth3
@@ -327,7 +325,7 @@ VLAN_INTERFACE=${VLAN_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
 TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 
-# Multi-host is a mode where each compute node runs its own network node.  This
+# **MULTI_HOST** is a mode where each compute node runs its own network node.  This
 # allows network operations and routing for a VM to occur on the server that is
 # running the VM - removing a SPOF and bandwidth bottleneck.
 MULTI_HOST=${MULTI_HOST:-False}
@@ -380,12 +378,12 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 # By default this script will install and configure MySQL.  If you want to
 # use an existing server, you can pass in the user/password/host parameters.
 # You will need to send the same ``MYSQL_PASSWORD`` to every host if you are doing
-# a multi-node devstack installation.
+# a multi-node DevStack installation.
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 MYSQL_USER=${MYSQL_USER:-root}
 read_password MYSQL_PASSWORD "ENTER A PASSWORD TO USE FOR MYSQL."
 
-# don't specify /db in this string, so we can use it for multiple services
+# NOTE: Don't specify /db in this string so we can use it for multiple services
 BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST}
 
 # Rabbit connection info
@@ -394,6 +392,7 @@ read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
+
 
 # SWIFT
 # -----
@@ -438,6 +437,7 @@ if is_service_enabled swift; then
     read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
 fi
 
+
 # Keystone
 # --------
 
@@ -461,6 +461,7 @@ KEYSTONE_SERVICE_HOST=${KEYSTONE_SERVICE_HOST:-$SERVICE_HOST}
 KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
 KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-http}
 
+
 # Horizon
 # -------
 
@@ -468,6 +469,7 @@ KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-http}
 # current user.
 APACHE_USER=${APACHE_USER:-$USER}
 APACHE_GROUP=${APACHE_GROUP:-$APACHE_USER}
+
 
 # Log files
 # ---------
@@ -536,18 +538,21 @@ if [ ! -w $DEST ]; then
     sudo chown `whoami` $DEST
 fi
 
+
 # Install Packages
 # ================
 #
 # Openstack uses a fair number of other projects.
 
-# - We are going to install packages only for the services needed.
-# - We are parsing the packages files and detecting metadatas.
-#  - If there is a NOPRIME as comment mean we are not doing the install
-#    just yet.
-#  - If we have the meta-keyword dist:DISTRO or
-#    dist:DISTRO1,DISTRO2 it will be installed only for those
-#    distros (case insensitive).
+# get_packages() collects a list of package names of any type from the
+# prerequisite files in ``files/{apts|pips}``.  The list is intended
+# to be passed to a package installer such as apt or pip.
+#
+# Only packages required for the services in ENABLED_SERVICES will be
+# included.  Two bits of metadata are recognized in the prerequisite files:
+# - ``# NOPRIME`` defers installation to be performed later in stack.sh
+# - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
+#   of the package to the distros listed.  The distro names are case insensitive.
 function get_packages() {
     local package_dir=$1
     local file_to_parse
@@ -654,9 +659,9 @@ if is_service_enabled melange; then
     git_clone $MELANGECLIENT_REPO $MELANGECLIENT_DIR $MELANGECLIENT_BRANCH
 fi
 
+
 # Initialization
 # ==============
-
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
@@ -688,8 +693,9 @@ if is_service_enabled melange; then
     cd $MELANGECLIENT_DIR; sudo python setup.py develop
 fi
 
+
 # Syslog
-# ---------
+# ------
 
 if [[ $SYSLOG != "False" ]]; then
     apt_get install -y rsyslog-relp
@@ -710,8 +716,9 @@ EOF
     sudo /usr/sbin/service rsyslog restart
 fi
 
+
 # Rabbit
-# ---------
+# ------
 
 if is_service_enabled rabbit; then
     # Install and start rabbitmq-server
@@ -724,8 +731,9 @@ if is_service_enabled rabbit; then
     sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
 fi
 
+
 # Mysql
-# ---------
+# -----
 
 if is_service_enabled mysql; then
 
@@ -762,7 +770,7 @@ fi
 
 
 # Horizon
-# ---------
+# -------
 
 # Setup the django horizon application to serve via apache/wsgi
 
@@ -862,6 +870,7 @@ if is_service_enabled g-reg; then
     fi
 fi
 
+
 # Nova
 # ----
 
@@ -873,17 +882,22 @@ fi
 sudo chown `whoami` $NOVA_CONF_DIR
 
 if is_service_enabled n-api; then
-    # We are going to use a sample http middleware configuration based on the
-    # one from the keystone project to launch nova.  This paste config adds
-    # the configuration required for nova to validate keystone tokens.
+    # Use the sample http middleware configuration supplied in the
+    # Nova sources.  This paste config adds the configuration required
+    # for Nova to validate Keystone tokens.
 
-    # Remove legacy paste config
+    # Allow rate limiting to be turned off for testing, like for Tempest
+    # NOTE: Set OSAPI_RATE_LIMIT=" " to turn OFF rate limiting
+    OSAPI_RATE_LIMIT=${OSAPI_RATE_LIMIT:-"ratelimit"}
+
+    # Remove legacy paste config if present
     rm -f $NOVA_DIR/bin/nova-api-paste.ini
 
-    # First we add a some extra data to the default paste config from nova
+    # Get the sample configuration file in place
     cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
 
-    # Then we add our own service token to the configuration
+    # Rewrite the authtoken configration for our Keystone service.
+    # This is a bit defensive to allow the sample file some varaince.
     sed -e "
         /^admin_token/i admin_tenant_name = $SERVICE_TENANT_NAME
         /admin_tenant_name/s/^.*$/admin_tenant_name = $SERVICE_TENANT_NAME/;
@@ -893,14 +907,12 @@ if is_service_enabled n-api; then
         s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
     " -i $NOVA_CONF_DIR/api-paste.ini
 
-    # Finally, we change the pipelines in nova to use keystone
+    # Finally, change the Nova pipelines to use Keystone
     function replace_pipeline() {
         sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_CONF_DIR/api-paste.ini
     }
     replace_pipeline "ec2cloud" "ec2faultwrap logrequest totoken authtoken keystonecontext cloudrequest authorizer validator ec2executor"
     replace_pipeline "ec2admin" "ec2faultwrap logrequest totoken authtoken keystonecontext adminrequest authorizer ec2executor"
-    # allow people to turn off rate limiting for testing, like when using tempest, by setting OSAPI_RATE_LIMIT=" "
-    OSAPI_RATE_LIMIT=${OSAPI_RATE_LIMIT:-"ratelimit"}
     replace_pipeline "openstack_compute_api_v2" "faultwrap authtoken keystonecontext $OSAPI_RATE_LIMIT osapi_compute_app_v2"
     replace_pipeline "openstack_volume_api_v1" "faultwrap authtoken keystonecontext $OSAPI_RATE_LIMIT osapi_volume_app_v1"
 fi
@@ -1178,6 +1190,7 @@ if is_service_enabled swift; then
    unset s swift_hash swift_auth_server
 fi
 
+
 # Volume Service
 # --------------
 
@@ -1327,6 +1340,7 @@ for I in "${EXTRA_OPTS[@]}"; do
     add_nova_opt ${I//-}
 done
 
+
 # XenServer
 # ---------
 
@@ -1346,6 +1360,7 @@ else
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
     add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
 fi
+
 
 # Nova Database
 # ~~~~~~~~~~~~~
@@ -1496,7 +1511,6 @@ if is_service_enabled key; then
         bash $FILES/keystone_data.sh
 fi
 
-
 # launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
     screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
@@ -1580,7 +1594,6 @@ if is_service_enabled mysql && is_service_enabled nova; then
     $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
 
-
 # Launching nova-compute should be as simple as running ``nova-compute`` but
 # have to do a little more than that in our script.  Since we add the group
 # ``libvirtd`` to our user in this script, when nova-compute is run it is
@@ -1598,6 +1611,7 @@ screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CON
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
 
+
 # Install Images
 # ==============
 
@@ -1606,7 +1620,7 @@ screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
 # The default image is a small ***TTY*** testing image, which lets you login
 # the username/password of root/password.
 #
-# TTY also uses cloud-init, supporting login via keypair and sending scripts as
+# TTY also uses ``cloud-init``, supporting login via keypair and sending scripts as
 # userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
 #
 # Override ``IMAGE_URLS`` with a comma-separated list of uec images.
@@ -1691,10 +1705,12 @@ if is_service_enabled g-reg; then
     done
 fi
 
+
 # Fin
 # ===
 
 set +o xtrace
+
 
 # Using the cloud
 # ===============
@@ -1703,24 +1719,24 @@ echo ""
 echo ""
 echo ""
 
-# If you installed the horizon on this server, then you should be able
+# If you installed Horizon on this server you should be able
 # to access the site using your browser.
 if is_service_enabled horizon; then
-    echo "horizon is now available at http://$SERVICE_HOST/"
+    echo "Horizon is now available at http://$SERVICE_HOST/"
 fi
 
-# If keystone is present, you can point nova cli to this server
+# If Keystone is present you can point ``nova`` cli to this server
 if is_service_enabled key; then
-    echo "keystone is serving at $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/"
-    echo "examples on using novaclient command line is in exercise.sh"
-    echo "the default users are: admin and demo"
-    echo "the password: $ADMIN_PASSWORD"
+    echo "Keystone is serving at $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/"
+    echo "Examples on using novaclient command line is in exercise.sh"
+    echo "The default users are: admin and demo"
+    echo "The password: $ADMIN_PASSWORD"
 fi
 
 # Echo HOST_IP - useful for build_uec.sh, which uses dhcp to give the instance an address
 echo "This is your host ip: $HOST_IP"
 
-# Warn that EXTRA_FLAGS needs to be converted to EXTRA_OPTS
+# Warn that ``EXTRA_FLAGS`` needs to be converted to ``EXTRA_OPTS``
 if [[ -n "$EXTRA_FLAGS" ]]; then
     echo "WARNING: EXTRA_FLAGS is defined and may need to be converted to EXTRA_OPTS"
 fi
