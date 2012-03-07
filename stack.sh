@@ -135,17 +135,30 @@ if [[ $EUID -eq 0 ]]; then
     fi
     exit 1
 else
-    # Our user needs passwordless priviledges for certain commands which nova
-    # uses internally.
-    # Natty uec images sudoers does not have a '#includedir'. add one.
+    # We're not root, make sure sudo is available
+    dpkg -l sudo
+    die_if_error "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
+
+    # UEC images /etc/sudoers does not have a '#includedir'. add one.
     sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
         echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
+
+    # Set up devstack sudoers
     TEMPFILE=`mktemp`
-    cat $FILES/sudo/nova > $TEMPFILE
-    sed -e "s,%USER%,$USER,g" -i $TEMPFILE
+    echo "`whoami` ALL=(root) NOPASSWD:ALL" >$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
-    sudo mv $TEMPFILE /etc/sudoers.d/stack_sh_nova
+    sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
+
+    # Set up the rootwrap sudoers
+    TEMPFILE=`mktemp`
+    echo "$USER ALL=(root) NOPASSWD: /usr/local/bin/nova-rootwrap" >$TEMPFILE
+    chmod 0440 $TEMPFILE
+    sudo chown root:root $TEMPFILE
+    sudo mv $TEMPFILE /etc/sudoers.d/nova-rootwrap
+
+    # Remove old file
+    sudo rm -f /etc/sudoers.d/stack_sh_nova
 fi
 
 # Set True to configure stack.sh to run cleanly without Internet access.
@@ -1192,6 +1205,7 @@ add_nova_opt "[DEFAULT]"
 add_nova_opt "verbose=True"
 add_nova_opt "auth_strategy=keystone"
 add_nova_opt "allow_resize_to_same_host=True"
+add_nova_opt "root_helper=sudo /usr/local/bin/nova-rootwrap"
 add_nova_opt "compute_scheduler_driver=$SCHEDULER"
 add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF_DIR/$NOVA_CONF"
 add_nova_opt "fixed_range=$FIXED_RANGE"
