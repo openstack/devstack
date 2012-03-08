@@ -1,2 +1,3 @@
 django-nose-selenium
 pycrypto==2.3
+python-cloudfiles

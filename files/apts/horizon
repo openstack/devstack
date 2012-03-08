@@ -22,5 +22,4 @@ python-django
 python-django-mailer
 python-django-nose
 python-django-registration
-python-cloudfiles
 python-migrate
