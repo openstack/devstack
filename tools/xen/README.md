@@ -100,3 +100,9 @@ Step 6: Do cloudy stuff!
 * Play with horizon
 * Play with the CLI
 * Log bugs to devstack and core projects, and submit fixes!
+
+Ubuntu 11.10 VM on Xenserver
+----------------------------
+Run ./scripts/xenoneirictemplate.sh on your Xenserver host. This creates a
+template to be able to install a Ubuntu Oneiric (11.10) virtual machine.
+Once the template is created, follow the wizard to complete the network install.
