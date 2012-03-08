@@ -2,9 +2,6 @@
 #
 # Initial data for Keystone using python-keystoneclient
 #
-# A set of EC2-compatible credentials is created for both admin and demo
-# users and placed in $DEVSTACK_DIR/ec2rc.
-#
 # Tenant               User      Roles
 # -------------------------------------------------------
 # admin                admin     admin
@@ -47,6 +44,7 @@ ADMIN_USER=$(get_id keystone user-create --name=admin \
 DEMO_USER=$(get_id keystone user-create --name=demo \
                                         --pass="$ADMIN_PASSWORD" \
                                         --email=demo@example.com)
+
 
 # Roles
 ADMIN_ROLE=$(get_id keystone role-create --name=admin)
@@ -135,20 +133,3 @@ if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
                            --user $QUANTUM_USER \
                            --role $ADMIN_ROLE
 fi
-
-# create ec2 creds and parse the secret and access key returned
-RESULT=$(keystone ec2-credentials-create --tenant_id=$ADMIN_TENANT --user=$ADMIN_USER)
-ADMIN_ACCESS=$(echo "$RESULT" | awk '/ access / { print $4 }')
-ADMIN_SECRET=$(echo "$RESULT" | awk '/ secret / { print $4 }')
-
-RESULT=$(keystone ec2-credentials-create --tenant_id=$DEMO_TENANT --user=$DEMO_USER)
-DEMO_ACCESS=$(echo "$RESULT" | awk '/ access / { print $4 }')
-DEMO_SECRET=$(echo "$RESULT" | awk '/ secret / { print $4 }')
-
-# write the secret and access to ec2rc
-cat > $DEVSTACK_DIR/ec2rc <<EOF
-ADMIN_ACCESS=$ADMIN_ACCESS
-ADMIN_SECRET=$ADMIN_SECRET
-DEMO_ACCESS=$DEMO_ACCESS
-DEMO_SECRET=$DEMO_SECRET
-EOF

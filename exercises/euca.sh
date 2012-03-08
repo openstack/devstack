@@ -18,15 +18,15 @@ set -o xtrace
 # Settings
 # ========
 
-# Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd) >/dev/null
+# Keep track of the current directory
+EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
 # Import common functions
-source ./functions
+source $TOP_DIR/functions
 
-# Import configuration
-source ./openrc
-popd >/dev/null
+# Import EC2 configuration
+source $TOP_DIR/eucarc
 
 # Max time to wait while vm goes from build to active state
 ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}

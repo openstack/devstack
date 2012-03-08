@@ -24,6 +24,12 @@ catalog.RegionOne.ec2.internalURL = http://%SERVICE_HOST%:8773/services/Cloud
 catalog.RegionOne.ec2.name = 'EC2 Service'
 
 
+catalog.RegionOne.s3.publicURL = http://%SERVICE_HOST%:3333
+catalog.RegionOne.s3.adminURL = http://%SERVICE_HOST%:3333
+catalog.RegionOne.s3.internalURL = http://%SERVICE_HOST%:3333
+catalog.RegionOne.s3.name = 'S3 Service'
+
+
 catalog.RegionOne.image.publicURL = http://%SERVICE_HOST%:9292/v1
 catalog.RegionOne.image.adminURL = http://%SERVICE_HOST%:9292/v1
 catalog.RegionOne.image.internalURL = http://%SERVICE_HOST%:9292/v1

@@ -1,3 +1,6 @@
+# Find the other rc files
+RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
+
 # compute service
 NOVA_REPO=https://github.com/openstack/nova.git
 NOVA_BRANCH=master
@@ -76,12 +79,7 @@ case "$LIBVIRT_TYPE" in
         IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz";;
 esac
 
-# use stored ec2 env variables
-if [ -f ./ec2rc ]; then
-    source ./ec2rc
-fi
-
 # allow local overrides of env variables
-if [ -f ./localrc ]; then
-    source ./localrc
+if [ -f $RC_DIR/localrc ]; then
+    source $RC_DIR/localrc
 fi

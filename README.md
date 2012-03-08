@@ -41,6 +41,11 @@ We also provide an environment file that you can use to interact with your cloud
     . openrc
     # list instances
     nova list
+
+If the EC2 API is your cup-o-tea, you can create credentials and use euca2ools:
+
+    # source eucarc to generate EC2 credentials and set up the environment
+    . eucarc
     # list instances using ec2 api
     euca-describe-instances
 

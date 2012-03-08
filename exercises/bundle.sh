@@ -18,24 +18,24 @@ set -o xtrace
 # Settings
 # ========
 
-# Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd) >/dev/null
+# Keep track of the current directory
+EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
 # Import common functions
-source ./functions
+source $TOP_DIR/functions
 
-# Import configuration
-source ./openrc
+# Import EC2 configuration
+source $TOP_DIR/eucarc
 
 # Remove old certificates
-rm -f cacert.pem
-rm -f cert.pem
-rm -f pk.pem
+rm -f $TOP_DIR/cacert.pem
+rm -f $TOP_DIR/cert.pem
+rm -f $TOP_DIR/pk.pem
 
 # Get Certificates
-nova x509-get-root-cert
-nova x509-create-cert
-popd >/dev/null
+nova x509-get-root-cert $TOP_DIR/cacert.pem
+nova x509-create-cert $TOP_DIR/pk.pem $TOP_DIR/cert.pem
 
 # Max time to wait for image to be registered
 REGISTER_TIMEOUT=${REGISTER_TIMEOUT:-15}

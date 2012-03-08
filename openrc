@@ -17,8 +17,11 @@ if [[ -n "$2" ]]; then
     TENANT=$2
 fi
 
+# Find the other rc files
+RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
+
 # Load local configuration
-source ./stackrc
+source $RC_DIR/stackrc
 
 # The introduction of Keystone to the OpenStack ecosystem has standardized the
 # term **tenant** as the entity that owns resources.  In some places references
@@ -59,30 +62,8 @@ export NOVA_VERSION=${NOVA_VERSION:-1.1}
 # In the future this will change names:
 export COMPUTE_API_VERSION=${COMPUTE_API_VERSION:-$NOVA_VERSION}
 
-# Set the ec2 url so euca2ools works
-export EC2_URL=${EC2_URL:-http://$SERVICE_HOST:8773/services/Cloud}
-
-# Access key is set in the initial keystone data to be the same as username
-export EC2_ACCESS_KEY=${DEMO_ACCESS}
-
-# Secret key is set in the initial keystone data to the admin password
-export EC2_SECRET_KEY=${DEMO_SECRET}
-
-# Euca2ools Certificate stuff for uploading bundles
-# See exercises/bundle.sh to see how to get certs using nova cli
-NOVARC=$(readlink -f "${BASH_SOURCE:-${0}}" 2>/dev/null) ||
-        NOVARC=$(python -c 'import os,sys; print os.path.abspath(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE:-${0}}")
-NOVA_KEY_DIR=${NOVARC%/*}
-export S3_URL=http://$SERVICE_HOST:3333
-export EC2_USER_ID=42 # nova does not use user id, but bundling requires it
-export EC2_PRIVATE_KEY=${NOVA_KEY_DIR}/pk.pem
-export EC2_CERT=${NOVA_KEY_DIR}/cert.pem
-export NOVA_CERT=${NOVA_KEY_DIR}/cacert.pem
-export EUCALYPTUS_CERT=${NOVA_CERT} # euca-bundle-image seems to require this set
-alias ec2-bundle-image="ec2-bundle-image --cert ${EC2_CERT} --privatekey ${EC2_PRIVATE_KEY} --user 42 --ec2cert ${NOVA_CERT}"
-alias ec2-upload-bundle="ec2-upload-bundle -a ${EC2_ACCESS_KEY} -s ${EC2_SECRET_KEY} --url ${S3_URL} --ec2cert ${NOVA_CERT}"
-
 # set log level to DEBUG (helps debug issues)
+# export KEYSTONECLIENT_DEBUG=1
 # export NOVACLIENT_DEBUG=1
 
 # Max time till the vm is bootable
