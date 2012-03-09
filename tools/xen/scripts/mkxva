@@ -177,7 +177,7 @@ EOF
     /sbin/mkfs.ext3 -I 128 -m0 -F "$partition"
     /sbin/e2label "$partition" vpxroot
     make_fs_inner "$staging" "$partition" ""
-    
+
     # Now run grub on the image we've created
     CLEAN_MOUNTPOINT=$(mktemp -d "$TMPDIR/mkfs-XXXXXX")
 
@@ -203,7 +203,7 @@ EOF
 
     $SUDO umount "$CLEAN_MOUNTPOINT"
     CLEAN_MOUNTPOINT=
-    
+
     # Grub expects a disk with name /dev/xxxx with a first partition
     # named /dev/xxxx1, so we give it what it wants using symlinks
     # Note: /dev is linked to the real /dev of the build machine, so
@@ -214,14 +214,14 @@ EOF
     rm -f "$disk_part1_name"
     ln -s "$CLEAN_LOSETUP" "$disk_name"
     ln -s "$partition" "$disk_part1_name"
-    
+
     # Feed commands into the grub shell to setup the disk
     grub --no-curses --device-map=/dev/null <<EOF
 device (hd0) $disk_name
 setup (hd0) (hd0,0)
 quit
 EOF
-    
+
     # Cleanup
     rm -f "$disk_name"
     rm -f "$disk_part1_name"
@@ -253,7 +253,7 @@ splitvdi () {
     local n_bytes=$(stat --printf=%s "$diskimg")
     local n_meg=$((($n_bytes+$((1024*1024 -1)))/$((1024*1024))))
     local i=0
-    while [ $i -lt $n_meg ] ; do 
+    while [ $i -lt $n_meg ] ; do
 	if [ $rio -eq 0 ] ; then
 		local file="$outputdir"/chunk-$(printf "%08d" $i)
 		dd if="$diskimg" of="$file" skip=$i bs=1M count=1 2>/dev/null
@@ -359,7 +359,7 @@ done
 
 
 # cleanup
-if [ -z "${DO_NOT_CLEANUP:-}" ] ; then 
+if [ -z "${DO_NOT_CLEANUP:-}" ] ; then
     rm -rf "$XVA_TARBALL_STAGING"
     rm -f "$FS_TMPFILE"
 fi

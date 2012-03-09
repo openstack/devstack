@@ -1,5 +1,5 @@
 #!/bin/sh -e
-# Copyright (c) 2010-2011 Gluster, Inc. <http://www.gluster.com> 
+# Copyright (c) 2010-2011 Gluster, Inc. <http://www.gluster.com>
 # This initial version of this file was taken from the source tree
 # of GlusterFS. It was not directly attributed, but is assumed to be
 # Copyright (c) 2010-2011 Gluster, Inc and release GPLv3

@@ -30,7 +30,7 @@ fi
 if [ ! -d files/apts ]; then
     echo "Please run this script from devstack/tools/"
     exit 1
-fi 
+fi
 
 # Mount the image
 STAGING_DIR=/tmp/`echo $1 | sed  "s/\//_/g"`.stage

@@ -144,7 +144,7 @@ if [ ! -d $TOP_DIR/nova ]; then
     env GIT_SSL_NO_VERIFY=true git clone $NOVA_REPO
     cd $TOP_DIR/nova
     git checkout $NOVA_BRANCH
-fi 
+fi
 
 # Install plugins
 cp -pr $TOP_DIR/nova/plugins/xenserver/xenapi/etc/xapi.d /etc/
