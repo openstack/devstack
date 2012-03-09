@@ -472,6 +472,7 @@ if [[ -n "$LOGFILE" ]]; then
     LOGDAYS=${LOGDAYS:-7}
     LOGDIR=$(dirname "$LOGFILE")
     LOGNAME=$(basename "$LOGFILE")
+    mkdir -p $LOGDIR
     find $LOGDIR -maxdepth 1 -name $LOGNAME.\* -mtime +$LOGDAYS -exec rm {} \;
 
     TIMESTAMP_FORMAT=${TIMESTAMP_FORMAT:-"%F-%H%M%S"}
