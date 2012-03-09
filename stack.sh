@@ -83,7 +83,8 @@ fi
 # If ``localrc`` exists, then ``stackrc`` will load those settings.  This is
 # useful for changing a branch or repository to test other versions.  Also you
 # can store your other settings like **MYSQL_PASSWORD** or **ADMIN_PASSWORD** instead
-# of letting devstack generate random ones for you.
+# of letting devstack generate random ones for you. You can customize
+# which services to install as well in your localrc.
 source ./stackrc
 
 # Destination path for installation ``DEST``
@@ -180,9 +181,6 @@ M_PORT=${M_PORT:-9898}
 M_HOST=${M_HOST:-localhost}
 # Melange MAC Address Range
 M_MAC_RANGE=${M_MAC_RANGE:-FE-EE-DD-00-00-00/24}
-
-# Specify which services to launch.  These generally correspond to screen tabs
-ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit}
 
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}

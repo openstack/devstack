@@ -1,6 +1,14 @@
 # Find the other rc files
 RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
 
+# Specify which services to launch.  These generally correspond to
+# screen tabs. If you like to add other services that are not enabled
+# by default you can append them in your ENABLED_SERVICES variable in
+# your localrc. For example for swift you can just add this in your
+# localrc to add it with the other services:
+# ENABLED_SERVICES="$ENABLED_SERVICES,swift"
+ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit
+
 # compute service
 NOVA_REPO=https://github.com/openstack/nova.git
 NOVA_BRANCH=master
