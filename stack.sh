@@ -179,7 +179,7 @@ M_PORT=${M_PORT:-9898}
 # Default Melange Host
 M_HOST=${M_HOST:-localhost}
 # Melange MAC Address Range
-M_MAC_RANGE=${M_MAC_RANGE:-404040/24}
+M_MAC_RANGE=${M_MAC_RANGE:-FE-EE-DD-00-00-00/24}
 
 # Specify which services to launch.  These generally correspond to screen tabs
 ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit}
