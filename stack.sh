@@ -1519,7 +1519,7 @@ fi
 
 # If we're using Quantum (i.e. q-svc is enabled), network creation has to
 # happen after we've started the Quantum service.
-if is_service_enabled mysql; then
+if is_service_enabled mysql && is_service_enabled nova; then
     # create a small network
     $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
 
@@ -1540,24 +1540,17 @@ fi
 # ``libvirtd`` to our user in this script, when nova-compute is run it is
 # within the context of our original shell (so our groups won't be updated).
 # Use 'sg' to execute nova-compute as a member of the libvirtd group.
+# We don't check for is_service_enable as screen_it does it for us
 screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
 screen_it n-crt "cd $NOVA_DIR && $NOVA_DIR/bin/nova-cert"
 screen_it n-obj "cd $NOVA_DIR && $NOVA_DIR/bin/nova-objectstore"
 screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
-if is_service_enabled n-novnc; then
-    screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
-fi
-if is_service_enabled n-xvnc; then
-    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
-fi
-if is_service_enabled n-cauth; then
-    screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
-fi
-if is_service_enabled horizon; then
-    screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
-fi
+screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
+screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
+screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
+screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
 
 # Install Images
 # ==============
