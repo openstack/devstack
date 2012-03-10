@@ -538,12 +538,16 @@ fi
 #    dist:DISTRO1,DISTRO2 it will be installed only for those
 #    distros (case insensitive).
 function get_packages() {
-    local file_to_parse="general"
+    local package_dir=$1
+    local file_to_parse
     local service
 
-    for service in ${ENABLED_SERVICES//,/ }; do
-        # Allow individual services to specify dependencies
-        if [[ -e $FILES/apts/${service} ]]; then
+    if [[ -z "$package_dir" ]]; then
+        echo "No package directory supplied"
+        return 1
+    fi
+    for service in general ${ENABLED_SERVICES//,/ }; do        # Allow individual services to specify dependencies
+        if [[ -e ${package_dir}/${service} ]]; then
             file_to_parse="${file_to_parse} $service"
         fi
         if [[ $service == n-* ]]; then
@@ -562,9 +566,9 @@ function get_packages() {
     done
 
     for file in ${file_to_parse}; do
-        local fname=${FILES}/apts/${file}
+        local fname=${package_dir}/${file}
         local OIFS line package distros distro
-        [[ -e $fname ]] || { echo "missing: $fname"; exit 1 ;}
+        [[ -e $fname ]] || continue
 
         OIFS=$IFS
         IFS=$'\n'
@@ -590,10 +594,10 @@ function get_packages() {
 
 # install apt requirements
 apt_get update
-apt_get install $(get_packages)
+apt_get install $(get_packages $FILES/apts)
 
 # install python requirements
-pip_install `cat $FILES/pips/* | uniq`
+pip_install $(get_packages $FILES/pips | sort -u)
 
 # compute service
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH

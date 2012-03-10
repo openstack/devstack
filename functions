@@ -4,7 +4,7 @@
 # apt-get wrapper to set arguments correctly
 # apt_get package [package ...]
 function apt_get() {
-    [[ "$OFFLINE" = "True" ]] && return
+    [[ "$OFFLINE" = "True" || -z "$@" ]] && return
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
     $sudo DEBIAN_FRONTEND=noninteractive \
@@ -124,7 +124,7 @@ function is_set() {
 # pip install wrapper to set cache and proxy environment variables
 # pip_install package [package ...]
 function pip_install {
-    [[ "$OFFLINE" = "True" ]] && return
+    [[ "$OFFLINE" = "True" || -z "$@" ]] && return
     sudo PIP_DOWNLOAD_CACHE=/var/cache/pip \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
