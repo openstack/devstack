@@ -912,6 +912,9 @@ if is_service_enabled n-cpu; then
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     apt_get install libvirt-bin
 
+    # Force IP forwarding on, just on case
+    sudo sysctl -w net.ipv4.ip_forward=1
+
     # attempt to load modules: network block device - used to manage qcow images
     sudo modprobe nbd || true
 
@@ -993,6 +996,9 @@ if is_service_enabled n-net; then
     clean_iptables
     rm -rf $NOVA_DIR/networks
     mkdir -p $NOVA_DIR/networks
+
+    # Force IP forwarding on, just on case
+    sudo sysctl -w net.ipv4.ip_forward=1
 fi
 
 # Storage Service
