@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# source exerciserc
+#
+# Configure the DevStack exercise scripts
+# For best results, source this _after_ stackrc/localrc as it will set
+# values only if they are not already set.
+
+# Max time to wait while vm goes from build to active state
+export ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
+
+# Max time to wait for proper IP association and dis-association.
+export ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-15}
+
+# Max time till the vm is bootable
+export BOOT_TIMEOUT=${BOOT_TIMEOUT:-30}
+
+# Max time from run instance command until it is running
+export RUNNING_TIMEOUT=${RUNNING_TIMEOUT:-$(($BOOT_TIMEOUT + $ACTIVE_TIMEOUT))}
+
+# Max time to wait for a vm to terminate
+export TERMINATE_TIMEOUT=${TERMINATE_TIMEOUT:-30}
