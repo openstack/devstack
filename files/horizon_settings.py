@@ -40,6 +40,12 @@ HORIZON_CONFIG = {
     'user_home': 'openstack_dashboard.views.user_home',
 }
 
+# TODO(tres): Remove these once Keystone has an API to identify auth backend.
+OPENSTACK_KEYSTONE_BACKEND = {
+    'name': 'native',
+    'can_edit_user': True
+}
+
 OPENSTACK_HOST = "127.0.0.1"
 OPENSTACK_KEYSTONE_URL = "http://%s:5000/v2.0" % OPENSTACK_HOST
 # FIXME: this is only needed until keystone fixes its GET /tenants call
