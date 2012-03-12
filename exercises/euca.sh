@@ -28,14 +28,8 @@ source $TOP_DIR/functions
 # Import EC2 configuration
 source $TOP_DIR/eucarc
 
-# Max time to wait while vm goes from build to active state
-ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
-
-# Max time till the vm is bootable
-BOOT_TIMEOUT=${BOOT_TIMEOUT:-30}
-
-# Max time to wait for proper association and dis-association.
-ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-15}
+# Import exercise configuration
+source $TOP_DIR/exerciserc
 
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}

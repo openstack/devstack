@@ -18,24 +18,18 @@ set -o xtrace
 # Settings
 # ========
 
-# Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd) >/dev/null
+# Keep track of the current directory
+EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
 # Import common functions
-source ./functions
+source $TOP_DIR/functions
 
 # Import configuration
-source ./openrc
-popd >/dev/null
+source $TOP_DIR/openrc
 
-# Max time to wait while vm goes from build to active state
-ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
-
-# Max time till the vm is bootable
-BOOT_TIMEOUT=${BOOT_TIMEOUT:-30}
-
-# Max time to wait for proper association and dis-association.
-ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-15}
+# Import exercise configuration
+source $TOP_DIR/exerciserc
 
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}

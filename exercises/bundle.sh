@@ -28,6 +28,9 @@ source $TOP_DIR/functions
 # Import EC2 configuration
 source $TOP_DIR/eucarc
 
+# Import exercise configuration
+source $TOP_DIR/exerciserc
+
 # Remove old certificates
 rm -f $TOP_DIR/cacert.pem
 rm -f $TOP_DIR/cert.pem

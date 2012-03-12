@@ -43,15 +43,14 @@ Many scripts will utilize shared functions from the ``functions`` file.  There a
 also rc files (``stackrc`` and ``openrc``) that are often included to set the primary
 configuration of the user environment::
 
-    # Use openrc + stackrc + localrc for settings
-    pushd $(cd $(dirname "$0")/.. && pwd) >/dev/null
+    # Keep track of the current devstack directory.
+    TOP_DIR=$(cd $(dirname "$0") && pwd)
 
     # Import common functions
-    source ./functions
+    source $TOP_DIR/functions
 
     # Import configuration
-    source ./openrc
-    popd >/dev/null
+    source $TOP_DIR/openrc
 
 ``stack.sh`` is a rather large monolithic script that flows through from beginning
 to end.  There is a proposal to segment it to put the OpenStack projects
@@ -118,6 +117,12 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
     # Print the commands being run so that we can see the command that triggers
     # an error.  It is also useful for following allowing as the install occurs.
     set -o xtrace
+
+* Settings and configuration are stored in ``exerciserc``, which must be
+  sourced after ``openrc`` or ``stackrc``::
+
+    # Import exercise configuration
+    source $TOP_DIR/exerciserc
 
 * There are a couple of helper functions in the common ``functions`` sub-script
   that will check for non-zero exit codes and unset environment variables and
