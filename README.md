@@ -12,6 +12,10 @@ Read more at http://devstack.org (built from the gh-pages branch)
 
 IMPORTANT: Be sure to carefully read stack.sh and any other scripts you execute before you run them, as they install software and may alter your networking configuration.  We strongly recommend that you run stack.sh in a clean and disposable vm when you are first getting started.
 
+# Devstack on Xenserver
+
+If you would like to use Xenserver as the hypervisor, please refer to the instructions in ./tools/xen/README.md.
+
 # Versions
 
 The devstack master branch generally points to trunk versions of OpenStack components.  For older, stable versions, look for branches named stable/[release].  For example, you can do the following to create a diablo OpenStack cloud:
