@@ -94,6 +94,12 @@ if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|f16) ]]; then
     fi
 fi
 
+if [ "${DISTRO}" = "oneiric" ] && is_service_enabled qpid ; then
+    # Qpid was introduced in precise
+    echo "You must use Ubuntu Precise or newer for Qpid support."
+    exit 1
+fi
+
 # Set the paths of certain binaries
 if [[ "$os_PACKAGE" = "deb" ]]; then
     NOVA_ROOTWRAP=/usr/local/bin/nova-rootwrap
@@ -381,8 +387,8 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 # host.
 
 
-# MySQL & RabbitMQ
-# ----------------
+# MySQL & (RabbitMQ or Qpid)
+# --------------------------
 
 # We configure Nova, Horizon, Glance and Keystone to use MySQL as their
 # database server.  While they share a single server, each has their own
@@ -400,8 +406,10 @@ read_password MYSQL_PASSWORD "ENTER A PASSWORD TO USE FOR MYSQL."
 BASE_SQL_CONN=${BASE_SQL_CONN:-mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST}
 
 # Rabbit connection info
-RABBIT_HOST=${RABBIT_HOST:-localhost}
-read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
+if is_service_enabled rabbit; then
+    RABBIT_HOST=${RABBIT_HOST:-localhost}
+    read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
+fi
 
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
@@ -756,8 +764,8 @@ EOF
 fi
 
 
-# Rabbit
-# ------
+# Rabbit or Qpid
+# --------------
 
 if is_service_enabled rabbit; then
     # Install and start rabbitmq-server
@@ -772,6 +780,13 @@ if is_service_enabled rabbit; then
     fi
     # change the rabbit password since the default is "guest"
     sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
+elif is_service_enabled qpid; then
+    if [[ "$os_PACKAGE" = "rpm" ]]; then
+        install_package qpid-cpp-server
+        restart_service qpidd
+    else
+        install_package qpidd
+    fi
 fi
 
 
@@ -1653,8 +1668,12 @@ add_nova_opt "vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
 add_nova_opt "api_paste_config=$NOVA_CONF_DIR/api-paste.ini"
 add_nova_opt "image_service=nova.image.glance.GlanceImageService"
 add_nova_opt "ec2_dmz_host=$EC2_DMZ_HOST"
-add_nova_opt "rabbit_host=$RABBIT_HOST"
-add_nova_opt "rabbit_password=$RABBIT_PASSWORD"
+if is_service_enabled rabbit ; then
+    add_nova_opt "rabbit_host=$RABBIT_HOST"
+    add_nova_opt "rabbit_password=$RABBIT_PASSWORD"
+elif is_service_enabled qpid ; then
+    add_nova_opt "rpc_backend=nova.rpc.impl_qpid"
+fi
 add_nova_opt "glance_api_servers=$GLANCE_HOSTPORT"
 add_nova_opt "force_dhcp_release=True"
 if [ -n "$INSTANCES_PATH" ]; then

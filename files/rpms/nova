@@ -29,11 +29,13 @@ python-netaddr
 python-paramiko
 python-paste
 python-paste-deploy
+python-qpid
 python-routes
 python-sqlalchemy
 python-suds
 python-tempita
 rabbitmq-server # NOPRIME
+qpid-cpp-server # NOPRIME
 sqlite
 sudo
 vconfig
