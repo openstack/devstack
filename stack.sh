@@ -906,15 +906,6 @@ if is_service_enabled n-api; then
         s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
         s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
     " -i $NOVA_CONF_DIR/api-paste.ini
-
-    # Finally, change the Nova pipelines to use Keystone
-    function replace_pipeline() {
-        sed "/\[pipeline:$1\]/,/\[/s/^pipeline = .*/pipeline = $2/" -i $NOVA_CONF_DIR/api-paste.ini
-    }
-    replace_pipeline "ec2cloud" "ec2faultwrap logrequest totoken authtoken keystonecontext cloudrequest authorizer validator ec2executor"
-    replace_pipeline "ec2admin" "ec2faultwrap logrequest totoken authtoken keystonecontext adminrequest authorizer ec2executor"
-    replace_pipeline "openstack_compute_api_v2" "faultwrap authtoken keystonecontext $OSAPI_RATE_LIMIT osapi_compute_app_v2"
-    replace_pipeline "openstack_volume_api_v1" "faultwrap authtoken keystonecontext $OSAPI_RATE_LIMIT osapi_volume_app_v1"
 fi
 
 # Helper to clean iptables rules

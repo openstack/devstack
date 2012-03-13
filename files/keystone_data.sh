@@ -10,7 +10,7 @@
 # service              quantum   admin        # if enabled
 # service              swift     admin        # if enabled
 # demo                 admin     admin
-# demo                 demo      Member,sysadmin,netadmin
+# demo                 demo      Member,anotherrole
 # invisible_to_admin   demo      Member
 #
 # Variables set before calling this script:
@@ -50,15 +50,15 @@ DEMO_USER=$(get_id keystone user-create --name=demo \
 ADMIN_ROLE=$(get_id keystone role-create --name=admin)
 KEYSTONEADMIN_ROLE=$(get_id keystone role-create --name=KeystoneAdmin)
 KEYSTONESERVICE_ROLE=$(get_id keystone role-create --name=KeystoneServiceAdmin)
-SYSADMIN_ROLE=$(get_id keystone role-create --name=sysadmin)
-NETADMIN_ROLE=$(get_id keystone role-create --name=netadmin)
+# ANOTHER_ROLE demonstrates that an arbitrary role may be created and used
+# TODO(sleepsonthefloor): show how this can be used for rbac in the future!
+ANOTHER_ROLE=$(get_id keystone role-create --name=anotherrole)
 
 
 # Add Roles to Users in Tenants
 keystone user-role-add --user $ADMIN_USER --role $ADMIN_ROLE --tenant_id $ADMIN_TENANT
 keystone user-role-add --user $ADMIN_USER --role $ADMIN_ROLE --tenant_id $DEMO_TENANT
-keystone user-role-add --user $DEMO_USER --role $SYSADMIN_ROLE --tenant_id $DEMO_TENANT
-keystone user-role-add --user $DEMO_USER --role $NETADMIN_ROLE --tenant_id $DEMO_TENANT
+keystone user-role-add --user $DEMO_USER --role $ANOTHER_ROLE --tenant_id $DEMO_TENANT
 
 # TODO(termie): these two might be dubious
 keystone user-role-add --user $ADMIN_USER --role $KEYSTONEADMIN_ROLE --tenant_id $ADMIN_TENANT
