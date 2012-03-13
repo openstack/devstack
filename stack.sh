@@ -1573,15 +1573,11 @@ if is_service_enabled mysql && is_service_enabled nova; then
     # create a small network
     $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE
 
-    if is_service_enabled q-svc; then
-        echo "Not creating floating IPs (not supported by QuantumManager)"
-    else
-        # create some floating ips
-        $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+    # create some floating ips
+    $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
-        # create a second pool
-        $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
-    fi
+    # create a second pool
+    $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
 
 
