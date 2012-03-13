@@ -88,7 +88,7 @@ EOF
 
 get_params()
 {
-  while getopts "hicwbf:d:v:m:p:k:r:l:" OPTION; 
+  while getopts "hicwbf:d:v:m:p:k:r:l:" OPTION;
   do
     case $OPTION in
       h) usage
@@ -246,7 +246,7 @@ create_management_vif()
 
 
 # This installs the interface for public traffic, only if a bridge is specified
-# The interface is not configured at this stage, but it will be, once the admin   
+# The interface is not configured at this stage, but it will be, once the admin
 # tasks are complete for the services of this VPX
 create_public_vif()
 {

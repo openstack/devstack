@@ -78,7 +78,7 @@ set -o xtrace
 . localrc
 
 # Unlike kvm, ssh to the xen host to run tests, in case the test instance is launch with a host only network
-ssh root@$XEN_IP &quot;cd devstack &amp;&amp; . localrc &amp;&amp; cd tools/jenkins &amp;&amp; ./run_test.sh $EXECUTOR_NUMBER $ADAPTER &apos;$RC&apos;&quot; 
+ssh root@$XEN_IP &quot;cd devstack &amp;&amp; . localrc &amp;&amp; cd tools/jenkins &amp;&amp; ./run_test.sh $EXECUTOR_NUMBER $ADAPTER &apos;$RC&apos;&quot;
 </command>
     </hudson.tasks.Shell>
   </builders>

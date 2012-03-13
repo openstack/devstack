@@ -147,7 +147,7 @@ cat > $LIBVIRT_XML <<EOF
     <interface type='network'>
       <source network='$NET_NAME'/>
     </interface>
-        
+
     <!-- The order is significant here.  File must be defined first -->
     <serial type="file">
       <source path='$vm_dir/console.log'/>
