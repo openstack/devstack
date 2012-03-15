@@ -1359,7 +1359,7 @@ fi
 # All nova components talk to a central database.  We will need to do this step
 # only once for an entire cluster.
 
-if is_service_enabled mysql; then
+if is_service_enabled mysql && is_service_enabled nova; then
     # (re)create nova database
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS nova;'
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE nova;'
