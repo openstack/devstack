@@ -1,7 +1,7 @@
 python-eventlet
 python-routes
 python-greenlet
-python-argparse
+python-argparse # dist:oneiric
 python-sqlalchemy
 python-wsgiref
 python-pastedeploy

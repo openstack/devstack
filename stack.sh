@@ -26,7 +26,7 @@
 # installation with ``FORCE=yes ./stack``
 DISTRO=$(lsb_release -c -s)
 
-if [[ ! ${DISTRO} =~ (oneiric) ]]; then
+if [[ ! ${DISTRO} =~ (oneiric|precise) ]]; then
     echo "WARNING: this script has only been tested on oneiric"
     if [[ "$FORCE" != "yes" ]]; then
         echo "If you wish to run this script anyway run with FORCE=yes"
