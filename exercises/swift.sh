@@ -36,6 +36,9 @@ source $TOP_DIR/exerciserc
 # Container name
 CONTAINER=ex-swift
 
+# If swift is not enabled we exit with exitcode 55 which mean
+# exercise is skipped.
+is_service_enabled swift || exit 55
 
 # Testing Swift
 # =============

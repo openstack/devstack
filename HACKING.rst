@@ -136,6 +136,10 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
     FLOATING_IP=`euca-allocate-address | cut -f2`
     die_if_not_set FLOATING_IP "Failure allocating floating IP"
 
+* If you want an exercise to be skipped when for example a service wasn't
+  enabled for the exercise to be run, you can exit your exercise with the
+  special exitcode 55 and it will be detected as skipped.
+
 * The exercise scripts should only use the various OpenStack client binaries to
   interact with OpenStack.  This specifically excludes any ``*-manage`` tools
   as those assume direct access to configuration and databases, as well as direct
