@@ -990,10 +990,10 @@ if is_service_enabled n-cpu; then
     clean_iptables
 
     # Destroy old instances
-    instances=`virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
+    instances=`sudo virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
     if [ ! "$instances" = "" ]; then
-        echo $instances | xargs -n1 virsh destroy || true
-        echo $instances | xargs -n1 virsh undefine || true
+        echo $instances | xargs -n1 sudo virsh destroy || true
+        echo $instances | xargs -n1 sudo virsh undefine || true
     fi
 
     # Logout and delete iscsi sessions
