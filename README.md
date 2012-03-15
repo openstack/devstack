@@ -59,10 +59,18 @@ You can override environment variables used in stack.sh by creating file name 'l
 
 # Swift
 
-Swift is not installed by default, you need to add the **swift** keyword in the ENABLED_SERVICES variable to get it installed.
+Swift is not installed by default, you can enable easily by adding this to your localrc:
 
-If you have keystone enabled, Swift will authenticate against it, make sure to use the keystone URL to auth against.
+   ENABLED_SERVICE="$ENABLED_SERVICES,swift"
 
-At this time Swift is not started in a screen session but as daemon you need to use the **swift-init** CLI to manage the swift daemons.
+If you want a minimal swift install with only swift and keystone you can have this instead in your localrc:
+
+   ENABLED_SERVICES="key,mysql,swift"
+
+If you use swift with keystone, Swift will authenticate against it. You will need to make sure to use the keystone URL to auth against.
+
+Swift will be acting as a S3 endpoint for keystone so effectively replacing the **nova-objectore**.
+
+Only swift proxy server is launched in the screen session all other services are started in background and managed by **swift-init* tool.
 
 By default Swift will configure 3 replicas (and one spare) which could be IO intensive on a small vm, if you only want to do some quick testing of the API you can choose to only have one replica by customizing the variable SWIFT_REPLICAS in your localrc.
