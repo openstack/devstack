@@ -430,13 +430,18 @@ SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 # only some quick testing.
 SWIFT_REPLICAS=${SWIFT_REPLICAS:-3}
 
-# We only ask for Swift Hash if we have enabled swift service.
 if is_service_enabled swift; then
+    # If we are using swift, we can default the s3 port to swift instead
+    # of nova-objectstore
+    S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
+    # We only ask for Swift Hash if we have enabled swift service.
     # SWIFT_HASH is a random unique string for a swift cluster that
     # can never change.
     read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
 fi
 
+# Set default port for nova-objectstore
+S3_SERVICE_PORT=${S3_SERVICE_PORT:-3333}
 
 # Keystone
 # --------
@@ -1017,6 +1022,9 @@ fi
 
 # Storage Service
 if is_service_enabled swift; then
+    # Install memcached for swift.
+    apt_get install memcached
+
     # We first do a bit of setup by creating the directories and
     # changing the permissions so we can run it as our user.
 
@@ -1176,7 +1184,7 @@ if is_service_enabled swift; then
 
    # TODO: Bring some services in foreground.
    # Launch all services.
-   swift-init all start
+   swift-init all restart
 
    unset s swift_hash swift_auth_server
 fi
@@ -1243,9 +1251,8 @@ add_nova_opt "root_helper=sudo /usr/local/bin/nova-rootwrap"
 add_nova_opt "compute_scheduler_driver=$SCHEDULER"
 add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF_DIR/$NOVA_CONF"
 add_nova_opt "fixed_range=$FIXED_RANGE"
-if is_service_enabled n-obj; then
-    add_nova_opt "s3_host=$SERVICE_HOST"
-fi
+add_nova_opt "s3_host=$SERVICE_HOST"
+add_nova_opt "s3_port=$S3_SERVICE_PORT"
 if is_service_enabled quantum; then
     add_nova_opt "network_manager=nova.network.quantum.manager.QuantumManager"
     add_nova_opt "quantum_connection_host=$Q_HOST"
@@ -1471,6 +1478,7 @@ if is_service_enabled key; then
 
     sudo sed -e "s,%SERVICE_HOST%,$SERVICE_HOST,g" -i $KEYSTONE_CATALOG
 
+    sudo sed -e "s,%S3_SERVICE_PORT%,$S3_SERVICE_PORT,g" -i $KEYSTONE_CATALOG
 
     if [ "$SYSLOG" != "False" ]; then
         cp $KEYSTONE_DIR/etc/logging.conf.sample $KEYSTONE_DIR/etc/logging.conf
@@ -1500,6 +1508,16 @@ if is_service_enabled key; then
     SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
     ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES \
         bash $FILES/keystone_data.sh
+
+    # create an access key and secret key for nova ec2 register image
+    if is_service_enabled swift && is_service_enabled nova; then
+        CREDS=$(keystone --os_auth_url=$SERVICE_ENDPOINT --os_username=nova --os_password=$SERVICE_PASSWORD --os_tenant_name=$SERVICE_TENANT_NAME ec2-credentials-create)
+        ACCESS_KEY=$(echo "$CREDS" | awk '/ access / { print $4 }')
+        SECRET_KEY=$(echo "$CREDS" | awk '/ secret / { print $4 }')
+        add_nova_opt "s3_access_key=$ACCESS_KEY"
+        add_nova_opt "s3_secret_key=$SECRET_KEY"
+        add_nova_opt "s3_affix_tenant=True"
+    fi
 fi
 
 # launch the nova-api and wait for it to answer before continuing

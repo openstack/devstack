@@ -3,14 +3,14 @@
 # Initial data for Keystone using python-keystoneclient
 #
 # Tenant               User      Roles
-# -------------------------------------------------------
+# ------------------------------------------------------------------
 # admin                admin     admin
 # service              glance    admin
-# service              nova      admin
+# service              nova      admin, [ResellerAdmin (swift only)]
 # service              quantum   admin        # if enabled
 # service              swift     admin        # if enabled
 # demo                 admin     admin
-# demo                 demo      Member,anotherrole
+# demo                 demo      Member, anotherrole
 # invisible_to_admin   demo      Member
 #
 # Variables set before calling this script:
@@ -96,6 +96,15 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     keystone user-role-add --tenant_id $SERVICE_TENANT \
                            --user $SWIFT_USER \
                            --role $ADMIN_ROLE
+    # Nova needs ResellerAdmin role to download images when accessing
+    # swift through the s3 api. The admin role in swift allows a user
+    # to act as an admin for their tenant, but ResellerAdmin is needed
+    # for a user to act as any tenant. The name of this role is also
+    # configurable in swift-proxy.conf
+    RESELLER_ROLE=$(get_id keystone role-create --name=ResellerAdmin)
+    keystone user-role-add --tenant_id $SERVICE_TENANT \
+                           --user $NOVA_USER \
+                           --role $RESELLER_ROLE
 fi
 
 if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then

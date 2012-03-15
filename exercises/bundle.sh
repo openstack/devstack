@@ -57,7 +57,7 @@ AMI=`euca-register $BUCKET/$IMAGE.manifest.xml | cut -f2`
 die_if_not_set AMI "Failure registering $BUCKET/$IMAGE"
 
 # Wait for the image to become available
-if ! timeout $REGISTER_TIMEOUT sh -c "while euca-describe-images | grep '$AMI' | grep 'available'; do sleep 1; done"; then
+if ! timeout $REGISTER_TIMEOUT sh -c "while euca-describe-images | grep $AMI | grep -q available; do sleep 1; done"; then
     echo "Image $AMI not available within $REGISTER_TIMEOUT seconds"
     exit 1
 fi
