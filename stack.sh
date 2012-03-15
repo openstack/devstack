@@ -1182,9 +1182,10 @@ if is_service_enabled swift; then
    # We then can start rsync.
    sudo /etc/init.d/rsync restart || :
 
-   # TODO: Bring some services in foreground.
-   # Launch all services.
+   # With swift-init we are first spawning all the swift services but kill the
+   # proxy service so we can run it in foreground in screen.
    swift-init all restart
+   swift-init proxy stop
 
    unset s swift_hash swift_auth_server
 fi
@@ -1619,6 +1620,7 @@ screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_
 screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
+screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_LOCATION}/proxy-server.conf -v"
 
 
 # Install Images
