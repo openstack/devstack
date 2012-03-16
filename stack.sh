@@ -1614,7 +1614,6 @@ fi
 # We don't check for is_service_enable as screen_it does it for us
 screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
 screen_it n-crt "cd $NOVA_DIR && $NOVA_DIR/bin/nova-cert"
-screen_it n-obj "cd $NOVA_DIR && $NOVA_DIR/bin/nova-objectstore"
 screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
@@ -1624,6 +1623,10 @@ screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
 screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_LOCATION}/proxy-server.conf -v"
 
+# Starting the nova-objectstore only if swift service is not enabled.
+# Swift will act as s3 objectstore.
+is_service_enabled swift || \
+    screen_it n-obj "cd $NOVA_DIR && $NOVA_DIR/bin/nova-objectstore"
 
 # Install Images
 # ==============
