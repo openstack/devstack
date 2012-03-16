@@ -376,13 +376,13 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
 # TODO: add logging to different location.
 
 # By default the location of swift drives and objects is located inside
-# the swift source directory. SWIFT_DATA_LOCATION variable allow you to redefine
+# the swift source directory. SWIFT_DATA_DIR variable allow you to redefine
 # this.
-SWIFT_DATA_LOCATION=${SWIFT_DATA_LOCATION:-${SWIFT_DIR}/data}
+SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DEST}/data/swift}
 
 # We are going to have the configuration files inside the source
-# directory, change SWIFT_CONFIG_LOCATION if you want to adjust that.
-SWIFT_CONFIG_LOCATION=${SWIFT_CONFIG_LOCATION:-${SWIFT_DIR}/config}
+# directory, change SWIFT_CONFIG_DIR if you want to adjust that.
+SWIFT_CONFIG_DIR=${SWIFT_CONFIG_DIR:-/etc/swift}
 
 # devstack will create a loop-back disk formatted as XFS to store the
 # swift data. By default the disk size is 1 gigabyte. The variable
@@ -1128,39 +1128,39 @@ if is_service_enabled swift; then
     # changing the permissions so we can run it as our user.
 
     USER_GROUP=$(id -g)
-    sudo mkdir -p ${SWIFT_DATA_LOCATION}/drives
-    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_LOCATION}
+    sudo mkdir -p ${SWIFT_DATA_DIR}/drives
+    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_DIR}
 
     # We then create a loopback disk and format it to XFS.
     # TODO: Reset disks on new pass.
-    if [[ ! -e ${SWIFT_DATA_LOCATION}/drives/images/swift.img ]]; then
-        mkdir -p  ${SWIFT_DATA_LOCATION}/drives/images
-        sudo touch  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
-        sudo chown $USER: ${SWIFT_DATA_LOCATION}/drives/images/swift.img
+    if [[ ! -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
+        mkdir -p  ${SWIFT_DATA_DIR}/drives/images
+        sudo touch  ${SWIFT_DATA_DIR}/drives/images/swift.img
+        sudo chown $USER: ${SWIFT_DATA_DIR}/drives/images/swift.img
 
-        dd if=/dev/zero of=${SWIFT_DATA_LOCATION}/drives/images/swift.img \
+        dd if=/dev/zero of=${SWIFT_DATA_DIR}/drives/images/swift.img \
             bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
-        mkfs.xfs -f -i size=1024  ${SWIFT_DATA_LOCATION}/drives/images/swift.img
+        mkfs.xfs -f -i size=1024  ${SWIFT_DATA_DIR}/drives/images/swift.img
     fi
 
     # After the drive being created we mount the disk with a few mount
     # options to make it most efficient as possible for swift.
-    mkdir -p ${SWIFT_DATA_LOCATION}/drives/sdb1
-    if ! egrep -q ${SWIFT_DATA_LOCATION}/drives/sdb1 /proc/mounts; then
+    mkdir -p ${SWIFT_DATA_DIR}/drives/sdb1
+    if ! egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
         sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
-            ${SWIFT_DATA_LOCATION}/drives/images/swift.img ${SWIFT_DATA_LOCATION}/drives/sdb1
+            ${SWIFT_DATA_DIR}/drives/images/swift.img ${SWIFT_DATA_DIR}/drives/sdb1
     fi
 
     # We then create link to that mounted location so swift would know
     # where to go.
     for x in $(seq ${SWIFT_REPLICAS}); do
-        sudo ln -sf ${SWIFT_DATA_LOCATION}/drives/sdb1/$x ${SWIFT_DATA_LOCATION}/$x; done
+        sudo ln -sf ${SWIFT_DATA_DIR}/drives/sdb1/$x ${SWIFT_DATA_DIR}/$x; done
 
     # We now have to emulate a few different servers into one we
     # create all the directories needed for swift
     for x in $(seq ${SWIFT_REPLICAS}); do
-            drive=${SWIFT_DATA_LOCATION}/drives/sdb1/${x}
-            node=${SWIFT_DATA_LOCATION}/${x}/node
+            drive=${SWIFT_DATA_DIR}/drives/sdb1/${x}
+            node=${SWIFT_DATA_DIR}/${x}/node
             node_device=${node}/sdb1
             [[ -d $node ]] && continue
             [[ -d $drive ]] && continue
@@ -1169,17 +1169,23 @@ if is_service_enabled swift; then
             sudo chown -R $USER: ${node}
     done
 
-   sudo mkdir -p ${SWIFT_CONFIG_LOCATION}/{object,container,account}-server /var/run/swift
-   sudo chown -R $USER: ${SWIFT_CONFIG_LOCATION} /var/run/swift
+   sudo mkdir -p ${SWIFT_CONFIG_DIR}/{object,container,account}-server /var/run/swift
+   sudo chown -R $USER: ${SWIFT_CONFIG_DIR} /var/run/swift
 
-   # swift-init has a bug using /etc/swift until bug #885595 is fixed
-   # we have to create a link
-   sudo ln -sf ${SWIFT_CONFIG_LOCATION} /etc/swift
+    if [[ "$SWIFT_CONFIG_DIR" != "/etc/swift" ]]; then
+        # Some swift tools are hard-coded to use /etc/swift and are apparenty not going to be fixed.
+        # Create a symlink if the config dir is moved
+        sudo ln -sf ${SWIFT_CONFIG_DIR} /etc/swift
+    fi
 
-   # Swift use rsync to syncronize between all the different
-   # partitions (which make more sense when you have a multi-node
-   # setup) we configure it with our version of rsync.
-   sed -e "s/%GROUP%/${USER_GROUP}/;s/%USER%/$USER/;s,%SWIFT_DATA_LOCATION%,$SWIFT_DATA_LOCATION," $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
+    # Swift use rsync to syncronize between all the different
+    # partitions (which make more sense when you have a multi-node
+    # setup) we configure it with our version of rsync.
+    sed -e "
+        s/%GROUP%/${USER_GROUP}/;
+        s/%USER%/$USER/;
+        s,%SWIFT_DATA_DIR%,$SWIFT_DATA_DIR,;
+    " $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
    sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
 
    # By default Swift will be installed with the tempauth middleware
@@ -1194,7 +1200,7 @@ if is_service_enabled swift; then
    # We do the install of the proxy-server and swift configuration
    # replacing a few directives to match our configuration.
    sed -e "
-       s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},g;
+       s,%SWIFT_CONFIG_DIR%,${SWIFT_CONFIG_DIR},g;
        s,%USER%,$USER,g;
        s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
        s,%SERVICE_USERNAME%,swift,g;
@@ -1209,35 +1215,40 @@ if is_service_enabled swift; then
        s,%KEYSTONE_AUTH_PROTOCOL%,${KEYSTONE_AUTH_PROTOCOL},g;
        s/%AUTH_SERVER%/${swift_auth_server}/g;
     " $FILES/swift/proxy-server.conf | \
-       sudo tee  ${SWIFT_CONFIG_LOCATION}/proxy-server.conf
+       sudo tee ${SWIFT_CONFIG_DIR}/proxy-server.conf
 
-   sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > ${SWIFT_CONFIG_LOCATION}/swift.conf
+    sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > ${SWIFT_CONFIG_DIR}/swift.conf
 
-   # We need to generate a object/account/proxy configuration
-   # emulating 4 nodes on different ports we have a little function
-   # that help us doing that.
-   function generate_swift_configuration() {
-       local server_type=$1
-       local bind_port=$2
-       local log_facility=$3
-       local node_number
+    # We need to generate a object/account/proxy configuration
+    # emulating 4 nodes on different ports we have a little function
+    # that help us doing that.
+    function generate_swift_configuration() {
+        local server_type=$1
+        local bind_port=$2
+        local log_facility=$3
+        local node_number
 
-       for node_number in $(seq ${SWIFT_REPLICAS}); do
-           node_path=${SWIFT_DATA_LOCATION}/${node_number}
-           sed -e "s,%SWIFT_CONFIG_LOCATION%,${SWIFT_CONFIG_LOCATION},;s,%USER%,$USER,;s,%NODE_PATH%,${node_path},;s,%BIND_PORT%,${bind_port},;s,%LOG_FACILITY%,${log_facility}," \
-               $FILES/swift/${server_type}-server.conf > ${SWIFT_CONFIG_LOCATION}/${server_type}-server/${node_number}.conf
-           bind_port=$(( ${bind_port} + 10 ))
-           log_facility=$(( ${log_facility} + 1 ))
-       done
-   }
-   generate_swift_configuration object 6010 2
-   generate_swift_configuration container 6011 2
-   generate_swift_configuration account 6012 2
+        for node_number in $(seq ${SWIFT_REPLICAS}); do
+            node_path=${SWIFT_DATA_DIR}/${node_number}
+            sed -e "
+                s,%SWIFT_CONFIG_DIR%,${SWIFT_CONFIG_DIR},;
+                s,%USER%,$USER,;
+                s,%NODE_PATH%,${node_path},;
+                s,%BIND_PORT%,${bind_port},;
+                s,%LOG_FACILITY%,${log_facility},
+            " $FILES/swift/${server_type}-server.conf > ${SWIFT_CONFIG_DIR}/${server_type}-server/${node_number}.conf
+            bind_port=$(( ${bind_port} + 10 ))
+            log_facility=$(( ${log_facility} + 1 ))
+        done
+    }
+    generate_swift_configuration object 6010 2
+    generate_swift_configuration container 6011 2
+    generate_swift_configuration account 6012 2
 
 
    # We have some specific configuration for swift for rsyslog. See
    # the file /etc/rsyslog.d/10-swift.conf for more info.
-   swift_log_dir=${SWIFT_DATA_LOCATION}/logs
+   swift_log_dir=${SWIFT_DATA_DIR}/logs
    rm -rf ${swift_log_dir}
    mkdir -p ${swift_log_dir}/hourly
    sudo chown -R syslog:adm ${swift_log_dir}
@@ -1247,7 +1258,7 @@ if is_service_enabled swift; then
 
    # This is where we create three different rings for swift with
    # different object servers binding on different ports.
-   pushd ${SWIFT_CONFIG_LOCATION} >/dev/null && {
+   pushd ${SWIFT_CONFIG_DIR} >/dev/null && {
 
        rm -f *.builder *.ring.gz backups/*.builder backups/*.ring.gz
 
@@ -1619,7 +1630,7 @@ screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_
 screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
-screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_LOCATION}/proxy-server.conf -v"
+screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
 
 # Starting the nova-objectstore only if swift service is not enabled.
 # Swift will act as s3 objectstore.
