@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 
-# **exercise.sh** - using the cloud can be fun
+# **floating_ips.sh** - using the cloud can be fun
 
 # we will use the ``nova`` cli tool provided by the ``python-novaclient``
-# package
-#
+# package to work out the instance connectivity
 
-
-echo "**************************************************"
+echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
-echo "**************************************************"
+echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
@@ -50,6 +48,7 @@ DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
 
 # Additional floating IP pool and range
 TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
+
 
 # Launching a server
 # ==================
@@ -162,8 +161,8 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $
 fi
 
 # add floating ip to our server
-nova add-floating-ip $VM_UUID $FLOATING_IP
-die_if_error "Failure adding floating IP $FLOATING_IP to $NAME"
+nova add-floating-ip $VM_UUID $FLOATING_IP || \
+    die "Failure adding floating IP $FLOATING_IP to $NAME"
 
 # test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
@@ -182,8 +181,7 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TES
 fi
 
 # dis-allow icmp traffic (ping)
-nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
-die_if_error "Failure deleting security group rule from $SECGROUP"
+nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || die "Failure deleting security group rule from $SECGROUP"
 
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "xenserver" ]; then
@@ -196,16 +194,13 @@ if [ "$VIRT_DRIVER" != "xenserver" ]; then
 fi
 
 # de-allocate the floating ip
-nova floating-ip-delete $FLOATING_IP
-die_if_error "Failure deleting floating IP $FLOATING_IP"
+nova floating-ip-delete $FLOATING_IP || die "Failure deleting floating IP $FLOATING_IP"
 
 # Delete second floating IP
-nova floating-ip-delete $TEST_FLOATING_IP
-die_if_error "Failure deleting floating IP $TEST_FLOATING_IP"
+nova floating-ip-delete $TEST_FLOATING_IP || die "Failure deleting floating IP $TEST_FLOATING_IP"
 
 # shutdown the server
-nova delete $VM_UUID
-die_if_error "Failure deleting instance $NAME"
+nova delete $VM_UUID || die "Failure deleting instance $NAME"
 
 # make sure the VM shuts down within a reasonable time
 if ! timeout $TERMINATE_TIMEOUT sh -c "while nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
@@ -214,10 +209,9 @@ if ! timeout $TERMINATE_TIMEOUT sh -c "while nova show $VM_UUID | grep status | 
 fi
 
 # Delete a secgroup
-nova secgroup-delete $SECGROUP
-die_if_error "Failure deleting security group $SECGROUP"
+nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
 
 set +o xtrace
-echo "**************************************************"
-echo "End DevStack Exercise: $0"
-echo "**************************************************"
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"

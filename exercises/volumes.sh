@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
+# **volumes.sh**
+
 # Test nova volumes with the nova command from python-novaclient
 
-echo "**************************************************"
+echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
-echo "**************************************************"
+echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
@@ -36,6 +38,7 @@ DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 
 # Boot this image, use first AMi image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
+
 
 # Launching a server
 # ==================
@@ -136,8 +139,8 @@ die_if_not_set VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 
 # Attach to server
 DEVICE=/dev/vdb
-nova volume-attach $VM_UUID $VOL_ID $DEVICE
-die_if_error "Failure attaching volume $VOL_NAME to $NAME"
+nova volume-attach $VM_UUID $VOL_ID $DEVICE || \
+    die "Failure attaching volume $VOL_NAME to $NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
     echo "Volume $VOL_NAME not attached to $NAME"
     exit 1
@@ -151,26 +154,23 @@ if [[ "$VOL_ATTACH" != $VM_UUID ]]; then
 fi
 
 # Detach volume
-nova volume-detach $VM_UUID $VOL_ID
-die_if_error "Failure detaching volume $VOL_NAME from $NAME"
+nova volume-detach $VM_UUID $VOL_ID || die "Failure detaching volume $VOL_NAME from $NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not detached from $NAME"
     exit 1
 fi
 
 # Delete volume
-nova volume-delete $VOL_ID
-die_if_error "Failure deleting volume $VOL_NAME"
+nova volume-delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
     exit 1
 fi
 
 # shutdown the server
-nova delete $NAME
-die_if_error "Failure deleting instance $NAME"
+nova delete $NAME || die "Failure deleting instance $NAME"
 
 set +o xtrace
-echo "**************************************************"
-echo "End DevStack Exercise: $0"
-echo "**************************************************"
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"

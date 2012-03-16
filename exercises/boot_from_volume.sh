@@ -8,9 +8,9 @@
 #  *  Format and install an os onto the volume
 #  *  Detach volume from builder, and then boot volume-backed instance
 
-echo "**************************************************"
+echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
-echo "**************************************************"
+echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
@@ -46,9 +46,12 @@ DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 # Default floating IP pool name
 DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
 
+
+# Launching servers
+# =================
+
 # Grab the id of the image to launch
 IMAGE=`glance -f index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
-
 die_if_not_set IMAGE "Failure getting image"
 
 # Instance and volume names
@@ -88,7 +91,8 @@ nova keypair-add $KEY_NAME > $KEY_FILE
 chmod 600 $KEY_FILE
 
 # Boot our instance
-VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP --key_name $KEY_NAME $INSTANCE_NAME | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
+VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP --key_name $KEY_NAME $INSTANCE_NAME | grep ' id ' | get_field 2`
+die_if_not_set VM_UUID "Failure launching $INSTANCE_NAME"
 
 # check that the status is active within ACTIVE_TIMEOUT seconds
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
@@ -105,7 +109,7 @@ if [ "$FREE_ALL_FLOATING_IPS" = "True" ]; then
 fi
 
 # Allocate floating ip
-FLOATING_IP=`nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | cut -d '|' -f2 | tr -d ' '`
+FLOATING_IP=`nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | get_field 1`
 
 # Make sure the ip gets allocated
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $FLOATING_IP; do sleep 1; done"; then
@@ -133,7 +137,7 @@ fi
 
 # FIXME (anthony) - python-novaclient should accept a volume_name for the attachment param?
 DEVICE=/dev/vdb
-VOLUME_ID=`nova volume-list | grep $VOL_NAME  | cut -d '|' -f 2 | tr -d ' '`
+VOLUME_ID=`nova volume-list | grep $VOL_NAME  | get_field 1`
 nova volume-attach $INSTANCE_NAME $VOLUME_ID $DEVICE
 
 # Wait till volume is attached
@@ -192,7 +196,8 @@ nova volume-detach $INSTANCE_NAME $VOLUME_ID
 # The format of mapping is:
 # <dev_name>=<id>:<type>:<size(GB)>:<delete_on_terminate>
 # Leaving the middle two fields blank appears to do-the-right-thing
-VOL_VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE --block_device_mapping vda=$VOLUME_ID:::0 --security_groups=$SECGROUP --key_name $KEY_NAME $VOL_INSTANCE_NAME | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
+VOL_VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE --block_device_mapping vda=$VOLUME_ID:::0 --security_groups=$SECGROUP --key_name $KEY_NAME $VOL_INSTANCE_NAME | grep ' id ' | get_field 2`
+die_if_not_set VOL_VM_UUID "Failure launching $VOL_INSTANCE_NAME"
 
 # Check that the status is active within ACTIVE_TIMEOUT seconds
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VOL_VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
@@ -201,7 +206,7 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VOL_VM_UUID | grep status
 fi
 
 # Add floating ip to our server
-nova remove-floating-ip  $VM_UUID $FLOATING_IP
+nova remove-floating-ip $VM_UUID $FLOATING_IP
 
 # Gratuitous sleep, probably hiding a race condition :/
 sleep 1
@@ -221,7 +226,8 @@ echo "success!"
 EOF
 
 # Delete volume backed instance
-nova delete $VOL_INSTANCE_NAME
+nova delete $VOL_INSTANCE_NAME || \
+    die "Failure deleting instance volume $VOL_INSTANCE_NAME"
 
 # Wait till our volume is no longer in-use
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
@@ -230,10 +236,12 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | 
 fi
 
 # Delete the volume
-nova volume-delete $VOL_NAME
+nova volume-delete $VOL_NAME || \
+    die "Failure deleting volume $VOLUME_NAME"
 
 # Delete instance
-nova delete $INSTANCE_NAME
+nova delete $INSTANCE_NAME || \
+    die "Failure deleting instance $INSTANCE_NAME"
 
 # Wait for termination
 if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $INSTANCE_NAME; do sleep 1; done"; then
@@ -242,12 +250,14 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $INSTANCE_NAME; do sleep 1; 
 fi
 
 # De-allocate the floating ip
-nova floating-ip-delete $FLOATING_IP
+nova floating-ip-delete $FLOATING_IP || \
+    die "Failure deleting floating IP $FLOATING_IP"
 
-# Delete secgroup
-nova secgroup-delete $SECGROUP
+# Delete a secgroup
+nova secgroup-delete $SECGROUP || \
+    die "Failure deleting security group $SECGROUP"
 
 set +o xtrace
-echo "**************************************************"
-echo "End DevStack Exercise: $0"
-echo "**************************************************"
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"
