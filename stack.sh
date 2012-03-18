@@ -1460,7 +1460,7 @@ if is_service_enabled key; then
         echo "catalog.RegionOne.object_store.publicURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
         echo "catalog.RegionOne.object_store.adminURL = http://%SERVICE_HOST%:8080/" >> $KEYSTONE_CATALOG
         echo "catalog.RegionOne.object_store.internalURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.object_store.name = 'Swift Service'" >> $KEYSTONE_CATALOG
+        echo "catalog.RegionOne.object_store.name = Swift Service" >> $KEYSTONE_CATALOG
     fi
 
     # Add quantum endpoints to service catalog if quantum is enabled
@@ -1468,7 +1468,7 @@ if is_service_enabled key; then
         echo "catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
         echo "catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
         echo "catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.network.name = 'Quantum Service'" >> $KEYSTONE_CATALOG
+        echo "catalog.RegionOne.network.name = Quantum Service" >> $KEYSTONE_CATALOG
     fi
 
     sudo sed -e "s,%SERVICE_HOST%,$SERVICE_HOST,g" -i $KEYSTONE_CATALOG
