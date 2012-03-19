@@ -1,5 +1,9 @@
 # functions - Common functions used by DevStack components
 
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
 
 # apt-get wrapper to set arguments correctly
 # apt_get package [package ...]
@@ -22,15 +26,13 @@ function cp_it {
 }
 
 
-# Checks the exit code of the last command and prints "message"
-# if it is non-zero and exits
-# die_if_error "message"
-function die_if_error() {
+# Prints "message" and exits
+# die "message"
+function die() {
     local exitcode=$?
-    if [ $exitcode != 0 ]; then
-        echo $@
-        exit $exitcode
-    fi
+    set +o xtrace
+    echo $@
+    exit $exitcode
 }
 
 
@@ -39,12 +41,16 @@ function die_if_error() {
 # NOTE: env-var is the variable name without a '$'
 # die_if_not_set env-var "message"
 function die_if_not_set() {
-    local exitcode=$?
-    local evar=$1; shift
-    if ! is_set $evar || [ $exitcode != 0 ]; then
-        echo $@
-        exit 99
-    fi
+    (
+        local exitcode=$?
+        set +o xtrace
+        local evar=$1; shift
+        if ! is_set $evar || [ $exitcode != 0 ]; then
+            set +o xtrace
+            echo $@
+            exit -1
+        fi
+    )
 }
 
 
@@ -143,3 +149,6 @@ function trueorfalse() {
     [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
     echo "$default"
 }
+
+# Restore xtrace
+$XTRACE

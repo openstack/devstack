@@ -2,9 +2,9 @@
 
 # Test OpenStack client enviroment variable handling
 
-echo "**************************************************"
+echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
-echo "**************************************************"
+echo "*********************************************************************"
 
 # Verify client workage
 VERIFY=${1:-""}
@@ -149,8 +149,8 @@ report "EC2" $STATUS_EC2
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT
 
-echo "**************************************************"
-echo "End DevStack Exercise: $0"
-echo "**************************************************"
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"
 
 exit $RETURN

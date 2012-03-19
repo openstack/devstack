@@ -133,8 +133,7 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 else
     # We're not root, make sure sudo is available
-    dpkg -l sudo
-    die_if_error "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
+    dpkg -l sudo || die "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
 
     # UEC images /etc/sudoers does not have a '#includedir'. add one.
     sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
