@@ -98,7 +98,7 @@ fi
 
 VAL=$(iniget test.ini zzz handlers)
 if [[ -z "$VAL" ]]; then
-    echo "OK"
+    echo "OK: zzz not present"
 else
     echo "iniget failed: $VAL"
 fi
@@ -106,12 +106,30 @@ fi
 iniset test.ini zzz handlers "999"
 
 VAL=$(iniget test.ini zzz handlers)
-if [[ -z "$VAL" ]]; then
-    echo "OK"
+if [[ -n "$VAL" ]]; then
+    echo "OK: zzz not present"
 else
     echo "iniget failed: $VAL"
 fi
 
+
+# Test option not exist
+
+VAL=$(iniget test.ini aaa debug)
+if [[ -z "$VAL" ]]; then
+    echo "OK aaa.debug not present"
+else
+    echo "iniget failed: $VAL"
+fi
+
+iniset test.ini aaa debug "999"
+
+VAL=$(iniget test.ini aaa debug)
+if [[ -n "$VAL" ]]; then
+    echo "OK aaa.debug present"
+else
+    echo "iniget failed: $VAL"
+fi
 
 # Test comments
 

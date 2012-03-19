@@ -184,7 +184,7 @@ function git_clone {
 
 
 # Comment an option in an INI file
-# optset config-file section option
+# iniset config-file section option
 function inicomment() {
     local file=$1
     local section=$2
@@ -194,7 +194,7 @@ function inicomment() {
 
 
 # Get an option from an INI file
-# optget config-file section option
+# iniget config-file section option
 function iniget() {
     local file=$1
     local section=$2
@@ -206,16 +206,25 @@ function iniget() {
 
 
 # Set an option in an INI file
-# This is NOT a complete option setter, it assumes that the section and
-# option already exist in the INI file.  If the section does not exist,
-# nothing happens.
-# optset config-file section option value
+# iniset config-file section option value
 function iniset() {
     local file=$1
     local section=$2
     local option=$3
     local value=$4
-    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=[ \t]*\).*$|\1$value|" $file
+    if ! grep -q "^\[$section\]" $file; then
+        # Add section at the end
+        echo -e "\n[$section]" >>$file
+    fi
+    if [[ -z "$(iniget $file $section $option)" ]]; then
+        # Add it
+        sed -i -e "/^\[$section\]/ a\\
+$option = $value
+" $file
+    else
+        # Replace it
+        sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=[ \t]*\).*$|\1$value|" $file
+    fi
 }
 
 
