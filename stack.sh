@@ -1079,7 +1079,7 @@ if is_service_enabled swift; then
    # which has some default username and password if you have
    # configured keystone it will checkout the directory.
    if is_service_enabled key; then
-       swift_auth_server="s3token tokenauth keystone"
+       swift_auth_server="s3token authtoken keystone"
    else
        swift_auth_server=tempauth
    fi
@@ -1092,6 +1092,7 @@ if is_service_enabled swift; then
        s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
        s,%SERVICE_USERNAME%,swift,g;
        s,%SERVICE_PASSWORD%,$SERVICE_PASSWORD,g;
+       s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
        s,%SERVICE_TOKEN%,${SERVICE_TOKEN},g;
        s,%KEYSTONE_SERVICE_PORT%,${KEYSTONE_SERVICE_PORT},g;
        s,%KEYSTONE_SERVICE_HOST%,${KEYSTONE_SERVICE_HOST},g;
