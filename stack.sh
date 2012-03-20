@@ -883,8 +883,8 @@ if is_service_enabled n-api; then
     # for Nova to validate Keystone tokens.
 
     # Allow rate limiting to be turned off for testing, like for Tempest
-    # NOTE: Set OSAPI_RATE_LIMIT=" " to turn OFF rate limiting
-    OSAPI_RATE_LIMIT=${OSAPI_RATE_LIMIT:-"ratelimit"}
+    # NOTE: Set API_RATE_LIMIT="False" to turn OFF rate limiting
+    API_RATE_LIMIT=${API_RATE_LIMIT:-"True"}
 
     # Remove legacy paste config if present
     rm -f $NOVA_DIR/bin/nova-api-paste.ini
@@ -1320,10 +1320,14 @@ fi
 if [ "$SYSLOG" != "False" ]; then
     add_nova_opt "use_syslog=True"
 fi
+if [ "$API_RATE_LIMIT" != "True" ]; then
+    add_nova_opt "api_rate_limit=False"
+fi
+
 
 # Provide some transition from EXTRA_FLAGS to EXTRA_OPTS
 if [[ -z "$EXTRA_OPTS" && -n "$EXTRA_FLAGS" ]]; then
-	EXTRA_OPTS=$EXTRA_FLAGS
+    EXTRA_OPTS=$EXTRA_FLAGS
 fi
 
 # You can define extra nova conf flags by defining the array EXTRA_OPTS,
