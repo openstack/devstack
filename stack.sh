@@ -814,6 +814,11 @@ fi
 # ------
 
 if is_service_enabled g-reg; then
+    GLANCE_CONF_DIR=/etc/glance
+    if [[ ! -d $GLANCE_CONF_DIR ]]; then
+        sudo mkdir -p $GLANCE_CONF_DIR
+    fi
+    sudo chown `whoami` $GLANCE_CONF_DIR
     GLANCE_IMAGE_DIR=$DEST/glance/images
     # Delete existing images
     rm -rf $GLANCE_IMAGE_DIR
@@ -845,22 +850,22 @@ if is_service_enabled g-reg; then
     }
 
     # Copy over our glance configurations and update them
-    GLANCE_REGISTRY_CONF=$GLANCE_DIR/etc/glance-registry.conf
+    GLANCE_REGISTRY_CONF=$GLANCE_CONF_DIR/glance-registry.conf
     cp $FILES/glance-registry.conf $GLANCE_REGISTRY_CONF
     glance_config $GLANCE_REGISTRY_CONF
 
     if [[ -e $FILES/glance-registry-paste.ini ]]; then
-        GLANCE_REGISTRY_PASTE_INI=$GLANCE_DIR/etc/glance-registry-paste.ini
+        GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
         cp $FILES/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
         glance_config $GLANCE_REGISTRY_PASTE_INI
     fi
 
-    GLANCE_API_CONF=$GLANCE_DIR/etc/glance-api.conf
+    GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
     cp $FILES/glance-api.conf $GLANCE_API_CONF
     glance_config $GLANCE_API_CONF
 
     if [[ -e $FILES/glance-api-paste.ini ]]; then
-        GLANCE_API_PASTE_INI=$GLANCE_DIR/etc/glance-api-paste.ini
+        GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
         cp $FILES/glance-api-paste.ini $GLANCE_API_PASTE_INI
         glance_config $GLANCE_API_PASTE_INI
     fi
@@ -1426,12 +1431,12 @@ screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< 
 
 # launch the glance registry service
 if is_service_enabled g-reg; then
-    screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=etc/glance-registry.conf"
+    screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
 fi
 
 # launch the glance api and wait for it to answer before continuing
 if is_service_enabled g-api; then
-    screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=etc/glance-api.conf"
+    screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
       echo "g-api did not start"
