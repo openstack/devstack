@@ -1,8 +1,8 @@
-Devstack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
+DevStack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
 
 # Goals
 
-* To quickly build dev OpenStack environments in a clean oneiric environment
+* To quickly build dev OpenStack environments in a clean Oneiric or Precise environment
 * To describe working configurations of OpenStack (which code branches work together?  what do config files look like for those branches?)
 * To make it easier for developers to dive into OpenStack so that they can productively contribute without having to understand every part of the system at once
 * To make it easy to prototype cross-project features
@@ -10,23 +10,23 @@ Devstack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
 
 Read more at http://devstack.org (built from the gh-pages branch)
 
-IMPORTANT: Be sure to carefully read stack.sh and any other scripts you execute before you run them, as they install software and may alter your networking configuration.  We strongly recommend that you run stack.sh in a clean and disposable vm when you are first getting started.
+IMPORTANT: Be sure to carefully read `stack.sh` and any other scripts you execute before you run them, as they install software and may alter your networking configuration.  We strongly recommend that you run `stack.sh` in a clean and disposable vm when you are first getting started.
 
 # Devstack on Xenserver
 
-If you would like to use Xenserver as the hypervisor, please refer to the instructions in ./tools/xen/README.md.
+If you would like to use Xenserver as the hypervisor, please refer to the instructions in `./tools/xen/README.md`.
 
 # Versions
 
-The devstack master branch generally points to trunk versions of OpenStack components.  For older, stable versions, look for branches named stable/[release].  For example, you can do the following to create a diablo OpenStack cloud:
+The devstack master branch generally points to trunk versions of OpenStack components.  For older, stable versions, look for branches named stable/[release] in the DevStack repo.  For example, you can do the following to create a diablo OpenStack cloud:
 
     git checkout stable/diablo
     ./stack.sh
 
-Milestone builds are also available in this manner:
+You can also pick specific OpenStack project releases by setting the appropriate `*_BRANCH` variables in `localrc` (look in `stackrc` for the default set).  Usually just before a release there will be milestone-proposed branches that need to be tested::
 
-    git checkout essex-3
-    ./stack.sh
+    GLANCE_REPO=https://github.com/openstack/glance.git
+    GLANCE_BRANCH=milestone-proposed
 
 # Start A Dev Cloud
 
@@ -55,22 +55,22 @@ If the EC2 API is your cup-o-tea, you can create credentials and use euca2ools:
 
 # Customizing
 
-You can override environment variables used in stack.sh by creating file name 'localrc'.  It is likely that you will need to do this to tweak your networking configuration should you need to access your cloud from a different host.
+You can override environment variables used in `stack.sh` by creating file name `localrc`.  It is likely that you will need to do this to tweak your networking configuration should you need to access your cloud from a different host.
 
 # Swift
 
-Swift is not installed by default, you can enable easily by adding this to your localrc:
+Swift is not installed by default, you can enable easily by adding this to your `localrc`:
 
-   ENABLED_SERVICE="$ENABLED_SERVICES,swift"
+    ENABLED_SERVICE="$ENABLED_SERVICES,swift"
 
-If you want a minimal swift install with only swift and keystone you can have this instead in your localrc:
+If you want a minimal Swift install with only Swift and Keystone you can have this instead in your `localrc`:
 
-   ENABLED_SERVICES="key,mysql,swift"
+    ENABLED_SERVICES="key,mysql,swift"
 
-If you use swift with keystone, Swift will authenticate against it. You will need to make sure to use the keystone URL to auth against.
+If you use Swift with Keystone, Swift will authenticate against it. You will need to make sure to use the Keystone URL to auth against.
 
-Swift will be acting as a S3 endpoint for keystone so effectively replacing the **nova-objectore**.
+Swift will be acting as a S3 endpoint for Keystone so effectively replacing the `nova-objectstore`.
 
-Only swift proxy server is launched in the screen session all other services are started in background and managed by **swift-init* tool.
+Only Swift proxy server is launched in the screen session all other services are started in background and managed by `swift-init` tool.
 
-By default Swift will configure 3 replicas (and one spare) which could be IO intensive on a small vm, if you only want to do some quick testing of the API you can choose to only have one replica by customizing the variable SWIFT_REPLICAS in your localrc.
+By default Swift will configure 3 replicas (and one spare) which could be IO intensive on a small vm, if you only want to do some quick testing of the API you can choose to only have one replica by customizing the variable `SWIFT_REPLICAS` in your `localrc`.
