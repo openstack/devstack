@@ -35,7 +35,7 @@ if ! which git; then
 fi
 
 # Clone devstack
-DEVSTACK=${DEVSTACKROOT:/root/devstack}
+DEVSTACK=${DEVSTACKROOT:-"/root/devstack"}
 if [ ! -d $DEVSTACK ]; then
     git clone git://github.com/openstack-dev/devstack.git $DEVSTACK
 fi
