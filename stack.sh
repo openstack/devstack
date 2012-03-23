@@ -646,14 +646,13 @@ if is_service_enabled horizon; then
     # django powered web control panel for openstack
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
 fi
+if is_service_enabled quantum; then
+    git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
+fi
 if is_service_enabled q-svc; then
     # quantum
     git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 fi
-if is_service_enabled quantum; then
-    git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
-fi
-
 if is_service_enabled m-svc; then
     # melange
     git_clone $MELANGE_REPO $MELANGE_DIR $MELANGE_BRANCH
@@ -684,11 +683,11 @@ cd $NOVA_DIR; sudo python setup.py develop
 if is_service_enabled horizon; then
     cd $HORIZON_DIR; sudo python setup.py develop
 fi
-if is_service_enabled q-svc; then
-    cd $QUANTUM_DIR; sudo python setup.py develop
-fi
 if is_service_enabled quantum; then
     cd $QUANTUM_CLIENT_DIR; sudo python setup.py develop
+fi
+if is_service_enabled q-svc; then
+    cd $QUANTUM_DIR; sudo python setup.py develop
 fi
 if is_service_enabled m-svc; then
     cd $MELANGE_DIR; sudo python setup.py develop
