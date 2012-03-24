@@ -1535,6 +1535,11 @@ fi
 
 # Quantum service
 if is_service_enabled q-svc; then
+    QUANTUM_CONF_DIR=/etc/quantum
+    if [[ ! -d $QUANTUM_CONF_DIR ]]; then
+        sudo mkdir -p $QUANTUM_CONF_DIR
+    fi
+    sudo chown `whoami` $QUANTUM_CONF_DIR
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         # Install deps
         # FIXME add to files/apts/quantum, but don't install if not needed!
@@ -1547,11 +1552,13 @@ if is_service_enabled q-svc; then
             echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
             exit 1
         fi
-        QUANTUM_PLUGIN_INI_FILE=$QUANTUM_DIR/etc/plugins.ini
+        QUANTUM_PLUGIN_INI_FILE=$QUANTUM_CONF_DIR/plugins.ini
+        sudo cp $QUANTUM_DIR/etc/plugins.ini $QUANTUM_PLUGIN_INI_FILE
         # Make sure we're using the openvswitch plugin
-        sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
+        sudo sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
     fi
-   screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$QUANTUM_CLIENT_DIR:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_DIR/etc/quantum.conf"
+   sudo cp $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF_DIR/quantum.conf
+   screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$QUANTUM_CLIENT_DIR:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_CONF_DIR/quantum.conf"
 fi
 
 # Quantum agent (for compute nodes)
@@ -1564,8 +1571,9 @@ if is_service_enabled q-agt; then
         sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
 
        # Start up the quantum <-> openvswitch agent
-       QUANTUM_OVS_CONFIG_FILE=$QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
-       sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum/g" $QUANTUM_OVS_CONFIG_FILE
+       QUANTUM_OVS_CONFIG_FILE=$QUANTUM_CONF_DIR/ovs_quantum_plugin.ini
+       sudo cp $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini $QUANTUM_OVS_CONFIG_FILE
+       sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum/g" $QUANTUM_OVS_CONFIG_FILE
        screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_OVS_CONFIG_FILE -v"
     fi
 
