@@ -1,0 +1,77 @@
+# Sample ``localrc`` for user-configurable variables in ``stack.sh``
+
+# NOTE: Copy this file to the root ``devstack`` directory for it to work properly.
+
+# ``localrc`` is a user-maintained setings file that is sourced at the end of
+# ``stackrc``. This gives it the ability to override any variables set in ``stackrc``.
+# Also, most of the settings in ``stack.sh`` are written to only be set if no
+# value has already been set; this lets ``localrc`` effectively override the
+# default values.
+
+# This is a collection of some of the settings we have found to be useful
+# in our DevStack development environments. Additional settings are described
+# in http://devstack.org/localrc.html
+# These should be considered as samples and are unsupported DevStack code.
+
+
+# Minimal Contents
+# ----------------
+
+# While ``stack.sh`` is happy to run without ``localrc``, devlife is better when
+# there are a few minimal variables set:
+
+# If the ``*_PASSWORD`` variables are not set here you will be prompted to enter
+# values for them by ``stack.sh``.
+ADMIN_PASSWORD=nomoresecrete
+MYSQL_PASSWORD=stackdb
+RABBIT_PASSWORD=stackqueue
+SERVICE_PASSWORD=$ADMIN_PASSWORD
+
+# HOST_IP should be set manually for best results.  It is auto-detected during the
+# first run of ``stack.sh`` but often is indeterminate on later runs due to the IP
+# being moved from an Ethernet interface to a bridge on the host. Setting it here
+# also makes it available for ``openrc`` to include when setting ``OS_AUTH_URL``.
+# ``HOST_IP`` is not set by default.
+HOST_IP=w.x.y.z
+
+
+# Set DevStack Install Directory
+# ------------------------------
+
+# The DevStack install directory is set by the ``DEST`` variable. By setting it
+# early in ``localrc`` you can reference it in later variables. The default value
+# is ``/opt/stack``. It can be useful to set it even though it is not changed from
+# the default value.
+DEST=/opt/stack
+
+
+# Using milestone-proposed branches
+# ---------------------------------
+
+# Uncomment these to grab the milestone-proposed branches from the repos:
+#GLANCE_BRANCH=milestone-proposed
+#HORIZON_BRANCH=milestone-proposed
+#KEYSTONE_BRANCH=milestone-proposed
+#KEYSTONECLIENT_BRANCH=milestone-proposed
+#NOVA_BRANCH=milestone-proposed
+#NOVACLIENT_BRANCH=milestone-proposed
+#SWIFT_BRANCH=milestone-proposed
+
+
+# Swift
+# -----
+
+# Swift is now used as the back-end for the S3-like object store. If Nova's
+# objectstore (``n-obj`` in ``ENABLED_SERVICES``) is enabled, it will NOT
+# run if Swift is enabled. Setting the hash value is required and you will
+# be prompted for it if Swift is enabled so just set it to something already:
+SWIFT_HASH=66a3d6b56c1f479c8b4e70ab5c2000f5
+
+# For development purposes the default of 3 replicas is usually not required.
+# Set this to 1 to save some resources:
+SWIFT_REPLICAS=1
+
+# The data for Swift is stored in the source tree by default (``$DEST/swift/data``)
+# and can be moved by setting ``SWIFT_DATA_DIR``. The directory will be created
+# if it does not exist.
+SWIFT_DATA_DIR=$DEST/data
