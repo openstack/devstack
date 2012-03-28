@@ -747,6 +747,51 @@ EOF
     sudo service mysql restart
 fi
 
+# Our screenrc file builder
+function screen_rc {
+    SCREENRC=$TOP_DIR/stack-screenrc
+    if [[ ! -e $SCREENRC ]]; then
+        # Name the screen session
+        echo "sessionname stack" > $SCREENRC
+        # Set a reasonable statusbar
+        echo 'hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"' >> $SCREENRC
+        echo "screen -t stack bash" >> $SCREENRC
+    fi
+    # If this service doesn't already exist in the screenrc file
+    if ! grep $1 $SCREENRC 2>&1 > /dev/null; then
+        NL=`echo -ne '\015'`
+        echo "screen -t $1 bash" >> $SCREENRC
+        echo "stuff \"$2$NL\"" >> $SCREENRC
+    fi
+}
+
+# Our screen helper to launch a service in a hidden named screen
+function screen_it {
+    NL=`echo -ne '\015'`
+    if is_service_enabled $1; then
+        # Append the service to the screen rc file
+        screen_rc "$1" "$2"
+
+        screen -S stack -X screen -t $1
+        # sleep to allow bash to be ready to be send the command - we are
+        # creating a new window in screen and then sends characters, so if
+        # bash isn't running by the time we send the command, nothing happens
+        sleep 1.5
+
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            screen -S stack -p $1 -X logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log
+            screen -S stack -p $1 -X log on
+            ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
+        fi
+        screen -S stack -p $1 -X stuff "$2$NL"
+    fi
+}
+
+# create a new named screen to run processes in
+screen -d -m -S stack -t stack -s /bin/bash
+sleep 1
+# set a reasonable statusbar
+screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"
 
 # Horizon
 # -------
@@ -845,6 +890,80 @@ if is_service_enabled g-reg; then
         glance_config $GLANCE_API_PASTE_INI
     fi
 fi
+
+# Quantum
+# -------
+
+# Quantum service
+if is_service_enabled q-svc; then
+    QUANTUM_CONF_DIR=/etc/quantum
+    if [[ ! -d $QUANTUM_CONF_DIR ]]; then
+        sudo mkdir -p $QUANTUM_CONF_DIR
+    fi
+    sudo chown `whoami` $QUANTUM_CONF_DIR
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        # Install deps
+        # FIXME add to files/apts/quantum, but don't install if not needed!
+        kernel_version=`cat /proc/version | cut -d " " -f3`
+        apt_get install linux-headers-$kernel_version
+        apt_get install openvswitch-switch openvswitch-datapath-dkms
+        # Create database for the plugin/agent
+        if is_service_enabled mysql; then
+            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
+            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum CHARACTER SET utf8;'
+        else
+            echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
+            exit 1
+        fi
+        QUANTUM_PLUGIN_INI_FILE=$QUANTUM_CONF_DIR/plugins.ini
+        sudo cp $QUANTUM_DIR/etc/plugins.ini $QUANTUM_PLUGIN_INI_FILE
+        # Make sure we're using the openvswitch plugin
+        sudo sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
+    fi
+   sudo cp $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF_DIR/quantum.conf
+   screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$QUANTUM_CLIENT_DIR:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_CONF_DIR/quantum.conf"
+fi
+
+# Quantum agent (for compute nodes)
+if is_service_enabled q-agt; then
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        # Set up integration bridge
+        OVS_BRIDGE=${OVS_BRIDGE:-br-int}
+        sudo ovs-vsctl --no-wait -- --if-exists del-br $OVS_BRIDGE
+        sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
+        sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
+
+       # Start up the quantum <-> openvswitch agent
+       QUANTUM_OVS_CONFIG_FILE=$QUANTUM_CONF_DIR/ovs_quantum_plugin.ini
+       sudo cp $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini $QUANTUM_OVS_CONFIG_FILE
+       sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum?charset=utf8/g" $QUANTUM_OVS_CONFIG_FILE
+       screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_OVS_CONFIG_FILE -v"
+    fi
+
+fi
+
+# Melange service
+if is_service_enabled m-svc; then
+    if is_service_enabled mysql; then
+        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS melange;'
+        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE melange CHARACTER SET utf8;'
+    else
+        echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
+        exit 1
+    fi
+    MELANGE_CONFIG_FILE=$MELANGE_DIR/etc/melange/melange.conf
+    cp $MELANGE_CONFIG_FILE.sample $MELANGE_CONFIG_FILE
+    sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/melange?charset=utf8/g" $MELANGE_CONFIG_FILE
+    cd $MELANGE_DIR && PYTHONPATH=.:$PYTHONPATH python $MELANGE_DIR/bin/melange-manage --config-file=$MELANGE_CONFIG_FILE db_sync
+    screen_it m-svc "cd $MELANGE_DIR && PYTHONPATH=.:$PYTHONPATH python $MELANGE_DIR/bin/melange-server --config-file=$MELANGE_CONFIG_FILE"
+    echo "Waiting for melange to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:9898; do sleep 1; done"; then
+      echo "melange-server did not start"
+      exit 1
+    fi
+    melange mac_address_range create cidr=$M_MAC_RANGE
+fi
+
 
 
 # Nova
@@ -1362,52 +1481,6 @@ fi
 # so send the start command by forcing text into the window.
 # Only run the services specified in ``ENABLED_SERVICES``
 
-# Our screenrc file builder
-function screen_rc {
-    SCREENRC=$TOP_DIR/stack-screenrc
-    if [[ ! -e $SCREENRC ]]; then
-        # Name the screen session
-        echo "sessionname stack" > $SCREENRC
-        # Set a reasonable statusbar
-        echo 'hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"' >> $SCREENRC
-        echo "screen -t stack bash" >> $SCREENRC
-    fi
-    # If this service doesn't already exist in the screenrc file
-    if ! grep $1 $SCREENRC 2>&1 > /dev/null; then
-        NL=`echo -ne '\015'`
-        echo "screen -t $1 bash" >> $SCREENRC
-        echo "stuff \"$2$NL\"" >> $SCREENRC
-    fi
-}
-
-# Our screen helper to launch a service in a hidden named screen
-function screen_it {
-    NL=`echo -ne '\015'`
-    if is_service_enabled $1; then
-        # Append the service to the screen rc file
-        screen_rc "$1" "$2"
-
-        screen -S stack -X screen -t $1
-        # sleep to allow bash to be ready to be send the command - we are
-        # creating a new window in screen and then sends characters, so if
-        # bash isn't running by the time we send the command, nothing happens
-        sleep 1.5
-
-        if [[ -n ${SCREEN_LOGDIR} ]]; then
-            screen -S stack -p $1 -X logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log
-            screen -S stack -p $1 -X log on
-            ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
-        fi
-        screen -S stack -p $1 -X stuff "$2$NL"
-    fi
-}
-
-# create a new named screen to run processes in
-screen -d -m -S stack -t stack -s /bin/bash
-sleep 1
-# set a reasonable statusbar
-screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"
-
 # launch the glance registry service
 if is_service_enabled g-reg; then
     screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
@@ -1507,74 +1580,6 @@ if is_service_enabled n-api; then
       echo "nova-api did not start"
       exit 1
     fi
-fi
-
-# Quantum service
-if is_service_enabled q-svc; then
-    QUANTUM_CONF_DIR=/etc/quantum
-    if [[ ! -d $QUANTUM_CONF_DIR ]]; then
-        sudo mkdir -p $QUANTUM_CONF_DIR
-    fi
-    sudo chown `whoami` $QUANTUM_CONF_DIR
-    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        # Install deps
-        # FIXME add to files/apts/quantum, but don't install if not needed!
-        apt_get install openvswitch-switch openvswitch-datapath-dkms
-        # Create database for the plugin/agent
-        if is_service_enabled mysql; then
-            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
-            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum CHARACTER SET utf8;'
-        else
-            echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
-            exit 1
-        fi
-        QUANTUM_PLUGIN_INI_FILE=$QUANTUM_CONF_DIR/plugins.ini
-        sudo cp $QUANTUM_DIR/etc/plugins.ini $QUANTUM_PLUGIN_INI_FILE
-        # Make sure we're using the openvswitch plugin
-        sudo sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
-    fi
-   sudo cp $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF_DIR/quantum.conf
-   screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$QUANTUM_CLIENT_DIR:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_CONF_DIR/quantum.conf"
-fi
-
-# Quantum agent (for compute nodes)
-if is_service_enabled q-agt; then
-    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        # Set up integration bridge
-        OVS_BRIDGE=${OVS_BRIDGE:-br-int}
-        sudo ovs-vsctl --no-wait -- --if-exists del-br $OVS_BRIDGE
-        sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
-        sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
-
-       # Start up the quantum <-> openvswitch agent
-       QUANTUM_OVS_CONFIG_FILE=$QUANTUM_CONF_DIR/ovs_quantum_plugin.ini
-       sudo cp $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini $QUANTUM_OVS_CONFIG_FILE
-       sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum?charset=utf8/g" $QUANTUM_OVS_CONFIG_FILE
-       screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_OVS_CONFIG_FILE -v"
-    fi
-
-fi
-
-# Melange service
-if is_service_enabled m-svc; then
-    if is_service_enabled mysql; then
-        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS melange;'
-        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE melange CHARACTER SET utf8;'
-    else
-        echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
-        exit 1
-    fi
-    MELANGE_CONFIG_FILE=$MELANGE_DIR/etc/melange/melange.conf
-    cp $MELANGE_CONFIG_FILE.sample $MELANGE_CONFIG_FILE
-    sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/melange?charset=utf8/g" $MELANGE_CONFIG_FILE
-    cd $MELANGE_DIR && PYTHONPATH=.:$PYTHONPATH python $MELANGE_DIR/bin/melange-manage --config-file=$MELANGE_CONFIG_FILE db_sync
-    screen_it m-svc "cd $MELANGE_DIR && PYTHONPATH=.:$PYTHONPATH python $MELANGE_DIR/bin/melange-server --config-file=$MELANGE_CONFIG_FILE"
-    echo "Waiting for melange to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:9898; do sleep 1; done"; then
-      echo "melange-server did not start"
-      exit 1
-    fi
-    melange mac_address_range create cidr=$M_MAC_RANGE
 fi
 
 # If we're using Quantum (i.e. q-svc is enabled), network creation has to
