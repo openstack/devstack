@@ -1681,27 +1681,41 @@ if is_service_enabled g-reg; then
             *.img)
                 IMAGE="$FILES/$IMAGE_FNAME";
                 IMAGE_NAME=$(basename "$IMAGE" ".img")
+                DISK_FORMAT=raw
+                CONTAINER_FORMAT=bare
                 ;;
             *.img.gz)
                 IMAGE="$FILES/${IMAGE_FNAME}"
                 IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
+                DISK_FORMAT=raw
+                CONTAINER_FORMAT=bare
+                ;;
+            *.qcow2)
+                IMAGE="$FILES/${IMAGE_FNAME}"
+                IMAGE_NAME=$(basename "$IMAGE" ".qcow2")
+                DISK_FORMAT=qcow2
+                CONTAINER_FORMAT=bare
                 ;;
             *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
         esac
 
-        # Use glance client to add the kernel the root filesystem.
-        # We parse the results of the first upload to get the glance ID of the
-        # kernel for use when uploading the root filesystem.
-        KERNEL_ID=""; RAMDISK_ID="";
-        if [ -n "$KERNEL" ]; then
-            RVAL=`glance add --silent-upload -A $TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < "$KERNEL"`
-            KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+        if [ "$CONTAINER_FORMAT" = "bare" ]; then
+            glance add --silent-upload -A $TOKEN name="$IMAGE_NAME" is_public=true container_format=$CONTAINER_FORMAT disk_format=$DISK_FORMAT < <(zcat --force "${IMAGE}")
+        else
+            # Use glance client to add the kernel the root filesystem.
+            # We parse the results of the first upload to get the glance ID of the
+            # kernel for use when uploading the root filesystem.
+            KERNEL_ID=""; RAMDISK_ID="";
+            if [ -n "$KERNEL" ]; then
+                RVAL=`glance add --silent-upload -A $TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < "$KERNEL"`
+                KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+            fi
+            if [ -n "$RAMDISK" ]; then
+                RVAL=`glance add --silent-upload -A $TOKEN name="$IMAGE_NAME-ramdisk" is_public=true container_format=ari disk_format=ari < "$RAMDISK"`
+                RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+            fi
+            glance add -A $TOKEN name="${IMAGE_NAME%.img}" is_public=true container_format=ami disk_format=ami ${KERNEL_ID:+kernel_id=$KERNEL_ID} ${RAMDISK_ID:+ramdisk_id=$RAMDISK_ID} < <(zcat --force "${IMAGE}")
         fi
-        if [ -n "$RAMDISK" ]; then
-            RVAL=`glance add --silent-upload -A $TOKEN name="$IMAGE_NAME-ramdisk" is_public=true container_format=ari disk_format=ari < "$RAMDISK"`
-            RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-        fi
-        glance add -A $TOKEN name="${IMAGE_NAME%.img}" is_public=true container_format=ami disk_format=ami ${KERNEL_ID:+kernel_id=$KERNEL_ID} ${RAMDISK_ID:+ramdisk_id=$RAMDISK_ID} < <(zcat --force "${IMAGE}")
     done
 fi
 
