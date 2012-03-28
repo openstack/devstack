@@ -3,18 +3,18 @@
 # source openrc [username] [tenantname]
 #
 # Configure a set of credentials for $TENANT/$USERNAME:
-#   Set TENANT to override the default tenant 'demo'
-#   Set USERNAME to override the default user name 'demo'
+#   Set OS_TENANT_NAME to override the default tenant 'demo'
+#   Set OS_USERNAME to override the default user name 'demo'
 #   Set ADMIN_PASSWORD to set the password for 'admin' and 'demo'
 
 # NOTE: support for the old NOVA_* novaclient environment variables has
 # been removed.
 
 if [[ -n "$1" ]]; then
-    USERNAME=$1
+    OS_USERNAME=$1
 fi
 if [[ -n "$2" ]]; then
-    TENANT=$2
+    OS_TENANT_NAME=$2
 fi
 
 # Find the other rc files
@@ -27,11 +27,11 @@ source $RC_DIR/stackrc
 # term **tenant** as the entity that owns resources.  In some places references
 # still exist to the original Nova term **project** for this use.  Also,
 # **tenant_name** is prefered to **tenant_id**.
-export OS_TENANT_NAME=${TENANT:-demo}
+export OS_TENANT_NAME=${OS_TENANT_NAME:-demo}
 
 # In addition to the owning entity (tenant), nova stores the entity performing
 # the action as the **user**.
-export OS_USERNAME=${USERNAME:-demo}
+export OS_USERNAME=${OS_USERNAME:-demo}
 
 # With Keystone you pass the keystone password instead of an api key.
 # Recent versions of novaclient use OS_PASSWORD instead of NOVA_API_KEYs
