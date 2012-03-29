@@ -1637,17 +1637,8 @@ if is_service_enabled g-reg; then
     TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$ADMIN_USER\", \"password\": \"$ADMIN_PASSWORD\"}, \"tenantName\": \"$ADMIN_TENANT\"}}" -H "Content-type: application/json" http://$HOST_IP:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
 
     # Option to upload legacy ami-tty, which works with xenserver
-    if [ $UPLOAD_LEGACY_TTY ]; then
-        if [ ! -f $FILES/tty.tgz ]; then
-            wget -c http://images.ansolabs.com/tty.tgz -O $FILES/tty.tgz
-        fi
-
-        tar -zxf $FILES/tty.tgz -C $FILES/images
-        RVAL=`glance add --silent-upload -A $TOKEN name="tty-kernel" is_public=true container_format=aki disk_format=aki < $FILES/images/aki-tty/image`
-        KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-        RVAL=`glance add --silent-upload -A $TOKEN name="tty-ramdisk" is_public=true container_format=ari disk_format=ari < $FILES/images/ari-tty/image`
-        RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
-        glance add -A $TOKEN name="tty" is_public=true container_format=ami disk_format=ami kernel_id=$KERNEL_ID ramdisk_id=$RAMDISK_ID < $FILES/images/ami-tty/image
+    if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
+        IMAGE_URLS="${IMAGE_URLS:+${IMAGE_URLS},}http://images.ansolabs.com/tty.tgz"
     fi
 
     for image_url in ${IMAGE_URLS//,/ }; do
@@ -1669,14 +1660,15 @@ if is_service_enabled g-reg; then
                 rm -Rf "$xdir";
                 mkdir "$xdir"
                 tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
-                KERNEL=$(for f in "$xdir/"*-vmlinuz*; do
+                KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
                          [ -f "$f" ] && echo "$f" && break; done; true)
-                RAMDISK=$(for f in "$xdir/"*-initrd*; do
+                RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
                          [ -f "$f" ] && echo "$f" && break; done; true)
-                IMAGE=$(for f in "$xdir/"*.img; do
+                IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
                          [ -f "$f" ] && echo "$f" && break; done; true)
-                [ -n "$IMAGE_NAME" ]
-                IMAGE_NAME=$(basename "$IMAGE" ".img")
+                if [[ -z "$IMAGE_NAME" ]]; then
+                    IMAGE_NAME=$(basename "$IMAGE" ".img")
+                fi
                 ;;
             *.img)
                 IMAGE="$FILES/$IMAGE_FNAME";
