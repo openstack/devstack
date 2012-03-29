@@ -1714,6 +1714,16 @@ if is_service_enabled g-reg; then
 fi
 
 
+# Run local script
+# ================
+
+# Run ``local.sh`` if it exists to perform user-managed tasks
+if [[ -x $TOP_DIR/local.sh ]]; then
+    echo "Running user script $TOP_DIR/local.sh"
+    $TOP_DIR/local.sh
+fi
+
+
 # Fin
 # ===
 
