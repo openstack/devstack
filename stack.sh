@@ -1659,6 +1659,8 @@ if is_service_enabled g-reg; then
 
         KERNEL=""
         RAMDISK=""
+        DISK_FORMAT=""
+        CONTAINER_FORMAT=""
         case "$IMAGE_FNAME" in
             *.tar.gz|*.tgz)
                 # Extract ami and aki files
