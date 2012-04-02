@@ -2,5 +2,5 @@ proto
 *~
 *.log
 src
-localrc
-local.sh
+localrc-not
+local.sh-not

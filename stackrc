@@ -1,3 +1,11 @@
+#
+# devstack rc file as specified in blog post
+#
+#   http://www.joinfu.com/2012/03/testing-essex-rc1-with-devstack-and-tempest/
+#
+# In addition I've added testing for Quantum and melange, whatever that is
+
+
 # Find the other rc files
 RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
 
@@ -7,11 +15,14 @@ RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
 # your localrc. For example for swift you can just add this in your
 # localrc to add it with the other services:
 # ENABLED_SERVICES="$ENABLED_SERVICES,swift"
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit
+ENABLED_SERVICES=general,g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit
+
+# This is for more stuff that isn't tested by default
+ENABLED_SERVICES="$ENABLED_SERVICES,quantum,melange"
 
 # compute service
 NOVA_REPO=https://github.com/openstack/nova.git
-NOVA_BRANCH=master
+NOVA_BRANCH=milestone-proposed
 
 # storage service
 SWIFT_REPO=https://github.com/openstack/swift.git
@@ -23,11 +34,11 @@ SWIFT_KEYSTONE_BRANCH=master
 
 # image catalog service
 GLANCE_REPO=https://github.com/openstack/glance.git
-GLANCE_BRANCH=master
+GLANCE_BRANCH=milestone-proposed
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=https://github.com/openstack/keystone.git
-KEYSTONE_BRANCH=master
+KEYSTONE_BRANCH=milestone-proposed
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/cloudbuilders/noVNC.git
@@ -35,23 +46,23 @@ NOVNC_BRANCH=master
 
 # django powered web control panel for openstack
 HORIZON_REPO=https://github.com/openstack/horizon.git
-HORIZON_BRANCH=master
+HORIZON_BRANCH=milestone-proposed
 
 # python client library to nova that horizon (and others) use
 NOVACLIENT_REPO=https://github.com/openstack/python-novaclient.git
-NOVACLIENT_BRANCH=master
+NOVACLIENT_BRANCH=milestone-proposed
 
 # python keystone client library to nova that horizon uses
 KEYSTONECLIENT_REPO=https://github.com/openstack/python-keystoneclient
-KEYSTONECLIENT_BRANCH=master
+KEYSTONECLIENT_BRANCH=milestone-proposed
 
 # quantum service
 QUANTUM_REPO=https://github.com/openstack/quantum
-QUANTUM_BRANCH=master
+QUANTUM_BRANCH=milestone-proposed
 
 # quantum client
 QUANTUM_CLIENT_REPO=https://github.com/openstack/python-quantumclient
-QUANTUM_CLIENT_BRANCH=master
+QUANTUM_CLIENT_BRANCH=milesetone-proposed
 
 # Tempest test suite
 TEMPEST_REPO=https://github.com/openstack/tempest.git
@@ -59,11 +70,11 @@ TEMPEST_BRANCH=master
 
 # melange service
 MELANGE_REPO=https://github.com/openstack/melange.git
-MELANGE_BRANCH=master
+MELANGE_BRANCH=milesetone-proposed
 
 # python melange client library
 MELANGECLIENT_REPO=https://github.com/openstack/python-melangeclient.git
-MELANGECLIENT_BRANCH=master
+MELANGECLIENT_BRANCH=milesetone-proposed
 
 # Specify a comma-separated list of uec images to download and install into glance.
 # supported urls here are:

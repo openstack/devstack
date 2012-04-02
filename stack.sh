@@ -26,13 +26,13 @@
 # installation with ``FORCE=yes ./stack``
 DISTRO=$(lsb_release -c -s)
 
-if [[ ! ${DISTRO} =~ (oneiric|precise) ]]; then
-    echo "WARNING: this script has only been tested on oneiric"
-    if [[ "$FORCE" != "yes" ]]; then
-        echo "If you wish to run this script anyway run with FORCE=yes"
-        exit 1
-    fi
-fi
+#if [[ ! ${DISTRO} =~ (oneiric|precise) ]]; then
+#    echo "WARNING: this script has only been tested on oneiric"
+#    if [[ "$FORCE" != "yes" ]]; then
+#        echo "If you wish to run this script anyway run with FORCE=yes"
+#        exit 1
+#    fi
+#fi
 
 # Keep track of the current devstack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
@@ -107,7 +107,7 @@ if [[ $EUID -eq 0 ]]; then
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
-    dpkg -l sudo || apt_get update && apt_get install sudo
+    which sudo || yum -y update && yum -y install sudo
 
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
@@ -133,7 +133,7 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 else
     # We're not root, make sure sudo is available
-    dpkg -l sudo || die "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
+    which sudo || die "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
 
     # UEC images /etc/sudoers does not have a '#includedir'. add one.
     sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
@@ -588,9 +588,9 @@ function get_packages() {
     done
 }
 
-# install apt requirements
-apt_get update
-apt_get install $(get_packages $FILES/apts)
+# install yum requirements
+sudo yum -y update
+sudo yum -y install $(get_packages $FILES/rpms)
 
 # install python requirements
 pip_install $(get_packages $FILES/pips | sort -u)
@@ -677,7 +677,7 @@ fi
 # ------
 
 if [[ $SYSLOG != "False" ]]; then
-    apt_get install -y rsyslog-relp
+    yum -y install -y rsyslog-relp
     if [[ "$SYSLOG_HOST" = "$HOST_IP" ]]; then
         # Configure the master host to receive
         cat <<EOF >/tmp/90-stack-m.conf
@@ -703,7 +703,7 @@ if is_service_enabled rabbit; then
     # Install and start rabbitmq-server
     # the temp file is necessary due to LP: #878600
     tfile=$(mktemp)
-    apt_get install rabbitmq-server > "$tfile" 2>&1
+    yum -y install rabbitmq-server > "$tfile" 2>&1
     cat "$tfile"
     rm -f "$tfile"
     # change the rabbit password since the default is "guest"
@@ -738,7 +738,7 @@ EOF
     fi
 
     # Install and start mysql-server
-    apt_get install mysql-server
+    yum -y install mysql-server
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
     sudo mysql -uroot -p$MYSQL_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';"
 
@@ -801,7 +801,7 @@ screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< 
 if is_service_enabled horizon; then
 
     # Install apache2, which is NOPRIME'd
-    apt_get install apache2 libapache2-mod-wsgi
+    yum -y install apache2 libapache2-mod-wsgi
 
 
     # Remove stale session database.
@@ -905,8 +905,8 @@ if is_service_enabled q-svc; then
         # Install deps
         # FIXME add to files/apts/quantum, but don't install if not needed!
         kernel_version=`cat /proc/version | cut -d " " -f3`
-        apt_get install linux-headers-$kernel_version
-        apt_get install openvswitch-switch openvswitch-datapath-dkms
+        yum -y install linux-headers-$kernel_version
+        yum -y install openvswitch-switch openvswitch-datapath-dkms
         # Create database for the plugin/agent
         if is_service_enabled mysql; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
@@ -1019,7 +1019,7 @@ if is_service_enabled n-cpu; then
 
     # Virtualization Configuration
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    apt_get install libvirt-bin
+    yum -y install libvirt-bin
 
     # Force IP forwarding on, just on case
     sudo sysctl -w net.ipv4.ip_forward=1
@@ -1043,7 +1043,7 @@ if is_service_enabled n-cpu; then
     # to simulate multiple systems.
     if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
         if [[ "$DISTRO" > natty ]]; then
-            apt_get install cgroup-lite
+            yum -y install cgroup-lite
         else
             cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
             sudo mkdir -p /cgroup
@@ -1113,7 +1113,7 @@ fi
 # Storage Service
 if is_service_enabled swift; then
     # Install memcached for swift.
-    apt_get install memcached
+    yum -y install memcached
 
     # We first do a bit of setup by creating the directories and
     # changing the permissions so we can run it as our user.
@@ -1297,7 +1297,7 @@ if is_service_enabled n-vol; then
     # By default, the backing file is 2G in size, and is stored in /opt/stack.
 
     # install the package
-    apt_get install tgt
+    yum -y install tgt
 
     if ! sudo vgs $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}

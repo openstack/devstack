@@ -1,0 +1,21 @@
+python-pep8
+pylint
+python-pip
+screen
+unzip
+wget
+psmisc
+git-core
+lsof # useful when debugging
+openssh-server
+vim
+mlocate # useful when debugging
+python-virtualenv
+python-unittest2
+iputils
+wget
+curl
+tcpdump
+euca2ools # only for testing client
+python-pip
+gcc

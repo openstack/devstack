@@ -1,0 +1,25 @@
+apache2  # NOPRIME
+libapache2-mod-wsgi  # NOPRIME
+python-dateutil
+python-paste
+python-paste-deploy
+python-anyjson
+python-routes
+python-xattr
+python-sqlalchemy
+python-webob
+python-kombu
+pylint
+python-pep8
+python-eventlet
+python-nose
+python-sphinx
+python-mox
+python-kombu
+python-coverage
+python-cherrypy2 # why?
+Django
+python-django-mailer
+python-django-nose
+django-registration
+python-migrate

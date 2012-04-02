@@ -1,0 +1,44 @@
+dnsmasq
+dnsmasq-utils # for dhcp_release only available in dist:oneiric
+kpartx
+parted
+arping # only available in dist:natty
+iputils-arping # only available in dist:oneiric
+mysql-server # NOPRIME
+MySQL-python
+python-xattr # needed for glance which is needed for nova --- this shouldn't be here
+python-lxml # needed for glance which is needed for nova --- this shouldn't be here
+kvm
+gawk
+iptables
+ebtables
+sqlite
+sudo
+kvm
+libvirt-bin # NOPRIME
+vlan
+curl
+rabbitmq-server # NOPRIME
+socat # used by ajaxterm
+python-mox
+python-paste
+python-migrate
+python-gflags
+python-greenlet
+libvirt-python
+python-lxml
+python-routes
+python-netaddr
+python-paste-deploy
+python-eventlet
+python-cheetah
+python-carrot
+python-tempita
+python-sqlalchemy
+python-suds
+python-lockfile
+m2crypto
+python-boto
+python-kombu
+python-feedparser
+python-iso8601
