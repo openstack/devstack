@@ -797,15 +797,28 @@ EOF
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
     sudo mysql -uroot -p$MYSQL_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';"
 
-    # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
+    # Update ``my.cnf`` for some local needs and restart the mysql service
     if [[ "$os_PACKAGE" = "deb" ]]; then
-        MY_CNF=/etc/mysql/my.cnf
+        MY_CONF=/etc/mysql/my.cnf
         MYSQL=mysql
     else
-        MY_CNF=/etc/my.cnf
+        MY_CONF=/etc/my.cnf
         MYSQL=mysqld
     fi
-    sudo sed -i 's/127.0.0.1/0.0.0.0/g' $MY_CNF
+
+    # Change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0)
+    sudo sed -i '/^bind-address/s/127.0.0.1/0.0.0.0/g' $MY_CONF
+
+    # Set default db type to InnoDB
+    if grep -q "default-storage-engine" $MY_CONF; then
+        # Change it
+        sudo bash -c "source $TOP_DIR/functions; iniset $MY_CONF mysqld default-storage-engine InnoDB"
+    else
+        # Add it
+        sudo sed -i -e "/^\[mysqld\]/ a \
+default-storage-engine = InnoDB" $MY_CONF
+    fi
+
     restart_service $MYSQL
 fi
 
