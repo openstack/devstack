@@ -62,7 +62,7 @@ QUANTUM_BRANCH=milestone-proposed
 
 # quantum client
 QUANTUM_CLIENT_REPO=https://github.com/openstack/python-quantumclient
-QUANTUM_CLIENT_BRANCH=milesetone-proposed
+QUANTUM_CLIENT_BRANCH=milestone-proposed
 
 # Tempest test suite
 TEMPEST_REPO=https://github.com/openstack/tempest.git
@@ -70,11 +70,11 @@ TEMPEST_BRANCH=master
 
 # melange service
 MELANGE_REPO=https://github.com/openstack/melange.git
-MELANGE_BRANCH=milesetone-proposed
+MELANGE_BRANCH=milestone-proposed
 
 # python melange client library
 MELANGECLIENT_REPO=https://github.com/openstack/python-melangeclient.git
-MELANGECLIENT_BRANCH=milesetone-proposed
+MELANGECLIENT_BRANCH=milestone-proposed
 
 # Specify a comma-separated list of uec images to download and install into glance.
 # supported urls here are:
