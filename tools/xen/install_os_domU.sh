@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on errors
+set -o errexit
+
 # Abort if localrc is not set
 if [ ! -e ../../localrc ]; then
     echo "You must have a localrc with ALL necessary passwords defined before proceeding."
@@ -19,25 +22,29 @@ source xenrc
 # Echo commands
 set -o xtrace
 
-# Check for xva file
-if [ ! -e $XVA ]; then
-    echo "Missing xva file.  Please run build_xva.sh (ideally on a non dom0 host since the build can require lots of space)."
-    echo "Place the resulting xva file in $XVA"
-    exit 1
-fi
+xe_min()
+{
+  local cmd="$1"
+  shift
+  xe "$cmd" --minimal "$@"
+}
 
-# Make sure we have git
-if ! which git; then
-    GITDIR=/tmp/git-1.7.7
-    cd /tmp
-    rm -rf $GITDIR*
-    wget http://git-core.googlecode.com/files/git-1.7.7.tar.gz
-    tar xfv git-1.7.7.tar.gz
-    cd $GITDIR
-    ./configure --with-curl --with-expat
-    make install
-    cd $TOP_DIR
+cd $TOP_DIR
+if [ -f ./master ]
+then
+    rm -rf ./master
+    rm -rf ./nova
 fi
+wget https://github.com/openstack/nova/zipball/master --no-check-certificate
+unzip -o master -d ./nova
+cp -pr ./nova/*/plugins/xenserver/xenapi/etc/xapi.d /etc/
+chmod a+x /etc/xapi.d/plugins/*
+
+mkdir -p /boot/guest
+
+GUEST_NAME=${GUEST_NAME:-"DevStackOSDomU"}
+SNAME="ubuntusnapshot"
+TNAME="ubuntuready"
 
 # Helper to create networks
 # Uses echo trickery to return network uuid
@@ -48,23 +55,23 @@ function create_network() {
     netname=$4
     if [ -z $br ]
     then
-        pif=$(xe pif-list --minimal device=$dev VLAN=$vlan)
+        pif=$(xe_min pif-list device=$dev VLAN=$vlan)
         if [ -z $pif ]
         then
             net=$(xe network-create name-label=$netname)
         else
-            net=$(xe network-list --minimal PIF-uuids=$pif)
+            net=$(xe_min network-list  PIF-uuids=$pif)
         fi
         echo $net
         return 0
     fi
-    if [ ! $(xe network-list --minimal params=bridge | grep -w --only-matching $br) ]
+    if [ ! $(xe_min network-list  params=bridge | grep -w --only-matching $br) ]
     then
         echo "Specified bridge $br does not exist"
         echo "If you wish to use defaults, please keep the bridge name empty"
         exit 1
     else
-        net=$(xe network-list --minimal bridge=$br)
+        net=$(xe_min network-list  bridge=$br)
         echo $net
     fi
 }
@@ -95,13 +102,13 @@ function create_vlan() {
     then
         return
     fi
-    if [ -z $(xe vlan-list --minimal tag=$vlan) ]
+    if [ -z $(xe_min vlan-list  tag=$vlan) ]
     then
-        pif=$(xe pif-list --minimal network-uuid=$net)
+        pif=$(xe_min pif-list  network-uuid=$net)
         # We created a brand new network this time
         if [ -z $pif ]
         then
-            pif=$(xe pif-list --minimal device=$dev VLAN=-1)
+            pif=$(xe_min pif-list  device=$dev VLAN=-1)
             xe vlan-create pif-uuid=$pif vlan=$vlan network-uuid=$net
         else
             echo "VLAN does not exist but PIF attached to this network"
@@ -133,24 +140,11 @@ fi
 # Enable ip forwarding at runtime as well
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
-# Set local storage il8n
-SR_UUID=`xe sr-list --minimal name-label="Local storage"`
-xe sr-param-set uuid=$SR_UUID other-config:i18n-key=local-storage
-
-# Checkout nova
-git_clone $NOVA_REPO $TOP_DIR/nova $NOVA_BRANCH
-
-# Install plugins
-cp -pr $TOP_DIR/nova/plugins/xenserver/xenapi/etc/xapi.d /etc/
-chmod a+x /etc/xapi.d/plugins/*
-yum --enablerepo=base install -y parted
-mkdir -p /boot/guest
-
 # Shutdown previous runs
 DO_SHUTDOWN=${DO_SHUTDOWN:-1}
 if [ "$DO_SHUTDOWN" = "1" ]; then
     # Shutdown all domU's that created previously
-    xe vm-list --minimal name-label="$LABEL" | xargs ./scripts/uninstall-os-vpx.sh
+    xe_min vm-list  name-label="$GUEST_NAME" | xargs ./scripts/uninstall-os-vpx.sh
 
     # Destroy any instances that were launched
     for uuid in `xe vm-list | grep -1 instance | grep uuid | sed "s/.*\: //g"`; do
@@ -168,18 +162,54 @@ fi
 
 # Start guest
 if [ -z $VM_BR ]; then
-    VM_BR=$(xe network-list --minimal uuid=$VM_NET params=bridge)
+    VM_BR=$(xe_min network-list  uuid=$VM_NET params=bridge)
 fi
 if [ -z $MGT_BR ]; then
-    MGT_BR=$(xe network-list --minimal uuid=$MGT_NET params=bridge)
+    MGT_BR=$(xe_min network-list  uuid=$MGT_NET params=bridge)
 fi
 if [ -z $PUB_BR ]; then
-    PUB_BR=$(xe network-list --minimal uuid=$PUB_NET params=bridge)
+    PUB_BR=$(xe_min network-list  uuid=$PUB_NET params=bridge)
 fi
-$TOP_DIR/scripts/install-os-vpx.sh -f $XVA -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -w -k "flat_network_bridge=${VM_BR}"
+
+templateuuid=$(xe template-list name-label="$TNAME")
+if [ -n "$templateuuid" ]
+then
+        vm_uuid=$(xe vm-install template="$TNAME" new-name-label="$GUEST_NAME")
+else
+    template=$(xe_min template-list name-label="Ubuntu 11.10 (64-bit)")
+    if [ -z "$template" ]
+    then
+        $TOP_DIR/scripts/xenoneirictemplate.sh
+    fi
+    $TOP_DIR/scripts/install-os-vpx.sh -t "Ubuntu 11.10 (64-bit)" -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -r $OSDOMU_MEM_MB -k "flat_network_bridge=${VM_BR}"
+
+    # Wait for install to finish
+    while true
+    do
+        state=$(xe_min vm-list name-label="$GUEST_NAME" power-state=halted)
+        if [ -n "$state" ]
+        then
+            break
+        else
+            echo "Waiting for "$GUEST_NAME" to finish installation..."
+            sleep 30
+        fi
+    done
+
+    vm_uuid=$(xe_min vm-list name-label="$GUEST_NAME")
+    xe vm-param-set actions-after-reboot=Restart uuid="$vm_uuid"
+
+    # Make template from VM
+    snuuid=$(xe vm-snapshot vm="$GUEST_NAME" new-name-label="$SNAME")
+    template_uuid=$(xe snapshot-clone uuid=$snuuid new-name-label="$TNAME")
+fi
+
+$TOP_DIR/build_xva.sh "$GUEST_NAME"
+
+xe vm-start vm="$GUEST_NAME"
 
 if [ $PUB_IP == "dhcp" ]; then
-    PUB_IP=$(xe vm-list --minimal name-label=$GUEST_NAME params=networks |  sed -ne 's,^.*3/ip: \([0-9.]*\).*$,\1,p')
+    PUB_IP=$(xe_min vm-list  name-label=$GUEST_NAME params=networks |  sed -ne 's,^.*3/ip: \([0-9.]*\).*$,\1,p')
 fi
 
 # If we have copied our ssh credentials, use ssh to monitor while the installation runs

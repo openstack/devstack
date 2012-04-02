@@ -332,17 +332,11 @@ set_kernel_params()
 {
   local v="$1"
   local args=$KERNEL_PARAMS
-  local cmdline=$(cat /proc/cmdline)
-  for word in $cmdline
-  do
-    if echo "$word" | grep -q "geppetto"
-    then
-      args="$word $args"
-    fi
-  done
   if [ "$args" != "" ]
   then
     echo "Passing Geppetto args to VPX: $args."
+    pvargs=$(xe vm-param-get param-name=PV-args uuid="$v")
+    args="$pvargs $args"
     xe vm-param-set PV-args="$args" uuid="$v"
   fi
 }
@@ -429,13 +423,17 @@ then
 elif [ "$TEMPLATE_NAME" ]
 then
   echo $TEMPLATE_NAME
-  vm_uuid=$(xe_min vm-install template="$TEMPLATE_NAME" new-name-label="DevstackOSDomu")
+  vm_uuid=$(xe_min vm-install template="$TEMPLATE_NAME" new-name-label="$NAME_LABEL")
   destroy_vifs "$vm_uuid"
   set_auto_start "$vm_uuid"
   create_gi_vif "$vm_uuid"
   create_vm_vif "$vm_uuid"
   create_management_vif "$vm_uuid"
   create_public_vif "$vm_uuid"
+  set_kernel_params "$vm_uuid"
+  xe vm-param-set other-config:os-vpx=true uuid="$vm_uuid"
+  xe vm-param-set actions-after-reboot=Destroy uuid="$vm_uuid"
+  set_memory "$vm_uuid"
 else
   if [ ! -f "$VPX_FILE" ]
   then

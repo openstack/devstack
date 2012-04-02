@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Name of this guest
-GUEST_NAME=${GUEST_NAME:-ALLINONE}
+GUEST_NAME=${GUEST_NAME:-DevStackOSDomU}
 
 # Size of image
-VDI_MB=${VDI_MB:-2500}
+VDI_MB=${VDI_MB:-5000}
 
 # VM Password
 GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
@@ -35,11 +35,7 @@ MGT_BR=${MGT_BR:-""}
 MGT_VLAN=${MGT_VLAN:-101}
 MGT_DEV=${MGT_DEV:-eth0}
 
-# XVA Directory
-XVA_DIR=${XVA_DIR:-`pwd`/xvas}
-
-# Path to xva file
-XVA=${XVA:-$XVA_DIR/$GUEST_NAME.xva }
+OSDOMU_MEM_MB=1024
 
 # Source params
 cd ../.. && source ./stackrc && cd $TOP_DIR

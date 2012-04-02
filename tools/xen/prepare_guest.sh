@@ -6,13 +6,6 @@ set -x
 GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 STAGING_DIR=${STAGING_DIR:-stage}
 DO_TGZ=${DO_TGZ:-1}
-KERNEL_VERSION=3.0.0-12-virtual
-
-# Debootstrap base system
-if [ ! -d $STAGING_DIR ]; then
-    apt-get install debootstrap
-    debootstrap --arch amd64 oneiric $STAGING_DIR http://us.archive.ubuntu.com/ubuntu/
-fi
 
 # Sources.list
 cat <<EOF >$STAGING_DIR/etc/apt/sources.list
@@ -28,7 +21,6 @@ EOF
 
 # Install basics
 chroot $STAGING_DIR apt-get update
-chroot $STAGING_DIR apt-get install -y linux-image-$KERNEL_VERSION
 chroot $STAGING_DIR apt-get install -y cracklib-runtime curl wget ssh openssh-server tcpdump ethtool
 chroot $STAGING_DIR apt-get install -y curl wget ssh openssh-server python-pip git vim-nox sudo
 chroot $STAGING_DIR pip install xenapi
