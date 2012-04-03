@@ -1,4 +1,7 @@
 # functions - Common functions used by DevStack components
+#
+# ENABLED_SERVICES is used by is_service_enabled()
+
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -6,7 +9,7 @@ set +o xtrace
 
 
 # apt-get wrapper to set arguments correctly
-# apt_get package [package ...]
+# apt_get operation package [package ...]
 function apt_get() {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
     local sudo="sudo"
@@ -70,6 +73,71 @@ function get_field() {
 }
 
 
+# Determine OS Vendor, Release and Update
+# Tested with OS/X, Ubuntu, RedHat, CentOS, Fedora
+# Returns results in global variables:
+# os_VENDOR - vendor name
+# os_RELEASE - release
+# os_UPDATE - update
+# os_PACKAGE - package type
+# os_CODENAME - vendor's codename for release
+# GetOSVersion
+GetOSVersion() {
+    # Figure out which vendor we are
+    if [[ -n "`which sw_vers 2>/dev/null`" ]]; then
+        # OS/X
+        os_VENDOR=`sw_vers -productName`
+        os_RELEASE=`sw_vers -productVersion`
+        os_UPDATE=${os_RELEASE##*.}
+        os_RELEASE=${os_RELEASE%.*}
+        os_PACKAGE=""
+        if [[ "$os_RELEASE" =~ "10.7" ]]; then
+            os_CODENAME="lion"
+        elif [[ "$os_RELEASE" =~ "10.6" ]]; then
+            os_CODENAME="snow leopard"
+        elif [[ "$os_RELEASE" =~ "10.5" ]]; then
+            os_CODENAME="leopard"
+        elif [[ "$os_RELEASE" =~ "10.4" ]]; then
+            os_CODENAME="tiger"
+        elif [[ "$os_RELEASE" =~ "10.3" ]]; then
+            os_CODENAME="panther"
+        else
+            os_CODENAME=""
+        fi
+    elif [[ -x $(which lsb_release 2>/dev/null) ]]; then
+        os_VENDOR=$(lsb_release -i -s)
+        os_RELEASE=$(lsb_release -r -s)
+        os_UPDATE=""
+        if [[ "Debian,Ubuntu" =~ $os_VENDOR ]]; then
+            os_PACKAGE="deb"
+        else
+            os_PACKAGE="rpm"
+        fi
+        os_CODENAME=$(lsb_release -c -s)
+    elif [[ -r /etc/redhat-release ]]; then
+        # Red Hat Enterprise Linux Server release 5.5 (Tikanga)
+        # CentOS release 5.5 (Final)
+        # CentOS Linux release 6.0 (Final)
+        # Fedora release 16 (Verne)
+        os_CODENAME=""
+        for r in "Red Hat" CentOS Fedora; do
+            os_VENDOR=$r
+            if [[ -n "`grep \"$r\" /etc/redhat-release`" ]]; then
+                ver=`sed -e 's/^.* \(.*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
+                os_CODENAME=${ver#*|}
+                os_RELEASE=${ver%|*}
+                os_UPDATE=${os_RELEASE##*.}
+                os_RELEASE=${os_RELEASE%.*}
+                break
+            fi
+            os_VENDOR=""
+        done
+        os_PACKAGE="rpm"
+    fi
+    export os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
+}
+
+
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
@@ -115,6 +183,42 @@ function git_clone {
 }
 
 
+# Comment an option in an INI file
+# optset config-file section option
+function inicomment() {
+    local file=$1
+    local section=$2
+    local option=$3
+    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" $file
+}
+
+
+# Get an option from an INI file
+# optget config-file section option
+function iniget() {
+    local file=$1
+    local section=$2
+    local option=$3
+    local line
+    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" $file)
+    echo ${line#*=}
+}
+
+
+# Set an option in an INI file
+# This is NOT a complete option setter, it assumes that the section and
+# option already exist in the INI file.  If the section does not exist,
+# nothing happens.
+# optset config-file section option value
+function iniset() {
+    local file=$1
+    local section=$2
+    local option=$3
+    local value=$4
+    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=[ \t]*\).*$|\1$value|" $file
+}
+
+
 # is_service_enabled() checks if the service(s) specified as arguments are
 # enabled by the user in **ENABLED_SERVICES**.
 #
@@ -138,6 +242,20 @@ function is_service_enabled() {
 }
 
 
+# Distro-agnostic package installer
+# install_package package [package ...]
+function install_package() {
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        apt_get install "$@"
+    else
+        yum_install "$@"
+    fi
+}
+
+
 # Test if the named environment variable is set and not zero length
 # is_set env-var
 function is_set() {
@@ -153,10 +271,39 @@ function is_set() {
 # pip_install package [package ...]
 function pip_install {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        CMD_PIP=/usr/bin/pip
+    else
+        CMD_PIP=/usr/bin/pip-python
+    fi
     sudo PIP_DOWNLOAD_CACHE=/var/cache/pip \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
-        pip install --use-mirrors $@
+        $CMD_PIP install --use-mirrors $@
+}
+
+
+# Service wrapper to restart services
+# restart_service service-name
+function restart_service() {
+    sudo /usr/sbin/service $1 restart
+}
+
+
+# Service wrapper to start services
+# start_service service-name
+function start_service() {
+    sudo /usr/sbin/service $1 start
+}
+
+
+# Service wrapper to stop services
+# stop_service service-name
+function stop_service() {
+    sudo /usr/sbin/service $1 stop
 }
 
 
@@ -171,6 +318,18 @@ function trueorfalse() {
     [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
     echo "$default"
 }
+
+
+# yum wrapper to set arguments correctly
+# yum_install package [package ...]
+function yum_install() {
+    [[ "$OFFLINE" = "True" ]] && return
+    local sudo="sudo"
+    [[ "$(id -u)" = "0" ]] && sudo="env"
+    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
+        yum install -y "$@"
+}
+
 
 # Restore xtrace
 $XTRACE
