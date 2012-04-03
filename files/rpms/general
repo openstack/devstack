@@ -19,3 +19,14 @@ tcpdump
 euca2ools # only for testing client
 python-pip
 gcc
+
+python-distutils-extra
+bpython
+python-novaclient
+python-prettytable
+python-greenlet
+python-eventlet
+python-passlib
+python-sqlalchemy0.7
+python-nose1.1
+python-webob1.0

@@ -16,7 +16,8 @@ sqlite
 sudo
 kvm
 libvirt-bin # NOPRIME
-vlan
+#vlan
+bridge-utils
 curl
 rabbitmq-server # NOPRIME
 socat # used by ajaxterm
@@ -34,7 +35,7 @@ python-eventlet
 python-cheetah
 python-carrot
 python-tempita
-python-sqlalchemy
+python-sqlalchemy0.7
 python-suds
 python-lockfile
 m2crypto

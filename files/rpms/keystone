@@ -6,7 +6,7 @@ python-paste-deploy
 python-paste
 sqlite
 python-sqlite2
-python-sqlalchemy
+python-sqlalchemy0.7
 MySQL-python
 python-webob
 python-greenlet

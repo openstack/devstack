@@ -18,6 +18,9 @@
 
 # Learn more and get the most recent version at http://devstack.org
 
+UPDATE="sudo yum -y update"
+INSTALL="sudo yum -y install"
+SERVICE="sudo /sbin/service"
 
 # Sanity Check
 # ============
@@ -107,7 +110,7 @@ if [[ $EUID -eq 0 ]]; then
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
-    which sudo || yum -y update && yum -y install sudo
+    which sudo || $UPDATE && $INSTALL sudo
 
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
@@ -589,8 +592,8 @@ function get_packages() {
 }
 
 # install yum requirements
-sudo yum -y update
-sudo yum -y install $(get_packages $FILES/rpms)
+$UPDATE
+$INSTALL $(get_packages $FILES/rpms)
 
 # install python requirements
 pip_install $(get_packages $FILES/pips | sort -u)
@@ -677,7 +680,7 @@ fi
 # ------
 
 if [[ $SYSLOG != "False" ]]; then
-    yum -y install -y rsyslog-relp
+    $INSTALL -y rsyslog-relp
     if [[ "$SYSLOG_HOST" = "$HOST_IP" ]]; then
         # Configure the master host to receive
         cat <<EOF >/tmp/90-stack-m.conf
@@ -692,7 +695,7 @@ EOF
 EOF
         sudo mv /tmp/90-stack-s.conf /etc/rsyslog.d
     fi
-    sudo /usr/sbin/service rsyslog restart
+    $SERVICE rsyslog restart
 fi
 
 
@@ -703,11 +706,15 @@ if is_service_enabled rabbit; then
     # Install and start rabbitmq-server
     # the temp file is necessary due to LP: #878600
     tfile=$(mktemp)
-    yum -y install rabbitmq-server > "$tfile" 2>&1
+    $INSTALL rabbitmq-server > "$tfile" 2>&1
     cat "$tfile"
     rm -f "$tfile"
+    # Start the server first
+    $SERVICE rabbitmq-server start 
+    sudo chkconfig rabbitmq-server on
+
     # change the rabbit password since the default is "guest"
-    sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
+    sudo  rabbitmqctl change_password guest $RABBIT_PASSWORD
 fi
 
 
@@ -718,11 +725,11 @@ if is_service_enabled mysql; then
 
     # Seed configuration with mysql password so that apt-get install doesn't
     # prompt us for a password upon install.
-    cat <<MYSQL_PRESEED | sudo debconf-set-selections
-mysql-server-5.1 mysql-server/root_password password $MYSQL_PASSWORD
-mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASSWORD
-mysql-server-5.1 mysql-server/start_on_boot boolean true
-MYSQL_PRESEED
+#    cat <<MYSQL_PRESEED | sudo debconf-set-selections
+#mysql-server-5.1 mysql-server/root_password password $MYSQL_PASSWORD
+#mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASSWORD
+#mysql-server-5.1 mysql-server/start_on_boot boolean true
+#MYSQL_PRESEED
 
     # while ``.my.cnf`` is not needed for openstack to function, it is useful
     # as it allows you to access the mysql databases via ``mysql nova`` instead
@@ -738,13 +745,19 @@ EOF
     fi
 
     # Install and start mysql-server
-    yum -y install mysql-server
-    # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
-    sudo mysql -uroot -p$MYSQL_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';"
+    $INSTALL mysql-server mysql-libs
+    $SERVICE mysqld restart
+    sudo chkconfig mysqld on
 
-    # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:
-    sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
-    sudo service mysql restart
+    # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:                                      
+    sudo sed -i 's/\[mysqld\]/[mysqld]\nbind-address=0.0.0.0/g' /etc/my.cnf
+    $SERVICE mysqld restart
+
+    # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
+    sudo mysqladmin -u $MYSQL_USER password $MYSQL_PASSWORD || true
+    sudo mysql -uroot -ppass -h127.0.0.1 -e "delete from mysql.user where user = '';" || true
+    sudo mysql -uroot -p$MYSQL_PASSWORD  -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';" 
+
 fi
 
 # Our screenrc file builder
@@ -801,8 +814,7 @@ screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< 
 if is_service_enabled horizon; then
 
     # Install apache2, which is NOPRIME'd
-    yum -y install apache2 libapache2-mod-wsgi
-
+    $INSTALL httpd mod_wsgi mod_ssl
 
     # Remove stale session database.
     rm -f $HORIZON_DIR/openstack_dashboard/local/dashboard_openstack.sqlite3
@@ -820,13 +832,14 @@ if is_service_enabled horizon; then
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
     ## Configure apache's 000-default to run horizon
-    sudo cp $FILES/000-default.template /etc/apache2/sites-enabled/000-default
+    HTTPD_CONF=/etc/httpd/conf.d/000-default
+    sudo cp $FILES/000-default.template $HTTPD_CONF
     sudo sed -e "
         s,%USER%,$APACHE_USER,g;
         s,%GROUP%,$APACHE_GROUP,g;
         s,%HORIZON_DIR%,$HORIZON_DIR,g;
-    " -i /etc/apache2/sites-enabled/000-default
-    sudo service apache2 restart
+    " -i $HTTPD_CONF
+    $SERVICE httpd restart
 fi
 
 
@@ -905,8 +918,8 @@ if is_service_enabled q-svc; then
         # Install deps
         # FIXME add to files/apts/quantum, but don't install if not needed!
         kernel_version=`cat /proc/version | cut -d " " -f3`
-        yum -y install linux-headers-$kernel_version
-        yum -y install openvswitch-switch openvswitch-datapath-dkms
+        $INSTALL linux-headers-$kernel_version
+        $INSTALL openvswitch-switch openvswitch-datapath-dkms
         # Create database for the plugin/agent
         if is_service_enabled mysql; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
@@ -1019,7 +1032,7 @@ if is_service_enabled n-cpu; then
 
     # Virtualization Configuration
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    yum -y install libvirt-bin
+    $INSTALL libvirt-client 
 
     # Force IP forwarding on, just on case
     sudo sysctl -w net.ipv4.ip_forward=1
@@ -1043,7 +1056,7 @@ if is_service_enabled n-cpu; then
     # to simulate multiple systems.
     if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
         if [[ "$DISTRO" > natty ]]; then
-            yum -y install cgroup-lite
+            $INSTALL cgroup-lite
         else
             cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
             sudo mkdir -p /cgroup
@@ -1058,12 +1071,13 @@ if is_service_enabled n-cpu; then
 
     # The user that nova runs as needs to be member of libvirtd group otherwise
     # nova-compute will be unable to use libvirt.
-    sudo usermod -a -G libvirtd `whoami`
+    sudo usermod -a -G qemu `whoami`
+
     # libvirt detects various settings on startup, as we potentially changed
     # the system configuration (modules, filesystems), we need to restart
     # libvirt to detect those changes.
-    sudo /etc/init.d/libvirt-bin restart
-
+    #sudo /etc/init.d/libvirt-bin restart
+    $SERVICE libvirt-guests restart 
 
     # Instance Storage
     # ~~~~~~~~~~~~~~~~
@@ -1297,7 +1311,7 @@ if is_service_enabled n-vol; then
     # By default, the backing file is 2G in size, and is stored in /opt/stack.
 
     # install the package
-    yum -y install tgt
+    $INSTALL scsi-target-utils
 
     if ! sudo vgs $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
@@ -1323,8 +1337,8 @@ if is_service_enabled n-vol; then
 
     # tgt in oneiric doesn't restart properly if tgtd isn't running
     # do it in two steps
-    sudo stop tgt || true
-    sudo start tgt
+    $SERVICE tgtd stop  || true
+    $SERVICE tgtd start 
 fi
 
 NOVA_CONF=nova.conf

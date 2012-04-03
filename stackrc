@@ -70,11 +70,11 @@ TEMPEST_BRANCH=master
 
 # melange service
 MELANGE_REPO=https://github.com/openstack/melange.git
-MELANGE_BRANCH=milestone-proposed
+MELANGE_BRANCH=master
 
 # python melange client library
 MELANGECLIENT_REPO=https://github.com/openstack/python-melangeclient.git
-MELANGECLIENT_BRANCH=milestone-proposed
+MELANGECLIENT_BRANCH=master
 
 # Specify a comma-separated list of uec images to download and install into glance.
 # supported urls here are:

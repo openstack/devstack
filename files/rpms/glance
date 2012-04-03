@@ -2,7 +2,7 @@ python-eventlet
 python-routes
 python-greenlet
 python-argparse # dist:oneiric
-python-sqlalchemy
+python-sqlalchemy0.7
 mod_wsgi
 python-paste-deploy
 python-xattr

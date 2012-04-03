@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PKGS=" git emacs-nox screen redhat-lsb python-pip "
+PKGS=" git emacs-nox screen redhat-lsb python-pip telnet bash-completion "
 EPEL_RPM_URL="http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm"
 RPM="sudo rpm"
 YUM="sudo yum "

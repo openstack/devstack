@@ -6,20 +6,20 @@ python-paste-deploy
 python-anyjson
 python-routes
 python-xattr
-python-sqlalchemy
+python-sqlalchemy0.7
 python-webob
 python-kombu
 pylint
 python-pep8
 python-eventlet
-python-nose
+python-nose1.1
 python-sphinx
 python-mox
 python-kombu
 python-coverage
 python-cherrypy2 # why?
-Django
-python-django-mailer
-python-django-nose
-django-registration
+#Django
+#python-django-mailer
+#python-django-nose
+#django-registration
 python-migrate
