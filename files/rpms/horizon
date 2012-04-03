@@ -2,7 +2,7 @@ apache2  # NOPRIME
 libapache2-mod-wsgi  # NOPRIME
 python-dateutil
 python-paste
-python-paste-deploy
+#python-paste-deploy
 python-anyjson
 python-routes
 python-xattr

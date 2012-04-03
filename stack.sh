@@ -89,6 +89,20 @@ source ./stackrc
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
 
+# Set the destination directories for openstack projects                                                                                                               
+NOVA_DIR=$DEST/nova
+HORIZON_DIR=$DEST/horizon
+GLANCE_DIR=$DEST/glance
+KEYSTONE_DIR=$DEST/keystone
+NOVACLIENT_DIR=$DEST/python-novaclient
+KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
+NOVNC_DIR=$DEST/noVNC
+SWIFT_DIR=$DEST/swift
+QUANTUM_DIR=$DEST/quantum
+QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
+MELANGE_DIR=$DEST/melange
+MELANGECLIENT_DIR=$DEST/python-melangeclient
+
 # Check to see if we are already running a stack.sh
 if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].stack"; then
     echo "You are already running a stack.sh session."
@@ -151,7 +165,7 @@ else
 
     # Set up the rootwrap sudoers
     TEMPFILE=`mktemp`
-    echo "$USER ALL=(root) NOPASSWD: /usr/local/bin/nova-rootwrap" >$TEMPFILE
+    echo "$USER ALL=(root) NOPASSWD: ${NOVA_DIR}/bin/nova-rootwrap" >$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/nova-rootwrap
@@ -918,8 +932,19 @@ if is_service_enabled q-svc; then
         # Install deps
         # FIXME add to files/apts/quantum, but don't install if not needed!
         kernel_version=`cat /proc/version | cut -d " " -f3`
-        $INSTALL linux-headers-$kernel_version
-        $INSTALL openvswitch-switch openvswitch-datapath-dkms
+        $INSTALL rpm-build openssl-devel
+
+#        $INSTALL linux-headers-$kernel_version
+#        $INSTALL openvswitch-switch openvswitch-datapath-dkms
+      
+        # Build openvswitch RPMS from source
+        mkdir -p ~/rpmbuild/SOURCES
+        cd ~/rpmbuild/SOURCES
+	wget http://openvswitch.org/releases/openvswitch-1.3.0.tar.gz
+        tar xzvf openvswitch-1.3.0.tar.gz
+        rpmbuild -bb openvswitch-1.3.0/rhel/openvswitch.spec
+        rpmbuild -bb openvswitch-1.3.0/rhel/        
+
         # Create database for the plugin/agent
         if is_service_enabled mysql; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
@@ -1282,7 +1307,7 @@ if is_service_enabled swift; then
 
    } && popd >/dev/null
 
-   sudo chmod +x /usr/local/bin/swift-*
+   sudo chmod +x ${SWIFT_DIR}/bin/swift-*
 
    # We then can start rsync.
    sudo /etc/init.d/rsync restart || :
@@ -1355,7 +1380,7 @@ add_nova_opt "[DEFAULT]"
 add_nova_opt "verbose=True"
 add_nova_opt "auth_strategy=keystone"
 add_nova_opt "allow_resize_to_same_host=True"
-add_nova_opt "root_helper=sudo /usr/local/bin/nova-rootwrap"
+add_nova_opt "root_helper=sudo ${NOVA_DIR}/bin/nova-rootwrap"
 add_nova_opt "compute_scheduler_driver=$SCHEDULER"
 add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF_DIR/$NOVA_CONF"
 add_nova_opt "fixed_range=$FIXED_RANGE"
@@ -1623,7 +1648,7 @@ screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
 screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
-screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/apache2/error.log"
+screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/httpd/*log"
 screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_LOCATION}/proxy-server.conf -v"
 
 # Starting the nova-objectstore only if swift service is not enabled.

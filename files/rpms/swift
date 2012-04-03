@@ -8,7 +8,7 @@ python-eventlet
 python-greenlet
 python-netifaces
 python-nose
-python-paste-deploy
+#python-paste-deploy
 python-setuptools
 python-simplejson
 python-webob

@@ -30,7 +30,7 @@ libvirt-python
 python-lxml
 python-routes
 python-netaddr
-python-paste-deploy
+#python-paste-deploy
 python-eventlet
 python-cheetah
 python-carrot

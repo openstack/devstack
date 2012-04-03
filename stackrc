@@ -18,7 +18,8 @@ RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
 ENABLED_SERVICES=general,g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit
 
 # This is for more stuff that isn't tested by default
-ENABLED_SERVICES="$ENABLED_SERVICES,quantum,melange"
+#ENABLED_SERVICES="$ENABLED_SERVICES,q-svc,q-agt,quantum,m-svc,melange"
+ENABLED_SERVICES="$ENABLED_SERVICES,m-svc,melange"
 
 # compute service
 NOVA_REPO=https://github.com/openstack/nova.git

@@ -4,6 +4,6 @@ python-greenlet
 python-argparse # dist:oneiric
 python-sqlalchemy0.7
 mod_wsgi
-python-paste-deploy
+#python-paste-deploy
 python-xattr
 python-iso8601
