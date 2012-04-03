@@ -846,7 +846,7 @@ if is_service_enabled horizon; then
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
     ## Configure apache's 000-default to run horizon
-    HTTPD_CONF=/etc/httpd/conf.d/000-default
+    HTTPD_CONF=/etc/httpd/conf.d/horizon.conf
     sudo cp $FILES/000-default.template $HTTPD_CONF
     sudo sed -e "
         s,%USER%,$APACHE_USER,g;
@@ -1057,7 +1057,7 @@ if is_service_enabled n-cpu; then
 
     # Virtualization Configuration
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    $INSTALL libvirt-client 
+    $INSTALL libvirt libvirt-client 
 
     # Force IP forwarding on, just on case
     sudo sysctl -w net.ipv4.ip_forward=1
@@ -1096,13 +1096,16 @@ if is_service_enabled n-cpu; then
 
     # The user that nova runs as needs to be member of libvirtd group otherwise
     # nova-compute will be unable to use libvirt.
-    sudo usermod -a -G qemu `whoami`
+    sudo groupadd libvirt
+    sudo echo "unix_sock_group=\"libvirt\"" >> /etc/libvirt/libvirtd.conf
+    sudo usermod -a -G libvirt `whoami`
 
     # libvirt detects various settings on startup, as we potentially changed
     # the system configuration (modules, filesystems), we need to restart
     # libvirt to detect those changes.
     #sudo /etc/init.d/libvirt-bin restart
-    $SERVICE libvirt-guests restart 
+    $SERVICE libvirtd restart 
+    $SERVICE libvirt-guests restart
 
     # Instance Storage
     # ~~~~~~~~~~~~~~~~
@@ -1640,7 +1643,7 @@ fi
 # within the context of our original shell (so our groups won't be updated).
 # Use 'sg' to execute nova-compute as a member of the libvirtd group.
 # We don't check for is_service_enable as screen_it does it for us
-screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
+screen_it n-cpu "cd $NOVA_DIR && sg libvirt $NOVA_DIR/bin/nova-compute"
 screen_it n-crt "cd $NOVA_DIR && $NOVA_DIR/bin/nova-cert"
 screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"

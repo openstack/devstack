@@ -1,4 +1,14 @@
-<VirtualHost *:80>
+LoadModule wsgi_module modules/mod_wsgi.so
+LoadModule rewrite_module modules/mod_rewrite.so
+
+WSGISocketPrefix /var/run/wsgi
+
+#<VirtualHost *:80>
+
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI}
+
     WSGIScriptAlias / %HORIZON_DIR%/openstack_dashboard/wsgi/django.wsgi
     WSGIDaemonProcess horizon user=%USER% group=%GROUP% processes=3 threads=10
     SetEnv APACHE_RUN_USER %USER%
@@ -21,8 +31,8 @@
         allow from all
     </Directory>
 
-    ErrorLog /var/log/apache2/error.log
+    ErrorLog /var/log/httpd/error_log
     LogLevel warn
-    CustomLog /var/log/apache2/access.log combined
-</VirtualHost>
+    CustomLog /var/log/httpd/horizon_log combined
+#</VirtualHost>
 
