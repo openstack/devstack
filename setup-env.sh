@@ -2,6 +2,7 @@
 
 PKGS=" git emacs-nox screen redhat-lsb python-pip telnet bash-completion "
 EPEL_RPM_URL="http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm"
+REPOFORGE_RPM_URL="http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm"
 RPM="sudo rpm"
 YUM="sudo yum "
 
@@ -9,6 +10,7 @@ YUM="sudo yum "
 # Setup EPEL
 #
 $RPM -Uhv $EPEL_RPM_URL
+$RPM -Uhv $REPOFORGE_RPM_URL
 
 #
 # Update the systems
@@ -37,10 +39,10 @@ export EDITOR=emacs
 export PROMPT="\u@\h \W> "
 export PS1=$PROMPT
 
-TTY=`/usr/bin/tty`
-if [ "$TTY" != "not a tty" -a "$TERM" != "screen" -a "$SHLVL" -eq 1 -a -n "$SSH_CLIENT" ]; then
-    screen -t `hostname` -x -RR remote
-fi
+#TTY=`/usr/bin/tty`
+#if [ "$TTY" != "not a tty" -a "$TERM" != "screen" -a "$SHLVL" -eq 1 -a -n "$SSH_CLIENT" ]; then
+#    screen -t `hostname` -x -RR remote
+#fi
 
 EOF
 ) >> ~/.bash_profile
@@ -59,3 +61,10 @@ cat <<EOF
 EOF
 ) > ~/.screenrc
 
+
+
+#
+# Setup the ephemeral storage as the target for openstack
+#
+sudo mkdir -p /media/ephemeral0/stack
+sudo ln -s /media/ephemeral0/stack /opt/stack

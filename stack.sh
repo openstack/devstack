@@ -53,6 +53,24 @@ if [ ! -d $FILES ]; then
     exit 1
 fi
 
+#
+# Install some RPM repos as needed: EPEL,  RPMFORGE but only for qemu-system-x86(_64),
+#   and the SEAS repo for openvswitch
+#
+EPEL_RPM_URL="http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm"
+REPOFORGE_RPM_URL="http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm"
+SEAS_REPO_URL="http://linux.seas.harvard.edu/seas/6/"
+RPM="sudo rpm"
+
+$RPM -Uhv $EPEL_RPM_URL
+$RPM -Uhv $REPOFORGE_RPM_URL
+
+# Disable RPMFORGE
+sudo perl -i -p -e 's/enabled = 1/enabled = 0/g' /etc/yum.repos.d/rpmforge.repo
+
+# Copy over the SEAS repo 
+sudo cp $TOP_DIR/files/seas.repo /etc/yum.repos.d/
+$RPM --import ${SEAS_REPO_URL}/RPM-GPG-KEY-SEAS-6
 
 # Settings
 # ========
@@ -932,19 +950,10 @@ if is_service_enabled q-svc; then
         # Install deps
         # FIXME add to files/apts/quantum, but don't install if not needed!
         kernel_version=`cat /proc/version | cut -d " " -f3`
-        $INSTALL rpm-build openssl-devel
 
 #        $INSTALL linux-headers-$kernel_version
-#        $INSTALL openvswitch-switch openvswitch-datapath-dkms
+        $INSTALL --enablerepo=seas-testing --enablerepo=seas-stable openvswitch
       
-        # Build openvswitch RPMS from source
-        mkdir -p ~/rpmbuild/SOURCES
-        cd ~/rpmbuild/SOURCES
-	wget http://openvswitch.org/releases/openvswitch-1.3.0.tar.gz
-        tar xzvf openvswitch-1.3.0.tar.gz
-        rpmbuild -bb openvswitch-1.3.0/rhel/openvswitch.spec
-        rpmbuild -bb openvswitch-1.3.0/rhel/        
-
         # Create database for the plugin/agent
         if is_service_enabled mysql; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
@@ -1059,6 +1068,14 @@ if is_service_enabled n-cpu; then
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     $INSTALL libvirt libvirt-client 
 
+    # This package comes from repoforge:
+    #
+    #     http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm
+    # 
+    # and is required to run on EC2 in emulated mode (provides qemu-system-x86_64)
+    #
+    $INSTALL --enablerepo=rpmforge --enablerepo=rpmforge-extras qemu || true
+
     # Force IP forwarding on, just on case
     sudo sysctl -w net.ipv4.ip_forward=1
 
@@ -1096,9 +1113,11 @@ if is_service_enabled n-cpu; then
 
     # The user that nova runs as needs to be member of libvirtd group otherwise
     # nova-compute will be unable to use libvirt.
-    sudo groupadd libvirt
-    sudo echo "unix_sock_group=\"libvirt\"" >> /etc/libvirt/libvirtd.conf
+    sudo groupadd libvirt || true
     sudo usermod -a -G libvirt `whoami`
+    sudo mv /etc/libvirt/libvirtd.conf /etc/libvirt/libvirtd.conf.orig || true
+    sudo cp $FILES/libvirtd.conf /etc/libvirt/libvirtd.conf
+
 
     # libvirt detects various settings on startup, as we potentially changed
     # the system configuration (modules, filesystems), we need to restart

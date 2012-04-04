@@ -1,0 +1,20 @@
+[seas-stable]
+name=Stable SEAS Linux Packages for Enterprise Linux $releasever - $basearch
+baseurl=http://linux.seas.harvard.edu/seas/$releasever/stable/$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-SEAS-6
+
+[seas-testing]
+name=In-Testing SEAS Linux Packages for Enterprise Linux $releasever - $basearch
+baseurl=http://linux.seas.harvard.edu/seas/$releasever/testing/$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-SEAS-6
+
+[seas-unstable]
+name=Unstable SEAS Linux Packages for Enterprise Linux $releasever - $basearch
+baseurl=http://linux.seas.harvard.edu/seas/$releasever/unstable/$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-SEAS-6
