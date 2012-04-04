@@ -10,7 +10,7 @@ python-sqlalchemy0.7
 MySQL-python
 python-webob
 python-greenlet
-python-routes
+#python-routes
 openldap-devel
 cyrus-sasl-devel
 python-bcrypt

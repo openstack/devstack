@@ -67,4 +67,4 @@ EOF
 # Setup the ephemeral storage as the target for openstack
 #
 sudo mkdir -p /media/ephemeral0/stack
-sudo ln -s /media/ephemeral0/stack /opt/stack
+sudo ln -s /media/ephemeral0/stack /opt/

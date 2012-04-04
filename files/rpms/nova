@@ -28,7 +28,7 @@ python-gflags
 python-greenlet
 libvirt-python
 python-lxml
-python-routes
+#python-routes
 python-netaddr
 #python-paste-deploy
 python-eventlet

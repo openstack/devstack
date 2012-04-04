@@ -4,7 +4,7 @@ python-dateutil
 python-paste
 #python-paste-deploy
 python-anyjson
-python-routes
+#python-routes
 python-xattr
 python-sqlalchemy0.7
 python-webob
