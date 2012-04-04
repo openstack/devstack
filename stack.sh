@@ -748,6 +748,10 @@ EOF
     restart_service mysql
 fi
 
+if [ -z "$SCREEN_HARDSTATUS" ]; then
+    SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'
+fi
+
 # Our screenrc file builder
 function screen_rc {
     SCREENRC=$TOP_DIR/stack-screenrc
@@ -755,7 +759,7 @@ function screen_rc {
         # Name the screen session
         echo "sessionname stack" > $SCREENRC
         # Set a reasonable statusbar
-        echo 'hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"' >> $SCREENRC
+        echo 'hardstatus alwayslastline "$SCREEN_HARDSTATUS"' >> $SCREENRC
         echo "screen -t stack bash" >> $SCREENRC
     fi
     # If this service doesn't already exist in the screenrc file
@@ -792,7 +796,7 @@ function screen_it {
 screen -d -m -S stack -t stack -s /bin/bash
 sleep 1
 # set a reasonable statusbar
-screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"
+screen -r stack -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
 # Horizon
 # -------
