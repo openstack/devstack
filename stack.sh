@@ -142,7 +142,8 @@ if [[ $EUID -eq 0 ]]; then
 
     # since this script runs as a normal user, we need to give that user
     # ability to run sudo
-    which sudo || $UPDATE && $INSTALL sudo
+
+    which sudo || $UPDATE && install_package sudo
 
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
@@ -302,6 +303,7 @@ function read_password {
     fi
     set -o xtrace
 }
+
 
 # Nova Network Configuration
 # --------------------------
@@ -623,9 +625,11 @@ function get_packages() {
     done
 }
 
-# install yum requirements
+
+# install package requirements
 $UPDATE
-$INSTALL $(get_packages $FILES/rpms)
+install_package $(get_packages $FILES/rpms)
+
 
 # install python requirements
 pip_install $(get_packages $FILES/pips | sort -u)
@@ -712,7 +716,9 @@ fi
 # ------
 
 if [[ $SYSLOG != "False" ]]; then
-    $INSTALL -y rsyslog-relp
+
+    install_package rsyslog-relp
+
     if [[ "$SYSLOG_HOST" = "$HOST_IP" ]]; then
         # Configure the master host to receive
         cat <<EOF >/tmp/90-stack-m.conf
@@ -727,7 +733,8 @@ EOF
 EOF
         sudo mv /tmp/90-stack-s.conf /etc/rsyslog.d
     fi
-    $SERVICE rsyslog restart
+    restart_service rsyslog
+
 fi
 
 
@@ -738,7 +745,9 @@ if is_service_enabled rabbit; then
     # Install and start rabbitmq-server
     # the temp file is necessary due to LP: #878600
     tfile=$(mktemp)
-    $INSTALL rabbitmq-server > "$tfile" 2>&1
+
+    install_package rabbitmq-server > "$tfile" 2>&1
+
     cat "$tfile"
     rm -f "$tfile"
     # Start the server first
@@ -777,18 +786,21 @@ EOF
     fi
 
     # Install and start mysql-server
-    $INSTALL mysql-server mysql-libs
+    install_package mysql-server
+
     $SERVICE mysqld restart
     sudo chkconfig mysqld on
 
     # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:                                      
     sudo sed -i 's/\[mysqld\]/[mysqld]\nbind-address=0.0.0.0/g' /etc/my.cnf
-    $SERVICE mysqld restart
+    restart_service mysqld 
+
 
     # Update the DB to give user ‘$MYSQL_USER’@’%’ full control of the all databases:
     sudo mysqladmin -u $MYSQL_USER password $MYSQL_PASSWORD || true
     sudo mysql -uroot -ppass -h127.0.0.1 -e "delete from mysql.user where user = '';" || true
     sudo mysql -uroot -p$MYSQL_PASSWORD  -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USER'@'%' identified by '$MYSQL_PASSWORD';" 
+
 
 fi
 
@@ -846,7 +858,8 @@ screen -r stack -X hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< 
 if is_service_enabled horizon; then
 
     # Install apache2, which is NOPRIME'd
-    $INSTALL httpd mod_wsgi mod_ssl
+    #install_package apache2 libapache2-mod-wsgi
+    install_package httpd mod_wsgi mod_ssl
 
     # Remove stale session database.
     rm -f $HORIZON_DIR/openstack_dashboard/local/dashboard_openstack.sqlite3
@@ -871,7 +884,8 @@ if is_service_enabled horizon; then
         s,%GROUP%,$APACHE_GROUP,g;
         s,%HORIZON_DIR%,$HORIZON_DIR,g;
     " -i $HTTPD_CONF
-    $SERVICE httpd restart
+    restart_service httpd restart
+
 fi
 
 
@@ -951,9 +965,10 @@ if is_service_enabled q-svc; then
         # FIXME add to files/apts/quantum, but don't install if not needed!
         kernel_version=`cat /proc/version | cut -d " " -f3`
 
-#        $INSTALL linux-headers-$kernel_version
-        $INSTALL --enablerepo=seas-testing --enablerepo=seas-stable openvswitch
-      
+        #$INSTALL linux-headers-$kernel_version
+        install_package --enablerepo=seas-testing --enablerepo=seas-stable openvswitch
+        #install_package openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
+
         # Create database for the plugin/agent
         if is_service_enabled mysql; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
@@ -963,12 +978,17 @@ if is_service_enabled q-svc; then
             exit 1
         fi
         QUANTUM_PLUGIN_INI_FILE=$QUANTUM_CONF_DIR/plugins.ini
-        sudo cp $QUANTUM_DIR/etc/plugins.ini $QUANTUM_PLUGIN_INI_FILE
+        # must remove this file from existing location, otherwise Quantum will prefer it
+        if [[ -e $QUANTUM_DIR/etc/plugins.ini ]]; then
+            sudo mv $QUANTUM_DIR/etc/plugins.ini $QUANTUM_PLUGIN_INI_FILE
+        fi
         # Make sure we're using the openvswitch plugin
         sudo sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
     fi
-   sudo cp $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF_DIR/quantum.conf
-   screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$QUANTUM_CLIENT_DIR:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_CONF_DIR/quantum.conf"
+    if [[ -e $QUANTUM_DIR/etc/quantum.conf ]]; then
+        sudo mv $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF_DIR/quantum.conf
+    fi
+    screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$QUANTUM_CLIENT_DIR:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_CONF_DIR/quantum.conf"
 fi
 
 # Quantum agent (for compute nodes)
@@ -980,11 +1000,15 @@ if is_service_enabled q-agt; then
         sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
         sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
 
-       # Start up the quantum <-> openvswitch agent
-       QUANTUM_OVS_CONFIG_FILE=$QUANTUM_CONF_DIR/ovs_quantum_plugin.ini
-       sudo cp $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini $QUANTUM_OVS_CONFIG_FILE
-       sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum?charset=utf8/g" $QUANTUM_OVS_CONFIG_FILE
-       screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_OVS_CONFIG_FILE -v"
+        # Start up the quantum <-> openvswitch agent
+        QUANTUM_OVS_CONF_DIR=$QUANTUM_CONF_DIR/plugins/openvswitch
+        mkdir -p $QUANTUM_OVS_CONF_DIR
+        QUANTUM_OVS_CONFIG_FILE=$QUANTUM_OVS_CONF_DIR/ovs_quantum_plugin.ini
+        if [[ -e $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini ]]; then
+            sudo mv $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini $QUANTUM_OVS_CONFIG_FILE
+        fi
+        sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum?charset=utf8/g" $QUANTUM_OVS_CONFIG_FILE
+        screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_OVS_CONFIG_FILE -v"
     fi
 
 fi
@@ -1066,6 +1090,9 @@ if is_service_enabled n-cpu; then
 
     # Virtualization Configuration
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    install_package libvirt libvirt-client
+    # install_package libvirt-bin
+
     $INSTALL libvirt libvirt-client 
 
     # This package comes from repoforge:
@@ -1098,7 +1125,8 @@ if is_service_enabled n-cpu; then
     # to simulate multiple systems.
     if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
         if [[ "$DISTRO" > natty ]]; then
-            $INSTALL cgroup-lite
+            install_package cgroup-lite
+
         else
             cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
             sudo mkdir -p /cgroup
@@ -1122,9 +1150,9 @@ if is_service_enabled n-cpu; then
     # libvirt detects various settings on startup, as we potentially changed
     # the system configuration (modules, filesystems), we need to restart
     # libvirt to detect those changes.
-    #sudo /etc/init.d/libvirt-bin restart
-    $SERVICE libvirtd restart 
-    $SERVICE libvirt-guests restart
+    restart_service libvirtd
+#    restart_service libvirt-bin
+
 
     # Instance Storage
     # ~~~~~~~~~~~~~~~~
@@ -1174,7 +1202,7 @@ fi
 # Storage Service
 if is_service_enabled swift; then
     # Install memcached for swift.
-    yum -y install memcached
+    install_package memcached
 
     # We first do a bit of setup by creating the directories and
     # changing the permissions so we can run it as our user.
@@ -1358,7 +1386,7 @@ if is_service_enabled n-vol; then
     # By default, the backing file is 2G in size, and is stored in /opt/stack.
 
     # install the package
-    $INSTALL scsi-target-utils
+    install_package scsi-target-utils
 
     if ! sudo vgs $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
