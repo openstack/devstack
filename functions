@@ -255,6 +255,18 @@ function install_package() {
     fi
 }
 
+# Distro-agnostic package installer
+# update_packages 
+function update_packages() {
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        apt_get update
+    else
+        sudo yum -y update
+    fi
+}
 
 # Test if the named environment variable is set and not zero length
 # is_set env-var
@@ -282,29 +294,56 @@ function pip_install {
     sudo PIP_DOWNLOAD_CACHE=/var/cache/pip \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
-#        pip-python install --upgrade $@
-        $CMD_PIP install --use-mirrors $@
+        $CMD_PIP install --upgrade $@
 }
 
 
 # Service wrapper to restart services
 # restart_service service-name
 function restart_service() {
-    sudo /usr/sbin/service $1 restart
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        SERVICE=/usr/sbin/service
+    else
+        SERVICE=/sbin/service
+    fi
+
+
+    sudo $SERVICE $1 restart
 }
 
 
 # Service wrapper to start services
 # start_service service-name
 function start_service() {
-    sudo /usr/sbin/service $1 start
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        SERVICE=/usr/sbin/service
+    else
+        SERVICE=/sbin/service
+    fi
+    sudo $SERVICE $1 start
 }
 
 
 # Service wrapper to stop services
 # stop_service service-name
 function stop_service() {
-    sudo /usr/sbin/service $1 stop
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        SERVICE=/usr/sbin/service
+    else
+        SERVICE=/sbin/service
+    fi
+
+    sudo $SERVICE $1 stop
+
 }
 
 

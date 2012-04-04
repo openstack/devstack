@@ -18,9 +18,9 @@
 
 # Learn more and get the most recent version at http://devstack.org
 
-UPDATE="sudo yum -y update"
-INSTALL="sudo yum -y install"
-SERVICE="sudo /sbin/service"
+#UPDATE="sudo yum -y update"
+#INSTALL="sudo yum -y install"
+#SERVICE="sudo /sbin/service"
 
 # Sanity Check
 # ============
@@ -751,11 +751,11 @@ if is_service_enabled rabbit; then
     cat "$tfile"
     rm -f "$tfile"
     # Start the server first
-    $SERVICE rabbitmq-server start 
+    start_service rabbitmq-server 
     sudo chkconfig rabbitmq-server on
 
     # change the rabbit password since the default is "guest"
-    sudo  rabbitmqctl change_password guest $RABBIT_PASSWORD
+    sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
 fi
 
 
@@ -788,7 +788,7 @@ EOF
     # Install and start mysql-server
     install_package mysql-server
 
-    $SERVICE mysqld restart
+    restart_service mysqld 
     sudo chkconfig mysqld on
 
     # Edit /etc/mysql/my.cnf to change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and restart the mysql service:                                      
@@ -965,7 +965,7 @@ if is_service_enabled q-svc; then
         # FIXME add to files/apts/quantum, but don't install if not needed!
         kernel_version=`cat /proc/version | cut -d " " -f3`
 
-        #$INSTALL linux-headers-$kernel_version
+        #install_package linux-headers-$kernel_version
         install_package --enablerepo=seas-testing --enablerepo=seas-stable openvswitch
         #install_package openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
 
@@ -1093,15 +1093,13 @@ if is_service_enabled n-cpu; then
     install_package libvirt libvirt-client
     # install_package libvirt-bin
 
-    $INSTALL libvirt libvirt-client 
-
     # This package comes from repoforge:
     #
     #     http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm
     # 
     # and is required to run on EC2 in emulated mode (provides qemu-system-x86_64)
     #
-    $INSTALL --enablerepo=rpmforge --enablerepo=rpmforge-extras qemu || true
+    install_package --enablerepo=rpmforge --enablerepo=rpmforge-extras qemu || true
 
     # Force IP forwarding on, just on case
     sudo sysctl -w net.ipv4.ip_forward=1
@@ -1387,6 +1385,7 @@ if is_service_enabled n-vol; then
 
     # install the package
     install_package scsi-target-utils
+    start_service tgtd
 
     if ! sudo vgs $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
@@ -1412,8 +1411,8 @@ if is_service_enabled n-vol; then
 
     # tgt in oneiric doesn't restart properly if tgtd isn't running
     # do it in two steps
-    $SERVICE tgtd stop  || true
-    $SERVICE tgtd start 
+    stop_service  tgtd || true
+    start_service tgtd  
 fi
 
 NOVA_CONF=nova.conf
