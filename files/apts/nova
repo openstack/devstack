@@ -1,5 +1,5 @@
 dnsmasq-base
-dnsmasq-utils # for dhcp_release only available in dist:oneiric
+dnsmasq-utils # for dhcp_release only available in dist:oneiric,precise
 kpartx
 parted
 arping # only available in dist:natty
