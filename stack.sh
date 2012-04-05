@@ -759,7 +759,7 @@ function screen_rc {
         # Name the screen session
         echo "sessionname stack" > $SCREENRC
         # Set a reasonable statusbar
-        echo 'hardstatus alwayslastline "$SCREEN_HARDSTATUS"' >> $SCREENRC
+        echo "hardstatus alwayslastline '$SCREEN_HARDSTATUS'" >> $SCREENRC
         echo "screen -t stack bash" >> $SCREENRC
     fi
     # If this service doesn't already exist in the screenrc file
