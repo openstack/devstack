@@ -37,13 +37,18 @@ TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
 
 # Abort if localrc is not set
 if [ ! -e $TOP_DIR/localrc ]; then
-    echo "You must have a localrc with ALL necessary passwords and configuration defined before proceeding."
-    echo "See stack.sh for required passwords."
+    echo "You must have a localrc with necessary basic configuration defined before proceeding."
     exit 1
 fi
 
-# Source params
-source ./stackrc
+# Abort if openrc is not set
+if [ ! -e $TOP_DIR/openrc ]; then
+    echo "You must have an openrc with ALL necessary passwords and credentials defined before proceeding."
+    exit 1
+fi
+
+# Source params. openrc sources stackrc which sources localrc
+source $TOP_DIR/openrc
 
 # Set defaults not configured by stackrc
 TENANT=${TENANT:-admin}
@@ -132,8 +137,8 @@ if [[ ! -r $TEMPEST_CONF ]]; then
 fi
 
 IDENTITY_USE_SSL=${IDENTITY_USE_SSL:-False}
-IDENTITY_PORT=${IDENTITY_PORT:-5000}
-IDENTITY_API_VERSION={$IDENTITY_API_VERSION:-v2.0} # Note: need v for now...
+TEMPEST_IDENTITY_HOST=${IDENTITY_HOST:-127.0.0.1}
+TEMPEST_IDENTITY_API_VERSION="v2.0" # Note: need v for now...
 # TODO(jaypipes): This is dumb and needs to be removed
 # from the Tempest configuration file entirely...
 IDENTITY_PATH=${IDENTITY_PATH:-tokens}
@@ -167,14 +172,16 @@ ADMIN_TENANT_NAME={$ADMIN_TENANT:-admin}
 # Do any of the following need to be configurable?
 COMPUTE_CATALOG_TYPE=compute
 COMPUTE_CREATE_IMAGE_ENABLED=True
-COMPUTE_RESIZE_AVAILABLE=True
+COMPUTE_RESIZE_AVAILABLE=False  # not supported with QEMU...
 COMPUTE_LOG_LEVEL=ERROR
+BUILD_INTERVAL=10
+BUILD_TIMEOUT=600
 
 sed -e "
     s,%IDENTITY_USE_SSL%,$IDENTITY_USE_SSL,g;
-    s,%IDENTITY_HOST%,$HOST_IP,g;
+    s,%IDENTITY_HOST%,$TEMPEST_IDENTITY_HOST,g;
     s,%IDENTITY_PORT%,$IDENTITY_PORT,g;
-    s,%IDENTITY_API_VERSION%,$IDENTITY_API_VERSION,g;
+    s,%IDENTITY_API_VERSION%,$TEMPEST_IDENTITY_API_VERSION,g;
     s,%IDENTITY_PATH%,$IDENTITY_PATH,g;
     s,%IDENTITY_STRATEGY%,$IDENTITY_STRATEGY,g;
     s,%USERNAME%,$OS_USERNAME,g;
@@ -187,6 +194,8 @@ sed -e "
     s,%COMPUTE_CREATE_IMAGE_ENABLED%,$COMPUTE_CREATE_IMAGE_ENABLED,g;
     s,%COMPUTE_RESIZE_AVAILABLE%,$COMPUTE_RESIZE_AVAILABLE,g;
     s,%COMPUTE_LOG_LEVEL%,$COMPUTE_LOG_LEVEL,g;
+    s,%BUILD_INTERVAL%,$BUILD_INTERVAL,g;
+    s,%BUILD_TIMEOUT%,$BUILD_TIMEOUT,g;
     s,%IMAGE_ID%,$IMAGE_UUID,g;
     s,%IMAGE_ID_ALT%,$IMAGE_UUID_ALT,g;
     s,%FLAVOR_REF%,$FLAVOR_REF,g;
@@ -195,6 +204,10 @@ sed -e "
     s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g;
     s,%ADMIN_TENANT_NAME%,$ADMIN_TENANT_NAME,g;
 " -i $TEMPEST_CONF
+
+echo "Created tempest configuration file:"
+cat $TEMPEST_CONF
+echo "\n\n"
 
 # Create config.ini
 
