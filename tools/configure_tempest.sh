@@ -125,22 +125,75 @@ if [[ -n "$IMAGE_NAME" ]]; then
     IMAGE_UUID=$(echo $IMAGE_UUID)
 fi
 
-# Create tempest.conf from tempest.conf.sample
+# Create tempest.conf from tempest.conf.tpl
 
 if [[ ! -r $TEMPEST_CONF ]]; then
-    cp $TEMPEST_CONF.sample $TEMPEST_CONF
+    cp $TEMPEST_CONF.tpl $TEMPEST_CONF
 fi
 
+IDENTITY_USE_SSL=${IDENTITY_USE_SSL:-False}
+IDENTITY_PORT=${IDENTITY_PORT:-5000}
+IDENTITY_API_VERSION={$IDENTITY_API_VERSION:-v2.0} # Note: need v for now...
+# TODO(jaypipes): This is dumb and needs to be removed
+# from the Tempest configuration file entirely...
+IDENTITY_PATH=${IDENTITY_PATH:-tokens}
+IDENTITY_STRATEGY=${IDENTITY_STRATEGY:-keystone}
+
+# We use regular, non-admin users in Tempest for the USERNAME
+# substitutions and use ADMIN_USERNAME et al for the admin stuff.
+# OS_USERNAME et all should be defined in openrc.
+OS_USERNAME=${OS_USERNAME:-demo}
+OS_TENANT_NAME=${OS_TENANT_NAME:-demo}
+OS_PASSWORD=${OS_PASSWORD:-secrete}
+
+# TODO(jaypipes): Support multiple regular user accounts instead
+# of using the same regular user account for the alternate user...
+ALT_USERNAME=$OS_USERNAME
+ALT_PASSWORD=$OS_PASSWORD
+ALT_TENANT_NAME=$OS_TENANT_NAME
+
+# TODO(jaypipes): Support multiple images instead of plopping
+# the IMAGE_UUID into both the image_ref and image_ref_alt slots
+IMAGE_UUID_ALT=$IMAGE_UUID
+
+# TODO(jaypipes): Support configurable flavor refs here...
+FLAVOR_REF=1
+FLAVOR_REF_ALT=2
+
+ADMIN_USERNAME={$ADMIN_USERNAME:-admin}
+ADMIN_PASSWORD={$ADMIN_PASSWORD:-secrete}
+ADMIN_TENANT_NAME={$ADMIN_TENANT:-admin}
+
+# Do any of the following need to be configurable?
+COMPUTE_CATALOG_TYPE=compute
+COMPUTE_CREATE_IMAGE_ENABLED=True
+COMPUTE_RESIZE_AVAILABLE=True
+COMPUTE_LOG_LEVEL=ERROR
+
 sed -e "
-    /^api_key=/s|=.*\$|=$ADMIN_PASSWORD|;
-    /^auth_url=/s|=.*\$|=${OS_AUTH_URL%/}/|;
-    /^host=/s|=.*\$|=$HOST_IP|;
-    /^image_ref=/s|=.*\$|=$IMAGE_UUID|;
-    /^password=/s|=.*\$|=$ADMIN_PASSWORD|;
-    /^tenant=/s|=.*\$|=$TENANT|;
-    /^tenant_name=/s|=.*\$|=$TENANT|;
-    /^user=/s|=.*\$|=$USERNAME|;
-    /^username=/s|=.*\$|=$USERNAME|;
+    s,%IDENTITY_USE_SSL%,$IDENTITY_USE_SSL,g;
+    s,%IDENTITY_HOST%,$HOST_IP,g;
+    s,%IDENTITY_PORT%,$IDENTITY_PORT,g;
+    s,%IDENTITY_API_VERSION%,$IDENTITY_API_VERSION,g;
+    s,%IDENTITY_PATH%,$IDENTITY_PATH,g;
+    s,%IDENTITY_STRATEGY%,$IDENTITY_STRATEGY,g;
+    s,%USERNAME%,$OS_USERNAME,g;
+    s,%PASSWORD%,$OS_PASSWORD,g;
+    s,%TENANT_NAME%,$OS_TENANT_NAME,g;
+    s,%ALT_USERNAME%,$ALT_USERNAME,g;
+    s,%ALT_PASSWORD%,$ALT_PASSWORD,g;
+    s,%ALT_TENANT_NAME%,$ALT_TENANT_NAME,g;
+    s,%COMPUTE_CATALOG_TYPE%,$COMPUTE_CATALOG_TYPE,g;
+    s,%COMPUTE_CREATE_IMAGE_ENABLED%,$COMPUTE_CREATE_IMAGE_ENABLED,g;
+    s,%COMPUTE_RESIZE_AVAILABLE%,$COMPUTE_RESIZE_AVAILABLE,g;
+    s,%COMPUTE_LOG_LEVEL%,$COMPUTE_LOG_LEVEL,g;
+    s,%IMAGE_ID%,$IMAGE_UUID,g;
+    s,%IMAGE_ID_ALT%,$IMAGE_UUID_ALT,g;
+    s,%FLAVOR_REF%,$FLAVOR_REF,g;
+    s,%FLAVOR_REF_ALT%,$FLAVOR_REF_ALT,g;
+    s,%ADMIN_USERNAME%,$ADMIN_USERNAME,g;
+    s,%ADMIN_PASSWORD%,$ADMIN_PASSWORD,g;
+    s,%ADMIN_TENANT_NAME%,$ADMIN_TENANT_NAME,g;
 " -i $TEMPEST_CONF
 
 # Create config.ini
