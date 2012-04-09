@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-# **stack.sh** is an opinionated OpenStack developer installation.
-
-# This script installs and configures various combinations of *Glance*,
-# *Horizon*, *Keystone*, *Melange*, *Nova*, *Quantum* and *Swift*
+# ``stack.sh`` is an opinionated OpenStack developer installation.  It
+# installs and configures various combinations of **Glance**, **Horizon**,
+# **Keystone**, **Melange**, **Nova**, **Quantum** and **Swift**
 
 # This script allows you to specify configuration options of what git
 # repositories to use, enabled services, network configuration and various
@@ -12,42 +11,30 @@
 # developer install.
 
 # To keep this script simple we assume you are running on an **Ubuntu 11.10
-# Oneiric** machine.  It should work in a VM or physical server.  Additionally
-# we put the list of *apt* and *pip* dependencies and other configuration files
-# in this repo.  So start by grabbing this script and the dependencies.
+# Oneiric** or **Ubuntu 12.04 Precise** machine.  It should work in a VM or
+# physical server.  Additionally we put the list of ``apt`` and ``pip``
+# dependencies and other configuration files in this repo.  So start by
+# grabbing this script and the dependencies.
 
 # Learn more and get the most recent version at http://devstack.org
 
-
-# Sanity Check
-# ============
-
-# Warn users who aren't on oneiric, but allow them to override check and attempt
-# installation with ``FORCE=yes ./stack``
-DISTRO=$(lsb_release -c -s)
-
-if [[ ! ${DISTRO} =~ (oneiric|precise) ]]; then
-    echo "WARNING: this script has only been tested on oneiric"
-    if [[ "$FORCE" != "yes" ]]; then
-        echo "If you wish to run this script anyway run with FORCE=yes"
-        exit 1
-    fi
-fi
-
-# Keep track of the current devstack directory.
+# Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
 # Import common functions
-. $TOP_DIR/functions
+source $TOP_DIR/functions
 
-# stack.sh keeps the list of **apt** and **pip** dependencies in external
-# files, along with config templates and other useful files.  You can find these
-# in the ``files`` directory (next to this script).  We will reference this
-# directory using the ``FILES`` variable in this script.
-FILES=$TOP_DIR/files
-if [ ! -d $FILES ]; then
-    echo "ERROR: missing devstack/files - did you grab more than just stack.sh?"
-    exit 1
+# Determine what system we are running on.  This provides ``os_VENDOR``,
+# ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
+GetOSVersion
+
+# Translate the OS version values into common nomenclature
+if [[ "$os_VENDOR" =~ (Ubuntu) ]]; then
+    # 'Everyone' refers to Ubuntu releases by the code name adjective
+    DISTRO=$os_CODENAME
+else
+    # Catch-all for now is Vendor + Release + Update
+    DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
 fi
 
 
@@ -72,21 +59,49 @@ fi
 #
 # DevStack distributes ``stackrc`` which contains locations for the OpenStack
 # repositories and branches to configure.  ``stackrc`` sources ``localrc`` to
-# allow you to override those settings and not have your changes overwritten
+# allow you to safely override those settings without being overwritten
 # when updating DevStack.
 
-# We support HTTP and HTTPS proxy servers via the usual environment variables
-# **http_proxy** and **https_proxy**.  They can be set in ``localrc`` if necessary or
-# on the command line::
+# HTTP and HTTPS proxy servers are supported via the usual environment variables
+# ``http_proxy`` and ``https_proxy``.  They can be set in ``localrc`` if necessary
+# or on the command line::
 #
 #     http_proxy=http://proxy.example.com:3128/ ./stack.sh
 
+if [[ ! -r $TOP_DIR/stackrc ]]; then
+    echo "ERROR: missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
+    exit 1
+fi
 source ./stackrc
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
 
-# Check to see if we are already running a stack.sh
+
+# Sanity Check
+# ============
+
+# Warn users who aren't on an explicitly supported distro, but allow them to
+# override check and attempt installation with ``FORCE=yes ./stack``
+if [[ ! ${DISTRO} =~ (oneiric|precise) ]]; then
+    echo "WARNING: this script has only been tested on oneiric and precise"
+    if [[ "$FORCE" != "yes" ]]; then
+        echo "If you wish to run this script anyway run with FORCE=yes"
+        exit 1
+    fi
+fi
+
+# stack.sh keeps the list of ``apt`` and ``pip`` dependencies in external
+# files, along with config templates and other useful files.  You can find these
+# in the ``files`` directory (next to this script).  We will reference this
+# directory using the ``FILES`` variable in this script.
+FILES=$TOP_DIR/files
+if [ ! -d $FILES ]; then
+    echo "ERROR: missing devstack/files - did you grab more than just stack.sh?"
+    exit 1
+fi
+
+# Check to see if we are already running DevStack
 if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].stack"; then
     echo "You are already running a stack.sh session."
     echo "To rejoin this session type 'screen -x stack'."
