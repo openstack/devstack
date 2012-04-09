@@ -1547,14 +1547,6 @@ if is_service_enabled key; then
     fi
 
     if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
-        # FIXME(dtroyer): etc/keystone.conf causes trouble if the config files
-        #                 are located anywhere else (say, /etc/keystone).
-        #                 LP 966670 fixes this in keystone, we fix it
-        #                 here until the bug fix is committed.
-        if [[ -r $KEYSTONE_DIR/etc/keystone.conf ]]; then
-            # Get the sample config file out of the way
-            mv $KEYSTONE_DIR/etc/keystone.conf $KEYSTONE_DIR/etc/keystone.conf.sample
-        fi
         cp -p $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
         cp -p $KEYSTONE_DIR/etc/policy.json $KEYSTONE_CONF_DIR
     fi
