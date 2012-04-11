@@ -59,6 +59,11 @@ Of course, use real passwords if this machine is exposed.
     ACTIVE_TIMEOUT=45
     # Interface on which you would like to access services
     HOST_IP_IFACE=ethX
+    # First time Ubuntu network install params
+    NETINSTALLIP="dhcp"
+    NAMESERVERS=""
+    NETMASK=""
+    GATEWAY=""
     EOF
 
 Step 4: Run ./install_os_domU.sh from the tools/xen directory
