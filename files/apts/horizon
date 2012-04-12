@@ -18,7 +18,6 @@ python-mox
 python-kombu
 python-coverage
 python-cherrypy3 # why?
-python-django
 python-django-mailer
 python-django-nose
 python-django-registration
