@@ -1,0 +1,39 @@
+MySQL-python
+curl
+dnsmasq-utils # for dhcp_release
+ebtables
+gawk
+iptables
+iputils
+kpartx
+kvm
+libvirt-bin # NOPRIME
+libvirt-python
+libxml2-python
+m2crypto
+mysql-server # NOPRIME
+parted
+python-boto
+python-carrot
+python-cheetah
+python-eventlet
+python-feedparser
+python-gflags
+python-greenlet
+python-iso8601
+python-kombu
+python-lockfile
+python-migrate
+python-mox
+python-netaddr
+python-paramiko
+python-paste
+python-paste-deploy
+python-routes
+python-sqlalchemy
+python-suds
+python-tempita
+rabbitmq-server # NOPRIME
+sqlite
+sudo
+vconfig

@@ -1,0 +1,11 @@
+python-greenlet
+python-lxml
+python-paste
+python-paste-deploy
+python-paste-script
+python-routes
+python-setuptools
+python-sqlalchemy
+python-sqlite2
+python-webob
+sqlite

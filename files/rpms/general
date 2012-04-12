@@ -1,0 +1,14 @@
+curl
+euca2ools # only for testing client
+git-core
+openssh-server
+psmisc
+pylint
+python-pep8
+python-pip
+python-unittest2
+python-virtualenv
+screen
+tcpdump
+unzip
+wget
