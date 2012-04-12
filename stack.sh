@@ -959,6 +959,15 @@ if is_service_enabled g-reg; then
     iniset $GLANCE_API_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
     iniset $GLANCE_API_CONF paste_deploy flavor keystone
 
+    # Store the images in swift if enabled.
+    if is_service_enabled swift; then
+        iniset $GLANCE_API_CONF DEFAULT default_store swift
+        iniset $GLANCE_API_CONF DEFAULT swift_store_auth_address $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/
+        iniset $GLANCE_API_CONF DEFAULT swift_store_user $SERVICE_TENANT_NAME:glance
+        iniset $GLANCE_API_CONF DEFAULT swift_store_key $SERVICE_PASSWORD
+        iniset $GLANCE_API_CONF DEFAULT swift_store_create_container_on_put True
+    fi
+
     GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
     cp $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
     iniset $GLANCE_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
