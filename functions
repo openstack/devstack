@@ -419,7 +419,7 @@ function is_service_enabled() {
 
 # remove extra commas from the input string (ENABLED_SERVICES)
 function _cleanup_service_list () {
-	echo "$1" | sed -e '
+    echo "$1" | sed -e '
         s/,,/,/g;
         s/^,//;
         s/,$//
@@ -615,6 +615,105 @@ function trueorfalse() {
     [[ "0 no false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
     [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
     echo "$default"
+}
+
+
+# Retrieve an image from a URL and upload into Glance
+# Uses the following variables:
+#   **FILES** must be set to the cache dir
+#   **GLANCE_HOSTPORT**
+# upload_image image-url glance-token
+function upload_image() {
+    local image_url=$1
+    local token=$2
+
+    # Create a directory for the downloaded image tarballs.
+    mkdir -p $FILES/images
+
+    # Downloads the image (uec ami+aki style), then extracts it.
+    IMAGE_FNAME=`basename "$image_url"`
+    if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
+        wget -c $image_url -O $FILES/$IMAGE_FNAME
+        if [[ $? -ne 0 ]]; then
+            echo "Not found: $image_url"
+            return
+        fi
+    fi
+
+    # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
+    if [[ "$image_url" =~ 'openvz' ]]; then
+        IMAGE="$FILES/${IMAGE_FNAME}"
+        IMAGE_NAME="${IMAGE_FNAME%.tar.gz}"
+        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format ami --disk-format ami < "${IMAGE}"
+        return
+    fi
+
+    KERNEL=""
+    RAMDISK=""
+    DISK_FORMAT=""
+    CONTAINER_FORMAT=""
+    UNPACK=""
+    case "$IMAGE_FNAME" in
+        *.tar.gz|*.tgz)
+            # Extract ami and aki files
+            [ "${IMAGE_FNAME%.tar.gz}" != "$IMAGE_FNAME" ] &&
+                IMAGE_NAME="${IMAGE_FNAME%.tar.gz}" ||
+                IMAGE_NAME="${IMAGE_FNAME%.tgz}"
+            xdir="$FILES/images/$IMAGE_NAME"
+            rm -Rf "$xdir";
+            mkdir "$xdir"
+            tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
+            KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
+                     [ -f "$f" ] && echo "$f" && break; done; true)
+            RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
+                     [ -f "$f" ] && echo "$f" && break; done; true)
+            IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
+                     [ -f "$f" ] && echo "$f" && break; done; true)
+            if [[ -z "$IMAGE_NAME" ]]; then
+                IMAGE_NAME=$(basename "$IMAGE" ".img")
+            fi
+            ;;
+        *.img)
+            IMAGE="$FILES/$IMAGE_FNAME";
+            IMAGE_NAME=$(basename "$IMAGE" ".img")
+            DISK_FORMAT=raw
+            CONTAINER_FORMAT=bare
+            ;;
+        *.img.gz)
+            IMAGE="$FILES/${IMAGE_FNAME}"
+            IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
+            DISK_FORMAT=raw
+            CONTAINER_FORMAT=bare
+            UNPACK=zcat
+            ;;
+        *.qcow2)
+            IMAGE="$FILES/${IMAGE_FNAME}"
+            IMAGE_NAME=$(basename "$IMAGE" ".qcow2")
+            DISK_FORMAT=qcow2
+            CONTAINER_FORMAT=bare
+            ;;
+        *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
+    esac
+
+    if [ "$CONTAINER_FORMAT" = "bare" ]; then
+        if [ "$UNPACK" = "zcat" ]; then
+            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --public --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
+        else
+            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --public --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < "${IMAGE}"
+        fi
+    else
+        # Use glance client to add the kernel the root filesystem.
+        # We parse the results of the first upload to get the glance ID of the
+        # kernel for use when uploading the root filesystem.
+        KERNEL_ID=""; RAMDISK_ID="";
+        if [ -n "$KERNEL" ]; then
+            KERNEL_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" --public --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
+        fi
+        if [ -n "$RAMDISK" ]; then
+            RAMDISK_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" --public --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
+        fi
+        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" --public --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
+    fi
 }
 
 

@@ -2141,21 +2141,17 @@ is_service_enabled swift3 || \
 
 # Upload an image to glance.
 #
-# The default image is a small ***TTY*** testing image, which lets you login
-# the username/password of root/password.
+# The default image is cirros, a small testing image, which lets you login as root
 #
-# TTY also uses ``cloud-init``, supporting login via keypair and sending scripts as
+# cirros also uses ``cloud-init``, supporting login via keypair and sending scripts as
 # userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
 #
 # Override ``IMAGE_URLS`` with a comma-separated list of uec images.
 #
-#  * **natty**: http://uec-images.ubuntu.com/natty/current/natty-server-cloudimg-amd64.tar.gz
 #  * **oneiric**: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
+#  * **precise**: http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64.tar.gz
 
 if is_service_enabled g-reg; then
-    # Create a directory for the downloaded image tarballs.
-    mkdir -p $FILES/images
-
     TOKEN=$(keystone  token-get | grep ' id ' | get_field 2)
 
     # Option to upload legacy ami-tty, which works with xenserver
@@ -2164,87 +2160,7 @@ if is_service_enabled g-reg; then
     fi
 
     for image_url in ${IMAGE_URLS//,/ }; do
-        # Downloads the image (uec ami+aki style), then extracts it.
-        IMAGE_FNAME=`basename "$image_url"`
-        if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
-            wget -c $image_url -O $FILES/$IMAGE_FNAME
-        fi
-
-        # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
-        if [[ "$image_url" =~ 'openvz' ]]; then
-            IMAGE="$FILES/${IMAGE_FNAME}"
-            IMAGE_NAME="${IMAGE_FNAME%.tar.gz}"
-            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --public --container-format ami --disk-format ami < "$IMAGE"
-            continue
-        fi
-
-        KERNEL=""
-        RAMDISK=""
-        DISK_FORMAT=""
-        CONTAINER_FORMAT=""
-        UNPACK=""
-        
-        case "$IMAGE_FNAME" in
-            *.tar.gz|*.tgz)
-                # Extract ami and aki files
-                [ "${IMAGE_FNAME%.tar.gz}" != "$IMAGE_FNAME" ] &&
-                    IMAGE_NAME="${IMAGE_FNAME%.tar.gz}" ||
-                    IMAGE_NAME="${IMAGE_FNAME%.tgz}"
-                xdir="$FILES/images/$IMAGE_NAME"
-                rm -Rf "$xdir";
-                mkdir "$xdir"
-                tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
-                KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
-                         [ -f "$f" ] && echo "$f" && break; done; true)
-                RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
-                         [ -f "$f" ] && echo "$f" && break; done; true)
-                IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
-                         [ -f "$f" ] && echo "$f" && break; done; true)
-                if [[ -z "$IMAGE_NAME" ]]; then
-                    IMAGE_NAME=$(basename "$IMAGE" ".img")
-                fi
-                ;;
-            *.img)
-                IMAGE="$FILES/$IMAGE_FNAME";
-                IMAGE_NAME=$(basename "$IMAGE" ".img")
-                DISK_FORMAT=raw
-                CONTAINER_FORMAT=bare
-                ;;
-            *.img.gz)
-                IMAGE="$FILES/${IMAGE_FNAME}"
-                IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
-                DISK_FORMAT=raw
-                CONTAINER_FORMAT=bare
-                UNPACK=zcat
-                ;;
-            *.qcow2)
-                IMAGE="$FILES/${IMAGE_FNAME}"
-                IMAGE_NAME=$(basename "$IMAGE" ".qcow2")
-                DISK_FORMAT=qcow2
-                CONTAINER_FORMAT=bare
-                ;;
-            *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
-        esac
-
-        if [ "$CONTAINER_FORMAT" = "bare" ]; then
-            if [ "$UNPACK" = "zcat" ]; then
-                glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT <  <(zcat --force "${IMAGE}")
-            else
-                glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < ${IMAGE}
-            fi
-        else
-            # Use glance client to add the kernel the root filesystem.
-            # We parse the results of the first upload to get the glance ID of the
-            # kernel for use when uploading the root filesystem.
-            KERNEL_ID=""; RAMDISK_ID="";
-            if [ -n "$KERNEL" ]; then
-                KERNEL_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" --is-public=True --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
-            fi
-            if [ -n "$RAMDISK" ]; then
-                RAMDISK_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" --is-public=True --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
-            fi
-            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" --is-public=True --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
-        fi
+        upload_image $image_url $TOKEN
     done
 fi
 
