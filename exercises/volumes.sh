@@ -53,10 +53,10 @@ nova list
 nova image-list
 
 # But we recommend using glance directly
-glance -f index
+glance image-list
 
 # Grab the id of the image to launch
-IMAGE=`glance -f index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
+IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
 
 # determinine instance type
 # -------------------------

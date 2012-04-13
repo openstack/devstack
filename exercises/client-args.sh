@@ -46,7 +46,9 @@ unset OS_AUTH_URL
 
 # Common authentication args
 TENANT_ARG="--os_tenant_name=$x_TENANT_NAME"
+TENANT_ARG_DASH="--os-tenant-name=$x_TENANT_NAME"
 ARGS="--os_username=$x_USERNAME --os_password=$x_PASSWORD --os_auth_url=$x_AUTH_URL"
+ARGS_DASH="--os-username=$x_USERNAME --os-password=$x_PASSWORD --os-auth-url=$x_AUTH_URL"
 
 # Set global return
 RETURN=0
@@ -94,7 +96,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
-        if glance $TENANT_ARG $ARGS index; then
+        if glance $TENANT_ARG_DASH $ARGS_DASH image-list; then
             STATUS_GLANCE="Succeeded"
         else
             STATUS_GLANCE="Failed"

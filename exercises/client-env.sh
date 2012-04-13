@@ -107,7 +107,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
-        if glance index; then
+        if glance image-list; then
             STATUS_GLANCE="Succeeded"
         else
             STATUS_GLANCE="Failed"

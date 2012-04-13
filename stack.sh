@@ -201,6 +201,7 @@ OFFLINE=`trueorfalse False $OFFLINE`
 NOVA_DIR=$DEST/nova
 HORIZON_DIR=$DEST/horizon
 GLANCE_DIR=$DEST/glance
+GLANCECLIENT_DIR=$DEST/python-glanceclient
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
@@ -643,6 +644,7 @@ git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 # python client library to nova that horizon (and others) use
 git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
+git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
 
 # glance, swift middleware and nova api needs keystone middleware
 if is_service_enabled key g-api n-api swift; then
@@ -714,6 +716,9 @@ fi
 if is_service_enabled melange; then
     cd $MELANGECLIENT_DIR; sudo python setup.py develop
 fi
+
+# Do this _after_ glance is installed to override the old binary
+cd $GLANCECLIENT_DIR; sudo python setup.py develop
 
 
 # Syslog
@@ -1854,21 +1859,19 @@ if is_service_enabled g-reg; then
         esac
 
         if [ "$CONTAINER_FORMAT" = "bare" ]; then
-            glance add --silent-upload -A $TOKEN name="$IMAGE_NAME" is_public=true container_format=$CONTAINER_FORMAT disk_format=$DISK_FORMAT < <(zcat --force "${IMAGE}")
+            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --public --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
         else
             # Use glance client to add the kernel the root filesystem.
             # We parse the results of the first upload to get the glance ID of the
             # kernel for use when uploading the root filesystem.
             KERNEL_ID=""; RAMDISK_ID="";
             if [ -n "$KERNEL" ]; then
-                RVAL=`glance add --silent-upload -A $TOKEN name="$IMAGE_NAME-kernel" is_public=true container_format=aki disk_format=aki < "$KERNEL"`
-                KERNEL_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+                KERNEL_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" --public --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
             fi
             if [ -n "$RAMDISK" ]; then
-                RVAL=`glance add --silent-upload -A $TOKEN name="$IMAGE_NAME-ramdisk" is_public=true container_format=ari disk_format=ari < "$RAMDISK"`
-                RAMDISK_ID=`echo $RVAL | cut -d":" -f2 | tr -d " "`
+                RAMDISK_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" --public --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
             fi
-            glance add -A $TOKEN name="${IMAGE_NAME%.img}" is_public=true container_format=ami disk_format=ami ${KERNEL_ID:+kernel_id=$KERNEL_ID} ${RAMDISK_ID:+ramdisk_id=$RAMDISK_ID} < <(zcat --force "${IMAGE}")
+            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" --public --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
         fi
     done
 fi

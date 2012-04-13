@@ -51,7 +51,7 @@ DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
 # =================
 
 # Grab the id of the image to launch
-IMAGE=`glance -f index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
+IMAGE=`glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1`
 die_if_not_set IMAGE "Failure getting image"
 
 # Instance and volume names

@@ -17,13 +17,13 @@ NOVA_BRANCH=master
 SWIFT_REPO=https://github.com/openstack/swift.git
 SWIFT_BRANCH=master
 
-# swift and keystone integration
-SWIFT_KEYSTONE_REPO=https://github.com/cloudbuilders/swift-keystone2.git
-SWIFT_KEYSTONE_BRANCH=master
-
 # image catalog service
 GLANCE_REPO=https://github.com/openstack/glance.git
 GLANCE_BRANCH=master
+
+# python glance client library
+GLANCECLIENT_REPO=https://github.com/openstack/python-glanceclient
+GLANCECLIENT_BRANCH=master
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=https://github.com/openstack/keystone.git
