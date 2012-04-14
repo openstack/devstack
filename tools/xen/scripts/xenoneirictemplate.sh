@@ -15,6 +15,7 @@ fi
 distro="Ubuntu 11.10"
 arches=("32-bit" "64-bit")
 
+preseedurl=${1:-"http://images.ansolabs.com/devstackubuntupreseed.cfg"}
 
 for arch in ${arches[@]} ; do
     echo "Attempting $distro ($arch)"
@@ -25,7 +26,7 @@ for arch in ${arches[@]} ; do
         NEWUUID=$(xe vm-clone uuid=$LENNY new-name-label="$distro ($arch)")
         xe template-param-set uuid=$NEWUUID other-config:install-methods=http,ftp \
          other-config:install-repository=http://archive.ubuntu.net/ubuntu \
-         PV-args="-- quiet console=hvc0 partman/default_filesystem=ext3 locale=en_US console-setup/ask_detect=false keyboard-configuration/layoutcode=us netcfg/choose_interface=eth3 netcfg/get_hostname=unassigned-hostname netcfg/get_domain=unassigned-domain auto url=http://images.ansolabs.com/devstackubuntupreseed.cfg" \
+         PV-args="-- quiet console=hvc0 partman/default_filesystem=ext3 locale=en_US console-setup/ask_detect=false keyboard-configuration/layoutcode=us netcfg/choose_interface=eth3 netcfg/get_hostname=os netcfg/get_domain=os auto url=${preseedurl}" \
          other-config:debian-release=oneiric \
          other-config:default_template=true
 

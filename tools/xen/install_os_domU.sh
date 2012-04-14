@@ -179,7 +179,8 @@ else
     template=$(xe_min template-list name-label="Ubuntu 11.10 (64-bit)")
     if [ -z "$template" ]
     then
-        $TOP_DIR/scripts/xenoneirictemplate.sh
+        cp $TOP_DIR/devstackubuntupreseed.cfg /opt/xensource/www/
+        $TOP_DIR/scripts/xenoneirictemplate.sh "${HOST_IP}/devstackubuntupreseed.cfg"
     fi
     $TOP_DIR/scripts/install-os-vpx.sh -t "Ubuntu 11.10 (64-bit)" -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -r $OSDOMU_MEM_MB -k "flat_network_bridge=${VM_BR}"
 
