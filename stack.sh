@@ -340,7 +340,7 @@ TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 # **MULTI_HOST** is a mode where each compute node runs its own network node.  This
 # allows network operations and routing for a VM to occur on the server that is
 # running the VM - removing a SPOF and bandwidth bottleneck.
-MULTI_HOST=${MULTI_HOST:-False}
+MULTI_HOST=`trueorfalse False $MULTI_HOST`
 
 # If you are using FlatDHCP on multiple hosts, set the ``FLAT_INTERFACE``
 # variable but make sure that the interface doesn't already have an
