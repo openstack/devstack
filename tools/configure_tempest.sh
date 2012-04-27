@@ -67,11 +67,11 @@ fi
 # We ignore ramdisk and kernel images and set the IMAGE_UUID to
 # the first image returned and set IMAGE_UUID_ALT to the second,
 # if there is more than one returned...
-IMAGE_LINES=`glance index`
+IMAGE_LINES=`glance image-list`
 IFS="$(echo -e "\n\r")"
 IMAGES=""
 for line in $IMAGE_LINES; do
-    IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|--\)" | grep -v "\(aki\|ari\)" | cut -d' ' -f1`"
+    IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | cut -d' ' -f2`"
 done
 # Create array of image UUIDs...
 IFS=" "
