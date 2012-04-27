@@ -38,5 +38,8 @@ MGT_BR=${MGT_BR:-""}
 MGT_VLAN=${MGT_VLAN:-101}
 MGT_DEV=${MGT_DEV:-eth0}
 
+# Guest installer network
+ENABLE_GI=true
+
 # Source params
 cd ../.. && source ./stackrc && cd $TOP_DIR

@@ -1700,7 +1700,7 @@ fi
 # For Example: EXTRA_OPTS=(foo=true bar=2)
 for I in "${EXTRA_OPTS[@]}"; do
     # Attempt to convert flags to options
-    add_nova_opt ${I//-}
+    add_nova_opt ${I//--}
 done
 
 
@@ -1711,8 +1711,9 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
     add_nova_opt "connection_type=xenapi"
     XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
+    XENAPI_USER=${XENAPI_USER:-"root"}
     add_nova_opt "xenapi_connection_url=$XENAPI_CONNECTION_URL"
-    add_nova_opt "xenapi_connection_username=root"
+    add_nova_opt "xenapi_connection_username=$XENAPI_USER"
     add_nova_opt "xenapi_connection_password=$XENAPI_PASSWORD"
     add_nova_opt "flat_injected=False"
     # Need to avoid crash due to new firewall support
