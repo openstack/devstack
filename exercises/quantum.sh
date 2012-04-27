@@ -103,7 +103,7 @@ TOKEN=`keystone token-get | grep ' id ' | awk '{print $4}'`
 # Various functions.
 #------------------------------------------------------------------------------
 function get_image_id {
-    local IMAGE_ID=`glance -f -A $TOKEN index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
+    local IMAGE_ID=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
     echo "$IMAGE_ID"
 }
 
