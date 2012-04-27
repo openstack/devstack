@@ -20,6 +20,26 @@ vdi_uuid=$(xe_min vbd-list params=vdi-uuid vm-uuid="$vm_uuid" \
 
 dom0_uuid=$(xe_min vm-list is-control-domain=true)
 
+get_mount_device()
+{
+  vbd_uuid=$1
+
+  dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
+  if [[ "$dev" =~ "sm/" ]]; then
+    DEBIAN_FRONTEND=noninteractive \
+        apt-get --option "Dpkg::Options::=--force-confold" --assume-yes \
+        install kpartx || true &> /dev/null
+    mapping=$(kpartx -av "/dev/$dev" | sed -ne 's,^add map \([a-f0-9\-]*\).*$,\1,p' | sed -ne "s,^\(.*${part}\)\$,\1,p")
+    if [ -z "$mapping" ]; then
+       echo "Failed to find mapping"
+       exit -1
+    fi
+    echo "mapper/${mapping}"
+  else
+    echo "/dev/$dev$part"
+  fi
+}
+
 open_vdi()
 {
   vbd_uuid=$(xe vbd-create vm-uuid="$dom0_uuid" vdi-uuid="$vdi_uuid" \
@@ -27,26 +47,30 @@ open_vdi()
   mp=$(mktemp -d)
   xe vbd-plug uuid="$vbd_uuid"
 
-  udevsettle
-  dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
-  mount "/dev/$dev$part" "$mp"
+  which_udev=$(which udevsettle) || true
+  if [ -n "$which_udev" ]; then
+      udevsettle
+  else
+      udevadm settle
+  fi
+
+  mount_device=$(get_mount_device "$vbd_uuid")
+  mount "$mount_device" "$mp"
   echo "Your vdi is mounted at $mp"
 }
 
 close_vdi()
 {
   vbd_uuid=$(xe_min vbd-list vm-uuid="$dom0_uuid" vdi-uuid="$vdi_uuid")
-  dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
-  umount "/dev/$dev$part"
+  mount_device=$(get_mount_device "$vbd_uuid")
+  umount "$mount_device"
 
   xe vbd-unplug uuid=$vbd_uuid
   xe vbd-destroy uuid=$vbd_uuid
 }
 
-if [ "$action" == "open" ]
-then
+if [ "$action" == "open" ]; then
   open_vdi
-elif [ "$action" == "close" ]
-then
+elif [ "$action" == "close" ]; then
   close_vdi
 fi

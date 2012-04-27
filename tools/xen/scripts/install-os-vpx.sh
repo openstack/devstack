@@ -19,7 +19,12 @@
 
 set -eux
 
-. /etc/xensource-inventory
+if [ -a /etc/xensource-inventory]
+then
+    . /etc/xensource-inventory
+else
+    . /etc/xcp/inventory
+fi
 
 NAME="XenServer OpenStack VPX"
 DATA_VDI_SIZE="500MiB"
