@@ -1663,7 +1663,6 @@ if is_service_enabled key; then
     # Rewrite stock keystone.conf:
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
     iniset $KEYSTONE_CONF sql connection "$BASE_SQL_CONN/keystone?charset=utf8"
-    iniset $KEYSTONE_CONF catalog template_file "$KEYSTONE_CATALOG"
     iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
     # Configure keystone.conf to use templates
     iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.TemplatedCatalog"
