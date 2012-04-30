@@ -1,4 +1,5 @@
 gcc
+libxml2-dev
 python-dev
 python-eventlet
 python-routes
