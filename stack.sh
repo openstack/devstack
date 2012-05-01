@@ -586,7 +586,16 @@ function get_packages() {
         if [[ -e ${package_dir}/${service} ]]; then
             file_to_parse="${file_to_parse} $service"
         fi
-        if [[ $service == n-* ]]; then
+        # NOTE(sdague) n-api needs glance for now because that's where
+        # glance client is
+        if [[ $service == n-api ]]; then
+            if [[ ! $file_to_parse =~ nova ]]; then
+                file_to_parse="${file_to_parse} nova"
+            fi
+            if [[ ! $file_to_parse =~ glance ]]; then
+                file_to_parse="${file_to_parse} glance"
+            fi
+        elif [[ $service == n-* ]]; then
             if [[ ! $file_to_parse =~ nova ]]; then
                 file_to_parse="${file_to_parse} nova"
             fi
