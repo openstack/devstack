@@ -205,6 +205,7 @@ GLANCECLIENT_DIR=$DEST/python-glanceclient
 KEYSTONE_DIR=$DEST/keystone
 NOVACLIENT_DIR=$DEST/python-novaclient
 KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
+OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 NOVNC_DIR=$DEST/noVNC
 SWIFT_DIR=$DEST/swift
 QUANTUM_DIR=$DEST/quantum
@@ -644,6 +645,7 @@ git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 # python client library to nova that horizon (and others) use
 git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
+git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
 git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
 
 # glance, swift middleware and nova api needs keystone middleware
@@ -691,6 +693,7 @@ fi
 # allowing ``import nova`` or ``import glance.client``
 cd $KEYSTONECLIENT_DIR; sudo python setup.py develop
 cd $NOVACLIENT_DIR; sudo python setup.py develop
+cd $OPENSTACKCLIENT_DIR; sudo python setup.py develop
 if is_service_enabled key g-api n-api swift; then
     cd $KEYSTONE_DIR; sudo python setup.py develop
 fi
