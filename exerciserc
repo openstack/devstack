@@ -20,3 +20,9 @@ export RUNNING_TIMEOUT=${RUNNING_TIMEOUT:-$(($BOOT_TIMEOUT + $ACTIVE_TIMEOUT))}
 
 # Max time to wait for a vm to terminate
 export TERMINATE_TIMEOUT=${TERMINATE_TIMEOUT:-30}
+
+# Max time to wait for a euca-volume command to propogate
+export VOLUME_TIMEOUT=${VOLUME_TIMEOUT:-30}
+
+# Max time to wait for a euca-delete command to propogate
+export VOLUME_DELETE_TIMEOUT=${SNAPSHOT_DELETE_TIMEOUT:-60}

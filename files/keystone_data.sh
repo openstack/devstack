@@ -9,6 +9,7 @@
 # service              nova      admin, [ResellerAdmin (swift only)]
 # service              quantum   admin        # if enabled
 # service              swift     admin        # if enabled
+# service              cinder    admin        # if enabled
 # demo                 admin     admin
 # demo                 demo      Member, anotherrole
 # invisible_to_admin   demo      Member
@@ -127,4 +128,14 @@ if [[ "$ENABLED_SERVICES" =~ "tempest" ]]; then
                                         --pass="$ADMIN_PASSWORD" \
                                         --email=alt_demo@example.com)
     keystone user-role-add --user $ALT_DEMO_USER --role $MEMBER_ROLE --tenant_id $ALT_DEMO_TENANT
+fi
+
+if [[ "$ENABLED_SERVICES" =~ "cinder" ]]; then
+    CINDER_USER=$(get_id keystone user-create --name=cinder \
+                                              --pass="$SERVICE_PASSWORD" \
+                                              --tenant_id $SERVICE_TENANT \
+                                              --email=cinder@example.com)
+    keystone user-role-add --tenant_id $SERVICE_TENANT \
+                           --user_id $CINDER_USER \
+                           --role_id $ADMIN_ROLE
 fi

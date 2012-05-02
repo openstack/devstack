@@ -44,7 +44,7 @@ if is_service_enabled horizon; then
 fi
 
 # Get the iSCSI volumes
-if is_service_enabled n-vol; then
+if is_service_enabled cinder n-vol; then
     TARGETS=$(sudo tgtadm --op show --mode target)
     if [[ -n "$TARGETS" ]]; then
         # FIXME(dtroyer): this could very well require more here to

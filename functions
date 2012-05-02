@@ -253,6 +253,7 @@ function is_service_enabled() {
     for service in ${services}; do
         [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
         [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && return 0
+        [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0
         [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && return 0
         [[ ${service} == "quantum" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
     done

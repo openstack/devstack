@@ -112,6 +112,13 @@ else
     NOVA_ROOTWRAP=/usr/bin/nova-rootwrap
 fi
 
+# ``stack.sh`` keeps function libraries here
+# Make sure ``$TOP_DIR/lib`` directory is present
+if [ ! -d $TOP_DIR/lib ]; then
+    echo "ERROR: missing devstack/lib - did you grab more than just stack.sh?"
+    exit 1
+fi
+
 # stack.sh keeps the list of ``apt`` and ``pip`` dependencies in external
 # files, along with config templates and other useful files.  You can find these
 # in the ``files`` directory (next to this script).  We will reference this
@@ -127,6 +134,12 @@ if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].stack"; then
     echo "You are already running a stack.sh session."
     echo "To rejoin this session type 'screen -x stack'."
     echo "To destroy this session, kill the running screen."
+    exit 1
+fi
+
+# Make sure we only have one volume service enabled.
+if is_service_enabled cinder && is_service_enabled n-vol; then
+    echo "ERROR: n-vol and cinder must not be enabled at the same time"
     exit 1
 fi
 
@@ -201,6 +214,19 @@ fi
 # prerequisites and initialize ``$DEST``.
 OFFLINE=`trueorfalse False $OFFLINE`
 
+# Destination path for service data
+DATA_DIR=${DATA_DIR:-${DEST}/data}
+sudo mkdir -p $DATA_DIR
+sudo chown `whoami` $DATA_DIR
+
+
+# Projects
+# --------
+
+# Get project function libraries
+source $TOP_DIR/lib/cinder
+
+
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
 HORIZON_DIR=$DEST/horizon
@@ -234,7 +260,7 @@ M_HOST=${M_HOST:-localhost}
 M_MAC_RANGE=${M_MAC_RANGE:-FE-EE-DD-00-00-00/24}
 
 # Name of the lvm volume group to use/create for iscsi volumes
-VOLUME_GROUP=${VOLUME_GROUP:-nova-volumes}
+VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
 
@@ -607,6 +633,10 @@ function get_packages() {
             if [[ ! $file_to_parse =~ glance ]]; then
                 file_to_parse="${file_to_parse} glance"
             fi
+        elif [[ $service == c-* ]]; then
+            if [[ ! $file_to_parse =~ cinder ]]; then
+                file_to_parse="${file_to_parse} cinder"
+            fi
         elif [[ $service == n-* ]]; then
             if [[ ! $file_to_parse =~ nova ]]; then
                 file_to_parse="${file_to_parse} nova"
@@ -704,9 +734,11 @@ if is_service_enabled m-svc; then
     # melange
     git_clone $MELANGE_REPO $MELANGE_DIR $MELANGE_BRANCH
 fi
-
 if is_service_enabled melange; then
     git_clone $MELANGECLIENT_REPO $MELANGECLIENT_DIR $MELANGECLIENT_BRANCH
+fi
+if is_service_enabled cinder; then
+    install_cinder
 fi
 
 
@@ -742,6 +774,9 @@ if is_service_enabled m-svc; then
 fi
 if is_service_enabled melange; then
     setup_develop $MELANGECLIENT_DIR
+fi
+if is_service_enabled cinder; then
+    configure_cinder
 fi
 
 # Do this _after_ glance is installed to override the old binary
@@ -1643,17 +1678,18 @@ fi
 # Volume Service
 # --------------
 
-if is_service_enabled n-vol; then
-    #
-    # Configure a default volume group called 'nova-volumes' for the nova-volume
+if is_service_enabled cinder; then
+    init_cinder
+elif is_service_enabled n-vol; then
+    # Configure a default volume group called '`stack-volumes`' for the volume
     # service if it does not yet exist.  If you don't wish to use a file backed
-    # volume group, create your own volume group called 'nova-volumes' before
-    # invoking stack.sh.
+    # volume group, create your own volume group called ``stack-volumes`` before
+    # invoking ``stack.sh``.
     #
-    # By default, the backing file is 2G in size, and is stored in /opt/stack.
+    # By default, the backing file is 2G in size, and is stored in ``/opt/stack/data``.
 
     if ! sudo vgs $VOLUME_GROUP; then
-        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DEST/nova-volumes-backing-file}
+        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
         VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
         # Only create if the file doesn't already exists
         [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
@@ -1801,6 +1837,10 @@ else
     add_nova_opt "logging_context_format_string=%(asctime)s %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
 fi
 
+# If cinder is enabled, use the cinder volume driver
+if is_service_enabled cinder; then
+    add_nova_opt "volume_api_class=nova.volume.cinder.API"
+fi
 
 # Provide some transition from EXTRA_FLAGS to EXTRA_OPTS
 if [[ -z "$EXTRA_OPTS" && -n "$EXTRA_FLAGS" ]]; then
@@ -1968,6 +2008,7 @@ fi
 
 # launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
+    add_nova_opt "enabled_apis=$NOVA_ENABLED_APIS"
     screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
     echo "Waiting for nova-api to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
@@ -2003,6 +2044,9 @@ screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
 screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
 screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
+if is_service_enabled cinder; then
+    start_cinder
+fi
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
 screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
 

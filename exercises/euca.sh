@@ -24,6 +24,9 @@ set -o xtrace
 # Keep track of the current directory
 EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
+VOLUME_ZONE=cinder
+VOLUME_SIZE=1
+ATTACH_DEVICE=/dev/vdc
 
 # Import common functions
 source $TOP_DIR/functions
