@@ -1526,7 +1526,7 @@ else
 fi
 if is_service_enabled n-vol; then
     add_nova_opt "volume_group=$VOLUME_GROUP"
-    add_nova_opt "volume_name_template=${VOLUME_NAME_PREFIX}%08x"
+    add_nova_opt "volume_name_template=${VOLUME_NAME_PREFIX}%s"
     # oneiric no longer supports ietadm
     add_nova_opt "iscsi_helper=tgtadm"
 fi
