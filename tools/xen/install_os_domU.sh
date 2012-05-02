@@ -174,13 +174,16 @@ fi
 templateuuid=$(xe template-list name-label="$TNAME")
 if [ -n "$templateuuid" ]
 then
-        vm_uuid=$(xe vm-install template="$TNAME" new-name-label="$GUEST_NAME")
+    vm_uuid=$(xe vm-install template="$TNAME" new-name-label="$GUEST_NAME")
 else
     template=$(xe_min template-list name-label="Ubuntu 11.10 (64-bit)")
     if [ -z "$template" ]
     then
         cp $TOP_DIR/devstackubuntupreseed.cfg /opt/xensource/www/
         $TOP_DIR/scripts/xenoneirictemplate.sh "${HOST_IP}/devstackubuntupreseed.cfg"
+        MIRROR=${MIRROR:-archive.ubuntu.com}
+        sed -e "s,d-i mirror/http/hostname string .*,d-i mirror/http/hostname string $MIRROR," \
+            -i /opt/xensource/www/devstackubuntupreseed.cfg
     fi
     $TOP_DIR/scripts/install-os-vpx.sh -t "Ubuntu 11.10 (64-bit)" -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -r $OSDOMU_MEM_MB -k "flat_network_bridge=${VM_BR}"
 

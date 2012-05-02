@@ -7,18 +7,6 @@ GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 STAGING_DIR=${STAGING_DIR:-stage}
 DO_TGZ=${DO_TGZ:-1}
 
-# Sources.list
-cat <<EOF >$STAGING_DIR/etc/apt/sources.list
-deb http://us.archive.ubuntu.com/ubuntu/ oneiric main restricted
-deb-src http://us.archive.ubuntu.com/ubuntu/ oneiric main restricted
-deb http://us.archive.ubuntu.com/ubuntu/ oneiric-updates main restricted
-deb-src http://us.archive.ubuntu.com/ubuntu/ oneiric-updates main restricted
-deb http://us.archive.ubuntu.com/ubuntu/ oneiric universe
-deb http://us.archive.ubuntu.com/ubuntu/ oneiric-updates universe
-deb http://us.archive.ubuntu.com/ubuntu/ oneiric multiverse
-deb http://us.archive.ubuntu.com/ubuntu/ oneiric-updates multiverse
-EOF
-
 # Install basics
 chroot $STAGING_DIR apt-get update
 chroot $STAGING_DIR apt-get install -y cracklib-runtime curl wget ssh openssh-server tcpdump ethtool
