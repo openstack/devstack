@@ -67,11 +67,12 @@ fi
 # We ignore ramdisk and kernel images and set the IMAGE_UUID to
 # the first image returned and set IMAGE_UUID_ALT to the second,
 # if there is more than one returned...
+# ... Also ensure we only take active images, so we don't get snapshots in process
 IMAGE_LINES=`glance image-list`
 IFS="$(echo -e "\n\r")"
 IMAGES=""
 for line in $IMAGE_LINES; do
-    IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | cut -d' ' -f2`"
+    IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | cut -d' ' -f2`"
 done
 # Create array of image UUIDs...
 IFS=" "
@@ -89,9 +90,8 @@ if [[ $NUM_IMAGES -gt 1 ]]; then
 fi
 
 # Create tempest.conf from tempest.conf.tpl
-if [[ ! -r $TEMPEST_CONF ]]; then
-    cp $TEMPEST_CONF.tpl $TEMPEST_CONF
-fi
+# copy every time, because the image UUIDS are going to change
+cp $TEMPEST_CONF.tpl $TEMPEST_CONF
 
 IDENTITY_USE_SSL=${IDENTITY_USE_SSL:-False}
 IDENTITY_HOST=${IDENTITY_HOST:-127.0.0.1}
