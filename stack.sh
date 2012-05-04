@@ -998,6 +998,9 @@ if is_service_enabled g-reg; then
     iniset $GLANCE_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $GLANCE_API_PASTE_INI filter:authtoken admin_user glance
     iniset $GLANCE_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
+
+    GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
+    cp $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
 fi
 
 # Quantum
