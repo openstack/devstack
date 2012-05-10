@@ -1141,6 +1141,8 @@ if [[ ! -d $NOVA_CONF_DIR ]]; then
 fi
 sudo chown `whoami` $NOVA_CONF_DIR
 
+cp -p $NOVA_DIR/etc/nova/policy.json $NOVA_CONF_DIR
+
 if is_service_enabled n-api; then
     # Use the sample http middleware configuration supplied in the
     # Nova sources.  This paste config adds the configuration required
