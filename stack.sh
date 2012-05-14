@@ -1053,7 +1053,6 @@ if is_service_enabled q-svc; then
         if is_service_enabled mysql; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum CHARACTER SET utf8;'
-            sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum?charset=utf8/g" $QUANTUM_OVS_CONFIG_FILE
         else
             echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
             exit 1
