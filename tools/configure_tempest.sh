@@ -93,6 +93,10 @@ fi
 # copy every time, because the image UUIDS are going to change
 cp $TEMPEST_CONF.tpl $TEMPEST_CONF
 
+ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-secrete}
+ADMIN_TENANT_NAME=${ADMIN_TENANT:-admin}
+
 IDENTITY_USE_SSL=${IDENTITY_USE_SSL:-False}
 IDENTITY_HOST=${IDENTITY_HOST:-127.0.0.1}
 IDENTITY_PORT=${IDENTITY_PORT:-5000}
@@ -107,21 +111,17 @@ IDENTITY_STRATEGY=${IDENTITY_STRATEGY:-keystone}
 # OS_USERNAME et all should be defined in openrc.
 OS_USERNAME=${OS_USERNAME:-demo}
 OS_TENANT_NAME=${OS_TENANT_NAME:-demo}
-OS_PASSWORD=${OS_PASSWORD:-secrete}
+OS_PASSWORD=${OS_PASSWORD:$ADMIN_PASSWORD}
 
-# TODO(jaypipes): Support multiple regular user accounts instead
-# of using the same regular user account for the alternate user...
-ALT_USERNAME=$OS_USERNAME
+# See files/keystone_data.sh where alt_demo user
+# and tenant are set up...
+ALT_USERNAME=${ALT_USERNAME:-alt_demo}
+ALT_TENANT_NAME=${ALT_TENANT_NAME:-alt_demo}
 ALT_PASSWORD=$OS_PASSWORD
-ALT_TENANT_NAME=$OS_TENANT_NAME
 
 # TODO(jaypipes): Support configurable flavor refs here...
 FLAVOR_REF=1
 FLAVOR_REF_ALT=2
-
-ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-secrete}
-ADMIN_TENANT_NAME=${ADMIN_TENANT:-admin}
 
 # Do any of the following need to be configurable?
 COMPUTE_CATALOG_TYPE=compute

@@ -12,6 +12,8 @@
 # demo                 admin     admin
 # demo                 demo      Member, anotherrole
 # invisible_to_admin   demo      Member
+# Tempest Only:
+# alt_demo             alt_demo  Member
 #
 # Variables set before calling this script:
 # SERVICE_TOKEN - aka admin_token in keystone.conf
@@ -115,4 +117,14 @@ if [[ "$ENABLED_SERVICES" =~ "quantum" ]]; then
     keystone user-role-add --tenant_id $SERVICE_TENANT \
                            --user $QUANTUM_USER \
                            --role $ADMIN_ROLE
+fi
+
+if [[ "$ENABLED_SERVICES" =~ "tempest" ]]; then
+    # Tempest has some tests that validate various authorization checks
+    # between two regular users in separate tenants
+    ALT_DEMO_TENANT=$(get_id keystone tenant-create --name=alt_demo)
+    ALT_DEMO_USER=$(get_id keystone user-create --name=alt_demo \
+                                        --pass="$ADMIN_PASSWORD" \
+                                        --email=alt_demo@example.com)
+    keystone user-role-add --user $ALT_DEMO_USER --role $MEMBER_ROLE --tenant_id $ALT_DEMO_TENANT
 fi
