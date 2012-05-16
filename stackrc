@@ -30,7 +30,7 @@ KEYSTONE_REPO=https://github.com/openstack/keystone.git
 KEYSTONE_BRANCH=master
 
 # a websockets/html5 or flash powered VNC console for vm instances
-NOVNC_REPO=https://github.com/cloudbuilders/noVNC.git
+NOVNC_REPO=https://github.com/kanaka/noVNC.git
 NOVNC_BRANCH=master
 
 # django powered web control panel for openstack
