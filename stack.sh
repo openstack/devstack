@@ -1347,16 +1347,20 @@ if is_service_enabled swift; then
     sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_DIR}
 
     # We then create a loopback disk and format it to XFS.
-    # TODO: Reset disks on new pass.
-    if [[ ! -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
+    if [[ -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
+        if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
+            sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
+        fi
+    else
         mkdir -p  ${SWIFT_DATA_DIR}/drives/images
         sudo touch  ${SWIFT_DATA_DIR}/drives/images/swift.img
         sudo chown $USER: ${SWIFT_DATA_DIR}/drives/images/swift.img
 
         dd if=/dev/zero of=${SWIFT_DATA_DIR}/drives/images/swift.img \
             bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
-        mkfs.xfs -f -i size=1024  ${SWIFT_DATA_DIR}/drives/images/swift.img
     fi
+    # Make a fresh XFS filesystem
+    mkfs.xfs -f -i size=1024  ${SWIFT_DATA_DIR}/drives/images/swift.img
 
     # After the drive being created we mount the disk with a few mount
     # options to make it most efficient as possible for swift.
