@@ -689,7 +689,7 @@ fi
 if is_service_enabled quantum; then
     git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
 fi
-if is_service_enabled q-svc; then
+if is_service_enabled quantum; then
     # quantum
     git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 fi
@@ -727,7 +727,7 @@ fi
 if is_service_enabled quantum; then
     cd $QUANTUM_CLIENT_DIR; sudo python setup.py develop
 fi
-if is_service_enabled q-svc; then
+if is_service_enabled quantum; then
     cd $QUANTUM_DIR; sudo python setup.py develop
 fi
 if is_service_enabled m-svc; then
@@ -1027,128 +1027,111 @@ if is_service_enabled g-reg; then
     cp $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
 fi
 
-# Quantum
+# Quantum (for controller or agent nodes)
 # -------
 if is_service_enabled quantum; then
     # Put config files in /etc/quantum for everyone to find
-    QUANTUM_CONF_DIR=/etc/quantum
-    if [[ ! -d $QUANTUM_CONF_DIR ]]; then
-        sudo mkdir -p $QUANTUM_CONF_DIR
+    if [[ ! -d /etc/quantum ]]; then
+        sudo mkdir -p /etc/quantum
     fi
-    sudo chown `whoami` $QUANTUM_CONF_DIR
-
-    # Set default values when using Linux Bridge plugin
-    if [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        # set the config file
-        QUANTUM_LB_CONF_DIR=$QUANTUM_CONF_DIR/plugins/linuxbridge
-        mkdir -p $QUANTUM_LB_CONF_DIR
-        QUANTUM_LB_CONFIG_FILE=$QUANTUM_LB_CONF_DIR/linuxbridge_conf.ini
-        # must remove this file from existing location, otherwise Quantum will prefer it
-        if [[ -e $QUANTUM_DIR/etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini ]]; then
-            sudo mv $QUANTUM_DIR/etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini $QUANTUM_LB_CONFIG_FILE
-        fi
-        #set the default network interface
-        QUANTUM_LB_PRIVATE_INTERFACE=${QUANTUM_LB_PRIVATE_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
-    fi
-fi
-# Quantum service
-if is_service_enabled q-svc; then
-    QUANTUM_PLUGIN_INI_FILE=$QUANTUM_CONF_DIR/plugins.ini
-    # must remove this file from existing location, otherwise Quantum will prefer it
-    if [[ -e $QUANTUM_DIR/etc/plugins.ini ]]; then
-        sudo mv $QUANTUM_DIR/etc/plugins.ini $QUANTUM_PLUGIN_INI_FILE
-    fi
+    sudo chown `whoami` /etc/quantum
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        # Install deps
-        # FIXME add to files/apts/quantum, but don't install if not needed!
-        if [[ "$os_PACKAGE" = "deb" ]]; then
-            kernel_version=`cat /proc/version | cut -d " " -f3`
-            install_package openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
-        else
-            ### FIXME(dtroyer): Find RPMs for OpenVSwitch
-            echo "OpenVSwitch packages need to be located"
-        fi
-
-        QUANTUM_OVS_CONF_DIR=$QUANTUM_CONF_DIR/plugins/openvswitch
-        QUANTUM_OVS_CONFIG_FILE=$QUANTUM_OVS_CONF_DIR/ovs_quantum_plugin.ini
-
-        # Create database for the plugin/agent
-        if is_service_enabled mysql; then
-            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ovs_quantum;'
-            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS ovs_quantum CHARACTER SET utf8;'
-        else
-            echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
-            exit 1
-        fi
-        # Make sure we're using the openvswitch plugin
-        sudo sed -i -e "s/^provider =.*$/provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin/g" $QUANTUM_PLUGIN_INI_FILE
+        Q_PLUGIN_CONF_PATH=etc/quantum/plugins/openvswitch
+        Q_PLUGIN_CONF_FILENAME=ovs_quantum_plugin.ini
+        Q_DB_NAME="ovs_quantum"
+        Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         # Install deps
         # FIXME add to files/apts/quantum, but don't install if not needed!
         install_package python-configobj
-        # Create database for the plugin/agent
-        if is_service_enabled mysql; then
-            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS quantum_linux_bridge;'
-            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS quantum_linux_bridge;'
-            if grep -Fxq "user = " $QUANTUM_LB_CONFIG_FILE
-            then
-                sudo sed -i -e "s/^connection = sqlite$/#connection = sqlite/g" $QUANTUM_LB_CONFIG_FILE
-                sudo sed -i -e "s/^#connection = mysql$/connection = mysql/g" $QUANTUM_LB_CONFIG_FILE
-                sudo sed -i -e "s/^user = .*$/user = $MYSQL_USER/g" $QUANTUM_LB_CONFIG_FILE
-                sudo sed -i -e "s/^pass = .*$/pass = $MYSQL_PASSWORD/g" $QUANTUM_LB_CONFIG_FILE
-                sudo sed -i -e "s/^host = .*$/host = $MYSQL_HOST/g" $QUANTUM_LB_CONFIG_FILE
-            else
-                sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/quantum_linux_bridge?charset=utf8/g" $QUANTUM_LB_CONFIG_FILE
-            fi
+        Q_PLUGIN_CONF_PATH=etc/quantum/plugins/linuxbridge
+        Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
+        Q_DB_NAME="quantum_linux_bridge"
+        Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin"
+    else
+        echo "Unknown Quantum plugin '$Q_PLUGIN'.. exiting"
+        exit 1
+    fi
+
+    # if needed, move config file from $QUANTUM_DIR/etc/quantum to /etc/quantum
+    mkdir -p /$Q_PLUGIN_CONF_PATH
+    Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
+    if [[ -e $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE ]]; then
+            sudo mv $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
+    fi
+    sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8/g" /$Q_PLUGIN_CONF_FILE
+
+    OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-True}
+    if [[ "$Q_PLUGIN" = "openvswitch" && $OVS_ENABLE_TUNNELING = "True" ]]; then
+        OVS_VERSION=`ovs-vsctl --version | head -n 1 | awk '{print $4;}'`
+        if [ $OVS_VERSION \< "1.4" ] && ! is_service_enabled q-svc ; then
+            echo "You are running OVS version $OVS_VERSION."
+            echo "OVS 1.4+ is required for tunneling between multiple hosts."
+            exit 1
+        fi
+        sudo sed -i -e "s/.*enable-tunneling = .*$/enable-tunneling = $OVS_ENABLE_TUNNELING/g" /$Q_PLUGIN_CONF_FILE
+    fi
+fi
+
+# Quantum service (for controller node)
+if is_service_enabled q-svc; then
+    Q_PLUGIN_INI_FILE=/etc/quantum/plugins.ini
+    Q_CONF_FILE=/etc/quantum/quantum.conf
+    # must remove this file from existing location, otherwise Quantum will prefer it
+    if [[ -e $QUANTUM_DIR/etc/plugins.ini ]]; then
+        sudo mv $QUANTUM_DIR/etc/plugins.ini $Q_PLUGIN_INI_FILE
+    fi
+
+    if [[ -e $QUANTUM_DIR/etc/quantum.conf ]]; then
+      sudo mv $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
+    fi
+
+    if is_service_enabled mysql; then
+            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e "DROP DATABASE IF EXISTS $Q_DB_NAME;"
+            mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $Q_DB_NAME CHARACTER SET utf8;"
         else
             echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
             exit 1
-        fi
-        # Make sure we're using the linuxbridge plugin
-        sudo sed -i -e "s/^provider =.*$/provider = quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin/g" $QUANTUM_PLUGIN_INI_FILE
     fi
-    if [[ -e $QUANTUM_DIR/etc/quantum.conf ]]; then
-        sudo mv $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF_DIR/quantum.conf
-    fi
-    screen_it q-svc "cd $QUANTUM_DIR && PYTHONPATH=.:$QUANTUM_CLIENT_DIR:$PYTHONPATH python $QUANTUM_DIR/bin/quantum-server $QUANTUM_CONF_DIR/quantum.conf"
+    sudo sed -i -e "s/^provider =.*$/provider = $Q_PLUGIN_CLASS/g" $Q_PLUGIN_INI_FILE
+
+    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server $Q_CONF_FILE"
 fi
 
 # Quantum agent (for compute nodes)
 if is_service_enabled q-agt; then
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        # Install deps
+        # FIXME add to files/apts/quantum, but don't install if not needed!
+        if [[ "$os_PACKAGE" = "deb" ]]; then
+            kernel_version=`cat /proc/version | cut -d " " -f3`
+            install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
+        else
+            ### FIXME(dtroyer): Find RPMs for OpenVSwitch
+            echo "OpenVSwitch packages need to be located"
+        fi
         # Set up integration bridge
         OVS_BRIDGE=${OVS_BRIDGE:-br-int}
+        for PORT in `sudo ovs-vsctl --no-wait list-ports $OVS_BRIDGE`; do
+            if [[ "$PORT" =~ tap* ]]; then echo `sudo ip link delete $PORT` > /dev/null; fi
+            sudo ovs-vsctl --no-wait del-port $OVS_BRIDGE $PORT
+        done
         sudo ovs-vsctl --no-wait -- --if-exists del-br $OVS_BRIDGE
         sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
         sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
-
-        # Start up the quantum <-> openvswitch agent
-        QUANTUM_OVS_CONF_DIR=$QUANTUM_CONF_DIR/plugins/openvswitch
-        mkdir -p $QUANTUM_OVS_CONF_DIR
-        QUANTUM_OVS_CONFIG_FILE=$QUANTUM_OVS_CONF_DIR/ovs_quantum_plugin.ini
-        if [[ -e $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini ]]; then
-            sudo mv $QUANTUM_DIR/etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini $QUANTUM_OVS_CONFIG_FILE
-        fi
-        sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/ovs_quantum?charset=utf8/g" $QUANTUM_OVS_CONFIG_FILE
-        screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py $QUANTUM_OVS_CONFIG_FILE -v"
+        sudo sed -i -e "s/.*local-ip = .*/local-ip = $HOST_IP/g" /$Q_PLUGIN_CONF_FILE
+        AGENT_BINARY=$QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
        # Start up the quantum <-> linuxbridge agent
        install_package bridge-utils
-       sudo sed -i -e "s/^physical_interface = .*$/physical_interface = $QUANTUM_LB_PRIVATE_INTERFACE/g" $QUANTUM_LB_CONFIG_FILE
-       if grep -Fxq "user = " $QUANTUM_LB_CONFIG_FILE
-       then
-           sudo sed -i -e "s/^connection = sqlite$/#connection = sqlite/g" $QUANTUM_LB_CONFIG_FILE
-           sudo sed -i -e "s/^#connection = mysql$/connection = mysql/g" $QUANTUM_LB_CONFIG_FILE
-           sudo sed -i -e "s/^user = .*$/user = $MYSQL_USER/g" $QUANTUM_LB_CONFIG_FILE
-           sudo sed -i -e "s/^pass = .*$/pass = $MYSQL_PASSWORD/g" $QUANTUM_LB_CONFIG_FILE
-           sudo sed -i -e "s/^host = .*$/host = $MYSQL_HOST/g" $QUANTUM_LB_CONFIG_FILE
-       else
-           sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/quantum_linux_bridge?charset=utf8/g" $QUANTUM_LB_CONFIG_FILE
-       fi
-
-       screen_it q-agt "sleep 4; sudo python $QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py $QUANTUM_LB_CONFIG_FILE -v"
+        #set the default network interface
+       QUANTUM_LB_PRIVATE_INTERFACE=${QUANTUM_LB_PRIVATE_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
+       sudo sed -i -e "s/^physical_interface = .*$/physical_interface = $QUANTUM_LB_PRIVATE_INTERFACE/g" /$Q_PLUGIN_CONF_FILE
+       AGENT_BINARY=$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py
     fi
+    # Start up the quantum agent
+    screen_it q-agt "sudo python $AGENT_BINARY /$Q_PLUGIN_CONF_FILE -v"
 fi
 
 # Melange service
@@ -1276,6 +1259,21 @@ if is_service_enabled n-cpu; then
             echo "RPM-based cgroup not implemented yet"
             yum_install libcgroup-tools
         fi
+    fi
+
+    QEMU_CONF=/etc/libvirt/qemu.conf
+    if is_service_enabled quantum && [[ $Q_PLUGIN = "openvswitch" ]] && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF ; then
+        # add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
+        sudo chmod 666 $QEMU_CONF
+        sudo cat <<EOF >> /etc/libvirt/qemu.conf
+cgroup_device_acl = [
+    "/dev/null", "/dev/full", "/dev/zero",
+    "/dev/random", "/dev/urandom",
+    "/dev/ptmx", "/dev/kvm", "/dev/kqemu",
+    "/dev/rtc", "/dev/hpet","/dev/net/tun",
+]
+EOF
+        sudo chmod 644 $QEMU_CONF
     fi
 
     if [[ "$os_PACKAGE" = "deb" ]]; then
@@ -1616,17 +1614,18 @@ if is_service_enabled quantum; then
         add_nova_opt "melange_host=$M_HOST"
         add_nova_opt "melange_port=$M_PORT"
     fi
-    if is_service_enabled q-svc && [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        add_nova_opt "libvirt_vif_type=ethernet"
-        add_nova_opt "libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
-        add_nova_opt "linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver"
-        add_nova_opt "quantum_use_dhcp=True"
-    elif is_service_enabled q-svc && [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        add_nova_opt "libvirt_vif_type=ethernet"
-        add_nova_opt "libvirt_vif_driver=nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"
-        add_nova_opt "linuxnet_interface_driver=nova.network.linux_net.QuantumLinuxBridgeInterfaceDriver"
-        add_nova_opt "quantum_use_dhcp=True"
+
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        NOVA_VIF_DRIVER="nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
+        LINUXNET_VIF_DRIVER="nova.network.linux_net.LinuxOVSInterfaceDriver"
+    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
+        NOVA_VIF_DRIVER="nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"
+        LINUXNET_VIF_DRIVER="nova.network.linux_net.QuantumLinuxBridgeInterfaceDriver"
     fi
+    add_nova_opt "libvirt_vif_type=ethernet"
+    add_nova_opt "libvirt_vif_driver=$NOVA_VIF_DRIVER"
+    add_nova_opt "linuxnet_interface_driver=$LINUXNET_VIF_DRIVER"
+    add_nova_opt "quantum_use_dhcp=True"
 else
     add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
 fi
