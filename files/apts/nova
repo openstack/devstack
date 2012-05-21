@@ -19,7 +19,7 @@ libvirt-bin # NOPRIME
 vlan
 curl
 rabbitmq-server # NOPRIME
-qpidd # NOPRIME
+qpidd # dist:precise NOPRIME
 socat # used by ajaxterm
 python-mox
 python-paste
