@@ -20,6 +20,10 @@ SWIFT3_REPO=https://github.com/fujita/swift3.git
 SWIFT3_BRANCH=master
 
 
+# python swift client library
+SWIFTCLIENT_REPO=https://github.com/openstack/python-swiftclient
+SWIFTCLIENT_BRANCH=master
+
 # image catalog service
 GLANCE_REPO=https://github.com/openstack/glance.git
 GLANCE_BRANCH=master
