@@ -1,0 +1,52 @@
+#!/bin/bash
+
+set -eux
+
+action="$1"
+vm="$2"
+device="${3-0}"
+part="${4-}"
+
+xe_min()
+{
+  local cmd="$1"
+  shift
+  xe "$cmd" --minimal "$@"
+}
+
+vm_uuid=$(xe_min vm-list name-label="$vm")
+vdi_uuid=$(xe_min vbd-list params=vdi-uuid vm-uuid="$vm_uuid" \
+                           userdevice="$device")
+
+dom0_uuid=$(xe_min vm-list is-control-domain=true)
+
+open_vdi()
+{
+  vbd_uuid=$(xe vbd-create vm-uuid="$dom0_uuid" vdi-uuid="$vdi_uuid" \
+                         device=autodetect)
+  mp=$(mktemp -d)
+  xe vbd-plug uuid="$vbd_uuid"
+
+  udevsettle
+  dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
+  mount "/dev/$dev$part" "$mp"
+  echo "Your vdi is mounted at $mp"
+}
+
+close_vdi()
+{
+  vbd_uuid=$(xe_min vbd-list vm-uuid="$dom0_uuid" vdi-uuid="$vdi_uuid")
+  dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
+  umount "/dev/$dev$part"
+
+  xe vbd-unplug uuid=$vbd_uuid
+  xe vbd-destroy uuid=$vbd_uuid
+}
+
+if [ "$action" == "open" ]
+then
+  open_vdi
+elif [ "$action" == "close" ]
+then
+  close_vdi
+fi
