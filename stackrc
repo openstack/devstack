@@ -16,6 +16,9 @@ NOVA_BRANCH=master
 # storage service
 SWIFT_REPO=https://github.com/openstack/swift.git
 SWIFT_BRANCH=master
+SWIFT3_REPO=https://github.com/fujita/swift3.git
+SWIFT3_BRANCH=master
+
 
 # image catalog service
 GLANCE_REPO=https://github.com/openstack/glance.git
