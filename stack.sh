@@ -632,13 +632,13 @@ function get_packages() {
                 continue
             fi
 
-            if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then # We are using BASH regexp matching feature.
-                        package=${BASH_REMATCH[1]}
-                        distros=${BASH_REMATCH[2]}
-                        for distro in ${distros//,/ }; do  #In bash ${VAR,,} will lowecase VAR
-                            [[ ${distro,,} == ${DISTRO,,} ]] && echo $package
-                        done
-                        continue
+            if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then
+                # We are using BASH regexp matching feature.
+                package=${BASH_REMATCH[1]}
+                distros=${BASH_REMATCH[2]}
+                # In bash ${VAR,,} will lowecase VAR
+                [[ ${distros,,} =~ ${DISTRO,,} ]] && echo $package
+                continue
             fi
 
             echo ${line%#*}
