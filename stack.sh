@@ -293,7 +293,7 @@ function read_password {
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     PUBLIC_INTERFACE_DEFAULT=eth3
     # allow build_domU.sh to specify the flat network bridge via kernel args
-    FLAT_NETWORK_BRIDGE_DEFAULT=$(grep -o 'flat_network_bridge=[^.]*' /proc/cmdline | cut -d= -f 2)
+    FLAT_NETWORK_BRIDGE_DEFAULT=$(grep -o 'flat_network_bridge=[[:alnum:]]*' /proc/cmdline | cut -d= -f 2 | sort -u)
     GUEST_INTERFACE_DEFAULT=eth1
 else
     PUBLIC_INTERFACE_DEFAULT=br100

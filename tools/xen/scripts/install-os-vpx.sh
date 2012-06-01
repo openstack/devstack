@@ -38,7 +38,7 @@ usage()
 cat << EOF
 
   Usage: $0 [-f FILE_PATH] [-d DISK_SIZE] [-v BRIDGE_NAME] [-m BRIDGE_NAME] [-p BRIDGE_NAME]
-            [-k PARAMS] [-r RAM] [-i|-c] [-w] [-b] [-l NAME_LABEL]
+            [-k PARAMS] [-r RAM] [-i|-c] [-w] [-b] [-l NAME_LABEL] [-t TEMPLATE_NW_INSTALL]
 
   Installs XenServer OpenStack VPX.
 
@@ -61,6 +61,7 @@ cat << EOF
      -r MiB       Specifies RAM used by the VPX, in MiB.
                   By default it will take the value from the XVA.
      -l name      Specifies the name label for the VM.
+     -t template  Network install an openstack domU from this template
 
   EXAMPLES:
 
@@ -88,7 +89,7 @@ EOF
 
 get_params()
 {
-  while getopts "hicwbf:d:v:m:p:k:r:l:" OPTION;
+  while getopts "hicwbf:d:v:m:p:k:r:l:t:" OPTION;
   do
     case $OPTION in
       h) usage
@@ -127,8 +128,11 @@ get_params()
       v)
          BRIDGE_V=$OPTARG
          ;;
-     l)
+      l)
          NAME_LABEL=$OPTARG
+         ;;
+      t)
+         TEMPLATE_NAME=$OPTARG
          ;;
       ?)
          usage
@@ -328,17 +332,11 @@ set_kernel_params()
 {
   local v="$1"
   local args=$KERNEL_PARAMS
-  local cmdline=$(cat /proc/cmdline)
-  for word in $cmdline
-  do
-    if echo "$word" | grep -q "geppetto"
-    then
-      args="$word $args"
-    fi
-  done
   if [ "$args" != "" ]
   then
     echo "Passing Geppetto args to VPX: $args."
+    pvargs=$(xe vm-param-get param-name=PV-args uuid="$v")
+    args="$pvargs $args"
     xe vm-param-set PV-args="$args" uuid="$v"
   fi
 }
@@ -422,6 +420,20 @@ then
 
   destroy_vifs "$vm_uuid"
   set_all "$vm_uuid"
+elif [ "$TEMPLATE_NAME" ]
+then
+  echo $TEMPLATE_NAME
+  vm_uuid=$(xe_min vm-install template="$TEMPLATE_NAME" new-name-label="$NAME_LABEL")
+  destroy_vifs "$vm_uuid"
+  set_auto_start "$vm_uuid"
+  create_gi_vif "$vm_uuid"
+  create_vm_vif "$vm_uuid"
+  create_management_vif "$vm_uuid"
+  create_public_vif "$vm_uuid"
+  set_kernel_params "$vm_uuid"
+  xe vm-param-set other-config:os-vpx=true uuid="$vm_uuid"
+  xe vm-param-set actions-after-reboot=Destroy uuid="$vm_uuid"
+  set_memory "$vm_uuid"
 else
   if [ ! -f "$VPX_FILE" ]
   then
