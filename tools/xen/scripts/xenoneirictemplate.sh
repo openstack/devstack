@@ -8,10 +8,10 @@
 BASE_DIR=$(cd $(dirname "$0") && pwd)
 source $BASE_DIR/../../../localrc
 
-LENNY=$(xe template-list name-label=Debian\ Lenny\ 5.0\ \(32-bit\) --minimal)
+LENNY=$(xe template-list name-label=Debian\ Squeeze\ 6.0\ \(32-bit\) --minimal)
 
 if [[ -z $LENNY ]] ; then
-    echo "Cant find lenny 32bit template, is this on 6.0.2?"
+    echo "Cant find Squeeze 32bit template."
     exit 1
 fi
 
