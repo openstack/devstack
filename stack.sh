@@ -251,7 +251,7 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
 HOST_IP_IFACE=${HOST_IP_IFACE:-eth0}
 # Use the eth0 IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ -z "$HOST_IP" -o "$HOST_IP" == "dhcp" ]; then
-    HOST_IP=`LC_ALL=C /sbin/ifconfig ${HOST_IP_IFACE} | grep -m 1 'inet addr:'| cut -d: -f2 | awk '{print $1}'`
+    HOST_IP=`LC_ALL=C ip -f inet addr show ${HOST_IP_IFACE} | awk '/inet/ {split($2,parts,"/");  print parts[1]}' | head -n1`
     if [ "$HOST_IP" = "" ]; then
         echo "Could not determine host ip address."
         echo "Either localrc specified dhcp on ${HOST_IP_IFACE} or defaulted to eth0"
