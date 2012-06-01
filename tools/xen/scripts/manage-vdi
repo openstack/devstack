@@ -7,11 +7,19 @@ vm="$2"
 device="${3-0}"
 part="${4-}"
 
-xe_min()
-{
+function xe_min() {
   local cmd="$1"
   shift
   xe "$cmd" --minimal "$@"
+}
+
+function run_udev_settle() {
+  which_udev=$(which udevsettle) || true
+  if [ -n "$which_udev" ]; then
+      udevsettle
+  else
+      udevadm settle
+  fi
 }
 
 vm_uuid=$(xe_min vm-list name-label="$vm")
@@ -20,50 +28,52 @@ vdi_uuid=$(xe_min vbd-list params=vdi-uuid vm-uuid="$vm_uuid" \
 
 dom0_uuid=$(xe_min vm-list is-control-domain=true)
 
-get_mount_device()
-{
+function get_mount_device() {
   vbd_uuid=$1
 
   dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
   if [[ "$dev" =~ "sm/" ]]; then
     DEBIAN_FRONTEND=noninteractive \
         apt-get --option "Dpkg::Options::=--force-confold" --assume-yes \
-        install kpartx || true &> /dev/null
-    mapping=$(kpartx -av "/dev/$dev" | sed -ne 's,^add map \([a-f0-9\-]*\).*$,\1,p' | sed -ne "s,^\(.*${part}\)\$,\1,p")
+        install kpartx &> /dev/null || true
+    mapping=$(kpartx -av "/dev/$dev" | sed -ne 's,^add map \([a-z0-9\-]*\).*$,\1,p' | sed -ne "s,^\(.*${part}\)\$,\1,p")
     if [ -z "$mapping" ]; then
        echo "Failed to find mapping"
        exit -1
     fi
-    echo "mapper/${mapping}"
+    echo "/dev/mapper/${mapping}"
   else
     echo "/dev/$dev$part"
   fi
 }
 
-open_vdi()
-{
+function clean_dev_mappings() {
+  dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
+  if [[ "$dev" =~ "sm/" ]]; then
+    kpartx -dv "/dev/$dev"
+  fi
+}
+
+function open_vdi() {
   vbd_uuid=$(xe vbd-create vm-uuid="$dom0_uuid" vdi-uuid="$vdi_uuid" \
                          device=autodetect)
   mp=$(mktemp -d)
   xe vbd-plug uuid="$vbd_uuid"
 
-  which_udev=$(which udevsettle) || true
-  if [ -n "$which_udev" ]; then
-      udevsettle
-  else
-      udevadm settle
-  fi
+  run_udev_settle
 
   mount_device=$(get_mount_device "$vbd_uuid")
   mount "$mount_device" "$mp"
   echo "Your vdi is mounted at $mp"
 }
 
-close_vdi()
-{
+function close_vdi() {
   vbd_uuid=$(xe_min vbd-list vm-uuid="$dom0_uuid" vdi-uuid="$vdi_uuid")
   mount_device=$(get_mount_device "$vbd_uuid")
+  run_udev_settle
   umount "$mount_device"
+
+  clean_dev_mappings
 
   xe vbd-unplug uuid=$vbd_uuid
   xe vbd-destroy uuid=$vbd_uuid

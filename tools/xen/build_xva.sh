@@ -118,6 +118,13 @@ else
     sed -e "s,@ETH3_NETMASK@,$PUB_NETMASK,g" -i $INTERFACES
 fi
 
+if [ "$ENABLE_GI" == "true" ]; then
+    cat <<EOF >>$INTERFACES
+auto eth0
+iface eth0 inet dhcp
+EOF
+fi
+
 # Gracefully cp only if source file/dir exists
 function cp_it {
     if [ -e $1 ] || [ -d $1 ]; then
