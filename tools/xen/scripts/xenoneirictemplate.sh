@@ -3,7 +3,7 @@
 ## on Xenserver 6.0.2 Net install only
 ## Original Author: David Markey <david.markey@citrix.com>
 ## Author: Renuka Apte <renuka.apte@citrix.com>
-## This is not an officially supported guest OS on XenServer 6.02
+## This is not an officially supported guest OS on XenServer 6.0.2
 
 BASE_DIR=$(cd $(dirname "$0") && pwd)
 source $BASE_DIR/../../../localrc
@@ -15,10 +15,14 @@ if [[ -z $LENNY ]] ; then
     exit 1
 fi
 
-distro="Ubuntu 11.10"
+distro="Ubuntu 11.10 for DevStack"
 arches=("32-bit" "64-bit")
 
 preseedurl=${1:-"http://images.ansolabs.com/devstackubuntupreseed.cfg"}
+
+NETINSTALL_LOCALE=${NETINSTALL_LOCALE:-en_US}
+NETINSTALL_KEYBOARD=${NETINSTALL_KEYBOARD:-us}
+NETINSTALL_IFACE=${NETINSTALL_IFACE:-eth3}
 
 for arch in ${arches[@]} ; do
     echo "Attempting $distro ($arch)"
@@ -30,7 +34,11 @@ for arch in ${arches[@]} ; do
             echo "NETINSTALLIP not set in localrc"
             exit 1
         fi
-        pvargs="-- quiet console=hvc0 partman/default_filesystem=ext3 locale=en_US console-setup/ask_detect=false keyboard-configuration/layoutcode=us netcfg/choose_interface=eth3 netcfg/get_hostname=os netcfg/get_domain=os auto url=${preseedurl}"
+        # Some of these settings can be found in example preseed files
+        # however these need to be answered before the netinstall
+        # is ready to fetch the preseed file, and as such must be here
+        # to get a fully automated install
+        pvargs="-- quiet console=hvc0 partman/default_filesystem=ext3 locale=${NETINSTALL_LOCALE} console-setup/ask_detect=false keyboard-configuration/layoutcode=${NETINSTALL_KEYBOARD} netcfg/choose_interface=${NETINSTALL_IFACE} netcfg/get_hostname=os netcfg/get_domain=os auto url=${preseedurl}"
         if [ "$NETINSTALLIP" != "dhcp" ]
         then
             netcfgargs="netcfg/disable_autoconfig=true netcfg/get_nameservers=${NAMESERVERS} netcfg/get_ipaddress=${NETINSTALLIP} netcfg/get_netmask=${NETMASK} netcfg/get_gateway=${GATEWAY} netcfg/confirm_static=true"

@@ -1,46 +1,40 @@
 #!/bin/bash
 
-set -e
+# This script is run by install_os_domU.sh
+#
+# It modifies the ubuntu image created by install_os_domU.sh
+# and previously moodified by prepare_guest_template.sh
+#
+# This script is responsible for:
+# - pushing in the DevStack code
+# - creating run.sh, to run the code on boot
+# It does this by mounting the disk image of the VM.
+#
+# The resultant image is then templated and started
+# by install_os_domU.sh
 
-declare -a on_exit_hooks
-
-on_exit()
-{
-    for i in $(seq $((${#on_exit_hooks[*]} - 1)) -1 0)
-    do
-        eval "${on_exit_hooks[$i]}"
-    done
-}
-
-add_on_exit()
-{
-    local n=${#on_exit_hooks[*]}
-    on_exit_hooks[$n]="$*"
-    if [[ $n -eq 0 ]]
-    then
-        trap on_exit EXIT
-    fi
-}
-
-# Abort if localrc is not set
-if [ ! -e ../../localrc ]; then
-    echo "You must have a localrc with ALL necessary passwords defined before proceeding."
-    echo "See the xen README for required passwords."
-    exit 1
-fi
+# Exit on errors
+set -o errexit
+# Echo commands
+set -o xtrace
 
 # This directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
+# Include onexit commands
+. $TOP_DIR/scripts/on_exit.sh
+
 # Source params - override xenrc params in your localrc to suite your taste
 source xenrc
 
-# Echo commands
-set -o xtrace
-
+#
+# Parameters
+#
 GUEST_NAME="$1"
 
-# Directory where we stage the build
+#
+# Mount the VDI
+#
 STAGING_DIR=$($TOP_DIR/scripts/manage-vdi open $GUEST_NAME 0 1 | grep -o "/tmp/tmp.[[:alnum:]]*")
 add_on_exit "$TOP_DIR/scripts/manage-vdi close $GUEST_NAME 0 1"
 
@@ -76,7 +70,7 @@ cd $TOP_DIR
 cat <<EOF >$STAGING_DIR/etc/rc.local
 # network restart required for getting the right gateway
 /etc/init.d/networking restart
-GUEST_PASSWORD=$GUEST_PASSWORD STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/devstack/tools/xen/prepare_guest.sh > /opt/stack/prepare_guest.log 2>&1
+chown -R stack /opt/stack
 su -c "/opt/stack/run.sh > /opt/stack/run.sh.log 2>&1" stack
 exit 0
 EOF
@@ -85,8 +79,12 @@ EOF
 echo $GUEST_NAME > $STAGING_DIR/etc/hostname
 
 # Hostname must resolve for rabbit
+HOSTS_FILE_IP=$PUB_IP
+if [ $MGT_IP != "dhcp" ]; then
+    HOSTS_FILE_IP=$MGT_IP
+fi
 cat <<EOF >$STAGING_DIR/etc/hosts
-$MGT_IP $GUEST_NAME
+$HOSTS_FILE_IP $GUEST_NAME
 127.0.0.1 localhost localhost.localdomain
 EOF
 
@@ -142,8 +140,6 @@ cat <<EOF >$STAGING_DIR/opt/stack/run.sh
 #!/bin/bash
 cd /opt/stack/devstack
 killall screen
-UPLOAD_LEGACY_TTY=yes HOST_IP=$PUB_IP VIRT_DRIVER=xenserver FORCE=yes MULTI_HOST=$MULTI_HOST HOST_IP_IFACE=$HOST_IP_IFACE $STACKSH_PARAMS ./stack.sh
+VIRT_DRIVER=xenserver FORCE=yes MULTI_HOST=$MULTI_HOST HOST_IP_IFACE=$HOST_IP_IFACE $STACKSH_PARAMS ./stack.sh
 EOF
 chmod 755 $STAGING_DIR/opt/stack/run.sh
-
-echo "Done"

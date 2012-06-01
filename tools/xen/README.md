@@ -81,3 +81,9 @@ Step 5: Do cloudy stuff!
 * Play with horizon
 * Play with the CLI
 * Log bugs to devstack and core projects, and submit fixes!
+
+Step 6: Run from snapshot
+-------------------------
+If you want to quicky re-run devstack from a clean state,
+using the same settings you used in your previous run,
+you can revert the DomU to the snapshot called "before_first_boot"
