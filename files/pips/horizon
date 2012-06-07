@@ -1,6 +1,0 @@
-django>=1.4
-django-mailer    # dist:f16
-django-nose      # dist:f16
-django-nose-selenium
-pycrypto==2.3
-python-cloudfiles
