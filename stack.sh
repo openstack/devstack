@@ -647,6 +647,16 @@ function get_packages() {
     done
 }
 
+# pip install the dependencies of the package before we do the setup.py
+# develop, so that pip and not distutils process the dependency chain
+function setup_develop() {
+    python setup.py egg_info
+    raw_links=`cat *.egg-info/dependency_links.txt | awk '{print "-f " $1}'`
+    depend_links=`echo $raw_links | xargs`
+    sudo pip install -r *-info/requires.txt $depend_links
+    sudo python setup.py develop
+}
+
 # install package requirements
 if [[ "$os_PACKAGE" = "deb" ]]; then
     apt_get update
@@ -710,38 +720,38 @@ fi
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
-cd $KEYSTONECLIENT_DIR; sudo python setup.py develop
-cd $NOVACLIENT_DIR; sudo python setup.py develop
-cd $OPENSTACKCLIENT_DIR; sudo python setup.py develop
+cd $KEYSTONECLIENT_DIR; setup_develop
+cd $NOVACLIENT_DIR; setup_develop
+cd $OPENSTACKCLIENT_DIR; setup_develop
 if is_service_enabled key g-api n-api swift; then
-    cd $KEYSTONE_DIR; sudo python setup.py develop
+    cd $KEYSTONE_DIR; setup_develop
 fi
 if is_service_enabled swift; then
-    cd $SWIFT_DIR; sudo python setup.py develop
-    cd $SWIFT3_DIR; sudo python setup.py develop
+    cd $SWIFT_DIR; setup_develop
+    cd $SWIFT3_DIR; setup_develop
 fi
 if is_service_enabled g-api n-api; then
-    cd $GLANCE_DIR; sudo python setup.py develop
+    cd $GLANCE_DIR; setup_develop
 fi
-cd $NOVA_DIR; sudo python setup.py develop
+cd $NOVA_DIR; setup_develop
 if is_service_enabled horizon; then
-    cd $HORIZON_DIR; sudo python setup.py develop
+    cd $HORIZON_DIR; setup_develop
 fi
 if is_service_enabled quantum; then
-    cd $QUANTUM_CLIENT_DIR; sudo python setup.py develop
+    cd $QUANTUM_CLIENT_DIR; setup_develop
 fi
 if is_service_enabled quantum; then
-    cd $QUANTUM_DIR; sudo python setup.py develop
+    cd $QUANTUM_DIR; setup_develop
 fi
 if is_service_enabled m-svc; then
-    cd $MELANGE_DIR; sudo python setup.py develop
+    cd $MELANGE_DIR; setup_develop
 fi
 if is_service_enabled melange; then
-    cd $MELANGECLIENT_DIR; sudo python setup.py develop
+    cd $MELANGECLIENT_DIR; setup_develop
 fi
 
 # Do this _after_ glance is installed to override the old binary
-cd $GLANCECLIENT_DIR; sudo python setup.py develop
+cd $GLANCECLIENT_DIR; setup_develop
 
 
 # Syslog
