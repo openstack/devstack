@@ -187,13 +187,6 @@ else
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
 
-    # Set up the rootwrap sudoers
-    TEMPFILE=`mktemp`
-    echo "$USER ALL=(root) NOPASSWD: $NOVA_ROOTWRAP" >$TEMPFILE
-    chmod 0440 $TEMPFILE
-    sudo chown root:root $TEMPFILE
-    sudo mv $TEMPFILE /etc/sudoers.d/nova-rootwrap
-
     # Remove old file
     sudo rm -f /etc/sudoers.d/stack_sh_nova
 fi
@@ -1183,6 +1176,13 @@ fi
 sudo chown `whoami` $NOVA_CONF_DIR
 
 cp -p $NOVA_DIR/etc/nova/policy.json $NOVA_CONF_DIR
+
+# Set up the rootwrap sudoers
+TEMPFILE=`mktemp`
+echo "$USER ALL=(root) NOPASSWD: $NOVA_ROOTWRAP" >$TEMPFILE
+chmod 0440 $TEMPFILE
+sudo chown root:root $TEMPFILE
+sudo mv $TEMPFILE /etc/sudoers.d/nova-rootwrap
 
 if is_service_enabled n-api; then
     # Use the sample http middleware configuration supplied in the
