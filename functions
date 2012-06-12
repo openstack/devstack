@@ -548,6 +548,26 @@ function install_package() {
 }
 
 
+# Distro-agnostic function to tell if a package is installed
+# is_package_installed package [package ...]
+function is_package_installed() {
+    if [[ -z "$@" ]]; then
+        return 1
+    fi
+
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        dpkg -l "$@" > /dev/null
+        return $?
+    else
+        rpm --quiet -q "$@"
+        return $?
+    fi
+}
+
+
 # Test if the named environment variable is set and not zero length
 # is_set env-var
 function is_set() {
