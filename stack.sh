@@ -145,14 +145,12 @@ if [[ $EUID -eq 0 ]]; then
     # ability to run sudo
     if [[ "$os_PACKAGE" = "deb" ]]; then
         dpkg -l sudo || apt_get update && install_package sudo
-        STACK_GROUP=sudo
     else
         rpm -qa | grep sudo || install_package sudo
-        STACK_GROUP=wheel
     fi
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
-        useradd -U -G $STACK_GROUP -s /bin/bash -d $DEST -m stack
+        useradd -U -s /bin/bash -d $DEST -m stack
     fi
 
     echo "Giving stack user passwordless sudo priviledges"
