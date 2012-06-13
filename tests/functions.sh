@@ -141,3 +141,5 @@ if [[ -z "$VAL" ]]; then
 else
     echo "inicomment failed: $VAL"
 fi
+
+rm test.ini
