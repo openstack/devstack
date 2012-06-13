@@ -1037,6 +1037,9 @@ if is_service_enabled g-reg; then
 
     GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
     cp $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
+
+    $GLANCE_DIR/bin/glance-manage db_sync
+
 fi
 
 # Quantum (for controller or agent nodes)
