@@ -1,5 +1,6 @@
 libxml2-devel
 python-argparse
+python-devel
 python-eventlet
 python-greenlet
 python-paste-deploy
