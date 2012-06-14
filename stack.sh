@@ -262,6 +262,9 @@ SYSLOG=`trueorfalse False $SYSLOG`
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
 SYSLOG_PORT=${SYSLOG_PORT:-516}
 
+# Use color for logging output
+LOG_COLOR=`trueorfalse True $LOG_COLOR`
+
 # Service startup timeout
 SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 
@@ -1761,6 +1764,16 @@ if [ "$SYSLOG" != "False" ]; then
 fi
 if [ "$API_RATE_LIMIT" != "True" ]; then
     add_nova_opt "api_rate_limit=False"
+fi
+if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+    # Add color to logging output
+    add_nova_opt "logging_context_format_string=%(asctime)s %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_name)s %(project_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    add_nova_opt "logging_default_format_string=%(asctime)s %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    add_nova_opt "logging_debug_format_suffix=[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
+    add_nova_opt "logging_exception_prefix=%(color)s%(asctime)s TRACE %(name)s [01;35m%(instance)s[00m"
+else
+    # Show user_name and project_name instead of user_id and project_id
+    add_nova_opt "logging_context_format_string=%(asctime)s %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
 fi
 
 
