@@ -25,9 +25,12 @@ if [[ "$1" == "--all" ]]; then
 fi
 
 # Shut down devstack's screen to get the bulk of OpenStack services in one shot
-SESSION=$(screen -ls | grep "[0-9].stack" | awk '{ print $1 }')
-if [[ -n "$SESSION" ]]; then
-    screen -X -S $SESSION quit
+SCREEN=$(which screen)
+if [[ -n "$SCREEN" ]]; then
+    SESSION=$(screen -ls | awk '/[0-9].stack/ { print $1 }')
+    if [[ -n "$SESSION" ]]; then
+        screen -X -S $SESSION quit
+    fi
 fi
 
 # Swift runs daemons
