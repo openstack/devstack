@@ -1704,6 +1704,11 @@ elif is_service_enabled n-vol; then
     fi
 
     if sudo vgs $VOLUME_GROUP; then
+        if [[ "$os_PACKAGE" = "rpm" ]]; then
+            # RPM doesn't start the service
+            start_service tgtd
+        fi
+
         # Remove nova iscsi targets
         sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
         # Clean out existing volumes
