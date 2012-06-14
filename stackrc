@@ -93,8 +93,10 @@ MELANGECLIENT_BRANCH=master
 #IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img" # cirros full disk image
 case "$LIBVIRT_TYPE" in
     lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
+        DEFAULT_IMAGE_NAME=cirros-0.3.0-x86_64-rootfs
         IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-rootfs.img.gz";;
     *)  # otherwise, use the uec style image (with kernel, ramdisk, disk)
+        DEFAULT_IMAGE_NAME=cirros-0.3.0-x86_64-uec
         IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz";;
 esac
 
