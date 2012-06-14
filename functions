@@ -73,6 +73,91 @@ function get_field() {
 }
 
 
+# get_packages() collects a list of package names of any type from the
+# prerequisite files in ``files/{apts|pips}``.  The list is intended
+# to be passed to a package installer such as apt or pip.
+#
+# Only packages required for the services in ENABLED_SERVICES will be
+# included.  Two bits of metadata are recognized in the prerequisite files:
+# - ``# NOPRIME`` defers installation to be performed later in stack.sh
+# - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
+#   of the package to the distros listed.  The distro names are case insensitive.
+#
+# get_packages dir
+function get_packages() {
+    local package_dir=$1
+    local file_to_parse
+    local service
+
+    if [[ -z "$package_dir" ]]; then
+        echo "No package directory supplied"
+        return 1
+    fi
+    if [[ -z "$DISTRO" ]]; then
+        echo "No distro set in DISTRO"
+        return 1
+    fi
+    for service in general ${ENABLED_SERVICES//,/ }; do
+        # Allow individual services to specify dependencies
+        if [[ -e ${package_dir}/${service} ]]; then
+            file_to_parse="${file_to_parse} $service"
+        fi
+        # NOTE(sdague) n-api needs glance for now because that's where
+        # glance client is
+        if [[ $service == n-api ]]; then
+            if [[ ! $file_to_parse =~ nova ]]; then
+                file_to_parse="${file_to_parse} nova"
+            fi
+            if [[ ! $file_to_parse =~ glance ]]; then
+                file_to_parse="${file_to_parse} glance"
+            fi
+        elif [[ $service == c-* ]]; then
+            if [[ ! $file_to_parse =~ cinder ]]; then
+                file_to_parse="${file_to_parse} cinder"
+            fi
+        elif [[ $service == n-* ]]; then
+            if [[ ! $file_to_parse =~ nova ]]; then
+                file_to_parse="${file_to_parse} nova"
+            fi
+        elif [[ $service == g-* ]]; then
+            if [[ ! $file_to_parse =~ glance ]]; then
+                file_to_parse="${file_to_parse} glance"
+            fi
+        elif [[ $service == key* ]]; then
+            if [[ ! $file_to_parse =~ keystone ]]; then
+                file_to_parse="${file_to_parse} keystone"
+            fi
+        fi
+    done
+
+    for file in ${file_to_parse}; do
+        local fname=${package_dir}/${file}
+        local OIFS line package distros distro
+        [[ -e $fname ]] || continue
+
+        OIFS=$IFS
+        IFS=$'\n'
+        for line in $(<${fname}); do
+            if [[ $line =~ "NOPRIME" ]]; then
+                continue
+            fi
+
+            if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then
+                # We are using BASH regexp matching feature.
+                package=${BASH_REMATCH[1]}
+                distros=${BASH_REMATCH[2]}
+                # In bash ${VAR,,} will lowecase VAR
+                [[ ${distros,,} =~ ${DISTRO,,} ]] && echo $package
+                continue
+            fi
+
+            echo ${line%#*}
+        done
+        IFS=$OIFS
+    done
+}
+
+
 # Determine OS Vendor, Release and Update
 # Tested with OS/X, Ubuntu, RedHat, CentOS, Fedora
 # Returns results in global variables:
