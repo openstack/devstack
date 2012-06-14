@@ -318,6 +318,23 @@ function restart_service() {
 }
 
 
+# pip install the dependencies of the package before we do the setup.py
+# develop, so that pip and not distutils process the dependency chain
+# setup_develop directory
+function setup_develop() {
+    (cd $1; \
+        python setup.py egg_info; \
+        raw_links=$(awk '/^.+/ {print "-f " $1}' *.egg-info/dependency_links.txt); \
+        depend_links=$(echo $raw_links | xargs); \
+        pip_install -r *-info/requires.txt $depend_links; \
+        sudo \
+            HTTP_PROXY=$http_proxy \
+            HTTPS_PROXY=$https_proxy \
+            python setup.py develop \
+    )
+}
+
+
 # Service wrapper to start services
 # start_service service-name
 function start_service() {

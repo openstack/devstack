@@ -64,18 +64,23 @@ fi
 # repositories and branches to configure.  ``stackrc`` sources ``localrc`` to
 # allow you to safely override those settings without being overwritten
 # when updating DevStack.
+if [[ ! -r $TOP_DIR/stackrc ]]; then
+    echo "ERROR: missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
+    exit 1
+fi
+source $TOP_DIR/stackrc
 
 # HTTP and HTTPS proxy servers are supported via the usual environment variables
 # ``http_proxy`` and ``https_proxy``.  They can be set in ``localrc`` if necessary
 # or on the command line::
 #
 #     http_proxy=http://proxy.example.com:3128/ ./stack.sh
-
-if [[ ! -r $TOP_DIR/stackrc ]]; then
-    echo "ERROR: missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
-    exit 1
+if [[ -n "$http_proxy" ]]; then
+    export http_proxy=$http_proxy
 fi
-source $TOP_DIR/stackrc
+if [[ -n "$https_proxy" ]]; then
+    export https_proxy=$https_proxy
+fi
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
@@ -644,16 +649,6 @@ function get_packages() {
     done
 }
 
-# pip install the dependencies of the package before we do the setup.py
-# develop, so that pip and not distutils process the dependency chain
-function setup_develop() {
-    python setup.py egg_info
-    raw_links=`cat *.egg-info/dependency_links.txt | awk '{print "-f " $1}'`
-    depend_links=`echo $raw_links | xargs`
-    sudo pip install -r *-info/requires.txt $depend_links
-    sudo python setup.py develop
-}
-
 # install package requirements
 if [[ "$os_PACKAGE" = "deb" ]]; then
     apt_get update
@@ -720,39 +715,37 @@ fi
 
 # setup our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
-cd $KEYSTONECLIENT_DIR; setup_develop
-cd $NOVACLIENT_DIR; setup_develop
-cd $OPENSTACKCLIENT_DIR; setup_develop
+setup_develop $KEYSTONECLIENT_DIR
+setup_develop $NOVACLIENT_DIR
+setup_develop $OPENSTACKCLIENT_DIR
 if is_service_enabled key g-api n-api swift; then
-    cd $KEYSTONE_DIR; setup_develop
+    setup_develop $KEYSTONE_DIR
 fi
 if is_service_enabled swift; then
-    cd $SWIFT_DIR; setup_develop
-    cd $SWIFTCLIENT_DIR; setup_develop
-    cd $SWIFT3_DIR; setup_develop
+    setup_develop $SWIFT_DIR
+    setup_develop $SWIFTCLIENT_DIR
+    setup_develop $SWIFT3_DIR
 fi
 if is_service_enabled g-api n-api; then
-    cd $GLANCE_DIR; setup_develop
+    setup_develop $GLANCE_DIR
 fi
-cd $NOVA_DIR; setup_develop
+setup_develop $NOVA_DIR
 if is_service_enabled horizon; then
-    cd $HORIZON_DIR; setup_develop
+    setup_develop $HORIZON_DIR
 fi
 if is_service_enabled quantum; then
-    cd $QUANTUM_CLIENT_DIR; setup_develop
-fi
-if is_service_enabled quantum; then
-    cd $QUANTUM_DIR; setup_develop
+    setup_develop $QUANTUM_CLIENT_DIR
+    setup_develop $QUANTUM_DIR
 fi
 if is_service_enabled m-svc; then
-    cd $MELANGE_DIR; setup_develop
+    setup_develop $MELANGE_DIR
 fi
 if is_service_enabled melange; then
-    cd $MELANGECLIENT_DIR; setup_develop
+    setup_develop $MELANGECLIENT_DIR
 fi
 
 # Do this _after_ glance is installed to override the old binary
-cd $GLANCECLIENT_DIR; setup_develop
+setup_develop $GLANCECLIENT_DIR
 
 
 # Syslog
@@ -2008,7 +2001,7 @@ if is_service_enabled g-reg; then
 
     ADMIN_USER=admin
     ADMIN_TENANT=admin
-    TOKEN=`curl -s -d  "{\"auth\":{\"passwordCredentials\": {\"username\": \"$ADMIN_USER\", \"password\": \"$ADMIN_PASSWORD\"}, \"tenantName\": \"$ADMIN_TENANT\"}}" -H "Content-type: application/json" http://$HOST_IP:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`
+    TOKEN=$(keystone --os_tenant_name $ADMIN_TENANT --os_username $ADMIN_USER --os_password $ADMIN_PASSWORD --os_auth_url http://$HOST_IP:5000/v2.0 token-get | grep ' id ' | get_field 2)
 
     # Option to upload legacy ami-tty, which works with xenserver
     if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
@@ -2018,7 +2011,7 @@ if is_service_enabled g-reg; then
     for image_url in ${IMAGE_URLS//,/ }; do
         # Downloads the image (uec ami+aki style), then extracts it.
         IMAGE_FNAME=`basename "$image_url"`
-        if [ ! -f $FILES/$IMAGE_FNAME ]; then
+        if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
             wget -c $image_url -O $FILES/$IMAGE_FNAME
         fi
 
