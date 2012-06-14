@@ -1443,34 +1443,69 @@ if is_service_enabled swift; then
         sudo sed -i '/disable *= *yes/ { s/yes/no/ }' /etc/xinetd.d/rsync
     fi
 
-   # By default Swift will be installed with the tempauth middleware
-   # which has some default username and password if you have
-   # configured keystone it will checkout the directory.
-   if is_service_enabled key; then
-       swift_auth_server="s3token authtoken keystone"
-   else
-       swift_auth_server=tempauth
-   fi
+    # By default Swift will be installed with the tempauth middleware
+    # which has some default username and password if you have
+    # configured keystone it will checkout the directory.
+    if is_service_enabled key; then
+        swift_auth_server="s3token authtoken keystone"
+    else
+        swift_auth_server=tempauth
+    fi
 
-   # We do the install of the proxy-server and swift configuration
-   # replacing a few directives to match our configuration.
-   sed -e "
-       s,%SWIFT_CONFIG_DIR%,${SWIFT_CONFIG_DIR},g;
-       s,%USER%,$USER,g;
-       s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
-       s,%SERVICE_USERNAME%,swift,g;
-       s,%SERVICE_PASSWORD%,$SERVICE_PASSWORD,g;
-       s,%KEYSTONE_SERVICE_PROTOCOL%,$KEYSTONE_SERVICE_PROTOCOL,g;
-       s,%SERVICE_TOKEN%,${SERVICE_TOKEN},g;
-       s,%KEYSTONE_API_PORT%,${KEYSTONE_API_PORT},g;
-       s,%KEYSTONE_AUTH_HOST%,${KEYSTONE_AUTH_HOST},g;
-       s,%KEYSTONE_AUTH_PORT%,${KEYSTONE_AUTH_PORT},g;
-       s,%KEYSTONE_AUTH_PROTOCOL%,${KEYSTONE_AUTH_PROTOCOL},g;
-       s/%AUTH_SERVER%/${swift_auth_server}/g;
-    " $FILES/swift/proxy-server.conf | \
-       sudo tee ${SWIFT_CONFIG_DIR}/proxy-server.conf
+    SWIFT_CONFIG_PROXY_SERVER=${SWIFT_CONFIG_DIR}/proxy-server.conf
+    cp ${SWIFT_DIR}/etc/proxy-server.conf-sample ${SWIFT_CONFIG_PROXY_SERVER}
 
-    sed -e "s/%SWIFT_HASH%/$SWIFT_HASH/" $FILES/swift/swift.conf > ${SWIFT_CONFIG_DIR}/swift.conf
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${USER}
+
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT swift_dir
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT swift_dir ${SWIFT_CONFIG_DIR}
+
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT workers
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT workers 1
+
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT log_level
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT log_level DEBUG
+
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
+
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} pipeline:main pipeline "catch_errors healthcheck cache ratelimit swift3 ${swift_auth_server} proxy-logging proxy-server"
+
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
+
+    cat <<EOF>>${SWIFT_CONFIG_PROXY_SERVER}
+
+[filter:keystone]
+paste.filter_factory = keystone.middleware.swift_auth:filter_factory
+operator_roles = Member,admin
+
+# NOTE(chmou): s3token middleware is not updated yet to use only
+# username and password.
+[filter:s3token]
+paste.filter_factory = keystone.middleware.s3_token:filter_factory
+auth_port = ${KEYSTONE_AUTH_PORT}
+auth_host = ${KEYSTONE_AUTH_HOST}
+auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
+auth_token = ${SERVICE_TOKEN}
+admin_token = ${SERVICE_TOKEN}
+
+[filter:authtoken]
+paste.filter_factory = keystone.middleware.auth_token:filter_factory
+auth_host = ${KEYSTONE_AUTH_HOST}
+auth_port = ${KEYSTONE_AUTH_PORT}
+auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
+auth_uri = ${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/
+admin_tenant_name = ${SERVICE_TENANT_NAME}
+admin_user = swift
+admin_password = ${SERVICE_PASSWORD}
+
+[filter:swift3]
+use = egg:swift3#middleware
+EOF
+
+    cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONFIG_DIR}/swift.conf
+    iniset ${SWIFT_CONFIG_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
 
     # We need to generate a object/account/proxy configuration
     # emulating 4 nodes on different ports we have a little function
@@ -1480,16 +1515,35 @@ if is_service_enabled swift; then
         local bind_port=$2
         local log_facility=$3
         local node_number
+        local swift_node_config
 
         for node_number in $(seq ${SWIFT_REPLICAS}); do
             node_path=${SWIFT_DATA_DIR}/${node_number}
-            sed -e "
-                s,%SWIFT_CONFIG_DIR%,${SWIFT_CONFIG_DIR},;
-                s,%USER%,$USER,;
-                s,%NODE_PATH%,${node_path},;
-                s,%BIND_PORT%,${bind_port},;
-                s,%LOG_FACILITY%,${log_facility},
-            " $FILES/swift/${server_type}-server.conf > ${SWIFT_CONFIG_DIR}/${server_type}-server/${node_number}.conf
+            swift_node_config=${SWIFT_CONFIG_DIR}/${server_type}-server/${node_number}.conf
+
+            cp ${SWIFT_DIR}/etc/${server_type}-server.conf-sample ${swift_node_config}
+
+            iniuncomment ${swift_node_config} DEFAULT user
+            iniset ${swift_node_config} DEFAULT user ${USER}
+
+            iniuncomment ${swift_node_config} DEFAULT bind_port
+            iniset ${swift_node_config} DEFAULT bind_port ${bind_port}
+
+            iniuncomment ${swift_node_config} DEFAULT swift_dir
+            iniset ${swift_node_config} DEFAULT swift_dir ${SWIFT_CONFIG_DIR}
+
+            iniuncomment ${swift_node_config} DEFAULT devices
+            iniset ${swift_node_config} DEFAULT devices ${node_path}
+
+            iniuncomment ${swift_node_config} DEFAULT log_facility
+            iniset ${swift_node_config} DEFAULT log_facility LOG_LOCAL${log_facility}
+
+            iniuncomment ${swift_node_config} DEFAULT mount_check
+            iniset ${swift_node_config} DEFAULT mount_check false
+
+            iniuncomment ${swift_node_config} ${server_type}-replicator vm_test_mode
+            iniset ${swift_node_config} ${server_type}-replicator vm_test_mode yes
+
             bind_port=$(( ${bind_port} + 10 ))
             log_facility=$(( ${log_facility} + 1 ))
         done
@@ -1498,48 +1552,47 @@ if is_service_enabled swift; then
     generate_swift_configuration container 6011 2
     generate_swift_configuration account 6012 2
 
+    # We have some specific configuration for swift for rsyslog. See
+    # the file /etc/rsyslog.d/10-swift.conf for more info.
+    swift_log_dir=${SWIFT_DATA_DIR}/logs
+    rm -rf ${swift_log_dir}
+    mkdir -p ${swift_log_dir}/hourly
+    sudo chown -R $USER:adm ${swift_log_dir}
+    sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
+        tee /etc/rsyslog.d/10-swift.conf
+    restart_service rsyslog
 
-   # We have some specific configuration for swift for rsyslog. See
-   # the file /etc/rsyslog.d/10-swift.conf for more info.
-   swift_log_dir=${SWIFT_DATA_DIR}/logs
-   rm -rf ${swift_log_dir}
-   mkdir -p ${swift_log_dir}/hourly
-   sudo chown -R $USER:adm ${swift_log_dir}
-   sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
-       tee /etc/rsyslog.d/10-swift.conf
-   restart_service rsyslog
+    # This is where we create three different rings for swift with
+    # different object servers binding on different ports.
+    pushd ${SWIFT_CONFIG_DIR} >/dev/null && {
 
-   # This is where we create three different rings for swift with
-   # different object servers binding on different ports.
-   pushd ${SWIFT_CONFIG_DIR} >/dev/null && {
+        rm -f *.builder *.ring.gz backups/*.builder backups/*.ring.gz
 
-       rm -f *.builder *.ring.gz backups/*.builder backups/*.ring.gz
+        port_number=6010
+        swift-ring-builder object.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+        for x in $(seq ${SWIFT_REPLICAS}); do
+            swift-ring-builder object.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
+            port_number=$[port_number + 10]
+        done
+        swift-ring-builder object.builder rebalance
 
-       port_number=6010
-       swift-ring-builder object.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
-       for x in $(seq ${SWIFT_REPLICAS}); do
-           swift-ring-builder object.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
-           port_number=$[port_number + 10]
-       done
-       swift-ring-builder object.builder rebalance
+        port_number=6011
+        swift-ring-builder container.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+        for x in $(seq ${SWIFT_REPLICAS}); do
+            swift-ring-builder container.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
+            port_number=$[port_number + 10]
+        done
+        swift-ring-builder container.builder rebalance
 
-       port_number=6011
-       swift-ring-builder container.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
-       for x in $(seq ${SWIFT_REPLICAS}); do
-           swift-ring-builder container.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
-           port_number=$[port_number + 10]
-       done
-       swift-ring-builder container.builder rebalance
+        port_number=6012
+        swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+        for x in $(seq ${SWIFT_REPLICAS}); do
+            swift-ring-builder account.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
+            port_number=$[port_number + 10]
+        done
+        swift-ring-builder account.builder rebalance
 
-       port_number=6012
-       swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
-       for x in $(seq ${SWIFT_REPLICAS}); do
-           swift-ring-builder account.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
-           port_number=$[port_number + 10]
-       done
-       swift-ring-builder account.builder rebalance
-
-   } && popd >/dev/null
+    } && popd >/dev/null
 
    # We then can start rsync.
     if [[ "$os_PACKAGE" = "deb" ]]; then
