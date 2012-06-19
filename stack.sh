@@ -1087,15 +1087,21 @@ fi
 
 # Quantum service (for controller node)
 if is_service_enabled q-svc; then
-    Q_PLUGIN_INI_FILE=/etc/quantum/plugins.ini
-    Q_CONF_FILE=/etc/quantum/quantum.conf
     # must remove this file from existing location, otherwise Quantum will prefer it
     if [[ -e $QUANTUM_DIR/etc/plugins.ini ]]; then
+        # Support prior to common config
+        Q_PLUGIN_INI_FILE=/etc/quantum/plugins.ini
         sudo mv $QUANTUM_DIR/etc/plugins.ini $Q_PLUGIN_INI_FILE
     fi
+    Q_CONF_FILE=/etc/quantum/quantum.conf
+    Q_API_PASTE_FILE=/etc/quantum/api-paste.ini
 
     if [[ -e $QUANTUM_DIR/etc/quantum.conf ]]; then
       sudo mv $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
+    fi
+
+    if [[ -e $QUANTUM_DIR/etc/api-paste.ini ]]; then
+      sudo mv $QUANTUM_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
     fi
 
     if is_service_enabled mysql; then
@@ -1105,9 +1111,16 @@ if is_service_enabled q-svc; then
             echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
             exit 1
     fi
-    sudo sed -i -e "s/^provider =.*$/provider = $Q_PLUGIN_CLASS/g" $Q_PLUGIN_INI_FILE
 
-    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server $Q_CONF_FILE"
+    # Update either configuration file with plugin or old plugin file
+    # file checked below exists only in common config version
+    if [[ -e $QUANTUM_DIR/quantum/tests/etc/quantum.conf.test ]]; then
+        sudo sed -i -e "s/^core_plugin =.*$/core_plugin = $Q_PLUGIN_CLASS/g" $Q_CONF_FILE
+    else
+        sudo sed -i -e "s/^provider =.*$/provider = $Q_PLUGIN_CLASS/g" $Q_PLUGIN_INI_FILE
+    fi
+
+    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE"
 fi
 
 # Quantum agent (for compute nodes)
