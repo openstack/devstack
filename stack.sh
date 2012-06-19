@@ -1497,7 +1497,7 @@ admin_user = swift
 admin_password = ${SERVICE_PASSWORD}
 
 [filter:swift3]
-use = egg:swift3#middleware
+use = egg:swift3#swift3
 EOF
 
     cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONFIG_DIR}/swift.conf
