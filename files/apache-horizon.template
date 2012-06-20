@@ -1,6 +1,7 @@
 <VirtualHost *:80>
     WSGIScriptAlias / %HORIZON_DIR%/openstack_dashboard/wsgi/django.wsgi
     WSGIDaemonProcess horizon user=%USER% group=%GROUP% processes=3 threads=10 home=%HORIZON_DIR%
+    WSGIApplicationGroup %{GLOBAL}
 
     SetEnv APACHE_RUN_USER %USER%
     SetEnv APACHE_RUN_GROUP %GROUP%
