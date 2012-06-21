@@ -91,8 +91,8 @@ DEST=${DEST:-/opt/stack}
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|f16) ]]; then
-    echo "WARNING: this script has been tested on oneiric, precise and f16"
+if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|f16|f17) ]]; then
+    echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         echo "If you wish to run this script anyway run with FORCE=yes"
         exit 1
