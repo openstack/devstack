@@ -214,6 +214,11 @@ fi
 # prerequisites and initialize ``$DEST``.
 OFFLINE=`trueorfalse False $OFFLINE`
 
+# Set True to configure ``stack.sh`` to exit with an error code if it is asked
+# to clone any git repositories.  If devstack is used in a testing environment,
+# this may be used to ensure that the correct code is being tested.
+ERROR_ON_CLONE=`trueorfalse False $ERROR_ON_CLONE`
+
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 sudo mkdir -p $DATA_DIR

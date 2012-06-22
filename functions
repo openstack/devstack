@@ -142,6 +142,8 @@ GetOSVersion() {
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
 # Set global RECLONE=yes to simulate a clone when dest-dir exists
+# Set global ERROR_ON_CLONE=True to abort execution with an error if the git repo
+# does not exist (default is False, meaning the repo will be cloned).
 # git_clone remote dest-dir branch
 function git_clone {
     [[ "$OFFLINE" = "True" ]] && return
@@ -153,6 +155,7 @@ function git_clone {
     if echo $GIT_BRANCH | egrep -q "^refs"; then
         # If our branch name is a gerrit style refs/changes/...
         if [[ ! -d $GIT_DEST ]]; then
+            [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
             git clone $GIT_REMOTE $GIT_DEST
         fi
         cd $GIT_DEST
@@ -160,6 +163,7 @@ function git_clone {
     else
         # do a full clone only if the directory doesn't exist
         if [[ ! -d $GIT_DEST ]]; then
+            [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
             git clone $GIT_REMOTE $GIT_DEST
             cd $GIT_DEST
             # This checkout syntax works for both branches and tags
