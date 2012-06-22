@@ -1232,19 +1232,19 @@ cp -p $NOVA_DIR/etc/nova/policy.json $NOVA_CONF_DIR
 # If Nova ships the new rootwrap filters files, deploy them
 # (owned by root) and add a parameter to $NOVA_ROOTWRAP
 ROOTWRAP_SUDOER_CMD="$NOVA_ROOTWRAP"
-if [[ -d $NOVA_DIR/etc/nova/rootwrap ]]; then
+if [[ -d $NOVA_DIR/etc/nova/rootwrap.d ]]; then
     # Wipe any existing rootwrap.d files first
     if [[ -d $NOVA_CONF_DIR/rootwrap.d ]]; then
         sudo rm -rf $NOVA_CONF_DIR/rootwrap.d
     fi
     # Deploy filters to /etc/nova/rootwrap.d
     sudo mkdir -m 755 $NOVA_CONF_DIR/rootwrap.d
-    sudo cp $NOVA_DIR/etc/nova/rootwrap/*.filters $NOVA_CONF_DIR/rootwrap.d
+    sudo cp $NOVA_DIR/etc/nova/rootwrap.d/*.filters $NOVA_CONF_DIR/rootwrap.d
     sudo chown -R root:root $NOVA_CONF_DIR/rootwrap.d
     sudo chmod 644 $NOVA_CONF_DIR/rootwrap.d/*
     # Set up rootwrap.conf, pointing to /etc/nova/rootwrap.d
     sudo cp $NOVA_DIR/etc/nova/rootwrap.conf $NOVA_CONF_DIR/
-    sudo sed -e "s:^path=.*$:path=$NOVA_CONF_DIR/rootwrap.d:" -i $NOVA_CONF_DIR/rootwrap.conf
+    sudo sed -e "s:^filters_path=.*$:filters_path=$NOVA_CONF_DIR/rootwrap.d:" -i $NOVA_CONF_DIR/rootwrap.conf
     sudo chown root:root $NOVA_CONF_DIR/rootwrap.conf
     sudo chmod 0644 $NOVA_CONF_DIR/rootwrap.conf
     # Specify rootwrap.conf as first parameter to nova-rootwrap
