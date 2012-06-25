@@ -1,5 +1,6 @@
 proto
 *~
+.*.sw[nop]
 *.log
 src
 localrc
