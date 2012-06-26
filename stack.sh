@@ -766,6 +766,10 @@ fi
 if is_service_enabled g-api n-api; then
     setup_develop $GLANCE_DIR
 fi
+
+# Do this _after_ glance is installed to override the old binary
+setup_develop $GLANCECLIENT_DIR
+
 setup_develop $NOVA_DIR
 if is_service_enabled horizon; then
     setup_develop $HORIZON_DIR
@@ -783,9 +787,6 @@ fi
 if is_service_enabled cinder; then
     configure_cinder
 fi
-
-# Do this _after_ glance is installed to override the old binary
-setup_develop $GLANCECLIENT_DIR
 
 
 # Syslog
