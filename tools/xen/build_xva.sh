@@ -44,19 +44,14 @@ if [ ! -d $STAGING_DIR/etc ]; then
     exit 1
 fi
 
-# Directory where our conf files are stored
-FILES_DIR=$TOP_DIR/files
-TEMPLATES_DIR=$TOP_DIR/templates
-
-# Directory for supporting script files
-SCRIPT_DIR=$TOP_DIR/scripts
-
-# Version of ubuntu with which we are working
-UBUNTU_VERSION=`cat $STAGING_DIR/etc/lsb-release | grep "DISTRIB_CODENAME=" | sed "s/DISTRIB_CODENAME=//"`
-KERNEL_VERSION=`ls $STAGING_DIR/boot/vmlinuz* | head -1 | sed "s/.*vmlinuz-//"`
-
 # Configure dns (use same dns as dom0)
-cp /etc/resolv.conf $STAGING_DIR/etc/resolv.conf
+# but only when not precise
+if [ "$UBUNTU_INST_RELEASE" != "precise" ]; then
+    cp /etc/resolv.conf $STAGING_DIR/etc/resolv.conf
+elif [ "$MGT_IP" != "dhcp" ] && [ "$PUB_IP" != "dhcp" ]; then
+    echo "Configuration without DHCP not supported on Precise"
+    exit 1
+fi
 
 # Copy over devstack
 rm -f /tmp/devstack.tar
@@ -90,6 +85,7 @@ EOF
 
 # Configure the network
 INTERFACES=$STAGING_DIR/etc/network/interfaces
+TEMPLATES_DIR=$TOP_DIR/templates
 cp $TEMPLATES_DIR/interfaces.in  $INTERFACES
 if [ $VM_IP == "dhcp" ]; then
     echo 'eth1 on dhcp'
