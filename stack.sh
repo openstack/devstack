@@ -89,6 +89,16 @@ DEST=${DEST:-/opt/stack}
 # Sanity Check
 # ============
 
+# We are looking for services with a - at the beginning to force
+# excluding those services. For example if you want to install all the default
+# services but not nova-volume (n-vol) you can have this set in your localrc :
+# ENABLED_SERVICES+=",-n-vol"
+for service in ${ENABLED_SERVICES//,/ }; do
+    if [[ ${service} == -* ]]; then
+        ENABLED_SERVICES=$(echo ${ENABLED_SERVICES}|sed -r "s/(,)?(-)?${service#-}(,)?/,/g")
+    fi
+done
+
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
 if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|f16) ]]; then
