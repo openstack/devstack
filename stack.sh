@@ -1931,7 +1931,7 @@ if is_service_enabled key; then
 
     KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
     KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
-    KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
+    KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-template}
 
     if [[ ! -d $KEYSTONE_CONF_DIR ]]; then
         sudo mkdir -p $KEYSTONE_CONF_DIR
@@ -1942,41 +1942,49 @@ if is_service_enabled key; then
         cp -p $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
         cp -p $KEYSTONE_DIR/etc/policy.json $KEYSTONE_CONF_DIR
     fi
-    cp -p $FILES/default_catalog.templates $KEYSTONE_CATALOG
 
     # Rewrite stock keystone.conf:
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
     iniset $KEYSTONE_CONF sql connection "$BASE_SQL_CONN/keystone?charset=utf8"
     iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
-    # Configure keystone.conf to use templates
-    iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.TemplatedCatalog"
-    iniset $KEYSTONE_CONF catalog template_file "$KEYSTONE_CATALOG"
     sed -e "
         /^pipeline.*ec2_extension crud_/s|ec2_extension crud_extension|ec2_extension s3_extension crud_extension|;
     " -i $KEYSTONE_CONF
     # Append the S3 bits
     iniset $KEYSTONE_CONF filter:s3_extension paste.filter_factory "keystone.contrib.s3:S3Extension.factory"
 
-    # Add swift endpoints to service catalog if swift is enabled
-    if is_service_enabled swift; then
-        echo "catalog.RegionOne.object_store.publicURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.object_store.adminURL = http://%SERVICE_HOST%:8080/" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.object_store.internalURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.object_store.name = Swift Service" >> $KEYSTONE_CATALOG
-    fi
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
+        # Configure keystone.conf to use sql
+        iniset $KEYSTONE_CONF catalog driver keystone.catalog.backends.sql.Catalog
+        inicomment $KEYSTONE_CONF catalog template_file
+    else
+        KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
+        cp -p $FILES/default_catalog.templates $KEYSTONE_CATALOG
+        # Add swift endpoints to service catalog if swift is enabled
+        if is_service_enabled swift; then
+            echo "catalog.RegionOne.object_store.publicURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.object_store.adminURL = http://%SERVICE_HOST%:8080/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.object_store.internalURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.object_store.name = Swift Service" >> $KEYSTONE_CATALOG
+        fi
 
-    # Add quantum endpoints to service catalog if quantum is enabled
-    if is_service_enabled quantum; then
-        echo "catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
-        echo "catalog.RegionOne.network.name = Quantum Service" >> $KEYSTONE_CATALOG
-    fi
+        # Add quantum endpoints to service catalog if quantum is enabled
+        if is_service_enabled quantum; then
+            echo "catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.name = Quantum Service" >> $KEYSTONE_CATALOG
+        fi
 
-    sudo sed -e "
-        s,%SERVICE_HOST%,$SERVICE_HOST,g;
-        s,%S3_SERVICE_PORT%,$S3_SERVICE_PORT,g;
-    " -i $KEYSTONE_CATALOG
+        sudo sed -e "
+            s,%SERVICE_HOST%,$SERVICE_HOST,g;
+            s,%S3_SERVICE_PORT%,$S3_SERVICE_PORT,g;
+        " -i $KEYSTONE_CATALOG
+
+        # Configure keystone.conf to use templates
+        iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.TemplatedCatalog"
+        iniset $KEYSTONE_CONF catalog template_file "$KEYSTONE_CATALOG"
+    fi
 
     # Set up logging
     LOGGING_ROOT="devel"
@@ -1988,25 +1996,31 @@ if is_service_enabled key; then
     iniset $KEYSTONE_CONF_DIR/logging.conf logger_root level "DEBUG"
     iniset $KEYSTONE_CONF_DIR/logging.conf logger_root handlers "devel,production"
 
-    # initialize keystone database
+    # Set up the keystone database
     $KEYSTONE_DIR/bin/keystone-manage db_sync
 
     # launch keystone and wait for it to answer before continuing
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -O- $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/ 2>&1 | grep -q '200 OK'; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while http_proxy= wget -O- $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/ 2>&1 | grep -q 'refused'; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
     fi
 
     # keystone_data.sh creates services, admin and demo users, and roles.
     SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
-    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES \
+
+    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
+    SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT SERVICE_HOST=$SERVICE_HOST \
+    S3_SERVICE_PORT=$S3_SERVICE_PORT KEYSTONE_CATALOG_BACKEND=$KEYSTONE_CATALOG_BACKEND \
+    DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES \
         bash $FILES/keystone_data.sh
 
     # create an access key and secret key for nova ec2 register image
     if is_service_enabled swift && is_service_enabled nova; then
-        CREDS=$(keystone --os_auth_url=$SERVICE_ENDPOINT --os_username=nova --os_password=$SERVICE_PASSWORD --os_tenant_name=$SERVICE_TENANT_NAME ec2-credentials-create)
+        NOVA_USER_ID=$(keystone user-list | grep ' nova ' | get_field 1)
+        NOVA_TENANT_ID=$(keystone tenant-list | grep " $SERVICE_TENANT_NAME " | get_field 1)
+        CREDS=$(keystone ec2-credentials-create --user $NOVA_USER_ID --tenant_id $NOVA_TENANT_ID)
         ACCESS_KEY=$(echo "$CREDS" | awk '/ access / { print $4 }')
         SECRET_KEY=$(echo "$CREDS" | awk '/ secret / { print $4 }')
         add_nova_opt "s3_access_key=$ACCESS_KEY"
