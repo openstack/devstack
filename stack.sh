@@ -219,6 +219,12 @@ else
     sudo rm -f /etc/sudoers.d/stack_sh_nova
 fi
 
+# Create the destination directory and ensure it is writable by the user
+sudo mkdir -p $DEST
+if [ ! -w $DEST ]; then
+    sudo chown `whoami` $DEST
+fi
+
 # Set True to configure ``stack.sh`` to run cleanly without Internet access.
 # ``stack.sh`` must have been previously run with Internet access to install
 # prerequisites and initialize ``$DEST``.
@@ -601,12 +607,6 @@ failed() {
 # Print the commands being run so that we can see the command that triggers
 # an error.  It is also useful for following along as the install occurs.
 set -o xtrace
-
-# create the destination directory and ensure it is writable by the user
-sudo mkdir -p $DEST
-if [ ! -w $DEST ]; then
-    sudo chown `whoami` $DEST
-fi
 
 
 # Install Packages
