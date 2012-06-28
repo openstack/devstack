@@ -2024,7 +2024,7 @@ if is_service_enabled key; then
     SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT SERVICE_HOST=$SERVICE_HOST \
     S3_SERVICE_PORT=$S3_SERVICE_PORT KEYSTONE_CATALOG_BACKEND=$KEYSTONE_CATALOG_BACKEND \
     DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES \
-        bash $FILES/keystone_data.sh
+        bash -x $FILES/keystone_data.sh
 
     # create an access key and secret key for nova ec2 register image
     if is_service_enabled swift && is_service_enabled nova; then
