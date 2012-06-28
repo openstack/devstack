@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# **build_bm_multi.sh**
+
 # Build an OpenStack install on several bare metal machines.
 SHELL_AFTER_RUN=no
 

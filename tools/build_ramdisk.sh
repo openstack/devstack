@@ -1,7 +1,10 @@
 #!/bin/bash
-# build_ramdisk.sh - Build RAM disk images
 
-# exit on error to stop unexpected errors
+# **build_ramdisk.sh**
+
+# Build RAM disk images
+
+# Exit on error to stop unexpected errors
 set -o errexit
 
 if [ ! "$#" -eq "1" ]; then
@@ -84,7 +87,7 @@ fi
 # Finds the next available NBD device
 # Exits script if error connecting or none free
 # map_nbd image
-# returns full nbd device path
+# Returns full nbd device path
 function map_nbd {
     for i in `seq 0 15`; do
         if [ ! -e /sys/block/nbd$i/pid ]; then
@@ -105,7 +108,7 @@ function map_nbd {
     echo $NBD
 }
 
-# prime image with as many apt/pips as we can
+# Prime image with as many apt/pips as we can
 DEV_FILE=$CACHEDIR/$DIST_NAME-dev.img
 DEV_FILE_TMP=`mktemp $DEV_FILE.XXXXXX`
 if [ ! -r $DEV_FILE ]; then
@@ -127,11 +130,11 @@ if [ ! -r $DEV_FILE ]; then
     mkdir -p $MNTDIR/$DEST
     chroot $MNTDIR chown stack $DEST
 
-    # a simple password - pass
+    # A simple password - pass
     echo stack:pass | chroot $MNTDIR chpasswd
     echo root:$ROOT_PASSWORD | chroot $MNTDIR chpasswd
 
-    # and has sudo ability (in the future this should be limited to only what
+    # And has sudo ability (in the future this should be limited to only what
     # stack requires)
     echo "stack ALL=(ALL) NOPASSWD: ALL" >> $MNTDIR/etc/sudoers
 
@@ -143,7 +146,8 @@ if [ ! -r $DEV_FILE ]; then
 fi
 rm -f $DEV_FILE_TMP
 
-# clone git repositories onto the system
+
+# Clone git repositories onto the system
 # ======================================
 
 IMG_FILE_TMP=`mktemp $IMG_FILE.XXXXXX`

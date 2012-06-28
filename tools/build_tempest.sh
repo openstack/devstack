@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# build_tempest.sh - Checkout and prepare a Tempest repo
-#                    (https://github.com/openstack/tempest.git)
+# **build_tempest.sh**
+
+# Checkout and prepare a Tempest repo: https://github.com/openstack/tempest.git
 
 function usage {
     echo "$0 - Check out and prepare a Tempest repo"

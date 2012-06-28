@@ -1,5 +1,8 @@
 #!/bin/bash
-# get_uec_image.sh - Prepare Ubuntu UEC images
+
+# **get_uec_image.sh**
+
+# Download and prepare Ubuntu UEC images
 
 CACHEDIR=${CACHEDIR:-/opt/stack/cache}
 ROOTSIZE=${ROOTSIZE:-2000}
@@ -11,12 +14,12 @@ TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
 # Import common functions
 . $TOP_DIR/functions
 
-# exit on error to stop unexpected errors
+# Exit on error to stop unexpected errors
 set -o errexit
 set -o xtrace
 
 usage() {
-    echo "Usage: $0 - Fetch and prepare Ubuntu images"
+    echo "Usage: $0 - Download and prepare Ubuntu UEC images"
     echo ""
     echo "$0 [-r rootsize] release imagefile [kernel]"
     echo ""

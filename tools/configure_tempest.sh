@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
-# configure_tempest.sh - Build a tempest configuration file from devstack
+# **configure_tempest.sh**
+
+# Build a tempest configuration file from devstack
 
 echo "**************************************************"
 echo "Configuring Tempest"

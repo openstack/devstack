@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# **build_uec.sh**
+
 # Make sure that we have the proper version of ubuntu (only works on oneiric)
 if ! egrep -q "oneiric" /etc/lsb-release; then
     echo "This script only works with ubuntu oneiric."

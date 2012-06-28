@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# **copy_dev_environment_to_uec.sh**
+
 # Echo commands
 set -o xtrace
 

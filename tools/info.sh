@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# info.sh - Produce a report on the state of devstack installs
+
+# **info.sh**
+
+# Produce a report on the state of devstack installs
 #
 # Output fields are separated with '|' chars
 # Output types are git,localrc,os,pip,pkg:

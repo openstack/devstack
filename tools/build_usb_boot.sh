@@ -1,5 +1,8 @@
 #!/bin/bash -e
-# build_usb_boot.sh - Create a syslinux boot environment
+
+# **build_usb_boot.sh**
+
+# Create a syslinux boot environment
 #
 # build_usb_boot.sh destdev
 #
