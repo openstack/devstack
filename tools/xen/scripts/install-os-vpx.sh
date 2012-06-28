@@ -19,12 +19,7 @@
 
 set -eux
 
-if [ -a /etc/xensource-inventory]
-then
-    . /etc/xensource-inventory
-else
-    . /etc/xcp/inventory
-fi
+[[ -f "/etc/xensource-inventory" ]] && source "/etc/xensource-inventory" || source "/etc/xcp/inventory"
 
 NAME="XenServer OpenStack VPX"
 DATA_VDI_SIZE="500MiB"
