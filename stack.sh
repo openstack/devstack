@@ -2026,11 +2026,17 @@ if is_service_enabled key; then
     DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES \
         bash $FILES/keystone_data.sh
 
+    # Set up auth creds now that keystone is bootstrapped
+    export OS_AUTH_URL=$SERVICE_ENDPOINT
+    export OS_TENANT_NAME=admin
+    export OS_USERNAME=admin
+    export OS_PASSWORD=$ADMIN_PASSWORD
+
     # create an access key and secret key for nova ec2 register image
     if is_service_enabled swift && is_service_enabled nova; then
         NOVA_USER_ID=$(keystone user-list | grep ' nova ' | get_field 1)
         NOVA_TENANT_ID=$(keystone tenant-list | grep " $SERVICE_TENANT_NAME " | get_field 1)
-        CREDS=$(keystone ec2-credentials-create --user $NOVA_USER_ID --tenant_id $NOVA_TENANT_ID)
+        CREDS=$(keystone ec2-credentials-create --user_id $NOVA_USER_ID --tenant_id $NOVA_TENANT_ID)
         ACCESS_KEY=$(echo "$CREDS" | awk '/ access / { print $4 }')
         SECRET_KEY=$(echo "$CREDS" | awk '/ secret / { print $4 }')
         add_nova_opt "s3_access_key=$ACCESS_KEY"
@@ -2108,9 +2114,7 @@ if is_service_enabled g-reg; then
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
 
-    ADMIN_USER=admin
-    ADMIN_TENANT=admin
-    TOKEN=$(keystone --os_tenant_name $ADMIN_TENANT --os_username $ADMIN_USER --os_password $ADMIN_PASSWORD --os_auth_url http://$HOST_IP:5000/v2.0 token-get | grep ' id ' | get_field 2)
+    TOKEN=$(keystone  token-get | grep ' id ' | get_field 2)
 
     # Option to upload legacy ami-tty, which works with xenserver
     if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
