@@ -57,8 +57,9 @@ then
 fi
 
 # get nova
-wget https://github.com/openstack/nova/zipball/master --no-check-certificate
-unzip -o master -d ./nova
+nova_zipball=$(echo $NOVA_REPO | sed "s:\.git$::;s:$:/zipball/$NOVA_BRANCH:g")
+wget $nova_zipball -O nova-zipball --no-check-certificate
+unzip -o nova-zipball  -d ./nova
 
 # install xapi plugins
 XAPI_PLUGIN_DIR=/etc/xapi.d/plugins/
