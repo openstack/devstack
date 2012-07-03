@@ -283,4 +283,16 @@ if [[ "$ENABLED_SERVICES" =~ "cinder" ]]; then
     keystone user-role-add --tenant_id $SERVICE_TENANT \
                            --user_id $CINDER_USER \
                            --role_id $ADMIN_ROLE
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        CINDER_SERVICE=$(get_id keystone service-create \
+            --name=cinder \
+            --type=volume \
+            --description="Cinder Service")
+        keystone endpoint-create \
+            --region RegionOne \
+            --service_id $CINDER_SERVICE \
+            --publicurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
+            --adminurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
+            --internalurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s"
+    fi
 fi
