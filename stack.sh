@@ -1556,6 +1556,7 @@ auth_uri = ${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SE
 admin_tenant_name = ${SERVICE_TENANT_NAME}
 admin_user = swift
 admin_password = ${SERVICE_PASSWORD}
+delay_auth_decision = 1
 EOF
     if is_service_enabled swift3;then
         cat <<EOF>>${SWIFT_CONFIG_PROXY_SERVER}
