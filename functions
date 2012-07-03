@@ -9,6 +9,18 @@ XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 
+# Exit 0 if address is in network or 1 if
+# address is not in network or netaddr library
+# is not installed.
+function address_in_net() {
+    python -c "
+import netaddr
+import sys
+sys.exit(netaddr.IPAddress('$1') not in netaddr.IPNetwork('$2'))
+"
+}
+
+
 # apt-get wrapper to set arguments correctly
 # apt_get operation package [package ...]
 function apt_get() {

@@ -283,13 +283,30 @@ LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
 # cases.
 SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
 
-HOST_IP_IFACE=${HOST_IP_IFACE:-eth0}
-# Use the eth0 IP unless an explicit is set by ``HOST_IP`` environment variable
+# Set fixed and floating range here so we can make sure not to use addresses
+# from either range when attempting to guess the ip to use for the host
+FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
+
+# Find the interface used for the default route
+HOST_IP_IFACE=${HOST_IP_IFACE:-$(ip route | sed -n '/^default/{ s/.*dev \(\w\+\)\s\+.*/\1/; p; }')}
+# Search for an IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ -z "$HOST_IP" -o "$HOST_IP" == "dhcp" ]; then
-    HOST_IP=`LC_ALL=C ip -f inet addr show ${HOST_IP_IFACE} | awk '/inet/ {split($2,parts,"/");  print parts[1]}' | head -n1`
-    if [ "$HOST_IP" = "" ]; then
+    HOST_IP=""
+    HOST_IPS=`LC_ALL=C ip -f inet addr show ${HOST_IP_IFACE} | awk '/inet/ {split($2,parts,"/");  print parts[1]}'`
+    for IP in $HOST_IPS; do
+        # Attempt to filter out ip addresses that are part of the fixed and
+        # floating range. Note that this method only works if the 'netaddr'
+        # python library is installed. If it is not installed, an error
+        # will be printed and the first ip from the interface will be used.
+        if ! (address_in_net $IP $FIXED_RANGE || address_in_net $IP $FLOATING_RANGE); then
+            HOST_IP=$IP
+            break;
+        fi
+    done
+    if [ "$HOST_IP" == "" ]; then
         echo "Could not determine host ip address."
-        echo "Either localrc specified dhcp on ${HOST_IP_IFACE} or defaulted to eth0"
+        echo "Either localrc specified dhcp on ${HOST_IP_IFACE} or defaulted"
         exit 1
     fi
 fi
@@ -368,11 +385,8 @@ else
 fi
 
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
-PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-br100}
-FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
-FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
