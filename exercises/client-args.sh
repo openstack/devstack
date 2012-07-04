@@ -113,7 +113,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
         STATUS_SWIFT="Skipped"
     else
         echo -e "\nTest Swift"
-        if swift $ARGS stat; then
+        if swift $TENANT_ARG $ARGS stat; then
             STATUS_SWIFT="Succeeded"
         else
             STATUS_SWIFT="Failed"
