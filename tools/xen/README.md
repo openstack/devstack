@@ -29,9 +29,9 @@ Step 2: Download devstack
 --------------------------
 On your XenServer host, run the following commands as root:
 
-wget --no-check-certificate https://github.com/openstack-dev/devstack/zipball/master
-unzip -o master -d ./devstack
-cd devstack/*/
+    wget --no-check-certificate https://github.com/openstack-dev/devstack/zipball/master
+    unzip -o master -d ./devstack
+    cd devstack/*/
 
 Step 3: Configure your localrc inside the devstack directory
 ------------------------------------------------------------
@@ -68,8 +68,8 @@ Of course, use real passwords if this machine is exposed.
 
 Step 4: Run ./install_os_domU.sh from the tools/xen directory
 -------------------------------------------------------------
-cd tools/xen
-./install_os_domU.sh
+    cd tools/xen
+    ./install_os_domU.sh
 
 Once this script finishes executing, log into the VM (openstack domU)
 that it installed and tail the run.sh.log file. You will need to wait
