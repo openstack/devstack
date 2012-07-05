@@ -69,7 +69,7 @@ If you want a minimal Swift install with only Swift and Keystone you can have th
 
 If you use Swift with Keystone, Swift will authenticate against it. You will need to make sure to use the Keystone URL to auth against.
 
-Swift will be acting as a S3 endpoint for Keystone so effectively replacing the `nova-objectstore`.
+If you are enabling `swift3` in `ENABLED_SERVICES` devstack will install the swift3 middleware emulation. Swift will be configured to act as a S3 endpoint for Keystone so effectively replacing the `nova-objectstore`.
 
 Only Swift proxy server is launched in the screen session all other services are started in background and managed by `swift-init` tool.
 

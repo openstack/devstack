@@ -499,9 +499,11 @@ SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 SWIFT_REPLICAS=${SWIFT_REPLICAS:-3}
 
 if is_service_enabled swift; then
-    # If we are using swift, we can default the s3 port to swift instead
+    # If we are using swift3, we can default the s3 port to swift instead
     # of nova-objectstore
-    S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
+    if is_service_enabled swift3;then
+        S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
+    fi
     # We only ask for Swift Hash if we have enabled swift service.
     # SWIFT_HASH is a random unique string for a swift cluster that
     # can never change.
@@ -642,8 +644,10 @@ if is_service_enabled swift; then
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
     # storage service client and and Library
     git_clone $SWIFTCLIENT_REPO $SWIFTCLIENT_DIR $SWIFTCLIENT_BRANCH
-    # swift3 middleware to provide S3 emulation to Swift
-    git_clone $SWIFT3_REPO $SWIFT3_DIR $SWIFT3_BRANCH
+    if is_service_enabled swift3; then
+        # swift3 middleware to provide S3 emulation to Swift
+        git_clone $SWIFT3_REPO $SWIFT3_DIR $SWIFT3_BRANCH
+    fi
 fi
 if is_service_enabled g-api n-api; then
     # image catalog service
@@ -1449,11 +1453,15 @@ if is_service_enabled swift; then
         sudo sed -i '/disable *= *yes/ { s/yes/no/ }' /etc/xinetd.d/rsync
     fi
 
+    if is_service_enabled swift3;then
+        swift_auth_server="s3token "
+    fi
+        
     # By default Swift will be installed with the tempauth middleware
     # which has some default username and password if you have
     # configured keystone it will checkout the directory.
     if is_service_enabled key; then
-        swift_auth_server="s3token authtoken keystone"
+        swift_auth_server+="authtoken keystone"
     else
         swift_auth_server=tempauth
     fi
@@ -1476,7 +1484,10 @@ if is_service_enabled swift; then
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
 
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} pipeline:main pipeline "catch_errors healthcheck cache ratelimit swift3 ${swift_auth_server} proxy-logging proxy-server"
+    # Only enable Swift3 if we have it enabled in ENABLED_SERVICES
+    is_service_enabled swift3 && swift3=swift3 || swift3=""
+
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} pipeline:main pipeline "catch_errors healthcheck cache ratelimit ${swift3} ${swift_auth_server} proxy-logging proxy-server"
 
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
 
@@ -1485,16 +1496,6 @@ if is_service_enabled swift; then
 [filter:keystone]
 paste.filter_factory = keystone.middleware.swift_auth:filter_factory
 operator_roles = Member,admin
-
-# NOTE(chmou): s3token middleware is not updated yet to use only
-# username and password.
-[filter:s3token]
-paste.filter_factory = keystone.middleware.s3_token:filter_factory
-auth_port = ${KEYSTONE_AUTH_PORT}
-auth_host = ${KEYSTONE_AUTH_HOST}
-auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
-auth_token = ${SERVICE_TOKEN}
-admin_token = ${SERVICE_TOKEN}
 
 [filter:authtoken]
 paste.filter_factory = keystone.middleware.auth_token:filter_factory
@@ -1505,10 +1506,23 @@ auth_uri = ${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SE
 admin_tenant_name = ${SERVICE_TENANT_NAME}
 admin_user = swift
 admin_password = ${SERVICE_PASSWORD}
+EOF
+    if is_service_enabled swift3;then
+        cat <<EOF>>${SWIFT_CONFIG_PROXY_SERVER}
+# NOTE(chmou): s3token middleware is not updated yet to use only
+# username and password.
+[filter:s3token]
+paste.filter_factory = keystone.middleware.s3_token:filter_factory
+auth_port = ${KEYSTONE_AUTH_PORT}
+auth_host = ${KEYSTONE_AUTH_HOST}
+auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
+auth_token = ${SERVICE_TOKEN}
+admin_token = ${SERVICE_TOKEN}
 
 [filter:swift3]
 use = egg:swift3#swift3
 EOF
+    fi
 
     cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONFIG_DIR}/swift.conf
     iniset ${SWIFT_CONFIG_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
@@ -1957,7 +1971,7 @@ if is_service_enabled key; then
     export OS_PASSWORD=$ADMIN_PASSWORD
 
     # Create an access key and secret key for nova ec2 register image
-    if is_service_enabled swift && is_service_enabled nova; then
+    if is_service_enabled swift3 && is_service_enabled nova; then
         NOVA_USER_ID=$(keystone user-list | grep ' nova ' | get_field 1)
         NOVA_TENANT_ID=$(keystone tenant-list | grep " $SERVICE_TENANT_NAME " | get_field 1)
         CREDS=$(keystone ec2-credentials-create --user_id $NOVA_USER_ID --tenant_id $NOVA_TENANT_ID)
@@ -2013,9 +2027,9 @@ fi
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
 screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
 
-# Starting the nova-objectstore only if swift service is not enabled.
+# Starting the nova-objectstore only if swift3 service is not enabled.
 # Swift will act as s3 objectstore.
-is_service_enabled swift || \
+is_service_enabled swift3 || \
     screen_it n-obj "cd $NOVA_DIR && $NOVA_DIR/bin/nova-objectstore"
 
 
