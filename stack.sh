@@ -818,7 +818,7 @@ EOF
     sudo sed -i '/^bind-address/s/127.0.0.1/0.0.0.0/g' $MY_CONF
 
     # Set default db type to InnoDB
-    if grep -q "default-storage-engine" $MY_CONF; then
+    if sudo grep -q "default-storage-engine" $MY_CONF; then
         # Change it
         sudo bash -c "source $TOP_DIR/functions; iniset $MY_CONF mysqld default-storage-engine InnoDB"
     else
