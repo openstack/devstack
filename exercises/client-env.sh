@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
+**client-env.sh**
+
 # Test OpenStack client enviroment variable handling
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
 echo "*********************************************************************"
 
-# Verify client workage
-VERIFY=${1:-""}
 
 # Settings
 # ========

@@ -83,7 +83,7 @@ if ! nova secgroup-list | grep -q $SECGROUP; then
     fi
 fi
 
-# determinine instance type
+# Determinine instance type
 # -------------------------
 
 # List of instance types:
@@ -99,6 +99,7 @@ NAME="ex-float"
 
 VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | get_field 2`
 die_if_not_set VM_UUID "Failure launching $NAME"
+
 
 # Testing
 # =======

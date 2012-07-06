@@ -40,6 +40,7 @@ CONTAINER=ex-swift
 # exercise is skipped.
 is_service_enabled swift || exit 55
 
+
 # Testing Swift
 # =============
 
