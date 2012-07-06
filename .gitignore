@@ -2,6 +2,10 @@ proto
 *~
 .*.sw[nop]
 *.log
+*.log.[1-9]
 src
 localrc
 local.sh
+files/*.gz
+files/images
+stack-screenrc
