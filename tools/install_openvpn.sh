@@ -1,5 +1,8 @@
 #!/bin/bash
-# install_openvpn.sh - Install OpenVPN and generate required certificates
+
+# **install_openvpn.sh**
+
+# Install OpenVPN and generate required certificates
 #
 # install_openvpn.sh --client name
 # install_openvpn.sh --server [name]

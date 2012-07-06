@@ -1,5 +1,8 @@
 #!/bin/bash -e
-# build_pxe_env.sh - Create a PXE boot environment
+
+# **build_pxe_env.sh**
+
+# Create a PXE boot environment
 #
 # build_pxe_env.sh destdir
 #

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# **warm_apts_and_pips_for_uec.sh**
+
 # Echo commands
 set -o xtrace
 

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# **build_bm.sh**
+
 # Build an OpenStack install on a bare metal machine.
 set +x
 
