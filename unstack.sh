@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-#
+
+# **unstack.sh**
+
 # Stops that which is started by ``stack.sh`` (mostly)
 # mysql and rabbit are left running as OpenStack code refreshes
 # do not require them to be restarted.
