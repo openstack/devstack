@@ -5,6 +5,9 @@
 # Keep track of the current devstack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
+# Import common functions
+source $TOP_DIR/functions
+
 # Load local configuration
 source $TOP_DIR/stackrc
 

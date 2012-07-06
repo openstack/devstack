@@ -5,6 +5,13 @@
 # Build an OpenStack install on a bare metal machine.
 set +x
 
+# Keep track of the current directory
+TOOLS_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
+
+# Import common functions
+source $TOP_DIR/functions
+
 # Source params
 source ./stackrc
 

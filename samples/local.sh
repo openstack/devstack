@@ -13,6 +13,9 @@
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
+# Import common functions
+source $TOP_DIR/functions
+
 # Use openrc + stackrc + localrc for settings
 source $TOP_DIR/stackrc
 
