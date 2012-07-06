@@ -1,6 +1,9 @@
 # Find the other rc files
 RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
 
+# Destination path for installation
+DEST=/opt/stack
+
 # Specify which services to launch.  These generally correspond to
 # screen tabs. If you like to add other services that are not enabled
 # by default you can append them in your ENABLED_SERVICES variable in
