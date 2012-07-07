@@ -40,12 +40,15 @@ source $TOP_DIR/exerciserc
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 
+# Boot this image, use first AMI-format image if unset
+DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
+
 
 # Launching a server
 # ==================
 
 # Find a machine image to boot
-IMAGE=`euca-describe-images | grep machine | cut -f2 | head -n1`
+IMAGE=`euca-describe-images | grep machine | grep ${DEFAULT_IMAGE_NAME} | cut -f2 | head -n1`
 
 # Define secgroup
 SECGROUP=euca_secgroup

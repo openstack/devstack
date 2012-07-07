@@ -185,7 +185,7 @@ fi
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || die "Failure deleting security group rule from $SECGROUP"
 
 # FIXME (anthony): make xs support security groups
-if [ "$VIRT_DRIVER" != "xenserver" ]; then
+if [ "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
     # test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
     if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
         print "Security group failure - ping should not be allowed!"

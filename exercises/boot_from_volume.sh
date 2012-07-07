@@ -46,6 +46,8 @@ DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 # Default floating IP pool name
 DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
 
+# Default user
+DEFAULT_INSTANCE_USER=${DEFAULT_INSTANCE_USER:-cirros}
 
 # Launching servers
 # =================
@@ -150,7 +152,7 @@ fi
 # To do this, ssh to the builder instance, mount volume, and build a volume-backed image.
 STAGING_DIR=/tmp/stage
 CIRROS_DIR=/tmp/cirros
-ssh -o StrictHostKeyChecking=no -i $KEY_FILE cirros@$FLOATING_IP << EOF
+ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP << EOF
 set -o errexit
 set -o xtrace
 sudo mkdir -p $STAGING_DIR
@@ -168,10 +170,10 @@ if [ ! -e cirros-0.3.0-x86_64-rootfs.img.gz ]; then
 fi
 
 # Copy cirros onto the volume
-scp -o StrictHostKeyChecking=no -i $KEY_FILE cirros-0.3.0-x86_64-rootfs.img.gz cirros@$FLOATING_IP:$STAGING_DIR
+scp -o StrictHostKeyChecking=no -i $KEY_FILE cirros-0.3.0-x86_64-rootfs.img.gz ${DEFAULT_INSTANCE_USER}@$FLOATING_IP:$STAGING_DIR
 
 # Unpack cirros into volume
-ssh -o StrictHostKeyChecking=no -i $KEY_FILE cirros@$FLOATING_IP << EOF
+ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP << EOF
 set -o errexit
 set -o xtrace
 cd $STAGING_DIR
@@ -221,7 +223,7 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sle
 fi
 
 # Make sure our volume-backed instance launched
-ssh -o StrictHostKeyChecking=no -i $KEY_FILE cirros@$FLOATING_IP << EOF
+ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP << EOF
 echo "success!"
 EOF
 

@@ -276,12 +276,6 @@ VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
 
-# Nova hypervisor configuration.  We default to libvirt with **kvm** but will
-# drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
-# also install an **LXC** based system.
-VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
-LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
-
 # Nova supports pluggable schedulers.  ``FilterScheduler`` should work in most
 # cases.
 SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
@@ -1957,6 +1951,13 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     # Need to avoid crash due to new firewall support
     XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
     add_nova_opt "firewall_driver=$XEN_FIREWALL_DRIVER"
+elif [ "$VIRT_DRIVER" = 'openvz' ]; then
+    # TODO(deva): OpenVZ driver does not yet work if compute_driver is set here.
+    #             Replace connection_type when this is fixed.
+    #             add_nova_opt "compute_driver=openvz.connection.OpenVzConnection"
+    add_nova_opt "connection_type=openvz"
+    LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
+    add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
 else
     add_nova_opt "compute_driver=libvirt.LibvirtDriver"
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
@@ -2210,6 +2211,14 @@ if is_service_enabled g-reg; then
         IMAGE_FNAME=`basename "$image_url"`
         if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
             wget -c $image_url -O $FILES/$IMAGE_FNAME
+        fi
+
+        # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
+        if [[ "$image_url" =~ 'openvz' ]]; then
+            IMAGE="$FILES/${IMAGE_FNAME}"
+            IMAGE_NAME="${IMAGE_FNAME%.tar.gz}"
+            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --public --container-format ami --disk-format ami < "$IMAGE"
+            continue
         fi
 
         KERNEL=""
