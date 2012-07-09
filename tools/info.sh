@@ -28,6 +28,9 @@ TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
 cd $TOP_DIR
 
+# Import common functions
+source $TOP_DIR/functions
+
 # Source params
 source $TOP_DIR/stackrc
 
@@ -37,6 +40,21 @@ if [[ ! -d $FILES ]]; then
     echo "ERROR: missing devstack/files - did you grab more than just stack.sh?"
     exit 1
 fi
+
+
+# OS
+# --
+
+# Determine what OS we're using
+GetDistro
+
+echo "os|distro=$DISTRO"
+echo "os|vendor=$os_VENDOR"
+echo "os|release=$os_RELEASE"
+if [ -n "$os_UPDATE" ]; then
+    echo "os|version=$os_UPDATE"
+fi
+
 
 # Repos
 # -----
@@ -62,123 +80,44 @@ for i in $DEST/*; do
     fi
 done
 
-# OS
-# --
-
-GetOSInfo() {
-    # Figure out which vedor we are
-    if [ -r /etc/lsb-release ]; then
-        . /etc/lsb-release
-        VENDORNAME=$DISTRIB_ID
-        RELEASE=$DISTRIB_RELEASE
-    else
-        for r in RedHat CentOS Fedora; do
-            VENDORPKG="`echo $r | tr [:upper:] [:lower:]`-release"
-            VENDORNAME=$r
-            RELEASE=`rpm -q --queryformat '%{VERSION}' $VENDORPKG`
-            if [ $? = 0 ]; then
-                break
-            fi
-            VENDORNAME=""
-        done
-        # Get update level
-        if [ -n "`grep Update /etc/redhat-release`" ]; then
-            # Get update
-            UPDATE=`cat /etc/redhat-release | sed s/.*Update\ // | sed s/\)$//`
-        else
-            # Assume update 0
-            UPDATE=0
-        fi
-    fi
-
-    echo "os|vendor=$VENDORNAME"
-    echo "os|release=$RELEASE"
-    if [ -n "$UPDATE" ]; then
-        echo "os|version=$UPDATE"
-    fi
-}
-
-GetOSInfo
 
 # Packages
 # --------
 
 # - We are going to check packages only for the services needed.
 # - We are parsing the packages files and detecting metadatas.
-#  - If we have the meta-keyword dist:DISTRO or
-#    dist:DISTRO1,DISTRO2 it will be installed only for those
-#    distros (case insensitive).
-function get_packages() {
-    local file_to_parse="general"
-    local service
 
-    for service in ${ENABLED_SERVICES//,/ }; do
-        # Allow individual services to specify dependencies
-        if [[ -e $FILES/apts/${service} ]]; then
-            file_to_parse="${file_to_parse} $service"
-        fi
-        if [[ $service == n-* ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
-                file_to_parse="${file_to_parse} nova"
-            fi
-        elif [[ $service == g-* ]]; then
-            if [[ ! $file_to_parse =~ glance ]]; then
-                file_to_parse="${file_to_parse} glance"
-            fi
-        elif [[ $service == key* ]]; then
-            if [[ ! $file_to_parse =~ keystone ]]; then
-                file_to_parse="${file_to_parse} keystone"
-            fi
-        fi
-    done
+if [[ "$os_PACKAGE" = "deb" ]]; then
+    PKG_DIR=$FILES/apts
+else
+    PKG_DIR=$FILES/rpms
+fi
 
-    for file in ${file_to_parse}; do
-        local fname=${FILES}/apts/${file}
-        local OIFS line package distros distro
-        [[ -e $fname ]] || { echo "missing: $fname"; exit 1; }
-
-        OIFS=$IFS
-        IFS=$'\n'
-        for line in $(<${fname}); do
-            if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then # We are using BASH regexp matching feature.
-                        package=${BASH_REMATCH[1]}
-                        distros=${BASH_REMATCH[2]}
-                        for distro in ${distros//,/ }; do  #In bash ${VAR,,} will lowecase VAR
-                            [[ ${distro,,} == ${DISTRO,,} ]] && echo $package
-                        done
-                        continue
-            fi
-
-            echo ${line%#*}
-        done
-        IFS=$OIFS
-    done
-}
-
-for p in $(get_packages); do
-    ver=$(dpkg -s $p 2>/dev/null | grep '^Version: ' | cut -d' ' -f2)
+for p in $(get_packages $PKG_DIR); do
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        ver=$(dpkg -s $p 2>/dev/null | grep '^Version: ' | cut -d' ' -f2)
+    else
+        ver=$(rpm -q --queryformat "%{VERSION}-%{RELEASE}\n" $p)
+    fi
     echo "pkg|${p}|${ver}"
 done
+
 
 # Pips
 # ----
 
-function get_pips() {
-    cat $FILES/pips/* | uniq
-}
+if [[ "$os_PACKAGE" = "deb" ]]; then
+    CMD_PIP=/usr/bin/pip
+else
+    CMD_PIP=/usr/bin/pip-python
+fi
 
 # Pip tells us what is currently installed
 FREEZE_FILE=$(mktemp --tmpdir freeze.XXXXXX)
-pip freeze >$FREEZE_FILE 2>/dev/null
+$CMD_PIP freeze >$FREEZE_FILE 2>/dev/null
 
 # Loop through our requirements and look for matches
-for p in $(get_pips); do
-    [[ "$p" = "-e" ]] && continue
-    if [[ "$p" =~ \+?([^#]*)#? ]]; then
-         # Get the URL from a remote reference
-         p=${BASH_REMATCH[1]}
-    fi
-    line="`grep -i $p $FREEZE_FILE`"
+while read line; do
     if [[ -n "$line" ]]; then
         if [[ "$line" =~ \+(.*)@(.*)#egg=(.*) ]]; then
             # Handle URLs
@@ -199,9 +138,10 @@ for p in $(get_pips); do
         #echo "unknown: $p"
         continue
     fi
-done
+done <$FREEZE_FILE
 
 rm $FREEZE_FILE
+
 
 # localrc
 # -------
@@ -212,5 +152,5 @@ if [[ -r $TOP_DIR/localrc ]]; then
         /PASSWORD/d;
         /^#/d;
         s/^/localrc\|/;
-    ' $TOP_DIR/localrc | sort
+    ' $TOP_DIR/localrc
 fi

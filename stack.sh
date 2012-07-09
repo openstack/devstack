@@ -26,19 +26,8 @@ source $TOP_DIR/functions
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
-GetOSVersion
-
-# Translate the OS version values into common nomenclature
-if [[ "$os_VENDOR" =~ (Ubuntu) ]]; then
-    # 'Everyone' refers to Ubuntu releases by the code name adjective
-    DISTRO=$os_CODENAME
-elif [[ "$os_VENDOR" =~ (Fedora) ]]; then
-    # For Fedora, just use 'f' and the release
-    DISTRO="f$os_RELEASE"
-else
-    # Catch-all for now is Vendor + Release + Update
-    DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
-fi
+# and ``DISTRO``
+GetDistro
 
 
 # Settings
