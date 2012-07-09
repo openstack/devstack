@@ -899,7 +899,7 @@ if is_service_enabled horizon; then
     # Initialize the horizon database (it stores sessions and notices shown to
     # users).  The user system is external (keystone).
     cd $HORIZON_DIR
-    python manage.py syncdb
+    python manage.py syncdb --noinput
     cd $TOP_DIR
 
     # Create an empty directory that apache uses as docroot
