@@ -1803,7 +1803,7 @@ done
 
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
-    add_nova_opt "connection_type=xenapi"
+    add_nova_opt "compute_driver=xenapi.XenAPIDriver"
     XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
     XENAPI_USER=${XENAPI_USER:-"root"}
     add_nova_opt "xenapi_connection_url=$XENAPI_CONNECTION_URL"
@@ -1814,7 +1814,7 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
     add_nova_opt "firewall_driver=$XEN_FIREWALL_DRIVER"
 else
-    add_nova_opt "connection_type=libvirt"
+    add_nova_opt "compute_driver=libvirt.LibvirtDriver"
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
     add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
 fi
