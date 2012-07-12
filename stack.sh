@@ -1375,7 +1375,7 @@ if is_service_enabled swift; then
     install_package memcached
 
     # We make sure to kill all swift processes first
-    pkill -f -9 swift-
+    swift-init all stop || true
 
     # We first do a bit of setup by creating the directories and
     # changing the permissions so we can run it as our user.
