@@ -387,7 +387,7 @@ function pip_install {
     else
         CMD_PIP=/usr/bin/pip-python
     fi
-    sudo PIP_DOWNLOAD_CACHE=/var/cache/pip \
+    sudo PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
         $CMD_PIP install --use-mirrors $@
