@@ -1947,6 +1947,8 @@ if is_service_enabled key; then
 
     # Initialize keystone database
     $KEYSTONE_DIR/bin/keystone-manage db_sync
+    # set up certificates
+    $KEYSTONE_DIR/bin/keystone-manage pki_setup
 
     # launch keystone and wait for it to answer before continuing
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
