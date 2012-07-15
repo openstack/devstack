@@ -1638,11 +1638,10 @@ elif is_service_enabled n-vol; then
     # volume group, create your own volume group called ``stack-volumes`` before
     # invoking ``stack.sh``.
     #
-    # By default, the backing file is 2G in size, and is stored in ``/opt/stack/data``.
+    # By default, the backing file is 5G in size, and is stored in ``/opt/stack/data``.
 
     if ! sudo vgs $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
-        VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-2052M}
         # Only create if the file doesn't already exists
         [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
         DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
