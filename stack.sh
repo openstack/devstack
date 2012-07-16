@@ -264,6 +264,13 @@ Q_PLUGIN=${Q_PLUGIN:-openvswitch}
 Q_PORT=${Q_PORT:-9696}
 # Default Quantum Host
 Q_HOST=${Q_HOST:-localhost}
+# Which Quantum API nova should use
+NOVA_USE_QUANTUM_API=${NOVA_USE_QUANTUM_API:-v1}
+# Default admin username
+Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
+# Default auth strategy
+Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
+
 
 # Default Melange Port
 M_PORT=${M_PORT:-9898}
@@ -375,6 +382,7 @@ PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-br100}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
+NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
@@ -1023,7 +1031,11 @@ if is_service_enabled quantum; then
         Q_PLUGIN_CONF_PATH=etc/quantum/plugins/openvswitch
         Q_PLUGIN_CONF_FILENAME=ovs_quantum_plugin.ini
         Q_DB_NAME="ovs_quantum"
-        Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin"
+        if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
+            Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin"
+        elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
+            Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2"
+        fi
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         # Install deps
         # FIXME add to files/apts/quantum, but don't install if not needed!
@@ -1031,7 +1043,11 @@ if is_service_enabled quantum; then
         Q_PLUGIN_CONF_PATH=etc/quantum/plugins/linuxbridge
         Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
         Q_DB_NAME="quantum_linux_bridge"
-        Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin"
+        if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
+            Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin"
+        elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
+            Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2"
+        fi
     else
         echo "Unknown Quantum plugin '$Q_PLUGIN'.. exiting"
         exit 1
@@ -1055,6 +1071,12 @@ if is_service_enabled quantum; then
         fi
         sudo sed -i -e "s/.*enable_tunneling = .*$/enable_tunneling = $OVS_ENABLE_TUNNELING/g" /$Q_PLUGIN_CONF_FILE
     fi
+
+    if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE AGENT target_v2_api False
+    elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE AGENT target_v2_api True
+    fi
 fi
 
 # Quantum service (for controller node)
@@ -1064,15 +1086,15 @@ if is_service_enabled q-svc; then
     Q_POLICY_FILE=/etc/quantum/policy.json
 
     if [[ -e $QUANTUM_DIR/etc/quantum.conf ]]; then
-      sudo mv $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
+      sudo cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
     fi
 
     if [[ -e $QUANTUM_DIR/etc/api-paste.ini ]]; then
-      sudo mv $QUANTUM_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
+      sudo cp $QUANTUM_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
     fi
 
     if [[ -e $QUANTUM_DIR/etc/policy.json ]]; then
-      sudo mv $QUANTUM_DIR/etc/policy.json $Q_POLICY_FILE
+      sudo cp $QUANTUM_DIR/etc/policy.json $Q_POLICY_FILE
     fi
 
     if is_service_enabled mysql; then
@@ -1110,14 +1132,14 @@ if is_service_enabled q-agt; then
         sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
         sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
         sudo sed -i -e "s/.*local_ip = .*/local_ip = $HOST_IP/g" /$Q_PLUGIN_CONF_FILE
-        AGENT_BINARY=$QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py
+        AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
        # Start up the quantum <-> linuxbridge agent
        install_package bridge-utils
         #set the default network interface
        QUANTUM_LB_PRIVATE_INTERFACE=${QUANTUM_LB_PRIVATE_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
        sudo sed -i -e "s/^physical_interface = .*$/physical_interface = $QUANTUM_LB_PRIVATE_INTERFACE/g" /$Q_PLUGIN_CONF_FILE
-       AGENT_BINARY=$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py
+       AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py"
     fi
     # Start up the quantum agent
     screen_it q-agt "sudo python $AGENT_BINARY /$Q_PLUGIN_CONF_FILE -v"
@@ -1694,15 +1716,27 @@ add_nova_opt "fixed_range=$FIXED_RANGE"
 add_nova_opt "s3_host=$SERVICE_HOST"
 add_nova_opt "s3_port=$S3_SERVICE_PORT"
 if is_service_enabled quantum; then
-    add_nova_opt "network_manager=nova.network.quantum.manager.QuantumManager"
-    add_nova_opt "quantum_connection_host=$Q_HOST"
-    add_nova_opt "quantum_connection_port=$Q_PORT"
+    if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
+        add_nova_opt "network_manager=nova.network.quantum.manager.QuantumManager"
+        add_nova_opt "quantum_connection_host=$Q_HOST"
+        add_nova_opt "quantum_connection_port=$Q_PORT"
+        add_nova_opt "quantum_use_dhcp=True"
 
-    if is_service_enabled melange; then
-        add_nova_opt "quantum_ipam_lib=nova.network.quantum.melange_ipam_lib"
-        add_nova_opt "use_melange_mac_generation=True"
-        add_nova_opt "melange_host=$M_HOST"
-        add_nova_opt "melange_port=$M_PORT"
+        if is_service_enabled melange; then
+            add_nova_opt "quantum_ipam_lib=nova.network.quantum.melange_ipam_lib"
+            add_nova_opt "use_melange_mac_generation=True"
+            add_nova_opt "melange_host=$M_HOST"
+            add_nova_opt "melange_port=$M_PORT"
+        fi
+
+    elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
+        add_nova_opt "network_api_class=nova.network.quantumv2.api.API"
+        add_nova_opt "quantum_admin_username=$Q_ADMIN_USERNAME"
+        add_nova_opt "quantum_admin_password=$SERVICE_PASSWORD"
+        add_nova_opt "quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+        add_nova_opt "quantum_auth_strategy=$Q_AUTH_STRATEGY"
+        add_nova_opt "quantum_admin_tenant_name=$SERVICE_TENANT_NAME"
+        add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
     fi
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
@@ -1715,7 +1749,6 @@ if is_service_enabled quantum; then
     add_nova_opt "libvirt_vif_type=ethernet"
     add_nova_opt "libvirt_vif_driver=$NOVA_VIF_DRIVER"
     add_nova_opt "linuxnet_interface_driver=$LINUXNET_VIF_DRIVER"
-    add_nova_opt "quantum_use_dhcp=True"
 else
     add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
 fi
@@ -1914,9 +1947,9 @@ if is_service_enabled key; then
 
         # Add quantum endpoints to service catalog if quantum is enabled
         if is_service_enabled quantum; then
-            echo "catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:9696/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
             echo "catalog.RegionOne.network.name = Quantum Service" >> $KEYSTONE_CATALOG
         fi
 
@@ -1995,14 +2028,24 @@ fi
 # If we're using Quantum (i.e. q-svc is enabled), network creation has to
 # happen after we've started the Quantum service.
 if is_service_enabled mysql && is_service_enabled nova; then
-    # Create a small network
-    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
+    if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
+        # Create a small network
+        $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
 
-    # Create some floating ips
-    $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+        # Create some floating ips
+        $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
-    # Create a second pool
-    $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
+        # Create a second pool
+        $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
+    elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
+        TENANT_ID=$(keystone tenant-list | grep " demo " | get_field 1)
+
+        # Create a small network
+        NET_ID=$(quantum net-create --os_token $Q_ADMIN_USERNAME --os_url http://$Q_HOST:$Q_PORT --tenant_id $TENANT_ID net1 | grep ' id ' | get_field 2)
+
+        # Create a subnet
+        quantum subnet-create --os_token $Q_ADMIN_USERNAME --os_url http://$Q_HOST:$Q_PORT --tenant_id $TENANT_ID --ip_version 4 --gateway  $NETWORK_GATEWAY $NET_ID $FIXED_RANGE
+    fi
 fi
 
 # Launching nova-compute should be as simple as running ``nova-compute`` but
