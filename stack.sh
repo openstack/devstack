@@ -1145,6 +1145,37 @@ if is_service_enabled q-agt; then
     screen_it q-agt "sudo python $AGENT_BINARY /$Q_PLUGIN_CONF_FILE -v"
 fi
 
+# Quantum DHCP
+if is_service_enabled q-dhcp; then
+    AGENT_DHCP_BINARY="$QUANTUM_DIR/bin/quantum-dhcp-agent"
+
+    Q_DHCP_CONF_FILE=/etc/quantum/dhcp_agent.ini
+
+    if [[ -e $QUANTUM_DIR/etc/dhcp_agent.ini ]]; then
+      sudo cp $QUANTUM_DIR/etc/dhcp_agent.ini $Q_DHCP_CONF_FILE
+    fi
+
+    # Set verbose
+    iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
+    # Set debug
+    iniset $Q_DHCP_CONF_FILE DEFAULT debug True
+
+    # Update database
+    iniset $Q_DHCP_CONF_FILE DEFAULT db_connection "mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8"
+    iniset $Q_DHCP_CONF_FILE DEFAULT auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+    iniset $Q_DHCP_CONF_FILE DEFAULT admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $Q_DHCP_CONF_FILE DEFAULT admin_user $Q_ADMIN_USERNAME
+    iniset $Q_DHCP_CONF_FILE DEFAULT admin_password $SERVICE_PASSWORD
+
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
+        iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
+    fi
+    # Start up the quantum agent
+    screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file=$Q_DHCP_CONF_FILE"
+fi
+
 # Melange service
 if is_service_enabled m-svc; then
     if is_service_enabled mysql; then
