@@ -17,3 +17,4 @@ wget
 curl
 tcpdump
 euca2ools # only for testing client
+tar
