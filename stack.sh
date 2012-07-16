@@ -1960,7 +1960,7 @@ if is_service_enabled key; then
     SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT SERVICE_HOST=$SERVICE_HOST \
     S3_SERVICE_PORT=$S3_SERVICE_PORT KEYSTONE_CATALOG_BACKEND=$KEYSTONE_CATALOG_BACKEND \
     DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES \
-        bash $FILES/keystone_data.sh
+        bash -x $FILES/keystone_data.sh
 
     # Set up auth creds now that keystone is bootstrapped
     export OS_AUTH_URL=$SERVICE_ENDPOINT
