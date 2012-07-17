@@ -81,6 +81,9 @@ fi
 if [[ -n "$https_proxy" ]]; then
     export https_proxy=$https_proxy
 fi
+if [[ -n "$no_proxy" ]]; then
+    export no_proxy=$no_proxy
+fi
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
