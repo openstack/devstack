@@ -697,6 +697,8 @@ fi
 if is_service_enabled swift; then
     setup_develop $SWIFT_DIR
     setup_develop $SWIFTCLIENT_DIR
+fi
+if is_service_enabled swift3; then
     setup_develop $SWIFT3_DIR
 fi
 if is_service_enabled g-api n-api; then
