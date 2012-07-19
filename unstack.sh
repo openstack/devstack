@@ -63,3 +63,8 @@ if [[ -n "$UNSTACK_ALL" ]]; then
         stop_service mysql
     fi
 fi
+
+# Quantum dhcp agent runs dnsmasq
+if is_service_enabled q-dhcp; then
+    sudo kill -9 $(ps aux | awk '/[d]nsmasq.+interface=tap/ { print $2 }')
+fi
