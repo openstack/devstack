@@ -120,3 +120,6 @@ esac
 if [ -f $RC_DIR/localrc ]; then
     source $RC_DIR/localrc
 fi
+
+# 5Gb default volume backing file size
+VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-5130M}
