@@ -275,7 +275,7 @@ if [[ "$ENABLED_SERVICES" =~ "tempest" ]]; then
         --role_id $MEMBER_ROLE
 fi
 
-if [[ "$ENABLED_SERVICES" =~ "cinder" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
     CINDER_USER=$(get_id keystone user-create --name=cinder \
                                               --pass="$SERVICE_PASSWORD" \
                                               --tenant_id $SERVICE_TENANT \
