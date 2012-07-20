@@ -1225,7 +1225,7 @@ if [[ -d $NOVA_DIR/etc/nova/rootwrap.d ]]; then
     ROOTWRAP_SUDOER_CMD="$NOVA_ROOTWRAP *"
 fi
 
-# Set up the rootwrap sudoers
+# Set up the rootwrap sudoers for nova
 TEMPFILE=`mktemp`
 echo "$USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
 chmod 0440 $TEMPFILE
@@ -1495,7 +1495,7 @@ if is_service_enabled swift; then
     if is_service_enabled swift3;then
         swift_auth_server="s3token "
     fi
-        
+
     # By default Swift will be installed with the tempauth middleware
     # which has some default username and password if you have
     # configured keystone it will checkout the directory.
