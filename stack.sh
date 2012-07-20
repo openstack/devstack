@@ -1898,7 +1898,10 @@ fi
 if is_service_enabled mysql && is_service_enabled nova; then
     # (re)create nova database
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS nova;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE nova;'
+    # Explicitly use latin1: to avoid lp#829209, nova expects the database to
+    # use latin1 by default, and then upgrades the database to utf8 (see the
+    # 082_essex.py in nova)
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE nova CHARACTER SET latin1;'
 
     # (re)create nova database
     $NOVA_DIR/bin/nova-manage db sync
