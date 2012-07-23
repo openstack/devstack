@@ -1,0 +1,4 @@
+python-setuptools
+python-gevent
+python-gflags
+python-sphinx

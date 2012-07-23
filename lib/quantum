@@ -33,5 +33,29 @@ function quantum_setup_ovs_bridge() {
     sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
 }
 
+function quantum_setup_external_bridge() {
+    local bridge=$1
+    # Create it if it does not exist
+    sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge
+    # remove internal ports
+    for PORT in `sudo ovs-vsctl --no-wait list-ports $bridge`; do
+        TYPE=$(sudo ovs-vsctl get interface $PORT type)
+        if [[ "$TYPE" == "internal" ]]; then
+            echo `sudo ip link delete $PORT` > /dev/null
+            sudo ovs-vsctl --no-wait del-port $bridge $PORT
+        fi
+    done
+    # ensure no IP is configured on the public bridge
+    sudo ip addr flush dev $bridge
+}
+
+function is_quantum_ovs_base_plugin() {
+    local plguin=$1
+    if [[ ",openvswitch,ryu," =~ ,${plugin}, ]]; then
+        return 0
+    fi
+    return 1
+}
+
 # Restore xtrace
 $XTRACE

@@ -101,6 +101,10 @@ TEMPEST_BRANCH=master
 HEAT_REPO=${GIT_BASE}/heat-api/heat.git
 HEAT_BRANCH=master
 
+# ryu service
+RYU_REPO=https://github.com/osrg/ryu.git
+RYU_BRANCH=master
+
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
 # also install an **LXC** or **OpenVZ** based system.
