@@ -1075,17 +1075,9 @@ if is_service_enabled q-svc; then
     Q_API_PASTE_FILE=/etc/quantum/api-paste.ini
     Q_POLICY_FILE=/etc/quantum/policy.json
 
-    if [[ -e $QUANTUM_DIR/etc/quantum.conf ]]; then
-      sudo cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
-    fi
-
-    if [[ -e $QUANTUM_DIR/etc/api-paste.ini ]]; then
-      sudo cp $QUANTUM_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
-    fi
-
-    if [[ -e $QUANTUM_DIR/etc/policy.json ]]; then
-      sudo cp $QUANTUM_DIR/etc/policy.json $Q_POLICY_FILE
-    fi
+    cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
+    cp $QUANTUM_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
+    cp $QUANTUM_DIR/etc/policy.json $Q_POLICY_FILE
 
     if is_service_enabled mysql; then
             mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e "DROP DATABASE IF EXISTS $Q_DB_NAME;"
@@ -1096,7 +1088,16 @@ if is_service_enabled q-svc; then
     fi
 
     # Update either configuration file with plugin
-    sudo sed -i -e "s/^core_plugin =.*$/core_plugin = $Q_PLUGIN_CLASS/g" $Q_CONF_FILE
+    iniset $Q_CONF_FILE DEFAULT core_plugin $Q_PLUGIN_CLASS
+
+    iniset $Q_CONF_FILE DEFAULT auth_strategy $Q_AUTH_STRATEGY
+    iniset $Q_API_PASTE_FILE filter:authtoken auth_host $KEYSTONE_SERVICE_HOST
+    iniset $Q_API_PASTE_FILE filter:authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $Q_API_PASTE_FILE filter:authtoken auth_protocol $KEYSTONE_SERVICE_PROTOCOL
+    iniset $Q_API_PASTE_FILE filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $Q_API_PASTE_FILE filter:authtoken admin_user $Q_ADMIN_USERNAME
+    iniset $Q_API_PASTE_FILE filter:authtoken admin_password $SERVICE_PASSWORD
+
     screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
 fi
 
@@ -2069,10 +2070,10 @@ if is_service_enabled mysql && is_service_enabled nova; then
         TENANT_ID=$(keystone tenant-list | grep " demo " | get_field 1)
 
         # Create a small network
-        NET_ID=$(quantum net-create --os_token $Q_ADMIN_USERNAME --os_url http://$Q_HOST:$Q_PORT --tenant_id $TENANT_ID net1 | grep ' id ' | get_field 2)
-
-        # Create a subnet
-        quantum subnet-create --os_token $Q_ADMIN_USERNAME --os_url http://$Q_HOST:$Q_PORT --tenant_id $TENANT_ID --ip_version 4 --gateway  $NETWORK_GATEWAY $NET_ID $FIXED_RANGE
+        # Since quantum command is executed in admin context at this point,
+        # --tenant_id needs to be specified.
+        NET_ID=$(quantum net-create --tenant_id $TENANT_ID net1 | grep ' id ' | get_field 2)
+        quantum subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE
     fi
 fi
 
