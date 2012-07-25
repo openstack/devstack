@@ -17,6 +17,7 @@ function apt_get() {
     [[ "$(id -u)" = "0" ]] && sudo="env"
     $sudo DEBIAN_FRONTEND=noninteractive \
         http_proxy=$http_proxy https_proxy=$https_proxy \
+        no_proxy=$no_proxy \
         apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
 }
 
@@ -479,6 +480,7 @@ function pip_install {
     sudo PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
+        NO_PROXY=$no_proxy \
         $CMD_PIP install --use-mirrors $@
 }
 
@@ -509,6 +511,7 @@ function setup_develop() {
         sudo \
             HTTP_PROXY=$http_proxy \
             HTTPS_PROXY=$https_proxy \
+            NO_PROXY=$no_proxy \
             python setup.py develop \
     )
 }
@@ -562,6 +565,7 @@ function yum_install() {
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
     $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
+        no_proxy=$no_proxy \
         yum install -y "$@"
 }
 

@@ -60,15 +60,20 @@ fi
 source $TOP_DIR/stackrc
 
 # HTTP and HTTPS proxy servers are supported via the usual environment variables
-# ``http_proxy`` and ``https_proxy``.  They can be set in ``localrc`` if necessary
+# ``http_proxy`` and ``https_proxy``.  Additionally if you would like to access
+# to specific server directly and not through the proxy server, you can use
+# ``no_proxy`` environment variable.  They can be set in ``localrc`` if necessary
 # or on the command line::
 #
-#     http_proxy=http://proxy.example.com:3128/ ./stack.sh
+#     http_proxy=http://proxy.example.com:3128/ no_proxy=repo.example.net ./stack.sh
 if [[ -n "$http_proxy" ]]; then
     export http_proxy=$http_proxy
 fi
 if [[ -n "$https_proxy" ]]; then
     export https_proxy=$https_proxy
+fi
+if [[ -n "$no_proxy" ]]; then
+    export no_proxy=$no_proxy
 fi
 
 # Destination path for installation ``DEST``
