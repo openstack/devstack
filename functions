@@ -129,6 +129,10 @@ function get_packages() {
             if [[ ! $file_to_parse =~ cinder ]]; then
                 file_to_parse="${file_to_parse} cinder"
             fi
+        elif [[ $service == ceilometer-* ]]; then
+            if [[ ! $file_to_parse =~ ceilometer ]]; then
+                file_to_parse="${file_to_parse} ceilometer"
+            fi
         elif [[ $service == n-* ]]; then
             if [[ ! $file_to_parse =~ nova ]]; then
                 file_to_parse="${file_to_parse} nova"
@@ -375,6 +379,7 @@ function is_service_enabled() {
         [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
         [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && return 0
         [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0
+        [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && return 0
         [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && return 0
         [[ ${service} == "quantum" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
     done

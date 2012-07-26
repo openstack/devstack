@@ -240,6 +240,7 @@ sudo chown `whoami` $DATA_DIR
 
 # Get project function libraries
 source $TOP_DIR/lib/cinder
+source $TOP_DIR/lib/ceilometer
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
@@ -788,6 +789,9 @@ if is_service_enabled quantum; then
 fi
 if is_service_enabled cinder; then
     install_cinder
+fi
+if is_service_enabled ceilometer; then
+    install_ceilometer
 fi
 
 # Initialization
@@ -2121,6 +2125,10 @@ screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CON
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
 if is_service_enabled cinder; then
     start_cinder
+fi
+if is_service_enabled ceilometer; then
+    configure_ceilometer
+    start_ceilometer
 fi
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
 screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
