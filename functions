@@ -471,12 +471,19 @@ function pip_install {
     if [[ -z "$os_PACKAGE" ]]; then
         GetOSVersion
     fi
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        CMD_PIP=/usr/bin/pip
+    if [[ $TRACK_DEPENDS = True ]] ; then
+        source $DEST/.venv/bin/activate
+        CMD_PIP=$DEST/.venv/bin/pip
+        SUDO_PIP="env"
     else
-        CMD_PIP=/usr/bin/pip-python
+        SUDO_PIP="sudo"
+        if [[ "$os_PACKAGE" = "deb" ]]; then
+            CMD_PIP=/usr/bin/pip
+        else
+            CMD_PIP=/usr/bin/pip-python
+        fi
     fi
-    sudo PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
+    $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
         $CMD_PIP install --use-mirrors $@
@@ -501,12 +508,17 @@ function restart_service() {
 # develop, so that pip and not distutils process the dependency chain
 # setup_develop directory
 function setup_develop() {
+    if [[ $TRACK_DEPENDS = True ]] ; then
+        SUDO_CMD="env"
+    else
+        SUDO_CMD="sudo"
+    fi
     (cd $1; \
         python setup.py egg_info; \
         raw_links=$(awk '/^.+/ {print "-f " $1}' *.egg-info/dependency_links.txt); \
         depend_links=$(echo $raw_links | xargs); \
         pip_install -r *-info/requires.txt $depend_links; \
-        sudo \
+        $SUDO_CMD \
             HTTP_PROXY=$http_proxy \
             HTTPS_PROXY=$https_proxy \
             python setup.py develop \
