@@ -17,39 +17,43 @@ ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-vol,n-sch,n-nov
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=ec2,osapi_compute,osapi_volume,metadata
 
+# Base GIT Repo URL
+# Another option is http://review.openstack.org/p
+GIT_BASE=https://github.com
+
 # volume service
-CINDER_REPO=https://github.com/openstack/cinder
+CINDER_REPO=${GIT_BASE}/openstack/cinder
 CINDER_BRANCH=master
 
 # volume client
-CINDERCLIENT_REPO=https://github.com/openstack/python-cinderclient
+CINDERCLIENT_REPO=${GIT_BASE}/openstack/python-cinderclient
 CINDERCLIENT_BRANCH=master
 
 # compute service
-NOVA_REPO=https://github.com/openstack/nova.git
+NOVA_REPO=${GIT_BASE}/openstack/nova.git
 NOVA_BRANCH=master
 
 # storage service
-SWIFT_REPO=https://github.com/openstack/swift.git
+SWIFT_REPO=${GIT_BASE}/openstack/swift.git
 SWIFT_BRANCH=master
 SWIFT3_REPO=https://github.com/fujita/swift3.git
 SWIFT3_BRANCH=master
 
 
 # python swift client library
-SWIFTCLIENT_REPO=https://github.com/openstack/python-swiftclient
+SWIFTCLIENT_REPO=${GIT_BASE}/openstack/python-swiftclient
 SWIFTCLIENT_BRANCH=master
 
 # image catalog service
-GLANCE_REPO=https://github.com/openstack/glance.git
+GLANCE_REPO=${GIT_BASE}/openstack/glance.git
 GLANCE_BRANCH=master
 
 # python glance client library
-GLANCECLIENT_REPO=https://github.com/openstack/python-glanceclient
+GLANCECLIENT_REPO=${GIT_BASE}/openstack/python-glanceclient
 GLANCECLIENT_BRANCH=master
 
 # unified auth system (manages accounts/tokens)
-KEYSTONE_REPO=https://github.com/openstack/keystone.git
+KEYSTONE_REPO=${GIT_BASE}/openstack/keystone.git
 KEYSTONE_BRANCH=master
 
 # a websockets/html5 or flash powered VNC console for vm instances
@@ -57,39 +61,39 @@ NOVNC_REPO=https://github.com/kanaka/noVNC.git
 NOVNC_BRANCH=master
 
 # django powered web control panel for openstack
-HORIZON_REPO=https://github.com/openstack/horizon.git
+HORIZON_REPO=${GIT_BASE}/openstack/horizon.git
 HORIZON_BRANCH=master
 
 # python client library to nova that horizon (and others) use
-NOVACLIENT_REPO=https://github.com/openstack/python-novaclient.git
+NOVACLIENT_REPO=${GIT_BASE}/openstack/python-novaclient.git
 NOVACLIENT_BRANCH=master
 
 # Shared openstack python client library
-OPENSTACKCLIENT_REPO=https://github.com/openstack/python-openstackclient.git
+OPENSTACKCLIENT_REPO=${GIT_BASE}/openstack/python-openstackclient.git
 OPENSTACKCLIENT_BRANCH=master
 
 # python keystone client library to nova that horizon uses
-KEYSTONECLIENT_REPO=https://github.com/openstack/python-keystoneclient
+KEYSTONECLIENT_REPO=${GIT_BASE}/openstack/python-keystoneclient
 KEYSTONECLIENT_BRANCH=master
 
 # quantum service
-QUANTUM_REPO=https://github.com/openstack/quantum
+QUANTUM_REPO=${GIT_BASE}/openstack/quantum
 QUANTUM_BRANCH=master
 
 # quantum client
-QUANTUM_CLIENT_REPO=https://github.com/openstack/python-quantumclient
+QUANTUM_CLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient
 QUANTUM_CLIENT_BRANCH=master
 
 # Tempest test suite
-TEMPEST_REPO=https://github.com/openstack/tempest.git
+TEMPEST_REPO=${GIT_BASE}/openstack/tempest.git
 TEMPEST_BRANCH=master
 
 # melange service
-MELANGE_REPO=https://github.com/openstack/melange.git
+MELANGE_REPO=${GIT_BASE}/openstack/melange.git
 MELANGE_BRANCH=master
 
 # python melange client library
-MELANGECLIENT_REPO=https://github.com/openstack/python-melangeclient.git
+MELANGECLIENT_REPO=${GIT_BASE}/openstack/python-melangeclient.git
 MELANGECLIENT_BRANCH=master
 
 # Specify a comma-separated list of uec images to download and install into glance.
