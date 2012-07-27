@@ -10,9 +10,9 @@ RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
 #
 # If you like to explicitly remove services you can add a -$service in
 # ENABLED_SERVICES, for example in your localrc to install all defaults but not
-# nova-volume you would just need to set this :
-# ENABLED_SERVICES+=,-n-vol
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit
+# cinder you would just need to set this :
+# ENABLED_SERVICES+=,-cinder
+ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit
 
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=ec2,osapi_compute,osapi_volume,metadata
