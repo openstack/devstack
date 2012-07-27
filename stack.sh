@@ -1047,9 +1047,8 @@ if is_service_enabled quantum; then
     # If needed, move config file from $QUANTUM_DIR/etc/quantum to /etc/quantum
     mkdir -p /$Q_PLUGIN_CONF_PATH
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
-    if [[ -e $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE ]]; then
-            sudo mv $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
-    fi
+    cp $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
+
     sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8/g" /$Q_PLUGIN_CONF_FILE
 
     OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-True}
@@ -1098,7 +1097,7 @@ if is_service_enabled q-svc; then
 
     # Update either configuration file with plugin
     sudo sed -i -e "s/^core_plugin =.*$/core_plugin = $Q_PLUGIN_CLASS/g" $Q_CONF_FILE
-    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE"
+    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
 fi
 
 # Quantum agent (for compute nodes)
@@ -1133,7 +1132,7 @@ if is_service_enabled q-agt; then
        AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py"
     fi
     # Start up the quantum agent
-    screen_it q-agt "sudo python $AGENT_BINARY /$Q_PLUGIN_CONF_FILE -v"
+    screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
 fi
 
 # Quantum DHCP
