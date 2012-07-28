@@ -142,6 +142,8 @@ function init_cinder() {
             if ! sudo vgs $VOLUME_GROUP; then sudo vgcreate $VOLUME_GROUP $DEV; fi
         fi
 
+        mkdir -p $CINDER_DIR/volumes
+
         if sudo vgs $VOLUME_GROUP; then
             if [[ "$os_PACKAGE" = "rpm" ]]; then
                 # RPM doesn't start the service
@@ -171,6 +173,9 @@ function install_cinder() {
 function start_cinder() {
     if is_service_enabled c-vol; then
         if [[ "$os_PACKAGE" = "deb" ]]; then
+            if [[ ! -f /etc/tgt/conf.d/cinder.conf ]]; then
+               echo "include $CINDER_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/cinder.conf
+            fi
             # tgt in oneiric doesn't restart properly if tgtd isn't running
             # do it in two steps
             sudo stop tgt || true

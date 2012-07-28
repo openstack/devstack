@@ -1699,6 +1699,9 @@ elif is_service_enabled n-vol; then
             start_service tgtd
         fi
 
+        # Setup tgtd configuration files
+        mkdir -p $NOVA_DIR/volumes
+
         # Remove nova iscsi targets
         sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
         # Clean out existing volumes
@@ -1711,6 +1714,12 @@ elif is_service_enabled n-vol; then
     fi
 
     if [[ "$os_PACKAGE" = "deb" ]]; then
+
+        # Setup the tgt configuration file
+        if [[ ! -f /etc/tgt/conf.d/nova.conf ]]; then
+           echo "include $NOVA_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/nova.conf
+        fi
+
         # tgt in oneiric doesn't restart properly if tgtd isn't running
         # do it in two steps
         sudo stop tgt || true
