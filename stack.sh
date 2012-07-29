@@ -1158,15 +1158,15 @@ if is_service_enabled quantum; then
     elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE AGENT target_v2_api True
     fi
+    Q_CONF_FILE=/etc/quantum/quantum.conf
+    cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
 fi
 
 # Quantum service (for controller node)
 if is_service_enabled q-svc; then
-    Q_CONF_FILE=/etc/quantum/quantum.conf
     Q_API_PASTE_FILE=/etc/quantum/api-paste.ini
     Q_POLICY_FILE=/etc/quantum/policy.json
 
-    cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
     cp $QUANTUM_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
     cp $QUANTUM_DIR/etc/policy.json $Q_POLICY_FILE
 
@@ -1188,8 +1188,6 @@ if is_service_enabled q-svc; then
     iniset $Q_API_PASTE_FILE filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $Q_API_PASTE_FILE filter:authtoken admin_user $Q_ADMIN_USERNAME
     iniset $Q_API_PASTE_FILE filter:authtoken admin_password $SERVICE_PASSWORD
-
-    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
 fi
 
 # Quantum agent (for compute nodes)
@@ -1213,8 +1211,6 @@ if is_service_enabled q-agt; then
        sudo sed -i -e "s/^physical_interface = .*$/physical_interface = $QUANTUM_LB_PRIVATE_INTERFACE/g" /$Q_PLUGIN_CONF_FILE
        AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py"
     fi
-    # Start up the quantum agent
-    screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
 fi
 
 # Quantum DHCP
@@ -1223,9 +1219,7 @@ if is_service_enabled q-dhcp; then
 
     Q_DHCP_CONF_FILE=/etc/quantum/dhcp_agent.ini
 
-    if [[ -e $QUANTUM_DIR/etc/dhcp_agent.ini ]]; then
-      sudo cp $QUANTUM_DIR/etc/dhcp_agent.ini $Q_DHCP_CONF_FILE
-    fi
+    cp $QUANTUM_DIR/etc/dhcp_agent.ini $Q_DHCP_CONF_FILE
 
     # Set verbose
     iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
@@ -1244,9 +1238,27 @@ if is_service_enabled q-dhcp; then
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
     fi
-    # Start up the quantum agent
-    screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file=$Q_DHCP_CONF_FILE"
 fi
+
+# Quantum RPC support - must be updated prior to starting any of the services
+if is_service_enabled quantum; then
+    iniset $Q_CONF_FILE DEFAULT control_exchange quantum
+    if is_service_enabled qpid ; then
+        iniset $Q_CONF_FILE DEFAULT rpc_backend quantum.openstack.common.rpc.impl_qpid
+    elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
+        iniset $Q_CONF_FILE DEFAULT rabbit_host $RABBIT_HOST
+        iniset $Q_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
+    fi
+fi
+
+# Start the Quantum services
+screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
+
+# Start up the quantum agent
+screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
+
+# Start up the quantum agent
+screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file=$Q_DHCP_CONF_FILE"
 
 # Melange service
 if is_service_enabled m-svc; then
