@@ -44,6 +44,28 @@ if [ ! -d $STAGING_DIR/etc ]; then
     exit 1
 fi
 
+# Copy XenServer tools deb into the VM
+ISO_DIR="/opt/xensource/packages/iso"
+XS_TOOLS_FILE_NAME="xs-tools.deb"
+XS_TOOLS_PATH="/root/$XS_TOOLS_FILE_NAME"
+if [ -e "$ISO_DIR" ]; then
+    TOOLS_ISO=$(ls $ISO_DIR/xs-tools-*.iso)
+    TMP_DIR=/tmp/temp.$RANDOM
+    mkdir -p $TMP_DIR
+    mount -o loop $TOOLS_ISO $TMP_DIR
+    DEB_FILE=$(ls $TMP_DIR/Linux/*amd64.deb)
+    echo "Copying XenServer tools into VM from: $DEB_FILE"
+    cp $DEB_FILE "${STAGING_DIR}${XS_TOOLS_PATH}"
+    umount $TMP_DIR
+    rm -rf $TMP_DIR
+else
+    echo "WARNING: no XenServer tools found, falling back to 5.6 tools"
+    TOOLS_URL="http://images.ansolabs.com/xen/xe-guest-utilities_5.6.100-651_amd64.deb"
+    wget $TOOLS_URL -O $XS_TOOLS_FILE_NAME
+    cp $XS_TOOLS_FILE_NAME "${STAGING_DIR}${XS_TOOLS_PATH}"
+    rm -rf $XS_TOOLS_FILE_NAME
+fi
+
 # Copy prepare_guest.sh to VM
 mkdir -p $STAGING_DIR/opt/stack/
 cp $TOP_DIR/prepare_guest.sh $STAGING_DIR/opt/stack/prepare_guest.sh
@@ -53,5 +75,7 @@ cp $STAGING_DIR/etc/rc.local $STAGING_DIR/etc/rc.local.preparebackup
 
 # run prepare_guest.sh on boot
 cat <<EOF >$STAGING_DIR/etc/rc.local
-GUEST_PASSWORD=$GUEST_PASSWORD STAGING_DIR=/ DO_TGZ=0 bash /opt/stack/prepare_guest.sh > /opt/stack/prepare_guest.log 2>&1
+GUEST_PASSWORD=$GUEST_PASSWORD STAGING_DIR=/ \
+    DO_TGZ=0 XS_TOOLS_PATH=$XS_TOOLS_PATH \
+    bash /opt/stack/prepare_guest.sh > /opt/stack/prepare_guest.log 2>&1
 EOF
