@@ -20,6 +20,10 @@ DATABASES = {
 CACHE_BACKEND = 'dummy://'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
+# Set a secure and unique SECRET_KEY (the Django default is '')
+from horizon.utils import secret_key
+SECRET_KEY = secret_key.generate_or_read_from_file(os.path.join(LOCAL_PATH, '.secret_key_store'))
+
 # Send email to the console by default
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Or send them to /dev/null
