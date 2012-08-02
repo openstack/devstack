@@ -614,6 +614,130 @@ else
     install_package $(get_packages $FILES/rpms)
 fi
 
+if [[ $SYSLOG != "False" ]]; then
+    install_package rsyslog-relp
+fi
+
+if is_service_enabled rabbit; then
+    # Install rabbitmq-server
+    # the temp file is necessary due to LP: #878600
+    tfile=$(mktemp)
+    install_package rabbitmq-server > "$tfile" 2>&1
+    cat "$tfile"
+    rm -f "$tfile"
+elif is_service_enabled qpid; then
+    if [[ "$os_PACKAGE" = "rpm" ]]; then
+        install_package qpid-cpp-server
+    else
+        install_package qpidd
+    fi
+fi
+
+if is_service_enabled mysql; then
+
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        # Seed configuration with mysql password so that apt-get install doesn't
+        # prompt us for a password upon install.
+        cat <<MYSQL_PRESEED | sudo debconf-set-selections
+mysql-server-5.1 mysql-server/root_password password $MYSQL_PASSWORD
+mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASSWORD
+mysql-server-5.1 mysql-server/start_on_boot boolean true
+MYSQL_PRESEED
+    fi
+
+    # while ``.my.cnf`` is not needed for openstack to function, it is useful
+    # as it allows you to access the mysql databases via ``mysql nova`` instead
+    # of having to specify the username/password each time.
+    if [[ ! -e $HOME/.my.cnf ]]; then
+        cat <<EOF >$HOME/.my.cnf
+[client]
+user=$MYSQL_USER
+password=$MYSQL_PASSWORD
+host=$MYSQL_HOST
+EOF
+        chmod 0600 $HOME/.my.cnf
+    fi
+    # Install mysql-server
+    install_package mysql-server
+fi
+
+if is_service_enabled quantum; then
+    if [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
+        # Install deps
+        # FIXME add to files/apts/quantum, but don't install if not needed!
+        install_package python-configobj
+    fi
+fi
+
+if is_service_enabled horizon; then
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        # Install apache2, which is NOPRIME'd
+        install_package apache2 libapache2-mod-wsgi
+    else
+        sudo rm -f /etc/httpd/conf.d/000-*
+        install_package httpd mod_wsgi
+    fi
+fi
+
+if is_service_enabled q-agt; then
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        # Install deps
+        # FIXME add to files/apts/quantum, but don't install if not needed!
+        if [[ "$os_PACKAGE" = "deb" ]]; then
+            kernel_version=`cat /proc/version | cut -d " " -f3`
+            install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
+        else
+            ### FIXME(dtroyer): Find RPMs for OpenVSwitch
+            echo "OpenVSwitch packages need to be located"
+        fi
+    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
+       install_package bridge-utils
+    fi
+fi
+
+if is_service_enabled n-cpu; then
+
+    # Virtualization Configuration
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        LIBVIRT_PKG_NAME=libvirt-bin
+    else
+        LIBVIRT_PKG_NAME=libvirt
+    fi
+    install_package $LIBVIRT_PKG_NAME
+    # Install and configure **LXC** if specified.  LXC is another approach to
+    # splitting a system into many smaller parts.  LXC uses cgroups and chroot
+    # to simulate multiple systems.
+    if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
+        if [[ "$os_PACKAGE" = "deb" ]]; then
+            if [[ "$DISTRO" > natty ]]; then
+                install_package cgroup-lite
+            fi
+        else
+            ### FIXME(dtroyer): figure this out
+            echo "RPM-based cgroup not implemented yet"
+            yum_install libcgroup-tools
+        fi
+    fi
+fi
+
+if is_service_enabled swift; then
+    # Install memcached for swift.
+    install_package memcached
+fi
+
+TRACK_DEPENDS=${TRACK_DEPENDS:-False}
+
+# Install python packages into a virtualenv so that we can track them
+if [[ $TRACK_DEPENDS = True ]] ; then
+    install_package python-virtualenv
+
+    rm -rf $DEST/.venv
+    virtualenv --system-site-packages $DEST/.venv
+    source $DEST/.venv/bin/activate
+    $DEST/.venv/bin/pip freeze > $DEST/requires-pre-pip
+fi
+
 # Install python requirements
 pip_install $(get_packages $FILES/pips | sort -u)
 
@@ -671,7 +795,6 @@ if is_service_enabled cinder; then
     install_cinder
 fi
 
-
 # Initialization
 # ==============
 
@@ -715,12 +838,19 @@ if is_service_enabled cinder; then
     configure_cinder
 fi
 
+if [[ $TRACK_DEPENDS = True ]] ; then
+    $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip
+    if ! diff -Nru $DEST/requires-pre-pip $DEST/requires-post-pip > $DEST/requires.diff ; then
+        cat $DEST/requires.diff
+    fi
+    echo "Ran stack.sh in depend tracking mode, bailing out now"
+    exit 0
+fi
 
 # Syslog
 # ------
 
 if [[ $SYSLOG != "False" ]]; then
-    install_package rsyslog-relp
     if [[ "$SYSLOG_HOST" = "$HOST_IP" ]]; then
         # Configure the master host to receive
         cat <<EOF >/tmp/90-stack-m.conf
@@ -743,12 +873,7 @@ fi
 # --------------
 
 if is_service_enabled rabbit; then
-    # Install and start rabbitmq-server
-    # the temp file is necessary due to LP: #878600
-    tfile=$(mktemp)
-    install_package rabbitmq-server > "$tfile" 2>&1
-    cat "$tfile"
-    rm -f "$tfile"
+    # Start rabbitmq-server
     if [[ "$os_PACKAGE" = "rpm" ]]; then
         # RPM doesn't start the service
         restart_service rabbitmq-server
@@ -756,45 +881,17 @@ if is_service_enabled rabbit; then
     # change the rabbit password since the default is "guest"
     sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
 elif is_service_enabled qpid; then
-    if [[ "$os_PACKAGE" = "rpm" ]]; then
-        install_package qpid-cpp-server
-        restart_service qpidd
-    else
-        install_package qpidd
-    fi
+    restart_service qpidd
 fi
 
 
 # Mysql
 # -----
 
+
 if is_service_enabled mysql; then
 
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        # Seed configuration with mysql password so that apt-get install doesn't
-        # prompt us for a password upon install.
-        cat <<MYSQL_PRESEED | sudo debconf-set-selections
-mysql-server-5.1 mysql-server/root_password password $MYSQL_PASSWORD
-mysql-server-5.1 mysql-server/root_password_again password $MYSQL_PASSWORD
-mysql-server-5.1 mysql-server/start_on_boot boolean true
-MYSQL_PRESEED
-    fi
-
-    # while ``.my.cnf`` is not needed for openstack to function, it is useful
-    # as it allows you to access the mysql databases via ``mysql nova`` instead
-    # of having to specify the username/password each time.
-    if [[ ! -e $HOME/.my.cnf ]]; then
-        cat <<EOF >$HOME/.my.cnf
-[client]
-user=$MYSQL_USER
-password=$MYSQL_PASSWORD
-host=$MYSQL_HOST
-EOF
-        chmod 0600 $HOME/.my.cnf
-    fi
-
-    # Install and start mysql-server
-    install_package mysql-server
+    #start mysql-server
     if [[ "$os_PACKAGE" = "rpm" ]]; then
         # RPM doesn't start the service
         start_service mysqld
@@ -904,10 +1001,8 @@ if is_service_enabled horizon; then
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
     if [[ "$os_PACKAGE" = "deb" ]]; then
-        # Install apache2, which is NOPRIME'd
         APACHE_NAME=apache2
         APACHE_CONF=sites-available/horizon
-        install_package apache2 libapache2-mod-wsgi
         # Clean up the old config name
         sudo rm -f /etc/apache2/sites-enabled/000-default
         # Be a good citizen and use the distro tools here
@@ -917,8 +1012,6 @@ if is_service_enabled horizon; then
         # Install httpd, which is NOPRIME'd
         APACHE_NAME=httpd
         APACHE_CONF=conf.d/horizon.conf
-        sudo rm -f /etc/httpd/conf.d/000-*
-        install_package httpd mod_wsgi
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
     fi
     ## Configure apache to run horizon
@@ -1028,9 +1121,6 @@ if is_service_enabled quantum; then
             Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2"
         fi
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        # Install deps
-        # FIXME add to files/apts/quantum, but don't install if not needed!
-        install_package python-configobj
         Q_PLUGIN_CONF_PATH=etc/quantum/plugins/linuxbridge
         Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
         Q_DB_NAME="quantum_linux_bridge"
@@ -1104,15 +1194,6 @@ fi
 # Quantum agent (for compute nodes)
 if is_service_enabled q-agt; then
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        # Install deps
-        # FIXME add to files/apts/quantum, but don't install if not needed!
-        if [[ "$os_PACKAGE" = "deb" ]]; then
-            kernel_version=`cat /proc/version | cut -d " " -f3`
-            install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
-        else
-            ### FIXME(dtroyer): Find RPMs for OpenVSwitch
-            echo "OpenVSwitch packages need to be located"
-        fi
         # Set up integration bridge
         OVS_BRIDGE=${OVS_BRIDGE:-br-int}
         for PORT in `sudo ovs-vsctl --no-wait list-ports $OVS_BRIDGE`; do
@@ -1126,8 +1207,7 @@ if is_service_enabled q-agt; then
         AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
        # Start up the quantum <-> linuxbridge agent
-       install_package bridge-utils
-        #set the default network interface
+       # set the default network interface
        QUANTUM_LB_PRIVATE_INTERFACE=${QUANTUM_LB_PRIVATE_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
        sudo sed -i -e "s/^physical_interface = .*$/physical_interface = $QUANTUM_LB_PRIVATE_INTERFACE/g" /$Q_PLUGIN_CONF_FILE
        AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py"
@@ -1273,15 +1353,6 @@ function clean_iptables() {
 
 if is_service_enabled n-cpu; then
 
-    # Virtualization Configuration
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        LIBVIRT_PKG_NAME=libvirt-bin
-    else
-        LIBVIRT_PKG_NAME=libvirt
-    fi
-    install_package $LIBVIRT_PKG_NAME
-
     # Force IP forwarding on, just on case
     sudo sysctl -w net.ipv4.ip_forward=1
 
@@ -1304,9 +1375,7 @@ if is_service_enabled n-cpu; then
     # to simulate multiple systems.
     if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
         if [[ "$os_PACKAGE" = "deb" ]]; then
-            if [[ "$DISTRO" > natty ]]; then
-                install_package cgroup-lite
-            else
+            if [[ ! "$DISTRO" > natty ]]; then
                 cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
                 sudo mkdir -p /cgroup
                 if ! grep -q cgroup /etc/fstab; then
@@ -1316,10 +1385,6 @@ if is_service_enabled n-cpu; then
                     sudo mount /cgroup
                 fi
             fi
-        else
-            ### FIXME(dtroyer): figure this out
-            echo "RPM-based cgroup not implemented yet"
-            yum_install libcgroup-tools
         fi
     fi
 
@@ -1414,8 +1479,6 @@ fi
 # ---------------
 
 if is_service_enabled swift; then
-    # Install memcached for swift.
-    install_package memcached
 
     # We make sure to kill all swift processes first
     swift-init all stop || true
