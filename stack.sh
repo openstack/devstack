@@ -2255,19 +2255,19 @@ if is_service_enabled g-reg; then
         esac
 
         if [ "$CONTAINER_FORMAT" = "bare" ]; then
-            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --public --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
+            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
         else
             # Use glance client to add the kernel the root filesystem.
             # We parse the results of the first upload to get the glance ID of the
             # kernel for use when uploading the root filesystem.
             KERNEL_ID=""; RAMDISK_ID="";
             if [ -n "$KERNEL" ]; then
-                KERNEL_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" --public --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
+                KERNEL_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" --is-public=True --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
             fi
             if [ -n "$RAMDISK" ]; then
-                RAMDISK_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" --public --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
+                RAMDISK_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" --is-public=True --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
             fi
-            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" --public --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
+            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" --is-public=True --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
         fi
     done
 fi
