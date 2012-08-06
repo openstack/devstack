@@ -37,7 +37,7 @@ fi
 
 # Swift runs daemons
 if is_service_enabled swift; then
-    swift-init all stop
+    swift-init all stop 2>/dev/null || true
 fi
 
 # Apache has the WSGI processes
