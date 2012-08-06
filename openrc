@@ -16,7 +16,7 @@ export NOVA_PROJECT_ID=${TENANT:-demo}
 
 # In addition to the owning entity (tenant), nova stores the entity performing
 # the action as the **user**.
-export NOVA_USERNAME=${USERNAME:-demo}
+export NOVA_USERNAME=${NOVA_USERNAME:-demo}
 
 # With Keystone you pass the keystone password instead of an api key.
 # The most recent versions of novaclient use NOVA_PASSWORD instead of NOVA_API_KEY
@@ -43,7 +43,7 @@ export NOVA_REGION_NAME=${NOVA_REGION_NAME:-RegionOne}
 export EC2_URL=${EC2_URL:-http://$SERVICE_HOST:8773/services/Cloud}
 
 # Access key is set in the initial keystone data to be the same as username
-export EC2_ACCESS_KEY=${USERNAME:-demo}
+export EC2_ACCESS_KEY=${NOVA_USERNAME:-demo}
 
 # Secret key is set in the initial keystone data to the admin password
 export EC2_SECRET_KEY=${ADMIN_PASSWORD:-secrete}
