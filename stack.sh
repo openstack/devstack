@@ -1466,7 +1466,7 @@ EOF'
     sudo rm -rf $NOVA_DIR/instances/*
 fi
 
-if is_service_enabled n-net; then
+if is_service_enabled n-net q-dhcp; then
     # Delete traces of nova networks from prior runs
     sudo killall dnsmasq || true
     clean_iptables
