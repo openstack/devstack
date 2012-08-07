@@ -155,9 +155,13 @@ if [[ $EUID -eq 0 ]]; then
     else
         rpm -qa | grep sudo || install_package sudo
     fi
+    if ! getent group stack >/dev/null; then
+        echo "Creating a group called stack"
+        groupadd stack
+    fi
     if ! getent passwd stack >/dev/null; then
         echo "Creating a user called stack"
-        useradd -U -s /bin/bash -d $DEST -m stack
+        useradd -g stack -s /bin/bash -d $DEST -m stack
     fi
 
     echo "Giving stack user passwordless sudo priviledges"
