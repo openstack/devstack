@@ -67,15 +67,20 @@ fi
 # Glance should already contain images to be used in tempest
 # testing. Here we simply look for images stored in Glance
 # and set the appropriate variables for use in the tempest config
-# We ignore ramdisk and kernel images and set the IMAGE_UUID to
-# the first image returned and set IMAGE_UUID_ALT to the second,
+# We ignore ramdisk and kernel images, look for the default image
+# DEFAULT_IMAGE_NAME. If not found, we set the IMAGE_UUID to the
+# first image returned and set IMAGE_UUID_ALT to the second,
 # if there is more than one returned...
 # ... Also ensure we only take active images, so we don't get snapshots in process
 IMAGE_LINES=`glance image-list`
 IFS="$(echo -e "\n\r")"
 IMAGES=""
 for line in $IMAGE_LINES; do
-    IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | cut -d' ' -f2`"
+    if [ -z $DEFAULT_IMAGE_NAME ]; then
+        IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | cut -d' ' -f2`"
+    else
+        IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | grep "$DEFAULT_IMAGE_NAME" | cut -d' ' -f2`"
+    fi
 done
 # Create array of image UUIDs...
 IFS=" "
@@ -127,9 +132,31 @@ ALT_USERNAME=${ALT_USERNAME:-alt_demo}
 ALT_TENANT_NAME=${ALT_TENANT_NAME:-alt_demo}
 ALT_PASSWORD=$OS_PASSWORD
 
-# TODO(jaypipes): Support configurable flavor refs here...
-FLAVOR_REF=1
-FLAVOR_REF_ALT=2
+# Check Nova for existing flavors and, if set, look for the
+# DEFAULT_INSTANCE_TYPE and use that. Otherwise, just use the first flavor.
+FLAVOR_LINES=`nova flavor-list`
+IFS="$(echo -e "\n\r")"
+FLAVORS=""
+for line in $FLAVOR_LINES; do
+    if [ -z $DEFAULT_INSTANCE_TYPE ]; then
+        FLAVORS="$FLAVORS `echo $line | grep -v "^\(ID\|+--\)" | cut -d' ' -f2`"
+    else
+        FLAVORS="$FLAVORS `echo $line | grep -v "^\(ID\|+--\)" | grep "$DEFAULT_INSTANCE_TYPE" | cut -d' ' -f2`"
+    fi
+done
+IFS=" "
+FLAVORS=($FLAVORS)
+NUM_FLAVORS=${#FLAVORS[*]}
+echo "Found $NUM_FLAVORS flavors"
+if [[ $NUM_FLAVORS -eq 0 ]]; then
+    echo "Found no valid flavors to use!"
+    exit 1
+fi
+FLAVOR_REF=${FLAVORS[0]}
+FLAVOR_REF_ALT=$FLAVOR_REF
+if [[ $NUM_FLAVORS -gt 1 ]]; then
+    FLAVOR_REF_ALT=${FLAVORS[1]}
+fi
 
 # Do any of the following need to be configurable?
 COMPUTE_CATALOG_TYPE=compute
@@ -141,7 +168,8 @@ COMPUTE_LOG_LEVEL=ERROR
 BUILD_INTERVAL=3
 BUILD_TIMEOUT=400
 RUN_SSH=True
-SSH_USER=$OS_USERNAME
+# Check for DEFAULT_INSTANCE_USER and try to connect with that account
+SSH_USER=${DEFAULT_INSTANCE_USER:-$OS_USERNAME}
 NETWORK_FOR_SSH=private
 IP_VERSION_FOR_SSH=4
 SSH_TIMEOUT=4
