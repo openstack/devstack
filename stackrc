@@ -91,14 +91,6 @@ QUANTUM_CLIENT_BRANCH=master
 TEMPEST_REPO=${GIT_BASE}/openstack/tempest.git
 TEMPEST_BRANCH=master
 
-# melange service
-MELANGE_REPO=${GIT_BASE}/openstack/melange.git
-MELANGE_BRANCH=master
-
-# python melange client library
-MELANGECLIENT_REPO=${GIT_BASE}/openstack/python-melangeclient.git
-MELANGECLIENT_BRANCH=master
-
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
 # also install an **LXC** or **OpenVZ** based system.

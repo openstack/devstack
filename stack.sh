@@ -2,7 +2,7 @@
 
 # ``stack.sh`` is an opinionated OpenStack developer installation.  It
 # installs and configures various combinations of **Glance**, **Horizon**,
-# **Keystone**, **Melange**, **Nova**, **Quantum** and **Swift**
+# **Keystone**, **Nova**, **Quantum** and **Swift**
 
 # This script allows you to specify configuration options of what git
 # repositories to use, enabled services, network configuration and various
@@ -251,8 +251,6 @@ SWIFT3_DIR=$DEST/swift3
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
 QUANTUM_DIR=$DEST/quantum
 QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
-MELANGE_DIR=$DEST/melange
-MELANGECLIENT_DIR=$DEST/python-melangeclient
 
 # Default Quantum Plugin
 Q_PLUGIN=${Q_PLUGIN:-openvswitch}
@@ -261,19 +259,11 @@ Q_PORT=${Q_PORT:-9696}
 # Default Quantum Host
 Q_HOST=${Q_HOST:-localhost}
 # Which Quantum API nova should use
-NOVA_USE_QUANTUM_API=${NOVA_USE_QUANTUM_API:-v1}
 # Default admin username
 Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
 # Default auth strategy
 Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
 
-
-# Default Melange Port
-M_PORT=${M_PORT:-9898}
-# Default Melange Host
-M_HOST=${M_HOST:-localhost}
-# Melange MAC Address Range
-M_MAC_RANGE=${M_MAC_RANGE:-FE-EE-DD-00-00-00/24}
 
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
@@ -418,14 +408,6 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 # ENABLED_SERVICES.
 #
 # With Quantum networking the NET_MAN variable is ignored.
-
-# Using Melange IPAM:
-#
-# Make sure that quantum and melange are enabled in ENABLED_SERVICES.
-# If they are then the melange IPAM lib will be set in the QuantumManager.
-# Adding m-svc to ENABLED_SERVICES will start the melange service on this
-# host.
-
 
 # MySQL & (RabbitMQ or Qpid)
 # --------------------------
@@ -785,13 +767,6 @@ if is_service_enabled quantum; then
     # quantum
     git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 fi
-if is_service_enabled m-svc; then
-    # melange
-    git_clone $MELANGE_REPO $MELANGE_DIR $MELANGE_BRANCH
-fi
-if is_service_enabled melange; then
-    git_clone $MELANGECLIENT_REPO $MELANGECLIENT_DIR $MELANGECLIENT_BRANCH
-fi
 if is_service_enabled cinder; then
     install_cinder
 fi
@@ -828,12 +803,6 @@ fi
 if is_service_enabled quantum; then
     setup_develop $QUANTUM_CLIENT_DIR
     setup_develop $QUANTUM_DIR
-fi
-if is_service_enabled m-svc; then
-    setup_develop $MELANGE_DIR
-fi
-if is_service_enabled melange; then
-    setup_develop $MELANGECLIENT_DIR
 fi
 if is_service_enabled cinder; then
     configure_cinder
@@ -1116,20 +1085,12 @@ if is_service_enabled quantum; then
         Q_PLUGIN_CONF_PATH=etc/quantum/plugins/openvswitch
         Q_PLUGIN_CONF_FILENAME=ovs_quantum_plugin.ini
         Q_DB_NAME="ovs_quantum"
-        if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
-            Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin"
-        elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
-            Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2"
-        fi
+        Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         Q_PLUGIN_CONF_PATH=etc/quantum/plugins/linuxbridge
         Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
         Q_DB_NAME="quantum_linux_bridge"
-        if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
-            Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin"
-        elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
-            Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2"
-        fi
+        Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2"
     else
         echo "Unknown Quantum plugin '$Q_PLUGIN'.. exiting"
         exit 1
@@ -1153,11 +1114,7 @@ if is_service_enabled quantum; then
         sudo sed -i -e "s/.*enable_tunneling = .*$/enable_tunneling = $OVS_ENABLE_TUNNELING/g" /$Q_PLUGIN_CONF_FILE
     fi
 
-    if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE AGENT target_v2_api False
-    elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE AGENT target_v2_api True
-    fi
+    iniset /$Q_PLUGIN_CONF_FILE AGENT target_v2_api True
     Q_CONF_FILE=/etc/quantum/quantum.conf
     cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
 fi
@@ -1259,29 +1216,6 @@ screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-f
 
 # Start up the quantum agent
 screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file=$Q_DHCP_CONF_FILE"
-
-# Melange service
-if is_service_enabled m-svc; then
-    if is_service_enabled mysql; then
-        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS melange;'
-        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE melange CHARACTER SET utf8;'
-    else
-        echo "mysql must be enabled in order to use the $Q_PLUGIN Quantum plugin."
-        exit 1
-    fi
-    MELANGE_CONFIG_FILE=$MELANGE_DIR/etc/melange/melange.conf
-    cp $MELANGE_CONFIG_FILE.sample $MELANGE_CONFIG_FILE
-    sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/melange?charset=utf8/g" $MELANGE_CONFIG_FILE
-    cd $MELANGE_DIR && PYTHONPATH=.:$PYTHONPATH python $MELANGE_DIR/bin/melange-manage --config-file=$MELANGE_CONFIG_FILE db_sync
-    screen_it m-svc "cd $MELANGE_DIR && PYTHONPATH=.:$PYTHONPATH python $MELANGE_DIR/bin/melange-server --config-file=$MELANGE_CONFIG_FILE"
-    echo "Waiting for melange to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:9898; do sleep 1; done"; then
-      echo "melange-server did not start"
-      exit 1
-    fi
-    melange mac_address_range create cidr=$M_MAC_RANGE
-fi
-
 
 # Nova
 # ----
@@ -1827,28 +1761,13 @@ add_nova_opt "fixed_range=$FIXED_RANGE"
 add_nova_opt "s3_host=$SERVICE_HOST"
 add_nova_opt "s3_port=$S3_SERVICE_PORT"
 if is_service_enabled quantum; then
-    if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
-        add_nova_opt "network_manager=nova.network.quantum.manager.QuantumManager"
-        add_nova_opt "quantum_connection_host=$Q_HOST"
-        add_nova_opt "quantum_connection_port=$Q_PORT"
-        add_nova_opt "quantum_use_dhcp=True"
-
-        if is_service_enabled melange; then
-            add_nova_opt "quantum_ipam_lib=nova.network.quantum.melange_ipam_lib"
-            add_nova_opt "use_melange_mac_generation=True"
-            add_nova_opt "melange_host=$M_HOST"
-            add_nova_opt "melange_port=$M_PORT"
-        fi
-
-    elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
-        add_nova_opt "network_api_class=nova.network.quantumv2.api.API"
-        add_nova_opt "quantum_admin_username=$Q_ADMIN_USERNAME"
-        add_nova_opt "quantum_admin_password=$SERVICE_PASSWORD"
-        add_nova_opt "quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
-        add_nova_opt "quantum_auth_strategy=$Q_AUTH_STRATEGY"
-        add_nova_opt "quantum_admin_tenant_name=$SERVICE_TENANT_NAME"
-        add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
-    fi
+    add_nova_opt "network_api_class=nova.network.quantumv2.api.API"
+    add_nova_opt "quantum_admin_username=$Q_ADMIN_USERNAME"
+    add_nova_opt "quantum_admin_password=$SERVICE_PASSWORD"
+    add_nova_opt "quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+    add_nova_opt "quantum_auth_strategy=$Q_AUTH_STRATEGY"
+    add_nova_opt "quantum_admin_tenant_name=$SERVICE_TENANT_NAME"
+    add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         NOVA_VIF_DRIVER="nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
@@ -2148,25 +2067,23 @@ fi
 
 # If we're using Quantum (i.e. q-svc is enabled), network creation has to
 # happen after we've started the Quantum service.
-if is_service_enabled mysql && is_service_enabled nova; then
-    if [[ "$NOVA_USE_QUANTUM_API" = "v1" ]]; then
-        # Create a small network
-        $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
+if is_service_enabled q-svc; then
+    TENANT_ID=$(keystone tenant-list | grep " demo " | get_field 1)
 
-        # Create some floating ips
-        $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+    # Create a small network
+    # Since quantum command is executed in admin context at this point,
+    # --tenant_id needs to be specified.
+    NET_ID=$(quantum net-create --tenant_id $TENANT_ID net1 | grep ' id ' | get_field 2)
+    quantum subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE
+elif is_service_enabled mysql && is_service_enabled nova; then
+    # Create a small network
+    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
 
-        # Create a second pool
-        $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
-    elif [[ "$NOVA_USE_QUANTUM_API" = "v2" ]]; then
-        TENANT_ID=$(keystone tenant-list | grep " demo " | get_field 1)
+    # Create some floating ips
+    $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
 
-        # Create a small network
-        # Since quantum command is executed in admin context at this point,
-        # --tenant_id needs to be specified.
-        NET_ID=$(quantum net-create --tenant_id $TENANT_ID net1 | grep ' id ' | get_field 2)
-        quantum subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE
-    fi
+    # Create a second pool
+    $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
 
 # Launching nova-compute should be as simple as running ``nova-compute`` but
