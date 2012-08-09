@@ -54,7 +54,12 @@ if is_service_enabled cinder n-vol; then
         echo "iSCSI target cleanup needed:"
         echo "$TARGETS"
     fi
-    stop_service tgt
+
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        stop_service tgt
+    else
+        stop_service tgtd
+    fi
 fi
 
 if [[ -n "$UNSTACK_ALL" ]]; then
