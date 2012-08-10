@@ -41,6 +41,10 @@ export OS_USERNAME=${OS_USERNAME:-demo}
 # or NOVA_PASSWORD.
 export OS_PASSWORD=${ADMIN_PASSWORD:-secrete}
 
+# Don't put the key into a keyring by default. Testing for development is much
+# easier with this off.
+export OS_NO_CACHE=${OS_NO_CACHE:-1}
+
 # Set api HOST_IP endpoint.  SERVICE_HOST may also be used to specify the endpoint,
 # which is convenient for some localrc configurations.
 HOST_IP=${HOST_IP:-127.0.0.1}
