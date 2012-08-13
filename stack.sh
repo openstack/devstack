@@ -1133,7 +1133,6 @@ if is_service_enabled quantum; then
         sudo sed -i -e "s/.*enable_tunneling = .*$/enable_tunneling = $OVS_ENABLE_TUNNELING/g" /$Q_PLUGIN_CONF_FILE
     fi
 
-    iniset /$Q_PLUGIN_CONF_FILE AGENT target_v2_api True
     Q_CONF_FILE=/etc/quantum/quantum.conf
     cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
 fi
@@ -1184,7 +1183,7 @@ if is_service_enabled q-agt; then
        # Start up the quantum <-> linuxbridge agent
        # set the default network interface
        QUANTUM_LB_PRIVATE_INTERFACE=${QUANTUM_LB_PRIVATE_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
-       sudo sed -i -e "s/^physical_interface = .*$/physical_interface = $QUANTUM_LB_PRIVATE_INTERFACE/g" /$Q_PLUGIN_CONF_FILE
+       iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings default:$QUANTUM_LB_PRIVATE_INTERFACE
        AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py"
     fi
 fi
