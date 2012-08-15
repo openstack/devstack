@@ -1746,6 +1746,7 @@ elif is_service_enabled n-vol; then
 
         # Setup the tgt configuration file
         if [[ ! -f /etc/tgt/conf.d/nova.conf ]]; then
+           sudo mkdir -p /etc/tgt/conf.d
            echo "include $NOVA_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/nova.conf
         fi
 
