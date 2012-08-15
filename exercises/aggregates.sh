@@ -7,14 +7,15 @@
 #  *  Updating Aggregate details
 #  *  Testing Aggregate metadata
 #  *  Testing Aggregate delete
-#  *  TODO(johngar) - test adding a host (idealy with two hosts)
+#  *  Testing General Aggregates (https://blueprints.launchpad.net/nova/+spec/general-host-aggregates)
+#  *  Testing add/remove hosts (with one host)
 
 echo "**************************************************"
 echo "Begin DevStack Exercise: $0"
 echo "**************************************************"
 
 # This script exits on an error so that errors don't compound and you see
-# only the first error that occured.
+# only the first error that occurred.
 set -o errexit
 
 # Print the commands being run so that we can see the command that triggers
@@ -47,6 +48,7 @@ OS_USERNAME=admin
 # ===================
 
 AGGREGATE_NAME=test_aggregate_$RANDOM
+AGGREGATE2_NAME=test_aggregate_$RANDOM
 AGGREGATE_A_ZONE=nova
 
 exit_if_aggregate_present() {
@@ -63,6 +65,7 @@ exit_if_aggregate_present() {
 exit_if_aggregate_present $AGGREGATE_NAME
 
 AGGREGATE_ID=`nova aggregate-create $AGGREGATE_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE_NAME " | get_field 1`
+AGGREGATE2_ID=`nova aggregate-create $AGGREGATE2_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE2_NAME " | get_field 1`
 
 # check aggregate created
 nova aggregate-list | grep -q " $AGGREGATE_NAME " || die "Aggregate $AGGREGATE_NAME not created"
@@ -120,13 +123,23 @@ nova aggregate-details $AGGREGATE_ID | grep {}
 # Test aggregate-add/remove-host
 # ==============================
 if [ "$VIRT_DRIVER" == "xenserver" ]; then
-    echo "TODO(johngarbutt) add tests for add/remove host from aggregate"
+    echo "TODO(johngarbutt) add tests for add/remove host from pool aggregate"
 fi
-
+HOST=`nova host-list | grep compute | get_field 1`
+# Make sure can add two aggregates to same host
+nova aggregate-add-host $AGGREGATE_ID $HOST
+nova aggregate-add-host $AGGREGATE2_ID $HOST
+if nova aggregate-add-host $AGGREGATE2_ID $HOST; then
+    echo "ERROR could add duplicate host to single aggregate"
+    exit -1
+fi
+nova aggregate-remove-host $AGGREGATE2_ID $HOST
+nova aggregate-remove-host $AGGREGATE_ID $HOST
 
 # Test aggregate-delete
 # =====================
 nova aggregate-delete $AGGREGATE_ID
+nova aggregate-delete $AGGREGATE2_ID
 exit_if_aggregate_present $AGGREGATE_NAME
 
 
