@@ -139,9 +139,9 @@ IFS="$(echo -e "\n\r")"
 FLAVORS=""
 for line in $FLAVOR_LINES; do
     if [ -z $DEFAULT_INSTANCE_TYPE ]; then
-        FLAVORS="$FLAVORS `echo $line | grep -v "^\(ID\|+--\)" | cut -d' ' -f2`"
+        FLAVORS="$FLAVORS `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
     else
-        FLAVORS="$FLAVORS `echo $line | grep -v "^\(ID\|+--\)" | grep "$DEFAULT_INSTANCE_TYPE" | cut -d' ' -f2`"
+        FLAVORS="$FLAVORS `echo $line | grep -v "^\(|\s*ID\|+--\)" | grep "$DEFAULT_INSTANCE_TYPE" | cut -d' ' -f2`"
     fi
 done
 IFS=" "
