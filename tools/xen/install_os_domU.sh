@@ -169,7 +169,7 @@ fi
 HOST_IP=${HOST_IP:-`ifconfig xenbr0 | grep "inet addr" | cut -d ":" -f2 | sed "s/ .*//"`}
 
 # Set up ip forwarding, but skip on xcp-xapi
-if [ -a /etc/sysconfig/network]; then
+if [ -a /etc/sysconfig/network ]; then
     if ! grep -q "FORWARD_IPV4=YES" /etc/sysconfig/network; then
       # FIXME: This doesn't work on reboot!
       echo "FORWARD_IPV4=YES" >> /etc/sysconfig/network
@@ -218,7 +218,7 @@ fi
 #
 
 GUEST_NAME=${GUEST_NAME:-"DevStackOSDomU"}
-TNAME="devstack_template_folsom_11.10"
+TNAME="devstack_template"
 SNAME_PREPARED="template_prepared"
 SNAME_FIRST_BOOT="before_first_boot"
 
@@ -242,19 +242,6 @@ if [ -z "$templateuuid" ]; then
     # Install Ubuntu over network
     #
 
-    # try to find ubuntu template
-    ubuntu_template_name="Ubuntu 11.10 for DevStack (64-bit)"
-    ubuntu_template=$(xe_min template-list name-label="$ubuntu_template_name")
-
-    # remove template, if we are in CLEAN_TEMPLATE mode
-    if [ -n "$ubuntu_template" ]; then
-        if $CLEAN_TEMPLATES; then
-            xe template-param-clear param-name=other-config uuid=$ubuntu_template
-            xe template-uninstall template-uuid=$ubuntu_template force=true
-            ubuntu_template=""
-        fi
-    fi
-
     # always update the preseed file, incase we have a newer one
     PRESEED_URL=${PRESEED_URL:-""}
     if [ -z "$PRESEED_URL" ]; then
@@ -272,13 +259,12 @@ if [ -z "$templateuuid" ]; then
         fi
     fi
 
-    if [ -z "$ubuntu_template" ]; then
-        $TOP_DIR/scripts/xenoneirictemplate.sh $PRESEED_URL
-    fi
+    # Update the template
+    $TOP_DIR/scripts/install_ubuntu_template.sh $PRESEED_URL
 
     # create a new VM with the given template
     # creating the correct VIFs and metadata
-    $TOP_DIR/scripts/install-os-vpx.sh -t "$ubuntu_template_name" -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -r $OSDOMU_MEM_MB -k "flat_network_bridge=${VM_BR}"
+    $TOP_DIR/scripts/install-os-vpx.sh -t "$UBUNTU_INST_TEMPLATE_NAME" -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -r $OSDOMU_MEM_MB -k "flat_network_bridge=${VM_BR}"
 
     # wait for install to finish
     wait_for_VM_to_halt
