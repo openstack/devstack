@@ -1528,7 +1528,7 @@ if is_service_enabled swift; then
     # which has some default username and password if you have
     # configured keystone it will checkout the directory.
     if is_service_enabled key; then
-        swift_auth_server+="authtoken keystone"
+        swift_auth_server+="authtoken keystoneauth"
     else
         swift_auth_server=tempauth
     fi
@@ -1558,23 +1558,20 @@ if is_service_enabled swift; then
 
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
 
-    cat <<EOF>>${SWIFT_CONFIG_PROXY_SERVER}
+    # Configure Keystone
+    sed -i '/^# \[filter:authtoken\]/,/^# \[filter:keystoneauth\]$/ s/^#[ \t]*//' ${SWIFT_CONFIG_PROXY_SERVER}
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_password $SERVICE_PASSWORD
 
-[filter:keystone]
-paste.filter_factory = keystone.middleware.swift_auth:filter_factory
-operator_roles = Member,admin
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles "Member, admin"
 
-[filter:authtoken]
-paste.filter_factory = keystone.middleware.auth_token:filter_factory
-auth_host = ${KEYSTONE_AUTH_HOST}
-auth_port = ${KEYSTONE_AUTH_PORT}
-auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
-auth_uri = ${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/
-admin_tenant_name = ${SERVICE_TENANT_NAME}
-admin_user = swift
-admin_password = ${SERVICE_PASSWORD}
-delay_auth_decision = 1
-EOF
     if is_service_enabled swift3;then
         cat <<EOF>>${SWIFT_CONFIG_PROXY_SERVER}
 # NOTE(chmou): s3token middleware is not updated yet to use only
