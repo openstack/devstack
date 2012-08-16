@@ -236,6 +236,30 @@ GetOSVersion() {
     export os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
 }
 
+# git update using reference as a branch.
+function git_update_branch() {
+
+    GIT_BRANCH=$1
+
+    git checkout -f origin/$GIT_BRANCH
+    # a local branch might not exist
+    git branch -D $GIT_BRANCH || true
+    git checkout -b $GIT_BRANCH
+}
+
+
+# git update using reference as a tag. Be careful editing source at that repo
+# as working copy will be in a detached mode
+function git_update_tag() {
+
+    GIT_TAG=$1
+
+    git tag -d $GIT_TAG
+    # fetching given tag only
+    git fetch origin tag $GIT_TAG
+    git checkout -f $GIT_TAG
+}
+
 
 # Translate the OS version values into common nomenclature
 # Sets ``DISTRO`` from the ``os_*`` values
@@ -267,16 +291,16 @@ function git_clone {
 
     GIT_REMOTE=$1
     GIT_DEST=$2
-    GIT_BRANCH=$3
+    GIT_REF=$3
 
-    if echo $GIT_BRANCH | egrep -q "^refs"; then
+    if echo $GIT_REF | egrep -q "^refs"; then
         # If our branch name is a gerrit style refs/changes/...
         if [[ ! -d $GIT_DEST ]]; then
             [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
             git clone $GIT_REMOTE $GIT_DEST
         fi
         cd $GIT_DEST
-        git fetch $GIT_REMOTE $GIT_BRANCH && git checkout FETCH_HEAD
+        git fetch $GIT_REMOTE $GIT_REF && git checkout FETCH_HEAD
     else
         # do a full clone only if the directory doesn't exist
         if [[ ! -d $GIT_DEST ]]; then
@@ -284,7 +308,7 @@ function git_clone {
             git clone $GIT_REMOTE $GIT_DEST
             cd $GIT_DEST
             # This checkout syntax works for both branches and tags
-            git checkout $GIT_BRANCH
+            git checkout $GIT_REF
         elif [[ "$RECLONE" == "yes" ]]; then
             # if it does exist then simulate what clone does if asked to RECLONE
             cd $GIT_DEST
@@ -295,10 +319,17 @@ function git_clone {
             # (due to the py files having older timestamps than our pyc, so python
             # thinks the pyc files are correct using them)
             find $GIT_DEST -name '*.pyc' -delete
-            git checkout -f origin/$GIT_BRANCH
-            # a local branch might not exist
-            git branch -D $GIT_BRANCH || true
-            git checkout -b $GIT_BRANCH
+
+            # handle GIT_REF accordingly to type (tag, branch)
+            if [[ -n "`git show-ref refs/tags/$GIT_REF`" ]]; then
+                git_update_tag $GIT_REF
+            elif [[ -n "`git show-ref refs/heads/$GIT_REF`" ]]; then
+                git_update_branch $GIT_REF
+            else
+                echo $GIT_REF is neither branch nor tag
+                exit 1
+            fi
+
         fi
     fi
 }
