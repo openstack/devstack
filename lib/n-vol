@@ -1,0 +1,118 @@
+# lib/n-vol
+# Install and start Nova volume service
+
+# Dependencies:
+# - functions
+# - KEYSTONE_AUTH_* must be defined
+# SERVICE_{TENANT_NAME|PASSWORD} must be defined
+
+# stack.sh
+# ---------
+# install_nvol
+# configure_nvol
+# init_nvol
+# start_nvol
+# stop_nvol
+# cleanup_nvol
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+
+# Defaults
+# --------
+
+# Name of the LVM volume group to use/create for iscsi volumes
+VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
+VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
+
+
+# cleanup_nvol() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_nvol() {
+    # kill instances (nova)
+    # delete image files (glance)
+    # This function intentionally left blank
+    :
+}
+
+# configure_nvol() - Set config files, create data dirs, etc
+function configure_nvol() {
+    # sudo python setup.py deploy
+    # iniset $XXX_CONF ...
+    # This function intentionally left blank
+    :
+}
+
+# init_nvol() - Initialize databases, etc.
+function init_nvol() {
+    # Configure a default volume group called '`stack-volumes`' for the volume
+    # service if it does not yet exist.  If you don't wish to use a file backed
+    # volume group, create your own volume group called ``stack-volumes`` before
+    # invoking ``stack.sh``.
+    #
+    # By default, the backing file is 5G in size, and is stored in ``/opt/stack/data``.
+
+    if ! sudo vgs $VOLUME_GROUP; then
+        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
+        # Only create if the file doesn't already exists
+        [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
+        DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
+        # Only create if the loopback device doesn't contain $VOLUME_GROUP
+        if ! sudo vgs $VOLUME_GROUP; then sudo vgcreate $VOLUME_GROUP $DEV; fi
+    fi
+
+    mkdir -p $NOVA_DIR/volumes
+
+    if sudo vgs $VOLUME_GROUP; then
+        if [[ "$os_PACKAGE" = "rpm" ]]; then
+            # RPM doesn't start the service
+            start_service tgtd
+        fi
+
+        # Remove nova iscsi targets
+        sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
+        # Clean out existing volumes
+        for lv in `sudo lvs --noheadings -o lv_name $VOLUME_GROUP`; do
+            # ``VOLUME_NAME_PREFIX`` prefixes the LVs we want
+            if [[ "${lv#$VOLUME_NAME_PREFIX}" != "$lv" ]]; then
+                sudo lvremove -f $VOLUME_GROUP/$lv
+            fi
+        done
+    fi
+}
+
+# install_nvol() - Collect source and prepare
+function install_nvol() {
+    # git clone xxx
+    # Install is handled when installing Nova
+    :
+}
+
+# start_nvol() - Start running processes, including screen
+function start_nvol() {
+    # Setup the tgt configuration file
+    if [[ ! -f /etc/tgt/conf.d/nova.conf ]]; then
+       sudo mkdir -p /etc/tgt/conf.d
+       echo "include $NOVA_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/nova.conf
+    fi
+
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        # tgt in oneiric doesn't restart properly if tgtd isn't running
+        # do it in two steps
+        sudo stop tgt || true
+        sudo start tgt
+    else
+        restart_service tgtd
+    fi
+
+    screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
+}
+
+# stop_nvol() - Stop running processes (non-screen)
+function stop_nvol() {
+    # FIXME(dtroyer): stop only the n-vol screen window?
+
+    stop_service tgt
+}
