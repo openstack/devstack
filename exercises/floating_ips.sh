@@ -200,12 +200,12 @@ nova floating-ip-delete $FLOATING_IP || die "Failure deleting floating IP $FLOAT
 # Delete second floating IP
 nova floating-ip-delete $TEST_FLOATING_IP || die "Failure deleting floating IP $TEST_FLOATING_IP"
 
-# shutdown the server
+# Shutdown the server
 nova delete $VM_UUID || die "Failure deleting instance $NAME"
 
-# make sure the VM shuts down within a reasonable time
-if ! timeout $TERMINATE_TIMEOUT sh -c "while nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
-    echo "server didn't shut down!"
+# Wait for termination
+if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
+    echo "Server $NAME not deleted"
     exit 1
 fi
 

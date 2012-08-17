@@ -43,15 +43,15 @@ DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 # Boot this image, use first AMI-format image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
 
+# Security group name
+SECGROUP=${SECGROUP:-euca_secgroup}
+
 
 # Launching a server
 # ==================
 
 # Find a machine image to boot
 IMAGE=`euca-describe-images | grep machine | grep ${DEFAULT_IMAGE_NAME} | cut -f2 | head -n1`
-
-# Define secgroup
-SECGROUP=euca_secgroup
 
 # Add a secgroup
 if ! euca-describe-groups | grep -q $SECGROUP; then
@@ -119,14 +119,13 @@ euca-terminate-instances $INSTANCE || \
     die "Failure terminating instance $INSTANCE"
 
 # Assure it has terminated within a reasonable time
-if ! timeout $TERMINATE_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
+if ! timeout $TERMINATE_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -q $INSTANCE; do sleep 1; done"; then
     echo "server didn't terminate within $TERMINATE_TIMEOUT seconds"
     exit 1
 fi
 
 # Delete group
-euca-delete-group $SECGROUP || \
-    die "Failure deleting security group $SECGROUP"
+euca-delete-group $SECGROUP || die "Failure deleting security group $SECGROUP"
 
 set +o xtrace
 echo "*********************************************************************"

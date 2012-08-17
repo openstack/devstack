@@ -49,6 +49,10 @@ DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
 # Default user
 DEFAULT_INSTANCE_USER=${DEFAULT_INSTANCE_USER:-cirros}
 
+# Security group name
+SECGROUP=${SECGROUP:-boot_secgroup}
+
+
 # Launching servers
 # =================
 
@@ -72,7 +76,6 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $INSTANCE_NAME; do sleep 1; 
 fi
 
 # Configure Security Groups
-SECGROUP=${SECGROUP:-test_secgroup}
 nova secgroup-delete $SECGROUP || true
 nova secgroup-create $SECGROUP "$SECGROUP description"
 nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
@@ -246,8 +249,8 @@ nova delete $INSTANCE_NAME || \
     die "Failure deleting instance $INSTANCE_NAME"
 
 # Wait for termination
-if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $INSTANCE_NAME; do sleep 1; done"; then
-    echo "server didn't terminate!"
+if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
+    echo "Server $NAME not deleted"
     exit 1
 fi
 
@@ -256,8 +259,7 @@ nova floating-ip-delete $FLOATING_IP || \
     die "Failure deleting floating IP $FLOATING_IP"
 
 # Delete a secgroup
-nova secgroup-delete $SECGROUP || \
-    die "Failure deleting security group $SECGROUP"
+nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
 
 set +o xtrace
 echo "*********************************************************************"

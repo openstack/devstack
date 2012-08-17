@@ -43,6 +43,9 @@ DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 # Boot this image, use first AMi image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
 
+# Security group name
+SECGROUP=${SECGROUP:-vol_secgroup}
+
 
 # Launching a server
 # ==================
@@ -61,6 +64,25 @@ glance image-list
 
 # Grab the id of the image to launch
 IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+
+# Security Groups
+# ---------------
+
+# List of secgroups:
+nova secgroup-list
+
+# Create a secgroup
+if ! nova secgroup-list | grep -q $SECGROUP; then
+    nova secgroup-create $SECGROUP "$SECGROUP description"
+    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova secgroup-list | grep -q $SECGROUP; do sleep 1; done"; then
+        echo "Security group not created"
+        exit 1
+    fi
+fi
+
+# Configure Security Group Rules
+nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
+nova secgroup-add-rule $SECGROUP tcp 22 22 0.0.0.0/0
 
 # determinine instance type
 # -------------------------
@@ -171,8 +193,17 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME; d
     exit 1
 fi
 
-# shutdown the server
-nova delete $NAME || die "Failure deleting instance $NAME"
+# Shutdown the server
+nova delete $VM_UUID || die "Failure deleting instance $NAME"
+
+# Wait for termination
+if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
+    echo "Server $NAME not deleted"
+    exit 1
+fi
+
+# Delete a secgroup
+nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
 
 set +o xtrace
 echo "*********************************************************************"
