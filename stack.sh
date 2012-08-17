@@ -1760,6 +1760,13 @@ elif is_service_enabled n-vol; then
     fi
 fi
 
+# Support entry points installation of console scripts
+if [ -d $NOVA_DIR/bin ] ; then
+    NOVA_BIN_DIR=$NOVA_DIR/bin
+else
+    NOVA_BIN_DIR=/usr/local/bin
+fi
+
 NOVA_CONF=nova.conf
 function add_nova_opt {
     echo "$1" >> $NOVA_CONF_DIR/$NOVA_CONF
@@ -1935,7 +1942,7 @@ if is_service_enabled mysql && is_service_enabled nova; then
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE nova CHARACTER SET latin1;'
 
     # (re)create nova database
-    $NOVA_DIR/bin/nova-manage db sync
+    $NOVA_BIN_DIR/nova-manage db sync
 fi
 
 
@@ -2077,7 +2084,7 @@ fi
 # Launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
     add_nova_opt "enabled_apis=$NOVA_ENABLED_APIS"
-    screen_it n-api "cd $NOVA_DIR && $NOVA_DIR/bin/nova-api"
+    screen_it n-api "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api"
     echo "Waiting for nova-api to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
       echo "nova-api did not start"
@@ -2097,13 +2104,13 @@ if is_service_enabled q-svc; then
     quantum subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE
 elif is_service_enabled mysql && is_service_enabled nova; then
     # Create a small network
-    $NOVA_DIR/bin/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
+    $NOVA_BIN_DIR/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
 
     # Create some floating ips
-    $NOVA_DIR/bin/nova-manage floating create $FLOATING_RANGE
+    $NOVA_BIN_DIR/nova-manage floating create $FLOATING_RANGE
 
     # Create a second pool
-    $NOVA_DIR/bin/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
+    $NOVA_BIN_DIR/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
 
 # Launching nova-compute should be as simple as running ``nova-compute`` but
@@ -2112,11 +2119,11 @@ fi
 # within the context of our original shell (so our groups won't be updated).
 # Use 'sg' to execute nova-compute as a member of the libvirtd group.
 # We don't check for is_service_enable as screen_it does it for us
-screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_DIR/bin/nova-compute"
-screen_it n-crt "cd $NOVA_DIR && $NOVA_DIR/bin/nova-cert"
-screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
-screen_it n-net "cd $NOVA_DIR && $NOVA_DIR/bin/nova-network"
-screen_it n-sch "cd $NOVA_DIR && $NOVA_DIR/bin/nova-scheduler"
+screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_BIN_DIR/nova-compute"
+screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
+screen_it n-vol "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-volume"
+screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network"
+screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler"
 screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
 screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
@@ -2133,7 +2140,7 @@ screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF
 # Starting the nova-objectstore only if swift3 service is not enabled.
 # Swift will act as s3 objectstore.
 is_service_enabled swift3 || \
-    screen_it n-obj "cd $NOVA_DIR && $NOVA_DIR/bin/nova-objectstore"
+    screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore"
 
 
 # Install Images

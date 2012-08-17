@@ -25,6 +25,11 @@ set -o xtrace
 
 # set up default directories
 CINDER_DIR=$DEST/cinder
+if [ -d $CINDER_DIR/bin ] ; then
+    CINDER_BIN_DIR=$CINDER_DIR/bin
+else
+    CINDER_BIN_DIR=/usr/local/bin
+fi
 CINDERCLIENT_DIR=$DEST/python-cinderclient
 CINDER_CONF_DIR=/etc/cinder
 CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
@@ -134,7 +139,7 @@ function init_cinder() {
         mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE cinder;'
 
         # (re)create cinder database
-        $CINDER_DIR/bin/cinder-manage db sync
+        $CINDER_BIN_DIR/cinder-manage db sync
     fi
 
     if is_service_enabled c-vol; then
@@ -198,9 +203,9 @@ function start_cinder() {
         fi
     fi
 
-    screen_it c-api "cd $CINDER_DIR && $CINDER_DIR/bin/cinder-api --config-file $CINDER_CONF"
-    screen_it c-vol "cd $CINDER_DIR && $CINDER_DIR/bin/cinder-volume --config-file $CINDER_CONF"
-    screen_it c-sch "cd $CINDER_DIR && $CINDER_DIR/bin/cinder-scheduler --config-file $CINDER_CONF"
+    screen_it c-api "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
+    screen_it c-vol "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
+    screen_it c-sch "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
 }
 
 # stop_cinder() - Stop running processes (non-screen)

@@ -75,7 +75,10 @@ OVS_HOSTS=${DEFAULT_OVS_HOSTS:-"localhost"}
 #------------------------------------------------------------------------------
 # Nova settings.
 #------------------------------------------------------------------------------
-NOVA_MANAGE=/opt/stack/nova/bin/nova-manage
+if [ -f /opt/stack/nova/bin/nova-manage ] ; then
+    NOVA_MANAGE=/opt/stack/nova/bin/nova-manage
+else
+    NOVA_MANAGE=/usr/local/bin/nova-manage
 NOVA=/usr/local/bin/nova
 NOVA_CONF=/etc/nova/nova.conf
 

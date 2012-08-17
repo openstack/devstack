@@ -23,6 +23,12 @@ set -o xtrace
 
 # set up default directories
 CEILOMETER_DIR=$DEST/ceilometer
+# Support potential entry-points console scripts
+if [ -d $CEILOMETER_DIR/bin ] ; then
+    CEILOMETER_BIN_DIR=$CEILOMETER_DIR/bin
+else
+    CEILOMETER_BIN_DIR=/usr/local/bin
+fi
 CEILOMETER_CONF_DIR=/etc/ceilometer
 CEILOMETER_AGENT_CONF=$CEILOMETER_CONF_DIR/ceilometer-agent.conf
 CEILOMETER_COLLECTOR_CONF=$CEILOMETER_CONF_DIR/ceilometer-collector.conf
@@ -54,7 +60,7 @@ function install_ceilometer() {
 
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer() {
-    screen_it ceilometer-acompute "cd $CEILOMETER_DIR && $CEILOMETER_DIR/bin/ceilometer-agent-compute --config-file $CEILOMETER_AGENT_CONF"
-    screen_it ceilometer-acentral "cd $CEILOMETER_DIR && $CEILOMETER_DIR/bin/ceilometer-agent-central --config-file $CEILOMETER_AGENT_CONF"
-    screen_it ceilometer-collector "cd $CEILOMETER_DIR && $CEILOMETER_DIR/bin/ceilometer-collector --config-file $CEILOMETER_COLLECTOR_CONF"
+    screen_it ceilometer-acompute "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_AGENT_CONF"
+    screen_it ceilometer-acentral "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_AGENT_CONF"
+    screen_it ceilometer-collector "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-collector --config-file $CEILOMETER_COLLECTOR_CONF"
 }
