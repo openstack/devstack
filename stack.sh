@@ -2174,6 +2174,8 @@ if is_service_enabled g-reg; then
         RAMDISK=""
         DISK_FORMAT=""
         CONTAINER_FORMAT=""
+        UNPACK=""
+        
         case "$IMAGE_FNAME" in
             *.tar.gz|*.tgz)
                 # Extract ami and aki files
@@ -2205,6 +2207,7 @@ if is_service_enabled g-reg; then
                 IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
                 DISK_FORMAT=raw
                 CONTAINER_FORMAT=bare
+                UNPACK=zcat
                 ;;
             *.qcow2)
                 IMAGE="$FILES/${IMAGE_FNAME}"
@@ -2216,7 +2219,11 @@ if is_service_enabled g-reg; then
         esac
 
         if [ "$CONTAINER_FORMAT" = "bare" ]; then
-            glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
+            if [ "$UNPACK" = "zcat" ]; then
+                glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT <  <(zcat --force "${IMAGE}")
+            else
+                glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < ${IMAGE}
+            fi
         else
             # Use glance client to add the kernel the root filesystem.
             # We parse the results of the first upload to get the glance ID of the
