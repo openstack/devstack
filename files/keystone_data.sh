@@ -10,6 +10,7 @@
 # service              quantum   admin        # if enabled
 # service              swift     admin        # if enabled
 # service              cinder    admin        # if enabled
+# service              heat      admin        # if enabled
 # demo                 admin     admin
 # demo                 demo      Member, anotherrole
 # invisible_to_admin   demo      Member
@@ -151,6 +152,29 @@ if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
             --publicurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
             --adminurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
             --internalurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s"
+    fi
+fi
+
+# Heat
+if [[ "$ENABLED_SERVICES" =~ "heat" ]]; then
+    HEAT_USER=$(get_id keystone user-create --name=heat \
+                                              --pass="$SERVICE_PASSWORD" \
+                                              --tenant_id $SERVICE_TENANT \
+                                              --email=heat@example.com)
+    keystone user-role-add --tenant_id $SERVICE_TENANT \
+                           --user_id $HEAT_USER \
+                           --role_id $ADMIN_ROLE
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        HEAT_SERVICE=$(get_id keystone service-create \
+            --name=heat \
+            --type=orchestration \
+            --description="Heat Service")
+        keystone endpoint-create \
+            --region RegionOne \
+            --service_id $HEAT_SERVICE \
+            --publicurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1" \
+            --adminurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1" \
+            --internalurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1"
     fi
 fi
 
@@ -296,3 +320,4 @@ if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
             --internalurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s"
     fi
 fi
+

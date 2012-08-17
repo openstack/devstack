@@ -2,7 +2,7 @@
 
 # ``stack.sh`` is an opinionated OpenStack developer installation.  It
 # installs and configures various combinations of **Glance**, **Horizon**,
-# **Keystone**, **Nova**, **Quantum** and **Swift**
+# **Keystone**, **Nova**, **Quantum**, **Heat** and **Swift**
 
 # This script allows you to specify configuration options of what git
 # repositories to use, enabled services, network configuration and various
@@ -241,6 +241,7 @@ sudo chown `whoami` $DATA_DIR
 # Get project function libraries
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/ceilometer
+source $TOP_DIR/lib/heat
 
 # Set the destination directories for openstack projects
 NOVA_DIR=$DEST/nova
@@ -787,6 +788,9 @@ if is_service_enabled quantum; then
     # quantum
     git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 fi
+if is_service_enabled heat; then
+    install_heat
+fi
 if is_service_enabled cinder; then
     install_cinder
 fi
@@ -826,6 +830,9 @@ fi
 if is_service_enabled quantum; then
     setup_develop $QUANTUM_CLIENT_DIR
     setup_develop $QUANTUM_DIR
+fi
+if is_service_enabled heat; then
+    configure_heat
 fi
 if is_service_enabled cinder; then
     configure_cinder
@@ -1945,6 +1952,11 @@ if is_service_enabled mysql && is_service_enabled nova; then
     $NOVA_BIN_DIR/nova-manage db sync
 fi
 
+# Heat
+# ------
+if is_service_enabled heat; then
+    init_heat
+fi
 
 # Launch Services
 # ===============
@@ -2142,6 +2154,10 @@ screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF
 is_service_enabled swift3 || \
     screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore"
 
+# launch heat engine, api and metadata
+if is_service_enabled heat; then
+    start_heat
+fi
 
 # Install Images
 # ==============
