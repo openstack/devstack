@@ -1,0 +1,60 @@
+# lib/ceilometer
+# Install and start Ceilometer service
+
+# Dependencies:
+# - functions
+
+# stack.sh
+# ---------
+# install_XXX
+# configure_XXX
+# init_XXX
+# start_XXX
+# stop_XXX
+# cleanup_XXX
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+
+# Defaults
+# --------
+
+# set up default directories
+CEILOMETER_DIR=$DEST/ceilometer
+CEILOMETER_CONF_DIR=/etc/ceilometer
+CEILOMETER_AGENT_CONF=$CEILOMETER_CONF_DIR/ceilometer-agent.conf
+CEILOMETER_COLLECTOR_CONF=$CEILOMETER_CONF_DIR/ceilometer-collector.conf
+
+# cleanup_ceilometer() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_ceilometer() {
+    # This function intentionally left blank
+    :
+}
+
+# configure_ceilometer() - Set config files, create data dirs, etc
+function configure_ceilometer() {
+    setup_develop $CEILOMETER_DIR
+    if [ ! -d $CEILOMETER_CONF_DIR ]; then
+        sudo mkdir -m 755 -p $CEILOMETER_CONF_DIR
+    fi
+    sudo chown `whoami` $CEILOMETER_CONF_DIR
+
+    # ceilometer confs are copy of /etc/nova/nova.conf which must exist first
+    grep -v format_string $NOVA_CONF_DIR/$NOVA_CONF > $CEILOMETER_AGENT_CONF
+    grep -v format_string $NOVA_CONF_DIR/$NOVA_CONF > $CEILOMETER_COLLECTOR_CONF
+}
+
+# install_ceilometer() - Collect source and prepare
+function install_ceilometer() {
+    git_clone $CEILOMETER_REPO $CEILOMETER_DIR $CEILOMETER_BRANCH
+}
+
+# start_ceilometer() - Start running processes, including screen
+function start_ceilometer() {
+    screen_it ceilometer-acompute "cd $CEILOMETER_DIR && $CEILOMETER_DIR/bin/ceilometer-agent-compute --config-file $CEILOMETER_AGENT_CONF"
+    screen_it ceilometer-acentral "cd $CEILOMETER_DIR && $CEILOMETER_DIR/bin/ceilometer-agent-central --config-file $CEILOMETER_AGENT_CONF"
+    screen_it ceilometer-collector "cd $CEILOMETER_DIR && $CEILOMETER_DIR/bin/ceilometer-collector --config-file $CEILOMETER_COLLECTOR_CONF"
+}

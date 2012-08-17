@@ -24,6 +24,10 @@ NOVA_ENABLED_APIS=ec2,osapi_compute,osapi_volume,metadata
 # Another option is http://review.openstack.org/p
 GIT_BASE=https://github.com
 
+# metering service
+CEILOMETER_REPO=https://github.com/stackforge/ceilometer.git
+CEILOMETER_BRANCH=master
+
 # volume service
 CINDER_REPO=${GIT_BASE}/openstack/cinder
 CINDER_BRANCH=master
