@@ -111,6 +111,7 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT sql_connection $BASE_SQL_CONN/cinder?charset=utf8
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT root_helper "sudo ${CINDER_ROOTWRAP}"
+    iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.openstack.volume.contrib.standard_extensions
 
     if is_service_enabled qpid ; then
         iniset $CINDER_CONF DEFAULT rpc_backend cinder.openstack.common.rpc.impl_qpid
