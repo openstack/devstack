@@ -269,7 +269,8 @@ Q_HOST=${Q_HOST:-localhost}
 Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
 # Default auth strategy
 Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
-
+# Use namespace or not
+Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
 
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
@@ -1204,6 +1205,7 @@ if is_service_enabled q-dhcp; then
     iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
     # Set debug
     iniset $Q_DHCP_CONF_FILE DEFAULT debug True
+    iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
 
     # Update database
     iniset $Q_DHCP_CONF_FILE DEFAULT db_connection "mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8"
