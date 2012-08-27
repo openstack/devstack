@@ -1135,14 +1135,19 @@ if is_service_enabled quantum; then
     sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8/g" /$Q_PLUGIN_CONF_FILE
 
     OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-True}
-    if [[ "$Q_PLUGIN" = "openvswitch" && $OVS_ENABLE_TUNNELING = "True" ]]; then
+    if [[ "$Q_PLUGIN" = "openvswitch" && "$OVS_ENABLE_TUNNELING" = "True" ]]; then
         OVS_VERSION=`ovs-vsctl --version | head -n 1 | awk '{print $4;}'`
         if [ $OVS_VERSION \< "1.4" ] && ! is_service_enabled q-svc ; then
             echo "You are running OVS version $OVS_VERSION."
             echo "OVS 1.4+ is required for tunneling between multiple hosts."
             exit 1
         fi
-        sudo sed -i -e "s/.*enable_tunneling = .*$/enable_tunneling = $OVS_ENABLE_TUNNELING/g" /$Q_PLUGIN_CONF_FILE
+        if [[ "$OVS_DEFAULT_BRIDGE" = "" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS network_vlan_ranges ""
+        else
+            iniset /$Q_PLUGIN_CONF_FILE OVS network_vlan_ranges default
+        fi
+        iniset /$Q_PLUGIN_CONF_FILE OVS tunnel_id_ranges 1:1000
     fi
 
     Q_CONF_FILE=/etc/quantum/quantum.conf
@@ -1189,7 +1194,19 @@ if is_service_enabled q-agt; then
         sudo ovs-vsctl --no-wait -- --if-exists del-br $OVS_BRIDGE
         sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
         sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
-        sudo sed -i -e "s/.*local_ip = .*/local_ip = $HOST_IP/g" /$Q_PLUGIN_CONF_FILE
+        if [[ "$OVS_ENABLE_TUNNELING" == "True" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS local_ip $HOST_IP
+        else
+            # Need bridge if not tunneling
+            OVS_DEFAULT_BRIDGE=${OVS_DEFAULT_BRIDGE:-br-$GUEST_INTERFACE_DEFAULT}
+        fi
+        if [[ "$OVS_DEFAULT_BRIDGE" = "" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings ""
+        else
+            # Configure bridge manually with physical interface as port for multi-node
+            sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_DEFAULT_BRIDGE
+            iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings default:$OVS_DEFAULT_BRIDGE
+        fi
         AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
        # Start up the quantum <-> linuxbridge agent
