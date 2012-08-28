@@ -6,7 +6,7 @@
 # mysql and rabbit are left running as OpenStack code refreshes
 # do not require them to be restarted.
 #
-# Stop all processes by setting UNSTACK_ALL or specifying ``--all``
+# Stop all processes by setting ``UNSTACK_ALL`` or specifying ``--all``
 # on the command line
 
 # Keep track of the current devstack directory.
