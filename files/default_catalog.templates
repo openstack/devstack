@@ -34,3 +34,8 @@ catalog.RegionOne.image.publicURL = http://%SERVICE_HOST%:9292
 catalog.RegionOne.image.adminURL = http://%SERVICE_HOST%:9292
 catalog.RegionOne.image.internalURL = http://%SERVICE_HOST%:9292
 catalog.RegionOne.image.name = Image Service
+
+catalog.RegionOne.heat.publicURL = http://%SERVICE_HOST%:8000/v1
+catalog.RegionOne.heat.adminURL = http://%SERVICE_HOST%:8000/v1
+catalog.RegionOne.heat.internalURL = http://%SERVICE_HOST%:8000/v1
+catalog.RegionOne.heat.name = Heat Service

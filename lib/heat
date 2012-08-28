@@ -1,0 +1,156 @@
+# lib/heat
+# Install and start Heat service
+# To enable, add the following to localrc
+# ENABLED_SERVICES+=,heat,h-api,h-eng,h-meta
+
+# Dependencies:
+# - functions
+
+# stack.sh
+# ---------
+# install_XXX
+# configure_XXX
+# init_XXX
+# start_XXX
+# stop_XXX
+# cleanup_XXX
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+
+# Defaults
+# --------
+HEAT_DIR=$DEST/heat
+
+# set up default directories
+
+# cleanup_heat() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_heat() {
+    # This function intentionally left blank
+    :
+}
+
+# configure_heat() - Set config files, create data dirs, etc
+function configure_heat() {
+    setup_develop $HEAT_DIR
+
+    HEAT_CONF_DIR=/etc/heat
+    if [[ ! -d $HEAT_CONF_DIR ]]; then
+        sudo mkdir -p $HEAT_CONF_DIR
+    fi
+    sudo chown `whoami` $HEAT_CONF_DIR
+
+    HEAT_API_HOST=${HEAT_API_HOST:-$SERVICE_HOST}
+    HEAT_API_PORT=${HEAT_API_PORT:-8000}
+    HEAT_ENGINE_HOST=${HEAT_ENGINE_HOST:-$SERVICE_HOST}
+    HEAT_ENGINE_PORT=${HEAT_ENGINE_PORT:-8001}
+    HEAT_METADATA_HOST=${HEAT_METADATA_HOST:-$SERVICE_HOST}
+    HEAT_METADATA_PORT=${HEAT_METADATA_PORT:-8002}
+
+    HEAT_API_CONF=$HEAT_CONF_DIR/heat-api.conf
+    cp $HEAT_DIR/etc/heat-api.conf $HEAT_API_CONF
+    iniset $HEAT_API_CONF DEFAULT debug True
+    inicomment $HEAT_API_CONF DEFAULT log_file
+    iniset $HEAT_API_CONF DEFAULT use_syslog $SYSLOG
+    iniset $HEAT_API_CONF DEFAULT bind_host $HEAT_API_HOST
+    iniset $HEAT_API_CONF DEFAULT bind_port $HEAT_API_PORT
+
+    if is_service_enabled rabbit; then
+        iniset $HEAT_API_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_kombu
+        iniset $HEAT_API_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $HEAT_API_CONF DEFAULT rabbit_host $RABBIT_HOST
+    elif is_service_enabled qpid; then
+        iniset $HEAT_API_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_qpid
+    fi
+
+    HEAT_API_PASTE_INI=$HEAT_CONF_DIR/heat-api-paste.ini
+    cp $HEAT_DIR/etc/heat-api-paste.ini $HEAT_API_PASTE_INI
+    iniset $HEAT_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $HEAT_API_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $HEAT_API_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $HEAT_API_PASTE_INI filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $HEAT_API_PASTE_INI filter:authtoken admin_user heat
+    iniset $HEAT_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
+    iniset $HEAT_API_PASTE_INI filter:ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_API_PASTE_INI filter:ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
+
+    HEAT_ENGINE_CONF=$HEAT_CONF_DIR/heat-engine.conf
+    cp $HEAT_DIR/etc/heat-engine.conf $HEAT_ENGINE_CONF
+    iniset $HEAT_ENGINE_CONF DEFAULT debug True
+    inicomment $HEAT_ENGINE_CONF DEFAULT log_file
+    iniset $HEAT_ENGINE_CONF DEFAULT use_syslog $SYSLOG
+    iniset $HEAT_ENGINE_CONF DEFAULT bind_host $HEAT_ENGINE_HOST
+    iniset $HEAT_ENGINE_CONF DEFAULT bind_port $HEAT_ENGINE_PORT
+    iniset $HEAT_ENGINE_CONF DEFAULT sql_connection $BASE_SQL_CONN/heat?charset=utf8
+    iniset $HEAT_ENGINE_CONF DEFAULT auth_encryption_key `hexdump -n 16 -v -e '/1 "%02x"' /dev/random`
+
+    if is_service_enabled rabbit; then
+        iniset $HEAT_ENGINE_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_kombu
+        iniset $HEAT_ENGINE_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $HEAT_ENGINE_CONF DEFAULT rabbit_host $RABBIT_HOST
+    elif is_service_enabled qpid; then
+        iniset $HEAT_ENGINE_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_qpid
+    fi
+
+    HEAT_ENGINE_PASTE_INI=$HEAT_CONF_DIR/heat-engine-paste.ini
+    cp $HEAT_DIR/etc/heat-engine-paste.ini $HEAT_ENGINE_PASTE_INI
+    iniset $HEAT_ENGINE_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $HEAT_ENGINE_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $HEAT_ENGINE_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $HEAT_ENGINE_PASTE_INI filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_ENGINE_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $HEAT_ENGINE_PASTE_INI filter:authtoken admin_user heat
+    iniset $HEAT_ENGINE_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
+
+    HEAT_METADATA_CONF=$HEAT_CONF_DIR/heat-metadata.conf
+    cp $HEAT_DIR/etc/heat-metadata.conf $HEAT_METADATA_CONF
+    iniset $HEAT_METADATA_CONF DEFAULT debug True
+    inicomment $HEAT_METADATA_CONF DEFAULT log_file
+    iniset $HEAT_METADATA_CONF DEFAULT use_syslog $SYSLOG
+    iniset $HEAT_METADATA_CONF DEFAULT bind_host $HEAT_METADATA_HOST
+    iniset $HEAT_METADATA_CONF DEFAULT bind_port $HEAT_METADATA_PORT
+
+    if is_service_enabled rabbit; then
+        iniset $HEAT_METADATA_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_kombu
+        iniset $HEAT_METADATA_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $HEAT_METADATA_CONF DEFAULT rabbit_host $RABBIT_HOST
+    elif is_service_enabled qpid; then
+        iniset $HEAT_METADATA_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_qpid
+    fi
+
+    HEAT_METADATA_PASTE_INI=$HEAT_CONF_DIR/heat-metadata-paste.ini
+    cp $HEAT_DIR/etc/heat-metadata-paste.ini $HEAT_METADATA_PASTE_INI
+
+}
+
+# init_heat() - Initialize database
+function init_heat() {
+
+    # (re)create heat database
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS heat;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE heat CHARACTER SET utf8;'
+
+    $HEAT_DIR/bin/heat-db-setup $os_PACKAGE -r $MYSQL_PASSWORD
+}
+
+# install_heat() - Collect source and prepare
+function install_heat() {
+    git_clone $HEAT_REPO $HEAT_DIR $HEAT_BRANCH
+}
+
+# start_heat() - Start running processes, including screen
+function start_heat() {
+    screen_it h-eng "cd $HEAT_DIR; bin/heat-engine --config-file=$HEAT_CONF_DIR/heat-engine.conf"
+    screen_it h-api "cd $HEAT_DIR; bin/heat-api --config-dir=$HEAT_CONF_DIR/heat-api.conf"
+    screen_it h-meta "cd $HEAT_DIR; bin/heat-metadata --config-dir=$HEAT_CONF_DIR/heat-metadata.conf"
+}
+
+# stop_heat() - Stop running processes (non-screen)
+function stop_heat() {
+    # This function intentionally left blank
+    :
+}
