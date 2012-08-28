@@ -1,0 +1,16 @@
+iptables
+mysql #NOPRIME
+sudo
+python-paste
+python-routes
+python-netaddr
+python-pastedeploy
+python-greenlet
+python-kombu
+python-eventlet
+python-sqlalchemy
+python-mysqldb
+python-pyudev
+python-qpid # dist:precise
+dnsmasq-base
+dnsmasq-utils # for dhcp_release only available in dist:oneiric,precise,quantal
