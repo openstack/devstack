@@ -1,0 +1,77 @@
+# lib/template
+# Functions to control the configuration and operation of the XXXX service
+# <do not include this template file in ``stack.sh``!>
+
+# Dependencies:
+# ``functions`` file
+# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# <list other global vars that are assumed to be defined>
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_XXXX
+# configure_XXXX
+# init_XXXX
+# start_XXXX
+# stop_XXXX
+# cleanup_XXXX
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+
+# Defaults
+# --------
+
+# <define global variables here that belong to this project>
+
+# Set up default directories
+XXXX_DIR=$DEST/XXXX
+XXX_CONF_DIR=/etc/XXXX
+
+
+# Entry Points
+# ------------
+
+# cleanup_XXXX() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_XXXX() {
+    # kill instances (nova)
+    # delete image files (glance)
+    # This function intentionally left blank
+    :
+}
+
+# configure_XXXX() - Set config files, create data dirs, etc
+function configure_XXXX() {
+    # sudo python setup.py deploy
+    # iniset $XXXX_CONF ...
+    # This function intentionally left blank
+    :
+}
+
+# init_XXXX() - Initialize databases, etc.
+function init_XXXX() {
+    # clean up from previous (possibly aborted) runs
+    # create required data files
+    :
+}
+
+# install_XXXX() - Collect source and prepare
+function install_XXXX() {
+    # git clone xxx
+    :
+}
+
+# start_XXXX() - Start running processes, including screen
+function start_XXXX()
+    # screen_it XXXX "cd $XXXX_DIR && $XXXX_DIR/bin/XXXX-bin"
+    :
+}
+
+# stop_XXXX() - Stop running processes (non-screen)
+function stop_XXXX() {
+    # FIXME(dtroyer): stop only our screen screen window?
+    :
+}

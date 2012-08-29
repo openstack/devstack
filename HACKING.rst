@@ -53,9 +53,23 @@ configuration of the user environment::
     source $TOP_DIR/openrc
 
 ``stack.sh`` is a rather large monolithic script that flows through from beginning
-to end.  There is a proposal to segment it to put the OpenStack projects
-into their own sub-scripts to better document the projects as a unit rather than
-have it scattered throughout ``stack.sh``.  Someday.
+to end.  The process of breaking it down into project-level sub-scripts has begun
+with the introduction of ``lib/cinder`` and ``lib/ceilometer``.
+
+These library sub-scripts have a number of fixed entry points, some of which may
+just be stubs.  These entry points will be called by ``stack.sh`` in the
+following order::
+
+    install_XXXX
+    configure_XXXX
+    init_XXXX
+    start_XXXX
+    stop_XXXX
+    cleanup_XXXX
+
+There is a sub-script template in ``lib/templates`` to be used in creating new
+service sub-scripts.  The comments in ``<>`` are meta comments describing
+how to use the template and should be removed.
 
 
 Documentation
