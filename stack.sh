@@ -1055,16 +1055,13 @@ if is_service_enabled g-reg; then
     iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $BASE_SQL_CONN/glance?charset=utf8
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
-
-    GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
-    cp $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
-    iniset $GLANCE_REGISTRY_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $GLANCE_REGISTRY_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $GLANCE_REGISTRY_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $GLANCE_REGISTRY_PASTE_INI filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
-    iniset $GLANCE_REGISTRY_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $GLANCE_REGISTRY_PASTE_INI filter:authtoken admin_user glance
-    iniset $GLANCE_REGISTRY_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_user glance
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
 
     GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
@@ -1074,6 +1071,13 @@ if is_service_enabled g-reg; then
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_API_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
     iniset $GLANCE_API_CONF paste_deploy flavor keystone
+    iniset $GLANCE_API_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $GLANCE_API_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $GLANCE_API_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $GLANCE_API_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset $GLANCE_API_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $GLANCE_API_CONF keystone_authtoken admin_user glance
+    iniset $GLANCE_API_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
 
     # Store the images in swift if enabled.
     if is_service_enabled swift; then
@@ -1084,15 +1088,11 @@ if is_service_enabled g-reg; then
         iniset $GLANCE_API_CONF DEFAULT swift_store_create_container_on_put True
     fi
 
+    GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
+    cp $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
+
     GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
     cp $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
-    iniset $GLANCE_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $GLANCE_API_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $GLANCE_API_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $GLANCE_API_PASTE_INI filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
-    iniset $GLANCE_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $GLANCE_API_PASTE_INI filter:authtoken admin_user glance
-    iniset $GLANCE_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
 
     GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
     cp $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
