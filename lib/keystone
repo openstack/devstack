@@ -1,0 +1,172 @@
+# lib/keystone
+# Functions to control the configuration and operation of **Keystone**
+
+# Dependencies:
+# ``functions`` file
+# ``BASE_SQL_CONN``
+# ``SERVICE_HOST``
+# ``SERVICE_TOKEN``
+# ``S3_SERVICE_PORT`` (template backend only)
+
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_keystone
+# configure_keystone
+# init_keystone
+# start_keystone
+# stop_keystone
+# cleanup_keystone
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
+
+# Defaults
+# --------
+
+# <define global variables here that belong to this project>
+
+# Set up default directories
+KEYSTONE_DIR=$DEST/keystone
+KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
+KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
+
+KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
+
+# Select the backend for Keystopne's service catalog
+KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-template}
+KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
+
+# Set Keystone interface configuration
+KEYSTONE_API_PORT=${KEYSTONE_API_PORT:-5000}
+KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
+KEYSTONE_AUTH_PORT=${KEYSTONE_AUTH_PORT:-35357}
+KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-http}
+KEYSTONE_SERVICE_HOST=${KEYSTONE_SERVICE_HOST:-$SERVICE_HOST}
+KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
+KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-http}
+
+
+# Entry Points
+# ------------
+
+# cleanup_keystone() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_keystone() {
+    # kill instances (nova)
+    # delete image files (glance)
+    # This function intentionally left blank
+    :
+}
+
+# configure_keystoneclient() - Set config files, create data dirs, etc
+function configure_keystoneclient() {
+    setup_develop $KEYSTONECLIENT_DIR
+}
+
+# configure_keystone() - Set config files, create data dirs, etc
+function configure_keystone() {
+    setup_develop $KEYSTONE_DIR
+
+    if [[ ! -d $KEYSTONE_CONF_DIR ]]; then
+        sudo mkdir -p $KEYSTONE_CONF_DIR
+        sudo chown `whoami` $KEYSTONE_CONF_DIR
+    fi
+
+    if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
+        cp -p $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
+        cp -p $KEYSTONE_DIR/etc/policy.json $KEYSTONE_CONF_DIR
+    fi
+
+    # Rewrite stock ``keystone.conf``
+    iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
+    iniset $KEYSTONE_CONF sql connection "$BASE_SQL_CONN/keystone?charset=utf8"
+    iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
+    sed -e "
+        /^pipeline.*ec2_extension crud_/s|ec2_extension crud_extension|ec2_extension s3_extension crud_extension|;
+    " -i $KEYSTONE_CONF
+
+    # Append the S3 bits
+    iniset $KEYSTONE_CONF filter:s3_extension paste.filter_factory "keystone.contrib.s3:S3Extension.factory"
+
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
+        # Configure ``keystone.conf`` to use sql
+        iniset $KEYSTONE_CONF catalog driver keystone.catalog.backends.sql.Catalog
+        inicomment $KEYSTONE_CONF catalog template_file
+    else
+        cp -p $FILES/default_catalog.templates $KEYSTONE_CATALOG
+
+        # Add swift endpoints to service catalog if swift is enabled
+        if is_service_enabled swift; then
+            echo "catalog.RegionOne.object_store.publicURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.object_store.adminURL = http://%SERVICE_HOST%:8080/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.object_store.internalURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.object_store.name = Swift Service" >> $KEYSTONE_CATALOG
+        fi
+
+        # Add quantum endpoints to service catalog if quantum is enabled
+        if is_service_enabled quantum; then
+            echo "catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.name = Quantum Service" >> $KEYSTONE_CATALOG
+        fi
+
+        sudo sed -e "
+            s,%SERVICE_HOST%,$SERVICE_HOST,g;
+            s,%S3_SERVICE_PORT%,$S3_SERVICE_PORT,g;
+        " -i $KEYSTONE_CATALOG
+
+        # Configure ``keystone.conf`` to use templates
+        iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.TemplatedCatalog"
+        iniset $KEYSTONE_CONF catalog template_file "$KEYSTONE_CATALOG"
+    fi
+
+    # Set up logging
+    LOGGING_ROOT="devel"
+    if [ "$SYSLOG" != "False" ]; then
+        LOGGING_ROOT="$LOGGING_ROOT,production"
+    fi
+    KEYSTONE_LOG_CONFIG="--log-config $KEYSTONE_CONF_DIR/logging.conf"
+    cp $KEYSTONE_DIR/etc/logging.conf.sample $KEYSTONE_CONF_DIR/logging.conf
+    iniset $KEYSTONE_CONF_DIR/logging.conf logger_root level "DEBUG"
+    iniset $KEYSTONE_CONF_DIR/logging.conf logger_root handlers "devel,production"
+
+}
+
+# init_keystone() - Initialize databases, etc.
+function init_keystone() {
+    # (Re)create keystone database
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone CHARACTER SET utf8;'
+
+    # Initialize keystone database
+    $KEYSTONE_DIR/bin/keystone-manage db_sync
+
+    # Set up certificates
+    $KEYSTONE_DIR/bin/keystone-manage pki_setup
+}
+
+# install_keystoneclient() - Collect source and prepare
+function install_keystoneclient() {
+    git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
+}
+
+# install_keystone() - Collect source and prepare
+function install_keystone() {
+    git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
+}
+
+# start_keystone() - Start running processes, including screen
+function start_keystone() {
+    # Start Keystone in a screen window
+    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
+}
+
+# stop_keystone() - Stop running processes
+function stop_keystone() {
+    # Kill the Keystone screen window
+    screen -S $SCREEN_NAME -p key -X kill
+}

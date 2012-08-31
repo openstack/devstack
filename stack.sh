@@ -262,63 +262,17 @@ sudo mkdir -p $DATA_DIR
 sudo chown `whoami` $DATA_DIR
 
 
-# Configure Projects
-# ==================
-
-# Get project function libraries
-source $TOP_DIR/lib/cinder
-source $TOP_DIR/lib/n-vol
-source $TOP_DIR/lib/ceilometer
-source $TOP_DIR/lib/heat
-source $TOP_DIR/lib/quantum
-
-# Set the destination directories for OpenStack projects
-NOVA_DIR=$DEST/nova
-HORIZON_DIR=$DEST/horizon
-GLANCE_DIR=$DEST/glance
-GLANCECLIENT_DIR=$DEST/python-glanceclient
-KEYSTONE_DIR=$DEST/keystone
-NOVACLIENT_DIR=$DEST/python-novaclient
-KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
-OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
-NOVNC_DIR=$DEST/noVNC
-SWIFT_DIR=$DEST/swift
-SWIFT3_DIR=$DEST/swift3
-SWIFTCLIENT_DIR=$DEST/python-swiftclient
-QUANTUM_DIR=$DEST/quantum
-QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
-
-# Default Quantum Plugin
-Q_PLUGIN=${Q_PLUGIN:-openvswitch}
-# Default Quantum Port
-Q_PORT=${Q_PORT:-9696}
-# Default Quantum Host
-Q_HOST=${Q_HOST:-localhost}
-# Which Quantum API nova should use
-# Default admin username
-Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
-# Default auth strategy
-Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
-# Use namespace or not
-Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
-# Meta data IP
-Q_META_DATA_IP=${Q_META_DATA_IP:-}
-
-# Name of the LVM volume group to use/create for iscsi volumes
-VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
-VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
-INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
-
-# Nova supports pluggable schedulers.  The default ``FilterScheduler``
-# should work in most cases.
-SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
+# Common Configuration
+# ====================
 
 # Set fixed and floating range here so we can make sure not to use addresses
 # from either range when attempting to guess the IP to use for the host.
 # Note that setting FIXED_RANGE may be necessary when running DevStack
-# in an OpenStack cloud that uses eith of these address ranges internally.
-FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
+# in an OpenStack cloud that uses either of these address ranges internally.
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
+FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
+FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
+NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
 
 # Find the interface used for the default route
 HOST_IP_IFACE=${HOST_IP_IFACE:-$(ip route | sed -n '/^default/{ s/.*dev \(\w\+\)\s\+.*/\1/; p; }')}
@@ -358,6 +312,57 @@ LOG_COLOR=`trueorfalse True $LOG_COLOR`
 
 # Service startup timeout
 SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
+
+
+# Configure Projects
+# ==================
+
+# Get project function libraries
+source $TOP_DIR/lib/keystone
+source $TOP_DIR/lib/cinder
+source $TOP_DIR/lib/n-vol
+source $TOP_DIR/lib/ceilometer
+source $TOP_DIR/lib/heat
+source $TOP_DIR/lib/quantum
+
+# Set the destination directories for OpenStack projects
+NOVA_DIR=$DEST/nova
+HORIZON_DIR=$DEST/horizon
+GLANCE_DIR=$DEST/glance
+GLANCECLIENT_DIR=$DEST/python-glanceclient
+NOVACLIENT_DIR=$DEST/python-novaclient
+OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
+NOVNC_DIR=$DEST/noVNC
+SWIFT_DIR=$DEST/swift
+SWIFT3_DIR=$DEST/swift3
+SWIFTCLIENT_DIR=$DEST/python-swiftclient
+QUANTUM_DIR=$DEST/quantum
+QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
+
+# Default Quantum Plugin
+Q_PLUGIN=${Q_PLUGIN:-openvswitch}
+# Default Quantum Port
+Q_PORT=${Q_PORT:-9696}
+# Default Quantum Host
+Q_HOST=${Q_HOST:-localhost}
+# Which Quantum API nova should use
+# Default admin username
+Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
+# Default auth strategy
+Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
+# Use namespace or not
+Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
+# Meta data IP
+Q_META_DATA_IP=${Q_META_DATA_IP:-}
+
+# Name of the LVM volume group to use/create for iscsi volumes
+VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
+VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
+INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
+
+# Nova supports pluggable schedulers.  The default ``FilterScheduler``
+# should work in most cases.
+SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
 
 # Generic helper to configure passwords
 function read_password {
@@ -419,8 +424,6 @@ else
 fi
 
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
-FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
-NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
 NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
@@ -568,14 +571,6 @@ read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (
 # Set the tenant for service accounts in Keystone
 SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}
 
-# Set Keystone interface configuration
-KEYSTONE_API_PORT=${KEYSTONE_API_PORT:-5000}
-KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
-KEYSTONE_AUTH_PORT=${KEYSTONE_AUTH_PORT:-35357}
-KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-http}
-KEYSTONE_SERVICE_HOST=${KEYSTONE_SERVICE_HOST:-$SERVICE_HOST}
-KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
-KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-http}
 
 
 # Horizon
@@ -791,10 +786,11 @@ pip_install $(get_packages $FILES/pips | sort -u)
 # Check Out Source
 # ----------------
 
+install_keystoneclient
+
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 
 # Check out the client libs that are used most
-git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
 git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
@@ -802,7 +798,7 @@ git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
 # glance, swift middleware and nova api needs keystone middleware
 if is_service_enabled key g-api n-api swift; then
     # unified auth system (manages accounts/tokens)
-    git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
+    install_keystone
 fi
 if is_service_enabled swift; then
     # storage service
@@ -849,11 +845,11 @@ fi
 
 # Set up our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
-setup_develop $KEYSTONECLIENT_DIR
+configure_keystoneclient
 setup_develop $NOVACLIENT_DIR
 setup_develop $OPENSTACKCLIENT_DIR
 if is_service_enabled key g-api n-api swift; then
-    setup_develop $KEYSTONE_DIR
+    configure_keystone
 fi
 if is_service_enabled swift; then
     setup_develop $SWIFT_DIR
@@ -982,6 +978,36 @@ screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
 sleep 1
 # Set a reasonable statusbar
 screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
+
+
+# Keystone
+# --------
+
+if is_service_enabled key; then
+    configure_keystone
+    init_keystone
+    start_keystone
+    echo "Waiting for keystone to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/ >/dev/null; do sleep 1; done"; then
+      echo "keystone did not start"
+      exit 1
+    fi
+
+    # ``keystone_data.sh`` creates services, admin and demo users, and roles.
+    SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+
+    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
+    SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT SERVICE_HOST=$SERVICE_HOST \
+    S3_SERVICE_PORT=$S3_SERVICE_PORT KEYSTONE_CATALOG_BACKEND=$KEYSTONE_CATALOG_BACKEND \
+    DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES HEAT_API_PORT=$HEAT_API_PORT \
+        bash -x $FILES/keystone_data.sh
+
+    # Set up auth creds now that keystone is bootstrapped
+    export OS_AUTH_URL=$SERVICE_ENDPOINT
+    export OS_TENANT_NAME=admin
+    export OS_USERNAME=admin
+    export OS_PASSWORD=$ADMIN_PASSWORD
+fi
 
 
 # Horizon
@@ -2113,118 +2139,16 @@ if is_service_enabled g-api; then
     fi
 fi
 
-if is_service_enabled key; then
-    # (Re)create keystone database
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone CHARACTER SET utf8;'
-
-    KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
-    KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
-    KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-template}
-
-    if [[ ! -d $KEYSTONE_CONF_DIR ]]; then
-        sudo mkdir -p $KEYSTONE_CONF_DIR
-        sudo chown `whoami` $KEYSTONE_CONF_DIR
-    fi
-
-    if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
-        cp -p $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
-        cp -p $KEYSTONE_DIR/etc/policy.json $KEYSTONE_CONF_DIR
-    fi
-
-    # Rewrite stock ``keystone.conf``
-    iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
-    iniset $KEYSTONE_CONF sql connection "$BASE_SQL_CONN/keystone?charset=utf8"
-    iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
-    sed -e "
-        /^pipeline.*ec2_extension crud_/s|ec2_extension crud_extension|ec2_extension s3_extension crud_extension|;
-    " -i $KEYSTONE_CONF
-    # Append the S3 bits
-    iniset $KEYSTONE_CONF filter:s3_extension paste.filter_factory "keystone.contrib.s3:S3Extension.factory"
-
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
-        # Configure ``keystone.conf`` to use sql
-        iniset $KEYSTONE_CONF catalog driver keystone.catalog.backends.sql.Catalog
-        inicomment $KEYSTONE_CONF catalog template_file
-    else
-        KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
-        cp -p $FILES/default_catalog.templates $KEYSTONE_CATALOG
-
-        # Add swift endpoints to service catalog if swift is enabled
-        if is_service_enabled swift; then
-            echo "catalog.RegionOne.object_store.publicURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.object_store.adminURL = http://%SERVICE_HOST%:8080/" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.object_store.internalURL = http://%SERVICE_HOST%:8080/v1/AUTH_\$(tenant_id)s" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.object_store.name = Swift Service" >> $KEYSTONE_CATALOG
-        fi
-
-        # Add quantum endpoints to service catalog if quantum is enabled
-        if is_service_enabled quantum; then
-            echo "catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.network.name = Quantum Service" >> $KEYSTONE_CATALOG
-        fi
-
-        sudo sed -e "
-            s,%SERVICE_HOST%,$SERVICE_HOST,g;
-            s,%S3_SERVICE_PORT%,$S3_SERVICE_PORT,g;
-        " -i $KEYSTONE_CATALOG
-
-        # Configure ``keystone.conf`` to use templates
-        iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.TemplatedCatalog"
-        iniset $KEYSTONE_CONF catalog template_file "$KEYSTONE_CATALOG"
-    fi
-
-    # Set up logging
-    LOGGING_ROOT="devel"
-    if [ "$SYSLOG" != "False" ]; then
-        LOGGING_ROOT="$LOGGING_ROOT,production"
-    fi
-    KEYSTONE_LOG_CONFIG="--log-config $KEYSTONE_CONF_DIR/logging.conf"
-    cp $KEYSTONE_DIR/etc/logging.conf.sample $KEYSTONE_CONF_DIR/logging.conf
-    iniset $KEYSTONE_CONF_DIR/logging.conf logger_root level "DEBUG"
-    iniset $KEYSTONE_CONF_DIR/logging.conf logger_root handlers "devel,production"
-
-    # Initialize keystone database
-    $KEYSTONE_DIR/bin/keystone-manage db_sync
-
-    # Set up certificates
-    $KEYSTONE_DIR/bin/keystone-manage pki_setup
-
-    # Launch keystone and wait for it to answer before continuing
-    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
-    echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/ >/dev/null; do sleep 1; done"; then
-      echo "keystone did not start"
-      exit 1
-    fi
-    # ``keystone_data.sh`` creates services, admin and demo users, and roles.
-    SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
-
-    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
-    SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT SERVICE_HOST=$SERVICE_HOST \
-    S3_SERVICE_PORT=$S3_SERVICE_PORT KEYSTONE_CATALOG_BACKEND=$KEYSTONE_CATALOG_BACKEND \
-    DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES HEAT_API_PORT=$HEAT_API_PORT \
-        bash -x $FILES/keystone_data.sh
-
-    # Set up auth creds now that keystone is bootstrapped
-    export OS_AUTH_URL=$SERVICE_ENDPOINT
-    export OS_TENANT_NAME=admin
-    export OS_USERNAME=admin
-    export OS_PASSWORD=$ADMIN_PASSWORD
-
-    # Create an access key and secret key for nova ec2 register image
-    if is_service_enabled swift3 && is_service_enabled nova; then
-        NOVA_USER_ID=$(keystone user-list | grep ' nova ' | get_field 1)
-        NOVA_TENANT_ID=$(keystone tenant-list | grep " $SERVICE_TENANT_NAME " | get_field 1)
-        CREDS=$(keystone ec2-credentials-create --user_id $NOVA_USER_ID --tenant_id $NOVA_TENANT_ID)
-        ACCESS_KEY=$(echo "$CREDS" | awk '/ access / { print $4 }')
-        SECRET_KEY=$(echo "$CREDS" | awk '/ secret / { print $4 }')
-        add_nova_opt "s3_access_key=$ACCESS_KEY"
-        add_nova_opt "s3_secret_key=$SECRET_KEY"
-        add_nova_opt "s3_affix_tenant=True"
-    fi
+# Create an access key and secret key for nova ec2 register image
+if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nova; then
+    NOVA_USER_ID=$(keystone user-list | grep ' nova ' | get_field 1)
+    NOVA_TENANT_ID=$(keystone tenant-list | grep " $SERVICE_TENANT_NAME " | get_field 1)
+    CREDS=$(keystone ec2-credentials-create --user_id $NOVA_USER_ID --tenant_id $NOVA_TENANT_ID)
+    ACCESS_KEY=$(echo "$CREDS" | awk '/ access / { print $4 }')
+    SECRET_KEY=$(echo "$CREDS" | awk '/ secret / { print $4 }')
+    add_nova_opt "s3_access_key=$ACCESS_KEY"
+    add_nova_opt "s3_secret_key=$SECRET_KEY"
+    add_nova_opt "s3_affix_tenant=True"
 fi
 
 screen_it zeromq "cd $NOVA_DIR && $NOVA_DIR/bin/nova-rpc-zmq-receiver"
