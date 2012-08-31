@@ -1,7 +1,16 @@
-# -*- mode: Shell-script -*-
 # functions - Common functions used by DevStack components
 #
-# ENABLED_SERVICES is used by is_service_enabled()
+# The following variables are assumed to be defined by certain functions:
+# ``DISTRO``
+# ``ENABLED_SERVICES``
+# ``EROR_ON_CLONE``
+# ``FILES``
+# ``GLANCE_HOSTPORT``
+# ``OFFLINE``
+# ``PIP_DOWNLOAD_CACHE``
+# ``RECLONE``
+# ``TRACK_DEPENDS``
+# ``http_proxy``, ``https_proxy``, ``no_proxy``
 
 
 # Save trace setting
@@ -9,9 +18,9 @@ XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 
-# Exit 0 if address is in network or 1 if
-# address is not in network or netaddr library
-# is not installed.
+# Exit 0 if address is in network or 1 if address is not in
+# network or netaddr library is not installed.
+# address_in_net ip-address ip-range
 function address_in_net() {
     python -c "
 import netaddr
@@ -21,7 +30,8 @@ sys.exit(netaddr.IPAddress('$1') not in netaddr.IPNetwork('$2'))
 }
 
 
-# apt-get wrapper to set arguments correctly
+# Wrapper for ``apt-get`` to set cache and proxy environment variables
+# Uses globals ``OFFLINE``, ``*_proxy`
 # apt_get operation package [package ...]
 function apt_get() {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
@@ -88,15 +98,16 @@ function get_field() {
 
 
 # get_packages() collects a list of package names of any type from the
-# prerequisite files in ``files/{apts|pips}``.  The list is intended
-# to be passed to a package installer such as apt or pip.
+# prerequisite files in ``files/{apts|rpms}``.  The list is intended
+# to be passed to a package installer such as apt or yum.
 #
-# Only packages required for the services in ENABLED_SERVICES will be
+# Only packages required for the services in ``ENABLED_SERVICES`` will be
 # included.  Two bits of metadata are recognized in the prerequisite files:
 # - ``# NOPRIME`` defers installation to be performed later in stack.sh
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
 #
+# Uses globals ``DISTRO``, ``ENABLED_SERVICES``
 # get_packages dir
 function get_packages() {
     local package_dir=$1
@@ -241,6 +252,7 @@ GetOSVersion() {
 }
 
 # git update using reference as a branch.
+# git_update_branch ref
 function git_update_branch() {
 
     GIT_BRANCH=$1
@@ -254,6 +266,7 @@ function git_update_branch() {
 
 # git update using reference as a tag. Be careful editing source at that repo
 # as working copy will be in a detached mode
+# git_update_tag ref
 function git_update_tag() {
 
     GIT_TAG=$1
@@ -289,6 +302,7 @@ function GetDistro() {
 # Set global RECLONE=yes to simulate a clone when dest-dir exists
 # Set global ERROR_ON_CLONE=True to abort execution with an error if the git repo
 # does not exist (default is False, meaning the repo will be cloned).
+# Uses global ``OFFLINE``
 # git_clone remote dest-dir branch
 function git_clone {
     [[ "$OFFLINE" = "True" ]] && return
@@ -394,16 +408,20 @@ $option = $value
 
 
 # is_service_enabled() checks if the service(s) specified as arguments are
-# enabled by the user in **ENABLED_SERVICES**.
+# enabled by the user in ``ENABLED_SERVICES``.
 #
-# If there are multiple services specified as arguments the test performs a
-# boolean OR or if any of the services specified on the command line
-# return true.
+# Multiple services specified as arguments are ``OR``'ed together; the test
+# is a short-circuit boolean, i.e it returns on the first match.
 #
-# There is a special cases for some 'catch-all' services::
+# There are special cases for some 'catch-all' services::
 #   **nova** returns true if any service enabled start with **n-**
+#   **cinder** returns true if any service enabled start with **c-**
+#   **ceilometer** returns true if any service enabled start with **ceilometer**
 #   **glance** returns true if any service enabled start with **g-**
 #   **quantum** returns true if any service enabled start with **q-**
+#
+# Uses global ``ENABLED_SERVICES``
+# is_service_enabled service [service ...]
 function is_service_enabled() {
     services=$@
     for service in ${services}; do
@@ -417,7 +435,9 @@ function is_service_enabled() {
     return 1
 }
 
-# remove extra commas from the input string (ENABLED_SERVICES)
+
+# remove extra commas from the input string (i.e. ``ENABLED_SERVICES``)
+# _cleanup_service_list service-list
 function _cleanup_service_list () {
     echo "$1" | sed -e '
         s/,,/,/g;
@@ -426,15 +446,17 @@ function _cleanup_service_list () {
     '
 }
 
+
 # enable_service() adds the services passed as argument to the
-# **ENABLED_SERVICES** list, if they are not already present.
+# ``ENABLED_SERVICES`` list, if they are not already present.
 #
 # For example:
-#
 #   enable_service n-vol
 #
 # This function does not know about the special cases
 # for nova, glance, and quantum built into is_service_enabled().
+# Uses global ``ENABLED_SERVICES``
+# enable_service service [service ...]
 function enable_service() {
     local tmpsvcs="${ENABLED_SERVICES}"
     for service in $@; do
@@ -446,15 +468,17 @@ function enable_service() {
     disable_negated_services
 }
 
+
 # disable_service() removes the services passed as argument to the
-# **ENABLED_SERVICES** list, if they are present.
+# ``ENABLED_SERVICES`` list, if they are present.
 #
 # For example:
-#
 #   disable_service n-vol
 #
 # This function does not know about the special cases
 # for nova, glance, and quantum built into is_service_enabled().
+# Uses global ``ENABLED_SERVICES``
+# disable_service service [service ...]
 function disable_service() {
     local tmpsvcs=",${ENABLED_SERVICES},"
     local service
@@ -466,17 +490,22 @@ function disable_service() {
     ENABLED_SERVICES=$(_cleanup_service_list "$tmpsvcs")
 }
 
+
 # disable_all_services() removes all current services
-# from **ENABLED_SERVICES** to reset the configuration
+# from ``ENABLED_SERVICES`` to reset the configuration
 # before a minimal installation
+# Uses global ``ENABLED_SERVICES``
+# disable_all_services
 function disable_all_services() {
     ENABLED_SERVICES=""
 }
 
-# We are looking for services with a - at the beginning to force
-# excluding those services. For example if you want to install all the default
-# services but not nova-volume (n-vol) you can have this set in your localrc :
+
+# Remove all services starting with '-'.  For example, to install all default
+# services except nova-volume (n-vol) set in ``localrc``:
 # ENABLED_SERVICES+=",-n-vol"
+# Uses global ``ENABLED_SERVICES``
+# disable_negated_services
 function disable_negated_services() {
     local tmpsvcs="${ENABLED_SERVICES}"
     local service
@@ -487,6 +516,7 @@ function disable_negated_services() {
     done
     ENABLED_SERVICES=$(_cleanup_service_list "$tmpsvcs")
 }
+
 
 # Distro-agnostic package installer
 # install_package package [package ...]
@@ -513,7 +543,8 @@ function is_set() {
 }
 
 
-# pip install wrapper to set cache and proxy environment variables
+# Wrapper for ``pip install`` to set cache and proxy environment variables
+# Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``, ``TRACK_DEPENDES``, ``*_proxy`
 # pip_install package [package ...]
 function pip_install {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
@@ -554,8 +585,9 @@ function restart_service() {
 }
 
 
-# pip install the dependencies of the package before we do the setup.py
-# develop, so that pip and not distutils process the dependency chain
+# ``pip install`` the dependencies of the package before ``setup.py develop``
+# so pip and not distutils processes the dependency chain
+# Uses globals ``TRACK_DEPENDES``, ``*_proxy`
 # setup_develop directory
 function setup_develop() {
     if [[ $TRACK_DEPENDS = True ]] ; then
@@ -606,7 +638,9 @@ function stop_service() {
 
 
 # Normalize config values to True or False
-# VAR=`trueorfalse default-value test-value`
+# Accepts as False: 0 no false False FALSE
+# Accepts as True: 1 yes true True TRUE
+# VAR=$(trueorfalse default-value test-value)
 function trueorfalse() {
     local default=$1
     local testval=$2
@@ -620,8 +654,8 @@ function trueorfalse() {
 
 # Retrieve an image from a URL and upload into Glance
 # Uses the following variables:
-#   **FILES** must be set to the cache dir
-#   **GLANCE_HOSTPORT**
+#   ``FILES`` must be set to the cache dir
+#   ``GLANCE_HOSTPORT``
 # upload_image image-url glance-token
 function upload_image() {
     local image_url=$1
@@ -717,7 +751,8 @@ function upload_image() {
 }
 
 
-# yum wrapper to set arguments correctly
+# Wrapper for ``yum`` to set proxy environment variables
+# Uses globals ``OFFLINE``, ``*_proxy`
 # yum_install package [package ...]
 function yum_install() {
     [[ "$OFFLINE" = "True" ]] && return
@@ -731,3 +766,8 @@ function yum_install() {
 
 # Restore xtrace
 $XTRACE
+
+
+# Local variables:
+# -*- mode: Shell-script -*-
+# End:
