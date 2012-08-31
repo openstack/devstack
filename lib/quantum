@@ -1,0 +1,37 @@
+# lib/quantum
+# functions - funstions specific to quantum
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Configures keystone integration for quantum service and agents
+function quantum_setup_keystone() {
+    local conf_file=$1
+    local section=$2
+    local use_auth_url=$3
+    if [[ -n $use_auth_url ]]; then
+        iniset $conf_file $section auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+    else
+        iniset $conf_file $section auth_host $KEYSTONE_SERVICE_HOST
+        iniset $conf_file $section auth_port $KEYSTONE_AUTH_PORT
+        iniset $conf_file $section auth_protocol $KEYSTONE_SERVICE_PROTOCOL
+    fi
+    iniset $conf_file $section admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $conf_file $section admin_user $Q_ADMIN_USERNAME
+    iniset $conf_file $section admin_password $SERVICE_PASSWORD
+}
+
+function quantum_setup_ovs_bridge() {
+    local bridge=$1
+    for PORT in `sudo ovs-vsctl --no-wait list-ports $bridge`; do
+        if [[ "$PORT" =~ tap* ]]; then echo `sudo ip link delete $PORT` > /dev/null; fi
+        sudo ovs-vsctl --no-wait del-port $bridge $PORT
+    done
+    sudo ovs-vsctl --no-wait -- --if-exists del-br $bridge
+    sudo ovs-vsctl --no-wait add-br $bridge
+    sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
+}
+
+# Restore xtrace
+$XTRACE

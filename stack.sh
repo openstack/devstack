@@ -268,6 +268,7 @@ sudo chown `whoami` $DATA_DIR
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
+source $TOP_DIR/lib/quantum
 
 # Set the destination directories for OpenStack projects
 NOVA_DIR=$DEST/nova
@@ -298,6 +299,8 @@ Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
 Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
 # Use namespace or not
 Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
+# Meta data IP
+Q_META_DATA_IP=${Q_META_DATA_IP:-}
 
 # Name of the LVM volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
@@ -1179,7 +1182,7 @@ if is_service_enabled quantum; then
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
     cp $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
 
-    sudo sed -i -e "s/^sql_connection =.*$/sql_connection = mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8/g" /$Q_PLUGIN_CONF_FILE
+    iniset /$Q_PLUGIN_CONF_FILE DATABASE sql_connection mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8
 
     OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-True}
     if [[ "$Q_PLUGIN" = "openvswitch" && "$OVS_ENABLE_TUNNELING" = "True" ]]; then
@@ -1221,12 +1224,7 @@ if is_service_enabled q-svc; then
     iniset $Q_CONF_FILE DEFAULT core_plugin $Q_PLUGIN_CLASS
 
     iniset $Q_CONF_FILE DEFAULT auth_strategy $Q_AUTH_STRATEGY
-    iniset $Q_API_PASTE_FILE filter:authtoken auth_host $KEYSTONE_SERVICE_HOST
-    iniset $Q_API_PASTE_FILE filter:authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $Q_API_PASTE_FILE filter:authtoken auth_protocol $KEYSTONE_SERVICE_PROTOCOL
-    iniset $Q_API_PASTE_FILE filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $Q_API_PASTE_FILE filter:authtoken admin_user $Q_ADMIN_USERNAME
-    iniset $Q_API_PASTE_FILE filter:authtoken admin_password $SERVICE_PASSWORD
+    quantum_setup_keystone $Q_API_PASTE_FILE filter:authtoken
 fi
 
 # Quantum agent (for compute nodes)
@@ -1234,13 +1232,7 @@ if is_service_enabled q-agt; then
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         # Set up integration bridge
         OVS_BRIDGE=${OVS_BRIDGE:-br-int}
-        for PORT in `sudo ovs-vsctl --no-wait list-ports $OVS_BRIDGE`; do
-            if [[ "$PORT" =~ tap* ]]; then echo `sudo ip link delete $PORT` > /dev/null; fi
-            sudo ovs-vsctl --no-wait del-port $OVS_BRIDGE $PORT
-        done
-        sudo ovs-vsctl --no-wait -- --if-exists del-br $OVS_BRIDGE
-        sudo ovs-vsctl --no-wait add-br $OVS_BRIDGE
-        sudo ovs-vsctl --no-wait br-set-external-id $OVS_BRIDGE bridge-id br-int
+        quantum_setup_ovs_bridge $OVS_BRIDGE
         if [[ "$OVS_ENABLE_TUNNELING" == "True" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE OVS local_ip $HOST_IP
         else
@@ -1280,15 +1272,51 @@ if is_service_enabled q-dhcp; then
 
     # Update database
     iniset $Q_DHCP_CONF_FILE DEFAULT db_connection "mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8"
-    iniset $Q_DHCP_CONF_FILE DEFAULT auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0"
-    iniset $Q_DHCP_CONF_FILE DEFAULT admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $Q_DHCP_CONF_FILE DEFAULT admin_user $Q_ADMIN_USERNAME
-    iniset $Q_DHCP_CONF_FILE DEFAULT admin_password $SERVICE_PASSWORD
+    quantum_setup_keystone $Q_DHCP_CONF_FILE DEFAULT set_auth_url
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
+    fi
+fi
+
+# Quantum L3
+if is_service_enabled q-l3; then
+    AGENT_L3_BINARY="$QUANTUM_DIR/bin/quantum-l3-agent"
+    PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
+    Q_L3_CONF_FILE=/etc/quantum/l3_agent.ini
+
+    cp $QUANTUM_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
+
+    # Set verbose
+    iniset $Q_L3_CONF_FILE DEFAULT verbose True
+    # Set debug
+    iniset $Q_L3_CONF_FILE DEFAULT debug True
+
+    iniset $Q_L3_CONF_FILE DEFAULT metadata_ip $Q_META_DATA_IP
+    iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
+    iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+
+    quantum_setup_keystone $Q_L3_CONF_FILE DEFAULT set_auth_url
+    if [[ "$Q_PLUGIN" == "openvswitch" ]]; then
+        iniset $Q_L3_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+        # Set up external bridge
+        # Create it if it does not exist
+        sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
+        sudo ovs-vsctl --no-wait br-set-external-id $PUBLIC_BRIDGE bridge-id $PUBLIC_BRIDGE
+        # remove internal ports
+        for PORT in `sudo ovs-vsctl --no-wait list-ports $PUBLIC_BRIDGE`; do
+            TYPE=$(sudo ovs-vsctl get interface $PORT type)
+            if [[ "$TYPE" == "internal" ]]; then
+                echo `sudo ip link delete $PORT` > /dev/null
+                sudo ovs-vsctl --no-wait del-port $bridge $PORT
+            fi
+        done
+        # ensure no IP is configured on the public bridge
+        sudo ip addr flush dev $PUBLIC_BRIDGE
+    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
+        iniset $Q_L3_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
     fi
 fi
 
@@ -1304,16 +1332,6 @@ if is_service_enabled quantum; then
         iniset $Q_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
     fi
 fi
-
-# Start the Quantum services
-screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
-
-# Start up the quantum agent
-screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
-
-# Start up the quantum agent
-screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
-
 
 # Nova
 # ----
@@ -2140,7 +2158,6 @@ if is_service_enabled key; then
       echo "keystone did not start"
       exit 1
     fi
-
     # ``keystone_data.sh`` creates services, admin and demo users, and roles.
     SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
 
@@ -2182,16 +2199,51 @@ if is_service_enabled n-api; then
     fi
 fi
 
-# If we're using Quantum (i.e. q-svc is enabled), network creation has to
-# happen after we've started the Quantum service.
 if is_service_enabled q-svc; then
+    # Start the Quantum service
+    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
+    echo "Waiting for Quantum to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:9696; do sleep 1; done"; then
+      echo "Quantum did not start"
+      exit 1
+    fi
+
+    # Configure Quantum elements
+    # Configure internal network & subnet
+
     TENANT_ID=$(keystone tenant-list | grep " demo " | get_field 1)
 
     # Create a small network
     # Since quantum command is executed in admin context at this point,
     # ``--tenant_id`` needs to be specified.
     NET_ID=$(quantum net-create --tenant_id $TENANT_ID net1 | grep ' id ' | get_field 2)
-    quantum subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE
+    SUBNET_ID=$(quantum subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+    if is_service_enabled q-l3; then
+        # Create a router, and add the private subnet as one of its interfaces
+        ROUTER_ID=$(quantum router-create --tenant_id $TENANT_ID router1 | grep ' id ' | get_field 2)
+        quantum router-interface-add $ROUTER_ID $SUBNET_ID
+        # Create an external network, and a subnet. Configure the external network as router gw
+        EXT_NET_ID=$(quantum net-create ext_net -- --router:external=True | grep ' id ' | get_field 2)
+        EXT_GW_IP=$(quantum subnet-create --ip_version 4 $EXT_NET_ID $FLOATING_RANGE -- --enable_dhcp=False | grep 'gateway_ip' | get_field 2)
+        quantum router-gateway-set $ROUTER_ID $EXT_NET_ID
+        if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+            CIDR_LEN=${FLOATING_RANGE#*/}
+            sudo ip addr add $EXT_GW_IP/$CIDR_LEN dev $PUBLIC_BRIDGE
+            sudo ip link set $PUBLIC_BRIDGE up
+        fi
+        if [[ "$Q_USE_NAMESPACE" == "False" ]]; then
+            # Explicitly set router id in l3 agent configuration
+            iniset $Q_L3_CONF_FILE DEFAULT router_id $ROUTER_ID
+        fi
+   fi
+
+   # Start up the quantum agent
+   screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
+   # Start up the quantum dhcp agent
+   screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
+   # Start up the quantum l3 agent
+   screen_it q-l3 "sudo python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
+
 elif is_service_enabled mysql && is_service_enabled nova; then
     # Create a small network
     $NOVA_BIN_DIR/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
