@@ -5,6 +5,7 @@
 # - functions
 # - KEYSTONE_AUTH_* must be defined
 # SERVICE_{TENANT_NAME|PASSWORD} must be defined
+# _configure_tgt_for_config_d() from lib/cinder
 
 # stack.sh
 # ---------
@@ -94,6 +95,7 @@ function install_nvol() {
 function start_nvol() {
     # Setup the tgt configuration file
     if [[ ! -f /etc/tgt/conf.d/nova.conf ]]; then
+        _configure_tgt_for_config_d
        sudo mkdir -p /etc/tgt/conf.d
        echo "include $NOVA_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/nova.conf
     fi
