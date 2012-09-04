@@ -7,8 +7,9 @@
 # work properly.
 
 # This is a collection of some of the things we have found to be useful to run
-# after stack.sh to tweak the OpenStack configuration that DevStack produces.
+# after ``stack.sh`` to tweak the OpenStack configuration that DevStack produces.
 # These should be considered as samples and are unsupported DevStack code.
+
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
@@ -34,7 +35,7 @@ source $TOP_DIR/openrc
 
 # Add first keypair found in localhost:$HOME/.ssh
 for i in $HOME/.ssh/id_rsa.pub $HOME/.ssh/id_dsa.pub; do
-    if [[ -f $i ]]; then
+    if [[ -r $i ]]; then
         nova keypair-add --pub_key=$i `hostname`
         break
     fi
@@ -55,8 +56,9 @@ MI_NAME=m1.micro
 if [[ -z $(nova flavor-list | grep $MI_NAME) ]]; then
     nova flavor-create $MI_NAME 6 128 0 1
 fi
+
+
 # Other Uses
 # ----------
 
-# Add tcp/22 to default security group
-
+# Add tcp/22 and icmp to default security group

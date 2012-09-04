@@ -1,9 +1,10 @@
 # Sample ``localrc`` for user-configurable variables in ``stack.sh``
 
-# NOTE: Copy this file to the root ``devstack`` directory for it to work properly.
+# NOTE: Copy this file to the root ``devstack`` directory for it to
+# work properly.
 
-# ``localrc`` is a user-maintained setings file that is sourced at the end of
-# ``stackrc``. This gives it the ability to override any variables set in ``stackrc``.
+# ``localrc`` is a user-maintained setings file that is sourced from ``stackrc``.
+# This gives it the ability to override any variables set in ``stackrc``.
 # Also, most of the settings in ``stack.sh`` are written to only be set if no
 # value has already been set; this lets ``localrc`` effectively override the
 # default values.
@@ -21,40 +22,51 @@
 # there are a few minimal variables set:
 
 # If the ``*_PASSWORD`` variables are not set here you will be prompted to enter
-# values for them by ``stack.sh``.
+# values for them by ``stack.sh`` and they will be added to ``localrc``.
 ADMIN_PASSWORD=nomoresecrete
 MYSQL_PASSWORD=stackdb
 RABBIT_PASSWORD=stackqueue
 SERVICE_PASSWORD=$ADMIN_PASSWORD
 
-# HOST_IP should be set manually for best results.  It is auto-detected during the
-# first run of ``stack.sh`` but often is indeterminate on later runs due to the IP
-# being moved from an Ethernet interface to a bridge on the host. Setting it here
-# also makes it available for ``openrc`` to include when setting ``OS_AUTH_URL``.
+# ``HOST_IP`` should be set manually for best results if the NIC configuration
+# of the host is unusual, i.e. ``eth1`` has the default route but ``eth0`` is the
+# public interface.  It is auto-detected in ``stack.sh`` but often is indeterminate
+# on later runs due to the IP moving from an Ethernet interface to a bridge on
+# the host. Setting it here also makes it available for ``openrc`` to include
+# when setting ``OS_AUTH_URL``.
 # ``HOST_IP`` is not set by default.
-HOST_IP=w.x.y.z
+#HOST_IP=w.x.y.z
 
 
-# Set DevStack Install Directory
-# ------------------------------
+# Logging
+# -------
 
-# The DevStack install directory is set by the ``DEST`` variable. By setting it
-# early in ``localrc`` you can reference it in later variables. The default value
-# is ``/opt/stack``. It can be useful to set it even though it is not changed from
-# the default value.
-DEST=/opt/stack
+# By default ``stack.sh`` output only goes to the terminal where it runs.  It can
+# be configured to additionally log to a file by setting ``LOGFILE`` to the full
+# path of the destination log file.  A timestamp will be appended to the given name.
+LOGFILE=$DEST/logs/stack.sh.log
+
+# Old log files are automatically removed after 7 days to keep things neat.  Change
+# the number of days by setting ``LOGDAYS``.
+LOGDAYS=2
+
+# Nova logs will be colorized if ``SYSLOG`` is not set; turn this off by setting
+# ``LOG_COLOR`` false.
+#LOG_COLOR=False
 
 
 # Using milestone-proposed branches
 # ---------------------------------
 
 # Uncomment these to grab the milestone-proposed branches from the repos:
+#CINDER_BRANCH=milestone-proposed
 #GLANCE_BRANCH=milestone-proposed
 #HORIZON_BRANCH=milestone-proposed
 #KEYSTONE_BRANCH=milestone-proposed
 #KEYSTONECLIENT_BRANCH=milestone-proposed
 #NOVA_BRANCH=milestone-proposed
 #NOVACLIENT_BRANCH=milestone-proposed
+#QUANTUM_BRANCH=milestone-proposed
 #SWIFT_BRANCH=milestone-proposed
 
 
