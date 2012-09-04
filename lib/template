@@ -65,7 +65,7 @@ function install_XXXX() {
 }
 
 # start_XXXX() - Start running processes, including screen
-function start_XXXX()
+function start_XXXX() {
     # screen_it XXXX "cd $XXXX_DIR && $XXXX_DIR/bin/XXXX-bin"
     :
 }
