@@ -125,16 +125,16 @@ nova aggregate-details $AGGREGATE_ID | grep {}
 if [ "$VIRT_DRIVER" == "xenserver" ]; then
     echo "TODO(johngarbutt) add tests for add/remove host from pool aggregate"
 fi
-HOST=`nova host-list | grep compute | get_field 1`
+FIRST_HOST=`nova host-list | grep compute | get_field 1 | head -1`
 # Make sure can add two aggregates to same host
-nova aggregate-add-host $AGGREGATE_ID $HOST
-nova aggregate-add-host $AGGREGATE2_ID $HOST
-if nova aggregate-add-host $AGGREGATE2_ID $HOST; then
+nova aggregate-add-host $AGGREGATE_ID $FIRST_HOST
+nova aggregate-add-host $AGGREGATE2_ID $FIRST_HOST
+if nova aggregate-add-host $AGGREGATE2_ID $FIRST_HOST; then
     echo "ERROR could add duplicate host to single aggregate"
     exit -1
 fi
-nova aggregate-remove-host $AGGREGATE2_ID $HOST
-nova aggregate-remove-host $AGGREGATE_ID $HOST
+nova aggregate-remove-host $AGGREGATE2_ID $FIRST_HOST
+nova aggregate-remove-host $AGGREGATE_ID $FIRST_HOST
 
 # Test aggregate-delete
 # =====================
