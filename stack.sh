@@ -456,13 +456,19 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 
 # Using Quantum networking:
 #
-# Make sure that quantum is enabled in ENABLED_SERVICES.  If it is the network
-# manager will be set to the QuantumManager.  If you want to run Quantum on
-# this host, make sure that q-svc is also in ENABLED_SERVICES.
-#
-# If you're planning to use the Quantum openvswitch plugin, set Q_PLUGIN to
-# "openvswitch" and make sure the q-agt service is enabled in
+# Make sure that quantum is enabled in ENABLED_SERVICES.  If you want
+# to run Quantum on this host, make sure that q-svc is also in
 # ENABLED_SERVICES.
+#
+# If you're planning to use the Quantum openvswitch plugin, set
+# Q_PLUGIN to "openvswitch" and make sure the q-agt service is enabled
+# in ENABLED_SERVICES.  If you're planning to use the Quantum
+# linuxbridge plugin, set Q_PLUGIN to "linuxbridge" and make sure the
+# q-agt service is enabled in ENABLED_SERVICES.
+#
+# See "Quantum Network Configuration" below for additional variables
+# that must be set in localrc for connectivity across hosts with
+# Quantum.
 #
 # With Quantum networking the NET_MAN variable is ignored.
 
@@ -711,14 +717,6 @@ EOF
     fi
     # Install mysql-server
     install_package mysql-server
-fi
-
-if is_service_enabled quantum; then
-    if [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        # Install deps
-        # FIXME add to files/apts/quantum, but don't install if not needed!
-        install_package python-configobj
-    fi
 fi
 
 if is_service_enabled horizon; then
@@ -1140,6 +1138,66 @@ fi
 # -------
 
 if is_service_enabled quantum; then
+    #
+    # Quantum Network Configuration
+    #
+    # The following variables control the Quantum openvswitch and
+    # linuxbridge plugins' allocation of tenant networks and
+    # availability of provider networks. If these are not configured
+    # in localrc, tenant networks will be local to the host (with no
+    # remote connectivity), and no physical resources will be
+    # available for the allocation of provider networks.
+
+    # To use GRE tunnels for tenant networks, set to True in
+    # localrc. GRE tunnels are only supported by the openvswitch
+    # plugin, and currently only on Ubuntu.
+    ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-False}
+
+    # If using GRE tunnels for tenant networks, specify the range of
+    # tunnel IDs from which tenant networks are allocated. Can be
+    # overriden in localrc in necesssary.
+    TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGE:-1:1000}
+
+    # To use VLANs for tenant networks, set to True in localrc. VLANs
+    # are supported by the openvswitch and linuxbridge plugins, each
+    # requiring additional configuration described below.
+    ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
+
+    # If using VLANs for tenant networks, set in localrc to specify
+    # the range of VLAN VIDs from which tenant networks are
+    # allocated. An external network switch must be configured to
+    # trunk these VLANs between hosts for multi-host connectivity.
+    #
+    # Example: TENANT_VLAN_RANGE=1000:1999
+    TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
+
+    # If using VLANs for tenant networks, or if using flat or VLAN
+    # provider networks, set in localrc to the name of the physical
+    # network, and also configure OVS_PHYSICAL_BRIDGE for the
+    # openvswitch agent or LB_PHYSICAL_INTERFACE for the linuxbridge
+    # agent, as described below.
+    #
+    # Example: PHYSICAL_NETWORK=default
+    PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
+
+    # With the openvswitch plugin, if using VLANs for tenant networks,
+    # or if using flat or VLAN provider networks, set in localrc to
+    # the name of the OVS bridge to use for the physical network. The
+    # bridge will be created if it does not already exist, but a
+    # physical interface must be manually added to the bridge as a
+    # port for external connectivity.
+    #
+    # Example: OVS_PHYSICAL_BRIDGE=br-eth1
+    OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
+
+    # With the linuxbridge plugin, if using VLANs for tenant networks,
+    # or if using flat or VLAN provider networks, set in localrc to
+    # the name of the network interface to use for the physical
+    # network.
+    #
+    # Example: LB_PHYSICAL_INTERFACE=eth1
+    LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
+
     # Put config files in ``/etc/quantum`` for everyone to find
     if [[ ! -d /etc/quantum ]]; then
         sudo mkdir -p /etc/quantum
@@ -1168,22 +1226,6 @@ if is_service_enabled quantum; then
 
     iniset /$Q_PLUGIN_CONF_FILE DATABASE sql_connection mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8
 
-    OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-True}
-    if [[ "$Q_PLUGIN" = "openvswitch" && "$OVS_ENABLE_TUNNELING" = "True" ]]; then
-        OVS_VERSION=`ovs-vsctl --version | head -n 1 | awk '{print $4;}'`
-        if [ $OVS_VERSION \< "1.4" ] && ! is_service_enabled q-svc ; then
-            echo "You are running OVS version $OVS_VERSION."
-            echo "OVS 1.4+ is required for tunneling between multiple hosts."
-            exit 1
-        fi
-        if [[ "$OVS_DEFAULT_BRIDGE" = "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE OVS network_vlan_ranges ""
-        else
-            iniset /$Q_PLUGIN_CONF_FILE OVS network_vlan_ranges default
-        fi
-        iniset /$Q_PLUGIN_CONF_FILE OVS tunnel_id_ranges 1:1000
-    fi
-
     Q_CONF_FILE=/etc/quantum/quantum.conf
     cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
 fi
@@ -1209,33 +1251,96 @@ if is_service_enabled q-svc; then
 
     iniset $Q_CONF_FILE DEFAULT auth_strategy $Q_AUTH_STRATEGY
     quantum_setup_keystone $Q_API_PASTE_FILE filter:authtoken
+
+    # Configure plugin
+    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS tenant_network_type gre
+            iniset /$Q_PLUGIN_CONF_FILE OVS tunnel_id_ranges $TENANT_TUNNEL_RANGES
+        elif [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS tenant_network_type vlan
+        else
+            echo "WARNING - The openvswitch plugin is using local tenant networks, with no connectivity between hosts."
+        fi
+
+        # Override OVS_VLAN_RANGES and OVS_BRIDGE_MAPPINGS in localrc
+        # for more complex physical network configurations.
+        if [[ "$OVS_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+            OVS_VLAN_RANGES=$PHYSICAL_NETWORK
+            if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
+                OVS_VLAN_RANGES=$OVS_VLAN_RANGES:$TENANT_VLAN_RANGE
+            fi
+        fi
+        if [[ "$OVS_VLAN_RANGES" != "" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS network_vlan_ranges $OVS_VLAN_RANGES
+        fi
+    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
+        if [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE VLANS tenant_network_type vlan
+        else
+            echo "WARNING - The linuxbridge plugin is using local tenant networks, with no connectivity between hosts."
+        fi
+
+        # Override LB_VLAN_RANGES and LB_INTERFACE_MAPPINGS in localrc
+        # for more complex physical network configurations.
+        if [[ "$LB_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+            LB_VLAN_RANGES=$PHYSICAL_NETWORK
+            if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
+                LB_VLAN_RANGES=$LB_VLAN_RANGES:$TENANT_VLAN_RANGE
+            fi
+        fi
+        if [[ "$LB_VLAN_RANGES" != "" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE VLANS network_vlan_ranges $LB_VLAN_RANGES
+        fi
+    fi
 fi
 
 # Quantum agent (for compute nodes)
 if is_service_enabled q-agt; then
+    # Configure agent for plugin
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        # Set up integration bridge
+        # Setup integration bridge
         OVS_BRIDGE=${OVS_BRIDGE:-br-int}
         quantum_setup_ovs_bridge $OVS_BRIDGE
-        if [[ "$OVS_ENABLE_TUNNELING" == "True" ]]; then
+
+        # Setup agent for tunneling
+        if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
+            # Verify tunnels are supported
+            # REVISIT - also check kernel module support for GRE and patch ports
+            OVS_VERSION=`ovs-vsctl --version | head -n 1 | awk '{print $4;}'`
+            if [ $OVS_VERSION \< "1.4" ] && ! is_service_enabled q-svc ; then
+                echo "You are running OVS version $OVS_VERSION."
+                echo "OVS 1.4+ is required for tunneling between multiple hosts."
+                exit 1
+            fi
             iniset /$Q_PLUGIN_CONF_FILE OVS local_ip $HOST_IP
-        else
-            # Need bridge if not tunneling
-            OVS_DEFAULT_BRIDGE=${OVS_DEFAULT_BRIDGE:-br-$GUEST_INTERFACE_DEFAULT}
         fi
-        if [[ "$OVS_DEFAULT_BRIDGE" = "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings ""
-        else
+
+        # Setup physical network bridge mappings.  Override
+        # OVS_VLAN_RANGES and OVS_BRIDGE_MAPPINGS in localrc for more
+        # complex physical network configurations.
+        if [[ "$OVS_BRIDGE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
+            OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
+
             # Configure bridge manually with physical interface as port for multi-node
-            sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_DEFAULT_BRIDGE
-            iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings default:$OVS_DEFAULT_BRIDGE
+            sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_PHYSICAL_BRIDGE
         fi
+        if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings $OVS_BRIDGE_MAPPINGS
+        fi
+
         AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-       # Start up the quantum <-> linuxbridge agent
-       # set the default network interface
-       QUANTUM_LB_PRIVATE_INTERFACE=${QUANTUM_LB_PRIVATE_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
-       iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings default:$QUANTUM_LB_PRIVATE_INTERFACE
+        # Setup physical network interface mappings.  Override
+        # LB_VLAN_RANGES and LB_INTERFACE_MAPPINGS in localrc for more
+        # complex physical network configurations.
+        if [[ "$LB_INTERFACE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$LB_PHYSICAL_INTERFACE" != "" ]]; then
+            LB_INTERFACE_MAPPINGS=$PHYSICAL_NETWORK:$LB_PHYSICAL_INTERFACE
+        fi
+        if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings $LB_INTERFACE_MAPPINGS
+        fi
+
        AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py"
     fi
 fi
@@ -2175,13 +2280,6 @@ if is_service_enabled q-svc; then
         fi
    fi
 
-   # Start up the quantum agent
-   screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
-   # Start up the quantum dhcp agent
-   screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
-   # Start up the quantum l3 agent
-   screen_it q-l3 "sudo python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
-
 elif is_service_enabled mysql && is_service_enabled nova; then
     # Create a small network
     $NOVA_BIN_DIR/nova-manage network create private $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
@@ -2192,6 +2290,11 @@ elif is_service_enabled mysql && is_service_enabled nova; then
     # Create a second pool
     $NOVA_BIN_DIR/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
+
+# Start up the quantum agents if enabled
+screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
+screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
+screen_it q-l3 "sudo python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
 
 # The group **libvirtd** is added to the current user in this script.
 # Use 'sg' to execute nova-compute as a member of the **libvirtd** group.
