@@ -585,6 +585,52 @@ function restart_service() {
 }
 
 
+# Helper to launch a service in a named screen
+# screen_it service "command-line"
+function screen_it {
+    NL=`echo -ne '\015'`
+    SCREEN_NAME=${SCREEN_NAME:-stack}
+    if is_service_enabled $1; then
+        # Append the service to the screen rc file
+        screen_rc "$1" "$2"
+
+        screen -S $SCREEN_NAME -X screen -t $1
+        # sleep to allow bash to be ready to be send the command - we are
+        # creating a new window in screen and then sends characters, so if
+        # bash isn't running by the time we send the command, nothing happens
+        sleep 1.5
+
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            screen -S $SCREEN_NAME -p $1 -X logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log
+            screen -S $SCREEN_NAME -p $1 -X log on
+            ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
+        fi
+        screen -S $SCREEN_NAME -p $1 -X stuff "$2$NL"
+    fi
+}
+
+
+# Screen rc file builder
+# screen_rc service "command-line"
+function screen_rc {
+    SCREEN_NAME=${SCREEN_NAME:-stack}
+    SCREENRC=$TOP_DIR/$SCREEN_NAME-screenrc
+    if [[ ! -e $SCREENRC ]]; then
+        # Name the screen session
+        echo "sessionname $SCREEN_NAME" > $SCREENRC
+        # Set a reasonable statusbar
+        echo "hardstatus alwayslastline '$SCREEN_HARDSTATUS'" >> $SCREENRC
+        echo "screen -t shell bash" >> $SCREENRC
+    fi
+    # If this service doesn't already exist in the screenrc file
+    if ! grep $1 $SCREENRC 2>&1 > /dev/null; then
+        NL=`echo -ne '\015'`
+        echo "screen -t $1 bash" >> $SCREENRC
+        echo "stuff \"$2$NL\"" >> $SCREENRC
+    fi
+}
+
+
 # ``pip install`` the dependencies of the package before ``setup.py develop``
 # so pip and not distutils processes the dependency chain
 # Uses globals ``TRACK_DEPENDES``, ``*_proxy`
