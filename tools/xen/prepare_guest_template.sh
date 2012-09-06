@@ -49,7 +49,7 @@ ISO_DIR="/opt/xensource/packages/iso"
 XS_TOOLS_FILE_NAME="xs-tools.deb"
 XS_TOOLS_PATH="/root/$XS_TOOLS_FILE_NAME"
 if [ -e "$ISO_DIR" ]; then
-    TOOLS_ISO=$(ls $ISO_DIR/xs-tools-*.iso)
+    TOOLS_ISO=$(ls -1 $ISO_DIR/xs-tools-*.iso | head -1)
     TMP_DIR=/tmp/temp.$RANDOM
     mkdir -p $TMP_DIR
     mount -o loop $TOOLS_ISO $TMP_DIR
