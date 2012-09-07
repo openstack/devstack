@@ -1327,28 +1327,23 @@ sudo chown `whoami` $NOVA_CONF_DIR
 
 cp -p $NOVA_DIR/etc/nova/policy.json $NOVA_CONF_DIR
 
-# If Nova ships the new rootwrap filters files, deploy them
-# (owned by root) and add a parameter to ``$NOVA_ROOTWRAP``
-ROOTWRAP_SUDOER_CMD="$NOVA_ROOTWRAP"
-if [[ -d $NOVA_DIR/etc/nova/rootwrap.d ]]; then
-    # Wipe any existing rootwrap.d files first
-    if [[ -d $NOVA_CONF_DIR/rootwrap.d ]]; then
-        sudo rm -rf $NOVA_CONF_DIR/rootwrap.d
-    fi
-    # Deploy filters to /etc/nova/rootwrap.d
-    sudo mkdir -m 755 $NOVA_CONF_DIR/rootwrap.d
-    sudo cp $NOVA_DIR/etc/nova/rootwrap.d/*.filters $NOVA_CONF_DIR/rootwrap.d
-    sudo chown -R root:root $NOVA_CONF_DIR/rootwrap.d
-    sudo chmod 644 $NOVA_CONF_DIR/rootwrap.d/*
-    # Set up rootwrap.conf, pointing to /etc/nova/rootwrap.d
-    sudo cp $NOVA_DIR/etc/nova/rootwrap.conf $NOVA_CONF_DIR/
-    sudo sed -e "s:^filters_path=.*$:filters_path=$NOVA_CONF_DIR/rootwrap.d:" -i $NOVA_CONF_DIR/rootwrap.conf
-    sudo chown root:root $NOVA_CONF_DIR/rootwrap.conf
-    sudo chmod 0644 $NOVA_CONF_DIR/rootwrap.conf
-    # Specify rootwrap.conf as first parameter to nova-rootwrap
-    NOVA_ROOTWRAP="$NOVA_ROOTWRAP $NOVA_CONF_DIR/rootwrap.conf"
-    ROOTWRAP_SUDOER_CMD="$NOVA_ROOTWRAP *"
+# Deploy new rootwrap filters files (owned by root).
+# Wipe any existing rootwrap.d files first
+if [[ -d $NOVA_CONF_DIR/rootwrap.d ]]; then
+    sudo rm -rf $NOVA_CONF_DIR/rootwrap.d
 fi
+# Deploy filters to /etc/nova/rootwrap.d
+sudo mkdir -m 755 $NOVA_CONF_DIR/rootwrap.d
+sudo cp $NOVA_DIR/etc/nova/rootwrap.d/*.filters $NOVA_CONF_DIR/rootwrap.d
+sudo chown -R root:root $NOVA_CONF_DIR/rootwrap.d
+sudo chmod 644 $NOVA_CONF_DIR/rootwrap.d/*
+# Set up rootwrap.conf, pointing to /etc/nova/rootwrap.d
+sudo cp $NOVA_DIR/etc/nova/rootwrap.conf $NOVA_CONF_DIR/
+sudo sed -e "s:^filters_path=.*$:filters_path=$NOVA_CONF_DIR/rootwrap.d:" -i $NOVA_CONF_DIR/rootwrap.conf
+sudo chown root:root $NOVA_CONF_DIR/rootwrap.conf
+sudo chmod 0644 $NOVA_CONF_DIR/rootwrap.conf
+# Specify rootwrap.conf as first parameter to nova-rootwrap
+ROOTWRAP_SUDOER_CMD="$NOVA_ROOTWRAP $NOVA_CONF_DIR/rootwrap.conf *"
 
 # Set up the rootwrap sudoers for nova
 TEMPFILE=`mktemp`
@@ -1856,7 +1851,7 @@ add_nova_opt "[DEFAULT]"
 add_nova_opt "verbose=True"
 add_nova_opt "auth_strategy=keystone"
 add_nova_opt "allow_resize_to_same_host=True"
-add_nova_opt "root_helper=sudo $NOVA_ROOTWRAP"
+add_nova_opt "rootwrap_config=$NOVA_CONF_DIR/rootwrap.conf"
 add_nova_opt "compute_scheduler_driver=$SCHEDULER"
 add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF_DIR/$NOVA_CONF"
 add_nova_opt "fixed_range=$FIXED_RANGE"
