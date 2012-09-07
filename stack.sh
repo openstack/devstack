@@ -267,6 +267,7 @@ sudo chown `whoami` $DATA_DIR
 
 # Get project function libraries
 source $TOP_DIR/lib/cinder
+source $TOP_DIR/lib/n-vol
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 
@@ -1743,57 +1744,7 @@ fi
 if is_service_enabled cinder; then
     init_cinder
 elif is_service_enabled n-vol; then
-    # Configure a default volume group called '`stack-volumes`' for the volume
-    # service if it does not yet exist.  If you don't wish to use a file backed
-    # volume group, create your own volume group called ``stack-volumes`` before
-    # invoking ``stack.sh``.
-    #
-    # By default, the backing file is 5G in size, and is stored in ``/opt/stack/data``.
-
-    if ! sudo vgs $VOLUME_GROUP; then
-        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
-        # Only create if the file doesn't already exists
-        [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
-        DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
-        # Only create if the loopback device doesn't contain $VOLUME_GROUP
-        if ! sudo vgs $VOLUME_GROUP; then sudo vgcreate $VOLUME_GROUP $DEV; fi
-    fi
-
-    if sudo vgs $VOLUME_GROUP; then
-        if [[ "$os_PACKAGE" = "rpm" ]]; then
-            # RPM doesn't start the service
-            start_service tgtd
-        fi
-
-        # Setup tgtd configuration files
-        mkdir -p $NOVA_DIR/volumes
-
-        # Remove nova iscsi targets
-        sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
-        # Clean out existing volumes
-        for lv in `sudo lvs --noheadings -o lv_name $VOLUME_GROUP`; do
-            # ``VOLUME_NAME_PREFIX`` prefixes the LVs we want
-            if [[ "${lv#$VOLUME_NAME_PREFIX}" != "$lv" ]]; then
-                sudo lvremove -f $VOLUME_GROUP/$lv
-            fi
-        done
-    fi
-
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-
-        # Setup the tgt configuration file
-        if [[ ! -f /etc/tgt/conf.d/nova.conf ]]; then
-           sudo mkdir -p /etc/tgt/conf.d
-           echo "include $NOVA_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/nova.conf
-        fi
-
-        # tgt in oneiric doesn't restart properly if tgtd isn't running
-        # do it in two steps
-        sudo stop tgt || true
-        sudo start tgt
-    else
-        restart_service tgtd
-    fi
+    init_nvol
 fi
 
 # Support entry points installation of console scripts
@@ -2169,12 +2120,14 @@ fi
 # ``screen_it`` checks ``is_service_enabled``, it is not needed here
 screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_BIN_DIR/nova-compute"
 screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
-screen_it n-vol "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-volume"
 screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network"
 screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler"
 screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
 screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
+if is_service_enabled n-vol; then
+    start_nvol
+fi
 if is_service_enabled cinder; then
     start_cinder
 fi
