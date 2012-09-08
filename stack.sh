@@ -1396,6 +1396,10 @@ if is_service_enabled n-cpu; then
         if [ ! -e /dev/kvm ]; then
             echo "WARNING: Switching to QEMU"
             LIBVIRT_TYPE=qemu
+            if which selinuxenabled 2>&1 > /dev/null && selinuxenabled; then
+                # https://bugzilla.redhat.com/show_bug.cgi?id=753589
+                sudo setsebool virt_use_execmem on
+            fi
         fi
     fi
 
