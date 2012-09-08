@@ -67,6 +67,11 @@ if [[ -n "$UNSTACK_ALL" ]]; then
     if is_service_enabled mysql; then
         stop_service mysql
     fi
+
+    # Stop rabbitmq-server
+    if is_service_enabled rabbit; then
+        stop_service rabbitmq-server
+    fi
 fi
 
 # Quantum dhcp agent runs dnsmasq
