@@ -35,7 +35,7 @@ source $TOP_DIR/exerciserc
 
 
 # Testing Security Groups
-# =============
+# =======================
 
 # List security groups
 nova secgroup-list

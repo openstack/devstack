@@ -6,6 +6,7 @@
 #
 # Output fields are separated with '|' chars
 # Output types are git,localrc,os,pip,pkg:
+#
 #   git|<project>|<branch>[<shaq>]
 #   localtc|<var>=<value>
 #   os|<var>=<value>

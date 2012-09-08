@@ -25,7 +25,7 @@ source $TOP_DIR/openrc
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
-# Unset all of the known NOVA_ vars
+# Unset all of the known NOVA_* vars
 unset NOVA_API_KEY
 unset NOVA_ENDPOINT_NAME
 unset NOVA_PASSWORD
