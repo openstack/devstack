@@ -668,7 +668,7 @@ if is_service_enabled rabbit; then
     rm -f "$tfile"
 elif is_service_enabled qpid; then
     if [[ "$os_PACKAGE" = "rpm" ]]; then
-        install_package qpid-cpp-server
+        install_package qpid-cpp-server-daemon
     else
         install_package qpidd
     fi
