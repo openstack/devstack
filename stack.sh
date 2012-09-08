@@ -1045,12 +1045,16 @@ if is_service_enabled g-reg; then
         sudo mkdir -p $GLANCE_CONF_DIR
     fi
     sudo chown `whoami` $GLANCE_CONF_DIR
+
     GLANCE_IMAGE_DIR=$DEST/glance/images
     # Delete existing images
     rm -rf $GLANCE_IMAGE_DIR
-
-    # Use local glance directories
     mkdir -p $GLANCE_IMAGE_DIR
+
+    GLANCE_CACHE_DIR=$DEST/glance/cache
+    # Delete existing images
+    rm -rf $GLANCE_CACHE_DIR
+    mkdir -p $GLANCE_CACHE_DIR
 
     # (re)create glance database
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS glance;'
@@ -1079,7 +1083,8 @@ if is_service_enabled g-reg; then
     iniset $GLANCE_API_CONF DEFAULT sql_connection $BASE_SQL_CONN/glance?charset=utf8
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_API_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
-    iniset $GLANCE_API_CONF paste_deploy flavor keystone
+    iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
+    iniset $GLANCE_API_CONF paste_deploy flavor keystone+cachemanagement
     iniset $GLANCE_API_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $GLANCE_API_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset $GLANCE_API_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
@@ -1102,6 +1107,23 @@ if is_service_enabled g-reg; then
 
     GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
     cp $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
+
+    GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
+    cp $GLANCE_DIR/etc/glance-cache.conf $GLANCE_CACHE_CONF
+    iniset $GLANCE_CACHE_CONF DEFAULT debug True
+    inicomment $GLANCE_CACHE_CONF DEFAULT log_file
+    iniset $GLANCE_CACHE_CONF DEFAULT use_syslog $SYSLOG
+    iniset $GLANCE_CACHE_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    iniset $GLANCE_CACHE_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
+    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_url
+    iniset $GLANCE_CACHE_CONF DEFAULT auth_url $KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_tenant_name
+    iniset $GLANCE_CACHE_CONF DEFAULT admin_tenant_name $SERVICE_TENANT_NAME
+    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_user
+    iniset $GLANCE_CACHE_CONF DEFAULT admin_user glance
+    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_password
+    iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
+
 
     GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
     cp $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
