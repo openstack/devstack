@@ -183,7 +183,7 @@ if [[ $EUID -eq 0 ]]; then
 
     # Give the non-root user the ability to run as **root** via ``sudo``
     if [[ "$os_PACKAGE" = "deb" ]]; then
-        dpkg -l sudo || apt_get update && install_package sudo
+        dpkg -l sudo || install_package sudo
     else
         rpm -qa | grep sudo || install_package sudo
     fi
@@ -660,7 +660,6 @@ set -o xtrace
 
 # Install package requirements
 if [[ "$os_PACKAGE" = "deb" ]]; then
-    apt_get update
     install_package $(get_packages $FILES/apts)
 else
     install_package $(get_packages $FILES/rpms)
