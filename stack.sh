@@ -447,10 +447,9 @@ MULTI_HOST=`trueorfalse False $MULTI_HOST`
 # fail.
 #
 # If you are running on a single node and don't need to access the VMs from
-# devices other than that node, you can set the flat interface to the same
-# value as ``FLAT_NETWORK_BRIDGE``.  This will stop the network hiccup from
-# occurring.
-FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
+# devices other than that node, you can set FLAT_INTERFACE=
+# This will stop nova from bridging any interfaces into FLAT_NETWORK_BRIDGE.
+FLAT_INTERFACE=${FLAT_INTERFACE-$GUEST_INTERFACE_DEFAULT}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
 
