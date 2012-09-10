@@ -101,7 +101,7 @@ if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 		--service_id $KEYSTONE_SERVICE \
 		--publicurl "http://$SERVICE_HOST:\$(public_port)s/v2.0" \
 		--adminurl "http://$SERVICE_HOST:\$(admin_port)s/v2.0" \
-		--internalurl "http://$SERVICE_HOST:\$(admin_port)s/v2.0"
+		--internalurl "http://$SERVICE_HOST:\$(public_port)s/v2.0"
 fi
 
 # Nova
@@ -123,9 +123,9 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
         keystone endpoint-create \
             --region RegionOne \
             --service_id $NOVA_SERVICE \
-            --publicurl "http://$SERVICE_HOST:\$(compute_port)s/v1.1/\$(tenant_id)s" \
-            --adminurl "http://$SERVICE_HOST:\$(compute_port)s/v1.1/\$(tenant_id)s" \
-            --internalurl "http://$SERVICE_HOST:\$(compute_port)s/v1.1/\$(tenant_id)s"
+            --publicurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s" \
+            --adminurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s" \
+            --internalurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s"
     fi
     # Nova needs ResellerAdmin role to download images when accessing
     # swift through the s3 api. The admin role in swift allows a user
@@ -197,9 +197,9 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         keystone endpoint-create \
             --region RegionOne \
             --service_id $GLANCE_SERVICE \
-            --publicurl "http://$SERVICE_HOST:9292/v1" \
-            --adminurl "http://$SERVICE_HOST:9292/v1" \
-            --internalurl "http://$SERVICE_HOST:9292/v1"
+            --publicurl "http://$SERVICE_HOST:9292" \
+            --adminurl "http://$SERVICE_HOST:9292" \
+            --internalurl "http://$SERVICE_HOST:9292"
     fi
 fi
 
@@ -223,7 +223,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
             --region RegionOne \
             --service_id $SWIFT_SERVICE \
             --publicurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
-            --adminurl "http://$SERVICE_HOST:8080/v1" \
+            --adminurl "http://$SERVICE_HOST:8080" \
             --internalurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
     fi
 fi
