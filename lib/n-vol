@@ -114,9 +114,10 @@ function start_nvol() {
     screen_it n-vol "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-volume"
 }
 
-# stop_nvol() - Stop running processes (non-screen)
+# stop_nvol() - Stop running processes
 function stop_nvol() {
-    # FIXME(dtroyer): stop only the n-vol screen window?
+    # Kill the nova volume screen window
+    screen -S $SCREEN_NAME -p n-vol -X kill
 
     stop_service tgt
 }

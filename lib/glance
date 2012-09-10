@@ -169,7 +169,7 @@ function start_glance() {
     fi
 }
 
-# stop_glance() - Stop running processes (non-screen)
+# stop_glance() - Stop running processes
 function stop_glance() {
     # Kill the Glance screen windows
     screen -S $SCREEN_NAME -p g-api -X kill

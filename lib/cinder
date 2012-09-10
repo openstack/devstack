@@ -225,9 +225,12 @@ function start_cinder() {
     screen_it c-sch "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
 }
 
-# stop_cinder() - Stop running processes (non-screen)
+# stop_cinder() - Stop running processes
 function stop_cinder() {
-    # FIXME(dtroyer): stop only the cinder screen window?
+    # Kill the cinder screen windows
+    for serv in c-api c-sch c-vol; do
+        screen -S $SCREEN_NAME -p $serv -X kill
+    done
 
     if is_service_enabled c-vol; then
         stop_service tgt
