@@ -1222,6 +1222,12 @@ if is_service_enabled quantum; then
     # Example: LB_PHYSICAL_INTERFACE=eth1
     LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
 
+    # With the openvswitch plugin, set to True in localrc to enable
+    # provider GRE tunnels when ENABLE_TENANT_TUNNELS is False.
+    #
+    # Example: OVS_ENABLE_TUNNELING=True
+    OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
+
     # Put config files in ``/etc/quantum`` for everyone to find
     if [[ ! -d /etc/quantum ]]; then
         sudo mkdir -p /etc/quantum
@@ -1298,6 +1304,11 @@ if is_service_enabled q-svc; then
         if [[ "$OVS_VLAN_RANGES" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE OVS network_vlan_ranges $OVS_VLAN_RANGES
         fi
+
+        # Enable tunnel networks if selected
+        if [[ $OVS_ENABLE_TUNNELING = "True" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
+        fi
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         if [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE VLANS tenant_network_type vlan
@@ -1328,7 +1339,7 @@ if is_service_enabled q-agt; then
         quantum_setup_ovs_bridge $OVS_BRIDGE
 
         # Setup agent for tunneling
-        if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
+        if [[ "$OVS_ENABLE_TUNNELING" = "True" ]]; then
             # Verify tunnels are supported
             # REVISIT - also check kernel module support for GRE and patch ports
             OVS_VERSION=`ovs-vsctl --version | head -n 1 | awk '{print $4;}'`
@@ -1337,6 +1348,7 @@ if is_service_enabled q-agt; then
                 echo "OVS 1.4+ is required for tunneling between multiple hosts."
                 exit 1
             fi
+            iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
             iniset /$Q_PLUGIN_CONF_FILE OVS local_ip $HOST_IP
         fi
 
