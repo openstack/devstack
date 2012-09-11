@@ -171,10 +171,10 @@ if [[ "$ENABLED_SERVICES" =~ "heat" ]]; then
             --description="Heat Service")
         keystone endpoint-create \
             --region RegionOne \
-            --service_id $HEAT_SERVICE \
-            --publicurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1" \
-            --adminurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1" \
-            --internalurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1"
+            --service_id $HEAT_CFN_SERVICE \
+            --publicurl "http://$SERVICE_HOST:$HEAT_API_CFN_PORT/v1" \
+            --adminurl "http://$SERVICE_HOST:$HEAT_API_CFN_PORT/v1" \
+            --internalurl "http://$SERVICE_HOST:$HEAT_API_CFN_PORT/v1"
     fi
 fi
 
