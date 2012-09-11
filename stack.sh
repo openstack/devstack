@@ -769,6 +769,8 @@ if is_service_enabled q-agt; then
         else
             ### FIXME(dtroyer): Find RPMs for OpenVSwitch
             echo "OpenVSwitch packages need to be located"
+            # Fedora does not started OVS by default
+            restart_service openvswitch
         fi
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
        install_package bridge-utils
@@ -1230,6 +1232,13 @@ if is_service_enabled quantum; then
 
     Q_CONF_FILE=/etc/quantum/quantum.conf
     cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
+    Q_RR_CONF_FILE=/etc/quantum/rootwrap.conf
+    cp -p $QUANTUM_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
+
+    # Copy over the config and filter bits
+    Q_CONF_ROOTWRAP_D=/etc/quantum/rootwrap.d
+    mkdir -p $Q_CONF_ROOTWRAP_D
+    cp -pr $QUANTUM_DIR/etc/quantum/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
 fi
 
 # Quantum service (for controller node)
@@ -1336,6 +1345,8 @@ if is_service_enabled q-agt; then
         if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings $OVS_BRIDGE_MAPPINGS
         fi
+        # Update config w/rootwrap
+        iniset /$Q_PLUGIN_CONF_FILE OVS root_helper #Q_RR_CONF_FILE
         AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         # Setup physical network interface mappings.  Override
@@ -1347,6 +1358,8 @@ if is_service_enabled q-agt; then
         if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings $LB_INTERFACE_MAPPINGS
         fi
+        # Update config w/rootwrap
+        iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE root_helper #Q_RR_CONF_FILE
         AGENT_BINARY="$QUANTUM_DIR/bin/quantum-linuxbridge-agent"
     fi
 fi
@@ -1366,6 +1379,9 @@ if is_service_enabled q-dhcp; then
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
 
     quantum_setup_keystone $Q_DHCP_CONF_FILE DEFAULT set_auth_url
+
+    # Update config w/rootwrap
+    iniset /$Q_DHCP_CONF_FILE DEFAULT root_helper #Q_RR_CONF_FILE
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
@@ -1548,8 +1564,7 @@ if is_service_enabled n-cpu; then
     QEMU_CONF=/etc/libvirt/qemu.conf
     if is_service_enabled quantum && [[ $Q_PLUGIN = "openvswitch" ]] && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF ; then
         # Add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
-        sudo chmod 666 $QEMU_CONF
-        sudo cat <<EOF >> /etc/libvirt/qemu.conf
+        cat <<EOF | sudo tee -a $QEMU_CONF
 cgroup_device_acl = [
     "/dev/null", "/dev/full", "/dev/zero",
     "/dev/random", "/dev/urandom",
@@ -1557,7 +1572,6 @@ cgroup_device_acl = [
     "/dev/rtc", "/dev/hpet","/dev/net/tun",
 ]
 EOF
-        sudo chmod 644 $QEMU_CONF
     fi
 
     if [[ "$os_PACKAGE" = "deb" ]]; then
@@ -2184,9 +2198,9 @@ elif is_service_enabled mysql && is_service_enabled nova; then
 fi
 
 # Start up the quantum agents if enabled
-screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
-screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
-screen_it q-l3 "sudo python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
+screen_it q-agt "python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
+screen_it q-dhcp "python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
+screen_it q-l3 "python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
 
 echo_summary "Starting Nova"
 # The group **libvirtd** is added to the current user in this script.
