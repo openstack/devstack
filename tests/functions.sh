@@ -239,3 +239,44 @@ test_disable_negated_services 'a,-a' ''
 test_disable_negated_services 'b,a,-a' 'b'
 test_disable_negated_services 'a,b,-a' 'b'
 test_disable_negated_services 'a,-a,b' 'b'
+
+
+echo "Testing is_package_installed()"
+
+if [[ -z "$os_PACKAGE" ]]; then
+    GetOSVersion
+fi
+
+if [[ "$os_PACKAGE" = "deb" ]]; then
+    is_package_installed dpkg
+    VAL=$?
+else
+    is_package_installed rpm
+    VAL=$?
+fi
+if [[ "$VAL" -eq 0 ]]; then
+    echo "OK"
+else
+    echo "is_package_installed() on existing package failed"
+fi
+
+if [[ "$os_PACKAGE" = "deb" ]]; then
+    is_package_installed dpkg bash
+    VAL=$?
+else
+    is_package_installed rpm bash
+    VAL=$?
+fi
+if [[ "$VAL" -eq 0 ]]; then
+    echo "OK"
+else
+    echo "is_package_installed() on more than one existing package failed"
+fi
+
+is_package_installed zzzZZZzzz
+VAL=$?
+if [[ "$VAL" -ne 0 ]]; then
+    echo "OK"
+else
+    echo "is_package_installed() on non-existing package failed"
+fi
