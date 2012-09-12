@@ -41,7 +41,6 @@ MAILER_EMAIL_BACKEND = EMAIL_BACKEND
 HORIZON_CONFIG = {
     'dashboards': ('nova', 'syspanel', 'settings',),
     'default_dashboard': 'nova',
-    'user_home': 'openstack_dashboard.views.user_home',
 }
 
 # TODO(tres): Remove these once Keystone has an API to identify auth backend.
