@@ -15,6 +15,7 @@ python-httplib2
 python-kombu
 python-migrate
 python-mox
+python-netaddr
 python-nose
 python-paste
 python-paste-deploy
