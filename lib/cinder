@@ -189,10 +189,19 @@ function install_cinder() {
     git_clone $CINDERCLIENT_REPO $CINDERCLIENT_DIR $CINDERCLIENT_BRANCH
 }
 
+# apply config.d approach (e.g. Oneiric does not have this)
+function _configure_tgt_for_config_d() {
+    if [[ ! -d /etc/tgt/conf.d/ ]]; then
+        sudo mkdir /etc/tgt/conf.d
+        echo "include /etc/tgt/conf.d/*.conf" | sudo tee -a /etc/tgt/targets.conf
+    fi
+}
+
 # start_cinder() - Start running processes, including screen
 function start_cinder() {
     if is_service_enabled c-vol; then
         if [[ "$os_PACKAGE" = "deb" ]]; then
+            _configure_tgt_for_config_d
             if [[ ! -f /etc/tgt/conf.d/cinder.conf ]]; then
                echo "include $CINDER_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/cinder.conf
             fi
