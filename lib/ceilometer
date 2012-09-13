@@ -16,9 +16,9 @@
 # stop_XXX
 # cleanup_XXX
 
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following along as the install occurs.
-set -o xtrace
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
 
 
 # Defaults
@@ -71,3 +71,6 @@ function start_ceilometer() {
     screen_it ceilometer-collector "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-collector --config-file $CEILOMETER_COLLECTOR_CONF"
     screen_it ceilometer-api "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR"
 }
+
+# Restore xtrace
+$XTRACE

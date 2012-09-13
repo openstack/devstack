@@ -166,6 +166,9 @@ if is_service_enabled cinder && is_service_enabled n-vol; then
     exit 1
 fi
 
+# Set up logging level
+VERBOSE=$(trueorfalse True $VERBOSE)
+
 
 # root Access
 # -----------
@@ -380,6 +383,7 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
 
 # Generic helper to configure passwords
 function read_password {
+    XTRACE=$(set +o | grep xtrace)
     set +o xtrace
     var=$1; msg=$2
     pw=${!var}
@@ -416,7 +420,7 @@ function read_password {
         eval "$var=$pw"
         echo "$var=$pw" >> $localrc
     fi
-    set -o xtrace
+    $XTRACE
 }
 
 
@@ -599,6 +603,18 @@ APACHE_GROUP=${APACHE_GROUP:-$APACHE_USER}
 # Log files
 # ---------
 
+# Echo text to the log file, summary log file and stdout
+# echo_summary "something to say"
+function echo_summary() {
+    echo $@ >&6
+}
+
+# Echo text only to stdout, no log files
+# echo_nolog "something not for the logs"
+function echo_nolog() {
+    echo $@ >&3
+}
+
 # Set up logging for ``stack.sh``
 # Set ``LOGFILE`` to turn on logging
 # Append '.xxxxxxxx' to the given name to maintain history
@@ -617,13 +633,38 @@ if [[ -n "$LOGFILE" ]]; then
     LOGNAME=$(basename "$LOGFILE")
     mkdir -p $LOGDIR
     find $LOGDIR -maxdepth 1 -name $LOGNAME.\* -mtime +$LOGDAYS -exec rm {} \;
-
     LOGFILE=$LOGFILE.${CURRENT_LOG_TIME}
-    # Redirect stdout/stderr to tee to write the log file
-    exec 1> >( tee "${LOGFILE}" ) 2>&1
-    echo "stack.sh log $LOGFILE"
+    SUMFILE=$LOGFILE.${CURRENT_LOG_TIME}.summary
+
+    # Redirect output according to config
+    # Copy stdout to fd 3
+    exec 3>&1
+    if [[ "$VERBOSE" == "True" ]]; then
+        # Redirect stdout/stderr to tee to write the log file
+        exec 1> >( tee "${LOGFILE}" ) 2>&1
+        # Set up a second fd for output
+        exec 6> >( tee "${SUMFILE}" )
+    else
+        # Set fd 1 and 2 to primary logfile
+        exec 1> "${LOGFILE}" 2>&1
+        # Set fd 6 to summary logfile and stdout
+        exec 6> >( tee "${SUMFILE}" /dev/fd/3 )
+    fi
+
+    echo_summary "stack.sh log $LOGFILE"
     # Specified logfile name always links to the most recent log
     ln -sf $LOGFILE $LOGDIR/$LOGNAME
+    ln -sf $SUMFILE $LOGDIR/$LOGNAME.summary
+else
+    # Set up output redirection without log files
+    # Copy stdout to fd 3
+    exec 3>&1
+    if [[ "$VERBOSE" != "yes" ]]; then
+        # Throw away stdout and stderr
+        exec 1>/dev/null 2>&1
+    fi
+    # Always send summary fd to original stdout
+    exec 6>&3
 fi
 
 # Set up logging of screen windows
@@ -667,6 +708,7 @@ set -o xtrace
 # OpenStack uses a fair number of other projects.
 
 # Install package requirements
+echo_summary "Installing package prerequisites"
 if [[ "$os_PACKAGE" = "deb" ]]; then
     install_package $(get_packages $FILES/apts)
 else
@@ -785,6 +827,7 @@ TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
 # Install python packages into a virtualenv so that we can track them
 if [[ $TRACK_DEPENDS = True ]] ; then
+    echo_summary "Installing Python packages into a virtualenv $DEST/.venv"
     install_package python-virtualenv
 
     rm -rf $DEST/.venv
@@ -794,11 +837,14 @@ if [[ $TRACK_DEPENDS = True ]] ; then
 fi
 
 # Install python requirements
+echo_summary "Installing Python prerequisites"
 pip_install $(get_packages $FILES/pips | sort -u)
 
 
 # Check Out Source
 # ----------------
+
+echo_summary "Installing OpenStack project source"
 
 install_keystoneclient
 
@@ -856,6 +902,8 @@ fi
 
 # Initialization
 # ==============
+
+echo_summary "Configuring OpenStack projects"
 
 # Set up our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
@@ -923,6 +971,7 @@ EOF
 EOF
         sudo mv /tmp/90-stack-s.conf /etc/rsyslog.d
     fi
+    echo_summary "Starting rsyslog"
     restart_service rsyslog
 fi
 
@@ -932,6 +981,7 @@ fi
 
 if is_service_enabled rabbit; then
     # Start rabbitmq-server
+    echo_summary "Starting RabbitMQ"
     if [[ "$os_PACKAGE" = "rpm" ]]; then
         # RPM doesn't start the service
         restart_service rabbitmq-server
@@ -939,6 +989,7 @@ if is_service_enabled rabbit; then
     # change the rabbit password since the default is "guest"
     sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
 elif is_service_enabled qpid; then
+    echo_summary "Starting qpid"
     restart_service qpidd
 fi
 
@@ -947,6 +998,7 @@ fi
 # -----
 
 if is_service_enabled mysql; then
+    echo_summary "Configuring and starting MySQL"
 
     # Start mysql-server
     if [[ "$os_PACKAGE" = "rpm" ]]; then
@@ -998,6 +1050,7 @@ screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 # --------
 
 if is_service_enabled key; then
+    echo_summary "Starting Keystone"
     configure_keystone
     init_keystone
     start_keystone
@@ -1030,6 +1083,7 @@ fi
 # Set up the django horizon application to serve via apache/wsgi
 
 if is_service_enabled horizon; then
+    echo_summary "Configuring and starting Horizon"
 
     # Remove stale session database.
     rm -f $HORIZON_DIR/openstack_dashboard/local/dashboard_openstack.sqlite3
@@ -1079,6 +1133,8 @@ fi
 # ------
 
 if is_service_enabled g-reg; then
+    echo_summary "Configuring Glance"
+
     GLANCE_CONF_DIR=/etc/glance
     if [[ ! -d $GLANCE_CONF_DIR ]]; then
         sudo mkdir -p $GLANCE_CONF_DIR
@@ -1174,6 +1230,7 @@ fi
 # -------
 
 if is_service_enabled quantum; then
+    echo_summary "Configuring Quantum"
     #
     # Quantum Network Configuration
     #
@@ -1469,6 +1526,8 @@ fi
 # Nova
 # ----
 
+echo_summary "Configuring Nova"
+
 # Put config files in ``/etc/nova`` for everyone to find
 NOVA_CONF_DIR=/etc/nova
 if [[ ! -d $NOVA_CONF_DIR ]]; then
@@ -1676,6 +1735,7 @@ fi
 # ---------------
 
 if is_service_enabled swift; then
+    echo_summary "Configuring Swift"
 
     # Make sure to kill all swift processes first
     swift-init all stop || true
@@ -1930,8 +1990,10 @@ fi
 # --------------
 
 if is_service_enabled cinder; then
+    echo_summary "Configuring Cinder"
     init_cinder
 elif is_service_enabled n-vol; then
+    echo_summary "Configuring Nova volumes"
     init_nvol
 fi
 
@@ -2072,6 +2134,7 @@ done
 # ---------
 
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    echo_summary "Using XenServer virtualization driver"
     read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
     add_nova_opt "compute_driver=xenapi.XenAPIDriver"
     XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
@@ -2084,6 +2147,7 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
     add_nova_opt "firewall_driver=$XEN_FIREWALL_DRIVER"
 elif [ "$VIRT_DRIVER" = 'openvz' ]; then
+    echo_summary "Using OpenVZ virtualization driver"
     # TODO(deva): OpenVZ driver does not yet work if compute_driver is set here.
     #             Replace connection_type when this is fixed.
     #             add_nova_opt "compute_driver=openvz.connection.OpenVzConnection"
@@ -2091,6 +2155,7 @@ elif [ "$VIRT_DRIVER" = 'openvz' ]; then
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
     add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
 else
+    echo_summary "Using libvirt virtualization driver"
     add_nova_opt "compute_driver=libvirt.LibvirtDriver"
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
     add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
@@ -2121,6 +2186,7 @@ fi
 # ----
 
 if is_service_enabled heat; then
+    echo_summary "Configuring Heat"
     init_heat
 fi
 
@@ -2134,6 +2200,7 @@ fi
 
 # Launch the glance registry service
 if is_service_enabled g-reg; then
+    echo_summary "Starting Glance"
     screen_it g-reg "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
 fi
 
@@ -2163,6 +2230,7 @@ screen_it zeromq "cd $NOVA_DIR && $NOVA_DIR/bin/nova-rpc-zmq-receiver"
 
 # Launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
+    echo_summary "Starting Nova API"
     add_nova_opt "enabled_apis=$NOVA_ENABLED_APIS"
     screen_it n-api "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api"
     echo "Waiting for nova-api to start..."
@@ -2173,6 +2241,7 @@ if is_service_enabled n-api; then
 fi
 
 if is_service_enabled q-svc; then
+    echo_summary "Starting Quantum"
     # Start the Quantum service
     screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
     echo "Waiting for Quantum to start..."
@@ -2226,6 +2295,7 @@ screen_it q-agt "sudo python $AGENT_BINARY --config-file $Q_CONF_FILE --config-f
 screen_it q-dhcp "sudo python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
 screen_it q-l3 "sudo python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
 
+echo_summary "Starting Nova"
 # The group **libvirtd** is added to the current user in this script.
 # Use 'sg' to execute nova-compute as a member of the **libvirtd** group.
 # ``screen_it`` checks ``is_service_enabled``, it is not needed here
@@ -2237,12 +2307,15 @@ screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_
 screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
 screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
 if is_service_enabled n-vol; then
+    echo_summary "Starting Nova volumes"
     start_nvol
 fi
 if is_service_enabled cinder; then
+    echo_summary "Starting Cinder"
     start_cinder
 fi
 if is_service_enabled ceilometer; then
+    echo_summary "Starting Ceilometer"
     configure_ceilometer
     start_ceilometer
 fi
@@ -2256,6 +2329,7 @@ is_service_enabled swift3 || \
 
 # launch heat engine, api and metadata
 if is_service_enabled heat; then
+    echo_summary "Starting Heat"
     start_heat
 fi
 
@@ -2274,6 +2348,7 @@ fi
 #  * **precise**: http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64.tar.gz
 
 if is_service_enabled g-reg; then
+    echo_summary "Uploading images"
     TOKEN=$(keystone  token-get | grep ' id ' | get_field 2)
 
     # Option to upload legacy ami-tty, which works with xenserver
@@ -2302,6 +2377,15 @@ fi
 
 set +o xtrace
 
+if [[ -n "$LOGFILE" ]]; then
+    exec 1>&3
+    # Force all output to stdout and logs now
+    exec 1> >( tee "${LOGFILE}" ) 2>&1
+else
+    # Force all output to stdout now
+    exec 1>&3
+fi
+
 
 # Using the cloud
 # ---------------
@@ -2329,8 +2413,8 @@ echo "This is your host ip: $HOST_IP"
 
 # Warn that ``EXTRA_FLAGS`` needs to be converted to ``EXTRA_OPTS``
 if [[ -n "$EXTRA_FLAGS" ]]; then
-    echo "WARNING: EXTRA_FLAGS is defined and may need to be converted to EXTRA_OPTS"
+    echo_summary "WARNING: EXTRA_FLAGS is defined and may need to be converted to EXTRA_OPTS"
 fi
 
 # Indicate how long this took to run (bash maintained variable ``SECONDS``)
-echo "stack.sh completed in $SECONDS seconds."
+echo_summary "stack.sh completed in $SECONDS seconds."

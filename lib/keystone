@@ -18,9 +18,9 @@
 # stop_keystone
 # cleanup_keystone
 
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following along as the install occurs.
-set -o xtrace
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
 
 
 # Defaults
@@ -170,3 +170,6 @@ function stop_keystone() {
     # Kill the Keystone screen window
     screen -S $SCREEN_NAME -p key -X kill
 }
+
+# Restore xtrace
+$XTRACE

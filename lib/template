@@ -16,9 +16,9 @@
 # stop_XXXX
 # cleanup_XXXX
 
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following along as the install occurs.
-set -o xtrace
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
 
 
 # Defaults
@@ -75,3 +75,6 @@ function stop_XXXX() {
     # FIXME(dtroyer): stop only our screen screen window?
     :
 }
+
+# Restore xtrace
+$XTRACE
