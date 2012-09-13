@@ -17,7 +17,7 @@ python-routes
 python-sqlalchemy
 python-suds
 rabbitmq-server # NOPRIME
-qpid-cpp-server # NOPRIME
+qpid-cpp-server-daemon # NOPRIME
 sqlite
 sudo
 vconfig
