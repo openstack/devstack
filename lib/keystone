@@ -36,7 +36,7 @@ KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 
 # Select the backend for Keystopne's service catalog
-KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-template}
+KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
 
 # Set Keystone interface configuration
