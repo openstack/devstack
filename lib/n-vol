@@ -3,7 +3,9 @@
 
 # Dependencies:
 # - functions
+# - DATA_DIR must be defined
 # - KEYSTONE_AUTH_* must be defined
+# - NOVA_DIR, NOVA_BIN_DIR, NOVA_STATE_PATH must be defined
 # SERVICE_{TENANT_NAME|PASSWORD} must be defined
 # _configure_tgt_for_config_d() from lib/cinder
 
@@ -64,7 +66,7 @@ function init_nvol() {
         if ! sudo vgs $VOLUME_GROUP; then sudo vgcreate $VOLUME_GROUP $DEV; fi
     fi
 
-    mkdir -p $NOVA_DIR/volumes
+    mkdir -p $NOVA_STATE_PATH/volumes
 
     if sudo vgs $VOLUME_GROUP; then
         if [[ "$os_PACKAGE" = "rpm" ]]; then
@@ -97,7 +99,7 @@ function start_nvol() {
     if [[ ! -f /etc/tgt/conf.d/nova.conf ]]; then
         _configure_tgt_for_config_d
        sudo mkdir -p /etc/tgt/conf.d
-       echo "include $NOVA_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/nova.conf
+       echo "include $NOVA_STATE_PATH/volumes/*" | sudo tee /etc/tgt/conf.d/nova.conf
     fi
 
     if [[ "$os_PACKAGE" = "deb" ]]; then
@@ -109,7 +111,7 @@ function start_nvol() {
         restart_service tgtd
     fi
 
-    screen_it n-vol "cd $NOVA_DIR && $NOVA_DIR/bin/nova-volume"
+    screen_it n-vol "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-volume"
 }
 
 # stop_nvol() - Stop running processes (non-screen)
