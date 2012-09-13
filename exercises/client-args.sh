@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-**client-args.sh**
+# **client-args.sh**
 
 # Test OpenStack client authentication aguemnts handling
 
@@ -140,8 +140,10 @@ report "Nova" $STATUS_NOVA
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT
 
-echo "*********************************************************************"
-echo "SUCCESS: End DevStack Exercise: $0"
-echo "*********************************************************************"
+if (( $RETURN == 0 )); then
+    echo "*********************************************************************"
+    echo "SUCCESS: End DevStack Exercise: $0"
+    echo "*********************************************************************"
+fi
 
 exit $RETURN

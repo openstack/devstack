@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-**client-env.sh**
+# **client-env.sh**
 
 # Test OpenStack client enviroment variable handling
 
@@ -149,8 +149,10 @@ report "EC2" $STATUS_EC2
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT
 
-echo "*********************************************************************"
-echo "SUCCESS: End DevStack Exercise: $0"
-echo "*********************************************************************"
+if (( $RETURN == 0 )); then
+    echo "*********************************************************************"
+    echo "SUCCESS: End DevStack Exercise: $0"
+    echo "*********************************************************************"
+fi
 
 exit $RETURN
