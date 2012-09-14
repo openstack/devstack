@@ -192,7 +192,7 @@ if [[ $EUID -eq 0 ]]; then
         useradd -g stack -s /bin/bash -d $DEST -m stack
     fi
 
-    echo "Giving stack user passwordless sudo priviledges"
+    echo "Giving stack user passwordless sudo privileges"
     # UEC images ``/etc/sudoers`` does not have a ``#includedir``, add one
     grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
         echo "#includedir /etc/sudoers.d" >> /etc/sudoers
@@ -927,8 +927,8 @@ EOF
 fi
 
 
-# Finalize queue instllation
-# --------------------------
+# Finalize queue installation
+# ----------------------------
 
 if is_service_enabled rabbit; then
     # Start rabbitmq-server
@@ -990,7 +990,7 @@ fi
 # Create a new named screen to run processes in
 screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
 sleep 1
-# Set a reasonable statusbar
+# Set a reasonable status bar
 screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
 
@@ -1522,8 +1522,8 @@ if is_service_enabled n-api; then
     # Get the sample configuration file in place
     cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
 
-    # Rewrite the authtoken configration for our Keystone service.
-    # This is a bit defensive to allow the sample file some varaince.
+    # Rewrite the authtoken configuration for our Keystone service.
+    # This is a bit defensive to allow the sample file some variance.
     sed -e "
         /^admin_token/i admin_tenant_name = $SERVICE_TENANT_NAME
         /admin_tenant_name/s/^.*$/admin_tenant_name = $SERVICE_TENANT_NAME/;
@@ -1735,12 +1735,12 @@ if is_service_enabled swift; then
    sudo chown -R $USER: ${SWIFT_CONFIG_DIR} /var/run/swift
 
     if [[ "$SWIFT_CONFIG_DIR" != "/etc/swift" ]]; then
-        # Some swift tools are hard-coded to use ``/etc/swift`` and are apparenty not going to be fixed.
+        # Some swift tools are hard-coded to use ``/etc/swift`` and are apparently not going to be fixed.
         # Create a symlink if the config dir is moved
         sudo ln -sf ${SWIFT_CONFIG_DIR} /etc/swift
     fi
 
-    # Swift use rsync to syncronize between all the different
+    # Swift use rsync to synchronize between all the different
     # partitions (which make more sense when you have a multi-node
     # setup) we configure it with our version of rsync.
     sed -e "
