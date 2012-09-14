@@ -3,6 +3,7 @@
 
 # Dependencies:
 # - functions
+# - DEST, DATA_DIR must be defined
 # - KEYSTONE_AUTH_* must be defined
 # SERVICE_{TENANT_NAME|PASSWORD} must be defined
 
@@ -25,14 +26,17 @@ set -o xtrace
 
 # set up default directories
 CINDER_DIR=$DEST/cinder
-if [ -d $CINDER_DIR/bin ] ; then
+CINDERCLIENT_DIR=$DEST/python-cinderclient
+CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
+CINDER_CONF_DIR=/etc/cinder
+CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
+
+# Support entry points installation of console scripts
+if [[ -d $CINDER_DIR/bin ]]; then
     CINDER_BIN_DIR=$CINDER_DIR/bin
 else
     CINDER_BIN_DIR=/usr/local/bin
 fi
-CINDERCLIENT_DIR=$DEST/python-cinderclient
-CINDER_CONF_DIR=/etc/cinder
-CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
 
 # Name of the lvm volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
@@ -112,6 +116,7 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT root_helper "sudo ${CINDER_ROOTWRAP}"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.openstack.volume.contrib.standard_extensions
+    iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
 
     if is_service_enabled qpid ; then
         iniset $CINDER_CONF DEFAULT rpc_backend cinder.openstack.common.rpc.impl_qpid
@@ -162,7 +167,7 @@ function init_cinder() {
             if ! sudo vgs $VOLUME_GROUP; then sudo vgcreate $VOLUME_GROUP $DEV; fi
         fi
 
-        mkdir -p $CINDER_DIR/volumes
+        mkdir -p $CINDER_STATE_PATH/volumes
 
         if sudo vgs $VOLUME_GROUP; then
             if [[ "$os_PACKAGE" = "rpm" ]]; then

@@ -317,11 +317,7 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/quantum
 
 # Set the destination directories for OpenStack projects
-NOVA_DIR=$DEST/nova
 HORIZON_DIR=$DEST/horizon
-GLANCE_DIR=$DEST/glance
-GLANCECLIENT_DIR=$DEST/python-glanceclient
-NOVACLIENT_DIR=$DEST/python-novaclient
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 NOVNC_DIR=$DEST/noVNC
 SWIFT_DIR=$DEST/swift
@@ -329,6 +325,33 @@ SWIFT3_DIR=$DEST/swift3
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
 QUANTUM_DIR=$DEST/quantum
 QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
+
+# Nova defaults
+NOVA_DIR=$DEST/nova
+NOVACLIENT_DIR=$DEST/python-novaclient
+NOVA_STATE_PATH=${NOVA_STATE_PATH:=$DATA_DIR/nova}
+# INSTANCES_PATH is the previous name for this
+NOVA_INSTANCES_PATH=${NOVA_INSTANCES_PATH:=${INSTANCES_PATH:=$NOVA_STATE_PATH/instances}}
+
+# Support entry points installation of console scripts
+if [[ -d $NOVA_DIR/bin ]]; then
+    NOVA_BIN_DIR=$NOVA_DIR/bin
+else
+    NOVA_BIN_DIR=/usr/local/bin
+fi
+
+# Glance defaults
+GLANCE_DIR=$DEST/glance
+GLANCECLIENT_DIR=$DEST/python-glanceclient
+GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
+GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
+
+# Support entry points installation of console scripts
+if [[ -d $GLANCE_DIR/bin ]]; then
+    GLANCE_BIN_DIR=$GLANCE_DIR/bin
+else
+    GLANCE_BIN_DIR=/usr/local/bin
+fi
 
 # Default Quantum Plugin
 Q_PLUGIN=${Q_PLUGIN:-openvswitch}
@@ -1062,13 +1085,11 @@ if is_service_enabled g-reg; then
     fi
     sudo chown `whoami` $GLANCE_CONF_DIR
 
-    GLANCE_IMAGE_DIR=$DEST/glance/images
     # Delete existing images
     rm -rf $GLANCE_IMAGE_DIR
     mkdir -p $GLANCE_IMAGE_DIR
 
-    GLANCE_CACHE_DIR=$DEST/glance/cache
-    # Delete existing images
+    # Delete existing cache
     rm -rf $GLANCE_CACHE_DIR
     mkdir -p $GLANCE_CACHE_DIR
 
@@ -1144,7 +1165,7 @@ if is_service_enabled g-reg; then
     GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
     cp $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
 
-    $GLANCE_DIR/bin/glance-manage db_sync
+    $GLANCE_BIN_DIR/glance-manage db_sync
 
 fi
 
@@ -1613,15 +1634,15 @@ EOF'
     # ~~~~~~~~~~~~~~~~
 
     # Nova stores each instance in its own directory.
-    mkdir -p $NOVA_DIR/instances
+    mkdir -p $NOVA_INSTANCES_PATH
 
     # You can specify a different disk to be mounted and used for backing the
     # virtual machines.  If there is a partition labeled nova-instances we
     # mount it (ext filesystems can be labeled via e2label).
     if [ -L /dev/disk/by-label/nova-instances ]; then
-        if ! mount -n | grep -q $NOVA_DIR/instances; then
-            sudo mount -L nova-instances $NOVA_DIR/instances
-            sudo chown -R `whoami` $NOVA_DIR/instances
+        if ! mount -n | grep -q $NOVA_INSTANCES_PATH; then
+            sudo mount -L nova-instances $NOVA_INSTANCES_PATH
+            sudo chown -R `whoami` $NOVA_INSTANCES_PATH
         fi
     fi
 
@@ -1640,15 +1661,15 @@ EOF'
     sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d " " -f2 | sudo iscsiadm --mode node --op delete || true
 
     # Clean out the instances directory.
-    sudo rm -rf $NOVA_DIR/instances/*
+    sudo rm -rf $NOVA_INSTANCES_PATH/*
 fi
 
 if is_service_enabled n-net q-dhcp; then
     # Delete traces of nova networks from prior runs
     sudo killall dnsmasq || true
     clean_iptables
-    rm -rf $NOVA_DIR/networks
-    mkdir -p $NOVA_DIR/networks
+    rm -rf $NOVA_STATE_PATH/networks
+    mkdir -p $NOVA_STATE_PATH/networks
 
     # Force IP forwarding on, just on case
     sudo sysctl -w net.ipv4.ip_forward=1
@@ -1918,13 +1939,6 @@ elif is_service_enabled n-vol; then
     init_nvol
 fi
 
-# Support entry points installation of console scripts
-if [ -d $NOVA_DIR/bin ] ; then
-    NOVA_BIN_DIR=$NOVA_DIR/bin
-else
-    NOVA_BIN_DIR=/usr/local/bin
-fi
-
 NOVA_CONF=nova.conf
 function add_nova_opt {
     echo "$1" >> $NOVA_CONF_DIR/$NOVA_CONF
@@ -2016,8 +2030,11 @@ elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
 fi
 add_nova_opt "glance_api_servers=$GLANCE_HOSTPORT"
 add_nova_opt "force_dhcp_release=True"
-if [ -n "$INSTANCES_PATH" ]; then
-    add_nova_opt "instances_path=$INSTANCES_PATH"
+if [ -n "$NOVA_STATE_PATH" ]; then
+    add_nova_opt "state_path=$NOVA_STATE_PATH"
+fi
+if [ -n "$NOVA_INSTANCES_PATH" ]; then
+    add_nova_opt "instances_path=$NOVA_INSTANCES_PATH"
 fi
 if [ "$MULTI_HOST" != "False" ]; then
     add_nova_opt "multi_host=True"
@@ -2124,12 +2141,12 @@ fi
 
 # Launch the glance registry service
 if is_service_enabled g-reg; then
-    screen_it g-reg "cd $GLANCE_DIR; bin/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
+    screen_it g-reg "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
 fi
 
 # Launch the glance api and wait for it to answer before continuing
 if is_service_enabled g-api; then
-    screen_it g-api "cd $GLANCE_DIR; bin/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
+    screen_it g-api "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
       echo "g-api did not start"
