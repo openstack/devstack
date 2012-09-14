@@ -1376,8 +1376,7 @@ if is_service_enabled q-agt; then
         if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings $OVS_BRIDGE_MAPPINGS
         fi
-
-        AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/openvswitch/agent/ovs_quantum_agent.py"
+        AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         # Setup physical network interface mappings.  Override
         # LB_VLAN_RANGES and LB_INTERFACE_MAPPINGS in localrc for more
@@ -1388,8 +1387,7 @@ if is_service_enabled q-agt; then
         if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings $LB_INTERFACE_MAPPINGS
         fi
-
-       AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py"
+        AGENT_BINARY="$QUANTUM_DIR/bin/quantum-linuxbridge-agent"
     fi
 fi
 
@@ -1407,8 +1405,6 @@ if is_service_enabled q-dhcp; then
     iniset $Q_DHCP_CONF_FILE DEFAULT debug True
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
 
-    # Update database
-    iniset $Q_DHCP_CONF_FILE DEFAULT db_connection "mysql:\/\/$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST\/$Q_DB_NAME?charset=utf8"
     quantum_setup_keystone $Q_DHCP_CONF_FILE DEFAULT set_auth_url
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
@@ -1433,15 +1429,14 @@ if is_service_enabled q-l3; then
 
     iniset $Q_L3_CONF_FILE DEFAULT metadata_ip $Q_META_DATA_IP
     iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-    iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
 
     quantum_setup_keystone $Q_L3_CONF_FILE DEFAULT set_auth_url
     if [[ "$Q_PLUGIN" == "openvswitch" ]]; then
         iniset $Q_L3_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+        iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
         # Set up external bridge
         # Create it if it does not exist
         sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
-        sudo ovs-vsctl --no-wait br-set-external-id $PUBLIC_BRIDGE bridge-id $PUBLIC_BRIDGE
         # remove internal ports
         for PORT in `sudo ovs-vsctl --no-wait list-ports $PUBLIC_BRIDGE`; do
             TYPE=$(sudo ovs-vsctl get interface $PORT type)
@@ -1454,6 +1449,7 @@ if is_service_enabled q-l3; then
         sudo ip addr flush dev $PUBLIC_BRIDGE
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         iniset $Q_L3_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
+        iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge ''
     fi
 fi
 
@@ -1969,17 +1965,20 @@ if is_service_enabled quantum; then
     add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        NOVA_VIF_DRIVER="nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"
-        LINUXNET_VIF_DRIVER="nova.network.linux_net.LinuxOVSInterfaceDriver"
+        NOVA_VIF_DRIVER="nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         NOVA_VIF_DRIVER="nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"
-        LINUXNET_VIF_DRIVER="nova.network.linux_net.QuantumLinuxBridgeInterfaceDriver"
     fi
-    add_nova_opt "libvirt_vif_type=ethernet"
     add_nova_opt "libvirt_vif_driver=$NOVA_VIF_DRIVER"
     add_nova_opt "linuxnet_interface_driver=$LINUXNET_VIF_DRIVER"
 else
     add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
+    add_nova_opt "public_interface=$PUBLIC_INTERFACE"
+    add_nova_opt "vlan_interface=$VLAN_INTERFACE"
+    add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
+    if [ -n "$FLAT_INTERFACE" ]; then
+        add_nova_opt "flat_interface=$FLAT_INTERFACE"
+    fi
 fi
 if is_service_enabled n-vol; then
     add_nova_opt "volume_group=$VOLUME_GROUP"
@@ -1989,12 +1988,6 @@ if is_service_enabled n-vol; then
 fi
 add_nova_opt "osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
 add_nova_opt "my_ip=$HOST_IP"
-add_nova_opt "public_interface=$PUBLIC_INTERFACE"
-add_nova_opt "vlan_interface=$VLAN_INTERFACE"
-add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
-if [ -n "$FLAT_INTERFACE" ]; then
-    add_nova_opt "flat_interface=$FLAT_INTERFACE"
-fi
 add_nova_opt "sql_connection=$BASE_SQL_CONN/nova?charset=utf8"
 add_nova_opt "libvirt_type=$LIBVIRT_TYPE"
 add_nova_opt "libvirt_cpu_mode=none"
