@@ -792,7 +792,12 @@ function upload_image() {
         *.img)
             IMAGE="$FILES/$IMAGE_FNAME";
             IMAGE_NAME=$(basename "$IMAGE" ".img")
-            DISK_FORMAT=raw
+            format=$(qemu-img info ${IMAGE} | awk '/^file format/ { print $3; exit }')
+            if [[ ",qcow2,raw,vdi,vmdk,vpc," =~ ",$format," ]]; then
+                DISK_FORMAT=$format
+            else
+                DISK_FORMAT=raw
+            fi
             CONTAINER_FORMAT=bare
             ;;
         *.img.gz)
