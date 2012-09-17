@@ -313,6 +313,7 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 
 # Get project function libraries
 source $TOP_DIR/lib/keystone
+source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/n-vol
 source $TOP_DIR/lib/ceilometer
@@ -341,19 +342,6 @@ if [[ -d $NOVA_DIR/bin ]]; then
     NOVA_BIN_DIR=$NOVA_DIR/bin
 else
     NOVA_BIN_DIR=/usr/local/bin
-fi
-
-# Glance defaults
-GLANCE_DIR=$DEST/glance
-GLANCECLIENT_DIR=$DEST/python-glanceclient
-GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
-GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
-
-# Support entry points installation of console scripts
-if [[ -d $GLANCE_DIR/bin ]]; then
-    GLANCE_BIN_DIR=$GLANCE_DIR/bin
-else
-    GLANCE_BIN_DIR=/usr/local/bin
 fi
 
 # Default Quantum Plugin
@@ -516,13 +504,6 @@ if is_service_enabled rabbit; then
     RABBIT_HOST=${RABBIT_HOST:-localhost}
     read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 fi
-
-
-# Glance
-# ------
-
-# Glance connection info.  Note the port must be specified.
-GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
 
 
 # Swift
@@ -847,13 +828,13 @@ pip_install $(get_packages $FILES/pips | sort -u)
 echo_summary "Installing OpenStack project source"
 
 install_keystoneclient
+install_glanceclient
 
 git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 
 # Check out the client libs that are used most
 git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
-git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
 
 # glance, swift middleware and nova api needs keystone middleware
 if is_service_enabled key g-api n-api swift; then
@@ -872,7 +853,7 @@ if is_service_enabled swift; then
 fi
 if is_service_enabled g-api n-api; then
     # image catalog service
-    git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
+    install_glance
 fi
 if is_service_enabled n-novnc; then
     # a websockets/html5 or flash powered VNC console for vm instances
@@ -921,12 +902,12 @@ if is_service_enabled swift3; then
     setup_develop $SWIFT3_DIR
 fi
 if is_service_enabled g-api n-api; then
-    setup_develop $GLANCE_DIR
+    configure_glance
 fi
 
 # Do this _after_ glance is installed to override the old binary
 # TODO(dtroyer): figure out when this is no longer necessary
-setup_develop $GLANCECLIENT_DIR
+configure_glanceclient
 
 setup_develop $NOVA_DIR
 if is_service_enabled horizon; then
@@ -1135,56 +1116,7 @@ fi
 if is_service_enabled g-reg; then
     echo_summary "Configuring Glance"
 
-    GLANCE_CONF_DIR=/etc/glance
-    if [[ ! -d $GLANCE_CONF_DIR ]]; then
-        sudo mkdir -p $GLANCE_CONF_DIR
-    fi
-    sudo chown `whoami` $GLANCE_CONF_DIR
-
-    # Delete existing images
-    rm -rf $GLANCE_IMAGE_DIR
-    mkdir -p $GLANCE_IMAGE_DIR
-
-    # Delete existing cache
-    rm -rf $GLANCE_CACHE_DIR
-    mkdir -p $GLANCE_CACHE_DIR
-
-    # (re)create glance database
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS glance;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE glance CHARACTER SET utf8;'
-
-    # Copy over our glance configurations and update them
-    GLANCE_REGISTRY_CONF=$GLANCE_CONF_DIR/glance-registry.conf
-    cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
-    iniset $GLANCE_REGISTRY_CONF DEFAULT debug True
-    inicomment $GLANCE_REGISTRY_CONF DEFAULT log_file
-    iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $BASE_SQL_CONN/glance?charset=utf8
-    iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
-    iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_user glance
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-
-    GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
-    cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
-    iniset $GLANCE_API_CONF DEFAULT debug True
-    inicomment $GLANCE_API_CONF DEFAULT log_file
-    iniset $GLANCE_API_CONF DEFAULT sql_connection $BASE_SQL_CONN/glance?charset=utf8
-    iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
-    iniset $GLANCE_API_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
-    iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
-    iniset $GLANCE_API_CONF paste_deploy flavor keystone+cachemanagement
-    iniset $GLANCE_API_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $GLANCE_API_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $GLANCE_API_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $GLANCE_API_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
-    iniset $GLANCE_API_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $GLANCE_API_CONF keystone_authtoken admin_user glance
-    iniset $GLANCE_API_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+    init_glance
 
     # Store the images in swift if enabled.
     if is_service_enabled swift; then
@@ -1194,35 +1126,6 @@ if is_service_enabled g-reg; then
         iniset $GLANCE_API_CONF DEFAULT swift_store_key $SERVICE_PASSWORD
         iniset $GLANCE_API_CONF DEFAULT swift_store_create_container_on_put True
     fi
-
-    GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
-    cp $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
-
-    GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
-    cp $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
-
-    GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
-    cp $GLANCE_DIR/etc/glance-cache.conf $GLANCE_CACHE_CONF
-    iniset $GLANCE_CACHE_CONF DEFAULT debug True
-    inicomment $GLANCE_CACHE_CONF DEFAULT log_file
-    iniset $GLANCE_CACHE_CONF DEFAULT use_syslog $SYSLOG
-    iniset $GLANCE_CACHE_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
-    iniset $GLANCE_CACHE_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
-    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_url
-    iniset $GLANCE_CACHE_CONF DEFAULT auth_url $KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
-    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_tenant_name
-    iniset $GLANCE_CACHE_CONF DEFAULT admin_tenant_name $SERVICE_TENANT_NAME
-    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_user
-    iniset $GLANCE_CACHE_CONF DEFAULT admin_user glance
-    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_password
-    iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
-
-
-    GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
-    cp $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
-
-    $GLANCE_BIN_DIR/glance-manage db_sync
-
 fi
 
 
@@ -2198,20 +2101,10 @@ fi
 # so send the start command by forcing text into the window.
 # Only run the services specified in ``ENABLED_SERVICES``
 
-# Launch the glance registry service
-if is_service_enabled g-reg; then
+# Launch the Glance services
+if is_service_enabled g-api g-reg; then
     echo_summary "Starting Glance"
-    screen_it g-reg "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
-fi
-
-# Launch the glance api and wait for it to answer before continuing
-if is_service_enabled g-api; then
-    screen_it g-api "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
-    echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
-      echo "g-api did not start"
-      exit 1
-    fi
+    start_glance
 fi
 
 # Create an access key and secret key for nova ec2 register image
