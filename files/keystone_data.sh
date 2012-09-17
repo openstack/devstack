@@ -165,7 +165,7 @@ if [[ "$ENABLED_SERVICES" =~ "heat" ]]; then
                            --user_id $HEAT_USER \
                            --role_id $ADMIN_ROLE
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        HEAT_SERVICE=$(get_id keystone service-create \
+        HEAT_CFN_SERVICE=$(get_id keystone service-create \
             --name=heat \
             --type=orchestration \
             --description="Heat Service")
