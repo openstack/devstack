@@ -1,5 +1,8 @@
 # lib/ceilometer
 # Install and start Ceilometer service
+# To enable, add the following to localrc
+# ENABLED_SERVICES+=ceilometer-acompute,ceilometer-acentral,ceilometer-collector,ceilometer-api
+
 
 # Dependencies:
 # - functions
@@ -32,6 +35,7 @@ fi
 CEILOMETER_CONF_DIR=/etc/ceilometer
 CEILOMETER_AGENT_CONF=$CEILOMETER_CONF_DIR/ceilometer-agent.conf
 CEILOMETER_COLLECTOR_CONF=$CEILOMETER_CONF_DIR/ceilometer-collector.conf
+CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
 
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
@@ -43,10 +47,12 @@ function cleanup_ceilometer() {
 # configure_ceilometer() - Set config files, create data dirs, etc
 function configure_ceilometer() {
     setup_develop $CEILOMETER_DIR
-    if [ ! -d $CEILOMETER_CONF_DIR ]; then
-        sudo mkdir -m 755 -p $CEILOMETER_CONF_DIR
-    fi
-    sudo chown `whoami` $CEILOMETER_CONF_DIR
+
+    [ -d $CEILOMETER_CONF_DIR ] && sudo mkdir -m 755 -p $CEILOMETER_CONF_DIR
+    sudo chown $USER $CEILOMETER_CONF_DIR
+
+    [ ! -d $CEILOMETER_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $CEILOMETER_API_LOG_DIR 
+    sudo chown $USER $CEILOMETER_API_LOG_DIR
 
     # ceilometer confs are copy of /etc/nova/nova.conf which must exist first
     grep -v format_string $NOVA_CONF_DIR/$NOVA_CONF > $CEILOMETER_AGENT_CONF
@@ -63,4 +69,5 @@ function start_ceilometer() {
     screen_it ceilometer-acompute "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_AGENT_CONF"
     screen_it ceilometer-acentral "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_AGENT_CONF"
     screen_it ceilometer-collector "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-collector --config-file $CEILOMETER_COLLECTOR_CONF"
+    screen_it ceilometer-api "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR"
 }
