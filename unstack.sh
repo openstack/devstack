@@ -18,6 +18,13 @@ source $TOP_DIR/functions
 # Load local configuration
 source $TOP_DIR/stackrc
 
+# Destination path for service data
+DATA_DIR=${DATA_DIR:-${DEST}/data}
+
+# Get project function libraries
+source $TOP_DIR/lib/cinder
+source $TOP_DIR/lib/n-vol
+
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 GetOSVersion
@@ -45,14 +52,41 @@ if is_service_enabled horizon; then
     stop_service apache2
 fi
 
+SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*
+
 # Get the iSCSI volumes
 if is_service_enabled cinder n-vol; then
+    if is_service_enabled n-vol; then
+        SCSI_PERSIST_DIR=$NOVA_STATE_PATH/volumes/*
+    fi
+
     TARGETS=$(sudo tgtadm --op show --mode target)
+    if [ $? -ne 0 ]; then
+        # If tgt driver isn't running this won't work obviously
+        # So check the response and restart if need be
+        echo "tgtd seems to be in a bad state, restarting..."
+        if [[ "$os_PACKAGE" = "deb" ]]; then
+            restart_service tgt
+        else
+            restart_service tgtd
+        fi
+        TARGETS=$(sudo tgtadm --op show --mode target)
+    fi
+
     if [[ -n "$TARGETS" ]]; then
-        # FIXME(dtroyer): this could very well require more here to
-        #                 clean up left-over volumes
-        echo "iSCSI target cleanup needed:"
-        echo "$TARGETS"
+        iqn_list=( $(grep --no-filename -r iqn $SCSI_PERSIST_DIR | sed 's/<target //' | sed 's/>//') )
+        for i in "${iqn_list[@]}"; do
+            echo removing iSCSI target: $i
+            sudo tgt-admin --delete $i
+        done
+    fi
+
+    if is_service_enabled cinder; then
+        sudo rm -rf $CINDER_STATE_PATH/volumes/*
+    fi
+
+    if is_service_enabled n-vol; then
+        sudo rm -rf $NOVA_STATE_PATH/volumes/*
     fi
 
     if [[ "$os_PACKAGE" = "deb" ]]; then
