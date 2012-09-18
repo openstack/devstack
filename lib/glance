@@ -1,0 +1,180 @@
+# lib/glance
+# Functions to control the configuration and operation of the Glance service
+
+# Dependencies:
+# ``functions`` file
+# ``DEST``, ``DATA_DIR`` must be defined
+# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# ``SERVICE_HOST``
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_glance
+# configure_glance
+# init_glance
+# start_glance
+# stop_glance
+# cleanup_glance
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# <define global variables here that belong to this project>
+
+# Set up default directories
+GLANCE_DIR=$DEST/glance
+GLANCECLIENT_DIR=$DEST/python-glanceclient
+GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
+GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
+
+GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
+GLANCE_REGISTRY_CONF=$GLANCE_CONF_DIR/glance-registry.conf
+GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
+GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
+GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
+GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
+GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
+
+# Support entry points installation of console scripts
+if [[ -d $GLANCE_DIR/bin ]]; then
+    GLANCE_BIN_DIR=$GLANCE_DIR/bin
+else
+    GLANCE_BIN_DIR=/usr/local/bin
+fi
+
+# Glance connection info.  Note the port must be specified.
+GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
+
+
+# Entry Points
+# ------------
+
+# cleanup_glance() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_glance() {
+    # kill instances (nova)
+    # delete image files (glance)
+    # This function intentionally left blank
+    :
+}
+
+# configure_glanceclient() - Set config files, create data dirs, etc
+function configure_glanceclient() {
+    setup_develop $GLANCECLIENT_DIR
+}
+
+# configure_glance() - Set config files, create data dirs, etc
+function configure_glance() {
+    setup_develop $GLANCE_DIR
+
+    if [[ ! -d $GLANCE_CONF_DIR ]]; then
+        sudo mkdir -p $GLANCE_CONF_DIR
+    fi
+    sudo chown `whoami` $GLANCE_CONF_DIR
+
+    # Copy over our glance configurations and update them
+    cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
+    iniset $GLANCE_REGISTRY_CONF DEFAULT debug True
+    inicomment $GLANCE_REGISTRY_CONF DEFAULT log_file
+    iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $BASE_SQL_CONN/glance?charset=utf8
+    iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
+    iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_user glance
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+
+    cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
+    iniset $GLANCE_API_CONF DEFAULT debug True
+    inicomment $GLANCE_API_CONF DEFAULT log_file
+    iniset $GLANCE_API_CONF DEFAULT sql_connection $BASE_SQL_CONN/glance?charset=utf8
+    iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
+    iniset $GLANCE_API_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
+    iniset $GLANCE_API_CONF paste_deploy flavor keystone+cachemanagement
+    iniset $GLANCE_API_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $GLANCE_API_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $GLANCE_API_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $GLANCE_API_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset $GLANCE_API_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $GLANCE_API_CONF keystone_authtoken admin_user glance
+    iniset $GLANCE_API_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+
+    cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
+
+    cp -p $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
+
+    cp $GLANCE_DIR/etc/glance-cache.conf $GLANCE_CACHE_CONF
+    iniset $GLANCE_CACHE_CONF DEFAULT debug True
+    inicomment $GLANCE_CACHE_CONF DEFAULT log_file
+    iniset $GLANCE_CACHE_CONF DEFAULT use_syslog $SYSLOG
+    iniset $GLANCE_CACHE_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    iniset $GLANCE_CACHE_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
+    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_url
+    iniset $GLANCE_CACHE_CONF DEFAULT auth_url $KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_tenant_name
+    iniset $GLANCE_CACHE_CONF DEFAULT admin_tenant_name $SERVICE_TENANT_NAME
+    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_user
+    iniset $GLANCE_CACHE_CONF DEFAULT admin_user glance
+    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_password
+    iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
+
+    cp -p $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
+
+}
+
+# init_glance() - Initialize databases, etc.
+function init_glance() {
+    # Delete existing images
+    rm -rf $GLANCE_IMAGE_DIR
+    mkdir -p $GLANCE_IMAGE_DIR
+
+    # Delete existing cache
+    rm -rf $GLANCE_CACHE_DIR
+    mkdir -p $GLANCE_CACHE_DIR
+
+    # (re)create glance database
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS glance;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE glance CHARACTER SET utf8;'
+
+    $GLANCE_BIN_DIR/glance-manage db_sync
+}
+
+# install_glanceclient() - Collect source and prepare
+function install_glanceclient() {
+    git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
+}
+
+# install_glance() - Collect source and prepare
+function install_glance() {
+    git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
+}
+
+# start_glance() - Start running processes, including screen
+function start_glance() {
+    screen_it g-reg "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
+    screen_it g-api "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
+    echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
+      echo "g-api did not start"
+      exit 1
+    fi
+}
+
+# stop_glance() - Stop running processes (non-screen)
+function stop_glance() {
+    # Kill the Glance screen windows
+    screen -S $SCREEN_NAME -p g-api -X kill
+    screen -S $SCREEN_NAME -p g-reg -X kill
+}
+
+# Restore xtrace
+$XTRACE
