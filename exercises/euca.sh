@@ -24,7 +24,6 @@ set -o xtrace
 # Keep track of the current directory
 EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
-VOLUME_ZONE=nova
 VOLUME_SIZE=1
 ATTACH_DEVICE=/dev/vdc
 
@@ -75,11 +74,15 @@ fi
 # Volumes
 # -------
 if [[ "$ENABLED_SERVICES" =~ "n-vol" || "$ENABLED_SERVICES" =~ "c-vol" ]]; then
+   VOLUME_ZONE=`euca-describe-availability-zones | head -n1 | cut -f2`
+   die_if_not_set VOLUME_ZONE "Failure to find zone for volume"
+
    VOLUME=`euca-create-volume -s 1 -z $VOLUME_ZONE | cut -f2`
    die_if_not_set VOLUME "Failure to create volume"
 
    # Test that volume has been created
    VOLUME=`euca-describe-volumes | cut -f2`
+   die_if_not_set VOLUME "Failure to get volume"
 
    # Test volume has become available
    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -q available; do sleep 1; done"; then
