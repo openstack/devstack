@@ -112,13 +112,6 @@ if [ "${DISTRO}" = "oneiric" ] && is_service_enabled qpid ; then
     exit 1
 fi
 
-# Set the paths of certain binaries
-if [[ "$os_PACKAGE" = "deb" ]]; then
-    NOVA_ROOTWRAP=/usr/local/bin/nova-rootwrap
-else
-    NOVA_ROOTWRAP=/usr/bin/nova-rootwrap
-fi
-
 # ``stack.sh`` keeps function libraries here
 # Make sure ``$TOP_DIR/lib`` directory is present
 if [ ! -d $TOP_DIR/lib ]; then
@@ -314,6 +307,7 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # Get project function libraries
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
+source $TOP_DIR/lib/nova
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/n-vol
 source $TOP_DIR/lib/ceilometer
@@ -329,20 +323,6 @@ SWIFT3_DIR=$DEST/swift3
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
 QUANTUM_DIR=$DEST/quantum
 QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
-
-# Nova defaults
-NOVA_DIR=$DEST/nova
-NOVACLIENT_DIR=$DEST/python-novaclient
-NOVA_STATE_PATH=${NOVA_STATE_PATH:=$DATA_DIR/nova}
-# INSTANCES_PATH is the previous name for this
-NOVA_INSTANCES_PATH=${NOVA_INSTANCES_PATH:=${INSTANCES_PATH:=$NOVA_STATE_PATH/instances}}
-
-# Support entry points installation of console scripts
-if [[ -d $NOVA_DIR/bin ]]; then
-    NOVA_BIN_DIR=$NOVA_DIR/bin
-else
-    NOVA_BIN_DIR=/usr/local/bin
-fi
 
 # Default Quantum Plugin
 Q_PLUGIN=${Q_PLUGIN:-openvswitch}
@@ -365,10 +345,6 @@ Q_META_DATA_IP=${Q_META_DATA_IP:-}
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
-
-# Nova supports pluggable schedulers.  The default ``FilterScheduler``
-# should work in most cases.
-SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
 
 # Generic helper to configure passwords
 function read_password {
@@ -813,30 +789,6 @@ if is_service_enabled q-agt; then
     fi
 fi
 
-if is_service_enabled n-cpu; then
-
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        LIBVIRT_PKG_NAME=libvirt-bin
-    else
-        LIBVIRT_PKG_NAME=libvirt
-    fi
-    install_package $LIBVIRT_PKG_NAME
-    # Install and configure **LXC** if specified.  LXC is another approach to
-    # splitting a system into many smaller parts.  LXC uses cgroups and chroot
-    # to simulate multiple systems.
-    if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
-        if [[ "$os_PACKAGE" = "deb" ]]; then
-            if [[ "$DISTRO" > natty ]]; then
-                install_package cgroup-lite
-            fi
-        else
-            ### FIXME(dtroyer): figure this out
-            echo "RPM-based cgroup not implemented yet"
-            yum_install libcgroup-tools
-        fi
-    fi
-fi
-
 if is_service_enabled swift; then
     # Install memcached for swift.
     install_package memcached
@@ -867,11 +819,9 @@ echo_summary "Installing OpenStack project source"
 
 install_keystoneclient
 install_glanceclient
-
-git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
+install_novaclient
 
 # Check out the client libs that are used most
-git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
 
 # glance, swift middleware and nova api needs keystone middleware
@@ -892,6 +842,10 @@ fi
 if is_service_enabled g-api n-api; then
     # image catalog service
     install_glance
+fi
+if is_service_enabled nova; then
+    # compute service
+    install_nova
 fi
 if is_service_enabled n-novnc; then
     # a websockets/html5 or flash powered VNC console for vm instances
@@ -927,7 +881,7 @@ echo_summary "Configuring OpenStack projects"
 # Set up our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
 configure_keystoneclient
-setup_develop $NOVACLIENT_DIR
+configure_novaclient
 setup_develop $OPENSTACKCLIENT_DIR
 if is_service_enabled key g-api n-api swift; then
     configure_keystone
@@ -947,7 +901,9 @@ fi
 # TODO(dtroyer): figure out when this is no longer necessary
 configure_glanceclient
 
-setup_develop $NOVA_DIR
+if is_service_enabled nova; then
+    configure_nova
+fi
 if is_service_enabled horizon; then
     setup_develop $HORIZON_DIR
 fi
@@ -1486,195 +1442,9 @@ fi
 # Nova
 # ----
 
-echo_summary "Configuring Nova"
-
-# Put config files in ``/etc/nova`` for everyone to find
-NOVA_CONF_DIR=/etc/nova
-if [[ ! -d $NOVA_CONF_DIR ]]; then
-    sudo mkdir -p $NOVA_CONF_DIR
-fi
-sudo chown `whoami` $NOVA_CONF_DIR
-
-cp -p $NOVA_DIR/etc/nova/policy.json $NOVA_CONF_DIR
-
-# Deploy new rootwrap filters files (owned by root).
-# Wipe any existing rootwrap.d files first
-if [[ -d $NOVA_CONF_DIR/rootwrap.d ]]; then
-    sudo rm -rf $NOVA_CONF_DIR/rootwrap.d
-fi
-# Deploy filters to /etc/nova/rootwrap.d
-sudo mkdir -m 755 $NOVA_CONF_DIR/rootwrap.d
-sudo cp $NOVA_DIR/etc/nova/rootwrap.d/*.filters $NOVA_CONF_DIR/rootwrap.d
-sudo chown -R root:root $NOVA_CONF_DIR/rootwrap.d
-sudo chmod 644 $NOVA_CONF_DIR/rootwrap.d/*
-# Set up rootwrap.conf, pointing to /etc/nova/rootwrap.d
-sudo cp $NOVA_DIR/etc/nova/rootwrap.conf $NOVA_CONF_DIR/
-sudo sed -e "s:^filters_path=.*$:filters_path=$NOVA_CONF_DIR/rootwrap.d:" -i $NOVA_CONF_DIR/rootwrap.conf
-sudo chown root:root $NOVA_CONF_DIR/rootwrap.conf
-sudo chmod 0644 $NOVA_CONF_DIR/rootwrap.conf
-# Specify rootwrap.conf as first parameter to nova-rootwrap
-ROOTWRAP_SUDOER_CMD="$NOVA_ROOTWRAP $NOVA_CONF_DIR/rootwrap.conf *"
-
-# Set up the rootwrap sudoers for nova
-TEMPFILE=`mktemp`
-echo "$USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
-chmod 0440 $TEMPFILE
-sudo chown root:root $TEMPFILE
-sudo mv $TEMPFILE /etc/sudoers.d/nova-rootwrap
-
-if is_service_enabled n-api; then
-    # Use the sample http middleware configuration supplied in the
-    # Nova sources.  This paste config adds the configuration required
-    # for Nova to validate Keystone tokens.
-
-    # Allow rate limiting to be turned off for testing, like for Tempest
-    # NOTE: Set API_RATE_LIMIT="False" to turn OFF rate limiting
-    API_RATE_LIMIT=${API_RATE_LIMIT:-"True"}
-
-    # Remove legacy paste config if present
-    rm -f $NOVA_DIR/bin/nova-api-paste.ini
-
-    # Get the sample configuration file in place
-    cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
-
-    # Rewrite the authtoken configuration for our Keystone service.
-    # This is a bit defensive to allow the sample file some variance.
-    sed -e "
-        /^admin_token/i admin_tenant_name = $SERVICE_TENANT_NAME
-        /admin_tenant_name/s/^.*$/admin_tenant_name = $SERVICE_TENANT_NAME/;
-        /admin_user/s/^.*$/admin_user = nova/;
-        /admin_password/s/^.*$/admin_password = $SERVICE_PASSWORD/;
-        s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
-        s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
-    " -i $NOVA_CONF_DIR/api-paste.ini
-fi
-
-# Helper to clean iptables rules
-function clean_iptables() {
-    # Delete rules
-    sudo iptables -S -v | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" | grep "\-A" |  sed "s/-A/-D/g" | awk '{print "sudo iptables",$0}' | bash
-    # Delete nat rules
-    sudo iptables -S -v -t nat | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" |  grep "\-A" | sed "s/-A/-D/g" | awk '{print "sudo iptables -t nat",$0}' | bash
-    # Delete chains
-    sudo iptables -S -v | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" | grep "\-N" |  sed "s/-N/-X/g" | awk '{print "sudo iptables",$0}' | bash
-    # Delete nat chains
-    sudo iptables -S -v -t nat | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" |  grep "\-N" | sed "s/-N/-X/g" | awk '{print "sudo iptables -t nat",$0}' | bash
-}
-
-if is_service_enabled n-cpu; then
-
-    # Force IP forwarding on, just on case
-    sudo sysctl -w net.ipv4.ip_forward=1
-
-    # Attempt to load modules: network block device - used to manage qcow images
-    sudo modprobe nbd || true
-
-    # Check for kvm (hardware based virtualization).  If unable to initialize
-    # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems
-    # come with hardware virtualization disabled in BIOS.
-    if [[ "$LIBVIRT_TYPE" == "kvm" ]]; then
-        sudo modprobe kvm || true
-        if [ ! -e /dev/kvm ]; then
-            echo "WARNING: Switching to QEMU"
-            LIBVIRT_TYPE=qemu
-            if which selinuxenabled 2>&1 > /dev/null && selinuxenabled; then
-                # https://bugzilla.redhat.com/show_bug.cgi?id=753589
-                sudo setsebool virt_use_execmem on
-            fi
-        fi
-    fi
-
-    # Install and configure **LXC** if specified.  LXC is another approach to
-    # splitting a system into many smaller parts.  LXC uses cgroups and chroot
-    # to simulate multiple systems.
-    if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
-        if [[ "$os_PACKAGE" = "deb" ]]; then
-            if [[ ! "$DISTRO" > natty ]]; then
-                cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
-                sudo mkdir -p /cgroup
-                if ! grep -q cgroup /etc/fstab; then
-                    echo "$cgline" | sudo tee -a /etc/fstab
-                fi
-                if ! mount -n | grep -q cgroup; then
-                    sudo mount /cgroup
-                fi
-            fi
-        fi
-    fi
-
-    QEMU_CONF=/etc/libvirt/qemu.conf
-    if is_service_enabled quantum && [[ $Q_PLUGIN = "openvswitch" ]] && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF ; then
-        # Add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
-        cat <<EOF | sudo tee -a $QEMU_CONF
-cgroup_device_acl = [
-    "/dev/null", "/dev/full", "/dev/zero",
-    "/dev/random", "/dev/urandom",
-    "/dev/ptmx", "/dev/kvm", "/dev/kqemu",
-    "/dev/rtc", "/dev/hpet","/dev/net/tun",
-]
-EOF
-    fi
-
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        LIBVIRT_DAEMON=libvirt-bin
-    else
-        # http://wiki.libvirt.org/page/SSHPolicyKitSetup
-        if ! grep ^libvirtd: /etc/group >/dev/null; then
-            sudo groupadd libvirtd
-        fi
-        sudo bash -c 'cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
-[libvirt Management Access]
-Identity=unix-group:libvirtd
-Action=org.libvirt.unix.manage
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-EOF'
-        LIBVIRT_DAEMON=libvirtd
-    fi
-
-    # The user that nova runs as needs to be member of **libvirtd** group otherwise
-    # nova-compute will be unable to use libvirt.
-    sudo usermod -a -G libvirtd `whoami`
-
-    # libvirt detects various settings on startup, as we potentially changed
-    # the system configuration (modules, filesystems), we need to restart
-    # libvirt to detect those changes.
-    restart_service $LIBVIRT_DAEMON
-
-
-    # Instance Storage
-    # ~~~~~~~~~~~~~~~~
-
-    # Nova stores each instance in its own directory.
-    mkdir -p $NOVA_INSTANCES_PATH
-
-    # You can specify a different disk to be mounted and used for backing the
-    # virtual machines.  If there is a partition labeled nova-instances we
-    # mount it (ext filesystems can be labeled via e2label).
-    if [ -L /dev/disk/by-label/nova-instances ]; then
-        if ! mount -n | grep -q $NOVA_INSTANCES_PATH; then
-            sudo mount -L nova-instances $NOVA_INSTANCES_PATH
-            sudo chown -R `whoami` $NOVA_INSTANCES_PATH
-        fi
-    fi
-
-    # Clean iptables from previous runs
-    clean_iptables
-
-    # Destroy old instances
-    instances=`sudo virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
-    if [ ! "$instances" = "" ]; then
-        echo $instances | xargs -n1 sudo virsh destroy || true
-        echo $instances | xargs -n1 sudo virsh undefine || true
-    fi
-
-    # Logout and delete iscsi sessions
-    sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d " " -f2 | xargs sudo iscsiadm --mode node --logout || true
-    sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d " " -f2 | sudo iscsiadm --mode node --op delete || true
-
-    # Clean out the instances directory.
-    sudo rm -rf $NOVA_INSTANCES_PATH/*
+if is_service_enabled nova; then
+    echo_summary "Configuring Nova"
+    configure_nova
 fi
 
 if is_service_enabled n-net q-dhcp; then
@@ -1955,26 +1725,12 @@ elif is_service_enabled n-vol; then
     init_nvol
 fi
 
-NOVA_CONF=nova.conf
-function add_nova_opt {
-    echo "$1" >> $NOVA_CONF_DIR/$NOVA_CONF
-}
+if is_service_enabled nova; then
+    echo_summary "Configuring Nova"
+    init_nova
+fi
 
-# Remove legacy ``nova.conf``
-rm -f $NOVA_DIR/bin/nova.conf
-
-# (Re)create ``nova.conf``
-rm -f $NOVA_CONF_DIR/$NOVA_CONF
-add_nova_opt "[DEFAULT]"
-add_nova_opt "verbose=True"
-add_nova_opt "auth_strategy=keystone"
-add_nova_opt "allow_resize_to_same_host=True"
-add_nova_opt "rootwrap_config=$NOVA_CONF_DIR/rootwrap.conf"
-add_nova_opt "compute_scheduler_driver=$SCHEDULER"
-add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF_DIR/$NOVA_CONF"
-add_nova_opt "fixed_range=$FIXED_RANGE"
-add_nova_opt "s3_host=$SERVICE_HOST"
-add_nova_opt "s3_port=$S3_SERVICE_PORT"
+# Additional Nova configuration that is dependent on other services
 if is_service_enabled quantum; then
     add_nova_opt "network_api_class=nova.network.quantumv2.api.API"
     add_nova_opt "quantum_admin_username=$Q_ADMIN_USERNAME"
@@ -2000,18 +1756,6 @@ else
         add_nova_opt "flat_interface=$FLAT_INTERFACE"
     fi
 fi
-if is_service_enabled n-vol; then
-    add_nova_opt "volume_group=$VOLUME_GROUP"
-    add_nova_opt "volume_name_template=${VOLUME_NAME_PREFIX}%s"
-    # oneiric no longer supports ietadm
-    add_nova_opt "iscsi_helper=tgtadm"
-fi
-add_nova_opt "osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
-add_nova_opt "my_ip=$HOST_IP"
-add_nova_opt "sql_connection=$BASE_SQL_CONN/nova?charset=utf8"
-add_nova_opt "libvirt_type=$LIBVIRT_TYPE"
-add_nova_opt "libvirt_cpu_mode=none"
-add_nova_opt "instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
 # All nova-compute workers need to know the vnc configuration options
 # These settings don't hurt anything if n-xvnc and n-novnc are disabled
 if is_service_enabled n-cpu; then
@@ -2030,8 +1774,6 @@ fi
 VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
 add_nova_opt "vncserver_listen=$VNCSERVER_LISTEN"
 add_nova_opt "vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
-add_nova_opt "api_paste_config=$NOVA_CONF_DIR/api-paste.ini"
-add_nova_opt "image_service=nova.image.glance.GlanceImageService"
 add_nova_opt "ec2_dmz_host=$EC2_DMZ_HOST"
 if is_service_enabled zeromq; then
     add_nova_opt "rpc_backend=nova.openstack.common.rpc.impl_zmq"
@@ -2042,51 +1784,6 @@ elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
     add_nova_opt "rabbit_password=$RABBIT_PASSWORD"
 fi
 add_nova_opt "glance_api_servers=$GLANCE_HOSTPORT"
-add_nova_opt "force_dhcp_release=True"
-if [ -n "$NOVA_STATE_PATH" ]; then
-    add_nova_opt "state_path=$NOVA_STATE_PATH"
-fi
-if [ -n "$NOVA_INSTANCES_PATH" ]; then
-    add_nova_opt "instances_path=$NOVA_INSTANCES_PATH"
-fi
-if [ "$MULTI_HOST" != "False" ]; then
-    add_nova_opt "multi_host=True"
-    add_nova_opt "send_arp_for_ha=True"
-fi
-if [ "$SYSLOG" != "False" ]; then
-    add_nova_opt "use_syslog=True"
-fi
-if [ "$API_RATE_LIMIT" != "True" ]; then
-    add_nova_opt "api_rate_limit=False"
-fi
-if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-    # Add color to logging output
-    add_nova_opt "logging_context_format_string=%(asctime)s %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_name)s %(project_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
-    add_nova_opt "logging_default_format_string=%(asctime)s %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
-    add_nova_opt "logging_debug_format_suffix=[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
-    add_nova_opt "logging_exception_prefix=%(color)s%(asctime)s TRACE %(name)s [01;35m%(instance)s[00m"
-else
-    # Show user_name and project_name instead of user_id and project_id
-    add_nova_opt "logging_context_format_string=%(asctime)s %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
-fi
-
-# If cinder is enabled, use the cinder volume driver
-if is_service_enabled cinder; then
-    add_nova_opt "volume_api_class=nova.volume.cinder.API"
-fi
-
-# Provide some transition from ``EXTRA_FLAGS`` to ``EXTRA_OPTS``
-if [[ -z "$EXTRA_OPTS" && -n "$EXTRA_FLAGS" ]]; then
-    EXTRA_OPTS=$EXTRA_FLAGS
-fi
-
-# Define extra nova conf flags by defining the array ``EXTRA_OPTS``.
-# For Example: ``EXTRA_OPTS=(foo=true bar=2)``
-for I in "${EXTRA_OPTS[@]}"; do
-    # Attempt to convert flags to options
-    add_nova_opt ${I//--}
-done
-
 
 # XenServer
 # ---------
@@ -2120,26 +1817,6 @@ else
 fi
 
 
-# Nova Database
-# -------------
-
-# All nova components talk to a central database.  We will need to do this step
-# only once for an entire cluster.
-
-if is_service_enabled mysql && is_service_enabled nova; then
-    # (Re)create nova database
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS nova;'
-
-    # Explicitly use latin1: to avoid lp#829209, nova expects the database to
-    # use latin1 by default, and then upgrades the database to utf8 (see the
-    # 082_essex.py in nova)
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE nova CHARACTER SET latin1;'
-
-    # (Re)create nova database
-    $NOVA_BIN_DIR/nova-manage db sync
-fi
-
-
 # Heat
 # ----
 
@@ -2152,8 +1829,6 @@ fi
 # Launch Services
 # ===============
 
-# Nova api crashes if we start it with a regular screen command,
-# so send the start command by forcing text into the window.
 # Only run the services specified in ``ENABLED_SERVICES``
 
 # Launch the Glance services
@@ -2179,7 +1854,6 @@ screen_it zeromq "cd $NOVA_DIR && $NOVA_DIR/bin/nova-rpc-zmq-receiver"
 # Launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
     echo_summary "Starting Nova API"
-    add_nova_opt "enabled_apis=$NOVA_ENABLED_APIS"
     screen_it n-api "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api"
     echo "Waiting for nova-api to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
@@ -2243,17 +1917,10 @@ screen_it q-agt "python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /
 screen_it q-dhcp "python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
 screen_it q-l3 "python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
 
-echo_summary "Starting Nova"
-# The group **libvirtd** is added to the current user in this script.
-# Use 'sg' to execute nova-compute as a member of the **libvirtd** group.
-# ``screen_it`` checks ``is_service_enabled``, it is not needed here
-screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_BIN_DIR/nova-compute"
-screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
-screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network"
-screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler"
-screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
-screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
-screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
+if is_service_enabled nova; then
+    echo_summary "Starting Nova"
+    start_nova
+fi
 if is_service_enabled n-vol; then
     echo_summary "Starting Nova volumes"
     start_nvol
