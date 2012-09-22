@@ -9,3 +9,4 @@ local.sh
 files/*.gz
 files/images
 stack-screenrc
+*.pem
