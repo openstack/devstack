@@ -357,6 +357,7 @@ Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
 Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
 # Use namespace or not
 Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
+Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP=:-True}
 # Meta data IP
 Q_META_DATA_IP=${Q_META_DATA_IP:-}
 
@@ -1233,6 +1234,11 @@ if is_service_enabled quantum; then
     Q_CONF_FILE=/etc/quantum/quantum.conf
     cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
     Q_RR_CONF_FILE=/etc/quantum/rootwrap.conf
+    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+        Q_RR_COMMAND="sudo"
+    else
+        Q_RR_COMMAND="sudo $QUANTUM_DIR/bin/quantum-rootwrap $Q_RR_CONF_FILE"
+    fi
     cp -p $QUANTUM_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
 
     # Copy over the config and filter bits
@@ -1345,8 +1351,6 @@ if is_service_enabled q-agt; then
         if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings $OVS_BRIDGE_MAPPINGS
         fi
-        # Update config w/rootwrap
-        iniset /$Q_PLUGIN_CONF_FILE OVS root_helper #Q_RR_CONF_FILE
         AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         # Setup physical network interface mappings.  Override
@@ -1358,10 +1362,10 @@ if is_service_enabled q-agt; then
         if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings $LB_INTERFACE_MAPPINGS
         fi
-        # Update config w/rootwrap
-        iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE root_helper #Q_RR_CONF_FILE
         AGENT_BINARY="$QUANTUM_DIR/bin/quantum-linuxbridge-agent"
     fi
+    # Update config w/rootwrap
+    iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
 fi
 
 # Quantum DHCP
@@ -1381,7 +1385,7 @@ if is_service_enabled q-dhcp; then
     quantum_setup_keystone $Q_DHCP_CONF_FILE DEFAULT set_auth_url
 
     # Update config w/rootwrap
-    iniset /$Q_DHCP_CONF_FILE DEFAULT root_helper #Q_RR_CONF_FILE
+    iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
@@ -1405,6 +1409,8 @@ if is_service_enabled q-l3; then
 
     iniset $Q_L3_CONF_FILE DEFAULT metadata_ip $Q_META_DATA_IP
     iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
+
+    iniset $Q_L3_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
     quantum_setup_keystone $Q_L3_CONF_FILE DEFAULT set_auth_url
     if [[ "$Q_PLUGIN" == "openvswitch" ]]; then
