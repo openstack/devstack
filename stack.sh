@@ -2222,8 +2222,9 @@ if is_service_enabled cinder; then
     start_cinder
 fi
 if is_service_enabled ceilometer; then
-    echo_summary "Starting Ceilometer"
+    echo_summary "Configuring Ceilometer"
     configure_ceilometer
+    echo_summary "Starting Ceilometer"
     start_ceilometer
 fi
 screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
