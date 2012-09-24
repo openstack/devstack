@@ -640,7 +640,7 @@ else
     # Set up output redirection without log files
     # Copy stdout to fd 3
     exec 3>&1
-    if [[ "$VERBOSE" != "yes" ]]; then
+    if [[ "$VERBOSE" != "True" ]]; then
         # Throw away stdout and stderr
         exec 1>/dev/null 2>&1
     fi
