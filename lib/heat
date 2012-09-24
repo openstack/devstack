@@ -173,10 +173,12 @@ function start_heat() {
     screen_it h-meta "cd $HEAT_DIR; bin/heat-metadata --config-dir=$HEAT_CONF_DIR/heat-metadata.conf"
 }
 
-# stop_heat() - Stop running processes (non-screen)
+# stop_heat() - Stop running processes
 function stop_heat() {
-    # This function intentionally left blank
-    :
+    # Kill the cinder screen windows
+    for serv in h-eng h-api-cfn h-api-cw h-meta; do
+        screen -S $SCREEN_NAME -p $serv -X kill
+    done
 }
 
 # Restore xtrace
