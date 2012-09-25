@@ -208,7 +208,7 @@ function start_cinder() {
         if [[ "$os_PACKAGE" = "deb" ]]; then
             _configure_tgt_for_config_d
             if [[ ! -f /etc/tgt/conf.d/cinder.conf ]]; then
-               echo "include $CINDER_DIR/volumes/*" | sudo tee /etc/tgt/conf.d/cinder.conf
+               echo "include $CINDER_STATE_PATH/volumes/*" | sudo tee /etc/tgt/conf.d/cinder.conf
             fi
             # tgt in oneiric doesn't restart properly if tgtd isn't running
             # do it in two steps
