@@ -6,6 +6,9 @@
 
 # Dependencies:
 # - functions
+# - OS_USERNAME, OS_PASSWORD, OS_TENANT_NAME, OS_AUTH_URL set for admin credentials
+# - DEST set to the destination directory
+# - NOVA_CONF_DIR, NOVA_CONF set to the nova configuration directory & file
 
 # stack.sh
 # ---------
@@ -57,6 +60,7 @@ function configure_ceilometer() {
     # ceilometer confs are copy of /etc/nova/nova.conf which must exist first
     grep -v format_string $NOVA_CONF_DIR/$NOVA_CONF > $CEILOMETER_AGENT_CONF
     grep -v format_string $NOVA_CONF_DIR/$NOVA_CONF > $CEILOMETER_COLLECTOR_CONF
+    iniset $CEILOMETER_COLLECTOR_CONF DEFAULT notification_topics 'notifications,glance_notifications'
 }
 
 # install_ceilometer() - Collect source and prepare
@@ -67,7 +71,7 @@ function install_ceilometer() {
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer() {
     screen_it ceilometer-acompute "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_AGENT_CONF"
-    screen_it ceilometer-acentral "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_AGENT_CONF"
+    screen_it ceilometer-acentral "export OS_USERNAME=$OS_USERNAME OS_PASSWORD=$OS_PASSWORD OS_TENANT_NAME=$OS_TENANT_NAME OS_AUTH_URL=$OS_AUTH_URL && cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_AGENT_CONF"
     screen_it ceilometer-collector "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-collector --config-file $CEILOMETER_COLLECTOR_CONF"
     screen_it ceilometer-api "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR"
 }
