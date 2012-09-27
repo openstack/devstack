@@ -359,7 +359,7 @@ Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
 Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
 Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP=:-True}
 # Meta data IP
-Q_META_DATA_IP=${Q_META_DATA_IP:-}
+Q_META_DATA_IP=${Q_META_DATA_IP:-$HOST_IP}
 
 # Name of the LVM volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
@@ -2216,10 +2216,12 @@ if is_service_enabled q-svc; then
         EXT_NET_ID=$(quantum net-create ext_net -- --router:external=True | grep ' id ' | get_field 2)
         EXT_GW_IP=$(quantum subnet-create --ip_version 4 $EXT_NET_ID $FLOATING_RANGE -- --enable_dhcp=False | grep 'gateway_ip' | get_field 2)
         quantum router-gateway-set $ROUTER_ID $EXT_NET_ID
-        if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+        if [[ "$Q_PLUGIN" = "openvswitch" ]] && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
             CIDR_LEN=${FLOATING_RANGE#*/}
             sudo ip addr add $EXT_GW_IP/$CIDR_LEN dev $PUBLIC_BRIDGE
             sudo ip link set $PUBLIC_BRIDGE up
+            ROUTER_GW_IP=`quantum port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' '{ print $8; }'`
+            sudo route add -net $FIXED_RANGE gw $ROUTER_GW_IP
         fi
         if [[ "$Q_USE_NAMESPACE" == "False" ]]; then
             # Explicitly set router id in l3 agent configuration
