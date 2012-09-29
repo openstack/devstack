@@ -681,7 +681,8 @@ function setup_develop() {
         python setup.py egg_info; \
         raw_links=$(awk '/^.+/ {print "-f " $1}' *.egg-info/dependency_links.txt); \
         depend_links=$(echo $raw_links | xargs); \
-        pip_install -r *-info/requires.txt $depend_links; \
+        require_file=$([ ! -r *-info/requires.txt ] || echo "-r *-info/requires.txt"); \
+        pip_install $require_file $depend_links; \
         $SUDO_CMD \
             HTTP_PROXY=$http_proxy \
             HTTPS_PROXY=$https_proxy \
