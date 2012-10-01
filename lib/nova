@@ -7,6 +7,7 @@
 # ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
 # ``LIBVIRT_TYPE`` must be defined
 # ``INSTANCE_NAME_PREFIX``, ``VOLUME_NAME_PREFIX`` must be defined
+# ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
@@ -32,6 +33,7 @@ NOVACLIENT_DIR=$DEST/python-novaclient
 NOVA_STATE_PATH=${NOVA_STATE_PATH:=$DATA_DIR/nova}
 # INSTANCES_PATH is the previous name for this
 NOVA_INSTANCES_PATH=${NOVA_INSTANCES_PATH:=${INSTANCES_PATH:=$NOVA_STATE_PATH/instances}}
+NOVA_AUTH_CACHE_DIR=${NOVA_AUTH_CACHE_DIR:-/var/cache/nova}
 
 NOVA_CONF_DIR=/etc/nova
 NOVA_CONF=$NOVA_CONF_DIR/nova.conf
@@ -172,6 +174,10 @@ function configure_nova() {
             s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
             s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
         " -i $NOVA_API_PASTE_INI
+    fi
+
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
+        iniset $NOVA_API_PASTE_INI filter:authtoken signing_dir $NOVA_AUTH_CACHE_DIR
     fi
 
     if is_service_enabled n-cpu; then
@@ -383,6 +389,11 @@ function init_nova() {
         $NOVA_BIN_DIR/nova-manage db sync
     fi
 
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
+        # Create cache dir
+        sudo mkdir -p $NOVA_AUTH_CACHE_DIR
+        sudo chown `whoami` $NOVA_AUTH_CACHE_DIR
+    fi
 }
 
 # install_novaclient() - Collect source and prepare

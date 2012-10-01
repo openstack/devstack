@@ -4,8 +4,8 @@
 # Dependencies:
 # - functions
 # - DEST, DATA_DIR must be defined
-# - KEYSTONE_AUTH_* must be defined
 # SERVICE_{TENANT_NAME|PASSWORD} must be defined
+# ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # stack.sh
 # ---------
@@ -30,6 +30,7 @@ CINDERCLIENT_DIR=$DEST/python-cinderclient
 CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
 CINDER_CONF_DIR=/etc/cinder
 CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
+CINDER_AUTH_CACHE_DIR=${CINDER_AUTH_CACHE_DIR:-/var/cache/cinder}
 
 # Support entry points installation of console scripts
 if [[ -d $CINDER_DIR/bin ]]; then
@@ -105,6 +106,10 @@ function configure_cinder() {
     iniset $CINDER_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CINDER_API_PASTE_INI filter:authtoken admin_user cinder
     iniset $CINDER_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
+
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
+        iniset $CINDER_API_PASTE_INI filter:authtoken signing_dir $CINDER_AUTH_CACHE_DIR
+    fi
 
     cp $CINDER_DIR/etc/cinder/cinder.conf.sample $CINDER_CONF
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
@@ -185,6 +190,12 @@ function init_cinder() {
                 fi
             done
         fi
+    fi
+
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
+        # Create cache dir
+        sudo mkdir -p $CINDER_AUTH_CACHE_DIR
+        sudo chown `whoami` $CINDER_AUTH_CACHE_DIR
     fi
 }
 

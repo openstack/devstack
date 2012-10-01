@@ -2042,7 +2042,7 @@ fi
 
 if is_service_enabled g-reg; then
     echo_summary "Uploading images"
-    TOKEN=$(keystone  token-get | grep ' id ' | get_field 2)
+    TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
 
     # Option to upload legacy ami-tty, which works with xenserver
     if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
