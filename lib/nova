@@ -280,7 +280,7 @@ function init_nova() {
     rm -f $NOVA_DIR/bin/nova.conf
 
     # (Re)create ``nova.conf``
-    rm -f $NOVA_CONF_DIR/$NOVA_CONF
+    rm -f $NOVA_CONF
     add_nova_opt "[DEFAULT]"
     add_nova_opt "verbose=True"
     add_nova_opt "auth_strategy=keystone"
@@ -288,7 +288,7 @@ function init_nova() {
     add_nova_opt "api_paste_config=$NOVA_API_PASTE_INI"
     add_nova_opt "rootwrap_config=$NOVA_CONF_DIR/rootwrap.conf"
     add_nova_opt "compute_scheduler_driver=$SCHEDULER"
-    add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF_DIR/$NOVA_CONF"
+    add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF"
     add_nova_opt "force_dhcp_release=True"
     add_nova_opt "fixed_range=$FIXED_RANGE"
     add_nova_opt "s3_host=$SERVICE_HOST"
@@ -416,8 +416,8 @@ function start_nova() {
     screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
     screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network"
     screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler"
-    screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF --web ."
-    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF_DIR/$NOVA_CONF"
+    screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF --web ."
+    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF"
     screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
 }
 

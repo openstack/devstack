@@ -8,7 +8,7 @@
 # - functions
 # - OS_USERNAME, OS_PASSWORD, OS_TENANT_NAME, OS_AUTH_URL set for admin credentials
 # - DEST set to the destination directory
-# - NOVA_CONF_DIR, NOVA_CONF set to the nova configuration directory & file
+# - NOVA_CONF set to the nova configuration file
 
 # stack.sh
 # ---------
