@@ -1,7 +1,6 @@
 # functions - Common functions used by DevStack components
 #
 # The following variables are assumed to be defined by certain functions:
-# ``DISTRO``
 # ``ENABLED_SERVICES``
 # ``EROR_ON_CLONE``
 # ``FILES``
@@ -107,7 +106,7 @@ function get_field() {
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
 #
-# Uses globals ``DISTRO``, ``ENABLED_SERVICES``
+# Uses globals ``ENABLED_SERVICES``
 # get_packages dir
 function get_packages() {
     local package_dir=$1
@@ -119,8 +118,7 @@ function get_packages() {
         return 1
     fi
     if [[ -z "$DISTRO" ]]; then
-        echo "No distro set in DISTRO"
-        return 1
+        GetDistro
     fi
     for service in general ${ENABLED_SERVICES//,/ }; do
         # Allow individual services to specify dependencies
