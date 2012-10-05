@@ -313,6 +313,7 @@ source $TOP_DIR/lib/n-vol
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/quantum
+source $TOP_DIR/lib/tempest
 
 # Set the destination directories for OpenStack projects
 HORIZON_DIR=$DEST/horizon
@@ -871,6 +872,9 @@ fi
 if is_service_enabled ceilometer; then
     install_ceilometer
 fi
+if is_service_enabled tempest; then
+    install_tempest
+fi
 
 
 # Initialization
@@ -916,6 +920,9 @@ if is_service_enabled heat; then
 fi
 if is_service_enabled cinder; then
     configure_cinder
+fi
+if is_service_enabled tempest; then
+    configure_tempest
 fi
 
 if [[ $TRACK_DEPENDS = True ]] ; then

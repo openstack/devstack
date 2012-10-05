@@ -1,0 +1,56 @@
+# lib/tempest
+
+# Dependencies:
+# ``functions`` file
+# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# <list other global vars that are assumed to be defined>
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_XXXX
+# configure_XXXX
+# init_XXXX
+# start_XXXX
+# stop_XXXX
+# cleanup_XXXX
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# <define global variables here that belong to this project>
+
+# Set up default directories
+TEMPEST_DIR=$DEST/tempest
+TEMPEST_CONF_DIR=$DEST/tempest/etc
+
+# Entry Points
+# ------------
+
+
+# configure_tempest() - Set config files, create data dirs, etc
+function configure_tempest() {
+    # sudo python setup.py deploy
+    # iniset $tempest_CONF ...
+    # This function intentionally left blank
+    #
+    # TODO(sdague) actually move the guts of configure tempest
+    # into this function
+    cd tools
+    ./configure_tempest.sh
+    cd ..
+}
+
+
+# install_tempest() - Collect source and prepare
+function install_tempest() {
+    git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
+}
+
+
+# Restore xtrace
+$XTRACE
