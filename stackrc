@@ -23,6 +23,10 @@ NOVA_ENABLED_APIS=ec2,osapi_compute,osapi_volume,metadata
 # Repositories
 # ------------
 
+# The comments on the branch lines below point to either the release closest
+# to the OpenStack Folsom release or what commit was master near the time this
+# DevStack branch was cut.
+
 # Base GIT Repo URL
 # Another option is http://review.openstack.org/p
 GIT_BASE=https://github.com
@@ -33,73 +37,73 @@ CEILOMETER_BRANCH=master
 
 # volume service
 CINDER_REPO=${GIT_BASE}/openstack/cinder
-CINDER_BRANCH=master
+CINDER_BRANCH=stable/folsom
 
 # volume client
 CINDERCLIENT_REPO=${GIT_BASE}/openstack/python-cinderclient
-CINDERCLIENT_BRANCH=master
+CINDERCLIENT_BRANCH=master      # 1.0.0 20Sep2012: 2e6be694c1
 
 # compute service
 NOVA_REPO=${GIT_BASE}/openstack/nova.git
-NOVA_BRANCH=master
+NOVA_BRANCH=stable/folsom
 
 # storage service
 SWIFT_REPO=${GIT_BASE}/openstack/swift.git
-SWIFT_BRANCH=master
+SWIFT_BRANCH=stable/folsom
 SWIFT3_REPO=https://github.com/fujita/swift3.git
-SWIFT3_BRANCH=master
+SWIFT3_BRANCH=master            # 10Jul2012: f216f1b4f2
 
 # python swift client library
 SWIFTCLIENT_REPO=${GIT_BASE}/openstack/python-swiftclient
-SWIFTCLIENT_BRANCH=master
+SWIFTCLIENT_BRANCH=master       # 1.2.0 12Sep2012: 68d1550f15
 
 # image catalog service
 GLANCE_REPO=${GIT_BASE}/openstack/glance.git
-GLANCE_BRANCH=master
+GLANCE_BRANCH=stable/folsom
 
 # python glance client library
 GLANCECLIENT_REPO=${GIT_BASE}/openstack/python-glanceclient
-GLANCECLIENT_BRANCH=master
+GLANCECLIENT_BRANCH=master      # 0.5.1 11Sep2012: 3f67c461da
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=${GIT_BASE}/openstack/keystone.git
-KEYSTONE_BRANCH=master
+KEYSTONE_BRANCH=stable/folsom
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/kanaka/noVNC.git
-NOVNC_BRANCH=master
+NOVNC_BRANCH=master             # 21Sep2012: 8dfd916946
 
 # django powered web control panel for openstack
 HORIZON_REPO=${GIT_BASE}/openstack/horizon.git
-HORIZON_BRANCH=master
+HORIZON_BRANCH=stable/folsom
 
 # python client library to nova that horizon (and others) use
 NOVACLIENT_REPO=${GIT_BASE}/openstack/python-novaclient.git
-NOVACLIENT_BRANCH=master
+NOVACLIENT_BRANCH=master        # 2.9.0 21Sep2012: cdebf729b0
 
 # consolidated openstack python client
 OPENSTACKCLIENT_REPO=${GIT_BASE}/openstack/python-openstackclient.git
-OPENSTACKCLIENT_BRANCH=master
+OPENSTACKCLIENT_BRANCH=master   # 14Sep2012: cd140091b5
 
 # python keystone client library to nova that horizon uses
 KEYSTONECLIENT_REPO=${GIT_BASE}/openstack/python-keystoneclient
-KEYSTONECLIENT_BRANCH=master
+KEYSTONECLIENT_BRANCH=master    # 29Sep2012: a8f7879fcf
 
 # quantum service
 QUANTUM_REPO=${GIT_BASE}/openstack/quantum
-QUANTUM_BRANCH=master
+QUANTUM_BRANCH=stable/folsom
 
 # quantum client
 QUANTUM_CLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient
-QUANTUM_CLIENT_BRANCH=master
+QUANTUM_CLIENT_BRANCH=master    # 2.1 14Sep2012: bc7ba5e19d
 
 # Tempest test suite
 TEMPEST_REPO=${GIT_BASE}/openstack/tempest.git
-TEMPEST_BRANCH=master
+TEMPEST_BRANCH=master           # 01Oct2012: 2f5db941f5
 
 # heat service
 HEAT_REPO=${GIT_BASE}/heat-api/heat.git
-HEAT_BRANCH=master
+HEAT_BRANCH=master              # 27Sep2012: ed99838c28
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
