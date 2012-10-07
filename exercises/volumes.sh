@@ -158,8 +158,6 @@ fi
 start_time=`date +%s`
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
-    end_time=`date +%s`
-    echo "Failed volume-create after $((end_time - start_time)) seconds"
     exit 1
 fi
 end_time=`date +%s`
@@ -176,8 +174,6 @@ nova volume-attach $VM_UUID $VOL_ID $DEVICE || \
     die "Failure attaching volume $VOL_NAME to $NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
     echo "Volume $VOL_NAME not attached to $NAME"
-    end_time=`date +%s`
-    echo "Failed volume-attach after $((end_time - start_time)) seconds"
     exit 1
 fi
 end_time=`date +%s`
@@ -195,8 +191,6 @@ start_time=`date +%s`
 nova volume-detach $VM_UUID $VOL_ID || die "Failure detaching volume $VOL_NAME from $NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not detached from $NAME"
-    end_time=`date +%s`
-    echo "Failed volume-detach after $((end_time - start_time)) seconds"
     exit 1
 fi
 end_time=`date +%s`
@@ -207,8 +201,6 @@ start_time=`date +%s`
 nova volume-delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
-    end_time=`date +%s`
-    echo "Failed volume-delete after $((end_time - start_time)) seconds"
     exit 1
 fi
 end_time=`date +%s`
