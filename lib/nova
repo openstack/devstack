@@ -12,6 +12,7 @@
 #
 # install_nova
 # configure_nova
+# create_nova_conf
 # init_nova
 # start_nova
 # stop_nova
@@ -274,8 +275,8 @@ EOF'
     fi
 }
 
-# init_nova() - Initialize databases, etc.
-function init_nova() {
+# create_nova_conf() - Create a new nova.conf file
+function create_nova_conf() {
     # Remove legacy ``nova.conf``
     rm -f $NOVA_DIR/bin/nova.conf
 
@@ -352,7 +353,10 @@ function init_nova() {
         # Attempt to convert flags to options
         add_nova_opt ${I//--}
     done
+}
 
+# init_nova() - Initialize databases, etc.
+function init_nova() {
     # Nova Database
     # -------------
 
