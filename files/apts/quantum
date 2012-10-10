@@ -1,5 +1,5 @@
 iptables
-mysql #NOPRIME
+mysql-server #NOPRIME
 sudo
 python-paste
 python-routes
