@@ -51,6 +51,8 @@ function configure_heat() {
     HEAT_METADATA_PORT=${HEAT_METADATA_PORT:-8002}
     HEAT_API_CW_HOST=${HEAT_API_CW_HOST:-$SERVICE_HOST}
     HEAT_API_CW_PORT=${HEAT_API_CW_PORT:-8003}
+    HEAT_API_HOST=${HEAT_API_HOST:-$SERVICE_HOST}
+    HEAT_API_PORT=${HEAT_API_PORT:-8004}
 
     # cloudformation api
     HEAT_API_CFN_CONF=$HEAT_CONF_DIR/heat-api-cfn.conf
@@ -80,6 +82,35 @@ function configure_heat() {
     iniset $HEAT_API_CFN_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
     iniset $HEAT_API_CFN_PASTE_INI filter:ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
     iniset $HEAT_API_CFN_PASTE_INI filter:ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
+
+    # openstack api
+    HEAT_API_CONF=$HEAT_CONF_DIR/heat-api.conf
+    cp $HEAT_DIR/etc/heat/heat-api.conf $HEAT_API_CONF
+    iniset $HEAT_API_CONF DEFAULT debug True
+    inicomment $HEAT_API_CONF DEFAULT log_file
+    iniset $HEAT_API_CONF DEFAULT use_syslog $SYSLOG
+    iniset $HEAT_API_CONF DEFAULT bind_host $HEAT_API_HOST
+    iniset $HEAT_API_CONF DEFAULT bind_port $HEAT_API_PORT
+
+    if is_service_enabled rabbit; then
+        iniset $HEAT_API_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_kombu
+        iniset $HEAT_API_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $HEAT_API_CONF DEFAULT rabbit_host $RABBIT_HOST
+    elif is_service_enabled qpid; then
+        iniset $HEAT_API_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_qpid
+    fi
+
+    HEAT_API_PASTE_INI=$HEAT_CONF_DIR/heat-api-paste.ini
+    cp $HEAT_DIR/etc/heat/heat-api-paste.ini $HEAT_API_PASTE_INI
+    iniset $HEAT_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $HEAT_API_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $HEAT_API_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $HEAT_API_PASTE_INI filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $HEAT_API_PASTE_INI filter:authtoken admin_user heat
+    iniset $HEAT_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
+    iniset $HEAT_API_PASTE_INI filter:ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_API_PASTE_INI filter:ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
     # engine
     HEAT_ENGINE_CONF=$HEAT_CONF_DIR/heat-engine.conf
@@ -168,6 +199,7 @@ function install_heat() {
 # start_heat() - Start running processes, including screen
 function start_heat() {
     screen_it h-eng "cd $HEAT_DIR; bin/heat-engine --config-file=$HEAT_CONF_DIR/heat-engine.conf"
+    screen_it h-api "cd $HEAT_DIR; bin/heat-api --config-dir=$HEAT_CONF_DIR/heat-api.conf"
     screen_it h-api-cfn "cd $HEAT_DIR; bin/heat-api-cfn --config-dir=$HEAT_CONF_DIR/heat-api-cfn.conf"
     screen_it h-api-cw "cd $HEAT_DIR; bin/heat-api-cloudwatch --config-dir=$HEAT_CONF_DIR/heat-api-cloudwatch.conf"
     screen_it h-meta "cd $HEAT_DIR; bin/heat-metadata --config-dir=$HEAT_CONF_DIR/heat-metadata.conf"
