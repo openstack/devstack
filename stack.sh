@@ -1022,6 +1022,11 @@ if [ -z "$SCREEN_HARDSTATUS" ]; then
     SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'
 fi
 
+# Clear screen rc file
+SCREENRC=$TOP_DIR/$SCREEN_NAME-screenrc
+if [[ -e $SCREENRC ]]; then
+    echo -n > $SCREENRC
+fi
 # Create a new named screen to run processes in
 screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
 sleep 1
