@@ -5,7 +5,7 @@
 # Download and prepare Ubuntu UEC images
 
 CACHEDIR=${CACHEDIR:-/opt/stack/cache}
-ROOTSIZE=${ROOTSIZE:-2000}
+ROOTSIZE=${ROOTSIZE:-2000M}
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
