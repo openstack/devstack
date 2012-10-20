@@ -24,7 +24,7 @@ usage() {
     echo "$0 [-r rootsize] release imagefile [kernel]"
     echo ""
     echo "-r size   - root fs size (min 2000MB)"
-    echo "release   - Ubuntu release: jaunty - oneric"
+    echo "release   - Ubuntu release: jaunty - oneiric"
     echo "imagefile - output image file"
     echo "kernel    - output kernel"
     exit 1
