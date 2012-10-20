@@ -1,8 +1,13 @@
+ebtables
 iptables
+iputils-ping
 mysql-server #NOPRIME
 sudo
+python-boto
+python-iso8601
 python-paste
 python-routes
+python-suds
 python-netaddr
 python-pastedeploy
 python-greenlet
@@ -14,3 +19,7 @@ python-pyudev
 python-qpid # dist:precise
 dnsmasq-base
 dnsmasq-utils # for dhcp_release only available in dist:oneiric,precise,quantal
+rabbitmq-server # NOPRIME
+qpid # NOPRIME
+sqlite3
+vlan
