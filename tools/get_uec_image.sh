@@ -90,7 +90,7 @@ fi
 
 # Get the UEC image
 UEC_NAME=$DIST_NAME-server-cloudimg-amd64
-if [ ! -d $CACHEDIR ]; then
+if [ ! -d $CACHEDIR/$DIST_NAME ]; then
     mkdir -p $CACHEDIR/$DIST_NAME
 fi
 if [ ! -e $CACHEDIR/$DIST_NAME/$UEC_NAME.tar.gz ]; then
