@@ -1757,98 +1757,98 @@ if is_service_enabled nova; then
     # Rebuild the config file from scratch
     create_nova_conf
     init_nova
-fi
 
-# Additional Nova configuration that is dependent on other services
-if is_service_enabled quantum; then
-    add_nova_opt "network_api_class=nova.network.quantumv2.api.API"
-    add_nova_opt "quantum_admin_username=$Q_ADMIN_USERNAME"
-    add_nova_opt "quantum_admin_password=$SERVICE_PASSWORD"
-    add_nova_opt "quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
-    add_nova_opt "quantum_auth_strategy=$Q_AUTH_STRATEGY"
-    add_nova_opt "quantum_admin_tenant_name=$SERVICE_TENANT_NAME"
-    add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
+    # Additional Nova configuration that is dependent on other services
+    if is_service_enabled quantum; then
+        add_nova_opt "network_api_class=nova.network.quantumv2.api.API"
+        add_nova_opt "quantum_admin_username=$Q_ADMIN_USERNAME"
+        add_nova_opt "quantum_admin_password=$SERVICE_PASSWORD"
+        add_nova_opt "quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+        add_nova_opt "quantum_auth_strategy=$Q_AUTH_STRATEGY"
+        add_nova_opt "quantum_admin_tenant_name=$SERVICE_TENANT_NAME"
+        add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
 
-    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        NOVA_VIF_DRIVER="nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"
-    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        NOVA_VIF_DRIVER="nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"
-    elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-        NOVA_VIF_DRIVER="quantum.plugins.ryu.nova.vif.LibvirtOpenVswitchOFPRyuDriver"
-        add_nova_opt "libvirt_ovs_integration_bridge=$OVS_BRIDGE"
-        add_nova_opt "linuxnet_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
-        add_nova_opt "libvirt_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
+        if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
+            NOVA_VIF_DRIVER="nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"
+        elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
+            NOVA_VIF_DRIVER="nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"
+        elif [[ "$Q_PLUGIN" = "ryu" ]]; then
+            NOVA_VIF_DRIVER="quantum.plugins.ryu.nova.vif.LibvirtOpenVswitchOFPRyuDriver"
+            add_nova_opt "libvirt_ovs_integration_bridge=$OVS_BRIDGE"
+            add_nova_opt "linuxnet_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
+            add_nova_opt "libvirt_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
+        fi
+        add_nova_opt "libvirt_vif_driver=$NOVA_VIF_DRIVER"
+        add_nova_opt "linuxnet_interface_driver=$LINUXNET_VIF_DRIVER"
+    elif is_service_enabled n-net; then
+        add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
+        add_nova_opt "public_interface=$PUBLIC_INTERFACE"
+        add_nova_opt "vlan_interface=$VLAN_INTERFACE"
+        add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
+        if [ -n "$FLAT_INTERFACE" ]; then
+            add_nova_opt "flat_interface=$FLAT_INTERFACE"
+        fi
     fi
-    add_nova_opt "libvirt_vif_driver=$NOVA_VIF_DRIVER"
-    add_nova_opt "linuxnet_interface_driver=$LINUXNET_VIF_DRIVER"
-else
-    add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
-    add_nova_opt "public_interface=$PUBLIC_INTERFACE"
-    add_nova_opt "vlan_interface=$VLAN_INTERFACE"
-    add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
-    if [ -n "$FLAT_INTERFACE" ]; then
-        add_nova_opt "flat_interface=$FLAT_INTERFACE"
+    # All nova-compute workers need to know the vnc configuration options
+    # These settings don't hurt anything if n-xvnc and n-novnc are disabled
+    if is_service_enabled n-cpu; then
+        NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
+        add_nova_opt "novncproxy_base_url=$NOVNCPROXY_URL"
+        XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
+        add_nova_opt "xvpvncproxy_base_url=$XVPVNCPROXY_URL"
     fi
-fi
-# All nova-compute workers need to know the vnc configuration options
-# These settings don't hurt anything if n-xvnc and n-novnc are disabled
-if is_service_enabled n-cpu; then
-    NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
-    add_nova_opt "novncproxy_base_url=$NOVNCPROXY_URL"
-    XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
-    add_nova_opt "xvpvncproxy_base_url=$XVPVNCPROXY_URL"
-fi
-if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-    VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
-else
-    VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
-fi
-# Address on which instance vncservers will listen on compute hosts.
-# For multi-host, this should be the management ip of the compute host.
-VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
-add_nova_opt "vncserver_listen=$VNCSERVER_LISTEN"
-add_nova_opt "vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
-add_nova_opt "ec2_dmz_host=$EC2_DMZ_HOST"
-if is_service_enabled zeromq; then
-    add_nova_opt "rpc_backend=nova.openstack.common.rpc.impl_zmq"
-elif is_service_enabled qpid; then
-    add_nova_opt "rpc_backend=nova.rpc.impl_qpid"
-elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
-    add_nova_opt "rabbit_host=$RABBIT_HOST"
-    add_nova_opt "rabbit_password=$RABBIT_PASSWORD"
-fi
-add_nova_opt "glance_api_servers=$GLANCE_HOSTPORT"
+    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
+    else
+        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
+    fi
+    # Address on which instance vncservers will listen on compute hosts.
+    # For multi-host, this should be the management ip of the compute host.
+    VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
+    add_nova_opt "vncserver_listen=$VNCSERVER_LISTEN"
+    add_nova_opt "vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
+    add_nova_opt "ec2_dmz_host=$EC2_DMZ_HOST"
+    if is_service_enabled zeromq; then
+        add_nova_opt "rpc_backend=nova.openstack.common.rpc.impl_zmq"
+    elif is_service_enabled qpid; then
+        add_nova_opt "rpc_backend=nova.rpc.impl_qpid"
+    elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
+        add_nova_opt "rabbit_host=$RABBIT_HOST"
+        add_nova_opt "rabbit_password=$RABBIT_PASSWORD"
+    fi
+    add_nova_opt "glance_api_servers=$GLANCE_HOSTPORT"
 
 
-# XenServer
-# ---------
+    # XenServer
+    # ---------
 
-if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-    echo_summary "Using XenServer virtualization driver"
-    read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
-    add_nova_opt "compute_driver=xenapi.XenAPIDriver"
-    XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
-    XENAPI_USER=${XENAPI_USER:-"root"}
-    add_nova_opt "xenapi_connection_url=$XENAPI_CONNECTION_URL"
-    add_nova_opt "xenapi_connection_username=$XENAPI_USER"
-    add_nova_opt "xenapi_connection_password=$XENAPI_PASSWORD"
-    add_nova_opt "flat_injected=False"
-    # Need to avoid crash due to new firewall support
-    XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
-    add_nova_opt "firewall_driver=$XEN_FIREWALL_DRIVER"
-elif [ "$VIRT_DRIVER" = 'openvz' ]; then
-    echo_summary "Using OpenVZ virtualization driver"
-    # TODO(deva): OpenVZ driver does not yet work if compute_driver is set here.
-    #             Replace connection_type when this is fixed.
-    #             add_nova_opt "compute_driver=openvz.connection.OpenVzConnection"
-    add_nova_opt "connection_type=openvz"
-    LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
-    add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
-else
-    echo_summary "Using libvirt virtualization driver"
-    add_nova_opt "compute_driver=libvirt.LibvirtDriver"
-    LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
-    add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
+    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+        echo_summary "Using XenServer virtualization driver"
+        read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
+        add_nova_opt "compute_driver=xenapi.XenAPIDriver"
+        XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
+        XENAPI_USER=${XENAPI_USER:-"root"}
+        add_nova_opt "xenapi_connection_url=$XENAPI_CONNECTION_URL"
+        add_nova_opt "xenapi_connection_username=$XENAPI_USER"
+        add_nova_opt "xenapi_connection_password=$XENAPI_PASSWORD"
+        add_nova_opt "flat_injected=False"
+        # Need to avoid crash due to new firewall support
+        XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
+        add_nova_opt "firewall_driver=$XEN_FIREWALL_DRIVER"
+    elif [ "$VIRT_DRIVER" = 'openvz' ]; then
+        echo_summary "Using OpenVZ virtualization driver"
+        # TODO(deva): OpenVZ driver does not yet work if compute_driver is set here.
+        #             Replace connection_type when this is fixed.
+        #             add_nova_opt "compute_driver=openvz.connection.OpenVzConnection"
+        add_nova_opt "connection_type=openvz"
+        LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
+        add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
+    else
+        echo_summary "Using libvirt virtualization driver"
+        add_nova_opt "compute_driver=libvirt.LibvirtDriver"
+        LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
+        add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
+    fi
 fi
 
 
