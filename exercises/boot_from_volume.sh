@@ -3,10 +3,8 @@
 # **boot_from_volume.sh**
 
 # This script demonstrates how to boot from a volume.  It does the following:
-#  *  Create a 'builder' instance
-#  *  Attach a volume to the instance
-#  *  Format and install an os onto the volume
-#  *  Detach volume from builder, and then boot volume-backed instance
+#  *  Create a bootable volume
+#  *  Boot a volume-backed instance
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -37,6 +35,10 @@ source $TOP_DIR/openrc
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
+# If cinder or n-vol are not enabled we exit with exitcode 55 so that
+# the exercise is skipped
+is_service_enabled cinder n-vol || exit 55
+
 # Boot this image, use first AMI image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
 
@@ -61,16 +63,13 @@ IMAGE=`glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1`
 die_if_not_set IMAGE "Failure getting image"
 
 # Instance and volume names
-INSTANCE_NAME=${INSTANCE_NAME:-test_instance}
 VOL_INSTANCE_NAME=${VOL_INSTANCE_NAME:-test_vol_instance}
 VOL_NAME=${VOL_NAME:-test_volume}
 
 # Clean-up from previous runs
 nova delete $VOL_INSTANCE_NAME || true
-nova delete $INSTANCE_NAME || true
 
-# Wait till server is gone
-if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $INSTANCE_NAME; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $VOL_INSTANCE_NAME; do sleep 1; done"; then
     echo "server didn't terminate!"
     exit 1
 fi
@@ -95,16 +94,6 @@ nova keypair-delete $KEY_NAME || true
 nova keypair-add $KEY_NAME > $KEY_FILE
 chmod 600 $KEY_FILE
 
-# Boot our instance
-VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP --key_name $KEY_NAME $INSTANCE_NAME | grep ' id ' | get_field 2`
-die_if_not_set VM_UUID "Failure launching $INSTANCE_NAME"
-
-# check that the status is active within ACTIVE_TIMEOUT seconds
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
-    echo "server didn't become active!"
-    exit 1
-fi
-
 # Delete the old volume
 nova volume-delete $VOL_NAME || true
 
@@ -122,17 +111,8 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $
     exit 1
 fi
 
-# Add floating ip to our server
-nova add-floating-ip $VM_UUID $FLOATING_IP
-
-# Test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
-if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
-    echo "Couldn't ping server with floating ip"
-    exit 1
-fi
-
-# Create our volume
-nova volume-create --display_name=$VOL_NAME 1
+# Create the bootable volume
+nova volume-create --display_name=$VOL_NAME --image-id $IMAGE 1
 
 # Wait for volume to activate
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
@@ -140,62 +120,7 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | 
     exit 1
 fi
 
-# FIXME (anthony) - python-novaclient should accept a volume_name for the attachment param?
-DEVICE=/dev/vdb
 VOLUME_ID=`nova volume-list | grep $VOL_NAME  | get_field 1`
-nova volume-attach $INSTANCE_NAME $VOLUME_ID $DEVICE
-
-# Wait till volume is attached
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
-    echo "Volume $VOL_NAME not created"
-    exit 1
-fi
-
-# The following script builds our bootable volume.
-# To do this, ssh to the builder instance, mount volume, and build a volume-backed image.
-STAGING_DIR=/tmp/stage
-CIRROS_DIR=/tmp/cirros
-ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP << EOF
-set -o errexit
-set -o xtrace
-sudo mkdir -p $STAGING_DIR
-sudo mkfs.ext3 -b 1024 $DEVICE 1048576
-sudo mount $DEVICE $STAGING_DIR
-# The following lines create a writable empty file so that we can scp
-# the actual file
-sudo touch $STAGING_DIR/cirros-0.3.0-x86_64-rootfs.img.gz
-sudo chown cirros $STAGING_DIR/cirros-0.3.0-x86_64-rootfs.img.gz
-EOF
-
-# Download cirros
-if [ ! -e cirros-0.3.0-x86_64-rootfs.img.gz ]; then
-    wget http://images.ansolabs.com/cirros-0.3.0-x86_64-rootfs.img.gz
-fi
-
-# Copy cirros onto the volume
-scp -o StrictHostKeyChecking=no -i $KEY_FILE cirros-0.3.0-x86_64-rootfs.img.gz ${DEFAULT_INSTANCE_USER}@$FLOATING_IP:$STAGING_DIR
-
-# Unpack cirros into volume
-ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP << EOF
-set -o errexit
-set -o xtrace
-cd $STAGING_DIR
-sudo mkdir -p $CIRROS_DIR
-sudo gunzip cirros-0.3.0-x86_64-rootfs.img.gz
-sudo mount cirros-0.3.0-x86_64-rootfs.img $CIRROS_DIR
-
-# Copy cirros into our volume
-sudo cp -pr $CIRROS_DIR/* $STAGING_DIR/
-
-cd
-sync
-sudo umount $CIRROS_DIR
-# The following typically fails.  Don't know why.
-sudo umount $STAGING_DIR || true
-EOF
-
-# Detach the volume from the builder instance
-nova volume-detach $INSTANCE_NAME $VOLUME_ID
 
 # Boot instance from volume!  This is done with the --block_device_mapping param.
 # The format of mapping is:
@@ -211,12 +136,6 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VOL_VM_UUID | grep status
 fi
 
 # Add floating ip to our server
-nova remove-floating-ip $VM_UUID $FLOATING_IP
-
-# Gratuitous sleep, probably hiding a race condition :/
-sleep 1
-
-# Add floating ip to our server
 nova add-floating-ip $VOL_VM_UUID $FLOATING_IP
 
 # Test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
@@ -226,9 +145,13 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sle
 fi
 
 # Make sure our volume-backed instance launched
-ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP << EOF
-echo "success!"
-EOF
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success ; do sleep 1; done"; then
+    echo "server didn't become ssh-able!"
+    exit 1
+fi
+
+# Remove floating ip from volume-backed instance
+nova remove-floating-ip $VOL_VM_UUID $FLOATING_IP
 
 # Delete volume backed instance
 nova delete $VOL_INSTANCE_NAME || \
@@ -243,16 +166,6 @@ fi
 # Delete the volume
 nova volume-delete $VOL_NAME || \
     die "Failure deleting volume $VOLUME_NAME"
-
-# Delete instance
-nova delete $INSTANCE_NAME || \
-    die "Failure deleting instance $INSTANCE_NAME"
-
-# Wait for termination
-if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
-    echo "Server $NAME not deleted"
-    exit 1
-fi
 
 # De-allocate the floating ip
 nova floating-ip-delete $FLOATING_IP || \
