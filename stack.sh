@@ -503,7 +503,7 @@ fi
 
 # Set ``SWIFT_DATA_DIR`` to the location of swift drives and objects.
 # Default is the common DevStack data directory.
-SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DEST}/data/swift}
+SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DATA_DIR}/swift}
 
 # Set ``SWIFT_CONFIG_DIR`` to the location of the configuration files.
 # Default is ``/etc/swift``.
@@ -1439,6 +1439,7 @@ if is_service_enabled q-dhcp; then
     # Set debug
     iniset $Q_DHCP_CONF_FILE DEFAULT debug True
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
+    iniset $Q_DHCP_CONF_FILE DEFAULT state_path $DATA_DIR/quantum
 
     quantum_setup_keystone $Q_DHCP_CONF_FILE DEFAULT set_auth_url
 
