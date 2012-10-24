@@ -5,6 +5,7 @@ git-core
 openssh-server
 psmisc
 pylint
+python-netaddr
 python-pep8
 python-pip
 python-unittest2
