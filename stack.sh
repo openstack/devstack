@@ -1792,6 +1792,8 @@ fi
 
 if is_service_enabled nova; then
     echo_summary "Configuring Nova"
+    # Rebuild the config file from scratch
+    create_nova_conf
     init_nova
 fi
 
