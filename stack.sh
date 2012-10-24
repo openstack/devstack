@@ -198,7 +198,6 @@ if [[ $EUID -eq 0 ]]; then
         echo "#includedir /etc/sudoers.d" >> /etc/sudoers
     ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
         > /etc/sudoers.d/50_stack_sh )
-    echo ""
     echo "Cancel requiretty in order to invoke sudo"
     grep -q "^Defaults.*requiretty" /etc/sudoers &&
         sed -i 's/Defaults.*requiretty/#Defaults    requiretty/' /etc/sudoers
