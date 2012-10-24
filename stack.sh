@@ -159,6 +159,10 @@ if is_service_enabled cinder && is_service_enabled n-vol; then
     exit 1
 fi
 
+# Make sure the state of SELinux on this system is not Enforcing.
+is_package_installed libselinux-utils &&
+    [[ $(getenforce) == "Enforcing" ]] && setenforce 0
+
 # Set up logging level
 VERBOSE=$(trueorfalse True $VERBOSE)
 
