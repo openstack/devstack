@@ -341,6 +341,13 @@ function create_nova_conf() {
         # Show user_name and project_name instead of user_id and project_id
         add_nova_opt "logging_context_format_string=%(asctime)s %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
     fi
+    if is_service_enabled ceilometer; then
+        add_nova_opt "instance_usage_audit=True"
+        add_nova_opt "instance_usage_audit_period=hour"
+        add_nova_opt "notification_driver=nova.openstack.common.notifier.rabbit_notifier"
+        add_nova_opt "notification_driver=ceilometer.compute.nova_notifier"
+    fi
+
 
     # Provide some transition from ``EXTRA_FLAGS`` to ``EXTRA_OPTS``
     if [[ -z "$EXTRA_OPTS" && -n "$EXTRA_FLAGS" ]]; then
