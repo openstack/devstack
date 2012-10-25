@@ -1266,8 +1266,10 @@ if is_service_enabled quantum; then
         Q_PLUGIN_CONF_FILENAME=ryu.ini
         Q_DB_NAME="ovs_quantum"
         Q_PLUGIN_CLASS="quantum.plugins.ryu.ryu_quantum_plugin.RyuQuantumPluginV2"
-    else
-        echo "Unknown Quantum plugin '$Q_PLUGIN'.. exiting"
+    fi
+
+    if [[ $Q_PLUGIN_CONF_PATH == '' || $Q_PLUGIN_CONF_FILENAME == '' || $Q_PLUGIN_CLASS == '' ]]; then
+        echo "Quantum plugin not set.. exiting"
         exit 1
     fi
 
