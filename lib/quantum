@@ -212,6 +212,10 @@ function create_nova_conf_quantum() {
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
+        if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+            add_nova_opt "xenapi_vif_driver=nova.virt.xenapi.vif.XenAPIOpenVswitchDriver"
+            add_nova_opt "xenapi_ovs_integration_bridge=$FLAT_NETWORK_BRIDGE"
+        fi
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"}
     elif [[ "$Q_PLUGIN" = "ryu" ]]; then
@@ -536,6 +540,11 @@ function _configure_quantum_metadata_agent() {
 # _configure_quantum_plugin_agent() - Set config files for quantum plugin agent
 # It is called when q-agt is enabled.
 function _configure_quantum_plugin_agent() {
+
+    # Specify the default root helper prior to agent configuration to
+    # ensure that an agent's configuration can override the default.
+    iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
+
     # Configure agent for plugin
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         _configure_quantum_plugin_agent_openvswitch
@@ -544,8 +553,6 @@ function _configure_quantum_plugin_agent() {
     elif [[ "$Q_PLUGIN" = "ryu" ]]; then
         _configure_quantum_plugin_agent_ryu
     fi
-
-    iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
 }
 
 function _configure_quantum_plugin_agent_linuxbridge() {
@@ -593,6 +600,41 @@ function _configure_quantum_plugin_agent_openvswitch() {
         iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings $OVS_BRIDGE_MAPPINGS
     fi
     AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
+
+    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+        # Nova will always be installed along with quantum for a domU
+        # devstack install, so it should be safe to rely on nova.conf
+        # for xenapi configuration.
+        Q_RR_DOM0_COMMAND="$QUANTUM_DIR/bin/quantum-rootwrap-dom0 $NOVA_CONF"
+        # Under XS/XCP, the ovs agent needs to target the dom0
+        # integration bridge.  This is enabled by using a root wrapper
+        # that executes commands on dom0 via a XenAPI plugin.
+        iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_DOM0_COMMAND"
+
+        # FLAT_NETWORK_BRIDGE is the dom0 integration bridge.  To
+        # ensure the bridge lacks direct connectivity, set
+        # VM_VLAN=-1;VM_DEV=invalid in localrc
+        iniset /$Q_PLUGIN_CONF_FILE OVS integration_bridge $FLAT_NETWORK_BRIDGE
+
+        # The ovs agent needs to ensure that the ports associated with
+        # a given network share the same local vlan tag.  On
+        # single-node XS/XCP, this requires monitoring both the dom0
+        # bridge, where VM's are attached, and the domU bridge, where
+        # dhcp servers are attached.
+        if is_service_enabled q-dhcp; then
+            iniset /$Q_PLUGIN_CONF_FILE OVS domu_integration_bridge $OVS_BRIDGE
+            # DomU will use the regular rootwrap
+            iniset /$Q_PLUGIN_CONF_FILE AGENT domu_root_helper "$Q_RR_COMMAND"
+            # Plug the vm interface into the domU integration bridge.
+            sudo ip addr flush dev $GUEST_INTERFACE_DEFAULT
+            sudo ip link set $OVS_BRIDGE up
+            # Assign the VM IP only if it has been set explicitly
+            if [[ "$VM_IP" != "" ]]; then
+                sudo ip addr add $VM_IP dev $OVS_BRIDGE
+            fi
+            sudo ovs-vsctl add-port $OVS_BRIDGE $GUEST_INTERFACE_DEFAULT
+        fi
+    fi
 }
 
 function _configure_quantum_plugin_agent_ryu() {
