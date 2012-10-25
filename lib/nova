@@ -316,6 +316,7 @@ function create_nova_conf() {
     fi
     if [ -n "$NOVA_STATE_PATH" ]; then
         add_nova_opt "state_path=$NOVA_STATE_PATH"
+        add_nova_opt "lock_path=$NOVA_STATE_PATH"
     fi
     if [ -n "$NOVA_INSTANCES_PATH" ]; then
         add_nova_opt "instances_path=$NOVA_INSTANCES_PATH"
