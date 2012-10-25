@@ -300,7 +300,6 @@ function create_nova_conf() {
     add_nova_opt "libvirt_type=$LIBVIRT_TYPE"
     add_nova_opt "libvirt_cpu_mode=none"
     add_nova_opt "instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
-    add_nova_opt "image_service=nova.image.glance.GlanceImageService"
 
     if is_service_enabled n-api; then
         add_nova_opt "enabled_apis=$NOVA_ENABLED_APIS"
