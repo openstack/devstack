@@ -119,23 +119,11 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | g
 fi
 
 # get the IP of the server
-IP=`nova show $VM_UUID | grep "private network" | get_field 2`
+IP=`nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2`
 die_if_not_set IP "Failure retrieving IP address"
 
 # for single node deployments, we can ping private ips
-MULTI_HOST=`trueorfalse False $MULTI_HOST`
-if [ "$MULTI_HOST" = "False" ]; then
-    # sometimes the first ping fails (10 seconds isn't enough time for the VM's
-    # network to respond?), so let's ping for a default of 15 seconds with a
-    # timeout of a second for each ping.
-    if ! timeout $BOOT_TIMEOUT sh -c "while ! ping -c1 -w1 $IP; do sleep 1; done"; then
-        echo "Couldn't ping server"
-        exit 1
-    fi
-else
-    # On a multi-host system, without vm net access, do a sleep to wait for the boot
-    sleep $BOOT_TIMEOUT
-fi
+ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
 
 # Volumes
 # -------

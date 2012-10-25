@@ -118,23 +118,10 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | g
 fi
 
 # get the IP of the server
-IP=`nova show $VM_UUID | grep "private network" | get_field 2`
+IP=`nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2`
 die_if_not_set IP "Failure retrieving IP address"
 
-# for single node deployments, we can ping private ips
-MULTI_HOST=`trueorfalse False $MULTI_HOST`
-if [ "$MULTI_HOST" = "False" ]; then
-    # sometimes the first ping fails (10 seconds isn't enough time for the VM's
-    # network to respond?), so let's ping for a default of 15 seconds with a
-    # timeout of a second for each ping.
-    if ! timeout $BOOT_TIMEOUT sh -c "while ! ping -c1 -w1 $IP; do sleep 1; done"; then
-        echo "Couldn't ping server"
-        exit 1
-    fi
-else
-    # On a multi-host system, without vm net access, do a sleep to wait for the boot
-    sleep $BOOT_TIMEOUT
-fi
+ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
 
 # Security Groups & Floating IPs
 # ------------------------------
@@ -166,10 +153,7 @@ nova add-floating-ip $VM_UUID $FLOATING_IP || \
     die "Failure adding floating IP $FLOATING_IP to $NAME"
 
 # test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
-if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
-    echo "Couldn't ping server with floating ip"
-    exit 1
-fi
+ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
 
 # Allocate an IP from second floating pool
 TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1`
@@ -187,18 +171,15 @@ nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || die "Failure deletin
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
     # test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
-    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
-        print "Security group failure - ping should not be allowed!"
-        echo "Couldn't ping server with floating ip"
-        exit 1
-    fi
+    ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
 fi
-
-# de-allocate the floating ip
-nova floating-ip-delete $FLOATING_IP || die "Failure deleting floating IP $FLOATING_IP"
 
 # Delete second floating IP
 nova floating-ip-delete $TEST_FLOATING_IP || die "Failure deleting floating IP $TEST_FLOATING_IP"
+
+
+# de-allocate the floating ip
+nova floating-ip-delete $FLOATING_IP || die "Failure deleting floating IP $FLOATING_IP"
 
 # Shutdown the server
 nova delete $VM_UUID || die "Failure deleting instance $NAME"
