@@ -1889,15 +1889,6 @@ else
 fi
 
 
-# Heat
-# ----
-
-if is_service_enabled heat; then
-    echo_summary "Configuring Heat"
-    init_heat
-fi
-
-
 # Launch Services
 # ===============
 
@@ -2017,8 +2008,12 @@ screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF
 is_service_enabled swift3 || \
     screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore"
 
-# launch heat engine, api and metadata
+
+# Configure and launch heat engine, api and metadata
 if is_service_enabled heat; then
+    # Initialize heat, including replacing nova flavors
+    echo_summary "Configuring Heat"
+    init_heat
     echo_summary "Starting Heat"
     start_heat
 fi
@@ -2088,6 +2083,11 @@ echo ""
 # to access the site using your browser.
 if is_service_enabled horizon; then
     echo "Horizon is now available at http://$SERVICE_HOST/"
+fi
+
+# Warn that the default flavors have been changed by Heat
+if is_service_enabled heat; then
+    echo "Heat has replaced the default flavors. View by running: nova flavor-list"
 fi
 
 # If Keystone is present you can point ``nova`` cli to this server
