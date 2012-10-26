@@ -136,10 +136,10 @@ fi
 #IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img" # cirros full disk image
 
 # Set default image based on ``VIRT_DRIVER`` and ``LIBVIRT_TYPE``, either of
-# which may be set in ``localrc``.  Also allow ``DEFAULT_IMAGE_NAME`` and 
+# which may be set in ``localrc``.  Also allow ``DEFAULT_IMAGE_NAME`` and
 # ``IMAGE_URLS`` to be set directly in ``localrc``.
 case "$VIRT_DRIVER" in
-    openvz) 
+    openvz)
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ubuntu-11.10-x86_64}
         IMAGE_URLS=${IMAGE_URLS:-"http://download.openvz.org/template/precreated/ubuntu-11.10-x86_64.tar.gz"};;
     libvirt)
@@ -159,3 +159,6 @@ esac
 
 # 5Gb default volume backing file size
 VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-5130M}
+
+PRIVATE_NETWORK_NAME=${PRIVATE_NETWORK_NAME:-"private"}
+PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME:-"nova"}

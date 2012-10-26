@@ -139,16 +139,10 @@ fi
 nova add-floating-ip $VOL_VM_UUID $FLOATING_IP
 
 # Test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
-if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
-    echo "Couldn't ping volume-backed server with floating ip"
-    exit 1
-fi
+ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
 
 # Make sure our volume-backed instance launched
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success ; do sleep 1; done"; then
-    echo "server didn't become ssh-able!"
-    exit 1
-fi
+ssh_check "$PUBLIC_NETWORK_NAME" $KEY_FILE $FLOATING_IP $DEFAULT_INSTANCE_USER $ACTIVE_TIMEOUT
 
 # Remove floating ip from volume-backed instance
 nova remove-floating-ip $VOL_VM_UUID $FLOATING_IP

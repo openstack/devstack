@@ -130,10 +130,7 @@ euca-authorize -P icmp -s 0.0.0.0/0 -t -1:-1 $SECGROUP || \
     die "Failure authorizing rule in $SECGROUP"
 
 # Test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
-if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
-    echo "Couldn't ping server with floating ip"
-    exit 1
-fi
+ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
 
 # Revoke pinging
 euca-revoke -P icmp -s 0.0.0.0/0 -t -1:-1 $SECGROUP || \

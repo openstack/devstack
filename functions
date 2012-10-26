@@ -849,6 +849,42 @@ function yum_install() {
         yum install -y "$@"
 }
 
+# ping check
+# Uses globals ``ENABLED_SERVICES``
+function ping_check() {
+    _ping_check_novanet "$1" $2 $3
+}
+
+# ping check for nova
+# Uses globals ``MULTI_HOST``, ``PRIVATE_NETWORK``
+function _ping_check_novanet() {
+    local from_net=$1
+    local ip=$2
+    local boot_timeout=$3
+    MULTI_HOST=`trueorfalse False $MULTI_HOST`
+    if [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
+        sleep $boot_timeout
+        return
+    fi
+    if ! timeout $boot_timeout sh -c "while ! ping -c1 -w1 $ip; do sleep 1; done"; then
+        echo "Couldn't ping server"
+        exit 1
+    fi
+}
+
+# ssh check
+function ssh_check() {
+    local NET_NAME=$1
+    local KEY_FILE=$2
+    local FLOATING_IP=$3
+    local DEFAULT_INSTANCE_USER=$4
+    local ACTIVE_TIMEOUT=$5
+    local probe_cmd = ""
+    if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success ; do sleep 1; done"; then
+        echo "server didn't become ssh-able!"
+        exit 1
+    fi
+}
 
 # Restore xtrace
 $XTRACE
