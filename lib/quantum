@@ -50,7 +50,7 @@ function quantum_setup_external_bridge() {
 }
 
 function is_quantum_ovs_base_plugin() {
-    local plguin=$1
+    local plugin=$1
     if [[ ",openvswitch,ryu," =~ ,${plugin}, ]]; then
         return 0
     fi
