@@ -189,6 +189,7 @@ function init_heat() {
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE heat CHARACTER SET utf8;'
 
     $HEAT_DIR/bin/heat-db-setup $os_PACKAGE -r $MYSQL_PASSWORD
+    $HEAT_DIR/tools/nova_create_flavors.sh
 }
 
 # install_heat() - Collect source and prepare
