@@ -159,9 +159,6 @@ if is_service_enabled cinder && is_service_enabled n-vol; then
     exit 1
 fi
 
-# Make sure the state of SELinux on this system is not Enforcing.
-is_package_installed libselinux-utils &&
-    [[ $(getenforce) == "Enforcing" ]] && setenforce 0
 
 # Set up logging level
 VERBOSE=$(trueorfalse True $VERBOSE)
@@ -180,6 +177,10 @@ if [[ $EUID -eq 0 ]]; then
     echo "You are running this script as root."
     echo "In $ROOTSLEEP seconds, we will create a user 'stack' and run as that user"
     sleep $ROOTSLEEP
+
+    # Make sure the state of SELinux on this system is not Enforcing.
+    is_package_installed libselinux-utils &&
+        [[ $(getenforce) == "Enforcing" ]] && setenforce 0
 
     # Give the non-root user the ability to run as **root** via ``sudo``
     is_package_installed sudo || install_package sudo
