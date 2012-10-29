@@ -41,8 +41,7 @@ CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_ceilometer() {
-    # This function intentionally left blank
-    :
+    mongo ceilometer --eval "db.dropDatabase();"
 }
 
 # configure_ceilometer() - Set config files, create data dirs, etc
@@ -63,6 +62,7 @@ function configure_ceilometer() {
     iniset $CEILOMETER_CONF DEFAULT sql_connection $BASE_SQL_CONN/nova?charset=utf8
 
     iniset $CEILOMETER_CONF keystone_authtoken auth_protocol http
+    cleanup_ceilometer
 }
 
 # install_ceilometer() - Collect source and prepare
