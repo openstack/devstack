@@ -32,6 +32,12 @@ source $TOP_DIR/functions
 # Import configuration
 source $TOP_DIR/openrc
 
+# Import quantum functions if needed
+if is_service_enabled quantum; then
+    source $TOP_DIR/lib/quantum
+    setup_quantum
+fi
+
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
@@ -167,6 +173,10 @@ nova floating-ip-delete $FLOATING_IP || \
 
 # Delete a secgroup
 nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
+
+if is_service_enabled quantum; then
+    teardown_quantum
+fi
 
 set +o xtrace
 echo "*********************************************************************"

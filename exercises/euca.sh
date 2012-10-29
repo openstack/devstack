@@ -33,6 +33,12 @@ source $TOP_DIR/functions
 # Import EC2 configuration
 source $TOP_DIR/eucarc
 
+# Import quantum functions if needed
+if is_service_enabled quantum; then
+    source $TOP_DIR/lib/quantum
+    setup_quantum
+fi
+
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
@@ -168,6 +174,10 @@ fi
 
 # Delete group
 euca-delete-group $SECGROUP || die "Failure deleting security group $SECGROUP"
+
+if is_service_enabled quantum; then
+    teardown_quantum
+fi
 
 set +o xtrace
 echo "*********************************************************************"
