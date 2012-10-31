@@ -305,6 +305,8 @@ function create_nova_conf() {
         add_nova_opt "enabled_apis=$NOVA_ENABLED_APIS"
     fi
     if is_service_enabled n-vol; then
+        NOVA_ENABLED_APIS="${NOVA_ENABLED_APIS},osapi_volume"
+        iniset $NOVA_CONF DEFAULT enabled_apis $NOVA_ENABLED_APIS
         add_nova_opt "volume_api_class=nova.volume.api.API"
         add_nova_opt "volume_group=$VOLUME_GROUP"
         add_nova_opt "volume_name_template=${VOLUME_NAME_PREFIX}%s"
