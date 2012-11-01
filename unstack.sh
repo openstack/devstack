@@ -15,6 +15,9 @@ TOP_DIR=$(cd $(dirname "$0") && pwd)
 # Import common functions
 source $TOP_DIR/functions
 
+# Import database library
+source $TOP_DIR/lib/database
+
 # Load local configuration
 source $TOP_DIR/stackrc
 
@@ -100,6 +103,10 @@ if [[ -n "$UNSTACK_ALL" ]]; then
     # Stop MySQL server
     if is_service_enabled mysql; then
         stop_service mysql
+    fi
+
+    if is_service_enabled postgresql; then
+        stop_service postgresql
     fi
 
     # Stop rabbitmq-server

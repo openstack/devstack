@@ -296,7 +296,9 @@ function create_nova_conf() {
     add_nova_opt "s3_port=$S3_SERVICE_PORT"
     add_nova_opt "osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
     add_nova_opt "my_ip=$HOST_IP"
-    add_nova_opt "sql_connection=$BASE_SQL_CONN/nova?charset=utf8"
+    local dburl
+    database_connection_url dburl nova
+    add_nova_opt "sql_connection=$dburl"
     add_nova_opt "libvirt_type=$LIBVIRT_TYPE"
     add_nova_opt "libvirt_cpu_mode=none"
     add_nova_opt "instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
@@ -372,14 +374,12 @@ function init_nova() {
     # All nova components talk to a central database.  We will need to do this step
     # only once for an entire cluster.
 
-    if is_service_enabled mysql && is_service_enabled nova; then
+    if is_service_enabled $DATABASE_BACKENDS && is_service_enabled nova; then
         # (Re)create nova database
-        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS nova;'
-
         # Explicitly use latin1: to avoid lp#829209, nova expects the database to
         # use latin1 by default, and then upgrades the database to utf8 (see the
         # 082_essex.py in nova)
-        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE nova CHARACTER SET latin1;'
+        recreate_database nova latin1
 
         # (Re)create nova database
         $NOVA_BIN_DIR/nova-manage db sync

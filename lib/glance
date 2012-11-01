@@ -81,7 +81,9 @@ function configure_glance() {
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT debug True
     inicomment $GLANCE_REGISTRY_CONF DEFAULT log_file
-    iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $BASE_SQL_CONN/glance?charset=utf8
+    local dburl
+    database_connection_url dburl glance
+    iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $dburl
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
@@ -95,7 +97,7 @@ function configure_glance() {
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
     iniset $GLANCE_API_CONF DEFAULT debug True
     inicomment $GLANCE_API_CONF DEFAULT log_file
-    iniset $GLANCE_API_CONF DEFAULT sql_connection $BASE_SQL_CONN/glance?charset=utf8
+    iniset $GLANCE_API_CONF DEFAULT sql_connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_API_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
     iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
@@ -149,8 +151,7 @@ function init_glance() {
     mkdir -p $GLANCE_CACHE_DIR
 
     # (re)create glance database
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS glance;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE glance CHARACTER SET utf8;'
+    recreate_database glance utf8
 
     $GLANCE_BIN_DIR/glance-manage db_sync
 }

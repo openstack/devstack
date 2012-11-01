@@ -82,9 +82,11 @@ function configure_keystone() {
     fi
 
     # Rewrite stock ``keystone.conf``
+    local dburl
+    database_connection_url dburl keystone
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
     iniset $KEYSTONE_CONF signing token_format "$KEYSTONE_TOKEN_FORMAT"
-    iniset $KEYSTONE_CONF sql connection "$BASE_SQL_CONN/keystone?charset=utf8"
+    iniset $KEYSTONE_CONF sql connection $dburl
     iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
     sed -e "
         /^pipeline.*ec2_extension crud_/s|ec2_extension crud_extension|ec2_extension s3_extension crud_extension|;
@@ -141,8 +143,7 @@ function configure_keystone() {
 # init_keystone() - Initialize databases, etc.
 function init_keystone() {
     # (Re)create keystone database
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS keystone;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE keystone CHARACTER SET utf8;'
+    recreate_database keystone utf8
 
     # Initialize keystone database
     $KEYSTONE_DIR/bin/keystone-manage db_sync

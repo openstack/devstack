@@ -1,0 +1,93 @@
+# lib/mysql
+# Functions to control the configuration and operation of the MySQL database backend
+
+# Dependencies:
+# DATABASE_{HOST,USER,PASSWORD} must be defined
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+register_database mysql
+
+function recreate_database_mysql {
+    local db=$1
+    local charset=$2
+    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -e "DROP DATABASE IF EXISTS $db;"
+    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -e "CREATE DATABASE $db CHARACTER SET $charset;"
+}
+
+function configure_database_mysql {
+    echo_summary "Configuring and starting MySQL"
+
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        MY_CONF=/etc/mysql/my.cnf
+        MYSQL=mysql
+    else
+        MY_CONF=/etc/my.cnf
+        MYSQL=mysqld
+    fi
+
+    # Start mysql-server
+    if [[ "$os_PACKAGE" = "rpm" ]]; then
+        # RPM doesn't start the service
+        start_service $MYSQL
+        # Set the root password - only works the first time
+        sudo mysqladmin -u root password $DATABASE_PASSWORD || true
+    fi
+    # Update the DB to give user ‘$DATABASE_USER’@’%’ full control of the all databases:
+    sudo mysql -uroot -p$DATABASE_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
+
+    # Now update ``my.cnf`` for some local needs and restart the mysql service
+
+    # Change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0)
+    sudo sed -i '/^bind-address/s/127.0.0.1/0.0.0.0/g' $MY_CONF
+
+    # Set default db type to InnoDB
+    if sudo grep -q "default-storage-engine" $MY_CONF; then
+        # Change it
+        sudo bash -c "source $TOP_DIR/functions; iniset $MY_CONF mysqld default-storage-engine InnoDB"
+    else
+        # Add it
+        sudo sed -i -e "/^\[mysqld\]/ a \
+default-storage-engine = InnoDB" $MY_CONF
+    fi
+
+    restart_service $MYSQL
+}
+
+function install_database_mysql {
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        # Seed configuration with mysql password so that apt-get install doesn't
+        # prompt us for a password upon install.
+        cat <<MYSQL_PRESEED | sudo debconf-set-selections
+mysql-server-5.1 mysql-server/root_password password $DATABASE_PASSWORD
+mysql-server-5.1 mysql-server/root_password_again password $DATABASE_PASSWORD
+mysql-server-5.1 mysql-server/start_on_boot boolean true
+MYSQL_PRESEED
+    fi
+
+    # while ``.my.cnf`` is not needed for OpenStack to function, it is useful
+    # as it allows you to access the mysql databases via ``mysql nova`` instead
+    # of having to specify the username/password each time.
+    if [[ ! -e $HOME/.my.cnf ]]; then
+        cat <<EOF >$HOME/.my.cnf
+[client]
+user=$DATABASE_USER
+password=$DATABASE_PASSWORD
+host=$DATABASE_HOST
+EOF
+        chmod 0600 $HOME/.my.cnf
+    fi
+    # Install mysql-server
+    install_package mysql-server
+}
+
+function database_connection_url_mysql {
+    local output=$1
+    local db=$2
+    eval "$output=$BASE_SQL_CONN/$db?charset=utf8"
+}
+
+# Restore xtrace
+$XTRACE

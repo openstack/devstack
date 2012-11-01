@@ -112,7 +112,9 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT volume_group $VOLUME_GROUP
     iniset $CINDER_CONF DEFAULT volume_name_template ${VOLUME_NAME_PREFIX}%s
     iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
-    iniset $CINDER_CONF DEFAULT sql_connection $BASE_SQL_CONN/cinder?charset=utf8
+    local dburl
+    database_connection_url dburl cinder
+    iniset $CINDER_CONF DEFAULT sql_connection $dburl
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT root_helper "sudo ${CINDER_ROOTWRAP}"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.openstack.volume.contrib.standard_extensions
@@ -141,10 +143,9 @@ function init_cinder() {
     # Force nova volumes off
     NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/osapi_volume,//")
 
-    if is_service_enabled mysql; then
+    if is_service_enabled $DATABASE_BACKENDS; then
         # (re)create cinder database
-        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS cinder;'
-        mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE cinder;'
+        recreate_database cinder utf8
 
         # (re)create cinder database
         $CINDER_BIN_DIR/cinder-manage db sync
