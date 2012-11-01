@@ -935,9 +935,6 @@ fi
 if is_service_enabled cinder; then
     configure_cinder
 fi
-if is_service_enabled tempest; then
-    configure_tempest
-fi
 if is_service_enabled ryu || (is_service_enabled quantum && [[ "$Q_PLUGIN" = "ryu" ]]); then
     setup_develop $RYU_DIR
 fi
@@ -2052,6 +2049,13 @@ if is_service_enabled g-reg; then
     for image_url in ${IMAGE_URLS//,/ }; do
         upload_image $image_url $TOKEN
     done
+fi
+
+
+# Configure Tempest last to ensure that the runtime configuration of
+# the various OpenStack services can be queried.
+if is_service_enabled tempest; then
+    configure_tempest
 fi
 
 
