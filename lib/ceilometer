@@ -6,8 +6,9 @@
 
 # Dependencies:
 # - functions
-# - OS_USERNAME, OS_PASSWORD, OS_TENANT_NAME, OS_AUTH_URL set for admin credentials
+# - OS_AUTH_URL for auth in api
 # - DEST set to the destination directory
+# - SERVICE_PASSWORD, SERVICE_TENANT_NAME for auth in api
 
 # stack.sh
 # ---------
@@ -61,7 +62,15 @@ function configure_ceilometer() {
     iniset $CEILOMETER_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $CEILOMETER_CONF DEFAULT sql_connection $BASE_SQL_CONN/nova?charset=utf8
 
+    # Install the policy file for the API server
+    cp $CEILOMETER_DIR/etc/ceilometer/policy.json $CEILOMETER_CONF_DIR
+    iniset $CEILOMETER_CONF DEFAULT policy_file $CEILOMETER_CONF_DIR/policy.json
+
     iniset $CEILOMETER_CONF keystone_authtoken auth_protocol http
+    iniset $CEILOMETER_CONF keystone_authtoken admin_user ceilometer
+    iniset $CEILOMETER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+    iniset $CEILOMETER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+
     cleanup_ceilometer
 }
 
@@ -73,7 +82,7 @@ function install_ceilometer() {
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer() {
     screen_it ceilometer-acompute "cd $CEILOMETER_DIR && sg libvirtd \"$CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
-    screen_it ceilometer-acentral "export OS_USERNAME=$OS_USERNAME OS_PASSWORD=$OS_PASSWORD OS_TENANT_NAME=$OS_TENANT_NAME OS_AUTH_URL=$OS_AUTH_URL && cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_CONF"
+    screen_it ceilometer-acentral "export OS_USERNAME=ceilometer OS_PASSWORD=$SERVICE_PASSWORD OS_TENANT_NAME=$SERVICE_TENANT_NAME OS_AUTH_URL=$OS_AUTH_URL && cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_CONF"
     screen_it ceilometer-collector "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-collector --config-file $CEILOMETER_CONF"
     screen_it ceilometer-api "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
 }
