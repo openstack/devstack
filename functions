@@ -570,7 +570,7 @@ function is_package_installed() {
 # is_set env-var
 function is_set() {
     local var=\$"$1"
-    if eval "[ -z $var ]"; then
+    if eval "[ -z \"$var\" ]"; then
         return 1
     fi
     return 0
