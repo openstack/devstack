@@ -23,7 +23,7 @@ set +o xtrace
 # Defaults
 # --------
 HEAT_DIR=$DEST/heat
-
+HEATCLIENT_DIR=$DEST/python-heatclient
 # set up default directories
 
 # cleanup_heat() - Remove residual data files, anything left over from previous
@@ -31,6 +31,11 @@ HEAT_DIR=$DEST/heat
 function cleanup_heat() {
     # This function intentionally left blank
     :
+}
+
+# configure_heatclient() - Set config files, create data dirs, etc
+function configure_heatclient() {
+    setup_develop $HEATCLIENT_DIR
 }
 
 # configure_heat() - Set config files, create data dirs, etc
@@ -191,6 +196,11 @@ function init_heat() {
 
     $HEAT_DIR/bin/heat-db-setup $os_PACKAGE -r $MYSQL_PASSWORD
     $HEAT_DIR/tools/nova_create_flavors.sh
+}
+
+# install_heatclient() - Collect source and prepare
+function install_heatclient() {
+    git_clone $HEATCLIENT_REPO $HEATCLIENT_DIR $HEATCLIENT_BRANCH
 }
 
 # install_heat() - Collect source and prepare

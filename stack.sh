@@ -852,6 +852,7 @@ if is_service_enabled quantum; then
 fi
 if is_service_enabled heat; then
     install_heat
+    install_heatclient
 fi
 if is_service_enabled cinder; then
     install_cinder
@@ -906,6 +907,7 @@ if is_service_enabled quantum; then
 fi
 if is_service_enabled heat; then
     configure_heat
+    configure_heatclient
 fi
 if is_service_enabled cinder; then
     configure_cinder
