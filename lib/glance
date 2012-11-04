@@ -6,6 +6,7 @@
 # ``DEST``, ``DATA_DIR`` must be defined
 # ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
 # ``SERVICE_HOST``
+# ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
@@ -31,6 +32,7 @@ GLANCE_DIR=$DEST/glance
 GLANCECLIENT_DIR=$DEST/python-glanceclient
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
 GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
+GLANCE_AUTH_CACHE_DIR=${GLANCE_AUTH_CACHE_DIR:-/var/cache/glance}
 
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_REGISTRY_CONF=$GLANCE_CONF_DIR/glance-registry.conf
@@ -91,6 +93,9 @@ function configure_glance() {
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_user glance
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
+        iniset $GLANCE_REGISTRY_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/registry
+    fi
 
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
     iniset $GLANCE_API_CONF DEFAULT debug True
@@ -113,6 +118,9 @@ function configure_glance() {
         iniset $GLANCE_API_CONF DEFAULT notifier_strategy rabbit
         iniset $GLANCE_API_CONF DEFAULT rabbit_host $RABBIT_HOST
         iniset $GLANCE_API_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+    fi
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
+        iniset $GLANCE_API_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/api
     fi
 
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
@@ -153,6 +161,14 @@ function init_glance() {
     mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE glance CHARACTER SET utf8;'
 
     $GLANCE_BIN_DIR/glance-manage db_sync
+
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
+        # Create cache dir
+        sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
+        sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/api
+        sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
+        sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/registry
+    fi
 }
 
 # install_glanceclient() - Collect source and prepare
