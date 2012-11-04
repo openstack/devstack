@@ -836,6 +836,21 @@ function upload_image() {
     fi
 }
 
+# Toggle enable/disable_service for services that must run exclusive of each other
+#  $1 The name of a variable containing a space-separated list of services
+#  $2 The name of a variable in which to store the enabled service's name
+#  $3 The name of the service to enable
+function use_exclusive_service {
+    local options=${!1}
+    local selection=$3
+    out=$2
+    [ -z $selection ] || [[ ! "$options" =~ "$selection" ]] && return 1
+    for opt in $options;do
+        [[ "$opt" = "$selection" ]] && enable_service $opt || disable_service $opt
+    done
+    eval "$out=$selection"
+    return 0
+}
 
 # Wrapper for ``yum`` to set proxy environment variables
 # Uses globals ``OFFLINE``, ``*_proxy`

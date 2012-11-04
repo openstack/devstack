@@ -1,0 +1,70 @@
+# lib/postgresql
+# Functions to control the configuration and operation of the PostgreSQL database backend
+
+# Dependencies:
+# DATABASE_{HOST,USER,PASSWORD} must be defined
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+register_database postgresql
+
+function recreate_database_postgresql {
+    local db=$1
+    local charset=$2
+    # Avoid unsightly error when calling dropdb when the database doesn't exist
+    psql -h$DATABASE_HOST -U$DATABASE_USER -dtemplate1 -c "DROP DATABASE IF EXISTS $db"
+    createdb -h $DATABASE_HOST -U$DATABASE_USER -l C -T template0 -E $charset $db
+}
+
+function configure_database_postgresql {
+    echo_summary "Configuring and starting PostgreSQL"
+    if [[ "$os_PACKAGE" = "rpm" ]]; then
+        PG_HBA=/var/lib/pgsql/data/pg_hba.conf
+        PG_CONF=/var/lib/pgsql/data/postgresql.conf
+    else
+        PG_DIR=`find /etc/postgresql -name pg_hba.conf|xargs dirname`
+        PG_HBA=$PG_DIR/pg_hba.conf
+        PG_CONF=$PG_DIR/postgresql.conf
+    fi
+    sudo [ -e /var/lib/pgsql/data ] || sudo postgresql-setup initdb
+    # Listen on all addresses
+    sudo sed -i "/listen_addresses/s/.*/listen_addresses = '*'/" $PG_CONF
+    # Do password auth from all IPv4 clients
+    sudo sed -i "/^host/s/all\s\+127.0.0.1\/32\s\+ident/$DATABASE_USER\t0.0.0.0\/0\tpassword/" $PG_HBA
+    # Do password auth for all IPv6 clients
+    sudo sed -i "/^host/s/all\s\+::1\/128\s\+ident/$DATABASE_USER\t::0\/0\tpassword/" $PG_HBA
+    start_service postgresql
+
+    # If creating the role fails, chances are it already existed. Try to alter it.
+    sudo -u postgres -i psql -c "CREATE ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'" || \
+    sudo -u postgres -i psql -c "ALTER ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'"
+}
+
+function install_database_postgresql {
+    echo_summary "Installing postgresql"
+    PGPASS=$HOME/.pgpass
+    if [[ ! -e $PGPASS ]]; then
+        cat <<EOF > $PGPASS
+*:*:*:$DATABASE_USER:$DATABASE_PASSWORD
+EOF
+        chmod 0600 $PGPASS
+    else
+        sed -i "s/:root:\w\+/:root:$DATABASE_PASSWORD/" $PGPASS
+    fi
+    if [[ "$os_PACKAGE" = "rpm" ]]; then
+        install_package postgresql-server
+    else
+        install_package postgresql
+    fi
+}
+
+function database_connection_url_postgresql {
+    local output=$1
+    local db=$2
+    eval "$output=$BASE_SQL_CONN/$db?client_encoding=utf8"
+}
+
+# Restore xtrace
+$XTRACE

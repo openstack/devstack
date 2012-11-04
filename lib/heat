@@ -120,7 +120,9 @@ function configure_heat() {
     iniset $HEAT_ENGINE_CONF DEFAULT use_syslog $SYSLOG
     iniset $HEAT_ENGINE_CONF DEFAULT bind_host $HEAT_ENGINE_HOST
     iniset $HEAT_ENGINE_CONF DEFAULT bind_port $HEAT_ENGINE_PORT
-    iniset $HEAT_ENGINE_CONF DEFAULT sql_connection $BASE_SQL_CONN/heat?charset=utf8
+    local dburl
+    database_connection_url dburl heat
+    iniset $HEAT_ENGINE_CONF DEFAULT sql_connection $dburl
     iniset $HEAT_ENGINE_CONF DEFAULT auth_encryption_key `hexdump -n 16 -v -e '/1 "%02x"' /dev/random`
 
     if is_service_enabled rabbit; then
@@ -185,8 +187,7 @@ function configure_heat() {
 function init_heat() {
 
     # (re)create heat database
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS heat;'
-    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE heat CHARACTER SET utf8;'
+    recreate_database heat utf8
 
     $HEAT_DIR/bin/heat-db-setup $os_PACKAGE -r $MYSQL_PASSWORD
     $HEAT_DIR/tools/nova_create_flavors.sh

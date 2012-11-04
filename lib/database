@@ -1,0 +1,103 @@
+# lib/database
+# Interface for interacting with different database backends
+
+# Dependencies:
+# DATABASE_BACKENDS variable must contain a list of available database backends
+# DATABASE_TYPE variable must be set
+
+# Each database must implement four functions:
+#   recreate_database_$DATABASE_TYPE
+#   install_database_$DATABASE_TYPE
+#   configure_database_$DATABASE_TYPE
+#   database_connection_url_$DATABASE_TYPE
+#
+# and call register_database $DATABASE_TYPE
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Register a database backend
+#  $1 The name of the database backend
+function register_database {
+    [ -z "$DATABASE_BACKENDS" ] && DATABASE_BACKENDS=$1 || DATABASE_BACKENDS+=" $1"
+}
+
+for f in $TOP_DIR/lib/databases/*; do source $f; done
+
+# Set the database type based on the configuration
+function initialize_database_backends {
+    for backend in $DATABASE_BACKENDS; do
+        is_service_enabled $backend && DATABASE_TYPE=$backend
+    done
+
+    [ -z "$DATABASE_TYPE" ] && return 1
+
+    # For backward-compatibility, read in the MYSQL_HOST/USER variables and use
+    # them as the default values for the DATABASE_HOST/USER variables.
+    MYSQL_HOST=${MYSQL_HOST:-localhost}
+    MYSQL_USER=${MYSQL_USER:-root}
+
+    DATABASE_HOST=${DATABASE_HOST:-${MYSQL_HOST}}
+    DATABASE_USER=${DATABASE_USER:-${MYSQL_USER}}
+
+    if [ -n "$MYSQL_PASSWORD" ]; then
+        DATABASE_PASSWORD=$MYSQL_PASSWORD
+    else
+        read_password DATABASE_PASSWORD "ENTER A PASSWORD TO USE FOR THE DATABASE."
+    fi
+
+    # We configure Nova, Horizon, Glance and Keystone to use MySQL as their
+    # database server.  While they share a single server, each has their own
+    # database and tables.
+
+    # By default this script will install and configure MySQL.  If you want to
+    # use an existing server, you can pass in the user/password/host parameters.
+    # You will need to send the same ``DATABASE_PASSWORD`` to every host if you are doing
+    # a multi-node DevStack installation.
+
+    # NOTE: Don't specify ``/db`` in this string so we can use it for multiple services
+    BASE_SQL_CONN=${BASE_SQL_CONN:-${DATABASE_TYPE}://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST}
+
+    return 0
+}
+
+# Set the database backend to use
+#  $1 The name of the database backend to use (mysql, postgresql, ...)
+function use_database {
+    use_exclusive_service DATABASE_BACKENDS DATABASE_TYPE $1 && return 0
+    ret=$?
+    echo "Invalid database '$1'"
+    return $ret
+}
+
+# Recreate a given database
+#  $1 The name of the database
+#  $2 The character set/encoding of the database
+function recreate_database {
+    local db=$1
+    local charset=$2
+    recreate_database_$DATABASE_TYPE $db $charset
+}
+
+# Install the database
+function install_database {
+    install_database_$DATABASE_TYPE
+}
+
+# Configure and start the database
+function configure_database {
+    configure_database_$DATABASE_TYPE
+}
+
+# Generate an SQLAlchemy connection URL and store it in a variable
+#  $1 The variable name in which to store the connection URL
+#  $2 The name of the database
+function database_connection_url {
+    local var=$1
+    local db=$2
+    database_connection_url_$DATABASE_TYPE $var $db
+}
+
+# Restore xtrace
+$XTRACE
