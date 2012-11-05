@@ -95,7 +95,7 @@ nova keypair-add $KEY_NAME > $KEY_FILE
 chmod 600 $KEY_FILE
 
 # Delete the old volume
-nova volume-delete $VOL_NAME || true
+cinder delete $VOL_NAME || true
 
 # Free every floating ips - setting FREE_ALL_FLOATING_IPS=True in localrc will make life easier for testers
 if [ "$FREE_ALL_FLOATING_IPS" = "True" ]; then
@@ -112,15 +112,15 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $
 fi
 
 # Create the bootable volume
-nova volume-create --display_name=$VOL_NAME --image-id $IMAGE 1
+cinder create --display_name=$VOL_NAME --image-id $IMAGE 1
 
 # Wait for volume to activate
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
     exit 1
 fi
 
-VOLUME_ID=`nova volume-list | grep $VOL_NAME  | get_field 1`
+VOLUME_ID=`cinder list | grep $VOL_NAME  | get_field 1`
 
 # Boot instance from volume!  This is done with the --block_device_mapping param.
 # The format of mapping is:
@@ -152,13 +152,13 @@ nova delete $VOL_INSTANCE_NAME || \
     die "Failure deleting instance volume $VOL_INSTANCE_NAME"
 
 # Wait till our volume is no longer in-use
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
     exit 1
 fi
 
 # Delete the volume
-nova volume-delete $VOL_NAME || \
+cinder delete $VOL_NAME || \
     die "Failure deleting volume $VOLUME_NAME"
 
 # De-allocate the floating ip

@@ -2,7 +2,7 @@
 
 # **volumes.sh**
 
-# Test nova volumes with the nova command from python-novaclient
+# Test cinder volumes with the cinder command from python-cinderclient
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -131,28 +131,28 @@ ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
 VOL_NAME="myvol-$(openssl rand -hex 4)"
 
 # Verify it doesn't exist
-if [[ -n "`nova volume-list | grep $VOL_NAME | head -1 | get_field 2`" ]]; then
+if [[ -n "`cinder list | grep $VOL_NAME | head -1 | get_field 2`" ]]; then
     echo "Volume $VOL_NAME already exists"
     exit 1
 fi
 
 # Create a new volume
-nova volume-create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" 1
+cinder create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" 1
 if [[ $? != 0 ]]; then
     echo "Failure creating volume $VOL_NAME"
     exit 1
 fi
 
 start_time=`date +%s`
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
     exit 1
 fi
 end_time=`date +%s`
-echo "Completed volume-create in $((end_time - start_time)) seconds"
+echo "Completed cinder create in $((end_time - start_time)) seconds"
 
 # Get volume ID
-VOL_ID=`nova volume-list | grep $VOL_NAME | head -1 | get_field 1`
+VOL_ID=`cinder list | grep $VOL_NAME | head -1 | get_field 1`
 die_if_not_set VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 
 # Attach to server
@@ -160,14 +160,14 @@ DEVICE=/dev/vdb
 start_time=`date +%s`
 nova volume-attach $VM_UUID $VOL_ID $DEVICE || \
     die "Failure attaching volume $VOL_NAME to $NAME"
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
     echo "Volume $VOL_NAME not attached to $NAME"
     exit 1
 fi
 end_time=`date +%s`
 echo "Completed volume-attach in $((end_time - start_time)) seconds"
 
-VOL_ATTACH=`nova volume-list | grep $VOL_NAME | head -1 | get_field -1`
+VOL_ATTACH=`cinder list | grep $VOL_NAME | head -1 | get_field -1`
 die_if_not_set VOL_ATTACH "Failure retrieving $VOL_NAME status"
 if [[ "$VOL_ATTACH" != $VM_UUID ]]; then
     echo "Volume not attached to correct instance"
@@ -177,7 +177,7 @@ fi
 # Detach volume
 start_time=`date +%s`
 nova volume-detach $VM_UUID $VOL_ID || die "Failure detaching volume $VOL_NAME from $NAME"
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not detached from $NAME"
     exit 1
 fi
@@ -186,13 +186,13 @@ echo "Completed volume-detach in $((end_time - start_time)) seconds"
 
 # Delete volume
 start_time=`date +%s`
-nova volume-delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME; do sleep 1; done"; then
+cinder delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
+if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
     exit 1
 fi
 end_time=`date +%s`
-echo "Completed volume-delete in $((end_time - start_time)) seconds"
+echo "Completed cinder delete in $((end_time - start_time)) seconds"
 
 # Shutdown the server
 nova delete $VM_UUID || die "Failure deleting instance $NAME"
