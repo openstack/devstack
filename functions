@@ -841,6 +841,22 @@ function upload_image() {
     fi
 }
 
+# Set the database backend to use
+# When called from stackrc/localrc DATABASE_BACKENDS has not been
+# initialized yet, just save the configuration selection and call back later
+# to validate it.
+#  $1 The name of the database backend to use (mysql, postgresql, ...)
+function use_database {
+    if [[ -z "$DATABASE_BACKENDS" ]]; then
+        # The backends haven't initialized yet, just save the selection for now
+        DATABASE_TYPE=$1
+        return
+    fi
+    use_exclusive_service DATABASE_BACKENDS DATABASE_TYPE $1 && return 0
+    ret=$?
+    return $ret
+}
+
 # Toggle enable/disable_service for services that must run exclusive of each other
 #  $1 The name of a variable containing a space-separated list of services
 #  $2 The name of a variable in which to store the enabled service's name
