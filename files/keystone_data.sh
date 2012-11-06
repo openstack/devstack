@@ -2,18 +2,19 @@
 #
 # Initial data for Keystone using python-keystoneclient
 #
-# Tenant               User      Roles
+# Tenant               User       Roles
 # ------------------------------------------------------------------
-# admin                admin     admin
-# service              glance    admin
-# service              nova      admin, [ResellerAdmin (swift only)]
-# service              quantum   admin        # if enabled
-# service              swift     admin        # if enabled
-# service              cinder    admin        # if enabled
-# service              heat      admin        # if enabled
-# demo                 admin     admin
-# demo                 demo      Member, anotherrole
-# invisible_to_admin   demo      Member
+# admin                admin      admin
+# service              glance     admin
+# service              nova       admin, [ResellerAdmin (swift only)]
+# service              quantum    admin        # if enabled
+# service              swift      admin        # if enabled
+# service              cinder     admin        # if enabled
+# service              heat       admin        # if enabled
+# service              ceilometer admin        # if enabled
+# demo                 admin      admin
+# demo                 demo       Member, anotherrole
+# invisible_to_admin   demo       Member
 # Tempest Only:
 # alt_demo             alt_demo  Member
 #
@@ -262,7 +263,14 @@ if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
     fi
 fi
 
-if [[ "$ENABLED_SERVICES" =~ "ceilometer-api" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "ceilometer" ]]; then
+    CEILOMETER_USER=$(get_id keystone user-create --name=ceilometer \
+                                              --pass="$SERVICE_PASSWORD" \
+                                              --tenant_id $SERVICE_TENANT \
+                                              --email=ceilometer@example.com)
+    keystone user-role-add --tenant_id $SERVICE_TENANT \
+                           --user_id $CEILOMETER_USER \
+                           --role_id $ADMIN_ROLE
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         CEILOMETER_SERVICE=$(get_id keystone service-create \
             --name=ceilometer \
@@ -345,4 +353,3 @@ if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
             --internalurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s"
     fi
 fi
-
