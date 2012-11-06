@@ -134,6 +134,10 @@ function configure_cinder() {
         iniset $CINDER_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
     fi
 
+    if [[ "$CINDER_SECURE_DELETE" == "False" ]]; then
+        iniset $CINDER_CONF DEFAULT secure_delete False
+    fi
+
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         # Add color to logging output
         iniset $CINDER_CONF DEFAULT logging_context_format_string "%(asctime)s %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_id)s %(project_id)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"

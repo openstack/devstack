@@ -356,6 +356,11 @@ RYU_OFP_PORT=${RYU_OFP_PORT:-6633}
 # Ryu Applications
 RYU_APPS=${RYU_APPS:-ryu.app.simple_isolation,ryu.app.rest}
 
+# Should cinder perform secure deletion of volumes?
+# Defaults to true, can be set to False to avoid this bug when testing:
+# https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1023755
+CINDER_SECURE_DELETE=`trueorfalse True $CINDER_SECURE_DELETE`
+
 # Name of the LVM volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
