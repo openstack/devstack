@@ -1,6 +1,7 @@
 ebtables
 iptables
 iputils-ping
+iputils-arping
 mysql-server #NOPRIME
 sudo
 python-boto
