@@ -894,7 +894,7 @@ function ssh_check() {
     local FLOATING_IP=$3
     local DEFAULT_INSTANCE_USER=$4
     local ACTIVE_TIMEOUT=$5
-    local probe_cmd = ""
+    local probe_cmd=""
     if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success ; do sleep 1; done"; then
         echo "server didn't become ssh-able!"
         exit 1
