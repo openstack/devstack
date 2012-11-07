@@ -47,6 +47,7 @@ if [ ! -e $TOP_DIR/openrc ]; then
 fi
 
 # Source params
+source $TOP_DIR/lib/database
 source $TOP_DIR/openrc
 
 # Where Openstack code lives
@@ -186,7 +187,7 @@ COMPUTE_CONFIG_PATH=/etc/nova/nova.conf
 # TODO(jaypipes): Create the key file here... right now, no whitebox
 # tests actually use a key.
 COMPUTE_PATH_TO_PRIVATE_KEY=$TEMPEST_DIR/id_rsa
-COMPUTE_DB_URI=mysql://root:$MYSQL_PASSWORD@localhost/nova
+COMPUTE_DB_URI=$BASE_SQL_CONN/nova
 
 # Image test configuration options...
 IMAGE_HOST=${IMAGE_HOST:-127.0.0.1}
