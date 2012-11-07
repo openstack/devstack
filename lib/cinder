@@ -125,6 +125,10 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.openstack.volume.contrib.standard_extensions
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
 
+    if [ "$SYSLOG" != "False" ]; then
+        iniset $CINDER_CONF DEFAULT use_syslog True
+    fi
+
     if is_service_enabled qpid ; then
         iniset $CINDER_CONF DEFAULT rpc_backend cinder.openstack.common.rpc.impl_qpid
     elif is_service_enabled zeromq; then
