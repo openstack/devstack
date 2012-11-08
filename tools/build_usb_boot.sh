@@ -11,7 +11,6 @@
 
 DEST_DIR=${1:-/tmp/syslinux-boot}
 PXEDIR=${PXEDIR:-/opt/ramstack/pxe}
-PROGDIR=`dirname $0`
 
 # Clean up any resources that may be in use
 cleanup() {
@@ -81,7 +80,7 @@ fi
 # Get image into place
 if [ ! -r $PXEDIR/stack-initrd.img ]; then
     cd $TOP_DIR
-    $PROGDIR/build_uec_ramdisk.sh $PXEDIR/stack-initrd.img
+    $TOOLS_DIR/build_uec_ramdisk.sh $PXEDIR/stack-initrd.img
 fi
 if [ ! -r $PXEDIR/stack-initrd.gz ]; then
     gzip -1 -c $PXEDIR/stack-initrd.img >$PXEDIR/stack-initrd.gz
