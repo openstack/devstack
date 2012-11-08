@@ -12,12 +12,11 @@
 # developer install.
 
 # To keep this script simple we assume you are running on a recent **Ubuntu**
-# (11.10 Oneiric or 12.04 Precise) or **Fedora** (F16 or F17) machine.  It
+# (11.10 Oneiric or newer) or **Fedora** (F16 or newer) machine.  It
 # should work in a VM or physical server.  Additionally we put the list of
 # ``apt`` and ``rpm`` dependencies and other configuration files in this repo.
 
 # Learn more and get the most recent version at http://devstack.org
-
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
@@ -32,6 +31,7 @@ GetDistro
 
 # Import database library (must be loaded before stackrc which sources localrc)
 source $TOP_DIR/lib/database
+
 
 # Settings
 # ========
@@ -107,9 +107,8 @@ if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|f16|f17) ]]; then
     fi
 fi
 
-# Disallow qpid on oneiric
+# Qpid was introduced to Ubuntu in precise, disallow it on oneiric
 if [ "${DISTRO}" = "oneiric" ] && is_service_enabled qpid ; then
-    # Qpid was introduced in precise
     echo "You must use Ubuntu Precise or newer for Qpid support."
     exit 1
 fi
@@ -453,14 +452,16 @@ MULTI_HOST=`trueorfalse False $MULTI_HOST`
 # fail.
 #
 # If you are running on a single node and don't need to access the VMs from
-# devices other than that node, you can set FLAT_INTERFACE=
-# This will stop nova from bridging any interfaces into FLAT_NETWORK_BRIDGE.
+# devices other than that node, you can set ``FLAT_INTERFACE=``
+# This will stop nova from bridging any interfaces into ``FLAT_NETWORK_BRIDGE``.
 FLAT_INTERFACE=${FLAT_INTERFACE-$GUEST_INTERFACE_DEFAULT}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
 
-# Using Quantum networking:
-#
+
+# Quantum Networking
+# ------------------
+
 # Make sure that quantum is enabled in ENABLED_SERVICES.  If you want
 # to run Quantum on this host, make sure that q-svc is also in
 # ENABLED_SERVICES.
@@ -478,17 +479,19 @@ FLAT_INTERFACE=${FLAT_INTERFACE-$GUEST_INTERFACE_DEFAULT}
 # With Quantum networking the NET_MAN variable is ignored.
 
 
-# Database configuration
+# Database Configuration
 # ----------------------
+
 # To select between database backends, add a line to localrc like:
 #
 #  use_database postgresql
 #
-# The available database backends are defined in the DATABASE_BACKENDS
+# The available database backends are defined in the ``DATABASE_BACKENDS``
 # variable defined in stackrc. By default, MySQL is enabled as the database
 # backend.
 
 initialize_database_backends && echo "Using $DATABASE_TYPE database backend" || echo "No database enabled"
+
 
 # RabbitMQ or Qpid
 # --------------------------
@@ -541,7 +544,7 @@ if is_service_enabled swift; then
         S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
     fi
     # We only ask for Swift Hash if we have enabled swift service.
-    # SWIFT_HASH is a random unique string for a swift cluster that
+    # ``SWIFT_HASH`` is a random unique string for a swift cluster that
     # can never change.
     read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
 fi
@@ -556,14 +559,13 @@ S3_SERVICE_PORT=${S3_SERVICE_PORT:-3333}
 # The ``SERVICE_TOKEN`` is used to bootstrap the Keystone database.  It is
 # just a string and is not a 'real' Keystone token.
 read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
-# Services authenticate to Identity with servicename/SERVICE_PASSWORD
+# Services authenticate to Identity with servicename/``SERVICE_PASSWORD``
 read_password SERVICE_PASSWORD "ENTER A SERVICE_PASSWORD TO USE FOR THE SERVICE AUTHENTICATION."
 # Horizon currently truncates usernames and passwords at 20 characters
 read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (20 CHARS OR LESS)."
 
 # Set the tenant for service accounts in Keystone
 SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}
-
 
 
 # Horizon
@@ -579,10 +581,9 @@ APACHE_GROUP=${APACHE_GROUP:-$APACHE_USER}
 # ---------
 
 # Draw a spinner so the user knows something is happening
-function spinner()
-{
+function spinner() {
     local delay=0.75
-    local spinstr='|/-\'
+    local spinstr='/-\|'
     printf "..." >&3
     while [ true ]; do
         local temp=${spinstr#?}
@@ -637,6 +638,7 @@ if [[ -n "$LOGFILE" ]]; then
     SUMFILE=$LOGFILE.${CURRENT_LOG_TIME}.summary
 
     # Redirect output according to config
+
     # Copy stdout to fd 3
     exec 3>&1
     if [[ "$VERBOSE" == "True" ]]; then
@@ -767,7 +769,7 @@ fi
 if is_service_enabled q-agt; then
     if is_quantum_ovs_base_plugin "$Q_PLUGIN"; then
         # Install deps
-        # FIXME add to files/apts/quantum, but don't install if not needed!
+        # FIXME add to ``files/apts/quantum``, but don't install if not needed!
         if [[ "$os_PACKAGE" = "deb" ]]; then
             kernel_version=`cat /proc/version | cut -d " " -f3`
             install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
@@ -810,6 +812,7 @@ pip_install $(get_packages $FILES/pips | sort -u)
 
 echo_summary "Installing OpenStack project source"
 
+# Grab clients first
 install_keystoneclient
 install_glanceclient
 install_novaclient
@@ -870,6 +873,7 @@ fi
 if is_service_enabled ryu || (is_service_enabled quantum && [[ "$Q_PLUGIN" = "ryu" ]]); then
     git_clone $RYU_REPO $RYU_DIR $RYU_BRANCH
 fi
+
 
 # Initialization
 # ==============
@@ -972,9 +976,14 @@ fi
 
 # Configure database
 # ------------------
+
 if is_service_enabled $DATABASE_BACKENDS; then
     configure_database
 fi
+
+
+# Configure screen
+# ----------------
 
 if [ -z "$SCREEN_HARDSTATUS" ]; then
     SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'
@@ -985,9 +994,11 @@ SCREENRC=$TOP_DIR/$SCREEN_NAME-screenrc
 if [[ -e $SCREENRC ]]; then
     echo -n > $SCREENRC
 fi
+
 # Create a new named screen to run processes in
 screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
 sleep 1
+
 # Set a reasonable status bar
 screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
@@ -1097,6 +1108,7 @@ fi
 
 # Ryu
 # ---
+
 # Ryu is not a part of OpenStack project. Please ignore following block if
 # you are not interested in Ryu.
 # launch ryu manager
@@ -1123,11 +1135,10 @@ fi
 # Quantum
 # -------
 
+# Quantum Network Configuration
 if is_service_enabled quantum; then
     echo_summary "Configuring Quantum"
-    #
-    # Quantum Network Configuration
-    #
+
     # The following variables control the Quantum openvswitch and
     # linuxbridge plugins' allocation of tenant networks and
     # availability of provider networks. If these are not configured
@@ -1155,7 +1166,7 @@ if is_service_enabled quantum; then
     # allocated. An external network switch must be configured to
     # trunk these VLANs between hosts for multi-host connectivity.
     #
-    # Example: TENANT_VLAN_RANGE=1000:1999
+    # Example: ``TENANT_VLAN_RANGE=1000:1999``
     TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
 
     # If using VLANs for tenant networks, or if using flat or VLAN
@@ -1164,7 +1175,7 @@ if is_service_enabled quantum; then
     # openvswitch agent or LB_PHYSICAL_INTERFACE for the linuxbridge
     # agent, as described below.
     #
-    # Example: PHYSICAL_NETWORK=default
+    # Example: ``PHYSICAL_NETWORK=default``
     PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
 
     # With the openvswitch plugin, if using VLANs for tenant networks,
@@ -1174,7 +1185,7 @@ if is_service_enabled quantum; then
     # physical interface must be manually added to the bridge as a
     # port for external connectivity.
     #
-    # Example: OVS_PHYSICAL_BRIDGE=br-eth1
+    # Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
     OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
 
     # With the linuxbridge plugin, if using VLANs for tenant networks,
@@ -1182,13 +1193,13 @@ if is_service_enabled quantum; then
     # the name of the network interface to use for the physical
     # network.
     #
-    # Example: LB_PHYSICAL_INTERFACE=eth1
+    # Example: ``LB_PHYSICAL_INTERFACE=eth1``
     LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
 
     # With the openvswitch plugin, set to True in localrc to enable
-    # provider GRE tunnels when ENABLE_TENANT_TUNNELS is False.
+    # provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
     #
-    # Example: OVS_ENABLE_TUNNELING=True
+    # Example: ``OVS_ENABLE_TUNNELING=True``
     OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
 
     # Put config files in ``/etc/quantum`` for everyone to find
@@ -1276,7 +1287,7 @@ if is_service_enabled q-svc; then
             echo "WARNING - The openvswitch plugin is using local tenant networks, with no connectivity between hosts."
         fi
 
-        # Override OVS_VLAN_RANGES and OVS_BRIDGE_MAPPINGS in localrc
+        # Override ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc``
         # for more complex physical network configurations.
         if [[ "$OVS_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
             OVS_VLAN_RANGES=$PHYSICAL_NETWORK
@@ -1299,7 +1310,7 @@ if is_service_enabled q-svc; then
             echo "WARNING - The linuxbridge plugin is using local tenant networks, with no connectivity between hosts."
         fi
 
-        # Override LB_VLAN_RANGES and LB_INTERFACE_MAPPINGS in localrc
+        # Override ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc``
         # for more complex physical network configurations.
         if [[ "$LB_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
             LB_VLAN_RANGES=$PHYSICAL_NETWORK
@@ -1339,7 +1350,7 @@ if is_service_enabled q-agt; then
         fi
 
         # Setup physical network bridge mappings.  Override
-        # OVS_VLAN_RANGES and OVS_BRIDGE_MAPPINGS in localrc for more
+        # ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc`` for more
         # complex physical network configurations.
         if [[ "$OVS_BRIDGE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
             OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
@@ -1353,7 +1364,7 @@ if is_service_enabled q-agt; then
         AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
     elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
         # Setup physical network interface mappings.  Override
-        # LB_VLAN_RANGES and LB_INTERFACE_MAPPINGS in localrc for more
+        # ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc`` for more
         # complex physical network configurations.
         if [[ "$LB_INTERFACE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$LB_PHYSICAL_INTERFACE" != "" ]]; then
             LB_INTERFACE_MAPPINGS=$PHYSICAL_NETWORK:$LB_PHYSICAL_INTERFACE
@@ -1453,6 +1464,7 @@ if is_service_enabled quantum; then
         iniset $Q_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
     fi
 fi
+
 
 # Nova
 # ----
@@ -1806,6 +1818,7 @@ elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
     add_nova_opt "rabbit_password=$RABBIT_PASSWORD"
 fi
 add_nova_opt "glance_api_servers=$GLANCE_HOSTPORT"
+
 
 # XenServer
 # ---------
