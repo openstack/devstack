@@ -57,8 +57,8 @@ then
 fi
 
 # get nova
-nova_zipball=$(echo $NOVA_REPO | sed "s:\.git$::;s:$:/zipball/$NOVA_BRANCH:g")
-wget $nova_zipball -O nova-zipball --no-check-certificate
+NOVA_ZIPBALL_URL=${NOVA_ZIPBALL_URL:-$(echo $NOVA_REPO | sed "s:\.git$::;s:$:/zipball/$NOVA_BRANCH:g")}
+wget $NOVA_ZIPBALL_URL -O nova-zipball --no-check-certificate
 unzip -o nova-zipball  -d ./nova
 
 # install xapi plugins
