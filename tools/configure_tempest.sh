@@ -58,6 +58,9 @@ TEMPEST_DIR=$DEST/tempest
 CONFIG_DIR=$TEMPEST_DIR/etc
 TEMPEST_CONF=$CONFIG_DIR/tempest.conf
 
+DATABASE_TYPE=${DATABASE_TYPE:-mysql}
+initialize_database_backends
+
 # Use the GUEST_IP unless an explicit IP is set by ``HOST_IP``
 HOST_IP=${HOST_IP:-$GUEST_IP}
 # Use the first IP if HOST_IP still is not set
