@@ -70,6 +70,13 @@ function configure_glanceclient() {
     setup_develop $GLANCECLIENT_DIR
 }
 
+# durable_glance_queues() - Determine if RabbitMQ queues are durable or not
+function durable_glance_queues() {
+    test `rabbitmqctl list_queues name durable | grep true | wc -l` -gt 0 && return 0
+    test `rabbitmqctl list_exchanges name durable | grep true | wc -l` -gt 0 && return 0
+    return 1
+}
+
 # configure_glance() - Set config files, create data dirs, etc
 function configure_glance() {
     setup_develop $GLANCE_DIR
@@ -120,6 +127,12 @@ function configure_glance() {
         iniset $GLANCE_API_CONF DEFAULT notifier_strategy rabbit
         iniset $GLANCE_API_CONF DEFAULT rabbit_host $RABBIT_HOST
         iniset $GLANCE_API_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+        if [[ durable_glance_queues -eq 0 ]]; then
+            # This gets around https://bugs.launchpad.net/glance/+bug/1074132
+            # that results in a g-api server becoming unresponsive during
+            # startup...
+            iniset $GLANCE_API_CONF DEFAULT rabbit_durable_queues True
+        fi
     fi
     if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
         iniset $GLANCE_API_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/api
