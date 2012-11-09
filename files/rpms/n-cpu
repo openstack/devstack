@@ -1,3 +1,4 @@
 # Stuff for diablo volumes
 iscsi-initiator-utils
 lvm2
+genisoimage
