@@ -101,6 +101,10 @@ TEMPEST_BRANCH=master
 HEAT_REPO=${GIT_BASE}/heat-api/heat.git
 HEAT_BRANCH=master
 
+# python heat client library
+HEATCLIENT_REPO=${GIT_BASE}/heat-api/python-heatclient.git
+HEATCLIENT_BRANCH=master
+
 # ryu service
 RYU_REPO=https://github.com/osrg/ryu.git
 RYU_BRANCH=master
