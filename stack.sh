@@ -322,6 +322,7 @@ source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/quantum
 source $TOP_DIR/lib/tempest
+source $TOP_DIR/lib/baremetal
 
 # Set the destination directories for OpenStack projects
 HORIZON_DIR=$DEST/horizon
@@ -393,6 +394,13 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     # Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
     FLAT_NETWORK_BRIDGE_DEFAULT=$(grep -o 'flat_network_bridge=[[:alnum:]]*' /proc/cmdline | cut -d= -f 2 | sort -u)
     GUEST_INTERFACE_DEFAULT=eth1
+elif [ "$VIRT_DRIVER" = 'baremetal' ]; then
+    PUBLIC_INTERFACE_DEFAULT=eth0
+    FLAT_NETWORK_BRIDGE_DEFAULT=br100
+    FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
+    FORCE_DHCP_RELEASE=${FORCE_DHCP_RELEASE:-False}
+    NET_MAN=${NET_MAN:-FlatManager}
+    STUB_NETWORK=${STUB_NETWORK:-False}
 else
     PUBLIC_INTERFACE_DEFAULT=br100
     FLAT_NETWORK_BRIDGE_DEFAULT=br100
@@ -404,6 +412,7 @@ NET_MAN=${NET_MAN:-FlatDHCPManager}
 EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
 VLAN_INTERFACE=${VLAN_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
+FORCE_DHCP_RELEASE=${FORCE_DHCP_RELEASE:-True}
 
 # Test floating pool and range are used for testing.  They are defined
 # here until the admin APIs can replace nova-manage
@@ -1009,9 +1018,9 @@ if is_service_enabled n-net q-dhcp; then
     # Delete traces of nova networks from prior runs
     sudo killall dnsmasq || true
     clean_iptables
-    rm -rf $NOVA_STATE_PATH/networks
-    mkdir -p $NOVA_STATE_PATH/networks
-
+    rm -rf ${NOVA_STATE_PATH}/networks
+    sudo mkdir -p ${NOVA_STATE_PATH}/networks
+    sudo chown -R ${USER} ${NOVA_STATE_PATH}/networks
     # Force IP forwarding on, just on case
     sudo sysctl -w net.ipv4.ip_forward=1
 fi
@@ -1092,6 +1101,10 @@ if is_service_enabled nova; then
         # Need to avoid crash due to new firewall support
         XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
         add_nova_opt "firewall_driver=$XEN_FIREWALL_DRIVER"
+
+    # OpenVZ
+    # ------
+
     elif [ "$VIRT_DRIVER" = 'openvz' ]; then
         echo_summary "Using OpenVZ virtualization driver"
         # TODO(deva): OpenVZ driver does not yet work if compute_driver is set here.
@@ -1100,6 +1113,25 @@ if is_service_enabled nova; then
         add_nova_opt "connection_type=openvz"
         LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
         add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
+
+    # Bare Metal
+    # ----------
+
+    elif [ "$VIRT_DRIVER" = 'baremetal' ]; then
+        echo_summary "Using BareMetal driver"
+        add_nova_opt "compute_driver=nova.virt.baremetal.driver.BareMetalDriver"
+        LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.firewall.NoopFirewallDriver"}
+        add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
+        add_nova_opt "baremetal_driver=$BM_DRIVER"
+        add_nova_opt "baremetal_tftp_root=/tftpboot"
+        add_nova_opt "instance_type_extra_specs=cpu_arch:$BM_CPU_ARCH"
+        add_nova_opt "power_manager=$BM_POWER_MANAGER"
+        add_nova_opt "scheduler_host_manager=nova.scheduler.baremetal_host_manager.BaremetalHostManager"
+        add_nova_opt "scheduler_default_filters=AllHostsFilter"
+
+    # Default
+    # -------
+
     else
         echo_summary "Using libvirt virtualization driver"
         add_nova_opt "compute_driver=libvirt.LibvirtDriver"
@@ -1108,6 +1140,12 @@ if is_service_enabled nova; then
     fi
 fi
 
+# Extra things to prepare nova for baremetal, before nova starts
+if is_service_enabled nova && is_baremetal; then
+    echo_summary "Preparing for nova baremetal"
+    prepare_baremetal_toolchain
+    configure_baremetal_nova_dirs
+fi
 
 # Launch Services
 # ===============
@@ -1227,19 +1265,56 @@ fi
 #  * **precise**: http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64.tar.gz
 
 if is_service_enabled g-reg; then
-    echo_summary "Uploading images"
     TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
 
-    # Option to upload legacy ami-tty, which works with xenserver
-    if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
-        IMAGE_URLS="${IMAGE_URLS:+${IMAGE_URLS},}https://github.com/downloads/citrix-openstack/warehouse/tty.tgz"
-    fi
+    if is_baremetal; then
+       echo_summary "Creating and uploading baremetal images"
 
-    for image_url in ${IMAGE_URLS//,/ }; do
-        upload_image $image_url $TOKEN
-    done
+       # build and upload separate deploy kernel & ramdisk
+       upload_baremetal_deploy $TOKEN
+
+       # upload images, separating out the kernel & ramdisk for PXE boot
+       for image_url in ${IMAGE_URLS//,/ }; do
+           upload_baremetal_image $image_url $TOKEN
+       done
+    else
+       echo_summary "Uploading images"
+
+       # Option to upload legacy ami-tty, which works with xenserver
+       if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
+           IMAGE_URLS="${IMAGE_URLS:+${IMAGE_URLS},}https://github.com/downloads/citrix-openstack/warehouse/tty.tgz"
+       fi
+
+       for image_url in ${IMAGE_URLS//,/ }; do
+           upload_image $image_url $TOKEN
+       done
+    fi
 fi
 
+# If we are running nova with baremetal driver, there are a few
+# last-mile configuration bits to attend to, which must happen
+# after n-api and n-sch have started.
+# Also, creating the baremetal flavor must happen after images
+# are loaded into glance, though just knowing the IDs is sufficient here
+if is_service_enabled nova && is_baremetal; then
+    # create special flavor for baremetal if we know what images to associate
+    [[ -n "$BM_DEPLOY_KERNEL_ID" ]] && [[ -n "$BM_DEPLOY_RAMDISK_ID" ]] && \
+       create_baremetal_flavor $BM_DEPLOY_KERNEL_ID $BM_DEPLOY_RAMDISK_ID
+
+    # otherwise user can manually add it later by calling nova-baremetal-manage
+    # otherwise user can manually add it later by calling nova-baremetal-manage
+    [[ -n "$BM_FIRST_MAC" ]] && add_baremetal_node
+
+    # NOTE: we do this here to ensure that our copy of dnsmasq is running
+    sudo pkill dnsmasq || true
+    sudo dnsmasq --conf-file= --port=0 --enable-tftp --tftp-root=/tftpboot \
+        --dhcp-boot=pxelinux.0 --bind-interfaces --pid-file=/var/run/dnsmasq.pid \
+        --interface=$BM_DNSMASQ_IFACE --dhcp-range=$BM_DNSMASQ_RANGE
+
+    # ensure callback daemon is running
+    sudo pkill nova-baremetal-deploy-helper || true
+    screen_it baremetal "nova-baremetal-deploy-helper"
+fi
 
 # Configure Tempest last to ensure that the runtime configuration of
 # the various OpenStack services can be queried.

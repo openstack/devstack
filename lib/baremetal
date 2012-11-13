@@ -1,0 +1,403 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
+# Copyright (c) 2012 Hewlett-Packard Development Company, L.P.
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+
+# This file provides devstack with the environment and utilities to
+# control nova-compute's baremetal driver.
+# It sets reasonable defaults to run within a single host,
+# using virtual machines in place of physical hardware.
+# However, by changing just a few options, devstack+baremetal can in fact
+# control physical hardware resources on the same network, if you know
+# the MAC address(es) and IPMI credentials.
+#
+# At a minimum, to enable the baremetal driver, you must set these in loclarc:
+#    VIRT_DRIVER=baremetal
+#    ENABLED_SERVICES="$ENABLED_SERVICES,baremetal"
+#
+#
+# We utilize diskimage-builder to create a ramdisk, and then
+# baremetal driver uses that to push a disk image onto the node(s).
+#
+# Below we define various defaults which control the behavior of the
+# baremetal compute service, and inform it of the hardware it will contorl.
+#
+# Below that, various functions are defined, which are called by devstack
+# in the following order:
+#
+#  before nova-cpu starts:
+#  - prepare_baremetal_toolchain
+#  - configure_baremetal_nova_dirs
+#
+#  after nova and glance have started:
+#  - build_and_upload_baremetal_deploy_k_and_r $token
+#  - create_baremetal_flavor $BM_DEPLOY_KERNEL_ID $BM_DEPLOY_RAMDISK_ID
+#  - upload_baremetal_image $url $token
+#  - add_baremetal_node <first_mac> <second_mac>
+
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Sub-driver settings
+# -------------------
+
+# sub-driver to use for kernel deployment
+#  - nova.virt.baremetal.pxe.PXE
+#  - nova.virt.baremetal.tilera.TILERA
+BM_DRIVER=${BM_DRIVER:-nova.virt.baremetal.pxe.PXE}
+
+# sub-driver to use for remote power management
+# - nova.virt.baremetal.fake.FakePowerManager, for manual power control
+# - nova.virt.baremetal.ipmi.Ipmi, for remote IPMI
+# - nova.virt.baremetal.tilera_pdu.Pdu, for TilePro hardware
+BM_POWER_MANAGER=${BM_POWER_MANAGER:-nova.virt.baremetal.fake.FakePowerManager}
+
+
+# These should be customized to your environment and hardware
+# -----------------------------------------------------------
+
+# BM_DNSMASQ_* options must be changed to suit your network environment
+BM_DNSMASQ_IFACE=${BM_DNSMASQ_IFACE:-$PUBLIC_INTERFACE}
+BM_DNSMASQ_IFACE=${BM_DNSMASQ_IFACE:-eth0}
+BM_DNSMASQ_RANGE=${BM_DNSMASQ_RANGE:-192.0.2.32,192.0.2.48}
+
+# BM_FIRST_MAC *must* be set to the MAC address of the node you will boot.
+#              This is passed to dnsmasq along with the kernel/ramdisk to
+#              deploy via PXE.
+BM_FIRST_MAC=${BM_FIRST_MAC:-}
+
+# BM_SECOND_MAC is only important if the host has >1 NIC.
+BM_SECOND_MAC=${BM_SECOND_MAC:-}
+
+# Hostname for the baremetal nova-compute node, if not run on this host
+BM_HOSTNAME=${BM_HOSTNAME:-$(hostname -f)}
+
+# BM_PM_* options are only necessary if BM_POWER_MANAGER=...IPMI
+BM_PM_ADDR=${BM_PM_ADDR:-0.0.0.0}
+BM_PM_USER=${BM_PM_USER:-user}
+BM_PM_PASS=${BM_PM_PASS:-pass}
+
+# BM_FLAVOR_* options are arbitrary and not necessarily related to physical
+#             hardware capacity. These can be changed if you are testing
+#             BaremetalHostManager with multiple nodes and different flavors.
+BM_CPU_ARCH=${BM_CPU_ARCH:-x86_64}
+BM_FLAVOR_CPU=${BM_FLAVOR_CPU:-1}
+BM_FLAVOR_RAM=${BM_FLAVOR_RAM:-1024}
+BM_FLAVOR_ROOT_DISK=${BM_FLAVOR_ROOT_DISK:-10}
+BM_FLAVOR_EPHEMERAL_DISK=${BM_FLAVOR_EPHEMERAL_DISK:-0}
+BM_FLAVOR_SWAP=${BM_FLAVOR_SWAP:-1}
+BM_FLAVOR_NAME=${BM_FLAVOR_NAME:-bm.small}
+BM_FLAVOR_ID=${BM_FLAVOR_ID:-11}
+BM_FLAVOR_ARCH=${BM_FLAVOR_ARCH:-$BM_CPU_ARCH}
+
+
+# Below this, we set some path and filenames.
+# Defaults are probably sufficient.
+
+BM_IMAGE_BUILD_DIR=${BM_IMAGE_BUILD_DIR:-$DEST/diskimage-builder}
+
+BM_HOST_CURRENT_KERNEL=$(uname -r)
+BM_DEPLOY_RAMDISK=${BM_DEPLOY_RAMDISK:-bm-deploy-$BM_HOST_CURRENT_KERNEL-initrd}
+BM_DEPLOY_KERNEL=${BM_DEPLOY_KERNEL:-bm-deploy-$BM_HOST_CURRENT_KERNEL-vmlinuz}
+
+# If you need to add any extra flavors to the deploy ramdisk image
+# eg, specific network drivers, specify them here
+BM_DEPLOY_FLAVOR=${BM_DEPLOY_FLAVOR:-}
+
+# set URL and version for google shell-in-a-box
+BM_SHELL_IN_A_BOX=${BM_SHELL_IN_A_BOX:-http://shellinabox.googlecode.com/files/shellinabox-2.14.tar.gz}
+
+
+# Functions
+# ---------
+
+# Check if baremetal is properly enabled
+# Returns false if VIRT_DRIVER is not baremetal, or if ENABLED_SERVICES
+# does not contain "baremetal"
+function is_baremetal() {
+    if [[ "$ENABLED_SERVICES" =~ 'baremetal' && "$VIRT_DRIVER" = 'baremetal' ]]; then
+        return 0
+    fi
+    return 1
+}
+
+# Install diskimage-builder and shell-in-a-box
+# so that we can build the deployment kernel & ramdisk
+function prepare_baremetal_toolchain() {
+    git_clone $BM_IMAGE_BUILD_REPO $BM_IMAGE_BUILD_DIR $BM_IMAGE_BUILD_BRANCH
+
+    local shellinabox_basename=$(basename $BM_SHELL_IN_A_BOX)
+    if [[ ! -e $DEST/$shellinabox_basename ]]; then
+        cd $DEST
+        wget $BM_SHELL_IN_A_BOX
+    fi
+    if [[ ! -d $DEST/${shellinabox_basename%%.tar.gz} ]]; then
+        cd $DEST
+        tar xzf $shellinabox_basename
+    fi
+    if [[ ! $(which shellinaboxd) ]]; then
+        cd $DEST/${shellinabox_basename%%.tar.gz}
+        ./configure
+        make
+        sudo make install
+    fi
+}
+
+# prepare various directories needed by baremetal hypervisor
+function configure_baremetal_nova_dirs() {
+    # ensure /tftpboot is prepared
+    sudo mkdir -p /tftpboot
+    sudo mkdir -p /tftpboot/pxelinux.cfg
+    sudo cp /usr/lib/syslinux/pxelinux.0 /tftpboot/
+    sudo chown -R `whoami`:libvirtd /tftpboot
+
+    # ensure $NOVA_STATE_PATH/baremetal is prepared
+    sudo mkdir -p $NOVA_STATE_PATH/baremetal
+    sudo mkdir -p $NOVA_STATE_PATH/baremetal/console
+    sudo mkdir -p $NOVA_STATE_PATH/baremetal/dnsmasq
+    sudo touch $NOVA_STATE_PATH/baremetal/dnsmasq/dnsmasq-dhcp.host
+    sudo chown -R `whoami` $NOVA_STATE_PATH/baremetal
+
+    # ensure dnsmasq is installed but not running
+    # because baremetal driver will reconfigure and restart this as needed
+    if [ ! is_package_installed dnsmasq ]; then
+        install_package dnsmasq
+    fi
+    stop_service dnsmasq
+}
+
+# build deploy kernel+ramdisk, then upload them to glance
+# this function sets BM_DEPLOY_KERNEL_ID and BM_DEPLOY_RAMDISK_ID
+function upload_baremetal_deploy() {
+    token=$1
+
+    if [ ! -e $TOP_DIR/files/$BM_DEPLOY_KERNEL -a -e /boot/vmlinuz-$BM_HOST_CURRENT_KERNEL ]; then
+        sudo cp /boot/vmlinuz-$BM_HOST_CURRENT_KERNEL $TOP_DIR/files/$BM_DEPLOY_KERNEL
+        sudo chmod a+r $TOP_DIR/files/$BM_DEPLOY_KERNEL
+    fi
+    if [ ! -e $TOP_DIR/files/$BM_DEPLOY_RAMDISK ]; then
+       $BM_IMAGE_BUILD_DIR/bin/ramdisk-image-create $BM_DEPLOY_FLAVOR deploy \
+           -o $TOP_DIR/files/$BM_DEPLOY_RAMDISK -k $BM_HOST_CURRENT_KERNEL
+    fi
+
+    # load them into glance
+    BM_DEPLOY_KERNEL_ID=$(glance \
+         --os-auth-token $token \
+         --os-image-url http://$GLANCE_HOSTPORT \
+         image-create \
+         --name $BM_DEPLOY_KERNEL \
+         --public --disk-format=aki \
+         < $TOP_DIR/files/$BM_DEPLOY_KERNEL  | grep ' id ' | get_field 2)
+    BM_DEPLOY_RAMDISK_ID=$(glance \
+         --os-auth-token $token \
+         --os-image-url http://$GLANCE_HOSTPORT \
+         image-create \
+         --name $BM_DEPLOY_RAMDISK \
+         --public --disk-format=ari \
+         < $TOP_DIR/files/$BM_DEPLOY_RAMDISK  | grep ' id ' | get_field 2)
+}
+
+# create a basic baremetal flavor, associated with deploy kernel & ramdisk
+#
+# Usage: create_baremetal_flavor <aki_uuid> <ari_uuid>
+function create_baremetal_flavor() {
+    aki=$1
+    ari=$2
+    nova flavor-create $BM_FLAVOR_NAME $BM_FLAVOR_ID \
+            $BM_FLAVOR_RAM $BM_FLAVOR_ROOT_DISK $BM_FLAVOR_CPU
+    nova-manage instance_type set_key \
+        --name=$BM_FLAVOR_NAME --key cpu_arch --value $BM_FLAVOR_ARCH
+    nova-manage instance_type set_key \
+        --name=$BM_FLAVOR_NAME --key deploy_kernel_id --value $aki
+    nova-manage instance_type set_key \
+        --name=$BM_FLAVOR_NAME --key deploy_ramdisk_id --value $ari
+}
+
+# pull run-time kernel/ramdisk out of disk image and load into glance
+# note that $file is currently expected to be in qcow2 format
+# Sets KERNEL_ID and RAMDISK_ID
+#
+# Usage: extract_and_upload_k_and_r_from_image $token $file
+function extract_and_upload_k_and_r_from_image() {
+    token=$1
+    file=$2
+    image_name=$(basename "$file" ".qcow2")
+
+    # this call returns the file names as "$kernel,$ramdisk"
+    out=$($BM_IMAGE_BUILD_DIR/bin/disk-image-get-kernel \
+            -x -d $TOP_DIR/files -o bm-deploy -i $file)
+    if [ $? -ne 0 ]; then
+        die "Failed to get kernel and ramdisk from $file"
+    fi
+    XTRACE=$(set +o | grep xtrace)
+    set +o xtrace
+    out=$(echo "$out" | tail -1)
+    $XTRACE
+    OUT_KERNEL=${out%%,*}
+    OUT_RAMDISK=${out##*,}
+
+    # load them into glance
+    KERNEL_ID=$(glance \
+         --os-auth-token $token \
+         --os-image-url http://$GLANCE_HOSTPORT \
+         image-create \
+         --name $image_name-kernel \
+         --public --disk-format=aki \
+         < $TOP_DIR/files/$OUT_KERNEL | grep ' id ' | get_field 2)
+    RAMDISK_ID=$(glance \
+         --os-auth-token $token \
+         --os-image-url http://$GLANCE_HOSTPORT \
+         image-create \
+         --name $image_name-initrd \
+         --public --disk-format=ari \
+         < $TOP_DIR/files/$OUT_RAMDISK | grep ' id ' | get_field 2)
+}
+
+
+# Re-implementation of devstack's "upload_image" function
+#
+# Takes the same parameters, but has some peculiarities which made it
+# easier to create a separate method, rather than complicate the logic
+# of the existing function.
+function upload_baremetal_image() {
+    local image_url=$1
+    local token=$2
+
+    # Create a directory for the downloaded image tarballs.
+    mkdir -p $FILES/images
+
+    # Downloads the image (uec ami+aki style), then extracts it.
+    IMAGE_FNAME=`basename "$image_url"`
+    if [[ ! -f $FILES/$IMAGE_FNAME || \
+        "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
+        wget -c $image_url -O $FILES/$IMAGE_FNAME
+        if [[ $? -ne 0 ]]; then
+            echo "Not found: $image_url"
+            return
+        fi
+    fi
+
+    local KERNEL=""
+    local RAMDISK=""
+    local DISK_FORMAT=""
+    local CONTAINER_FORMAT=""
+    case "$IMAGE_FNAME" in
+        *.tar.gz|*.tgz)
+            # Extract ami and aki files
+            [ "${IMAGE_FNAME%.tar.gz}" != "$IMAGE_FNAME" ] &&
+                IMAGE_NAME="${IMAGE_FNAME%.tar.gz}" ||
+                IMAGE_NAME="${IMAGE_FNAME%.tgz}"
+            xdir="$FILES/images/$IMAGE_NAME"
+            rm -Rf "$xdir";
+            mkdir "$xdir"
+            tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
+            KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
+                     [ -f "$f" ] && echo "$f" && break; done; true)
+            RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
+                     [ -f "$f" ] && echo "$f" && break; done; true)
+            IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
+                     [ -f "$f" ] && echo "$f" && break; done; true)
+            if [[ -z "$IMAGE_NAME" ]]; then
+                IMAGE_NAME=$(basename "$IMAGE" ".img")
+            fi
+            DISK_FORMAT=ami
+            CONTAINER_FORMAT=ami
+            ;;
+        *.qcow2)
+            IMAGE="$FILES/${IMAGE_FNAME}"
+            IMAGE_NAME=$(basename "$IMAGE" ".qcow2")
+            DISK_FORMAT=qcow2
+            CONTAINER_FORMAT=bare
+            ;;
+        *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
+    esac
+
+    if [ "$CONTAINER_FORMAT" = "bare" ]; then
+        extract_and_upload_k_and_r_from_image $token $IMAGE
+    elif [ "$CONTAINER_FORMAT" = "ami" ]; then
+        KERNEL_ID=$(glance \
+            --os-auth-token $token \
+            --os-image-url http://$GLANCE_HOSTPORT \
+            image-create \
+            --name "$IMAGE_NAME-kernel" --public \
+            --container-format aki \
+            --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
+        RAMDISK_ID=$(glance \
+            --os-auth-token $token \
+            --os-image-url http://$GLANCE_HOSTPORT \
+            image-create \
+            --name "$IMAGE_NAME-ramdisk" --public \
+            --container-format ari \
+            --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
+    else
+       # TODO(deva): add support for other image types
+       return
+    fi
+
+    glance \
+       --os-auth-token $token \
+       --os-image-url http://$GLANCE_HOSTPORT \
+       image-create \
+       --name "${IMAGE_NAME%.img}" --public \
+       --container-format $CONTAINER_FORMAT \
+       --disk-format $DISK_FORMAT \
+       ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} \
+       ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
+
+    # override DEFAULT_IMAGE_NAME so that tempest can find the image 
+    # that we just uploaded in glance
+    DEFAULT_IMAGE_NAME="${IMAGE_NAME%.img}"
+}
+
+function clear_baremetal_of_all_nodes() {
+    list=$(nova-baremetal-manage node list | tail -n +2 | awk '{print $1}' )
+    for node in $list
+    do
+        nova-baremetal-manage node delete $node
+    done
+    list=$(nova-baremetal-manage interface list | tail -n +2 | awk '{print $1}' )
+    for iface in $list
+    do
+        nova-baremetal-manage interface delete $iface
+    done
+}
+
+# inform nova-baremetal about nodes, MACs, etc
+# Defaults to using BM_FIRST_MAC and BM_SECOND_MAC if parameters not specified
+#
+# Usage: add_baremetal_node <first_mac> <second_mac>
+function add_baremetal_node() {
+    mac_1=${1:-$BM_FIRST_MAC}
+    mac_2=${2:-$BM_SECOND_MAC}
+
+    id=$(nova-baremetal-manage node create \
+       --host=$BM_HOSTNAME --prov_mac=$mac_1 \
+       --cpus=$BM_FLAVOR_CPU --memory_mb=$BM_FLAVOR_RAM \
+       --local_gb=$BM_FLAVOR_ROOT_DISK --terminal_port=0 \
+       --pm_address=$BM_PM_ADDR --pm_user=$BM_PM_USER --pm_password=$BM_PM_PASS \
+       )
+    [ $? -eq 0 ] || [ "$id" ] || die "Error adding baremetal node"
+    id2=$(nova-baremetal-manage interface create \
+       --node_id=$id --mac_address=$mac_2 --datapath_id=0 --port_no=0 \
+       )
+    [ $? -eq 0 ] || [ "$id2" ] || die "Error adding interface to barmetal node $id"
+}
+
+
+# Restore xtrace
+$XTRACE

@@ -214,6 +214,11 @@ function configure_nova() {
             fi
         fi
 
+        # Prepare directories and packages for baremetal driver
+        if is_baremetal; then
+            configure_baremetal_nova_dirs
+        fi
+
         if is_service_enabled quantum && is_quantum_ovs_base_plugin "$Q_PLUGIN" && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF ; then
             # Add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
             cat <<EOF | sudo tee -a $QEMU_CONF
@@ -356,6 +361,10 @@ function create_nova_conf() {
     local dburl
     database_connection_url dburl nova
     add_nova_opt "sql_connection=$dburl"
+    if is_baremetal; then
+        database_connection_url dburl nova_bm
+        add_nova_opt "baremetal_sql_connection=$dburl"
+    fi
     add_nova_opt "libvirt_type=$LIBVIRT_TYPE"
     add_nova_opt "libvirt_cpu_mode=none"
     add_nova_opt "instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
@@ -441,12 +450,23 @@ function init_nova() {
 
         # (Re)create nova database
         $NOVA_BIN_DIR/nova-manage db sync
+
+        # (Re)create nova baremetal database
+        if is_baremetal; then
+            recreate_database nova_bm latin1
+            $NOVA_BIN_DIR/nova-baremetal-manage db sync
+        fi
     fi
 
     # Create cache dir
     sudo mkdir -p $NOVA_AUTH_CACHE_DIR
     sudo chown `whoami` $NOVA_AUTH_CACHE_DIR
     rm -f $NOVA_AUTH_CACHE_DIR/*
+
+    # Create the keys folder
+    sudo mkdir -p ${NOVA_STATE_PATH}/keys
+    # make sure we own NOVA_STATE_PATH and all subdirs
+    sudo chown -R `whoami` ${NOVA_STATE_PATH}
 }
 
 # install_novaclient() - Collect source and prepare
