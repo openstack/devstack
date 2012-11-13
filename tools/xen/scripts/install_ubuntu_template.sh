@@ -45,6 +45,7 @@ fi
 # Clone built-in template to create new template
 new_uuid=$(xe vm-clone uuid=$builtin_uuid \
     new-name-label="$UBUNTU_INST_TEMPLATE_NAME")
+disk_size=$(($OSDOMU_VDI_GB * 1024 * 1024 * 1024))
 
 # Some of these settings can be found in example preseed files
 # however these need to be answered before the netinstall
@@ -73,6 +74,7 @@ xe template-param-set uuid=$new_uuid \
     PV-args="$pvargs" \
     other-config:debian-release="$UBUNTU_INST_RELEASE" \
     other-config:default_template=true \
+    other-config:disks='<provision><disk device="0" size="'$disk_size'" sr="" bootable="true" type="system"/></provision>' \
     other-config:install-arch="$UBUNTU_INST_ARCH"
 
 echo "Ubuntu template installed uuid:$new_uuid"
