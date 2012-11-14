@@ -60,7 +60,7 @@ if [ -e "$ISO_DIR" ]; then
     rm -rf $TMP_DIR
 else
     echo "WARNING: no XenServer tools found, falling back to 5.6 tools"
-    TOOLS_URL="http://images.ansolabs.com/xen/xe-guest-utilities_5.6.100-651_amd64.deb"
+    TOOLS_URL="https://github.com/downloads/citrix-openstack/warehouse/xe-guest-utilities_5.6.100-651_amd64.deb"
     wget $TOOLS_URL -O $XS_TOOLS_FILE_NAME
     cp $XS_TOOLS_FILE_NAME "${STAGING_DIR}${XS_TOOLS_PATH}"
     rm -rf $XS_TOOLS_FILE_NAME
