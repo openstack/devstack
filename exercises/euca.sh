@@ -79,7 +79,7 @@ fi
 
 # Volumes
 # -------
-if [[ "$ENABLED_SERVICES" =~ "n-vol" || "$ENABLED_SERVICES" =~ "c-vol" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "c-vol" ]]; then
    VOLUME_ZONE=`euca-describe-availability-zones | head -n1 | cut -f2`
    die_if_not_set VOLUME_ZONE "Failure to find zone for volume"
 

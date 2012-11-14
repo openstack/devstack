@@ -93,7 +93,7 @@ DEST=${DEST:-/opt/stack}
 # ============
 
 # Remove services which were negated in ENABLED_SERVICES
-# using the "-" prefix (e.g., "-n-vol") instead of
+# using the "-" prefix (e.g., "-rabbit") instead of
 # calling disable_service().
 disable_negated_services
 
@@ -153,12 +153,6 @@ elif [ "$rpc_backend_cnt" == 0 ]; then
     echo "       via ENABLED_SERVICES."
 fi
 unset rpc_backend_cnt
-
-# Make sure we only have one volume service enabled.
-if is_service_enabled cinder && is_service_enabled n-vol; then
-    echo "ERROR: n-vol and cinder must not be enabled at the same time"
-    exit 1
-fi
 
 # Set up logging level
 VERBOSE=$(trueorfalse True $VERBOSE)
@@ -310,7 +304,6 @@ source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
 source $TOP_DIR/lib/cinder
-source $TOP_DIR/lib/n-vol
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/quantum
@@ -1760,9 +1753,6 @@ fi
 if is_service_enabled cinder; then
     echo_summary "Configuring Cinder"
     init_cinder
-elif is_service_enabled n-vol; then
-    echo_summary "Configuring Nova volumes"
-    init_nvol
 fi
 
 if is_service_enabled nova; then
@@ -1961,10 +1951,6 @@ screen_it q-l3 "python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file
 if is_service_enabled nova; then
     echo_summary "Starting Nova"
     start_nova
-fi
-if is_service_enabled n-vol; then
-    echo_summary "Starting Nova volumes"
-    start_nvol
 fi
 if is_service_enabled cinder; then
     echo_summary "Starting Cinder"
