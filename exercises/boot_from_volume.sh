@@ -35,9 +35,9 @@ source $TOP_DIR/openrc
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
-# If cinder or n-vol are not enabled we exit with exitcode 55 so that
+# If cinder is not enabled we exit with exitcode 55 so that
 # the exercise is skipped
-is_service_enabled cinder n-vol || exit 55
+is_service_enabled cinder || exit 55
 
 # Boot this image, use first AMI image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}

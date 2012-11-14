@@ -26,7 +26,6 @@ DATA_DIR=${DATA_DIR:-${DEST}/data}
 
 # Get project function libraries
 source $TOP_DIR/lib/cinder
-source $TOP_DIR/lib/n-vol
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
@@ -58,11 +57,7 @@ fi
 SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*
 
 # Get the iSCSI volumes
-if is_service_enabled cinder n-vol; then
-    if is_service_enabled n-vol; then
-        SCSI_PERSIST_DIR=$NOVA_STATE_PATH/volumes/*
-    fi
-
+if is_service_enabled cinder; then
     TARGETS=$(sudo tgtadm --op show --mode target)
     if [ $? -ne 0 ]; then
         # If tgt driver isn't running this won't work obviously
@@ -86,10 +81,6 @@ if is_service_enabled cinder n-vol; then
 
     if is_service_enabled cinder; then
         sudo rm -rf $CINDER_STATE_PATH/volumes/*
-    fi
-
-    if is_service_enabled n-vol; then
-        sudo rm -rf $NOVA_STATE_PATH/volumes/*
     fi
 
     if [[ "$os_PACKAGE" = "deb" ]]; then

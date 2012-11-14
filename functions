@@ -462,7 +462,7 @@ function _cleanup_service_list () {
 # ``ENABLED_SERVICES`` list, if they are not already present.
 #
 # For example:
-#   enable_service n-vol
+#   enable_service qpid
 #
 # This function does not know about the special cases
 # for nova, glance, and quantum built into is_service_enabled().
@@ -484,7 +484,7 @@ function enable_service() {
 # ``ENABLED_SERVICES`` list, if they are present.
 #
 # For example:
-#   disable_service n-vol
+#   disable_service rabbit
 #
 # This function does not know about the special cases
 # for nova, glance, and quantum built into is_service_enabled().
@@ -513,8 +513,8 @@ function disable_all_services() {
 
 
 # Remove all services starting with '-'.  For example, to install all default
-# services except nova-volume (n-vol) set in ``localrc``:
-# ENABLED_SERVICES+=",-n-vol"
+# services except rabbit (rabbit) set in ``localrc``:
+# ENABLED_SERVICES+=",-rabbit"
 # Uses global ``ENABLED_SERVICES``
 # disable_negated_services
 function disable_negated_services() {

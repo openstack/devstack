@@ -140,22 +140,6 @@ if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
         --role_id $RESELLER_ROLE
 fi
 
-# Volume
-if [[ "$ENABLED_SERVICES" =~ "n-vol" ]]; then
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        VOLUME_SERVICE=$(get_id keystone service-create \
-            --name=volume \
-            --type=volume \
-            --description="Volume Service")
-        keystone endpoint-create \
-            --region RegionOne \
-            --service_id $VOLUME_SERVICE \
-            --publicurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
-            --adminurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
-            --internalurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s"
-    fi
-fi
-
 # Heat
 if [[ "$ENABLED_SERVICES" =~ "heat" ]]; then
     HEAT_USER=$(get_id keystone user-create --name=heat \
