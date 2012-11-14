@@ -5,6 +5,8 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+export QUANTUM_TEST_CONFIG_FILE=${QUANTUM_TEST_CONFIG_FILE:-"/etc/quantum/debug.ini"}
+
 # Configures keystone integration for quantum service and agents
 function quantum_setup_keystone() {
     local conf_file=$1
@@ -55,6 +57,73 @@ function is_quantum_ovs_base_plugin() {
         return 0
     fi
     return 1
+}
+
+function _get_net_id() {
+    quantum --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD net-list | grep $1 | awk '{print $2}'
+}
+
+function _get_probe_cmd_prefix() {
+    local from_net="$1"
+    net_id=`_get_net_id $from_net`
+    probe_id=`quantum-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}' | head -n 1`
+    echo "sudo ip netns exec qprobe-$probe_id"
+}
+
+function delete_probe() {
+    local from_net="$1"
+    net_id=`_get_net_id $from_net`
+    probe_id=`quantum-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}'`
+    quantum-debug --os-tenant-name admin --os-username admin probe-delete $probe_id
+}
+
+function _ping_check_quantum() {
+    local from_net=$1
+    local ip=$2
+    local timeout_sec=$3
+    local expected=${4:-"True"}
+    local check_command=""
+    probe_cmd=`_get_probe_cmd_prefix $from_net`
+    if [[ "$expected" = "True" ]]; then
+        check_command="while ! $probe_cmd ping -c1 -w1 $ip; do sleep 1; done"
+    else
+        check_command="while $probe_cmd ping -c1 -w1 $ip; do sleep 1; done"
+    fi
+    if ! timeout $timeout_sec sh -c "$check_command"; then
+        if [[ "$expected" = "True" ]]; then
+            echo "[Fail] Couldn't ping server"
+        else
+            echo "[Fail] Could ping server"
+        fi
+        exit 1
+    fi
+}
+
+# ssh check
+function _ssh_check_quantum() {
+    local from_net=$1
+    local key_file=$2
+    local ip=$3
+    local user=$4
+    local timeout_sec=$5
+    local probe_cmd = ""
+    probe_cmd=`_get_probe_cmd_prefix $from_net`
+    if ! timeout $timeout_sec sh -c "while ! $probe_cmd ssh -o StrictHostKeyChecking=no -i $key_file ${user}@$ip echo success ; do sleep 1; done"; then
+        echo "server didn't become ssh-able!"
+        exit 1
+    fi
+}
+
+function setup_quantum() {
+    public_net_id=`_get_net_id $PUBLIC_NETWORK_NAME`
+    quantum-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create $public_net_id
+    private_net_id=`_get_net_id $PRIVATE_NETWORK_NAME`
+    quantum-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create $private_net_id
+}
+
+function teardown_quantum() {
+    delete_probe $PUBLIC_NETWORK_NAME
+    delete_probe $PRIVATE_NETWORK_NAME
 }
 
 # Restore xtrace

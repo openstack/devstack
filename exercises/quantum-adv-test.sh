@@ -52,12 +52,16 @@ source $TOP_DIR/functions
 # Import configuration
 source $TOP_DIR/openrc
 
-# Import exercise configuration
-source $TOP_DIR/exerciserc
-
 # If quantum is not enabled we exit with exitcode 55 which mean
 # exercise is skipped.
 is_service_enabled quantum && is_service_enabled q-agt && is_service_enabled q-dhcp || exit 55
+
+# Import quantum fucntions
+source $TOP_DIR/lib/quantum
+setup_quantum
+
+# Import exercise configuration
+source $TOP_DIR/exerciserc
 
 #------------------------------------------------------------------------------
 # Test settings for quantum
@@ -76,14 +80,14 @@ DEMO1_NUM_NET=1
 DEMO2_NUM_NET=2
 
 PUBLIC_NET1_CIDR="200.0.0.0/24"
-DEMO1_NET1_CIDR="10.1.0.0/24"
-DEMO2_NET1_CIDR="10.2.0.0/24"
-DEMO2_NET2_CIDR="10.2.1.0/24"
+DEMO1_NET1_CIDR="10.10.0.0/24"
+DEMO2_NET1_CIDR="10.20.0.0/24"
+DEMO2_NET2_CIDR="10.20.1.0/24"
 
 PUBLIC_NET1_GATEWAY="200.0.0.1"
-DEMO1_NET1_GATEWAY="10.1.0.1"
-DEMO2_NET1_GATEWAY="10.2.0.1"
-DEMO2_NET2_GATEWAY="10.2.1.1"
+DEMO1_NET1_GATEWAY="10.10.0.1"
+DEMO2_NET1_GATEWAY="10.20.0.1"
+DEMO2_NET2_GATEWAY="10.20.1.1"
 
 PUBLIC_NUM_VM=1
 DEMO1_NUM_VM=1
@@ -188,7 +192,7 @@ function get_flavor_id {
 
 function confirm_server_active {
     local VM_UUID=$1
-    if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova  --no_cache show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
+    if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
     echo "server '$VM_UUID' did not become active!"
     false
 fi
@@ -232,6 +236,7 @@ function create_tenants {
     source $TOP_DIR/openrc admin admin
     add_tenant demo1 demo1 demo1
     add_tenant demo2 demo2 demo2
+    source $TOP_DIR/openrc demo demo
 }
 
 function delete_tenants_and_users {
@@ -241,6 +246,7 @@ function delete_tenants_and_users {
     remove_user demo2
     remove_tenant demo2
     echo "removed all tenants"
+    source $TOP_DIR/openrc demo demo
 }
 
 function create_network {
@@ -256,12 +262,8 @@ function create_network {
     source $TOP_DIR/openrc $TENANT $TENANT
     local NET_ID=$(quantum net-create --tenant_id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
     quantum subnet-create --ip_version 4 --tenant_id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
-    #T0DO(nati) comment out until l3-agent is merged
-    #local ROUTER_ID=$($QUANTUM router-create --tenant_id $TENANT_ID $ROUTER_NAME| grep ' id ' | awk '{print $4}' )
-    #for NET_NAME in ${NET_NAMES//,/ };do
-    #    SUBNET_ID=`get_subnet_id $NET_NAME`
-    #    $QUANTUM router-interface-create $NAME --subnet_id $SUBNET_ID
-    #done
+    quantum-debug probe-create $NET_ID
+    source $TOP_DIR/openrc demo demo
 }
 
 function create_networks {
@@ -285,7 +287,7 @@ function create_vm {
     done
     #TODO (nati) Add multi-nic test
     #TODO (nati) Add public-net test
-    local VM_UUID=`nova --no_cache boot --flavor $(get_flavor_id m1.tiny) \
+    local VM_UUID=`nova boot --flavor $(get_flavor_id m1.tiny) \
         --image $(get_image_id) \
         $NIC \
         $TENANT-server$NUM | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
@@ -301,32 +303,26 @@ function ping_ip {
    # Test agent connection.  Assumes namespaces are disabled, and
    # that DHCP is in use, but not L3
    local VM_NAME=$1
-   IP=`nova  --no_cache show $VM_NAME | grep 'network' | awk '{print $5}'`
-   if ! timeout $BOOT_TIMEOUT sh -c "while ! ping -c1 -w1 $IP; do sleep 1; done"; then
-        echo "Could not ping $VM_NAME"
-        false
-   fi
+   local NET_NAME=$2
+   IP=`nova show $VM_NAME | grep 'network' | awk '{print $5}'`
+   ping_check $NET_NAME $IP $BOOT_TIMEOUT
 }
 
 function check_vm {
     local TENANT=$1
     local NUM=$2
     local VM_NAME="$TENANT-server$NUM"
+    local NET_NAME=$3
     source $TOP_DIR/openrc $TENANT $TENANT
-    ping_ip $VM_NAME
+    ping_ip $VM_NAME $NET_NAME
     # TODO (nati) test ssh connection
     # TODO (nati) test inter connection between vm
-    # TODO (nati) test namespace dhcp
     # TODO (nati) test dhcp host routes
     # TODO (nati) test multi-nic
-    # TODO (nati) use test-agent
-    # TODO (nati) test L3 forwarding
-    # TODO (nati) test floating ip
-    # TODO (nati) test security group
 }
 
 function check_vms {
-    foreach_tenant_vm 'check_vm ${%TENANT%_NAME} %NUM%'
+    foreach_tenant_vm 'check_vm ${%TENANT%_NAME} %NUM% ${%TENANT%_VM%NUM%_NET}'
 }
 
 function shutdown_vm {
@@ -334,12 +330,12 @@ function shutdown_vm {
     local NUM=$2
     source $TOP_DIR/openrc $TENANT $TENANT
     VM_NAME=${TENANT}-server$NUM
-    nova --no_cache delete $VM_NAME
+    nova delete $VM_NAME
 }
 
 function shutdown_vms {
     foreach_tenant_vm 'shutdown_vm ${%TENANT%_NAME} %NUM%'
-    if ! timeout $TERMINATE_TIMEOUT sh -c "while nova --no_cache list | grep -q ACTIVE; do sleep 1; done"; then
+    if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q ACTIVE; do sleep 1; done"; then
         echo "Some VMs failed to shutdown"
         false
     fi
@@ -347,17 +343,22 @@ function shutdown_vms {
 
 function delete_network {
     local TENANT=$1
+    local NUM=$2
+    local NET_NAME="${TENANT}-net$NUM"
     source $TOP_DIR/openrc admin admin
     local TENANT_ID=$(get_tenant_id $TENANT)
     #TODO(nati) comment out until l3-agent merged
     #for res in port subnet net router;do
-    for res in port subnet net;do
-        quantum ${res}-list -F id -F tenant_id | grep $TENANT_ID | awk '{print $2}' | xargs -I % quantum ${res}-delete %
+    for net_id in `quantum net-list -c id -c name | grep $NET_NAME | awk '{print $2}'`;do
+        delete_probe $net_id
+        quantum subnet-list | grep $net_id | awk '{print $2}' | xargs -I% quantum subnet-delete %
+        quantum net-delete $net_id
     done
+    source $TOP_DIR/openrc demo demo
 }
 
 function delete_networks {
-   foreach_tenant 'delete_network ${%TENANT%_NAME}'
+   foreach_tenant_net 'delete_network ${%TENANT%_NAME} ${%NUM%}'
    #TODO(nati) add secuirty group check after it is implemented
    # source $TOP_DIR/openrc demo1 demo1
    # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
@@ -474,6 +475,7 @@ main() {
 }
 
 
+teardown_quantum
 #-------------------------------------------------------------------------------
 # Kick off script.
 #-------------------------------------------------------------------------------

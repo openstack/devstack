@@ -31,6 +31,12 @@ source $TOP_DIR/functions
 # Import configuration
 source $TOP_DIR/openrc
 
+# Import quantum functions if needed
+if is_service_enabled quantum; then
+    source $TOP_DIR/lib/quantum
+    setup_quantum
+fi
+
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
@@ -155,14 +161,16 @@ nova add-floating-ip $VM_UUID $FLOATING_IP || \
 # test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
 ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
 
-# Allocate an IP from second floating pool
-TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1`
-die_if_not_set TEST_FLOATING_IP "Failure creating floating IP in $TEST_FLOATING_POOL"
+if ! is_service_enabled quantum; then
+    # Allocate an IP from second floating pool
+    TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1`
+    die_if_not_set TEST_FLOATING_IP "Failure creating floating IP in $TEST_FLOATING_POOL"
 
-# list floating addresses
-if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TEST_FLOATING_POOL | grep -q $TEST_FLOATING_IP; do sleep 1; done"; then
-    echo "Floating IP not allocated"
-    exit 1
+    # list floating addresses
+    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TEST_FLOATING_POOL | grep -q $TEST_FLOATING_IP; do sleep 1; done"; then
+        echo "Floating IP not allocated"
+        exit 1
+     fi
 fi
 
 # dis-allow icmp traffic (ping)
@@ -171,12 +179,13 @@ nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || die "Failure deletin
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
     # test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
-    ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
+    ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT Fail
 fi
 
-# Delete second floating IP
-nova floating-ip-delete $TEST_FLOATING_IP || die "Failure deleting floating IP $TEST_FLOATING_IP"
-
+if ! is_service_enabled quantum; then
+    # Delete second floating IP
+    nova floating-ip-delete $TEST_FLOATING_IP || die "Failure deleting floating IP $TEST_FLOATING_IP"
+fi
 
 # de-allocate the floating ip
 nova floating-ip-delete $FLOATING_IP || die "Failure deleting floating IP $FLOATING_IP"
@@ -192,6 +201,10 @@ fi
 
 # Delete a secgroup
 nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
+
+if is_service_enabled quantum; then
+    teardown_quantum
+fi
 
 set +o xtrace
 echo "*********************************************************************"

@@ -872,7 +872,11 @@ function yum_install() {
 # ping check
 # Uses globals ``ENABLED_SERVICES``
 function ping_check() {
-    _ping_check_novanet "$1" $2 $3
+    if is_service_enabled quantum; then
+        _ping_check_quantum  "$1" $2 $3 $4
+        return
+    fi
+    _ping_check_novanet "$1" $2 $3 $4
 }
 
 # ping check for nova
@@ -881,19 +885,39 @@ function _ping_check_novanet() {
     local from_net=$1
     local ip=$2
     local boot_timeout=$3
+    local expected=${4:-"True"}
+    local check_command=""
     MULTI_HOST=`trueorfalse False $MULTI_HOST`
     if [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
         sleep $boot_timeout
         return
     fi
-    if ! timeout $boot_timeout sh -c "while ! ping -c1 -w1 $ip; do sleep 1; done"; then
-        echo "Couldn't ping server"
+    if [[ "$expected" = "True" ]]; then
+        check_command="while ! ping -c1 -w1 $ip; do sleep 1; done"
+    else
+        check_command="while ping -c1 -w1 $ip; do sleep 1; done"
+    fi
+    if ! timeout $boot_timeout sh -c "$check_command"; then
+        if [[ "$expected" = "True" ]]; then
+            echo "[Fail] Couldn't ping server"
+        else
+            echo "[Fail] Could ping server"
+        fi
         exit 1
     fi
 }
 
 # ssh check
+
 function ssh_check() {
+    if is_service_enabled quantum; then
+        _ssh_check_quantum  "$1" $2 $3 $4 $5
+        return
+    fi
+    _ssh_check_novanet "$1" $2 $3 $4 $5
+}
+
+function _ssh_check_novanet() {
     local NET_NAME=$1
     local KEY_FILE=$2
     local FLOATING_IP=$3
