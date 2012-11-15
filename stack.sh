@@ -779,11 +779,6 @@ if is_service_enabled q-agt; then
     fi
 fi
 
-if is_service_enabled swift; then
-    # Install memcached for swift.
-    install_package memcached
-fi
-
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
 # Install python packages into a virtualenv so that we can track them
