@@ -434,12 +434,13 @@ function start_nova() {
     screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF --web ."
     screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF"
     screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
+    screen_it n-cond "cd $NOVA_DIR && ./bin/nova-conductor"
 }
 
 # stop_nova() - Stop running processes (non-screen)
 function stop_nova() {
     # Kill the nova screen windows
-    for serv in n-api n-cpu n-crt n-net n-sch n-novnc n-xvnc n-cauth; do
+    for serv in n-api n-cpu n-crt n-net n-sch n-novnc n-xvnc n-cauth n-cond; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }
