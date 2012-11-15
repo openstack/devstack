@@ -128,7 +128,7 @@ IDENTITY_CATALOG_TYPE=identity
 # OS_USERNAME et all should be defined in openrc.
 OS_USERNAME=${OS_USERNAME:-demo}
 OS_TENANT_NAME=${OS_TENANT_NAME:-demo}
-OS_PASSWORD=${OS_PASSWORD:$ADMIN_PASSWORD}
+OS_PASSWORD=${OS_PASSWORD:-$ADMIN_PASSWORD}
 
 # See files/keystone_data.sh where alt_demo user
 # and tenant are set up...
