@@ -62,15 +62,6 @@ function initialize_database_backends {
     return 0
 }
 
-# Set the database backend to use
-#  $1 The name of the database backend to use (mysql, postgresql, ...)
-function use_database {
-    use_exclusive_service DATABASE_BACKENDS DATABASE_TYPE $1 && return 0
-    ret=$?
-    echo "Invalid database '$1'"
-    return $ret
-}
-
 # Recreate a given database
 #  $1 The name of the database
 #  $2 The character set/encoding of the database

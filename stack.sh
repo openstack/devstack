@@ -29,8 +29,6 @@ source $TOP_DIR/functions
 # and ``DISTRO``
 GetDistro
 
-# Import database library (must be loaded before stackrc which sources localrc)
-source $TOP_DIR/lib/database
 
 
 # Settings
@@ -91,6 +89,14 @@ DEST=${DEST:-/opt/stack}
 
 # Sanity Check
 # ============
+
+# Import database configuration
+source $TOP_DIR/lib/database
+
+# Validate database selection
+# Since DATABASE_BACKENDS is now set, this also gets ENABLED_SERVICES
+# properly configured for the database selection.
+use_database $DATABASE_TYPE || echo "Invalid database '$DATABASE_TYPE'"
 
 # Remove services which were negated in ENABLED_SERVICES
 # using the "-" prefix (e.g., "-rabbit") instead of
