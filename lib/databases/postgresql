@@ -28,7 +28,6 @@ function configure_database_postgresql {
         PG_HBA=$PG_DIR/pg_hba.conf
         PG_CONF=$PG_DIR/postgresql.conf
     fi
-    sudo [ -e /var/lib/pgsql/data ] || sudo postgresql-setup initdb
     # Listen on all addresses
     sudo sed -i "/listen_addresses/s/.*/listen_addresses = '*'/" $PG_CONF
     # Do password auth from all IPv4 clients
