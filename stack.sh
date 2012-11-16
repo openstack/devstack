@@ -1331,8 +1331,9 @@ if is_service_enabled q-l3; then
     # Set debug
     iniset $Q_L3_CONF_FILE DEFAULT debug True
 
-    iniset $Q_L3_CONF_FILE DEFAULT metadata_ip $Q_META_DATA_IP
     iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
+
+    iniset $Q_L3_CONF_FILE DEFAULT state_path $DATA_DIR/quantum
 
     iniset $Q_L3_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
@@ -1352,6 +1353,27 @@ if is_service_enabled q-l3; then
         # Set up external bridge
         quantum_setup_external_bridge $PUBLIC_BRIDGE
     fi
+fi
+
+#Quantum Metadata
+if is_service_enabled q-meta; then
+    AGENT_META_BINARY="$QUANTUM_DIR/bin/quantum-metadata-agent"
+    Q_META_CONF_FILE=/etc/quantum/metadata_agent.ini
+
+    cp $QUANTUM_DIR/etc/metadata_agent.ini $Q_META_CONF_FILE
+
+    # Set verbose
+    iniset $Q_META_CONF_FILE DEFAULT verbose True
+    # Set debug
+    iniset $Q_META_CONF_FILE DEFAULT debug True
+
+    iniset $Q_META_CONF_FILE DEFAULT state_path $DATA_DIR/quantum
+
+    iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
+
+    iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+
+    quantum_setup_keystone $Q_META_CONF_FILE DEFAULT set_auth_url
 fi
 
 # Quantum RPC support - must be updated prior to starting any of the services
@@ -1442,6 +1464,9 @@ if is_service_enabled nova; then
         fi
         add_nova_opt "libvirt_vif_driver=$NOVA_VIF_DRIVER"
         add_nova_opt "linuxnet_interface_driver=$LINUXNET_VIF_DRIVER"
+        if is_service_enabled q-meta; then
+            add_nova_opt "service_quantum_metadata_proxy=True"
+        fi
     elif is_service_enabled n-net; then
         add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
         add_nova_opt "public_interface=$PUBLIC_INTERFACE"
@@ -1611,6 +1636,7 @@ fi
 # Start up the quantum agents if enabled
 screen_it q-agt "python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
 screen_it q-dhcp "python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
+screen_it q-meta "python $AGENT_META_BINARY --config-file $Q_CONF_FILE --config-file=$Q_META_CONF_FILE"
 screen_it q-l3 "python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
 
 if is_service_enabled nova; then
