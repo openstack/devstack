@@ -306,6 +306,7 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # ==================
 
 # Get project function libraries
+source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
@@ -568,15 +569,6 @@ read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (
 SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}
 
 
-# Horizon
-# -------
-
-# Allow overriding the default Apache user and group, default both to
-# current user.
-APACHE_USER=${APACHE_USER:-$USER}
-APACHE_GROUP=${APACHE_GROUP:-$APACHE_USER}
-
-
 # Log files
 # ---------
 
@@ -756,16 +748,6 @@ if is_service_enabled $DATABASE_BACKENDS; then
     install_database
 fi
 
-if is_service_enabled horizon; then
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        # Install apache2, which is NOPRIME'd
-        install_package apache2 libapache2-mod-wsgi
-    else
-        sudo rm -f /etc/httpd/conf.d/000-*
-        install_package httpd mod_wsgi
-    fi
-fi
-
 if is_service_enabled q-agt; then
     if is_quantum_ovs_base_plugin "$Q_PLUGIN"; then
         # Install deps
@@ -840,8 +822,8 @@ if is_service_enabled n-novnc; then
     git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
 fi
 if is_service_enabled horizon; then
-    # django powered web control panel for openstack
-    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+    # dashboard
+    install_horizon
 fi
 if is_service_enabled quantum; then
     git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
@@ -899,7 +881,7 @@ if is_service_enabled nova; then
     configure_nova
 fi
 if is_service_enabled horizon; then
-    setup_develop $HORIZON_DIR
+    configure_horizon
 fi
 if is_service_enabled quantum; then
     setup_develop $QUANTUM_CLIENT_DIR
@@ -1035,48 +1017,8 @@ fi
 
 if is_service_enabled horizon; then
     echo_summary "Configuring and starting Horizon"
-
-    # Remove stale session database.
-    rm -f $HORIZON_DIR/openstack_dashboard/local/dashboard_openstack.sqlite3
-
-    # ``local_settings.py`` is used to override horizon default settings.
-    local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
-    cp $FILES/horizon_settings.py $local_settings
-
-    # Initialize the horizon database (it stores sessions and notices shown to
-    # users).  The user system is external (keystone).
-    cd $HORIZON_DIR
-    python manage.py syncdb --noinput
-    cd $TOP_DIR
-
-    # Create an empty directory that apache uses as docroot
-    sudo mkdir -p $HORIZON_DIR/.blackhole
-
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        APACHE_NAME=apache2
-        APACHE_CONF=sites-available/horizon
-        # Clean up the old config name
-        sudo rm -f /etc/apache2/sites-enabled/000-default
-        # Be a good citizen and use the distro tools here
-        sudo touch /etc/$APACHE_NAME/$APACHE_CONF
-        sudo a2ensite horizon
-    else
-        # Install httpd, which is NOPRIME'd
-        APACHE_NAME=httpd
-        APACHE_CONF=conf.d/horizon.conf
-        sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
-    fi
-
-    # Configure apache to run horizon
-    sudo sh -c "sed -e \"
-        s,%USER%,$APACHE_USER,g;
-        s,%GROUP%,$APACHE_GROUP,g;
-        s,%HORIZON_DIR%,$HORIZON_DIR,g;
-        s,%APACHE_NAME%,$APACHE_NAME,g;
-        s,%DEST%,$DEST,g;
-    \" $FILES/apache-horizon.template >/etc/$APACHE_NAME/$APACHE_CONF"
-
-    restart_service $APACHE_NAME
+    init_horizon
+    start_horizon
 fi
 
 
@@ -1958,7 +1900,7 @@ if is_service_enabled ceilometer; then
     echo_summary "Starting Ceilometer"
     start_ceilometer
 fi
-screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
+
 screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
 
 # Starting the nova-objectstore only if swift3 service is not enabled.
