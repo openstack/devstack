@@ -155,6 +155,10 @@ function get_packages() {
             if [[ ! $file_to_parse =~ keystone ]]; then
                 file_to_parse="${file_to_parse} keystone"
             fi
+        elif [[ $service == q-* ]]; then
+            if [[ ! $file_to_parse =~ quantum ]]; then
+                file_to_parse="${file_to_parse} quantum"
+            fi
         fi
     done
 
