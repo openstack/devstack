@@ -1773,11 +1773,11 @@ if is_service_enabled nova; then
         add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
 
         if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-            NOVA_VIF_DRIVER="nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"
+            NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
         elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-            NOVA_VIF_DRIVER="nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"
+            NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"}
         elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-            NOVA_VIF_DRIVER="quantum.plugins.ryu.nova.vif.LibvirtOpenVswitchOFPRyuDriver"
+            NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"quantum.plugins.ryu.nova.vif.LibvirtOpenVswitchOFPRyuDriver"}
             add_nova_opt "libvirt_ovs_integration_bridge=$OVS_BRIDGE"
             add_nova_opt "linuxnet_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
             add_nova_opt "libvirt_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
