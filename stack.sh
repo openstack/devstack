@@ -321,7 +321,6 @@ HORIZON_DIR=$DEST/horizon
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 NOVNC_DIR=$DEST/noVNC
 SWIFT3_DIR=$DEST/swift3
-QUANTUM_DIR=$DEST/quantum
 QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
 
 # Default Quantum Plugin
@@ -1153,14 +1152,7 @@ if is_service_enabled quantum; then
     iniset /$Q_PLUGIN_CONF_FILE DATABASE sql_connection $dburl
     unset dburl
 
-    Q_CONF_FILE=/etc/quantum/quantum.conf
     cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
-    Q_RR_CONF_FILE=/etc/quantum/rootwrap.conf
-    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
-        Q_RR_COMMAND="sudo"
-    else
-        Q_RR_COMMAND="sudo $QUANTUM_DIR/bin/quantum-rootwrap $Q_RR_CONF_FILE"
-    fi
     cp -p $QUANTUM_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
 
     # Copy over the config and filter bits
@@ -1400,13 +1392,22 @@ if is_service_enabled quantum; then
         iniset $Q_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
     fi
     if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
-        Q_DEBUG_CONF_FILE=/etc/quantum/debug.ini
-        cp $QUANTUM_DIR/etc/l3_agent.ini $Q_DEBUG_CONF_FILE
-        iniset $Q_L3_CONF_FILE DEFAULT verbose False
-        iniset $Q_L3_CONF_FILE DEFAULT debug False
-        iniset $Q_L3_CONF_FILE DEFAULT metadata_ip $Q_META_DATA_IP
-        iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-        iniset $Q_L3_CONF_FILE DEFAULT root_helper "sudo"
+        cp $QUANTUM_DIR/etc/l3_agent.ini $QUANTUM_TEST_CONFIG_FILE
+        iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT verbose False
+        iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT debug False
+        iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
+        quantum_setup_keystone $QUANTUM_TEST_CONFIG_FILE DEFAULT set_auth_url
+        if [[ "$Q_PLUGIN" == "openvswitch" ]]; then
+            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+        elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
+            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
+            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge ''
+        elif [[ "$Q_PLUGIN" = "ryu" ]]; then
+            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT interface_driver quantum.agent.linux.interface.RyuInterfaceDriver
+            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT ryu_api_host $RYU_API_HOST:$RYU_API_PORT
+        fi
     fi
 fi
 
@@ -1633,7 +1634,9 @@ if is_service_enabled q-svc; then
             iniset $Q_L3_CONF_FILE DEFAULT router_id $ROUTER_ID
         fi
    fi
-
+   if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
+      setup_quantum
+   fi
 elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     # Create a small network
     $NOVA_BIN_DIR/nova-manage network create "$PRIVATE_NETWORK_NAME" $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
