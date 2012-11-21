@@ -111,6 +111,8 @@ function install_horizon() {
     if [[ "$os_PACKAGE" = "deb" ]]; then
         # Install apache2, which is NOPRIME'd
         install_package apache2 libapache2-mod-wsgi
+    elif is_suse; then
+        install_package apache2 apache2-mod_wsgi
     else
         sudo rm -f /etc/httpd/conf.d/000-*
         install_package httpd mod_wsgi

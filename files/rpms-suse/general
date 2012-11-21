@@ -1,0 +1,23 @@
+bridge-utils
+curl
+euca2ools
+git-core
+iputils
+openssh
+psmisc
+python-cmd2 # dist:opensuse-12.3
+python-netaddr
+python-pep8
+python-pip
+python-pylint
+python-unittest2
+python-virtualenv
+screen
+tar
+tcpdump
+unzip
+vim-enhanced
+wget
+
+findutils-locate # useful when debugging
+lsof # useful when debugging

@@ -1,0 +1,4 @@
+# Not available in openSUSE main repositories, but can be fetched from OBS
+# (devel:languages:python and server:database projects)
+mongodb
+python-pymongo

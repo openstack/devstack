@@ -1,0 +1,48 @@
+curl
+# Note: we need to package dhcp_release in dnsmasq!
+dnsmasq
+ebtables
+gawk
+iptables
+iputils
+kpartx
+kvm
+libvirt # NOPRIME
+libvirt-python
+libxml2-python
+mysql-community-server # NOPRIME
+parted
+python-M2Crypto
+python-m2crypto # dist:sle11sp2
+python-Paste
+python-PasteDeploy
+python-Routes
+python-SQLAlchemy
+python-Tempita
+python-boto
+python-carrot
+python-cheetah
+python-eventlet
+python-feedparser
+python-greenlet
+python-iso8601
+python-kombu
+python-lockfile
+python-lxml # needed for glance which is needed for nova --- this shouldn't be here
+python-mox
+python-mysql
+python-netaddr
+python-paramiko
+python-python-gflags
+python-sqlalchemy-migrate
+python-suds
+python-xattr # needed for glance which is needed for nova --- this shouldn't be here
+rabbitmq-server # NOPRIME
+socat
+sqlite3
+sudo
+vlan
+
+# FIXME: qpid is not part of openSUSE, those names are tentative
+python-qpid # NOPRIME
+qpidd # NOPRIME
