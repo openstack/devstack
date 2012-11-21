@@ -25,7 +25,11 @@ function configure_database_mysql {
         MYSQL=mysql
     else
         MY_CONF=/etc/my.cnf
-        MYSQL=mysqld
+        if is_suse; then
+            MYSQL=mysql
+        else
+            MYSQL=mysqld
+        fi
     fi
 
     # Start mysql-server

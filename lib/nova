@@ -47,11 +47,7 @@ else
 fi
 
 # Set the paths of certain binaries
-if [[ "$os_PACKAGE" = "deb" ]]; then
-    NOVA_ROOTWRAP=/usr/local/bin/nova-rootwrap
-else
-    NOVA_ROOTWRAP=/usr/bin/nova-rootwrap
-fi
+NOVA_ROOTWRAP=$(get_rootwrap_location nova)
 
 # Allow rate limiting to be turned off for testing, like for Tempest
 # NOTE: Set API_RATE_LIMIT="False" to turn OFF rate limiting
@@ -252,7 +248,7 @@ EOF'
 
         # The user that nova runs as needs to be member of **libvirtd** group otherwise
         # nova-compute will be unable to use libvirt.
-        sudo usermod -a -G libvirtd `whoami`
+        add_user_to_group `whoami` libvirtd
 
         # libvirt detects various settings on startup, as we potentially changed
         # the system configuration (modules, filesystems), we need to restart

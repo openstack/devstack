@@ -223,6 +223,12 @@ GetOSVersion() {
         os_UPDATE=""
         if [[ "Debian,Ubuntu" =~ $os_VENDOR ]]; then
             os_PACKAGE="deb"
+        elif [[ "SUSE LINUX" =~ $os_VENDOR ]]; then
+            lsb_release -d -s | grep -q openSUSE
+            if [[ $? -eq 0 ]]; then
+                os_VENDOR="openSUSE"
+            fi
+            os_PACKAGE="rpm"
         else
             os_PACKAGE="rpm"
         fi
@@ -241,6 +247,23 @@ GetOSVersion() {
                 os_RELEASE=${ver%|*}
                 os_UPDATE=${os_RELEASE##*.}
                 os_RELEASE=${os_RELEASE%.*}
+                break
+            fi
+            os_VENDOR=""
+        done
+        os_PACKAGE="rpm"
+    elif [[ -r /etc/SuSE-release ]]; then
+        for r in openSUSE "SUSE Linux"; do
+            if [[ "$r" = "SUSE Linux" ]]; then
+                os_VENDOR="SUSE LINUX"
+            else
+                os_VENDOR=$r
+            fi
+
+            if [[ -n "`grep \"$r\" /etc/SuSE-release`" ]]; then
+                os_CODENAME=`grep "CODENAME = " /etc/SuSE-release | sed 's:.* = ::g'`
+                os_RELEASE=`grep "VERSION = " /etc/SuSE-release | sed 's:.* = ::g'`
+                os_UPDATE=`grep "PATCHLEVEL = " /etc/SuSE-release | sed 's:.* = ::g'`
                 break
             fi
             os_VENDOR=""
@@ -297,11 +320,33 @@ function GetDistro() {
     elif [[ "$os_VENDOR" =~ (Fedora) ]]; then
         # For Fedora, just use 'f' and the release
         DISTRO="f$os_RELEASE"
+    elif [[ "$os_VENDOR" =~ (openSUSE) ]]; then
+        DISTRO="opensuse-$os_RELEASE"
+    elif [[ "$os_VENDOR" =~ (SUSE LINUX) ]]; then
+        # For SLE, also use the service pack
+        if [[ -z "$os_UPDATE" ]]; then
+            DISTRO="sle${os_RELEASE}"
+        else
+            DISTRO="sle${os_RELEASE}sp${os_UPDATE}"
+        fi
     else
         # Catch-all for now is Vendor + Release + Update
         DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
     fi
     export DISTRO
+}
+
+
+# Determine if current distribution is a SUSE-based distribution
+# (openSUSE, SLE).
+# is_suse
+function is_suse {
+    if [[ -z "$os_VENDOR" ]]; then
+        GetOSVersion
+    fi
+
+    [[ "$os_VENDOR" = "openSUSE" || "$os_VENDOR" = "SUSE LINUX" ]]
+    return $?
 }
 
 
@@ -542,7 +587,11 @@ function install_package() {
 
         apt_get install "$@"
     else
-        yum_install "$@"
+        if is_suse; then
+            zypper_install "$@"
+        else
+            yum_install "$@"
+        fi
     fi
 }
 
@@ -593,7 +642,7 @@ function pip_install {
         SUDO_PIP="env"
     else
         SUDO_PIP="sudo"
-        if [[ "$os_PACKAGE" = "deb" ]]; then
+        if [[ "$os_PACKAGE" = "deb" || is_suse ]]; then
             CMD_PIP=/usr/bin/pip
         else
             CMD_PIP=/usr/bin/pip-python
@@ -944,6 +993,68 @@ function _ssh_check_novanet() {
         echo "server didn't become ssh-able!"
         exit 1
     fi
+}
+
+
+# zypper wrapper to set arguments correctly
+# zypper_install package [package ...]
+function zypper_install() {
+    [[ "$OFFLINE" = "True" ]] && return
+    local sudo="sudo"
+    [[ "$(id -u)" = "0" ]] && sudo="env"
+    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
+        zypper --non-interactive install --auto-agree-with-licenses "$@"
+}
+
+
+# Add a user to a group.
+# add_user_to_group user group
+function add_user_to_group() {
+    local user=$1
+    local group=$2
+
+    if [[ -z "$os_VENDOR" ]]; then
+        GetOSVersion
+    fi
+
+    # SLE11 and openSUSE 12.2 don't have the usual usermod
+    if ! is_suse || [[ "$os_VENDOR" = "openSUSE" && "$os_RELEASE" != "12.2" ]]; then
+        sudo usermod -a -G "$group" "$user"
+    else
+        sudo usermod -A "$group" "$user"
+    fi
+}
+
+
+# Get the location of the $module-rootwrap executables, where module is cinder
+# or nova.
+# get_rootwrap_location module
+function get_rootwrap_location() {
+    local module=$1
+
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+
+    if [[ "$os_PACKAGE" = "deb" || is_suse ]]; then
+        echo "/usr/local/bin/$module-rootwrap"
+    else
+        echo "/usr/bin/$module-rootwrap"
+    fi
+}
+
+
+# Check if qpid can be used on the current distro.
+# qpid_is_supported
+function qpid_is_supported() {
+    if [[ -z "$DISTRO" ]]; then
+        GetDistro
+    fi
+
+    # Qpid was introduced to Ubuntu in precise, disallow it on oneiric; it is
+    # not in openSUSE either right now.
+    [[ "$DISTRO" = "oneiric" || is_suse ]]
+    return $?
 }
 
 # Restore xtrace

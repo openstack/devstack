@@ -113,9 +113,8 @@ if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|f16|f17) ]]; then
     fi
 fi
 
-# Qpid was introduced to Ubuntu in precise, disallow it on oneiric
-if [ "${DISTRO}" = "oneiric" ] && is_service_enabled qpid ; then
-    echo "You must use Ubuntu Precise or newer for Qpid support."
+if is_service_enabled qpid && ! qpid_is_supported; then
+    echo "Qpid support is not available for this version of your distribution."
     exit 1
 fi
 
