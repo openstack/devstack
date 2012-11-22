@@ -106,7 +106,7 @@ if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 fi
 
 # Nova
-if [[ "$ENABLED_SERVICES" =~ "n-cpu" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     NOVA_USER=$(get_id keystone user-create \
         --name=nova \
         --pass="$SERVICE_PASSWORD" \
