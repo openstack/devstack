@@ -432,9 +432,9 @@ function start_nova() {
     screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network"
     screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler"
     screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF --web ."
-    screen_it n-xvnc "cd $NOVA_DIR && ./bin/nova-xvpvncproxy --config-file $NOVA_CONF"
-    screen_it n-cauth "cd $NOVA_DIR && ./bin/nova-consoleauth"
-    screen_it n-cond "cd $NOVA_DIR && ./bin/nova-conductor"
+    screen_it n-xvnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-xvpvncproxy --config-file $NOVA_CONF"
+    screen_it n-cauth "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-consoleauth"
+    screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor"
 }
 
 # stop_nova() - Stop running processes (non-screen)
