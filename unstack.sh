@@ -25,6 +25,7 @@ source $TOP_DIR/stackrc
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 
 # Get project function libraries
+source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/swift
@@ -65,6 +66,11 @@ fi
 # Kill TLS proxies
 if is_service_enabled tls-proxy; then
     killall stud
+fi
+
+# baremetal might have created a fake environment
+if is_service_enabled baremetal && [[ "$BM_USE_FAKE_ENV" = "True" ]]; then
+    cleanup_fake_baremetal_env
 fi
 
 SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*

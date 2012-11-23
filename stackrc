@@ -115,6 +115,13 @@ RYU_BRANCH=master
 BM_IMAGE_BUILD_REPO=https://github.com/stackforge/diskimage-builder.git
 BM_IMAGE_BUILD_BRANCH=master
 
+# bm_poseur
+# Used to simulate a hardware environment for baremetal
+# Only used if BM_USE_FAKE_ENV is set
+BM_POSEUR_REPO=https://github.com/tripleo/bm_poseur.git
+BM_POSEUR_BRANCH=master
+
+
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
 # also install an **LXC** or **OpenVZ** based system.
