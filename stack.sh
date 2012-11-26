@@ -329,7 +329,7 @@ Q_PLUGIN=${Q_PLUGIN:-openvswitch}
 # Default Quantum Port
 Q_PORT=${Q_PORT:-9696}
 # Default Quantum Host
-Q_HOST=${Q_HOST:-localhost}
+Q_HOST=${Q_HOST:-$HOST_IP}
 # Which Quantum API nova should use
 # Default admin username
 Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
