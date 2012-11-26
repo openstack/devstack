@@ -317,6 +317,7 @@ source $TOP_DIR/lib/tempest
 
 # Set the destination directories for OpenStack projects
 HORIZON_DIR=$DEST/horizon
+OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 NOVNC_DIR=$DEST/noVNC
 SWIFT_DIR=$DEST/swift
 SWIFT3_DIR=$DEST/swift3
@@ -812,6 +813,9 @@ install_keystoneclient
 install_glanceclient
 install_novaclient
 
+# Check out the client libs that are used most
+git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
+
 # glance, swift middleware and nova api needs keystone middleware
 if is_service_enabled key g-api n-api swift; then
     # unified auth system (manages accounts/tokens)
@@ -877,6 +881,7 @@ echo_summary "Configuring OpenStack projects"
 # allowing ``import nova`` or ``import glance.client``
 configure_keystoneclient
 configure_novaclient
+setup_develop $OPENSTACKCLIENT_DIR
 if is_service_enabled key g-api n-api swift; then
     configure_keystone
 fi
