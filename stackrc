@@ -71,7 +71,7 @@ KEYSTONE_BRANCH=stable/folsom
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/kanaka/noVNC.git
-NOVNC_BRANCH=master             # 21Sep2012: 8dfd916946
+NOVNC_BRANCH=8dfd916946             # 21Sep2012: 8dfd916946
 
 # django powered web control panel for openstack
 HORIZON_REPO=${GIT_BASE}/openstack/horizon.git
