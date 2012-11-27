@@ -1,0 +1,133 @@
+# lib/horizon
+# Functions to control the configuration and operation of the horizon service
+# <do not include this template file in ``stack.sh``!>
+
+# Dependencies:
+# ``functions`` file
+# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# <list other global vars that are assumed to be defined>
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_horizon
+# configure_horizon
+# init_horizon
+# start_horizon
+# stop_horizon
+# cleanup_horizon
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# <define global variables here that belong to this project>
+
+# Set up default directories
+HORIZON_DIR=$DEST/horizon
+
+# Allow overriding the default Apache user and group, default both to
+# current user.
+APACHE_USER=${APACHE_USER:-$USER}
+APACHE_GROUP=${APACHE_GROUP:-$APACHE_USER}
+
+
+# Entry Points
+# ------------
+
+# cleanup_horizon() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_horizon() {
+    # kill instances (nova)
+    # delete image files (glance)
+    # This function intentionally left blank
+    :
+}
+
+# configure_horizon() - Set config files, create data dirs, etc
+function configure_horizon() {
+    setup_develop $HORIZON_DIR
+}
+
+# init_horizon() - Initialize databases, etc.
+function init_horizon() {
+    # Remove stale session database.
+    rm -f $HORIZON_DIR/openstack_dashboard/local/dashboard_openstack.sqlite3
+
+    # ``local_settings.py`` is used to override horizon default settings.
+    local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
+    cp $FILES/horizon_settings.py $local_settings
+
+    # Initialize the horizon database (it stores sessions and notices shown to
+    # users).  The user system is external (keystone).
+    cd $HORIZON_DIR
+    python manage.py syncdb --noinput
+    cd $TOP_DIR
+
+    # Create an empty directory that apache uses as docroot
+    sudo mkdir -p $HORIZON_DIR/.blackhole
+
+
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        APACHE_NAME=apache2
+        APACHE_CONF=sites-available/horizon
+        # Clean up the old config name
+        sudo rm -f /etc/apache2/sites-enabled/000-default
+        # Be a good citizen and use the distro tools here
+        sudo touch /etc/$APACHE_NAME/$APACHE_CONF
+        sudo a2ensite horizon
+    else
+        # Install httpd, which is NOPRIME'd
+        APACHE_NAME=httpd
+        APACHE_CONF=conf.d/horizon.conf
+        sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
+    fi
+
+    # Configure apache to run horizon
+    sudo sh -c "sed -e \"
+        s,%USER%,$APACHE_USER,g;
+        s,%GROUP%,$APACHE_GROUP,g;
+        s,%HORIZON_DIR%,$HORIZON_DIR,g;
+        s,%APACHE_NAME%,$APACHE_NAME,g;
+        s,%DEST%,$DEST,g;
+    \" $FILES/apache-horizon.template >/etc/$APACHE_NAME/$APACHE_CONF"
+
+}
+
+# install_horizon() - Collect source and prepare
+function install_horizon() {
+    # Apache installation, because we mark it NOPRIME
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        # Install apache2, which is NOPRIME'd
+        install_package apache2 libapache2-mod-wsgi
+    else
+        sudo rm -f /etc/httpd/conf.d/000-*
+        install_package httpd mod_wsgi
+    fi
+
+    # NOTE(sdague) quantal changed the name of the node binary
+    if [[ "$os_PACKAGE" = "deb" ]]; then
+        if [[ ! -e "/usr/bin/node" ]]; then
+            install_package nodejs-legacy
+        fi
+    fi
+
+    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+}
+
+# start_horizon() - Start running processes, including screen
+function start_horizon() {
+    restart_service $APACHE_NAME
+    screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
+}
+
+# stop_horizon() - Stop running processes (non-screen)
+function stop_horizon() {
+    stop_service apache2
+}
+
+# Restore xtrace
+$XTRACE
