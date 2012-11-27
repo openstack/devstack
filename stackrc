@@ -76,6 +76,10 @@ HORIZON_BRANCH=master
 NOVACLIENT_REPO=${GIT_BASE}/openstack/python-novaclient.git
 NOVACLIENT_BRANCH=master
 
+# consolidated openstack python client
+OPENSTACKCLIENT_REPO=${GIT_BASE}/openstack/python-openstackclient.git
+OPENSTACKCLIENT_BRANCH=master
+
 # python keystone client library to nova that horizon uses
 KEYSTONECLIENT_REPO=${GIT_BASE}/openstack/python-keystoneclient
 KEYSTONECLIENT_BRANCH=master
