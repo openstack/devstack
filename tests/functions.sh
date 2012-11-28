@@ -54,6 +54,9 @@ handlers = aa, bb
 
 [bbb]
 handlers=ee,ff
+
+[ ccc ]
+spaces  =  yes
 EOF
 
 # Test with spaces
@@ -74,6 +77,14 @@ else
     echo "iniget failed: $VAL"
 fi
 
+# Test with spaces in section header
+
+VAL=$(iniget test.ini ccc spaces)
+if [[ "$VAL" == "yes" ]]; then
+    echo "OK: $VAL"
+else
+    echo "iniget failed: $VAL"
+fi
 
 # Test without spaces, end of file
 
@@ -111,7 +122,6 @@ if [[ -n "$VAL" ]]; then
 else
     echo "iniget failed: $VAL"
 fi
-
 
 # Test option not exist
 
