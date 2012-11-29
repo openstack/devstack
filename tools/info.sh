@@ -107,11 +107,7 @@ done
 # Pips
 # ----
 
-if [[ "$os_PACKAGE" = "deb" ]]; then
-    CMD_PIP=/usr/bin/pip
-else
-    CMD_PIP=/usr/bin/pip-python
-fi
+CMD_PIP=$(get_pip_command)
 
 # Pip tells us what is currently installed
 FREEZE_FILE=$(mktemp --tmpdir freeze.XXXXXX)

@@ -645,11 +645,7 @@ function pip_install {
         SUDO_PIP="env"
     else
         SUDO_PIP="sudo"
-        if [[ "$os_PACKAGE" = "deb" ]] || is_suse; then
-            CMD_PIP=/usr/bin/pip
-        else
-            CMD_PIP=/usr/bin/pip-python
-        fi
+        CMD_PIP=$(get_pip_command)
     fi
     if [[ "$PIP_USE_MIRRORS" != "False" ]]; then
         PIP_MIRROR_OPT="--use-mirrors"
@@ -1046,6 +1042,19 @@ function get_rootwrap_location() {
     fi
 }
 
+# Get the path to the pip command.
+# get_pip_command
+function get_pip_command() {
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+
+    if [[ "$os_PACKAGE" = "deb" ]] || is_suse; then
+        echo "/usr/bin/pip"
+    else
+        echo "/usr/bin/pip-python"
+    fi
+}
 
 # Check if qpid can be used on the current distro.
 # qpid_is_supported
