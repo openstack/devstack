@@ -79,6 +79,8 @@ function init_horizon() {
         # Be a good citizen and use the distro tools here
         sudo touch /etc/$APACHE_NAME/$APACHE_CONF
         sudo a2ensite horizon
+        # WSGI doesn't enable by default, enable it
+        sudo a2enmod wsgi
     else
         # Install httpd, which is NOPRIME'd
         if is_suse; then
