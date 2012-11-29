@@ -27,6 +27,7 @@ DATA_DIR=${DATA_DIR:-${DEST}/data}
 # Get project function libraries
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/horizon
+source $TOP_DIR/lib/swift
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
@@ -47,7 +48,7 @@ fi
 
 # Swift runs daemons
 if is_service_enabled swift; then
-    swift-init all stop 2>/dev/null || true
+    stop_swift
 fi
 
 # Apache has the WSGI processes
