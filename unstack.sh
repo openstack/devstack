@@ -62,6 +62,11 @@ if is_service_enabled horizon; then
     stop_horizon
 fi
 
+# Kill TLS proxies
+if is_service_enabled tls-proxy; then
+    killall stud
+fi
+
 SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*
 
 # Get the iSCSI volumes

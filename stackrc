@@ -6,6 +6,9 @@ RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
 # Destination path for installation
 DEST=/opt/stack
 
+# Destination for working data
+DATA_DIR=${DEST}/data
+
 # Select the default database
 DATABASE_TYPE=mysql
 

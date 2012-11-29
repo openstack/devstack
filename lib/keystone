@@ -4,7 +4,7 @@
 # Dependencies:
 # ``functions`` file
 # ``BASE_SQL_CONN``
-# ``SERVICE_HOST``
+# ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
 # ``SERVICE_TOKEN``
 # ``S3_SERVICE_PORT`` (template backend only)
 
@@ -48,10 +48,14 @@ KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-PKI}
 # Set Keystone interface configuration
 KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
 KEYSTONE_AUTH_PORT=${KEYSTONE_AUTH_PORT:-35357}
-KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-http}
+KEYSTONE_AUTH_PORT_INT=${KEYSTONE_AUTH_PORT_INT:-35358}
+KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
+
+# Public facing bits
 KEYSTONE_SERVICE_HOST=${KEYSTONE_SERVICE_HOST:-$SERVICE_HOST}
 KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
-KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-http}
+KEYSTONE_SERVICE_PORT_INT=${KEYSTONE_SERVICE_PORT_INT:-5001}
+KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
 
 # Entry Points
@@ -88,6 +92,13 @@ function configure_keystone() {
     # Rewrite stock ``keystone.conf``
     local dburl
     database_connection_url dburl keystone
+
+    if is_service_enabled tls-proxy; then
+        # Set the service ports for a proxy to take the originals
+        iniset $KEYSTONE_CONF DEFAULT public_port $KEYSTONE_SERVICE_PORT_INT
+        iniset $KEYSTONE_CONF DEFAULT admin_port $KEYSTONE_AUTH_PORT_INT
+    fi
+
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
     iniset $KEYSTONE_CONF signing token_format "$KEYSTONE_TOKEN_FORMAT"
     iniset $KEYSTONE_CONF sql connection $dburl
@@ -213,9 +224,9 @@ create_keystone_accounts() {
         keystone endpoint-create \
             --region RegionOne \
             --service_id $KEYSTONE_SERVICE \
-            --publicurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:\$(public_port)s/v2.0" \
-            --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:\$(admin_port)s/v2.0" \
-            --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:\$(public_port)s/v2.0"
+            --publicurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0" \
+            --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0" \
+            --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0"
     fi
 
     # TODO(dtroyer): This is part of a series of changes...remove these when
@@ -268,12 +279,24 @@ function install_keystone() {
 
 # start_keystone() - Start running processes, including screen
 function start_keystone() {
+    # Get right service port for testing
+    local service_port=$KEYSTONE_SERVICE_PORT
+    if is_service_enabled tls-proxy; then
+        service_port=$KEYSTONE_SERVICE_PORT_INT
+    fi
+
     # Start Keystone in a screen window
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ >/dev/null; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s http://$SERVICE_HOST:$service_port/v2.0/ >/dev/null; do sleep 1; done"; then
       echo "keystone did not start"
       exit 1
+    fi
+
+    # Start proxies if enabled
+    if is_service_enabled tls-proxy; then
+        start_tls_proxy '*' $KEYSTONE_SERVICE_PORT $KEYSTONE_SERVICE_HOST $KEYSTONE_SERVICE_PORT_INT &
+        start_tls_proxy '*' $KEYSTONE_AUTH_PORT $KEYSTONE_AUTH_HOST $KEYSTONE_AUTH_PORT_INT &
     fi
 }
 
