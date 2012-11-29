@@ -92,16 +92,16 @@ keystone user-role-add --user_id $DEMO_USER --role_id $MEMBER_ROLE --tenant_id $
 
 # Keystone
 if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-	KEYSTONE_SERVICE=$(get_id keystone service-create \
-		--name=keystone \
-		--type=identity \
-		--description="Keystone Identity Service")
-	keystone endpoint-create \
-	    --region RegionOne \
-		--service_id $KEYSTONE_SERVICE \
-		--publicurl "http://$SERVICE_HOST:\$(public_port)s/v2.0" \
-		--adminurl "http://$SERVICE_HOST:\$(admin_port)s/v2.0" \
-		--internalurl "http://$SERVICE_HOST:\$(public_port)s/v2.0"
+    KEYSTONE_SERVICE=$(get_id keystone service-create \
+        --name=keystone \
+        --type=identity \
+        --description="Keystone Identity Service")
+    keystone endpoint-create \
+        --region RegionOne \
+        --service_id $KEYSTONE_SERVICE \
+        --publicurl "http://$SERVICE_HOST:\$(public_port)s/v2.0" \
+        --adminurl "http://$SERVICE_HOST:\$(admin_port)s/v2.0" \
+        --internalurl "http://$SERVICE_HOST:\$(public_port)s/v2.0"
 fi
 
 # Nova
