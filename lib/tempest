@@ -49,6 +49,10 @@ function configure_tempest() {
 # install_tempest() - Collect source and prepare
 function install_tempest() {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
+
+    # Tempest doesn't satisfy its dependencies on its own, so
+    # install them here instead.
+    sudo pip install -r $TEMPEST_DIR/tools/pip-requires
 }
 
 
