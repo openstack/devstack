@@ -779,10 +779,6 @@ if [[ $TRACK_DEPENDS = True ]] ; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-pre-pip
 fi
 
-# Install python requirements
-echo_summary "Installing Python prerequisites"
-pip_install $(get_packages $FILES/pips | sort -u)
-
 
 # Check Out Source
 # ----------------

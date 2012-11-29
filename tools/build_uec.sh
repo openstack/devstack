@@ -68,7 +68,7 @@ fi
 # Option to warm the base image with software requirements.
 if [ $WARM_CACHE ]; then
     cd $TOOLS_DIR
-    ./warm_apts_and_pips_for_uec.sh $image_dir/disk
+    ./warm_apts_for_uec.sh $image_dir/disk
 fi
 
 # Name of our instance, used by libvirt

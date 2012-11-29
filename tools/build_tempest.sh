@@ -48,8 +48,6 @@ DEST=${DEST:-/opt/stack}
 TEMPEST_DIR=$DEST/tempest
 
 # Install tests and prerequisites
-pip_install `cat $TOP_DIR/files/pips/tempest`
-
 git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
 
 trap - SIGHUP SIGINT SIGTERM SIGQUIT EXIT
