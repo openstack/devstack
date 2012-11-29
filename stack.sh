@@ -953,15 +953,16 @@ if is_service_enabled key; then
     configure_keystone
     init_keystone
     start_keystone
-    echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/ >/dev/null; do sleep 1; done"; then
-      echo "keystone did not start"
-      exit 1
-    fi
 
-    # ``keystone_data.sh`` creates services, admin and demo users, and roles.
+    # Set up a temporary admin URI for Keystone
     SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
 
+    # Do the keystone-specific bits from keystone_data.sh
+    export OS_SERVICE_TOKEN=$SERVICE_TOKEN
+    export OS_SERVICE_ENDPOINT=$SERVICE_ENDPOINT
+    create_keystone_accounts
+
+    # ``keystone_data.sh`` creates services, admin and demo users, and roles.
     ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
     SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT SERVICE_HOST=$SERVICE_HOST \
     S3_SERVICE_PORT=$S3_SERVICE_PORT KEYSTONE_CATALOG_BACKEND=$KEYSTONE_CATALOG_BACKEND \
@@ -974,6 +975,7 @@ if is_service_enabled key; then
     export OS_TENANT_NAME=admin
     export OS_USERNAME=admin
     export OS_PASSWORD=$ADMIN_PASSWORD
+    unset OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
 fi
 
 
@@ -1750,7 +1752,7 @@ fi
 
 # If Keystone is present you can point ``nova`` cli to this server
 if is_service_enabled key; then
-    echo "Keystone is serving at $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_API_PORT/v2.0/"
+    echo "Keystone is serving at $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/"
     echo "Examples on using novaclient command line is in exercise.sh"
     echo "The default users are: admin and demo"
     echo "The password: $ADMIN_PASSWORD"
