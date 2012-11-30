@@ -277,6 +277,8 @@ EOF
         swift_node_config=${SWIFT_CONFIG_DIR}/container-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/container-server.conf-sample ${swift_node_config}
         generate_swift_config ${swift_node_config} ${node_number} $[CONTAINER_PORT_BASE + 10 * (node_number - 1)]
+        iniuncomment ${swift_node_config} app:container-server allow_versions
+        iniset ${swift_node_config} app:container-server allow_versions  "true"
 
         swift_node_config=${SWIFT_CONFIG_DIR}/account-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/account-server.conf-sample ${swift_node_config}
