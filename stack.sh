@@ -105,7 +105,7 @@ disable_negated_services
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|f16|f17) ]]; then
+if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|f16|f17|f18) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         echo "If you wish to run this script anyway run with FORCE=yes"
@@ -310,6 +310,7 @@ source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
 source $TOP_DIR/lib/cinder
+source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/quantum
@@ -319,9 +320,7 @@ source $TOP_DIR/lib/tempest
 HORIZON_DIR=$DEST/horizon
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 NOVNC_DIR=$DEST/noVNC
-SWIFT_DIR=$DEST/swift
 SWIFT3_DIR=$DEST/swift3
-SWIFTCLIENT_DIR=$DEST/python-swiftclient
 QUANTUM_DIR=$DEST/quantum
 QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
 
@@ -502,41 +501,6 @@ if is_service_enabled rabbit; then
     RABBIT_HOST=${RABBIT_HOST:-localhost}
     read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 fi
-
-
-# Swift
-# -----
-
-# TODO: add logging to different location.
-
-# Set ``SWIFT_DATA_DIR`` to the location of swift drives and objects.
-# Default is the common DevStack data directory.
-SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DATA_DIR}/swift}
-
-# Set ``SWIFT_CONFIG_DIR`` to the location of the configuration files.
-# Default is ``/etc/swift``.
-SWIFT_CONFIG_DIR=${SWIFT_CONFIG_DIR:-/etc/swift}
-
-# DevStack will create a loop-back disk formatted as XFS to store the
-# swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in bytes.
-# Default is 1 gigabyte.
-SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
-
-# The ring uses a configurable number of bits from a path’s MD5 hash as
-# a partition index that designates a device. The number of bits kept
-# from the hash is known as the partition power, and 2 to the partition
-# power indicates the partition count. Partitioning the full MD5 hash
-# ring allows other parts of the cluster to work in batches of items at
-# once which ends up either more efficient or at least less complex than
-# working with each item separately or the entire cluster all at once.
-# By default we define 9 for the partition count (which mean 512).
-SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
-
-# Set ``SWIFT_REPLICAS`` to configure how many replicas are to be
-# configured for your Swift cluster.  By default the three replicas would need a
-# bit of IO and Memory on a VM you may want to lower that to 1 if you want to do
-# only some quick testing.
-SWIFT_REPLICAS=${SWIFT_REPLICAS:-3}
 
 if is_service_enabled swift; then
     # If we are using swift3, we can default the s3 port to swift instead
@@ -793,7 +757,6 @@ echo_summary "Installing OpenStack project source"
 install_keystoneclient
 install_glanceclient
 install_novaclient
-
 # Check out the client libs that are used most
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
 
@@ -802,16 +765,16 @@ if is_service_enabled key g-api n-api swift; then
     # unified auth system (manages accounts/tokens)
     install_keystone
 fi
+
 if is_service_enabled swift; then
-    # storage service
-    git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
-    # storage service client and and Library
-    git_clone $SWIFTCLIENT_REPO $SWIFTCLIENT_DIR $SWIFTCLIENT_BRANCH
+    install_swiftclient
+    install_swift
     if is_service_enabled swift3; then
         # swift3 middleware to provide S3 emulation to Swift
         git_clone $SWIFT3_REPO $SWIFT3_DIR $SWIFT3_BRANCH
     fi
 fi
+
 if is_service_enabled g-api n-api; then
     # image catalog service
     install_glance
@@ -867,11 +830,11 @@ if is_service_enabled key g-api n-api swift; then
     configure_keystone
 fi
 if is_service_enabled swift; then
-    setup_develop $SWIFT_DIR
-    setup_develop $SWIFTCLIENT_DIR
-fi
-if is_service_enabled swift3; then
-    setup_develop $SWIFT3_DIR
+    configure_swift
+    configure_swiftclient
+    if is_service_enabled swift3; then
+        setup_develop $SWIFT3_DIR
+    fi
 fi
 if is_service_enabled g-api n-api; then
     configure_glance
@@ -1439,253 +1402,7 @@ fi
 
 if is_service_enabled swift; then
     echo_summary "Configuring Swift"
-
-    # Make sure to kill all swift processes first
-    swift-init all stop || true
-
-    # First do a bit of setup by creating the directories and
-    # changing the permissions so we can run it as our user.
-
-    USER_GROUP=$(id -g)
-    sudo mkdir -p ${SWIFT_DATA_DIR}/drives
-    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_DIR}
-
-    # Create a loopback disk and format it to XFS.
-    if [[ -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
-        if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
-            sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
-        fi
-    else
-        mkdir -p  ${SWIFT_DATA_DIR}/drives/images
-        sudo touch  ${SWIFT_DATA_DIR}/drives/images/swift.img
-        sudo chown $USER: ${SWIFT_DATA_DIR}/drives/images/swift.img
-
-        dd if=/dev/zero of=${SWIFT_DATA_DIR}/drives/images/swift.img \
-            bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
-    fi
-
-    # Make a fresh XFS filesystem
-    mkfs.xfs -f -i size=1024  ${SWIFT_DATA_DIR}/drives/images/swift.img
-
-    # Mount the disk with mount options to make it as efficient as possible
-    mkdir -p ${SWIFT_DATA_DIR}/drives/sdb1
-    if ! egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
-        sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
-            ${SWIFT_DATA_DIR}/drives/images/swift.img ${SWIFT_DATA_DIR}/drives/sdb1
-    fi
-
-    # Create a link to the above mount
-    for x in $(seq ${SWIFT_REPLICAS}); do
-        sudo ln -sf ${SWIFT_DATA_DIR}/drives/sdb1/$x ${SWIFT_DATA_DIR}/$x; done
-
-    # Create all of the directories needed to emulate a few different servers
-    for x in $(seq ${SWIFT_REPLICAS}); do
-            drive=${SWIFT_DATA_DIR}/drives/sdb1/${x}
-            node=${SWIFT_DATA_DIR}/${x}/node
-            node_device=${node}/sdb1
-            [[ -d $node ]] && continue
-            [[ -d $drive ]] && continue
-            sudo install -o ${USER} -g $USER_GROUP -d $drive
-            sudo install -o ${USER} -g $USER_GROUP -d $node_device
-            sudo chown -R $USER: ${node}
-    done
-
-   sudo mkdir -p ${SWIFT_CONFIG_DIR}/{object,container,account}-server /var/run/swift
-   sudo chown -R $USER: ${SWIFT_CONFIG_DIR} /var/run/swift
-
-    if [[ "$SWIFT_CONFIG_DIR" != "/etc/swift" ]]; then
-        # Some swift tools are hard-coded to use ``/etc/swift`` and are apparently not going to be fixed.
-        # Create a symlink if the config dir is moved
-        sudo ln -sf ${SWIFT_CONFIG_DIR} /etc/swift
-    fi
-
-    # Swift use rsync to synchronize between all the different
-    # partitions (which make more sense when you have a multi-node
-    # setup) we configure it with our version of rsync.
-    sed -e "
-        s/%GROUP%/${USER_GROUP}/;
-        s/%USER%/$USER/;
-        s,%SWIFT_DATA_DIR%,$SWIFT_DATA_DIR,;
-    " $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
-    else
-        sudo sed -i '/disable *= *yes/ { s/yes/no/ }' /etc/xinetd.d/rsync
-    fi
-
-    if is_service_enabled swift3;then
-        swift_auth_server="s3token "
-    fi
-
-    # By default Swift will be installed with the tempauth middleware
-    # which has some default username and password if you have
-    # configured keystone it will checkout the directory.
-    if is_service_enabled key; then
-        swift_auth_server+="authtoken keystoneauth"
-    else
-        swift_auth_server=tempauth
-    fi
-
-    SWIFT_CONFIG_PROXY_SERVER=${SWIFT_CONFIG_DIR}/proxy-server.conf
-    cp ${SWIFT_DIR}/etc/proxy-server.conf-sample ${SWIFT_CONFIG_PROXY_SERVER}
-
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${USER}
-
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT swift_dir
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT swift_dir ${SWIFT_CONFIG_DIR}
-
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT workers
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT workers 1
-
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT log_level
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT log_level DEBUG
-
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
-
-    # Only enable Swift3 if we have it enabled in ENABLED_SERVICES
-    is_service_enabled swift3 && swift3=swift3 || swift3=""
-
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} pipeline:main pipeline "catch_errors healthcheck cache ratelimit ${swift3} ${swift_auth_server} proxy-logging proxy-server"
-
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
-
-    # Configure Keystone
-    sed -i '/^# \[filter:authtoken\]/,/^# \[filter:keystoneauth\]$/ s/^#[ \t]*//' ${SWIFT_CONFIG_PROXY_SERVER}
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_password $SERVICE_PASSWORD
-
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles "Member, admin"
-
-    if is_service_enabled swift3; then
-        cat <<EOF >>${SWIFT_CONFIG_PROXY_SERVER}
-# NOTE(chmou): s3token middleware is not updated yet to use only
-# username and password.
-[filter:s3token]
-paste.filter_factory = keystone.middleware.s3_token:filter_factory
-auth_port = ${KEYSTONE_AUTH_PORT}
-auth_host = ${KEYSTONE_AUTH_HOST}
-auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
-auth_token = ${SERVICE_TOKEN}
-admin_token = ${SERVICE_TOKEN}
-
-[filter:swift3]
-use = egg:swift3#swift3
-EOF
-    fi
-
-    cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONFIG_DIR}/swift.conf
-    iniset ${SWIFT_CONFIG_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
-
-    # This function generates an object/account/proxy configuration
-    # emulating 4 nodes on different ports
-    function generate_swift_configuration() {
-        local server_type=$1
-        local bind_port=$2
-        local log_facility=$3
-        local node_number
-        local swift_node_config
-
-        for node_number in $(seq ${SWIFT_REPLICAS}); do
-            node_path=${SWIFT_DATA_DIR}/${node_number}
-            swift_node_config=${SWIFT_CONFIG_DIR}/${server_type}-server/${node_number}.conf
-
-            cp ${SWIFT_DIR}/etc/${server_type}-server.conf-sample ${swift_node_config}
-
-            iniuncomment ${swift_node_config} DEFAULT user
-            iniset ${swift_node_config} DEFAULT user ${USER}
-
-            iniuncomment ${swift_node_config} DEFAULT bind_port
-            iniset ${swift_node_config} DEFAULT bind_port ${bind_port}
-
-            iniuncomment ${swift_node_config} DEFAULT swift_dir
-            iniset ${swift_node_config} DEFAULT swift_dir ${SWIFT_CONFIG_DIR}
-
-            iniuncomment ${swift_node_config} DEFAULT devices
-            iniset ${swift_node_config} DEFAULT devices ${node_path}
-
-            iniuncomment ${swift_node_config} DEFAULT log_facility
-            iniset ${swift_node_config} DEFAULT log_facility LOG_LOCAL${log_facility}
-
-            iniuncomment ${swift_node_config} DEFAULT mount_check
-            iniset ${swift_node_config} DEFAULT mount_check false
-
-            iniuncomment ${swift_node_config} ${server_type}-replicator vm_test_mode
-            iniset ${swift_node_config} ${server_type}-replicator vm_test_mode yes
-
-            bind_port=$(( ${bind_port} + 10 ))
-            log_facility=$(( ${log_facility} + 1 ))
-        done
-    }
-    generate_swift_configuration object 6010 2
-    generate_swift_configuration container 6011 2
-    generate_swift_configuration account 6012 2
-
-    # Specific configuration for swift for rsyslog. See
-    # ``/etc/rsyslog.d/10-swift.conf`` for more info.
-    swift_log_dir=${SWIFT_DATA_DIR}/logs
-    rm -rf ${swift_log_dir}
-    mkdir -p ${swift_log_dir}/hourly
-    sudo chown -R $USER:adm ${swift_log_dir}
-    sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
-        tee /etc/rsyslog.d/10-swift.conf
-    restart_service rsyslog
-
-    # This is where we create three different rings for swift with
-    # different object servers binding on different ports.
-    pushd ${SWIFT_CONFIG_DIR} >/dev/null && {
-
-        rm -f *.builder *.ring.gz backups/*.builder backups/*.ring.gz
-
-        port_number=6010
-        swift-ring-builder object.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
-        for x in $(seq ${SWIFT_REPLICAS}); do
-            swift-ring-builder object.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
-            port_number=$[port_number + 10]
-        done
-        swift-ring-builder object.builder rebalance
-
-        port_number=6011
-        swift-ring-builder container.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
-        for x in $(seq ${SWIFT_REPLICAS}); do
-            swift-ring-builder container.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
-            port_number=$[port_number + 10]
-        done
-        swift-ring-builder container.builder rebalance
-
-        port_number=6012
-        swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
-        for x in $(seq ${SWIFT_REPLICAS}); do
-            swift-ring-builder account.builder add z${x}-127.0.0.1:${port_number}/sdb1 1
-            port_number=$[port_number + 10]
-        done
-        swift-ring-builder account.builder rebalance
-
-    } && popd >/dev/null
-
-   # Start rsync
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        sudo /etc/init.d/rsync restart || :
-    else
-        sudo systemctl start xinetd.service
-    fi
-
-   # First spawn all the swift services then kill the
-   # proxy service so we can run it in foreground in screen.
-   # ``swift-init ... {stop|restart}`` exits with '1' if no servers are running,
-   # ignore it just in case
-   swift-init all restart || true
-   swift-init proxy stop || true
-
-   unset s swift_hash swift_auth_server
+    init_swift
 fi
 
 
@@ -1802,6 +1519,12 @@ fi
 
 # Only run the services specified in ``ENABLED_SERVICES``
 
+# Launch Swift Services
+if is_service_enabled swift; then
+    echo_summary "Starting Swift"
+    start_swift
+fi
+
 # Launch the Glance services
 if is_service_enabled g-api g-reg; then
     echo_summary "Starting Glance"
@@ -1904,8 +1627,6 @@ if is_service_enabled ceilometer; then
     echo_summary "Starting Ceilometer"
     start_ceilometer
 fi
-
-screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
 
 # Starting the nova-objectstore only if swift3 service is not enabled.
 # Swift will act as s3 objectstore.
