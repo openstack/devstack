@@ -24,6 +24,9 @@ set +o xtrace
 # Defaults
 # --------
 
+# set up default driver
+CINDER_DRIVER=${CINDER_DRIVER:-default}
+
 # set up default directories
 CINDER_DIR=$DEST/cinder
 CINDERCLIENT_DIR=$DEST/python-cinderclient
@@ -144,6 +147,19 @@ function configure_cinder() {
         iniset $CINDER_CONF DEFAULT logging_default_format_string "%(asctime)s %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
         iniset $CINDER_CONF DEFAULT logging_debug_format_suffix "[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
         iniset $CINDER_CONF DEFAULT logging_exception_prefix "%(color)s%(asctime)s TRACE %(name)s [01;35m%(instance)s[00m"
+    fi
+
+    if [ "$CINDER_DRIVER" == "XenAPINFS" ]; then
+        (
+            set -u
+            iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.xenapi_sm.XenAPINFSDriver"
+            iniset $CINDER_CONF DEFAULT xenapi_connection_url "$CINDER_XENAPI_CONNECTION_URL"
+            iniset $CINDER_CONF DEFAULT xenapi_connection_username "$CINDER_XENAPI_CONNECTION_USERNAME"
+            iniset $CINDER_CONF DEFAULT xenapi_connection_password "$CINDER_XENAPI_CONNECTION_PASSWORD"
+            iniset $CINDER_CONF DEFAULT xenapi_nfs_server "$CINDER_XENAPI_NFS_SERVER"
+            iniset $CINDER_CONF DEFAULT xenapi_nfs_serverpath "$CINDER_XENAPI_NFS_SERVERPATH"
+        )
+        [ $? -ne 0 ] && exit 1
     fi
 }
 
