@@ -423,6 +423,7 @@ function start_nova() {
     # The group **libvirtd** is added to the current user in this script.
     # Use 'sg' to execute nova-compute as a member of the **libvirtd** group.
     # ``screen_it`` checks ``is_service_enabled``, it is not needed here
+    screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor"
     screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_BIN_DIR/nova-compute"
     screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
     screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network"
@@ -430,7 +431,6 @@ function start_nova() {
     screen_it n-novnc "cd $NOVNC_DIR && ./utils/nova-novncproxy --config-file $NOVA_CONF --web ."
     screen_it n-xvnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-xvpvncproxy --config-file $NOVA_CONF"
     screen_it n-cauth "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-consoleauth"
-    screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor"
 }
 
 # stop_nova() - Stop running processes (non-screen)
