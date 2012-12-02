@@ -185,7 +185,7 @@ SSH_TIMEOUT=4
 # Whitebox testing configuration for Compute...
 COMPUTE_WHITEBOX_ENABLED=True
 COMPUTE_SOURCE_DIR=$NOVA_SOURCE_DIR
-COMPUTE_BIN_DIR=/usr/bin/nova
+COMPUTE_BIN_DIR=$NOVA_BIN_DIR
 COMPUTE_CONFIG_PATH=/etc/nova/nova.conf
 # TODO(jaypipes): Create the key file here... right now, no whitebox
 # tests actually use a key.
