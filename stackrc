@@ -97,7 +97,7 @@ TEMPEST_REPO=${GIT_BASE}/openstack/tempest.git
 TEMPEST_BRANCH=master
 
 # heat service
-HEAT_REPO=${GIT_BASE}/heat-api/heat.git
+HEAT_REPO=${GIT_BASE}/openstack/heat.git
 HEAT_BRANCH=master
 
 # python heat client library
