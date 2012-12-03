@@ -196,8 +196,8 @@ if [[ $EUID -eq 0 ]]; then
         > /etc/sudoers.d/50_stack_sh )
 
     echo "Copying files to stack user"
-    STACK_DIR="$DEST/${PWD##*/}"
-    cp -r -f -T "$PWD" "$STACK_DIR"
+    STACK_DIR="$DEST/${TOP_DIR##*/}"
+    cp -r -f -T "$TOP_DIR" "$STACK_DIR"
     chown -R stack "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
         exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
