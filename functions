@@ -349,8 +349,7 @@ function is_suse {
         GetOSVersion
     fi
 
-    [[ "$os_VENDOR" = "openSUSE" || "$os_VENDOR" = "SUSE LINUX" ]]
-    return $?
+    [ "$os_VENDOR" = "openSUSE" ] || [ "$os_VENDOR" = "SUSE LINUX" ]
 }
 
 
@@ -646,7 +645,7 @@ function pip_install {
         SUDO_PIP="env"
     else
         SUDO_PIP="sudo"
-        if [[ "$os_PACKAGE" = "deb" || is_suse ]]; then
+        if [[ "$os_PACKAGE" = "deb" ]] || is_suse; then
             CMD_PIP=/usr/bin/pip
         else
             CMD_PIP=/usr/bin/pip-python
@@ -1040,7 +1039,7 @@ function get_rootwrap_location() {
         GetOSVersion
     fi
 
-    if [[ "$os_PACKAGE" = "deb" || is_suse ]]; then
+    if [[ "$os_PACKAGE" = "deb" ]] || is_suse; then
         echo "/usr/local/bin/$module-rootwrap"
     else
         echo "/usr/bin/$module-rootwrap"
@@ -1057,7 +1056,7 @@ function qpid_is_supported() {
 
     # Qpid was introduced to Ubuntu in precise, disallow it on oneiric; it is
     # not in openSUSE either right now.
-    [[ "$DISTRO" = "oneiric" || is_suse ]]
+    [[ "$DISTRO" = "oneiric" ]] || is_suse
     return $?
 }
 
