@@ -1543,7 +1543,7 @@ if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nov
     add_nova_opt "s3_affix_tenant=True"
 fi
 
-screen_it zeromq "cd $NOVA_DIR && $NOVA_DIR/bin/nova-rpc-zmq-receiver"
+screen_it zeromq "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-rpc-zmq-receiver"
 
 # Launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
