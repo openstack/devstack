@@ -15,6 +15,7 @@
 # configure_keystone
 # init_keystone
 # start_keystone
+# create_keystone_accounts
 # stop_keystone
 # cleanup_keystone
 
@@ -45,7 +46,6 @@ KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
 KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-PKI}
 
 # Set Keystone interface configuration
-KEYSTONE_API_PORT=${KEYSTONE_API_PORT:-5000}
 KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
 KEYSTONE_AUTH_PORT=${KEYSTONE_AUTH_PORT:-35357}
 KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-http}
@@ -144,6 +144,100 @@ function configure_keystone() {
 
 }
 
+# create_keystone_accounts() - Sets up common required keystone accounts
+
+# Tenant               User       Roles
+# ------------------------------------------------------------------
+# service              --         --
+# --                   --         Member
+# admin                admin      admin
+# demo                 admin      admin
+# demo                 demo       Member, anotherrole
+# invisible_to_admin   demo       Member
+
+# Migrated from keystone_data.sh
+create_keystone_accounts() {
+
+    # admin
+    ADMIN_TENANT=$(keystone tenant-create \
+        --name admin \
+        | grep " id " | get_field 2)
+    ADMIN_USER=$(keystone user-create \
+        --name admin \
+        --pass "$ADMIN_PASSWORD" \
+        --email admin@example.com \
+        | grep " id " | get_field 2)
+    ADMIN_ROLE=$(keystone role-create \
+        --name admin \
+        | grep " id " | get_field 2)
+    keystone user-role-add \
+        --user_id $ADMIN_USER \
+        --role_id $ADMIN_ROLE \
+        --tenant_id $ADMIN_TENANT
+
+    # service
+    SERVICE_TENANT=$(keystone tenant-create \
+        --name $SERVICE_TENANT_NAME \
+        | grep " id " | get_field 2)
+
+    # The Member role is used by Horizon and Swift so we need to keep it:
+    MEMBER_ROLE=$(keystone role-create --name=Member | grep " id " | get_field 2)
+    # ANOTHER_ROLE demonstrates that an arbitrary role may be created and used
+    # TODO(sleepsonthefloor): show how this can be used for rbac in the future!
+    ANOTHER_ROLE=$(keystone role-create --name=anotherrole | grep " id " | get_field 2)
+
+    # invisible tenant - admin can't see this one
+    INVIS_TENANT=$(keystone tenant-create --name=invisible_to_admin | grep " id " | get_field 2)
+
+    # demo
+    DEMO_TENANT=$(keystone tenant-create \
+        --name=demo \
+        | grep " id " | get_field 2)
+    DEMO_USER=$(keystone user-create \
+        --name demo \
+        --pass "$ADMIN_PASSWORD" \
+        --email demo@example.com \
+        | grep " id " | get_field 2)
+    keystone user-role-add --user_id $DEMO_USER --role_id $MEMBER_ROLE --tenant_id $DEMO_TENANT
+    keystone user-role-add --user_id $ADMIN_USER --role_id $ADMIN_ROLE --tenant_id $DEMO_TENANT
+    keystone user-role-add --user_id $DEMO_USER --role_id $ANOTHER_ROLE --tenant_id $DEMO_TENANT
+    keystone user-role-add --user_id $DEMO_USER --role_id $MEMBER_ROLE --tenant_id $INVIS_TENANT
+
+    # Keystone
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        KEYSTONE_SERVICE=$(keystone service-create \
+            --name keystone \
+            --type identity \
+            --description "Keystone Identity Service" \
+            | grep " id " | get_field 2)
+        keystone endpoint-create \
+            --region RegionOne \
+            --service_id $KEYSTONE_SERVICE \
+            --publicurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:\$(public_port)s/v2.0" \
+            --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:\$(admin_port)s/v2.0" \
+            --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:\$(public_port)s/v2.0"
+    fi
+
+    # TODO(dtroyer): This is part of a series of changes...remove these when
+    #                complete if they are really unused
+#    KEYSTONEADMIN_ROLE=$(keystone role-create \
+#        --name KeystoneAdmin \
+#        | grep " id " | get_field 2)
+#    KEYSTONESERVICE_ROLE=$(keystone role-create \
+#        --name KeystoneServiceAdmin \
+#        | grep " id " | get_field 2)
+
+    # TODO(termie): these two might be dubious
+#    keystone user-role-add \
+#        --user_id $ADMIN_USER \
+#        --role_id $KEYSTONEADMIN_ROLE \
+#        --tenant_id $ADMIN_TENANT
+#    keystone user-role-add \
+#        --user_id $ADMIN_USER \
+#        --role_id $KEYSTONESERVICE_ROLE \
+#        --tenant_id $ADMIN_TENANT
+}
+
 # init_keystone() - Initialize databases, etc.
 function init_keystone() {
     # (Re)create keystone database
@@ -176,6 +270,11 @@ function install_keystone() {
 function start_keystone() {
     # Start Keystone in a screen window
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
+    echo "Waiting for keystone to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ >/dev/null; do sleep 1; done"; then
+      echo "keystone did not start"
+      exit 1
+    fi
 }
 
 # stop_keystone() - Stop running processes
