@@ -341,6 +341,19 @@ function GetDistro() {
 }
 
 
+# Determine if current distribution is an Ubuntu-based distribution.
+# It will also detect non-Ubuntu but Debian-based distros; this is not an issue
+# since Debian and Ubuntu should be compatible.
+# is_ubuntu
+function is_ubuntu {
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+
+    [ "$os_PACKAGE" = "deb" ]
+}
+
+
 # Determine if current distribution is a SUSE-based distribution
 # (openSUSE, SLE).
 # is_suse
@@ -580,11 +593,7 @@ function disable_negated_services() {
 # Distro-agnostic package installer
 # install_package package [package ...]
 function install_package() {
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         [[ "$NO_UPDATE_REPOS" = "True" ]] || apt_get update
         NO_UPDATE_REPOS=True
 
@@ -609,6 +618,7 @@ function is_package_installed() {
     if [[ -z "$os_PACKAGE" ]]; then
         GetOSVersion
     fi
+
     if [[ "$os_PACKAGE" = "deb" ]]; then
         dpkg -l "$@" > /dev/null
         return $?
@@ -661,10 +671,7 @@ function pip_install {
 # Service wrapper to restart services
 # restart_service service-name
 function restart_service() {
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         sudo /usr/sbin/service $1 restart
     else
         sudo /sbin/service $1 restart
@@ -746,10 +753,7 @@ function setup_develop() {
 # Service wrapper to start services
 # start_service service-name
 function start_service() {
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         sudo /usr/sbin/service $1 start
     else
         sudo /sbin/service $1 start
@@ -760,10 +764,7 @@ function start_service() {
 # Service wrapper to stop services
 # stop_service service-name
 function stop_service() {
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         sudo /usr/sbin/service $1 stop
     else
         sudo /sbin/service $1 stop
@@ -1031,11 +1032,7 @@ function add_user_to_group() {
 function get_rootwrap_location() {
     local module=$1
 
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-
-    if [[ "$os_PACKAGE" = "deb" ]] || is_suse; then
+    if is_ubuntu || is_suse; then
         echo "/usr/local/bin/$module-rootwrap"
     else
         echo "/usr/bin/$module-rootwrap"
@@ -1045,11 +1042,7 @@ function get_rootwrap_location() {
 # Get the path to the pip command.
 # get_pip_command
 function get_pip_command() {
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-
-    if [[ "$os_PACKAGE" = "deb" ]] || is_suse; then
+    if is_ubuntu || is_suse; then
         echo "/usr/bin/pip"
     else
         echo "/usr/bin/pip-python"

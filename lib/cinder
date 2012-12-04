@@ -237,7 +237,7 @@ function _configure_tgt_for_config_d() {
 # start_cinder() - Start running processes, including screen
 function start_cinder() {
     if is_service_enabled c-vol; then
-        if [[ "$os_PACKAGE" = "deb" ]]; then
+        if is_ubuntu; then
             _configure_tgt_for_config_d
             if [[ ! -f /etc/tgt/conf.d/cinder.conf ]]; then
                echo "include $CINDER_STATE_PATH/volumes/*" | sudo tee /etc/tgt/conf.d/cinder.conf

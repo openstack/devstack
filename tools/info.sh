@@ -88,7 +88,7 @@ done
 # - We are going to check packages only for the services needed.
 # - We are parsing the packages files and detecting metadatas.
 
-if [[ "$os_PACKAGE" = "deb" ]]; then
+if is_ubuntu; then
     PKG_DIR=$FILES/apts
 else
     PKG_DIR=$FILES/rpms

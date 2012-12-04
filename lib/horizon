@@ -71,7 +71,7 @@ function init_horizon() {
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
 
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         APACHE_NAME=apache2
         APACHE_CONF=sites-available/horizon
         # Clean up the old config name
@@ -110,7 +110,7 @@ function init_horizon() {
 # install_horizon() - Collect source and prepare
 function install_horizon() {
     # Apache installation, because we mark it NOPRIME
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         # Install apache2, which is NOPRIME'd
         install_package apache2 libapache2-mod-wsgi
     elif is_suse; then
@@ -121,7 +121,7 @@ function install_horizon() {
     fi
 
     # NOTE(sdague) quantal changed the name of the node binary
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         if [[ ! -e "/usr/bin/node" ]]; then
             install_package nodejs-legacy
         fi
