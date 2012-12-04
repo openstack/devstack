@@ -52,7 +52,7 @@ function install_tempest() {
 
     # Tempest doesn't satisfy its dependencies on its own, so
     # install them here instead.
-    sudo pip install -r $TEMPEST_DIR/tools/pip-requires
+    pip_install -r $TEMPEST_DIR/tools/pip-requires
 }
 
 
