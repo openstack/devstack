@@ -1,0 +1,12 @@
+gcc
+libxml2-devel
+python-PasteDeploy
+python-Routes
+python-SQLAlchemy
+python-argparse
+python-devel
+python-eventlet
+python-greenlet
+python-iso8601
+python-wsgiref
+python-xattr

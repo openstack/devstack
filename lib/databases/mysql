@@ -84,7 +84,11 @@ EOF
         chmod 0600 $HOME/.my.cnf
     fi
     # Install mysql-server
-    install_package mysql-server
+    if is_suse; then
+        install_package mysql-community-server
+    else
+        install_package mysql-server
+    fi
 }
 
 function database_connection_url_mysql {
