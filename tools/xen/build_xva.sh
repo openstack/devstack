@@ -66,7 +66,7 @@ cat <<EOF >$STAGING_DIR/etc/rc.local
 # network restart required for getting the right gateway
 /etc/init.d/networking restart
 chown -R stack /opt/stack
-su -c "/opt/stack/run.sh > /opt/stack/run.sh.log 2>&1" stack
+su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" stack
 exit 0
 EOF
 
