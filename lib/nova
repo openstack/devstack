@@ -231,10 +231,13 @@ EOF
         if is_ubuntu; then
             LIBVIRT_DAEMON=libvirt-bin
         else
-            # http://wiki.libvirt.org/page/SSHPolicyKitSetup
-            if ! getent group libvirtd >/dev/null; then
-                sudo groupadd libvirtd
-            fi
+            LIBVIRT_DAEMON=libvirtd
+        fi
+
+        # For distributions using polkit to authorize access to libvirt,
+        # configure polkit accordingly.
+        # Based on http://wiki.libvirt.org/page/SSHPolicyKitSetup
+        if is_fedora; then
             sudo bash -c 'cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
 [libvirt Management Access]
 Identity=unix-group:libvirtd
@@ -243,11 +246,24 @@ ResultAny=yes
 ResultInactive=yes
 ResultActive=yes
 EOF'
-            LIBVIRT_DAEMON=libvirtd
+        elif is_suse; then
+            # Work around the fact that polkit-default-privs overrules pklas
+            # with 'unix-group:$group'.
+            sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
+[libvirt Management Access]
+Identity=unix-user:$USER
+Action=org.libvirt.unix.manage
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+EOF"
         fi
 
         # The user that nova runs as needs to be member of **libvirtd** group otherwise
         # nova-compute will be unable to use libvirt.
+        if ! getent group libvirtd >/dev/null; then
+            sudo groupadd libvirtd
+        fi
         add_user_to_group `whoami` libvirtd
 
         # libvirt detects various settings on startup, as we potentially changed
