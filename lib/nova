@@ -232,7 +232,7 @@ EOF
             LIBVIRT_DAEMON=libvirt-bin
         else
             # http://wiki.libvirt.org/page/SSHPolicyKitSetup
-            if ! grep ^libvirtd: /etc/group >/dev/null; then
+            if ! getent group libvirtd >/dev/null; then
                 sudo groupadd libvirtd
             fi
             sudo bash -c 'cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
