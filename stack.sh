@@ -677,7 +677,7 @@ set -o xtrace
 
 # Install package requirements
 echo_summary "Installing package prerequisites"
-if [[ "$os_PACKAGE" = "deb" ]]; then
+if is_ubuntu; then
     install_package $(get_packages $FILES/apts)
 elif is_suse; then
     install_package $(get_packages $FILES/rpms-suse)
@@ -726,7 +726,7 @@ if is_service_enabled q-agt; then
     if is_quantum_ovs_base_plugin "$Q_PLUGIN"; then
         # Install deps
         # FIXME add to ``files/apts/quantum``, but don't install if not needed!
-        if [[ "$os_PACKAGE" = "deb" ]]; then
+        if is_ubuntu; then
             kernel_version=`cat /proc/version | cut -d " " -f3`
             install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
         else

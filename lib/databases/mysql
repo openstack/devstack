@@ -20,7 +20,7 @@ function recreate_database_mysql {
 function configure_database_mysql {
     echo_summary "Configuring and starting MySQL"
 
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         MY_CONF=/etc/mysql/my.cnf
         MYSQL=mysql
     else
@@ -61,7 +61,7 @@ default-storage-engine = InnoDB" $MY_CONF
 }
 
 function install_database_mysql {
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         # Seed configuration with mysql password so that apt-get install doesn't
         # prompt us for a password upon install.
         cat <<MYSQL_PRESEED | sudo debconf-set-selections

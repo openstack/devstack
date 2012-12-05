@@ -65,7 +65,7 @@ if is_service_enabled cinder; then
         # If tgt driver isn't running this won't work obviously
         # So check the response and restart if need be
         echo "tgtd seems to be in a bad state, restarting..."
-        if [[ "$os_PACKAGE" = "deb" ]]; then
+        if is_ubuntu; then
             restart_service tgt
         else
             restart_service tgtd
@@ -85,7 +85,7 @@ if is_service_enabled cinder; then
         sudo rm -rf $CINDER_STATE_PATH/volumes/*
     fi
 
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         stop_service tgt
     else
         stop_service tgtd

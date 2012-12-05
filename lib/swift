@@ -159,7 +159,7 @@ function configure_swift() {
         s,%SWIFT_DATA_DIR%,$SWIFT_DATA_DIR,;
     " $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
     # rsyncd.conf just prepared for 4 nodes
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
     else
         sudo sed -i '/disable *= *yes/ { s/yes/no/ }' /etc/xinetd.d/rsync
@@ -341,7 +341,7 @@ function start_swift() {
     # (re)start rsyslog
     restart_service rsyslog
     # Start rsync
-    if [[ "$os_PACKAGE" = "deb" ]]; then
+    if is_ubuntu; then
         sudo /etc/init.d/rsync restart || :
     else
         sudo systemctl start xinetd.service
