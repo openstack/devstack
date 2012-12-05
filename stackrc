@@ -32,7 +32,7 @@ NOVA_ENABLED_APIS=ec2,osapi_compute,osapi_volume,metadata
 GIT_BASE=https://github.com
 
 # metering service
-CEILOMETER_REPO=https://github.com/stackforge/ceilometer.git
+CEILOMETER_REPO=${GIT_BASE}/openstack/ceilometer.git
 CEILOMETER_BRANCH=master
 
 # volume service
