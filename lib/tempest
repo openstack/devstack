@@ -2,22 +2,35 @@
 
 # Dependencies:
 # ``functions`` file
-# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# ``lib/nova`` service is runing
 # <list other global vars that are assumed to be defined>
-
+# - DEST
+# - ADMIN_PASSWORD
+# - OS_USERNAME
+# - DEFAULT_IMAGE_NAME
+# - S3_SERVICE_PORT
+# - SERVICE_HOST
+# - BASE_SQL_CONN ``lib/database`` declares
+# Optional Dependencies:
+# IDENTITY_*
+# ALT_* (similar vars exists in keystone_data.sh)
+# IMAGE_*
+# LIVE_MIGRATION_AVAILABLE
+# DEFAULT_INSTANCE_TYPE
+# DEFAULT_INSTANCE_USER
+# USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_XXXX
-# configure_XXXX
-# init_XXXX
-# start_XXXX
-# stop_XXXX
-# cleanup_XXXX
+# install_tempest
+# configure_tempest
+# init_tempest
+## start_tempest
+## stop_tempest
+## cleanup_tempest
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
-
 
 # Defaults
 # --------
@@ -25,8 +38,13 @@ set +o xtrace
 # <define global variables here that belong to this project>
 
 # Set up default directories
+NOVA_SOURCE_DIR=$DEST/nova
 TEMPEST_DIR=$DEST/tempest
-TEMPEST_CONF_DIR=$DEST/tempest/etc
+TEMPEST_CONF_DIR=$TEMPEST_DIR/etc
+TEMPEST_CONF=$TEMPEST_CONF_DIR/tempest.conf
+
+BUILD_INTERVAL=3
+BUILD_TIMEOUT=400
 
 # Entry Points
 # ------------
@@ -34,15 +52,168 @@ TEMPEST_CONF_DIR=$DEST/tempest/etc
 
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest() {
+    local IMAGE_LINES
+    local IMAGES
+    local NUM_IMAGES
+    local IMAGE_UUID
+    local IMAGE_UUID_ALT
+    local errexit
+
+    #TODO(afazekas):
     # sudo python setup.py deploy
-    # iniset $tempest_CONF ...
-    # This function intentionally left blank
-    #
-    # TODO(sdague) actually move the guts of configure tempest
-    # into this function
-    cd tools
-    ./configure_tempest.sh
-    cd ..
+
+    # This function exits on an error so that errors don't compound and you see
+    # only the first error that occured.
+    errexit=$(set +o | grep errexit)
+    set -o errexit
+
+    #Save IFS
+    ifs=$IFS
+
+    # Glance should already contain images to be used in tempest
+    # testing. Here we simply look for images stored in Glance
+    # and set the appropriate variables for use in the tempest config
+    # We ignore ramdisk and kernel images, look for the default image
+    # DEFAULT_IMAGE_NAME. If not found, we set the IMAGE_UUID to the
+    # first image returned and set IMAGE_UUID_ALT to the second,
+    # if there is more than one returned...
+    # ... Also ensure we only take active images, so we don't get snapshots in process
+    IMAGE_LINES=`glance image-list`
+    IFS=$'\n\r'
+    IMAGES=""
+    for line in $IMAGE_LINES; do
+        if [ -z $DEFAULT_IMAGE_NAME ]; then
+            IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | cut -d' ' -f2`"
+        else
+            IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | grep "$DEFAULT_IMAGE_NAME" | cut -d' ' -f2`"
+        fi
+    done
+    # Create array of image UUIDs...
+    IFS=" "
+    IMAGES=($IMAGES)
+    NUM_IMAGES=${#IMAGES[*]}
+    echo "Found $NUM_IMAGES images"
+    if [[ $NUM_IMAGES -eq 0 ]]; then
+        echo "Found no valid images to use!"
+        exit 1
+    fi
+    IMAGE_UUID=${IMAGES[0]}
+    IMAGE_UUID_ALT=$IMAGE_UUID
+    if [[ $NUM_IMAGES -gt 1 ]]; then
+        IMAGE_UUID_ALT=${IMAGES[1]}
+    fi
+
+    # Create tempest.conf from tempest.conf.sample
+    # copy every time, because the image UUIDS are going to change
+    cp $TEMPEST_CONF.sample $TEMPEST_CONF
+
+    IDENTITY_USE_SSL=${IDENTITY_USE_SSL:-False}
+    IDENTITY_HOST=${IDENTITY_HOST:-127.0.0.1}
+    IDENTITY_PORT=${IDENTITY_PORT:-5000}
+    # TODO(jaypipes): This is dumb and needs to be removed
+    # from the Tempest configuration file entirely...
+    IDENTITY_PATH=${IDENTITY_PATH:-tokens}
+
+    PASSWORD=${ADMIN_PASSWORD:-secrete}
+
+    # See files/keystone_data.sh where alt_demo user
+    # and tenant are set up...
+    ALT_USERNAME=${ALT_USERNAME:-alt_demo}
+    ALT_TENANT_NAME=${ALT_TENANT_NAME:-alt_demo}
+
+    # Check Nova for existing flavors and, if set, look for the
+    # DEFAULT_INSTANCE_TYPE and use that. Otherwise, just use the first flavor.
+    FLAVOR_LINES=`nova flavor-list`
+    IFS="$(echo -e "\n\r")"
+    FLAVORS=""
+    for line in $FLAVOR_LINES; do
+        if [ -z $DEFAULT_INSTANCE_TYPE ]; then
+            FLAVORS="$FLAVORS `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
+        else
+            FLAVORS="$FLAVORS `echo $line | grep -v "^\(|\s*ID\|+--\)" | grep "$DEFAULT_INSTANCE_TYPE" | cut -d' ' -f2`"
+    fi
+    done
+
+    IFS=" "
+    FLAVORS=($FLAVORS)
+    NUM_FLAVORS=${#FLAVORS[*]}
+    echo "Found $NUM_FLAVORS flavors"
+    if [[ $NUM_FLAVORS -eq 0 ]]; then
+        echo "Found no valid flavors to use!"
+        exit 1
+    fi
+    FLAVOR_REF=${FLAVORS[0]}
+    FLAVOR_REF_ALT=$FLAVOR_REF
+    if [[ $NUM_FLAVORS -gt 1 ]]; then
+        FLAVOR_REF_ALT=${FLAVORS[1]}
+    fi
+
+    # Timeouts
+    iniset $TEMPEST_CONF compute build_timeout $BUILD_TIMEOUT
+    iniset $TEMPEST_CONF volume build_timeout $BUILD_TIMEOUT
+    iniset $TEMPEST_CONF boto build_timeout $BUILD_TIMEOUT
+    iniset $TEMPEST_CONF compute build_interval $BUILD_INTERVAL
+    iniset $TEMPEST_CONF volume build_interval $BUILD_INTERVAL
+    iniset $TEMPEST_CONF boto build_interval $BUILD_INTERVAL
+    iniset $TEMPEST_CONF boto http_socket_timeout 5
+
+    iniset $TEMPEST_CONF identity use_ssl $IDENTITY_USE_SSL
+    iniset $TEMPEST_CONF identity host $IDENTITY_HOST
+    iniset $TEMPEST_CONF identity port $IDENTITY_PORT
+    iniset $TEMPEST_CONF identity path $IDENTITY_PATH
+
+    iniset $TEMPEST_CONF compute password "$PASSWORD"
+    iniset $TEMPEST_CONF compute alt_username $ALT_USERNAME
+    iniset $TEMPEST_CONF compute alt_password "$PASSWORD"
+    iniset $TEMPEST_CONF compute alt_tenant_name $ALT_TENANT_NAME
+    iniset $TEMPEST_CONF compute resize_available False
+    iniset $TEMPEST_CONF compute change_password_available False
+    iniset $TEMPEST_CONF compute compute_log_level ERROR
+    #Skip until #1074039 is fixed
+    iniset $TEMPEST_CONF compute run_ssh False
+    iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-$OS_USERNAME}
+    iniset $TEMPEST_CONF compute network_for_ssh private
+    iniset $TEMPEST_CONF compute ip_version_for_ssh 4
+    iniset $TEMPEST_CONF compute ssh_timeout 4
+    iniset $TEMPEST_CONF compute image_ref $IMAGE_UUID
+    iniset $TEMPEST_CONF compute image_ref_alt $IMAGE_UUID_ALT
+    iniset $TEMPEST_CONF compute flavor_ref $FLAVOR_REF
+    iniset $TEMPEST_CONF compute flavor_ref_alt $FLAVOR_REF_ALT
+    iniset $TEMPEST_CONF compute source_dir $NOVA_SOURCE_DIR
+    iniset $TEMPEST_CONF compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
+    iniset $TEMPEST_CONF compute use_block_migration_for_live_migration	${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
+    # Inherited behavior, might be wrong
+    iniset $TEMPEST_CONF compute bin_dir $NOVA_BIN_DIR
+    # TODO(jaypipes): Create the key file here... right now, no whitebox
+    # tests actually use a key.
+    iniset $TEMPEST_CONF compute path_to_private_key $TEMPEST_DIR/id_rsa
+    iniset $TEMPEST_CONF compute db_uri $BASE_SQL_CONN/nova
+
+    # image
+    iniset $TEMPEST_CONF image host ${IMAGE_HOST:-127.0.0.1}
+    iniset $TEMPEST_CONF image port ${IMAGE_PORT:-9292}
+    iniset $TEMPEST_CONF image password "$PASSWORD"
+
+    # identity-admin
+    iniset $TEMPEST_CONF "identity-admin" password "$PASSWORD"
+
+    # compute admin
+    iniset $TEMPEST_CONF "compute-admin" password "$PASSWORD"
+
+    # network
+    iniset $TEMPEST_CONF network api_version 2.0
+
+    #boto
+    iniset $TEMPEST_CONF boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
+    iniset $TEMPEST_CONF boto s3_url "http://$SERVICE_HOST:${S3_SERVICE_PORT:-3333}"
+
+    echo "Created tempest configuration file:"
+    cat $TEMPEST_CONF
+
+    # Restore IFS
+    IFS=$ifs
+    #Restore errexit
+    $errexit
 }
 
 
@@ -54,7 +225,6 @@ function install_tempest() {
     # install them here instead.
     pip_install -r $TEMPEST_DIR/tools/pip-requires
 }
-
 
 # Restore xtrace
 $XTRACE

@@ -1713,7 +1713,11 @@ fi
 # Configure Tempest last to ensure that the runtime configuration of
 # the various OpenStack services can be queried.
 if is_service_enabled tempest; then
+    echo_summary "Configuring Tempest"
     configure_tempest
+    echo '**************************************************'
+    echo_summary "Finished Configuring Tempest"
+    echo '**************************************************'
 fi
 
 
