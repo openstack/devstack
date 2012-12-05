@@ -7,6 +7,8 @@ iptables
 iputils
 kpartx
 kvm
+# qemu as fallback if kvm cannot be used
+qemu
 libvirt # NOPRIME
 libvirt-python
 libxml2-python
