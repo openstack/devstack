@@ -954,6 +954,8 @@ sleep 1
 # Set a reasonable status bar
 screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
+# Initialize the directory for service status check
+init_service_check
 
 # Keystone
 # --------
@@ -1726,6 +1728,8 @@ if [[ -x $TOP_DIR/local.sh ]]; then
     $TOP_DIR/local.sh
 fi
 
+# Check the status of running services
+service_check
 
 # Fin
 # ===
