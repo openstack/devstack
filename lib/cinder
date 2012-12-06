@@ -152,7 +152,7 @@ function configure_cinder() {
     if [ "$CINDER_DRIVER" == "XenAPINFS" ]; then
         (
             set -u
-            iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.xenapi_sm.XenAPINFSDriver"
+            iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.xenapi.sm.XenAPINFSDriver"
             iniset $CINDER_CONF DEFAULT xenapi_connection_url "$CINDER_XENAPI_CONNECTION_URL"
             iniset $CINDER_CONF DEFAULT xenapi_connection_username "$CINDER_XENAPI_CONNECTION_USERNAME"
             iniset $CINDER_CONF DEFAULT xenapi_connection_password "$CINDER_XENAPI_CONNECTION_PASSWORD"
