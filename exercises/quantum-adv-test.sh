@@ -58,7 +58,6 @@ is_service_enabled quantum && is_service_enabled q-agt && is_service_enabled q-d
 
 # Import quantum fucntions
 source $TOP_DIR/lib/quantum
-setup_quantum
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc
@@ -475,7 +474,6 @@ main() {
 }
 
 
-teardown_quantum
 #-------------------------------------------------------------------------------
 # Kick off script.
 #-------------------------------------------------------------------------------

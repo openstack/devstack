@@ -37,6 +37,12 @@ if [[ "$1" == "--all" ]]; then
     UNSTACK_ALL=${UNSTACK_ALL:-1}
 fi
 
+if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
+    source $TOP_DIR/openrc
+    source $TOP_DIR/lib/quantum
+    teardown_quantum
+fi
+
 # Shut down devstack's screen to get the bulk of OpenStack services in one shot
 SCREEN=$(which screen)
 if [[ -n "$SCREEN" ]]; then

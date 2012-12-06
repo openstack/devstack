@@ -5,8 +5,19 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+QUANTUM_DIR=$DEST/quantum
 export QUANTUM_TEST_CONFIG_FILE=${QUANTUM_TEST_CONFIG_FILE:-"/etc/quantum/debug.ini"}
 QUANTUM_AUTH_CACHE_DIR=${QUANTUM_AUTH_CACHE_DIR:-/var/cache/quantum}
+
+if is_service_enabled quantum; then
+    Q_CONF_FILE=/etc/quantum/quantum.conf
+    Q_RR_CONF_FILE=/etc/quantum/rootwrap.conf
+    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+        Q_RR_COMMAND="sudo"
+    else
+        Q_RR_COMMAND="sudo $QUANTUM_DIR/bin/quantum-rootwrap $Q_RR_CONF_FILE"
+    fi
+fi
 
 # Configures keystone integration for quantum service and agents
 function quantum_setup_keystone() {
@@ -74,7 +85,7 @@ function _get_probe_cmd_prefix() {
     local from_net="$1"
     net_id=`_get_net_id $from_net`
     probe_id=`quantum-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}' | head -n 1`
-    echo "sudo ip netns exec qprobe-$probe_id"
+    echo "$Q_RR_COMMAND ip netns exec qprobe-$probe_id"
 }
 
 function delete_probe() {
@@ -92,9 +103,9 @@ function _ping_check_quantum() {
     local check_command=""
     probe_cmd=`_get_probe_cmd_prefix $from_net`
     if [[ "$expected" = "True" ]]; then
-        check_command="while ! $probe_cmd ping -c1 -w1 $ip; do sleep 1; done"
+        check_command="while ! $probe_cmd ping -w 1 -c 1 $ip; do sleep 1; done"
     else
-        check_command="while $probe_cmd ping -c1 -w1 $ip; do sleep 1; done"
+        check_command="while $probe_cmd ping -w 1 -c 1 $ip; do sleep 1; done"
     fi
     if ! timeout $timeout_sec sh -c "$check_command"; then
         if [[ "$expected" = "True" ]]; then

@@ -72,6 +72,3 @@ export COMPUTE_API_VERSION=${COMPUTE_API_VERSION:-$NOVA_VERSION}
 # set log level to DEBUG (helps debug issues)
 # export KEYSTONECLIENT_DEBUG=1
 # export NOVACLIENT_DEBUG=1
-
-# set quantum debug command
-export QUANTUM_TEST_CONFIG_FILE=${QUANTUM_TEST_CONFIG_FILE:-"/etc/quantum/debug.ini"}
