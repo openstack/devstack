@@ -9,12 +9,12 @@
 
 # stack.sh
 # ---------
-# install_XXX
-# configure_XXX
-# init_XXX
-# start_XXX
-# stop_XXX
-# cleanup_XXX
+# install_cinder
+# configure_cinder
+# init_cinder
+# start_cinder
+# stop_cinder
+# cleanup_cinder
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -229,7 +229,7 @@ function install_cinder() {
 # apply config.d approach (e.g. Oneiric does not have this)
 function _configure_tgt_for_config_d() {
     if [[ ! -d /etc/tgt/conf.d/ ]]; then
-        sudo mkdir /etc/tgt/conf.d
+        sudo mkdir -p /etc/tgt/conf.d
         echo "include /etc/tgt/conf.d/*.conf" | sudo tee -a /etc/tgt/targets.conf
     fi
 }
@@ -237,11 +237,11 @@ function _configure_tgt_for_config_d() {
 # start_cinder() - Start running processes, including screen
 function start_cinder() {
     if is_service_enabled c-vol; then
+        _configure_tgt_for_config_d
+        if [[ ! -f /etc/tgt/conf.d/stack.conf ]]; then
+            echo "include $CINDER_STATE_PATH/volumes/*" | sudo tee /etc/tgt/conf.d/stack.conf
+        fi
         if is_ubuntu; then
-            _configure_tgt_for_config_d
-            if [[ ! -f /etc/tgt/conf.d/cinder.conf ]]; then
-               echo "include $CINDER_STATE_PATH/volumes/*" | sudo tee /etc/tgt/conf.d/cinder.conf
-            fi
             # tgt in oneiric doesn't restart properly if tgtd isn't running
             # do it in two steps
             sudo stop tgt || true
