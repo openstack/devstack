@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# **warm_apts_and_pips_for_uec.sh**
+# **warm_apts_for_uec.sh**
 
 # Echo commands
 set -o xtrace
@@ -48,8 +48,6 @@ cp /etc/resolv.conf $STAGING_DIR/etc/resolv.conf
 chroot $STAGING_DIR apt-get update
 chroot $STAGING_DIR apt-get install -y --download-only `cat files/apts/* | grep NOPRIME | cut -d\# -f1`
 chroot $STAGING_DIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1` || true
-mkdir -p $STAGING_DIR/var/cache/pip
-PIP_DOWNLOAD_CACHE=/var/cache/pip chroot $STAGING_DIR pip install `cat files/pips/*` || true
 
 # Unmount
 umount $STAGING_DIR

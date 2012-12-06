@@ -108,7 +108,7 @@ function map_nbd {
     echo $NBD
 }
 
-# Prime image with as many apt/pips as we can
+# Prime image with as many apt as we can
 DEV_FILE=$CACHEDIR/$DIST_NAME-dev.img
 DEV_FILE_TMP=`mktemp $DEV_FILE.XXXXXX`
 if [ ! -r $DEV_FILE ]; then
@@ -121,7 +121,6 @@ if [ ! -r $DEV_FILE ]; then
 
     chroot $MNTDIR apt-get install -y --download-only `cat files/apts/* | grep NOPRIME | cut -d\# -f1`
     chroot $MNTDIR apt-get install -y --force-yes `cat files/apts/* | grep -v NOPRIME | cut -d\# -f1`
-    chroot $MNTDIR pip install `cat files/pips/*`
 
     # Create a stack user that is a member of the libvirtd group so that stack
     # is able to interact with libvirt.
