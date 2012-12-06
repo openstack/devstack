@@ -15,9 +15,43 @@ if is_service_enabled quantum; then
     if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
         Q_RR_COMMAND="sudo"
     else
-        Q_RR_COMMAND="sudo $QUANTUM_DIR/bin/quantum-rootwrap $Q_RR_CONF_FILE"
+        QUANTUM_ROOTWRAP=$(get_rootwrap_location quantum)
+        Q_RR_COMMAND="sudo $QUANTUM_ROOTWRAP $Q_RR_CONF_FILE"
     fi
 fi
+
+# configure_quantum_rootwrap() - configure Quantum's rootwrap
+function configure_quantum_rootwrap() {
+    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+        return
+    fi
+    # Deploy new rootwrap filters files (owned by root).
+    # Wipe any existing rootwrap.d files first
+    Q_CONF_ROOTWRAP_D=/etc/quantum/rootwrap.d
+    if [[ -d $Q_CONF_ROOTWRAP_D ]]; then
+        sudo rm -rf $Q_CONF_ROOTWRAP_D
+    fi
+    # Deploy filters to /etc/quantum/rootwrap.d
+    mkdir -p -m 755 $Q_CONF_ROOTWRAP_D
+    cp -pr $QUANTUM_DIR/etc/quantum/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
+    sudo chown -R root:root $Q_CONF_ROOTWRAP_D
+    sudo chmod 644 $Q_CONF_ROOTWRAP_D/*
+    # Set up rootwrap.conf, pointing to /etc/quantum/rootwrap.d
+    sudo cp -p $QUANTUM_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
+    sudo sed -e "s:^filters_path=.*$:filters_path=$Q_CONF_ROOTWRAP_D:" -i $Q_RR_CONF_FILE
+    sudo chown root:root $Q_RR_CONF_FILE
+    sudo chmod 0644 $Q_RR_CONF_FILE
+    # Specify rootwrap.conf as first parameter to quantum-rootwrap
+    ROOTWRAP_SUDOER_CMD="$QUANTUM_ROOTWRAP $Q_RR_CONF_FILE *"
+
+    # Set up the rootwrap sudoers for quantum
+    TEMPFILE=`mktemp`
+    echo "$USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
+    chmod 0440 $TEMPFILE
+    sudo chown root:root $TEMPFILE
+    sudo mv $TEMPFILE /etc/sudoers.d/quantum-rootwrap
+}
+
 
 # Configures keystone integration for quantum service and agents
 function quantum_setup_keystone() {
