@@ -321,26 +321,6 @@ HORIZON_DIR=$DEST/horizon
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 NOVNC_DIR=$DEST/noVNC
 SWIFT3_DIR=$DEST/swift3
-QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
-
-# Default Quantum Plugin
-Q_PLUGIN=${Q_PLUGIN:-openvswitch}
-# Default Quantum Port
-Q_PORT=${Q_PORT:-9696}
-# Default Quantum Host
-Q_HOST=${Q_HOST:-$HOST_IP}
-# Which Quantum API nova should use
-# Default admin username
-Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
-# Default auth strategy
-Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
-# Use namespace or not
-Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
-Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
-# Meta data IP
-Q_META_DATA_IP=${Q_META_DATA_IP:-$HOST_IP}
-# Use quantum-debug command
-Q_USE_DEBUG_COMMAND=${Q_USE_DEBUG_COMMAND:-False}
 
 RYU_DIR=$DEST/ryu
 # Ryu API Host
@@ -456,26 +436,6 @@ MULTI_HOST=`trueorfalse False $MULTI_HOST`
 FLAT_INTERFACE=${FLAT_INTERFACE-$GUEST_INTERFACE_DEFAULT}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
-
-
-# Quantum Networking
-# ------------------
-
-# Make sure that quantum is enabled in ENABLED_SERVICES.  If you want
-# to run Quantum on this host, make sure that q-svc is also in
-# ENABLED_SERVICES.
-#
-# If you're planning to use the Quantum openvswitch plugin, set
-# Q_PLUGIN to "openvswitch" and make sure the q-agt service is enabled
-# in ENABLED_SERVICES.  If you're planning to use the Quantum
-# linuxbridge plugin, set Q_PLUGIN to "linuxbridge" and make sure the
-# q-agt service is enabled in ENABLED_SERVICES.
-#
-# See "Quantum Network Configuration" below for additional variables
-# that must be set in localrc for connectivity across hosts with
-# Quantum.
-#
-# With Quantum networking the NET_MAN variable is ignored.
 
 
 # Database Configuration
@@ -805,7 +765,7 @@ if is_service_enabled horizon; then
     install_horizon
 fi
 if is_service_enabled quantum; then
-    git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
+    git_clone $QUANTUMCLIENT_REPO $QUANTUMCLIENT_DIR $QUANTUMCLIENT_BRANCH
 fi
 if is_service_enabled quantum; then
     # quantum
@@ -864,7 +824,7 @@ if is_service_enabled horizon; then
     configure_horizon
 fi
 if is_service_enabled quantum; then
-    setup_develop $QUANTUM_CLIENT_DIR
+    setup_develop $QUANTUMCLIENT_DIR
     setup_develop $QUANTUM_DIR
 fi
 if is_service_enabled heat; then
@@ -1119,11 +1079,11 @@ if is_service_enabled quantum; then
     # Example: ``OVS_ENABLE_TUNNELING=True``
     OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
 
-    # Put config files in ``/etc/quantum`` for everyone to find
-    if [[ ! -d /etc/quantum ]]; then
-        sudo mkdir -p /etc/quantum
+    # Put config files in ``QUANTUM_CONF_DIR`` for everyone to find
+    if [[ ! -d $QUANTUM_CONF_DIR ]]; then
+        sudo mkdir -p $QUANTUM_CONF_DIR
     fi
-    sudo chown `whoami` /etc/quantum
+    sudo chown `whoami` $QUANTUM_CONF_DIR
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         Q_PLUGIN_CONF_PATH=etc/quantum/plugins/openvswitch
@@ -1147,7 +1107,7 @@ if is_service_enabled quantum; then
         exit 1
     fi
 
-    # If needed, move config file from ``$QUANTUM_DIR/etc/quantum`` to ``/etc/quantum``
+    # If needed, move config file from ``$QUANTUM_DIR/etc/quantum`` to ``QUANTUM_CONF_DIR``
     mkdir -p /$Q_PLUGIN_CONF_PATH
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
     cp $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
@@ -1156,14 +1116,14 @@ if is_service_enabled quantum; then
     iniset /$Q_PLUGIN_CONF_FILE DATABASE sql_connection $dburl
     unset dburl
 
-    cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
+    cp $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF
     configure_quantum_rootwrap
 fi
 
 # Quantum service (for controller node)
 if is_service_enabled q-svc; then
-    Q_API_PASTE_FILE=/etc/quantum/api-paste.ini
-    Q_POLICY_FILE=/etc/quantum/policy.json
+    Q_API_PASTE_FILE=$QUANTUM_CONF_DIR/api-paste.ini
+    Q_POLICY_FILE=$QUANTUM_CONF_DIR/policy.json
 
     cp $QUANTUM_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
     cp $QUANTUM_DIR/etc/policy.json $Q_POLICY_FILE
@@ -1176,9 +1136,9 @@ if is_service_enabled q-svc; then
     fi
 
     # Update either configuration file with plugin
-    iniset $Q_CONF_FILE DEFAULT core_plugin $Q_PLUGIN_CLASS
+    iniset $QUANTUM_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
 
-    iniset $Q_CONF_FILE DEFAULT auth_strategy $Q_AUTH_STRATEGY
+    iniset $QUANTUM_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
     quantum_setup_keystone $Q_API_PASTE_FILE filter:authtoken
 
     # Configure plugin
@@ -1295,7 +1255,7 @@ fi
 if is_service_enabled q-dhcp; then
     AGENT_DHCP_BINARY="$QUANTUM_DIR/bin/quantum-dhcp-agent"
 
-    Q_DHCP_CONF_FILE=/etc/quantum/dhcp_agent.ini
+    Q_DHCP_CONF_FILE=$QUANTUM_CONF_DIR/dhcp_agent.ini
 
     cp $QUANTUM_DIR/etc/dhcp_agent.ini $Q_DHCP_CONF_FILE
 
@@ -1325,7 +1285,7 @@ fi
 if is_service_enabled q-l3; then
     AGENT_L3_BINARY="$QUANTUM_DIR/bin/quantum-l3-agent"
     PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
-    Q_L3_CONF_FILE=/etc/quantum/l3_agent.ini
+    Q_L3_CONF_FILE=$QUANTUM_CONF_DIR/l3_agent.ini
 
     cp $QUANTUM_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
 
@@ -1361,7 +1321,7 @@ fi
 #Quantum Metadata
 if is_service_enabled q-meta; then
     AGENT_META_BINARY="$QUANTUM_DIR/bin/quantum-metadata-agent"
-    Q_META_CONF_FILE=/etc/quantum/metadata_agent.ini
+    Q_META_CONF_FILE=$QUANTUM_CONF_DIR/metadata_agent.ini
 
     cp $QUANTUM_DIR/etc/metadata_agent.ini $Q_META_CONF_FILE
 
@@ -1381,14 +1341,14 @@ fi
 
 # Quantum RPC support - must be updated prior to starting any of the services
 if is_service_enabled quantum; then
-    iniset $Q_CONF_FILE DEFAULT control_exchange quantum
+    iniset $QUANTUM_CONF DEFAULT control_exchange quantum
     if is_service_enabled qpid ; then
-        iniset $Q_CONF_FILE DEFAULT rpc_backend quantum.openstack.common.rpc.impl_qpid
+        iniset $QUANTUM_CONF DEFAULT rpc_backend quantum.openstack.common.rpc.impl_qpid
     elif is_service_enabled zeromq; then
-        iniset $Q_CONF_FILE DEFAULT rpc_backend quantum.openstack.common.rpc.impl_zmq
+        iniset $QUANTUM_CONF DEFAULT rpc_backend quantum.openstack.common.rpc.impl_zmq
     elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
-        iniset $Q_CONF_FILE DEFAULT rabbit_host $RABBIT_HOST
-        iniset $Q_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $QUANTUM_CONF DEFAULT rabbit_host $RABBIT_HOST
+        iniset $QUANTUM_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
     fi
     if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
         cp $QUANTUM_DIR/etc/l3_agent.ini $QUANTUM_TEST_CONFIG_FILE
@@ -1598,7 +1558,7 @@ fi
 if is_service_enabled q-svc; then
     echo_summary "Starting Quantum"
     # Start the Quantum service
-    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
+    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $QUANTUM_CONF --config-file /$Q_PLUGIN_CONF_FILE"
     echo "Waiting for Quantum to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:9696; do sleep 1; done"; then
       echo "Quantum did not start"
@@ -1650,10 +1610,10 @@ elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
 fi
 
 # Start up the quantum agents if enabled
-screen_it q-agt "python $AGENT_BINARY --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
-screen_it q-dhcp "python $AGENT_DHCP_BINARY --config-file $Q_CONF_FILE --config-file=$Q_DHCP_CONF_FILE"
-screen_it q-meta "python $AGENT_META_BINARY --config-file $Q_CONF_FILE --config-file=$Q_META_CONF_FILE"
-screen_it q-l3 "python $AGENT_L3_BINARY --config-file $Q_CONF_FILE --config-file=$Q_L3_CONF_FILE"
+screen_it q-agt "python $AGENT_BINARY --config-file $QUANTUM_CONF --config-file /$Q_PLUGIN_CONF_FILE"
+screen_it q-dhcp "python $AGENT_DHCP_BINARY --config-file $QUANTUM_CONF --config-file=$Q_DHCP_CONF_FILE"
+screen_it q-meta "python $AGENT_META_BINARY --config-file $QUANTUM_CONF --config-file=$Q_META_CONF_FILE"
+screen_it q-l3 "python $AGENT_L3_BINARY --config-file $QUANTUM_CONF --config-file=$Q_L3_CONF_FILE"
 
 if is_service_enabled nova; then
     echo_summary "Starting Nova"

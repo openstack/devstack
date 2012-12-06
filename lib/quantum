@@ -1,17 +1,69 @@
 # lib/quantum
 # functions - funstions specific to quantum
 
+# Dependencies:
+# ``functions`` file
+# ``DEST`` must be defined
+
+
+# Quantum Networking
+# ------------------
+
+# Make sure that quantum is enabled in ``ENABLED_SERVICES``.  If you want
+# to run Quantum on this host, make sure that q-svc is also in
+# ``ENABLED_SERVICES``.
+#
+# If you're planning to use the Quantum openvswitch plugin, set
+# ``Q_PLUGIN`` to "openvswitch" and make sure the q-agt service is enabled
+# in ``ENABLED_SERVICES``.  If you're planning to use the Quantum
+# linuxbridge plugin, set ``Q_PLUGIN`` to "linuxbridge" and make sure the
+# q-agt service is enabled in ``ENABLED_SERVICES``.
+#
+# See "Quantum Network Configuration" below for additional variables
+# that must be set in localrc for connectivity across hosts with
+# Quantum.
+#
+# With Quantum networking the NET_MAN variable is ignored.
+
+
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+
+# Defaults
+# --------
+
+# Set up default directories
 QUANTUM_DIR=$DEST/quantum
-export QUANTUM_TEST_CONFIG_FILE=${QUANTUM_TEST_CONFIG_FILE:-"/etc/quantum/debug.ini"}
+QUANTUMCLIENT_DIR=$DEST/python-quantumclient
 QUANTUM_AUTH_CACHE_DIR=${QUANTUM_AUTH_CACHE_DIR:-/var/cache/quantum}
 
+QUANTUM_CONF_DIR=/etc/quantum
+QUANTUM_CONF=$QUANTUM_CONF_DIR/quantum.conf
+export QUANTUM_TEST_CONFIG_FILE=${QUANTUM_TEST_CONFIG_FILE:-"$QUANTUM_CONF_DIR/debug.ini"}
+
+# Default Quantum Plugin
+Q_PLUGIN=${Q_PLUGIN:-openvswitch}
+# Default Quantum Port
+Q_PORT=${Q_PORT:-9696}
+# Default Quantum Host
+Q_HOST=${Q_HOST:-$HOST_IP}
+# Which Quantum API nova should use
+# Default admin username
+Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
+# Default auth strategy
+Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
+# Use namespace or not
+Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
+Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
+# Meta data IP
+Q_META_DATA_IP=${Q_META_DATA_IP:-$HOST_IP}
+# Use quantum-debug command
+Q_USE_DEBUG_COMMAND=${Q_USE_DEBUG_COMMAND:-False}
+
 if is_service_enabled quantum; then
-    Q_CONF_FILE=/etc/quantum/quantum.conf
-    Q_RR_CONF_FILE=/etc/quantum/rootwrap.conf
+    Q_RR_CONF_FILE=$QUANTUM_CONF_DIR/rootwrap.conf
     if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
         Q_RR_COMMAND="sudo"
     else
@@ -20,6 +72,10 @@ if is_service_enabled quantum; then
     fi
 fi
 
+
+# Entry Points
+# ------------
+
 # configure_quantum_rootwrap() - configure Quantum's rootwrap
 function configure_quantum_rootwrap() {
     if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
@@ -27,16 +83,16 @@ function configure_quantum_rootwrap() {
     fi
     # Deploy new rootwrap filters files (owned by root).
     # Wipe any existing rootwrap.d files first
-    Q_CONF_ROOTWRAP_D=/etc/quantum/rootwrap.d
+    Q_CONF_ROOTWRAP_D=$QUANTUM_CONF_DIR/rootwrap.d
     if [[ -d $Q_CONF_ROOTWRAP_D ]]; then
         sudo rm -rf $Q_CONF_ROOTWRAP_D
     fi
-    # Deploy filters to /etc/quantum/rootwrap.d
+    # Deploy filters to $QUANTUM_CONF_DIR/rootwrap.d
     mkdir -p -m 755 $Q_CONF_ROOTWRAP_D
     cp -pr $QUANTUM_DIR/etc/quantum/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
     sudo chown -R root:root $Q_CONF_ROOTWRAP_D
     sudo chmod 644 $Q_CONF_ROOTWRAP_D/*
-    # Set up rootwrap.conf, pointing to /etc/quantum/rootwrap.d
+    # Set up rootwrap.conf, pointing to $QUANTUM_CONF_DIR/rootwrap.d
     sudo cp -p $QUANTUM_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
     sudo sed -e "s:^filters_path=.*$:filters_path=$Q_CONF_ROOTWRAP_D:" -i $Q_RR_CONF_FILE
     sudo chown root:root $Q_RR_CONF_FILE
@@ -51,7 +107,6 @@ function configure_quantum_rootwrap() {
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/quantum-rootwrap
 }
-
 
 # Configures keystone integration for quantum service and agents
 function quantum_setup_keystone() {

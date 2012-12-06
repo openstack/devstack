@@ -89,8 +89,8 @@ QUANTUM_REPO=${GIT_BASE}/openstack/quantum
 QUANTUM_BRANCH=master
 
 # quantum client
-QUANTUM_CLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient
-QUANTUM_CLIENT_BRANCH=master
+QUANTUMCLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient
+QUANTUMCLIENT_BRANCH=master
 
 # Tempest test suite
 TEMPEST_REPO=${GIT_BASE}/openstack/tempest.git
