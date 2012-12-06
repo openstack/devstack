@@ -354,6 +354,18 @@ function is_ubuntu {
 }
 
 
+# Determine if current distribution is a Fedora-based distribution
+# (Fedora, RHEL, CentOS).
+# is_fedora
+function is_fedora {
+    if [[ -z "$os_VENDOR" ]]; then
+        GetOSVersion
+    fi
+
+    [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || [ "$os_VENDOR" = "CentOS" ]
+}
+
+
 # Determine if current distribution is a SUSE-based distribution
 # (openSUSE, SLE).
 # is_suse
@@ -363,6 +375,23 @@ function is_suse {
     fi
 
     [ "$os_VENDOR" = "openSUSE" ] || [ "$os_VENDOR" = "SUSE LINUX" ]
+}
+
+
+# Exit after outputting a message about the distribution not being supported.
+# exit_distro_not_supported [optional-string-telling-what-is-missing]
+function exit_distro_not_supported {
+    if [[ -z "$DISTRO" ]]; then
+        GetDistro
+    fi
+
+    if [ $# -gt 0 ]; then
+        echo "Support for $DISTRO is incomplete: no support for $@"
+    else
+        echo "Support for $DISTRO is incomplete."
+    fi
+
+    exit 1
 }
 
 
@@ -598,12 +627,12 @@ function install_package() {
         NO_UPDATE_REPOS=True
 
         apt_get install "$@"
+    elif is_fedora; then
+        yum_install "$@"
+    elif is_suse; then
+        zypper_install "$@"
     else
-        if is_suse; then
-            zypper_install "$@"
-        else
-            yum_install "$@"
-        fi
+        exit_distro_not_supported "installing packages"
     fi
 }
 
@@ -622,9 +651,11 @@ function is_package_installed() {
     if [[ "$os_PACKAGE" = "deb" ]]; then
         dpkg -l "$@" > /dev/null
         return $?
-    else
+    elif [[ "$os_PACKAGE" = "rpm" ]]; then
         rpm --quiet -q "$@"
         return $?
+    else
+        exit_distro_not_supported "finding if a package is installed"
     fi
 }
 
@@ -1032,20 +1063,20 @@ function add_user_to_group() {
 function get_rootwrap_location() {
     local module=$1
 
-    if is_ubuntu || is_suse; then
-        echo "/usr/local/bin/$module-rootwrap"
-    else
+    if is_fedora; then
         echo "/usr/bin/$module-rootwrap"
+    else
+        echo "/usr/local/bin/$module-rootwrap"
     fi
 }
 
 # Get the path to the pip command.
 # get_pip_command
 function get_pip_command() {
-    if is_ubuntu || is_suse; then
-        echo "/usr/bin/pip"
-    else
+    if is_fedora; then
         echo "/usr/bin/pip-python"
+    else
+        echo "/usr/bin/pip"
     fi
 }
 

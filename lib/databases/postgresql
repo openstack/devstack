@@ -20,7 +20,7 @@ function recreate_database_postgresql {
 
 function configure_database_postgresql {
     echo_summary "Configuring and starting PostgreSQL"
-    if [[ "$os_PACKAGE" = "rpm" ]]; then
+    if is_fedora || is_suse; then
         PG_HBA=/var/lib/pgsql/data/pg_hba.conf
         PG_CONF=/var/lib/pgsql/data/postgresql.conf
         sudo [ -e $PG_HBA ] || sudo postgresql-setup initdb
@@ -53,10 +53,12 @@ EOF
     else
         sed -i "s/:root:\w\+/:root:$DATABASE_PASSWORD/" $PGPASS
     fi
-    if [[ "$os_PACKAGE" = "rpm" ]]; then
+    if is_ubuntu; then
+        install_package postgresql
+    elif is_fedora || is_suse; then
         install_package postgresql-server
     else
-        install_package postgresql
+        exit_distro_not_supported "postgresql installation"
     fi
 }
 

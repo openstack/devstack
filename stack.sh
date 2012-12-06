@@ -678,17 +678,21 @@ set -o xtrace
 echo_summary "Installing package prerequisites"
 if is_ubuntu; then
     install_package $(get_packages $FILES/apts)
+elif is_fedora; then
+    install_package $(get_packages $FILES/rpms)
 elif is_suse; then
     install_package $(get_packages $FILES/rpms-suse)
 else
-    install_package $(get_packages $FILES/rpms)
+    exit_distro_not_supported "list of packages"
 fi
 
 if [[ $SYSLOG != "False" ]]; then
-    if is_suse; then
+    if is_ubuntu || is_fedora; then
+        install_package rsyslog-relp
+    elif is_suse; then
         install_package rsyslog-module-relp
     else
-        install_package rsyslog-relp
+        exit_distro_not_supported "rsyslog-relp installation"
     fi
 fi
 
@@ -700,20 +704,22 @@ if is_service_enabled rabbit; then
     cat "$tfile"
     rm -f "$tfile"
 elif is_service_enabled qpid; then
-    if [[ "$os_PACKAGE" = "rpm" ]]; then
+    if is_fedora; then
         install_package qpid-cpp-server-daemon
-    else
+    elif is_ubuntu; then
         install_package qpidd
+    else
+        exit_distro_not_supported "qpid installation"
     fi
 elif is_service_enabled zeromq; then
-    if [[ "$os_PACKAGE" = "rpm" ]]; then
-        if is_suse; then
-            install_package libzmq1 python-pyzmq
-        else
-            install_package zeromq python-zmq
-        fi
-    else
+    if is_fedora; then
+        install_package zeromq python-zmq
+    elif is_ubuntu; then
         install_package libzmq1 python-zmq
+    elif is_suse; then
+        install_package libzmq1 python-pyzmq
+    else
+        exit_distro_not_supported "zeromq installation"
     fi
 fi
 
@@ -909,8 +915,8 @@ fi
 if is_service_enabled rabbit; then
     # Start rabbitmq-server
     echo_summary "Starting RabbitMQ"
-    if [[ "$os_PACKAGE" = "rpm" ]]; then
-        # RPM doesn't start the service
+    if is_fedora || is_suse; then
+        # service is not started by default
         restart_service rabbitmq-server
     fi
     # change the rabbit password since the default is "guest"

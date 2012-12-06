@@ -23,22 +23,28 @@ function configure_database_mysql {
     if is_ubuntu; then
         MY_CONF=/etc/mysql/my.cnf
         MYSQL=mysql
-    else
+    elif is_fedora; then
         MY_CONF=/etc/my.cnf
-        if is_suse; then
-            MYSQL=mysql
-        else
-            MYSQL=mysqld
-        fi
+        MYSQL=mysqld
+    elif is_suse; then
+        MY_CONF=/etc/my.cnf
+        MYSQL=mysql
+    else
+        exit_distro_not_supported "mysql configuration"
     fi
 
     # Start mysql-server
-    if [[ "$os_PACKAGE" = "rpm" ]]; then
-        # RPM doesn't start the service
+    if is_fedora || is_suse; then
+        # service is not started by default
         start_service $MYSQL
-        # Set the root password - only works the first time
+    fi
+
+    # Set the root password - only works the first time. For Ubuntu, we already
+    # did that with debconf before installing the package.
+    if ! is_ubuntu; then
         sudo mysqladmin -u root password $DATABASE_PASSWORD || true
     fi
+
     # Update the DB to give user ‘$DATABASE_USER’@’%’ full control of the all databases:
     sudo mysql -uroot -p$DATABASE_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
 
@@ -84,10 +90,12 @@ EOF
         chmod 0600 $HOME/.my.cnf
     fi
     # Install mysql-server
-    if is_suse; then
+    if is_ubuntu || is_fedora; then
+        install_package mysql-server
+    elif is_suse; then
         install_package mysql-community-server
     else
-        install_package mysql-server
+        exit_distro_not_supported "mysql installation"
     fi
 }
 

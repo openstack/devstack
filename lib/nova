@@ -394,11 +394,13 @@ function install_novaclient() {
 function install_nova() {
     if is_service_enabled n-cpu; then
         if is_ubuntu; then
-            LIBVIRT_PKG_NAME=libvirt-bin
+            install_package libvirt-bin
+        elif is_fedora || is_suse; then
+            install_package libvirt
         else
-            LIBVIRT_PKG_NAME=libvirt
+            exit_distro_not_supported "libvirt installation"
         fi
-        install_package $LIBVIRT_PKG_NAME
+
         # Install and configure **LXC** if specified.  LXC is another approach to
         # splitting a system into many smaller parts.  LXC uses cgroups and chroot
         # to simulate multiple systems.
