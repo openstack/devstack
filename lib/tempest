@@ -4,21 +4,21 @@
 # ``functions`` file
 # ``lib/nova`` service is runing
 # <list other global vars that are assumed to be defined>
-# - DEST
-# - ADMIN_PASSWORD
-# - OS_USERNAME
-# - DEFAULT_IMAGE_NAME
-# - S3_SERVICE_PORT
-# - SERVICE_HOST
-# - BASE_SQL_CONN ``lib/database`` declares
+# - ``DEST``
+# - ``ADMIN_PASSWORD``
+# - ``DEFAULT_IMAGE_NAME``
+# - ``S3_SERVICE_PORT``
+# - ``SERVICE_HOST``
+# - ``BASE_SQL_CONN`` ``lib/database`` declares
 # Optional Dependencies:
-# IDENTITY_*
+# IDENTITY_USE_SSL, IDENTITY_HOST, IDENTITY_PORT, IDENTITY_PATH
 # ALT_* (similar vars exists in keystone_data.sh)
-# IMAGE_*
-# LIVE_MIGRATION_AVAILABLE
-# DEFAULT_INSTANCE_TYPE
-# DEFAULT_INSTANCE_USER
-# USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION
+# ``OS_USERNAME``
+# ``IMAGE_PORT``, ``IMAGE_HOST``
+# ``LIVE_MIGRATION_AVAILABLE``
+# ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
+# ``DEFAULT_INSTANCE_TYPE``
+# ``DEFAULT_INSTANCE_USER``
 # ``stack.sh`` calls the entry points in this order:
 #
 # install_tempest
@@ -52,12 +52,17 @@ BUILD_TIMEOUT=400
 
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest() {
-    local IMAGE_LINES
-    local IMAGES
-    local NUM_IMAGES
-    local IMAGE_UUID
-    local IMAGE_UUID_ALT
+    local image_lines
+    local images
+    local num_images
+    local image_uuid
+    local image_uuid_alt
     local errexit
+    local password
+    local line
+    local flavors
+    local flavors_ref
+    local flavor_lines
 
     #TODO(afazekas):
     # sudo python setup.py deploy
@@ -74,33 +79,33 @@ function configure_tempest() {
     # testing. Here we simply look for images stored in Glance
     # and set the appropriate variables for use in the tempest config
     # We ignore ramdisk and kernel images, look for the default image
-    # DEFAULT_IMAGE_NAME. If not found, we set the IMAGE_UUID to the
-    # first image returned and set IMAGE_UUID_ALT to the second,
+    # ``DEFAULT_IMAGE_NAME``. If not found, we set the ``image_uuid`` to the
+    # first image returned and set ``image_uuid_alt`` to the second,
     # if there is more than one returned...
     # ... Also ensure we only take active images, so we don't get snapshots in process
-    IMAGE_LINES=`glance image-list`
+    image_lines=`glance image-list`
     IFS=$'\n\r'
-    IMAGES=""
-    for line in $IMAGE_LINES; do
+    images=""
+    for line in $image_lines; do
         if [ -z $DEFAULT_IMAGE_NAME ]; then
-            IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | cut -d' ' -f2`"
+            images="$images `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | cut -d' ' -f2`"
         else
-            IMAGES="$IMAGES `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | grep "$DEFAULT_IMAGE_NAME" | cut -d' ' -f2`"
+            images="$images `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | grep "$DEFAULT_IMAGE_NAME" | cut -d' ' -f2`"
         fi
     done
     # Create array of image UUIDs...
     IFS=" "
-    IMAGES=($IMAGES)
-    NUM_IMAGES=${#IMAGES[*]}
-    echo "Found $NUM_IMAGES images"
-    if [[ $NUM_IMAGES -eq 0 ]]; then
+    images=($images)
+    num_images=${#images[*]}
+    echo "Found $num_images images"
+    if [[ $num_images -eq 0 ]]; then
         echo "Found no valid images to use!"
         exit 1
     fi
-    IMAGE_UUID=${IMAGES[0]}
-    IMAGE_UUID_ALT=$IMAGE_UUID
-    if [[ $NUM_IMAGES -gt 1 ]]; then
-        IMAGE_UUID_ALT=${IMAGES[1]}
+    image_uuid=${images[0]}
+    image_uuid_alt=$image_uuid
+    if [[ $num_images -gt 1 ]]; then
+        image_uuid_alt=${images[1]}
     fi
 
     # Create tempest.conf from tempest.conf.sample
@@ -114,7 +119,7 @@ function configure_tempest() {
     # from the Tempest configuration file entirely...
     IDENTITY_PATH=${IDENTITY_PATH:-tokens}
 
-    PASSWORD=${ADMIN_PASSWORD:-secrete}
+    password=${ADMIN_PASSWORD:-secrete}
 
     # See files/keystone_data.sh where alt_demo user
     # and tenant are set up...
@@ -122,30 +127,30 @@ function configure_tempest() {
     ALT_TENANT_NAME=${ALT_TENANT_NAME:-alt_demo}
 
     # Check Nova for existing flavors and, if set, look for the
-    # DEFAULT_INSTANCE_TYPE and use that. Otherwise, just use the first flavor.
-    FLAVOR_LINES=`nova flavor-list`
-    IFS="$(echo -e "\n\r")"
-    FLAVORS=""
-    for line in $FLAVOR_LINES; do
+    # ``DEFAULT_INSTANCE_TYPE`` and use that. Otherwise, just use the first flavor.
+    flavor_lines=`nova flavor-list`
+    IFS=$'\r\n'
+    flavors=""
+    for line in $flavor_lines; do
         if [ -z $DEFAULT_INSTANCE_TYPE ]; then
-            FLAVORS="$FLAVORS `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
+            flavors="$flavors `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
         else
-            FLAVORS="$FLAVORS `echo $line | grep -v "^\(|\s*ID\|+--\)" | grep "$DEFAULT_INSTANCE_TYPE" | cut -d' ' -f2`"
+            flavors="$flavors `echo $line | grep -v "^\(|\s*ID\|+--\)" | grep "$DEFAULT_INSTANCE_TYPE" | cut -d' ' -f2`"
     fi
     done
 
     IFS=" "
-    FLAVORS=($FLAVORS)
-    NUM_FLAVORS=${#FLAVORS[*]}
-    echo "Found $NUM_FLAVORS flavors"
-    if [[ $NUM_FLAVORS -eq 0 ]]; then
+    flavors=($flavors)
+    num_flavors=${#flavors[*]}
+    echo "Found $num_flavors flavors"
+    if [[ $num_flavors -eq 0 ]]; then
         echo "Found no valid flavors to use!"
         exit 1
     fi
-    FLAVOR_REF=${FLAVORS[0]}
-    FLAVOR_REF_ALT=$FLAVOR_REF
-    if [[ $NUM_FLAVORS -gt 1 ]]; then
-        FLAVOR_REF_ALT=${FLAVORS[1]}
+    flavor_ref=${flavors[0]}
+    flavor_ref_alt=$flavor_ref
+    if [[ $num_flavors -gt 1 ]]; then
+        flavor_ref_alt=${flavors[1]}
     fi
 
     # Timeouts
@@ -162,9 +167,9 @@ function configure_tempest() {
     iniset $TEMPEST_CONF identity port $IDENTITY_PORT
     iniset $TEMPEST_CONF identity path $IDENTITY_PATH
 
-    iniset $TEMPEST_CONF compute password "$PASSWORD"
+    iniset $TEMPEST_CONF compute password "$password"
     iniset $TEMPEST_CONF compute alt_username $ALT_USERNAME
-    iniset $TEMPEST_CONF compute alt_password "$PASSWORD"
+    iniset $TEMPEST_CONF compute alt_password "$password"
     iniset $TEMPEST_CONF compute alt_tenant_name $ALT_TENANT_NAME
     iniset $TEMPEST_CONF compute resize_available False
     iniset $TEMPEST_CONF compute change_password_available False
@@ -175,10 +180,10 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute network_for_ssh private
     iniset $TEMPEST_CONF compute ip_version_for_ssh 4
     iniset $TEMPEST_CONF compute ssh_timeout 4
-    iniset $TEMPEST_CONF compute image_ref $IMAGE_UUID
-    iniset $TEMPEST_CONF compute image_ref_alt $IMAGE_UUID_ALT
-    iniset $TEMPEST_CONF compute flavor_ref $FLAVOR_REF
-    iniset $TEMPEST_CONF compute flavor_ref_alt $FLAVOR_REF_ALT
+    iniset $TEMPEST_CONF compute image_ref $image_uuid
+    iniset $TEMPEST_CONF compute image_ref_alt $image_uuid_alt
+    iniset $TEMPEST_CONF compute flavor_ref $flavor_ref
+    iniset $TEMPEST_CONF compute flavor_ref_alt $flavor_ref_alt
     iniset $TEMPEST_CONF compute source_dir $NOVA_SOURCE_DIR
     iniset $TEMPEST_CONF compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONF compute use_block_migration_for_live_migration	${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
@@ -192,13 +197,13 @@ function configure_tempest() {
     # image
     iniset $TEMPEST_CONF image host ${IMAGE_HOST:-127.0.0.1}
     iniset $TEMPEST_CONF image port ${IMAGE_PORT:-9292}
-    iniset $TEMPEST_CONF image password "$PASSWORD"
+    iniset $TEMPEST_CONF image password "$password"
 
     # identity-admin
-    iniset $TEMPEST_CONF "identity-admin" password "$PASSWORD"
+    iniset $TEMPEST_CONF "identity-admin" password "$password"
 
     # compute admin
-    iniset $TEMPEST_CONF "compute-admin" password "$PASSWORD"
+    iniset $TEMPEST_CONF "compute-admin" password "$password"
 
     # network
     iniset $TEMPEST_CONF network api_version 2.0
