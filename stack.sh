@@ -1149,12 +1149,7 @@ if is_service_enabled quantum; then
     unset dburl
 
     cp $QUANTUM_DIR/etc/quantum.conf $Q_CONF_FILE
-    cp -p $QUANTUM_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
-
-    # Copy over the config and filter bits
-    Q_CONF_ROOTWRAP_D=/etc/quantum/rootwrap.d
-    mkdir -p $Q_CONF_ROOTWRAP_D
-    cp -pr $QUANTUM_DIR/etc/quantum/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
+    configure_quantum_rootwrap
 fi
 
 # Quantum service (for controller node)
