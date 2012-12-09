@@ -1387,6 +1387,7 @@ if is_service_enabled quantum; then
         iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT verbose False
         iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT debug False
         iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
+        iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT root_helper "$Q_RR_COMMAND"
         quantum_setup_keystone $QUANTUM_TEST_CONFIG_FILE DEFAULT set_auth_url
         if [[ "$Q_PLUGIN" == "openvswitch" ]]; then
             iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
