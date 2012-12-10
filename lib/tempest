@@ -63,6 +63,8 @@ function configure_tempest() {
     local flavors
     local flavors_ref
     local flavor_lines
+    local public_network_id
+    local tenant_networks_reachable
 
     #TODO(afazekas):
     # sudo python setup.py deploy
@@ -153,6 +155,17 @@ function configure_tempest() {
         flavor_ref_alt=${flavors[1]}
     fi
 
+    if [ "$Q_USE_NAMESPACE" != "False" ]; then
+        tenant_networks_reachable=false
+    else
+        tenant_networks_reachable=true
+    fi
+
+    if is_service_enabled q-l3; then
+        public_network_id=$(quantum net-list | grep $PUBLIC_NETWORK_NAME | \
+            awk '{print $2}')
+    fi
+
     # Timeouts
     iniset $TEMPEST_CONF compute build_timeout $BUILD_TIMEOUT
     iniset $TEMPEST_CONF volume build_timeout $BUILD_TIMEOUT
@@ -205,8 +218,14 @@ function configure_tempest() {
     # compute admin
     iniset $TEMPEST_CONF "compute-admin" password "$password"
 
+    # network admin
+    iniset $TEMPEST_CONF "network-admin" password "$password"
+
     # network
     iniset $TEMPEST_CONF network api_version 2.0
+    iniset $TEMPEST_CONF network password "$password"
+    iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
+    iniset $TEMPEST_CONF network public_network_id "$public_network_id"
 
     #boto
     iniset $TEMPEST_CONF boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
