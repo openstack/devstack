@@ -90,7 +90,7 @@ if [[ "$ENABLED_SERVICES" =~ "c-vol" ]]; then
    die_if_not_set VOLUME "Failure to get volume"
 
    # Test volume has become available
-   if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -q available; do sleep 1; done"; then
+   if ! timeout $RUNNING_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -q available; do sleep 1; done"; then
        echo "volume didnt become available within $RUNNING_TIMEOUT seconds"
        exit 1
    fi
