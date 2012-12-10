@@ -598,7 +598,15 @@ if [[ -n "$LOGFILE" ]]; then
     exec 3>&1
     if [[ "$VERBOSE" == "True" ]]; then
         # Redirect stdout/stderr to tee to write the log file
-        exec 1> >( tee "${LOGFILE}" ) 2>&1
+        exec 1> >( awk '
+                {
+                    cmd ="date +\"%Y-%m-%d %H:%M:%S \""
+                    cmd | getline now
+                    close("date +\"%Y-%m-%d %H:%M:%S \"")
+                    sub(/^/, now)
+                    print
+                    fflush()
+                }' | tee "${LOGFILE}" ) 2>&1
         # Set up a second fd for output
         exec 6> >( tee "${SUMFILE}" )
     else
