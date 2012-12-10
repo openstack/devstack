@@ -14,7 +14,7 @@ DATABASE_TYPE=mysql
 # ``disable_service`` functions in ``localrc``.
 # For example, to enable Swift add this to ``localrc``:
 # enable_service swift
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,$DATABASE_TYPE
+ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,tempest,$DATABASE_TYPE
 
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=ec2,osapi_compute,metadata
