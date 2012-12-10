@@ -1482,8 +1482,6 @@ if is_service_enabled nova; then
         fi
     elif is_service_enabled n-net; then
         add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
-        add_nova_opt "instance_dns_manager=nova.network.minidns.MiniDNS"
-        add_nova_opt "floating_ip_dns_manager=nova.network.minidns.MiniDNS"
         add_nova_opt "public_interface=$PUBLIC_INTERFACE"
         add_nova_opt "vlan_interface=$VLAN_INTERFACE"
         add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
