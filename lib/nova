@@ -172,9 +172,7 @@ function configure_nova() {
         " -i $NOVA_API_PASTE_INI
     fi
 
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
-        iniset $NOVA_API_PASTE_INI filter:authtoken signing_dir $NOVA_AUTH_CACHE_DIR
-    fi
+    iniset $NOVA_API_PASTE_INI filter:authtoken signing_dir $NOVA_AUTH_CACHE_DIR
 
     if is_service_enabled n-cpu; then
         # Force IP forwarding on, just on case
@@ -378,11 +376,9 @@ function init_nova() {
         $NOVA_BIN_DIR/nova-manage db sync
     fi
 
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
-        # Create cache dir
-        sudo mkdir -p $NOVA_AUTH_CACHE_DIR
-        sudo chown `whoami` $NOVA_AUTH_CACHE_DIR
-    fi
+    # Create cache dir
+    sudo mkdir -p $NOVA_AUTH_CACHE_DIR
+    sudo chown `whoami` $NOVA_AUTH_CACHE_DIR
 }
 
 # install_novaclient() - Collect source and prepare

@@ -95,9 +95,7 @@ function configure_glance() {
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_user glance
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
-        iniset $GLANCE_REGISTRY_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/registry
-    fi
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/registry
 
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
     iniset $GLANCE_API_CONF DEFAULT debug True
@@ -121,9 +119,7 @@ function configure_glance() {
         iniset $GLANCE_API_CONF DEFAULT rabbit_host $RABBIT_HOST
         iniset $GLANCE_API_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
     fi
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
-        iniset $GLANCE_API_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/api
-    fi
+    iniset $GLANCE_API_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/api
 
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
 
@@ -163,13 +159,11 @@ function init_glance() {
 
     $GLANCE_BIN_DIR/glance-manage db_sync
 
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
-        # Create cache dir
-        sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
-        sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/api
-        sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
-        sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/registry
-    fi
+    # Create cache dir
+    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
+    sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/api
+    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
+    sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/registry
 }
 
 # install_glanceclient() - Collect source and prepare

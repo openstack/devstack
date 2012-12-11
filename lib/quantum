@@ -68,12 +68,10 @@ function quantum_setup_keystone() {
     iniset $conf_file $section admin_tenant_name $SERVICE_TENANT_NAME
     iniset $conf_file $section admin_user $Q_ADMIN_USERNAME
     iniset $conf_file $section admin_password $SERVICE_PASSWORD
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
-        iniset $conf_file $section signing_dir $QUANTUM_AUTH_CACHE_DIR
-        # Create cache dir
-        sudo mkdir -p $QUANTUM_AUTH_CACHE_DIR
-        sudo chown `whoami` $QUANTUM_AUTH_CACHE_DIR
-    fi
+    iniset $conf_file $section signing_dir $QUANTUM_AUTH_CACHE_DIR
+    # Create cache dir
+    sudo mkdir -p $QUANTUM_AUTH_CACHE_DIR
+    sudo chown `whoami` $QUANTUM_AUTH_CACHE_DIR
 }
 
 function quantum_setup_ovs_bridge() {
