@@ -934,6 +934,7 @@ if is_service_enabled key; then
     export OS_SERVICE_TOKEN=$SERVICE_TOKEN
     export OS_SERVICE_ENDPOINT=$SERVICE_ENDPOINT
     create_keystone_accounts
+    create_nova_accounts
 
     # ``keystone_data.sh`` creates services, admin and demo users, and roles.
     ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
