@@ -195,8 +195,8 @@ function init_cinder() {
         mkdir -p $CINDER_STATE_PATH/volumes
 
         if sudo vgs $VOLUME_GROUP; then
-            if [[ "$os_PACKAGE" = "rpm" ]]; then
-                # RPM doesn't start the service
+            if is_fedora || is_suse; then
+                # service is not started by default
                 start_service tgtd
             fi
 
@@ -245,9 +245,15 @@ function start_cinder() {
             # do it in two steps
             sudo stop tgt || true
             sudo start tgt
-        else
+        elif is_fedora; then
             # bypass redirection to systemctl during restart
             sudo /sbin/service --skip-redirect tgtd restart
+        elif is_suse; then
+            restart_service tgtd
+        else
+            # note for other distros: unstack.sh also uses the tgt/tgtd service
+            # name, and would need to be adjusted too
+            exit_distro_not_supported "restarting tgt"
         fi
     fi
 
