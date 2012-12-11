@@ -1568,12 +1568,7 @@ screen_it zeromq "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-rpc-zmq-receiver"
 # Launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
     echo_summary "Starting Nova API"
-    screen_it n-api "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api"
-    echo "Waiting for nova-api to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:8774; do sleep 1; done"; then
-      echo "nova-api did not start"
-      exit 1
-    fi
+    start_nova_api
 fi
 
 if is_service_enabled q-svc; then

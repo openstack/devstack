@@ -996,6 +996,14 @@ function use_exclusive_service {
     return 0
 }
 
+# Wait for an HTTP server to start answering requests
+# wait_for_service timeout url
+function wait_for_service() {
+    local timeout=$1
+    local url=$2
+    timeout $timeout sh -c "while ! http_proxy= https_proxy= curl -s $url >/dev/null; do sleep 1; done"
+}
+
 # Wrapper for ``yum`` to set proxy environment variables
 # Uses globals ``OFFLINE``, ``*_proxy`
 # yum_install package [package ...]

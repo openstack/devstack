@@ -39,6 +39,12 @@ NOVA_CONF_DIR=/etc/nova
 NOVA_CONF=$NOVA_CONF_DIR/nova.conf
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 
+# Public facing bits
+NOVA_SERVICE_HOST=${NOVA_SERVICE_HOST:-$SERVICE_HOST}
+NOVA_SERVICE_PORT=${NOVA_SERVICE_PORT:-8774}
+NOVA_SERVICE_PORT_INT=${NOVA_SERVICE_PORT_INT:-18774}
+NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+
 # Support entry points installation of console scripts
 if [[ -d $NOVA_DIR/bin ]]; then
     NOVA_BIN_DIR=$NOVA_DIR/bin
@@ -170,6 +176,10 @@ function configure_nova() {
             s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
             s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
         " -i $NOVA_API_PASTE_INI
+        iniset $NOVA_API_PASTE_INI filter:authtoken auth_host $SERVICE_HOST
+        if is_service_enabled tls-proxy; then
+            iniset $NOVA_API_PASTE_INI filter:authtoken auth_protocol $SERVICE_PROTOCOL
+        fi
     fi
 
     iniset $NOVA_API_PASTE_INI filter:authtoken signing_dir $NOVA_AUTH_CACHE_DIR
@@ -324,9 +334,9 @@ create_nova_accounts() {
             keystone endpoint-create \
                 --region RegionOne \
                 --service_id $NOVA_SERVICE \
-                --publicurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s" \
-                --adminurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s" \
-                --internalurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s"
+                --publicurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
+                --adminurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
+                --internalurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s"
         fi
     fi
 }
@@ -361,6 +371,10 @@ function create_nova_conf() {
 
     if is_service_enabled n-api; then
         add_nova_opt "enabled_apis=$NOVA_ENABLED_APIS"
+        if is_service_enabled tls-proxy; then
+            # Set the service port for a proxy to take the original
+            add_nova_opt "osapi_compute_listen_port=$NOVA_SERVICE_PORT_INT"
+        fi
     fi
     if is_service_enabled cinder; then
         add_nova_opt "volume_api_class=nova.volume.cinder.API"
@@ -470,6 +484,27 @@ function install_nova() {
     fi
 
     git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
+}
+
+# start_nova_api() - Start the API process ahead of other things
+function start_nova_api() {
+    # Get right service port for testing
+    local service_port=$NOVA_SERVICE_PORT
+    if is_service_enabled tls-proxy; then
+        service_port=$NOVA_SERVICE_PORT_INT
+    fi
+
+    screen_it n-api "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api"
+    echo "Waiting for nova-api to start..."
+    if ! wait_for_service $SERVICE_TIMEOUT http://$SERVICE_HOST:$service_port; then
+      echo "nova-api did not start"
+      exit 1
+    fi
+
+    # Start proxies if enabled
+    if is_service_enabled tls-proxy; then
+        start_tls_proxy '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT &
+    fi
 }
 
 # start_nova() - Start running processes, including screen
