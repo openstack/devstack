@@ -93,6 +93,8 @@ if [[ "$ENABLED_SERVICES" =~ "heat" ]]; then
     keystone user-role-add --tenant_id $SERVICE_TENANT \
                            --user_id $HEAT_USER \
                            --role_id $ADMIN_ROLE
+    # heat_stack_user role is for users created by Heat
+    keystone role-create --name heat_stack_user
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         HEAT_CFN_SERVICE=$(get_id keystone service-create \
             --name=heat-cfn \
