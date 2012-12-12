@@ -715,6 +715,8 @@ function restart_service() {
 function screen_it {
     NL=`echo -ne '\015'`
     SCREEN_NAME=${SCREEN_NAME:-stack}
+    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
+
     if is_service_enabled $1; then
         # Append the service to the screen rc file
         screen_rc "$1" "$2"
@@ -730,7 +732,7 @@ function screen_it {
             screen -S $SCREEN_NAME -p $1 -X log on
             ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
         fi
-        screen -S $SCREEN_NAME -p $1 -X stuff "$2$NL"
+        screen -S $SCREEN_NAME -p $1 -X stuff "$2 || touch \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
     fi
 }
 
@@ -755,6 +757,47 @@ function screen_rc {
     fi
 }
 
+# Helper to remove the *.failure files under $SERVICE_DIR/$SCREEN_NAME
+# This is used for service_check when all the screen_it are called finished
+# init_service_check
+function init_service_check() {
+    SCREEN_NAME=${SCREEN_NAME:-stack}
+    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
+
+    if [[ ! -d "$SERVICE_DIR/$SCREEN_NAME" ]]; then
+        mkdir -p "$SERVICE_DIR/$SCREEN_NAME"
+    fi
+
+    rm -f "$SERVICE_DIR/$SCREEN_NAME"/*.failure
+}
+
+# Helper to get the status of each running service
+# service_check
+function service_check() {
+    local service
+    local failures
+    SCREEN_NAME=${SCREEN_NAME:-stack}
+    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
+
+
+    if [[ ! -d "$SERVICE_DIR/$SCREEN_NAME" ]]; then
+        echo "No service status directory found"
+        return
+    fi
+
+    # Check if there is any falure flag file under $SERVICE_DIR/$SCREEN_NAME
+    failures=`ls "$SERVICE_DIR/$SCREEN_NAME"/*.failure 2>/dev/null`
+
+    for service in $failures; do
+        service=`basename $service`
+        service=${service::-8}
+        echo "Error: Service $service is not running"
+    done
+
+    if [ -n "$failures" ]; then
+        echo "More details about the above errors can be found with screen, with ./rejoin-stack.sh"
+    fi
+}
 
 # ``pip install`` the dependencies of the package before ``setup.py develop``
 # so pip and not distutils processes the dependency chain
