@@ -105,10 +105,7 @@ function configure_cinder() {
     iniset $CINDER_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CINDER_API_PASTE_INI filter:authtoken admin_user cinder
     iniset $CINDER_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
-
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
-        iniset $CINDER_API_PASTE_INI filter:authtoken signing_dir $CINDER_AUTH_CACHE_DIR
-    fi
+    iniset $CINDER_API_PASTE_INI filter:authtoken signing_dir $CINDER_AUTH_CACHE_DIR
 
     cp $CINDER_DIR/etc/cinder/cinder.conf.sample $CINDER_CONF
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
@@ -212,11 +209,9 @@ function init_cinder() {
         fi
     fi
 
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
-        # Create cache dir
-        sudo mkdir -p $CINDER_AUTH_CACHE_DIR
-        sudo chown `whoami` $CINDER_AUTH_CACHE_DIR
-    fi
+    # Create cache dir
+    sudo mkdir -p $CINDER_AUTH_CACHE_DIR
+    sudo chown `whoami` $CINDER_AUTH_CACHE_DIR
 }
 
 # install_cinder() - Collect source and prepare
