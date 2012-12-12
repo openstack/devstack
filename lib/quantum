@@ -127,6 +127,7 @@ function quantum_setup_keystone() {
     # Create cache dir
     sudo mkdir -p $QUANTUM_AUTH_CACHE_DIR
     sudo chown `whoami` $QUANTUM_AUTH_CACHE_DIR
+    rm -f $QUANTUM_AUTH_CACHE_DIR/*
 }
 
 function quantum_setup_ovs_bridge() {

@@ -162,8 +162,10 @@ function init_glance() {
     # Create cache dir
     sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
     sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/api
+    rm -f $GLANCE_AUTH_CACHE_DIR/api/*
     sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
     sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/registry
+    rm -f $GLANCE_AUTH_CACHE_DIR/registry/*
 }
 
 # install_glanceclient() - Collect source and prepare
