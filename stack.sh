@@ -288,6 +288,7 @@ fi
 
 # Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
 SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 
 # Configure services to use syslog instead of writing to individual log files
 SYSLOG=`trueorfalse False $SYSLOG`
@@ -305,6 +306,7 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # ==================
 
 # Get project function libraries
+source $TOP_DIR/lib/tls
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
@@ -853,6 +855,12 @@ if [[ $TRACK_DEPENDS = True ]] ; then
     exit 0
 fi
 
+if is_service_enabled tls-proxy; then
+    configure_CA
+    init_CA
+    # Add name to /etc/hosts
+    # don't be naive and add to existing line!
+fi
 
 # Syslog
 # ------
@@ -931,12 +939,17 @@ init_service_check
 
 if is_service_enabled key; then
     echo_summary "Starting Keystone"
-    configure_keystone
     init_keystone
     start_keystone
 
     # Set up a temporary admin URI for Keystone
-    SERVICE_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+    SERVICE_ENDPOINT=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+
+    if is_service_enabled tls-proxy; then
+        export OS_CACERT=$INT_CA_DIR/ca-chain.pem
+        # Until the client support is fixed, just use the internal endpoint
+        SERVICE_ENDPOINT=http://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT_INT/v2.0
+    fi
 
     # Do the keystone-specific bits from keystone_data.sh
     export OS_SERVICE_TOKEN=$SERVICE_TOKEN

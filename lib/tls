@@ -1,0 +1,314 @@
+# lib/tls
+# Functions to control the configuration and operation of the TLS proxy service
+
+# Dependencies:
+# !! source _before_ any services that use ``SERVICE_HOST``
+# ``functions`` file
+# ``DEST``, ``DATA_DIR`` must be defined
+# ``HOST_IP``, ``SERVICE_HOST``
+# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+
+# Entry points:
+# configure_CA
+# init_CA
+
+# configure_proxy
+# start_tls_proxy
+
+# make_root_ca
+# make_int_ca
+# new_cert $INT_CA_DIR int-server "abc"
+# start_tls_proxy HOST_IP 5000 localhost 5000
+
+
+if is_service_enabled tls-proxy; then
+    # TODO(dtroyer): revisit this below after the search for HOST_IP has been done
+    TLS_IP=${TLS_IP:-$SERVICE_IP}
+
+    # Set the default ``SERVICE_PROTOCOL`` for TLS
+    SERVICE_PROTOCOL=https
+fi
+
+# Make up a hostname for cert purposes
+# will be added to /etc/hosts?
+DEVSTACK_HOSTNAME=secure.devstack.org
+DEVSTACK_CERT_NAME=devstack-cert
+DEVSTACK_CERT=$DATA_DIR/$DEVSTACK_CERT_NAME.pem
+
+# CA configuration
+ROOT_CA_DIR=${ROOT_CA_DIR:-$DATA_DIR/CA/root-ca}
+INT_CA_DIR=${INT_CA_DIR:-$DATA_DIR/CA/int-ca}
+
+ORG_NAME="OpenStack"
+ORG_UNIT_NAME="DevStack"
+
+# Stud configuration
+STUD_PROTO="--tls"
+STUD_CIPHERS='TLSv1+HIGH:!DES:!aNULL:!eNULL:@STRENGTH'
+
+
+# CA Functions
+# ============
+
+# There may be more than one, get specific
+OPENSSL=${OPENSSL:-/usr/bin/openssl}
+
+# Do primary CA configuration
+function configure_CA() {
+    # build common config file
+
+    # Verify ``TLS_IP`` is good
+    if [[ -n "$HOST_IP" && "$HOST_IP" != "$TLS_IP" ]]; then
+        # auto-discover has changed the IP
+        TLS_IP=$HOST_IP
+    fi
+}
+
+# Creates a new CA directory structure
+# create_CA_base ca-dir
+function create_CA_base() {
+    local ca_dir=$1
+
+    if [[ -d $ca_dir ]]; then
+        # Bail out it exists
+        return 0
+    fi
+
+    for i in certs crl newcerts private; do
+        mkdir -p $ca_dir/$i
+    done
+    chmod 710 $ca_dir/private
+    echo "01" >$ca_dir/serial
+    cp /dev/null $ca_dir/index.txt
+}
+
+
+# Create a new CA configuration file
+# create_CA_config ca-dir common-name
+function create_CA_config() {
+    local ca_dir=$1
+    local common_name=$2
+
+    echo "
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir                     = $ca_dir
+policy                  = policy_match
+database                = \$dir/index.txt
+serial                  = \$dir/serial
+certs                   = \$dir/certs
+crl_dir                 = \$dir/crl
+new_certs_dir           = \$dir/newcerts
+certificate             = \$dir/cacert.pem
+private_key             = \$dir/private/cacert.key
+RANDFILE                = \$dir/private/.rand
+default_md              = default
+
+[ req ]
+default_bits            = 1024
+default_md              = sha1
+
+prompt                  = no
+distinguished_name      = ca_distinguished_name
+
+x509_extensions         = ca_extensions
+
+[ ca_distinguished_name ]
+organizationName        = $ORG_NAME
+organizationalUnitName  = $ORG_UNIT_NAME Certificate Authority
+commonName              = $common_name
+
+[ policy_match ]
+countryName             = optional
+stateOrProvinceName     = optional
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+
+[ ca_extensions ]
+basicConstraints        = critical,CA:true
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid:always, issuer
+keyUsage                = cRLSign, keyCertSign
+
+" >$ca_dir/ca.conf
+}
+
+# Create a new signing configuration file
+# create_signing_config ca-dir
+function create_signing_config() {
+    local ca_dir=$1
+
+    echo "
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir                     = $ca_dir
+policy                  = policy_match
+database                = \$dir/index.txt
+serial                  = \$dir/serial
+certs                   = \$dir/certs
+crl_dir                 = \$dir/crl
+new_certs_dir           = \$dir/newcerts
+certificate             = \$dir/cacert.pem
+private_key             = \$dir/private/cacert.key
+RANDFILE                = \$dir/private/.rand
+default_md              = default
+
+[ req ]
+default_bits            = 1024
+default_md              = sha1
+
+prompt                  = no
+distinguished_name      = req_distinguished_name
+
+x509_extensions         = req_extensions
+
+[ req_distinguished_name ]
+organizationName        = $ORG_NAME
+organizationalUnitName  = $ORG_UNIT_NAME Server Farm
+
+[ policy_match ]
+countryName             = optional
+stateOrProvinceName     = optional
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+
+[ req_extensions ]
+basicConstraints        = CA:false
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid:always, issuer
+keyUsage                = digitalSignature, keyEncipherment, keyAgreement
+extendedKeyUsage        = serverAuth, clientAuth
+subjectAltName          = \$ENV::SUBJECT_ALT_NAME
+
+" >$ca_dir/signing.conf
+}
+
+# Create root and intermediate CAs and an initial server cert
+# init_CA
+function init_CA {
+    # Ensure CAs are built
+    make_root_CA $ROOT_CA_DIR
+    make_int_CA $INT_CA_DIR $ROOT_CA_DIR
+
+    # Create the CA bundle
+    cat $ROOT_CA_DIR/cacert.pem $INT_CA_DIR/cacert.pem >>$INT_CA_DIR/ca-chain.pem
+
+    if [[ ! -r $DEVSTACK_CERT ]]; then
+        if [[ -n "$TLS_IP" ]]; then
+            # Lie to let incomplete match routines work
+            TLS_IP="DNS:$TLS_IP"
+        fi
+        make_cert $INT_CA_DIR $DEVSTACK_CERT_NAME $DEVSTACK_HOSTNAME "$TLS_IP"
+
+        # Create a cert bundle
+        cat $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/cacert.pem >$DEVSTACK_CERT
+    fi
+}
+
+
+# make_cert creates and signs a new certificate with the given commonName and CA
+# make_cert ca-dir cert-name "common-name" ["alt-name" ...]
+function make_cert() {
+    local ca_dir=$1
+    local cert_name=$2
+    local common_name=$3
+    local alt_names=$4
+
+    # Generate a signing request
+    $OPENSSL req \
+        -sha1 \
+        -newkey rsa \
+        -nodes \
+        -keyout $ca_dir/private/$cert_name.key \
+        -out $ca_dir/$cert_name.csr \
+        -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}"
+
+    if [[ -z "$alt_names" ]]; then
+        alt_names="DNS:${common_name}"
+    else
+        alt_names="DNS:${common_name},${alt_names}"
+    fi
+
+    # Sign the request valid for 1 year
+    SUBJECT_ALT_NAME="$alt_names" \
+    $OPENSSL ca -config $ca_dir/signing.conf \
+        -extensions req_extensions \
+        -days 365 \
+        -notext \
+        -in $ca_dir/$cert_name.csr \
+        -out $ca_dir/$cert_name.crt \
+        -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}" \
+        -batch
+}
+
+
+# Make an intermediate CA to sign everything else
+# make_int_CA ca-dir signing-ca-dir
+function make_int_CA() {
+    local ca_dir=$1
+    local signing_ca_dir=$2
+
+    # Create the root CA
+    create_CA_base $ca_dir
+    create_CA_config $ca_dir 'Intermediate CA'
+    create_signing_config $ca_dir
+
+    # Create a signing certificate request
+    $OPENSSL req -config $ca_dir/ca.conf \
+        -sha1 \
+        -newkey rsa \
+        -nodes \
+        -keyout $ca_dir/private/cacert.key \
+        -out $ca_dir/cacert.csr \
+        -outform PEM
+
+    # Sign the intermediate request valid for 1 year
+    $OPENSSL ca -config $signing_ca_dir/ca.conf \
+        -extensions ca_extensions \
+        -days 365 \
+        -notext \
+        -in $ca_dir/cacert.csr \
+        -out $ca_dir/cacert.pem \
+        -batch
+}
+
+# Make a root CA to sign other CAs
+# make_root_CA ca-dir
+function make_root_CA() {
+    local ca_dir=$1
+
+    # Create the root CA
+    create_CA_base $ca_dir
+    create_CA_config $ca_dir 'Root CA'
+
+    # Create a self-signed certificate valid for 5 years
+    $OPENSSL req -config $ca_dir/ca.conf \
+        -x509 \
+        -nodes \
+        -newkey rsa \
+        -days 21360 \
+        -keyout $ca_dir/private/cacert.key \
+        -out $ca_dir/cacert.pem \
+        -outform PEM
+}
+
+
+# Proxy Functions
+# ===============
+
+# Starts the TLS proxy for the given IP/ports
+# start_tls_proxy front-host front-port back-host back-port
+function start_tls_proxy() {
+    local f_host=$1
+    local f_port=$2
+    local b_host=$3
+    local b_port=$4
+
+    stud $STUD_PROTO -f $f_host,$f_port -b $b_host,$b_port $DEVSTACK_CERT 2>/dev/null
+}
