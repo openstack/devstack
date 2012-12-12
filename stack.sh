@@ -30,9 +30,8 @@ source $TOP_DIR/functions
 GetDistro
 
 
-
-# Settings
-# ========
+# Global Settings
+# ===============
 
 # ``stack.sh`` is customizable through setting environment variables.  If you
 # want to override a setting you can set and export it::
@@ -62,33 +61,18 @@ fi
 source $TOP_DIR/stackrc
 
 
-# Proxy Settings
+# Local Settings
 # --------------
 
-# HTTP and HTTPS proxy servers are supported via the usual environment variables [1]
-# ``http_proxy``, ``https_proxy`` and ``no_proxy``. They can be set in
-# ``localrc`` if necessary or on the command line::
-#
-# [1] http://www.w3.org/Daemon/User/Proxies/ProxyClients.html
-#
-#     http_proxy=http://proxy.example.com:3128/ no_proxy=repo.example.net ./stack.sh
-
-if [[ -n "$http_proxy" ]]; then
-    export http_proxy=$http_proxy
-fi
-if [[ -n "$https_proxy" ]]; then
-    export https_proxy=$https_proxy
-fi
-if [[ -n "$no_proxy" ]]; then
-    export no_proxy=$no_proxy
-fi
+# Make sure the proxy config is visible to sub-processes
+export_proxy_variables
 
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
 
 
 # Sanity Check
-# ============
+# ------------
 
 # Clean up last environment var cache
 if [[ -r $TOP_DIR/.stackenv ]]; then
@@ -631,26 +615,9 @@ set -o xtrace
 # OpenStack uses a fair number of other projects.
 
 # Install package requirements
+# Source it so the entire environment is available
 echo_summary "Installing package prerequisites"
-if is_ubuntu; then
-    install_package $(get_packages $FILES/apts)
-elif is_fedora; then
-    install_package $(get_packages $FILES/rpms)
-elif is_suse; then
-    install_package $(get_packages $FILES/rpms-suse)
-else
-    exit_distro_not_supported "list of packages"
-fi
-
-if [[ $SYSLOG != "False" ]]; then
-    if is_ubuntu || is_fedora; then
-        install_package rsyslog-relp
-    elif is_suse; then
-        install_package rsyslog-module-relp
-    else
-        exit_distro_not_supported "rsyslog-relp installation"
-    fi
-fi
+source $TOP_DIR/tools/install_prereqs.sh
 
 install_rpc_backend
 
