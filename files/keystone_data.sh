@@ -5,7 +5,6 @@
 # Tenant               User       Roles
 # ------------------------------------------------------------------
 # service              glance     admin
-# service              nova       admin, [ResellerAdmin (swift only)]
 # service              quantum    admin        # if enabled
 # service              swift      admin        # if enabled
 # service              cinder     admin        # if enabled
@@ -53,29 +52,8 @@ RESELLER_ROLE=$(get_id keystone role-create --name=ResellerAdmin)
 # Services
 # --------
 
-# Nova
-if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
-    NOVA_USER=$(get_id keystone user-create \
-        --name=nova \
-        --pass="$SERVICE_PASSWORD" \
-        --tenant_id $SERVICE_TENANT \
-        --email=nova@example.com)
-    keystone user-role-add \
-        --tenant_id $SERVICE_TENANT \
-        --user_id $NOVA_USER \
-        --role_id $ADMIN_ROLE
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        NOVA_SERVICE=$(get_id keystone service-create \
-            --name=nova \
-            --type=compute \
-            --description="Nova Compute Service")
-        keystone endpoint-create \
-            --region RegionOne \
-            --service_id $NOVA_SERVICE \
-            --publicurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s" \
-            --adminurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s" \
-            --internalurl "http://$SERVICE_HOST:\$(compute_port)s/v2/\$(tenant_id)s"
-    fi
+if [[ "$ENABLED_SERVICES" =~ "n-api" ]] && [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+    NOVA_USER=$(keystone user-list | awk "/ nova / { print \$2 }")
     # Nova needs ResellerAdmin role to download images when accessing
     # swift through the s3 api.
     keystone user-role-add \
