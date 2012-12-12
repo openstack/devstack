@@ -20,14 +20,21 @@ function recreate_database_postgresql {
 
 function configure_database_postgresql {
     echo_summary "Configuring and starting PostgreSQL"
-    if is_fedora || is_suse; then
+    if is_fedora; then
         PG_HBA=/var/lib/pgsql/data/pg_hba.conf
         PG_CONF=/var/lib/pgsql/data/postgresql.conf
         sudo [ -e $PG_HBA ] || sudo postgresql-setup initdb
-    else
+    elif is_ubuntu; then
         PG_DIR=`find /etc/postgresql -name pg_hba.conf|xargs dirname`
         PG_HBA=$PG_DIR/pg_hba.conf
         PG_CONF=$PG_DIR/postgresql.conf
+    elif is_suse; then
+        PG_HBA=/var/lib/pgsql/data/pg_hba.conf
+        PG_CONF=/var/lib/pgsql/data/postgresql.conf
+        # initdb is called when postgresql is first started
+        sudo [ -e $PG_HBA ] || start_service postgresql
+    else
+        exit_distro_not_supported "postgresql configuration"
     fi
     # Listen on all addresses
     sudo sed -i "/listen_addresses/s/.*/listen_addresses = '*'/" $PG_CONF
@@ -35,7 +42,7 @@ function configure_database_postgresql {
     sudo sed -i "/^host/s/all\s\+127.0.0.1\/32\s\+ident/$DATABASE_USER\t0.0.0.0\/0\tpassword/" $PG_HBA
     # Do password auth for all IPv6 clients
     sudo sed -i "/^host/s/all\s\+::1\/128\s\+ident/$DATABASE_USER\t::0\/0\tpassword/" $PG_HBA
-    start_service postgresql
+    restart_service postgresql
 
     # If creating the role fails, chances are it already existed. Try to alter it.
     sudo -u root sudo -u postgres -i psql -c "CREATE ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'" || \
