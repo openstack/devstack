@@ -79,7 +79,7 @@ function init_horizon() {
         # Be a good citizen and use the distro tools here
         sudo touch /etc/$APACHE_NAME/$APACHE_CONF
         sudo a2ensite horizon
-        # WSGI doesn't enable by default, enable it
+        # WSGI isn't enabled by default, enable it
         sudo a2enmod wsgi
     elif is_fedora; then
         APACHE_NAME=httpd
@@ -88,9 +88,8 @@ function init_horizon() {
     elif is_suse; then
         APACHE_NAME=apache2
         APACHE_CONF=vhosts.d/horizon.conf
-        # Append wsgi to the list of modules to load
-        grep -q "^APACHE_MODULES=.*wsgi" /etc/sysconfig/apache2 ||
-            sudo sed '/^APACHE_MODULES=/s/^\(.*\)"$/\1 wsgi"/' -i /etc/sysconfig/apache2
+        # WSGI isn't enabled by default, enable it
+        sudo a2enmod wsgi
     else
         exit_distro_not_supported "apache configuration"
     fi
