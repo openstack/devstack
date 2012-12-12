@@ -134,12 +134,14 @@ function configure_tempest() {
     flavor_lines=`nova flavor-list`
     IFS=$'\r\n'
     flavors=""
-    for line in $flavor_lines; do
-        if [ -z $DEFAULT_INSTANCE_TYPE ]; then
-            flavors="$flavors `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
-        else
-            flavors="$flavors `echo $line | grep -v "^\(|\s*ID\|+--\)" | grep "$DEFAULT_INSTANCE_TYPE" | cut -d' ' -f2`"
+    if [[ -n "$DEFAULT_INSTANCE_TYPE" ]]; then
+        for line in $flavor_lines; do
+            f=$(echo $line | awk "/ $DEFAULT_INSTANCE_TYPE / { print \$2 }")
+            flavors="$flavors $f"
+        done
     fi
+    for line in $flavor_lines; do
+        flavors="$flavors `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
     done
 
     IFS=" "
