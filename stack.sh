@@ -1124,8 +1124,8 @@ if is_service_enabled nova; then
         add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
         add_nova_opt "baremetal_driver=$BM_DRIVER"
         add_nova_opt "baremetal_tftp_root=/tftpboot"
-        add_nova_opt "instance_type_extra_specs=cpu_arch:$BM_CPU_ARCH"
-        add_nova_opt "power_manager=$BM_POWER_MANAGER"
+        add_nova_opt "baremetal_instance_type_extra_specs=cpu_arch:$BM_CPU_ARCH"
+        add_nova_opt "baremetal_power_manager=$BM_POWER_MANAGER"
         add_nova_opt "scheduler_host_manager=nova.scheduler.baremetal_host_manager.BaremetalHostManager"
         add_nova_opt "scheduler_default_filters=AllHostsFilter"
 
