@@ -26,3 +26,7 @@ export VOLUME_TIMEOUT=${VOLUME_TIMEOUT:-30}
 
 # Max time to wait for a euca-delete command to propogate
 export VOLUME_DELETE_TIMEOUT=${SNAPSHOT_DELETE_TIMEOUT:-60}
+
+# The size of the volume we want to boot from; some storage back-ends
+# do not allow a disk resize, so it's important that this can be tuned
+export DEFAULT_VOLUME_SIZE=${DEFAULT_VOLUME_SIZE:-1}

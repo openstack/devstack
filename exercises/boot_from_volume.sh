@@ -117,7 +117,7 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $
 fi
 
 # Create the bootable volume
-cinder create --display_name=$VOL_NAME --image-id $IMAGE 1
+cinder create --display_name=$VOL_NAME --image-id $IMAGE $DEFAULT_VOLUME_SIZE
 
 # Wait for volume to activate
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
