@@ -1059,9 +1059,9 @@ if is_service_enabled nova; then
     # These settings don't hurt anything if n-xvnc and n-novnc are disabled
     if is_service_enabled n-cpu; then
         NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
-        add_nova_opt "novncproxy_base_url=$NOVNCPROXY_URL"
+        iniset $NOVA_CONF DEFAULT novncproxy_base_url "$NOVNCPROXY_URL"
         XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
-        add_nova_opt "xvpvncproxy_base_url=$XVPVNCPROXY_URL"
+        iniset $NOVA_CONF DEFAULT xvpvncproxy_base_url "$XVPVNCPROXY_URL"
     fi
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
@@ -1071,18 +1071,18 @@ if is_service_enabled nova; then
     # Address on which instance vncservers will listen on compute hosts.
     # For multi-host, this should be the management ip of the compute host.
     VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
-    add_nova_opt "vncserver_listen=$VNCSERVER_LISTEN"
-    add_nova_opt "vncserver_proxyclient_address=$VNCSERVER_PROXYCLIENT_ADDRESS"
-    add_nova_opt "ec2_dmz_host=$EC2_DMZ_HOST"
+    iniset $NOVA_CONF DEFAULT vncserver_listen "$VNCSERVER_LISTEN"
+    iniset $NOVA_CONF DEFAULT vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+    iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
     if is_service_enabled zeromq; then
-        add_nova_opt "rpc_backend=nova.openstack.common.rpc.impl_zmq"
+        iniset $NOVA_CONF DEFAULT rpc_backend "nova.openstack.common.rpc.impl_zmq"
     elif is_service_enabled qpid; then
-        add_nova_opt "rpc_backend=nova.rpc.impl_qpid"
+        iniset $NOVA_CONF DEFAULT rpc_backend "nova.rpc.impl_qpid"
     elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
-        add_nova_opt "rabbit_host=$RABBIT_HOST"
-        add_nova_opt "rabbit_password=$RABBIT_PASSWORD"
+        iniset $NOVA_CONF DEFAULT rabbit_host "$RABBIT_HOST"
+        iniset $NOVA_CONF DEFAULT rabbit_password "$RABBIT_PASSWORD"
     fi
-    add_nova_opt "glance_api_servers=$GLANCE_HOSTPORT"
+    iniset $NOVA_CONF DEFAULT glance_api_servers "$GLANCE_HOSTPORT"
 
 
     # XenServer
@@ -1091,16 +1091,16 @@ if is_service_enabled nova; then
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         echo_summary "Using XenServer virtualization driver"
         read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
-        add_nova_opt "compute_driver=xenapi.XenAPIDriver"
+        iniset $NOVA_CONF DEFAULT compute_driver "xenapi.XenAPIDriver"
         XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
         XENAPI_USER=${XENAPI_USER:-"root"}
-        add_nova_opt "xenapi_connection_url=$XENAPI_CONNECTION_URL"
-        add_nova_opt "xenapi_connection_username=$XENAPI_USER"
-        add_nova_opt "xenapi_connection_password=$XENAPI_PASSWORD"
-        add_nova_opt "flat_injected=False"
+        iniset $NOVA_CONF DEFAULT xenapi_connection_url "$XENAPI_CONNECTION_URL"
+        iniset $NOVA_CONF DEFAULT xenapi_connection_username "$XENAPI_USER"
+        iniset $NOVA_CONF DEFAULT xenapi_connection_password "$XENAPI_PASSWORD"
+        iniset $NOVA_CONF DEFAULT flat_injected "False"
         # Need to avoid crash due to new firewall support
         XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
-        add_nova_opt "firewall_driver=$XEN_FIREWALL_DRIVER"
+        iniset $NOVA_CONF DEFAULT firewall_driver "$XEN_FIREWALL_DRIVER"
 
     # OpenVZ
     # ------
@@ -1109,34 +1109,34 @@ if is_service_enabled nova; then
         echo_summary "Using OpenVZ virtualization driver"
         # TODO(deva): OpenVZ driver does not yet work if compute_driver is set here.
         #             Replace connection_type when this is fixed.
-        #             add_nova_opt "compute_driver=openvz.connection.OpenVzConnection"
-        add_nova_opt "connection_type=openvz"
+        #             iniset $NOVA_CONF DEFAULT compute_driver "openvz.connection.OpenVzConnection"
+        iniset $NOVA_CONF DEFAULT connection_type "openvz"
         LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
-        add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
+        iniset $NOVA_CONF DEFAULT firewall_driver "$LIBVIRT_FIREWALL_DRIVER"
 
     # Bare Metal
     # ----------
 
     elif [ "$VIRT_DRIVER" = 'baremetal' ]; then
         echo_summary "Using BareMetal driver"
-        add_nova_opt "compute_driver=nova.virt.baremetal.driver.BareMetalDriver"
         LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.firewall.NoopFirewallDriver"}
-        add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
-        add_nova_opt "baremetal_driver=$BM_DRIVER"
-        add_nova_opt "baremetal_tftp_root=/tftpboot"
-        add_nova_opt "baremetal_instance_type_extra_specs=cpu_arch:$BM_CPU_ARCH"
-        add_nova_opt "baremetal_power_manager=$BM_POWER_MANAGER"
-        add_nova_opt "scheduler_host_manager=nova.scheduler.baremetal_host_manager.BaremetalHostManager"
-        add_nova_opt "scheduler_default_filters=AllHostsFilter"
+        iniset $NOVA_CONF DEFAULT compute_driver nova.virt.baremetal.driver.BareMetalDriver
+        iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
+        iniset $NOVA_CONF DEFAULT scheduler_host_manager nova.scheduler.baremetal_host_manager.BaremetalHostManager
+        iniset $NOVA_CONF DEFAULT scheduler_default_filters AllHostsFilter
+        iniset $NOVA_CONF baremetal driver $BM_DRIVER
+        iniset $NOVA_CONF baremetal instance_type_extra_specs cpu_arch:$BM_CPU_ARCH
+        iniset $NOVA_CONF baremetal power_manager $BM_POWER_MANAGER
+        iniset $NOVA_CONF baremetal tftp_root /tftpboot
 
     # Default
     # -------
 
     else
         echo_summary "Using libvirt virtualization driver"
-        add_nova_opt "compute_driver=libvirt.LibvirtDriver"
+        iniset $NOVA_CONF DEFAULT compute_driver "libvirt.LibvirtDriver"
         LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
-        add_nova_opt "firewall_driver=$LIBVIRT_FIREWALL_DRIVER"
+        iniset $NOVA_CONF DEFAULT firewall_driver "$LIBVIRT_FIREWALL_DRIVER"
     fi
 fi
 
@@ -1174,9 +1174,9 @@ if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nov
     CREDS=$(keystone ec2-credentials-create --user_id $NOVA_USER_ID --tenant_id $NOVA_TENANT_ID)
     ACCESS_KEY=$(echo "$CREDS" | awk '/ access / { print $4 }')
     SECRET_KEY=$(echo "$CREDS" | awk '/ secret / { print $4 }')
-    add_nova_opt "s3_access_key=$ACCESS_KEY"
-    add_nova_opt "s3_secret_key=$SECRET_KEY"
-    add_nova_opt "s3_affix_tenant=True"
+    iniset $NOVA_CONF DEFAULT s3_access_key "$ACCESS_KEY"
+    iniset $NOVA_CONF DEFAULT s3_secret_key "$SECRET_KEY"
+    iniset $NOVA_CONF DEFAULT s3_affix_tenant "True"
 fi
 
 screen_it zeromq "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-rpc-zmq-receiver"

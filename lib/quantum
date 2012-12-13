@@ -200,13 +200,13 @@ function configure_quantum() {
 }
 
 function create_nova_conf_quantum() {
-    add_nova_opt "network_api_class=nova.network.quantumv2.api.API"
-    add_nova_opt "quantum_admin_username=$Q_ADMIN_USERNAME"
-    add_nova_opt "quantum_admin_password=$SERVICE_PASSWORD"
-    add_nova_opt "quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
-    add_nova_opt "quantum_auth_strategy=$Q_AUTH_STRATEGY"
-    add_nova_opt "quantum_admin_tenant_name=$SERVICE_TENANT_NAME"
-    add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
+    iniset $NOVA_CONF DEFAULT network_api_class "nova.network.quantumv2.api.API"
+    iniset $NOVA_CONF DEFAULT quantum_admin_username "$Q_ADMIN_USERNAME"
+    iniset $NOVA_CONF DEFAULT quantum_admin_password "$SERVICE_PASSWORD"
+    iniset $NOVA_CONF DEFAULT quantum_admin_auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+    iniset $NOVA_CONF DEFAULT quantum_auth_strategy "$Q_AUTH_STRATEGY"
+    iniset $NOVA_CONF DEFAULT quantum_admin_tenant_name "$SERVICE_TENANT_NAME"
+    iniset $NOVA_CONF DEFAULT quantum_url "http://$Q_HOST:$Q_PORT"
 
     if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
         NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
@@ -214,14 +214,14 @@ function create_nova_conf_quantum() {
         NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"}
     elif [[ "$Q_PLUGIN" = "ryu" ]]; then
         NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"quantum.plugins.ryu.nova.vif.LibvirtOpenVswitchOFPRyuDriver"}
-        add_nova_opt "libvirt_ovs_integration_bridge=$OVS_BRIDGE"
-        add_nova_opt "linuxnet_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
-        add_nova_opt "libvirt_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
+        iniset $NOVA_CONF DEFAULT libvirt_ovs_integration_bridge "$OVS_BRIDGE"
+        iniset $NOVA_CONF DEFAULT linuxnet_ovs_ryu_api_host "$RYU_API_HOST:$RYU_API_PORT"
+        iniset $NOVA_CONF DEFAULT libvirt_ovs_ryu_api_host "$RYU_API_HOST:$RYU_API_PORT"
     fi
-    add_nova_opt "libvirt_vif_driver=$NOVA_VIF_DRIVER"
-    add_nova_opt "linuxnet_interface_driver=$LINUXNET_VIF_DRIVER"
+    iniset $NOVA_CONF DEFAULT libvirt_vif_driver "$NOVA_VIF_DRIVER"
+    iniset $NOVA_CONF DEFAULT linuxnet_interface_driver "$LINUXNET_VIF_DRIVER"
     if is_service_enabled q-meta; then
-        add_nova_opt "service_quantum_metadata_proxy=True"
+        iniset $NOVA_CONF DEFAULT service_quantum_metadata_proxy "True"
     fi
 }
 

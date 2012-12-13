@@ -354,73 +354,73 @@ function create_nova_conf() {
     # (Re)create ``nova.conf``
     rm -f $NOVA_CONF
     add_nova_opt "[DEFAULT]"
-    add_nova_opt "verbose=True"
-    add_nova_opt "auth_strategy=keystone"
-    add_nova_opt "allow_resize_to_same_host=True"
-    add_nova_opt "api_paste_config=$NOVA_API_PASTE_INI"
-    add_nova_opt "rootwrap_config=$NOVA_CONF_DIR/rootwrap.conf"
-    add_nova_opt "compute_scheduler_driver=$SCHEDULER"
-    add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF"
-    add_nova_opt "force_dhcp_release=True"
-    add_nova_opt "fixed_range=$FIXED_RANGE"
-    add_nova_opt "default_floating_pool=$PUBLIC_NETWORK_NAME"
-    add_nova_opt "s3_host=$SERVICE_HOST"
-    add_nova_opt "s3_port=$S3_SERVICE_PORT"
-    add_nova_opt "osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
-    add_nova_opt "my_ip=$HOST_IP"
+    iniset $NOVA_CONF DEFAULT verbose "True"
+    iniset $NOVA_CONF DEFAULT auth_strategy "keystone"
+    iniset $NOVA_CONF DEFAULT allow_resize_to_same_host "True"
+    iniset $NOVA_CONF DEFAULT api_paste_config "$NOVA_API_PASTE_INI"
+    iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
+    iniset $NOVA_CONF DEFAULT compute_scheduler_driver "$SCHEDULER"
+    iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF"
+    iniset $NOVA_CONF DEFAULT force_dhcp_release "True"
+    iniset $NOVA_CONF DEFAULT fixed_range "$FIXED_RANGE"
+    iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
+    iniset $NOVA_CONF DEFAULT s3_host "$SERVICE_HOST"
+    iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
+    iniset $NOVA_CONF DEFAULT osapi_compute_extension "nova.api.openstack.compute.contrib.standard_extensions"
+    iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
     local dburl
     database_connection_url dburl nova
-    add_nova_opt "sql_connection=$dburl"
+    iniset $NOVA_CONF DEFAULT sql_connection "$dburl"
     if is_baremetal; then
         database_connection_url dburl nova_bm
-        add_nova_opt "baremetal_sql_connection=$dburl"
+        iniset $NOVA_CONF baremetal sql_connection $dburl
     fi
-    add_nova_opt "libvirt_type=$LIBVIRT_TYPE"
-    add_nova_opt "libvirt_cpu_mode=none"
-    add_nova_opt "instance_name_template=${INSTANCE_NAME_PREFIX}%08x"
+    iniset $NOVA_CONF DEFAULT libvirt_type "$LIBVIRT_TYPE"
+    iniset $NOVA_CONF DEFAULT libvirt_cpu_mode "none"
+    iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
 
     if is_service_enabled n-api; then
-        add_nova_opt "enabled_apis=$NOVA_ENABLED_APIS"
+        iniset $NOVA_CONF DEFAULT enabled_apis "$NOVA_ENABLED_APIS"
         if is_service_enabled tls-proxy; then
             # Set the service port for a proxy to take the original
-            add_nova_opt "osapi_compute_listen_port=$NOVA_SERVICE_PORT_INT"
+            iniset $NOVA_CONF DEFAULT osapi_compute_listen_port "$NOVA_SERVICE_PORT_INT"
         fi
     fi
     if is_service_enabled cinder; then
-        add_nova_opt "volume_api_class=nova.volume.cinder.API"
+        iniset $NOVA_CONF DEFAULT volume_api_class "nova.volume.cinder.API"
     fi
     if [ -n "$NOVA_STATE_PATH" ]; then
-        add_nova_opt "state_path=$NOVA_STATE_PATH"
-        add_nova_opt "lock_path=$NOVA_STATE_PATH"
+        iniset $NOVA_CONF DEFAULT state_path "$NOVA_STATE_PATH"
+        iniset $NOVA_CONF DEFAULT lock_path "$NOVA_STATE_PATH"
     fi
     if [ -n "$NOVA_INSTANCES_PATH" ]; then
-        add_nova_opt "instances_path=$NOVA_INSTANCES_PATH"
+        iniset $NOVA_CONF DEFAULT instances_path "$NOVA_INSTANCES_PATH"
     fi
     if [ "$MULTI_HOST" != "False" ]; then
-        add_nova_opt "multi_host=True"
-        add_nova_opt "send_arp_for_ha=True"
+        iniset $NOVA_CONF DEFAULT multi_host "True"
+        iniset $NOVA_CONF DEFAULT send_arp_for_ha "True"
     fi
     if [ "$SYSLOG" != "False" ]; then
-        add_nova_opt "use_syslog=True"
+        iniset $NOVA_CONF DEFAULT use_syslog "True"
     fi
     if [ "$API_RATE_LIMIT" != "True" ]; then
-        add_nova_opt "api_rate_limit=False"
+        iniset $NOVA_CONF DEFAULT api_rate_limit "False"
     fi
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         # Add color to logging output
-        add_nova_opt "logging_context_format_string=%(asctime)s.%(msecs)d %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_name)s %(project_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
-        add_nova_opt "logging_default_format_string=%(asctime)s.%(msecs)d %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
-        add_nova_opt "logging_debug_format_suffix=[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
-        add_nova_opt "logging_exception_prefix=%(color)s%(asctime)s.%(msecs)d TRACE %(name)s [01;35m%(instance)s[00m"
+        iniset $NOVA_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)d %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_name)s %(project_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+        iniset $NOVA_CONF DEFAULT logging_default_format_string "%(asctime)s.%(msecs)d %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+        iniset $NOVA_CONF DEFAULT logging_debug_format_suffix "[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
+        iniset $NOVA_CONF DEFAULT logging_exception_prefix "%(color)s%(asctime)s.%(msecs)d TRACE %(name)s [01;35m%(instance)s[00m"
     else
         # Show user_name and project_name instead of user_id and project_id
-        add_nova_opt "logging_context_format_string=%(asctime)s.%(msecs)d %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
+        iniset $NOVA_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)d %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
     fi
     if is_service_enabled ceilometer; then
-        add_nova_opt "instance_usage_audit=True"
-        add_nova_opt "instance_usage_audit_period=hour"
-        add_nova_opt "notification_driver=nova.openstack.common.notifier.rpc_notifier"
-        add_nova_opt "notification_driver=ceilometer.compute.nova_notifier"
+        iniset $NOVA_CONF DEFAULT instance_usage_audit "True"
+        iniset $NOVA_CONF DEFAULT instance_usage_audit_period "hour"
+        iniset $NOVA_CONF DEFAULT notification_driver "nova.openstack.common.notifier.rpc_notifier"
+        iniset $NOVA_CONF DEFAULT notification_driver "ceilometer.compute.nova_notifier"
     fi
 
 
@@ -433,17 +433,17 @@ function create_nova_conf() {
     # For Example: ``EXTRA_OPTS=(foo=true bar=2)``
     for I in "${EXTRA_OPTS[@]}"; do
         # Attempt to convert flags to options
-        add_nova_opt ${I//--}
+        iniset $NOVA_CONF DEFAULT ${I//=/ }
     done
 }
 
 function create_nova_conf_nova_network() {
-    add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
-    add_nova_opt "public_interface=$PUBLIC_INTERFACE"
-    add_nova_opt "vlan_interface=$VLAN_INTERFACE"
-    add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
+    iniset $NOVA_CONF DEFAULT network_manager "nova.network.manager.$NET_MAN"
+    iniset $NOVA_CONF DEFAULT public_interface "$PUBLIC_INTERFACE"
+    iniset $NOVA_CONF DEFAULT vlan_interface "$VLAN_INTERFACE"
+    iniset $NOVA_CONF DEFAULT flat_network_bridge "$FLAT_NETWORK_BRIDGE"
     if [ -n "$FLAT_INTERFACE" ]; then
-        add_nova_opt "flat_interface=$FLAT_INTERFACE"
+        iniset $NOVA_CONF DEFAULT flat_interface "$FLAT_INTERFACE"
     fi
 }
 
