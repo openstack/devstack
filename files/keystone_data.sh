@@ -7,7 +7,6 @@
 # service              glance     admin
 # service              quantum    admin        # if enabled
 # service              swift      admin        # if enabled
-# service              cinder     admin        # if enabled
 # service              heat       admin        # if enabled
 # service              ceilometer admin        # if enabled
 # Tempest Only:
@@ -38,6 +37,7 @@ function get_id () {
 # Lookups
 SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
 ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+MEMBER_ROLE=$(keystone role-list | awk "/ Member / { print \$2 }")
 
 
 # Roles
@@ -48,6 +48,7 @@ ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
 # but ResellerAdmin is needed for a user to act as any tenant. The name of this
 # role is also configurable in swift-proxy.conf
 RESELLER_ROLE=$(get_id keystone role-create --name=ResellerAdmin)
+
 
 # Services
 # --------
@@ -242,26 +243,4 @@ if [[ "$ENABLED_SERVICES" =~ "tempest" ]]; then
         --tenant_id $ALT_DEMO_TENANT \
         --user_id $ALT_DEMO_USER \
         --role_id $MEMBER_ROLE
-fi
-
-if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
-    CINDER_USER=$(get_id keystone user-create --name=cinder \
-                                              --pass="$SERVICE_PASSWORD" \
-                                              --tenant_id $SERVICE_TENANT \
-                                              --email=cinder@example.com)
-    keystone user-role-add --tenant_id $SERVICE_TENANT \
-                           --user_id $CINDER_USER \
-                           --role_id $ADMIN_ROLE
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        CINDER_SERVICE=$(get_id keystone service-create \
-            --name=cinder \
-            --type=volume \
-            --description="Cinder Service")
-        keystone endpoint-create \
-            --region RegionOne \
-            --service_id $CINDER_SERVICE \
-            --publicurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
-            --adminurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
-            --internalurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s"
-    fi
 fi

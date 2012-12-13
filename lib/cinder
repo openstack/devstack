@@ -31,9 +31,11 @@ CINDER_DRIVER=${CINDER_DRIVER:-default}
 CINDER_DIR=$DEST/cinder
 CINDERCLIENT_DIR=$DEST/python-cinderclient
 CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
+CINDER_AUTH_CACHE_DIR=${CINDER_AUTH_CACHE_DIR:-/var/cache/cinder}
+
 CINDER_CONF_DIR=/etc/cinder
 CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
-CINDER_AUTH_CACHE_DIR=${CINDER_AUTH_CACHE_DIR:-/var/cache/cinder}
+CINDER_API_PASTE_INI=$CINDER_CONF_DIR/api-paste.ini
 
 # Support entry points installation of console scripts
 if [[ -d $CINDER_DIR/bin ]]; then
@@ -97,7 +99,6 @@ function configure_cinder() {
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/cinder-rootwrap
 
-    CINDER_API_PASTE_INI=$CINDER_CONF_DIR/api-paste.ini
     cp $CINDER_DIR/etc/cinder/api-paste.ini $CINDER_API_PASTE_INI
     iniset $CINDER_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $CINDER_API_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
@@ -156,6 +157,46 @@ function configure_cinder() {
             iniset $CINDER_CONF DEFAULT xenapi_nfs_server "$CINDER_XENAPI_NFS_SERVER"
             iniset $CINDER_CONF DEFAULT xenapi_nfs_serverpath "$CINDER_XENAPI_NFS_SERVERPATH"
         )
+    fi
+}
+
+# create_cinder_accounts() - Set up common required cinder accounts
+
+# Tenant               User       Roles
+# ------------------------------------------------------------------
+# service              cinder     admin        # if enabled
+
+# Migrated from keystone_data.sh
+create_cinder_accounts() {
+
+    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+
+    # Cinder
+    if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
+        CINDER_USER=$(keystone user-create \
+            --name=cinder \
+            --pass="$SERVICE_PASSWORD" \
+            --tenant_id $SERVICE_TENANT \
+            --email=cinder@example.com \
+            | grep " id " | get_field 2)
+        keystone user-role-add \
+            --tenant_id $SERVICE_TENANT \
+            --user_id $CINDER_USER \
+            --role_id $ADMIN_ROLE
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+            CINDER_SERVICE=$(keystone service-create \
+                --name=cinder \
+                --type=volume \
+                --description="Cinder Volume Service" \
+                | grep " id " | get_field 2)
+            keystone endpoint-create \
+                --region RegionOne \
+                --service_id $CINDER_SERVICE \
+                --publicurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
+                --adminurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
+                --internalurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s"
+        fi
     fi
 }
 
