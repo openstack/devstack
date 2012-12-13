@@ -133,7 +133,7 @@ function configure_keystone() {
             echo "catalog.RegionOne.network.name = Quantum Service" >> $KEYSTONE_CATALOG
         fi
 
-        sudo sed -e "
+        sed -e "
             s,%SERVICE_HOST%,$SERVICE_HOST,g;
             s,%S3_SERVICE_PORT%,$S3_SERVICE_PORT,g;
         " -i $KEYSTONE_CATALOG
