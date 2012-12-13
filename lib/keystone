@@ -81,8 +81,8 @@ function configure_keystone() {
 
     if [[ ! -d $KEYSTONE_CONF_DIR ]]; then
         sudo mkdir -p $KEYSTONE_CONF_DIR
-        sudo chown `whoami` $KEYSTONE_CONF_DIR
     fi
+    sudo chown `whoami` $KEYSTONE_CONF_DIR
 
     if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
         cp -p $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
