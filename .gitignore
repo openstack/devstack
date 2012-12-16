@@ -10,3 +10,4 @@ files/*.gz
 files/images
 stack-screenrc
 *.pem
+accrc
