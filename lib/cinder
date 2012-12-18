@@ -253,6 +253,7 @@ function init_cinder() {
     # Create cache dir
     sudo mkdir -p $CINDER_AUTH_CACHE_DIR
     sudo chown `whoami` $CINDER_AUTH_CACHE_DIR
+    rm -f $CINDER_AUTH_CACHE_DIR/*
 }
 
 # install_cinder() - Collect source and prepare

@@ -259,11 +259,13 @@ function init_keystone() {
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
         # Set up certificates
+        rm -rf $KEYSTONE_CONF_DIR/ssl
         $KEYSTONE_DIR/bin/keystone-manage pki_setup
 
         # Create cache dir
         sudo mkdir -p $KEYSTONE_AUTH_CACHE_DIR
         sudo chown `whoami` $KEYSTONE_AUTH_CACHE_DIR
+        rm -f $KEYSTONE_AUTH_CACHE_DIR/*
     fi
 }
 
