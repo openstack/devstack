@@ -90,6 +90,11 @@ DEST=${DEST:-/opt/stack}
 # Sanity Check
 # ============
 
+# Clean up last environment var cache
+if [[ -r $TOP_DIR/.stackenv ]]; then
+    rm $TOP_DIR/.stackenv
+fi
+
 # Import database configuration
 source $TOP_DIR/lib/database
 
@@ -537,9 +542,9 @@ function echo_nolog() {
 # Set ``LOGFILE`` to turn on logging
 # Append '.xxxxxxxx' to the given name to maintain history
 # where 'xxxxxxxx' is a representation of the date the file was created
+TIMESTAMP_FORMAT=${TIMESTAMP_FORMAT:-"%F-%H%M%S"}
 if [[ -n "$LOGFILE" || -n "$SCREEN_LOGDIR" ]]; then
     LOGDAYS=${LOGDAYS:-7}
-    TIMESTAMP_FORMAT=${TIMESTAMP_FORMAT:-"%F-%H%M%S"}
     CURRENT_LOG_TIME=$(date "+$TIMESTAMP_FORMAT")
 fi
 
@@ -1705,6 +1710,14 @@ if is_service_enabled tempest; then
     echo_summary "Finished Configuring Tempest"
     echo '**************************************************'
 fi
+
+# Save some values we generated for later use
+CURRENT_RUN_TIME=$(date "+$TIMESTAMP_FORMAT")
+echo "# $CURRENT_RUN_TIME" >$TOP_DIR/.stackenv
+for i in BASE_SQL_CONN ENABLED_SERVICES HOST_IP LOGFILE \
+  SERVICE_HOST SERVICE_PROTOCOL TLS_IP; do
+    echo $i=${!i} >>$TOP_DIR/.stackenv
+done
 
 
 # Run local script
