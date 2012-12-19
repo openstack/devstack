@@ -307,7 +307,11 @@ function stop_cinder() {
     done
 
     if is_service_enabled c-vol; then
-        stop_service tgt
+        if is_ubuntu; then
+            stop_service tgt
+        else
+            stop_service tgtd
+        fi
     fi
 }
 
