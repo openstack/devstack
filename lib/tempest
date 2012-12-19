@@ -11,6 +11,9 @@
 # - ``S3_SERVICE_PORT``
 # - ``SERVICE_HOST``
 # - ``BASE_SQL_CONN`` ``lib/database`` declares
+# - ``PUBLIC_NETWORK_NAME``
+# - ``Q_USE_NAMESPACE``
+# - ``Q_ROUTER_NAME``
 # Optional Dependencies:
 # IDENTITY_USE_SSL, IDENTITY_HOST, IDENTITY_PORT, IDENTITY_PATH
 # ALT_* (similar vars exists in keystone_data.sh)
@@ -61,6 +64,7 @@ function configure_tempest() {
     local flavors_ref
     local flavor_lines
     local public_network_id
+    local public_router_id
     local tenant_networks_reachable
 
     # TODO(afazekas):
@@ -175,6 +179,12 @@ function configure_tempest() {
     if is_service_enabled q-l3; then
         public_network_id=$(quantum net-list | grep $PUBLIC_NETWORK_NAME | \
             awk '{print $2}')
+        if [ "$Q_USE_NAMESPACE" == "False" ]; then
+            # If namespaces are disabled, devstack will create a single
+            # public router that tempest should be configured to use.
+            public_router_id=$(quantum router-list | awk "/ $Q_ROUTER_NAME / \
+               { print \$2 }")
+        fi
     fi
 
     # Timeouts
@@ -243,6 +253,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF network password "$password"
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONF network public_network_id "$public_network_id"
+    iniset $TEMPEST_CONF network public_router_id "$public_router_id"
 
     #boto
     iniset $TEMPEST_CONF boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
