@@ -99,7 +99,7 @@ function configure_swift() {
     # changing the permissions so we can run it as our user.
 
     USER_GROUP=$(id -g)
-    sudo mkdir -p ${SWIFT_DATA_DIR}/drives
+    sudo mkdir -p ${SWIFT_DATA_DIR}/{drives,cache}
     sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_DIR}
 
     # Create a loopback disk and format it to XFS.
@@ -273,16 +273,22 @@ EOF
         swift_node_config=${SWIFT_CONFIG_DIR}/object-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/object-server.conf-sample ${swift_node_config}
         generate_swift_config ${swift_node_config} ${node_number} $[OBJECT_PORT_BASE + 10 * (node_number - 1)]
+        iniset ${swift_node_config} filter:recon recon_cache_path  ${SWIFT_DATA_DIR}/cache
+        # Using a sed and not iniset/iniuncomment because we want to a global
+        # modification and make sure it works for new sections.
+        sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
 
         swift_node_config=${SWIFT_CONFIG_DIR}/container-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/container-server.conf-sample ${swift_node_config}
         generate_swift_config ${swift_node_config} ${node_number} $[CONTAINER_PORT_BASE + 10 * (node_number - 1)]
         iniuncomment ${swift_node_config} app:container-server allow_versions
         iniset ${swift_node_config} app:container-server allow_versions  "true"
+        sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
 
         swift_node_config=${SWIFT_CONFIG_DIR}/account-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/account-server.conf-sample ${swift_node_config}
         generate_swift_config ${swift_node_config} ${node_number} $[ACCOUNT_PORT_BASE + 10 * (node_number - 1)]
+        sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
     done
 
     swift_log_dir=${SWIFT_DATA_DIR}/logs
