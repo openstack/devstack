@@ -190,7 +190,7 @@ function configure_tempest() {
     #Skip until #1074039 is fixed
     iniset $TEMPEST_CONF compute run_ssh False
     iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-$OS_USERNAME}
-    iniset $TEMPEST_CONF compute network_for_ssh private
+    iniset $TEMPEST_CONF compute network_for_ssh $PRIVATE_NETWORK_NAME
     iniset $TEMPEST_CONF compute ip_version_for_ssh 4
     iniset $TEMPEST_CONF compute ssh_timeout 4
     iniset $TEMPEST_CONF compute image_ref $image_uuid
@@ -199,7 +199,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute flavor_ref_alt $flavor_ref_alt
     iniset $TEMPEST_CONF compute source_dir $NOVA_SOURCE_DIR
     iniset $TEMPEST_CONF compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
-    iniset $TEMPEST_CONF compute use_block_migration_for_live_migration	${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
+    iniset $TEMPEST_CONF compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
     # Inherited behavior, might be wrong
     iniset $TEMPEST_CONF compute bin_dir $NOVA_BIN_DIR
     # TODO(jaypipes): Create the key file here... right now, no whitebox

@@ -28,6 +28,7 @@ DATA_DIR=${DATA_DIR:-${DEST}/data}
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/swift
+source $TOP_DIR/lib/quantum
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
@@ -39,8 +40,7 @@ fi
 
 if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
     source $TOP_DIR/openrc
-    source $TOP_DIR/lib/quantum
-    teardown_quantum
+    teardown_quantum_debug
 fi
 
 # Shut down devstack's screen to get the bulk of OpenStack services in one shot
@@ -119,8 +119,7 @@ if [[ -n "$UNSTACK_ALL" ]]; then
     fi
 fi
 
-# Quantum dhcp agent runs dnsmasq
-if is_service_enabled q-dhcp; then
-    pid=$(ps aux | awk '/[d]nsmasq.+interface=tap/ { print $2 }')
-    [ ! -z "$pid" ] && sudo kill -9 $pid
+if is_service_enabled quantum; then
+    stop_quantum
+    stop_quantum_third_party
 fi

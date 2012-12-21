@@ -1,0 +1,63 @@
+# Ryu OpenFlow Controller
+# -----------------------
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+RYU_DIR=$DEST/ryu
+# Ryu API Host
+RYU_API_HOST=${RYU_API_HOST:-127.0.0.1}
+# Ryu API Port
+RYU_API_PORT=${RYU_API_PORT:-8080}
+# Ryu OFP Host
+RYU_OFP_HOST=${RYU_OFP_HOST:-127.0.0.1}
+# Ryu OFP Port
+RYU_OFP_PORT=${RYU_OFP_PORT:-6633}
+# Ryu Applications
+RYU_APPS=${RYU_APPS:-ryu.app.simple_isolation,ryu.app.rest}
+
+function configure_ryu() {
+    setup_develop $RYU_DIR
+}
+
+function init_ryu() {
+    RYU_CONF_DIR=/etc/ryu
+    if [[ ! -d $RYU_CONF_DIR ]]; then
+        sudo mkdir -p $RYU_CONF_DIR
+    fi
+    sudo chown `whoami` $RYU_CONF_DIR
+    RYU_CONF=$RYU_CONF_DIR/ryu.conf
+    sudo rm -rf $RYU_CONF
+
+    cat <<EOF > $RYU_CONF
+--app_lists=$RYU_APPS
+--wsapi_host=$RYU_API_HOST
+--wsapi_port=$RYU_API_PORT
+--ofp_listen_host=$RYU_OFP_HOST
+--ofp_tcp_listen_port=$RYU_OFP_PORT
+EOF
+}
+
+function install_ryu() {
+    git_clone $RYU_REPO $RYU_DIR $RYU_BRANCH
+}
+
+function is_ryu_required() {
+    if is_service_enabled ryu || (is_service_enabled quantum && [[ "$Q_PLUGIN" = "ryu" ]]); then
+        return 0
+    fi
+    return 1
+}
+
+function start_ryu() {
+    screen_it ryu "cd $RYU_DIR && $RYU_DIR/bin/ryu-manager --flagfile $RYU_CONF"
+}
+
+function stop_ryu() {
+    :
+}
+
+# Restore xtrace
+$XTRACE

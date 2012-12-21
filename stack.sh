@@ -329,18 +329,6 @@ OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 NOVNC_DIR=$DEST/noVNC
 SWIFT3_DIR=$DEST/swift3
 
-RYU_DIR=$DEST/ryu
-# Ryu API Host
-RYU_API_HOST=${RYU_API_HOST:-127.0.0.1}
-# Ryu API Port
-RYU_API_PORT=${RYU_API_PORT:-8080}
-# Ryu OFP Host
-RYU_OFP_HOST=${RYU_OFP_HOST:-127.0.0.1}
-# Ryu OFP Port
-RYU_OFP_PORT=${RYU_OFP_PORT:-6633}
-# Ryu Applications
-RYU_APPS=${RYU_APPS:-ryu.app.simple_isolation,ryu.app.rest}
-
 # Should cinder perform secure deletion of volumes?
 # Defaults to true, can be set to False to avoid this bug when testing:
 # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1023755
@@ -703,21 +691,7 @@ if is_service_enabled $DATABASE_BACKENDS; then
 fi
 
 if is_service_enabled q-agt; then
-    if is_quantum_ovs_base_plugin "$Q_PLUGIN"; then
-        # Install deps
-        # FIXME add to ``files/apts/quantum``, but don't install if not needed!
-        if is_ubuntu; then
-            kernel_version=`cat /proc/version | cut -d " " -f3`
-            install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
-        else
-            ### FIXME(dtroyer): Find RPMs for OpenVSwitch
-            echo "OpenVSwitch packages need to be located"
-            # Fedora does not started OVS by default
-            restart_service openvswitch
-        fi
-    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-       install_package bridge-utils
-    fi
+    install_quantum_agent_packages
 fi
 
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
@@ -778,11 +752,9 @@ if is_service_enabled horizon; then
     install_horizon
 fi
 if is_service_enabled quantum; then
-    git_clone $QUANTUMCLIENT_REPO $QUANTUMCLIENT_DIR $QUANTUMCLIENT_BRANCH
-fi
-if is_service_enabled quantum; then
-    # quantum
-    git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
+    install_quantum
+    install_quantumclient
+    install_quantum_third_party
 fi
 if is_service_enabled heat; then
     install_heat
@@ -796,9 +768,6 @@ if is_service_enabled ceilometer; then
 fi
 if is_service_enabled tempest; then
     install_tempest
-fi
-if is_service_enabled ryu || (is_service_enabled quantum && [[ "$Q_PLUGIN" = "ryu" ]]); then
-    git_clone $RYU_REPO $RYU_DIR $RYU_BRANCH
 fi
 
 
@@ -837,8 +806,8 @@ if is_service_enabled horizon; then
     configure_horizon
 fi
 if is_service_enabled quantum; then
-    setup_develop $QUANTUMCLIENT_DIR
-    setup_develop $QUANTUM_DIR
+    setup_quantumclient
+    setup_quantum
 fi
 if is_service_enabled heat; then
     configure_heat
@@ -846,9 +815,6 @@ if is_service_enabled heat; then
 fi
 if is_service_enabled cinder; then
     configure_cinder
-fi
-if is_service_enabled ryu || (is_service_enabled quantum && [[ "$Q_PLUGIN" = "ryu" ]]); then
-    setup_develop $RYU_DIR
 fi
 
 if [[ $TRACK_DEPENDS = True ]] ; then
@@ -962,6 +928,7 @@ if is_service_enabled key; then
     create_keystone_accounts
     create_nova_accounts
     create_cinder_accounts
+    create_quantum_accounts
 
     # ``keystone_data.sh`` creates services, admin and demo users, and roles.
     ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
@@ -1011,392 +978,22 @@ if is_service_enabled g-reg; then
 fi
 
 
-# Ryu
-# ---
-
-# Ryu is not a part of OpenStack project. Please ignore following block if
-# you are not interested in Ryu.
-# launch ryu manager
-if is_service_enabled ryu; then
-    RYU_CONF_DIR=/etc/ryu
-    if [[ ! -d $RYU_CONF_DIR ]]; then
-        sudo mkdir -p $RYU_CONF_DIR
-    fi
-    sudo chown `whoami` $RYU_CONF_DIR
-    RYU_CONF=$RYU_CONF_DIR/ryu.conf
-    sudo rm -rf $RYU_CONF
-
-    cat <<EOF > $RYU_CONF
---app_lists=$RYU_APPS
---wsapi_host=$RYU_API_HOST
---wsapi_port=$RYU_API_PORT
---ofp_listen_host=$RYU_OFP_HOST
---ofp_tcp_listen_port=$RYU_OFP_PORT
-EOF
-    screen_it ryu "cd $RYU_DIR && $RYU_DIR/bin/ryu-manager --flagfile $RYU_CONF"
-fi
-
-
 # Quantum
 # -------
 
-# Quantum Network Configuration
 if is_service_enabled quantum; then
     echo_summary "Configuring Quantum"
 
-    # The following variables control the Quantum openvswitch and
-    # linuxbridge plugins' allocation of tenant networks and
-    # availability of provider networks. If these are not configured
-    # in localrc, tenant networks will be local to the host (with no
-    # remote connectivity), and no physical resources will be
-    # available for the allocation of provider networks.
-
-    # To use GRE tunnels for tenant networks, set to True in
-    # localrc. GRE tunnels are only supported by the openvswitch
-    # plugin, and currently only on Ubuntu.
-    ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-False}
-
-    # If using GRE tunnels for tenant networks, specify the range of
-    # tunnel IDs from which tenant networks are allocated. Can be
-    # overriden in localrc in necesssary.
-    TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGE:-1:1000}
-
-    # To use VLANs for tenant networks, set to True in localrc. VLANs
-    # are supported by the openvswitch and linuxbridge plugins, each
-    # requiring additional configuration described below.
-    ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
-
-    # If using VLANs for tenant networks, set in localrc to specify
-    # the range of VLAN VIDs from which tenant networks are
-    # allocated. An external network switch must be configured to
-    # trunk these VLANs between hosts for multi-host connectivity.
-    #
-    # Example: ``TENANT_VLAN_RANGE=1000:1999``
-    TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
-
-    # If using VLANs for tenant networks, or if using flat or VLAN
-    # provider networks, set in localrc to the name of the physical
-    # network, and also configure OVS_PHYSICAL_BRIDGE for the
-    # openvswitch agent or LB_PHYSICAL_INTERFACE for the linuxbridge
-    # agent, as described below.
-    #
-    # Example: ``PHYSICAL_NETWORK=default``
-    PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
-
-    # With the openvswitch plugin, if using VLANs for tenant networks,
-    # or if using flat or VLAN provider networks, set in localrc to
-    # the name of the OVS bridge to use for the physical network. The
-    # bridge will be created if it does not already exist, but a
-    # physical interface must be manually added to the bridge as a
-    # port for external connectivity.
-    #
-    # Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
-    OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
-
-    # With the linuxbridge plugin, if using VLANs for tenant networks,
-    # or if using flat or VLAN provider networks, set in localrc to
-    # the name of the network interface to use for the physical
-    # network.
-    #
-    # Example: ``LB_PHYSICAL_INTERFACE=eth1``
-    LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
-
-    # With the openvswitch plugin, set to True in localrc to enable
-    # provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
-    #
-    # Example: ``OVS_ENABLE_TUNNELING=True``
-    OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
-
-    # Put config files in ``QUANTUM_CONF_DIR`` for everyone to find
-    if [[ ! -d $QUANTUM_CONF_DIR ]]; then
-        sudo mkdir -p $QUANTUM_CONF_DIR
-    fi
-    sudo chown `whoami` $QUANTUM_CONF_DIR
-
-    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        Q_PLUGIN_CONF_PATH=etc/quantum/plugins/openvswitch
-        Q_PLUGIN_CONF_FILENAME=ovs_quantum_plugin.ini
-        Q_DB_NAME="ovs_quantum"
-        Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2"
-    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        Q_PLUGIN_CONF_PATH=etc/quantum/plugins/linuxbridge
-        Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
-        Q_DB_NAME="quantum_linux_bridge"
-        Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2"
-    elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-        Q_PLUGIN_CONF_PATH=etc/quantum/plugins/ryu
-        Q_PLUGIN_CONF_FILENAME=ryu.ini
-        Q_DB_NAME="ovs_quantum"
-        Q_PLUGIN_CLASS="quantum.plugins.ryu.ryu_quantum_plugin.RyuQuantumPluginV2"
-    fi
-
-    if [[ $Q_PLUGIN_CONF_PATH == '' || $Q_PLUGIN_CONF_FILENAME == '' || $Q_PLUGIN_CLASS == '' ]]; then
-        echo "Quantum plugin not set.. exiting"
-        exit 1
-    fi
-
-    # If needed, move config file from ``$QUANTUM_DIR/etc/quantum`` to ``QUANTUM_CONF_DIR``
-    mkdir -p /$Q_PLUGIN_CONF_PATH
-    Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
-    cp $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
-
-    database_connection_url dburl $Q_DB_NAME
-    iniset /$Q_PLUGIN_CONF_FILE DATABASE sql_connection $dburl
-    unset dburl
-
-    cp $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF
-    configure_quantum_rootwrap
+    configure_quantum
+    init_quantum
 fi
 
-# Quantum service (for controller node)
-if is_service_enabled q-svc; then
-    Q_API_PASTE_FILE=$QUANTUM_CONF_DIR/api-paste.ini
-    Q_POLICY_FILE=$QUANTUM_CONF_DIR/policy.json
-
-    cp $QUANTUM_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
-    cp $QUANTUM_DIR/etc/policy.json $Q_POLICY_FILE
-
-    if is_service_enabled $DATABASE_BACKENDS; then
-        recreate_database $Q_DB_NAME utf8
-    else
-        echo "A database must be enabled in order to use the $Q_PLUGIN Quantum plugin."
-        exit 1
-    fi
-
-    # Update either configuration file with plugin
-    iniset $QUANTUM_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
-
-    iniset $QUANTUM_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
-    quantum_setup_keystone $Q_API_PASTE_FILE filter:authtoken
-
-    # Configure plugin
-    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE OVS tenant_network_type gre
-            iniset /$Q_PLUGIN_CONF_FILE OVS tunnel_id_ranges $TENANT_TUNNEL_RANGES
-        elif [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE OVS tenant_network_type vlan
-        else
-            echo "WARNING - The openvswitch plugin is using local tenant networks, with no connectivity between hosts."
-        fi
-
-        # Override ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc``
-        # for more complex physical network configurations.
-        if [[ "$OVS_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
-            OVS_VLAN_RANGES=$PHYSICAL_NETWORK
-            if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
-                OVS_VLAN_RANGES=$OVS_VLAN_RANGES:$TENANT_VLAN_RANGE
-            fi
-        fi
-        if [[ "$OVS_VLAN_RANGES" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE OVS network_vlan_ranges $OVS_VLAN_RANGES
-        fi
-
-        # Enable tunnel networks if selected
-        if [[ $OVS_ENABLE_TUNNELING = "True" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
-        fi
-    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        if [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE VLANS tenant_network_type vlan
-        else
-            echo "WARNING - The linuxbridge plugin is using local tenant networks, with no connectivity between hosts."
-        fi
-
-        # Override ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc``
-        # for more complex physical network configurations.
-        if [[ "$LB_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
-            LB_VLAN_RANGES=$PHYSICAL_NETWORK
-            if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
-                LB_VLAN_RANGES=$LB_VLAN_RANGES:$TENANT_VLAN_RANGE
-            fi
-        fi
-        if [[ "$LB_VLAN_RANGES" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE VLANS network_vlan_ranges $LB_VLAN_RANGES
-        fi
-    elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE OVS openflow_controller $RYU_OFP_HOST:$RYU_OFP_PORT
-        iniset /$Q_PLUGIN_CONF_FILE OVS openflow_rest_api $RYU_API_HOST:$RYU_API_PORT
-    fi
-fi
-
-# Quantum agent (for compute nodes)
-if is_service_enabled q-agt; then
-    # Configure agent for plugin
-    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        # Setup integration bridge
-        OVS_BRIDGE=${OVS_BRIDGE:-br-int}
-        quantum_setup_ovs_bridge $OVS_BRIDGE
-
-        # Setup agent for tunneling
-        if [[ "$OVS_ENABLE_TUNNELING" = "True" ]]; then
-            # Verify tunnels are supported
-            # REVISIT - also check kernel module support for GRE and patch ports
-            OVS_VERSION=`ovs-vsctl --version | head -n 1 | awk '{print $4;}'`
-            if [ $OVS_VERSION \< "1.4" ] && ! is_service_enabled q-svc ; then
-                echo "You are running OVS version $OVS_VERSION."
-                echo "OVS 1.4+ is required for tunneling between multiple hosts."
-                exit 1
-            fi
-            iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
-            iniset /$Q_PLUGIN_CONF_FILE OVS local_ip $HOST_IP
-        fi
-
-        # Setup physical network bridge mappings.  Override
-        # ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc`` for more
-        # complex physical network configurations.
-        if [[ "$OVS_BRIDGE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
-            OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
-
-            # Configure bridge manually with physical interface as port for multi-node
-            sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_PHYSICAL_BRIDGE
-        fi
-        if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings $OVS_BRIDGE_MAPPINGS
-        fi
-        AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
-    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        # Setup physical network interface mappings.  Override
-        # ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc`` for more
-        # complex physical network configurations.
-        if [[ "$LB_INTERFACE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$LB_PHYSICAL_INTERFACE" != "" ]]; then
-            LB_INTERFACE_MAPPINGS=$PHYSICAL_NETWORK:$LB_PHYSICAL_INTERFACE
-        fi
-        if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings $LB_INTERFACE_MAPPINGS
-        fi
-        AGENT_BINARY="$QUANTUM_DIR/bin/quantum-linuxbridge-agent"
-    elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-        # Set up integration bridge
-        OVS_BRIDGE=${OVS_BRIDGE:-br-int}
-        quantum_setup_ovs_bridge $OVS_BRIDGE
-        if [ -n "$RYU_INTERNAL_INTERFACE" ]; then
-            sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_BRIDGE $RYU_INTERNAL_INTERFACE
-        fi
-        AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/ryu/agent/ryu_quantum_agent.py"
-    fi
-    # Update config w/rootwrap
-    iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
-fi
-
-# Quantum DHCP
-if is_service_enabled q-dhcp; then
-    AGENT_DHCP_BINARY="$QUANTUM_DIR/bin/quantum-dhcp-agent"
-
-    Q_DHCP_CONF_FILE=$QUANTUM_CONF_DIR/dhcp_agent.ini
-
-    cp $QUANTUM_DIR/etc/dhcp_agent.ini $Q_DHCP_CONF_FILE
-
-    # Set verbose
-    iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
-    # Set debug
-    iniset $Q_DHCP_CONF_FILE DEFAULT debug True
-    iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-    iniset $Q_DHCP_CONF_FILE DEFAULT state_path $DATA_DIR/quantum
-
-    quantum_setup_keystone $Q_DHCP_CONF_FILE DEFAULT set_auth_url
-
-    # Update config w/rootwrap
-    iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
-
-    if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-        iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
-    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
-    elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-        iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.RyuInterfaceDriver
-        iniset $Q_DHCP_CONF_FILE DEFAULT ryu_api_host $RYU_API_HOST:$RYU_API_PORT
-    fi
-fi
-
-# Quantum L3
-if is_service_enabled q-l3; then
-    AGENT_L3_BINARY="$QUANTUM_DIR/bin/quantum-l3-agent"
-    PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
-    Q_L3_CONF_FILE=$QUANTUM_CONF_DIR/l3_agent.ini
-
-    cp $QUANTUM_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
-
-    # Set verbose
-    iniset $Q_L3_CONF_FILE DEFAULT verbose True
-    # Set debug
-    iniset $Q_L3_CONF_FILE DEFAULT debug True
-
-    iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-
-    iniset $Q_L3_CONF_FILE DEFAULT state_path $DATA_DIR/quantum
-
-    iniset $Q_L3_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
-
-    quantum_setup_keystone $Q_L3_CONF_FILE DEFAULT set_auth_url
-    if [[ "$Q_PLUGIN" == "openvswitch" ]]; then
-        iniset $Q_L3_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
-        iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
-        # Set up external bridge
-        quantum_setup_external_bridge $PUBLIC_BRIDGE
-    elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-        iniset $Q_L3_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
-        iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge ''
-    elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-        iniset $Q_L3_CONF_FILE DEFAULT interface_driver quantum.agent.linux.interface.RyuInterfaceDriver
-        iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
-        iniset $Q_L3_CONF_FILE DEFAULT ryu_api_host $RYU_API_HOST:$RYU_API_PORT
-        # Set up external bridge
-        quantum_setup_external_bridge $PUBLIC_BRIDGE
-    fi
-fi
-
-#Quantum Metadata
-if is_service_enabled q-meta; then
-    AGENT_META_BINARY="$QUANTUM_DIR/bin/quantum-metadata-agent"
-    Q_META_CONF_FILE=$QUANTUM_CONF_DIR/metadata_agent.ini
-
-    cp $QUANTUM_DIR/etc/metadata_agent.ini $Q_META_CONF_FILE
-
-    # Set verbose
-    iniset $Q_META_CONF_FILE DEFAULT verbose True
-    # Set debug
-    iniset $Q_META_CONF_FILE DEFAULT debug True
-
-    iniset $Q_META_CONF_FILE DEFAULT state_path $DATA_DIR/quantum
-
-    iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
-
-    iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
-
-    quantum_setup_keystone $Q_META_CONF_FILE DEFAULT set_auth_url
-fi
-
-# Quantum RPC support - must be updated prior to starting any of the services
+# Some Quantum plugins require network controllers which are not
+# a part of the OpenStack project. Configure and start them.
 if is_service_enabled quantum; then
-    iniset $QUANTUM_CONF DEFAULT control_exchange quantum
-    if is_service_enabled qpid ; then
-        iniset $QUANTUM_CONF DEFAULT rpc_backend quantum.openstack.common.rpc.impl_qpid
-    elif is_service_enabled zeromq; then
-        iniset $QUANTUM_CONF DEFAULT rpc_backend quantum.openstack.common.rpc.impl_zmq
-    elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
-        iniset $QUANTUM_CONF DEFAULT rabbit_host $RABBIT_HOST
-        iniset $QUANTUM_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
-    fi
-    if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
-        cp $QUANTUM_DIR/etc/l3_agent.ini $QUANTUM_TEST_CONFIG_FILE
-        iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT verbose False
-        iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT debug False
-        iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-        iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT root_helper "$Q_RR_COMMAND"
-        quantum_setup_keystone $QUANTUM_TEST_CONFIG_FILE DEFAULT set_auth_url
-        if [[ "$Q_PLUGIN" == "openvswitch" ]]; then
-            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
-            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
-        elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
-            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge ''
-        elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT interface_driver quantum.agent.linux.interface.RyuInterfaceDriver
-            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
-            iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT ryu_api_host $RYU_API_HOST:$RYU_API_PORT
-        fi
-    fi
+    configure_quantum_third_party
+    init_quantum_third_party
+    start_quantum_third_party
 fi
 
 
@@ -1445,37 +1042,9 @@ if is_service_enabled nova; then
 
     # Additional Nova configuration that is dependent on other services
     if is_service_enabled quantum; then
-        add_nova_opt "network_api_class=nova.network.quantumv2.api.API"
-        add_nova_opt "quantum_admin_username=$Q_ADMIN_USERNAME"
-        add_nova_opt "quantum_admin_password=$SERVICE_PASSWORD"
-        add_nova_opt "quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
-        add_nova_opt "quantum_auth_strategy=$Q_AUTH_STRATEGY"
-        add_nova_opt "quantum_admin_tenant_name=$SERVICE_TENANT_NAME"
-        add_nova_opt "quantum_url=http://$Q_HOST:$Q_PORT"
-
-        if [[ "$Q_PLUGIN" = "openvswitch" ]]; then
-            NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
-        elif [[ "$Q_PLUGIN" = "linuxbridge" ]]; then
-            NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"}
-        elif [[ "$Q_PLUGIN" = "ryu" ]]; then
-            NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"quantum.plugins.ryu.nova.vif.LibvirtOpenVswitchOFPRyuDriver"}
-            add_nova_opt "libvirt_ovs_integration_bridge=$OVS_BRIDGE"
-            add_nova_opt "linuxnet_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
-            add_nova_opt "libvirt_ovs_ryu_api_host=$RYU_API_HOST:$RYU_API_PORT"
-        fi
-        add_nova_opt "libvirt_vif_driver=$NOVA_VIF_DRIVER"
-        add_nova_opt "linuxnet_interface_driver=$LINUXNET_VIF_DRIVER"
-        if is_service_enabled q-meta; then
-            add_nova_opt "service_quantum_metadata_proxy=True"
-        fi
+        create_nova_conf_quantum
     elif is_service_enabled n-net; then
-        add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
-        add_nova_opt "public_interface=$PUBLIC_INTERFACE"
-        add_nova_opt "vlan_interface=$VLAN_INTERFACE"
-        add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
-        if [ -n "$FLAT_INTERFACE" ]; then
-            add_nova_opt "flat_interface=$FLAT_INTERFACE"
-        fi
+        create_nova_conf_nova_network
     fi
     # All nova-compute workers need to know the vnc configuration options
     # These settings don't hurt anything if n-xvnc and n-novnc are disabled
@@ -1584,64 +1153,24 @@ fi
 
 if is_service_enabled q-svc; then
     echo_summary "Starting Quantum"
-    # Start the Quantum service
-    screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $QUANTUM_CONF --config-file /$Q_PLUGIN_CONF_FILE"
-    echo "Waiting for Quantum to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://127.0.0.1:9696; do sleep 1; done"; then
-      echo "Quantum did not start"
-      exit 1
-    fi
 
-    # Configure Quantum elements
-    # Configure internal network & subnet
-
-    TENANT_ID=$(keystone tenant-list | grep " demo " | get_field 1)
-
-    # Create a small network
-    # Since quantum command is executed in admin context at this point,
-    # ``--tenant_id`` needs to be specified.
-    NET_ID=$(quantum net-create --tenant_id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
-    SUBNET_ID=$(quantum subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
-    if is_service_enabled q-l3; then
-        # Create a router, and add the private subnet as one of its interfaces
-        ROUTER_ID=$(quantum router-create --tenant_id $TENANT_ID router1 | grep ' id ' | get_field 2)
-        quantum router-interface-add $ROUTER_ID $SUBNET_ID
-        # Create an external network, and a subnet. Configure the external network as router gw
-        EXT_NET_ID=$(quantum net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True | grep ' id ' | get_field 2)
-        EXT_GW_IP=$(quantum subnet-create --ip_version 4 $EXT_NET_ID $FLOATING_RANGE -- --enable_dhcp=False | grep 'gateway_ip' | get_field 2)
-        quantum router-gateway-set $ROUTER_ID $EXT_NET_ID
-        if is_quantum_ovs_base_plugin "$Q_PLUGIN" && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
-            CIDR_LEN=${FLOATING_RANGE#*/}
-            sudo ip addr add $EXT_GW_IP/$CIDR_LEN dev $PUBLIC_BRIDGE
-            sudo ip link set $PUBLIC_BRIDGE up
-            ROUTER_GW_IP=`quantum port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' '{ print $8; }'`
-            sudo route add -net $FIXED_RANGE gw $ROUTER_GW_IP
-        fi
-        if [[ "$Q_USE_NAMESPACE" == "False" ]]; then
-            # Explicitly set router id in l3 agent configuration
-            iniset $Q_L3_CONF_FILE DEFAULT router_id $ROUTER_ID
-        fi
-   fi
-   if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
-      setup_quantum
-   fi
+    start_quantum_service_and_check
+    create_quantum_initial_network
+    setup_quantum_debug
 elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     # Create a small network
     $NOVA_BIN_DIR/nova-manage network create "$PRIVATE_NETWORK_NAME" $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
 
     # Create some floating ips
-    $NOVA_BIN_DIR/nova-manage floating create $FLOATING_RANGE --pool=$PUBLIC_NETWORK
+    $NOVA_BIN_DIR/nova-manage floating create $FLOATING_RANGE --pool=$PUBLIC_NETWORK_NAME
 
     # Create a second pool
     $NOVA_BIN_DIR/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
 
-# Start up the quantum agents if enabled
-screen_it q-agt "python $AGENT_BINARY --config-file $QUANTUM_CONF --config-file /$Q_PLUGIN_CONF_FILE"
-screen_it q-dhcp "python $AGENT_DHCP_BINARY --config-file $QUANTUM_CONF --config-file=$Q_DHCP_CONF_FILE"
-screen_it q-meta "python $AGENT_META_BINARY --config-file $QUANTUM_CONF --config-file=$Q_META_CONF_FILE"
-screen_it q-l3 "python $AGENT_L3_BINARY --config-file $QUANTUM_CONF --config-file=$Q_L3_CONF_FILE"
-
+if is_service_enabled quantum; then
+    start_quantum_agents
+fi
 if is_service_enabled nova; then
     echo_summary "Starting Nova"
     start_nova

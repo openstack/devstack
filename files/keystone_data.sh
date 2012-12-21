@@ -5,7 +5,6 @@
 # Tenant               User       Roles
 # ------------------------------------------------------------------
 # service              glance     admin
-# service              quantum    admin        # if enabled
 # service              swift      admin        # if enabled
 # service              heat       admin        # if enabled
 # service              ceilometer admin        # if enabled
@@ -145,30 +144,6 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
             --publicurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
             --adminurl "http://$SERVICE_HOST:8080" \
             --internalurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
-    fi
-fi
-
-if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
-    QUANTUM_USER=$(get_id keystone user-create \
-        --name=quantum \
-        --pass="$SERVICE_PASSWORD" \
-        --tenant_id $SERVICE_TENANT \
-        --email=quantum@example.com)
-    keystone user-role-add \
-        --tenant_id $SERVICE_TENANT \
-        --user_id $QUANTUM_USER \
-        --role_id $ADMIN_ROLE
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        QUANTUM_SERVICE=$(get_id keystone service-create \
-            --name=quantum \
-            --type=network \
-            --description="Quantum Service")
-        keystone endpoint-create \
-            --region RegionOne \
-            --service_id $QUANTUM_SERVICE \
-            --publicurl "http://$SERVICE_HOST:9696/" \
-            --adminurl "http://$SERVICE_HOST:9696/" \
-            --internalurl "http://$SERVICE_HOST:9696/"
     fi
 fi
 

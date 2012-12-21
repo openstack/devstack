@@ -348,6 +348,7 @@ function create_nova_conf() {
     add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF"
     add_nova_opt "force_dhcp_release=True"
     add_nova_opt "fixed_range=$FIXED_RANGE"
+    add_nova_opt "default_floating_pool=$PUBLIC_NETWORK_NAME"
     add_nova_opt "s3_host=$SERVICE_HOST"
     add_nova_opt "s3_port=$S3_SERVICE_PORT"
     add_nova_opt "osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
@@ -411,6 +412,16 @@ function create_nova_conf() {
         # Attempt to convert flags to options
         add_nova_opt ${I//--}
     done
+}
+
+function create_nova_conf_nova_network() {
+    add_nova_opt "network_manager=nova.network.manager.$NET_MAN"
+    add_nova_opt "public_interface=$PUBLIC_INTERFACE"
+    add_nova_opt "vlan_interface=$VLAN_INTERFACE"
+    add_nova_opt "flat_network_bridge=$FLAT_NETWORK_BRIDGE"
+    if [ -n "$FLAT_INTERFACE" ]; then
+        add_nova_opt "flat_interface=$FLAT_INTERFACE"
+    fi
 }
 
 # init_nova() - Initialize databases, etc.
