@@ -376,35 +376,22 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
         sleep 10
     done
 
-    # output the run.sh.log
-    ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no stack@$DOMU_IP 'tail -f run.sh.log' &
-    TAIL_PID=$!
-
-    function kill_tail() {
-        kill -9 $TAIL_PID
-        exit 1
-    }
-    # Let Ctrl-c kill tail and exit
-    trap kill_tail SIGINT
-
-    # ensure we kill off the tail if we exit the script early
-    # for other reasons
-    add_on_exit "kill -9 $TAIL_PID || true"
-
-    # wait silently until stack.sh has finished
-    set +o xtrace
-    while ! ssh_no_check -q stack@$DOMU_IP "tail run.sh.log | grep -q 'stack.sh completed in'"; do
+    set +x
+    echo -n "Waiting for startup script to finish"
+    while [ `ssh_no_check -q stack@$DOMU_IP pgrep -c run.sh` -ge 1 ]
+    do
         sleep 10
+        echo -n "."
     done
-    set -o xtrace
+    echo "done!"
+    set -x
 
-    # kill the tail process now stack.sh has finished
-    kill -9 $TAIL_PID
+    # output the run.sh.log
+    ssh_no_check -q stack@$DOMU_IP 'cat run.sh.log'
 
-    # check for a failure
-    if ssh_no_check -q stack@$DOMU_IP "grep -q 'stack.sh failed' run.sh.log"; then
-        exit 1
-    fi
+    # Fail if the expected text is not found
+    ssh_no_check -q stack@$DOMU_IP 'cat run.sh.log' | grep -q 'stack.sh completed in'
+
     echo "################################################################################"
     echo ""
     echo "All Finished!"
