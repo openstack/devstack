@@ -1,5 +1,5 @@
 # lib/glance
-# Functions to control the configuration and operation of the Glance service
+# Functions to control the configuration and operation of the **Glance** service
 
 # Dependencies:
 # ``functions`` file
@@ -24,8 +24,6 @@ set +o xtrace
 
 # Defaults
 # --------
-
-# <define global variables here that belong to this project>
 
 # Set up default directories
 GLANCE_DIR=$DEST/glance
@@ -141,7 +139,6 @@ function configure_glance() {
     iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
 
     cp -p $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
-
 }
 
 # init_glance() - Initialize databases, etc.

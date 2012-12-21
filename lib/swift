@@ -1,5 +1,5 @@
 # lib/swift
-# Functions to control the configuration and operation of the swift service
+# Functions to control the configuration and operation of the **Swift** service
 
 # Dependencies:
 # ``functions`` file
@@ -23,10 +23,7 @@ set +o xtrace
 # Defaults
 # --------
 
-# <define global variables here that belong to this project>
-
 # Set up default directories
-
 SWIFT_DIR=$DEST/swift
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
@@ -70,6 +67,7 @@ SWIFT_REPLICAS_SEQ=$(seq ${SWIFT_REPLICAS})
 OBJECT_PORT_BASE=6010
 CONTAINER_PORT_BASE=6011
 ACCOUNT_PORT_BASE=6012
+
 
 # Entry Points
 # ------------
@@ -293,7 +291,6 @@ EOF
     sudo chown -R $USER:adm ${swift_log_dir}
     sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
         tee /etc/rsyslog.d/10-swift.conf
-
 }
 
 # configure_swiftclient() - Set config files, create data dirs, etc

@@ -1,5 +1,5 @@
 # lib/nova
-# Functions to control the configuration and operation of the XXXX service
+# Functions to control the configuration and operation of the **Nova** service
 
 # Dependencies:
 # ``functions`` file

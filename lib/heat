@@ -1,5 +1,6 @@
 # lib/heat
-# Install and start Heat service
+# Install and start **Heat** service
+
 # To enable, add the following to localrc
 # ENABLED_SERVICES+=,heat,h-api-cfn,h-api-cw,h-eng
 
@@ -8,12 +9,14 @@
 
 # stack.sh
 # ---------
-# install_XXX
-# configure_XXX
-# init_XXX
-# start_XXX
-# stop_XXX
-# cleanup_XXX
+# install_heatclient
+# install_heat
+# configure_heatclient
+# configure_heat
+# init_heat
+# start_heat
+# stop_heat
+# cleanup_heat
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -57,7 +60,7 @@ function configure_heat() {
     HEAT_API_HOST=${HEAT_API_HOST:-$SERVICE_HOST}
     HEAT_API_PORT=${HEAT_API_PORT:-8004}
 
-    # cloudformation api
+    # Cloudformation API
     HEAT_API_CFN_CONF=$HEAT_CONF_DIR/heat-api-cfn.conf
     cp $HEAT_DIR/etc/heat/heat-api-cfn.conf $HEAT_API_CFN_CONF
     iniset $HEAT_API_CFN_CONF DEFAULT debug True
@@ -86,7 +89,7 @@ function configure_heat() {
     iniset $HEAT_API_CFN_PASTE_INI filter:ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
     iniset $HEAT_API_CFN_PASTE_INI filter:ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
-    # openstack api
+    # OpenStack API
     HEAT_API_CONF=$HEAT_CONF_DIR/heat-api.conf
     cp $HEAT_DIR/etc/heat/heat-api.conf $HEAT_API_CONF
     iniset $HEAT_API_CONF DEFAULT debug True
@@ -139,7 +142,7 @@ function configure_heat() {
         iniset $HEAT_ENGINE_CONF DEFAULT rpc_backend heat.openstack.common.rpc.impl_qpid
     fi
 
-    # cloudwatch api
+    # Cloudwatch API
     HEAT_API_CW_CONF=$HEAT_CONF_DIR/heat-api-cloudwatch.conf
     cp $HEAT_DIR/etc/heat/heat-api-cloudwatch.conf $HEAT_API_CW_CONF
     iniset $HEAT_API_CW_CONF DEFAULT debug True

@@ -1,4 +1,5 @@
 # lib/tempest
+# Install and configure Tempest
 
 # Dependencies:
 # ``functions`` file
@@ -23,32 +24,28 @@
 #
 # install_tempest
 # configure_tempest
-# init_tempest
-## start_tempest
-## stop_tempest
-## cleanup_tempest
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+
 # Defaults
 # --------
 
-# <define global variables here that belong to this project>
-
 # Set up default directories
-NOVA_SOURCE_DIR=$DEST/nova
 TEMPEST_DIR=$DEST/tempest
 TEMPEST_CONF_DIR=$TEMPEST_DIR/etc
 TEMPEST_CONF=$TEMPEST_CONF_DIR/tempest.conf
 
+NOVA_SOURCE_DIR=$DEST/nova
+
 BUILD_INTERVAL=3
 BUILD_TIMEOUT=400
 
+
 # Entry Points
 # ------------
-
 
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest() {
@@ -66,7 +63,7 @@ function configure_tempest() {
     local public_network_id
     local tenant_networks_reachable
 
-    #TODO(afazekas):
+    # TODO(afazekas):
     # sudo python setup.py deploy
 
     # This function exits on an error so that errors don't compound and you see
@@ -74,7 +71,7 @@ function configure_tempest() {
     errexit=$(set +o | grep errexit)
     set -o errexit
 
-    #Save IFS
+    # Save IFS
     ifs=$IFS
 
     # Glance should already contain images to be used in tempest
@@ -239,7 +236,6 @@ function configure_tempest() {
     #Restore errexit
     $errexit
 }
-
 
 # install_tempest() - Collect source and prepare
 function install_tempest() {

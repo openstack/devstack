@@ -1,5 +1,5 @@
-# lib/mysql
-# Functions to control the configuration and operation of the MySQL database backend
+# lib/databases/mysql
+# Functions to control the configuration and operation of the **MySQL** database backend
 
 # Dependencies:
 # DATABASE_{HOST,USER,PASSWORD} must be defined

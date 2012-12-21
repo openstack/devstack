@@ -1,8 +1,8 @@
 # lib/ceilometer
-# Install and start Ceilometer service
+# Install and start **Ceilometer** service
+
 # To enable, add the following to localrc
 # ENABLED_SERVICES+=ceilometer-acompute,ceilometer-acentral,ceilometer-collector,ceilometer-api
-
 
 # Dependencies:
 # - functions
@@ -12,12 +12,12 @@
 
 # stack.sh
 # ---------
-# install_XXX
-# configure_XXX
-# init_XXX
-# start_XXX
-# stop_XXX
-# cleanup_XXX
+# install_ceilometer
+# configure_ceilometer
+# init_ceilometer
+# start_ceilometer
+# stop_ceilometer
+# cleanup_ceilometer
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -27,17 +27,18 @@ set +o xtrace
 # Defaults
 # --------
 
-# set up default directories
+# Set up default directories
 CEILOMETER_DIR=$DEST/ceilometer
+CEILOMETER_CONF_DIR=/etc/ceilometer
+CEILOMETER_CONF=$CEILOMETER_CONF_DIR/ceilometer.conf
+CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
+
 # Support potential entry-points console scripts
 if [ -d $CEILOMETER_DIR/bin ] ; then
     CEILOMETER_BIN_DIR=$CEILOMETER_DIR/bin
 else
     CEILOMETER_BIN_DIR=/usr/local/bin
 fi
-CEILOMETER_CONF_DIR=/etc/ceilometer
-CEILOMETER_CONF=$CEILOMETER_CONF_DIR/ceilometer.conf
-CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
 
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up

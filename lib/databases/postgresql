@@ -1,5 +1,5 @@
-# lib/postgresql
-# Functions to control the configuration and operation of the PostgreSQL database backend
+# lib/databases/postgresql
+# Functions to control the configuration and operation of the **PostgreSQL** database backend
 
 # Dependencies:
 # DATABASE_{HOST,USER,PASSWORD} must be defined

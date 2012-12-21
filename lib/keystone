@@ -8,7 +8,6 @@
 # ``SERVICE_TOKEN``
 # ``S3_SERVICE_PORT`` (template backend only)
 
-
 # ``stack.sh`` calls the entry points in this order:
 #
 # install_keystone
@@ -26,8 +25,6 @@ set +o xtrace
 
 # Defaults
 # --------
-
-# <define global variables here that belong to this project>
 
 # Set up default directories
 KEYSTONE_DIR=$DEST/keystone

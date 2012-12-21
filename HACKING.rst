@@ -15,6 +15,16 @@ https://github.com/openstack-dev/devstack.git.  Besides the master branch that
 tracks the OpenStack trunk branches a separate branch is maintained for all
 OpenStack releases starting with Diablo (stable/diablo).
 
+Contributing code to DevStack follows the usual OpenStack process as described
+in `How To Contribute`__ in the OpenStack wiki.  `DevStack's LaunchPad project`__
+contains the usual links for blueprints, bugs, tec.
+
+__ contribute_
+.. _contribute: http://wiki.openstack.org/HowToContribute.
+
+__ lp_
+.. _lp: https://launchpad.net/~devstack
+
 The primary script in DevStack is ``stack.sh``, which performs the bulk of the
 work for DevStack's use cases.  There is a subscript ``functions`` that contains
 generally useful shell functions and is used by a number of the scripts in
@@ -53,8 +63,8 @@ configuration of the user environment::
     source $TOP_DIR/openrc
 
 ``stack.sh`` is a rather large monolithic script that flows through from beginning
-to end.  The process of breaking it down into project-level sub-scripts has begun
-with the introduction of ``lib/cinder`` and ``lib/ceilometer``.
+to end.  The process of breaking it down into project-level sub-scripts is nearly
+complete and should make ``stack.sh`` easier to read and manage.
 
 These library sub-scripts have a number of fixed entry points, some of which may
 just be stubs.  These entry points will be called by ``stack.sh`` in the
@@ -70,6 +80,12 @@ following order::
 There is a sub-script template in ``lib/templates`` to be used in creating new
 service sub-scripts.  The comments in ``<>`` are meta comments describing
 how to use the template and should be removed.
+
+In order to show the dependencies and conditions under which project functions
+are executed the top-level conditional testing for things like ``is_service_enabled``
+should be done in ``stack.sh``.  There may be nested conditionals that need
+to be in the sub-script, such as testing for keystone being enabled in
+``configure_swift()``.
 
 
 Documentation

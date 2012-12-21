@@ -1,5 +1,5 @@
 # lib/cinder
-# Install and start Cinder volume service
+# Install and start **Cinder** volume service
 
 # Dependencies:
 # - functions

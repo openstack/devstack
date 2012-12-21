@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 #
 
-# **quantum.sh**
+# **quantum-adv-test.sh**
 
-# We will use this test to perform integration testing of nova and
-# other components with Quantum.
+# Perform integration testing of Nova and other components with Quantum.
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -14,6 +13,7 @@ echo "*********************************************************************"
 # only the first error that occured.
 
 set -o errtrace
+
 trap failed ERR
 failed() {
     local r=$?
@@ -30,17 +30,8 @@ failed() {
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
-#------------------------------------------------------------------------------
-# Quantum config check
-#------------------------------------------------------------------------------
-# Warn if quantum is not enabled
-if [[ ! "$ENABLED_SERVICES" =~ "q-svc" ]]; then
-    echo "WARNING: Running quantum test without enabling quantum"
-fi
-
-#------------------------------------------------------------------------------
 # Environment
-#------------------------------------------------------------------------------
+# -----------
 
 # Keep track of the current directory
 EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
@@ -62,9 +53,8 @@ source $TOP_DIR/lib/quantum
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
-#------------------------------------------------------------------------------
-# Test settings for quantum
-#------------------------------------------------------------------------------
+# Quantum Settings
+# ----------------
 
 TENANTS="DEMO1"
 # TODO (nati)_Test public network
@@ -106,24 +96,17 @@ PUBLIC_ROUTER1_NET="admin-net1"
 DEMO1_ROUTER1_NET="demo1-net1"
 DEMO2_ROUTER1_NET="demo2-net1"
 
-#------------------------------------------------------------------------------
-# Keystone settings.
-#------------------------------------------------------------------------------
 KEYSTONE="keystone"
 
-#------------------------------------------------------------------------------
-# Get a token for clients that don't support service catalog
-#------------------------------------------------------------------------------
-
-# manually create a token by querying keystone (sending JSON data).  Keystone
+# Manually create a token by querying keystone (sending JSON data).  Keystone
 # returns a token and catalog of endpoints.  We use python to parse the token
 # and save it.
 
 TOKEN=`keystone token-get | grep ' id ' | awk '{print $4}'`
 
-#------------------------------------------------------------------------------
-# Various functions.
-#------------------------------------------------------------------------------
+# Various functions
+# -----------------
+
 function foreach_tenant {
     COMMAND=$1
     for TENANT in ${TENANTS//,/ };do
@@ -192,10 +175,9 @@ function get_flavor_id {
 function confirm_server_active {
     local VM_UUID=$1
     if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
-    echo "server '$VM_UUID' did not become active!"
-    false
-fi
-
+        echo "server '$VM_UUID' did not become active!"
+        false
+    fi
 }
 
 function add_tenant {
@@ -214,22 +196,14 @@ function add_tenant {
 function remove_tenant {
     local TENANT=$1
     local TENANT_ID=$(get_tenant_id $TENANT)
-
     $KEYSTONE tenant-delete $TENANT_ID
 }
 
 function remove_user {
     local USER=$1
     local USER_ID=$(get_user_id $USER)
-
     $KEYSTONE user-delete $USER_ID
 }
-
-
-
-#------------------------------------------------------------------------------
-# "Create" functions
-#------------------------------------------------------------------------------
 
 function create_tenants {
     source $TOP_DIR/openrc admin admin
@@ -383,9 +357,9 @@ function all {
     delete_all
 }
 
-#------------------------------------------------------------------------------
-# Test functions.
-#------------------------------------------------------------------------------
+# Test functions
+# --------------
+
 function test_functions {
     IMAGE=$(get_image_id)
     echo $IMAGE
@@ -400,9 +374,9 @@ function test_functions {
     echo $NETWORK_ID
 }
 
-#------------------------------------------------------------------------------
-# Usage and main.
-#------------------------------------------------------------------------------
+# Usage and main
+# --------------
+
 usage() {
     echo "$0: [-h]"
     echo "  -h, --help              Display help message"
@@ -473,10 +447,9 @@ main() {
     fi
 }
 
+# Kick off script
+# ---------------
 
-#-------------------------------------------------------------------------------
-# Kick off script.
-#-------------------------------------------------------------------------------
 echo $*
 main $*
 
