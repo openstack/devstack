@@ -187,6 +187,12 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute resize_available False
     iniset $TEMPEST_CONF compute change_password_available False
     iniset $TEMPEST_CONF compute compute_log_level ERROR
+    # Note(nati) current tempest don't create network for each tenant
+    # so reuse same tenant for now
+    if is_service_enabled quantum; then
+        TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
+    fi
+    iniset $TEMPEST_CONF compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     #Skip until #1074039 is fixed
     iniset $TEMPEST_CONF compute run_ssh False
     iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-$OS_USERNAME}
