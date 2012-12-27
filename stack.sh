@@ -1201,6 +1201,17 @@ if is_service_enabled heat; then
     start_heat
 fi
 
+# Create account rc files
+# =======================
+
+# Creates source able script files for easier user switching.
+# This step also creates certificates for tenants and users,
+# which is helpful in image bundle steps.
+
+if is_service_enabled nova && is_service_enabled key; then
+    $TOP_DIR/tools/create_userrc.sh -PA --target-dir $TOP_DIR/accrc
+fi
+
 
 # Install Images
 # ==============
