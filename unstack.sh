@@ -71,36 +71,7 @@ SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*
 
 # Get the iSCSI volumes
 if is_service_enabled cinder; then
-    TARGETS=$(sudo tgtadm --op show --mode target)
-    if [ $? -ne 0 ]; then
-        # If tgt driver isn't running this won't work obviously
-        # So check the response and restart if need be
-        echo "tgtd seems to be in a bad state, restarting..."
-        if is_ubuntu; then
-            restart_service tgt
-        else
-            restart_service tgtd
-        fi
-        TARGETS=$(sudo tgtadm --op show --mode target)
-    fi
-
-    if [[ -n "$TARGETS" ]]; then
-        iqn_list=( $(grep --no-filename -r iqn $SCSI_PERSIST_DIR | sed 's/<target //' | sed 's/>//') )
-        for i in "${iqn_list[@]}"; do
-            echo removing iSCSI target: $i
-            sudo tgt-admin --delete $i
-        done
-    fi
-
-    if is_service_enabled cinder; then
-        sudo rm -rf $CINDER_STATE_PATH/volumes/*
-    fi
-
-    if is_ubuntu; then
-        stop_service tgt
-    else
-        stop_service tgtd
-    fi
+    cleanup_cinder
 fi
 
 if [[ -n "$UNSTACK_ALL" ]]; then
