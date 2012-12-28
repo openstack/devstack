@@ -211,9 +211,7 @@ function configure_baremetal_nova_dirs() {
 
     # ensure dnsmasq is installed but not running
     # because baremetal driver will reconfigure and restart this as needed
-    if [ ! is_package_installed dnsmasq ]; then
-        install_package dnsmasq
-    fi
+    is_package_installed dnsmasq || install_package dnsmasq
     stop_service dnsmasq
 }
 
@@ -256,12 +254,10 @@ function create_baremetal_flavor() {
     ari=$2
     nova flavor-create $BM_FLAVOR_NAME $BM_FLAVOR_ID \
             $BM_FLAVOR_RAM $BM_FLAVOR_ROOT_DISK $BM_FLAVOR_CPU
-    nova-manage instance_type set_key \
-        --name=$BM_FLAVOR_NAME --key cpu_arch --value $BM_FLAVOR_ARCH
-    nova-manage instance_type set_key \
-        --name=$BM_FLAVOR_NAME --key deploy_kernel_id --value $aki
-    nova-manage instance_type set_key \
-        --name=$BM_FLAVOR_NAME --key deploy_ramdisk_id --value $ari
+    nova flavor-key $BM_FLAVOR_NAME set \
+            cpu_arch=$BM_FLAVOR_ARCH \
+            deploy_kernel_id=$aki \
+            deploy_ramdisk_id=$ari
 }
 
 # pull run-time kernel/ramdisk out of disk image and load into glance
