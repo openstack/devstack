@@ -29,6 +29,7 @@ set +o xtrace
 
 SWIFT_DIR=$DEST/swift
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
+SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 
 # TODO: add logging to different location.
 
@@ -212,6 +213,7 @@ function configure_swift() {
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_password $SERVICE_PASSWORD
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken signing_dir $SWIFT_AUTH_CACHE_DIR
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles
@@ -325,6 +327,10 @@ function init_swift() {
         swift-ring-builder account.builder rebalance
     } && popd >/dev/null
 
+    # Create cache dir
+    sudo mkdir -p $SWIFT_AUTH_CACHE_DIR
+    sudo chown `whoami` $SWIFT_AUTH_CACHE_DIR
+    rm -f $SWIFT_AUTH_CACHE_DIR/*
 }
 
 function install_swift() {
