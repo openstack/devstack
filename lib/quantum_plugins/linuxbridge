@@ -1,0 +1,79 @@
+# Quantum Linux Bridge plugin
+# ---------------------------
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+function is_quantum_ovs_base_plugin() {
+    # linuxbridge doesn't use OVS
+    return 1
+}
+
+function quantum_plugin_create_nova_conf() {
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"}
+}
+
+function quantum_plugin_install_agent_packages() {
+    install_package bridge-utils
+}
+
+function quantum_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/quantum/plugins/linuxbridge
+    Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
+    Q_DB_NAME="quantum_linux_bridge"
+    Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2"
+}
+
+function quantum_plugin_configure_debug_command() {
+    iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge
+}
+
+function quantum_plugin_configure_dhcp_agent() {
+    :
+}
+
+function quantum_plugin_configure_l3_agent() {
+    iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge
+}
+
+function quantum_plugin_configure_plugin_agent() {
+    # Setup physical network interface mappings.  Override
+    # ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc`` for more
+    # complex physical network configurations.
+    if [[ "$LB_INTERFACE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$LB_PHYSICAL_INTERFACE" != "" ]]; then
+        LB_INTERFACE_MAPPINGS=$PHYSICAL_NETWORK:$LB_PHYSICAL_INTERFACE
+    fi
+    if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings $LB_INTERFACE_MAPPINGS
+    fi
+    AGENT_BINARY="$QUANTUM_DIR/bin/quantum-linuxbridge-agent"
+}
+
+function quantum_plugin_configure_service() {
+    if [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE VLANS tenant_network_type vlan
+    else
+        echo "WARNING - The linuxbridge plugin is using local tenant networks, with no connectivity between hosts."
+    fi
+
+    # Override ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc``
+    # for more complex physical network configurations.
+    if [[ "$LB_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+        LB_VLAN_RANGES=$PHYSICAL_NETWORK
+        if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
+            LB_VLAN_RANGES=$LB_VLAN_RANGES:$TENANT_VLAN_RANGE
+        fi
+    fi
+    if [[ "$LB_VLAN_RANGES" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE VLANS network_vlan_ranges $LB_VLAN_RANGES
+    fi
+}
+
+function quantum_plugin_setup_interface_driver() {
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
+}
+
+# Restore xtrace
+$XTRACE

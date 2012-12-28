@@ -1,0 +1,55 @@
+# Quantum Big Switch/FloodLight plugin
+# ------------------------------------
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+source $TOP_DIR/lib/quantum_plugins/ovs_base
+source $TOP_DIR/lib/quantum_thirdparty/bigswitch_floodlight     # for third party service specific configuration values
+
+function quantum_plugin_create_nova_conf() {
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
+}
+
+function quantum_plugin_install_agent_packages() {
+    _quantum_ovs_base_install_agent_packages
+}
+
+function quantum_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/quantum/plugins/bigswitch
+    Q_PLUGIN_CONF_FILENAME=restproxy.ini
+    Q_DB_NAME="restproxy_quantum"
+    Q_PLUGIN_CLASS="quantum.plugins.bigswitch.plugin.QuantumRestProxyV2"
+    BS_FL_CONTROLLERS_PORT=${BS_FL_CONTROLLERS_PORT:-localhost:80}
+    BS_FL_CONTROLLER_TIMEOUT=${BS_FL_CONTROLLER_TIMEOUT:-10}
+}
+
+function quantum_plugin_configure_debug_command() {
+    _quantum_ovs_base_configure_debug_command
+}
+
+function quantum_plugin_configure_dhcp_agent() {
+    :
+}
+
+function quantum_plugin_configure_l3_agent() {
+    _quantum_ovs_base_configure_l3_agent
+}
+
+function quantum_plugin_configure_plugin_agent() {
+    :
+}
+
+function quantum_plugin_configure_service() {
+    iniset /$Q_PLUGIN_CONF_FILE RESTPROXY servers $BS_FL_CONTROLLERS_PORT
+    iniset /$Q_PLUGIN_CONF_FILE RESTPROXY servertimeout $BS_FL_CONTROLLER_TIMEOUT
+}
+
+function quantum_plugin_setup_interface_driver() {
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+}
+
+# Restore xtrace
+$XTRACE

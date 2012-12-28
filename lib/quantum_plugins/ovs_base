@@ -1,0 +1,49 @@
+# common functions for ovs based plugin
+# -------------------------------------
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+function is_quantum_ovs_base_plugin() {
+    # Yes, we use OVS.
+    return 0
+}
+
+function _quantum_ovs_base_setup_bridge() {
+    local bridge=$1
+    quantum-ovs-cleanup --ovs_integration_bridge $bridge
+    sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge
+    sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
+}
+
+function _quantum_ovs_base_install_agent_packages() {
+    local kernel_version
+    # Install deps
+    # FIXME add to ``files/apts/quantum``, but don't install if not needed!
+    if is_ubuntu; then
+        kernel_version=`cat /proc/version | cut -d " " -f3`
+        install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
+    else
+        ### FIXME(dtroyer): Find RPMs for OpenVSwitch
+        echo "OpenVSwitch packages need to be located"
+        # Fedora does not started OVS by default
+        restart_service openvswitch
+    fi
+}
+
+function _quantum_ovs_base_configure_debug_command() {
+    iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+}
+
+function _quantum_ovs_base_configure_l3_agent() {
+    iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+
+    quantum-ovs-cleanup --external_network_bridge $PUBLIC_BRIDGE
+    sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
+    # ensure no IP is configured on the public bridge
+    sudo ip addr flush dev $PUBLIC_BRIDGE
+}
+
+# Restore xtrace
+$XTRACE
