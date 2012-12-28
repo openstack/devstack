@@ -29,9 +29,9 @@ Step 2: Download devstack
 --------------------------
 On your XenServer host, run the following commands as root:
 
-wget --no-check-certificate https://github.com/openstack-dev/devstack/zipball/master
-unzip -o master -d ./devstack
-cd devstack/*/
+    wget --no-check-certificate https://github.com/openstack-dev/devstack/zipball/master
+    unzip -o master -d ./devstack
+    cd devstack/*/
 
 Step 3: Configure your localrc inside the devstack directory
 ------------------------------------------------------------
