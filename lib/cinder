@@ -169,6 +169,7 @@ function configure_cinder() {
 
     if [[ "$CINDER_SECURE_DELETE" == "False" ]]; then
         iniset $CINDER_CONF DEFAULT secure_delete False
+        iniset $CINDER_CONF DEFAULT volume_clear none
     fi
 
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
