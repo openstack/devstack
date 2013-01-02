@@ -648,7 +648,25 @@ set -o xtrace
 
 # Install package requirements
 echo_summary "Installing package prerequisites"
-$TOP_DIR/tools/install_prereqs.sh
+if is_ubuntu; then
+    install_package $(get_packages $FILES/apts)
+elif is_fedora; then
+    install_package $(get_packages $FILES/rpms)
+elif is_suse; then
+    install_package $(get_packages $FILES/rpms-suse)
+else
+    exit_distro_not_supported "list of packages"
+fi
+
+if [[ $SYSLOG != "False" ]]; then
+    if is_ubuntu || is_fedora; then
+        install_package rsyslog-relp
+    elif is_suse; then
+        install_package rsyslog-module-relp
+    else
+        exit_distro_not_supported "rsyslog-relp installation"
+    fi
+fi
 
 if is_service_enabled rabbit; then
     # Install rabbitmq-server
