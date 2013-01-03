@@ -313,6 +313,7 @@ source $TOP_DIR/lib/baremetal
 HORIZON_DIR=$DEST/horizon
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 NOVNC_DIR=$DEST/noVNC
+SPICE_DIR=$DEST/spice-html5
 SWIFT3_DIR=$DEST/swift3
 
 # Should cinder perform secure deletion of volumes?
@@ -716,6 +717,10 @@ if is_service_enabled n-novnc; then
     # a websockets/html5 or flash powered VNC console for vm instances
     git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
 fi
+if is_service_enabled n-spice; then
+    # a websockets/html5 or flash powered SPICE console for vm instances
+    git_clone $SPICE_REPO $SPICE_DIR $SPICE_BRANCH
+fi
 if is_service_enabled horizon; then
     # dashboard
     install_horizon
@@ -1008,17 +1013,38 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT novncproxy_base_url "$NOVNCPROXY_URL"
         XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
         iniset $NOVA_CONF DEFAULT xvpvncproxy_base_url "$XVPVNCPROXY_URL"
+        SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:6082/spice_auto.html"}
+        iniset $NOVA_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
     fi
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
     else
         VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
     fi
-    # Address on which instance vncservers will listen on compute hosts.
-    # For multi-host, this should be the management ip of the compute host.
-    VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
-    iniset $NOVA_CONF DEFAULT vncserver_listen "$VNCSERVER_LISTEN"
-    iniset $NOVA_CONF DEFAULT vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+
+    if is_service_enabled n-novnc || is_service_enabled n-xvnc ; then
+      # Address on which instance vncservers will listen on compute hosts.
+      # For multi-host, this should be the management ip of the compute host.
+      VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
+      iniset $NOVA_CONF DEFAULT vnc_enabled true
+      iniset $NOVA_CONF DEFAULT vncserver_listen "$VNCSERVER_LISTEN"
+      iniset $NOVA_CONF DEFAULT vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+    else
+      iniset $NOVA_CONF DEFAULT vnc_enabled false
+    fi
+
+    if is_service_enabled n-spice; then
+      # Address on which instance spiceservers will listen on compute hosts.
+      # For multi-host, this should be the management ip of the compute host.
+      SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
+      SPICESERVER_LISTEN=${SPICESERVER_LISTEN=127.0.0.1}
+      iniset $NOVA_CONF spice enabled true
+      iniset $NOVA_CONF spice server_listen "$SPICESERVER_LISTEN"
+      iniset $NOVA_CONF spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
+    else
+      iniset $NOVA_CONF spice enabled false
+    fi
+
     iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
     iniset_rpc_backend nova $NOVA_CONF DEFAULT
     iniset $NOVA_CONF DEFAULT glance_api_servers "$GLANCE_HOSTPORT"

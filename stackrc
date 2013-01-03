@@ -78,6 +78,10 @@ KEYSTONE_BRANCH=master
 NOVNC_REPO=https://github.com/kanaka/noVNC.git
 NOVNC_BRANCH=master
 
+# a websockets/html5 or flash powered SPICE console for vm instances
+SPICE_REPO=http://anongit.freedesktop.org/git/spice/spice-html5.git
+SPICE_BRANCH=master
+
 # django powered web control panel for openstack
 HORIZON_REPO=${GIT_BASE}/openstack/horizon.git
 HORIZON_BRANCH=master
