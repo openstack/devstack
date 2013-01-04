@@ -1146,9 +1146,9 @@ function get_rootwrap_location() {
 # get_pip_command
 function get_pip_command() {
     if is_fedora; then
-        echo "/usr/bin/pip-python"
+        which pip-python
     else
-        echo "/usr/bin/pip"
+        which pip
     fi
 }
 
