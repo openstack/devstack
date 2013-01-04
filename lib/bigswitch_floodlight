@@ -1,0 +1,50 @@
+# Big Switch/FloodLight  OpenFlow Controller
+# ------------------------------------------
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+BS_FL_CONTROLLERS_PORT=${BS_FL_CONTROLLERS_PORT:-localhost:80}
+BS_FL_OF_PORT=${BS_FL_OF_PORT:-6633}
+OVS_BRIDGE=${OVS_BRIDGE:-br-int}
+
+function configure_bigswitch_floodlight() {
+    :
+}
+
+function init_bigswitch_floodlight() {
+    install_quantum_agent_packages
+
+    echo -n "Installing OVS managed by the openflow controllers:"
+    echo ${BS_FL_CONTROLLERS_PORT}
+
+    # Create local OVS bridge and configure it
+    sudo ovs-vsctl --no-wait -- --if-exists del-br ${OVS_BRIDGE}
+    sudo ovs-vsctl --no-wait add-br ${OVS_BRIDGE}
+    sudo ovs-vsctl --no-wait br-set-external-id ${OVS_BRIDGE} bridge-id ${OVS_BRIDGE}
+
+    ctrls=
+    for ctrl in `echo ${BS_FL_CONTROLLERS_PORT} | tr ',' ' '`
+    do
+        ctrl=${ctrl%:*}
+        ctrls="${ctrls} tcp:${ctrl}:${BS_FL_OF_PORT}"
+    done
+    echo "Adding Network conttrollers: " ${ctrls}
+    sudo ovs-vsctl --no-wait set-controller ${OVS_BRIDGE} ${ctrls}
+}
+
+function install_bigswitch_floodlight() {
+    :
+}
+
+function start_bigswitch_floodlight() {
+    :
+}
+
+function stop_bigswitch_floodlight() {
+    :
+}
+
+# Restore xtrace
+$XTRACE
