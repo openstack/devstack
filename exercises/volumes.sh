@@ -205,7 +205,7 @@ echo "Completed volume-detach in $((end_time - start_time)) seconds"
 # Delete volume
 start_time=`date +%s`
 nova volume-delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while nova volume-list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
     end_time=`date +%s`
     echo "Failed volume-delete after $((end_time - start_time)) seconds"
