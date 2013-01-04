@@ -16,6 +16,7 @@ sqlite3
 sudo
 kvm
 libvirt-bin # NOPRIME
+libjs-jquery-tablesorter # Needed for coverage html reports
 vlan
 curl
 rabbitmq-server # NOPRIME
