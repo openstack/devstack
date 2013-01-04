@@ -82,30 +82,34 @@ function configure_tempest() {
     # first image returned and set ``image_uuid_alt`` to the second,
     # if there is more than one returned...
     # ... Also ensure we only take active images, so we don't get snapshots in process
-    image_lines=`glance image-list`
-    IFS=$'\n\r'
-    images=""
-    for line in $image_lines; do
-        if [ -z $DEFAULT_IMAGE_NAME ]; then
-            images="$images `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | cut -d' ' -f2`"
-        else
-            images="$images `echo $line | grep -v "^\(ID\|+--\)" | grep -v "\(aki\|ari\)" | grep 'active' | grep "$DEFAULT_IMAGE_NAME" | cut -d' ' -f2`"
+    declare -a images
+
+    while read -r IMAGE_NAME IMAGE_UUID; do
+        if [ "$IMAGE_NAME" = "$DEFAULT_IMAGE_NAME" ]; then
+            image_uuid="$IMAGE_UUID"
+            image_uuid_alt="$IMAGE_UUID"
         fi
-    done
-    # Create array of image UUIDs...
-    IFS=" "
-    images=($images)
-    num_images=${#images[*]}
-    echo "Found $num_images images"
-    if [[ $num_images -eq 0 ]]; then
-        echo "Found no valid images to use!"
-        exit 1
-    fi
-    image_uuid=${images[0]}
-    image_uuid_alt=$image_uuid
-    if [[ $num_images -gt 1 ]]; then
-        image_uuid_alt=${images[1]}
-    fi
+        images+=($IMAGE_UUID)
+    done < <(glance image-list --status=active | awk -F'|' '!/^(+--)|ID|aki|ari/ { print $3,$2 }')
+
+    case "${#images[*]}" in
+        0)
+            echo "Found no valid images to use!"
+            exit 1
+            ;;
+        1)
+            if [ -z "$image_uuid" ]; then
+                image_uuid=${images[0]}
+                image_uuid_alt=${images[0]}
+            fi
+            ;;
+        *)
+            if [ -z "$image_uuid" ]; then
+                image_uuid=${images[0]}
+                image_uuid_alt=${images[1]}
+            fi
+            ;;
+    esac
 
     # Create tempest.conf from tempest.conf.sample
     # copy every time, because the image UUIDS are going to change
