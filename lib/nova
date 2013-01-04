@@ -408,13 +408,13 @@ function create_nova_conf() {
     fi
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         # Add color to logging output
-        add_nova_opt "logging_context_format_string=%(asctime)s %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_name)s %(project_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
-        add_nova_opt "logging_default_format_string=%(asctime)s %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+        add_nova_opt "logging_context_format_string=%(asctime)s.%(msecs)d %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_name)s %(project_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+        add_nova_opt "logging_default_format_string=%(asctime)s.%(msecs)d %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
         add_nova_opt "logging_debug_format_suffix=[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
-        add_nova_opt "logging_exception_prefix=%(color)s%(asctime)s TRACE %(name)s [01;35m%(instance)s[00m"
+        add_nova_opt "logging_exception_prefix=%(color)s%(asctime)s.%(msecs)d TRACE %(name)s [01;35m%(instance)s[00m"
     else
         # Show user_name and project_name instead of user_id and project_id
-        add_nova_opt "logging_context_format_string=%(asctime)s %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
+        add_nova_opt "logging_context_format_string=%(asctime)s.%(msecs) %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
     fi
     if is_service_enabled ceilometer; then
         add_nova_opt "instance_usage_audit=True"
