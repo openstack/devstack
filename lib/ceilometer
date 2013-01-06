@@ -9,6 +9,7 @@
 # - OS_AUTH_URL for auth in api
 # - DEST set to the destination directory
 # - SERVICE_PASSWORD, SERVICE_TENANT_NAME for auth in api
+# - STACK_USER service user
 
 # stack.sh
 # ---------
@@ -94,7 +95,7 @@ function configure_ceilometer() {
 function init_ceilometer() {
     # Create cache dir
     sudo mkdir -p $CEILOMETER_AUTH_CACHE_DIR
-    sudo chown `whoami` $CEILOMETER_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
     rm -f $CEILOMETER_AUTH_CACHE_DIR/*
 }
 

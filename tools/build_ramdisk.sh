@@ -125,17 +125,17 @@ if [ ! -r $DEV_FILE ]; then
     # Create a stack user that is a member of the libvirtd group so that stack
     # is able to interact with libvirt.
     chroot $MNTDIR groupadd libvirtd
-    chroot $MNTDIR useradd stack -s /bin/bash -d $DEST -G libvirtd
+    chroot $MNTDIR useradd $DEFAULT_STACK_USER -s /bin/bash -d $DEST -G libvirtd
     mkdir -p $MNTDIR/$DEST
-    chroot $MNTDIR chown stack $DEST
+    chroot $MNTDIR chown $DEFAULT_STACK_USER $DEST
 
     # A simple password - pass
-    echo stack:pass | chroot $MNTDIR chpasswd
+    echo $DEFAULT_STACK_USER:pass | chroot $MNTDIR chpasswd
     echo root:$ROOT_PASSWORD | chroot $MNTDIR chpasswd
 
     # And has sudo ability (in the future this should be limited to only what
     # stack requires)
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> $MNTDIR/etc/sudoers
+    echo "$DEFAULT_STACK_USER ALL=(ALL) NOPASSWD: ALL" >> $MNTDIR/etc/sudoers
 
     umount $MNTDIR
     rmdir $MNTDIR
@@ -187,7 +187,7 @@ git_clone $OPENSTACKX_REPO $DEST/openstackx $OPENSTACKX_BRANCH
 # Use this version of devstack
 rm -rf $MNTDIR/$DEST/devstack
 cp -pr $CWD $MNTDIR/$DEST/devstack
-chroot $MNTDIR chown -R stack $DEST/devstack
+chroot $MNTDIR chown -R $DEFAULT_STACK_USER $DEST/devstack
 
 # Configure host network for DHCP
 mkdir -p $MNTDIR/etc/network
@@ -225,7 +225,7 @@ EOF
 
 # Make the run.sh executable
 chmod 755 $RUN_SH
-chroot $MNTDIR chown stack $DEST/run.sh
+chroot $MNTDIR chown $DEFAULT_STACK_USER $DEST/run.sh
 
 umount $MNTDIR
 rmdir $MNTDIR

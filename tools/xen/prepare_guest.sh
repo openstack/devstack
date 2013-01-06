@@ -19,6 +19,7 @@ GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 STAGING_DIR=${STAGING_DIR:-stage}
 DO_TGZ=${DO_TGZ:-1}
 XS_TOOLS_PATH=${XS_TOOLS_PATH:-"/root/xs-tools.deb"}
+STACK_USER=${STACK_USER:-stack}
 
 # Install basics
 chroot $STAGING_DIR apt-get update
@@ -46,12 +47,12 @@ rm -f $STAGING_DIR/etc/localtime
 
 # Add stack user
 chroot $STAGING_DIR groupadd libvirtd
-chroot $STAGING_DIR useradd stack -s /bin/bash -d /opt/stack -G libvirtd
-echo stack:$GUEST_PASSWORD | chroot $STAGING_DIR chpasswd
-echo "stack ALL=(ALL) NOPASSWD: ALL" >> $STAGING_DIR/etc/sudoers
+chroot $STAGING_DIR useradd $STACK_USER -s /bin/bash -d /opt/stack -G libvirtd
+echo $STACK_USER:$GUEST_PASSWORD | chroot $STAGING_DIR chpasswd
+echo "$STACK_USER ALL=(ALL) NOPASSWD: ALL" >> $STAGING_DIR/etc/sudoers
 
 # Give ownership of /opt/stack to stack user
-chroot $STAGING_DIR chown -R stack /opt/stack
+chroot $STAGING_DIR chown -R $STACK_USER /opt/stack
 
 # Make our ip address hostnames look nice at the command prompt
 echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> $STAGING_DIR/opt/stack/.bashrc

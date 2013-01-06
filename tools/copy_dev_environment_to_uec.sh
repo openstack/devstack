@@ -18,6 +18,9 @@ TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
 # Change dir to top of devstack
 cd $TOP_DIR
 
+# Source params
+source ./stackrc
+
 # Echo usage
 usage() {
     echo "Add stack user and keys"
@@ -43,13 +46,13 @@ mkdir -p $STAGING_DIR/$DEST
 # Create a stack user that is a member of the libvirtd group so that stack
 # is able to interact with libvirt.
 chroot $STAGING_DIR groupadd libvirtd || true
-chroot $STAGING_DIR useradd stack -s /bin/bash -d $DEST -G libvirtd || true
+chroot $STAGING_DIR useradd $DEFAULT_STACK_USER -s /bin/bash -d $DEST -G libvirtd || true
 
 # Add a simple password - pass
-echo stack:pass | chroot $STAGING_DIR chpasswd
+echo $DEFAULT_STACK_USER:pass | chroot $STAGING_DIR chpasswd
 
 # Configure sudo
-( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+( umask 226 && echo "$DEFAULT_STACK_USER ALL=(ALL) NOPASSWD:ALL" \
     > $STAGING_DIR/etc/sudoers.d/50_stack_sh )
 
 # Copy over your ssh keys and env if desired
@@ -64,7 +67,7 @@ rm -rf $STAGING_DIR/$DEST/devstack
 cp_it . $STAGING_DIR/$DEST/devstack
 
 # Give stack ownership over $DEST so it may do the work needed
-chroot $STAGING_DIR chown -R stack $DEST
+chroot $STAGING_DIR chown -R $DEFAULT_STACK_USER $DEST
 
 # Unmount
 umount $STAGING_DIR

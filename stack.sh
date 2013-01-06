@@ -177,40 +177,43 @@ VERBOSE=$(trueorfalse True $VERBOSE)
 # sudo privileges and runs as that user.
 
 if [[ $EUID -eq 0 ]]; then
+    STACK_USER=$DEFAULT_STACK_USER
     ROOTSLEEP=${ROOTSLEEP:-10}
     echo "You are running this script as root."
-    echo "In $ROOTSLEEP seconds, we will create a user 'stack' and run as that user"
+    echo "In $ROOTSLEEP seconds, we will create a user '$STACK_USER' and run as that user"
     sleep $ROOTSLEEP
 
     # Give the non-root user the ability to run as **root** via ``sudo``
     is_package_installed sudo || install_package sudo
-    if ! getent group stack >/dev/null; then
-        echo "Creating a group called stack"
-        groupadd stack
+    if ! getent group $STACK_USER >/dev/null; then
+        echo "Creating a group called $STACK_USER"
+        groupadd $STACK_USER
     fi
-    if ! getent passwd stack >/dev/null; then
-        echo "Creating a user called stack"
-        useradd -g stack -s /bin/bash -d $DEST -m stack
+    if ! getent passwd $STACK_USER >/dev/null; then
+        echo "Creating a user called $STACK_USER"
+        useradd -g $STACK_USER -s /bin/bash -d $DEST -m $STACK_USER
     fi
 
     echo "Giving stack user passwordless sudo privileges"
     # UEC images ``/etc/sudoers`` does not have a ``#includedir``, add one
     grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
         echo "#includedir /etc/sudoers.d" >> /etc/sudoers
-    ( umask 226 && echo "stack ALL=(ALL) NOPASSWD:ALL" \
+    ( umask 226 && echo "$STACK_USER ALL=(ALL) NOPASSWD:ALL" \
         > /etc/sudoers.d/50_stack_sh )
 
-    echo "Copying files to stack user"
+    echo "Copying files to $STACK_USER user"
     STACK_DIR="$DEST/${TOP_DIR##*/}"
     cp -r -f -T "$TOP_DIR" "$STACK_DIR"
-    chown -R stack "$STACK_DIR"
+    chown -R $STACK_USER "$STACK_DIR"
+    cd "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
-        exec su -c "set -e; cd $STACK_DIR; bash stack.sh; bash" stack
+        exec sudo -u $STACK_USER  bash -l -c "set -e; bash stack.sh; bash"
     else
-        exec su -c "set -e; cd $STACK_DIR; bash stack.sh" stack
+        exec sudo -u $STACK_USER bash -l -c "set -e; source stack.sh"
     fi
     exit 1
 else
+    STACK_USER=`whoami`
     # We're not **root**, make sure ``sudo`` is available
     is_package_installed sudo || die "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
 
@@ -220,10 +223,10 @@ else
 
     # Set up devstack sudoers
     TEMPFILE=`mktemp`
-    echo "`whoami` ALL=(root) NOPASSWD:ALL" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD:ALL" >$TEMPFILE
     # Some binaries might be under /sbin or /usr/sbin, so make sure sudo will
     # see them by forcing PATH
-    echo "Defaults:`whoami` secure_path=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >> $TEMPFILE
+    echo "Defaults:$STACK_USER secure_path=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >> $TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
@@ -235,7 +238,7 @@ fi
 # Create the destination directory and ensure it is writable by the user
 sudo mkdir -p $DEST
 if [ ! -w $DEST ]; then
-    sudo chown `whoami` $DEST
+    sudo chown $STACK_USER $DEST
 fi
 
 # Set ``OFFLINE`` to ``True`` to configure ``stack.sh`` to run cleanly without
@@ -251,7 +254,7 @@ ERROR_ON_CLONE=`trueorfalse False $ERROR_ON_CLONE`
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 sudo mkdir -p $DATA_DIR
-sudo chown `whoami` $DATA_DIR
+sudo chown $STACK_USER $DATA_DIR
 
 
 # Common Configuration

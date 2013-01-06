@@ -4,6 +4,7 @@
 # Dependencies:
 # ``functions`` file
 # ``DEST``, ``SCREEN_NAME``, `SWIFT_HASH` must be defined
+# ``STACK_USER`` must be defined
 # ``SWIFT_DATA_DIR`` or ``DATA_DIR`` must be defined
 # ``lib/keystone`` file
 # ``stack.sh`` calls the entry points in this order:
@@ -333,7 +334,7 @@ function init_swift() {
 
     # Create cache dir
     sudo mkdir -p $SWIFT_AUTH_CACHE_DIR
-    sudo chown `whoami` $SWIFT_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $SWIFT_AUTH_CACHE_DIR
     rm -f $SWIFT_AUTH_CACHE_DIR/*
 }
 

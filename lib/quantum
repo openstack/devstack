@@ -388,7 +388,7 @@ function _configure_quantum_common() {
     if [[ ! -d $QUANTUM_CONF_DIR ]]; then
         sudo mkdir -p $QUANTUM_CONF_DIR
     fi
-    sudo chown `whoami` $QUANTUM_CONF_DIR
+    sudo chown $STACK_USER $QUANTUM_CONF_DIR
 
     cp $QUANTUM_DIR/etc/quantum.conf $QUANTUM_CONF
 
@@ -730,7 +730,7 @@ function _quantum_setup_keystone() {
     iniset $conf_file $section signing_dir $QUANTUM_AUTH_CACHE_DIR
     # Create cache dir
     sudo mkdir -p $QUANTUM_AUTH_CACHE_DIR
-    sudo chown `whoami` $QUANTUM_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $QUANTUM_AUTH_CACHE_DIR
     rm -f $QUANTUM_AUTH_CACHE_DIR/*
 }
 

@@ -49,7 +49,7 @@ function configure_heat() {
     if [[ ! -d $HEAT_CONF_DIR ]]; then
         sudo mkdir -p $HEAT_CONF_DIR
     fi
-    sudo chown `whoami` $HEAT_CONF_DIR
+    sudo chown $STACK_USER $HEAT_CONF_DIR
 
     HEAT_API_CFN_HOST=${HEAT_API_CFN_HOST:-$SERVICE_HOST}
     HEAT_API_CFN_PORT=${HEAT_API_CFN_PORT:-8000}
