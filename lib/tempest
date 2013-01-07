@@ -14,10 +14,11 @@
 # - ``PUBLIC_NETWORK_NAME``
 # - ``Q_USE_NAMESPACE``
 # - ``Q_ROUTER_NAME``
+# - ``VIRT_DRIVER``
+# - ``LIBVIRT_TYPE``
 # Optional Dependencies:
 # IDENTITY_USE_SSL, IDENTITY_HOST, IDENTITY_PORT, IDENTITY_PATH
 # ALT_* (similar vars exists in keystone_data.sh)
-# ``OS_USERNAME``
 # ``IMAGE_PORT``, ``IMAGE_HOST``
 # ``LIVE_MIGRATION_AVAILABLE``
 # ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
@@ -27,6 +28,7 @@
 #
 # install_tempest
 # configure_tempest
+# init_tempest
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -47,6 +49,8 @@ BUILD_INTERVAL=3
 BUILD_TIMEOUT=400
 
 
+BOTO_MATERIALS_PATH="$DEST/devstack/files/images/s3-materials/cirros-0.3.0"
+
 # Entry Points
 # ------------
 
@@ -66,6 +70,7 @@ function configure_tempest() {
     local public_network_id
     local public_router_id
     local tenant_networks_reachable
+    local boto_instance_type="m1.tiny"
 
     # TODO(afazekas):
     # sudo python setup.py deploy
@@ -138,11 +143,13 @@ function configure_tempest() {
     if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
         nova flavor-create m1.nano 42 64 0 1
         flavor_ref=42
+        boto_instance_type=m1.nano
         nova flavor-create m1.micro 84 128 0 1
         flavor_ref_alt=84
     else
         # Check Nova for existing flavors and, if set, look for the
         # ``DEFAULT_INSTANCE_TYPE`` and use that.
+        boto_instance_type=$DEFAULT_INSTANCE_TYPE
         flavor_lines=`nova flavor-list`
         IFS=$'\r\n'
         flavors=""
@@ -216,10 +223,10 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     #Skip until #1074039 is fixed
     iniset $TEMPEST_CONF compute run_ssh False
-    iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-$OS_USERNAME}
+    iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
     iniset $TEMPEST_CONF compute network_for_ssh $PRIVATE_NETWORK_NAME
     iniset $TEMPEST_CONF compute ip_version_for_ssh 4
-    iniset $TEMPEST_CONF compute ssh_timeout 4
+    iniset $TEMPEST_CONF compute ssh_timeout $BUILD_TIMEOUT
     iniset $TEMPEST_CONF compute image_ref $image_uuid
     iniset $TEMPEST_CONF compute image_ref_alt $image_uuid_alt
     iniset $TEMPEST_CONF compute flavor_ref $flavor_ref
@@ -258,6 +265,9 @@ function configure_tempest() {
     #boto
     iniset $TEMPEST_CONF boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
     iniset $TEMPEST_CONF boto s3_url "http://$SERVICE_HOST:${S3_SERVICE_PORT:-3333}"
+    iniset $TEMPEST_CONF boto s3_materials_path "$BOTO_MATERIALS_PATH"
+    iniset $TEMPEST_CONF boto instance_type "$boto_instance_type"
+    iniset $TEMPEST_CONF boto http_socket_timeout 30
 
     echo "Created tempest configuration file:"
     cat $TEMPEST_CONF
@@ -275,6 +285,31 @@ function install_tempest() {
     # Tempest doesn't satisfy its dependencies on its own, so
     # install them here instead.
     pip_install -r $TEMPEST_DIR/tools/pip-requires
+}
+
+# init_tempest() - Initialize ec2 images
+function init_tempest() {
+    local base_image_name=cirros-0.3.0-x86_64
+    # /opt/stack/devstack/files/images/cirros-0.3.0-x86_64-uec
+    local devstack_dir="$DEST/devstack"
+    local image_dir="$devstack_dir/files/images/${base_image_name}-uec"
+    local kernel="$image_dir/${base_image_name}-vmlinuz"
+    local ramdisk="$image_dir/${base_image_name}-initrd"
+    local disk_image="$image_dir/${base_image_name}-blank.img"
+    # if the cirros uec downloaded and the system is uec capable
+    if [ -f "$kernel" -a -f "$ramdisk" -a -f "$disk_image" -a  "$VIRT_DRIVER" != "openvz" \
+         -a \( "$LIBVIRT_TYPE" != "lxc" -o "$VIRT_DRIVER" != "libvirt" \) ]; then
+       echo "Prepare aki/ari/ami Images"
+       ( #new namespace
+           # tenant:demo ; user: demo
+           source $devstack_dir/accrc/demo/demo
+           euca-bundle-image -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
+           euca-bundle-image -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
+           euca-bundle-image -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
+       ) 2>&1 </dev/null | cat
+    else
+        echo "Boto materials are not prepared"
+    fi
 }
 
 # Restore xtrace
