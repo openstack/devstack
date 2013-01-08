@@ -28,7 +28,7 @@ skips=""
 
 # Loop over each possible script (by basename)
 for script in $basenames; do
-    if [[ "$SKIP_EXERCISES" =~ $script ]] ; then
+    if [[ ,$SKIP_EXERCISES, =~ ,$script, ]] ; then
         skips="$skips $script"
     else
         echo "====================================================================="
