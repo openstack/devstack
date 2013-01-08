@@ -48,6 +48,20 @@ fi
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
+# _clean_volume_group removes all cinder volumes from the specified volume group
+# _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
+function _clean_volume_group() {
+    local vg=$1
+    local vg_prefix=$2
+    # Clean out existing volumes
+    for lv in `sudo lvs --noheadings -o lv_name $vg`; do
+        # vg_prefix prefixes the LVs we want
+        if [[ "${lv#$vg_prefix}" != "$lv" ]]; then
+            sudo lvremove -f $vg/$lv
+        fi
+    done
+}
+
 # cleanup_cinder() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_cinder() {
@@ -84,7 +98,8 @@ function cleanup_cinder() {
         stop_service tgtd
     fi
 
-    sudo vgremove -f $VOLUME_GROUP
+    # Campsite rule: leave behind a volume group at least as clean as we found it
+    _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
 }
 
 # configure_cinder() - Set config files, create data dirs, etc
@@ -272,13 +287,8 @@ function init_cinder() {
 
             # Remove iscsi targets
             sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
-            # Clean out existing volumes
-            for lv in `sudo lvs --noheadings -o lv_name $VOLUME_GROUP`; do
-                # VOLUME_NAME_PREFIX prefixes the LVs we want
-                if [[ "${lv#$VOLUME_NAME_PREFIX}" != "$lv" ]]; then
-                    sudo lvremove -f $VOLUME_GROUP/$lv
-                fi
-            done
+            # Start with a clean volume group
+            _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
         fi
     fi
 
