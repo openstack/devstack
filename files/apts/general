@@ -5,7 +5,7 @@ screen
 unzip
 wget
 psmisc
-git-core
+git
 lsof # useful when debugging
 openssh-server
 vim-nox
