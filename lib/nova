@@ -419,7 +419,7 @@ function create_nova_conf() {
     if is_service_enabled ceilometer; then
         add_nova_opt "instance_usage_audit=True"
         add_nova_opt "instance_usage_audit_period=hour"
-        add_nova_opt "notification_driver=nova.openstack.common.notifier.rabbit_notifier"
+        add_nova_opt "notification_driver=nova.openstack.common.notifier.rpc_notifier"
         add_nova_opt "notification_driver=ceilometer.compute.nova_notifier"
     fi
 
