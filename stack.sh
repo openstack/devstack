@@ -773,6 +773,7 @@ if is_service_enabled cinder; then
     install_cinder
 fi
 if is_service_enabled ceilometer; then
+    install_ceilometerclient
     install_ceilometer
 fi
 if is_service_enabled tempest; then
@@ -1218,6 +1219,7 @@ fi
 if is_service_enabled ceilometer; then
     echo_summary "Configuring Ceilometer"
     configure_ceilometer
+    configure_ceilometerclient
     echo_summary "Starting Ceilometer"
     start_ceilometer
 fi

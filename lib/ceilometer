@@ -29,6 +29,7 @@ set +o xtrace
 
 # Set up default directories
 CEILOMETER_DIR=$DEST/ceilometer
+CEILOMETERCLIENT_DIR=$DEST/python-ceilometerclient
 CEILOMETER_CONF_DIR=/etc/ceilometer
 CEILOMETER_CONF=$CEILOMETER_CONF_DIR/ceilometer.conf
 CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
@@ -44,6 +45,11 @@ fi
 # runs that a clean run would need to clean up
 function cleanup_ceilometer() {
     mongo ceilometer --eval "db.dropDatabase();"
+}
+
+# configure_ceilometerclient() - Set config files, create data dirs, etc
+function configure_ceilometerclient() {
+    setup_develop $CEILOMETERCLIENT_DIR
 }
 
 # configure_ceilometer() - Set config files, create data dirs, etc
@@ -85,6 +91,11 @@ function configure_ceilometer() {
 # install_ceilometer() - Collect source and prepare
 function install_ceilometer() {
     git_clone $CEILOMETER_REPO $CEILOMETER_DIR $CEILOMETER_BRANCH
+}
+
+# install_ceilometerclient() - Collect source and prepare
+function install_ceilometerclient() {
+    git_clone $CEILOMETERCLIENT_REPO $CEILOMETERCLIENT_DIR $CEILOMETERCLIENT_BRANCH
 }
 
 # start_ceilometer() - Start running processes, including screen
