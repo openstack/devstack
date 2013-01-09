@@ -1129,6 +1129,12 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF baremetal power_manager $BM_POWER_MANAGER
         iniset $NOVA_CONF baremetal tftp_root /tftpboot
 
+        # Define extra baremetal nova conf flags by defining the array ``EXTRA_BAREMETAL_OPTS``.
+        for I in "${EXTRA_BAREMETAL_OPTS[@]}"; do
+           # Attempt to convert flags to options
+           iniset $NOVA_CONF baremetal ${I//=/ }
+        done
+
     # Default
     # -------
 
