@@ -192,7 +192,7 @@ echo "Completed volume-detach in $((end_time - start_time)) seconds"
 # Delete volume
 start_time=`date +%s`
 cinder delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
-if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME; do sleep 1; done"; then
+if ! timeout $ACTIVE_TIMEOUT sh -c "while cinder list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
     exit 1
 fi
