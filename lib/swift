@@ -39,7 +39,8 @@ SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DATA_DIR}/swift}
 SWIFT_CONFIG_DIR=${SWIFT_CONFIG_DIR:-/etc/swift}
 
 # DevStack will create a loop-back disk formatted as XFS to store the
-# swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in bytes.
+# swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
+# kilobytes.
 # Default is 1 gigabyte.
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 
