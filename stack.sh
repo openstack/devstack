@@ -321,7 +321,6 @@ source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/quantum
-source $TOP_DIR/lib/tempest
 source $TOP_DIR/lib/baremetal
 
 # Set the destination directories for OpenStack projects
@@ -774,9 +773,6 @@ if is_service_enabled cinder; then
 fi
 if is_service_enabled ceilometer; then
     install_ceilometer
-fi
-if is_service_enabled tempest; then
-    install_tempest
 fi
 
 
@@ -1314,16 +1310,6 @@ if is_service_enabled nova && is_baremetal; then
     screen_it baremetal "nova-baremetal-deploy-helper"
 fi
 
-# Configure Tempest last to ensure that the runtime configuration of
-# the various OpenStack services can be queried.
-if is_service_enabled tempest; then
-    echo_summary "Configuring Tempest"
-    configure_tempest
-    echo '**************************************************'
-    echo_summary "Finished Configuring Tempest"
-    echo '**************************************************'
-fi
-
 # Save some values we generated for later use
 CURRENT_RUN_TIME=$(date "+$TIMESTAMP_FORMAT")
 echo "# $CURRENT_RUN_TIME" >$TOP_DIR/.stackenv
@@ -1331,6 +1317,16 @@ for i in BASE_SQL_CONN ENABLED_SERVICES HOST_IP LOGFILE \
   SERVICE_HOST SERVICE_PROTOCOL TLS_IP; do
     echo $i=${!i} >>$TOP_DIR/.stackenv
 done
+
+
+# Run extras
+# ==========
+
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i stack
+    done
+fi
 
 
 # Run local script
