@@ -173,10 +173,10 @@ function add_entry(){
     fi
     cat >"$rcfile" <<EOF
 # you can source this file
-export EC2_ACCESS_KEY=$ec2_access_key
-export EC2_SECRET_KEY=$ec2_secret_key
-export EC2_URL=$EC2_URL
-export S3_URL=$S3_URL
+export EC2_ACCESS_KEY="$ec2_access_key"
+export EC2_SECRET_KEY="$ec2_secret_key"
+export EC2_URL="$EC2_URL"
+export S3_URL="$S3_URL"
 # OpenStack USER ID = $user_id
 export OS_USERNAME="$user_name"
 # Openstack Tenant ID = $tenant_id
@@ -210,7 +210,7 @@ function create_or_get_role(){
     if [ -n "$role_id" ]; then
         echo $role_id
     else
-        keystone tenant-create --name "$role_name" |awk '/\|[[:space:]]*id[[:space:]]*\|.*\|/ {print $4}'
+        keystone role-create --name "$role_name" |awk '/\|[[:space:]]*id[[:space:]]*\|.*\|/ {print $4}'
     fi
 }
 
