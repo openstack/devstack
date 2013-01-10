@@ -33,6 +33,10 @@ GIT_BASE=https://github.com
 CEILOMETER_REPO=${GIT_BASE}/openstack/ceilometer.git
 CEILOMETER_BRANCH=master
 
+# ceilometer client library
+CEILOMETERCLIENT_REPO=${GIT_BASE}/openstack/python-ceilometerclient
+CEILOMETERCLIENT_BRANCH=master
+
 # volume service
 CINDER_REPO=${GIT_BASE}/openstack/cinder
 CINDER_BRANCH=master
