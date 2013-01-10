@@ -1221,6 +1221,7 @@ if is_service_enabled ceilometer; then
     configure_ceilometer
     configure_ceilometerclient
     echo_summary "Starting Ceilometer"
+    init_ceilometer
     start_ceilometer
 fi
 
