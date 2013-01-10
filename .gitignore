@@ -11,3 +11,4 @@ files/images
 stack-screenrc
 *.pem
 accrc
+.stackenv
