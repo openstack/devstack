@@ -95,13 +95,13 @@ function configure_swift() {
     setup_develop $SWIFT_DIR
 
     # Make sure to kill all swift processes first
-    swift-init all stop || true
+    swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
     # First do a bit of setup by creating the directories and
     # changing the permissions so we can run it as our user.
 
     USER_GROUP=$(id -g)
-    sudo mkdir -p ${SWIFT_DATA_DIR}/{drives,cache}
+    sudo mkdir -p ${SWIFT_DATA_DIR}/{drives,cache,run,logs}
     sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_DIR}
 
     # Create a loopback disk and format it to XFS.
@@ -143,8 +143,8 @@ function configure_swift() {
         sudo chown -R $USER: ${node}
     done
 
-   sudo mkdir -p ${SWIFT_CONFIG_DIR}/{object,container,account}-server /var/run/swift
-   sudo chown -R $USER: ${SWIFT_CONFIG_DIR} /var/run/swift
+   sudo mkdir -p ${SWIFT_CONFIG_DIR}/{object,container,account}-server
+   sudo chown -R $USER: ${SWIFT_CONFIG_DIR}
 
     if [[ "$SWIFT_CONFIG_DIR" != "/etc/swift" ]]; then
         # Some swift tools are hard-coded to use ``/etc/swift`` and are apparently not going to be fixed.
@@ -311,7 +311,7 @@ function configure_swiftclient() {
 function init_swift() {
     local node_number
     # Make sure to kill all swift processes first
-    swift-init all stop || true
+    swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
     # This is where we create three different rings for swift with
     # different object servers binding on different ports.
@@ -363,15 +363,15 @@ function start_swift() {
    # proxy service so we can run it in foreground in screen.
    # ``swift-init ... {stop|restart}`` exits with '1' if no servers are running,
    # ignore it just in case
-   swift-init all restart || true
-   swift-init proxy stop || true
+   swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
+   swift-init --run-dir=${SWIFT_DATA_DIR}/run proxy stop || true
    screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
 }
 
 # stop_swift() - Stop running processes (non-screen)
 function stop_swift() {
     # screen normally killed by unstack.sh
-    swift-init all stop || true
+    swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 }
 
 # Restore xtrace
