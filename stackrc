@@ -108,7 +108,7 @@ HEAT_REPO=${GIT_BASE}/openstack/heat.git
 HEAT_BRANCH=master
 
 # python heat client library
-HEATCLIENT_REPO=${GIT_BASE}/heat-api/python-heatclient.git
+HEATCLIENT_REPO=${GIT_BASE}/openstack/python-heatclient.git
 HEATCLIENT_BRANCH=master
 
 # ryu service
