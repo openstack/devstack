@@ -88,6 +88,30 @@ to be in the sub-script, such as testing for keystone being enabled in
 ``configure_swift()``.
 
 
+stackrc
+-------
+
+``stackrc`` is the global configuration file for DevStack.  It is responsible for
+calling ``localrc`` if it exists so configuration can be overridden by the user.
+
+The criteria for what belongs in ``stackrc`` can be vaguely summarized as
+follows:
+
+* All project respositories and branches (for historical reasons)
+* Global configuration that may be referenced in ``localrc``, i.e. ``DEST``, ``DATA_DIR``
+* Global service configuration like ``ENABLED_SERVICES``
+* Variables used by multiple services that do not have a clear owner, i.e.
+  ``VOLUME_BACKING_FILE_SIZE`` (nova-volumes and cinder) or ``PUBLIC_NETWORK_NAME``
+  (nova-network and quantum)
+* Variables that can not be cleanly declared in a project file due to
+  dependency ordering, i.e. the order of sourcing the project files can
+  not be changed for other reasons but the earlier file needs to dereference a
+  variable set in the later file.  This should be rare.
+
+Also, variable declarations in ``stackrc`` do NOT allow overriding (the form
+``FOO=${FOO:-baz}``); if they did then they can already be changed in ``localrc``
+and can stay in the project file.
+
 Documentation
 -------------
 
