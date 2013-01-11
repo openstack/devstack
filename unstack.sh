@@ -39,6 +39,15 @@ if [[ "$1" == "--all" ]]; then
     UNSTACK_ALL=${UNSTACK_ALL:-1}
 fi
 
+# Run extras
+# ==========
+
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i unstack
+    done
+fi
+
 if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
     source $TOP_DIR/openrc
     teardown_quantum_debug
