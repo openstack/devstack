@@ -37,6 +37,12 @@ CINDER_CONF_DIR=/etc/cinder
 CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
 CINDER_API_PASTE_INI=$CINDER_CONF_DIR/api-paste.ini
 
+# Public facing bits
+CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
+CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
+CINDER_SERVICE_PORT_INT=${CINDER_SERVICE_PORT_INT:-18776}
+CINDER_SERVICE_PROTOCOL=${CINDER_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+
 # Support entry points installation of console scripts
 if [[ -d $CINDER_DIR/bin ]]; then
     CINDER_BIN_DIR=$CINDER_DIR/bin
@@ -169,6 +175,11 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.openstack.volume.contrib.standard_extensions
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
 
+    if is_service_enabled tls-proxy; then
+        # Set the service port for a proxy to take the original
+        iniset $CINDER_CONF DEFAULT osapi_volume_listen_port $CINDER_SERVICE_PORT_INT
+    fi
+
     if [ "$SYSLOG" != "False" ]; then
         iniset $CINDER_CONF DEFAULT use_syslog True
     fi
@@ -241,9 +252,9 @@ create_cinder_accounts() {
             keystone endpoint-create \
                 --region RegionOne \
                 --service_id $CINDER_SERVICE \
-                --publicurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
-                --adminurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s" \
-                --internalurl "http://$SERVICE_HOST:8776/v1/\$(tenant_id)s"
+                --publicurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
+                --adminurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
+                --internalurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
         fi
     fi
 }
@@ -340,6 +351,11 @@ function start_cinder() {
     screen_it c-api "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
     screen_it c-vol "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
     screen_it c-sch "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
+
+    # Start proxies if enabled
+    if is_service_enabled c-api && is_service_enabled tls-proxy; then
+        start_tls_proxy '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_PORT_INT &
+    fi
 }
 
 # stop_cinder() - Stop running processes
