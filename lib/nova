@@ -432,8 +432,8 @@ function create_nova_conf() {
     # Define extra nova conf flags by defining the array ``EXTRA_OPTS``.
     # For Example: ``EXTRA_OPTS=(foo=true bar=2)``
     for I in "${EXTRA_OPTS[@]}"; do
-        # Attempt to convert flags to options
-        iniset $NOVA_CONF DEFAULT ${I//=/ }
+        # Replace the first '=' with ' ' for iniset syntax
+        iniset $NOVA_CONF DEFAULT ${I/=/ }
     done
 }
 
