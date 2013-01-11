@@ -189,7 +189,7 @@ subjectAltName          = \$ENV::SUBJECT_ALT_NAME
 " >$ca_dir/signing.conf
 }
 
-# Create root and intermediate CAs and an initial server cert
+# Create root and intermediate CAs
 # init_CA
 function init_CA {
     # Ensure CAs are built
@@ -198,7 +198,11 @@ function init_CA {
 
     # Create the CA bundle
     cat $ROOT_CA_DIR/cacert.pem $INT_CA_DIR/cacert.pem >>$INT_CA_DIR/ca-chain.pem
+}
 
+# Create an initial server cert
+# init_cert
+function init_cert {
     if [[ ! -r $DEVSTACK_CERT ]]; then
         if [[ -n "$TLS_IP" ]]; then
             # Lie to let incomplete match routines work

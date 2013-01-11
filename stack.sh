@@ -839,6 +839,7 @@ fi
 if is_service_enabled tls-proxy; then
     configure_CA
     init_CA
+    init_cert
     # Add name to /etc/hosts
     # don't be naive and add to existing line!
 fi
