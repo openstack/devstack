@@ -459,7 +459,7 @@ function inicomment() {
     local file=$1
     local section=$2
     local option=$3
-    sed -i -e "/^\[ *$section *\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" $file
+    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
 }
 
 # Uncomment an option in an INI file
@@ -468,7 +468,7 @@ function iniuncomment() {
     local file=$1
     local section=$2
     local option=$3
-    sed -i -e "/^\[ *$section *\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" $file
+    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" "$file"
 }
 
 
@@ -479,10 +479,20 @@ function iniget() {
     local section=$2
     local option=$3
     local line
-    line=$(sed -ne "/^\[ *$section *\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" $file)
+    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
     echo ${line#*=}
 }
 
+# Determinate is the given option present in the INI file
+# ini_has_option config-file section option
+function ini_has_option() {
+    local file=$1
+    local section=$2
+    local option=$3
+    local line
+    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
+    [ -n "$line" ]
+}
 
 # Set an option in an INI file
 # iniset config-file section option value
@@ -491,18 +501,18 @@ function iniset() {
     local section=$2
     local option=$3
     local value=$4
-    if ! grep -q "^\[ *$section *\]" $file; then
+    if ! grep -q "^\[$section\]" "$file"; then
         # Add section at the end
-        echo -e "\n[$section]" >>$file
+        echo -e "\n[$section]" >>"$file"
     fi
-    if [[ -z "$(iniget $file $section $option)" ]]; then
+    if ! ini_has_option "$file" "$section" "$option"; then
         # Add it
-        sed -i -e "/^\[ *$section *\]/ a\\
+        sed -i -e "/^\[$section\]/ a\\
 $option = $value
-" $file
+" "$file"
     else
         # Replace it
-        sed -i -e "/^\[ *$section *\]/,/^\[.*\]/ s|^\($option[ \t]*=[ \t]*\).*$|\1$value|" $file
+        sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=[ \t]*\).*$|\1$value|" "$file"
     fi
 }
 
