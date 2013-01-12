@@ -27,7 +27,7 @@ function init_ryu() {
     if [[ ! -d $RYU_CONF_DIR ]]; then
         sudo mkdir -p $RYU_CONF_DIR
     fi
-    sudo chown `whoami` $RYU_CONF_DIR
+    sudo chown $STACK_USER $RYU_CONF_DIR
     RYU_CONF=$RYU_CONF_DIR/ryu.conf
     sudo rm -rf $RYU_CONF
 

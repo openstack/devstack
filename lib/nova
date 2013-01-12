@@ -3,7 +3,7 @@
 
 # Dependencies:
 # ``functions`` file
-# ``DEST``, ``DATA_DIR`` must be defined
+# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
 # ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
 # ``LIBVIRT_TYPE`` must be defined
 # ``INSTANCE_NAME_PREFIX``, ``VOLUME_NAME_PREFIX`` must be defined
@@ -149,7 +149,7 @@ function configure_nova() {
     if [[ ! -d $NOVA_CONF_DIR ]]; then
         sudo mkdir -p $NOVA_CONF_DIR
     fi
-    sudo chown `whoami` $NOVA_CONF_DIR
+    sudo chown $STACK_USER $NOVA_CONF_DIR
 
     cp -p $NOVA_DIR/etc/nova/policy.json $NOVA_CONF_DIR
 
@@ -277,7 +277,7 @@ EOF"
         if ! getent group libvirtd >/dev/null; then
             sudo groupadd libvirtd
         fi
-        add_user_to_group `whoami` libvirtd
+        add_user_to_group $STACK_USER libvirtd
 
         # libvirt detects various settings on startup, as we potentially changed
         # the system configuration (modules, filesystems), we need to restart
@@ -297,7 +297,7 @@ EOF"
         if [ -L /dev/disk/by-label/nova-instances ]; then
             if ! mount -n | grep -q $NOVA_INSTANCES_PATH; then
                 sudo mount -L nova-instances $NOVA_INSTANCES_PATH
-                sudo chown -R `whoami` $NOVA_INSTANCES_PATH
+                sudo chown -R $STACK_USER $NOVA_INSTANCES_PATH
             fi
         fi
 
@@ -474,13 +474,13 @@ function init_nova() {
 
     # Create cache dir
     sudo mkdir -p $NOVA_AUTH_CACHE_DIR
-    sudo chown `whoami` $NOVA_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $NOVA_AUTH_CACHE_DIR
     rm -f $NOVA_AUTH_CACHE_DIR/*
 
     # Create the keys folder
     sudo mkdir -p ${NOVA_STATE_PATH}/keys
     # make sure we own NOVA_STATE_PATH and all subdirs
-    sudo chown -R `whoami` ${NOVA_STATE_PATH}
+    sudo chown -R $STACK_USER ${NOVA_STATE_PATH}
 }
 
 # install_novaclient() - Collect source and prepare

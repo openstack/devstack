@@ -7,6 +7,7 @@
 # ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
 # ``SERVICE_TOKEN``
 # ``S3_SERVICE_PORT`` (template backend only)
+# ``STACK_USER``
 
 # ``stack.sh`` calls the entry points in this order:
 #
@@ -79,7 +80,7 @@ function configure_keystone() {
     if [[ ! -d $KEYSTONE_CONF_DIR ]]; then
         sudo mkdir -p $KEYSTONE_CONF_DIR
     fi
-    sudo chown `whoami` $KEYSTONE_CONF_DIR
+    sudo chown $STACK_USER $KEYSTONE_CONF_DIR
 
     if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
         cp -p $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
@@ -261,7 +262,7 @@ function init_keystone() {
 
         # Create cache dir
         sudo mkdir -p $KEYSTONE_AUTH_CACHE_DIR
-        sudo chown `whoami` $KEYSTONE_AUTH_CACHE_DIR
+        sudo chown $STACK_USER $KEYSTONE_AUTH_CACHE_DIR
         rm -f $KEYSTONE_AUTH_CACHE_DIR/*
     fi
 }

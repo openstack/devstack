@@ -200,14 +200,14 @@ function configure_baremetal_nova_dirs() {
     sudo mkdir -p /tftpboot
     sudo mkdir -p /tftpboot/pxelinux.cfg
     sudo cp /usr/lib/syslinux/pxelinux.0 /tftpboot/
-    sudo chown -R `whoami`:libvirtd /tftpboot
+    sudo chown -R $STACK_USER:libvirtd /tftpboot
 
     # ensure $NOVA_STATE_PATH/baremetal is prepared
     sudo mkdir -p $NOVA_STATE_PATH/baremetal
     sudo mkdir -p $NOVA_STATE_PATH/baremetal/console
     sudo mkdir -p $NOVA_STATE_PATH/baremetal/dnsmasq
     sudo touch $NOVA_STATE_PATH/baremetal/dnsmasq/dnsmasq-dhcp.host
-    sudo chown -R `whoami` $NOVA_STATE_PATH/baremetal
+    sudo chown -R $STACK_USER $NOVA_STATE_PATH/baremetal
 
     # ensure dnsmasq is installed but not running
     # because baremetal driver will reconfigure and restart this as needed

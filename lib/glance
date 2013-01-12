@@ -3,7 +3,7 @@
 
 # Dependencies:
 # ``functions`` file
-# ``DEST``, ``DATA_DIR`` must be defined
+# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
 # ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
 # ``SERVICE_HOST``
 # ``KEYSTONE_TOKEN_FORMAT`` must be defined
@@ -75,7 +75,7 @@ function configure_glance() {
     if [[ ! -d $GLANCE_CONF_DIR ]]; then
         sudo mkdir -p $GLANCE_CONF_DIR
     fi
-    sudo chown `whoami` $GLANCE_CONF_DIR
+    sudo chown $STACK_USER $GLANCE_CONF_DIR
 
     # Copy over our glance configurations and update them
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
@@ -158,10 +158,10 @@ function init_glance() {
 
     # Create cache dir
     sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
-    sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/api
+    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/api
     rm -f $GLANCE_AUTH_CACHE_DIR/api/*
     sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
-    sudo chown `whoami` $GLANCE_AUTH_CACHE_DIR/registry
+    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/registry
     rm -f $GLANCE_AUTH_CACHE_DIR/registry/*
 }
 

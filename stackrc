@@ -12,6 +12,9 @@ DATA_DIR=${DEST}/data
 # Select the default database
 DATABASE_TYPE=mysql
 
+# Default stack user
+DEFAULT_STACK_USER=stack
+
 # Specify which services to launch.  These generally correspond to
 # screen tabs. To change the default list, use the ``enable_service`` and
 # ``disable_service`` functions in ``localrc``.
