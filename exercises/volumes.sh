@@ -86,8 +86,12 @@ if ! nova secgroup-list | grep -q $SECGROUP; then
 fi
 
 # Configure Security Group Rules
-nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
-nova secgroup-add-rule $SECGROUP tcp 22 22 0.0.0.0/0
+if ! nova secgroup-list-rules $SECGROUP | grep -q icmp; then
+    nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
+fi
+if ! nova secgroup-list-rules $SECGROUP | grep -q " tcp .* 22 "; then
+    nova secgroup-add-rule $SECGROUP tcp 22 22 0.0.0.0/0
+fi
 
 # determinine instance type
 # -------------------------
