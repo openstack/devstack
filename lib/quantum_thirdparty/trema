@@ -1,0 +1,113 @@
+# Trema Sliceable Switch
+# ----------------------
+
+# Trema is a Full-Stack OpenFlow Framework in Ruby and C
+# https://github.com/trema/trema
+#
+# Trema Sliceable Switch is an OpenFlow controller which provides
+# virtual layer-2 network slices.
+# https://github.com/trema/apps/wiki
+
+# Trema Sliceable Switch (OpenFlow Controller)
+TREMA_APPS_REPO=${TREMA_APPS_REPO:-https://github.com/trema/apps.git}
+TREMA_APPS_BRANCH=${TREMA_APPS_BRANCH:-master}
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+TREMA_DIR=${TREMA_DIR:-$DEST/trema}
+TREMA_SS_DIR="$TREMA_DIR/apps/sliceable_switch"
+
+TREMA_DATA_DIR=${TREMA_DATA_DIR:-$DATA_DIR/trema}
+TREMA_SS_ETC_DIR=$TREMA_DATA_DIR/sliceable_switch/etc
+TREMA_SS_DB_DIR=$TREMA_DATA_DIR/sliceable_switch/db
+TREMA_SS_SCRIPT_DIR=$TREMA_DATA_DIR/sliceable_switch/script
+TREMA_TMP_DIR=$TREMA_DATA_DIR/trema
+
+TREMA_LOG_LEVEL=${TREMA_LOG_LEVEL:-info}
+
+TREMA_SS_CONFIG=$TREMA_SS_ETC_DIR/sliceable.conf
+TREMA_SS_APACHE_CONFIG=/etc/apache2/sites-available/sliceable_switch
+
+# configure_trema - Set config files, create data dirs, etc
+function configure_trema() {
+    # prepare dir
+    for d in $TREMA_SS_ETC_DIR $TREMA_SS_DB_DIR $TREMA_SS_SCRIPT_DIR; do
+        sudo mkdir -p $d
+        sudo chown -R `whoami` $d
+    done
+    sudo mkdir -p $TREMA_TMP_DIR
+}
+
+# init_trema - Initialize databases, etc.
+function init_trema() {
+    local _pwd=$(pwd)
+
+    # Initialize databases for Sliceable Switch
+    cd $TREMA_SS_DIR
+    rm -f filter.db slice.db
+    ./create_tables.sh
+    mv filter.db slice.db $TREMA_SS_DB_DIR
+    # Make sure that apache cgi has write access to the databases
+    sudo chown -R www-data.www-data $TREMA_SS_DB_DIR
+    cd $_pwd
+
+    # Setup HTTP Server for sliceable_switch
+    cp $TREMA_SS_DIR/{Slice.pm,Filter.pm,config.cgi} $TREMA_SS_SCRIPT_DIR
+    sed -i -e "s|/home/sliceable_switch/db|$TREMA_SS_DB_DIR|" \
+        $TREMA_SS_SCRIPT_DIR/config.cgi
+
+    sudo cp $TREMA_SS_DIR/apache/sliceable_switch $TREMA_SS_APACHE_CONFIG
+    sudo sed -i -e "s|/home/sliceable_switch/script|$TREMA_SS_SCRIPT_DIR|" \
+        $TREMA_SS_APACHE_CONFIG
+    sudo a2enmod rewrite actions
+    sudo a2ensite sliceable_switch
+
+    cp $TREMA_SS_DIR/sliceable_switch_null.conf $TREMA_SS_CONFIG
+    sed -i -e "s|^\$apps_dir.*$|\$apps_dir = \"$TREMA_DIR/apps\"|" \
+           -e "s|^\$db_dir.*$|\$db_dir = \"$TREMA_SS_DB_DIR\"|" \
+           $TREMA_SS_CONFIG
+}
+
+function gem_install() {
+    [[ "$OFFLINE" = "True" ]] && return
+    [ -n "$RUBYGEMS_CMD" ] || get_gem_command
+
+    local pkg=$1
+    $RUBYGEMS_CMD list | grep "^${pkg} " && return
+    sudo $RUBYGEMS_CMD install $pkg
+}
+
+function get_gem_command() {
+    # Trema requires ruby 1.8, so gem1.8 is checked first
+    RUBYGEMS_CMD=$(which gem1.8 || which gem)
+    if [ -z "$RUBYGEMS_CMD" ]; then
+        echo "Warning: ruby gems command not found."
+    fi
+}
+
+function install_trema() {
+    # Trema
+    gem_install trema
+    # Sliceable Switch
+    git_clone $TREMA_APPS_REPO $TREMA_DIR/apps $TREMA_APPS_BRANCH
+    make -C $TREMA_DIR/apps/topology
+    make -C $TREMA_DIR/apps/flow_manager
+    make -C $TREMA_DIR/apps/sliceable_switch
+}
+
+function start_trema() {
+    # APACHE_NAME is defined in init_horizon (in lib/horizon)
+    restart_service $APACHE_NAME
+
+    sudo LOGGING_LEVEL=$TREMA_LOG_LEVEL TREMA_TMP=$TREMA_TMP_DIR \
+        trema run -d -c $TREMA_SS_CONFIG
+}
+
+function stop_trema() {
+    sudo TREMA_TMP=$TREMA_TMP_DIR trema killall
+}
+
+# Restore xtrace
+$MY_XTRACE
