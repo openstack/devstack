@@ -129,33 +129,41 @@ function configure_tempest() {
     ALT_USERNAME=${ALT_USERNAME:-alt_demo}
     ALT_TENANT_NAME=${ALT_TENANT_NAME:-alt_demo}
 
-    # Check Nova for existing flavors and, if set, look for the
-    # ``DEFAULT_INSTANCE_TYPE`` and use that. Otherwise, just use the first flavor.
-    flavor_lines=`nova flavor-list`
-    IFS=$'\r\n'
-    flavors=""
-    if [[ -n "$DEFAULT_INSTANCE_TYPE" ]]; then
+    # If the ``DEFAULT_INSTANCE_TYPE`` not declared, use the new behavior
+    # Tempest creates instane types for himself
+    if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
+        nova flavor-create m1.pico 42 32 0 1
+        flavor_ref=42
+        nova flavor-create m1.nano 84 64 0 1
+        flavor_ref_alt=84
+    else
+        # Check Nova for existing flavors and, if set, look for the
+        # ``DEFAULT_INSTANCE_TYPE`` and use that.
+        flavor_lines=`nova flavor-list`
+        IFS=$'\r\n'
+        flavors=""
         for line in $flavor_lines; do
             f=$(echo $line | awk "/ $DEFAULT_INSTANCE_TYPE / { print \$2 }")
             flavors="$flavors $f"
         done
-    fi
-    for line in $flavor_lines; do
-        flavors="$flavors `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
-    done
 
-    IFS=" "
-    flavors=($flavors)
-    num_flavors=${#flavors[*]}
-    echo "Found $num_flavors flavors"
-    if [[ $num_flavors -eq 0 ]]; then
-        echo "Found no valid flavors to use!"
-        exit 1
-    fi
-    flavor_ref=${flavors[0]}
-    flavor_ref_alt=$flavor_ref
-    if [[ $num_flavors -gt 1 ]]; then
-        flavor_ref_alt=${flavors[1]}
+        for line in $flavor_lines; do
+            flavors="$flavors `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
+        done
+
+        IFS=" "
+        flavors=($flavors)
+        num_flavors=${#flavors[*]}
+        echo "Found $num_flavors flavors"
+        if [[ $num_flavors -eq 0 ]]; then
+            echo "Found no valid flavors to use!"
+            exit 1
+        fi
+        flavor_ref=${flavors[0]}
+        flavor_ref_alt=$flavor_ref
+        if [[ $num_flavors -gt 1 ]]; then
+            flavor_ref_alt=${flavors[1]}
+        fi
     fi
 
     if [ "$Q_USE_NAMESPACE" != "False" ]; then
