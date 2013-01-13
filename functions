@@ -1133,18 +1133,6 @@ function get_pip_command() {
     fi
 }
 
-# Check if qpid can be used on the current distro.
-# qpid_is_supported
-function qpid_is_supported() {
-    if [[ -z "$DISTRO" ]]; then
-        GetDistro
-    fi
-
-    # Qpid was introduced to Ubuntu in precise, disallow it on oneiric; it is
-    # not in openSUSE either right now.
-    ( ! ([[ "$DISTRO" = "oneiric" ]] || is_suse) )
-}
-
 # Restore xtrace
 $XTRACE
 

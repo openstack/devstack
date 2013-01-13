@@ -176,7 +176,7 @@ fi
 # Set common config for all quantum server and agents.
 function configure_quantum() {
     _configure_quantum_common
-    _configure_quantum_rpc
+    iniset_rpc_backend quantum $QUANTUM_CONF DEFAULT
 
     if is_service_enabled q-svc; then
         _configure_quantum_service
@@ -594,19 +594,6 @@ function _configure_quantum_plugin_agent_ryu() {
         sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_BRIDGE $RYU_INTERNAL_INTERFACE
     fi
     AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/ryu/agent/ryu_quantum_agent.py"
-}
-
-# Quantum RPC support - must be updated prior to starting any of the services
-function _configure_quantum_rpc() {
-    iniset $QUANTUM_CONF DEFAULT control_exchange quantum
-    if is_service_enabled qpid ; then
-        iniset $QUANTUM_CONF DEFAULT rpc_backend quantum.openstack.common.rpc.impl_qpid
-    elif is_service_enabled zeromq; then
-        iniset $QUANTUM_CONF DEFAULT rpc_backend quantum.openstack.common.rpc.impl_zmq
-    elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
-        iniset $QUANTUM_CONF DEFAULT rabbit_host $RABBIT_HOST
-        iniset $QUANTUM_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
-    fi
 }
 
 # _configure_quantum_service() - Set config files for quantum service
