@@ -224,6 +224,7 @@ GetOSVersion() {
         os_VENDOR=$(lsb_release -i -s)
         os_RELEASE=$(lsb_release -r -s)
         os_UPDATE=""
+        os_PACKAGE="rpm"
         if [[ "Debian,Ubuntu" =~ $os_VENDOR ]]; then
             os_PACKAGE="deb"
         elif [[ "SUSE LINUX" =~ $os_VENDOR ]]; then
@@ -231,9 +232,8 @@ GetOSVersion() {
             if [[ $? -eq 0 ]]; then
                 os_VENDOR="openSUSE"
             fi
-            os_PACKAGE="rpm"
-        else
-            os_PACKAGE="rpm"
+        elif [[ $os_VENDOR =~ Red.*Hat ]]; then
+            os_VENDOR="Red Hat"
         fi
         os_CODENAME=$(lsb_release -c -s)
     elif [[ -r /etc/redhat-release ]]; then
