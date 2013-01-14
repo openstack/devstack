@@ -132,9 +132,9 @@ function configure_tempest() {
     # If the ``DEFAULT_INSTANCE_TYPE`` not declared, use the new behavior
     # Tempest creates instane types for himself
     if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
-        nova flavor-create m1.pico 42 32 0 1
+        nova flavor-create m1.nano 42 64 0 1
         flavor_ref=42
-        nova flavor-create m1.nano 84 64 0 1
+        nova flavor-create m1.micro 84 128 0 1
         flavor_ref_alt=84
     else
         # Check Nova for existing flavors and, if set, look for the
