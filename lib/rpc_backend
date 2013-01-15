@@ -1,0 +1,123 @@
+# lib/rpc_backend
+# Interface for interactig with different rpc backend
+# rpc backend settings
+
+# Dependencies:
+# ``functions`` file
+# ``RABBIT_{HOST|PASSWORD}`` must be defined when RabbitMQ is used
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# check_rpc_backend
+# install_rpc_backend
+# restart_rpc_backend
+# iniset_rpc_backend
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Entry Points
+# ------------
+
+# Make sure we only have one rpc backend enabled.
+# Also check the specified rpc backend is available on your platform.
+function check_rpc_backend() {
+    local rpc_backend_cnt=0
+    for svc in qpid zeromq rabbit; do
+        is_service_enabled $svc &&
+        ((rpc_backend_cnt++))
+    done
+    if [ "$rpc_backend_cnt" -gt 1 ]; then
+        echo "ERROR: only one rpc backend may be enabled,"
+        echo "       set only one of 'rabbit', 'qpid', 'zeromq'"
+        echo "       via ENABLED_SERVICES."
+    elif [ "$rpc_backend_cnt" == 0 ]; then
+        echo "ERROR: at least one rpc backend must be enabled,"
+        echo "       set one of 'rabbit', 'qpid', 'zeromq'"
+        echo "       via ENABLED_SERVICES."
+    fi
+
+    if is_service_enabled qpid && ! qpid_is_supported; then
+        echo "Qpid support is not available for this version of your distribution."
+        exit 1
+    fi
+}
+
+# install rpc backend
+function install_rpc_backend() {
+    if is_service_enabled rabbit; then
+        # Install rabbitmq-server
+        # the temp file is necessary due to LP: #878600
+        tfile=$(mktemp)
+        install_package rabbitmq-server > "$tfile" 2>&1
+        cat "$tfile"
+        rm -f "$tfile"
+    elif is_service_enabled qpid; then
+        if is_fedora; then
+            install_package qpid-cpp-server-daemon
+        elif is_ubuntu; then
+            install_package qpidd
+        else
+            exit_distro_not_supported "qpid installation"
+        fi
+    elif is_service_enabled zeromq; then
+        if is_fedora; then
+            install_package zeromq python-zmq
+        elif is_ubuntu; then
+            install_package libzmq1 python-zmq
+        elif is_suse; then
+            install_package libzmq1 python-pyzmq
+        else
+            exit_distro_not_supported "zeromq installation"
+        fi
+    fi
+}
+
+# restart the rpc backend
+function restart_rpc_backend() {
+    if is_service_enabled rabbit; then
+        # Start rabbitmq-server
+        echo_summary "Starting RabbitMQ"
+        if is_fedora || is_suse; then
+            # service is not started by default
+            restart_service rabbitmq-server
+        fi
+        # change the rabbit password since the default is "guest"
+        sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
+    elif is_service_enabled qpid; then
+        echo_summary "Starting qpid"
+        restart_service qpidd
+    fi
+}
+
+# iniset cofiguration
+function iniset_rpc_backend() {
+    local package=$1
+    local file=$2
+    local section=$3
+    if is_service_enabled zeromq; then
+        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_zmq
+    elif is_service_enabled qpid; then
+        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_qpid
+    elif is_service_enabled rabbit; then
+        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_kombu
+        iniset $file $section rabbit_host $RABBIT_HOST
+        iniset $file $section rabbit_password $RABBIT_PASSWORD
+    fi
+}
+
+# Check if qpid can be used on the current distro.
+# qpid_is_supported
+function qpid_is_supported() {
+    if [[ -z "$DISTRO" ]]; then
+        GetDistro
+    fi
+
+    # Qpid was introduced to Ubuntu in precise, disallow it on oneiric; it is
+    # not in openSUSE either right now.
+    ( ! ([[ "$DISTRO" = "oneiric" ]] || is_suse) )
+}
+
+# Restore xtrace
+$XTRACE

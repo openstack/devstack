@@ -95,8 +95,9 @@ if [[ -r $TOP_DIR/.stackenv ]]; then
     rm $TOP_DIR/.stackenv
 fi
 
-# Import database configuration
+# Import common services (database, message queue) configuration
 source $TOP_DIR/lib/database
+source $TOP_DIR/lib/rpc_backend
 
 # Validate database selection
 # Since DATABASE_BACKENDS is now set, this also gets ENABLED_SERVICES
@@ -118,10 +119,9 @@ if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|f16|f17|f18|opensuse-12.2) 
     fi
 fi
 
-if is_service_enabled qpid && ! qpid_is_supported; then
-    echo "Qpid support is not available for this version of your distribution."
-    exit 1
-fi
+# Make sure we only have one rpc backend enabled,
+# and the specified rpc backend is available on your platform.
+check_rpc_backend
 
 # ``stack.sh`` keeps function libraries here
 # Make sure ``$TOP_DIR/lib`` directory is present
@@ -146,23 +146,6 @@ if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].$SCREEN_NAME"; then
     echo "To destroy this session, type './unstack.sh'."
     exit 1
 fi
-
-# Make sure we only have one rpc backend enabled.
-rpc_backend_cnt=0
-for svc in qpid zeromq rabbit; do
-    is_service_enabled $svc &&
-        ((rpc_backend_cnt++))
-done
-if [ "$rpc_backend_cnt" -gt 1 ]; then
-    echo "ERROR: only one rpc backend may be enabled,"
-    echo "       set only one of 'rabbit', 'qpid', 'zeromq'"
-    echo "       via ENABLED_SERVICES."
-elif [ "$rpc_backend_cnt" == 0 ]; then
-    echo "ERROR: at least one rpc backend must be enabled,"
-    echo "       set one of 'rabbit', 'qpid', 'zeromq'"
-    echo "       via ENABLED_SERVICES."
-fi
-unset rpc_backend_cnt
 
 # Set up logging level
 VERBOSE=$(trueorfalse True $VERBOSE)
@@ -670,32 +653,7 @@ if [[ $SYSLOG != "False" ]]; then
     fi
 fi
 
-if is_service_enabled rabbit; then
-    # Install rabbitmq-server
-    # the temp file is necessary due to LP: #878600
-    tfile=$(mktemp)
-    install_package rabbitmq-server > "$tfile" 2>&1
-    cat "$tfile"
-    rm -f "$tfile"
-elif is_service_enabled qpid; then
-    if is_fedora; then
-        install_package qpid-cpp-server-daemon
-    elif is_ubuntu; then
-        install_package qpidd
-    else
-        exit_distro_not_supported "qpid installation"
-    fi
-elif is_service_enabled zeromq; then
-    if is_fedora; then
-        install_package zeromq python-zmq
-    elif is_ubuntu; then
-        install_package libzmq1 python-zmq
-    elif is_suse; then
-        install_package libzmq1 python-pyzmq
-    else
-        exit_distro_not_supported "zeromq installation"
-    fi
-fi
+install_rpc_backend
 
 if is_service_enabled $DATABASE_BACKENDS; then
     install_database
@@ -868,20 +826,7 @@ fi
 
 # Finalize queue installation
 # ----------------------------
-
-if is_service_enabled rabbit; then
-    # Start rabbitmq-server
-    echo_summary "Starting RabbitMQ"
-    if is_fedora || is_suse; then
-        # service is not started by default
-        restart_service rabbitmq-server
-    fi
-    # change the rabbit password since the default is "guest"
-    sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
-elif is_service_enabled qpid; then
-    echo_summary "Starting qpid"
-    restart_service qpidd
-fi
+restart_rpc_backend
 
 
 # Configure database
@@ -1075,14 +1020,7 @@ if is_service_enabled nova; then
     iniset $NOVA_CONF DEFAULT vncserver_listen "$VNCSERVER_LISTEN"
     iniset $NOVA_CONF DEFAULT vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
     iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
-    if is_service_enabled zeromq; then
-        iniset $NOVA_CONF DEFAULT rpc_backend "nova.openstack.common.rpc.impl_zmq"
-    elif is_service_enabled qpid; then
-        iniset $NOVA_CONF DEFAULT rpc_backend "nova.rpc.impl_qpid"
-    elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
-        iniset $NOVA_CONF DEFAULT rabbit_host "$RABBIT_HOST"
-        iniset $NOVA_CONF DEFAULT rabbit_password "$RABBIT_PASSWORD"
-    fi
+    iniset_rpc_backend nova $NOVA_CONF DEFAULT
     iniset $NOVA_CONF DEFAULT glance_api_servers "$GLANCE_HOSTPORT"
 
 
