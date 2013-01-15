@@ -68,6 +68,19 @@ if [ ! -d $XAPI_PLUGIN_DIR ]; then
     XAPI_PLUGIN_DIR=/usr/lib/xcp/plugins/
 fi
 cp -pr ./nova/*/plugins/xenserver/xenapi/etc/xapi.d/plugins/* $XAPI_PLUGIN_DIR
+
+# Install the netwrap xapi plugin to support agent control of dom0 networking
+if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
+    if [ -f ./quantum ]; then
+        rm -rf ./quantum
+    fi
+    # get quantum
+    QUANTUM_ZIPBALL_URL=${QUANTUM_ZIPBALL_URL:-$(echo $QUANTUM_REPO | sed "s:\.git$::;s:$:/zipball/$QUANTUM_BRANCH:g")}
+    wget $QUANTUM_ZIPBALL_URL -O quantum-zipball --no-check-certificate
+    unzip -o quantum-zipball  -d ./quantum
+    cp -pr ./quantum/*/quantum/plugins/openvswitch/agent/xenapi/etc/xapi.d/plugins/* $XAPI_PLUGIN_DIR
+fi
+
 chmod a+x ${XAPI_PLUGIN_DIR}*
 
 mkdir -p /boot/guest
