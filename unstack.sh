@@ -65,6 +65,7 @@ fi
 # Swift runs daemons
 if is_service_enabled swift; then
     stop_swift
+    cleanup_swift
 fi
 
 # Apache has the WSGI processes
