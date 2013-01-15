@@ -138,7 +138,15 @@ function start_horizon() {
 
 # stop_horizon() - Stop running processes (non-screen)
 function stop_horizon() {
-    stop_service apache2
+    if is_ubuntu; then
+        stop_service apache2
+    elif is_fedora; then
+        stop_service httpd
+    elif is_suse; then
+        stop_service apache2
+    else
+        exit_distro_not_supported "apache configuration"
+    fi
 }
 
 # Restore xtrace
