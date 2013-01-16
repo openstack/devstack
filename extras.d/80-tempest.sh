@@ -9,6 +9,7 @@ if [[ "$1" == "stack" ]]; then
         echo_summary "Configuring Tempest"
         install_tempest
         configure_tempest
+        init_tempest
     fi
 fi
 
