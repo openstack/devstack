@@ -48,7 +48,7 @@ nova secgroup-create $SEC_GROUP_NAME 'a test security group'
 RULES_TO_ADD=( 22 3389 5900 )
 
 for RULE in "${RULES_TO_ADD[@]}"; do
-    nova secgroup-add-rule $SEC_GROUP_NAME tcp $RULE $RULE 0.0.0.0/00
+    nova secgroup-add-rule $SEC_GROUP_NAME tcp $RULE $RULE 0.0.0.0/0
 done
 
 # Check to make sure rules were added
@@ -63,7 +63,7 @@ done
 
 # Delete rules and secgroup
 for RULE in "${RULES_TO_ADD[@]}"; do
-    nova secgroup-delete-rule $SEC_GROUP_NAME tcp $RULE $RULE 0.0.0.0/00
+    nova secgroup-delete-rule $SEC_GROUP_NAME tcp $RULE $RULE 0.0.0.0/0
 done
 nova secgroup-delete $SEC_GROUP_NAME
 
