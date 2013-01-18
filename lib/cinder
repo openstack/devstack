@@ -209,6 +209,8 @@ function configure_cinder() {
             iniset $CINDER_CONF DEFAULT xenapi_nfs_server "$CINDER_XENAPI_NFS_SERVER"
             iniset $CINDER_CONF DEFAULT xenapi_nfs_serverpath "$CINDER_XENAPI_NFS_SERVERPATH"
         )
+    elif [ "$CINDER_DRIVER" == "sheepdog" ]; then
+        iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.sheepdog.SheepdogDriver"
     fi
 }
 
