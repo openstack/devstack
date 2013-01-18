@@ -355,6 +355,7 @@ function create_nova_conf() {
     rm -f $NOVA_CONF
     add_nova_opt "[DEFAULT]"
     iniset $NOVA_CONF DEFAULT verbose "True"
+    iniset $NOVA_CONF DEFAULT debug "True"
     iniset $NOVA_CONF DEFAULT auth_strategy "keystone"
     iniset $NOVA_CONF DEFAULT allow_resize_to_same_host "True"
     iniset $NOVA_CONF DEFAULT api_paste_config "$NOVA_API_PASTE_INI"
