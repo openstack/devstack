@@ -16,10 +16,9 @@
 # - ``Q_ROUTER_NAME``
 # - ``VIRT_DRIVER``
 # - ``LIBVIRT_TYPE``
+# - ``KEYSTONE_SERVICE_PROTOCOL``, ``KEYSTONE_SERVICE_HOST`` from lib/keystone
 # Optional Dependencies:
-# IDENTITY_USE_SSL, IDENTITY_HOST, IDENTITY_PORT, IDENTITY_PATH
 # ALT_* (similar vars exists in keystone_data.sh)
-# ``IMAGE_PORT``, ``IMAGE_HOST``
 # ``LIVE_MIGRATION_AVAILABLE``
 # ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
 # ``DEFAULT_INSTANCE_TYPE``
@@ -124,13 +123,6 @@ function configure_tempest() {
     # copy every time, because the image UUIDS are going to change
     cp $TEMPEST_CONF.sample $TEMPEST_CONF
 
-    IDENTITY_USE_SSL=${IDENTITY_USE_SSL:-False}
-    IDENTITY_HOST=${IDENTITY_HOST:-127.0.0.1}
-    IDENTITY_PORT=${IDENTITY_PORT:-5000}
-    # TODO(jaypipes): This is dumb and needs to be removed
-    # from the Tempest configuration file entirely...
-    IDENTITY_PATH=${IDENTITY_PATH:-tokens}
-
     password=${ADMIN_PASSWORD:-secrete}
 
     # See files/keystone_data.sh where alt_demo user
@@ -203,15 +195,19 @@ function configure_tempest() {
     iniset $TEMPEST_CONF boto build_interval $BUILD_INTERVAL
     iniset $TEMPEST_CONF boto http_socket_timeout 5
 
-    iniset $TEMPEST_CONF identity use_ssl $IDENTITY_USE_SSL
-    iniset $TEMPEST_CONF identity host $IDENTITY_HOST
-    iniset $TEMPEST_CONF identity port $IDENTITY_PORT
-    iniset $TEMPEST_CONF identity path $IDENTITY_PATH
+    # Identity
+    iniset $TEMPEST_CONF identity uri "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v2.0/"
+    iniset $TEMPEST_CONF identity password "$password"
+    iniset $TEMPEST_CONF identity alt_username $ALT_USERNAME
+    iniset $TEMPEST_CONF identity alt_password "$password"
+    iniset $TEMPEST_CONF identity alt_tenant_name $ALT_TENANT_NAME
+    iniset $TEMPEST_CONF identity admin_password "$password"
 
-    iniset $TEMPEST_CONF compute password "$password"
-    iniset $TEMPEST_CONF compute alt_username $ALT_USERNAME
-    iniset $TEMPEST_CONF compute alt_password "$password"
-    iniset $TEMPEST_CONF compute alt_tenant_name $ALT_TENANT_NAME
+    # Compute
+    iniset $TEMPEST_CONF compute password "$password" # DEPRECATED
+    iniset $TEMPEST_CONF compute alt_username $ALT_USERNAME # DEPRECATED
+    iniset $TEMPEST_CONF compute alt_password "$password" # DEPRECATED
+    iniset $TEMPEST_CONF compute alt_tenant_name $ALT_TENANT_NAME # DEPRECATED
     iniset $TEMPEST_CONF compute resize_available False
     iniset $TEMPEST_CONF compute change_password_available False
     iniset $TEMPEST_CONF compute compute_log_level ERROR
@@ -223,41 +219,47 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     #Skip until #1074039 is fixed
     iniset $TEMPEST_CONF compute run_ssh False
-    iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
+    iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
     iniset $TEMPEST_CONF compute network_for_ssh $PRIVATE_NETWORK_NAME
     iniset $TEMPEST_CONF compute ip_version_for_ssh 4
     iniset $TEMPEST_CONF compute ssh_timeout $BUILD_TIMEOUT
     iniset $TEMPEST_CONF compute image_ref $image_uuid
+    iniset $TEMPEST_CONF compute image_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
     iniset $TEMPEST_CONF compute image_ref_alt $image_uuid_alt
+    iniset $TEMPEST_CONF compute image_alt_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
     iniset $TEMPEST_CONF compute flavor_ref $flavor_ref
     iniset $TEMPEST_CONF compute flavor_ref_alt $flavor_ref_alt
-    iniset $TEMPEST_CONF compute source_dir $NOVA_SOURCE_DIR
     iniset $TEMPEST_CONF compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONF compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
-    # Inherited behavior, might be wrong
-    iniset $TEMPEST_CONF compute bin_dir $NOVA_BIN_DIR
+    iniset $TEMPEST_CONF compute source_dir $NOVA_SOURCE_DIR # DEPRECATED
+    iniset $TEMPEST_CONF compute bin_dir $NOVA_BIN_DIR # DEPRECATED
+    iniset $TEMPEST_CONF compute path_to_private_key $TEMPEST_DIR/id_rsa # DEPRECATED
+    iniset $TEMPEST_CONF compute db_uri $BASE_SQL_CONN/nova # DEPRECATED
+
+    # Whitebox
+    iniset $TEMPEST_CONF whitebox source_dir $NOVA_SOURCE_DIR
+    iniset $TEMPEST_CONF whitebox bin_dir $NOVA_BIN_DIR
     # TODO(jaypipes): Create the key file here... right now, no whitebox
     # tests actually use a key.
-    iniset $TEMPEST_CONF compute path_to_private_key $TEMPEST_DIR/id_rsa
-    iniset $TEMPEST_CONF compute db_uri $BASE_SQL_CONN/nova
+    iniset $TEMPEST_CONF whitebox path_to_private_key $TEMPEST_DIR/id_rsa
+    iniset $TEMPEST_CONF whitebox db_uri $BASE_SQL_CONN/nova
+
 
     # image
-    iniset $TEMPEST_CONF image host ${IMAGE_HOST:-127.0.0.1}
-    iniset $TEMPEST_CONF image port ${IMAGE_PORT:-9292}
-    iniset $TEMPEST_CONF image password "$password"
+    iniset $TEMPEST_CONF image password "$password" # DEPRECATED
 
     # identity-admin
-    iniset $TEMPEST_CONF "identity-admin" password "$password"
+    iniset $TEMPEST_CONF "identity-admin" password "$password" # DEPRECATED
 
     # compute admin
-    iniset $TEMPEST_CONF "compute-admin" password "$password"
+    iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
 
     # network admin
-    iniset $TEMPEST_CONF "network-admin" password "$password"
+    iniset $TEMPEST_CONF "network-admin" password "$password" # DEPRECATED
 
     # network
     iniset $TEMPEST_CONF network api_version 2.0
-    iniset $TEMPEST_CONF network password "$password"
+    iniset $TEMPEST_CONF network password "$password" # DEPRECATED
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONF network public_network_id "$public_network_id"
     iniset $TEMPEST_CONF network public_router_id "$public_router_id"
@@ -268,6 +270,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF boto s3_materials_path "$BOTO_MATERIALS_PATH"
     iniset $TEMPEST_CONF boto instance_type "$boto_instance_type"
     iniset $TEMPEST_CONF boto http_socket_timeout 30
+    iniset $TEMPEST_CONF boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
     echo "Created tempest configuration file:"
     cat $TEMPEST_CONF
