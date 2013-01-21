@@ -5,7 +5,7 @@
 # ``functions`` file
 # ``lib/nova`` service is runing
 # <list other global vars that are assumed to be defined>
-# - ``DEST``
+# - ``DEST``, ``FILES``
 # - ``ADMIN_PASSWORD``
 # - ``DEFAULT_IMAGE_NAME``
 # - ``S3_SERVICE_PORT``
@@ -48,7 +48,7 @@ BUILD_INTERVAL=3
 BUILD_TIMEOUT=400
 
 
-BOTO_MATERIALS_PATH="$DEST/devstack/files/images/s3-materials/cirros-0.3.0"
+BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-0.3.0"
 
 # Entry Points
 # ------------
@@ -294,8 +294,7 @@ function install_tempest() {
 function init_tempest() {
     local base_image_name=cirros-0.3.0-x86_64
     # /opt/stack/devstack/files/images/cirros-0.3.0-x86_64-uec
-    local devstack_dir="$DEST/devstack"
-    local image_dir="$devstack_dir/files/images/${base_image_name}-uec"
+    local image_dir="$FILES/images/${base_image_name}-uec"
     local kernel="$image_dir/${base_image_name}-vmlinuz"
     local ramdisk="$image_dir/${base_image_name}-initrd"
     local disk_image="$image_dir/${base_image_name}-blank.img"
