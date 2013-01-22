@@ -1,0 +1,3 @@
+ldap-utils
+slapd # NOPRIME
+python-ldap

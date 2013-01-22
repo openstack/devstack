@@ -1,0 +1,10 @@
+dn: olcDatabase={${LDAP_OLCDB_NUMBER}}hdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: dc=openstack,dc=org
+-
+replace: olcRootDN
+olcRootDN: dc=Manager,dc=openstack,dc=org
+-
+${LDAP_ROOTPW_COMMAND}: olcRootPW
+olcRootPW: ${SLAPPASS}

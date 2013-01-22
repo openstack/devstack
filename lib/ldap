@@ -1,0 +1,74 @@
+# lib/ldap
+# Functions to control the installation and configuration of **ldap**
+
+# ``stack.sh`` calls the entry points in this order:
+#
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# install_ldap
+# install_ldap() - Collect source and prepare
+function install_ldap() {
+    echo "Installing LDAP inside function"
+    echo "LDAP_PASSWORD is $LDAP_PASSWORD"
+    echo "os_VENDOR is $os_VENDOR"
+    printf "installing"
+    if is_ubuntu; then
+        echo "os vendor is Ubuntu"
+        LDAP_OLCDB_NUMBER=1
+        LDAP_ROOTPW_COMMAND=replace
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install slapd ldap-utils
+        #automatically starts LDAP on ubuntu so no need to call start_ldap
+    elif is_fedora; then
+        echo "os vendor is Fedora"
+        LDAP_OLCDB_NUMBER=2
+        LDAP_ROOTPW_COMMAND=add
+        start_ldap
+    fi
+
+    printf "generate password file"
+    SLAPPASS=`slappasswd -s $LDAP_PASSWORD`
+
+    printf "secret is $SLAPPASS\n"
+    #create manager.ldif
+    TMP_MGR_DIFF_FILE=`mktemp -t manager_ldiff.$$.XXXXXXXXXX.ldif`
+    sed -e "s|\${LDAP_OLCDB_NUMBER}|$LDAP_OLCDB_NUMBER|" -e "s|\${SLAPPASS}|$SLAPPASS|" -e "s|\${LDAP_ROOTPW_COMMAND}|$LDAP_ROOTPW_COMMAND|" $FILES/ldap/manager.ldif.in >> $TMP_MGR_DIFF_FILE
+
+    #update ldap olcdb
+    sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f $TMP_MGR_DIFF_FILE
+
+    # add our top level ldap nodes
+    if ldapsearch -x -w $LDAP_PASSWORD -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -x -b dc=openstack,dc=org | grep -q "Success" ; then
+        printf "LDAP already configured for OpenStack\n"
+        if [[ "$KEYSTONE_CLEAR_LDAP" == "yes" ]]; then
+            # clear LDAP state
+            clear_ldap_state
+            # reconfigure LDAP for OpenStack
+            ldapadd -c -x -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -w $LDAP_PASSWORD -f  $FILES/ldap/openstack.ldif
+        fi
+    else
+        printf "Configuring LDAP for OpenStack\n"
+        ldapadd -c -x -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -w $LDAP_PASSWORD -f  $FILES/ldap/openstack.ldif
+    fi
+}
+
+# start_ldap() - Start LDAP
+function start_ldap() {
+    sudo service slapd restart
+}
+
+
+# stop_ldap() - Stop LDAP
+function stop_ldap() {
+    sudo service slapd stop
+}
+
+# clear_ldap_state() - Clear LDAP State
+function clear_ldap_state() {
+    ldapdelete -x -w $LDAP_PASSWORD -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -x -r "dc=openstack,dc=org"
+}
+
+# Restore xtrace
+$XTRACE

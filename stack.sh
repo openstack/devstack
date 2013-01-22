@@ -306,6 +306,7 @@ source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/quantum
 source $TOP_DIR/lib/baremetal
+source $TOP_DIR/lib/ldap
 
 # Set the destination directories for OpenStack projects
 HORIZON_DIR=$DEST/horizon
@@ -475,6 +476,20 @@ read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN 
 read_password SERVICE_PASSWORD "ENTER A SERVICE_PASSWORD TO USE FOR THE SERVICE AUTHENTICATION."
 # Horizon currently truncates usernames and passwords at 20 characters
 read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (20 CHARS OR LESS)."
+# Keystone can now optionally install OpenLDAP by adding ldap to the list
+# of enabled services in the localrc file (e.g. ENABLED_SERVICES=key,ldap).
+# If OpenLDAP has already been installed but you need to clear out
+# the Keystone contents of LDAP set KEYSTONE_CLEAR_LDAP to yes
+# (e.g. KEYSTONE_CLEAR_LDAP=yes ) in the localrc file.  To enable the
+# Keystone Identity Driver (keystone.identity.backends.ldap.Identity)
+# set KEYSTONE_IDENTITY_BACKEND to ldap (e.g. KEYSTONE_IDENTITY_BACKEND=ldap)
+# in the localrc file.
+
+
+# only request ldap password if the service is enabled
+if is_service_enabled ldap; then
+    read_password LDAP_PASSWORD "ENTER A PASSWORD TO USE FOR LDAP"
+fi
 
 # Set the tenant for service accounts in Keystone
 SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}

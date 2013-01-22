@@ -1,0 +1,21 @@
+dn: dc=openstack,dc=org
+dc: openstack
+objectClass: dcObject
+objectClass: organizationalUnit
+ou: openstack
+
+dn: ou=Groups,dc=openstack,dc=org
+objectClass: organizationalUnit
+ou: Groups
+
+dn: ou=Users,dc=openstack,dc=org
+objectClass: organizationalUnit
+ou: Users
+
+dn: ou=Roles,dc=openstack,dc=org
+objectClass: organizationalUnit
+ou: Roles
+
+dn: ou=Projects,dc=openstack,dc=org
+objectClass: organizationalUnit
+ou: Projects
