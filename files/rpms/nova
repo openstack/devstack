@@ -10,6 +10,7 @@ kvm
 libvirt-bin # NOPRIME
 libvirt-python
 libxml2-python
+numpy # needed by websockify for spice console
 m2crypto
 mysql-server # NOPRIME
 parted
