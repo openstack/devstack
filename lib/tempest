@@ -304,7 +304,7 @@ function init_tempest() {
        echo "Prepare aki/ari/ami Images"
        ( #new namespace
            # tenant:demo ; user: demo
-           source $devstack_dir/accrc/demo/demo
+           source $TOP_DIR/accrc/demo/demo
            euca-bundle-image -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
            euca-bundle-image -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
            euca-bundle-image -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
