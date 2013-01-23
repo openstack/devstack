@@ -1,0 +1,49 @@
+# Brocade Quantum Plugin
+# ----------------------
+
+# Save trace setting
+BRCD_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+function is_quantum_ovs_base_plugin() {
+    return 1
+}
+
+function quantum_plugin_create_nova_conf() {
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver"}
+}
+
+function quantum_plugin_install_agent_packages() {
+    install_package bridge-utils
+}
+
+function quantum_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/quantum/plugins/brocade
+    Q_PLUGIN_CONF_FILENAME=brocade.ini
+    Q_DB_NAME="brcd_quantum"
+    Q_PLUGIN_CLASS="quantum.plugins.brocade.QuantumPlugin.BrocadePluginV2"
+}
+
+function quantum_plugin_configure_debug_command() {
+    :
+}
+
+function quantum_plugin_configure_dhcp_agent() {
+    :
+}
+
+function quantum_plugin_configure_l3_agent() {
+    :
+}
+
+function quantum_plugin_configure_plugin_agent() {
+    AGENT_BINARY="$QUANTUM_DIR/bin/quantum-linuxbridge-agent"
+}
+
+function quantum_plugin_setup_interface_driver() {
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
+}
+
+# Restore xtrace
+$BRCD_XTRACE
