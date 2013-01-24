@@ -160,7 +160,6 @@ VERBOSE=$(trueorfalse True $VERBOSE)
 # sudo privileges and runs as that user.
 
 if [[ $EUID -eq 0 ]]; then
-    STACK_USER=$DEFAULT_STACK_USER
     ROOTSLEEP=${ROOTSLEEP:-10}
     echo "You are running this script as root."
     echo "In $ROOTSLEEP seconds, we will create a user '$STACK_USER' and run as that user"
@@ -196,7 +195,6 @@ if [[ $EUID -eq 0 ]]; then
     fi
     exit 1
 else
-    STACK_USER=`whoami`
     # We're not **root**, make sure ``sudo`` is available
     is_package_installed sudo || die "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
 
@@ -1291,7 +1289,7 @@ fi
 CURRENT_RUN_TIME=$(date "+$TIMESTAMP_FORMAT")
 echo "# $CURRENT_RUN_TIME" >$TOP_DIR/.stackenv
 for i in BASE_SQL_CONN ENABLED_SERVICES HOST_IP LOGFILE \
-  SERVICE_HOST SERVICE_PROTOCOL TLS_IP; do
+  SERVICE_HOST SERVICE_PROTOCOL STACK_USER TLS_IP; do
     echo $i=${!i} >>$TOP_DIR/.stackenv
 done
 

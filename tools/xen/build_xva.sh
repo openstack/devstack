@@ -65,8 +65,8 @@ cd $TOP_DIR
 cat <<EOF >$STAGING_DIR/etc/rc.local
 # network restart required for getting the right gateway
 /etc/init.d/networking restart
-chown -R $DEFAULT_STACK_USER /opt/stack
-su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" $DEFAULT_STACK_USER
+chown -R $STACK_USER /opt/stack
+su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" $STACK_USER
 exit 0
 EOF
 
