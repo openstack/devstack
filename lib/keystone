@@ -3,11 +3,12 @@
 
 # Dependencies:
 # ``functions`` file
+# ``DEST``, ``STACK_USER``
+# ``IDENTITY_API_VERSION``
 # ``BASE_SQL_CONN``
 # ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
 # ``SERVICE_TOKEN``
 # ``S3_SERVICE_PORT`` (template backend only)
-# ``STACK_USER``
 
 # ``stack.sh`` calls the entry points in this order:
 #
@@ -249,9 +250,9 @@ create_keystone_accounts() {
         keystone endpoint-create \
             --region RegionOne \
             --service_id $KEYSTONE_SERVICE \
-            --publicurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0" \
-            --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0" \
-            --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0"
+            --publicurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION" \
+            --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v$IDENTITY_API_VERSION" \
+            --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION"
     fi
 }
 
@@ -302,7 +303,7 @@ function start_keystone() {
     # Start Keystone in a screen window
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s http://$SERVICE_HOST:$service_port/v2.0/ >/dev/null; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s http://$SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
       die $LINENO "keystone did not start"
     fi
 
