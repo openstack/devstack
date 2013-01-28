@@ -55,6 +55,7 @@ BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-0.3.0"
 
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest() {
+    setup_develop $TEMPEST_DIR
     local image_lines
     local images
     local num_images
