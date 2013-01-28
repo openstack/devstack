@@ -5,7 +5,7 @@
 # DATABASE_{HOST,USER,PASSWORD} must be defined
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 register_database mysql
@@ -121,4 +121,4 @@ function database_connection_url_mysql {
 }
 
 # Restore xtrace
-$XTRACE
+$MY_XTRACE

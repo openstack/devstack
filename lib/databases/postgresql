@@ -5,7 +5,7 @@
 # DATABASE_{HOST,USER,PASSWORD} must be defined
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+PG_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 register_database postgresql
@@ -76,4 +76,4 @@ function database_connection_url_postgresql {
 }
 
 # Restore xtrace
-$XTRACE
+$PG_XTRACE
