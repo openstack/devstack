@@ -172,7 +172,7 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT sql_connection $dburl
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT root_helper "sudo ${CINDER_ROOTWRAP}"
-    iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.openstack.volume.contrib.standard_extensions
+    iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.contrib.standard_extensions
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
 
     if is_service_enabled tls-proxy; then
