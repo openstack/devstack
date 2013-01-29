@@ -967,7 +967,14 @@ fi
 
 if is_service_enabled n-net q-dhcp; then
     # Delete traces of nova networks from prior runs
-    sudo killall dnsmasq || true
+    # Do not kill any dnsmasq instance spawned by NetworkManager
+    netman_pid=$(pidof NetworkManager || true)
+    if [ -z "$netman_pid" ]; then
+        sudo killall dnsmasq || true
+    else
+        sudo ps h -o pid,ppid -C dnsmasq | grep -v $netman_pid | awk '{print $1}' | sudo xargs kill || true
+    fi
+
     clean_iptables
     rm -rf ${NOVA_STATE_PATH}/networks
     sudo mkdir -p ${NOVA_STATE_PATH}/networks
