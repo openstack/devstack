@@ -39,6 +39,9 @@ KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
 
+# Select the backend for Tokens
+KEYSTONE_TOKEN_BACKEND=${KEYSTONE_TOKEN_BACKEND:-sql}
+
 # Select Keystone's token format
 # Choose from 'UUID' and 'PKI'
 KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-PKI}
@@ -107,6 +110,12 @@ function configure_keystone() {
 
     # Append the S3 bits
     iniset $KEYSTONE_CONF filter:s3_extension paste.filter_factory "keystone.contrib.s3:S3Extension.factory"
+
+    if [[ "$KEYSTONE_TOKEN_BACKEND" = "sql" ]]; then
+        iniset $KEYSTONE_CONF token driver keystone.token.backends.sql.Token
+    else
+        iniset $KEYSTONE_CONF token driver keystone.token.backends.kvs.Token
+    fi
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
         # Configure ``keystone.conf`` to use sql
