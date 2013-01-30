@@ -251,7 +251,7 @@ FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
 
 # Find the interface used for the default route
-HOST_IP_IFACE=${HOST_IP_IFACE:-$(ip route | sed -n '/^default/{ s/.*dev \(\w\+\)\s\+.*/\1/; p; }')}
+HOST_IP_IFACE=${HOST_IP_IFACE:-$(ip route | sed -n '/^default/{ s/.*dev \(\w\+\)\s\+.*/\1/; p; }' | head -1)}
 # Search for an IP unless an explicit is set by ``HOST_IP`` environment variable
 if [ -z "$HOST_IP" -o "$HOST_IP" == "dhcp" ]; then
     HOST_IP=""
