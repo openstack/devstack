@@ -12,8 +12,12 @@ DATA_DIR=${DEST}/data
 # Select the default database
 DATABASE_TYPE=mysql
 
-# Default stack user
-DEFAULT_STACK_USER=stack
+# Determine stack user
+if [[ $EUID -eq 0 ]]; then
+    STACK_USER=stack
+else
+    STACK_USER=$(whoami)
+fi
 
 # Specify which services to launch.  These generally correspond to
 # screen tabs. To change the default list, use the ``enable_service`` and

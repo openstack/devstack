@@ -207,11 +207,11 @@ ROOTSLEEP=0
 `cat $TOP_DIR/localrc`
 LOCAL_EOF
 fi
-useradd -U -G sudo -s /bin/bash -d /opt/stack -m $DEFAULT_STACK_USER
-echo $DEFAULT_STACK_USER:pass | chpasswd
+useradd -U -G sudo -s /bin/bash -d /opt/stack -m $STACK_USER
+echo $STACK_USER:pass | chpasswd
 mkdir -p /opt/stack/.ssh
 echo "$PUB_KEY" > /opt/stack/.ssh/authorized_keys
-chown -R $DEFAULT_STACK_USER /opt/stack
+chown -R $STACK_USER /opt/stack
 chmod 700 /opt/stack/.ssh
 chmod 600 /opt/stack/.ssh/authorized_keys
 
@@ -224,7 +224,7 @@ fi
 
 # Run stack.sh
 cat >> $vm_dir/uec/user-data<<EOF
-sudo -u $DEFAULT_STACK_USER bash -l -c "cd /opt/stack/devstack && ./stack.sh"
+sudo -u $STACK_USER bash -l -c "cd /opt/stack/devstack && ./stack.sh"
 EOF
 
 # (re)start a metadata service
