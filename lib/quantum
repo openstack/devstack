@@ -410,6 +410,9 @@ function _configure_quantum_debug_command() {
     iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT debug False
     iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+    # Intermediate fix until Quantum patch lands and then line above will
+    # be cleaned.
+    iniset $QUANTUM_TEST_CONFIG_FILE AGENT root_helper "$Q_RR_COMMAND"
 
     _quantum_setup_keystone $QUANTUM_TEST_CONFIG_FILE DEFAULT set_auth_url
     _quantum_setup_interface_driver $QUANTUM_TEST_CONFIG_FILE
