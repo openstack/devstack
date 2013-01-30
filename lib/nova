@@ -49,7 +49,7 @@ NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 if [[ -d $NOVA_DIR/bin ]]; then
     NOVA_BIN_DIR=$NOVA_DIR/bin
 else
-    NOVA_BIN_DIR=/usr/local/bin
+    NOVA_BIN_DIR=$(get_python_exec_prefix)
 fi
 
 # Set the paths of certain binaries

@@ -40,7 +40,7 @@ CEILOMETER_AUTH_CACHE_DIR=${CEILOMETER_AUTH_CACHE_DIR:-/var/cache/ceilometer}
 if [ -d $CEILOMETER_DIR/bin ] ; then
     CEILOMETER_BIN_DIR=$CEILOMETER_DIR/bin
 else
-    CEILOMETER_BIN_DIR=/usr/local/bin
+    CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
 fi
 
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
