@@ -18,7 +18,7 @@ https://www.citrix.com/English/ss/downloads/details.asp?downloadId=2311504&produ
 For details on installation, see: http://wiki.openstack.org/XenServer/Install
 
 Here are some sample Xenserver network settings for when you are just
-getting started (I use settings like this with a lappy + cheap wifi router):
+getting started (Settings like this have been used with a laptop + cheap wifi router):
 
 * XenServer Host IP: 192.168.1.10
 * XenServer Netmask: 255.255.255.0
@@ -29,9 +29,9 @@ Step 2: Download devstack
 --------------------------
 On your XenServer host, run the following commands as root:
 
-wget --no-check-certificate https://github.com/openstack-dev/devstack/zipball/master
-unzip -o master -d ./devstack
-cd devstack/*/
+    wget --no-check-certificate https://github.com/openstack-dev/devstack/zipball/master
+    unzip -o master -d ./devstack
+    cd devstack/*/
 
 Step 3: Configure your localrc inside the devstack directory
 ------------------------------------------------------------
