@@ -44,12 +44,9 @@ if [ ! -d $STAGING_DIR/etc ]; then
     exit 1
 fi
 
-# Configure dns (use same dns as dom0)
-# but only when not precise
-if [ "$UBUNTU_INST_RELEASE" != "precise" ]; then
-    cp /etc/resolv.conf $STAGING_DIR/etc/resolv.conf
-elif [ "$MGT_IP" != "dhcp" ] && [ "$PUB_IP" != "dhcp" ]; then
-    echo "Configuration without DHCP not supported on Precise"
+# Only support DHCP for now - don't support how different versions of Ubuntu handle resolv.conf
+if [ "$MGT_IP" != "dhcp" ] && [ "$PUB_IP" != "dhcp" ]; then
+    echo "Configuration without DHCP not supported"
     exit 1
 fi
 
