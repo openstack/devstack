@@ -236,6 +236,12 @@ SNAME_PREPARED="template_prepared"
 SNAME_FIRST_BOOT="before_first_boot"
 
 function wait_for_VM_to_halt() {
+    set +x
+    echo "Waiting for the VM to halt.  Progress in-VM can be checked with vncviewer:"
+    mgmt_ip=$(echo $XENAPI_CONNECTION_URL | tr -d -c '1234567890.')
+    domid=$(xe vm-list name-label="$GUEST_NAME" params=dom-id minimal=true)
+    port=$(xenstore-read /local/domain/$domid/console/vnc-port)
+    echo "vncviewer -via $mgmt_ip localhost:${port:2}"
     while true
     do
         state=$(xe_min vm-list name-label="$GUEST_NAME" power-state=halted)
@@ -243,10 +249,11 @@ function wait_for_VM_to_halt() {
         then
             break
         else
-            echo "Waiting for "$GUEST_NAME" to finish installation..."
+            echo -n "."
             sleep 20
         fi
     done
+    set -x
 }
 
 templateuuid=$(xe template-list name-label="$TNAME")
@@ -405,12 +412,14 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
     # Fail if the expected text is not found
     ssh_no_check -q stack@$DOMU_IP 'cat run.sh.log' | grep -q 'stack.sh completed in'
 
+    set +x
     echo "################################################################################"
     echo ""
     echo "All Finished!"
     echo "You can visit the OpenStack Dashboard"
     echo "at http://$DOMU_IP, and contact other services at the usual ports."
 else
+    set +x
     echo "################################################################################"
     echo ""
     echo "All Finished!"
