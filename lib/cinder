@@ -47,7 +47,7 @@ CINDER_SERVICE_PROTOCOL=${CINDER_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 if [[ -d $CINDER_DIR/bin ]]; then
     CINDER_BIN_DIR=$CINDER_DIR/bin
 else
-    CINDER_BIN_DIR=/usr/local/bin
+    CINDER_BIN_DIR=$(get_python_exec_prefix)
 fi
 
 # Name of the lvm volume group to use/create for iscsi volumes

@@ -44,7 +44,7 @@ GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
 if [[ -d $GLANCE_DIR/bin ]]; then
     GLANCE_BIN_DIR=$GLANCE_DIR/bin
 else
-    GLANCE_BIN_DIR=/usr/local/bin
+    GLANCE_BIN_DIR=$(get_python_exec_prefix)
 fi
 
 # Glance connection info.  Note the port must be specified.
