@@ -90,6 +90,9 @@ else
     BM_DNSMASQ_RANGE=${BM_DNSMASQ_RANGE:-}
 fi
 
+# BM_DNSMASQ_DNS provide dns server to bootstrap clients
+BM_DNSMASQ_DNS=${BM_DNSMASQ_DNS:-}
+
 # BM_FIRST_MAC *must* be set to the MAC address of the node you will boot.
 #              This is passed to dnsmasq along with the kernel/ramdisk to
 #              deploy via PXE.
