@@ -433,7 +433,7 @@ if is_service_enabled rabbit; then
     read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 fi
 
-if is_service_enabled swift; then
+if is_service_enabled s-proxy; then
     # If we are using swift3, we can default the s3 port to swift instead
     # of nova-objectstore
     if is_service_enabled swift3;then
@@ -670,12 +670,12 @@ install_novaclient
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
 
 # glance, swift middleware and nova api needs keystone middleware
-if is_service_enabled key g-api n-api swift; then
+if is_service_enabled key g-api n-api s-proxy; then
     # unified auth system (manages accounts/tokens)
     install_keystone
 fi
 
-if is_service_enabled swift; then
+if is_service_enabled s-proxy; then
     install_swiftclient
     install_swift
     if is_service_enabled swift3; then
@@ -732,10 +732,10 @@ echo_summary "Configuring OpenStack projects"
 configure_keystoneclient
 configure_novaclient
 setup_develop $OPENSTACKCLIENT_DIR
-if is_service_enabled key g-api n-api swift; then
+if is_service_enabled key g-api n-api s-proxy; then
     configure_keystone
 fi
-if is_service_enabled swift; then
+if is_service_enabled s-proxy; then
     configure_swift
     configure_swiftclient
     if is_service_enabled swift3; then
@@ -919,7 +919,7 @@ if is_service_enabled g-reg; then
     init_glance
 
     # Store the images in swift if enabled.
-    if is_service_enabled swift; then
+    if is_service_enabled s-proxy; then
         iniset $GLANCE_API_CONF DEFAULT default_store swift
         iniset $GLANCE_API_CONF DEFAULT swift_store_auth_address $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/
         iniset $GLANCE_API_CONF DEFAULT swift_store_user $SERVICE_TENANT_NAME:glance
@@ -978,7 +978,7 @@ fi
 # Storage Service
 # ---------------
 
-if is_service_enabled swift; then
+if is_service_enabled s-proxy; then
     echo_summary "Configuring Swift"
     init_swift
 fi
@@ -1125,7 +1125,7 @@ fi
 # Only run the services specified in ``ENABLED_SERVICES``
 
 # Launch Swift Services
-if is_service_enabled swift; then
+if is_service_enabled s-proxy; then
     echo_summary "Starting Swift"
     start_swift
 fi
