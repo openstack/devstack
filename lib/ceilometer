@@ -73,6 +73,7 @@ function configure_ceilometer() {
 
     # Install the policy file for the API server
     cp $CEILOMETER_DIR/etc/ceilometer/policy.json $CEILOMETER_CONF_DIR
+    cp $CEILOMETER_DIR/etc/ceilometer/pipeline.yaml $CEILOMETER_CONF_DIR
     iniset $CEILOMETER_CONF DEFAULT policy_file $CEILOMETER_CONF_DIR/policy.json
 
     # the compute and central agents need these credentials in order to
