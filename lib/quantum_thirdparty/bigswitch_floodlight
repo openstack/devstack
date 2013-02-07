@@ -2,7 +2,7 @@
 # ------------------------------------------
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 BS_FL_CONTROLLERS_PORT=${BS_FL_CONTROLLERS_PORT:-localhost:80}
@@ -47,4 +47,4 @@ function stop_bigswitch_floodlight() {
 }
 
 # Restore xtrace
-$XTRACE
+$MY_XTRACE
