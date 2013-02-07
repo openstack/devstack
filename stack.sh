@@ -99,11 +99,6 @@ fi
 source $TOP_DIR/lib/database
 source $TOP_DIR/lib/rpc_backend
 
-# Validate database selection
-# Since DATABASE_BACKENDS is now set, this also gets ENABLED_SERVICES
-# properly configured for the database selection.
-use_database $DATABASE_TYPE || echo "Invalid database '$DATABASE_TYPE'"
-
 # Remove services which were negated in ENABLED_SERVICES
 # using the "-" prefix (e.g., "-rabbit") instead of
 # calling disable_service().
@@ -430,13 +425,13 @@ FLAT_INTERFACE=${FLAT_INTERFACE-$GUEST_INTERFACE_DEFAULT}
 # Database Configuration
 # ----------------------
 
-# To select between database backends, add a line to localrc like:
+# To select between database backends, add the following to ``localrc``:
 #
-#  use_database postgresql
+#    disable_service mysql
+#    enable_service postgresql
 #
-# The available database backends are defined in the ``DATABASE_BACKENDS``
-# variable defined in stackrc. By default, MySQL is enabled as the database
-# backend.
+# The available database backends are listed in ``DATABASE_BACKENDS`` after
+# ``lib/database`` is sourced. ``mysql`` is the default.
 
 initialize_database_backends && echo "Using $DATABASE_TYPE database backend" || echo "No database enabled"
 
@@ -520,11 +515,11 @@ function echo_summary() {
         if [ ! -z "$LAST_SPINNER_PID" ]; then
             printf "\b\b\bdone\n" >&3
         fi
-        echo -n $@ >&6
+        echo -n -e $@ >&6
         spinner &
         LAST_SPINNER_PID=$!
     else
-        echo $@ >&6
+        echo -e $@ >&6
     fi
 }
 
@@ -1382,9 +1377,9 @@ fi
 # Echo ``HOST_IP`` - useful for ``build_uec.sh``, which uses dhcp to give the instance an address
 echo "This is your host ip: $HOST_IP"
 
-# Warn that ``EXTRA_FLAGS`` needs to be converted to ``EXTRA_OPTS``
-if [[ -n "$EXTRA_FLAGS" ]]; then
-    echo_summary "WARNING: EXTRA_FLAGS is defined and may need to be converted to EXTRA_OPTS"
+# Warn that a deprecated feature was used
+if [[ -n "$DEPRECATED_TEXT" ]]; then
+    echo_summary "WARNING: $DEPRECATED_TEXT"
 fi
 
 # Indicate how long this took to run (bash maintained variable ``SECONDS``)
