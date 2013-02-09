@@ -209,7 +209,6 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute alt_username $ALT_USERNAME # DEPRECATED
     iniset $TEMPEST_CONF compute alt_password "$password" # DEPRECATED
     iniset $TEMPEST_CONF compute alt_tenant_name $ALT_TENANT_NAME # DEPRECATED
-    iniset $TEMPEST_CONF compute resize_available False
     iniset $TEMPEST_CONF compute change_password_available False
     iniset $TEMPEST_CONF compute compute_log_level ERROR
     # Note(nati) current tempest don't create network for each tenant
