@@ -2,7 +2,7 @@
 # -------------------------------------
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 function is_quantum_ovs_base_plugin() {
@@ -46,4 +46,4 @@ function _quantum_ovs_base_configure_l3_agent() {
 }
 
 # Restore xtrace
-$XTRACE
+$MY_XTRACE

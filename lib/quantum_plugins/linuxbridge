@@ -2,7 +2,7 @@
 # ---------------------------
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 function is_quantum_ovs_base_plugin() {
@@ -76,4 +76,4 @@ function quantum_plugin_setup_interface_driver() {
 }
 
 # Restore xtrace
-$XTRACE
+$MY_XTRACE
