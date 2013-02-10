@@ -80,6 +80,27 @@ function die_if_not_set() {
 }
 
 
+# HTTP and HTTPS proxy servers are supported via the usual environment variables [1]
+# ``http_proxy``, ``https_proxy`` and ``no_proxy``. They can be set in
+# ``localrc`` or on the command line if necessary::
+#
+# [1] http://www.w3.org/Daemon/User/Proxies/ProxyClients.html
+#
+#     http_proxy=http://proxy.example.com:3128/ no_proxy=repo.example.net ./stack.sh
+
+function export_proxy_variables() {
+    if [[ -n "$http_proxy" ]]; then
+        export http_proxy=$http_proxy
+    fi
+    if [[ -n "$https_proxy" ]]; then
+        export https_proxy=$https_proxy
+    fi
+    if [[ -n "$no_proxy" ]]; then
+        export no_proxy=$no_proxy
+    fi
+}
+
+
 # Grab a numbered field from python prettytable output
 # Fields are numbered starting with 1
 # Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
