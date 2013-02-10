@@ -49,8 +49,16 @@ function init_ryu() {
     echo "${RYU_CONF_CONTENTS}" > $RYU_CONF
 }
 
+# install_ryu can be called multiple times as quantum_pluing/ryu may call
+# this function for quantum-ryu-agent
+# Make this function idempotent and avoid cloning same repo many times
+# with RECLONE=yes
+_RYU_INSTALLED=${_RYU_INSTALLED:-False}
 function install_ryu() {
-    git_clone $RYU_REPO $RYU_DIR $RYU_BRANCH
+    if [[ "$_RYU_INSTALLED" == "False" ]]; then
+        git_clone $RYU_REPO $RYU_DIR $RYU_BRANCH
+        _RYU_INSTALLED=True
+    fi
 }
 
 function start_ryu() {
