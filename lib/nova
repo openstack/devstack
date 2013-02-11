@@ -166,20 +166,13 @@ function configure_nova() {
         # Get the sample configuration file in place
         cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
 
-        # Rewrite the authtoken configuration for our Keystone service.
-        # This is a bit defensive to allow the sample file some variance.
-        sed -e "
-            /^admin_token/i admin_tenant_name = $SERVICE_TENANT_NAME
-            /admin_tenant_name/s/^.*$/admin_tenant_name = $SERVICE_TENANT_NAME/;
-            /admin_user/s/^.*$/admin_user = nova/;
-            /admin_password/s/^.*$/admin_password = $SERVICE_PASSWORD/;
-            s,%SERVICE_TENANT_NAME%,$SERVICE_TENANT_NAME,g;
-            s,%SERVICE_TOKEN%,$SERVICE_TOKEN,g;
-        " -i $NOVA_API_PASTE_INI
         iniset $NOVA_API_PASTE_INI filter:authtoken auth_host $SERVICE_HOST
         if is_service_enabled tls-proxy; then
             iniset $NOVA_API_PASTE_INI filter:authtoken auth_protocol $SERVICE_PROTOCOL
         fi
+        iniset $NOVA_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
+        iniset $NOVA_API_PASTE_INI filter:authtoken admin_user nova
+        iniset $NOVA_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
     fi
 
     iniset $NOVA_API_PASTE_INI filter:authtoken signing_dir $NOVA_AUTH_CACHE_DIR
