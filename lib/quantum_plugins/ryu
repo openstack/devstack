@@ -17,7 +17,9 @@ function quantum_plugin_install_agent_packages() {
     _quantum_ovs_base_install_agent_packages
 
     # quantum_ryu_agent requires ryu module
+    install_package $(get_packages "ryu")
     install_ryu
+    configure_ryu
 }
 
 function quantum_plugin_configure_common() {

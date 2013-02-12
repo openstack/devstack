@@ -17,24 +17,15 @@ RYU_OFP_HOST=${RYU_OFP_HOST:-127.0.0.1}
 RYU_OFP_PORT=${RYU_OFP_PORT:-6633}
 # Ryu Applications
 RYU_APPS=${RYU_APPS:-ryu.app.simple_isolation,ryu.app.rest}
-# Ryu configuration
-RYU_CONF_CONTENTS=${RYU_CONF_CONTENTS:-"
---app_lists=$RYU_APPS
---wsapi_host=$RYU_API_HOST
---wsapi_port=$RYU_API_PORT
---ofp_listen_host=$RYU_OFP_HOST
---ofp_tcp_listen_port=$RYU_OFP_PORT
---quantum_url=http://$Q_HOST:$Q_PORT
---quantum_admin_username=$Q_ADMIN_USERNAME
---quantum_admin_password=$SERVICE_PASSWORD
---quantum_admin_tenant_name=$SERVICE_TENANT_NAME
---quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0
---quantum_auth_strategy=$Q_AUTH_STRATEGY
---quantum_controller_addr=tcp:$RYU_OFP_HOST:$RYU_OFP_PORT
-"}
 
+# configure_ryu can be called multiple times as quantum_pluing/ryu may call
+# this function for quantum-ryu-agent
+_RYU_CONFIGURED=${_RYU_CONFIGURED:-False}
 function configure_ryu() {
-    setup_develop $RYU_DIR
+    if [[ "$_RYU_CONFIGURED" == "False" ]]; then
+        setup_develop $RYU_DIR
+        _RYU_CONFIGURED=True
+    fi
 }
 
 function init_ryu() {
@@ -46,6 +37,21 @@ function init_ryu() {
     RYU_CONF=$RYU_CONF_DIR/ryu.conf
     sudo rm -rf $RYU_CONF
 
+    # Ryu configuration
+    RYU_CONF_CONTENTS=${RYU_CONF_CONTENTS:-"[DEFAULT]
+app_lists=$RYU_APPS
+wsapi_host=$RYU_API_HOST
+wsapi_port=$RYU_API_PORT
+ofp_listen_host=$RYU_OFP_HOST
+ofp_tcp_listen_port=$RYU_OFP_PORT
+quantum_url=http://$Q_HOST:$Q_PORT
+quantum_admin_username=$Q_ADMIN_USERNAME
+quantum_admin_password=$SERVICE_PASSWORD
+quantum_admin_tenant_name=$SERVICE_TENANT_NAME
+quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0
+quantum_auth_strategy=$Q_AUTH_STRATEGY
+quantum_controller_addr=tcp:$RYU_OFP_HOST:$RYU_OFP_PORT
+"}
     echo "${RYU_CONF_CONTENTS}" > $RYU_CONF
 }
 
@@ -62,7 +68,7 @@ function install_ryu() {
 }
 
 function start_ryu() {
-    screen_it ryu "cd $RYU_DIR && $RYU_DIR/bin/ryu-manager --flagfile $RYU_CONF"
+    screen_it ryu "cd $RYU_DIR && $RYU_DIR/bin/ryu-manager --config-file $RYU_CONF"
 }
 
 function stop_ryu() {
