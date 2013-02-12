@@ -24,6 +24,12 @@ catalog.RegionOne.volume.internalURL = http://%SERVICE_HOST%:8776/v1/$(tenant_id
 catalog.RegionOne.volume.name = Volume Service
 
 
+catalog.RegionOne.volumev2.publicURL = http://%SERVICE_HOST%:8776/v2/$(tenant_id)s
+catalog.RegionOne.volumev2.adminURL = http://%SERVICE_HOST%:8776/v2/$(tenant_id)s
+catalog.RegionOne.volumev2.internalURL = http://%SERVICE_HOST%:8776/v2/$(tenant_id)s
+catalog.RegionOne.volumev2.name = Volume Service V2
+
+
 catalog.RegionOne.ec2.publicURL = http://%SERVICE_HOST%:8773/services/Cloud
 catalog.RegionOne.ec2.adminURL = http://%SERVICE_HOST%:8773/services/Admin
 catalog.RegionOne.ec2.internalURL = http://%SERVICE_HOST%:8773/services/Cloud
