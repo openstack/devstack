@@ -738,26 +738,31 @@ function restart_service() {
 # Helper to launch a service in a named screen
 # screen_it service "command-line"
 function screen_it {
-    NL=`echo -ne '\015'`
     SCREEN_NAME=${SCREEN_NAME:-stack}
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
+    SCREEN_DEV=`trueorfalse True $SCREEN_DEV`
 
     if is_service_enabled $1; then
         # Append the service to the screen rc file
         screen_rc "$1" "$2"
 
         screen -S $SCREEN_NAME -X screen -t $1
-        # sleep to allow bash to be ready to be send the command - we are
-        # creating a new window in screen and then sends characters, so if
-        # bash isn't running by the time we send the command, nothing happens
-        sleep 1.5
+        if [[ "$SCREEN_DEV" = "True" ]]; then
+            # sleep to allow bash to be ready to be send the command - we are
+            # creating a new window in screen and then sends characters, so if
+            # bash isn't running by the time we send the command, nothing happens
+            sleep 1.5
 
-        if [[ -n ${SCREEN_LOGDIR} ]]; then
-            screen -S $SCREEN_NAME -p $1 -X logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log
-            screen -S $SCREEN_NAME -p $1 -X log on
-            ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
+            if [[ -n ${SCREEN_LOGDIR} ]]; then
+                screen -S $SCREEN_NAME -p $1 -X logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log
+                screen -S $SCREEN_NAME -p $1 -X log on
+                ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
+            fi
+            NL=`echo -ne '\015'`
+            screen -S $SCREEN_NAME -p $1 -X stuff "$2 || touch \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
+        else
+            screen -S $SCREEN_NAME -p $1 -X exec /bin/bash -c "$2 || touch \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\""
         fi
-        screen -S $SCREEN_NAME -p $1 -X stuff "$2 || touch \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
     fi
 }
 
