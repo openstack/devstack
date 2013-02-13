@@ -400,15 +400,10 @@ function upload_baremetal_image() {
 }
 
 function clear_baremetal_of_all_nodes() {
-    list=$(nova-baremetal-manage node list | tail -n +2 | awk '{print $1}' )
+    list=$(nova baremetal-node-list | awk -F '| ' 'NR>3 {print $2}' )
     for node in $list
     do
-        nova-baremetal-manage node delete $node
-    done
-    list=$(nova-baremetal-manage interface list | tail -n +2 | awk '{print $1}' )
-    for iface in $list
-    do
-        nova-baremetal-manage interface delete $iface
+        nova baremetal-node-delete $node
     done
 }
 
@@ -420,16 +415,18 @@ function add_baremetal_node() {
     mac_1=${1:-$BM_FIRST_MAC}
     mac_2=${2:-$BM_SECOND_MAC}
 
-    id=$(nova-baremetal-manage node create \
-       --host=$BM_HOSTNAME --prov_mac=$mac_1 \
-       --cpus=$BM_FLAVOR_CPU --memory_mb=$BM_FLAVOR_RAM \
-       --local_gb=$BM_FLAVOR_ROOT_DISK --terminal_port=0 \
-       --pm_address=$BM_PM_ADDR --pm_user=$BM_PM_USER --pm_password=$BM_PM_PASS \
-       )
+    id=$(nova baremetal-node-create \
+       --pm_address="$BM_PM_ADDR" \
+       --pm_user="$BM_PM_USER" \
+       --pm_password="$BM_PM_PASS" \
+       "$BM_HOSTNAME" \
+       "$BM_FLAVOR_CPU" \
+       "$BM_FLAVOR_RAM" \
+       "$BM_FLAVOR_ROOT_DISK" \
+       "$mac_1" \
+       | grep ' id ' | get_field 2 )
     [ $? -eq 0 ] || [ "$id" ] || die "Error adding baremetal node"
-    id2=$(nova-baremetal-manage interface create \
-       --node_id=$id --mac_address=$mac_2 --datapath_id=0 --port_no=0 \
-       )
+    id2=$(nova baremetal-add-interface "$id" "$mac_2" )
     [ $? -eq 0 ] || [ "$id2" ] || die "Error adding interface to barmetal node $id"
 }
 
