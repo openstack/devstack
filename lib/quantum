@@ -518,7 +518,11 @@ function _configure_quantum_service() {
     iniset $QUANTUM_CONF DEFAULT allow_overlapping_ips $Q_ALLOW_OVERLAPPING_IP
 
     iniset $QUANTUM_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
-    _quantum_setup_keystone $Q_API_PASTE_FILE filter:authtoken
+    _quantum_setup_keystone $QUANTUM_CONF keystone_authtoken
+    # Comment out keystone authtoken configuration in api-paste.ini
+    # It is required to avoid any breakage in Quantum where the sample
+    # api-paste.ini has authtoken configurations.
+    _quantum_commentout_keystone_authtoken $Q_API_PASTE_FILE filter:authtoken
 
     # Configure plugin
     quantum_plugin_configure_service
@@ -582,6 +586,21 @@ function _quantum_setup_keystone() {
     sudo mkdir -p $QUANTUM_AUTH_CACHE_DIR
     sudo chown $STACK_USER $QUANTUM_AUTH_CACHE_DIR
     rm -f $QUANTUM_AUTH_CACHE_DIR/*
+}
+
+function _quantum_commentout_keystone_authtoken() {
+    local conf_file=$1
+    local section=$2
+
+    inicomment $conf_file $section auth_host
+    inicomment $conf_file $section auth_port
+    inicomment $conf_file $section auth_protocol
+    inicomment $conf_file $section auth_url
+
+    inicomment $conf_file $section admin_tenant_name
+    inicomment $conf_file $section admin_user
+    inicomment $conf_file $section admin_password
+    inicomment $conf_file $section signing_dir
 }
 
 function _quantum_setup_interface_driver() {
