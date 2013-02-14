@@ -205,12 +205,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF identity admin_password "$password"
 
     # Compute
-    iniset $TEMPEST_CONF compute password "$password" # DEPRECATED
-    iniset $TEMPEST_CONF compute alt_username $ALT_USERNAME # DEPRECATED
-    iniset $TEMPEST_CONF compute alt_password "$password" # DEPRECATED
-    iniset $TEMPEST_CONF compute alt_tenant_name $ALT_TENANT_NAME # DEPRECATED
     iniset $TEMPEST_CONF compute change_password_available False
-    iniset $TEMPEST_CONF compute compute_log_level ERROR
     # Note(nati) current tempest don't create network for each tenant
     # so reuse same tenant for now
     if is_service_enabled quantum; then
@@ -231,10 +226,6 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute flavor_ref_alt $flavor_ref_alt
     iniset $TEMPEST_CONF compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONF compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
-    iniset $TEMPEST_CONF compute source_dir $NOVA_SOURCE_DIR # DEPRECATED
-    iniset $TEMPEST_CONF compute bin_dir $NOVA_BIN_DIR # DEPRECATED
-    iniset $TEMPEST_CONF compute path_to_private_key $TEMPEST_DIR/id_rsa # DEPRECATED
-    iniset $TEMPEST_CONF compute db_uri $BASE_SQL_CONN/nova # DEPRECATED
 
     # Whitebox
     iniset $TEMPEST_CONF whitebox source_dir $NOVA_SOURCE_DIR
@@ -245,21 +236,11 @@ function configure_tempest() {
     iniset $TEMPEST_CONF whitebox db_uri $BASE_SQL_CONN/nova
 
 
-    # image
-    iniset $TEMPEST_CONF image password "$password" # DEPRECATED
-
-    # identity-admin
-    iniset $TEMPEST_CONF "identity-admin" password "$password" # DEPRECATED
-
     # compute admin
     iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
 
-    # network admin
-    iniset $TEMPEST_CONF "network-admin" password "$password" # DEPRECATED
-
     # network
     iniset $TEMPEST_CONF network api_version 2.0
-    iniset $TEMPEST_CONF network password "$password" # DEPRECATED
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONF network public_network_id "$public_network_id"
     iniset $TEMPEST_CONF network public_router_id "$public_router_id"
