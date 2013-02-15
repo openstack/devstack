@@ -2,7 +2,7 @@
 
 # **volumes.sh**
 
-# Test cinder volumes with the cinder command from python-cinderclient
+# Test cinder volumes with the ``cinder`` command from ``python-cinderclient``
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -45,11 +45,15 @@ is_service_enabled cinder || exit 55
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 
-# Boot this image, use first AMi image if unset
+# Boot this image, use first AMI image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
 
 # Security group name
 SECGROUP=${SECGROUP:-vol_secgroup}
+
+# Instance and volume names
+VM_NAME=${VM_NAME:-ex-vol-inst}
+VOL_NAME="ex-vol-$(openssl rand -hex 4)"
 
 
 # Launching a server
@@ -61,19 +65,17 @@ nova list
 # Images
 # ------
 
-# Nova has a **deprecated** way of listing images.
-nova image-list
-
-# But we recommend using glance directly
+# List the images available
 glance image-list
 
 # Grab the id of the image to launch
 IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+die_if_not_set IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 
 # Security Groups
 # ---------------
 
-# List of secgroups:
+# List security groups
 nova secgroup-list
 
 # Create a secgroup
@@ -93,126 +95,122 @@ if ! nova secgroup-list-rules $SECGROUP | grep -q " tcp .* 22 "; then
     nova secgroup-add-rule $SECGROUP tcp 22 22 0.0.0.0/0
 fi
 
-# determinine instance type
-# -------------------------
+# List secgroup rules
+nova secgroup-list-rules $SECGROUP
 
-# List of instance types:
+# Set up instance
+# ---------------
+
+# List flavors
 nova flavor-list
 
-INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1`
+# Select a flavor
+INSTANCE_TYPE=$(nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1)
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | get_field 1`
+   INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
 fi
 
-NAME="ex-vol"
+# Clean-up from previous runs
+nova delete $VM_NAME || true
+if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $VM_NAME; do sleep 1; done"; then
+    echo "server didn't terminate!"
+    exit 1
+fi
 
-VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | get_field 2`
-die_if_not_set VM_UUID "Failure launching $NAME"
+# Boot instance
+# -------------
 
+VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
+die_if_not_set VM_UUID "Failure launching $VM_NAME"
 
-# Testing
-# =======
-
-# First check if it spins up (becomes active and responds to ping on
-# internal ip).  If you run this script from a nova node, you should
-# bypass security groups and have direct access to the server.
-
-# Waiting for boot
-# ----------------
-
-# check that the status is active within ACTIVE_TIMEOUT seconds
+# Check that the status is active within ACTIVE_TIMEOUT seconds
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
     echo "server didn't become active!"
     exit 1
 fi
 
-# get the IP of the server
-IP=`nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2`
+# Get the instance IP
+IP=$(nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2)
 die_if_not_set IP "Failure retrieving IP address"
 
-# for single node deployments, we can ping private ips
+# Private IPs can be pinged in single node deployments
 ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
 
 # Volumes
 # -------
 
-VOL_NAME="myvol-$(openssl rand -hex 4)"
-
 # Verify it doesn't exist
-if [[ -n "`cinder list | grep $VOL_NAME | head -1 | get_field 2`" ]]; then
+if [[ -n $(cinder list | grep $VOL_NAME | head -1 | get_field 2) ]]; then
     echo "Volume $VOL_NAME already exists"
     exit 1
 fi
 
 # Create a new volume
-cinder create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE
-if [[ $? != 0 ]]; then
-    echo "Failure creating volume $VOL_NAME"
-    exit 1
-fi
-
-start_time=`date +%s`
+start_time=$(date +%s)
+cinder create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
+    die "Failure creating volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
     exit 1
 fi
-end_time=`date +%s`
+end_time=$(date +%s)
 echo "Completed cinder create in $((end_time - start_time)) seconds"
 
 # Get volume ID
-VOL_ID=`cinder list | grep $VOL_NAME | head -1 | get_field 1`
+VOL_ID=$(cinder list | grep $VOL_NAME | head -1 | get_field 1)
 die_if_not_set VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 
 # Attach to server
 DEVICE=/dev/vdb
-start_time=`date +%s`
+start_time=$(date +%s)
 nova volume-attach $VM_UUID $VOL_ID $DEVICE || \
-    die "Failure attaching volume $VOL_NAME to $NAME"
+    die "Failure attaching volume $VOL_NAME to $VM_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
-    echo "Volume $VOL_NAME not attached to $NAME"
+    echo "Volume $VOL_NAME not attached to $VM_NAME"
     exit 1
 fi
-end_time=`date +%s`
+end_time=$(date +%s)
 echo "Completed volume-attach in $((end_time - start_time)) seconds"
 
-VOL_ATTACH=`cinder list | grep $VOL_NAME | head -1 | get_field -1`
+VOL_ATTACH=$(cinder list | grep $VOL_NAME | head -1 | get_field -1)
 die_if_not_set VOL_ATTACH "Failure retrieving $VOL_NAME status"
 if [[ "$VOL_ATTACH" != $VM_UUID ]]; then
     echo "Volume not attached to correct instance"
     exit 1
 fi
 
+# Clean up
+# --------
+
 # Detach volume
-start_time=`date +%s`
-nova volume-detach $VM_UUID $VOL_ID || die "Failure detaching volume $VOL_NAME from $NAME"
+start_time=$(date +%s)
+nova volume-detach $VM_UUID $VOL_ID || die "Failure detaching volume $VOL_NAME from $VM_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
-    echo "Volume $VOL_NAME not detached from $NAME"
+    echo "Volume $VOL_NAME not detached from $VM_NAME"
     exit 1
 fi
-end_time=`date +%s`
+end_time=$(date +%s)
 echo "Completed volume-detach in $((end_time - start_time)) seconds"
 
 # Delete volume
-start_time=`date +%s`
+start_time=$(date +%s)
 cinder delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while cinder list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
     exit 1
 fi
-end_time=`date +%s`
+end_time=$(date +%s)
 echo "Completed cinder delete in $((end_time - start_time)) seconds"
 
-# Shutdown the server
-nova delete $VM_UUID || die "Failure deleting instance $NAME"
-
-# Wait for termination
+# Delete instance
+nova delete $VM_UUID || die "Failure deleting instance $VM_NAME"
 if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
-    echo "Server $NAME not deleted"
+    echo "Server $VM_NAME not deleted"
     exit 1
 fi
 
-# Delete a secgroup
+# Delete secgroup
 nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
 
 set +o xtrace

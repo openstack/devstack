@@ -2,8 +2,7 @@
 
 # **floating_ips.sh** - using the cloud can be fun
 
-# we will use the ``nova`` cli tool provided by the ``python-novaclient``
-# package to work out the instance connectivity
+# Test instance connectivity with the ``nova`` command from ``python-novaclient``
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -42,7 +41,7 @@ source $TOP_DIR/exerciserc
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 
-# Boot this image, use first AMi image if unset
+# Boot this image, use first AMI image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
 
 # Security group name
@@ -54,6 +53,9 @@ DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
 # Additional floating IP pool and range
 TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
 
+# Instance name
+VM_NAME="ex-float"
+
 
 # Launching a server
 # ==================
@@ -64,19 +66,17 @@ nova list
 # Images
 # ------
 
-# Nova has a **deprecated** way of listing images.
-nova image-list
-
-# But we recommend using glance directly
+# List the images available
 glance image-list
 
 # Grab the id of the image to launch
 IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+die_if_not_set IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 
 # Security Groups
 # ---------------
 
-# List of secgroups:
+# List security groups
 nova secgroup-list
 
 # Create a secgroup
@@ -88,81 +88,79 @@ if ! nova secgroup-list | grep -q $SECGROUP; then
     fi
 fi
 
-# Determinine instance type
-# -------------------------
-
-# List of instance types:
-nova flavor-list
-
-INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1`
-if [[ -z "$INSTANCE_TYPE" ]]; then
-    # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | get_field 1`
+# Configure Security Group Rules
+if ! nova secgroup-list-rules $SECGROUP | grep -q icmp; then
+    nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
+fi
+if ! nova secgroup-list-rules $SECGROUP | grep -q " tcp .* 22 "; then
+    nova secgroup-add-rule $SECGROUP tcp 22 22 0.0.0.0/0
 fi
 
-NAME="ex-float"
+# List secgroup rules
+nova secgroup-list-rules $SECGROUP
 
-VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | get_field 2`
-die_if_not_set VM_UUID "Failure launching $NAME"
+# Set up instance
+# ---------------
 
+# List flavors
+nova flavor-list
 
-# Testing
-# =======
+# Select a flavor
+INSTANCE_TYPE=$(nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1)
+if [[ -z "$INSTANCE_TYPE" ]]; then
+    # grab the first flavor in the list to launch if default doesn't exist
+   INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
+fi
 
-# First check if it spins up (becomes active and responds to ping on
-# internal ip).  If you run this script from a nova node, you should
-# bypass security groups and have direct access to the server.
+# Clean-up from previous runs
+nova delete $VM_NAME || true
+if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $VM_NAME; do sleep 1; done"; then
+    echo "server didn't terminate!"
+    exit 1
+fi
 
-# Waiting for boot
-# ----------------
+# Boot instance
+# -------------
 
-# check that the status is active within ACTIVE_TIMEOUT seconds
+VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
+die_if_not_set VM_UUID "Failure launching $VM_NAME"
+
+# Check that the status is active within ACTIVE_TIMEOUT seconds
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
     echo "server didn't become active!"
     exit 1
 fi
 
-# get the IP of the server
-IP=`nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2`
+# Get the instance IP
+IP=$(nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2)
 die_if_not_set IP "Failure retrieving IP address"
 
+# Private IPs can be pinged in single node deployments
 ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
 
-# Security Groups & Floating IPs
-# ------------------------------
+# Floating IPs
+# ------------
 
-if ! nova secgroup-list-rules $SECGROUP | grep -q icmp; then
-    # allow icmp traffic (ping)
-    nova secgroup-add-rule $SECGROUP icmp -1 -1 0.0.0.0/0
-    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova secgroup-list-rules $SECGROUP | grep -q icmp; do sleep 1; done"; then
-        echo "Security group rule not created"
-        exit 1
-    fi
-fi
+# Allocate a floating IP from the default pool
+FLOATING_IP=$(nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | get_field 1)
+die_if_not_set FLOATING_IP "Failure creating floating IP from pool $DEFAULT_FLOATING_POOL"
 
-# List rules for a secgroup
-nova secgroup-list-rules $SECGROUP
-
-# allocate a floating ip from default pool
-FLOATING_IP=`nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | get_field 1`
-die_if_not_set FLOATING_IP "Failure creating floating IP"
-
-# list floating addresses
+# List floating addresses
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $FLOATING_IP; do sleep 1; done"; then
     echo "Floating IP not allocated"
     exit 1
 fi
 
-# add floating ip to our server
+# Add floating IP to our server
 nova add-floating-ip $VM_UUID $FLOATING_IP || \
-    die "Failure adding floating IP $FLOATING_IP to $NAME"
+    die "Failure adding floating IP $FLOATING_IP to $VM_NAME"
 
-# test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
+# Test we can ping our floating IP within ASSOCIATE_TIMEOUT seconds
 ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
 
 if ! is_service_enabled quantum; then
     # Allocate an IP from second floating pool
-    TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1`
+    TEST_FLOATING_IP=$(nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1)
     die_if_not_set TEST_FLOATING_IP "Failure creating floating IP in $TEST_FLOATING_POOL"
 
     # list floating addresses
@@ -172,34 +170,40 @@ if ! is_service_enabled quantum; then
      fi
 fi
 
-# dis-allow icmp traffic (ping)
-nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || die "Failure deleting security group rule from $SECGROUP"
+# Dis-allow icmp traffic (ping)
+nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || \
+    die "Failure deleting security group rule from $SECGROUP"
 
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
-    # test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
+    # Test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
     ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT Fail
 fi
 
+# Clean up
+# --------
+
 if ! is_service_enabled quantum; then
     # Delete second floating IP
-    nova floating-ip-delete $TEST_FLOATING_IP || die "Failure deleting floating IP $TEST_FLOATING_IP"
+    nova floating-ip-delete $TEST_FLOATING_IP || \
+        die "Failure deleting floating IP $TEST_FLOATING_IP"
 fi
 
-# de-allocate the floating ip
-nova floating-ip-delete $FLOATING_IP || die "Failure deleting floating IP $FLOATING_IP"
+# Delete the floating ip
+nova floating-ip-delete $FLOATING_IP || \
+    die "Failure deleting floating IP $FLOATING_IP"
 
-# Shutdown the server
-nova delete $VM_UUID || die "Failure deleting instance $NAME"
-
+# Delete instance
+nova delete $VM_UUID || die "Failure deleting instance $VM_NAME"
 # Wait for termination
 if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
-    echo "Server $NAME not deleted"
+    echo "Server $VM_NAME not deleted"
     exit 1
 fi
 
-# Delete a secgroup
-nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
+# Delete secgroup
+nova secgroup-delete $SECGROUP || \
+    die "Failure deleting security group $SECGROUP"
 
 set +o xtrace
 echo "*********************************************************************"

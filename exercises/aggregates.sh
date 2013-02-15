@@ -39,9 +39,8 @@ source $TOP_DIR/openrc
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
-# run test as the admin user
-_OLD_USERNAME=$OS_USERNAME
-OS_USERNAME=admin
+# Test as the admin user
+. openrc admin admin
 
 
 # Create an aggregate
@@ -54,7 +53,7 @@ AGGREGATE_A_ZONE=nova
 exit_if_aggregate_present() {
     aggregate_name=$1
 
-    if [ `nova aggregate-list | grep -c " $aggregate_name "` == 0 ]; then
+    if [ $(nova aggregate-list | grep -c " $aggregate_name ") == 0 ]; then
         echo "SUCCESS $aggregate_name not present"
     else
         echo "ERROR found aggregate: $aggregate_name"
@@ -64,8 +63,8 @@ exit_if_aggregate_present() {
 
 exit_if_aggregate_present $AGGREGATE_NAME
 
-AGGREGATE_ID=`nova aggregate-create $AGGREGATE_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE_NAME " | get_field 1`
-AGGREGATE2_ID=`nova aggregate-create $AGGREGATE2_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE2_NAME " | get_field 1`
+AGGREGATE_ID=$(nova aggregate-create $AGGREGATE_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE_NAME " | get_field 1)
+AGGREGATE2_ID=$(nova aggregate-create $AGGREGATE2_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE2_NAME " | get_field 1)
 
 # check aggregate created
 nova aggregate-list | grep -q " $AGGREGATE_NAME " || die "Aggregate $AGGREGATE_NAME not created"
@@ -125,7 +124,7 @@ nova aggregate-details $AGGREGATE_ID | egrep "{u'availability_zone': u'$AGGREGAT
 if [ "$VIRT_DRIVER" == "xenserver" ]; then
     echo "TODO(johngarbutt) add tests for add/remove host from pool aggregate"
 fi
-FIRST_HOST=`nova host-list | grep compute | get_field 1 | head -1`
+FIRST_HOST=$(nova host-list | grep compute | get_field 1 | head -1)
 # Make sure can add two aggregates to same host
 nova aggregate-add-host $AGGREGATE_ID $FIRST_HOST
 nova aggregate-add-host $AGGREGATE2_ID $FIRST_HOST
@@ -141,12 +140,6 @@ nova aggregate-remove-host $AGGREGATE_ID $FIRST_HOST
 nova aggregate-delete $AGGREGATE_ID
 nova aggregate-delete $AGGREGATE2_ID
 exit_if_aggregate_present $AGGREGATE_NAME
-
-
-# Test complete
-# =============
-OS_USERNAME=$_OLD_USERNAME
-echo "AGGREGATE TEST PASSED"
 
 set +o xtrace
 echo "**************************************************"
