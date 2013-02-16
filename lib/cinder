@@ -254,37 +254,55 @@ create_cinder_accounts() {
     fi
 }
 
+# create_cinder_cache_dir() - Part of the init_cinder() process
+function create_cinder_cache_dir() {
+    # Create cache dir
+    sudo mkdir -p $CINDER_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $CINDER_AUTH_CACHE_DIR
+    rm -f $CINDER_AUTH_CACHE_DIR/*
+}
+
+create_cinder_volume_group() {
+    # Configure a default volume group called '`stack-volumes`' for the volume
+    # service if it does not yet exist.  If you don't wish to use a file backed
+    # volume group, create your own volume group called ``stack-volumes`` before
+    # invoking ``stack.sh``.
+    #
+    # By default, the backing file is 5G in size, and is stored in ``/opt/stack/data``.
+
+    if ! sudo vgs $VOLUME_GROUP; then
+        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
+
+        # Only create if the file doesn't already exists
+        [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
+
+        DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
+
+        # Only create if the loopback device doesn't contain $VOLUME_GROUP
+        if ! sudo vgs $VOLUME_GROUP; then
+            sudo vgcreate $VOLUME_GROUP $DEV
+        fi
+    fi
+
+    mkdir -p $CINDER_STATE_PATH/volumes
+}
+
 # init_cinder() - Initialize database and volume group
 function init_cinder() {
     # Force nova volumes off
     NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/osapi_volume,//")
 
     if is_service_enabled $DATABASE_BACKENDS; then
-        # (re)create cinder database
+        # (Re)create cinder database
         recreate_database cinder utf8
 
-        # (re)create cinder database
+        # Migrate cinder database
         $CINDER_BIN_DIR/cinder-manage db sync
     fi
 
     if is_service_enabled c-vol; then
-        # Configure a default volume group called '`stack-volumes`' for the volume
-        # service if it does not yet exist.  If you don't wish to use a file backed
-        # volume group, create your own volume group called ``stack-volumes`` before
-        # invoking ``stack.sh``.
-        #
-        # By default, the backing file is 5G in size, and is stored in ``/opt/stack/data``.
 
-        if ! sudo vgs $VOLUME_GROUP; then
-            VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
-            # Only create if the file doesn't already exists
-            [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
-            DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
-            # Only create if the loopback device doesn't contain $VOLUME_GROUP
-            if ! sudo vgs $VOLUME_GROUP; then sudo vgcreate $VOLUME_GROUP $DEV; fi
-        fi
-
-        mkdir -p $CINDER_STATE_PATH/volumes
+        create_cinder_volume_group
 
         if sudo vgs $VOLUME_GROUP; then
             if is_fedora || is_suse; then
@@ -299,10 +317,7 @@ function init_cinder() {
         fi
     fi
 
-    # Create cache dir
-    sudo mkdir -p $CINDER_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $CINDER_AUTH_CACHE_DIR
-    rm -f $CINDER_AUTH_CACHE_DIR/*
+    create_cinder_cache_dir
 }
 
 # install_cinder() - Collect source and prepare

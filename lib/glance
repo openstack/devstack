@@ -141,6 +141,17 @@ function configure_glance() {
     cp -p $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
 }
 
+# create_glance_cache_dir() - Part of the init_glance() process
+function create_glance_cache_dir() {
+    # Create cache dir
+    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
+    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/api
+    rm -f $GLANCE_AUTH_CACHE_DIR/api/*
+    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
+    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/registry
+    rm -f $GLANCE_AUTH_CACHE_DIR/registry/*
+}
+
 # init_glance() - Initialize databases, etc.
 function init_glance() {
     # Delete existing images
@@ -151,18 +162,13 @@ function init_glance() {
     rm -rf $GLANCE_CACHE_DIR
     mkdir -p $GLANCE_CACHE_DIR
 
-    # (re)create glance database
+    # (Re)create glance database
     recreate_database glance utf8
 
+    # Migrate glance database
     $GLANCE_BIN_DIR/glance-manage db_sync
 
-    # Create cache dir
-    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
-    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/api
-    rm -f $GLANCE_AUTH_CACHE_DIR/api/*
-    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
-    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/registry
-    rm -f $GLANCE_AUTH_CACHE_DIR/registry/*
+    create_glance_cache_dir
 }
 
 # install_glanceclient() - Collect source and prepare

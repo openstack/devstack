@@ -446,6 +446,14 @@ function create_nova_conf() {
     done
 }
 
+# create_nova_cache_dir() - Part of the init_nova() process
+function create_nova_cache_dir() {
+    # Create cache dir
+    sudo mkdir -p $NOVA_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $NOVA_AUTH_CACHE_DIR
+    rm -f $NOVA_AUTH_CACHE_DIR/*
+}
+
 function create_nova_conf_nova_network() {
     iniset $NOVA_CONF DEFAULT network_manager "nova.network.manager.$NET_MAN"
     iniset $NOVA_CONF DEFAULT public_interface "$PUBLIC_INTERFACE"
@@ -456,14 +464,17 @@ function create_nova_conf_nova_network() {
     fi
 }
 
+# create_nova_keys_dir() - Part of the init_nova() process
+function create_nova_keys_dir() {
+    # Create keys dir
+    sudo mkdir -p ${NOVA_STATE_PATH}/keys
+    sudo chown -R $STACK_USER ${NOVA_STATE_PATH}
+}
+
 # init_nova() - Initialize databases, etc.
 function init_nova() {
-    # Nova Database
-    # -------------
-
-    # All nova components talk to a central database.  We will need to do this step
-    # only once for an entire cluster.
-
+    # All nova components talk to a central database.
+    # Only do this step once on the API node for an entire cluster.
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-api; then
         # (Re)create nova database
         # Explicitly use latin1: to avoid lp#829209, nova expects the database to
@@ -471,7 +482,7 @@ function init_nova() {
         # 082_essex.py in nova)
         recreate_database nova latin1
 
-        # (Re)create nova database
+        # Migrate nova database
         $NOVA_BIN_DIR/nova-manage db sync
 
         # (Re)create nova baremetal database
@@ -481,15 +492,8 @@ function init_nova() {
         fi
     fi
 
-    # Create cache dir
-    sudo mkdir -p $NOVA_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $NOVA_AUTH_CACHE_DIR
-    rm -f $NOVA_AUTH_CACHE_DIR/*
-
-    # Create the keys folder
-    sudo mkdir -p ${NOVA_STATE_PATH}/keys
-    # make sure we own NOVA_STATE_PATH and all subdirs
-    sudo chown -R $STACK_USER ${NOVA_STATE_PATH}
+    create_nova_cache_dir
+    create_nova_keys_dir
 }
 
 # install_novaclient() - Collect source and prepare
