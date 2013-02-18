@@ -91,7 +91,7 @@ Swift is not installed by default, you can enable easily by adding this to your 
 If you want a minimal Swift install with only Swift and Keystone you can have this instead in your `localrc`:
 
     disable_all_services
-    enable_service key mysql swift
+    enable_service swift key mysql rabbit
 
 If you use Swift with Keystone, Swift will authenticate against it. You will need to make sure to use the Keystone URL to auth against.
 
