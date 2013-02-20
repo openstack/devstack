@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-#Warning: This script just for development purposes
+# **create_userrc.sh**
+
+# Pre-create rc files and credentials for the default users.
+
+# Warning: This script just for development purposes
 
 ACCOUNT_DIR=./accrc
 
@@ -164,12 +168,12 @@ function add_entry(){
     local ec2_cert="$rcfile-cert.pem"
     local ec2_private_key="$rcfile-pk.pem"
     # Try to preserve the original file on fail (best effort)
-    mv "$ec2_private_key" "$ec2_private_key.old" &>/dev/null
-    mv "$ec2_cert" "$ec2_cert.old" &>/dev/null
+    mv -f "$ec2_private_key" "$ec2_private_key.old" &>/dev/null
+    mv -f "$ec2_cert" "$ec2_cert.old" &>/dev/null
     # It will not create certs when the password is incorrect
     if ! nova --os-password "$user_passwd" --os-username "$user_name" --os-tenant-name "$tenant_name" x509-create-cert "$ec2_private_key" "$ec2_cert"; then
-        mv "$ec2_private_key.old" "$ec2_private_key" &>/dev/null
-        mv "$ec2_cert.old" "$ec2_cert" &>/dev/null
+        mv -f "$ec2_private_key.old" "$ec2_private_key" &>/dev/null
+        mv -f "$ec2_cert.old" "$ec2_cert" &>/dev/null
     fi
     cat >"$rcfile" <<EOF
 # you can source this file
