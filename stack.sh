@@ -1215,8 +1215,9 @@ fi
 # Upload an image to glance.
 #
 # The default image is cirros, a small testing image which lets you login as **root**
-# cirros also uses ``cloud-init``, supporting login via keypair and sending scripts as
-# userdata.  See https://help.ubuntu.com/community/CloudInit for more on cloud-init
+# cirros has a ``cloud-init`` analog supporting login via keypair and sending
+# scripts as userdata.
+# See https://help.ubuntu.com/community/CloudInit for more on cloud-init
 #
 # Override ``IMAGE_URLS`` with a comma-separated list of UEC images.
 #  * **oneiric**: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
