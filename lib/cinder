@@ -361,6 +361,7 @@ function start_cinder() {
     screen_it c-api "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
     screen_it c-vol "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
     screen_it c-sch "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
+    screen_it c-bak "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-backup --config-file $CINDER_CONF"
 
     # Start proxies if enabled
     if is_service_enabled c-api && is_service_enabled tls-proxy; then
@@ -371,7 +372,7 @@ function start_cinder() {
 # stop_cinder() - Stop running processes
 function stop_cinder() {
     # Kill the cinder screen windows
-    for serv in c-api c-sch c-vol; do
+    for serv in c-api c-bak c-sch c-vol; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 
