@@ -212,8 +212,6 @@ function configure_tempest() {
         TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
     fi
     iniset $TEMPEST_CONF compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
-    #Skip until #1074039 is fixed
-    iniset $TEMPEST_CONF compute run_ssh False
     iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
     iniset $TEMPEST_CONF compute network_for_ssh $PRIVATE_NETWORK_NAME
     iniset $TEMPEST_CONF compute ip_version_for_ssh 4
