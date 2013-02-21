@@ -40,7 +40,7 @@ source $TOP_DIR/openrc
 source $TOP_DIR/exerciserc
 
 # Test as the admin user
-. openrc admin admin
+. $TOP_DIR/openrc admin admin
 
 
 # Create an aggregate
