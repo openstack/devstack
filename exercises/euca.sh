@@ -44,7 +44,7 @@ source $TOP_DIR/exerciserc
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 
-# Boot this image, use first AMI-format image if unset
+# Boot this image, use first AMI image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
 
 # Security group name
@@ -56,6 +56,7 @@ SECGROUP=${SECGROUP:-euca_secgroup}
 
 # Find a machine image to boot
 IMAGE=`euca-describe-images | grep machine | grep ${DEFAULT_IMAGE_NAME} | cut -f2 | head -n1`
+die_if_not_set IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 
 # Add a secgroup
 if ! euca-describe-groups | grep -q $SECGROUP; then
@@ -174,7 +175,7 @@ if ! timeout $TERMINATE_TIMEOUT sh -c "while euca-describe-instances $INSTANCE |
     exit 1
 fi
 
-# Delete group
+# Delete secgroup
 euca-delete-group $SECGROUP || die "Failure deleting security group $SECGROUP"
 
 set +o xtrace

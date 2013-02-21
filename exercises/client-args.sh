@@ -8,6 +8,14 @@ echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
 echo "*********************************************************************"
 
+# This script exits on an error so that errors don't compound and you see
+# only the first error that occured.
+set -o errexit
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following allowing as the install occurs.
+set -o xtrace
+
 
 # Settings
 # ========
@@ -63,7 +71,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
         STATUS_KEYSTONE="Skipped"
     else
         echo -e "\nTest Keystone"
-        if keystone $TENANT_ARG $ARGS catalog --service identity; then
+        if keystone $TENANT_ARG_DASH $ARGS_DASH catalog --service identity; then
             STATUS_KEYSTONE="Succeeded"
         else
             STATUS_KEYSTONE="Failed"
@@ -82,10 +90,27 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     else
         # Test OSAPI
         echo -e "\nTest Nova"
-        if nova $TENANT_ARG $ARGS flavor-list; then
+        if nova $TENANT_ARG_DASH $ARGS_DASH flavor-list; then
             STATUS_NOVA="Succeeded"
         else
             STATUS_NOVA="Failed"
+            RETURN=1
+        fi
+    fi
+fi
+
+# Cinder client
+# -------------
+
+if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
+    if [[ "$SKIP_EXERCISES" =~ "c-api" ]] ; then
+        STATUS_CINDER="Skipped"
+    else
+        echo -e "\nTest Cinder"
+        if cinder $TENANT_ARG_DASH $ARGS_DASH list; then
+            STATUS_CINDER="Succeeded"
+        else
+            STATUS_CINDER="Failed"
             RETURN=1
         fi
     fi
@@ -116,7 +141,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
         STATUS_SWIFT="Skipped"
     else
         echo -e "\nTest Swift"
-        if swift $TENANT_ARG $ARGS stat; then
+        if swift $TENANT_ARG_DASH $ARGS_DASH stat; then
             STATUS_SWIFT="Succeeded"
         else
             STATUS_SWIFT="Failed"
@@ -124,6 +149,8 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
         fi
     fi
 fi
+
+set +o xtrace
 
 # Results
 # -------
@@ -137,6 +164,7 @@ function report() {
 echo -e "\n"
 report "Keystone" $STATUS_KEYSTONE
 report "Nova" $STATUS_NOVA
+report "Cinder" $STATUS_CINDER
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT
 

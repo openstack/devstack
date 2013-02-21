@@ -2,7 +2,7 @@
 
 # **sec_groups.sh**
 
-# Test security groups via the command line tools that ship with it.
+# Test security groups via the command line
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -41,7 +41,7 @@ source $TOP_DIR/exerciserc
 nova secgroup-list
 
 # Create random name for new sec group and create secgroup of said name
-SEC_GROUP_NAME="sec-group-$(openssl rand -hex 4)"
+SEC_GROUP_NAME="ex-secgroup-$(openssl rand -hex 4)"
 nova secgroup-create $SEC_GROUP_NAME 'a test security group'
 
 # Add some rules to the secgroup
@@ -65,8 +65,10 @@ done
 for RULE in "${RULES_TO_ADD[@]}"; do
     nova secgroup-delete-rule $SEC_GROUP_NAME tcp $RULE $RULE 0.0.0.0/0
 done
-nova secgroup-delete $SEC_GROUP_NAME
 
+# Delete secgroup
+nova secgroup-delete $SEC_GROUP_NAME || \
+    die "Failure deleting security group $SEC_GROUP_NAME"
 
 set +o xtrace
 echo "*********************************************************************"

@@ -2,7 +2,7 @@
 
 # **swift.sh**
 
-# Test swift via the command line tools that ship with it.
+# Test swift via the ``swift`` command line from ``python-swiftclient`
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -33,12 +33,12 @@ source $TOP_DIR/openrc
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
-# Container name
-CONTAINER=ex-swift
-
 # If swift is not enabled we exit with exitcode 55 which mean
 # exercise is skipped.
 is_service_enabled swift || exit 55
+
+# Container name
+CONTAINER=ex-swift
 
 
 # Testing Swift

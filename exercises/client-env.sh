@@ -8,6 +8,14 @@ echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
 echo "*********************************************************************"
 
+# This script exits on an error so that errors don't compound and you see
+# only the first error that occured.
+set -o errexit
+
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following allowing as the install occurs.
+set -o xtrace
+
 
 # Settings
 # ========
@@ -99,6 +107,23 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     fi
 fi
 
+# Cinder client
+# -------------
+
+if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
+    if [[ "$SKIP_EXERCISES" =~ "c-api" ]] ; then
+        STATUS_CINDER="Skipped"
+    else
+        echo -e "\nTest Cinder"
+        if cinder list; then
+            STATUS_CINDER="Succeeded"
+        else
+            STATUS_CINDER="Failed"
+            RETURN=1
+        fi
+    fi
+fi
+
 # Glance client
 # -------------
 
@@ -133,6 +158,8 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
     fi
 fi
 
+set +o xtrace
+
 # Results
 # -------
 
@@ -146,6 +173,7 @@ echo -e "\n"
 report "Keystone" $STATUS_KEYSTONE
 report "Nova" $STATUS_NOVA
 report "EC2" $STATUS_EC2
+report "Cinder" $STATUS_CINDER
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT
 
