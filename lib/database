@@ -2,9 +2,12 @@
 # Interface for interacting with different database backends
 
 # Dependencies:
-# DATABASE_BACKENDS variable must contain a list of available database backends
-# DATABASE_TYPE variable must be set
+# ``ENABLED_SERVICES`` must be defined
 
+# ``DATABASE_BACKENDS`` will contain a list of available database backends
+# after sourcing this file.
+
+# This is a wrapper for the specific database backends available.
 # Each database must implement four functions:
 #   recreate_database_$DATABASE_TYPE
 #   install_database_$DATABASE_TYPE
@@ -23,7 +26,35 @@ function register_database {
     [ -z "$DATABASE_BACKENDS" ] && DATABASE_BACKENDS=$1 || DATABASE_BACKENDS+=" $1"
 }
 
+# Sourcing the database libs sets DATABASE_BACKENDS with the available list
 for f in $TOP_DIR/lib/databases/*; do source $f; done
+
+# If ``DATABASE_TYPE`` is defined here it's because the user has it in ``localrc``
+# or has called ``use_database``.  Both are deprecated so let's fix it up for now.
+if [[ -n $DATABASE_TYPE ]]; then
+    # This is now deprecated usage, set up a warning and try to be
+    # somewhat backward compatible for now.
+    DEPRECATED_TEXT="$DEPRECATED_TEXT\nThe database backend needs to be properly set in ENABLED_SERVICES; DATABASE_TYPE or use_database is deprecated localrc\n"
+    if [[ ! $ENABLED_SERVICES =~ $DATABASE_TYPE ]]; then
+        # It's not in enabled services but user has attempted to select a
+        # database, so just add it now
+        ENABLED_SERVICES+=,$DATABASE_TYPE
+        unset DATABASE_TYPE
+    fi
+fi
+
+# ``DATABASE_BACKENDS`` now contains a list of the supported databases
+# Look in ``ENABLED_SERVICES`` to see if one has been selected
+for db in $DATABASE_BACKENDS; do
+    # Set the type for the rest of the backend to use
+    if is_service_enabled $db; then
+        # Set this now for the rest of the database funtions
+        DATABASE_TYPE=$db
+    fi
+done
+# If ``DATABASE_TYPE`` is unset here no database was selected
+# This is not an error as multi-node installs will do this on the compute nodes
+
 
 # Set the database type based on the configuration
 function initialize_database_backends {

@@ -60,11 +60,12 @@ You can override environment variables used in `stack.sh` by creating file name 
 # Database Backend
 
 Multiple database backends are available. The available databases are defined in the lib/databases directory.
-To choose a database backend, add a line to your `localrc` like:
+`mysql` is the default database, choose a different one by putting the following in `localrc`:
 
-    use_database postgresql
+    disable_service mysql
+    enable_service postgresql
 
-By default, the mysql database backend is used.
+`mysql` is the default database.
 
 # RPC Backend
 

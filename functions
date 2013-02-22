@@ -1003,9 +1003,11 @@ function upload_image() {
 #  $1 The name of the database backend to use (mysql, postgresql, ...)
 function use_database {
     if [[ -z "$DATABASE_BACKENDS" ]]; then
-        # The backends haven't initialized yet, just save the selection for now
+        # No backends registered means this is likely called from ``localrc``
+        # This is now deprecated usage
         DATABASE_TYPE=$1
     else
+        # This should no longer get called...here for posterity
         use_exclusive_service DATABASE_BACKENDS DATABASE_TYPE $1
     fi
 }
