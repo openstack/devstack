@@ -268,6 +268,11 @@ SYSLOG=`trueorfalse False $SYSLOG`
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
 SYSLOG_PORT=${SYSLOG_PORT:-516}
 
+# Enable sysstat logging
+SYSSTAT_FILE=${SYSSTAT_FILE:-"sysstat.dat"}
+SYSSTAT_INTERVAL=${SYSSTAT_INTERVAL:-"1"}
+
+
 # Use color for logging output (only available if syslog is not used)
 LOG_COLOR=`trueorfalse True $LOG_COLOR`
 
@@ -1272,6 +1277,15 @@ if is_service_enabled nova && is_baremetal; then
     # ensure callback daemon is running
     sudo pkill nova-baremetal-deploy-helper || true
     screen_it baremetal "nova-baremetal-deploy-helper"
+fi
+
+# run sysstat if it is enabled
+if is_service_enabled sysstat;then
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        screen_it sysstat "sar -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
+    else
+        screen_it sysstat "sar $SYSSTAT_INTERVAL"
+    fi
 fi
 
 # Save some values we generated for later use
