@@ -31,7 +31,7 @@ function quantum_plugin_configure_debug_command() {
 }
 
 function quantum_plugin_configure_dhcp_agent() {
-    :
+    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager quantum.agent.dhcp_agent.DhcpAgentWithStateReport
 }
 
 function quantum_plugin_configure_l3_agent() {
