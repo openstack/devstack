@@ -46,6 +46,10 @@ SWIFT_CONF_DIR=${SWIFT_CONF_DIR:-${SWIFT_CONFIG_DIR:-/etc/swift}}
 # Default is 1 gigabyte.
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 
+# Set ``SWIFT_EXTRAS_MIDDLEWARE`` to extras middlewares.
+# Default is ``staticweb, tempurl, bulk, formpost``
+SWIFT_EXTRAS_MIDDLEWARE=${SWIFT_EXTRAS_MIDDLEWARE:-tempurl formpost staticweb bulk}
+
 # The ring uses a configurable number of bits from a path’s MD5 hash as
 # a partition index that designates a device. The number of bits kept
 # from the hash is known as the partition power, and 2 to the partition
@@ -85,11 +89,12 @@ function cleanup_swift() {
    if [[ -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
       rm ${SWIFT_DATA_DIR}/drives/images/swift.img
    fi
+   rm -rf ${SWIFT_DATA_DIR}/run/
 }
 
 # configure_swift() - Set config files, create data dirs and loop image
 function configure_swift() {
-    local swift_auth_server
+    local swift_pipeline=" "
     local node_number
     local swift_node_config
     local swift_log_dir
@@ -200,10 +205,21 @@ function configure_swift() {
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
 
-    # Only enable Swift3 if we have it enabled in ENABLED_SERVICES
-    is_service_enabled swift3 && swift3=swift3 || swift3=""
-
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} pipeline:main pipeline "catch_errors healthcheck cache ratelimit ${swift3} ${swift_auth_server} proxy-logging proxy-server"
+    # By default Swift will be installed with the tempauth middleware
+    # which has some default username and password if you have
+    # configured keystone it will configure swift with it.
+    if is_service_enabled key;then
+        if is_service_enabled swift3;then
+            swift_pipeline=" s3token swift3 "
+        fi
+        swift_pipeline+=" authtoken keystoneauth "
+    else
+        if is_service_enabled swift3;then
+            swift_pipeline=" swift3 "
+        fi
+        swift_pipeline+=" tempauth "
+    fi
+    sed -i "/^pipeline/ { s/tempauth/${swift_pipeline} ${SWIFT_EXTRAS_MIDDLEWARE}/ ;}" ${SWIFT_CONFIG_PROXY_SERVER}
 
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
 
