@@ -58,8 +58,8 @@ fi
 
 # get nova
 NOVA_ZIPBALL_URL=${NOVA_ZIPBALL_URL:-$(echo $NOVA_REPO | sed "s:\.git$::;s:$:/zipball/$NOVA_BRANCH:g")}
-wget $NOVA_ZIPBALL_URL -O nova-zipball --no-check-certificate
-unzip -o nova-zipball  -d ./nova
+wget -nv $NOVA_ZIPBALL_URL -O nova-zipball --no-check-certificate
+unzip -q -o nova-zipball  -d ./nova
 
 # install xapi plugins
 XAPI_PLUGIN_DIR=/etc/xapi.d/plugins/
@@ -76,8 +76,8 @@ if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
     fi
     # get quantum
     QUANTUM_ZIPBALL_URL=${QUANTUM_ZIPBALL_URL:-$(echo $QUANTUM_REPO | sed "s:\.git$::;s:$:/zipball/$QUANTUM_BRANCH:g")}
-    wget $QUANTUM_ZIPBALL_URL -O quantum-zipball --no-check-certificate
-    unzip -o quantum-zipball  -d ./quantum
+    wget -nv $QUANTUM_ZIPBALL_URL -O quantum-zipball --no-check-certificate
+    unzip -q -o quantum-zipball  -d ./quantum
     cp -pr ./quantum/*/quantum/plugins/openvswitch/agent/xenapi/etc/xapi.d/plugins/* $XAPI_PLUGIN_DIR
 fi
 
@@ -386,18 +386,14 @@ fi
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
 COPYENV=${COPYENV:-1}
 if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" = "1" ]; then
-    echo "We're done launching the vm, about to start tailing the"
-    echo "stack.sh log. It will take a second or two to start."
-    echo
-    echo "Just CTRL-C at any time to stop tailing."
+    set +x
 
+    echo "VM Launched - Waiting for startup script"
     # wait for log to appear
     while ! ssh_no_check -q stack@$DOMU_IP "[ -e run.sh.log ]"; do
         sleep 10
     done
-
-    set +x
-    echo -n "Waiting for startup script to finish"
+    echo -n "Running"
     while [ `ssh_no_check -q stack@$DOMU_IP pgrep -c run.sh` -ge 1 ]
     do
         sleep 10
