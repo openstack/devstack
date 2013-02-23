@@ -64,11 +64,16 @@ function configure_ceilometer() {
     [ ! -d $CEILOMETER_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $CEILOMETER_API_LOG_DIR
     sudo chown $USER $CEILOMETER_API_LOG_DIR
 
-    iniset $CEILOMETER_CONF DEFAULT rpc_backend 'ceilometer.openstack.common.rpc.impl_kombu'
+    if is_service_enabled rabbit ; then
+        iniset $CEILOMETER_CONF DEFAULT rpc_backend 'ceilometer.openstack.common.rpc.impl_kombu'
+        iniset $CEILOMETER_CONF DEFAULT rabbit_host $RABBIT_HOST
+        iniset $CEILOMETER_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+    elif is_service_enabled qpid ; then
+        iniset $CEILOMETER_CONF DEFAULT rpc_backend 'ceilometer.openstack.common.rpc.impl_qpid'
+    fi
+
     iniset $CEILOMETER_CONF DEFAULT notification_topics 'notifications,glance_notifications'
     iniset $CEILOMETER_CONF DEFAULT verbose True
-    iniset $CEILOMETER_CONF DEFAULT rabbit_host $RABBIT_HOST
-    iniset $CEILOMETER_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $CEILOMETER_CONF DEFAULT sql_connection $BASE_SQL_CONN/nova?charset=utf8
 
     # Install the policy file for the API server
