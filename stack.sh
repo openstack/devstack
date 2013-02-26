@@ -410,7 +410,6 @@ FLAT_INTERFACE=${FLAT_INTERFACE-$GUEST_INTERFACE_DEFAULT}
 
 ## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
 
-
 # Database Configuration
 # ----------------------
 
@@ -845,6 +844,18 @@ screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 # Initialize the directory for service status check
 init_service_check
 
+# Kick off Sysstat
+# ------------------------
+# run sysstat if it is enabled, this has to be early as daemon
+# startup is one of the things to track.
+if is_service_enabled sysstat;then
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        screen_it sysstat "sar -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
+    else
+        screen_it sysstat "sar $SYSSTAT_INTERVAL"
+    fi
+fi
+
 # Keystone
 # --------
 
@@ -1275,14 +1286,6 @@ if is_service_enabled nova && is_baremetal; then
     screen_it baremetal "nova-baremetal-deploy-helper"
 fi
 
-# run sysstat if it is enabled
-if is_service_enabled sysstat;then
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it sysstat "sar -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
-    else
-        screen_it sysstat "sar $SYSSTAT_INTERVAL"
-    fi
-fi
 
 # Save some values we generated for later use
 CURRENT_RUN_TIME=$(date "+$TIMESTAMP_FORMAT")
