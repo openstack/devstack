@@ -56,7 +56,7 @@ exit_if_aggregate_present() {
     if [ $(nova aggregate-list | grep -c " $aggregate_name ") == 0 ]; then
         echo "SUCCESS $aggregate_name not present"
     else
-        echo "ERROR found aggregate: $aggregate_name"
+        die $LINENO "found aggregate: $aggregate_name"
         exit -1
     fi
 }
@@ -67,15 +67,14 @@ AGGREGATE_ID=$(nova aggregate-create $AGGREGATE_NAME $AGGREGATE_A_ZONE | grep " 
 AGGREGATE2_ID=$(nova aggregate-create $AGGREGATE2_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE2_NAME " | get_field 1)
 
 # check aggregate created
-nova aggregate-list | grep -q " $AGGREGATE_NAME " || die "Aggregate $AGGREGATE_NAME not created"
+nova aggregate-list | grep -q " $AGGREGATE_NAME " || die $LINENO "Aggregate $AGGREGATE_NAME not created"
 
 
 # Ensure creating a duplicate fails
 # =================================
 
 if nova aggregate-create $AGGREGATE_NAME $AGGREGATE_A_ZONE; then
-    echo "ERROR could create duplicate aggregate"
-    exit -1
+    die $LINENO "could create duplicate aggregate"
 fi
 
 
@@ -113,7 +112,7 @@ nova aggregate-set-metadata $AGGREGATE_ID $META_DATA_2_KEY ${META_DATA_3_KEY}=78
 nova aggregate-details $AGGREGATE_ID | grep $META_DATA_1_KEY
 nova aggregate-details $AGGREGATE_ID | grep $META_DATA_3_KEY
 
-nova aggregate-details $AGGREGATE_ID | grep $META_DATA_2_KEY && die "ERROR metadata was not cleared"
+nova aggregate-details $AGGREGATE_ID | grep $META_DATA_2_KEY && die $LINENO "ERROR metadata was not cleared"
 
 nova aggregate-set-metadata $AGGREGATE_ID $META_DATA_3_KEY $META_DATA_1_KEY
 nova aggregate-details $AGGREGATE_ID | egrep "{u'availability_zone': u'$AGGREGATE_A_ZONE'}|{}"
@@ -129,8 +128,7 @@ FIRST_HOST=$(nova host-list | grep compute | get_field 1 | head -1)
 nova aggregate-add-host $AGGREGATE_ID $FIRST_HOST
 nova aggregate-add-host $AGGREGATE2_ID $FIRST_HOST
 if nova aggregate-add-host $AGGREGATE2_ID $FIRST_HOST; then
-    echo "ERROR could add duplicate host to single aggregate"
-    exit -1
+    die $LINENO "could add duplicate host to single aggregate"
 fi
 nova aggregate-remove-host $AGGREGATE2_ID $FIRST_HOST
 nova aggregate-remove-host $AGGREGATE_ID $FIRST_HOST

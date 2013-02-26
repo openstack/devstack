@@ -71,7 +71,7 @@ glance image-list
 
 # Grab the id of the image to launch
 IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
-die_if_not_set IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
+die_if_not_set $LINENO IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 
 # Security Groups
 # ---------------
@@ -83,8 +83,7 @@ nova secgroup-list
 if ! nova secgroup-list | grep -q $SECGROUP; then
     nova secgroup-create $SECGROUP "$SECGROUP description"
     if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova secgroup-list | grep -q $SECGROUP; do sleep 1; done"; then
-        echo "Security group not created"
-        exit 1
+        die $LINENO "Security group not created"
     fi
 fi
 
@@ -115,7 +114,7 @@ fi
 # Clean-up from previous runs
 nova delete $VM_NAME || true
 if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $VM_NAME; do sleep 1; done"; then
-    echo "server didn't terminate!"
+    die $LINENO "server didn't terminate!"
     exit 1
 fi
 
@@ -123,17 +122,16 @@ fi
 # -------------
 
 VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
-die_if_not_set VM_UUID "Failure launching $VM_NAME"
+die_if_not_set $LINENO VM_UUID "Failure launching $VM_NAME"
 
 # Check that the status is active within ACTIVE_TIMEOUT seconds
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
-    echo "server didn't become active!"
-    exit 1
+    die $LINENO "server didn't become active!"
 fi
 
 # Get the instance IP
 IP=$(nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2)
-die_if_not_set IP "Failure retrieving IP address"
+die_if_not_set $LINENO IP "Failure retrieving IP address"
 
 # Private IPs can be pinged in single node deployments
 ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
@@ -143,17 +141,16 @@ ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
 
 # Allocate a floating IP from the default pool
 FLOATING_IP=$(nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | get_field 1)
-die_if_not_set FLOATING_IP "Failure creating floating IP from pool $DEFAULT_FLOATING_POOL"
+die_if_not_set $LINENO FLOATING_IP "Failure creating floating IP from pool $DEFAULT_FLOATING_POOL"
 
 # List floating addresses
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $FLOATING_IP; do sleep 1; done"; then
-    echo "Floating IP not allocated"
-    exit 1
+    die $LINENO "Floating IP not allocated"
 fi
 
 # Add floating IP to our server
 nova add-floating-ip $VM_UUID $FLOATING_IP || \
-    die "Failure adding floating IP $FLOATING_IP to $VM_NAME"
+    die $LINENO "Failure adding floating IP $FLOATING_IP to $VM_NAME"
 
 # Test we can ping our floating IP within ASSOCIATE_TIMEOUT seconds
 ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
@@ -161,18 +158,17 @@ ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
 if ! is_service_enabled quantum; then
     # Allocate an IP from second floating pool
     TEST_FLOATING_IP=$(nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1)
-    die_if_not_set TEST_FLOATING_IP "Failure creating floating IP in $TEST_FLOATING_POOL"
+    die_if_not_set $LINENO TEST_FLOATING_IP "Failure creating floating IP in $TEST_FLOATING_POOL"
 
     # list floating addresses
     if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TEST_FLOATING_POOL | grep -q $TEST_FLOATING_IP; do sleep 1; done"; then
-        echo "Floating IP not allocated"
-        exit 1
+        die $LINENO "Floating IP not allocated"
      fi
 fi
 
 # Dis-allow icmp traffic (ping)
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || \
-    die "Failure deleting security group rule from $SECGROUP"
+    die $LINENO "Failure deleting security group rule from $SECGROUP"
 
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
@@ -186,24 +182,23 @@ fi
 if ! is_service_enabled quantum; then
     # Delete second floating IP
     nova floating-ip-delete $TEST_FLOATING_IP || \
-        die "Failure deleting floating IP $TEST_FLOATING_IP"
+        die $LINENO "Failure deleting floating IP $TEST_FLOATING_IP"
 fi
 
 # Delete the floating ip
 nova floating-ip-delete $FLOATING_IP || \
-    die "Failure deleting floating IP $FLOATING_IP"
+    die $LINENO "Failure deleting floating IP $FLOATING_IP"
 
 # Delete instance
-nova delete $VM_UUID || die "Failure deleting instance $VM_NAME"
+nova delete $VM_UUID || die $LINENO "Failure deleting instance $VM_NAME"
 # Wait for termination
 if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
-    echo "Server $VM_NAME not deleted"
-    exit 1
+    die $LINENO "Server $VM_NAME not deleted"
 fi
 
 # Delete secgroup
 nova secgroup-delete $SECGROUP || \
-    die "Failure deleting security group $SECGROUP"
+    die $LINENO "Failure deleting security group $SECGROUP"
 
 set +o xtrace
 echo "*********************************************************************"

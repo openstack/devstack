@@ -45,20 +45,20 @@ CONTAINER=ex-swift
 # =============
 
 # Check if we have to swift via keystone
-swift stat || die "Failure geting status"
+swift stat || die $LINENO "Failure geting status"
 
 # We start by creating a test container
-swift post $CONTAINER || die "Failure creating container $CONTAINER"
+swift post $CONTAINER || die $LINENO "Failure creating container $CONTAINER"
 
 # add some files into it.
-swift upload $CONTAINER /etc/issue || die "Failure uploading file to container $CONTAINER"
+swift upload $CONTAINER /etc/issue || die $LINENO "Failure uploading file to container $CONTAINER"
 
 # list them
-swift list $CONTAINER || die "Failure listing contents of container $CONTAINER"
+swift list $CONTAINER || die $LINENO "Failure listing contents of container $CONTAINER"
 
 # And we may want to delete them now that we have tested that
 # everything works.
-swift delete $CONTAINER || die "Failure deleting container $CONTAINER"
+swift delete $CONTAINER || die $LINENO "Failure deleting container $CONTAINER"
 
 set +o xtrace
 echo "*********************************************************************"

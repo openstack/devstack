@@ -323,8 +323,7 @@ function start_keystone() {
     screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
     echo "Waiting for keystone to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s http://$SERVICE_HOST:$service_port/v2.0/ >/dev/null; do sleep 1; done"; then
-      echo "keystone did not start"
-      exit 1
+      die $LINENO "keystone did not start"
     fi
 
     # Start proxies if enabled

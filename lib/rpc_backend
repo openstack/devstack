@@ -39,8 +39,7 @@ function check_rpc_backend() {
     fi
 
     if is_service_enabled qpid && ! qpid_is_supported; then
-        echo "Qpid support is not available for this version of your distribution."
-        exit 1
+        die $LINENO "Qpid support is not available for this version of your distribution."
     fi
 }
 

@@ -72,7 +72,7 @@ glance image-list
 
 # Grab the id of the image to launch
 IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
-die_if_not_set IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
+die_if_not_set $LINENO IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 
 # Security Groups
 # ---------------
@@ -140,7 +140,7 @@ fi
 # Create the bootable volume
 start_time=$(date +%s)
 cinder create --image-id $IMAGE --display_name=$VOL_NAME --display_description "test bootable volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
-    die "Failure creating volume $VOL_NAME"
+    die $LINENO "Failure creating volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
     exit 1
@@ -150,7 +150,7 @@ echo "Completed cinder create in $((end_time - start_time)) seconds"
 
 # Get volume ID
 VOL_ID=$(cinder list | grep $VOL_NAME  | get_field 1)
-die_if_not_set VOL_ID "Failure retrieving volume ID for $VOL_NAME"
+die_if_not_set $LINENO VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 
 # Boot instance
 # -------------
@@ -159,7 +159,7 @@ die_if_not_set VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 # <dev_name>=<id>:<type>:<size(GB)>:<delete_on_terminate>
 # Leaving the middle two fields blank appears to do-the-right-thing
 VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --block-device-mapping vda=$VOL_ID --security_groups=$SECGROUP --key_name $KEY_NAME $VM_NAME | grep ' id ' | get_field 2)
-die_if_not_set VM_UUID "Failure launching $VM_NAME"
+die_if_not_set $LINENO VM_UUID "Failure launching $VM_NAME"
 
 # Check that the status is active within ACTIVE_TIMEOUT seconds
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
@@ -169,7 +169,7 @@ fi
 
 # Get the instance IP
 IP=$(nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2)
-die_if_not_set IP "Failure retrieving IP address"
+die_if_not_set $LINENO IP "Failure retrieving IP address"
 
 # Private IPs can be pinged in single node deployments
 ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
@@ -178,7 +178,7 @@ ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
 # --------
 
 # Delete volume backed instance
-nova delete $VM_UUID || die "Failure deleting instance $VM_NAME"
+nova delete $VM_UUID || die $LINENO "Failure deleting instance $VM_NAME"
 if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
     echo "Server $VM_NAME not deleted"
     exit 1
@@ -192,7 +192,7 @@ fi
 
 # Delete volume
 start_time=$(date +%s)
-cinder delete $VOL_ID || die "Failure deleting volume $VOLUME_NAME"
+cinder delete $VOL_ID || die $LINENO "Failure deleting volume $VOLUME_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while cinder list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
     exit 1
@@ -201,7 +201,7 @@ end_time=$(date +%s)
 echo "Completed cinder delete in $((end_time - start_time)) seconds"
 
 # Delete secgroup
-nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
+nova secgroup-delete $SECGROUP || die $LINENO "Failure deleting security group $SECGROUP"
 
 set +o xtrace
 echo "*********************************************************************"

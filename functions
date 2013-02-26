@@ -57,8 +57,15 @@ function cp_it {
 # die "message"
 function die() {
     local exitcode=$?
+    if [ $exitcode == 0 ]; then
+        exitcode=1
+    fi
     set +o xtrace
-    echo $@
+    local msg="[ERROR] $0:$1 $2"
+    echo $msg 1>&2;
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        echo $msg >> "${SCREEN_LOGDIR}/error.log"
+    fi
     exit $exitcode
 }
 
@@ -71,10 +78,9 @@ function die_if_not_set() {
     (
         local exitcode=$?
         set +o xtrace
-        local evar=$1; shift
+        local evar=$2; shift
         if ! is_set $evar || [ $exitcode != 0 ]; then
-            echo $@
-            exit -1
+            die $@
         fi
     )
 }
@@ -406,12 +412,10 @@ function exit_distro_not_supported {
     fi
 
     if [ $# -gt 0 ]; then
-        echo "Support for $DISTRO is incomplete: no support for $@"
+        die $LINENO "Support for $DISTRO is incomplete: no support for $@"
     else
-        echo "Support for $DISTRO is incomplete."
+        die $LINENO "Support for $DISTRO is incomplete."
     fi
-
-    exit 1
 }
 
 
@@ -1087,9 +1091,9 @@ function _ping_check_novanet() {
     fi
     if ! timeout $boot_timeout sh -c "$check_command"; then
         if [[ "$expected" = "True" ]]; then
-            echo "[Fail] Couldn't ping server"
+            die $LINENO "[Fail] Couldn't ping server"
         else
-            echo "[Fail] Could ping server"
+            die $LINENO "[Fail] Could ping server"
         fi
         exit 1
     fi
@@ -1113,8 +1117,7 @@ function _ssh_check_novanet() {
     local ACTIVE_TIMEOUT=$5
     local probe_cmd=""
     if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success ; do sleep 1; done"; then
-        echo "server didn't become ssh-able!"
-        exit 1
+        die $LINENO "server didn't become ssh-able!"
     fi
 }
 

@@ -68,7 +68,7 @@ done
 
 # Delete secgroup
 nova secgroup-delete $SEC_GROUP_NAME || \
-    die "Failure deleting security group $SEC_GROUP_NAME"
+    die $LINENO "Failure deleting security group $SEC_GROUP_NAME"
 
 set +o xtrace
 echo "*********************************************************************"

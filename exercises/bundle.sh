@@ -49,21 +49,20 @@ REGISTER_TIMEOUT=${REGISTER_TIMEOUT:-15}
 BUCKET=testbucket
 IMAGE=bundle.img
 truncate -s 5M /tmp/$IMAGE
-euca-bundle-image -i /tmp/$IMAGE || die "Failure bundling image $IMAGE"
+euca-bundle-image -i /tmp/$IMAGE || die $LINENO "Failure bundling image $IMAGE"
 
-euca-upload-bundle --debug -b $BUCKET -m /tmp/$IMAGE.manifest.xml || die "Failure uploading bundle $IMAGE to $BUCKET"
+euca-upload-bundle --debug -b $BUCKET -m /tmp/$IMAGE.manifest.xml || die $LINENO "Failure uploading bundle $IMAGE to $BUCKET"
 
 AMI=`euca-register $BUCKET/$IMAGE.manifest.xml | cut -f2`
-die_if_not_set AMI "Failure registering $BUCKET/$IMAGE"
+die_if_not_set $LINENO AMI "Failure registering $BUCKET/$IMAGE"
 
 # Wait for the image to become available
 if ! timeout $REGISTER_TIMEOUT sh -c "while euca-describe-images | grep $AMI | grep -q available; do sleep 1; done"; then
-    echo "Image $AMI not available within $REGISTER_TIMEOUT seconds"
-    exit 1
+    die $LINENO "Image $AMI not available within $REGISTER_TIMEOUT seconds"
 fi
 
 # Clean up
-euca-deregister $AMI || die "Failure deregistering $AMI"
+euca-deregister $AMI || die $LINENO "Failure deregistering $AMI"
 
 set +o xtrace
 echo "*********************************************************************"

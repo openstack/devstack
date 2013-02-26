@@ -351,8 +351,7 @@ function start_quantum_service_and_check() {
     screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $QUANTUM_CONF --config-file /$Q_PLUGIN_CONF_FILE"
     echo "Waiting for Quantum to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$Q_HOST:$Q_PORT; do sleep 1; done"; then
-      echo "Quantum did not start"
-      exit 1
+      die $LINENO "Quantum did not start"
     fi
 }
 
@@ -396,8 +395,7 @@ function _configure_quantum_common() {
     quantum_plugin_configure_common
 
     if [[ $Q_PLUGIN_CONF_PATH == '' || $Q_PLUGIN_CONF_FILENAME == '' || $Q_PLUGIN_CLASS == '' ]]; then
-        echo "Quantum plugin not set.. exiting"
-        exit 1
+        die $LINENO "Quantum plugin not set.. exiting"
     fi
 
     # If needed, move config file from ``$QUANTUM_DIR/etc/quantum`` to ``QUANTUM_CONF_DIR``
@@ -511,8 +509,7 @@ function _configure_quantum_service() {
     if is_service_enabled $DATABASE_BACKENDS; then
         recreate_database $Q_DB_NAME utf8
     else
-        echo "A database must be enabled in order to use the $Q_PLUGIN Quantum plugin."
-        exit 1
+        die $LINENO "A database must be enabled in order to use the $Q_PLUGIN Quantum plugin."
     fi
 
     # Update either configuration file with plugin
@@ -661,11 +658,10 @@ function _ping_check_quantum() {
     fi
     if ! timeout $timeout_sec sh -c "$check_command"; then
         if [[ "$expected" = "True" ]]; then
-            echo "[Fail] Couldn't ping server"
+            die $LINENO "[Fail] Couldn't ping server"
         else
-            echo "[Fail] Could ping server"
+            die $LINENO "[Fail] Could ping server"
         fi
-        exit 1
     fi
 }
 
@@ -679,8 +675,7 @@ function _ssh_check_quantum() {
     local probe_cmd = ""
     probe_cmd=`_get_probe_cmd_prefix $from_net`
     if ! timeout $timeout_sec sh -c "while ! $probe_cmd ssh -o StrictHostKeyChecking=no -i $key_file ${user}@$ip echo success ; do sleep 1; done"; then
-        echo "server didn't become ssh-able!"
-        exit 1
+        die $LINENO "server didn't become ssh-able!"
     fi
 }
 

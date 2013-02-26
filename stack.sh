@@ -55,8 +55,7 @@ GetDistro
 # allow you to safely override those settings.
 
 if [[ ! -r $TOP_DIR/stackrc ]]; then
-    echo "ERROR: missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
-    exit 1
+    log_error $LINENO "missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
 fi
 source $TOP_DIR/stackrc
 
@@ -93,8 +92,7 @@ disable_negated_services
 if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|f16|f17|f18|opensuse-12.2) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
-        echo "If you wish to run this script anyway run with FORCE=yes"
-        exit 1
+        die $LINENO "If you wish to run this script anyway run with FORCE=yes"
     fi
 fi
 
@@ -105,16 +103,14 @@ check_rpc_backend
 # ``stack.sh`` keeps function libraries here
 # Make sure ``$TOP_DIR/lib`` directory is present
 if [ ! -d $TOP_DIR/lib ]; then
-    echo "ERROR: missing devstack/lib"
-    exit 1
+    log_error $LINENO "missing devstack/lib"
 fi
 
 # ``stack.sh`` keeps the list of ``apt`` and ``rpm`` dependencies and config
 # templates and other useful files in the ``files`` subdirectory
 FILES=$TOP_DIR/files
 if [ ! -d $FILES ]; then
-    echo "ERROR: missing devstack/files"
-    exit 1
+    log_error $LINENO "missing devstack/files"
 fi
 
 SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -248,9 +244,7 @@ if [ -z "$HOST_IP" -o "$HOST_IP" == "dhcp" ]; then
         fi
     done
     if [ "$HOST_IP" == "" ]; then
-        echo "Could not determine host ip address."
-        echo "Either localrc specified dhcp on ${HOST_IP_IFACE} or defaulted"
-        exit 1
+        die $LINENO "Could not determine host ip address. Either localrc specified dhcp on ${HOST_IP_IFACE} or defaulted"
     fi
 fi
 

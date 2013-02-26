@@ -542,8 +542,7 @@ function start_nova_api() {
     screen_it n-api "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api"
     echo "Waiting for nova-api to start..."
     if ! wait_for_service $SERVICE_TIMEOUT http://$SERVICE_HOST:$service_port; then
-      echo "nova-api did not start"
-      exit 1
+      die $LINENO "nova-api did not start"
     fi
 
     # Start proxies if enabled

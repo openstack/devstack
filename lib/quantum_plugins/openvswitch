@@ -49,9 +49,7 @@ function quantum_plugin_configure_plugin_agent() {
         # REVISIT - also check kernel module support for GRE and patch ports
         OVS_VERSION=`ovs-vsctl --version | head -n 1 | awk '{print $4;}'`
         if [ $OVS_VERSION \< "1.4" ] && ! is_service_enabled q-svc ; then
-            echo "You are running OVS version $OVS_VERSION."
-            echo "OVS 1.4+ is required for tunneling between multiple hosts."
-            exit 1
+            die $LINENO "You are running OVS version $OVS_VERSION. OVS 1.4+ is required for tunneling between multiple hosts."
         fi
         iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
         iniset /$Q_PLUGIN_CONF_FILE OVS local_ip $HOST_IP

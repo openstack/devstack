@@ -19,8 +19,7 @@ function setup_integration_bridge() {
         conn=(${NVP_CONTROLLER_CONNECTION//\:/ })
         OVS_MGR_IP=${conn[0]}
     else
-        echo "Error - No controller specified. Unable to set a manager for OVS"
-        exit 1
+        die $LINENO "Error - No controller specified. Unable to set a manager for OVS"
     fi
     sudo ovs-vsctl set-manager ssl:$OVS_MGR_IP
 }
@@ -63,14 +62,12 @@ function quantum_plugin_configure_dhcp_agent() {
 
 function quantum_plugin_configure_l3_agent() {
    # Nicira plugin does not run L3 agent
-   echo "ERROR - q-l3 should must not be executed with Nicira plugin!"
-   exit 1
+   die $LINENO "q-l3 should must not be executed with Nicira plugin!"
 }
 
 function quantum_plugin_configure_plugin_agent() {
    # Nicira plugin does not run L2 agent
-   echo "ERROR - q-agt must not be executed with Nicira plugin!"
-   exit 1
+   die $LINENO "q-agt must not be executed with Nicira plugin!"
 }
 
 function quantum_plugin_configure_service() {
@@ -93,8 +90,7 @@ function quantum_plugin_configure_service() {
         if [[ "$DEFAULT_TZ_UUID" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" default_tz_uuid $DEFAULT_TZ_UUID
         else
-            echo "ERROR - The nicira plugin won't work without a default transport zone."
-            exit 1
+            die $LINENO "The nicira plugin won't work without a default transport zone."
         fi
         if [[ "$DEFAULT_L3_GW_SVC_UUID" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" default_l3_gw_service_uuid $DEFAULT_L3_GW_SVC_UUID
@@ -114,8 +110,7 @@ function quantum_plugin_configure_service() {
             # Only 1 controller can be specified in this case
             iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" nvp_controller_connection $NVP_CONTROLLER_CONNECTION
         else
-            echo "ERROR - The nicira plugin needs at least an NVP controller."
-            exit 1
+            die $LINENO "The nicira plugin needs at least an NVP controller."
         fi
         if [[ "$NVP_USER" != "" ]]; then
             iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" nvp_user $NVP_USER

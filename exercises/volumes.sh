@@ -70,7 +70,7 @@ glance image-list
 
 # Grab the id of the image to launch
 IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
-die_if_not_set IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
+die_if_not_set $LINENO IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 
 # Security Groups
 # ---------------
@@ -114,25 +114,23 @@ fi
 # Clean-up from previous runs
 nova delete $VM_NAME || true
 if ! timeout $ACTIVE_TIMEOUT sh -c "while nova show $VM_NAME; do sleep 1; done"; then
-    echo "server didn't terminate!"
-    exit 1
+    die $LINENO "server didn't terminate!"
 fi
 
 # Boot instance
 # -------------
 
 VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
-die_if_not_set VM_UUID "Failure launching $VM_NAME"
+die_if_not_set $LINENO VM_UUID "Failure launching $VM_NAME"
 
 # Check that the status is active within ACTIVE_TIMEOUT seconds
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
-    echo "server didn't become active!"
-    exit 1
+    die $LINENO "server didn't become active!"
 fi
 
 # Get the instance IP
 IP=$(nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2)
-die_if_not_set IP "Failure retrieving IP address"
+die_if_not_set $LINENO IP "Failure retrieving IP address"
 
 # Private IPs can be pinged in single node deployments
 ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
@@ -142,42 +140,38 @@ ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
 
 # Verify it doesn't exist
 if [[ -n $(cinder list | grep $VOL_NAME | head -1 | get_field 2) ]]; then
-    echo "Volume $VOL_NAME already exists"
-    exit 1
+    die $LINENO "Volume $VOL_NAME already exists"
 fi
 
 # Create a new volume
 start_time=$(date +%s)
 cinder create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
-    die "Failure creating volume $VOL_NAME"
+    die $LINENO "Failure creating volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
-    echo "Volume $VOL_NAME not created"
-    exit 1
+    die $LINENO "Volume $VOL_NAME not created"
 fi
 end_time=$(date +%s)
 echo "Completed cinder create in $((end_time - start_time)) seconds"
 
 # Get volume ID
 VOL_ID=$(cinder list | grep $VOL_NAME | head -1 | get_field 1)
-die_if_not_set VOL_ID "Failure retrieving volume ID for $VOL_NAME"
+die_if_not_set $LINENO VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 
 # Attach to server
 DEVICE=/dev/vdb
 start_time=$(date +%s)
 nova volume-attach $VM_UUID $VOL_ID $DEVICE || \
-    die "Failure attaching volume $VOL_NAME to $VM_NAME"
+    die $LINENO "Failure attaching volume $VOL_NAME to $VM_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
-    echo "Volume $VOL_NAME not attached to $VM_NAME"
-    exit 1
+    die $LINENO "Volume $VOL_NAME not attached to $VM_NAME"
 fi
 end_time=$(date +%s)
 echo "Completed volume-attach in $((end_time - start_time)) seconds"
 
 VOL_ATTACH=$(cinder list | grep $VOL_NAME | head -1 | get_field -1)
-die_if_not_set VOL_ATTACH "Failure retrieving $VOL_NAME status"
+die_if_not_set $LINENO VOL_ATTACH "Failure retrieving $VOL_NAME status"
 if [[ "$VOL_ATTACH" != $VM_UUID ]]; then
-    echo "Volume not attached to correct instance"
-    exit 1
+    die $LINENO "Volume not attached to correct instance"
 fi
 
 # Clean up
@@ -185,33 +179,30 @@ fi
 
 # Detach volume
 start_time=$(date +%s)
-nova volume-detach $VM_UUID $VOL_ID || die "Failure detaching volume $VOL_NAME from $VM_NAME"
+nova volume-detach $VM_UUID $VOL_ID || die $LINENO "Failure detaching volume $VOL_NAME from $VM_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
-    echo "Volume $VOL_NAME not detached from $VM_NAME"
-    exit 1
+    die $LINENO "Volume $VOL_NAME not detached from $VM_NAME"
 fi
 end_time=$(date +%s)
 echo "Completed volume-detach in $((end_time - start_time)) seconds"
 
 # Delete volume
 start_time=$(date +%s)
-cinder delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
+cinder delete $VOL_ID || die $LINENO "Failure deleting volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while cinder list | grep $VOL_NAME; do sleep 1; done"; then
-    echo "Volume $VOL_NAME not deleted"
-    exit 1
+    die $LINENO "Volume $VOL_NAME not deleted"
 fi
 end_time=$(date +%s)
 echo "Completed cinder delete in $((end_time - start_time)) seconds"
 
 # Delete instance
-nova delete $VM_UUID || die "Failure deleting instance $VM_NAME"
+nova delete $VM_UUID || die $LINENO "Failure deleting instance $VM_NAME"
 if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sleep 1; done"; then
-    echo "Server $VM_NAME not deleted"
-    exit 1
+    die $LINENO "Server $VM_NAME not deleted"
 fi
 
 # Delete secgroup
-nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
+nova secgroup-delete $SECGROUP || die $LINENO "Failure deleting security group $SECGROUP"
 
 set +o xtrace
 echo "*********************************************************************"

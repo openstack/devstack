@@ -264,7 +264,7 @@ function create_vm {
         --image $(get_image_id) \
         $NIC \
         $TENANT-server$NUM | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
-    die_if_not_set VM_UUID "Failure launching $TENANT-server$NUM" VM_UUID
+    die_if_not_set $LINENO VM_UUID "Failure launching $TENANT-server$NUM"
     confirm_server_active $VM_UUID
 }
 
@@ -309,8 +309,7 @@ function shutdown_vm {
 function shutdown_vms {
     foreach_tenant_vm 'shutdown_vm ${%TENANT%_NAME} %NUM%'
     if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q ACTIVE; do sleep 1; done"; then
-        echo "Some VMs failed to shutdown"
-        false
+        die $LINENO "Some VMs failed to shutdown"
     fi
 }
 
