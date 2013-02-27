@@ -18,6 +18,7 @@ libvirt-bin # NOPRIME
 libjs-jquery-tablesorter # Needed for coverage html reports
 vlan
 curl
+genisoimage # required for config_drive
 rabbitmq-server # NOPRIME
 qpidd # dist:precise NOPRIME
 socat # used by ajaxterm
