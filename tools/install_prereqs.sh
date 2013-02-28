@@ -54,15 +54,7 @@ export_proxy_variables
 # ================
 
 # Install package requirements
-if is_ubuntu; then
-    install_package $(get_packages $FILES/apts)
-elif is_fedora; then
-    install_package $(get_packages $FILES/rpms)
-elif is_suse; then
-    install_package $(get_packages $FILES/rpms-suse)
-else
-    exit_distro_not_supported "list of packages"
-fi
+install_package $(get_packages $ENABLED_SERVICES)
 
 if [[ -n "$SYSLOG" && "$SYSLOG" != "False" ]]; then
     if is_ubuntu || is_fedora; then
