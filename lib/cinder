@@ -50,8 +50,13 @@ else
     CINDER_BIN_DIR=$(get_python_exec_prefix)
 fi
 
-# Name of the lvm volume group to use/create for iscsi volumes
+# Support for multi lvm backend configuration (default is no support)
+CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
+
+# Name of the lvm volume groups to use/create for iscsi volumes
+# VOLUME_GROUP2 is used only if CINDER_MULTI_LVM_BACKEND = True
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
+VOLUME_GROUP2=${VOLUME_GROUP2:-stack-volumes2}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
 # _clean_volume_group removes all cinder volumes from the specified volume group
@@ -106,6 +111,9 @@ function cleanup_cinder() {
 
     # Campsite rule: leave behind a volume group at least as clean as we found it
     _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
+    if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
+        _clean_volume_group $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
+    fi
 }
 
 # configure_cinder() - Set config files, create data dirs, etc
@@ -164,8 +172,18 @@ function configure_cinder() {
     cp $CINDER_DIR/etc/cinder/cinder.conf.sample $CINDER_CONF
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT verbose True
-    iniset $CINDER_CONF DEFAULT volume_group $VOLUME_GROUP
-    iniset $CINDER_CONF DEFAULT volume_name_template ${VOLUME_NAME_PREFIX}%s
+    if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
+        iniset $CINDER_CONF DEFAULT enabled_backends lvmdriver-1,lvmdriver-2
+        iniset $CINDER_CONF lvmdriver-1 volume_group $VOLUME_GROUP
+        iniset $CINDER_CONF lvmdriver-1 volume_driver cinder.volume.drivers.lvm.LVMISCSIDriver
+        iniset $CINDER_CONF lvmdriver-1 volume_backend_name LVM_iSCSI
+        iniset $CINDER_CONF lvmdriver-2 volume_group $VOLUME_GROUP2
+        iniset $CINDER_CONF lvmdriver-2 volume_driver cinder.volume.drivers.lvm.LVMISCSIDriver
+        iniset $CINDER_CONF lvmdriver-2 volume_backend_name LVM_iSCSI
+    else
+        iniset $CINDER_CONF DEFAULT volume_group $VOLUME_GROUP
+        iniset $CINDER_CONF DEFAULT volume_name_template ${VOLUME_NAME_PREFIX}%s
+    fi
     iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
     local dburl
     database_connection_url dburl cinder
@@ -263,12 +281,14 @@ function create_cinder_cache_dir() {
 }
 
 create_cinder_volume_group() {
-    # Configure a default volume group called '`stack-volumes`' for the volume
-    # service if it does not yet exist.  If you don't wish to use a file backed
-    # volume group, create your own volume group called ``stack-volumes`` before
-    # invoking ``stack.sh``.
+    # According to the CINDER_MULTI_LVM_BACKEND value, configure one or two default volumes
+    # group called ``stack-volumes`` (and ``stack-volumes2``) for the volume
+    # service if it (they) does (do) not yet exist. If you don't wish to use a
+    # file backed volume group, create your own volume group called ``stack-volumes``
+    # and ``stack-volumes2`` before invoking ``stack.sh``.
     #
-    # By default, the backing file is 5G in size, and is stored in ``/opt/stack/data``.
+    # By default, the two backing files are 5G in size, and are stored in
+    # ``/opt/stack/data``.
 
     if ! sudo vgs $VOLUME_GROUP; then
         VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
@@ -281,6 +301,23 @@ create_cinder_volume_group() {
         # Only create if the loopback device doesn't contain $VOLUME_GROUP
         if ! sudo vgs $VOLUME_GROUP; then
             sudo vgcreate $VOLUME_GROUP $DEV
+        fi
+    fi
+    if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
+        #set up the second volume if CINDER_MULTI_LVM_BACKEND is enabled
+
+        if ! sudo vgs $VOLUME_GROUP2; then
+            VOLUME_BACKING_FILE2=${VOLUME_BACKING_FILE2:-$DATA_DIR/${VOLUME_GROUP2}-backing-file}
+
+            # Only create if the file doesn't already exists
+            [[ -f $VOLUME_BACKING_FILE2 ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE2
+
+            DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE2`
+
+            # Only create if the loopback device doesn't contain $VOLUME_GROUP
+            if ! sudo vgs $VOLUME_GROUP2; then
+                sudo vgcreate $VOLUME_GROUP2 $DEV
+            fi
         fi
     fi
 
@@ -314,6 +351,9 @@ function init_cinder() {
             sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
             # Start with a clean volume group
             _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
+            if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
+                _clean_volume_group $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
+            fi
         fi
     fi
 
