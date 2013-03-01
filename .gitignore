@@ -12,3 +12,4 @@ stack-screenrc
 *.pem
 accrc
 .stackenv
+.prereqs
