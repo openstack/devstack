@@ -1070,7 +1070,7 @@ if is_service_enabled nova; then
 
     elif [ "$VIRT_DRIVER" = 'openvz' ]; then
         echo_summary "Using OpenVZ virtualization driver"
-        iniset $NOVA_CONF DEFAULT compute_driver "openvz.driver.OpenVzDriver"
+        iniset $NOVA_CONF DEFAULT compute_driver "openvz.OpenVzDriver"
         iniset $NOVA_CONF DEFAULT connection_type "openvz"
         LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
         iniset $NOVA_CONF DEFAULT firewall_driver "$LIBVIRT_FIREWALL_DRIVER"
