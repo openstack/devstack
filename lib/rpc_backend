@@ -58,6 +58,8 @@ function install_rpc_backend() {
             install_package qpid-cpp-server-daemon
         elif is_ubuntu; then
             install_package qpidd
+            sudo sed -i '/PLAIN/!s/mech_list: /mech_list: PLAIN /' /etc/sasl2/qpidd.conf
+            sudo chmod o+r /etc/qpid/qpidd.sasldb
         else
             exit_distro_not_supported "qpid installation"
         fi
@@ -100,6 +102,11 @@ function iniset_rpc_backend() {
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_zmq
     elif is_service_enabled qpid; then
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_qpid
+        if is_ubuntu; then
+            QPID_PASSWORD=`sudo strings /etc/qpid/qpidd.sasldb | grep -B1 admin | head -1`
+            iniset $file $section qpid_password $QPID_PASSWORD
+            iniset $file $section qpid_username admin
+        fi
     elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_kombu
         iniset $file $section rabbit_host $RABBIT_HOST

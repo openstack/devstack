@@ -114,9 +114,8 @@ function configure_glance() {
         iniset $GLANCE_API_CONF DEFAULT notifier_strategy qpid
     elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
         iniset $GLANCE_API_CONF DEFAULT notifier_strategy rabbit
-        iniset $GLANCE_API_CONF DEFAULT rabbit_host $RABBIT_HOST
-        iniset $GLANCE_API_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
     fi
+    iniset_rpc_backend glance $GLANCE_API_CONF DEFAULT
     iniset $GLANCE_API_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/api
 
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
