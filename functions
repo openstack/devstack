@@ -553,6 +553,56 @@ $option = $value
     fi
 }
 
+# Get a multiple line option from an INI file
+# iniget_multiline config-file section option
+function iniget_multiline() {
+    local file=$1
+    local section=$2
+    local option=$3
+    local values
+    values=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { s/^$option[ \t]*=[ \t]*//gp; }" "$file")
+    echo ${values}
+}
+
+# Set a multiple line option in an INI file
+# iniset_multiline config-file section option value1 value2 valu3 ...
+function iniset_multiline() {
+    local file=$1
+    local section=$2
+    local option=$3
+    shift 3
+    local values
+    for v in $@; do
+        # The later sed command inserts each new value in the line next to
+        # the section identifier, which causes the values to be inserted in
+        # the reverse order. Do a reverse here to keep the original order.
+        values="$v ${values}"
+    done
+    if ! grep -q "^\[$section\]" "$file"; then
+        # Add section at the end
+        echo -e "\n[$section]" >>"$file"
+    else
+        # Remove old values
+        sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
+    fi
+    # Add new ones
+    for v in $values; do
+        sed -i -e "/^\[$section\]/ a\\
+$option = $v
+" "$file"
+    done
+}
+
+# Append a new option in an ini file without replacing the old value
+# iniadd config-file section option value1 value2 value3 ...
+function iniadd() {
+    local file=$1
+    local section=$2
+    local option=$3
+    shift 3
+    local values="$(iniget_multiline $file $section $option) $@"
+    iniset_multiline $file $section $option $values
+}
 
 # is_service_enabled() checks if the service(s) specified as arguments are
 # enabled by the user in ``ENABLED_SERVICES``.
