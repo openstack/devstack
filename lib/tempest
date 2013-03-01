@@ -238,6 +238,9 @@ function configure_tempest() {
     iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
 
     # network
+    if is_service_enabled quantum; then
+        iniset $TEMPEST_CONF network quantum_available "True"
+    fi
     iniset $TEMPEST_CONF network api_version 2.0
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONF network public_network_id "$public_network_id"
