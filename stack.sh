@@ -197,9 +197,7 @@ fi
 
 # Create the destination directory and ensure it is writable by the user
 sudo mkdir -p $DEST
-if [ ! -w $DEST ]; then
-    sudo chown $STACK_USER $DEST
-fi
+sudo chown -R $STACK_USER $DEST
 
 # Set ``OFFLINE`` to ``True`` to configure ``stack.sh`` to run cleanly without
 # Internet access. ``stack.sh`` must have been previously run with Internet
@@ -214,7 +212,7 @@ ERROR_ON_CLONE=`trueorfalse False $ERROR_ON_CLONE`
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 sudo mkdir -p $DATA_DIR
-sudo chown $STACK_USER $DATA_DIR
+sudo chown -R $STACK_USER $DATA_DIR
 
 
 # Common Configuration
