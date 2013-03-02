@@ -29,20 +29,6 @@ function register_database {
 # Sourcing the database libs sets DATABASE_BACKENDS with the available list
 for f in $TOP_DIR/lib/databases/*; do source $f; done
 
-# If ``DATABASE_TYPE`` is defined here it's because the user has it in ``localrc``
-# or has called ``use_database``.  Both are deprecated so let's fix it up for now.
-if [[ -n $DATABASE_TYPE ]]; then
-    # This is now deprecated usage, set up a warning and try to be
-    # somewhat backward compatible for now.
-    DEPRECATED_TEXT="$DEPRECATED_TEXT\nThe database backend needs to be properly set in ENABLED_SERVICES; DATABASE_TYPE or use_database is deprecated localrc\n"
-    if [[ ! $ENABLED_SERVICES =~ $DATABASE_TYPE ]]; then
-        # It's not in enabled services but user has attempted to select a
-        # database, so just add it now
-        ENABLED_SERVICES+=,$DATABASE_TYPE
-        unset DATABASE_TYPE
-    fi
-fi
-
 # ``DATABASE_BACKENDS`` now contains a list of the supported databases
 # Look in ``ENABLED_SERVICES`` to see if one has been selected
 for db in $DATABASE_BACKENDS; do
