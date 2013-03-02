@@ -36,6 +36,7 @@ function quantum_plugin_configure_dhcp_agent() {
 
 function quantum_plugin_configure_l3_agent() {
     _quantum_ovs_base_configure_l3_agent
+    iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager quantum.agent.l3_agent.L3NATAgentWithStateReport
 }
 
 function quantum_plugin_configure_plugin_agent() {
