@@ -115,9 +115,8 @@ EOF
 }
 
 function database_connection_url_mysql {
-    local output=$1
-    local db=$2
-    eval "$output=$BASE_SQL_CONN/$db?charset=utf8"
+    local db=$1
+    echo "$BASE_SQL_CONN/$db?charset=utf8"
 }
 
 # Restore xtrace

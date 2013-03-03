@@ -405,9 +405,7 @@ function _configure_quantum_common() {
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
     cp $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
 
-    database_connection_url dburl $Q_DB_NAME
-    iniset /$Q_PLUGIN_CONF_FILE DATABASE sql_connection $dburl
-    unset dburl
+    iniset /$Q_PLUGIN_CONF_FILE DATABASE sql_connection `database_connection_url $Q_DB_NAME`
 
     _quantum_setup_rootwrap
 }

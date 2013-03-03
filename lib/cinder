@@ -185,9 +185,7 @@ function configure_cinder() {
         iniset $CINDER_CONF DEFAULT volume_name_template ${VOLUME_NAME_PREFIX}%s
     fi
     iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
-    local dburl
-    database_connection_url dburl cinder
-    iniset $CINDER_CONF DEFAULT sql_connection $dburl
+    iniset $CINDER_CONF DEFAULT sql_connection `database_connection_url cinder`
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.contrib.standard_extensions

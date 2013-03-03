@@ -117,9 +117,7 @@ function configure_heat() {
     iniset $HEAT_ENGINE_CONF DEFAULT heat_metadata_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT
     iniset $HEAT_ENGINE_CONF DEFAULT heat_waitcondition_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1/waitcondition
     iniset $HEAT_ENGINE_CONF DEFAULT heat_watch_server_url http://$HEAT_API_CW_HOST:$HEAT_API_CW_PORT
-    local dburl
-    database_connection_url dburl heat
-    iniset $HEAT_ENGINE_CONF DEFAULT sql_connection $dburl
+    iniset $HEAT_ENGINE_CONF DEFAULT sql_connection `database_connection_url heat`
     iniset $HEAT_ENGINE_CONF DEFAULT auth_encryption_key `hexdump -n 16 -v -e '/1 "%02x"' /dev/random`
 
     iniset_rpc_backend heat $HEAT_ENGINE_CONF DEFAULT
