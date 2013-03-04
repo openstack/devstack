@@ -1078,9 +1078,8 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT compute_driver nova.virt.baremetal.driver.BareMetalDriver
         iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
         iniset $NOVA_CONF DEFAULT scheduler_host_manager nova.scheduler.baremetal_host_manager.BaremetalHostManager
-        # NOTE(deva): ComputeCapabilitiesFilter does not currently work with Baremetal. See bug # 1129485
-        #             As a work around, we disable CCFilter by explicitly enabling all the other default filters.
-        iniset $NOVA_CONF DEFAULT scheduler_default_filters ComputeFilter,RetryFilter,AvailabilityZoneFilter,ImagePropertiesFilter
+        iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
+        iniset $NOVA_CONF DEFAULT reserved_host_memory_mb 0
         iniset $NOVA_CONF baremetal instance_type_extra_specs cpu_arch:$BM_CPU_ARCH
         iniset $NOVA_CONF baremetal driver $BM_DRIVER
         iniset $NOVA_CONF baremetal power_manager $BM_POWER_MANAGER
