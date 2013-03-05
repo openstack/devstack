@@ -1,0 +1,37 @@
+# PLUMgrid Quantum Plugin
+# Edgar Magana emagana@plumgrid.com
+# ------------------------------------
+
+# Save trace settings
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+#source $TOP_DIR/lib/quantum_plugins/ovs_base
+
+function quantum_plugin_create_nova_conf() {
+
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+}
+
+function quantum_plugin_setup_interface_driver() {
+    :
+}
+
+function quantum_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/quantum/plugins/plumgrid
+    Q_PLUGIN_CONF_FILENAME=plumgrid.ini
+    Q_DB_NAME="plumgrid_quantum"
+    Q_PLUGIN_CLASS="quantum.plugins.plumgrid.plumgrid_nos_plugin.plumgrid_plugin.QuantumPluginPLUMgridV2"
+}
+
+function quantum_plugin_configure_service() {
+    iniset /$Q_PLUGIN_CONF_FILE PLUMgridNOS nos_server localhost
+    iniset /$Q_PLUGIN_CONF_FILE PLUMgridNOS nos_server_port 7766
+}
+
+function quantum_plugin_configure_debug_command() {
+    :
+}
+
+# Restore xtrace
+$MY_XTRACE
