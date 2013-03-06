@@ -167,9 +167,9 @@ if [[ "$ENABLED_SERVICES" =~ "ceilometer" ]]; then
         keystone endpoint-create \
             --region RegionOne \
             --service_id $CEILOMETER_SERVICE \
-            --publicurl "http://$SERVICE_HOST:8777/" \
-            --adminurl "http://$SERVICE_HOST:8777/" \
-            --internalurl "http://$SERVICE_HOST:8777/"
+            --publicurl "http://$SERVICE_HOST:8777" \
+            --adminurl "http://$SERVICE_HOST:8777" \
+            --internalurl "http://$SERVICE_HOST:8777"
     fi
 fi
 
