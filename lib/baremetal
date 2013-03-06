@@ -258,9 +258,10 @@ function create_baremetal_flavor() {
     nova flavor-create $BM_FLAVOR_NAME $BM_FLAVOR_ID \
             $BM_FLAVOR_RAM $BM_FLAVOR_ROOT_DISK $BM_FLAVOR_CPU
     nova flavor-key $BM_FLAVOR_NAME set \
-            cpu_arch=$BM_FLAVOR_ARCH \
-            deploy_kernel_id=$aki \
-            deploy_ramdisk_id=$ari
+            "cpu_arch"="$BM_FLAVOR_ARCH" \
+            "baremetal:deploy_kernel_id"="$aki" \
+            "baremetal:deploy_ramdisk_id"="$ari"
+
 }
 
 # pull run-time kernel/ramdisk out of disk image and load into glance
