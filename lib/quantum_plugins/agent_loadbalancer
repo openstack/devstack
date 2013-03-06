@@ -1,0 +1,45 @@
+# Quantum loadbalancer plugin
+# ---------------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+AGENT_LBAAS_BINARY="$QUANTUM_DIR/bin/quantum-lbaas-agent"
+
+function quantum_agent_lbaas_install_agent_packages() {
+    if is_ubuntu || is_fedora; then
+        install_package haproxy
+    fi
+}
+
+function quantum_agent_lbaas_configure_common() {
+    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
+        Q_SERVICE_PLUGIN_CLASSES="quantum.plugins.services.agent_loadbalancer.plugin.LoadBalancerPlugin"
+    else
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,quantum.plugins.services.agent_loadbalancer.plugin.LoadBalancerPlugin"
+    fi
+}
+
+function quantum_agent_lbaas_configure_agent() {
+    LBAAS_AGENT_CONF_PATH=/etc/quantum/plugins/services/agent_loadbalancer
+    mkdir -p $LBAAS_AGENT_CONF_PATH
+
+    LBAAS_AGENT_CONF_FILENAME="$LBAAS_AGENT_CONF_PATH/lbaas_agent.ini"
+
+    cp $QUANTUM_DIR/etc/lbaas_agent.ini /$LBAAS_AGENT_CONF_FILENAME
+
+    if [[ $Q_PLUGIN == 'linuxbridge' || $Q_PLUGIN == 'brocade' ]]; then
+        iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT interface_driver "quantum.agent.linux.interface.BridgeInterfaceDriver"
+    else
+        iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT interface_driver "quantum.agent.linux.interface.OVSInterfaceDriver"
+    fi
+
+    if is_fedora; then
+        iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT user_group "nobody"
+    fi
+}
+
+# Restore xtrace
+$MY_XTRACE
