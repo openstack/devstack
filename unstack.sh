@@ -63,7 +63,7 @@ if [[ -n "$SCREEN" ]]; then
 fi
 
 # Swift runs daemons
-if is_service_enabled swift; then
+if is_service_enabled s-proxy; then
     stop_swift
     cleanup_swift
 fi

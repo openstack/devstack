@@ -56,17 +56,18 @@ SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 
 # Set ``SWIFT_REPLICAS`` to configure how many replicas are to be
-# configured for your Swift cluster.  By default the three replicas would need a
-# bit of IO and Memory on a VM you may want to lower that to 1 if you want to do
-# only some quick testing.
-SWIFT_REPLICAS=${SWIFT_REPLICAS:-3}
+# configured for your Swift cluster. By default we are configuring
+# only one replica since this is way less CPU and memory intensive. If
+# you are planning to test swift replication you may want to set this
+# up to 3.
+SWIFT_REPLICAS=${SWIFT_REPLICAS:-1}
 SWIFT_REPLICAS_SEQ=$(seq ${SWIFT_REPLICAS})
 
 # Set ``OBJECT_PORT_BASE``, ``CONTAINER_PORT_BASE``, ``ACCOUNT_PORT_BASE``
 # Port bases used in port number calclution for the service "nodes"
 # The specified port number will be used, the additinal ports calculated by
 # base_port + node_num * 10
-OBJECT_PORT_BASE=6010
+OBJECT_PORT_BASE=6013
 CONTAINER_PORT_BASE=6011
 ACCOUNT_PORT_BASE=6012
 
@@ -359,19 +360,34 @@ function start_swift() {
         sudo systemctl start xinetd.service
     fi
 
-   # First spawn all the swift services then kill the
-   # proxy service so we can run it in foreground in screen.
-   # ``swift-init ... {stop|restart}`` exits with '1' if no servers are running,
-   # ignore it just in case
+   # By default with only one replica we are launching the proxy,
+   # container, account and object server in screen in foreground and
+   # other services in background. If we have SWIFT_REPLICAS set to something
+   # greater than one we first spawn all the swift services then kill the proxy
+   # service so we can run it in foreground in screen.  ``swift-init ...
+   # {stop|restart}`` exits with '1' if no servers are running, ignore it just
+   # in case
    swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
-   swift-init --run-dir=${SWIFT_DATA_DIR}/run proxy stop || true
-   screen_it swift "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
+   if [[ ${SWIFT_REPLICAS} == 1 ]];then
+        todo="object container account"
+   fi
+   for type in proxy ${todo};do
+       swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
+   done
+   screen_it s-proxy "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONFIG_DIR}/proxy-server.conf -v"
+   if [[ ${SWIFT_REPLICAS} == 1 ]];then
+       for type in object container account;do
+           screen_it s-${type} "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONFIG_DIR}/${type}-server/1.conf -v"
+       done
+   fi
 }
 
 # stop_swift() - Stop running processes (non-screen)
 function stop_swift() {
     # screen normally killed by unstack.sh
-    swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
+    if type -p swift-init >/dev/null;then
+        swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
+    fi
 }
 
 # Restore xtrace
