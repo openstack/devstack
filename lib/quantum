@@ -176,6 +176,11 @@ fi
 # Please refer to lib/quantum_plugins/README.md for details.
 source $TOP_DIR/lib/quantum_plugins/$Q_PLUGIN
 
+# Agent loadbalancer service plugin functions
+# -------------------------------------------
+# Hardcoding for 1 service plugin for now
+source $TOP_DIR/lib/quantum_plugins/agent_loadbalancer
+
 # Entry Points
 # ------------
 
@@ -185,6 +190,10 @@ function configure_quantum() {
     _configure_quantum_common
     iniset_rpc_backend quantum $QUANTUM_CONF DEFAULT
 
+    # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
+    if is_service_enabled q-lbaas; then
+        _configure_quantum_lbaas
+    fi
     if is_service_enabled q-svc; then
         _configure_quantum_service
     fi
@@ -362,6 +371,10 @@ function start_quantum_agents() {
     screen_it q-dhcp "python $AGENT_DHCP_BINARY --config-file $QUANTUM_CONF --config-file=$Q_DHCP_CONF_FILE"
     screen_it q-meta "python $AGENT_META_BINARY --config-file $QUANTUM_CONF --config-file=$Q_META_CONF_FILE"
     screen_it q-l3 "python $AGENT_L3_BINARY --config-file $QUANTUM_CONF --config-file=$Q_L3_CONF_FILE"
+
+    if is_service_enabled q-lbaas; then
+        screen_it q-lbaas "python $AGENT_LBAAS_BINARY --config-file $QUANTUM_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
+    fi
 }
 
 # stop_quantum() - Stop running processes (non-screen)
@@ -483,6 +496,13 @@ function _configure_quantum_metadata_agent() {
     _quantum_setup_keystone $Q_META_CONF_FILE DEFAULT set_auth_url
 }
 
+function _configure_quantum_lbaas()
+{
+    quantum_agent_lbaas_install_agent_packages
+    quantum_agent_lbaas_configure_common
+    quantum_agent_lbaas_configure_agent
+}
+
 # _configure_quantum_plugin_agent() - Set config files for quantum plugin agent
 # It is called when q-agt is enabled.
 function _configure_quantum_plugin_agent() {
@@ -511,6 +531,10 @@ function _configure_quantum_service() {
 
     # Update either configuration file with plugin
     iniset $QUANTUM_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
+
+    if [[ $Q_SERVICE_PLUGIN_CLASSES != '' ]]; then
+        iniset $QUANTUM_CONF DEFAULT service_plugins $Q_SERVICE_PLUGIN_CLASSES
+    fi
 
     iniset $QUANTUM_CONF DEFAULT verbose True
     iniset $QUANTUM_CONF DEFAULT debug True
