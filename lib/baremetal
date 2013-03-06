@@ -63,7 +63,7 @@ BM_DRIVER=${BM_DRIVER:-nova.virt.baremetal.pxe.PXE}
 
 # sub-driver to use for remote power management
 # - nova.virt.baremetal.fake.FakePowerManager, for manual power control
-# - nova.virt.baremetal.ipmi.Ipmi, for remote IPMI
+# - nova.virt.baremetal.ipmi.IPMI, for remote IPMI
 # - nova.virt.baremetal.tilera_pdu.Pdu, for TilePro hardware
 BM_POWER_MANAGER=${BM_POWER_MANAGER:-nova.virt.baremetal.fake.FakePowerManager}
 
