@@ -42,6 +42,11 @@ done
 # This is not an error as multi-node installs will do this on the compute nodes
 
 
+# Get rid of everything enough to cleanly change database backends
+function cleanup_database {
+    cleanup_database_$DATABASE_TYPE
+}
+
 # Set the database type based on the configuration
 function initialize_database_backends {
     for backend in $DATABASE_BACKENDS; do

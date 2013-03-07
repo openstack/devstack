@@ -725,6 +725,8 @@ fi
 configure_glanceclient
 
 if is_service_enabled nova; then
+    # First clean up old instances
+    cleanup_nova
     configure_nova
 fi
 if is_service_enabled horizon; then

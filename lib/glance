@@ -59,8 +59,7 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
 function cleanup_glance() {
     # kill instances (nova)
     # delete image files (glance)
-    # This function intentionally left blank
-    :
+    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR $GLANCE_AUTH_CACHE_DIR
 }
 
 # configure_glanceclient() - Set config files, create data dirs, etc

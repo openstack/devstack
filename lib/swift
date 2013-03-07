@@ -388,9 +388,11 @@ function start_swift() {
 # stop_swift() - Stop running processes (non-screen)
 function stop_swift() {
     # screen normally killed by unstack.sh
-    if type -p swift-init >/dev/null;then
+    if type -p swift-init >/dev/null; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi
+    # Dump the proxy server
+    sudo pkill -f swift-proxy-server
 }
 
 # Restore xtrace

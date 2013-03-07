@@ -775,6 +775,21 @@ function install_package() {
 }
 
 
+# Distro-agnostic package uninstaller
+# uninstall_package package [package ...]
+function uninstall_package() {
+    if is_ubuntu; then
+        apt_get purge "$@"
+    elif is_fedora; then
+        yum remove -y "$@"
+    elif is_suse; then
+        rpm -e "$@"
+    else
+        exit_distro_not_supported "uninstalling packages"
+    fi
+}
+
+
 # Distro-agnostic function to tell if a package is installed
 # is_package_installed package [package ...]
 function is_package_installed() {

@@ -211,8 +211,6 @@ function configure_quantum() {
     fi
 
     _configure_quantum_debug_command
-
-    _cleanup_quantum
 }
 
 function create_nova_conf_quantum() {
@@ -385,9 +383,9 @@ function stop_quantum() {
     fi
 }
 
-# _cleanup_quantum() - Remove residual data files, anything left over from previous
+# cleanup_quantum() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function _cleanup_quantum() {
+function cleanup_quantum() {
     :
 }
 

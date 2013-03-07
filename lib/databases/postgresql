@@ -10,6 +10,20 @@ set +o xtrace
 
 register_database postgresql
 
+# Get rid of everything enough to cleanly change database backends
+function cleanup_database_postgresql {
+    stop_service postgresql
+    if is_ubuntu; then
+        # Get ruthless with mysql
+        sudo aptitude purge -y  ~npostgresql
+        return
+    elif is_fedora; then
+        uninstall_package postgresql-server
+    else
+        return
+    fi
+}
+
 function recreate_database_postgresql {
     local db=$1
     local charset=$2
