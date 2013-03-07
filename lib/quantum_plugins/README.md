@@ -18,7 +18,7 @@ functions
 * ``quantum_plugin_create_nova_conf`` :
   set ``NOVA_VIF_DRIVER`` and optionally set options in nova_conf
   e.g.
-  NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
+  NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
 * ``quantum_plugin_install_agent_packages`` :
   install packages that is specific to plugin agent
   e.g.
