@@ -3,6 +3,7 @@ curl
 euca2ools # only for testing client
 git-core
 openssh-server
+openssl
 psmisc
 pylint
 python-netaddr
