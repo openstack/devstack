@@ -4,6 +4,7 @@ euca2ools
 git-core
 iputils
 openssh
+openssl
 psmisc
 python-cmd2 # dist:opensuse-12.3
 python-netaddr

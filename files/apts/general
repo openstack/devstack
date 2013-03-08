@@ -9,6 +9,7 @@ psmisc
 git
 lsof # useful when debugging
 openssh-server
+openssl
 vim-nox
 locate # useful when debugging
 python-virtualenv
