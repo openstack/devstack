@@ -89,7 +89,7 @@ Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
 # Meta data IP
 Q_META_DATA_IP=${Q_META_DATA_IP:-$HOST_IP}
 # Allow Overlapping IP among subnets
-Q_ALLOW_OVERLAPPING_IP=${Q_ALLOW_OVERLAPPING_IP:-False}
+Q_ALLOW_OVERLAPPING_IP=${Q_ALLOW_OVERLAPPING_IP:-True}
 # Use quantum-debug command
 Q_USE_DEBUG_COMMAND=${Q_USE_DEBUG_COMMAND:-False}
 # The name of the default q-l3 router
