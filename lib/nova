@@ -37,6 +37,9 @@ NOVA_AUTH_CACHE_DIR=${NOVA_AUTH_CACHE_DIR:-/var/cache/nova}
 
 NOVA_CONF_DIR=/etc/nova
 NOVA_CONF=$NOVA_CONF_DIR/nova.conf
+NOVA_CELLS_CONF=$NOVA_CONF_DIR/nova-cells.conf
+NOVA_CELLS_DB=${NOVA_CELLS_DB:-nova_cell}
+
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 
 # Public facing bits
@@ -124,10 +127,6 @@ TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 
 # Functions
 # ---------
-
-function add_nova_opt {
-    echo "$1" >>$NOVA_CONF
-}
 
 # Helper to clean iptables rules
 function clean_iptables() {
@@ -415,7 +414,6 @@ function create_nova_conf() {
 
     # (Re)create ``nova.conf``
     rm -f $NOVA_CONF
-    add_nova_opt "[DEFAULT]"
     iniset $NOVA_CONF DEFAULT verbose "True"
     iniset $NOVA_CONF DEFAULT debug "True"
     iniset $NOVA_CONF DEFAULT auth_strategy "keystone"
@@ -539,6 +537,32 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT glance_api_servers "$GLANCE_HOSTPORT"
 }
 
+function init_nova_cells() {
+    if is_service_enabled n-cell; then
+        cp $NOVA_CONF $NOVA_CELLS_CONF
+        iniset $NOVA_CELLS_CONF DEFAULT sql_connection `database_connection_url $NOVA_CELLS_DB`
+        iniset $NOVA_CELLS_CONF DEFAULT rabbit_virtual_host child_cell
+        iniset $NOVA_CELLS_CONF DEFAULT dhcpbridge_flagfile $NOVA_CELLS_CONF
+        iniset $NOVA_CELLS_CONF cells enable True
+        iniset $NOVA_CELLS_CONF cells name child
+
+        iniset $NOVA_CONF DEFAULT scheduler_topic cells
+        iniset $NOVA_CONF DEFAULT compute_api_class nova.compute.cells_api.ComputeCellsAPI
+        iniset $NOVA_CONF cells enable True
+        iniset $NOVA_CONF cells name region
+
+        if is_service_enabled n-api-meta; then
+            NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/,metadata//")
+            iniset $NOVA_CONF DEFAULT enabled_apis $NOVA_ENABLED_APIS
+            iniset $NOVA_CELLS_CONF DEFAULT enabled_apis metadata
+        fi
+
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF db sync
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF cell create --name=region --cell_type=parent --username=guest --hostname=$RABBIT_HOST --port=5672 --password=$RABBIT_PASSWORD --virtual_host=/ --woffset=0 --wscale=1
+        $NOVA_BIN_DIR/nova-manage cell create --name=child --cell_type=child --username=guest --hostname=$RABBIT_HOST --port=5672 --password=$RABBIT_PASSWORD --virtual_host=child_cell --woffset=0 --wscale=1
+    fi
+}
+
 # create_nova_cache_dir() - Part of the init_nova() process
 function create_nova_cache_dir() {
     # Create cache dir
@@ -577,6 +601,10 @@ function init_nova() {
 
         # Migrate nova database
         $NOVA_BIN_DIR/nova-manage db sync
+
+        if is_service_enabled n-cell; then
+            recreate_database $NOVA_CELLS_DB latin1
+        fi
 
         # (Re)create nova baremetal database
         if is_baremetal; then
@@ -648,14 +676,26 @@ function start_nova_api() {
 
 # start_nova() - Start running processes, including screen
 function start_nova() {
-    # The group **$LIBVIRT_GROUP** is added to the current user in this script.
-    # Use 'sg' to execute nova-compute as a member of the **$LIBVIRT_GROUP** group.
+    NOVA_CONF_BOTTOM=$NOVA_CONF
+
     # ``screen_it`` checks ``is_service_enabled``, it is not needed here
     screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor"
-    screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP $NOVA_BIN_DIR/nova-compute"
+
+    if is_service_enabled n-cell; then
+        NOVA_CONF_BOTTOM=$NOVA_CELLS_CONF
+        screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CELLS_CONF"
+        screen_it n-cell "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CONF"
+        screen_it n-cell "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CELLS_CONF"
+    fi
+
+    # The group **$LIBVIRT_GROUP** is added to the current user in this script.
+    # Use 'sg' to execute nova-compute as a member of the **$LIBVIRT_GROUP** group.
+    screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP \"$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CONF_BOTTOM\""
     screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
-    screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network"
-    screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler"
+    screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network --config-file $NOVA_CONF_BOTTOM"
+    screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler --config-file $NOVA_CONF_BOTTOM"
+    screen_it n-api-meta "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api-metadata --config-file $NOVA_CONF_BOTTOM"
+
     screen_it n-novnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-novncproxy --config-file $NOVA_CONF --web $NOVNC_DIR"
     screen_it n-xvnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-xvpvncproxy --config-file $NOVA_CONF"
     screen_it n-spice "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $NOVA_CONF --web $SPICE_DIR"
@@ -670,7 +710,9 @@ function start_nova() {
 # stop_nova() - Stop running processes (non-screen)
 function stop_nova() {
     # Kill the nova screen windows
-    for serv in n-api n-cpu n-crt n-net n-sch n-novnc n-xvnc n-cauth n-cond n-spice; do
+    # Some services are listed here twice since more than one instance
+    # of a service may be running in certain configs.
+    for serv in n-api n-cpu n-crt n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cond n-cond n-cell n-cell n-api-meta; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }

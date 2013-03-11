@@ -153,3 +153,23 @@ You can then run many compute nodes, each of which should have a `stackrc` which
     MYSQL_HOST=$SERVICE_HOST
     RABBIT_HOST=$SERVICE_HOST
     Q_HOST=$SERVICE_HOST
+
+# Cells
+
+Cells is a new scaling option with a full spec at http://wiki.openstack.org/blueprint-nova-compute-cells.
+
+To setup a cells environment add the following to your `localrc`:
+
+    enable_service n-cell
+    enable_service n-api-meta
+    MULTI_HOST=True
+
+    # The following have not been tested with cells, they may or may not work.
+    disable_service n-obj
+    disable_service cinder
+    disable_service c-sch
+    disable_service c-api
+    disable_service c-vol
+    disable_service n-xvnc
+
+Be aware that there are some features currently missing in cells, one notable one being security groups.

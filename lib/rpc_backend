@@ -138,6 +138,13 @@ function restart_rpc_backend() {
         fi
         # change the rabbit password since the default is "guest"
         sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
+        if is_service_enabled n-cell; then
+            # Add partitioned access for the child cell
+            if [ -z `sudo rabbitmqctl list_vhosts | grep child_cell` ]; then
+                sudo rabbitmqctl add_vhost child_cell
+                sudo rabbitmqctl set_permissions -p child_cell guest ".*" ".*" ".*"
+            fi
+        fi
     elif is_service_enabled qpid; then
         echo_summary "Starting qpid"
         restart_service qpidd
