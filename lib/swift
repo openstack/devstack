@@ -352,6 +352,9 @@ function install_swiftclient() {
 function start_swift() {
     # (re)start rsyslog
     restart_service rsyslog
+    # (re)start memcached to make sure we have a clean memcache.
+    restart_service memcached
+
     # Start rsync
     if is_ubuntu; then
         sudo /etc/init.d/rsync restart || :
