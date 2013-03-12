@@ -16,13 +16,11 @@ function install_ldap() {
     echo "os_VENDOR is $os_VENDOR"
     printf "installing"
     if is_ubuntu; then
-        echo "os vendor is Ubuntu"
         LDAP_OLCDB_NUMBER=1
         LDAP_ROOTPW_COMMAND=replace
         sudo DEBIAN_FRONTEND=noninteractive apt-get install slapd ldap-utils
         #automatically starts LDAP on ubuntu so no need to call start_ldap
-    elif is_fedora; then
-        echo "os vendor is Fedora"
+    elif is_fedora || is_suse; then
         LDAP_OLCDB_NUMBER=2
         LDAP_ROOTPW_COMMAND=add
         start_ldap
