@@ -539,6 +539,7 @@ function _configure_quantum_service() {
     iniset $QUANTUM_CONF DEFAULT verbose True
     iniset $QUANTUM_CONF DEFAULT debug True
     iniset $QUANTUM_CONF DEFAULT state_path $DATA_DIR/quantum
+    iniset $QUANTUM_CONF DEFAULT policy_file $Q_POLICY_FILE
     iniset $QUANTUM_CONF DEFAULT allow_overlapping_ips $Q_ALLOW_OVERLAPPING_IP
 
     iniset $QUANTUM_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
