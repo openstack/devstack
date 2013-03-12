@@ -171,6 +171,7 @@ function configure_cinder() {
 
     cp $CINDER_DIR/etc/cinder/cinder.conf.sample $CINDER_CONF
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
+    iniset $CINDER_CONF DEFAULT debug True
     iniset $CINDER_CONF DEFAULT verbose True
     if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
         iniset $CINDER_CONF DEFAULT enabled_backends lvmdriver-1,lvmdriver-2
