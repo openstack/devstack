@@ -271,6 +271,8 @@ GetOSVersion() {
             if [[ $? -eq 0 ]]; then
                 os_VENDOR="openSUSE"
             fi
+        elif [[ $os_VENDOR == "openSUSE project" ]]; then
+            os_VENDOR="openSUSE"
         elif [[ $os_VENDOR =~ Red.*Hat ]]; then
             os_VENDOR="Red Hat"
         fi
