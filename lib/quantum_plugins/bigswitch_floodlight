@@ -9,7 +9,7 @@ source $TOP_DIR/lib/quantum_plugins/ovs_base
 source $TOP_DIR/lib/quantum_thirdparty/bigswitch_floodlight     # for third party service specific configuration values
 
 function quantum_plugin_create_nova_conf() {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
 }
 
 function quantum_plugin_install_agent_packages() {
