@@ -53,8 +53,8 @@ function cp_it {
 }
 
 
-# Prints "message" and exits
-# die "message"
+# Prints line number and "message" then exits
+# die $LINENO "message"
 function die() {
     local exitcode=$?
     if [ $exitcode == 0 ]; then
@@ -73,7 +73,7 @@ function die() {
 # Checks an environment variable is not set or has length 0 OR if the
 # exit code is non-zero and prints "message" and exits
 # NOTE: env-var is the variable name without a '$'
-# die_if_not_set env-var "message"
+# die_if_not_set $LINENO env-var "message"
 function die_if_not_set() {
     (
         local exitcode=$?
