@@ -45,15 +45,15 @@ CEILOMETER_REPO=${GIT_BASE}/openstack/ceilometer.git
 CEILOMETER_BRANCH=master
 
 # ceilometer client library
-CEILOMETERCLIENT_REPO=${GIT_BASE}/openstack/python-ceilometerclient
+CEILOMETERCLIENT_REPO=${GIT_BASE}/openstack/python-ceilometerclient.git
 CEILOMETERCLIENT_BRANCH=master
 
 # volume service
-CINDER_REPO=${GIT_BASE}/openstack/cinder
+CINDER_REPO=${GIT_BASE}/openstack/cinder.git
 CINDER_BRANCH=master
 
 # volume client
-CINDERCLIENT_REPO=${GIT_BASE}/openstack/python-cinderclient
+CINDERCLIENT_REPO=${GIT_BASE}/openstack/python-cinderclient.git
 CINDERCLIENT_BRANCH=master
 
 # compute service
@@ -63,11 +63,11 @@ NOVA_BRANCH=master
 # storage service
 SWIFT_REPO=${GIT_BASE}/openstack/swift.git
 SWIFT_BRANCH=master
-SWIFT3_REPO=https://github.com/fujita/swift3.git
+SWIFT3_REPO=${GIT_BASE}/fujita/swift3.git
 SWIFT3_BRANCH=master
 
 # python swift client library
-SWIFTCLIENT_REPO=${GIT_BASE}/openstack/python-swiftclient
+SWIFTCLIENT_REPO=${GIT_BASE}/openstack/python-swiftclient.git
 SWIFTCLIENT_BRANCH=master
 
 # image catalog service
@@ -75,7 +75,7 @@ GLANCE_REPO=${GIT_BASE}/openstack/glance.git
 GLANCE_BRANCH=master
 
 # python glance client library
-GLANCECLIENT_REPO=${GIT_BASE}/openstack/python-glanceclient
+GLANCECLIENT_REPO=${GIT_BASE}/openstack/python-glanceclient.git
 GLANCECLIENT_BRANCH=master
 
 # unified auth system (manages accounts/tokens)
@@ -83,7 +83,7 @@ KEYSTONE_REPO=${GIT_BASE}/openstack/keystone.git
 KEYSTONE_BRANCH=master
 
 # a websockets/html5 or flash powered VNC console for vm instances
-NOVNC_REPO=https://github.com/kanaka/noVNC.git
+NOVNC_REPO=${GIT_BASE}/kanaka/noVNC.git
 NOVNC_BRANCH=master
 
 # a websockets/html5 or flash powered SPICE console for vm instances
@@ -103,15 +103,15 @@ OPENSTACKCLIENT_REPO=${GIT_BASE}/openstack/python-openstackclient.git
 OPENSTACKCLIENT_BRANCH=master
 
 # python keystone client library to nova that horizon uses
-KEYSTONECLIENT_REPO=${GIT_BASE}/openstack/python-keystoneclient
+KEYSTONECLIENT_REPO=${GIT_BASE}/openstack/python-keystoneclient.git
 KEYSTONECLIENT_BRANCH=master
 
 # quantum service
-QUANTUM_REPO=${GIT_BASE}/openstack/quantum
+QUANTUM_REPO=${GIT_BASE}/openstack/quantum.git
 QUANTUM_BRANCH=master
 
 # quantum client
-QUANTUMCLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient
+QUANTUMCLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient.git
 QUANTUMCLIENT_BRANCH=master
 
 # Tempest test suite
@@ -127,17 +127,17 @@ HEATCLIENT_REPO=${GIT_BASE}/openstack/python-heatclient.git
 HEATCLIENT_BRANCH=master
 
 # ryu service
-RYU_REPO=https://github.com/osrg/ryu.git
+RYU_REPO=${GIT_BASE}/osrg/ryu.git
 RYU_BRANCH=master
 
 # diskimage-builder
-BM_IMAGE_BUILD_REPO=https://github.com/stackforge/diskimage-builder.git
+BM_IMAGE_BUILD_REPO=${GIT_BASE}/stackforge/diskimage-builder.git
 BM_IMAGE_BUILD_BRANCH=master
 
 # bm_poseur
 # Used to simulate a hardware environment for baremetal
 # Only used if BM_USE_FAKE_ENV is set
-BM_POSEUR_REPO=https://github.com/tripleo/bm_poseur.git
+BM_POSEUR_REPO=${GIT_BASE}/tripleo/bm_poseur.git
 BM_POSEUR_BRANCH=master
 
 
