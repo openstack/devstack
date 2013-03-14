@@ -524,9 +524,9 @@ if [[ -n "$LOGFILE" ]]; then
     # as the template to search for, appending '.*' to match the date
     # we added on earlier runs.
     LOGDIR=$(dirname "$LOGFILE")
-    LOGNAME=$(basename "$LOGFILE")
+    LOGFILENAME=$(basename "$LOGFILE")
     mkdir -p $LOGDIR
-    find $LOGDIR -maxdepth 1 -name $LOGNAME.\* -mtime +$LOGDAYS -exec rm {} \;
+    find $LOGDIR -maxdepth 1 -name $LOGFILENAME.\* -mtime +$LOGDAYS -exec rm {} \;
     LOGFILE=$LOGFILE.${CURRENT_LOG_TIME}
     SUMFILE=$LOGFILE.${CURRENT_LOG_TIME}.summary
 
@@ -556,8 +556,8 @@ if [[ -n "$LOGFILE" ]]; then
 
     echo_summary "stack.sh log $LOGFILE"
     # Specified logfile name always links to the most recent log
-    ln -sf $LOGFILE $LOGDIR/$LOGNAME
-    ln -sf $SUMFILE $LOGDIR/$LOGNAME.summary
+    ln -sf $LOGFILE $LOGDIR/$LOGFILENAME
+    ln -sf $SUMFILE $LOGDIR/$LOGFILENAME.summary
 else
     # Set up output redirection without log files
     # Copy stdout to fd 3
