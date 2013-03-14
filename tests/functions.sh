@@ -60,6 +60,10 @@ spaces  =  yes
 
 [ddd]
 empty =
+
+[eee]
+multi = foo1
+multi = foo2
 EOF
 
 # Test with spaces
@@ -191,6 +195,34 @@ if [[ -z "$VAL" ]]; then
     echo "OK"
 else
     echo "inicomment failed: $VAL"
+fi
+
+# Test multiple line iniset/iniget
+iniset_multiline test.ini eee multi bar1 bar2
+
+VAL=$(iniget_multiline test.ini eee multi)
+if [[ "$VAL" == "bar1 bar2" ]]; then
+    echo "OK: iniset_multiline"
+else
+    echo "iniset_multiline failed: $VAL"
+fi
+
+# Test iniadd with exiting values
+iniadd test.ini eee multi bar3
+VAL=$(iniget_multiline test.ini eee multi)
+if [[ "$VAL" == "bar1 bar2 bar3" ]]; then
+    echo "OK: iniadd"
+else
+    echo "iniadd failed: $VAL"
+fi
+
+# Test iniadd with non-exiting values
+iniadd test.ini eee non-multi foobar1 foobar2
+VAL=$(iniget_multiline test.ini eee non-multi)
+if [[ "$VAL" == "foobar1 foobar2" ]]; then
+    echo "OK: iniadd with non-exiting value"
+else
+    echo "iniadd with non-exsting failed: $VAL"
 fi
 
 rm test.ini
