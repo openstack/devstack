@@ -20,13 +20,13 @@ if [ ! -e ../../localrc ]; then
 fi
 
 # This directory
-TOP_DIR=$(cd $(dirname "$0") && pwd)
+THIS_DIR=$(cd $(dirname "$0") && pwd)
 
 # Source lower level functions
-. $TOP_DIR/../../functions
+. $THIS_DIR/../../functions
 
 # Include onexit commands
-. $TOP_DIR/scripts/on_exit.sh
+. $THIS_DIR/scripts/on_exit.sh
 
 
 #
@@ -49,7 +49,7 @@ xe_min()
 # including installing XenAPI plugins
 #
 
-cd $TOP_DIR
+cd $THIS_DIR
 if [ -f ./master ]
 then
     rm -rf ./master
@@ -271,7 +271,7 @@ if [ -z "$templateuuid" ]; then
             HTTP_SERVER_LOCATION="/var/www/html"
             mkdir -p $HTTP_SERVER_LOCATION
         fi
-        cp -f $TOP_DIR/devstackubuntupreseed.cfg $HTTP_SERVER_LOCATION
+        cp -f $THIS_DIR/devstackubuntupreseed.cfg $HTTP_SERVER_LOCATION
         MIRROR=${MIRROR:-""}
         if [ -n "$MIRROR" ]; then
             sed -e "s,d-i mirror/http/hostname string .*,d-i mirror/http/hostname string $MIRROR," \
@@ -280,11 +280,11 @@ if [ -z "$templateuuid" ]; then
     fi
 
     # Update the template
-    $TOP_DIR/scripts/install_ubuntu_template.sh $PRESEED_URL
+    $THIS_DIR/scripts/install_ubuntu_template.sh $PRESEED_URL
 
     # create a new VM with the given template
     # creating the correct VIFs and metadata
-    $TOP_DIR/scripts/install-os-vpx.sh -t "$UBUNTU_INST_TEMPLATE_NAME" -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -r $OSDOMU_MEM_MB -k "flat_network_bridge=${VM_BR}"
+    $THIS_DIR/scripts/install-os-vpx.sh -t "$UBUNTU_INST_TEMPLATE_NAME" -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -r $OSDOMU_MEM_MB -k "flat_network_bridge=${VM_BR}"
 
     # wait for install to finish
     wait_for_VM_to_halt
@@ -298,7 +298,7 @@ if [ -z "$templateuuid" ]; then
     #
 
     # Install XenServer tools, and other such things
-    $TOP_DIR/prepare_guest_template.sh "$GUEST_NAME"
+    $THIS_DIR/prepare_guest_template.sh "$GUEST_NAME"
 
     # start the VM to run the prepare steps
     xe vm-start vm="$GUEST_NAME"
@@ -320,7 +320,7 @@ fi
 #
 # Inject DevStack inside VM disk
 #
-$TOP_DIR/build_xva.sh "$GUEST_NAME"
+$THIS_DIR/build_xva.sh "$GUEST_NAME"
 
 # create a snapshot before the first boot
 # to allow a quick re-run with the same settings
