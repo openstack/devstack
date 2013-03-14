@@ -377,12 +377,9 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
     iniset $NOVA_CONF DEFAULT osapi_compute_extension "nova.api.openstack.compute.contrib.standard_extensions"
     iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
-    local dburl
-    database_connection_url dburl nova
-    iniset $NOVA_CONF DEFAULT sql_connection "$dburl"
+    iniset $NOVA_CONF DEFAULT sql_connection `database_connection_url nova`
     if is_baremetal; then
-        database_connection_url dburl nova_bm
-        iniset $NOVA_CONF baremetal sql_connection $dburl
+        iniset $NOVA_CONF baremetal sql_connection `database_connection_url nova_bm`
     fi
     iniset $NOVA_CONF DEFAULT libvirt_type "$LIBVIRT_TYPE"
     iniset $NOVA_CONF DEFAULT libvirt_cpu_mode "none"

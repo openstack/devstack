@@ -68,7 +68,7 @@ function configure_ceilometer() {
 
     iniset $CEILOMETER_CONF DEFAULT notification_topics 'notifications,glance_notifications'
     iniset $CEILOMETER_CONF DEFAULT verbose True
-    iniset $CEILOMETER_CONF DEFAULT sql_connection $BASE_SQL_CONN/nova?charset=utf8
+    iniset $CEILOMETER_CONF DEFAULT `database_connection_url nova`
 
     # Install the policy file for the API server
     cp $CEILOMETER_DIR/etc/ceilometer/policy.json $CEILOMETER_CONF_DIR
