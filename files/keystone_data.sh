@@ -52,7 +52,7 @@ RESELLER_ROLE=$(get_id keystone role-create --name=ResellerAdmin)
 # Services
 # --------
 
-if [[ "$ENABLED_SERVICES" =~ "n-api" ]] && [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "n-api" ]] && [[ "$ENABLED_SERVICES" =~ "s-proxy" || "$ENABLED_SERVICES" =~ "swift" ]]; then
     NOVA_USER=$(keystone user-list | awk "/ nova / { print \$2 }")
     # Nova needs ResellerAdmin role to download images when accessing
     # swift through the s3 api.
@@ -123,7 +123,8 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
 fi
 
 # Swift
-if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+
+if [[ "$ENABLED_SERVICES" =~ "swift" || "$ENABLED_SERVICES" =~ "s-proxy" ]]; then
     SWIFT_USER=$(get_id keystone user-create \
         --name=swift \
         --pass="$SERVICE_PASSWORD" \
@@ -190,7 +191,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
 fi
 
 # S3
-if [[ "$ENABLED_SERVICES" =~ "n-obj" || "$ENABLED_SERVICES" =~ "swift" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "n-obj" || "$ENABLED_SERVICES" =~ "swift3" ]]; then
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         S3_SERVICE=$(get_id keystone service-create \
             --name=s3 \

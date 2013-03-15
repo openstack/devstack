@@ -136,7 +136,7 @@ fi
 # Swift client
 # ------------
 
-if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
+if [[ "$ENABLED_SERVICES" =~ "swift" || "$ENABLED_SERVICES" =~ "s-proxy" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "swift" ]] ; then
         STATUS_SWIFT="Skipped"
     else
