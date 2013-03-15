@@ -223,27 +223,9 @@ FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
 
-# Find the interface used for the default route
-HOST_IP_IFACE=${HOST_IP_IFACE:-$(ip route | sed -n '/^default/{ s/.*dev \(\w\+\)\s\+.*/\1/; p; }' | head -1)}
-# Search for an IP unless an explicit is set by ``HOST_IP`` environment variable
-if [ -z "$HOST_IP" -o "$HOST_IP" == "dhcp" ]; then
-    HOST_IP=""
-    HOST_IPS=`LC_ALL=C ip -f inet addr show ${HOST_IP_IFACE} | awk '/inet/ {split($2,parts,"/");  print parts[1]}'`
-    for IP in $HOST_IPS; do
-        # Attempt to filter out IP addresses that are part of the fixed and
-        # floating range. Note that this method only works if the ``netaddr``
-        # python library is installed. If it is not installed, an error
-        # will be printed and the first IP from the interface will be used.
-        # If that is not correct set ``HOST_IP`` in ``localrc`` to the correct
-        # address.
-        if ! (address_in_net $IP $FIXED_RANGE || address_in_net $IP $FLOATING_RANGE); then
-            HOST_IP=$IP
-            break;
-        fi
-    done
-    if [ "$HOST_IP" == "" ]; then
-        die $LINENO "Could not determine host ip address. Either localrc specified dhcp on ${HOST_IP_IFACE} or defaulted"
-    fi
+HOST_IP=$(get_default_host_ip $FIXED_RANGE $FLOATING_RANGE "$HOST_IP_IFACE" "$HOST_IP")
+if [ "$HOST_IP" == "" ]; then
+    die $LINENO "Could not determine host ip address. Either localrc specified dhcp on ${HOST_IP_IFACE} or defaulted"
 fi
 
 # Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
