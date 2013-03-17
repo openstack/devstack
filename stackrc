@@ -196,5 +196,10 @@ esac
 # 5Gb default volume backing file size
 VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-5130M}
 
+# Name of the LVM volume group to use/create for iscsi volumes
+VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
+VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
+INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
+
 PRIVATE_NETWORK_NAME=${PRIVATE_NETWORK_NAME:-"private"}
 PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME:-"nova"}
