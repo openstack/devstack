@@ -569,7 +569,12 @@ function _quantum_setup_rootwrap() {
     sudo chown -R root:root $Q_CONF_ROOTWRAP_D
     sudo chmod 644 $Q_CONF_ROOTWRAP_D/*
     # Set up rootwrap.conf, pointing to $QUANTUM_CONF_DIR/rootwrap.d
-    sudo cp -p $QUANTUM_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
+    # location moved in newer versions, prefer new location
+    if test -r $QUANTUM_DIR/etc/quantum/rootwrap.conf; then
+      sudo cp -p $QUANTUM_DIR/etc/quantum/rootwrap.conf $Q_RR_CONF_FILE
+    else
+      sudo cp -p $QUANTUM_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
+    fi
     sudo sed -e "s:^filters_path=.*$:filters_path=$Q_CONF_ROOTWRAP_D:" -i $Q_RR_CONF_FILE
     sudo chown root:root $Q_RR_CONF_FILE
     sudo chmod 0644 $Q_RR_CONF_FILE
