@@ -53,6 +53,11 @@ fi
 # Support for multi lvm backend configuration (default is no support)
 CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
 
+# Should cinder perform secure deletion of volumes?
+# Defaults to true, can be set to False to avoid this bug when testing:
+# https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1023755
+CINDER_SECURE_DELETE=`trueorfalse True $CINDER_SECURE_DELETE`
+
 # Name of the lvm volume groups to use/create for iscsi volumes
 # VOLUME_GROUP2 is used only if CINDER_MULTI_LVM_BACKEND = True
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}

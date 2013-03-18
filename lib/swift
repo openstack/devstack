@@ -28,6 +28,7 @@ set +o xtrace
 SWIFT_DIR=$DEST/swift
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
+SWIFT3_DIR=$DEST/swift3
 
 # TODO: add logging to different location.
 
@@ -39,6 +40,12 @@ SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DATA_DIR}/swift}
 # Default is ``/etc/swift``.
 # TODO(dtroyer): remove SWIFT_CONFIG_DIR after cutting stable/grizzly
 SWIFT_CONF_DIR=${SWIFT_CONF_DIR:-${SWIFT_CONFIG_DIR:-/etc/swift}}
+
+if is_service_enabled s-proxy && is_service_enabled swift3; then
+    # If we are using swift3, we can default the s3 port to swift instead
+    # of nova-objectstore
+    S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
+fi
 
 # DevStack will create a loop-back disk formatted as XFS to store the
 # swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
