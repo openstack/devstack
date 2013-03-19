@@ -365,13 +365,13 @@ function start_quantum_service_and_check() {
 # Start running processes, including screen
 function start_quantum_agents() {
     # Start up the quantum agents if enabled
-    screen_it q-agt "python $AGENT_BINARY --config-file $QUANTUM_CONF --config-file /$Q_PLUGIN_CONF_FILE"
-    screen_it q-dhcp "python $AGENT_DHCP_BINARY --config-file $QUANTUM_CONF --config-file=$Q_DHCP_CONF_FILE"
-    screen_it q-meta "python $AGENT_META_BINARY --config-file $QUANTUM_CONF --config-file=$Q_META_CONF_FILE"
-    screen_it q-l3 "python $AGENT_L3_BINARY --config-file $QUANTUM_CONF --config-file=$Q_L3_CONF_FILE"
+    screen_it q-agt "cd $QUANTUM_DIR && python $AGENT_BINARY --config-file $QUANTUM_CONF --config-file /$Q_PLUGIN_CONF_FILE"
+    screen_it q-dhcp "cd $QUANTUM_DIR && python $AGENT_DHCP_BINARY --config-file $QUANTUM_CONF --config-file=$Q_DHCP_CONF_FILE"
+    screen_it q-l3 "cd $QUANTUM_DIR && python $AGENT_L3_BINARY --config-file $QUANTUM_CONF --config-file=$Q_L3_CONF_FILE"
+    screen_it q-meta "cd $QUANTUM_DIR && python $AGENT_META_BINARY --config-file $QUANTUM_CONF --config-file=$Q_META_CONF_FILE"
 
     if is_service_enabled q-lbaas; then
-        screen_it q-lbaas "python $AGENT_LBAAS_BINARY --config-file $QUANTUM_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
+        screen_it q-lbaas "cd $QUANTUM_DIR && python $AGENT_LBAAS_BINARY --config-file $QUANTUM_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
     fi
 }
 
