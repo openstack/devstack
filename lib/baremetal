@@ -33,7 +33,7 @@
 # baremetal driver uses that to push a disk image onto the node(s).
 #
 # Below we define various defaults which control the behavior of the
-# baremetal compute service, and inform it of the hardware it will contorl.
+# baremetal compute service, and inform it of the hardware it will control.
 #
 # Below that, various functions are defined, which are called by devstack
 # in the following order:
@@ -395,7 +395,7 @@ function upload_baremetal_image() {
        ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} \
        ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
 
-    # override DEFAULT_IMAGE_NAME so that tempest can find the image 
+    # override DEFAULT_IMAGE_NAME so that tempest can find the image
     # that we just uploaded in glance
     DEFAULT_IMAGE_NAME="${IMAGE_NAME%.img}"
 }
