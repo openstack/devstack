@@ -781,9 +781,9 @@ function uninstall_package() {
     if is_ubuntu; then
         apt_get purge "$@"
     elif is_fedora; then
-        yum remove -y "$@"
+        sudo yum remove -y "$@"
     elif is_suse; then
-        rpm -e "$@"
+        sudo rpm -e "$@"
     else
         exit_distro_not_supported "uninstalling packages"
     fi
