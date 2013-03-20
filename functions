@@ -408,6 +408,9 @@ function GetDistro() {
         else
             DISTRO="sle${os_RELEASE}sp${os_UPDATE}"
         fi
+    elif [[ "$os_VENDOR" =~ (Red Hat) || "$os_VENDOR" =~ (CentOS) ]]; then
+        # Drop the . release as we assume it's compatible
+        DISTRO="rhel${os_RELEASE::1}"
     else
         # Catch-all for now is Vendor + Release + Update
         DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
@@ -439,7 +442,6 @@ function is_fedora {
 
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || [ "$os_VENDOR" = "CentOS" ]
 }
-
 
 # Determine if current distribution is a SUSE-based distribution
 # (openSUSE, SLE).
