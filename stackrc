@@ -30,8 +30,8 @@ NOVA_ENABLED_APIS=ec2,osapi_compute,metadata
 # stuffing text into the screen windows so that a developer can use
 # ctrl-c, up-arrow, enter to restart the service. Starting services
 # this way is slightly unreliable, and a bit slower, so this can
-# be disabled for automated testing by setting this value to false.
-SCREEN_DEV=True
+# be disabled for automated testing by setting this value to False.
+USE_SCREEN=True
 
 # Repositories
 # ------------
@@ -198,3 +198,6 @@ VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-5130M}
 
 PRIVATE_NETWORK_NAME=${PRIVATE_NETWORK_NAME:-"private"}
 PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME:-"nova"}
+
+# Compatibility until it's eradicated from CI
+USE_SCREEN=${SCREEN_DEV:-$USE_SCREEN}

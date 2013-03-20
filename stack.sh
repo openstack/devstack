@@ -800,8 +800,17 @@ fi
 # Configure screen
 # ----------------
 
-if [ -z "$SCREEN_HARDSTATUS" ]; then
-    SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'
+USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+if [[ "$USE_SCREEN" == "True" ]]; then
+    # Create a new named screen to run processes in
+    screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
+    sleep 1
+
+    # Set a reasonable status bar
+    if [ -z "$SCREEN_HARDSTATUS" ]; then
+        SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'
+    fi
+    screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 fi
 
 # Clear screen rc file
@@ -810,12 +819,6 @@ if [[ -e $SCREENRC ]]; then
     echo -n > $SCREENRC
 fi
 
-# Create a new named screen to run processes in
-screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
-sleep 1
-
-# Set a reasonable status bar
-screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
 # Initialize the directory for service status check
 init_service_check
