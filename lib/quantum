@@ -53,7 +53,7 @@
 # that must be set in localrc for connectivity across hosts with
 # Quantum.
 #
-# With Quantum networking the NET_MAN variable is ignored.
+# With Quantum networking the NETWORK_MANAGER variable is ignored.
 
 
 # Save trace setting

@@ -278,11 +278,6 @@ SWIFT3_DIR=$DEST/swift3
 # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1023755
 CINDER_SECURE_DELETE=`trueorfalse True $CINDER_SECURE_DELETE`
 
-# Name of the LVM volume group to use/create for iscsi volumes
-VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
-VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
-INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
-
 # Generic helper to configure passwords
 function read_password {
     XTRACE=$(set +o | grep xtrace)
@@ -325,64 +320,6 @@ function read_password {
     $XTRACE
 }
 
-
-# Nova Network Configuration
-# --------------------------
-
-# FIXME: more documentation about why these are important options.  Also
-# we should make sure we use the same variable names as the option names.
-
-if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-    PUBLIC_INTERFACE_DEFAULT=eth3
-    # Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
-    FLAT_NETWORK_BRIDGE_DEFAULT=$(grep -o 'flat_network_bridge=[[:alnum:]]*' /proc/cmdline | cut -d= -f 2 | sort -u)
-    GUEST_INTERFACE_DEFAULT=eth1
-elif [ "$VIRT_DRIVER" = 'baremetal' ]; then
-    PUBLIC_INTERFACE_DEFAULT=eth0
-    FLAT_NETWORK_BRIDGE_DEFAULT=br100
-    FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
-    FORCE_DHCP_RELEASE=${FORCE_DHCP_RELEASE:-False}
-    NET_MAN=${NET_MAN:-FlatManager}
-    STUB_NETWORK=${STUB_NETWORK:-False}
-else
-    PUBLIC_INTERFACE_DEFAULT=br100
-    FLAT_NETWORK_BRIDGE_DEFAULT=br100
-    GUEST_INTERFACE_DEFAULT=eth0
-fi
-
-PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
-NET_MAN=${NET_MAN:-FlatDHCPManager}
-EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
-FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
-VLAN_INTERFACE=${VLAN_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
-FORCE_DHCP_RELEASE=${FORCE_DHCP_RELEASE:-True}
-
-# Test floating pool and range are used for testing.  They are defined
-# here until the admin APIs can replace nova-manage
-TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
-TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
-
-# ``MULTI_HOST`` is a mode where each compute node runs its own network node.  This
-# allows network operations and routing for a VM to occur on the server that is
-# running the VM - removing a SPOF and bandwidth bottleneck.
-MULTI_HOST=`trueorfalse False $MULTI_HOST`
-
-# If you are using the FlatDHCP network mode on multiple hosts, set the
-# ``FLAT_INTERFACE`` variable but make sure that the interface doesn't already
-# have an IP or you risk breaking things.
-#
-# **DHCP Warning**:  If your flat interface device uses DHCP, there will be a
-# hiccup while the network is moved from the flat interface to the flat network
-# bridge.  This will happen when you launch your first instance.  Upon launch
-# you will lose all connectivity to the node, and the VM launch will probably
-# fail.
-#
-# If you are running on a single node and don't need to access the VMs from
-# devices other than that node, you can set ``FLAT_INTERFACE=``
-# This will stop nova from bridging any interfaces into ``FLAT_NETWORK_BRIDGE``.
-FLAT_INTERFACE=${FLAT_INTERFACE-$GUEST_INTERFACE_DEFAULT}
-
-## FIXME(ja): should/can we check that FLAT_INTERFACE is sane?
 
 # Database Configuration
 # ----------------------
@@ -983,48 +920,6 @@ if is_service_enabled nova; then
     elif is_service_enabled n-net; then
         create_nova_conf_nova_network
     fi
-    # All nova-compute workers need to know the vnc configuration options
-    # These settings don't hurt anything if n-xvnc and n-novnc are disabled
-    if is_service_enabled n-cpu; then
-        NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
-        iniset $NOVA_CONF DEFAULT novncproxy_base_url "$NOVNCPROXY_URL"
-        XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
-        iniset $NOVA_CONF DEFAULT xvpvncproxy_base_url "$XVPVNCPROXY_URL"
-        SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:6082/spice_auto.html"}
-        iniset $NOVA_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
-    fi
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
-    else
-        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
-    fi
-
-    if is_service_enabled n-novnc || is_service_enabled n-xvnc ; then
-      # Address on which instance vncservers will listen on compute hosts.
-      # For multi-host, this should be the management ip of the compute host.
-      VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
-      iniset $NOVA_CONF DEFAULT vnc_enabled true
-      iniset $NOVA_CONF DEFAULT vncserver_listen "$VNCSERVER_LISTEN"
-      iniset $NOVA_CONF DEFAULT vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
-    else
-      iniset $NOVA_CONF DEFAULT vnc_enabled false
-    fi
-
-    if is_service_enabled n-spice; then
-      # Address on which instance spiceservers will listen on compute hosts.
-      # For multi-host, this should be the management ip of the compute host.
-      SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
-      SPICESERVER_LISTEN=${SPICESERVER_LISTEN=127.0.0.1}
-      iniset $NOVA_CONF spice enabled true
-      iniset $NOVA_CONF spice server_listen "$SPICESERVER_LISTEN"
-      iniset $NOVA_CONF spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
-    else
-      iniset $NOVA_CONF spice enabled false
-    fi
-
-    iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
-    iniset_rpc_backend nova $NOVA_CONF DEFAULT
-    iniset $NOVA_CONF DEFAULT glance_api_servers "$GLANCE_HOSTPORT"
 
 
     # XenServer
