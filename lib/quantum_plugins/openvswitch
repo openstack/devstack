@@ -8,7 +8,7 @@ set +o xtrace
 source $TOP_DIR/lib/quantum_plugins/ovs_base
 
 function quantum_plugin_create_nova_conf() {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+    _quantum_ovs_base_configure_nova_vif_driver
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         iniset $NOVA_CONF DEFAULT xenapi_vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
         iniset $NOVA_CONF DEFAULT xenapi_ovs_integration_bridge $FLAT_NETWORK_BRIDGE
@@ -43,6 +43,7 @@ function quantum_plugin_configure_plugin_agent() {
     # Setup integration bridge
     OVS_BRIDGE=${OVS_BRIDGE:-br-int}
     _quantum_ovs_base_setup_bridge $OVS_BRIDGE
+    _quantum_ovs_base_configure_firewall_driver
 
     # Setup agent for tunneling
     if [[ "$OVS_ENABLE_TUNNELING" = "True" ]]; then
@@ -137,6 +138,10 @@ function quantum_plugin_configure_service() {
 function quantum_plugin_setup_interface_driver() {
     local conf_file=$1
     iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+}
+
+function has_quantum_plugin_security_group() {
+    return 0
 }
 
 # Restore xtrace

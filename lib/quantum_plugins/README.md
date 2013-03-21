@@ -32,3 +32,5 @@ functions
 * ``quantum_plugin_configure_plugin_agent``
 * ``quantum_plugin_configure_service``
 * ``quantum_plugin_setup_interface_driver``
+* ``has_quantum_plugin_security_group``:
+  return 0 if the plugin support quantum security group otherwise return 1

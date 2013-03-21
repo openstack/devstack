@@ -9,7 +9,7 @@ source $TOP_DIR/lib/quantum_plugins/ovs_base
 source $TOP_DIR/lib/quantum_thirdparty/ryu      # for configuration value
 
 function quantum_plugin_create_nova_conf() {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
+    _quantum_ovs_base_configure_nova_vif_driver
     iniset $NOVA_CONF DEFAULT libvirt_ovs_integration_bridge "$OVS_BRIDGE"
 }
 
@@ -52,6 +52,8 @@ function quantum_plugin_configure_plugin_agent() {
     fi
     iniset /$Q_PLUGIN_CONF_FILE OVS integration_bridge $OVS_BRIDGE
     AGENT_BINARY="$QUANTUM_DIR/quantum/plugins/ryu/agent/ryu_quantum_agent.py"
+
+    _quantum_ovs_base_configure_firewall_driver
 }
 
 function quantum_plugin_configure_service() {
@@ -62,6 +64,11 @@ function quantum_plugin_setup_interface_driver() {
     local conf_file=$1
     iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
     iniset $conf_file DEFAULT ovs_use_veth True
+}
+
+function has_quantum_plugin_security_group() {
+    # 0 means True here
+    return 0
 }
 
 # Restore xtrace
