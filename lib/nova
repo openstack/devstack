@@ -65,6 +65,9 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
 
 QEMU_CONF=/etc/libvirt/qemu.conf
 
+NOVNC_DIR=$DEST/noVNC
+SPICE_DIR=$DEST/spice-html5
+
 
 # Nova Network Configuration
 # --------------------------

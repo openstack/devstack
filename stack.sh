@@ -269,14 +269,12 @@ source $TOP_DIR/lib/ldap
 # Set the destination directories for OpenStack projects
 HORIZON_DIR=$DEST/horizon
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
-NOVNC_DIR=$DEST/noVNC
-SPICE_DIR=$DEST/spice-html5
-SWIFT3_DIR=$DEST/swift3
 
-# Should cinder perform secure deletion of volumes?
-# Defaults to true, can be set to False to avoid this bug when testing:
-# https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1023755
-CINDER_SECURE_DELETE=`trueorfalse True $CINDER_SECURE_DELETE`
+
+# Interactive Configuration
+# -------------------------
+
+# Do all interactive config up front before the logging spew begins
 
 # Generic helper to configure passwords
 function read_password {
@@ -322,7 +320,6 @@ function read_password {
 
 
 # Database Configuration
-# ----------------------
 
 # To select between database backends, add the following to ``localrc``:
 #
@@ -335,8 +332,7 @@ function read_password {
 initialize_database_backends && echo "Using $DATABASE_TYPE database backend" || echo "No database enabled"
 
 
-# RabbitMQ or Qpid
-# --------------------------
+# Queue Configuration
 
 # Rabbit connection info
 if is_service_enabled rabbit; then
@@ -344,53 +340,45 @@ if is_service_enabled rabbit; then
     read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 fi
 
-if is_service_enabled s-proxy; then
-    # If we are using swift3, we can default the s3 port to swift instead
-    # of nova-objectstore
-    if is_service_enabled swift3;then
-        S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
+
+# Keystone
+
+if is_service_enabled key; then
+    # The ``SERVICE_TOKEN`` is used to bootstrap the Keystone database.  It is
+    # just a string and is not a 'real' Keystone token.
+    read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
+    # Services authenticate to Identity with servicename/``SERVICE_PASSWORD``
+    read_password SERVICE_PASSWORD "ENTER A SERVICE_PASSWORD TO USE FOR THE SERVICE AUTHENTICATION."
+    # Horizon currently truncates usernames and passwords at 20 characters
+    read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (20 CHARS OR LESS)."
+
+    # Keystone can now optionally install OpenLDAP by enabling the ``ldap``
+    # service in ``localrc`` (e.g. ``enable_service ldap``).
+    # To clean out the Keystone contents in OpenLDAP set ``KEYSTONE_CLEAR_LDAP``
+    # to ``yes`` (e.g. ``KEYSTONE_CLEAR_LDAP=yes``) in ``localrc``.  To enable the
+    # Keystone Identity Driver (``keystone.identity.backends.ldap.Identity``)
+    # set ``KEYSTONE_IDENTITY_BACKEND`` to ``ldap`` (e.g.
+    # ``KEYSTONE_IDENTITY_BACKEND=ldap``) in ``localrc``.
+
+    # only request ldap password if the service is enabled
+    if is_service_enabled ldap; then
+        read_password LDAP_PASSWORD "ENTER A PASSWORD TO USE FOR LDAP"
     fi
+fi
+
+
+# Swift
+
+if is_service_enabled s-proxy; then
     # We only ask for Swift Hash if we have enabled swift service.
     # ``SWIFT_HASH`` is a random unique string for a swift cluster that
     # can never change.
     read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
 fi
 
-# Set default port for nova-objectstore
-S3_SERVICE_PORT=${S3_SERVICE_PORT:-3333}
 
-
-# Keystone
-# --------
-
-# The ``SERVICE_TOKEN`` is used to bootstrap the Keystone database.  It is
-# just a string and is not a 'real' Keystone token.
-read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
-# Services authenticate to Identity with servicename/``SERVICE_PASSWORD``
-read_password SERVICE_PASSWORD "ENTER A SERVICE_PASSWORD TO USE FOR THE SERVICE AUTHENTICATION."
-# Horizon currently truncates usernames and passwords at 20 characters
-read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (20 CHARS OR LESS)."
-# Keystone can now optionally install OpenLDAP by adding ldap to the list
-# of enabled services in the localrc file (e.g. ENABLED_SERVICES=key,ldap).
-# If OpenLDAP has already been installed but you need to clear out
-# the Keystone contents of LDAP set KEYSTONE_CLEAR_LDAP to yes
-# (e.g. KEYSTONE_CLEAR_LDAP=yes ) in the localrc file.  To enable the
-# Keystone Identity Driver (keystone.identity.backends.ldap.Identity)
-# set KEYSTONE_IDENTITY_BACKEND to ldap (e.g. KEYSTONE_IDENTITY_BACKEND=ldap)
-# in the localrc file.
-
-
-# only request ldap password if the service is enabled
-if is_service_enabled ldap; then
-    read_password LDAP_PASSWORD "ENTER A PASSWORD TO USE FOR LDAP"
-fi
-
-# Set the tenant for service accounts in Keystone
-SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}
-
-
-# Log files
-# ---------
+# Configure logging
+# -----------------
 
 # Draw a spinner so the user knows something is happening
 function spinner() {
@@ -638,14 +626,15 @@ fi
 
 echo_summary "Configuring OpenStack projects"
 
-# Set up our checkouts so they are installed into python path
-# allowing ``import nova`` or ``import glance.client``
+# Set up our checkouts so they are installed in the python path
 configure_keystoneclient
 configure_novaclient
 setup_develop $OPENSTACKCLIENT_DIR
+
 if is_service_enabled key g-api n-api s-proxy; then
     configure_keystone
 fi
+
 if is_service_enabled s-proxy; then
     configure_swift
     configure_swiftclient
@@ -653,6 +642,7 @@ if is_service_enabled s-proxy; then
         setup_develop $SWIFT3_DIR
     fi
 fi
+
 if is_service_enabled g-api n-api; then
     configure_glance
 fi
@@ -666,17 +656,21 @@ if is_service_enabled nova; then
     cleanup_nova
     configure_nova
 fi
+
 if is_service_enabled horizon; then
     configure_horizon
 fi
+
 if is_service_enabled quantum; then
     setup_quantumclient
     setup_quantum
 fi
+
 if is_service_enabled heat; then
     configure_heat
     configure_heatclient
 fi
+
 if is_service_enabled cinder; then
     configure_cinder
 fi
@@ -697,6 +691,7 @@ if is_service_enabled tls-proxy; then
     # Add name to /etc/hosts
     # don't be naive and add to existing line!
 fi
+
 
 # Syslog
 # ------
@@ -992,6 +987,7 @@ if is_service_enabled nova && is_baremetal; then
     fi
 fi
 
+
 # Launch Services
 # ===============
 
@@ -1080,6 +1076,7 @@ if is_service_enabled heat; then
     echo_summary "Starting Heat"
     start_heat
 fi
+
 
 # Create account rc files
 # =======================
@@ -1190,6 +1187,7 @@ fi
 
 # Check the status of running services
 service_check
+
 
 # Fin
 # ===
