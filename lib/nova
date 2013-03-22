@@ -109,7 +109,7 @@ EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
 # If you are running on a single node and don't need to access the VMs from
 # devices other than that node, you can set ``FLAT_INTERFACE=``
 # This will stop nova from bridging any interfaces into ``FLAT_NETWORK_BRIDGE``.
-FLAT_INTERFACE=${FLAT_INTERFACE-$GUEST_INTERFACE_DEFAULT}
+FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 
 # ``MULTI_HOST`` is a mode where each compute node runs its own network node.  This
 # allows network operations and routing for a VM to occur on the server that is
