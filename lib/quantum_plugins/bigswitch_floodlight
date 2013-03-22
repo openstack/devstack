@@ -51,5 +51,10 @@ function quantum_plugin_setup_interface_driver() {
     iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
 }
 
+function has_quantum_plugin_security_group() {
+    # 1 means False here
+    return 1
+}
+
 # Restore xtrace
 $MY_XTRACE

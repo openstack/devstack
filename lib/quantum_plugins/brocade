@@ -45,5 +45,10 @@ function quantum_plugin_setup_interface_driver() {
     iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
 }
 
+function has_quantum_plugin_security_group() {
+    # 0 means True here
+    return 0
+}
+
 # Restore xtrace
 $BRCD_XTRACE

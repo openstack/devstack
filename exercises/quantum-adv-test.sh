@@ -235,7 +235,7 @@ function create_network {
     source $TOP_DIR/openrc $TENANT $TENANT
     local NET_ID=$(quantum net-create --tenant_id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
     quantum subnet-create --ip_version 4 --tenant_id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
-    quantum-debug probe-create $NET_ID
+    quantum-debug probe-create --device-owner compute $NET_ID
     source $TOP_DIR/openrc demo demo
 }
 
