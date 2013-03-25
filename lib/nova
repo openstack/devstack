@@ -355,7 +355,8 @@ EOF"
         # ----------------
 
         # Nova stores each instance in its own directory.
-        mkdir -p $NOVA_INSTANCES_PATH
+        sudo mkdir -p $NOVA_INSTANCES_PATH
+        sudo chown -R $STACK_USER $NOVA_INSTANCES_PATH
 
         # You can specify a different disk to be mounted and used for backing the
         # virtual machines.  If there is a partition labeled nova-instances we
