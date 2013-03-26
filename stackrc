@@ -44,112 +44,117 @@ NOVA_ENABLED_APIS=ec2,osapi_compute,metadata
 # be disabled for automated testing by setting this value to False.
 USE_SCREEN=True
 
+# allow local overrides of env variables, including repo config
+if [ -f $RC_DIR/localrc ]; then
+    source $RC_DIR/localrc
+fi
+
 # Repositories
 # ------------
 
 # Base GIT Repo URL
 # Another option is http://review.openstack.org/p
-GIT_BASE=https://github.com
+GIT_BASE=${GIT_BASE:-https://github.com}
 
 # metering service
-CEILOMETER_REPO=${GIT_BASE}/openstack/ceilometer.git
-CEILOMETER_BRANCH=master
+CEILOMETER_REPO=${CEILOMETER_REPO:-${GIT_BASE}/openstack/ceilometer.git}
+CEILOMETER_BRANCH=${CEILOMETER_BRANCH:-master}
 
 # ceilometer client library
-CEILOMETERCLIENT_REPO=${GIT_BASE}/openstack/python-ceilometerclient.git
-CEILOMETERCLIENT_BRANCH=master
+CEILOMETERCLIENT_REPO=${CEILOMETERCLIENT_REPO:-${GIT_BASE}/openstack/python-ceilometerclient.git}
+CEILOMETERCLIENT_BRANCH=${CEILOMETERCLIENT_BRANCH:-master}
 
 # volume service
-CINDER_REPO=${GIT_BASE}/openstack/cinder.git
-CINDER_BRANCH=master
+CINDER_REPO=${CINDER_REPO:-${GIT_BASE}/openstack/cinder.git}
+CINDER_BRANCH=${CINDER_BRANCH:-master}
 
 # volume client
-CINDERCLIENT_REPO=${GIT_BASE}/openstack/python-cinderclient.git
-CINDERCLIENT_BRANCH=master
+CINDERCLIENT_REPO=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
+CINDERCLIENT_BRANCH=${CINDERCLIENT_BRANCH:-master}
 
 # compute service
-NOVA_REPO=${GIT_BASE}/openstack/nova.git
-NOVA_BRANCH=master
+NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
+NOVA_BRANCH=${NOVA_BRANCH:-master}
 
 # storage service
-SWIFT_REPO=${GIT_BASE}/openstack/swift.git
-SWIFT_BRANCH=master
-SWIFT3_REPO=${GIT_BASE}/fujita/swift3.git
-SWIFT3_BRANCH=master
+SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
+SWIFT_BRANCH=${SWIFT_BRANCH:-master}
+SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/fujita/swift3.git}
+SWIFT3_BRANCH=${SWIFT3_BRANCH:-master}
 
 # python swift client library
-SWIFTCLIENT_REPO=${GIT_BASE}/openstack/python-swiftclient.git
-SWIFTCLIENT_BRANCH=master
+SWIFTCLIENT_REPO=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
+SWIFTCLIENT_BRANCH=${SWIFTCLIENT_BRANCH:-master}
 
 # image catalog service
-GLANCE_REPO=${GIT_BASE}/openstack/glance.git
-GLANCE_BRANCH=master
+GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
+GLANCE_BRANCH=${GLANCE_BRANCH:-master}
 
 # python glance client library
-GLANCECLIENT_REPO=${GIT_BASE}/openstack/python-glanceclient.git
-GLANCECLIENT_BRANCH=master
+GLANCECLIENT_REPO=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
+GLANCECLIENT_BRANCH=${GLANCECLIENT_BRANCH:-master}
 
 # unified auth system (manages accounts/tokens)
-KEYSTONE_REPO=${GIT_BASE}/openstack/keystone.git
-KEYSTONE_BRANCH=master
+KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
+KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
 
 # a websockets/html5 or flash powered VNC console for vm instances
-NOVNC_REPO=${GIT_BASE}/kanaka/noVNC.git
-NOVNC_BRANCH=master
+NOVNC_REPO=${NOVNC_REPO:-${GIT_BASE}/kanaka/noVNC.git}
+NOVNC_BRANCH=${NOVNC_BRANCH:-master}
 
 # a websockets/html5 or flash powered SPICE console for vm instances
-SPICE_REPO=http://anongit.freedesktop.org/git/spice/spice-html5.git
-SPICE_BRANCH=master
+SPICE_REPO=${SPICE_REPO:-http://anongit.freedesktop.org/git/spice/spice-html5.git}
+SPICE_BRANCH=${SPICE_BRANCH:-master}
 
 # django powered web control panel for openstack
-HORIZON_REPO=${GIT_BASE}/openstack/horizon.git
-HORIZON_BRANCH=master
+HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
+HORIZON_BRANCH=${HORIZON_BRANCH:-master}
 
 # python client library to nova that horizon (and others) use
-NOVACLIENT_REPO=${GIT_BASE}/openstack/python-novaclient.git
-NOVACLIENT_BRANCH=master
+NOVACLIENT_REPO=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
+NOVACLIENT_BRANCH=${NOVACLIENT_BRANCH:-master}
 
 # consolidated openstack python client
-OPENSTACKCLIENT_REPO=${GIT_BASE}/openstack/python-openstackclient.git
-OPENSTACKCLIENT_BRANCH=master
+OPENSTACKCLIENT_REPO=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
+OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
 
 # python keystone client library to nova that horizon uses
-KEYSTONECLIENT_REPO=${GIT_BASE}/openstack/python-keystoneclient.git
-KEYSTONECLIENT_BRANCH=master
+KEYSTONECLIENT_REPO=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
+KEYSTONECLIENT_BRANCH=${KEYSTONECLIENT_BRANCH:-master}
 
 # quantum service
-QUANTUM_REPO=${GIT_BASE}/openstack/quantum.git
-QUANTUM_BRANCH=master
+QUANTUM_REPO=${QUANTUM_REPO:-${GIT_BASE}/openstack/quantum.git}
+QUANTUM_BRANCH=${QUANTUM_BRANCH:-master}
 
 # quantum client
-QUANTUMCLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient.git
-QUANTUMCLIENT_BRANCH=master
+QUANTUMCLIENT_REPO=${QUANTUMCLIENT_REPO:-${GIT_BASE}/openstack/python-quantumclient.git}
+QUANTUMCLIENT_BRANCH=${QUANTUMCLIENT_BRANCH:-master}
 
 # Tempest test suite
-TEMPEST_REPO=${GIT_BASE}/openstack/tempest.git
-TEMPEST_BRANCH=master
+TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
+TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
 # heat service
-HEAT_REPO=${GIT_BASE}/openstack/heat.git
-HEAT_BRANCH=master
+HEAT_REPO=${HEAT_REPO:-${GIT_BASE}/openstack/heat.git}
+HEAT_BRANCH=${HEAT_BRANCH:-master}
 
 # python heat client library
-HEATCLIENT_REPO=${GIT_BASE}/openstack/python-heatclient.git
-HEATCLIENT_BRANCH=master
+HEATCLIENT_REPO=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
+HEATCLIENT_BRANCH=${HEATCLIENT_BRANCH:-master}
 
 # ryu service
-RYU_REPO=${GIT_BASE}/osrg/ryu.git
-RYU_BRANCH=master
+RYU_REPO=${RYU_REPO:-${GIT_BASE}/osrg/ryu.git}
+RYU_BRANCH=${RYU_BRANCH:-master}
 
 # diskimage-builder
-BM_IMAGE_BUILD_REPO=${GIT_BASE}/stackforge/diskimage-builder.git
-BM_IMAGE_BUILD_BRANCH=master
+BM_IMAGE_BUILD_REPO=${BM_IMAGE_BUILD_REPO:-${GIT_BASE}/stackforge/diskimage-builder.git}
+BM_IMAGE_BUILD_BRANCH=${BM_IMAGE_BUILD_BRANCH:-master}
 
 # bm_poseur
 # Used to simulate a hardware environment for baremetal
 # Only used if BM_USE_FAKE_ENV is set
-BM_POSEUR_REPO=${GIT_BASE}/tripleo/bm_poseur.git
-BM_POSEUR_BRANCH=master
+BM_POSEUR_REPO=${BM_POSEUR_REPO:-${GIT_BASE}/tripleo/bm_poseur.git}
+BM_POSEUR_BRANCH=${BM_POSEUR_BRANCH:-master}
 
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
@@ -157,11 +162,6 @@ BM_POSEUR_BRANCH=master
 # also install an **LXC** or **OpenVZ** based system.
 VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
-
-# allow local overrides of env variables
-if [ -f $RC_DIR/localrc ]; then
-    source $RC_DIR/localrc
-fi
 
 # Specify a comma-separated list of UEC images to download and install into glance.
 # supported urls here are:
