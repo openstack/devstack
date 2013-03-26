@@ -103,3 +103,51 @@ If you only want to do some testing of a real normal swift cluster with multiple
 If you are enabling `swift3` in `ENABLED_SERVICES` devstack will install the swift3 middleware emulation. Swift will be configured to act as a S3 endpoint for Keystone so effectively replacing the `nova-objectstore`.
 
 Only Swift proxy server is launched in the screen session all other services are started in background and managed by `swift-init` tool.
+
+# Quantum
+
+Basic Setup
+
+In order to enable Quantum a single node setup, you'll need the following settings in your `localrc` :
+
+    disable_service n-net
+    enable_service q-svc
+    enable_service q-agt
+    enable_service q-dhcp
+    enable_service q-l3
+    enable_service q-meta
+    enable_service quantum
+    # Optional, to enable tempest configuration as part of devstack
+    enable_service tempest
+
+Then run stack.sh as normal.
+
+If tempest has been successfully configured, a basic set of smoke tests can be run as follows:
+
+    $ cd /opt/stack/tempest
+    $ nosetests tempest/tests/network/test_network_basic_ops.py
+
+Multi-Node Setup
+
+A more interesting setup involves running multiple compute nodes, with Quantum networks connecting VMs on different compute nodes.
+You should run at least one "controller node", which should have a `stackrc` that includes at least:
+
+    disable_service n-net
+    enable_service q-svc
+    enable_service q-agt
+    enable_service q-dhcp
+    enable_service q-l3
+    enable_service q-meta
+    enable_service quantum
+
+You likely want to change your `localrc` to run a scheduler that will balance VMs across hosts:
+
+    SCHEDULER=nova.scheduler.simple.SimpleScheduler
+
+You can then run many compute nodes, each of which should have a `stackrc` which includes the following, with the IP address of the above controller node:
+
+    ENABLED_SERVICES=n-cpu,rabbit,g-api,quantum,q-agt
+    SERVICE_HOST=[IP of controller node]
+    MYSQL_HOST=$SERVICE_HOST
+    RABBIT_HOST=$SERVICE_HOST
+    Q_HOST=$SERVICE_HOST
