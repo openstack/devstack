@@ -48,7 +48,7 @@ DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
 SECGROUP=${SECGROUP:-test_secgroup}
 
 # Default floating IP pool name
-DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
+DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-public}
 
 # Additional floating IP pool and range
 TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
