@@ -227,6 +227,13 @@ else
     sudo rm -f /etc/sudoers.d/stack_sh_nova
 fi
 
+# Ensure /usr/sbin and /sbin are available on PATH
+S_PATH="/sbin /usr/sbin"
+for i in $S_PATH
+do
+    echo ":$PATH:" | egrep ":$i:" > /dev/null || (PATH=$PATH:$i; echo $PATH)
+done
+
 # Create the destination directory and ensure it is writable by the user
 sudo mkdir -p $DEST
 if [ ! -w $DEST ]; then
