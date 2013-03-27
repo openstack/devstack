@@ -1017,7 +1017,10 @@ if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nov
     iniset $NOVA_CONF DEFAULT s3_affix_tenant "True"
 fi
 
-screen_it zeromq "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-rpc-zmq-receiver"
+if is_service_enabled zeromq; then
+    echo_summary "Starting zermomq receiver"
+    screen_it zeromq "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-rpc-zmq-receiver"
+fi
 
 # Launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
