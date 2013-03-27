@@ -1062,12 +1062,6 @@ if is_service_enabled ceilometer; then
     start_ceilometer
 fi
 
-# Starting the nova-objectstore only if swift3 service is not enabled.
-# Swift will act as s3 objectstore.
-is_service_enabled swift3 || \
-    screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore"
-
-
 # Configure and launch heat engine, api and metadata
 if is_service_enabled heat; then
     # Initialize heat, including replacing nova flavors

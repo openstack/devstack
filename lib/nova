@@ -660,6 +660,11 @@ function start_nova() {
     screen_it n-xvnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-xvpvncproxy --config-file $NOVA_CONF"
     screen_it n-spice "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $NOVA_CONF --web $SPICE_DIR"
     screen_it n-cauth "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-consoleauth"
+
+    # Starting the nova-objectstore only if swift3 service is not enabled.
+    # Swift will act as s3 objectstore.
+    is_service_enabled swift3 || \
+        screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore"
 }
 
 # stop_nova() - Stop running processes (non-screen)
