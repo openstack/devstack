@@ -29,6 +29,10 @@ set +o xtrace
 # Set up default directories
 HORIZON_DIR=$DEST/horizon
 
+# local_settings.py is used to customize Dashboard settings.
+# The example file in Horizon repo is used by default.
+HORIZON_SETTINGS=${HORIZON_SETTINGS:-$HORIZON_DIR/openstack_dashboard/local/local_settings.py.example}
+
 # Allow overriding the default Apache user and group, default to
 # current user and his default group.
 APACHE_USER=${APACHE_USER:-$USER}
@@ -77,7 +81,7 @@ function init_horizon() {
 
     # ``local_settings.py`` is used to override horizon default settings.
     local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
-    cp $FILES/horizon_settings.py $local_settings
+    cp $HORIZON_SETTINGS $local_settings
 
     # enable loadbalancer dashboard in case service is enabled
     if is_service_enabled q-lbaas; then
