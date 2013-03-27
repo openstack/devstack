@@ -28,6 +28,9 @@ THIS_DIR=$(cd $(dirname "$0") && pwd)
 # Include onexit commands
 . $THIS_DIR/scripts/on_exit.sh
 
+# xapi functions
+. $THIS_DIR/functions
+
 
 #
 # Get Settings
@@ -43,48 +46,26 @@ xe_min()
   xe "$cmd" --minimal "$@"
 }
 
-
 #
 # Prepare Dom0
 # including installing XenAPI plugins
 #
 
 cd $THIS_DIR
-if [ -f ./master ]
-then
-    rm -rf ./master
-    rm -rf ./nova
-fi
 
-# get nova
-NOVA_ZIPBALL_URL=${NOVA_ZIPBALL_URL:-$(echo $NOVA_REPO | sed "s:\.git$::;s:$:/zipball/$NOVA_BRANCH:g")}
-wget -nv $NOVA_ZIPBALL_URL -O nova-zipball --no-check-certificate
-unzip -q -o nova-zipball  -d ./nova
+# Install plugins
 
-# install xapi plugins
-XAPI_PLUGIN_DIR=/etc/xapi.d/plugins/
-if [ ! -d $XAPI_PLUGIN_DIR ]; then
-    # the following is needed when using xcp-xapi
-    XAPI_PLUGIN_DIR=/usr/lib/xcp/plugins/
-fi
-cp -pr ./nova/*/plugins/xenserver/xenapi/etc/xapi.d/plugins/* $XAPI_PLUGIN_DIR
+## Nova plugins
+NOVA_ZIPBALL_URL=${NOVA_ZIPBALL_URL:-$(zip_snapshot_location $NOVA_REPO $NOVA_BRANCH)}
+install_xapi_plugins_from_zipball $NOVA_ZIPBALL_URL
 
-# Install the netwrap xapi plugin to support agent control of dom0 networking
+## Install the netwrap xapi plugin to support agent control of dom0 networking
 if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
-    if [ -f ./quantum ]; then
-        rm -rf ./quantum
-    fi
-    # get quantum
-    QUANTUM_ZIPBALL_URL=${QUANTUM_ZIPBALL_URL:-$(echo $QUANTUM_REPO | sed "s:\.git$::;s:$:/zipball/$QUANTUM_BRANCH:g")}
-    wget -nv $QUANTUM_ZIPBALL_URL -O quantum-zipball --no-check-certificate
-    unzip -q -o quantum-zipball  -d ./quantum
-    cp -pr ./quantum/*/quantum/plugins/openvswitch/agent/xenapi/etc/xapi.d/plugins/* $XAPI_PLUGIN_DIR
+    QUANTUM_ZIPBALL_URL=${QUANTUM_ZIPBALL_URL:-$(zip_snapshot_location $QUANTUM_REPO $QUANTUM_BRANCH)}
+    install_xapi_plugins_from_zipball $QUANTUM_ZIPBALL_URL
 fi
 
-chmod a+x ${XAPI_PLUGIN_DIR}*
-
-mkdir -p /boot/guest
-
+create_directory_for_kernels
 
 #
 # Configure Networking
