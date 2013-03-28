@@ -156,8 +156,11 @@ function cleanup_nova() {
         fi
 
         # Logout and delete iscsi sessions
-        sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d " " -f2 | xargs sudo iscsiadm --mode node --logout || true
-        sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d " " -f2 | sudo iscsiadm --mode node --op delete || true
+        tgts=$(sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d ' ' -f2)
+        for target in $tgts; do
+            sudo iscsiadm --mode node -T $target --logout || true
+        done
+        sudo iscsiadm --mode node --op delete || true
 
         # Clean out the instances directory.
         sudo rm -rf $NOVA_INSTANCES_PATH/*
