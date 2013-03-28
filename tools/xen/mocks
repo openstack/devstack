@@ -12,6 +12,18 @@ test ! -e "$LIST_OF_DIRECTORIES" && {
     exit 1
 }
 
+test ! -e "$XE_RESPONSE" && {
+    echo "Mocking is not set up properly."
+    echo "XE_RESPONSE should point to an existing file."
+    exit 1
+}
+
+test ! -e "$XE_CALLS" && {
+    echo "Mocking is not set up properly."
+    echo "XE_CALLS should point to an existing file."
+    exit 1
+}
+
 function mktemp {
     if test "${1:-}" = "-d";
     then
@@ -41,6 +53,10 @@ function rm {
     echo "rm $@" >> $LIST_OF_ACTIONS
 }
 
+function ln {
+    echo "ln $@" >> $LIST_OF_ACTIONS
+}
+
 function [ {
     if test "${1:-}" = "-d";
     then
@@ -56,4 +72,14 @@ function [ {
     fi
     echo "Mock test does not implement the requested function"
     exit 1
+}
+
+function xe {
+    cat $XE_RESPONSE
+    {
+    for i in $(seq "$#")
+    do
+        eval "echo \"\$$i\""
+    done
+    } >> $XE_CALLS
 }
