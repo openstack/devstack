@@ -1148,6 +1148,12 @@ function upload_image() {
             DISK_FORMAT=qcow2
             CONTAINER_FORMAT=bare
             ;;
+        *.iso)
+            IMAGE="$FILES/${IMAGE_FNAME}"
+            IMAGE_NAME=$(basename "$IMAGE" ".iso")
+            DISK_FORMAT=iso
+            CONTAINER_FORMAT=bare
+            ;;
         *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
     esac
 
