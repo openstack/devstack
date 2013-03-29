@@ -139,3 +139,7 @@ function database_connection_url_mysql {
 
 # Restore xtrace
 $MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

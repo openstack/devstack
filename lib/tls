@@ -316,3 +316,7 @@ function start_tls_proxy() {
 
     stud $STUD_PROTO -f $f_host,$f_port -b $b_host,$b_port $DEVSTACK_CERT 2>/dev/null
 }
+
+# Local variables:
+# mode: shell-script
+# End:

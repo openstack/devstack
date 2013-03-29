@@ -429,3 +429,7 @@ function stop_swift() {
 
 # Restore xtrace
 $XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

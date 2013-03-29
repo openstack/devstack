@@ -78,3 +78,7 @@ function stop_XXXX() {
 
 # Restore xtrace
 $XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

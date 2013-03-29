@@ -90,3 +90,7 @@ function database_connection_url_postgresql {
 
 # Restore xtrace
 $PG_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

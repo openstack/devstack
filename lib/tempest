@@ -294,3 +294,7 @@ function init_tempest() {
 
 # Restore xtrace
 $XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

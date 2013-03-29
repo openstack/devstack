@@ -434,3 +434,7 @@ function add_baremetal_node() {
 
 # Restore xtrace
 $XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

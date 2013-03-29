@@ -138,3 +138,7 @@ function stop_ceilometer() {
 
 # Restore xtrace
 $XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

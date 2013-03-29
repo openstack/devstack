@@ -761,3 +761,7 @@ function stop_quantum_third_party() {
 
 # Restore xtrace
 $XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

@@ -431,3 +431,7 @@ function stop_cinder() {
 
 # Restore xtrace
 $XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

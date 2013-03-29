@@ -221,3 +221,7 @@ PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME:-"nova"}
 
 # Compatibility until it's eradicated from CI
 USE_SCREEN=${SCREEN_DEV:-$USE_SCREEN}
+
+# Local variables:
+# mode: shell-script
+# End:
