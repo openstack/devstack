@@ -12,6 +12,5 @@ python-setuptools # instead of python-distribute; dist:sle11sp2
 python-greenlet
 python-lxml
 python-mysql
-python-py-bcrypt
 python-pysqlite
 sqlite3
