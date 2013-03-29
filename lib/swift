@@ -79,9 +79,9 @@ SWIFT_REPLICAS_SEQ=$(seq ${SWIFT_REPLICAS})
 # Port bases used in port number calclution for the service "nodes"
 # The specified port number will be used, the additinal ports calculated by
 # base_port + node_num * 10
-OBJECT_PORT_BASE=6013
-CONTAINER_PORT_BASE=6011
-ACCOUNT_PORT_BASE=6012
+OBJECT_PORT_BASE=${OBJECT_PORT_BASE:-6013}
+CONTAINER_PORT_BASE=${CONTAINER_PORT_BASE:-6011}
+ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 
 
 # Entry Points
