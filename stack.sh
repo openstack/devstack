@@ -826,17 +826,7 @@ fi
 
 if is_service_enabled g-reg; then
     echo_summary "Configuring Glance"
-
     init_glance
-
-    # Store the images in swift if enabled.
-    if is_service_enabled s-proxy; then
-        iniset $GLANCE_API_CONF DEFAULT default_store swift
-        iniset $GLANCE_API_CONF DEFAULT swift_store_auth_address $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/
-        iniset $GLANCE_API_CONF DEFAULT swift_store_user $SERVICE_TENANT_NAME:glance
-        iniset $GLANCE_API_CONF DEFAULT swift_store_key $SERVICE_PASSWORD
-        iniset $GLANCE_API_CONF DEFAULT swift_store_create_container_on_put True
-    fi
 fi
 
 
