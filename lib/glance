@@ -62,15 +62,8 @@ function cleanup_glance() {
     sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR $GLANCE_AUTH_CACHE_DIR
 }
 
-# configure_glanceclient() - Set config files, create data dirs, etc
-function configure_glanceclient() {
-    setup_develop $GLANCECLIENT_DIR
-}
-
 # configure_glance() - Set config files, create data dirs, etc
 function configure_glance() {
-    setup_develop $GLANCE_DIR
-
     if [[ ! -d $GLANCE_CONF_DIR ]]; then
         sudo mkdir -p $GLANCE_CONF_DIR
     fi
@@ -180,11 +173,13 @@ function init_glance() {
 # install_glanceclient() - Collect source and prepare
 function install_glanceclient() {
     git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
+    setup_develop $GLANCECLIENT_DIR
 }
 
 # install_glance() - Collect source and prepare
 function install_glance() {
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
+    setup_develop $GLANCE_DIR
 }
 
 # start_glance() - Start running processes, including screen

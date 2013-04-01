@@ -647,10 +647,6 @@ if is_service_enabled g-api n-api; then
     configure_glance
 fi
 
-# Do this _after_ glance is installed to override the old binary
-# TODO(dtroyer): figure out when this is no longer necessary
-configure_glanceclient
-
 if is_service_enabled nova; then
     # First clean up old instances
     cleanup_nova
