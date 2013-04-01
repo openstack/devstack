@@ -123,9 +123,6 @@ function cleanup_cinder() {
 
 # configure_cinder() - Set config files, create data dirs, etc
 function configure_cinder() {
-    setup_develop $CINDER_DIR
-    setup_develop $CINDERCLIENT_DIR
-
     if [[ ! -d $CINDER_CONF_DIR ]]; then
         sudo mkdir -p $CINDER_CONF_DIR
     fi
@@ -367,7 +364,10 @@ function init_cinder() {
 # install_cinder() - Collect source and prepare
 function install_cinder() {
     git_clone $CINDER_REPO $CINDER_DIR $CINDER_BRANCH
+    setup_develop $CINDER_DIR
+
     git_clone $CINDERCLIENT_REPO $CINDERCLIENT_DIR $CINDERCLIENT_BRANCH
+    setup_develop $CINDERCLIENT_DIR
 }
 
 # apply config.d approach (e.g. Oneiric does not have this)
