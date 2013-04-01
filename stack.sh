@@ -627,7 +627,6 @@ fi
 echo_summary "Configuring OpenStack projects"
 
 # Set up our checkouts so they are installed in the python path
-configure_keystoneclient
 configure_novaclient
 setup_develop $OPENSTACKCLIENT_DIR
 

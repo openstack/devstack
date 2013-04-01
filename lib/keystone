@@ -75,15 +75,8 @@ function cleanup_keystone() {
     :
 }
 
-# configure_keystoneclient() - Set config files, create data dirs, etc
-function configure_keystoneclient() {
-    setup_develop $KEYSTONECLIENT_DIR
-}
-
 # configure_keystone() - Set config files, create data dirs, etc
 function configure_keystone() {
-    setup_develop $KEYSTONE_DIR
-
     if [[ ! -d $KEYSTONE_CONF_DIR ]]; then
         sudo mkdir -p $KEYSTONE_CONF_DIR
     fi
@@ -305,6 +298,7 @@ function init_keystone() {
 # install_keystoneclient() - Collect source and prepare
 function install_keystoneclient() {
     git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
+    setup_develop $KEYSTONECLIENT_DIR
 }
 
 # install_keystone() - Collect source and prepare
@@ -314,6 +308,7 @@ function install_keystone() {
         install_ldap
     fi
     git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
+    setup_develop $KEYSTONE_DIR
 }
 
 # start_keystone() - Start running processes, including screen
