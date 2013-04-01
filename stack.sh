@@ -556,117 +556,99 @@ if [[ $TRACK_DEPENDS = True ]] ; then
 fi
 
 
-# Check Out Source
-# ----------------
+# Check Out and Install Source
+# ----------------------------
 
 echo_summary "Installing OpenStack project source"
 
-# Grab clients first
+# Install clients libraries
 install_keystoneclient
 install_glanceclient
 install_cinderclient
 install_novaclient
-# Check out the client libs that are used most
+if is_service_enabled swift glance; then
+    install_swiftclient
+fi
+if is_service_enabled quantum nova; then
+    install_quantumclient
+fi
+
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
 setup_develop $OPENSTACKCLIENT_DIR
 
-# glance, swift middleware and nova api needs keystone middleware
-if is_service_enabled key g-api n-api s-proxy; then
-    # unified auth system (manages accounts/tokens)
+if is_service_enabled key; then
     install_keystone
+    configure_keystone
 fi
 
 if is_service_enabled s-proxy; then
-    install_swiftclient
     install_swift
+    configure_swift
+
     if is_service_enabled swift3; then
         # swift3 middleware to provide S3 emulation to Swift
         git_clone $SWIFT3_REPO $SWIFT3_DIR $SWIFT3_BRANCH
+        setup_develop $SWIFT3_DIR
     fi
 fi
 
 if is_service_enabled g-api n-api; then
     # image catalog service
     install_glance
+    configure_glance
 fi
+
+if is_service_enabled cinder; then
+    install_cinder
+    configure_cinder
+fi
+
+if is_service_enabled quantum; then
+    install_quantum
+    install_quantum_third_party
+fi
+
 if is_service_enabled nova; then
     # compute service
     install_nova
+    cleanup_nova
+    configure_nova
 fi
+
 if is_service_enabled n-novnc; then
     # a websockets/html5 or flash powered VNC console for vm instances
     git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
 fi
+
 if is_service_enabled n-spice; then
     # a websockets/html5 or flash powered SPICE console for vm instances
     git_clone $SPICE_REPO $SPICE_DIR $SPICE_BRANCH
 fi
+
 if is_service_enabled horizon; then
     # dashboard
     install_horizon
+    configure_horizon
 fi
-if is_service_enabled quantum; then
-    install_quantum
-    install_quantumclient
-    install_quantum_third_party
-fi
-if is_service_enabled heat; then
-    install_heat
-    install_heatclient
-fi
-if is_service_enabled cinder; then
-    install_cinder
-fi
+
 if is_service_enabled ceilometer; then
     install_ceilometerclient
     install_ceilometer
 fi
 
-
-# Initialization
-# ==============
-
-echo_summary "Configuring OpenStack projects"
-
-# Set up our checkouts so they are installed in the python path
-
-if is_service_enabled key g-api n-api s-proxy; then
-    configure_keystone
-fi
-
-if is_service_enabled s-proxy; then
-    configure_swift
-    if is_service_enabled swift3; then
-        setup_develop $SWIFT3_DIR
-    fi
-fi
-
-if is_service_enabled g-api n-api; then
-    configure_glance
-fi
-
-if is_service_enabled nova; then
-    # First clean up old instances
-    cleanup_nova
-    configure_nova
-fi
-
-if is_service_enabled horizon; then
-    configure_horizon
-fi
-
-if is_service_enabled quantum; then
-    setup_quantumclient
-    setup_quantum
-fi
-
 if is_service_enabled heat; then
+    install_heat
+    install_heatclient
     configure_heat
     configure_heatclient
 fi
 
-if is_service_enabled cinder; then
-    configure_cinder
+if is_service_enabled tls-proxy; then
+    configure_CA
+    init_CA
+    init_cert
+    # Add name to /etc/hosts
+    # don't be naive and add to existing line!
 fi
 
 if [[ $TRACK_DEPENDS = True ]] ; then
@@ -676,14 +658,6 @@ if [[ $TRACK_DEPENDS = True ]] ; then
     fi
     echo "Ran stack.sh in depend tracking mode, bailing out now"
     exit 0
-fi
-
-if is_service_enabled tls-proxy; then
-    configure_CA
-    init_CA
-    init_cert
-    # Add name to /etc/hosts
-    # don't be naive and add to existing line!
 fi
 
 
