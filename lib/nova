@@ -169,11 +169,6 @@ function cleanup_nova() {
     sudo rm -rf $NOVA_STATE_PATH $NOVA_AUTH_CACHE_DIR
 }
 
-# configure_novaclient() - Set config files, create data dirs, etc
-function configure_novaclient() {
-    setup_develop $NOVACLIENT_DIR
-}
-
 # configure_nova_rootwrap() - configure Nova's rootwrap
 function configure_nova_rootwrap() {
     # Deploy new rootwrap filters files (owned by root).
@@ -204,8 +199,6 @@ function configure_nova_rootwrap() {
 
 # configure_nova() - Set config files, create data dirs, etc
 function configure_nova() {
-    setup_develop $NOVA_DIR
-
     # Put config files in ``/etc/nova`` for everyone to find
     if [[ ! -d $NOVA_CONF_DIR ]]; then
         sudo mkdir -p $NOVA_CONF_DIR
@@ -597,6 +590,7 @@ function init_nova() {
 # install_novaclient() - Collect source and prepare
 function install_novaclient() {
     git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
+    setup_develop $NOVACLIENT_DIR
 }
 
 # install_nova() - Collect source and prepare
@@ -627,6 +621,7 @@ function install_nova() {
     fi
 
     git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
+    setup_develop $NOVA_DIR
 }
 
 # start_nova_api() - Start the API process ahead of other things

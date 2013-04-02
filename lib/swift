@@ -106,8 +106,6 @@ function configure_swift() {
     local swift_node_config
     local swift_log_dir
 
-    setup_develop $SWIFT_DIR
-
     # Make sure to kill all swift processes first
     swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
@@ -281,11 +279,6 @@ EOF
         tee /etc/rsyslog.d/10-swift.conf
 }
 
-# configure_swiftclient() - Set config files, create data dirs, etc
-function configure_swiftclient() {
-    setup_develop $SWIFTCLIENT_DIR
-}
-
 # create_swift_disk - Create Swift backing disk
 function create_swift_disk() {
     local node_number
@@ -374,12 +367,13 @@ function init_swift() {
 
 function install_swift() {
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
+    setup_develop $SWIFT_DIR
 }
 
 function install_swiftclient() {
     git_clone $SWIFTCLIENT_REPO $SWIFTCLIENT_DIR $SWIFTCLIENT_BRANCH
+    setup_develop $SWIFTCLIENT_DIR
 }
-
 
 # start_swift() - Start running processes, including screen
 function start_swift() {
