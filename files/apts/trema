@@ -1,0 +1,15 @@
+# Trema
+gcc
+make
+ruby1.8
+rubygems1.8
+ruby1.8-dev
+libpcap-dev
+libsqlite3-dev
+
+# Sliceable Switch
+sqlite3
+libdbi-perl
+libdbd-sqlite3-perl
+apache2
+libjson-perl
