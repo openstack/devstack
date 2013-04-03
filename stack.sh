@@ -824,12 +824,24 @@ pip_install $(get_packages $FILES/pips | sort -u)
 
 echo_summary "Installing OpenStack project source"
 
+# Install clients libraries
 install_keystoneclient
 install_glanceclient
+install_cinderclient
 install_novaclient
+if is_service_enabled swift glance; then
+    # storage service client and and Library
+    git_clone $SWIFTCLIENT_REPO $SWIFTCLIENT_DIR $SWIFTCLIENT_BRANCH
+    setup_develop $SWIFTCLIENT_DIR
+fi
+if is_service_enabled quantum nova; then
+    git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
+    setup_develop $QUANTUM_CLIENT_DIR
+fi
 
 # Check out the client libs that are used most
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
+setup_develop $OPENSTACKCLIENT_DIR
 
 # glance, swift middleware and nova api needs keystone middleware
 if is_service_enabled key g-api n-api swift; then
@@ -839,8 +851,6 @@ fi
 if is_service_enabled swift; then
     # storage service
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
-    # storage service client and and Library
-    git_clone $SWIFTCLIENT_REPO $SWIFTCLIENT_DIR $SWIFTCLIENT_BRANCH
     if is_service_enabled swift3; then
         # swift3 middleware to provide S3 emulation to Swift
         git_clone $SWIFT3_REPO $SWIFT3_DIR $SWIFT3_BRANCH
@@ -861,9 +871,6 @@ fi
 if is_service_enabled horizon; then
     # django powered web control panel for openstack
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
-fi
-if is_service_enabled quantum; then
-    git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
 fi
 if is_service_enabled quantum; then
     # quantum
@@ -887,26 +894,22 @@ echo_summary "Configuring OpenStack projects"
 
 # Set up our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
-configure_keystoneclient
-configure_novaclient
-setup_develop $OPENSTACKCLIENT_DIR
 if is_service_enabled key g-api n-api swift; then
     configure_keystone
 fi
 if is_service_enabled swift; then
     setup_develop $SWIFT_DIR
-    setup_develop $SWIFTCLIENT_DIR
 fi
 if is_service_enabled swift3; then
     setup_develop $SWIFT3_DIR
 fi
 if is_service_enabled g-api n-api; then
     configure_glance
-fi
 
-# Do this _after_ glance is installed to override the old binary
-# TODO(dtroyer): figure out when this is no longer necessary
-configure_glanceclient
+    # Do this again _after_ glance is installed to overwrite
+    # the old binary shipped in glance
+    setup_develop $GLANCECLIENT_DIR
+fi
 
 if is_service_enabled nova; then
     configure_nova
@@ -915,7 +918,6 @@ if is_service_enabled horizon; then
     setup_develop $HORIZON_DIR
 fi
 if is_service_enabled quantum; then
-    setup_develop $QUANTUM_CLIENT_DIR
     setup_develop $QUANTUM_DIR
 fi
 if is_service_enabled heat; then

@@ -103,11 +103,6 @@ function cleanup_nova() {
     fi
 }
 
-# configure_novaclient() - Set config files, create data dirs, etc
-function configure_novaclient() {
-    setup_develop $NOVACLIENT_DIR
-}
-
 # configure_nova_rootwrap() - configure Nova's rootwrap
 function configure_nova_rootwrap() {
     # Deploy new rootwrap filters files (owned by root).
@@ -377,6 +372,7 @@ function init_nova() {
 # install_novaclient() - Collect source and prepare
 function install_novaclient() {
     git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
+    setup_develop $NOVACLIENT_DIR
 }
 
 # install_nova() - Collect source and prepare

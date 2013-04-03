@@ -63,11 +63,6 @@ function cleanup_glance() {
     :
 }
 
-# configure_glanceclient() - Set config files, create data dirs, etc
-function configure_glanceclient() {
-    setup_develop $GLANCECLIENT_DIR
-}
-
 # configure_glance() - Set config files, create data dirs, etc
 function configure_glance() {
     setup_develop $GLANCE_DIR
@@ -158,6 +153,7 @@ function init_glance() {
 # install_glanceclient() - Collect source and prepare
 function install_glanceclient() {
     git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
+    setup_develop $GLANCECLIENT_DIR
 }
 
 # install_glance() - Collect source and prepare
