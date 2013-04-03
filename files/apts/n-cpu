@@ -1,4 +1,5 @@
 # Stuff for diablo volumes
+nbd-client
 lvm2
 open-iscsi
 open-iscsi-utils
