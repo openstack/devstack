@@ -59,7 +59,7 @@ GIT_BASE=${GIT_BASE:-https://github.com}
 
 # metering service
 CEILOMETER_REPO=${CEILOMETER_REPO:-${GIT_BASE}/openstack/ceilometer.git}
-CEILOMETER_BRANCH=${CEILOMETER_BRANCH:-master}
+CEILOMETER_BRANCH=${CEILOMETER_BRANCH:-stable/grizzly}
 
 # ceilometer client library
 CEILOMETERCLIENT_REPO=${CEILOMETERCLIENT_REPO:-${GIT_BASE}/openstack/python-ceilometerclient.git}
@@ -67,7 +67,7 @@ CEILOMETERCLIENT_BRANCH=${CEILOMETERCLIENT_BRANCH:-master}
 
 # volume service
 CINDER_REPO=${CINDER_REPO:-${GIT_BASE}/openstack/cinder.git}
-CINDER_BRANCH=${CINDER_BRANCH:-master}
+CINDER_BRANCH=${CINDER_BRANCH:-stable/grizzly}
 
 # volume client
 CINDERCLIENT_REPO=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
@@ -75,11 +75,11 @@ CINDERCLIENT_BRANCH=${CINDERCLIENT_BRANCH:-master}
 
 # compute service
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
-NOVA_BRANCH=${NOVA_BRANCH:-master}
+NOVA_BRANCH=${NOVA_BRANCH:-stable/grizzly}
 
 # storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
-SWIFT_BRANCH=${SWIFT_BRANCH:-master}
+SWIFT_BRANCH=${SWIFT_BRANCH:-stable/grizzly}
 SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/fujita/swift3.git}
 SWIFT3_BRANCH=${SWIFT3_BRANCH:-master}
 
@@ -89,7 +89,7 @@ SWIFTCLIENT_BRANCH=${SWIFTCLIENT_BRANCH:-master}
 
 # image catalog service
 GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
-GLANCE_BRANCH=${GLANCE_BRANCH:-master}
+GLANCE_BRANCH=${GLANCE_BRANCH:-stable/grizzly}
 
 # python glance client library
 GLANCECLIENT_REPO=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
@@ -97,7 +97,7 @@ GLANCECLIENT_BRANCH=${GLANCECLIENT_BRANCH:-master}
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
-KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
+KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-stable/grizzly}
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=${NOVNC_REPO:-${GIT_BASE}/kanaka/noVNC.git}
@@ -109,7 +109,7 @@ SPICE_BRANCH=${SPICE_BRANCH:-master}
 
 # django powered web control panel for openstack
 HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
-HORIZON_BRANCH=${HORIZON_BRANCH:-master}
+HORIZON_BRANCH=${HORIZON_BRANCH:-stable/grizzly}
 
 # python client library to nova that horizon (and others) use
 NOVACLIENT_REPO=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
@@ -125,7 +125,7 @@ KEYSTONECLIENT_BRANCH=${KEYSTONECLIENT_BRANCH:-master}
 
 # quantum service
 QUANTUM_REPO=${QUANTUM_REPO:-${GIT_BASE}/openstack/quantum.git}
-QUANTUM_BRANCH=${QUANTUM_BRANCH:-master}
+QUANTUM_BRANCH=${QUANTUM_BRANCH:-stable/grizzly}
 
 # quantum client
 QUANTUMCLIENT_REPO=${QUANTUMCLIENT_REPO:-${GIT_BASE}/openstack/python-quantumclient.git}
@@ -137,7 +137,7 @@ TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
 # heat service
 HEAT_REPO=${HEAT_REPO:-${GIT_BASE}/openstack/heat.git}
-HEAT_BRANCH=${HEAT_BRANCH:-master}
+HEAT_BRANCH=${HEAT_BRANCH:-stable/grizzly}
 
 # python heat client library
 HEATCLIENT_REPO=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
