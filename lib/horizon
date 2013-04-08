@@ -38,6 +38,10 @@ HORIZON_SETTINGS=${HORIZON_SETTINGS:-$HORIZON_DIR/openstack_dashboard/local/loca
 APACHE_USER=${APACHE_USER:-$USER}
 APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
 
+
+# Functions
+# ---------
+
 # utility method of setting python option
 function _horizon_config_set() {
     local file=$1

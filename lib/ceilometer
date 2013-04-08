@@ -37,11 +37,15 @@ CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
 CEILOMETER_AUTH_CACHE_DIR=${CEILOMETER_AUTH_CACHE_DIR:-/var/cache/ceilometer}
 
 # Support potential entry-points console scripts
-if [ -d $CEILOMETER_DIR/bin ] ; then
+if [[ -d $CEILOMETER_DIR/bin ]]; then
     CEILOMETER_BIN_DIR=$CEILOMETER_DIR/bin
 else
     CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
 fi
+
+
+# Functions
+# ---------
 
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
@@ -93,7 +97,7 @@ function configure_ceilometer() {
 }
 
 function configure_mongodb() {
-    if is_fedora ; then
+    if is_fedora; then
         # ensure smallfiles selected to minimize freespace requirements
         sudo sed -i '/--smallfiles/!s/OPTIONS=\"/OPTIONS=\"--smallfiles /' /etc/sysconfig/mongod
 
@@ -134,6 +138,7 @@ function stop_ceilometer() {
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }
+
 
 # Restore xtrace
 $XTRACE

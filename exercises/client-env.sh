@@ -60,7 +60,7 @@ RETURN=0
 # Keystone client
 # ---------------
 if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
-    if [[ "$SKIP_EXERCISES" =~ "key" ]] ; then
+    if [[ "$SKIP_EXERCISES" =~ "key" ]]; then
         STATUS_KEYSTONE="Skipped"
     else
         echo -e "\nTest Keystone"
@@ -77,7 +77,7 @@ fi
 # -----------
 
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
-    if [[ "$SKIP_EXERCISES" =~ "n-api" ]] ; then
+    if [[ "$SKIP_EXERCISES" =~ "n-api" ]]; then
         STATUS_NOVA="Skipped"
         STATUS_EC2="Skipped"
     else
@@ -111,7 +111,7 @@ fi
 # -------------
 
 if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
-    if [[ "$SKIP_EXERCISES" =~ "c-api" ]] ; then
+    if [[ "$SKIP_EXERCISES" =~ "c-api" ]]; then
         STATUS_CINDER="Skipped"
     else
         echo -e "\nTest Cinder"
@@ -128,7 +128,7 @@ fi
 # -------------
 
 if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
-    if [[ "$SKIP_EXERCISES" =~ "g-api" ]] ; then
+    if [[ "$SKIP_EXERCISES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
@@ -146,7 +146,7 @@ fi
 
 
 if [[ "$ENABLED_SERVICES" =~ "swift" || "$ENABLED_SERVICES" =~ "s-proxy" ]]; then
-    if [[ "$SKIP_EXERCISES" =~ "swift" ]] ; then
+    if [[ "$SKIP_EXERCISES" =~ "swift" ]]; then
         STATUS_SWIFT="Skipped"
     else
         echo -e "\nTest Swift"
@@ -161,8 +161,9 @@ fi
 
 set +o xtrace
 
+
 # Results
-# -------
+# =======
 
 function report() {
     if [[ -n "$2" ]]; then

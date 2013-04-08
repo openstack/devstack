@@ -53,7 +53,6 @@
 #
 # With Quantum networking the NETWORK_MANAGER variable is ignored.
 
-
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
@@ -172,6 +171,7 @@ if is_service_enabled quantum; then
     OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
 fi
 
+
 # Quantum plugin specific functions
 # ---------------------------------
 # Please refer to lib/quantum_plugins/README.md for details.
@@ -189,8 +189,9 @@ else
     Q_USE_SECGROUP=False
 fi
 
-# Entry Points
-# ------------
+
+# Functions
+# ---------
 
 # configure_quantum()
 # Set common config for all quantum server and agents.
@@ -730,7 +731,7 @@ function _ssh_check_quantum() {
     local timeout_sec=$5
     local probe_cmd = ""
     probe_cmd=`_get_probe_cmd_prefix $from_net`
-    if ! timeout $timeout_sec sh -c "while ! $probe_cmd ssh -o StrictHostKeyChecking=no -i $key_file ${user}@$ip echo success ; do sleep 1; done"; then
+    if ! timeout $timeout_sec sh -c "while ! $probe_cmd ssh -o StrictHostKeyChecking=no -i $key_file ${user}@$ip echo success; do sleep 1; done"; then
         die $LINENO "server didn't become ssh-able!"
     fi
 }

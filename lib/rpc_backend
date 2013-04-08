@@ -17,8 +17,9 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-# Entry Points
-# ------------
+
+# Functions
+# ---------
 
 # Make sure we only have one rpc backend enabled.
 # Also check the specified rpc backend is available on your platform.
@@ -156,6 +157,7 @@ function qpid_is_supported() {
     # not in openSUSE either right now.
     ( ! ([[ "$DISTRO" = "oneiric" ]] || is_suse) )
 }
+
 
 # Restore xtrace
 $XTRACE

@@ -64,6 +64,10 @@ VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
 VOLUME_GROUP2=${VOLUME_GROUP2:-stack-volumes2}
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
+
+# Functions
+# ---------
+
 # _clean_volume_group removes all cinder volumes from the specified volume group
 # _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
 function _clean_volume_group() {
@@ -431,6 +435,7 @@ function stop_cinder() {
         fi
     fi
 }
+
 
 # Restore xtrace
 $XTRACE

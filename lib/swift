@@ -84,8 +84,8 @@ CONTAINER_PORT_BASE=${CONTAINER_PORT_BASE:-6011}
 ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 
 
-# Entry Points
-# ------------
+# Functions
+# ---------
 
 # cleanup_swift() - Remove residual data files
 function cleanup_swift() {

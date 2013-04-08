@@ -120,14 +120,16 @@ In order to enable Quantum a single node setup, you'll need the following settin
     # Optional, to enable tempest configuration as part of devstack
     enable_service tempest
 
-Then run stack.sh as normal.
+Then run `stack.sh` as normal.
+
+# Tempest
 
 If tempest has been successfully configured, a basic set of smoke tests can be run as follows:
 
     $ cd /opt/stack/tempest
     $ nosetests tempest/tests/network/test_network_basic_ops.py
 
-Multi-Node Setup
+# Multi-Node Setup
 
 A more interesting setup involves running multiple compute nodes, with Quantum networks connecting VMs on different compute nodes.
 You should run at least one "controller node", which should have a `stackrc` that includes at least:

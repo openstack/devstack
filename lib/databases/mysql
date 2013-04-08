@@ -8,7 +8,12 @@
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+
 register_database mysql
+
+
+# Functions
+# ---------
 
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database_mysql {
@@ -136,6 +141,7 @@ function database_connection_url_mysql {
     local db=$1
     echo "$BASE_SQL_CONN/$db?charset=utf8"
 }
+
 
 # Restore xtrace
 $MY_XTRACE

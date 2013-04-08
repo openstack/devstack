@@ -63,8 +63,8 @@ KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}
 
 
-# Entry Points
-# ------------
+# Functions
+# ---------
 
 # cleanup_keystone() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up

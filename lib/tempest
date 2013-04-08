@@ -50,8 +50,9 @@ BUILD_TIMEOUT=400
 
 BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-0.3.1"
 
-# Entry Points
-# ------------
+
+# Functions
+# ---------
 
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest() {

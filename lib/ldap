@@ -1,12 +1,16 @@
 # lib/ldap
 # Functions to control the installation and configuration of **ldap**
 
-# ``stack.sh`` calls the entry points in this order:
-#
+# ``lib/keystone`` calls the entry points in this order:
+# install_ldap()
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
+
+
+# Functions
+# ---------
 
 # install_ldap
 # install_ldap() - Collect source and prepare
@@ -44,7 +48,7 @@ function install_ldap() {
     fi
 
     # add our top level ldap nodes
-    if ldapsearch -x -w $LDAP_PASSWORD -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -x -b dc=openstack,dc=org | grep -q "Success" ; then
+    if ldapsearch -x -w $LDAP_PASSWORD -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -x -b dc=openstack,dc=org | grep -q "Success"; then
         printf "LDAP already configured for OpenStack\n"
         if [[ "$KEYSTONE_CLEAR_LDAP" == "yes" ]]; then
             # clear LDAP state

@@ -25,9 +25,14 @@ set +o xtrace
 
 # Defaults
 # --------
+
+# set up default directories
 HEAT_DIR=$DEST/heat
 HEATCLIENT_DIR=$DEST/python-heatclient
-# set up default directories
+
+
+# Functions
+# ---------
 
 # cleanup_heat() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
@@ -181,6 +186,7 @@ function stop_heat() {
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }
+
 
 # Restore xtrace
 $XTRACE

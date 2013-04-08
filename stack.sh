@@ -12,7 +12,7 @@
 # developer install.
 
 # To keep this script simple we assume you are running on a recent **Ubuntu**
-# (11.10 Oneiric or newer) or **Fedora** (F16 or newer) machine.  It
+# (12.04 Precise or newer) or **Fedora** (F16 or newer) machine.  It
 # should work in a VM or physical server.  Additionally we put the list of
 # ``apt`` and ``rpm`` dependencies and other configuration files in this repo.
 
@@ -51,8 +51,8 @@ GetDistro
 # be overwritten by a DevStack update.
 #
 # DevStack distributes ``stackrc`` which contains locations for the OpenStack
-# repositories and branches to configure.  ``stackrc`` sources ``localrc`` to
-# allow you to safely override those settings.
+# repositories, branches to configure, and other configuration defaults.
+# ``stackrc`` sources ``localrc`` to allow you to safely override those settings.
 
 if [[ ! -r $TOP_DIR/stackrc ]]; then
     log_error $LINENO "missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
@@ -78,6 +78,19 @@ if [[ -r $TOP_DIR/.stackenv ]]; then
     rm $TOP_DIR/.stackenv
 fi
 
+# ``stack.sh`` keeps the list of ``apt`` and ``rpm`` dependencies and config
+# templates and other useful files in the ``files`` subdirectory
+FILES=$TOP_DIR/files
+if [ ! -d $FILES ]; then
+    log_error $LINENO "missing devstack/files"
+fi
+
+# ``stack.sh`` keeps function libraries here
+# Make sure ``$TOP_DIR/lib`` directory is present
+if [ ! -d $TOP_DIR/lib ]; then
+    log_error $LINENO "missing devstack/lib"
+fi
+
 # Import common services (database, message queue) configuration
 source $TOP_DIR/lib/database
 source $TOP_DIR/lib/rpc_backend
@@ -100,21 +113,9 @@ fi
 # and the specified rpc backend is available on your platform.
 check_rpc_backend
 
-# ``stack.sh`` keeps function libraries here
-# Make sure ``$TOP_DIR/lib`` directory is present
-if [ ! -d $TOP_DIR/lib ]; then
-    log_error $LINENO "missing devstack/lib"
-fi
-
-# ``stack.sh`` keeps the list of ``apt`` and ``rpm`` dependencies and config
-# templates and other useful files in the ``files`` subdirectory
-FILES=$TOP_DIR/files
-if [ ! -d $FILES ]; then
-    log_error $LINENO "missing devstack/files"
-fi
-
 SCREEN_NAME=${SCREEN_NAME:-stack}
 # Check to see if we are already running DevStack
+# Note that this may fail if USE_SCREEN=False
 if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].$SCREEN_NAME"; then
     echo "You are already running a stack.sh session."
     echo "To rejoin this session type 'screen -x stack'."
@@ -230,6 +231,8 @@ fi
 
 # Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
 SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+
+# Allow the use of an alternate protocol (such as https) for service endpoints
 SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 
 # Configure services to use syslog instead of writing to individual log files
@@ -240,7 +243,6 @@ SYSLOG_PORT=${SYSLOG_PORT:-516}
 # Enable sysstat logging
 SYSSTAT_FILE=${SYSSTAT_FILE:-"sysstat.dat"}
 SYSSTAT_INTERVAL=${SYSSTAT_INTERVAL:-"1"}
-
 
 # Use color for logging output (only available if syslog is not used)
 LOG_COLOR=`trueorfalse True $LOG_COLOR`
@@ -267,7 +269,6 @@ source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
 
 # Set the destination directories for OpenStack projects
-HORIZON_DIR=$DEST/horizon
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 
 
@@ -545,7 +546,7 @@ fi
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
 # Install python packages into a virtualenv so that we can track them
-if [[ $TRACK_DEPENDS = True ]] ; then
+if [[ $TRACK_DEPENDS = True ]]; then
     echo_summary "Installing Python packages into a virtualenv $DEST/.venv"
     install_package python-virtualenv
 
@@ -651,9 +652,9 @@ if is_service_enabled tls-proxy; then
     # don't be naive and add to existing line!
 fi
 
-if [[ $TRACK_DEPENDS = True ]] ; then
+if [[ $TRACK_DEPENDS = True ]]; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip
-    if ! diff -Nru $DEST/requires-pre-pip $DEST/requires-post-pip > $DEST/requires.diff ; then
+    if ! diff -Nru $DEST/requires-pre-pip $DEST/requires-post-pip > $DEST/requires.diff; then
         cat $DEST/requires.diff
     fi
     echo "Ran stack.sh in depend tracking mode, bailing out now"
@@ -719,9 +720,9 @@ if [[ -e $SCREENRC ]]; then
     echo -n > $SCREENRC
 fi
 
-
 # Initialize the directory for service status check
 init_service_check
+
 
 # Kick off Sysstat
 # ------------------------
@@ -734,6 +735,7 @@ if is_service_enabled sysstat;then
         screen_it sysstat "sar $SYSSTAT_INTERVAL"
     fi
 fi
+
 
 # Keystone
 # --------

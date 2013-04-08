@@ -830,7 +830,7 @@ function pip_install {
     if [[ -z "$os_PACKAGE" ]]; then
         GetOSVersion
     fi
-    if [[ $TRACK_DEPENDS = True ]] ; then
+    if [[ $TRACK_DEPENDS = True ]]; then
         source $DEST/.venv/bin/activate
         CMD_PIP=$DEST/.venv/bin/pip
         SUDO_PIP="env"
@@ -1005,7 +1005,7 @@ function service_check() {
 # Uses globals ``TRACK_DEPENDES``, ``*_proxy`
 # setup_develop directory
 function setup_develop() {
-    if [[ $TRACK_DEPENDS = True ]] ; then
+    if [[ $TRACK_DEPENDS = True ]]; then
         SUDO_CMD="env"
     else
         SUDO_CMD="sudo"
@@ -1288,7 +1288,7 @@ function _ssh_check_novanet() {
     local DEFAULT_INSTANCE_USER=$4
     local ACTIVE_TIMEOUT=$5
     local probe_cmd=""
-    if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success ; do sleep 1; done"; then
+    if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success; do sleep 1; done"; then
         die $LINENO "server didn't become ssh-able!"
     fi
 }

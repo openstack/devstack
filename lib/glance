@@ -51,8 +51,8 @@ fi
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
 
 
-# Entry Points
-# ------------
+# Functions
+# ---------
 
 # cleanup_glance() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
@@ -198,6 +198,7 @@ function stop_glance() {
     screen -S $SCREEN_NAME -p g-api -X kill
     screen -S $SCREEN_NAME -p g-reg -X kill
 }
+
 
 # Restore xtrace
 $XTRACE

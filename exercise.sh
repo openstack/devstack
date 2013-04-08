@@ -23,7 +23,7 @@ basenames=${RUN_EXERCISES:-""}
 
 EXERCISE_DIR=$TOP_DIR/exercises
 
-if [ -z "${basenames}" ] ; then
+if [[ -z "${basenames}" ]]; then
     # Locate the scripts we should run
     basenames=$(for b in `ls $EXERCISE_DIR/*.sh`; do basename $b .sh; done)
 else
@@ -38,7 +38,7 @@ skips=""
 
 # Loop over each possible script (by basename)
 for script in $basenames; do
-    if [[ ,$SKIP_EXERCISES, =~ ,$script, ]] ; then
+    if [[ ,$SKIP_EXERCISES, =~ ,$script, ]]; then
         skips="$skips $script"
     else
         echo "====================================================================="
@@ -48,7 +48,7 @@ for script in $basenames; do
         exitcode=$?
         if [[ $exitcode == 55 ]]; then
             skips="$skips $script"
-        elif [[ $exitcode -ne 0 ]] ; then
+        elif [[ $exitcode -ne 0 ]]; then
             failures="$failures $script"
         else
             passes="$passes $script"
@@ -69,6 +69,6 @@ for script in $failures; do
 done
 echo "====================================================================="
 
-if [ -n "$failures" ] ; then
+if [[ -n "$failures" ]]; then
     exit 1
 fi

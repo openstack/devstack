@@ -49,6 +49,7 @@ if [ -f $RC_DIR/localrc ]; then
     source $RC_DIR/localrc
 fi
 
+
 # Repositories
 # ------------
 
@@ -155,7 +156,6 @@ BM_IMAGE_BUILD_BRANCH=${BM_IMAGE_BUILD_BRANCH:-master}
 # Only used if BM_USE_FAKE_ENV is set
 BM_POSEUR_REPO=${BM_POSEUR_REPO:-${GIT_BASE}/tripleo/bm_poseur.git}
 BM_POSEUR_BRANCH=${BM_POSEUR_BRANCH:-master}
-
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can

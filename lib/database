@@ -20,14 +20,18 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+
 # Register a database backend
 #  $1 The name of the database backend
+# This is required to be defined before the specific database scripts are sourced
 function register_database {
     [ -z "$DATABASE_BACKENDS" ] && DATABASE_BACKENDS=$1 || DATABASE_BACKENDS+=" $1"
 }
 
 # Sourcing the database libs sets DATABASE_BACKENDS with the available list
-for f in $TOP_DIR/lib/databases/*; do source $f; done
+for f in $TOP_DIR/lib/databases/*; do
+    source $f;
+done
 
 # ``DATABASE_BACKENDS`` now contains a list of the supported databases
 # Look in ``ENABLED_SERVICES`` to see if one has been selected
@@ -41,6 +45,9 @@ done
 # If ``DATABASE_TYPE`` is unset here no database was selected
 # This is not an error as multi-node installs will do this on the compute nodes
 
+
+# Functions
+# ---------
 
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database {
@@ -111,6 +118,7 @@ function database_connection_url {
     local db=$2
     database_connection_url_$DATABASE_TYPE $var $db
 }
+
 
 # Restore xtrace
 $XTRACE

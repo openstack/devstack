@@ -7,8 +7,8 @@ General
 
 DevStack is written in POSIX shell script.  This choice was made because
 it best illustrates the configuration steps that this implementation takes
-on setting up and interacting with OpenStack components.  DevStack specifies
-BASH and is compatible with Bash 3.
+on setting up and interacting with OpenStack components.  DevStack specifically
+uses Bash and is compatible with Bash 3.
 
 DevStack's official repository is located on GitHub at
 https://github.com/openstack-dev/devstack.git.  Besides the master branch that
@@ -30,9 +30,17 @@ work for DevStack's use cases.  There is a subscript ``functions`` that contains
 generally useful shell functions and is used by a number of the scripts in
 DevStack.
 
+The ``lib`` directory contains sub-scripts for projects or packages that ``stack.sh``
+sources to perform much of the work related to those projects.  These sub-scripts
+contain configuration defaults and functions to configure, start and stop the project
+or package.  These variables and functions are also used by related projects,
+such as Grenade, to manage a DevStack installation.
+
 A number of additional scripts can be found in the ``tools`` directory that may
-be useful in setting up special-case uses of DevStack. These include: bare metal
-deployment, ramdisk deployment and Jenkins integration.
+be useful in supporting DevStack installations.  Of particular note are ``info.sh``
+to collect and report information about the installed system, and ``instal_prereqs.sh``
+that handles installation of the prerequisite packages for DevStack.  It is
+suitable, for example, to pre-load a system for making a snapshot.
 
 
 Scripts
@@ -63,8 +71,8 @@ configuration of the user environment::
     source $TOP_DIR/openrc
 
 ``stack.sh`` is a rather large monolithic script that flows through from beginning
-to end.  The process of breaking it down into project-level sub-scripts is nearly
-complete and should make ``stack.sh`` easier to read and manage.
+to end.  It has been broken down into project-specific subscripts (as noted above)
+located in ``lib`` to make ``stack.sh`` more manageable and to promote code reuse.
 
 These library sub-scripts have a number of fixed entry points, some of which may
 just be stubs.  These entry points will be called by ``stack.sh`` in the
@@ -111,6 +119,7 @@ follows:
 Also, variable declarations in ``stackrc`` do NOT allow overriding (the form
 ``FOO=${FOO:-baz}``); if they did then they can already be changed in ``localrc``
 and can stay in the project file.
+
 
 Documentation
 -------------

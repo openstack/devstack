@@ -8,7 +8,12 @@
 PG_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+
 register_database postgresql
+
+
+# Functions
+# ---------
 
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database_postgresql {
@@ -87,6 +92,7 @@ function database_connection_url_postgresql {
     local db=$1
     echo "$BASE_SQL_CONN/$db?client_encoding=utf8"
 }
+
 
 # Restore xtrace
 $PG_XTRACE
