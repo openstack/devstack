@@ -169,7 +169,7 @@ function configure_swift() {
     # configured keystone it will configure swift with it.
     if is_service_enabled key;then
         if is_service_enabled swift3;then
-            swift_pipeline=" s3token swift3 "
+            swift_pipeline=" swift3 s3token "
         fi
         swift_pipeline+=" authtoken keystoneauth "
     else
