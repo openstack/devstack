@@ -286,6 +286,7 @@ function init_nova() {
     add_nova_opt "dhcpbridge_flagfile=$NOVA_CONF"
     add_nova_opt "force_dhcp_release=True"
     add_nova_opt "fixed_range=$FIXED_RANGE"
+    add_nova_opt "default_floating_pool=$PUBLIC_NETWORK_NAME"
     add_nova_opt "s3_host=$SERVICE_HOST"
     add_nova_opt "s3_port=$S3_SERVICE_PORT"
     add_nova_opt "osapi_compute_extension=nova.api.openstack.compute.contrib.standard_extensions"
