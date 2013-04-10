@@ -17,6 +17,7 @@
 
     <Directory %HORIZON_DIR%/>
         Options Indexes FollowSymLinks MultiViews
+        %HORIZON_REQUIRE%
         AllowOverride None
         Order allow,deny
         allow from all

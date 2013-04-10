@@ -102,6 +102,7 @@ function init_horizon() {
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
 
+    HORIZON_REQUIRE=''
     if is_ubuntu; then
         APACHE_NAME=apache2
         APACHE_CONF=sites-available/horizon
@@ -115,6 +116,12 @@ function init_horizon() {
     elif is_fedora; then
         APACHE_NAME=httpd
         APACHE_CONF=conf.d/horizon.conf
+
+        if [[ "$os_RELEASE" -ge "18" ]]; then
+            # fedora 18 has Require all denied  in its httpd.conf
+            # and requires explicit Require all granted
+            HORIZON_REQUIRE='Require all granted'
+        fi
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
     elif is_suse; then
         APACHE_NAME=apache2
@@ -132,6 +139,7 @@ function init_horizon() {
         s,%HORIZON_DIR%,$HORIZON_DIR,g;
         s,%APACHE_NAME%,$APACHE_NAME,g;
         s,%DEST%,$DEST,g;
+        s,%HORIZON_REQUIRE%,$HORIZON_REQUIRE,g;
     \" $FILES/apache-horizon.template >/etc/$APACHE_NAME/$APACHE_CONF"
 
 }
@@ -156,6 +164,9 @@ function install_horizon() {
         if [[ ! -e "/usr/bin/node" ]]; then
             install_package nodejs-legacy
         fi
+    elif is_fedora && [[ "$os_RELEASE" -ge "18" ]]; then
+        # fedora 18 and higher gets nodejs
+        install_package nodejs
     fi
 
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
