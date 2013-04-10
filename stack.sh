@@ -18,6 +18,9 @@
 
 # Learn more and get the most recent version at http://devstack.org
 
+# Make sure custom grep options don't get in the way
+unset GREP_OPTIONS
+
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
