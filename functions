@@ -887,9 +887,18 @@ function pip_install {
         SUDO_PIP="sudo"
         CMD_PIP=$(get_pip_command)
     fi
+
+    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
+        # RHEL6 pip by default doesn't have this (was introduced
+        # around 0.8.1 or so)
+        PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-False}
+    else
+        PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-True}
+    fi
     if [[ "$PIP_USE_MIRRORS" != "False" ]]; then
         PIP_MIRROR_OPT="--use-mirrors"
     fi
+
     $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
