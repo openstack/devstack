@@ -131,7 +131,9 @@ EOF
     if is_ubuntu || is_fedora; then
         install_package mysql-server
     elif is_suse; then
-        install_package mysql-community-server
+        if ! is_package_installed mariadb; then
+            install_package mysql-community-server
+        fi
     else
         exit_distro_not_supported "mysql installation"
     fi
