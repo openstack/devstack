@@ -10,14 +10,16 @@ python-greenlet
 python-iso8601
 python-kombu
 python-netaddr
-python-paste
-python-paste-deploy
+#rhel6 gets via pip
+python-paste        # dist:f16,f17,f18
+python-paste-deploy # dist:f16,f17,f18
 python-qpid
 python-routes
 python-sqlalchemy
 python-suds
 rabbitmq-server # NOPRIME
-qpid-cpp-server-daemon # NOPRIME
+qpid-cpp-server-daemon # NOPRIME dist:f16,f17,f18
+qpid-cpp-server        # NOPRIME dist:rhel6
 sqlite
 sudo
 vconfig

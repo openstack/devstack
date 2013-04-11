@@ -3,7 +3,7 @@ python-argparse
 python-devel
 python-eventlet
 python-greenlet
-python-paste-deploy
+python-paste-deploy #dist:f16,f17,f18
 python-routes
 python-sqlalchemy
 python-wsgiref
