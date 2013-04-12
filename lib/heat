@@ -81,13 +81,10 @@ function configure_heat() {
     iniset $HEAT_API_CFN_CONF keystone_authtoken admin_user heat
     iniset $HEAT_API_CFN_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
     iniset $HEAT_API_CFN_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api-cfn
+    iniset $HEAT_API_CFN_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_API_CFN_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
     iniset_rpc_backend heat $HEAT_API_CFN_CONF DEFAULT
-
-    HEAT_API_CFN_PASTE_INI=$HEAT_CONF_DIR/heat-api-cfn-paste.ini
-    cp $HEAT_DIR/etc/heat/heat-api-cfn-paste.ini $HEAT_API_CFN_PASTE_INI
-    iniset $HEAT_API_CFN_PASTE_INI filter:ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_CFN_PASTE_INI filter:ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
     # OpenStack API
     HEAT_API_CONF=$HEAT_CONF_DIR/heat-api.conf
@@ -105,13 +102,11 @@ function configure_heat() {
     iniset $HEAT_API_CONF keystone_authtoken admin_user heat
     iniset $HEAT_API_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
     iniset $HEAT_API_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api
+    iniset $HEAT_API_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_API_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
     iniset_rpc_backend heat $HEAT_API_CONF DEFAULT
 
-    HEAT_API_PASTE_INI=$HEAT_CONF_DIR/heat-api-paste.ini
-    cp $HEAT_DIR/etc/heat/heat-api-paste.ini $HEAT_API_PASTE_INI
-    iniset $HEAT_API_PASTE_INI filter:ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_PASTE_INI filter:ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
     # engine
     HEAT_ENGINE_CONF=$HEAT_CONF_DIR/heat-engine.conf
@@ -145,13 +140,11 @@ function configure_heat() {
     iniset $HEAT_API_CW_CONF keystone_authtoken admin_user heat
     iniset $HEAT_API_CW_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
     iniset $HEAT_API_CW_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api-cloudwatch
+    iniset $HEAT_API_CW_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_API_CW_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
     iniset_rpc_backend heat $HEAT_API_CW_CONF DEFAULT
 
-    HEAT_API_CW_PASTE_INI=$HEAT_CONF_DIR/heat-api-cloudwatch-paste.ini
-    cp $HEAT_DIR/etc/heat/heat-api-cloudwatch-paste.ini $HEAT_API_CW_PASTE_INI
-    iniset $HEAT_API_CW_PASTE_INI filter:ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_CW_PASTE_INI filter:ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 }
 
 # init_heat() - Initialize database
