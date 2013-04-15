@@ -377,21 +377,20 @@ function install_cinderclient() {
     setup_develop $CINDERCLIENT_DIR
 }
 
-# apply config.d approach (e.g. Oneiric does not have this)
+# apply config.d approach for cinder volumes directory
 function _configure_tgt_for_config_d() {
-    if [[ ! -d /etc/tgt/conf.d/ ]]; then
-        sudo mkdir -p /etc/tgt/conf.d
-        echo "include /etc/tgt/conf.d/*.conf" | sudo tee -a /etc/tgt/targets.conf
+    if [[ ! -d /etc/tgt/stack.d/ ]]; then
+        sudo ln -sf $CINDER_STATE_PATH/volumes /etc/tgt/stack.d
+        echo "include /etc/tgt/stack.d/*" | sudo tee -a /etc/tgt/targets.conf
     fi
 }
 
 # start_cinder() - Start running processes, including screen
 function start_cinder() {
     if is_service_enabled c-vol; then
+        # Delete any old stack.conf
+        sudo rm -f /etc/tgt/conf.d/stack.conf
         _configure_tgt_for_config_d
-        if [[ ! -f /etc/tgt/conf.d/stack.conf ]]; then
-            echo "include $CINDER_STATE_PATH/volumes/*" | sudo tee /etc/tgt/conf.d/stack.conf
-        fi
         if is_ubuntu; then
             # tgt in oneiric doesn't restart properly if tgtd isn't running
             # do it in two steps
