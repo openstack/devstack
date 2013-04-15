@@ -330,7 +330,7 @@ function delete_network {
 }
 
 function delete_networks {
-   foreach_tenant_net 'delete_network ${%TENANT%_NAME} ${%NUM%}'
+   foreach_tenant_net 'delete_network ${%TENANT%_NAME} %NUM%'
    #TODO(nati) add secuirty group check after it is implemented
    # source $TOP_DIR/openrc demo1 demo1
    # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
