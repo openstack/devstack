@@ -96,7 +96,7 @@ if [[ "$ENABLED_SERVICES" =~ "c-vol" ]]; then
    # Attach volume to an instance
    euca-attach-volume -i $INSTANCE -d $ATTACH_DEVICE $VOLUME || \
        die $LINENO "Failure attaching volume $VOLUME to $INSTANCE"
-   if ! timeout $ACTIVE_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -q in-use; do sleep 1; done"; then
+   if ! timeout $ACTIVE_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -A 1 in-use | grep -q attach; do sleep 1; done"; then
        die $LINENO "Could not attach $VOLUME to $INSTANCE"
    fi
 
