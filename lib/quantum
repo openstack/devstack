@@ -539,6 +539,8 @@ function _configure_quantum_plugin_agent() {
     # Specify the default root helper prior to agent configuration to
     # ensure that an agent's configuration can override the default
     iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
+    iniset $QUANTUM_CONF DEFAULT verbose True
+    iniset $QUANTUM_CONF DEFAULT debug True
 
     # Configure agent for plugin
     quantum_plugin_configure_plugin_agent
