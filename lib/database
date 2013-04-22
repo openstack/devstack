@@ -38,7 +38,7 @@ done
 for db in $DATABASE_BACKENDS; do
     # Set the type for the rest of the backend to use
     if is_service_enabled $db; then
-        # Set this now for the rest of the database funtions
+        # Set this now for the rest of the database functions
         DATABASE_TYPE=$db
     fi
 done
