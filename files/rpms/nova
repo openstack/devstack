@@ -15,6 +15,7 @@ numpy # needed by websockify for spice console
 m2crypto
 mysql-server # NOPRIME
 parted
+polkit
 python-boto
 python-carrot
 python-cheetah
