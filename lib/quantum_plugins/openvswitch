@@ -1,114 +1,17 @@
-# Quantum Open vSwtich plugin
+# Quantum Open vSwitch plugin
 # ---------------------------
 
 # Save trace setting
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-source $TOP_DIR/lib/quantum_plugins/ovs_base
-
-function quantum_plugin_create_nova_conf() {
-    _quantum_ovs_base_configure_nova_vif_driver
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-        iniset $NOVA_CONF DEFAULT xenapi_vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
-        iniset $NOVA_CONF DEFAULT xenapi_ovs_integration_bridge $XEN_INTEGRATION_BRIDGE
-        # Disable nova's firewall so that it does not conflict with quantum
-        iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
-    fi
-}
-
-function quantum_plugin_install_agent_packages() {
-    _quantum_ovs_base_install_agent_packages
-}
+source $TOP_DIR/lib/quantum_plugins/openvswitch_agent
 
 function quantum_plugin_configure_common() {
     Q_PLUGIN_CONF_PATH=etc/quantum/plugins/openvswitch
     Q_PLUGIN_CONF_FILENAME=ovs_quantum_plugin.ini
     Q_DB_NAME="ovs_quantum"
     Q_PLUGIN_CLASS="quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2"
-}
-
-function quantum_plugin_configure_debug_command() {
-    _quantum_ovs_base_configure_debug_command
-}
-
-function quantum_plugin_configure_dhcp_agent() {
-    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager quantum.agent.dhcp_agent.DhcpAgentWithStateReport
-}
-
-function quantum_plugin_configure_l3_agent() {
-    _quantum_ovs_base_configure_l3_agent
-    iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager quantum.agent.l3_agent.L3NATAgentWithStateReport
-}
-
-function quantum_plugin_configure_plugin_agent() {
-    # Setup integration bridge
-    _quantum_ovs_base_setup_bridge $OVS_BRIDGE
-    _quantum_ovs_base_configure_firewall_driver
-
-    # Setup agent for tunneling
-    if [[ "$OVS_ENABLE_TUNNELING" = "True" ]]; then
-        # Verify tunnels are supported
-        # REVISIT - also check kernel module support for GRE and patch ports
-        OVS_VERSION=`ovs-vsctl --version | head -n 1 | awk '{print $4;}'`
-        if [ $OVS_VERSION \< "1.4" ] && ! is_service_enabled q-svc ; then
-            die $LINENO "You are running OVS version $OVS_VERSION. OVS 1.4+ is required for tunneling between multiple hosts."
-        fi
-        iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
-        iniset /$Q_PLUGIN_CONF_FILE OVS local_ip $HOST_IP
-    fi
-
-    # Setup physical network bridge mappings.  Override
-    # ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc`` for more
-    # complex physical network configurations.
-    if [[ "$OVS_BRIDGE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
-        OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
-
-        # Configure bridge manually with physical interface as port for multi-node
-        sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_PHYSICAL_BRIDGE
-    fi
-    if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings $OVS_BRIDGE_MAPPINGS
-    fi
-    AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
-
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-        # Make a copy of our config for domU
-        sudo cp /$Q_PLUGIN_CONF_FILE "/$Q_PLUGIN_CONF_FILE.domu"
-
-        # Deal with Dom0's L2 Agent:
-        Q_RR_DOM0_COMMAND="$QUANTUM_DIR/bin/quantum-rootwrap-xen-dom0 $Q_RR_CONF_FILE"
-
-        # For now, duplicate the xen configuration already found in nova.conf
-        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_url "$XENAPI_CONNECTION_URL"
-        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_username "$XENAPI_USER"
-        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_password "$XENAPI_PASSWORD"
-
-        # Under XS/XCP, the ovs agent needs to target the dom0
-        # integration bridge.  This is enabled by using a root wrapper
-        # that executes commands on dom0 via a XenAPI plugin.
-        iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_DOM0_COMMAND"
-
-        # Set "physical" mapping
-        iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings "physnet1:$FLAT_NETWORK_BRIDGE"
-
-        # XEN_INTEGRATION_BRIDGE is the integration bridge in dom0
-        iniset /$Q_PLUGIN_CONF_FILE OVS integration_bridge $XEN_INTEGRATION_BRIDGE
-
-        # Set up domU's L2 agent:
-
-        # Create a bridge "br-$GUEST_INTERFACE_DEFAULT"
-        sudo ovs-vsctl --no-wait -- --may-exist add-br "br-$GUEST_INTERFACE_DEFAULT"
-        # Add $GUEST_INTERFACE_DEFAULT to that bridge
-        sudo ovs-vsctl add-port "br-$GUEST_INTERFACE_DEFAULT" $GUEST_INTERFACE_DEFAULT
-
-        # Set bridge mappings to "physnet1:br-$GUEST_INTERFACE_DEFAULT"
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" OVS bridge_mappings "physnet1:br-$GUEST_INTERFACE_DEFAULT"
-        # Set integration bridge to domU's
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" OVS integration_bridge $OVS_BRIDGE
-        # Set root wrap
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" AGENT root_helper "$Q_RR_COMMAND"
-    fi
 }
 
 function quantum_plugin_configure_service() {
@@ -141,17 +44,8 @@ function quantum_plugin_configure_service() {
     _quantum_ovs_base_configure_firewall_driver
 }
 
-function quantum_plugin_setup_interface_driver() {
-    local conf_file=$1
-    iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
-}
-
 function has_quantum_plugin_security_group() {
     return 0
-}
-
-function quantum_plugin_check_adv_test_requirements() {
-    is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
 }
 
 # Restore xtrace

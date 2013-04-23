@@ -1,0 +1,62 @@
+# Quantum Modular Layer 2 plugin
+# ------------------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Default openvswitch L2 agent
+Q_AGENT=${Q_AGENT:-openvswitch}
+source $TOP_DIR/lib/quantum_plugins/${Q_AGENT}_agent
+
+function quantum_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/quantum/plugins/ml2
+    Q_PLUGIN_CONF_FILENAME=ml2_conf.ini
+    Q_DB_NAME="quantum_ml2"
+    Q_PLUGIN_CLASS="quantum.plugins.ml2.plugin.Ml2Plugin"
+}
+
+function quantum_plugin_configure_service() {
+    if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE ml2 tenant_network_types gre
+        iniset /$Q_PLUGIN_CONF_FILE ml2_type_gre tunnel_id_ranges $TENANT_TUNNEL_RANGES
+    elif [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE ml2 tenant_network_types vlan
+    else
+        echo "WARNING - The ml2 plugin is using local tenant networks, with no connectivity between hosts."
+    fi
+
+    # Override ``ML2_VLAN_RANGES`` and any needed agent configuration
+    # variables in ``localrc`` for more complex physical network
+    # configurations.
+    if [[ "$ML2_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+        ML2_VLAN_RANGES=$PHYSICAL_NETWORK
+        if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
+            ML2_VLAN_RANGES=$ML2_VLAN_RANGES:$TENANT_VLAN_RANGE
+        fi
+    fi
+    if [[ "$ML2_VLAN_RANGES" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE ml2_type_vlan network_vlan_ranges $ML2_VLAN_RANGES
+    fi
+
+    # REVISIT(rkukura): Setting firewall_driver here for
+    # quantum.agent.securitygroups_rpc.is_firewall_enabled() which is
+    # used in the server, in case no L2 agent is configured on the
+    # server's node. If an L2 agent is configured, this will get
+    # overridden with the correct driver. The ml2 plugin should
+    # instead use its own config variable to indicate whether security
+    # groups is enabled, and that will need to be set here instead.
+    if [[ "$Q_USE_SECGROUP" == "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.not.a.real.FirewallDriver
+    else
+        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.firewall.NoopFirewallDriver
+    fi
+
+}
+
+function has_quantum_plugin_security_group() {
+    return 0
+}
+
+# Restore xtrace
+$MY_XTRACE
