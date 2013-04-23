@@ -15,6 +15,7 @@ libvirt-python
 libxml2-python
 mysql-community-server # NOPRIME
 parted
+polkit
 python-M2Crypto
 python-m2crypto # dist:sle11sp2
 python-Paste
