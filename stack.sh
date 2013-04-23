@@ -929,6 +929,25 @@ if is_service_enabled nova; then
            iniset $NOVA_CONF baremetal ${I/=/ }
         done
 
+   # PowerVM
+   # -------
+
+    elif [ "$VIRT_DRIVER" = 'powervm' ]; then
+        echo_summary "Using PowerVM driver"
+        POWERVM_MGR_TYPE=${POWERVM_MGR_TYPE:-"ivm"}
+        POWERVM_MGR_HOST=${POWERVM_MGR_HOST:-"powervm.host"}
+        POWERVM_MGR_USER=${POWERVM_MGR_USER:-"padmin"}
+        POWERVM_MGR_PASSWD=${POWERVM_MGR_PASSWD:-"password"}
+        POWERVM_IMG_REMOTE_PATH=${POWERVM_IMG_REMOTE_PATH:-"/tmp"}
+        POWERVM_IMG_LOCAL_PATH=${POWERVM_IMG_LOCAL_PATH:-"/tmp"}
+        iniset $NOVA_CONF DEFAULT compute_driver nova.virt.powervm.PowerVMDriver
+        iniset $NOVA_CONF DEFAULT powervm_mgr_type $POWERVM_MGR_TYPE
+        iniset $NOVA_CONF DEFAULT powervm_mgr $POWERVM_MGR_HOST
+        iniset $NOVA_CONF DEFAULT powervm_mgr_user $POWERVM_MGR_USER
+        iniset $NOVA_CONF DEFAULT powervm_mgr_passwd $POWERVM_MGR_PASSWD
+        iniset $NOVA_CONF DEFAULT powervm_img_remote_path $POWERVM_IMG_REMOTE_PATH
+        iniset $NOVA_CONF DEFAULT powervm_img_local_path $POWERVM_IMG_LOCAL_PATH
+
     # Default
     # -------
 
