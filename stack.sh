@@ -589,8 +589,10 @@ if is_service_enabled s-proxy; then
     install_swift
     configure_swift
 
+    # swift3 middleware to provide S3 emulation to Swift
     if is_service_enabled swift3; then
-        # swift3 middleware to provide S3 emulation to Swift
+        # replace the nova-objectstore port by the swift port
+        S3_SERVICE_PORT=8080
         git_clone $SWIFT3_REPO $SWIFT3_DIR $SWIFT3_BRANCH
         setup_develop $SWIFT3_DIR
     fi
