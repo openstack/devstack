@@ -538,6 +538,12 @@ source $TOP_DIR/tools/install_prereqs.sh
 
 install_rpc_backend
 
+# a place for distro-specific post-prereq workarounds
+if [[ -f $TOP_DIR/tools/${DISTRO}/post-prereq.sh ]]; then
+    echo_summary "Running ${DISTRO} extra prereq tasks"
+    source $TOP_DIR/tools/${DISTRO}/post-prereq.sh
+fi
+
 if is_service_enabled $DATABASE_BACKENDS; then
     install_database
 fi
