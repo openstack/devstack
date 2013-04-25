@@ -2,8 +2,7 @@ dnsmasq-base
 dnsmasq-utils # for dhcp_release only available in dist:oneiric,precise,quantal
 kpartx
 parted
-arping # only available in dist:natty
-iputils-arping # only available in dist:oneiric
+iputils-arping
 mysql-server # NOPRIME
 python-mysqldb
 python-xattr # needed for glance which is needed for nova --- this shouldn't be here
