@@ -651,6 +651,7 @@ fi
 if is_service_enabled heat; then
     install_heat
     install_heatclient
+    cleanup_heat
     configure_heat
     configure_heatclient
 fi
