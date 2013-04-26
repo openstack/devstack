@@ -8,8 +8,8 @@ python-eventlet
 python-greenlet
 python-netifaces
 python-nose
-python-paste-deploy
-python-setuptools
+python-paste-deploy # dist:f16,f17,f18
+python-setuptools   # dist:f16,f17,f18
 python-simplejson
 python-webob
 pyxattr
