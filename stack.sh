@@ -957,6 +957,18 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT powervm_img_remote_path $POWERVM_IMG_REMOTE_PATH
         iniset $NOVA_CONF DEFAULT powervm_img_local_path $POWERVM_IMG_LOCAL_PATH
 
+    # vSphere API
+    # -------
+
+    elif [ "$VIRT_DRIVER" = 'vsphere' ]; then
+        echo_summary "Using VMware vCenter driver"
+        iniset $NOVA_CONF DEFAULT compute_driver "vmwareapi.VMwareVCDriver"
+        VMWAREAPI_USER=${VMWAREAPI_USER:-"root"}
+        iniset $NOVA_CONF DEFAULT vmwareapi_host_ip "$VMWAREAPI_IP"
+        iniset $NOVA_CONF DEFAULT vmwareapi_host_username "$VMWAREAPI_USER"
+        iniset $NOVA_CONF DEFAULT vmwareapi_host_password "$VMWAREAPI_PASSWORD"
+        iniset $NOVA_CONF DEFAULT vmwareapi_cluster_name "$VMWAREAPI_CLUSTER"
+
     # Default
     # -------
 
