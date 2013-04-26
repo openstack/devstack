@@ -42,7 +42,8 @@ NOW=$(date "+%s")
 LAST_RUN=$(head -1 $PREREQ_RERUN_MARKER 2>/dev/null || echo "0")
 DELTA=$(($NOW - $LAST_RUN))
 if [[ $DELTA -lt $PREREQ_RERUN_SECONDS && -z "$FORCE_PREREQ" ]]; then
-    echo "Re-run time has not expired ($(($PREREQ_RERUN_SECONDS - $DELTA)) seconds remaining); exiting..."
+    echo "Re-run time has not expired ($(($PREREQ_RERUN_SECONDS - $DELTA)) seconds remaining) "
+    echo "and FORCE_PREREQ not set; exiting..."
     return 0
 fi
 

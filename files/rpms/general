@@ -1,14 +1,19 @@
 bridge-utils
 curl
+dbus
 euca2ools # only for testing client
+gcc # dist:rhel6 [2]
 git-core
 openssh-server
 openssl
+libxml2-devel # dist:rhel6 [2]
+libxslt-devel # dist:rhel6 [2]
 psmisc
 pylint
 python-netaddr
 python-pep8
 python-pip
+python-prettytable # dist:rhel6 [1]
 python-unittest2
 python-virtualenv
 screen
@@ -16,3 +21,12 @@ tar
 tcpdump
 unzip
 wget
+
+# [1] : some of installed tools have unversioned dependencies on this,
+# but others have versioned (<=0.7).  So if a later version (0.7.1)
+# gets installed in response to an unversioned dependency, it breaks.
+# This pre-installs a compatible 0.6(ish) version from RHEL
+
+# [2] : RHEL6 rpm versions of python-lxml is old, and has to be
+# removed.  Several tools rely on it, so we install the dependencies
+# pip needs to build it here (see tools/install_prereqs.sh)
