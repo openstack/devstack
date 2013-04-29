@@ -497,7 +497,7 @@ fi
 
 # Set ``SWIFT_DATA_DIR`` to the location of swift drives and objects.
 # Default is the common DevStack data directory.
-SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DEST}/data/swift}
+SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DATA_DIR}/swift}
 
 # Set ``SWIFT_CONFIG_DIR`` to the location of the configuration files.
 # Default is ``/etc/swift``.
