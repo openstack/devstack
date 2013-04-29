@@ -57,8 +57,12 @@ Of course, use real passwords if this machine is exposed.
     MULTI_HOST=1
     # Give extra time for boot
     ACTIVE_TIMEOUT=45
-    # Interface on which you would like to access services
-    HOST_IP_IFACE=ethX
+    # Host Interface, i.e. the interface on the nova vm you want to expose the
+    # services on. Usually eth2 (management network) or eth3 (public network) and
+    # not eth0 (private network with XenServer host) or eth1 (VM traffic network)
+    # This is also used as the interface for the Ubuntu install
+    # The default is eth3.
+    # HOST_IP_IFACE=eth3
     # First time Ubuntu network install params
     NETINSTALLIP="dhcp"
     NAMESERVERS=""
