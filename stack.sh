@@ -579,6 +579,17 @@ if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
     # Nova stopping later on complaining that
     # '/var/lib/dbus/machine-id' doesn't exist.
     sudo service messagebus restart
+
+    # In setup.py, a "setup_requires" package is supposed to
+    # transient.  However there is a bug with rhel6 distribute where
+    # setup_requires packages can register entry points that aren't
+    # cleared out properly after the setup-phase; the end result is
+    # installation failures (bz#924038).  Thus we pre-install the
+    # problem package here; this way the setup_requires dependency is
+    # already satisfied and it will not need to be installed
+    # transiently, meaning we avoid the issue of it not being cleaned
+    # out properly.  Note we do this before the track-depends below.
+    pip_install hgtools
 fi
 
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
