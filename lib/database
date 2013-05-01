@@ -38,7 +38,7 @@ done
 for db in $DATABASE_BACKENDS; do
     # Set the type for the rest of the backend to use
     if is_service_enabled $db; then
-        # Set this now for the rest of the database funtions
+        # Set this now for the rest of the database functions
         DATABASE_TYPE=$db
     fi
 done
@@ -110,13 +110,11 @@ function configure_database {
     configure_database_$DATABASE_TYPE
 }
 
-# Generate an SQLAlchemy connection URL and store it in a variable
-#  $1 The variable name in which to store the connection URL
-#  $2 The name of the database
+# Generate an SQLAlchemy connection URL and output it using echo
+#  $1 The name of the database
 function database_connection_url {
-    local var=$1
-    local db=$2
-    database_connection_url_$DATABASE_TYPE $var $db
+    local db=$1
+    database_connection_url_$DATABASE_TYPE $db
 }
 
 
