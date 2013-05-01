@@ -82,6 +82,8 @@ Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
 Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
 # Use namespace or not
 Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
+# RHEL's support for namespaces requires using veths with ovs
+Q_OVS_USE_VETH=${Q_OVS_USE_VETH:-False}
 Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
 # Meta data IP
 Q_META_DATA_IP=${Q_META_DATA_IP:-$HOST_IP}
@@ -665,6 +667,11 @@ function _quantum_commentout_keystone_authtoken() {
 }
 
 function _quantum_setup_interface_driver() {
+
+    # ovs_use_veth needs to be set before the plugin configuration
+    # occurs to allow plugins to override the setting.
+    iniset $1 DEFAULT ovs_use_veth $Q_OVS_USE_VETH
+
     quantum_plugin_setup_interface_driver $1
 }
 
