@@ -105,7 +105,7 @@ disable_negated_services
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|f16|f17|f18|opensuse-12.2|rhel6) ]]; then
+if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|saucy|f16|f17|f18|opensuse-12.2|rhel6) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         die $LINENO "If you wish to run this script anyway run with FORCE=yes"
