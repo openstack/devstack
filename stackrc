@@ -162,6 +162,11 @@ BM_POSEUR_BRANCH=${BM_POSEUR_BRANCH:-master}
 # also install an **LXC** or **OpenVZ** based system.
 VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
 LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
+if [[ "$os_VENDOR" =~ (Debian) ]]; then
+  LIBVIRT_GROUP=libvirt
+else
+  LIBVIRT_GROUP=libvirtd
+fi
 
 # Specify a comma-separated list of UEC images to download and install into glance.
 # supported urls here are:

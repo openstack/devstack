@@ -125,7 +125,7 @@ function install_ceilometerclient() {
 
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer() {
-    screen_it ceilometer-acompute "cd $CEILOMETER_DIR && sg libvirtd \"$CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
+    screen_it ceilometer-acompute "cd $CEILOMETER_DIR && sg $LIBVIRT_GROUP \"$CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
     screen_it ceilometer-acentral "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_CONF"
     screen_it ceilometer-collector "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-collector --config-file $CEILOMETER_CONF"
     screen_it ceilometer-api "cd $CEILOMETER_DIR && $CEILOMETER_BIN_DIR/ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"

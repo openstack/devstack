@@ -204,7 +204,7 @@ function configure_baremetal_nova_dirs() {
     sudo mkdir -p /tftpboot
     sudo mkdir -p /tftpboot/pxelinux.cfg
     sudo cp /usr/lib/syslinux/pxelinux.0 /tftpboot/
-    sudo chown -R $STACK_USER:libvirtd /tftpboot
+    sudo chown -R $STACK_USER:$LIBVIRT_GROUP /tftpboot
 
     # ensure $NOVA_STATE_PATH/baremetal is prepared
     sudo mkdir -p $NOVA_STATE_PATH/baremetal

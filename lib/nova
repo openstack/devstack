@@ -298,14 +298,14 @@ EOF
 
         if is_fedora || is_suse; then
             if is_fedora && [[  $DISTRO =~ (rhel6) || "$os_RELEASE" -le "17" ]]; then
-                sudo bash -c 'cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
+                sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
 [libvirt Management Access]
-Identity=unix-group:libvirtd
+Identity=unix-group:$LIBVIRT_GROUP
 Action=org.libvirt.unix.manage
 ResultAny=yes
 ResultInactive=yes
 ResultActive=yes
-EOF'
+EOF"
             elif is_suse && [[ $os_RELEASE = 12.2 || "$os_VENDOR" = "SUSE LINUX" ]]; then
                 # openSUSE < 12.3 or SLE
                 # Work around the fact that polkit-default-privs overrules pklas
@@ -338,10 +338,10 @@ EOF"
 
         # The user that nova runs as needs to be member of **libvirtd** group otherwise
         # nova-compute will be unable to use libvirt.
-        if ! getent group libvirtd >/dev/null; then
-            sudo groupadd libvirtd
+        if ! getent group $LIBVIRT_GROUP >/dev/null; then
+            sudo groupadd $LIBVIRT_GROUP
         fi
-        add_user_to_group $STACK_USER libvirtd
+        add_user_to_group $STACK_USER $LIBVIRT_GROUP
 
         # libvirt detects various settings on startup, as we potentially changed
         # the system configuration (modules, filesystems), we need to restart
@@ -648,11 +648,11 @@ function start_nova_api() {
 
 # start_nova() - Start running processes, including screen
 function start_nova() {
-    # The group **libvirtd** is added to the current user in this script.
-    # Use 'sg' to execute nova-compute as a member of the **libvirtd** group.
+    # The group **$LIBVIRT_GROUP** is added to the current user in this script.
+    # Use 'sg' to execute nova-compute as a member of the **$LIBVIRT_GROUP** group.
     # ``screen_it`` checks ``is_service_enabled``, it is not needed here
     screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor"
-    screen_it n-cpu "cd $NOVA_DIR && sg libvirtd $NOVA_BIN_DIR/nova-compute"
+    screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP $NOVA_BIN_DIR/nova-compute"
     screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
     screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network"
     screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler"
