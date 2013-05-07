@@ -1,15 +1,13 @@
 #!/bin/bash
 
-# This script is a level script
-# It must be run on a XenServer or XCP machine
+# This script must be run on a XenServer or XCP machine
 #
 # It creates a DomU VM that runs OpenStack services
 #
 # For more details see: README.md
 
-# Exit on errors
 set -o errexit
-# Echo commands
+set -o nounset
 set -o xtrace
 
 # Abort if localrc is not set
@@ -31,13 +29,12 @@ THIS_DIR=$(cd $(dirname "$0") && pwd)
 # xapi functions
 . $THIS_DIR/functions
 
-
 #
 # Get Settings
 #
 
 # Source params - override xenrc params in your localrc to suit your taste
-source xenrc
+source $THIS_DIR/xenrc
 
 xe_min()
 {
