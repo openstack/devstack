@@ -16,6 +16,16 @@ VDI_MB=${VDI_MB:-5000}
 OSDOMU_MEM_MB=1024
 OSDOMU_VDI_GB=8
 
+# Network mapping. Specify bridge names or network names. Network names may
+# differ across localised versions of XenServer. If a given bridge/network
+# was not found, a new network will be created with the specified name.
+
+# The management network is specified by the bridge name. xenbr0 is usually
+# the name of the bridge of the network associated with the hypervisor's eth0.
+MGT_BRIDGE_OR_NET_NAME="xenbr0"
+VM_BRIDGE_OR_NET_NAME="OpenStack VM Network"
+PUB_BRIDGE_OR_NET_NAME="OpenStack Public Network"
+
 # VM Password
 GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 
@@ -28,28 +38,17 @@ HOST_IP_IFACE=${HOST_IP_IFACE:-eth3}
 # Our nova host's network info
 #
 
-# A host-only ip that let's the interface come up, otherwise unused
-VM_IP=${VM_IP:-10.255.255.255}
+# Management network
 MGT_IP=${MGT_IP:-172.16.100.55}
-PUB_IP=${PUB_IP:-192.168.1.55}
+MGT_NETMASK=${MGT_NETMASK:-255.255.255.0}
+
+# VM Network
+VM_IP=${VM_IP:-10.255.255.255}
+VM_NETMASK=${VM_NETMASK:-255.255.255.0}
 
 # Public network
+PUB_IP=${PUB_IP:-192.168.1.55}
 PUB_NETMASK=${PUB_NETMASK:-255.255.255.0}
-PUB_BR=${PUB_BR:-"xenbr0"}
-PUB_VLAN=${PUB_VLAN:--1}
-PUB_DEV=${PUB_DEV:-eth0}
-
-# VM network params
-VM_NETMASK=${VM_NETMASK:-255.255.255.0}
-VM_BR=${VM_BR:-""}
-VM_VLAN=${VM_VLAN:-100}
-VM_DEV=${VM_DEV:-eth0}
-
-# MGMT network params
-MGT_NETMASK=${MGT_NETMASK:-255.255.255.0}
-MGT_BR=${MGT_BR:-""}
-MGT_VLAN=${MGT_VLAN:-101}
-MGT_DEV=${MGT_DEV:-eth0}
 
 # Decide if you should enable eth0,
 # the guest installer network

@@ -93,3 +93,84 @@ function find_ip_by_name() {
         fi
     done
 }
+
+function _create_new_network() {
+    local name_label
+    name_label=$1
+
+    xe network-create name-label="$name_label"
+}
+
+function _multiple_networks_with_name() {
+    local name_label
+    name_label=$1
+
+    # A comma indicates multiple matches
+    xe network-list name-label="$name_label" --minimal | grep -q ","
+}
+
+function _network_exists() {
+    local name_label
+    name_label=$1
+
+    ! [ -z $(xe network-list name-label="$name_label" --minimal) ]
+}
+
+function _bridge_exists() {
+    local bridge
+    bridge=$1
+
+    ! [ -z $(xe network-list bridge="$bridge" --minimal) ]
+}
+
+
+function setup_network() {
+    local bridge_or_net_name
+    bridge_or_net_name=$1
+
+    if ! _bridge_exists "$bridge_or_net_name"; then
+        if _network_exists "$bridge_or_net_name"; then
+            if _multiple_networks_with_name "$bridge_or_net_name"; then
+                cat >&2 << EOF
+ERROR: Multiple networks found matching name-label to "$bridge_or_net_name"
+please review your XenServer network configuration / localrc file.
+EOF
+                exit 1
+            fi
+        else
+            _create_new_network "$bridge_or_net_name"
+        fi
+    fi
+}
+
+function bridge_for() {
+    local bridge_or_net_name
+    bridge_or_net_name=$1
+
+    if _bridge_exists "$bridge_or_net_name"; then
+        echo "$bridge_or_net_name"
+    else
+        xe network-list name-label="$bridge_or_net_name" params=bridge --minimal
+    fi
+}
+
+function xenapi_ip_on() {
+    local bridge_or_net_name
+    bridge_or_net_name=$1
+
+    ifconfig $(bridge_for "$bridge_or_net_name") | grep "inet addr" | cut -d ":" -f2 | sed "s/ .*//"
+}
+
+function xenapi_is_listening_on() {
+    local bridge_or_net_name
+    bridge_or_net_name=$1
+
+    ! [ -z $(xenapi_ip_on "$bridge_or_net_name") ]
+}
+
+function parameter_is_specified() {
+    local parameter_name
+    parameter_name=$1
+
+    compgen -v | grep "$parameter_name"
+}
