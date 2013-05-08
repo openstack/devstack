@@ -43,12 +43,11 @@ source $TOP_DIR/functions
 # Import configuration
 source $TOP_DIR/openrc
 
-# If quantum is not enabled we exit with exitcode 55 which mean
-# exercise is skipped.
-is_service_enabled quantum && is_service_enabled q-agt && is_service_enabled q-dhcp || exit 55
-
-# Import quantum fucntions
+# Import quantum functions
 source $TOP_DIR/lib/quantum
+
+# If quantum is not enabled we exit with exitcode 55, which means exercise is skipped.
+quantum_plugin_check_adv_test_requirements || exit 55
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc

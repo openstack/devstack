@@ -35,5 +35,8 @@ function quantum_plugin_configure_debug_command() {
     :
 }
 
+function quantum_plugin_check_adv_test_requirements() {
+    is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
+}
 # Restore xtrace
 $MY_XTRACE
