@@ -40,7 +40,7 @@ python-sqlalchemy
 python-suds
 python-tempita
 rabbitmq-server # NOPRIME
-qpid-cpp-server-daemon # NOPRIME
+qpid-cpp-server # NOPRIME
 sqlite
 sudo
 vconfig
