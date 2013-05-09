@@ -380,6 +380,12 @@ GetOSVersion() {
             os_VENDOR=""
         done
         os_PACKAGE="rpm"
+    # If lsb_release is not installed, we should be able to detect Debian OS
+    elif [[ -f /etc/debian_version ]] && [[ $(cat /proc/version) =~ "Debian" ]]; then
+        os_VENDOR="Debian"
+        os_PACKAGE="deb"
+        os_CODENAME=$(awk '/VERSION=/' /etc/os-release | sed 's/VERSION=//' | sed -r 's/\"|\(|\)//g' | awk '{print $2}')
+        os_RELEASE=$(awk '/VERSION_ID=/' /etc/os-release | sed 's/VERSION_ID=//' | sed 's/\"//g')
     fi
     export os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
 }
@@ -425,8 +431,8 @@ function git_update_remote_branch() {
 # Sets ``DISTRO`` from the ``os_*`` values
 function GetDistro() {
     GetOSVersion
-    if [[ "$os_VENDOR" =~ (Ubuntu) ]]; then
-        # 'Everyone' refers to Ubuntu releases by the code name adjective
+    if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) ]]; then
+        # 'Everyone' refers to Ubuntu / Debian releases by the code name adjective
         DISTRO=$os_CODENAME
     elif [[ "$os_VENDOR" =~ (Fedora) ]]; then
         # For Fedora, just use 'f' and the release
@@ -459,10 +465,8 @@ function is_ubuntu {
     if [[ -z "$os_PACKAGE" ]]; then
         GetOSVersion
     fi
-
     [ "$os_PACKAGE" = "deb" ]
 }
-
 
 # Determine if current distribution is a Fedora-based distribution
 # (Fedora, RHEL, CentOS).

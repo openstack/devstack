@@ -2,7 +2,7 @@
 nbd-client
 lvm2
 open-iscsi
-open-iscsi-utils
+open-iscsi-utils # Deprecated since quantal dist:lucid,oneiric,precise
 genisoimage
 sysfsutils
 sg3-utils
