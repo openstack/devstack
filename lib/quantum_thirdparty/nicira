@@ -1,0 +1,52 @@
+# Nicira NVP
+# ----------
+
+# This third-party addition can be used to configure connectivity between a DevStack instance
+# and an NVP Gateway in dev/test environments. In order to use this correctly, the following
+# env variables need to be set (e.g. in your localrc file):
+#
+# * enable_service nicira            --> to execute this third-party addition
+# * PUBLIC_BRIDGE                    --> bridge used for external connectivity, typically br-ex
+# * NVP_GATEWAY_NETWORK_INTERFACE    --> interface used to communicate with the NVP Gateway
+# * NVP_GATEWAY_NETWORK_CIDR         --> CIDR to configure br-ex, e.g. 172.24.4.211/24
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# This is the interface that connects the Devstack instance
+# to an network that allows it to talk to the gateway for
+# testing purposes
+NVP_GATEWAY_NETWORK_INTERFACE=${NVP_GATEWAY_NETWORK_INTERFACE:-eth2}
+
+function configure_nicira() {
+    :
+}
+
+function init_nicira() {
+    die_if_not_set $LINENO NVP_GATEWAY_NETWORK_CIDR "Please, specify CIDR for the gateway network interface."
+    # Make sure the interface is up, but not configured
+    sudo ifconfig $NVP_GATEWAY_NETWORK_INTERFACE up
+    sudo ip addr flush $NVP_GATEWAY_NETWORK_INTERFACE
+    # Use the PUBLIC Bridge to route traffic to the NVP gateway
+    # NOTE(armando-migliaccio): if running in a nested environment this will work
+    # only with mac learning enabled, portsecurity and security profiles disabled
+    sudo ovs-vsctl -- --may-exist add-port $PUBLIC_BRIDGE $NVP_GATEWAY_NETWORK_INTERFACE
+    nvp_gw_net_if_mac=$(ip link show $NVP_GATEWAY_NETWORK_INTERFACE | awk '/ether/ {print $2}')
+    sudo ifconfig $PUBLIC_BRIDGE $NVP_GATEWAY_NETWORK_CIDR hw ether $nvp_gw_net_if_mac
+}
+
+function install_nicira() {
+    :
+}
+
+function start_nicira() {
+    :
+}
+
+function stop_nicira() {
+    :
+}
+
+# Restore xtrace
+$MY_XTRACE
