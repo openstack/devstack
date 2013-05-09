@@ -64,7 +64,9 @@ UBUNTU_INST_TEMPLATE_NAME="Ubuntu 11.10 (64-bit) for DevStack"
 # XenServer 6.1 and later or XCP 1.6 or later
 # 11.10 is only really supported with XenServer 6.0.2 and later
 UBUNTU_INST_ARCH="amd64"
-UBUNTU_INST_REPOSITORY="http://archive.ubuntu.net/ubuntu"
+UBUNTU_INST_HTTP_HOSTNAME="archive.ubuntu.net"
+UBUNTU_INST_HTTP_DIRECTORY="/ubuntu"
+UBUNTU_INST_HTTP_PROXY=""
 UBUNTU_INST_LOCALE="en_US"
 UBUNTU_INST_KEYBOARD="us"
 # network configuration for ubuntu netinstall
