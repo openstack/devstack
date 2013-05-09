@@ -157,6 +157,11 @@ BM_IMAGE_BUILD_BRANCH=${BM_IMAGE_BUILD_BRANCH:-master}
 BM_POSEUR_REPO=${BM_POSEUR_REPO:-${GIT_BASE}/tripleo/bm_poseur.git}
 BM_POSEUR_BRANCH=${BM_POSEUR_BRANCH:-master}
 
+# pbr
+# Used to drive the setuptools configs
+PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
+PBR_BRANCH=${PBR_BRANCH:-master}
+
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
 # also install an **LXC** or **OpenVZ** based system.

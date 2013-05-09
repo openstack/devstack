@@ -282,6 +282,7 @@ source $TOP_DIR/lib/ldap
 
 # Set the destination directories for OpenStack projects
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
+PBR_DIR=$DEST/pbr
 
 
 # Interactive Configuration
@@ -618,6 +619,10 @@ fi
 # ----------------------------
 
 echo_summary "Installing OpenStack project source"
+
+# Install pbr
+git_clone $PBR_REPO $PBR_DIR $PBR_BRANCH
+setup_develop $PBR_DIR
 
 # Install clients libraries
 install_keystoneclient
