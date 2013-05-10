@@ -30,7 +30,7 @@ function check_rpc_backend() {
     # that can be passed as arguments to is_service_enabled.
     # We check for a call to iniset_rpc_backend in these files, meaning
     # the service needs a backend.
-    rpc_candidates=$(grep -rl iniset_rpc_backend . | awk -F/ '{print $NF}')
+    rpc_candidates=$(grep -rl iniset_rpc_backend $TOP_DIR/lib/ | awk -F/ '{print $NF}')
     for c in ${rpc_candidates}; do
         if is_service_enabled $c; then
             rpc_needed=0
