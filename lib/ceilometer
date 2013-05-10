@@ -70,7 +70,7 @@ function configure_ceilometer() {
 
     iniset_rpc_backend ceilometer $CEILOMETER_CONF DEFAULT
 
-    iniset $CEILOMETER_CONF DEFAULT notification_topics 'notifications,glance_notifications'
+    iniset $CEILOMETER_CONF DEFAULT notification_topics 'notifications'
     iniset $CEILOMETER_CONF DEFAULT verbose True
 
     # Install the policy file for the API server
