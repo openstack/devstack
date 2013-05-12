@@ -65,3 +65,31 @@ function get_local_sr {
 function get_local_sr_path {
     echo "/var/run/sr-mount/$(get_local_sr)"
 }
+
+function find_ip_by_name() {
+    local guest_name="$1"
+    local interface="$2"
+
+    local period=10
+    local max_tries=10
+    local i=0
+
+    while true; do
+        if [ $i -ge $max_tries ]; then
+            echo "Timeout: ip address for interface $interface of $guest_name"
+            exit 11
+        fi
+
+        ipaddress=$(xe vm-list --minimal \
+                    name-label=$guest_name \
+                    params=networks | sed -ne "s,^.*${interface}/ip: \([0-9.]*\).*\$,\1,p")
+
+        if [ -z "$ipaddress" ]; then
+            sleep $period
+            ((i++))
+        else
+            echo $ipaddress
+            break
+        fi
+    done
+}
