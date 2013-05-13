@@ -8,6 +8,9 @@
 # Name of this guest
 GUEST_NAME=${GUEST_NAME:-DevStackOSDomU}
 
+# Template cleanup
+CLEAN_TEMPLATES=${CLEAN_TEMPLATES:-false}
+
 # Size of image
 VDI_MB=${VDI_MB:-5000}
 OSDOMU_MEM_MB=1024
@@ -19,7 +22,6 @@ GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 # Host Interface, i.e. the interface on the nova vm you want to expose the
 # services on. Usually eth2 (management network) or eth3 (public network) and
 # not eth0 (private network with XenServer host) or eth1 (VM traffic network)
-# This is also used as the interface for the Ubuntu install
 HOST_IP_IFACE=${HOST_IP_IFACE:-eth3}
 
 #
@@ -65,12 +67,11 @@ UBUNTU_INST_ARCH="amd64"
 UBUNTU_INST_REPOSITORY="http://archive.ubuntu.net/ubuntu"
 UBUNTU_INST_LOCALE="en_US"
 UBUNTU_INST_KEYBOARD="us"
-# network configuration for HOST_IP_IFACE during install
+# network configuration for ubuntu netinstall
+UBUNTU_INST_IFACE="eth3"
 UBUNTU_INST_IP="dhcp"
 UBUNTU_INST_NAMESERVERS=""
 UBUNTU_INST_NETMASK=""
 UBUNTU_INST_GATEWAY=""
 
-# Load stackrc defaults
-# then override with settings from localrc
-cd ../.. && source ./stackrc && cd $TOP_DIR
+source ../../stackrc
