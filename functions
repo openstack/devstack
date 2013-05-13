@@ -1415,6 +1415,35 @@ function get_pip_command() {
     fi
 }
 
+# Path permissions sanity check
+# check_path_perm_sanity path
+function check_path_perm_sanity() {
+    # Ensure no element of the path has 0700 permissions, which is very
+    # likely to cause issues for daemons.  Inspired by default 0700
+    # homedir permissions on RHEL and common practice of making DEST in
+    # the stack user's homedir.
+
+    local real_path=$(readlink -f $1)
+    local rebuilt_path=""
+    for i in $(echo ${real_path} | tr "/" " "); do
+        rebuilt_path=$rebuilt_path"/"$i
+
+        if [[ $(stat -c '%a' ${rebuilt_path}) = 700 ]]; then
+            echo "*** DEST path element"
+            echo "***    ${rebuilt_path}"
+            echo "*** appears to have 0700 permissions."
+            echo "*** This is very likely to cause fatal issues for devstack daemons."
+
+            if [[ -n "$SKIP_PATH_SANITY" ]]; then
+                return
+            else
+                echo "*** Set SKIP_PATH_SANITY to skip this check"
+                die $LINENO "Invalid path permissions"
+            fi
+        fi
+    done
+}
+
 # Restore xtrace
 $XTRACE
 
