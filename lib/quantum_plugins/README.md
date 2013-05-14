@@ -34,3 +34,5 @@ functions
 * ``quantum_plugin_setup_interface_driver``
 * ``has_quantum_plugin_security_group``:
   return 0 if the plugin support quantum security group otherwise return 1
+* ``quantum_plugin_check_adv_test_requirements``:
+  return 0 if requirements are satisfied otherwise return 1
