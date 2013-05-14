@@ -74,6 +74,11 @@ function quantum_plugin_configure_service() {
     if [[ "$LB_VLAN_RANGES" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE VLANS network_vlan_ranges $LB_VLAN_RANGES
     fi
+    if [[ "$Q_USE_SECGROUP" == "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.linux.iptables_firewall.IptablesFirewallDriver
+    else
+        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.firewall.NoopFirewallDriver
+    fi
 }
 
 function quantum_plugin_setup_interface_driver() {
