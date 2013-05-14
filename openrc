@@ -20,9 +20,6 @@ fi
 # Find the other rc files
 RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
 
-# Import common functions
-source $RC_DIR/functions
-
 # Load local configuration
 source $RC_DIR/stackrc
 
@@ -80,7 +77,3 @@ export OS_CACERT=$INT_CA_DIR/ca-chain.pem
 export NOVA_VERSION=${NOVA_VERSION:-1.1}
 # In the future this will change names:
 export COMPUTE_API_VERSION=${COMPUTE_API_VERSION:-$NOVA_VERSION}
-
-# set log level to DEBUG (helps debug issues)
-# export KEYSTONECLIENT_DEBUG=1
-# export NOVACLIENT_DEBUG=1
