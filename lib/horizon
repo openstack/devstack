@@ -38,6 +38,18 @@ HORIZON_SETTINGS=${HORIZON_SETTINGS:-$HORIZON_DIR/openstack_dashboard/local/loca
 APACHE_USER=${APACHE_USER:-$USER}
 APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
 
+# Set up service name and configuration path
+if is_ubuntu; then
+    APACHE_NAME=apache2
+    APACHE_CONF=sites-available/horizon
+elif is_fedora; then
+    APACHE_NAME=httpd
+    APACHE_CONF=conf.d/horizon.conf
+elif is_suse; then
+    APACHE_NAME=apache2
+    APACHE_CONF=vhosts.d/horizon.conf
+fi
+
 
 # Functions
 # ---------
@@ -135,8 +147,6 @@ function init_horizon() {
 
     HORIZON_REQUIRE=''
     if is_ubuntu; then
-        APACHE_NAME=apache2
-        APACHE_CONF=sites-available/horizon
         # Clean up the old config name
         sudo rm -f /etc/apache2/sites-enabled/000-default
         # Be a good citizen and use the distro tools here
@@ -145,9 +155,6 @@ function init_horizon() {
         # WSGI isn't enabled by default, enable it
         sudo a2enmod wsgi
     elif is_fedora; then
-        APACHE_NAME=httpd
-        APACHE_CONF=conf.d/horizon.conf
-
         if [[ "$os_RELEASE" -ge "18" ]]; then
             # fedora 18 has Require all denied  in its httpd.conf
             # and requires explicit Require all granted
@@ -155,13 +162,15 @@ function init_horizon() {
         fi
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
     elif is_suse; then
-        APACHE_NAME=apache2
-        APACHE_CONF=vhosts.d/horizon.conf
         # WSGI isn't enabled by default, enable it
         sudo a2enmod wsgi
     else
         exit_distro_not_supported "apache configuration"
     fi
+
+    # Remove old log files that could mess with how devstack detects whether Horizon
+    # has been successfully started (see start_horizon() and functions::screen_it())
+    sudo rm -f /var/log/$APACHE_NAME/horizon_*
 
     # Configure apache to run horizon
     sudo sh -c "sed -e \"
@@ -219,12 +228,8 @@ function start_horizon() {
 
 # stop_horizon() - Stop running processes (non-screen)
 function stop_horizon() {
-    if is_ubuntu; then
-        stop_service apache2
-    elif is_fedora; then
-        stop_service httpd
-    elif is_suse; then
-        stop_service apache2
+    if [ -n "$APACHE_NAME" ]; then
+        stop_service $APACHE_NAME
     else
         exit_distro_not_supported "apache configuration"
     fi
