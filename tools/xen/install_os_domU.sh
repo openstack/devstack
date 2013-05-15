@@ -250,11 +250,12 @@ if [ -z "$templateuuid" ]; then
             mkdir -p $HTTP_SERVER_LOCATION
         fi
         cp -f $THIS_DIR/devstackubuntupreseed.cfg $HTTP_SERVER_LOCATION
-        MIRROR=${MIRROR:-""}
-        if [ -n "$MIRROR" ]; then
-            sed -e "s,d-i mirror/http/hostname string .*,d-i mirror/http/hostname string $MIRROR," \
-                -i "${HTTP_SERVER_LOCATION}/devstackubuntupreseed.cfg"
-        fi
+
+        sed \
+            -e "s,\(d-i mirror/http/hostname string\).*,\1 $UBUNTU_INST_HTTP_HOSTNAME,g" \
+            -e "s,\(d-i mirror/http/directory string\).*,\1 $UBUNTU_INST_HTTP_DIRECTORY,g" \
+            -e "s,\(d-i mirror/http/proxy string\).*,\1 $UBUNTU_INST_HTTP_PROXY,g" \
+            -i "${HTTP_SERVER_LOCATION}/devstackubuntupreseed.cfg"
     fi
 
     # Update the template

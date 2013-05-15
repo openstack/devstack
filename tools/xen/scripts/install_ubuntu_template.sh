@@ -69,11 +69,16 @@ fi
 
 xe template-param-set uuid=$new_uuid \
     other-config:install-methods=http \
-    other-config:install-repository="$UBUNTU_INST_REPOSITORY" \
+    other-config:install-repository="http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY}" \
     PV-args="$pvargs" \
     other-config:debian-release="$UBUNTU_INST_RELEASE" \
     other-config:default_template=true \
     other-config:disks='<provision><disk device="0" size="'$disk_size'" sr="" bootable="true" type="system"/></provision>' \
     other-config:install-arch="$UBUNTU_INST_ARCH"
+
+if ! [ -z "$UBUNTU_INST_HTTP_PROXY" ]; then
+    xe template-param-set uuid=$new_uuid \
+        other-config:install-proxy="$UBUNTU_INST_HTTP_PROXY"
+fi
 
 echo "Ubuntu template installed uuid:$new_uuid"
