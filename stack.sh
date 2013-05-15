@@ -956,8 +956,6 @@ if is_service_enabled nova; then
         echo_summary "Using XenServer virtualization driver"
         read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
         iniset $NOVA_CONF DEFAULT compute_driver "xenapi.XenAPIDriver"
-        XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
-        XENAPI_USER=${XENAPI_USER:-"root"}
         iniset $NOVA_CONF DEFAULT xenapi_connection_url "$XENAPI_CONNECTION_URL"
         iniset $NOVA_CONF DEFAULT xenapi_connection_username "$XENAPI_USER"
         iniset $NOVA_CONF DEFAULT xenapi_connection_password "$XENAPI_PASSWORD"

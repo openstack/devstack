@@ -234,6 +234,10 @@ PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME:-"public"}
 # Compatibility until it's eradicated from CI
 USE_SCREEN=${SCREEN_DEV:-$USE_SCREEN}
 
+# Xen config common to nova and quantum
+XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
+XENAPI_USER=${XENAPI_USER:-"root"}
+
 # Local variables:
 # mode: shell-script
 # End:

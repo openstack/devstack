@@ -72,10 +72,13 @@ function quantum_plugin_configure_plugin_agent() {
     AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
 
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-        # Nova will always be installed along with quantum for a domU
-        # devstack install, so it should be safe to rely on nova.conf
-        # for xenapi configuration.
-        Q_RR_DOM0_COMMAND="$QUANTUM_DIR/bin/quantum-rootwrap-xen-dom0 $NOVA_CONF"
+        Q_RR_DOM0_COMMAND="$QUANTUM_DIR/bin/quantum-rootwrap-xen-dom0 $Q_RR_CONF_FILE"
+
+        # For now, duplicate the xen configuration already found in nova.conf
+        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_url "$XENAPI_CONNECTION_URL"
+        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_username "$XENAPI_USER"
+        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_password "$XENAPI_PASSWORD"
+
         # Under XS/XCP, the ovs agent needs to target the dom0
         # integration bridge.  This is enabled by using a root wrapper
         # that executes commands on dom0 via a XenAPI plugin.
