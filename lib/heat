@@ -159,7 +159,6 @@ function init_heat() {
     recreate_database heat utf8
 
     $HEAT_DIR/bin/heat-db-setup $os_PACKAGE -r $DATABASE_PASSWORD
-    $HEAT_DIR/tools/nova_create_flavors.sh
     create_heat_cache_dir
 }
 
