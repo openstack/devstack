@@ -4,6 +4,7 @@ ebtables
 iptables
 iputils
 mysql-server # NOPRIME
+openvswitch # NOPRIME
 python-boto
 python-eventlet
 python-greenlet
