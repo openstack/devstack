@@ -397,6 +397,10 @@ function stop_quantum() {
         pid=$(ps aux | awk '/[d]nsmasq.+interface=(tap|ns-)/ { print $2 }')
         [ ! -z "$pid" ] && sudo kill -9 $pid
     fi
+    if is_service_enabled q-meta; then
+        pid=$(ps aux | awk '/quantum-ns-metadata-proxy/ { print $2 }')
+        [ ! -z "$pid" ] && sudo kill -9 $pid
+    fi
 }
 
 # cleanup_quantum() - Remove residual data files, anything left over from previous
