@@ -1,8 +1,8 @@
 # lib/ceilometer
 # Install and start **Ceilometer** service
 
-# To enable, add the following to localrc
-# ENABLED_SERVICES+=ceilometer-acompute,ceilometer-acentral,ceilometer-collector,ceilometer-api
+# To enable Ceilometer services, add the following to localrc
+# enable_service ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api
 
 # Dependencies:
 # - functions
