@@ -58,6 +58,14 @@ CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
 # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1023755
 CINDER_SECURE_DELETE=`trueorfalse True $CINDER_SECURE_DELETE`
 
+# Cinder reports allocations back to the scheduler on periodic intervals
+# it turns out we can get an "out of space" issue when we run tests too
+# quickly just because cinder didn't realize we'd freed up resources.
+# Make this configurable so that devstack-gate/tempest can set it to
+# less than the 60 second default
+# https://bugs.launchpad.net/cinder/+bug/1180976
+CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
+
 # Name of the lvm volume groups to use/create for iscsi volumes
 # VOLUME_GROUP2 is used only if CINDER_MULTI_LVM_BACKEND = True
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
@@ -197,6 +205,7 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.contrib.standard_extensions
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
+    iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
 
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
