@@ -41,7 +41,6 @@ function quantum_plugin_configure_l3_agent() {
 
 function quantum_plugin_configure_plugin_agent() {
     # Setup integration bridge
-    OVS_BRIDGE=${OVS_BRIDGE:-br-int}
     _quantum_ovs_base_setup_bridge $OVS_BRIDGE
     _quantum_ovs_base_configure_firewall_driver
 

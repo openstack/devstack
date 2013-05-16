@@ -8,7 +8,6 @@ set +o xtrace
 source $TOP_DIR/lib/quantum_plugins/ovs_base
 
 function setup_integration_bridge() {
-    OVS_BRIDGE=${OVS_BRIDGE:-br-int}
     _quantum_ovs_base_setup_bridge $OVS_BRIDGE
     # Set manager to NVP controller (1st of list)
     if [[ "$NVP_CONTROLLERS" != "" ]]; then
