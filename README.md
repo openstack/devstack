@@ -122,6 +122,19 @@ In order to enable Quantum a single node setup, you'll need the following settin
 
 Then run `stack.sh` as normal.
 
+devstack supports adding specific Quantum configuration flags to both the Open vSwitch and LinuxBridge plugin configuration files. To make use of this feature, the following variables are defined and can be configured in your `localrc` file:
+
+    Variable Name             Plugin Config File Section Modified
+    -------------------------------------------------------------------------------------
+    Q_SRV_EXTRA_OPTS          `OVS` (for Open Vswitch) or `LINUX_BRIDGE` (for LinuxBridge)
+    Q_AGENT_EXTRA_AGENT_OPTS  AGENT
+    Q_AGENT_EXTRA_SRV_OPTS    `OVS` (for Open Vswitch) or `LINUX_BRIDGE` (for LinuxBridge)
+
+An example of using the variables in your `localrc` is below:
+
+    Q_AGENT_EXTRA_AGENT_OPTS=(tunnel_type=vxlan vxlan_udp_port=8472)
+    Q_SRV_EXTRA_OPTS=(tenant_network_type=vxlan)
+
 # Tempest
 
 If tempest has been successfully configured, a basic set of smoke tests can be run as follows:

@@ -42,6 +42,14 @@ function quantum_plugin_configure_service() {
     fi
 
     _quantum_ovs_base_configure_firewall_driver
+
+    # Define extra "OVS" configuration options when q-svc is configured by defining
+    # the array ``Q_SRV_EXTRA_OPTS``.
+    # For Example: ``Q_SRV_EXTRA_OPTS=(foo=true bar=2)``
+    for I in "${Q_SRV_EXTRA_OPTS[@]}"; do
+        # Replace the first '=' with ' ' for iniset syntax
+        iniset /$Q_PLUGIN_CONF_FILE OVS ${I/=/ }
+    done
 }
 
 function has_quantum_plugin_security_group() {

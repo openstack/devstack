@@ -52,6 +52,10 @@
 # Quantum.
 #
 # With Quantum networking the NETWORK_MANAGER variable is ignored.
+#
+# To enable specific configuration options for either the Open vSwitch or
+# LinuxBridge plugin, please see the top level README file under the
+# Quantum section.
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
