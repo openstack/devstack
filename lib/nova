@@ -151,7 +151,7 @@ function cleanup_nova() {
         instances=`sudo virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
         if [ ! "$instances" = "" ]; then
             echo $instances | xargs -n1 sudo virsh destroy || true
-            echo $instances | xargs -n1 sudo virsh undefine || true
+            echo $instances | xargs -n1 sudo virsh undefine --managed-save || true
         fi
 
         # Logout and delete iscsi sessions
