@@ -7,7 +7,8 @@ python-devel
 python-eventlet
 python-greenlet
 python-netifaces
-python-nose
+# RHEL6's python-nose is incompatible with Tempest
+python-nose         # dist:f16,f17,f18
 python-paste-deploy # dist:f16,f17,f18
 python-setuptools   # dist:f16,f17,f18
 python-simplejson
