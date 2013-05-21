@@ -71,6 +71,12 @@ setup_network "$VM_BRIDGE_OR_NET_NAME"
 setup_network "$MGT_BRIDGE_OR_NET_NAME"
 setup_network "$PUB_BRIDGE_OR_NET_NAME"
 
+# With quantum, one more network is required, which is internal to the
+# hypervisor, and used by the VMs
+if is_service_enabled quantum; then
+    setup_network "$XEN_INT_BRIDGE_OR_NET_NAME"
+fi
+
 if parameter_is_specified "FLAT_NETWORK_BRIDGE"; then
     cat >&2 << EOF
 ERROR: FLAT_NETWORK_BRIDGE is specified in localrc file
@@ -195,6 +201,12 @@ if [ -z "$templateuuid" ]; then
     # create a new VM with the given template
     # creating the correct VIFs and metadata
     FLAT_NETWORK_BRIDGE=$(bridge_for "$VM_BRIDGE_OR_NET_NAME")
+
+    KERNEL_PARAMS_FOR_QUANTUM=""
+    if is_service_enabled quantum; then
+        XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
+        KERNEL_PARAMS_FOR_QUANTUM="xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
+    fi
     $THIS_DIR/scripts/install-os-vpx.sh \
         -t "$UBUNTU_INST_TEMPLATE_NAME" \
         -v "$VM_BRIDGE_OR_NET_NAME" \
@@ -202,7 +214,7 @@ if [ -z "$templateuuid" ]; then
         -p "$PUB_BRIDGE_OR_NET_NAME" \
         -l "$GUEST_NAME" \
         -r "$OSDOMU_MEM_MB" \
-        -k "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
+        -k "flat_network_bridge=${FLAT_NETWORK_BRIDGE} ${KERNEL_PARAMS_FOR_QUANTUM}"
 
     # wait for install to finish
     wait_for_VM_to_halt
@@ -240,10 +252,15 @@ fi
 #
 $THIS_DIR/build_xva.sh "$GUEST_NAME"
 
+# Attach a network interface for the integration network (so that the bridge
+# is created by XenServer). This is required for Quantum.
+if is_service_enabled quantum; then
+    add_interface "$GUEST_NAME" "$XEN_INT_BRIDGE_OR_NET_NAME" "4"
+fi
+
 # create a snapshot before the first boot
 # to allow a quick re-run with the same settings
 xe vm-snapshot vm="$GUEST_NAME" new-name-label="$SNAME_FIRST_BOOT"
-
 
 #
 # Run DevStack VM

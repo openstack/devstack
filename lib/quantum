@@ -386,6 +386,11 @@ function start_quantum_agents() {
     screen_it q-l3 "cd $QUANTUM_DIR && python $AGENT_L3_BINARY --config-file $QUANTUM_CONF --config-file=$Q_L3_CONF_FILE"
     screen_it q-meta "cd $QUANTUM_DIR && python $AGENT_META_BINARY --config-file $QUANTUM_CONF --config-file=$Q_META_CONF_FILE"
 
+    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+        # For XenServer, start an agent for the domU openvswitch
+        screen_it q-domua "cd $QUANTUM_DIR && python $AGENT_BINARY --config-file $QUANTUM_CONF --config-file /$Q_PLUGIN_CONF_FILE.domU"
+    fi
+
     if is_service_enabled q-lbaas; then
         screen_it q-lbaas "cd $QUANTUM_DIR && python $AGENT_LBAAS_BINARY --config-file $QUANTUM_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
     fi
