@@ -198,7 +198,7 @@ function start_trove() {
 function stop_trove() {
     # Kill the trove screen windows
     for serv in tr-api tr-tmgr tr-cond; do
-        screen -S $SCREEN_NAME -p $serv -X kill
+        screen_stop $serv
     done
 }
 

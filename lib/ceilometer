@@ -162,7 +162,7 @@ function start_ceilometer() {
 function stop_ceilometer() {
     # Kill the ceilometer screen windows
     for serv in ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
-        screen -S $SCREEN_NAME -p $serv -X kill
+        screen_stop $serv
     done
 }
 
