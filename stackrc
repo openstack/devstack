@@ -245,6 +245,9 @@ PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME:-"public"}
 # Compatibility until it's eradicated from CI
 USE_SCREEN=${SCREEN_DEV:-$USE_SCREEN}
 
+# Set default screen name
+SCREEN_NAME=${SCREEN_NAME:-stack}
+
 # Local variables:
 # mode: shell-script
 # End:
