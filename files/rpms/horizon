@@ -3,6 +3,7 @@ django-registration
 gcc
 httpd # NOPRIME
 mod_wsgi  # NOPRIME
+nodejs # NOPRIME
 pylint
 python-anyjson
 python-BeautifulSoup

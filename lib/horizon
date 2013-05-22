@@ -73,31 +73,6 @@ function _horizon_config_set() {
     fi
 }
 
-# Basic install of upstream nodejs for platforms that want it
-function install_nodejs() {
-    if [[ $(which node) ]]; then
-        echo "You already appear to have nodejs, skipping install"
-        return
-    fi
-
-    # There are several node deployment scripts; one may be more
-    # appropriate at some future point, but for now direct download is
-    # the simplest way.  The version barely matters for lesscss which
-    # doesn't use anything fancy.
-    local ver=0.10.1
-    local nodejs=node-v${ver}-linux-x64
-    local tar=$nodejs.tar.gz
-    local nodejs_url=http://nodejs.org/dist/v${ver}/${tar}
-
-    curl -Ss ${nodejs_url} | tar -C ${DEST} -xz
-    if [ $? -ne 0 ]; then
-        echo "*** Download of nodejs failed"
-        return 1
-    fi
-
-    # /usr/bin so it gets found in the PATH available to horizon
-    sudo ln -s $DEST/$nodejs/bin/node /usr/bin/node
-}
 
 # Entry Points
 # ------------
@@ -105,15 +80,7 @@ function install_nodejs() {
 # cleanup_horizon() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_horizon() {
-
-    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-    # if the /usr/bin/node link looks like it's pointing into $DEST,
-    # then we installed it via install_nodejs
-        if [[ $(readlink -f /usr/bin/node) =~ ($DEST) ]]; then
-            sudo rm /usr/bin/node
-        fi
-    fi
-
+    :
 }
 
 # configure_horizon() - Set config files, create data dirs, etc
@@ -199,21 +166,12 @@ function install_horizon() {
         exit_distro_not_supported "apache installation"
     fi
 
-    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-        # RHEL6 currently has no native way to get nodejs, so we do a
-        # basic install here (see cleanup_horizon too).
-        # TODO: does nova have a better way that we can limit
-        # requirement of site-wide nodejs install?
-        install_nodejs
-    fi
-
     # NOTE(sdague) quantal changed the name of the node binary
     if is_ubuntu; then
         if [[ ! -e "/usr/bin/node" ]]; then
             install_package nodejs-legacy
         fi
-    elif is_fedora && [[ "$os_RELEASE" -ge "18" ]]; then
-        # fedora 18 and higher gets nodejs
+    elif is_fedora && [[ $DISTRO =~ (rhel6) || "$os_RELEASE" -ge "18" ]]; then
         install_package nodejs
     fi
 
