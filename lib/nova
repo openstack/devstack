@@ -690,7 +690,7 @@ function start_nova() {
 
     # The group **$LIBVIRT_GROUP** is added to the current user in this script.
     # Use 'sg' to execute nova-compute as a member of the **$LIBVIRT_GROUP** group.
-    screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP \"$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CONF_BOTTOM\""
+    screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP '$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CONF_BOTTOM'"
     screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
     screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network --config-file $NOVA_CONF_BOTTOM"
     screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler --config-file $NOVA_CONF_BOTTOM"
