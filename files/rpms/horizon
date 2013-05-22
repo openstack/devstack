@@ -16,8 +16,7 @@ python-kombu
 python-migrate
 python-mox
 python-netaddr
-# RHEL6's python-nose is incompatible with Tempest
-python-nose         #dist:f16,f17,f18
+python-nose
 python-paste        #dist:f16,f17,f18
 python-paste-deploy #dist:f16,f17,f18
 python-pep8
