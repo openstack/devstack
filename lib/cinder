@@ -67,27 +67,43 @@ CINDER_SECURE_DELETE=`trueorfalse True $CINDER_SECURE_DELETE`
 CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 
 # Name of the lvm volume groups to use/create for iscsi volumes
-# VOLUME_GROUP2 is used only if CINDER_MULTI_LVM_BACKEND = True
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
+VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
+
+# VOLUME_GROUP2 is used only if CINDER_MULTI_LVM_BACKEND = True
 VOLUME_GROUP2=${VOLUME_GROUP2:-stack-volumes2}
+VOLUME_BACKING_FILE2=${VOLUME_BACKING_FILE2:-$DATA_DIR/${VOLUME_GROUP2}-backing-file}
+
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
 
 # Functions
 # ---------
-
-# _clean_volume_group removes all cinder volumes from the specified volume group
-# _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
-function _clean_volume_group() {
+# _cleanup_lvm removes all cinder volumes and the backing file of the
+# volume group used by cinder
+# _cleanup_lvm $VOLUME_GROUP $VOLUME_NAME_PREFIX
+function _cleanup_lvm() {
     local vg=$1
-    local vg_prefix=$2
+    local lv_prefix=$2
+
     # Clean out existing volumes
     for lv in `sudo lvs --noheadings -o lv_name $vg`; do
-        # vg_prefix prefixes the LVs we want
-        if [[ "${lv#$vg_prefix}" != "$lv" ]]; then
+        # lv_prefix prefixes the LVs we want
+        if [[ "${lv#$lv_prefix}" != "$lv" ]]; then
             sudo lvremove -f $vg/$lv
         fi
     done
+
+    # if there is no logical volume left, it's safe to attempt a cleanup
+    # of the backing file
+    if [ -z "`sudo lvs --noheadings -o lv_name $vg`" ]; then
+        # if the backing physical device is a loop device, it was probably setup by devstack
+        VG_DEV=$(sudo losetup -j $DATA_DIR/${vg}-backing-file | awk -F':' '/backing-file/ { print $1}')
+        if [[ -n "$VG_DEV" ]]; then
+            sudo losetup -d $VG_DEV
+            rm -f $DATA_DIR/${vg}-backing-file
+        fi
+    fi
 }
 
 # cleanup_cinder() - Remove residual data files, anything left over from previous
@@ -127,9 +143,10 @@ function cleanup_cinder() {
     fi
 
     # Campsite rule: leave behind a volume group at least as clean as we found it
-    _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
+    _cleanup_lvm $VOLUME_GROUP $VOLUME_NAME_PREFIX
+
     if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
-        _clean_volume_group $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
+        _cleanup_lvm $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
     fi
 }
 
@@ -318,8 +335,6 @@ create_cinder_volume_group() {
     # ``/opt/stack/data``.
 
     if ! sudo vgs $VOLUME_GROUP; then
-        VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
-
         # Only create if the file doesn't already exists
         [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
 
@@ -334,8 +349,6 @@ create_cinder_volume_group() {
         #set up the second volume if CINDER_MULTI_LVM_BACKEND is enabled
 
         if ! sudo vgs $VOLUME_GROUP2; then
-            VOLUME_BACKING_FILE2=${VOLUME_BACKING_FILE2:-$DATA_DIR/${VOLUME_GROUP2}-backing-file}
-
             # Only create if the file doesn't already exists
             [[ -f $VOLUME_BACKING_FILE2 ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE2
 
