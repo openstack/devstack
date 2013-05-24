@@ -7,7 +7,6 @@ set +o xtrace
 
 BS_FL_CONTROLLERS_PORT=${BS_FL_CONTROLLERS_PORT:-localhost:80}
 BS_FL_OF_PORT=${BS_FL_OF_PORT:-6633}
-OVS_BRIDGE=${OVS_BRIDGE:-br-int}
 
 function configure_bigswitch_floodlight() {
     :

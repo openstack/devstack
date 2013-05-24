@@ -45,7 +45,6 @@ function quantum_plugin_configure_l3_agent() {
 
 function quantum_plugin_configure_plugin_agent() {
     # Set up integration bridge
-    OVS_BRIDGE=${OVS_BRIDGE:-br-int}
     _quantum_ovs_base_setup_bridge $OVS_BRIDGE
     if [ -n "$RYU_INTERNAL_INTERFACE" ]; then
         sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_BRIDGE $RYU_INTERNAL_INTERFACE

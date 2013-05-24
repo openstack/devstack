@@ -5,6 +5,9 @@
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+OVS_BRIDGE=${OVS_BRIDGE:-br-int}
+PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
+
 function is_quantum_ovs_base_plugin() {
     # Yes, we use OVS.
     return 0
@@ -15,6 +18,18 @@ function _quantum_ovs_base_setup_bridge() {
     quantum-ovs-cleanup
     sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge
     sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
+}
+
+function quantum_ovs_base_cleanup() {
+    # remove all OVS ports that look like Quantum created ports
+    for port in $(sudo ovs-vsctl list port | grep -o -e tap[0-9a-f\-]* -e q[rg]-[0-9a-f\-]*); do
+        sudo ovs-vsctl del-port ${port}
+    done
+
+    # remove all OVS bridges created by Quantum
+    for bridge in $(sudo ovs-vsctl list-br | grep -o -e ${OVS_BRIDGE} -e ${PUBLIC_BRIDGE}); do
+        sudo ovs-vsctl del-br ${bridge}
+    done
 }
 
 function _quantum_ovs_base_install_agent_packages() {

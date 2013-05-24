@@ -109,4 +109,5 @@ fi
 if is_service_enabled quantum; then
     stop_quantum
     stop_quantum_third_party
+    cleanup_quantum
 fi

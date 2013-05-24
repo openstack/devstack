@@ -17,8 +17,6 @@ OFC_DRIVER=${OFC_DRIVER:-trema}
 OFC_RETRY_MAX=${OFC_RETRY_MAX:-0}
 OFC_RETRY_INTERVAL=${OFC_RETRY_INTERVAL:-1}
 
-OVS_BRIDGE=${OVS_BRIDGE:-br-int}
-
 # Main logic
 # ---------------------------
 
