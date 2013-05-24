@@ -75,7 +75,7 @@ Q_PLUGIN=${Q_PLUGIN:-openvswitch}
 # Default Quantum Port
 Q_PORT=${Q_PORT:-9696}
 # Default Quantum Host
-Q_HOST=${Q_HOST:-$HOST_IP}
+Q_HOST=${Q_HOST:-$SERVICE_HOST}
 # Default admin username
 Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-quantum}
 # Default auth strategy
@@ -86,7 +86,7 @@ Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
 Q_OVS_USE_VETH=${Q_OVS_USE_VETH:-False}
 Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
 # Meta data IP
-Q_META_DATA_IP=${Q_META_DATA_IP:-$HOST_IP}
+Q_META_DATA_IP=${Q_META_DATA_IP:-$SERVICE_HOST}
 # Allow Overlapping IP among subnets
 Q_ALLOW_OVERLAPPING_IP=${Q_ALLOW_OVERLAPPING_IP:-True}
 # Use quantum-debug command
