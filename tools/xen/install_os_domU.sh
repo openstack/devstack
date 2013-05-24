@@ -311,53 +311,26 @@ xe vm-snapshot vm="$GUEST_NAME" new-name-label="$SNAME_FIRST_BOOT"
 #
 xe vm-start vm="$GUEST_NAME"
 
-
-#
-# Find IP and optionally wait for stack.sh to complete
-#
-
-function find_ip_by_name() {
-  local guest_name="$1"
-  local interface="$2"
-  local period=10
-  max_tries=10
-  i=0
-  while true
-  do
-    if [ $i -ge $max_tries ]; then
-      echo "Timed out waiting for devstack ip address"
-      exit 11
-    fi
-
-    devstackip=$(xe vm-list --minimal \
-                 name-label=$guest_name \
-                 params=networks | sed -ne "s,^.*${interface}/ip: \([0-9.]*\).*\$,\1,p")
-    if [ -z "$devstackip" ]
-    then
-      sleep $period
-      ((i++))
-    else
-      echo $devstackip
-      break
-    fi
-  done
-}
-
 function ssh_no_check() {
     ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "$@"
 }
 
-# Note the XenServer needs to be on the chosen
-# network, so XenServer can access Glance API
+# Get hold of the Management IP of OpenStack VM
+OS_VM_MANAGEMENT_ADDRESS=$MGT_IP
+if [ $OS_VM_MANAGEMENT_ADDRESS == "dhcp" ]; then
+    OS_VM_MANAGEMENT_ADDRESS=$(find_ip_by_name $GUEST_NAME 2)
+fi
+
+# Get hold of the Service IP of OpenStack VM
 if [ $HOST_IP_IFACE == "eth2" ]; then
-    DOMU_IP=$MGT_IP
+    OS_VM_SERVICES_ADDRESS=$MGT_IP
     if [ $MGT_IP == "dhcp" ]; then
-        DOMU_IP=$(find_ip_by_name $GUEST_NAME 2)
+        OS_VM_SERVICES_ADDRESS=$(find_ip_by_name $GUEST_NAME 2)
     fi
 else
-    DOMU_IP=$PUB_IP
+    OS_VM_SERVICES_ADDRESS=$PUB_IP
     if [ $PUB_IP == "dhcp" ]; then
-        DOMU_IP=$(find_ip_by_name $GUEST_NAME 3)
+        OS_VM_SERVICES_ADDRESS=$(find_ip_by_name $GUEST_NAME 3)
     fi
 fi
 
@@ -369,11 +342,11 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
 
     echo "VM Launched - Waiting for startup script"
     # wait for log to appear
-    while ! ssh_no_check -q stack@$DOMU_IP "[ -e run.sh.log ]"; do
+    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "[ -e run.sh.log ]"; do
         sleep 10
     done
     echo -n "Running"
-    while [ `ssh_no_check -q stack@$DOMU_IP pgrep -c run.sh` -ge 1 ]
+    while [ `ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS pgrep -c run.sh` -ge 1 ]
     do
         sleep 10
         echo -n "."
@@ -382,17 +355,17 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
     set -x
 
     # output the run.sh.log
-    ssh_no_check -q stack@$DOMU_IP 'cat run.sh.log'
+    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'cat run.sh.log'
 
     # Fail if the expected text is not found
-    ssh_no_check -q stack@$DOMU_IP 'cat run.sh.log' | grep -q 'stack.sh completed in'
+    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'cat run.sh.log' | grep -q 'stack.sh completed in'
 
     set +x
     echo "################################################################################"
     echo ""
     echo "All Finished!"
     echo "You can visit the OpenStack Dashboard"
-    echo "at http://$DOMU_IP, and contact other services at the usual ports."
+    echo "at http://$OS_VM_SERVICES_ADDRESS, and contact other services at the usual ports."
 else
     set +x
     echo "################################################################################"
@@ -401,9 +374,9 @@ else
     echo "Now, you can monitor the progress of the stack.sh installation by "
     echo "tailing /opt/stack/run.sh.log from within your domU."
     echo ""
-    echo "ssh into your domU now: 'ssh stack@$DOMU_IP' using your password"
+    echo "ssh into your domU now: 'ssh stack@$OS_VM_MANAGEMENT_ADDRESS' using your password"
     echo "and then do: 'tail -f /opt/stack/run.sh.log'"
     echo ""
     echo "When the script completes, you can then visit the OpenStack Dashboard"
-    echo "at http://$DOMU_IP, and contact other services at the usual ports."
+    echo "at http://$OS_VM_SERVICES_ADDRESS, and contact other services at the usual ports."
 fi
