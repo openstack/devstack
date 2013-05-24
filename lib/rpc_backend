@@ -78,11 +78,11 @@ function cleanup_rpc_backend {
         fi
     elif is_service_enabled zeromq; then
         if is_fedora; then
-            uninstall_package zeromq python-zmq
+            uninstall_package zeromq python-zmq redis
         elif is_ubuntu; then
-            uninstall_package libzmq1 python-zmq
+            uninstall_package libzmq1 python-zmq redis-server
         elif is_suse; then
-            uninstall_package libzmq1 python-pyzmq
+            uninstall_package libzmq1 python-pyzmq redis
         else
             exit_distro_not_supported "zeromq installation"
         fi
@@ -115,12 +115,15 @@ function install_rpc_backend() {
             exit_distro_not_supported "qpid installation"
         fi
     elif is_service_enabled zeromq; then
+        # NOTE(ewindisch): Redis is not strictly necessary
+        # but there is a matchmaker driver that works
+        # really well & out of the box for multi-node.
         if is_fedora; then
-            install_package zeromq python-zmq
+            install_package zeromq python-zmq redis
         elif is_ubuntu; then
-            install_package libzmq1 python-zmq
+            install_package libzmq1 python-zmq redis-server
         elif is_suse; then
-            install_package libzmq1 python-pyzmq
+            install_package libzmq1 python-pyzmq redis
         else
             exit_distro_not_supported "zeromq installation"
         fi
@@ -158,6 +161,11 @@ function iniset_rpc_backend() {
     local section=$3
     if is_service_enabled zeromq; then
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_zmq
+        iniset $file $section rpc_zmq_matchmaker \
+            ${package}.openstack.common.rpc.matchmaker_redis.MatchMakerRedis
+        # Set MATCHMAKER_REDIS_HOST if running multi-node.
+        MATCHMAKER_REDIS_HOST=${MATCHMAKER_REDIS_HOST:-127.0.0.1}
+        iniset $file matchmaker_redis host $MATCHMAKER_REDIS_HOST
     elif is_service_enabled qpid; then
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_qpid
         if is_ubuntu; then
