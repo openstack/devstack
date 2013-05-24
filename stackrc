@@ -164,14 +164,25 @@ PBR_BRANCH=${PBR_BRANCH:-master}
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
-# also install an **LXC** or **OpenVZ** based system.
+# also install an **LXC**, **OpenVZ** or **XenAPI** based system.
 VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
-LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
-if [[ "$os_VENDOR" =~ (Debian) ]]; then
-  LIBVIRT_GROUP=libvirt
-else
-  LIBVIRT_GROUP=libvirtd
-fi
+case "$VIRT_DRIVER" in
+    libvirt)
+        LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
+        if [[ "$os_VENDOR" =~ (Debian) ]]; then
+            LIBVIRT_GROUP=libvirt
+        else
+            LIBVIRT_GROUP=libvirtd
+        fi
+        ;;
+    xenserver)
+        # Xen config common to nova and quantum
+        XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
+        XENAPI_USER=${XENAPI_USER:-"root"}
+        ;;
+    *)
+        ;;
+esac
 
 # Specify a comma-separated list of UEC images to download and install into glance.
 # supported urls here are:
@@ -233,10 +244,6 @@ PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME:-"public"}
 
 # Compatibility until it's eradicated from CI
 USE_SCREEN=${SCREEN_DEV:-$USE_SCREEN}
-
-# Xen config common to nova and quantum
-XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
-XENAPI_USER=${XENAPI_USER:-"root"}
 
 # Local variables:
 # mode: shell-script
