@@ -235,7 +235,7 @@ create_gi_vif()
 create_vm_vif()
 {
   local v="$1"
-  echo "Installing management interface on $BRIDGE_V."
+  echo "Installing VM interface on $BRIDGE_V."
   local out_network_uuid=$(find_network "$BRIDGE_V")
   create_vif "$v" "$out_network_uuid" "1" >/dev/null
 }

@@ -8,6 +8,34 @@ The Openstack services are configured to run within a "privileged" virtual
 machine on the Xenserver host (called OS domU). The VM uses the XAPI toolstack
 to communicate with the host.
 
+The provided localrc helps to build a basic environment.
+The requirements are:
+ - An internet-enabled network with a DHCP server on it
+ - XenServer box plugged in to the same network
+This network will be used as the OpenStack management network. The VM Network
+and the Public Network will not be connected to any physical interfaces, only
+new virtual networks will be created by the `install_os_domU.sh` script.
+
+Steps to follow:
+ - Install XenServer
+ - Download Devstack to XenServer
+ - Customise `localrc`
+ - Start `install_os_domU.sh` script
+
+The `install_os_domU.sh` script will:
+ - Setup XenAPI plugins
+ - Create the named networks, if they don't exist
+ - Install an Ubuntu Virtual Machine, with 4 network interfaces:
+   - eth0 - internal xapi interface
+   - eth1 - VM interface, connected to `VM_BRIDGE_OR_NET_NAME` defaults to
+   `"OpenStack VM Network"`.
+   - eth2 - Management interface, connected to `MGT_BRIDGE_OR_NET_NAME`,
+     defaults to `xenbr0`, XenServer's bridge associated with the Hypervisors
+     `eth0`.
+   - eth3 - Public interface, connected to `PUB_BRIDGE_OR_NET_NAME` defaults to
+   `"OpenStack Public Network"`.
+ - Start devstack inside the created OpenStack VM
+
 ## Step 1: Install Xenserver
 Install XenServer 5.6+ on a clean box. You can get XenServer by signing
 up for an account on citrix.com, and then visiting:
@@ -15,13 +43,12 @@ https://www.citrix.com/English/ss/downloads/details.asp?downloadId=2311504&produ
 
 For details on installation, see: http://wiki.openstack.org/XenServer/Install
 
-Here are some sample Xenserver network settings for when you are just
-getting started (Settings like this have been used with a laptop + cheap wifi router):
-
-* XenServer Host IP: 192.168.1.10
-* XenServer Netmask: 255.255.255.0
-* XenServer Gateway: 192.168.1.1
-* XenServer DNS: 192.168.1.1
+The XenServer IP configuration depends on your local network setup. If you are
+using dhcp, make a reservation for XenServer, so its IP address won't change
+over time. Make a note of the XenServer's IP address, as it has to be specified
+in `localrc`. The other option is to manually specify the IP setup for the
+XenServer box. Please make sure, that a gateway and a nameserver is configured,
+as `install_os_domU.sh` will connect to github.com to get source-code snapshots.
 
 ## Step 2: Download devstack
 On your XenServer host, run the following commands as root:
@@ -32,45 +59,63 @@ On your XenServer host, run the following commands as root:
 
 ## Step 3: Configure your localrc inside the devstack directory
 Devstack uses a localrc for user-specific configuration.  Note that
-the XENAPI_PASSWORD must be your dom0 root password.
+the `XENAPI_PASSWORD` must be your dom0 root password.
 Of course, use real passwords if this machine is exposed.
 
     cat > ./localrc <<EOF
+    # Passwords
+    # NOTE: these need to be specified, otherwise devstack will try
+    # to prompt for these passwords, blocking the install process.
+
     MYSQL_PASSWORD=my_super_secret
     SERVICE_TOKEN=my_super_secret
     ADMIN_PASSWORD=my_super_secret
     SERVICE_PASSWORD=my_super_secret
     RABBIT_PASSWORD=my_super_secret
     SWIFT_HASH="66a3d6b56c1f479c8b4e70ab5c2000f5"
-    # This is the password for the OpenStack VM (for both stack and root users)
+    # This will be the password for the OpenStack VM (both stack and root users)
     GUEST_PASSWORD=my_super_secret
 
     # XenAPI parameters
-    # IMPORTANT: The following must be set to your dom0 root password!
+    # NOTE: The following must be set to your XenServer root password!
+
     XENAPI_PASSWORD=my_xenserver_root_password
+
     XENAPI_CONNECTION_URL="http://address_of_your_xenserver"
     VNCSERVER_PROXYCLIENT_ADDRESS=address_of_your_xenserver
 
-    # Do not download the usual images yet!
+    # Do not download the usual images
     IMAGE_URLS=""
     # Explicitly set virt driver here
     VIRT_DRIVER=xenserver
-    # Explicitly set multi-host
+    # Explicitly enable multi-host
     MULTI_HOST=1
     # Give extra time for boot
     ACTIVE_TIMEOUT=45
-    # Host Interface, i.e. the interface on the nova vm you want to expose the
-    # services on. Usually eth2 (management network) or eth3 (public network) and
-    # not eth0 (private network with XenServer host) or eth1 (VM traffic network)
-    # The default is eth3.
-    # HOST_IP_IFACE=eth3
+    # Host Interface, i.e. the interface on the OpenStack vm you want to expose
+    # the services on. The default is eth3, which means the public network, but
+    # as the public network is going to be virtual, we are setting the services
+    # to listen on the management network, which defaults to 'xenbr0', the
+    # XenServer's network.
+    HOST_IP_IFACE=eth2
+
+    # Use DHCP server to configure the Management IP of OpenStack VM
+    MGT_IP="dhcp"
 
     # Settings for netinstalling Ubuntu
-    # UBUNTU_INST_RELEASE=precise
+    UBUNTU_INST_RELEASE=precise
 
-    # First time Ubuntu network install params
-    # UBUNTU_INST_IFACE="eth3"
-    # UBUNTU_INST_IP="dhcp"
+    # First time Ubuntu network install params, use the DHCP server on the
+    # management network
+    UBUNTU_INST_IFACE="eth2"
+    UBUNTU_INST_IP="dhcp"
+
+    # NOTE: the value of FLAT_NETWORK_BRIDGE will automatically be determined
+    # by install_os_domU.sh script.
+
+    # Public IP address is aligned with the devstack defaults (see FLOATING_RANGE)
+    PUB_IP=172.24.4.10
+    PUB_NETMASK=255.255.255.0
     EOF
 
 ## Step 4: Run `./install_os_domU.sh` from the `tools/xen` directory
