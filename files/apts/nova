@@ -1,5 +1,5 @@
 dnsmasq-base
-dnsmasq-utils # for dhcp_release only available in dist:oneiric,precise,quantal
+dnsmasq-utils # for dhcp_release
 kpartx
 parted
 iputils-arping
@@ -13,6 +13,7 @@ ebtables
 sqlite3
 sudo
 kvm
+qemu # dist:wheezy,jessie
 libvirt-bin # NOPRIME
 libjs-jquery-tablesorter # Needed for coverage html reports
 vlan
