@@ -2,7 +2,7 @@
 # Install and start **Heat** service
 
 # To enable, add the following to localrc
-# ENABLED_SERVICES+=,heat,h-api-cfn,h-api-cw,h-eng
+# ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng
 
 # Dependencies:
 # - functions
@@ -193,8 +193,8 @@ function start_heat() {
 
 # stop_heat() - Stop running processes
 function stop_heat() {
-    # Kill the cinder screen windows
-    for serv in h-eng h-api-cfn h-api-cw; do
+    # Kill the screen windows
+    for serv in h-eng h-api h-api-cfn h-api-cw; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }
