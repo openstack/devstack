@@ -153,6 +153,7 @@ You can then run many compute nodes, each of which should have a `stackrc` which
     MYSQL_HOST=$SERVICE_HOST
     RABBIT_HOST=$SERVICE_HOST
     Q_HOST=$SERVICE_HOST
+    MATCHMAKER_REDIS_HOST=$SERVICE_HOST
 
 # Cells
 
