@@ -32,6 +32,12 @@ source $TOP_DIR/functions
 # and ``DISTRO``
 GetDistro
 
+
+# Configure non-default repos
+# ===========================
+
+# Repo configuration needs to occur before package installation.
+
 # Some dependencies are not available in Debian Wheezy official
 # repositories. However, it's possible to run OpenStack from gplhost
 # repository.
@@ -41,6 +47,17 @@ if [[ "$os_VENDOR" =~ (Debian) ]]; then
     apt_get update
     apt_get install --force-yes gplhost-archive-keyring
 fi
+
+# Installing Open vSwitch on RHEL6 requires enabling the RDO repo.
+RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack/openstack-grizzly/rdo-release-grizzly-3.noarch.rpm"}
+RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-grizzly"}
+if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
+    if ! yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
+        echo "RDO repo not detected; installing"
+        yum_install $RHEL6_RDO_REPO_RPM
+    fi
+fi
+
 
 # Global Settings
 # ===============
