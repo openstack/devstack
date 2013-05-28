@@ -754,6 +754,22 @@ EOF
 EOF
         sudo mv /tmp/90-stack-s.conf /etc/rsyslog.d
     fi
+
+    RSYSLOGCONF="/etc/rsyslog.conf"
+    if [ -f $RSYSLOGCONF ]; then
+        sudo cp -b $RSYSLOGCONF $RSYSLOGCONF.bak
+        if [[ $(grep '$SystemLogRateLimitBurst' $RSYSLOGCONF)  ]]; then
+            sudo sed -i 's/$SystemLogRateLimitBurst\ .*/$SystemLogRateLimitBurst\ 0/' $RSYSLOGCONF
+        else
+            sudo sed -i '$ i $SystemLogRateLimitBurst\ 0' $RSYSLOGCONF
+        fi
+        if [[ $(grep '$SystemLogRateLimitInterval' $RSYSLOGCONF)  ]]; then
+            sudo sed -i 's/$SystemLogRateLimitInterval\ .*/$SystemLogRateLimitInterval\ 0/' $RSYSLOGCONF
+        else
+            sudo sed -i '$ i $SystemLogRateLimitInterval\ 0' $RSYSLOGCONF
+        fi
+    fi
+
     echo_summary "Starting rsyslog"
     restart_service rsyslog
 fi
