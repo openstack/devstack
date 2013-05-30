@@ -200,21 +200,13 @@ if [ -z "$templateuuid" ]; then
 
     # create a new VM with the given template
     # creating the correct VIFs and metadata
-    FLAT_NETWORK_BRIDGE=$(bridge_for "$VM_BRIDGE_OR_NET_NAME")
-
-    KERNEL_PARAMS_FOR_QUANTUM=""
-    if is_service_enabled quantum; then
-        XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
-        KERNEL_PARAMS_FOR_QUANTUM="xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
-    fi
     $THIS_DIR/scripts/install-os-vpx.sh \
         -t "$UBUNTU_INST_TEMPLATE_NAME" \
         -v "$VM_BRIDGE_OR_NET_NAME" \
         -m "$MGT_BRIDGE_OR_NET_NAME" \
         -p "$PUB_BRIDGE_OR_NET_NAME" \
         -l "$GUEST_NAME" \
-        -r "$OSDOMU_MEM_MB" \
-        -k "flat_network_bridge=${FLAT_NETWORK_BRIDGE} ${KERNEL_PARAMS_FOR_QUANTUM}"
+        -r "$OSDOMU_MEM_MB"
 
     # wait for install to finish
     wait_for_VM_to_halt
@@ -253,10 +245,19 @@ fi
 $THIS_DIR/build_xva.sh "$GUEST_NAME"
 
 # Attach a network interface for the integration network (so that the bridge
-# is created by XenServer). This is required for Quantum.
+# is created by XenServer). This is required for Quantum. Also pass that as a
+# kernel parameter for DomU
 if is_service_enabled quantum; then
     add_interface "$GUEST_NAME" "$XEN_INT_BRIDGE_OR_NET_NAME" "4"
+
+    XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
+    append_kernel_cmdline \
+        "$GUEST_NAME" \
+        "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
 fi
+
+FLAT_NETWORK_BRIDGE=$(bridge_for "$VM_BRIDGE_OR_NET_NAME")
+append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
 
 # create a snapshot before the first boot
 # to allow a quick re-run with the same settings
