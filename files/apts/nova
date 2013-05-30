@@ -12,8 +12,8 @@ iptables
 ebtables
 sqlite3
 sudo
-kvm
-qemu # dist:wheezy,jessie
+kvm # NOPRIME
+qemu # dist:wheezy,jessie NOPRIME
 libvirt-bin # NOPRIME
 libjs-jquery-tablesorter # Needed for coverage html reports
 vlan
@@ -27,7 +27,7 @@ python-paste
 python-migrate
 python-gflags
 python-greenlet
-python-libvirt
+python-libvirt # NOPRIME
 python-libxml2
 python-routes
 python-netaddr
