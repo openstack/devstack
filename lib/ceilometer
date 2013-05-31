@@ -91,6 +91,8 @@ function configure_ceilometer() {
     iniset $CEILOMETER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CEILOMETER_CONF keystone_authtoken signing_dir $CEILOMETER_AUTH_CACHE_DIR
 
+    iniset $CEILOMETER_CONF database connection mongodb://localhost:27017/ceilometer
+
     configure_mongodb
 
     cleanup_ceilometer
