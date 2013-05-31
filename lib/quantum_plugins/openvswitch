@@ -135,6 +135,8 @@ function quantum_plugin_configure_service() {
     if [[ $OVS_ENABLE_TUNNELING = "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
     fi
+
+    _quantum_ovs_base_configure_firewall_driver
 }
 
 function quantum_plugin_setup_interface_driver() {

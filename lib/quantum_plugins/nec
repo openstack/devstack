@@ -82,6 +82,8 @@ function quantum_plugin_configure_service() {
     iniset /$Q_PLUGIN_CONF_FILE OFC driver $OFC_DRIVER
     iniset /$Q_PLUGIN_CONF_FILE OFC api_retry_max OFC_RETRY_MAX
     iniset /$Q_PLUGIN_CONF_FILE OFC api_retry_interval OFC_RETRY_INTERVAL
+
+    _quantum_ovs_base_configure_firewall_driver
 }
 
 function quantum_plugin_setup_interface_driver() {

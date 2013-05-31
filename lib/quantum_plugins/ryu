@@ -57,6 +57,8 @@ function quantum_plugin_configure_plugin_agent() {
 
 function quantum_plugin_configure_service() {
     iniset /$Q_PLUGIN_CONF_FILE OVS openflow_rest_api $RYU_API_HOST:$RYU_API_PORT
+
+    _quantum_ovs_base_configure_firewall_driver
 }
 
 function quantum_plugin_setup_interface_driver() {
