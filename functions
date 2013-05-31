@@ -1413,6 +1413,10 @@ function get_pip_command() {
     else
         which pip
     fi
+
+    if [ $? -ne 0 ]; then
+        die $LINENO "Unable to find pip; cannot continue"
+    fi
 }
 
 # Path permissions sanity check
