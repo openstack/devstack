@@ -142,7 +142,6 @@ fi
 # and the specified rpc backend is available on your platform.
 check_rpc_backend
 
-SCREEN_NAME=${SCREEN_NAME:-stack}
 # Check to see if we are already running DevStack
 # Note that this may fail if USE_SCREEN=False
 if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].$SCREEN_NAME"; then
