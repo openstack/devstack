@@ -80,7 +80,10 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     PUBLIC_INTERFACE_DEFAULT=eth3
     GUEST_INTERFACE_DEFAULT=eth1
     # Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
-    FLAT_NETWORK_BRIDGE_DEFAULT=$(grep -o 'flat_network_bridge=[[:alnum:]]*' /proc/cmdline | cut -d= -f 2 | sort -u)
+    FLAT_NETWORK_BRIDGE_DEFAULT=$(sed -e 's/.* flat_network_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
+    if is_service_enabled quantum; then
+        XEN_INTEGRATION_BRIDGE=$(sed -e 's/.* xen_integration_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
+    fi
 elif [ "$VIRT_DRIVER" = 'baremetal' ]; then
     NETWORK_MANAGER=${NETWORK_MANAGER:-FlatManager}
     PUBLIC_INTERFACE_DEFAULT=eth0

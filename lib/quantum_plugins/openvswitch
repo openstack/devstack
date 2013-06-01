@@ -11,7 +11,9 @@ function quantum_plugin_create_nova_conf() {
     _quantum_ovs_base_configure_nova_vif_driver
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         iniset $NOVA_CONF DEFAULT xenapi_vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
-        iniset $NOVA_CONF DEFAULT xenapi_ovs_integration_bridge $FLAT_NETWORK_BRIDGE
+        iniset $NOVA_CONF DEFAULT xenapi_ovs_integration_bridge $XEN_INTEGRATION_BRIDGE
+        # Disable nova's firewall so that it does not conflict with quantum
+        iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
     fi
 }
 
@@ -71,6 +73,10 @@ function quantum_plugin_configure_plugin_agent() {
     AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
 
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+        # Make a copy of our config for domU
+        sudo cp /$Q_PLUGIN_CONF_FILE "/$Q_PLUGIN_CONF_FILE.domu"
+
+        # Deal with Dom0's L2 Agent:
         Q_RR_DOM0_COMMAND="$QUANTUM_DIR/bin/quantum-rootwrap-xen-dom0 $Q_RR_CONF_FILE"
 
         # For now, duplicate the xen configuration already found in nova.conf
@@ -83,29 +89,25 @@ function quantum_plugin_configure_plugin_agent() {
         # that executes commands on dom0 via a XenAPI plugin.
         iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_DOM0_COMMAND"
 
-        # FLAT_NETWORK_BRIDGE is the dom0 integration bridge.  To
-        # ensure the bridge lacks direct connectivity, set
-        # VM_VLAN=-1;VM_DEV=invalid in localrc
-        iniset /$Q_PLUGIN_CONF_FILE OVS integration_bridge $FLAT_NETWORK_BRIDGE
+        # Set "physical" mapping
+        iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings "physnet1:$FLAT_NETWORK_BRIDGE"
 
-        # The ovs agent needs to ensure that the ports associated with
-        # a given network share the same local vlan tag.  On
-        # single-node XS/XCP, this requires monitoring both the dom0
-        # bridge, where VM's are attached, and the domU bridge, where
-        # dhcp servers are attached.
-        if is_service_enabled q-dhcp; then
-            iniset /$Q_PLUGIN_CONF_FILE OVS domu_integration_bridge $OVS_BRIDGE
-            # DomU will use the regular rootwrap
-            iniset /$Q_PLUGIN_CONF_FILE AGENT domu_root_helper "$Q_RR_COMMAND"
-            # Plug the vm interface into the domU integration bridge.
-            sudo ip addr flush dev $GUEST_INTERFACE_DEFAULT
-            sudo ip link set $OVS_BRIDGE up
-            # Assign the VM IP only if it has been set explicitly
-            if [[ "$VM_IP" != "" ]]; then
-                sudo ip addr add $VM_IP dev $OVS_BRIDGE
-            fi
-            sudo ovs-vsctl add-port $OVS_BRIDGE $GUEST_INTERFACE_DEFAULT
-        fi
+        # XEN_INTEGRATION_BRIDGE is the integration bridge in dom0
+        iniset /$Q_PLUGIN_CONF_FILE OVS integration_bridge $XEN_INTEGRATION_BRIDGE
+
+        # Set up domU's L2 agent:
+
+        # Create a bridge "br-$GUEST_INTERFACE_DEFAULT"
+        sudo ovs-vsctl --no-wait -- --may-exist add-br "br-$GUEST_INTERFACE_DEFAULT"
+        # Add $GUEST_INTERFACE_DEFAULT to that bridge
+        sudo ovs-vsctl add-port "br-$GUEST_INTERFACE_DEFAULT" $GUEST_INTERFACE_DEFAULT
+
+        # Set bridge mappings to "physnet1:br-$GUEST_INTERFACE_DEFAULT"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" OVS bridge_mappings "physnet1:br-$GUEST_INTERFACE_DEFAULT"
+        # Set integration bridge to domU's
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" OVS integration_bridge $OVS_BRIDGE
+        # Set root wrap
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" AGENT root_helper "$Q_RR_COMMAND"
     fi
 }
 

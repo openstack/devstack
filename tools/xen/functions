@@ -123,6 +123,32 @@ function _bridge_exists() {
     ! [ -z $(xe network-list bridge="$bridge" --minimal) ]
 }
 
+function _network_uuid() {
+    local bridge_or_net_name
+    bridge_or_net_name=$1
+
+    if _bridge_exists "$bridge_or_net_name"; then
+        xe network-list bridge="$bridge_or_net_name" --minimal
+    else
+        xe network-list name-label="$bridge_or_net_name" --minimal
+    fi
+}
+
+function add_interface() {
+    local vm_name
+    local bridge_or_network_name
+
+    vm_name="$1"
+    bridge_or_network_name="$2"
+    device_number="$3"
+
+    local vm
+    local net
+
+    vm=$(xe vm-list name-label="$vm_name" --minimal)
+    net=$(_network_uuid "$bridge_or_network_name")
+    xe vif-create network-uuid=$net vm-uuid=$vm device=$device_number
+}
 
 function setup_network() {
     local bridge_or_net_name
