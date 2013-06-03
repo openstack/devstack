@@ -3,7 +3,7 @@
 # ``stack.sh`` is an opinionated OpenStack developer installation.  It
 # installs and configures various combinations of **Ceilometer**, **Cinder**,
 # **Glance**, **Heat**, **Horizon**, **Keystone**, **Nova**, **Quantum**
-# and **Swift**
+# and **Swift**.
 
 # This script allows you to specify configuration options of what git
 # repositories to use, enabled services, network configuration and various
@@ -12,9 +12,11 @@
 # developer install.
 
 # To keep this script simple we assume you are running on a recent **Ubuntu**
-# (12.04 Precise or newer) or **Fedora** (F16 or newer) machine.  It
-# should work in a VM or physical server.  Additionally we put the list of
-# ``apt`` and ``rpm`` dependencies and other configuration files in this repo.
+# (12.04 Precise or newer) or **Fedora** (F16 or newer) machine.  (It may work
+# on other platforms but support for those platforms is left to those who added
+# them to DevStack.)  It should work in a VM or physical server.  Additionally
+# we maintain a list of ``apt`` and ``rpm`` dependencies and other configuration
+# files in this repo.
 
 # Learn more and get the most recent version at http://devstack.org
 
@@ -33,55 +35,20 @@ source $TOP_DIR/functions
 GetDistro
 
 
-# Configure non-default repos
-# ===========================
-
-# Repo configuration needs to occur before package installation.
-
-# Some dependencies are not available in Debian Wheezy official
-# repositories. However, it's possible to run OpenStack from gplhost
-# repository.
-if [[ "$os_VENDOR" =~ (Debian) ]]; then
-    echo 'deb http://archive.gplhost.com/debian grizzly main' | sudo tee /etc/apt/sources.list.d/gplhost_wheezy-backports.list
-    echo 'deb http://archive.gplhost.com/debian grizzly-backports main' | sudo tee -a /etc/apt/sources.list.d/gplhost_wheezy-backports.list
-    apt_get update
-    apt_get install --force-yes gplhost-archive-keyring
-fi
-
-# Installing Open vSwitch on RHEL6 requires enabling the RDO repo.
-RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack/openstack-grizzly/rdo-release-grizzly-3.noarch.rpm"}
-RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-grizzly"}
-# RHEL6 requires EPEL for many Open Stack dependencies
-RHEL6_EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
-
-if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-
-    if ! yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
-        echo "RDO repo not detected; installing"
-        yum_install $RHEL6_RDO_REPO_RPM || \
-            die $LINENO "Error installing RDO repo, cannot continue"
-    fi
-
-    if ! yum repolist enabled epel | grep -q 'epel'; then
-        echo "EPEL not detected; installing"
-        yum_install ${RHEL6_EPEL_RPM} || \
-            die $LINENO "Error installing EPEL repo, cannot continue"
-    fi
-
-fi
-
 # Global Settings
 # ===============
 
-# ``stack.sh`` is customizable through setting environment variables.  If you
-# want to override a setting you can set and export it::
+# ``stack.sh`` is customizable by setting environment variables.  Override a
+# default setting via export::
 #
 #     export DATABASE_PASSWORD=anothersecret
 #     ./stack.sh
 #
-# You can also pass options on a single line ``DATABASE_PASSWORD=simple ./stack.sh``
+# or by setting the variable on the command line::
 #
-# Additionally, you can put any local variables into a ``localrc`` file::
+#     DATABASE_PASSWORD=simple ./stack.sh
+#
+# Persistent variables can be placed in a ``localrc`` file::
 #
 #     DATABASE_PASSWORD=anothersecret
 #     DATABASE_USER=hellaroot
@@ -164,6 +131,41 @@ fi
 
 # Set up logging level
 VERBOSE=$(trueorfalse True $VERBOSE)
+
+
+# Additional repos
+# ================
+
+# Some distros need to add repos beyond the defaults provided by the vendor
+# to pick up required packages.
+
+# The Debian Wheezy official repositories do not contain all required packages,
+# add gplhost repository.
+if [[ "$os_VENDOR" =~ (Debian) ]]; then
+    echo 'deb http://archive.gplhost.com/debian grizzly main' | sudo tee /etc/apt/sources.list.d/gplhost_wheezy-backports.list
+    echo 'deb http://archive.gplhost.com/debian grizzly-backports main' | sudo tee -a /etc/apt/sources.list.d/gplhost_wheezy-backports.list
+    apt_get update
+    apt_get install --force-yes gplhost-archive-keyring
+fi
+
+if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
+    # Installing Open vSwitch on RHEL6 requires enabling the RDO repo.
+    RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack/openstack-grizzly/rdo-release-grizzly-3.noarch.rpm"}
+    RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-grizzly"}
+    if ! yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
+        echo "RDO repo not detected; installing"
+        yum_install $RHEL6_RDO_REPO_RPM || \
+            die $LINENO "Error installing RDO repo, cannot continue"
+    fi
+
+    # RHEL6 requires EPEL for many Open Stack dependencies
+    RHEL6_EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
+    if ! yum repolist enabled epel | grep -q 'epel'; then
+        echo "EPEL not detected; installing"
+        yum_install ${RHEL6_EPEL_RPM} || \
+            die $LINENO "Error installing EPEL repo, cannot continue"
+    fi
+fi
 
 
 # root Access
@@ -296,7 +298,7 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # Configure Projects
 # ==================
 
-# Get project function libraries
+# Source project function libraries
 source $TOP_DIR/lib/tls
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
@@ -310,7 +312,7 @@ source $TOP_DIR/lib/quantum
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
 
-# Set the destination directories for OpenStack projects
+# Set the destination directories for other OpenStack projects
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 PBR_DIR=$DEST/pbr
 
@@ -565,6 +567,7 @@ failed() {
 # an error.  It is also useful for following along as the install occurs.
 set -o xtrace
 
+
 # Install Packages
 # ================
 
@@ -585,61 +588,51 @@ if is_service_enabled q-agt; then
     install_quantum_agent_packages
 fi
 
-#
+
 # System-specific preconfigure
 # ============================
 
 if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-    # Avoid having to configure selinux to allow things like httpd to
-    # access horizion files or run binaries like nodejs (LP#1175444)
+    # Disable selinux to avoid configuring to allow Apache access
+    # to Horizon files or run nodejs (LP#1175444)
     if selinuxenabled; then
         sudo setenforce 0
     fi
 
-    # An old version (2.0.1) of python-crypto is probably installed on
-    # a fresh system, via the dependency chain
-    # cas->python-paramiko->python-crypto (related to anaconda).
-    # Unfortunately, "pip uninstall pycrypto" will remove the
-    # .egg-info file for this rpm-installed version, but leave most of
-    # the actual library files behind in /usr/lib64/python2.6/Crypto.
-    # When later "pip install pycrypto" happens, the built library
-    # will be installed over these existing files; the result is a
-    # useless mess of old, rpm-packaged files and pip-installed files.
-    # Unsurprisingly, the end result is it doesn't work.  Thus we have
-    # to get rid of it now so that any packages that pip-install
-    # pycrypto get a "clean slate".
-    # (note, we have to be careful about other RPM packages specified
-    # pulling in python-crypto as well.  That's why RHEL6 doesn't
-    # install python-paramiko packages for example...)
+    # An old version of ``python-crypto`` (2.0.1) may be installed on a
+    # fresh system via Anaconda and the dependency chain
+    # ``cas`` -> ``python-paramiko`` -> ``python-crypto``.
+    # ``pip uninstall pycrypto`` will remove the packaged ``.egg-info`` file
+    # but leave most of the actual library files behind in ``/usr/lib64/python2.6/Crypto``.
+    # Later ``pip install pycrypto`` will install over the packaged files resulting
+    # in a useless mess of old, rpm-packaged files and pip-installed files.
+    # Remove the package so that ``pip install python-crypto`` installs cleanly.
+    # Note: other RPM packages may require ``python-crypto`` as well.  For example,
+    # RHEL6 does not install ``python-paramiko packages``.
     uninstall_package python-crypto
 
-    # A similar thing happens for python-lxml (a dependency of
-    # ipa-client, an auditing thing we don't care about).  We have the
-    # build-dependencies the lxml pip-install will need (gcc,
-    # libxml2-dev & libxslt-dev) in the "general" rpm lists
+    # A similar situation occurs with ``python-lxml``, which is required by
+    # ``ipa-client``, an auditing package we don't care about.  The
+    # build-dependencies needed for ``pip install lxml`` (``gcc``,
+    # ``libxml2-dev`` and ``libxslt-dev``) are present in ``files/rpms/general``.
     uninstall_package python-lxml
 
-    # If the dbus rpm was installed by the devstack rpm dependencies
-    # then you may hit a bug where the uuid isn't generated because
-    # the service was never started (PR#598200), causing issues for
-    # Nova stopping later on complaining that
-    # '/var/lib/dbus/machine-id' doesn't exist.
+    # If the ``dbus`` package was installed by DevStack dependencies the
+    # uuid may not be generated because the service was never started (PR#598200),
+    # causing Nova to stop later on complaining that ``/var/lib/dbus/machine-id``
+    # does not exist.
     sudo service messagebus restart
 
-    # In setup.py, a "setup_requires" package is supposed to
-    # transient.  However there is a bug with rhel6 distribute where
-    # setup_requires packages can register entry points that aren't
-    # cleared out properly after the setup-phase; the end result is
-    # installation failures (bz#924038).  Thus we pre-install the
-    # problem package here; this way the setup_requires dependency is
-    # already satisfied and it will not need to be installed
-    # transiently, meaning we avoid the issue of it not being cleaned
-    # out properly.  Note we do this before the track-depends below.
+    # ``setup.py`` contains a ``setup_requires`` package that is supposed
+    # to be transient.  However, RHEL6 distribute has a bug where
+    # ``setup_requires`` registers entry points that are not cleaned
+    # out properly after the setup-phase resulting in installation failures
+    # (bz#924038).  Pre-install the problem package so the ``setup_requires``
+    # dependency is satisfied and it will not be installed transiently.
+    # Note we do this before the track-depends below.
     pip_install hgtools
 
-    # The version of python-nose in the RHEL6 repo is incompatible
-    # with Tempest.  As a workaround:
-
+    # RHEL6's version of ``python-nose`` is incompatible with Tempest.
     # Install nose 1.1 (Tempest-compatible) from EPEL
     install_package python-nose1.1
     # Add a symlink for the new nosetests to allow tox for Tempest to
@@ -850,10 +843,10 @@ fi
 init_service_check
 
 
-# Kick off Sysstat
-# ------------------------
-# run sysstat if it is enabled, this has to be early as daemon
-# startup is one of the things to track.
+# Sysstat
+# -------
+
+# If enabled, systat has to start early to track OpenStack service startup.
 if is_service_enabled sysstat;then
     if [[ -n ${SCREEN_LOGDIR} ]]; then
         screen_it sysstat "sar -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
@@ -967,7 +960,7 @@ if is_service_enabled n-net q-dhcp; then
     rm -rf ${NOVA_STATE_PATH}/networks
     sudo mkdir -p ${NOVA_STATE_PATH}/networks
     sudo chown -R ${USER} ${NOVA_STATE_PATH}/networks
-    # Force IP forwarding on, just on case
+    # Force IP forwarding on, just in case
     sudo sysctl -w net.ipv4.ip_forward=1
 fi
 
@@ -1018,6 +1011,7 @@ if is_service_enabled nova; then
         XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
         iniset $NOVA_CONF DEFAULT firewall_driver "$XEN_FIREWALL_DRIVER"
 
+
     # OpenVZ
     # ------
 
@@ -1027,6 +1021,7 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT connection_type "openvz"
         LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
         iniset $NOVA_CONF DEFAULT firewall_driver "$LIBVIRT_FIREWALL_DRIVER"
+
 
     # Bare Metal
     # ----------
@@ -1050,6 +1045,7 @@ if is_service_enabled nova; then
            iniset $NOVA_CONF baremetal ${I/=/ }
         done
 
+
    # PowerVM
    # -------
 
@@ -1069,8 +1065,9 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT powervm_img_remote_path $POWERVM_IMG_REMOTE_PATH
         iniset $NOVA_CONF DEFAULT powervm_img_local_path $POWERVM_IMG_LOCAL_PATH
 
+
     # vSphere API
-    # -------
+    # -----------
 
     elif [ "$VIRT_DRIVER" = 'vsphere' ]; then
         echo_summary "Using VMware vCenter driver"
@@ -1081,8 +1078,9 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT vmwareapi_host_password "$VMWAREAPI_PASSWORD"
         iniset $NOVA_CONF DEFAULT vmwareapi_cluster_name "$VMWAREAPI_CLUSTER"
 
+
     # fake
-    # -----
+    # ----
 
     elif [ "$VIRT_DRIVER" = 'fake' ]; then
         echo_summary "Using fake Virt driver"
@@ -1102,8 +1100,8 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT scheduler_default_filters "RetryFilter,AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter"
 
 
-    # Default
-    # -------
+    # Default libvirt
+    # ---------------
 
     else
         echo_summary "Using libvirt virtualization driver"
@@ -1295,7 +1293,6 @@ if is_service_enabled nova && is_baremetal; then
     sudo pkill nova-baremetal-deploy-helper || true
     screen_it baremetal "nova-baremetal-deploy-helper"
 fi
-
 
 # Save some values we generated for later use
 CURRENT_RUN_TIME=$(date "+$TIMESTAMP_FORMAT")

@@ -200,6 +200,7 @@ function _get_package_dir() {
     echo "$pkg_dir"
 }
 
+
 # get_packages() collects a list of package names of any type from the
 # prerequisite files in ``files/{apts|rpms}``.  The list is intended
 # to be passed to a package installer such as apt or yum.
@@ -390,42 +391,6 @@ GetOSVersion() {
     export os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
 }
 
-# git update using reference as a branch.
-# git_update_branch ref
-function git_update_branch() {
-
-    GIT_BRANCH=$1
-
-    git checkout -f origin/$GIT_BRANCH
-    # a local branch might not exist
-    git branch -D $GIT_BRANCH || true
-    git checkout -b $GIT_BRANCH
-}
-
-
-# git update using reference as a tag. Be careful editing source at that repo
-# as working copy will be in a detached mode
-# git_update_tag ref
-function git_update_tag() {
-
-    GIT_TAG=$1
-
-    git tag -d $GIT_TAG
-    # fetching given tag only
-    git fetch origin tag $GIT_TAG
-    git checkout -f $GIT_TAG
-}
-
-
-# git update using reference as a branch.
-# git_update_remote_branch ref
-function git_update_remote_branch() {
-
-    GIT_BRANCH=$1
-
-    git checkout -b $GIT_BRANCH -t origin/$GIT_BRANCH
-}
-
 
 # Translate the OS version values into common nomenclature
 # Sets ``DISTRO`` from the ``os_*`` values
@@ -457,19 +422,8 @@ function GetDistro() {
 }
 
 
-# Determine if current distribution is an Ubuntu-based distribution.
-# It will also detect non-Ubuntu but Debian-based distros; this is not an issue
-# since Debian and Ubuntu should be compatible.
-# is_ubuntu
-function is_ubuntu {
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-    [ "$os_PACKAGE" = "deb" ]
-}
-
 # Determine if current distribution is a Fedora-based distribution
-# (Fedora, RHEL, CentOS).
+# (Fedora, RHEL, CentOS, etc).
 # is_fedora
 function is_fedora {
     if [[ -z "$os_VENDOR" ]]; then
@@ -478,6 +432,7 @@ function is_fedora {
 
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || [ "$os_VENDOR" = "CentOS" ]
 }
+
 
 # Determine if current distribution is a SUSE-based distribution
 # (openSUSE, SLE).
@@ -488,6 +443,17 @@ function is_suse {
     fi
 
     [ "$os_VENDOR" = "openSUSE" ] || [ "$os_VENDOR" = "SUSE LINUX" ]
+}
+
+
+# Determine if current distribution is an Ubuntu-based distribution
+# It will also detect non-Ubuntu but Debian-based distros
+# is_ubuntu
+function is_ubuntu {
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    [ "$os_PACKAGE" = "deb" ]
 }
 
 
@@ -562,6 +528,43 @@ function git_clone {
 
         fi
     fi
+}
+
+
+# git update using reference as a branch.
+# git_update_branch ref
+function git_update_branch() {
+
+    GIT_BRANCH=$1
+
+    git checkout -f origin/$GIT_BRANCH
+    # a local branch might not exist
+    git branch -D $GIT_BRANCH || true
+    git checkout -b $GIT_BRANCH
+}
+
+
+# git update using reference as a branch.
+# git_update_remote_branch ref
+function git_update_remote_branch() {
+
+    GIT_BRANCH=$1
+
+    git checkout -b $GIT_BRANCH -t origin/$GIT_BRANCH
+}
+
+
+# git update using reference as a tag. Be careful editing source at that repo
+# as working copy will be in a detached mode
+# git_update_tag ref
+function git_update_tag() {
+
+    GIT_TAG=$1
+
+    git tag -d $GIT_TAG
+    # fetching given tag only
+    git fetch origin tag $GIT_TAG
+    git checkout -f $GIT_TAG
 }
 
 
@@ -1020,6 +1023,7 @@ function screen_rc {
     fi
 }
 
+
 # Helper to remove the *.failure files under $SERVICE_DIR/$SCREEN_NAME
 # This is used for service_check when all the screen_it are called finished
 # init_service_check
@@ -1033,6 +1037,7 @@ function init_service_check() {
 
     rm -f "$SERVICE_DIR/$SCREEN_NAME"/*.failure
 }
+
 
 # Helper to get the status of each running service
 # service_check
@@ -1061,6 +1066,7 @@ function service_check() {
         echo "More details about the above errors can be found with screen, with ./rejoin-stack.sh"
     fi
 }
+
 
 # ``pip install`` the dependencies of the package before ``setup.py develop``
 # so pip and not distutils processes the dependency chain
@@ -1242,6 +1248,7 @@ function upload_image() {
     fi
 }
 
+
 # Set the database backend to use
 # When called from stackrc/localrc DATABASE_BACKENDS has not been
 # initialized yet, just save the configuration selection and call back later
@@ -1259,6 +1266,7 @@ function use_database {
     fi
 }
 
+
 # Toggle enable/disable_service for services that must run exclusive of each other
 #  $1 The name of a variable containing a space-separated list of services
 #  $2 The name of a variable in which to store the enabled service's name
@@ -1275,6 +1283,7 @@ function use_exclusive_service {
     return 0
 }
 
+
 # Wait for an HTTP server to start answering requests
 # wait_for_service timeout url
 function wait_for_service() {
@@ -1282,6 +1291,7 @@ function wait_for_service() {
     local url=$2
     timeout $timeout sh -c "while ! http_proxy= https_proxy= curl -s $url >/dev/null; do sleep 1; done"
 }
+
 
 # Wrapper for ``yum`` to set proxy environment variables
 # Uses globals ``OFFLINE``, ``*_proxy`
@@ -1295,8 +1305,21 @@ function yum_install() {
         yum install -y "$@"
 }
 
+
+# zypper wrapper to set arguments correctly
+# zypper_install package [package ...]
+function zypper_install() {
+    [[ "$OFFLINE" = "True" ]] && return
+    local sudo="sudo"
+    [[ "$(id -u)" = "0" ]] && sudo="env"
+    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
+        zypper --non-interactive install --auto-agree-with-licenses "$@"
+}
+
+
 # ping check
 # Uses globals ``ENABLED_SERVICES``
+# ping_check from-net ip boot-timeout expected
 function ping_check() {
     if is_service_enabled quantum; then
         _ping_check_quantum  "$1" $2 $3 $4
@@ -1333,8 +1356,10 @@ function _ping_check_novanet() {
     fi
 }
 
+
 # ssh check
 
+# ssh_check net-name key-file floating-ip default-user active-timeout
 function ssh_check() {
     if is_service_enabled quantum; then
         _ssh_check_quantum  "$1" $2 $3 $4 $5
@@ -1353,17 +1378,6 @@ function _ssh_check_novanet() {
     if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success; do sleep 1; done"; then
         die $LINENO "server didn't become ssh-able!"
     fi
-}
-
-
-# zypper wrapper to set arguments correctly
-# zypper_install package [package ...]
-function zypper_install() {
-    [[ "$OFFLINE" = "True" ]] && return
-    local sudo="sudo"
-    [[ "$(id -u)" = "0" ]] && sudo="env"
-    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
-        zypper --non-interactive install --auto-agree-with-licenses "$@"
 }
 
 
@@ -1396,6 +1410,7 @@ function get_python_exec_prefix() {
     fi
 }
 
+
 # Get the location of the $module-rootwrap executables, where module is cinder
 # or nova.
 # get_rootwrap_location module
@@ -1404,6 +1419,7 @@ function get_rootwrap_location() {
 
     echo "$(get_python_exec_prefix)/$module-rootwrap"
 }
+
 
 # Get the path to the pip command.
 # get_pip_command
@@ -1418,6 +1434,7 @@ function get_pip_command() {
         die $LINENO "Unable to find pip; cannot continue"
     fi
 }
+
 
 # Path permissions sanity check
 # check_path_perm_sanity path
@@ -1447,6 +1464,7 @@ function check_path_perm_sanity() {
         fi
     done
 }
+
 
 # Restore xtrace
 $XTRACE
