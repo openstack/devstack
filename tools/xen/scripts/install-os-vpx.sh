@@ -25,7 +25,6 @@ NAME="XenServer OpenStack VPX"
 DATA_VDI_SIZE="500MiB"
 BRIDGE_M=
 BRIDGE_P=
-KERNEL_PARAMS=
 VPX_FILE=os-vpx.xva
 AS_TEMPLATE=
 FROM_TEMPLATE=
@@ -38,7 +37,7 @@ usage()
 cat << EOF
 
   Usage: $0 [-f FILE_PATH] [-d DISK_SIZE] [-v BRIDGE_NAME] [-m BRIDGE_NAME] [-p BRIDGE_NAME]
-            [-k PARAMS] [-r RAM] [-i|-c] [-w] [-b] [-l NAME_LABEL] [-t TEMPLATE_NW_INSTALL]
+            [-r RAM] [-i|-c] [-w] [-b] [-l NAME_LABEL] [-t TEMPLATE_NW_INSTALL]
 
   Installs XenServer OpenStack VPX.
 
@@ -57,7 +56,6 @@ cat << EOF
                   Defaults to xenbr0.
      -v bridge    Specifies the bridge for the vm network
      -p bridge    Specifies the bridge for the externally facing network.
-     -k params    Specifies kernel parameters.
      -r MiB       Specifies RAM used by the VPX, in MiB.
                   By default it will take the value from the XVA.
      -l name      Specifies the name label for the VM.
@@ -81,15 +79,12 @@ cat << EOF
      using the default for management traffic:
             install-os-vpx.sh -m xapi4
 
-     Create a VPX that automatically becomes the master:
-            install-os-vpx.sh -k geppetto_master=true
-
 EOF
 }
 
 get_params()
 {
-  while getopts "hicwbf:d:v:m:p:k:r:l:t:" OPTION;
+  while getopts "hicwbf:d:v:m:p:r:l:t:" OPTION;
   do
     case $OPTION in
       h) usage
@@ -118,9 +113,6 @@ get_params()
          ;;
       p)
          BRIDGE_P=$OPTARG
-         ;;
-      k)
-         KERNEL_PARAMS=$OPTARG
          ;;
       r)
          RAM=$OPTARG
@@ -328,20 +320,6 @@ create_data_disk()
 }
 
 
-set_kernel_params()
-{
-  local v="$1"
-  local args=$KERNEL_PARAMS
-  if [ "$args" != "" ]
-  then
-    echo "Passing Geppetto args to VPX: $args."
-    pvargs=$(xe vm-param-get param-name=PV-args uuid="$v")
-    args="$pvargs $args"
-    xe vm-param-set PV-args="$args" uuid="$v"
-  fi
-}
-
-
 set_memory()
 {
   local v="$1"
@@ -367,7 +345,6 @@ set_auto_start()
 set_all()
 {
   local v="$1"
-  set_kernel_params "$v"
   set_memory "$v"
   set_auto_start "$v"
   label_system_disk "$v"
@@ -430,7 +407,6 @@ then
   create_vm_vif "$vm_uuid"
   create_management_vif "$vm_uuid"
   create_public_vif "$vm_uuid"
-  set_kernel_params "$vm_uuid"
   xe vm-param-set other-config:os-vpx=true uuid="$vm_uuid"
   xe vm-param-set actions-after-reboot=Destroy uuid="$vm_uuid"
   set_memory "$vm_uuid"

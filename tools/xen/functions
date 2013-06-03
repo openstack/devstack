@@ -94,6 +94,14 @@ function find_ip_by_name() {
     done
 }
 
+function _vm_uuid() {
+    local vm_name_label
+
+    vm_name_label="$1"
+
+    xe vm-list name-label="$vm_name_label" --minimal
+}
+
 function _create_new_network() {
     local name_label
     name_label=$1
@@ -135,17 +143,17 @@ function _network_uuid() {
 }
 
 function add_interface() {
-    local vm_name
+    local vm_name_label
     local bridge_or_network_name
 
-    vm_name="$1"
+    vm_name_label="$1"
     bridge_or_network_name="$2"
     device_number="$3"
 
     local vm
     local net
 
-    vm=$(xe vm-list name-label="$vm_name" --minimal)
+    vm=$(_vm_uuid "$vm_name_label")
     net=$(_network_uuid "$bridge_or_network_name")
     xe vif-create network-uuid=$net vm-uuid=$vm device=$device_number
 }
@@ -199,4 +207,20 @@ function parameter_is_specified() {
     parameter_name=$1
 
     compgen -v | grep "$parameter_name"
+}
+
+function append_kernel_cmdline()
+{
+    local vm_name_label
+    local kernel_args
+
+    vm_name_label="$1"
+    kernel_args="$2"
+
+    local vm
+    local pv_args
+
+    vm=$(_vm_uuid "$vm_name_label")
+    pv_args=$(xe vm-param-get param-name=PV-args uuid=$vm)
+    xe vm-param-set PV-args="$pv_args $kernel_args" uuid=$vm
 }
