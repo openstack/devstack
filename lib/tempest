@@ -23,6 +23,7 @@
 # ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
 # ``DEFAULT_INSTANCE_TYPE``
 # ``DEFAULT_INSTANCE_USER``
+# ``CINDER_MULTI_LVM_BACKEND``
 # ``stack.sh`` calls the entry points in this order:
 #
 # install_tempest
@@ -234,11 +235,10 @@ function configure_tempest() {
     iniset $TEMPEST_CONF whitebox path_to_private_key $TEMPEST_DIR/id_rsa
     iniset $TEMPEST_CONF whitebox db_uri $BASE_SQL_CONN/nova
 
-
-    # compute admin
+    # Compute admin
     iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
 
-    # network
+    # Network
     if is_service_enabled quantum; then
         iniset $TEMPEST_CONF network quantum_available "True"
     fi
@@ -247,7 +247,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF network public_network_id "$public_network_id"
     iniset $TEMPEST_CONF network public_router_id "$public_router_id"
 
-    #boto
+    # boto
     iniset $TEMPEST_CONF boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
     iniset $TEMPEST_CONF boto s3_url "http://$SERVICE_HOST:${S3_SERVICE_PORT:-3333}"
     iniset $TEMPEST_CONF boto s3_materials_path "$BOTO_MATERIALS_PATH"
@@ -255,9 +255,17 @@ function configure_tempest() {
     iniset $TEMPEST_CONF boto http_socket_timeout 30
     iniset $TEMPEST_CONF boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
-    # orchestration
+    # Orchestration
     if is_service_enabled heat; then
         iniset $TEMPEST_CONF orchestration heat_available "True"
+    fi
+
+    # Volume
+    CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
+    if [ $CINDER_MULTI_LVM_BACKEND == "True "]; then
+        iniset $TEMPEST_CONF volume multi_backend_enabled "True"
+        iniset $TEMPEST_CONF volume backend1_name "LVM_iSCSI"
+        iniset $TEMPEST_CONF volume backend2_name "LVM_iSCSI_2"
     fi
 
     echo "Created tempest configuration file:"

@@ -194,7 +194,7 @@ function configure_cinder() {
         iniset $CINDER_CONF lvmdriver-1 volume_backend_name LVM_iSCSI
         iniset $CINDER_CONF lvmdriver-2 volume_group $VOLUME_GROUP2
         iniset $CINDER_CONF lvmdriver-2 volume_driver cinder.volume.drivers.lvm.LVMISCSIDriver
-        iniset $CINDER_CONF lvmdriver-2 volume_backend_name LVM_iSCSI
+        iniset $CINDER_CONF lvmdriver-2 volume_backend_name LVM_iSCSI_2
     else
         iniset $CINDER_CONF DEFAULT volume_group $VOLUME_GROUP
         iniset $CINDER_CONF DEFAULT volume_name_template ${VOLUME_NAME_PREFIX}%s
