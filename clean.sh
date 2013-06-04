@@ -19,7 +19,9 @@ source $TOP_DIR/functions
 source $TOP_DIR/stackrc
 
 # Get the variables that are set in stack.sh
-source $TOP_DIR/.stackenv
+if [[ -r $TOP_DIR/.stackenv ]]; then
+    source $TOP_DIR/.stackenv
+fi
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
@@ -88,4 +90,4 @@ cleanup_database
 # FIXED_IP_ADDR in br100
 
 # Clean up files
-#rm -f .stackenv
+rm -f $TOP_DIR/.stackenv
