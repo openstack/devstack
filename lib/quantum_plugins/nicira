@@ -14,9 +14,6 @@ function setup_integration_bridge() {
         # Get the first controller
         controllers=(${NVP_CONTROLLERS//,/ })
         OVS_MGR_IP=${controllers[0]}
-    elif [[ "$NVP_CONTROLLER_CONNECTION" != "" ]]; then
-        conn=(${NVP_CONTROLLER_CONNECTION//\:/ })
-        OVS_MGR_IP=${conn[0]}
     else
         die $LINENO "Error - No controller specified. Unable to set a manager for OVS"
     fi
@@ -83,55 +80,43 @@ function quantum_plugin_configure_service() {
         iniset /$Q_PLUGIN_CONF_FILE NVP concurrent_connections $CONCURRENT_CONNECTIONS
     fi
 
-    if [[ "$DEFAULT_CLUSTER" != "" ]]; then
-        # Make name shorter for sake of readability
-        DC=$DEFAULT_CLUSTER
-        if [[ "$DEFAULT_TZ_UUID" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" default_tz_uuid $DEFAULT_TZ_UUID
-        else
-            die $LINENO "The nicira plugin won't work without a default transport zone."
-        fi
-        if [[ "$DEFAULT_L3_GW_SVC_UUID" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" default_l3_gw_service_uuid $DEFAULT_L3_GW_SVC_UUID
-            Q_L3_ENABLED=True
-            Q_L3_ROUTER_PER_TENANT=True
-            iniset /$Q_PLUGIN_CONF_FILE NVP enable_metadata_access_network True
-        else
-            echo "WARNING - No l3 gw service enabled.  You will not be able to use the L3 API extension"
-        fi
-        if [[ "$DEFAULT_L2_GW_SVC_UUID" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" default_l2_gw_service_uuid $DEFAULT_L2_GW_SVC_UUID
-        fi
-        # NVP_CONTROLLERS must be a comma separated string
-        if [[ "$NVP_CONTROLLERS" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" nvp_controllers $NVP_CONTROLLERS
-        elif [[ "$NVP_CONTROLLER_CONNECTION" != "" ]]; then
-            # Only 1 controller can be specified in this case
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" nvp_controller_connection $NVP_CONTROLLER_CONNECTION
-        else
-            die $LINENO "The nicira plugin needs at least an NVP controller."
-        fi
-        if [[ "$NVP_USER" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" nvp_user $NVP_USER
-        fi
-        if [[ "$NVP_PASSWORD" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" nvp_password $NVP_PASSWORD
-        fi
-        if [[ "$NVP_REQ_TIMEOUT" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" req_timeout $NVP_REQ_TIMEOUT
-        fi
-        if [[ "$NVP_HTTP_TIMEOUT" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" http_timeout $NVP_HTTP_TIMEOUT
-        fi
-        if [[ "$NVP_RETRIES" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" retries $NVP_RETRIES
-        fi
-        if [[ "$NVP_REDIRECTS" != "" ]]; then
-            iniset /$Q_PLUGIN_CONF_FILE "CLUSTER:$DC" redirects $NVP_REDIRECTS
-        fi
+    if [[ "$DEFAULT_TZ_UUID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_tz_uuid $DEFAULT_TZ_UUID
     else
-        echo "ERROR - Default cluster not configured. Quantum will not start"
-        exit 1
+        die $LINENO "The nicira plugin won't work without a default transport zone."
+    fi
+    if [[ "$DEFAULT_L3_GW_SVC_UUID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l3_gw_service_uuid $DEFAULT_L3_GW_SVC_UUID
+        Q_L3_ENABLED=True
+        Q_L3_ROUTER_PER_TENANT=True
+        iniset /$Q_PLUGIN_CONF_FILE NVP enable_metadata_access_network True
+    fi
+    if [[ "$DEFAULT_L2_GW_SVC_UUID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l2_gw_service_uuid $DEFAULT_L2_GW_SVC_UUID
+    fi
+    # NVP_CONTROLLERS must be a comma separated string
+    if [[ "$NVP_CONTROLLERS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nvp_controllers $NVP_CONTROLLERS
+    else
+        die $LINENO "The nicira plugin needs at least an NVP controller."
+    fi
+    if [[ "$NVP_USER" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nvp_user $NVP_USER
+    fi
+    if [[ "$NVP_PASSWORD" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nvp_password $NVP_PASSWORD
+    fi
+    if [[ "$NVP_REQ_TIMEOUT" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT req_timeout $NVP_REQ_TIMEOUT
+    fi
+    if [[ "$NVP_HTTP_TIMEOUT" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT http_timeout $NVP_HTTP_TIMEOUT
+    fi
+    if [[ "$NVP_RETRIES" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT retries $NVP_RETRIES
+    fi
+    if [[ "$NVP_REDIRECTS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT redirects $NVP_REDIRECTS
     fi
 }
 
