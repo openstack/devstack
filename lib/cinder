@@ -69,10 +69,12 @@ CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 # Name of the lvm volume groups to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
 VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
+VOLUME_BACKING_DEVICE=${VOLUME_BACKING_DEVICE:-}
 
 # VOLUME_GROUP2 is used only if CINDER_MULTI_LVM_BACKEND = True
 VOLUME_GROUP2=${VOLUME_GROUP2:-stack-volumes2}
 VOLUME_BACKING_FILE2=${VOLUME_BACKING_FILE2:-$DATA_DIR/${VOLUME_GROUP2}-backing-file}
+VOLUME_BACKING_DEVICE2=${VOLUME_BACKING_DEVICE2:-}
 
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
@@ -335,28 +337,35 @@ create_cinder_volume_group() {
     # ``/opt/stack/data``.
 
     if ! sudo vgs $VOLUME_GROUP; then
-        # Only create if the file doesn't already exists
-        [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
+        if [ -z "$VOLUME_BACKING_DEVICE" ]; then
+            # Only create if the file doesn't already exists
+            [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
+            DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
 
-        DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
-
-        # Only create if the loopback device doesn't contain $VOLUME_GROUP
-        if ! sudo vgs $VOLUME_GROUP; then
-            sudo vgcreate $VOLUME_GROUP $DEV
+            # Only create if the loopback device doesn't contain $VOLUME_GROUP
+            if ! sudo vgs $VOLUME_GROUP; then
+                sudo vgcreate $VOLUME_GROUP $DEV
+            fi
+        else
+            sudo vgcreate $VOLUME_GROUP $VOLUME_BACKING_DEVICE
         fi
     fi
     if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
         #set up the second volume if CINDER_MULTI_LVM_BACKEND is enabled
 
         if ! sudo vgs $VOLUME_GROUP2; then
-            # Only create if the file doesn't already exists
-            [[ -f $VOLUME_BACKING_FILE2 ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE2
+            if [ -z "$VOLUME_BACKING_DEVICE2" ]; then
+                # Only create if the file doesn't already exists
+                [[ -f $VOLUME_BACKING_FILE2 ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE2
 
-            DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE2`
+                DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE2`
 
-            # Only create if the loopback device doesn't contain $VOLUME_GROUP
-            if ! sudo vgs $VOLUME_GROUP2; then
-                sudo vgcreate $VOLUME_GROUP2 $DEV
+                # Only create if the loopback device doesn't contain $VOLUME_GROUP
+                if ! sudo vgs $VOLUME_GROUP2; then
+                    sudo vgcreate $VOLUME_GROUP2 $DEV
+                fi
+            else
+                sudo vgcreate $VOLUME_GROUP2 $VOLUME_BACKING_DEVICE2
             fi
         fi
     fi

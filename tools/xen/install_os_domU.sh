@@ -259,6 +259,19 @@ fi
 FLAT_NETWORK_BRIDGE=$(bridge_for "$VM_BRIDGE_OR_NET_NAME")
 append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
 
+# Add a separate xvdb, if it was requested
+if [[ "0" != "$XEN_XVDB_SIZE_GB" ]]; then
+    vm=$(xe vm-list name-label="$GUEST_NAME" --minimal)
+
+    # Add a new disk
+    localsr=$(get_local_sr)
+    extra_vdi=$(xe vdi-create \
+        name-label=xvdb-added-by-devstack \
+        virtual-size="${XEN_XVDB_SIZE_GB}GiB" \
+        sr-uuid=$localsr type=user)
+    xe vbd-create vm-uuid=$vm vdi-uuid=$extra_vdi device=1
+fi
+
 # create a snapshot before the first boot
 # to allow a quick re-run with the same settings
 xe vm-snapshot vm="$GUEST_NAME" new-name-label="$SNAME_FIRST_BOOT"
