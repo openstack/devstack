@@ -202,6 +202,11 @@ source $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN
 # Hardcoding for 1 service plugin for now
 source $TOP_DIR/lib/neutron_plugins/services/loadbalancer
 
+# VPN service plugin functions
+# -------------------------------------------
+# Hardcoding for 1 service plugin for now
+source $TOP_DIR/lib/neutron_plugins/services/vpn
+
 # Use security group or not
 if has_neutron_plugin_security_group; then
     Q_USE_SECGROUP=${Q_USE_SECGROUP:-True}
@@ -221,6 +226,9 @@ function configure_neutron() {
     # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
     if is_service_enabled q-lbaas; then
         _configure_neutron_lbaas
+    fi
+    if is_service_enabled q-vpn; then
+        _configure_neutron_vpn
     fi
     if is_service_enabled q-svc; then
         _configure_neutron_service
@@ -248,6 +256,7 @@ function create_nova_conf_neutron() {
     iniset $NOVA_CONF DEFAULT quantum_admin_auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
     iniset $NOVA_CONF DEFAULT quantum_auth_strategy "$Q_AUTH_STRATEGY"
     iniset $NOVA_CONF DEFAULT quantum_admin_tenant_name "$SERVICE_TENANT_NAME"
+    iniset $NOVA_CONF DEFAULT quantum_region_name "RegionOne"
     iniset $NOVA_CONF DEFAULT quantum_url "http://$Q_HOST:$Q_PORT"
 
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
@@ -536,7 +545,8 @@ function _configure_neutron_l3_agent() {
     Q_L3_ENABLED=True
     # for l3-agent, only use per tenant router if we have namespaces
     Q_L3_ROUTER_PER_TENANT=$Q_USE_NAMESPACE
-    AGENT_L3_BINARY="$NEUTRON_BIN_DIR/neutron-l3-agent"
+
+    AGENT_L3_BINARY=${AGENT_L3_BINARY:-"$NEUTRON_BIN_DIR/neutron-l3-agent"}
     Q_L3_CONF_FILE=$NEUTRON_CONF_DIR/l3_agent.ini
 
     cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
@@ -569,6 +579,13 @@ function _configure_neutron_metadata_agent() {
 function _configure_neutron_lbaas() {
     neutron_agent_lbaas_configure_common
     neutron_agent_lbaas_configure_agent
+}
+
+function _configure_neutron_vpn()
+{
+    neutron_vpn_install_agent_packages
+    neutron_vpn_configure_common
+    neutron_vpn_configure_agent
 }
 
 # _configure_neutron_plugin_agent() - Set config files for neutron plugin agent
