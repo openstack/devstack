@@ -255,6 +255,11 @@ function configure_tempest() {
     iniset $TEMPEST_CONF boto http_socket_timeout 30
     iniset $TEMPEST_CONF boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
+    # orchestration
+    if is_service_enabled heat; then
+        iniset $TEMPEST_CONF orchestration heat_available "True"
+    fi
+
     echo "Created tempest configuration file:"
     cat $TEMPEST_CONF
 
