@@ -11,7 +11,6 @@ python-sqlalchemy
 python-webob
 python-kombu
 pylint
-pep8
 python-eventlet
 python-nose
 python-sphinx

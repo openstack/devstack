@@ -17,7 +17,6 @@ python-kombu
 python-mox
 python-netaddr
 python-nose
-python-pep8
 python-pylint
 python-sqlalchemy-migrate
 python-xattr

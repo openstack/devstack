@@ -8,7 +8,6 @@ openssl
 psmisc
 python-cmd2 # dist:opensuse-12.3
 python-netaddr
-python-pep8
 python-pip
 python-pylint
 python-unittest2
