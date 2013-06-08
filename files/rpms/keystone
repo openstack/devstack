@@ -1,10 +1,10 @@
 python-greenlet
-python-lxml         #dist:f16,f17,f18
-python-paste        #dist:f16,f17,f18
-python-paste-deploy #dist:f16,f17,f18
-python-paste-script #dist:f16,f17,f18
+python-lxml         #dist:f16,f17,f18,f19
+python-paste        #dist:f16,f17,f18,f19
+python-paste-deploy #dist:f16,f17,f18,f19
+python-paste-script #dist:f16,f17,f18,f19
 python-routes
-python-setuptools   #dist:f16,f17,f18
+python-setuptools   #dist:f16,f17,f18,f19
 python-sqlalchemy
 python-sqlite2
 python-webob
