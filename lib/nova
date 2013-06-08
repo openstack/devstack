@@ -439,7 +439,7 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT libvirt_type "$LIBVIRT_TYPE"
     iniset $NOVA_CONF DEFAULT libvirt_cpu_mode "none"
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
-    iniset $NOVA_CONF DEFAULT osapi_v3_enabled "True"
+    iniset $NOVA_CONF osapi_v3 enabled "True"
 
     if is_fedora; then
         # nova defaults to /usr/local/bin, but fedora pip likes to
