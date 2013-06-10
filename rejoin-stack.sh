@@ -5,6 +5,10 @@
 
 TOP_DIR=`dirname $0`
 
+# Import common functions in case the localrc (loaded via stackrc)
+# uses them.
+source $TOP_DIR/functions
+
 source $TOP_DIR/stackrc
 
 # if screenrc exists, run screen
