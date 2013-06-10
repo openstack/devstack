@@ -20,7 +20,6 @@ python-netaddr
 python-nose
 python-paste        #dist:f16,f17,f18
 python-paste-deploy #dist:f16,f17,f18
-python-pep8
 python-routes
 python-sphinx
 python-sqlalchemy
