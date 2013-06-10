@@ -237,37 +237,39 @@ function configure_nova() {
         # Force IP forwarding on, just on case
         sudo sysctl -w net.ipv4.ip_forward=1
 
-        # Attempt to load modules: network block device - used to manage qcow images
-        sudo modprobe nbd || true
+        if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+            # Attempt to load modules: network block device - used to manage qcow images
+            sudo modprobe nbd || true
 
-        # Check for kvm (hardware based virtualization).  If unable to initialize
-        # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems
-        # come with hardware virtualization disabled in BIOS.
-        if [[ "$LIBVIRT_TYPE" == "kvm" ]]; then
-            sudo modprobe kvm || true
-            if [ ! -e /dev/kvm ]; then
-                echo "WARNING: Switching to QEMU"
-                LIBVIRT_TYPE=qemu
-                if which selinuxenabled 2>&1 > /dev/null && selinuxenabled; then
-                    # https://bugzilla.redhat.com/show_bug.cgi?id=753589
-                    sudo setsebool virt_use_execmem on
+            # Check for kvm (hardware based virtualization).  If unable to initialize
+            # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems
+            # come with hardware virtualization disabled in BIOS.
+            if [[ "$LIBVIRT_TYPE" == "kvm" ]]; then
+                sudo modprobe kvm || true
+                if [ ! -e /dev/kvm ]; then
+                    echo "WARNING: Switching to QEMU"
+                    LIBVIRT_TYPE=qemu
+                    if which selinuxenabled 2>&1 > /dev/null && selinuxenabled; then
+                        # https://bugzilla.redhat.com/show_bug.cgi?id=753589
+                        sudo setsebool virt_use_execmem on
+                    fi
                 fi
             fi
-        fi
 
-        # Install and configure **LXC** if specified.  LXC is another approach to
-        # splitting a system into many smaller parts.  LXC uses cgroups and chroot
-        # to simulate multiple systems.
-        if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
-            if is_ubuntu; then
-                if [[ ! "$DISTRO" > natty ]]; then
-                    cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
-                    sudo mkdir -p /cgroup
-                    if ! grep -q cgroup /etc/fstab; then
-                        echo "$cgline" | sudo tee -a /etc/fstab
-                    fi
-                    if ! mount -n | grep -q cgroup; then
-                        sudo mount /cgroup
+            # Install and configure **LXC** if specified.  LXC is another approach to
+            # splitting a system into many smaller parts.  LXC uses cgroups and chroot
+            # to simulate multiple systems.
+            if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
+                if is_ubuntu; then
+                    if [[ ! "$DISTRO" > natty ]]; then
+                        cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
+                        sudo mkdir -p /cgroup
+                        if ! grep -q cgroup /etc/fstab; then
+                            echo "$cgline" | sudo tee -a /etc/fstab
+                        fi
+                        if ! mount -n | grep -q cgroup; then
+                            sudo mount /cgroup
+                        fi
                     fi
                 fi
             fi
@@ -278,9 +280,10 @@ function configure_nova() {
             configure_baremetal_nova_dirs
         fi
 
-        if is_service_enabled quantum && is_quantum_ovs_base_plugin && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF; then
-            # Add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
-            cat <<EOF | sudo tee -a $QEMU_CONF
+        if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+            if is_service_enabled quantum && is_quantum_ovs_base_plugin && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF; then
+                # Add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
+                cat <<EOF | sudo tee -a $QEMU_CONF
 cgroup_device_acl = [
     "/dev/null", "/dev/full", "/dev/zero",
     "/dev/random", "/dev/urandom",
@@ -288,19 +291,17 @@ cgroup_device_acl = [
     "/dev/rtc", "/dev/hpet","/dev/net/tun",
 ]
 EOF
-        fi
+            fi
 
-        if is_ubuntu; then
-            LIBVIRT_DAEMON=libvirt-bin
-        else
-            LIBVIRT_DAEMON=libvirtd
-        fi
+            if is_ubuntu; then
+                LIBVIRT_DAEMON=libvirt-bin
+            else
+                LIBVIRT_DAEMON=libvirtd
+            fi
 
-
-
-        if is_fedora || is_suse; then
-            if is_fedora && [[  $DISTRO =~ (rhel6) || "$os_RELEASE" -le "17" ]]; then
-                sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
+            if is_fedora || is_suse; then
+                if is_fedora && [[  $DISTRO =~ (rhel6) || "$os_RELEASE" -le "17" ]]; then
+                    sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
 [libvirt Management Access]
 Identity=unix-group:$LIBVIRT_GROUP
 Action=org.libvirt.unix.manage
@@ -308,11 +309,11 @@ ResultAny=yes
 ResultInactive=yes
 ResultActive=yes
 EOF"
-            elif is_suse && [[ $os_RELEASE = 12.2 || "$os_VENDOR" = "SUSE LINUX" ]]; then
-                # openSUSE < 12.3 or SLE
-                # Work around the fact that polkit-default-privs overrules pklas
-                # with 'unix-group:$group'.
-                sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
+                elif is_suse && [[ $os_RELEASE = 12.2 || "$os_VENDOR" = "SUSE LINUX" ]]; then
+                    # openSUSE < 12.3 or SLE
+                    # Work around the fact that polkit-default-privs overrules pklas
+                    # with 'unix-group:$group'.
+                    sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
 [libvirt Management Access]
 Identity=unix-user:$USER
 Action=org.libvirt.unix.manage
@@ -320,13 +321,13 @@ ResultAny=yes
 ResultInactive=yes
 ResultActive=yes
 EOF"
-            else
-                # Starting with fedora 18 and opensuse-12.3 enable stack-user to
-                # virsh -c qemu:///system by creating a policy-kit rule for
-                # stack-user using the new Javascript syntax
-                rules_dir=/etc/polkit-1/rules.d
-                sudo mkdir -p $rules_dir
-                sudo bash -c "cat <<EOF > $rules_dir/50-libvirt-$STACK_USER.rules
+                else
+                    # Starting with fedora 18 and opensuse-12.3 enable stack-user to
+                    # virsh -c qemu:///system by creating a policy-kit rule for
+                    # stack-user using the new Javascript syntax
+                    rules_dir=/etc/polkit-1/rules.d
+                    sudo mkdir -p $rules_dir
+                    sudo bash -c "cat <<EOF > $rules_dir/50-libvirt-$STACK_USER.rules
 polkit.addRule(function(action, subject) {
      if (action.id == 'org.libvirt.unix.manage' &&
          subject.user == '"$STACK_USER"') {
@@ -334,21 +335,22 @@ polkit.addRule(function(action, subject) {
      }
 });
 EOF"
-                unset rules_dir
+                    unset rules_dir
+                fi
             fi
-        fi
 
-        # The user that nova runs as needs to be member of **libvirtd** group otherwise
-        # nova-compute will be unable to use libvirt.
-        if ! getent group $LIBVIRT_GROUP >/dev/null; then
-            sudo groupadd $LIBVIRT_GROUP
-        fi
-        add_user_to_group $STACK_USER $LIBVIRT_GROUP
+            # The user that nova runs as needs to be member of **libvirtd** group otherwise
+            # nova-compute will be unable to use libvirt.
+            if ! getent group $LIBVIRT_GROUP >/dev/null; then
+                sudo groupadd $LIBVIRT_GROUP
+            fi
+            add_user_to_group $STACK_USER $LIBVIRT_GROUP
 
-        # libvirt detects various settings on startup, as we potentially changed
-        # the system configuration (modules, filesystems), we need to restart
-        # libvirt to detect those changes.
-        restart_service $LIBVIRT_DAEMON
+            # libvirt detects various settings on startup, as we potentially changed
+            # the system configuration (modules, filesystems), we need to restart
+            # libvirt to detect those changes.
+            restart_service $LIBVIRT_DAEMON
+        fi
 
 
         # Instance Storage
@@ -436,8 +438,10 @@ function create_nova_conf() {
     if is_baremetal; then
         iniset $NOVA_CONF baremetal sql_connection `database_connection_url nova_bm`
     fi
-    iniset $NOVA_CONF DEFAULT libvirt_type "$LIBVIRT_TYPE"
-    iniset $NOVA_CONF DEFAULT libvirt_cpu_mode "none"
+    if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+        iniset $NOVA_CONF DEFAULT libvirt_type "$LIBVIRT_TYPE"
+        iniset $NOVA_CONF DEFAULT libvirt_cpu_mode "none"
+    fi
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
 
@@ -636,26 +640,32 @@ function install_novaclient() {
 # install_nova() - Collect source and prepare
 function install_nova() {
     if is_service_enabled n-cpu; then
-        if is_ubuntu; then
-            install_package libvirt-bin
-        elif is_fedora || is_suse; then
-            install_package libvirt
-        else
-            exit_distro_not_supported "libvirt installation"
-        fi
-
-        # Install and configure **LXC** if specified.  LXC is another approach to
-        # splitting a system into many smaller parts.  LXC uses cgroups and chroot
-        # to simulate multiple systems.
-        if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
+        if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
             if is_ubuntu; then
-                if [[ "$DISTRO" > natty ]]; then
-                    install_package cgroup-lite
-                fi
+                install_package kvm
+                install_package libvirt-bin
+                install_package python-libvirt
+            elif is_fedora || is_suse; then
+                install_package kvm
+                install_package libvirt
+                install_package libvirt-python
             else
-                ### FIXME(dtroyer): figure this out
-                echo "RPM-based cgroup not implemented yet"
-                yum_install libcgroup-tools
+                exit_distro_not_supported "libvirt installation"
+            fi
+
+            # Install and configure **LXC** if specified.  LXC is another approach to
+            # splitting a system into many smaller parts.  LXC uses cgroups and chroot
+            # to simulate multiple systems.
+            if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
+                if is_ubuntu; then
+                    if [[ "$DISTRO" > natty ]]; then
+                        install_package cgroup-lite
+                    fi
+                else
+                    ### FIXME(dtroyer): figure this out
+                    echo "RPM-based cgroup not implemented yet"
+                    yum_install libcgroup-tools
+                fi
             fi
         fi
     fi
@@ -698,9 +708,13 @@ function start_nova() {
         screen_it n-cell "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CELLS_CONF"
     fi
 
-    # The group **$LIBVIRT_GROUP** is added to the current user in this script.
-    # Use 'sg' to execute nova-compute as a member of the **$LIBVIRT_GROUP** group.
-    screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP '$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CONF_BOTTOM'"
+    if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+        # The group **$LIBVIRT_GROUP** is added to the current user in this script.
+        # Use 'sg' to execute nova-compute as a member of the **$LIBVIRT_GROUP** group.
+        screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP '$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CONF_BOTTOM'"
+    else
+        screen_it n-cpu "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-compute --config-file $NOVA_CONF_BOTTOM"
+    fi
     screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
     screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network --config-file $NOVA_CONF_BOTTOM"
     screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler --config-file $NOVA_CONF_BOTTOM"

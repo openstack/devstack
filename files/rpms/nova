@@ -7,9 +7,9 @@ genisoimage # required for config_drive
 iptables
 iputils
 kpartx
-kvm
+kvm # NOPRIME
 libvirt-bin # NOPRIME
-libvirt-python
+libvirt-python # NOPRIME
 libxml2-python
 numpy # needed by websockify for spice console
 m2crypto

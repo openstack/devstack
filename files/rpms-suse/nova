@@ -7,11 +7,11 @@ genisoimage # required for config_drive
 iptables
 iputils
 kpartx
-kvm
+kvm # NOPRIME
 # qemu as fallback if kvm cannot be used
-qemu
+qemu # NOPRIME
 libvirt # NOPRIME
-libvirt-python
+libvirt-python # NOPRIME
 libxml2-python
 mysql-community-server # NOPRIME
 parted
