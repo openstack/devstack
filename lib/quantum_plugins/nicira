@@ -46,7 +46,7 @@ function quantum_plugin_configure_common() {
 }
 
 function quantum_plugin_configure_debug_command() {
-    :
+    sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
 }
 
 function quantum_plugin_configure_dhcp_agent() {
