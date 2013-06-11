@@ -162,7 +162,7 @@ euca-terminate-instances $INSTANCE || \
 # case changed with bug/836978. Requesting the status of an invalid instance
 # will now return an error message including the instance id, so we need to
 # filter that out.
-if ! timeout $TERMINATE_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -ve \"\\\(InstanceNotFound\\\|InvalidInstanceID\[.\]NotFound\\\)\" | grep -q $INSTANCE; do sleep 1; done"; then
+if ! timeout $TERMINATE_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -ve '\(InstanceNotFound\|InvalidInstanceID\.NotFound\)' | grep -q $INSTANCE; do sleep 1; done"; then
     die $LINENO "server didn't terminate within $TERMINATE_TIMEOUT seconds"
 fi
 
