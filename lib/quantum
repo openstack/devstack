@@ -362,8 +362,14 @@ function install_quantumclient() {
 
 # install_quantum_agent_packages() - Collect source and prepare
 function install_quantum_agent_packages() {
-    # install packages that is specific to plugin agent
-    quantum_plugin_install_agent_packages
+    # install packages that are specific to plugin agent(s)
+    if is_service_enabled q-agt q-dhcp q-l3; then
+        quantum_plugin_install_agent_packages
+    fi
+
+    if is_service_enabled q-lbaas; then
+       quantum_agent_lbaas_install_agent_packages
+    fi
 }
 
 # Start running processes, including screen
@@ -548,7 +554,6 @@ function _configure_quantum_metadata_agent() {
 }
 
 function _configure_quantum_lbaas() {
-    quantum_agent_lbaas_install_agent_packages
     quantum_agent_lbaas_configure_common
     quantum_agent_lbaas_configure_agent
 }
