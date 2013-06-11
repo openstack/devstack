@@ -34,8 +34,8 @@ function quantum_plugin_create_nova_conf() {
 }
 
 function quantum_plugin_install_agent_packages() {
-    # Nicira Plugin does not run q-agt
-    :
+    # Nicira Plugin does not run q-agt, but it currently needs dhcp and metadata agents
+    _quantum_ovs_base_install_agent_packages
 }
 
 function quantum_plugin_configure_common() {
