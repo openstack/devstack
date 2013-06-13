@@ -206,6 +206,13 @@ function configure_tempest() {
     iniset $TEMPEST_CONF identity alt_tenant_name $ALT_TENANT_NAME
     iniset $TEMPEST_CONF identity admin_password "$password"
 
+    # Image
+    # for the gate we want to be able to override this variable so we aren't
+    # doing an HTTP fetch over the wide internet for this test
+    if [[ ! -z "$TEMPEST_HTTP_IMAGE" ]]; then
+        iniset $TEMPEST_CONF image http_image $TEMPEST_HTTP_IMAGE
+    fi
+
     # Compute
     iniset $TEMPEST_CONF compute change_password_available False
     # Note(nati) current tempest don't create network for each tenant
