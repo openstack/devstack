@@ -178,7 +178,6 @@ function configure_keystone() {
     cp $KEYSTONE_DIR/etc/logging.conf.sample $KEYSTONE_CONF_DIR/logging.conf
     iniset $KEYSTONE_CONF_DIR/logging.conf logger_root level "DEBUG"
     iniset $KEYSTONE_CONF_DIR/logging.conf logger_root handlers "devel,production"
-
 }
 
 # create_keystone_accounts() - Sets up common required keystone accounts
@@ -254,25 +253,6 @@ create_keystone_accounts() {
             --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0" \
             --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0"
     fi
-
-    # TODO(dtroyer): This is part of a series of changes...remove these when
-    #                complete if they are really unused
-#    KEYSTONEADMIN_ROLE=$(keystone role-create \
-#        --name KeystoneAdmin \
-#        | grep " id " | get_field 2)
-#    KEYSTONESERVICE_ROLE=$(keystone role-create \
-#        --name KeystoneServiceAdmin \
-#        | grep " id " | get_field 2)
-
-    # TODO(termie): these two might be dubious
-#    keystone user-role-add \
-#        --user_id $ADMIN_USER \
-#        --role_id $KEYSTONEADMIN_ROLE \
-#        --tenant_id $ADMIN_TENANT
-#    keystone user-role-add \
-#        --user_id $ADMIN_USER \
-#        --role_id $KEYSTONESERVICE_ROLE \
-#        --tenant_id $ADMIN_TENANT
 }
 
 # init_keystone() - Initialize databases, etc.
@@ -338,6 +318,7 @@ function stop_keystone() {
     # Kill the Keystone screen window
     screen -S $SCREEN_NAME -p key -X kill
 }
+
 
 # Restore xtrace
 $XTRACE

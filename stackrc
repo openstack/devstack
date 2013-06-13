@@ -73,9 +73,57 @@ CINDER_BRANCH=${CINDER_BRANCH:-master}
 CINDERCLIENT_REPO=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
 CINDERCLIENT_BRANCH=${CINDERCLIENT_BRANCH:-master}
 
+# image catalog service
+GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
+GLANCE_BRANCH=${GLANCE_BRANCH:-master}
+
+# python glance client library
+GLANCECLIENT_REPO=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
+GLANCECLIENT_BRANCH=${GLANCECLIENT_BRANCH:-master}
+
+# heat service
+HEAT_REPO=${HEAT_REPO:-${GIT_BASE}/openstack/heat.git}
+HEAT_BRANCH=${HEAT_BRANCH:-master}
+
+# python heat client library
+HEATCLIENT_REPO=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
+HEATCLIENT_BRANCH=${HEATCLIENT_BRANCH:-master}
+
+# django powered web control panel for openstack
+HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
+HORIZON_BRANCH=${HORIZON_BRANCH:-master}
+
+# unified auth system (manages accounts/tokens)
+KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
+KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
+
+# python keystone client library to nova that horizon uses
+KEYSTONECLIENT_REPO=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
+KEYSTONECLIENT_BRANCH=${KEYSTONECLIENT_BRANCH:-master}
+
 # compute service
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
 NOVA_BRANCH=${NOVA_BRANCH:-master}
+
+# python client library to nova that horizon (and others) use
+NOVACLIENT_REPO=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
+NOVACLIENT_BRANCH=${NOVACLIENT_BRANCH:-master}
+
+# consolidated openstack python client
+OPENSTACKCLIENT_REPO=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
+OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
+
+# pbr drives the setuptools configs
+PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
+PBR_BRANCH=${PBR_BRANCH:-master}
+
+# quantum service
+QUANTUM_REPO=${QUANTUM_REPO:-${GIT_BASE}/openstack/quantum.git}
+QUANTUM_BRANCH=${QUANTUM_BRANCH:-master}
+
+# quantum client
+QUANTUMCLIENT_REPO=${QUANTUMCLIENT_REPO:-${GIT_BASE}/openstack/python-quantumclient.git}
+QUANTUMCLIENT_BRANCH=${QUANTUMCLIENT_BRANCH:-master}
 
 # storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
@@ -87,65 +135,10 @@ SWIFT3_BRANCH=${SWIFT3_BRANCH:-master}
 SWIFTCLIENT_REPO=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
 SWIFTCLIENT_BRANCH=${SWIFTCLIENT_BRANCH:-master}
 
-# image catalog service
-GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
-GLANCE_BRANCH=${GLANCE_BRANCH:-master}
-
-# python glance client library
-GLANCECLIENT_REPO=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
-GLANCECLIENT_BRANCH=${GLANCECLIENT_BRANCH:-master}
-
-# unified auth system (manages accounts/tokens)
-KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
-KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
-
-# a websockets/html5 or flash powered VNC console for vm instances
-NOVNC_REPO=${NOVNC_REPO:-${GIT_BASE}/kanaka/noVNC.git}
-NOVNC_BRANCH=${NOVNC_BRANCH:-master}
-
-# a websockets/html5 or flash powered SPICE console for vm instances
-SPICE_REPO=${SPICE_REPO:-http://anongit.freedesktop.org/git/spice/spice-html5.git}
-SPICE_BRANCH=${SPICE_BRANCH:-master}
-
-# django powered web control panel for openstack
-HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
-HORIZON_BRANCH=${HORIZON_BRANCH:-master}
-
-# python client library to nova that horizon (and others) use
-NOVACLIENT_REPO=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
-NOVACLIENT_BRANCH=${NOVACLIENT_BRANCH:-master}
-
-# consolidated openstack python client
-OPENSTACKCLIENT_REPO=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
-OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
-
-# python keystone client library to nova that horizon uses
-KEYSTONECLIENT_REPO=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
-KEYSTONECLIENT_BRANCH=${KEYSTONECLIENT_BRANCH:-master}
-
-# quantum service
-QUANTUM_REPO=${QUANTUM_REPO:-${GIT_BASE}/openstack/quantum.git}
-QUANTUM_BRANCH=${QUANTUM_BRANCH:-master}
-
-# quantum client
-QUANTUMCLIENT_REPO=${QUANTUMCLIENT_REPO:-${GIT_BASE}/openstack/python-quantumclient.git}
-QUANTUMCLIENT_BRANCH=${QUANTUMCLIENT_BRANCH:-master}
-
 # Tempest test suite
 TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
 TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
-# heat service
-HEAT_REPO=${HEAT_REPO:-${GIT_BASE}/openstack/heat.git}
-HEAT_BRANCH=${HEAT_BRANCH:-master}
-
-# python heat client library
-HEATCLIENT_REPO=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
-HEATCLIENT_BRANCH=${HEATCLIENT_BRANCH:-master}
-
-# ryu service
-RYU_REPO=${RYU_REPO:-${GIT_BASE}/osrg/ryu.git}
-RYU_BRANCH=${RYU_BRANCH:-master}
 
 # diskimage-builder
 BM_IMAGE_BUILD_REPO=${BM_IMAGE_BUILD_REPO:-${GIT_BASE}/stackforge/diskimage-builder.git}
@@ -157,10 +150,18 @@ BM_IMAGE_BUILD_BRANCH=${BM_IMAGE_BUILD_BRANCH:-master}
 BM_POSEUR_REPO=${BM_POSEUR_REPO:-${GIT_BASE}/tripleo/bm_poseur.git}
 BM_POSEUR_BRANCH=${BM_POSEUR_BRANCH:-master}
 
-# pbr
-# Used to drive the setuptools configs
-PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
-PBR_BRANCH=${PBR_BRANCH:-master}
+# a websockets/html5 or flash powered VNC console for vm instances
+NOVNC_REPO=${NOVNC_REPO:-${GIT_BASE}/kanaka/noVNC.git}
+NOVNC_BRANCH=${NOVNC_BRANCH:-master}
+
+# ryu service
+RYU_REPO=${RYU_REPO:-${GIT_BASE}/osrg/ryu.git}
+RYU_BRANCH=${RYU_BRANCH:-master}
+
+# a websockets/html5 or flash powered SPICE console for vm instances
+SPICE_REPO=${SPICE_REPO:-http://anongit.freedesktop.org/git/spice/spice-html5.git}
+SPICE_BRANCH=${SPICE_BRANCH:-master}
+
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
@@ -184,18 +185,22 @@ case "$VIRT_DRIVER" in
         ;;
 esac
 
-# Specify a comma-separated list of UEC images to download and install into glance.
-# supported urls here are:
+
+# Images
+# ------
+
+# Specify a comma-separated list of images to download and install into glance.
+# Supported urls here are:
 #  * "uec-style" images:
 #     If the file ends in .tar.gz, uncompress the tarball and and select the first
 #     .img file inside it as the image.  If present, use "*-vmlinuz*" as the kernel
 #     and "*-initrd*" as the ramdisk
-#     example: http://cloud-images.ubuntu.com/releases/oneiric/release/ubuntu-11.10-server-cloudimg-amd64.tar.gz
+#     example: http://cloud-images.ubuntu.com/releases/precise/release/ubuntu-12.04-server-cloudimg-amd64.tar.gz
 #  * disk image (*.img,*.img.gz)
 #    if file ends in .img, then it will be uploaded and registered as a to
 #    glance as a disk image.  If it ends in .gz, it is uncompressed first.
 #    example:
-#      http://cloud-images.ubuntu.com/releases/oneiric/release/ubuntu-11.10-server-cloudimg-armel-disk1.img
+#      http://cloud-images.ubuntu.com/releases/precise/release/ubuntu-12.04-server-cloudimg-armel-disk1.img
 #      http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-rootfs.img.gz
 #  * OpenVZ image:
 #    OpenVZ uses its own format of image, and does not support UEC style images
@@ -222,10 +227,11 @@ case "$VIRT_DRIVER" in
         ;;
     vsphere)
         IMAGE_URLS="";;
-    *) # otherwise, use the uec style image (with kernel, ramdisk, disk)
+    *) # Default to Cirros with kernel, ramdisk and disk image
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.1-x86_64-uec}
         IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-uec.tar.gz"};;
 esac
+
 
 # 5Gb default volume backing file size
 VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-5130M}

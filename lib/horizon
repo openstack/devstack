@@ -74,13 +74,20 @@ function _horizon_config_set() {
 }
 
 
+
 # Entry Points
 # ------------
 
 # cleanup_horizon() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_horizon() {
-    :
+    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
+        # If ``/usr/bin/node`` points into ``$DEST``
+        # we installed it via ``install_nodejs``
+        if [[ $(readlink -f /usr/bin/node) =~ ($DEST) ]]; then
+            sudo rm /usr/bin/node
+        fi
+    fi
 }
 
 # configure_horizon() - Set config files, create data dirs, etc
@@ -110,7 +117,6 @@ function init_horizon() {
 
     # Create an empty directory that apache uses as docroot
     sudo mkdir -p $HORIZON_DIR/.blackhole
-
 
     HORIZON_REQUIRE=''
     if is_ubuntu; then
@@ -148,7 +154,6 @@ function init_horizon() {
         s,%DEST%,$DEST,g;
         s,%HORIZON_REQUIRE%,$HORIZON_REQUIRE,g;
     \" $FILES/apache-horizon.template >/etc/$APACHE_NAME/$APACHE_CONF"
-
 }
 
 # install_horizon() - Collect source and prepare
@@ -192,6 +197,7 @@ function stop_horizon() {
         exit_distro_not_supported "apache configuration"
     fi
 }
+
 
 # Restore xtrace
 $XTRACE
