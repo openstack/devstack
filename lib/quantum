@@ -187,7 +187,7 @@ source $TOP_DIR/lib/quantum_plugins/$Q_PLUGIN
 # -------------------------------------------
 
 # Hardcoding for 1 service plugin for now
-source $TOP_DIR/lib/quantum_plugins/services/agent_loadbalancer
+source $TOP_DIR/lib/quantum_plugins/services/loadbalancer
 
 # Use security group or not
 if has_quantum_plugin_security_group; then
