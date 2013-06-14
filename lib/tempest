@@ -167,9 +167,15 @@ function configure_tempest() {
         fi
         flavor_ref=${flavors[0]}
         flavor_ref_alt=$flavor_ref
-        if [[ $num_flavors -gt 1 ]]; then
-            flavor_ref_alt=${flavors[1]}
-        fi
+
+        # ensure flavor_ref and flavor_ref_alt have different values
+        # some resize instance in tempest tests depends on this.
+        for f in ${flavors[@]:1}; do
+            if [[ $f -ne $flavor_ref ]]; then
+                flavor_ref_alt=$f
+                break
+            fi
+        done
     fi
 
     if [ "$Q_USE_NAMESPACE" != "False" ]; then
