@@ -85,7 +85,7 @@ if [[ "$ENABLED_SERVICES" =~ "c-vol" ]]; then
    die_if_not_set $LINENO VOLUME "Failure to create volume"
 
    # Test that volume has been created
-   VOLUME=`euca-describe-volumes | cut -f2`
+   VOLUME=`euca-describe-volumes $VOLUME | cut -f2`
    die_if_not_set $LINENO VOLUME "Failure to get volume"
 
    # Test volume has become available
