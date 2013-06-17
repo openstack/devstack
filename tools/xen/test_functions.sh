@@ -138,6 +138,29 @@ function test_create_directory_for_kernels_existing_dir {
 EOF
 }
 
+function test_create_directory_for_images {
+    (
+        . mocks
+        mock_out get_local_sr uuid1
+        create_directory_for_images
+    )
+
+    assert_directory_exists "/var/run/sr-mount/uuid1/os-images"
+    assert_symlink "/images" "/var/run/sr-mount/uuid1/os-images"
+}
+
+function test_create_directory_for_images_existing_dir {
+    (
+        . mocks
+        given_directory_exists "/images"
+        create_directory_for_images
+    )
+
+    diff -u $LIST_OF_ACTIONS - << EOF
+[ -d /images ]
+EOF
+}
+
 function test_extract_remote_zipball {
     local RESULT=$(. mocks && extract_remote_zipball "someurl")
 
