@@ -4,9 +4,9 @@ objectClass: dcObject
 objectClass: organizationalUnit
 ou: openstack
 
-dn: ou=Groups,dc=openstack,dc=org
+dn: ou=UserGroups,dc=openstack,dc=org
 objectClass: organizationalUnit
-ou: Groups
+ou: UserGroups
 
 dn: ou=Users,dc=openstack,dc=org
 objectClass: organizationalUnit
