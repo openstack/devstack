@@ -30,31 +30,34 @@ XEN_INT_BRIDGE_OR_NET_NAME="OpenStack VM Integration Network"
 # VM Password
 GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 
+# Extracted variables for OpenStack VM network device numbers.
+# Make sure, they form a continous sequence starting from 0
+MGT_DEV_NR=0
+VM_DEV_NR=1
+PUB_DEV_NR=2
+XEN_INT_DEV_NR=3
+
 # Host Interface, i.e. the interface on the nova vm you want to expose the
-# services on. Usually eth2 (management network) or eth3 (public network) and
-# not eth0 (private network with XenServer host) or eth1 (VM traffic network)
-HOST_IP_IFACE=${HOST_IP_IFACE:-eth3}
+# services on. Usually the device connected to the management network or the
+# one connected to the public network is used.
+HOST_IP_IFACE=${HOST_IP_IFACE:-"eth${MGT_DEV_NR}"}
 
 #
 # Our nova host's network info
 #
 
 # Management network
-MGT_IP=${MGT_IP:-172.16.100.55}
-MGT_NETMASK=${MGT_NETMASK:-255.255.255.0}
+MGT_IP=${MGT_IP:-dhcp}
+MGT_NETMASK=${MGT_NETMASK:-ignored}
 
 # VM Network
 VM_IP=${VM_IP:-10.255.255.255}
 VM_NETMASK=${VM_NETMASK:-255.255.255.0}
 
 # Public network
-PUB_IP=${PUB_IP:-192.168.1.55}
+# Aligned with stack.sh - see FLOATING_RANGE
+PUB_IP=${PUB_IP:-172.24.4.10}
 PUB_NETMASK=${PUB_NETMASK:-255.255.255.0}
-
-# Decide if you should enable eth0,
-# the guest installer network
-# You need to disable this on xcp-xapi on Ubuntu 12.04
-ENABLE_GI=true
 
 # Ubuntu install settings
 UBUNTU_INST_RELEASE="oneiric"
@@ -69,8 +72,11 @@ UBUNTU_INST_HTTP_DIRECTORY="/ubuntu"
 UBUNTU_INST_HTTP_PROXY=""
 UBUNTU_INST_LOCALE="en_US"
 UBUNTU_INST_KEYBOARD="us"
-# network configuration for ubuntu netinstall
-UBUNTU_INST_IFACE="eth3"
+# network configuration for ubuntu netinstall.
+# TODO(matelakat): get rid of legacy network interfaces
+# specify "eth2" to use the management network
+# specify "eth3" to use the public network
+UBUNTU_INST_IFACE="eth2"
 UBUNTU_INST_IP="dhcp"
 UBUNTU_INST_NAMESERVERS=""
 UBUNTU_INST_NETMASK=""
