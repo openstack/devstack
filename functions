@@ -471,6 +471,13 @@ function exit_distro_not_supported {
     fi
 }
 
+# Utility function for checking machine architecture
+# is_arch arch-type
+function is_arch {
+    ARCH_TYPE=$1
+
+    [ "($uname -m)" = "$ARCH_TYPE" ]
+}
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
