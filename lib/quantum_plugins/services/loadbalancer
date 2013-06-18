@@ -7,7 +7,7 @@ set +o xtrace
 
 
 AGENT_LBAAS_BINARY="$QUANTUM_DIR/bin/quantum-lbaas-agent"
-AGENT_LBAAS_PLUGIN=quantum.plugins.services.agent_loadbalancer.plugin.LoadBalancerPlugin
+LBAAS_PLUGIN=quantum.services.loadbalancer.plugin.LoadBalancerPlugin
 
 function quantum_agent_lbaas_install_agent_packages() {
     if is_ubuntu || is_fedora; then
@@ -20,14 +20,14 @@ function quantum_agent_lbaas_install_agent_packages() {
 
 function quantum_agent_lbaas_configure_common() {
     if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
-        Q_SERVICE_PLUGIN_CLASSES=$AGENT_LBAAS_PLUGIN
+        Q_SERVICE_PLUGIN_CLASSES=$LBAAS_PLUGIN
     else
-        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$AGENT_LBAAS_PLUGIN"
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$LBAAS_PLUGIN"
     fi
 }
 
 function quantum_agent_lbaas_configure_agent() {
-    LBAAS_AGENT_CONF_PATH=/etc/quantum/plugins/services/agent_loadbalancer
+    LBAAS_AGENT_CONF_PATH=/etc/quantum/services/loadbalancer/haproxy
     mkdir -p $LBAAS_AGENT_CONF_PATH
 
     LBAAS_AGENT_CONF_FILENAME="$LBAAS_AGENT_CONF_PATH/lbaas_agent.ini"
