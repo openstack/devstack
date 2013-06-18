@@ -44,12 +44,22 @@ function quantum_plugin_configure_plugin_agent() {
 function quantum_plugin_configure_service() {
     iniset /$Q_PLUGIN_CONF_FILE restproxy servers $BS_FL_CONTROLLERS_PORT
     iniset /$Q_PLUGIN_CONF_FILE restproxy servertimeout $BS_FL_CONTROLLER_TIMEOUT
+    if [ "$BS_FL_VIF_DRIVER" = "ivs" ]
+    then
+        iniset /$Q_PLUGIN_CONF_FILE nova vif_type ivs
+    fi
 }
 
 function quantum_plugin_setup_interface_driver() {
     local conf_file=$1
-    iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+    if [ "$BS_FL_VIF_DRIVER" = "ivs" ]
+    then
+        iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.IVSInterfaceDriver
+    else
+        iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+    fi
 }
+
 
 function has_quantum_plugin_security_group() {
     # 1 means False here
