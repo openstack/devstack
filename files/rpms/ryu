@@ -1,5 +1,5 @@
 python-gevent
 python-gflags
 python-netifaces
-python-setuptools #dist:f16,f17,f18
+python-setuptools #dist:f16,f17,f18,f19
 python-sphinx

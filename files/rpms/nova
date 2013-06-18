@@ -29,11 +29,11 @@ python-lockfile
 python-migrate
 python-mox
 python-netaddr
-python-paramiko # dist:f16,f17,f18
+python-paramiko # dist:f16,f17,f18,f19
 # ^ on RHEL, brings in python-crypto which conflicts with version from
 # pip we need
-python-paste        # dist:f16,f17,f18
-python-paste-deploy # dist:f16,f17,f18
+python-paste        # dist:f16,f17,f18,f19
+python-paste-deploy # dist:f16,f17,f18,f19
 python-qpid
 python-routes
 python-sqlalchemy
