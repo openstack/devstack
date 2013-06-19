@@ -158,7 +158,7 @@ function init_heat() {
     # (re)create heat database
     recreate_database heat utf8
 
-    $HEAT_DIR/bin/heat-db-setup $os_PACKAGE -r $DATABASE_PASSWORD
+    $HEAT_DIR/bin/heat-manage db_sync
     create_heat_cache_dir
 }
 
