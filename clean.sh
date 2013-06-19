@@ -63,7 +63,7 @@ cleanup_nova
 cleanup_quantum
 cleanup_swift
 
-# cinder doesn't clean up the volume group as it might be used elsewhere...
+# cinder doesn't always clean up the volume group as it might be used elsewhere...
 # clean it up if it is a loop device
 VG_DEV=$(sudo losetup -j $DATA_DIR/${VOLUME_GROUP}-backing-file | awk -F':' '/backing-file/ { print $1}')
 if [[ -n "$VG_DEV" ]]; then
