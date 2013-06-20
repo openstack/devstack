@@ -1108,6 +1108,10 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT compute_driver "libvirt.LibvirtDriver"
         LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
         iniset $NOVA_CONF DEFAULT firewall_driver "$LIBVIRT_FIREWALL_DRIVER"
+        # Power architecture currently does not support graphical consoles.
+        if is_arch "ppc64"; then
+            iniset $NOVA_CONF DEFAULT vnc_enabled "false"
+        fi
     fi
 
     init_nova_cells
