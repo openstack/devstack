@@ -233,8 +233,8 @@ case "$VIRT_DRIVER" in
 esac
 
 
-# 5Gb default volume backing file size
-VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-5130M}
+# 10Gb default volume backing file size
+VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-10250M}
 
 # Name of the LVM volume group to use/create for iscsi volumes
 VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
