@@ -3,6 +3,7 @@
 
 # Dependencies:
 # ``functions`` file
+# ``apache`` file
 # ``DEST``, ``SCREEN_NAME``, `SWIFT_HASH` must be defined
 # ``STACK_USER`` must be defined
 # ``SWIFT_DATA_DIR`` or ``DATA_DIR`` must be defined
@@ -10,11 +11,13 @@
 # ``stack.sh`` calls the entry points in this order:
 #
 # install_swift
+# _config_swift_apache_wsgi
 # configure_swift
 # init_swift
 # start_swift
 # stop_swift
 # cleanup_swift
+# _cleanup_swift_apache_wsgi
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -28,6 +31,7 @@ set +o xtrace
 SWIFT_DIR=$DEST/swift
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
+SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
 SWIFT3_DIR=$DEST/swift3
 
 # TODO: add logging to different location.
@@ -97,6 +101,103 @@ function cleanup_swift() {
       rm ${SWIFT_DATA_DIR}/drives/images/swift.img
    fi
    rm -rf ${SWIFT_DATA_DIR}/run/
+   if is_apache_enabled_service swift; then
+       _cleanup_swift_apache_wsgi
+   fi
+}
+
+# _cleanup_swift_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+function _cleanup_swift_apache_wsgi() {
+    sudo rm -f $SWIFT_APACHE_WSGI_DIR/*.wsgi
+    ! is_fedora && sudo a2dissite proxy-server
+    for node_number in ${SWIFT_REPLICAS_SEQ}; do
+        for type in object container account; do
+            site_name=${type}-server-${node_number}
+            ! is_fedora && sudo a2dissite ${site_name}
+            sudo rm -f /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site_name}
+        done
+    done
+}
+
+# _config_swift_apache_wsgi() - Set WSGI config files of Swift
+function _config_swift_apache_wsgi() {
+    sudo mkdir -p ${SWIFT_APACHE_WSGI_DIR}
+    local apache_vhost_dir=/etc/${APACHE_NAME}/$APACHE_CONF_DIR
+    local proxy_port=${SWIFT_DEFAULT_BIND_PORT:-8080}
+
+    # copy proxy vhost and wsgi file
+    sudo cp ${SWIFT_DIR}/examples/apache2/proxy-server.template ${apache_vhost_dir}/proxy-server
+    sudo sed -e "
+        /^#/d;/^$/d;
+        s/%PORT%/$proxy_port/g;
+        s/%SERVICENAME%/proxy-server/g;
+        s/%APACHE_NAME%/${APACHE_NAME}/g;
+    " -i ${apache_vhost_dir}/proxy-server
+
+    sudo cp ${SWIFT_DIR}/examples/wsgi/proxy-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/proxy-server.wsgi
+    sudo sed -e "
+        /^#/d;/^$/d;
+        s/%SERVICECONF%/proxy-server.conf/g;
+    " -i ${SWIFT_APACHE_WSGI_DIR}/proxy-server.wsgi
+    ! is_fedora && sudo a2ensite proxy-server
+
+    # copy apache vhost file and set name and port
+    for node_number in ${SWIFT_REPLICAS_SEQ}; do
+        object_port=$[OBJECT_PORT_BASE + 10 * ($node_number - 1)]
+        container_port=$[CONTAINER_PORT_BASE + 10 * ($node_number - 1)]
+        account_port=$[ACCOUNT_PORT_BASE + 10 * ($node_number - 1)]
+
+        sudo cp ${SWIFT_DIR}/examples/apache2/object-server.template ${apache_vhost_dir}/object-server-${node_number}
+        sudo sed -e "
+            s/%PORT%/$object_port/g;
+            s/%SERVICENAME%/object-server-${node_number}/g;
+            s/%APACHE_NAME%/${APACHE_NAME}/g;
+        " -i ${apache_vhost_dir}/object-server-${node_number}
+        ! is_fedora && sudo a2ensite object-server-${node_number}
+
+        sudo cp ${SWIFT_DIR}/examples/wsgi/object-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/object-server-${node_number}.wsgi
+        sudo sed -e "
+            /^#/d;/^$/d;
+            s/%SERVICECONF%/object-server\/${node_number}.conf/g;
+        " -i ${SWIFT_APACHE_WSGI_DIR}/object-server-${node_number}.wsgi
+
+        sudo cp ${SWIFT_DIR}/examples/apache2/container-server.template ${apache_vhost_dir}/container-server-${node_number}
+        sudo sed -e "
+            /^#/d;/^$/d;
+            s/%PORT%/$container_port/g;
+            s/%SERVICENAME%/container-server-${node_number}/g;
+            s/%APACHE_NAME%/${APACHE_NAME}/g;
+        " -i ${apache_vhost_dir}/container-server-${node_number}
+        ! is_fedora && sudo a2ensite container-server-${node_number}
+
+        sudo cp ${SWIFT_DIR}/examples/wsgi/container-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/container-server-${node_number}.wsgi
+        sudo sed -e "
+            /^#/d;/^$/d;
+            s/%SERVICECONF%/container-server\/${node_number}.conf/g;
+        " -i ${SWIFT_APACHE_WSGI_DIR}/container-server-${node_number}.wsgi
+
+        sudo cp ${SWIFT_DIR}/examples/apache2/account-server.template ${apache_vhost_dir}/account-server-${node_number}
+        sudo sed -e "
+             /^#/d;/^$/d;
+            s/%PORT%/$account_port/g;
+            s/%SERVICENAME%/account-server-${node_number}/g;
+            s/%APACHE_NAME%/${APACHE_NAME}/g;
+        " -i ${apache_vhost_dir}/account-server-${node_number}
+        ! is_fedora && sudo a2ensite account-server-${node_number}
+
+        sudo cp ${SWIFT_DIR}/examples/wsgi/account-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
+        sudo sed -e "
+             /^#/d;/^$/d;
+            s/%SERVICECONF%/account-server\/${node_number}.conf/g;
+        " -i ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
+
+    done
+
+    # run apache server as stack user
+    change_apache_user_group ${STACK_USER}
+
+    # WSGI isn't enabled by default, enable it
+    ! is_fedora && sudo a2enmod wsgi
 }
 
 # configure_swift() - Set config files, create data dirs and loop image
@@ -288,6 +389,9 @@ EOF
     sudo chown -R $USER:adm ${swift_log_dir}
     sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
         tee /etc/rsyslog.d/10-swift.conf
+    if is_apache_enabled_service swift; then
+        _config_swift_apache_wsgi
+    fi
 }
 
 # create_swift_disk - Create Swift backing disk
@@ -423,6 +527,9 @@ function init_swift() {
 function install_swift() {
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
     setup_develop $SWIFT_DIR
+    if is_apache_enabled_service swift; then
+        install_apache_wsgi
+    fi
 }
 
 function install_swiftclient() {
@@ -444,6 +551,22 @@ function start_swift() {
         sudo systemctl start xinetd.service
     fi
 
+    if is_apache_enabled_service swift; then
+        # Make sure the apache lock dir is owned by $STACK_USER
+        # for running apache server to avoid failure of restarting
+        # apache server due to permission problem.
+        sudo chown -R $STACK_USER /var/run/lock/$APACHE_NAME
+        restart_apache_server
+        swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
+        screen_it s-proxy "cd $SWIFT_DIR && sudo tail -f /var/log/$APACHE_NAME/proxy-server"
+        if [[ ${SWIFT_REPLICAS} == 1 ]]; then
+            for type in object container account; do
+                screen_it s-${type} "cd $SWIFT_DIR && sudo tail -f /var/log/$APACHE_NAME/${type}-server-1"
+            done
+        fi
+        return 0
+    fi
+
    # By default with only one replica we are launching the proxy,
    # container, account and object server in screen in foreground and
    # other services in background. If we have SWIFT_REPLICAS set to something
@@ -460,7 +583,7 @@ function start_swift() {
    done
    screen_it s-proxy "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
    if [[ ${SWIFT_REPLICAS} == 1 ]]; then
-       for type in object container account;do
+       for type in object container account; do
            screen_it s-${type} "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
        done
    fi
@@ -468,6 +591,11 @@ function start_swift() {
 
 # stop_swift() - Stop running processes (non-screen)
 function stop_swift() {
+
+    if is_apache_enabled_service swift; then
+        swift-init --run-dir=${SWIFT_DATA_DIR}/run rest stop && return 0
+    fi
+
     # screen normally killed by unstack.sh
     if type -p swift-init >/dev/null; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
