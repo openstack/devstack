@@ -7,7 +7,7 @@
 # service              glance     admin
 # service              swift      service        # if enabled
 # service              heat       service        # if enabled
-# service              ceilometer service        # if enabled
+# service              ceilometer admin          # if enabled
 # Tempest Only:
 # alt_demo             alt_demo  Member
 #
@@ -157,7 +157,7 @@ if [[ "$ENABLED_SERVICES" =~ "ceilometer" ]]; then
                                               --email=ceilometer@example.com)
     keystone user-role-add --tenant_id $SERVICE_TENANT \
                            --user_id $CEILOMETER_USER \
-                           --role_id $SERVICE_ROLE
+                           --role_id $ADMIN_ROLE
     # Ceilometer needs ResellerAdmin role to access swift account stats.
     keystone user-role-add --tenant_id $SERVICE_TENANT \
                            --user_id $CEILOMETER_USER \
