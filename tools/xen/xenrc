@@ -76,4 +76,14 @@ UBUNTU_INST_NAMESERVERS=""
 UBUNTU_INST_NETMASK=""
 UBUNTU_INST_GATEWAY=""
 
+# Create a separate xvdb. Tis could be used as a backing device for cinder
+# volumes. Specify
+#   XEN_XVDB_SIZE_GB=10
+#   VOLUME_BACKING_DEVICE=/dev/xvdb
+# in your localrc to avoid kernel lockups:
+#   https://bugs.launchpad.net/cinder/+bug/1023755
+#
+# Set the size to 0 to avoid creation of additional disk.
+XEN_XVDB_SIZE_GB=0
+
 source ../../stackrc
