@@ -27,8 +27,8 @@ function quantum_plugin_configure_common() {
 function quantum_plugin_configure_service() {
     PLUMGRID_NOS_IP=${PLUMGRID_NOS_IP:-localhost}
     PLUMGRID_NOS_PORT=${PLUMGRID_NOS_PORT:-7766}
-    iniset /$Q_PLUGIN_CONF_FILE PLUMgridNOS nos_server $PLUMGRID_NOS_IP
-    iniset /$Q_PLUGIN_CONF_FILE PLUMgridNOS nos_server_port $PLUMGRID_NOS_PORT
+    iniset /$Q_PLUGIN_CONF_FILE plumgridnos nos_server $PLUMGRID_NOS_IP
+    iniset /$Q_PLUGIN_CONF_FILE plumgridnos nos_server_port $PLUMGRID_NOS_PORT
 }
 
 function quantum_plugin_configure_debug_command() {

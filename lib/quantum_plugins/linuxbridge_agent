@@ -39,12 +39,12 @@ function quantum_plugin_configure_plugin_agent() {
         LB_INTERFACE_MAPPINGS=$PHYSICAL_NETWORK:$LB_PHYSICAL_INTERFACE
     fi
     if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE physical_interface_mappings $LB_INTERFACE_MAPPINGS
+        iniset /$Q_PLUGIN_CONF_FILE linux_bridge physical_interface_mappings $LB_INTERFACE_MAPPINGS
     fi
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.linux.iptables_firewall.IptablesFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.linux.iptables_firewall.IptablesFirewallDriver
     else
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.firewall.NoopFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.firewall.NoopFirewallDriver
     fi
     AGENT_BINARY="$QUANTUM_DIR/bin/quantum-linuxbridge-agent"
     # Define extra "AGENT" configuration options when q-agt is configured by defining
@@ -52,14 +52,14 @@ function quantum_plugin_configure_plugin_agent() {
     # For Example: ``Q_AGENT_EXTRA_AGENT_OPTS=(foo=true bar=2)``
     for I in "${Q_AGENT_EXTRA_AGENT_OPTS[@]}"; do
         # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE AGENT ${I/=/ }
+        iniset /$Q_PLUGIN_CONF_FILE agent ${I/=/ }
     done
     # Define extra "LINUX_BRIDGE" configuration options when q-agt is configured by defining
     # the array ``Q_AGENT_EXTRA_SRV_OPTS``.
     # For Example: ``Q_AGENT_EXTRA_SRV_OPTS=(foo=true bar=2)``
     for I in "${Q_AGENT_EXTRA_SRV_OPTS[@]}"; do
         # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE ${I/=/ }
+        iniset /$Q_PLUGIN_CONF_FILE linux_bridge ${I/=/ }
     done
 }
 

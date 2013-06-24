@@ -42,8 +42,8 @@ function quantum_plugin_configure_plugin_agent() {
 }
 
 function quantum_plugin_configure_service() {
-    iniset /$Q_PLUGIN_CONF_FILE RESTPROXY servers $BS_FL_CONTROLLERS_PORT
-    iniset /$Q_PLUGIN_CONF_FILE RESTPROXY servertimeout $BS_FL_CONTROLLER_TIMEOUT
+    iniset /$Q_PLUGIN_CONF_FILE restproxy servers $BS_FL_CONTROLLERS_PORT
+    iniset /$Q_PLUGIN_CONF_FILE restproxy servertimeout $BS_FL_CONTROLLER_TIMEOUT
 }
 
 function quantum_plugin_setup_interface_driver() {

@@ -16,10 +16,10 @@ function quantum_plugin_configure_common() {
 
 function quantum_plugin_configure_service() {
     if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE OVS tenant_network_type gre
-        iniset /$Q_PLUGIN_CONF_FILE OVS tunnel_id_ranges $TENANT_TUNNEL_RANGES
+        iniset /$Q_PLUGIN_CONF_FILE ovs tenant_network_type gre
+        iniset /$Q_PLUGIN_CONF_FILE ovs tunnel_id_ranges $TENANT_TUNNEL_RANGES
     elif [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE OVS tenant_network_type vlan
+        iniset /$Q_PLUGIN_CONF_FILE ovs tenant_network_type vlan
     else
         echo "WARNING - The openvswitch plugin is using local tenant networks, with no connectivity between hosts."
     fi
@@ -33,12 +33,12 @@ function quantum_plugin_configure_service() {
         fi
     fi
     if [[ "$OVS_VLAN_RANGES" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE OVS network_vlan_ranges $OVS_VLAN_RANGES
+        iniset /$Q_PLUGIN_CONF_FILE ovs network_vlan_ranges $OVS_VLAN_RANGES
     fi
 
     # Enable tunnel networks if selected
     if [[ $OVS_ENABLE_TUNNELING = "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
+        iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
     fi
 
     _quantum_ovs_base_configure_firewall_driver
@@ -48,7 +48,7 @@ function quantum_plugin_configure_service() {
     # For Example: ``Q_SRV_EXTRA_OPTS=(foo=true bar=2)``
     for I in "${Q_SRV_EXTRA_OPTS[@]}"; do
         # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE OVS ${I/=/ }
+        iniset /$Q_PLUGIN_CONF_FILE ovs ${I/=/ }
     done
 }
 

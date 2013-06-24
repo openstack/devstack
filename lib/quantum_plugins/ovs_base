@@ -56,9 +56,9 @@ function _quantum_ovs_base_configure_debug_command() {
 
 function _quantum_ovs_base_configure_firewall_driver() {
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
     else
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.firewall.NoopFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.firewall.NoopFirewallDriver
     fi
 }
 

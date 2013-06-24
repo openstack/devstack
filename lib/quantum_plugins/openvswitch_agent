@@ -47,8 +47,8 @@ function quantum_plugin_configure_plugin_agent() {
         if [ `vercmp_numbers "$OVS_VERSION" "1.4"` -lt "0" ] && ! is_service_enabled q-svc ; then
             die $LINENO "You are running OVS version $OVS_VERSION. OVS 1.4+ is required for tunneling between multiple hosts."
         fi
-        iniset /$Q_PLUGIN_CONF_FILE OVS enable_tunneling True
-        iniset /$Q_PLUGIN_CONF_FILE OVS local_ip $HOST_IP
+        iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
+        iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $HOST_IP
     fi
 
     # Setup physical network bridge mappings.  Override
@@ -61,7 +61,7 @@ function quantum_plugin_configure_plugin_agent() {
         sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_PHYSICAL_BRIDGE
     fi
     if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings $OVS_BRIDGE_MAPPINGS
+        iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings $OVS_BRIDGE_MAPPINGS
     fi
     AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
 
@@ -73,20 +73,20 @@ function quantum_plugin_configure_plugin_agent() {
         Q_RR_DOM0_COMMAND="$QUANTUM_DIR/bin/quantum-rootwrap-xen-dom0 $Q_RR_CONF_FILE"
 
         # For now, duplicate the xen configuration already found in nova.conf
-        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_url "$XENAPI_CONNECTION_URL"
-        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_username "$XENAPI_USER"
-        iniset $Q_RR_CONF_FILE XENAPI xenapi_connection_password "$XENAPI_PASSWORD"
+        iniset $Q_RR_CONF_FILE xenapi xenapi_connection_url "$XENAPI_CONNECTION_URL"
+        iniset $Q_RR_CONF_FILE xenapi xenapi_connection_username "$XENAPI_USER"
+        iniset $Q_RR_CONF_FILE xenapi xenapi_connection_password "$XENAPI_PASSWORD"
 
         # Under XS/XCP, the ovs agent needs to target the dom0
         # integration bridge.  This is enabled by using a root wrapper
         # that executes commands on dom0 via a XenAPI plugin.
-        iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_DOM0_COMMAND"
+        iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_DOM0_COMMAND"
 
         # Set "physical" mapping
-        iniset /$Q_PLUGIN_CONF_FILE OVS bridge_mappings "physnet1:$FLAT_NETWORK_BRIDGE"
+        iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings "physnet1:$FLAT_NETWORK_BRIDGE"
 
         # XEN_INTEGRATION_BRIDGE is the integration bridge in dom0
-        iniset /$Q_PLUGIN_CONF_FILE OVS integration_bridge $XEN_INTEGRATION_BRIDGE
+        iniset /$Q_PLUGIN_CONF_FILE ovs integration_bridge $XEN_INTEGRATION_BRIDGE
 
         # Set up domU's L2 agent:
 
@@ -96,25 +96,25 @@ function quantum_plugin_configure_plugin_agent() {
         sudo ovs-vsctl add-port "br-$GUEST_INTERFACE_DEFAULT" $GUEST_INTERFACE_DEFAULT
 
         # Set bridge mappings to "physnet1:br-$GUEST_INTERFACE_DEFAULT"
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" OVS bridge_mappings "physnet1:br-$GUEST_INTERFACE_DEFAULT"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs bridge_mappings "physnet1:br-$GUEST_INTERFACE_DEFAULT"
         # Set integration bridge to domU's
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" OVS integration_bridge $OVS_BRIDGE
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs integration_bridge $OVS_BRIDGE
         # Set root wrap
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" AGENT root_helper "$Q_RR_COMMAND"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper "$Q_RR_COMMAND"
     fi
     # Define extra "AGENT" configuration options when q-agt is configured by defining
     # defining the array ``Q_AGENT_EXTRA_AGENT_OPTS``.
     # For Example: ``Q_AGENT_EXTRA_AGENT_OPTS=(foo=true bar=2)``
     for I in "${Q_AGENT_EXTRA_AGENT_OPTS[@]}"; do
         # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE AGENT ${I/=/ }
+        iniset /$Q_PLUGIN_CONF_FILE agent ${I/=/ }
     done
     # Define extra "OVS" configuration options when q-agt is configured by defining
     # defining the array ``Q_AGENT_EXTRA_SRV_OPTS``.
     # For Example: ``Q_AGENT_EXTRA_SRV_OPTS=(foo=true bar=2)``
     for I in "${Q_AGENT_EXTRA_SRV_OPTS[@]}"; do
         # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE OVS ${I/=/ }
+        iniset /$Q_PLUGIN_CONF_FILE ovs ${I/=/ }
     done
 }
 

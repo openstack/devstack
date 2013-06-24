@@ -77,11 +77,11 @@ function quantum_plugin_configure_plugin_agent() {
 
 function quantum_plugin_configure_service() {
     iniset $QUANTUM_CONF DEFAULT api_extensions_path quantum/plugins/nec/extensions/
-    iniset /$Q_PLUGIN_CONF_FILE OFC host $OFC_API_HOST
-    iniset /$Q_PLUGIN_CONF_FILE OFC port $OFC_API_PORT
-    iniset /$Q_PLUGIN_CONF_FILE OFC driver $OFC_DRIVER
-    iniset /$Q_PLUGIN_CONF_FILE OFC api_retry_max OFC_RETRY_MAX
-    iniset /$Q_PLUGIN_CONF_FILE OFC api_retry_interval OFC_RETRY_INTERVAL
+    iniset /$Q_PLUGIN_CONF_FILE ofc host $OFC_API_HOST
+    iniset /$Q_PLUGIN_CONF_FILE ofc port $OFC_API_PORT
+    iniset /$Q_PLUGIN_CONF_FILE ofc driver $OFC_DRIVER
+    iniset /$Q_PLUGIN_CONF_FILE ofc api_retry_max OFC_RETRY_MAX
+    iniset /$Q_PLUGIN_CONF_FILE ofc api_retry_interval OFC_RETRY_INTERVAL
 
     _quantum_ovs_base_configure_firewall_driver
 }

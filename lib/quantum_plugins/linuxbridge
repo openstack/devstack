@@ -14,7 +14,7 @@ function quantum_plugin_configure_common() {
 
 function quantum_plugin_configure_service() {
     if [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE VLANS tenant_network_type vlan
+        iniset /$Q_PLUGIN_CONF_FILE vlans tenant_network_type vlan
     else
         echo "WARNING - The linuxbridge plugin is using local tenant networks, with no connectivity between hosts."
     fi
@@ -28,12 +28,12 @@ function quantum_plugin_configure_service() {
         fi
     fi
     if [[ "$LB_VLAN_RANGES" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE VLANS network_vlan_ranges $LB_VLAN_RANGES
+        iniset /$Q_PLUGIN_CONF_FILE vlans network_vlan_ranges $LB_VLAN_RANGES
     fi
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.linux.iptables_firewall.IptablesFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.linux.iptables_firewall.IptablesFirewallDriver
     else
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.firewall.NoopFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.firewall.NoopFirewallDriver
     fi
 
     # Define extra "LINUX_BRIDGE" configuration options when q-svc is configured by defining
@@ -41,7 +41,7 @@ function quantum_plugin_configure_service() {
     # For Example: ``Q_SRV_EXTRA_OPTS=(foo=true bar=2)``
     for I in "${Q_SRV_EXTRA_OPTS[@]}"; do
         # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE LINUX_BRIDGE ${I/=/ }
+        iniset /$Q_PLUGIN_CONF_FILE linux_bridge ${I/=/ }
     done
 }
 
