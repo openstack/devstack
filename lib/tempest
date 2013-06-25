@@ -281,6 +281,9 @@ function configure_tempest() {
         iniset $TEMPEST_CONF volume backend2_name "LVM_iSCSI_2"
     fi
 
+    # cli
+    iniset $TEMPEST_CONF cli cli_dir $NOVA_BIN_DIR
+
     echo "Created tempest configuration file:"
     cat $TEMPEST_CONF
 
