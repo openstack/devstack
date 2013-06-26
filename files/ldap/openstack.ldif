@@ -20,10 +20,6 @@ dn: ou=Projects,dc=openstack,dc=org
 objectClass: organizationalUnit
 ou: Projects
 
-dn: ou=Domains,dc=openstack,dc=org
-objectClass: organizationalUnit
-ou: Domains
-
 dn: cn=9fe2ff9ee4384b1894a90878d3e92bab,ou=Roles,dc=openstack,dc=org
 objectClass: organizationalRole
 ou: _member_
