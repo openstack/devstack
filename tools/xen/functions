@@ -24,6 +24,16 @@ function create_directory_for_kernels {
     fi
 }
 
+function create_directory_for_images {
+    if [ -d "/images" ]; then
+        echo "INFO: /images directory already exists, using that" >&2
+    else
+        local LOCALPATH="$(get_local_sr_path)/os-images"
+        mkdir -p $LOCALPATH
+        ln -s $LOCALPATH /images
+    fi
+}
+
 function extract_remote_zipball {
     local ZIPBALL_URL=$1
 

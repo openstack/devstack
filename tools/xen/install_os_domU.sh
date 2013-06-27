@@ -63,6 +63,7 @@ if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
 fi
 
 create_directory_for_kernels
+create_directory_for_images
 
 #
 # Configure Networking
