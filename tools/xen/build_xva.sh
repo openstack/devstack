@@ -32,6 +32,41 @@ source xenrc
 #
 GUEST_NAME="$1"
 
+function _print_interface_config() {
+    local device_nr
+    local ip_address
+    local netmask
+
+    device_nr="$1"
+    ip_address="$2"
+    netmask="$3"
+
+    local device
+
+    device="eth${device_nr}"
+
+    echo "auto $device"
+    if [ $ip_address == "dhcp" ]; then
+        echo "iface $device inet dhcp"
+    else
+        echo "iface $device inet static"
+        echo "  address $ip_address"
+        echo "  netmask $netmask"
+    fi
+
+    # Turn off tx checksumming for better performance
+    echo "  post-up ethtool -K $device tx off"
+}
+
+function print_interfaces_config() {
+    echo "auto lo"
+    echo "iface lo inet loopback"
+
+    _print_interface_config $PUB_DEV_NR $PUB_IP $PUB_NETMASK
+    _print_interface_config $VM_DEV_NR $VM_IP $VM_NETMASK
+    _print_interface_config $MGT_DEV_NR $MGT_IP $MGT_NETMASK
+}
+
 #
 # Mount the VDI
 #
@@ -81,42 +116,7 @@ $HOSTS_FILE_IP $GUEST_NAME
 EOF
 
 # Configure the network
-INTERFACES=$STAGING_DIR/etc/network/interfaces
-TEMPLATES_DIR=$TOP_DIR/templates
-cp $TEMPLATES_DIR/interfaces.in  $INTERFACES
-if [ $VM_IP == "dhcp" ]; then
-    echo 'eth1 on dhcp'
-    sed -e "s,iface eth1 inet static,iface eth1 inet dhcp,g" -i $INTERFACES
-    sed -e '/@ETH1_/d' -i $INTERFACES
-else
-    sed -e "s,@ETH1_IP@,$VM_IP,g" -i $INTERFACES
-    sed -e "s,@ETH1_NETMASK@,$VM_NETMASK,g" -i $INTERFACES
-fi
-
-if [ $MGT_IP == "dhcp" ]; then
-    echo 'eth2 on dhcp'
-    sed -e "s,iface eth2 inet static,iface eth2 inet dhcp,g" -i $INTERFACES
-    sed -e '/@ETH2_/d' -i $INTERFACES
-else
-    sed -e "s,@ETH2_IP@,$MGT_IP,g" -i $INTERFACES
-    sed -e "s,@ETH2_NETMASK@,$MGT_NETMASK,g" -i $INTERFACES
-fi
-
-if [ $PUB_IP == "dhcp" ]; then
-    echo 'eth3 on dhcp'
-    sed -e "s,iface eth3 inet static,iface eth3 inet dhcp,g" -i $INTERFACES
-    sed -e '/@ETH3_/d' -i $INTERFACES
-else
-    sed -e "s,@ETH3_IP@,$PUB_IP,g" -i $INTERFACES
-    sed -e "s,@ETH3_NETMASK@,$PUB_NETMASK,g" -i $INTERFACES
-fi
-
-if [ "$ENABLE_GI" == "true" ]; then
-    cat <<EOF >>$INTERFACES
-auto eth0
-iface eth0 inet dhcp
-EOF
-fi
+print_interfaces_config > $STAGING_DIR/etc/network/interfaces
 
 # Gracefully cp only if source file/dir exists
 function cp_it {

@@ -77,7 +77,7 @@ SPICE_DIR=$DEST/spice-html5
 
 # Set defaults according to the virt driver
 if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-    PUBLIC_INTERFACE_DEFAULT=eth3
+    PUBLIC_INTERFACE_DEFAULT=eth2
     GUEST_INTERFACE_DEFAULT=eth1
     # Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
     FLAT_NETWORK_BRIDGE_DEFAULT=$(sed -e 's/.* flat_network_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)

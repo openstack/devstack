@@ -1001,6 +1001,9 @@ if is_service_enabled nova; then
 
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         echo_summary "Using XenServer virtualization driver"
+        if [ -z "$XENAPI_CONNECTION_URL" ]; then
+            die $LINENO "XENAPI_CONNECTION_URL is not specified"
+        fi
         read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
         iniset $NOVA_CONF DEFAULT compute_driver "xenapi.XenAPIDriver"
         iniset $NOVA_CONF DEFAULT xenapi_connection_url "$XENAPI_CONNECTION_URL"

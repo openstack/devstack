@@ -178,7 +178,6 @@ case "$VIRT_DRIVER" in
         ;;
     xenserver)
         # Xen config common to nova and quantum
-        XENAPI_CONNECTION_URL=${XENAPI_CONNECTION_URL:-"http://169.254.0.1"}
         XENAPI_USER=${XENAPI_USER:-"root"}
         ;;
     *)
