@@ -68,16 +68,16 @@ function quantum_plugin_configure_plugin_agent() {
 
 function quantum_plugin_configure_service() {
     if [[ "$MAX_LP_PER_BRIDGED_LS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE NVP max_lp_per_bridged_ls $MAX_LP_PER_BRIDGED_LS
+        iniset /$Q_PLUGIN_CONF_FILE nvp max_lp_per_bridged_ls $MAX_LP_PER_BRIDGED_LS
     fi
     if [[ "$MAX_LP_PER_OVERLAY_LS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE NVP max_lp_per_overlay_ls $MAX_LP_PER_OVERLAY_LS
+        iniset /$Q_PLUGIN_CONF_FILE nvp max_lp_per_overlay_ls $MAX_LP_PER_OVERLAY_LS
     fi
     if [[ "$FAILOVER_TIME" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE NVP failover_time $FAILOVER_TIME
+        iniset /$Q_PLUGIN_CONF_FILE nvp failover_time $FAILOVER_TIME
     fi
     if [[ "$CONCURRENT_CONNECTIONS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE NVP concurrent_connections $CONCURRENT_CONNECTIONS
+        iniset /$Q_PLUGIN_CONF_FILE nvp concurrent_connections $CONCURRENT_CONNECTIONS
     fi
 
     if [[ "$DEFAULT_TZ_UUID" != "" ]]; then
@@ -89,7 +89,7 @@ function quantum_plugin_configure_service() {
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l3_gw_service_uuid $DEFAULT_L3_GW_SVC_UUID
         Q_L3_ENABLED=True
         Q_L3_ROUTER_PER_TENANT=True
-        iniset /$Q_PLUGIN_CONF_FILE NVP enable_metadata_access_network True
+        iniset /$Q_PLUGIN_CONF_FILE nvp enable_metadata_access_network True
     fi
     if [[ "$DEFAULT_L2_GW_SVC_UUID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l2_gw_service_uuid $DEFAULT_L2_GW_SVC_UUID

@@ -459,7 +459,7 @@ function _configure_quantum_common() {
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
     cp $QUANTUM_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
 
-    iniset /$Q_PLUGIN_CONF_FILE DATABASE sql_connection `database_connection_url $Q_DB_NAME`
+    iniset /$Q_PLUGIN_CONF_FILE database connection `database_connection_url $Q_DB_NAME`
     iniset $QUANTUM_CONF DEFAULT state_path $DATA_DIR/quantum
 
     # If addition config files are set, make sure their path name is set as well
@@ -494,7 +494,7 @@ function _configure_quantum_debug_command() {
     iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT root_helper "$Q_RR_COMMAND"
     # Intermediate fix until Quantum patch lands and then line above will
     # be cleaned.
-    iniset $QUANTUM_TEST_CONFIG_FILE AGENT root_helper "$Q_RR_COMMAND"
+    iniset $QUANTUM_TEST_CONFIG_FILE agent root_helper "$Q_RR_COMMAND"
 
     _quantum_setup_keystone $QUANTUM_TEST_CONFIG_FILE DEFAULT set_auth_url
     _quantum_setup_interface_driver $QUANTUM_TEST_CONFIG_FILE
@@ -563,7 +563,7 @@ function _configure_quantum_lbaas() {
 function _configure_quantum_plugin_agent() {
     # Specify the default root helper prior to agent configuration to
     # ensure that an agent's configuration can override the default
-    iniset /$Q_PLUGIN_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
+    iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_COMMAND"
     iniset $QUANTUM_CONF DEFAULT verbose True
     iniset $QUANTUM_CONF DEFAULT debug True
 
@@ -645,7 +645,7 @@ function _quantum_setup_rootwrap() {
     sudo mv $TEMPFILE /etc/sudoers.d/quantum-rootwrap
 
     # Update the root_helper
-    iniset $QUANTUM_CONF AGENT root_helper "$Q_RR_COMMAND"
+    iniset $QUANTUM_CONF agent root_helper "$Q_RR_COMMAND"
 }
 
 # Configures keystone integration for quantum service and agents
