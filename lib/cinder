@@ -276,6 +276,19 @@ function configure_cinder() {
             echo "$CINDER_GLUSTERFS_SHARES" > $CINDER_CONF_DIR/glusterfs_shares
         fi
     fi
+
+    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
+        # Cinder clones are slightly larger due to some extra
+        # metadata.  RHEL6 will not allow auto-extending of LV's
+        # without this, leading to clones giving hard-to-track disk
+        # I/O errors.
+        # see https://bugzilla.redhat.com/show_bug.cgi?id=975052
+        sudo sed -i~ \
+            -e 's/snapshot_autoextend_threshold =.*/snapshot_autoextend_threshold = 80/' \
+            -e 's/snapshot_autoextend_percent =.*/snapshot_autoextend_percent = 20/' \
+            /etc/lvm/lvm.conf
+    fi
+
 }
 
 # create_cinder_accounts() - Set up common required cinder accounts
