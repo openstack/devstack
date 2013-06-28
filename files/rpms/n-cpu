@@ -4,3 +4,4 @@ lvm2
 genisoimage
 sysfsutils
 sg3_utils
+python-libguestfs
