@@ -2,14 +2,14 @@
 
 # **client-args.sh**
 
-# Test OpenStack client authentication aguemnts handling
+# Test OpenStack client authentication arguments handling
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
 echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
-# only the first error that occured.
+# only the first error that occurred.
 set -o errexit
 
 # Print the commands being run so that we can see the command that triggers

@@ -10,7 +10,7 @@ echo "Begin DevStack Exercise: $0"
 echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
-# only the first error that occured.
+# only the first error that occurred.
 set -o errexit
 
 # Print the commands being run so that we can see the command that triggers
@@ -90,7 +90,7 @@ if [[ "$ENABLED_SERVICES" =~ "c-vol" ]]; then
 
    # Test volume has become available
    if ! timeout $RUNNING_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -q available; do sleep 1; done"; then
-       die $LINENO "volume didnt become available within $RUNNING_TIMEOUT seconds"
+       die $LINENO "volume didn't become available within $RUNNING_TIMEOUT seconds"
    fi
 
    # Attach volume to an instance

@@ -174,7 +174,7 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
   the script on non-zero exit codes::
 
     # This script exits on an error so that errors don't compound and you see
-    # only the first error that occured.
+    # only the first error that occurred.
     set -o errexit
 
     # Print the commands being run so that we can see the command that triggers

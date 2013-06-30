@@ -37,7 +37,7 @@ source $RC_DIR/lib/tls
 # The introduction of Keystone to the OpenStack ecosystem has standardized the
 # term **tenant** as the entity that owns resources.  In some places references
 # still exist to the original Nova term **project** for this use.  Also,
-# **tenant_name** is prefered to **tenant_id**.
+# **tenant_name** is preferred to **tenant_id**.
 export OS_TENANT_NAME=${OS_TENANT_NAME:-demo}
 
 # In addition to the owning entity (tenant), nova stores the entity performing
