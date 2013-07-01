@@ -340,14 +340,14 @@ function create_cinder_cache_dir() {
 }
 
 create_cinder_volume_group() {
-    # According to the CINDER_MULTI_LVM_BACKEND value, configure one or two default volumes
+    # According to the ``CINDER_MULTI_LVM_BACKEND`` value, configure one or two default volumes
     # group called ``stack-volumes`` (and ``stack-volumes2``) for the volume
     # service if it (they) does (do) not yet exist. If you don't wish to use a
     # file backed volume group, create your own volume group called ``stack-volumes``
     # and ``stack-volumes2`` before invoking ``stack.sh``.
     #
-    # By default, the two backing files are 5G in size, and are stored in
-    # ``/opt/stack/data``.
+    # The two backing files are ``VOLUME_BACKING_FILE_SIZE`` in size, and they are stored in
+    # the ``DATA_DIR``.
 
     if ! sudo vgs $VOLUME_GROUP; then
         if [ -z "$VOLUME_BACKING_DEVICE" ]; then
