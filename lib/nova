@@ -490,6 +490,8 @@ function create_nova_conf() {
     if is_service_enabled ceilometer; then
         iniset $NOVA_CONF DEFAULT instance_usage_audit "True"
         iniset $NOVA_CONF DEFAULT instance_usage_audit_period "hour"
+        iniset $NOVA_CONF DEFAULT notify_on_state_change "vm_and_task_state"
+        iniset $NOVA_CONF DEFAULT notify_on_any_change "True"
         iniset_multiline $NOVA_CONF DEFAULT notification_driver "nova.openstack.common.notifier.rpc_notifier" "ceilometer.compute.nova_notifier"
     fi
 
