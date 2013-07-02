@@ -3,7 +3,7 @@
 
 # Dependencies:
 # ``functions`` file
-# ``lib/nova`` service is runing
+# ``lib/nova`` service is running
 # <list other global vars that are assumed to be defined>
 # - ``DEST``, ``FILES``
 # - ``ADMIN_PASSWORD``
@@ -78,7 +78,7 @@ function configure_tempest() {
     # sudo python setup.py deploy
 
     # This function exits on an error so that errors don't compound and you see
-    # only the first error that occured.
+    # only the first error that occurred.
     errexit=$(set +o | grep errexit)
     set -o errexit
 

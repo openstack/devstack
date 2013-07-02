@@ -37,7 +37,7 @@ fi
 builtin_name="Debian Squeeze 6.0 (32-bit)"
 builtin_uuid=$(xe template-list name-label="$builtin_name" --minimal)
 if [[ -z $builtin_uuid ]]; then
-    echo "Cant find the Debian Squeeze 32bit template on your XenServer."
+    echo "Can't find the Debian Squeeze 32bit template on your XenServer."
     exit 1
 fi
 

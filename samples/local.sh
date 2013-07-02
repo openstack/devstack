@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Sample ``local.sh`` for user-configurable tasks to run automatically
-# at the sucessful conclusion of ``stack.sh``.
+# at the successful conclusion of ``stack.sh``.
 
 # NOTE: Copy this file to the root ``devstack`` directory for it to
 # work properly.
