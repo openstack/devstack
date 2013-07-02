@@ -273,6 +273,9 @@ function configure_tempest() {
         iniset $TEMPEST_CONF orchestration heat_available "True"
     fi
 
+    # Scenario
+    iniset $TEMPEST_CONF scenario img_dir "$FILES/images/cirros-0.3.1-x86_64-uec"
+
     # Volume
     CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
     if [ $CINDER_MULTI_LVM_BACKEND == "True" ]; then
