@@ -35,7 +35,6 @@ GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 MGT_DEV_NR=0
 VM_DEV_NR=1
 PUB_DEV_NR=2
-XEN_INT_DEV_NR=3
 
 # Host Interface, i.e. the interface on the nova vm you want to expose the
 # services on. Usually the device connected to the management network or the
