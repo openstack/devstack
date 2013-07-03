@@ -1020,6 +1020,8 @@ function screen_rc {
         echo "sessionname $SCREEN_NAME" > $SCREENRC
         # Set a reasonable statusbar
         echo "hardstatus alwayslastline '$SCREEN_HARDSTATUS'" >> $SCREENRC
+        # Some distributions override PROMPT_COMMAND for the screen terminal type - turn that off
+        echo "setenv PROMPT_COMMAND /bin/true" >> $SCREENRC
         echo "screen -t shell bash" >> $SCREENRC
     fi
     # If this service doesn't already exist in the screenrc file
