@@ -32,7 +32,7 @@ function get_mount_device() {
   vbd_uuid=$1
 
   dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
-  if [[ "$dev" =~ "sm/" ]]; then
+  if [[ "$dev" =~ "sm/" || "$dev" =~ "blktap-2/" ]]; then
     DEBIAN_FRONTEND=noninteractive \
         apt-get --option "Dpkg::Options::=--force-confold" --assume-yes \
         install kpartx &> /dev/null || true
@@ -49,7 +49,7 @@ function get_mount_device() {
 
 function clean_dev_mappings() {
   dev=$(xe_min vbd-list params=device uuid="$vbd_uuid")
-  if [[ "$dev" =~ "sm/" ]]; then
+  if [[ "$dev" =~ "sm/" || "$dev" =~ "blktap-2/" ]]; then
     kpartx -dv "/dev/$dev"
   fi
 }
