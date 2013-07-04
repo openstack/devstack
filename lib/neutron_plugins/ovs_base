@@ -44,9 +44,9 @@ function _neutron_ovs_base_install_agent_packages() {
         # Ensure that the service is started
         restart_service openvswitch
     elif is_suse; then
-        ### FIXME: Find out if package can be pushed to Factory
-        echo "OpenVSwitch packages can be installed from Cloud:OpenStack:Master in OBS"
-        restart_service openvswitch
+        install_package openvswitch
+        restart_service openvswitch-switch
+        restart_service openvswitch-controller
     fi
 }
 
