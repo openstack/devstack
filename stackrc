@@ -118,11 +118,11 @@ PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
 PBR_BRANCH=${PBR_BRANCH:-master}
 
 # quantum service
-QUANTUM_REPO=${QUANTUM_REPO:-${GIT_BASE}/openstack/quantum.git}
+QUANTUM_REPO=${QUANTUM_REPO:-${GIT_BASE}/openstack/neutron.git}
 QUANTUM_BRANCH=${QUANTUM_BRANCH:-master}
 
 # quantum client
-QUANTUMCLIENT_REPO=${QUANTUMCLIENT_REPO:-${GIT_BASE}/openstack/python-quantumclient.git}
+QUANTUMCLIENT_REPO=${QUANTUMCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
 QUANTUMCLIENT_BRANCH=${QUANTUMCLIENT_BRANCH:-master}
 
 # storage service
