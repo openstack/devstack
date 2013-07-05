@@ -90,11 +90,11 @@ KEYSTONECLIENT_REPO=${GIT_BASE}/openstack/python-keystoneclient
 KEYSTONECLIENT_BRANCH=master    # 29Sep2012: a8f7879fcf
 
 # quantum service
-QUANTUM_REPO=${GIT_BASE}/openstack/quantum
+QUANTUM_REPO=${GIT_BASE}/openstack/neutron
 QUANTUM_BRANCH=stable/folsom
 
 # quantum client
-QUANTUM_CLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient
+QUANTUM_CLIENT_REPO=${GIT_BASE}/openstack/python-neutronclient
 QUANTUM_CLIENT_BRANCH=master    # 2.1 14Sep2012: bc7ba5e19d
 
 # Tempest test suite
