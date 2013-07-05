@@ -1,5 +1,5 @@
-# Note: we need to package dhcp_release in dnsmasq!
 dnsmasq
+dnsmasq-utils # dist:opensuse-12.3
 ebtables
 iptables
 iputils
