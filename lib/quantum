@@ -62,8 +62,8 @@ set +o xtrace
 # -----------------------------
 
 # Set up default directories
-QUANTUM_DIR=$DEST/quantum
-QUANTUMCLIENT_DIR=$DEST/python-quantumclient
+QUANTUM_DIR=$DEST/neutron
+QUANTUMCLIENT_DIR=$DEST/python-neutronclient
 QUANTUM_AUTH_CACHE_DIR=${QUANTUM_AUTH_CACHE_DIR:-/var/cache/quantum}
 
 QUANTUM_CONF_DIR=/etc/quantum
