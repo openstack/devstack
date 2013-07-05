@@ -878,6 +878,7 @@ if is_service_enabled key; then
     export OS_SERVICE_ENDPOINT=$SERVICE_ENDPOINT
     create_keystone_accounts
     create_nova_accounts
+    create_swift_accounts
     create_cinder_accounts
     create_quantum_accounts
 
