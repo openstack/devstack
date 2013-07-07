@@ -1,4 +1,4 @@
-# Quantum loadbalancer plugin
+# Neutron loadbalancer plugin
 # ---------------------------
 
 # Save trace setting
@@ -6,10 +6,10 @@ MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 
-AGENT_LBAAS_BINARY="$QUANTUM_DIR/bin/quantum-lbaas-agent"
-LBAAS_PLUGIN=quantum.services.loadbalancer.plugin.LoadBalancerPlugin
+AGENT_LBAAS_BINARY="$NEUTRON_BIN_DIR/neutron-lbaas-agent"
+LBAAS_PLUGIN=neutron.services.loadbalancer.plugin.LoadBalancerPlugin
 
-function quantum_agent_lbaas_install_agent_packages() {
+function neutron_agent_lbaas_install_agent_packages() {
     if is_ubuntu || is_fedora; then
         install_package haproxy
     elif is_suse; then
@@ -18,7 +18,7 @@ function quantum_agent_lbaas_install_agent_packages() {
     fi
 }
 
-function quantum_agent_lbaas_configure_common() {
+function neutron_agent_lbaas_configure_common() {
     if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
         Q_SERVICE_PLUGIN_CLASSES=$LBAAS_PLUGIN
     else
@@ -26,20 +26,20 @@ function quantum_agent_lbaas_configure_common() {
     fi
 }
 
-function quantum_agent_lbaas_configure_agent() {
-    LBAAS_AGENT_CONF_PATH=/etc/quantum/services/loadbalancer/haproxy
+function neutron_agent_lbaas_configure_agent() {
+    LBAAS_AGENT_CONF_PATH=/etc/neutron/services/loadbalancer/haproxy
     mkdir -p $LBAAS_AGENT_CONF_PATH
 
     LBAAS_AGENT_CONF_FILENAME="$LBAAS_AGENT_CONF_PATH/lbaas_agent.ini"
 
-    cp $QUANTUM_DIR/etc/lbaas_agent.ini $LBAAS_AGENT_CONF_FILENAME
+    cp $NEUTRON_DIR/etc/lbaas_agent.ini $LBAAS_AGENT_CONF_FILENAME
 
     iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT use_namespaces $Q_USE_NAMESPACE
     # ovs_use_veth needs to be set before the plugin configuration
     # occurs to allow plugins to override the setting.
     iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT ovs_use_veth $Q_OVS_USE_VETH
 
-    quantum_plugin_setup_interface_driver $LBAAS_AGENT_CONF_FILENAME
+    neutron_plugin_setup_interface_driver $LBAAS_AGENT_CONF_FILENAME
 
     if is_fedora; then
         iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT user_group "nobody"

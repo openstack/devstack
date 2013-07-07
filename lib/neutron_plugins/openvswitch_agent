@@ -1,43 +1,43 @@
-# Quantum Open vSwitch L2 agent
+# Neutron Open vSwitch L2 agent
 # -----------------------------
 
 # Save trace setting
 PLUGIN_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-source $TOP_DIR/lib/quantum_plugins/ovs_base
+source $TOP_DIR/lib/neutron_plugins/ovs_base
 
-function quantum_plugin_create_nova_conf() {
-    _quantum_ovs_base_configure_nova_vif_driver
+function neutron_plugin_create_nova_conf() {
+    _neutron_ovs_base_configure_nova_vif_driver
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         iniset $NOVA_CONF DEFAULT xenapi_vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
         iniset $NOVA_CONF DEFAULT xenapi_ovs_integration_bridge $XEN_INTEGRATION_BRIDGE
-        # Disable nova's firewall so that it does not conflict with quantum
+        # Disable nova's firewall so that it does not conflict with neutron
         iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
     fi
 }
 
-function quantum_plugin_install_agent_packages() {
-    _quantum_ovs_base_install_agent_packages
+function neutron_plugin_install_agent_packages() {
+    _neutron_ovs_base_install_agent_packages
 }
 
-function quantum_plugin_configure_debug_command() {
-    _quantum_ovs_base_configure_debug_command
+function neutron_plugin_configure_debug_command() {
+    _neutron_ovs_base_configure_debug_command
 }
 
-function quantum_plugin_configure_dhcp_agent() {
-    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager quantum.agent.dhcp_agent.DhcpAgentWithStateReport
+function neutron_plugin_configure_dhcp_agent() {
+    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
 }
 
-function quantum_plugin_configure_l3_agent() {
-    _quantum_ovs_base_configure_l3_agent
-    iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager quantum.agent.l3_agent.L3NATAgentWithStateReport
+function neutron_plugin_configure_l3_agent() {
+    _neutron_ovs_base_configure_l3_agent
+    iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
 }
 
-function quantum_plugin_configure_plugin_agent() {
+function neutron_plugin_configure_plugin_agent() {
     # Setup integration bridge
-    _quantum_ovs_base_setup_bridge $OVS_BRIDGE
-    _quantum_ovs_base_configure_firewall_driver
+    _neutron_ovs_base_setup_bridge $OVS_BRIDGE
+    _neutron_ovs_base_configure_firewall_driver
 
     # Setup agent for tunneling
     if [[ "$OVS_ENABLE_TUNNELING" = "True" ]]; then
@@ -63,14 +63,14 @@ function quantum_plugin_configure_plugin_agent() {
     if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings $OVS_BRIDGE_MAPPINGS
     fi
-    AGENT_BINARY="$QUANTUM_DIR/bin/quantum-openvswitch-agent"
+    AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-openvswitch-agent"
 
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         # Make a copy of our config for domU
         sudo cp /$Q_PLUGIN_CONF_FILE "/$Q_PLUGIN_CONF_FILE.domu"
 
         # Deal with Dom0's L2 Agent:
-        Q_RR_DOM0_COMMAND="$QUANTUM_DIR/bin/quantum-rootwrap-xen-dom0 $Q_RR_CONF_FILE"
+        Q_RR_DOM0_COMMAND="$NEUTRON_BIN_DIR/neutron-rootwrap-xen-dom0 $Q_RR_CONF_FILE"
 
         # For now, duplicate the xen configuration already found in nova.conf
         iniset $Q_RR_CONF_FILE xenapi xenapi_connection_url "$XENAPI_CONNECTION_URL"
@@ -118,12 +118,12 @@ function quantum_plugin_configure_plugin_agent() {
     done
 }
 
-function quantum_plugin_setup_interface_driver() {
+function neutron_plugin_setup_interface_driver() {
     local conf_file=$1
-    iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
 }
 
-function quantum_plugin_check_adv_test_requirements() {
+function neutron_plugin_check_adv_test_requirements() {
     is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
 }
 

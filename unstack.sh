@@ -29,7 +29,7 @@ source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/swift
-source $TOP_DIR/lib/quantum
+source $TOP_DIR/lib/neutron
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
@@ -50,7 +50,7 @@ fi
 
 if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
     source $TOP_DIR/openrc
-    teardown_quantum_debug
+    teardown_neutron_debug
 fi
 
 # Shut down devstack's screen to get the bulk of OpenStack services in one shot
@@ -106,8 +106,8 @@ if [[ -n "$UNSTACK_ALL" ]]; then
     fi
 fi
 
-if is_service_enabled quantum; then
-    stop_quantum
-    stop_quantum_third_party
-    cleanup_quantum
+if is_service_enabled neutron; then
+    stop_neutron
+    stop_neutron_third_party
+    cleanup_neutron
 fi

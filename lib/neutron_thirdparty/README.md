@@ -1,7 +1,7 @@
-Quantum third party specific files
+Neutron third party specific files
 ==================================
-Some Quantum plugins require third party programs to function.
-The files under the directory, ``lib/quantum_thirdparty/``, will be used
+Some Neutron plugins require third party programs to function.
+The files under the directory, ``lib/neutron_thirdparty/``, will be used
 when their service are enabled.
 Third party program specific configuration variables should be in this file.
 
@@ -10,7 +10,7 @@ Third party program specific configuration variables should be in this file.
 
 functions
 ---------
-``lib/quantum`` calls the following functions when the ``<third_party>`` is enabled
+``lib/neutron`` calls the following functions when the ``<third_party>`` is enabled
 
 functions to be implemented
 * ``configure_<third_party>``:

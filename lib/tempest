@@ -185,12 +185,12 @@ function configure_tempest() {
     fi
 
     if is_service_enabled q-l3; then
-        public_network_id=$(quantum net-list | grep $PUBLIC_NETWORK_NAME | \
+        public_network_id=$(neutron net-list | grep $PUBLIC_NETWORK_NAME | \
             awk '{print $2}')
         if [ "$Q_USE_NAMESPACE" == "False" ]; then
             # If namespaces are disabled, devstack will create a single
             # public router that tempest should be configured to use.
-            public_router_id=$(quantum router-list | awk "/ $Q_ROUTER_NAME / \
+            public_router_id=$(neutron router-list | awk "/ $Q_ROUTER_NAME / \
                { print \$2 }")
         fi
     fi
@@ -223,7 +223,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute change_password_available False
     # Note(nati) current tempest don't create network for each tenant
     # so reuse same tenant for now
-    if is_service_enabled quantum; then
+    if is_service_enabled neutron; then
         TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
     fi
     iniset $TEMPEST_CONF compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
@@ -252,8 +252,8 @@ function configure_tempest() {
     iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
 
     # Network
-    if is_service_enabled quantum; then
-        iniset $TEMPEST_CONF network quantum_available "True"
+    if is_service_enabled neutron; then
+        iniset $TEMPEST_CONF network neutron_available "True"
     fi
     iniset $TEMPEST_CONF network api_version 2.0
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
 
-# **quantum-adv-test.sh**
+# **neutron-adv-test.sh**
 
-# Perform integration testing of Nova and other components with Quantum.
+# Perform integration testing of Nova and other components with Neutron.
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -43,16 +43,16 @@ source $TOP_DIR/functions
 # Import configuration
 source $TOP_DIR/openrc
 
-# Import quantum functions
-source $TOP_DIR/lib/quantum
+# Import neutron functions
+source $TOP_DIR/lib/neutron
 
-# If quantum is not enabled we exit with exitcode 55, which means exercise is skipped.
-quantum_plugin_check_adv_test_requirements || exit 55
+# If neutron is not enabled we exit with exitcode 55, which means exercise is skipped.
+neutron_plugin_check_adv_test_requirements || exit 55
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
-# Quantum Settings
+# Neutron Settings
 # ----------------
 
 TENANTS="DEMO1"
@@ -161,7 +161,7 @@ function get_role_id {
 
 function get_network_id {
     local NETWORK_NAME="$1"
-    local NETWORK_ID=`quantum net-list -F id  -- --name=$NETWORK_NAME | awk "NR==4" | awk '{print $2}'`
+    local NETWORK_ID=`neutron net-list -F id  -- --name=$NETWORK_NAME | awk "NR==4" | awk '{print $2}'`
     echo $NETWORK_ID
 }
 
@@ -232,9 +232,9 @@ function create_network {
     source $TOP_DIR/openrc admin admin
     local TENANT_ID=$(get_tenant_id $TENANT)
     source $TOP_DIR/openrc $TENANT $TENANT
-    local NET_ID=$(quantum net-create --tenant_id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
-    quantum subnet-create --ip_version 4 --tenant_id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
-    quantum-debug probe-create --device-owner compute $NET_ID
+    local NET_ID=$(neutron net-create --tenant_id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
+    neutron subnet-create --ip_version 4 --tenant_id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
+    neutron-debug probe-create --device-owner compute $NET_ID
     source $TOP_DIR/openrc demo demo
 }
 
@@ -320,10 +320,10 @@ function delete_network {
     local TENANT_ID=$(get_tenant_id $TENANT)
     #TODO(nati) comment out until l3-agent merged
     #for res in port subnet net router;do
-    for net_id in `quantum net-list -c id -c name | grep $NET_NAME | awk '{print $2}'`;do
+    for net_id in `neutron net-list -c id -c name | grep $NET_NAME | awk '{print $2}'`;do
         delete_probe $net_id
-        quantum subnet-list | grep $net_id | awk '{print $2}' | xargs -I% quantum subnet-delete %
-        quantum net-delete $net_id
+        neutron subnet-list | grep $net_id | awk '{print $2}' | xargs -I% neutron subnet-delete %
+        neutron net-delete $net_id
     done
     source $TOP_DIR/openrc demo demo
 }

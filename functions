@@ -262,8 +262,8 @@ function get_packages() {
                 file_to_parse="${file_to_parse} keystone"
             fi
         elif [[ $service == q-* ]]; then
-            if [[ ! $file_to_parse =~ quantum ]]; then
-                file_to_parse="${file_to_parse} quantum"
+            if [[ ! $file_to_parse =~ neutron ]]; then
+                file_to_parse="${file_to_parse} neutron"
             fi
         fi
     done
@@ -717,7 +717,7 @@ function is_running() {
 #   **cinder** returns true if any service enabled start with **c-**
 #   **ceilometer** returns true if any service enabled start with **ceilometer**
 #   **glance** returns true if any service enabled start with **g-**
-#   **quantum** returns true if any service enabled start with **q-**
+#   **neutron** returns true if any service enabled start with **q-**
 #   **swift** returns true if any service enabled start with **s-**
 #   For backward compatibility if we have **swift** in ENABLED_SERVICES all the
 #   **s-** services will be enabled. This will be deprecated in the future.
@@ -732,7 +732,7 @@ function is_service_enabled() {
         [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0
         [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && return 0
         [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && return 0
-        [[ ${service} == "quantum" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
+        [[ ${service} == "neutron" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
         [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && return 0
         [[ ${service} == s-* && ${ENABLED_SERVICES} =~ "swift" ]] && return 0
     done
@@ -758,7 +758,7 @@ function _cleanup_service_list () {
 #   enable_service qpid
 #
 # This function does not know about the special cases
-# for nova, glance, and quantum built into is_service_enabled().
+# for nova, glance, and neutron built into is_service_enabled().
 # Uses global ``ENABLED_SERVICES``
 # enable_service service [service ...]
 function enable_service() {
@@ -780,7 +780,7 @@ function enable_service() {
 #   disable_service rabbit
 #
 # This function does not know about the special cases
-# for nova, glance, and quantum built into is_service_enabled().
+# for nova, glance, and neutron built into is_service_enabled().
 # Uses global ``ENABLED_SERVICES``
 # disable_service service [service ...]
 function disable_service() {
@@ -1331,8 +1331,8 @@ function zypper_install() {
 # Uses globals ``ENABLED_SERVICES``
 # ping_check from-net ip boot-timeout expected
 function ping_check() {
-    if is_service_enabled quantum; then
-        _ping_check_quantum  "$1" $2 $3 $4
+    if is_service_enabled neutron; then
+        _ping_check_neutron  "$1" $2 $3 $4
         return
     fi
     _ping_check_novanet "$1" $2 $3 $4
@@ -1371,8 +1371,8 @@ function _ping_check_novanet() {
 
 # ssh_check net-name key-file floating-ip default-user active-timeout
 function ssh_check() {
-    if is_service_enabled quantum; then
-        _ssh_check_quantum  "$1" $2 $3 $4 $5
+    if is_service_enabled neutron; then
+        _ssh_check_neutron  "$1" $2 $3 $4 $5
         return
     fi
     _ssh_check_novanet "$1" $2 $3 $4 $5
