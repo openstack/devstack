@@ -30,9 +30,9 @@ source $TOP_DIR/functions
 # Import configuration
 source $TOP_DIR/openrc
 
-# Import quantum functions if needed
-if is_service_enabled quantum; then
-    source $TOP_DIR/lib/quantum
+# Import neutron functions if needed
+if is_service_enabled neutron; then
+    source $TOP_DIR/lib/neutron
 fi
 
 # Import exercise configuration
@@ -155,7 +155,7 @@ nova add-floating-ip $VM_UUID $FLOATING_IP || \
 # Test we can ping our floating IP within ASSOCIATE_TIMEOUT seconds
 ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
 
-if ! is_service_enabled quantum; then
+if ! is_service_enabled neutron; then
     # Allocate an IP from second floating pool
     TEST_FLOATING_IP=$(nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1)
     die_if_not_set $LINENO TEST_FLOATING_IP "Failure creating floating IP in $TEST_FLOATING_POOL"
@@ -179,7 +179,7 @@ fi
 # Clean up
 # --------
 
-if ! is_service_enabled quantum; then
+if ! is_service_enabled neutron; then
     # Delete second floating IP
     nova floating-ip-delete $TEST_FLOATING_IP || \
         die $LINENO "Failure deleting floating IP $TEST_FLOATING_IP"

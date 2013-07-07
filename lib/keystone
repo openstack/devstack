@@ -151,12 +151,12 @@ function configure_keystone() {
             echo "catalog.RegionOne.object_store.name = Swift Service" >> $KEYSTONE_CATALOG
         fi
 
-        # Add quantum endpoints to service catalog if quantum is enabled
-        if is_service_enabled quantum; then
+        # Add neutron endpoints to service catalog if neutron is enabled
+        if is_service_enabled neutron; then
             echo "catalog.RegionOne.network.publicURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
             echo "catalog.RegionOne.network.adminURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
             echo "catalog.RegionOne.network.internalURL = http://%SERVICE_HOST%:$Q_PORT/" >> $KEYSTONE_CATALOG
-            echo "catalog.RegionOne.network.name = Quantum Service" >> $KEYSTONE_CATALOG
+            echo "catalog.RegionOne.network.name = Neutron Service" >> $KEYSTONE_CATALOG
         fi
 
         sed -e "

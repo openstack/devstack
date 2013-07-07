@@ -1,4 +1,4 @@
-# Quantum Cisco plugin
+# Neutron Cisco plugin
 # ---------------------------
 
 # Save trace setting
@@ -86,17 +86,17 @@ function _config_switch() {
 # Prefix openvswitch plugin routines with "ovs" in order to differentiate from
 # cisco plugin routines. This means, ovs plugin routines will coexist with cisco
 # plugin routines in this script.
-source $TOP_DIR/lib/quantum_plugins/openvswitch
-_prefix_function quantum_plugin_create_nova_conf ovs
-_prefix_function quantum_plugin_install_agent_packages ovs
-_prefix_function quantum_plugin_configure_common ovs
-_prefix_function quantum_plugin_configure_debug_command ovs
-_prefix_function quantum_plugin_configure_dhcp_agent ovs
-_prefix_function quantum_plugin_configure_l3_agent ovs
-_prefix_function quantum_plugin_configure_plugin_agent ovs
-_prefix_function quantum_plugin_configure_service ovs
-_prefix_function quantum_plugin_setup_interface_driver ovs
-_prefix_function has_quantum_plugin_security_group ovs
+source $TOP_DIR/lib/neutron_plugins/openvswitch
+_prefix_function neutron_plugin_create_nova_conf ovs
+_prefix_function neutron_plugin_install_agent_packages ovs
+_prefix_function neutron_plugin_configure_common ovs
+_prefix_function neutron_plugin_configure_debug_command ovs
+_prefix_function neutron_plugin_configure_dhcp_agent ovs
+_prefix_function neutron_plugin_configure_l3_agent ovs
+_prefix_function neutron_plugin_configure_plugin_agent ovs
+_prefix_function neutron_plugin_configure_service ovs
+_prefix_function neutron_plugin_setup_interface_driver ovs
+_prefix_function has_neutron_plugin_security_group ovs
 
 # Check the version of the installed ncclient package
 function check_ncclient_version() {
@@ -144,66 +144,66 @@ function is_ncclient_installed() {
     return 0
 }
 
-function has_quantum_plugin_security_group() {
+function has_neutron_plugin_security_group() {
     if _has_ovs_subplugin; then
-        ovs_has_quantum_plugin_security_group
+        ovs_has_neutron_plugin_security_group
     else
         return 1
     fi
 }
 
-function is_quantum_ovs_base_plugin() {
+function is_neutron_ovs_base_plugin() {
     # Cisco uses OVS if openvswitch subplugin is deployed
     _has_ovs_subplugin
     return
 }
 
 # populate required nova configuration parameters
-function quantum_plugin_create_nova_conf() {
+function neutron_plugin_create_nova_conf() {
     if _has_ovs_subplugin; then
-        ovs_quantum_plugin_create_nova_conf
+        ovs_neutron_plugin_create_nova_conf
     else
-        _quantum_ovs_base_configure_nova_vif_driver
+        _neutron_ovs_base_configure_nova_vif_driver
     fi
 }
 
-function quantum_plugin_install_agent_packages() {
+function neutron_plugin_install_agent_packages() {
     # Cisco plugin uses openvswitch to operate in one of its configurations
-    ovs_quantum_plugin_install_agent_packages
+    ovs_neutron_plugin_install_agent_packages
 }
 
 # Configure common parameters
-function quantum_plugin_configure_common() {
+function neutron_plugin_configure_common() {
     # setup default subplugins
     if [ ! -v Q_CISCO_PLUGIN_SUBPLUGINS ]; then
         declare -ga Q_CISCO_PLUGIN_SUBPLUGINS
         Q_CISCO_PLUGIN_SUBPLUGINS=(openvswitch nexus)
     fi
     if _has_ovs_subplugin; then
-        ovs_quantum_plugin_configure_common
-        Q_PLUGIN_EXTRA_CONF_PATH=etc/quantum/plugins/cisco
+        ovs_neutron_plugin_configure_common
+        Q_PLUGIN_EXTRA_CONF_PATH=etc/neutron/plugins/cisco
         Q_PLUGIN_EXTRA_CONF_FILES=(cisco_plugins.ini)
     else
-        Q_PLUGIN_CONF_PATH=etc/quantum/plugins/cisco
+        Q_PLUGIN_CONF_PATH=etc/neutron/plugins/cisco
         Q_PLUGIN_CONF_FILENAME=cisco_plugins.ini
     fi
-    Q_PLUGIN_CLASS="quantum.plugins.cisco.network_plugin.PluginV2"
-    Q_DB_NAME=cisco_quantum
+    Q_PLUGIN_CLASS="neutron.plugins.cisco.network_plugin.PluginV2"
+    Q_DB_NAME=cisco_neutron
 }
 
-function quantum_plugin_configure_debug_command() {
+function neutron_plugin_configure_debug_command() {
     if _has_ovs_subplugin; then
-        ovs_quantum_plugin_configure_debug_command
+        ovs_neutron_plugin_configure_debug_command
     fi
 }
 
-function quantum_plugin_configure_dhcp_agent() {
-    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager quantum.agent.dhcp_agent.DhcpAgentWithStateReport
+function neutron_plugin_configure_dhcp_agent() {
+    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
 }
 
-function quantum_plugin_configure_l3_agent() {
+function neutron_plugin_configure_l3_agent() {
     if _has_ovs_subplugin; then
-        ovs_quantum_plugin_configure_l3_agent
+        ovs_neutron_plugin_configure_l3_agent
     fi
 }
 
@@ -230,7 +230,7 @@ function _configure_nexus_subplugin() {
         HOST_NAME=$(hostname)
         Q_CISCO_PLUGIN_SWITCH_INFO=([1.1.1.1]=stack:stack:22:${HOST_NAME}:1/10)
     else
-        iniset $cisco_cfg_file CISCO nexus_driver quantum.plugins.cisco.nexus.cisco_nexus_network_driver_v2.CiscoNEXUSDriver
+        iniset $cisco_cfg_file CISCO nexus_driver neutron.plugins.cisco.nexus.cisco_nexus_network_driver_v2.CiscoNEXUSDriver
     fi
 
     # Setup the switch configurations
@@ -267,21 +267,21 @@ function _configure_n1kv_subplugin() {
 
     # Setup the integration bridge by calling the ovs_base
     OVS_BRIDGE=$Q_CISCO_PLUGIN_INTEGRATION_BRIDGE
-    _quantum_ovs_base_setup_bridge $OVS_BRIDGE
+    _neutron_ovs_base_setup_bridge $OVS_BRIDGE
 }
 
-function quantum_plugin_configure_plugin_agent() {
+function neutron_plugin_configure_plugin_agent() {
     if _has_ovs_subplugin; then
-        ovs_quantum_plugin_configure_plugin_agent
+        ovs_neutron_plugin_configure_plugin_agent
     fi
 }
 
-function quantum_plugin_configure_service() {
+function neutron_plugin_configure_service() {
     local subplugin
     local cisco_cfg_file
 
     if _has_ovs_subplugin; then
-        ovs_quantum_plugin_configure_service
+        ovs_neutron_plugin_configure_service
         cisco_cfg_file=/${Q_PLUGIN_EXTRA_CONF_FILES[0]}
     else
         cisco_cfg_file=/$Q_PLUGIN_CONF_FILE
@@ -302,9 +302,9 @@ function quantum_plugin_configure_service() {
     inicomment $cisco_cfg_file CISCO_TEST host
     for subplugin in ${Q_CISCO_PLUGIN_SUBPLUGINS[@]}; do
         case $subplugin in
-            nexus) iniset $cisco_cfg_file CISCO_PLUGINS nexus_plugin quantum.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin;;
-            openvswitch) iniset $cisco_cfg_file CISCO_PLUGINS vswitch_plugin quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2;;
-            n1kv) iniset $cisco_cfg_file CISCO_PLUGINS vswitch_plugin quantum.plugins.cisco.n1kv.n1kv_quantum_plugin.N1kvQuantumPluginV2;;
+            nexus) iniset $cisco_cfg_file CISCO_PLUGINS nexus_plugin neutron.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin;;
+            openvswitch) iniset $cisco_cfg_file CISCO_PLUGINS vswitch_plugin neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2;;
+            n1kv) iniset $cisco_cfg_file CISCO_PLUGINS vswitch_plugin neutron.plugins.cisco.n1kv.n1kv_neutron_plugin.N1kvNeutronPluginV2;;
             *) die $LINENO "Unsupported cisco subplugin: $subplugin";;
         esac
     done
@@ -318,9 +318,9 @@ function quantum_plugin_configure_service() {
     fi
 }
 
-function quantum_plugin_setup_interface_driver() {
+function neutron_plugin_setup_interface_driver() {
     local conf_file=$1
-    iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.OVSInterfaceDriver
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
 }
 
 # Restore xtrace

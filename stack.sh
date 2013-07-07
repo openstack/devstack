@@ -2,7 +2,7 @@
 
 # ``stack.sh`` is an opinionated OpenStack developer installation.  It
 # installs and configures various combinations of **Ceilometer**, **Cinder**,
-# **Glance**, **Heat**, **Horizon**, **Keystone**, **Nova**, **Quantum**
+# **Glance**, **Heat**, **Horizon**, **Keystone**, **Nova**, **Neutron**
 # and **Swift**.
 
 # This script allows you to specify configuration options of what git
@@ -307,7 +307,7 @@ source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
-source $TOP_DIR/lib/quantum
+source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
 
@@ -583,8 +583,8 @@ if is_service_enabled $DATABASE_BACKENDS; then
     install_database
 fi
 
-if is_service_enabled quantum; then
-    install_quantum_agent_packages
+if is_service_enabled neutron; then
+    install_neutron_agent_packages
 fi
 
 
@@ -669,8 +669,8 @@ install_novaclient
 if is_service_enabled swift glance; then
     install_swiftclient
 fi
-if is_service_enabled quantum nova; then
-    install_quantumclient
+if is_service_enabled neutron nova; then
+    install_neutronclient
 fi
 
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
@@ -705,9 +705,9 @@ if is_service_enabled cinder; then
     configure_cinder
 fi
 
-if is_service_enabled quantum; then
-    install_quantum
-    install_quantum_third_party
+if is_service_enabled neutron; then
+    install_neutron
+    install_neutron_third_party
 fi
 
 if is_service_enabled nova; then
@@ -879,7 +879,7 @@ if is_service_enabled key; then
     create_keystone_accounts
     create_nova_accounts
     create_cinder_accounts
-    create_quantum_accounts
+    create_neutron_accounts
 
     # ``keystone_data.sh`` creates services, admin and demo users, and roles.
     ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
@@ -919,22 +919,22 @@ if is_service_enabled g-reg; then
 fi
 
 
-# Quantum
+# Neutron
 # -------
 
-if is_service_enabled quantum; then
-    echo_summary "Configuring Quantum"
+if is_service_enabled neutron; then
+    echo_summary "Configuring Neutron"
 
-    configure_quantum
-    init_quantum
+    configure_neutron
+    init_neutron
 fi
 
-# Some Quantum plugins require network controllers which are not
+# Some Neutron plugins require network controllers which are not
 # a part of the OpenStack project. Configure and start them.
-if is_service_enabled quantum; then
-    configure_quantum_third_party
-    init_quantum_third_party
-    start_quantum_third_party
+if is_service_enabled neutron; then
+    configure_neutron_third_party
+    init_neutron_third_party
+    start_neutron_third_party
 fi
 
 
@@ -989,8 +989,8 @@ if is_service_enabled nova; then
     init_nova
 
     # Additional Nova configuration that is dependent on other services
-    if is_service_enabled quantum; then
-        create_nova_conf_quantum
+    if is_service_enabled neutron; then
+        create_nova_conf_neutron
     elif is_service_enabled n-net; then
         create_nova_conf_nova_network
     fi
@@ -1172,11 +1172,11 @@ if is_service_enabled n-api; then
 fi
 
 if is_service_enabled q-svc; then
-    echo_summary "Starting Quantum"
+    echo_summary "Starting Neutron"
 
-    start_quantum_service_and_check
-    create_quantum_initial_network
-    setup_quantum_debug
+    start_neutron_service_and_check
+    create_neutron_initial_network
+    setup_neutron_debug
 elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     NM_CONF=${NOVA_CONF}
     if is_service_enabled n-cell; then
@@ -1193,8 +1193,8 @@ elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
 
-if is_service_enabled quantum; then
-    start_quantum_agents
+if is_service_enabled neutron; then
+    start_neutron_agents
 fi
 if is_service_enabled nova; then
     echo_summary "Starting Nova"

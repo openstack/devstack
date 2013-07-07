@@ -18,8 +18,8 @@ RYU_OFP_PORT=${RYU_OFP_PORT:-6633}
 # Ryu Applications
 RYU_APPS=${RYU_APPS:-ryu.app.simple_isolation,ryu.app.rest}
 
-# configure_ryu can be called multiple times as quantum_pluing/ryu may call
-# this function for quantum-ryu-agent
+# configure_ryu can be called multiple times as neutron_pluing/ryu may call
+# this function for neutron-ryu-agent
 _RYU_CONFIGURED=${_RYU_CONFIGURED:-False}
 function configure_ryu() {
     if [[ "$_RYU_CONFIGURED" == "False" ]]; then
@@ -44,19 +44,19 @@ wsapi_host=$RYU_API_HOST
 wsapi_port=$RYU_API_PORT
 ofp_listen_host=$RYU_OFP_HOST
 ofp_tcp_listen_port=$RYU_OFP_PORT
-quantum_url=http://$Q_HOST:$Q_PORT
-quantum_admin_username=$Q_ADMIN_USERNAME
-quantum_admin_password=$SERVICE_PASSWORD
-quantum_admin_tenant_name=$SERVICE_TENANT_NAME
-quantum_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0
-quantum_auth_strategy=$Q_AUTH_STRATEGY
-quantum_controller_addr=tcp:$RYU_OFP_HOST:$RYU_OFP_PORT
+neutron_url=http://$Q_HOST:$Q_PORT
+neutron_admin_username=$Q_ADMIN_USERNAME
+neutron_admin_password=$SERVICE_PASSWORD
+neutron_admin_tenant_name=$SERVICE_TENANT_NAME
+neutron_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0
+neutron_auth_strategy=$Q_AUTH_STRATEGY
+neutron_controller_addr=tcp:$RYU_OFP_HOST:$RYU_OFP_PORT
 "}
     echo "${RYU_CONF_CONTENTS}" > $RYU_CONF
 }
 
-# install_ryu can be called multiple times as quantum_pluing/ryu may call
-# this function for quantum-ryu-agent
+# install_ryu can be called multiple times as neutron_pluing/ryu may call
+# this function for neutron-ryu-agent
 # Make this function idempotent and avoid cloning same repo many times
 # with RECLONE=yes
 _RYU_INSTALLED=${_RYU_INSTALLED:-False}

@@ -21,7 +21,7 @@ fi
 # ``disable_service`` functions in ``localrc``.
 # For example, to enable Swift add this to ``localrc``:
 #  enable_service swift
-# In order to enable Quantum (a single node setup) add the following
+# In order to enable Neutron (a single node setup) add the following
 # settings in `` localrc``:
 #  disable_service n-net
 #  enable_service q-svc
@@ -29,7 +29,7 @@ fi
 #  enable_service q-dhcp
 #  enable_service q-l3
 #  enable_service q-meta
-#  enable_service quantum
+#  enable_service neutron
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
 ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,tempest,mysql
@@ -117,13 +117,13 @@ OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
 PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
 PBR_BRANCH=${PBR_BRANCH:-master}
 
-# quantum service
-QUANTUM_REPO=${QUANTUM_REPO:-${GIT_BASE}/openstack/neutron.git}
-QUANTUM_BRANCH=${QUANTUM_BRANCH:-master}
+# neutron service
+NEUTRON_REPO=${NEUTRON_REPO:-${GIT_BASE}/openstack/neutron.git}
+NEUTRON_BRANCH=${NEUTRON_BRANCH:-master}
 
-# quantum client
-QUANTUMCLIENT_REPO=${QUANTUMCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
-QUANTUMCLIENT_BRANCH=${QUANTUMCLIENT_BRANCH:-master}
+# neutron client
+NEUTRONCLIENT_REPO=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
+NEUTRONCLIENT_BRANCH=${NEUTRONCLIENT_BRANCH:-master}
 
 # storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
@@ -177,7 +177,7 @@ case "$VIRT_DRIVER" in
         fi
         ;;
     xenserver)
-        # Xen config common to nova and quantum
+        # Xen config common to nova and neutron
         XENAPI_USER=${XENAPI_USER:-"root"}
         ;;
     *)

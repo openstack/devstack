@@ -1,37 +1,37 @@
-# Quantum Linux Bridge L2 agent
+# Neutron Linux Bridge L2 agent
 # -----------------------------
 
 # Save trace setting
 PLUGIN_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-function is_quantum_ovs_base_plugin() {
+function is_neutron_ovs_base_plugin() {
     # linuxbridge doesn't use OVS
     return 1
 }
 
-function quantum_plugin_create_nova_conf() {
+function neutron_plugin_create_nova_conf() {
     NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
 }
 
-function quantum_plugin_install_agent_packages() {
+function neutron_plugin_install_agent_packages() {
     install_package bridge-utils
 }
 
-function quantum_plugin_configure_debug_command() {
-    iniset $QUANTUM_TEST_CONFIG_FILE DEFAULT external_network_bridge
+function neutron_plugin_configure_debug_command() {
+    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge
 }
 
-function quantum_plugin_configure_dhcp_agent() {
-    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager quantum.agent.dhcp_agent.DhcpAgentWithStateReport
+function neutron_plugin_configure_dhcp_agent() {
+    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
 }
 
-function quantum_plugin_configure_l3_agent() {
+function neutron_plugin_configure_l3_agent() {
     iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge
-    iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager quantum.agent.l3_agent.L3NATAgentWithStateReport
+    iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
 }
 
-function quantum_plugin_configure_plugin_agent() {
+function neutron_plugin_configure_plugin_agent() {
     # Setup physical network interface mappings.  Override
     # ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc`` for more
     # complex physical network configurations.
@@ -42,11 +42,11 @@ function quantum_plugin_configure_plugin_agent() {
         iniset /$Q_PLUGIN_CONF_FILE linux_bridge physical_interface_mappings $LB_INTERFACE_MAPPINGS
     fi
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.linux.iptables_firewall.IptablesFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
     else
-        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.firewall.NoopFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
     fi
-    AGENT_BINARY="$QUANTUM_DIR/bin/quantum-linuxbridge-agent"
+    AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-linuxbridge-agent"
     # Define extra "AGENT" configuration options when q-agt is configured by defining
     # the array ``Q_AGENT_EXTRA_AGENT_OPTS``.
     # For Example: ``Q_AGENT_EXTRA_AGENT_OPTS=(foo=true bar=2)``
@@ -63,12 +63,12 @@ function quantum_plugin_configure_plugin_agent() {
     done
 }
 
-function quantum_plugin_setup_interface_driver() {
+function neutron_plugin_setup_interface_driver() {
     local conf_file=$1
-    iniset $conf_file DEFAULT interface_driver quantum.agent.linux.interface.BridgeInterfaceDriver
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.BridgeInterfaceDriver
 }
 
-function quantum_plugin_check_adv_test_requirements() {
+function neutron_plugin_check_adv_test_requirements() {
     is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
 }
 

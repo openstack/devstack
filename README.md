@@ -104,11 +104,11 @@ If you are enabling `swift3` in `ENABLED_SERVICES` devstack will install the swi
 
 Only Swift proxy server is launched in the screen session all other services are started in background and managed by `swift-init` tool.
 
-# Quantum
+# Neutron
 
 Basic Setup
 
-In order to enable Quantum a single node setup, you'll need the following settings in your `localrc` :
+In order to enable Neutron a single node setup, you'll need the following settings in your `localrc` :
 
     disable_service n-net
     enable_service q-svc
@@ -116,13 +116,13 @@ In order to enable Quantum a single node setup, you'll need the following settin
     enable_service q-dhcp
     enable_service q-l3
     enable_service q-meta
-    enable_service quantum
+    enable_service neutron
     # Optional, to enable tempest configuration as part of devstack
     enable_service tempest
 
 Then run `stack.sh` as normal.
 
-devstack supports adding specific Quantum configuration flags to both the Open vSwitch and LinuxBridge plugin configuration files. To make use of this feature, the following variables are defined and can be configured in your `localrc` file:
+devstack supports adding specific Neutron configuration flags to both the Open vSwitch and LinuxBridge plugin configuration files. To make use of this feature, the following variables are defined and can be configured in your `localrc` file:
 
     Variable Name             Plugin Config File Section Modified
     -------------------------------------------------------------------------------------
@@ -144,7 +144,7 @@ If tempest has been successfully configured, a basic set of smoke tests can be r
 
 # Multi-Node Setup
 
-A more interesting setup involves running multiple compute nodes, with Quantum networks connecting VMs on different compute nodes.
+A more interesting setup involves running multiple compute nodes, with Neutron networks connecting VMs on different compute nodes.
 You should run at least one "controller node", which should have a `stackrc` that includes at least:
 
     disable_service n-net
@@ -153,7 +153,7 @@ You should run at least one "controller node", which should have a `stackrc` tha
     enable_service q-dhcp
     enable_service q-l3
     enable_service q-meta
-    enable_service quantum
+    enable_service neutron
 
 You likely want to change your `localrc` to run a scheduler that will balance VMs across hosts:
 
@@ -161,7 +161,7 @@ You likely want to change your `localrc` to run a scheduler that will balance VM
 
 You can then run many compute nodes, each of which should have a `stackrc` which includes the following, with the IP address of the above controller node:
 
-    ENABLED_SERVICES=n-cpu,rabbit,g-api,quantum,q-agt
+    ENABLED_SERVICES=n-cpu,rabbit,g-api,neutron,q-agt
     SERVICE_HOST=[IP of controller node]
     MYSQL_HOST=$SERVICE_HOST
     RABBIT_HOST=$SERVICE_HOST

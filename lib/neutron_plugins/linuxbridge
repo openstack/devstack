@@ -1,18 +1,18 @@
-# Quantum Linux Bridge plugin
+# Neutron Linux Bridge plugin
 # ---------------------------
 
 # Save trace setting
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-function quantum_plugin_configure_common() {
-    Q_PLUGIN_CONF_PATH=etc/quantum/plugins/linuxbridge
+function neutron_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/linuxbridge
     Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
-    Q_DB_NAME="quantum_linux_bridge"
-    Q_PLUGIN_CLASS="quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2"
+    Q_DB_NAME="neutron_linux_bridge"
+    Q_PLUGIN_CLASS="neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2"
 }
 
-function quantum_plugin_configure_service() {
+function neutron_plugin_configure_service() {
     if [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE vlans tenant_network_type vlan
     else
@@ -31,9 +31,9 @@ function quantum_plugin_configure_service() {
         iniset /$Q_PLUGIN_CONF_FILE vlans network_vlan_ranges $LB_VLAN_RANGES
     fi
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.linux.iptables_firewall.IptablesFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
     else
-        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver quantum.agent.firewall.NoopFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
     fi
 
     # Define extra "LINUX_BRIDGE" configuration options when q-svc is configured by defining
@@ -45,7 +45,7 @@ function quantum_plugin_configure_service() {
     done
 }
 
-function has_quantum_plugin_security_group() {
+function has_neutron_plugin_security_group() {
     # 0 means True here
     return 0
 }

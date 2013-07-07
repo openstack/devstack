@@ -81,7 +81,7 @@ if [ "$VIRT_DRIVER" = 'xenserver' ]; then
     GUEST_INTERFACE_DEFAULT=eth1
     # Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
     FLAT_NETWORK_BRIDGE_DEFAULT=$(sed -e 's/.* flat_network_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
-    if is_service_enabled quantum; then
+    if is_service_enabled neutron; then
         XEN_INTEGRATION_BRIDGE=$(sed -e 's/.* xen_integration_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
     fi
 elif [ "$VIRT_DRIVER" = 'baremetal' ]; then
@@ -281,7 +281,7 @@ function configure_nova() {
         fi
 
         if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
-            if is_service_enabled quantum && is_quantum_ovs_base_plugin && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF; then
+            if is_service_enabled neutron && is_neutron_ovs_base_plugin && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF; then
                 # Add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
                 cat <<EOF | sudo tee -a $QEMU_CONF
 cgroup_device_acl = [

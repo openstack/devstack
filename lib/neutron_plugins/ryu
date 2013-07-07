@@ -1,0 +1,80 @@
+# Neutron Ryu plugin
+# ------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+source $TOP_DIR/lib/neutron_plugins/ovs_base
+source $TOP_DIR/lib/neutron_thirdparty/ryu      # for configuration value
+
+function neutron_plugin_create_nova_conf() {
+    _neutron_ovs_base_configure_nova_vif_driver
+    iniset $NOVA_CONF DEFAULT libvirt_ovs_integration_bridge "$OVS_BRIDGE"
+}
+
+function neutron_plugin_install_agent_packages() {
+    _neutron_ovs_base_install_agent_packages
+
+    # neutron_ryu_agent requires ryu module
+    install_package $(get_packages "ryu")
+    install_ryu
+    configure_ryu
+}
+
+function neutron_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/ryu
+    Q_PLUGIN_CONF_FILENAME=ryu.ini
+    Q_DB_NAME="ovs_neutron"
+    Q_PLUGIN_CLASS="neutron.plugins.ryu.ryu_neutron_plugin.RyuNeutronPluginV2"
+}
+
+function neutron_plugin_configure_debug_command() {
+    _neutron_ovs_base_configure_debug_command
+    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT ryu_api_host $RYU_API_HOST:$RYU_API_PORT
+}
+
+function neutron_plugin_configure_dhcp_agent() {
+    iniset $Q_DHCP_CONF_FILE DEFAULT ryu_api_host $RYU_API_HOST:$RYU_API_PORT
+}
+
+function neutron_plugin_configure_l3_agent() {
+    iniset $Q_L3_CONF_FILE DEFAULT ryu_api_host $RYU_API_HOST:$RYU_API_PORT
+    _neutron_ovs_base_configure_l3_agent
+}
+
+function neutron_plugin_configure_plugin_agent() {
+    # Set up integration bridge
+    _neutron_ovs_base_setup_bridge $OVS_BRIDGE
+    if [ -n "$RYU_INTERNAL_INTERFACE" ]; then
+        sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_BRIDGE $RYU_INTERNAL_INTERFACE
+    fi
+    iniset /$Q_PLUGIN_CONF_FILE ovs integration_bridge $OVS_BRIDGE
+    AGENT_BINARY="$NEUTRON_DIR/neutron/plugins/ryu/agent/ryu_neutron_agent.py"
+
+    _neutron_ovs_base_configure_firewall_driver
+}
+
+function neutron_plugin_configure_service() {
+    iniset /$Q_PLUGIN_CONF_FILE ovs openflow_rest_api $RYU_API_HOST:$RYU_API_PORT
+
+    _neutron_ovs_base_configure_firewall_driver
+}
+
+function neutron_plugin_setup_interface_driver() {
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+    iniset $conf_file DEFAULT ovs_use_veth True
+}
+
+function has_neutron_plugin_security_group() {
+    # 0 means True here
+    return 0
+}
+
+function neutron_plugin_check_adv_test_requirements() {
+    is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
+}
+
+# Restore xtrace
+$MY_XTRACE

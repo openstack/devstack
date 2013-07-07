@@ -1,4 +1,4 @@
-# Quantum Modular Layer 2 plugin
+# Neutron Modular Layer 2 plugin
 # ------------------------------
 
 # Save trace setting
@@ -7,16 +7,16 @@ set +o xtrace
 
 # Default openvswitch L2 agent
 Q_AGENT=${Q_AGENT:-openvswitch}
-source $TOP_DIR/lib/quantum_plugins/${Q_AGENT}_agent
+source $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent
 
-function quantum_plugin_configure_common() {
-    Q_PLUGIN_CONF_PATH=etc/quantum/plugins/ml2
+function neutron_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/ml2
     Q_PLUGIN_CONF_FILENAME=ml2_conf.ini
-    Q_DB_NAME="quantum_ml2"
-    Q_PLUGIN_CLASS="quantum.plugins.ml2.plugin.Ml2Plugin"
+    Q_DB_NAME="neutron_ml2"
+    Q_PLUGIN_CLASS="neutron.plugins.ml2.plugin.Ml2Plugin"
 }
 
-function quantum_plugin_configure_service() {
+function neutron_plugin_configure_service() {
     if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ml2 tenant_network_types gre
         iniset /$Q_PLUGIN_CONF_FILE ml2_type_gre tunnel_id_ranges $TENANT_TUNNEL_RANGES
@@ -40,21 +40,21 @@ function quantum_plugin_configure_service() {
     fi
 
     # REVISIT(rkukura): Setting firewall_driver here for
-    # quantum.agent.securitygroups_rpc.is_firewall_enabled() which is
+    # neutron.agent.securitygroups_rpc.is_firewall_enabled() which is
     # used in the server, in case no L2 agent is configured on the
     # server's node. If an L2 agent is configured, this will get
     # overridden with the correct driver. The ml2 plugin should
     # instead use its own config variable to indicate whether security
     # groups is enabled, and that will need to be set here instead.
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.not.a.real.FirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver neutron.agent.not.a.real.FirewallDriver
     else
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver quantum.agent.firewall.NoopFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver neutron.agent.firewall.NoopFirewallDriver
     fi
 
 }
 
-function has_quantum_plugin_security_group() {
+function has_neutron_plugin_security_group() {
     return 0
 }
 
