@@ -1087,12 +1087,13 @@ function setup_develop() {
     else
         SUDO_CMD="sudo"
     fi
+    for reqs_file in $1/requirements.txt $1/tools/pip-requires ; do
+        if [ -f $reqs_file ] ; then
+            pip_install -r $reqs_file
+        fi
+    done
     (cd $1; \
         python setup.py egg_info; \
-        raw_links=$(awk '/^.+/ {print "-f " $1}' *.egg-info/dependency_links.txt); \
-        depend_links=$(echo $raw_links | xargs); \
-        require_file=$([ ! -r *-info/requires.txt ] || echo "-r *-info/requires.txt"); \
-        pip_install $require_file $depend_links; \
         $SUDO_CMD \
             HTTP_PROXY=$http_proxy \
             HTTPS_PROXY=$https_proxy \
