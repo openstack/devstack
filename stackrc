@@ -37,6 +37,9 @@ ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-s
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=ec2,osapi_compute,metadata
 
+# Configure Identity API version: 2.0, 3
+IDENTITY_API_VERSION=2.0
+
 # Whether to use 'dev mode' for screen windows. Dev mode works by
 # stuffing text into the screen windows so that a developer can use
 # ctrl-c, up-arrow, enter to restart the service. Starting services
