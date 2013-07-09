@@ -199,13 +199,11 @@ if [ -z "$templateuuid" ]; then
     # Update the template
     $THIS_DIR/scripts/install_ubuntu_template.sh $PRESEED_URL
 
-    # create a new VM with the given template
-    # creating the correct VIFs and metadata
+    # create a new VM from the given template with eth0 attached to the given
+    # network
     $THIS_DIR/scripts/install-os-vpx.sh \
         -t "$UBUNTU_INST_TEMPLATE_NAME" \
-        -v "$VM_BRIDGE_OR_NET_NAME" \
-        -m "$MGT_BRIDGE_OR_NET_NAME" \
-        -p "$PUB_BRIDGE_OR_NET_NAME" \
+        -n "$UBUNTU_INST_BRIDGE_OR_NET_NAME" \
         -l "$GUEST_NAME" \
         -r "$OSDOMU_MEM_MB"
 

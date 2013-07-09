@@ -60,8 +60,8 @@ PUB_IP=${PUB_IP:-172.24.4.10}
 PUB_NETMASK=${PUB_NETMASK:-255.255.255.0}
 
 # Ubuntu install settings
-UBUNTU_INST_RELEASE="oneiric"
-UBUNTU_INST_TEMPLATE_NAME="Ubuntu 11.10 (64-bit) for DevStack"
+UBUNTU_INST_RELEASE="precise"
+UBUNTU_INST_TEMPLATE_NAME="Ubuntu 12.04 (64-bit) for DevStack"
 # For 12.04 use "precise" and update template name
 # However, for 12.04, you should be using
 # XenServer 6.1 and later or XCP 1.6 or later
@@ -72,11 +72,8 @@ UBUNTU_INST_HTTP_DIRECTORY="/ubuntu"
 UBUNTU_INST_HTTP_PROXY=""
 UBUNTU_INST_LOCALE="en_US"
 UBUNTU_INST_KEYBOARD="us"
-# network configuration for ubuntu netinstall.
-# TODO(matelakat): get rid of legacy network interfaces
-# specify "eth2" to use the management network
-# specify "eth3" to use the public network
-UBUNTU_INST_IFACE="eth2"
+# network configuration for ubuntu netinstall
+UBUNTU_INST_BRIDGE_OR_NET_NAME=${UBUNTU_INST_BRIDGE_OR_NET_NAME:-"$MGT_BRIDGE_OR_NET_NAME"}
 UBUNTU_INST_IP="dhcp"
 UBUNTU_INST_NAMESERVERS=""
 UBUNTU_INST_NETMASK=""
