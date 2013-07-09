@@ -120,6 +120,10 @@ function configure_keystone() {
         iniset $KEYSTONE_CONF identity driver "keystone.identity.backends.ldap.Identity"
     fi
 
+    # Set the URL advertised in the ``versions`` structure returned by the '/' route
+    iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(public_port)s/"
+    iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(admin_port)s/"
+
     if is_service_enabled tls-proxy; then
         # Set the service ports for a proxy to take the originals
         iniset $KEYSTONE_CONF DEFAULT public_port $KEYSTONE_SERVICE_PORT_INT
