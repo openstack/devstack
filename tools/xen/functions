@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function xapi_plugin_location {
-    for PLUGIN_DIR in "/etc/xapi.d/plugins/" "/usr/lib/xcp/plugins/"; do
+    for PLUGIN_DIR in "/etc/xapi.d/plugins/" "/usr/lib/xcp/plugins/" "/usr/lib/xapi/plugins"; do
         if [ -d $PLUGIN_DIR ]; then
             echo $PLUGIN_DIR
             return 0
