@@ -40,11 +40,11 @@ function extract_remote_zipball {
     local LOCAL_ZIPBALL=$(mktemp)
     local EXTRACTED_FILES=$(mktemp -d)
 
-    (
+    {
         wget -nv $ZIPBALL_URL -O $LOCAL_ZIPBALL --no-check-certificate
         unzip -q -o $LOCAL_ZIPBALL -d $EXTRACTED_FILES
         rm -f $LOCAL_ZIPBALL
-    ) >&2
+    } >&2
 
     echo "$EXTRACTED_FILES"
 }
