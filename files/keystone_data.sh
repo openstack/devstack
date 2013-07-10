@@ -5,7 +5,6 @@
 # Tenant               User       Roles
 # ------------------------------------------------------------------
 # service              glance     admin
-# service              swift      service        # if enabled
 # service              heat       service        # if enabled
 # service              ceilometer admin          # if enabled
 # Tempest Only:
@@ -124,32 +123,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     fi
 fi
 
-# Swift
-
-if [[ "$ENABLED_SERVICES" =~ "swift" || "$ENABLED_SERVICES" =~ "s-proxy" ]]; then
-    SWIFT_USER=$(get_id keystone user-create \
-        --name=swift \
-        --pass="$SERVICE_PASSWORD" \
-        --tenant_id $SERVICE_TENANT \
-        --email=swift@example.com)
-    keystone user-role-add \
-        --tenant_id $SERVICE_TENANT \
-        --user_id $SWIFT_USER \
-        --role_id $SERVICE_ROLE
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        SWIFT_SERVICE=$(get_id keystone service-create \
-            --name=swift \
-            --type="object-store" \
-            --description="Swift Service")
-        keystone endpoint-create \
-            --region RegionOne \
-            --service_id $SWIFT_SERVICE \
-            --publicurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
-            --adminurl "http://$SERVICE_HOST:8080" \
-            --internalurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
-    fi
-fi
-
+# Ceilometer
 if [[ "$ENABLED_SERVICES" =~ "ceilometer" ]]; then
     CEILOMETER_USER=$(get_id keystone user-create --name=ceilometer \
                                               --pass="$SERVICE_PASSWORD" \
