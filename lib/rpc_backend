@@ -172,7 +172,7 @@ function iniset_rpc_backend() {
         iniset $file matchmaker_redis host $MATCHMAKER_REDIS_HOST
     elif is_service_enabled qpid || [ -n "$QPID_HOST" ]; then
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_qpid
-        iniset $file $section qpid_hostname $QPID_HOST
+        iniset $file $section qpid_hostname ${QPID_HOST:-$SERVICE_HOST}
         if is_ubuntu; then
             QPID_PASSWORD=`sudo strings /etc/qpid/qpidd.sasldb | grep -B1 admin | head -1`
             iniset $file $section qpid_password $QPID_PASSWORD
