@@ -1,0 +1,82 @@
+# Neutron MidoNet plugin
+# ----------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+function is_neutron_ovs_base_plugin() {
+    # MidoNet does not use l3-agent
+    # 0 means True here
+    return 1
+}
+
+function neutron_plugin_create_nova_conf() {
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"midonet.nova.virt.libvirt.vif.MidonetVifDriver"}
+}
+
+function neutron_plugin_install_agent_packages() {
+    :
+}
+
+function neutron_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/midonet
+    Q_PLUGIN_CONF_FILENAME=midonet.ini
+    Q_DB_NAME="neutron_midonet"
+    Q_PLUGIN_CLASS="neutron.plugins.midonet.plugin.MidonetPluginV2"
+}
+
+function neutron_plugin_configure_debug_command() {
+    :
+}
+
+function neutron_plugin_configure_dhcp_agent() {
+   die $LINENO "q-dhcp must not be executed with MidoNet plugin!"
+}
+
+function neutron_plugin_configure_l3_agent() {
+   die $LINENO "q-l3 must not be executed with MidoNet plugin!"
+}
+
+function neutron_plugin_configure_plugin_agent() {
+   die $LINENO "q-agt must not be executed with MidoNet plugin!"
+}
+
+function neutron_plugin_configure_service() {
+    if [[ "$MIDONET_API_URI" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE MIDONET midonet_uri $MIDONET_API_URI
+    fi
+    if [[ "$MIDONET_USERNAME" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE MIDONET username $MIDONET_USERNAME
+    fi
+    if [[ "$MIDONET_PASSWORD" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE MIDONET password $MIDONET_PASSWORD
+    fi
+    if [[ "$MIDONET_PROJECT_ID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE MIDONET project_id $MIDONET_PROJECT_ID
+    fi
+    if [[ "$MIDONET_PROVIDER_ROUTER_ID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE MIDONET provider_router_id $MIDONET_PROVIDER_ROUTER_ID
+    fi
+    if [[ "$MIDONET_METADATA_ROUTER_ID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE MIDONET metadata_router_id $MIDONET_METADATA_ROUTER_ID
+    fi
+}
+
+function neutron_plugin_setup_interface_driver() {
+    # May change in the future
+    :
+}
+
+function has_neutron_plugin_security_group() {
+    # 0 means True here
+    return 0
+}
+
+function neutron_plugin_check_adv_test_requirements() {
+    # 0 means True here
+    return 1
+}
+
+# Restore xtrace
+$MY_XTRACE
