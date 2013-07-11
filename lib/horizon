@@ -106,7 +106,7 @@ function init_horizon() {
 
     # enable loadbalancer dashboard in case service is enabled
     if is_service_enabled q-lbaas; then
-        _horizon_config_set $local_settings OPENSTACK_QUANTUM_NETWORK enable_lb True
+        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_lb True
     fi
 
     # Initialize the horizon database (it stores sessions and notices shown to
