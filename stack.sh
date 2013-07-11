@@ -328,8 +328,8 @@ NOVNC_DIR=$DEST/noVNC
 SWIFT_DIR=$DEST/swift
 SWIFT3_DIR=$DEST/swift3
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
-QUANTUM_DIR=$DEST/quantum
-QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
+QUANTUM_DIR=$DEST/neutron
+QUANTUM_CLIENT_DIR=$DEST/python-neutronclient
 
 # Default Quantum Plugin
 Q_PLUGIN=${Q_PLUGIN:-openvswitch}
