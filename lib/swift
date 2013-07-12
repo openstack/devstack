@@ -271,6 +271,34 @@ EOF
         sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
     done
 
+    # Set new accounts in tempauth to match keystone tenant/user (to make testing easier)
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swifttenanttest1_swiftusertest1 "testing .admin"
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swifttenanttest2_swiftusertest2 "testing2 .admin"
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swifttenanttest1_swiftusertest3 "testing3 .admin"
+
+    testfile=${SWIFT_CONF_DIR}/test.conf
+    cp ${SWIFT_DIR}/test/sample.conf ${testfile}
+
+    # Set accounts for functional tests
+    iniset ${testfile} func_test account swifttenanttest1
+    iniset ${testfile} func_test username swiftusertest1
+    iniset ${testfile} func_test username3 swiftusertest3
+    iniset ${testfile} func_test account2 swifttenanttest2
+    iniset ${testfile} func_test username2 swiftusertest2
+
+    # Set maximum file size to 10000 bytes or our vm will fill up quickly with
+    # the default 5gb size.
+    iniuncomment ${testfile} func_test max_file_size
+    iniset ${testfile} func_test max_file_size 10000
+
+
+    if is_service_enabled key;then
+        iniuncomment ${testfile} func_test auth_version
+        iniset ${testfile} func_test auth_host ${KEYSTONE_SERVICE_HOST}
+        iniset ${testfile} func_test auth_port ${KEYSTONE_AUTH_PORT}
+        iniset ${testfile} func_test auth_prefix /v2.0/
+    fi
+
     swift_log_dir=${SWIFT_DATA_DIR}/logs
     rm -rf ${swift_log_dir}
     mkdir -p ${swift_log_dir}/hourly
@@ -328,6 +356,29 @@ function create_swift_disk() {
         sudo install -o ${USER} -g $USER_GROUP -d $node_device
         sudo chown -R $USER: ${node}
     done
+}
+# create_swift_accounts() - Set up common required swift accounts for tests we
+# are all attach names since we want to make it compatible with tempauth which
+# use underscores for separators.
+
+# Tenant               User       Roles
+# ------------------------------------------------------------------
+# swifttenanttest1   swiftusertest1     admin
+# swifttenanttest1   swiftusertest3     anotherrole
+# swifttenanttest2   swiftusertest2     admin
+
+# Migrated from keystone_data.sh
+function create_swift_accounts() {
+    SWIFT_TENANT_TEST1=$(keystone tenant-create --name=swifttenanttest1 | grep " id " | get_field 2)
+    SWIFT_USER_TEST1=$(keystone user-create --name=swiftusertest1 --pass=testing --email=test@example.com | grep " id " | get_field 2)
+    keystone user-role-add --user_id $SWIFT_USER_TEST1 --role_id $ADMIN_ROLE --tenant_id $SWIFT_TENANT_TEST1
+
+    SWIFT_USER_TEST3=$(keystone user-create --name=swiftusertest3 --pass=testing3 --email=test3@example.com | grep " id " | get_field 2)
+    keystone user-role-add --user_id $SWIFT_USER_TEST3 --role_id $ANOTHER_ROLE --tenant_id $SWIFT_TENANT_TEST1
+
+    SWIFT_TENANT_TEST2=$(keystone tenant-create --name=swifttenanttest2 | grep " id " | get_field 2)
+    SWIFT_USER_TEST2=$(keystone user-create --name=swiftusertest2 --pass=testing2 --email=test2@example.com | grep " id " | get_field 2)
+    keystone user-role-add --user_id $SWIFT_USER_TEST2 --role_id $ADMIN_ROLE --tenant_id $SWIFT_TENANT_TEST2
 }
 
 # init_swift() - Initialize rings
