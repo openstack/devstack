@@ -1080,7 +1080,9 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF DEFAULT vmwareapi_host_username "$VMWAREAPI_USER"
         iniset $NOVA_CONF DEFAULT vmwareapi_host_password "$VMWAREAPI_PASSWORD"
         iniset $NOVA_CONF DEFAULT vmwareapi_cluster_name "$VMWAREAPI_CLUSTER"
-
+        if is_service_enabled neutron; then
+            iniset $NOVA_CONF vmware integration_bridge $OVS_BRIDGE
+        fi
 
     # fake
     # ----
