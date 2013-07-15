@@ -474,9 +474,13 @@ function start_cinder() {
     fi
 
     screen_it c-api "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
-    screen_it c-vol "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
     screen_it c-sch "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
     screen_it c-bak "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-backup --config-file $CINDER_CONF"
+    screen_it c-vol "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
+
+    # NOTE(jdg): For cinder, startup order matters.  To ensure that repor_capabilities is received
+    # by the scheduler start the cinder-volume service last (or restart it) after the scheduler
+    # has started.  This is a quick fix for lp bug/1189595
 
     # Start proxies if enabled
     if is_service_enabled c-api && is_service_enabled tls-proxy; then
