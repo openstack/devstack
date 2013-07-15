@@ -50,6 +50,15 @@ xe_min()
 
 cd $THIS_DIR
 
+# Die if multiple hosts listed
+if have_multiple_hosts; then
+    cat >&2 << EOF
+ERROR: multiple hosts found. This might mean that the XenServer is a member
+of a pool - Exiting.
+EOF
+    exit 1
+fi
+
 # Install plugins
 
 ## Nova plugins
@@ -256,7 +265,7 @@ $THIS_DIR/build_xva.sh "$GUEST_NAME"
 # is created by XenServer). This is required for Neutron. Also pass that as a
 # kernel parameter for DomU
 if is_service_enabled neutron; then
-    add_interface "$GUEST_NAME" "$XEN_INT_BRIDGE_OR_NET_NAME" $XEN_INT_DEV_NR
+    attach_network "$XEN_INT_BRIDGE_OR_NET_NAME"
 
     XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
     append_kernel_cmdline \

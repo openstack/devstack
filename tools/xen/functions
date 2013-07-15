@@ -250,3 +250,21 @@ function destroy_all_vifs_of()
     done
     unset IFS
 }
+
+function have_multiple_hosts() {
+    xe host-list --minimal | grep -q ","
+}
+
+function attach_network() {
+    local bridge_or_net_name
+
+    bridge_or_net_name="$1"
+
+    local net
+    local host
+
+    net=$(_network_uuid "$bridge_or_net_name")
+    host=$(xe host-list --minimal)
+
+    xe network-attach uuid=$net host-uuid=$host
+}
