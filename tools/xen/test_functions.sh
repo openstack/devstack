@@ -173,6 +173,15 @@ EOF
     [ "$RESULT" = "tempdir" ]
 }
 
+function test_extract_remote_zipball_wget_fail {
+    set +e
+
+    local IGNORE
+    IGNORE=$(. mocks && extract_remote_zipball "failurl")
+
+    assert_previous_command_failed
+}
+
 function test_find_nova_plugins {
     local tmpdir=$(mktemp -d)
 
