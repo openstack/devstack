@@ -22,7 +22,7 @@ STACK_USER="$3"
 # Install basics
 apt-get update
 apt-get install -y cracklib-runtime curl wget ssh openssh-server tcpdump ethtool
-apt-get install -y curl wget ssh openssh-server python-pip git vim-nox sudo
+apt-get install -y curl wget ssh openssh-server python-pip git vim-nox sudo python-netaddr
 pip install xenapi
 
 # Install XenServer guest utilities
