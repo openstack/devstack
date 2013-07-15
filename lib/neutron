@@ -614,6 +614,14 @@ function _configure_neutron_service() {
     iniset $NEUTRON_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
     _neutron_setup_keystone $NEUTRON_CONF keystone_authtoken
 
+    # Define extra "DEFAULT" configuration options when q-svc is configured by
+    # defining the array ``Q_SRV_EXTRA_DEFAULT_OPTS``.
+    # For Example: ``Q_SRV_EXTRA_DEFAULT_OPTS=(foo=true bar=2)``
+    for I in "${Q_SRV_EXTRA_DEFAULT_OPTS[@]}"; do
+        # Replace the first '=' with ' ' for iniset syntax
+        iniset $NEUTRON_CONF DEFAULT ${I/=/ }
+    done
+
     # Configure plugin
     neutron_plugin_configure_service
 }

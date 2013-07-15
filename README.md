@@ -122,13 +122,14 @@ In order to enable Neutron a single node setup, you'll need the following settin
 
 Then run `stack.sh` as normal.
 
-devstack supports adding specific Neutron configuration flags to both the Open vSwitch and LinuxBridge plugin configuration files. To make use of this feature, the following variables are defined and can be configured in your `localrc` file:
+devstack supports adding specific Neutron configuration flags to the service, Open vSwitch plugin and LinuxBridge plugin configuration files. To make use of this feature, the following variables are defined and can be configured in your `localrc` file:
 
-    Variable Name             Plugin Config File Section Modified
+    Variable Name             Config File  Section Modified
     -------------------------------------------------------------------------------------
-    Q_SRV_EXTRA_OPTS          `OVS` (for Open Vswitch) or `LINUX_BRIDGE` (for LinuxBridge)
-    Q_AGENT_EXTRA_AGENT_OPTS  AGENT
-    Q_AGENT_EXTRA_SRV_OPTS    `OVS` (for Open Vswitch) or `LINUX_BRIDGE` (for LinuxBridge)
+    Q_SRV_EXTRA_OPTS          Plugin       `OVS` (for Open Vswitch) or `LINUX_BRIDGE` (for LinuxBridge)
+    Q_AGENT_EXTRA_AGENT_OPTS  Plugin       AGENT
+    Q_AGENT_EXTRA_SRV_OPTS    Plugin       `OVS` (for Open Vswitch) or `LINUX_BRIDGE` (for LinuxBridge)
+    Q_SRV_EXTRA_DEFAULT_OPTS  Service      DEFAULT
 
 An example of using the variables in your `localrc` is below:
 
