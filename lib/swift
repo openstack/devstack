@@ -357,18 +357,39 @@ function create_swift_disk() {
         sudo chown -R $USER: ${node}
     done
 }
-# create_swift_accounts() - Set up common required swift accounts for tests we
-# are all attach names since we want to make it compatible with tempauth which
-# use underscores for separators.
+# create_swift_accounts() - Set up standard swift accounts and extra
+# one for tests we do this by attaching all words in the account name
+# since we want to make it compatible with tempauth which use
+# underscores for separators.
 
 # Tenant               User       Roles
 # ------------------------------------------------------------------
+# service            swift              service
 # swifttenanttest1   swiftusertest1     admin
 # swifttenanttest1   swiftusertest3     anotherrole
 # swifttenanttest2   swiftusertest2     admin
 
-# Migrated from keystone_data.sh
 function create_swift_accounts() {
+    KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
+
+    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+
+    SWIFT_USER=$(keystone user-create --name=swift --pass="$SERVICE_PASSWORD" \
+        --tenant_id $SERVICE_TENANT --email=swift@example.com | grep " id " | get_field 2)
+    keystone user-role-add --tenant_id $SERVICE_TENANT --user_id $SWIFT_USER --role_id $ADMIN_ROLE
+
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        SWIFT_SERVICE=$(keystone service-create --name=swift --type="object-store" \
+            --description="Swift Service" | grep " id " | get_field 2)
+        keystone endpoint-create \
+            --region RegionOne \
+            --service_id $SWIFT_SERVICE \
+            --publicurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
+            --adminurl "http://$SERVICE_HOST:8080" \
+            --internalurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
+    fi
+
     SWIFT_TENANT_TEST1=$(keystone tenant-create --name=swifttenanttest1 | grep " id " | get_field 2)
     SWIFT_USER_TEST1=$(keystone user-create --name=swiftusertest1 --pass=testing --email=test@example.com | grep " id " | get_field 2)
     keystone user-role-add --user_id $SWIFT_USER_TEST1 --role_id $ADMIN_ROLE --tenant_id $SWIFT_TENANT_TEST1
