@@ -81,10 +81,9 @@ VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
 # Functions
 # ---------
-# _cleanup_lvm removes all cinder volumes and the backing file of the
-# volume group used by cinder
-# _cleanup_lvm $VOLUME_GROUP $VOLUME_NAME_PREFIX
-function _cleanup_lvm() {
+# _clean_lvm_lv removes all cinder LVM volumes
+# _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
+function _clean_lvm_lv() {
     local vg=$1
     local lv_prefix=$2
 
@@ -95,6 +94,13 @@ function _cleanup_lvm() {
             sudo lvremove -f $vg/$lv
         fi
     done
+}
+
+# _clean_lvm_backing_file() removes the backing file of the
+# volume group used by cinder
+# _clean_lvm_backing_file() $VOLUME_GROUP
+function _clean_lvm_backing_file() {
+    local vg=$1
 
     # if there is no logical volume left, it's safe to attempt a cleanup
     # of the backing file
@@ -145,10 +151,12 @@ function cleanup_cinder() {
     fi
 
     # Campsite rule: leave behind a volume group at least as clean as we found it
-    _cleanup_lvm $VOLUME_GROUP $VOLUME_NAME_PREFIX
+    _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
+    _clean_lvm_backing_file $VOLUME_GROUP
 
     if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
-        _cleanup_lvm $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
+        _clean_lvm_lv $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
+        _clean_lvm_backing_file $VOLUME_GROUP2
     fi
 }
 
@@ -412,9 +420,9 @@ function init_cinder() {
             # Remove iscsi targets
             sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
             # Start with a clean volume group
-            _clean_volume_group $VOLUME_GROUP $VOLUME_NAME_PREFIX
+            _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
             if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
-                _clean_volume_group $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
+                _clean_lvm_lv $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
             fi
         fi
     fi
