@@ -1,0 +1,29 @@
+# Neutron VPN plugin
+# ---------------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+VPN_BINARY="$NEUTRON_DIR/bin/neutron-vpn-agent"
+VPN_PLUGIN="neutron.services.vpn.plugin.VPNDriverPlugin"
+
+function neutron_vpn_install_agent_packages() {
+    install_package strongswan
+}
+
+function neutron_vpn_configure_common() {
+    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
+        Q_SERVICE_PLUGIN_CLASSES=$VPN_PLUGIN
+    else
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$VPN_PLUGIN"
+    fi
+}
+
+function neutron_vpn_configure_agent() {
+    AGENT_L3_BINARY="$NEUTRON_DIR/bin/neutron-vpn-agent"
+}
+
+# Restore xtrace
+$MY_XTRACE
