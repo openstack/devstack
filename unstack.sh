@@ -111,3 +111,5 @@ if is_service_enabled neutron; then
     stop_neutron_third_party
     cleanup_neutron
 fi
+
+cleanup_tmp

@@ -913,13 +913,34 @@ function pip_install {
         PIP_MIRROR_OPT="--use-mirrors"
     fi
 
+    # pip < 1.4 has a bug where it will use an already existing build
+    # directory unconditionally.  Say an earlier component installs
+    # foo v1.1; pip will have built foo's source in
+    # /tmp/$USER-pip-build.  Even if a later component specifies foo <
+    # 1.1, the existing extracted build will be used and cause
+    # confusing errors.  By creating unique build directories we avoid
+    # this problem. See
+    #  https://github.com/pypa/pip/issues/709
+    local pip_build_tmp=$(mktemp --tmpdir -d pip-build.XXXXX)
+
     $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
         NO_PROXY=$no_proxy \
-        $CMD_PIP install $PIP_MIRROR_OPT $@
+        $CMD_PIP install --build=${pip_build_tmp} \
+        $PIP_MIRROR_OPT $@ \
+        && $SUDO_PIP rm -rf ${pip_build_tmp}
 }
 
+
+# Cleanup anything from /tmp on unstack
+# clean_tmp
+function cleanup_tmp {
+    local tmp_dir=${TMPDIR:-/tmp}
+
+    # see comments in pip_install
+    sudo rm -rf ${tmp_dir}/pip-build.*
+}
 
 # Service wrapper to restart services
 # restart_service service-name
