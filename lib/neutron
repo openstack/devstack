@@ -207,6 +207,10 @@ source $TOP_DIR/lib/neutron_plugins/services/loadbalancer
 # Hardcoding for 1 service plugin for now
 source $TOP_DIR/lib/neutron_plugins/services/vpn
 
+# Firewall Service Plugin functions
+# --------------------------------
+source $TOP_DIR/lib/neutron_plugins/services/firewall
+
 # Use security group or not
 if has_neutron_plugin_security_group; then
     Q_USE_SECGROUP=${Q_USE_SECGROUP:-True}
@@ -229,6 +233,9 @@ function configure_neutron() {
     fi
     if is_service_enabled q-vpn; then
         _configure_neutron_vpn
+    fi
+    if is_service_enabled q-fwaas; then
+        _configure_neutron_fwaas
     fi
     if is_service_enabled q-svc; then
         _configure_neutron_service
@@ -418,11 +425,17 @@ function start_neutron_agents() {
     screen_it q-agt "cd $NEUTRON_DIR && python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
     screen_it q-dhcp "cd $NEUTRON_DIR && python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
-    if is_service_enabled q-vpn; then
-        screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY --config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
-    else
-        screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY --config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
+    L3_CONF_FILES="--config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
+
+    if is_service_enabled q-fwaas; then
+        L3_CONF_FILES="$L3_CONF_FILES --config-file $Q_FWAAS_CONF_FILE"
     fi
+    if is_service_enabled q-vpn; then
+        screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY $L3_CONF_FILES"
+    else
+        screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY $L3_CONF_FILES"
+    fi
+
     screen_it q-meta "cd $NEUTRON_DIR && python $AGENT_META_BINARY --config-file $NEUTRON_CONF --config-file=$Q_META_CONF_FILE"
 
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
@@ -554,6 +567,10 @@ function _configure_neutron_l3_agent() {
     AGENT_L3_BINARY=${AGENT_L3_BINARY:-"$NEUTRON_BIN_DIR/neutron-l3-agent"}
     Q_L3_CONF_FILE=$NEUTRON_CONF_DIR/l3_agent.ini
 
+    if is_service_enabled q-fwaas; then
+        Q_FWAAS_CONF_FILE=$NEUTRON_CONF_DIR/fwaas_driver.ini
+    fi
+
     cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
 
     iniset $Q_L3_CONF_FILE DEFAULT verbose True
@@ -584,6 +601,11 @@ function _configure_neutron_metadata_agent() {
 function _configure_neutron_lbaas() {
     neutron_agent_lbaas_configure_common
     neutron_agent_lbaas_configure_agent
+}
+
+function _configure_neutron_fwaas() {
+    neutron_fwaas_configure_common
+    neutron_fwaas_configure_driver
 }
 
 function _configure_neutron_vpn()
