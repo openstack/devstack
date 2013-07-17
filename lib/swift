@@ -133,19 +133,6 @@ function configure_swift() {
         sudo sed -i '/disable *= *yes/ { s/yes/no/ }' /etc/xinetd.d/rsync
     fi
 
-    if is_service_enabled swift3;then
-        swift_auth_server="s3token "
-    fi
-
-    # By default Swift will be installed with the tempauth middleware
-    # which has some default username and password if you have
-    # configured keystone it will checkout the directory.
-    if is_service_enabled key; then
-        swift_auth_server+="authtoken keystoneauth"
-    else
-        swift_auth_server=tempauth
-    fi
-
     SWIFT_CONFIG_PROXY_SERVER=${SWIFT_CONF_DIR}/proxy-server.conf
     cp ${SWIFT_DIR}/etc/proxy-server.conf-sample ${SWIFT_CONFIG_PROXY_SERVER}
 
@@ -164,23 +151,21 @@ function configure_swift() {
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
 
-    # By default Swift will be installed with the tempauth middleware
-    # which has some default username and password if you have
-    # configured keystone it will configure swift with it.
-    if is_service_enabled key;then
-        if is_service_enabled swift3;then
-            swift_pipeline=" swift3 s3token "
-        fi
-        swift_pipeline+=" authtoken keystoneauth "
-    else
-        if is_service_enabled swift3;then
-            swift_pipeline=" swift3 "
-        fi
-        swift_pipeline+=" tempauth "
+    # By default Swift will be installed with keystone and tempauth middleware
+    # and add the swift3 middleware if its configured for it. The token for
+    # tempauth would be prefixed with the reseller_prefix setting TEMPAUTH_ the
+    # token for keystoneauth would have the standard reseller_prefix AUTH_
+    if is_service_enabled swift3;then
+        swift_pipeline=" swift3 s3token "
     fi
+    swift_pipeline+=" authtoken keystoneauth tempauth "
     sed -i "/^pipeline/ { s/tempauth/${swift_pipeline} ${SWIFT_EXTRAS_MIDDLEWARE}/ ;}" ${SWIFT_CONFIG_PROXY_SERVER}
 
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth account_autocreate
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
+
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix "TEMPAUTH"
 
     # Configure Keystone
     sed -i '/^# \[filter:authtoken\]/,/^# \[filter:keystoneauth\]$/ s/^#[ \t]*//' ${SWIFT_CONFIG_PROXY_SERVER}
