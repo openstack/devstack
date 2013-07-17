@@ -223,6 +223,7 @@ EOF
         local swift_node_config=$1
         local node_id=$2
         local bind_port=$3
+        local server_type=$4
 
         log_facility=$[ node_id - 1 ]
         node_path=${SWIFT_DATA_DIR}/${node_number}
@@ -252,7 +253,7 @@ EOF
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
         swift_node_config=${SWIFT_CONF_DIR}/object-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/object-server.conf-sample ${swift_node_config}
-        generate_swift_config ${swift_node_config} ${node_number} $[OBJECT_PORT_BASE + 10 * (node_number - 1)]
+        generate_swift_config ${swift_node_config} ${node_number} $[OBJECT_PORT_BASE + 10 * (node_number - 1)] object
         iniset ${swift_node_config} filter:recon recon_cache_path  ${SWIFT_DATA_DIR}/cache
         # Using a sed and not iniset/iniuncomment because we want to a global
         # modification and make sure it works for new sections.
@@ -260,14 +261,14 @@ EOF
 
         swift_node_config=${SWIFT_CONF_DIR}/container-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/container-server.conf-sample ${swift_node_config}
-        generate_swift_config ${swift_node_config} ${node_number} $[CONTAINER_PORT_BASE + 10 * (node_number - 1)]
+        generate_swift_config ${swift_node_config} ${node_number} $[CONTAINER_PORT_BASE + 10 * (node_number - 1)] container
         iniuncomment ${swift_node_config} app:container-server allow_versions
         iniset ${swift_node_config} app:container-server allow_versions  "true"
         sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
 
         swift_node_config=${SWIFT_CONF_DIR}/account-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/account-server.conf-sample ${swift_node_config}
-        generate_swift_config ${swift_node_config} ${node_number} $[ACCOUNT_PORT_BASE + 10 * (node_number - 1)]
+        generate_swift_config ${swift_node_config} ${node_number} $[ACCOUNT_PORT_BASE + 10 * (node_number - 1)] account
         sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
     done
 
