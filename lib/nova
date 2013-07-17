@@ -368,7 +368,7 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT allow_resize_to_same_host "True"
     iniset $NOVA_CONF DEFAULT api_paste_config "$NOVA_API_PASTE_INI"
     iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
-    iniset $NOVA_CONF DEFAULT compute_scheduler_driver "$SCHEDULER"
+    iniset $NOVA_CONF DEFAULT scheduler_driver "$SCHEDULER"
     iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF"
     iniset $NOVA_CONF DEFAULT force_dhcp_release "True"
     iniset $NOVA_CONF DEFAULT fixed_range "$FIXED_RANGE"
