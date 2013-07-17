@@ -37,12 +37,10 @@ CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
 CEILOMETER_AUTH_CACHE_DIR=${CEILOMETER_AUTH_CACHE_DIR:-/var/cache/ceilometer}
 
 # Support potential entry-points console scripts
-if [[ -d $CEILOMETER_DIR/bin ]]; then
-    CEILOMETER_BIN_DIR=$CEILOMETER_DIR/bin
-else
-    CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
-fi
+CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
 
+# Set up database backend
+CEILOMETER_BACKEND=${CEILOMETER_BACKEND:-mongodb}
 
 # Functions
 # ---------
@@ -91,11 +89,13 @@ function configure_ceilometer() {
     iniset $CEILOMETER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CEILOMETER_CONF keystone_authtoken signing_dir $CEILOMETER_AUTH_CACHE_DIR
 
-    iniset $CEILOMETER_CONF database connection mongodb://localhost:27017/ceilometer
-
-    configure_mongodb
-
-    cleanup_ceilometer
+    if [[ "$CEILOMETER_BACKEND" = 'mysql' ]]; then
+        iniset $CEILOMETER_CONF database connection `database_connection_url ceilometer`
+    else
+        iniset $CEILOMETER_CONF database connection mongodb://localhost:27017/ceilometer
+        configure_mongodb
+        cleanup_ceilometer
+    fi
 }
 
 function configure_mongodb() {
@@ -113,6 +113,11 @@ function init_ceilometer() {
     sudo mkdir -p $CEILOMETER_AUTH_CACHE_DIR
     sudo chown $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
     rm -f $CEILOMETER_AUTH_CACHE_DIR/*
+
+    if [[ "$CEILOMETER_BACKEND" = 'mysql' ]]; then
+        recreate_database ceilometer utf8
+        $CEILOMETER_BIN_DIR/ceilometer-dbsync
+    fi
 }
 
 # install_ceilometer() - Collect source and prepare
