@@ -243,6 +243,9 @@ EOF
         iniuncomment ${swift_node_config} DEFAULT log_facility
         iniset ${swift_node_config} DEFAULT log_facility LOG_LOCAL${log_facility}
 
+        iniuncomment ${swift_node_config} DEFAULT disable_fallocate
+        iniset ${swift_node_config} DEFAULT disable_fallocate true
+
         iniuncomment ${swift_node_config} DEFAULT mount_check
         iniset ${swift_node_config} DEFAULT mount_check false
 
@@ -286,12 +289,6 @@ EOF
     iniset ${testfile} func_test username3 swiftusertest3
     iniset ${testfile} func_test account2 swifttenanttest2
     iniset ${testfile} func_test username2 swiftusertest2
-
-    # Set maximum file size to 10000 bytes or our vm will fill up quickly with
-    # the default 5gb size.
-    iniuncomment ${testfile} func_test max_file_size
-    iniset ${testfile} func_test max_file_size 10000
-
 
     if is_service_enabled key;then
         iniuncomment ${testfile} func_test auth_version
