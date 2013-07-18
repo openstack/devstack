@@ -132,6 +132,11 @@ function configure_keystone() {
 
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
     iniset $KEYSTONE_CONF signing token_format "$KEYSTONE_TOKEN_FORMAT"
+
+    if [[ "$KEYSTONE_TOKEN_FORMAT" = "UUID" ]]; then
+        iniset $KEYSTONE_CONF token provider keystone.token.providers.uuid.Provider
+    fi
+
     iniset $KEYSTONE_CONF sql connection `database_connection_url keystone`
     iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
 
