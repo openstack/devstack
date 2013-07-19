@@ -415,7 +415,12 @@ function start_neutron_agents() {
     # Start up the neutron agents if enabled
     screen_it q-agt "cd $NEUTRON_DIR && python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
     screen_it q-dhcp "cd $NEUTRON_DIR && python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
-    screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY --config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
+
+    if is_service_enabled q-vpn; then
+        screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY --config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
+    else
+        screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY --config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
+    fi
     screen_it q-meta "cd $NEUTRON_DIR && python $AGENT_META_BINARY --config-file $NEUTRON_CONF --config-file=$Q_META_CONF_FILE"
 
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
@@ -585,7 +590,6 @@ function _configure_neutron_vpn()
 {
     neutron_vpn_install_agent_packages
     neutron_vpn_configure_common
-    neutron_vpn_configure_agent
 }
 
 # _configure_neutron_plugin_agent() - Set config files for neutron plugin agent
