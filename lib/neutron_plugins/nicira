@@ -47,6 +47,7 @@ function neutron_plugin_configure_common() {
 
 function neutron_plugin_configure_debug_command() {
     sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
+    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge "$PUBLIC_BRIDGE"
 }
 
 function neutron_plugin_configure_dhcp_agent() {
