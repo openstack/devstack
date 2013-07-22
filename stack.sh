@@ -836,7 +836,7 @@ fi
 # Clear screen rc file
 SCREENRC=$TOP_DIR/$SCREEN_NAME-screenrc
 if [[ -e $SCREENRC ]]; then
-    echo -n > $SCREENRC
+    rm -f $SCREENRC
 fi
 
 # Initialize the directory for service status check

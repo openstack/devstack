@@ -17,7 +17,7 @@ if [[ -e $TOP_DIR/stack-screenrc ]]; then
         echo "Attaching to already started screen session.."
         exec screen -r stack
     fi
-    exec screen -c $TOP_DIR/stack-screenrc -S $SCREEN_NAME
+    exec screen -c $TOP_DIR/stack-screenrc
 fi
 
 echo "Couldn't find $TOP_DIR/stack-screenrc file; have you run stack.sh yet?"
