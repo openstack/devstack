@@ -1,5 +1,10 @@
 gcc
+libffi-devel        # testonly
 libxml2-devel
+libxslt-devel       # testonly
+mysql-devel         # testonly
+openssl-devel       # testonly
+postgresql-devel    # testonly
 python-argparse
 python-devel
 python-eventlet
@@ -9,3 +14,4 @@ python-routes
 python-sqlalchemy
 python-wsgiref
 pyxattr
+zlib-devel          # testonly
