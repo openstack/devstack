@@ -253,7 +253,7 @@ function configure_tempest() {
 
     # Network
     if is_service_enabled neutron; then
-        iniset $TEMPEST_CONF network neutron_available "True"
+        iniset $TEMPEST_CONF service_available neutron "True"
     fi
     iniset $TEMPEST_CONF network api_version 2.0
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
