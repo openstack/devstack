@@ -85,30 +85,42 @@ Example (Qpid):
 
 # Swift
 
-Swift is enabled by default configured with only one replica to avoid being IO/memory intensive on a small vm. When running with only one replica the account, container and object services will run directly in screen. The others services like replicator, updaters or auditor runs in background.
+Swift is disabled by default.  When enabled, it is configured with
+only one replica to avoid being IO/memory intensive on a small
+vm. When running with only one replica the account, container and
+object services will run directly in screen. The others services like
+replicator, updaters or auditor runs in background.
 
-If you would like to disable Swift you can add this to your `localrc` :
+If you would like to enable Swift you can add this to your `localrc` :
 
-    disable_service s-proxy s-object s-container s-account
+    enable_service s-proxy s-object s-container s-account
 
-If you want a minimal Swift install with only Swift and Keystone you can have this instead in your `localrc`:
+If you want a minimal Swift install with only Swift and Keystone you
+can have this instead in your `localrc`:
 
     disable_all_services
     enable_service key mysql s-proxy s-object s-container s-account
 
-If you only want to do some testing of a real normal swift cluster with multiple replicas you can do so by customizing the variable `SWIFT_REPLICAS` in your `localrc` (usually to 3).
+If you only want to do some testing of a real normal swift cluster
+with multiple replicas you can do so by customizing the variable
+`SWIFT_REPLICAS` in your `localrc` (usually to 3).
 
 # Swift S3
 
-If you are enabling `swift3` in `ENABLED_SERVICES` devstack will install the swift3 middleware emulation. Swift will be configured to act as a S3 endpoint for Keystone so effectively replacing the `nova-objectstore`.
+If you are enabling `swift3` in `ENABLED_SERVICES` devstack will
+install the swift3 middleware emulation. Swift will be configured to
+act as a S3 endpoint for Keystone so effectively replacing the
+`nova-objectstore`.
 
-Only Swift proxy server is launched in the screen session all other services are started in background and managed by `swift-init` tool.
+Only Swift proxy server is launched in the screen session all other
+services are started in background and managed by `swift-init` tool.
 
 # Neutron
 
 Basic Setup
 
-In order to enable Neutron a single node setup, you'll need the following settings in your `localrc` :
+In order to enable Neutron a single node setup, you'll need the
+following settings in your `localrc` :
 
     disable_service n-net
     enable_service q-svc
