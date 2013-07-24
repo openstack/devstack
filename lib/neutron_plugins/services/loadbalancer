@@ -34,7 +34,6 @@ function neutron_agent_lbaas_configure_agent() {
 
     cp $NEUTRON_DIR/etc/lbaas_agent.ini $LBAAS_AGENT_CONF_FILENAME
 
-    iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT use_namespaces $Q_USE_NAMESPACE
     # ovs_use_veth needs to be set before the plugin configuration
     # occurs to allow plugins to override the setting.
     iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT ovs_use_veth $Q_OVS_USE_VETH
