@@ -18,15 +18,38 @@ XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 
-# Exit 0 if address is in network or 1 if address is not in
-# network or netaddr library is not installed.
+# Convert CIDR notation to a IPv4 netmask
+# cidr2netmask cidr-bits
+function cidr2netmask() {
+    local maskpat="255 255 255 255"
+    local maskdgt="254 252 248 240 224 192 128"
+    set -- ${maskpat:0:$(( ($1 / 8) * 4 ))}${maskdgt:$(( (7 - ($1 % 8)) * 4 )):3}
+    echo ${1-0}.${2-0}.${3-0}.${4-0}
+}
+
+
+# Return the network portion of the given IP address using netmask
+# netmask is in the traditional dotted-quad format
+# maskip ip-address netmask
+function maskip() {
+    local ip=$1
+    local mask=$2
+    local l="${ip%.*}"; local r="${ip#*.}"; local n="${mask%.*}"; local m="${mask#*.}"
+    local subnet=$((${ip%%.*}&${mask%%.*})).$((${r%%.*}&${m%%.*})).$((${l##*.}&${n##*.})).$((${ip##*.}&${mask##*.}))
+    echo $subnet
+}
+
+
+# Exit 0 if address is in network or 1 if address is not in network
+# ip-range is in CIDR notation: 1.2.3.4/20
 # address_in_net ip-address ip-range
 function address_in_net() {
-    python -c "
-import netaddr
-import sys
-sys.exit(netaddr.IPAddress('$1') not in netaddr.IPNetwork('$2'))
-"
+    local ip=$1
+    local range=$2
+    local masklen=${range#*/}
+    local network=$(maskip ${range%/*} $(cidr2netmask $masklen))
+    local subnet=$(maskip $ip $(cidr2netmask $masklen))
+    [[ $network == $subnet ]]
 }
 
 
