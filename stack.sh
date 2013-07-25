@@ -736,6 +736,9 @@ fi
 if is_service_enabled ceilometer; then
     install_ceilometerclient
     install_ceilometer
+    echo_summary "Configuring Ceilometer"
+    configure_ceilometer
+    configure_ceilometerclient
 fi
 
 if is_service_enabled heat; then
@@ -1211,9 +1214,6 @@ if is_service_enabled cinder; then
     start_cinder
 fi
 if is_service_enabled ceilometer; then
-    echo_summary "Configuring Ceilometer"
-    configure_ceilometer
-    configure_ceilometerclient
     echo_summary "Starting Ceilometer"
     init_ceilometer
     start_ceilometer
