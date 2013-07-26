@@ -251,10 +251,6 @@ function configure_tempest() {
     # Compute admin
     iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
 
-    # Network
-    if is_service_enabled neutron; then
-        iniset $TEMPEST_CONF service_available neutron "True"
-    fi
     iniset $TEMPEST_CONF network api_version 2.0
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONF network public_network_id "$public_network_id"
@@ -267,11 +263,6 @@ function configure_tempest() {
     iniset $TEMPEST_CONF boto instance_type "$boto_instance_type"
     iniset $TEMPEST_CONF boto http_socket_timeout 30
     iniset $TEMPEST_CONF boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
-
-    # Orchestration
-    if is_service_enabled heat; then
-        iniset $TEMPEST_CONF orchestration heat_available "True"
-    fi
 
     # Scenario
     iniset $TEMPEST_CONF scenario img_dir "$FILES/images/cirros-0.3.1-x86_64-uec"
@@ -286,6 +277,15 @@ function configure_tempest() {
 
     # cli
     iniset $TEMPEST_CONF cli cli_dir $NOVA_BIN_DIR
+
+    # service_available
+    for service in nova cinder glance neutron swift heat ; do
+        if is_service_enabled $service ; then
+            iniset $TEMPEST_CONF service_available $service "True"
+        else
+            iniset $TEMPEST_CONF service_available $service "False"
+        fi
+    done
 
     echo "Created tempest configuration file:"
     cat $TEMPEST_CONF
