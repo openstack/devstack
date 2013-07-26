@@ -80,6 +80,15 @@ BM_USE_FAKE_ENV=`trueorfalse False $BM_USE_FAKE_ENV`
 # change the virtualization type: --engine qemu
 BM_POSEUR_EXTRA_OPTS=${BM_POSEUR_EXTRA_OPTS:-}
 
+# To provide PXE, configure nova-network's dnsmasq rather than run the one
+# dedicated to baremetal. When enable this, make sure these conditions are
+# fulfilled:
+#  1) nova-compute and nova-network runs on the same host
+#  2) nova-network uses FlatDHCPManager
+# NOTE: the other BM_DNSMASQ_* have no effect on the behavior if this option
+#       is enabled.
+BM_DNSMASQ_FROM_NOVA_NETWORK=`trueorfalse False $BM_DNSMASQ_FROM_NOVA_NETWORK`
+
 # BM_DNSMASQ_IFACE should match FLAT_NETWORK_BRIDGE
 if [ "$BM_USE_FAKE_ENV" ]; then
     BM_DNSMASQ_IFACE=${BM_DNSMASQ_IFACE:-br99}
