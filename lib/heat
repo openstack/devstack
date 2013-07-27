@@ -41,11 +41,6 @@ function cleanup_heat() {
     sudo rm -rf $HEAT_AUTH_CACHE_DIR
 }
 
-# configure_heatclient() - Set config files, create data dirs, etc
-function configure_heatclient() {
-    setup_develop $HEATCLIENT_DIR
-}
-
 # configure_heat() - Set config files, create data dirs, etc
 function configure_heat() {
     setup_develop $HEAT_DIR
@@ -176,6 +171,7 @@ function create_heat_cache_dir() {
 # install_heatclient() - Collect source and prepare
 function install_heatclient() {
     git_clone $HEATCLIENT_REPO $HEATCLIENT_DIR $HEATCLIENT_BRANCH
+    setup_develop $HEATCLIENT_DIR
 }
 
 # install_heat() - Collect source and prepare
