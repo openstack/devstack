@@ -666,11 +666,14 @@ install_keystoneclient
 install_glanceclient
 install_cinderclient
 install_novaclient
-if is_service_enabled swift glance; then
+if is_service_enabled swift glance horizon; then
     install_swiftclient
 fi
-if is_service_enabled neutron nova; then
+if is_service_enabled neutron nova horizon; then
     install_neutronclient
+fi
+if is_service_enabled heat horizon; then
+    install_heatclient
 fi
 
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
@@ -742,7 +745,6 @@ if is_service_enabled ceilometer; then
 fi
 
 if is_service_enabled heat; then
-    install_heatclient
     install_heat
     cleanup_heat
     configure_heat
