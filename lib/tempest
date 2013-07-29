@@ -195,6 +195,9 @@ function configure_tempest() {
         fi
     fi
 
+    # Oslo
+    iniset $TEMPEST_CONF DEFAULT lock_path $TMPDIR
+
     # Timeouts
     iniset $TEMPEST_CONF compute build_timeout $BUILD_TIMEOUT
     iniset $TEMPEST_CONF volume build_timeout $BUILD_TIMEOUT
