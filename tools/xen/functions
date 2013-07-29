@@ -53,18 +53,18 @@ function find_xapi_plugins_dir {
     find $1 -path '*/xapi.d/plugins' -type d -print
 }
 
-function install_xapi_plugins_from_zipball {
+function install_xapi_plugins_from {
     local XAPI_PLUGIN_DIR
     local EXTRACTED_FILES
     local EXTRACTED_PLUGINS_DIR
 
+    EXTRACTED_FILES="$1"
+
     XAPI_PLUGIN_DIR=$(xapi_plugin_location)
 
-    EXTRACTED_FILES=$(extract_remote_zipball $1)
     EXTRACTED_PLUGINS_DIR=$(find_xapi_plugins_dir $EXTRACTED_FILES)
 
     cp -pr $EXTRACTED_PLUGINS_DIR/* $XAPI_PLUGIN_DIR
-    rm -rf $EXTRACTED_FILES
     chmod a+x ${XAPI_PLUGIN_DIR}*
 }
 

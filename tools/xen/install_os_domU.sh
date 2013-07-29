@@ -63,12 +63,25 @@ fi
 
 ## Nova plugins
 NOVA_ZIPBALL_URL=${NOVA_ZIPBALL_URL:-$(zip_snapshot_location $NOVA_REPO $NOVA_BRANCH)}
-install_xapi_plugins_from_zipball $NOVA_ZIPBALL_URL
+EXTRACTED_NOVA=$(extract_remote_zipball "$NOVA_ZIPBALL_URL")
+install_xapi_plugins_from "$EXTRACTED_NOVA"
+
+LOGROT_SCRIPT=$(find "$EXTRACTED_NOVA" -name "rotate_xen_guest_logs.sh" -print)
+if [ -n "$LOGROT_SCRIPT" ]; then
+    mkdir -p "/var/log/xen/guest"
+    cp "$LOGROT_SCRIPT" /root/consolelogrotate
+    chmod +x /root/consolelogrotate
+    echo "* * * * * /root/consolelogrotate" | crontab
+fi
+
+rm -rf "$EXTRACTED_NOVA"
 
 ## Install the netwrap xapi plugin to support agent control of dom0 networking
 if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
     NEUTRON_ZIPBALL_URL=${NEUTRON_ZIPBALL_URL:-$(zip_snapshot_location $NEUTRON_REPO $NEUTRON_BRANCH)}
-    install_xapi_plugins_from_zipball $NEUTRON_ZIPBALL_URL
+    EXTRACTED_NEUTRON=$(extract_remote_zipball "$NEUTRON_ZIPBALL_URL")
+    install_xapi_plugins_from "$EXTRACTED_NEUTRON"
+    rm -rf "$EXTRACTED_NEUTRON"
 fi
 
 create_directory_for_kernels
