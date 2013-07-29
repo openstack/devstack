@@ -275,11 +275,15 @@ function configure_tempest() {
         iniset $TEMPEST_CONF volume backend2_name "LVM_iSCSI_2"
     fi
 
+    # Dashboard
+    iniset $TEMPEST_CONF dashboard dashboard_url "http://$SERVICE_HOST/"
+    iniset $TEMPEST_CONF dashboard login_url "http://$SERVICE_HOST/auth/login/"
+
     # cli
     iniset $TEMPEST_CONF cli cli_dir $NOVA_BIN_DIR
 
     # service_available
-    for service in nova cinder glance neutron swift heat ; do
+    for service in nova cinder glance neutron swift heat horizon ; do
         if is_service_enabled $service ; then
             iniset $TEMPEST_CONF service_available $service "True"
         else
