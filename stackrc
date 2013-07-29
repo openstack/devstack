@@ -180,8 +180,11 @@ SPICE_BRANCH=${SPICE_BRANCH:-master}
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
-# also install an **LXC**, **OpenVZ** or **XenAPI** based system.
-VIRT_DRIVER=${VIRT_DRIVER:-libvirt}
+# also install an **LXC**, **OpenVZ** or **XenAPI** based system.  If xenserver-core
+# is installed, the default will be XenAPI
+DEFAULT_VIRT_DRIVER=libvirt
+is_package_installed xenserver-core && DEFAULT_VIRT_DRIVER=xenserver
+VIRT_DRIVER=${VIRT_DRIVER:-$DEFAULT_VIRT_DRIVER}
 case "$VIRT_DRIVER" in
     libvirt)
         LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
