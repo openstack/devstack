@@ -1,4 +1,5 @@
 gcc
+libffi-dev
 libxml2-dev
 python-dev
 python-eventlet
