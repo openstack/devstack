@@ -104,6 +104,9 @@ function init_horizon() {
     local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
 
+    if is_service_enabled neutron; then
+        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_security_group $Q_USE_SECGROUP
+    fi
     # enable loadbalancer dashboard in case service is enabled
     if is_service_enabled q-lbaas; then
         _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_lb True
