@@ -42,6 +42,7 @@ set +o xtrace
 TEMPEST_DIR=$DEST/tempest
 TEMPEST_CONF_DIR=$TEMPEST_DIR/etc
 TEMPEST_CONF=$TEMPEST_CONF_DIR/tempest.conf
+TEMPEST_STATE_PATH=${TEMPEST_STATE_PATH:=$DATA_DIR/tempest}
 
 NOVA_SOURCE_DIR=$DEST/nova
 
@@ -196,7 +197,8 @@ function configure_tempest() {
     fi
 
     # Oslo
-    iniset $TEMPEST_CONF DEFAULT lock_path $TMPDIR
+    iniset $TEMPEST_CONF DEFAULT lock_path $TEMPEST_STATE_PATH
+    mkdir -p $TEMPEST_STATE_PATH
 
     # Timeouts
     iniset $TEMPEST_CONF compute build_timeout $BUILD_TIMEOUT
