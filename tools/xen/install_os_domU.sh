@@ -151,9 +151,7 @@ if [ "$DO_SHUTDOWN" = "1" ]; then
     # Destroy any instances that were launched
     for uuid in `xe vm-list | grep -1 instance | grep uuid | sed "s/.*\: //g"`; do
         echo "Shutting down nova instance $uuid"
-        xe vm-unpause uuid=$uuid || true
-        xe vm-shutdown uuid=$uuid || true
-        xe vm-destroy uuid=$uuid
+        xe vm-uninstall uuid=$uuid force=true
     done
 
     # Destroy orphaned vdis
