@@ -568,11 +568,11 @@ function init_nova_cells() {
         iniset $NOVA_CELLS_CONF DEFAULT rabbit_virtual_host child_cell
         iniset $NOVA_CELLS_CONF DEFAULT dhcpbridge_flagfile $NOVA_CELLS_CONF
         iniset $NOVA_CELLS_CONF cells enable True
+        iniset $NOVA_CELLS_CONF cells cell_type compute
         iniset $NOVA_CELLS_CONF cells name child
 
-        iniset $NOVA_CONF DEFAULT scheduler_topic cells
-        iniset $NOVA_CONF DEFAULT compute_api_class nova.compute.cells_api.ComputeCellsAPI
         iniset $NOVA_CONF cells enable True
+        iniset $NOVA_CONF cells cell_type api
         iniset $NOVA_CONF cells name region
 
         if is_service_enabled n-api-meta; then
@@ -714,8 +714,8 @@ function start_nova() {
     if is_service_enabled n-cell; then
         NOVA_CONF_BOTTOM=$NOVA_CELLS_CONF
         screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CELLS_CONF"
-        screen_it n-cell "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CONF"
-        screen_it n-cell "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CELLS_CONF"
+        screen_it n-cell-region "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CONF"
+        screen_it n-cell-child "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CELLS_CONF"
     fi
 
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then

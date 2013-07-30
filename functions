@@ -745,12 +745,17 @@ function is_running() {
 #   For backward compatibility if we have **swift** in ENABLED_SERVICES all the
 #   **s-** services will be enabled. This will be deprecated in the future.
 #
+# Cells within nova is enabled if **n-cell** is in ``ENABLED_SERVICES``.
+# We also need to make sure to treat **n-cell-region** and **n-cell-child**
+# as enabled in this case.
+#
 # Uses global ``ENABLED_SERVICES``
 # is_service_enabled service [service ...]
 function is_service_enabled() {
     services=$@
     for service in ${services}; do
         [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
+        [[ ${service} == n-cell-* && ${ENABLED_SERVICES} =~ "n-cell" ]] && return 0
         [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && return 0
         [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0
         [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && return 0

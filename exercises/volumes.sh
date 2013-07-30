@@ -78,12 +78,18 @@ die_if_not_set $LINENO IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 # List security groups
 nova secgroup-list
 
-# Create a secgroup
-if ! nova secgroup-list | grep -q $SECGROUP; then
-    nova secgroup-create $SECGROUP "$SECGROUP description"
-    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova secgroup-list | grep -q $SECGROUP; do sleep 1; done"; then
-        echo "Security group not created"
-        exit 1
+if is_service_enabled n-cell; then
+    # Cells does not support security groups, so force the use of "default"
+    SECGROUP="default"
+    echo "Using the default security group because of Cells."
+else
+    # Create a secgroup
+    if ! nova secgroup-list | grep -q $SECGROUP; then
+        nova secgroup-create $SECGROUP "$SECGROUP description"
+        if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova secgroup-list | grep -q $SECGROUP; do sleep 1; done"; then
+            echo "Security group not created"
+            exit 1
+        fi
     fi
 fi
 
@@ -201,8 +207,12 @@ if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sl
     die $LINENO "Server $VM_NAME not deleted"
 fi
 
-# Delete secgroup
-nova secgroup-delete $SECGROUP || die $LINENO "Failure deleting security group $SECGROUP"
+if [[ $SECGROUP = "default" ]] ; then
+    echo "Skipping deleting default security group"
+else
+    # Delete secgroup
+    nova secgroup-delete $SECGROUP || die $LINENO "Failure deleting security group $SECGROUP"
+fi
 
 set +o xtrace
 echo "*********************************************************************"
