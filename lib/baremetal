@@ -239,14 +239,14 @@ function upload_baremetal_deploy() {
          --os-image-url http://$GLANCE_HOSTPORT \
          image-create \
          --name $BM_DEPLOY_KERNEL \
-         --public --disk-format=aki \
+         --is-public True --disk-format=aki \
          < $TOP_DIR/files/$BM_DEPLOY_KERNEL  | grep ' id ' | get_field 2)
     BM_DEPLOY_RAMDISK_ID=$(glance \
          --os-auth-token $token \
          --os-image-url http://$GLANCE_HOSTPORT \
          image-create \
          --name $BM_DEPLOY_RAMDISK \
-         --public --disk-format=ari \
+         --is-public True --disk-format=ari \
          < $TOP_DIR/files/$BM_DEPLOY_RAMDISK  | grep ' id ' | get_field 2)
 }
 
@@ -294,14 +294,14 @@ function extract_and_upload_k_and_r_from_image() {
          --os-image-url http://$GLANCE_HOSTPORT \
          image-create \
          --name $image_name-kernel \
-         --public --disk-format=aki \
+         --is-public True --disk-format=aki \
          < $TOP_DIR/files/$OUT_KERNEL | grep ' id ' | get_field 2)
     RAMDISK_ID=$(glance \
          --os-auth-token $token \
          --os-image-url http://$GLANCE_HOSTPORT \
          image-create \
          --name $image_name-initrd \
-         --public --disk-format=ari \
+         --is-public True --disk-format=ari \
          < $TOP_DIR/files/$OUT_RAMDISK | grep ' id ' | get_field 2)
 }
 
@@ -371,14 +371,14 @@ function upload_baremetal_image() {
             --os-auth-token $token \
             --os-image-url http://$GLANCE_HOSTPORT \
             image-create \
-            --name "$IMAGE_NAME-kernel" --public \
+            --name "$IMAGE_NAME-kernel" --is-public True \
             --container-format aki \
             --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
         RAMDISK_ID=$(glance \
             --os-auth-token $token \
             --os-image-url http://$GLANCE_HOSTPORT \
             image-create \
-            --name "$IMAGE_NAME-ramdisk" --public \
+            --name "$IMAGE_NAME-ramdisk" --is-public True \
             --container-format ari \
             --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
     else
@@ -390,7 +390,7 @@ function upload_baremetal_image() {
        --os-auth-token $token \
        --os-image-url http://$GLANCE_HOSTPORT \
        image-create \
-       --name "${IMAGE_NAME%.img}" --public \
+       --name "${IMAGE_NAME%.img}" --is-public True \
        --container-format $CONTAINER_FORMAT \
        --disk-format $DISK_FORMAT \
        ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} \
