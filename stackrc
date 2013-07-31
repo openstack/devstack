@@ -116,6 +116,14 @@ NOVACLIENT_BRANCH=${NOVACLIENT_BRANCH:-master}
 OPENSTACKCLIENT_REPO=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
 OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
 
+# oslo.config
+OSLOCFG_REPO=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
+OSLOCFG_BRANCH=${OSLOCFG_BRANCH:-master}
+
+# oslo.messaging
+OSLOMSG_REPO=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
+OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
+
 # pbr drives the setuptools configs
 PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
 PBR_BRANCH=${PBR_BRANCH:-master}
