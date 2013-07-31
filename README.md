@@ -148,6 +148,32 @@ An example of using the variables in your `localrc` is below:
     Q_AGENT_EXTRA_AGENT_OPTS=(tunnel_type=vxlan vxlan_udp_port=8472)
     Q_SRV_EXTRA_OPTS=(tenant_network_type=vxlan)
 
+devstack also supports configuring the Neutron ML2 plugin. The ML2 plugin can run with the OVS, LinuxBridge, or Hyper-V agents on compute hosts. A simple way to configure the ml2 plugin is shown below:
+
+    # VLAN configuration
+    Q_PLUGIN=ml2
+    ENABLE_TENANT_VLANS=True
+
+    # GRE tunnel configuration
+    Q_PLUGIN=ml2
+    ENABLE_TENANT_TUNNELS=True
+
+    # VXLAN tunnel configuration
+    Q_PLUGIN=ml2
+    Q_ML2_TENANT_NETWORK_TYPE=vxlan
+
+The above will default in devstack to using the OVS on each compute host. To change this, set the `Q_AGENT` variable to the agent you want to run (e.g. linuxbridge).
+
+    Variable Name                    Notes
+    -------------------------------------------------------------------------------------
+    Q_AGENT                          This specifies which agent to run with the ML2 Plugin (either `openvswitch` or `linuxbridge`).
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS   The ML2 MechanismDrivers to load. The default is none. Note, ML2 will work with the OVS and LinuxBridge agents by default.
+    Q_ML2_PLUGIN_TYPE_DRIVERS        The ML2 TypeDrivers to load. Defaults to all available TypeDrivers.
+    Q_ML2_PLUGIN_GRE_TYPE_OPTIONS    GRE TypeDriver options. Defaults to none.
+    Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS  VXLAN TypeDriver options. Defaults to none.
+    Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS   VLAN TypeDriver options. Defaults to none.
+    Q_AGENT_EXTRA_AGENT_OPTS         Extra configuration options to pass to the OVS or LinuxBridge Agent.
+
 # Tempest
 
 If tempest has been successfully configured, a basic set of smoke tests can be run as follows:
