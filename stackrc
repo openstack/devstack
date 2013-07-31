@@ -136,6 +136,10 @@ NEUTRON_BRANCH=${NEUTRON_BRANCH:-master}
 NEUTRONCLIENT_REPO=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
 NEUTRONCLIENT_BRANCH=${NEUTRONCLIENT_BRANCH:-master}
 
+# consolidated openstack requirements
+REQUIREMENTS_REPO=${REQUIREMENTS_REPO:-${GIT_BASE}/openstack/requirements.git}
+REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-master}
+
 # storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
 SWIFT_BRANCH=${SWIFT_BRANCH:-master}

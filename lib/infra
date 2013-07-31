@@ -1,0 +1,56 @@
+# lib/infra
+#
+# Functions to install infrastructure projects needed by other projects
+# early in the cycle. We need this so we can do things like gate on
+# requirements as a global list
+
+# Dependencies:
+# ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# unfubar_setuptools
+# install_infra
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+PBR_DIR=$DEST/pbr
+REQUIREMENTS_DIR=$DEST/requirements
+
+# Entry Points
+# ------------
+
+# unfubar_setuptools() - Unbreak the giant mess that is the current state of setuptools
+function unfubar_setuptools() {
+    # this is a giant game of who's on first, but it does consistently work
+    # there is hope that upstream python packaging fixes this in the future
+    echo_summary "Unbreaking setuptools"
+    pip_install -U setuptools
+    pip_install -U pip
+    uninstall_package python-setuptools
+    pip_install -U setuptools
+    pip_install -U pip
+}
+
+
+# install_infra() - Collect source and prepare
+function install_infra() {
+    # bring down global requirements
+    git_clone $REQUIREMENTS_REPO $REQUIREMENTS_DIR $REQUIREMENTS_BRANCH
+
+    # Install pbr
+    git_clone $PBR_REPO $PBR_DIR $PBR_BRANCH
+    setup_develop $PBR_DIR
+}
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
