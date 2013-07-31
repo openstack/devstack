@@ -299,6 +299,7 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 
 # Source project function libraries
 source $TOP_DIR/lib/tls
+source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
@@ -660,6 +661,9 @@ echo_summary "Installing OpenStack project source"
 # Install pbr
 git_clone $PBR_REPO $PBR_DIR $PBR_BRANCH
 setup_develop $PBR_DIR
+
+# Install oslo libraries that have graduated
+install_oslo
 
 # Install clients libraries
 install_keystoneclient

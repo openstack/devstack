@@ -1,0 +1,42 @@
+# lib/oslo
+#
+# Functions to install oslo libraries from git
+#
+# We need this to handle the fact that projects would like to use
+# pre-released versions of oslo libraries.
+
+# Dependencies:
+# ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_oslo
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+OSLOCFG_DIR=$DEST/oslo.config
+OSLOMSG_DIR=$DEST/oslo.messaging
+
+# Entry Points
+# ------------
+
+# install_oslo() - Collect source and prepare
+function install_oslo() {
+    git_clone $OSLOCFG_REPO $OSLOCFG_DIR $OSLOCFG_BRANCH
+    setup_develop $OSLOCFG_DIR
+
+    git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
+    setup_develop $OSLOMSG_DIR
+}
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
