@@ -1131,18 +1131,32 @@ function service_check() {
 # Uses globals ``STACK_USER``, ``TRACK_DEPENDES``, ``*_proxy`
 # setup_develop directory
 function setup_develop() {
+    local project_dir=$1
     if [[ $TRACK_DEPENDS = True ]]; then
         SUDO_CMD="env"
     else
         SUDO_CMD="sudo"
     fi
-    $SUDO_CMD \
-        HTTP_PROXY=$http_proxy \
-        HTTPS_PROXY=$https_proxy \
-        NO_PROXY=$no_proxy \
-        pip install -e $1
-    # ensure that further actions can do things like setup.py sdist
-    $SUDO_CMD chown -R $STACK_USER $1/*.egg-info
+
+    echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
+
+    (cd $REQUIREMENTS_DIR; \
+        $SUDO_CMD python update.py $project_dir)
+
+    for reqs_file in $project_dir/requirements.txt $project_dir/tools/pip-requires ; do
+        if [ -f $reqs_file ] ; then
+            pip_install -r $reqs_file
+        fi
+    done
+
+    (cd $project_dir; \
+        python setup.py egg_info; \
+        $SUDO_CMD \
+            HTTP_PROXY=$http_proxy \
+            HTTPS_PROXY=$https_proxy \
+            NO_PROXY=$no_proxy \
+            python setup.py develop \
+    )
 }
 
 
