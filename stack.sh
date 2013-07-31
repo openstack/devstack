@@ -1049,6 +1049,11 @@ if is_service_enabled nova; then
         iniset $NOVA_CONF baremetal driver $BM_DRIVER
         iniset $NOVA_CONF baremetal power_manager $BM_POWER_MANAGER
         iniset $NOVA_CONF baremetal tftp_root /tftpboot
+        if [[ "$BM_DNSMASQ_FROM_NOVA_NETWORK" = "True" ]]; then
+            BM_DNSMASQ_CONF=$NOVA_CONF_DIR/dnsmasq-for-baremetal-from-nova-network.conf
+            sudo cp "$FILES/dnsmasq-for-baremetal-from-nova-network.conf" "$BM_DNSMASQ_CONF"
+            iniset $NOVA_CONF DEFAULT dnsmasq_config_file "$BM_DNSMASQ_CONF"
+        fi
 
         # Define extra baremetal nova conf flags by defining the array ``EXTRA_BAREMETAL_OPTS``.
         for I in "${EXTRA_BAREMETAL_OPTS[@]}"; do
@@ -1294,15 +1299,16 @@ if is_service_enabled nova && is_baremetal; then
        create_baremetal_flavor $BM_DEPLOY_KERNEL_ID $BM_DEPLOY_RAMDISK_ID
 
     # otherwise user can manually add it later by calling nova-baremetal-manage
-    # otherwise user can manually add it later by calling nova-baremetal-manage
     [[ -n "$BM_FIRST_MAC" ]] && add_baremetal_node
 
-    # NOTE: we do this here to ensure that our copy of dnsmasq is running
-    sudo pkill dnsmasq || true
-    sudo dnsmasq --conf-file= --port=0 --enable-tftp --tftp-root=/tftpboot \
-        --dhcp-boot=pxelinux.0 --bind-interfaces --pid-file=/var/run/dnsmasq.pid \
-        --interface=$BM_DNSMASQ_IFACE --dhcp-range=$BM_DNSMASQ_RANGE \
-        ${BM_DNSMASQ_DNS:+--dhcp-option=option:dns-server,$BM_DNSMASQ_DNS}
+    if [[ "$BM_DNSMASQ_FROM_NOVA_NETWORK" = "False" ]]; then
+        # NOTE: we do this here to ensure that our copy of dnsmasq is running
+        sudo pkill dnsmasq || true
+        sudo dnsmasq --conf-file= --port=0 --enable-tftp --tftp-root=/tftpboot \
+            --dhcp-boot=pxelinux.0 --bind-interfaces --pid-file=/var/run/dnsmasq.pid \
+            --interface=$BM_DNSMASQ_IFACE --dhcp-range=$BM_DNSMASQ_RANGE \
+            ${BM_DNSMASQ_DNS:+--dhcp-option=option:dns-server,$BM_DNSMASQ_DNS}
+    fi
     # ensure callback daemon is running
     sudo pkill nova-baremetal-deploy-helper || true
     screen_it baremetal "nova-baremetal-deploy-helper"
