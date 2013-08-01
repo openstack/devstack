@@ -179,7 +179,7 @@ The above will default in devstack to using the OVS on each compute host. To cha
 If tempest has been successfully configured, a basic set of smoke tests can be run as follows:
 
     $ cd /opt/stack/tempest
-    $ nosetests tempest/tests/network/test_network_basic_ops.py
+    $ nosetests tempest/scenario/test_network_basic_ops.py
 
 # Multi-Node Setup
 
