@@ -1,0 +1,64 @@
+# MidoNet
+# -------
+
+# This file implements functions required to configure MidoNet as the third-party
+# system used with devstack's Neutron.  To include this file, specify the following
+# variables in localrc:
+#
+# * enable_service midonet
+#
+
+# MidoNet devstack destination dir
+MIDONET_DIR=${MIDONET_DIR:-$DEST/midonet}
+
+# MidoNet client repo
+MIDONET_CLIENT_REPO=${MIDONET_CLIENT_REPO:-https://github.com/midokura/python-midonetclient.git}
+MIDONET_CLIENT_BRANCH=${MIDONET_CLIENT_BRANCH:-master}
+MIDONET_CLIENT_DIR=$MIDONET_DIR/python-midonetclient
+
+# MidoNet OpenStack repo
+MIDONET_OS_REPO=${MIDONET_OS_REPO:-https://github.com/midokura/midonet-openstack.git}
+MIDONET_OS_BRANCH=${MIDONET_OS_BRANCH:-master}
+MIDONET_OS_DIR=$MIDONET_DIR/midonet-openstack
+MIDONET_SETUP_SCRIPT=${MIDONET_SETUP_SCRIPT:-$MIDONET_OS_DIR/bin/setup_midonet_topology.py}
+
+
+MIDOLMAN_LOG=${MIDOLMAN_LOG:-/var/log/midolman/midolman.log}
+MIDONET_API_LOG=${MIDONET_API_LOG:-/var/log/tomcat7/midonet-api.log}
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+function configure_midonet() {
+    :
+}
+
+function init_midonet() {
+
+    # Initialize DB.  Evaluate the output of setup_midonet_topology.py to set
+    # env variables for provider router ID and metadata router ID
+    eval `python $MIDONET_SETUP_SCRIPT admin $ADMIN_PASSWORD $ADMIN_TENANT provider_devices`
+    die_if_not_set $LINENO provider_router_id "Error running midonet setup script, provider_router_id was not set."
+    die_if_not_set $LINENO metadata_router_id "Error running midonet setup script, metadata_router_id was not set."
+
+    iniset /$Q_PLUGIN_CONF_FILE MIDONET provider_router_id $provider_router_id
+    iniset /$Q_PLUGIN_CONF_FILE MIDONET metadata_router_id $metadata_router_id
+}
+
+function install_midonet() {
+    git_clone $MIDONET_CLIENT_REPO $MIDONET_CLIENT_DIR $MIDONET_CLIENT_BRANCH
+    git_clone $MIDONET_OS_REPO $MIDONET_OS_DIR $MIDONET_OS_BRANCH
+    export PYTHONPATH=$MIDONET_CLIENT_DIR/src:$MIDONET_OS_DIR/src:$PYTHONPATH
+}
+
+function start_midonet() {
+    :
+}
+
+function stop_midonet() {
+    :
+}
+
+# Restore xtrace
+$MY_XTRACE
