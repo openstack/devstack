@@ -1483,11 +1483,7 @@ function get_rootwrap_location() {
 # Get the path to the pip command.
 # get_pip_command
 function get_pip_command() {
-    if is_fedora; then
-        which pip-python
-    else
-        which pip
-    fi
+    which pip || which pip-python
 
     if [ $? -ne 0 ]; then
         die $LINENO "Unable to find pip; cannot continue"
