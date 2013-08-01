@@ -240,7 +240,8 @@ case "$VIRT_DRIVER" in
         esac
         ;;
     vsphere)
-        IMAGE_URLS="";;
+        DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-debian-2.6.32-i686}
+        IMAGE_URLS=${IMAGE_URLS:-"http://partnerweb.vmware.com/programs/vmdkimage/debian-2.6.32-i686.vmdk"};;
     *) # Default to Cirros with kernel, ramdisk and disk image
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.1-x86_64-uec}
         IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-uec.tar.gz"};;
