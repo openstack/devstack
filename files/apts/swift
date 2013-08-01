@@ -10,7 +10,6 @@ python-greenlet
 python-netifaces
 python-nose
 python-pastedeploy
-python-setuptools
 python-simplejson
 python-webob
 python-xattr

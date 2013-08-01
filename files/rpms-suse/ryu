@@ -1,5 +1,3 @@
-python-distribute
-python-setuptools # instead of python-distribute; dist:sle11sp2
 python-Sphinx
 python-gevent
 python-netifaces

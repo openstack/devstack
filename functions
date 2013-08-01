@@ -1140,8 +1140,11 @@ function setup_develop() {
 
     echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
 
-    (cd $REQUIREMENTS_DIR; \
-        $SUDO_CMD python update.py $project_dir)
+    # Don't update repo if local changes exist
+    if (cd $project_dir && git diff --quiet); then
+        (cd $REQUIREMENTS_DIR; \
+            $SUDO_CMD python update.py $project_dir)
+    fi
 
     pip_install -e $project_dir
     # ensure that further actions can do things like setup.py sdist

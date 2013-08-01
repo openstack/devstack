@@ -7,8 +7,6 @@ python-Routes
 python-SQLAlchemy
 python-WebOb
 python-devel
-python-distribute
-python-setuptools # instead of python-distribute; dist:sle11sp2
 python-greenlet
 python-lxml
 python-mysql

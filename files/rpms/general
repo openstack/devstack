@@ -11,7 +11,7 @@ libxml2-devel # dist:rhel6 [2]
 libxslt-devel # dist:rhel6 [2]
 psmisc
 pylint
-python-pip
+python-setuptools
 python-prettytable # dist:rhel6 [1]
 python-unittest2
 python-virtualenv
