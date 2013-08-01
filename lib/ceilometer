@@ -1,8 +1,11 @@
 # lib/ceilometer
 # Install and start **Ceilometer** service
 
-# To enable Ceilometer services, add the following to localrc
-# enable_service ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api
+# To enable a minimal set of Ceilometer services, add the following to localrc:
+#   enable_service ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api
+#
+# To ensure Ceilometer alarming services are enabled also, further add to the localrc:
+#   enable_service ceilometer-alarm-notify ceilometer-alarm-eval
 
 # Dependencies:
 # - functions
@@ -135,12 +138,14 @@ function start_ceilometer() {
     screen_it ceilometer-acentral "ceilometer-agent-central --config-file $CEILOMETER_CONF"
     screen_it ceilometer-collector "ceilometer-collector --config-file $CEILOMETER_CONF"
     screen_it ceilometer-api "ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
+    screen_it ceilometer-alarm-notify "ceilometer-alarm-notifier --config-file $CEILOMETER_CONF"
+    screen_it ceilometer-alarm-eval "ceilometer-alarm-singleton --config-file $CEILOMETER_CONF"
 }
 
 # stop_ceilometer() - Stop running processes
 function stop_ceilometer() {
     # Kill the ceilometer screen windows
-    for serv in ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api; do
+    for serv in ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api ceilometer-alarm-notify ceilometer-alarm-eval; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }
