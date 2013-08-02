@@ -113,7 +113,7 @@ function err() {
     local exitcode=$?
     errXTRACE=$(set +o | grep xtrace)
     set +o xtrace
-    local msg="[ERROR] $0:$1 $2"
+    local msg="[ERROR] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg 1>&2;
     if [[ -n ${SCREEN_LOGDIR} ]]; then
         echo $msg >> "${SCREEN_LOGDIR}/error.log"
