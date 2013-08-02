@@ -187,6 +187,9 @@ case "$VIRT_DRIVER" in
             LIBVIRT_GROUP=libvirtd
         fi
         ;;
+    fake)
+        NUMBER_FAKE_NOVA_COMPUTE=${NUMBER_FAKE_NOVA_COMPUTE:-1}
+        ;;
     xenserver)
         # Xen config common to nova and neutron
         XENAPI_USER=${XENAPI_USER:-"root"}
