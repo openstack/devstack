@@ -15,7 +15,6 @@ python-dateutil
 python-eventlet
 python-kombu
 python-mox
-python-netaddr
 python-nose
 python-pylint
 python-sqlalchemy-migrate

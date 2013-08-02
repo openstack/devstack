@@ -9,7 +9,6 @@ python-iso8601
 python-paste
 python-routes
 python-suds
-python-netaddr
 python-pastedeploy
 python-greenlet
 python-kombu

@@ -10,7 +10,6 @@ python-eventlet
 python-greenlet
 python-iso8601
 python-kombu
-python-netaddr
 #rhel6 gets via pip
 python-paste        # dist:f16,f17,f18,f19
 python-paste-deploy # dist:f16,f17,f18,f19

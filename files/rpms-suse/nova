@@ -35,7 +35,6 @@ python-lockfile
 python-lxml # needed for glance which is needed for nova --- this shouldn't be here
 python-mox
 python-mysql
-python-netaddr
 python-numpy # needed by websockify for spice console
 python-paramiko
 python-python-gflags

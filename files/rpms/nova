@@ -28,7 +28,6 @@ python-kombu
 python-lockfile
 python-migrate
 python-mox
-python-netaddr
 python-paramiko # dist:f16,f17,f18,f19
 # ^ on RHEL, brings in python-crypto which conflicts with version from
 # pip we need

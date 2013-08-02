@@ -16,7 +16,6 @@ python-httplib2
 python-kombu
 python-migrate
 python-mox
-python-netaddr
 python-nose
 python-paste        #dist:f16,f17,f18,f19
 python-paste-deploy #dist:f16,f17,f18,f19

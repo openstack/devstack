@@ -30,7 +30,6 @@ python-greenlet
 python-libvirt # NOPRIME
 python-libxml2
 python-routes
-python-netaddr
 python-numpy # used by websockify for spice console
 python-pastedeploy
 python-eventlet
