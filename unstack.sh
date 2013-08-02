@@ -24,6 +24,9 @@ source $TOP_DIR/stackrc
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 
+# Import apache functions
+source $TOP_DIR/lib/apache
+
 # Get project function libraries
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/cinder

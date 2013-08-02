@@ -1,0 +1,118 @@
+# lib/apache
+# Functions to control configuration and operation of apache web server
+
+# Dependencies:
+# ``functions`` file
+# is_apache_enabled_service
+# change_apache_user_group
+# install_apache_wsgi
+# config_apache_wsgi
+# start_apache_server
+# stop_apache_server
+# restart_apache_server
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Allow overriding the default Apache user and group, default to
+# current user and his default group.
+APACHE_USER=${APACHE_USER:-$USER}
+APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
+
+
+# Set up apache name and configuration directory
+if is_ubuntu; then
+    APACHE_NAME=apache2
+    APACHE_CONF_DIR=sites-available
+elif is_fedora; then
+    APACHE_NAME=httpd
+    APACHE_CONF_DIR=conf.d
+elif is_suse; then
+    APACHE_NAME=apache2
+    APACHE_CONF_DIR=vhosts.d
+fi
+
+# Functions
+# ---------
+
+# is_apache_enabled_service() checks if the service(s) specified as arguments are
+# apache enabled by the user in ``APACHE_ENABLED_SERVICES`` as web front end.
+#
+# Multiple services specified as arguments are ``OR``'ed together; the test
+# is a short-circuit boolean, i.e it returns on the first match.
+#
+# Uses global ``APACHE_ENABLED_SERVICES``
+# APACHE_ENABLED_SERVICES service [service ...]
+function is_apache_enabled_service() {
+    services=$@
+    for service in ${services}; do
+        [[ ,${APACHE_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
+    done
+    return 1
+}
+
+# change_apache_user_group() - Change the User/Group to run Apache server
+function change_apache_user_group(){
+    local stack_user=$@
+    if is_ubuntu; then
+        sudo sed -e "
+            s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER=${stack_user}/g;
+            s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP=${stack_user}/g
+        " -i /etc/${APACHE_NAME}/envvars
+    elif is_fedora; then
+        sudo sed -e "
+            s/^User .*/User ${stack_user}/g;
+            s/^Group .*/Group ${stack_user}/g
+        " -i /etc/${APACHE_NAME}/httpd.conf
+    elif is_suse; then
+        sudo sed -e "
+            s/^User .*/User ${stack_user}/g;
+            s/^Group .*/Group ${stack_user}/g
+        " -i /etc/${APACHE_NAME}/uid.conf
+    else
+        exit_distro_not_supported "apache user and group"
+    fi
+}
+
+# install_apache_wsgi() - Install Apache server and wsgi module
+function install_apache_wsgi() {
+    # Apache installation, because we mark it NOPRIME
+    if is_ubuntu; then
+        # Install apache2, which is NOPRIME'd
+        install_package apache2 libapache2-mod-wsgi
+    elif is_fedora; then
+        sudo rm -f /etc/httpd/conf.d/000-*
+        install_package httpd mod_wsgi
+    elif is_suse; then
+        install_package apache2 apache2-mod_wsgi
+    else
+        exit_distro_not_supported "apache installation"
+    fi
+}
+
+# start_apache_server() - Start running apache server
+function start_apache_server() {
+    start_service $APACHE_NAME
+}
+
+# stop_apache_server() - Stop running apache server
+function stop_apache_server() {
+    if [ -n "$APACHE_NAME" ]; then
+        stop_service $APACHE_NAME
+    else
+        exit_distro_not_supported "apache configuration"
+    fi
+}
+
+# restart_apache_server
+function restart_apache_server() {
+    restart_service $APACHE_NAME
+}
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

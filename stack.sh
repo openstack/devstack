@@ -298,6 +298,7 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # ==================
 
 # Source project function libraries
+source $TOP_DIR/lib/apache
 source $TOP_DIR/lib/tls
 source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/oslo

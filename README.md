@@ -83,6 +83,13 @@ Example (Qpid):
 
     ENABLED_SERVICES="$ENABLED_SERVICES,-rabbit,-zeromq,qpid"
 
+# Apache Frontend
+
+Apache web server is enabled for wsgi services by setting `APACHE_ENABLED_SERVICES` in your localrc. But remember to enable these services at first as above.
+
+Example:
+    APACHE_ENABLED_SERVICES+=keystone,swift
+
 # Swift
 
 Swift is disabled by default.  When enabled, it is configured with
