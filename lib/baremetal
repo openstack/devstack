@@ -138,9 +138,12 @@ BM_FLAVOR_ARCH=${BM_FLAVOR_ARCH:-$BM_CPU_ARCH}
 BM_IMAGE_BUILD_DIR=${BM_IMAGE_BUILD_DIR:-$DEST/diskimage-builder}
 BM_POSEUR_DIR=${BM_POSEUR_DIR:-$DEST/bm_poseur}
 
-BM_HOST_CURRENT_KERNEL=$(uname -r)
-BM_DEPLOY_RAMDISK=${BM_DEPLOY_RAMDISK:-bm-deploy-$BM_HOST_CURRENT_KERNEL-initrd}
-BM_DEPLOY_KERNEL=${BM_DEPLOY_KERNEL:-bm-deploy-$BM_HOST_CURRENT_KERNEL-vmlinuz}
+# Use DIB to create deploy ramdisk and kernel.
+BM_BUILD_DEPLOY_RAMDISK=`trueorfalse True $BM_BUILD_DEPLOY_RAMDISK`
+# If not use DIB, these files are used as deploy ramdisk/kernel.
+# (The value must be a relative path from $TOP_DIR/files/)
+BM_DEPLOY_RAMDISK=${BM_DEPLOY_RAMDISK:-}
+BM_DEPLOY_KERNEL=${BM_DEPLOY_KERNEL:-}
 
 # If you need to add any extra flavors to the deploy ramdisk image
 # eg, specific network drivers, specify them here
@@ -233,13 +236,13 @@ function configure_baremetal_nova_dirs() {
 function upload_baremetal_deploy() {
     token=$1
 
-    if [ ! -e $TOP_DIR/files/$BM_DEPLOY_KERNEL -a -e /boot/vmlinuz-$BM_HOST_CURRENT_KERNEL ]; then
-        sudo cp /boot/vmlinuz-$BM_HOST_CURRENT_KERNEL $TOP_DIR/files/$BM_DEPLOY_KERNEL
-        sudo chmod a+r $TOP_DIR/files/$BM_DEPLOY_KERNEL
-    fi
-    if [ ! -e $TOP_DIR/files/$BM_DEPLOY_RAMDISK ]; then
-       $BM_IMAGE_BUILD_DIR/bin/ramdisk-image-create $BM_DEPLOY_FLAVOR deploy \
-           -o $TOP_DIR/files/$BM_DEPLOY_RAMDISK -k $BM_HOST_CURRENT_KERNEL
+    if [ "$BM_BUILD_DEPLOY_RAMDISK" = "True" ]; then
+        BM_DEPLOY_KERNEL=bm-deploy.kernel
+        BM_DEPLOY_RAMDISK=bm-deploy.initramfs
+        if [ ! -e "$TOP_DIR/files/$BM_DEPLOY_KERNEL" -o ! -e "$TOP_DIR/files/$BM_DEPLOY_RAMDISK" ]; then
+            $BM_IMAGE_BUILD_DIR/bin/ramdisk-image-create $BM_DEPLOY_FLAVOR deploy \
+                -o $TOP_DIR/files/bm-deploy
+        fi
     fi
 
     # load them into glance
