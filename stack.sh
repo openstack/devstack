@@ -601,23 +601,29 @@ if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
         sudo setenforce 0
     fi
 
-    # An old version of ``python-crypto`` (2.0.1) may be installed on a
-    # fresh system via Anaconda and the dependency chain
-    # ``cas`` -> ``python-paramiko`` -> ``python-crypto``.
-    # ``pip uninstall pycrypto`` will remove the packaged ``.egg-info`` file
-    # but leave most of the actual library files behind in ``/usr/lib64/python2.6/Crypto``.
-    # Later ``pip install pycrypto`` will install over the packaged files resulting
-    # in a useless mess of old, rpm-packaged files and pip-installed files.
-    # Remove the package so that ``pip install python-crypto`` installs cleanly.
-    # Note: other RPM packages may require ``python-crypto`` as well.  For example,
-    # RHEL6 does not install ``python-paramiko packages``.
-    uninstall_package python-crypto
+    # The following workarounds break xenserver
+    if [ "$VIRT_DRIVER" != 'xenserver' ]; then
+        # An old version of ``python-crypto`` (2.0.1) may be installed on a
+        # fresh system via Anaconda and the dependency chain
+        # ``cas`` -> ``python-paramiko`` -> ``python-crypto``.
+        # ``pip uninstall pycrypto`` will remove the packaged ``.egg-info``
+        #  file but leave most of the actual library files behind in
+        # ``/usr/lib64/python2.6/Crypto``. Later ``pip install pycrypto``
+        # will install over the packaged files resulting
+        # in a useless mess of old, rpm-packaged files and pip-installed files.
+        # Remove the package so that ``pip install python-crypto`` installs
+        # cleanly.
+        # Note: other RPM packages may require ``python-crypto`` as well.
+        # For example, RHEL6 does not install ``python-paramiko packages``.
+        uninstall_package python-crypto
 
-    # A similar situation occurs with ``python-lxml``, which is required by
-    # ``ipa-client``, an auditing package we don't care about.  The
-    # build-dependencies needed for ``pip install lxml`` (``gcc``,
-    # ``libxml2-dev`` and ``libxslt-dev``) are present in ``files/rpms/general``.
-    uninstall_package python-lxml
+        # A similar situation occurs with ``python-lxml``, which is required by
+        # ``ipa-client``, an auditing package we don't care about.  The
+        # build-dependencies needed for ``pip install lxml`` (``gcc``,
+        # ``libxml2-dev`` and ``libxslt-dev``) are present in
+        # ``files/rpms/general``.
+        uninstall_package python-lxml
+    fi
 
     # If the ``dbus`` package was installed by DevStack dependencies the
     # uuid may not be generated because the service was never started (PR#598200),
