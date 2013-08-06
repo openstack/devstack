@@ -367,7 +367,9 @@ function create_neutron_initial_network() {
 
 # init_neutron() - Initialize databases, etc.
 function init_neutron() {
-    :
+    recreate_database $Q_DB_NAME utf8
+    # Run Neutron db migrations
+    $NEUTRON_BIN_DIR/neutron-db-manage --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE upgrade head
 }
 
 # install_neutron() - Collect source and prepare
@@ -613,12 +615,6 @@ function _configure_neutron_service() {
 
     cp $NEUTRON_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
     cp $NEUTRON_DIR/etc/policy.json $Q_POLICY_FILE
-
-    if is_service_enabled $DATABASE_BACKENDS; then
-        recreate_database $Q_DB_NAME utf8
-    else
-        die $LINENO "A database must be enabled in order to use the $Q_PLUGIN Neutron plugin."
-    fi
 
     # Update either configuration file with plugin
     iniset $NEUTRON_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS

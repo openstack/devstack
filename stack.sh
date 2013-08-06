@@ -939,7 +939,10 @@ if is_service_enabled neutron; then
     echo_summary "Configuring Neutron"
 
     configure_neutron
-    init_neutron
+    # Run init_neutron only on the node hosting the neutron API server
+    if is_service_enabled $DATABASE_BACKENDS && is_service_enabled q-svc; then
+        init_neutron
+    fi
 fi
 
 # Some Neutron plugins require network controllers which are not
