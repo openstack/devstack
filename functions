@@ -7,7 +7,6 @@
 # ``GLANCE_HOSTPORT``
 # ``OFFLINE``
 # ``PIP_DOWNLOAD_CACHE``
-# ``PIP_USE_MIRRORS``
 # ``RECLONE``
 # ``TRACK_DEPENDS``
 # ``http_proxy``, ``https_proxy``, ``no_proxy``
@@ -913,8 +912,7 @@ function is_set() {
 
 
 # Wrapper for ``pip install`` to set cache and proxy environment variables
-# Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``, ``PIP_USE_MIRRORS``,
-#   ``TRACK_DEPENDS``, ``*_proxy`
+# Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``, ``TRACK_DEPENDS``, ``*_proxy`
 # pip_install package [package ...]
 function pip_install {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
@@ -928,17 +926,6 @@ function pip_install {
     else
         SUDO_PIP="sudo"
         CMD_PIP=$(get_pip_command)
-    fi
-
-    if is_fedora && [[ $DISTRO =~ (rhel6) ]]; then
-        # RHEL6 pip by default doesn't have this (was introduced
-        # around 0.8.1 or so)
-        PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-False}
-    else
-        PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-True}
-    fi
-    if [[ "$PIP_USE_MIRRORS" != "False" ]]; then
-        PIP_MIRROR_OPT="--use-mirrors"
     fi
 
     # pip < 1.4 has a bug where it will use an already existing build
@@ -956,7 +943,6 @@ function pip_install {
         HTTPS_PROXY=$https_proxy \
         NO_PROXY=$no_proxy \
         $CMD_PIP install --build=${pip_build_tmp} \
-        $PIP_MIRROR_OPT $@ \
         && $SUDO_PIP rm -rf ${pip_build_tmp}
 }
 
