@@ -1116,7 +1116,7 @@ function service_check() {
 
     for service in $failures; do
         service=`basename $service`
-        service=${service::-8}
+        service=${service%.failure}
         echo "Error: Service $service is not running"
     done
 
