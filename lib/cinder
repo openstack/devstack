@@ -296,6 +296,10 @@ function configure_cinder() {
             -e 's/snapshot_autoextend_percent =.*/snapshot_autoextend_percent = 20/' \
             /etc/lvm/lvm.conf
     fi
+    iniset $CINDER_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT
+    iniset $CINDER_CONF keystone_authtoken admin_user cinder
+    iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
 
 }
 
