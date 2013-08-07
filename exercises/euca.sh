@@ -129,7 +129,8 @@ else
     # Allocate floating address
     FLOATING_IP=`euca-allocate-address | cut -f2`
     die_if_not_set $LINENO FLOATING_IP "Failure allocating floating IP"
-
+    # describe all instances at this moment
+    euca-describe-instances
     # Associate floating address
     euca-associate-address -i $INSTANCE $FLOATING_IP || \
         die $LINENO "Failure associating address $FLOATING_IP to $INSTANCE"
