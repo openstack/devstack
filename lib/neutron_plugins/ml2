@@ -20,7 +20,7 @@ Q_AGENT=${Q_AGENT:-openvswitch}
 source $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent
 
 # List of MechanismDrivers to load
-Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_PLUGIN_MECHANISM_DRIVERS:-}
+Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_ML2_PLUGIN_MECHANISM_DRIVERS:-}
 # List of Type Drivers to load
 Q_ML2_PLUGIN_TYPE_DRIVERS=${Q_ML2_PLUGIN_TYPE_DRIVERS:-local,flat,vlan,gre,vxlan}
 # Default GRE TypeDriver options
@@ -91,6 +91,8 @@ function neutron_plugin_configure_service() {
 
     # Since we enable the tunnel TypeDrivers, also enable a local_ip
     iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $HOST_IP
+
+    populate_ml2_config mechanism_drivers=$Q_ML2_PLUGIN_MECHANISM_DRIVERS /$Q_PLUGIN_CONF_FILE ml2
 
     populate_ml2_config type_drivers=$Q_ML2_PLUGIN_TYPE_DRIVERS /$Q_PLUGIN_CONF_FILE ml2
 
