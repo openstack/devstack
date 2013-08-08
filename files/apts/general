@@ -1,6 +1,6 @@
 bridge-utils
 pylint
-python-pip
+python-setuptools
 screen
 unzip
 wget

@@ -578,18 +578,8 @@ set -o xtrace
 echo_summary "Installing package prerequisites"
 source $TOP_DIR/tools/install_prereqs.sh
 
-install_rpc_backend
-
-if is_service_enabled $DATABASE_BACKENDS; then
-    install_database
-fi
-
-if is_service_enabled neutron; then
-    install_neutron_agent_packages
-fi
-
-# Unbreak the giant mess that is the current state of setuptools
-unfubar_setuptools
+# Configure an appropriate python environment
+$TOP_DIR/tools/install_pip.sh
 
 # System-specific preconfigure
 # ============================
@@ -646,6 +636,16 @@ if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
     # Add a symlink for the new nosetests to allow tox for Tempest to
     # work unmolested.
     sudo ln -sf /usr/bin/nosetests1.1 /usr/local/bin/nosetests
+fi
+
+install_rpc_backend
+
+if is_service_enabled $DATABASE_BACKENDS; then
+    install_database
+fi
+
+if is_service_enabled neutron; then
+    install_neutron_agent_packages
 fi
 
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
