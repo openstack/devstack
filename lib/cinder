@@ -234,6 +234,10 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
 
+    if is_service_enabled ceilometer; then
+        iniset $CINDER_CONF DEFAULT notification_driver "cinder.openstack.common.notifier.rpc_notifier"
+    fi
+
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
         iniset $CINDER_CONF DEFAULT osapi_volume_listen_port $CINDER_SERVICE_PORT_INT
