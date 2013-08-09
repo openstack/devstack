@@ -525,7 +525,6 @@ function _configure_neutron_debug_command() {
     # be cleaned.
     iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper "$Q_RR_COMMAND"
 
-    _neutron_setup_keystone $NEUTRON_TEST_CONFIG_FILE DEFAULT set_auth_url
     _neutron_setup_interface_driver $NEUTRON_TEST_CONFIG_FILE
 
     neutron_plugin_configure_debug_command
@@ -542,7 +541,6 @@ function _configure_neutron_dhcp_agent() {
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
-    _neutron_setup_keystone $Q_DHCP_CONF_FILE DEFAULT set_auth_url
     _neutron_setup_interface_driver $Q_DHCP_CONF_FILE
 
     neutron_plugin_configure_dhcp_agent
@@ -563,7 +561,6 @@ function _configure_neutron_l3_agent() {
     iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_L3_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
-    _neutron_setup_keystone $Q_L3_CONF_FILE DEFAULT set_auth_url
     _neutron_setup_interface_driver $Q_L3_CONF_FILE
 
     neutron_plugin_configure_l3_agent
@@ -580,7 +577,6 @@ function _configure_neutron_metadata_agent() {
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
-    _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT set_auth_url
 }
 
 function _configure_neutron_lbaas() {
