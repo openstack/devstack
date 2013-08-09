@@ -201,6 +201,7 @@ function configure_tempest() {
     mkdir -p $TEMPEST_STATE_PATH
     iniset $TEMPEST_CONF DEFAULT use_stderr False
     iniset $TEMPEST_CONF DEFAULT log_file tempest.log
+    iniset $TEMPEST_CONF DEFAULT debug True
 
     # Timeouts
     iniset $TEMPEST_CONF compute build_timeout $BUILD_TIMEOUT
