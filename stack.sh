@@ -318,6 +318,7 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
+source $TOP_DIR/lib/ironic
 
 # Set the destination directories for other OpenStack projects
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
@@ -778,6 +779,11 @@ if is_service_enabled tls-proxy; then
     # don't be naive and add to existing line!
 fi
 
+if is_service_enabled ir-api ir-cond; then
+    install_ironic
+    configure_ironic
+fi
+
 if [[ $TRACK_DEPENDS = True ]]; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip
     if ! diff -Nru $DEST/requires-pre-pip $DEST/requires-post-pip > $DEST/requires.diff; then
@@ -945,6 +951,15 @@ if is_service_enabled g-reg; then
     echo_summary "Configuring Glance"
     init_glance
 fi
+
+# Ironic
+# ------
+
+if is_service_enabled ir-api ir-cond; then
+    echo_summary "Configuring Ironic"
+    init_ironic
+fi
+
 
 
 # Neutron
@@ -1184,6 +1199,12 @@ fi
 if is_service_enabled g-api g-reg; then
     echo_summary "Starting Glance"
     start_glance
+fi
+
+# Launch the Ironic services
+if is_service_enabled ir-api ir-cond; then
+    echo_summary "Starting Ironic"
+    start_ironic
 fi
 
 # Create an access key and secret key for nova ec2 register image

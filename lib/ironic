@@ -1,0 +1,222 @@
+# lib/ironic
+# Functions to control the configuration and operation of the **Ironic** service
+
+# Dependencies:
+# ``functions`` file
+# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# ``SERVICE_HOST``
+# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_ironic
+# configure_ironic
+# init_ironic
+# start_ironic
+# stop_ironic
+# cleanup_ironic
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# Set up default directories
+IRONIC_DIR=$DEST/ironic
+IRONIC_AUTH_CACHE_DIR=${IRONIC_AUTH_CACHE_DIR:-/var/cache/ironic}
+IRONIC_CONF_DIR=${IRONIC_CONF_DIR:-/etc/ironic}
+IRONIC_CONF_FILE=$IRONIC_CONF_DIR/ironic.conf
+IRONIC_ROOTWRAP_CONF=$IRONIC_CONF_DIR/rootwrap.conf
+IRONIC_ROOTWRAP_FILTERS=$IRONIC_CONF_DIR/rootwrap.d
+IRONIC_POLICY_JSON=$IRONIC_CONF_DIR/policy.json
+
+# Support entry points installation of console scripts
+IRONIC_BIN_DIR=$(get_python_exec_prefix)
+
+# Ironic connection info.  Note the port must be specified.
+IRONIC_SERVICE_PROTOCOL=http
+IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:6385}
+
+
+# Functions
+# ---------
+
+# cleanup_ironic() - Remove residual data files, anything left over from previous
+# runs that would need to clean up.
+function cleanup_ironic() {
+    sudo rm -rf $IRONIC_AUTH_CACHE_DIR
+}
+
+# configure_ironic() - Set config files, create data dirs, etc
+function configure_ironic() {
+    if [[ ! -d $IRONIC_CONF_DIR ]]; then
+        sudo mkdir -p $IRONIC_CONF_DIR
+    fi
+    sudo chown $STACK_USER $IRONIC_CONF_DIR
+
+    # Copy over ironic configuration file and configure common parameters.
+    cp $IRONIC_DIR/etc/ironic/ironic.conf.sample $IRONIC_CONF_FILE
+    iniset $IRONIC_CONF_FILE DEFAULT debug True
+    inicomment $IRONIC_CONF_FILE DEFAULT log_file
+    iniset $IRONIC_CONF_FILE DEFAULT sql_connection `database_connection_url ironic`
+    iniset $IRONIC_CONF_FILE DEFAULT use_syslog $SYSLOG
+
+    # Configure Ironic conductor, if it was enabled.
+    if is_service_enabled ir-cond; then
+        configure_ironic_conductor
+    fi
+
+    # Configure Ironic API, if it was enabled.
+    if is_service_enabled ir-api; then
+        configure_ironic_api
+    fi
+}
+
+# configure_ironic_api() - Is used by configure_ironic(). Performs
+# API specific configuration.
+function configure_ironic_api() {
+    iniset $IRONIC_CONF_FILE keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $IRONIC_CONF_FILE keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $IRONIC_CONF_FILE keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $IRONIC_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset $IRONIC_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $IRONIC_CONF_FILE keystone_authtoken admin_user ironic
+    iniset $IRONIC_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
+    if is_service_enabled qpid; then
+        iniset $IRONIC_CONF_FILE DEFAULT notifier_strategy qpid
+    elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
+        iniset $IRONIC_CONF_FILE DEFAULT notifier_strategy rabbit
+    fi
+    iniset_rpc_backend ironic $IRONIC_CONF_FILE DEFAULT
+    iniset $IRONIC_CONF_FILE keystone_authtoken signing_dir $IRONIC_AUTH_CACHE_DIR/api
+
+    cp -p $IRONIC_DIR/etc/ironic/policy.json $IRONIC_POLICY_JSON
+}
+
+# configure_ironic_conductor() - Is used by configure_ironic().
+# Sets conductor specific settings.
+function configure_ironic_conductor() {
+    cp $IRONIC_DIR/etc/ironic/rootwrap.conf $IRONIC_ROOTWRAP_CONF
+    cp -r $IRONIC_DIR/etc/ironic/rootwrap.d $IRONIC_ROOTWRAP_FILTERS
+
+    iniset $IRONIC_CONF DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
+}
+
+# create_ironic_cache_dir() - Part of the init_ironic() process
+function create_ironic_cache_dir() {
+    # Create cache dir
+    sudo mkdir -p $IRONIC_AUTH_CACHE_DIR/api
+    sudo chown $STACK_USER $IRONIC_AUTH_CACHE_DIR/api
+    rm -f $IRONIC_AUTH_CACHE_DIR/api/*
+    sudo mkdir -p $IRONIC_AUTH_CACHE_DIR/registry
+    sudo chown $STACK_USER $IRONIC_AUTH_CACHE_DIR/registry
+    rm -f $IRONIC_AUTH_CACHE_DIR/registry/*
+}
+
+# create_ironic_accounts() - Set up common required ironic accounts
+
+# Tenant               User       Roles
+# ------------------------------------------------------------------
+# service              ironic     admin        # if enabled
+create_ironic_accounts() {
+
+    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+
+    # Ironic
+    if [[ "$ENABLED_SERVICES" =~ "ir-api" ]]; then
+        IRONIC_USER=$(keystone user-create \
+            --name=ironic \
+            --pass="$SERVICE_PASSWORD" \
+            --tenant_id $SERVICE_TENANT \
+            --email=ironic@example.com \
+            | grep " id " | get_field 2)
+        keystone user-role-add \
+            --tenant_id $SERVICE_TENANT \
+            --user_id $IRONIC_USER \
+            --role_id $ADMIN_ROLE
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+            IRONIC_SERVICE=$(keystone service-create \
+                --name=ironic \
+                --type=baremetal \
+                --description="Ironic baremetal provisioning service" \
+                | grep " id " | get_field 2)
+            keystone endpoint-create \
+                --region RegionOne \
+                --service_id $IRONIC_SERVICE \
+                --publicurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT/v1/" \
+                --adminurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT/v1/" \
+                --internalurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT/v1/"
+        fi
+    fi
+}
+
+
+# init_ironic() - Initialize databases, etc.
+function init_ironic() {
+    # (Re)create  ironic database
+    recreate_database ironic utf8
+
+    # Migrate ironic database
+    $IRONIC_BIN_DIR/ironic-dbsync
+
+    create_ironic_cache_dir
+
+    # Create keystone artifacts for Ironic.
+    create_ironic_accounts
+}
+
+# install_ironic() - Collect source and prepare
+function install_ironic() {
+    git_clone $IRONIC_REPO $IRONIC_DIR $IRONIC_BRANCH
+    setup_develop $IRONIC_DIR
+}
+
+# start_ironic() - Start running processes, including screen
+function start_ironic() {
+    # Start Ironic API server, if enabled.
+    if is_service_enabled ir-api; then
+        start_ironic_api
+    fi
+
+    # Start Ironic conductor, if enabled.
+    if is_service_enabled ir-cond; then
+        start_ironic_conductor
+    fi
+}
+
+# start_ironic_api() - Used by start_ironic().
+# Starts Ironic API server.
+function start_ironic_api() {
+    screen_it ir-api "cd $IRONIC_DIR; $IRONIC_BIN_DIR/ironic-api --config-file=$IRONIC_CONF_FILE"
+    echo "Waiting for ir-api ($IRONIC_HOSTPORT) to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$IRONIC_HOSTPORT; do sleep 1; done"; then
+      die $LINENO "ir-api did not start"
+    fi
+}
+
+# start_ironic_conductor() - Used by start_ironic().
+# Starts Ironic conductor.
+function start_ironic_conductor() {
+    screen_it ir-cond "cd $IRONIC_DIR; $IRONIC_BIN_DIR/ironic-conductor --config-file=$IRONIC_CONF_FILE"
+    # TODO(romcheg): Find a way to check whether the conductor has started.
+}
+
+# stop_ironic() - Stop running processes
+function stop_ironic() {
+    # Kill the Ironic screen windows
+    screen -S $SCREEN_NAME -p ir-api -X kill
+    screen -S $SCREEN_NAME -p ir-cond -X kill
+}
+
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
