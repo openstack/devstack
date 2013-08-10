@@ -1,3 +1,5 @@
 tgt
 lvm2
 qemu-utils
+libpq-dev
+python-dev

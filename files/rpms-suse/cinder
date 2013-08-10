@@ -1,3 +1,5 @@
 lvm2
 tgt
 qemu-tools
+python-devel
+postgresql-devel

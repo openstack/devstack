@@ -1,3 +1,5 @@
 lvm2
 scsi-target-utils
 qemu-img
+python-devel
+postgresql-devel
