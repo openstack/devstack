@@ -30,7 +30,7 @@ set +o xtrace
 HEAT_DIR=$DEST/heat
 HEATCLIENT_DIR=$DEST/python-heatclient
 HEAT_AUTH_CACHE_DIR=${HEAT_AUTH_CACHE_DIR:-/var/cache/heat}
-
+HEAT_STANDALONE=`trueorfalse False $HEAT_STANDALONE`
 
 # Functions
 # ---------
@@ -83,6 +83,7 @@ function configure_heat() {
     iniset $HEAT_API_CFN_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api-cfn
     iniset $HEAT_API_CFN_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
     iniset $HEAT_API_CFN_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
+    [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_API_CFN_CONF paste_deploy flavor standalone
 
     iniset_rpc_backend heat $HEAT_API_CFN_CONF DEFAULT
 
@@ -104,7 +105,7 @@ function configure_heat() {
     iniset $HEAT_API_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api
     iniset $HEAT_API_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
     iniset $HEAT_API_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
-
+    [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_API_CONF paste_deploy flavor standalone
     iniset_rpc_backend heat $HEAT_API_CONF DEFAULT
 
 
@@ -142,6 +143,7 @@ function configure_heat() {
     iniset $HEAT_API_CW_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api-cloudwatch
     iniset $HEAT_API_CW_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
     iniset $HEAT_API_CW_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
+    [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_API_CW_CONF paste_deploy flavor standalone
 
     iniset_rpc_backend heat $HEAT_API_CW_CONF DEFAULT
 

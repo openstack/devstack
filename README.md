@@ -181,6 +181,23 @@ The above will default in devstack to using the OVS on each compute host. To cha
     Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS   VLAN TypeDriver options. Defaults to none.
     Q_AGENT_EXTRA_AGENT_OPTS         Extra configuration options to pass to the OVS or LinuxBridge Agent.
 
+# Heat
+
+Heat is disabled by default. To enable it you'll need the following settings
+in your `localrc` :
+
+    enable_service heat h-api h-api-cfn h-api-cw h-eng
+
+Heat can also run in standalone mode, and be configured to orchestrate
+on an external OpenStack cloud. To launch only Heat in standalone mode
+you'll need the following settings in your `localrc` :
+
+    disable_all_services
+    enable_service rabbit mysql heat h-api h-api-cfn h-api-cw h-eng
+    HEAT_STANDALONE=True
+    KEYSTONE_SERVICE_HOST=...
+    KEYSTONE_AUTH_HOST=...
+
 # Tempest
 
 If tempest has been successfully configured, a basic set of smoke tests can be run as follows:
