@@ -56,6 +56,7 @@ if [[ -n "$SESSION" ]]; then
 fi
 
 # Clean projects
+cleanup_oslo
 cleanup_cinder
 cleanup_glance
 cleanup_keystone

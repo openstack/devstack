@@ -27,11 +27,26 @@ OSLOMSG_DIR=$DEST/oslo.messaging
 
 # install_oslo() - Collect source and prepare
 function install_oslo() {
+    # TODO(sdague): remove this once we get to Icehouse, this just makes
+    # for a smoother transition of existing users.
+    cleanup_oslo
+
     git_clone $OSLOCFG_REPO $OSLOCFG_DIR $OSLOCFG_BRANCH
     setup_develop $OSLOCFG_DIR
 
     git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
     setup_develop $OSLOMSG_DIR
+}
+
+# cleanup_oslo() - purge possibly old versions of oslo
+function cleanup_oslo() {
+    # this means we've got an old olso installed, lets get rid of it
+    if find /usr | grep oslo.config | grep -v oslo.config.egg-link > /dev/null; then
+        echo "Found old oslo.config... removing to ensure consistency"
+        local PIP_CMD=$(get_pip_command)
+        pip_install olso.config
+        sudo $PIP_CMD uninstall -y olso.config
+    fi
 }
 
 # Restore xtrace
