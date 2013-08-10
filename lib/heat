@@ -68,7 +68,7 @@ function configure_heat() {
     # Cloudformation API
     HEAT_API_CFN_CONF=$HEAT_CONF_DIR/heat-api-cfn.conf
     cp $HEAT_DIR/etc/heat/heat-api-cfn.conf $HEAT_API_CFN_CONF
-    iniset $HEAT_API_CFN_CONF DEFAULT debug True
+    iniset $HEAT_API_CFN_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     inicomment $HEAT_API_CFN_CONF DEFAULT log_file
     iniset $HEAT_API_CFN_CONF DEFAULT use_syslog $SYSLOG
     iniset $HEAT_API_CFN_CONF DEFAULT bind_host $HEAT_API_CFN_HOST
@@ -90,7 +90,7 @@ function configure_heat() {
     # OpenStack API
     HEAT_API_CONF=$HEAT_CONF_DIR/heat-api.conf
     cp $HEAT_DIR/etc/heat/heat-api.conf $HEAT_API_CONF
-    iniset $HEAT_API_CONF DEFAULT debug True
+    iniset $HEAT_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     inicomment $HEAT_API_CONF DEFAULT log_file
     iniset $HEAT_API_CONF DEFAULT use_syslog $SYSLOG
     iniset $HEAT_API_CONF DEFAULT bind_host $HEAT_API_HOST
@@ -112,7 +112,7 @@ function configure_heat() {
     # engine
     HEAT_ENGINE_CONF=$HEAT_CONF_DIR/heat-engine.conf
     cp $HEAT_DIR/etc/heat/heat-engine.conf $HEAT_ENGINE_CONF
-    iniset $HEAT_ENGINE_CONF DEFAULT debug True
+    iniset $HEAT_ENGINE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     inicomment $HEAT_ENGINE_CONF DEFAULT log_file
     iniset $HEAT_ENGINE_CONF DEFAULT use_syslog $SYSLOG
     iniset $HEAT_ENGINE_CONF DEFAULT bind_host $HEAT_ENGINE_HOST
@@ -128,7 +128,7 @@ function configure_heat() {
     # Cloudwatch API
     HEAT_API_CW_CONF=$HEAT_CONF_DIR/heat-api-cloudwatch.conf
     cp $HEAT_DIR/etc/heat/heat-api-cloudwatch.conf $HEAT_API_CW_CONF
-    iniset $HEAT_API_CW_CONF DEFAULT debug True
+    iniset $HEAT_API_CW_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     inicomment $HEAT_API_CW_CONF DEFAULT log_file
     iniset $HEAT_API_CW_CONF DEFAULT use_syslog $SYSLOG
     iniset $HEAT_API_CW_CONF DEFAULT bind_host $HEAT_API_CW_HOST
