@@ -81,10 +81,12 @@ function install_get_pip() {
 }
 
 function install_pip_tarball() {
-    curl -O $PIP_TAR_URL
-    tar xvfz pip-$INSTALL_PIP_VERSION.tar.gz
-    cd pip-$INSTALL_PIP_VERSION
-    sudo python setup.py install
+    (cd $FILES; \
+        curl -O $PIP_TAR_URL; \
+        tar xvfz pip-$INSTALL_PIP_VERSION.tar.gz; \
+        cd pip-$INSTALL_PIP_VERSION; \
+        sudo python setup.py install; \
+    )
 }
 
 # Show starting versions

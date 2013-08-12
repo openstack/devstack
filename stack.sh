@@ -581,6 +581,10 @@ source $TOP_DIR/tools/install_prereqs.sh
 # Configure an appropriate python environment
 $TOP_DIR/tools/install_pip.sh
 
+# Do the ugly hacks for borken packages and distros
+$TOP_DIR/tools/fixup_stuff.sh
+
+
 # System-specific preconfigure
 # ============================
 
