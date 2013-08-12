@@ -29,6 +29,10 @@ THIS_DIR=$(cd $(dirname "$0") && pwd)
 # xapi functions
 . $THIS_DIR/functions
 
+# Determine what system we are running on.
+# Might not be XenServer if we're using xenserver-core
+GetDistro
+
 #
 # Get Settings
 #
