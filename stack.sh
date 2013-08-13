@@ -234,8 +234,10 @@ else
 fi
 
 # Create the destination directory and ensure it is writable by the user
+# and read/executable by everybody for daemons (e.g. apache run for horizon)
 sudo mkdir -p $DEST
 sudo chown -R $STACK_USER $DEST
+chmod 0755 $DEST
 
 # a basic test for $DEST path permissions (fatal on error unless skipped)
 check_path_perm_sanity ${DEST}
