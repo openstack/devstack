@@ -577,6 +577,8 @@ function _configure_neutron_metadata_agent() {
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
+    _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT True True
+
 }
 
 function _configure_neutron_lbaas() {
@@ -687,6 +689,7 @@ function _neutron_setup_keystone() {
     local conf_file=$1
     local section=$2
     local use_auth_url=$3
+    local skip_auth_cache=$4
     if [[ -n $use_auth_url ]]; then
         iniset $conf_file $section auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0"
     else
@@ -697,11 +700,13 @@ function _neutron_setup_keystone() {
     iniset $conf_file $section admin_tenant_name $SERVICE_TENANT_NAME
     iniset $conf_file $section admin_user $Q_ADMIN_USERNAME
     iniset $conf_file $section admin_password $SERVICE_PASSWORD
-    iniset $conf_file $section signing_dir $NEUTRON_AUTH_CACHE_DIR
-    # Create cache dir
-    sudo mkdir -p $NEUTRON_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $NEUTRON_AUTH_CACHE_DIR
-    rm -f $NEUTRON_AUTH_CACHE_DIR/*
+    if [[ -z $skip_auth_cache ]]; then
+        iniset $conf_file $section signing_dir $NEUTRON_AUTH_CACHE_DIR
+        # Create cache dir
+        sudo mkdir -p $NEUTRON_AUTH_CACHE_DIR
+        sudo chown $STACK_USER $NEUTRON_AUTH_CACHE_DIR
+        rm -f $NEUTRON_AUTH_CACHE_DIR/*
+    fi
 }
 
 function _neutron_setup_interface_driver() {
