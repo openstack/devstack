@@ -1433,6 +1433,19 @@ function _ping_check_novanet() {
     fi
 }
 
+# Get ip of instance
+function get_instance_ip(){
+    local vm_id=$1
+    local network_name=$2
+    local nova_result="$(nova show $vm_id)"
+    local ip=$(echo "$nova_result" | grep "$network_name" | get_field 2)
+    if [[ $ip = "" ]];then
+        echo "$nova_result"
+        die $LINENO "[Fail] Coudn't get ipaddress of VM"
+        exit 1
+    fi
+    echo $ip
+}
 
 # ssh check
 
