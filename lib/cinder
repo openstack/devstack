@@ -287,6 +287,14 @@ function configure_cinder() {
             CINDER_GLUSTERFS_SHARES=$(echo $CINDER_GLUSTERFS_SHARES | tr ";" "\n")
             echo "$CINDER_GLUSTERFS_SHARES" > $CINDER_CONF_DIR/glusterfs_shares
         fi
+    elif [ "$CINDER_DRIVER" == "vsphere" ]; then
+        echo_summary "Using VMware vCenter driver"
+        iniset $CINDER_CONF DEFAULT enabled_backends vmware
+        iniset $CINDER_CONF vmware host_ip "$VMWAREAPI_IP"
+        iniset $CINDER_CONF vmware host_username "$VMWAREAPI_USER"
+        iniset $CINDER_CONF vmware host_password "$VMWAREAPI_PASSWORD"
+        iniset $CINDER_CONF vmware cluster_name "$VMWAREAPI_CLUSTER"
+        iniset $CINDER_CONF vmware volume_driver "cinder.volume.drivers.vmware.vmdk.VMwareVcVmdkDriver"
     fi
 
     if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
