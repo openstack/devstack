@@ -944,13 +944,9 @@ function pip_install {
         CMD_PIP=$(get_pip_command)
     fi
 
-    if is_fedora && [[ $DISTRO =~ (rhel6) ]]; then
-        # RHEL6 pip by default doesn't have this (was introduced
-        # around 0.8.1 or so)
-        PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-False}
-    else
-        PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-True}
-    fi
+    # Mirror option not needed anymore because pypi has CDN available,
+    # but it's useful in certain circumstances
+    PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-False}
     if [[ "$PIP_USE_MIRRORS" != "False" ]]; then
         PIP_MIRROR_OPT="--use-mirrors"
     fi
