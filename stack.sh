@@ -252,6 +252,9 @@ OFFLINE=`trueorfalse False $OFFLINE`
 # operation.
 ERROR_ON_CLONE=`trueorfalse False $ERROR_ON_CLONE`
 
+# Whether to enable the debug log level in OpenStack services
+ENABLE_DEBUG_LOG_LEVEL=`trueorfalse True $ENABLE_DEBUG_LOG_LEVEL`
+
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 sudo mkdir -p $DATA_DIR

@@ -71,7 +71,7 @@ function configure_glance() {
 
     # Copy over our glance configurations and update them
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
-    iniset $GLANCE_REGISTRY_CONF DEFAULT debug True
+    iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     inicomment $GLANCE_REGISTRY_CONF DEFAULT log_file
     local dburl=`database_connection_url glance`
     iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $dburl
@@ -87,7 +87,7 @@ function configure_glance() {
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/registry
 
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
-    iniset $GLANCE_API_CONF DEFAULT debug True
+    iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     inicomment $GLANCE_API_CONF DEFAULT log_file
     iniset $GLANCE_API_CONF DEFAULT sql_connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
@@ -123,7 +123,7 @@ function configure_glance() {
     cp -p $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
 
     cp $GLANCE_DIR/etc/glance-cache.conf $GLANCE_CACHE_CONF
-    iniset $GLANCE_CACHE_CONF DEFAULT debug True
+    iniset $GLANCE_CACHE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     inicomment $GLANCE_CACHE_CONF DEFAULT log_file
     iniset $GLANCE_CACHE_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_CACHE_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/

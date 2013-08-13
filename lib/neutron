@@ -537,7 +537,7 @@ function _configure_neutron_dhcp_agent() {
     cp $NEUTRON_DIR/etc/dhcp_agent.ini $Q_DHCP_CONF_FILE
 
     iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
-    iniset $Q_DHCP_CONF_FILE DEFAULT debug True
+    iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
@@ -557,7 +557,7 @@ function _configure_neutron_l3_agent() {
     cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
 
     iniset $Q_L3_CONF_FILE DEFAULT verbose True
-    iniset $Q_L3_CONF_FILE DEFAULT debug True
+    iniset $Q_L3_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_L3_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
@@ -573,7 +573,7 @@ function _configure_neutron_metadata_agent() {
     cp $NEUTRON_DIR/etc/metadata_agent.ini $Q_META_CONF_FILE
 
     iniset $Q_META_CONF_FILE DEFAULT verbose True
-    iniset $Q_META_CONF_FILE DEFAULT debug True
+    iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
@@ -597,7 +597,7 @@ function _configure_neutron_plugin_agent() {
     # ensure that an agent's configuration can override the default
     iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_COMMAND"
     iniset $NEUTRON_CONF DEFAULT verbose True
-    iniset $NEUTRON_CONF DEFAULT debug True
+    iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
     # Configure agent for plugin
     neutron_plugin_configure_plugin_agent
@@ -620,7 +620,7 @@ function _configure_neutron_service() {
     fi
 
     iniset $NEUTRON_CONF DEFAULT verbose True
-    iniset $NEUTRON_CONF DEFAULT debug True
+    iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $NEUTRON_CONF DEFAULT policy_file $Q_POLICY_FILE
     iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips $Q_ALLOW_OVERLAPPING_IP
 
