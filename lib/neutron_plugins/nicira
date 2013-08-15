@@ -90,7 +90,7 @@ function neutron_plugin_configure_service() {
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l3_gw_service_uuid $DEFAULT_L3_GW_SVC_UUID
         Q_L3_ENABLED=True
         Q_L3_ROUTER_PER_TENANT=True
-        iniset /$Q_PLUGIN_CONF_FILE nvp enable_metadata_access_network True
+        iniset /$Q_PLUGIN_CONF_FILE nvp metadata_mode access_network
     fi
     if [[ "$DEFAULT_L2_GW_SVC_UUID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l2_gw_service_uuid $DEFAULT_L2_GW_SVC_UUID
