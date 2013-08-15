@@ -387,8 +387,9 @@ GetOSVersion() {
         # CentOS release 5.5 (Final)
         # CentOS Linux release 6.0 (Final)
         # Fedora release 16 (Verne)
+        # XenServer release 6.2.0-70446c (xenenterprise)
         os_CODENAME=""
-        for r in "Red Hat" CentOS Fedora; do
+        for r in "Red Hat" CentOS Fedora XenServer; do
             os_VENDOR=$r
             if [[ -n "`grep \"$r\" /etc/redhat-release`" ]]; then
                 ver=`sed -e 's/^.* \(.*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
@@ -451,6 +452,8 @@ function GetDistro() {
     elif [[ "$os_VENDOR" =~ (Red Hat) || "$os_VENDOR" =~ (CentOS) ]]; then
         # Drop the . release as we assume it's compatible
         DISTRO="rhel${os_RELEASE::1}"
+    elif [[ "$os_VENDOR" =~ (XenServer) ]]; then
+        DISTRO="xs$os_RELEASE"
     else
         # Catch-all for now is Vendor + Release + Update
         DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
