@@ -1063,7 +1063,7 @@ function screen_it {
             sleep 1.5
 
             NL=`echo -ne '\015'`
-            screen -S $SCREEN_NAME -p $1 -X stuff "$2 || touch \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
+            screen -S $SCREEN_NAME -p $1 -X stuff "$2 || echo \"$1 failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
         else
             # Spawn directly without screen
             run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$service.pid
