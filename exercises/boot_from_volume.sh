@@ -174,7 +174,8 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | g
 fi
 
 # Get the instance IP
-IP=$(nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2)
+IP=$(get_instance_ip $VM_UUID $PRIVATE_NETWORK_NAME)
+
 die_if_not_set $LINENO IP "Failure retrieving IP address"
 
 # Private IPs can be pinged in single node deployments
