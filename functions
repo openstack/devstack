@@ -912,7 +912,7 @@ function is_package_installed() {
     fi
 
     if [[ "$os_PACKAGE" = "deb" ]]; then
-        dpkg -l "$@" > /dev/null
+        dpkg -l "$@" > /dev/null 2> /dev/null
     elif [[ "$os_PACKAGE" = "rpm" ]]; then
         rpm --quiet -q "$@"
     else
