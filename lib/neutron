@@ -534,6 +534,11 @@ function _configure_neutron_common() {
         iniset $NEUTRON_CONF quotas quota_security_group_rule -1
     fi
 
+    # Format logging
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+        setup_colorized_logging $NEUTRON_CONF DEFAULT
+    fi
+
     _neutron_setup_rootwrap
 }
 
