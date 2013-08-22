@@ -1,9 +1,0 @@
-deb http://mirror.rackspace.com/ubuntu/ %DIST% main restricted
-deb http://mirror.rackspace.com/ubuntu/ %DIST%-updates main restricted
-deb http://mirror.rackspace.com/ubuntu/ %DIST% universe
-deb http://mirror.rackspace.com/ubuntu/ %DIST%-updates universe
-deb http://mirror.rackspace.com/ubuntu/ %DIST% multiverse
-deb http://mirror.rackspace.com/ubuntu/ %DIST%-updates multiverse
-deb http://security.ubuntu.com/ubuntu %DIST%-security main restricted
-deb http://security.ubuntu.com/ubuntu %DIST%-security universe
-deb http://security.ubuntu.com/ubuntu %DIST%-security multiverse
