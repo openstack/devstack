@@ -451,6 +451,7 @@ function create_nova_conf() {
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
         iniset $NOVA_CONF DEFAULT libvirt_type "$LIBVIRT_TYPE"
         iniset $NOVA_CONF DEFAULT libvirt_cpu_mode "none"
+        iniset $NOVA_CONF DEFAULT use_usb_tablet "False"
     fi
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
