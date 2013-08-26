@@ -646,6 +646,7 @@ function init_nova() {
 function install_novaclient() {
     git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
     setup_develop $NOVACLIENT_DIR
+    sudo install -D -m 0644 -o $STACK_USER {$NOVACLIENT_DIR/tools/,/etc/bash_completion.d/}nova.bash_completion
 }
 
 # install_nova() - Collect source and prepare
@@ -683,6 +684,7 @@ function install_nova() {
 
     git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
     setup_develop $NOVA_DIR
+    sudo install -D -m 0644 -o $STACK_USER {$NOVA_DIR/tools/,/etc/bash_completion.d/}nova-manage.bash_completion
 }
 
 # start_nova_api() - Start the API process ahead of other things
