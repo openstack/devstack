@@ -282,6 +282,9 @@ function configure_tempest() {
     # Scenario
     iniset $TEMPEST_CONF scenario img_dir "$FILES/images/cirros-0.3.1-x86_64-uec"
 
+    # Large Ops Number
+    iniset $TEMPEST_CONF scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
+
     # Volume
     CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
     if [ $CINDER_MULTI_LVM_BACKEND == "True" ]; then
