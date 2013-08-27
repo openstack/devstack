@@ -367,3 +367,25 @@ if [[ "$VAL" -ne 0 ]]; then
 else
     echo "is_package_installed() on non-existing package failed"
 fi
+
+# test against removed package...was a bug on Ubuntu
+if is_ubuntu; then
+    PKG=cowsay
+    if ! (dpkg -s $PKG >/dev/null 2>&1); then
+        # it was never installed...set up the condition
+        sudo apt-get install -y cowsay >/dev/null 2>&1
+    fi
+    if (dpkg -s $PKG >/dev/null 2>&1); then
+        # remove it to create the 'un' status
+        sudo dpkg -P $PKG >/dev/null 2>&1
+    fi
+
+    # now test the installed check on a deleted package
+    is_package_installed $PKG
+    VAL=$?
+    if [[ "$VAL" -ne 0 ]]; then
+        echo "OK"
+    else
+        echo "is_package_installed() on deleted package failed"
+    fi
+fi
