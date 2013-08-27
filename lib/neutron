@@ -542,6 +542,14 @@ function _configure_neutron_dhcp_agent() {
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
+    # Define extra "DEFAULT" configuration options when q-dhcp is configured by
+    # defining the array ``Q_DHCP_EXTRA_DEFAULT_OPTS``.
+    # For Example: ``Q_DHCP_EXTRA_DEFAULT_OPTS=(foo=true bar=2)``
+    for I in "${Q_DHCP_EXTRA_DEFAULT_OPTS[@]}"; do
+        # Replace the first '=' with ' ' for iniset syntax
+        iniset $Q_DHCP_CONF_FILE DEFAULT ${I/=/ }
+    done
+
     _neutron_setup_interface_driver $Q_DHCP_CONF_FILE
 
     neutron_plugin_configure_dhcp_agent
