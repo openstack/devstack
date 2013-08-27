@@ -31,7 +31,12 @@ function neutron_plugin_configure_debug_command() {
 }
 
 function neutron_plugin_configure_dhcp_agent() {
-   die $LINENO "q-dhcp must not be executed with MidoNet plugin!"
+    DHCP_DRIVER=${DHCP_DRIVER:-"neutron.plugins.midonet.agent.midonet_driver.DhcpNoOpDriver"}
+    DHCP_INTERFACE_DRIVER=${DHCP_INTEFACE_DRIVER:-"neutron.plugins.midonet.agent.midonet_driver.MidonetInterfaceDriver"}
+    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_driver $DHCP_DRIVER
+    iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver $DHCP_INTERFACE_DRIVER
+    iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces True
+    iniset $Q_DHCP_CONF_FILE DEFAULT enable_isolated_metadata True
 }
 
 function neutron_plugin_configure_l3_agent() {
@@ -57,9 +62,6 @@ function neutron_plugin_configure_service() {
     fi
     if [[ "$MIDONET_PROVIDER_ROUTER_ID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE MIDONET provider_router_id $MIDONET_PROVIDER_ROUTER_ID
-    fi
-    if [[ "$MIDONET_METADATA_ROUTER_ID" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE MIDONET metadata_router_id $MIDONET_METADATA_ROUTER_ID
     fi
 }
 
