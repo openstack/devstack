@@ -31,6 +31,8 @@ HEAT_DIR=$DEST/heat
 HEATCLIENT_DIR=$DEST/python-heatclient
 HEAT_AUTH_CACHE_DIR=${HEAT_AUTH_CACHE_DIR:-/var/cache/heat}
 HEAT_STANDALONE=`trueorfalse False $HEAT_STANDALONE`
+HEAT_CONF_DIR=/etc/heat
+HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 
 # Functions
 # ---------
@@ -39,13 +41,13 @@ HEAT_STANDALONE=`trueorfalse False $HEAT_STANDALONE`
 # runs that a clean run would need to clean up
 function cleanup_heat() {
     sudo rm -rf $HEAT_AUTH_CACHE_DIR
+    sudo rm -rf $HEAT_ENV_DIR
 }
 
 # configure_heat() - Set config files, create data dirs, etc
 function configure_heat() {
     setup_develop $HEAT_DIR
 
-    HEAT_CONF_DIR=/etc/heat
     if [[ ! -d $HEAT_CONF_DIR ]]; then
         sudo mkdir -p $HEAT_CONF_DIR
     fi
@@ -154,6 +156,12 @@ function configure_heat() {
     [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_API_CW_CONF paste_deploy flavor standalone
 
     iniset_rpc_backend heat $HEAT_API_CW_CONF DEFAULT
+
+    # heat environment
+    sudo mkdir -p $HEAT_ENV_DIR
+    sudo chown $STACK_USER $HEAT_ENV_DIR
+    # copy the default environment
+    cp $HEAT_DIR/etc/heat/environment.d/* $HEAT_ENV_DIR/
 
 }
 
