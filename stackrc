@@ -275,6 +275,9 @@ USE_SCREEN=${SCREEN_DEV:-$USE_SCREEN}
 # Set default screen name
 SCREEN_NAME=${SCREEN_NAME:-stack}
 
+# Do not install packages tagged with 'testonly' by default
+INSTALL_TESTONLY_PACKAGES=${INSTALL_TESTONLY_PACKAGES:-False}
+
 # Local variables:
 # mode: shell-script
 # End:

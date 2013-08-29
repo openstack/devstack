@@ -317,16 +317,36 @@ function get_packages() {
                 continue
             fi
 
+            # Assume we want this package
+            package=${line%#*}
+            inst_pkg=1
+
+            # Look for # dist:xxx in comment
             if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then
                 # We are using BASH regexp matching feature.
                 package=${BASH_REMATCH[1]}
                 distros=${BASH_REMATCH[2]}
                 # In bash ${VAR,,} will lowecase VAR
-                [[ ${distros,,} =~ ${DISTRO,,} ]] && echo $package
-                continue
+                # Look for a match in the distro list
+                if [[ ! ${distros,,} =~ ${DISTRO,,} ]]; then
+                    # If no match then skip this package
+                    inst_pkg=0
+                fi
             fi
 
-            echo ${line%#*}
+            # Look for # testonly in comment
+            if [[ $line =~ (.*)#.*testonly.* ]]; then
+                package=${BASH_REMATCH[1]}
+                # Are we installing test packages? (test for the default value)
+                if [[ $INSTALL_TESTONLY_PACKAGES = "False" ]]; then
+                    # If not installing test packages the skip this package
+                    inst_pkg=0
+                fi
+            fi
+
+            if [[ $inst_pkg = 1 ]]; then
+                echo $package
+            fi
         done
         IFS=$OIFS
     done
