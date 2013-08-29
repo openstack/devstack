@@ -48,6 +48,11 @@ useradd $STACK_USER -s /bin/bash -d /opt/stack -G libvirtd
 echo $STACK_USER:$GUEST_PASSWORD | chpasswd
 echo "$STACK_USER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
+# Add an udev rule, so that new block devices could be written by stack user
+cat > /etc/udev/rules.d/50-openstack-blockdev.rules << EOF
+KERNEL=="xvd[b-z]", GROUP="$STACK_USER", MODE="0660"
+EOF
+
 # Give ownership of /opt/stack to stack user
 chown -R $STACK_USER /opt/stack
 
