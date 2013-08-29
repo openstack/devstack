@@ -1,0 +1,27 @@
+# Neutron firewall plugin
+# ---------------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+FWAAS_PLUGIN=neutron.services.firewall.fwaas_plugin.FirewallPlugin
+
+function neutron_fwaas_configure_common() {
+    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
+        Q_SERVICE_PLUGIN_CLASSES=$FWAAS_PLUGIN
+    else
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$FWAAS_PLUGIN"
+    fi
+}
+
+function neutron_fwaas_configure_driver() {
+    FWAAS_DRIVER_CONF_FILENAME=/etc/neutron/fwaas_driver.ini
+    cp $NEUTRON_DIR/etc/fwaas_driver.ini $FWAAS_DRIVER_CONF_FILENAME
+
+    iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas enabled True
+    iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas driver "neutron.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver"
+}
+
+# Restore xtrace
+$MY_XTRACE

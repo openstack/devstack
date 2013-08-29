@@ -50,7 +50,7 @@ function _horizon_config_set() {
         if [ -n "$line" ]; then
             sed -i -e "/^$section/,/^}/ s/^\( *'$option'\) *:.*$/\1: $value,/" $file
         else
-            sed -i -e "/^$section/ a\n    '$option': $value,\n" $file
+            sed -i -e "/^$section/a\    '$option': $value," $file
         fi
     else
         echo -e "\n\n$section = {\n    '$option': $value,\n}" >> $file
@@ -94,6 +94,11 @@ function init_horizon() {
     # enable loadbalancer dashboard in case service is enabled
     if is_service_enabled q-lbaas; then
         _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_lb True
+    fi
+
+    # enable firewall dashboard in case service is enabled
+    if is_service_enabled q-fwaas; then
+        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_firewall True
     fi
 
     # Initialize the horizon database (it stores sessions and notices shown to
