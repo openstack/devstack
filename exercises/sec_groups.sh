@@ -33,6 +33,9 @@ source $TOP_DIR/openrc
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
+# Skip if the hypervisor is Docker
+[[ "$VIRT_DRIVER" == "docker" ]] && exit 55
+
 
 # Testing Security Groups
 # =======================

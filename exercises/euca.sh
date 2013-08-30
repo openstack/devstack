@@ -41,6 +41,9 @@ fi
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
+# Skip if the hypervisor is Docker
+[[ "$VIRT_DRIVER" == "docker" ]] && exit 55
+
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 

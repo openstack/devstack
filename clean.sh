@@ -64,6 +64,11 @@ cleanup_nova
 cleanup_neutron
 cleanup_swift
 
+# Do the hypervisor cleanup until this can be moved back into lib/nova
+if [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
+    cleanup_nova_hypervisor
+fi
+
 # cinder doesn't always clean up the volume group as it might be used elsewhere...
 # clean it up if it is a loop device
 VG_DEV=$(sudo losetup -j $DATA_DIR/${VOLUME_GROUP}-backing-file | awk -F':' '/backing-file/ { print $1}')
