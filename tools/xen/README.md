@@ -1,48 +1,54 @@
-# Getting Started With XenServer 5.6 and Devstack
-The purpose of the code in this directory it to help developers bootstrap
-a XenServer 5.6 (or greater) + Openstack development environment.  This file gives
-some pointers on how to get started.
+# Getting Started With XenServer and Devstack
 
-Xenserver is a Type 1 hypervisor, so it needs to be installed on bare metal.
-The Openstack services are configured to run within a "privileged" virtual
-machine on the Xenserver host (called OS domU). The VM uses the XAPI toolstack
-to communicate with the host.
+The purpose of the code in this directory it to help developers bootstrap a
+XenServer 6.2 (older versions may also work) + Openstack development
+environment. This file gives some pointers on how to get started.
+
+Xenserver is a Type 1 hypervisor, so it is best installed on bare metal.  The
+Openstack services are configured to run within a virtual machine (called OS
+domU) on the XenServer host. The VM uses the XAPI toolstack to communicate with
+the host over a network connection (see `MGT_BRIDGE_OR_NET_NAME`).
 
 The provided localrc helps to build a basic environment.
-The requirements are:
+
+## Introduction
+
+### Requirements
+
  - An internet-enabled network with a DHCP server on it
  - XenServer box plugged in to the same network
 This network will be used as the OpenStack management network. The VM Network
 and the Public Network will not be connected to any physical interfaces, only
 new virtual networks will be created by the `install_os_domU.sh` script.
 
-Steps to follow:
+### Steps to follow
+
  - Install XenServer
  - Download Devstack to XenServer
  - Customise `localrc`
  - Start `install_os_domU.sh` script
 
+### Brief explanation
+
 The `install_os_domU.sh` script will:
  - Setup XenAPI plugins
  - Create the named networks, if they don't exist
- - Preseed-Netinstall an Ubuntu Virtual Machine, with 1 network interface:
-   - eth0 - Connected to `UBUNTU_INST_BRIDGE_OR_NET_NAME`, defaults to
-   `MGT_BRIDGE_OR_NET_NAME`
+ - Preseed-Netinstall an Ubuntu Virtual Machine (NOTE: you can save and reuse
+   it, see [Reuse the Ubuntu VM](#reuse-the-ubuntu-vm)), with 1 network
+   interface:
+   - `eth0` - Connected to `UBUNTU_INST_BRIDGE_OR_NET_NAME`, defaults to
+     `MGT_BRIDGE_OR_NET_NAME`
  - After the Ubuntu install process finished, the network configuration is
  modified to:
-   - eth0 - Management interface, connected to `MGT_BRIDGE_OR_NET_NAME`
-   - eth1 - VM interface, connected to `VM_BRIDGE_OR_NET_NAME`
-   - eth2 - Public interface, connected to `PUB_BRIDGE_OR_NET_NAME`
-   - (eth3) - Optional network interface if neutron is used, to enforce xapi to
-   create the underlying bridge.
+   - `eth0` - Management interface, connected to `MGT_BRIDGE_OR_NET_NAME`. Xapi
+     must be accessible through this network.
+   - `eth1` - VM interface, connected to `VM_BRIDGE_OR_NET_NAME`
+   - `eth2` - Public interface, connected to `PUB_BRIDGE_OR_NET_NAME`
  - Start devstack inside the created OpenStack VM
 
 ## Step 1: Install Xenserver
-Install XenServer 5.6+ on a clean box. You can get XenServer by signing
-up for an account on citrix.com, and then visiting:
-https://www.citrix.com/English/ss/downloads/details.asp?downloadId=2311504&productId=683148
-
-For details on installation, see: http://wiki.openstack.org/XenServer/Install
+Install XenServer on a clean box. You can download the latest XenServer for
+free from: http://www.xenserver.org/
 
 The XenServer IP configuration depends on your local network setup. If you are
 using dhcp, make a reservation for XenServer, so its IP address won't change
@@ -85,17 +91,20 @@ Of course, use real passwords if this machine is exposed.
     XENAPI_CONNECTION_URL="http://address_of_your_xenserver"
     VNCSERVER_PROXYCLIENT_ADDRESS=address_of_your_xenserver
 
-    # Do not download the usual images
-    IMAGE_URLS=""
-    # Explicitly set virt driver here
+    # Download a vhd and a uec image
+    IMAGE_URLS="\
+    https://github.com/downloads/citrix-openstack/warehouse/cirros-0.3.0-x86_64-disk.vhd.tgz,\
+    http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-uec.tar.gz"
+
+    # Explicitly set virt driver
     VIRT_DRIVER=xenserver
-    # Explicitly enable multi-host
+
+    # Explicitly enable multi-host for nova-network HA
     MULTI_HOST=1
+
     # Give extra time for boot
     ACTIVE_TIMEOUT=45
 
-    # NOTE: the value of FLAT_NETWORK_BRIDGE will automatically be determined
-    # by install_os_domU.sh script.
     EOF
 
 ## Step 4: Run `./install_os_domU.sh` from the `tools/xen` directory
@@ -107,12 +116,60 @@ Once this script finishes executing, log into the VM (openstack domU) that it
 installed and tail the run.sh.log file. You will need to wait until it run.sh
 has finished executing.
 
-## Step 5: Do cloudy stuff!
-* Play with horizon
-* Play with the CLI
-* Log bugs to devstack and core projects, and submit fixes!
+# Appendix
 
-## Step 6: Run from snapshot
-If you want to quicky re-run devstack from a clean state,
-using the same settings you used in your previous run,
-you can revert the DomU to the snapshot called `before_first_boot`
+This section contains useful information for running devstack in CI
+environments / using ubuntu network mirrors.
+
+## Use a specific Ubuntu mirror for installation
+
+To speed up the Ubuntu installation, you can use a specific mirror. To specify
+a mirror explicitly, include the following settings in your `localrc` file:
+
+    UBUNTU_INST_HTTP_HOSTNAME="archive.ubuntu.com"
+    UBUNTU_INST_HTTP_DIRECTORY="/ubuntu"
+
+These variables set the `mirror/http/hostname` and `mirror/http/directory`
+settings in the ubuntu preseed file. The minimal ubuntu VM will use the
+specified parameters.
+
+## Use an http proxy to speed up Ubuntu installation
+
+To further speed up the Ubuntu VM and package installation, an internal http
+proxy could be used. `squid-deb-proxy` has prooven to be stable. To use an http
+proxy, specify:
+
+    UBUNTU_INST_HTTP_PROXY="http://ubuntu-proxy.somedomain.com:8000"
+
+in your `localrc` file.
+
+## Reuse the Ubuntu VM
+
+Performing a minimal ubuntu installation could take a lot of time, depending on
+your mirror/network speed. If you run `install_os_domU.sh` script on a clean
+hypervisor, you can speed up the installation, by re-using the ubuntu vm from
+a previous installation.
+
+### Export the Ubuntu VM to an XVA
+
+Given you have an nfs export `TEMPLATE_NFS_DIR`:
+
+    TEMPLATE_FILENAME=devstack-jeos.xva
+    TEMPLATE_NAME=jeos_template_for_devstack
+    mountdir=$(mktemp -d)
+    mount -t nfs "$TEMPLATE_NFS_DIR" "$mountdir"
+    VM="$(xe template-list name-label="$TEMPLATE_NAME" --minimal)"
+    xe template-export template-uuid=$VM filename="$mountdir/$TEMPLATE_FILENAME"
+    umount "$mountdir"
+    rm -rf "$mountdir"
+
+### Import the Ubuntu VM
+
+Given you have an nfs export `TEMPLATE_NFS_DIR` where you exported the Ubuntu
+VM as `TEMPLATE_FILENAME`:
+
+    mountdir=$(mktemp -d)
+    mount -t nfs "$TEMPLATE_NFS_DIR" "$mountdir"
+    xe vm-import filename="$mountdir/$TEMPLATE_FILENAME"
+    umount "$mountdir"
+    rm -rf "$mountdir"
