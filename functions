@@ -1645,6 +1645,37 @@ vercmp_numbers() {
 }
 
 
+# ``policy_add policy_file policy_name policy_permissions``
+#
+# Add a policy to a policy.json file
+# Do nothing if the policy already exists
+
+function policy_add() {
+    local policy_file=$1
+    local policy_name=$2
+    local policy_perm=$3
+
+    if grep -q ${policy_name} ${policy_file}; then
+        echo "Policy ${policy_name} already exists in ${policy_file}"
+        return
+    fi
+
+    # Add a terminating comma to policy lines without one
+    # Remove the closing '}' and all lines following to the end-of-file
+    local tmpfile=$(mktemp)
+    uniq ${policy_file} | sed -e '
+        s/]$/],/
+        /^[}]/,$d
+    ' > ${tmpfile}
+
+    # Append policy and closing brace
+    echo "    \"${policy_name}\": ${policy_perm}" >>${tmpfile}
+    echo "}" >>${tmpfile}
+
+    mv ${tmpfile} ${policy_file}
+}
+
+
 # Restore xtrace
 $XTRACE
 
