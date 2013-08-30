@@ -32,6 +32,7 @@ HEATCLIENT_DIR=$DEST/python-heatclient
 HEAT_AUTH_CACHE_DIR=${HEAT_AUTH_CACHE_DIR:-/var/cache/heat}
 HEAT_STANDALONE=`trueorfalse False $HEAT_STANDALONE`
 HEAT_CONF_DIR=/etc/heat
+HEAT_CONF=$HEAT_CONF_DIR/heat.conf
 HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 HEAT_TEMPLATES_DIR=$HEAT_CONF_DIR/templates
 
@@ -54,6 +55,8 @@ function configure_heat() {
         sudo mkdir -p $HEAT_CONF_DIR
     fi
     sudo chown $STACK_USER $HEAT_CONF_DIR
+    # remove old config files
+    rm -f $HEAT_CONF_DIR/heat-*.conf
 
     HEAT_API_CFN_HOST=${HEAT_API_CFN_HOST:-$SERVICE_HOST}
     HEAT_API_CFN_PORT=${HEAT_API_CFN_PORT:-8000}
@@ -68,96 +71,55 @@ function configure_heat() {
 
     cp $HEAT_DIR/etc/heat/api-paste.ini $HEAT_API_PASTE_FILE
     cp $HEAT_DIR/etc/heat/policy.json $HEAT_POLICY_FILE
+    cp $HEAT_DIR/etc/heat/heat.conf.sample $HEAT_CONF
 
-    # Cloudformation API
-    HEAT_API_CFN_CONF=$HEAT_CONF_DIR/heat-api-cfn.conf
-    cp $HEAT_DIR/etc/heat/heat-api-cfn.conf $HEAT_API_CFN_CONF
-    iniset $HEAT_API_CFN_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    inicomment $HEAT_API_CFN_CONF DEFAULT log_file
-    iniset $HEAT_API_CFN_CONF DEFAULT use_syslog $SYSLOG
-    iniset $HEAT_API_CFN_CONF DEFAULT bind_host $HEAT_API_CFN_HOST
-    iniset $HEAT_API_CFN_CONF DEFAULT bind_port $HEAT_API_CFN_PORT
-    iniset $HEAT_API_CFN_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $HEAT_API_CFN_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $HEAT_API_CFN_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $HEAT_API_CFN_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_CFN_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $HEAT_API_CFN_CONF keystone_authtoken admin_user heat
-    iniset $HEAT_API_CFN_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $HEAT_API_CFN_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api-cfn
-    iniset $HEAT_API_CFN_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_CFN_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
-    [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_API_CFN_CONF paste_deploy flavor standalone
+    # common options
+    iniset_rpc_backend heat $HEAT_CONF DEFAULT
+    iniset $HEAT_CONF DEFAULT heat_metadata_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT
+    iniset $HEAT_CONF DEFAULT heat_waitcondition_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1/waitcondition
+    iniset $HEAT_CONF DEFAULT heat_watch_server_url http://$HEAT_API_CW_HOST:$HEAT_API_CW_PORT
+    iniset $HEAT_CONF DEFAULT sql_connection `database_connection_url heat`
+    iniset $HEAT_CONF DEFAULT auth_encryption_key `hexdump -n 16 -v -e '/1 "%02x"' /dev/random`
 
-    iniset_rpc_backend heat $HEAT_API_CFN_CONF DEFAULT
-
-    # OpenStack API
-    HEAT_API_CONF=$HEAT_CONF_DIR/heat-api.conf
-    cp $HEAT_DIR/etc/heat/heat-api.conf $HEAT_API_CONF
-    iniset $HEAT_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    inicomment $HEAT_API_CONF DEFAULT log_file
-    iniset $HEAT_API_CONF DEFAULT use_syslog $SYSLOG
-    iniset $HEAT_API_CONF DEFAULT bind_host $HEAT_API_HOST
-    iniset $HEAT_API_CONF DEFAULT bind_port $HEAT_API_PORT
-    iniset $HEAT_API_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $HEAT_API_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $HEAT_API_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $HEAT_API_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $HEAT_API_CONF keystone_authtoken admin_user heat
-    iniset $HEAT_API_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $HEAT_API_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api
-    iniset $HEAT_API_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
-    [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_API_CONF paste_deploy flavor standalone
-    iniset_rpc_backend heat $HEAT_API_CONF DEFAULT
-
-
-    # engine
-    HEAT_ENGINE_CONF=$HEAT_CONF_DIR/heat-engine.conf
-    cp $HEAT_DIR/etc/heat/heat-engine.conf $HEAT_ENGINE_CONF
-    iniset $HEAT_ENGINE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    inicomment $HEAT_ENGINE_CONF DEFAULT log_file
-    iniset $HEAT_ENGINE_CONF DEFAULT use_syslog $SYSLOG
-    iniset $HEAT_ENGINE_CONF DEFAULT bind_host $HEAT_ENGINE_HOST
-    iniset $HEAT_ENGINE_CONF DEFAULT bind_port $HEAT_ENGINE_PORT
-    iniset $HEAT_ENGINE_CONF DEFAULT heat_metadata_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT
-    iniset $HEAT_ENGINE_CONF DEFAULT heat_waitcondition_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1/waitcondition
-    iniset $HEAT_ENGINE_CONF DEFAULT heat_watch_server_url http://$HEAT_API_CW_HOST:$HEAT_API_CW_PORT
-    iniset $HEAT_ENGINE_CONF DEFAULT sql_connection `database_connection_url heat`
-    iniset $HEAT_ENGINE_CONF DEFAULT auth_encryption_key `hexdump -n 16 -v -e '/1 "%02x"' /dev/random`
-
-    iniset_rpc_backend heat $HEAT_ENGINE_CONF DEFAULT
-
+    # logging
+    iniset $HEAT_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+    iniset $HEAT_CONF DEFAULT use_syslog $SYSLOG
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         # Add color to logging output
-        iniset $HEAT_ENGINE_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_name)s %(project_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
-        iniset $HEAT_ENGINE_CONF DEFAULT logging_default_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
-        iniset $HEAT_ENGINE_CONF DEFAULT logging_debug_format_suffix "[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
-        iniset $HEAT_ENGINE_CONF DEFAULT logging_exception_prefix "%(color)s%(asctime)s.%(msecs)03d TRACE %(name)s [01;35m%(instance)s[00m"
+        iniset $HEAT_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(user_name)s %(project_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+        iniset $HEAT_CONF DEFAULT logging_default_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+        iniset $HEAT_CONF DEFAULT logging_debug_format_suffix "[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
+        iniset $HEAT_CONF DEFAULT logging_exception_prefix "%(color)s%(asctime)s.%(msecs)03d TRACE %(name)s [01;35m%(instance)s[00m"
     fi
 
-    # Cloudwatch API
-    HEAT_API_CW_CONF=$HEAT_CONF_DIR/heat-api-cloudwatch.conf
-    cp $HEAT_DIR/etc/heat/heat-api-cloudwatch.conf $HEAT_API_CW_CONF
-    iniset $HEAT_API_CW_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    inicomment $HEAT_API_CW_CONF DEFAULT log_file
-    iniset $HEAT_API_CW_CONF DEFAULT use_syslog $SYSLOG
-    iniset $HEAT_API_CW_CONF DEFAULT bind_host $HEAT_API_CW_HOST
-    iniset $HEAT_API_CW_CONF DEFAULT bind_port $HEAT_API_CW_PORT
-    iniset $HEAT_API_CW_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $HEAT_API_CW_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $HEAT_API_CW_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $HEAT_API_CW_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_CW_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $HEAT_API_CW_CONF keystone_authtoken admin_user heat
-    iniset $HEAT_API_CW_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $HEAT_API_CW_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api-cloudwatch
-    iniset $HEAT_API_CW_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_API_CW_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
-    [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_API_CW_CONF paste_deploy flavor standalone
+    # keystone authtoken
+    iniset $HEAT_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $HEAT_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $HEAT_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $HEAT_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $HEAT_CONF keystone_authtoken admin_user heat
+    iniset $HEAT_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+    iniset $HEAT_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api-cfn
 
-    iniset_rpc_backend heat $HEAT_API_CW_CONF DEFAULT
+    # ec2authtoken
+    iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
+
+    # paste_deploy
+    [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_CONF paste_deploy flavor standalone
+
+    # OpenStack API
+    iniset $HEAT_CONF heat_api bind_host $HEAT_API_HOST
+    iniset $HEAT_CONF heat_api bind_port $HEAT_API_PORT
+
+    # Cloudformation API
+    iniset $HEAT_CONF heat_api_cfn bind_host $HEAT_API_CFN_HOST
+    iniset $HEAT_CONF heat_api_cfn bind_port $HEAT_API_CFN_PORT
+
+    # Cloudwatch API
+    iniset $HEAT_CONF heat_api_cloudwatch bind_host $HEAT_API_CW_HOST
+    iniset $HEAT_CONF heat_api_cloudwatch bind_port $HEAT_API_CW_PORT
 
     # heat environment
     sudo mkdir -p $HEAT_ENV_DIR
@@ -207,10 +169,10 @@ function install_heat() {
 
 # start_heat() - Start running processes, including screen
 function start_heat() {
-    screen_it h-eng "cd $HEAT_DIR; bin/heat-engine --config-file=$HEAT_CONF_DIR/heat-engine.conf"
-    screen_it h-api "cd $HEAT_DIR; bin/heat-api --config-dir=$HEAT_CONF_DIR/heat-api.conf"
-    screen_it h-api-cfn "cd $HEAT_DIR; bin/heat-api-cfn --config-dir=$HEAT_CONF_DIR/heat-api-cfn.conf"
-    screen_it h-api-cw "cd $HEAT_DIR; bin/heat-api-cloudwatch --config-dir=$HEAT_CONF_DIR/heat-api-cloudwatch.conf"
+    screen_it h-eng "cd $HEAT_DIR; bin/heat-engine --config-file=$HEAT_CONF"
+    screen_it h-api "cd $HEAT_DIR; bin/heat-api --config-file=$HEAT_CONF"
+    screen_it h-api-cfn "cd $HEAT_DIR; bin/heat-api-cfn --config-file=$HEAT_CONF"
+    screen_it h-api-cw "cd $HEAT_DIR; bin/heat-api-cloudwatch --config-file=$HEAT_CONF"
 }
 
 # stop_heat() - Stop running processes
