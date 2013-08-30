@@ -63,20 +63,18 @@ SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 # should be listening on HOST_IP.  If its running elsewhere, it can be set here
 GLANCE_HOST=${GLANCE_HOST:-$HOST_IP}
 
+# Identity API version
+export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
+
 # Authenticating against an Openstack cloud using Keystone returns a **Token**
 # and **Service Catalog**.  The catalog contains the endpoints for all services
 # the user/tenant has access to - including nova, glance, keystone, swift, ...
 # We currently recommend using the 2.0 *identity api*.
 #
-# *NOTE*: Using the 2.0 *identity api* does not mean that compute api is 2.0.  We
-# will use the 1.1 *compute api*
-export OS_AUTH_URL=$SERVICE_PROTOCOL://$SERVICE_HOST:5000/v2.0
+export OS_AUTH_URL=$SERVICE_PROTOCOL://$SERVICE_HOST:5000/v${OS_IDENTITY_API_VERSION}
 
 # Set the pointer to our CA certificate chain.  Harmless if TLS is not used.
 export OS_CACERT=$INT_CA_DIR/ca-chain.pem
-
-# Identity API version
-export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
 
 # Currently novaclient needs you to specify the *compute api* version.  This
 # needs to match the config of your catalog returned by Keystone.
