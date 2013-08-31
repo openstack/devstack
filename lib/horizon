@@ -144,6 +144,7 @@ function init_horizon() {
         s,%GROUP%,$APACHE_GROUP,g;
         s,%HORIZON_DIR%,$HORIZON_DIR,g;
         s,%APACHE_NAME%,$APACHE_NAME,g;
+		s,%APACHE_SERVER_NAME%,$APACHE_SERVER_NAME,g;
         s,%DEST%,$DEST,g;
         s,%HORIZON_REQUIRE%,$HORIZON_REQUIRE,g;
     \" $FILES/apache-horizon.template >$horizon_conf"

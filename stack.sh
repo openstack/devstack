@@ -759,6 +759,11 @@ fi
 
 if is_service_enabled horizon; then
     # dashboard
+	if [ ! $APACHE_SERVER_NAME ]; then
+		eval "APACHE_SERVER_NAME=openstack.loc"
+		echo "APACHE_SERVER_NAME=openstack.loc" >> $localrc
+	fi
+	echo "Setting APACHE_SERVER_NAME=$APACHE_SERVER_NAME"
     install_horizon
     configure_horizon
 fi
