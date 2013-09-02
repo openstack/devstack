@@ -58,9 +58,9 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]] && [[ "$ENABLED_SERVICES" =~ "s-proxy" |
     # Nova needs ResellerAdmin role to download images when accessing
     # swift through the s3 api.
     keystone user-role-add \
-        --tenant_id $SERVICE_TENANT \
-        --user_id $NOVA_USER \
-        --role_id $RESELLER_ROLE
+        --tenant-id $SERVICE_TENANT \
+        --user-id $NOVA_USER \
+        --role-id $RESELLER_ROLE
 fi
 
 # Heat
@@ -69,9 +69,9 @@ if [[ "$ENABLED_SERVICES" =~ "heat" ]]; then
                                               --pass="$SERVICE_PASSWORD" \
                                               --tenant_id $SERVICE_TENANT \
                                               --email=heat@example.com)
-    keystone user-role-add --tenant_id $SERVICE_TENANT \
-                           --user_id $HEAT_USER \
-                           --role_id $SERVICE_ROLE
+    keystone user-role-add --tenant-id $SERVICE_TENANT \
+                           --user-id $HEAT_USER \
+                           --role-id $SERVICE_ROLE
     # heat_stack_user role is for users created by Heat
     keystone role-create --name heat_stack_user
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
@@ -106,9 +106,9 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         --tenant_id $SERVICE_TENANT \
         --email=glance@example.com)
     keystone user-role-add \
-        --tenant_id $SERVICE_TENANT \
-        --user_id $GLANCE_USER \
-        --role_id $ADMIN_ROLE
+        --tenant-id $SERVICE_TENANT \
+        --user-id $GLANCE_USER \
+        --role-id $ADMIN_ROLE
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         GLANCE_SERVICE=$(get_id keystone service-create \
             --name=glance \
@@ -129,13 +129,13 @@ if [[ "$ENABLED_SERVICES" =~ "ceilometer" ]]; then
                                               --pass="$SERVICE_PASSWORD" \
                                               --tenant_id $SERVICE_TENANT \
                                               --email=ceilometer@example.com)
-    keystone user-role-add --tenant_id $SERVICE_TENANT \
-                           --user_id $CEILOMETER_USER \
-                           --role_id $ADMIN_ROLE
+    keystone user-role-add --tenant-id $SERVICE_TENANT \
+                           --user-id $CEILOMETER_USER \
+                           --role-id $ADMIN_ROLE
     # Ceilometer needs ResellerAdmin role to access swift account stats.
-    keystone user-role-add --tenant_id $SERVICE_TENANT \
-                           --user_id $CEILOMETER_USER \
-                           --role_id $RESELLER_ROLE
+    keystone user-role-add --tenant-id $SERVICE_TENANT \
+                           --user-id $CEILOMETER_USER \
+                           --role-id $RESELLER_ROLE
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         CEILOMETER_SERVICE=$(get_id keystone service-create \
             --name=ceilometer \
@@ -192,7 +192,7 @@ if [[ "$ENABLED_SERVICES" =~ "tempest" ]]; then
         --pass="$ADMIN_PASSWORD" \
         --email=alt_demo@example.com)
     keystone user-role-add \
-        --tenant_id $ALT_DEMO_TENANT \
-        --user_id $ALT_DEMO_USER \
-        --role_id $MEMBER_ROLE
+        --tenant-id $ALT_DEMO_TENANT \
+        --user-id $ALT_DEMO_USER \
+        --role-id $MEMBER_ROLE
 fi

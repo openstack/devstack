@@ -464,7 +464,7 @@ function create_swift_accounts() {
 
     SWIFT_USER=$(keystone user-create --name=swift --pass="$SERVICE_PASSWORD" \
         --tenant_id $SERVICE_TENANT --email=swift@example.com | grep " id " | get_field 2)
-    keystone user-role-add --tenant_id $SERVICE_TENANT --user_id $SWIFT_USER --role_id $ADMIN_ROLE
+    keystone user-role-add --tenant-id $SERVICE_TENANT --user-id $SWIFT_USER --role-id $ADMIN_ROLE
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         SWIFT_SERVICE=$(keystone service-create --name=swift --type="object-store" \
@@ -479,14 +479,14 @@ function create_swift_accounts() {
 
     SWIFT_TENANT_TEST1=$(keystone tenant-create --name=swifttenanttest1 | grep " id " | get_field 2)
     SWIFT_USER_TEST1=$(keystone user-create --name=swiftusertest1 --pass=testing --email=test@example.com | grep " id " | get_field 2)
-    keystone user-role-add --user_id $SWIFT_USER_TEST1 --role_id $ADMIN_ROLE --tenant_id $SWIFT_TENANT_TEST1
+    keystone user-role-add --user-id $SWIFT_USER_TEST1 --role-id $ADMIN_ROLE --tenant-id $SWIFT_TENANT_TEST1
 
     SWIFT_USER_TEST3=$(keystone user-create --name=swiftusertest3 --pass=testing3 --email=test3@example.com | grep " id " | get_field 2)
-    keystone user-role-add --user_id $SWIFT_USER_TEST3 --role_id $ANOTHER_ROLE --tenant_id $SWIFT_TENANT_TEST1
+    keystone user-role-add --user-id $SWIFT_USER_TEST3 --role-id $ANOTHER_ROLE --tenant-id $SWIFT_TENANT_TEST1
 
     SWIFT_TENANT_TEST2=$(keystone tenant-create --name=swifttenanttest2 | grep " id " | get_field 2)
     SWIFT_USER_TEST2=$(keystone user-create --name=swiftusertest2 --pass=testing2 --email=test2@example.com | grep " id " | get_field 2)
-    keystone user-role-add --user_id $SWIFT_USER_TEST2 --role_id $ADMIN_ROLE --tenant_id $SWIFT_TENANT_TEST2
+    keystone user-role-add --user-id $SWIFT_USER_TEST2 --role-id $ADMIN_ROLE --tenant-id $SWIFT_TENANT_TEST2
 }
 
 # init_swift() - Initialize rings
