@@ -521,6 +521,15 @@ function _configure_neutron_common() {
         done
     fi
 
+    if [ "$VIRT_DRIVER" = 'fake' ]; then
+        # Disable arbitrary limits
+        iniset $NEUTRON_CONF quotas quota_network -1
+        iniset $NEUTRON_CONF quotas quota_subnet -1
+        iniset $NEUTRON_CONF quotas quota_port -1
+        iniset $NEUTRON_CONF quotas quota_security_group -1
+        iniset $NEUTRON_CONF quotas quota_security_group_rule -1
+    fi
+
     _neutron_setup_rootwrap
 }
 
