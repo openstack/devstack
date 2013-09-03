@@ -96,6 +96,10 @@ HEATCLIENT_BRANCH=${HEATCLIENT_BRANCH:-master}
 HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
 HORIZON_BRANCH=${HORIZON_BRANCH:-master}
 
+# baremetal provisionint service
+IRONIC_REPO=${IRONIC_REPO:-${GIT_BASE}/openstack/ironic.git}
+IRONIC_BRANCH=${IRONIC_BRANCH:-master}
+
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
 KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}

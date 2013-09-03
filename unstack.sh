@@ -33,6 +33,7 @@ source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/neutron
+source $TOP_DIR/lib/ironic
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
@@ -77,6 +78,12 @@ fi
 if is_service_enabled s-proxy; then
     stop_swift
     cleanup_swift
+fi
+
+# Ironic runs daemons
+if is_service_enabled ir-api ir-cond; then
+    stop_ironic
+    cleanup_ironic
 fi
 
 # Apache has the WSGI processes
