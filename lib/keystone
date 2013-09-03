@@ -217,9 +217,9 @@ create_keystone_accounts() {
         --name admin \
         | grep " id " | get_field 2)
     keystone user-role-add \
-        --user_id $ADMIN_USER \
-        --role_id $ADMIN_ROLE \
-        --tenant_id $ADMIN_TENANT
+        --user-id $ADMIN_USER \
+        --role-id $ADMIN_ROLE \
+        --tenant-id $ADMIN_TENANT
 
     # service
     SERVICE_TENANT=$(keystone tenant-create \
@@ -244,10 +244,10 @@ create_keystone_accounts() {
         --pass "$ADMIN_PASSWORD" \
         --email demo@example.com \
         | grep " id " | get_field 2)
-    keystone user-role-add --user_id $DEMO_USER --role_id $MEMBER_ROLE --tenant_id $DEMO_TENANT
-    keystone user-role-add --user_id $ADMIN_USER --role_id $ADMIN_ROLE --tenant_id $DEMO_TENANT
-    keystone user-role-add --user_id $DEMO_USER --role_id $ANOTHER_ROLE --tenant_id $DEMO_TENANT
-    keystone user-role-add --user_id $DEMO_USER --role_id $MEMBER_ROLE --tenant_id $INVIS_TENANT
+    keystone user-role-add --user-id $DEMO_USER --role-id $MEMBER_ROLE --tenant-id $DEMO_TENANT
+    keystone user-role-add --user-id $ADMIN_USER --role-id $ADMIN_ROLE --tenant-id $DEMO_TENANT
+    keystone user-role-add --user-id $DEMO_USER --role-id $ANOTHER_ROLE --tenant-id $DEMO_TENANT
+    keystone user-role-add --user-id $DEMO_USER --role-id $MEMBER_ROLE --tenant-id $INVIS_TENANT
 
     # Keystone
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then

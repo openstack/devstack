@@ -335,9 +335,9 @@ create_cinder_accounts() {
             --email=cinder@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \
-            --tenant_id $SERVICE_TENANT \
-            --user_id $CINDER_USER \
-            --role_id $ADMIN_ROLE
+            --tenant-id $SERVICE_TENANT \
+            --user-id $CINDER_USER \
+            --role-id $ADMIN_ROLE
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
             CINDER_SERVICE=$(keystone service-create \
                 --name=cinder \

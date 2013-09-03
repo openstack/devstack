@@ -301,9 +301,9 @@ function create_neutron_accounts() {
             --email=neutron@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \
-            --tenant_id $SERVICE_TENANT \
-            --user_id $NEUTRON_USER \
-            --role_id $ADMIN_ROLE
+            --tenant-id $SERVICE_TENANT \
+            --user-id $NEUTRON_USER \
+            --role-id $ADMIN_ROLE
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
             NEUTRON_SERVICE=$(keystone service-create \
                 --name=neutron \

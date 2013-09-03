@@ -399,9 +399,9 @@ create_nova_accounts() {
             --email=nova@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \
-            --tenant_id $SERVICE_TENANT \
-            --user_id $NOVA_USER \
-            --role_id $ADMIN_ROLE
+            --tenant-id $SERVICE_TENANT \
+            --user-id $NOVA_USER \
+            --role-id $ADMIN_ROLE
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
             NOVA_SERVICE=$(keystone service-create \
                 --name=nova \
