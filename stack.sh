@@ -597,64 +597,6 @@ $TOP_DIR/tools/install_pip.sh
 # Do the ugly hacks for borken packages and distros
 $TOP_DIR/tools/fixup_stuff.sh
 
-
-# System-specific preconfigure
-# ============================
-
-if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-    # Disable selinux to avoid configuring to allow Apache access
-    # to Horizon files or run nodejs (LP#1175444)
-    if selinuxenabled; then
-        sudo setenforce 0
-    fi
-
-    # The following workarounds break xenserver
-    if [ "$VIRT_DRIVER" != 'xenserver' ]; then
-        # An old version of ``python-crypto`` (2.0.1) may be installed on a
-        # fresh system via Anaconda and the dependency chain
-        # ``cas`` -> ``python-paramiko`` -> ``python-crypto``.
-        # ``pip uninstall pycrypto`` will remove the packaged ``.egg-info``
-        #  file but leave most of the actual library files behind in
-        # ``/usr/lib64/python2.6/Crypto``. Later ``pip install pycrypto``
-        # will install over the packaged files resulting
-        # in a useless mess of old, rpm-packaged files and pip-installed files.
-        # Remove the package so that ``pip install python-crypto`` installs
-        # cleanly.
-        # Note: other RPM packages may require ``python-crypto`` as well.
-        # For example, RHEL6 does not install ``python-paramiko packages``.
-        uninstall_package python-crypto
-
-        # A similar situation occurs with ``python-lxml``, which is required by
-        # ``ipa-client``, an auditing package we don't care about.  The
-        # build-dependencies needed for ``pip install lxml`` (``gcc``,
-        # ``libxml2-dev`` and ``libxslt-dev``) are present in
-        # ``files/rpms/general``.
-        uninstall_package python-lxml
-    fi
-
-    # If the ``dbus`` package was installed by DevStack dependencies the
-    # uuid may not be generated because the service was never started (PR#598200),
-    # causing Nova to stop later on complaining that ``/var/lib/dbus/machine-id``
-    # does not exist.
-    sudo service messagebus restart
-
-    # ``setup.py`` contains a ``setup_requires`` package that is supposed
-    # to be transient.  However, RHEL6 distribute has a bug where
-    # ``setup_requires`` registers entry points that are not cleaned
-    # out properly after the setup-phase resulting in installation failures
-    # (bz#924038).  Pre-install the problem package so the ``setup_requires``
-    # dependency is satisfied and it will not be installed transiently.
-    # Note we do this before the track-depends below.
-    pip_install hgtools
-
-    # RHEL6's version of ``python-nose`` is incompatible with Tempest.
-    # Install nose 1.1 (Tempest-compatible) from EPEL
-    install_package python-nose1.1
-    # Add a symlink for the new nosetests to allow tox for Tempest to
-    # work unmolested.
-    sudo ln -sf /usr/bin/nosetests1.1 /usr/local/bin/nosetests
-fi
-
 install_rpc_backend
 
 if is_service_enabled $DATABASE_BACKENDS; then
