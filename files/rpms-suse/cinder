@@ -3,3 +3,4 @@ tgt
 qemu-tools
 python-devel
 postgresql-devel
+open-iscsi
