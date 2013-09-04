@@ -189,6 +189,10 @@ if [[ $EUID -eq 0 ]]; then
         groupadd $STACK_USER
     fi
     if ! getent passwd $STACK_USER >/dev/null; then
+        if [ ! -d $DEST ];then
+            echo "Creating a dir called $DEST"
+            mkdir -p $DEST
+        fi
         echo "Creating a user called $STACK_USER"
         useradd -g $STACK_USER -s /bin/bash -d $DEST -m $STACK_USER
     fi
