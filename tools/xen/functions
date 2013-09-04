@@ -268,3 +268,22 @@ function attach_network() {
 
     xe network-attach uuid=$net host-uuid=$host
 }
+
+function set_vm_memory() {
+    local vm_name_label
+    local memory
+
+    vm_name_label="$1"
+    memory="$2"
+
+    local vm
+
+    vm=$(_vm_uuid "$vm_name_label")
+
+    xe vm-memory-limits-set \
+        static-min=${memory}MiB \
+        static-max=${memory}MiB \
+        dynamic-min=${memory}MiB \
+        dynamic-max=${memory}MiB \
+        uuid=$vm
+}

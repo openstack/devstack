@@ -20,8 +20,6 @@
 set -eux
 
 BRIDGE=
-RAM=
-BALLOONING=
 NAME_LABEL=
 TEMPLATE_NAME=
 
@@ -29,7 +27,7 @@ usage()
 {
 cat << EOF
 
-  Usage: $0 -t TEMPLATE_NW_INSTALL -l NAME_LABEL [-n BRIDGE] [-r RAM] [-b] 
+  Usage: $0 -t TEMPLATE_NW_INSTALL -l NAME_LABEL [-n BRIDGE]
 
   Install a VM from a template
 
@@ -37,9 +35,6 @@ cat << EOF
 
      -h           Shows this message.
      -t template  VM template to use
-     -b           Enable memory ballooning. When set min_RAM=RAM/2 max_RAM=RAM.
-     -r MiB       Specifies RAM used by the VPX, in MiB.
-                  By default it will take the value from the XVA.
      -l name      Specifies the name label for the VM.
      -n bridge    The bridge/network to use for eth0. Defaults to xenbr0
 EOF
@@ -52,12 +47,6 @@ get_params()
     case $OPTION in
       h) usage
          exit 1
-         ;;
-      b)
-         BALLOONING=1
-         ;;
-      r)
-         RAM=$OPTARG
          ;;
       n)
          BRIDGE=$OPTARG
@@ -119,19 +108,6 @@ create_vif()
 }
 
 
-set_memory()
-{
-  local v="$1"
-  if [ "$RAM" != "" ]
-  then
-    echo "Setting RAM to $RAM MiB."
-    [ "$BALLOONING" == 1 ] && RAM_MIN=$(($RAM / 2)) || RAM_MIN=$RAM
-    xe vm-memory-limits-set static-min=16MiB static-max=${RAM}MiB \
-                            dynamic-min=${RAM_MIN}MiB dynamic-max=${RAM}MiB \
-                            uuid="$v"
-  fi
-}
-
 
 # Make the VM auto-start on server boot.
 set_auto_start()
@@ -161,5 +137,3 @@ set_auto_start "$vm_uuid"
 create_vif "$vm_uuid"
 xe vm-param-set other-config:os-vpx=true uuid="$vm_uuid"
 xe vm-param-set actions-after-reboot=Destroy uuid="$vm_uuid"
-set_memory "$vm_uuid"
-xe vm-start uuid=$vm_uuid
