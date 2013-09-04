@@ -202,7 +202,7 @@ function xenapi_ip_on() {
     local bridge_or_net_name
     bridge_or_net_name=$1
 
-    ifconfig $(bridge_for "$bridge_or_net_name") | grep "inet addr" | cut -d ":" -f2 | sed "s/ .*//"
+    ifconfig $(bridge_for "$bridge_or_net_name") | grep "inet " | cut -d ":" -f2 | sed "s/ .*//"
 }
 
 function xenapi_is_listening_on() {
