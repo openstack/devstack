@@ -226,6 +226,7 @@ function configure_cinder() {
         iniset $CINDER_CONF DEFAULT volume_group $VOLUME_GROUP
         iniset $CINDER_CONF DEFAULT volume_name_template ${VOLUME_NAME_PREFIX}%s
     fi
+    iniset $CINDER_CONF DEFAULT my_ip "$CINDER_SERVICE_HOST"
     iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
     iniset $CINDER_CONF DEFAULT sql_connection `database_connection_url cinder`
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
