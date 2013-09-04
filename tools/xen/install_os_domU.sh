@@ -181,7 +181,7 @@ function wait_for_VM_to_halt() {
     mgmt_ip=$(echo $XENAPI_CONNECTION_URL | tr -d -c '1234567890.')
     domid=$(xe vm-list name-label="$GUEST_NAME" params=dom-id minimal=true)
     port=$(xenstore-read /local/domain/$domid/console/vnc-port)
-    echo "vncviewer -via $mgmt_ip localhost:${port:2}"
+    echo "vncviewer -via root@$mgmt_ip localhost:${port:2}"
     while true
     do
         state=$(xe_min vm-list name-label="$GUEST_NAME" power-state=halted)
