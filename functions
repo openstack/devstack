@@ -1158,6 +1158,51 @@ function service_check() {
     fi
 }
 
+# Returns true if the directory is on a filesystem mounted via NFS.
+function is_nfs_directory() {
+    local mount_type=`stat -f -L -c %T $1`
+    test "$mount_type" == "nfs"
+}
+
+# Only run the command if the target file (the last arg) is not on an
+# NFS filesystem.
+function _safe_permission_operation() {
+    local args=( $@ )
+    local last
+    local sudo_cmd
+    local dir_to_check
+
+    let last="${#args[*]} - 1"
+
+    dir_to_check=${args[$last]}
+    if [ ! -d "$dir_to_check" ]; then
+        dir_to_check=`dirname "$dir_to_check"`
+    fi
+
+    if is_nfs_directory "$dir_to_check" ; then
+        return 0
+    fi
+
+    if [[ $TRACK_DEPENDS = True ]]; then
+        sudo_cmd="env"
+    else
+        sudo_cmd="sudo"
+    fi
+
+    $sudo_cmd $@
+}
+
+# Only change ownership of a file or directory if it is not on an NFS
+# filesystem.
+function safe_chown() {
+    _safe_permission_operation chown $@
+}
+
+# Only change permissions of a file or directory if it is not on an
+# NFS filesystem.
+function safe_chmod() {
+    _safe_permission_operation chmod $@
+}
 
 # ``pip install -e`` the package, which processes the dependencies
 # using pip before running `setup.py develop`
@@ -1165,11 +1210,6 @@ function service_check() {
 # setup_develop directory
 function setup_develop() {
     local project_dir=$1
-    if [[ $TRACK_DEPENDS = True ]]; then
-        SUDO_CMD="env"
-    else
-        SUDO_CMD="sudo"
-    fi
 
     echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
 
@@ -1181,7 +1221,7 @@ function setup_develop() {
 
     pip_install -e $project_dir
     # ensure that further actions can do things like setup.py sdist
-    $SUDO_CMD chown -R $STACK_USER $1/*.egg-info
+    safe_chown -R $STACK_USER $1/*.egg-info
 }
 
 
