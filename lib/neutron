@@ -327,6 +327,9 @@ function create_neutron_initial_network() {
     # Since neutron command is executed in admin context at this point,
     # ``--tenant_id`` needs to be specified.
     if is_baremetal; then
+        if [[ "$PUBLIC_INTERFACE" == '' || "$OVS_PHYSICAL_BRIDGE" == '' ]]; then
+            die $LINENO "Neutron settings for baremetal not set.. exiting"
+        fi
         sudo ovs-vsctl add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
         for IP in $(ip addr show dev $PUBLIC_INTERFACE | grep ' inet ' | awk '{print $2}'); do
             sudo ip addr del $IP dev $PUBLIC_INTERFACE
@@ -335,6 +338,7 @@ function create_neutron_initial_network() {
         NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type flat --provider:physical_network "$PHYSICAL_NETWORK" | grep ' id ' | get_field 2)
         SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --gateway $NETWORK_GATEWAY --name $PRIVATE_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
         sudo ifconfig $OVS_PHYSICAL_BRIDGE up
+        sudo route add default gw $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
     else
         NET_ID=$(neutron net-create --tenant_id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
         SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY --name $PRIVATE_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
@@ -493,7 +497,7 @@ function _configure_neutron_common() {
     #    ``Q_PLUGIN_EXTRA_CONF_FILES=(file1, file2)``
     neutron_plugin_configure_common
 
-    if [[ $Q_PLUGIN_CONF_PATH == '' || $Q_PLUGIN_CONF_FILENAME == '' || $Q_PLUGIN_CLASS == '' ]]; then
+    if [[ "$Q_PLUGIN_CONF_PATH" == '' || "$Q_PLUGIN_CONF_FILENAME" == '' || "$Q_PLUGIN_CLASS" == '' ]]; then
         die $LINENO "Neutron plugin not set.. exiting"
     fi
 
