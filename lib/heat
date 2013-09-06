@@ -100,7 +100,7 @@ function configure_heat() {
     iniset $HEAT_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $HEAT_CONF keystone_authtoken admin_user heat
     iniset $HEAT_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $HEAT_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR/api-cfn
+    iniset $HEAT_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR
 
     # ec2authtoken
     iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
@@ -148,12 +148,8 @@ function init_heat() {
 # create_heat_cache_dir() - Part of the init_heat() process
 function create_heat_cache_dir() {
     # Create cache dirs
-    sudo mkdir -p $HEAT_AUTH_CACHE_DIR/api
-    sudo chown $STACK_USER $HEAT_AUTH_CACHE_DIR/api
-    sudo mkdir -p $HEAT_AUTH_CACHE_DIR/api-cfn
-    sudo chown $STACK_USER $HEAT_AUTH_CACHE_DIR/api-cfn
-    sudo mkdir -p $HEAT_AUTH_CACHE_DIR/api-cloudwatch
-    sudo chown $STACK_USER $HEAT_AUTH_CACHE_DIR/api-cloudwatch
+    sudo mkdir -p $HEAT_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $HEAT_AUTH_CACHE_DIR
 }
 
 # install_heatclient() - Collect source and prepare
