@@ -8,9 +8,10 @@ set +o xtrace
 
 AGENT_VPN_BINARY="$NEUTRON_BIN_DIR/neutron-vpn-agent"
 VPN_PLUGIN="neutron.services.vpn.plugin.VPNDriverPlugin"
+IPSEC_PACKAGE=${IPSEC_PACKAGE:-"openswan"}
 
 function neutron_vpn_install_agent_packages() {
-    install_package strongswan
+    install_package $IPSEC_PACKAGE
 }
 
 function neutron_vpn_configure_common() {
