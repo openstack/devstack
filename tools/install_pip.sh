@@ -25,7 +25,7 @@ FILES=$TOP_DIR/files
 
 # Handle arguments
 
-INSTALL_PIP_VERSION=${INSTALL_PIP_VERSION:-"1.4"}
+INSTALL_PIP_VERSION=${INSTALL_PIP_VERSION:-"1.4.1"}
 while [[ -n "$1" ]]; do
     case $1 in
         --force)
