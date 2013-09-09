@@ -451,6 +451,9 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
     iniset $NOVA_CONF DEFAULT osapi_compute_extension "nova.api.openstack.compute.contrib.standard_extensions"
     iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
+    iniset $NOVA_CONF DEFAULT osapi_compute_workers "4"
+    iniset $NOVA_CONF DEFAULT ec2_workers "4"
+    iniset $NOVA_CONF DEFAULT metadata_workers "4"
     iniset $NOVA_CONF DEFAULT sql_connection `database_connection_url nova`
     if is_baremetal; then
         iniset $NOVA_CONF baremetal sql_connection `database_connection_url nova_bm`
