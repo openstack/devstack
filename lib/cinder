@@ -293,7 +293,6 @@ function configure_cinder() {
         iniset $CINDER_CONF DEFAULT vmware_host_ip "$VMWAREAPI_IP"
         iniset $CINDER_CONF DEFAULT vmware_host_username "$VMWAREAPI_USER"
         iniset $CINDER_CONF DEFAULT vmware_host_password "$VMWAREAPI_PASSWORD"
-        iniset $CINDER_CONF DEFAULT vmware_cluster_name "$VMWAREAPI_CLUSTER"
         iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.vmware.vmdk.VMwareVcVmdkDriver"
     fi
 
