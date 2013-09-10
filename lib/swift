@@ -61,10 +61,6 @@ SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-1000000}
 # Default is ``staticweb, tempurl, formpost``
 SWIFT_EXTRAS_MIDDLEWARE=${SWIFT_EXTRAS_MIDDLEWARE:-tempurl formpost staticweb}
 
-# Set ``SWIFT_EXTRAS_MIDDLEWARE_LAST`` to extras middlewares that need to be at
-# the end of the pipeline.
-SWIFT_EXTRAS_MIDDLEWARE_LAST=${SWIFT_EXTRAS_MIDDLEWARE_LAST}
-
 # The ring uses a configurable number of bits from a path’s MD5 hash as
 # a partition index that designates a device. The number of bits kept
 # from the hash is known as the partition power, and 2 to the partition
@@ -256,12 +252,6 @@ function configure_swift() {
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
 
-    # Configure Ceilometer
-    if is_service_enabled ceilometer; then
-        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer use "egg:ceilometer#swift"
-        SWIFT_EXTRAS_MIDDLEWARE_LAST="${SWIFT_EXTRAS_MIDDLEWARE_LAST} ceilometer"
-    fi
-
     # By default Swift will be installed with keystone and tempauth middleware
     # and add the swift3 middleware if its configured for it. The token for
     # tempauth would be prefixed with the reseller_prefix setting TEMPAUTH_ the
@@ -271,7 +261,6 @@ function configure_swift() {
     fi
     swift_pipeline+=" authtoken keystoneauth tempauth "
     sed -i "/^pipeline/ { s/tempauth/${swift_pipeline} ${SWIFT_EXTRAS_MIDDLEWARE}/ ;}" ${SWIFT_CONFIG_PROXY_SERVER}
-    sed -i "/^pipeline/ { s/proxy-server/${SWIFT_EXTRAS_MIDDLEWARE_LAST} proxy-server/ ; }" ${SWIFT_CONFIG_PROXY_SERVER}
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth account_autocreate
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
