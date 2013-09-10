@@ -101,6 +101,11 @@ function init_horizon() {
         _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_firewall True
     fi
 
+    # enable VPN dashboard in case service is enabled
+    if is_service_enabled q-vpn; then
+        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_vpn True
+    fi
+
     # Initialize the horizon database (it stores sessions and notices shown to
     # users).  The user system is external (keystone).
     cd $HORIZON_DIR
