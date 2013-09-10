@@ -122,7 +122,7 @@ function configure_heat() {
     iniset $HEAT_CONF heat_api_cloudwatch bind_port $HEAT_API_CW_PORT
 
     # Set limits to match tempest defaults
-    iniset $HEAT_CONF max_template_size 10240
+    iniset $HEAT_CONF DEFAULT max_template_size 10240
 
     # heat environment
     sudo mkdir -p $HEAT_ENV_DIR
