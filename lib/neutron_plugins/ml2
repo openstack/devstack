@@ -46,6 +46,15 @@ function neutron_plugin_configure_common() {
     Q_PLUGIN_CONF_FILENAME=ml2_conf.ini
     Q_DB_NAME="neutron_ml2"
     Q_PLUGIN_CLASS="neutron.plugins.ml2.plugin.Ml2Plugin"
+    # The ML2 plugin delegates L3 routing/NAT functionality to
+    # the L3 service plugin which must therefore be specified.
+    Q_L3_PLUGIN_CLASS=${Q_L3_PLUGIN_CLASS:-"neutron.services.l3_router.l3_router_plugin.L3RouterPlugin"}
+    if  ini_has_option $NEUTRON_CONF DEFAULT service_plugins ; then
+        srv_plugins=$(iniget $NEUTRON_CONF DEFAULT service_plugins)","$Q_L3_PLUGIN_CLASS
+    else
+        srv_plugins=$Q_L3_PLUGIN_CLASS
+    fi
+    iniset $NEUTRON_CONF DEFAULT service_plugins $srv_plugins
 }
 
 function neutron_plugin_configure_service() {
