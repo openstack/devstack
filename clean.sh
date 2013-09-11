@@ -33,6 +33,7 @@ GetDistro
 source $TOP_DIR/lib/database
 source $TOP_DIR/lib/rpc_backend
 
+source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/tls
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
