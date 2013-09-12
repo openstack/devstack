@@ -181,6 +181,13 @@ RYU_BRANCH=${RYU_BRANCH:-master}
 SPICE_REPO=${SPICE_REPO:-http://anongit.freedesktop.org/git/spice/spice-html5.git}
 SPICE_BRANCH=${SPICE_BRANCH:-master}
 
+# trove service
+TROVE_REPO=${TROVE_REPO:-${GIT_BASE}/openstack/trove.git}
+TROVE_BRANCH=${TROVE_BRANCH:-master}
+
+# trove client library test
+TROVECLIENT_REPO=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
+TROVECLIENT_BRANCH=${TROVECLIENT_BRANCH:-master}
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can

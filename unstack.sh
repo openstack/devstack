@@ -34,6 +34,7 @@ source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ironic
+source $TOP_DIR/lib/trove
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
@@ -128,6 +129,10 @@ if is_service_enabled neutron; then
     stop_neutron
     stop_neutron_third_party
     cleanup_neutron
+fi
+
+if is_service_enabled trove; then
+    cleanup_trove
 fi
 
 cleanup_tmp
