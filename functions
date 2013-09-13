@@ -1484,7 +1484,7 @@ function use_exclusive_service {
 function wait_for_service() {
     local timeout=$1
     local url=$2
-    timeout $timeout sh -c "while ! http_proxy= https_proxy= curl -s $url >/dev/null; do sleep 1; done"
+    timeout $timeout sh -c "while ! curl --noproxy '*' -s $url >/dev/null; do sleep 1; done"
 }
 
 
