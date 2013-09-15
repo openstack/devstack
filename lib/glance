@@ -39,6 +39,7 @@ GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
 GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
 GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
 GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
+GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
 
 # Support entry points installation of console scripts
 if [[ -d $GLANCE_DIR/bin ]]; then
@@ -142,6 +143,7 @@ function configure_glance() {
     iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
 
     cp -p $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
+    cp -p $GLANCE_DIR/etc/schema-image.json $GLANCE_SCHEMA_JSON
 }
 
 # create_glance_cache_dir() - Part of the init_glance() process
