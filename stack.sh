@@ -203,7 +203,7 @@ if [[ $EUID -eq 0 ]]; then
     echo "Copying files to $STACK_USER user"
     STACK_DIR="$DEST/${TOP_DIR##*/}"
     cp -r -f -T "$TOP_DIR" "$STACK_DIR"
-    chown -R $STACK_USER "$STACK_DIR"
+    safe_chown -R $STACK_USER "$STACK_DIR"
     cd "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
         exec sudo -u $STACK_USER  bash -l -c "set -e; bash stack.sh; bash"
@@ -236,8 +236,8 @@ fi
 # Create the destination directory and ensure it is writable by the user
 # and read/executable by everybody for daemons (e.g. apache run for horizon)
 sudo mkdir -p $DEST
-sudo chown -R $STACK_USER $DEST
-chmod 0755 $DEST
+safe_chown -R $STACK_USER $DEST
+safe_chmod 0755 $DEST
 
 # a basic test for $DEST path permissions (fatal on error unless skipped)
 check_path_perm_sanity ${DEST}
@@ -258,7 +258,7 @@ ENABLE_DEBUG_LOG_LEVEL=`trueorfalse True $ENABLE_DEBUG_LOG_LEVEL`
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 sudo mkdir -p $DATA_DIR
-sudo chown -R $STACK_USER $DATA_DIR
+safe_chown -R $STACK_USER $DATA_DIR
 
 
 # Common Configuration
@@ -965,7 +965,7 @@ if is_service_enabled n-net q-dhcp; then
     clean_iptables
     rm -rf ${NOVA_STATE_PATH}/networks
     sudo mkdir -p ${NOVA_STATE_PATH}/networks
-    sudo chown -R ${USER} ${NOVA_STATE_PATH}/networks
+    safe_chown -R ${USER} ${NOVA_STATE_PATH}/networks
     # Force IP forwarding on, just in case
     sudo sysctl -w net.ipv4.ip_forward=1
 fi
