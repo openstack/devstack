@@ -23,8 +23,14 @@
 # Make sure custom grep options don't get in the way
 unset GREP_OPTIONS
 
+echo -e "\033[31;42m Test color: GREP_OPTIONS=$GREP_OPTIONS \033[0m"
+read -n 1
+
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
+
+echo -e "\033[31;42m TOP_DIR=$TOP_DIR \033[0m"
+read -n 1
 
 # Import common functions
 source $TOP_DIR/functions
@@ -34,6 +40,8 @@ source $TOP_DIR/functions
 # and ``DISTRO``
 GetDistro
 
+echo -e "\033[31;42m DISTRO=$DISTRO \033[0m"
+read -n 1
 
 # Global Settings
 # ===============
@@ -76,6 +84,8 @@ export_proxy_variables
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
 
+echo -e "\033[31;42m DEST=$DEST \033[0m"
+read -n 1
 
 # Sanity Check
 # ------------
@@ -120,6 +130,12 @@ fi
 # and the specified rpc backend is available on your platform.
 check_rpc_backend
 
+echo -e "\033[31;42m Check USE_SCREEN=$USE_SCREEN \033[0m"
+read -n 1
+
+echo -e "\033[31;42m Check SCREEN_NAME=$SCREEN_NAME \033[0m"
+read -n 1
+
 # Check to see if we are already running DevStack
 # Note that this may fail if USE_SCREEN=False
 if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].$SCREEN_NAME"; then
@@ -132,6 +148,8 @@ fi
 # Set up logging level
 VERBOSE=$(trueorfalse True $VERBOSE)
 
+echo -e "\033[31;42m log level VERBOSE=$VERBOSE \033[0m"
+read -n 1
 
 # Additional repos
 # ================
@@ -214,6 +232,9 @@ if [[ $EUID -eq 0 ]]; then
 else
     # We're not **root**, make sure ``sudo`` is available
     is_package_installed sudo || die "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
+
+echo -e "\033[31;42m TODO \033[0m"
+read -n 1
 
     # UEC images ``/etc/sudoers`` does not have a ``#includedir``, add one
     sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
