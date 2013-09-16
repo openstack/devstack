@@ -34,8 +34,8 @@ FILES=$TOP_DIR/files
 # ---------------
 
 # Pre-install affected packages so we can fix the permissions
-sudo pip install prettytable
-sudo pip install httplib2
+pip_install prettytable
+pip_install httplib2
 
 SITE_DIRS=$(python -c "import site; import os; print os.linesep.join(site.getsitepackages())")
 for dir in $SITE_DIRS; do
