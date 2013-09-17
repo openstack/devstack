@@ -132,6 +132,7 @@ function _config_swift_apache_wsgi() {
         s/%PORT%/$proxy_port/g;
         s/%SERVICENAME%/proxy-server/g;
         s/%APACHE_NAME%/${APACHE_NAME}/g;
+        s/%USER%/${STACK_USER}/g;
     " -i ${apache_vhost_dir}/proxy-server
 
     sudo cp ${SWIFT_DIR}/examples/wsgi/proxy-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/proxy-server.wsgi
@@ -152,6 +153,7 @@ function _config_swift_apache_wsgi() {
             s/%PORT%/$object_port/g;
             s/%SERVICENAME%/object-server-${node_number}/g;
             s/%APACHE_NAME%/${APACHE_NAME}/g;
+            s/%USER%/${STACK_USER}/g;
         " -i ${apache_vhost_dir}/object-server-${node_number}
         ! is_fedora && sudo a2ensite object-server-${node_number}
 
@@ -167,6 +169,7 @@ function _config_swift_apache_wsgi() {
             s/%PORT%/$container_port/g;
             s/%SERVICENAME%/container-server-${node_number}/g;
             s/%APACHE_NAME%/${APACHE_NAME}/g;
+            s/%USER%/${STACK_USER}/g;
         " -i ${apache_vhost_dir}/container-server-${node_number}
         ! is_fedora && sudo a2ensite container-server-${node_number}
 
@@ -182,6 +185,7 @@ function _config_swift_apache_wsgi() {
             s/%PORT%/$account_port/g;
             s/%SERVICENAME%/account-server-${node_number}/g;
             s/%APACHE_NAME%/${APACHE_NAME}/g;
+            s/%USER%/${STACK_USER}/g;
         " -i ${apache_vhost_dir}/account-server-${node_number}
         ! is_fedora && sudo a2ensite account-server-${node_number}
 
