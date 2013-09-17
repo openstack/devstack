@@ -1,0 +1,22 @@
+Listen %PUBLICPORT%
+Listen %ADMINPORT%
+
+<VirtualHost *:%PUBLICPORT%>
+    WSGIDaemonProcess keystone-public processes=5 threads=1 user=%USER%
+    WSGIProcessGroup keystone-public
+    WSGIScriptAlias / %PUBLICWSGI%
+    WSGIApplicationGroup %{GLOBAL}
+    ErrorLog /var/log/%APACHE_NAME%/keystone
+    LogLevel debug
+    CustomLog /var/log/%APACHE_NAME%/access.log combined
+</VirtualHost>
+
+<VirtualHost *:%ADMINPORT%>
+    WSGIDaemonProcess keystone-admin processes=5 threads=1 user=%USER%
+    WSGIProcessGroup keystone-admin
+    WSGIScriptAlias / %ADMINWSGI%
+    WSGIApplicationGroup %{GLOBAL}
+    ErrorLog /var/log/%APACHE_NAME%/keystone
+    LogLevel debug
+    CustomLog /var/log/%APACHE_NAME%/access.log combined
+</VirtualHost>
