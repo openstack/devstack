@@ -6,6 +6,8 @@
 # is_apache_enabled_service
 # install_apache_wsgi
 # config_apache_wsgi
+# enable_apache_site
+# disable_apache_site
 # start_apache_server
 # stop_apache_server
 # restart_apache_server
@@ -57,13 +59,38 @@ function install_apache_wsgi() {
     if is_ubuntu; then
         # Install apache2, which is NOPRIME'd
         install_package apache2 libapache2-mod-wsgi
+        # WSGI isn't enabled by default, enable it
+        sudo a2enmod wsgi
     elif is_fedora; then
         sudo rm -f /etc/httpd/conf.d/000-*
         install_package httpd mod_wsgi
     elif is_suse; then
         install_package apache2 apache2-mod_wsgi
+        # WSGI isn't enabled by default, enable it
+        sudo a2enmod wsgi
     else
         exit_distro_not_supported "apache installation"
+    fi
+}
+
+# enable_apache_site() - Enable a particular apache site
+function enable_apache_site() {
+    local site=$@
+    if is_ubuntu; then
+        sudo a2ensite ${site}
+    elif is_fedora; then
+        # fedora conf.d is only imported if it ends with .conf so this is approx the same
+        sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site} /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf
+    fi
+}
+
+# disable_apache_site() - Disable a particular apache site
+function disable_apache_site() {
+    local site=$@
+    if is_ubuntu; then
+        sudo a2dissite ${site}
+    elif is_fedora; then
+        sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}
     fi
 }
 

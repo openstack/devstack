@@ -115,11 +115,11 @@ function cleanup_swift() {
 # _cleanup_swift_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
 function _cleanup_swift_apache_wsgi() {
     sudo rm -f $SWIFT_APACHE_WSGI_DIR/*.wsgi
-    ! is_fedora && sudo a2dissite proxy-server
+    disable_apache_site proxy-server
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
         for type in object container account; do
             site_name=${type}-server-${node_number}
-            ! is_fedora && sudo a2dissite ${site_name}
+            disable_apache_site ${site_name}
             sudo rm -f /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site_name}
         done
     done
@@ -140,13 +140,13 @@ function _config_swift_apache_wsgi() {
         s/%APACHE_NAME%/${APACHE_NAME}/g;
         s/%USER%/${STACK_USER}/g;
     " -i ${apache_vhost_dir}/proxy-server
+    enable_apache_site proxy-server
 
     sudo cp ${SWIFT_DIR}/examples/wsgi/proxy-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/proxy-server.wsgi
     sudo sed -e "
         /^#/d;/^$/d;
         s/%SERVICECONF%/proxy-server.conf/g;
     " -i ${SWIFT_APACHE_WSGI_DIR}/proxy-server.wsgi
-    ! is_fedora && sudo a2ensite proxy-server
 
     # copy apache vhost file and set name and port
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
@@ -161,7 +161,7 @@ function _config_swift_apache_wsgi() {
             s/%APACHE_NAME%/${APACHE_NAME}/g;
             s/%USER%/${STACK_USER}/g;
         " -i ${apache_vhost_dir}/object-server-${node_number}
-        ! is_fedora && sudo a2ensite object-server-${node_number}
+        enable_apache_site object-server-${node_number}
 
         sudo cp ${SWIFT_DIR}/examples/wsgi/object-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/object-server-${node_number}.wsgi
         sudo sed -e "
@@ -177,7 +177,7 @@ function _config_swift_apache_wsgi() {
             s/%APACHE_NAME%/${APACHE_NAME}/g;
             s/%USER%/${STACK_USER}/g;
         " -i ${apache_vhost_dir}/container-server-${node_number}
-        ! is_fedora && sudo a2ensite container-server-${node_number}
+        enable_apache_site container-server-${node_number}
 
         sudo cp ${SWIFT_DIR}/examples/wsgi/container-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/container-server-${node_number}.wsgi
         sudo sed -e "
@@ -193,18 +193,14 @@ function _config_swift_apache_wsgi() {
             s/%APACHE_NAME%/${APACHE_NAME}/g;
             s/%USER%/${STACK_USER}/g;
         " -i ${apache_vhost_dir}/account-server-${node_number}
-        ! is_fedora && sudo a2ensite account-server-${node_number}
+        enable_apache_site account-server-${node_number}
 
         sudo cp ${SWIFT_DIR}/examples/wsgi/account-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
         sudo sed -e "
              /^#/d;/^$/d;
             s/%SERVICECONF%/account-server\/${node_number}.conf/g;
         " -i ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
-
     done
-
-    # WSGI isn't enabled by default, enable it
-    ! is_fedora && sudo a2enmod wsgi
 }
 
 # configure_swift() - Set config files, create data dirs and loop image

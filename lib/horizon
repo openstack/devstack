@@ -123,8 +123,6 @@ function init_horizon() {
         # Be a good citizen and use the distro tools here
         sudo touch $horizon_conf
         sudo a2ensite horizon.conf
-        # WSGI isn't enabled by default, enable it
-        sudo a2enmod wsgi
     elif is_fedora; then
         if [[ "$os_RELEASE" -ge "18" ]]; then
             # fedora 18 has Require all denied  in its httpd.conf
@@ -132,9 +130,6 @@ function init_horizon() {
             HORIZON_REQUIRE='Require all granted'
         fi
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
-    elif is_suse; then
-        # WSGI isn't enabled by default, enable it
-        sudo a2enmod wsgi
     else
         exit_distro_not_supported "apache configuration"
     fi
