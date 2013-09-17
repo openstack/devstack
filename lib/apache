@@ -4,7 +4,6 @@
 # Dependencies:
 # ``functions`` file
 # is_apache_enabled_service
-# change_apache_user_group
 # install_apache_wsgi
 # config_apache_wsgi
 # start_apache_server
@@ -50,29 +49,6 @@ function is_apache_enabled_service() {
         [[ ,${APACHE_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
     done
     return 1
-}
-
-# change_apache_user_group() - Change the User/Group to run Apache server
-function change_apache_user_group(){
-    local stack_user=$@
-    if is_ubuntu; then
-        sudo sed -e "
-            s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER=${stack_user}/g;
-            s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP=${stack_user}/g
-        " -i /etc/${APACHE_NAME}/envvars
-    elif is_fedora; then
-        sudo sed -e "
-            s/^User .*/User ${stack_user}/g;
-            s/^Group .*/Group ${stack_user}/g
-        " -i /etc/${APACHE_NAME}/httpd.conf
-    elif is_suse; then
-        sudo sed -e "
-            s/^User .*/User ${stack_user}/g;
-            s/^Group .*/Group ${stack_user}/g
-        " -i /etc/${APACHE_NAME}/uid.conf
-    else
-        exit_distro_not_supported "apache user and group"
-    fi
 }
 
 # install_apache_wsgi() - Install Apache server and wsgi module
