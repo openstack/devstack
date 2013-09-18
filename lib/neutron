@@ -88,7 +88,7 @@ NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
 
 # Default Neutron Plugin
-Q_PLUGIN=${Q_PLUGIN:-openvswitch}
+Q_PLUGIN=${Q_PLUGIN:-ml2}
 # Default Neutron Port
 Q_PORT=${Q_PORT:-9696}
 # Default Neutron Host
