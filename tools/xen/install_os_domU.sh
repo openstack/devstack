@@ -10,6 +10,8 @@ set -o errexit
 set -o nounset
 set -o xtrace
 
+export LC_ALL=C
+
 # Abort if localrc is not set
 if [ ! -e ../../localrc ]; then
     echo "You must have a localrc with ALL necessary passwords defined before proceeding."
