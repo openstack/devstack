@@ -18,22 +18,38 @@ set +o xtrace
 # to an network that allows it to talk to the gateway for
 # testing purposes
 NVP_GATEWAY_NETWORK_INTERFACE=${NVP_GATEWAY_NETWORK_INTERFACE:-eth2}
+# Re-declare floating range as it's needed also in stop_nicira, which
+# is invoked by unstack.sh
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
 
 function configure_nicira() {
     :
 }
 
 function init_nicira() {
-    die_if_not_set $LINENO NVP_GATEWAY_NETWORK_CIDR "Please, specify CIDR for the gateway network interface."
+    if ! is_set NVP_GATEWAY_NETWORK_CIDR; then
+        NVP_GATEWAY_NETWORK_CIDR=$PUBLIC_NETWORK_GATEWAY/${FLOATING_RANGE#*/}
+        echo "The IP address to set on br-ex was not specified. "
+        echo "Defaulting to "$NVP_GATEWAY_NETWORK_CIDR
+    fi
     # Make sure the interface is up, but not configured
-    sudo ifconfig $NVP_GATEWAY_NETWORK_INTERFACE up
+    sudo ip link dev $NVP_GATEWAY_NETWORK_INTERFACE set up
+    # Save and then flush the IP addresses on the interface
+    addresses=$(ip addr show dev $NVP_GATEWAY_NETWORK_INTERFACE | grep inet | awk {'print $2'})
     sudo ip addr flush $NVP_GATEWAY_NETWORK_INTERFACE
     # Use the PUBLIC Bridge to route traffic to the NVP gateway
     # NOTE(armando-migliaccio): if running in a nested environment this will work
     # only with mac learning enabled, portsecurity and security profiles disabled
+    # The public bridge might not exist for the NVP plugin if Q_USE_DEBUG_COMMAND is off
+    # Try to create it anyway
+    sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
     sudo ovs-vsctl -- --may-exist add-port $PUBLIC_BRIDGE $NVP_GATEWAY_NETWORK_INTERFACE
     nvp_gw_net_if_mac=$(ip link show $NVP_GATEWAY_NETWORK_INTERFACE | awk '/ether/ {print $2}')
-    sudo ifconfig $PUBLIC_BRIDGE $NVP_GATEWAY_NETWORK_CIDR hw ether $nvp_gw_net_if_mac
+    sudo ip link dev $PUBLIC_BRIDGE set address $nvp_gw_net_if_mac
+    for address in $addresses; do
+        sudo ip addr add dev $PUBLIC_BRIDGE $address
+    done
+    sudo ip addr add dev $PUBLIC_BRIDGE $NVP_GATEWAY_NETWORK_CIDR
 }
 
 function install_nicira() {
@@ -45,7 +61,21 @@ function start_nicira() {
 }
 
 function stop_nicira() {
-    :
+    if ! is_set NVP_GATEWAY_NETWORK_CIDR; then
+        NVP_GATEWAY_NETWORK_CIDR=$PUBLIC_NETWORK_GATEWAY/${FLOATING_RANGE#*/}
+        echo "The IP address expected on br-ex was not specified. "
+        echo "Defaulting to "$NVP_GATEWAY_NETWORK_CIDR
+    fi
+    sudo ip addr del $NVP_GATEWAY_NETWORK_CIDR dev $PUBLIC_BRIDGE
+    # Save and then flush remaining addresses on the interface
+    addresses=$(ip addr show dev $PUBLIC_BRIDGE | grep inet | awk {'print $2'})
+    sudo ip addr flush $PUBLIC_BRIDGE
+    # Try to detach physical interface from PUBLIC_BRIDGE
+    sudo ovs-vsctl del-port $NVP_GATEWAY_NETWORK_INTERFACE
+    # Restore addresses on NVP_GATEWAY_NETWORK_INTERFACE
+    for address in $addresses; do
+        sudo ip addr add dev $NVP_GATEWAY_NETWORK_INTERFACE $address
+    done
 }
 
 # Restore xtrace
