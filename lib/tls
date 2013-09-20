@@ -22,7 +22,8 @@
 # - make_int_ca
 # - new_cert $INT_CA_DIR int-server "abc"
 # - start_tls_proxy HOST_IP 5000 localhost 5000
-
+# - ensure_certificates
+# - is_ssl_enabled_service
 
 # Defaults
 # --------
@@ -306,6 +307,53 @@ function make_root_CA() {
         -keyout $ca_dir/private/cacert.key \
         -out $ca_dir/cacert.pem \
         -outform PEM
+}
+
+
+# Certificate Input Configuration
+# ===============================
+
+# check to see if the service(s) specified are to be SSL enabled.
+#
+# Multiple services specified as arguments are ``OR``'ed together; the test
+# is a short-circuit boolean, i.e it returns on the first match.
+#
+# Uses global ``SSL_ENABLED_SERVICES``
+function is_ssl_enabled_service() {
+    services=$@
+    for service in ${services}; do
+        [[ ,${SSL_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
+    done
+    return 1
+}
+
+
+# Ensure that the certificates for a service are in place. This function does
+# not check that a service is SSL enabled, this should already have been
+# completed.
+#
+# The function expects to find a certificate, key and CA certificate in the
+# variables {service}_SSL_CERT, {service}_SSL_KEY and {service}_SSL_CA. For
+# example for keystone this would be KEYSTONE_SSL_CERT, KEYSTONE_SSL_KEY and
+# KEYSTONE_SSL_CA. If it does not find these certificates the program will
+# quit.
+function ensure_certificates() {
+    local service=$1
+
+    local cert_var="${service}_SSL_CERT"
+    local key_var="${service}_SSL_KEY"
+    local ca_var="${service}_SSL_CA"
+
+    local cert=${!cert_var}
+    local key=${!key_var}
+    local ca=${!ca_var}
+
+    if [[ !($cert && $key && $ca) ]]; then
+        die $LINENO "Missing either the ${cert_var} ${key_var} or ${ca_var}" \
+                    "variable to enable SSL for ${service}"
+    fi
+
+    cat $ca >> $SSL_BUNDLE_FILE
 }
 
 
