@@ -30,6 +30,9 @@ Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS:-vni_ranges=10
 # Default VLAN TypeDriver options
 Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS:-}
 
+# L3 Plugin to load for ML2
+ML2_L3_PLUGIN=${ML2_L3_PLUGIN:-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
+
 function populate_ml2_config() {
     OPTS=$1
     CONF=$2
@@ -48,13 +51,11 @@ function neutron_plugin_configure_common() {
     Q_PLUGIN_CLASS="neutron.plugins.ml2.plugin.Ml2Plugin"
     # The ML2 plugin delegates L3 routing/NAT functionality to
     # the L3 service plugin which must therefore be specified.
-    Q_L3_PLUGIN_CLASS=${Q_L3_PLUGIN_CLASS:-"neutron.services.l3_router.l3_router_plugin.L3RouterPlugin"}
-    if  ini_has_option $NEUTRON_CONF DEFAULT service_plugins ; then
-        srv_plugins=$(iniget $NEUTRON_CONF DEFAULT service_plugins)","$Q_L3_PLUGIN_CLASS
+    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
+        Q_SERVICE_PLUGIN_CLASSES=$ML2_L3_PLUGIN
     else
-        srv_plugins=$Q_L3_PLUGIN_CLASS
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$ML2_L3_PLUGIN"
     fi
-    iniset $NEUTRON_CONF DEFAULT service_plugins $srv_plugins
 }
 
 function neutron_plugin_configure_service() {
