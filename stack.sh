@@ -1104,26 +1104,6 @@ if is_service_enabled nova; then
             iniset $NOVA_CONF vmware integration_bridge $OVS_BRIDGE
         fi
 
-    # fake
-    # ----
-
-    elif [ "$VIRT_DRIVER" = 'fake' ]; then
-        echo_summary "Using fake Virt driver"
-        iniset $NOVA_CONF DEFAULT compute_driver "nova.virt.fake.FakeDriver"
-        # Disable arbitrary limits
-        iniset $NOVA_CONF DEFAULT quota_instances -1
-        iniset $NOVA_CONF DEFAULT quota_cores -1
-        iniset $NOVA_CONF DEFAULT quota_ram -1
-        iniset $NOVA_CONF DEFAULT quota_floating_ips -1
-        iniset $NOVA_CONF DEFAULT quota_fixed_ips -1
-        iniset $NOVA_CONF DEFAULT quota_metadata_items -1
-        iniset $NOVA_CONF DEFAULT quota_injected_files -1
-        iniset $NOVA_CONF DEFAULT quota_injected_file_path_bytes -1
-        iniset $NOVA_CONF DEFAULT quota_security_groups -1
-        iniset $NOVA_CONF DEFAULT quota_security_group_rules -1
-        iniset $NOVA_CONF DEFAULT quota_key_pairs -1
-        iniset $NOVA_CONF DEFAULT scheduler_default_filters "RetryFilter,AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter"
-
 
     # Default libvirt
     # ---------------
