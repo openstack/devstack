@@ -203,9 +203,6 @@ function _config_swift_apache_wsgi() {
 
     done
 
-    # run apache server as stack user
-    change_apache_user_group ${STACK_USER}
-
     # WSGI isn't enabled by default, enable it
     ! is_fedora && sudo a2enmod wsgi
 }
@@ -562,10 +559,6 @@ function start_swift() {
     fi
 
     if is_apache_enabled_service swift; then
-        # Make sure the apache lock dir is owned by $STACK_USER
-        # for running apache server to avoid failure of restarting
-        # apache server due to permission problem.
-        sudo chown -R $STACK_USER /var/run/lock/$APACHE_NAME
         restart_apache_server
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
         screen_it s-proxy "cd $SWIFT_DIR && sudo tail -f /var/log/$APACHE_NAME/proxy-server"
