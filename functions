@@ -548,11 +548,17 @@ function is_arch {
 # Uses global ``OFFLINE``
 # git_clone remote dest-dir branch
 function git_clone {
-    [[ "$OFFLINE" = "True" ]] && return
-
     GIT_REMOTE=$1
     GIT_DEST=$2
     GIT_REF=$3
+
+    if [[ "$OFFLINE" = "True" ]]; then
+        echo "Running in offline mode, clones already exist"
+        # print out the results so we know what change was used in the logs
+        cd $GIT_DEST
+        git show --oneline
+        return
+    fi
 
     if echo $GIT_REF | egrep -q "^refs"; then
         # If our branch name is a gerrit style refs/changes/...
@@ -595,6 +601,10 @@ function git_clone {
 
         fi
     fi
+
+    # print out the results so we know what change was used in the logs
+    cd $GIT_DEST
+    git show --oneline
 }
 
 
