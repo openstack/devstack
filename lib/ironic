@@ -148,9 +148,9 @@ create_ironic_accounts() {
             keystone endpoint-create \
                 --region RegionOne \
                 --service_id $IRONIC_SERVICE \
-                --publicurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT/v1/" \
-                --adminurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT/v1/" \
-                --internalurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT/v1/"
+                --publicurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT" \
+                --adminurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT" \
+                --internalurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT"
         fi
     fi
 }
