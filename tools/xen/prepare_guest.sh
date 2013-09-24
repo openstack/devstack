@@ -56,11 +56,6 @@ EOF
 # Give ownership of /opt/stack to stack user
 chown -R $STACK_USER /opt/stack
 
-# Make our ip address hostnames look nice at the command prompt
-echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> /opt/stack/.bashrc
-echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> /root/.bashrc
-echo "export PS1='${debian_chroot:+($debian_chroot)}\\u@\\H:\\w\\$ '" >> /etc/profile
-
 function setup_vimrc {
     if [ ! -e $1 ]; then
         # Simple but usable vimrc
