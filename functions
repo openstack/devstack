@@ -1745,6 +1745,25 @@ function policy_add() {
 }
 
 
+# This function sets log formatting options for colorizing log
+# output to stdout. It is meant to be called by lib modules.
+# The last two parameters are optional and can be used to specify
+# non-default value for project and user format variables.
+# Defaults are respectively 'project_name' and 'user_name'
+#
+# setup_colorized_logging something.conf SOMESECTION
+function setup_colorized_logging() {
+    local conf_file=$1
+    local conf_section=$2
+    local project_var=${3:-"project_name"}
+    local user_var=${4:-"user_name"}
+    # Add color to logging output
+    iniset $conf_file $conf_section logging_context_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%("$user_var")s %("$project_var")s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    iniset $conf_file $conf_section logging_default_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    iniset $conf_file $conf_section logging_debug_format_suffix "[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
+    iniset $conf_file $conf_section logging_exception_prefix "%(color)s%(asctime)s.%(msecs)03d TRACE %(name)s [01;35m%(instance)s[00m"
+}
+
 # Restore xtrace
 $XTRACE
 
