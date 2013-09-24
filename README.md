@@ -139,6 +139,7 @@ following settings in your `localrc` :
     enable_service q-dhcp
     enable_service q-l3
     enable_service q-meta
+    enable_service q-metering
     enable_service neutron
     # Optional, to enable tempest configuration as part of devstack
     enable_service tempest

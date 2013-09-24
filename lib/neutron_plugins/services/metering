@@ -1,0 +1,30 @@
+# Neutron metering plugin
+# ---------------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+AGENT_METERING_BINARY="$NEUTRON_BIN_DIR/neutron-metering-agent"
+METERING_PLUGIN="neutron.services.metering.metering_plugin.MeteringPlugin"
+
+function neutron_agent_metering_configure_common() {
+    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
+        Q_SERVICE_PLUGIN_CLASSES=$METERING_PLUGIN
+    else
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$METERING_PLUGIN"
+    fi
+}
+
+function neutron_agent_metering_configure_agent() {
+    METERING_AGENT_CONF_PATH=/etc/neutron/services/metering
+    mkdir -p $METERING_AGENT_CONF_PATH
+
+    METERING_AGENT_CONF_FILENAME="$METERING_AGENT_CONF_PATH/metering_agent.ini"
+
+    cp $NEUTRON_DIR/etc/metering_agent.ini $METERING_AGENT_CONF_FILENAME
+}
+
+# Restore xtrace
+$MY_XTRACE
