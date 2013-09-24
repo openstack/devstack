@@ -93,13 +93,34 @@ mkdir -p $STAGING_DIR/opt/stack/devstack
 tar xf /tmp/devstack.tar -C $STAGING_DIR/opt/stack/devstack
 cd $TOP_DIR
 
-# Run devstack on launch
-cat <<EOF >$STAGING_DIR/etc/rc.local
-# network restart required for getting the right gateway
-/etc/init.d/networking restart
-chown -R $STACK_USER /opt/stack
-su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" $STACK_USER
-exit 0
+# Create an upstart job (task) for devstack, which can interact with the console
+cat >$STAGING_DIR/etc/init/devstack.conf << EOF
+start on stopped rc RUNLEVEL=[2345]
+
+console output
+task
+
+pre-start script
+    rm -f /var/run/devstack.succeeded
+end script
+
+script
+    initctl stop hvc0 || true
+
+    # Read any leftover characters from standard input
+    while read -n 1 -s -t 0.1 -r ignored; do
+        true
+    done
+
+    clear
+
+    chown -R $STACK_USER /opt/stack
+
+    if su -c "/opt/stack/run.sh" $STACK_USER; then
+        touch /var/run/devstack.succeeded
+    fi
+    initctl start hvc0 > /dev/null 2>&1
+end script
 EOF
 
 # Configure the hostname
@@ -138,8 +159,9 @@ fi
 # Configure run.sh
 cat <<EOF >$STAGING_DIR/opt/stack/run.sh
 #!/bin/bash
+set -eux
 cd /opt/stack/devstack
-killall screen
-VIRT_DRIVER=xenserver FORCE=yes MULTI_HOST=$MULTI_HOST HOST_IP_IFACE=$HOST_IP_IFACE $STACKSH_PARAMS ./stack.sh
+./unstack.sh || true
+./stack.sh
 EOF
 chmod 755 $STAGING_DIR/opt/stack/run.sh
