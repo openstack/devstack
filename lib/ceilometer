@@ -5,7 +5,7 @@
 #   enable_service ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api
 #
 # To ensure Ceilometer alarming services are enabled also, further add to the localrc:
-#   enable_service ceilometer-alarm-notifier ceilometer-alarm-singleton
+#   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
 
 # Dependencies:
 # - functions
@@ -139,13 +139,13 @@ function start_ceilometer() {
     screen_it ceilometer-collector "ceilometer-collector --config-file $CEILOMETER_CONF"
     screen_it ceilometer-api "ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
     screen_it ceilometer-alarm-notifier "ceilometer-alarm-notifier --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-alarm-singleton "ceilometer-alarm-singleton --config-file $CEILOMETER_CONF"
+    screen_it ceilometer-alarm-evaluator "ceilometer-alarm-evaluator --config-file $CEILOMETER_CONF"
 }
 
 # stop_ceilometer() - Stop running processes
 function stop_ceilometer() {
     # Kill the ceilometer screen windows
-    for serv in ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-singleton; do
+    for serv in ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }
