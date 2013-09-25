@@ -1,0 +1,77 @@
+# lib/nova_plugins/hypervisor-fake
+# Configure the fake hypervisor
+
+# Enable with:
+# VIRT_DRIVER=fake
+
+# Dependencies:
+# ``functions`` file
+# ``nova`` configuration
+
+# install_nova_hypervisor - install any external requirements
+# configure_nova_hypervisor - make configuration changes, including those to other services
+# start_nova_hypervisor - start any external services
+# stop_nova_hypervisor - stop any external services
+# cleanup_nova_hypervisor - remove transient data and cache
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+
+# Entry Points
+# ------------
+
+# clean_nova_hypervisor - Clean up an installation
+function cleanup_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# configure_nova_hypervisor - Set config files, create data dirs, etc
+function configure_nova_hypervisor() {
+    iniset $NOVA_CONF DEFAULT compute_driver "nova.virt.fake.FakeDriver"
+    # Disable arbitrary limits
+    iniset $NOVA_CONF DEFAULT quota_instances -1
+    iniset $NOVA_CONF DEFAULT quota_cores -1
+    iniset $NOVA_CONF DEFAULT quota_ram -1
+    iniset $NOVA_CONF DEFAULT quota_floating_ips -1
+    iniset $NOVA_CONF DEFAULT quota_fixed_ips -1
+    iniset $NOVA_CONF DEFAULT quota_metadata_items -1
+    iniset $NOVA_CONF DEFAULT quota_injected_files -1
+    iniset $NOVA_CONF DEFAULT quota_injected_file_path_bytes -1
+    iniset $NOVA_CONF DEFAULT quota_security_groups -1
+    iniset $NOVA_CONF DEFAULT quota_security_group_rules -1
+    iniset $NOVA_CONF DEFAULT quota_key_pairs -1
+    iniset $NOVA_CONF DEFAULT scheduler_default_filters "RetryFilter,AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter"
+}
+
+# install_nova_hypervisor() - Install external components
+function install_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# start_nova_hypervisor - Start any required external services
+function start_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# stop_nova_hypervisor - Stop any external services
+function stop_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
