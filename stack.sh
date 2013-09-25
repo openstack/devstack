@@ -518,7 +518,7 @@ if [[ -n "$LOGFILE" ]]; then
         # Set fd 1 and 2 to primary logfile
         exec 1> "${LOGFILE}" 2>&1
         # Set fd 6 to summary logfile and stdout
-        exec 6> >( tee "${SUMFILE}" /dev/fd/3 )
+        exec 6> >( tee "${SUMFILE}" >&3 )
     fi
 
     echo_summary "stack.sh log $LOGFILE"
