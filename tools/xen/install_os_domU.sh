@@ -111,12 +111,15 @@ if is_service_enabled neutron; then
 fi
 
 if parameter_is_specified "FLAT_NETWORK_BRIDGE"; then
-    cat >&2 << EOF
-ERROR: FLAT_NETWORK_BRIDGE is specified in localrc file
-This is considered as an error, as its value will be derived from the
-VM_BRIDGE_OR_NET_NAME variable's value.
+    if [ "$(bridge_for "$VM_BRIDGE_OR_NET_NAME")" != "$(bridge_for "$FLAT_NETWORK_BRIDGE")" ]; then
+        cat >&2 << EOF
+ERROR: FLAT_NETWORK_BRIDGE is specified in localrc file, and either no network
+found on XenServer by searching for networks by that value as name-label or
+bridge name or the network found does not match the network specified by
+VM_BRIDGE_OR_NET_NAME. Please check your localrc file.
 EOF
-    exit 1
+        exit 1
+    fi
 fi
 
 if ! xenapi_is_listening_on "$MGT_BRIDGE_OR_NET_NAME"; then
@@ -310,7 +313,7 @@ if is_service_enabled neutron; then
         "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
 fi
 
-FLAT_NETWORK_BRIDGE=$(bridge_for "$VM_BRIDGE_OR_NET_NAME")
+FLAT_NETWORK_BRIDGE="${FLAT_NETWORK_BRIDGE:-$(bridge_for "$VM_BRIDGE_OR_NET_NAME")}"
 append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
 
 # Add a separate xvdb, if it was requested
