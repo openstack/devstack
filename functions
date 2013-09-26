@@ -556,7 +556,7 @@ function git_clone {
         echo "Running in offline mode, clones already exist"
         # print out the results so we know what change was used in the logs
         cd $GIT_DEST
-        git show --oneline --quiet
+        git show --oneline | head -1
         return
     fi
 
@@ -604,7 +604,7 @@ function git_clone {
 
     # print out the results so we know what change was used in the logs
     cd $GIT_DEST
-    git show --oneline --quiet
+    git show --oneline | head -1
 }
 
 
