@@ -119,6 +119,16 @@ function neutron_plugin_configure_service() {
     if [[ "$NVP_REDIRECTS" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT redirects $NVP_REDIRECTS
     fi
+    if [[ "$AGENT_MODE" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE nvp agent_mode $AGENT_MODE
+        if [[ "$AGENT_MODE" == "agentless" ]]; then
+            if [[ "$DEFAULT_SERVICE_CLUSTER_UUID" != "" ]]; then
+                iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_service_cluster_uuid $DEFAULT_SERVICE_CLUSTER_UUID
+            else
+                die $LINENO "Agentless mode requires a service cluster."
+            fi
+        fi
+    fi
 }
 
 function neutron_plugin_setup_interface_driver() {
