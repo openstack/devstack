@@ -1,4 +1,4 @@
-etup lib/heat
+# lib/heat
 # Install and start **Heat** service
 
 # To enable, add the following to localrc
