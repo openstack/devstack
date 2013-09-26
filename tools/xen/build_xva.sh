@@ -119,6 +119,20 @@ script
     if su -c "/opt/stack/run.sh" $STACK_USER; then
         touch /var/run/devstack.succeeded
     fi
+
+    # Update /etc/issue
+    {
+        echo "OpenStack VM - Installed by DevStack"
+        IPADDR=\$(ip -4 address show eth0 | sed -n 's/.*inet \\([0-9\.]\\+\\).*/\1/p')
+        echo "  Management IP:   \$IPADDR"
+        echo -n "  Devstack run:    "
+        if [ -e /var/run/devstack.succeeded ]; then
+            echo "SUCCEEDED"
+        else
+            echo "FAILED"
+        fi
+        echo ""
+    } > /etc/issue
     initctl start hvc0 > /dev/null 2>&1
 end script
 EOF
