@@ -14,11 +14,13 @@
 #
 # install_keystone
 # configure_keystone
+# _config_keystone_apache_wsgi
 # init_keystone
 # start_keystone
 # create_keystone_accounts
 # stop_keystone
 # cleanup_keystone
+# _cleanup_keystone_apache_wsgi
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -34,6 +36,7 @@ KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
 KEYSTONE_AUTH_CACHE_DIR=${KEYSTONE_AUTH_CACHE_DIR:-/var/cache/keystone}
+KEYSTONE_WSGI_DIR=${KEYSTONE_WSGI_DIR:-/var/www/keystone}
 
 KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 
@@ -84,6 +87,33 @@ function cleanup_keystone() {
     # delete image files (glance)
     # This function intentionally left blank
     :
+}
+
+# _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+function _cleanup_keystone_apache_wsgi() {
+    sudo rm -f $KEYSTONE_WSGI_DIR/*.wsgi
+    disable_apache_site keystone
+    sudo rm -f /etc/$APACHE_NAME/$APACHE_CONF_DIR/keystone
+}
+
+# _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
+function _config_keystone_apache_wsgi() {
+    sudo mkdir -p $KEYSTONE_WSGI_DIR
+
+    # copy proxy vhost and wsgi file
+    sudo cp $KEYSTONE_DIR/httpd/keystone.py $KEYSTONE_WSGI_DIR/main
+    sudo cp $KEYSTONE_DIR/httpd/keystone.py $KEYSTONE_WSGI_DIR/admin
+
+    sudo cp $FILES/apache-keystone.template /etc/$APACHE_NAME/$APACHE_CONF_DIR/keystone
+    sudo sed -e "
+        s|%PUBLICPORT%|$KEYSTONE_SERVICE_PORT|g;
+        s|%ADMINPORT%|$KEYSTONE_AUTH_PORT|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%PUBLICWSGI%|$KEYSTONE_WSGI_DIR/main|g;
+        s|%ADMINWSGI%|$KEYSTONE_WSGI_DIR/admin|g;
+        s|%USER%|$STACK_USER|g
+    " -i /etc/$APACHE_NAME/$APACHE_CONF_DIR/keystone
+    enable_apache_site keystone
 }
 
 # configure_keystone() - Set config files, create data dirs, etc
@@ -204,6 +234,10 @@ function configure_keystone() {
     cp $KEYSTONE_DIR/etc/logging.conf.sample $KEYSTONE_CONF_DIR/logging.conf
     iniset $KEYSTONE_CONF_DIR/logging.conf logger_root level "DEBUG"
     iniset $KEYSTONE_CONF_DIR/logging.conf logger_root handlers "devel,production"
+
+    if is_apache_enabled_service key; then
+        _config_keystone_apache_wsgi
+    fi
 }
 
 # create_keystone_accounts() - Sets up common required keystone accounts
@@ -316,6 +350,9 @@ function install_keystone() {
     fi
     git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
     setup_develop $KEYSTONE_DIR
+    if is_apache_enabled_service key; then
+        install_apache_wsgi
+    fi
 }
 
 # start_keystone() - Start running processes, including screen
@@ -326,8 +363,14 @@ function start_keystone() {
         service_port=$KEYSTONE_SERVICE_PORT_INT
     fi
 
-    # Start Keystone in a screen window
-    screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
+    if is_apache_enabled_service key; then
+        restart_apache_server
+        screen_it key "cd $KEYSTONE_DIR && sudo tail -f /var/log/$APACHE_NAME/keystone"
+    else
+        # Start Keystone in a screen window
+        screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
+    fi
+
     echo "Waiting for keystone to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s http://$SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
       die $LINENO "keystone did not start"
