@@ -1371,6 +1371,17 @@ function insert_vrouter() {
     sudo service network restart
 }
 
+function test_insert_vrouter ()
+{
+    lsmod | grep -q vrouter
+    if [ $? == 0 ]; then
+	echo "vrouter module already inserted."
+    else
+	insert_vrouter
+	echo "vrouter kernel module inserted."
+    fi
+}
+
 # Create the destination directory and ensure it is writable by the user
 DEST=${DEST:-/opt/contrail}
 sudo mkdir -p $DEST
@@ -1481,6 +1492,8 @@ screen_it cass "sudo /usr/sbin/cassandra -f"
 screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
 screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
 sleep 2
+screen_it disco "python $PYLIBPATH/discovery/disc_server_zk.py --conf_file /etc/contrail/discovery.conf"
+sleep 2
 screen_it apiSrv "python $PYLIBPATH/vnc_cfg_api_server/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
 echo "Waiting for api-server to start..."
 if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://${SERVICE_HOST}:${API_SERVER_PORT}; do sleep 1; done"; then
@@ -1494,15 +1507,18 @@ source /etc/contrail/control_param
 screen_it control "export LD_LIBRARY_PATH=/opt/stack/contrail/build/lib; $CONTRAIL_SRC/build/debug/control-node/control-node --map-server-url https://${IFMAP_SERVER}:${IFMAP_PORT} --map-user ${IFMAP_USER} --map-password ${IFMAP_PASWD} --hostname ${HOSTNAME} --host-ip ${HOSTIP} --bgp-port ${BGP_PORT} ${CERT_OPTS} ${LOG_LOCAL}"
 
 # vrouter
-if [ $(lsmod | grep vrouter) ]; then
-    echo "vrouter module already inserted."
-else
-    insert_vrouter
-    echo "vrouter kernel module inserted."
-fi
+test_insert_vrouter
 
+# agent
 source /etc/contrail/agent_param
-screen_it agent "sudo env LD_LIBRARY_PATH=/opt/stack/contrail/build/lib bash -c \"$CONTRAIL_SRC/build/debug/vnsw/agent/vnswad --config-file $CONFIG $LOGFILE\""
+sudo cat > $TOP_DIR/vnsw.hlpr <<END
+#!/bin/bash
+
+LD_LIBRARY_PATH=/opt/stack/contrail/build/lib $CONTRAIL_SRC/build/debug/vnsw/agent/vnswad --config-file $CONFIG $VROUTER_LOGFILE
+END
+sudo mv $TOP_DIR/vnsw.hlpr /opt/contrail/
+sudo chmod +x /opt/contrail/vnsw.hlpr
+screen_it agent "sudo /opt/contrail/vnsw.hlpr"
 
 # Fin
 # ===

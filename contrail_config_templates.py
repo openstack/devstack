@@ -111,7 +111,7 @@ HOSTNAME=$__contrail_hostname__
 HOSTIP=$__contrail_host_ip__
 BGP_PORT=$__contrail_bgp_port__
 CERT_OPTS=$__contrail_cert_ops__
-LOGFILE=$__contrail_logfile__
+CONTROL_LOGFILE=$__contrail_logfile__
 LOG_LOCAL=$__contrail_log_local__
 """)
 
@@ -125,7 +125,7 @@ COLLECTOR_PORT=$__contrail_collector_port__
 DISCOVERY=$__contrail_discovery_ip__
 HOSTIP=$__contrail_host_ip__
 CERT_OPTS=$__contrail_cert_ops__
-LOGFILE=$__contrail_logfile__
+DNS_LOGFILE=$__contrail_logfile__
 LOG_LOCAL=$__contrail_log_local__
 """)
 
@@ -229,7 +229,7 @@ kmod=vrouter/vrouter.ko
 pname=vnswad
 LIBDIR=/usr/lib64
 VHOST_CFG=/etc/sysconfig/network-scripts/ifcfg-vhost0
-LOGFILE=--log-file=/var/log/contrail/vrouter.log
+VROUTER_LOGFILE=--log-file=/var/log/contrail/vrouter.log
 COLLECTOR=$__contrail_collector__
 $__contrail_dev__
 """)

@@ -167,7 +167,7 @@ class Setup(object):
         # dsetia
         self._args.openstack_ip = self._args.cfgm_ip
         self._args.collector_ip = self._args.cfgm_ip
-        # self._args.discovery_ip = self._args.cfgm_ip
+        self._args.discovery_ip = self._args.cfgm_ip
         self._args.control_ip = self._args.cfgm_ip
         self._args.compute_ip = self._args.cfgm_ip
         self._args.openstack_mgmt_ip = self._args.cfgm_ip
@@ -756,20 +756,6 @@ SUBCHANNELS=1,2,3
 
                     self.run_shell("sudo chkconfig network on")
                     self.run_shell("sudo chkconfig supervisor-vrouter on")
-            else: # of if dev and dev != 'vhost0'
-                # allow for updating anything except self-ip/gw and eth-port
-                self.run_shell("sudo sed 's/COLLECTOR=.*/COLLECTOR=%s/g' /etc/contrail/agent_param > agent_param.new" %(collector_ip))
-                self.run_shell("sudo mv agent_param.new /etc/contrail/agent_param")
-
-                self.run_shell("sudo cp /etc/contrail/agent.conf %s/agent.conf" %(temp_dir_name))
-                agent_tree = ET.parse('%s/agent.conf' %(temp_dir_name))
-                agent_root = agent_tree.getroot()
-                agent_elem = agent_root.find('agent')
-                self._replace_discovery_server(agent_elem, discovery_ip, ncontrols)
-
-                agent_tree = agent_tree.write('%s/agent.conf' %(temp_dir_name))
-                self.run_shell("sudo cp %s/agent.conf /etc/contrail/agent.conf" %(temp_dir_name))
-                self.run_shell("sudo rm %s/agent.conf" %(temp_dir_name))
             #end if dev and dev != 'vhost0' :
 
         # role == compute && !cfgm
@@ -827,52 +813,6 @@ SUBCHANNELS=1,2,3
 
         self.cleanup()
     #end do_setup
-
-    def run_services(self):
-        if 'database' in self._args.role:
-            local("sudo ./contrail_setup_utils/database-server-setup.sh %s" % (self._args.database_listen_ip))
-            
-        if 'openstack' in self._args.role:
-            local("sudo ./contrail_setup_utils/keystone-server-setup.sh")
-            local("sudo ./contrail_setup_utils/glance-server-setup.sh")
-            local("sudo ./contrail_setup_utils/cinder-server-setup.sh")
-            local("sudo ./contrail_setup_utils/nova-server-setup.sh")
-
-        if 'config' in self._args.role:
-            openstack_ip = self._args.openstack_ip
-            quantum_ip = self._args.cfgm_ip
-            local("sudo ./contrail_setup_utils/config-server-setup.sh")
-            local("sudo ./contrail_setup_utils/quantum-server-setup.sh")
-            with settings(host_string = 'root@%s' %(openstack_ip), password = env.password):
-                put("/opt/contrail/contrail_installer/contrail_setup_utils/setup-quantum-in-keystone.py",
-                    "/root/setup-quantum-in-keystone.py")
-                quant_args = "--quant_server_ip %s --tenant %s --user %s --password %s --svc_password %s" \
-                              %(quantum_ip, ks_admin_tenant_name, ks_admin_user, ks_admin_password, self.service_token)
-                run("python /root/setup-quantum-in-keystone.py %s" %(quant_args))
-
-        if 'collector' in self._args.role:
-            if self._args.num_collector_nodes:
-                local("sudo ./contrail_setup_utils/collector-server-setup.sh multinode")
-            else:
-                local("sudo ./contrail_setup_utils/collector-server-setup.sh")
-
-        if 'control' in self._args.role:
-            local("sudo ./contrail_setup_utils/control-server-setup.sh")
-
-        if 'compute' in self._args.role:
-            if self._fixed_qemu_conf:
-                local("sudo service libvirtd restart")
-
-        if self._args.compute_ip :
-            # running compute-server-setup.sh on cfgm sets nova.conf's
-            # sql access from ip instead of localhost, causing privilege
-            # degradation for nova tables
-            local("sudo ./contrail_setup_utils/compute-server-setup.sh")
-
-        if 'webui' in self._args.role:
-            local("sudo ./contrail_setup_utils/webui-server-setup.sh")
-
-    #end run_services
 
 #end class Setup
 
