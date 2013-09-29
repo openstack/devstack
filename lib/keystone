@@ -145,7 +145,7 @@ function configure_keystone() {
         iniset $KEYSTONE_CONF ldap user "dc=Manager,dc=openstack,dc=org"
         iniset $KEYSTONE_CONF ldap suffix "dc=openstack,dc=org"
         iniset $KEYSTONE_CONF ldap use_dumb_member "True"
-        iniset $KEYSTONE_CONF ldap user_attribute_ignore "enabled,email,tenants,tenantId"
+        iniset $KEYSTONE_CONF ldap user_attribute_ignore "enabled,email,tenants,default_project_id"
         iniset $KEYSTONE_CONF ldap tenant_attribute_ignore "enabled"
         iniset $KEYSTONE_CONF ldap tenant_domain_id_attribute "businessCategory"
         iniset $KEYSTONE_CONF ldap tenant_desc_attribute "description"
