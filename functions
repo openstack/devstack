@@ -551,6 +551,7 @@ function git_clone {
     GIT_REMOTE=$1
     GIT_DEST=$2
     GIT_REF=$3
+    RECLONE=$(trueorfalse False $RECLONE)
 
     if [[ "$OFFLINE" = "True" ]]; then
         echo "Running in offline mode, clones already exist"
@@ -576,7 +577,7 @@ function git_clone {
             cd $GIT_DEST
             # This checkout syntax works for both branches and tags
             git checkout $GIT_REF
-        elif [[ "$RECLONE" == "yes" ]]; then
+        elif [[ "$RECLONE" = "True" ]]; then
             # if it does exist then simulate what clone does if asked to RECLONE
             cd $GIT_DEST
             # set the url to pull from and fetch
@@ -1268,16 +1269,16 @@ function stop_service() {
 
 
 # Normalize config values to True or False
-# Accepts as False: 0 no false False FALSE
-# Accepts as True: 1 yes true True TRUE
+# Accepts as False: 0 no No NO false False FALSE
+# Accepts as True: 1 yes Yes YES true True TRUE
 # VAR=$(trueorfalse default-value test-value)
 function trueorfalse() {
     local default=$1
     local testval=$2
 
     [[ -z "$testval" ]] && { echo "$default"; return; }
-    [[ "0 no false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
-    [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
+    [[ "0 no No NO false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
+    [[ "1 yes Yes YES true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
     echo "$default"
 }
 
