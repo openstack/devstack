@@ -1334,6 +1334,175 @@ fi
 # Check the status of running services
 service_check
 
+# Contrail
+function insert_vrouter() {
+    source /etc/contrail/agent_param
+    source $VHOST_CFG
+    sudo insmod $CONTRAIL_SRC/$kmod
+
+    echo "Creating vhost interface: $DEVICE."
+    VIF=$CONTRAIL_SRC/build/debug/vrouter/utils/vif
+    DEV_MAC=$(cat /sys/class/net/$dev/address)
+    sudo $VIF --create $DEVICE --mac $DEV_MAC
+    if [ $? != 0 ]
+    then
+        echo "Error creating interface: $DEVICE"
+    fi
+
+    echo "Adding $DEVICE to vrouter"
+    sudo $VIF --add $DEVICE --mac $DEV_MAC --vrf 0 --mode x --type vhost
+    if [ $? != 0 ]
+    then
+        echo "Error adding $DEVICE to vrouter"
+    fi
+
+    echo "Adding $dev to vrouter"
+    sudo $VIF --add $dev --mac $DEV_MAC --vrf 0 --mode x --type physical
+    if [ $? != 0 ]
+    then
+        echo "Error adding $dev to vrouter"
+    fi
+
+    echo "Sleeping 10 seconds to allow link state to settle"
+    sudo ifup $DEVICE
+    sudo cp /etc/contrail/ifcfg-$dev /etc/sysconfig/network-scripts
+    sleep 10
+    echo "Restarting network service"
+    sudo service network restart
+}
+
+# Create the destination directory and ensure it is writable by the user
+DEST=${DEST:-/opt/contrail}
+sudo mkdir -p $DEST
+if [ ! -w $DEST ]; then
+    sudo chown `whoami` $DEST
+fi
+
+# Destination path for service data
+DATA_DIR=${DATA_DIR:-${DEST}/data}
+sudo mkdir -p $DATA_DIR
+sudo chown `whoami` $DATA_DIR
+
+SCREEN_NAME="contrail"
+screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
+sleep 1
+# Set a reasonable status bar
+screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
+
+PYLIBPATH=`/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
+sudo mkdir -p /var/log/contrail
+sudo chmod 777 /var/log/contrail
+
+# basic dependencies
+if ! command_exists repo ; then
+    mkdir -p ~/bin
+    PATH=~/bin:$PATH
+    sudo curl https://dl-ssl.google.com/dl/googlesource/git-repo/repo > ~/bin/repo
+    sudo chmod a+x ~/bin/repo
+fi
+
+# dependencies
+if [ $ENABLE_CONTRAIL ]; then
+    sudo yum -y install patch scons flex bison make vim
+    sudo yum -y install expat-devel gettext-devel curl-devel
+    sudo yum -y install gcc-c++ python-devel autoconf automake
+    sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
+
+    # api server requirements
+    sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
+    sudo pip install netifaces fabric argparse
+    sudo pip install stevedore xmltodict python-keystoneclient
+    sudo pip install kazoo 
+fi
+
+CONTRAIL_SRC=${CONTRAIL_SRC:-/opt/stack/contrail}
+mkdir -p $CONTRAIL_SRC
+contrail_cwd=$(pwd)
+cd $CONTRAIL_SRC
+if [ ! -d $CONTRAIL_SRC/.repo ]; then
+    repo init -u git@github.com:Juniper/contrail-vnc
+fi
+repo sync
+python third_party/fetch_packages.py
+scons
+cd ${contrail_cwd}
+
+# get cassandra
+if [ ! -f "/usr/sbin/cassandra" ] ; then
+    cat << EOF > datastax.repo
+[datastax]
+name = DataStax Repo for Apache Cassandra
+baseurl = http://rpm.datastax.com/community
+enabled = 1
+gpgcheck = 0
+EOF
+    sudo mv datastax.repo /etc/yum.repos.d/
+    sudo yum -y install dsc20
+fi
+	    
+# get ifmap 
+if [ ! -d $CONTRAIL_SRC/third_party/irond-0.3.0-bin ]; then
+    contrail_cwd=$(pwd)
+    cd $CONTRAIL_SRC/third_party
+    wget http://trust.f4.hs-hannover.de/download/iron/archive/irond-0.3.0-bin.zip
+    unzip irond-0.3.0-bin.zip
+    cd ${contrail_cwd}
+fi
+
+if [ ! -d $CONTRAIL_SRC/third_party/zookeeper-3.4.5 ]; then
+    contrail_cwd=$(pwd)
+    cd $CONTRAIL_SRC/third_party
+    wget http://apache.mirrors.hoobly.com/zookeeper/stable/zookeeper-3.4.5.tar.gz
+    tar xvzf zookeeper-3.4.5.tar.gz
+    cd zookeeper-3.4.5
+    cp conf/zoo_sample.cfg conf/zoo.cfg
+    cd ${contrail_cwd}
+fi
+
+# ncclient
+if [ ! -d $PYLIBPATH/ncclient ]; then
+    contrail_cwd=$(pwd)
+    cd $CONTRAIL_SRC/third_party
+    wget https://code.grnet.gr/attachments/download/1172/ncclient-v0.3.2.tar.gz
+    sudo pip install ncclient-v0.3.2.tar.gz
+    cd ${contrail_cwd}
+fi
+
+# create config files
+# python $TOP_DIR/setup_contrail.py --physical_interface $CONTRAIL_USE_INTF
+python $TOP_DIR/setup_contrail.py --cfgm_ip $SERVICE_HOST
+
+# install contrail modules
+echo "Installing contrail modules"
+sudo pip install --upgrade $(find $CONTRAIL_SRC/build/debug -name "*.tar.gz" -print)
+
+# launch ...
+screen_it cass "sudo /usr/sbin/cassandra -f"
+screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
+screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
+sleep 2
+screen_it apiSrv "python $PYLIBPATH/vnc_cfg_api_server/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
+echo "Waiting for api-server to start..."
+if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://${SERVICE_HOST}:${API_SERVER_PORT}; do sleep 1; done"; then
+  echo "api-server did not start"
+  exit 1
+fi
+sleep 2
+screen_it schema "python $PYLIBPATH/schema_transformer/to_bgp.py --conf_file /etc/contrail/schema_transformer.conf"
+
+source /etc/contrail/control_param
+screen_it control "export LD_LIBRARY_PATH=/opt/stack/contrail/build/lib; $CONTRAIL_SRC/build/debug/control-node/control-node --map-server-url https://${IFMAP_SERVER}:${IFMAP_PORT} --map-user ${IFMAP_USER} --map-password ${IFMAP_PASWD} --hostname ${HOSTNAME} --host-ip ${HOSTIP} --bgp-port ${BGP_PORT} ${CERT_OPTS} ${LOG_LOCAL}"
+
+# vrouter
+if [ $(lsmod | grep vrouter) ]; then
+    echo "vrouter module already inserted."
+else
+    insert_vrouter
+    echo "vrouter kernel module inserted."
+fi
+
+source /etc/contrail/agent_param
+screen_it agent "sudo env LD_LIBRARY_PATH=/opt/stack/contrail/build/lib bash -c \"$CONTRAIL_SRC/build/debug/vnsw/agent/vnswad --config-file $CONFIG $LOGFILE\""
 
 # Fin
 # ===

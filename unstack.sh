@@ -135,4 +135,13 @@ if is_service_enabled trove; then
     cleanup_trove
 fi
 
+# Contrail
+SCREEN=$(which screen)
+if [[ -n "$SCREEN" ]]; then
+    SESSION=$(screen -ls | awk '/[0-9].contrail/ { print $1 }')
+    if [[ -n "$SESSION" ]]; then
+        screen -X -S $SESSION quit
+    fi
+fi
+
 cleanup_tmp
