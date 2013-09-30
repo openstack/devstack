@@ -109,12 +109,15 @@ function configure_trove() {
     # (Re)create trove conf files
     rm -f $TROVE_CONF_DIR/trove.conf
     rm -f $TROVE_CONF_DIR/trove-taskmanager.conf
+    rm -f $TROVE_CONF_DIR/trove-conductor.conf
+
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT sql_connection `database_connection_url trove`
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT add_addresses True
 
     iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT sql_connection `database_connection_url trove`
+    iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT control_exchange trove
     sed -i "s/localhost/$NETWORK_GATEWAY/g" $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
 
     # (Re)create trove taskmanager conf file if needed
@@ -126,6 +129,17 @@ function configure_trove() {
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_tenant_name trove
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
+    fi
+
+    # (Re)create trove conductor conf file if needed
+    if is_service_enabled tr-cond; then
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT sql_connection `database_connection_url trove`
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_user radmin
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_tenant_name trove
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT control_exchange trove
     fi
 }
 
@@ -152,12 +166,13 @@ function init_trove() {
 function start_trove() {
     screen_it tr-api "cd $TROVE_DIR; bin/trove-api --config-file=$TROVE_CONF_DIR/trove.conf --debug 2>&1"
     screen_it tr-tmgr "cd $TROVE_DIR; bin/trove-taskmanager --config-file=$TROVE_CONF_DIR/trove-taskmanager.conf --debug 2>&1"
+    screen_it tr-cond "cd $TROVE_DIR; bin/trove-conductor --config-file=$TROVE_CONF_DIR/trove-conductor.conf --debug 2>&1"
 }
 
 # stop_trove() - Stop running processes
 function stop_trove() {
     # Kill the trove screen windows
-    for serv in tr-api tr-tmgr; do
+    for serv in tr-api tr-tmgr tr-cond; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }
