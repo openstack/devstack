@@ -16,6 +16,8 @@
 #   - pre-install hgtools to work around a bug in RHEL6 distribute
 #   - install nose 1.1 from EPEL
 
+set -o errexit
+set -o xtrace
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)

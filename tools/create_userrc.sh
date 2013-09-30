@@ -6,6 +6,9 @@
 
 # Warning: This script just for development purposes
 
+set -o errexit
+set -o xtrace
+
 ACCOUNT_DIR=./accrc
 
 display_help()
@@ -138,10 +141,14 @@ s3=`keystone endpoint-get --service s3 | awk '/\|[[:space:]]*s3.publicURL/ {prin
 mkdir -p "$ACCOUNT_DIR"
 ACCOUNT_DIR=`readlink -f "$ACCOUNT_DIR"`
 EUCALYPTUS_CERT=$ACCOUNT_DIR/cacert.pem
-mv "$EUCALYPTUS_CERT" "$EUCALYPTUS_CERT.old" &>/dev/null
+if [ -e "$EUCALYPTUS_CERT" ]; then
+    mv "$EUCALYPTUS_CERT" "$EUCALYPTUS_CERT.old"
+fi
 if ! nova x509-get-root-cert "$EUCALYPTUS_CERT"; then
     echo "Failed to update the root certificate: $EUCALYPTUS_CERT" >&2
-    mv "$EUCALYPTUS_CERT.old" "$EUCALYPTUS_CERT" &>/dev/null
+    if [ -e "$EUCALYPTUS_CERT.old" ]; then
+        mv "$EUCALYPTUS_CERT.old" "$EUCALYPTUS_CERT"
+    fi
 fi
 
 
@@ -168,12 +175,20 @@ function add_entry(){
     local ec2_cert="$rcfile-cert.pem"
     local ec2_private_key="$rcfile-pk.pem"
     # Try to preserve the original file on fail (best effort)
-    mv -f "$ec2_private_key" "$ec2_private_key.old" &>/dev/null
-    mv -f "$ec2_cert" "$ec2_cert.old" &>/dev/null
+    if [ -e "$ec2_private_key" ]; then
+        mv -f "$ec2_private_key" "$ec2_private_key.old"
+    fi
+    if [ -e "$ec2_cert" ]; then
+        mv -f "$ec2_cert" "$ec2_cert.old"
+    fi
     # It will not create certs when the password is incorrect
     if ! nova --os-password "$user_passwd" --os-username "$user_name" --os-tenant-name "$tenant_name" x509-create-cert "$ec2_private_key" "$ec2_cert"; then
-        mv -f "$ec2_private_key.old" "$ec2_private_key" &>/dev/null
-        mv -f "$ec2_cert.old" "$ec2_cert" &>/dev/null
+        if [ -e "$ec2_private_key.old" ]; then
+            mv -f "$ec2_private_key.old" "$ec2_private_key"
+        fi
+        if [ -e "$ec2_cert.old" ]; then
+            mv -f "$ec2_cert.old" "$ec2_cert"
+        fi
     fi
     cat >"$rcfile" <<EOF
 # you can source this file
