@@ -1,4 +1,5 @@
 bridge-utils
+ca-certificates-mozilla
 curl
 euca2ools
 git-core
