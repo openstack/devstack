@@ -1,0 +1,97 @@
+# lib/savanna
+
+# Dependencies:
+# ``functions`` file
+# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+# ``ADMIN_{TENANT_NAME|PASSWORD}`` must be defined
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_savanna
+# configure_savanna
+# start_savanna
+# stop_savanna
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# Set up default repos
+SAVANNA_REPO=${SAVANNA_REPO:-${GIT_BASE}/openstack/savanna.git}
+SAVANNA_BRANCH=${SAVANNA_BRANCH:-master}
+
+# Set up default directories
+SAVANNA_DIR=$DEST/savanna
+SAVANNA_CONF_DIR=${SAVANNA_CONF_DIR:-/etc/savanna}
+SAVANNA_CONF_FILE=savanna.conf
+ADMIN_TENANT_NAME=${ADMIN_TENANT_NAME:-admin}
+ADMIN_NAME=${ADMIN_NAME:-admin}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-nova}
+SAVANNA_DEBUG=${SAVANNA_DEBUG:-True}
+
+# Support entry points installation of console scripts
+if [[ -d $SAVANNA_DIR/bin ]]; then
+    SAVANNA_BIN_DIR=$SAVANNA_DIR/bin
+else
+    SAVANNA_BIN_DIR=$(get_python_exec_prefix)
+fi
+
+# Functions
+# ---------
+
+# configure_savanna() - Set config files, create data dirs, etc
+function configure_savanna() {
+
+    if [[ ! -d $SAVANNA_CONF_DIR ]]; then
+        sudo mkdir -p $SAVANNA_CONF_DIR
+    fi
+    sudo chown $STACK_USER $SAVANNA_CONF_DIR
+
+    # Copy over savanna configuration file and configure common parameters.
+    cp $SAVANNA_DIR/etc/savanna/savanna.conf.sample $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE
+
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_password $ADMIN_PASSWORD
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_username $ADMIN_NAME
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_tenant_name $ADMIN_TENANT_NAME
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT debug $SAVANNA_DEBUG
+
+    recreate_database savanna utf8
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE database sql_connection `database_connection_url savanna`
+    inicomment $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE database connection
+
+    if is_service_enabled neutron; then
+        iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT use_neutron true
+        iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT use_floating_ips true
+    fi
+
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT use_syslog $SYSLOG
+}
+
+# install_savanna() - Collect source and prepare
+function install_savanna() {
+    git_clone $SAVANNA_REPO $SAVANNA_DIR $SAVANNA_BRANCH
+    setup_develop $SAVANNA_DIR
+}
+
+# start_savanna() - Start running processes, including screen
+function start_savanna() {
+    screen_it savanna "cd $SAVANNA_DIR && $SAVANNA_BIN_DIR/savanna-api --config-file $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE"
+}
+
+# stop_savanna() - Stop running processes
+function stop_savanna() {
+    # Kill the Savanna screen windows
+    screen -S $SCREEN_NAME -p savanna -X kill
+}
+
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
