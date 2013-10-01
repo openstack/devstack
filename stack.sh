@@ -1496,7 +1496,7 @@ screen_it disco "python $PYLIBPATH/discovery/disc_server_zk.py --conf_file /etc/
 sleep 2
 screen_it apiSrv "python $PYLIBPATH/vnc_cfg_api_server/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
 echo "Waiting for api-server to start..."
-if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://${SERVICE_HOST}:${API_SERVER_PORT}; do sleep 1; done"; then
+if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://${SERVICE_HOST}:8082; do sleep 1; done"; then
   echo "api-server did not start"
   exit 1
 fi
