@@ -679,16 +679,22 @@ if is_service_enabled cinder; then
     configure_cinder
 fi
 
+function test_install_neutron_patch() { 
+    contrail_cwd=$(pwd)
+    cd $DEST/neutron
+    patch -p0 -N --dry-run --silent < $TOP_DIR/neutron.patch &> /dev/null
+    if [ $? == 0 ]; then
+        # patch is missing
+        echo "Installing Neutron patch"
+        sudo patch -p0 < $TOP_DIR/neutron.patch
+    fi
+    cd ${contrail_cwd}
+}   
+
 if is_service_enabled neutron; then
     install_neutron
     install_neutron_third_party
-    if [ $ENABLE_CONTRAIL ]; then
-        echo "Installing Neutron patch"
-        contrail_cwd=$(pwd)
-        cd $DEST/neutron
-        sudo patch -p0 < $TOP_DIR/neutron.patch
-        cd ${contrail_cwd}
-    fi
+    test_install_neutron_patch
 fi
 
 if is_service_enabled nova; then
@@ -927,7 +933,94 @@ if is_service_enabled ir-api ir-cond; then
     init_ironic
 fi
 
+# Contrail
+# --------
+if [ $ENABLE_CONTRAIL ]; then
+    PYLIBPATH=`/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
+    sudo mkdir -p /var/log/contrail
+    sudo chmod 777 /var/log/contrail
 
+    # basic dependencies
+    if ! command_exists repo ; then
+        mkdir -p ~/bin
+        PATH=~/bin:$PATH
+        sudo curl https://dl-ssl.google.com/dl/googlesource/git-repo/repo > ~/bin/repo
+        sudo chmod a+x ~/bin/repo
+    fi
+
+    # dependencies
+    sudo yum -y install patch scons flex bison make vim
+    sudo yum -y install expat-devel gettext-devel curl-devel
+    sudo yum -y install gcc-c++ python-devel autoconf automake
+    sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
+
+    # api server requirements
+    # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
+    sudo pip install gevent geventhttpclient==1.0a thrift
+    sudo pip install netifaces fabric argparse
+    sudo pip install stevedore xmltodict python-keystoneclient
+    sudo pip install kazoo 
+
+    CONTRAIL_SRC=${CONTRAIL_SRC:-/opt/stack/contrail}
+    mkdir -p $CONTRAIL_SRC
+    contrail_cwd=$(pwd)
+    cd $CONTRAIL_SRC
+    if [ ! -d $CONTRAIL_SRC/.repo ]; then
+        repo init -u git@github.com:Juniper/contrail-vnc
+    fi
+    repo sync
+    python third_party/fetch_packages.py
+    scons
+    cd ${contrail_cwd}
+
+    # get cassandra
+    if [ ! -f "/usr/sbin/cassandra" ] ; then
+        cat << EOF > datastax.repo
+[datastax]
+name = DataStax Repo for Apache Cassandra
+baseurl = http://rpm.datastax.com/community
+enabled = 1
+gpgcheck = 0
+EOF
+        sudo mv datastax.repo /etc/yum.repos.d/
+        sudo yum -y install dsc20
+    fi
+	    
+    # get ifmap 
+    if [ ! -d $CONTRAIL_SRC/third_party/irond-0.3.0-bin ]; then
+        contrail_cwd=$(pwd)
+        cd $CONTRAIL_SRC/third_party
+        wget http://trust.f4.hs-hannover.de/download/iron/archive/irond-0.3.0-bin.zip
+        unzip irond-0.3.0-bin.zip
+        cd ${contrail_cwd}
+    fi
+
+    if [ ! -d $CONTRAIL_SRC/third_party/zookeeper-3.4.5 ]; then
+        contrail_cwd=$(pwd)
+        cd $CONTRAIL_SRC/third_party
+        wget http://apache.mirrors.hoobly.com/zookeeper/stable/zookeeper-3.4.5.tar.gz
+        tar xvzf zookeeper-3.4.5.tar.gz
+        cd zookeeper-3.4.5
+        cp conf/zoo_sample.cfg conf/zoo.cfg
+        cd ${contrail_cwd}
+    fi
+
+    # ncclient
+    if [ ! -d $PYLIBPATH/ncclient ]; then
+        contrail_cwd=$(pwd)
+        cd $CONTRAIL_SRC/third_party
+        wget https://code.grnet.gr/attachments/download/1172/ncclient-v0.3.2.tar.gz
+        sudo pip install ncclient-v0.3.2.tar.gz
+        cd ${contrail_cwd}
+    fi
+
+    # create config files
+    python $TOP_DIR/setup_contrail.py --cfgm_ip $SERVICE_HOST
+
+    # install contrail modules
+    echo "Installing contrail modules"
+    sudo pip install --upgrade $(find $CONTRAIL_SRC/build/debug -name "*.tar.gz" -print)
+fi
 
 # Neutron
 # -------
@@ -1170,7 +1263,6 @@ if is_service_enabled n-api; then
     start_nova_api
 fi
 
-# dsetia - neutron was here
 if is_service_enabled nova; then
     echo_summary "Starting Nova"
     start_nova
@@ -1368,19 +1460,6 @@ function test_insert_vrouter ()
 if [ $ENABLE_CONTRAIL ]; then
     # save screen settings
     SAVED_SCREEN_NAME=$SCREEN_NAME
-
-    # Create the destination directory and ensure it is writable by the user
-    DEST=${DEST:-/opt/contrail}
-    sudo mkdir -p $DEST
-    if [ ! -w $DEST ]; then
-        sudo chown `whoami` $DEST
-    fi
-
-    # Destination path for service data
-    DATA_DIR=${DATA_DIR:-${DEST}/data}
-    sudo mkdir -p $DATA_DIR
-    sudo chown `whoami` $DATA_DIR
-
     SCREEN_NAME="contrail"
     screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
     sleep 1
@@ -1388,90 +1467,6 @@ if [ $ENABLE_CONTRAIL ]; then
     screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
     PYLIBPATH=`/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
-    sudo mkdir -p /var/log/contrail
-    sudo chmod 777 /var/log/contrail
-
-    # basic dependencies
-    if ! command_exists repo ; then
-        mkdir -p ~/bin
-        PATH=~/bin:$PATH
-        sudo curl https://dl-ssl.google.com/dl/googlesource/git-repo/repo > ~/bin/repo
-        sudo chmod a+x ~/bin/repo
-    fi
-
-    # dependencies
-    sudo yum -y install patch scons flex bison make vim
-    sudo yum -y install expat-devel gettext-devel curl-devel
-    sudo yum -y install gcc-c++ python-devel autoconf automake
-    sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
-
-    # api server requirements
-    # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
-    sudo pip install gevent geventhttpclient==1.0a thrift
-    sudo pip install netifaces fabric argparse
-    sudo pip install stevedore xmltodict python-keystoneclient
-    sudo pip install kazoo 
-
-    CONTRAIL_SRC=${CONTRAIL_SRC:-/opt/stack/contrail}
-    mkdir -p $CONTRAIL_SRC
-    contrail_cwd=$(pwd)
-    cd $CONTRAIL_SRC
-    if [ ! -d $CONTRAIL_SRC/.repo ]; then
-        repo init -u git@github.com:Juniper/contrail-vnc
-    fi
-    repo sync
-    python third_party/fetch_packages.py
-    scons
-    cd ${contrail_cwd}
-
-    # get cassandra
-    if [ ! -f "/usr/sbin/cassandra" ] ; then
-        cat << EOF > datastax.repo
-[datastax]
-name = DataStax Repo for Apache Cassandra
-baseurl = http://rpm.datastax.com/community
-enabled = 1
-gpgcheck = 0
-EOF
-        sudo mv datastax.repo /etc/yum.repos.d/
-        sudo yum -y install dsc20
-    fi
-	    
-    # get ifmap 
-    if [ ! -d $CONTRAIL_SRC/third_party/irond-0.3.0-bin ]; then
-        contrail_cwd=$(pwd)
-        cd $CONTRAIL_SRC/third_party
-        wget http://trust.f4.hs-hannover.de/download/iron/archive/irond-0.3.0-bin.zip
-        unzip irond-0.3.0-bin.zip
-        cd ${contrail_cwd}
-    fi
-
-    if [ ! -d $CONTRAIL_SRC/third_party/zookeeper-3.4.5 ]; then
-        contrail_cwd=$(pwd)
-        cd $CONTRAIL_SRC/third_party
-        wget http://apache.mirrors.hoobly.com/zookeeper/stable/zookeeper-3.4.5.tar.gz
-        tar xvzf zookeeper-3.4.5.tar.gz
-        cd zookeeper-3.4.5
-        cp conf/zoo_sample.cfg conf/zoo.cfg
-        cd ${contrail_cwd}
-    fi
-
-    # ncclient
-    if [ ! -d $PYLIBPATH/ncclient ]; then
-        contrail_cwd=$(pwd)
-        cd $CONTRAIL_SRC/third_party
-        wget https://code.grnet.gr/attachments/download/1172/ncclient-v0.3.2.tar.gz
-        sudo pip install ncclient-v0.3.2.tar.gz
-        cd ${contrail_cwd}
-    fi
-
-    # create config files
-    # python $TOP_DIR/setup_contrail.py --physical_interface $CONTRAIL_USE_INTF
-    python $TOP_DIR/setup_contrail.py --cfgm_ip $SERVICE_HOST
-
-    # install contrail modules
-    echo "Installing contrail modules"
-    sudo pip install --upgrade $(find $CONTRAIL_SRC/build/debug -name "*.tar.gz" -print)
 
     # launch ...
     screen_it cass "sudo /usr/sbin/cassandra -f"
