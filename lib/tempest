@@ -230,6 +230,11 @@ function configure_tempest() {
 
     # Compute
     iniset $TEMPEST_CONF compute change_password_available False
+    # Note(nati) current tempest don't create network for each tenant
+    # so reuse same tenant for now
+    if is_service_enabled neutron; then
+        TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
+    fi
     iniset $TEMPEST_CONF compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
     iniset $TEMPEST_CONF compute network_for_ssh $PRIVATE_NETWORK_NAME
