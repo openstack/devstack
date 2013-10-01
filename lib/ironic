@@ -79,6 +79,8 @@ function configure_ironic() {
 # configure_ironic_api() - Is used by configure_ironic(). Performs
 # API specific configuration.
 function configure_ironic_api() {
+    iniset $IRONIC_CONF_FILE DEFAULT auth_strategy keystone
+    iniset $IRONIC_CONF_FILE DEFAULT policy_file $IRONIC_POLICY_JSON
     iniset $IRONIC_CONF_FILE keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $IRONIC_CONF_FILE keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset $IRONIC_CONF_FILE keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
