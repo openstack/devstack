@@ -15,6 +15,8 @@ TOP_DIR=$(cd $(dirname "$0") && pwd)
 # Import common functions
 source $TOP_DIR/functions
 
+FILES=$TOP_DIR/files
+
 # Load local configuration
 source $TOP_DIR/stackrc
 
@@ -83,6 +85,10 @@ cleanup_keystone
 cleanup_nova
 cleanup_neutron
 cleanup_swift
+
+if is_service_enabled ldap; then
+    cleanup_ldap
+fi
 
 # Do the hypervisor cleanup until this can be moved back into lib/nova
 if [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
