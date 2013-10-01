@@ -131,7 +131,7 @@ function init_horizon() {
         fi
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
     else
-        exit_distro_not_supported "apache configuration"
+        exit_distro_not_supported "horizon apache configuration"
     fi
 
     # Remove old log files that could mess with how devstack detects whether Horizon
