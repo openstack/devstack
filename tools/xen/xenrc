@@ -13,7 +13,7 @@ CLEAN_TEMPLATES=${CLEAN_TEMPLATES:-false}
 
 # Size of image
 VDI_MB=${VDI_MB:-5000}
-OSDOMU_MEM_MB=2048
+OSDOMU_MEM_MB=3072
 OSDOMU_VDI_GB=8
 
 # Network mapping. Specify bridge names or network names. Network names may
