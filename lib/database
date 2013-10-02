@@ -64,7 +64,7 @@ function initialize_database_backends {
 
     # For backward-compatibility, read in the MYSQL_HOST/USER variables and use
     # them as the default values for the DATABASE_HOST/USER variables.
-    MYSQL_HOST=${MYSQL_HOST:-localhost}
+    MYSQL_HOST=${MYSQL_HOST:-127.0.0.1}
     MYSQL_USER=${MYSQL_USER:-root}
 
     DATABASE_HOST=${DATABASE_HOST:-${MYSQL_HOST}}
