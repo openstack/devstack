@@ -127,6 +127,7 @@ function neutron_plugin_configure_service() {
             else
                 die $LINENO "Agentless mode requires a service cluster."
             fi
+            iniset /$Q_PLUGIN_CONF_FILE nvp_metadata metadata_server_address $Q_META_DATA_IP
         fi
     fi
 }
