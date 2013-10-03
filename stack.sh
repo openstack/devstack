@@ -200,8 +200,8 @@ if [[ $EUID -eq 0 ]]; then
     ( umask 226 && echo "$STACK_USER ALL=(ALL) NOPASSWD:ALL" \
         > /etc/sudoers.d/50_stack_sh )
 
-    echo "Copying files to $STACK_USER user"
     STACK_DIR="$DEST/${TOP_DIR##*/}"
+    echo "Copying files to $STACK_DIR"
     cp -r -f -T "$TOP_DIR" "$STACK_DIR"
     safe_chown -R $STACK_USER "$STACK_DIR"
     cd "$STACK_DIR"
