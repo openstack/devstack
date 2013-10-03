@@ -130,6 +130,8 @@ function init_horizon() {
             HORIZON_REQUIRE='Require all granted'
         fi
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
+    elif is_suse; then
+        : # nothing to do
     else
         exit_distro_not_supported "apache configuration"
     fi
