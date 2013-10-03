@@ -496,6 +496,8 @@ function start_cinder() {
             # name, and would need to be adjusted too
             exit_distro_not_supported "restarting tgt"
         fi
+        # NOTE(gfidente): ensure tgtd is running in debug mode
+        sudo tgtadm --mode system --op update --name debug --value on
     fi
 
     screen_it c-api "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
