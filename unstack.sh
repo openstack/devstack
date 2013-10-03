@@ -145,10 +145,12 @@ if [[ -n "$SCREEN" ]]; then
 fi
 cmd=$(lsmod | grep vrouter)
 if [ $? == 0 ]; then
-    sudo rmmod vrouter
-    source /etc/contrail/agent_param
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-$dev
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-vhost0
+    cmd=$(sudo rmmod vrouter)
+    if [ $? == 0 ]; then
+        source /etc/contrail/agent_param
+        sudo rm -f /etc/sysconfig/network-scripts/ifcfg-$dev
+        sudo rm -f /etc/sysconfig/network-scripts/ifcfg-vhost0
+    fi
 fi
 
 cleanup_tmp
