@@ -682,6 +682,13 @@ fi
 if is_service_enabled neutron; then
     install_neutron
     install_neutron_third_party
+    if [ $ENABLE_CONTRAIL ]; then
+        echo "Installing Neutron patch"
+        contrail_cwd=$(pwd)
+        cd $DEST/neutron
+        sudo patch -p0 < $TOP_DIR/neutron.patch
+        cd ${contrail_cwd}
+    fi
 fi
 
 if is_service_enabled nova; then
@@ -1163,31 +1170,7 @@ if is_service_enabled n-api; then
     start_nova_api
 fi
 
-if is_service_enabled q-svc; then
-    echo_summary "Starting Neutron"
-
-    start_neutron_service_and_check
-    create_neutron_initial_network
-    setup_neutron_debug
-elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
-    NM_CONF=${NOVA_CONF}
-    if is_service_enabled n-cell; then
-        NM_CONF=${NOVA_CELLS_CONF}
-    fi
-
-    # Create a small network
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF network create "$PRIVATE_NETWORK_NAME" $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
-
-    # Create some floating ips
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create $FLOATING_RANGE --pool=$PUBLIC_NETWORK_NAME
-
-    # Create a second pool
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
-fi
-
-if is_service_enabled neutron; then
-    start_neutron_agents
-fi
+# dsetia - neutron was here
 if is_service_enabled nova; then
     echo_summary "Starting Nova"
     start_nova
@@ -1383,6 +1366,9 @@ function test_insert_vrouter ()
 }
 
 if [ $ENABLE_CONTRAIL ]; then
+    # save screen settings
+    SAVED_SCREEN_NAME=$SCREEN_NAME
+
     # Create the destination directory and ensure it is writable by the user
     DEST=${DEST:-/opt/contrail}
     sudo mkdir -p $DEST
@@ -1519,6 +1505,35 @@ END
     sudo mv $TOP_DIR/vnsw.hlpr /opt/contrail/
     sudo chmod +x /opt/contrail/vnsw.hlpr
     screen_it agent "sudo /opt/contrail/vnsw.hlpr"
+
+    # restore saved screen settings
+    SCREEN_NAME=$SAVED_SCREEN_NAME
+fi
+
+if is_service_enabled q-svc; then
+    echo_summary "Starting Neutron"
+
+    start_neutron_service_and_check
+    create_neutron_initial_network
+    setup_neutron_debug
+elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
+    NM_CONF=${NOVA_CONF}
+    if is_service_enabled n-cell; then
+        NM_CONF=${NOVA_CELLS_CONF}
+    fi
+
+    # Create a small network
+    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF network create "$PRIVATE_NETWORK_NAME" $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
+
+    # Create some floating ips
+    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create $FLOATING_RANGE --pool=$PUBLIC_NETWORK_NAME
+
+    # Create a second pool
+    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
+fi
+
+if is_service_enabled neutron; then
+    start_neutron_agents
 fi
 
 # Fin
