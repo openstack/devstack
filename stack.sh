@@ -1502,9 +1502,9 @@ EOF
 
 LD_LIBRARY_PATH=/opt/stack/contrail/build/lib $CONTRAIL_SRC/build/debug/vnsw/agent/vnswad --config-file $CONFIG $VROUTER_LOGFILE
 END
-    sudo mv $TOP_DIR/vnsw.hlpr /opt/contrail/
-    sudo chmod +x /opt/contrail/vnsw.hlpr
-    screen_it agent "sudo /opt/contrail/vnsw.hlpr"
+    sudo mv $TOP_DIR/vnsw.hlpr /etc/contrail/
+    sudo chmod +x /etc/contrail/vnsw.hlpr
+    screen_it agent "sudo /etc/contrail/vnsw.hlpr"
 
     # restore saved screen settings
     SCREEN_NAME=$SAVED_SCREEN_NAME
