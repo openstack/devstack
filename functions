@@ -364,7 +364,7 @@ function get_packages() {
 # GetOSVersion
 GetOSVersion() {
     # Figure out which vendor we are
-    if [[ -n "`which sw_vers 2>/dev/null`" ]]; then
+    if [[ -x "`which sw_vers 2>/dev/null`" ]]; then
         # OS/X
         os_VENDOR=`sw_vers -productName`
         os_RELEASE=`sw_vers -productVersion`
