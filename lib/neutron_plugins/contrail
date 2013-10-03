@@ -1,0 +1,46 @@
+# Juniper/Contrail Neutron Plugin
+# -------------------------------
+
+# Save trace settings
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+function neutron_plugin_create_nova_conf() {
+
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+}
+
+function neutron_plugin_setup_interface_driver() {
+    :
+}
+
+function neutron_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/juniper/contrail
+    Q_PLUGIN_CONF_FILENAME=ContrailPlugin.ini
+    Q_DB_NAME="contrail_neutron"
+    Q_PLUGIN_CLASS="neutron.plugins.juniper.contrail.contrailplugin.ContrailPlugin"
+}
+
+function neutron_plugin_configure_service() {
+    :
+}
+
+function neutron_plugin_configure_debug_command() {
+    :
+}
+
+function is_neutron_ovs_base_plugin() {
+    # False
+    return 1
+}
+
+function has_neutron_plugin_security_group() {
+    # False
+    return 1
+}
+
+function neutron_plugin_check_adv_test_requirements() {
+    is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
+}
+# Restore xtrace
+$MY_XTRACE
