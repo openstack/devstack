@@ -24,6 +24,12 @@ source $TOP_DIR/stackrc
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 
+if [[ $EUID -eq 0 ]]; then
+    echo "You are running this script as root."
+    echo "It might work but you will have a better day running it as $STACK_USER"
+    exit 1
+fi
+
 # Import apache functions
 source $TOP_DIR/lib/apache
 

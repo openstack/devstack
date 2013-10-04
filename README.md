@@ -34,7 +34,7 @@ You can also pick specific OpenStack project releases by setting the appropriate
 
 # Start A Dev Cloud
 
-Installing in a dedicated disposable vm is safer than installing on your dev machine!  To start a dev cloud:
+Installing in a dedicated disposable vm is safer than installing on your dev machine!  Plus you can pick one of the supported Linux distros for your VM.  To start a dev cloud run the following NOT AS ROOT (see below for more):
 
     ./stack.sh
 
@@ -56,6 +56,12 @@ If the EC2 API is your cup-o-tea, you can create credentials and use euca2ools:
     . eucarc
     # list instances using ec2 api
     euca-describe-instances
+
+# DevStack Execution Environment
+
+DevStack runs rampant over the system it runs on, installing things and uninstalling other things.  Running this on a system you care about is a recipe for disappointment, or worse.  Alas, we're all in the virtualization business here, so run it in a VM.  And take advantage of the snapshot capabilities of your hypervisor of choice to reduce testing cycle times.  You might even save enough time to write one more feature before the next feature freeze...
+
+``stack.sh`` needs to have root access for a lot of tasks, but it also needs to have not-root permissions for most of its work and for all of the OpenStack services.  So ``stack.sh`` specifically does not run if you are root. This is a recent change (Oct 2013) from the previous behaviour of automatically creating a ``stack`` user.  Automatically creating a user account is not always the right response to running as root, so that bit is now an explicit step using ``tools/create-stack-user.sh``.  Run that (as root!) if you do not want to just use your normal login here, which works perfectly fine.
 
 # Customizing
 
