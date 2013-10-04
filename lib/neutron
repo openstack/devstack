@@ -419,7 +419,7 @@ function start_neutron_service_and_check() {
     # Start the Neutron service
     screen_it q-svc "cd $NEUTRON_DIR && python $NEUTRON_BIN_DIR/neutron-server $CFG_FILE_OPTIONS"
     echo "Waiting for Neutron to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$Q_HOST:$Q_PORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$Q_HOST:$Q_PORT; do sleep 1; done"; then
       die $LINENO "Neutron did not start"
     fi
 }
