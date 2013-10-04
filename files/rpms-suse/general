@@ -11,7 +11,6 @@ python-setuptools # instead of python-distribute; dist:sle11sp2
 python-cmd2 # dist:opensuse-12.3
 python-pylint
 python-unittest2
-python-virtualenv
 screen
 tar
 tcpdump
