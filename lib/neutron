@@ -208,7 +208,7 @@ source $TOP_DIR/lib/neutron_plugins/services/loadbalancer
 source $TOP_DIR/lib/neutron_plugins/services/vpn
 
 # Firewall Service Plugin functions
-# --------------------------------
+# ---------------------------------
 source $TOP_DIR/lib/neutron_plugins/services/firewall
 
 # Use security group or not
@@ -494,6 +494,7 @@ function _configure_neutron_common() {
     # For main plugin config file, set ``Q_PLUGIN_CONF_PATH``, ``Q_PLUGIN_CONF_FILENAME``.
     # For addition plugin config files, set ``Q_PLUGIN_EXTRA_CONF_PATH``,
     # ``Q_PLUGIN_EXTRA_CONF_FILES``.  For example:
+    #
     #    ``Q_PLUGIN_EXTRA_CONF_FILES=(file1, file2)``
     neutron_plugin_configure_common
 

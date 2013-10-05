@@ -5,7 +5,9 @@
 # Create a user account suitable for running DevStack
 # - create a group named $STACK_USER if it does not exist
 # - create a user named $STACK_USER if it does not exist
+#
 #   - home is $DEST
+#
 # - configure sudo for $STACK_USER
 
 # ``stack.sh`` was never intended to run as root.  It had a hack to do what is

@@ -2,7 +2,7 @@
 
 # **swift.sh**
 
-# Test swift via the ``swift`` command line from ``python-swiftclient`
+# Test swift via the ``swift`` command line from ``python-swiftclient``
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"

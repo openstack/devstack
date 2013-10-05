@@ -54,7 +54,7 @@ function address_in_net() {
 
 
 # Wrapper for ``apt-get`` to set cache and proxy environment variables
-# Uses globals ``OFFLINE``, ``*_proxy`
+# Uses globals ``OFFLINE``, ``*_proxy``
 # apt_get operation package [package ...]
 function apt_get() {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
@@ -260,7 +260,8 @@ function _get_package_dir() {
 #
 # Only packages required for the services in 1st argument will be
 # included.  Two bits of metadata are recognized in the prerequisite files:
-# - ``# NOPRIME`` defers installation to be performed later in stack.sh
+#
+# - ``# NOPRIME`` defers installation to be performed later in `stack.sh`
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
 function get_packages() {
@@ -982,7 +983,7 @@ function is_set() {
 
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``, ``PIP_USE_MIRRORS``,
-#   ``TRACK_DEPENDS``, ``*_proxy`
+# ``TRACK_DEPENDS``, ``*_proxy``
 # pip_install package [package ...]
 function pip_install {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
@@ -1011,8 +1012,7 @@ function pip_install {
     # /tmp/$USER-pip-build.  Even if a later component specifies foo <
     # 1.1, the existing extracted build will be used and cause
     # confusing errors.  By creating unique build directories we avoid
-    # this problem. See
-    #  https://github.com/pypa/pip/issues/709
+    # this problem. See https://github.com/pypa/pip/issues/709
     local pip_build_tmp=$(mktemp --tmpdir -d pip-build.XXXXX)
 
     $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
@@ -1146,8 +1146,8 @@ function screen_rc {
 }
 
 
-# Helper to remove the *.failure files under $SERVICE_DIR/$SCREEN_NAME
-# This is used for service_check when all the screen_it are called finished
+# Helper to remove the ``*.failure`` files under ``$SERVICE_DIR/$SCREEN_NAME``.
+# This is used for ``service_check`` when all the ``screen_it`` are called finished
 # init_service_check
 function init_service_check() {
     SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -1301,10 +1301,12 @@ function trueorfalse() {
 }
 
 
-# Retrieve an image from a URL and upload into Glance
+# Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:
-#   ``FILES`` must be set to the cache dir
-#   ``GLANCE_HOSTPORT``
+#
+# - ``FILES`` must be set to the cache dir
+# - ``GLANCE_HOSTPORT``
+#
 # upload_image image-url glance-token
 function upload_image() {
     local image_url=$1
@@ -1466,7 +1468,8 @@ function upload_image() {
 # When called from stackrc/localrc DATABASE_BACKENDS has not been
 # initialized yet, just save the configuration selection and call back later
 # to validate it.
-#  $1 The name of the database backend to use (mysql, postgresql, ...)
+#
+# ``$1`` - the name of the database backend to use (mysql, postgresql, ...)
 function use_database {
     if [[ -z "$DATABASE_BACKENDS" ]]; then
         # No backends registered means this is likely called from ``localrc``
@@ -1507,7 +1510,7 @@ function wait_for_service() {
 
 
 # Wrapper for ``yum`` to set proxy environment variables
-# Uses globals ``OFFLINE``, ``*_proxy`
+# Uses globals ``OFFLINE``, ``*_proxy``
 # yum_install package [package ...]
 function yum_install() {
     [[ "$OFFLINE" = "True" ]] && return
