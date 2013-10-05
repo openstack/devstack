@@ -172,66 +172,36 @@ fi
 # -----------
 
 # OpenStack is designed to be run as a non-root user; Horizon will fail to run
-# as **root** since Apache will not serve content from **root** user).  If
-# ``stack.sh`` is run as **root**, it automatically creates a **stack** user with
-# sudo privileges and runs as that user.
+# as **root** since Apache will not serve content from **root** user).
+# ``stack.sh`` must not be run as **root**.  It aborts and suggests one course of
+# action to create a suitable user account.
 
 if [[ $EUID -eq 0 ]]; then
-    ROOTSLEEP=${ROOTSLEEP:-10}
     echo "You are running this script as root."
-    echo "In $ROOTSLEEP seconds, we will create a user '$STACK_USER' and run as that user"
-    sleep $ROOTSLEEP
-
-    # Give the non-root user the ability to run as **root** via ``sudo``
-    is_package_installed sudo || install_package sudo
-    if ! getent group $STACK_USER >/dev/null; then
-        echo "Creating a group called $STACK_USER"
-        groupadd $STACK_USER
-    fi
-    if ! getent passwd $STACK_USER >/dev/null; then
-        echo "Creating a user called $STACK_USER"
-        useradd -g $STACK_USER -s /bin/bash -d $DEST -m $STACK_USER
-    fi
-
-    echo "Giving stack user passwordless sudo privileges"
-    # UEC images ``/etc/sudoers`` does not have a ``#includedir``, add one
-    grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
-        echo "#includedir /etc/sudoers.d" >> /etc/sudoers
-    ( umask 226 && echo "$STACK_USER ALL=(ALL) NOPASSWD:ALL" \
-        > /etc/sudoers.d/50_stack_sh )
-
-    STACK_DIR="$DEST/${TOP_DIR##*/}"
-    echo "Copying files to $STACK_DIR"
-    cp -r -f -T "$TOP_DIR" "$STACK_DIR"
-    safe_chown -R $STACK_USER "$STACK_DIR"
-    cd "$STACK_DIR"
-    if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
-        exec sudo -u $STACK_USER  bash -l -c "set -e; bash stack.sh; bash"
-    else
-        exec sudo -u $STACK_USER bash -l -c "set -e; source stack.sh"
-    fi
+    echo "Cut it out."
+    echo "Really."
+    echo "If you need an account to run DevStack, do this (as root, heh) to create $STACK_USER:"
+    echo "$TOP_DIR/tools/create-stack-user.sh"
     exit 1
-else
-    # We're not **root**, make sure ``sudo`` is available
-    is_package_installed sudo || die "Sudo is required.  Re-run stack.sh as root ONE TIME ONLY to set up sudo."
-
-    # UEC images ``/etc/sudoers`` does not have a ``#includedir``, add one
-    sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
-        echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
-
-    # Set up devstack sudoers
-    TEMPFILE=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD:ALL" >$TEMPFILE
-    # Some binaries might be under /sbin or /usr/sbin, so make sure sudo will
-    # see them by forcing PATH
-    echo "Defaults:$STACK_USER secure_path=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >> $TEMPFILE
-    chmod 0440 $TEMPFILE
-    sudo chown root:root $TEMPFILE
-    sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
-
-    # Remove old file
-    sudo rm -f /etc/sudoers.d/stack_sh_nova
 fi
+
+# We're not **root**, make sure ``sudo`` is available
+is_package_installed sudo || install_package sudo
+
+# UEC images ``/etc/sudoers`` does not have a ``#includedir``, add one
+sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
+    echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
+
+# Set up devstack sudoers
+TEMPFILE=`mktemp`
+echo "$STACK_USER ALL=(root) NOPASSWD:ALL" >$TEMPFILE
+# Some binaries might be under /sbin or /usr/sbin, so make sure sudo will
+# see them by forcing PATH
+echo "Defaults:$STACK_USER secure_path=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >> $TEMPFILE
+chmod 0440 $TEMPFILE
+sudo chown root:root $TEMPFILE
+sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
+
 
 # Create the destination directory and ensure it is writable by the user
 # and read/executable by everybody for daemons (e.g. apache run for horizon)
