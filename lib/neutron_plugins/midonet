@@ -12,7 +12,7 @@ function is_neutron_ovs_base_plugin() {
 }
 
 function neutron_plugin_create_nova_conf() {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"midonet.nova.virt.libvirt.vif.MidonetVifDriver"}
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
 }
 
 function neutron_plugin_install_agent_packages() {
