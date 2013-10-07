@@ -38,7 +38,7 @@ such as Grenade, to manage a DevStack installation.
 
 A number of additional scripts can be found in the ``tools`` directory that may
 be useful in supporting DevStack installations.  Of particular note are ``info.sh``
-to collect and report information about the installed system, and ``instal_prereqs.sh``
+to collect and report information about the installed system, and ``install_prereqs.sh``
 that handles installation of the prerequisite packages for DevStack.  It is
 suitable, for example, to pre-load a system for making a snapshot.
 
