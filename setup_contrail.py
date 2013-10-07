@@ -755,7 +755,6 @@ SUBCHANNELS=1,2,3
                     self.run_shell("sudo mv %s/ifcfg-%s /etc/contrail/" % (temp_dir_name, dev))
 
                     self.run_shell("sudo chkconfig network on")
-                    self.run_shell("sudo chkconfig supervisor-vrouter on")
             #end if dev and dev != 'vhost0' :
 
         # role == compute && !cfgm
