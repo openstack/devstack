@@ -76,15 +76,7 @@ SPICE_DIR=$DEST/spice-html5
 # --------------------------
 
 # Set defaults according to the virt driver
-if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-    PUBLIC_INTERFACE_DEFAULT=eth2
-    GUEST_INTERFACE_DEFAULT=eth1
-    # Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
-    FLAT_NETWORK_BRIDGE_DEFAULT=$(sed -e 's/.* flat_network_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
-    if is_service_enabled neutron; then
-        XEN_INTEGRATION_BRIDGE=$(sed -e 's/.* xen_integration_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
-    fi
-elif [ "$VIRT_DRIVER" = 'baremetal' ]; then
+if [ "$VIRT_DRIVER" = 'baremetal' ]; then
     NETWORK_MANAGER=${NETWORK_MANAGER:-FlatManager}
     PUBLIC_INTERFACE_DEFAULT=eth0
     FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
@@ -535,16 +527,12 @@ function create_nova_conf() {
         SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:6082/spice_auto.html"}
         iniset $NOVA_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
     fi
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
-    else
-        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
-    fi
 
     if is_service_enabled n-novnc || is_service_enabled n-xvnc; then
       # Address on which instance vncservers will listen on compute hosts.
       # For multi-host, this should be the management ip of the compute host.
       VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
+      VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
       iniset $NOVA_CONF DEFAULT vnc_enabled true
       iniset $NOVA_CONF DEFAULT vncserver_listen "$VNCSERVER_LISTEN"
       iniset $NOVA_CONF DEFAULT vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"

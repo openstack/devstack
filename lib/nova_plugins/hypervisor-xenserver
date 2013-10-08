@@ -1,0 +1,85 @@
+# lib/nova_plugins/hypervisor-xenserver
+# Configure the XenServer hypervisor
+
+# Enable with:
+# VIRT_DRIVER=xenserver
+
+# Dependencies:
+# ``functions`` file
+# ``nova`` configuration
+
+# install_nova_hypervisor - install any external requirements
+# configure_nova_hypervisor - make configuration changes, including those to other services
+# start_nova_hypervisor - start any external services
+# stop_nova_hypervisor - stop any external services
+# cleanup_nova_hypervisor - remove transient data and cache
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+PUBLIC_INTERFACE_DEFAULT=eth2
+GUEST_INTERFACE_DEFAULT=eth1
+# Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
+FLAT_NETWORK_BRIDGE_DEFAULT=$(sed -e 's/.* flat_network_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
+if is_service_enabled neutron; then
+    XEN_INTEGRATION_BRIDGE=$(sed -e 's/.* xen_integration_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
+fi
+
+VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
+
+
+# Entry Points
+# ------------
+
+# clean_nova_hypervisor - Clean up an installation
+function cleanup_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# configure_nova_hypervisor - Set config files, create data dirs, etc
+function configure_nova_hypervisor() {
+    if [ -z "$XENAPI_CONNECTION_URL" ]; then
+        die $LINENO "XENAPI_CONNECTION_URL is not specified"
+    fi
+    read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
+    iniset $NOVA_CONF DEFAULT compute_driver "xenapi.XenAPIDriver"
+    iniset $NOVA_CONF DEFAULT xenapi_connection_url "$XENAPI_CONNECTION_URL"
+    iniset $NOVA_CONF DEFAULT xenapi_connection_username "$XENAPI_USER"
+    iniset $NOVA_CONF DEFAULT xenapi_connection_password "$XENAPI_PASSWORD"
+    iniset $NOVA_CONF DEFAULT flat_injected "False"
+    # Need to avoid crash due to new firewall support
+    XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
+    iniset $NOVA_CONF DEFAULT firewall_driver "$XEN_FIREWALL_DRIVER"
+}
+
+# install_nova_hypervisor() - Install external components
+function install_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# start_nova_hypervisor - Start any required external services
+function start_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# stop_nova_hypervisor - Stop any external services
+function stop_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
