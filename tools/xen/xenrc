@@ -20,9 +20,7 @@ OSDOMU_VDI_GB=8
 # differ across localised versions of XenServer. If a given bridge/network
 # was not found, a new network will be created with the specified name.
 
-# The management network is specified by the bridge name. xenbr0 is usually
-# the name of the bridge of the network associated with the hypervisor's eth0.
-MGT_BRIDGE_OR_NET_NAME="xenbr0"
+# Get the management network from the XS installation
 VM_BRIDGE_OR_NET_NAME="OpenStack VM Network"
 PUB_BRIDGE_OR_NET_NAME="OpenStack Public Network"
 XEN_INT_BRIDGE_OR_NET_NAME="OpenStack VM Integration Network"
@@ -72,7 +70,6 @@ UBUNTU_INST_HTTP_PROXY=""
 UBUNTU_INST_LOCALE="en_US"
 UBUNTU_INST_KEYBOARD="us"
 # network configuration for ubuntu netinstall
-UBUNTU_INST_BRIDGE_OR_NET_NAME=${UBUNTU_INST_BRIDGE_OR_NET_NAME:-"$MGT_BRIDGE_OR_NET_NAME"}
 UBUNTU_INST_IP="dhcp"
 UBUNTU_INST_NAMESERVERS=""
 UBUNTU_INST_NETMASK=""
