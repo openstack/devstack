@@ -50,10 +50,12 @@ GetDistro
 echo "Distro: $DISTRO"
 
 function get_versions() {
-    PIP=$(which pip 2>/dev/null || which pip-python 2>/dev/null)
+    PIP=$(which pip 2>/dev/null || which pip-python 2>/dev/null || true)
     if [[ -n $PIP ]]; then
         PIP_VERSION=$($PIP --version | awk '{ print $2}')
         echo "pip: $PIP_VERSION"
+    else
+        echo "pip: Not Installed"
     fi
 }
 
