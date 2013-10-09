@@ -22,7 +22,7 @@ function neutron_plugin_configure_common() {
 }
 
 function neutron_plugin_configure_service() {
-    :
+    iniset $NEUTRON_CONF quotas quota_driver neutron.quota.ConfDriver
 }
 
 function neutron_plugin_configure_debug_command() {
