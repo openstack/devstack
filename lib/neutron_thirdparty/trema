@@ -28,7 +28,7 @@ TREMA_TMP_DIR=$TREMA_DATA_DIR/trema
 TREMA_LOG_LEVEL=${TREMA_LOG_LEVEL:-info}
 
 TREMA_SS_CONFIG=$TREMA_SS_ETC_DIR/sliceable.conf
-TREMA_SS_APACHE_CONFIG=/etc/apache2/sites-available/sliceable_switch
+TREMA_SS_APACHE_CONFIG=/etc/apache2/sites-available/sliceable_switch.conf
 
 # configure_trema - Set config files, create data dirs, etc
 function configure_trema() {
