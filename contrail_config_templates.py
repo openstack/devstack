@@ -271,3 +271,15 @@ $__contrail_dns__
 $__contrail_domain__
 $__contrail_mtu__
 """)
+
+contrail_plugin_template = string.Template("""
+[APISERVER]
+api_server_ip=$__api_server_ip__
+api_server_port=$__api_server_port__
+multi_tenancy=$__multitenancy__
+
+[KEYSTONE]
+admin_user=$__contrail_admin_user__
+admin_password=$__contrail_admin_password__
+admin_tenant_name=$__contrail_admin_tenant_name__
+""")
