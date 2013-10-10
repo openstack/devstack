@@ -248,8 +248,11 @@ agent_conf_template = string.Template("""
    <name>$__contrail_intf__</name>
   </eth-port>
   <control>
-   <ip-address>$__contrail_control_ip__</ip-address>
+   <ip-address>$__contrail_box_ip__</ip-address>
   </control>
+  <xmpp-server>
+   <ip-address>$__contrail_control_ip__</ip-address>
+  </xmpp-server>
  </agent>
 </config>
 """)
