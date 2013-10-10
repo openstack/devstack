@@ -177,6 +177,11 @@ class Setup(object):
 
     #end _parse_args
 
+    def call_cmd(self, cmd):
+        from subprocess import call
+        return call(cmd, shell=True)
+    # end
+
     def run_cmd(self, cmd):
         """Return (status, output) of executing cmd in a shell."""
         pipe = os.popen('{ ' + cmd + '; } 2>&1', 'r')
@@ -635,7 +640,7 @@ HWADDR=%s
         if 'compute' in self._args.role:
             dist = platform.dist()[0]
             # add /dev/net/tun in cgroup_device_acl needed for type=ethernet interfaces
-            ret = self.run_cmd("sudo grep -q '^cgroup_device_acl' /etc/libvirt/qemu.conf")
+            ret = self.call_cmd("sudo grep -q '^cgroup_device_acl' /etc/libvirt/qemu.conf")
             if ret == 1:
                 self.run_shell('sudo cp /etc/libvirt/qemu.conf qemu.conf')
                 self.run_shell('sudo chown %s qemu.conf' % whoami)
