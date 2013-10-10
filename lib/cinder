@@ -233,6 +233,7 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.contrib.standard_extensions
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
+    iniset $CINDER_CONF DEFAULT lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
 
     if is_service_enabled ceilometer; then
