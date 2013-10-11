@@ -1203,6 +1203,7 @@ fi
 
 if is_service_enabled g-reg; then
     TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
+    die_if_not_set $LINENO TOKEN "Keystone fail to get token"
 
     if is_baremetal; then
        echo_summary "Creating and uploading baremetal images"

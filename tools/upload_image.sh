@@ -33,6 +33,7 @@ fi
 
 # Get a token to authenticate to glance
 TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
+die_if_not_set $LINENO TOKEN "Keystone fail to get token"
 
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$GLANCE_HOST:9292}
