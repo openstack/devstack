@@ -680,26 +680,50 @@ if is_service_enabled cinder; then
 fi
 
 function test_install_neutron_patch() { 
+    patch_name="neutron_v2.patch"
     contrail_cwd=$(pwd)
     cd $DEST/neutron
-    patch -p0 -N --dry-run --silent < $TOP_DIR/neutron.patch &> /dev/null
+    patch -p0 -N --dry-run --silent < $TOP_DIR/$patch_name &> /dev/null
     if [ $? == 0 ]; then
         # patch is missing
-        echo "Installing Neutron patch"
-        sudo patch -p0 < $TOP_DIR/neutron.patch
+        echo "Installing neutron patch"
+        patch -p0 < $TOP_DIR/$patch_name
     fi
     cd ${contrail_cwd}
 }   
 
+function test_install_nova_patch() { 
+    patch_name="nova_v1.patch"
+    contrail_cwd=$(pwd)
+    cd $DEST/nova
+    patch -p0 -N --dry-run --silent < $TOP_DIR/$patch_name &> /dev/null
+    if [ $? == 0 ]; then
+        # patch is missing
+        echo "Installing nova patch"
+        patch -p0 < $TOP_DIR/$patch_name
+    fi
+    cd ${contrail_cwd}
+}   
+
+function command_exists() {
+    hash "$1" &> /dev/null ;
+}
+
+
 if is_service_enabled neutron; then
     install_neutron
     install_neutron_third_party
-    test_install_neutron_patch
+    if [ $ENABLE_CONTRAIL ]; then
+        test_install_neutron_patch
+    fi
 fi
 
 if is_service_enabled nova; then
     # compute service
     install_nova
+    if [ $ENABLE_CONTRAIL ]; then
+        test_install_nova_patch
+    fi
     cleanup_nova
     configure_nova
 fi
@@ -959,7 +983,7 @@ if [ $ENABLE_CONTRAIL ]; then
     sudo pip install gevent geventhttpclient==1.0a thrift
     sudo pip install netifaces fabric argparse
     sudo pip install stevedore xmltodict python-keystoneclient
-    sudo pip install kazoo 
+    sudo pip install kazoo pyinotify
 
     CONTRAIL_SRC=${CONTRAIL_SRC:-/opt/stack/contrail}
     mkdir -p $CONTRAIL_SRC
@@ -1500,6 +1524,8 @@ END
     sudo mv $TOP_DIR/vnsw.hlpr /etc/contrail/
     sudo chmod +x /etc/contrail/vnsw.hlpr
     screen_it agent "sudo /etc/contrail/vnsw.hlpr"
+
+    screen_it vif  "python /opt/stack/nova/plugins/contrail/contrail_vif.py"
 
     # restore saved screen settings
     SCREEN_NAME=$SAVED_SCREEN_NAME
