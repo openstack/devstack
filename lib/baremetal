@@ -449,8 +449,10 @@ function add_baremetal_node() {
        "$mac_1" \
        | grep ' id ' | get_field 2 )
     [ $? -eq 0 ] || [ "$id" ] || die $LINENO "Error adding baremetal node"
-    id2=$(nova baremetal-interface-add "$id" "$mac_2" )
-    [ $? -eq 0 ] || [ "$id2" ] || die $LINENO "Error adding interface to barmetal node $id"
+    if [ -n "$mac_2" ]; then
+        id2=$(nova baremetal-interface-add "$id" "$mac_2" )
+        [ $? -eq 0 ] || [ "$id2" ] || die $LINENO "Error adding interface to barmetal node $id"
+    fi
 }
 
 
