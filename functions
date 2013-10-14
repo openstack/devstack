@@ -2,7 +2,7 @@
 #
 # The following variables are assumed to be defined by certain functions:
 # ``ENABLED_SERVICES``
-# ``EROR_ON_CLONE``
+# ``ERROR_ON_CLONE``
 # ``FILES``
 # ``GLANCE_HOSTPORT``
 # ``OFFLINE``
