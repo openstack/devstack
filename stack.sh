@@ -1222,7 +1222,7 @@ if is_service_enabled nova && is_baremetal; then
     fi
     # ensure callback daemon is running
     sudo pkill nova-baremetal-deploy-helper || true
-    screen_it baremetal "nova-baremetal-deploy-helper"
+    screen_it baremetal "cd ; nova-baremetal-deploy-helper"
 fi
 
 # Save some values we generated for later use
