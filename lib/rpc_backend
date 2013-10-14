@@ -131,6 +131,9 @@ function install_rpc_backend() {
         else
             exit_distro_not_supported "zeromq installation"
         fi
+        # Necessary directory for socket location.
+        sudo mkdir -p /var/run/openstack
+        sudo chown $STACK_USER /var/run/openstack
     fi
 }
 
