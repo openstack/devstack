@@ -268,6 +268,9 @@ $THIS_DIR/prepare_guest_template.sh "$GUEST_NAME"
 # Set virtual machine parameters
 set_vm_memory "$GUEST_NAME" "$OSDOMU_MEM_MB"
 
+# Max out VCPU count for better performance
+max_vcpus "$GUEST_NAME"
+
 # start the VM to run the prepare steps
 xe vm-start vm="$GUEST_NAME"
 

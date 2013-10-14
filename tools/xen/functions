@@ -287,3 +287,35 @@ function set_vm_memory() {
         dynamic-max=${memory}MiB \
         uuid=$vm
 }
+
+function max_vcpus() {
+    local vm_name_label
+
+    vm_name_label="$1"
+
+    local vm
+    local host
+    local cpu_count
+
+    host=$(xe host-list --minimal)
+    vm=$(_vm_uuid "$vm_name_label")
+
+    cpu_count=$(xe host-param-get \
+        param-name=cpu_info \
+        uuid=$host |
+        sed -e 's/^.*cpu_count: \([0-9]*\);.*$/\1/g')
+
+    if [ -z "$cpu_count" ]; then
+        # get dom0's vcpu count
+        cpu_count=$(cat /proc/cpuinfo | grep processor | wc -l)
+    fi
+
+    # Assert cpu_count is not empty
+    [ -n "$cpu_count" ]
+
+    # Assert ithas a numeric nonzero value
+    expr "$cpu_count" + 0
+
+    xe vm-param-set uuid=$vm VCPUs-max=$cpu_count
+    xe vm-param-set uuid=$vm VCPUs-at-startup=$cpu_count
+}
