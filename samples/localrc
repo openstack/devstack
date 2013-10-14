@@ -83,7 +83,8 @@ SWIFT_HASH=66a3d6b56c1f479c8b4e70ab5c2000f5
 # Set this to 1 to save some resources:
 SWIFT_REPLICAS=1
 
-# The data for Swift is stored in the source tree by default (``$DEST/swift/data``)
-# and can be moved by setting ``SWIFT_DATA_DIR``. The directory will be created
+# The data for Swift is stored by default in (``$DEST/data/swift``),
+# or (``$DATA_DIR/swift``) if ``DATA_DIR`` has been set, and can be
+# moved by setting ``SWIFT_DATA_DIR``. The directory will be created
 # if it does not exist.
 SWIFT_DATA_DIR=$DEST/data
