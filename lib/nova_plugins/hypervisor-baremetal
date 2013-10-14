@@ -1,0 +1,93 @@
+# lib/nova_plugins/hypervisor-baremetal
+# Configure the baremetal hypervisor
+
+# Enable with:
+# VIRT_DRIVER=baremetal
+
+# Dependencies:
+# ``functions`` file
+# ``nova`` configuration
+
+# install_nova_hypervisor - install any external requirements
+# configure_nova_hypervisor - make configuration changes, including those to other services
+# start_nova_hypervisor - start any external services
+# stop_nova_hypervisor - stop any external services
+# cleanup_nova_hypervisor - remove transient data and cache
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+NETWORK_MANAGER=${NETWORK_MANAGER:-FlatManager}
+PUBLIC_INTERFACE_DEFAULT=eth0
+FLAT_INTERFACE=${FLAT_INTERFACE:-eth0}
+FLAT_NETWORK_BRIDGE_DEFAULT=br100
+STUB_NETWORK=${STUB_NETWORK:-False}
+
+
+# Entry Points
+# ------------
+
+# clean_nova_hypervisor - Clean up an installation
+function cleanup_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# configure_nova_hypervisor - Set config files, create data dirs, etc
+function configure_nova_hypervisor() {
+    configure_baremetal_nova_dirs
+
+    iniset $NOVA_CONF baremetal sql_connection `database_connection_url nova_bm`
+    LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.firewall.NoopFirewallDriver"}
+    iniset $NOVA_CONF DEFAULT compute_driver nova.virt.baremetal.driver.BareMetalDriver
+    iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
+    iniset $NOVA_CONF DEFAULT scheduler_host_manager nova.scheduler.baremetal_host_manager.BaremetalHostManager
+    iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
+    iniset $NOVA_CONF DEFAULT reserved_host_memory_mb 0
+    iniset $NOVA_CONF baremetal instance_type_extra_specs cpu_arch:$BM_CPU_ARCH
+    iniset $NOVA_CONF baremetal driver $BM_DRIVER
+    iniset $NOVA_CONF baremetal power_manager $BM_POWER_MANAGER
+    iniset $NOVA_CONF baremetal tftp_root /tftpboot
+    if [[ "$BM_DNSMASQ_FROM_NOVA_NETWORK" = "True" ]]; then
+        BM_DNSMASQ_CONF=$NOVA_CONF_DIR/dnsmasq-for-baremetal-from-nova-network.conf
+        sudo cp "$FILES/dnsmasq-for-baremetal-from-nova-network.conf" "$BM_DNSMASQ_CONF"
+        iniset $NOVA_CONF DEFAULT dnsmasq_config_file "$BM_DNSMASQ_CONF"
+    fi
+
+    # Define extra baremetal nova conf flags by defining the array ``EXTRA_BAREMETAL_OPTS``.
+    for I in "${EXTRA_BAREMETAL_OPTS[@]}"; do
+       # Attempt to convert flags to options
+       iniset $NOVA_CONF baremetal ${I/=/ }
+    done
+}
+
+# install_nova_hypervisor() - Install external components
+function install_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# start_nova_hypervisor - Start any required external services
+function start_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# stop_nova_hypervisor - Stop any external services
+function stop_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

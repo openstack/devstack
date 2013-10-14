@@ -1,0 +1,76 @@
+# lib/nova_plugins/hypervisor-powervm
+# Configure the PowerVM hypervisor
+
+# Enable with:
+# VIRT_DRIVER=powervm
+
+# Dependencies:
+# ``functions`` file
+# ``nova`` configuration
+
+# install_nova_hypervisor - install any external requirements
+# configure_nova_hypervisor - make configuration changes, including those to other services
+# start_nova_hypervisor - start any external services
+# stop_nova_hypervisor - stop any external services
+# cleanup_nova_hypervisor - remove transient data and cache
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+
+# Entry Points
+# ------------
+
+# clean_nova_hypervisor - Clean up an installation
+function cleanup_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# configure_nova_hypervisor - Set config files, create data dirs, etc
+function configure_nova_hypervisor() {
+    POWERVM_MGR_TYPE=${POWERVM_MGR_TYPE:-"ivm"}
+    POWERVM_MGR_HOST=${POWERVM_MGR_HOST:-"powervm.host"}
+    POWERVM_MGR_USER=${POWERVM_MGR_USER:-"padmin"}
+    POWERVM_MGR_PASSWD=${POWERVM_MGR_PASSWD:-"password"}
+    POWERVM_IMG_REMOTE_PATH=${POWERVM_IMG_REMOTE_PATH:-"/tmp"}
+    POWERVM_IMG_LOCAL_PATH=${POWERVM_IMG_LOCAL_PATH:-"/tmp"}
+    iniset $NOVA_CONF DEFAULT compute_driver nova.virt.powervm.PowerVMDriver
+    iniset $NOVA_CONF DEFAULT powervm_mgr_type $POWERVM_MGR_TYPE
+    iniset $NOVA_CONF DEFAULT powervm_mgr $POWERVM_MGR_HOST
+    iniset $NOVA_CONF DEFAULT powervm_mgr_user $POWERVM_MGR_USER
+    iniset $NOVA_CONF DEFAULT powervm_mgr_passwd $POWERVM_MGR_PASSWD
+    iniset $NOVA_CONF DEFAULT powervm_img_remote_path $POWERVM_IMG_REMOTE_PATH
+    iniset $NOVA_CONF DEFAULT powervm_img_local_path $POWERVM_IMG_LOCAL_PATH
+}
+
+# install_nova_hypervisor() - Install external components
+function install_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# start_nova_hypervisor - Start any required external services
+function start_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+# stop_nova_hypervisor - Stop any external services
+function stop_nova_hypervisor() {
+    # This function intentionally left blank
+    :
+}
+
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
