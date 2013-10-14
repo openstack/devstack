@@ -86,7 +86,7 @@ function configure_heat() {
     iniset $HEAT_CONF DEFAULT use_syslog $SYSLOG
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         # Add color to logging output
-        setup_colorized_logging $HEAT_CONF DEFAULT
+        setup_colorized_logging $HEAT_CONF DEFAULT tenant user
     fi
 
     # keystone authtoken
