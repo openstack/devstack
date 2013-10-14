@@ -48,8 +48,12 @@ IDENTITY_API_VERSION=2.0
 USE_SCREEN=True
 
 # allow local overrides of env variables, including repo config
-if [ -f $RC_DIR/localrc ]; then
+if [[ -f $RC_DIR/localrc ]]; then
+    # Old-style user-supplied config
     source $RC_DIR/localrc
+elif [[ -f $RC_DIR/.localrc.auto ]]; then
+    # New-style user-supplied config extracted from local.conf
+    source $RC_DIR/.localrc.auto
 fi
 
 

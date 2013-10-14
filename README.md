@@ -250,3 +250,42 @@ To setup a cells environment add the following to your `localrc`:
     enable_service n-cell
 
 Be aware that there are some features currently missing in cells, one notable one being security groups.  The exercises have been patched to disable functionality not supported by cells.
+
+
+# Local Configuration
+
+Historically DevStack has used ``localrc`` to contain all local configuration and customizations. More and more of the configuration variables available for DevStack are passed-through to the individual project configuration files.  The old mechanism for this required specific code for each file and did not scale well.  This is handled now by a master local configuration file.
+
+# local.conf
+
+The new config file ``local.conf`` is an extended-INI format that introduces a new meta-section header that provides some additional information such as a phase name and destination config filename:
+
+  [[ <phase> | <filename> ]]
+
+where <phase> is one of a set of phase names defined by ``stack.sh`` and <filename> is the project config filename.  The filename is eval'ed in the stack.sh context so all environment variables are available and may be used.  Using the project config file variables in the header is strongly suggested (see example of NOVA_CONF below).  If the path of the config file does not exist it is skipped.
+
+The defined phases are:
+
+* local - extracts ``localrc`` from ``local.conf`` before ``stackrc`` is sourced
+* post-config - runs after the layer 2 services are configured and before they are started
+* extra - runs after services are started and before any files in ``extra.d`` are executes
+
+The file is processed strictly in sequence; meta-sections may be specified more than once but if any settings are duplicated the last to appear in the file will be used.
+
+  [[post-config|$NOVA_CONF]]
+  [DEFAULT]
+  use_syslog = True
+
+  [osapi_v3]
+  enabled = False
+
+A specific meta-section ``local:localrc`` is used to provide a default localrc file.  This allows all custom settings for DevStack to be contained in a single file.  ``localrc`` is not overwritten if it exists to preserve compatability.
+
+  [[local|localrc]]
+  FIXED_RANGE=10.254.1.0/24
+  ADMIN_PASSWORD=speciale
+  LOGFILE=$DEST/logs/stack.sh.log
+
+Note that ``Q_PLUGIN_CONF_FILE`` is unique in that it is assumed to _NOT_ start with a ``/`` (slash) character.  A slash will need to be added:
+
+  [[post-config|/$Q_PLUGIN_CONF_FILE]]

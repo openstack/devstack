@@ -1,0 +1,130 @@
+# lib/config - Configuration file manipulation functions
+
+# These functions have no external dependencies and the following side-effects:
+#
+# CONFIG_AWK_CMD is defined, default is ``awk``
+
+# Meta-config files contain multiple INI-style configuration files
+# using a specific new section header to delimit them:
+#
+#   [[group-name|file-name]]
+#
+# group-name refers to the group of configuration file changes to be processed
+# at a particular time.  These are called phases in ``stack.sh`` but 
+# group here as these functions are not DevStack-specific.
+#
+# file-name is the destination of the config file
+
+# Save trace setting
+C_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Allow the awk command to be overridden on legacy platforms
+CONFIG_AWK_CMD=${CONFIG_AWK_CMD:-awk}
+
+# Get the section for the specific group and config file
+# get_meta_section infile group configfile
+function get_meta_section() {
+    local file=$1
+    local matchgroup=$2
+    local configfile=$3
+
+    [[ -r $file ]] || return 0
+    [[ -z $configfile ]] && return 0
+
+    $CONFIG_AWK_CMD -v matchgroup=$matchgroup -v configfile=$configfile '
+        BEGIN { group = "" }
+        /^\[\[.+|.*\]\]/ {
+            if (group == "") {
+                gsub("[][]", "", $1);
+                split($1, a, "|");
+                if (a[1] == matchgroup && a[2] == configfile) {
+                    group=a[1]
+                }
+            } else {
+                group=""
+            }
+            next
+        }
+        {
+            if (group != "")
+                print $0
+        }
+    ' $file
+}
+
+
+# Get a list of config files for a specific group
+# get_meta_section_files infile group
+function get_meta_section_files() {
+    local file=$1
+    local matchgroup=$2
+
+    [[ -r $file ]] || return 0
+
+    $CONFIG_AWK_CMD -v matchgroup=$matchgroup '
+      /^\[\[.+\|.*\]\]/ {
+          gsub("[][]", "", $1);
+          split($1, a, "|");
+          if (a[1] == matchgroup)
+              print a[2]
+      }
+    ' $file
+}
+
+
+# Merge the contents of a meta-config file into its destination config file
+# If configfile does not exist it will be created.
+# merge_config_file infile group configfile
+function merge_config_file() {
+    local file=$1
+    local matchgroup=$2
+    local configfile=$3
+
+    [[ -r $configfile ]] || touch $configfile
+
+    get_meta_section $file $matchgroup $configfile | \
+    $CONFIG_AWK_CMD -v configfile=$configfile '
+        BEGIN { section = "" }
+        /^\[.+\]/ {
+            gsub("[][]", "", $1);
+            section=$1
+            next
+        }
+        /^ *\#/ {
+            next
+        }
+        /^.+/ {
+            split($0, d, " *= *")
+            print "iniset " configfile " " section " " d[1] " \"" d[2] "\""
+        }
+    ' | while read a; do eval "$a"; done
+
+}
+
+
+# Merge all of the files specified by group
+# merge_config_group infile group [group ...]
+function merge_config_group() {
+    local localfile=$1; shift
+    local matchgroups=$@
+
+    [[ -r $localfile ]] || return 0
+
+    for group in $matchgroups; do
+        for configfile in $(get_meta_section_files $localfile $group); do
+            if [[ -d $(dirname $configfile) ]]; then
+                merge_config_file $localfile $group $configfile
+            fi
+        done
+    done
+}
+
+
+# Restore xtrace
+$C_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
