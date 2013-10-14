@@ -160,7 +160,7 @@ TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
 
 # diskimage-builder
-BM_IMAGE_BUILD_REPO=${BM_IMAGE_BUILD_REPO:-${GIT_BASE}/stackforge/diskimage-builder.git}
+BM_IMAGE_BUILD_REPO=${BM_IMAGE_BUILD_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
 BM_IMAGE_BUILD_BRANCH=${BM_IMAGE_BUILD_BRANCH:-master}
 
 # bm_poseur
