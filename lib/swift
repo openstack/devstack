@@ -39,6 +39,7 @@ SWIFT3_DIR=$DEST/swift3
 # Set ``SWIFT_DATA_DIR`` to the location of swift drives and objects.
 # Default is the common DevStack data directory.
 SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DATA_DIR}/swift}
+SWIFT_DISK_IMAGE=${SWIFT_DATA_DIR}/drives/images/swift.img
 
 # Set ``SWIFT_CONF_DIR`` to the location of the configuration files.
 # Default is ``/etc/swift``.
@@ -55,10 +56,10 @@ fi
 # swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
 # kilobytes.
 # Default is 1 gigabyte.
-SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1048576
+SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1G
 # if tempest enabled the default size is 4 Gigabyte.
 if is_service_enabled tempest; then
-    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-4194304}
+    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-4G}
 fi
 
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-$SWIFT_LOOPBACK_DISK_SIZE_DEFAULT}
@@ -107,8 +108,8 @@ function cleanup_swift() {
    if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
       sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
    fi
-   if [[ -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
-      rm ${SWIFT_DATA_DIR}/drives/images/swift.img
+   if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
+      rm ${SWIFT_DISK_IMAGE}
    fi
    rm -rf ${SWIFT_DATA_DIR}/run/
    if is_apache_enabled_service swift; then
@@ -420,28 +421,27 @@ function create_swift_disk() {
     sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_DIR}
 
     # Create a loopback disk and format it to XFS.
-    if [[ -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
+    if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
         if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
             sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
-            sudo rm -f ${SWIFT_DATA_DIR}/drives/images/swift.img
+            sudo rm -f ${SWIFT_DISK_IMAGE}
         fi
     fi
 
     mkdir -p ${SWIFT_DATA_DIR}/drives/images
-    sudo touch ${SWIFT_DATA_DIR}/drives/images/swift.img
-    sudo chown $USER: ${SWIFT_DATA_DIR}/drives/images/swift.img
+    sudo touch ${SWIFT_DISK_IMAGE}
+    sudo chown $USER: ${SWIFT_DISK_IMAGE}
 
-    dd if=/dev/zero of=${SWIFT_DATA_DIR}/drives/images/swift.img \
-        bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
+    truncate -s ${SWIFT_LOOPBACK_DISK_SIZE} ${SWIFT_DISK_IMAGE}
 
     # Make a fresh XFS filesystem
-    mkfs.xfs -f -i size=1024  ${SWIFT_DATA_DIR}/drives/images/swift.img
+    mkfs.xfs -f -i size=1024  ${SWIFT_DISK_IMAGE}
 
     # Mount the disk with mount options to make it as efficient as possible
     mkdir -p ${SWIFT_DATA_DIR}/drives/sdb1
     if ! egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
         sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
-            ${SWIFT_DATA_DIR}/drives/images/swift.img ${SWIFT_DATA_DIR}/drives/sdb1
+            ${SWIFT_DISK_IMAGE} ${SWIFT_DATA_DIR}/drives/sdb1
     fi
 
     # Create a link to the above mount and
