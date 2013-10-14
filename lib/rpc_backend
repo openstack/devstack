@@ -63,7 +63,7 @@ function cleanup_rpc_backend {
     if is_service_enabled rabbit; then
         # Obliterate rabbitmq-server
         uninstall_package rabbitmq-server
-        sudo killall epmd
+        sudo killall epmd || sudo killall -9 epmd
         if is_ubuntu; then
             # And the Erlang runtime too
             sudo aptitude purge -y ~nerlang
