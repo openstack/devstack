@@ -722,6 +722,7 @@ fi
 
 if is_service_enabled ir-api ir-cond; then
     install_ironic
+    install_ironicclient
     configure_ironic
 fi
 
