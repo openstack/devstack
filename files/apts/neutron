@@ -15,6 +15,7 @@ python-kombu
 python-eventlet
 python-sqlalchemy
 python-mysqldb
+python-psycopg2
 python-pyudev
 python-qpid # dist:precise
 dnsmasq-base

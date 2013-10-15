@@ -7,6 +7,7 @@ sqlite3
 python-pysqlite2
 python-sqlalchemy
 python-mysqldb
+python-psycopg2
 python-webob
 python-greenlet
 python-routes
