@@ -47,6 +47,15 @@ source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
 
+# Extras Source
+# --------------
+
+# Phase: source
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i source
+    done
+fi
 
 # See if there is anything running...
 # need to adapt when run_service is merged
@@ -54,6 +63,16 @@ SESSION=$(screen -ls | awk '/[0-9].stack/ { print $1 }')
 if [[ -n "$SESSION" ]]; then
     # Let unstack.sh do its thing first
     $TOP_DIR/unstack.sh --all
+fi
+
+# Run extras
+# ==========
+
+# Phase: clean
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i clean
+    done
 fi
 
 # Clean projects

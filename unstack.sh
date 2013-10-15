@@ -42,6 +42,16 @@ source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ironic
 source $TOP_DIR/lib/trove
 
+# Extras Source
+# --------------
+
+# Phase: source
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i source
+    done
+fi
+
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 GetOSVersion
@@ -53,6 +63,7 @@ fi
 # Run extras
 # ==========
 
+# Phase: unstack
 if [[ -d $TOP_DIR/extras.d ]]; then
     for i in $TOP_DIR/extras.d/*.sh; do
         [[ -r $i ]] && source $i unstack

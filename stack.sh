@@ -313,6 +313,16 @@ source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/ironic
 source $TOP_DIR/lib/trove
 
+# Extras Source
+# --------------
+
+# Phase: source
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i source
+    done
+fi
+
 # Set the destination directories for other OpenStack projects
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
 
@@ -725,6 +735,16 @@ if is_service_enabled ir-api ir-cond; then
     configure_ironic
 fi
 
+# Extras Install
+# --------------
+
+# Phase: install
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i stack install
+    done
+fi
+
 if [[ $TRACK_DEPENDS = True ]]; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip
     if ! diff -Nru $DEST/requires-pre-pip $DEST/requires-post-pip > $DEST/requires.diff; then
@@ -1000,6 +1020,17 @@ if is_service_enabled nova && is_baremetal; then
 fi
 
 
+# Extras Configuration
+# ====================
+
+# Phase: post-config
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i stack post-config
+    done
+fi
+
+
 # Local Configuration
 # ===================
 
@@ -1214,9 +1245,10 @@ merge_config_group $TOP_DIR/local.conf extra
 # Run extras
 # ==========
 
+# Phase: extra
 if [[ -d $TOP_DIR/extras.d ]]; then
     for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i stack
+        [[ -r $i ]] && source $i stack extra
     done
 fi
 
