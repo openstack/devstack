@@ -215,6 +215,10 @@ If tempest has been successfully configured, a basic set of smoke tests can be r
     $ cd /opt/stack/tempest
     $ nosetests tempest/scenario/test_network_basic_ops.py
 
+# Additional Projects
+
+DevStack has a hook mechanism to call out to a dispatch script at specific points in the execution if `stack.sh`, `unstack.sh` and `clean.sh`.  This allows higher-level projects, especially those that the lower level projects have no dependency on, to be added to DevStack without modifying the scripts.  Tempest is built this way as an example of how to structure the dispatch script, see `extras.d/80-tempest.sh`.  See `extras.d/README.md` for more information.
+
 # Multi-Node Setup
 
 A more interesting setup involves running multiple compute nodes, with Neutron networks connecting VMs on different compute nodes.
