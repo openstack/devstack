@@ -35,25 +35,35 @@ FILES=$TOP_DIR/files
 # Python Packages
 # ---------------
 
+# get_package_path python-package    # in import notation
+function get_package_path() {
+    local package=$1
+    echo $(python -c "import os; import $package; print(os.path.split(os.path.realpath($package.__file__))[0])")
+}
+
+
 # Pre-install affected packages so we can fix the permissions
+# These can go away once we are confident that pip 1.4.1+ is available everywhere
+
+# Fix prettytable 0.7.2 permissions
+# Don't specify --upgrade so we use the existing package if present
 pip_install prettytable
+PACKAGE_DIR=$(get_package_path prettytable)
+# Only fix version 0.7.2
+dir=$(echo $PACKAGE_DIR/prettytable-0.7.2*)
+if [[ -d $dir ]]; then
+    sudo chmod +r $dir/*
+fi
+
+# Fix httplib2 0.8 permissions
+# Don't specify --upgrade so we use the existing package if present
 pip_install httplib2
-
-SITE_DIRS=$(python -c "import site; import os; print os.linesep.join(site.getsitepackages())")
-for dir in $SITE_DIRS; do
-
-    # Fix prettytable 0.7.2 permissions
-    if [[ -r $dir/prettytable.py ]]; then
-        sudo chmod +r $dir/prettytable-0.7.2*/*
-    fi
-
-    # Fix httplib2 0.8 permissions
-    httplib_dir=httplib2-0.8.egg-info
-    if [[ -d $dir/$httplib_dir ]]; then
-        sudo chmod +r $dir/$httplib_dir/*
-    fi
-
-done
+PACKAGE_DIR=$(get_package_path httplib2)
+# Only fix version 0.8
+dir=$(echo $PACKAGE_DIR-0.8*)
+if [[ -d $dir ]]; then
+    sudo chmod +r $dir/*
+fi
 
 
 # RHEL6
