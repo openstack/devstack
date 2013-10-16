@@ -264,7 +264,7 @@ function _get_package_dir() {
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
 function get_packages() {
-    local services=$1
+    local services=$@
     local package_dir=$(_get_package_dir)
     local file_to_parse
     local service
@@ -276,7 +276,7 @@ function get_packages() {
     if [[ -z "$DISTRO" ]]; then
         GetDistro
     fi
-    for service in general ${services//,/ }; do
+    for service in ${services//,/ }; do
         # Allow individual services to specify dependencies
         if [[ -e ${package_dir}/${service} ]]; then
             file_to_parse="${file_to_parse} $service"

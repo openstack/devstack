@@ -55,7 +55,7 @@ export_proxy_variables
 # ================
 
 # Install package requirements
-install_package $(get_packages $ENABLED_SERVICES)
+install_package $(get_packages general $ENABLED_SERVICES)
 
 if [[ -n "$SYSLOG" && "$SYSLOG" != "False" ]]; then
     if is_ubuntu || is_fedora; then
