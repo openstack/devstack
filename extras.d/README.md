@@ -10,12 +10,11 @@ that end with `.sh`.  To control the order that the scripts are sourced their
 names start with a two digit sequence number.  DevStack reserves the sequence
 numbers 00 through 09 and 90 through 99 for its own use.
 
-The scripts are sourced at each hook point so they should not declare anything
-at the top level that would cause a problem, specifically, functions.  This does
-allow the entire `stack.sh` variable space to be available.  The scripts are
+The scripts are sourced at the beginning of each script that calls them. The
+entire `stack.sh` variable space is available.  The scripts are
 sourced with one or more arguments, the first of which defines the hook phase:
 
-arg 1: source | stack | unstack | clean
+    source | stack | unstack | clean
 
     source: always called first in any of the scripts, used to set the
         initial defaults in a lib/* script or similar
