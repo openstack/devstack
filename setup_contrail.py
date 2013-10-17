@@ -18,6 +18,7 @@ from pprint import pformat
 import xml.etree.ElementTree as ET
 import platform
 import getpass
+import re
 
 import tempfile
 
@@ -255,12 +256,14 @@ class Setup(object):
         return domain_list
 
     def get_if_mtu (self, dev):
-        mtu = self.run_shell("ifconfig %s | grep mtu | awk '{ print $NF }'" % dev)
-        if not mtu:
-            # for debian
-            mtu = self.run_shell("ifconfig %s | grep MTU | sed 's/.*MTU.\([0-9]\+\).*/\1/g'" % dev)
-        if mtu and mtu != '1500': return mtu
-        return ''
+        ifconfig = self.run_shell("ifconfig %s" % dev)
+        m = re.search(r'(?i)mtu[:\s]*(\d+)\b', ifconfig)
+        mtu = ''
+        if m:
+            mtu = m.group(1)
+            if mtu == '1500':
+                mtu = ''
+        return mtu
     #end if_mtu
 
     def get_intf_ip (self, intf):
