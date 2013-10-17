@@ -993,8 +993,8 @@ if [ $ENABLE_CONTRAIL ]; then
         repo init -u git@github.com:Juniper/contrail-vnc
     fi
     repo sync
-    python third_party/fetch_packages.py
-    scons
+    #python third_party/fetch_packages.py
+    #scons
     cd ${contrail_cwd}
 
     # get cassandra
@@ -1039,7 +1039,8 @@ EOF
     fi
 
     # create config files
-    python $TOP_DIR/setup_contrail.py --cfgm_ip $SERVICE_HOST
+    # DEBUG - NBK
+    python $TOP_DIR/setup_contrail.py --physical_interface=eth1 # --cfgm_ip $SERVICE_HOST 
 
     # install contrail modules
     echo "Installing contrail modules"
@@ -1436,8 +1437,19 @@ service_check
 # Contrail
 function insert_vrouter() {
     source /etc/contrail/agent_param
-    source $VHOST_CFG
-    sudo insmod $CONTRAIL_SRC/$kmod
+    EXT_DEV=$dev
+    if [ -e $VHOST_CFG ]; then
+	source $VHOST_CFG
+    else
+	DEVICE=vhost0
+	IPADDR=$(ifconfig $EXT_DEV | sed -ne 's/.*inet *addr[: ]*\([0-9.]*\).*/\1/i p')
+	NETMASK=$(ifconfig $EXT_DEV | sed -ne 's/.*mask[: *]\([0-9.]*\).*/\1/i p')
+    fi
+    # don't die in small memory environments
+    sudo insmod $CONTRAIL_SRC/$kmod vr_flow_entries=4096 vr_oflow_entries=512
+
+    # DEBUG - don't bring the network down!
+    exit 1
 
     echo "Creating vhost interface: $DEVICE."
     VIF=$CONTRAIL_SRC/build/debug/vrouter/utils/vif
