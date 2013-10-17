@@ -23,10 +23,10 @@ import re
 import tempfile
 
 # Get Environment Stuff
-password='contrail123'
-admin_username='admin'
-admin_token='contrail123'
-admin_tenant ='admin'
+password = os.environ['ADMIN_PASSWORD'] or 'contrail123'
+admin_username = os.environ['CONTRAIL_ADMIN_USERNAME'] or 'admin'
+admin_token = os.environ['SERVICE_TOKEN'] or 'contrail123'
+admin_tenant = os.environ['CONTRAIL_ADMIN_TENANT'] or 'admin'
 
 # TODO following keystone credentials hardcoded
 ks_admin_user = admin_username

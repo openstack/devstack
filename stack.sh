@@ -965,18 +965,24 @@ if [ $ENABLE_CONTRAIL ]; then
     sudo chmod 777 /var/log/contrail
 
     # basic dependencies
-    if ! command_exists repo ; then
-        mkdir -p ~/bin
-        PATH=~/bin:$PATH
-        sudo curl https://dl-ssl.google.com/dl/googlesource/git-repo/repo > ~/bin/repo
-        sudo chmod a+x ~/bin/repo
+    if ! which repo > /dev/null 2>&1 ; then
+        curl -O https://dl-ssl.google.com/dl/googlesource/git-repo/repo
+        chmod 0755 repo
+	sudo mv repo /usr/bin
     fi
 
     # dependencies
-    sudo yum -y install patch scons flex bison make vim
-    sudo yum -y install expat-devel gettext-devel curl-devel
-    sudo yum -y install gcc-c++ python-devel autoconf automake
-    sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
+    if is_ubuntu; then
+	apt_get install patch scons flex bison make vim
+	apt_get install libexpat-dev libgettextpo0 libcurl4-openssl-dev
+	apt_get install python-dev autoconf automake build-essential
+	apt_get install libevent-dev libxml2-dev libxslt-dev
+    else
+	sudo yum -y install patch scons flex bison make vim
+	sudo yum -y install expat-devel gettext-devel curl-devel
+	sudo yum -y install gcc-c++ python-devel autoconf automake
+	sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
+    fi
 
     # api server requirements
     # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
@@ -998,16 +1004,29 @@ if [ $ENABLE_CONTRAIL ]; then
     cd ${contrail_cwd}
 
     # get cassandra
-    if [ ! -f "/usr/sbin/cassandra" ] ; then
-        cat << EOF > datastax.repo
+    if ! which cassandra > /dev/null 2>&1 ; then
+	if is_ubuntu; then
+	    echo "deb http://www.apache.org/dist/cassandra/debian 08x main" |
+	    sudo tee /etc/apt/sources.list.d/cassandra.list
+
+	    gpg --keyserver pgp.mit.edu --recv-keys F758CE318D77295D
+	    gpg --export --armor F758CE318D77295D | sudo apt-key add -
+	    gpg --keyserver pgp.mit.edu --recv-keys 2B5C1B00
+	    gpg --export --armor 2B5C1B00 | sudo apt-key add -
+	    
+	    apt_get update
+	    apt_get install cassandra
+	else
+            cat << EOF > datastax.repo
 [datastax]
 name = DataStax Repo for Apache Cassandra
 baseurl = http://rpm.datastax.com/community
 enabled = 1
 gpgcheck = 0
 EOF
-        sudo mv datastax.repo /etc/yum.repos.d/
-        sudo yum -y install dsc20
+            sudo mv datastax.repo /etc/yum.repos.d/
+            sudo yum -y install dsc20
+	fi
     fi
 	    
     # get ifmap 
@@ -1039,8 +1058,10 @@ EOF
     fi
 
     # create config files
-    # DEBUG - NBK
-    python $TOP_DIR/setup_contrail.py --physical_interface=eth1 # --cfgm_ip $SERVICE_HOST 
+    # export passwords in a subshell so setup_contrail can pick them up but they won't leak later
+    (export ADMIN_PASSWORD CONTRAIL_ADMIN_USERNAME SERVICE_TOKEN CONTRAIL_ADMIN_TENANT && 
+    python $TOP_DIR/setup_contrail.py --physical_interface=$PHYSICAL_INTERFACE # --cfgm_ip $SERVICE_HOST 
+    )
 
     # install contrail modules
     echo "Installing contrail modules"
@@ -1448,44 +1469,46 @@ function insert_vrouter() {
     # don't die in small memory environments
     sudo insmod $CONTRAIL_SRC/$kmod vr_flow_entries=4096 vr_oflow_entries=512
 
-    # DEBUG - don't bring the network down!
-    exit 1
-
     echo "Creating vhost interface: $DEVICE."
     VIF=$CONTRAIL_SRC/build/debug/vrouter/utils/vif
     DEV_MAC=$(cat /sys/class/net/$dev/address)
-    sudo $VIF --create $DEVICE --mac $DEV_MAC
-    if [ $? != 0 ]
-    then
-        echo "Error creating interface: $DEVICE"
-    fi
+    sudo $VIF --create $DEVICE --mac $DEV_MAC \
+        || echo "Error creating interface: $DEVICE"
 
     echo "Adding $DEVICE to vrouter"
-    sudo $VIF --add $DEVICE --mac $DEV_MAC --vrf 0 --mode x --type vhost
-    if [ $? != 0 ]
-    then
-        echo "Error adding $DEVICE to vrouter"
-    fi
+    sudo $VIF --add $DEVICE --mac $DEV_MAC --vrf 0 --mode x --type vhost \
+	|| echo "Error adding $DEVICE to vrouter"
 
     echo "Adding $dev to vrouter"
-    sudo $VIF --add $dev --mac $DEV_MAC --vrf 0 --mode x --type physical
-    if [ $? != 0 ]
-    then
-        echo "Error adding $dev to vrouter"
-    fi
+    sudo $VIF --add $dev --mac $DEV_MAC --vrf 0 --mode x --type physical \
+	|| echo "Error adding $dev to vrouter"
 
-    echo "Sleeping 10 seconds to allow link state to settle"
-    sudo ifup $DEVICE
-    sudo cp /etc/contrail/ifcfg-$dev /etc/sysconfig/network-scripts
-    sleep 10
-    echo "Restarting network service"
-    sudo service network restart
+    if is_ubuntu; then
+	cat > /tmp/interfaces <<EOF
+iface $DEVICE inet static
+      address $IPADDR
+      netmask $NETMASK
+
+iface $dev inet manual
+EOF
+	sudo ifdown $dev
+	sudo ifup -i /tmp/interfaces $DEVICE
+	echo "Sleeping 10 seconds to allow link state to settle"
+	sleep 10
+	sudo ifup -i /tmp/interfaces $dev
+    else
+	echo "Sleeping 10 seconds to allow link state to settle"
+	sudo ifup $DEVICE
+	sudo cp /etc/contrail/ifcfg-$dev /etc/sysconfig/network-scripts
+	sleep 10
+	echo "Restarting network service"
+	sudo service network restart
+    fi
 }
 
 function test_insert_vrouter ()
 {
-    lsmod | grep -q vrouter
-    if [ $? == 0 ]; then
+    if lsmod | grep -q vrouter; then 
 	echo "vrouter module already inserted."
     else
 	insert_vrouter
@@ -1511,7 +1534,9 @@ if [ $ENABLE_CONTRAIL ]; then
     sleep 2
     screen_it disco "python $PYLIBPATH/discovery/disc_server_zk.py --conf_file /etc/contrail/discovery.conf"
     sleep 2
-    screen_it apiSrv "python $PYLIBPATH/vnc_cfg_api_server/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
+    # find the directory where vnc_cfg_api_server was installed and start vnc_cfg_api_server.py
+    vnc_cfg_api_server_path=$(python -c 'import vnc_cfg_api_server; from os.path import dirname; print dirname(vnc_cfg_api_server.__file__)')
+    screen_it apiSrv "python ${vnc_cfg_api_server_path}/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
     echo "Waiting for api-server to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://${SERVICE_HOST}:8082; do sleep 1; done"; then
         echo "api-server did not start"
