@@ -436,6 +436,10 @@ if is_service_enabled s-proxy; then
     read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
 fi
 
+if [ $ENABLE_CONTRAIL ]; then
+    read_password PHYSICAL_INTERFACE "ENTER PHYSICAL INTERFACE TO USE FOR FOR VROUTER"
+fi
+
 
 # Configure logging
 # -----------------
@@ -680,7 +684,7 @@ if is_service_enabled cinder; then
 fi
 
 function test_install_neutron_patch() { 
-    patch_name="neutron_v2.patch"
+    patch_name="neutron_v3.patch"
     contrail_cwd=$(pwd)
     cd $DEST/neutron
     patch -p0 -N --dry-run --silent < $TOP_DIR/$patch_name &> /dev/null
@@ -966,7 +970,7 @@ if [ $ENABLE_CONTRAIL ]; then
 
     # basic dependencies
     if ! which repo > /dev/null 2>&1 ; then
-        curl -O https://dl-ssl.google.com/dl/googlesource/git-repo/repo
+        curl -o repo -O https://git-repo.googlecode.com/files/repo-1.19
         chmod 0755 repo
 	sudo mv repo /usr/bin
     fi
@@ -999,8 +1003,8 @@ if [ $ENABLE_CONTRAIL ]; then
         repo init -u git@github.com:Juniper/contrail-vnc
     fi
     repo sync
-    #python third_party/fetch_packages.py
-    #scons
+    python third_party/fetch_packages.py
+    scons
     cd ${contrail_cwd}
 
     # get cassandra
