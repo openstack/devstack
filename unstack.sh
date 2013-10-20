@@ -152,5 +152,11 @@ if [ $? == 0 ]; then
         sudo rm -f /etc/sysconfig/network-scripts/ifcfg-vhost0
     fi
 fi
+if [ $CONTRAIL_VGW_PUBLIC_SUBNET ]; then
+    sudo route del -net $CONTRAIL_VGW_PUBLIC_SUBNET dev vgw
+fi
+if [ $CONTRAIL_VGW_INTERFACE ]; then
+    sudo tunctl -d vgw
+fi
 
 cleanup_tmp

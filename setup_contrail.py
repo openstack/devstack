@@ -50,7 +50,7 @@ class Setup(object):
 
     def _parse_args(self, args_str):
         '''
-        Eg. python setup.py --cfgm_ip 127.0.0.1 
+        Eg. python setup.py --cfgm_ip 127.0.0.1 --vgw_interface vgw --vgw_public_subnet 1.1.1.0/24 --vgw_public_network default-domain:default-project:public:public
         '''
 
         # Source any specified config/ini file
@@ -159,6 +159,11 @@ class Setup(object):
         parser.add_argument("--redis_role", help = "Redis Role of Node")
         parser.add_argument("--self_collector_ip", help = "Self IP of Collector Node")
     
+	#Simple gateway interface
+        parser.add_argument("--vgw_interface", help="Simple Virtual Gateway interface")
+        parser.add_argument("--vgw_public_subnet", help="Simple Virtual Gateway public sub-net")
+        parser.add_argument("--vgw_public_network", help="FQDN for public network")
+
         self._args = parser.parse_args(remaining_argv)
 
         if self._args.physical_interface:
@@ -672,6 +677,9 @@ HWADDR=%s
             non_mgmt_ip = self._args.non_mgmt_ip 
             non_mgmt_gw = self._args.non_mgmt_gw
             vhost_ip = compute_ip
+            vgw_interface = self._args.vgw_interface
+            vgw_public_subnet = self._args.vgw_public_subnet
+            vgw_public_network = self._args.vgw_public_network
             multi_net= False
             if non_mgmt_ip :
                 if non_mgmt_ip != compute_ip:
@@ -718,16 +726,32 @@ HWADDR=%s
                     template_vals, "agent_param")
                 self.run_shell("sudo mv agent_param /etc/contrail/agent_param")
 
-                template_vals = {
-                    '__contrail_box_ip__' : cidr,
-                    '__contrail_gateway__' : gateway,
-                    '__contrail_intf__' : dev,
-                    '__contrail_disc_ip__' : discovery_ip,
-                    '__contrail_instances__' : ncontrols,
-                    '__contrail_control_ip__' : cfgm_ip,
-                }
-                self._template_substitute_write(agent_conf_template,
-                    template_vals, "agent.conf")
+                if vgw_interface is None or vgw_public_subnet is None or vgw_public_network is None:
+                    template_vals = {
+                        '__contrail_box_ip__' : cidr,
+                        '__contrail_gateway__' : gateway,
+                        '__contrail_intf__' : dev,
+                        '__contrail_disc_ip__' : discovery_ip,
+                        '__contrail_instances__' : ncontrols,
+                        '__contrail_control_ip__' : cfgm_ip,
+                    }
+                    self._template_substitute_write(agent_conf_template,
+                        template_vals, "agent.conf")
+                else:
+                    template_vals = {
+                        '__contrail_box_ip__' : cidr,
+                        '__contrail_gateway__' : gateway,
+                        '__contrail_intf__' : dev,
+                        '__contrail_disc_ip__' : discovery_ip,
+                        '__contrail_instances__' : ncontrols,
+                        '__contrail_control_ip__' : cfgm_ip,
+                        '__contrail_vgw_interface__' : vgw_interface,
+                        '__contrail_vgw_public_subnet__' : vgw_public_subnet,
+                        '__contrail_vgw_public_network__' : vgw_public_network,
+                    }
+                    self._template_substitute_write(agent_vgw_conf_template,
+                        template_vals, "agent.conf")
+
                 self.run_shell("sudo mv agent.conf /etc/contrail/agent.conf")
 
                 ## make ifcfg-vhost0

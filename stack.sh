@@ -981,11 +981,13 @@ if [ $ENABLE_CONTRAIL ]; then
 	apt_get install libexpat-dev libgettextpo0 libcurl4-openssl-dev
 	apt_get install python-dev autoconf automake build-essential
 	apt_get install libevent-dev libxml2-dev libxslt-dev
+	apt_get install tunctl
     else
 	sudo yum -y install patch scons flex bison make vim
 	sudo yum -y install expat-devel gettext-devel curl-devel
 	sudo yum -y install gcc-c++ python-devel autoconf automake
 	sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
+	sudo yum -y install tunctl
     fi
 
     # api server requirements
@@ -1066,6 +1068,13 @@ EOF
     (export ADMIN_PASSWORD CONTRAIL_ADMIN_USERNAME SERVICE_TOKEN CONTRAIL_ADMIN_TENANT && 
     python $TOP_DIR/setup_contrail.py --physical_interface=$PHYSICAL_INTERFACE # --cfgm_ip $SERVICE_HOST 
     )
+
+    # process gateway configuration if present
+    contrail_gw_interface=""
+    if [ $CONTRAIL_VGW_INTERFACE -a $CONTRAIL_VGW_PUBLIC_SUBNET -a $CONTRAIL_VGW_PUBLIC_NETWORK ]; then
+	    contrail_gw_interface="--vgw_interface $CONTRAIL_VGW_INTERFACE --vgw_public_subnet $CONTRAIL_VGW_PUBLIC_SUBNET --vgw_public_network $CONTRAIL_VGW_PUBLIC_NETWORK"
+    fi
+    python $TOP_DIR/setup_contrail.py --cfgm_ip $SERVICE_HOST $contrail_gw_interface
 
     # install contrail modules
     echo "Installing contrail modules"
@@ -1556,6 +1565,13 @@ if [ $ENABLE_CONTRAIL ]; then
     test_insert_vrouter
 
     # agent
+    if [ $CONTRAIL_VGW_INTERFACE -a $CONTRAIL_VGW_PUBLIC_SUBNET -a $CONTRAIL_VGW_PUBLIC_NETWORK ]; then
+        sudo sysctl -w net.ipv4.ip_forward=1
+        sudo /opt/stack/contrail/build/debug/vrouter/utils/vif --create vgw --mac 00:01:00:5e:00:00
+        #sudo tunctl -p -t vgw
+        sudo ifconfig vgw up
+        sudo route add -net $CONTRAIL_VGW_PUBLIC_SUBNET dev vgw
+    fi
     source /etc/contrail/agent_param
     sudo cat > $TOP_DIR/vnsw.hlpr <<END
 #!/bin/bash
