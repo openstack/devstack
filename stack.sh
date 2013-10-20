@@ -1568,7 +1568,6 @@ if [ $ENABLE_CONTRAIL ]; then
     if [ $CONTRAIL_VGW_INTERFACE -a $CONTRAIL_VGW_PUBLIC_SUBNET -a $CONTRAIL_VGW_PUBLIC_NETWORK ]; then
         sudo sysctl -w net.ipv4.ip_forward=1
         sudo /opt/stack/contrail/build/debug/vrouter/utils/vif --create vgw --mac 00:01:00:5e:00:00
-        #sudo tunctl -p -t vgw
         sudo ifconfig vgw up
         sudo route add -net $CONTRAIL_VGW_PUBLIC_SUBNET dev vgw
     fi
