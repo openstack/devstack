@@ -37,7 +37,6 @@ DOCKER_REGISTRY_IMAGE=${DOCKER_REGISTRY_IMAGE:-http://get.docker.io/images/opens
 DOCKER_REGISTRY_IMAGE_NAME=docker-registry
 DOCKER_REPOSITORY_NAME=${SERVICE_HOST}:${DOCKER_REGISTRY_PORT}/${DOCKER_IMAGE_NAME}
 
-DOCKER_PACKAGE_VERSION=${DOCKER_PACKAGE_VERSION:-0.6.1}
 DOCKER_APT_REPO=${DOCKER_APT_REPO:-https://get.docker.io/ubuntu}
 
 
@@ -72,7 +71,7 @@ function install_nova_hypervisor() {
     fi
 
     # Make sure Docker is installed
-    if ! is_package_installed lxc-docker-${DOCKER_PACKAGE_VERSION}; then
+    if ! is_package_installed lxc-docker; then
         die $LINENO "Docker is not installed.  Please run tools/docker/install_docker.sh"
     fi
 
