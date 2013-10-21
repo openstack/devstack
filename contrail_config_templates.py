@@ -257,6 +257,33 @@ agent_conf_template = string.Template("""
 </config>
 """)
 
+agent_vgw_conf_template = string.Template("""
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+ <agent>
+  <!-- Physical ports connecting to IP Fabric -->
+  <vhost>
+   <name>vhost0</name>
+   <ip-address>$__contrail_box_ip__</ip-address>
+   <gateway>$__contrail_gateway__</gateway>
+  </vhost>
+  <eth-port>
+   <name>$__contrail_intf__</name>
+  </eth-port>
+  <control>
+   <ip-address>$__contrail_control_ip__</ip-address>
+  </control>
+  <xmpp-server>
+   <ip-address>$__contrail_control_ip__</ip-address>
+  </xmpp-server>
+  <gateway virtual-network="$__contrail_vgw_public_network__">
+    <interface>$__contrail_vgw_interface__</interface>
+    <subnet>$__contrail_vgw_public_subnet__</subnet>
+  </gateway>
+ </agent>
+</config>
+""")
+
 ifconfig_vhost0_template = string.Template("""
 #Contrail vhost0
 DEVICE=vhost0
