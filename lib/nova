@@ -610,19 +610,9 @@ function start_nova_api() {
     fi
 }
 
-# start_nova() - Start running processes, including screen
-function start_nova() {
+# start_nova_compute() - Start the compute process
+function start_nova_compute() {
     NOVA_CONF_BOTTOM=$NOVA_CONF
-
-    # ``screen_it`` checks ``is_service_enabled``, it is not needed here
-    screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor"
-
-    if is_service_enabled n-cell; then
-        NOVA_CONF_BOTTOM=$NOVA_CELLS_CONF
-        screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CELLS_CONF"
-        screen_it n-cell-region "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CONF"
-        screen_it n-cell-child "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CELLS_CONF"
-    fi
 
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
         # The group **$LIBVIRT_GROUP** is added to the current user in this script.
@@ -639,6 +629,22 @@ function start_nova() {
         fi
         screen_it n-cpu "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-compute --config-file $NOVA_CONF_BOTTOM"
     fi
+}
+
+# start_nova() - Start running processes, including screen
+function start_nova_rest() {
+    NOVA_CONF_BOTTOM=$NOVA_CONF
+
+    # ``screen_it`` checks ``is_service_enabled``, it is not needed here
+    screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor"
+
+    if is_service_enabled n-cell; then
+        NOVA_CONF_BOTTOM=$NOVA_CELLS_CONF
+        screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CELLS_CONF"
+        screen_it n-cell-region "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CONF"
+        screen_it n-cell-child "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CELLS_CONF"
+    fi
+
     screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
     screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network --config-file $NOVA_CONF_BOTTOM"
     screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler --config-file $NOVA_CONF_BOTTOM"
@@ -653,6 +659,11 @@ function start_nova() {
     # Swift will act as s3 objectstore.
     is_service_enabled swift3 || \
         screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore"
+}
+
+function start_nova() {
+    start_nova_compute
+    start_nova_rest
 }
 
 # stop_nova() - Stop running processes (non-screen)
