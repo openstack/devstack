@@ -964,13 +964,12 @@ fi
 # Contrail
 # --------
 if [ $ENABLE_CONTRAIL ]; then
-    PYLIBPATH=`/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
     sudo mkdir -p /var/log/contrail
     sudo chmod 777 /var/log/contrail
 
     # basic dependencies
     if ! which repo > /dev/null 2>&1 ; then
-        curl -o repo -O https://git-repo.googlecode.com/files/repo-1.19
+	wget http://commondatastorage.googleapis.com/git-repo-downloads/repo
         chmod 0755 repo
 	sudo mv repo /usr/bin
     fi
@@ -992,6 +991,7 @@ if [ $ENABLE_CONTRAIL ]; then
 
     # api server requirements
     # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
+    sudo easy_install -U distribute
     sudo pip install gevent geventhttpclient==1.0a thrift
     sudo pip install netifaces fabric argparse
     sudo pip install stevedore xmltodict python-keystoneclient
@@ -1022,6 +1022,8 @@ if [ $ENABLE_CONTRAIL ]; then
 	    
 	    apt_get update
 	    apt_get install cassandra
+	    # don't start cassandra at boot
+	    sudo update-rc.d -f cassandra remove
 	else
             cat << EOF > datastax.repo
 [datastax]
@@ -1055,7 +1057,7 @@ EOF
     fi
 
     # ncclient
-    if [ ! -d $PYLIBPATH/ncclient ]; then
+    if ! python -c 'import ncclient' >/dev/null 2>&1; then
         contrail_cwd=$(pwd)
         cd $CONTRAIL_SRC/third_party
         wget https://code.grnet.gr/attachments/download/1172/ncclient-v0.3.2.tar.gz
@@ -1529,6 +1531,11 @@ function test_insert_vrouter ()
     fi
 }
 
+function pywhere() {
+    module=$1
+    python -c "import $module; import os; print os.path.dirname($module.__file__)"
+}
+
 if [ $ENABLE_CONTRAIL ]; then
     # save screen settings
     SAVED_SCREEN_NAME=$SCREEN_NAME
@@ -1538,25 +1545,25 @@ if [ $ENABLE_CONTRAIL ]; then
     # Set a reasonable status bar
     screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
-    PYLIBPATH=`/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
-
     # launch ...
     screen_it cass "sudo /usr/sbin/cassandra -f"
     screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
     screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
     sleep 2
-    screen_it disco "python $PYLIBPATH/discovery/disc_server_zk.py --conf_file /etc/contrail/discovery.conf"
+    
+    
+    screen_it disco "python $(pywhere discovery)/disc_server_zk.py --conf_file /etc/contrail/discovery.conf"
     sleep 2
+
     # find the directory where vnc_cfg_api_server was installed and start vnc_cfg_api_server.py
-    vnc_cfg_api_server_path=$(python -c 'import vnc_cfg_api_server; from os.path import dirname; print dirname(vnc_cfg_api_server.__file__)')
-    screen_it apiSrv "python ${vnc_cfg_api_server_path}/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
+    screen_it apiSrv "python $(pywhere vnc_cfg_api_server)/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
     echo "Waiting for api-server to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://${SERVICE_HOST}:8082; do sleep 1; done"; then
         echo "api-server did not start"
         exit 1
     fi
     sleep 2
-    screen_it schema "python $PYLIBPATH/schema_transformer/to_bgp.py --conf_file /etc/contrail/schema_transformer.conf"
+    screen_it schema "python $(pywhere schema_transformer)/to_bgp.py --conf_file /etc/contrail/schema_transformer.conf"
 
     source /etc/contrail/control_param
     screen_it control "export LD_LIBRARY_PATH=/opt/stack/contrail/build/lib; $CONTRAIL_SRC/build/debug/control-node/control-node --map-server-url https://${IFMAP_SERVER}:${IFMAP_PORT} --map-user ${IFMAP_USER} --map-password ${IFMAP_PASWD} --hostname ${HOSTNAME} --host-ip ${HOSTIP} --bgp-port ${BGP_PORT} ${CERT_OPTS} ${LOG_LOCAL}"
@@ -1572,14 +1579,31 @@ if [ $ENABLE_CONTRAIL ]; then
         sudo route add -net $CONTRAIL_VGW_PUBLIC_SUBNET dev vgw
     fi
     source /etc/contrail/agent_param
-    sudo cat > $TOP_DIR/vnsw.hlpr <<END
-#!/bin/bash
+    #sudo mkdir -p $(dirname $VROUTER_LOGFILE)
+    mkdir -p $TOP_DIR/bin
+    
+    # make a fake contrail-version when contrail isn't installed by yum
+    if ! contrail-version >/dev/null 2>&1; then
+	cat >$TOP_DIR/bin/contrail-version <<EOF2
+#! /bin/sh
+cat <<EOF
+Package                                Version                 Build-ID | Repo | RPM Name
+-------------------------------------- ----------------------- ----------------------------------
+contrail-analytics                     1-1304082216        148                                    
+openstack-dashboard.noarch             2012.1.3-1.fc17     updates                                
+contrail-agent                         1-1304091654        contrail-agent-1-1304091654.x86_64     
+EOF
+EOF2
+    fi
+    chmod a+x $TOP_DIR/bin/contrail-version
 
+    cat > $TOP_DIR/bin/vnsw.hlpr <<END
+#! /bin/bash
+PATH=$TOP_DIR/bin:$PATH
 LD_LIBRARY_PATH=/opt/stack/contrail/build/lib $CONTRAIL_SRC/build/debug/vnsw/agent/vnswad --config-file $CONFIG $VROUTER_LOGFILE
 END
-    sudo mv $TOP_DIR/vnsw.hlpr /etc/contrail/
-    sudo chmod +x /etc/contrail/vnsw.hlpr
-    screen_it agent "sudo /etc/contrail/vnsw.hlpr"
+    chmod a+x $TOP_DIR/bin/vnsw.hlpr
+    screen_it agent "sudo $TOP_DIR/bin/vnsw.hlpr"
 
     screen_it vif  "python /opt/stack/nova/plugins/contrail/contrail_vif.py"
 

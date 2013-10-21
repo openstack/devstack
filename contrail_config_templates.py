@@ -2,6 +2,7 @@ import string
 
 api_server_conf_template = string.Template("""
 [DEFAULTS]
+reset_config=True
 ifmap_server_ip=$__contrail_ifmap_server_ip__
 ifmap_server_port=$__contrail_ifmap_server_port__
 ifmap_username=$__contrail_ifmap_username__
@@ -229,7 +230,7 @@ kmod=vrouter/vrouter.ko
 pname=vnswad
 LIBDIR=/usr/lib64
 VHOST_CFG=/etc/sysconfig/network-scripts/ifcfg-vhost0
-VROUTER_LOGFILE=--log-file=/var/log/contrail/vrouter.log
+VROUTER_LOGFILE=--log-file=/var/log/vrouter.log
 COLLECTOR=$__contrail_collector__
 $__contrail_dev__
 """)
