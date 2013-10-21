@@ -193,6 +193,16 @@ TROVE_BRANCH=${TROVE_BRANCH:-master}
 TROVECLIENT_REPO=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
 TROVECLIENT_BRANCH=${TROVECLIENT_BRANCH:-master}
 
+# stackforge libraries that are used by OpenStack core services
+# wsme
+WSME_REPO=${WSME_REPO:-${GIT_BASE}/stackforge/wsme.git}
+WSME_BRANCH=${WSME_BRANCH:-master}
+
+# pecan
+PECAN_REPO=${PECAN_REPO:-${GIT_BASE}/stackforge/pecan.git}
+PECAN_BRANCH=${PECAN_BRANCH:-master}
+
+
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
 # also install an **LXC**, **OpenVZ** or **XenAPI** based system.  If xenserver-core

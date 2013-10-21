@@ -1,0 +1,67 @@
+# lib/stackforge
+#
+# Functions to install stackforge libraries that we depend on so
+# that we can try their git versions during devstack gate.
+#
+# This is appropriate for python libraries that release to pypi and are
+# expected to be used beyond OpenStack like, but are requirements
+# for core services in global-requirements.
+#    * wsme
+#    * pecan
+#
+# This is not appropriate for stackforge projects which are early stage
+# OpenStack tools
+
+# Dependencies:
+# ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_stackforge
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+WSME_DIR=$DEST/wsme
+PECAN_DIR=$DEST/pecan
+
+# Entry Points
+# ------------
+
+# install_stackforge() - Collect source and prepare
+function install_stackforge() {
+    # TODO(sdague): remove this once we get to Icehouse, this just makes
+    # for a smoother transition of existing users.
+    cleanup_stackforge
+
+    git_clone $WSME_REPO $WSME_DIR $WSME_BRANCH
+    setup_develop $WSME_DIR
+
+    git_clone $PECAN_REPO $PECAN_DIR $PECAN_BRANCH
+    setup_develop $PECAN_DIR
+}
+
+# cleanup_stackforge() - purge possibly old versions of stackforge libraries
+function cleanup_stackforge() {
+    # this means we've got an old version installed, lets get rid of it
+    # otherwise python hates itself
+    for lib in wsme pecan; do
+        if ! python -c "import $lib" 2>/dev/null; then
+            echo "Found old $lib... removing to ensure consistency"
+            local PIP_CMD=$(get_pip_command)
+            pip_install $lib
+            sudo $PIP_CMD uninstall -y $lib
+        fi
+    done
+}
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
