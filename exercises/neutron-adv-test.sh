@@ -102,6 +102,7 @@ KEYSTONE="keystone"
 # and save it.
 
 TOKEN=`keystone token-get | grep ' id ' | awk '{print $4}'`
+die_if_not_set $LINENO TOKEN "Keystone fail to get token"
 
 # Various functions
 # -----------------
