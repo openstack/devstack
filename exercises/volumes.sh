@@ -118,6 +118,7 @@ INSTANCE_TYPE=$(nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1)
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
     INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
+    die_if_not_set $LINENO INSTANCE_TYPE "Failure retrieving INSTANCE_TYPE"
 fi
 
 # Clean-up from previous runs
