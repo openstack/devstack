@@ -588,7 +588,9 @@ echo_summary "Installing package prerequisites"
 source $TOP_DIR/tools/install_prereqs.sh
 
 # Configure an appropriate python environment
-$TOP_DIR/tools/install_pip.sh
+if [[ "$OFFLINE" != "True" ]]; then
+    $TOP_DIR/tools/install_pip.sh
+fi
 
 # Do the ugly hacks for borken packages and distros
 $TOP_DIR/tools/fixup_stuff.sh
