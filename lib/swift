@@ -104,17 +104,17 @@ ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 
 # cleanup_swift() - Remove residual data files
 function cleanup_swift() {
-   rm -f ${SWIFT_CONF_DIR}{*.builder,*.ring.gz,backups/*.builder,backups/*.ring.gz}
-   if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
-      sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
-   fi
-   if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
-      rm ${SWIFT_DISK_IMAGE}
-   fi
-   rm -rf ${SWIFT_DATA_DIR}/run/
-   if is_apache_enabled_service swift; then
-       _cleanup_swift_apache_wsgi
-   fi
+    rm -f ${SWIFT_CONF_DIR}{*.builder,*.ring.gz,backups/*.builder,backups/*.ring.gz}
+    if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
+        sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
+    fi
+    if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
+        rm ${SWIFT_DISK_IMAGE}
+    fi
+    rm -rf ${SWIFT_DATA_DIR}/run/
+    if is_apache_enabled_service swift; then
+        _cleanup_swift_apache_wsgi
+    fi
 }
 
 # _cleanup_swift_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
@@ -192,7 +192,7 @@ function _config_swift_apache_wsgi() {
 
         sudo cp ${SWIFT_DIR}/examples/apache2/account-server.template ${apache_vhost_dir}/account-server-${node_number}
         sudo sed -e "
-             /^#/d;/^$/d;
+            /^#/d;/^$/d;
             s/%PORT%/$account_port/g;
             s/%SERVICENAME%/account-server-${node_number}/g;
             s/%APACHE_NAME%/${APACHE_NAME}/g;
@@ -202,7 +202,7 @@ function _config_swift_apache_wsgi() {
 
         sudo cp ${SWIFT_DIR}/examples/wsgi/account-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
         sudo sed -e "
-             /^#/d;/^$/d;
+            /^#/d;/^$/d;
             s/%SERVICECONF%/account-server\/${node_number}.conf/g;
         " -i ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
     done
@@ -577,26 +577,26 @@ function start_swift() {
         return 0
     fi
 
-   # By default with only one replica we are launching the proxy,
-   # container, account and object server in screen in foreground and
-   # other services in background. If we have SWIFT_REPLICAS set to something
-   # greater than one we first spawn all the swift services then kill the proxy
-   # service so we can run it in foreground in screen.  ``swift-init ...
-   # {stop|restart}`` exits with '1' if no servers are running, ignore it just
-   # in case
-   swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
-   if [[ ${SWIFT_REPLICAS} == 1 ]]; then
+    # By default with only one replica we are launching the proxy,
+    # container, account and object server in screen in foreground and
+    # other services in background. If we have SWIFT_REPLICAS set to something
+    # greater than one we first spawn all the swift services then kill the proxy
+    # service so we can run it in foreground in screen.  ``swift-init ...
+    # {stop|restart}`` exits with '1' if no servers are running, ignore it just
+    # in case
+    swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
+    if [[ ${SWIFT_REPLICAS} == 1 ]]; then
         todo="object container account"
-   fi
-   for type in proxy ${todo}; do
-       swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
-   done
-   screen_it s-proxy "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
-   if [[ ${SWIFT_REPLICAS} == 1 ]]; then
-       for type in object container account; do
-           screen_it s-${type} "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
-       done
-   fi
+    fi
+    for type in proxy ${todo}; do
+        swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
+    done
+    screen_it s-proxy "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
+    if [[ ${SWIFT_REPLICAS} == 1 ]]; then
+        for type in object container account; do
+            screen_it s-${type} "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
+        done
+    fi
 }
 
 # stop_swift() - Stop running processes (non-screen)
