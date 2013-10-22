@@ -1371,9 +1371,9 @@ function upload_image() {
         IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.xen-raw.tgz}"
         glance \
-          --os-auth-token $token \
-          --os-image-url http://$GLANCE_HOSTPORT \
-          image-create \
+            --os-auth-token $token \
+            --os-image-url http://$GLANCE_HOSTPORT \
+            image-create \
             --name "$IMAGE_NAME" --is-public=True \
             --container-format=tgz --disk-format=raw \
             --property vm_mode=xen < "${IMAGE}"
@@ -1396,11 +1396,11 @@ function upload_image() {
             mkdir "$xdir"
             tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
             KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             if [[ -z "$IMAGE_NAME" ]]; then
                 IMAGE_NAME=$(basename "$IMAGE" ".img")
             fi
@@ -1691,23 +1691,23 @@ function check_path_perm_sanity() {
 #
 # _vercmp_r sep ver1 ver2
 function _vercmp_r {
-  typeset sep
-  typeset -a ver1=() ver2=()
-  sep=$1; shift
-  ver1=("${@:1:sep}")
-  ver2=("${@:sep+1}")
+    typeset sep
+    typeset -a ver1=() ver2=()
+    sep=$1; shift
+    ver1=("${@:1:sep}")
+    ver2=("${@:sep+1}")
 
-  if ((ver1 > ver2)); then
-    echo 1; return 0
-  elif ((ver2 > ver1)); then
-    echo -1; return 0
-  fi
+    if ((ver1 > ver2)); then
+        echo 1; return 0
+    elif ((ver2 > ver1)); then
+        echo -1; return 0
+    fi
 
-  if ((sep <= 1)); then
-    echo 0; return 0
-  fi
+    if ((sep <= 1)); then
+        echo 0; return 0
+    fi
 
-  _vercmp_r $((sep-1)) "${ver1[@]:1}" "${ver2[@]:1}"
+    _vercmp_r $((sep-1)) "${ver1[@]:1}" "${ver2[@]:1}"
 }
 
 
@@ -1729,13 +1729,13 @@ function _vercmp_r {
 #
 # vercmp_numbers ver1 ver2
 vercmp_numbers() {
-  typeset v1=$1 v2=$2 sep
-  typeset -a ver1 ver2
+    typeset v1=$1 v2=$2 sep
+    typeset -a ver1 ver2
 
-  IFS=. read -ra ver1 <<< "$v1"
-  IFS=. read -ra ver2 <<< "$v2"
+    IFS=. read -ra ver1 <<< "$v1"
+    IFS=. read -ra ver2 <<< "$v2"
 
-  _vercmp_r "${#ver1[@]}" "${ver1[@]}" "${ver2[@]}"
+    _vercmp_r "${#ver1[@]}" "${ver1[@]}" "${ver2[@]}"
 }
 
 
