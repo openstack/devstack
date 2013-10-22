@@ -66,12 +66,12 @@ fi
 # Heat
 if [[ "$ENABLED_SERVICES" =~ "heat" ]]; then
     HEAT_USER=$(get_id keystone user-create --name=heat \
-                                              --pass="$SERVICE_PASSWORD" \
-                                              --tenant_id $SERVICE_TENANT \
-                                              --email=heat@example.com)
+        --pass="$SERVICE_PASSWORD" \
+        --tenant_id $SERVICE_TENANT \
+        --email=heat@example.com)
     keystone user-role-add --tenant-id $SERVICE_TENANT \
-                           --user-id $HEAT_USER \
-                           --role-id $SERVICE_ROLE
+        --user-id $HEAT_USER \
+        --role-id $SERVICE_ROLE
     # heat_stack_user role is for users created by Heat
     keystone role-create --name heat_stack_user
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
@@ -126,16 +126,16 @@ fi
 # Ceilometer
 if [[ "$ENABLED_SERVICES" =~ "ceilometer" ]]; then
     CEILOMETER_USER=$(get_id keystone user-create --name=ceilometer \
-                                              --pass="$SERVICE_PASSWORD" \
-                                              --tenant_id $SERVICE_TENANT \
-                                              --email=ceilometer@example.com)
+        --pass="$SERVICE_PASSWORD" \
+        --tenant_id $SERVICE_TENANT \
+        --email=ceilometer@example.com)
     keystone user-role-add --tenant-id $SERVICE_TENANT \
-                           --user-id $CEILOMETER_USER \
-                           --role-id $ADMIN_ROLE
+        --user-id $CEILOMETER_USER \
+        --role-id $ADMIN_ROLE
     # Ceilometer needs ResellerAdmin role to access swift account stats.
     keystone user-role-add --tenant-id $SERVICE_TENANT \
-                           --user-id $CEILOMETER_USER \
-                           --role-id $RESELLER_ROLE
+        --user-id $CEILOMETER_USER \
+        --role-id $RESELLER_ROLE
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         CEILOMETER_SERVICE=$(get_id keystone service-create \
             --name=ceilometer \

@@ -87,31 +87,31 @@ fi
 # Volumes
 # -------
 if is_service_enabled c-vol && ! is_service_enabled n-cell; then
-   VOLUME_ZONE=`euca-describe-availability-zones | head -n1 | cut -f2`
-   die_if_not_set $LINENO VOLUME_ZONE "Failure to find zone for volume"
+    VOLUME_ZONE=`euca-describe-availability-zones | head -n1 | cut -f2`
+    die_if_not_set $LINENO VOLUME_ZONE "Failure to find zone for volume"
 
-   VOLUME=`euca-create-volume -s 1 -z $VOLUME_ZONE | cut -f2`
-   die_if_not_set $LINENO VOLUME "Failure to create volume"
+    VOLUME=`euca-create-volume -s 1 -z $VOLUME_ZONE | cut -f2`
+    die_if_not_set $LINENO VOLUME "Failure to create volume"
 
-   # Test that volume has been created
-   VOLUME=`euca-describe-volumes $VOLUME | cut -f2`
-   die_if_not_set $LINENO VOLUME "Failure to get volume"
+    # Test that volume has been created
+    VOLUME=`euca-describe-volumes $VOLUME | cut -f2`
+    die_if_not_set $LINENO VOLUME "Failure to get volume"
 
-   # Test volume has become available
-   if ! timeout $RUNNING_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -q available; do sleep 1; done"; then
-       die $LINENO "volume didn't become available within $RUNNING_TIMEOUT seconds"
-   fi
+    # Test volume has become available
+    if ! timeout $RUNNING_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -q available; do sleep 1; done"; then
+        die $LINENO "volume didn't become available within $RUNNING_TIMEOUT seconds"
+    fi
 
-   # Attach volume to an instance
-   euca-attach-volume -i $INSTANCE -d $ATTACH_DEVICE $VOLUME || \
-       die $LINENO "Failure attaching volume $VOLUME to $INSTANCE"
-   if ! timeout $ACTIVE_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -A 1 in-use | grep -q attach; do sleep 1; done"; then
-       die $LINENO "Could not attach $VOLUME to $INSTANCE"
-   fi
+    # Attach volume to an instance
+    euca-attach-volume -i $INSTANCE -d $ATTACH_DEVICE $VOLUME || \
+        die $LINENO "Failure attaching volume $VOLUME to $INSTANCE"
+    if ! timeout $ACTIVE_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -A 1 in-use | grep -q attach; do sleep 1; done"; then
+        die $LINENO "Could not attach $VOLUME to $INSTANCE"
+    fi
 
-   # Detach volume from an instance
-   euca-detach-volume $VOLUME || \
-       die $LINENO "Failure detaching volume $VOLUME to $INSTANCE"
+    # Detach volume from an instance
+    euca-detach-volume $VOLUME || \
+        die $LINENO "Failure detaching volume $VOLUME to $INSTANCE"
     if ! timeout $ACTIVE_TIMEOUT sh -c "while ! euca-describe-volumes $VOLUME | grep -q available; do sleep 1; done"; then
         die $LINENO "Could not detach $VOLUME to $INSTANCE"
     fi
@@ -120,7 +120,7 @@ if is_service_enabled c-vol && ! is_service_enabled n-cell; then
     euca-delete-volume $VOLUME || \
         die $LINENO "Failure to delete volume"
     if ! timeout $ACTIVE_TIMEOUT sh -c "while euca-describe-volumes | grep $VOLUME; do sleep 1; done"; then
-       die $LINENO "Could not delete $VOLUME"
+        die $LINENO "Could not delete $VOLUME"
     fi
 else
     echo "Volume Tests Skipped"

@@ -273,12 +273,12 @@ function create_vms {
 }
 
 function ping_ip {
-     # Test agent connection.  Assumes namespaces are disabled, and
-     # that DHCP is in use, but not L3
-     local VM_NAME=$1
-     local NET_NAME=$2
-     IP=$(get_instance_ip $VM_NAME $NET_NAME)
-     ping_check $NET_NAME $IP $BOOT_TIMEOUT
+    # Test agent connection.  Assumes namespaces are disabled, and
+    # that DHCP is in use, but not L3
+    local VM_NAME=$1
+    local NET_NAME=$2
+    IP=$(get_instance_ip $VM_NAME $NET_NAME)
+    ping_check $NET_NAME $IP $BOOT_TIMEOUT
 }
 
 function check_vm {
@@ -330,12 +330,12 @@ function delete_network {
 }
 
 function delete_networks {
-   foreach_tenant_net 'delete_network ${%TENANT%_NAME} %NUM%'
-   #TODO(nati) add secuirty group check after it is implemented
-   # source $TOP_DIR/openrc demo1 demo1
-   # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
-   # source $TOP_DIR/openrc demo2 demo2
-   # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
+    foreach_tenant_net 'delete_network ${%TENANT%_NAME} %NUM%'
+    # TODO(nati) add secuirty group check after it is implemented
+    # source $TOP_DIR/openrc demo1 demo1
+    # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
+    # source $TOP_DIR/openrc demo2 demo2
+    # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
 }
 
 function create_all {

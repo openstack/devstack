@@ -122,16 +122,16 @@ fi
 
 # test empty option
 if ini_has_option test.ini ddd empty; then
-   echo "OK: ddd.empty present"
+    echo "OK: ddd.empty present"
 else
-   echo "ini_has_option failed: ddd.empty not found"
+    echo "ini_has_option failed: ddd.empty not found"
 fi
 
 # test non-empty option
 if ini_has_option test.ini bbb handlers; then
-   echo "OK: bbb.handlers present"
+    echo "OK: bbb.handlers present"
 else
-   echo "ini_has_option failed: bbb.handlers not found"
+    echo "ini_has_option failed: bbb.handlers not found"
 fi
 
 # test changing empty option
