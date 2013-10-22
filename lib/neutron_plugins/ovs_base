@@ -73,13 +73,7 @@ function _neutron_ovs_base_configure_l3_agent() {
 }
 
 function _neutron_ovs_base_configure_nova_vif_driver() {
-    # The hybrid VIF driver needs to be specified when Neutron Security Group
-    # is enabled (until vif_security attributes are supported in VIF extension)
-    if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver"}
-    else
-        NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
-    fi
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
 }
 
 # Restore xtrace
