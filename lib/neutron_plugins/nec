@@ -101,15 +101,15 @@ function _neutron_setup_ovs_tunnels() {
     local id=0
     GRE_LOCAL_IP=${GRE_LOCAL_IP:-$HOST_IP}
     if [ -n "$GRE_REMOTE_IPS" ]; then
-         for ip in ${GRE_REMOTE_IPS//:/ }
-         do
-             if [[ "$ip" == "$GRE_LOCAL_IP" ]]; then
-                 continue
-             fi
-             sudo ovs-vsctl --no-wait add-port $bridge gre$id -- \
-                 set Interface gre$id type=gre options:remote_ip=$ip
-             id=`expr $id + 1`
-         done
+        for ip in ${GRE_REMOTE_IPS//:/ }
+        do
+            if [[ "$ip" == "$GRE_LOCAL_IP" ]]; then
+                continue
+            fi
+            sudo ovs-vsctl --no-wait add-port $bridge gre$id -- \
+                set Interface gre$id type=gre options:remote_ip=$ip
+            id=`expr $id + 1`
+        done
     fi
 }
 

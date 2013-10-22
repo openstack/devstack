@@ -58,13 +58,13 @@ function neutron_plugin_configure_dhcp_agent() {
 }
 
 function neutron_plugin_configure_l3_agent() {
-   # Nicira plugin does not run L3 agent
-   die $LINENO "q-l3 should must not be executed with Nicira plugin!"
+    # Nicira plugin does not run L3 agent
+    die $LINENO "q-l3 should must not be executed with Nicira plugin!"
 }
 
 function neutron_plugin_configure_plugin_agent() {
-   # Nicira plugin does not run L2 agent
-   die $LINENO "q-agt must not be executed with Nicira plugin!"
+    # Nicira plugin does not run L2 agent
+    die $LINENO "q-agt must not be executed with Nicira plugin!"
 }
 
 function neutron_plugin_configure_service() {
