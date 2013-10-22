@@ -55,10 +55,41 @@ def check_indents(line):
             print_error('E003: Indent not multiple of 4', line)
 
 
+def starts_multiline(line):
+    m = re.search("[^<]<<\s*(?P<token>\w+)", line)
+    if m:
+        return m.group('token')
+    else:
+        return False
+
+
+def end_of_multiline(line, token):
+    if token:
+        return re.search("^%s\s*$" % token, line) is not None
+    return False
+
+
 def check_files(files):
+    in_multiline = False
+    logical_line = ""
+    token = False
     for line in fileinput.input(files):
-        check_no_trailing_whitespace(line)
-        check_indents(line)
+        # NOTE(sdague): multiline processing of heredocs is interesting
+        if not in_multiline:
+            logical_line = line
+            token = starts_multiline(line)
+            if token:
+                in_multiline = True
+                continue
+        else:
+            logical_line = logical_line + line
+            if not end_of_multiline(line, token):
+                continue
+            else:
+                in_multiline = False
+
+        check_no_trailing_whitespace(logical_line)
+        check_indents(logical_line)
 
 
 def get_options():
