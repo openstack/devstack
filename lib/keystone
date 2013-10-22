@@ -373,7 +373,7 @@ function start_keystone() {
 
     echo "Waiting for keystone to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -s http://$SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
-      die $LINENO "keystone did not start"
+        die $LINENO "keystone did not start"
     fi
 
     # Start proxies if enabled

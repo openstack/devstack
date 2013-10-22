@@ -66,8 +66,8 @@ function init_trema() {
 
     cp $TREMA_SS_DIR/sliceable_switch_null.conf $TREMA_SS_CONFIG
     sed -i -e "s|^\$apps_dir.*$|\$apps_dir = \"$TREMA_DIR/apps\"|" \
-           -e "s|^\$db_dir.*$|\$db_dir = \"$TREMA_SS_DB_DIR\"|" \
-           $TREMA_SS_CONFIG
+        -e "s|^\$db_dir.*$|\$db_dir = \"$TREMA_SS_DB_DIR\"|" \
+        $TREMA_SS_CONFIG
 }
 
 function gem_install() {

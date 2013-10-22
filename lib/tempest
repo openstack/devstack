@@ -193,7 +193,7 @@ function configure_tempest() {
             # If namespaces are disabled, devstack will create a single
             # public router that tempest should be configured to use.
             public_router_id=$(neutron router-list | awk "/ $Q_ROUTER_NAME / \
-               { print \$2 }")
+                { print \$2 }")
         fi
     fi
 
@@ -328,15 +328,15 @@ function init_tempest() {
     local disk_image="$image_dir/${base_image_name}-blank.img"
     # if the cirros uec downloaded and the system is uec capable
     if [ -f "$kernel" -a -f "$ramdisk" -a -f "$disk_image" -a  "$VIRT_DRIVER" != "openvz" \
-         -a \( "$LIBVIRT_TYPE" != "lxc" -o "$VIRT_DRIVER" != "libvirt" \) ]; then
-       echo "Prepare aki/ari/ami Images"
-       ( #new namespace
-           # tenant:demo ; user: demo
-           source $TOP_DIR/accrc/demo/demo
-           euca-bundle-image -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
-           euca-bundle-image -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
-           euca-bundle-image -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
-       ) 2>&1 </dev/null | cat
+        -a \( "$LIBVIRT_TYPE" != "lxc" -o "$VIRT_DRIVER" != "libvirt" \) ]; then
+        echo "Prepare aki/ari/ami Images"
+        ( #new namespace
+            # tenant:demo ; user: demo
+            source $TOP_DIR/accrc/demo/demo
+            euca-bundle-image -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
+        ) 2>&1 </dev/null | cat
     else
         echo "Boto materials are not prepared"
     fi

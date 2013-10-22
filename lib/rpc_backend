@@ -102,9 +102,9 @@ function install_rpc_backend() {
         if is_fedora; then
             install_package qpid-cpp-server
             if [[ $DISTRO =~ (rhel6) ]]; then
-               # RHEL6 leaves "auth=yes" in /etc/qpidd.conf, it needs to
-               # be no or you get GSS authentication errors as it
-               # attempts to default to this.
+                # RHEL6 leaves "auth=yes" in /etc/qpidd.conf, it needs to
+                # be no or you get GSS authentication errors as it
+                # attempts to default to this.
                 sudo sed -i.bak 's/^auth=yes$/auth=no/' /etc/qpidd.conf
             fi
         elif is_ubuntu; then

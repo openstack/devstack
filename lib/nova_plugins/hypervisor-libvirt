@@ -82,10 +82,10 @@ EOF"
             sudo mkdir -p $rules_dir
             sudo bash -c "cat <<EOF > $rules_dir/50-libvirt-$STACK_USER.rules
 polkit.addRule(function(action, subject) {
-     if (action.id == 'org.libvirt.unix.manage' &&
-         subject.user == '"$STACK_USER"') {
-         return polkit.Result.YES;
-     }
+    if (action.id == 'org.libvirt.unix.manage' &&
+        subject.user == '"$STACK_USER"') {
+        return polkit.Result.YES;
+    }
 });
 EOF"
             unset rules_dir

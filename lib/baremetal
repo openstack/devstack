@@ -256,19 +256,19 @@ function upload_baremetal_deploy() {
 
     # load them into glance
     BM_DEPLOY_KERNEL_ID=$(glance \
-         --os-auth-token $token \
-         --os-image-url http://$GLANCE_HOSTPORT \
-         image-create \
-         --name $BM_DEPLOY_KERNEL \
-         --is-public True --disk-format=aki \
-         < $TOP_DIR/files/$BM_DEPLOY_KERNEL  | grep ' id ' | get_field 2)
+        --os-auth-token $token \
+        --os-image-url http://$GLANCE_HOSTPORT \
+        image-create \
+        --name $BM_DEPLOY_KERNEL \
+        --is-public True --disk-format=aki \
+        < $TOP_DIR/files/$BM_DEPLOY_KERNEL  | grep ' id ' | get_field 2)
     BM_DEPLOY_RAMDISK_ID=$(glance \
-         --os-auth-token $token \
-         --os-image-url http://$GLANCE_HOSTPORT \
-         image-create \
-         --name $BM_DEPLOY_RAMDISK \
-         --is-public True --disk-format=ari \
-         < $TOP_DIR/files/$BM_DEPLOY_RAMDISK  | grep ' id ' | get_field 2)
+        --os-auth-token $token \
+        --os-image-url http://$GLANCE_HOSTPORT \
+        image-create \
+        --name $BM_DEPLOY_RAMDISK \
+        --is-public True --disk-format=ari \
+        < $TOP_DIR/files/$BM_DEPLOY_RAMDISK  | grep ' id ' | get_field 2)
 }
 
 # create a basic baremetal flavor, associated with deploy kernel & ramdisk
@@ -278,11 +278,11 @@ function create_baremetal_flavor() {
     aki=$1
     ari=$2
     nova flavor-create $BM_FLAVOR_NAME $BM_FLAVOR_ID \
-            $BM_FLAVOR_RAM $BM_FLAVOR_ROOT_DISK $BM_FLAVOR_CPU
+        $BM_FLAVOR_RAM $BM_FLAVOR_ROOT_DISK $BM_FLAVOR_CPU
     nova flavor-key $BM_FLAVOR_NAME set \
-            "cpu_arch"="$BM_FLAVOR_ARCH" \
-            "baremetal:deploy_kernel_id"="$aki" \
-            "baremetal:deploy_ramdisk_id"="$ari"
+        "cpu_arch"="$BM_FLAVOR_ARCH" \
+        "baremetal:deploy_kernel_id"="$aki" \
+        "baremetal:deploy_ramdisk_id"="$ari"
 
 }
 
@@ -311,19 +311,19 @@ function extract_and_upload_k_and_r_from_image() {
 
     # load them into glance
     KERNEL_ID=$(glance \
-         --os-auth-token $token \
-         --os-image-url http://$GLANCE_HOSTPORT \
-         image-create \
-         --name $image_name-kernel \
-         --is-public True --disk-format=aki \
-         < $TOP_DIR/files/$OUT_KERNEL | grep ' id ' | get_field 2)
+        --os-auth-token $token \
+        --os-image-url http://$GLANCE_HOSTPORT \
+        image-create \
+        --name $image_name-kernel \
+        --is-public True --disk-format=aki \
+        < $TOP_DIR/files/$OUT_KERNEL | grep ' id ' | get_field 2)
     RAMDISK_ID=$(glance \
-         --os-auth-token $token \
-         --os-image-url http://$GLANCE_HOSTPORT \
-         image-create \
-         --name $image_name-initrd \
-         --is-public True --disk-format=ari \
-         < $TOP_DIR/files/$OUT_RAMDISK | grep ' id ' | get_field 2)
+        --os-auth-token $token \
+        --os-image-url http://$GLANCE_HOSTPORT \
+        image-create \
+        --name $image_name-initrd \
+        --is-public True --disk-format=ari \
+        < $TOP_DIR/files/$OUT_RAMDISK | grep ' id ' | get_field 2)
 }
 
 
@@ -365,11 +365,11 @@ function upload_baremetal_image() {
             mkdir "$xdir"
             tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
             KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             if [[ -z "$IMAGE_NAME" ]]; then
                 IMAGE_NAME=$(basename "$IMAGE" ".img")
             fi
@@ -403,19 +403,19 @@ function upload_baremetal_image() {
             --container-format ari \
             --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
     else
-       # TODO(deva): add support for other image types
-       return
+        # TODO(deva): add support for other image types
+        return
     fi
 
     glance \
-       --os-auth-token $token \
-       --os-image-url http://$GLANCE_HOSTPORT \
-       image-create \
-       --name "${IMAGE_NAME%.img}" --is-public True \
-       --container-format $CONTAINER_FORMAT \
-       --disk-format $DISK_FORMAT \
-       ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} \
-       ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
+        --os-auth-token $token \
+        --os-image-url http://$GLANCE_HOSTPORT \
+        image-create \
+        --name "${IMAGE_NAME%.img}" --is-public True \
+        --container-format $CONTAINER_FORMAT \
+        --disk-format $DISK_FORMAT \
+        ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} \
+        ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
 
     # override DEFAULT_IMAGE_NAME so that tempest can find the image
     # that we just uploaded in glance
@@ -439,15 +439,15 @@ function add_baremetal_node() {
     mac_2=${2:-$BM_SECOND_MAC}
 
     id=$(nova baremetal-node-create \
-       --pm_address="$BM_PM_ADDR" \
-       --pm_user="$BM_PM_USER" \
-       --pm_password="$BM_PM_PASS" \
-       "$BM_HOSTNAME" \
-       "$BM_FLAVOR_CPU" \
-       "$BM_FLAVOR_RAM" \
-       "$BM_FLAVOR_ROOT_DISK" \
-       "$mac_1" \
-       | grep ' id ' | get_field 2 )
+        --pm_address="$BM_PM_ADDR" \
+        --pm_user="$BM_PM_USER" \
+        --pm_password="$BM_PM_PASS" \
+        "$BM_HOSTNAME" \
+        "$BM_FLAVOR_CPU" \
+        "$BM_FLAVOR_RAM" \
+        "$BM_FLAVOR_ROOT_DISK" \
+        "$mac_1" \
+        | grep ' id ' | get_field 2 )
     [ $? -eq 0 ] || [ "$id" ] || die $LINENO "Error adding baremetal node"
     if [ -n "$mac_2" ]; then
         id2=$(nova baremetal-interface-add "$id" "$mac_2" )
