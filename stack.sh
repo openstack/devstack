@@ -843,7 +843,7 @@ init_service_check
 # If enabled, systat has to start early to track OpenStack service startup.
 if is_service_enabled sysstat;then
     if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it sysstat "sar -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
+        screen_it sysstat "cd ; sar -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
     else
         screen_it sysstat "sar $SYSSTAT_INTERVAL"
     fi
