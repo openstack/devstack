@@ -62,7 +62,7 @@ die_if_not_set $LINENO IMAGE "Failure getting image $DOCKER_IMAGE_NAME"
 INSTANCE_TYPE=$(nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1)
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
+    INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
 fi
 
 # Clean-up from previous runs
@@ -102,4 +102,3 @@ set +o xtrace
 echo "*********************************************************************"
 echo "SUCCESS: End DevStack Exercise: $0"
 echo "*********************************************************************"
-
