@@ -11,6 +11,7 @@
 # ``stack.sh`` calls the entry points in this order:
 #
 # install_ironic
+# install_ironicclient
 # configure_ironic
 # init_ironic
 # start_ironic
@@ -27,6 +28,7 @@ set +o xtrace
 
 # Set up default directories
 IRONIC_DIR=$DEST/ironic
+IRONICCLIENT_DIR=$DEST/python-ironicclient
 IRONIC_AUTH_CACHE_DIR=${IRONIC_AUTH_CACHE_DIR:-/var/cache/ironic}
 IRONIC_CONF_DIR=${IRONIC_CONF_DIR:-/etc/ironic}
 IRONIC_CONF_FILE=$IRONIC_CONF_DIR/ironic.conf
@@ -44,6 +46,18 @@ IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:6385}
 
 # Functions
 # ---------
+
+# install_ironic() - Collect source and prepare
+function install_ironic() {
+    git_clone $IRONIC_REPO $IRONIC_DIR $IRONIC_BRANCH
+    setup_develop $IRONIC_DIR
+}
+
+# install_ironicclient() - Collect sources and prepare
+function install_ironicclient() {
+    git_clone $IRONICCLIENT_REPO $IRONICCLIENT_DIR $IRONICCLIENT_BRANCH
+    setup_develop $IRONICCLIENT_DIR
+}
 
 # cleanup_ironic() - Remove residual data files, anything left over from previous
 # runs that would need to clean up.
@@ -168,12 +182,6 @@ function init_ironic() {
 
     # Create keystone artifacts for Ironic.
     create_ironic_accounts
-}
-
-# install_ironic() - Collect source and prepare
-function install_ironic() {
-    git_clone $IRONIC_REPO $IRONIC_DIR $IRONIC_BRANCH
-    setup_develop $IRONIC_DIR
 }
 
 # start_ironic() - Start running processes, including screen
