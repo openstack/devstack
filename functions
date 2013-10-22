@@ -580,7 +580,8 @@ function git_clone {
     if echo $GIT_REF | egrep -q "^refs"; then
         # If our branch name is a gerrit style refs/changes/...
         if [[ ! -d $GIT_DEST ]]; then
-            [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
+            [[ "$ERROR_ON_CLONE" = "True" ]] && \
+                die $LINENO "Cloning not allowed in this configuration"
             git clone $GIT_REMOTE $GIT_DEST
         fi
         cd $GIT_DEST
@@ -588,7 +589,8 @@ function git_clone {
     else
         # do a full clone only if the directory doesn't exist
         if [[ ! -d $GIT_DEST ]]; then
-            [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
+            [[ "$ERROR_ON_CLONE" = "True" ]] && \
+                die $LINENO "Cloning not allowed in this configuration"
             git clone $GIT_REMOTE $GIT_DEST
             cd $GIT_DEST
             # This checkout syntax works for both branches and tags
@@ -612,8 +614,7 @@ function git_clone {
             elif [[ -n "`git show-ref refs/remotes/origin/$GIT_REF`" ]]; then
                 git_update_remote_branch $GIT_REF
             else
-                echo $GIT_REF is neither branch nor tag
-                exit 1
+                die $LINENO "$GIT_REF is neither branch nor tag"
             fi
 
         fi
@@ -1563,7 +1564,6 @@ function _ping_check_novanet() {
         else
             die $LINENO "[Fail] Could ping server"
         fi
-        exit 1
     fi
 }
 
@@ -1576,7 +1576,6 @@ function get_instance_ip(){
     if [[ $ip = "" ]];then
         echo "$nova_result"
         die $LINENO "[Fail] Coudn't get ipaddress of VM"
-        exit 1
     fi
     echo $ip
 }
