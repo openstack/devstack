@@ -10,7 +10,7 @@
 #   [[group-name|file-name]]
 #
 # group-name refers to the group of configuration file changes to be processed
-# at a particular time.  These are called phases in ``stack.sh`` but 
+# at a particular time.  These are called phases in ``stack.sh`` but
 # group here as these functions are not DevStack-specific.
 #
 # file-name is the destination of the config file
@@ -64,12 +64,12 @@ function get_meta_section_files() {
     [[ -r $file ]] || return 0
 
     $CONFIG_AWK_CMD -v matchgroup=$matchgroup '
-      /^\[\[.+\|.*\]\]/ {
-          gsub("[][]", "", $1);
-          split($1, a, "|");
-          if (a[1] == matchgroup)
-              print a[2]
-      }
+        /^\[\[.+\|.*\]\]/ {
+            gsub("[][]", "", $1);
+            split($1, a, "|");
+            if (a[1] == matchgroup)
+                print a[2]
+        }
     ' $file
 }
 
