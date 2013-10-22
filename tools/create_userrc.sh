@@ -105,15 +105,15 @@ if [ -z "$OS_PASSWORD" ]; then
 fi
 
 if [ -z "$OS_TENANT_NAME" -a -z "$OS_TENANT_ID" ]; then
-   export OS_TENANT_NAME=admin
+    export OS_TENANT_NAME=admin
 fi
 
 if [ -z "$OS_USERNAME" ]; then
-   export OS_USERNAME=admin
+    export OS_USERNAME=admin
 fi
 
 if [ -z "$OS_AUTH_URL" ]; then
-   export OS_AUTH_URL=http://localhost:5000/v2.0/
+    export OS_AUTH_URL=http://localhost:5000/v2.0/
 fi
 
 USER_PASS=${USER_PASS:-$OS_PASSWORD}
@@ -249,7 +249,7 @@ if [ $MODE != "create" ]; then
         for user_id_at_name in `keystone user-list --tenant-id $tenant_id | awk 'BEGIN {IGNORECASE = 1} /true[[:space:]]*\|[^|]*\|$/ {print  $2 "@" $4}'`; do
             read user_id user_name <<< `echo "$user_id_at_name" | sed 's/@/ /'`
             if [ $MODE = one -a "$user_name" != "$USER_NAME" ]; then
-               continue;
+                continue;
             fi
             add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
         done

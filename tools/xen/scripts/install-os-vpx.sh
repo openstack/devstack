@@ -42,69 +42,69 @@ EOF
 
 get_params()
 {
-  while getopts "hbn:r:l:t:" OPTION;
-  do
-    case $OPTION in
-      h) usage
-         exit 1
-         ;;
-      n)
-         BRIDGE=$OPTARG
-         ;;
-      l)
-         NAME_LABEL=$OPTARG
-         ;;
-      t)
-         TEMPLATE_NAME=$OPTARG
-         ;;
-      ?)
-         usage
-         exit
-         ;;
-    esac
-  done
-  if [[ -z $BRIDGE ]]
-  then
-     BRIDGE=xenbr0
-  fi
+    while getopts "hbn:r:l:t:" OPTION;
+    do
+        case $OPTION in
+            h) usage
+                exit 1
+                ;;
+            n)
+                BRIDGE=$OPTARG
+                ;;
+            l)
+                NAME_LABEL=$OPTARG
+                ;;
+            t)
+                TEMPLATE_NAME=$OPTARG
+                ;;
+            ?)
+                usage
+                exit
+                ;;
+        esac
+    done
+    if [[ -z $BRIDGE ]]
+    then
+        BRIDGE=xenbr0
+    fi
 
-  if [[ -z $TEMPLATE_NAME ]]; then
-    echo "Please specify a template name" >&2
-    exit 1
-  fi
+    if [[ -z $TEMPLATE_NAME ]]; then
+        echo "Please specify a template name" >&2
+        exit 1
+    fi
 
-  if [[ -z $NAME_LABEL ]]; then
-    echo "Please specify a name-label for the new VM" >&2
-    exit 1
-  fi
+    if [[ -z $NAME_LABEL ]]; then
+        echo "Please specify a name-label for the new VM" >&2
+        exit 1
+    fi
 }
 
 
 xe_min()
 {
-  local cmd="$1"
-  shift
-  xe "$cmd" --minimal "$@"
+    local cmd="$1"
+    shift
+    xe "$cmd" --minimal "$@"
 }
 
 
 find_network()
 {
-  result=$(xe_min network-list bridge="$1")
-  if [ "$result" = "" ]
-  then
-    result=$(xe_min network-list name-label="$1")
-  fi
-  echo "$result"
+    result=$(xe_min network-list bridge="$1")
+    if [ "$result" = "" ]
+    then
+        result=$(xe_min network-list name-label="$1")
+    fi
+    echo "$result"
 }
 
 
 create_vif()
 {
-  local v="$1"
-  echo "Installing VM interface on [$BRIDGE]"
-  local out_network_uuid=$(find_network "$BRIDGE")
-  xe vif-create vm-uuid="$v" network-uuid="$out_network_uuid" device="0"
+    local v="$1"
+    echo "Installing VM interface on [$BRIDGE]"
+    local out_network_uuid=$(find_network "$BRIDGE")
+    xe vif-create vm-uuid="$v" network-uuid="$out_network_uuid" device="0"
 }
 
 
@@ -112,20 +112,20 @@ create_vif()
 # Make the VM auto-start on server boot.
 set_auto_start()
 {
-  local v="$1"
-  xe vm-param-set uuid="$v" other-config:auto_poweron=true
+    local v="$1"
+    xe vm-param-set uuid="$v" other-config:auto_poweron=true
 }
 
 
 destroy_vifs()
 {
-  local v="$1"
-  IFS=,
-  for vif in $(xe_min vif-list vm-uuid="$v")
-  do
-    xe vif-destroy uuid="$vif"
-  done
-  unset IFS
+    local v="$1"
+    IFS=,
+    for vif in $(xe_min vif-list vm-uuid="$v")
+    do
+        xe vif-destroy uuid="$vif"
+    done
+    unset IFS
 }
 
 

@@ -229,8 +229,8 @@ EOF
 
 # (re)start a metadata service
 (
-  pid=`lsof -iTCP@192.168.$GUEST_NETWORK.1:4567 -n | awk '{print $2}' | tail -1`
-  [ -z "$pid" ] || kill -9 $pid
+    pid=`lsof -iTCP@192.168.$GUEST_NETWORK.1:4567 -n | awk '{print $2}' | tail -1`
+    [ -z "$pid" ] || kill -9 $pid
 )
 cd $vm_dir/uec
 python meta.py 192.168.$GUEST_NETWORK.1:4567 &
@@ -268,7 +268,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]; then
     sleep 2
 
     while [ ! -e "$vm_dir/console.log" ]; do
-      sleep 1
+        sleep 1
     done
 
     tail -F $vm_dir/console.log &
