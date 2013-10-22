@@ -69,11 +69,17 @@ function install_xapi_plugins_from {
 }
 
 function get_local_sr {
-    xe sr-list name-label="Local storage" --minimal
+    xe pool-list params=default-SR minimal=true
 }
 
 function get_local_sr_path {
-    echo "/var/run/sr-mount/$(get_local_sr)"
+    pbd_path="/var/run/sr-mount/$(get_local_sr)"
+    pbd_device_config_path=`xe pbd-list sr-uuid=$(get_local_sr) params=device-config | grep " path: "`
+    if [ -n "$pbd_device_config_path" ]; then
+        pbd_uuid=`xe pbd-list sr-uuid=$(get_local_sr) minimal=true`
+        pbd_path=`xe pbd-param-get uuid=$pbd_uuid param-name=device-config param-key=path || echo ""`
+    fi
+    echo $pbd_path
 }
 
 function find_ip_by_name() {
