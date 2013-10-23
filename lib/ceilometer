@@ -137,7 +137,9 @@ function install_ceilometerclient() {
 
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer() {
-    screen_it ceilometer-acompute "cd ; sg $LIBVIRT_GROUP \"ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
+    if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+        screen_it ceilometer-acompute "cd ; sg $LIBVIRT_GROUP \"ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
+    fi
     screen_it ceilometer-acentral "cd ; ceilometer-agent-central --config-file $CEILOMETER_CONF"
     screen_it ceilometer-collector "cd ; ceilometer-collector --config-file $CEILOMETER_CONF"
     screen_it ceilometer-api "cd ; ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
