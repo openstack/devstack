@@ -1,16 +1,17 @@
 # functions - Common functions used by DevStack components
 #
 # The following variables are assumed to be defined by certain functions:
-# ``ENABLED_SERVICES``
-# ``ERROR_ON_CLONE``
-# ``FILES``
-# ``GLANCE_HOSTPORT``
-# ``OFFLINE``
-# ``PIP_DOWNLOAD_CACHE``
-# ``PIP_USE_MIRRORS``
-# ``RECLONE``
-# ``TRACK_DEPENDS``
-# ``http_proxy``, ``https_proxy``, ``no_proxy``
+#
+# - ``ENABLED_SERVICES``
+# - ``ERROR_ON_CLONE``
+# - ``FILES``
+# - ``GLANCE_HOSTPORT``
+# - ``OFFLINE``
+# - ``PIP_DOWNLOAD_CACHE``
+# - ``PIP_USE_MIRRORS``
+# - ``RECLONE``
+# - ``TRACK_DEPENDS``
+# - ``http_proxy``, ``https_proxy``, ``no_proxy``
 
 
 # Save trace setting

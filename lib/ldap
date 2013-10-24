@@ -2,7 +2,8 @@
 # Functions to control the installation and configuration of **ldap**
 
 # ``lib/keystone`` calls the entry points in this order:
-# install_ldap()
+#
+# - install_ldap()
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -91,6 +92,7 @@ function clear_ldap_state() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

@@ -2,15 +2,16 @@
 # Functions to control configuration and operation of apache web server
 
 # Dependencies:
-# ``functions`` file
-# is_apache_enabled_service
-# install_apache_wsgi
-# config_apache_wsgi
-# enable_apache_site
-# disable_apache_site
-# start_apache_server
-# stop_apache_server
-# restart_apache_server
+#
+# - ``functions`` file
+# - is_apache_enabled_service
+# - install_apache_wsgi
+# - config_apache_wsgi
+# - enable_apache_site
+# - disable_apache_site
+# - start_apache_server
+# - stop_apache_server
+# - restart_apache_server
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -116,6 +117,7 @@ function restart_apache_server() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

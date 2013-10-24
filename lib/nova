@@ -2,22 +2,23 @@
 # Functions to control the configuration and operation of the **Nova** service
 
 # Dependencies:
-# ``functions`` file
-# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
-# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
-# ``LIBVIRT_TYPE`` must be defined
-# ``INSTANCE_NAME_PREFIX``, ``VOLUME_NAME_PREFIX`` must be defined
-# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+#
+# - ``functions`` file
+# - ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+# - ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# - ``LIBVIRT_TYPE`` must be defined
+# - ``INSTANCE_NAME_PREFIX``, ``VOLUME_NAME_PREFIX`` must be defined
+# - ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_nova
-# configure_nova
-# create_nova_conf
-# init_nova
-# start_nova
-# stop_nova
-# cleanup_nova
+# - install_nova
+# - configure_nova
+# - create_nova_conf
+# - init_nova
+# - start_nova
+# - stop_nova
+# - cleanup_nova
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -683,6 +684,7 @@ function stop_nova() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

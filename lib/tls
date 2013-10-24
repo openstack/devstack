@@ -1,24 +1,27 @@
 # lib/tls
 # Functions to control the configuration and operation of the TLS proxy service
 
-# Dependencies:
 # !! source _before_ any services that use ``SERVICE_HOST``
-# ``functions`` file
-# ``DEST``, ``DATA_DIR`` must be defined
-# ``HOST_IP``, ``SERVICE_HOST``
-# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+#
+# Dependencies:
+#
+# - ``functions`` file
+# - ``DEST``, ``DATA_DIR`` must be defined
+# - ``HOST_IP``, ``SERVICE_HOST``
+# - ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # Entry points:
-# configure_CA
-# init_CA
+#
+# - configure_CA
+# - init_CA
 
-# configure_proxy
-# start_tls_proxy
+# - configure_proxy
+# - start_tls_proxy
 
-# make_root_ca
-# make_int_ca
-# new_cert $INT_CA_DIR int-server "abc"
-# start_tls_proxy HOST_IP 5000 localhost 5000
+# - make_root_ca
+# - make_int_ca
+# - new_cert $INT_CA_DIR int-server "abc"
+# - start_tls_proxy HOST_IP 5000 localhost 5000
 
 
 # Defaults
@@ -321,6 +324,7 @@ function start_tls_proxy() {
 }
 
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

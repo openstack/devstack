@@ -1,21 +1,20 @@
 # lib/horizon
 # Functions to control the configuration and operation of the horizon service
-# <do not include this template file in ``stack.sh``!>
 
 # Dependencies:
-# ``functions`` file
-# ``apache`` file
-# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
-# <list other global vars that are assumed to be defined>
+#
+# - ``functions`` file
+# - ``apache`` file
+# - ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_horizon
-# configure_horizon
-# init_horizon
-# start_horizon
-# stop_horizon
-# cleanup_horizon
+# - install_horizon
+# - configure_horizon
+# - init_horizon
+# - start_horizon
+# - stop_horizon
+# - cleanup_horizon
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -24,8 +23,6 @@ set +o xtrace
 
 # Defaults
 # --------
-
-# <define global variables here that belong to this project>
 
 # Set up default directories
 HORIZON_DIR=$DEST/horizon
@@ -183,6 +180,7 @@ function stop_horizon() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

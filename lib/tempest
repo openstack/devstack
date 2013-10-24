@@ -2,34 +2,38 @@
 # Install and configure Tempest
 
 # Dependencies:
-# ``functions`` file
-# ``lib/nova`` service is running
-# <list other global vars that are assumed to be defined>
-# - ``DEST``, ``FILES``
-# - ``ADMIN_PASSWORD``
-# - ``DEFAULT_IMAGE_NAME``
-# - ``S3_SERVICE_PORT``
-# - ``SERVICE_HOST``
-# - ``BASE_SQL_CONN`` ``lib/database`` declares
-# - ``PUBLIC_NETWORK_NAME``
-# - ``Q_USE_NAMESPACE``
-# - ``Q_ROUTER_NAME``
-# - ``VIRT_DRIVER``
-# - ``LIBVIRT_TYPE``
-# - ``KEYSTONE_SERVICE_PROTOCOL``, ``KEYSTONE_SERVICE_HOST`` from lib/keystone
+#
+# - ``functions`` file
+# - ``lib/nova`` service is running
+# - Global vars that are assumed to be defined:
+#   - ``DEST``, ``FILES``
+#   - ``ADMIN_PASSWORD``
+#   - ``DEFAULT_IMAGE_NAME``
+#   - ``S3_SERVICE_PORT``
+#   - ``SERVICE_HOST``
+#   - ``BASE_SQL_CONN`` ``lib/database`` declares
+#   - ``PUBLIC_NETWORK_NAME``
+#   - ``Q_USE_NAMESPACE``
+#   - ``Q_ROUTER_NAME``
+#   - ``VIRT_DRIVER``
+#   - ``LIBVIRT_TYPE``
+#   - ``KEYSTONE_SERVICE_PROTOCOL``, ``KEYSTONE_SERVICE_HOST`` from lib/keystone
+#
 # Optional Dependencies:
-# ALT_* (similar vars exists in keystone_data.sh)
-# ``LIVE_MIGRATION_AVAILABLE``
-# ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
-# ``DEFAULT_INSTANCE_TYPE``
-# ``DEFAULT_INSTANCE_USER``
-# ``CINDER_MULTI_LVM_BACKEND``
-# ``HEAT_CREATE_TEST_IMAGE``
+#
+# - ``ALT_*`` (similar vars exists in keystone_data.sh)
+# - ``LIVE_MIGRATION_AVAILABLE``
+# - ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
+# - ``DEFAULT_INSTANCE_TYPE``
+# - ``DEFAULT_INSTANCE_USER``
+# - ``CINDER_MULTI_LVM_BACKEND``
+# - ``HEAT_CREATE_TEST_IMAGE``
+#
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_tempest
-# configure_tempest
-# init_tempest
+# - install_tempest
+# - configure_tempest
+# - init_tempest
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -345,6 +349,7 @@ function init_tempest() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

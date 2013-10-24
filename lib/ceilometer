@@ -10,6 +10,7 @@
 #   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
 
 # Dependencies:
+#
 # - functions
 # - OS_AUTH_URL for auth in api
 # - DEST set to the destination directory
@@ -18,12 +19,12 @@
 
 # stack.sh
 # ---------
-# install_ceilometer
-# configure_ceilometer
-# init_ceilometer
-# start_ceilometer
-# stop_ceilometer
-# cleanup_ceilometer
+# - install_ceilometer
+# - configure_ceilometer
+# - init_ceilometer
+# - start_ceilometer
+# - stop_ceilometer
+# - cleanup_ceilometer
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -156,6 +157,7 @@ function stop_ceilometer() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

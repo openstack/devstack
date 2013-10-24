@@ -6,11 +6,12 @@
 # pre-released versions of oslo libraries.
 
 # Dependencies:
-# ``functions`` file
+#
+# - ``functions`` file
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_oslo
+# - install_oslo
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -52,6 +53,7 @@ function cleanup_oslo() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

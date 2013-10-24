@@ -3,12 +3,13 @@
 # **aggregates.sh**
 
 # This script demonstrates how to use host aggregates:
-#  *  Create an Aggregate
-#  *  Updating Aggregate details
-#  *  Testing Aggregate metadata
-#  *  Testing Aggregate delete
-#  *  Testing General Aggregates (https://blueprints.launchpad.net/nova/+spec/general-host-aggregates)
-#  *  Testing add/remove hosts (with one host)
+#
+# *  Create an Aggregate
+# *  Updating Aggregate details
+# *  Testing Aggregate metadata
+# *  Testing Aggregate delete
+# *  Testing General Aggregates (https://blueprints.launchpad.net/nova/+spec/general-host-aggregates)
+# *  Testing add/remove hosts (with one host)
 
 echo "**************************************************"
 echo "Begin DevStack Exercise: $0"
