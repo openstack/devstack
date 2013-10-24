@@ -1257,9 +1257,18 @@ function setup_develop() {
     # ensure that further actions can do things like setup.py sdist
     safe_chown -R $STACK_USER $1/*.egg-info
 
-    # Undo requirements changes, if we made them
-    if [ $update_requirements -eq 0 ]; then
-         (cd $project_dir && git reset --hard)
+    # We've just gone and possibly modified the user's source tree in an
+    # automated way, which is considered bad form if it's a development
+    # tree because we've screwed up their next git checkin. So undo it.
+    #
+    # However... there are some circumstances, like running in the gate
+    # where we really really want the overridden version to stick. So provide
+    # a variable that tells us whether or not we should UNDO the requirements
+    # changes (this will be set to False in the OpenStack ci gate)
+    if [ $UNDO_REQUIREMENTS = "True"]; then
+        if [ $update_requirements -eq 0 ]; then
+            (cd $project_dir && git reset --hard)
+        fi
     fi
 }
 
