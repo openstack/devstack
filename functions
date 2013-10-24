@@ -1395,9 +1395,9 @@ function upload_image() {
             rm -Rf "$xdir";
             mkdir "$xdir"
             tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
-            KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
+            KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image "$xdir/"vmlinuz*; do
                 [ -f "$f" ] && echo "$f" && break; done; true)
-            RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
+            RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image "$xdir/"initrd*; do
                 [ -f "$f" ] && echo "$f" && break; done; true)
             IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
                 [ -f "$f" ] && echo "$f" && break; done; true)
