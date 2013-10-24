@@ -91,8 +91,9 @@ fi
 # Assumption is we are now in the DevStack repo workspace to be processed
 
 # Pull the latest docs branch from devstack.org repo
-rm -rf docs || true
-git clone -b gh-pages $GH_PAGES_REPO docs
+if ! [ -d docs ]; then
+    git clone -b gh-pages $GH_PAGES_REPO docs
+fi
 
 # Build list of scripts to process
 FILES=""
