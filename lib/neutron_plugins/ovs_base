@@ -73,7 +73,7 @@ function _neutron_ovs_base_configure_l3_agent() {
 }
 
 function _neutron_ovs_base_configure_nova_vif_driver() {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+    :
 }
 
 # Restore xtrace

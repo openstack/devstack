@@ -9,7 +9,7 @@ source $TOP_DIR/lib/neutron_plugins/ovs_base
 source $TOP_DIR/lib/neutron_thirdparty/bigswitch_floodlight     # for third party service specific configuration values
 
 function neutron_plugin_create_nova_conf() {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+    :
 }
 
 function neutron_plugin_install_agent_packages() {
