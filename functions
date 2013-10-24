@@ -1259,7 +1259,7 @@ function setup_develop() {
 
     # Undo requirements changes, if we made them
     if [ $update_requirements -eq 0 ]; then
-        (cd $project_dir && git checkout -- requirements.txt test-requirements.txt setup.py)
+         (cd $project_dir && git reset --hard)
     fi
 }
 
