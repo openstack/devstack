@@ -1,0 +1,3238 @@
+diff --git nova/network/model.py nova/network/model.py
+index e11bfeb..a004cb4 100644
+--- nova/network/model.py
++++ nova/network/model.py
+@@ -38,6 +38,7 @@ VIF_TYPE_802_QBG = '802.1qbg'
+ VIF_TYPE_802_QBH = '802.1qbh'
+ VIF_TYPE_MLNX_DIRECT = 'mlnx_direct'
+ VIF_TYPE_MIDONET = 'midonet'
++VIF_TYPE_CONTRAIL = 'contrail'
+ VIF_TYPE_OTHER = 'other'
+ 
+ # Constant for max length of network interface names
+diff --git nova/virt/libvirt/vif.py nova/virt/libvirt/vif.py
+index 3e4004a..340b2fa 100644
+--- nova/virt/libvirt/vif.py
++++ nova/virt/libvirt/vif.py
+@@ -312,6 +312,17 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+ 
+         return conf
+ 
++    def get_config_contrail(self, instance, vif, image_meta,
++                            inst_type):
++        conf = super(LibvirtGenericVIFDriver,
++                     self).get_config(instance, vif,
++                                      image_meta, inst_type)
++
++        dev = self.get_vif_devname(vif)
++        designer.set_vif_host_backend_ethernet_config(conf, dev)
++
++        return conf
++
+     def get_config_mlnx_direct(self, instance, vif, image_meta,
+                                inst_type):
+         conf = super(LibvirtGenericVIFDriver,
+@@ -375,6 +386,11 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+                                            vif,
+                                            image_meta,
+                                            inst_type)
++        elif vif_type == network_model.VIF_TYPE_CONTRAIL:
++            return self.get_config_contrail(instance,
++                                            vif,
++                                            image_meta,
++                                            inst_type)
+         else:
+             raise exception.NovaException(
+                 _("Unexpected vif_type=%s") % vif_type)
+@@ -567,6 +583,28 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+         except exception.ProcessExecutionError:
+             LOG.exception(_("Failed while plugging vif"), instance=instance)
+ 
++    def plug_contrail(self, instance, vif):
++        """Plug using Contrail Driver
++        """
++        super(LibvirtGenericVIFDriver,
++              self).plug(instance, vif)
++        dev = self.get_vif_devname(vif)
++        linux_net.create_tap_dev(dev)
++        iface_id = vif['id']
++        from nova.virt import netutils
++        net, prefix_len=netutils.get_net_and_prefixlen(vif['network']['subnets'][0]['cidr'])
++        import sys
++        sys.path.append('/opt/stack/nova/plugins/contrail')
++        from config_parser import ContrailVifUpdate
++        ContrailVifUpdate(vif['id'],
++                          dev, vif['network']['subnets'][0]['ips'][0]['address'],
++                          instance['uuid'], vif['network']['id'],
++                          vif['address'],
++                          instance['display_name'],
++                          instance['hostname'],
++                          instance['host'],
++                          prefix_len)
++
+     def plug(self, instance, vif):
+         vif_type = vif['type']
+ 
+@@ -574,7 +612,6 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+                     'vif=%(vif)s'),
+                   {'vif_type': vif_type, 'instance': instance,
+                    'vif': vif})
+-
+         if vif_type is None:
+             raise exception.NovaException(
+                 _("vif_type parameter must be present "
+@@ -595,6 +632,8 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+             self.plug_mlnx_direct(instance, vif)
+         elif vif_type == network_model.VIF_TYPE_MIDONET:
+             self.plug_midonet(instance, vif)
++        elif vif_type == network_model.VIF_TYPE_CONTRAIL:
++            self.plug_contrail(instance, vif)
+         else:
+             raise exception.NovaException(
+                 _("Unexpected vif_type=%s") % vif_type)
+@@ -746,6 +785,18 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+         except exception.ProcessExecutionError:
+             LOG.exception(_("Failed while unplugging vif"), instance=instance)
+ 
++    def unplug_contrail(self, instance, vif):
++        """Unplug using Contrail Driver
++        """
++        super(LibvirtGenericVIFDriver,
++              self).unplug(instance, vif)
++        dev = self.get_vif_devname(vif)
++        import sys
++        sys.path.append('/opt/stack/nova/plugins/contrail')
++        from config_parser import ContrailVifDelete
++        ContrailVifDelete(vif['id'])
++        linux_net.delete_net_dev(dev)
++
+     def unplug(self, instance, vif):
+         vif_type = vif['type']
+ 
+@@ -770,6 +821,8 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+             self.unplug_ivs(instance, vif)
+         elif vif_type == network_model.VIF_TYPE_IOVISOR:
+             self.unplug_iovisor(instance, vif)
++        elif vif_type == network_model.VIF_TYPE_CONTRAIL:
++            self.unplug_contrail(instance, vif)
+         elif vif_type == network_model.VIF_TYPE_MLNX_DIRECT:
+             self.unplug_mlnx_direct(instance, vif)
+         elif vif_type == network_model.VIF_TYPE_MIDONET:
+diff --git plugins/contrail/config_parser.py plugins/contrail/config_parser.py
+new file mode 100644
+index 0000000..043b77c
+--- /dev/null
++++ plugins/contrail/config_parser.py
+@@ -0,0 +1,116 @@
++import os
++import sys
++import cgitb
++import argparse
++
++VIF_DIR = '/opt/stack/nova/plugins/contrail/vif/'
++
++class ContrailVifDelete(object):
++     def __init__(self, port_id):
++          if os.path.exists(VIF_DIR+port_id):
++               os.remove(VIF_DIR+port_id)
++     #end __init__
++# end ContrailVifDelete
++
++class ContrailVifUpdate(object):
++     def __init__(self, port_id, tap_name, ip_address, instance_id, vn_id, mac_address, display_name,
++                  hostname, host, prefix_len):
++          try:
++               os.makedirs(VIF_DIR)
++          except OSError:
++               if os.path.exists(VIF_DIR):
++                    pass
++               else:
++                    raise
++          self.__update_vif(port_id, tap_name, 
++                            ip_address, instance_id, 
++                            vn_id, mac_address, display_name, 
++                            hostname, host, prefix_len)
++          
++     # end __init__
++
++     def __update_vif(self, port_id, tap_name, 
++                     ip_address, instance_id, 
++                     vn_id, mac_address, 
++                     display_name,
++                     hostname,
++                     host, prefix_len):
++          if (port_id and tap_name and
++              ip_address and instance_id and
++              vn_id and mac_address and
++              host and prefix_len):
++               import ConfigParser
++               config = ConfigParser.RawConfigParser()
++               config.add_section('Vif')
++               config.set('Vif', 'port_id', port_id)
++               config.set('Vif', 'tap_name', tap_name)
++               config.set('Vif', 'ip_address', ip_address)
++               config.set('Vif', 'instance_id', instance_id)
++               config.set('Vif', 'vn_id', vn_id)
++               config.set('Vif', 'mac_address', mac_address)
++               config.set('Vif', 'display_name', display_name)
++               config.set('Vif', 'hostname',  hostname)
++               config.set('Vif', 'host', host)
++               config.set('Vif', 'prefix_len', prefix_len)
++               with open(VIF_DIR + port_id, 'wb') as configfile:
++                    config.write(configfile)
++               
++      # end __update_vif
++# end ContrailVifUpdate
++
++def update_vif_file(args):
++     #import pdb; pdb.set_trace()
++     if (args.port_id and args.tap_name and
++         args.ip_address and args.instance_id and
++         args.vn_id and args.mac_address and
++         args.host and args.prefix_len):
++          ContrailVifUpdate(args.port_id, args.tap_name, 
++                            args.ip_address, args.instance_id, 
++                            args.vn_id, args.mac_address, args.display_name,
++                            args.hostname, args.host, args.prefix_len)
++              
++# end update_vif_file
++
++def parse_args(args_str):
++    '''
++    '''
++    # Source any specified config/ini file
++    # Turn off help, so we      all options in response to -h
++    conf_parser = argparse.ArgumentParser(add_help=False)
++    args, remaining_argv = conf_parser.parse_known_args(args_str.split())
++    parser = argparse.ArgumentParser(
++        # Inherit options from config_parser
++        parents=[conf_parser],
++        # print script description with -h/--help
++        description=__doc__,
++        # Don't mess with format of description
++        formatter_class=argparse.RawDescriptionHelpFormatter,
++    )
++    #defaults.update(secopts)
++    #defaults.update(ksopts)
++    #parser.set_defaults(**defaults)
++
++    parser.add_argument("--port_id", help = "port id")
++    parser.add_argument("--tap_name", help = "tap_name")
++    parser.add_argument("--ip_address", help = "ip_address")
++    parser.add_argument("--instance_id", help = "instance_id")
++    parser.add_argument("--vn_id", help = "vn_id")
++    parser.add_argument("--mac_address", help = "mac_address")
++    parser.add_argument("--display_name", help = "display_name")
++    parser.add_argument("--hostname", help = "hostname")
++    parser.add_argument("--host", help = "host")
++    parser.add_argument("--prefix_len", help = "prefix_len")
++    args = parser.parse_args(remaining_argv)
++    update_vif_file(args)
++# end parse_args
++
++def main(args_str=None):
++     #import pdb; pdb.set_trace()
++     if not args_str:
++          args_str = ' '.join(sys.argv[1:])
++          args = parse_args(args_str)
++# end main
++          
++if __name__ == '__main__':
++     cgitb.enable(format='text')
++     main()
+diff --git plugins/contrail/contrail_vif.py plugins/contrail/contrail_vif.py
+new file mode 100644
+index 0000000..7d004a0
+--- /dev/null
++++ plugins/contrail/contrail_vif.py
+@@ -0,0 +1,298 @@
++#
++# Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
++#
++
++"""
++contril vif plug, communicate with contrail agent
++"""
++import os
++import pyinotify
++import sys
++import socket
++import cgitb
++from nova import utils
++from nova import exception
++from nova.openstack.common import log as logging
++from pyinotify import WatchManager, Notifier, ThreadedNotifier, EventsCodes, ProcessEvent
++import gevent
++from gevent import monkey; monkey.patch_time()
++
++LOG = logging.getLogger(__name__)
++
++'''
++struct Port {
++    1:required tuuid port_id,
++    2:required tuuid instance_id,
++    3:required string tap_name,
++    4:required string ip_address,
++    5:required tuuid vn_id,
++    6:required string mac_address,
++    7:optional string display_name,
++    8:optional string hostname,
++    9:optional string host;
++    10: optional byte prefix_len;
++}
++'''
++
++class ContrailVifPlug(object):
++    ""
++    ""
++    def __init__(self):
++        self._agent_alive = False
++        self._agent_connected = False
++        self._port_dict = {}
++        self._protocol = None
++        self._notifier = None
++    #end __init__
++
++    def _agent_connect(self, protocol):
++        # Agent connect for first time
++        if protocol != None:
++            from instance_service import InstanceService
++	    service = InstanceService.Client(protocol)
++	    return service.Connect()
++        else:
++            return False
++    #end __agent_connect
++
++    def _keep_alive(self):
++        try:
++            if self._agent_alive == False:
++                self._protocol = self._agent_conn_open()
++                if self._protocol == None:
++                    return
++            from instance_service import InstanceService
++            service = InstanceService.Client(self._protocol)
++            aa_latest = service.KeepAliveCheck()
++            if self._agent_alive == False and aa_latest == True:
++                port_l = [v for k, v in self._port_dict.iteritems()]
++                service.AddPort(port_l)
++                self._agent_alive = True
++                return
++            if self._agent_alive == True and aa_latest == False:
++                self._agent_alive = False
++                return
++        except:
++            self._agent_alive = False
++    #end _keep_alive
++
++    def _agent_conn_open(self):
++        import socket
++        import sys
++        import uuid
++        from thrift.transport import TTransport, TSocket
++        from thrift.transport.TTransport import TTransportException
++        from thrift.protocol import TBinaryProtocol, TProtocol
++        from instance_service import InstanceService
++        from instance_service import ttypes
++        try:
++            socket = TSocket.TSocket("127.0.0.1", 9090)
++            transport = TTransport.TFramedTransport(socket)
++            transport.open()
++            protocol = TBinaryProtocol.TBinaryProtocol(transport)
++            self._agent_connected = self._agent_connect(protocol)
++            return protocol
++        except TTransportException:
++            return None
++    #end _agent_conn_open
++
++    def get_dev_name(self, iface_id):
++        return "tap" + iface_id[0:11]
++    #end get_dev_name
++
++    def _convert_to_bl(self, id):
++        import uuid
++        hexstr = uuid.UUID(id).hex
++        return [int(hexstr[i:i+2], 16) for i in range(32) if i%2 == 0]
++    #end _convert_to_bl
++
++    def _agent_inform_port_add(self, port, port_id):
++        # First add to the port list
++        self._port_dict[port_id] = port
++        if not self._agent_alive:
++            return
++        from instance_service import InstanceService
++        import socket
++        try:
++            service = InstanceService.Client(self._protocol)
++            service.AddPort([port])
++        except:
++            self._agent_alive = False
++    #end _agent_inform_port_add
++
++    def _agent_inform_port_delete(self, port_id):
++        # First add to the port list
++        if port_id in self._port_dict:
++            del_port_id = self._port_dict[port_id].port_id
++            del self._port_dict[port_id]
++        if not self._agent_alive:
++            return
++        from instance_service import InstanceService
++        import socket
++        try:
++            service = InstanceService.Client(self._protocol)
++            service.DeletePort(del_port_id)
++        except:
++            self._agent_alive = False
++    #end _agent_inform_port_delete
++
++
++#end class ContrailVifPlug
++
++def launch_interval_looping(contrail_vif_plug):
++    while True:
++        contrail_vif_plug._keep_alive()
++        gevent.sleep(2)
++#end launch_internal_looping
++
++
++class ContrailVifDir(ProcessEvent):
++    def __init__(self, contrail_vif, vif_dir):
++        self._create_port_list(contrail_vif, vif_dir)
++        self._contrail_vif_plug = contrail_vif
++    #end __init__
++
++    def _convert_to_bl(self, id):
++        import uuid
++        hexstr = uuid.UUID(id).hex
++        return [int(hexstr[i:i+2], 16) for i in range(32) if i%2 == 0]
++    #end _convert_to_bl
++
++    def _create_port_list(self, contrail_vif, vif_dir):
++        import os
++        files = [f for f in os.listdir(vif_dir) if os.path.isfile(os.path.join(vif_dir,f))]
++        for f in files:
++            print f
++            file_name = os.path.join(vif_dir, f)
++            port, port_id = self._read_port_info_from_file(file_name)
++            if port is not None:
++                contrail_vif._agent_inform_port_add(port, port_id)
++    #end create_port_list
++
++    def _get_port_info(self, config):
++        import ConfigParser
++        #import pdb; pdb.set_trace()
++        from instance_service import ttypes
++        try:
++           vif = 'Vif'
++           port = ttypes.Port(self._convert_to_bl(config.get(vif, 'port_id')),
++                              self._convert_to_bl(config.get(vif, 'instance_id')),
++                              config.get(vif, 'tap_name'),
++                              config.get(vif, 'ip_address'),
++                              self._convert_to_bl(config.get(vif, 'vn_id')),
++                              config.get(vif, 'mac_address'),
++                              config.get(vif, 'display_name'),
++                              config.get(vif, 'hostname'),
++                              config.get(vif, 'host'))
++           #print config.get(vif, 'prefix_len')
++           return port
++        except:
++           return None
++
++    def _print_port_info(self, config):
++        import ConfigParser
++        try:
++           vif = 'Vif'
++           print config.get(vif, 'port_id')
++           print config.get(vif, 'instance_id')
++           print config.get(vif, 'tap_name')
++           print config.get(vif, 'ip_address')
++           print config.get(vif, 'vn_id')
++       	   print config.get(vif, 'mac_address')
++           print config.get(vif, 'display_name')
++           print config.get(vif, 'hostname')
++           print config.get(vif, 'host')
++           print config.get(vif, 'prefix_len')
++        except:
++           return
++    #end __print_port_into
++
++    def _read_port_info_from_file(self, file_name):
++        import ConfigParser
++        config = ConfigParser.ConfigParser()
++        config.read(file_name)
++        self._print_port_info(config)
++        port = self._get_port_info(config)
++        if port is not None:
++            return port, config.get('Vif', 'port_id')
++        else:
++            return None, None
++    #end _read_port_info_from_file
++
++    def _is_allowed(self, file_name):
++        ret = True
++        if (file_name[0] == '.' or file_name[-1] == '~'):
++            ret = False
++        return ret
++    #end _is_allowed
++
++    def process_IN_CREATE(self, event):
++        file_name = os.path.join(event.path, event.name)
++        if not self._is_allowed(event.name):
++            return
++        print "Create: %s" %  file_name
++        port, port_id = self._read_port_info_from_file(file_name)
++        if port is not None:
++           print "In create: %s" % port.tap_name
++           self._contrail_vif_plug._agent_inform_port_add(port, port_id)
++           
++    #end process_IN_CREATE
++
++    def process_IN_DELETE(self, event):
++        if not self._is_allowed(event.name):
++            return
++        print "Remove: %s" %  os.path.join(event.path, event.name)
++        file_name = os.path.join(event.path, event.name)
++        #import pdb; pdb.set_trace()
++        if self._is_allowed(event.name):
++            self._contrail_vif_plug._agent_inform_port_delete(event.name)
++            return
++        
++    #end process_IN_DELETE
++
++    def process_IN_MODIFY(self, event):
++        if not self._is_allowed(event.name):
++            return
++        file_name = os.path.join(event.path, event.name)
++        print "Modify: %s" % file_name
++        port, port_id = self._read_port_info_from_file(file_name)
++        if port is not None:
++            print "In modify %s" % port.tap_name
++            self._contrail_vif_plug._agent_inform_port_add(port, port_id)
++    #end process_IN_MODIFY
++#end ContrilVifDir
++
++
++VIF_DIR = '/opt/stack/nova/plugins/contrail/vif'
++def contrail_vif_dir_monitor(contrail_vif_plug):
++    #import pdb; pdb.set_trace()
++    wm = WatchManager()
++    notifier = pyinotify.ThreadedNotifier(wm, ContrailVifDir(contrail_vif_plug, VIF_DIR))
++    contrail_vif_plug._notifier = notifier
++    # watched events
++    mask = pyinotify.IN_DELETE | \
++           pyinotify.IN_CREATE | \
++           pyinotify.IN_MODIFY | \
++           pyinotify.IN_ISDIR
++    wm.add_watch(VIF_DIR, mask, quiet=False)
++    notifier.start()
++#end contrail_vif_dir_monitor
++
++def main(args_str = None):
++    try:
++        os.makedirs(VIF_DIR)
++    except OSError:
++        if os.path.exists(VIF_DIR):
++            pass
++        else:
++            raise
++    contrail_vif_plug = ContrailVifPlug()
++    contrail_vif_dir_monitor_task = gevent.spawn(contrail_vif_dir_monitor, contrail_vif_plug)
++    #import pdb; pdb.set_trace()
++    contrail_timer_task = gevent.spawn(launch_interval_looping, contrail_vif_plug)
++    gevent.joinall([contrail_timer_task, contrail_vif_dir_monitor_task])
++#end main
++    
++if __name__ == '__main__':
++    cgitb.enable(format='text')
++    main()
+diff --git plugins/contrail/instance_service/InstanceService-remote plugins/contrail/instance_service/InstanceService-remote
+new file mode 100644
+index 0000000..76626d4
+--- /dev/null
++++ plugins/contrail/instance_service/InstanceService-remote
+@@ -0,0 +1,165 @@
++#!/usr/bin/env python
++#
++# Autogenerated by Thrift Compiler (0.8.0)
++#
++# DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
++#
++#  options string: py
++#
++
++import sys
++import pprint
++from urlparse import urlparse
++from thrift.transport import TTransport
++from thrift.transport import TSocket
++from thrift.transport import THttpClient
++from thrift.protocol import TBinaryProtocol
++
++import InstanceService
++from ttypes import *
++
++if len(sys.argv) <= 1 or sys.argv[1] == '--help':
++  print ''
++  print 'Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]'
++  print ''
++  print 'Functions:'
++  print '  bool AddPort(PortList port_list)'
++  print '  bool KeepAliveCheck()'
++  print '  bool Connect()'
++  print '  bool DeletePort(tuuid port_id)'
++  print '  bool TunnelNHEntryAdd(string src_ip, string dst_ip, string vrf_name)'
++  print '  bool TunnelNHEntryDelete(string src_ip, string dst_ip, string vrf_name)'
++  print '  bool RouteEntryAdd(string ip_address, string gw_ip, string vrf_name, string label)'
++  print '  bool RouteEntryDelete(string ip_address, string vrf_name)'
++  print '  bool AddHostRoute(string ip_address, string vrf_name)'
++  print '  bool AddLocalVmRoute(string ip_address, string intf_uuid, string vrf_name, string label)'
++  print '  bool AddRemoteVmRoute(string ip_address, string gw_ip, string vrf_name, string label)'
++  print '  bool CreateVrf(string vrf_name)'
++  print ''
++  sys.exit(0)
++
++pp = pprint.PrettyPrinter(indent = 2)
++host = 'localhost'
++port = 9090
++uri = ''
++framed = False
++http = False
++argi = 1
++
++if sys.argv[argi] == '-h':
++  parts = sys.argv[argi+1].split(':')
++  host = parts[0]
++  if len(parts) > 1:
++    port = int(parts[1])
++  argi += 2
++
++if sys.argv[argi] == '-u':
++  url = urlparse(sys.argv[argi+1])
++  parts = url[1].split(':')
++  host = parts[0]
++  if len(parts) > 1:
++    port = int(parts[1])
++  else:
++    port = 80
++  uri = url[2]
++  if url[4]:
++    uri += '?%s' % url[4]
++  http = True
++  argi += 2
++
++if sys.argv[argi] == '-f' or sys.argv[argi] == '-framed':
++  framed = True
++  argi += 1
++
++cmd = sys.argv[argi]
++args = sys.argv[argi+1:]
++
++if http:
++  transport = THttpClient.THttpClient(host, port, uri)
++else:
++  socket = TSocket.TSocket(host, port)
++  if framed:
++    transport = TTransport.TFramedTransport(socket)
++  else:
++    transport = TTransport.TBufferedTransport(socket)
++protocol = TBinaryProtocol.TBinaryProtocol(transport)
++client = InstanceService.Client(protocol)
++transport.open()
++
++if cmd == 'AddPort':
++  if len(args) != 1:
++    print 'AddPort requires 1 args'
++    sys.exit(1)
++  pp.pprint(client.AddPort(eval(args[0]),))
++
++elif cmd == 'KeepAliveCheck':
++  if len(args) != 0:
++    print 'KeepAliveCheck requires 0 args'
++    sys.exit(1)
++  pp.pprint(client.KeepAliveCheck())
++
++elif cmd == 'Connect':
++  if len(args) != 0:
++    print 'Connect requires 0 args'
++    sys.exit(1)
++  pp.pprint(client.Connect())
++
++elif cmd == 'DeletePort':
++  if len(args) != 1:
++    print 'DeletePort requires 1 args'
++    sys.exit(1)
++  pp.pprint(client.DeletePort(eval(args[0]),))
++
++elif cmd == 'TunnelNHEntryAdd':
++  if len(args) != 3:
++    print 'TunnelNHEntryAdd requires 3 args'
++    sys.exit(1)
++  pp.pprint(client.TunnelNHEntryAdd(args[0],args[1],args[2],))
++
++elif cmd == 'TunnelNHEntryDelete':
++  if len(args) != 3:
++    print 'TunnelNHEntryDelete requires 3 args'
++    sys.exit(1)
++  pp.pprint(client.TunnelNHEntryDelete(args[0],args[1],args[2],))
++
++elif cmd == 'RouteEntryAdd':
++  if len(args) != 4:
++    print 'RouteEntryAdd requires 4 args'
++    sys.exit(1)
++  pp.pprint(client.RouteEntryAdd(args[0],args[1],args[2],args[3],))
++
++elif cmd == 'RouteEntryDelete':
++  if len(args) != 2:
++    print 'RouteEntryDelete requires 2 args'
++    sys.exit(1)
++  pp.pprint(client.RouteEntryDelete(args[0],args[1],))
++
++elif cmd == 'AddHostRoute':
++  if len(args) != 2:
++    print 'AddHostRoute requires 2 args'
++    sys.exit(1)
++  pp.pprint(client.AddHostRoute(args[0],args[1],))
++
++elif cmd == 'AddLocalVmRoute':
++  if len(args) != 4:
++    print 'AddLocalVmRoute requires 4 args'
++    sys.exit(1)
++  pp.pprint(client.AddLocalVmRoute(args[0],args[1],args[2],args[3],))
++
++elif cmd == 'AddRemoteVmRoute':
++  if len(args) != 4:
++    print 'AddRemoteVmRoute requires 4 args'
++    sys.exit(1)
++  pp.pprint(client.AddRemoteVmRoute(args[0],args[1],args[2],args[3],))
++
++elif cmd == 'CreateVrf':
++  if len(args) != 1:
++    print 'CreateVrf requires 1 args'
++    sys.exit(1)
++  pp.pprint(client.CreateVrf(args[0],))
++
++else:
++  print 'Unrecognized method %s' % cmd
++  sys.exit(1)
++
++transport.close()
+diff --git plugins/contrail/instance_service/InstanceService.py plugins/contrail/instance_service/InstanceService.py
+new file mode 100644
+index 0000000..2219045
+--- /dev/null
++++ plugins/contrail/instance_service/InstanceService.py
+@@ -0,0 +1,2275 @@
++#
++# Autogenerated by Thrift Compiler (0.8.0)
++#
++# DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
++#
++#  options string: py
++#
++
++from thrift.Thrift import TType, TMessageType, TException
++from ttypes import *
++from thrift.Thrift import TProcessor
++from thrift.transport import TTransport
++from thrift.protocol import TBinaryProtocol, TProtocol
++try:
++  from thrift.protocol import fastbinary
++except:
++  fastbinary = None
++
++
++class Iface:
++  def AddPort(self, port_list):
++    """
++    Parameters:
++     - port_list
++    """
++    pass
++
++  def KeepAliveCheck(self, ):
++    pass
++
++  def Connect(self, ):
++    pass
++
++  def DeletePort(self, port_id):
++    """
++    Parameters:
++     - port_id
++    """
++    pass
++
++  def TunnelNHEntryAdd(self, src_ip, dst_ip, vrf_name):
++    """
++    Parameters:
++     - src_ip
++     - dst_ip
++     - vrf_name
++    """
++    pass
++
++  def TunnelNHEntryDelete(self, src_ip, dst_ip, vrf_name):
++    """
++    Parameters:
++     - src_ip
++     - dst_ip
++     - vrf_name
++    """
++    pass
++
++  def RouteEntryAdd(self, ip_address, gw_ip, vrf_name, label):
++    """
++    Parameters:
++     - ip_address
++     - gw_ip
++     - vrf_name
++     - label
++    """
++    pass
++
++  def RouteEntryDelete(self, ip_address, vrf_name):
++    """
++    Parameters:
++     - ip_address
++     - vrf_name
++    """
++    pass
++
++  def AddHostRoute(self, ip_address, vrf_name):
++    """
++    Parameters:
++     - ip_address
++     - vrf_name
++    """
++    pass
++
++  def AddLocalVmRoute(self, ip_address, intf_uuid, vrf_name, label):
++    """
++    Parameters:
++     - ip_address
++     - intf_uuid
++     - vrf_name
++     - label
++    """
++    pass
++
++  def AddRemoteVmRoute(self, ip_address, gw_ip, vrf_name, label):
++    """
++    Parameters:
++     - ip_address
++     - gw_ip
++     - vrf_name
++     - label
++    """
++    pass
++
++  def CreateVrf(self, vrf_name):
++    """
++    Parameters:
++     - vrf_name
++    """
++    pass
++
++
++class Client(Iface):
++  def __init__(self, iprot, oprot=None):
++    self._iprot = self._oprot = iprot
++    if oprot is not None:
++      self._oprot = oprot
++    self._seqid = 0
++
++  def AddPort(self, port_list):
++    """
++    Parameters:
++     - port_list
++    """
++    self.send_AddPort(port_list)
++    return self.recv_AddPort()
++
++  def send_AddPort(self, port_list):
++    self._oprot.writeMessageBegin('AddPort', TMessageType.CALL, self._seqid)
++    args = AddPort_args()
++    args.port_list = port_list
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_AddPort(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = AddPort_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "AddPort failed: unknown result");
++
++  def KeepAliveCheck(self, ):
++    self.send_KeepAliveCheck()
++    return self.recv_KeepAliveCheck()
++
++  def send_KeepAliveCheck(self, ):
++    self._oprot.writeMessageBegin('KeepAliveCheck', TMessageType.CALL, self._seqid)
++    args = KeepAliveCheck_args()
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_KeepAliveCheck(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = KeepAliveCheck_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "KeepAliveCheck failed: unknown result");
++
++  def Connect(self, ):
++    self.send_Connect()
++    return self.recv_Connect()
++
++  def send_Connect(self, ):
++    self._oprot.writeMessageBegin('Connect', TMessageType.CALL, self._seqid)
++    args = Connect_args()
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_Connect(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = Connect_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "Connect failed: unknown result");
++
++  def DeletePort(self, port_id):
++    """
++    Parameters:
++     - port_id
++    """
++    self.send_DeletePort(port_id)
++    return self.recv_DeletePort()
++
++  def send_DeletePort(self, port_id):
++    self._oprot.writeMessageBegin('DeletePort', TMessageType.CALL, self._seqid)
++    args = DeletePort_args()
++    args.port_id = port_id
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_DeletePort(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = DeletePort_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "DeletePort failed: unknown result");
++
++  def TunnelNHEntryAdd(self, src_ip, dst_ip, vrf_name):
++    """
++    Parameters:
++     - src_ip
++     - dst_ip
++     - vrf_name
++    """
++    self.send_TunnelNHEntryAdd(src_ip, dst_ip, vrf_name)
++    return self.recv_TunnelNHEntryAdd()
++
++  def send_TunnelNHEntryAdd(self, src_ip, dst_ip, vrf_name):
++    self._oprot.writeMessageBegin('TunnelNHEntryAdd', TMessageType.CALL, self._seqid)
++    args = TunnelNHEntryAdd_args()
++    args.src_ip = src_ip
++    args.dst_ip = dst_ip
++    args.vrf_name = vrf_name
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_TunnelNHEntryAdd(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = TunnelNHEntryAdd_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "TunnelNHEntryAdd failed: unknown result");
++
++  def TunnelNHEntryDelete(self, src_ip, dst_ip, vrf_name):
++    """
++    Parameters:
++     - src_ip
++     - dst_ip
++     - vrf_name
++    """
++    self.send_TunnelNHEntryDelete(src_ip, dst_ip, vrf_name)
++    return self.recv_TunnelNHEntryDelete()
++
++  def send_TunnelNHEntryDelete(self, src_ip, dst_ip, vrf_name):
++    self._oprot.writeMessageBegin('TunnelNHEntryDelete', TMessageType.CALL, self._seqid)
++    args = TunnelNHEntryDelete_args()
++    args.src_ip = src_ip
++    args.dst_ip = dst_ip
++    args.vrf_name = vrf_name
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_TunnelNHEntryDelete(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = TunnelNHEntryDelete_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "TunnelNHEntryDelete failed: unknown result");
++
++  def RouteEntryAdd(self, ip_address, gw_ip, vrf_name, label):
++    """
++    Parameters:
++     - ip_address
++     - gw_ip
++     - vrf_name
++     - label
++    """
++    self.send_RouteEntryAdd(ip_address, gw_ip, vrf_name, label)
++    return self.recv_RouteEntryAdd()
++
++  def send_RouteEntryAdd(self, ip_address, gw_ip, vrf_name, label):
++    self._oprot.writeMessageBegin('RouteEntryAdd', TMessageType.CALL, self._seqid)
++    args = RouteEntryAdd_args()
++    args.ip_address = ip_address
++    args.gw_ip = gw_ip
++    args.vrf_name = vrf_name
++    args.label = label
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_RouteEntryAdd(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = RouteEntryAdd_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "RouteEntryAdd failed: unknown result");
++
++  def RouteEntryDelete(self, ip_address, vrf_name):
++    """
++    Parameters:
++     - ip_address
++     - vrf_name
++    """
++    self.send_RouteEntryDelete(ip_address, vrf_name)
++    return self.recv_RouteEntryDelete()
++
++  def send_RouteEntryDelete(self, ip_address, vrf_name):
++    self._oprot.writeMessageBegin('RouteEntryDelete', TMessageType.CALL, self._seqid)
++    args = RouteEntryDelete_args()
++    args.ip_address = ip_address
++    args.vrf_name = vrf_name
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_RouteEntryDelete(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = RouteEntryDelete_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "RouteEntryDelete failed: unknown result");
++
++  def AddHostRoute(self, ip_address, vrf_name):
++    """
++    Parameters:
++     - ip_address
++     - vrf_name
++    """
++    self.send_AddHostRoute(ip_address, vrf_name)
++    return self.recv_AddHostRoute()
++
++  def send_AddHostRoute(self, ip_address, vrf_name):
++    self._oprot.writeMessageBegin('AddHostRoute', TMessageType.CALL, self._seqid)
++    args = AddHostRoute_args()
++    args.ip_address = ip_address
++    args.vrf_name = vrf_name
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_AddHostRoute(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = AddHostRoute_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "AddHostRoute failed: unknown result");
++
++  def AddLocalVmRoute(self, ip_address, intf_uuid, vrf_name, label):
++    """
++    Parameters:
++     - ip_address
++     - intf_uuid
++     - vrf_name
++     - label
++    """
++    self.send_AddLocalVmRoute(ip_address, intf_uuid, vrf_name, label)
++    return self.recv_AddLocalVmRoute()
++
++  def send_AddLocalVmRoute(self, ip_address, intf_uuid, vrf_name, label):
++    self._oprot.writeMessageBegin('AddLocalVmRoute', TMessageType.CALL, self._seqid)
++    args = AddLocalVmRoute_args()
++    args.ip_address = ip_address
++    args.intf_uuid = intf_uuid
++    args.vrf_name = vrf_name
++    args.label = label
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_AddLocalVmRoute(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = AddLocalVmRoute_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "AddLocalVmRoute failed: unknown result");
++
++  def AddRemoteVmRoute(self, ip_address, gw_ip, vrf_name, label):
++    """
++    Parameters:
++     - ip_address
++     - gw_ip
++     - vrf_name
++     - label
++    """
++    self.send_AddRemoteVmRoute(ip_address, gw_ip, vrf_name, label)
++    return self.recv_AddRemoteVmRoute()
++
++  def send_AddRemoteVmRoute(self, ip_address, gw_ip, vrf_name, label):
++    self._oprot.writeMessageBegin('AddRemoteVmRoute', TMessageType.CALL, self._seqid)
++    args = AddRemoteVmRoute_args()
++    args.ip_address = ip_address
++    args.gw_ip = gw_ip
++    args.vrf_name = vrf_name
++    args.label = label
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_AddRemoteVmRoute(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = AddRemoteVmRoute_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "AddRemoteVmRoute failed: unknown result");
++
++  def CreateVrf(self, vrf_name):
++    """
++    Parameters:
++     - vrf_name
++    """
++    self.send_CreateVrf(vrf_name)
++    return self.recv_CreateVrf()
++
++  def send_CreateVrf(self, vrf_name):
++    self._oprot.writeMessageBegin('CreateVrf', TMessageType.CALL, self._seqid)
++    args = CreateVrf_args()
++    args.vrf_name = vrf_name
++    args.write(self._oprot)
++    self._oprot.writeMessageEnd()
++    self._oprot.trans.flush()
++
++  def recv_CreateVrf(self, ):
++    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
++    if mtype == TMessageType.EXCEPTION:
++      x = TApplicationException()
++      x.read(self._iprot)
++      self._iprot.readMessageEnd()
++      raise x
++    result = CreateVrf_result()
++    result.read(self._iprot)
++    self._iprot.readMessageEnd()
++    if result.success is not None:
++      return result.success
++    raise TApplicationException(TApplicationException.MISSING_RESULT, "CreateVrf failed: unknown result");
++
++
++class Processor(Iface, TProcessor):
++  def __init__(self, handler):
++    self._handler = handler
++    self._processMap = {}
++    self._processMap["AddPort"] = Processor.process_AddPort
++    self._processMap["KeepAliveCheck"] = Processor.process_KeepAliveCheck
++    self._processMap["Connect"] = Processor.process_Connect
++    self._processMap["DeletePort"] = Processor.process_DeletePort
++    self._processMap["TunnelNHEntryAdd"] = Processor.process_TunnelNHEntryAdd
++    self._processMap["TunnelNHEntryDelete"] = Processor.process_TunnelNHEntryDelete
++    self._processMap["RouteEntryAdd"] = Processor.process_RouteEntryAdd
++    self._processMap["RouteEntryDelete"] = Processor.process_RouteEntryDelete
++    self._processMap["AddHostRoute"] = Processor.process_AddHostRoute
++    self._processMap["AddLocalVmRoute"] = Processor.process_AddLocalVmRoute
++    self._processMap["AddRemoteVmRoute"] = Processor.process_AddRemoteVmRoute
++    self._processMap["CreateVrf"] = Processor.process_CreateVrf
++
++  def process(self, iprot, oprot):
++    (name, type, seqid) = iprot.readMessageBegin()
++    if name not in self._processMap:
++      iprot.skip(TType.STRUCT)
++      iprot.readMessageEnd()
++      x = TApplicationException(TApplicationException.UNKNOWN_METHOD, 'Unknown function %s' % (name))
++      oprot.writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
++      x.write(oprot)
++      oprot.writeMessageEnd()
++      oprot.trans.flush()
++      return
++    else:
++      self._processMap[name](self, seqid, iprot, oprot)
++    return True
++
++  def process_AddPort(self, seqid, iprot, oprot):
++    args = AddPort_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = AddPort_result()
++    result.success = self._handler.AddPort(args.port_list)
++    oprot.writeMessageBegin("AddPort", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_KeepAliveCheck(self, seqid, iprot, oprot):
++    args = KeepAliveCheck_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = KeepAliveCheck_result()
++    result.success = self._handler.KeepAliveCheck()
++    oprot.writeMessageBegin("KeepAliveCheck", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_Connect(self, seqid, iprot, oprot):
++    args = Connect_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = Connect_result()
++    result.success = self._handler.Connect()
++    oprot.writeMessageBegin("Connect", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_DeletePort(self, seqid, iprot, oprot):
++    args = DeletePort_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = DeletePort_result()
++    result.success = self._handler.DeletePort(args.port_id)
++    oprot.writeMessageBegin("DeletePort", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_TunnelNHEntryAdd(self, seqid, iprot, oprot):
++    args = TunnelNHEntryAdd_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = TunnelNHEntryAdd_result()
++    result.success = self._handler.TunnelNHEntryAdd(args.src_ip, args.dst_ip, args.vrf_name)
++    oprot.writeMessageBegin("TunnelNHEntryAdd", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_TunnelNHEntryDelete(self, seqid, iprot, oprot):
++    args = TunnelNHEntryDelete_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = TunnelNHEntryDelete_result()
++    result.success = self._handler.TunnelNHEntryDelete(args.src_ip, args.dst_ip, args.vrf_name)
++    oprot.writeMessageBegin("TunnelNHEntryDelete", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_RouteEntryAdd(self, seqid, iprot, oprot):
++    args = RouteEntryAdd_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = RouteEntryAdd_result()
++    result.success = self._handler.RouteEntryAdd(args.ip_address, args.gw_ip, args.vrf_name, args.label)
++    oprot.writeMessageBegin("RouteEntryAdd", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_RouteEntryDelete(self, seqid, iprot, oprot):
++    args = RouteEntryDelete_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = RouteEntryDelete_result()
++    result.success = self._handler.RouteEntryDelete(args.ip_address, args.vrf_name)
++    oprot.writeMessageBegin("RouteEntryDelete", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_AddHostRoute(self, seqid, iprot, oprot):
++    args = AddHostRoute_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = AddHostRoute_result()
++    result.success = self._handler.AddHostRoute(args.ip_address, args.vrf_name)
++    oprot.writeMessageBegin("AddHostRoute", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_AddLocalVmRoute(self, seqid, iprot, oprot):
++    args = AddLocalVmRoute_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = AddLocalVmRoute_result()
++    result.success = self._handler.AddLocalVmRoute(args.ip_address, args.intf_uuid, args.vrf_name, args.label)
++    oprot.writeMessageBegin("AddLocalVmRoute", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_AddRemoteVmRoute(self, seqid, iprot, oprot):
++    args = AddRemoteVmRoute_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = AddRemoteVmRoute_result()
++    result.success = self._handler.AddRemoteVmRoute(args.ip_address, args.gw_ip, args.vrf_name, args.label)
++    oprot.writeMessageBegin("AddRemoteVmRoute", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++  def process_CreateVrf(self, seqid, iprot, oprot):
++    args = CreateVrf_args()
++    args.read(iprot)
++    iprot.readMessageEnd()
++    result = CreateVrf_result()
++    result.success = self._handler.CreateVrf(args.vrf_name)
++    oprot.writeMessageBegin("CreateVrf", TMessageType.REPLY, seqid)
++    result.write(oprot)
++    oprot.writeMessageEnd()
++    oprot.trans.flush()
++
++
++# HELPER FUNCTIONS AND STRUCTURES
++
++class AddPort_args:
++  """
++  Attributes:
++   - port_list
++  """
++
++  thrift_spec = None
++  def __init__(self, port_list=None,):
++    self.port_list = port_list
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == -1:
++        if ftype == TType.LIST:
++          self.port_list = []
++          (_etype24, _size21) = iprot.readListBegin()
++          for _i25 in xrange(_size21):
++            _elem26 = Port()
++            _elem26.read(iprot)
++            self.port_list.append(_elem26)
++          iprot.readListEnd()
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('AddPort_args')
++    if self.port_list is not None:
++      oprot.writeFieldBegin('port_list', TType.LIST, -1)
++      oprot.writeListBegin(TType.STRUCT, len(self.port_list))
++      for iter27 in self.port_list:
++        iter27.write(oprot)
++      oprot.writeListEnd()
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class AddPort_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('AddPort_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class KeepAliveCheck_args:
++
++  thrift_spec = (
++  )
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('KeepAliveCheck_args')
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class KeepAliveCheck_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('KeepAliveCheck_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class Connect_args:
++
++  thrift_spec = (
++  )
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('Connect_args')
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class Connect_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('Connect_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class DeletePort_args:
++  """
++  Attributes:
++   - port_id
++  """
++
++  thrift_spec = None
++  def __init__(self, port_id=None,):
++    self.port_id = port_id
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == -1:
++        if ftype == TType.LIST:
++          self.port_id = []
++          (_etype31, _size28) = iprot.readListBegin()
++          for _i32 in xrange(_size28):
++            _elem33 = iprot.readI16();
++            self.port_id.append(_elem33)
++          iprot.readListEnd()
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('DeletePort_args')
++    if self.port_id is not None:
++      oprot.writeFieldBegin('port_id', TType.LIST, -1)
++      oprot.writeListBegin(TType.I16, len(self.port_id))
++      for iter34 in self.port_id:
++        oprot.writeI16(iter34)
++      oprot.writeListEnd()
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class DeletePort_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('DeletePort_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class TunnelNHEntryAdd_args:
++  """
++  Attributes:
++   - src_ip
++   - dst_ip
++   - vrf_name
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.STRING, 'src_ip', None, None, ), # 1
++    (2, TType.STRING, 'dst_ip', None, None, ), # 2
++    (3, TType.STRING, 'vrf_name', None, None, ), # 3
++  )
++
++  def __init__(self, src_ip=None, dst_ip=None, vrf_name=None,):
++    self.src_ip = src_ip
++    self.dst_ip = dst_ip
++    self.vrf_name = vrf_name
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.STRING:
++          self.src_ip = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 2:
++        if ftype == TType.STRING:
++          self.dst_ip = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 3:
++        if ftype == TType.STRING:
++          self.vrf_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('TunnelNHEntryAdd_args')
++    if self.src_ip is not None:
++      oprot.writeFieldBegin('src_ip', TType.STRING, 1)
++      oprot.writeString(self.src_ip)
++      oprot.writeFieldEnd()
++    if self.dst_ip is not None:
++      oprot.writeFieldBegin('dst_ip', TType.STRING, 2)
++      oprot.writeString(self.dst_ip)
++      oprot.writeFieldEnd()
++    if self.vrf_name is not None:
++      oprot.writeFieldBegin('vrf_name', TType.STRING, 3)
++      oprot.writeString(self.vrf_name)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.src_ip is None:
++      raise TProtocol.TProtocolException(message='Required field src_ip is unset!')
++    if self.dst_ip is None:
++      raise TProtocol.TProtocolException(message='Required field dst_ip is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class TunnelNHEntryAdd_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('TunnelNHEntryAdd_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class TunnelNHEntryDelete_args:
++  """
++  Attributes:
++   - src_ip
++   - dst_ip
++   - vrf_name
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.STRING, 'src_ip', None, None, ), # 1
++    (2, TType.STRING, 'dst_ip', None, None, ), # 2
++    (3, TType.STRING, 'vrf_name', None, None, ), # 3
++  )
++
++  def __init__(self, src_ip=None, dst_ip=None, vrf_name=None,):
++    self.src_ip = src_ip
++    self.dst_ip = dst_ip
++    self.vrf_name = vrf_name
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.STRING:
++          self.src_ip = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 2:
++        if ftype == TType.STRING:
++          self.dst_ip = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 3:
++        if ftype == TType.STRING:
++          self.vrf_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('TunnelNHEntryDelete_args')
++    if self.src_ip is not None:
++      oprot.writeFieldBegin('src_ip', TType.STRING, 1)
++      oprot.writeString(self.src_ip)
++      oprot.writeFieldEnd()
++    if self.dst_ip is not None:
++      oprot.writeFieldBegin('dst_ip', TType.STRING, 2)
++      oprot.writeString(self.dst_ip)
++      oprot.writeFieldEnd()
++    if self.vrf_name is not None:
++      oprot.writeFieldBegin('vrf_name', TType.STRING, 3)
++      oprot.writeString(self.vrf_name)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.src_ip is None:
++      raise TProtocol.TProtocolException(message='Required field src_ip is unset!')
++    if self.dst_ip is None:
++      raise TProtocol.TProtocolException(message='Required field dst_ip is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class TunnelNHEntryDelete_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('TunnelNHEntryDelete_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class RouteEntryAdd_args:
++  """
++  Attributes:
++   - ip_address
++   - gw_ip
++   - vrf_name
++   - label
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.STRING, 'ip_address', None, None, ), # 1
++    (2, TType.STRING, 'gw_ip', None, None, ), # 2
++    (3, TType.STRING, 'vrf_name', None, None, ), # 3
++    (4, TType.STRING, 'label', None, None, ), # 4
++  )
++
++  def __init__(self, ip_address=None, gw_ip=None, vrf_name=None, label=None,):
++    self.ip_address = ip_address
++    self.gw_ip = gw_ip
++    self.vrf_name = vrf_name
++    self.label = label
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.STRING:
++          self.ip_address = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 2:
++        if ftype == TType.STRING:
++          self.gw_ip = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 3:
++        if ftype == TType.STRING:
++          self.vrf_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 4:
++        if ftype == TType.STRING:
++          self.label = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('RouteEntryAdd_args')
++    if self.ip_address is not None:
++      oprot.writeFieldBegin('ip_address', TType.STRING, 1)
++      oprot.writeString(self.ip_address)
++      oprot.writeFieldEnd()
++    if self.gw_ip is not None:
++      oprot.writeFieldBegin('gw_ip', TType.STRING, 2)
++      oprot.writeString(self.gw_ip)
++      oprot.writeFieldEnd()
++    if self.vrf_name is not None:
++      oprot.writeFieldBegin('vrf_name', TType.STRING, 3)
++      oprot.writeString(self.vrf_name)
++      oprot.writeFieldEnd()
++    if self.label is not None:
++      oprot.writeFieldBegin('label', TType.STRING, 4)
++      oprot.writeString(self.label)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.ip_address is None:
++      raise TProtocol.TProtocolException(message='Required field ip_address is unset!')
++    if self.gw_ip is None:
++      raise TProtocol.TProtocolException(message='Required field gw_ip is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class RouteEntryAdd_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('RouteEntryAdd_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class RouteEntryDelete_args:
++  """
++  Attributes:
++   - ip_address
++   - vrf_name
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.STRING, 'ip_address', None, None, ), # 1
++    (2, TType.STRING, 'vrf_name', None, None, ), # 2
++  )
++
++  def __init__(self, ip_address=None, vrf_name=None,):
++    self.ip_address = ip_address
++    self.vrf_name = vrf_name
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.STRING:
++          self.ip_address = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 2:
++        if ftype == TType.STRING:
++          self.vrf_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('RouteEntryDelete_args')
++    if self.ip_address is not None:
++      oprot.writeFieldBegin('ip_address', TType.STRING, 1)
++      oprot.writeString(self.ip_address)
++      oprot.writeFieldEnd()
++    if self.vrf_name is not None:
++      oprot.writeFieldBegin('vrf_name', TType.STRING, 2)
++      oprot.writeString(self.vrf_name)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.ip_address is None:
++      raise TProtocol.TProtocolException(message='Required field ip_address is unset!')
++    if self.vrf_name is None:
++      raise TProtocol.TProtocolException(message='Required field vrf_name is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class RouteEntryDelete_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('RouteEntryDelete_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class AddHostRoute_args:
++  """
++  Attributes:
++   - ip_address
++   - vrf_name
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.STRING, 'ip_address', None, None, ), # 1
++    (2, TType.STRING, 'vrf_name', None, None, ), # 2
++  )
++
++  def __init__(self, ip_address=None, vrf_name=None,):
++    self.ip_address = ip_address
++    self.vrf_name = vrf_name
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.STRING:
++          self.ip_address = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 2:
++        if ftype == TType.STRING:
++          self.vrf_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('AddHostRoute_args')
++    if self.ip_address is not None:
++      oprot.writeFieldBegin('ip_address', TType.STRING, 1)
++      oprot.writeString(self.ip_address)
++      oprot.writeFieldEnd()
++    if self.vrf_name is not None:
++      oprot.writeFieldBegin('vrf_name', TType.STRING, 2)
++      oprot.writeString(self.vrf_name)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.ip_address is None:
++      raise TProtocol.TProtocolException(message='Required field ip_address is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class AddHostRoute_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('AddHostRoute_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class AddLocalVmRoute_args:
++  """
++  Attributes:
++   - ip_address
++   - intf_uuid
++   - vrf_name
++   - label
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.STRING, 'ip_address', None, None, ), # 1
++    (2, TType.STRING, 'intf_uuid', None, None, ), # 2
++    (3, TType.STRING, 'vrf_name', None, None, ), # 3
++    (4, TType.STRING, 'label', None, None, ), # 4
++  )
++
++  def __init__(self, ip_address=None, intf_uuid=None, vrf_name=None, label=None,):
++    self.ip_address = ip_address
++    self.intf_uuid = intf_uuid
++    self.vrf_name = vrf_name
++    self.label = label
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.STRING:
++          self.ip_address = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 2:
++        if ftype == TType.STRING:
++          self.intf_uuid = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 3:
++        if ftype == TType.STRING:
++          self.vrf_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 4:
++        if ftype == TType.STRING:
++          self.label = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('AddLocalVmRoute_args')
++    if self.ip_address is not None:
++      oprot.writeFieldBegin('ip_address', TType.STRING, 1)
++      oprot.writeString(self.ip_address)
++      oprot.writeFieldEnd()
++    if self.intf_uuid is not None:
++      oprot.writeFieldBegin('intf_uuid', TType.STRING, 2)
++      oprot.writeString(self.intf_uuid)
++      oprot.writeFieldEnd()
++    if self.vrf_name is not None:
++      oprot.writeFieldBegin('vrf_name', TType.STRING, 3)
++      oprot.writeString(self.vrf_name)
++      oprot.writeFieldEnd()
++    if self.label is not None:
++      oprot.writeFieldBegin('label', TType.STRING, 4)
++      oprot.writeString(self.label)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.ip_address is None:
++      raise TProtocol.TProtocolException(message='Required field ip_address is unset!')
++    if self.intf_uuid is None:
++      raise TProtocol.TProtocolException(message='Required field intf_uuid is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class AddLocalVmRoute_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('AddLocalVmRoute_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class AddRemoteVmRoute_args:
++  """
++  Attributes:
++   - ip_address
++   - gw_ip
++   - vrf_name
++   - label
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.STRING, 'ip_address', None, None, ), # 1
++    (2, TType.STRING, 'gw_ip', None, None, ), # 2
++    (3, TType.STRING, 'vrf_name', None, None, ), # 3
++    (4, TType.STRING, 'label', None, None, ), # 4
++  )
++
++  def __init__(self, ip_address=None, gw_ip=None, vrf_name=None, label=None,):
++    self.ip_address = ip_address
++    self.gw_ip = gw_ip
++    self.vrf_name = vrf_name
++    self.label = label
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.STRING:
++          self.ip_address = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 2:
++        if ftype == TType.STRING:
++          self.gw_ip = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 3:
++        if ftype == TType.STRING:
++          self.vrf_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 4:
++        if ftype == TType.STRING:
++          self.label = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('AddRemoteVmRoute_args')
++    if self.ip_address is not None:
++      oprot.writeFieldBegin('ip_address', TType.STRING, 1)
++      oprot.writeString(self.ip_address)
++      oprot.writeFieldEnd()
++    if self.gw_ip is not None:
++      oprot.writeFieldBegin('gw_ip', TType.STRING, 2)
++      oprot.writeString(self.gw_ip)
++      oprot.writeFieldEnd()
++    if self.vrf_name is not None:
++      oprot.writeFieldBegin('vrf_name', TType.STRING, 3)
++      oprot.writeString(self.vrf_name)
++      oprot.writeFieldEnd()
++    if self.label is not None:
++      oprot.writeFieldBegin('label', TType.STRING, 4)
++      oprot.writeString(self.label)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.ip_address is None:
++      raise TProtocol.TProtocolException(message='Required field ip_address is unset!')
++    if self.gw_ip is None:
++      raise TProtocol.TProtocolException(message='Required field gw_ip is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class AddRemoteVmRoute_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('AddRemoteVmRoute_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class CreateVrf_args:
++  """
++  Attributes:
++   - vrf_name
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.STRING, 'vrf_name', None, None, ), # 1
++  )
++
++  def __init__(self, vrf_name=None,):
++    self.vrf_name = vrf_name
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.STRING:
++          self.vrf_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('CreateVrf_args')
++    if self.vrf_name is not None:
++      oprot.writeFieldBegin('vrf_name', TType.STRING, 1)
++      oprot.writeString(self.vrf_name)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.vrf_name is None:
++      raise TProtocol.TProtocolException(message='Required field vrf_name is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
++
++class CreateVrf_result:
++  """
++  Attributes:
++   - success
++  """
++
++  thrift_spec = (
++    (0, TType.BOOL, 'success', None, None, ), # 0
++  )
++
++  def __init__(self, success=None,):
++    self.success = success
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 0:
++        if ftype == TType.BOOL:
++          self.success = iprot.readBool();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('CreateVrf_result')
++    if self.success is not None:
++      oprot.writeFieldBegin('success', TType.BOOL, 0)
++      oprot.writeBool(self.success)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
+diff --git plugins/contrail/instance_service/__init__.py plugins/contrail/instance_service/__init__.py
+new file mode 100644
+index 0000000..f34ead4
+--- /dev/null
++++ plugins/contrail/instance_service/__init__.py
+@@ -0,0 +1 @@
++__all__ = ['ttypes', 'constants', 'InstanceService']
+diff --git plugins/contrail/instance_service/constants.py plugins/contrail/instance_service/constants.py
+new file mode 100644
+index 0000000..73f07fe
+--- /dev/null
++++ plugins/contrail/instance_service/constants.py
+@@ -0,0 +1,11 @@
++#
++# Autogenerated by Thrift Compiler (0.8.0)
++#
++# DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
++#
++#  options string: py
++#
++
++from thrift.Thrift import TType, TMessageType, TException
++from ttypes import *
++
+diff --git plugins/contrail/instance_service/ttypes.py plugins/contrail/instance_service/ttypes.py
+new file mode 100644
+index 0000000..564f82e
+--- /dev/null
++++ plugins/contrail/instance_service/ttypes.py
+@@ -0,0 +1,210 @@
++#
++# Autogenerated by Thrift Compiler (0.8.0)
++#
++# DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
++#
++#  options string: py
++#
++
++from thrift.Thrift import TType, TMessageType, TException
++
++from thrift.transport import TTransport
++from thrift.protocol import TBinaryProtocol, TProtocol
++try:
++  from thrift.protocol import fastbinary
++except:
++  fastbinary = None
++
++
++
++class Port:
++  """
++  Attributes:
++   - port_id
++   - instance_id
++   - tap_name
++   - ip_address
++   - vn_id
++   - mac_address
++   - display_name
++   - hostname
++   - host
++  """
++
++  thrift_spec = (
++    None, # 0
++    (1, TType.LIST, 'port_id', (TType.I16,None), None, ), # 1
++    (2, TType.LIST, 'instance_id', (TType.I16,None), None, ), # 2
++    (3, TType.STRING, 'tap_name', None, None, ), # 3
++    (4, TType.STRING, 'ip_address', None, None, ), # 4
++    (5, TType.LIST, 'vn_id', (TType.I16,None), None, ), # 5
++    (6, TType.STRING, 'mac_address', None, None, ), # 6
++    (7, TType.STRING, 'display_name', None, None, ), # 7
++    (8, TType.STRING, 'hostname', None, None, ), # 8
++    (9, TType.STRING, 'host', None, None, ), # 9
++  )
++
++  def __init__(self, port_id=None, instance_id=None, tap_name=None, ip_address=None, vn_id=None, mac_address=None, display_name=None, hostname=None, host=None,):
++    self.port_id = port_id
++    self.instance_id = instance_id
++    self.tap_name = tap_name
++    self.ip_address = ip_address
++    self.vn_id = vn_id
++    self.mac_address = mac_address
++    self.display_name = display_name
++    self.hostname = hostname
++    self.host = host
++
++  def read(self, iprot):
++    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
++      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
++      return
++    iprot.readStructBegin()
++    while True:
++      (fname, ftype, fid) = iprot.readFieldBegin()
++      if ftype == TType.STOP:
++        break
++      if fid == 1:
++        if ftype == TType.LIST:
++          self.port_id = []
++          (_etype3, _size0) = iprot.readListBegin()
++          for _i4 in xrange(_size0):
++            _elem5 = iprot.readI16();
++            self.port_id.append(_elem5)
++          iprot.readListEnd()
++        else:
++          iprot.skip(ftype)
++      elif fid == 2:
++        if ftype == TType.LIST:
++          self.instance_id = []
++          (_etype9, _size6) = iprot.readListBegin()
++          for _i10 in xrange(_size6):
++            _elem11 = iprot.readI16();
++            self.instance_id.append(_elem11)
++          iprot.readListEnd()
++        else:
++          iprot.skip(ftype)
++      elif fid == 3:
++        if ftype == TType.STRING:
++          self.tap_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 4:
++        if ftype == TType.STRING:
++          self.ip_address = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 5:
++        if ftype == TType.LIST:
++          self.vn_id = []
++          (_etype15, _size12) = iprot.readListBegin()
++          for _i16 in xrange(_size12):
++            _elem17 = iprot.readI16();
++            self.vn_id.append(_elem17)
++          iprot.readListEnd()
++        else:
++          iprot.skip(ftype)
++      elif fid == 6:
++        if ftype == TType.STRING:
++          self.mac_address = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 7:
++        if ftype == TType.STRING:
++          self.display_name = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 8:
++        if ftype == TType.STRING:
++          self.hostname = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      elif fid == 9:
++        if ftype == TType.STRING:
++          self.host = iprot.readString();
++        else:
++          iprot.skip(ftype)
++      else:
++        iprot.skip(ftype)
++      iprot.readFieldEnd()
++    iprot.readStructEnd()
++
++  def write(self, oprot):
++    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
++      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
++      return
++    oprot.writeStructBegin('Port')
++    if self.port_id is not None:
++      oprot.writeFieldBegin('port_id', TType.LIST, 1)
++      oprot.writeListBegin(TType.I16, len(self.port_id))
++      for iter18 in self.port_id:
++        oprot.writeI16(iter18)
++      oprot.writeListEnd()
++      oprot.writeFieldEnd()
++    if self.instance_id is not None:
++      oprot.writeFieldBegin('instance_id', TType.LIST, 2)
++      oprot.writeListBegin(TType.I16, len(self.instance_id))
++      for iter19 in self.instance_id:
++        oprot.writeI16(iter19)
++      oprot.writeListEnd()
++      oprot.writeFieldEnd()
++    if self.tap_name is not None:
++      oprot.writeFieldBegin('tap_name', TType.STRING, 3)
++      oprot.writeString(self.tap_name)
++      oprot.writeFieldEnd()
++    if self.ip_address is not None:
++      oprot.writeFieldBegin('ip_address', TType.STRING, 4)
++      oprot.writeString(self.ip_address)
++      oprot.writeFieldEnd()
++    if self.vn_id is not None:
++      oprot.writeFieldBegin('vn_id', TType.LIST, 5)
++      oprot.writeListBegin(TType.I16, len(self.vn_id))
++      for iter20 in self.vn_id:
++        oprot.writeI16(iter20)
++      oprot.writeListEnd()
++      oprot.writeFieldEnd()
++    if self.mac_address is not None:
++      oprot.writeFieldBegin('mac_address', TType.STRING, 6)
++      oprot.writeString(self.mac_address)
++      oprot.writeFieldEnd()
++    if self.display_name is not None:
++      oprot.writeFieldBegin('display_name', TType.STRING, 7)
++      oprot.writeString(self.display_name)
++      oprot.writeFieldEnd()
++    if self.hostname is not None:
++      oprot.writeFieldBegin('hostname', TType.STRING, 8)
++      oprot.writeString(self.hostname)
++      oprot.writeFieldEnd()
++    if self.host is not None:
++      oprot.writeFieldBegin('host', TType.STRING, 9)
++      oprot.writeString(self.host)
++      oprot.writeFieldEnd()
++    oprot.writeFieldStop()
++    oprot.writeStructEnd()
++
++  def validate(self):
++    if self.port_id is None:
++      raise TProtocol.TProtocolException(message='Required field port_id is unset!')
++    if self.instance_id is None:
++      raise TProtocol.TProtocolException(message='Required field instance_id is unset!')
++    if self.tap_name is None:
++      raise TProtocol.TProtocolException(message='Required field tap_name is unset!')
++    if self.ip_address is None:
++      raise TProtocol.TProtocolException(message='Required field ip_address is unset!')
++    if self.vn_id is None:
++      raise TProtocol.TProtocolException(message='Required field vn_id is unset!')
++    if self.mac_address is None:
++      raise TProtocol.TProtocolException(message='Required field mac_address is unset!')
++    return
++
++
++  def __repr__(self):
++    L = ['%s=%r' % (key, value)
++      for key, value in self.__dict__.iteritems()]
++    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
++
++  def __eq__(self, other):
++    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
++
++  def __ne__(self, other):
++    return not (self == other)
