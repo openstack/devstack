@@ -13,7 +13,7 @@ if [[ -n "$2" ]]; then
 fi
 
 # Find the other rc files
-RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
+RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
 # Get user configuration
 source $RC_DIR/openrc
