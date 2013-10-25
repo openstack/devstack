@@ -980,7 +980,8 @@ if [ $ENABLE_CONTRAIL ]; then
 	apt_get install libexpat-dev libgettextpo0 libcurl4-openssl-dev
 	apt_get install python-dev autoconf automake build-essential
 	apt_get install libevent-dev libxml2-dev libxslt-dev
-	apt_get install tunctl
+	apt_get install uml-utilities
+	apt_get install redis-server
     else
 	sudo yum -y install patch scons flex bison make vim
 	sudo yum -y install expat-devel gettext-devel curl-devel
@@ -989,6 +990,9 @@ if [ $ENABLE_CONTRAIL ]; then
 	sudo yum -y install tunctl
 	sudo yum -y install redis
     fi
+
+    # use contrail-specific configs.  e.g. redis runs non-daemon on port 6382
+    rsync -rv $TOP_DIR/contrail/etc/ /etc/contrail
 
     # api server requirements
     # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
@@ -1009,14 +1013,6 @@ if [ $ENABLE_CONTRAIL ]; then
     python third_party/fetch_packages.py
     scons
     cd ${contrail_cwd}
-
-    # setup redis
-    if [ -e /etc/redis.conf ]; then
-        grep -q 6382 /etc/redis.conf ||
-            echo "Setting Redis listen port to 6382"
-            (sed 's/^port .*/port 6382/g' /etc/redis.conf > redis.conf.new && \
-            sudo mv redis.conf.new /etc/redis.conf)
-    fi
 
     # get cassandra
     if ! which cassandra > /dev/null 2>&1 ; then
@@ -1074,18 +1070,17 @@ EOF
         cd ${contrail_cwd}
     fi
 
-    # create config files
-    # export passwords in a subshell so setup_contrail can pick them up but they won't leak later
-    (export ADMIN_PASSWORD CONTRAIL_ADMIN_USERNAME SERVICE_TOKEN CONTRAIL_ADMIN_TENANT && 
-    python $TOP_DIR/setup_contrail.py --physical_interface=$PHYSICAL_INTERFACE # --cfgm_ip $SERVICE_HOST 
-    )
-
     # process gateway configuration if present
     contrail_gw_interface=""
     if [ $CONTRAIL_VGW_INTERFACE -a $CONTRAIL_VGW_PUBLIC_SUBNET -a $CONTRAIL_VGW_PUBLIC_NETWORK ]; then
 	    contrail_gw_interface="--vgw_interface $CONTRAIL_VGW_INTERFACE --vgw_public_subnet $CONTRAIL_VGW_PUBLIC_SUBNET --vgw_public_network $CONTRAIL_VGW_PUBLIC_NETWORK"
     fi
-    python $TOP_DIR/setup_contrail.py --cfgm_ip $SERVICE_HOST $contrail_gw_interface
+
+    # create config files
+    # export passwords in a subshell so setup_contrail can pick them up but they won't leak later
+    (export ADMIN_PASSWORD CONTRAIL_ADMIN_USERNAME SERVICE_TOKEN CONTRAIL_ADMIN_TENANT && 
+    python $TOP_DIR/setup_contrail.py --physical_interface=$PHYSICAL_INTERFACE --cfgm_ip $SERVICE_HOST $contrail_gw_interface
+    )
 
     # install contrail modules
     echo "Installing contrail modules"
@@ -1555,8 +1550,8 @@ if [ $ENABLE_CONTRAIL ]; then
     screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
     # launch ...
+    screen_it redis "sudo redis-server /etc/contrail/redis.conf"
     screen_it cass "sudo /usr/sbin/cassandra -f"
-    screen_it redis "sudo redis-server /etc/redis.conf"
     screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
     screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
     sleep 2
