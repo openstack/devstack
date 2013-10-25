@@ -992,7 +992,7 @@ if [ $ENABLE_CONTRAIL ]; then
     fi
 
     # use contrail-specific configs.  e.g. redis runs non-daemon on port 6382
-    rsync -rv $TOP_DIR/contrail/etc/ /etc/contrail
+    sudo rsync -rv $TOP_DIR/contrail/etc/ /etc/contrail
 
     # api server requirements
     # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
