@@ -24,7 +24,6 @@ set +o xtrace
 
 # Set up default directories
 DOCKER_DIR=$DEST/docker
-DOCKER_REPO=${DOCKER_REPO:-https://github.com/dotcloud/openstack-docker.git}
 DOCKER_BRANCH=${DOCKER_BRANCH:-master}
 
 DOCKER_UNIX_SOCKET=/var/run/docker.sock
@@ -54,10 +53,6 @@ function cleanup_nova_hypervisor() {
 
 # configure_nova_hypervisor - Set config files, create data dirs, etc
 function configure_nova_hypervisor() {
-    git_clone $DOCKER_REPO $DOCKER_DIR $DOCKER_BRANCH
-
-    ln -snf ${DOCKER_DIR}/nova-driver $NOVA_DIR/nova/virt/docker
-
     iniset $NOVA_CONF DEFAULT compute_driver docker.DockerDriver
     iniset $GLANCE_API_CONF DEFAULT container_formats ami,ari,aki,bare,ovf,docker
 
