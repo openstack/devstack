@@ -1074,18 +1074,17 @@ EOF
         cd ${contrail_cwd}
     fi
 
-    # create config files
-    # export passwords in a subshell so setup_contrail can pick them up but they won't leak later
-    (export ADMIN_PASSWORD CONTRAIL_ADMIN_USERNAME SERVICE_TOKEN CONTRAIL_ADMIN_TENANT && 
-    python $TOP_DIR/setup_contrail.py --physical_interface=$PHYSICAL_INTERFACE # --cfgm_ip $SERVICE_HOST 
-    )
-
     # process gateway configuration if present
     contrail_gw_interface=""
     if [ $CONTRAIL_VGW_INTERFACE -a $CONTRAIL_VGW_PUBLIC_SUBNET -a $CONTRAIL_VGW_PUBLIC_NETWORK ]; then
 	    contrail_gw_interface="--vgw_interface $CONTRAIL_VGW_INTERFACE --vgw_public_subnet $CONTRAIL_VGW_PUBLIC_SUBNET --vgw_public_network $CONTRAIL_VGW_PUBLIC_NETWORK"
     fi
-    python $TOP_DIR/setup_contrail.py --cfgm_ip $SERVICE_HOST $contrail_gw_interface
+
+    # create config files
+    # export passwords in a subshell so setup_contrail can pick them up but they won't leak later
+    (export ADMIN_PASSWORD CONTRAIL_ADMIN_USERNAME SERVICE_TOKEN CONTRAIL_ADMIN_TENANT && 
+    python $TOP_DIR/setup_contrail.py --physical_interface=$PHYSICAL_INTERFACE --cfgm_ip $SERVICE_HOST $contrail_gw_interface
+    )
 
     # install contrail modules
     echo "Installing contrail modules"
