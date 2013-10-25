@@ -631,7 +631,9 @@ install_infra
 install_oslo
 
 # Install stackforge libraries for testing
-install_stackforge
+if is_service_enabled stackforge_libs; then
+    install_stackforge
+fi
 
 # Install clients libraries
 install_keystoneclient
