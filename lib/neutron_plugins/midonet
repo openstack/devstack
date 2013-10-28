@@ -32,23 +32,10 @@ function neutron_plugin_configure_debug_command() {
 
 function neutron_plugin_configure_dhcp_agent() {
     DHCP_DRIVER=${DHCP_DRIVER:-"neutron.plugins.midonet.agent.midonet_driver.DhcpNoOpDriver"}
-    DHCP_INTERFACE_DRIVER=${DHCP_INTEFACE_DRIVER:-"neutron.plugins.midonet.agent.midonet_driver.MidonetInterfaceDriver"}
+    neutron_plugin_setup_interface_driver $Q_DHCP_CONF_FILE
     iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_driver $DHCP_DRIVER
-    iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver $DHCP_INTERFACE_DRIVER
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces True
     iniset $Q_DHCP_CONF_FILE DEFAULT enable_isolated_metadata True
-    if [[ "$MIDONET_API_URI" != "" ]]; then
-        iniset $Q_DHCP_CONF_FILE MIDONET midonet_uri "$MIDONET_API_URI"
-    fi
-    if [[ "$MIDONET_USERNAME" != "" ]]; then
-        iniset $Q_DHCP_CONF_FILE MIDONET username "$MIDONET_USERNAME"
-    fi
-    if [[ "$MIDONET_PASSWORD" != "" ]]; then
-        iniset $Q_DHCP_CONF_FILE MIDONET password "$MIDONET_PASSWORD"
-    fi
-    if [[ "$MIDONET_PROJECT_ID" != "" ]]; then
-        iniset $Q_DHCP_CONF_FILE MIDONET project_id "$MIDONET_PROJECT_ID"
-    fi
 }
 
 function neutron_plugin_configure_l3_agent() {
@@ -78,8 +65,8 @@ function neutron_plugin_configure_service() {
 }
 
 function neutron_plugin_setup_interface_driver() {
-    # May change in the future
-    :
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.MidonetInterfaceDriver
 }
 
 function has_neutron_plugin_security_group() {
