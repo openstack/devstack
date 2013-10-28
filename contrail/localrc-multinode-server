@@ -1,9 +1,11 @@
 # CONTRAIL MULTI_NODE master
+HOST_IP=172.18.3.6 # change this per compute node
 
 ENABLE_CONTRAIL=yes
-PHYSICAL_INTERFACE=eth1
+PHYSICAL_INTERFACE=eth0:1
+FLAT_INTERFACE=eth0:1
 
-MULTI_HOST=1
+MULTI_HOST=True
 Q_PLUGIN=contrail
 
 STACK_DIR=$(cd $(dirname $0) && pwd)
@@ -20,6 +22,7 @@ enable_service q-dhcp
 enable_service q-l3
 enable_service q-meta
 enable_service neutron
+enable_service rabbit
 
 DATABASE_PASSWORD=contrail123
 RABBIT_PASSWORD=contrail123
