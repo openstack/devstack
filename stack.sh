@@ -687,7 +687,7 @@ function test_install_neutron_patch() {
     patch_name="neutron_v3.patch"
     contrail_cwd=$(pwd)
     cd $DEST/neutron
-    patch -p0 -N --dry-run --silent < $TOP_DIR/$patch_name &> /dev/null
+    patch -p0 -N --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
     if [ $? == 0 ]; then
         # patch is missing
         echo "Installing neutron patch"
@@ -697,14 +697,16 @@ function test_install_neutron_patch() {
 }   
 
 function test_install_nova_patch() { 
-    patch_name="nova_v2.patch"
+    patch_name="nova_v3.patch"
     contrail_cwd=$(pwd)
     cd $DEST/nova
-    patch -p0 -N --dry-run --silent < $TOP_DIR/$patch_name &> /dev/null
+    patch -p0 -N --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
     if [ $? == 0 ]; then
         # patch is missing
         echo "Installing nova patch"
         patch -p0 < $TOP_DIR/$patch_name
+        sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
+        sudo chmod +x /usr/bin/config_parser
     fi
     cd ${contrail_cwd}
 }   
