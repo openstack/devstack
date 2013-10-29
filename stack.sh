@@ -694,16 +694,6 @@ if is_service_enabled nova; then
     configure_nova
 fi
 
-if is_service_enabled n-novnc; then
-    # a websockets/html5 or flash powered VNC console for vm instances
-    git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
-fi
-
-if is_service_enabled n-spice; then
-    # a websockets/html5 or flash powered SPICE console for vm instances
-    git_clone $SPICE_REPO $SPICE_DIR $SPICE_BRANCH
-fi
-
 if is_service_enabled horizon; then
     # dashboard
     install_horizon

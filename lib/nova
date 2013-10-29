@@ -73,9 +73,6 @@ SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
 
 QEMU_CONF=/etc/libvirt/qemu.conf
 
-NOVNC_DIR=$DEST/noVNC
-SPICE_DIR=$DEST/spice-html5
-
 # Set default defaults here as some hypervisor drivers override these
 PUBLIC_INTERFACE_DEFAULT=br100
 GUEST_INTERFACE_DEFAULT=eth0
@@ -590,6 +587,28 @@ function install_nova() {
         install_nova_hypervisor
     fi
 
+    if is_service_enabled n-novnc; then
+        # a websockets/html5 or flash powered VNC console for vm instances
+        if trueorfalse True "$NOVNC_FROM_PACKAGE"; then
+            NOVNC_WEB_DIR=/usr/share/novnc
+            install_package novnc
+        else
+            NOVNC_WEB_DIR=$DEST/noVNC
+            git_clone $NOVNC_REPO $NOVNC_WEB_DIR $NOVNC_BRANCH
+        fi
+    fi
+
+    if is_service_enabled n-spice; then
+        # a websockets/html5 or flash powered SPICE console for vm instances
+        if trueorfalse True "$SPICE_FROM_PACKAGE"; then
+            SPICE_WEB_DIR=/usr/share/spice-html5
+            install_package spice-html5
+        else
+            SPICE_WEB_DIR=$DEST/spice-html5
+            git_clone $SPICE_REPO $SPICE_WEB_DIR $SPICE_BRANCH
+        fi
+    fi
+
     git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
     setup_develop $NOVA_DIR
     sudo install -D -m 0644 -o $STACK_USER {$NOVA_DIR/tools/,/etc/bash_completion.d/}nova-manage.bash_completion
@@ -658,9 +677,9 @@ function start_nova_rest() {
     screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler --config-file $compute_cell_conf"
     screen_it n-api-meta "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api-metadata --config-file $compute_cell_conf"
 
-    screen_it n-novnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-novncproxy --config-file $api_cell_conf --web $NOVNC_DIR"
+    screen_it n-novnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-novncproxy --config-file $api_cell_conf --web $NOVNC_WEB_DIR"
     screen_it n-xvnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-xvpvncproxy --config-file $api_cell_conf"
-    screen_it n-spice "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $api_cell_conf --web $SPICE_DIR"
+    screen_it n-spice "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $api_cell_conf --web $SPICE_WEB_DIR"
     screen_it n-cauth "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-consoleauth --config-file $api_cell_conf"
 
     # Starting the nova-objectstore only if swift3 service is not enabled.
