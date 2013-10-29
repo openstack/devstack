@@ -26,7 +26,6 @@ function is_neutron_ovs_base_plugin() {
 }
 
 function neutron_plugin_create_nova_conf() {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtOpenVswitchDriver"}
     # if n-cpu is enabled, then setup integration bridge
     if is_service_enabled n-cpu; then
         setup_integration_bridge

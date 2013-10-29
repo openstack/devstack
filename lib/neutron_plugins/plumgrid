@@ -9,8 +9,7 @@ set +o xtrace
 #source $TOP_DIR/lib/neutron_plugins/ovs_base
 
 function neutron_plugin_create_nova_conf() {
-
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+    :
 }
 
 function neutron_plugin_setup_interface_driver() {
