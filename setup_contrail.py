@@ -698,20 +698,26 @@ HWADDR=%s
 
             mac = None
             if dev and dev != 'vhost0' :
-                mac = netifaces.ifaddresses (dev)[netifaces.AF_LINK][0][
-                            'addr']
+                ifaddresses = netifaces.ifaddresses(dev)
+                if netifaces.AF_LINK not in ifaddresses:
+                    # kludge - if dev is an alias like "eth0:0",
+                    # ifaddresses doesn't get the link address, so get
+                    # it from the parent interface, "eth0"
+                    i = dev.find(":")
+                    if i > 0:
+                        ifaddresses = netifaces.ifaddresses(dev[0:i])
+                mac = ifaddresses[netifaces.AF_LINK][0]['addr']
                 if mac:
                     with open ('%s/default_pmac' % temp_dir_name, 'w') as f:
                         f.write (mac)
                     self.run_shell("sudo mv %s/default_pmac /etc/contrail/default_pmac" % (temp_dir_name))
                 else:
                     raise KeyError, 'Interface %s Mac %s' % (str (dev), str (mac))
-                netmask = netifaces.ifaddresses (dev)[netifaces.AF_INET][0][
-                                'netmask']
+                netmask = netifaces.ifaddresses (dev)[netifaces.AF_INET][0]['netmask']
                 if multi_net:
                     gateway= non_mgmt_gw
                 else:
-                    gateway = self.find_gateway (dev)
+                    gateway = self.find_gateway(dev)
                 cidr = str (netaddr.IPNetwork('%s/%s' % (vhost_ip, netmask)))
 
                 template_vals = {
