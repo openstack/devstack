@@ -1,0 +1,12 @@
+Contrail directory includes some sample localrc files
+
+1) localrc.master - Use this on all-in-one system or master host
+on a multi node system. Set PHYSICAL_INTERFACE to the interface that
+Vrouter should bind to. Uncomment MULTI_HOST line if setup has 
+multiple compute nodes.
+
+2) localrc.compute - Use this on all compute nodes. Change the 
+following to suit your deployment:
+ PHYSICAL_INTERFACE
+ HOST_IP
+ SERVICE_HOST

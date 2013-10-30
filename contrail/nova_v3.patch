@@ -11,7 +11,7 @@ index e11bfeb..a004cb4 100644
  
  # Constant for max length of network interface names
 diff --git nova/virt/libvirt/vif.py nova/virt/libvirt/vif.py
-index 3e4004a..340b2fa 100644
+index 0e38345..32ef4bb 100644
 --- nova/virt/libvirt/vif.py
 +++ nova/virt/libvirt/vif.py
 @@ -312,6 +312,17 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
@@ -44,8 +44,8 @@ index 3e4004a..340b2fa 100644
          else:
              raise exception.NovaException(
                  _("Unexpected vif_type=%s") % vif_type)
-@@ -567,6 +583,28 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
-         except exception.ProcessExecutionError:
+@@ -567,6 +583,31 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+         except processutils.ProcessExecutionError:
              LOG.exception(_("Failed while plugging vif"), instance=instance)
  
 +    def plug_contrail(self, instance, vif):
@@ -54,26 +54,29 @@ index 3e4004a..340b2fa 100644
 +        super(LibvirtGenericVIFDriver,
 +              self).plug(instance, vif)
 +        dev = self.get_vif_devname(vif)
-+        linux_net.create_tap_dev(dev)
 +        iface_id = vif['id']
 +        from nova.virt import netutils
 +        net, prefix_len=netutils.get_net_and_prefixlen(vif['network']['subnets'][0]['cidr'])
-+        import sys
-+        sys.path.append('/opt/stack/nova/plugins/contrail')
-+        from config_parser import ContrailVifUpdate
-+        ContrailVifUpdate(vif['id'],
-+                          dev, vif['network']['subnets'][0]['ips'][0]['address'],
-+                          instance['uuid'], vif['network']['id'],
-+                          vif['address'],
-+                          instance['display_name'],
-+                          instance['hostname'],
-+                          instance['host'],
-+                          prefix_len)
++        try:
++            linux_net.create_tap_dev(dev)
++            utils.execute('config_parser', 'create', 
++                                           '--port_id', vif['id'],
++                                           '--tap_name', dev,
++                                           '--ip_address', vif['network']['subnets'][0]['ips'][0]['address'],
++                                           '--instance_id', instance['uuid'],
++                                           '--vn_id', vif['network']['id'],
++                                           '--mac_address', vif['address'],
++                                           '--display_name', instance['display_name'],
++                                           '--hostname', instance['hostname'],
++                                           '--host', instance['host'],
++                                           '--prefix_len', prefix_len)
++        except processutils.ProcessExecutionError:
++             LOG.exception(_("Failed while plugging vif"), instance=instance)
 +
      def plug(self, instance, vif):
          vif_type = vif['type']
  
-@@ -574,7 +612,6 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+@@ -574,7 +615,6 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
                      'vif=%(vif)s'),
                    {'vif_type': vif_type, 'instance': instance,
                     'vif': vif})
@@ -81,7 +84,7 @@ index 3e4004a..340b2fa 100644
          if vif_type is None:
              raise exception.NovaException(
                  _("vif_type parameter must be present "
-@@ -595,6 +632,8 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+@@ -595,6 +635,8 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
              self.plug_mlnx_direct(instance, vif)
          elif vif_type == network_model.VIF_TYPE_MIDONET:
              self.plug_midonet(instance, vif)
@@ -90,8 +93,8 @@ index 3e4004a..340b2fa 100644
          else:
              raise exception.NovaException(
                  _("Unexpected vif_type=%s") % vif_type)
-@@ -746,6 +785,18 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
-         except exception.ProcessExecutionError:
+@@ -746,6 +788,19 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+         except processutils.ProcessExecutionError:
              LOG.exception(_("Failed while unplugging vif"), instance=instance)
  
 +    def unplug_contrail(self, instance, vif):
@@ -100,16 +103,17 @@ index 3e4004a..340b2fa 100644
 +        super(LibvirtGenericVIFDriver,
 +              self).unplug(instance, vif)
 +        dev = self.get_vif_devname(vif)
-+        import sys
-+        sys.path.append('/opt/stack/nova/plugins/contrail')
-+        from config_parser import ContrailVifDelete
-+        ContrailVifDelete(vif['id'])
-+        linux_net.delete_net_dev(dev)
++        try:
++            utils.execute('config_parser', 'delete',
++                                            '--port_id', vif['id'])
++            linux_net.delete_net_dev(dev)
++        except processutils.ProcessExecutionError:
++            LOG.exception(_("Failed while unplugging vif"), instance=instance)
 +
      def unplug(self, instance, vif):
          vif_type = vif['type']
  
-@@ -770,6 +821,8 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
+@@ -770,6 +825,8 @@ class LibvirtGenericVIFDriver(LibvirtBaseVIFDriver):
              self.unplug_ivs(instance, vif)
          elif vif_type == network_model.VIF_TYPE_IOVISOR:
              self.unplug_iovisor(instance, vif)
@@ -119,11 +123,12 @@ index 3e4004a..340b2fa 100644
              self.unplug_mlnx_direct(instance, vif)
          elif vif_type == network_model.VIF_TYPE_MIDONET:
 diff --git plugins/contrail/config_parser.py plugins/contrail/config_parser.py
-new file mode 100644
-index 0000000..043b77c
+new file mode 100755
+index 0000000..acac9fb
 --- /dev/null
 +++ plugins/contrail/config_parser.py
-@@ -0,0 +1,116 @@
+@@ -0,0 +1,126 @@
++#! /usr/bin/env python
 +import os
 +import sys
 +import cgitb
@@ -185,15 +190,18 @@ index 0000000..043b77c
 +# end ContrailVifUpdate
 +
 +def update_vif_file(args):
-+     #import pdb; pdb.set_trace()
-+     if (args.port_id and args.tap_name and
-+         args.ip_address and args.instance_id and
-+         args.vn_id and args.mac_address and
-+         args.host and args.prefix_len):
-+          ContrailVifUpdate(args.port_id, args.tap_name, 
-+                            args.ip_address, args.instance_id, 
-+                            args.vn_id, args.mac_address, args.display_name,
-+                            args.hostname, args.host, args.prefix_len)
++    if args.which is 'create':    
++       if (args.port_id and args.tap_name and
++           args.ip_address and args.instance_id and
++           args.vn_id and args.mac_address and
++           args.host and args.prefix_len):
++           ContrailVifUpdate(args.port_id, args.tap_name, 
++                             args.ip_address, args.instance_id, 
++                             args.vn_id, args.mac_address, args.display_name,
++                             args.hostname, args.host, args.prefix_len)
++    elif args.which is 'delete':
++        if args.port_id is not None:
++           ContrailVifDelete(args.port_id)
 +              
 +# end update_vif_file
 +
@@ -216,22 +224,28 @@ index 0000000..043b77c
 +    #defaults.update(ksopts)
 +    #parser.set_defaults(**defaults)
 +
-+    parser.add_argument("--port_id", help = "port id")
-+    parser.add_argument("--tap_name", help = "tap_name")
-+    parser.add_argument("--ip_address", help = "ip_address")
-+    parser.add_argument("--instance_id", help = "instance_id")
-+    parser.add_argument("--vn_id", help = "vn_id")
-+    parser.add_argument("--mac_address", help = "mac_address")
-+    parser.add_argument("--display_name", help = "display_name")
-+    parser.add_argument("--hostname", help = "hostname")
-+    parser.add_argument("--host", help = "host")
-+    parser.add_argument("--prefix_len", help = "prefix_len")
++    subparsers = parser.add_subparsers(help='commands')
++    create_parser = subparsers.add_parser('create', help='Create/Modify vif')
++    create_parser.set_defaults(which='create')
++    create_parser.add_argument("--port_id", help = "port id")
++    create_parser.add_argument("--tap_name", help = "tap_name")
++    create_parser.add_argument("--ip_address", help = "ip_address")
++    create_parser.add_argument("--instance_id", help = "instance_id")
++    create_parser.add_argument("--vn_id", help = "vn_id")
++    create_parser.add_argument("--mac_address", help = "mac_address")
++    create_parser.add_argument("--display_name", help = "display_name")
++    create_parser.add_argument("--hostname", help = "hostname")
++    create_parser.add_argument("--host", help = "host")
++    create_parser.add_argument("--prefix_len", help = "prefix_len")
++    delete_parser = subparsers.add_parser('delete', help='Delete vif')
++    delete_parser.set_defaults(which='delete')
++    delete_parser.add_argument("--port_id", help = "port id")
++    print parser.parse_args()
 +    args = parser.parse_args(remaining_argv)
 +    update_vif_file(args)
 +# end parse_args
 +
 +def main(args_str=None):
-+     #import pdb; pdb.set_trace()
 +     if not args_str:
 +          args_str = ' '.join(sys.argv[1:])
 +          args = parse_args(args_str)
