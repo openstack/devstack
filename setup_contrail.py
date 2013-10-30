@@ -166,16 +166,12 @@ class Setup(object):
 
         self._args = parser.parse_args(remaining_argv)
 
-        if self._args.physical_interface:
-            self._args.cfgm_ip = self.get_intf_ip(self._args.physical_interface)
-        print 'Using IP address %s' % self._args.cfgm_ip
-
         # dsetia
         self._args.openstack_ip = self._args.cfgm_ip
         self._args.collector_ip = self._args.cfgm_ip
         self._args.discovery_ip = self._args.cfgm_ip
         self._args.control_ip = self._args.cfgm_ip
-        self._args.compute_ip = self._args.cfgm_ip
+        self._args.compute_ip = self.get_intf_ip(self._args.physical_interface)
         self._args.openstack_mgmt_ip = self._args.cfgm_ip
         self._args.database_listen_ip = self._args.cfgm_ip
         self._args.cassandra_ip_list = ['127.0.0.1']

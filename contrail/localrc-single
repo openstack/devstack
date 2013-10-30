@@ -1,0 +1,25 @@
+STACK_DIR=$(cd $(dirname $0) && pwd)
+
+LOG=True
+DEBUG=True
+LOGFILE=$STACK_DIR/log/stack.log
+LOGDAYS=1
+
+disable_service n-net
+enable_service q-svc
+enable_service q-agt
+enable_service q-dhcp
+enable_service q-l3
+enable_service q-meta
+enable_service neutron
+
+DATABASE_PASSWORD=contrail123
+RABBIT_PASSWORD=contrail123
+SERVICE_TOKEN=contrail123
+SERVICE_PASSWORD=contrail123
+ADMIN_PASSWORD=contrail123
+
+ENABLE_CONTRAIL=yes
+Q_PLUGIN=contrail
+PHYSICAL_INTERFACE=eth1
+
