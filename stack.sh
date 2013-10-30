@@ -1010,7 +1010,7 @@ if [ $ENABLE_CONTRAIL ]; then
         repo init -u git@github.com:Juniper/contrail-vnc
     fi
     repo sync
-    python third_party/fetch_packages.py
+    #python third_party/fetch_packages.py
     scons
     cd ${contrail_cwd}
 
