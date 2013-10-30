@@ -1503,14 +1503,33 @@ function insert_vrouter() {
 	|| echo "Error adding $dev to vrouter"
 
     if is_ubuntu; then
-	cat > /tmp/interfaces <<EOF
-iface $DEVICE inet static
-      address $IPADDR
-      netmask $NETMASK
 
+	# copy eth0 interface params, routes, and dns to a new
+	# interfaces file for vhost0
+	(
+	cat <<EOF
 iface $dev inet manual
+
+iface $DEVICE inet static
 EOF
+	ifconfig $dev | perl -ne '
+/HWaddr\s*([a-f\d:]+)/i    && print(" hwaddr $1\n");
+/inet addr:\s*([\d.]+)/i && print(" address $1\n");
+/Bcast:\s*([\d.]+)/i     && print(" broadcast $1\n");
+/Mask:\s*([\d.]+)/i      && print(" netmask $1\n");
+'
+	route -n | perl -ane '$F[7]=="'$dev'" && ($F[3] =~ /G/) && print(" gateway $F[1]\n")'
+
+	perl -ne '/^nameserver ([\d.]+)/ && push(@dns, $1); 
+END { @dns && print(" dns-nameservers ", join(" ", @dns), "\n") }' /etc/resolv.conf
+) >/tmp/interfaces
+
+	# bring down the old interface
+	# and bring it back up with no IP address
 	sudo ifdown $dev
+	sudo ifconfig $dev 0 up
+
+	# bring up vhost0
 	sudo ifup -i /tmp/interfaces $DEVICE
 	echo "Sleeping 10 seconds to allow link state to settle"
 	sleep 10
