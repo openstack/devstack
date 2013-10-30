@@ -305,20 +305,6 @@ class Setup(object):
         return found
     #end _is_string_in_file
     
-    def get_mac_addr(self, dev):
-        ifaddresses = netifaces.ifaddresses(dev)
-        if netifaces.AF_LINK not in ifaddresses:
-            # kludge - if dev is an alias like "eth0:0", ifaddresses
-            # doesn't get the link address, so get it from the parent
-            # interface, "eth0"
-            i = dev.find(":")
-            if i > 0:
-                ifaddresses = netifaces.ifaddresses(dev[0:i])
-        mac = None
-        if netifaces.AF_LINK in ifaddresses:
-            mac = ifaddresses[netifaces.AF_LINK][0]['addr']
-        return mac
-
     def _rewrite_ifcfg_file(self, filename, dev, prsv_cfg):
         bond = False
         mac = ''
@@ -328,8 +314,8 @@ class Setup(object):
             bond = True
         # end if os.path.isdir...
 
-        mac = self.get_mac_addr(dev)
-        ifcfg_file='/etc/sysconfig/network-scripts/ifcfg-%s' % (dev)
+        mac = netifaces.ifaddresses(dev)[netifaces.AF_LINK][0]['addr']
+        ifcfg_file='/etc/sysconfig/network-scripts/ifcfg-%s' %(dev)
         if not os.path.isfile( ifcfg_file ):
             ifcfg_file = temp_dir_name + 'ifcfg-' + dev
             with open (ifcfg_file, 'w') as f:
@@ -712,18 +698,20 @@ HWADDR=%s
 
             mac = None
             if dev and dev != 'vhost0' :
-                mac = self.get_mac_addr(dev)
+                mac = netifaces.ifaddresses (dev)[netifaces.AF_LINK][0][
+                            'addr']
                 if mac:
                     with open ('%s/default_pmac' % temp_dir_name, 'w') as f:
                         f.write (mac)
                     self.run_shell("sudo mv %s/default_pmac /etc/contrail/default_pmac" % (temp_dir_name))
                 else:
                     raise KeyError, 'Interface %s Mac %s' % (str (dev), str (mac))
-                netmask = netifaces.ifaddresses (dev)[netifaces.AF_INET][0]['netmask']
+                netmask = netifaces.ifaddresses (dev)[netifaces.AF_INET][0][
+                                'netmask']
                 if multi_net:
                     gateway= non_mgmt_gw
                 else:
-                    gateway = self.find_gateway(dev)
+                    gateway = self.find_gateway (dev)
                 cidr = str (netaddr.IPNetwork('%s/%s' % (vhost_ip, netmask)))
 
                 template_vals = {
