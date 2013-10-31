@@ -271,6 +271,12 @@ set_vm_memory "$GUEST_NAME" "$OSDOMU_MEM_MB"
 # Max out VCPU count for better performance
 max_vcpus "$GUEST_NAME"
 
+# Wipe out all network cards
+destroy_all_vifs_of "$GUEST_NAME"
+
+# Add only one interface to prepare the guest template
+add_interface "$GUEST_NAME" "$MGT_BRIDGE_OR_NET_NAME" "0"
+
 # start the VM to run the prepare steps
 xe vm-start vm="$GUEST_NAME"
 
