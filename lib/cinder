@@ -281,6 +281,11 @@ function configure_cinder() {
             iniset $CINDER_CONF DEFAULT xenapi_nfs_server "$CINDER_XENAPI_NFS_SERVER"
             iniset $CINDER_CONF DEFAULT xenapi_nfs_serverpath "$CINDER_XENAPI_NFS_SERVERPATH"
         )
+    elif [ "$CINDER_DRIVER" == "nfs" ]; then
+        iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.nfs.NfsDriver"
+        iniset $CINDER_CONF DEFAULT nfs_shares_config "$CINDER_CONF_DIR/nfs_shares.conf"
+        echo "$CINDER_NFS_SERVERPATH" | sudo tee "$CINDER_CONF_DIR/nfs_shares.conf"
+        sudo chmod 666 $CINDER_CONF_DIR/nfs_shares.conf
     elif [ "$CINDER_DRIVER" == "sheepdog" ]; then
         iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.sheepdog.SheepdogDriver"
     elif [ "$CINDER_DRIVER" == "glusterfs" ]; then
