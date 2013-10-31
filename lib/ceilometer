@@ -91,7 +91,7 @@ function configure_ceilometer() {
     iniset $CEILOMETER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CEILOMETER_CONF keystone_authtoken signing_dir $CEILOMETER_AUTH_CACHE_DIR
 
-    if [[ "$CEILOMETER_BACKEND" = 'mysql' ]]; then
+    if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
         iniset $CEILOMETER_CONF database connection `database_connection_url ceilometer`
     else
         iniset $CEILOMETER_CONF database connection mongodb://localhost:27017/ceilometer
@@ -116,7 +116,7 @@ function init_ceilometer() {
     sudo chown $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
     rm -f $CEILOMETER_AUTH_CACHE_DIR/*
 
-    if [[ "$CEILOMETER_BACKEND" = 'mysql' ]]; then
+    if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
         recreate_database ceilometer utf8
         $CEILOMETER_BIN_DIR/ceilometer-dbsync
     fi
