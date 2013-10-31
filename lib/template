@@ -3,18 +3,19 @@
 # <do not include this template file in ``stack.sh``!>
 
 # Dependencies:
-# ``functions`` file
-# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
-# <list other global vars that are assumed to be defined>
+#
+# - ``functions`` file
+# - ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# - <list other global vars that are assumed to be defined>
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_XXXX
-# configure_XXXX
-# init_XXXX
-# start_XXXX
-# stop_XXXX
-# cleanup_XXXX
+# - install_XXXX
+# - configure_XXXX
+# - init_XXXX
+# - start_XXXX
+# - stop_XXXX
+# - cleanup_XXXX
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -79,6 +80,7 @@ function stop_XXXX() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

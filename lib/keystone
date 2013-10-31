@@ -2,25 +2,26 @@
 # Functions to control the configuration and operation of **Keystone**
 
 # Dependencies:
-# ``functions`` file
-# ``DEST``, ``STACK_USER``
-# ``IDENTITY_API_VERSION``
-# ``BASE_SQL_CONN``
-# ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
-# ``SERVICE_TOKEN``
-# ``S3_SERVICE_PORT`` (template backend only)
+#
+# - ``functions`` file
+# - ``DEST``, ``STACK_USER``
+# - ``IDENTITY_API_VERSION``
+# - ``BASE_SQL_CONN``
+# - ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
+# - ``SERVICE_TOKEN``
+# - ``S3_SERVICE_PORT`` (template backend only)
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_keystone
-# configure_keystone
-# _config_keystone_apache_wsgi
-# init_keystone
-# start_keystone
-# create_keystone_accounts
-# stop_keystone
-# cleanup_keystone
-# _cleanup_keystone_apache_wsgi
+# - install_keystone
+# - configure_keystone
+# - _config_keystone_apache_wsgi
+# - init_keystone
+# - start_keystone
+# - create_keystone_accounts
+# - stop_keystone
+# - cleanup_keystone
+# - _cleanup_keystone_apache_wsgi
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -393,6 +394,7 @@ function stop_keystone() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

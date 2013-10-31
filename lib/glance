@@ -2,20 +2,21 @@
 # Functions to control the configuration and operation of the **Glance** service
 
 # Dependencies:
-# ``functions`` file
-# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
-# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
-# ``SERVICE_HOST``
-# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+#
+# - ``functions`` file
+# - ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+# - ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# - ``SERVICE_HOST``
+# - ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_glance
-# configure_glance
-# init_glance
-# start_glance
-# stop_glance
-# cleanup_glance
+# - install_glance
+# - configure_glance
+# - init_glance
+# - start_glance
+# - stop_glance
+# - cleanup_glance
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -209,6 +210,7 @@ function stop_glance() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

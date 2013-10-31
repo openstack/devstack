@@ -7,24 +7,24 @@
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_neutron
-# install_neutronclient
-# install_neutron_agent_packages
-# install_neutron_third_party
-# configure_neutron
-# init_neutron
-# configure_neutron_third_party
-# init_neutron_third_party
-# start_neutron_third_party
-# create_nova_conf_neutron
-# start_neutron_service_and_check
-# create_neutron_initial_network
-# setup_neutron_debug
-# start_neutron_agents
+# - install_neutron
+# - install_neutronclient
+# - install_neutron_agent_packages
+# - install_neutron_third_party
+# - configure_neutron
+# - init_neutron
+# - configure_neutron_third_party
+# - init_neutron_third_party
+# - start_neutron_third_party
+# - create_nova_conf_neutron
+# - start_neutron_service_and_check
+# - create_neutron_initial_network
+# - setup_neutron_debug
+# - start_neutron_agents
 #
 # ``unstack.sh`` calls the entry points in this order:
 #
-# stop_neutron
+# - stop_neutron
 
 # Functions in lib/neutron are classified into the following categories:
 #
@@ -895,6 +895,7 @@ function stop_neutron_third_party() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

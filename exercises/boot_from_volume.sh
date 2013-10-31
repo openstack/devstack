@@ -3,8 +3,9 @@
 # **boot_from_volume.sh**
 
 # This script demonstrates how to boot from a volume.  It does the following:
-#  *  Create a bootable volume
-#  *  Boot a volume-backed instance
+#
+# *  Create a bootable volume
+# *  Boot a volume-backed instance
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"

@@ -1,15 +1,16 @@
 # lib/savanna-dashboard
 
 # Dependencies:
-# ``functions`` file
-# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
-# ``SERVICE_HOST
+#
+# - ``functions`` file
+# - ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+# - ``SERVICE_HOST``
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_savanna_dashboard
-# configure_savanna_dashboard
-# cleanup_savanna_dashboard
+# - install_savanna_dashboard
+# - configure_savanna_dashboard
+# - cleanup_savanna_dashboard
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)

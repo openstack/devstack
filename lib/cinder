@@ -2,19 +2,20 @@
 # Install and start **Cinder** volume service
 
 # Dependencies:
+#
 # - functions
 # - DEST, DATA_DIR, STACK_USER must be defined
-# SERVICE_{TENANT_NAME|PASSWORD} must be defined
-# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+# - SERVICE_{TENANT_NAME|PASSWORD} must be defined
+# - ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # stack.sh
 # ---------
-# install_cinder
-# configure_cinder
-# init_cinder
-# start_cinder
-# stop_cinder
-# cleanup_cinder
+# - install_cinder
+# - configure_cinder
+# - init_cinder
+# - start_cinder
+# - stop_cinder
+# - cleanup_cinder
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -82,7 +83,8 @@ VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 # Functions
 # ---------
 # _clean_lvm_lv removes all cinder LVM volumes
-# _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
+#
+# Usage: _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
 function _clean_lvm_lv() {
     local vg=$1
     local lv_prefix=$2
@@ -98,7 +100,8 @@ function _clean_lvm_lv() {
 
 # _clean_lvm_backing_file() removes the backing file of the
 # volume group used by cinder
-# _clean_lvm_backing_file() $VOLUME_GROUP
+#
+# Usage: _clean_lvm_backing_file() $VOLUME_GROUP
 function _clean_lvm_backing_file() {
     local vg=$1
 
@@ -551,6 +554,7 @@ function stop_cinder() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

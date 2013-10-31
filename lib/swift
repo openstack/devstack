@@ -2,22 +2,24 @@
 # Functions to control the configuration and operation of the **Swift** service
 
 # Dependencies:
-# ``functions`` file
-# ``apache`` file
-# ``DEST``, ``SCREEN_NAME``, `SWIFT_HASH` must be defined
-# ``STACK_USER`` must be defined
-# ``SWIFT_DATA_DIR`` or ``DATA_DIR`` must be defined
-# ``lib/keystone`` file
+#
+# - ``functions`` file
+# - ``apache`` file
+# - ``DEST``, ``SCREEN_NAME``, `SWIFT_HASH` must be defined
+# - ``STACK_USER`` must be defined
+# - ``SWIFT_DATA_DIR`` or ``DATA_DIR`` must be defined
+# - ``lib/keystone`` file
+#
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_swift
-# _config_swift_apache_wsgi
-# configure_swift
-# init_swift
-# start_swift
-# stop_swift
-# cleanup_swift
-# _cleanup_swift_apache_wsgi
+# - install_swift
+# - _config_swift_apache_wsgi
+# - configure_swift
+# - init_swift
+# - start_swift
+# - stop_swift
+# - cleanup_swift
+# - _cleanup_swift_apache_wsgi
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -624,6 +626,7 @@ function stop_swift() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:
