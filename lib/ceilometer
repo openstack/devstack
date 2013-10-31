@@ -2,9 +2,11 @@
 # Install and start **Ceilometer** service
 
 # To enable a minimal set of Ceilometer services, add the following to localrc:
+#
 #   enable_service ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api
 #
 # To ensure Ceilometer alarming services are enabled also, further add to the localrc:
+#
 #   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
 
 # Dependencies:

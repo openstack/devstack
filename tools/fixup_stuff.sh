@@ -5,11 +5,15 @@
 # fixup_stuff.sh
 #
 # All distro and package specific hacks go in here
+#
 # - prettytable 0.7.2 permissions are 600 in the package and
 #   pip 1.4 doesn't fix it (1.3 did)
+#
 # - httplib2 0.8 permissions are 600 in the package and
 #   pip 1.4 doesn't fix it (1.3 did)
+#
 # - RHEL6:
+#
 #   - set selinux not enforcing
 #   - (re)start messagebus daemon
 #   - remove distro packages python-crypto and python-lxml
@@ -90,7 +94,7 @@ if [[ $DISTRO =~ (rhel6) ]]; then
         # fresh system via Anaconda and the dependency chain
         # ``cas`` -> ``python-paramiko`` -> ``python-crypto``.
         # ``pip uninstall pycrypto`` will remove the packaged ``.egg-info``
-        #  file but leave most of the actual library files behind in
+        # file but leave most of the actual library files behind in
         # ``/usr/lib64/python2.6/Crypto``. Later ``pip install pycrypto``
         # will install over the packaged files resulting
         # in a useless mess of old, rpm-packaged files and pip-installed files.

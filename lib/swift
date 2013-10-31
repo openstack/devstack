@@ -272,8 +272,8 @@ function configure_swift() {
 
     # By default Swift will be installed with keystone and tempauth middleware
     # and add the swift3 middleware if its configured for it. The token for
-    # tempauth would be prefixed with the reseller_prefix setting TEMPAUTH_ the
-    # token for keystoneauth would have the standard reseller_prefix AUTH_
+    # tempauth would be prefixed with the reseller_prefix setting `TEMPAUTH_` the
+    # token for keystoneauth would have the standard reseller_prefix `AUTH_`
     if is_service_enabled swift3;then
         swift_pipeline+=" swift3 s3token "
     fi

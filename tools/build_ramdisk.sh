@@ -84,11 +84,10 @@ if [ ! -r $CACHEDIR/$DIST_NAME-base.img ]; then
     $TOOLS_DIR/get_uec_image.sh $DIST_NAME $CACHEDIR/$DIST_NAME-base.img
 fi
 
-# Finds the next available NBD device
-# Exits script if error connecting or none free
+# Finds and returns full device path for the next available NBD device.
+# Exits script if error connecting or none free.
 # map_nbd image
-# Returns full nbd device path
-function map_nbd {
+function map_nbd() {
     for i in `seq 0 15`; do
         if [ ! -e /sys/block/nbd$i/pid ]; then
             NBD=/dev/nbd$i
@@ -156,7 +155,7 @@ if [ ! -r $IMG_FILE ]; then
 
     # Pre-create the image file
     # FIXME(dt): This should really get the partition size to
-    #            pre-create the image file
+    # pre-create the image file
     dd if=/dev/zero of=$IMG_FILE_TMP bs=1 count=1 seek=$((2*1024*1024*1024))
     # Create filesystem image for RAM disk
     dd if=${NBD}p1 of=$IMG_FILE_TMP bs=1M
