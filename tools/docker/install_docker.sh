@@ -38,7 +38,7 @@ curl https://get.docker.io/gpg | sudo apt-key add -
 install_package python-software-properties && \
     sudo sh -c "echo deb $DOCKER_APT_REPO docker main > /etc/apt/sources.list.d/docker.list"
 apt_get update
-install_package --force-yes lxc-docker-${DOCKER_PACKAGE_VERSION} socat
+install_package --force-yes lxc-docker socat
 
 # Start the daemon - restart just in case the package ever auto-starts...
 restart_service docker
