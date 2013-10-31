@@ -1,6 +1,7 @@
-HOST_IP=172.18.3.5 # change this per compute node
-SERVICE_HOST=172.18.3.6
+# change this to your master node's ip
+SERVICE_HOST=172.18.3.6 
 
+# the interface that contrail's vhost0 should take over
 PHYSICAL_INTERFACE=eth0
 
 ENABLE_CONTRAIL=yes

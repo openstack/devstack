@@ -1009,6 +1009,8 @@ if [ $ENABLE_CONTRAIL ]; then
     contrail_cwd=$(pwd)
     cd $CONTRAIL_SRC
     if [ ! -d $CONTRAIL_SRC/.repo ]; then
+        git config --global --get user.name || git config --global user.name "Anonymous"
+        git config --global --get user.email || git config --global user.email "anonymous@nowhere.com"
         repo init -u git@github.com:Juniper/contrail-vnc
     fi
     repo sync
@@ -1019,14 +1021,13 @@ if [ $ENABLE_CONTRAIL ]; then
     # get cassandra
     if ! which cassandra > /dev/null 2>&1 ; then
 	if is_ubuntu; then
+	    sudo add-apt-repository ppa:nilarimogard/webupd8
+	    sudo apt-get update
+	    sudo apt-get install launchpad-getkeys
+	    
 	    echo "deb http://www.apache.org/dist/cassandra/debian 08x main" |
 	    sudo tee /etc/apt/sources.list.d/cassandra.list
 
-	    gpg --keyserver pgp.mit.edu --recv-keys F758CE318D77295D
-	    gpg --export --armor F758CE318D77295D | sudo apt-key add -
-	    gpg --keyserver pgp.mit.edu --recv-keys 2B5C1B00
-	    gpg --export --armor 2B5C1B00 | sudo apt-key add -
-	    
 	    apt_get update
 	    apt_get install cassandra
 	    # don't start cassandra at boot
