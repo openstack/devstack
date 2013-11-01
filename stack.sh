@@ -53,7 +53,7 @@ if [[ -r $TOP_DIR/local.conf ]]; then
             if [[ -r $TOP_DIR/localrc ]]; then
                 warn $LINENO "localrc and local.conf:[[local]] both exist, using localrc"
             else
-                echo "# Generated file, do not exit" >$TOP_DIR/.localrc.auto
+                echo "# Generated file, do not edit" >$TOP_DIR/.localrc.auto
                 get_meta_section $TOP_DIR/local.conf local $lfile >>$TOP_DIR/.localrc.auto
             fi
         fi
