@@ -700,10 +700,14 @@ function test_install_nova_patch() {
     patch_name="nova_v3.patch"
     contrail_cwd=$(pwd)
     cd $DEST/nova
-    echo "Installing nova patch"
-    patch -p0 -N < $TOP_DIR/contrail/$patch_name
-    sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
-    sudo chmod +x /usr/bin/config_parser
+    patch -p0 -N --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
+    if [ $? == 0 ]; then
+        # patch is missing
+        echo "Installing nova patch"
+        patch -p0 < $TOP_DIR/contrail/$patch_name
+        sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
+        sudo chmod +x /usr/bin/config_parser
+    fi
     cd ${contrail_cwd}
 }   
 
