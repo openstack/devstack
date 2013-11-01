@@ -120,6 +120,11 @@ function init_horizon() {
         # Be a good citizen and use the distro tools here
         sudo touch $horizon_conf
         sudo a2ensite horizon.conf
+        if [[ "$DISTRO" == "saucy" ]]; then
+            # Ubuntu 13.10 has Require all denied in apache2.conf
+            # and requires explicit Require all granted
+            HORIZON_REQUIRE='Require all granted'
+        fi
     elif is_fedora; then
         if [[ "$os_RELEASE" -ge "18" ]]; then
             # fedora 18 has Require all denied  in its httpd.conf
