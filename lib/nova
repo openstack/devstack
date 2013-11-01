@@ -63,6 +63,10 @@ NOVA_ROOTWRAP=$(get_rootwrap_location nova)
 # NOTE: Set API_RATE_LIMIT="False" to turn OFF rate limiting
 API_RATE_LIMIT=${API_RATE_LIMIT:-"True"}
 
+# Option to enable/disable config drive
+# NOTE: Set FORCE_CONFIG_DRIVE="False" to turn OFF config drive
+FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"always"}
+
 # Nova supports pluggable schedulers.  The default ``FilterScheduler``
 # should work in most cases.
 SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
@@ -427,6 +431,9 @@ function create_nova_conf() {
     fi
     if [ "$API_RATE_LIMIT" != "True" ]; then
         iniset $NOVA_CONF DEFAULT api_rate_limit "False"
+    fi
+    if [ "$FORCE_CONFIG_DRIVE" != "False" ]; then
+        iniset $NOVA_CONF DEFAULT force_config_drive "$FORCE_CONFIG_DRIVE"
     fi
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
