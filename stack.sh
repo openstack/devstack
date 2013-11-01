@@ -691,7 +691,7 @@ function test_install_neutron_patch() {
     if [ $? == 0 ]; then
         # patch is missing
         echo "Installing neutron patch"
-        patch -p0 < $TOP_DIR/$patch_name
+        patch -p0 < $TOP_DIR/contrail/$patch_name
     fi
     cd ${contrail_cwd}
 }   
@@ -704,7 +704,7 @@ function test_install_nova_patch() {
     if [ $? == 0 ]; then
         # patch is missing
         echo "Installing nova patch"
-        patch -p0 < $TOP_DIR/$patch_name
+        patch -p0 < $TOP_DIR/contrail/$patch_name
         sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
         sudo chmod +x /usr/bin/config_parser
     fi
