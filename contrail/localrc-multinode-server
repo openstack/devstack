@@ -1,5 +1,4 @@
 # CONTRAIL MULTI_NODE master
-HOST_IP=172.18.3.6 # change this per compute node
 
 ENABLE_CONTRAIL=yes
 PHYSICAL_INTERFACE=eth0
