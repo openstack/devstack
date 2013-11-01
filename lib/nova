@@ -212,26 +212,24 @@ function configure_nova() {
     configure_nova_rootwrap
 
     if is_service_enabled n-api; then
-        # Use the sample http middleware configuration supplied in the
-        # Nova sources.  This paste config adds the configuration required
-        # for Nova to validate Keystone tokens.
-
         # Remove legacy paste config if present
         rm -f $NOVA_DIR/bin/nova-api-paste.ini
 
         # Get the sample configuration file in place
         cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
 
-        iniset $NOVA_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
+        # Comment out the keystone configs in Nova's api-paste.ini.
+        # We are using nova.conf to configure this instead.
+        inicomment $NOVA_API_PASTE_INI filter:authtoken auth_host
         if is_service_enabled tls-proxy; then
-            iniset $NOVA_API_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+            inicomment $NOVA_API_PASTE_INI filter:authtoken auth_protocol
         fi
-        iniset $NOVA_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-        iniset $NOVA_API_PASTE_INI filter:authtoken admin_user nova
-        iniset $NOVA_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
+        inicomment $NOVA_API_PASTE_INI filter:authtoken admin_tenant_name
+        inicomment $NOVA_API_PASTE_INI filter:authtoken admin_user
+        inicomment $NOVA_API_PASTE_INI filter:authtoken admin_password
     fi
 
-    iniset $NOVA_API_PASTE_INI filter:authtoken signing_dir $NOVA_AUTH_CACHE_DIR
+    inicomment $NOVA_API_PASTE_INI filter:authtoken signing_dir
 
     if is_service_enabled n-cpu; then
         # Force IP forwarding on, just on case
@@ -394,7 +392,20 @@ function create_nova_conf() {
             # Set the service port for a proxy to take the original
             iniset $NOVA_CONF DEFAULT osapi_compute_listen_port "$NOVA_SERVICE_PORT_INT"
         fi
+
+        # Add keystone authtoken configuration
+
+        iniset $NOVA_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
+        if is_service_enabled tls-proxy; then
+            iniset $NOVA_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+        fi
+        iniset $NOVA_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+        iniset $NOVA_CONF keystone_authtoken admin_user nova
+        iniset $NOVA_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
     fi
+
+    iniset $NOVA_CONF keystone_authtoken signing_dir $NOVA_AUTH_CACHE_DIR
+
     if is_service_enabled cinder; then
         iniset $NOVA_CONF DEFAULT volume_api_class "nova.volume.cinder.API"
     fi
