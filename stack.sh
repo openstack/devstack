@@ -700,14 +700,10 @@ function test_install_nova_patch() {
     patch_name="nova_v3.patch"
     contrail_cwd=$(pwd)
     cd $DEST/nova
-    patch -p0 -N --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
-    if [ $? == 0 ]; then
-        # patch is missing
-        echo "Installing nova patch"
-        patch -p0 < $TOP_DIR/$patch_name
-        sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
-        sudo chmod +x /usr/bin/config_parser
-    fi
+    echo "Installing nova patch"
+    patch -p0 -N < $TOP_DIR/contrail/$patch_name
+    sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
+    sudo chmod +x /usr/bin/config_parser
     cd ${contrail_cwd}
 }   
 
@@ -1014,7 +1010,7 @@ if [ $ENABLE_CONTRAIL ]; then
         repo init -u git@github.com:Juniper/contrail-vnc
     fi
     repo sync
-    python third_party/fetch_packages.py
+    #python third_party/fetch_packages.py
     scons
     cd ${contrail_cwd}
 
