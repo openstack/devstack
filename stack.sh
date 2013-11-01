@@ -1039,7 +1039,12 @@ if [ $ENABLE_CONTRAIL ]; then
 		sudo tee /etc/apt/sources.list.d/cassandra.list
 	    apt_get update
 	    apt_get install --force-yes cassandra
-	    # don't start cassandra at boot
+	    
+	    # fix cassandra's stack size issues
+	    sudo patch -N -r - -d /etc/cassandra < $TOP_DIR/contrail/cassandra-env.sh.patch
+
+	    # don't start cassandra at boot.  I'll screen_it later
+	    sudo service cassandra stop
 	    sudo update-rc.d -f cassandra remove
 	else
             cat << EOF > datastax.repo
