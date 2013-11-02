@@ -1021,16 +1021,30 @@ if [ $ENABLE_CONTRAIL ]; then
     # get cassandra
     if ! which cassandra > /dev/null 2>&1 ; then
 	if is_ubuntu; then
-	    sudo add-apt-repository ppa:nilarimogard/webupd8
-	    sudo apt-get update
-	    sudo apt-get install launchpad-getkeys
-	    
-	    echo "deb http://www.apache.org/dist/cassandra/debian 08x main" |
-	    sudo tee /etc/apt/sources.list.d/cassandra.list
-
+	    apt_get install python-software-properties
+	    sudo add-apt-repository -y ppa:nilarimogard/webupd8
 	    apt_get update
-	    apt_get install cassandra
-	    # don't start cassandra at boot
+	    apt_get install launchpad-getkeys
+
+	    # use oracle Java 7 instead of OpenJDK
+	    sudo add-apt-repository -y ppa:webupd8team/java
+	    apt_get update
+	    echo debconf shared/accepted-oracle-license-v1-1 select true | \
+		sudo debconf-set-selections
+	    echo debconf shared/accepted-oracle-license-v1-1 seen true | \
+		sudo debconf-set-selections
+	    yes | apt_get install oracle-java7-installer
+
+	    echo "deb http://www.apache.org/dist/cassandra/debian 08x main" | \
+		sudo tee /etc/apt/sources.list.d/cassandra.list
+	    apt_get update
+	    apt_get install --force-yes cassandra
+	    
+	    # fix cassandra's stack size issues
+	    sudo patch -N -r - -d /etc/cassandra < $TOP_DIR/contrail/cassandra-env.sh.patch
+
+	    # don't start cassandra at boot.  I'll screen_it later
+	    sudo service cassandra stop
 	    sudo update-rc.d -f cassandra remove
 	else
             cat << EOF > datastax.repo
