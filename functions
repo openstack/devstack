@@ -557,6 +557,18 @@ function is_arch {
     [ "($uname -m)" = "$ARCH_TYPE" ]
 }
 
+# Checks if installed Apache is <= given version
+# $1 = x.y.z (version string of Apache)
+function check_apache_version {
+    local cmd="apachectl"
+    if ! [[ -x $(which apachectl 2>/dev/null) ]]; then
+        cmd="/usr/sbin/apachectl"
+    fi
+
+    local version=$($cmd -v | grep version | grep -Po 'Apache/\K[^ ]*')
+    expr "$version" '>=' $1 > /dev/null
+}
+
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.

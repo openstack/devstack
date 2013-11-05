@@ -112,7 +112,12 @@ function init_horizon() {
     # Create an empty directory that apache uses as docroot
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
+    # Apache 2.4 uses mod_authz_host for access control now (instead of "Allow")
     HORIZON_REQUIRE=''
+    if check_apache_version "2.4" ; then
+        HORIZON_REQUIRE='Require all granted'
+    fi
+
     local horizon_conf=/etc/$APACHE_NAME/$APACHE_CONF_DIR/horizon.conf
     if is_ubuntu; then
         # Clean up the old config name
@@ -120,17 +125,7 @@ function init_horizon() {
         # Be a good citizen and use the distro tools here
         sudo touch $horizon_conf
         sudo a2ensite horizon.conf
-        if [[ "$DISTRO" == "saucy" ]]; then
-            # Ubuntu 13.10 has Require all denied in apache2.conf
-            # and requires explicit Require all granted
-            HORIZON_REQUIRE='Require all granted'
-        fi
     elif is_fedora; then
-        if [[ "$os_RELEASE" -ge "18" ]]; then
-            # fedora 18 has Require all denied  in its httpd.conf
-            # and requires explicit Require all granted
-            HORIZON_REQUIRE='Require all granted'
-        fi
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
     elif is_suse; then
         : # nothing to do
