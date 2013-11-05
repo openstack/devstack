@@ -226,9 +226,7 @@ function configure_nova() {
         # Comment out the keystone configs in Nova's api-paste.ini.
         # We are using nova.conf to configure this instead.
         inicomment $NOVA_API_PASTE_INI filter:authtoken auth_host
-        if is_service_enabled tls-proxy; then
-            inicomment $NOVA_API_PASTE_INI filter:authtoken auth_protocol
-        fi
+        inicomment $NOVA_API_PASTE_INI filter:authtoken auth_protocol
         inicomment $NOVA_API_PASTE_INI filter:authtoken admin_tenant_name
         inicomment $NOVA_API_PASTE_INI filter:authtoken admin_user
         inicomment $NOVA_API_PASTE_INI filter:authtoken admin_password
@@ -402,9 +400,7 @@ function create_nova_conf() {
         # Add keystone authtoken configuration
 
         iniset $NOVA_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-        if is_service_enabled tls-proxy; then
-            iniset $NOVA_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-        fi
+        iniset $NOVA_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
         iniset $NOVA_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
         iniset $NOVA_CONF keystone_authtoken admin_user nova
         iniset $NOVA_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
