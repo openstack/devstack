@@ -641,32 +641,32 @@ function start_nova_compute() {
 
 # start_nova() - Start running processes, including screen
 function start_nova_rest() {
-    NOVA_CONF_BOTTOM=$NOVA_CONF
-
-    # ``screen_it`` checks ``is_service_enabled``, it is not needed here
-    screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor"
-
+    local api_cell_conf=$NOVA_CONF
     if is_service_enabled n-cell; then
-        NOVA_CONF_BOTTOM=$NOVA_CELLS_CONF
-        screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CELLS_CONF"
-        screen_it n-cell-region "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CONF"
-        screen_it n-cell-child "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $NOVA_CELLS_CONF"
+        local compute_cell_conf=$NOVA_CELLS_CONF
+    else
+        local compute_cell_conf=$NOVA_CONF
     fi
 
-    screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert"
-    screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network --config-file $NOVA_CONF_BOTTOM"
-    screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler --config-file $NOVA_CONF_BOTTOM"
-    screen_it n-api-meta "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api-metadata --config-file $NOVA_CONF_BOTTOM"
+    # ``screen_it`` checks ``is_service_enabled``, it is not needed here
+    screen_it n-cond "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-conductor --config-file $compute_cell_conf"
+    screen_it n-cell-region "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $api_cell_conf"
+    screen_it n-cell-child "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells --config-file $compute_cell_conf"
 
-    screen_it n-novnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-novncproxy --config-file $NOVA_CONF --web $NOVNC_DIR"
-    screen_it n-xvnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-xvpvncproxy --config-file $NOVA_CONF"
-    screen_it n-spice "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $NOVA_CONF --web $SPICE_DIR"
-    screen_it n-cauth "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-consoleauth"
+    screen_it n-crt "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cert --config-file $api_cell_conf"
+    screen_it n-net "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-network --config-file $compute_cell_conf"
+    screen_it n-sch "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-scheduler --config-file $compute_cell_conf"
+    screen_it n-api-meta "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-api-metadata --config-file $compute_cell_conf"
+
+    screen_it n-novnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-novncproxy --config-file $api_cell_conf --web $NOVNC_DIR"
+    screen_it n-xvnc "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-xvpvncproxy --config-file $api_cell_conf"
+    screen_it n-spice "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $api_cell_conf --web $SPICE_DIR"
+    screen_it n-cauth "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-consoleauth --config-file $api_cell_conf"
 
     # Starting the nova-objectstore only if swift3 service is not enabled.
     # Swift will act as s3 objectstore.
     is_service_enabled swift3 || \
-        screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore"
+        screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore --config-file $api_cell_conf"
 }
 
 function start_nova() {
@@ -679,7 +679,7 @@ function stop_nova() {
     # Kill the nova screen windows
     # Some services are listed here twice since more than one instance
     # of a service may be running in certain configs.
-    for serv in n-api n-cpu n-crt n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cond n-cond n-cell n-cell n-api-meta; do
+    for serv in n-api n-cpu n-crt n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cond n-cell n-cell n-api-meta; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
     if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
