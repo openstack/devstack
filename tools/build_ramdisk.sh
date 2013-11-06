@@ -22,7 +22,7 @@ cleanup() {
         umount $MNTDIR
         rmdir $MNTDIR
     fi
-    if [ -n "$DEV_FILE_TMP" -a -e "$DEV_FILE_TMP "]; then
+    if [ -n "$DEV_FILE_TMP" -a -e "$DEV_FILE_TMP" ]; then
         rm -f $DEV_FILE_TMP
     fi
     if [ -n "$IMG_FILE_TMP" -a -e "$IMG_FILE_TMP" ]; then

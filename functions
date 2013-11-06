@@ -1266,7 +1266,7 @@ function setup_develop() {
     # where we really really want the overridden version to stick. So provide
     # a variable that tells us whether or not we should UNDO the requirements
     # changes (this will be set to False in the OpenStack ci gate)
-    if [ $UNDO_REQUIREMENTS = "True"]; then
+    if [ $UNDO_REQUIREMENTS = "True" ]; then
         if [ $update_requirements -eq 0 ]; then
             (cd $project_dir && git reset --hard)
         fi
