@@ -55,21 +55,26 @@ function neutron_plugin_configure_l3_agent() {
     _neutron_ovs_base_configure_l3_agent
 }
 
-function neutron_plugin_configure_plugin_agent() {
+function _quantum_plugin_setup_bridge() {
     if [[ "$SKIP_OVS_BRIDGE_SETUP" = "True" ]]; then
         return
     fi
     # Set up integration bridge
     _neutron_ovs_base_setup_bridge $OVS_BRIDGE
-    sudo ovs-vsctl --no-wait set-controller $OVS_BRIDGE tcp:$OFC_OFP_HOST:$OFC_OFP_PORT
     # Generate datapath ID from HOST_IP
-    local dpid=$(printf "0x%07d%03d%03d%03d\n" ${HOST_IP//./ })
+    local dpid=$(printf "%07d%03d%03d%03d\n" ${HOST_IP//./ })
     sudo ovs-vsctl --no-wait set Bridge $OVS_BRIDGE other-config:datapath-id=$dpid
     sudo ovs-vsctl --no-wait set-fail-mode $OVS_BRIDGE secure
+    sudo ovs-vsctl --no-wait set-controller $OVS_BRIDGE tcp:$OFC_OFP_HOST:$OFC_OFP_PORT
     if [ -n "$OVS_INTERFACE" ]; then
         sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_BRIDGE $OVS_INTERFACE
     fi
     _neutron_setup_ovs_tunnels $OVS_BRIDGE
+}
+
+function neutron_plugin_configure_plugin_agent() {
+    _quantum_plugin_setup_bridge
+
     AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-nec-agent"
 
     _neutron_ovs_base_configure_firewall_driver
