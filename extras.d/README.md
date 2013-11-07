@@ -19,10 +19,10 @@ sourced with one or more arguments, the first of which defines the hook phase:
     source: always called first in any of the scripts, used to set the
         initial defaults in a lib/* script or similar
 
-    stack: called by stack.sh.  There are three possible values for
+    stack: called by stack.sh.  There are four possible values for
         the second arg to distinguish the phase stack.sh is in:
 
-        arg 2:  install | post-config | extra
+        arg 2:  install | post-config | extra | post-extra
 
     unstack: called by unstack.sh
 
