@@ -26,7 +26,6 @@ set +o xtrace
 
 # Set up default directories
 DOCKER_DIR=$DEST/docker
-DOCKER_BRANCH=${DOCKER_BRANCH:-master}
 
 DOCKER_UNIX_SOCKET=/var/run/docker.sock
 DOCKER_PID_FILE=/var/run/docker.pid
@@ -56,8 +55,6 @@ function cleanup_nova_hypervisor() {
 function configure_nova_hypervisor() {
     iniset $NOVA_CONF DEFAULT compute_driver docker.DockerDriver
     iniset $GLANCE_API_CONF DEFAULT container_formats ami,ari,aki,bare,ovf,docker
-
-    sudo cp -p ${DOCKER_DIR}/nova-driver/docker.filters $NOVA_CONF_DIR/rootwrap.d
 }
 
 # install_nova_hypervisor() - Install external components
