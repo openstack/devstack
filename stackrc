@@ -62,7 +62,7 @@ fi
 
 # Base GIT Repo URL
 # Another option is http://review.openstack.org/p
-GIT_BASE=${GIT_BASE:-https://github.com}
+GIT_BASE=${GIT_BASE:-git://git.openstack.org}
 
 # metering service
 CEILOMETER_REPO=${CEILOMETER_REPO:-${GIT_BASE}/openstack/ceilometer.git}
@@ -182,7 +182,7 @@ NOVNC_REPO=${NOVNC_REPO:-${GIT_BASE}/kanaka/noVNC.git}
 NOVNC_BRANCH=${NOVNC_BRANCH:-master}
 
 # ryu service
-RYU_REPO=${RYU_REPO:-${GIT_BASE}/osrg/ryu.git}
+RYU_REPO=${RYU_REPO:-https://github.com/osrg/ryu.git}
 RYU_BRANCH=${RYU_BRANCH:-master}
 
 # a websockets/html5 or flash powered SPICE console for vm instances

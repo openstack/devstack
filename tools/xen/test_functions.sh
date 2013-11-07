@@ -111,8 +111,8 @@ function test_no_plugin_directory_found {
 
 function test_zip_snapshot_location {
     diff \
-    <(zip_snapshot_location "https://github.com/openstack/nova.git" "master") \
-    <(echo "https://github.com/openstack/nova/zipball/master")
+    <(zip_snapshot_location "git://git.openstack.org/openstack/nova.git" "master") \
+    <(echo "git://git.openstack.org/openstack/nova/zipball/master")
 }
 
 function test_create_directory_for_kernels {
