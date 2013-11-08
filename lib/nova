@@ -589,7 +589,8 @@ function install_nova() {
 
     if is_service_enabled n-novnc; then
         # a websockets/html5 or flash powered VNC console for vm instances
-        if trueorfalse True "$NOVNC_FROM_PACKAGE"; then
+        NOVNC_FROM_PACKAGE=`trueorfalse True $NOVNC_FROM_PACKAGE`
+        if [ "$NOVNC_FROM_PACKAGE" = "True" ]; then
             NOVNC_WEB_DIR=/usr/share/novnc
             install_package novnc
         else
@@ -600,7 +601,8 @@ function install_nova() {
 
     if is_service_enabled n-spice; then
         # a websockets/html5 or flash powered SPICE console for vm instances
-        if trueorfalse True "$SPICE_FROM_PACKAGE"; then
+        SPICE_FROM_PACKAGE=`trueorfalse True $SPICE_FROM_PACKAGE`
+        if [ "$SPICE_FROM_PACKAGE" = "True" ]; then
             SPICE_WEB_DIR=/usr/share/spice-html5
             install_package spice-html5
         else
