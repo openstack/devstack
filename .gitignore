@@ -8,6 +8,7 @@ localrc
 local.sh
 files/*.gz
 files/images
+files/pip-*
 stack-screenrc
 *.pem
 accrc
