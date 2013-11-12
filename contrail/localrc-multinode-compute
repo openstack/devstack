@@ -1,5 +1,5 @@
 # change this to your master node's ip
-SERVICE_HOST=172.18.3.6 
+SERVICE_HOST=172.18.3.10 # contrail0
 
 # the interface that contrail's vhost0 should take over
 PHYSICAL_INTERFACE=eth0
