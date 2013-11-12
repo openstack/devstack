@@ -82,7 +82,7 @@ for example).
 # Customizing
 
 You can override environment variables used in `stack.sh` by creating file
-name `local.conf` with a ``locarc`` section as shown below.  It is likely
+name `local.conf` with a ``localrc`` section as shown below.  It is likely
 that you will need to do this to tweak your networking configuration should
 you need to access your cloud from a different host.
 
