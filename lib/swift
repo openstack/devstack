@@ -59,9 +59,9 @@ fi
 # kilobytes.
 # Default is 1 gigabyte.
 SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1G
-# if tempest enabled the default size is 4 Gigabyte.
+# if tempest enabled the default size is 6 Gigabyte.
 if is_service_enabled tempest; then
-    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-4G}
+    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-6G}
 fi
 
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-$SWIFT_LOOPBACK_DISK_SIZE_DEFAULT}
