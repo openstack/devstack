@@ -25,12 +25,12 @@ import tempfile
 # Get Environment Stuff
 password = os.environ.get('ADMIN_PASSWORD', 'contrail123')
 admin_username = os.environ.get('CONTRAIL_ADMIN_USERNAME', 'admin')
-admin_token = os.environ.get('SERVICE_TOKEN', 'contrail123')
+admin_passwd = os.environ.get('ADMIN_PASSWORD', 'contrail123')
 admin_tenant = os.environ.get('CONTRAIL_ADMIN_TENANT', 'admin')
 
 # TODO following keystone credentials hardcoded
 ks_admin_user = admin_username
-ks_admin_password = admin_token
+ks_admin_password = admin_passwd
 ks_admin_tenant_name = admin_tenant
 
 from contrail_config_templates import *
@@ -171,7 +171,7 @@ class Setup(object):
         self._args.collector_ip = self._args.cfgm_ip
         self._args.discovery_ip = self._args.cfgm_ip
         self._args.control_ip = self._args.cfgm_ip
-        self._args.compute_ip = self.get_intf_ip(self._args.physical_interface)
+        self._args.compute_ip = self.get_management_ip(self._args.physical_interface)
         self._args.openstack_mgmt_ip = self._args.cfgm_ip
         self._args.database_listen_ip = self._args.cfgm_ip
         self._args.cassandra_ip_list = ['127.0.0.1']
@@ -273,6 +273,14 @@ class Setup(object):
             return ip
         raise RuntimeError, '%s not configured' % intf
     # end 
+
+    def get_management_ip(self, physical_interface):
+        if 'vhost0' in netifaces.interfaces():
+            ipaddr = netifaces.ifaddresses('vhost0')
+        else:
+            ipaddr = netifaces.ifaddresses(physical_interface)
+        return ipaddr[netifaces.AF_INET][0]['addr']
+    # end get_management_ip
 
     def get_device_by_ip (self, ip):
         for i in netifaces.interfaces ():
@@ -448,7 +456,7 @@ HWADDR=%s
 
             self.run_shell("echo 'SERVICE_TOKEN=%s' >> %s/ctrl-details" 
                                             %(self.service_token, temp_dir_name))
-            self.run_shell("echo 'ADMIN_TOKEN=%s' >> %s/ctrl-details" %(ks_admin_password, temp_dir_name))
+            self.run_shell("echo 'ADMIN_PASSWORD=%s' >> %s/ctrl-details" %(ks_admin_password, temp_dir_name))
             self.run_shell("echo 'CONTROLLER=%s' >> %s/ctrl-details" %(openstack_ip, temp_dir_name))
             self.run_shell("echo 'QUANTUM=%s' >> %s/ctrl-details" %(cfgm_ip, temp_dir_name))
             self.run_shell("echo 'COMPUTE=%s' >> %s/ctrl-details" %(compute_ip, temp_dir_name))
@@ -493,7 +501,6 @@ HWADDR=%s
                              '__contrail_api_server_port__': '8082',
                              '__contrail_multi_tenancy__': self._args.multi_tenancy,
                              '__contrail_keystone_ip__': '127.0.0.1',
-                             '__contrail_admin_token__': ks_admin_password,
                              '__contrail_admin_user__': ks_admin_user,
                              '__contrail_admin_password__': ks_admin_password,
                              '__contrail_admin_tenant_name__': ks_admin_tenant_name,
