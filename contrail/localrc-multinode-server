@@ -20,9 +20,7 @@ enable_service q-dhcp
 enable_service q-meta
 enable_service neutron
 enable_service rabbit
-
-#enable_service q-l3
-#enable_service q-agt
+# not used by contrail
 disable_service q-l3
 disable_service q-agt
 
