@@ -1012,6 +1012,10 @@ if [ $ENABLE_CONTRAIL ]; then
     fi
     repo sync
     python third_party/fetch_packages.py
+    cd third_party/thrift-*
+    touch configure.ac
+    autoreconf --force --install
+    cd ../..
     scons
     cd ${contrail_cwd}
 
