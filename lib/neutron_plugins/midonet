@@ -62,6 +62,9 @@ function neutron_plugin_configure_service() {
     if [[ "$MIDONET_PROVIDER_ROUTER_ID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE MIDONET provider_router_id $MIDONET_PROVIDER_ROUTER_ID
     fi
+
+    Q_L3_ENABLED=True
+    Q_L3_ROUTER_PER_TENANT=True
 }
 
 function neutron_plugin_setup_interface_driver() {
