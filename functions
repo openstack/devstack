@@ -841,6 +841,7 @@ function is_service_enabled() {
         [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0
         [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && return 0
         [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && return 0
+        [[ ${service} == "ironic" && ${ENABLED_SERVICES} =~ "ir-" ]] && return 0
         [[ ${service} == "neutron" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
         [[ ${service} == "trove" && ${ENABLED_SERVICES} =~ "tr-" ]] && return 0
         [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && return 0
