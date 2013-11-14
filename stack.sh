@@ -980,25 +980,22 @@ if [ $ENABLE_CONTRAIL ]; then
     if is_ubuntu; then
 	apt_get install patch scons flex bison make vim
 	apt_get install libexpat-dev libgettextpo0 libcurl4-openssl-dev
-	apt_get install python-dev autoconf automake build-essential
+	apt_get install python-dev autoconf automake build-essential libtool
 	apt_get install libevent-dev libxml2-dev libxslt-dev
 	apt_get install uml-utilities
 	apt_get install redis-server
     else
 	sudo yum -y install patch scons flex bison make vim
 	sudo yum -y install expat-devel gettext-devel curl-devel
-	sudo yum -y install gcc-c++ python-devel autoconf automake
+	sudo yum -y install gcc-c++ python-devel autoconf automake libtool
 	sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
 	sudo yum -y install tunctl
 	sudo yum -y install redis
     fi
 
-    # use contrail-specific configs.  e.g. redis runs non-daemon on port 6382
-    sudo rsync -rv $TOP_DIR/contrail/etc/ /etc/contrail
-
     # api server requirements
     # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
-    sudo easy_install -U distribute
+    # sudo easy_install -U distribute
     sudo pip install gevent geventhttpclient==1.0a thrift
     sudo pip install netifaces fabric argparse
     sudo pip install stevedore xmltodict python-keystoneclient
@@ -1015,6 +1012,10 @@ if [ $ENABLE_CONTRAIL ]; then
     fi
     repo sync
     python third_party/fetch_packages.py
+    cd third_party/thrift-*
+    touch configure.ac
+    autoreconf --force --install
+    cd ../..
     scons
     cd ${contrail_cwd}
 
@@ -1055,7 +1056,7 @@ enabled = 1
 gpgcheck = 0
 EOF
             sudo mv datastax.repo /etc/yum.repos.d/
-            sudo yum -y install dsc20
+            sudo yum -y install cassandra20
 	fi
     fi
 	    
@@ -1586,7 +1587,7 @@ if [ $ENABLE_CONTRAIL ]; then
     screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
     # launch ...
-    screen_it redis "sudo redis-server /etc/contrail/redis.conf"
+    screen_it redis "sudo redis-server /etc/redis.conf"
     screen_it cass "sudo /usr/sbin/cassandra -f"
     screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
     screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"

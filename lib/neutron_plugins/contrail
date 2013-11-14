@@ -40,7 +40,7 @@ function has_neutron_plugin_security_group() {
 }
 
 function neutron_plugin_check_adv_test_requirements() {
-    is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
+    return 0
 }
 # Restore xtrace
 $MY_XTRACE

@@ -148,8 +148,14 @@ if [ $? == 0 ]; then
     cmd=$(sudo rmmod vrouter)
     if [ $? == 0 ]; then
         source /etc/contrail/agent_param
-        sudo rm -f /etc/sysconfig/network-scripts/ifcfg-$dev
-        sudo rm -f /etc/sysconfig/network-scripts/ifcfg-vhost0
+        if is_ubuntu; then
+            sudo ifdown $dev
+            sudo ifup   $dev
+            sudo ifdown vhost0
+        else
+            sudo rm -f /etc/sysconfig/network-scripts/ifcfg-$dev
+            sudo rm -f /etc/sysconfig/network-scripts/ifcfg-vhost0
+        fi
     fi
 fi
 if [ $CONTRAIL_VGW_PUBLIC_SUBNET ]; then
