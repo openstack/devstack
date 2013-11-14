@@ -980,14 +980,14 @@ if [ $ENABLE_CONTRAIL ]; then
     if is_ubuntu; then
 	apt_get install patch scons flex bison make vim
 	apt_get install libexpat-dev libgettextpo0 libcurl4-openssl-dev
-	apt_get install python-dev autoconf automake build-essential
+	apt_get install python-dev autoconf automake build-essential libtool
 	apt_get install libevent-dev libxml2-dev libxslt-dev
 	apt_get install uml-utilities
 	apt_get install redis-server
     else
 	sudo yum -y install patch scons flex bison make vim
 	sudo yum -y install expat-devel gettext-devel curl-devel
-	sudo yum -y install gcc-c++ python-devel autoconf automake
+	sudo yum -y install gcc-c++ python-devel autoconf automake libtool
 	sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
 	sudo yum -y install tunctl
 	sudo yum -y install redis
