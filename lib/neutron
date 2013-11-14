@@ -115,6 +115,13 @@ Q_ROUTER_NAME=${Q_ROUTER_NAME:-router1}
 # nova vif driver that all plugins should use
 NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
 
+# The next two variables are configured by plugin
+# e.g.  _configure_neutron_l3_agent or lib/neutron_plugins/*
+#
+# The plugin supports L3.
+Q_L3_ENABLED=${Q_L3_ENABLED:-False}
+# L3 routers exist per tenant
+Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-False}
 
 # List of config file names in addition to the main plugin config file
 # See _configure_neutron_common() for details about setting it up
