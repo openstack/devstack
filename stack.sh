@@ -1589,7 +1589,7 @@ if [ $ENABLE_CONTRAIL ]; then
     screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
     # launch ...
-    screen_it redis "sudo redis-server /etc/redis.conf"
+    screen_it redis "sudo redis-server /etc/contrail/redis.conf"
     screen_it cass "sudo /usr/sbin/cassandra -f"
     screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
     screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
