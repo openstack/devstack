@@ -315,3 +315,12 @@ admin_user=$__contrail_admin_user__
 admin_password=$__contrail_admin_password__
 admin_tenant_name=$__contrail_admin_tenant_name__
 """)
+
+openstackrc_template = string.Template("""
+export OS_USERNAME=$__contrail_admin_user__
+export OS_PASSWORD=$__contrail_admin_password__
+export OS_TENANT_NAME=$__contrail_admin_tenant_name__
+export OS_AUTH_URL=http://$__contrail_keystone_ip__:5000/v2.0/
+export OS_NO_CACHE=1
+""")
+

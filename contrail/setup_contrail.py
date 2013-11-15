@@ -591,6 +591,16 @@ HWADDR=%s
             self.run_shell("sudo cp %s/ContrailPlugin.ini /opt/stack/neutron/etc/neutron/plugins/juniper/contrail/" %(temp_dir_name))
             self.run_shell("sudo mv %s/ContrailPlugin.ini /etc/contrail/" %(temp_dir_name))
 
+            template_vals = {
+                             '__contrail_keystone_ip__': cfgm_ip,
+                             '__contrail_admin_user__': ks_admin_user,
+                             '__contrail_admin_password__': ks_admin_password,
+                             '__contrail_admin_tenant_name__': ks_admin_tenant_name,
+                            }
+            self._template_substitute_write(openstackrc_template,
+                                            template_vals, temp_dir_name + '/openstackrc')
+            self.run_shell("sudo mv %s/openstackrc /etc/contrail/openstackrc" %(temp_dir_name))
+
         if 'control' in self._args.role:
             control_ip = self._args.control_ip
             certdir = '/var/lib/puppet/ssl' if self._args.puppet_server else '/etc/contrail/ssl'
