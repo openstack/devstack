@@ -56,7 +56,7 @@ function install_contrail() {
     fi
     repo sync
     python third_party/fetch_packages.py
-    (cd third_party/thrift-*; touch configure.ac; autoreconf --force --install)
+    (cd third_party/thrift-*; touch configure.ac README ChangeLog; autoreconf --force --install)
     scons
     cd ${contrail_cwd}
 
