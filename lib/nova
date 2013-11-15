@@ -589,7 +589,7 @@ function install_nova() {
 
     if is_service_enabled n-novnc; then
         # a websockets/html5 or flash powered VNC console for vm instances
-        NOVNC_FROM_PACKAGE=`trueorfalse True $NOVNC_FROM_PACKAGE`
+        NOVNC_FROM_PACKAGE=`trueorfalse False $NOVNC_FROM_PACKAGE`
         if [ "$NOVNC_FROM_PACKAGE" = "True" ]; then
             NOVNC_WEB_DIR=/usr/share/novnc
             install_package novnc
