@@ -1362,18 +1362,42 @@ function upload_image() {
 
         # Before we can upload vmdk type images to glance, we need to know it's
         # disk type, storage adapter, and networking adapter. These values are
-        # passed to glance as custom properties. We take these values from the
+        # passed to glance as custom properties. 
+        # We take these values from the vmdk file if populated. Otherwise, we use
         # vmdk filename, which is expected in the following format:
         #
         #     <name>-<disk type>:<storage adapter>:<network adapter>
         #
         # If the filename does not follow the above format then the vsphere
         # driver will supply default values.
+
+        # vmdk adapter type
+        vmdk_adapter_type="$(head -25 $IMAGE | grep -a -F -m 1 'ddb.adapterType =' $IMAGE)"
+        vmdk_adapter_type="${vmdk_adapter_type#*\"}"
+        vmdk_adapter_type="${vmdk_adapter_type%?}"
+
+        # vmdk disk type
+        vmdk_create_type="$(head -25 $IMAGE | grep -a -F -m 1 'createType=' $IMAGE)"
+        vmdk_create_type="${vmdk_create_type#*\"}"
+        vmdk_create_type="${vmdk_create_type%?}"
+        if [[ "$vmdk_create_type" = "monolithicSparse" ]]; then
+            vmdk_disktype="sparse"
+        elif [[ "$vmdk_create_type" = "monolithicFlat" ]]; then
+            die $LINENO "Monolithic flat disks should use a descriptor-data pair." \
+            "Please provide the disk and not the descriptor."
+        else
+            #TODO(alegendre): handle streamOptimized once supported by VMware driver.
+            vmdk_disktype="preallocated"
+        fi
         property_string=`echo "$IMAGE_NAME" | grep -oP '(?<=-)(?!.*-).+:.+:.+$'`
         if [[ ! -z "$property_string" ]]; then
             IFS=':' read -a props <<< "$property_string"
-            vmdk_disktype="${props[0]}"
-            vmdk_adapter_type="${props[1]}"
+            if [[ ! -z "${props[0]}" ]]; then
+                vmdk_disktype="${props[0]}"
+            fi
+            if [[ ! -z "${props[1]}" ]]; then
+                vmdk_adapter_type="${props[1]}"
+            fi
             vmdk_net_adapter="${props[2]}"
         fi
 
