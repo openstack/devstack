@@ -1002,6 +1002,7 @@ if [ $ENABLE_CONTRAIL ]; then
     sudo pip install kazoo pyinotify
 
     CONTRAIL_SRC=${CONTRAIL_SRC:-/opt/stack/contrail}
+    if [ "$CONTRAIL_REBUILD" ] || ! [ -e "$CONTRAIL_SRC" ] ; then
     mkdir -p $CONTRAIL_SRC
     contrail_cwd=$(pwd)
     cd $CONTRAIL_SRC
@@ -1017,6 +1018,7 @@ if [ $ENABLE_CONTRAIL ]; then
     autoreconf --force --install
     cd ../..
     scons
+    fi # CONTRAIL_REBUILD
     cd ${contrail_cwd}
 
     # get cassandra
