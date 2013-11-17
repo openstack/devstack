@@ -186,8 +186,8 @@ function insert_vrouter() {
 	source $VHOST_CFG
     else
 	DEVICE=vhost0
-	IPADDR=$(ifconfig $EXT_DEV | sed -ne 's/.*inet *addr[: ]*\([0-9.]*\).*/\1/i p')
-	NETMASK=$(ifconfig $EXT_DEV | sed -ne 's/.*mask[: *]\([0-9.]*\).*/\1/i p')
+	IPADDR=$(sudo ifconfig $EXT_DEV | sed -ne 's/.*inet *addr[: ]*\([0-9.]*\).*/\1/i p')
+	NETMASK=$(sudo ifconfig $EXT_DEV | sed -ne 's/.*mask[: *]\([0-9.]*\).*/\1/i p')
     fi
     # don't die in small memory environments
     sudo insmod $CONTRAIL_SRC/$kmod vr_flow_entries=4096 vr_oflow_entries=512
@@ -216,13 +216,13 @@ iface $dev inet manual
 
 iface $DEVICE inet static
 EOF
-	ifconfig $dev | perl -ne '
+	sudo ifconfig $dev | perl -ne '
 /HWaddr\s*([a-f\d:]+)/i    && print(" hwaddr $1\n");
 /inet addr:\s*([\d.]+)/i && print(" address $1\n");
 /Bcast:\s*([\d.]+)/i     && print(" broadcast $1\n");
 /Mask:\s*([\d.]+)/i      && print(" netmask $1\n");
 '
-	route -n | perl -ane '$F[7]=="'$dev'" && ($F[3] =~ /G/) && print(" gateway $F[1]\n")'
+	sudo route -n | perl -ane '$F[7]=="'$dev'" && ($F[3] =~ /G/) && print(" gateway $F[1]\n")'
 
 	perl -ne '/^nameserver ([\d.]+)/ && push(@dns, $1); 
 END { @dns && print(" dns-nameservers ", join(" ", @dns), "\n") }' /etc/resolv.conf
