@@ -90,7 +90,7 @@ function install_contrail() {
 	    apt_get install --force-yes cassandra
 	    
 	    # fix cassandra's stack size issues
-	    sudo patch -N -r - -d /etc/cassandra < $TOP_DIR/contrail/cassandra-env.sh.patch
+	    test_install_cassandra_patch
 
 	    # don't start cassandra at boot.  I'll screen_it later
 	    sudo service cassandra stop
@@ -148,6 +148,16 @@ EOF
     python $TOP_DIR/contrail/setup_contrail.py --physical_interface=$PHYSICAL_INTERFACE --cfgm_ip $SERVICE_HOST $contrail_gw_interface
     )
 
+}
+
+function test_install_cassandra_patch() { 
+    patch_name="cassandra-env.sh.patch"
+    patch -p0 -N -d /etc/cassandra --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
+    if [ $? == 0 ]; then
+        # patch is missing
+        echo "Installing neutron patch"
+        patch -p0 -d /etc/cassandra < $TOP_DIR/contrail/$patch_name
+    fi
 }
 
 function test_install_neutron_patch() { 
