@@ -1,9 +1,9 @@
 # CONTRAIL MULTI_NODE master
-HOST_IP=172.18.4.18
+HOST_IP=192.168.122.251
 
-# allow floating ips from 172.18.4.240 to 172.18.4.255
+# allow floating ips from 192.168.122.240 to 192.168.122.255
 CONTRAIL_VGW_INTERFACE=vgw
-CONTRAIL_VGW_PUBLIC_SUBNET=172.18.4.240/28 # .240 to .255
+CONTRAIL_VGW_PUBLIC_SUBNET=192.168.122.240/28 # .240 to .255
 CONTRAIL_VGW_PUBLIC_NETWORK=default-domain:admin:public:public
 
 ENABLE_CONTRAIL=yes
@@ -14,6 +14,8 @@ Q_PLUGIN=contrail
 
 STACK_DIR=$(cd $(dirname $0) && pwd)
 
+# log all screen output to this directory
+SCREEN_LOGDIR=$STACK_DIR/log/screens
 LOG=True
 DEBUG=True
 LOGFILE=$STACK_DIR/log/stack.log
