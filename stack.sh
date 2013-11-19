@@ -1025,7 +1025,7 @@ if [ $ENABLE_CONTRAIL ]; then
     if ! which cassandra > /dev/null 2>&1 ; then
 	if is_ubuntu; then
 	    apt_get install python-software-properties
-	    sudo add-apt-repository -y ppa:nilarimogard/webupd8
+	    sudo add-apt-repository ppa:nilarimogard/webupd8
 	    apt_get update
 	    apt_get install launchpad-getkeys
 
@@ -1589,7 +1589,17 @@ if [ $ENABLE_CONTRAIL ]; then
     screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
     # launch ...
+
+    # rebuild /etc/contrail/redis.conf to listen on port 6382
+    rm -f /etc/contrail/redis.conf
+    for f in /etc/redis.conf /etc/redis/redis.conf; do
+	if [ -e $f ]; then
+	    cp -f $f /etc/contrail/redis.conf 
+	fi
+    done 
+    patch -p0 -N -r - -d /etc/contrail < $TOP_DIR/contrail/redis.conf.patch
     screen_it redis "sudo redis-server /etc/contrail/redis.conf"
+
     screen_it cass "sudo /usr/sbin/cassandra -f"
     screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
     screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
