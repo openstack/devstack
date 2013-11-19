@@ -152,11 +152,11 @@ EOF
 
 function test_install_cassandra_patch() { 
     patch_name="cassandra-env.sh.patch"
-    patch -p0 -N -d /etc/cassandra --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
+    sudo patch -p0 -N -d /etc/cassandra --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
     if [ $? == 0 ]; then
         # patch is missing
         echo "Installing cassandra patch"
-        patch -p0 -d /etc/cassandra < $TOP_DIR/contrail/$patch_name
+        sudo patch -p0 -d /etc/cassandra < $TOP_DIR/contrail/$patch_name
     fi
 }
 
