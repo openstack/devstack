@@ -1,0 +1,21 @@
+--- /etc/redis/redis.conf	2011-07-27 17:26:50.000000000 +0000
++++ redis.conf	2013-11-19 19:28:06.266187000 +0000
+@@ -14,7 +14,7 @@
+ 
+ # By default Redis does not run as a daemon. Use 'yes' if you need it.
+ # Note that Redis will write a pid file in /var/run/redis.pid when daemonized.
+-daemonize yes
++#daemonize yes
+ 
+ # When running daemonized, Redis writes a pid file in /var/run/redis.pid by
+ # default. You can specify a custom pid file location here.
+@@ -22,7 +22,8 @@
+ 
+ # Accept connections on the specified port, default is 6379.
+ # If port 0 is specified Redis will not listen on a TCP socket.
+-port 6379
++# contrail uses redis on 6382
++port 6382
+ 
+ # If you want you can bind a single interface, if the bind option is not
+ # specified all the interfaces will listen for incoming connections.

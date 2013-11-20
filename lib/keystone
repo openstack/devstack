@@ -333,6 +333,18 @@ function init_keystone() {
         sudo chown $STACK_USER $KEYSTONE_AUTH_CACHE_DIR
         rm -f $KEYSTONE_AUTH_CACHE_DIR/*
     fi
+
+    # Nova always speaks HTTPS, so keystone needs SSL certs
+    if [ ${KEYSTONE_SERVICE_PROTOCOL} == 'https' ]; then
+	$KEYSTONE_DIR/bin/keystone-manage ssl_setup
+	iniset $KEYSTONE_CONF ssl enable True
+	iniset $KEYSTONE_CONF ssl certfile ${KEYSTONE_CONF_DIR}/ssl/certs/keystone.pem
+	iniset $KEYSTONE_CONF ssl keyfile ${KEYSTONE_CONF_DIR}/ssl/private/keystonekey.pem
+	iniset $KEYSTONE_CONF ssl ca_certs ${KEYSTONE_CONF_DIR}/ssl/certs/ca.pem
+	iniset $KEYSTONE_CONF ssl ca_key ${KEYSTONE_CONF_DIR}/ssl/private/cakey.pem
+    else
+	iniset $KEYSTONE_CONF ssl enable False
+    fi
 }
 
 # install_keystoneclient() - Collect source and prepare
@@ -372,7 +384,7 @@ function start_keystone() {
     fi
 
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -s http://$SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -k -s ${KEYSTONE_SERVICE_PROTOCOL}://$SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
       die $LINENO "keystone did not start"
     fi
 

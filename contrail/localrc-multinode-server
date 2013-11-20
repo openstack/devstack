@@ -1,4 +1,10 @@
 # CONTRAIL MULTI_NODE master
+HOST_IP=192.168.122.251
+
+# allow floating ips from 192.168.122.240 to 192.168.122.255
+CONTRAIL_VGW_INTERFACE=vgw
+CONTRAIL_VGW_PUBLIC_SUBNET=192.168.122.240/28 # .240 to .255
+CONTRAIL_VGW_PUBLIC_NETWORK=default-domain:admin:public:public
 
 ENABLE_CONTRAIL=yes
 PHYSICAL_INTERFACE=eth0
@@ -8,6 +14,8 @@ Q_PLUGIN=contrail
 
 STACK_DIR=$(cd $(dirname $0) && pwd)
 
+# log all screen output to this directory
+SCREEN_LOGDIR=$STACK_DIR/log/screens
 LOG=True
 DEBUG=True
 LOGFILE=$STACK_DIR/log/stack.log
@@ -15,12 +23,14 @@ LOGDAYS=1
 
 disable_service n-net
 enable_service q-svc
-enable_service q-agt
 enable_service q-dhcp
-enable_service q-l3
 enable_service q-meta
 enable_service neutron
 enable_service rabbit
+
+# not used by contrail
+disable_service q-l3
+disable_service q-agt
 enable_service contrail
 
 DATABASE_PASSWORD=contrail123

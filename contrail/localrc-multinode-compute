@@ -1,5 +1,12 @@
+HOST_IP=172.18.4.10 # publicly routable ip to me
+
 # change this to your master node's ip
-SERVICE_HOST=172.18.3.6 
+SERVICE_HOST=172.18.4.18 # contrail0
+
+# allow floating ips from 172.18.4.240 to 172.18.4.255
+CONTRAIL_VGW_INTERFACE=vgw
+CONTRAIL_VGW_PUBLIC_SUBNET=172.18.4.240/28 # .240 to .255
+CONTRAIL_VGW_PUBLIC_NETWORK=default-domain:admin:public:public
 
 # the interface that contrail's vhost0 should take over
 PHYSICAL_INTERFACE=eth0
