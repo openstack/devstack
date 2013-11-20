@@ -266,6 +266,15 @@ function configure_swift() {
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
 
+    # Devstack is commonly run in a small slow environment, so bump the
+    # timeouts up.
+    # node_timeout is how long between read operations a node takes to
+    # respond to the proxy server
+    # conn_timeout is all about how long it takes a connect() system call to
+    # return
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server node_timeout 120
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server conn_timeout 20
+
     # Configure Ceilometer
     if is_service_enabled ceilometer; then
         iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer use "egg:ceilometer#swift"
