@@ -12,6 +12,7 @@ enable_service q-dhcp
 enable_service q-l3
 enable_service q-meta
 enable_service neutron
+enable_service contrail
 
 DATABASE_PASSWORD=contrail123
 RABBIT_PASSWORD=contrail123

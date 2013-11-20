@@ -1,0 +1,392 @@
+# Contrail NFV
+# ------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set -o xtrace
+
+BS_FL_CONTROLLERS_PORT=${BS_FL_CONTROLLERS_PORT:-localhost:80}
+BS_FL_OF_PORT=${BS_FL_OF_PORT:-6633}
+
+function install_contrail() {
+    sudo mkdir -p /var/log/contrail
+    sudo chmod 777 /var/log/contrail
+
+    # basic dependencies
+    if ! which repo > /dev/null 2>&1 ; then
+	wget http://commondatastorage.googleapis.com/git-repo-downloads/repo
+        chmod 0755 repo
+	sudo mv repo /usr/bin
+    fi
+
+    # dependencies
+    if is_ubuntu; then
+	apt_get install patch scons flex bison make vim
+	apt_get install libexpat-dev libgettextpo0 libcurl4-openssl-dev
+	apt_get install python-dev autoconf automake build-essential libtool
+	apt_get install libevent-dev libxml2-dev libxslt-dev
+	apt_get install uml-utilities
+	apt_get install redis-server
+    else
+	sudo yum -y install patch scons flex bison make vim
+	sudo yum -y install expat-devel gettext-devel curl-devel
+	sudo yum -y install gcc-c++ python-devel autoconf automake libtool
+	sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
+	sudo yum -y install tunctl
+	sudo yum -y install redis
+    fi
+
+    # api server requirements
+    # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
+    # sudo easy_install -U distribute
+    # sudo pip install --upgrade setuptools
+    sudo pip install gevent geventhttpclient==1.0a thrift
+    sudo pip install netifaces fabric argparse
+    sudo pip install stevedore xmltodict python-keystoneclient
+    sudo pip install kazoo pyinotify
+
+    CONTRAIL_SRC=${CONTRAIL_SRC:-/opt/stack/contrail}
+    mkdir -p $CONTRAIL_SRC
+    contrail_cwd=$(pwd)
+    cd $CONTRAIL_SRC
+    if [ ! -d $CONTRAIL_SRC/.repo ]; then
+        git config --global --get user.name || git config --global user.name "Anonymous"
+        git config --global --get user.email || git config --global user.email "anonymous@nowhere.com"
+        repo init -u git@github.com:Juniper/contrail-vnc
+    fi
+    repo sync
+    python third_party/fetch_packages.py
+    (cd third_party/thrift-*; touch configure.ac README ChangeLog; autoreconf --force --install)
+    scons
+    cd ${contrail_cwd}
+
+    # install contrail modules
+    echo "Installing contrail modules"
+    sudo pip install --upgrade $(find $CONTRAIL_SRC/build/debug -name "*.tar.gz" -print)
+
+    # install neutron patch after VNC api is built and installed
+    test_install_neutron_patch
+
+    # get cassandra
+    if ! which cassandra > /dev/null 2>&1 ; then
+	if is_ubuntu; then
+	    apt_get install python-software-properties
+	    sudo add-apt-repository -y ppa:nilarimogard/webupd8
+	    apt_get update
+	    apt_get install launchpad-getkeys
+
+	    # use oracle Java 7 instead of OpenJDK
+	    sudo add-apt-repository -y ppa:webupd8team/java
+	    apt_get update
+	    echo debconf shared/accepted-oracle-license-v1-1 select true | \
+		sudo debconf-set-selections
+	    echo debconf shared/accepted-oracle-license-v1-1 seen true | \
+		sudo debconf-set-selections
+	    yes | apt_get install oracle-java7-installer
+
+	    echo "deb http://www.apache.org/dist/cassandra/debian 08x main" | \
+		sudo tee /etc/apt/sources.list.d/cassandra.list
+	    apt_get update
+	    apt_get install --force-yes cassandra
+	    
+	    # fix cassandra's stack size issues
+	    test_install_cassandra_patch
+
+	    # don't start cassandra at boot.  I'll screen_it later
+	    sudo service cassandra stop
+	    sudo update-rc.d -f cassandra remove
+	else
+            cat << EOF > datastax.repo
+[datastax]
+name = DataStax Repo for Apache Cassandra
+baseurl = http://rpm.datastax.com/community
+enabled = 1
+gpgcheck = 0
+EOF
+            sudo mv datastax.repo /etc/yum.repos.d/
+            sudo yum -y install cassandra20
+	fi
+    fi
+	    
+    # get ifmap 
+    if [ ! -d $CONTRAIL_SRC/third_party/irond-0.3.0-bin ]; then
+        contrail_cwd=$(pwd)
+        cd $CONTRAIL_SRC/third_party
+        wget http://trust.f4.hs-hannover.de/download/iron/archive/irond-0.3.0-bin.zip
+        unzip irond-0.3.0-bin.zip
+        cd ${contrail_cwd}
+    fi
+
+    if [ ! -d $CONTRAIL_SRC/third_party/zookeeper-3.4.5 ]; then
+        contrail_cwd=$(pwd)
+        cd $CONTRAIL_SRC/third_party
+        wget http://apache.mirrors.hoobly.com/zookeeper/stable/zookeeper-3.4.5.tar.gz
+        tar xvzf zookeeper-3.4.5.tar.gz
+        cd zookeeper-3.4.5
+        cp conf/zoo_sample.cfg conf/zoo.cfg
+        cd ${contrail_cwd}
+    fi
+
+    # ncclient
+    if ! python -c 'import ncclient' >/dev/null 2>&1; then
+        contrail_cwd=$(pwd)
+        cd $CONTRAIL_SRC/third_party
+        wget https://code.grnet.gr/attachments/download/1172/ncclient-v0.3.2.tar.gz
+        sudo pip install ncclient-v0.3.2.tar.gz
+        cd ${contrail_cwd}
+    fi
+
+    # process gateway configuration if present
+    contrail_gw_interface=""
+    if [ $CONTRAIL_VGW_INTERFACE -a $CONTRAIL_VGW_PUBLIC_SUBNET -a $CONTRAIL_VGW_PUBLIC_NETWORK ]; then
+	    contrail_gw_interface="--vgw_interface $CONTRAIL_VGW_INTERFACE --vgw_public_subnet $CONTRAIL_VGW_PUBLIC_SUBNET --vgw_public_network $CONTRAIL_VGW_PUBLIC_NETWORK"
+    fi
+
+    # create config files
+    # export passwords in a subshell so setup_contrail can pick them up but they won't leak later
+    (export ADMIN_PASSWORD CONTRAIL_ADMIN_USERNAME SERVICE_TOKEN CONTRAIL_ADMIN_TENANT && 
+    python $TOP_DIR/contrail/setup_contrail.py --physical_interface=$PHYSICAL_INTERFACE --cfgm_ip $SERVICE_HOST $contrail_gw_interface
+    )
+
+}
+
+function test_install_cassandra_patch() { 
+    patch_name="cassandra-env.sh.patch"
+    sudo patch -p0 -N -d /etc/cassandra --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
+    if [ $? == 0 ]; then
+        # patch is missing
+        echo "Installing cassandra patch"
+        sudo patch -p0 -d /etc/cassandra < $TOP_DIR/contrail/$patch_name
+    fi
+}
+
+function test_install_neutron_patch() { 
+    patch_name="neutron_v3.patch"
+    contrail_cwd=$(pwd)
+    cd $DEST/neutron
+    patch -p0 -N --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
+    if [ $? == 0 ]; then
+        # patch is missing
+        echo "Installing neutron patch"
+        patch -p0 < $TOP_DIR/contrail/$patch_name
+    fi
+    cd ${contrail_cwd}
+}   
+
+function test_install_nova_patch() { 
+    patch_name="nova_v3.patch"
+    contrail_cwd=$(pwd)
+    cd $DEST/nova
+    patch -p0 -N --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
+    if [ $? == 0 ]; then
+        # patch is missing
+        echo "Installing nova patch"
+        patch -p0 < $TOP_DIR/contrail/$patch_name
+        sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
+        sudo chmod +x /usr/bin/config_parser
+    fi
+    cd ${contrail_cwd}
+}   
+
+# take over physical interface
+function insert_vrouter() {
+    source /etc/contrail/agent_param
+    EXT_DEV=$dev
+    if [ -e $VHOST_CFG ]; then
+	source $VHOST_CFG
+    else
+	DEVICE=vhost0
+	IPADDR=$(sudo ifconfig $EXT_DEV | sed -ne 's/.*inet *addr[: ]*\([0-9.]*\).*/\1/i p')
+	NETMASK=$(sudo ifconfig $EXT_DEV | sed -ne 's/.*mask[: *]\([0-9.]*\).*/\1/i p')
+    fi
+    # don't die in small memory environments
+    sudo insmod $CONTRAIL_SRC/$kmod vr_flow_entries=4096 vr_oflow_entries=512
+
+    echo "Creating vhost interface: $DEVICE."
+    VIF=$CONTRAIL_SRC/build/debug/vrouter/utils/vif
+    DEV_MAC=$(cat /sys/class/net/$dev/address)
+    sudo $VIF --create $DEVICE --mac $DEV_MAC \
+        || echo "Error creating interface: $DEVICE"
+
+    echo "Adding $DEVICE to vrouter"
+    sudo $VIF --add $DEVICE --mac $DEV_MAC --vrf 0 --mode x --type vhost \
+	|| echo "Error adding $DEVICE to vrouter"
+
+    echo "Adding $dev to vrouter"
+    sudo $VIF --add $dev --mac $DEV_MAC --vrf 0 --mode x --type physical \
+	|| echo "Error adding $dev to vrouter"
+
+    if is_ubuntu; then
+
+	# copy eth0 interface params, routes, and dns to a new
+	# interfaces file for vhost0
+	(
+	cat <<EOF
+iface $dev inet manual
+
+iface $DEVICE inet static
+EOF
+	sudo ifconfig $dev | perl -ne '
+/HWaddr\s*([a-f\d:]+)/i    && print(" hwaddr $1\n");
+/inet addr:\s*([\d.]+)/i && print(" address $1\n");
+/Bcast:\s*([\d.]+)/i     && print(" broadcast $1\n");
+/Mask:\s*([\d.]+)/i      && print(" netmask $1\n");
+'
+	sudo route -n | perl -ane '$F[7]=="'$dev'" && ($F[3] =~ /G/) && print(" gateway $F[1]\n")'
+
+	perl -ne '/^nameserver ([\d.]+)/ && push(@dns, $1); 
+END { @dns && print(" dns-nameservers ", join(" ", @dns), "\n") }' /etc/resolv.conf
+) >/tmp/interfaces
+
+	# bring down the old interface
+	# and bring it back up with no IP address
+	sudo ifdown $dev
+	sudo ifconfig $dev 0 up
+
+	# bring up vhost0
+	sudo ifup -i /tmp/interfaces $DEVICE
+	echo "Sleeping 10 seconds to allow link state to settle"
+	sleep 10
+	sudo ifup -i /tmp/interfaces $dev
+    else
+	echo "Sleeping 10 seconds to allow link state to settle"
+	sudo ifup $DEVICE
+	sudo cp /etc/contrail/ifcfg-$dev /etc/sysconfig/network-scripts
+	sleep 10
+	echo "Restarting network service"
+	sudo service network restart
+    fi
+}
+
+function test_insert_vrouter ()
+{
+    if lsmod | grep -q vrouter; then 
+	echo "vrouter module already inserted."
+    else
+	insert_vrouter
+	echo "vrouter kernel module inserted."
+    fi
+}
+
+function pywhere() {
+    module=$1
+    python -c "import $module; import os; print os.path.dirname($module.__file__)"
+}
+
+function start_contrail() {
+    # save screen settings
+    SAVED_SCREEN_NAME=$SCREEN_NAME
+    SCREEN_NAME="contrail"
+    screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
+    sleep 1
+    # Set a reasonable status bar
+    screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
+
+    # launch ...
+    screen_it redis "sudo redis-server /etc/redis.conf"
+    screen_it cass "sudo /usr/sbin/cassandra -f"
+    screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
+    screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
+    sleep 2
+    
+    
+    screen_it disco "python $(pywhere discovery)/disc_server_zk.py --conf_file /etc/contrail/discovery.conf"
+    sleep 2
+
+    # find the directory where vnc_cfg_api_server was installed and start vnc_cfg_api_server.py
+    screen_it apiSrv "python $(pywhere vnc_cfg_api_server)/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
+    echo "Waiting for api-server to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://${SERVICE_HOST}:8082; do sleep 1; done"; then
+        echo "api-server did not start"
+        exit 1
+    fi
+    sleep 2
+    screen_it schema "python $(pywhere schema_transformer)/to_bgp.py --conf_file /etc/contrail/schema_transformer.conf"
+
+    source /etc/contrail/control_param
+    screen_it control "export LD_LIBRARY_PATH=/opt/stack/contrail/build/lib; $CONTRAIL_SRC/build/debug/control-node/control-node --map-server-url https://${IFMAP_SERVER}:${IFMAP_PORT} --map-user ${IFMAP_USER} --map-password ${IFMAP_PASWD} --hostname ${HOSTNAME} --host-ip ${HOSTIP} --bgp-port ${BGP_PORT} ${CERT_OPTS} ${LOG_LOCAL}"
+
+    # vrouter
+    test_insert_vrouter
+
+    # agent
+    if [ $CONTRAIL_VGW_INTERFACE -a $CONTRAIL_VGW_PUBLIC_SUBNET -a $CONTRAIL_VGW_PUBLIC_NETWORK ]; then
+        sudo sysctl -w net.ipv4.ip_forward=1
+        sudo /opt/stack/contrail/build/debug/vrouter/utils/vif --create vgw --mac 00:01:00:5e:00:00
+        sudo ifconfig vgw up
+        sudo route add -net $CONTRAIL_VGW_PUBLIC_SUBNET dev vgw
+    fi
+    source /etc/contrail/agent_param
+    #sudo mkdir -p $(dirname $VROUTER_LOGFILE)
+    mkdir -p $TOP_DIR/bin
+    
+    # make a fake contrail-version when contrail isn't installed by yum
+    if ! contrail-version >/dev/null 2>&1; then
+	cat >$TOP_DIR/bin/contrail-version <<EOF2
+#! /bin/sh
+cat <<EOF
+Package                                Version                 Build-ID | Repo | RPM Name
+-------------------------------------- ----------------------- ----------------------------------
+contrail-analytics                     1-1304082216        148                                    
+openstack-dashboard.noarch             2012.1.3-1.fc17     updates                                
+contrail-agent                         1-1304091654        contrail-agent-1-1304091654.x86_64     
+EOF
+EOF2
+    fi
+    chmod a+x $TOP_DIR/bin/contrail-version
+
+    cat > $TOP_DIR/bin/vnsw.hlpr <<END
+#! /bin/bash
+PATH=$TOP_DIR/bin:$PATH
+LD_LIBRARY_PATH=/opt/stack/contrail/build/lib $CONTRAIL_SRC/build/debug/vnsw/agent/vnswad --config-file $CONFIG $VROUTER_LOGFILE
+END
+    chmod a+x $TOP_DIR/bin/vnsw.hlpr
+    screen_it agent "sudo $TOP_DIR/bin/vnsw.hlpr"
+
+    screen_it vif  "python /opt/stack/nova/plugins/contrail/contrail_vif.py"
+
+    # restore saved screen settings
+    SCREEN_NAME=$SAVED_SCREEN_NAME
+}
+
+function configure_contrail() {
+    test_install_nova_patch
+}
+
+function init_contrail() {
+    :
+}
+
+function stop_contrail() {
+    SCREEN=$(which screen)
+    if [[ -n "$SCREEN" ]]; then
+        SESSION=$(screen -ls | awk '/[0-9].contrail/ { print $1 }')
+        if [[ -n "$SESSION" ]]; then
+            screen -X -S $SESSION quit
+        fi
+    fi
+    cmd=$(lsmod | grep vrouter)
+    if [ $? == 0 ]; then
+        cmd=$(sudo rmmod vrouter)
+        if [ $? == 0 ]; then
+            source /etc/contrail/agent_param
+            if is_ubuntu; then
+                sudo ifdown $dev
+                sudo ifup   $dev
+                sudo ifdown vhost0
+            else
+                sudo rm -f /etc/sysconfig/network-scripts/ifcfg-$dev
+                sudo rm -f /etc/sysconfig/network-scripts/ifcfg-vhost0
+            fi
+        fi
+    fi
+    if [ $CONTRAIL_VGW_PUBLIC_SUBNET ]; then
+        sudo route del -net $CONTRAIL_VGW_PUBLIC_SUBNET dev vgw
+    fi
+    if [ $CONTRAIL_VGW_INTERFACE ]; then
+        sudo tunctl -d vgw
+    fi
+}
+
+# Restore xtrace
+$MY_XTRACE

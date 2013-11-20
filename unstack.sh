@@ -135,34 +135,4 @@ if is_service_enabled trove; then
     cleanup_trove
 fi
 
-# Contrail
-SCREEN=$(which screen)
-if [[ -n "$SCREEN" ]]; then
-    SESSION=$(screen -ls | awk '/[0-9].contrail/ { print $1 }')
-    if [[ -n "$SESSION" ]]; then
-        screen -X -S $SESSION quit
-    fi
-fi
-cmd=$(lsmod | grep vrouter)
-if [ $? == 0 ]; then
-    cmd=$(sudo rmmod vrouter)
-    if [ $? == 0 ]; then
-        source /etc/contrail/agent_param
-        if is_ubuntu; then
-            sudo ifdown $dev
-            sudo ifup   $dev
-            sudo ifdown vhost0
-        else
-            sudo rm -f /etc/sysconfig/network-scripts/ifcfg-$dev
-            sudo rm -f /etc/sysconfig/network-scripts/ifcfg-vhost0
-        fi
-    fi
-fi
-if [ $CONTRAIL_VGW_PUBLIC_SUBNET ]; then
-    sudo route del -net $CONTRAIL_VGW_PUBLIC_SUBNET dev vgw
-fi
-if [ $CONTRAIL_VGW_INTERFACE ]; then
-    sudo tunctl -d vgw
-fi
-
 cleanup_tmp
