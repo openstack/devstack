@@ -8,7 +8,7 @@ HOST_IP=10.84.13.34
 # Set this to IP address of config (master) node
 SERVICE_HOST=10.84.13.1
 
-ENABLED_SERVICES=n-cpu,rabbit,q-agt,agent
+ENABLED_SERVICES=n-cpu,rabbit,g-api,neutron,agent,vif
 
 MYSQL_HOST=$SERVICE_HOST
 RABBIT_HOST=$SERVICE_HOST
