@@ -73,6 +73,7 @@ function configure_tempest() {
     local password
     local line
     local flavors
+    local available_flavors
     local flavors_ref
     local flavor_lines
     local public_network_id
@@ -142,10 +143,15 @@ function configure_tempest() {
     # If the ``DEFAULT_INSTANCE_TYPE`` not declared, use the new behavior
     # Tempest creates instane types for himself
     if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
-        nova flavor-create m1.nano 42 64 0 1
+        available_flavors=$(nova flavor-list)
+        if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
+            nova flavor-create m1.nano 42 64 0 1
+        fi
         flavor_ref=42
         boto_instance_type=m1.nano
-        nova flavor-create m1.micro 84 128 0 1
+        if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
+            nova flavor-create m1.micro 84 128 0 1
+        fi
         flavor_ref_alt=84
     else
         # Check Nova for existing flavors and, if set, look for the
