@@ -42,7 +42,7 @@ function install_contrail() {
     # api server requirements
     # sudo pip install gevent==0.13.8 geventhttpclient==1.0a thrift==0.8.0
     # sudo easy_install -U distribute
-    # sudo pip install --upgrade setuptools
+    sudo pip install --upgrade setuptools
     sudo pip install gevent geventhttpclient==1.0a thrift
     sudo pip install netifaces fabric argparse
     sudo pip install stevedore xmltodict python-keystoneclient
@@ -160,7 +160,7 @@ function apply_patch() {
     [ -f "$patch" ] || die "No such patch file $patch"
     if [ -e "$patch_applied" ]; then
 	echo "Patch $(basename $patch) was previously applied in $dir"
-    else5D
+    else
 	echo "Installing patch $(basename $patch) in $dir..."
 	if patch -p0 -N -r - -d "$dir" < "$patch" 2>&1 | grep -i fail; then
 	    die "Failed to apply $patch in $dir"
@@ -181,8 +181,10 @@ function test_install_neutron_patch() {
 
 function test_install_nova_patch() { 
     apply_patch $TOP_DIR/contrail/nova_v3.patch $DEST/nova
-    sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
-    sudo chmod +x /usr/bin/config_parser
+    if [ -e $DEST/nova/plugins/contrail/config_parser.py ]; then
+        sudo mv $DEST/nova/plugins/contrail/config_parser.py /usr/bin/config_parser
+        sudo chmod +x /usr/bin/config_parser
+    fi
 }   
 
 # take over physical interface
