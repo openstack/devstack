@@ -178,6 +178,7 @@ function configure_keystone() {
     # Set the URL advertised in the ``versions`` structure returned by the '/' route
     iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(public_port)s/"
     iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(admin_port)s/"
+    iniset $KEYSTONE_CONF DEFAULT admin_bind_host "$KEYSTONE_SERVICE_HOST"
 
     # Register SSL certificates if provided
     if is_ssl_enabled_service key; then
