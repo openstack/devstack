@@ -1,3 +1,5 @@
+#! /bin/bash
+
 # Contrail NFV
 # ------------
 
@@ -150,42 +152,35 @@ EOF
 
 }
 
-function test_install_cassandra_patch() { 
-    patch_name="cassandra-env.sh.patch"
-    sudo patch -p0 -N -d /etc/cassandra --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
-    if [ $? == 0 ]; then
-        # patch is missing
-        echo "Installing cassandra patch"
-        sudo patch -p0 -d /etc/cassandra < $TOP_DIR/contrail/$patch_name
+function apply_patch() { 
+    local patch="$1"
+    local dir="$2"
+
+    echo "Installing patch $(basename $patch) in $dir..."
+
+    # run patch, ignore previously applied patches, and return an
+    # error if patch says "fail"
+    [ -d "$dir" ] || die "No such directory $dir"
+    [ -f "$patch" ] || die "No such patch file $patch"
+    if patch -p0 -N -r - -d "$dir" < "$patch" 2>&1 | grep -i fail; then
+	die "Failed tp apply $patch in $dir"
+    else
+	true
     fi
 }
 
+function test_install_cassandra_patch() { 
+    apply_patch $TOP_DIR/contrail/cassandra-env.sh.patch /etc/cassandra
+}
+
 function test_install_neutron_patch() { 
-    patch_name="neutron_v3.patch"
-    contrail_cwd=$(pwd)
-    cd $DEST/neutron
-    patch -p0 -N --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
-    if [ $? == 0 ]; then
-        # patch is missing
-        echo "Installing neutron patch"
-        patch -p0 < $TOP_DIR/contrail/$patch_name
-    fi
-    cd ${contrail_cwd}
+    apply_patch $TOP_DIR/contrail/neutron_v3.patch $DEST/neutron
 }   
 
 function test_install_nova_patch() { 
-    patch_name="nova_v3.patch"
-    contrail_cwd=$(pwd)
-    cd $DEST/nova
-    patch -p0 -N --dry-run --silent < $TOP_DIR/contrail/$patch_name &> /dev/null
-    if [ $? == 0 ]; then
-        # patch is missing
-        echo "Installing nova patch"
-        patch -p0 < $TOP_DIR/contrail/$patch_name
-        sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
-        sudo chmod +x /usr/bin/config_parser
-    fi
-    cd ${contrail_cwd}
+    apply_patch $TOP_DIR/contrail/nova_v3.patch $DEST/nova
+    sudo mv ./plugins/contrail/config_parser.py /usr/bin/config_parser
+    sudo chmod +x /usr/bin/config_parser
 }   
 
 # take over physical interface
@@ -289,7 +284,7 @@ function start_contrail() {
 	    cp -f $f /etc/contrail/redis.conf 
 	fi
     done 
-    patch -p0 -N -r - -d /etc/contrail < $TOP_DIR/contrail/redis.conf.patch
+    apply_patch $TOP_DIR/contrail/redis.conf.patch /etc/contrail
 
     # launch ...
     screen_it redis "sudo redis-server /etc/contrail/redis.conf"
