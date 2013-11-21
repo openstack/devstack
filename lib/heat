@@ -95,7 +95,7 @@ function configure_heat() {
     iniset $HEAT_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $HEAT_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset $HEAT_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $HEAT_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    configure_API_version $HEAT_CONF $IDENTITY_API_VERSION
     iniset $HEAT_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
     iniset $HEAT_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $HEAT_CONF keystone_authtoken admin_user heat

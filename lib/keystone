@@ -335,6 +335,14 @@ create_keystone_accounts() {
     fi
 }
 
+# Configure the API version for the OpenStack projects.
+# configure_API_version conf_file version
+function configure_API_version() {
+    local conf_file=$1
+    local api_version=$2
+    iniset $conf_file keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$api_version
+}
+
 # init_keystone() - Initialize databases, etc.
 function init_keystone() {
     if is_service_enabled ldap; then
