@@ -36,6 +36,7 @@ function install_contrail() {
 	sudo yum -y install libevent libevent-devel libxml2-devel libxslt-devel
 	sudo yum -y install tunctl
 	sudo yum -y install redis
+	sudo yum -y install java-1.7.0-openjdk
     fi
 
     # api server requirements
@@ -97,17 +98,13 @@ function install_contrail() {
 	    # don't start cassandra at boot.  I'll screen_it later
 	    sudo service cassandra stop
 	    sudo update-rc.d -f cassandra remove
-	else
-            cat << EOF > datastax.repo
-[datastax]
-name = DataStax Repo for Apache Cassandra
-baseurl = http://rpm.datastax.com/community
-enabled = 1
-gpgcheck = 0
-EOF
-            sudo mv datastax.repo /etc/yum.repos.d/
-            sudo yum -y install cassandra20
-	fi
+	elif [ ! -d $CONTRAIL_SRC/third_party/apache-cassandra-2.0.2-bin ]; then
+        contrail_cwd=$(pwd)
+        cd $CONTRAIL_SRC/third_party
+        wget http://www.bizdirusa.com/mirrors/apache/cassandra/2.0.2/apache-cassandra-2.0.2-bin.tar.gz
+        tar xvzf apache-cassandra-2.0.2-bin.tar.gz
+        cd ${contrail_cwd}
+    fi
     fi
 	    
     # get ifmap 
@@ -277,18 +274,17 @@ function start_contrail() {
     # Set a reasonable status bar
     screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
-    # redis: rebuild /etc/contrail/redis.conf to listen on port 6382
-    rm -f /etc/contrail/redis.conf
-    for f in /etc/redis.conf /etc/redis/redis.conf; do
-	if [ -e $f ]; then
-	    cp -f $f /etc/contrail/redis.conf 
-	fi
-    done 
-    apply_patch $TOP_DIR/contrail/redis.conf.patch /etc/contrail
+    if is_ubuntu; then
+        REDIS_CONF="/etc/redis/redis.conf"
+        CASS_PATH="/usr/sbin/cassandra"
+    else
+        REDIS_CONF="/etc/redis.conf"
+        CASS_PATH="$CONTRAIL_SRC/third_party/apache-cassandra-2.0.2/bin/cassandra"
+    fi
 
     # launch ...
-    screen_it redis "sudo redis-server /etc/contrail/redis.conf"
-    screen_it cass "sudo /usr/sbin/cassandra -f"
+    screen_it redis "sudo redis-server $REDIS_CONF"
+    screen_it cass "sudo $CASS_PATH -f"
     screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
     screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
     sleep 2
