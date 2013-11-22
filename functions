@@ -1338,11 +1338,24 @@ function upload_image() {
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
 
-    # Downloads the image (uec ami+aki style), then extracts it.
-    IMAGE_FNAME=`basename "$image_url"`
-    if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
-        wget -c $image_url -O $FILES/$IMAGE_FNAME
-        if [[ $? -ne 0 ]]; then
+    if [[ $image_url != file* ]]; then
+        # Downloads the image (uec ami+aki style), then extracts it.
+        IMAGE_FNAME=`basename "$image_url"`
+        if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
+             wget -c $image_url -O $FILES/$IMAGE_FNAME
+             if [[ $? -ne 0 ]]; then
+                 echo "Not found: $image_url"
+                 return
+             fi
+        fi
+        IMAGE="$FILES/${IMAGE_FNAME}"
+    else
+        # File based URL (RFC 1738): file://host/path
+        # Remote files are not considered here.
+        # *nix: file:///home/user/path/file
+        # windows: file:///C:/Documents%20and%20Settings/user/path/file
+        IMAGE=$(echo $image_url | sed "s/^file:\/\///g")
+        if [[ ! -f $IMAGE || "$(stat -c "%s" $IMAGE)" == "0" ]]; then
             echo "Not found: $image_url"
             return
         fi
@@ -1350,7 +1363,6 @@ function upload_image() {
 
     # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
     if [[ "$image_url" =~ 'openvz' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.tar.gz}"
         glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format ami --disk-format ami < "${IMAGE}"
         return
@@ -1358,7 +1370,6 @@ function upload_image() {
 
     # vmdk format images
     if [[ "$image_url" =~ '.vmdk' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.vmdk}"
 
         # Before we can upload vmdk type images to glance, we need to know it's
@@ -1409,7 +1420,6 @@ function upload_image() {
     # XenServer-vhd-ovf-format images are provided as .vhd.tgz
     # and should not be decompressed prior to loading
     if [[ "$image_url" =~ '.vhd.tgz' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.vhd.tgz}"
         glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=ovf --disk-format=vhd < "${IMAGE}"
         return
@@ -1419,7 +1429,6 @@ function upload_image() {
     # and should not be decompressed prior to loading.
     # Setting metadata, so PV mode is used.
     if [[ "$image_url" =~ '.xen-raw.tgz' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.xen-raw.tgz}"
         glance \
             --os-auth-token $token \
@@ -1457,7 +1466,6 @@ function upload_image() {
             fi
             ;;
         *.img)
-            IMAGE="$FILES/$IMAGE_FNAME";
             IMAGE_NAME=$(basename "$IMAGE" ".img")
             format=$(qemu-img info ${IMAGE} | awk '/^file format/ { print $3; exit }')
             if [[ ",qcow2,raw,vdi,vmdk,vpc," =~ ",$format," ]]; then
@@ -1468,20 +1476,17 @@ function upload_image() {
             CONTAINER_FORMAT=bare
             ;;
         *.img.gz)
-            IMAGE="$FILES/${IMAGE_FNAME}"
             IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
             DISK_FORMAT=raw
             CONTAINER_FORMAT=bare
             UNPACK=zcat
             ;;
         *.qcow2)
-            IMAGE="$FILES/${IMAGE_FNAME}"
             IMAGE_NAME=$(basename "$IMAGE" ".qcow2")
             DISK_FORMAT=qcow2
             CONTAINER_FORMAT=bare
             ;;
         *.iso)
-            IMAGE="$FILES/${IMAGE_FNAME}"
             IMAGE_NAME=$(basename "$IMAGE" ".iso")
             DISK_FORMAT=iso
             CONTAINER_FORMAT=bare
