@@ -81,3 +81,8 @@ export OS_CACERT=$INT_CA_DIR/ca-chain.pem
 export NOVA_VERSION=${NOVA_VERSION:-1.1}
 # In the future this will change names:
 export COMPUTE_API_VERSION=${COMPUTE_API_VERSION:-$NOVA_VERSION}
+
+# Currently cinderclient needs you to specify the *volume api* version. This
+# needs to match the config of your catalog returned by Keystone.
+export CINDER_VERSION=${CINDER_VERSION:-2}
+export OS_VOLUME_API_VERSION=${OS_VOLUME_API_VERSION:-$CINDER_VERSION}
