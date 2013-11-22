@@ -207,6 +207,12 @@ source $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN
 # Hardcoding for 1 service plugin for now
 source $TOP_DIR/lib/neutron_plugins/services/loadbalancer
 
+# Agent metering service plugin functions
+# -------------------------------------------
+
+# Hardcoding for 1 service plugin for now
+source $TOP_DIR/lib/neutron_plugins/services/metering
+
 # VPN service plugin functions
 # -------------------------------------------
 # Hardcoding for 1 service plugin for now
@@ -235,6 +241,9 @@ function configure_neutron() {
     # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
     if is_service_enabled q-lbaas; then
         _configure_neutron_lbaas
+    fi
+    if is_service_enabled q-metering; then
+        _configure_neutron_metering
     fi
     if is_service_enabled q-vpn; then
         _configure_neutron_vpn
@@ -457,6 +466,10 @@ function start_neutron_agents() {
     if is_service_enabled q-lbaas; then
         screen_it q-lbaas "cd $NEUTRON_DIR && python $AGENT_LBAAS_BINARY --config-file $NEUTRON_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
     fi
+
+    if is_service_enabled q-metering; then
+        screen_it q-metering "cd $NEUTRON_DIR && python $AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
+    fi
 }
 
 # stop_neutron() - Stop running processes (non-screen)
@@ -635,6 +648,11 @@ function _configure_neutron_metadata_agent() {
 function _configure_neutron_lbaas() {
     neutron_agent_lbaas_configure_common
     neutron_agent_lbaas_configure_agent
+}
+
+function _configure_neutron_metering() {
+    neutron_agent_metering_configure_common
+    neutron_agent_metering_configure_agent
 }
 
 function _configure_neutron_fwaas() {
