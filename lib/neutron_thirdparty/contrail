@@ -162,7 +162,7 @@ function apply_patch() {
 	echo "Patch $(basename $patch) was previously applied in $dir"
     else
 	echo "Installing patch $(basename $patch) in $dir..."
-	if patch -p0 -N -r - -d "$dir" < "$patch" 2>&1 | grep -i fail; then
+	if sudo patch -p0 -N -r - -d "$dir" < "$patch" 2>&1 | grep -i fail; then
 	    die "Failed to apply $patch in $dir"
 	else
 	    sudo touch "$patch_applied"
