@@ -3163,7 +3163,7 @@ index 0000000..4a87a41
 +
 +    def floatingip_update(self, fip_id, fip_q):
 +        fip_q['id'] = fip_id
-+        fip_obj = self._floatingip_neutron(fip_q, UPDATE)
++        fip_obj = self._floatingip_neutron_to_vnc(fip_q, UPDATE)
 +        self._vnc_lib.floating_ip_update(fip_obj)
 +
 +        return self._floatingip_vnc_to_neutron(fip_obj)
