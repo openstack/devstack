@@ -130,7 +130,7 @@ fi
 # Boot instance
 # -------------
 
-VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
+VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security-groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
 die_if_not_set $LINENO VM_UUID "Failure launching $VM_NAME"
 
 # Check that the status is active within ACTIVE_TIMEOUT seconds
@@ -156,7 +156,7 @@ fi
 
 # Create a new volume
 start_time=$(date +%s)
-cinder create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
+cinder create --display-name $VOL_NAME --display-description "test volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
     die $LINENO "Failure creating volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     die $LINENO "Volume $VOL_NAME not created"
