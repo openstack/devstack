@@ -82,6 +82,10 @@ function configure_ceilometer() {
     cp $CEILOMETER_DIR/etc/ceilometer/pipeline.yaml $CEILOMETER_CONF_DIR
     iniset $CEILOMETER_CONF DEFAULT policy_file $CEILOMETER_CONF_DIR/policy.json
 
+    if [ "$CEILOMETER_PIPELINE_INTERVAL" ]; then
+        sed -i "s/interval:.*/interval: ${CEILOMETER_PIPELINE_INTERVAL}/" $CEILOMETER_CONF_DIR/pipeline.yaml
+    fi
+
     # the compute and central agents need these credentials in order to
     # call out to the public nova and glance APIs
     iniset $CEILOMETER_CONF DEFAULT os_username ceilometer
