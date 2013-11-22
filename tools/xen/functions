@@ -137,14 +137,14 @@ function _network_exists() {
     local name_label
     name_label=$1
 
-    ! [ -z $(xe network-list name-label="$name_label" --minimal) ]
+    ! [ -z "$(xe network-list name-label="$name_label" --minimal)" ]
 }
 
 function _bridge_exists() {
     local bridge
     bridge=$1
 
-    ! [ -z $(xe network-list bridge="$bridge" --minimal) ]
+    ! [ -z "$(xe network-list bridge="$bridge" --minimal)" ]
 }
 
 function _network_uuid() {
