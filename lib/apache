@@ -4,6 +4,10 @@
 # Dependencies:
 #
 # - ``functions`` file
+# -``STACK_USER`` must be defined
+
+# lib/apache exports the following functions:
+#
 # - is_apache_enabled_service
 # - install_apache_wsgi
 # - config_apache_wsgi
@@ -19,7 +23,7 @@ set +o xtrace
 
 # Allow overriding the default Apache user and group, default to
 # current user and his default group.
-APACHE_USER=${APACHE_USER:-$USER}
+APACHE_USER=${APACHE_USER:-$STACK_USER}
 APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
 
 

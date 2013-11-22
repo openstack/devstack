@@ -225,7 +225,7 @@ function configure_swift() {
     swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
     sudo mkdir -p ${SWIFT_CONF_DIR}/{object,container,account}-server
-    sudo chown -R $USER: ${SWIFT_CONF_DIR}
+    sudo chown -R ${STACK_USER}: ${SWIFT_CONF_DIR}
 
     if [[ "$SWIFT_CONF_DIR" != "/etc/swift" ]]; then
         # Some swift tools are hard-coded to use ``/etc/swift`` and are apparently not going to be fixed.
@@ -238,7 +238,7 @@ function configure_swift() {
     # setup) we configure it with our version of rsync.
     sed -e "
         s/%GROUP%/${USER_GROUP}/;
-        s/%USER%/$USER/;
+        s/%USER%/${STACK_USER}/;
         s,%SWIFT_DATA_DIR%,$SWIFT_DATA_DIR,;
     " $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
     # rsyncd.conf just prepared for 4 nodes
@@ -252,7 +252,7 @@ function configure_swift() {
     cp ${SWIFT_DIR}/etc/proxy-server.conf-sample ${SWIFT_CONFIG_PROXY_SERVER}
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${USER}
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${STACK_USER}
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT swift_dir
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT swift_dir ${SWIFT_CONF_DIR}
@@ -348,7 +348,7 @@ EOF
         node_path=${SWIFT_DATA_DIR}/${node_number}
 
         iniuncomment ${swift_node_config} DEFAULT user
-        iniset ${swift_node_config} DEFAULT user ${USER}
+        iniset ${swift_node_config} DEFAULT user ${STACK_USER}
 
         iniuncomment ${swift_node_config} DEFAULT bind_port
         iniset ${swift_node_config} DEFAULT bind_port ${bind_port}
@@ -419,7 +419,7 @@ EOF
     swift_log_dir=${SWIFT_DATA_DIR}/logs
     rm -rf ${swift_log_dir}
     mkdir -p ${swift_log_dir}/hourly
-    sudo chown -R $USER:adm ${swift_log_dir}
+    sudo chown -R ${STACK_USER}:adm ${swift_log_dir}
     sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
         tee /etc/rsyslog.d/10-swift.conf
     if is_apache_enabled_service swift; then
@@ -434,9 +434,9 @@ function create_swift_disk() {
     # First do a bit of setup by creating the directories and
     # changing the permissions so we can run it as our user.
 
-    USER_GROUP=$(id -g)
+    USER_GROUP=$(id -g ${STACK_USER})
     sudo mkdir -p ${SWIFT_DATA_DIR}/{drives,cache,run,logs}
-    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_DIR}
+    sudo chown -R ${STACK_USER}:${USER_GROUP} ${SWIFT_DATA_DIR}
 
     # Create a loopback disk and format it to XFS.
     if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
@@ -448,7 +448,7 @@ function create_swift_disk() {
 
     mkdir -p ${SWIFT_DATA_DIR}/drives/images
     sudo touch ${SWIFT_DISK_IMAGE}
-    sudo chown $USER: ${SWIFT_DISK_IMAGE}
+    sudo chown ${STACK_USER}: ${SWIFT_DISK_IMAGE}
 
     truncate -s ${SWIFT_LOOPBACK_DISK_SIZE} ${SWIFT_DISK_IMAGE}
 
@@ -471,9 +471,9 @@ function create_swift_disk() {
         node_device=${node}/sdb1
         [[ -d $node ]] && continue
         [[ -d $drive ]] && continue
-        sudo install -o ${USER} -g $USER_GROUP -d $drive
-        sudo install -o ${USER} -g $USER_GROUP -d $node_device
-        sudo chown -R $USER: ${node}
+        sudo install -o ${STACK_USER} -g $USER_GROUP -d $drive
+        sudo install -o ${STACK_USER} -g $USER_GROUP -d $node_device
+        sudo chown -R ${STACK_USER}: ${node}
     done
 }
 # create_swift_accounts() - Set up standard swift accounts and extra

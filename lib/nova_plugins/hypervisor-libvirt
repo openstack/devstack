@@ -7,6 +7,7 @@
 # Dependencies:
 # ``functions`` file
 # ``nova`` configuration
+# ``STACK_USER`` has to be defined
 
 # install_nova_hypervisor - install any external requirements
 # configure_nova_hypervisor - make configuration changes, including those to other services
@@ -68,7 +69,7 @@ EOF"
             # with 'unix-group:$group'.
             sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
 [libvirt Management Access]
-Identity=unix-user:$USER
+Identity=unix-user:$STACK_USER
 Action=org.libvirt.unix.manage
 ResultAny=yes
 ResultInactive=yes

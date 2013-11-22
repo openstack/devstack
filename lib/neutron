@@ -4,6 +4,7 @@
 # Dependencies:
 # ``functions`` file
 # ``DEST`` must be defined
+# ``STACK_USER`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
@@ -730,7 +731,7 @@ function _neutron_setup_rootwrap() {
 
     # Set up the rootwrap sudoers for neutron
     TEMPFILE=`mktemp`
-    echo "$USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/neutron-rootwrap

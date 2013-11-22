@@ -195,7 +195,7 @@ function configure_nova_rootwrap() {
 
     # Set up the rootwrap sudoers for nova
     TEMPFILE=`mktemp`
-    echo "$USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/nova-rootwrap
