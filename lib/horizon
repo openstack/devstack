@@ -153,15 +153,6 @@ function install_horizon() {
     # Apache installation, because we mark it NOPRIME
     install_apache_wsgi
 
-    # NOTE(sdague) quantal changed the name of the node binary
-    if is_ubuntu; then
-        if [[ ! -e "/usr/bin/node" ]]; then
-            install_package nodejs-legacy
-        fi
-    elif is_fedora && [[ $DISTRO =~ (rhel6) || "$os_RELEASE" -ge "18" ]]; then
-        install_package nodejs
-    fi
-
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
 }
 
