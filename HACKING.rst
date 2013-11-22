@@ -227,3 +227,51 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
   or graciously handle possible artifacts left over from previous runs if executed
   again.  It is acceptable to require a reboot or even a re-install of DevStack
   to restore a clean test environment.
+
+
+Bash Style Guidelines
+~~~~~~~~~~~~~~~~~~~~~
+Devstack defines a bash set of best practices for maintaining large
+collections of bash scripts. These should be considered as part of the
+review process.
+
+We have a preliminary enforcing script for this called bash8 (only a
+small number of these rules are enforced).
+
+Whitespace Rules
+----------------
+
+- lines should not include trailing whitespace
+- there should be no hard tabs in the file
+- indents are 4 spaces, and all indentation should be some multiple of
+  them
+
+Control Structure Rules
+-----------------------
+- then should be on the same line as the if
+- do should be on the same line as the for
+
+Example::
+
+  if [[ -r $TOP_DIR/local.conf ]]; then
+      LRC=$(get_meta_section_files $TOP_DIR/local.conf local)
+      for lfile in $LRC; do
+          if [[ "$lfile" == "localrc" ]]; then
+              if [[ -r $TOP_DIR/localrc ]]; then
+                  warn $LINENO "localrc and local.conf:[[local]] both exist, using localrc"
+              else
+                  echo "# Generated file, do not edit" >$TOP_DIR/.localrc.auto
+                  get_meta_section $TOP_DIR/local.conf local $lfile >>$TOP_DIR/.localrc.auto
+              fi
+          fi
+      done
+  fi
+
+Variables and Functions
+-----------------------
+- functions should be used whenever possible for clarity
+- functions should use ``local`` variables as much as possible to
+  ensure they are isolated from the rest of the environment
+- local variables should be lower case, global variables should be
+  upper case
+- function names should_have_underscores, NotCamelCase.
