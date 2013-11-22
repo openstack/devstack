@@ -1251,7 +1251,11 @@ function safe_chmod() {
 
 # ``pip install -e`` the package, which processes the dependencies
 # using pip before running `setup.py develop`
-# Uses globals ``STACK_USER``, ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``
+#
+# Updates the dependencies in project_dir from the
+# openstack/requirements global list before installing anything.
+#
+# Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``
 # setup_develop directory
 function setup_develop() {
     local project_dir=$1
@@ -1267,9 +1271,7 @@ function setup_develop() {
             $SUDO_CMD python update.py $project_dir)
     fi
 
-    pip_install -e $project_dir
-    # ensure that further actions can do things like setup.py sdist
-    safe_chown -R $STACK_USER $1/*.egg-info
+    setup_develop_no_requirements_update $project_dir
 
     # We've just gone and possibly modified the user's source tree in an
     # automated way, which is considered bad form if it's a development
@@ -1284,6 +1286,18 @@ function setup_develop() {
             (cd $project_dir && git reset --hard)
         fi
     fi
+}
+
+# ``pip install -e`` the package, which processes the dependencies
+# using pip before running `setup.py develop`
+# Uses globals ``STACK_USER``
+# setup_develop_no_requirements_update directory
+function setup_develop_no_requirements_update() {
+    local project_dir=$1
+
+    pip_install -e $project_dir
+    # ensure that further actions can do things like setup.py sdist
+    safe_chown -R $STACK_USER $1/*.egg-info
 }
 
 
