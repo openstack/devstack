@@ -28,22 +28,31 @@ MASTER_BRANCH=${MASTER_BRANCH:-master}
 # http://devstack.org is a GitHub gh-pages site in the https://github.com/cloudbuilders/devtack.git repo
 GH_PAGES_REPO=git@github.com:cloudbuilders/devstack.git
 
+# Keep track of the devstack directory
+TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
+
 # Uses this shocco branch: https://github.com/dtroyer/shocco/tree/rst_support
 SHOCCO=${SHOCCO:-shocco}
 if ! which shocco; then
-    if [[ ! -x shocco/shocco ]]; then
+    if [[ ! -x $TOP_DIR/shocco/shocco ]]; then
         if [[ -z "$INSTALL_SHOCCO" ]]; then
             echo "shocco not found in \$PATH, please set environment variable SHOCCO"
             exit 1
         fi
         echo "Installing local copy of shocco"
+        if ! which pygmentize; then
+            sudo pip install Pygments
+        fi
+        if ! which rst2html.py; then
+            sudo pip install docutils
+        fi
         git clone -b rst_support https://github.com/dtroyer/shocco shocco
         cd shocco
         ./configure
         make
         cd ..
     fi
-    SHOCCO=shocco/shocco
+    SHOCCO=$TOP_DIR/shocco/shocco
 fi
 
 # Process command-line args

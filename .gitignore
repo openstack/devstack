@@ -13,5 +13,6 @@ stack-screenrc
 accrc
 .stackenv
 .prereqs
+devstack-docs-*
 docs/
 docs-files
