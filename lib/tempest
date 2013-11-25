@@ -80,6 +80,7 @@ function configure_tempest() {
     local public_router_id
     local tenant_networks_reachable
     local boto_instance_type="m1.tiny"
+    local ssh_connect_method="fixed"
 
     # TODO(afazekas):
     # sudo python setup.py deploy
@@ -192,9 +193,12 @@ function configure_tempest() {
 
     if [ "$Q_USE_NAMESPACE" != "False" ]; then
         tenant_networks_reachable=false
+        ssh_connect_method="floating"
     else
         tenant_networks_reachable=true
     fi
+
+    ssh_connect_method=${TEMPEST_SSH_CONNECT_METHOD:-$ssh_connect_method}
 
     if is_service_enabled q-l3; then
         public_network_id=$(neutron net-list | grep $PUBLIC_NETWORK_NAME | \
@@ -258,6 +262,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute flavor_ref_alt $flavor_ref_alt
     iniset $TEMPEST_CONF compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONF compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
+    iniset $TEMPEST_CONF compute ssh_connect_method $ssh_connect_method
 
     # Compute admin
     iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
