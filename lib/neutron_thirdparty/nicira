@@ -20,7 +20,7 @@ set +o xtrace
 NVP_GATEWAY_NETWORK_INTERFACE=${NVP_GATEWAY_NETWORK_INTERFACE:-eth2}
 # Re-declare floating range as it's needed also in stop_nicira, which
 # is invoked by unstack.sh
-FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.224/28}
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.0/24}
 
 function configure_nicira() {
     :
