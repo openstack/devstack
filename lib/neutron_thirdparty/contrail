@@ -290,25 +290,29 @@ function start_contrail() {
     fi
 
     # launch ...
+    redis-cli flushall
     screen_it redis "sudo redis-server $REDIS_CONF"
+
     screen_it cass "sudo $CASS_PATH -f"
+
     screen_it zk  "cd $CONTRAIL_SRC/third_party/zookeeper-3.4.5; ./bin/zkServer.sh start"
+
     screen_it ifmap "cd $CONTRAIL_SRC/third_party/irond-0.3.0-bin; java -jar ./irond.jar"
     sleep 2
     
     
-    screen_it disco "python $(pywhere discovery)/disc_server_zk.py --conf_file /etc/contrail/discovery.conf"
+    screen_it disco "python $(pywhere discovery)/disc_server_zk.py --reset_config --conf_file /etc/contrail/discovery.conf"
     sleep 2
 
     # find the directory where vnc_cfg_api_server was installed and start vnc_cfg_api_server.py
-    screen_it apiSrv "python $(pywhere vnc_cfg_api_server)/vnc_cfg_api_server.py --conf_file /etc/contrail/api_server.conf"
+    screen_it apiSrv "python $(pywhere vnc_cfg_api_server)/vnc_cfg_api_server.py --reset_config --conf_file /etc/contrail/api_server.conf"
     echo "Waiting for api-server to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://${SERVICE_HOST}:8082; do sleep 1; done"; then
         echo "api-server did not start"
         exit 1
     fi
     sleep 2
-    screen_it schema "python $(pywhere schema_transformer)/to_bgp.py --conf_file /etc/contrail/schema_transformer.conf"
+    screen_it schema "python $(pywhere schema_transformer)/to_bgp.py --reset_config --conf_file /etc/contrail/schema_transformer.conf"
 
     source /etc/contrail/control_param
     screen_it control "export LD_LIBRARY_PATH=/opt/stack/contrail/build/lib; $CONTRAIL_SRC/build/debug/control-node/control-node --map-server-url https://${IFMAP_SERVER}:${IFMAP_PORT} --map-user ${IFMAP_USER} --map-password ${IFMAP_PASWD} --hostname ${HOSTNAME} --host-ip ${HOSTIP} --bgp-port ${BGP_PORT} ${CERT_OPTS} ${LOG_LOCAL}"
