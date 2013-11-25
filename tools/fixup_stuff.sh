@@ -51,7 +51,7 @@ function get_package_path() {
 
 # Fix prettytable 0.7.2 permissions
 # Don't specify --upgrade so we use the existing package if present
-pip_install prettytable
+pip_install 'prettytable>0.7'
 PACKAGE_DIR=$(get_package_path prettytable)
 # Only fix version 0.7.2
 dir=$(echo $PACKAGE_DIR/prettytable-0.7.2*)
