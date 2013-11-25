@@ -179,7 +179,6 @@ function configure_keystone() {
     fi
 
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
-    iniset $KEYSTONE_CONF signing token_format "$KEYSTONE_TOKEN_FORMAT"
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" = "UUID" ]]; then
         iniset $KEYSTONE_CONF token provider keystone.token.providers.uuid.Provider
