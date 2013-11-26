@@ -26,6 +26,7 @@ FILES=$TOP_DIR/files
 
 # Handle arguments
 
+USE_GET_PIP=${USE_GET_PIP:-0}
 INSTALL_PIP_VERSION=${INSTALL_PIP_VERSION:-"1.4.1"}
 while [[ -n "$1" ]]; do
     case $1 in
@@ -63,7 +64,7 @@ function get_versions() {
 function install_get_pip() {
     if [[ ! -r $FILES/get-pip.py ]]; then
         (cd $FILES; \
-            curl $PIP_GET_PIP_URL; \
+            curl -O $PIP_GET_PIP_URL; \
         )
     fi
     sudo python $FILES/get-pip.py
