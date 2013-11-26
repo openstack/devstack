@@ -96,6 +96,13 @@ SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 SWIFT_REPLICAS=${SWIFT_REPLICAS:-1}
 SWIFT_REPLICAS_SEQ=$(seq ${SWIFT_REPLICAS})
 
+# Set ``SWIFT_LOG_TOKEN_LENGTH`` to configure how many characters of an auth
+# token should be placed in the logs. When keystone is used with PKI tokens,
+# the token values can be huge, seemingly larger the 2K, at the least. We
+# restrict it here to a default of 12 characters, which should be enough to
+# trace through the logs when looking for its use.
+SWIFT_LOG_TOKEN_LENGTH=${SWIFT_LOG_TOKEN_LENGTH:-12}
+
 # Set ``OBJECT_PORT_BASE``, ``CONTAINER_PORT_BASE``, ``ACCOUNT_PORT_BASE``
 # Port bases used in port number calclution for the service "nodes"
 # The specified port number will be used, the additinal ports calculated by
@@ -281,6 +288,9 @@ function configure_swift() {
         SWIFT_EXTRAS_MIDDLEWARE_LAST="${SWIFT_EXTRAS_MIDDLEWARE_LAST} ceilometer"
     fi
 
+    # Restrict the length of auth tokens in the swift proxy-server logs.
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:proxy-logging reveal_sensitive_prefix ${SWIFT_LOG_TOKEN_LENGTH}
+
     # By default Swift will be installed with keystone and tempauth middleware
     # and add the swift3 middleware if its configured for it. The token for
     # tempauth would be prefixed with the reseller_prefix setting `TEMPAUTH_` the
@@ -336,7 +346,7 @@ EOF
     cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONF_DIR}/swift.conf
     iniset ${SWIFT_CONF_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
 
-    # This function generates an object/account/proxy configuration
+    # This function generates an object/container/account configuration
     # emulating 4 nodes on different ports
     function generate_swift_config() {
         local swift_node_config=$1
