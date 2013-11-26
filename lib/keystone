@@ -189,6 +189,8 @@ function configure_keystone() {
 
     if [[ "$KEYSTONE_TOKEN_BACKEND" = "sql" ]]; then
         iniset $KEYSTONE_CONF token driver keystone.token.backends.sql.Token
+    elif [[ "$KEYSTONE_TOKEN_BACKEND" = "memcache" ]]; then
+        iniset $KEYSTONE_CONF token driver keystone.token.backends.memcache.Token
     else
         iniset $KEYSTONE_CONF token driver keystone.token.backends.kvs.Token
     fi
@@ -348,6 +350,17 @@ function install_keystone() {
     # only install ldap if the service has been enabled
     if is_service_enabled ldap; then
         install_ldap
+    fi
+    if [[ "$KEYSTONE_TOKEN_BACKEND" = "memcache" ]]; then
+        # Install memcached and the memcache Python library that keystone uses.
+        # Unfortunately the Python library goes by different names in the .deb
+        # and .rpm circles.
+        install_package memcached
+        if is_ubuntu; then
+            install_package python-memcache
+        else
+            install_package python-memcached
+        fi
     fi
     git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
     setup_develop $KEYSTONE_DIR
