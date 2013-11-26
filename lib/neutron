@@ -17,6 +17,7 @@
 # - configure_neutron_third_party
 # - init_neutron_third_party
 # - start_neutron_third_party
+# - create_neutron_cache_dir
 # - create_nova_conf_neutron
 # - start_neutron_service_and_check
 # - create_neutron_initial_network
@@ -294,6 +295,14 @@ function create_nova_conf_neutron() {
     if is_service_enabled q-meta; then
         iniset $NOVA_CONF DEFAULT service_neutron_metadata_proxy "True"
     fi
+}
+
+# create_neutron_cache_dir() - Part of the _neutron_setup_keystone() process
+function create_neutron_cache_dir() {
+    # Create cache dir
+    sudo mkdir -p $NEUTRON_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $NEUTRON_AUTH_CACHE_DIR
+    rm -f $NEUTRON_AUTH_CACHE_DIR/*
 }
 
 # create_neutron_accounts() - Set up common required neutron accounts
@@ -782,9 +791,7 @@ function _neutron_setup_keystone() {
     if [[ -z $skip_auth_cache ]]; then
         iniset $conf_file $section signing_dir $NEUTRON_AUTH_CACHE_DIR
         # Create cache dir
-        sudo mkdir -p $NEUTRON_AUTH_CACHE_DIR
-        sudo chown $STACK_USER $NEUTRON_AUTH_CACHE_DIR
-        rm -f $NEUTRON_AUTH_CACHE_DIR/*
+        create_neutron_cache_dir
     fi
 }
 
