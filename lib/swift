@@ -321,6 +321,10 @@ function configure_swift() {
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_password $SERVICE_PASSWORD
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken signing_dir $SWIFT_AUTH_CACHE_DIR
+    # This causes the authtoken middleware to use the same python logging
+    # adapter provided by the swift proxy-server, so that request transaction
+    # IDs will included in all of its log messages.
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken log_name swift
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles
