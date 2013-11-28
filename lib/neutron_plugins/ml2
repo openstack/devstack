@@ -34,10 +34,13 @@ Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS:-}
 ML2_L3_PLUGIN=${ML2_L3_PLUGIN:-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
 
 function populate_ml2_config() {
-    OPTS=$1
-    CONF=$2
-    SECTION=$3
+    CONF=$1
+    SECTION=$2
+    OPTS=$3
 
+    if [ -z "$OPTS" ]; then
+        return
+    fi
     for I in "${OPTS[@]}"; do
         # Replace the first '=' with ' ' for iniset syntax
         iniset $CONF $SECTION ${I/=/ }
@@ -102,19 +105,17 @@ function neutron_plugin_configure_service() {
     # Since we enable the tunnel TypeDrivers, also enable a local_ip
     iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $HOST_IP
 
-    populate_ml2_config mechanism_drivers=$Q_ML2_PLUGIN_MECHANISM_DRIVERS /$Q_PLUGIN_CONF_FILE ml2
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 mechanism_drivers=$Q_ML2_PLUGIN_MECHANISM_DRIVERS
 
-    populate_ml2_config type_drivers=$Q_ML2_PLUGIN_TYPE_DRIVERS /$Q_PLUGIN_CONF_FILE ml2
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 type_drivers=$Q_ML2_PLUGIN_TYPE_DRIVERS
 
-    populate_ml2_config $Q_SRV_EXTRA_OPTS /$Q_PLUGIN_CONF_FILE ml2
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 $Q_SRV_EXTRA_OPTS
 
-    populate_ml2_config $Q_ML2_PLUGIN_GRE_TYPE_OPTIONS /$Q_PLUGIN_CONF_FILE ml2_type_gre
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_gre $Q_ML2_PLUGIN_GRE_TYPE_OPTIONS
 
-    populate_ml2_config $Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS /$Q_PLUGIN_CONF_FILE ml2_type_vxlan
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vxlan $Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS
 
-    if [ "$Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS" != "" ]; then
-        populate_ml2_config $Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS /$Q_PLUGIN_CONF_FILE ml2_type_vlan
-    fi
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vlan $Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS
 }
 
 function has_neutron_plugin_security_group() {
