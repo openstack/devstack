@@ -747,6 +747,7 @@ fi
 if [[ $TRACK_DEPENDS = True ]]; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip
     if ! diff -Nru $DEST/requires-pre-pip $DEST/requires-post-pip > $DEST/requires.diff; then
+        echo "Detect some changes for installed packages of pip, in depend tracking mode"
         cat $DEST/requires.diff
     fi
     echo "Ran stack.sh in depend tracking mode, bailing out now"
