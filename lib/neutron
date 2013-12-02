@@ -565,7 +565,7 @@ function _configure_neutron_common() {
 
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $NEUTRON_CONF DEFAULT
+        setup_colorized_logging $NEUTRON_CONF DEFAULT project_id
     fi
 
     _neutron_setup_rootwrap
