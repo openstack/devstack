@@ -2,7 +2,7 @@
 #
 # **build_tempest.sh**
 
-# Checkout and prepare a Tempest repo: https://github.com/openstack/tempest.git
+# Checkout and prepare a Tempest repo: git://git.openstack.org/openstack/tempest.git
 
 function usage {
     echo "$0 - Check out and prepare a Tempest repo"
