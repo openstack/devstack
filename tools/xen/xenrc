@@ -13,7 +13,13 @@ CLEAN_TEMPLATES=${CLEAN_TEMPLATES:-false}
 
 # Size of image
 VDI_MB=${VDI_MB:-5000}
-OSDOMU_MEM_MB=3072
+
+# Devstack now contains many components.  3GB ram is not enough to prevent
+# swapping and memory fragmentation - the latter of which can cause failures
+# such as blkfront failing to plug a VBD and lead to random test fails.
+#
+# Set to 4GB so an 8GB XenServer VM can have a 1GB Dom0 and leave 3GB for VMs
+OSDOMU_MEM_MB=4096
 OSDOMU_VDI_GB=8
 
 # Network mapping. Specify bridge names or network names. Network names may
