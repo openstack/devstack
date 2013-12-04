@@ -113,6 +113,7 @@ function install_contrail() {
         cd $CONTRAIL_SRC/third_party
         wget http://trust.f4.hs-hannover.de/download/iron/archive/irond-0.3.0-bin.zip
         unzip irond-0.3.0-bin.zip
+        chmod -w irond-0.3.0-bin/ifmap.properties
         cd ${contrail_cwd}
     fi
 
