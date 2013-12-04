@@ -25,7 +25,7 @@
 #      vhost0                     10.99.99.253 (floating)
 #
 
-set -eux
+set -ex
 
 . ./openrc admin demo
 
@@ -57,32 +57,54 @@ python /opt/stack/contrail/controller/src/config/utils/create_floating_pool.py -
 python /opt/stack/contrail/controller/src/config/utils/use_floating_pool.py --project_name default-domain:demo --floating_ip_pool_name default-domain:demo:public:floatingip_pool
 
 # vms
-image=cirros-0.3.1-x86_64-uec
+
+image=cirros-0.3.1-x86_64-uec # default stock image
+## try to use a test image instead of stock
+#IMAGE_NAME=${IMAGE_NAME:-cirros-test}
+#IMAGE_FILE=${IMAGE_FILE:-~/projects/piston/projects/cirros/cirros-0.3.1-x86_64-nbk.qcow2}
+#if glance image-show $IMAGE_NAME > /dev/null 2>&1; then
+#    image=$IMAGE_NAME
+#else
+#    if [ -e $IMAGE_FILE ] && 
+#	glance image-create --name=$IMAGE_NAME --disk-format qcow2  --container-format=bare  < $IMAGE_FILE; then
+#	image=$IMAGE_NAME
+#    fi
+#fi
+
 flavor=m1.tiny
 base="--image $image --flavor $flavor"
 
 # vm1: net1
-#nova boot $base --nic net-id=$net1_id --nic net-id=$net2_id vm1
 nova boot $base --nic net-id=$net1_id vm1
 
-# vm2: net1
-nova boot $base --nic net-id=$net1_id vm2
+# vm2: net2
+nova boot $base --nic net-id=$net2_id vm2
 
 # floatingip for vm1
 eval $(neutron floatingip-create -f shell -c id $public_id | sed -ne /id=/p)
 floatingip1_id=$id
 vm1_net1_ip=$(nova show vm1 | sed -ne 's/^| net1 network[ \t]*|[ \t]*\([.0-9]*\)[ \t]*|/\1/p')
-port_id=$(neutron port-list | sed -ne 's/| \([-0-9a-f]*\)[ \t]*|[ \t]*.*'"$vm1_net1_ip"'.*/\1/p')
-neutron floatingip-associate $floatingip1_id $port_id
+port1_id=$(neutron port-list | sed -ne 's/| \([-0-9a-f]*\)[ \t]*|[ \t]*.*'"$vm1_net1_ip"'.*/\1/p')
+neutron floatingip-associate $floatingip1_id $port1_id
 neutron floatingip-show $floatingip1_id
 
 # floatingip for vm2
 eval $(neutron floatingip-create -f shell -c id $public_id | sed -ne /id=/p)
 floatingip2_id=$id
-vm2_net1_ip=$(nova show vm2 | sed -ne 's/^| net1 network[ \t]*|[ \t]*\([.0-9]*\)[ \t]*|/\1/p')
-port_id=$(neutron port-list | sed -ne 's/| \([-0-9a-f]*\)[ \t]*|[ \t]*.*'"$vm2_net1_ip"'.*/\1/p')
-neutron floatingip-associate $floatingip2_id $port_id
+vm2_net2_ip=$(nova show vm2 | sed -ne 's/^| net2 network[ \t]*|[ \t]*\([.0-9]*\)[ \t]*|/\1/p')
+port2_id=$(neutron port-list | sed -ne 's/| \([-0-9a-f]*\)[ \t]*|[ \t]*.*'"$vm2_net2_ip"'.*/\1/p')
+neutron floatingip-associate $floatingip2_id $port2_id
 neutron floatingip-show $floatingip2_id
 
 # show where the vms ended up
 nova list --fields name,status,Networks,OS-EXT-SRV-ATTR:host
+
+# if the net_policy_join script exists, then use it to join net1 and net2
+THIS_DIR=$(dirname $0)
+PATH=$THIS_DIR:$PATH
+if which net_policy_join.py; then
+    net_policy_join.py $net1_id $net2_id 
+fi
+
+
+set +ex
