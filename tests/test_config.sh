@@ -70,6 +70,12 @@ additional=true
 
 [[test1|test1c.conf]]
 $TEST_1C_ADD
+
+[[test3|test-space.conf]]
+[DEFAULT]
+attribute=value
+ 
+# the above line has a single space
 EOF
 
 
@@ -176,4 +182,14 @@ else
     echo "failed: $VAL != $EXPECT_VAL"
 fi
 
-rm -f test.conf test1c.conf test2a.conf
+echo -n "merge_config_file test-space: "
+rm -f test-space.conf
+merge_config_file test.conf test3 test-space.conf
+VAL=$(cat test-space.conf)
+# iniset adds a blank line if it creates the file...
+EXPECT_VAL="
+[DEFAULT]
+attribute = value"
+check_result "$VAL" "$EXPECT_VAL"
+
+rm -f test.conf test1c.conf test2a.conf test-space.conf

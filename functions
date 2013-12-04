@@ -729,6 +729,8 @@ function iniset() {
     local option=$3
     local value=$4
 
+    [[ -z $section || -z $option ]] && return
+
     if ! grep -q "^\[$section\]" "$file" 2>/dev/null; then
         # Add section at the end
         echo -e "\n[$section]" >>"$file"

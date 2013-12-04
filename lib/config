@@ -95,7 +95,7 @@ function merge_config_file() {
         /^ *\#/ {
             next
         }
-        /^.+/ {
+        /^[^ \t]+/ {
             split($0, d, " *= *")
             print "iniset " configfile " " section " " d[1] " \"" d[2] "\""
         }
