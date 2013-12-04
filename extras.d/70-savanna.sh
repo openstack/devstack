@@ -14,6 +14,7 @@ if is_service_enabled savanna; then
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         echo_summary "Configuring Savanna"
         configure_savanna
+        create_savanna_accounts
         if is_service_enabled horizon; then
             configure_savanna_dashboard
         fi

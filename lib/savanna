@@ -3,7 +3,6 @@
 # Dependencies:
 # ``functions`` file
 # ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
-# ``ADMIN_{TENANT_NAME|PASSWORD}`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
@@ -28,10 +27,11 @@ SAVANNA_BRANCH=${SAVANNA_BRANCH:-master}
 SAVANNA_DIR=$DEST/savanna
 SAVANNA_CONF_DIR=${SAVANNA_CONF_DIR:-/etc/savanna}
 SAVANNA_CONF_FILE=savanna.conf
-ADMIN_TENANT_NAME=${ADMIN_TENANT_NAME:-admin}
-ADMIN_NAME=${ADMIN_NAME:-admin}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-nova}
 SAVANNA_DEBUG=${SAVANNA_DEBUG:-True}
+
+SAVANNA_SERVICE_HOST=${SAVANNA_SERVICE_HOST:-$SERVICE_HOST}
+SAVANNA_SERVICE_PORT=${SAVANNA_SERVICE_PORT:-8386}
+SAVANNA_SERVICE_PROTOCOL=${SAVANNA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
 # Support entry points installation of console scripts
 if [[ -d $SAVANNA_DIR/bin ]]; then
@@ -42,6 +42,42 @@ fi
 
 # Functions
 # ---------
+
+# create_savanna_accounts() - Set up common required savanna accounts
+#
+# Tenant      User       Roles
+# ------------------------------
+# service     savanna    admin
+function create_savanna_accounts() {
+
+    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+
+    SAVANNA_USER=$(keystone user-create \
+        --name=savanna \
+        --pass="$SERVICE_PASSWORD" \
+        --tenant_id $SERVICE_TENANT \
+        --email=savanna@example.com \
+        | grep " id " | get_field 2)
+    keystone user-role-add \
+        --tenant-id $SERVICE_TENANT \
+        --user-id $SAVANNA_USER \
+        --role-id $ADMIN_ROLE
+
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        SAVANNA_SERVICE=$(keystone service-create \
+            --name=savanna \
+            --type=data_processing \
+            --description="Savanna Data Processing" \
+            | grep " id " | get_field 2)
+        keystone endpoint-create \
+            --region RegionOne \
+            --service_id $SAVANNA_SERVICE \
+            --publicurl "$SAVANNA_SERVICE_PROTOCOL://$SAVANNA_SERVICE_HOST:$SAVANNA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
+            --adminurl "$SAVANNA_SERVICE_PROTOCOL://$SAVANNA_SERVICE_HOST:$SAVANNA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
+            --internalurl "$SAVANNA_SERVICE_PROTOCOL://$SAVANNA_SERVICE_HOST:$SAVANNA_SERVICE_PORT/v1.1/\$(tenant_id)s"
+    fi
+}
 
 # configure_savanna() - Set config files, create data dirs, etc
 function configure_savanna() {
@@ -54,9 +90,9 @@ function configure_savanna() {
     # Copy over savanna configuration file and configure common parameters.
     cp $SAVANNA_DIR/etc/savanna/savanna.conf.sample $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE
 
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_password $ADMIN_PASSWORD
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_username $ADMIN_NAME
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_tenant_name $ADMIN_TENANT_NAME
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_username savanna
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_tenant_name $SERVICE_TENANT_NAME
     iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT debug $SAVANNA_DEBUG
 
     recreate_database savanna utf8
