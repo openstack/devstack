@@ -1351,10 +1351,9 @@ function upload_image() {
 
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
-
+    IMAGE_FNAME=`basename "$image_url"`
     if [[ $image_url != file* ]]; then
         # Downloads the image (uec ami+aki style), then extracts it.
-        IMAGE_FNAME=`basename "$image_url"`
         if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
              wget -c $image_url -O $FILES/$IMAGE_FNAME
              if [[ $? -ne 0 ]]; then
@@ -1410,13 +1409,92 @@ function upload_image() {
         vmdk_create_type="$(head -25 $IMAGE | grep -a -F -m 1 'createType=' $IMAGE)"
         vmdk_create_type="${vmdk_create_type#*\"}"
         vmdk_create_type="${vmdk_create_type%?}"
+
+        descriptor_data_pair_msg="Monolithic flat and VMFS disks "`
+                                 `"should use a descriptor-data pair."
         if [[ "$vmdk_create_type" = "monolithicSparse" ]]; then
             vmdk_disktype="sparse"
-        elif [[ "$vmdk_create_type" = "monolithicFlat" ]]; then
-            die $LINENO "Monolithic flat disks should use a descriptor-data pair." \
-            "Please provide the disk and not the descriptor."
+        elif [[ "$vmdk_create_type" = "monolithicFlat" || \
+        "$vmdk_create_type" = "vmfs" ]]; then
+            # Attempt to retrieve the *-flat.vmdk
+            flat_fname="$(head -25 $IMAGE | grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $IMAGE)"
+            flat_fname="${flat_fname#*\"}"
+            flat_fname="${flat_fname%?}"
+            if [[ -z "$flat_name" ]]; then
+                flat_fname="$IMAGE_NAME-flat.vmdk"
+            fi
+            path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
+            flat_url="${image_url:0:$path_len}$flat_fname"
+            warn $LINENO "$descriptor_data_pair_msg"`
+                         `" Attempt to retrieve the *-flat.vmdk: $flat_url"
+            if [[ $flat_url != file* ]]; then
+                if [[ ! -f $FILES/$flat_fname || \
+                "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
+                    wget -c $flat_url -O $FILES/$flat_fname
+                    if [[ $? -ne 0 ]]; then
+                        echo "Flat disk not found: $flat_url"
+                        flat_found=false
+                    fi
+                fi
+                if $flat_found; then
+                    IMAGE="$FILES/${flat_fname}"
+                fi
+            else
+                IMAGE=$(echo $flat_url | sed "s/^file:\/\///g")
+                if [[ ! -f $IMAGE || "$(stat -c "%s" $IMAGE)" == "0" ]]; then
+                    echo "Flat disk not found: $flat_url"
+                    flat_found=false
+                fi
+                if ! $flat_found; then
+                    IMAGE=$(echo $image_url | sed "s/^file:\/\///g")
+                fi
+            fi
+            if $flat_found; then
+                IMAGE_NAME="${flat_fname}"
+            fi
+            vmdk_disktype="preallocated"
+        elif [[ -z "$vmdk_create_type" ]]; then
+            # *-flat.vmdk provided: attempt to retrieve the descriptor (*.vmdk)
+            # to retrieve appropriate metadata
+            if [[ ${IMAGE_NAME: -5} != "-flat" ]]; then
+                warn $LINENO "Expected filename suffix: '-flat'."`
+                            `" Filename provided: ${IMAGE_NAME}"
+            else
+                descriptor_fname="${IMAGE_NAME:0:${#IMAGE_NAME} - 5}.vmdk"
+                path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
+                flat_path="${image_url:0:$path_len}"
+                descriptor_url=$flat_path$descriptor_fname
+                warn $LINENO "$descriptor_data_pair_msg"`
+                             `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
+                if [[ $flat_path != file* ]]; then
+                    if [[ ! -f $FILES/$descriptor_fname || \
+                    "$(stat -c "%s" $FILES/$descriptor_fname)" = "0" ]]; then
+                        wget -c $descriptor_url -O $FILES/$descriptor_fname
+                        if [[ $? -ne 0 ]]; then
+                            warn $LINENO "Descriptor not found $descriptor_url"
+                            descriptor_found=false
+                        fi
+                    fi
+                    descriptor_url="$FILES/$descriptor_fname"
+                else
+                    descriptor_url=$(echo $descriptor_url | sed "s/^file:\/\///g")
+                    if [[ ! -f $descriptor_url || \
+                    "$(stat -c "%s" $descriptor_url)" == "0" ]]; then
+                         warn $LINENO "Descriptor not found $descriptor_url"
+                         descriptor_found=false
+                    fi
+                fi
+                if $descriptor_found; then
+                    vmdk_adapter_type="$(head -25 $descriptor_url |"`
+                    `"grep -a -F -m 1 'ddb.adapterType =' $descriptor_url)"
+                    vmdk_adapter_type="${vmdk_adapter_type#*\"}"
+                    vmdk_adapter_type="${vmdk_adapter_type%?}"
+                 fi
+             fi
+             #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
+             vmdk_disktype="preallocated"
         else
-            #TODO(alegendre): handle streamOptimized once supported by VMware driver.
+            #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
             vmdk_disktype="preallocated"
         fi
 
