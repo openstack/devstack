@@ -183,7 +183,7 @@ function test_install_neutron_patch() {
 function test_install_nova_patch() { 
     apply_patch $TOP_DIR/contrail/nova_v3.patch $DEST/nova
     if [ -e $DEST/nova/plugins/contrail/config_parser.py ]; then
-        sudo mv $DEST/nova/plugins/contrail/config_parser.py /usr/bin/config_parser
+        sudo cp $DEST/nova/plugins/contrail/config_parser.py /usr/bin/config_parser
         sudo chmod +x /usr/bin/config_parser
     fi
 }   
