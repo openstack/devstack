@@ -316,6 +316,7 @@ function configure_swift() {
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cafile $KEYSTONE_SSL_CA
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
@@ -339,6 +340,7 @@ paste.filter_factory = keystone.middleware.s3_token:filter_factory
 auth_port = ${KEYSTONE_AUTH_PORT}
 auth_host = ${KEYSTONE_AUTH_HOST}
 auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
+cafile = ${KEYSTONE_SSL_CA}
 auth_token = ${SERVICE_TOKEN}
 admin_token = ${SERVICE_TOKEN}
 

@@ -29,7 +29,6 @@ TROVE_DIR=$DEST/trove
 TROVECLIENT_DIR=$DEST/python-troveclient
 TROVE_CONF_DIR=/etc/trove
 TROVE_LOCAL_CONF_DIR=$TROVE_DIR/etc/trove
-TROVE_AUTH_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT//v$IDENTITY_API_VERSION
 TROVE_AUTH_CACHE_DIR=${TROVE_AUTH_CACHE_DIR:-/var/cache/trove}
 TROVE_BIN_DIR=/usr/local/bin
 
@@ -102,6 +101,7 @@ function configure_trove() {
     iniset $TROVE_API_PASTE_INI filter:tokenauth auth_host $KEYSTONE_AUTH_HOST
     iniset $TROVE_API_PASTE_INI filter:tokenauth auth_port $KEYSTONE_AUTH_PORT
     iniset $TROVE_API_PASTE_INI filter:tokenauth auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $TROVE_API_PASTE_INI filter:tokenauth cafile $KEYSTONE_SSL_CA
     iniset $TROVE_API_PASTE_INI filter:tokenauth admin_tenant_name $SERVICE_TENANT_NAME
     iniset $TROVE_API_PASTE_INI filter:tokenauth admin_user trove
     iniset $TROVE_API_PASTE_INI filter:tokenauth admin_password $SERVICE_PASSWORD
@@ -123,6 +123,8 @@ function configure_trove() {
 
     # (Re)create trove taskmanager conf file if needed
     if is_service_enabled tr-tmgr; then
+        TROVE_AUTH_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT//v$IDENTITY_API_VERSION
+
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT rabbit_password $RABBIT_PASSWORD
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT sql_connection `database_connection_url trove`
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT taskmanager_manager trove.taskmanager.manager.Manager

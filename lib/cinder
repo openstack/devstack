@@ -209,6 +209,7 @@ function configure_cinder() {
     inicomment $CINDER_API_PASTE_INI filter:authtoken auth_host
     inicomment $CINDER_API_PASTE_INI filter:authtoken auth_port
     inicomment $CINDER_API_PASTE_INI filter:authtoken auth_protocol
+    inicomment $CINDER_API_PASTE_INI filter:authtoken cafile
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_tenant_name
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_user
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_password
@@ -219,6 +220,7 @@ function configure_cinder() {
     iniset $CINDER_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $CINDER_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset $CINDER_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $CINDER_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
     iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CINDER_CONF keystone_authtoken admin_user cinder
     iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
