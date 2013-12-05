@@ -1277,6 +1277,13 @@ if [[ -d $TOP_DIR/extras.d ]]; then
     done
 fi
 
+# Local Configuration
+# ===================
+
+# Apply configuration from local.conf if it exists for layer 2 services
+# Phase: post-extra
+merge_config_group $TOP_DIR/local.conf post-extra
+
 
 # Run local script
 # ================
