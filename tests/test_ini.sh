@@ -136,6 +136,26 @@ else
     echo "iniget failed: $VAL"
 fi
 
+# test pipe in option
+iniset test.ini aaa handlers "a|b"
+
+VAL=$(iniget test.ini aaa handlers)
+if [[ "$VAL" == "a|b" ]]; then
+    echo "OK: $VAL"
+else
+    echo "iniget failed: $VAL"
+fi
+
+# test space in option
+iniset test.ini aaa handlers "a b"
+
+VAL="$(iniget test.ini aaa handlers)"
+if [[ "$VAL" == "a b" ]]; then
+    echo "OK: $VAL"
+else
+    echo "iniget failed: $VAL"
+fi
+
 # Test section not exist
 
 VAL=$(iniget test.ini zzz handlers)
