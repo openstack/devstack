@@ -6,8 +6,6 @@
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-#source $TOP_DIR/lib/neutron_plugins/ovs_base
-
 function neutron_plugin_create_nova_conf() {
     :
 }
@@ -23,11 +21,17 @@ function neutron_plugin_configure_common() {
     Q_PLUGIN_CLASS="neutron.plugins.plumgrid.plumgrid_plugin.plumgrid_plugin.NeutronPluginPLUMgridV2"
     PLUMGRID_DIRECTOR_IP=${PLUMGRID_DIRECTOR_IP:-localhost}
     PLUMGRID_DIRECTOR_PORT=${PLUMGRID_DIRECTOR_PORT:-7766}
+    PLUMGRID_ADMIN=${PLUMGRID_ADMIN:-username}
+    PLUMGRID_PASSWORD=${PLUMGRID_PASSWORD:-password}
+    PLUMGRID_TIMEOUT=${PLUMGRID_TIMEOUT:-70}
 }
 
 function neutron_plugin_configure_service() {
     iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector director_server $PLUMGRID_DIRECTOR_IP
     iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector director_server_port $PLUMGRID_DIRECTOR_PORT
+    iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector username $PLUMGRID_ADMIN
+    iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector password $PLUMGRID_PASSWORD
+    iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector servertimeout $PLUMGRID_TIMEOUT
 }
 
 function neutron_plugin_configure_debug_command() {
