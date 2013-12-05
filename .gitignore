@@ -1,6 +1,6 @@
 proto
 *~
-.*.sw[nop]
+.*.sw?
 *.log
 *.log.[1-9]
 src
