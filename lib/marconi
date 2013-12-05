@@ -1,0 +1,171 @@
+# lib/marconi
+# Install and start **Marconi** service
+
+# To enable a minimal set of Marconi services, add the following to localrc:
+#   enable_service marconi-server
+#
+# Dependencies:
+# - functions
+# - OS_AUTH_URL for auth in api
+# - DEST set to the destination directory
+# - SERVICE_PASSWORD, SERVICE_TENANT_NAME for auth in api
+# - STACK_USER service user
+
+# stack.sh
+# ---------
+# install_marconi
+# configure_marconi
+# init_marconi
+# start_marconi
+# stop_marconi
+# cleanup_marconi
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# Set up default directories
+MARCONI_DIR=$DEST/marconi
+MARCONICLIENT_DIR=$DEST/python-marconiclient
+MARCONI_CONF_DIR=/etc/marconi
+MARCONI_CONF=$MARCONI_CONF_DIR/marconi.conf
+MARCONI_API_LOG_DIR=/var/log/marconi-api
+MARCONI_AUTH_CACHE_DIR=${MARCONI_AUTH_CACHE_DIR:-/var/cache/marconi}
+
+# Support potential entry-points console scripts
+MARCONI_BIN_DIR=$(get_python_exec_prefix)
+
+# Set up database backend
+MARCONI_BACKEND=${MARCONI_BACKEND:-mongodb}
+
+
+# Set Marconi repository
+MARCONI_REPO=${MARCONI_REPO:-${GIT_BASE}/openstack/marconi.git}
+MARCONI_BRANCH=${MARCONI_BRANCH:-master}
+
+# Set client library repository
+MARCONICLIENT_REPO=${MARCONICLIENT_REPO:-${GIT_BASE}/openstack/python-marconiclient.git}
+MARCONICLIENT_BRANCH=${MARCONICLIENT_BRANCH:-master}
+
+# Functions
+# ---------
+
+# cleanup_marconi() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_marconi() {
+    mongo marconi --eval "db.dropDatabase();"
+}
+
+# configure_marconiclient() - Set config files, create data dirs, etc
+function configure_marconiclient() {
+    setup_develop $MARCONICLIENT_DIR
+}
+
+# configure_marconi() - Set config files, create data dirs, etc
+function configure_marconi() {
+    setup_develop $MARCONI_DIR
+
+    [ ! -d $MARCONI_CONF_DIR ] && sudo mkdir -m 755 -p $MARCONI_CONF_DIR
+    sudo chown $USER $MARCONI_CONF_DIR
+
+    [ ! -d $MARCONI_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $MARCONI_API_LOG_DIR
+    sudo chown $USER $MARCONI_API_LOG_DIR
+
+    iniset $MARCONI_CONF DEFAULT verbose True
+    iniset $MARCONI_CONF 'drivers:transport:wsgi' bind '0.0.0.0'
+
+    # Install the policy file for the API server
+    cp $MARCONI_DIR/etc/marconi/policy.json $MARCONI_CONF_DIR
+    iniset $MARCONI_CONF DEFAULT policy_file $MARCONI_CONF_DIR/policy.json
+
+    iniset $MARCONI_CONF keystone_authtoken auth_protocol http
+    iniset $MARCONI_CONF keystone_authtoken admin_user marconi
+    iniset $MARCONI_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+    iniset $MARCONI_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $MARCONI_CONF keystone_authtoken signing_dir $MARCONI_AUTH_CACHE_DIR
+
+    if [[ "$MARCONI_BACKEND" = 'mongodb' ]]; then
+        iniset $MARCONI_CONF database connection mongodb://localhost:27017/marconi
+        configure_mongodb
+        cleanup_marconi
+    fi
+}
+
+function configure_mongodb() {
+    # Set nssize to 2GB. This increases the number of namespaces supported
+    # # per database.
+    sudo sed -i '/--nssize/!s/OPTIONS=\"/OPTIONS=\"--nssize 2047 /' /etc/sysconfig/mongod
+
+    restart_service mongod
+}
+
+# init_marconi() - Initialize etc.
+function init_marconi() {
+    # Create cache dir
+    sudo mkdir -p $MARCONI_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $MARCONI_AUTH_CACHE_DIR
+    rm -f $MARCONI_AUTH_CACHE_DIR/*
+}
+
+# install_marconi() - Collect source and prepare
+function install_marconi() {
+    git_clone $MARCONI_REPO $MARCONI_DIR $MARCONI_BRANCH
+    setup_develop $MARCONI_DIR
+}
+
+# install_marconiclient() - Collect source and prepare
+function install_marconiclient() {
+    git_clone $MARCONICLIENT_REPO $MARCONICLIENT_DIR $MARCONICLIENT_BRANCH
+    setup_develop $MARCONICLIENT_DIR
+}
+
+# start_marconi() - Start running processes, including screen
+function start_marconi() {
+    screen_it marconi-server "marconi-server --config-file $MARCONI_CONF"
+}
+
+# stop_marconi() - Stop running processes
+function stop_marconi() {
+    # Kill the marconi screen windows
+    for serv in marconi-server; do
+        screen -S $SCREEN_NAME -p $serv -X kill
+    done
+}
+
+function create_marconi_accounts() {
+    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+
+    MARCONI_USER=$(get_id keystone user-create --name=marconi \
+                                                --pass="$SERVICE_PASSWORD" \
+                                                --tenant_id $SERVICE_TENANT \
+                                                --email=marconi@example.com)
+    keystone user-role-add --tenant-id $SERVICE_TENANT \
+                            --user-id $MARCONI_USER \
+                            --role-id $ADMIN_ROLE
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        MARCONI_SERVICE=$(get_id keystone service-create \
+            --name=marconi \
+            --type=queuing \
+            --description="Marconi Service")
+        keystone endpoint-create \
+            --region RegionOne \
+            --service_id $MARCONI_SERVICE \
+            --publicurl "http://$SERVICE_HOST:8888" \
+            --adminurl "http://$SERVICE_HOST:8888" \
+            --internalurl "http://$SERVICE_HOST:8888"
+    fi
+
+}
+
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
