@@ -367,25 +367,20 @@ COPYENV=${COPYENV:-1}
 if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" = "1" ]; then
     set +x
 
-    echo "VM Launched - Waiting for startup script"
-    # wait for log to appear
-    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "[ -e run.sh.log ]"; do
+    echo "VM Launched - Waiting for devstack to start"
+    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "service devstack status | grep -q running"; do
         sleep 10
     done
-    echo -n "Running"
-    while [ `ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS pgrep -c run.sh` -ge 1 ]
-    do
+    echo -n "devstack is running"
+    while ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "service devstack status | grep -q running"; do
         sleep 10
         echo -n "."
     done
     echo "done!"
     set -x
 
-    # output the run.sh.log
-    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'cat run.sh.log'
-
-    # Fail if the expected text is not found
-    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'cat run.sh.log' | grep -q 'stack.sh completed in'
+    # Fail if devstack did not succeed
+    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'test -e /var/run/devstack.succeeded'
 
     set +x
     echo "################################################################################"
@@ -399,11 +394,12 @@ else
     echo ""
     echo "All Finished!"
     echo "Now, you can monitor the progress of the stack.sh installation by "
-    echo "tailing /opt/stack/run.sh.log from within your domU."
+    echo "looking at the console of your domU / checking the log files."
     echo ""
     echo "ssh into your domU now: 'ssh stack@$OS_VM_MANAGEMENT_ADDRESS' using your password"
-    echo "and then do: 'tail -f /opt/stack/run.sh.log'"
+    echo "and then do: 'sudo service devstack status' to check if devstack is still running."
+    echo "Check that /var/run/devstack.succeeded exists"
     echo ""
-    echo "When the script completes, you can then visit the OpenStack Dashboard"
+    echo "When devstack completes, you can visit the OpenStack Dashboard"
     echo "at http://$OS_VM_SERVICES_ADDRESS, and contact other services at the usual ports."
 fi
