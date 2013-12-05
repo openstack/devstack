@@ -56,6 +56,7 @@ done
 
 # Check to make sure rules were added
 SEC_GROUP_RULES=( $(nova secgroup-list-rules $SEC_GROUP_NAME | grep -v \- | grep -v 'Source Group' | cut -d '|' -f3 | tr -d ' ') )
+die_if_not_set $LINENO SEC_GROUP_RULES "Failure retrieving SEC_GROUP_RULES for $SEC_GROUP_NAME"
 for i in "${RULES_TO_ADD[@]}"; do
     skip=
     for j in "${SEC_GROUP_RULES[@]}"; do
