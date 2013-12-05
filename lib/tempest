@@ -193,7 +193,9 @@ function configure_tempest() {
 
     if [ "$Q_USE_NAMESPACE" != "False" ]; then
         tenant_networks_reachable=false
-        ssh_connect_method="floating"
+        if ! is_service_enabled n-net; then
+            ssh_connect_method="floating"
+        fi
     else
         tenant_networks_reachable=true
     fi
