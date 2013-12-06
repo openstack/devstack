@@ -101,7 +101,7 @@ function install_contrail() {
 	elif [ ! -d $CONTRAIL_SRC/third_party/apache-cassandra-2.0.2-bin ]; then
         contrail_cwd=$(pwd)
         cd $CONTRAIL_SRC/third_party
-        wget http://www.bizdirusa.com/mirrors/apache/cassandra/2.0.2/apache-cassandra-2.0.2-bin.tar.gz
+        wget http://repo1.maven.org/maven2/org/apache/cassandra/apache-cassandra/2.0.2/apache-cassandra-2.0.2-bin.tar.gz
         tar xvzf apache-cassandra-2.0.2-bin.tar.gz
         cd ${contrail_cwd}
     fi
@@ -113,6 +113,7 @@ function install_contrail() {
         cd $CONTRAIL_SRC/third_party
         wget http://trust.f4.hs-hannover.de/download/iron/archive/irond-0.3.0-bin.zip
         unzip irond-0.3.0-bin.zip
+        chmod -w irond-0.3.0-bin/ifmap.properties
         cd ${contrail_cwd}
     fi
 
@@ -176,13 +177,13 @@ function test_install_cassandra_patch() {
 }
 
 function test_install_neutron_patch() { 
-    apply_patch $TOP_DIR/contrail/neutron_v3.patch $DEST/neutron
+    apply_patch $TOP_DIR/contrail/neutron_v4.patch $DEST/neutron
 }   
 
 function test_install_nova_patch() { 
-    apply_patch $TOP_DIR/contrail/nova_v3.patch $DEST/nova
+    apply_patch $TOP_DIR/contrail/nova_v4.patch $DEST/nova
     if [ -e $DEST/nova/plugins/contrail/config_parser.py ]; then
-        sudo mv $DEST/nova/plugins/contrail/config_parser.py /usr/bin/config_parser
+        sudo cp $DEST/nova/plugins/contrail/config_parser.py /usr/bin/config_parser
         sudo chmod +x /usr/bin/config_parser
     fi
 }   
