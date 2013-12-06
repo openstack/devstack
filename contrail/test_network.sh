@@ -59,17 +59,17 @@ python /opt/stack/contrail/controller/src/config/utils/use_floating_pool.py --pr
 # vms
 
 image=cirros-0.3.1-x86_64-uec # default stock image
-## try to use a test image instead of stock
-#IMAGE_NAME=${IMAGE_NAME:-cirros-test}
-#IMAGE_FILE=${IMAGE_FILE:-~/projects/piston/projects/cirros/cirros-0.3.1-x86_64-nbk.qcow2}
-#if glance image-show $IMAGE_NAME > /dev/null 2>&1; then
-#    image=$IMAGE_NAME
-#else
-#    if [ -e $IMAGE_FILE ] && 
-#	glance image-create --name=$IMAGE_NAME --disk-format qcow2  --container-format=bare  < $IMAGE_FILE; then
-#	image=$IMAGE_NAME
-#    fi
-#fi
+# try to use a test image instead of stock
+IMAGE_NAME=${IMAGE_NAME:-cirros-test}
+IMAGE_FILE=${IMAGE_FILE:-~/projects/piston/projects/cirros/cirros-0.3.1-x86_64-nbk.qcow2}
+if glance image-show $IMAGE_NAME > /dev/null 2>&1; then
+    image=$IMAGE_NAME
+else
+    if [ -e $IMAGE_FILE ] && 
+	glance image-create --name=$IMAGE_NAME --disk-format qcow2  --container-format=bare  < $IMAGE_FILE; then
+	image=$IMAGE_NAME
+    fi
+fi
 
 flavor=m1.tiny
 base="--image $image --flavor $flavor"
