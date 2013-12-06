@@ -32,6 +32,17 @@ TROVE_LOCAL_CONF_DIR=$TROVE_DIR/etc/trove
 TROVE_AUTH_CACHE_DIR=${TROVE_AUTH_CACHE_DIR:-/var/cache/trove}
 TROVE_BIN_DIR=/usr/local/bin
 
+# setup_trove_logging() - Adds logging configuration to conf files
+function setup_trove_logging() {
+    local CONF=$1
+    iniset $CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+    iniset $CONF DEFAULT use_syslog $SYSLOG
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+        # Add color to logging output
+        setup_colorized_logging $CONF DEFAULT tenant user
+    fi
+}
+
 # create_trove_accounts() - Set up common required trove accounts
 
 # Tenant               User       Roles
@@ -121,6 +132,9 @@ function configure_trove() {
     iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT control_exchange trove
     sed -i "s/localhost/$NETWORK_GATEWAY/g" $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
 
+    setup_trove_logging $TROVE_CONF_DIR/trove.conf
+    setup_trove_logging $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
+
     # (Re)create trove taskmanager conf file if needed
     if is_service_enabled tr-tmgr; then
         TROVE_AUTH_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT//v$IDENTITY_API_VERSION
@@ -132,6 +146,7 @@ function configure_trove() {
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_tenant_name trove
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
+        setup_trove_logging $TROVE_CONF_DIR/trove-taskmanager.conf
     fi
 
     # (Re)create trove conductor conf file if needed
@@ -143,6 +158,7 @@ function configure_trove() {
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT control_exchange trove
+        setup_trove_logging $TROVE_CONF_DIR/trove-conductor.conf
     fi
 }
 
