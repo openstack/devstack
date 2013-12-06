@@ -314,6 +314,13 @@ function start_contrail() {
     source /etc/contrail/control_param
     screen_it control "export LD_LIBRARY_PATH=/opt/stack/contrail/build/lib; $CONTRAIL_SRC/build/debug/control-node/control-node --map-server-url https://${IFMAP_SERVER}:${IFMAP_PORT} --map-user ${IFMAP_USER} --map-password ${IFMAP_PASWD} --hostname ${HOSTNAME} --host-ip ${HOSTIP} --bgp-port ${BGP_PORT} ${CERT_OPTS} ${LOG_LOCAL}"
 
+    # Provision Vrouter - must be run after API server and schema transformer are up
+    sleep 2
+    admin_user=${CONTRAIL_ADMIN_USERNAME:-"admin"}
+    admin_passwd=${ADMIN_PASSWORD:-"contrail123"}
+    admin_tenant=${CONTRAIL_ADMIN_TENANT:-"admin"}
+    python $TOP_DIR/contrail/provision_vrouter.py --host_name $HOSTNAME --host_ip $HOST_IP --api_server_ip $SERVICE_HOST --oper add --admin_user $admin_user --admin_password $admin_passwd --admin_tenant_name $admin_tenant
+
     # vrouter
     test_insert_vrouter
 
