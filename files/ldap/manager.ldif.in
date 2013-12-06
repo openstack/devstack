@@ -1,10 +1,15 @@
 dn: olcDatabase={${LDAP_OLCDB_NUMBER}}hdb,cn=config
 changetype: modify
 replace: olcSuffix
-olcSuffix: dc=openstack,dc=org
+olcSuffix: ${BASE_DN}
 -
 replace: olcRootDN
-olcRootDN: dc=Manager,dc=openstack,dc=org
+olcRootDN: ${MANAGER_DN}
 -
 ${LDAP_ROOTPW_COMMAND}: olcRootPW
 olcRootPW: ${SLAPPASS}
+-
+replace: olcDbIndex
+olcDbIndex: objectClass eq
+olcDbIndex: default pres,eq
+olcDbIndex: cn,sn,givenName,co

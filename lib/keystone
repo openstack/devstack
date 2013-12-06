@@ -151,17 +151,17 @@ function configure_keystone() {
 
     if is_service_enabled ldap; then
         #Set all needed ldap values
-        iniset $KEYSTONE_CONF ldap password  $LDAP_PASSWORD
-        iniset $KEYSTONE_CONF ldap user "dc=Manager,dc=openstack,dc=org"
-        iniset $KEYSTONE_CONF ldap suffix "dc=openstack,dc=org"
+        iniset $KEYSTONE_CONF ldap password $LDAP_PASSWORD
+        iniset $KEYSTONE_CONF ldap user $LDAP_MANAGER_DN
+        iniset $KEYSTONE_CONF ldap suffix $LDAP_BASE_DN
         iniset $KEYSTONE_CONF ldap use_dumb_member "True"
         iniset $KEYSTONE_CONF ldap user_attribute_ignore "enabled,email,tenants,default_project_id"
         iniset $KEYSTONE_CONF ldap tenant_attribute_ignore "enabled"
         iniset $KEYSTONE_CONF ldap tenant_domain_id_attribute "businessCategory"
         iniset $KEYSTONE_CONF ldap tenant_desc_attribute "description"
-        iniset $KEYSTONE_CONF ldap tenant_tree_dn "ou=Projects,dc=openstack,dc=org"
+        iniset $KEYSTONE_CONF ldap tenant_tree_dn "ou=Projects,$LDAP_BASE_DN"
         iniset $KEYSTONE_CONF ldap user_domain_id_attribute "businessCategory"
-        iniset $KEYSTONE_CONF ldap user_tree_dn "ou=Users,dc=openstack,dc=org"
+        iniset $KEYSTONE_CONF ldap user_tree_dn "ou=Users,$LDAP_BASE_DN"
         iniset $KEYSTONE_CONF DEFAULT member_role_id "9fe2ff9ee4384b1894a90878d3e92bab"
         iniset $KEYSTONE_CONF DEFAULT member_role_name "_member_"
     fi
@@ -337,6 +337,10 @@ create_keystone_accounts() {
 
 # init_keystone() - Initialize databases, etc.
 function init_keystone() {
+    if is_service_enabled ldap; then
+        init_ldap
+    fi
+
     # (Re)create keystone database
     recreate_database keystone utf8
 

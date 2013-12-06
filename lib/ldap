@@ -9,75 +9,143 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+
+LDAP_DOMAIN=${LDAP_DOMAIN:-openstack.org}
+# Make an array of domain components
+DC=(${LDAP_DOMAIN/./ })
+
+# Leftmost domain component used in top-level entry
+LDAP_BASE_DC=${DC[0]}
+
+# Build the base DN
+dn=""
+for dc in ${DC[*]}; do
+    dn="$dn,dc=$dc"
+done
+LDAP_BASE_DN=${dn#,}
+
+LDAP_MANAGER_DN="${LDAP_MANAGER_DN:-cn=Manager,${LDAP_BASE_DN}}"
+LDAP_URL=${LDAP_URL:-ldap://localhost}
+
 LDAP_SERVICE_NAME=slapd
+
+if is_ubuntu; then
+    LDAP_OLCDB_NUMBER=1
+    LDAP_ROOTPW_COMMAND=replace
+elif is_fedora; then
+    LDAP_OLCDB_NUMBER=2
+    LDAP_ROOTPW_COMMAND=add
+elif is_suse; then
+    # SUSE has slappasswd in /usr/sbin/
+    PATH=$PATH:/usr/sbin/
+    LDAP_OLCDB_NUMBER=1
+    LDAP_ROOTPW_COMMAND=add
+    LDAP_SERVICE_NAME=ldap
+fi
+
 
 # Functions
 # ---------
+
+# Perform common variable substitutions on the data files
+# _ldap_varsubst file
+function _ldap_varsubst() {
+    local infile=$1
+    sed -e "
+        s|\${LDAP_OLCDB_NUMBER}|$LDAP_OLCDB_NUMBER|
+        s|\${SLAPPASS}|$SLAPPASS|
+        s|\${LDAP_ROOTPW_COMMAND}|$LDAP_ROOTPW_COMMAND|
+        s|\${BASE_DC}|$LDAP_BASE_DC|
+        s|\${BASE_DN}|$LDAP_BASE_DN|
+        s|\${MANAGER_DN}|$LDAP_MANAGER_DN|
+    " $infile
+}
+
+# clean_ldap() - Remove ldap server
+function cleanup_ldap() {
+    uninstall_package $(get_packages ldap)
+    if is_ubuntu; then
+        uninstall_package slapd ldap-utils libslp1
+        sudo rm -rf /etc/ldap/ldap.conf /var/lib/ldap
+    elif is_fedora; then
+        sudo rm -rf /etc/openldap /var/lib/ldap
+    elif is_suse; then
+        sudo rm -rf /var/lib/ldap
+    fi
+}
+
+# init_ldap
+# init_ldap() - Initialize databases, etc.
+function init_ldap() {
+    local keystone_ldif
+
+    TMP_LDAP_DIR=$(mktemp -d -t ldap.$$.XXXXXXXXXX)
+
+    # Remove data but not schemas
+    clear_ldap_state
+
+    # Add our top level ldap nodes
+    if ldapsearch -x -w $LDAP_PASSWORD -D "$LDAP_MANAGER_DN" -H $LDAP_URL -b "$LDAP_BASE_DN" | grep -q "Success"; then
+        printf "LDAP already configured for $LDAP_BASE_DC\n"
+    else
+        printf "Configuring LDAP for $LDAP_BASE_DC\n"
+        # If BASE_DN is changed, the user may override the default file
+        if [[ -r $FILES/ldap/${LDAP_BASE_DC}.ldif.in ]]; then
+            keystone_ldif=${LDAP_BASE_DC}.ldif
+        else
+            keystone_ldif=keystone.ldif
+        fi
+        _ldap_varsubst $FILES/ldap/${keystone_ldif}.in >$TMP_LDAP_DIR/${keystone_ldif}
+        if [[ -r $TMP_LDAP_DIR/${keystone_ldif} ]]; then
+            ldapadd -x -w $LDAP_PASSWORD -D "$LDAP_MANAGER_DN" -H $LDAP_URL -c -f $TMP_LDAP_DIR/${keystone_ldif}
+        fi
+    fi
+
+    rm -rf TMP_LDAP_DIR
+}
 
 # install_ldap
 # install_ldap() - Collect source and prepare
 function install_ldap() {
     echo "Installing LDAP inside function"
-    echo "LDAP_PASSWORD is $LDAP_PASSWORD"
     echo "os_VENDOR is $os_VENDOR"
-    printf "installing"
+
+    TMP_LDAP_DIR=$(mktemp -d -t ldap.$$.XXXXXXXXXX)
+
+    printf "installing OpenLDAP"
     if is_ubuntu; then
-        LDAP_OLCDB_NUMBER=1
-        LDAP_ROOTPW_COMMAND=replace
-        sudo DEBIAN_FRONTEND=noninteractive apt-get install slapd ldap-utils
-        #automatically starts LDAP on ubuntu so no need to call start_ldap
+        # Ubuntu automatically starts LDAP so no need to call start_ldap()
+        :
     elif is_fedora; then
-        LDAP_OLCDB_NUMBER=2
-        LDAP_ROOTPW_COMMAND=add
         start_ldap
     elif is_suse; then
-        LDAP_OLCDB_NUMBER=1
-        LDAP_ROOTPW_COMMAND=add
-        LDAP_SERVICE_NAME=ldap
-        # SUSE has slappasswd in /usr/sbin/
-        PATH=$PATH:/usr/sbin/
-        sudo slapadd -F /etc/openldap/slapd.d/ -bcn=config -l $FILES/ldap/base-config.ldif
+        _ldap_varsubst $FILES/ldap/suse-base-config.ldif.in >$TMP_LDAP_DIR/suse-base-config.ldif
+        sudo slapadd -F /etc/openldap/slapd.d/ -bcn=config -l $TMP_LDAP_DIR/suse-base-config.ldif
         sudo sed -i '/^OPENLDAP_START_LDAPI=/s/"no"/"yes"/g' /etc/sysconfig/openldap
         start_ldap
     fi
 
-    printf "generate password file"
-    SLAPPASS=`slappasswd -s $LDAP_PASSWORD`
+    echo "LDAP_PASSWORD is $LDAP_PASSWORD"
+    SLAPPASS=$(slappasswd -s $LDAP_PASSWORD)
+    printf "LDAP secret is $SLAPPASS\n"
 
-    printf "secret is $SLAPPASS\n"
-    #create manager.ldif
-    TMP_MGR_DIFF_FILE=`mktemp -t manager_ldiff.$$.XXXXXXXXXX.ldif`
-    sed -e "s|\${LDAP_OLCDB_NUMBER}|$LDAP_OLCDB_NUMBER|" -e "s|\${SLAPPASS}|$SLAPPASS|" -e "s|\${LDAP_ROOTPW_COMMAND}|$LDAP_ROOTPW_COMMAND|" $FILES/ldap/manager.ldif.in >> $TMP_MGR_DIFF_FILE
-
-    #update ldap olcdb
-    sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f $TMP_MGR_DIFF_FILE
+    # Create manager.ldif and add to olcdb
+    _ldap_varsubst $FILES/ldap/manager.ldif.in >$TMP_LDAP_DIR/manager.ldif
+    sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f $TMP_LDAP_DIR/manager.ldif
 
     # On fedora we need to manually add cosine and inetorgperson schemas
-    if is_fedora || is_suse; then
+    if is_fedora; then
         sudo ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/cosine.ldif
         sudo ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif
     fi
 
-    # add our top level ldap nodes
-    if ldapsearch -x -w $LDAP_PASSWORD -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -x -b dc=openstack,dc=org | grep -q "Success"; then
-        printf "LDAP already configured for OpenStack\n"
-        if [[ "$KEYSTONE_CLEAR_LDAP" == "yes" ]]; then
-            # clear LDAP state
-            clear_ldap_state
-            # reconfigure LDAP for OpenStack
-            ldapadd -c -x -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -w $LDAP_PASSWORD -f  $FILES/ldap/openstack.ldif
-        fi
-    else
-        printf "Configuring LDAP for OpenStack\n"
-        ldapadd -c -x -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -w $LDAP_PASSWORD -f  $FILES/ldap/openstack.ldif
-    fi
+    rm -rf TMP_LDAP_DIR
 }
 
 # start_ldap() - Start LDAP
 function start_ldap() {
     sudo service $LDAP_SERVICE_NAME restart
 }
-
 
 # stop_ldap() - Stop LDAP
 function stop_ldap() {
@@ -86,7 +154,7 @@ function stop_ldap() {
 
 # clear_ldap_state() - Clear LDAP State
 function clear_ldap_state() {
-    ldapdelete -x -w $LDAP_PASSWORD -H ldap://localhost -D dc=Manager,dc=openstack,dc=org -x -r "dc=openstack,dc=org"
+    ldapdelete -x -w $LDAP_PASSWORD -D "$LDAP_MANAGER_DN" -H $LDAP_URL -r "$LDAP_BASE_DN"
 }
 
 # Restore xtrace
