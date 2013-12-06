@@ -29,6 +29,10 @@ set -ex
 
 . ./openrc admin demo
 
+ssh-keygen -f id_rsa
+nova keypair-add --pub-key id_rsa.pub sshkey
+
+
 # allow ping and ssh
 nova secgroup-list
 nova secgroup-list-rules default
@@ -71,14 +75,28 @@ else
     fi
 fi
 
+tee cloudinit.sh <<EOF
+#! /bin/sh
+echo "Cloudinit worked!"
+echo
+
+echo "Inet interfaces:"
+ip -f inet -o addr list
+EOF
+chmod a+x cloudinit.sh
+
+
 flavor=m1.tiny
-base="--image $image --flavor $flavor"
+base="--image $image --flavor $flavor --key-name sshkey --user-data cloudinit.sh"
 
 # vm1: net1
 nova boot $base --nic net-id=$net1_id vm1
 
 # vm2: net2
 nova boot $base --nic net-id=$net2_id vm2
+
+# vm3: net1, net2
+nova boot $base --nic net-id=$net1_id --nic net-id=$net2_id vm3
 
 # floatingip for vm1
 eval $(neutron floatingip-create -f shell -c id $public_id | sed -ne /id=/p)
