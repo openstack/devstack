@@ -29,8 +29,9 @@ set -ex
 
 . ./openrc admin demo
 
-ssh-keygen -f id_rsa
-nova keypair-add --pub-key id_rsa.pub sshkey
+\rm -f sshkey
+ssh-keygen -f sshkey
+nova keypair-add --pub-key sshkey.pub sshkey
 
 
 # allow ping and ssh
@@ -98,31 +99,61 @@ nova boot $base --nic net-id=$net2_id vm2
 # vm3: net1, net2
 nova boot $base --nic net-id=$net1_id --nic net-id=$net2_id vm3
 
-# floatingip for vm1
-eval $(neutron floatingip-create -f shell -c id $public_id | sed -ne /id=/p)
-floatingip1_id=$id
-vm1_net1_ip=$(nova show vm1 | sed -ne 's/^| net1 network[ \t]*|[ \t]*\([.0-9]*\)[ \t]*|/\1/p')
-port1_id=$(neutron port-list | sed -ne 's/| \([-0-9a-f]*\)[ \t]*|[ \t]*.*'"$vm1_net1_ip"'.*/\1/p')
-neutron floatingip-associate $floatingip1_id $port1_id
-neutron floatingip-show $floatingip1_id
-
-# floatingip for vm2
-eval $(neutron floatingip-create -f shell -c id $public_id | sed -ne /id=/p)
-floatingip2_id=$id
-vm2_net2_ip=$(nova show vm2 | sed -ne 's/^| net2 network[ \t]*|[ \t]*\([.0-9]*\)[ \t]*|/\1/p')
-port2_id=$(neutron port-list | sed -ne 's/| \([-0-9a-f]*\)[ \t]*|[ \t]*.*'"$vm2_net2_ip"'.*/\1/p')
-neutron floatingip-associate $floatingip2_id $port2_id
-neutron floatingip-show $floatingip2_id
-
-# show where the vms ended up
-nova list --fields name,status,Networks,OS-EXT-SRV-ATTR:host
 
 # if the net_policy_join script exists, then use it to join net1 and net2
-THIS_DIR=$(dirname $0)
+# use ${BASH_SOURCE[0]} instead of $0, because it works when this script is sourced
+THIS_DIR=$(dirname ${BASH_SOURCE[0]})
 PATH=$THIS_DIR:$PATH
 if which net_policy_join.py; then
     net_policy_join.py $net1_id $net2_id 
 fi
 
+
+die() {
+    echo "ERROR: " "$@" >&2
+    exit 1
+}
+
+# create a floating ip, usually on the $public network
+floatingip_create() {
+    local public_id=$1
+
+    eval $(neutron floatingip-create -f shell -c id $public_id | sed -ne /id=/p || \
+	die "couldn't create floatnig ip")
+    floatingip_id=$id
+    echo $floatingip_id
+}
+
+# assign $floatingip_id to $vm_name's interface on $net_name
+floatingip_associate() {
+    local vm_name=$1
+    local net_name=$2
+    local floatingip_id=$3
+
+    # find the port that the vm is attached to
+    vm_net_ip=$(nova show $vm_name | sed -ne 's/^| '"$net_name"' network[ \t]*|[ \t]*\([.0-9]*\)[ \t]*|/\1/p' || \
+	die "couldn't find $vm_name's ip on network $net_name")
+    port_id=$(neutron port-list | sed -ne 's/| \([-0-9a-f]*\)[ \t]*|[ \t]*.*'"$vm_net_ip"'.*/\1/p' || \
+	die "couldn't find prt_id for ip $vm_net_ip")
+    neutron floatingip-associate $floatingip_id $port_id
+}
+
+# floatingip1 for vm1,net1
+floatingip1_id=$(floatingip_create $public_id)
+floatingip_associate vm1 net1 $floatingip1_id
+neutron floatingip-show $floatingip1_id
+
+# floatingip2 for vm2,net2
+floatingip2_id=$(floatingip_create $public_id)
+floatingip_associate vm2 net2 $floatingip2_id
+neutron floatingip-show $floatingip2_id
+
+# floatingip3 for vm3,net1
+floatingip3_id=$(floatingip_create $public_id)
+floatingip_associate vm3 net1 $floatingip3_id
+neutron floatingip-show $floatingip3_id
+
+# show where the vms ended up
+nova list --fields name,status,Networks,OS-EXT-SRV-ATTR:host
 
 set +ex
