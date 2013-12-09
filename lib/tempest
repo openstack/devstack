@@ -15,6 +15,7 @@
 #   - ``PUBLIC_NETWORK_NAME``
 #   - ``Q_USE_NAMESPACE``
 #   - ``Q_ROUTER_NAME``
+#   - ``Q_L3_ENABLED``
 #   - ``VIRT_DRIVER``
 #   - ``LIBVIRT_TYPE``
 #   - ``KEYSTONE_SERVICE_PROTOCOL``, ``KEYSTONE_SERVICE_HOST`` from lib/keystone
@@ -202,7 +203,7 @@ function configure_tempest() {
 
     ssh_connect_method=${TEMPEST_SSH_CONNECT_METHOD:-$ssh_connect_method}
 
-    if is_service_enabled q-l3; then
+    if [ "$Q_L3_ENABLED" = "True" ]; then
         public_network_id=$(neutron net-list | grep $PUBLIC_NETWORK_NAME | \
             awk '{print $2}')
         if [ "$Q_USE_NAMESPACE" == "False" ]; then
