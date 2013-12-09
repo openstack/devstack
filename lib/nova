@@ -652,7 +652,7 @@ function start_nova_compute() {
         screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP '$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf'"
     elif [[ "$VIRT_DRIVER" = 'fake' ]]; then
         for i in `seq 1 $NUMBER_FAKE_NOVA_COMPUTE`; do
-            screen_it n-cpu "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf"
+            screen_it n-cpu "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf --config-file <(echo -e '[DEFAULT]\nhost=${HOSTNAME}${i}')"
         done
     else
         if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
