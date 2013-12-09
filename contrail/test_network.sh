@@ -29,8 +29,7 @@ set -ex
 
 . ./openrc admin demo
 
-\rm -f sshkey
-ssh-keygen -f sshkey
+yes | ssh-keygen -N "" -f sshkey
 nova keypair-add --pub-key sshkey.pub sshkey
 
 
