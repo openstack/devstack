@@ -122,11 +122,11 @@ index cfff8dd..0a51783 100644
          elif vif_type == network_model.VIF_TYPE_MLNX_DIRECT:
              self.unplug_mlnx_direct(instance, vif)
          elif vif_type == network_model.VIF_TYPE_MIDONET:
-diff --git plugins/contrail/contrail_parser.py plugins/contrail/contrail_parser.py
+diff --git plugins/contrail/config_parser.py plugins/contrail/config_parser.py
 new file mode 100755
 index 0000000..acac9fb
 --- /dev/null
-+++ plugins/contrail/contrail_parser.py
++++ plugins/contrail/config_parser.py
 @@ -0,0 +1,126 @@
 +#! /usr/bin/env python
 +import os
