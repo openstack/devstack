@@ -1,6 +1,11 @@
 This fork of devstack brings up all in one openstack + opencontrail
 system. Run stack.sh as usual to setup OpenStack + contrail modules.
 
+Contrail directory also includes some sample localrc files.
+1) localrc-single: for all-in-one system 
+2) localrc-multinode-server: master host on a multi node system. 
+3) localrc-multinode-compute: all compute nodes. 
+
 Notes:
 1) You will need to install kernel-devel package to compile OpenContrail
    Vrouter module
@@ -12,12 +17,35 @@ Notes:
    otherwise checking out contrail code will fail. The repo tool assumes
    ssh and will not work with HTTPS git url. You can have ssh-agent forward
    keys to target system running devstack.
+6) Copy sample localrc-single as localrc for a single node system. Copy
+   localrc-multinode-server and localrc-multinode-compute as localrc on 
+   master and compute nodes respectively for a multi-node system.
 
-Contrail directory also includes some sample localrc files.
-1) localrc-single: for all-in-one system 
-2) localrc-multinode-server: master host on a multi node system. 
-3) localrc-multinode-compute: all compute nodes. 
-
-Change the following to suit your deployment:
+Change the following in localrc to suit your deployment:
  PHYSICAL_INTERFACE -- external interface Vrouter should bind to
  SERVICE_HOST -- IP address of master
+
+Steps for basic Ubuntu VM image
+-------------------------------
+1) ssh as ubuntu to target. Password should be ubuntu
+2) Add following line to /etc/hosts to avoid
+   "sudo: unable to resolve host ubuntu" error
+   127.0.1.1 ubuntu
+3) Get following packages. You may need to change linux header version
+   package based on "uname -a" output
+   sudo apt-get update
+   sudo apt-get install git-core
+   sudo aptitude install build-essential
+   sudo apt-get install pkg-config 
+   sudo apt-get install linux-headers-3.2.0-35-virtual (for vrouter.ko)
+4) verify ssh to github is working
+   ssh -T git@github.com
+5) download devstack (should have already done this)
+   git clone git@github.com:dsetia/devstack.git
+6) copy sample localrc as mentioned above. Edit localrc 
+   PHYSICAL_INTERFACE/SERVICE_HOST/... to match your setup
+
+   cd devstack
+   cp contrail/localrc-single localrc
+   vi localrc  # edit PHYSICAL_INTERFACE
+7) ./stack.sh
