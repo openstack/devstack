@@ -26,5 +26,9 @@ function neutron_agent_metering_configure_agent() {
     cp $NEUTRON_DIR/etc/metering_agent.ini $METERING_AGENT_CONF_FILENAME
 }
 
+function neutron_metering_stop() {
+    :
+}
+
 # Restore xtrace
 $MY_XTRACE

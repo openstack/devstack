@@ -22,5 +22,16 @@ function neutron_vpn_configure_common() {
     fi
 }
 
+function neutron_vpn_stop() {
+    local ipsec_data_dir=$DATA_DIR/neutron/ipsec
+    local pids
+    if [ -d $ipsec_data_dir ]; then
+        pids=$(find $ipsec_data_dir -name 'pluto.pid' -exec cat {} \;)
+    fi
+    if [ -n "$pids" ]; then
+        sudo kill $pids
+    fi
+}
+
 # Restore xtrace
 $MY_XTRACE

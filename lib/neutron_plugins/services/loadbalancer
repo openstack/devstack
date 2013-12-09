@@ -45,5 +45,10 @@ function neutron_agent_lbaas_configure_agent() {
     fi
 }
 
+function neutron_lbaas_stop() {
+    pids=$(ps aux | awk '/haproxy/ { print $2 }')
+    [ ! -z "$pids" ] && sudo kill $pids
+}
+
 # Restore xtrace
 $MY_XTRACE
