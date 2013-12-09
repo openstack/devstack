@@ -1156,6 +1156,11 @@ function screen_rc {
         NL=`echo -ne '\015'`
         echo "screen -t $1 bash" >> $SCREENRC
         echo "stuff \"$2$NL\"" >> $SCREENRC
+
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            echo "logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log" >>$SCREENRC
+            echo "log on" >>$SCREENRC
+        fi
     fi
 }
 
