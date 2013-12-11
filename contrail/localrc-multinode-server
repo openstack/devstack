@@ -1,10 +1,10 @@
 # CONTRAIL MULTI_NODE master
-HOST_IP=192.168.122.251
+HOST_IP=192.168.56.119
 
-# allow floating ips from 192.168.122.240 to 192.168.122.255
+# allow floating ips from 10.99.99.0
 CONTRAIL_VGW_INTERFACE=vgw
-CONTRAIL_VGW_PUBLIC_SUBNET=192.168.122.240/28 # .240 to .255
-CONTRAIL_VGW_PUBLIC_NETWORK=default-domain:admin:public:public
+CONTRAIL_VGW_PUBLIC_SUBNET=10.99.99.0/24 #
+CONTRAIL_VGW_PUBLIC_NETWORK=default-domain:demo:public:public
 
 ENABLE_CONTRAIL=yes
 PHYSICAL_INTERFACE=eth0
@@ -26,12 +26,12 @@ enable_service q-svc
 enable_service q-meta
 enable_service neutron
 enable_service rabbit
+enable_service contrail
 
 # not used by contrail
 disable_service q-dhcp
 disable_service q-l3
 disable_service q-agt
-enable_service contrail
 
 DATABASE_PASSWORD=contrail123
 RABBIT_PASSWORD=contrail123
