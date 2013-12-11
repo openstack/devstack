@@ -153,6 +153,7 @@ function install_contrail() {
 function apply_patch() { 
     local patch="$1"
     local dir="$2"
+    local sudo="$3"
     local patch_applied="${dir}/$(basename ${patch}).appled"
 
     # run patch, ignore previously applied patches, and return an
@@ -163,7 +164,7 @@ function apply_patch() {
 	echo "Patch $(basename $patch) was previously applied in $dir"
     else
 	echo "Installing patch $(basename $patch) in $dir..."
-	if sudo patch -p0 -N -r - -d "$dir" < "$patch" 2>&1 | grep -i fail; then
+	if $sudo patch -p0 -N -r - -d "$dir" < "$patch" 2>&1 | grep -i fail; then
 	    die "Failed to apply $patch in $dir"
 	else
 	    sudo touch "$patch_applied"
@@ -173,7 +174,7 @@ function apply_patch() {
 }
 
 function test_install_cassandra_patch() { 
-    apply_patch $TOP_DIR/contrail/cassandra-env.sh.patch /etc/cassandra
+    apply_patch $TOP_DIR/contrail/cassandra-env.sh.patch /etc/cassandra sudo
 }
 
 function test_install_neutron_patch() { 
