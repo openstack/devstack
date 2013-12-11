@@ -8,6 +8,10 @@ Notes:
 3) This fork includes Neutron and Nova patches. These patches have been
    seperately submitted for review.
 4) OpenStack + OpenContrail has been tested on FC17, Ubuntu 12.04 and 13.10
+5) You need a github account. Register host's SSH keys to the github account
+   otherwise checking out contrail code will fail. The repo tool assumes
+   ssh and will not work with HTTPS git url. You can have ssh-agent forward
+   keys to target system running devstack.
 
 Contrail directory also includes some sample localrc files.
 1) localrc-single: for all-in-one system 
