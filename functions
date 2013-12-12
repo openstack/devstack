@@ -407,7 +407,7 @@ GetOSVersion() {
         os_RELEASE=$(lsb_release -r -s)
         os_UPDATE=""
         os_PACKAGE="rpm"
-        if [[ "Debian,Ubuntu,LinuxMint" =~ $os_VENDOR ]]; then
+        if [[ "Debian,Ubuntu,LinuxMint,elementary OS" =~ $os_VENDOR ]]; then
             os_PACKAGE="deb"
         elif [[ "SUSE LINUX" =~ $os_VENDOR ]]; then
             lsb_release -d -s | grep -q openSUSE
