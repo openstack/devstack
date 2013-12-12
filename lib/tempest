@@ -147,12 +147,21 @@ function configure_tempest() {
     if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
         available_flavors=$(nova flavor-list)
         if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
-            nova flavor-create m1.nano 42 64 0 1
+            if is_arch "ppc64"; then
+                # qemu needs at least 128MB of memory to boot on ppc64
+                nova flavor-create m1.nano 42 128 0 1
+            else
+                nova flavor-create m1.nano 42 64 0 1
+            fi
         fi
         flavor_ref=42
         boto_instance_type=m1.nano
         if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
-            nova flavor-create m1.micro 84 128 0 1
+            if is_arch "ppc64"; then
+                nova flavor-create m1.micro 84 256 0 1
+            else
+                nova flavor-create m1.micro 84 128 0 1
+            fi
         fi
         flavor_ref_alt=84
     else
