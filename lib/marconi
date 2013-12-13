@@ -148,10 +148,11 @@ function create_marconi_accounts() {
                             --user-id $MARCONI_USER \
                             --role-id $ADMIN_ROLE
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        MARCONI_SERVICE=$(get_id keystone service-create \
+        MARCONI_SERVICE=$(keystone service-create \
             --name=marconi \
             --type=queuing \
-            --description="Marconi Service")
+            --description="Marconi Service" \
+            | grep " id " | get_field 2)
         keystone endpoint-create \
             --region RegionOne \
             --service_id $MARCONI_SERVICE \
