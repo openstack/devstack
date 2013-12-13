@@ -33,7 +33,7 @@ function init_nicira() {
         echo "Defaulting to "$NVP_GATEWAY_NETWORK_CIDR
     fi
     # Make sure the interface is up, but not configured
-    sudo ip link dev $NVP_GATEWAY_NETWORK_INTERFACE set up
+    sudo ip link set $NVP_GATEWAY_NETWORK_INTERFACE up
     # Save and then flush the IP addresses on the interface
     addresses=$(ip addr show dev $NVP_GATEWAY_NETWORK_INTERFACE | grep inet | awk {'print $2'})
     sudo ip addr flush $NVP_GATEWAY_NETWORK_INTERFACE
@@ -45,7 +45,7 @@ function init_nicira() {
     sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
     sudo ovs-vsctl -- --may-exist add-port $PUBLIC_BRIDGE $NVP_GATEWAY_NETWORK_INTERFACE
     nvp_gw_net_if_mac=$(ip link show $NVP_GATEWAY_NETWORK_INTERFACE | awk '/ether/ {print $2}')
-    sudo ip link dev $PUBLIC_BRIDGE set address $nvp_gw_net_if_mac
+    sudo ip link set address $nvp_gw_net_if_mac dev $PUBLIC_BRIDGE
     for address in $addresses; do
         sudo ip addr add dev $PUBLIC_BRIDGE $address
     done
