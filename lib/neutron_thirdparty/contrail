@@ -365,6 +365,19 @@ END
 
     screen_it vif  "python /opt/stack/nova/plugins/contrail/contrail_vif.py"
 
+    if is_service_enabled q-meta; then
+	# set up a proxy route in contrail from 169.254.169.254:80 to
+	# my metadata server at port 8775
+	python /opt/stack/contrail/controller/src/config/utils/provision_linklocal.py \
+	    --linklocal_service_name metadata \
+	    --linklocal_service_ip 169.254.169.254 \
+	    --linklocal_service_port 80 \
+	    --ipfabric_service_ip $Q_META_DATA_IP \
+	    --ipfabric_service_port 8775 \
+	    --oper add
+    fi
+
+
     # restore saved screen settings
     SCREEN_NAME=$SAVED_SCREEN_NAME
 }
