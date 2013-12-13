@@ -1,7 +1,7 @@
-HOST_IP=192.168.56.103 # publicly routable ip to me
+#HOST_IP=192.168.56.104 # publicly routable ip to me
 
 # change this to your master node's ip
-SERVICE_HOST=172.18.4.119 # control1
+SERVICE_HOST=192.168.56.119 # control1
 
 # the interface that contrail's vhost0 should take over
 PHYSICAL_INTERFACE=eth0
