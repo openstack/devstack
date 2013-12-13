@@ -1,5 +1,6 @@
 STACK_DIR=$(cd $(dirname $0) && pwd)
 
+SCREEN_LOGDIR=$STACK_DIR/log/screens
 LOG=True
 DEBUG=True
 LOGFILE=$STACK_DIR/log/stack.log
@@ -24,3 +25,6 @@ ENABLE_CONTRAIL=yes
 Q_PLUGIN=contrail
 PHYSICAL_INTERFACE=eth1
 
+# use contrail forked neutron repo
+NEUTRON_REPO=https://github.com/dsetia/neutron.git
+NEUTRON_BRANCH=master

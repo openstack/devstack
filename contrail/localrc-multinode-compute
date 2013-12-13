@@ -34,3 +34,7 @@ SERVICE_TOKEN=contrail123
 SERVICE_PASSWORD=contrail123
 ADMIN_PASSWORD=contrail123
 DATABASE_TYPE=mysql
+#
+# use contrail forked neutron repo
+NEUTRON_REPO=https://github.com/dsetia/neutron.git
+NEUTRON_BRANCH=master

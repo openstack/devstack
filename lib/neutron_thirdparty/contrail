@@ -68,7 +68,7 @@ function install_contrail() {
     sudo pip install --upgrade $(find $CONTRAIL_SRC/build/debug -name "*.tar.gz" -print)
 
     # install neutron patch after VNC api is built and installed
-    test_install_neutron_patch
+    # test_install_neutron_patch
 
     # get cassandra
     if ! which cassandra > /dev/null 2>&1 ; then
