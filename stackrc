@@ -282,6 +282,9 @@ case "$VIRT_DRIVER" in
         IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-uec.tar.gz"};;
 esac
 
+if [[ "$HEAT_FETCHED_TEST_IMAGE" == "Fedora-i386-20-20131211.1-sda" ]]; then
+    IMAGE_URLS+=",https://dl.fedoraproject.org/pub/alt/stage/20-RC1.1/Images/i386/$HEAT_FETCHED_TEST_IMAGE.qcow2"
+fi
 
 # 10Gb default volume backing file size
 VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-10250M}
