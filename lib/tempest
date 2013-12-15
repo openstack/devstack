@@ -293,7 +293,9 @@ function configure_tempest() {
     iniset $TEMPEST_CONF boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
     # Orchestration test image
-    if [[ "$HEAT_CREATE_TEST_IMAGE" = "True" ]]; then
+    if [[ ! -z "$HEAT_FETCHED_TEST_IMAGE" ]]; then
+        iniset $TEMPEST_CONF orchestration image_ref "$HEAT_FETCHED_TEST_IMAGE"
+    elif [[ "$HEAT_CREATE_TEST_IMAGE" = "True" ]]; then
         disk_image_create /usr/share/tripleo-image-elements "vm fedora heat-cfntools" "i386" "fedora-vm-heat-cfntools-tempest"
         iniset $TEMPEST_CONF orchestration image_ref "fedora-vm-heat-cfntools-tempest"
     fi
