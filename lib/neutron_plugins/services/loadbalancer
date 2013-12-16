@@ -19,11 +19,7 @@ function neutron_agent_lbaas_install_agent_packages() {
 }
 
 function neutron_agent_lbaas_configure_common() {
-    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
-        Q_SERVICE_PLUGIN_CLASSES=$LBAAS_PLUGIN
-    else
-        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$LBAAS_PLUGIN"
-    fi
+    _neutron_service_plugin_class_add $LBAAS_PLUGIN
 }
 
 function neutron_agent_lbaas_configure_agent() {
