@@ -33,7 +33,7 @@ fi
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
 ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,tempest,mysql
-ENABLED_SERVICES=$ENABLED_SERVICES,cass,ifmap,apiSrv,schema,zk,control,agent,disco,vif,redis
+ENABLED_SERVICES=$ENABLED_SERVICES,cass,ifmap,apiSrv,schema,svc-mon,zk,control,agent,disco,vif,redis
 
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=ec2,osapi_compute,metadata

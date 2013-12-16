@@ -8,12 +8,14 @@ LOGDAYS=1
 
 disable_service n-net
 enable_service q-svc
-disable_service q-agt
-disable_service q-dhcp
-disable_service q-l3
 enable_service q-meta
 enable_service neutron
 enable_service contrail
+
+# not used by contrail
+disable_service q-agt
+disable_service q-dhcp
+disable_service q-l3
 
 DATABASE_PASSWORD=contrail123
 RABBIT_PASSWORD=contrail123

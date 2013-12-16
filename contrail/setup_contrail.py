@@ -643,6 +643,7 @@ HWADDR=%s
             self.run_shell("echo '# Contrail users' >> %s/basicauthusers.properties" % dir)
             self.run_shell("echo 'api-server:api-server' >> %s/basicauthusers.properties" % dir)
             self.run_shell("echo 'schema-transformer:schema-transformer' >> %s/basicauthusers.properties" % dir)
+            self.run_shell("echo 'svc-monitor:svc-monitor' >> %s/basicauthusers.properties" % dir)
             self.run_shell("sudo sed -e '/%s:/d' -e '/%s.dns:/d' %s/%s > %s/%s.new" \
                           %(control_ip, control_ip, dir, 'basicauthusers.properties',
                                                     dir, 'basicauthusers.properties'))
