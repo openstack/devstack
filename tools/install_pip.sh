@@ -87,7 +87,7 @@ get_versions
 # Eradicate any and all system packages
 uninstall_package python-pip
 
-if [[ -n "$USE_GET_PIP" ]]; then
+if [[ "$USE_GET_PIP" == "1" ]]; then
     install_get_pip
 else
     install_pip_tarball
