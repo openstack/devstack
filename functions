@@ -422,6 +422,7 @@ GetOSVersion() {
         os_CODENAME=$(lsb_release -c -s)
     elif [[ -r /etc/redhat-release ]]; then
         # Red Hat Enterprise Linux Server release 5.5 (Tikanga)
+        # Red Hat Enterprise Linux Server release 7.0 Beta (Maipo)
         # CentOS release 5.5 (Final)
         # CentOS Linux release 6.0 (Final)
         # Fedora release 16 (Verne)
@@ -430,7 +431,7 @@ GetOSVersion() {
         for r in "Red Hat" CentOS Fedora XenServer; do
             os_VENDOR=$r
             if [[ -n "`grep \"$r\" /etc/redhat-release`" ]]; then
-                ver=`sed -e 's/^.* \(.*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
+                ver=`sed -e 's/^.* \([0-9].*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
                 os_CODENAME=${ver#*|}
                 os_RELEASE=${ver%|*}
                 os_UPDATE=${os_RELEASE##*.}
