@@ -109,8 +109,8 @@ function _clean_lvm_backing_file() {
     # of the backing file
     if [ -z "`sudo lvs --noheadings -o lv_name $vg`" ]; then
         # if the backing physical device is a loop device, it was probably setup by devstack
-        VG_DEV=$(sudo losetup -j $DATA_DIR/${vg}-backing-file | awk -F':' '/backing-file/ { print $1}')
-        if [[ -n "$VG_DEV" ]]; then
+        if [[ -n "$VG_DEV" ]] && [[ -e "$VG_DEV" ]]; then
+            VG_DEV=$(sudo losetup -j $DATA_DIR/${vg}-backing-file | awk -F':' '/backing-file/ { print $1}')
             sudo losetup -d $VG_DEV
             rm -f $DATA_DIR/${vg}-backing-file
         fi
