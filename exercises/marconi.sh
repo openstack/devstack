@@ -35,7 +35,7 @@ source $TOP_DIR/exerciserc
 
 is_service_enabled marconi-server || exit 55
 
-curl http://$SERVICE_HOST:8888/v1/ 2>/dev/null | grep -q 'Auth' || die $LINENO "Marconi API not functioning!"
+curl http://$SERVICE_HOST:8888/v1/ 2>/dev/null | grep -q 'queue_name' || die $LINENO "Marconi API not functioning!"
 
 set +o xtrace
 echo "*********************************************************************"
