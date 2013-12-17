@@ -69,7 +69,7 @@ set +o xtrace
 
 # Gateway and subnet defaults, in case they are not customized in localrc
 NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
-PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.225}
+PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.1}
 PRIVATE_SUBNET_NAME=${PRIVATE_SUBNET_NAME:-"private-subnet"}
 PUBLIC_SUBNET_NAME=${PUBLIC_SUBNET_NAME:-"public-subnet"}
 
