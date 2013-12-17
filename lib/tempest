@@ -324,6 +324,9 @@ function configure_tempest() {
     # cli
     iniset $TEMPEST_CONF cli cli_dir $NOVA_BIN_DIR
 
+    # Networking
+    iniset $TEMPEST_CONF network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
+
     # service_available
     for service in nova cinder glance neutron swift heat horizon ceilometer ironic savanna; do
         if is_service_enabled $service ; then
