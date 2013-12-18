@@ -508,6 +508,19 @@ function stop_neutron() {
         pid=$(ps aux | awk '/neutron-ns-metadata-proxy/ { print $2 }')
         [ ! -z "$pid" ] && sudo kill -9 $pid
     fi
+
+    if is_service_enabled q-lbaas; then
+        neutron_lbaas_stop
+    fi
+    if is_service_enabled q-fwaas; then
+        neutron_fwaas_stop
+    fi
+    if is_service_enabled q-vpn; then
+        neutron_vpn_stop
+    fi
+    if is_service_enabled q-metering; then
+        neutron_metering_stop
+    fi
 }
 
 # cleanup_neutron() - Remove residual data files, anything left over from previous
@@ -518,7 +531,7 @@ function cleanup_neutron() {
     fi
 
     # delete all namespaces created by neutron
-    for ns in $(sudo ip netns list | grep -o -e qdhcp-[0-9a-f\-]* -e qrouter-[0-9a-f\-]*); do
+    for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|qlbaas)-[0-9a-f-]*'); do
         sudo ip netns delete ${ns}
     done
 }

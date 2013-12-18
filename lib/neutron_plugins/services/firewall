@@ -23,5 +23,9 @@ function neutron_fwaas_configure_driver() {
     iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas driver "neutron.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver"
 }
 
+function neutron_fwaas_stop() {
+    :
+}
+
 # Restore xtrace
 $MY_XTRACE
