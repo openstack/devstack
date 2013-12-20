@@ -7,7 +7,8 @@
 #    net1        net2       public       net4
 #     |           |           |           |
 #     +- vrouter -+           |           |
-#     |	       	  +------------- vrouter -+
+#     |           +------------- vrouter -+
+#     |           |           |           |
 #     |  1     2  |           |           |
 #     +--- vm1 ---+           |           |
 #     |           |  2     1  |    vm8 ---+
@@ -153,11 +154,10 @@ nova keypair-add --pub-key sshkey.pub sshkey
 # cloudinit script to verify that the metadata server is working
 tee cloudinit.sh <<EOF
 #! /bin/sh
-echo "Cloudinit worked!"
-echo
-
-echo "Inet interfaces:"
-ip -o -f inet addr list
+echo "--- cloudinit.sh ---"
+ip -o -f inet addr list | sed -e 's/^[0-9]*: //' -e 's/ *inet//' -e 's/\/.*//' -e '/^lo/d'
+#(cd  /run/cirros/datasource/data && for i in *; do echo -n "$i: "; head -1 $i; done)
+echo "--- cloudinit.sh ---"
 EOF
 chmod a+x cloudinit.sh
 
@@ -166,12 +166,15 @@ flavor=m1.tiny
 vm_params="--image $image --flavor $flavor --key-name sshkey --user-data cloudinit.sh"
 
 # vms
+vms=""
 
 # vm1: net1, net2
 nova boot $vm_params --nic net-id=$net1_id --nic net-id=$net2_id vm1
+vms="$vms vm1"
 
 # vm2: net2, net1, float on net2
 nova boot $vm_params --nic net-id=$net2_id --nic net-id=$net1_id vm2
+vms="$vms vm2"
 
 # floatingip1 for vm2,net2
 floatingip1_id=$(floatingip_create $public_id)
@@ -179,21 +182,27 @@ floatingip_associate vm2 net2 $floatingip1_id
 
 # vm4: net1
 nova boot $vm_params --nic net-id=$net1_id vm4
+vms="$vms vm4"
 
 # vm5: net2
 nova boot $vm_params --nic net-id=$net2_id vm5
+vms="$vms vm5"
 
 # vm3: public, net2
 nova boot $vm_params --nic net-id=$public_id --nic net-id=$net2_id vm3
+vms="$vms vm3"
 
 # vm6: public, net2
 nova boot $vm_params --nic net-id=$public_id --nic net-id=$net2_id vm6
+vms="$vms vm6"
 
 # vm7: public, net1, net2
 nova boot $vm_params --nic net-id=$public_id --nic net-id=$net1_id --nic net-id=$net2_id vm7
+vms="$vms vm7"
 
 # vm9: public
 nova boot $vm_params --nic net-id=$public_id vm9
+vms="$vms vm9"
 
 # net4 (new)
 net4_id=$(net_create net4)
@@ -205,9 +214,91 @@ net_policy_join.py $net2_id $net4_id
 
 # vm8: net4
 nova boot $vm_params --nic net-id=$net4_id vm8
+vms="$vms vm8"
 
 # show where the vms ended up
 nova list --fields name,status,Networks,OS-EXT-SRV-ATTR:host
 
-# restore the shell flags, since this script is usually sourced
+# don't exit this whole shell if a test fails
 set +ex
+
+#----------------------------------------------------------------------
+# tests
+
+# wait for the console-log to get to a login prompt
+vms_to_test="$vms"
+echo
+echo "Waiting for VMs to boot: $vms_to_test..."
+t0=$SECONDS
+while [ "$vms_to_test" ]; do
+    # timeout after a few minutes
+    if [ $(($SECONDS-$t0)) -gt 300 ]; then
+	die "VMs failed to boot: $vms_to_test"
+    fi
+    vms_to_test_next=""
+    for vm in $vms_to_test; do
+	if nova console-log $vm | grep -q ' login: $'; then
+	    echo "$vm booted in $(($SECONDS-$t0))s"
+	    nova console-log $vm | \
+		sed -n -e '/--- cloudinit.sh ---/,/--- cloudinit.sh ---/ s/^/  / p' | head -n-1 | tail -n+2
+	else
+	    vms_to_test_next="$vms_to_test_next $vm"
+	fi
+    done
+    vms_to_test="$vms_to_test_next"
+done
+
+echo "All VMs booted in $(($SECONDS-$t0))s"
+
+vm1_net2_ip=10.2.0.253; vm1_net1_ip=10.1.0.253
+vm2_net2_ip=10.2.0.252; vm2_float_ip=10.99.99.253; vm2_net1_ip=10.1.0.252
+vm3_public_ip=10.99.99.252; vm3_net2_ip=10.2.0.250
+vm4_net1_ip=10.1.0.251
+vm5_net2_ip=10.2.0.251
+vm6_public_ip=10.99.99.251; vm6_net2_ip=10.2.0.249
+vm7_public_ip=10.99.99.250; vm7_net1_ip=10.1.0.250; vm7_net2_ip=10.2.0.248
+vm8_net4_ip=10.4.0.253
+vm9_public_ip=10.99.99.249
+
+test_vm_ssh() {
+    msg="$1"
+    shift
+    ssh_cmdline=""
+    for ip in "$@"; do
+	ssh_cmdline="$ssh_cmdline ssh -A -o ConnectTimeout=10 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PasswordAuthentication=no cirros@$ip"
+    done
+
+    # debug
+    ssh_cmdline="timeout 10s $ssh_cmdline ip -o -f inet addr list"
+
+    echo -n "$msg... "
+    out=$($ssh_cmdline </dev/null 2>&1)
+    if [ $? = 0 ]; then
+	echo "ok"
+    else
+	echo "fail"
+	die "$ssh_cmdline" $out
+    fi
+}
+
+echo
+echo "Testing SSH connecivity..."
+
+test_vm_ssh "vm2_float" $vm2_float_ip
+test_vm_ssh "vm3_public" $vm3_public_ip
+test_vm_ssh "vm6_public" $vm6_public_ip
+test_vm_ssh "vm7_public" $vm7_public_ip
+test_vm_ssh "vm9_public" $vm9_public_ip
+
+test_vm_ssh "vm2_float -> vm1_net1" $vm2_float_ip $vm1_net1_ip
+test_vm_ssh "vm2_float -> vm4_net1" $vm2_float_ip $vm4_net1_ip
+test_vm_ssh "vm2_float -> vm5_net2" $vm2_float_ip $vm5_net2_ip
+test_vm_ssh "vm2_float -> vm1_net2 -> vm4_net1" $vm2_float_ip $vm1_net2_ip $vm4_net1_ip
+test_vm_ssh "vm2_float -> vm8_net4" $vm2_float_ip $vm8_net4_ip
+test_vm_ssh "vm2_float -> vm5_net2 -> vm8_net4" $vm2_float_ip $vm5_net2_ip $vm8_net4_ip
+test_vm_ssh "vm7_public -> vm4_net1" $vm7_public_ip $vm4_net1_ip
+test_vm_ssh "vm7_public -> vm5_net2" $vm7_public_ip $vm5_net2_ip
+test_vm_ssh "vm7_public -> vm9_public" $vm7_public_ip $vm9_public_ip
+test_vm_ssh "vm6_public -> vm2_net2" $vm6_public_ip $vm2_net2_ip
+
+
