@@ -283,6 +283,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONF network public_network_id "$public_network_id"
     iniset $TEMPEST_CONF network public_router_id "$public_router_id"
+    iniset $TEMPEST_CONF network default_network "$FIXED_RANGE"
 
     # boto
     iniset $TEMPEST_CONF boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
