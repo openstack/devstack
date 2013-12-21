@@ -124,6 +124,8 @@ function configure_glance() {
         iniset $GLANCE_API_CONF DEFAULT swift_store_user $SERVICE_TENANT_NAME:glance
         iniset $GLANCE_API_CONF DEFAULT swift_store_key $SERVICE_PASSWORD
         iniset $GLANCE_API_CONF DEFAULT swift_store_create_container_on_put True
+
+        iniset_multiline DEFAULT known_stores glance.store.filesystem.Store glance.store.http.Store glance.store.swift.Store
     fi
 
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
