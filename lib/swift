@@ -378,8 +378,8 @@ EOF
         iniuncomment ${swift_node_config} DEFAULT log_facility
         iniset ${swift_node_config} DEFAULT log_facility LOG_LOCAL${log_facility}
 
-        iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT workers
-        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT workers 1
+        iniuncomment ${swift_node_config} DEFAULT workers
+        iniset ${swift_node_config} DEFAULT workers 1
 
         iniuncomment ${swift_node_config} DEFAULT disable_fallocate
         iniset ${swift_node_config} DEFAULT disable_fallocate true
