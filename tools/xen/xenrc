@@ -63,8 +63,8 @@ PUB_IP=${PUB_IP:-172.24.4.10}
 PUB_NETMASK=${PUB_NETMASK:-255.255.255.0}
 
 # Ubuntu install settings
-UBUNTU_INST_RELEASE="precise"
-UBUNTU_INST_TEMPLATE_NAME="Ubuntu 12.04 (64-bit) for DevStack"
+UBUNTU_INST_RELEASE="saucy"
+UBUNTU_INST_TEMPLATE_NAME="Ubuntu 13.10 (64-bit) for DevStack"
 # For 12.04 use "precise" and update template name
 # However, for 12.04, you should be using
 # XenServer 6.1 and later or XCP 1.6 or later
