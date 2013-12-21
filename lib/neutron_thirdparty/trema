@@ -62,7 +62,7 @@ function init_trema() {
     sudo sed -i -e "s|/home/sliceable_switch/script|$TREMA_SS_SCRIPT_DIR|" \
         $TREMA_SS_APACHE_CONFIG
     sudo a2enmod rewrite actions
-    sudo a2ensite sliceable_switch
+    sudo a2ensite sliceable_switch.conf
 
     cp $TREMA_SS_DIR/sliceable_switch_null.conf $TREMA_SS_CONFIG
     sed -i -e "s|^\$apps_dir.*$|\$apps_dir = \"$TREMA_DIR/apps\"|" \
