@@ -2,7 +2,6 @@ import string
 
 api_server_conf_template = string.Template("""
 [DEFAULTS]
-reset_config=True
 ifmap_server_ip=$__contrail_ifmap_server_ip__
 ifmap_server_port=$__contrail_ifmap_server_port__
 ifmap_username=$__contrail_ifmap_username__
