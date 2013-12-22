@@ -1104,10 +1104,7 @@ fi
 
 if is_service_enabled q-svc; then
     echo_summary "Starting Neutron"
-
     start_neutron_service_and_check
-    create_neutron_initial_network
-    setup_neutron_debug
 elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     NM_CONF=${NOVA_CONF}
     if is_service_enabled n-cell; then
@@ -1126,6 +1123,12 @@ fi
 
 if is_service_enabled neutron; then
     start_neutron_agents
+fi
+# Once neutron agents are started setup initial network elements
+if is_service_enabled q-svc; then
+    echo_summary "Creating initial neutron network elements"
+    create_neutron_initial_network
+    setup_neutron_debug
 fi
 if is_service_enabled nova; then
     echo_summary "Starting Nova"
