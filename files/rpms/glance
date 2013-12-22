@@ -1,6 +1,6 @@
 gcc
 libffi-devel        # testonly
-libxml2-devel
+libxml2-devel       # testonly
 libxslt-devel       # testonly
 mysql-devel         # testonly
 openssl-devel       # testonly
@@ -9,7 +9,8 @@ python-argparse
 python-devel
 python-eventlet
 python-greenlet
-python-paste-deploy #dist:f16,f17,f18,f19
+python-lxml         #dist:f18,f19,f20
+python-paste-deploy #dist:f18,f19,f20
 python-routes
 python-sqlalchemy
 python-wsgiref

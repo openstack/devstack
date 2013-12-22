@@ -20,6 +20,7 @@ tar
 tcpdump
 unzip
 wget
+which
 
 # [1] : some of installed tools have unversioned dependencies on this,
 # but others have versioned (<=0.7).  So if a later version (0.7.1)
