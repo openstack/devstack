@@ -79,3 +79,7 @@ bash /opt/stack/prepare_guest.sh \\
     "$GUEST_PASSWORD" "$XS_TOOLS_PATH" "$STACK_USER" \\
     > /opt/stack/prepare_guest.log 2>&1
 EOF
+
+# Need to set barrier=0 to avoid a Xen bug
+# https://bugs.launchpad.net/ubuntu/+source/linux/+bug/824089
+sed -i -e 's/errors=/barrier=0,errors=/' $STAGING_DIR/etc/fstab
