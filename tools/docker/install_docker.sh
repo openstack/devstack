@@ -45,7 +45,7 @@ restart_service docker
 
 echo "Waiting for docker daemon to start..."
 DOCKER_GROUP=$(groups | cut -d' ' -f1)
-CONFIGURE_CMD="while ! /bin/echo -e 'GET /v1.3/version HTTP/1.0\n\n' | socat - unix-connect:$DOCKER_UNIX_SOCKET | grep -q '200 OK'; do
+CONFIGURE_CMD="while ! /bin/echo -e 'GET /v1.3/version HTTP/1.0\n\n' | socat - unix-connect:$DOCKER_UNIX_SOCKET 2>/dev/null | grep -q '200 OK'; do
     # Set the right group on docker unix socket before retrying
     sudo chgrp $DOCKER_GROUP $DOCKER_UNIX_SOCKET
     sudo chmod g+rw $DOCKER_UNIX_SOCKET
