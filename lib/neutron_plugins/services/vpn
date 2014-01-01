@@ -15,11 +15,7 @@ function neutron_vpn_install_agent_packages() {
 }
 
 function neutron_vpn_configure_common() {
-    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
-        Q_SERVICE_PLUGIN_CLASSES=$VPN_PLUGIN
-    else
-        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$VPN_PLUGIN"
-    fi
+    _neutron_service_plugin_class_add $VPN_PLUGIN
 }
 
 function neutron_vpn_stop() {

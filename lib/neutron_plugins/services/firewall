@@ -8,11 +8,7 @@ set +o xtrace
 FWAAS_PLUGIN=neutron.services.firewall.fwaas_plugin.FirewallPlugin
 
 function neutron_fwaas_configure_common() {
-    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
-        Q_SERVICE_PLUGIN_CLASSES=$FWAAS_PLUGIN
-    else
-        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$FWAAS_PLUGIN"
-    fi
+    _neutron_service_plugin_class_add $FWAAS_PLUGIN
 }
 
 function neutron_fwaas_configure_driver() {

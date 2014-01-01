@@ -757,6 +757,16 @@ function _configure_neutron_service() {
 # Utility Functions
 #------------------
 
+# _neutron_service_plugin_class_add() - add service plugin class
+function _neutron_service_plugin_class_add() {
+    local service_plugin_class=$1
+    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
+        Q_SERVICE_PLUGIN_CLASSES=$service_plugin_class
+    elif [[ ! ,${Q_SERVICE_PLUGIN_CLASSES}, =~ ,${service_plugin_class}, ]]; then
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$service_plugin_class"
+    fi
+}
+
 # _neutron_setup_rootwrap() - configure Neutron's rootwrap
 function _neutron_setup_rootwrap() {
     if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
