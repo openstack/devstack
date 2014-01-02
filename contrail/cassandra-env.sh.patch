@@ -11,24 +11,3 @@
  
  if [ "x$MAX_HEAP_SIZE" = "x" ] && [ "x$HEAP_NEWSIZE" = "x" ]; then
      calculate_heap_sizes
-@@ -124,13 +124,13 @@
-     JVM_OPTS="$JVM_OPTS -XX:HeapDumpPath=$CASSANDRA_HEAPDUMP_DIR/cassandra-`date +%s`-pid$$.hprof"
- fi
- 
--if [ "`uname`" = "Linux" ] ; then
--    # reduce the per-thread stack size to minimize the impact of Thrift
--    # thread-per-client.  (Best practice is for client connections to
--    # be pooled anyway.) Only do so on Linux where it is known to be
--    # supported.
--    JVM_OPTS="$JVM_OPTS -Xss128k"
--fi
-+#if [ "`uname`" = "Linux" ] ; then
-+#    # reduce the per-thread stack size to minimize the impact of Thrift
-+#    # thread-per-client.  (Best practice is for client connections to
-+#    # be pooled anyway.) Only do so on Linux where it is known to be
-+#    # supported.
-+#    JVM_OPTS="$JVM_OPTS -Xss128k"
-+#fi
- 
- # GC tuning options
- JVM_OPTS="$JVM_OPTS -XX:+UseParNewGC" 
