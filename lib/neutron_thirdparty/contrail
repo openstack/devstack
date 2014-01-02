@@ -88,7 +88,7 @@ function install_contrail() {
 	    yes | apt_get install oracle-java7-installer
 
 	    # See http://wiki.apache.org/cassandra/DebianPackaging
-	    echo "deb http://www.apache.org/dist/cassandra/debian 08x main" | \
+	    echo "deb http://www.apache.org/dist/cassandra/debian 12x main" | \
 		sudo tee /etc/apt/sources.list.d/cassandra.list
 	    gpg --keyserver pgp.mit.edu --recv-keys F758CE318D77295D
 	    gpg --export --armor F758CE318D77295D | sudo apt-key add -
