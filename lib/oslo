@@ -22,6 +22,7 @@ set +o xtrace
 # --------
 OSLOCFG_DIR=$DEST/oslo.config
 OSLOMSG_DIR=$DEST/oslo.messaging
+OSLORWRAP_DIR=$DEST/oslo.rootwrap
 
 # Entry Points
 # ------------
@@ -37,6 +38,9 @@ function install_oslo() {
 
     git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
     setup_develop $OSLOMSG_DIR
+
+    git_clone $OSLORWRAP_REPO $OSLORWRAP_DIR $OSLORWRAP_BRANCH
+    setup_develop $OSLORWRAP_DIR
 }
 
 # cleanup_oslo() - purge possibly old versions of oslo
