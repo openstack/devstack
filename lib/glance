@@ -176,7 +176,7 @@ function init_glance() {
     recreate_database glance utf8
 
     # Migrate glance database
-    $GLANCE_BIN_DIR/glance-manage db sync
+    $GLANCE_BIN_DIR/glance-manage db_sync
 
     create_glance_cache_dir
 }
