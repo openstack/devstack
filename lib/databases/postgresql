@@ -64,9 +64,13 @@ function configure_database_postgresql {
     sudo sed -i "/^host/s/all\s\+::1\/128\s\+ident/$DATABASE_USER\t::0\/0\tpassword/" $PG_HBA
     restart_service postgresql
 
-    # If creating the role fails, chances are it already existed. Try to alter it.
-    sudo -u root sudo -u postgres -i psql -c "CREATE ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'" || \
-    sudo -u root sudo -u postgres -i psql -c "ALTER ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'"
+    # Create the role if it's not here or else alter it.
+    root_roles=$(sudo -u root sudo -u postgres -i psql -t -c "SELECT 'HERE' from pg_roles where rolname='root'")
+    if [[ ${root_roles} == *HERE ]];then
+        sudo -u root sudo -u postgres -i psql -c "ALTER ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'"
+    else
+        sudo -u root sudo -u postgres -i psql -c "CREATE ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'"
+    fi
 }
 
 function install_database_postgresql {
