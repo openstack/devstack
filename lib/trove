@@ -30,7 +30,13 @@ TROVECLIENT_DIR=$DEST/python-troveclient
 TROVE_CONF_DIR=/etc/trove
 TROVE_LOCAL_CONF_DIR=$TROVE_DIR/etc/trove
 TROVE_AUTH_CACHE_DIR=${TROVE_AUTH_CACHE_DIR:-/var/cache/trove}
-TROVE_BIN_DIR=/usr/local/bin
+
+# Support entry points installation of console scripts
+if [[ -d $TROVE_DIR/bin ]]; then
+    TROVE_BIN_DIR=$TROVE_DIR/bin
+else
+    TROVE_BIN_DIR=$(get_python_exec_prefix)
+fi
 
 # setup_trove_logging() - Adds logging configuration to conf files
 function setup_trove_logging() {
@@ -178,14 +184,14 @@ function init_trove() {
     recreate_database trove utf8
 
     #Initialize the trove database
-    $TROVE_DIR/bin/trove-manage db_sync
+    $TROVE_BIN_DIR/trove-manage db_sync
 }
 
 # start_trove() - Start running processes, including screen
 function start_trove() {
-    screen_it tr-api "cd $TROVE_DIR; bin/trove-api --config-file=$TROVE_CONF_DIR/trove.conf --debug 2>&1"
-    screen_it tr-tmgr "cd $TROVE_DIR; bin/trove-taskmanager --config-file=$TROVE_CONF_DIR/trove-taskmanager.conf --debug 2>&1"
-    screen_it tr-cond "cd $TROVE_DIR; bin/trove-conductor --config-file=$TROVE_CONF_DIR/trove-conductor.conf --debug 2>&1"
+    screen_it tr-api "cd $TROVE_DIR; $TROVE_BIN_DIR/trove-api --config-file=$TROVE_CONF_DIR/trove.conf --debug 2>&1"
+    screen_it tr-tmgr "cd $TROVE_DIR; $TROVE_BIN_DIR/trove-taskmanager --config-file=$TROVE_CONF_DIR/trove-taskmanager.conf --debug 2>&1"
+    screen_it tr-cond "cd $TROVE_DIR; $TROVE_BIN_DIR/trove-conductor --config-file=$TROVE_CONF_DIR/trove-conductor.conf --debug 2>&1"
 }
 
 # stop_trove() - Stop running processes
