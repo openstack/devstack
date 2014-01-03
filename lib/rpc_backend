@@ -192,9 +192,8 @@ function qpid_is_supported() {
         GetDistro
     fi
 
-    # Qpid was introduced to Ubuntu in precise, disallow it on oneiric; it is
-    # not in openSUSE either right now.
-    ( ! ([[ "$DISTRO" = "oneiric" ]] || is_suse) )
+    # Qpid is not in openSUSE
+    ( ! is_suse )
 }
 
 
