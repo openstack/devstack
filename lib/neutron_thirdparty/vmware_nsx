@@ -78,5 +78,9 @@ function stop_vmware_nsx() {
     done
 }
 
+function check_vmware_nsx() {
+    :
+}
+
 # Restore xtrace
 $MY_XTRACE

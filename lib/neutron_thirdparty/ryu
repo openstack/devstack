@@ -75,5 +75,9 @@ function stop_ryu() {
     :
 }
 
+function check_ryu() {
+    :
+}
+
 # Restore xtrace
 $MY_XTRACE

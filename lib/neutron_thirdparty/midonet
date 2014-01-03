@@ -56,5 +56,9 @@ function stop_midonet() {
     :
 }
 
+function check_midonet() {
+    :
+}
+
 # Restore xtrace
 $MY_XTRACE
