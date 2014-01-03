@@ -234,6 +234,13 @@ safe_chmod 0755 $DEST
 # a basic test for $DEST path permissions (fatal on error unless skipped)
 check_path_perm_sanity ${DEST}
 
+# Certain services such as rabbitmq require that the local hostname resolves
+# correctly.  Make sure it exists in /etc/hosts so that is always true.
+LOCAL_HOSTNAME=`hostname -s`
+if [ -z "`grep ^127.0.0.1 /etc/hosts | grep $LOCAL_HOSTNAME`" ]; then
+    sudo sed -i "s/\(^127.0.0.1.*\)/\1 $LOCAL_HOSTNAME/" /etc/hosts
+fi
+
 # Set ``OFFLINE`` to ``True`` to configure ``stack.sh`` to run cleanly without
 # Internet access. ``stack.sh`` must have been previously run with Internet
 # access to install prerequisites and fetch repositories.
