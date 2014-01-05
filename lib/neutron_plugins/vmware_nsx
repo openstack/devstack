@@ -1,5 +1,5 @@
-# Neutron Nicira NVP plugin
-# ---------------------------
+# Neutron VMware NSX plugin
+# -------------------------
 
 # Save trace setting
 MY_XTRACE=$(set +o | grep xtrace)
@@ -9,10 +9,10 @@ source $TOP_DIR/lib/neutron_plugins/ovs_base
 
 function setup_integration_bridge() {
     _neutron_ovs_base_setup_bridge $OVS_BRIDGE
-    # Set manager to NVP controller (1st of list)
-    if [[ "$NVP_CONTROLLERS" != "" ]]; then
+    # Set manager to NSX controller (1st of list)
+    if [[ "$NSX_CONTROLLERS" != "" ]]; then
         # Get the first controller
-        controllers=(${NVP_CONTROLLERS//,/ })
+        controllers=(${NSX_CONTROLLERS//,/ })
         OVS_MGR_IP=${controllers[0]}
     else
         die $LINENO "Error - No controller specified. Unable to set a manager for OVS"
@@ -21,7 +21,7 @@ function setup_integration_bridge() {
 }
 
 function is_neutron_ovs_base_plugin() {
-    # NVP uses OVS, but not the l3-agent
+    # NSX uses OVS, but not the l3-agent
     return 0
 }
 
@@ -33,14 +33,15 @@ function neutron_plugin_create_nova_conf() {
 }
 
 function neutron_plugin_install_agent_packages() {
-    # Nicira Plugin does not run q-agt, but it currently needs dhcp and metadata agents
+    # VMware NSX Plugin does not run q-agt, but it currently needs dhcp and metadata agents
     _neutron_ovs_base_install_agent_packages
 }
 
 function neutron_plugin_configure_common() {
-    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/nicira
-    Q_PLUGIN_CONF_FILENAME=nvp.ini
-    Q_DB_NAME="neutron_nvp"
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/vmware
+    Q_PLUGIN_CONF_FILENAME=nsx.ini
+    Q_DB_NAME="neutron_nsx"
+    # TODO(armando-migliaccio): rename this once the code rename is complete
     Q_PLUGIN_CLASS="neutron.plugins.nicira.NeutronPlugin.NvpPluginV2"
 }
 
@@ -57,76 +58,76 @@ function neutron_plugin_configure_dhcp_agent() {
 }
 
 function neutron_plugin_configure_l3_agent() {
-    # Nicira plugin does not run L3 agent
-    die $LINENO "q-l3 should must not be executed with Nicira plugin!"
+    # VMware NSX plugin does not run L3 agent
+    die $LINENO "q-l3 should must not be executed with VMware NSX plugin!"
 }
 
 function neutron_plugin_configure_plugin_agent() {
-    # Nicira plugin does not run L2 agent
-    die $LINENO "q-agt must not be executed with Nicira plugin!"
+    # VMware NSX plugin does not run L2 agent
+    die $LINENO "q-agt must not be executed with VMware NSX plugin!"
 }
 
 function neutron_plugin_configure_service() {
     if [[ "$MAX_LP_PER_BRIDGED_LS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE nvp max_lp_per_bridged_ls $MAX_LP_PER_BRIDGED_LS
+        iniset /$Q_PLUGIN_CONF_FILE nsx max_lp_per_bridged_ls $MAX_LP_PER_BRIDGED_LS
     fi
     if [[ "$MAX_LP_PER_OVERLAY_LS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE nvp max_lp_per_overlay_ls $MAX_LP_PER_OVERLAY_LS
+        iniset /$Q_PLUGIN_CONF_FILE nsx max_lp_per_overlay_ls $MAX_LP_PER_OVERLAY_LS
     fi
     if [[ "$FAILOVER_TIME" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE nvp failover_time $FAILOVER_TIME
+        iniset /$Q_PLUGIN_CONF_FILE nsx failover_time $FAILOVER_TIME
     fi
     if [[ "$CONCURRENT_CONNECTIONS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE nvp concurrent_connections $CONCURRENT_CONNECTIONS
+        iniset /$Q_PLUGIN_CONF_FILE nsx concurrent_connections $CONCURRENT_CONNECTIONS
     fi
 
     if [[ "$DEFAULT_TZ_UUID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_tz_uuid $DEFAULT_TZ_UUID
     else
-        die $LINENO "The nicira plugin won't work without a default transport zone."
+        die $LINENO "The VMware NSX plugin won't work without a default transport zone."
     fi
     if [[ "$DEFAULT_L3_GW_SVC_UUID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l3_gw_service_uuid $DEFAULT_L3_GW_SVC_UUID
         Q_L3_ENABLED=True
         Q_L3_ROUTER_PER_TENANT=True
-        iniset /$Q_PLUGIN_CONF_FILE nvp metadata_mode access_network
+        iniset /$Q_PLUGIN_CONF_FILE nsx metadata_mode access_network
     fi
     if [[ "$DEFAULT_L2_GW_SVC_UUID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l2_gw_service_uuid $DEFAULT_L2_GW_SVC_UUID
     fi
-    # NVP_CONTROLLERS must be a comma separated string
-    if [[ "$NVP_CONTROLLERS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nvp_controllers $NVP_CONTROLLERS
+    # NSX_CONTROLLERS must be a comma separated string
+    if [[ "$NSX_CONTROLLERS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nsx_controllers $NSX_CONTROLLERS
     else
-        die $LINENO "The nicira plugin needs at least an NVP controller."
+        die $LINENO "The VMware NSX plugin needs at least an NSX controller."
     fi
-    if [[ "$NVP_USER" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nvp_user $NVP_USER
+    if [[ "$NSX_USER" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nsx_user $NSX_USER
     fi
-    if [[ "$NVP_PASSWORD" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nvp_password $NVP_PASSWORD
+    if [[ "$NSX_PASSWORD" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nsx_password $NSX_PASSWORD
     fi
-    if [[ "$NVP_REQ_TIMEOUT" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE DEFAULT req_timeout $NVP_REQ_TIMEOUT
+    if [[ "$NSX_REQ_TIMEOUT" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT req_timeout $NSX_REQ_TIMEOUT
     fi
-    if [[ "$NVP_HTTP_TIMEOUT" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE DEFAULT http_timeout $NVP_HTTP_TIMEOUT
+    if [[ "$NSX_HTTP_TIMEOUT" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT http_timeout $NSX_HTTP_TIMEOUT
     fi
-    if [[ "$NVP_RETRIES" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE DEFAULT retries $NVP_RETRIES
+    if [[ "$NSX_RETRIES" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT retries $NSX_RETRIES
     fi
-    if [[ "$NVP_REDIRECTS" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE DEFAULT redirects $NVP_REDIRECTS
+    if [[ "$NSX_REDIRECTS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT redirects $NSX_REDIRECTS
     fi
     if [[ "$AGENT_MODE" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE nvp agent_mode $AGENT_MODE
+        iniset /$Q_PLUGIN_CONF_FILE nsx agent_mode $AGENT_MODE
         if [[ "$AGENT_MODE" == "agentless" ]]; then
             if [[ "$DEFAULT_SERVICE_CLUSTER_UUID" != "" ]]; then
                 iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_service_cluster_uuid $DEFAULT_SERVICE_CLUSTER_UUID
             else
                 die $LINENO "Agentless mode requires a service cluster."
             fi
-            iniset /$Q_PLUGIN_CONF_FILE nvp_metadata metadata_server_address $Q_META_DATA_IP
+            iniset /$Q_PLUGIN_CONF_FILE nsx_metadata metadata_server_address $Q_META_DATA_IP
         fi
     fi
 }

@@ -400,10 +400,10 @@ main() {
     echo Description
     echo
     echo Copyright 2012, Cisco Systems
-    echo Copyright 2012, Nicira Networks, Inc.
+    echo Copyright 2012, VMware, Inc.
     echo Copyright 2012, NTT MCL, Inc.
     echo
-    echo Please direct any questions to dedutta@cisco.com, dan@nicira.com, nachi@nttmcl.com
+    echo Please direct any questions to dedutta@cisco.com, dwendlandt@vmware.com, nachi@nttmcl.com
     echo
 
 
