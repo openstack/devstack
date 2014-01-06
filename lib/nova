@@ -338,7 +338,7 @@ create_nova_accounts() {
                 --adminurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
                 --internalurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s"
             NOVA_V3_SERVICE=$(keystone service-create \
-                --name=nova \
+                --name=novav3 \
                 --type=computev3 \
                 --description="Nova Compute Service V3" \
                 | grep " id " | get_field 2)
