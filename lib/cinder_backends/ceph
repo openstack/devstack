@@ -1,0 +1,79 @@
+# lib/cinder_backends/ceph
+# Configure the ceph backend
+
+# Enable with:
+#
+#   CINDER_ENABLED_BACKENDS+=,ceph:ceph
+#
+# Optional parameters:
+#   CINDER_BAK_CEPH_POOL=<pool-name>
+#   CINDER_BAK_CEPH_USER=<user>
+#   CINDER_BAK_CEPH_POOL_PG=<pg-num>
+#   CINDER_BAK_CEPH_POOL_PGP=<pgp-num>
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# configure_ceph_backend_lvm - called from configure_cinder()
+
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+CINDER_BAK_CEPH_POOL=${CINDER_BAK_CEPH_POOL:-backups}
+CINDER_BAK_CEPH_POOL_PG=${CINDER_BAK_CEPH_POOL_PG:-8}
+CINDER_BAK_CEPH_POOL_PGP=${CINDER_BAK_CEPH_POOL_PGP:-8}
+CINDER_BAK_CEPH_USER=${CINDER_BAK_CEPH_USER:-cinder-bak}
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_backend_ceph - Set config files, create data dirs, etc
+# configure_cinder_backend_ceph $name
+function configure_cinder_backend_ceph {
+    local be_name=$1
+
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.rbd.RBDDriver"
+    iniset $CINDER_CONF $be_name rbd_ceph_conf "$CEPH_CONF"
+    iniset $CINDER_CONF $be_name rbd_pool "$CINDER_CEPH_POOL"
+    iniset $CINDER_CONF $be_name rbd_user "$CINDER_CEPH_USER"
+    iniset $CINDER_CONF $be_name rbd_uuid "$CINDER_CEPH_UUID"
+    iniset $CINDER_CONF $be_name rbd_flatten_volume_from_snapshot False
+    iniset $CINDER_CONF $be_name rbd_max_clone_depth 5
+    iniset $CINDER_CONF DEFAULT glance_api_version 2
+
+    if is_service_enabled c-bak; then
+        # Configure Cinder backup service options, ceph pool, ceph user and ceph key
+        sudo ceph -c ${CEPH_CONF_FILE} osd pool create ${CINDER_BAK_CEPH_POOL} ${CINDER_BAK_CEPH_POOL_PG} ${CINDER_BAK_CEPH_POOL_PGP}
+        sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${CINDER_BAK_CEPH_POOL} size ${CEPH_REPLICAS}
+        if [[ $CEPH_REPLICAS -ne 1 ]]; then
+            sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${CINDER_BAK_CEPH_POOL} crush_ruleset ${RULE_ID}
+        fi
+        sudo ceph -c ${CEPH_CONF_FILE} auth get-or-create client.${CINDER_BAK_CEPH_USER} mon "allow r" osd "allow class-read object_prefix rbd_children, allow rwx pool=${CINDER_BAK_CEPH_POOL}" | sudo tee ${CEPH_CONF_DIR}/ceph.client.${CINDER_BAK_CEPH_USER}.keyring
+        sudo chown $(whoami):$(whoami) ${CEPH_CONF_DIR}/ceph.client.${CINDER_BAK_CEPH_USER}.keyring
+
+        iniset $CINDER_CONF DEFAULT backup_driver "cinder.backup.drivers.ceph"
+        iniset $CINDER_CONF DEFAULT backup_ceph_conf "$CEPH_CONF"
+        iniset $CINDER_CONF DEFAULT backup_ceph_pool "$CINDER_BAK_CEPH_POOL"
+        iniset $CINDER_CONF DEFAULT backup_ceph_user "$CINDER_BAK_CEPH_USER"
+        iniset $CINDER_CONF DEFAULT backup_ceph_stripe_unit 0
+        iniset $CINDER_CONF DEFAULT backup_ceph_stripe_count 0
+        iniset $CINDER_CONF DEFAULT restore_discard_excess_bytes True
+    fi
+}
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
