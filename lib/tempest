@@ -329,7 +329,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
 
     # service_available
-    for service in nova cinder glance neutron swift heat horizon ceilometer ironic savanna trove; do
+    for service in nova cinder glance neutron swift heat horizon ceilometer ironic savanna trove marconi; do
         if is_service_enabled $service ; then
             iniset $TEMPEST_CONF service_available $service "True"
         else
