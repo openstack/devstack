@@ -901,6 +901,10 @@ if is_service_enabled key; then
         create_trove_accounts
     fi
 
+    if is_service_enabled ceilometer; then
+        create_ceilometer_accounts
+    fi
+
     if is_service_enabled swift || is_service_enabled s-proxy; then
         create_swift_accounts
     fi

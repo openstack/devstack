@@ -51,3 +51,8 @@ catalog.RegionOne.orchestration.publicURL = http://%SERVICE_HOST%:8000/v1
 catalog.RegionOne.orchestration.adminURL = http://%SERVICE_HOST%:8000/v1
 catalog.RegionOne.orchestration.internalURL = http://%SERVICE_HOST%:8000/v1
 catalog.RegionOne.orchestration.name = Heat Service
+
+catalog.RegionOne.metering.publicURL = http://%SERVICE_HOST%:8777/v1
+catalog.RegionOne.metering.adminURL = http://%SERVICE_HOST%:8777/v1
+catalog.RegionOne.metering.internalURL = http://%SERVICE_HOST%:8777/v1
+catalog.RegionOne.metering.name = Telemetry Service
