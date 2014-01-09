@@ -318,7 +318,7 @@ create_nova_accounts() {
         NOVA_USER=$(keystone user-create \
             --name=nova \
             --pass="$SERVICE_PASSWORD" \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --email=nova@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \

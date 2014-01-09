@@ -365,7 +365,7 @@ create_cinder_accounts() {
         CINDER_USER=$(keystone user-create \
             --name=cinder \
             --pass="$SERVICE_PASSWORD" \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --email=cinder@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \

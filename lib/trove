@@ -64,7 +64,7 @@ create_trove_accounts() {
         TROVE_USER=$(keystone user-create \
             --name=trove \
             --pass="$SERVICE_PASSWORD" \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --email=trove@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add --tenant-id $SERVICE_TENANT \

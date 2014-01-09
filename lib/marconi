@@ -142,7 +142,7 @@ function create_marconi_accounts() {
 
     MARCONI_USER=$(get_id keystone user-create --name=marconi \
                                                 --pass="$SERVICE_PASSWORD" \
-                                                --tenant_id $SERVICE_TENANT \
+                                                --tenant-id $SERVICE_TENANT \
                                                 --email=marconi@example.com)
     keystone user-role-add --tenant-id $SERVICE_TENANT \
                             --user-id $MARCONI_USER \

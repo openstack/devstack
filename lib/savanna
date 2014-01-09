@@ -56,7 +56,7 @@ function create_savanna_accounts() {
     SAVANNA_USER=$(keystone user-create \
         --name=savanna \
         --pass="$SERVICE_PASSWORD" \
-        --tenant_id $SERVICE_TENANT \
+        --tenant-id $SERVICE_TENANT \
         --email=savanna@example.com \
         | grep " id " | get_field 2)
     keystone user-role-add \

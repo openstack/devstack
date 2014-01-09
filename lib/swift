@@ -514,7 +514,7 @@ function create_swift_accounts() {
     ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
 
     SWIFT_USER=$(keystone user-create --name=swift --pass="$SERVICE_PASSWORD" \
-        --tenant_id $SERVICE_TENANT --email=swift@example.com | grep " id " | get_field 2)
+        --tenant-id $SERVICE_TENANT --email=swift@example.com | grep " id " | get_field 2)
     keystone user-role-add --tenant-id $SERVICE_TENANT --user-id $SWIFT_USER --role-id $ADMIN_ROLE
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
