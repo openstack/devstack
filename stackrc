@@ -136,6 +136,10 @@ OSLOCFG_BRANCH=${OSLOCFG_BRANCH:-master}
 OSLOMSG_REPO=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
 OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
 
+# oslo.rootwrap
+OSLORWRAP_REPO=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
+OSLORWRAP_BRANCH=${OSLORWRAP_BRANCH:-master}
+
 # pbr drives the setuptools configs
 PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
 PBR_BRANCH=${PBR_BRANCH:-master}
