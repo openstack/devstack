@@ -163,15 +163,8 @@ function cleanup_cinder() {
     fi
 }
 
-# configure_cinder() - Set config files, create data dirs, etc
-function configure_cinder() {
-    if [[ ! -d $CINDER_CONF_DIR ]]; then
-        sudo mkdir -p $CINDER_CONF_DIR
-    fi
-    sudo chown $STACK_USER $CINDER_CONF_DIR
-
-    cp -p $CINDER_DIR/etc/cinder/policy.json $CINDER_CONF_DIR
-
+# configure_cinder_rootwrap() - configure Cinder's rootwrap
+function configure_cinder_rootwrap() {
     # Set the paths of certain binaries
     CINDER_ROOTWRAP=$(get_rootwrap_location cinder)
     if [[ ! -x $CINDER_ROOTWRAP ]]; then
@@ -214,6 +207,18 @@ function configure_cinder() {
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/cinder-rootwrap
+}
+
+# configure_cinder() - Set config files, create data dirs, etc
+function configure_cinder() {
+    if [[ ! -d $CINDER_CONF_DIR ]]; then
+        sudo mkdir -p $CINDER_CONF_DIR
+    fi
+    sudo chown $STACK_USER $CINDER_CONF_DIR
+
+    cp -p $CINDER_DIR/etc/cinder/policy.json $CINDER_CONF_DIR
+
+    configure_cinder_rootwrap
 
     cp $CINDER_DIR/etc/cinder/api-paste.ini $CINDER_API_PASTE_INI
 
