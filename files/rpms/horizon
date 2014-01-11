@@ -16,8 +16,8 @@ python-kombu
 python-migrate
 python-mox
 python-nose
-python-paste        #dist:f16,f17,f18,f19
-python-paste-deploy #dist:f16,f17,f18,f19
+python-paste        #dist:f18,f19,f20
+python-paste-deploy #dist:f18,f19,f20
 python-routes
 python-sphinx
 python-sqlalchemy
