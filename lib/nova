@@ -377,6 +377,7 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT osapi_compute_workers "4"
     iniset $NOVA_CONF DEFAULT ec2_workers "4"
     iniset $NOVA_CONF DEFAULT metadata_workers "4"
+    iniset $NOVA_CONF conductor workers "4"
     iniset $NOVA_CONF DEFAULT sql_connection `database_connection_url nova`
     iniset $NOVA_CONF DEFAULT fatal_deprecations "True"
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
