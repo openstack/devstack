@@ -1364,11 +1364,11 @@ function upload_image() {
     if [[ $image_url != file* ]]; then
         # Downloads the image (uec ami+aki style), then extracts it.
         if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
-             wget -c $image_url -O $FILES/$IMAGE_FNAME
-             if [[ $? -ne 0 ]]; then
-                 echo "Not found: $image_url"
-                 return
-             fi
+            wget -c $image_url -O $FILES/$IMAGE_FNAME
+            if [[ $? -ne 0 ]]; then
+                echo "Not found: $image_url"
+                return
+            fi
         fi
         IMAGE="$FILES/${IMAGE_FNAME}"
     else
@@ -1420,7 +1420,7 @@ function upload_image() {
         vmdk_create_type="${vmdk_create_type%?}"
 
         descriptor_data_pair_msg="Monolithic flat and VMFS disks "`
-                                 `"should use a descriptor-data pair."
+                                    `"should use a descriptor-data pair."
         if [[ "$vmdk_create_type" = "monolithicSparse" ]]; then
             vmdk_disktype="sparse"
         elif [[ "$vmdk_create_type" = "monolithicFlat" || \
@@ -1435,7 +1435,7 @@ function upload_image() {
             path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
             flat_url="${image_url:0:$path_len}$flat_fname"
             warn $LINENO "$descriptor_data_pair_msg"`
-                         `" Attempt to retrieve the *-flat.vmdk: $flat_url"
+                            `" Attempt to retrieve the *-flat.vmdk: $flat_url"
             if [[ $flat_url != file* ]]; then
                 if [[ ! -f $FILES/$flat_fname || \
                 "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
@@ -1474,7 +1474,7 @@ function upload_image() {
                 flat_path="${image_url:0:$path_len}"
                 descriptor_url=$flat_path$descriptor_fname
                 warn $LINENO "$descriptor_data_pair_msg"`
-                             `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
+                                `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
                 if [[ $flat_path != file* ]]; then
                     if [[ ! -f $FILES/$descriptor_fname || \
                     "$(stat -c "%s" $FILES/$descriptor_fname)" = "0" ]]; then
@@ -1489,8 +1489,8 @@ function upload_image() {
                     descriptor_url=$(echo $descriptor_url | sed "s/^file:\/\///g")
                     if [[ ! -f $descriptor_url || \
                     "$(stat -c "%s" $descriptor_url)" == "0" ]]; then
-                         warn $LINENO "Descriptor not found $descriptor_url"
-                         descriptor_found=false
+                        warn $LINENO "Descriptor not found $descriptor_url"
+                        descriptor_found=false
                     fi
                 fi
                 if $descriptor_found; then
@@ -1498,10 +1498,10 @@ function upload_image() {
                     `"grep -a -F -m 1 'ddb.adapterType =' $descriptor_url)"
                     vmdk_adapter_type="${vmdk_adapter_type#*\"}"
                     vmdk_adapter_type="${vmdk_adapter_type%?}"
-                 fi
-             fi
-             #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
-             vmdk_disktype="preallocated"
+                fi
+            fi
+            #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
+            vmdk_disktype="preallocated"
         else
             #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
             vmdk_disktype="preallocated"
