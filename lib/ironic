@@ -149,11 +149,11 @@ create_ironic_accounts() {
         IRONIC_USER=$(keystone user-create \
             --name=ironic \
             --pass="$SERVICE_PASSWORD" \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --email=ironic@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --user_id $IRONIC_USER \
             --role_id $ADMIN_ROLE
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
