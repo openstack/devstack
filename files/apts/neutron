@@ -20,6 +20,6 @@ python-qpid # dist:precise
 dnsmasq-base
 dnsmasq-utils # for dhcp_release only available in dist:oneiric,precise,quantal
 rabbitmq-server # NOPRIME
-qpid # NOPRIME
+qpidd # NOPRIME
 sqlite3
 vlan
