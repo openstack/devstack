@@ -1132,10 +1132,39 @@ function screen_it {
             sleep 1.5
 
             NL=`echo -ne '\015'`
-            screen -S $SCREEN_NAME -p $1 -X stuff "$2 || echo \"$1 failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
+            # This fun command does the following:
+            # - the passed server command is backgrounded
+            # - the pid of the background process is saved in the usual place
+            # - the server process is brought back to the foreground
+            # - if the server process exits prematurely the fg command errors
+            #   and a message is written to stdout and the service failure file
+            # The pid saved can be used in screen_stop() as a process group
+            # id to kill off all child processes
+            screen -S $SCREEN_NAME -p $1 -X stuff "$2 & echo \$! >$SERVICE_DIR/$SCREEN_NAME/$1.pid; fg || echo \"$1 failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
         else
             # Spawn directly without screen
-            run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$service.pid
+            run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$1.pid
+        fi
+    fi
+}
+
+
+# Stop a service in screen
+# screen_stop service
+function screen_stop() {
+    SCREEN_NAME=${SCREEN_NAME:-stack}
+    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
+    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+
+    if is_service_enabled $1; then
+        # Kill via pid if we have one available
+        if [[ -r $SERVICE_DIR/$SCREEN_NAME/$1.pid ]]; then
+            pkill -TERM -P $(cat $SERVICE_DIR/$SCREEN_NAME/$1.pid)
+            rm $SERVICE_DIR/$SCREEN_NAME/$1.pid
+        fi
+        if [[ "$USE_SCREEN" = "True" ]]; then
+            # Clean up the screen window
+            screen -S $SCREEN_NAME -p $1 -X kill
         fi
     fi
 }

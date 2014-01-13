@@ -429,7 +429,7 @@ function start_keystone() {
 # stop_keystone() - Stop running processes
 function stop_keystone() {
     # Kill the Keystone screen window
-    screen -S $SCREEN_NAME -p key -X kill
+    screen_stop key
 }
 
 

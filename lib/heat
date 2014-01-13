@@ -175,7 +175,7 @@ function start_heat() {
 function stop_heat() {
     # Kill the screen windows
     for serv in h-eng h-api h-api-cfn h-api-cw; do
-        screen -S $SCREEN_NAME -p $serv -X kill
+        screen_stop $serv
     done
 }
 
