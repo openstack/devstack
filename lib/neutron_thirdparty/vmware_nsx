@@ -1,0 +1,82 @@
+# VMware NSX
+# ----------
+
+# This third-party addition can be used to configure connectivity between a DevStack instance
+# and an NSX Gateway in dev/test environments. In order to use this correctly, the following
+# env variables need to be set (e.g. in your localrc file):
+#
+# * enable_service vmware_nsx        --> to execute this third-party addition
+# * PUBLIC_BRIDGE                    --> bridge used for external connectivity, typically br-ex
+# * NSX_GATEWAY_NETWORK_INTERFACE    --> interface used to communicate with the NSX Gateway
+# * NSX_GATEWAY_NETWORK_CIDR         --> CIDR to configure br-ex, e.g. 172.24.4.211/24
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# This is the interface that connects the Devstack instance
+# to an network that allows it to talk to the gateway for
+# testing purposes
+NSX_GATEWAY_NETWORK_INTERFACE=${NSX_GATEWAY_NETWORK_INTERFACE:-eth2}
+# Re-declare floating range as it's needed also in stop_vmware_nsx, which
+# is invoked by unstack.sh
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.0/24}
+
+function configure_vmware_nsx() {
+    :
+}
+
+function init_vmware_nsx() {
+    if ! is_set NSX_GATEWAY_NETWORK_CIDR; then
+        NSX_GATEWAY_NETWORK_CIDR=$PUBLIC_NETWORK_GATEWAY/${FLOATING_RANGE#*/}
+        echo "The IP address to set on br-ex was not specified. "
+        echo "Defaulting to "$NSX_GATEWAY_NETWORK_CIDR
+    fi
+    # Make sure the interface is up, but not configured
+    sudo ip link set $NSX_GATEWAY_NETWORK_INTERFACE up
+    # Save and then flush the IP addresses on the interface
+    addresses=$(ip addr show dev $NSX_GATEWAY_NETWORK_INTERFACE | grep inet | awk {'print $2'})
+    sudo ip addr flush $NSX_GATEWAY_NETWORK_INTERFACE
+    # Use the PUBLIC Bridge to route traffic to the NSX gateway
+    # NOTE(armando-migliaccio): if running in a nested environment this will work
+    # only with mac learning enabled, portsecurity and security profiles disabled
+    # The public bridge might not exist for the NSX plugin if Q_USE_DEBUG_COMMAND is off
+    # Try to create it anyway
+    sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
+    sudo ovs-vsctl -- --may-exist add-port $PUBLIC_BRIDGE $NSX_GATEWAY_NETWORK_INTERFACE
+    nsx_gw_net_if_mac=$(ip link show $NSX_GATEWAY_NETWORK_INTERFACE | awk '/ether/ {print $2}')
+    sudo ip link set address $nsx_gw_net_if_mac dev $PUBLIC_BRIDGE
+    for address in $addresses; do
+        sudo ip addr add dev $PUBLIC_BRIDGE $address
+    done
+    sudo ip addr add dev $PUBLIC_BRIDGE $NSX_GATEWAY_NETWORK_CIDR
+}
+
+function install_vmware_nsx() {
+    :
+}
+
+function start_vmware_nsx() {
+    :
+}
+
+function stop_vmware_nsx() {
+    if ! is_set NSX_GATEWAY_NETWORK_CIDR; then
+        NSX_GATEWAY_NETWORK_CIDR=$PUBLIC_NETWORK_GATEWAY/${FLOATING_RANGE#*/}
+        echo "The IP address expected on br-ex was not specified. "
+        echo "Defaulting to "$NSX_GATEWAY_NETWORK_CIDR
+    fi
+    sudo ip addr del $NSX_GATEWAY_NETWORK_CIDR dev $PUBLIC_BRIDGE
+    # Save and then flush remaining addresses on the interface
+    addresses=$(ip addr show dev $PUBLIC_BRIDGE | grep inet | awk {'print $2'})
+    sudo ip addr flush $PUBLIC_BRIDGE
+    # Try to detach physical interface from PUBLIC_BRIDGE
+    sudo ovs-vsctl del-port $NSX_GATEWAY_NETWORK_INTERFACE
+    # Restore addresses on NSX_GATEWAY_NETWORK_INTERFACE
+    for address in $addresses; do
+        sudo ip addr add dev $NSX_GATEWAY_NETWORK_INTERFACE $address
+    done
+}
+
+# Restore xtrace
+$MY_XTRACE
