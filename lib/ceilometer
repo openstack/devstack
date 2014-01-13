@@ -48,8 +48,50 @@ CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
 # Set up database backend
 CEILOMETER_BACKEND=${CEILOMETER_BACKEND:-mysql}
 
+# Ceilometer connection info.
+CEILOMETER_SERVICE_PROTOCOL=http
+CEILOMETER_SERVICE_HOST=$SERVICE_HOST
+CEILOMETER_SERVICE_PORT=${CEILOMETER_SERVICE_PORT:-8777}
+#
+
 # Functions
 # ---------
+#
+# create_ceilometer_accounts() - Set up common required ceilometer accounts
+
+create_ceilometer_accounts() {
+
+    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+
+    # Ceilometer
+    if [[ "$ENABLED_SERVICES" =~ "ceilometer-api" ]]; then
+        CEILOMETER_USER=$(keystone user-create \
+            --name=ceilometer \
+            --pass="$SERVICE_PASSWORD" \
+            --tenant_id $SERVICE_TENANT \
+            --email=ceilometer@example.com \
+            | grep " id " | get_field 2)
+        keystone user-role-add \
+            --tenant-id $SERVICE_TENANT \
+            --user-id $CEILOMETER_USER \
+            --role-id $ADMIN_ROLE
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+            CEILOMETER_SERVICE=$(keystone service-create \
+                --name=ceilometer \
+                --type=metering \
+                --description="OpenStack Telemetry Service" \
+                | grep " id " | get_field 2)
+            keystone endpoint-create \
+                --region RegionOne \
+                --service_id $CEILOMETER_SERVICE \
+                --publicurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/" \
+                --adminurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/" \
+                --internalurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/"
+        fi
+    fi
+}
+
 
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
