@@ -179,6 +179,14 @@ function confirm_server_active {
     fi
 }
 
+function neutron_debug_admin {
+    local os_username=$OS_USERNAME
+    local os_tenant_id=$OS_TENANT_ID
+    source $TOP_DIR/openrc admin admin
+    neutron-debug $@
+    source $TOP_DIR/openrc $os_username $os_tenant_id
+}
+
 function add_tenant {
     local TENANT=$1
     local USER=$2
@@ -234,7 +242,7 @@ function create_network {
     source $TOP_DIR/openrc $TENANT $TENANT
     local NET_ID=$(neutron net-create --tenant_id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
     neutron subnet-create --ip_version 4 --tenant_id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
-    neutron-debug probe-create --device-owner compute $NET_ID
+    neutron_debug_admin probe-create --device-owner compute $NET_ID
     source $TOP_DIR/openrc demo demo
 }
 
