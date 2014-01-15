@@ -129,6 +129,20 @@ TEMPEST_SERVICES+=,nova
 # Functions
 # ---------
 
+# Test if any Nova services are enabled
+# is_nova_enabled
+function is_nova_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"n-" ]] && return 0
+    return 1
+}
+
+# Test if any Nova Cell services are enabled
+# is_nova_enabled
+function is_n-cell_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"n-cell-" ]] && return 0
+    return 1
+}
+
 # Helper to clean iptables rules
 function clean_iptables() {
     # Delete rules

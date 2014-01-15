@@ -59,6 +59,13 @@ TEMPEST_SERVICES+=,glance
 # Functions
 # ---------
 
+# Test if any Glance services are enabled
+# is_glance_enabled
+function is_glance_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"g-" ]] && return 0
+    return 1
+}
+
 # cleanup_glance() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_glance() {

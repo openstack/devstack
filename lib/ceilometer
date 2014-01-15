@@ -59,7 +59,14 @@ TEMPEST_SERVICES+=,ceilometer
 
 # Functions
 # ---------
-#
+
+# Test if any Ceilometer services are enabled
+# is_ceilometer_enabled
+function is_ceilometer_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"ceilometer-" ]] && return 0
+    return 1
+}
+
 # create_ceilometer_accounts() - Set up common required ceilometer accounts
 
 create_ceilometer_accounts() {

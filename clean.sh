@@ -97,7 +97,7 @@ if is_service_enabled ldap; then
 fi
 
 # Do the hypervisor cleanup until this can be moved back into lib/nova
-if [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
+if is_service_enabled nova && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
     cleanup_nova_hypervisor
 fi
 

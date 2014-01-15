@@ -35,7 +35,7 @@ fi
 #  enable_service neutron
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,tempest,mysql
+ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,tempest,mysql
 
 # Tell Tempest which services are available.  The default is set here as
 # Tempest falls late in the configuration sequence.  This differs from
