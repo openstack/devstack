@@ -41,6 +41,10 @@ fi
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
+# If nova api is not enabled we exit with exitcode 55 so that
+# the exercise is skipped
+is_service_enabled n-api || exit 55
+
 # Skip if the hypervisor is Docker
 [[ "$VIRT_DRIVER" == "docker" ]] && exit 55
 

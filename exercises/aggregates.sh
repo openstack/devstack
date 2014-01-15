@@ -43,6 +43,10 @@ source $TOP_DIR/exerciserc
 # Test as the admin user
 . $TOP_DIR/openrc admin admin
 
+# If nova api is not enabled we exit with exitcode 55 so that
+# the exercise is skipped
+is_service_enabled n-api || exit 55
+
 # Cells does not support aggregates.
 is_service_enabled n-cell && exit 55
 
