@@ -203,8 +203,8 @@ function insert_vrouter() {
 	source $VHOST_CFG
     else
 	DEVICE=vhost0
-	IPADDR=$(sudo ifconfig $EXT_DEV | sed -ne 's/.*inet *addr[: ]*\([0-9.]*\).*/\1/i p')
-	NETMASK=$(sudo ifconfig $EXT_DEV | sed -ne 's/.*mask[: *]\([0-9.]*\).*/\1/i p')
+	IPADDR=$(sudo ifconfig $EXT_DEV | sed -ne 's/.*inet *\(addr\)*[: ]*\([0-9.]*\).*/\2/i p')
+	NETMASK=$(sudo ifconfig $EXT_DEV | sed -ne 's/.*mask[: ]*\([0-9.]*\).*/\1/i p')
     fi
     # don't die in small memory environments
     sudo insmod $CONTRAIL_SRC/$kmod vr_flow_entries=4096 vr_oflow_entries=512
