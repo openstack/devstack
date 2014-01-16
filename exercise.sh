@@ -15,7 +15,7 @@ source $TOP_DIR/stackrc
 
 # comma separated list of script basenames to skip
 # to refrain from exercising euca.sh use SKIP_EXERCISES=euca
-SKIP_EXERCISES=${SKIP_EXERCISES:-""}
+SKIP_EXERCISES=${SKIP_EXERCISES:-"boot_from_volume,bundle,euca"}
 
 # comma separated list of script basenames to run
 # to run only euca.sh use RUN_EXERCISES=euca

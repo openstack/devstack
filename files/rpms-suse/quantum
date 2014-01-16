@@ -4,13 +4,11 @@ ebtables
 iptables
 iputils
 mysql-community-server # NOPRIME
-python-boto
 python-eventlet
 python-greenlet
 python-iso8601
 python-kombu
 python-mysql
-python-netaddr
 python-Paste
 python-PasteDeploy
 python-pyudev

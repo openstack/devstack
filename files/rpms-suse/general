@@ -7,9 +7,8 @@ openssh
 openssl
 psmisc
 python-cmd2 # dist:opensuse-12.3
-python-netaddr
+python-setuptools
 python-pep8
-python-pip
 python-pylint
 python-unittest2
 python-virtualenv

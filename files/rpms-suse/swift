@@ -6,8 +6,6 @@ python-WebOb
 python-configobj
 python-coverage
 python-devel
-python-distribute
-python-setuptools # instead of python-distribute; dist:sle11sp2
 python-eventlet
 python-greenlet
 python-netifaces
