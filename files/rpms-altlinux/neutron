@@ -1,0 +1,23 @@
+python-module-MySQLdb
+dnsmasq # for dhcp_release
+ebtables
+iptables
+iputils
+mysql-server # NOPRIME
+openvswitch # NOPRIME
+python-module-boto
+python-module-eventlet
+python-module-greenlet
+python-module-iso8601
+python-module-kombu
+python-module-paste
+python-module-PasteDeploy # dist:f18,f19,f20
+python-module-qpid
+python-module-routes
+python-module-SQLAlchemy
+python-module-suds
+rabbitmq-server # NOPRIME
+qpid-cpp-server        # NOPRIME
+sqlite
+sudo
+vlan-utils

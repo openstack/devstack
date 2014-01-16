@@ -142,6 +142,10 @@ function restart_rpc_backend() {
         if is_fedora || is_suse; then
             # service is not started by default
             restart_service rabbitmq-server
+        elif is_altlinux; then
+            restart_service rabbitmq
+	    # Give a chance to start a service prior other commands
+            sleep 3
         fi
         # change the rabbit password since the default is "guest"
         sudo rabbitmqctl change_password guest $RABBIT_PASSWORD

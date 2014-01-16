@@ -1,0 +1,18 @@
+gcc4.7
+libffi-devel        # testonly
+libxml2-devel       # testonly
+libxslt-devel       # testonly
+mysql-devel         # testonly
+openssl-devel       # testonly
+postgresql-devel    # testonly
+python-module-argparse
+python-devel
+python-module-eventlet
+python-module-greenlet
+python-module-lxml
+python-module-PasteDeploy
+python-module-routes
+python-module-SQLAlchemy
+python-modules-wsgiref
+python-module-pyxattr
+zlib-devel          # testonly

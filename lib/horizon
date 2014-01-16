@@ -127,7 +127,7 @@ function init_horizon() {
         sudo a2ensite horizon.conf
     elif is_fedora; then
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
-    elif is_suse; then
+    elif is_suse || is_altlinux; then
         : # nothing to do
     else
         exit_distro_not_supported "horizon apache configuration"
@@ -146,6 +146,11 @@ function init_horizon() {
         s,%DEST%,$DEST,g;
         s,%HORIZON_REQUIRE%,$HORIZON_REQUIRE,g;
     \" $FILES/apache-horizon.template >$horizon_conf"
+
+    # Comment out unsupported SetEnv in configuration file
+    if is_altlinux; then
+        sudo sed '/SetEnv/s/\(^.*$\)/#\1/' -i $horizon_conf
+    fi
 }
 
 # install_horizon() - Collect source and prepare

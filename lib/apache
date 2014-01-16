@@ -37,6 +37,9 @@ elif is_fedora; then
 elif is_suse; then
     APACHE_NAME=apache2
     APACHE_CONF_DIR=vhosts.d
+elif is_altlinux; then
+    APACHE_NAME=httpd2
+    APACHE_CONF_DIR=conf/sites-enabled
 fi
 
 # Functions
@@ -69,10 +72,13 @@ function install_apache_wsgi() {
     elif is_fedora; then
         sudo rm -f /etc/httpd/conf.d/000-*
         install_package httpd mod_wsgi
-    elif is_suse; then
+    elif is_suse || is_altlinux; then
         install_package apache2 apache2-mod_wsgi
         # WSGI isn't enabled by default, enable it
         sudo a2enmod wsgi
+        if is_altlinux; then
+            sudo rm -f /etc/$APACHE_NAME/$APACHE_CONF_DIR/000-*
+        fi
     else
         exit_distro_not_supported "apache installation"
     fi
@@ -83,7 +89,7 @@ function enable_apache_site() {
     local site=$@
     if is_ubuntu; then
         sudo a2ensite ${site}
-    elif is_fedora; then
+    elif is_fedora || is_altlinux; then
         # fedora conf.d is only imported if it ends with .conf so this is approx the same
         sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site} /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf
     fi
@@ -94,7 +100,7 @@ function disable_apache_site() {
     local site=$@
     if is_ubuntu; then
         sudo a2dissite ${site}
-    elif is_fedora; then
+    elif is_fedora || is_altlinux; then
         sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}
     fi
 }

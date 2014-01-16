@@ -196,7 +196,7 @@ function configure_nova_rootwrap() {
     # Set up the rootwrap sudoers for nova
     TEMPFILE=`mktemp`
     echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
-    chmod 0440 $TEMPFILE
+    is_altlinux && chmod 0400 $TEMPFILE || chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/nova-rootwrap
 }
@@ -383,8 +383,8 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
 
-    if is_fedora; then
-        # nova defaults to /usr/local/bin, but fedora pip likes to
+    if is_fedora || is_altlinux; then
+        # nova defaults to /usr/local/bin, but fedora and altlinux pip likes to
         # install things in /usr/bin
         iniset $NOVA_CONF DEFAULT bindir "/usr/bin"
     fi

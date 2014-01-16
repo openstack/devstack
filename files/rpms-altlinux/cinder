@@ -1,0 +1,7 @@
+lvm2
+tgt #scsi-target-utils
+qemu-img
+python-devel
+postgresql-devel
+open-iscsi #iscsi-initiator-utils
+python-module-lxml

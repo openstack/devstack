@@ -1,0 +1,26 @@
+python-module-django
+python-module-django-tests
+#django-registration
+gcc4.7
+httpd # NOPRIME
+mod_wsgi  # NOPRIME
+pylint
+python-module-anyjson
+python-module-BeautifulSoup
+python-module-boto
+python-module-coverage
+python-module-dateutil
+python-module-eventlet
+python-module-greenlet
+python-module-httplib2
+python-module-kombu
+python-module-migrate
+python-module-mox
+python-module-nose
+python-module-paste
+python-module-PasteDeploy
+python-module-routes
+python-module-sphinx
+python-module-SQLAlchemy
+python-module-webob
+python-module-pyxattr

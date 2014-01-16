@@ -24,7 +24,7 @@ function cleanup_database_mysql {
         sudo aptitude purge -y ~nmysql-server
         sudo rm -rf /var/lib/mysql
         return
-    elif is_fedora; then
+    elif is_fedora || is_altlinux; then
         MYSQL=mysqld
     elif is_suse; then
         MYSQL=mysql
@@ -53,20 +53,32 @@ function configure_database_mysql {
     elif is_suse; then
         MY_CONF=/etc/my.cnf
         MYSQL=mysql
+    elif is_altlinux; then
+        MY_CONF=/etc/my.cnf.d/server.cnf
+        MYSQL=mysqld
+        # Networking in ALT Linux is disabled in default configuration
+        sudo sed -i 's/^skip-networking/#skip-networking/g' $MY_CONF
+        # Check if it stopped
+        stop_service $MYSQL || :
     else
         exit_distro_not_supported "mysql configuration"
     fi
 
     # Start mysql-server
-    if is_fedora || is_suse; then
+    if is_fedora || is_suse || is_altlinux; then
         # service is not started by default
         start_service $MYSQL
+        sleep 3 # Give a chance to start prior next command
     fi
 
     # Set the root password - only works the first time. For Ubuntu, we already
     # did that with debconf before installing the package.
     if ! is_ubuntu; then
-        sudo mysqladmin -u root password $DATABASE_PASSWORD || true
+	if ! is_altlinux; then
+            sudo mysqladmin -u root password $DATABASE_PASSWORD || true
+        else
+            sudo mysqladmin --no-defaults -u root password $DATABASE_PASSWORD || true
+        fi
     fi
 
     # Update the DB to give user ‘$DATABASE_USER’@’%’ full control of the all databases:
@@ -103,6 +115,8 @@ long-query-time = 0" $MY_CONF
 log-queries-not-using-indexes" $MY_CONF
 
     restart_service $MYSQL
+
+    is_altlinux && sleep 3 || : # Give a chance to start prior next command
 }
 
 function install_database_mysql {
@@ -135,6 +149,8 @@ EOF
         if ! is_package_installed mariadb; then
             install_package mysql-community-server
         fi
+    elif is_altlinux; then
+        install_package mariadb-server
     else
         exit_distro_not_supported "mysql installation"
     fi
