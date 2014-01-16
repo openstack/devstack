@@ -204,7 +204,7 @@ function configure_cinder_rootwrap() {
 
     TEMPFILE=`mktemp`
     echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CINDER_SUDOER_CMD" >$TEMPFILE
-    chmod 0440 $TEMPFILE
+    is_altlinux && chmod 0400 $TEMPFILE || chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/cinder-rootwrap
 }
@@ -531,7 +531,7 @@ function start_cinder() {
         elif is_fedora; then
             # bypass redirection to systemctl during restart
             sudo /sbin/service --skip-redirect tgtd restart
-        elif is_suse; then
+        elif is_suse || is_altlinux; then
             restart_service tgtd
         else
             # note for other distros: unstack.sh also uses the tgt/tgtd service

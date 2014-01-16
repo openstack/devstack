@@ -799,7 +799,7 @@ function _neutron_setup_rootwrap() {
     # Set up the rootwrap sudoers for neutron
     TEMPFILE=`mktemp`
     echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
-    chmod 0440 $TEMPFILE
+    is_altlinux && chmod 0400 $TEMPFILE || chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/neutron-rootwrap
 

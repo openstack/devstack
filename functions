@@ -61,10 +61,10 @@ function apt_get() {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
-    $sudo DEBIAN_FRONTEND=noninteractive \
+    $sudo /bin/bash -c "DEBIAN_FRONTEND=noninteractive \
         http_proxy=$http_proxy https_proxy=$https_proxy \
         no_proxy=$no_proxy \
-        apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
+        apt-get --option \"Dpkg::Options::=--force-confold\" --assume-yes $*"
 }
 
 
@@ -246,6 +246,8 @@ function _get_package_dir() {
         pkg_dir=$FILES/apts
     elif is_fedora; then
         pkg_dir=$FILES/rpms
+    elif is_altlinux; then
+        pkg_dir=$FILES/rpms-altlinux
     elif is_suse; then
         pkg_dir=$FILES/rpms-suse
     else
@@ -372,7 +374,7 @@ function get_packages() {
 
 
 # Determine OS Vendor, Release and Update
-# Tested with OS/X, Ubuntu, RedHat, CentOS, Fedora
+# Tested with OS/X, Ubuntu, RedHat, CentOS, Fedora, ALTLinux
 # Returns results in global variables:
 # os_VENDOR - vendor name
 # os_RELEASE - release
@@ -418,8 +420,23 @@ GetOSVersion() {
             os_VENDOR="openSUSE"
         elif [[ $os_VENDOR =~ Red.*Hat ]]; then
             os_VENDOR="Red Hat"
+        elif [[ $os_VENDOR =~ ALT.* ]]; then
+            os_VENDOR="ALT Linux"
         fi
         os_CODENAME=$(lsb_release -c -s)
+	elif [[ -r /etc/altlinux-release ]]; then
+		# ALT Linux check must be prior Red Hat due
+		# file /etc/redhat-release existance
+        # ALT Linux 7.x
+        os_VENDOR="ALT Linux"
+        os_PACKAGE="rpm"
+		os_UPDATE=""
+        if [[ -n "`grep \"$r\" /etc/altlinux-release`" ]]; then
+            ver=`sed -e 's/^.* \([0-9.]*\) .* (\(.*\)).*$/\1\|\2/' /etc/altlinux-release`
+			os_CODENAME=${ver#*|}
+			os_CODENAME=${os_CODENAME//\ /}
+			os_RELEASE=${ver%|*}
+		fi
     elif [[ -r /etc/redhat-release ]]; then
         # Red Hat Enterprise Linux Server release 5.5 (Tikanga)
         # Red Hat Enterprise Linux Server release 7.0 Beta (Maipo)
@@ -493,6 +510,8 @@ function GetDistro() {
         DISTRO="rhel${os_RELEASE::1}"
     elif [[ "$os_VENDOR" =~ (XenServer) ]]; then
         DISTRO="xs$os_RELEASE"
+	elif [[ "$os_VENDOR" =~ (ALT Linux) ]]; then
+        DISTRO="altlinux-$os_RELEASE"
     else
         # Catch-all for now is Vendor + Release + Update
         DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
@@ -535,6 +554,16 @@ function is_ubuntu {
     [ "$os_PACKAGE" = "deb" ]
 }
 
+# Determine if current distribution is a ALT Linux distribution
+# is_altlinux
+function is_altlinux {
+    if [[ -z "$os_VENDOR" ]]; then
+        GetOSVersion
+    fi
+
+    [ "$os_VENDOR" = "ALT Linux" ]
+}
+
 
 # Exit after outputting a message about the distribution not being supported.
 # exit_distro_not_supported [optional-string-telling-what-is-missing]
@@ -562,8 +591,15 @@ function is_arch {
 # $1 = x.y.z (version string of Apache)
 function check_apache_version {
     local cmd="apachectl"
+	
+    if is_altlinux; then
+        #TODO: apachectl2 -v shows nothing
+		[[ -x $(which apachectl2 2>/dev/null) ]]
+	    return	
+	fi
+
     if ! [[ -x $(which apachectl 2>/dev/null) ]]; then
-        cmd="/usr/sbin/apachectl"
+		cmd="/usr/sbin/apachectl"
     fi
 
     local version=$($cmd -v | grep version | grep -Po 'Apache/\K[^ ]*')
@@ -945,6 +981,11 @@ function install_package() {
         NO_UPDATE_REPOS=True
 
         apt_get install "$@"
+    elif is_altlinux; then
+        [[ "$NO_UPDATE_REPOS" = "True" ]] || apt_get update
+        NO_UPDATE_REPOS=True
+
+        apt_get install "$@"
     elif is_fedora; then
         yum_install "$@"
     elif is_suse; then
@@ -960,6 +1001,8 @@ function install_package() {
 function uninstall_package() {
     if is_ubuntu; then
         apt_get purge "$@"
+    elif is_altlinux; then
+        apt_get remove "$@"
     elif is_fedora; then
         sudo yum remove -y "$@"
     elif is_suse; then
@@ -1033,12 +1076,12 @@ function pip_install {
     # this problem. See https://github.com/pypa/pip/issues/709
     local pip_build_tmp=$(mktemp --tmpdir -d pip-build.XXXXX)
 
-    $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
+    $SUDO_PIP /bin/bash -c "PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
         NO_PROXY=$no_proxy \
         $CMD_PIP install --build=${pip_build_tmp} \
-        $PIP_MIRROR_OPT $@ \
+        $PIP_MIRROR_OPT $*" \
         && $SUDO_PIP rm -rf ${pip_build_tmp}
 }
 
@@ -1817,7 +1860,7 @@ function add_user_to_group() {
 # Get the path to the direcotry where python executables are installed.
 # get_python_exec_prefix
 function get_python_exec_prefix() {
-    if is_fedora || is_suse; then
+    if is_fedora || is_suse || is_altlinux; then
         echo "/usr/bin"
     else
         echo "/usr/local/bin"

@@ -62,20 +62,26 @@ function get_versions() {
 
 
 function install_get_pip() {
+    SUDO_OPT="-E"
+    is_altlinux && SUDO_OPT=""
+
     if [[ ! -r $FILES/get-pip.py ]]; then
         (cd $FILES; \
             curl -O $PIP_GET_PIP_URL; \
         )
     fi
-    sudo -E python $FILES/get-pip.py
+    sudo $SUDO_OPT python $FILES/get-pip.py
 }
 
 function install_pip_tarball() {
+    SUDO_OPT="-E"
+    is_altlinux && SUDO_OPT=""
+
     (cd $FILES; \
         curl -O $PIP_TAR_URL; \
         tar xvfz pip-$INSTALL_PIP_VERSION.tar.gz 1>/dev/null; \
         cd pip-$INSTALL_PIP_VERSION; \
-        sudo -E python setup.py install 1>/dev/null; \
+        sudo $SUDO_OPT python setup.py install 1>/dev/null; \
     )
 }
 
@@ -85,7 +91,7 @@ get_versions
 # Do pip
 
 # Eradicate any and all system packages
-uninstall_package python-pip
+is_package_installed python-pip && uninstall_package python-pip || :
 
 if [[ "$USE_GET_PIP" == "1" ]]; then
     install_get_pip

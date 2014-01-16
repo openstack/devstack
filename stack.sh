@@ -219,8 +219,17 @@ TEMPFILE=`mktemp`
 echo "$STACK_USER ALL=(root) NOPASSWD:ALL" >$TEMPFILE
 # Some binaries might be under /sbin or /usr/sbin, so make sure sudo will
 # see them by forcing PATH
-echo "Defaults:$STACK_USER secure_path=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >> $TEMPFILE
-chmod 0440 $TEMPFILE
+# sudo in ALT Linux not support secure_path option
+# but has strong security restrictions for sudo
+if is_altlinux
+then
+	echo "Defaults:$STACK_USER env_keep+=\"http_proxy https_proxy no_proxy\"" >> $TEMPFILE
+	chmod 0400 $TEMPFILE
+else
+	echo "Defaults:$STACK_USER secure_path=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >> $TEMPFILE
+	chmod 0440 $TEMPFILE
+fi
+
 sudo chown root:root $TEMPFILE
 sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
 
