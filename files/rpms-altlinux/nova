@@ -1,0 +1,45 @@
+python-module-MySQLdb
+curl
+dnsmasq-utils # for dhcp_release
+ebtables
+gawk
+genisoimage # required for config_drive
+iptables
+iputils
+kpartx
+kvm # NOPRIME
+libvirt-bin # NOPRIME
+libvirt-python # NOPRIME
+libxml2-python
+python-module-numpy # needed by websockify for spice console
+python-module-m2crypto
+mysql-server # NOPRIME
+parted
+polkit
+python-module-boto
+python-module-carrot
+python-module-cheetah
+python-module-eventlet
+python-module-feedparser
+python-module-gflags
+python-module-greenlet
+python-module-iso8601
+python-module-kombu
+python-module-lockfile
+python-module-migrate
+python-module-mox
+python-module-paramiko
+# ^ on RHEL, brings in python-crypto which conflicts with version from
+# pip we need
+python-module-paste
+python-module-PasteDeploy
+python-module-qpid
+python-module-routes
+python-module-SQLAlchemy
+python-module-suds
+python-module-tempita
+rabbitmq-server # NOPRIME
+qpid-cpp-server # NOPRIME
+sqlite
+sudo
+vlan-utils

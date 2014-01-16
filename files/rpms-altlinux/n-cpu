@@ -1,0 +1,8 @@
+# Stuff for diablo volumes
+open-iscsi	#iscsi-initiator-utils
+tgt
+lvm2
+genisoimage
+sysfsutils
+sg3_utils
+python-module-libguestfs

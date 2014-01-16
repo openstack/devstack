@@ -1,0 +1,13 @@
+python-module-greenlet
+libxslt-devel
+python-module-lxml
+python-module-paste
+python-module-PasteDeploy
+python-module-PasteScript
+python-module-routes
+python-module-SQLAlchemy
+python-module-webob
+sqlite
+
+libsasl2-devel
+# Deps installed via pip for RHEL
