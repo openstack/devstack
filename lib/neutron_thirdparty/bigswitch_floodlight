@@ -45,5 +45,9 @@ function stop_bigswitch_floodlight() {
     :
 }
 
+function check_bigswitch_floodlight() {
+    :
+}
+
 # Restore xtrace
 $MY_XTRACE

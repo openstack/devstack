@@ -958,6 +958,11 @@ function stop_neutron_third_party() {
     _neutron_third_party_do stop
 }
 
+# check_neutron_third_party_integration() - Check that third party integration is sane
+function check_neutron_third_party_integration() {
+    _neutron_third_party_do check
+}
+
 
 # Restore xtrace
 $XTRACE

@@ -109,5 +109,9 @@ function stop_trema() {
     sudo TREMA_TMP=$TREMA_TMP_DIR trema killall
 }
 
+function check_trema() {
+    :
+}
+
 # Restore xtrace
 $MY_XTRACE
