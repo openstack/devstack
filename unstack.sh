@@ -30,20 +30,31 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
+
+# Configure Projects
+# ==================
+
 # Import apache functions
 source $TOP_DIR/lib/apache
 
-# Get project function libraries
-source $TOP_DIR/lib/baremetal
-source $TOP_DIR/lib/ceilometer
-source $TOP_DIR/lib/cinder
+# Import TLS functions
+source $TOP_DIR/lib/tls
+
+# Source project function libraries
+source $TOP_DIR/lib/infra
+source $TOP_DIR/lib/oslo
+source $TOP_DIR/lib/stackforge
+source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
-source $TOP_DIR/lib/heat
-source $TOP_DIR/lib/horizon
+source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
+source $TOP_DIR/lib/ceilometer
+source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
+source $TOP_DIR/lib/baremetal
+source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/ironic
 source $TOP_DIR/lib/trove
 
