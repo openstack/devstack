@@ -55,3 +55,35 @@ Steps for basic Ubuntu VM image
    cp contrail/localrc-single localrc
    vi localrc  # edit PHYSICAL_INTERFACE
 7) ./stack.sh
+
+Software Gateway support
+------------------------
+
+Software gateway provides internet connectivity to virtual machines. It
+supports routing between virtual-network and external public-networks. The
+Simple Gateway is a restricted implementation of gateway. The features 
+supported are,
+    - A compute node provides Simple Gateway functionality for a single
+      virtual-network
+    - A virtual-network can ideally have multiple subnets. But, gateway 
+      supports only one subnet per virtual-network
+    - Relies on the networking stack of host operating-system to route packets
+      between public-network and virtual-network
+
+Configuration:
+ Following parameters must be configured in localrc for Simple Gateway:
+
+ CONTRAIL_VGW_PUBLIC_NETWORK 
+    Specifies FQDN of the routing-instance that needs public access. 
+    Example: If domain=default-domain, user=admin and vm=public, FQDN is 
+             default-domain:admin:public:public
+ CONTRAIL_VGW_PUBLIC_SUBNET
+    Specifies the subnet configured for the virtual-network.
+    Example: 192.168.1.0/24
+ CONTRAIL_VGW_INTERFACE 
+    A tap interface is created with this name. The interface is added to
+    routing-instance of virtual-network. Packets to/from virtual-network 
+    use this interface (Example: vgw)
+
+Please see detailed instructions at:
+https://github.com/Juniper/contrail-controller/wiki/Simple-Gateway
