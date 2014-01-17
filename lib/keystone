@@ -28,6 +28,7 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+source $TOP_DIR/lib/tls
 
 # Defaults
 # --------

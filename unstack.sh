@@ -35,10 +35,12 @@ source $TOP_DIR/lib/apache
 
 # Get project function libraries
 source $TOP_DIR/lib/baremetal
+source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
+source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/neutron
