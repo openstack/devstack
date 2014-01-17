@@ -20,6 +20,12 @@ Notes:
 6) Copy sample localrc-single as localrc for a single node system. Copy
    localrc-multinode-server and localrc-multinode-compute as localrc on 
    master and compute nodes respectively for a multi-node system.
+7) After running unstack.sh, run ifconfig and verify IP address has been
+   restored on PHYSICAL_INTERFACE and vhost0 interface is gone. Sometimes
+   you might see "ERROR: Module vrouter is in use" after running unstack.sh
+   which means interface cleanup couldn't be done since vrouter is busy and
+   could not be uninstalled. Repeat unstack.sh untill the interfaces are
+   restored to original state.
 
 Change the following in localrc to suit your deployment:
  PHYSICAL_INTERFACE -- external interface Vrouter should bind to
