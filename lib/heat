@@ -110,15 +110,12 @@ function configure_heat() {
     [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_CONF paste_deploy flavor standalone
 
     # OpenStack API
-    iniset $HEAT_CONF heat_api bind_host $HEAT_API_HOST
     iniset $HEAT_CONF heat_api bind_port $HEAT_API_PORT
 
     # Cloudformation API
-    iniset $HEAT_CONF heat_api_cfn bind_host $HEAT_API_CFN_HOST
     iniset $HEAT_CONF heat_api_cfn bind_port $HEAT_API_CFN_PORT
 
     # Cloudwatch API
-    iniset $HEAT_CONF heat_api_cloudwatch bind_host $HEAT_API_CW_HOST
     iniset $HEAT_CONF heat_api_cloudwatch bind_port $HEAT_API_CW_PORT
 
     # heat environment
