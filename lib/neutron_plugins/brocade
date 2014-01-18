@@ -38,7 +38,7 @@ function neutron_plugin_configure_l3_agent() {
 }
 
 function neutron_plugin_configure_plugin_agent() {
-    AGENT_BINARY="$NEUTON_BIN_DIR/neutron-linuxbridge-agent"
+    AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-linuxbridge-agent"
 }
 
 function neutron_plugin_setup_interface_driver() {
