@@ -505,7 +505,7 @@ function stop_neutron() {
         [ ! -z "$pid" ] && sudo kill -9 $pid
     fi
     if is_service_enabled q-meta; then
-        pkill -9 -f neutron-ns-metadata-proxy
+        sudo pkill -9 neutron-ns-metadata-proxy || :
     fi
 
     if is_service_enabled q-lbaas; then
