@@ -650,12 +650,11 @@ function start_nova_compute() {
 
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
         # Enable client side traces for libvirt
-        export LIBVIRT_LOG_FILTERS="1:libvirt"
-        export LIBVIRT_LOG_OUTPUTS="1:file:/var/log/libvirt/libvirtd-nova.log"
-
+        local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:event 3:json 3:file 1:util"
+        local log_outputs="1:file:/var/log/libvirt/libvirtd.log"
         # Enable server side traces for libvirtd
-        echo "log_filters=\"1:libvirt 1:qemu\"" | sudo tee -a /etc/libvirt/libvirtd.conf
-        echo "log_outputs=\"1:file:/var/log/libvirt/libvirtd.log\"" | sudo tee -a /etc/libvirt/libvirtd.conf
+        echo "log_filters=\"$log_filters\"" | sudo tee -a /etc/libvirt/libvirtd.conf
+        echo "log_outputs=\"$log_outputs\"" | sudo tee -a /etc/libvirt/libvirtd.conf
 
         # The group **$LIBVIRT_GROUP** is added to the current user in this script.
         # Use 'sg' to execute nova-compute as a member of the **$LIBVIRT_GROUP** group.
