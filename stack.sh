@@ -860,11 +860,17 @@ init_service_check
 # -------
 
 # If enabled, systat has to start early to track OpenStack service startup.
-if is_service_enabled sysstat;then
+if is_service_enabled sysstat; then
+    # what we want to measure
+    # -u : cpu statitics
+    # -q : load
+    # -b : io load rates
+    # -w : process creation and context switch rates
+    SYSSTAT_OPTS="-u -q -b -w"
     if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it sysstat "cd ; sar -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
+        screen_it sysstat "cd $TOP_DIR; ./tools/sar_filter.py $SYSSTAT_OPTS -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
     else
-        screen_it sysstat "sar $SYSSTAT_INTERVAL"
+        screen_it sysstat "./tools/sar_filter.py $SYSSTAT_OPTS $SYSSTAT_INTERVAL"
     fi
 fi
 
