@@ -7,8 +7,10 @@ src
 localrc
 local.sh
 files/*.gz
+files/*.qcow2
 files/images
 files/pip-*
+files/get-pip.py
 stack-screenrc
 *.pem
 accrc
