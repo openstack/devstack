@@ -1,0 +1,42 @@
+# lib/cinder_plugins/vsphere
+# Configure the vsphere driver
+
+# Enable with:
+#
+#   CINDER_DRIVER=vsphere
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# configure_cinder_driver - make configuration changes, including those to other services
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# Set up default directories
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_driver - Set config files, create data dirs, etc
+function configure_cinder_driver() {
+    iniset $CINDER_CONF DEFAULT vmware_host_ip "$VMWAREAPI_IP"
+    iniset $CINDER_CONF DEFAULT vmware_host_username "$VMWAREAPI_USER"
+    iniset $CINDER_CONF DEFAULT vmware_host_password "$VMWAREAPI_PASSWORD"
+    iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.vmware.vmdk.VMwareVcVmdkDriver"
+}
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
