@@ -332,29 +332,29 @@ function create_neutron_cache_dir() {
 # Migrated from keystone_data.sh
 function create_neutron_accounts() {
 
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
-        NEUTRON_USER=$(keystone user-create \
-            --name=neutron \
-            --pass="$SERVICE_PASSWORD" \
-            --tenant-id $SERVICE_TENANT \
-            --email=neutron@example.com \
+        NEUTRON_USER=$(openstack user create \
+            neutron \
+            --password "$SERVICE_PASSWORD" \
+            --project $SERVICE_TENANT \
+            --email neutron@example.com \
             | grep " id " | get_field 2)
-        keystone user-role-add \
-            --tenant-id $SERVICE_TENANT \
-            --user-id $NEUTRON_USER \
-            --role-id $ADMIN_ROLE
+        openstack role add \
+            $ADMIN_ROLE \
+            --project $SERVICE_TENANT \
+            --user $NEUTRON_USER
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            NEUTRON_SERVICE=$(keystone service-create \
-                --name=neutron \
+            NEUTRON_SERVICE=$(openstack service create \
+                neutron \
                 --type=network \
                 --description="Neutron Service" \
                 | grep " id " | get_field 2)
-            keystone endpoint-create \
+            openstack endpoint create \
+                $NEUTRON_SERVICE \
                 --region RegionOne \
-                --service_id $NEUTRON_SERVICE \
                 --publicurl "http://$SERVICE_HOST:9696/" \
                 --adminurl "http://$SERVICE_HOST:9696/" \
                 --internalurl "http://$SERVICE_HOST:9696/"
@@ -363,7 +363,7 @@ function create_neutron_accounts() {
 }
 
 function create_neutron_initial_network() {
-    TENANT_ID=$(keystone tenant-list | grep " demo " | get_field 1)
+    TENANT_ID=$(openstack project list | grep " demo " | get_field 1)
     die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for demo"
 
     # Create a small network

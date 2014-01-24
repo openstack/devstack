@@ -527,39 +527,53 @@ function create_swift_accounts() {
 
     KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    SWIFT_USER=$(keystone user-create --name=swift --pass="$SERVICE_PASSWORD" \
-        --tenant-id $SERVICE_TENANT --email=swift@example.com | grep " id " | get_field 2)
-    keystone user-role-add --tenant-id $SERVICE_TENANT --user-id $SWIFT_USER --role-id $ADMIN_ROLE
+    SWIFT_USER=$(openstack user create \
+        swift \
+        --password "$SERVICE_PASSWORD" \
+        --project $SERVICE_TENANT \
+        --email=swift@example.com \
+        | grep " id " | get_field 2)
+    openstack role add \
+        $ADMIN_ROLE \
+        --project $SERVICE_TENANT \
+        --user $SWIFT_USER
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        SWIFT_SERVICE=$(keystone service-create --name=swift --type="object-store" \
-            --description="Swift Service" | grep " id " | get_field 2)
-        keystone endpoint-create \
+        SWIFT_SERVICE=$(openstack service create \
+            swift \
+            --type="object-store" \
+            --description="Swift Service" \
+            | grep " id " | get_field 2)
+        openstack endpoint create \
+            $SWIFT_SERVICE \
             --region RegionOne \
-            --service_id $SWIFT_SERVICE \
             --publicurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
             --adminurl "http://$SERVICE_HOST:8080" \
             --internalurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
     fi
 
-    SWIFT_TENANT_TEST1=$(keystone tenant-create --name=swifttenanttest1 | grep " id " | get_field 2)
+    SWIFT_TENANT_TEST1=$(openstack project create swifttenanttest1 | grep " id " | get_field 2)
     die_if_not_set $LINENO SWIFT_TENANT_TEST1 "Failure creating SWIFT_TENANT_TEST1"
-    SWIFT_USER_TEST1=$(keystone user-create --name=swiftusertest1 --pass=$SWIFTUSERTEST1_PASSWORD --email=test@example.com | grep " id " | get_field 2)
+    SWIFT_USER_TEST1=$(openstack user create swiftusertest1 --password=$SWIFTUSERTEST1_PASSWORD \
+        --project "$SWIFT_TENANT_TEST1" --email=test@example.com | grep " id " | get_field 2)
     die_if_not_set $LINENO SWIFT_USER_TEST1 "Failure creating SWIFT_USER_TEST1"
-    keystone user-role-add --user-id $SWIFT_USER_TEST1 --role-id $ADMIN_ROLE --tenant-id $SWIFT_TENANT_TEST1
+    openstack role add --user $SWIFT_USER_TEST1 --project $SWIFT_TENANT_TEST1 $ADMIN_ROLE
 
-    SWIFT_USER_TEST3=$(keystone user-create --name=swiftusertest3 --pass=$SWIFTUSERTEST3_PASSWORD --email=test3@example.com | grep " id " | get_field 2)
+    SWIFT_USER_TEST3=$(openstack user create swiftusertest3 --password=$SWIFTUSERTEST3_PASSWORD \
+        --project "$SWIFT_TENANT_TEST1" --email=test3@example.com | grep " id " | get_field 2)
     die_if_not_set $LINENO SWIFT_USER_TEST3 "Failure creating SWIFT_USER_TEST3"
-    keystone user-role-add --user-id $SWIFT_USER_TEST3 --role-id $ANOTHER_ROLE --tenant-id $SWIFT_TENANT_TEST1
+    openstack role add --user $SWIFT_USER_TEST3 --project $SWIFT_TENANT_TEST1 $ANOTHER_ROLE
 
-    SWIFT_TENANT_TEST2=$(keystone tenant-create --name=swifttenanttest2 | grep " id " | get_field 2)
+    SWIFT_TENANT_TEST2=$(openstack project create swifttenanttest2 | grep " id " | get_field 2)
     die_if_not_set $LINENO SWIFT_TENANT_TEST2 "Failure creating SWIFT_TENANT_TEST2"
-    SWIFT_USER_TEST2=$(keystone user-create --name=swiftusertest2 --pass=$SWIFTUSERTEST2_PASSWORD --email=test2@example.com | grep " id " | get_field 2)
+
+    SWIFT_USER_TEST2=$(openstack user create swiftusertest2 --password=$SWIFTUSERTEST2_PASSWORD \
+        --project "$SWIFT_TENANT_TEST2" --email=test2@example.com | grep " id " | get_field 2)
     die_if_not_set $LINENO SWIFT_USER_TEST2 "Failure creating SWIFT_USER_TEST2"
-    keystone user-role-add --user-id $SWIFT_USER_TEST2 --role-id $ADMIN_ROLE --tenant-id $SWIFT_TENANT_TEST2
+    openstack role add --user $SWIFT_USER_TEST2 --project $SWIFT_TENANT_TEST2 $ADMIN_ROLE
 }
 
 # init_swift() - Initialize rings

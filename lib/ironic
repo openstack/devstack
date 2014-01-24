@@ -145,30 +145,30 @@ function create_ironic_cache_dir() {
 # service              ironic     admin        # if enabled
 create_ironic_accounts() {
 
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     # Ironic
     if [[ "$ENABLED_SERVICES" =~ "ir-api" ]]; then
-        IRONIC_USER=$(keystone user-create \
-            --name=ironic \
-            --pass="$SERVICE_PASSWORD" \
-            --tenant-id $SERVICE_TENANT \
-            --email=ironic@example.com \
+        IRONIC_USER=$(openstack user create \
+            ironic \
+            --password "$SERVICE_PASSWORD" \
+            --project $SERVICE_TENANT \
+            --email ironic@example.com \
             | grep " id " | get_field 2)
-        keystone user-role-add \
-            --tenant-id $SERVICE_TENANT \
-            --user_id $IRONIC_USER \
-            --role_id $ADMIN_ROLE
+        openstack role add \
+            $ADMIN_ROLE \
+            --project $SERVICE_TENANT \
+            --user $IRONIC_USER
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            IRONIC_SERVICE=$(keystone service-create \
-                --name=ironic \
+            IRONIC_SERVICE=$(openstack service create \
+                ironic \
                 --type=baremetal \
                 --description="Ironic baremetal provisioning service" \
                 | grep " id " | get_field 2)
-            keystone endpoint-create \
+            openstack endpoint create \
+                $IRONIC_SERVICE \
                 --region RegionOne \
-                --service_id $IRONIC_SERVICE \
                 --publicurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT" \
                 --adminurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT" \
                 --internalurl "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT"
