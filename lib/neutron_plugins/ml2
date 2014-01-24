@@ -29,6 +29,8 @@ Q_ML2_PLUGIN_GRE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GRE_TYPE_OPTIONS:-tunnel_id_ranges=
 Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS:-vni_ranges=1001:2000}
 # Default VLAN TypeDriver options
 Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS:-}
+# Default Bulk operation for mechanism drivers
+Q_ML2_PLUGIN_BULK_SUPPORT=${Q_ML2_PLUGIN_BULK_SUPPORT:-True}
 
 # L3 Plugin to load for ML2
 ML2_L3_PLUGIN=${ML2_L3_PLUGIN:-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
@@ -106,6 +108,8 @@ function neutron_plugin_configure_service() {
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 type_drivers=$Q_ML2_PLUGIN_TYPE_DRIVERS
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 $Q_SRV_EXTRA_OPTS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 bulk_support=$Q_ML2_PLUGIN_BULK_SUPPORT
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_gre $Q_ML2_PLUGIN_GRE_TYPE_OPTIONS
 
