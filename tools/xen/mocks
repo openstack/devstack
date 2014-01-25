@@ -73,7 +73,7 @@ function [ {
         done
         return 1
     fi
-    echo "Mock test does not implement the requested function"
+    echo "Mock test does not implement the requested function: ${1:-}"
     exit 1
 }
 

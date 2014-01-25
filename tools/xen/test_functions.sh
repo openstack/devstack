@@ -118,7 +118,7 @@ function test_zip_snapshot_location {
 function test_create_directory_for_kernels {
     (
         . mocks
-        mock_out get_local_sr uuid1
+        mock_out get_local_sr_path /var/run/sr-mount/uuid1
         create_directory_for_kernels
     )
 
@@ -141,7 +141,7 @@ EOF
 function test_create_directory_for_images {
     (
         . mocks
-        mock_out get_local_sr uuid1
+        mock_out get_local_sr_path /var/run/sr-mount/uuid1
         create_directory_for_images
     )
 
@@ -199,8 +199,7 @@ function test_get_local_sr {
 
     [ "$RESULT" == "uuid123" ]
 
-    assert_xe_min
-    assert_xe_param "sr-list" "name-label=Local storage"
+    assert_xe_param "pool-list" params=default-SR minimal=true
 }
 
 function test_get_local_sr_path {
