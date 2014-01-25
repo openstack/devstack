@@ -23,6 +23,13 @@
 # Make sure custom grep options don't get in the way
 unset GREP_OPTIONS
 
+# Sanitize language settings to avoid commands bailing out
+# with "unsupported locale setting" errors.
+unset LANG
+unset LANGUAGE
+LC_ALL=C
+export LC_ALL
+
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
