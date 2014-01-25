@@ -29,6 +29,9 @@ function before_each_test {
 
     XE_CALLS=$(mktemp)
     truncate -s 0 $XE_CALLS
+
+    DEAD_MESSAGES=$(mktemp)
+    truncate -s 0 $DEAD_MESSAGES
 }
 
 # Teardown
@@ -62,6 +65,10 @@ function assert_xe_min {
 
 function assert_xe_param {
     grep -qe "^$1\$" $XE_CALLS
+}
+
+function assert_died_with {
+    diff -u <(echo "$1") $DEAD_MESSAGES
 }
 
 function mock_out {
@@ -109,10 +116,16 @@ function test_no_plugin_directory_found {
     grep "[ -d /usr/lib/xcp/plugins/ ]" $LIST_OF_ACTIONS
 }
 
-function test_zip_snapshot_location {
+function test_zip_snapshot_location_http {
     diff \
-    <(zip_snapshot_location "git://git.openstack.org/openstack/nova.git" "master") \
-    <(echo "git://git.openstack.org/openstack/nova/zipball/master")
+    <(zip_snapshot_location "http://github.com/openstack/nova.git" "master") \
+    <(echo "http://github.com/openstack/nova/zipball/master")
+}
+
+function test_zip_snapsot_location_git {
+    diff \
+    <(zip_snapshot_location "git://github.com/openstack/nova.git" "master") \
+    <(echo "http://github.com/openstack/nova/zipball/master")
 }
 
 function test_create_directory_for_kernels {
@@ -179,7 +192,7 @@ function test_extract_remote_zipball_wget_fail {
     local IGNORE
     IGNORE=$(. mocks && extract_remote_zipball "failurl")
 
-    assert_previous_command_failed
+    assert_died_with "Failed to download [failurl]"
 }
 
 function test_find_nova_plugins {

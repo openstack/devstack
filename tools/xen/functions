@@ -1,5 +1,14 @@
 #!/bin/bash
 
+function die_with_error {
+    local err_msg
+
+    err_msg="$1"
+
+    echo "$err_msg" >&2
+    exit 1
+}
+
 function xapi_plugin_location {
     for PLUGIN_DIR in "/etc/xapi.d/plugins/" "/usr/lib/xcp/plugins/" "/usr/lib/xapi/plugins"; do
         if [ -d $PLUGIN_DIR ]; then
@@ -11,7 +20,7 @@ function xapi_plugin_location {
 }
 
 function zip_snapshot_location {
-    echo $1 | sed "s:\.git$::;s:$:/zipball/$2:g"
+    echo $1 | sed "s,^git://,http://,g;s:\.git$::;s:$:/zipball/$2:g"
 }
 
 function create_directory_for_kernels {
@@ -41,7 +50,9 @@ function extract_remote_zipball {
     local EXTRACTED_FILES=$(mktemp -d)
 
     {
-        wget -nv $ZIPBALL_URL -O $LOCAL_ZIPBALL --no-check-certificate
+        if ! wget -nv $ZIPBALL_URL -O $LOCAL_ZIPBALL --no-check-certificate; then
+            die_with_error "Failed to download [$ZIPBALL_URL]"
+        fi
         unzip -q -o $LOCAL_ZIPBALL -d $EXTRACTED_FILES
         rm -f $LOCAL_ZIPBALL
     } >&2
