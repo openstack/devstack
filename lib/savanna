@@ -95,7 +95,6 @@ function configure_savanna() {
     iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_tenant_name $SERVICE_TENANT_NAME
     iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT debug $SAVANNA_DEBUG
 
-    recreate_database savanna utf8
     iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE database connection `database_connection_url savanna`
 
     if is_service_enabled neutron; then
@@ -104,6 +103,9 @@ function configure_savanna() {
     fi
 
     iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT use_syslog $SYSLOG
+
+    recreate_database savanna utf8
+    $SAVANNA_BIN_DIR/savanna-db-manage --config-file $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE upgrade head
 }
 
 # install_savanna() - Collect source and prepare
