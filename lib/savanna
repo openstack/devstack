@@ -96,8 +96,7 @@ function configure_savanna() {
     iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT debug $SAVANNA_DEBUG
 
     recreate_database savanna utf8
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE database sql_connection `database_connection_url savanna`
-    inicomment $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE database connection
+    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE database connection `database_connection_url savanna`
 
     if is_service_enabled neutron; then
         iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT use_neutron true
