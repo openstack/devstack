@@ -33,7 +33,6 @@ IRONIC_AUTH_CACHE_DIR=${IRONIC_AUTH_CACHE_DIR:-/var/cache/ironic}
 IRONIC_CONF_DIR=${IRONIC_CONF_DIR:-/etc/ironic}
 IRONIC_CONF_FILE=$IRONIC_CONF_DIR/ironic.conf
 IRONIC_ROOTWRAP_CONF=$IRONIC_CONF_DIR/rootwrap.conf
-IRONIC_ROOTWRAP_FILTERS=$IRONIC_CONF_DIR/rootwrap.d
 IRONIC_POLICY_JSON=$IRONIC_CONF_DIR/policy.json
 
 # Support entry points installation of console scripts
@@ -118,7 +117,7 @@ function configure_ironic_api() {
 # Sets conductor specific settings.
 function configure_ironic_conductor() {
     cp $IRONIC_DIR/etc/ironic/rootwrap.conf $IRONIC_ROOTWRAP_CONF
-    cp -r $IRONIC_DIR/etc/ironic/rootwrap.d $IRONIC_ROOTWRAP_FILTERS
+    cp -r $IRONIC_DIR/etc/ironic/rootwrap.d $IRONIC_CONF_DIR
 
     iniset $IRONIC_CONF DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
 }
