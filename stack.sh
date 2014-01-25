@@ -298,6 +298,9 @@ SYSLOG_PORT=${SYSLOG_PORT:-516}
 SYSSTAT_FILE=${SYSSTAT_FILE:-"sysstat.dat"}
 SYSSTAT_INTERVAL=${SYSSTAT_INTERVAL:-"1"}
 
+PIDSTAT_FILE=${PIDSTAT_FILE:-"pidstat.txt"}
+PIDSTAT_INTERVAL=${PIDSTAT_INTERVAL:-"5"}
+
 # Use color for logging output (only available if syslog is not used)
 LOG_COLOR=`trueorfalse True $LOG_COLOR`
 
@@ -882,6 +885,16 @@ if is_service_enabled sysstat; then
         screen_it sysstat "cd $TOP_DIR; ./tools/sar_filter.py $SYSSTAT_OPTS -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
     else
         screen_it sysstat "./tools/sar_filter.py $SYSSTAT_OPTS $SYSSTAT_INTERVAL"
+    fi
+fi
+
+if is_service_enabled pidstat; then
+    # Per-process stats
+    PIDSTAT_OPTS="-l -p ALL -T ALL"
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        screen_it pidstat "cd $TOP_DIR; pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL > $SCREEN_LOGDIR/$PIDSTAT_FILE"
+    else
+        screen_it pidstat "pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL"
     fi
 fi
 
