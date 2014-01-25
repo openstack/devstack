@@ -6,7 +6,6 @@
 # ------------------------------------------------------------------
 # service              glance     admin
 # service              heat       service        # if enabled
-# service              ceilometer admin          # if enabled
 # Tempest Only:
 # alt_demo             alt_demo  Member
 #
@@ -113,30 +112,11 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
 fi
 
 # Ceilometer
-if [[ "$ENABLED_SERVICES" =~ "ceilometer" ]]; then
-    keystone user-create --name=ceilometer \
-        --pass="$SERVICE_PASSWORD" \
-        --tenant $SERVICE_TENANT_NAME \
-        --email=ceilometer@example.com
-    keystone user-role-add --tenant $SERVICE_TENANT_NAME \
-        --user ceilometer \
-        --role admin
+if [[ "$ENABLED_SERVICES" =~ "ceilometer" ]] && [[ "$ENABLED_SERVICES" =~ "s-proxy" || "$ENABLED_SERVICES" =~ "swift" ]]; then
     # Ceilometer needs ResellerAdmin role to access swift account stats.
     keystone user-role-add --tenant $SERVICE_TENANT_NAME \
         --user ceilometer \
         --role ResellerAdmin
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        keystone service-create \
-            --name=ceilometer \
-            --type=metering \
-            --description="Ceilometer Service"
-        keystone endpoint-create \
-            --region RegionOne \
-            --service ceilometer \
-            --publicurl "http://$SERVICE_HOST:8777" \
-            --adminurl "http://$SERVICE_HOST:8777" \
-            --internalurl "http://$SERVICE_HOST:8777"
-    fi
 fi
 
 # EC2
