@@ -56,6 +56,30 @@ Steps for basic Ubuntu VM image
    vi localrc  # edit PHYSICAL_INTERFACE
 7) ./stack.sh
 
+Steps for basic Fedora host
+---------------------------
+I perform these steps on a minimal Fedora host. You may not
+need these steps and will depend upon your starting image.
+
+1) sudo yum -y install git-core patch vim
+2) sudo yum -y install kernel-devel-3.6.6-1
+   My "uname -a" shows "Linux a6s34 3.6.6-1.fc17.x86_64"
+3) sudo yum -y upgrade libtasn1
+4) sudo yum -y install python-pip
+5) sudo easy_install -U distribute
+6) verify ssh to github is working
+   ssh -T git@github.com
+7) download devstack (should have already done this)
+   git clone git@github.com:dsetia/devstack.git
+8) copy sample localrc as mentioned above. Edit localrc 
+   PHYSICAL_INTERFACE/SERVICE_HOST/... to match your setup
+
+   cd devstack
+   cp contrail/localrc-single localrc
+   vi localrc  # edit PHYSICAL_INTERFACE
+9) ./stack.sh
+
+
 Software Gateway support
 ------------------------
 
