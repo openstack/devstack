@@ -245,14 +245,14 @@ function configure_keystone() {
     fi
 
     # Set up logging
-    LOGGING_ROOT="devel"
     if [ "$SYSLOG" != "False" ]; then
-        LOGGING_ROOT="$LOGGING_ROOT,production"
+        iniset $KEYSTONE_CONF DEFAULT use_syslog "True"
     fi
-    KEYSTONE_LOG_CONFIG="--log-config $KEYSTONE_CONF_DIR/logging.conf"
-    cp $KEYSTONE_DIR/etc/logging.conf.sample $KEYSTONE_CONF_DIR/logging.conf
-    iniset $KEYSTONE_CONF_DIR/logging.conf logger_root level "DEBUG"
-    iniset $KEYSTONE_CONF_DIR/logging.conf logger_root handlers "devel,production"
+
+    # Format logging
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+        setup_colorized_logging $KEYSTONE_CONF DEFAULT
+    fi
 
     if is_apache_enabled_service key; then
         _config_keystone_apache_wsgi
@@ -410,7 +410,7 @@ function start_keystone() {
         screen_it key "cd $KEYSTONE_DIR && sudo tail -f /var/log/$APACHE_NAME/keystone"
     else
         # Start Keystone in a screen window
-        screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG --debug"
+        screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF --debug"
     fi
 
     echo "Waiting for keystone to start..."
