@@ -312,9 +312,13 @@ rm -f $SSL_BUNDLE_FILE
 # Configure Projects
 # ==================
 
-# Source project function libraries
+# Import apache functions
 source $TOP_DIR/lib/apache
+
+# Import TLS functions
 source $TOP_DIR/lib/tls
+
+# Source project function libraries
 source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/stackforge
