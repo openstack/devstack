@@ -610,9 +610,6 @@ function _configure_neutron_debug_command() {
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT verbose False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT root_helper "$Q_RR_COMMAND"
-    # Intermediate fix until Neutron patch lands and then line above will
-    # be cleaned.
     iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper "$Q_RR_COMMAND"
 
     _neutron_setup_interface_driver $NEUTRON_TEST_CONFIG_FILE
