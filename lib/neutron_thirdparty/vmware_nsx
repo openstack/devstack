@@ -79,7 +79,7 @@ function stop_vmware_nsx() {
 }
 
 function check_vmware_nsx() {
-    :
+    neutron-check-nsx-config $NEUTRON_CONF_DIR/plugins/vmware/nsx.ini
 }
 
 # Restore xtrace
