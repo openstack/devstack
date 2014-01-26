@@ -1132,6 +1132,15 @@ if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nov
     iniset $NOVA_CONF DEFAULT s3_affix_tenant "True"
 fi
 
+# Create a randomized default value for the keymgr's fixed_key
+if is_service_enabled nova; then
+    FIXED_KEY=""
+    for i in $(seq 1 64);
+        do FIXED_KEY+=$(echo "obase=16; $(($RANDOM % 16))" | bc);
+    done;
+    iniset $NOVA_CONF keymgr fixed_key "$FIXED_KEY"
+fi
+
 if is_service_enabled zeromq; then
     echo_summary "Starting zermomq receiver"
     screen_it zeromq "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-rpc-zmq-receiver"
