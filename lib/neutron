@@ -627,6 +627,7 @@ function _configure_neutron_dhcp_agent() {
     iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+    iniset $Q_DHCP_CONF_FILE DEFAULT enable_isolated_metadata True
 
     # Define extra "DEFAULT" configuration options when q-dhcp is configured by
     # defining the array ``Q_DHCP_EXTRA_DEFAULT_OPTS``.
