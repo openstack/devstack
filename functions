@@ -1304,7 +1304,8 @@ function setup_develop() {
     echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
 
     # Don't update repo if local changes exist
-    (cd $project_dir && git diff --quiet)
+    # Don't use buggy "git diff --quiet"
+    (cd $project_dir && git diff --exit-code >/dev/null)
     local update_requirements=$?
 
     if [ $update_requirements -eq 0 ]; then
