@@ -151,6 +151,8 @@ function configure_ceilometer() {
 
 function configure_mongodb() {
     if is_fedora; then
+        # install mongodb client
+        install_package mongodb
         # ensure smallfiles selected to minimize freespace requirements
         sudo sed -i '/--smallfiles/!s/OPTIONS=\"/OPTIONS=\"--smallfiles /' /etc/sysconfig/mongod
 
