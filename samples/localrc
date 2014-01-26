@@ -1,90 +1,94 @@
-# Sample ``localrc`` for user-configurable variables in ``stack.sh``
+# Misc
+HOST_IP=127.0.0.1   
+DATABASE_PASSWORD=123456  
+ADMIN_PASSWORD=123456  
+SERVICE_PASSWORD=123456  
+SERVICE_TOKEN=123456  
+RABBIT_PASSWORD=123456  
+ 
+# Reclone each time   
+RECLONE=true   
+  
+# Python enviroments   
+#OFFLINE=true   
+  
+## For Keystone   
+KEYSTONE_TOKEN_FORMAT=PKI  
+  
+## For Swift   
+SWIFT_REPLICAS=1  
+SWIFT_HASH=011688b44136573e209e  
+  
+# Enable Logging
+DEST=/home/stack 
+LOGFILE=$DEST/logs/stack.sh.log  
+VERBOSE=True  
+LOG_COLOR=True  
+SCREEN_LOGDIR=$DEST/logs  
+  
+# Pre-requisite   
+ENABLED_SERVICES=rabbit,mysql,key  
+  
+## If you want ZeroMQ instead of RabbitMQ (don't forget to un-declare 'rabbit' from the pre-requesite)   
+#ENABLED_SERVICES+=,-rabbit,-qpid,zeromq  
+  
+## If you want Qpid instead of RabbitMQ (don't forget to un-declare 'rabbit' from the pre-requesite)   
+#ENABLED_SERVICES+=,-rabbit,-zeromq,qpid   
+  
+# Horizon (Dashboard UI) - (always use the trunk)   
+ENABLED_SERVICES+=,horizon  
+#HORIZON_REPO=https://github.com/openstack/horizon  
+#HORIZON_BRANCH=master  
+  
+# Nova - Compute Service   
+ENABLED_SERVICES+=,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch,n-novnc,n-cauth
+IMAGE_URLS+=",https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"  
+  
+## Nova Cells   
+ENABLED_SERVICES+=,n-cell  
+  
+# Glance - Image Service   
+ENABLED_SERVICES+=,g-api,g-reg  
+  
+# Swift - Object Storage   
+ENABLED_SERVICES+=,s-proxy,s-object,s-container,s-account  
+  
+# Neutron - Networking Service   
+# If Neutron is not declared the old good nova-network will be used   
+ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta,neutron  
+  
+## Neutron - Load Balancing   
+ENABLED_SERVICES+=,q-lbaas  
+  
+## Neutron - VPN as a Service   
+ENABLED_SERVICES+=,q-vpn  
+  
+## Neutron - Firewall as a Service   
+ENABLED_SERVICES+=,q-fwaas  
+  
+# VLAN configuration   
+#Q_PLUGIN=ml2
+#ENABLE_TENANT_VLANS=True 
+# GRE tunnel configuration   
+#Q_PLUGIN=ml2  
+#ENABLE_TENANT_TUNNELS=True  
+  
+# VXLAN tunnel configuration   
+Q_PLUGIN=ml2  
+Q_ML2_TENANT_NETWORK_TYPE=vxlan     
+  
+# Cinder - Block Device Service   
+ENABLED_SERVICES+=,cinder,c-api,c-vol,c-sch  
+  
+# Heat - Orchestration Service   
+ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng  
+IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_64-cfntools.qcow2"  
+  
+# Ceilometer - Metering Service (metering + alarming)   
+CEILOMETER_BACKEND=mysql  
+ENABLED_SERVICES+=,ceilometer-acompute,ceilometer-acentral,ceilometer-collector,ceilometer-api  
+ENABLED_SERVICES+=,ceilometer-alarm-notify,ceilometer-alarm-eval  
+  
+# Apache fronted for WSGI   
+APACHE_ENABLED_SERVICES+=keystone,swift  
 
-# NOTE: Copy this file to the root ``devstack`` directory for it to
-# work properly.
-
-# ``localrc`` is a user-maintained setings file that is sourced from ``stackrc``.
-# This gives it the ability to override any variables set in ``stackrc``.
-# Also, most of the settings in ``stack.sh`` are written to only be set if no
-# value has already been set; this lets ``localrc`` effectively override the
-# default values.
-
-# This is a collection of some of the settings we have found to be useful
-# in our DevStack development environments. Additional settings are described
-# in http://devstack.org/localrc.html
-# These should be considered as samples and are unsupported DevStack code.
-
-
-# Minimal Contents
-# ----------------
-
-# While ``stack.sh`` is happy to run without ``localrc``, devlife is better when
-# there are a few minimal variables set:
-
-# If the ``*_PASSWORD`` variables are not set here you will be prompted to enter
-# values for them by ``stack.sh`` and they will be added to ``localrc``.
-ADMIN_PASSWORD=nomoresecrete
-MYSQL_PASSWORD=stackdb
-RABBIT_PASSWORD=stackqueue
-SERVICE_PASSWORD=$ADMIN_PASSWORD
-
-# ``HOST_IP`` should be set manually for best results if the NIC configuration
-# of the host is unusual, i.e. ``eth1`` has the default route but ``eth0`` is the
-# public interface.  It is auto-detected in ``stack.sh`` but often is indeterminate
-# on later runs due to the IP moving from an Ethernet interface to a bridge on
-# the host. Setting it here also makes it available for ``openrc`` to include
-# when setting ``OS_AUTH_URL``.
-# ``HOST_IP`` is not set by default.
-#HOST_IP=w.x.y.z
-
-
-# Logging
-# -------
-
-# By default ``stack.sh`` output only goes to the terminal where it runs.  It can
-# be configured to additionally log to a file by setting ``LOGFILE`` to the full
-# path of the destination log file.  A timestamp will be appended to the given name.
-LOGFILE=$DEST/logs/stack.sh.log
-
-# Old log files are automatically removed after 7 days to keep things neat.  Change
-# the number of days by setting ``LOGDAYS``.
-LOGDAYS=2
-
-# Nova logs will be colorized if ``SYSLOG`` is not set; turn this off by setting
-# ``LOG_COLOR`` false.
-#LOG_COLOR=False
-
-
-# Using milestone-proposed branches
-# ---------------------------------
-
-# Uncomment these to grab the milestone-proposed branches from the repos:
-#CINDER_BRANCH=milestone-proposed
-#GLANCE_BRANCH=milestone-proposed
-#HORIZON_BRANCH=milestone-proposed
-#KEYSTONE_BRANCH=milestone-proposed
-#KEYSTONECLIENT_BRANCH=milestone-proposed
-#NOVA_BRANCH=milestone-proposed
-#NOVACLIENT_BRANCH=milestone-proposed
-#NEUTRON_BRANCH=milestone-proposed
-#SWIFT_BRANCH=milestone-proposed
-
-
-# Swift
-# -----
-
-# Swift is now used as the back-end for the S3-like object store. If Nova's
-# objectstore (``n-obj`` in ``ENABLED_SERVICES``) is enabled, it will NOT
-# run if Swift is enabled. Setting the hash value is required and you will
-# be prompted for it if Swift is enabled so just set it to something already:
-SWIFT_HASH=66a3d6b56c1f479c8b4e70ab5c2000f5
-
-# For development purposes the default of 3 replicas is usually not required.
-# Set this to 1 to save some resources:
-SWIFT_REPLICAS=1
-
-# The data for Swift is stored by default in (``$DEST/data/swift``),
-# or (``$DATA_DIR/swift``) if ``DATA_DIR`` has been set, and can be
-# moved by setting ``SWIFT_DATA_DIR``. The directory will be created
-# if it does not exist.
-SWIFT_DATA_DIR=$DEST/data
