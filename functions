@@ -1304,7 +1304,8 @@ function setup_develop() {
     echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
 
     # Don't update repo if local changes exist
-    (cd $project_dir && git diff --quiet)
+    # Don't use buggy "git diff --quiet"
+    (cd $project_dir && git diff --exit-code >/dev/null)
     local update_requirements=$?
 
     if [ $update_requirements -eq 0 ]; then
@@ -1542,7 +1543,7 @@ function upload_image() {
         # NOTE: For backwards compatibility reasons, colons may be used in place
         # of semi-colons for property delimiters but they are not permitted
         # characters in NTFS filesystems.
-        property_string=`echo "$IMAGE_NAME" | grep -oP '(?<=-)(?!.*-).+[:;].+[:;].+$'`
+        property_string=`echo "$IMAGE_NAME" | grep -oP '(?<=-)(?!.*-).*[:;].*[:;].*$'`
         IFS=':;' read -a props <<< "$property_string"
         vmdk_disktype="${props[0]:-$vmdk_disktype}"
         vmdk_adapter_type="${props[1]:-$vmdk_adapter_type}"

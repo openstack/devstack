@@ -298,6 +298,9 @@ SYSLOG_PORT=${SYSLOG_PORT:-516}
 SYSSTAT_FILE=${SYSSTAT_FILE:-"sysstat.dat"}
 SYSSTAT_INTERVAL=${SYSSTAT_INTERVAL:-"1"}
 
+PIDSTAT_FILE=${PIDSTAT_FILE:-"pidstat.txt"}
+PIDSTAT_INTERVAL=${PIDSTAT_INTERVAL:-"5"}
+
 # Use color for logging output (only available if syslog is not used)
 LOG_COLOR=`trueorfalse True $LOG_COLOR`
 
@@ -312,9 +315,13 @@ rm -f $SSL_BUNDLE_FILE
 # Configure Projects
 # ==================
 
-# Source project function libraries
+# Import apache functions
 source $TOP_DIR/lib/apache
+
+# Import TLS functions
 source $TOP_DIR/lib/tls
+
+# Source project function libraries
 source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/stackforge
@@ -881,6 +888,16 @@ if is_service_enabled sysstat; then
     fi
 fi
 
+if is_service_enabled pidstat; then
+    # Per-process stats
+    PIDSTAT_OPTS="-l -p ALL -T ALL"
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        screen_it pidstat "cd $TOP_DIR; pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL > $SCREEN_LOGDIR/$PIDSTAT_FILE"
+    else
+        screen_it pidstat "pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL"
+    fi
+fi
+
 
 # Start Services
 # ==============
@@ -1113,6 +1130,15 @@ if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nov
     iniset $NOVA_CONF DEFAULT s3_access_key "$ACCESS_KEY"
     iniset $NOVA_CONF DEFAULT s3_secret_key "$SECRET_KEY"
     iniset $NOVA_CONF DEFAULT s3_affix_tenant "True"
+fi
+
+# Create a randomized default value for the keymgr's fixed_key
+if is_service_enabled nova; then
+    FIXED_KEY=""
+    for i in $(seq 1 64);
+        do FIXED_KEY+=$(echo "obase=16; $(($RANDOM % 16))" | bc);
+    done;
+    iniset $NOVA_CONF keymgr fixed_key "$FIXED_KEY"
 fi
 
 if is_service_enabled zeromq; then

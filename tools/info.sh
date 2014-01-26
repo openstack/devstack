@@ -85,8 +85,8 @@ done
 # Packages
 # --------
 
-# - We are going to check packages only for the services needed.
-# - We are parsing the packages files and detecting metadatas.
+# - Only check packages for the services enabled
+# - Parse version info from the package metadata, not the package/file names
 
 for p in $(get_packages $ENABLED_SERVICES); do
     if [[ "$os_PACKAGE" = "deb" ]]; then
@@ -141,9 +141,15 @@ rm $FREEZE_FILE
 
 # Dump localrc with 'localrc|' prepended and comments and passwords left out
 if [[ -r $TOP_DIR/localrc ]]; then
+    RC=$TOP_DIR/localrc
+elif [[ -f $RC_DIR/.localrc.auto ]]; then
+    RC=$TOP_DIR/.localrc.auto
+fi
+if [[ -n $RC ]]; then
     sed -e '
-        /PASSWORD/d;
+        /^[ \t]*$/d;
+        /PASSWORD/s/=.*$/=\<password\>/;
         /^#/d;
         s/^/localrc\|/;
-    ' $TOP_DIR/localrc
+    ' $RC
 fi
