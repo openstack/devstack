@@ -55,3 +55,59 @@ Steps for basic Ubuntu VM image
    cp contrail/localrc-single localrc
    vi localrc  # edit PHYSICAL_INTERFACE
 7) ./stack.sh
+
+Steps for basic Fedora host
+---------------------------
+I perform these steps on a minimal Fedora host. You may not
+need these steps and will depend upon your starting image.
+
+1) sudo yum -y install git-core patch vim
+2) sudo yum -y install kernel-devel-3.6.6-1
+   My "uname -a" shows "Linux a6s34 3.6.6-1.fc17.x86_64"
+3) sudo yum -y upgrade libtasn1
+4) sudo yum -y install python-pip
+5) sudo easy_install -U distribute
+6) verify ssh to github is working
+   ssh -T git@github.com
+7) download devstack (should have already done this)
+   git clone git@github.com:dsetia/devstack.git
+8) copy sample localrc as mentioned above. Edit localrc 
+   PHYSICAL_INTERFACE/SERVICE_HOST/... to match your setup
+
+   cd devstack
+   cp contrail/localrc-single localrc
+   vi localrc  # edit PHYSICAL_INTERFACE
+9) ./stack.sh
+
+
+Software Gateway support
+------------------------
+
+Software gateway provides internet connectivity to virtual machines. It
+supports routing between virtual-network and external public-networks. The
+Simple Gateway is a restricted implementation of gateway. The features 
+supported are,
+    - A compute node provides Simple Gateway functionality for a single
+      virtual-network
+    - A virtual-network can ideally have multiple subnets. But, gateway 
+      supports only one subnet per virtual-network
+    - Relies on the networking stack of host operating-system to route packets
+      between public-network and virtual-network
+
+Configuration:
+ Following parameters must be configured in localrc for Simple Gateway:
+
+ CONTRAIL_VGW_PUBLIC_NETWORK 
+    Specifies FQDN of the routing-instance that needs public access. 
+    Example: If domain=default-domain, user=admin and vm=public, FQDN is 
+             default-domain:admin:public:public
+ CONTRAIL_VGW_PUBLIC_SUBNET
+    Specifies the subnet configured for the virtual-network.
+    Example: 192.168.1.0/24
+ CONTRAIL_VGW_INTERFACE 
+    A tap interface is created with this name. The interface is added to
+    routing-instance of virtual-network. Packets to/from virtual-network 
+    use this interface (Example: vgw)
+
+Please see detailed instructions at:
+https://github.com/Juniper/contrail-controller/wiki/Simple-Gateway
