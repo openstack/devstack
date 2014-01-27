@@ -652,8 +652,10 @@ function stop_swift() {
     if type -p swift-init >/dev/null; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi
-    # Dump the proxy server
-    sudo pkill -f swift-proxy-server
+    for type in proxy object container account; do
+        # Dump all of the servers
+        pkill -f swift-
+    done
 }
 
 # Restore xtrace
