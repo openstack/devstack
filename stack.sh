@@ -12,7 +12,7 @@
 # developer install.
 
 # To keep this script simple we assume you are running on a recent **Ubuntu**
-# (12.04 Precise or newer) or **Fedora** (F16 or newer) machine.  (It may work
+# (12.04 Precise or newer) or **Fedora** (F18 or newer) machine.  (It may work
 # on other platforms but support for those platforms is left to those who added
 # them to DevStack.)  It should work in a VM or physical server.  Additionally
 # we maintain a list of ``apt`` and ``rpm`` dependencies and other configuration
@@ -22,6 +22,13 @@
 
 # Make sure custom grep options don't get in the way
 unset GREP_OPTIONS
+
+# Sanitize language settings to avoid commands bailing out
+# with "unsupported locale setting" errors.
+unset LANG
+unset LANGUAGE
+LC_ALL=C
+export LC_ALL
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
@@ -131,7 +138,7 @@ disable_negated_services
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (oneiric|precise|quantal|raring|saucy|trusty|7.0|wheezy|sid|testing|jessie|f16|f17|f18|f19|opensuse-12.2|rhel6) ]]; then
+if [[ ! ${DISTRO} =~ (precise|raring|saucy|trusty|7.0|wheezy|sid|testing|jessie|f18|f19|f20|opensuse-12.2|rhel6) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         die $LINENO "If you wish to run this script anyway run with FORCE=yes"
@@ -291,6 +298,9 @@ SYSLOG_PORT=${SYSLOG_PORT:-516}
 SYSSTAT_FILE=${SYSSTAT_FILE:-"sysstat.dat"}
 SYSSTAT_INTERVAL=${SYSSTAT_INTERVAL:-"1"}
 
+PIDSTAT_FILE=${PIDSTAT_FILE:-"pidstat.txt"}
+PIDSTAT_INTERVAL=${PIDSTAT_INTERVAL:-"5"}
+
 # Use color for logging output (only available if syslog is not used)
 LOG_COLOR=`trueorfalse True $LOG_COLOR`
 
@@ -305,9 +315,13 @@ rm -f $SSL_BUNDLE_FILE
 # Configure Projects
 # ==================
 
-# Source project function libraries
+# Import apache functions
 source $TOP_DIR/lib/apache
+
+# Import TLS functions
 source $TOP_DIR/lib/tls
+
+# Source project function libraries
 source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/stackforge
@@ -860,11 +874,27 @@ init_service_check
 # -------
 
 # If enabled, systat has to start early to track OpenStack service startup.
-if is_service_enabled sysstat;then
+if is_service_enabled sysstat; then
+    # what we want to measure
+    # -u : cpu statitics
+    # -q : load
+    # -b : io load rates
+    # -w : process creation and context switch rates
+    SYSSTAT_OPTS="-u -q -b -w"
     if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it sysstat "cd ; sar -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
+        screen_it sysstat "cd $TOP_DIR; ./tools/sar_filter.py $SYSSTAT_OPTS -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
     else
-        screen_it sysstat "sar $SYSSTAT_INTERVAL"
+        screen_it sysstat "./tools/sar_filter.py $SYSSTAT_OPTS $SYSSTAT_INTERVAL"
+    fi
+fi
+
+if is_service_enabled pidstat; then
+    # Per-process stats
+    PIDSTAT_OPTS="-l -p ALL -T ALL"
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        screen_it pidstat "cd $TOP_DIR; pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL > $SCREEN_LOGDIR/$PIDSTAT_FILE"
+    else
+        screen_it pidstat "pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL"
     fi
 fi
 
@@ -899,6 +929,10 @@ if is_service_enabled key; then
 
     if is_service_enabled trove; then
         create_trove_accounts
+    fi
+
+    if is_service_enabled ceilometer; then
+        create_ceilometer_accounts
     fi
 
     if is_service_enabled swift || is_service_enabled s-proxy; then
@@ -1098,6 +1132,15 @@ if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nov
     iniset $NOVA_CONF DEFAULT s3_affix_tenant "True"
 fi
 
+# Create a randomized default value for the keymgr's fixed_key
+if is_service_enabled nova; then
+    FIXED_KEY=""
+    for i in $(seq 1 64);
+        do FIXED_KEY+=$(echo "obase=16; $(($RANDOM % 16))" | bc);
+    done;
+    iniset $NOVA_CONF keymgr fixed_key "$FIXED_KEY"
+fi
+
 if is_service_enabled zeromq; then
     echo_summary "Starting zermomq receiver"
     screen_it zeromq "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-rpc-zmq-receiver"
@@ -1112,6 +1155,7 @@ fi
 if is_service_enabled q-svc; then
     echo_summary "Starting Neutron"
     start_neutron_service_and_check
+    check_neutron_third_party_integration
 elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     NM_CONF=${NOVA_CONF}
     if is_service_enabled n-cell; then
@@ -1203,7 +1247,6 @@ fi
 # See https://help.ubuntu.com/community/CloudInit for more on cloud-init
 #
 # Override ``IMAGE_URLS`` with a comma-separated list of UEC images.
-#  * **oneiric**: http://uec-images.ubuntu.com/oneiric/current/oneiric-server-cloudimg-amd64.tar.gz
 #  * **precise**: http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64.tar.gz
 
 if is_service_enabled g-reg; then

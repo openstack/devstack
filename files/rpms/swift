@@ -9,7 +9,7 @@ python-eventlet
 python-greenlet
 python-netifaces
 python-nose
-python-paste-deploy # dist:f16,f17,f18,f19
+python-paste-deploy # dist:f18,f19,f20
 python-simplejson
 python-webob
 pyxattr

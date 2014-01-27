@@ -64,7 +64,7 @@ create_trove_accounts() {
         TROVE_USER=$(keystone user-create \
             --name=trove \
             --pass="$SERVICE_PASSWORD" \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --email=trove@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add --tenant-id $SERVICE_TENANT \
@@ -198,7 +198,7 @@ function start_trove() {
 function stop_trove() {
     # Kill the trove screen windows
     for serv in tr-api tr-tmgr tr-cond; do
-        screen -S $SCREEN_NAME -p $serv -X kill
+        screen_stop $serv
     done
 }
 

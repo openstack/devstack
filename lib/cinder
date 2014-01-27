@@ -109,8 +109,8 @@ function _clean_lvm_backing_file() {
     # of the backing file
     if [ -z "`sudo lvs --noheadings -o lv_name $vg`" ]; then
         # if the backing physical device is a loop device, it was probably setup by devstack
-        VG_DEV=$(sudo losetup -j $DATA_DIR/${vg}-backing-file | awk -F':' '/backing-file/ { print $1}')
-        if [[ -n "$VG_DEV" ]]; then
+        if [[ -n "$VG_DEV" ]] && [[ -e "$VG_DEV" ]]; then
+            VG_DEV=$(sudo losetup -j $DATA_DIR/${vg}-backing-file | awk -F':' '/backing-file/ { print $1}')
             sudo losetup -d $VG_DEV
             rm -f $DATA_DIR/${vg}-backing-file
         fi
@@ -163,15 +163,8 @@ function cleanup_cinder() {
     fi
 }
 
-# configure_cinder() - Set config files, create data dirs, etc
-function configure_cinder() {
-    if [[ ! -d $CINDER_CONF_DIR ]]; then
-        sudo mkdir -p $CINDER_CONF_DIR
-    fi
-    sudo chown $STACK_USER $CINDER_CONF_DIR
-
-    cp -p $CINDER_DIR/etc/cinder/policy.json $CINDER_CONF_DIR
-
+# configure_cinder_rootwrap() - configure Cinder's rootwrap
+function configure_cinder_rootwrap() {
     # Set the paths of certain binaries
     CINDER_ROOTWRAP=$(get_rootwrap_location cinder)
     if [[ ! -x $CINDER_ROOTWRAP ]]; then
@@ -214,6 +207,18 @@ function configure_cinder() {
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/cinder-rootwrap
+}
+
+# configure_cinder() - Set config files, create data dirs, etc
+function configure_cinder() {
+    if [[ ! -d $CINDER_CONF_DIR ]]; then
+        sudo mkdir -p $CINDER_CONF_DIR
+    fi
+    sudo chown $STACK_USER $CINDER_CONF_DIR
+
+    cp -p $CINDER_DIR/etc/cinder/policy.json $CINDER_CONF_DIR
+
+    configure_cinder_rootwrap
 
     cp $CINDER_DIR/etc/cinder/api-paste.ini $CINDER_API_PASTE_INI
 
@@ -341,7 +346,7 @@ function configure_cinder() {
             -e 's/snapshot_autoextend_percent =.*/snapshot_autoextend_percent = 20/' \
             /etc/lvm/lvm.conf
     fi
-    iniset $CINDER_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT
+    configure_API_version $CINDER_CONF $IDENTITY_API_VERSION
     iniset $CINDER_CONF keystone_authtoken admin_user cinder
     iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
@@ -365,7 +370,7 @@ create_cinder_accounts() {
         CINDER_USER=$(keystone user-create \
             --name=cinder \
             --pass="$SERVICE_PASSWORD" \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --email=cinder@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \
@@ -385,7 +390,7 @@ create_cinder_accounts() {
                 --adminurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
                 --internalurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
             CINDER_V2_SERVICE=$(keystone service-create \
-                --name=cinder \
+                --name=cinderv2 \
                 --type=volumev2 \
                 --description="Cinder Volume Service V2" \
                 | grep " id " | get_field 2)
@@ -556,7 +561,7 @@ function start_cinder() {
 function stop_cinder() {
     # Kill the cinder screen windows
     for serv in c-api c-bak c-sch c-vol; do
-        screen -S $SCREEN_NAME -p $serv -X kill
+        screen_stop $serv
     done
 
     if is_service_enabled c-vol; then

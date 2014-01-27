@@ -2,6 +2,22 @@
 
 # **cinder_cert.sh**
 
+# This script is a simple wrapper around the tempest volume api tests
+# It requires that you have a working and functional devstack install
+# and that you've enabled your device driver by making the necessary
+# modifications to /etc/cinder/cinder.conf
+
+# This script will refresh your openstack repo's and restart the cinder
+# services to pick up your driver changes.
+# please NOTE; this script assumes your devstack install is functional
+# and includes tempest. A good first step is to make sure you can
+# create volumes on your device before you even try and run this script.
+
+# It also assumes default install location (/opt/stack/xxx)
+# to aid in debug, you should also verify that you've added
+# an output directory for screen logs:
+#     SCREEN_LOGDIR=/opt/stack/screen-logs
+
 CERT_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$(cd $CERT_DIR/..; pwd)
 
@@ -73,9 +89,9 @@ start_cinder
 sleep 5
 
 # run tempest api/volume/test_*
-log_message "Run the actual tempest volume tests (run_tests.sh -N tempest.api.volume.test_*)...", True
+log_message "Run the actual tempest volume tests (./tools/pretty_tox.sh api.volume_*)...", True
 exec 2> >(tee -a $TEMPFILE)
-`./run_tests.sh -N tempest.api.volume.test_*`
+`./tools/pretty_tox.sh api.volume`
 if [[ $? = 0 ]]; then
     log_message "CONGRATULATIONS!!!  Device driver PASSED!", True
     log_message "Submit output: ($TEMPFILE)"

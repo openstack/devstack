@@ -1132,10 +1132,42 @@ function screen_it {
             sleep 1.5
 
             NL=`echo -ne '\015'`
-            screen -S $SCREEN_NAME -p $1 -X stuff "$2 || echo \"$1 failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
+            # This fun command does the following:
+            # - the passed server command is backgrounded
+            # - the pid of the background process is saved in the usual place
+            # - the server process is brought back to the foreground
+            # - if the server process exits prematurely the fg command errors
+            #   and a message is written to stdout and the service failure file
+            # The pid saved can be used in screen_stop() as a process group
+            # id to kill off all child processes
+            screen -S $SCREEN_NAME -p $1 -X stuff "$2 & echo \$! >$SERVICE_DIR/$SCREEN_NAME/$1.pid; fg || echo \"$1 failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
         else
             # Spawn directly without screen
-            run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$service.pid
+            run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$1.pid
+        fi
+    fi
+}
+
+
+# Stop a service in screen
+# If a PID is available use it, kill the whole process group via TERM
+# If screen is being used kill the screen window; this will catch processes
+# that did not leave a PID behind
+# screen_stop service
+function screen_stop() {
+    SCREEN_NAME=${SCREEN_NAME:-stack}
+    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
+    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+
+    if is_service_enabled $1; then
+        # Kill via pid if we have one available
+        if [[ -r $SERVICE_DIR/$SCREEN_NAME/$1.pid ]]; then
+            pkill -TERM -P -$(cat $SERVICE_DIR/$SCREEN_NAME/$1.pid)
+            rm $SERVICE_DIR/$SCREEN_NAME/$1.pid
+        fi
+        if [[ "$USE_SCREEN" = "True" ]]; then
+            # Clean up the screen window
+            screen -S $SCREEN_NAME -p $1 -X kill
         fi
     fi
 }
@@ -1272,7 +1304,8 @@ function setup_develop() {
     echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
 
     # Don't update repo if local changes exist
-    (cd $project_dir && git diff --quiet)
+    # Don't use buggy "git diff --quiet"
+    (cd $project_dir && git diff --exit-code >/dev/null)
     local update_requirements=$?
 
     if [ $update_requirements -eq 0 ]; then
@@ -1364,11 +1397,11 @@ function upload_image() {
     if [[ $image_url != file* ]]; then
         # Downloads the image (uec ami+aki style), then extracts it.
         if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
-             wget -c $image_url -O $FILES/$IMAGE_FNAME
-             if [[ $? -ne 0 ]]; then
-                 echo "Not found: $image_url"
-                 return
-             fi
+            wget -c $image_url -O $FILES/$IMAGE_FNAME
+            if [[ $? -ne 0 ]]; then
+                echo "Not found: $image_url"
+                return
+            fi
         fi
         IMAGE="$FILES/${IMAGE_FNAME}"
     else
@@ -1420,7 +1453,7 @@ function upload_image() {
         vmdk_create_type="${vmdk_create_type%?}"
 
         descriptor_data_pair_msg="Monolithic flat and VMFS disks "`
-                                 `"should use a descriptor-data pair."
+                                    `"should use a descriptor-data pair."
         if [[ "$vmdk_create_type" = "monolithicSparse" ]]; then
             vmdk_disktype="sparse"
         elif [[ "$vmdk_create_type" = "monolithicFlat" || \
@@ -1435,7 +1468,7 @@ function upload_image() {
             path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
             flat_url="${image_url:0:$path_len}$flat_fname"
             warn $LINENO "$descriptor_data_pair_msg"`
-                         `" Attempt to retrieve the *-flat.vmdk: $flat_url"
+                            `" Attempt to retrieve the *-flat.vmdk: $flat_url"
             if [[ $flat_url != file* ]]; then
                 if [[ ! -f $FILES/$flat_fname || \
                 "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
@@ -1474,7 +1507,7 @@ function upload_image() {
                 flat_path="${image_url:0:$path_len}"
                 descriptor_url=$flat_path$descriptor_fname
                 warn $LINENO "$descriptor_data_pair_msg"`
-                             `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
+                                `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
                 if [[ $flat_path != file* ]]; then
                     if [[ ! -f $FILES/$descriptor_fname || \
                     "$(stat -c "%s" $FILES/$descriptor_fname)" = "0" ]]; then
@@ -1489,8 +1522,8 @@ function upload_image() {
                     descriptor_url=$(echo $descriptor_url | sed "s/^file:\/\///g")
                     if [[ ! -f $descriptor_url || \
                     "$(stat -c "%s" $descriptor_url)" == "0" ]]; then
-                         warn $LINENO "Descriptor not found $descriptor_url"
-                         descriptor_found=false
+                        warn $LINENO "Descriptor not found $descriptor_url"
+                        descriptor_found=false
                     fi
                 fi
                 if $descriptor_found; then
@@ -1498,10 +1531,10 @@ function upload_image() {
                     `"grep -a -F -m 1 'ddb.adapterType =' $descriptor_url)"
                     vmdk_adapter_type="${vmdk_adapter_type#*\"}"
                     vmdk_adapter_type="${vmdk_adapter_type%?}"
-                 fi
-             fi
-             #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
-             vmdk_disktype="preallocated"
+                fi
+            fi
+            #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
+            vmdk_disktype="preallocated"
         else
             #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
             vmdk_disktype="preallocated"
@@ -1510,7 +1543,7 @@ function upload_image() {
         # NOTE: For backwards compatibility reasons, colons may be used in place
         # of semi-colons for property delimiters but they are not permitted
         # characters in NTFS filesystems.
-        property_string=`echo "$IMAGE_NAME" | grep -oP '(?<=-)(?!.*-).+[:;].+[:;].+$'`
+        property_string=`echo "$IMAGE_NAME" | grep -oP '(?<=-)(?!.*-).*[:;].*[:;].*$'`
         IFS=':;' read -a props <<< "$property_string"
         vmdk_disktype="${props[0]:-$vmdk_disktype}"
         vmdk_adapter_type="${props[1]:-$vmdk_adapter_type}"

@@ -39,6 +39,10 @@ rm -f $TOP_DIR/cacert.pem
 rm -f $TOP_DIR/cert.pem
 rm -f $TOP_DIR/pk.pem
 
+# If nova api is not enabled we exit with exitcode 55 so that
+# the exercise is skipped
+is_service_enabled n-api || exit 55
+
 # Get Certificates
 nova x509-get-root-cert $TOP_DIR/cacert.pem
 nova x509-create-cert $TOP_DIR/pk.pem $TOP_DIR/cert.pem
