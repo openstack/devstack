@@ -69,6 +69,22 @@ if [[ -d $dir ]]; then
     sudo chmod +r $dir/*
 fi
 
+# Ubuntu 12.04
+# -----
+# We can regularly get kernel crashes on the 12.04 default kernel, so attempt
+# to install a new kernel
+if [[ ${DISTRO} =~ (precise) ]]; then
+    # Finally, because we suspect the Precise kernel is problematic, install a new kernel
+    UPGRADE_KERNEL=$(trueorfalse False $UPGRADE_KERNEL)
+    if [[ $UPGRADE_KERNEL == "True" ]]; then
+        if [[ ! `uname -r` =~ (^3\.11) ]]; then
+            apt_get install linux-generic-lts-saucy
+            echo "Installing Saucy LTS kernel, please reboot before proceeding"
+            exit 1
+        fi
+    fi
+fi
+
 
 # RHEL6
 # -----
