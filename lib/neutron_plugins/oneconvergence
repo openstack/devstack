@@ -1,0 +1,76 @@
+# Neutron One Convergence plugin
+# ---------------------------
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+source $TOP_DIR/lib/neutron_plugins/ovs_base
+
+Q_L3_ENABLED=true
+Q_L3_ROUTER_PER_TENANT=true
+Q_USE_NAMESPACE=true
+
+function neutron_plugin_install_agent_packages {
+    _neutron_ovs_base_install_agent_packages
+}
+# Configure common parameters
+function neutron_plugin_configure_common {
+
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/oneconvergence
+    Q_PLUGIN_CONF_FILENAME=nvsdplugin.ini
+    Q_PLUGIN_CLASS="neutron.plugins.oneconvergence.plugin.OneConvergencePluginV2"
+    Q_DB_NAME='oc_nvsd_neutron'
+}
+
+# Configure plugin specific information
+function neutron_plugin_configure_service {
+    iniset /$Q_PLUGIN_CONF_FILE nvsd nvsd_ip $NVSD_IP
+    iniset /$Q_PLUGIN_CONF_FILE nvsd nvsd_port $NVSD_PORT
+    iniset /$Q_PLUGIN_CONF_FILE nvsd nvsd_user $NVSD_USER
+    iniset /$Q_PLUGIN_CONF_FILE nvsd nvsd_passwd $NVSD_PASSWD
+}
+
+function neutron_plugin_configure_debug_command {
+    _neutron_ovs_base_configure_debug_command
+}
+
+function neutron_plugin_setup_interface_driver {
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+}
+
+function has_neutron_plugin_security_group {
+    # 1 means False here
+    return 0
+}
+
+function setup_integration_bridge {
+    _neutron_ovs_base_setup_bridge $OVS_BRIDGE
+}
+
+function neutron_plugin_configure_dhcp_agent {
+    setup_integration_bridge
+    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
+}
+
+function neutron_plugin_configure_l3_agent {
+    _neutron_ovs_base_configure_l3_agent
+    iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
+}
+
+function neutron_plugin_configure_plugin_agent {
+
+    AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-nvsd-agent"
+
+    _neutron_ovs_base_configure_firewall_driver
+}
+
+function neutron_plugin_create_nova_conf {
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+    if ( is_service_enabled n-cpu && ! ( is_service_enabled q-dhcp )) ; then
+        setup_integration_bridge
+    fi
+}
+
+# Restore xtrace
+$MY_XTRACE
