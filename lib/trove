@@ -38,6 +38,16 @@ else
     TROVE_BIN_DIR=$(get_python_exec_prefix)
 fi
 
+# Functions
+# ---------
+
+# Test if any Trove services are enabled
+# is_trove_enabled
+function is_trove_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"tr-" ]] && return 0
+    return 1
+}
+
 # setup_trove_logging() - Adds logging configuration to conf files
 function setup_trove_logging() {
     local CONF=$1
