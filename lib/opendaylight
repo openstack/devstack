@@ -1,0 +1,167 @@
+# lib/opendaylight
+# Functions to control the configuration and operation of the opendaylight service
+
+# Dependencies:
+#
+# - ``functions`` file
+# # ``DEST`` must be defined
+# # ``STACK_USER`` must be defined
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# - is_opendaylight_enabled
+# - is_opendaylight-compute_enabled
+# - install_opendaylight
+# - install_opendaylight-compute
+# - configure_opendaylight
+# - init_opendaylight
+# - start_opendaylight
+# - stop_opendaylight-compute
+# - stop_opendaylight
+# - cleanup_opendaylight
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# For OVS_BRIDGE and PUBLIC_BRIDGE
+source $TOP_DIR/lib/neutron_plugins/ovs_base
+
+# Defaults
+# --------
+
+# The IP address of ODL. Set this in local.conf.
+# ODL_MGR_IP=
+ODL_MGR_IP=${ODL_MGR_IP:-$SERVICE_HOST}
+
+# <define global variables here that belong to this project>
+ODL_DIR=$DEST/opendaylight
+
+# The OpenDaylight Package, currently using 'Hydrogen' release
+ODL_PKG=${ODL_PKG:-distributions-virtualization-0.1.1-osgipackage.zip}
+
+# The OpenDaylight URL
+ODL_URL=${ODL_URL:-https://nexus.opendaylight.org/content/repositories/opendaylight.release/org/opendaylight/integration/distributions-virtualization/0.1.1}
+
+# Default arguments for OpenDaylight. This is typically used to set
+# Java memory options.
+#   ODL_ARGS=Xmx1024m -XX:MaxPermSize=512m
+ODL_ARGS=${ODL_ARGS:-"-XX:MaxPermSize=384m"}
+
+# How long to pause after ODL starts to let it complete booting
+ODL_BOOT_WAIT=${ODL_BOOT_WAIT:-60}
+
+# Set up default directories
+
+
+# Entry Points
+# ------------
+
+# Test if OpenDaylight is enabled
+# is_opendaylight_enabled
+function is_opendaylight_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"odl-" ]] && return 0
+    return 1
+}
+
+# cleanup_opendaylight() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_opendaylight {
+    :
+}
+
+# configure_opendaylight() - Set config files, create data dirs, etc
+function configure_opendaylight {
+    # Remove simple forwarder
+    rm -f $ODL_DIR/opendaylight/plugins/org.opendaylight.controller.samples.simpleforwarding*
+
+    # Configure OpenFlow 1.3
+    echo "ovsdb.of.version=1.3" >> $ODL_DIR/opendaylight/configuration/config.ini
+}
+
+# init_opendaylight() - Initialize databases, etc.
+function init_opendaylight {
+    # clean up from previous (possibly aborted) runs
+    # create required data files
+    :
+}
+
+# install_opendaylight() - Collect source and prepare
+function install_opendaylight {
+    local _pwd=$(pwd)
+
+    if is_ubuntu; then
+        install_package maven openjdk-7-jre openjdk-7-jdk
+    else
+        yum_install maven java-1.7.0-openjdk
+    fi
+
+    # Download OpenDaylight
+    mkdir -p $ODL_DIR
+    cd $ODL_DIR
+    wget -N $ODL_URL/$ODL_PKG
+    unzip -u $ODL_PKG
+}
+
+# install_opendaylight-compute - Make sure OVS is install
+function install_opendaylight-compute {
+    local kernel_version
+    # Install deps
+    # FIXME add to ``files/apts/neutron``, but don't install if not needed!
+    if is_ubuntu; then
+        kernel_version=`cat /proc/version | cut -d " " -f3`
+        install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
+    elif is_fedora; then
+        install_package openvswitch
+        # Ensure that the service is started
+        restart_service openvswitch
+    elif is_suse; then
+        install_package openvswitch
+        restart_service openvswitch-switch
+        restart_service openvswitch-controller
+    fi
+}
+
+# start_opendaylight() - Start running processes, including screen
+function start_opendaylight {
+    if is_ubuntu; then
+        JHOME=/usr/lib/jvm/java-1.7.0-openjdk-amd64
+    else
+        JHOME=/usr/lib/jvm/java-1.7.0-openjdk
+    fi
+
+    # The flags to ODL have the following meaning:
+    #   -of13: runs ODL using OpenFlow 1.3 protocol support.
+    #   -virt ovsdb: Runs ODL in "virtualization" mode with OVSDB support
+    screen_it odl-server "cd $ODL_DIR/opendaylight && JAVE_HOME=$JHOME ./run.sh $ODL_ARGS -of13 -virt ovsdb"
+
+    # Sleep a bit to let OpenDaylight finish starting up
+    sleep $ODL_BOOT_WAIT
+}
+
+# stop_opendaylight() - Stop running processes (non-screen)
+function stop_opendaylight {
+    screen_stop odl-server
+}
+
+# stop_opendaylight-compute() - Remove OVS bridges
+function stop_opendaylight-compute {
+    # remove all OVS ports that look like Neutron created ports
+    for port in $(sudo ovs-vsctl list port | grep -o -e tap[0-9a-f\-]* -e q[rg]-[0-9a-f\-]*); do
+        sudo ovs-vsctl del-port ${port}
+    done
+
+    # remove all OVS bridges created by Neutron
+    for bridge in $(sudo ovs-vsctl list-br | grep -o -e ${OVS_BRIDGE} -e ${PUBLIC_BRIDGE}); do
+        sudo ovs-vsctl del-br ${bridge}
+    done
+}
+
+# Restore xtrace
+$XTRACE
+
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:
