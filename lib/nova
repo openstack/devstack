@@ -122,6 +122,9 @@ MULTI_HOST=`trueorfalse False $MULTI_HOST`
 TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
 TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,nova
+
 
 # Functions
 # ---------

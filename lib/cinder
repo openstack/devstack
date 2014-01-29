@@ -79,6 +79,9 @@ VOLUME_BACKING_DEVICE2=${VOLUME_BACKING_DEVICE2:-}
 
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,cinder
+
 
 # Functions
 # ---------

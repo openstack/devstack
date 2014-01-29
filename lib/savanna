@@ -40,6 +40,10 @@ else
     SAVANNA_BIN_DIR=$(get_python_exec_prefix)
 fi
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,savanna
+
+
 # Functions
 # ---------
 

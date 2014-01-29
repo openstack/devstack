@@ -38,6 +38,10 @@ HEAT_CONF=$HEAT_CONF_DIR/heat.conf
 HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 HEAT_TEMPLATES_DIR=$HEAT_CONF_DIR/templates
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,heat
+
+
 # Functions
 # ---------
 
