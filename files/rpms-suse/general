@@ -17,6 +17,7 @@ tcpdump
 unzip
 vim-enhanced
 wget
+bc
 
 findutils-locate # useful when debugging
 lsof # useful when debugging
