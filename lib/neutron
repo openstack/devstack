@@ -237,6 +237,10 @@ else
     Q_USE_SECGROUP=False
 fi
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,neutron
+
+
 # Functions
 # ---------
 

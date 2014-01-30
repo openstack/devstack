@@ -52,6 +52,9 @@ fi
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,glance
+
 
 # Functions
 # ---------

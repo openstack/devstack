@@ -51,6 +51,10 @@ MARCONI_BRANCH=${MARCONI_BRANCH:-master}
 MARCONICLIENT_REPO=${MARCONICLIENT_REPO:-${GIT_BASE}/openstack/python-marconiclient.git}
 MARCONICLIENT_BRANCH=${MARCONICLIENT_BRANCH:-master}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,marconi
+
+
 # Functions
 # ---------
 
