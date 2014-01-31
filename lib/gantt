@@ -1,0 +1,96 @@
+# lib/gantt
+# Install and start **Gantt** scheduler service
+
+# Dependencies:
+#
+# - functions
+# - DEST, DATA_DIR, STACK_USER must be defined
+
+# stack.sh
+# ---------
+# - install_gantt
+# - configure_gantt
+# - init_gantt
+# - start_gantt
+# - stop_gantt
+# - cleanup_gantt
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Defaults
+# --------
+
+# set up default directories
+GANTT_DIR=$DEST/gantt
+GANTT_STATE_PATH=${GANTT_STATE_PATH:=$DATA_DIR/gantt}
+GANTT_REPO=${GANTT_REPO:-${GIT_BASE}/openstack/gantt.git}
+GANTT_BRANCH=${GANTT_BRANCH:-master}
+
+GANTTCLIENT_DIR=$DEST/python-ganttclient
+GANTTCLIENT_REPO=${GANTT_REPO:-${GIT_BASE}/openstack/python-ganttclient.git}
+GANTTCLIENT_BRANCH=${GANTT_BRANCH:-master}
+
+# eventually we will have a separate gantt config
+# file but for compatibility reasone stick with
+# nova.conf for now
+GANTT_CONF_DIR=${GANTT_CONF_DIR:-/etc/nova}
+GANTT_CONF=$GANTT_CONF_DIR/nova.conf
+
+# Support entry points installation of console scripts
+GANTT_BIN_DIR=$(get_python_exec_prefix)
+
+
+# Functions
+# ---------
+
+# cleanup_gantt() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_gantt() {
+    echo "Cleanup Gantt"
+}
+
+# configure_gantt() - Set config files, create data dirs, etc
+function configure_gantt() {
+    echo "Configure Gantt"
+}
+
+# init_gantt() - Initialize database and volume group
+function init_gantt() {
+    echo "Initialize Gantt"
+}
+
+# install_gantt() - Collect source and prepare
+function install_gantt() {
+    git_clone $GANTT_REPO $GANTT_DIR $GANTT_BRANCH
+    setup_develop $GANTT_DIR
+}
+
+# install_ganttclient() - Collect source and prepare
+function install_ganttclient() {
+    echo "Install Gantt Client"
+#    git_clone $GANTTCLIENT_REPO $GANTTCLIENT_DIR $GANTTCLIENT_BRANCH
+#    setup_develop $GANTTCLIENT_DIR
+}
+
+# start_gantt() - Start running processes, including screen
+function start_gantt() {
+    if is_service_enabled gantt; then
+        screen_it gantt "cd $GANTT_DIR && $GANTT_BIN_DIR/gantt-scheduler --config-file $GANTT_CONF"
+    fi
+}
+
+# stop_gantt() - Stop running processes
+function stop_gantt() {
+    echo "Stop Gantt"
+    screen_stop gantt
+}
+
+# Restore xtrace
+$XTRACE
+
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:
