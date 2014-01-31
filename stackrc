@@ -37,6 +37,12 @@ fi
 #  enable_service tempest
 ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,tempest,mysql
 
+# Tell Tempest which services are available.  The default is set here as
+# Tempest falls late in the configuration sequence.  This differs from
+# ``ENABLED_SERVICES`` in that the project names are used here rather than
+# the service names, i.e.: TEMPEST_SERVICES="key,glance,nova"
+TEMPEST_SERVICES=""
+
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=ec2,osapi_compute,metadata
 

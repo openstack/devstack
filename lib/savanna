@@ -26,7 +26,7 @@ SAVANNA_BRANCH=${SAVANNA_BRANCH:-master}
 # Set up default directories
 SAVANNA_DIR=$DEST/savanna
 SAVANNA_CONF_DIR=${SAVANNA_CONF_DIR:-/etc/savanna}
-SAVANNA_CONF_FILE=savanna.conf
+SAVANNA_CONF_FILE=${SAVANNA_CONF_DIR}/savanna.conf
 SAVANNA_DEBUG=${SAVANNA_DEBUG:-True}
 
 SAVANNA_SERVICE_HOST=${SAVANNA_SERVICE_HOST:-$SERVICE_HOST}
@@ -39,6 +39,10 @@ if [[ -d $SAVANNA_DIR/bin ]]; then
 else
     SAVANNA_BIN_DIR=$(get_python_exec_prefix)
 fi
+
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,savanna
+
 
 # Functions
 # ---------
@@ -88,24 +92,24 @@ function configure_savanna() {
     sudo chown $STACK_USER $SAVANNA_CONF_DIR
 
     # Copy over savanna configuration file and configure common parameters.
-    cp $SAVANNA_DIR/etc/savanna/savanna.conf.sample $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE
+    cp $SAVANNA_DIR/etc/savanna/savanna.conf.sample $SAVANNA_CONF_FILE
 
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_username savanna
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT os_admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT debug $SAVANNA_DEBUG
+    iniset $SAVANNA_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
+    iniset $SAVANNA_CONF_FILE DEFAULT os_admin_username savanna
+    iniset $SAVANNA_CONF_FILE DEFAULT os_admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $SAVANNA_CONF_FILE DEFAULT debug $SAVANNA_DEBUG
 
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE database connection `database_connection_url savanna`
+    iniset $SAVANNA_CONF_FILE database connection `database_connection_url savanna`
 
     if is_service_enabled neutron; then
-        iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT use_neutron true
-        iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT use_floating_ips true
+        iniset $SAVANNA_CONF_FILE DEFAULT use_neutron true
+        iniset $SAVANNA_CONF_FILE DEFAULT use_floating_ips true
     fi
 
-    iniset $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE DEFAULT use_syslog $SYSLOG
+    iniset $SAVANNA_CONF_FILE DEFAULT use_syslog $SYSLOG
 
     recreate_database savanna utf8
-    $SAVANNA_BIN_DIR/savanna-db-manage --config-file $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE upgrade head
+    $SAVANNA_BIN_DIR/savanna-db-manage --config-file $SAVANNA_CONF_FILE upgrade head
 }
 
 # install_savanna() - Collect source and prepare
@@ -116,7 +120,7 @@ function install_savanna() {
 
 # start_savanna() - Start running processes, including screen
 function start_savanna() {
-    screen_it savanna "cd $SAVANNA_DIR && $SAVANNA_BIN_DIR/savanna-api --config-file $SAVANNA_CONF_DIR/$SAVANNA_CONF_FILE"
+    screen_it savanna "cd $SAVANNA_DIR && $SAVANNA_BIN_DIR/savanna-api --config-file $SAVANNA_CONF_FILE"
 }
 
 # stop_savanna() - Stop running processes

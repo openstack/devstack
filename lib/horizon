@@ -31,6 +31,9 @@ HORIZON_DIR=$DEST/horizon
 # The example file in Horizon repo is used by default.
 HORIZON_SETTINGS=${HORIZON_SETTINGS:-$HORIZON_DIR/openstack_dashboard/local/local_settings.py.example}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,horizon
+
 
 # Functions
 # ---------

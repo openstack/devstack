@@ -42,6 +42,9 @@ IRONIC_BIN_DIR=$(get_python_exec_prefix)
 IRONIC_SERVICE_PROTOCOL=http
 IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:6385}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,ironic
+
 
 # Functions
 # ---------

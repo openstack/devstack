@@ -111,6 +111,9 @@ OBJECT_PORT_BASE=${OBJECT_PORT_BASE:-6013}
 CONTAINER_PORT_BASE=${CONTAINER_PORT_BASE:-6011}
 ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,swift
+
 
 # Functions
 # ---------
@@ -257,6 +260,8 @@ function configure_swift() {
 
     SWIFT_CONFIG_PROXY_SERVER=${SWIFT_CONF_DIR}/proxy-server.conf
     cp ${SWIFT_DIR}/etc/proxy-server.conf-sample ${SWIFT_CONFIG_PROXY_SERVER}
+
+    cp ${SWIFT_DIR}/etc/container-sync-realms.conf-sample ${SWIFT_CONF_DIR}/container-sync-realms.conf
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${STACK_USER}
@@ -652,8 +657,10 @@ function stop_swift() {
     if type -p swift-init >/dev/null; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi
-    # Dump the proxy server
-    sudo pkill -f swift-proxy-server
+    for type in proxy object container account; do
+        # Dump all of the servers
+        pkill -f swift-
+    done
 }
 
 # Restore xtrace
