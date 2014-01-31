@@ -25,10 +25,10 @@ def is_data_line(line):
 
 
 def parse_line(line):
-    m = re.search('(\d\d:\d\d:\d\d \w\w)(\s+((\S+)\s*)+)', line)
+    m = re.search('(\d\d:\d\d:\d\d( \w\w)?)(\s+((\S+)\s*)+)', line)
     if m:
         date = m.group(1)
-        data = m.group(2).rstrip()
+        data = m.group(3).rstrip()
         return date, data
     else:
         return None, None
@@ -47,6 +47,10 @@ header = ""
 data_line = ""
 printed_header = False
 current_ts = None
+
+# print out the first sysstat line regardless
+print process.stdout.readline()
+
 while True:
     nextline = process.stdout.readline()
     if nextline == '' and process.poll() is not None:
