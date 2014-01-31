@@ -261,6 +261,8 @@ function configure_swift() {
     SWIFT_CONFIG_PROXY_SERVER=${SWIFT_CONF_DIR}/proxy-server.conf
     cp ${SWIFT_DIR}/etc/proxy-server.conf-sample ${SWIFT_CONFIG_PROXY_SERVER}
 
+    cp ${SWIFT_DIR}/etc/container-sync-realms.conf-sample ${SWIFT_CONF_DIR}/container-sync-realms.conf
+
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${STACK_USER}
 
