@@ -46,8 +46,8 @@ set +o xtrace
 
 # Set up default directories
 TEMPEST_DIR=$DEST/tempest
-TEMPEST_CONF_DIR=$TEMPEST_DIR/etc
-TEMPEST_CONF=$TEMPEST_CONF_DIR/tempest.conf
+TEMPEST_CONFIG_DIR=${TEMPEST_CONFIG_DIR:-$TEMPEST_DIR/etc}
+TEMPEST_CONFIG=$TEMPEST_CONFIG_DIR/tempest.conf
 TEMPEST_STATE_PATH=${TEMPEST_STATE_PATH:=$DATA_DIR/tempest}
 
 NOVA_SOURCE_DIR=$DEST/nova
@@ -58,6 +58,10 @@ BUILD_TIMEOUT=196
 
 BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-0.3.1"
 
+# Cinder/Volume variables
+TEMPEST_VOLUME_DRIVER=${TEMPEST_VOLUME_DRIVER:-default}
+TEMPEST_VOLUME_VENDOR=${TEMPEST_VOLUME_VENDOR:-"Open Source"}
+TEMPEST_STORAGE_PROTOCOL=${TEMPEST_STORAGE_PROTOCOL:-iSCSI}
 
 # Functions
 # ---------
@@ -82,6 +86,11 @@ function configure_tempest() {
     local tenant_networks_reachable
     local boto_instance_type="m1.tiny"
     local ssh_connect_method="fixed"
+
+    if [[ ! -d $TEMPEST_CONFIG_DIR ]]; then
+        sudo mkdir -p $TEMPEST_CONFIG_DIR
+    fi
+    sudo chown $STACK_USER $TEMPEST_CONFIG_DIR
 
     # TODO(afazekas):
     # sudo python setup.py deploy
@@ -133,7 +142,8 @@ function configure_tempest() {
 
     # Create tempest.conf from tempest.conf.sample
     # copy every time, because the image UUIDS are going to change
-    cp $TEMPEST_CONF.sample $TEMPEST_CONF
+    sudo cp $TEMPEST_DIR/etc/tempest.conf.sample $TEMPEST_CONFIG
+    sudo chmod 644 $TEMPEST_CONFIG
 
     password=${ADMIN_PASSWORD:-secrete}
 
@@ -224,121 +234,126 @@ function configure_tempest() {
     fi
 
     # Oslo
-    iniset $TEMPEST_CONF DEFAULT lock_path $TEMPEST_STATE_PATH
+    iniset $TEMPEST_CONFIG DEFAULT lock_path $TEMPEST_STATE_PATH
     mkdir -p $TEMPEST_STATE_PATH
-    iniset $TEMPEST_CONF DEFAULT use_stderr False
-    iniset $TEMPEST_CONF DEFAULT log_file tempest.log
-    iniset $TEMPEST_CONF DEFAULT debug True
+    iniset $TEMPEST_CONFIG DEFAULT use_stderr False
+    iniset $TEMPEST_CONFIG DEFAULT log_file tempest.log
+    iniset $TEMPEST_CONFIG DEFAULT debug True
 
     # Timeouts
-    iniset $TEMPEST_CONF compute build_timeout $BUILD_TIMEOUT
-    iniset $TEMPEST_CONF volume build_timeout $BUILD_TIMEOUT
-    iniset $TEMPEST_CONF boto build_timeout $BUILD_TIMEOUT
-    iniset $TEMPEST_CONF compute build_interval $BUILD_INTERVAL
-    iniset $TEMPEST_CONF volume build_interval $BUILD_INTERVAL
-    iniset $TEMPEST_CONF boto build_interval $BUILD_INTERVAL
-    iniset $TEMPEST_CONF boto http_socket_timeout 5
+    iniset $TEMPEST_CONFIG compute build_timeout $BUILD_TIMEOUT
+    iniset $TEMPEST_CONFIG volume build_timeout $BUILD_TIMEOUT
+    iniset $TEMPEST_CONFIG boto build_timeout $BUILD_TIMEOUT
+    iniset $TEMPEST_CONFIG compute build_interval $BUILD_INTERVAL
+    iniset $TEMPEST_CONFIG volume build_interval $BUILD_INTERVAL
+    iniset $TEMPEST_CONFIG boto build_interval $BUILD_INTERVAL
+    iniset $TEMPEST_CONFIG boto http_socket_timeout 5
 
     # Identity
-    iniset $TEMPEST_CONF identity uri "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v2.0/"
-    iniset $TEMPEST_CONF identity password "$password"
-    iniset $TEMPEST_CONF identity alt_username $ALT_USERNAME
-    iniset $TEMPEST_CONF identity alt_password "$password"
-    iniset $TEMPEST_CONF identity alt_tenant_name $ALT_TENANT_NAME
-    iniset $TEMPEST_CONF identity admin_password "$password"
+    iniset $TEMPEST_CONFIG identity uri "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v2.0/"
+    iniset $TEMPEST_CONFIG identity password "$password"
+    iniset $TEMPEST_CONFIG identity alt_username $ALT_USERNAME
+    iniset $TEMPEST_CONFIG identity alt_password "$password"
+    iniset $TEMPEST_CONFIG identity alt_tenant_name $ALT_TENANT_NAME
+    iniset $TEMPEST_CONFIG identity admin_password "$password"
 
     # Image
     # for the gate we want to be able to override this variable so we aren't
     # doing an HTTP fetch over the wide internet for this test
     if [[ ! -z "$TEMPEST_HTTP_IMAGE" ]]; then
-        iniset $TEMPEST_CONF image http_image $TEMPEST_HTTP_IMAGE
+        iniset $TEMPEST_CONFIG image http_image $TEMPEST_HTTP_IMAGE
     fi
 
     # Compute
-    iniset $TEMPEST_CONF compute change_password_available False
+    iniset $TEMPEST_CONFIG compute change_password_available False
     # Note(nati) current tempest don't create network for each tenant
     # so reuse same tenant for now
     if is_service_enabled neutron; then
         TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
     fi
-    iniset $TEMPEST_CONF compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
-    iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
-    iniset $TEMPEST_CONF compute network_for_ssh $PRIVATE_NETWORK_NAME
-    iniset $TEMPEST_CONF compute ip_version_for_ssh 4
-    iniset $TEMPEST_CONF compute ssh_timeout $BUILD_TIMEOUT
-    iniset $TEMPEST_CONF compute image_ref $image_uuid
-    iniset $TEMPEST_CONF compute image_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
-    iniset $TEMPEST_CONF compute image_ref_alt $image_uuid_alt
-    iniset $TEMPEST_CONF compute image_alt_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
-    iniset $TEMPEST_CONF compute flavor_ref $flavor_ref
-    iniset $TEMPEST_CONF compute flavor_ref_alt $flavor_ref_alt
-    iniset $TEMPEST_CONF compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
-    iniset $TEMPEST_CONF compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
-    iniset $TEMPEST_CONF compute ssh_connect_method $ssh_connect_method
+    iniset $TEMPEST_CONFIG compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
+    iniset $TEMPEST_CONFIG compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
+    iniset $TEMPEST_CONFIG compute network_for_ssh $PRIVATE_NETWORK_NAME
+    iniset $TEMPEST_CONFIG compute ip_version_for_ssh 4
+    iniset $TEMPEST_CONFIG compute ssh_timeout $BUILD_TIMEOUT
+    iniset $TEMPEST_CONFIG compute image_ref $image_uuid
+    iniset $TEMPEST_CONFIG compute image_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
+    iniset $TEMPEST_CONFIG compute image_ref_alt $image_uuid_alt
+    iniset $TEMPEST_CONFIG compute image_alt_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
+    iniset $TEMPEST_CONFIG compute flavor_ref $flavor_ref
+    iniset $TEMPEST_CONFIG compute flavor_ref_alt $flavor_ref_alt
+    iniset $TEMPEST_CONFIG compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
+    iniset $TEMPEST_CONFIG compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
+    iniset $TEMPEST_CONFIG compute ssh_connect_method $ssh_connect_method
 
     # Compute admin
-    iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
+    iniset $TEMPEST_CONFIG "compute-admin" password "$password" # DEPRECATED
 
-    iniset $TEMPEST_CONF network api_version 2.0
-    iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
-    iniset $TEMPEST_CONF network public_network_id "$public_network_id"
-    iniset $TEMPEST_CONF network public_router_id "$public_router_id"
-    iniset $TEMPEST_CONF network default_network "$FIXED_RANGE"
+    iniset $TEMPEST_CONFIG network api_version 2.0
+    iniset $TEMPEST_CONFIG network tenant_networks_reachable "$tenant_networks_reachable"
+    iniset $TEMPEST_CONFIG network public_network_id "$public_network_id"
+    iniset $TEMPEST_CONFIG network public_router_id "$public_router_id"
+    iniset $TEMPEST_CONFIG network default_network "$FIXED_RANGE"
 
     # boto
-    iniset $TEMPEST_CONF boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
-    iniset $TEMPEST_CONF boto s3_url "http://$SERVICE_HOST:${S3_SERVICE_PORT:-3333}"
-    iniset $TEMPEST_CONF boto s3_materials_path "$BOTO_MATERIALS_PATH"
-    iniset $TEMPEST_CONF boto instance_type "$boto_instance_type"
-    iniset $TEMPEST_CONF boto http_socket_timeout 30
-    iniset $TEMPEST_CONF boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
+    iniset $TEMPEST_CONFIG boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
+    iniset $TEMPEST_CONFIG boto s3_url "http://$SERVICE_HOST:${S3_SERVICE_PORT:-3333}"
+    iniset $TEMPEST_CONFIG boto s3_materials_path "$BOTO_MATERIALS_PATH"
+    iniset $TEMPEST_CONFIG boto instance_type "$boto_instance_type"
+    iniset $TEMPEST_CONFIG boto http_socket_timeout 30
+    iniset $TEMPEST_CONFIG boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
     # Orchestration test image
     if [[ ! -z "$HEAT_FETCHED_TEST_IMAGE" ]]; then
-        iniset $TEMPEST_CONF orchestration image_ref "$HEAT_FETCHED_TEST_IMAGE"
+        iniset $TEMPEST_CONFIG orchestration image_ref "$HEAT_FETCHED_TEST_IMAGE"
     elif [[ "$HEAT_CREATE_TEST_IMAGE" = "True" ]]; then
         disk_image_create /usr/share/tripleo-image-elements "vm fedora heat-cfntools" "i386" "fedora-vm-heat-cfntools-tempest"
-        iniset $TEMPEST_CONF orchestration image_ref "fedora-vm-heat-cfntools-tempest"
+        iniset $TEMPEST_CONFIG orchestration image_ref "fedora-vm-heat-cfntools-tempest"
     fi
 
     # Scenario
-    iniset $TEMPEST_CONF scenario img_dir "$FILES/images/cirros-0.3.1-x86_64-uec"
+    iniset $TEMPEST_CONFIG scenario img_dir "$FILES/images/cirros-0.3.1-x86_64-uec"
 
     # Large Ops Number
-    iniset $TEMPEST_CONF scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
+    iniset $TEMPEST_CONFIG scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
 
     # Volume
     if is_service_enabled c-bak; then
-        iniset $TEMPEST_CONF volume volume_backup_enabled "True"
+        iniset $TEMPEST_CONFIG volume volume_backup_enabled "True"
     fi
     CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
     if [ $CINDER_MULTI_LVM_BACKEND == "True" ]; then
-        iniset $TEMPEST_CONF volume multi_backend_enabled "True"
-        iniset $TEMPEST_CONF volume backend1_name "LVM_iSCSI"
-        iniset $TEMPEST_CONF volume backend2_name "LVM_iSCSI_2"
+        iniset $TEMPEST_CONFIG volume multi_backend_enabled "True"
+        iniset $TEMPEST_CONFIG volume backend1_name "LVM_iSCSI"
+        iniset $TEMPEST_CONFIG volume backend2_name "LVM_iSCSI_2"
+    fi
+
+    if [ $TEMPEST_VOLUME_DRIVER != "default" ]; then
+        iniset $TEMPEST_CONFIG volume vendor_name $TEMPEST_VOLUME_VENDOR
+        iniset $TEMPEST_CONFIG volume storage_protocol $TEMPEST_STORAGE_PROTOCOL
     fi
 
     # Dashboard
-    iniset $TEMPEST_CONF dashboard dashboard_url "http://$SERVICE_HOST/"
-    iniset $TEMPEST_CONF dashboard login_url "http://$SERVICE_HOST/auth/login/"
+    iniset $TEMPEST_CONFIG dashboard dashboard_url "http://$SERVICE_HOST/"
+    iniset $TEMPEST_CONFIG dashboard login_url "http://$SERVICE_HOST/auth/login/"
 
     # cli
-    iniset $TEMPEST_CONF cli cli_dir $NOVA_BIN_DIR
+    iniset $TEMPEST_CONFIG cli cli_dir $NOVA_BIN_DIR
 
     # Networking
-    iniset $TEMPEST_CONF network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
+    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
 
     # service_available
     for service in ${TEMPEST_SERVICES//,/ }; do
         if is_service_enabled $service ; then
-            iniset $TEMPEST_CONF service_available $service "True"
+            iniset $TEMPEST_CONFIG service_available $service "True"
         else
-            iniset $TEMPEST_CONF service_available $service "False"
+            iniset $TEMPEST_CONFIG service_available $service "False"
         fi
     done
 
     echo "Created tempest configuration file:"
-    cat $TEMPEST_CONF
+    cat $TEMPEST_CONFIG
 
     # Restore IFS
     IFS=$ifs
