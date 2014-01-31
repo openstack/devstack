@@ -24,10 +24,17 @@ if is_service_enabled ir-api ir-cond; then
         # Start the ironic API and ironic taskmgr components
         echo_summary "Starting Ironic"
         start_ironic
+
+        if [[ "$IRONIC_BAREMETAL_BASIC_OPS" = "True" ]]; then
+            prepare_baremetal_basic_ops
+        fi
     fi
 
     if [[ "$1" == "unstack" ]]; then
         stop_ironic
+        if [[ "$IRONIC_BAREMETAL_BASIC_OPS" = "True" ]]; then
+            cleanup_baremetal_basic_ops
+        fi
     fi
 
     if [[ "$1" == "clean" ]]; then

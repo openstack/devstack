@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+# **create-nodes**
+
+# Creates baremetal poseur nodes for ironic testing purposes
+
+set -exu
+
+# Keep track of the devstack directory
+TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
+
+CPU=$1
+MEM=$(( 1024 * $2 ))
+# extra G to allow fuzz for partition table : flavor size and registered size
+# need to be different to actual size.
+DISK=$(( $3 + 1))
+
+case $4 in
+    i386) ARCH='i686' ;;
+    amd64) ARCH='x86_64' ;;
+    *) echo "Unsupported arch $4!" ; exit 1 ;;
+esac
+
+TOTAL=$(($5 - 1))
+BRIDGE=$6
+EMULATOR=$7
+
+LIBVIRT_NIC_DRIVER=${LIBVIRT_NIC_DRIVER:-"e1000"}
+LIBVIRT_STORAGE_POOL=${LIBVIRT_STORAGE_POOL:-"default"}
+
+if ! virsh pool-list --all | grep -q $LIBVIRT_STORAGE_POOL; then
+    virsh pool-define-as --name $LIBVIRT_STORAGE_POOL dir --target /var/lib/libvirt/images >&2
+    virsh pool-autostart $LIBVIRT_STORAGE_POOL >&2
+    virsh pool-start $LIBVIRT_STORAGE_POOL >&2
+fi
+
+pool_state=$(virsh pool-info $LIBVIRT_STORAGE_POOL | grep State | awk '{ print $2 }')
+if [ "$pool_state" != "running" ] ; then
+  [ ! -d /var/lib/libvirt/images ] && sudo mkdir /var/lib/libvirt/images
+  virsh pool-start $LIBVIRT_STORAGE_POOL >&2
+fi
+
+PREALLOC=
+if [ -f /etc/debian_version ]; then
+    PREALLOC="--prealloc-metadata"
+fi
+
+DOMS=""
+for idx in $(seq 0 $TOTAL) ; do
+    NAME="baremetal${BRIDGE}_${idx}"
+    DOMS="$DOMS $NAME"
+    VOL_NAME="baremetal${BRIDGE}-${idx}.qcow2"
+    (virsh list --all | grep -q $NAME) && continue
+
+    virsh vol-list --pool $LIBVIRT_STORAGE_POOL | grep -q $VOL_NAME &&
+        virsh vol-delete $VOL_NAME --pool $LIBVIRT_STORAGE_POOL >&2
+    virsh vol-create-as $LIBVIRT_STORAGE_POOL ${VOL_NAME} ${DISK}G --format qcow2 $PREALLOC >&2
+    volume_path=$(virsh vol-path --pool $LIBVIRT_STORAGE_POOL $VOL_NAME)
+    # Pre-touch the VM to set +C, as it can only be set on empty files.
+    sudo touch "$volume_path"
+    sudo chattr +C "$volume_path" || true
+    $TOP_DIR/scripts/configure-vm --bootdev network --name $NAME --image "$volume_path" --arch $ARCH --cpus $CPU --memory $MEM --libvirt-nic-driver $LIBVIRT_NIC_DRIVER --emulator $EMULATOR --network $BRIDGE >&2
+done
+
+for dom in $DOMS ; do
+    # echo mac
+    virsh dumpxml $dom | grep "mac address" | head -1 | cut -d\' -f2
+done
