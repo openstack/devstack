@@ -31,10 +31,10 @@ DOCKER_UNIX_SOCKET=/var/run/docker.sock
 DOCKER_PID_FILE=/var/run/docker.pid
 DOCKER_REGISTRY_PORT=${DOCKER_REGISTRY_PORT:-5042}
 
-DOCKER_IMAGE=${DOCKER_IMAGE:-http://get.docker.io/images/openstack/docker-ut.tar.gz}
-DOCKER_IMAGE_NAME=docker-busybox
-DOCKER_REGISTRY_IMAGE=${DOCKER_REGISTRY_IMAGE:-http://get.docker.io/images/openstack/docker-registry.tar.gz}
-DOCKER_REGISTRY_IMAGE_NAME=docker-registry
+DOCKER_IMAGE=${DOCKER_IMAGE:-busybox:latest}
+DOCKER_IMAGE_NAME=busybox
+DOCKER_REGISTRY_IMAGE=${DOCKER_REGISTRY_IMAGE:-registry:latest}
+DOCKER_REGISTRY_IMAGE_NAME=registry
 DOCKER_REPOSITORY_NAME=${SERVICE_HOST}:${DOCKER_REGISTRY_PORT}/${DOCKER_IMAGE_NAME}
 
 DOCKER_APT_REPO=${DOCKER_APT_REPO:-https://get.docker.io/ubuntu}
