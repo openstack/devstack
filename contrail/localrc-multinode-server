@@ -40,5 +40,5 @@ SERVICE_PASSWORD=contrail123
 ADMIN_PASSWORD=contrail123
 
 # use contrail forked neutron repo
-NEUTRON_REPO=https://github.com/dsetia/neutron.git
-NEUTRON_BRANCH=master
+NEUTRON_REPO=https://github.com/noelbk/neutron.git
+NEUTRON_BRANCH=contrail
