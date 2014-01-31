@@ -5,12 +5,13 @@
 # requirements as a global list
 
 # Dependencies:
-# ``functions`` file
+#
+# - ``functions`` file
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# unfubar_setuptools
-# install_infra
+# - unfubar_setuptools
+# - install_infra
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -51,6 +52,7 @@ function install_infra() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

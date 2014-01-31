@@ -2,21 +2,23 @@
 # Install and start **Heat** service
 
 # To enable, add the following to localrc
-# ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng
+#
+#   ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng
 
 # Dependencies:
+#
 # - functions
 
 # stack.sh
 # ---------
-# install_heatclient
-# install_heat
-# configure_heatclient
-# configure_heat
-# init_heat
-# start_heat
-# stop_heat
-# cleanup_heat
+# - install_heatclient
+# - install_heat
+# - configure_heatclient
+# - configure_heat
+# - init_heat
+# - start_heat
+# - stop_heat
+# - cleanup_heat
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -35,6 +37,10 @@ HEAT_CONF_DIR=/etc/heat
 HEAT_CONF=$HEAT_CONF_DIR/heat.conf
 HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 HEAT_TEMPLATES_DIR=$HEAT_CONF_DIR/templates
+
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,heat
+
 
 # Functions
 # ---------
@@ -58,13 +64,13 @@ function configure_heat() {
     # remove old config files
     rm -f $HEAT_CONF_DIR/heat-*.conf
 
-    HEAT_API_CFN_HOST=${HEAT_API_CFN_HOST:-$SERVICE_HOST}
+    HEAT_API_CFN_HOST=${HEAT_API_CFN_HOST:-$HOST_IP}
     HEAT_API_CFN_PORT=${HEAT_API_CFN_PORT:-8000}
     HEAT_ENGINE_HOST=${HEAT_ENGINE_HOST:-$SERVICE_HOST}
     HEAT_ENGINE_PORT=${HEAT_ENGINE_PORT:-8001}
-    HEAT_API_CW_HOST=${HEAT_API_CW_HOST:-$SERVICE_HOST}
+    HEAT_API_CW_HOST=${HEAT_API_CW_HOST:-$HOST_IP}
     HEAT_API_CW_PORT=${HEAT_API_CW_PORT:-8003}
-    HEAT_API_HOST=${HEAT_API_HOST:-$SERVICE_HOST}
+    HEAT_API_HOST=${HEAT_API_HOST:-$HOST_IP}
     HEAT_API_PORT=${HEAT_API_PORT:-8004}
     HEAT_API_PASTE_FILE=$HEAT_CONF_DIR/api-paste.ini
     HEAT_POLICY_FILE=$HEAT_CONF_DIR/policy.json
@@ -78,7 +84,7 @@ function configure_heat() {
     iniset $HEAT_CONF DEFAULT heat_metadata_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT
     iniset $HEAT_CONF DEFAULT heat_waitcondition_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1/waitcondition
     iniset $HEAT_CONF DEFAULT heat_watch_server_url http://$HEAT_API_CW_HOST:$HEAT_API_CW_PORT
-    iniset $HEAT_CONF DEFAULT sql_connection `database_connection_url heat`
+    iniset $HEAT_CONF database connection `database_connection_url heat`
     iniset $HEAT_CONF DEFAULT auth_encryption_key `hexdump -n 16 -v -e '/1 "%02x"' /dev/random`
 
     # logging
@@ -86,14 +92,15 @@ function configure_heat() {
     iniset $HEAT_CONF DEFAULT use_syslog $SYSLOG
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         # Add color to logging output
-        setup_colorized_logging $HEAT_CONF DEFAULT
+        setup_colorized_logging $HEAT_CONF DEFAULT tenant user
     fi
 
     # keystone authtoken
     iniset $HEAT_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $HEAT_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset $HEAT_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $HEAT_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    configure_API_version $HEAT_CONF $IDENTITY_API_VERSION
+    iniset $HEAT_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
     iniset $HEAT_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $HEAT_CONF keystone_authtoken admin_user heat
     iniset $HEAT_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
@@ -107,19 +114,13 @@ function configure_heat() {
     [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_CONF paste_deploy flavor standalone
 
     # OpenStack API
-    iniset $HEAT_CONF heat_api bind_host $HEAT_API_HOST
     iniset $HEAT_CONF heat_api bind_port $HEAT_API_PORT
 
     # Cloudformation API
-    iniset $HEAT_CONF heat_api_cfn bind_host $HEAT_API_CFN_HOST
     iniset $HEAT_CONF heat_api_cfn bind_port $HEAT_API_CFN_PORT
 
     # Cloudwatch API
-    iniset $HEAT_CONF heat_api_cloudwatch bind_host $HEAT_API_CW_HOST
     iniset $HEAT_CONF heat_api_cloudwatch bind_port $HEAT_API_CW_PORT
-
-    # Set limits to match tempest defaults
-    iniset $HEAT_CONF DEFAULT max_template_size 10240
 
     # heat environment
     sudo mkdir -p $HEAT_ENV_DIR
@@ -175,7 +176,7 @@ function start_heat() {
 function stop_heat() {
     # Kill the screen windows
     for serv in h-eng h-api h-api-cfn h-api-cw; do
-        screen -S $SCREEN_NAME -p $serv -X kill
+        screen_stop $serv
     done
 }
 
@@ -198,6 +199,7 @@ function disk_image_create {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

@@ -12,7 +12,7 @@ function is_neutron_ovs_base_plugin() {
 }
 
 function neutron_plugin_create_nova_conf() {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"midonet.nova.virt.libvirt.vif.MidonetVifDriver"}
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
 }
 
 function neutron_plugin_install_agent_packages() {
@@ -32,19 +32,18 @@ function neutron_plugin_configure_debug_command() {
 
 function neutron_plugin_configure_dhcp_agent() {
     DHCP_DRIVER=${DHCP_DRIVER:-"neutron.plugins.midonet.agent.midonet_driver.DhcpNoOpDriver"}
-    DHCP_INTERFACE_DRIVER=${DHCP_INTEFACE_DRIVER:-"neutron.plugins.midonet.agent.midonet_driver.MidonetInterfaceDriver"}
+    neutron_plugin_setup_interface_driver $Q_DHCP_CONF_FILE
     iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_driver $DHCP_DRIVER
-    iniset $Q_DHCP_CONF_FILE DEFAULT interface_driver $DHCP_INTERFACE_DRIVER
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces True
     iniset $Q_DHCP_CONF_FILE DEFAULT enable_isolated_metadata True
 }
 
 function neutron_plugin_configure_l3_agent() {
-   die $LINENO "q-l3 must not be executed with MidoNet plugin!"
+    die $LINENO "q-l3 must not be executed with MidoNet plugin!"
 }
 
 function neutron_plugin_configure_plugin_agent() {
-   die $LINENO "q-agt must not be executed with MidoNet plugin!"
+    die $LINENO "q-agt must not be executed with MidoNet plugin!"
 }
 
 function neutron_plugin_configure_service() {
@@ -63,11 +62,14 @@ function neutron_plugin_configure_service() {
     if [[ "$MIDONET_PROVIDER_ROUTER_ID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE MIDONET provider_router_id $MIDONET_PROVIDER_ROUTER_ID
     fi
+
+    Q_L3_ENABLED=True
+    Q_L3_ROUTER_PER_TENANT=True
 }
 
 function neutron_plugin_setup_interface_driver() {
-    # May change in the future
-    :
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.MidonetInterfaceDriver
 }
 
 function has_neutron_plugin_security_group() {

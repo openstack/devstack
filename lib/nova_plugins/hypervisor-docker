@@ -2,11 +2,13 @@
 # Configure the Docker hypervisor
 
 # Enable with:
-# VIRT_DRIVER=docker
+#
+#   VIRT_DRIVER=docker
 
 # Dependencies:
-# ``functions`` file
-# ``nova`` and ``glance`` configurations
+#
+# - ``functions`` file
+# - ``nova`` and ``glance`` configurations
 
 # install_nova_hypervisor - install any external requirements
 # configure_nova_hypervisor - make configuration changes, including those to other services
@@ -24,8 +26,6 @@ set +o xtrace
 
 # Set up default directories
 DOCKER_DIR=$DEST/docker
-DOCKER_REPO=${DOCKER_REPO:-https://github.com/dotcloud/openstack-docker.git}
-DOCKER_BRANCH=${DOCKER_BRANCH:-master}
 
 DOCKER_UNIX_SOCKET=/var/run/docker.sock
 DOCKER_PID_FILE=/var/run/docker.pid
@@ -37,7 +37,6 @@ DOCKER_REGISTRY_IMAGE=${DOCKER_REGISTRY_IMAGE:-http://get.docker.io/images/opens
 DOCKER_REGISTRY_IMAGE_NAME=docker-registry
 DOCKER_REPOSITORY_NAME=${SERVICE_HOST}:${DOCKER_REGISTRY_PORT}/${DOCKER_IMAGE_NAME}
 
-DOCKER_PACKAGE_VERSION=${DOCKER_PACKAGE_VERSION:-0.6.1}
 DOCKER_APT_REPO=${DOCKER_APT_REPO:-https://get.docker.io/ubuntu}
 
 
@@ -54,14 +53,8 @@ function cleanup_nova_hypervisor() {
 
 # configure_nova_hypervisor - Set config files, create data dirs, etc
 function configure_nova_hypervisor() {
-    git_clone $DOCKER_REPO $DOCKER_DIR $DOCKER_BRANCH
-
-    ln -snf ${DOCKER_DIR}/nova-driver $NOVA_DIR/nova/virt/docker
-
     iniset $NOVA_CONF DEFAULT compute_driver docker.DockerDriver
     iniset $GLANCE_API_CONF DEFAULT container_formats ami,ari,aki,bare,ovf,docker
-
-    sudo cp -p ${DOCKER_DIR}/nova-driver/docker.filters $NOVA_CONF_DIR/rootwrap.d
 }
 
 # install_nova_hypervisor() - Install external components

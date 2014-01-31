@@ -3,8 +3,9 @@
 # **boot_from_volume.sh**
 
 # This script demonstrates how to boot from a volume.  It does the following:
-#  *  Create a bootable volume
-#  *  Boot a volume-backed instance
+#
+# *  Create a bootable volume
+# *  Boot a volume-backed instance
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -119,7 +120,7 @@ nova flavor-list
 INSTANCE_TYPE=$(nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1)
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
+    INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
 fi
 
 # Clean-up from previous runs
@@ -148,7 +149,7 @@ fi
 
 # Create the bootable volume
 start_time=$(date +%s)
-cinder create --image-id $IMAGE --display_name=$VOL_NAME --display_description "test bootable volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
+cinder create --image-id $IMAGE --display-name=$VOL_NAME --display-description "test bootable volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
     die $LINENO "Failure creating volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
@@ -164,10 +165,10 @@ die_if_not_set $LINENO VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 # Boot instance
 # -------------
 
-# Boot using the --block_device_mapping param. The format of mapping is:
+# Boot using the --block-device-mapping param. The format of mapping is:
 # <dev_name>=<id>:<type>:<size(GB)>:<delete_on_terminate>
 # Leaving the middle two fields blank appears to do-the-right-thing
-VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --block-device-mapping vda=$VOL_ID --security_groups=$SECGROUP --key_name $KEY_NAME $VM_NAME | grep ' id ' | get_field 2)
+VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --block-device-mapping vda=$VOL_ID --security-groups=$SECGROUP --key-name $KEY_NAME $VM_NAME | grep ' id ' | get_field 2)
 die_if_not_set $LINENO VM_UUID "Failure launching $VM_NAME"
 
 # Check that the status is active within ACTIVE_TIMEOUT seconds

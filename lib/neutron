@@ -1,30 +1,32 @@
 # lib/neutron
-# functions - funstions specific to neutron
+# functions - functions specific to neutron
 
 # Dependencies:
 # ``functions`` file
 # ``DEST`` must be defined
+# ``STACK_USER`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_neutron
-# install_neutronclient
-# install_neutron_agent_packages
-# install_neutron_third_party
-# configure_neutron
-# init_neutron
-# configure_neutron_third_party
-# init_neutron_third_party
-# start_neutron_third_party
-# create_nova_conf_neutron
-# start_neutron_service_and_check
-# create_neutron_initial_network
-# setup_neutron_debug
-# start_neutron_agents
+# - install_neutron
+# - install_neutronclient
+# - install_neutron_agent_packages
+# - install_neutron_third_party
+# - configure_neutron
+# - init_neutron
+# - configure_neutron_third_party
+# - init_neutron_third_party
+# - start_neutron_third_party
+# - create_neutron_cache_dir
+# - create_nova_conf_neutron
+# - start_neutron_service_and_check
+# - create_neutron_initial_network
+# - setup_neutron_debug
+# - start_neutron_agents
 #
 # ``unstack.sh`` calls the entry points in this order:
 #
-# stop_neutron
+# - stop_neutron
 
 # Functions in lib/neutron are classified into the following categories:
 #
@@ -67,7 +69,7 @@ set +o xtrace
 
 # Gateway and subnet defaults, in case they are not customized in localrc
 NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
-PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.225}
+PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.1}
 PRIVATE_SUBNET_NAME=${PRIVATE_SUBNET_NAME:-"private-subnet"}
 PUBLIC_SUBNET_NAME=${PUBLIC_SUBNET_NAME:-"public-subnet"}
 
@@ -79,8 +81,8 @@ NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 # Support entry points installation of console scripts
 if [[ -d $NEUTRON_DIR/bin/neutron-server ]]; then
     NEUTRON_BIN_DIR=$NEUTRON_DIR/bin
-     else
-NEUTRON_BIN_DIR=$(get_python_exec_prefix)
+else
+    NEUTRON_BIN_DIR=$(get_python_exec_prefix)
 fi
 
 NEUTRON_CONF_DIR=/etc/neutron
@@ -88,7 +90,7 @@ NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
 
 # Default Neutron Plugin
-Q_PLUGIN=${Q_PLUGIN:-openvswitch}
+Q_PLUGIN=${Q_PLUGIN:-ml2}
 # Default Neutron Port
 Q_PORT=${Q_PORT:-9696}
 # Default Neutron Host
@@ -110,6 +112,17 @@ Q_ALLOW_OVERLAPPING_IP=${Q_ALLOW_OVERLAPPING_IP:-True}
 Q_USE_DEBUG_COMMAND=${Q_USE_DEBUG_COMMAND:-False}
 # The name of the default q-l3 router
 Q_ROUTER_NAME=${Q_ROUTER_NAME:-router1}
+# nova vif driver that all plugins should use
+NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+
+# The next two variables are configured by plugin
+# e.g.  _configure_neutron_l3_agent or lib/neutron_plugins/*
+#
+# The plugin supports L3.
+Q_L3_ENABLED=${Q_L3_ENABLED:-False}
+# L3 routers exist per tenant
+Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-False}
+
 # List of config file names in addition to the main plugin config file
 # See _configure_neutron_common() for details about setting it up
 declare -a Q_PLUGIN_EXTRA_CONF_FILES
@@ -202,13 +215,19 @@ source $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN
 # Hardcoding for 1 service plugin for now
 source $TOP_DIR/lib/neutron_plugins/services/loadbalancer
 
+# Agent metering service plugin functions
+# -------------------------------------------
+
+# Hardcoding for 1 service plugin for now
+source $TOP_DIR/lib/neutron_plugins/services/metering
+
 # VPN service plugin functions
 # -------------------------------------------
 # Hardcoding for 1 service plugin for now
 source $TOP_DIR/lib/neutron_plugins/services/vpn
 
 # Firewall Service Plugin functions
-# --------------------------------
+# ---------------------------------
 source $TOP_DIR/lib/neutron_plugins/services/firewall
 
 # Use security group or not
@@ -217,6 +236,10 @@ if has_neutron_plugin_security_group; then
 else
     Q_USE_SECGROUP=False
 fi
+
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,neutron
+
 
 # Functions
 # ---------
@@ -230,6 +253,9 @@ function configure_neutron() {
     # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
     if is_service_enabled q-lbaas; then
         _configure_neutron_lbaas
+    fi
+    if is_service_enabled q-metering; then
+        _configure_neutron_metering
     fi
     if is_service_enabled q-vpn; then
         _configure_neutron_vpn
@@ -268,6 +294,7 @@ function create_nova_conf_neutron() {
 
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
+        iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
         iniset $NOVA_CONF DEFAULT security_group_api neutron
     fi
 
@@ -279,6 +306,14 @@ function create_nova_conf_neutron() {
     if is_service_enabled q-meta; then
         iniset $NOVA_CONF DEFAULT service_neutron_metadata_proxy "True"
     fi
+}
+
+# create_neutron_cache_dir() - Part of the _neutron_setup_keystone() process
+function create_neutron_cache_dir() {
+    # Create cache dir
+    sudo mkdir -p $NEUTRON_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $NEUTRON_AUTH_CACHE_DIR
+    rm -f $NEUTRON_AUTH_CACHE_DIR/*
 }
 
 # create_neutron_accounts() - Set up common required neutron accounts
@@ -297,7 +332,7 @@ function create_neutron_accounts() {
         NEUTRON_USER=$(keystone user-create \
             --name=neutron \
             --pass="$SERVICE_PASSWORD" \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --email=neutron@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \
@@ -322,10 +357,11 @@ function create_neutron_accounts() {
 
 function create_neutron_initial_network() {
     TENANT_ID=$(keystone tenant-list | grep " demo " | get_field 1)
+    die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for demo"
 
     # Create a small network
     # Since neutron command is executed in admin context at this point,
-    # ``--tenant_id`` needs to be specified.
+    # ``--tenant-id`` needs to be specified.
     if is_baremetal; then
         if [[ "$PUBLIC_INTERFACE" == '' || "$OVS_PHYSICAL_BRIDGE" == '' ]]; then
             die $LINENO "Neutron settings for baremetal not set.. exiting"
@@ -335,28 +371,36 @@ function create_neutron_initial_network() {
             sudo ip addr del $IP dev $PUBLIC_INTERFACE
             sudo ip addr add $IP dev $OVS_PHYSICAL_BRIDGE
         done
-        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type flat --provider:physical_network "$PHYSICAL_NETWORK" | grep ' id ' | get_field 2)
-        SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --gateway $NETWORK_GATEWAY --name $PRIVATE_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant-id $TENANT_ID --provider:network_type flat --provider:physical_network "$PHYSICAL_NETWORK" | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
+        SUBNET_ID=$(neutron subnet-create --tenant-id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --gateway $NETWORK_GATEWAY --name $PRIVATE_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $TENANT_ID"
         sudo ifconfig $OVS_PHYSICAL_BRIDGE up
         sudo route add default gw $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
     else
-        NET_ID=$(neutron net-create --tenant_id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
-        SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY --name $PRIVATE_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+        NET_ID=$(neutron net-create --tenant-id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
+        SUBNET_ID=$(neutron subnet-create --tenant-id $TENANT_ID --ip_version 4 --gateway $NETWORK_GATEWAY --name $PRIVATE_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $TENANT_ID"
     fi
 
     if [[ "$Q_L3_ENABLED" == "True" ]]; then
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
             # create a tenant-owned router.
-            ROUTER_ID=$(neutron router-create --tenant_id $TENANT_ID $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            ROUTER_ID=$(neutron router-create --tenant-id $TENANT_ID $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $TENANT_ID $Q_ROUTER_NAME"
         else
             # Plugin only supports creating a single router, which should be admin owned.
             ROUTER_ID=$(neutron router-create $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $Q_ROUTER_NAME"
         fi
         neutron router-interface-add $ROUTER_ID $SUBNET_ID
         # Create an external network, and a subnet. Configure the external network as router gw
         EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO EXT_NET_ID "Failure creating EXT_NET_ID for $PUBLIC_NETWORK_NAME"
         EXT_GW_IP=$(neutron subnet-create --ip_version 4 ${Q_FLOATING_ALLOCATION_POOL:+--allocation-pool $Q_FLOATING_ALLOCATION_POOL} --gateway $PUBLIC_NETWORK_GATEWAY --name $PUBLIC_SUBNET_NAME $EXT_NET_ID $FLOATING_RANGE -- --enable_dhcp=False | grep 'gateway_ip' | get_field 2)
+        die_if_not_set $LINENO EXT_GW_IP "Failure creating EXT_GW_IP"
         neutron router-gateway-set $ROUTER_ID $EXT_NET_ID
 
         if is_service_enabled q-l3; then
@@ -366,6 +410,7 @@ function create_neutron_initial_network() {
                 sudo ip addr add $EXT_GW_IP/$CIDR_LEN dev $PUBLIC_BRIDGE
                 sudo ip link set $PUBLIC_BRIDGE up
                 ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' '{ print $8; }'`
+                die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
                 sudo route add -net $FIXED_RANGE gw $ROUTER_GW_IP
             fi
             if [[ "$Q_USE_NAMESPACE" == "False" ]]; then
@@ -373,7 +418,7 @@ function create_neutron_initial_network() {
                 iniset $Q_L3_CONF_FILE DEFAULT router_id $ROUTER_ID
             fi
         fi
-   fi
+    fi
 }
 
 # init_neutron() - Initialize databases, etc.
@@ -404,7 +449,7 @@ function install_neutron_agent_packages() {
     fi
 
     if is_service_enabled q-lbaas; then
-       neutron_agent_lbaas_install_agent_packages
+        neutron_agent_lbaas_install_agent_packages
     fi
 }
 
@@ -414,13 +459,13 @@ function start_neutron_service_and_check() {
     local cfg_file
     local CFG_FILE_OPTIONS="--config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
     for cfg_file in ${Q_PLUGIN_EXTRA_CONF_FILES[@]}; do
-         CFG_FILE_OPTIONS+=" --config-file /$cfg_file"
+        CFG_FILE_OPTIONS+=" --config-file /$cfg_file"
     done
     # Start the Neutron service
     screen_it q-svc "cd $NEUTRON_DIR && python $NEUTRON_BIN_DIR/neutron-server $CFG_FILE_OPTIONS"
     echo "Waiting for Neutron to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$Q_HOST:$Q_PORT; do sleep 1; done"; then
-      die $LINENO "Neutron did not start"
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$Q_HOST:$Q_PORT; do sleep 1; done"; then
+        die $LINENO "Neutron did not start"
     fi
 }
 
@@ -451,6 +496,10 @@ function start_neutron_agents() {
     if is_service_enabled q-lbaas; then
         screen_it q-lbaas "cd $NEUTRON_DIR && python $AGENT_LBAAS_BINARY --config-file $NEUTRON_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
     fi
+
+    if is_service_enabled q-metering; then
+        screen_it q-metering "cd $NEUTRON_DIR && python $AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
+    fi
 }
 
 # stop_neutron() - Stop running processes (non-screen)
@@ -460,8 +509,20 @@ function stop_neutron() {
         [ ! -z "$pid" ] && sudo kill -9 $pid
     fi
     if is_service_enabled q-meta; then
-        pid=$(ps aux | awk '/neutron-ns-metadata-proxy/ { print $2 }')
-        [ ! -z "$pid" ] && sudo kill -9 $pid
+        sudo pkill -9 -f neutron-ns-metadata-proxy || :
+    fi
+
+    if is_service_enabled q-lbaas; then
+        neutron_lbaas_stop
+    fi
+    if is_service_enabled q-fwaas; then
+        neutron_fwaas_stop
+    fi
+    if is_service_enabled q-vpn; then
+        neutron_vpn_stop
+    fi
+    if is_service_enabled q-metering; then
+        neutron_metering_stop
     fi
 }
 
@@ -473,7 +534,7 @@ function cleanup_neutron() {
     fi
 
     # delete all namespaces created by neutron
-    for ns in $(sudo ip netns list | grep -o -e qdhcp-[0-9a-f\-]* -e qrouter-[0-9a-f\-]*); do
+    for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|qlbaas)-[0-9a-f-]*'); do
         sudo ip netns delete ${ns}
     done
 }
@@ -494,6 +555,7 @@ function _configure_neutron_common() {
     # For main plugin config file, set ``Q_PLUGIN_CONF_PATH``, ``Q_PLUGIN_CONF_FILENAME``.
     # For addition plugin config files, set ``Q_PLUGIN_EXTRA_CONF_PATH``,
     # ``Q_PLUGIN_EXTRA_CONF_FILES``.  For example:
+    #
     #    ``Q_PLUGIN_EXTRA_CONF_FILES=(file1, file2)``
     neutron_plugin_configure_common
 
@@ -536,7 +598,7 @@ function _configure_neutron_common() {
 
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $NEUTRON_CONF DEFAULT
+        setup_colorized_logging $NEUTRON_CONF DEFAULT project_id
     fi
 
     _neutron_setup_rootwrap
@@ -552,9 +614,6 @@ function _configure_neutron_debug_command() {
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT verbose False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT root_helper "$Q_RR_COMMAND"
-    # Intermediate fix until Neutron patch lands and then line above will
-    # be cleaned.
     iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper "$Q_RR_COMMAND"
 
     _neutron_setup_interface_driver $NEUTRON_TEST_CONFIG_FILE
@@ -630,6 +689,11 @@ function _configure_neutron_lbaas() {
     neutron_agent_lbaas_configure_agent
 }
 
+function _configure_neutron_metering() {
+    neutron_agent_metering_configure_common
+    neutron_agent_metering_configure_agent
+}
+
 function _configure_neutron_fwaas() {
     neutron_fwaas_configure_common
     neutron_fwaas_configure_driver
@@ -693,6 +757,16 @@ function _configure_neutron_service() {
 # Utility Functions
 #------------------
 
+# _neutron_service_plugin_class_add() - add service plugin class
+function _neutron_service_plugin_class_add() {
+    local service_plugin_class=$1
+    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
+        Q_SERVICE_PLUGIN_CLASSES=$service_plugin_class
+    elif [[ ! ,${Q_SERVICE_PLUGIN_CLASSES}, =~ ,${service_plugin_class}, ]]; then
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$service_plugin_class"
+    fi
+}
+
 # _neutron_setup_rootwrap() - configure Neutron's rootwrap
 function _neutron_setup_rootwrap() {
     if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
@@ -712,9 +786,9 @@ function _neutron_setup_rootwrap() {
     # Set up ``rootwrap.conf``, pointing to ``$NEUTRON_CONF_DIR/rootwrap.d``
     # location moved in newer versions, prefer new location
     if test -r $NEUTRON_DIR/etc/neutron/rootwrap.conf; then
-      sudo cp -p $NEUTRON_DIR/etc/neutron/rootwrap.conf $Q_RR_CONF_FILE
+        sudo cp -p $NEUTRON_DIR/etc/neutron/rootwrap.conf $Q_RR_CONF_FILE
     else
-      sudo cp -p $NEUTRON_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
+        sudo cp -p $NEUTRON_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
     fi
     sudo sed -e "s:^filters_path=.*$:filters_path=$Q_CONF_ROOTWRAP_D:" -i $Q_RR_CONF_FILE
     sudo chown root:root $Q_RR_CONF_FILE
@@ -724,7 +798,7 @@ function _neutron_setup_rootwrap() {
 
     # Set up the rootwrap sudoers for neutron
     TEMPFILE=`mktemp`
-    echo "$USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/neutron-rootwrap
@@ -757,9 +831,7 @@ function _neutron_setup_keystone() {
     if [[ -z $skip_auth_cache ]]; then
         iniset $conf_file $section signing_dir $NEUTRON_AUTH_CACHE_DIR
         # Create cache dir
-        sudo mkdir -p $NEUTRON_AUTH_CACHE_DIR
-        sudo chown $STACK_USER $NEUTRON_AUTH_CACHE_DIR
-        rm -f $NEUTRON_AUTH_CACHE_DIR/*
+        create_neutron_cache_dir
     fi
 }
 
@@ -848,11 +920,11 @@ function _ssh_check_neutron() {
 # please refer to ``lib/neutron_thirdparty/README.md`` for details
 NEUTRON_THIRD_PARTIES=""
 for f in $TOP_DIR/lib/neutron_thirdparty/*; do
-     third_party=$(basename $f)
-     if is_service_enabled $third_party; then
-         source $TOP_DIR/lib/neutron_thirdparty/$third_party
-         NEUTRON_THIRD_PARTIES="$NEUTRON_THIRD_PARTIES,$third_party"
-     fi
+    third_party=$(basename $f)
+    if is_service_enabled $third_party; then
+        source $TOP_DIR/lib/neutron_thirdparty/$third_party
+        NEUTRON_THIRD_PARTIES="$NEUTRON_THIRD_PARTIES,$third_party"
+    fi
 done
 
 function _neutron_third_party_do() {
@@ -886,10 +958,16 @@ function stop_neutron_third_party() {
     _neutron_third_party_do stop
 }
 
+# check_neutron_third_party_integration() - Check that third party integration is sane
+function check_neutron_third_party_integration() {
+    _neutron_third_party_do check
+}
+
 
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

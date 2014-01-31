@@ -397,6 +397,11 @@ function init_contrail() {
     :
 }
 
+function check_contrail() {
+    :
+}
+
+
 function stop_contrail() {
     SCREEN=$(which screen)
     if [[ -n "$SCREEN" ]]; then

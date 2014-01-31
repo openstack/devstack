@@ -56,10 +56,8 @@ unset OS_PASSWORD
 unset OS_AUTH_URL
 
 # Common authentication args
-TENANT_ARG="--os_tenant_name=$x_TENANT_NAME"
-TENANT_ARG_DASH="--os-tenant-name=$x_TENANT_NAME"
-ARGS="--os_username=$x_USERNAME --os_password=$x_PASSWORD --os_auth_url=$x_AUTH_URL"
-ARGS_DASH="--os-username=$x_USERNAME --os-password=$x_PASSWORD --os-auth-url=$x_AUTH_URL"
+TENANT_ARG="--os-tenant-name=$x_TENANT_NAME"
+ARGS="--os-username=$x_USERNAME --os-password=$x_PASSWORD --os-auth-url=$x_AUTH_URL"
 
 # Set global return
 RETURN=0
@@ -71,7 +69,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
         STATUS_KEYSTONE="Skipped"
     else
         echo -e "\nTest Keystone"
-        if keystone $TENANT_ARG_DASH $ARGS_DASH catalog --service identity; then
+        if keystone $TENANT_ARG $ARGS catalog --service identity; then
             STATUS_KEYSTONE="Succeeded"
         else
             STATUS_KEYSTONE="Failed"
@@ -90,7 +88,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     else
         # Test OSAPI
         echo -e "\nTest Nova"
-        if nova $TENANT_ARG_DASH $ARGS_DASH flavor-list; then
+        if nova $TENANT_ARG $ARGS flavor-list; then
             STATUS_NOVA="Succeeded"
         else
             STATUS_NOVA="Failed"
@@ -107,7 +105,7 @@ if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
         STATUS_CINDER="Skipped"
     else
         echo -e "\nTest Cinder"
-        if cinder $TENANT_ARG_DASH $ARGS_DASH list; then
+        if cinder $TENANT_ARG $ARGS list; then
             STATUS_CINDER="Succeeded"
         else
             STATUS_CINDER="Failed"
@@ -124,7 +122,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
-        if glance $TENANT_ARG_DASH $ARGS_DASH image-list; then
+        if glance $TENANT_ARG $ARGS image-list; then
             STATUS_GLANCE="Succeeded"
         else
             STATUS_GLANCE="Failed"
@@ -141,7 +139,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" || "$ENABLED_SERVICES" =~ "s-proxy" ]]; the
         STATUS_SWIFT="Skipped"
     else
         echo -e "\nTest Swift"
-        if swift $TENANT_ARG_DASH $ARGS_DASH stat; then
+        if swift $TENANT_ARG $ARGS stat; then
             STATUS_SWIFT="Succeeded"
         else
             STATUS_SWIFT="Failed"

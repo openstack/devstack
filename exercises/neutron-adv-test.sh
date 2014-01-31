@@ -102,6 +102,7 @@ KEYSTONE="keystone"
 # and save it.
 
 TOKEN=`keystone token-get | grep ' id ' | awk '{print $4}'`
+die_if_not_set $LINENO TOKEN "Keystone fail to get token"
 
 # Various functions
 # -----------------
@@ -138,24 +139,28 @@ function foreach_tenant_net {
 
 function get_image_id {
     local IMAGE_ID=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+    die_if_not_set $LINENO IMAGE_ID "Failure retrieving IMAGE_ID"
     echo "$IMAGE_ID"
 }
 
 function get_tenant_id {
     local TENANT_NAME=$1
     local TENANT_ID=`keystone tenant-list | grep " $TENANT_NAME " | head -n 1 | get_field 1`
+    die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for $TENANT_NAME"
     echo "$TENANT_ID"
 }
 
 function get_user_id {
     local USER_NAME=$1
     local USER_ID=`keystone user-list | grep $USER_NAME | awk '{print $2}'`
+    die_if_not_set $LINENO USER_ID "Failure retrieving USER_ID for $USER_NAME"
     echo "$USER_ID"
 }
 
 function get_role_id {
     local ROLE_NAME=$1
     local ROLE_ID=`keystone role-list | grep $ROLE_NAME | awk '{print $2}'`
+    die_if_not_set $LINENO ROLE_ID "Failure retrieving ROLE_ID for $ROLE_NAME"
     echo "$ROLE_ID"
 }
 
@@ -168,6 +173,7 @@ function get_network_id {
 function get_flavor_id {
     local INSTANCE_TYPE=$1
     local FLAVOR_ID=`nova flavor-list | grep $INSTANCE_TYPE | awk '{print $2}'`
+    die_if_not_set $LINENO FLAVOR_ID "Failure retrieving FLAVOR_ID for $INSTANCE_TYPE"
     echo "$FLAVOR_ID"
 }
 
@@ -177,6 +183,14 @@ function confirm_server_active {
         echo "server '$VM_UUID' did not become active!"
         false
     fi
+}
+
+function neutron_debug_admin {
+    local os_username=$OS_USERNAME
+    local os_tenant_id=$OS_TENANT_ID
+    source $TOP_DIR/openrc admin admin
+    neutron-debug $@
+    source $TOP_DIR/openrc $os_username $os_tenant_id
 }
 
 function add_tenant {
@@ -232,9 +246,10 @@ function create_network {
     source $TOP_DIR/openrc admin admin
     local TENANT_ID=$(get_tenant_id $TENANT)
     source $TOP_DIR/openrc $TENANT $TENANT
-    local NET_ID=$(neutron net-create --tenant_id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
-    neutron subnet-create --ip_version 4 --tenant_id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
-    neutron-debug probe-create --device-owner compute $NET_ID
+    local NET_ID=$(neutron net-create --tenant-id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
+    die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $TENANT_ID $NET_NAME $EXTRA"
+    neutron subnet-create --ip-version 4 --tenant-id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
+    neutron_debug_admin probe-create --device-owner compute $NET_ID
     source $TOP_DIR/openrc demo demo
 }
 
@@ -272,12 +287,12 @@ function create_vms {
 }
 
 function ping_ip {
-     # Test agent connection.  Assumes namespaces are disabled, and
-     # that DHCP is in use, but not L3
-     local VM_NAME=$1
-     local NET_NAME=$2
-     IP=$(get_instance_ip $VM_NAME $NET_NAME)
-     ping_check $NET_NAME $IP $BOOT_TIMEOUT
+    # Test agent connection.  Assumes namespaces are disabled, and
+    # that DHCP is in use, but not L3
+    local VM_NAME=$1
+    local NET_NAME=$2
+    IP=$(get_instance_ip $VM_NAME $NET_NAME)
+    ping_check $NET_NAME $IP $BOOT_TIMEOUT
 }
 
 function check_vm {
@@ -329,12 +344,12 @@ function delete_network {
 }
 
 function delete_networks {
-   foreach_tenant_net 'delete_network ${%TENANT%_NAME} %NUM%'
-   #TODO(nati) add secuirty group check after it is implemented
-   # source $TOP_DIR/openrc demo1 demo1
-   # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
-   # source $TOP_DIR/openrc demo2 demo2
-   # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
+    foreach_tenant_net 'delete_network ${%TENANT%_NAME} %NUM%'
+    # TODO(nati) add secuirty group check after it is implemented
+    # source $TOP_DIR/openrc demo1 demo1
+    # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
+    # source $TOP_DIR/openrc demo2 demo2
+    # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
 }
 
 function create_all {
@@ -393,10 +408,10 @@ main() {
     echo Description
     echo
     echo Copyright 2012, Cisco Systems
-    echo Copyright 2012, Nicira Networks, Inc.
+    echo Copyright 2012, VMware, Inc.
     echo Copyright 2012, NTT MCL, Inc.
     echo
-    echo Please direct any questions to dedutta@cisco.com, dan@nicira.com, nachi@nttmcl.com
+    echo Please direct any questions to dedutta@cisco.com, dwendlandt@vmware.com, nachi@nttmcl.com
     echo
 
 

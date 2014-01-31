@@ -6,6 +6,9 @@
 
 # Warning: This script just for development purposes
 
+set -o errexit
+set -o xtrace
+
 ACCOUNT_DIR=./accrc
 
 display_help()
@@ -40,6 +43,7 @@ Optional Arguments
 --os-tenant-name <tenant_name>
 --os-tenant-id <tenant_id>
 --os-auth-url <auth_url>
+--os-cacert <cert file>
 --target-dir <target_directory>
 --skip-tenant <tenant-name>
 --debug
@@ -50,7 +54,7 @@ $0 -P -C mytenant -u myuser -p mypass
 EOF
 }
 
-if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-name:,os-tenant-id:,os-auth-url:,target-dir:,skip-tenant:,help,debug -- "$@")
+if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-name:,os-tenant-id:,os-auth-url:,target-dir:,skip-tenant:,os-cacert:,help,debug -- "$@")
 then
     #parse error
     display_help
@@ -77,6 +81,7 @@ do
     --os-tenant-id) export OS_TENANT_ID=$2; shift ;;
     --skip-tenant) SKIP_TENANT="$SKIP_TENANT$2,"; shift ;;
     --os-auth-url) export OS_AUTH_URL=$2; shift ;;
+    --os-cacert) export OS_CACERT=$2; shift ;;
     --target-dir) ACCOUNT_DIR=$2; shift ;;
     --debug) set -o xtrace ;;
     -u) MODE=${MODE:-one};  USER_NAME=$2; shift ;;
@@ -102,15 +107,15 @@ if [ -z "$OS_PASSWORD" ]; then
 fi
 
 if [ -z "$OS_TENANT_NAME" -a -z "$OS_TENANT_ID" ]; then
-   export OS_TENANT_NAME=admin
+    export OS_TENANT_NAME=admin
 fi
 
 if [ -z "$OS_USERNAME" ]; then
-   export OS_USERNAME=admin
+    export OS_USERNAME=admin
 fi
 
 if [ -z "$OS_AUTH_URL" ]; then
-   export OS_AUTH_URL=http://localhost:5000/v2.0/
+    export OS_AUTH_URL=http://localhost:5000/v2.0/
 fi
 
 USER_PASS=${USER_PASS:-$OS_PASSWORD}
@@ -138,10 +143,14 @@ s3=`keystone endpoint-get --service s3 | awk '/\|[[:space:]]*s3.publicURL/ {prin
 mkdir -p "$ACCOUNT_DIR"
 ACCOUNT_DIR=`readlink -f "$ACCOUNT_DIR"`
 EUCALYPTUS_CERT=$ACCOUNT_DIR/cacert.pem
-mv "$EUCALYPTUS_CERT" "$EUCALYPTUS_CERT.old" &>/dev/null
+if [ -e "$EUCALYPTUS_CERT" ]; then
+    mv "$EUCALYPTUS_CERT" "$EUCALYPTUS_CERT.old"
+fi
 if ! nova x509-get-root-cert "$EUCALYPTUS_CERT"; then
     echo "Failed to update the root certificate: $EUCALYPTUS_CERT" >&2
-    mv "$EUCALYPTUS_CERT.old" "$EUCALYPTUS_CERT" &>/dev/null
+    if [ -e "$EUCALYPTUS_CERT.old" ]; then
+        mv "$EUCALYPTUS_CERT.old" "$EUCALYPTUS_CERT"
+    fi
 fi
 
 
@@ -168,12 +177,20 @@ function add_entry(){
     local ec2_cert="$rcfile-cert.pem"
     local ec2_private_key="$rcfile-pk.pem"
     # Try to preserve the original file on fail (best effort)
-    mv -f "$ec2_private_key" "$ec2_private_key.old" &>/dev/null
-    mv -f "$ec2_cert" "$ec2_cert.old" &>/dev/null
+    if [ -e "$ec2_private_key" ]; then
+        mv -f "$ec2_private_key" "$ec2_private_key.old"
+    fi
+    if [ -e "$ec2_cert" ]; then
+        mv -f "$ec2_cert" "$ec2_cert.old"
+    fi
     # It will not create certs when the password is incorrect
     if ! nova --os-password "$user_passwd" --os-username "$user_name" --os-tenant-name "$tenant_name" x509-create-cert "$ec2_private_key" "$ec2_cert"; then
-        mv -f "$ec2_private_key.old" "$ec2_private_key" &>/dev/null
-        mv -f "$ec2_cert.old" "$ec2_cert" &>/dev/null
+        if [ -e "$ec2_private_key.old" ]; then
+            mv -f "$ec2_private_key.old" "$ec2_private_key"
+        fi
+        if [ -e "$ec2_cert.old" ]; then
+            mv -f "$ec2_cert.old" "$ec2_cert"
+        fi
     fi
     cat >"$rcfile" <<EOF
 # you can source this file
@@ -186,6 +203,7 @@ export OS_USERNAME="$user_name"
 # Openstack Tenant ID = $tenant_id
 export OS_TENANT_NAME="$tenant_name"
 export OS_AUTH_URL="$OS_AUTH_URL"
+export OS_CACERT="$OS_CACERT"
 export EC2_CERT="$ec2_cert"
 export EC2_PRIVATE_KEY="$ec2_private_key"
 export EC2_USER_ID=42 #not checked by nova (can be a 12-digit id)
@@ -234,7 +252,7 @@ if [ $MODE != "create" ]; then
         for user_id_at_name in `keystone user-list --tenant-id $tenant_id | awk 'BEGIN {IGNORECASE = 1} /true[[:space:]]*\|[^|]*\|$/ {print  $2 "@" $4}'`; do
             read user_id user_name <<< `echo "$user_id_at_name" | sed 's/@/ /'`
             if [ $MODE = one -a "$user_name" != "$USER_NAME" ]; then
-               continue;
+                continue;
             fi
             add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
         done

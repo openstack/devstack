@@ -2,19 +2,20 @@
 # Install and start **Cinder** volume service
 
 # Dependencies:
+#
 # - functions
 # - DEST, DATA_DIR, STACK_USER must be defined
-# SERVICE_{TENANT_NAME|PASSWORD} must be defined
-# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+# - SERVICE_{TENANT_NAME|PASSWORD} must be defined
+# - ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # stack.sh
 # ---------
-# install_cinder
-# configure_cinder
-# init_cinder
-# start_cinder
-# stop_cinder
-# cleanup_cinder
+# - install_cinder
+# - configure_cinder
+# - init_cinder
+# - start_cinder
+# - stop_cinder
+# - cleanup_cinder
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -78,11 +79,15 @@ VOLUME_BACKING_DEVICE2=${VOLUME_BACKING_DEVICE2:-}
 
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,cinder
+
 
 # Functions
 # ---------
 # _clean_lvm_lv removes all cinder LVM volumes
-# _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
+#
+# Usage: _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
 function _clean_lvm_lv() {
     local vg=$1
     local lv_prefix=$2
@@ -98,7 +103,8 @@ function _clean_lvm_lv() {
 
 # _clean_lvm_backing_file() removes the backing file of the
 # volume group used by cinder
-# _clean_lvm_backing_file() $VOLUME_GROUP
+#
+# Usage: _clean_lvm_backing_file() $VOLUME_GROUP
 function _clean_lvm_backing_file() {
     local vg=$1
 
@@ -106,8 +112,8 @@ function _clean_lvm_backing_file() {
     # of the backing file
     if [ -z "`sudo lvs --noheadings -o lv_name $vg`" ]; then
         # if the backing physical device is a loop device, it was probably setup by devstack
-        VG_DEV=$(sudo losetup -j $DATA_DIR/${vg}-backing-file | awk -F':' '/backing-file/ { print $1}')
-        if [[ -n "$VG_DEV" ]]; then
+        if [[ -n "$VG_DEV" ]] && [[ -e "$VG_DEV" ]]; then
+            VG_DEV=$(sudo losetup -j $DATA_DIR/${vg}-backing-file | awk -F':' '/backing-file/ { print $1}')
             sudo losetup -d $VG_DEV
             rm -f $DATA_DIR/${vg}-backing-file
         fi
@@ -160,17 +166,16 @@ function cleanup_cinder() {
     fi
 }
 
-# configure_cinder() - Set config files, create data dirs, etc
-function configure_cinder() {
-    if [[ ! -d $CINDER_CONF_DIR ]]; then
-        sudo mkdir -p $CINDER_CONF_DIR
-    fi
-    sudo chown $STACK_USER $CINDER_CONF_DIR
-
-    cp -p $CINDER_DIR/etc/cinder/policy.json $CINDER_CONF_DIR
-
+# configure_cinder_rootwrap() - configure Cinder's rootwrap
+function configure_cinder_rootwrap() {
     # Set the paths of certain binaries
     CINDER_ROOTWRAP=$(get_rootwrap_location cinder)
+    if [[ ! -x $CINDER_ROOTWRAP ]]; then
+        CINDER_ROOTWRAP=$(get_rootwrap_location oslo)
+        if [[ ! -x $CINDER_ROOTWRAP ]]; then
+            die $LINENO "No suitable rootwrap found."
+        fi
+    fi
 
     # If Cinder ships the new rootwrap filters files, deploy them
     # (owned by root) and add a parameter to $CINDER_ROOTWRAP
@@ -186,31 +191,60 @@ function configure_cinder() {
         sudo chown -R root:root $CINDER_CONF_DIR/rootwrap.d
         sudo chmod 644 $CINDER_CONF_DIR/rootwrap.d/*
         # Set up rootwrap.conf, pointing to /etc/cinder/rootwrap.d
-        sudo cp $CINDER_DIR/etc/cinder/rootwrap.conf $CINDER_CONF_DIR/
+        if [[ -f $CINDER_DIR/etc/cinder/rootwrap.conf ]]; then
+            sudo cp $CINDER_DIR/etc/cinder/rootwrap.conf $CINDER_CONF_DIR/
+        else
+            # rootwrap.conf is no longer shipped in Cinder itself
+            echo "filters_path=" | sudo tee $CINDER_CONF_DIR/rootwrap.conf > /dev/null
+        fi
         sudo sed -e "s:^filters_path=.*$:filters_path=$CINDER_CONF_DIR/rootwrap.d:" -i $CINDER_CONF_DIR/rootwrap.conf
         sudo chown root:root $CINDER_CONF_DIR/rootwrap.conf
         sudo chmod 0644 $CINDER_CONF_DIR/rootwrap.conf
-        # Specify rootwrap.conf as first parameter to cinder-rootwrap
+        # Specify rootwrap.conf as first parameter to rootwrap
         CINDER_ROOTWRAP="$CINDER_ROOTWRAP $CINDER_CONF_DIR/rootwrap.conf"
         ROOTWRAP_CINDER_SUDOER_CMD="$CINDER_ROOTWRAP *"
     fi
 
     TEMPFILE=`mktemp`
-    echo "$USER ALL=(root) NOPASSWD: $ROOTWRAP_CINDER_SUDOER_CMD" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CINDER_SUDOER_CMD" >$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/cinder-rootwrap
+}
+
+# configure_cinder() - Set config files, create data dirs, etc
+function configure_cinder() {
+    if [[ ! -d $CINDER_CONF_DIR ]]; then
+        sudo mkdir -p $CINDER_CONF_DIR
+    fi
+    sudo chown $STACK_USER $CINDER_CONF_DIR
+
+    cp -p $CINDER_DIR/etc/cinder/policy.json $CINDER_CONF_DIR
+
+    configure_cinder_rootwrap
 
     cp $CINDER_DIR/etc/cinder/api-paste.ini $CINDER_API_PASTE_INI
-    iniset $CINDER_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $CINDER_API_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $CINDER_API_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $CINDER_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $CINDER_API_PASTE_INI filter:authtoken admin_user cinder
-    iniset $CINDER_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
-    iniset $CINDER_API_PASTE_INI filter:authtoken signing_dir $CINDER_AUTH_CACHE_DIR
+
+    inicomment $CINDER_API_PASTE_INI filter:authtoken auth_host
+    inicomment $CINDER_API_PASTE_INI filter:authtoken auth_port
+    inicomment $CINDER_API_PASTE_INI filter:authtoken auth_protocol
+    inicomment $CINDER_API_PASTE_INI filter:authtoken cafile
+    inicomment $CINDER_API_PASTE_INI filter:authtoken admin_tenant_name
+    inicomment $CINDER_API_PASTE_INI filter:authtoken admin_user
+    inicomment $CINDER_API_PASTE_INI filter:authtoken admin_password
+    inicomment $CINDER_API_PASTE_INI filter:authtoken signing_dir
 
     cp $CINDER_DIR/etc/cinder/cinder.conf.sample $CINDER_CONF
+
+    iniset $CINDER_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $CINDER_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $CINDER_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $CINDER_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
+    iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $CINDER_CONF keystone_authtoken admin_user cinder
+    iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+    iniset $CINDER_CONF keystone_authtoken signing_dir $CINDER_AUTH_CACHE_DIR
+
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $CINDER_CONF DEFAULT verbose True
@@ -222,6 +256,11 @@ function configure_cinder() {
         iniset $CINDER_CONF lvmdriver-2 volume_group $VOLUME_GROUP2
         iniset $CINDER_CONF lvmdriver-2 volume_driver cinder.volume.drivers.lvm.LVMISCSIDriver
         iniset $CINDER_CONF lvmdriver-2 volume_backend_name LVM_iSCSI_2
+        # NOTE(mriedem): Work around Cinder "wishlist" bug 1255593
+        if [[ "$CINDER_SECURE_DELETE" == "False" ]]; then
+            iniset $CINDER_CONF lvmdriver-1 volume_clear none
+            iniset $CINDER_CONF lvmdriver-2 volume_clear none
+        fi
     else
         iniset $CINDER_CONF DEFAULT volume_group $VOLUME_GROUP
         iniset $CINDER_CONF DEFAULT volume_name_template ${VOLUME_NAME_PREFIX}%s
@@ -233,6 +272,7 @@ function configure_cinder() {
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.contrib.standard_extensions
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
+    iniset $CINDER_CONF DEFAULT lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
 
     if is_service_enabled ceilometer; then
@@ -270,6 +310,11 @@ function configure_cinder() {
             iniset $CINDER_CONF DEFAULT xenapi_nfs_server "$CINDER_XENAPI_NFS_SERVER"
             iniset $CINDER_CONF DEFAULT xenapi_nfs_serverpath "$CINDER_XENAPI_NFS_SERVERPATH"
         )
+    elif [ "$CINDER_DRIVER" == "nfs" ]; then
+        iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.nfs.NfsDriver"
+        iniset $CINDER_CONF DEFAULT nfs_shares_config "$CINDER_CONF_DIR/nfs_shares.conf"
+        echo "$CINDER_NFS_SERVERPATH" | sudo tee "$CINDER_CONF_DIR/nfs_shares.conf"
+        sudo chmod 666 $CINDER_CONF_DIR/nfs_shares.conf
     elif [ "$CINDER_DRIVER" == "sheepdog" ]; then
         iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.sheepdog.SheepdogDriver"
     elif [ "$CINDER_DRIVER" == "glusterfs" ]; then
@@ -304,7 +349,7 @@ function configure_cinder() {
             -e 's/snapshot_autoextend_percent =.*/snapshot_autoextend_percent = 20/' \
             /etc/lvm/lvm.conf
     fi
-    iniset $CINDER_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT
+    configure_API_version $CINDER_CONF $IDENTITY_API_VERSION
     iniset $CINDER_CONF keystone_authtoken admin_user cinder
     iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
@@ -328,7 +373,7 @@ create_cinder_accounts() {
         CINDER_USER=$(keystone user-create \
             --name=cinder \
             --pass="$SERVICE_PASSWORD" \
-            --tenant_id $SERVICE_TENANT \
+            --tenant-id $SERVICE_TENANT \
             --email=cinder@example.com \
             | grep " id " | get_field 2)
         keystone user-role-add \
@@ -348,7 +393,7 @@ create_cinder_accounts() {
                 --adminurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
                 --internalurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
             CINDER_V2_SERVICE=$(keystone service-create \
-                --name=cinder \
+                --name=cinderv2 \
                 --type=volumev2 \
                 --description="Cinder Volume Service V2" \
                 | grep " id " | get_field 2)
@@ -496,6 +541,8 @@ function start_cinder() {
             # name, and would need to be adjusted too
             exit_distro_not_supported "restarting tgt"
         fi
+        # NOTE(gfidente): ensure tgtd is running in debug mode
+        sudo tgtadm --mode system --op update --name debug --value on
     fi
 
     screen_it c-api "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
@@ -517,7 +564,7 @@ function start_cinder() {
 function stop_cinder() {
     # Kill the cinder screen windows
     for serv in c-api c-bak c-sch c-vol; do
-        screen -S $SCREEN_NAME -p $serv -X kill
+        screen_stop $serv
     done
 
     if is_service_enabled c-vol; then
@@ -533,6 +580,7 @@ function stop_cinder() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

@@ -15,6 +15,8 @@ TOP_DIR=$(cd $(dirname "$0") && pwd)
 # Import common functions
 source $TOP_DIR/functions
 
+FILES=$TOP_DIR/files
+
 # Load local configuration
 source $TOP_DIR/stackrc
 
@@ -28,13 +30,17 @@ fi
 # and ``DISTRO``
 GetDistro
 
+# Import apache functions
+source $TOP_DIR/lib/apache
+source $TOP_DIR/lib/ldap
 
 # Import database library
 source $TOP_DIR/lib/database
 source $TOP_DIR/lib/rpc_backend
 
-source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/tls
+
+source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
@@ -45,8 +51,19 @@ source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
-source $TOP_DIR/lib/ldap
+source $TOP_DIR/lib/ironic
+source $TOP_DIR/lib/trove
 
+
+# Extras Source
+# --------------
+
+# Phase: source
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i source
+    done
+fi
 
 # See if there is anything running...
 # need to adapt when run_service is merged
@@ -54,6 +71,16 @@ SESSION=$(screen -ls | awk '/[0-9].stack/ { print $1 }')
 if [[ -n "$SESSION" ]]; then
     # Let unstack.sh do its thing first
     $TOP_DIR/unstack.sh --all
+fi
+
+# Run extras
+# ==========
+
+# Phase: clean
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i clean
+    done
 fi
 
 # Clean projects
@@ -65,16 +92,13 @@ cleanup_nova
 cleanup_neutron
 cleanup_swift
 
+if is_service_enabled ldap; then
+    cleanup_ldap
+fi
+
 # Do the hypervisor cleanup until this can be moved back into lib/nova
 if [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
     cleanup_nova_hypervisor
-fi
-
-# cinder doesn't always clean up the volume group as it might be used elsewhere...
-# clean it up if it is a loop device
-VG_DEV=$(sudo losetup -j $DATA_DIR/${VOLUME_GROUP}-backing-file | awk -F':' '/backing-file/ { print $1}')
-if [[ -n "$VG_DEV" ]]; then
-    sudo losetup -d $VG_DEV
 fi
 
 #if mount | grep $DATA_DIR/swift/drives; then
@@ -86,11 +110,18 @@ fi
 sudo rm -rf /etc/keystone /etc/glance /etc/nova /etc/cinder /etc/swift
 
 # Clean out tgt
-sudo rm /etc/tgt/conf.d/*
+sudo rm -f /etc/tgt/conf.d/*
 
 # Clean up the message queue
 cleanup_rpc_backend
 cleanup_database
+
+# Clean out data, logs and status
+LOGDIR=$(dirname "$LOGFILE")
+sudo rm -rf $DATA_DIR $LOGDIR $DEST/status
+if [[ -n "$SCREEN_LOGDIR" ]] && [[ -d "$SCREEN_LOGDIR" ]]; then
+    sudo rm -rf $SCREEN_LOGDIR
+fi
 
 # Clean up networking...
 # should this be in nova?

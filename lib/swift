@@ -2,22 +2,24 @@
 # Functions to control the configuration and operation of the **Swift** service
 
 # Dependencies:
-# ``functions`` file
-# ``apache`` file
-# ``DEST``, ``SCREEN_NAME``, `SWIFT_HASH` must be defined
-# ``STACK_USER`` must be defined
-# ``SWIFT_DATA_DIR`` or ``DATA_DIR`` must be defined
-# ``lib/keystone`` file
+#
+# - ``functions`` file
+# - ``apache`` file
+# - ``DEST``, ``SCREEN_NAME``, `SWIFT_HASH` must be defined
+# - ``STACK_USER`` must be defined
+# - ``SWIFT_DATA_DIR`` or ``DATA_DIR`` must be defined
+# - ``lib/keystone`` file
+#
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_swift
-# _config_swift_apache_wsgi
-# configure_swift
-# init_swift
-# start_swift
-# stop_swift
-# cleanup_swift
-# _cleanup_swift_apache_wsgi
+# - install_swift
+# - _config_swift_apache_wsgi
+# - configure_swift
+# - init_swift
+# - start_swift
+# - stop_swift
+# - cleanup_swift
+# - _cleanup_swift_apache_wsgi
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -39,6 +41,7 @@ SWIFT3_DIR=$DEST/swift3
 # Set ``SWIFT_DATA_DIR`` to the location of swift drives and objects.
 # Default is the common DevStack data directory.
 SWIFT_DATA_DIR=${SWIFT_DATA_DIR:-${DATA_DIR}/swift}
+SWIFT_DISK_IMAGE=${SWIFT_DATA_DIR}/drives/images/swift.img
 
 # Set ``SWIFT_CONF_DIR`` to the location of the configuration files.
 # Default is ``/etc/swift``.
@@ -55,10 +58,10 @@ fi
 # swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
 # kilobytes.
 # Default is 1 gigabyte.
-SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1048576
-# if tempest enabled the default size is 4 Gigabyte.
+SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1G
+# if tempest enabled the default size is 6 Gigabyte.
 if is_service_enabled tempest; then
-    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-4194304}
+    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-6G}
 fi
 
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-$SWIFT_LOOPBACK_DISK_SIZE_DEFAULT}
@@ -66,6 +69,14 @@ SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-$SWIFT_LOOPBACK_DISK_SIZE_D
 # Set ``SWIFT_EXTRAS_MIDDLEWARE`` to extras middlewares.
 # Default is ``staticweb, tempurl, formpost``
 SWIFT_EXTRAS_MIDDLEWARE=${SWIFT_EXTRAS_MIDDLEWARE:-tempurl formpost staticweb}
+
+# Set ``SWIFT_EXTRAS_MIDDLEWARE_LAST`` to extras middlewares that need to be at
+# the end of the pipeline.
+SWIFT_EXTRAS_MIDDLEWARE_LAST=${SWIFT_EXTRAS_MIDDLEWARE_LAST}
+
+# Set ``SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH`` to extras middlewares that need to be at
+# the beginning of the pipeline, before authentication middlewares.
+SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH=${SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH:-crossdomain}
 
 # The ring uses a configurable number of bits from a path’s MD5 hash as
 # a partition index that designates a device. The number of bits kept
@@ -85,6 +96,13 @@ SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 SWIFT_REPLICAS=${SWIFT_REPLICAS:-1}
 SWIFT_REPLICAS_SEQ=$(seq ${SWIFT_REPLICAS})
 
+# Set ``SWIFT_LOG_TOKEN_LENGTH`` to configure how many characters of an auth
+# token should be placed in the logs. When keystone is used with PKI tokens,
+# the token values can be huge, seemingly larger the 2K, at the least. We
+# restrict it here to a default of 12 characters, which should be enough to
+# trace through the logs when looking for its use.
+SWIFT_LOG_TOKEN_LENGTH=${SWIFT_LOG_TOKEN_LENGTH:-12}
+
 # Set ``OBJECT_PORT_BASE``, ``CONTAINER_PORT_BASE``, ``ACCOUNT_PORT_BASE``
 # Port bases used in port number calclution for the service "nodes"
 # The specified port number will be used, the additinal ports calculated by
@@ -93,23 +111,26 @@ OBJECT_PORT_BASE=${OBJECT_PORT_BASE:-6013}
 CONTAINER_PORT_BASE=${CONTAINER_PORT_BASE:-6011}
 ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,swift
+
 
 # Functions
 # ---------
 
 # cleanup_swift() - Remove residual data files
 function cleanup_swift() {
-   rm -f ${SWIFT_CONF_DIR}{*.builder,*.ring.gz,backups/*.builder,backups/*.ring.gz}
-   if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
-      sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
-   fi
-   if [[ -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
-      rm ${SWIFT_DATA_DIR}/drives/images/swift.img
-   fi
-   rm -rf ${SWIFT_DATA_DIR}/run/
-   if is_apache_enabled_service swift; then
-       _cleanup_swift_apache_wsgi
-   fi
+    rm -f ${SWIFT_CONF_DIR}{*.builder,*.ring.gz,backups/*.builder,backups/*.ring.gz}
+    if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
+        sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
+    fi
+    if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
+        rm ${SWIFT_DISK_IMAGE}
+    fi
+    rm -rf ${SWIFT_DATA_DIR}/run/
+    if is_apache_enabled_service swift; then
+        _cleanup_swift_apache_wsgi
+    fi
 }
 
 # _cleanup_swift_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
@@ -187,7 +208,7 @@ function _config_swift_apache_wsgi() {
 
         sudo cp ${SWIFT_DIR}/examples/apache2/account-server.template ${apache_vhost_dir}/account-server-${node_number}
         sudo sed -e "
-             /^#/d;/^$/d;
+            /^#/d;/^$/d;
             s/%PORT%/$account_port/g;
             s/%SERVICENAME%/account-server-${node_number}/g;
             s/%APACHE_NAME%/${APACHE_NAME}/g;
@@ -197,7 +218,7 @@ function _config_swift_apache_wsgi() {
 
         sudo cp ${SWIFT_DIR}/examples/wsgi/account-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
         sudo sed -e "
-             /^#/d;/^$/d;
+            /^#/d;/^$/d;
             s/%SERVICECONF%/account-server\/${node_number}.conf/g;
         " -i ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
     done
@@ -205,7 +226,7 @@ function _config_swift_apache_wsgi() {
 
 # configure_swift() - Set config files, create data dirs and loop image
 function configure_swift() {
-    local swift_pipeline=" "
+    local swift_pipeline="${SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH}"
     local node_number
     local swift_node_config
     local swift_log_dir
@@ -214,7 +235,7 @@ function configure_swift() {
     swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
     sudo mkdir -p ${SWIFT_CONF_DIR}/{object,container,account}-server
-    sudo chown -R $USER: ${SWIFT_CONF_DIR}
+    sudo chown -R ${STACK_USER}: ${SWIFT_CONF_DIR}
 
     if [[ "$SWIFT_CONF_DIR" != "/etc/swift" ]]; then
         # Some swift tools are hard-coded to use ``/etc/swift`` and are apparently not going to be fixed.
@@ -227,7 +248,7 @@ function configure_swift() {
     # setup) we configure it with our version of rsync.
     sed -e "
         s/%GROUP%/${USER_GROUP}/;
-        s/%USER%/$USER/;
+        s/%USER%/${STACK_USER}/;
         s,%SWIFT_DATA_DIR%,$SWIFT_DATA_DIR,;
     " $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
     # rsyncd.conf just prepared for 4 nodes
@@ -241,7 +262,7 @@ function configure_swift() {
     cp ${SWIFT_DIR}/etc/proxy-server.conf-sample ${SWIFT_CONFIG_PROXY_SERVER}
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${USER}
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${STACK_USER}
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT swift_dir
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT swift_dir ${SWIFT_CONF_DIR}
@@ -255,15 +276,34 @@ function configure_swift() {
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
 
+    # Devstack is commonly run in a small slow environment, so bump the
+    # timeouts up.
+    # node_timeout is how long between read operations a node takes to
+    # respond to the proxy server
+    # conn_timeout is all about how long it takes a connect() system call to
+    # return
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server node_timeout 120
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server conn_timeout 20
+
+    # Configure Ceilometer
+    if is_service_enabled ceilometer; then
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer use "egg:ceilometer#swift"
+        SWIFT_EXTRAS_MIDDLEWARE_LAST="${SWIFT_EXTRAS_MIDDLEWARE_LAST} ceilometer"
+    fi
+
+    # Restrict the length of auth tokens in the swift proxy-server logs.
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:proxy-logging reveal_sensitive_prefix ${SWIFT_LOG_TOKEN_LENGTH}
+
     # By default Swift will be installed with keystone and tempauth middleware
     # and add the swift3 middleware if its configured for it. The token for
-    # tempauth would be prefixed with the reseller_prefix setting TEMPAUTH_ the
-    # token for keystoneauth would have the standard reseller_prefix AUTH_
+    # tempauth would be prefixed with the reseller_prefix setting `TEMPAUTH_` the
+    # token for keystoneauth would have the standard reseller_prefix `AUTH_`
     if is_service_enabled swift3;then
-        swift_pipeline=" swift3 s3token "
+        swift_pipeline+=" swift3 s3token "
     fi
     swift_pipeline+=" authtoken keystoneauth tempauth "
     sed -i "/^pipeline/ { s/tempauth/${swift_pipeline} ${SWIFT_EXTRAS_MIDDLEWARE}/ ;}" ${SWIFT_CONFIG_PROXY_SERVER}
+    sed -i "/^pipeline/ { s/proxy-server/${SWIFT_EXTRAS_MIDDLEWARE_LAST} proxy-server/ ; }" ${SWIFT_CONFIG_PROXY_SERVER}
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth account_autocreate
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
@@ -271,16 +311,24 @@ function configure_swift() {
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix "TEMPAUTH"
 
+    # Configure Crossdomain
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:crossdomain use "egg:swift#crossdomain"
+
     # Configure Keystone
     sed -i '/^# \[filter:authtoken\]/,/^# \[filter:keystoneauth\]$/ s/^#[ \t]*//' ${SWIFT_CONFIG_PROXY_SERVER}
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cafile $KEYSTONE_SSL_CA
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_password $SERVICE_PASSWORD
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken signing_dir $SWIFT_AUTH_CACHE_DIR
+    # This causes the authtoken middleware to use the same python logging
+    # adapter provided by the swift proxy-server, so that request transaction
+    # IDs will included in all of its log messages.
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken log_name swift
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles
@@ -295,6 +343,7 @@ paste.filter_factory = keystone.middleware.s3_token:filter_factory
 auth_port = ${KEYSTONE_AUTH_PORT}
 auth_host = ${KEYSTONE_AUTH_HOST}
 auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
+cafile = ${KEYSTONE_SSL_CA}
 auth_token = ${SERVICE_TOKEN}
 admin_token = ${SERVICE_TOKEN}
 
@@ -306,7 +355,7 @@ EOF
     cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONF_DIR}/swift.conf
     iniset ${SWIFT_CONF_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
 
-    # This function generates an object/account/proxy configuration
+    # This function generates an object/container/account configuration
     # emulating 4 nodes on different ports
     function generate_swift_config() {
         local swift_node_config=$1
@@ -318,7 +367,7 @@ EOF
         node_path=${SWIFT_DATA_DIR}/${node_number}
 
         iniuncomment ${swift_node_config} DEFAULT user
-        iniset ${swift_node_config} DEFAULT user ${USER}
+        iniset ${swift_node_config} DEFAULT user ${STACK_USER}
 
         iniuncomment ${swift_node_config} DEFAULT bind_port
         iniset ${swift_node_config} DEFAULT bind_port ${bind_port}
@@ -331,6 +380,9 @@ EOF
 
         iniuncomment ${swift_node_config} DEFAULT log_facility
         iniset ${swift_node_config} DEFAULT log_facility LOG_LOCAL${log_facility}
+
+        iniuncomment ${swift_node_config} DEFAULT workers
+        iniset ${swift_node_config} DEFAULT workers 1
 
         iniuncomment ${swift_node_config} DEFAULT disable_fallocate
         iniset ${swift_node_config} DEFAULT disable_fallocate true
@@ -389,7 +441,7 @@ EOF
     swift_log_dir=${SWIFT_DATA_DIR}/logs
     rm -rf ${swift_log_dir}
     mkdir -p ${swift_log_dir}/hourly
-    sudo chown -R $USER:adm ${swift_log_dir}
+    sudo chown -R ${STACK_USER}:adm ${swift_log_dir}
     sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
         tee /etc/rsyslog.d/10-swift.conf
     if is_apache_enabled_service swift; then
@@ -404,33 +456,32 @@ function create_swift_disk() {
     # First do a bit of setup by creating the directories and
     # changing the permissions so we can run it as our user.
 
-    USER_GROUP=$(id -g)
+    USER_GROUP=$(id -g ${STACK_USER})
     sudo mkdir -p ${SWIFT_DATA_DIR}/{drives,cache,run,logs}
-    sudo chown -R $USER:${USER_GROUP} ${SWIFT_DATA_DIR}
+    sudo chown -R ${STACK_USER}:${USER_GROUP} ${SWIFT_DATA_DIR}
 
     # Create a loopback disk and format it to XFS.
-    if [[ -e ${SWIFT_DATA_DIR}/drives/images/swift.img ]]; then
+    if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
         if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
             sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
-            sudo rm -f ${SWIFT_DATA_DIR}/drives/images/swift.img
+            sudo rm -f ${SWIFT_DISK_IMAGE}
         fi
     fi
 
     mkdir -p ${SWIFT_DATA_DIR}/drives/images
-    sudo touch ${SWIFT_DATA_DIR}/drives/images/swift.img
-    sudo chown $USER: ${SWIFT_DATA_DIR}/drives/images/swift.img
+    sudo touch ${SWIFT_DISK_IMAGE}
+    sudo chown ${STACK_USER}: ${SWIFT_DISK_IMAGE}
 
-    dd if=/dev/zero of=${SWIFT_DATA_DIR}/drives/images/swift.img \
-        bs=1024 count=0 seek=${SWIFT_LOOPBACK_DISK_SIZE}
+    truncate -s ${SWIFT_LOOPBACK_DISK_SIZE} ${SWIFT_DISK_IMAGE}
 
     # Make a fresh XFS filesystem
-    mkfs.xfs -f -i size=1024  ${SWIFT_DATA_DIR}/drives/images/swift.img
+    mkfs.xfs -f -i size=1024  ${SWIFT_DISK_IMAGE}
 
     # Mount the disk with mount options to make it as efficient as possible
     mkdir -p ${SWIFT_DATA_DIR}/drives/sdb1
     if ! egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
         sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
-            ${SWIFT_DATA_DIR}/drives/images/swift.img ${SWIFT_DATA_DIR}/drives/sdb1
+            ${SWIFT_DISK_IMAGE} ${SWIFT_DATA_DIR}/drives/sdb1
     fi
 
     # Create a link to the above mount and
@@ -442,9 +493,9 @@ function create_swift_disk() {
         node_device=${node}/sdb1
         [[ -d $node ]] && continue
         [[ -d $drive ]] && continue
-        sudo install -o ${USER} -g $USER_GROUP -d $drive
-        sudo install -o ${USER} -g $USER_GROUP -d $node_device
-        sudo chown -R $USER: ${node}
+        sudo install -o ${STACK_USER} -g $USER_GROUP -d $drive
+        sudo install -o ${STACK_USER} -g $USER_GROUP -d $node_device
+        sudo chown -R ${STACK_USER}: ${node}
     done
 }
 # create_swift_accounts() - Set up standard swift accounts and extra
@@ -466,7 +517,7 @@ function create_swift_accounts() {
     ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
 
     SWIFT_USER=$(keystone user-create --name=swift --pass="$SERVICE_PASSWORD" \
-        --tenant_id $SERVICE_TENANT --email=swift@example.com | grep " id " | get_field 2)
+        --tenant-id $SERVICE_TENANT --email=swift@example.com | grep " id " | get_field 2)
     keystone user-role-add --tenant-id $SERVICE_TENANT --user-id $SWIFT_USER --role-id $ADMIN_ROLE
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
@@ -481,14 +532,19 @@ function create_swift_accounts() {
     fi
 
     SWIFT_TENANT_TEST1=$(keystone tenant-create --name=swifttenanttest1 | grep " id " | get_field 2)
+    die_if_not_set $LINENO SWIFT_TENANT_TEST1 "Failure creating SWIFT_TENANT_TEST1"
     SWIFT_USER_TEST1=$(keystone user-create --name=swiftusertest1 --pass=testing --email=test@example.com | grep " id " | get_field 2)
+    die_if_not_set $LINENO SWIFT_USER_TEST1 "Failure creating SWIFT_USER_TEST1"
     keystone user-role-add --user-id $SWIFT_USER_TEST1 --role-id $ADMIN_ROLE --tenant-id $SWIFT_TENANT_TEST1
 
     SWIFT_USER_TEST3=$(keystone user-create --name=swiftusertest3 --pass=testing3 --email=test3@example.com | grep " id " | get_field 2)
+    die_if_not_set $LINENO SWIFT_USER_TEST3 "Failure creating SWIFT_USER_TEST3"
     keystone user-role-add --user-id $SWIFT_USER_TEST3 --role-id $ANOTHER_ROLE --tenant-id $SWIFT_TENANT_TEST1
 
     SWIFT_TENANT_TEST2=$(keystone tenant-create --name=swifttenanttest2 | grep " id " | get_field 2)
+    die_if_not_set $LINENO SWIFT_TENANT_TEST2 "Failure creating SWIFT_TENANT_TEST2"
     SWIFT_USER_TEST2=$(keystone user-create --name=swiftusertest2 --pass=testing2 --email=test2@example.com | grep " id " | get_field 2)
+    die_if_not_set $LINENO SWIFT_USER_TEST2 "Failure creating SWIFT_USER_TEST2"
     keystone user-role-add --user-id $SWIFT_USER_TEST2 --role-id $ADMIN_ROLE --tenant-id $SWIFT_TENANT_TEST2
 }
 
@@ -566,26 +622,26 @@ function start_swift() {
         return 0
     fi
 
-   # By default with only one replica we are launching the proxy,
-   # container, account and object server in screen in foreground and
-   # other services in background. If we have SWIFT_REPLICAS set to something
-   # greater than one we first spawn all the swift services then kill the proxy
-   # service so we can run it in foreground in screen.  ``swift-init ...
-   # {stop|restart}`` exits with '1' if no servers are running, ignore it just
-   # in case
-   swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
-   if [[ ${SWIFT_REPLICAS} == 1 ]]; then
+    # By default with only one replica we are launching the proxy,
+    # container, account and object server in screen in foreground and
+    # other services in background. If we have SWIFT_REPLICAS set to something
+    # greater than one we first spawn all the swift services then kill the proxy
+    # service so we can run it in foreground in screen.  ``swift-init ...
+    # {stop|restart}`` exits with '1' if no servers are running, ignore it just
+    # in case
+    swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
+    if [[ ${SWIFT_REPLICAS} == 1 ]]; then
         todo="object container account"
-   fi
-   for type in proxy ${todo}; do
-       swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
-   done
-   screen_it s-proxy "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
-   if [[ ${SWIFT_REPLICAS} == 1 ]]; then
-       for type in object container account; do
-           screen_it s-${type} "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
-       done
-   fi
+    fi
+    for type in proxy ${todo}; do
+        swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
+    done
+    screen_it s-proxy "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
+    if [[ ${SWIFT_REPLICAS} == 1 ]]; then
+        for type in object container account; do
+            screen_it s-${type} "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
+        done
+    fi
 }
 
 # stop_swift() - Stop running processes (non-screen)
@@ -599,13 +655,16 @@ function stop_swift() {
     if type -p swift-init >/dev/null; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi
-    # Dump the proxy server
-    sudo pkill -f swift-proxy-server
+    for type in proxy object container account; do
+        # Dump all of the servers
+        pkill -f swift-
+    done
 }
 
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

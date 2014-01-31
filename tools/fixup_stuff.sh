@@ -5,17 +5,23 @@
 # fixup_stuff.sh
 #
 # All distro and package specific hacks go in here
+#
 # - prettytable 0.7.2 permissions are 600 in the package and
 #   pip 1.4 doesn't fix it (1.3 did)
+#
 # - httplib2 0.8 permissions are 600 in the package and
 #   pip 1.4 doesn't fix it (1.3 did)
+#
 # - RHEL6:
+#
 #   - set selinux not enforcing
 #   - (re)start messagebus daemon
 #   - remove distro packages python-crypto and python-lxml
 #   - pre-install hgtools to work around a bug in RHEL6 distribute
 #   - install nose 1.1 from EPEL
 
+set -o errexit
+set -o xtrace
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
@@ -33,25 +39,51 @@ FILES=$TOP_DIR/files
 # Python Packages
 # ---------------
 
+# get_package_path python-package    # in import notation
+function get_package_path() {
+    local package=$1
+    echo $(python -c "import os; import $package; print(os.path.split(os.path.realpath($package.__file__))[0])")
+}
+
+
 # Pre-install affected packages so we can fix the permissions
-pip_install prettytable
+# These can go away once we are confident that pip 1.4.1+ is available everywhere
+
+# Fix prettytable 0.7.2 permissions
+# Don't specify --upgrade so we use the existing package if present
+pip_install 'prettytable>0.7'
+PACKAGE_DIR=$(get_package_path prettytable)
+# Only fix version 0.7.2
+dir=$(echo $PACKAGE_DIR/prettytable-0.7.2*)
+if [[ -d $dir ]]; then
+    sudo chmod +r $dir/*
+fi
+
+# Fix httplib2 0.8 permissions
+# Don't specify --upgrade so we use the existing package if present
 pip_install httplib2
+PACKAGE_DIR=$(get_package_path httplib2)
+# Only fix version 0.8
+dir=$(echo $PACKAGE_DIR-0.8*)
+if [[ -d $dir ]]; then
+    sudo chmod +r $dir/*
+fi
 
-SITE_DIRS=$(python -c "import site; import os; print os.linesep.join(site.getsitepackages())")
-for dir in $SITE_DIRS; do
-
-    # Fix prettytable 0.7.2 permissions
-    if [[ -r $dir/prettytable.py ]]; then
-        sudo chmod +r $dir/prettytable-0.7.2*/*
+# Ubuntu 12.04
+# -----
+# We can regularly get kernel crashes on the 12.04 default kernel, so attempt
+# to install a new kernel
+if [[ ${DISTRO} =~ (precise) ]]; then
+    # Finally, because we suspect the Precise kernel is problematic, install a new kernel
+    UPGRADE_KERNEL=$(trueorfalse False $UPGRADE_KERNEL)
+    if [[ $UPGRADE_KERNEL == "True" ]]; then
+        if [[ ! `uname -r` =~ (^3\.11) ]]; then
+            apt_get install linux-generic-lts-saucy
+            echo "Installing Saucy LTS kernel, please reboot before proceeding"
+            exit 1
+        fi
     fi
-
-    # Fix httplib2 0.8 permissions
-    httplib_dir=httplib2-0.8.egg-info
-    if [[ -d $dir/$httplib_dir ]]; then
-        sudo chmod +r $dir/$httplib_dir/*
-    fi
-
-done
+fi
 
 
 # RHEL6
@@ -60,8 +92,7 @@ done
 if [[ $DISTRO =~ (rhel6) ]]; then
 
     # Disable selinux to avoid configuring to allow Apache access
-    # to Horizon files or run nodejs (LP#1175444)
-    # FIXME(dtroyer): see if this can be skipped without node or if Horizon is not enabled
+    # to Horizon files (LP#1175444)
     if selinuxenabled; then
         sudo setenforce 0
     fi
@@ -78,7 +109,7 @@ if [[ $DISTRO =~ (rhel6) ]]; then
         # fresh system via Anaconda and the dependency chain
         # ``cas`` -> ``python-paramiko`` -> ``python-crypto``.
         # ``pip uninstall pycrypto`` will remove the packaged ``.egg-info``
-        #  file but leave most of the actual library files behind in
+        # file but leave most of the actual library files behind in
         # ``/usr/lib64/python2.6/Crypto``. Later ``pip install pycrypto``
         # will install over the packaged files resulting
         # in a useless mess of old, rpm-packaged files and pip-installed files.

@@ -24,17 +24,48 @@ source $TOP_DIR/stackrc
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 
+if [[ $EUID -eq 0 ]]; then
+    echo "You are running this script as root."
+    echo "It might work but you will have a better day running it as $STACK_USER"
+    exit 1
+fi
+
+
+# Configure Projects
+# ==================
+
 # Import apache functions
 source $TOP_DIR/lib/apache
 
-# Get project function libraries
-source $TOP_DIR/lib/baremetal
-source $TOP_DIR/lib/cinder
+# Import TLS functions
+source $TOP_DIR/lib/tls
+
+# Source project function libraries
+source $TOP_DIR/lib/infra
+source $TOP_DIR/lib/oslo
+source $TOP_DIR/lib/stackforge
 source $TOP_DIR/lib/horizon
+source $TOP_DIR/lib/keystone
+source $TOP_DIR/lib/glance
+source $TOP_DIR/lib/nova
+source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
+source $TOP_DIR/lib/ceilometer
+source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
+source $TOP_DIR/lib/baremetal
+source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/ironic
-source $TOP_DIR/lib/trove
+
+# Extras Source
+# --------------
+
+# Phase: source
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i source
+    done
+fi
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
@@ -47,6 +78,7 @@ fi
 # Run extras
 # ==========
 
+# Phase: unstack
 if [[ -d $TOP_DIR/extras.d ]]; then
     for i in $TOP_DIR/extras.d/*.sh; do
         [[ -r $i ]] && source $i unstack
@@ -58,21 +90,26 @@ if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
     teardown_neutron_debug
 fi
 
-# Shut down devstack's screen to get the bulk of OpenStack services in one shot
-SCREEN=$(which screen)
-if [[ -n "$SCREEN" ]]; then
-    SESSION=$(screen -ls | awk '/[0-9].stack/ { print $1 }')
-    if [[ -n "$SESSION" ]]; then
-        screen -X -S $SESSION quit
-    fi
+# Call service stop
+
+if is_service_enabled heat; then
+    stop_heat
 fi
 
-# Shut down Nova hypervisor plugins after Nova
-NOVA_PLUGINS=$TOP_DIR/lib/nova_plugins
-if is_service_enabled nova && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
-    # Load plugin
-    source $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER
-    stop_nova_hypervisor
+if is_service_enabled ceilometer; then
+    stop_ceilometer
+fi
+
+if is_service_enabled nova; then
+    stop_nova
+fi
+
+if is_service_enabled g-api g-reg; then
+    stop_glance
+fi
+
+if is_service_enabled key; then
+    stop_keystone
 fi
 
 # Swift runs daemons
@@ -106,6 +143,7 @@ SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*
 
 # Get the iSCSI volumes
 if is_service_enabled cinder; then
+    stop_cinder
     cleanup_cinder
 fi
 
@@ -133,6 +171,15 @@ fi
 
 if is_service_enabled trove; then
     cleanup_trove
+fi
+
+# Clean up the remainder of the screen processes
+SCREEN=$(which screen)
+if [[ -n "$SCREEN" ]]; then
+    SESSION=$(screen -ls | awk '/[0-9].stack/ { print $1 }')
+    if [[ -n "$SESSION" ]]; then
+        screen -X -S $SESSION quit
+    fi
 fi
 
 cleanup_tmp

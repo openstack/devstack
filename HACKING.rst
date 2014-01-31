@@ -5,10 +5,10 @@ Contributing to DevStack
 General
 -------
 
-DevStack is written in POSIX shell script.  This choice was made because
-it best illustrates the configuration steps that this implementation takes
-on setting up and interacting with OpenStack components.  DevStack specifically
-uses Bash and is compatible with Bash 3.
+DevStack is written in UNIX shell script.  It uses a number of bash-isms
+and so is limited to Bash (version 3 and up) and compatible shells.
+Shell script was chosen because it best illustrates the steps used to
+set up and interact with OpenStack components.
 
 DevStack's official repository is located on GitHub at
 https://github.com/openstack-dev/devstack.git.  Besides the master branch that
@@ -38,7 +38,7 @@ such as Grenade, to manage a DevStack installation.
 
 A number of additional scripts can be found in the ``tools`` directory that may
 be useful in supporting DevStack installations.  Of particular note are ``info.sh``
-to collect and report information about the installed system, and ``instal_prereqs.sh``
+to collect and report information about the installed system, and ``install_prereqs.sh``
 that handles installation of the prerequisite packages for DevStack.  It is
 suitable, for example, to pre-load a system for making a snapshot.
 
@@ -54,14 +54,14 @@ Sometimes the script needs to know the location of the DevStack install director
 ``TOP_DIR`` should always point there, even if the script itself is located in
 a subdirectory::
 
-    # Keep track of the current devstack directory.
+    # Keep track of the current DevStack directory.
     TOP_DIR=$(cd $(dirname "$0") && pwd)
 
 Many scripts will utilize shared functions from the ``functions`` file.  There are
 also rc files (``stackrc`` and ``openrc``) that are often included to set the primary
 configuration of the user environment::
 
-    # Keep track of the current devstack directory.
+    # Keep track of the current DevStack directory.
     TOP_DIR=$(cd $(dirname "$0") && pwd)
 
     # Import common functions
@@ -100,13 +100,14 @@ stackrc
 -------
 
 ``stackrc`` is the global configuration file for DevStack.  It is responsible for
-calling ``localrc`` if it exists so configuration can be overridden by the user.
+calling ``local.conf`` (or ``localrc`` if it exists) so local user configuration
+is recognized.
 
 The criteria for what belongs in ``stackrc`` can be vaguely summarized as
 follows:
 
-* All project respositories and branches (for historical reasons)
-* Global configuration that may be referenced in ``localrc``, i.e. ``DEST``, ``DATA_DIR``
+* All project repositories and branches handled directly in ``stack.sh``
+* Global configuration that may be referenced in ``local.conf``, i.e. ``DEST``, ``DATA_DIR``
 * Global service configuration like ``ENABLED_SERVICES``
 * Variables used by multiple services that do not have a clear owner, i.e.
   ``VOLUME_BACKING_FILE_SIZE`` (nova-volumes and cinder) or ``PUBLIC_NETWORK_NAME``
@@ -116,8 +117,9 @@ follows:
   not be changed for other reasons but the earlier file needs to dereference a
   variable set in the later file.  This should be rare.
 
-Also, variable declarations in ``stackrc`` do NOT allow overriding (the form
-``FOO=${FOO:-baz}``); if they did then they can already be changed in ``localrc``
+Also, variable declarations in ``stackrc`` before ``local.conf`` is sourced
+do NOT allow overriding (the form
+``FOO=${FOO:-baz}``); if they did then they can already be changed in ``local.conf``
 and can stay in the project file.
 
 
@@ -139,7 +141,9 @@ verbose in the comments _ABOVE_ the code they pertain to.  Shocco also supports
 Markdown formatting in the comments; use it sparingly.  Specifically, ``stack.sh``
 uses Markdown headers to divide the script into logical sections.
 
-.. _shocco: http://rtomayko.github.com/shocco/
+.. _shocco: https://github.com/dtroyer/shocco/tree/rst_support
+
+The script used to drive <code>shocco</code> is <code>tools/build_docs.sh</code>.
 
 
 Exercises
@@ -223,3 +227,51 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
   or graciously handle possible artifacts left over from previous runs if executed
   again.  It is acceptable to require a reboot or even a re-install of DevStack
   to restore a clean test environment.
+
+
+Bash Style Guidelines
+~~~~~~~~~~~~~~~~~~~~~
+Devstack defines a bash set of best practices for maintaining large
+collections of bash scripts. These should be considered as part of the
+review process.
+
+We have a preliminary enforcing script for this called bash8 (only a
+small number of these rules are enforced).
+
+Whitespace Rules
+----------------
+
+- lines should not include trailing whitespace
+- there should be no hard tabs in the file
+- indents are 4 spaces, and all indentation should be some multiple of
+  them
+
+Control Structure Rules
+-----------------------
+- then should be on the same line as the if
+- do should be on the same line as the for
+
+Example::
+
+  if [[ -r $TOP_DIR/local.conf ]]; then
+      LRC=$(get_meta_section_files $TOP_DIR/local.conf local)
+      for lfile in $LRC; do
+          if [[ "$lfile" == "localrc" ]]; then
+              if [[ -r $TOP_DIR/localrc ]]; then
+                  warn $LINENO "localrc and local.conf:[[local]] both exist, using localrc"
+              else
+                  echo "# Generated file, do not edit" >$TOP_DIR/.localrc.auto
+                  get_meta_section $TOP_DIR/local.conf local $lfile >>$TOP_DIR/.localrc.auto
+              fi
+          fi
+      done
+  fi
+
+Variables and Functions
+-----------------------
+- functions should be used whenever possible for clarity
+- functions should use ``local`` variables as much as possible to
+  ensure they are isolated from the rest of the environment
+- local variables should be lower case, global variables should be
+  upper case
+- function names should_have_underscores, NotCamelCase.

@@ -44,9 +44,9 @@ source $THIS_DIR/xenrc
 
 xe_min()
 {
-  local cmd="$1"
-  shift
-  xe "$cmd" --minimal "$@"
+    local cmd="$1"
+    shift
+    xe "$cmd" --minimal "$@"
 }
 
 #
@@ -96,6 +96,10 @@ create_directory_for_images
 #
 # Configure Networking
 #
+
+MGT_NETWORK=`xe pif-list management=true params=network-uuid minimal=true`
+MGT_BRIDGE_OR_NET_NAME=`xe network-list uuid=$MGT_NETWORK params=bridge minimal=true`
+
 setup_network "$VM_BRIDGE_OR_NET_NAME"
 setup_network "$MGT_BRIDGE_OR_NET_NAME"
 setup_network "$PUB_BRIDGE_OR_NET_NAME"
@@ -107,12 +111,15 @@ if is_service_enabled neutron; then
 fi
 
 if parameter_is_specified "FLAT_NETWORK_BRIDGE"; then
-    cat >&2 << EOF
-ERROR: FLAT_NETWORK_BRIDGE is specified in localrc file
-This is considered as an error, as its value will be derived from the
-VM_BRIDGE_OR_NET_NAME variable's value.
+    if [ "$(bridge_for "$VM_BRIDGE_OR_NET_NAME")" != "$(bridge_for "$FLAT_NETWORK_BRIDGE")" ]; then
+        cat >&2 << EOF
+ERROR: FLAT_NETWORK_BRIDGE is specified in localrc file, and either no network
+found on XenServer by searching for networks by that value as name-label or
+bridge name or the network found does not match the network specified by
+VM_BRIDGE_OR_NET_NAME. Please check your localrc file.
 EOF
-    exit 1
+        exit 1
+    fi
 fi
 
 if ! xenapi_is_listening_on "$MGT_BRIDGE_OR_NET_NAME"; then
@@ -128,8 +135,8 @@ HOST_IP=$(xenapi_ip_on "$MGT_BRIDGE_OR_NET_NAME")
 # Set up ip forwarding, but skip on xcp-xapi
 if [ -a /etc/sysconfig/network ]; then
     if ! grep -q "FORWARD_IPV4=YES" /etc/sysconfig/network; then
-      # FIXME: This doesn't work on reboot!
-      echo "FORWARD_IPV4=YES" >> /etc/sysconfig/network
+        # FIXME: This doesn't work on reboot!
+        echo "FORWARD_IPV4=YES" >> /etc/sysconfig/network
     fi
 fi
 # Also, enable ip forwarding in rc.local, since the above trick isn't working
@@ -203,6 +210,7 @@ if [ -z "$templateuuid" ]; then
     #
     # Install Ubuntu over network
     #
+    UBUNTU_INST_BRIDGE_OR_NET_NAME=${UBUNTU_INST_BRIDGE_OR_NET_NAME:-"$MGT_BRIDGE_OR_NET_NAME"}
 
     # always update the preseed file, incase we have a newer one
     PRESEED_URL=${PRESEED_URL:-""}
@@ -263,6 +271,15 @@ $THIS_DIR/prepare_guest_template.sh "$GUEST_NAME"
 # Set virtual machine parameters
 set_vm_memory "$GUEST_NAME" "$OSDOMU_MEM_MB"
 
+# Max out VCPU count for better performance
+max_vcpus "$GUEST_NAME"
+
+# Wipe out all network cards
+destroy_all_vifs_of "$GUEST_NAME"
+
+# Add only one interface to prepare the guest template
+add_interface "$GUEST_NAME" "$MGT_BRIDGE_OR_NET_NAME" "0"
+
 # start the VM to run the prepare steps
 xe vm-start vm="$GUEST_NAME"
 
@@ -296,7 +313,7 @@ if is_service_enabled neutron; then
         "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
 fi
 
-FLAT_NETWORK_BRIDGE=$(bridge_for "$VM_BRIDGE_OR_NET_NAME")
+FLAT_NETWORK_BRIDGE="${FLAT_NETWORK_BRIDGE:-$(bridge_for "$VM_BRIDGE_OR_NET_NAME")}"
 append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
 
 # Add a separate xvdb, if it was requested
@@ -350,25 +367,20 @@ COPYENV=${COPYENV:-1}
 if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" = "1" ]; then
     set +x
 
-    echo "VM Launched - Waiting for startup script"
-    # wait for log to appear
-    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "[ -e run.sh.log ]"; do
+    echo "VM Launched - Waiting for devstack to start"
+    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "service devstack status | grep -q running"; do
         sleep 10
     done
-    echo -n "Running"
-    while [ `ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS pgrep -c run.sh` -ge 1 ]
-    do
+    echo -n "devstack is running"
+    while ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "service devstack status | grep -q running"; do
         sleep 10
         echo -n "."
     done
     echo "done!"
     set -x
 
-    # output the run.sh.log
-    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'cat run.sh.log'
-
-    # Fail if the expected text is not found
-    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'cat run.sh.log' | grep -q 'stack.sh completed in'
+    # Fail if devstack did not succeed
+    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'test -e /var/run/devstack.succeeded'
 
     set +x
     echo "################################################################################"
@@ -382,11 +394,12 @@ else
     echo ""
     echo "All Finished!"
     echo "Now, you can monitor the progress of the stack.sh installation by "
-    echo "tailing /opt/stack/run.sh.log from within your domU."
+    echo "looking at the console of your domU / checking the log files."
     echo ""
     echo "ssh into your domU now: 'ssh stack@$OS_VM_MANAGEMENT_ADDRESS' using your password"
-    echo "and then do: 'tail -f /opt/stack/run.sh.log'"
+    echo "and then do: 'sudo service devstack status' to check if devstack is still running."
+    echo "Check that /var/run/devstack.succeeded exists"
     echo ""
-    echo "When the script completes, you can then visit the OpenStack Dashboard"
+    echo "When devstack completes, you can visit the OpenStack Dashboard"
     echo "at http://$OS_VM_SERVICES_ADDRESS, and contact other services at the usual ports."
 fi

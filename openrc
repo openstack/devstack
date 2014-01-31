@@ -18,7 +18,7 @@ if [[ -n "$2" ]]; then
 fi
 
 # Find the other rc files
-RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
+RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
 # Import common functions
 source $RC_DIR/functions
@@ -58,6 +58,7 @@ export OS_NO_CACHE=${OS_NO_CACHE:-1}
 HOST_IP=${HOST_IP:-127.0.0.1}
 SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
 SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
+KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
 
 # Some exercises call glance directly.  On a single-node installation, Glance
 # should be listening on HOST_IP.  If its running elsewhere, it can be set here
@@ -71,13 +72,18 @@ export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
 # the user/tenant has access to - including nova, glance, keystone, swift, ...
 # We currently recommend using the 2.0 *identity api*.
 #
-export OS_AUTH_URL=$SERVICE_PROTOCOL://$SERVICE_HOST:5000/v${OS_IDENTITY_API_VERSION}
+export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:5000/v${OS_IDENTITY_API_VERSION}
 
 # Set the pointer to our CA certificate chain.  Harmless if TLS is not used.
-export OS_CACERT=$INT_CA_DIR/ca-chain.pem
+export OS_CACERT=${OS_CACERT:-$INT_CA_DIR/ca-chain.pem}
 
 # Currently novaclient needs you to specify the *compute api* version.  This
 # needs to match the config of your catalog returned by Keystone.
 export NOVA_VERSION=${NOVA_VERSION:-1.1}
 # In the future this will change names:
 export COMPUTE_API_VERSION=${COMPUTE_API_VERSION:-$NOVA_VERSION}
+
+# Currently cinderclient needs you to specify the *volume api* version. This
+# needs to match the config of your catalog returned by Keystone.
+export CINDER_VERSION=${CINDER_VERSION:-2}
+export OS_VOLUME_API_VERSION=${OS_VOLUME_API_VERSION:-$CINDER_VERSION}

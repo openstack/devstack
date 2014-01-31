@@ -18,8 +18,8 @@ python-mysqldb
 python-pyudev
 python-qpid # dist:precise
 dnsmasq-base
-dnsmasq-utils # for dhcp_release only available in dist:oneiric,precise,quantal
+dnsmasq-utils # for dhcp_release only available in dist:precise
 rabbitmq-server # NOPRIME
-qpid # NOPRIME
+qpidd # NOPRIME
 sqlite3
 vlan

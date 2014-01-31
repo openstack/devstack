@@ -1,0 +1,150 @@
+# Neutron VMware NSX plugin
+# -------------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+source $TOP_DIR/lib/neutron_plugins/ovs_base
+
+function setup_integration_bridge() {
+    _neutron_ovs_base_setup_bridge $OVS_BRIDGE
+    # Set manager to NSX controller (1st of list)
+    if [[ "$NSX_CONTROLLERS" != "" ]]; then
+        # Get the first controller
+        controllers=(${NSX_CONTROLLERS//,/ })
+        OVS_MGR_IP=${controllers[0]}
+    else
+        die $LINENO "Error - No controller specified. Unable to set a manager for OVS"
+    fi
+    sudo ovs-vsctl set-manager ssl:$OVS_MGR_IP
+}
+
+function is_neutron_ovs_base_plugin() {
+    # NSX uses OVS, but not the l3-agent
+    return 0
+}
+
+function neutron_plugin_create_nova_conf() {
+    # if n-cpu is enabled, then setup integration bridge
+    if is_service_enabled n-cpu; then
+        setup_integration_bridge
+    fi
+}
+
+function neutron_plugin_install_agent_packages() {
+    # VMware NSX Plugin does not run q-agt, but it currently needs dhcp and metadata agents
+    _neutron_ovs_base_install_agent_packages
+}
+
+function neutron_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/vmware
+    Q_PLUGIN_CONF_FILENAME=nsx.ini
+    Q_DB_NAME="neutron_nsx"
+    # TODO(armando-migliaccio): rename this once the code rename is complete
+    Q_PLUGIN_CLASS="neutron.plugins.nicira.NeutronPlugin.NvpPluginV2"
+}
+
+function neutron_plugin_configure_debug_command() {
+    sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
+    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge "$PUBLIC_BRIDGE"
+}
+
+function neutron_plugin_configure_dhcp_agent() {
+    setup_integration_bridge
+    iniset $Q_DHCP_CONF_FILE DEFAULT enable_isolated_metadata True
+    iniset $Q_DHCP_CONF_FILE DEFAULT enable_metadata_network True
+    iniset $Q_DHCP_CONF_FILE DEFAULT ovs_use_veth True
+}
+
+function neutron_plugin_configure_l3_agent() {
+    # VMware NSX plugin does not run L3 agent
+    die $LINENO "q-l3 should must not be executed with VMware NSX plugin!"
+}
+
+function neutron_plugin_configure_plugin_agent() {
+    # VMware NSX plugin does not run L2 agent
+    die $LINENO "q-agt must not be executed with VMware NSX plugin!"
+}
+
+function neutron_plugin_configure_service() {
+    if [[ "$MAX_LP_PER_BRIDGED_LS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE nsx max_lp_per_bridged_ls $MAX_LP_PER_BRIDGED_LS
+    fi
+    if [[ "$MAX_LP_PER_OVERLAY_LS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE nsx max_lp_per_overlay_ls $MAX_LP_PER_OVERLAY_LS
+    fi
+    if [[ "$FAILOVER_TIME" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE nsx failover_time $FAILOVER_TIME
+    fi
+    if [[ "$CONCURRENT_CONNECTIONS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE nsx concurrent_connections $CONCURRENT_CONNECTIONS
+    fi
+
+    if [[ "$DEFAULT_TZ_UUID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_tz_uuid $DEFAULT_TZ_UUID
+    else
+        die $LINENO "The VMware NSX plugin won't work without a default transport zone."
+    fi
+    if [[ "$DEFAULT_L3_GW_SVC_UUID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l3_gw_service_uuid $DEFAULT_L3_GW_SVC_UUID
+        Q_L3_ENABLED=True
+        Q_L3_ROUTER_PER_TENANT=True
+        iniset /$Q_PLUGIN_CONF_FILE nsx metadata_mode access_network
+    fi
+    if [[ "$DEFAULT_L2_GW_SVC_UUID" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_l2_gw_service_uuid $DEFAULT_L2_GW_SVC_UUID
+    fi
+    # NSX_CONTROLLERS must be a comma separated string
+    if [[ "$NSX_CONTROLLERS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nsx_controllers $NSX_CONTROLLERS
+    else
+        die $LINENO "The VMware NSX plugin needs at least an NSX controller."
+    fi
+    if [[ "$NSX_USER" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nsx_user $NSX_USER
+    fi
+    if [[ "$NSX_PASSWORD" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT nsx_password $NSX_PASSWORD
+    fi
+    if [[ "$NSX_REQ_TIMEOUT" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT req_timeout $NSX_REQ_TIMEOUT
+    fi
+    if [[ "$NSX_HTTP_TIMEOUT" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT http_timeout $NSX_HTTP_TIMEOUT
+    fi
+    if [[ "$NSX_RETRIES" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT retries $NSX_RETRIES
+    fi
+    if [[ "$NSX_REDIRECTS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE DEFAULT redirects $NSX_REDIRECTS
+    fi
+    if [[ "$AGENT_MODE" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE nsx agent_mode $AGENT_MODE
+        if [[ "$AGENT_MODE" == "agentless" ]]; then
+            if [[ "$DEFAULT_SERVICE_CLUSTER_UUID" != "" ]]; then
+                iniset /$Q_PLUGIN_CONF_FILE DEFAULT default_service_cluster_uuid $DEFAULT_SERVICE_CLUSTER_UUID
+            else
+                die $LINENO "Agentless mode requires a service cluster."
+            fi
+            iniset /$Q_PLUGIN_CONF_FILE nsx_metadata metadata_server_address $Q_META_DATA_IP
+        fi
+    fi
+}
+
+function neutron_plugin_setup_interface_driver() {
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+}
+
+function has_neutron_plugin_security_group() {
+    # 0 means True here
+    return 0
+}
+
+function neutron_plugin_check_adv_test_requirements() {
+    is_service_enabled q-dhcp && return 0
+}
+
+# Restore xtrace
+$MY_XTRACE

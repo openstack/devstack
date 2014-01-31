@@ -2,20 +2,21 @@
 # Functions to control the configuration and operation of the **Glance** service
 
 # Dependencies:
-# ``functions`` file
-# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
-# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
-# ``SERVICE_HOST``
-# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+#
+# - ``functions`` file
+# - ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+# - ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
+# - ``SERVICE_HOST``
+# - ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_glance
-# configure_glance
-# init_glance
-# start_glance
-# stop_glance
-# cleanup_glance
+# - install_glance
+# - configure_glance
+# - init_glance
+# - start_glance
+# - stop_glance
+# - cleanup_glance
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -51,6 +52,9 @@ fi
 # Glance connection info.  Note the port must be specified.
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
 
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,glance
+
 
 # Functions
 # ---------
@@ -81,7 +85,8 @@ function configure_glance() {
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset $GLANCE_REGISTRY_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
+    configure_API_version $GLANCE_REGISTRY_CONF $IDENTITY_API_VERSION
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_user glance
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
@@ -98,7 +103,8 @@ function configure_glance() {
     iniset $GLANCE_API_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $GLANCE_API_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset $GLANCE_API_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $GLANCE_API_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset $GLANCE_API_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
+    configure_API_version $GLANCE_API_CONF $IDENTITY_API_VERSION
     iniset $GLANCE_API_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $GLANCE_API_CONF keystone_authtoken admin_user glance
     iniset $GLANCE_API_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
@@ -121,6 +127,8 @@ function configure_glance() {
         iniset $GLANCE_API_CONF DEFAULT swift_store_user $SERVICE_TENANT_NAME:glance
         iniset $GLANCE_API_CONF DEFAULT swift_store_key $SERVICE_PASSWORD
         iniset $GLANCE_API_CONF DEFAULT swift_store_create_container_on_put True
+
+        iniset $GLANCE_API_CONF DEFAULT known_stores "glance.store.filesystem.Store, glance.store.http.Store, glance.store.swift.Store"
     fi
 
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
@@ -193,22 +201,23 @@ function start_glance() {
     screen_it g-reg "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
     screen_it g-api "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= wget -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
-      die $LINENO "g-api did not start"
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
+        die $LINENO "g-api did not start"
     fi
 }
 
 # stop_glance() - Stop running processes
 function stop_glance() {
     # Kill the Glance screen windows
-    screen -S $SCREEN_NAME -p g-api -X kill
-    screen -S $SCREEN_NAME -p g-reg -X kill
+    screen_stop g-api
+    screen_stop g-reg
 }
 
 
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:
