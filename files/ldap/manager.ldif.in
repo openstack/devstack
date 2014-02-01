@@ -12,4 +12,4 @@ olcRootPW: ${SLAPPASS}
 replace: olcDbIndex
 olcDbIndex: objectClass eq
 olcDbIndex: default pres,eq
-olcDbIndex: cn,sn,givenName,co
+olcDbIndex: cn,sn,givenName
