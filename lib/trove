@@ -129,14 +129,14 @@ function configure_trove() {
     # Copy api-paste file over to the trove conf dir and configure it
     cp $TROVE_LOCAL_CONF_DIR/api-paste.ini $TROVE_CONF_DIR/api-paste.ini
     TROVE_API_PASTE_INI=$TROVE_CONF_DIR/api-paste.ini
-    iniset $TROVE_API_PASTE_INI filter:tokenauth auth_host $KEYSTONE_AUTH_HOST
-    iniset $TROVE_API_PASTE_INI filter:tokenauth auth_port $KEYSTONE_AUTH_PORT
-    iniset $TROVE_API_PASTE_INI filter:tokenauth auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $TROVE_API_PASTE_INI filter:tokenauth cafile $KEYSTONE_SSL_CA
-    iniset $TROVE_API_PASTE_INI filter:tokenauth admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $TROVE_API_PASTE_INI filter:tokenauth admin_user trove
-    iniset $TROVE_API_PASTE_INI filter:tokenauth admin_password $SERVICE_PASSWORD
-    iniset $TROVE_API_PASTE_INI filter:tokenauth signing_dir $TROVE_AUTH_CACHE_DIR
+    iniset $TROVE_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
+    iniset $TROVE_API_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
+    iniset $TROVE_API_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $TROVE_API_PASTE_INI filter:authtoken cafile $KEYSTONE_SSL_CA
+    iniset $TROVE_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $TROVE_API_PASTE_INI filter:authtoken admin_user trove
+    iniset $TROVE_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
+    iniset $TROVE_API_PASTE_INI filter:authtoken signing_dir $TROVE_AUTH_CACHE_DIR
 
     # (Re)create trove conf files
     rm -f $TROVE_CONF_DIR/trove.conf
