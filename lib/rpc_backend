@@ -139,12 +139,18 @@ function restart_rpc_backend() {
     if is_service_enabled rabbit; then
         # Start rabbitmq-server
         echo_summary "Starting RabbitMQ"
-        if is_fedora || is_suse; then
-            # service is not started by default
-            restart_service rabbitmq-server
-        fi
-        # change the rabbit password since the default is "guest"
-        sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
+        # NOTE(bnemec): Retry initial rabbitmq configuration to deal with
+        # the fact that sometimes it fails to start properly.
+        # Reference: https://bugzilla.redhat.com/show_bug.cgi?id=1059028
+        for i in `seq 10`; do
+            if is_fedora || is_suse; then
+                # service is not started by default
+                restart_service rabbitmq-server
+            fi
+            # change the rabbit password since the default is "guest"
+            sudo rabbitmqctl change_password guest $RABBIT_PASSWORD && break
+            [[ $i -eq "10" ]] && die $LINENO "Failed to set rabbitmq password"
+        done
         if is_service_enabled n-cell; then
             # Add partitioned access for the child cell
             if [ -z `sudo rabbitmqctl list_vhosts | grep child_cell` ]; then
