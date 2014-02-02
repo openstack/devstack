@@ -105,6 +105,7 @@ function cleanup_ceilometer() {
 # configure_ceilometerclient() - Set config files, create data dirs, etc
 function configure_ceilometerclient() {
     setup_develop $CEILOMETERCLIENT_DIR
+    sudo install -D -m 0644 -o $STACK_USER {$CEILOMETERCLIENT_DIR/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
 }
 
 # configure_ceilometer() - Set config files, create data dirs, etc
