@@ -601,6 +601,9 @@ function err_trap {
     exit $r
 }
 
+
+set -o errexit
+
 # Print the commands being run so that we can see the command that triggers
 # an error.  It is also useful for following along as the install occurs.
 set -o xtrace
