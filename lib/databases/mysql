@@ -87,20 +87,25 @@ function configure_database_mysql {
 default-storage-engine = InnoDB" $MY_CONF
     fi
 
-    # Turn on slow query log
-    sudo sed -i '/log.slow.queries/d' $MY_CONF
-    sudo sed -i -e "/^\[mysqld\]/ a \
-log-slow-queries = /var/log/mysql/mysql-slow.log" $MY_CONF
+    if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
+        echo_summary "Enabling MySQL query logging"
 
-    # Log all queries (any query taking longer than 0 seconds)
-    sudo sed -i '/long.query.time/d' $MY_CONF
-    sudo sed -i -e "/^\[mysqld\]/ a \
-long-query-time = 0" $MY_CONF
+        # Turn on slow query log
+        sudo sed -i '/log.slow.queries/d' $MY_CONF
+        sudo sed -i -e "/^\[mysqld\]/ a \
+            log-slow-queries = /var/log/mysql/mysql-slow.log" $MY_CONF
 
-    # Log all non-indexed queries
-    sudo sed -i '/log.queries.not.using.indexes/d' $MY_CONF
-    sudo sed -i -e "/^\[mysqld\]/ a \
-log-queries-not-using-indexes" $MY_CONF
+        # Log all queries (any query taking longer than 0 seconds)
+        sudo sed -i '/long.query.time/d' $MY_CONF
+        sudo sed -i -e "/^\[mysqld\]/ a \
+            long-query-time = 0" $MY_CONF
+
+        # Log all non-indexed queries
+        sudo sed -i '/log.queries.not.using.indexes/d' $MY_CONF
+        sudo sed -i -e "/^\[mysqld\]/ a \
+            log-queries-not-using-indexes" $MY_CONF
+
+    fi
 
     restart_service $MYSQL
 }

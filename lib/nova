@@ -240,8 +240,10 @@ function configure_nova() {
         sudo sysctl -w net.ipv4.ip_forward=1
 
         if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
-            # Attempt to load modules: network block device - used to manage qcow images
-            sudo modprobe nbd || true
+            # When libguestfs is available for file injection, enable using
+            # libguestfs to inspect the image and figure out the proper
+            # partition to inject into.
+            iniset $NOVA_CONF libvirt inject_partition '-1'
 
             # Check for kvm (hardware based virtualization).  If unable to initialize
             # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems

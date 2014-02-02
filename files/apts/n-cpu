@@ -1,8 +1,8 @@
 # Stuff for diablo volumes
-nbd-client
 lvm2
 open-iscsi
 open-iscsi-utils # Deprecated since quantal dist:precise
 genisoimage
 sysfsutils
 sg3-utils
+python-guestfs
