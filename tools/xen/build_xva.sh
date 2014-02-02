@@ -21,8 +21,18 @@ set -o xtrace
 # This directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
+# Source lower level functions
+. $TOP_DIR/../../functions
+
 # Include onexit commands
 . $TOP_DIR/scripts/on_exit.sh
+
+# xapi functions
+. $TOP_DIR/functions
+
+# Determine what system we are running on.
+# Might not be XenServer if we're using xenserver-core
+GetDistro
 
 # Source params - override xenrc params in your localrc to suite your taste
 source xenrc
