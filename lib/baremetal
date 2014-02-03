@@ -431,8 +431,7 @@ function upload_baremetal_image() {
 
 function clear_baremetal_of_all_nodes() {
     list=$(nova baremetal-node-list | awk -F '| ' 'NR>3 {print $2}' )
-    for node in $list
-    do
+    for node in $list; do
         nova baremetal-node-delete $node
     done
 }

@@ -194,8 +194,7 @@ function wait_for_VM_to_halt() {
     while true
     do
         state=$(xe_min vm-list name-label="$GUEST_NAME" power-state=halted)
-        if [ -n "$state" ]
-        then
+        if [ -n "$state" ]; then
             break
         else
             echo -n "."

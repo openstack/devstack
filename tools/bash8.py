@@ -21,9 +21,19 @@
 # Currently Supported checks
 #
 # Errors
+# Basic white space errors, for consistent indenting
 # - E001: check that lines do not end with trailing whitespace
 # - E002: ensure that indents are only spaces, and not hard tabs
 # - E003: ensure all indents are a multiple of 4 spaces
+#
+# Structure errors
+#
+# A set of rules that help keep things consistent in control blocks.
+# These are ignored on long lines that have a continuation, because
+# unrolling that is kind of "interesting"
+#
+# - E010: *do* not on the same line as *for*
+# - E011: *then* not on the same line as *if*
 
 import argparse
 import fileinput
@@ -49,6 +59,23 @@ def print_error(error, line):
     ERRORS = ERRORS + 1
     print("%s: '%s'" % (error, line.rstrip('\n')))
     print(" - %s: L%s" % (fileinput.filename(), fileinput.filelineno()))
+
+
+def not_continuation(line):
+    return not re.search('\\\\$', line)
+
+def check_for_do(line):
+    if not_continuation(line):
+        if re.search('^\s*for ', line):
+            if not re.search(';\s*do(\b|$)', line):
+                print_error('E010: Do not on same line as for', line)
+
+
+def check_if_then(line):
+    if not_continuation(line):
+        if re.search('^\s*if \[', line):
+            if not re.search(';\s*then(\b|$)', line):
+                print_error('E011: Then non on same line as if', line)
 
 
 def check_no_trailing_whitespace(line):
@@ -100,6 +127,8 @@ def check_files(files):
 
         check_no_trailing_whitespace(logical_line)
         check_indents(logical_line)
+        check_for_do(logical_line)
+        check_if_then(logical_line)
 
 
 def get_options():

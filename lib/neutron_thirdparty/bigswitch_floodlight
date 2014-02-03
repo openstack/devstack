@@ -24,8 +24,7 @@ function init_bigswitch_floodlight() {
     sudo ovs-vsctl --no-wait br-set-external-id ${OVS_BRIDGE} bridge-id ${OVS_BRIDGE}
 
     ctrls=
-    for ctrl in `echo ${BS_FL_CONTROLLERS_PORT} | tr ',' ' '`
-    do
+    for ctrl in `echo ${BS_FL_CONTROLLERS_PORT} | tr ',' ' '`; do
         ctrl=${ctrl%:*}
         ctrls="${ctrls} tcp:${ctrl}:${BS_FL_OF_PORT}"
     done
