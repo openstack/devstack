@@ -456,6 +456,7 @@ if is_service_enabled s-proxy; then
     read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
 fi
 
+
 # Configure logging
 # -----------------
 
@@ -973,6 +974,7 @@ if is_service_enabled ir-api ir-cond; then
     init_ironic
 fi
 
+
 # Neutron
 # -------
 
@@ -1324,31 +1326,6 @@ fi
 # Check the status of running services
 service_check
 
-if is_service_enabled q-svc; then
-    echo_summary "Starting Neutron"
-
-    start_neutron_service_and_check
-    # create_neutron_initial_network
-    setup_neutron_debug
-elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
-    NM_CONF=${NOVA_CONF}
-    if is_service_enabled n-cell; then
-        NM_CONF=${NOVA_CELLS_CONF}
-    fi
-
-    # Create a small network
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF network create "$PRIVATE_NETWORK_NAME" $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
-
-    # Create some floating ips
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create $FLOATING_RANGE --pool=$PUBLIC_NETWORK_NAME
-
-    # Create a second pool
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
-fi
-
-if is_service_enabled neutron; then
-    start_neutron_agents
-fi
 
 # Fin
 # ===
