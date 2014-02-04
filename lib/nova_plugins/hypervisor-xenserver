@@ -56,6 +56,34 @@ function configure_nova_hypervisor() {
     # Need to avoid crash due to new firewall support
     XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
     iniset $NOVA_CONF DEFAULT firewall_driver "$XEN_FIREWALL_DRIVER"
+
+    local dom0_ip
+    dom0_ip=$(echo "$XENAPI_CONNECTION_URL" | cut -d "/" -f 3-)
+
+    local ssh_dom0
+    ssh_dom0="sudo -u $DOMZERO_USER ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$dom0_ip"
+
+    # install nova plugins to dom0
+    tar -czf - -C $NOVA_DIR/plugins/xenserver/xenapi/etc/xapi.d/plugins/ ./ |
+        $ssh_dom0 'tar -xzf - -C /etc/xapi.d/plugins/ && chmod a+x /etc/xapi.d/plugins/*'
+
+    # install console logrotate script
+    tar -czf - -C $NOVA_DIR/tools/xenserver/ rotate_xen_guest_logs.sh |
+        $ssh_dom0 'tar -xzf - -C /root/ && chmod +x /root/rotate_xen_guest_logs.sh && mkdir -p /var/log/xen/guest'
+
+    # Create a cron job that will rotate guest logs
+    $ssh_dom0 crontab - << CRONTAB
+* * * * * /root/rotate_xen_guest_logs.sh
+CRONTAB
+
+    # Create directories for kernels and images
+    {
+        echo "set -eux"
+        cat $TOP_DIR/tools/xen/functions
+        echo "create_directory_for_images"
+        echo "create_directory_for_kernels"
+    } | $ssh_dom0
+
 }
 
 # install_nova_hypervisor() - Install external components

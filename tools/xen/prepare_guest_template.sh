@@ -76,7 +76,7 @@ cp $STAGING_DIR/etc/rc.local $STAGING_DIR/etc/rc.local.preparebackup
 cat <<EOF >$STAGING_DIR/etc/rc.local
 #!/bin/sh -e
 bash /opt/stack/prepare_guest.sh \\
-    "$GUEST_PASSWORD" "$XS_TOOLS_PATH" "$STACK_USER" \\
+    "$GUEST_PASSWORD" "$XS_TOOLS_PATH" "$STACK_USER" "$DOMZERO_USER" \\
     > /opt/stack/prepare_guest.log 2>&1
 EOF
 

@@ -336,3 +336,11 @@ function max_vcpus() {
     xe vm-param-set uuid=$vm VCPUs-max=$cpu_count
     xe vm-param-set uuid=$vm VCPUs-at-startup=$cpu_count
 }
+
+function get_domid() {
+    local vm_name_label
+
+    vm_name_label="$1"
+
+    xe vm-list name-label="$vm_name_label" params=dom-id minimal=true
+}
