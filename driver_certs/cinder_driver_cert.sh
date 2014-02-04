@@ -24,6 +24,7 @@ TOP_DIR=$(cd $CERT_DIR/..; pwd)
 source $TOP_DIR/functions
 source $TOP_DIR/stackrc
 source $TOP_DIR/openrc
+source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/tempest
 source $TOP_DIR/lib/cinder
 
