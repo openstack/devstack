@@ -30,8 +30,18 @@ import fileinput
 import re
 import sys
 
-
 ERRORS = 0
+IGNORE = None
+
+
+def register_ignores(ignores):
+    global IGNORE
+    if ignores:
+        IGNORE='^(' + '|'.join(ignores.split(',')) + ')'
+
+
+def should_ignore(error):
+    return IGNORE and re.search(IGNORE, error)
 
 
 def print_error(error, line):
@@ -97,11 +107,13 @@ def get_options():
         description='A bash script style checker')
     parser.add_argument('files', metavar='file', nargs='+',
                         help='files to scan for errors')
+    parser.add_argument('-i', '--ignore', help='Rules to ignore')
     return parser.parse_args()
 
 
 def main():
     opts = get_options()
+    register_ignores(opts.ignore)
     check_files(opts.files)
 
     if ERRORS > 0:
