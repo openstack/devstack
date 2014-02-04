@@ -2,12 +2,14 @@
 #
 # Initial data for Keystone using python-keystoneclient
 #
-# Tenant               User       Roles
+# Tenant               User         Roles
 # ------------------------------------------------------------------
-# service              glance     admin
-# service              heat       service        # if enabled
+# service              glance       service
+# service              glance-swift ResellerAdmin
+# service              heat         service        # if enabled
+# service              ceilometer   admin          # if enabled
 # Tempest Only:
-# alt_demo             alt_demo  Member
+# alt_demo             alt_demo     Member
 #
 # Variables set before calling this script:
 # SERVICE_TOKEN - aka admin_token in keystone.conf
@@ -96,7 +98,19 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     keystone user-role-add \
         --tenant $SERVICE_TENANT_NAME \
         --user glance \
-        --role admin
+        --role service
+    # required for swift access
+    if [[ "$ENABLED_SERVICES" =~ "s-proxy" ]]; then
+        keystone user-create \
+            --name=glance-swift \
+            --pass="$SERVICE_PASSWORD" \
+            --tenant $SERVICE_TENANT_NAME \
+            --email=glance-swift@example.com
+        keystone user-role-add \
+            --tenant $SERVICE_TENANT_NAME \
+            --user glance-swift \
+            --role ResellerAdmin
+    fi
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         keystone service-create \
             --name=glance \
