@@ -71,8 +71,7 @@ MODE=""
 ROLE=Member
 USER_NAME=""
 USER_PASS=""
-while [ $# -gt 0 ]
-do
+while [ $# -gt 0 ]; do
     case "$1" in
     -h|--help) display_help; exit 0 ;;
     --os-username) export OS_USERNAME=$2; shift ;;
