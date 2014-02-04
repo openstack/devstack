@@ -323,7 +323,7 @@ function configure_tempest() {
     fi
     CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
     if [ $CINDER_MULTI_LVM_BACKEND == "True" ]; then
-        iniset $TEMPEST_CONFIG volume multi_backend_enabled "True"
+        iniset $TEMPEST_CONFIG volume-feature-enabled multi_backend "True"
         iniset $TEMPEST_CONFIG volume backend1_name "LVM_iSCSI"
         iniset $TEMPEST_CONFIG volume backend2_name "LVM_iSCSI_2"
     fi
