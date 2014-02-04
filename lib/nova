@@ -240,10 +240,6 @@ function configure_nova() {
         sudo sysctl -w net.ipv4.ip_forward=1
 
         if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
-            # File injection is being disabled by default in the near future -
-            # disable it here for now to avoid surprises later.
-            iniset $NOVA_CONF libvirt inject_partition '-2'
-
             # Check for kvm (hardware based virtualization).  If unable to initialize
             # kvm, we drop back to the slower emulation mode (qemu).  Note: many systems
             # come with hardware virtualization disabled in BIOS.
@@ -499,6 +495,12 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
     iniset_rpc_backend nova $NOVA_CONF DEFAULT
     iniset $NOVA_CONF DEFAULT glance_api_servers "$GLANCE_HOSTPORT"
+
+    if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+        # File injection is being disabled by default in the near future -
+        # disable it here for now to avoid surprises later.
+        iniset $NOVA_CONF libvirt inject_partition '-2'
+    fi
 }
 
 function init_nova_cells() {
