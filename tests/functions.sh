@@ -49,8 +49,7 @@ function test_enable_service() {
 
     ENABLED_SERVICES="$start"
     enable_service $add
-    if [ "$ENABLED_SERVICES" = "$finish" ]
-    then
+    if [ "$ENABLED_SERVICES" = "$finish" ]; then
         echo "OK: $start + $add -> $ENABLED_SERVICES"
     else
         echo "changing $start to $finish with $add failed: $ENABLED_SERVICES"
@@ -76,8 +75,7 @@ function test_disable_service() {
 
     ENABLED_SERVICES="$start"
     disable_service "$del"
-    if [ "$ENABLED_SERVICES" = "$finish" ]
-    then
+    if [ "$ENABLED_SERVICES" = "$finish" ]; then
         echo "OK: $start - $del -> $ENABLED_SERVICES"
     else
         echo "changing $start to $finish with $del failed: $ENABLED_SERVICES"
@@ -102,8 +100,7 @@ echo "Testing disable_all_services()"
 ENABLED_SERVICES=a,b,c
 disable_all_services
 
-if [[ -z "$ENABLED_SERVICES" ]]
-then
+if [[ -z "$ENABLED_SERVICES" ]]; then
     echo "OK"
 else
     echo "disabling all services FAILED: $ENABLED_SERVICES"
@@ -118,8 +115,7 @@ function test_disable_negated_services() {
 
     ENABLED_SERVICES="$start"
     disable_negated_services
-    if [ "$ENABLED_SERVICES" = "$finish" ]
-    then
+    if [ "$ENABLED_SERVICES" = "$finish" ]; then
         echo "OK: $start + $add -> $ENABLED_SERVICES"
     else
         echo "changing $start to $finish failed: $ENABLED_SERVICES"

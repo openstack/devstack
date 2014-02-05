@@ -227,16 +227,14 @@ function test_get_local_sr_path {
 }
 
 [ "$1" = "run_tests" ] && {
-    for testname in $($0)
-    do
+    for testname in $($0); do
         echo "$testname"
         before_each_test
         (
             set -eux
             $testname
         )
-        if [ "$?" != "0" ]
-        then
+        if [ "$?" != "0" ]; then
             echo "FAIL"
             exit 1
         else
