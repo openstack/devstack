@@ -148,8 +148,6 @@ function configure_trove() {
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT add_addresses True
 
     iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT rabbit_password $RABBIT_PASSWORD
-    iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT sql_connection `database_connection_url trove`
-    iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT control_exchange trove
     sed -i "s/localhost/$NETWORK_GATEWAY/g" $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
 
     setup_trove_logging $TROVE_CONF_DIR/trove.conf

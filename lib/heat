@@ -186,8 +186,7 @@ function disk_image_create {
     local elements=$2
     local arch=$3
     local output=$TOP_DIR/files/$4
-    if [[ -f "$output.qcow2" ]];
-    then
+    if [[ -f "$output.qcow2" ]]; then
         echo "Image file already exists: $output_file"
     else
         ELEMENTS_PATH=$elements_path disk-image-create \

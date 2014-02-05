@@ -108,10 +108,8 @@ function configure_glance() {
     iniset $GLANCE_API_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $GLANCE_API_CONF keystone_authtoken admin_user glance
     iniset $GLANCE_API_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    if is_service_enabled qpid; then
-        iniset $GLANCE_API_CONF DEFAULT notifier_strategy qpid
-    elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
-        iniset $GLANCE_API_CONF DEFAULT notifier_strategy rabbit
+    if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
+        iniset $GLANCE_API_CONF DEFAULT notification_driver messaging
     fi
     iniset_rpc_backend glance $GLANCE_API_CONF DEFAULT
     iniset $GLANCE_API_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/api

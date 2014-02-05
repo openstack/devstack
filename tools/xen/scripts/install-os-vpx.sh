@@ -63,8 +63,7 @@ get_params()
                 ;;
         esac
     done
-    if [[ -z $BRIDGE ]]
-    then
+    if [[ -z $BRIDGE ]]; then
         BRIDGE=xenbr0
     fi
 
@@ -91,8 +90,7 @@ xe_min()
 find_network()
 {
     result=$(xe_min network-list bridge="$1")
-    if [ "$result" = "" ]
-    then
+    if [ "$result" = "" ]; then
         result=$(xe_min network-list name-label="$1")
     fi
     echo "$result"
@@ -121,8 +119,7 @@ destroy_vifs()
 {
     local v="$1"
     IFS=,
-    for vif in $(xe_min vif-list vm-uuid="$v")
-    do
+    for vif in $(xe_min vif-list vm-uuid="$v"); do
         xe vif-destroy uuid="$vif"
     done
     unset IFS

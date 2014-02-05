@@ -44,16 +44,14 @@ function neutron_plugin_configure_plugin_agent() {
 function neutron_plugin_configure_service() {
     iniset /$Q_PLUGIN_CONF_FILE restproxy servers $BS_FL_CONTROLLERS_PORT
     iniset /$Q_PLUGIN_CONF_FILE restproxy servertimeout $BS_FL_CONTROLLER_TIMEOUT
-    if [ "$BS_FL_VIF_DRIVER" = "ivs" ]
-    then
+    if [ "$BS_FL_VIF_DRIVER" = "ivs" ]; then
         iniset /$Q_PLUGIN_CONF_FILE nova vif_type ivs
     fi
 }
 
 function neutron_plugin_setup_interface_driver() {
     local conf_file=$1
-    if [ "$BS_FL_VIF_DRIVER" = "ivs" ]
-    then
+    if [ "$BS_FL_VIF_DRIVER" = "ivs" ]; then
         iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.IVSInterfaceDriver
     else
         iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
