@@ -1450,7 +1450,7 @@ function upload_image() {
         # vmdk disk type
         vmdk_create_type="$(head -25 $IMAGE | grep -a -F -m 1 'createType=' $IMAGE)"
         vmdk_create_type="${vmdk_create_type#*\"}"
-        vmdk_create_type="${vmdk_create_type%?}"
+        vmdk_create_type="${vmdk_create_type%\"*}"
 
         descriptor_data_pair_msg="Monolithic flat and VMFS disks "`
                                     `"should use a descriptor-data pair."
@@ -1495,6 +1495,8 @@ function upload_image() {
                 IMAGE_NAME="${flat_fname}"
             fi
             vmdk_disktype="preallocated"
+        elif [[ "$vmdk_create_type" = "streamOptimized" ]]; then
+            vmdk_disktype="streamOptimized"
         elif [[ -z "$vmdk_create_type" ]]; then
             # *-flat.vmdk provided: attempt to retrieve the descriptor (*.vmdk)
             # to retrieve appropriate metadata
@@ -1533,10 +1535,8 @@ function upload_image() {
                     vmdk_adapter_type="${vmdk_adapter_type%?}"
                 fi
             fi
-            #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
             vmdk_disktype="preallocated"
         else
-            #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
             vmdk_disktype="preallocated"
         fi
 

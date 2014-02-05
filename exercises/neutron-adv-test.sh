@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 #
-
+# Copyright 2012, Cisco Systems
+# Copyright 2012, VMware, Inc.
+# Copyright 2012, NTT MCL, Inc.
+#
+# Please direct any questions to dedutta@cisco.com, dwendlandt@vmware.com, nachi@nttmcl.com
+#
 # **neutron-adv-test.sh**
 
 # Perform integration testing of Nova and other components with Neutron.
@@ -406,14 +411,6 @@ usage() {
 main() {
 
     echo Description
-    echo
-    echo Copyright 2012, Cisco Systems
-    echo Copyright 2012, VMware, Inc.
-    echo Copyright 2012, NTT MCL, Inc.
-    echo
-    echo Please direct any questions to dedutta@cisco.com, dwendlandt@vmware.com, nachi@nttmcl.com
-    echo
-
 
     if [ $# -eq 0 ] ; then
         # if no args are provided, run all tests
