@@ -389,6 +389,10 @@ function create_nova_conf() {
     fi
 
     if is_service_enabled n-api; then
+        if is_service_enabled n-api-meta; then
+            # If running n-api-meta as a separate service
+            NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/,metadata//")
+        fi
         iniset $NOVA_CONF DEFAULT enabled_apis "$NOVA_ENABLED_APIS"
         if is_service_enabled tls-proxy; then
             # Set the service port for a proxy to take the original
