@@ -47,7 +47,7 @@ IGNORE = None
 def register_ignores(ignores):
     global IGNORE
     if ignores:
-        IGNORE='^(' + '|'.join(ignores.split(',')) + ')'
+        IGNORE = '^(' + '|'.join(ignores.split(',')) + ')'
 
 
 def should_ignore(error):
@@ -64,11 +64,15 @@ def print_error(error, line):
 def not_continuation(line):
     return not re.search('\\\\$', line)
 
+
 def check_for_do(line):
     if not_continuation(line):
-        if re.search('^\s*for ', line):
+        match = re.match('^\s*(for|while|until)\s', line)
+        if match:
+            operator = match.group(1).strip()
             if not re.search(';\s*do(\b|$)', line):
-                print_error('E010: Do not on same line as for', line)
+                print_error('E010: Do not on same line as %s' % operator,
+                            line)
 
 
 def check_if_then(line):

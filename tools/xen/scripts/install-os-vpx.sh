@@ -42,8 +42,7 @@ EOF
 
 get_params()
 {
-    while getopts "hbn:r:l:t:" OPTION;
-    do
+    while getopts "hbn:r:l:t:" OPTION; do
         case $OPTION in
             h) usage
                 exit 1

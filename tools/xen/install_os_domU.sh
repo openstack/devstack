@@ -191,8 +191,7 @@ function wait_for_VM_to_halt() {
     domid=$(xe vm-list name-label="$GUEST_NAME" params=dom-id minimal=true)
     port=$(xenstore-read /local/domain/$domid/console/vnc-port)
     echo "vncviewer -via root@$mgmt_ip localhost:${port:2}"
-    while true
-    do
+    while true; do
         state=$(xe_min vm-list name-label="$GUEST_NAME" power-state=halted)
         if [ -n "$state" ]; then
             break
