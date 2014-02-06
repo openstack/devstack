@@ -120,7 +120,12 @@ neutron subnet-create --name net2-subnet1 $net2_id 10.2.0.0/24
 public_id=$(net_create public)
 echo "public_id=$public_id"
 # CONTRAIL_VGW_PUBLIC_SUBNET is set in localrc to be publicly addressable ips
+CONTRAIL_VGW_PUBLIC_SUBNET=10.99.99.0/24
 neutron subnet-create --name public-subnet1 $public_id $CONTRAIL_VGW_PUBLIC_SUBNET --disable-dhcp
+
+# route between net1 and net2
+net_policy_join.py $public_id $net1_id
+net_policy_join.py $public_id $net2_id
 
 # call contrail to create floating ip pool
 python /opt/stack/contrail/controller/src/config/utils/create_floating_pool.py --public_vn_name default-domain:demo:public --floating_ip_pool_name floatingip_pool
@@ -148,8 +153,8 @@ fi
 
 # make an ssh key
 yes | ssh-keygen -N "" -f sshkey
-ssh-add sshkey
 nova keypair-add --pub-key sshkey.pub sshkey
+ssh-add sshkey
 
 # cloudinit script to verify that the metadata server is working
 tee cloudinit.sh <<EOF
