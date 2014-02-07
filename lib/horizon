@@ -81,9 +81,6 @@ function configure_horizon() {
 
 # init_horizon() - Initialize databases, etc.
 function init_horizon() {
-    # Remove stale session database.
-    rm -f $HORIZON_DIR/openstack_dashboard/local/dashboard_openstack.sqlite3
-
     # ``local_settings.py`` is used to override horizon default settings.
     local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
@@ -105,12 +102,6 @@ function init_horizon() {
     if is_service_enabled q-vpn; then
         _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_vpn True
     fi
-
-    # Initialize the horizon database (it stores sessions and notices shown to
-    # users).  The user system is external (keystone).
-    cd $HORIZON_DIR
-    python manage.py syncdb --noinput
-    cd $TOP_DIR
 
     # Create an empty directory that apache uses as docroot
     sudo mkdir -p $HORIZON_DIR/.blackhole
