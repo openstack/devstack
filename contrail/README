@@ -13,10 +13,10 @@ Notes:
 3) This fork includes Neutron and Nova patches. These patches have been
    seperately submitted for review.
 4) OpenStack + OpenContrail has been tested on FC17, Ubuntu 12.04 and 13.10
-5) You need a github account. Register host's SSH keys to the github account
-   otherwise checking out contrail code will fail. The repo tool assumes
-   ssh and will not work with HTTPS git url. You can have ssh-agent forward
-   keys to target system running devstack.
+5) Repo tool uses SSH by default. Use ssh-agent to forward keys to target 
+   running devstack or upload host's SSH keys to the github account.
+   Set CONTRAIL_REPO_PROTO to https to use HTTPS instead. This line is 
+   commented out in sample localrc file
 6) Copy sample localrc-single as localrc for a single node system. Copy
    localrc-multinode-server and localrc-multinode-compute as localrc on 
    master and compute nodes respectively for a multi-node system.
@@ -26,6 +26,8 @@ Notes:
    which means interface cleanup couldn't be done since vrouter is busy and
    could not be uninstalled. Repeat unstack.sh untill the interfaces are
    restored to original state.
+8) Protocol for openstack bits is also SSH by default. Uncomment out 
+   GIT_BASE line to use https instead
 
 Change the following in localrc to suit your deployment:
  PHYSICAL_INTERFACE -- external interface Vrouter should bind to

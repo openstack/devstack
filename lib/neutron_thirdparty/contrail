@@ -1,3 +1,4 @@
+# proto is https or ssh
 #! /bin/bash
 
 # Contrail NFV
@@ -48,6 +49,7 @@ function install_contrail() {
     sudo pip install stevedore xmltodict python-keystoneclient
     sudo pip install kazoo pyinotify
 
+    CONTRAIL_REPO_PROTO=${CONTRAIL_REPO_PROTO:-ssh}
     CONTRAIL_SRC=${CONTRAIL_SRC:-/opt/stack/contrail}
     mkdir -p $CONTRAIL_SRC
     contrail_cwd=$(pwd)
@@ -55,7 +57,12 @@ function install_contrail() {
     if [ ! -d $CONTRAIL_SRC/.repo ]; then
         git config --global --get user.name || git config --global user.name "Anonymous"
         git config --global --get user.email || git config --global user.email "anonymous@nowhere.com"
-        repo init -u git@github.com:Juniper/contrail-vnc
+        if [ "$CONTRAIL_REPO_PROTO" == "ssh" ]; then
+            repo init -u git@github.com:Juniper/contrail-vnc
+        else
+            repo init -u https://github.com/Juniper/contrail-vnc
+            sed -i 's/fetch=".."/fetch=\"https:\/\/github.com\/Juniper\/\"/' .repo/manifest.xml
+        fi
     fi
     repo sync
     python third_party/fetch_packages.py

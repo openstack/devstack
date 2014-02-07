@@ -42,3 +42,9 @@ ADMIN_PASSWORD=contrail123
 # use contrail forked neutron repo
 NEUTRON_REPO=https://github.com/dsetia/neutron.git
 NEUTRON_BRANCH=master
+
+# repo proto is https or (default) ssh. Leave commented for ssh
+# CONTRAIL_REPO_PROTO=https
+
+# proto for openstack bits. Use HTTPS if git is firewalled
+# GIT_BASE=https://git.openstack.org
