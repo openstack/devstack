@@ -49,6 +49,13 @@ TEMPEST_SERVICES+=,ironic
 # Functions
 # ---------
 
+# Test if any Ironic services are enabled
+# is_ironic_enabled
+function is_ironic_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"ir-" ]] && return 0
+    return 1
+}
+
 # install_ironic() - Collect source and prepare
 function install_ironic() {
     git_clone $IRONIC_REPO $IRONIC_DIR $IRONIC_BRANCH

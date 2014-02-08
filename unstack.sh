@@ -55,7 +55,6 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
-source $TOP_DIR/lib/ironic
 
 # Extras Source
 # --------------
@@ -116,12 +115,6 @@ fi
 if is_service_enabled s-proxy; then
     stop_swift
     cleanup_swift
-fi
-
-# Ironic runs daemons
-if is_service_enabled ir-api ir-cond; then
-    stop_ironic
-    cleanup_ironic
 fi
 
 # Apache has the WSGI processes

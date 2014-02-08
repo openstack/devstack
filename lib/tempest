@@ -266,11 +266,6 @@ function configure_tempest() {
 
     # Compute
     iniset $TEMPEST_CONFIG compute change_password_available False
-    # Note(nati) current tempest don't create network for each tenant
-    # so reuse same tenant for now
-    if is_service_enabled neutron; then
-        TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
-    fi
     iniset $TEMPEST_CONFIG compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     iniset $TEMPEST_CONFIG compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
     iniset $TEMPEST_CONFIG compute network_for_ssh $PRIVATE_NETWORK_NAME
@@ -323,7 +318,7 @@ function configure_tempest() {
     fi
     CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
     if [ $CINDER_MULTI_LVM_BACKEND == "True" ]; then
-        iniset $TEMPEST_CONFIG volume multi_backend_enabled "True"
+        iniset $TEMPEST_CONFIG volume-feature-enabled multi_backend "True"
         iniset $TEMPEST_CONFIG volume backend1_name "LVM_iSCSI"
         iniset $TEMPEST_CONFIG volume backend2_name "LVM_iSCSI_2"
     fi
