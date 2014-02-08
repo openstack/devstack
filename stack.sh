@@ -336,7 +336,6 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
-source $TOP_DIR/lib/ironic
 
 # Extras Source
 # --------------
@@ -746,11 +745,6 @@ if is_service_enabled tls-proxy; then
     # don't be naive and add to existing line!
 fi
 
-if is_service_enabled ir-api ir-cond; then
-    install_ironic
-    install_ironicclient
-    configure_ironic
-fi
 
 # Extras Install
 # --------------
@@ -966,15 +960,6 @@ if is_service_enabled g-reg; then
 fi
 
 
-# Ironic
-# ------
-
-if is_service_enabled ir-api ir-cond; then
-    echo_summary "Configuring Ironic"
-    init_ironic
-fi
-
-
 # Neutron
 # -------
 
@@ -1099,12 +1084,6 @@ fi
 if is_service_enabled g-api g-reg; then
     echo_summary "Starting Glance"
     start_glance
-fi
-
-# Launch the Ironic services
-if is_service_enabled ir-api ir-cond; then
-    echo_summary "Starting Ironic"
-    start_ironic
 fi
 
 # Create an access key and secret key for nova ec2 register image
