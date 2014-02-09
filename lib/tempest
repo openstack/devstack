@@ -251,6 +251,7 @@ function configure_tempest() {
 
     # Identity
     iniset $TEMPEST_CONFIG identity uri "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v2.0/"
+    iniset $TEMPEST_CONFIG identity uri_v3 "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v3/"
     iniset $TEMPEST_CONFIG identity password "$password"
     iniset $TEMPEST_CONFIG identity alt_username $ALT_USERNAME
     iniset $TEMPEST_CONFIG identity alt_password "$password"
