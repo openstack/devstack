@@ -442,7 +442,7 @@ function create_nova_conf() {
         iniset $NOVA_CONF DEFAULT instance_usage_audit "True"
         iniset $NOVA_CONF DEFAULT instance_usage_audit_period "hour"
         iniset $NOVA_CONF DEFAULT notify_on_state_change "vm_and_task_state"
-        iniset $NOVA_CONF DEFAULT notification_driver "nova.openstack.common.notifier.rpc_notifier"
+        iniset $NOVA_CONF DEFAULT notification_driver "messaging"
     fi
 
     # Provide some transition from ``EXTRA_FLAGS`` to ``EXTRA_OPTS``
