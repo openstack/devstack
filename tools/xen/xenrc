@@ -35,7 +35,7 @@ XEN_INT_BRIDGE_OR_NET_NAME="OpenStack VM Integration Network"
 GUEST_PASSWORD=${GUEST_PASSWORD:-secrete}
 
 # Extracted variables for OpenStack VM network device numbers.
-# Make sure, they form a continous sequence starting from 0
+# Make sure they form a continuous sequence starting from 0
 MGT_DEV_NR=0
 VM_DEV_NR=1
 PUB_DEV_NR=2
