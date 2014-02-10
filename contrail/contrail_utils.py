@@ -16,9 +16,7 @@ from thrift.transport import TTransport
 from nova.utils import execute
 from nova.openstack.common.processutils import ProcessExecutionError
 
-FORMAT_STYLE_JSON = 'json'
-
-def format(dict, style='table'):
+def format_dict(dict, style='table'):
     """stringify dict as json, shell, table (ascii), or python"""
     if style == 'json':
         import json

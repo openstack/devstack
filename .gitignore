@@ -13,3 +13,4 @@ stack-screenrc
 accrc
 .stackenv
 .prereqs
+*.pyc
