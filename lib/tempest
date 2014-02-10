@@ -348,9 +348,6 @@ function configure_tempest() {
         fi
     done
 
-    echo "Created tempest configuration file:"
-    cat $TEMPEST_CONFIG
-
     # Restore IFS
     IFS=$ifs
     #Restore errexit
