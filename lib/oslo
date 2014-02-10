@@ -20,9 +20,13 @@ set +o xtrace
 
 # Defaults
 # --------
+CLIFF_DIR=$DEST/cliff
 OSLOCFG_DIR=$DEST/oslo.config
 OSLOMSG_DIR=$DEST/oslo.messaging
 OSLORWRAP_DIR=$DEST/oslo.rootwrap
+PYCADF_DIR=$DEST/pycadf
+STEVEDORE_DIR=$DEST/stevedore
+TASKFLOW_DIR=$DEST/taskflow
 
 # Entry Points
 # ------------
@@ -33,6 +37,9 @@ function install_oslo() {
     # for a smoother transition of existing users.
     cleanup_oslo
 
+    git_clone $CLIFF_REPO $CLIFF_DIR $CLIFF_BRANCH
+    setup_develop $CLIFF_DIR
+
     git_clone $OSLOCFG_REPO $OSLOCFG_DIR $OSLOCFG_BRANCH
     setup_develop $OSLOCFG_DIR
 
@@ -41,6 +48,15 @@ function install_oslo() {
 
     git_clone $OSLORWRAP_REPO $OSLORWRAP_DIR $OSLORWRAP_BRANCH
     setup_develop $OSLORWRAP_DIR
+
+    git_clone $PYCADF_REPO $PYCADF_DIR $PYCADF_BRANCH
+    setup_develop $PYCADF_DIR
+
+    git_clone $STEVEDORE_REPO $STEVEDORE_DIR $STEVEDORE_BRANCH
+    setup_develop $STEVEDORE_DIR
+
+    git_clone $TASKFLOW_REPO $TASKFLOW_DIR $TASKFLOW_BRANCH
+    setup_develop $TASKFLOW_DIR
 }
 
 # cleanup_oslo() - purge possibly old versions of oslo
