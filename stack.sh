@@ -298,6 +298,8 @@ SYSLOG_PORT=${SYSLOG_PORT:-516}
 SYSSTAT_FILE=${SYSSTAT_FILE:-"sysstat.dat"}
 SYSSTAT_INTERVAL=${SYSSTAT_INTERVAL:-"1"}
 
+DSTAT_FILE=${DSTAT_FILE:-"dstat.txt"}
+
 PIDSTAT_FILE=${PIDSTAT_FILE:-"pidstat.txt"}
 PIDSTAT_INTERVAL=${PIDSTAT_INTERVAL:-"5"}
 
@@ -876,6 +878,16 @@ if is_service_enabled sysstat; then
         screen_it sysstat "cd $TOP_DIR; ./tools/sar_filter.py $SYSSTAT_OPTS -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
     else
         screen_it sysstat "./tools/sar_filter.py $SYSSTAT_OPTS $SYSSTAT_INTERVAL"
+    fi
+fi
+
+if is_service_enabled dstat; then
+    # Per-process stats
+    DSTAT_OPTS="-tcndylp --top-cpu-adv"
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
+    else
+        screen_it dstat "dstat $DSTAT_OPTS"
     fi
 fi
 
