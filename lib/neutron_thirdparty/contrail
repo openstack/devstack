@@ -74,6 +74,9 @@ function install_contrail() {
     echo "Installing contrail modules"
     sudo pip install --upgrade $(find $CONTRAIL_SRC/build/debug -name "*.tar.gz" -print)
 
+    # install VIF driver
+    sudo pip install $CONTRAIL_SRC/build/noarch/nova_contrail_vif/dist/nova_contrail_vif*.tar.gz
+
     # install neutron patch after VNC api is built and installed
     # test_install_neutron_patch
 
@@ -377,8 +380,6 @@ END
     chmod a+x $TOP_DIR/bin/vnsw.hlpr
     screen_it agent "sudo $TOP_DIR/bin/vnsw.hlpr"
 
-    screen_it vif  "python /opt/stack/nova/plugins/contrail/contrail_vif.py"
-
     if is_service_enabled q-meta; then
 	# set up a proxy route in contrail from 169.254.169.254:80 to
 	# my metadata server at port 8775
@@ -397,7 +398,7 @@ END
 }
 
 function configure_contrail() {
-    test_install_nova_patch
+    :
 }
 
 function init_contrail() {
