@@ -362,7 +362,11 @@ function read_password {
     var=$1; msg=$2
     pw=${!var}
 
-    localrc=$TOP_DIR/localrc
+    if [[ -f $RC_DIR/localrc ]]; then
+        localrc=$TOP_DIR/localrc
+    else
+        localrc=$TOP_DIR/.localrc.auto
+    fi
 
     # If the password is not defined yet, proceed to prompt user for a password.
     if [ ! $pw ]; then
