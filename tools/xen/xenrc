@@ -91,4 +91,7 @@ UBUNTU_INST_GATEWAY=""
 # Set the size to 0 to avoid creation of additional disk.
 XEN_XVDB_SIZE_GB=0
 
+restore_nounset=`set +o | grep nounset`
+set +u
 source ../../stackrc
+$restore_nounset
