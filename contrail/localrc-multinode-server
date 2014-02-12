@@ -21,12 +21,24 @@ DEBUG=True
 LOGFILE=$STACK_DIR/log/stack.log
 LOGDAYS=1
 
+# contrail services
+enable_service cass
+enable_service ifmap
+enable_service apiSrv
+enable_service schema
+enable_service svc-mon
+enable_service zk
+enable_service control
+enable_service agent
+enable_service disco
+enable_service redis
+enable_service contrail
+
 disable_service n-net
 enable_service q-svc
 enable_service q-meta
 enable_service neutron
 enable_service rabbit
-enable_service contrail
 
 # not used by contrail
 disable_service q-dhcp
