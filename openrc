@@ -67,7 +67,7 @@ GLANCE_HOST=${GLANCE_HOST:-$HOST_IP}
 # Identity API version
 export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
 
-# Authenticating against an Openstack cloud using Keystone returns a **Token**
+# Authenticating against an OpenStack cloud using Keystone returns a **Token**
 # and **Service Catalog**.  The catalog contains the endpoints for all services
 # the user/tenant has access to - including nova, glance, keystone, swift, ...
 # We currently recommend using the 2.0 *identity api*.
