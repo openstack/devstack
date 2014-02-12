@@ -58,6 +58,13 @@ TEMPEST_SERVICES+=,marconi
 # Functions
 # ---------
 
+# Test if any Marconi services are enabled
+# is_marconi_enabled
+function is_marconi_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"marconi-" ]] && return 0
+    return 1
+}
+
 # cleanup_marconi() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_marconi() {
