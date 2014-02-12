@@ -33,11 +33,6 @@ source $TOP_DIR/functions
 # Import EC2 configuration
 source $TOP_DIR/eucarc
 
-# Import neutron functions if needed
-if is_service_enabled neutron; then
-    source $TOP_DIR/lib/neutron
-fi
-
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 

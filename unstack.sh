@@ -103,7 +103,7 @@ if is_service_enabled nova; then
     stop_nova
 fi
 
-if is_service_enabled g-api g-reg; then
+if is_service_enabled glance; then
     stop_glance
 fi
 

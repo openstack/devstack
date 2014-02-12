@@ -10,6 +10,7 @@
 
 # ``stack.sh`` calls the entry points in this order:
 #
+# - is_XXXX_enabled
 # - install_XXXX
 # - configure_XXXX
 # - init_XXXX
@@ -34,6 +35,13 @@ XXX_CONF_DIR=/etc/XXXX
 
 # Entry Points
 # ------------
+
+# Test if any XXXX services are enabled
+# is_XXXX_enabled
+function is_XXXX_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"XX-" ]] && return 0
+    return 1
+}
 
 # cleanup_XXXX() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
