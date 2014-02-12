@@ -1,0 +1,48 @@
+# lib/cinder_plugins/solidfire
+# Configure the solidfire driver
+
+# Enable with:
+#
+#   CINDER_DRIVER=solidfire
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# configure_cinder_driver - make configuration changes, including those to other services
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# Set up default directories
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_driver - Set config files, create data dirs, etc
+function configure_cinder_driver() {
+    # To use solidfire, set the following in localrc:
+    # CINDER_DRIVER=solidfire
+    # SAN_IP=<mvip>
+    # SAN_LOGIN=<cluster-admin-account>
+    # SAN_PASSWORD=<cluster-admin-password>
+
+    iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.solidfire.SolidFireDriver"
+    iniset $CINDER_CONF DEFAULT san_ip $SAN_IP
+    iniset $CINDER_CONF DEFAULT san_login $SAN_LOGIN
+    iniset $CINDER_CONF DEFAULT san_password $SAN_PASSWORD
+}
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
