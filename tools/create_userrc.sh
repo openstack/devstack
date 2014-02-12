@@ -253,6 +253,14 @@ if [ $MODE != "create" ]; then
             if [ $MODE = one -a "$user_name" != "$USER_NAME" ]; then
                 continue;
             fi
+
+            # Checks for a specific password defined for an user.
+            # Example for an username johndoe:
+            #                     JOHNDOE_PASSWORD=1234
+            eval SPECIFIC_UPASSWORD="\$${USER_NAME^^}_PASSWORD"
+            if [ -n "$SPECIFIC_UPASSWORD" ]; then
+                USER_PASS=$SPECIFIC_UPASSWORD
+            fi
             add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
         done
     done
