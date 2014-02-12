@@ -1085,7 +1085,7 @@ if is_service_enabled s-proxy; then
 fi
 
 # Launch the Glance services
-if is_service_enabled g-api g-reg; then
+if is_service_enabled glance; then
     echo_summary "Starting Glance"
     start_glance
 fi

@@ -840,6 +840,16 @@ function is_service_enabled() {
     services=$@
     for service in ${services}; do
         [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
+
+        # Look for top-level 'enabled' function for this service
+        if type is_${service}_enabled >/dev/null 2>&1; then
+            # A function exists for this service, use it
+            is_${service}_enabled
+            return $?
+        fi
+
+        # TODO(dtroyer): Remove these legacy special-cases after the is_XXX_enabled()
+        #                are implemented
         [[ ${service} == n-cell-* && ${ENABLED_SERVICES} =~ "n-cell" ]] && return 0
         [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && return 0
         [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0

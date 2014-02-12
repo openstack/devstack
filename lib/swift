@@ -118,6 +118,13 @@ TEMPEST_SERVICES+=,swift
 # Functions
 # ---------
 
+# Test if any Swift services are enabled
+# is_swift_enabled
+function is_swift_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"s-" ]] && return 0
+    return 1
+}
+
 # cleanup_swift() - Remove residual data files
 function cleanup_swift() {
     rm -f ${SWIFT_CONF_DIR}{*.builder,*.ring.gz,backups/*.builder,backups/*.ring.gz}

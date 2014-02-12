@@ -244,6 +244,13 @@ TEMPEST_SERVICES+=,neutron
 # Functions
 # ---------
 
+# Test if any Neutron services are enabled
+# is_neutron_enabled
+function is_neutron_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"q-" ]] && return 0
+    return 1
+}
+
 # configure_neutron()
 # Set common config for all neutron server and agents.
 function configure_neutron() {
