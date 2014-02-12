@@ -460,6 +460,17 @@ function is_ubuntu {
 # Git Functions
 # =============
 
+# Returns openstack release name for a given branch name
+# ``get_release_name_from_branch branch-name``
+function get_release_name_from_branch(){
+    local branch=$1
+    if [[ $branch =~ "stable/" ]]; then
+        echo ${branch#*/}
+    else
+        echo "master"
+    fi
+}
+
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
@@ -792,7 +803,9 @@ function get_packages() {
 # install_package package [package ...]
 function install_package() {
     if is_ubuntu; then
-        [[ "$NO_UPDATE_REPOS" = "True" ]] || apt_get update
+        # if there are transient errors pulling the updates, that's fine. It may
+        # be secondary repositories that we don't really care about.
+        [[ "$NO_UPDATE_REPOS" = "True" ]] || apt_get update || /bin/true
         NO_UPDATE_REPOS=True
 
         apt_get install "$@"
