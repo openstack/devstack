@@ -60,5 +60,5 @@ docker pull $DOCKER_IMAGE
 docker tag $DOCKER_IMAGE $DOCKER_IMAGE_NAME
 
 # Get docker-registry image
-docker pull $REGISTRY_IMAGE
-docker tag $REGISTRY_IMAGE $REGISTRY_IMAGE_NAME
+docker pull $DOCKER_REGISTRY_IMAGE
+docker tag $DOCKER_REGISTRY_IMAGE $DOCKER_REGISTRY_IMAGE_NAME
