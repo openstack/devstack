@@ -154,10 +154,12 @@ function create_marconi_accounts() {
     MARCONI_USER=$(get_id keystone user-create --name=marconi \
                                                 --pass="$SERVICE_PASSWORD" \
                                                 --tenant-id $SERVICE_TENANT \
-                                                --email=marconi@example.com)
+                                                --email=marconi@example.com \
+                                                | grep " id " | get_field 2)
     keystone user-role-add --tenant-id $SERVICE_TENANT \
                             --user-id $MARCONI_USER \
                             --role-id $ADMIN_ROLE
+
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         MARCONI_SERVICE=$(keystone service-create \
             --name=marconi \
