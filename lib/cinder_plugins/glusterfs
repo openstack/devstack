@@ -1,0 +1,50 @@
+# lib/cinder_plugins/glusterfs
+# Configure the glusterfs driver
+
+# Enable with:
+#
+#   CINDER_DRIVER=glusterfs
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# configure_cinder_driver - make configuration changes, including those to other services
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# Set up default directories
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_driver - Set config files, create data dirs, etc
+function configure_cinder_driver() {
+    # To use glusterfs, set the following in localrc:
+    # CINDER_DRIVER=glusterfs
+    # CINDER_GLUSTERFS_SHARES="127.0.0.1:/vol1;127.0.0.1:/vol2"
+    # Shares are <host>:<volume> and separated by semicolons.
+
+    iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.glusterfs.GlusterfsDriver"
+    iniset $CINDER_CONF DEFAULT glusterfs_shares_config "$CINDER_CONF_DIR/glusterfs_shares"
+    touch $CINDER_CONF_DIR/glusterfs_shares
+    if [ ! -z "$CINDER_GLUSTERFS_SHARES" ]; then
+        CINDER_GLUSTERFS_SHARES=$(echo $CINDER_GLUSTERFS_SHARES | tr ";" "\n")
+        echo "$CINDER_GLUSTERFS_SHARES" > $CINDER_CONF_DIR/glusterfs_shares
+    fi
+}
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:

@@ -27,6 +27,12 @@ set +o xtrace
 
 # set up default driver
 CINDER_DRIVER=${CINDER_DRIVER:-default}
+CINDER_PLUGINS=$TOP_DIR/lib/cinder_plugins
+
+# grab plugin config if specified via cinder_driver
+if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
+    source $CINDER_PLUGINS/$CINDER_DRIVER
+fi
 
 # set up default directories
 CINDER_DIR=$DEST/cinder
@@ -308,42 +314,8 @@ function configure_cinder() {
         setup_colorized_logging $CINDER_CONF DEFAULT "project_id" "user_id"
     fi
 
-    if [ "$CINDER_DRIVER" == "XenAPINFS" ]; then
-        (
-            set -u
-            iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.xenapi.sm.XenAPINFSDriver"
-            iniset $CINDER_CONF DEFAULT xenapi_connection_url "$CINDER_XENAPI_CONNECTION_URL"
-            iniset $CINDER_CONF DEFAULT xenapi_connection_username "$CINDER_XENAPI_CONNECTION_USERNAME"
-            iniset $CINDER_CONF DEFAULT xenapi_connection_password "$CINDER_XENAPI_CONNECTION_PASSWORD"
-            iniset $CINDER_CONF DEFAULT xenapi_nfs_server "$CINDER_XENAPI_NFS_SERVER"
-            iniset $CINDER_CONF DEFAULT xenapi_nfs_serverpath "$CINDER_XENAPI_NFS_SERVERPATH"
-        )
-    elif [ "$CINDER_DRIVER" == "nfs" ]; then
-        iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.nfs.NfsDriver"
-        iniset $CINDER_CONF DEFAULT nfs_shares_config "$CINDER_CONF_DIR/nfs_shares.conf"
-        echo "$CINDER_NFS_SERVERPATH" | sudo tee "$CINDER_CONF_DIR/nfs_shares.conf"
-        sudo chmod 666 $CINDER_CONF_DIR/nfs_shares.conf
-    elif [ "$CINDER_DRIVER" == "sheepdog" ]; then
-        iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.sheepdog.SheepdogDriver"
-    elif [ "$CINDER_DRIVER" == "glusterfs" ]; then
-        # To use glusterfs, set the following in localrc:
-        # CINDER_DRIVER=glusterfs
-        # CINDER_GLUSTERFS_SHARES="127.0.0.1:/vol1;127.0.0.1:/vol2"
-        # Shares are <host>:<volume> and separated by semicolons.
-
-        iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.glusterfs.GlusterfsDriver"
-        iniset $CINDER_CONF DEFAULT glusterfs_shares_config "$CINDER_CONF_DIR/glusterfs_shares"
-        touch $CINDER_CONF_DIR/glusterfs_shares
-        if [ ! -z "$CINDER_GLUSTERFS_SHARES" ]; then
-            CINDER_GLUSTERFS_SHARES=$(echo $CINDER_GLUSTERFS_SHARES | tr ";" "\n")
-            echo "$CINDER_GLUSTERFS_SHARES" > $CINDER_CONF_DIR/glusterfs_shares
-        fi
-    elif [ "$CINDER_DRIVER" == "vsphere" ]; then
-        echo_summary "Using VMware vCenter driver"
-        iniset $CINDER_CONF DEFAULT vmware_host_ip "$VMWAREAPI_IP"
-        iniset $CINDER_CONF DEFAULT vmware_host_username "$VMWAREAPI_USER"
-        iniset $CINDER_CONF DEFAULT vmware_host_password "$VMWAREAPI_PASSWORD"
-        iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.vmware.vmdk.VMwareVcVmdkDriver"
+    if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
+        configure_cinder_driver
     fi
 
     if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then

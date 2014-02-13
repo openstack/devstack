@@ -112,11 +112,6 @@ function configure_ironic_api() {
     iniset $IRONIC_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $IRONIC_CONF_FILE keystone_authtoken admin_user ironic
     iniset $IRONIC_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
-    if is_service_enabled qpid; then
-        iniset $IRONIC_CONF_FILE DEFAULT notifier_strategy qpid
-    elif [ -n "$RABBIT_HOST" ] &&  [ -n "$RABBIT_PASSWORD" ]; then
-        iniset $IRONIC_CONF_FILE DEFAULT notifier_strategy rabbit
-    fi
     iniset_rpc_backend ironic $IRONIC_CONF_FILE DEFAULT
     iniset $IRONIC_CONF_FILE keystone_authtoken signing_dir $IRONIC_AUTH_CACHE_DIR/api
 
