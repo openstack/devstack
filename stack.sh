@@ -1181,7 +1181,7 @@ fi
 
 # Configure and launch heat engine, api and metadata
 if is_service_enabled heat; then
-    # Initialize heat, including replacing nova flavors
+    # Initialize heat
     echo_summary "Configuring Heat"
     init_heat
     echo_summary "Starting Heat"
@@ -1348,11 +1348,6 @@ echo ""
 # to access the site using your browser.
 if is_service_enabled horizon; then
     echo "Horizon is now available at http://$SERVICE_HOST/"
-fi
-
-# Warn that the default flavors have been changed by Heat
-if is_service_enabled heat; then
-    echo "Heat has replaced the default flavors. View by running: nova flavor-list"
 fi
 
 # If Keystone is present you can point ``nova`` cli to this server
