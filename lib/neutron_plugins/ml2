@@ -118,6 +118,8 @@ function neutron_plugin_configure_service() {
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vlan $Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE restproxy servers=$BS_FL_CONTROLLERS_PORT
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE restproxy server_ssl=False
 }
 
 function has_neutron_plugin_security_group() {
