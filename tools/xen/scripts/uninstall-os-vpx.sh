@@ -22,63 +22,63 @@ set -ex
 # By default, don't remove the templates
 REMOVE_TEMPLATES=${REMOVE_TEMPLATES:-"false"}
 if [ "$1" = "--remove-templates" ]; then
-  REMOVE_TEMPLATES=true
+    REMOVE_TEMPLATES=true
 fi
 
 xe_min()
 {
-  local cmd="$1"
-  shift
-  xe "$cmd" --minimal "$@"
+    local cmd="$1"
+    shift
+    xe "$cmd" --minimal "$@"
 }
 
 destroy_vdi()
 {
-  local vbd_uuid="$1"
-  local type=$(xe_min vbd-list uuid=$vbd_uuid params=type)
-  local dev=$(xe_min vbd-list uuid=$vbd_uuid params=userdevice)
-  local vdi_uuid=$(xe_min vbd-list uuid=$vbd_uuid params=vdi-uuid)
+    local vbd_uuid="$1"
+    local type=$(xe_min vbd-list uuid=$vbd_uuid params=type)
+    local dev=$(xe_min vbd-list uuid=$vbd_uuid params=userdevice)
+    local vdi_uuid=$(xe_min vbd-list uuid=$vbd_uuid params=vdi-uuid)
 
-  if [ "$type" == 'Disk' ] && [ "$dev" != 'xvda' ] && [ "$dev" != '0' ]; then
-    xe vdi-destroy uuid=$vdi_uuid
-  fi
+    if [ "$type" == 'Disk' ] && [ "$dev" != 'xvda' ] && [ "$dev" != '0' ]; then
+        xe vdi-destroy uuid=$vdi_uuid
+    fi
 }
 
 uninstall()
 {
-  local vm_uuid="$1"
-  local power_state=$(xe_min vm-list uuid=$vm_uuid params=power-state)
+    local vm_uuid="$1"
+    local power_state=$(xe_min vm-list uuid=$vm_uuid params=power-state)
 
-  if [ "$power_state" != "halted" ]; then
-    xe vm-shutdown vm=$vm_uuid force=true
-  fi
+    if [ "$power_state" != "halted" ]; then
+        xe vm-shutdown vm=$vm_uuid force=true
+    fi
 
-  for v in $(xe_min vbd-list vm-uuid=$vm_uuid | sed -e 's/,/ /g'); do
-    destroy_vdi "$v"
-  done
+    for v in $(xe_min vbd-list vm-uuid=$vm_uuid | sed -e 's/,/ /g'); do
+        destroy_vdi "$v"
+    done
 
-  xe vm-uninstall vm=$vm_uuid force=true >/dev/null
+    xe vm-uninstall vm=$vm_uuid force=true >/dev/null
 }
 
 uninstall_template()
 {
-  local vm_uuid="$1"
+    local vm_uuid="$1"
 
-  for v in $(xe_min vbd-list vm-uuid=$vm_uuid | sed -e 's/,/ /g'); do
-    destroy_vdi "$v"
-  done
+    for v in $(xe_min vbd-list vm-uuid=$vm_uuid | sed -e 's/,/ /g'); do
+        destroy_vdi "$v"
+    done
 
-  xe template-uninstall template-uuid=$vm_uuid force=true >/dev/null
+    xe template-uninstall template-uuid=$vm_uuid force=true >/dev/null
 }
 
 # remove the VMs and their disks
 for u in $(xe_min vm-list other-config:os-vpx=true | sed -e 's/,/ /g'); do
-  uninstall "$u"
+    uninstall "$u"
 done
 
 # remove the templates
 if [ "$REMOVE_TEMPLATES" == "true" ]; then
-  for u in $(xe_min template-list other-config:os-vpx=true | sed -e 's/,/ /g'); do
-    uninstall_template "$u"
-  done
+    for u in $(xe_min template-list other-config:os-vpx=true | sed -e 's/,/ /g'); do
+        uninstall_template "$u"
+    done
 fi

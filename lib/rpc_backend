@@ -3,15 +3,16 @@
 # rpc backend settings
 
 # Dependencies:
-# ``functions`` file
-# ``RABBIT_{HOST|PASSWORD}`` must be defined when RabbitMQ is used
+#
+# - ``functions`` file
+# - ``RABBIT_{HOST|PASSWORD}`` must be defined when RabbitMQ is used
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# check_rpc_backend
-# install_rpc_backend
-# restart_rpc_backend
-# iniset_rpc_backend
+# - check_rpc_backend
+# - install_rpc_backend
+# - restart_rpc_backend
+# - iniset_rpc_backend
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -63,7 +64,7 @@ function cleanup_rpc_backend {
     if is_service_enabled rabbit; then
         # Obliterate rabbitmq-server
         uninstall_package rabbitmq-server
-        sudo killall epmd
+        sudo killall epmd || sudo killall -9 epmd
         if is_ubuntu; then
             # And the Erlang runtime too
             sudo aptitude purge -y ~nerlang
@@ -86,10 +87,6 @@ function cleanup_rpc_backend {
         else
             exit_distro_not_supported "zeromq installation"
         fi
-
-        # Necessary directory for socket location.
-        sudo mkdir -p /var/run/openstack
-        sudo chown $STACK_USER /var/run/openstack
     fi
 }
 
@@ -106,9 +103,9 @@ function install_rpc_backend() {
         if is_fedora; then
             install_package qpid-cpp-server
             if [[ $DISTRO =~ (rhel6) ]]; then
-               # RHEL6 leaves "auth=yes" in /etc/qpidd.conf, it needs to
-               # be no or you get GSS authentication errors as it
-               # attempts to default to this.
+                # RHEL6 leaves "auth=yes" in /etc/qpidd.conf, it needs to
+                # be no or you get GSS authentication errors as it
+                # attempts to default to this.
                 sudo sed -i.bak 's/^auth=yes$/auth=no/' /etc/qpidd.conf
             fi
         elif is_ubuntu; then
@@ -131,6 +128,9 @@ function install_rpc_backend() {
         else
             exit_distro_not_supported "zeromq installation"
         fi
+        # Necessary directory for socket location.
+        sudo mkdir -p /var/run/openstack
+        sudo chown $STACK_USER /var/run/openstack
     fi
 }
 
@@ -192,15 +192,15 @@ function qpid_is_supported() {
         GetDistro
     fi
 
-    # Qpid was introduced to Ubuntu in precise, disallow it on oneiric; it is
-    # not in openSUSE either right now.
-    ( ! ([[ "$DISTRO" = "oneiric" ]] || is_suse) )
+    # Qpid is not in openSUSE
+    ( ! is_suse )
 }
 
 
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

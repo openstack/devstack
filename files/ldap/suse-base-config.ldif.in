@@ -12,8 +12,10 @@ objectClass: olcSchemaConfig
 cn: schema
 
 include: file:///etc/openldap/schema/core.ldif
+include: file:///etc/openldap/schema/cosine.ldif
+include: file:///etc/openldap/schema/inetorgperson.ldif
 
 dn: olcDatabase={1}hdb,cn=config
 objectClass: olcHdbConfig
 olcDbDirectory: /var/lib/ldap
-olcSuffix: dc=openstack,dc=org
+olcSuffix: ${BASE_DN}

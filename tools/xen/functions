@@ -1,5 +1,14 @@
 #!/bin/bash
 
+function die_with_error {
+    local err_msg
+
+    err_msg="$1"
+
+    echo "$err_msg" >&2
+    exit 1
+}
+
 function xapi_plugin_location {
     for PLUGIN_DIR in "/etc/xapi.d/plugins/" "/usr/lib/xcp/plugins/" "/usr/lib/xapi/plugins"; do
         if [ -d $PLUGIN_DIR ]; then
@@ -11,7 +20,7 @@ function xapi_plugin_location {
 }
 
 function zip_snapshot_location {
-    echo $1 | sed "s:\.git$::;s:$:/zipball/$2:g"
+    echo $1 | sed "s,^git://,http://,g;s:\.git$::;s:$:/zipball/$2:g"
 }
 
 function create_directory_for_kernels {
@@ -41,7 +50,9 @@ function extract_remote_zipball {
     local EXTRACTED_FILES=$(mktemp -d)
 
     {
-        wget -nv $ZIPBALL_URL -O $LOCAL_ZIPBALL --no-check-certificate
+        if ! wget -nv $ZIPBALL_URL -O $LOCAL_ZIPBALL --no-check-certificate; then
+            die_with_error "Failed to download [$ZIPBALL_URL]"
+        fi
         unzip -q -o $LOCAL_ZIPBALL -d $EXTRACTED_FILES
         rm -f $LOCAL_ZIPBALL
     } >&2
@@ -69,11 +80,17 @@ function install_xapi_plugins_from {
 }
 
 function get_local_sr {
-    xe sr-list name-label="Local storage" --minimal
+    xe pool-list params=default-SR minimal=true
 }
 
 function get_local_sr_path {
-    echo "/var/run/sr-mount/$(get_local_sr)"
+    pbd_path="/var/run/sr-mount/$(get_local_sr)"
+    pbd_device_config_path=`xe pbd-list sr-uuid=$(get_local_sr) params=device-config | grep " path: "`
+    if [ -n "$pbd_device_config_path" ]; then
+        pbd_uuid=`xe pbd-list sr-uuid=$(get_local_sr) minimal=true`
+        pbd_path=`xe pbd-param-get uuid=$pbd_uuid param-name=device-config param-key=path || echo ""`
+    fi
+    echo $pbd_path
 }
 
 function find_ip_by_name() {
@@ -131,14 +148,14 @@ function _network_exists() {
     local name_label
     name_label=$1
 
-    ! [ -z $(xe network-list name-label="$name_label" --minimal) ]
+    ! [ -z "$(xe network-list name-label="$name_label" --minimal)" ]
 }
 
 function _bridge_exists() {
     local bridge
     bridge=$1
 
-    ! [ -z $(xe network-list bridge="$bridge" --minimal) ]
+    ! [ -z "$(xe network-list bridge="$bridge" --minimal)" ]
 }
 
 function _network_uuid() {
@@ -286,4 +303,36 @@ function set_vm_memory() {
         dynamic-min=${memory}MiB \
         dynamic-max=${memory}MiB \
         uuid=$vm
+}
+
+function max_vcpus() {
+    local vm_name_label
+
+    vm_name_label="$1"
+
+    local vm
+    local host
+    local cpu_count
+
+    host=$(xe host-list --minimal)
+    vm=$(_vm_uuid "$vm_name_label")
+
+    cpu_count=$(xe host-param-get \
+        param-name=cpu_info \
+        uuid=$host |
+        sed -e 's/^.*cpu_count: \([0-9]*\);.*$/\1/g')
+
+    if [ -z "$cpu_count" ]; then
+        # get dom0's vcpu count
+        cpu_count=$(cat /proc/cpuinfo | grep processor | wc -l)
+    fi
+
+    # Assert cpu_count is not empty
+    [ -n "$cpu_count" ]
+
+    # Assert ithas a numeric nonzero value
+    expr "$cpu_count" + 0
+
+    xe vm-param-set uuid=$vm VCPUs-max=$cpu_count
+    xe vm-param-set uuid=$vm VCPUs-at-startup=$cpu_count
 }

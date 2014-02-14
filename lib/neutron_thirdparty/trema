@@ -28,7 +28,7 @@ TREMA_TMP_DIR=$TREMA_DATA_DIR/trema
 TREMA_LOG_LEVEL=${TREMA_LOG_LEVEL:-info}
 
 TREMA_SS_CONFIG=$TREMA_SS_ETC_DIR/sliceable.conf
-TREMA_SS_APACHE_CONFIG=/etc/apache2/sites-available/sliceable_switch
+TREMA_SS_APACHE_CONFIG=/etc/apache2/sites-available/sliceable_switch.conf
 
 # configure_trema - Set config files, create data dirs, etc
 function configure_trema() {
@@ -62,12 +62,12 @@ function init_trema() {
     sudo sed -i -e "s|/home/sliceable_switch/script|$TREMA_SS_SCRIPT_DIR|" \
         $TREMA_SS_APACHE_CONFIG
     sudo a2enmod rewrite actions
-    sudo a2ensite sliceable_switch
+    sudo a2ensite sliceable_switch.conf
 
     cp $TREMA_SS_DIR/sliceable_switch_null.conf $TREMA_SS_CONFIG
     sed -i -e "s|^\$apps_dir.*$|\$apps_dir = \"$TREMA_DIR/apps\"|" \
-           -e "s|^\$db_dir.*$|\$db_dir = \"$TREMA_SS_DB_DIR\"|" \
-           $TREMA_SS_CONFIG
+        -e "s|^\$db_dir.*$|\$db_dir = \"$TREMA_SS_DB_DIR\"|" \
+        $TREMA_SS_CONFIG
 }
 
 function gem_install() {
@@ -107,6 +107,10 @@ function start_trema() {
 
 function stop_trema() {
     sudo TREMA_TMP=$TREMA_TMP_DIR trema killall
+}
+
+function check_trema() {
+    :
 }
 
 # Restore xtrace

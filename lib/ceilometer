@@ -2,12 +2,15 @@
 # Install and start **Ceilometer** service
 
 # To enable a minimal set of Ceilometer services, add the following to localrc:
-#   enable_service ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api
+#
+#   enable_service ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api
 #
 # To ensure Ceilometer alarming services are enabled also, further add to the localrc:
+#
 #   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
 
 # Dependencies:
+#
 # - functions
 # - OS_AUTH_URL for auth in api
 # - DEST set to the destination directory
@@ -16,12 +19,12 @@
 
 # stack.sh
 # ---------
-# install_ceilometer
-# configure_ceilometer
-# init_ceilometer
-# start_ceilometer
-# stop_ceilometer
-# cleanup_ceilometer
+# - install_ceilometer
+# - configure_ceilometer
+# - init_ceilometer
+# - start_ceilometer
+# - stop_ceilometer
+# - cleanup_ceilometer
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -45,8 +48,53 @@ CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
 # Set up database backend
 CEILOMETER_BACKEND=${CEILOMETER_BACKEND:-mysql}
 
+# Ceilometer connection info.
+CEILOMETER_SERVICE_PROTOCOL=http
+CEILOMETER_SERVICE_HOST=$SERVICE_HOST
+CEILOMETER_SERVICE_PORT=${CEILOMETER_SERVICE_PORT:-8777}
+
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,ceilometer
+
+
 # Functions
 # ---------
+#
+# create_ceilometer_accounts() - Set up common required ceilometer accounts
+
+create_ceilometer_accounts() {
+
+    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+
+    # Ceilometer
+    if [[ "$ENABLED_SERVICES" =~ "ceilometer-api" ]]; then
+        CEILOMETER_USER=$(keystone user-create \
+            --name=ceilometer \
+            --pass="$SERVICE_PASSWORD" \
+            --tenant_id $SERVICE_TENANT \
+            --email=ceilometer@example.com \
+            | grep " id " | get_field 2)
+        keystone user-role-add \
+            --tenant-id $SERVICE_TENANT \
+            --user-id $CEILOMETER_USER \
+            --role-id $ADMIN_ROLE
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+            CEILOMETER_SERVICE=$(keystone service-create \
+                --name=ceilometer \
+                --type=metering \
+                --description="OpenStack Telemetry Service" \
+                | grep " id " | get_field 2)
+            keystone endpoint-create \
+                --region RegionOne \
+                --service_id $CEILOMETER_SERVICE \
+                --publicurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT" \
+                --adminurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT" \
+                --internalurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT"
+        fi
+    fi
+}
+
 
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
@@ -64,10 +112,10 @@ function configure_ceilometer() {
     setup_develop $CEILOMETER_DIR
 
     [ ! -d $CEILOMETER_CONF_DIR ] && sudo mkdir -m 755 -p $CEILOMETER_CONF_DIR
-    sudo chown $USER $CEILOMETER_CONF_DIR
+    sudo chown $STACK_USER $CEILOMETER_CONF_DIR
 
     [ ! -d $CEILOMETER_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $CEILOMETER_API_LOG_DIR
-    sudo chown $USER $CEILOMETER_API_LOG_DIR
+    sudo chown $STACK_USER $CEILOMETER_API_LOG_DIR
 
     iniset_rpc_backend ceilometer $CEILOMETER_CONF DEFAULT
 
@@ -78,6 +126,10 @@ function configure_ceilometer() {
     cp $CEILOMETER_DIR/etc/ceilometer/policy.json $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/pipeline.yaml $CEILOMETER_CONF_DIR
     iniset $CEILOMETER_CONF DEFAULT policy_file $CEILOMETER_CONF_DIR/policy.json
+
+    if [ "$CEILOMETER_PIPELINE_INTERVAL" ]; then
+        sed -i "s/interval:.*/interval: ${CEILOMETER_PIPELINE_INTERVAL}/" $CEILOMETER_CONF_DIR/pipeline.yaml
+    fi
 
     # the compute and central agents need these credentials in order to
     # call out to the public nova and glance APIs
@@ -91,7 +143,7 @@ function configure_ceilometer() {
     iniset $CEILOMETER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CEILOMETER_CONF keystone_authtoken signing_dir $CEILOMETER_AUTH_CACHE_DIR
 
-    if [[ "$CEILOMETER_BACKEND" = 'mysql' ]]; then
+    if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
         iniset $CEILOMETER_CONF database connection `database_connection_url ceilometer`
     else
         iniset $CEILOMETER_CONF database connection mongodb://localhost:27017/ceilometer
@@ -102,6 +154,8 @@ function configure_ceilometer() {
 
 function configure_mongodb() {
     if is_fedora; then
+        # install mongodb client
+        install_package mongodb
         # ensure smallfiles selected to minimize freespace requirements
         sudo sed -i '/--smallfiles/!s/OPTIONS=\"/OPTIONS=\"--smallfiles /' /etc/sysconfig/mongod
 
@@ -116,7 +170,7 @@ function init_ceilometer() {
     sudo chown $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
     rm -f $CEILOMETER_AUTH_CACHE_DIR/*
 
-    if [[ "$CEILOMETER_BACKEND" = 'mysql' ]]; then
+    if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
         recreate_database ceilometer utf8
         $CEILOMETER_BIN_DIR/ceilometer-dbsync
     fi
@@ -134,19 +188,28 @@ function install_ceilometerclient() {
 
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer() {
-    screen_it ceilometer-acompute "sg $LIBVIRT_GROUP \"ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
-    screen_it ceilometer-acentral "ceilometer-agent-central --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-collector "ceilometer-collector --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-api "ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-alarm-notifier "ceilometer-alarm-notifier --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-alarm-evaluator "ceilometer-alarm-evaluator --config-file $CEILOMETER_CONF"
+    if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+        screen_it ceilometer-acompute "cd ; sg $LIBVIRT_GROUP \"ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
+    fi
+    screen_it ceilometer-acentral "cd ; ceilometer-agent-central --config-file $CEILOMETER_CONF"
+    screen_it ceilometer-anotification "cd ; ceilometer-agent-notification --config-file $CEILOMETER_CONF"
+    screen_it ceilometer-collector "cd ; ceilometer-collector --config-file $CEILOMETER_CONF"
+    screen_it ceilometer-api "cd ; ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
+
+    echo "Waiting for ceilometer-api to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -s http://localhost:8777/v2/ >/dev/null; do sleep 1; done"; then
+        die $LINENO "ceilometer-api did not start"
+    fi
+
+    screen_it ceilometer-alarm-notifier "cd ; ceilometer-alarm-notifier --config-file $CEILOMETER_CONF"
+    screen_it ceilometer-alarm-evaluator "cd ; ceilometer-alarm-evaluator --config-file $CEILOMETER_CONF"
 }
 
 # stop_ceilometer() - Stop running processes
 function stop_ceilometer() {
     # Kill the ceilometer screen windows
-    for serv in ceilometer-acompute ceilometer-acentral ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
-        screen -S $SCREEN_NAME -p $serv -X kill
+    for serv in ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
+        screen_stop $serv
     done
 }
 
@@ -154,6 +217,7 @@ function stop_ceilometer() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

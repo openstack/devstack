@@ -38,6 +38,10 @@ fi
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
+# If nova api is not enabled we exit with exitcode 55 so that
+# the exercise is skipped
+is_service_enabled n-api || exit 55
+
 # Skip if the hypervisor is Docker
 [[ "$VIRT_DRIVER" == "docker" ]] && exit 55
 
@@ -113,7 +117,8 @@ nova flavor-list
 INSTANCE_TYPE=$(nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1)
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
+    INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
+    die_if_not_set $LINENO INSTANCE_TYPE "Failure retrieving INSTANCE_TYPE"
 fi
 
 # Clean-up from previous runs
@@ -126,7 +131,7 @@ fi
 # Boot instance
 # -------------
 
-VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
+VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security-groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
 die_if_not_set $LINENO VM_UUID "Failure launching $VM_NAME"
 
 # Check that the status is active within ACTIVE_TIMEOUT seconds
@@ -168,7 +173,7 @@ if ! is_service_enabled neutron; then
     # list floating addresses
     if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TEST_FLOATING_POOL | grep -q $TEST_FLOATING_IP; do sleep 1; done"; then
         die $LINENO "Floating IP not allocated"
-     fi
+    fi
 fi
 
 # Dis-allow icmp traffic (ping)

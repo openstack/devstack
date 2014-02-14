@@ -18,7 +18,7 @@ DEBUG=True
 LOGFILE=$STACK_DIR/log/stack.log
 LOGDAYS=1
 
-ENABLED_SERVICES=n-cpu,rabbit,g-api,neutron,agent,vif,contrail
+ENABLED_SERVICES=n-cpu,rabbit,g-api,neutron,agent,contrail
 
 Q_USE_DEBUG_COMMAND=True
 PHYSICAL_NETWORK=default
@@ -38,3 +38,12 @@ DATABASE_TYPE=mysql
 # use contrail forked neutron repo
 NEUTRON_REPO=https://github.com/dsetia/neutron.git
 NEUTRON_BRANCH=master
+
+# repo proto is https or (default) ssh. Leave commented for ssh
+# CONTRAIL_REPO_PROTO=https
+
+# proto for openstack bits. Use HTTPS if git is firewalled
+# GIT_BASE=https://git.openstack.org
+
+# use contrail VIF driver with NOVA
+NOVA_VIF_DRIVER=nova_contrail_vif.contrailvif.VRouterVIFDriver

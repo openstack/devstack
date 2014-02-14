@@ -6,8 +6,8 @@ set -o errexit
 
 # Make sure only root can run our script
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root"
-   exit 1
+    echo "This script must be run as root"
+    exit 1
 fi
 
 # This directory
@@ -31,15 +31,15 @@ apt-get install -y --force-yes $DEPS
 
 # Install jenkins
 if [ ! -e /var/lib/jenkins ]; then
-   echo "Jenkins installation failed"
-   exit 1
+    echo "Jenkins installation failed"
+    exit 1
 fi
 
 # Make sure user has configured a jenkins ssh pubkey
 if [ ! -e /var/lib/jenkins/.ssh/id_rsa.pub ]; then
-   echo "Public key for jenkins is missing.  This is used to ssh into your instances."
-   echo "Please run "su -c ssh-keygen jenkins" before proceeding"
-   exit 1
+    echo "Public key for jenkins is missing.  This is used to ssh into your instances."
+    echo "Please run "su -c ssh-keygen jenkins" before proceeding"
+    exit 1
 fi
 
 # Setup sudo
@@ -96,7 +96,7 @@ PLUGINS=http://hudson-ci.org/downloads/plugins/build-timeout/1.6/build-timeout.h
 
 # Configure plugins
 for plugin in ${PLUGINS//,/ }; do
-    name=`basename $plugin`   
+    name=`basename $plugin`
     dest=/var/lib/jenkins/plugins/$name
     if [ ! -e $dest ]; then
         curl -L $plugin -o $dest

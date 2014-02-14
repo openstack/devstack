@@ -70,6 +70,9 @@ the `XENAPI_PASSWORD` must be your dom0 root password.
 Of course, use real passwords if this machine is exposed.
 
     cat > ./localrc <<EOF
+    # At the moment, we depend on github's snapshot function.
+    GIT_BASE="http://github.com"
+
     # Passwords
     # NOTE: these need to be specified, otherwise devstack will try
     # to prompt for these passwords, blocking the install process.

@@ -1,8 +1,11 @@
 #!/usr/bin/python 
+"""
+Common utility functions for Contrail scripts
 
-# adapted from from contrail_lib.py in https://github.com/Juniper/vrouter-xen-utils
-# Noel Burton-Krahn <noel@pistoncloud.com>
-# 2014-01-30
+adapted from from contrail_lib.py in https://github.com/Juniper/vrouter-xen-utils
+
+Noel Burton-Krahn <noel@pistoncloud.com>
+"""
 
 import sys
 

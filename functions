@@ -1,16 +1,17 @@
 # functions - Common functions used by DevStack components
 #
 # The following variables are assumed to be defined by certain functions:
-# ``ENABLED_SERVICES``
-# ``EROR_ON_CLONE``
-# ``FILES``
-# ``GLANCE_HOSTPORT``
-# ``OFFLINE``
-# ``PIP_DOWNLOAD_CACHE``
-# ``PIP_USE_MIRRORS``
-# ``RECLONE``
-# ``TRACK_DEPENDS``
-# ``http_proxy``, ``https_proxy``, ``no_proxy``
+#
+# - ``ENABLED_SERVICES``
+# - ``ERROR_ON_CLONE``
+# - ``FILES``
+# - ``GLANCE_HOSTPORT``
+# - ``OFFLINE``
+# - ``PIP_DOWNLOAD_CACHE``
+# - ``PIP_USE_MIRRORS``
+# - ``RECLONE``
+# - ``TRACK_DEPENDS``
+# - ``http_proxy``, ``https_proxy``, ``no_proxy``
 
 
 # Save trace setting
@@ -54,7 +55,7 @@ function address_in_net() {
 
 
 # Wrapper for ``apt-get`` to set cache and proxy environment variables
-# Uses globals ``OFFLINE``, ``*_proxy`
+# Uses globals ``OFFLINE``, ``*_proxy``
 # apt_get operation package [package ...]
 function apt_get() {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
@@ -155,6 +156,22 @@ function err_if_not_set() {
 }
 
 
+# Prints line number and "message" in warning format
+# warn $LINENO "message"
+function warn() {
+    local exitcode=$?
+    errXTRACE=$(set +o | grep xtrace)
+    set +o xtrace
+    local msg="[WARNING] ${BASH_SOURCE[2]}:$1 $2"
+    echo $msg 1>&2;
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        echo $msg >> "${SCREEN_LOGDIR}/error.log"
+    fi
+    $errXTRACE
+    return $exitcode
+}
+
+
 # HTTP and HTTPS proxy servers are supported via the usual environment variables [1]
 # ``http_proxy``, ``https_proxy`` and ``no_proxy``. They can be set in
 # ``localrc`` or on the command line if necessary::
@@ -244,11 +261,12 @@ function _get_package_dir() {
 #
 # Only packages required for the services in 1st argument will be
 # included.  Two bits of metadata are recognized in the prerequisite files:
-# - ``# NOPRIME`` defers installation to be performed later in stack.sh
+#
+# - ``# NOPRIME`` defers installation to be performed later in `stack.sh`
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
 function get_packages() {
-    local services=$1
+    local services=$@
     local package_dir=$(_get_package_dir)
     local file_to_parse
     local service
@@ -260,7 +278,7 @@ function get_packages() {
     if [[ -z "$DISTRO" ]]; then
         GetDistro
     fi
-    for service in general ${services//,/ }; do
+    for service in ${services//,/ }; do
         # Allow individual services to specify dependencies
         if [[ -e ${package_dir}/${service} ]]; then
             file_to_parse="${file_to_parse} $service"
@@ -364,7 +382,7 @@ function get_packages() {
 # GetOSVersion
 GetOSVersion() {
     # Figure out which vendor we are
-    if [[ -n "`which sw_vers 2>/dev/null`" ]]; then
+    if [[ -x "`which sw_vers 2>/dev/null`" ]]; then
         # OS/X
         os_VENDOR=`sw_vers -productName`
         os_RELEASE=`sw_vers -productVersion`
@@ -404,6 +422,7 @@ GetOSVersion() {
         os_CODENAME=$(lsb_release -c -s)
     elif [[ -r /etc/redhat-release ]]; then
         # Red Hat Enterprise Linux Server release 5.5 (Tikanga)
+        # Red Hat Enterprise Linux Server release 7.0 Beta (Maipo)
         # CentOS release 5.5 (Final)
         # CentOS Linux release 6.0 (Final)
         # Fedora release 16 (Verne)
@@ -412,7 +431,7 @@ GetOSVersion() {
         for r in "Red Hat" CentOS Fedora XenServer; do
             os_VENDOR=$r
             if [[ -n "`grep \"$r\" /etc/redhat-release`" ]]; then
-                ver=`sed -e 's/^.* \(.*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
+                ver=`sed -e 's/^.* \([0-9].*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
                 os_CODENAME=${ver#*|}
                 os_RELEASE=${ver%|*}
                 os_UPDATE=${os_RELEASE##*.}
@@ -536,7 +555,19 @@ function exit_distro_not_supported {
 function is_arch {
     ARCH_TYPE=$1
 
-    [ "($uname -m)" = "$ARCH_TYPE" ]
+    [[ "$(uname -m)" == "$ARCH_TYPE" ]]
+}
+
+# Checks if installed Apache is <= given version
+# $1 = x.y.z (version string of Apache)
+function check_apache_version {
+    local cmd="apachectl"
+    if ! [[ -x $(which apachectl 2>/dev/null) ]]; then
+        cmd="/usr/sbin/apachectl"
+    fi
+
+    local version=$($cmd -v | grep version | grep -Po 'Apache/\K[^ ]*')
+    expr "$version" '>=' $1 > /dev/null
 }
 
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
@@ -564,7 +595,8 @@ function git_clone {
     if echo $GIT_REF | egrep -q "^refs"; then
         # If our branch name is a gerrit style refs/changes/...
         if [[ ! -d $GIT_DEST ]]; then
-            [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
+            [[ "$ERROR_ON_CLONE" = "True" ]] && \
+                die $LINENO "Cloning not allowed in this configuration"
             git clone $GIT_REMOTE $GIT_DEST
         fi
         cd $GIT_DEST
@@ -572,7 +604,8 @@ function git_clone {
     else
         # do a full clone only if the directory doesn't exist
         if [[ ! -d $GIT_DEST ]]; then
-            [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
+            [[ "$ERROR_ON_CLONE" = "True" ]] && \
+                die $LINENO "Cloning not allowed in this configuration"
             git clone $GIT_REMOTE $GIT_DEST
             cd $GIT_DEST
             # This checkout syntax works for both branches and tags
@@ -596,8 +629,7 @@ function git_clone {
             elif [[ -n "`git show-ref refs/remotes/origin/$GIT_REF`" ]]; then
                 git_update_remote_branch $GIT_REF
             else
-                echo $GIT_REF is neither branch nor tag
-                exit 1
+                die $LINENO "$GIT_REF is neither branch nor tag"
             fi
 
         fi
@@ -697,7 +729,10 @@ function iniset() {
     local section=$2
     local option=$3
     local value=$4
-    if ! grep -q "^\[$section\]" "$file"; then
+
+    [[ -z $section || -z $option ]] && return
+
+    if ! grep -q "^\[$section\]" "$file" 2>/dev/null; then
         # Add section at the end
         echo -e "\n[$section]" >>"$file"
     fi
@@ -707,8 +742,9 @@ function iniset() {
 $option = $value
 " "$file"
     else
+        local sep=$(echo -ne "\x01")
         # Replace it
-        sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=[ \t]*\).*$|\1$value|" "$file"
+        sed -i -e '/^\['${section}'\]/,/^\[.*\]/ s'${sep}'^\('${option}'[ \t]*=[ \t]*\).*$'${sep}'\1'"${value}"${sep} "$file"
     fi
 }
 
@@ -809,6 +845,7 @@ function is_service_enabled() {
         [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0
         [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && return 0
         [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && return 0
+        [[ ${service} == "ironic" && ${ENABLED_SERVICES} =~ "ir-" ]] && return 0
         [[ ${service} == "neutron" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
         [[ ${service} == "trove" && ${ENABLED_SERVICES} =~ "tr-" ]] && return 0
         [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && return 0
@@ -926,7 +963,7 @@ function uninstall_package() {
     elif is_fedora; then
         sudo yum remove -y "$@"
     elif is_suse; then
-        sudo rpm -e "$@"
+        sudo zypper rm "$@"
     else
         exit_distro_not_supported "uninstalling packages"
     fi
@@ -964,7 +1001,7 @@ function is_set() {
 
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``, ``PIP_USE_MIRRORS``,
-#   ``TRACK_DEPENDS``, ``*_proxy`
+# ``TRACK_DEPENDS``, ``*_proxy``
 # pip_install package [package ...]
 function pip_install {
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
@@ -993,8 +1030,7 @@ function pip_install {
     # /tmp/$USER-pip-build.  Even if a later component specifies foo <
     # 1.1, the existing extracted build will be used and cause
     # confusing errors.  By creating unique build directories we avoid
-    # this problem. See
-    #  https://github.com/pypa/pip/issues/709
+    # this problem. See https://github.com/pypa/pip/issues/709
     local pip_build_tmp=$(mktemp --tmpdir -d pip-build.XXXXX)
 
     $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
@@ -1096,10 +1132,42 @@ function screen_it {
             sleep 1.5
 
             NL=`echo -ne '\015'`
-            screen -S $SCREEN_NAME -p $1 -X stuff "$2 || echo \"$1 failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
+            # This fun command does the following:
+            # - the passed server command is backgrounded
+            # - the pid of the background process is saved in the usual place
+            # - the server process is brought back to the foreground
+            # - if the server process exits prematurely the fg command errors
+            #   and a message is written to stdout and the service failure file
+            # The pid saved can be used in screen_stop() as a process group
+            # id to kill off all child processes
+            screen -S $SCREEN_NAME -p $1 -X stuff "$2 & echo \$! >$SERVICE_DIR/$SCREEN_NAME/$1.pid; fg || echo \"$1 failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
         else
             # Spawn directly without screen
-            run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$service.pid
+            run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$1.pid
+        fi
+    fi
+}
+
+
+# Stop a service in screen
+# If a PID is available use it, kill the whole process group via TERM
+# If screen is being used kill the screen window; this will catch processes
+# that did not leave a PID behind
+# screen_stop service
+function screen_stop() {
+    SCREEN_NAME=${SCREEN_NAME:-stack}
+    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
+    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+
+    if is_service_enabled $1; then
+        # Kill via pid if we have one available
+        if [[ -r $SERVICE_DIR/$SCREEN_NAME/$1.pid ]]; then
+            pkill -TERM -P -$(cat $SERVICE_DIR/$SCREEN_NAME/$1.pid)
+            rm $SERVICE_DIR/$SCREEN_NAME/$1.pid
+        fi
+        if [[ "$USE_SCREEN" = "True" ]]; then
+            # Clean up the screen window
+            screen -S $SCREEN_NAME -p $1 -X kill
         fi
     fi
 }
@@ -1124,12 +1192,17 @@ function screen_rc {
         NL=`echo -ne '\015'`
         echo "screen -t $1 bash" >> $SCREENRC
         echo "stuff \"$2$NL\"" >> $SCREENRC
+
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            echo "logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log" >>$SCREENRC
+            echo "log on" >>$SCREENRC
+        fi
     fi
 }
 
 
-# Helper to remove the *.failure files under $SERVICE_DIR/$SCREEN_NAME
-# This is used for service_check when all the screen_it are called finished
+# Helper to remove the ``*.failure`` files under ``$SERVICE_DIR/$SCREEN_NAME``.
+# This is used for ``service_check`` when all the ``screen_it`` are called finished
 # init_service_check
 function init_service_check() {
     SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -1219,7 +1292,11 @@ function safe_chmod() {
 
 # ``pip install -e`` the package, which processes the dependencies
 # using pip before running `setup.py develop`
-# Uses globals ``STACK_USER``, ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``
+#
+# Updates the dependencies in project_dir from the
+# openstack/requirements global list before installing anything.
+#
+# Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``
 # setup_develop directory
 function setup_develop() {
     local project_dir=$1
@@ -1227,7 +1304,8 @@ function setup_develop() {
     echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
 
     # Don't update repo if local changes exist
-    (cd $project_dir && git diff --quiet)
+    # Don't use buggy "git diff --quiet"
+    (cd $project_dir && git diff --exit-code >/dev/null)
     local update_requirements=$?
 
     if [ $update_requirements -eq 0 ]; then
@@ -1235,14 +1313,33 @@ function setup_develop() {
             $SUDO_CMD python update.py $project_dir)
     fi
 
+    setup_develop_no_requirements_update $project_dir
+
+    # We've just gone and possibly modified the user's source tree in an
+    # automated way, which is considered bad form if it's a development
+    # tree because we've screwed up their next git checkin. So undo it.
+    #
+    # However... there are some circumstances, like running in the gate
+    # where we really really want the overridden version to stick. So provide
+    # a variable that tells us whether or not we should UNDO the requirements
+    # changes (this will be set to False in the OpenStack ci gate)
+    if [ $UNDO_REQUIREMENTS = "True" ]; then
+        if [ $update_requirements -eq 0 ]; then
+            (cd $project_dir && git reset --hard)
+        fi
+    fi
+}
+
+# ``pip install -e`` the package, which processes the dependencies
+# using pip before running `setup.py develop`
+# Uses globals ``STACK_USER``
+# setup_develop_no_requirements_update directory
+function setup_develop_no_requirements_update() {
+    local project_dir=$1
+
     pip_install -e $project_dir
     # ensure that further actions can do things like setup.py sdist
     safe_chown -R $STACK_USER $1/*.egg-info
-
-    # Undo requirements changes, if we made them
-    if [ $update_requirements -eq 0 ]; then
-        (cd $project_dir && git checkout -- requirements.txt test-requirements.txt setup.py)
-    fi
 }
 
 
@@ -1283,10 +1380,12 @@ function trueorfalse() {
 }
 
 
-# Retrieve an image from a URL and upload into Glance
+# Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:
-#   ``FILES`` must be set to the cache dir
-#   ``GLANCE_HOSTPORT``
+#
+# - ``FILES`` must be set to the cache dir
+# - ``GLANCE_HOSTPORT``
+#
 # upload_image image-url glance-token
 function upload_image() {
     local image_url=$1
@@ -1294,12 +1393,24 @@ function upload_image() {
 
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
-
-    # Downloads the image (uec ami+aki style), then extracts it.
     IMAGE_FNAME=`basename "$image_url"`
-    if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
-        wget -c $image_url -O $FILES/$IMAGE_FNAME
-        if [[ $? -ne 0 ]]; then
+    if [[ $image_url != file* ]]; then
+        # Downloads the image (uec ami+aki style), then extracts it.
+        if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
+            wget -c $image_url -O $FILES/$IMAGE_FNAME
+            if [[ $? -ne 0 ]]; then
+                echo "Not found: $image_url"
+                return
+            fi
+        fi
+        IMAGE="$FILES/${IMAGE_FNAME}"
+    else
+        # File based URL (RFC 1738): file://host/path
+        # Remote files are not considered here.
+        # *nix: file:///home/user/path/file
+        # windows: file:///C:/Documents%20and%20Settings/user/path/file
+        IMAGE=$(echo $image_url | sed "s/^file:\/\///g")
+        if [[ ! -f $IMAGE || "$(stat -c "%s" $IMAGE)" == "0" ]]; then
             echo "Not found: $image_url"
             return
         fi
@@ -1307,7 +1418,6 @@ function upload_image() {
 
     # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
     if [[ "$image_url" =~ 'openvz' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.tar.gz}"
         glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format ami --disk-format ami < "${IMAGE}"
         return
@@ -1315,34 +1425,137 @@ function upload_image() {
 
     # vmdk format images
     if [[ "$image_url" =~ '.vmdk' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.vmdk}"
 
         # Before we can upload vmdk type images to glance, we need to know it's
         # disk type, storage adapter, and networking adapter. These values are
-        # passed to glance as custom properties. We take these values from the
+        # passed to glance as custom properties.
+        # We take these values from the vmdk file if populated. Otherwise, we use
         # vmdk filename, which is expected in the following format:
         #
-        #     <name>-<disk type>:<storage adapter>:<network adapter>
+        #     <name>-<disk type>;<storage adapter>;<network adapter>
         #
         # If the filename does not follow the above format then the vsphere
         # driver will supply default values.
-        property_string=`echo "$IMAGE_NAME" | grep -oP '(?<=-)(?!.*-).+:.+:.+$'`
-        if [[ ! -z "$property_string" ]]; then
-            IFS=':' read -a props <<< "$property_string"
-            vmdk_disktype="${props[0]}"
-            vmdk_adapter_type="${props[1]}"
-            vmdk_net_adapter="${props[2]}"
+
+        vmdk_adapter_type=""
+        vmdk_disktype=""
+        vmdk_net_adapter=""
+
+        # vmdk adapter type
+        vmdk_adapter_type="$(head -25 $IMAGE | grep -a -F -m 1 'ddb.adapterType =' $IMAGE)"
+        vmdk_adapter_type="${vmdk_adapter_type#*\"}"
+        vmdk_adapter_type="${vmdk_adapter_type%?}"
+
+        # vmdk disk type
+        vmdk_create_type="$(head -25 $IMAGE | grep -a -F -m 1 'createType=' $IMAGE)"
+        vmdk_create_type="${vmdk_create_type#*\"}"
+        vmdk_create_type="${vmdk_create_type%?}"
+
+        descriptor_data_pair_msg="Monolithic flat and VMFS disks "`
+                                    `"should use a descriptor-data pair."
+        if [[ "$vmdk_create_type" = "monolithicSparse" ]]; then
+            vmdk_disktype="sparse"
+        elif [[ "$vmdk_create_type" = "monolithicFlat" || \
+        "$vmdk_create_type" = "vmfs" ]]; then
+            # Attempt to retrieve the *-flat.vmdk
+            flat_fname="$(head -25 $IMAGE | grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $IMAGE)"
+            flat_fname="${flat_fname#*\"}"
+            flat_fname="${flat_fname%?}"
+            if [[ -z "$flat_name" ]]; then
+                flat_fname="$IMAGE_NAME-flat.vmdk"
+            fi
+            path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
+            flat_url="${image_url:0:$path_len}$flat_fname"
+            warn $LINENO "$descriptor_data_pair_msg"`
+                            `" Attempt to retrieve the *-flat.vmdk: $flat_url"
+            if [[ $flat_url != file* ]]; then
+                if [[ ! -f $FILES/$flat_fname || \
+                "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
+                    wget -c $flat_url -O $FILES/$flat_fname
+                    if [[ $? -ne 0 ]]; then
+                        echo "Flat disk not found: $flat_url"
+                        flat_found=false
+                    fi
+                fi
+                if $flat_found; then
+                    IMAGE="$FILES/${flat_fname}"
+                fi
+            else
+                IMAGE=$(echo $flat_url | sed "s/^file:\/\///g")
+                if [[ ! -f $IMAGE || "$(stat -c "%s" $IMAGE)" == "0" ]]; then
+                    echo "Flat disk not found: $flat_url"
+                    flat_found=false
+                fi
+                if ! $flat_found; then
+                    IMAGE=$(echo $image_url | sed "s/^file:\/\///g")
+                fi
+            fi
+            if $flat_found; then
+                IMAGE_NAME="${flat_fname}"
+            fi
+            vmdk_disktype="preallocated"
+        elif [[ -z "$vmdk_create_type" ]]; then
+            # *-flat.vmdk provided: attempt to retrieve the descriptor (*.vmdk)
+            # to retrieve appropriate metadata
+            if [[ ${IMAGE_NAME: -5} != "-flat" ]]; then
+                warn $LINENO "Expected filename suffix: '-flat'."`
+                            `" Filename provided: ${IMAGE_NAME}"
+            else
+                descriptor_fname="${IMAGE_NAME:0:${#IMAGE_NAME} - 5}.vmdk"
+                path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
+                flat_path="${image_url:0:$path_len}"
+                descriptor_url=$flat_path$descriptor_fname
+                warn $LINENO "$descriptor_data_pair_msg"`
+                                `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
+                if [[ $flat_path != file* ]]; then
+                    if [[ ! -f $FILES/$descriptor_fname || \
+                    "$(stat -c "%s" $FILES/$descriptor_fname)" = "0" ]]; then
+                        wget -c $descriptor_url -O $FILES/$descriptor_fname
+                        if [[ $? -ne 0 ]]; then
+                            warn $LINENO "Descriptor not found $descriptor_url"
+                            descriptor_found=false
+                        fi
+                    fi
+                    descriptor_url="$FILES/$descriptor_fname"
+                else
+                    descriptor_url=$(echo $descriptor_url | sed "s/^file:\/\///g")
+                    if [[ ! -f $descriptor_url || \
+                    "$(stat -c "%s" $descriptor_url)" == "0" ]]; then
+                        warn $LINENO "Descriptor not found $descriptor_url"
+                        descriptor_found=false
+                    fi
+                fi
+                if $descriptor_found; then
+                    vmdk_adapter_type="$(head -25 $descriptor_url |"`
+                    `"grep -a -F -m 1 'ddb.adapterType =' $descriptor_url)"
+                    vmdk_adapter_type="${vmdk_adapter_type#*\"}"
+                    vmdk_adapter_type="${vmdk_adapter_type%?}"
+                fi
+            fi
+            #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
+            vmdk_disktype="preallocated"
+        else
+            #TODO(alegendre): handle streamOptimized once supported by the VMware driver.
+            vmdk_disktype="preallocated"
         fi
 
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format bare --disk-format vmdk --property vmware-disktype="$vmdk_disktype" --property vmware_adaptertype="$vmdk_adapter_type" --property hw_vif_model="$vmdk_net_adapter" < "${IMAGE}"
+        # NOTE: For backwards compatibility reasons, colons may be used in place
+        # of semi-colons for property delimiters but they are not permitted
+        # characters in NTFS filesystems.
+        property_string=`echo "$IMAGE_NAME" | grep -oP '(?<=-)(?!.*-).*[:;].*[:;].*$'`
+        IFS=':;' read -a props <<< "$property_string"
+        vmdk_disktype="${props[0]:-$vmdk_disktype}"
+        vmdk_adapter_type="${props[1]:-$vmdk_adapter_type}"
+        vmdk_net_adapter="${props[2]:-$vmdk_net_adapter}"
+
+        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format bare --disk-format vmdk --property vmware_disktype="$vmdk_disktype" --property vmware_adaptertype="$vmdk_adapter_type" --property hw_vif_model="$vmdk_net_adapter" < "${IMAGE}"
         return
     fi
 
     # XenServer-vhd-ovf-format images are provided as .vhd.tgz
     # and should not be decompressed prior to loading
     if [[ "$image_url" =~ '.vhd.tgz' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.vhd.tgz}"
         glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=ovf --disk-format=vhd < "${IMAGE}"
         return
@@ -1352,12 +1565,11 @@ function upload_image() {
     # and should not be decompressed prior to loading.
     # Setting metadata, so PV mode is used.
     if [[ "$image_url" =~ '.xen-raw.tgz' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
         IMAGE_NAME="${IMAGE_FNAME%.xen-raw.tgz}"
         glance \
-          --os-auth-token $token \
-          --os-image-url http://$GLANCE_HOSTPORT \
-          image-create \
+            --os-auth-token $token \
+            --os-image-url http://$GLANCE_HOSTPORT \
+            image-create \
             --name "$IMAGE_NAME" --is-public=True \
             --container-format=tgz --disk-format=raw \
             --property vm_mode=xen < "${IMAGE}"
@@ -1380,17 +1592,16 @@ function upload_image() {
             mkdir "$xdir"
             tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
             KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
+                [ -f "$f" ] && echo "$f" && break; done; true)
             if [[ -z "$IMAGE_NAME" ]]; then
                 IMAGE_NAME=$(basename "$IMAGE" ".img")
             fi
             ;;
         *.img)
-            IMAGE="$FILES/$IMAGE_FNAME";
             IMAGE_NAME=$(basename "$IMAGE" ".img")
             format=$(qemu-img info ${IMAGE} | awk '/^file format/ { print $3; exit }')
             if [[ ",qcow2,raw,vdi,vmdk,vpc," =~ ",$format," ]]; then
@@ -1401,20 +1612,17 @@ function upload_image() {
             CONTAINER_FORMAT=bare
             ;;
         *.img.gz)
-            IMAGE="$FILES/${IMAGE_FNAME}"
             IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
             DISK_FORMAT=raw
             CONTAINER_FORMAT=bare
             UNPACK=zcat
             ;;
         *.qcow2)
-            IMAGE="$FILES/${IMAGE_FNAME}"
             IMAGE_NAME=$(basename "$IMAGE" ".qcow2")
             DISK_FORMAT=qcow2
             CONTAINER_FORMAT=bare
             ;;
         *.iso)
-            IMAGE="$FILES/${IMAGE_FNAME}"
             IMAGE_NAME=$(basename "$IMAGE" ".iso")
             DISK_FORMAT=iso
             CONTAINER_FORMAT=bare
@@ -1422,11 +1630,15 @@ function upload_image() {
         *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
     esac
 
+    if is_arch "ppc64"; then
+        IMG_PROPERTY="--property hw_disk_bus=scsi --property hw_cdrom_bus=scsi"
+    fi
+
     if [ "$CONTAINER_FORMAT" = "bare" ]; then
         if [ "$UNPACK" = "zcat" ]; then
-            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
+            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" $IMG_PROPERTY --is-public True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
         else
-            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < "${IMAGE}"
+            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" $IMG_PROPERTY --is-public True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < "${IMAGE}"
         fi
     else
         # Use glance client to add the kernel the root filesystem.
@@ -1434,12 +1646,12 @@ function upload_image() {
         # kernel for use when uploading the root filesystem.
         KERNEL_ID=""; RAMDISK_ID="";
         if [ -n "$KERNEL" ]; then
-            KERNEL_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" --is-public True --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
+            KERNEL_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" $IMG_PROPERTY --is-public True --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
         fi
         if [ -n "$RAMDISK" ]; then
-            RAMDISK_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" --is-public True --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
+            RAMDISK_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" $IMG_PROPERTY --is-public True --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
         fi
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" --is-public True --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
+        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" $IMG_PROPERTY --is-public True --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
     fi
 }
 
@@ -1448,7 +1660,8 @@ function upload_image() {
 # When called from stackrc/localrc DATABASE_BACKENDS has not been
 # initialized yet, just save the configuration selection and call back later
 # to validate it.
-#  $1 The name of the database backend to use (mysql, postgresql, ...)
+#
+# ``$1`` - the name of the database backend to use (mysql, postgresql, ...)
 function use_database {
     if [[ -z "$DATABASE_BACKENDS" ]]; then
         # No backends registered means this is likely called from ``localrc``
@@ -1484,12 +1697,12 @@ function use_exclusive_service {
 function wait_for_service() {
     local timeout=$1
     local url=$2
-    timeout $timeout sh -c "while ! http_proxy= https_proxy= curl -s $url >/dev/null; do sleep 1; done"
+    timeout $timeout sh -c "while ! curl --noproxy '*' -s $url >/dev/null; do sleep 1; done"
 }
 
 
 # Wrapper for ``yum`` to set proxy environment variables
-# Uses globals ``OFFLINE``, ``*_proxy`
+# Uses globals ``OFFLINE``, ``*_proxy``
 # yum_install package [package ...]
 function yum_install() {
     [[ "$OFFLINE" = "True" ]] && return
@@ -1546,7 +1759,6 @@ function _ping_check_novanet() {
         else
             die $LINENO "[Fail] Could ping server"
         fi
-        exit 1
     fi
 }
 
@@ -1559,7 +1771,6 @@ function get_instance_ip(){
     if [[ $ip = "" ]];then
         echo "$nova_result"
         die $LINENO "[Fail] Coudn't get ipaddress of VM"
-        exit 1
     fi
     echo $ip
 }
@@ -1675,23 +1886,23 @@ function check_path_perm_sanity() {
 #
 # _vercmp_r sep ver1 ver2
 function _vercmp_r {
-  typeset sep
-  typeset -a ver1=() ver2=()
-  sep=$1; shift
-  ver1=("${@:1:sep}")
-  ver2=("${@:sep+1}")
+    typeset sep
+    typeset -a ver1=() ver2=()
+    sep=$1; shift
+    ver1=("${@:1:sep}")
+    ver2=("${@:sep+1}")
 
-  if ((ver1 > ver2)); then
-    echo 1; return 0
-  elif ((ver2 > ver1)); then
-    echo -1; return 0
-  fi
+    if ((ver1 > ver2)); then
+        echo 1; return 0
+    elif ((ver2 > ver1)); then
+        echo -1; return 0
+    fi
 
-  if ((sep <= 1)); then
-    echo 0; return 0
-  fi
+    if ((sep <= 1)); then
+        echo 0; return 0
+    fi
 
-  _vercmp_r $((sep-1)) "${ver1[@]:1}" "${ver2[@]:1}"
+    _vercmp_r $((sep-1)) "${ver1[@]:1}" "${ver2[@]:1}"
 }
 
 
@@ -1713,13 +1924,13 @@ function _vercmp_r {
 #
 # vercmp_numbers ver1 ver2
 vercmp_numbers() {
-  typeset v1=$1 v2=$2 sep
-  typeset -a ver1 ver2
+    typeset v1=$1 v2=$2 sep
+    typeset -a ver1 ver2
 
-  IFS=. read -ra ver1 <<< "$v1"
-  IFS=. read -ra ver2 <<< "$v2"
+    IFS=. read -ra ver1 <<< "$v1"
+    IFS=. read -ra ver2 <<< "$v2"
 
-  _vercmp_r "${#ver1[@]}" "${ver1[@]}" "${ver2[@]}"
+    _vercmp_r "${#ver1[@]}" "${ver1[@]}" "${ver2[@]}"
 }
 
 

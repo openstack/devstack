@@ -1,6 +1,5 @@
 apache2  # NOPRIME
 apache2-mod_wsgi  # NOPRIME
-nodejs
 python-CherryPy # why? (coming from apts)
 python-Paste
 python-PasteDeploy

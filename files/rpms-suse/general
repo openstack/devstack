@@ -1,4 +1,5 @@
 bridge-utils
+ca-certificates-mozilla
 curl
 euca2ools
 git-core
@@ -10,13 +11,13 @@ python-setuptools # instead of python-distribute; dist:sle11sp2
 python-cmd2 # dist:opensuse-12.3
 python-pylint
 python-unittest2
-python-virtualenv
 screen
 tar
 tcpdump
 unzip
 vim-enhanced
 wget
+bc
 
 findutils-locate # useful when debugging
 lsof # useful when debugging

@@ -1,21 +1,20 @@
 # lib/horizon
 # Functions to control the configuration and operation of the horizon service
-# <do not include this template file in ``stack.sh``!>
 
 # Dependencies:
-# ``functions`` file
-# ``apache`` file
-# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
-# <list other global vars that are assumed to be defined>
+#
+# - ``functions`` file
+# - ``apache`` file
+# - ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_horizon
-# configure_horizon
-# init_horizon
-# start_horizon
-# stop_horizon
-# cleanup_horizon
+# - install_horizon
+# - configure_horizon
+# - init_horizon
+# - start_horizon
+# - stop_horizon
+# - cleanup_horizon
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -25,14 +24,15 @@ set +o xtrace
 # Defaults
 # --------
 
-# <define global variables here that belong to this project>
-
 # Set up default directories
 HORIZON_DIR=$DEST/horizon
 
 # local_settings.py is used to customize Dashboard settings.
 # The example file in Horizon repo is used by default.
 HORIZON_SETTINGS=${HORIZON_SETTINGS:-$HORIZON_DIR/openstack_dashboard/local/local_settings.py.example}
+
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,horizon
 
 
 # Functions
@@ -115,7 +115,12 @@ function init_horizon() {
     # Create an empty directory that apache uses as docroot
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
+    # Apache 2.4 uses mod_authz_host for access control now (instead of "Allow")
     HORIZON_REQUIRE=''
+    if check_apache_version "2.4" ; then
+        HORIZON_REQUIRE='Require all granted'
+    fi
+
     local horizon_conf=/etc/$APACHE_NAME/$APACHE_CONF_DIR/horizon.conf
     if is_ubuntu; then
         # Clean up the old config name
@@ -124,14 +129,11 @@ function init_horizon() {
         sudo touch $horizon_conf
         sudo a2ensite horizon.conf
     elif is_fedora; then
-        if [[ "$os_RELEASE" -ge "18" ]]; then
-            # fedora 18 has Require all denied  in its httpd.conf
-            # and requires explicit Require all granted
-            HORIZON_REQUIRE='Require all granted'
-        fi
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
+    elif is_suse; then
+        : # nothing to do
     else
-        exit_distro_not_supported "apache configuration"
+        exit_distro_not_supported "horizon apache configuration"
     fi
 
     # Remove old log files that could mess with how devstack detects whether Horizon
@@ -154,15 +156,6 @@ function install_horizon() {
     # Apache installation, because we mark it NOPRIME
     install_apache_wsgi
 
-    # NOTE(sdague) quantal changed the name of the node binary
-    if is_ubuntu; then
-        if [[ ! -e "/usr/bin/node" ]]; then
-            install_package nodejs-legacy
-        fi
-    elif is_fedora && [[ $DISTRO =~ (rhel6) || "$os_RELEASE" -ge "18" ]]; then
-        install_package nodejs
-    fi
-
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
 }
 
@@ -181,6 +174,7 @@ function stop_horizon() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

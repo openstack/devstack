@@ -2,30 +2,31 @@
 # Functions to control the configuration and operation of **Keystone**
 
 # Dependencies:
-# ``functions`` file
-# ``DEST``, ``STACK_USER``
-# ``IDENTITY_API_VERSION``
-# ``BASE_SQL_CONN``
-# ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
-# ``SERVICE_TOKEN``
-# ``S3_SERVICE_PORT`` (template backend only)
+#
+# - ``functions`` file
+# - ``tls`` file
+# - ``DEST``, ``STACK_USER``
+# - ``IDENTITY_API_VERSION``
+# - ``BASE_SQL_CONN``
+# - ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
+# - ``SERVICE_TOKEN``
+# - ``S3_SERVICE_PORT`` (template backend only)
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_keystone
-# configure_keystone
-# _config_keystone_apache_wsgi
-# init_keystone
-# start_keystone
-# create_keystone_accounts
-# stop_keystone
-# cleanup_keystone
-# _cleanup_keystone_apache_wsgi
+# - install_keystone
+# - configure_keystone
+# - _config_keystone_apache_wsgi
+# - init_keystone
+# - start_keystone
+# - create_keystone_accounts
+# - stop_keystone
+# - cleanup_keystone
+# - _cleanup_keystone_apache_wsgi
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
-
 
 # Defaults
 # --------
@@ -78,6 +79,13 @@ KEYSTONE_VALID_IDENTITY_BACKENDS=kvs,ldap,pam,sql
 # valid assignment backends as per dir keystone/identity/backends
 KEYSTONE_VALID_ASSIGNMENT_BACKENDS=kvs,ldap,sql
 
+# if we are running with SSL use https protocols
+if is_ssl_enabled_service "key"; then
+    KEYSTONE_AUTH_PROTOCOL="https"
+    KEYSTONE_SERVICE_PROTOCOL="https"
+fi
+
+
 # Functions
 # ---------
 # cleanup_keystone() - Remove residual data files, anything left over from previous
@@ -125,6 +133,7 @@ function configure_keystone() {
 
     if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
         cp -p $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
+        chmod 600 $KEYSTONE_CONF
         cp -p $KEYSTONE_DIR/etc/policy.json $KEYSTONE_CONF_DIR
         if [[ -f "$KEYSTONE_DIR/etc/keystone-paste.ini" ]]; then
             cp -p "$KEYSTONE_DIR/etc/keystone-paste.ini" "$KEYSTONE_PASTE_INI"
@@ -141,17 +150,17 @@ function configure_keystone() {
 
     if is_service_enabled ldap; then
         #Set all needed ldap values
-        iniset $KEYSTONE_CONF ldap password  $LDAP_PASSWORD
-        iniset $KEYSTONE_CONF ldap user "dc=Manager,dc=openstack,dc=org"
-        iniset $KEYSTONE_CONF ldap suffix "dc=openstack,dc=org"
+        iniset $KEYSTONE_CONF ldap password $LDAP_PASSWORD
+        iniset $KEYSTONE_CONF ldap user $LDAP_MANAGER_DN
+        iniset $KEYSTONE_CONF ldap suffix $LDAP_BASE_DN
         iniset $KEYSTONE_CONF ldap use_dumb_member "True"
         iniset $KEYSTONE_CONF ldap user_attribute_ignore "enabled,email,tenants,default_project_id"
         iniset $KEYSTONE_CONF ldap tenant_attribute_ignore "enabled"
         iniset $KEYSTONE_CONF ldap tenant_domain_id_attribute "businessCategory"
         iniset $KEYSTONE_CONF ldap tenant_desc_attribute "description"
-        iniset $KEYSTONE_CONF ldap tenant_tree_dn "ou=Projects,dc=openstack,dc=org"
+        iniset $KEYSTONE_CONF ldap tenant_tree_dn "ou=Projects,$LDAP_BASE_DN"
         iniset $KEYSTONE_CONF ldap user_domain_id_attribute "businessCategory"
-        iniset $KEYSTONE_CONF ldap user_tree_dn "ou=Users,dc=openstack,dc=org"
+        iniset $KEYSTONE_CONF ldap user_tree_dn "ou=Users,$LDAP_BASE_DN"
         iniset $KEYSTONE_CONF DEFAULT member_role_id "9fe2ff9ee4384b1894a90878d3e92bab"
         iniset $KEYSTONE_CONF DEFAULT member_role_name "_member_"
     fi
@@ -170,6 +179,15 @@ function configure_keystone() {
     iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(public_port)s/"
     iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(admin_port)s/"
 
+    # Register SSL certificates if provided
+    if is_ssl_enabled_service key; then
+        ensure_certificates KEYSTONE
+
+        iniset $KEYSTONE_CONF ssl enable True
+        iniset $KEYSTONE_CONF ssl certfile $KEYSTONE_SSL_CERT
+        iniset $KEYSTONE_CONF ssl keyfile $KEYSTONE_SSL_KEY
+    fi
+
     if is_service_enabled tls-proxy; then
         # Set the service ports for a proxy to take the originals
         iniset $KEYSTONE_CONF DEFAULT public_port $KEYSTONE_SERVICE_PORT_INT
@@ -177,7 +195,6 @@ function configure_keystone() {
     fi
 
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
-    iniset $KEYSTONE_CONF signing token_format "$KEYSTONE_TOKEN_FORMAT"
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" = "UUID" ]]; then
         iniset $KEYSTONE_CONF token provider keystone.token.providers.uuid.Provider
@@ -188,6 +205,8 @@ function configure_keystone() {
 
     if [[ "$KEYSTONE_TOKEN_BACKEND" = "sql" ]]; then
         iniset $KEYSTONE_CONF token driver keystone.token.backends.sql.Token
+    elif [[ "$KEYSTONE_TOKEN_BACKEND" = "memcache" ]]; then
+        iniset $KEYSTONE_CONF token driver keystone.token.backends.memcache.Token
     else
         iniset $KEYSTONE_CONF token driver keystone.token.backends.kvs.Token
     fi
@@ -226,14 +245,14 @@ function configure_keystone() {
     fi
 
     # Set up logging
-    LOGGING_ROOT="devel"
     if [ "$SYSLOG" != "False" ]; then
-        LOGGING_ROOT="$LOGGING_ROOT,production"
+        iniset $KEYSTONE_CONF DEFAULT use_syslog "True"
     fi
-    KEYSTONE_LOG_CONFIG="--log-config $KEYSTONE_CONF_DIR/logging.conf"
-    cp $KEYSTONE_DIR/etc/logging.conf.sample $KEYSTONE_CONF_DIR/logging.conf
-    iniset $KEYSTONE_CONF_DIR/logging.conf logger_root level "DEBUG"
-    iniset $KEYSTONE_CONF_DIR/logging.conf logger_root handlers "devel,production"
+
+    # Format logging
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+        setup_colorized_logging $KEYSTONE_CONF DEFAULT
+    fi
 
     if is_apache_enabled_service key; then
         _config_keystone_apache_wsgi
@@ -315,8 +334,20 @@ create_keystone_accounts() {
     fi
 }
 
+# Configure the API version for the OpenStack projects.
+# configure_API_version conf_file version
+function configure_API_version() {
+    local conf_file=$1
+    local api_version=$2
+    iniset $conf_file keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$api_version
+}
+
 # init_keystone() - Initialize databases, etc.
 function init_keystone() {
+    if is_service_enabled ldap; then
+        init_ldap
+    fi
+
     # (Re)create keystone database
     recreate_database keystone utf8
 
@@ -360,6 +391,17 @@ function install_keystone() {
     if is_service_enabled ldap; then
         install_ldap
     fi
+    if [[ "$KEYSTONE_TOKEN_BACKEND" = "memcache" ]]; then
+        # Install memcached and the memcache Python library that keystone uses.
+        # Unfortunately the Python library goes by different names in the .deb
+        # and .rpm circles.
+        install_package memcached
+        if is_ubuntu; then
+            install_package python-memcache
+        else
+            install_package python-memcached
+        fi
+    fi
     git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
     setup_develop $KEYSTONE_DIR
     if is_apache_enabled_service key; then
@@ -380,12 +422,12 @@ function start_keystone() {
         screen_it key "cd $KEYSTONE_DIR && sudo tail -f /var/log/$APACHE_NAME/keystone"
     else
         # Start Keystone in a screen window
-        screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $KEYSTONE_LOG_CONFIG -d --debug"
+        screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF --debug"
     fi
 
     echo "Waiting for keystone to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! http_proxy= curl -k -s ${KEYSTONE_SERVICE_PROTOCOL}://$SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
-      die $LINENO "keystone did not start"
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -s $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
+        die $LINENO "keystone did not start"
     fi
 
     # Start proxies if enabled
@@ -398,13 +440,14 @@ function start_keystone() {
 # stop_keystone() - Stop running processes
 function stop_keystone() {
     # Kill the Keystone screen window
-    screen -S $SCREEN_NAME -p key -X kill
+    screen_stop key
 }
 
 
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

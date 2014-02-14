@@ -4,4 +4,4 @@ qemu-utils
 libpq-dev
 python-dev
 open-iscsi
-open-iscsi-utils # Deprecated since quantal dist:lucid,oneiric,precise
+open-iscsi-utils # Deprecated since quantal dist:precise

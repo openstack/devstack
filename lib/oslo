@@ -6,11 +6,12 @@
 # pre-released versions of oslo libraries.
 
 # Dependencies:
-# ``functions`` file
+#
+# - ``functions`` file
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_oslo
+# - install_oslo
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -21,6 +22,7 @@ set +o xtrace
 # --------
 OSLOCFG_DIR=$DEST/oslo.config
 OSLOMSG_DIR=$DEST/oslo.messaging
+OSLORWRAP_DIR=$DEST/oslo.rootwrap
 
 # Entry Points
 # ------------
@@ -36,6 +38,9 @@ function install_oslo() {
 
     git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
     setup_develop $OSLOMSG_DIR
+
+    git_clone $OSLORWRAP_REPO $OSLORWRAP_DIR $OSLORWRAP_BRANCH
+    setup_develop $OSLORWRAP_DIR
 }
 
 # cleanup_oslo() - purge possibly old versions of oslo
@@ -52,6 +57,7 @@ function cleanup_oslo() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

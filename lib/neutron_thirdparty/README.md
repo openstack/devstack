@@ -34,3 +34,6 @@ functions to be implemented
 
 * ``stop_<third_party>``:
   stop running processes (non-screen)
+
+* ``check_<third_party>``:
+  verify that the integration between neutron server and third-party components is sane

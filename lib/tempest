@@ -2,34 +2,39 @@
 # Install and configure Tempest
 
 # Dependencies:
-# ``functions`` file
-# ``lib/nova`` service is running
-# <list other global vars that are assumed to be defined>
-# - ``DEST``, ``FILES``
-# - ``ADMIN_PASSWORD``
-# - ``DEFAULT_IMAGE_NAME``
-# - ``S3_SERVICE_PORT``
-# - ``SERVICE_HOST``
-# - ``BASE_SQL_CONN`` ``lib/database`` declares
-# - ``PUBLIC_NETWORK_NAME``
-# - ``Q_USE_NAMESPACE``
-# - ``Q_ROUTER_NAME``
-# - ``VIRT_DRIVER``
-# - ``LIBVIRT_TYPE``
-# - ``KEYSTONE_SERVICE_PROTOCOL``, ``KEYSTONE_SERVICE_HOST`` from lib/keystone
+#
+# - ``functions`` file
+# - ``lib/nova`` service is running
+# - Global vars that are assumed to be defined:
+#   - ``DEST``, ``FILES``
+#   - ``ADMIN_PASSWORD``
+#   - ``DEFAULT_IMAGE_NAME``
+#   - ``S3_SERVICE_PORT``
+#   - ``SERVICE_HOST``
+#   - ``BASE_SQL_CONN`` ``lib/database`` declares
+#   - ``PUBLIC_NETWORK_NAME``
+#   - ``Q_USE_NAMESPACE``
+#   - ``Q_ROUTER_NAME``
+#   - ``Q_L3_ENABLED``
+#   - ``VIRT_DRIVER``
+#   - ``LIBVIRT_TYPE``
+#   - ``KEYSTONE_SERVICE_PROTOCOL``, ``KEYSTONE_SERVICE_HOST`` from lib/keystone
+#
 # Optional Dependencies:
-# ALT_* (similar vars exists in keystone_data.sh)
-# ``LIVE_MIGRATION_AVAILABLE``
-# ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
-# ``DEFAULT_INSTANCE_TYPE``
-# ``DEFAULT_INSTANCE_USER``
-# ``CINDER_MULTI_LVM_BACKEND``
-# ``HEAT_CREATE_TEST_IMAGE``
+#
+# - ``ALT_*`` (similar vars exists in keystone_data.sh)
+# - ``LIVE_MIGRATION_AVAILABLE``
+# - ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
+# - ``DEFAULT_INSTANCE_TYPE``
+# - ``DEFAULT_INSTANCE_USER``
+# - ``CINDER_MULTI_LVM_BACKEND``
+# - ``HEAT_CREATE_TEST_IMAGE``
+#
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_tempest
-# configure_tempest
-# init_tempest
+# - install_tempest
+# - configure_tempest
+# - init_tempest
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -48,7 +53,7 @@ TEMPEST_STATE_PATH=${TEMPEST_STATE_PATH:=$DATA_DIR/tempest}
 NOVA_SOURCE_DIR=$DEST/nova
 
 BUILD_INTERVAL=1
-BUILD_TIMEOUT=400
+BUILD_TIMEOUT=196
 
 
 BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-0.3.1"
@@ -69,12 +74,14 @@ function configure_tempest() {
     local password
     local line
     local flavors
+    local available_flavors
     local flavors_ref
     local flavor_lines
     local public_network_id
     local public_router_id
     local tenant_networks_reachable
     local boto_instance_type="m1.tiny"
+    local ssh_connect_method="fixed"
 
     # TODO(afazekas):
     # sudo python setup.py deploy
@@ -138,10 +145,24 @@ function configure_tempest() {
     # If the ``DEFAULT_INSTANCE_TYPE`` not declared, use the new behavior
     # Tempest creates instane types for himself
     if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
-        nova flavor-create m1.nano 42 64 0 1
+        available_flavors=$(nova flavor-list)
+        if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
+            if is_arch "ppc64"; then
+                # qemu needs at least 128MB of memory to boot on ppc64
+                nova flavor-create m1.nano 42 128 0 1
+            else
+                nova flavor-create m1.nano 42 64 0 1
+            fi
+        fi
         flavor_ref=42
         boto_instance_type=m1.nano
-        nova flavor-create m1.micro 84 128 0 1
+        if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
+            if is_arch "ppc64"; then
+                nova flavor-create m1.micro 84 256 0 1
+            else
+                nova flavor-create m1.micro 84 128 0 1
+            fi
+        fi
         flavor_ref_alt=84
     else
         # Check Nova for existing flavors and, if set, look for the
@@ -182,18 +203,23 @@ function configure_tempest() {
 
     if [ "$Q_USE_NAMESPACE" != "False" ]; then
         tenant_networks_reachable=false
+        if ! is_service_enabled n-net; then
+            ssh_connect_method="floating"
+        fi
     else
         tenant_networks_reachable=true
     fi
 
-    if is_service_enabled q-l3; then
+    ssh_connect_method=${TEMPEST_SSH_CONNECT_METHOD:-$ssh_connect_method}
+
+    if [ "$Q_L3_ENABLED" = "True" ]; then
         public_network_id=$(neutron net-list | grep $PUBLIC_NETWORK_NAME | \
             awk '{print $2}')
         if [ "$Q_USE_NAMESPACE" == "False" ]; then
             # If namespaces are disabled, devstack will create a single
             # public router that tempest should be configured to use.
             public_router_id=$(neutron router-list | awk "/ $Q_ROUTER_NAME / \
-               { print \$2 }")
+                { print \$2 }")
         fi
     fi
 
@@ -230,6 +256,11 @@ function configure_tempest() {
 
     # Compute
     iniset $TEMPEST_CONF compute change_password_available False
+    # Note(nati) current tempest don't create network for each tenant
+    # so reuse same tenant for now
+    if is_service_enabled neutron; then
+        TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
+    fi
     iniset $TEMPEST_CONF compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     iniset $TEMPEST_CONF compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
     iniset $TEMPEST_CONF compute network_for_ssh $PRIVATE_NETWORK_NAME
@@ -243,6 +274,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute flavor_ref_alt $flavor_ref_alt
     iniset $TEMPEST_CONF compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONF compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
+    iniset $TEMPEST_CONF compute ssh_connect_method $ssh_connect_method
 
     # Compute admin
     iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
@@ -251,6 +283,7 @@ function configure_tempest() {
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONF network public_network_id "$public_network_id"
     iniset $TEMPEST_CONF network public_router_id "$public_router_id"
+    iniset $TEMPEST_CONF network default_network "$FIXED_RANGE"
 
     # boto
     iniset $TEMPEST_CONF boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
@@ -261,7 +294,9 @@ function configure_tempest() {
     iniset $TEMPEST_CONF boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
     # Orchestration test image
-    if [ $HEAT_CREATE_TEST_IMAGE == "True" ]; then
+    if [[ ! -z "$HEAT_FETCHED_TEST_IMAGE" ]]; then
+        iniset $TEMPEST_CONF orchestration image_ref "$HEAT_FETCHED_TEST_IMAGE"
+    elif [[ "$HEAT_CREATE_TEST_IMAGE" = "True" ]]; then
         disk_image_create /usr/share/tripleo-image-elements "vm fedora heat-cfntools" "i386" "fedora-vm-heat-cfntools-tempest"
         iniset $TEMPEST_CONF orchestration image_ref "fedora-vm-heat-cfntools-tempest"
     fi
@@ -290,8 +325,11 @@ function configure_tempest() {
     # cli
     iniset $TEMPEST_CONF cli cli_dir $NOVA_BIN_DIR
 
+    # Networking
+    iniset $TEMPEST_CONF network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
+
     # service_available
-    for service in nova cinder glance neutron swift heat horizon ; do
+    for service in ${TEMPEST_SERVICES//,/ }; do
         if is_service_enabled $service ; then
             iniset $TEMPEST_CONF service_available $service "True"
         else
@@ -323,15 +361,15 @@ function init_tempest() {
     local disk_image="$image_dir/${base_image_name}-blank.img"
     # if the cirros uec downloaded and the system is uec capable
     if [ -f "$kernel" -a -f "$ramdisk" -a -f "$disk_image" -a  "$VIRT_DRIVER" != "openvz" \
-         -a \( "$LIBVIRT_TYPE" != "lxc" -o "$VIRT_DRIVER" != "libvirt" \) ]; then
-       echo "Prepare aki/ari/ami Images"
-       ( #new namespace
-           # tenant:demo ; user: demo
-           source $TOP_DIR/accrc/demo/demo
-           euca-bundle-image -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
-           euca-bundle-image -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
-           euca-bundle-image -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
-       ) 2>&1 </dev/null | cat
+        -a \( "$LIBVIRT_TYPE" != "lxc" -o "$VIRT_DRIVER" != "libvirt" \) ]; then
+        echo "Prepare aki/ari/ami Images"
+        ( #new namespace
+            # tenant:demo ; user: demo
+            source $TOP_DIR/accrc/demo/demo
+            euca-bundle-image -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
+        ) 2>&1 </dev/null | cat
     else
         echo "Boto materials are not prepared"
     fi
@@ -340,6 +378,7 @@ function init_tempest() {
 # Restore xtrace
 $XTRACE
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

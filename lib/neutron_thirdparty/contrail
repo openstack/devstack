@@ -1,3 +1,4 @@
+# proto is https or ssh
 #! /bin/bash
 
 # Contrail NFV
@@ -16,7 +17,7 @@ function install_contrail() {
 
     # basic dependencies
     if ! which repo > /dev/null 2>&1 ; then
-	wget http://commondatastorage.googleapis.com/git-repo-downloads/repo
+	wget -N http://commondatastorage.googleapis.com/git-repo-downloads/repo
         chmod 0755 repo
 	sudo mv repo /usr/bin
     fi
@@ -48,6 +49,7 @@ function install_contrail() {
     sudo pip install stevedore xmltodict python-keystoneclient
     sudo pip install kazoo pyinotify
 
+    CONTRAIL_REPO_PROTO=${CONTRAIL_REPO_PROTO:-ssh}
     CONTRAIL_SRC=${CONTRAIL_SRC:-/opt/stack/contrail}
     mkdir -p $CONTRAIL_SRC
     contrail_cwd=$(pwd)
@@ -55,7 +57,12 @@ function install_contrail() {
     if [ ! -d $CONTRAIL_SRC/.repo ]; then
         git config --global --get user.name || git config --global user.name "Anonymous"
         git config --global --get user.email || git config --global user.email "anonymous@nowhere.com"
-        repo init -u git@github.com:Juniper/contrail-vnc
+        if [ "$CONTRAIL_REPO_PROTO" == "ssh" ]; then
+            repo init -u git@github.com:Juniper/contrail-vnc
+        else
+            repo init -u https://github.com/Juniper/contrail-vnc
+            sed -i 's/fetch=".."/fetch=\"https:\/\/github.com\/Juniper\/\"/' .repo/manifest.xml
+        fi
     fi
     repo sync
     python third_party/fetch_packages.py
@@ -66,6 +73,9 @@ function install_contrail() {
     # install contrail modules
     echo "Installing contrail modules"
     sudo pip install --upgrade $(find $CONTRAIL_SRC/build/debug -name "*.tar.gz" -print)
+
+    # install VIF driver
+    sudo pip install $CONTRAIL_SRC/build/noarch/nova_contrail_vif/dist/nova_contrail_vif*.tar.gz
 
     # install neutron patch after VNC api is built and installed
     # test_install_neutron_patch
@@ -107,7 +117,7 @@ function install_contrail() {
 	elif [ ! -d $CONTRAIL_SRC/third_party/apache-cassandra-2.0.2-bin ]; then
         contrail_cwd=$(pwd)
         cd $CONTRAIL_SRC/third_party
-        wget http://repo1.maven.org/maven2/org/apache/cassandra/apache-cassandra/2.0.2/apache-cassandra-2.0.2-bin.tar.gz
+        wget -N http://repo1.maven.org/maven2/org/apache/cassandra/apache-cassandra/2.0.2/apache-cassandra-2.0.2-bin.tar.gz
         tar xvzf apache-cassandra-2.0.2-bin.tar.gz
         cd ${contrail_cwd}
     fi
@@ -117,7 +127,7 @@ function install_contrail() {
     if [ ! -d $CONTRAIL_SRC/third_party/irond-0.3.0-bin ]; then
         contrail_cwd=$(pwd)
         cd $CONTRAIL_SRC/third_party
-        wget http://trust.f4.hs-hannover.de/download/iron/archive/irond-0.3.0-bin.zip
+        wget -N http://trust.f4.hs-hannover.de/download/iron/archive/irond-0.3.0-bin.zip
         unzip irond-0.3.0-bin.zip
         chmod -w irond-0.3.0-bin/ifmap.properties
         cd ${contrail_cwd}
@@ -126,7 +136,7 @@ function install_contrail() {
     if [ ! -d $CONTRAIL_SRC/third_party/zookeeper-3.4.5 ]; then
         contrail_cwd=$(pwd)
         cd $CONTRAIL_SRC/third_party
-        wget http://apache.mirrors.hoobly.com/zookeeper/stable/zookeeper-3.4.5.tar.gz
+        wget -N http://apache.mirrors.hoobly.com/zookeeper/stable/zookeeper-3.4.5.tar.gz
         tar xvzf zookeeper-3.4.5.tar.gz
         cd zookeeper-3.4.5
         cp conf/zoo_sample.cfg conf/zoo.cfg
@@ -137,7 +147,7 @@ function install_contrail() {
     if ! python -c 'import ncclient' >/dev/null 2>&1; then
         contrail_cwd=$(pwd)
         cd $CONTRAIL_SRC/third_party
-        wget https://code.grnet.gr/attachments/download/1172/ncclient-v0.3.2.tar.gz
+        wget -N https://code.grnet.gr/attachments/download/1172/ncclient-v0.3.2.tar.gz
         sudo pip install ncclient-v0.3.2.tar.gz
         cd ${contrail_cwd}
     fi
@@ -370,8 +380,6 @@ END
     chmod a+x $TOP_DIR/bin/vnsw.hlpr
     screen_it agent "sudo $TOP_DIR/bin/vnsw.hlpr"
 
-    screen_it vif  "python /opt/stack/nova/plugins/contrail/contrail_vif.py"
-
     if is_service_enabled q-meta; then
 	# set up a proxy route in contrail from 169.254.169.254:80 to
 	# my metadata server at port 8775
@@ -390,12 +398,17 @@ END
 }
 
 function configure_contrail() {
-    test_install_nova_patch
+    :
 }
 
 function init_contrail() {
     :
 }
+
+function check_contrail() {
+    :
+}
+
 
 function stop_contrail() {
     SCREEN=$(which screen)
