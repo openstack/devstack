@@ -201,7 +201,7 @@ function configure_keystone() {
         iniset $KEYSTONE_CONF token provider keystone.token.providers.uuid.Provider
     fi
 
-    iniset $KEYSTONE_CONF sql connection `database_connection_url keystone`
+    iniset $KEYSTONE_CONF database connection `database_connection_url keystone`
     iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
 
     if [[ "$KEYSTONE_TOKEN_BACKEND" = "sql" ]]; then
