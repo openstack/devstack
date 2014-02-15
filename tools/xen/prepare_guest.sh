@@ -18,6 +18,57 @@ set -o xtrace
 GUEST_PASSWORD="$1"
 XS_TOOLS_PATH="$2"
 STACK_USER="$3"
+DOMZERO_USER="$4"
+
+
+function setup_domzero_user() {
+    local username
+
+    username="$1"
+
+    local key_updater_script
+    local sudoers_file
+    key_updater_script="/home/$username/update_authorized_keys.sh"
+    sudoers_file="/etc/sudoers.d/allow_$username"
+
+    # Create user
+    adduser --disabled-password --quiet "$username" --gecos "$username"
+
+    # Give passwordless sudo
+    cat > $sudoers_file << EOF
+    $username ALL = NOPASSWD: ALL
+EOF
+    chmod 0440 $sudoers_file
+
+    # A script to populate this user's authenticated_keys from xenstore
+    cat > $key_updater_script << EOF
+#!/bin/bash
+set -eux
+
+DOMID=\$(sudo xenstore-read domid)
+sudo xenstore-exists /local/domain/\$DOMID/authorized_keys/$username
+sudo xenstore-read /local/domain/\$DOMID/authorized_keys/$username > /home/$username/xenstore_value
+cat /home/$username/xenstore_value > /home/$username/.ssh/authorized_keys
+EOF
+
+    # Give the key updater to the user
+    chown $username:$username $key_updater_script
+    chmod 0700 $key_updater_script
+
+    # Setup the .ssh folder
+    mkdir -p /home/$username/.ssh
+    chown $username:$username /home/$username/.ssh
+    chmod 0700 /home/$username/.ssh
+    touch /home/$username/.ssh/authorized_keys
+    chown $username:$username /home/$username/.ssh/authorized_keys
+    chmod 0600 /home/$username/.ssh/authorized_keys
+
+    # Setup the key updater as a cron job
+    crontab -u $username - << EOF
+* * * * * $key_updater_script
+EOF
+
+}
 
 # Install basics
 apt-get update
@@ -47,6 +98,8 @@ groupadd libvirtd
 useradd $STACK_USER -s /bin/bash -d /opt/stack -G libvirtd
 echo $STACK_USER:$GUEST_PASSWORD | chpasswd
 echo "$STACK_USER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+setup_domzero_user "$DOMZERO_USER"
 
 # Add an udev rule, so that new block devices could be written by stack user
 cat > /etc/udev/rules.d/50-openstack-blockdev.rules << EOF

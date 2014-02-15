@@ -52,7 +52,7 @@ MARCONICLIENT_REPO=${MARCONICLIENT_REPO:-${GIT_BASE}/openstack/python-marconicli
 MARCONICLIENT_BRANCH=${MARCONICLIENT_BRANCH:-master}
 
 # Tell Tempest this project is present
-TEMPEST_SERVICES+=,marconi-server
+TEMPEST_SERVICES+=,marconi
 
 
 # Functions
@@ -89,10 +89,6 @@ function configure_marconi() {
     iniset $MARCONI_CONF DEFAULT verbose True
     iniset $MARCONI_CONF 'drivers:transport:wsgi' bind '0.0.0.0'
 
-    # Install the policy file for the API server
-    cp $MARCONI_DIR/etc/marconi/policy.json $MARCONI_CONF_DIR
-    iniset $MARCONI_CONF DEFAULT policy_file $MARCONI_CONF_DIR/policy.json
-
     iniset $MARCONI_CONF keystone_authtoken auth_protocol http
     iniset $MARCONI_CONF keystone_authtoken admin_user marconi
     iniset $MARCONI_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
@@ -109,9 +105,16 @@ function configure_marconi() {
 function configure_mongodb() {
     # Set nssize to 2GB. This increases the number of namespaces supported
     # # per database.
-    sudo sed -i '/--nssize/!s/OPTIONS=\"/OPTIONS=\"--nssize 2047 /' /etc/sysconfig/mongod
-
-    restart_service mongod
+    if is_ubuntu; then
+        sudo sed -i -e "
+            s|[^ \t]*#[ \t]*\(nssize[ \t]*=.*\$\)|\1|
+            s|^\(nssize[ \t]*=[ \t]*\).*\$|\1 2047|
+        " /etc/mongodb.conf
+        restart_service mongodb
+    elif is_fedora; then
+        sudo sed -i '/--nssize/!s/OPTIONS=\"/OPTIONS=\"--nssize 2047 /' /etc/sysconfig/mongod
+        restart_service mongod
+    fi
 }
 
 # init_marconi() - Initialize etc.
@@ -154,10 +157,12 @@ function create_marconi_accounts() {
     MARCONI_USER=$(get_id keystone user-create --name=marconi \
                                                 --pass="$SERVICE_PASSWORD" \
                                                 --tenant-id $SERVICE_TENANT \
-                                                --email=marconi@example.com)
+                                                --email=marconi@example.com \
+                                                | grep " id " | get_field 2)
     keystone user-role-add --tenant-id $SERVICE_TENANT \
                             --user-id $MARCONI_USER \
                             --role-id $ADMIN_ROLE
+
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         MARCONI_SERVICE=$(keystone service-create \
             --name=marconi \

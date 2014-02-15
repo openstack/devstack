@@ -30,15 +30,19 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # Install Docker Service
 # ======================
 
-# Stop the auto-repo updates and do it when required here
-NO_UPDATE_REPOS=True
+if is_fedora; then
+    install_package docker-io socat
+else
+    # Stop the auto-repo updates and do it when required here
+    NO_UPDATE_REPOS=True
 
-# Set up home repo
-curl https://get.docker.io/gpg | sudo apt-key add -
-install_package python-software-properties && \
-    sudo sh -c "echo deb $DOCKER_APT_REPO docker main > /etc/apt/sources.list.d/docker.list"
-apt_get update
-install_package --force-yes lxc-docker socat
+    # Set up home repo
+    curl https://get.docker.io/gpg | sudo apt-key add -
+    install_package python-software-properties && \
+        sudo sh -c "echo deb $DOCKER_APT_REPO docker main > /etc/apt/sources.list.d/docker.list"
+    apt_get update
+    install_package --force-yes lxc-docker socat
+fi
 
 # Start the daemon - restart just in case the package ever auto-starts...
 restart_service docker

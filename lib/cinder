@@ -184,43 +184,28 @@ function cleanup_cinder() {
 function configure_cinder_rootwrap() {
     # Set the paths of certain binaries
     CINDER_ROOTWRAP=$(get_rootwrap_location cinder)
-    if [[ ! -x $CINDER_ROOTWRAP ]]; then
-        CINDER_ROOTWRAP=$(get_rootwrap_location oslo)
-        if [[ ! -x $CINDER_ROOTWRAP ]]; then
-            die $LINENO "No suitable rootwrap found."
-        fi
-    fi
 
-    # If Cinder ships the new rootwrap filters files, deploy them
-    # (owned by root) and add a parameter to $CINDER_ROOTWRAP
-    ROOTWRAP_CINDER_SUDOER_CMD="$CINDER_ROOTWRAP"
-    if [[ -d $CINDER_DIR/etc/cinder/rootwrap.d ]]; then
-        # Wipe any existing rootwrap.d files first
-        if [[ -d $CINDER_CONF_DIR/rootwrap.d ]]; then
-            sudo rm -rf $CINDER_CONF_DIR/rootwrap.d
-        fi
-        # Deploy filters to /etc/cinder/rootwrap.d
-        sudo mkdir -m 755 $CINDER_CONF_DIR/rootwrap.d
-        sudo cp $CINDER_DIR/etc/cinder/rootwrap.d/*.filters $CINDER_CONF_DIR/rootwrap.d
-        sudo chown -R root:root $CINDER_CONF_DIR/rootwrap.d
-        sudo chmod 644 $CINDER_CONF_DIR/rootwrap.d/*
-        # Set up rootwrap.conf, pointing to /etc/cinder/rootwrap.d
-        if [[ -f $CINDER_DIR/etc/cinder/rootwrap.conf ]]; then
-            sudo cp $CINDER_DIR/etc/cinder/rootwrap.conf $CINDER_CONF_DIR/
-        else
-            # rootwrap.conf is no longer shipped in Cinder itself
-            echo "filters_path=" | sudo tee $CINDER_CONF_DIR/rootwrap.conf > /dev/null
-        fi
-        sudo sed -e "s:^filters_path=.*$:filters_path=$CINDER_CONF_DIR/rootwrap.d:" -i $CINDER_CONF_DIR/rootwrap.conf
-        sudo chown root:root $CINDER_CONF_DIR/rootwrap.conf
-        sudo chmod 0644 $CINDER_CONF_DIR/rootwrap.conf
-        # Specify rootwrap.conf as first parameter to rootwrap
-        CINDER_ROOTWRAP="$CINDER_ROOTWRAP $CINDER_CONF_DIR/rootwrap.conf"
-        ROOTWRAP_CINDER_SUDOER_CMD="$CINDER_ROOTWRAP *"
+    # Deploy new rootwrap filters files (owned by root).
+    # Wipe any existing rootwrap.d files first
+    if [[ -d $CINDER_CONF_DIR/rootwrap.d ]]; then
+        sudo rm -rf $CINDER_CONF_DIR/rootwrap.d
     fi
+    # Deploy filters to /etc/cinder/rootwrap.d
+    sudo mkdir -m 755 $CINDER_CONF_DIR/rootwrap.d
+    sudo cp $CINDER_DIR/etc/cinder/rootwrap.d/*.filters $CINDER_CONF_DIR/rootwrap.d
+    sudo chown -R root:root $CINDER_CONF_DIR/rootwrap.d
+    sudo chmod 644 $CINDER_CONF_DIR/rootwrap.d/*
+    # Set up rootwrap.conf, pointing to /etc/cinder/rootwrap.d
+    sudo cp $CINDER_DIR/etc/cinder/rootwrap.conf $CINDER_CONF_DIR/
+    sudo sed -e "s:^filters_path=.*$:filters_path=$CINDER_CONF_DIR/rootwrap.d:" -i $CINDER_CONF_DIR/rootwrap.conf
+    sudo chown root:root $CINDER_CONF_DIR/rootwrap.conf
+    sudo chmod 0644 $CINDER_CONF_DIR/rootwrap.conf
+    # Specify rootwrap.conf as first parameter to rootwrap
+    ROOTWRAP_CSUDOER_CMD="$CINDER_ROOTWRAP $CINDER_CONF_DIR/rootwrap.conf *"
 
+    # Set up the rootwrap sudoers for cinder
     TEMPFILE=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CINDER_SUDOER_CMD" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CSUDOER_CMD" >$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/cinder-rootwrap
