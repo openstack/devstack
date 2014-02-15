@@ -67,21 +67,6 @@ fi
 
 # Install plugins
 
-## Nova plugins
-NOVA_ZIPBALL_URL=${NOVA_ZIPBALL_URL:-$(zip_snapshot_location $NOVA_REPO $NOVA_BRANCH)}
-EXTRACTED_NOVA=$(extract_remote_zipball "$NOVA_ZIPBALL_URL")
-install_xapi_plugins_from "$EXTRACTED_NOVA"
-
-LOGROT_SCRIPT=$(find "$EXTRACTED_NOVA" -name "rotate_xen_guest_logs.sh" -print)
-if [ -n "$LOGROT_SCRIPT" ]; then
-    mkdir -p "/var/log/xen/guest"
-    cp "$LOGROT_SCRIPT" /root/consolelogrotate
-    chmod +x /root/consolelogrotate
-    echo "* * * * * /root/consolelogrotate" | crontab
-fi
-
-rm -rf "$EXTRACTED_NOVA"
-
 ## Install the netwrap xapi plugin to support agent control of dom0 networking
 if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
     NEUTRON_ZIPBALL_URL=${NEUTRON_ZIPBALL_URL:-$(zip_snapshot_location $NEUTRON_REPO $NEUTRON_BRANCH)}
@@ -89,9 +74,6 @@ if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
     install_xapi_plugins_from "$EXTRACTED_NEUTRON"
     rm -rf "$EXTRACTED_NEUTRON"
 fi
-
-create_directory_for_kernels
-create_directory_for_images
 
 #
 # Configure Networking
@@ -188,7 +170,7 @@ function wait_for_VM_to_halt() {
     set +x
     echo "Waiting for the VM to halt.  Progress in-VM can be checked with vncviewer:"
     mgmt_ip=$(echo $XENAPI_CONNECTION_URL | tr -d -c '1234567890.')
-    domid=$(xe vm-list name-label="$GUEST_NAME" params=dom-id minimal=true)
+    domid=$(get_domid "$GUEST_NAME")
     port=$(xenstore-read /local/domain/$domid/console/vnc-port)
     echo "vncviewer -via root@$mgmt_ip localhost:${port:2}"
     while true; do
@@ -358,6 +340,37 @@ else
         OS_VM_SERVICES_ADDRESS=$(find_ip_by_name $GUEST_NAME $PUB_DEV_NR)
     fi
 fi
+
+# Create an ssh-keypair, and set it up for dom0 user
+rm -f /root/dom0key /root/dom0key.pub
+ssh-keygen -f /root/dom0key -P "" -C "dom0"
+DOMID=$(get_domid "$GUEST_NAME")
+
+xenstore-write /local/domain/$DOMID/authorized_keys/$DOMZERO_USER "$(cat /root/dom0key.pub)"
+xenstore-chmod -u /local/domain/$DOMID/authorized_keys/$DOMZERO_USER r$DOMID
+
+function run_on_appliance() {
+    ssh \
+        -i /root/dom0key \
+        -o UserKnownHostsFile=/dev/null \
+        -o StrictHostKeyChecking=no \
+        -o BatchMode=yes \
+        "$DOMZERO_USER@$OS_VM_MANAGEMENT_ADDRESS" "$@"
+}
+
+# Wait until we can log in to the appliance
+while ! run_on_appliance true; do
+    sleep 1
+done
+
+# Remove authenticated_keys updater cronjob
+echo "" | run_on_appliance crontab -
+
+# Generate a passwordless ssh key for domzero user
+echo "ssh-keygen -f /home/$DOMZERO_USER/.ssh/id_rsa -C $DOMZERO_USER@appliance -N \"\" -q" | run_on_appliance
+
+# Authenticate that user to dom0
+run_on_appliance cat /home/$DOMZERO_USER/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 # If we have copied our ssh credentials, use ssh to monitor while the installation runs
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}

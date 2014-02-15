@@ -245,6 +245,10 @@ case "$VIRT_DRIVER" in
     xenserver)
         # Xen config common to nova and neutron
         XENAPI_USER=${XENAPI_USER:-"root"}
+        # This user will be used for dom0 - domU communication
+        #   should be able to log in to dom0 without a password
+        #   will be used to install the plugins
+        DOMZERO_USER=${DOMZERO_USER:-"domzero"}
         ;;
     *)
         ;;
