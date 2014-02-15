@@ -1102,6 +1102,47 @@ if is_service_enabled glance; then
     start_glance
 fi
 
+# Install Images
+# ==============
+
+# Upload an image to glance.
+#
+# The default image is cirros, a small testing image which lets you login as **root**
+# cirros has a ``cloud-init`` analog supporting login via keypair and sending
+# scripts as userdata.
+# See https://help.ubuntu.com/community/CloudInit for more on cloud-init
+#
+# Override ``IMAGE_URLS`` with a comma-separated list of UEC images.
+#  * **precise**: http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64.tar.gz
+
+if is_service_enabled g-reg; then
+    TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
+    die_if_not_set $LINENO TOKEN "Keystone fail to get token"
+
+    if is_baremetal; then
+        echo_summary "Creating and uploading baremetal images"
+
+        # build and upload separate deploy kernel & ramdisk
+        upload_baremetal_deploy $TOKEN
+
+        # upload images, separating out the kernel & ramdisk for PXE boot
+        for image_url in ${IMAGE_URLS//,/ }; do
+            upload_baremetal_image $image_url $TOKEN
+        done
+    else
+        echo_summary "Uploading images"
+
+        # Option to upload legacy ami-tty, which works with xenserver
+        if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
+            IMAGE_URLS="${IMAGE_URLS:+${IMAGE_URLS},}https://github.com/downloads/citrix-openstack/warehouse/tty.tgz"
+        fi
+
+        for image_url in ${IMAGE_URLS//,/ }; do
+            upload_image $image_url $TOKEN
+        done
+    fi
+fi
+
 # Create an access key and secret key for nova ec2 register image
 if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nova; then
     NOVA_USER_ID=$(keystone user-list | grep ' nova ' | get_field 1)
@@ -1206,47 +1247,6 @@ if is_service_enabled nova && is_service_enabled key; then
     $TOP_DIR/tools/create_userrc.sh $USERRC_PARAMS
 fi
 
-
-# Install Images
-# ==============
-
-# Upload an image to glance.
-#
-# The default image is cirros, a small testing image which lets you login as **root**
-# cirros has a ``cloud-init`` analog supporting login via keypair and sending
-# scripts as userdata.
-# See https://help.ubuntu.com/community/CloudInit for more on cloud-init
-#
-# Override ``IMAGE_URLS`` with a comma-separated list of UEC images.
-#  * **precise**: http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64.tar.gz
-
-if is_service_enabled g-reg; then
-    TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
-    die_if_not_set $LINENO TOKEN "Keystone fail to get token"
-
-    if is_baremetal; then
-        echo_summary "Creating and uploading baremetal images"
-
-        # build and upload separate deploy kernel & ramdisk
-        upload_baremetal_deploy $TOKEN
-
-        # upload images, separating out the kernel & ramdisk for PXE boot
-        for image_url in ${IMAGE_URLS//,/ }; do
-            upload_baremetal_image $image_url $TOKEN
-        done
-    else
-        echo_summary "Uploading images"
-
-        # Option to upload legacy ami-tty, which works with xenserver
-        if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
-            IMAGE_URLS="${IMAGE_URLS:+${IMAGE_URLS},}https://github.com/downloads/citrix-openstack/warehouse/tty.tgz"
-        fi
-
-        for image_url in ${IMAGE_URLS//,/ }; do
-            upload_image $image_url $TOKEN
-        done
-    fi
-fi
 
 # If we are running nova with baremetal driver, there are a few
 # last-mile configuration bits to attend to, which must happen
