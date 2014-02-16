@@ -54,29 +54,29 @@ TEMPEST_SERVICES+=,savanna
 # service     savanna    admin
 function create_savanna_accounts() {
 
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    SAVANNA_USER=$(keystone user-create \
-        --name=savanna \
-        --pass="$SERVICE_PASSWORD" \
-        --tenant-id $SERVICE_TENANT \
-        --email=savanna@example.com \
+    SAVANNA_USER=$(openstack user create \
+        savanna \
+        --password "$SERVICE_PASSWORD" \
+        --project $SERVICE_TENANT \
+        --email savanna@example.com \
         | grep " id " | get_field 2)
-    keystone user-role-add \
-        --tenant-id $SERVICE_TENANT \
-        --user-id $SAVANNA_USER \
-        --role-id $ADMIN_ROLE
+    openstack role add \
+        $ADMIN_ROLE \
+        --project $SERVICE_TENANT \
+        --user $SAVANNA_USER
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        SAVANNA_SERVICE=$(keystone service-create \
-            --name=savanna \
+        SAVANNA_SERVICE=$(openstack service create \
+            savanna \
             --type=data_processing \
             --description="Savanna Data Processing" \
             | grep " id " | get_field 2)
-        keystone endpoint-create \
+        openstack endpoint create \
+            $SAVANNA_SERVICE \
             --region RegionOne \
-            --service_id $SAVANNA_SERVICE \
             --publicurl "$SAVANNA_SERVICE_PROTOCOL://$SAVANNA_SERVICE_HOST:$SAVANNA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
             --adminurl "$SAVANNA_SERVICE_PROTOCOL://$SAVANNA_SERVICE_HOST:$SAVANNA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
             --internalurl "$SAVANNA_SERVICE_PROTOCOL://$SAVANNA_SERVICE_HOST:$SAVANNA_SERVICE_PORT/v1.1/\$(tenant_id)s"

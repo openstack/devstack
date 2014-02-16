@@ -324,41 +324,41 @@ function configure_nova() {
 # Migrated from keystone_data.sh
 create_nova_accounts() {
 
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     # Nova
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
-        NOVA_USER=$(keystone user-create \
-            --name=nova \
-            --pass="$SERVICE_PASSWORD" \
-            --tenant-id $SERVICE_TENANT \
-            --email=nova@example.com \
+        NOVA_USER=$(openstack user create \
+            nova \
+            --password "$SERVICE_PASSWORD" \
+            --project $SERVICE_TENANT \
+            --email nova@example.com \
             | grep " id " | get_field 2)
-        keystone user-role-add \
-            --tenant-id $SERVICE_TENANT \
-            --user-id $NOVA_USER \
-            --role-id $ADMIN_ROLE
+        openstack role add \
+            $ADMIN_ROLE \
+            --project $SERVICE_TENANT \
+            --user $NOVA_USER
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            NOVA_SERVICE=$(keystone service-create \
-                --name=nova \
+            NOVA_SERVICE=$(openstack service create \
+                nova \
                 --type=compute \
                 --description="Nova Compute Service" \
                 | grep " id " | get_field 2)
-            keystone endpoint-create \
+            openstack endpoint create \
+                $NOVA_SERVICE \
                 --region RegionOne \
-                --service_id $NOVA_SERVICE \
                 --publicurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
                 --adminurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
                 --internalurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s"
-            NOVA_V3_SERVICE=$(keystone service-create \
-                --name=novav3 \
+            NOVA_V3_SERVICE=$(openstack service create \
+                novav3 \
                 --type=computev3 \
                 --description="Nova Compute Service V3" \
                 | grep " id " | get_field 2)
-            keystone endpoint-create \
+            openstack endpoint create \
+                $NOVA_V3_SERVICE \
                 --region RegionOne \
-                --service_id $NOVA_V3_SERVICE \
                 --publicurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
                 --adminurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
                 --internalurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3"
