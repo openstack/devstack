@@ -925,6 +925,9 @@ if is_service_enabled key; then
     # Do the keystone-specific bits from keystone_data.sh
     export OS_SERVICE_TOKEN=$SERVICE_TOKEN
     export OS_SERVICE_ENDPOINT=$SERVICE_ENDPOINT
+    # Add temporarily to make openstackclient work
+    export OS_TOKEN=$SERVICE_TOKEN
+    export OS_URL=$SERVICE_ENDPOINT
     create_keystone_accounts
     create_nova_accounts
     create_cinder_accounts
@@ -947,6 +950,7 @@ if is_service_enabled key; then
         bash -x $FILES/keystone_data.sh
 
     # Set up auth creds now that keystone is bootstrapped
+    unset OS_TOKEN OS_URL
     export OS_AUTH_URL=$SERVICE_ENDPOINT
     export OS_TENANT_NAME=admin
     export OS_USERNAME=admin

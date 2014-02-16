@@ -330,45 +330,44 @@ function configure_cinder() {
 # Migrated from keystone_data.sh
 create_cinder_accounts() {
 
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     # Cinder
     if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
-        CINDER_USER=$(keystone user-create \
-            --name=cinder \
-            --pass="$SERVICE_PASSWORD" \
-            --tenant-id $SERVICE_TENANT \
-            --email=cinder@example.com \
+        CINDER_USER=$(openstack user create \
+            cinder \
+            --password "$SERVICE_PASSWORD" \
+            --project $SERVICE_TENANT \
+            --email cinder@example.com \
             | grep " id " | get_field 2)
-        keystone user-role-add \
-            --tenant-id $SERVICE_TENANT \
-            --user-id $CINDER_USER \
-            --role-id $ADMIN_ROLE
+        openstack role add \
+            $ADMIN_ROLE \
+            --project $SERVICE_TENANT \
+            --user $CINDER_USER
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            CINDER_SERVICE=$(keystone service-create \
-                --name=cinder \
+            CINDER_SERVICE=$(openstack service create \
+                cinder \
                 --type=volume \
                 --description="Cinder Volume Service" \
                 | grep " id " | get_field 2)
-            keystone endpoint-create \
+            openstack endpoint create \
+                $CINDER_SERVICE \
                 --region RegionOne \
-                --service_id $CINDER_SERVICE \
                 --publicurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
                 --adminurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
                 --internalurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
-            CINDER_V2_SERVICE=$(keystone service-create \
-                --name=cinderv2 \
+            CINDER_V2_SERVICE=$(openstack service create \
+                cinderv2 \
                 --type=volumev2 \
                 --description="Cinder Volume Service V2" \
                 | grep " id " | get_field 2)
-            keystone endpoint-create \
+            openstack endpoint create \
+                $CINDER_V2_SERVICE \
                 --region RegionOne \
-                --service_id $CINDER_V2_SERVICE \
                 --publicurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
                 --adminurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
                 --internalurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s"
-
         fi
     fi
 }

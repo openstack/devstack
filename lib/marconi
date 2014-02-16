@@ -151,27 +151,29 @@ function stop_marconi() {
 }
 
 function create_marconi_accounts() {
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    MARCONI_USER=$(get_id keystone user-create --name=marconi \
-                                                --pass="$SERVICE_PASSWORD" \
-                                                --tenant-id $SERVICE_TENANT \
-                                                --email=marconi@example.com \
-                                                | grep " id " | get_field 2)
-    keystone user-role-add --tenant-id $SERVICE_TENANT \
-                            --user-id $MARCONI_USER \
-                            --role-id $ADMIN_ROLE
+    MARCONI_USER=$(openstack user create \
+        marconi \
+        --password "$SERVICE_PASSWORD" \
+        --project $SERVICE_TENANT \
+        --email marconi@example.com \
+        | grep " id " | get_field 2)
+    openstack role add \
+        $ADMIN_ROLE \
+        --project $SERVICE_TENANT \
+        --user $MARCONI_USER
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        MARCONI_SERVICE=$(keystone service-create \
-            --name=marconi \
+        MARCONI_SERVICE=$(openstack service create \
+            marconi \
             --type=queuing \
             --description="Marconi Service" \
             | grep " id " | get_field 2)
-        keystone endpoint-create \
+        openstack endpoint create \
+            $MARCONI_SERVICE \
             --region RegionOne \
-            --service_id $MARCONI_SERVICE \
             --publicurl "http://$SERVICE_HOST:8888" \
             --adminurl "http://$SERVICE_HOST:8888" \
             --internalurl "http://$SERVICE_HOST:8888"

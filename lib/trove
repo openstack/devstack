@@ -71,28 +71,29 @@ function setup_trove_logging() {
 
 create_trove_accounts() {
     # Trove
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    SERVICE_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    SERVICE_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     if [[ "$ENABLED_SERVICES" =~ "trove" ]]; then
-        TROVE_USER=$(keystone user-create \
-            --name=trove \
-            --pass="$SERVICE_PASSWORD" \
-            --tenant-id $SERVICE_TENANT \
-            --email=trove@example.com \
+        TROVE_USER=$(openstack user create \
+            trove \
+            --password "$SERVICE_PASSWORD" \
+            --project $SERVICE_TENANT \
+            --email trove@example.com \
             | grep " id " | get_field 2)
-        keystone user-role-add --tenant-id $SERVICE_TENANT \
-            --user-id $TROVE_USER \
-            --role-id $SERVICE_ROLE
+        openstack role add \
+            $SERVICE_ROLE \
+            --project $SERVICE_TENANT \
+            --user $TROVE_USER
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            TROVE_SERVICE=$(keystone service-create \
-                --name=trove \
+            TROVE_SERVICE=$(openstack service create
+                trove \
                 --type=database \
                 --description="Trove Service" \
                 | grep " id " | get_field 2)
-            keystone endpoint-create \
+            openstack endpoint create \
+                $TROVE_SERVICE \
                 --region RegionOne \
-                --service_id $TROVE_SERVICE \
                 --publicurl "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s" \
                 --adminurl "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s" \
                 --internalurl "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s"
