@@ -28,6 +28,9 @@ if is_service_enabled ir-api ir-cond; then
 
     if [[ "$1" == "unstack" ]]; then
         stop_ironic
+    fi
+
+    if [[ "$1" == "clean" ]]; then
         cleanup_ironic
     fi
 fi
