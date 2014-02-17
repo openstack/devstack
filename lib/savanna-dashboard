@@ -37,8 +37,9 @@ SAVANNA_PYTHONCLIENT_DIR=$DEST/python-savannaclient
 
 function configure_savanna_dashboard() {
 
-    echo -e "SAVANNA_URL = \"http://$SERVICE_HOST:8386/v1.1\"\nAUTO_ASSIGNMENT_ENABLED = False" >> $HORIZON_DIR/openstack_dashboard/local/local_settings.py
-    echo -e "HORIZON_CONFIG['dashboards'] += ('savanna',)\nINSTALLED_APPS += ('savannadashboard',)" >> $HORIZON_DIR/openstack_dashboard/settings.py
+    echo -e "AUTO_ASSIGNMENT_ENABLED = False" >> $HORIZON_DIR/openstack_dashboard/local/local_settings.py
+    echo -e "HORIZON_CONFIG['dashboards'] += ('savanna',)" >> $HORIZON_DIR/openstack_dashboard/settings.py
+    echo -e "INSTALLED_APPS += ('savannadashboard',)" >> $HORIZON_DIR/openstack_dashboard/settings.py
 
     if is_service_enabled neutron; then
         echo -e "SAVANNA_USE_NEUTRON = True" >> $HORIZON_DIR/openstack_dashboard/local/local_settings.py
