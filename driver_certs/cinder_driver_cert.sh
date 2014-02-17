@@ -16,6 +16,7 @@
 # It also assumes default install location (/opt/stack/xxx)
 # to aid in debug, you should also verify that you've added
 # an output directory for screen logs:
+#
 #     SCREEN_LOGDIR=/opt/stack/screen-logs
 
 CERT_DIR=$(cd $(dirname "$0") && pwd)

@@ -6,8 +6,9 @@
 # This is appropriate for python libraries that release to pypi and are
 # expected to be used beyond OpenStack like, but are requirements
 # for core services in global-requirements.
-#    * wsme
-#    * pecan
+#
+#     * wsme
+#     * pecan
 #
 # This is not appropriate for stackforge projects which are early stage
 # OpenStack tools

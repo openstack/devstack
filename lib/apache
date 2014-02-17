@@ -4,8 +4,8 @@
 # Dependencies:
 #
 # - ``functions`` file
-# -``STACK_USER`` must be defined
-
+# - ``STACK_USER`` must be defined
+#
 # lib/apache exports the following functions:
 #
 # - is_apache_enabled_service

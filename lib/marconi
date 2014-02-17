@@ -2,7 +2,8 @@
 # Install and start **Marconi** service
 
 # To enable a minimal set of Marconi services, add the following to localrc:
-#   enable_service marconi-server
+#
+#     enable_service marconi-server
 #
 # Dependencies:
 # - functions
