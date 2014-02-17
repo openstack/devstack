@@ -86,7 +86,7 @@ create_trove_accounts() {
             --project $SERVICE_TENANT \
             --user $TROVE_USER
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            TROVE_SERVICE=$(openstack service create
+            TROVE_SERVICE=$(openstack service create \
                 trove \
                 --type=database \
                 --description="Trove Service" \
