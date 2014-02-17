@@ -140,6 +140,10 @@ NOVACLIENT_BRANCH=${NOVACLIENT_BRANCH:-master}
 OPENSTACKCLIENT_REPO=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
 OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
 
+# cliff command line framework
+CLIFF_REPO=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
+CLIFF_BRANCH=${CLIFF_BRANCH:-master}
+
 # oslo.config
 OSLOCFG_REPO=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
 OSLOCFG_BRANCH=${OSLOCFG_BRANCH:-master}
@@ -151,6 +155,18 @@ OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
 # oslo.rootwrap
 OSLORWRAP_REPO=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
 OSLORWRAP_BRANCH=${OSLORWRAP_BRANCH:-master}
+
+# pycadf auditing library
+PYCADF_REPO=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
+PYCADF_BRANCH=${PYCADF_BRANCH:-master}
+
+# stevedore plugin manager
+STEVEDORE_REPO=${STEVEDORE_REPO:-${GIT_BASE}/openstack/stevedore.git}
+STEVEDORE_BRANCH=${STEVEDORE_BRANCH:-master}
+
+# taskflow plugin manager
+TASKFLOW_REPO=${TASKFLOW_REPO:-${GIT_BASE}/openstack/taskflow.git}
+TASKFLOW_BRANCH=${TASKFLOW_BRANCH:-master}
 
 # pbr drives the setuptools configs
 PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
