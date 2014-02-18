@@ -1,11 +1,11 @@
 # Getting Started With XenServer and Devstack
 
 The purpose of the code in this directory it to help developers bootstrap a
-XenServer 6.2 (older versions may also work) + Openstack development
+XenServer 6.2 (older versions may also work) + OpenStack development
 environment. This file gives some pointers on how to get started.
 
 Xenserver is a Type 1 hypervisor, so it is best installed on bare metal.  The
-Openstack services are configured to run within a virtual machine (called OS
+OpenStack services are configured to run within a virtual machine (called OS
 domU) on the XenServer host. The VM uses the XAPI toolstack to communicate with
 the host over a network connection (see `MGT_BRIDGE_OR_NET_NAME`).
 

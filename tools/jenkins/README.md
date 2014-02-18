@@ -1,6 +1,6 @@
 Getting Started With Jenkins and Devstack
 =========================================
-This little corner of devstack is to show how to get an Openstack jenkins
+This little corner of devstack is to show how to get an OpenStack jenkins
 environment up and running quickly, using the rcb configuration methodology.
 
 
