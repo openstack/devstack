@@ -15,6 +15,7 @@
 # and it was time for this nonsense to stop.  Run this script as root to create
 # the user and configure sudo.
 
+set -o errexit
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
@@ -27,11 +28,13 @@ source $TOP_DIR/functions
 # and ``DISTRO``
 GetDistro
 
-# Needed to get ``ENABLED_SERVICES``
+# Needed to get ``ENABLED_SERVICES`` and ``STACK_USER``
 source $TOP_DIR/stackrc
 
 # Give the non-root user the ability to run as **root** via ``sudo``
 is_package_installed sudo || install_package sudo
+
+[[ -z "$STACK_USER" ]] && die "STACK_USER is not set. Exiting."
 
 if ! getent group $STACK_USER >/dev/null; then
     echo "Creating a group called $STACK_USER"
