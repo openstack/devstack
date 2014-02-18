@@ -15,23 +15,39 @@
 # and it was time for this nonsense to stop.  Run this script as root to create
 # the user and configure sudo.
 
+set -e
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
 # Import common functions
-source $TOP_DIR/functions
+if [[ -e $TOP_DIR/functions ]]; then
+    source $TOP_DIR/functions
+else
+    echo "Could not source $TOP_DIR/functions. Exiting."
+    exit 1
+fi
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 # and ``DISTRO``
 GetDistro
 
-# Needed to get ``ENABLED_SERVICES``
-source $TOP_DIR/stackrc
+# Needed to get ``ENABLED_SERVICES`` and ``STACK_USER``
+if [[ -e $TOP_DIR/stackrc ]]; then
+    source $TOP_DIR/stackrc
+else
+    echo "Could not source $TOP_DIR/stackrc. Exiting."
+    exit 1
+fi
 
 # Give the non-root user the ability to run as **root** via ``sudo``
 is_package_installed sudo || install_package sudo
+
+if [[ -z "$STACK_USER" ]]; then
+    echo "STACK_USER is not set. Exiting."
+    exit 1
+fi
 
 if ! getent group $STACK_USER >/dev/null; then
     echo "Creating a group called $STACK_USER"
