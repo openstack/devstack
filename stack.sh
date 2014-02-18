@@ -941,6 +941,10 @@ if is_service_enabled key; then
         create_swift_accounts
     fi
 
+    if is_service_enabled heat; then
+        create_heat_accounts
+    fi
+
     # ``keystone_data.sh`` creates services, admin and demo users, and roles.
     ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
     SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT SERVICE_HOST=$SERVICE_HOST \
