@@ -93,9 +93,9 @@ function neutron_plugin_configure_service() {
     # instead use its own config variable to indicate whether security
     # groups is enabled, and that will need to be set here instead.
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver neutron.agent.not.a.real.FirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.not.a.real.FirewallDriver
     else
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver neutron.agent.firewall.NoopFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
     fi
 
     # Since we enable the tunnel TypeDrivers, also enable a local_ip
