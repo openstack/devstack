@@ -68,7 +68,9 @@ function is_marconi_enabled {
 # cleanup_marconi() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_marconi() {
-    mongo marconi --eval "db.dropDatabase();"
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! mongo marconi --eval 'db.dropDatabase();'; do sleep 1; done"; then
+        die $LINENO "Mongo DB did not start"
+    fi
 }
 
 # configure_marconiclient() - Set config files, create data dirs, etc
