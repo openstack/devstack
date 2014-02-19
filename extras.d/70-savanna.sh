@@ -8,6 +8,7 @@ if is_service_enabled savanna; then
     elif [[ "$1" == "stack" && "$2" == "install" ]]; then
         echo_summary "Installing Savanna"
         install_savanna
+        cleanup_savanna
         if is_service_enabled horizon; then
             install_savanna_dashboard
         fi
@@ -28,5 +29,9 @@ if is_service_enabled savanna; then
         if is_service_enabled horizon; then
             cleanup_savanna_dashboard
         fi
+    fi
+
+    if [[ "$1" == "clean" ]]; then
+        cleanup_savanna
     fi
 fi
