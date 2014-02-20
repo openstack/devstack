@@ -25,11 +25,5 @@ function build_xva {
 # because rabbit won't launch with an ip addr hostname :(
 build_xva HEADNODE $HEAD_PUB_IP $HEAD_MGT_IP 1 "ENABLED_SERVICES=g-api,g-reg,key,n-api,n-sch,n-vnc,horizon,mysql,rabbit"
 
-# Wait till the head node is up
-#while ! curl -L http://$HEAD_PUB_IP | grep -q username; do
-#    echo "Waiting for head node ($HEAD_PUB_IP) to start..."
-#    sleep 5
-#done
-
 # Build the HA compute host
 build_xva COMPUTENODE $COMPUTE_PUB_IP $COMPUTE_MGT_IP 0 "ENABLED_SERVICES=n-cpu,n-net,n-api"

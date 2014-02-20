@@ -101,11 +101,6 @@ if is_service_enabled nova && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; th
     cleanup_nova_hypervisor
 fi
 
-#if mount | grep $DATA_DIR/swift/drives; then
-#  sudo umount $DATA_DIR/swift/drives/sdb1
-#fi
-
-
 # Clean out /etc
 sudo rm -rf /etc/keystone /etc/glance /etc/nova /etc/cinder /etc/swift
 
@@ -122,10 +117,6 @@ sudo rm -rf $DATA_DIR $LOGDIR $DEST/status
 if [[ -n "$SCREEN_LOGDIR" ]] && [[ -d "$SCREEN_LOGDIR" ]]; then
     sudo rm -rf $SCREEN_LOGDIR
 fi
-
-# Clean up networking...
-# should this be in nova?
-# FIXED_IP_ADDR in br100
 
 # Clean up files
 rm -f $TOP_DIR/.stackenv
