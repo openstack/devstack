@@ -314,8 +314,8 @@ function configure_tempest() {
     iniset $TEMPEST_CONFIG scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
 
     # Volume
-    if is_service_enabled c-bak; then
-        iniset $TEMPEST_CONFIG volume volume_backup_enabled "True"
+    if ! is_service_enabled c-bak; then
+        iniset $TEMPEST_CONFIG volume-feature-enabled backup False
     fi
     CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
     if [ $CINDER_MULTI_LVM_BACKEND == "True" ]; then
