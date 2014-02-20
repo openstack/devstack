@@ -9,8 +9,8 @@ python-argparse
 python-devel
 python-eventlet
 python-greenlet
-python-lxml         #dist:f18,f19,f20
-python-paste-deploy #dist:f18,f19,f20
+python-lxml         #dist:f18,f19,f20,rhel7
+python-paste-deploy #dist:f18,f19,f20,rhel7
 python-routes
 python-sqlalchemy
 python-wsgiref
