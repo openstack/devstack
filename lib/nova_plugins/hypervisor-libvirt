@@ -58,40 +58,40 @@ EOF
 
     if is_fedora || is_suse; then
         if is_fedora && [[ $DISTRO =~ (rhel6) || "$os_RELEASE" -le "17" ]]; then
-            sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
+            cat <<EOF | sudo tee /etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
 [libvirt Management Access]
 Identity=unix-group:$LIBVIRT_GROUP
 Action=org.libvirt.unix.manage
 ResultAny=yes
 ResultInactive=yes
 ResultActive=yes
-EOF"
+EOF
         elif is_suse && [[ $os_RELEASE = 12.2 || "$os_VENDOR" = "SUSE LINUX" ]]; then
             # openSUSE < 12.3 or SLE
             # Work around the fact that polkit-default-privs overrules pklas
             # with 'unix-group:$group'.
-            sudo bash -c "cat <<EOF >/etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
+            cat <<EOF | sudo tee /etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
 [libvirt Management Access]
 Identity=unix-user:$STACK_USER
 Action=org.libvirt.unix.manage
 ResultAny=yes
 ResultInactive=yes
 ResultActive=yes
-EOF"
+EOF
         else
             # Starting with fedora 18 and opensuse-12.3 enable stack-user to
             # virsh -c qemu:///system by creating a policy-kit rule for
             # stack-user using the new Javascript syntax
             rules_dir=/etc/polkit-1/rules.d
             sudo mkdir -p $rules_dir
-            sudo bash -c "cat <<EOF > $rules_dir/50-libvirt-$STACK_USER.rules
+            cat <<EOF | sudo tee $rules_dir/50-libvirt-$STACK_USER.rules
 polkit.addRule(function(action, subject) {
     if (action.id == 'org.libvirt.unix.manage' &&
         subject.user == '"$STACK_USER"') {
         return polkit.Result.YES;
     }
 });
-EOF"
+EOF
             unset rules_dir
         fi
     fi
