@@ -20,7 +20,7 @@ if [[ -n $@ ]]; then
 else
     LIBS=`find lib -type f | grep -v \.md`
     SCRIPTS=`find . -type f -name \*\.sh`
-    EXTRA="functions"
+    EXTRA="functions functions-common stackrc openrc exerciserc eucarc"
     FILES="$SCRIPTS $LIBS $EXTRA"
 fi
 
