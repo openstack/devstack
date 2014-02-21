@@ -275,3 +275,5 @@ Variables and Functions
 - local variables should be lower case, global variables should be
   upper case
 - function names should_have_underscores, NotCamelCase.
+- functions should be declared as per the regex ^function foo {$
+  with code starting on the next line

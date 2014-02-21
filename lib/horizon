@@ -39,7 +39,7 @@ TEMPEST_SERVICES+=,horizon
 # ---------
 
 # utility method of setting python option
-function _horizon_config_set() {
+function _horizon_config_set {
     local file=$1
     local section=$2
     local option=$3
@@ -64,7 +64,7 @@ function _horizon_config_set() {
 
 # cleanup_horizon() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_horizon() {
+function cleanup_horizon {
     if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
         # If ``/usr/bin/node`` points into ``$DEST``
         # we installed it via ``install_nodejs``
@@ -75,12 +75,12 @@ function cleanup_horizon() {
 }
 
 # configure_horizon() - Set config files, create data dirs, etc
-function configure_horizon() {
+function configure_horizon {
     setup_develop $HORIZON_DIR
 }
 
 # init_horizon() - Initialize databases, etc.
-function init_horizon() {
+function init_horizon {
     # ``local_settings.py`` is used to override horizon default settings.
     local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
@@ -143,7 +143,7 @@ function init_horizon() {
 }
 
 # install_horizon() - Collect source and prepare
-function install_horizon() {
+function install_horizon {
     # Apache installation, because we mark it NOPRIME
     install_apache_wsgi
 
@@ -151,13 +151,13 @@ function install_horizon() {
 }
 
 # start_horizon() - Start running processes, including screen
-function start_horizon() {
+function start_horizon {
     restart_apache_server
     screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
 }
 
 # stop_horizon() - Stop running processes (non-screen)
-function stop_horizon() {
+function stop_horizon {
     stop_apache_server
 }
 

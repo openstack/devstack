@@ -9,11 +9,11 @@ set +o xtrace
 AGENT_METERING_BINARY="$NEUTRON_BIN_DIR/neutron-metering-agent"
 METERING_PLUGIN="neutron.services.metering.metering_plugin.MeteringPlugin"
 
-function neutron_agent_metering_configure_common() {
+function neutron_agent_metering_configure_common {
     _neutron_service_plugin_class_add $METERING_PLUGIN
 }
 
-function neutron_agent_metering_configure_agent() {
+function neutron_agent_metering_configure_agent {
     METERING_AGENT_CONF_PATH=/etc/neutron/services/metering
     mkdir -p $METERING_AGENT_CONF_PATH
 
@@ -22,7 +22,7 @@ function neutron_agent_metering_configure_agent() {
     cp $NEUTRON_DIR/etc/metering_agent.ini $METERING_AGENT_CONF_FILENAME
 }
 
-function neutron_metering_stop() {
+function neutron_metering_stop {
     :
 }
 

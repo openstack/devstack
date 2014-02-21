@@ -16,7 +16,7 @@ TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 cd $TOP_DIR
 
 # Echo usage
-usage() {
+function usage {
     echo "Cache OpenStack dependencies on a uec image to speed up performance."
     echo ""
     echo "Usage: $0 [full path to raw uec base image]"

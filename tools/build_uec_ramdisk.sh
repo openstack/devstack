@@ -20,7 +20,7 @@ if ! egrep -q "oneiric" /etc/lsb-release; then
 fi
 
 # Clean up resources that may be in use
-cleanup() {
+function cleanup {
     set +o errexit
 
     if [ -n "$MNT_DIR" ]; then

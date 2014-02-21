@@ -25,7 +25,7 @@ CONFIG_AWK_CMD=${CONFIG_AWK_CMD:-awk}
 
 # Get the section for the specific group and config file
 # get_meta_section infile group configfile
-function get_meta_section() {
+function get_meta_section {
     local file=$1
     local matchgroup=$2
     local configfile=$3
@@ -57,7 +57,7 @@ function get_meta_section() {
 
 # Get a list of config files for a specific group
 # get_meta_section_files infile group
-function get_meta_section_files() {
+function get_meta_section_files {
     local file=$1
     local matchgroup=$2
 
@@ -77,7 +77,7 @@ function get_meta_section_files() {
 # Merge the contents of a meta-config file into its destination config file
 # If configfile does not exist it will be created.
 # merge_config_file infile group configfile
-function merge_config_file() {
+function merge_config_file {
     local file=$1
     local matchgroup=$2
     local configfile=$3
@@ -106,7 +106,7 @@ function merge_config_file() {
 
 # Merge all of the files specified by group
 # merge_config_group infile group [group ...]
-function merge_config_group() {
+function merge_config_group {
     local localfile=$1; shift
     local matchgroups=$@
 

@@ -38,7 +38,7 @@ set +o xtrace
 
 # Append a new option in an ini file without replacing the old value
 # iniadd config-file section option value1 value2 value3 ...
-function iniadd() {
+function iniadd {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
@@ -52,7 +52,7 @@ function iniadd() {
 
 # Comment an option in an INI file
 # inicomment config-file section option
-function inicomment() {
+function inicomment {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
@@ -64,7 +64,7 @@ function inicomment() {
 
 # Get an option from an INI file
 # iniget config-file section option
-function iniget() {
+function iniget {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
@@ -78,7 +78,7 @@ function iniget() {
 
 # Get a multiple line option from an INI file
 # iniget_multiline config-file section option
-function iniget_multiline() {
+function iniget_multiline {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
@@ -92,7 +92,7 @@ function iniget_multiline() {
 
 # Determinate is the given option present in the INI file
 # ini_has_option config-file section option
-function ini_has_option() {
+function ini_has_option {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
@@ -106,7 +106,7 @@ function ini_has_option() {
 
 # Set an option in an INI file
 # iniset config-file section option value
-function iniset() {
+function iniset {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
@@ -135,7 +135,7 @@ $option = $value
 
 # Set a multiple line option in an INI file
 # iniset_multiline config-file section option value1 value2 valu3 ...
-function iniset_multiline() {
+function iniset_multiline {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
@@ -167,7 +167,7 @@ $option = $v
 
 # Uncomment an option in an INI file
 # iniuncomment config-file section option
-function iniuncomment() {
+function iniuncomment {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
@@ -181,7 +181,7 @@ function iniuncomment() {
 # Accepts as False: 0 no No NO false False FALSE
 # Accepts as True: 1 yes Yes YES true True TRUE
 # VAR=$(trueorfalse default-value test-value)
-function trueorfalse() {
+function trueorfalse {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local default=$1
@@ -213,7 +213,7 @@ function backtrace {
 
 # Prints line number and "message" then exits
 # die $LINENO "message"
-function die() {
+function die {
     local exitcode=$?
     set +o xtrace
     local line=$1; shift
@@ -231,7 +231,7 @@ function die() {
 # exit code is non-zero and prints "message" and exits
 # NOTE: env-var is the variable name without a '$'
 # die_if_not_set $LINENO env-var "message"
-function die_if_not_set() {
+function die_if_not_set {
     local exitcode=$?
     FXTRACE=$(set +o | grep xtrace)
     set +o xtrace
@@ -245,7 +245,7 @@ function die_if_not_set() {
 
 # Prints line number and "message" in error format
 # err $LINENO "message"
-function err() {
+function err {
     local exitcode=$?
     errXTRACE=$(set +o | grep xtrace)
     set +o xtrace
@@ -262,7 +262,7 @@ function err() {
 # exit code is non-zero and prints "message"
 # NOTE: env-var is the variable name without a '$'
 # err_if_not_set $LINENO env-var "message"
-function err_if_not_set() {
+function err_if_not_set {
     local exitcode=$?
     errinsXTRACE=$(set +o | grep xtrace)
     set +o xtrace
@@ -291,14 +291,14 @@ function exit_distro_not_supported {
 
 # Test if the named environment variable is set and not zero length
 # is_set env-var
-function is_set() {
+function is_set {
     local var=\$"$1"
     eval "[ -n \"$var\" ]" # For ex.: sh -c "[ -n \"$var\" ]" would be better, but several exercises depends on this
 }
 
 # Prints line number and "message" in warning format
 # warn $LINENO "message"
-function warn() {
+function warn {
     local exitcode=$?
     errXTRACE=$(set +o | grep xtrace)
     set +o xtrace
@@ -324,7 +324,7 @@ function warn() {
 # os_PACKAGE - package type
 # os_CODENAME - vendor's codename for release
 # GetOSVersion
-GetOSVersion() {
+function GetOSVersion {
     # Figure out which vendor we are
     if [[ -x "`which sw_vers 2>/dev/null`" ]]; then
         # OS/X
@@ -414,7 +414,7 @@ GetOSVersion() {
 
 # Translate the OS version values into common nomenclature
 # Sets global ``DISTRO`` from the ``os_*`` values
-function GetDistro() {
+function GetDistro {
     GetOSVersion
     if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) ]]; then
         # 'Everyone' refers to Ubuntu / Debian releases by the code name adjective
@@ -491,7 +491,7 @@ function is_ubuntu {
 
 # Returns openstack release name for a given branch name
 # ``get_release_name_from_branch branch-name``
-function get_release_name_from_branch(){
+function get_release_name_from_branch {
     local branch=$1
     if [[ $branch =~ "stable/" ]]; then
         echo ${branch#*/}
@@ -577,7 +577,7 @@ function git_clone {
 # to timeout(1); otherwise the default value of 0 maintains the status
 # quo of waiting forever.
 # usage: git_timed <git-command>
-function git_timed() {
+function git_timed {
     local count=0
     local timeout=0
 
@@ -603,7 +603,7 @@ function git_timed() {
 
 # git update using reference as a branch.
 # git_update_branch ref
-function git_update_branch() {
+function git_update_branch {
 
     GIT_BRANCH=$1
 
@@ -615,7 +615,7 @@ function git_update_branch() {
 
 # git update using reference as a branch.
 # git_update_remote_branch ref
-function git_update_remote_branch() {
+function git_update_remote_branch {
 
     GIT_BRANCH=$1
 
@@ -625,7 +625,7 @@ function git_update_remote_branch() {
 # git update using reference as a tag. Be careful editing source at that repo
 # as working copy will be in a detached mode
 # git_update_tag ref
-function git_update_tag() {
+function git_update_tag {
 
     GIT_TAG=$1
 
@@ -641,7 +641,7 @@ function git_update_tag() {
 
 # Get the default value for HOST_IP
 # get_default_host_ip fixed_range floating_range host_ip_iface host_ip
-function get_default_host_ip() {
+function get_default_host_ip {
     local fixed_range=$1
     local floating_range=$2
     local host_ip_iface=$3
@@ -673,7 +673,7 @@ function get_default_host_ip() {
 # Fields are numbered starting with 1
 # Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
 # get_field field-number
-function get_field() {
+function get_field {
     while read data; do
         if [ "$1" -lt 0 ]; then
             field="(\$(NF$1))"
@@ -687,7 +687,7 @@ function get_field() {
 # Add a policy to a policy.json file
 # Do nothing if the policy already exists
 # ``policy_add policy_file policy_name policy_permissions``
-function policy_add() {
+function policy_add {
     local policy_file=$1
     local policy_name=$2
     local policy_perm=$3
@@ -717,7 +717,7 @@ function policy_add() {
 # =================
 
 # _get_package_dir
-function _get_package_dir() {
+function _get_package_dir {
     local pkg_dir
     if is_ubuntu; then
         pkg_dir=$FILES/apts
@@ -734,7 +734,7 @@ function _get_package_dir() {
 # Wrapper for ``apt-get`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``*_proxy``
 # apt_get operation package [package ...]
-function apt_get() {
+function apt_get {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
@@ -759,7 +759,7 @@ function apt_get() {
 # - ``# NOPRIME`` defers installation to be performed later in `stack.sh`
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
-function get_packages() {
+function get_packages {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local services=$@
@@ -870,7 +870,7 @@ function get_packages() {
 
 # Distro-agnostic package installer
 # install_package package [package ...]
-function install_package() {
+function install_package {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     if is_ubuntu; then
@@ -895,7 +895,7 @@ function install_package() {
 
 # Distro-agnostic function to tell if a package is installed
 # is_package_installed package [package ...]
-function is_package_installed() {
+function is_package_installed {
     if [[ -z "$@" ]]; then
         return 1
     fi
@@ -915,7 +915,7 @@ function is_package_installed() {
 
 # Distro-agnostic package uninstaller
 # uninstall_package package [package ...]
-function uninstall_package() {
+function uninstall_package {
     if is_ubuntu; then
         apt_get purge "$@"
     elif is_fedora; then
@@ -930,7 +930,7 @@ function uninstall_package() {
 # Wrapper for ``yum`` to set proxy environment variables
 # Uses globals ``OFFLINE``, ``*_proxy``
 # yum_install package [package ...]
-function yum_install() {
+function yum_install {
     [[ "$OFFLINE" = "True" ]] && return
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
@@ -941,7 +941,7 @@ function yum_install() {
 
 # zypper wrapper to set arguments correctly
 # zypper_install package [package ...]
-function zypper_install() {
+function zypper_install {
     [[ "$OFFLINE" = "True" ]] && return
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
@@ -958,7 +958,7 @@ function zypper_install() {
 # files to produce the same logs as screen_it().  The log filename is derived
 # from the service name and global-and-now-misnamed SCREEN_LOGDIR
 # _run_process service "command-line"
-function _run_process() {
+function _run_process {
     local service=$1
     local command="$2"
 
@@ -983,7 +983,7 @@ function _run_process() {
 # Helper to remove the ``*.failure`` files under ``$SERVICE_DIR/$SCREEN_NAME``.
 # This is used for ``service_check`` when all the ``screen_it`` are called finished
 # init_service_check
-function init_service_check() {
+function init_service_check {
     SCREEN_NAME=${SCREEN_NAME:-stack}
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
 
@@ -996,7 +996,7 @@ function init_service_check() {
 
 # Find out if a process exists by partial name.
 # is_running name
-function is_running() {
+function is_running {
     local name=$1
     ps auxw | grep -v grep | grep ${name} > /dev/null
     RC=$?
@@ -1009,7 +1009,7 @@ function is_running() {
 # of screen_it() without screen.  PIDs are written to
 # $SERVICE_DIR/$SCREEN_NAME/$service.pid
 # run_process service "command-line"
-function run_process() {
+function run_process {
     local service=$1
     local command="$2"
 
@@ -1092,7 +1092,7 @@ function screen_rc {
 # If screen is being used kill the screen window; this will catch processes
 # that did not leave a PID behind
 # screen_stop service
-function screen_stop() {
+function screen_stop {
     SCREEN_NAME=${SCREEN_NAME:-stack}
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
     USE_SCREEN=$(trueorfalse True $USE_SCREEN)
@@ -1112,7 +1112,7 @@ function screen_stop() {
 
 # Helper to get the status of each running service
 # service_check
-function service_check() {
+function service_check {
     local service
     local failures
     SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -1145,7 +1145,7 @@ function service_check() {
 
 # Get the path to the pip command.
 # get_pip_command
-function get_pip_command() {
+function get_pip_command {
     which pip || which pip-python
 
     if [ $? -ne 0 ]; then
@@ -1155,7 +1155,7 @@ function get_pip_command() {
 
 # Get the path to the direcotry where python executables are installed.
 # get_python_exec_prefix
-function get_python_exec_prefix() {
+function get_python_exec_prefix {
     if is_fedora || is_suse; then
         echo "/usr/bin"
     else
@@ -1221,7 +1221,7 @@ function pip_install {
 #
 # Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``, ``UNDO_REQUIREMENTS``
 # setup_develop directory
-function setup_develop() {
+function setup_develop {
     local project_dir=$1
 
     echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
@@ -1257,7 +1257,7 @@ function setup_develop() {
 # using pip before running `setup.py develop`
 # Uses globals ``STACK_USER``
 # setup_develop_no_requirements_update directory
-function setup_develop_no_requirements_update() {
+function setup_develop_no_requirements_update {
     local project_dir=$1
 
     pip_install -e $project_dir
@@ -1271,7 +1271,7 @@ function setup_develop_no_requirements_update() {
 
 # remove extra commas from the input string (i.e. ``ENABLED_SERVICES``)
 # _cleanup_service_list service-list
-function _cleanup_service_list () {
+function _cleanup_service_list {
     echo "$1" | sed -e '
         s/,,/,/g;
         s/^,//;
@@ -1284,7 +1284,7 @@ function _cleanup_service_list () {
 # before a minimal installation
 # Uses global ``ENABLED_SERVICES``
 # disable_all_services
-function disable_all_services() {
+function disable_all_services {
     ENABLED_SERVICES=""
 }
 
@@ -1293,7 +1293,7 @@ function disable_all_services() {
 # ENABLED_SERVICES+=",-rabbit"
 # Uses global ``ENABLED_SERVICES``
 # disable_negated_services
-function disable_negated_services() {
+function disable_negated_services {
     local tmpsvcs="${ENABLED_SERVICES}"
     local service
     for service in ${tmpsvcs//,/ }; do
@@ -1314,7 +1314,7 @@ function disable_negated_services() {
 # for nova, glance, and neutron built into is_service_enabled().
 # Uses global ``ENABLED_SERVICES``
 # disable_service service [service ...]
-function disable_service() {
+function disable_service {
     local tmpsvcs=",${ENABLED_SERVICES},"
     local service
     for service in $@; do
@@ -1335,7 +1335,7 @@ function disable_service() {
 # for nova, glance, and neutron built into is_service_enabled().
 # Uses global ``ENABLED_SERVICES``
 # enable_service service [service ...]
-function enable_service() {
+function enable_service {
     local tmpsvcs="${ENABLED_SERVICES}"
     for service in $@; do
         if ! is_service_enabled $service; then
@@ -1369,7 +1369,7 @@ function enable_service() {
 #
 # Uses global ``ENABLED_SERVICES``
 # is_service_enabled service [service ...]
-function is_service_enabled() {
+function is_service_enabled {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local enabled=1
@@ -1424,7 +1424,7 @@ function use_exclusive_service {
 
 # Only run the command if the target file (the last arg) is not on an
 # NFS filesystem.
-function _safe_permission_operation() {
+function _safe_permission_operation {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local args=( $@ )
@@ -1457,7 +1457,7 @@ function _safe_permission_operation() {
 # Exit 0 if address is in network or 1 if address is not in network
 # ip-range is in CIDR notation: 1.2.3.4/20
 # address_in_net ip-address ip-range
-function address_in_net() {
+function address_in_net {
     local ip=$1
     local range=$2
     local masklen=${range#*/}
@@ -1468,7 +1468,7 @@ function address_in_net() {
 
 # Add a user to a group.
 # add_user_to_group user group
-function add_user_to_group() {
+function add_user_to_group {
     local user=$1
     local group=$2
 
@@ -1486,7 +1486,7 @@ function add_user_to_group() {
 
 # Convert CIDR notation to a IPv4 netmask
 # cidr2netmask cidr-bits
-function cidr2netmask() {
+function cidr2netmask {
     local maskpat="255 255 255 255"
     local maskdgt="254 252 248 240 224 192 128"
     set -- ${maskpat:0:$(( ($1 / 8) * 4 ))}${maskdgt:$(( (7 - ($1 % 8)) * 4 )):3}
@@ -1509,7 +1509,7 @@ function cp_it {
 #
 #     http_proxy=http://proxy.example.com:3128/ no_proxy=repo.example.net ./stack.sh
 
-function export_proxy_variables() {
+function export_proxy_variables {
     if [[ -n "$http_proxy" ]]; then
         export http_proxy=$http_proxy
     fi
@@ -1522,7 +1522,7 @@ function export_proxy_variables() {
 }
 
 # Returns true if the directory is on a filesystem mounted via NFS.
-function is_nfs_directory() {
+function is_nfs_directory {
     local mount_type=`stat -f -L -c %T $1`
     test "$mount_type" == "nfs"
 }
@@ -1530,7 +1530,7 @@ function is_nfs_directory() {
 # Return the network portion of the given IP address using netmask
 # netmask is in the traditional dotted-quad format
 # maskip ip-address netmask
-function maskip() {
+function maskip {
     local ip=$1
     local mask=$2
     local l="${ip%.*}"; local r="${ip#*.}"; local n="${mask%.*}"; local m="${mask#*.}"
@@ -1540,7 +1540,7 @@ function maskip() {
 
 # Service wrapper to restart services
 # restart_service service-name
-function restart_service() {
+function restart_service {
     if is_ubuntu; then
         sudo /usr/sbin/service $1 restart
     else
@@ -1550,19 +1550,19 @@ function restart_service() {
 
 # Only change permissions of a file or directory if it is not on an
 # NFS filesystem.
-function safe_chmod() {
+function safe_chmod {
     _safe_permission_operation chmod $@
 }
 
 # Only change ownership of a file or directory if it is not on an NFS
 # filesystem.
-function safe_chown() {
+function safe_chown {
     _safe_permission_operation chown $@
 }
 
 # Service wrapper to start services
 # start_service service-name
-function start_service() {
+function start_service {
     if is_ubuntu; then
         sudo /usr/sbin/service $1 start
     else
@@ -1572,7 +1572,7 @@ function start_service() {
 
 # Service wrapper to stop services
 # stop_service service-name
-function stop_service() {
+function stop_service {
     if is_ubuntu; then
         sudo /usr/sbin/service $1 stop
     else

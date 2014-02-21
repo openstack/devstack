@@ -154,7 +154,7 @@ set +o xtrace
 # Results
 # =======
 
-function report() {
+function report {
     if [[ -n "$2" ]]; then
         echo "$1: $2"
     fi

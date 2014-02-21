@@ -20,7 +20,7 @@ echo "*********************************************************************"
 set -o errtrace
 
 trap failed ERR
-failed() {
+function failed {
     local r=$?
     set +o errtrace
     set +o xtrace
@@ -395,7 +395,7 @@ function test_functions {
 # Usage and main
 # --------------
 
-usage() {
+function usage {
     echo "$0: [-h]"
     echo "  -h, --help              Display help message"
     echo "  -t, --tenant            Create tenants"
@@ -408,7 +408,7 @@ usage() {
     echo "  -T, --test              Test functions"
 }
 
-main() {
+function main {
 
     echo Description
 

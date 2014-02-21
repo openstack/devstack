@@ -61,7 +61,7 @@ fi
 # -----
 
 # git_report <dir>
-function git_report() {
+function git_report {
     local dir=$1
     local proj ref branch head
     if [[ -d $dir/.git ]]; then

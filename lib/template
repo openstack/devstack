@@ -45,7 +45,7 @@ function is_XXXX_enabled {
 
 # cleanup_XXXX() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_XXXX() {
+function cleanup_XXXX {
     # kill instances (nova)
     # delete image files (glance)
     # This function intentionally left blank
@@ -53,7 +53,7 @@ function cleanup_XXXX() {
 }
 
 # configure_XXXX() - Set config files, create data dirs, etc
-function configure_XXXX() {
+function configure_XXXX {
     # sudo python setup.py deploy
     # iniset $XXXX_CONF ...
     # This function intentionally left blank
@@ -61,26 +61,26 @@ function configure_XXXX() {
 }
 
 # init_XXXX() - Initialize databases, etc.
-function init_XXXX() {
+function init_XXXX {
     # clean up from previous (possibly aborted) runs
     # create required data files
     :
 }
 
 # install_XXXX() - Collect source and prepare
-function install_XXXX() {
+function install_XXXX {
     # git clone xxx
     :
 }
 
 # start_XXXX() - Start running processes, including screen
-function start_XXXX() {
+function start_XXXX {
     # screen_it XXXX "cd $XXXX_DIR && $XXXX_DIR/bin/XXXX-bin"
     :
 }
 
 # stop_XXXX() - Stop running processes (non-screen)
-function stop_XXXX() {
+function stop_XXXX {
     # FIXME(dtroyer): stop only our screen screen window?
     :
 }

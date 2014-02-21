@@ -5,33 +5,33 @@
 PLUGIN_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-function is_neutron_ovs_base_plugin() {
+function is_neutron_ovs_base_plugin {
     # linuxbridge doesn't use OVS
     return 1
 }
 
-function neutron_plugin_create_nova_conf() {
+function neutron_plugin_create_nova_conf {
     :
 }
 
-function neutron_plugin_install_agent_packages() {
+function neutron_plugin_install_agent_packages {
     install_package bridge-utils
 }
 
-function neutron_plugin_configure_debug_command() {
+function neutron_plugin_configure_debug_command {
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge
 }
 
-function neutron_plugin_configure_dhcp_agent() {
+function neutron_plugin_configure_dhcp_agent {
     iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
 }
 
-function neutron_plugin_configure_l3_agent() {
+function neutron_plugin_configure_l3_agent {
     iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge
     iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
 }
 
-function neutron_plugin_configure_plugin_agent() {
+function neutron_plugin_configure_plugin_agent {
     # Setup physical network interface mappings.  Override
     # ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc`` for more
     # complex physical network configurations.
@@ -63,12 +63,12 @@ function neutron_plugin_configure_plugin_agent() {
     done
 }
 
-function neutron_plugin_setup_interface_driver() {
+function neutron_plugin_setup_interface_driver {
     local conf_file=$1
     iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.BridgeInterfaceDriver
 }
 
-function neutron_plugin_check_adv_test_requirements() {
+function neutron_plugin_check_adv_test_requirements {
     is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
 }
 

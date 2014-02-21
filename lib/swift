@@ -126,7 +126,7 @@ function is_swift_enabled {
 }
 
 # cleanup_swift() - Remove residual data files
-function cleanup_swift() {
+function cleanup_swift {
     rm -f ${SWIFT_CONF_DIR}{*.builder,*.ring.gz,backups/*.builder,backups/*.ring.gz}
     if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
         sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
@@ -141,7 +141,7 @@ function cleanup_swift() {
 }
 
 # _cleanup_swift_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
-function _cleanup_swift_apache_wsgi() {
+function _cleanup_swift_apache_wsgi {
     sudo rm -f $SWIFT_APACHE_WSGI_DIR/*.wsgi
     disable_apache_site proxy-server
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
@@ -154,7 +154,7 @@ function _cleanup_swift_apache_wsgi() {
 }
 
 # _config_swift_apache_wsgi() - Set WSGI config files of Swift
-function _config_swift_apache_wsgi() {
+function _config_swift_apache_wsgi {
     sudo mkdir -p ${SWIFT_APACHE_WSGI_DIR}
     local apache_vhost_dir=/etc/${APACHE_NAME}/$APACHE_CONF_DIR
     local proxy_port=${SWIFT_DEFAULT_BIND_PORT:-8080}
@@ -233,7 +233,7 @@ function _config_swift_apache_wsgi() {
 
 # This function generates an object/container/account configuration
 # emulating 4 nodes on different ports
-function generate_swift_config() {
+function generate_swift_config {
     local swift_node_config=$1
     local node_id=$2
     local bind_port=$3
@@ -272,7 +272,7 @@ function generate_swift_config() {
 
 
 # configure_swift() - Set config files, create data dirs and loop image
-function configure_swift() {
+function configure_swift {
     local swift_pipeline="${SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH}"
     local node_number
     local swift_node_config
@@ -460,7 +460,7 @@ EOF
 }
 
 # create_swift_disk - Create Swift backing disk
-function create_swift_disk() {
+function create_swift_disk {
     local node_number
 
     # First do a bit of setup by creating the directories and
@@ -520,7 +520,7 @@ function create_swift_disk() {
 # swifttenanttest1   swiftusertest3     anotherrole
 # swifttenanttest2   swiftusertest2     admin
 
-function create_swift_accounts() {
+function create_swift_accounts {
     # Defines specific passwords used by tools/create_userrc.sh
     SWIFTUSERTEST1_PASSWORD=testing
     SWIFTUSERTEST2_PASSWORD=testing2
@@ -578,7 +578,7 @@ function create_swift_accounts() {
 }
 
 # init_swift() - Initialize rings
-function init_swift() {
+function init_swift {
     local node_number
     # Make sure to kill all swift processes first
     swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
@@ -612,7 +612,7 @@ function init_swift() {
     rm -f $SWIFT_AUTH_CACHE_DIR/*
 }
 
-function install_swift() {
+function install_swift {
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
     setup_develop $SWIFT_DIR
     if is_apache_enabled_service swift; then
@@ -620,13 +620,13 @@ function install_swift() {
     fi
 }
 
-function install_swiftclient() {
+function install_swiftclient {
     git_clone $SWIFTCLIENT_REPO $SWIFTCLIENT_DIR $SWIFTCLIENT_BRANCH
     setup_develop $SWIFTCLIENT_DIR
 }
 
 # start_swift() - Start running processes, including screen
-function start_swift() {
+function start_swift {
     # (re)start rsyslog
     restart_service rsyslog
     # (re)start memcached to make sure we have a clean memcache.
@@ -674,7 +674,7 @@ function start_swift() {
 }
 
 # stop_swift() - Stop running processes (non-screen)
-function stop_swift() {
+function stop_swift {
 
     if is_apache_enabled_service swift; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest stop && return 0

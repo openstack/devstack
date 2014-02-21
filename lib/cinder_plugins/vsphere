@@ -27,7 +27,7 @@ set +o xtrace
 # ------------
 
 # configure_cinder_driver - Set config files, create data dirs, etc
-function configure_cinder_driver() {
+function configure_cinder_driver {
     iniset $CINDER_CONF DEFAULT vmware_host_ip "$VMWAREAPI_IP"
     iniset $CINDER_CONF DEFAULT vmware_host_username "$VMWAREAPI_USER"
     iniset $CINDER_CONF DEFAULT vmware_host_password "$VMWAREAPI_PASSWORD"

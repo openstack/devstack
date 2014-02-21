@@ -49,7 +49,7 @@ fi
 
 # Perform common variable substitutions on the data files
 # _ldap_varsubst file
-function _ldap_varsubst() {
+function _ldap_varsubst {
     local infile=$1
     sed -e "
         s|\${LDAP_OLCDB_NUMBER}|$LDAP_OLCDB_NUMBER|
@@ -62,7 +62,7 @@ function _ldap_varsubst() {
 }
 
 # clean_ldap() - Remove ldap server
-function cleanup_ldap() {
+function cleanup_ldap {
     uninstall_package $(get_packages ldap)
     if is_ubuntu; then
         uninstall_package slapd ldap-utils libslp1
@@ -76,7 +76,7 @@ function cleanup_ldap() {
 
 # init_ldap
 # init_ldap() - Initialize databases, etc.
-function init_ldap() {
+function init_ldap {
     local keystone_ldif
 
     TMP_LDAP_DIR=$(mktemp -d -t ldap.$$.XXXXXXXXXX)
@@ -106,7 +106,7 @@ function init_ldap() {
 
 # install_ldap
 # install_ldap() - Collect source and prepare
-function install_ldap() {
+function install_ldap {
     echo "Installing LDAP inside function"
     echo "os_VENDOR is $os_VENDOR"
 
@@ -143,17 +143,17 @@ function install_ldap() {
 }
 
 # start_ldap() - Start LDAP
-function start_ldap() {
+function start_ldap {
     sudo service $LDAP_SERVICE_NAME restart
 }
 
 # stop_ldap() - Stop LDAP
-function stop_ldap() {
+function stop_ldap {
     sudo service $LDAP_SERVICE_NAME stop
 }
 
 # clear_ldap_state() - Clear LDAP State
-function clear_ldap_state() {
+function clear_ldap_state {
     ldapdelete -x -w $LDAP_PASSWORD -D "$LDAP_MANAGER_DN" -H $LDAP_URL -r "$LDAP_BASE_DN"
 }
 

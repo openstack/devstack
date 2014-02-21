@@ -20,28 +20,28 @@ MIDONET_CLIENT_DIR=${MIDONET_CLIENT_DIR:-$MIDONET_DIR/python-midonetclient}
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-function configure_midonet() {
+function configure_midonet {
     :
 }
 
-function init_midonet() {
+function init_midonet {
     :
 }
 
-function install_midonet() {
+function install_midonet {
     git_clone $MIDONET_CLIENT_REPO $MIDONET_CLIENT_DIR $MIDONET_CLIENT_BRANCH
     export PYTHONPATH=$MIDONET_CLIENT_DIR/src:$PYTHONPATH
 }
 
-function start_midonet() {
+function start_midonet {
     :
 }
 
-function stop_midonet() {
+function stop_midonet {
     :
 }
 
-function check_midonet() {
+function check_midonet {
     :
 }
 

@@ -73,19 +73,19 @@ function is_marconi_enabled {
 
 # cleanup_marconi() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_marconi() {
+function cleanup_marconi {
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! mongo marconi --eval 'db.dropDatabase();'; do sleep 1; done"; then
         die $LINENO "Mongo DB did not start"
     fi
 }
 
 # configure_marconiclient() - Set config files, create data dirs, etc
-function configure_marconiclient() {
+function configure_marconiclient {
     setup_develop $MARCONICLIENT_DIR
 }
 
 # configure_marconi() - Set config files, create data dirs, etc
-function configure_marconi() {
+function configure_marconi {
     setup_develop $MARCONI_DIR
 
     [ ! -d $MARCONI_CONF_DIR ] && sudo mkdir -m 755 -p $MARCONI_CONF_DIR
@@ -110,7 +110,7 @@ function configure_marconi() {
     fi
 }
 
-function configure_mongodb() {
+function configure_mongodb {
     # Set nssize to 2GB. This increases the number of namespaces supported
     # # per database.
     if is_ubuntu; then
@@ -126,7 +126,7 @@ function configure_mongodb() {
 }
 
 # init_marconi() - Initialize etc.
-function init_marconi() {
+function init_marconi {
     # Create cache dir
     sudo mkdir -p $MARCONI_AUTH_CACHE_DIR
     sudo chown $STACK_USER $MARCONI_AUTH_CACHE_DIR
@@ -134,19 +134,19 @@ function init_marconi() {
 }
 
 # install_marconi() - Collect source and prepare
-function install_marconi() {
+function install_marconi {
     git_clone $MARCONI_REPO $MARCONI_DIR $MARCONI_BRANCH
     setup_develop $MARCONI_DIR
 }
 
 # install_marconiclient() - Collect source and prepare
-function install_marconiclient() {
+function install_marconiclient {
     git_clone $MARCONICLIENT_REPO $MARCONICLIENT_DIR $MARCONICLIENT_BRANCH
     setup_develop $MARCONICLIENT_DIR
 }
 
 # start_marconi() - Start running processes, including screen
-function start_marconi() {
+function start_marconi {
     screen_it marconi-server "marconi-server --config-file $MARCONI_CONF"
     echo "Waiting for Marconi to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- $MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT/v1/health; do sleep 1; done"; then
@@ -155,14 +155,14 @@ function start_marconi() {
 }
 
 # stop_marconi() - Stop running processes
-function stop_marconi() {
+function stop_marconi {
     # Kill the marconi screen windows
     for serv in marconi-server; do
         screen -S $SCREEN_NAME -p $serv -X kill
     done
 }
 
-function create_marconi_accounts() {
+function create_marconi_accounts {
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 

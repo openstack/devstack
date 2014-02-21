@@ -22,11 +22,11 @@ OFC_RETRY_INTERVAL=${OFC_RETRY_INTERVAL:-1}
 
 source $TOP_DIR/lib/neutron_plugins/ovs_base
 
-function neutron_plugin_create_nova_conf() {
+function neutron_plugin_create_nova_conf {
     _neutron_ovs_base_configure_nova_vif_driver
 }
 
-function neutron_plugin_install_agent_packages() {
+function neutron_plugin_install_agent_packages {
     # SKIP_OVS_INSTALL is useful when we want to use Open vSwitch whose
     # version is different from the version provided by the distribution.
     if [[ "$SKIP_OVS_INSTALL" = "True" ]]; then
@@ -36,26 +36,26 @@ function neutron_plugin_install_agent_packages() {
     _neutron_ovs_base_install_agent_packages
 }
 
-function neutron_plugin_configure_common() {
+function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/nec
     Q_PLUGIN_CONF_FILENAME=nec.ini
     Q_DB_NAME="neutron_nec"
     Q_PLUGIN_CLASS="neutron.plugins.nec.nec_plugin.NECPluginV2"
 }
 
-function neutron_plugin_configure_debug_command() {
+function neutron_plugin_configure_debug_command {
     _neutron_ovs_base_configure_debug_command
 }
 
-function neutron_plugin_configure_dhcp_agent() {
+function neutron_plugin_configure_dhcp_agent {
     :
 }
 
-function neutron_plugin_configure_l3_agent() {
+function neutron_plugin_configure_l3_agent {
     _neutron_ovs_base_configure_l3_agent
 }
 
-function _quantum_plugin_setup_bridge() {
+function _quantum_plugin_setup_bridge {
     if [[ "$SKIP_OVS_BRIDGE_SETUP" = "True" ]]; then
         return
     fi
@@ -72,7 +72,7 @@ function _quantum_plugin_setup_bridge() {
     _neutron_setup_ovs_tunnels $OVS_BRIDGE
 }
 
-function neutron_plugin_configure_plugin_agent() {
+function neutron_plugin_configure_plugin_agent {
     _quantum_plugin_setup_bridge
 
     AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-nec-agent"
@@ -80,7 +80,7 @@ function neutron_plugin_configure_plugin_agent() {
     _neutron_ovs_base_configure_firewall_driver
 }
 
-function neutron_plugin_configure_service() {
+function neutron_plugin_configure_service {
     iniset $NEUTRON_CONF DEFAULT api_extensions_path neutron/plugins/nec/extensions/
     iniset /$Q_PLUGIN_CONF_FILE ofc host $OFC_API_HOST
     iniset /$Q_PLUGIN_CONF_FILE ofc port $OFC_API_PORT
@@ -91,7 +91,7 @@ function neutron_plugin_configure_service() {
     _neutron_ovs_base_configure_firewall_driver
 }
 
-function neutron_plugin_setup_interface_driver() {
+function neutron_plugin_setup_interface_driver {
     local conf_file=$1
     iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
     iniset $conf_file DEFAULT ovs_use_veth True
@@ -101,7 +101,7 @@ function neutron_plugin_setup_interface_driver() {
 # ---------------------------
 
 # Setup OVS tunnel manually
-function _neutron_setup_ovs_tunnels() {
+function _neutron_setup_ovs_tunnels {
     local bridge=$1
     local id=0
     GRE_LOCAL_IP=${GRE_LOCAL_IP:-$HOST_IP}
@@ -117,12 +117,12 @@ function _neutron_setup_ovs_tunnels() {
     fi
 }
 
-function has_neutron_plugin_security_group() {
+function has_neutron_plugin_security_group {
     # 0 means True here
     return 0
 }
 
-function neutron_plugin_check_adv_test_requirements() {
+function neutron_plugin_check_adv_test_requirements {
     is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
 }
 

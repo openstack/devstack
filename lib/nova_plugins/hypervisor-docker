@@ -44,7 +44,7 @@ DOCKER_APT_REPO=${DOCKER_APT_REPO:-https://get.docker.io/ubuntu}
 # ------------
 
 # clean_nova_hypervisor - Clean up an installation
-function cleanup_nova_hypervisor() {
+function cleanup_nova_hypervisor {
     stop_service docker
 
     # Clean out work area
@@ -52,13 +52,13 @@ function cleanup_nova_hypervisor() {
 }
 
 # configure_nova_hypervisor - Set config files, create data dirs, etc
-function configure_nova_hypervisor() {
+function configure_nova_hypervisor {
     iniset $NOVA_CONF DEFAULT compute_driver docker.DockerDriver
     iniset $GLANCE_API_CONF DEFAULT container_formats ami,ari,aki,bare,ovf,docker
 }
 
 # install_nova_hypervisor() - Install external components
-function install_nova_hypervisor() {
+function install_nova_hypervisor {
     # So far this is Ubuntu only
     if ! is_ubuntu; then
         die $LINENO "Docker is only supported on Ubuntu at this time"
@@ -77,7 +77,7 @@ function install_nova_hypervisor() {
 }
 
 # start_nova_hypervisor - Start any required external services
-function start_nova_hypervisor() {
+function start_nova_hypervisor {
     local docker_pid
     read docker_pid <$DOCKER_PID_FILE
     if [[ -z $docker_pid ]] || ! ps -p $docker_pid | grep [d]ocker; then
@@ -111,7 +111,7 @@ function start_nova_hypervisor() {
 }
 
 # stop_nova_hypervisor - Stop any external services
-function stop_nova_hypervisor() {
+function stop_nova_hypervisor {
     # Stop the docker registry container
     docker kill $(docker ps | grep docker-registry | cut -d' ' -f1)
 }
