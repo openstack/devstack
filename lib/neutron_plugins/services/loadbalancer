@@ -38,6 +38,7 @@ function neutron_agent_lbaas_configure_agent() {
 
     if is_fedora; then
         iniset $LBAAS_AGENT_CONF_FILENAME DEFAULT user_group "nobody"
+        iniset $LBAAS_AGENT_CONF_FILENAME haproxy user_group "nobody"
     fi
 }
 
