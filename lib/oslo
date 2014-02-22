@@ -24,6 +24,7 @@ CLIFF_DIR=$DEST/cliff
 OSLOCFG_DIR=$DEST/oslo.config
 OSLOMSG_DIR=$DEST/oslo.messaging
 OSLORWRAP_DIR=$DEST/oslo.rootwrap
+OSLOVMWARE_DIR=$DEST/oslo.vmware
 PYCADF_DIR=$DEST/pycadf
 STEVEDORE_DIR=$DEST/stevedore
 TASKFLOW_DIR=$DEST/taskflow
@@ -48,6 +49,9 @@ function install_oslo() {
 
     git_clone $OSLORWRAP_REPO $OSLORWRAP_DIR $OSLORWRAP_BRANCH
     setup_develop $OSLORWRAP_DIR
+
+    git_clone $OSLOVMWARE_REPO $OSLOVMWARE_DIR $OSLOVMWARE_BRANCH
+    setup_develop $OSLOVMWARE_DIR
 
     git_clone $PYCADF_REPO $PYCADF_DIR $PYCADF_BRANCH
     setup_develop $PYCADF_DIR

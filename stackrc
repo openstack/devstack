@@ -167,6 +167,10 @@ OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
 OSLORWRAP_REPO=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
 OSLORWRAP_BRANCH=${OSLORWRAP_BRANCH:-master}
 
+# oslo.vmware
+OSLOVMWARE_REPO=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
+OSLOVMWARE_BRANCH=${OSLOVMWARE_BRANCH:-master}
+
 # pycadf auditing library
 PYCADF_REPO=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
 PYCADF_BRANCH=${PYCADF_BRANCH:-master}
