@@ -110,15 +110,6 @@ function configure_heat() {
     iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
     iniset $HEAT_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
-    # stack user domain
-    # Note we have to pass token/endpoint here because the current endpoint and
-    # version negotiation in OSC means just --os-identity-api-version=3 won't work
-    KS_ENDPOINT_V3="$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
-    D_ID=$(openstack --os-token $OS_SERVICE_TOKEN --os-url=$KS_ENDPOINT_V3 \
-        --os-identity-api-version=3 domain show heat \
-        | grep ' id ' | get_field 2)
-    iniset $HEAT_CONF stack_user_domain ${D_ID}
-
     # paste_deploy
     [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_CONF paste_deploy flavor standalone
 
@@ -211,9 +202,11 @@ function create_heat_accounts() {
     # Note we have to pass token/endpoint here because the current endpoint and
     # version negotiation in OSC means just --os-identity-api-version=3 won't work
     KS_ENDPOINT_V3="$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
-    openstack --os-token $OS_SERVICE_TOKEN --os-url=$KS_ENDPOINT_V3 \
+    D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
         --os-identity-api-version=3 domain create heat \
-        --description "Owns users and projects created by heat"
+        --description "Owns users and projects created by heat" \
+        | grep ' id ' | get_field 2)
+    iniset $HEAT_CONF DEFAULT stack_user_domain ${D_ID}
 }
 
 # Restore xtrace
