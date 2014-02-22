@@ -2,7 +2,8 @@
 # Install and start **Marconi** service
 
 # To enable a minimal set of Marconi services, add the following to localrc:
-#   enable_service marconi-server
+#
+#     enable_service marconi-server
 #
 # Dependencies:
 # - functions
@@ -51,6 +52,11 @@ MARCONI_BRANCH=${MARCONI_BRANCH:-master}
 MARCONICLIENT_REPO=${MARCONICLIENT_REPO:-${GIT_BASE}/openstack/python-marconiclient.git}
 MARCONICLIENT_BRANCH=${MARCONICLIENT_BRANCH:-master}
 
+# Set Marconi Connection Info
+MARCONI_SERVICE_HOST=${MARCONI_SERVICE_HOST:-$SERVICE_HOST}
+MARCONI_SERVICE_PORT=${MARCONI_SERVICE_PORT:-8888}
+MARCONI_SERVICE_PROTOCOL=${MARCONI_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,marconi
 
@@ -89,7 +95,7 @@ function configure_marconi() {
     sudo chown $USER $MARCONI_API_LOG_DIR
 
     iniset $MARCONI_CONF DEFAULT verbose True
-    iniset $MARCONI_CONF 'drivers:transport:wsgi' bind '0.0.0.0'
+    iniset $MARCONI_CONF 'drivers:transport:wsgi' bind $MARCONI_SERVICE_HOST
 
     iniset $MARCONI_CONF keystone_authtoken auth_protocol http
     iniset $MARCONI_CONF keystone_authtoken admin_user marconi
@@ -142,6 +148,10 @@ function install_marconiclient() {
 # start_marconi() - Start running processes, including screen
 function start_marconi() {
     screen_it marconi-server "marconi-server --config-file $MARCONI_CONF"
+    echo "Waiting for Marconi to start..."
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- $MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT/v1/health; do sleep 1; done"; then
+        die $LINENO "Marconi did not start"
+    fi
 }
 
 # stop_marconi() - Stop running processes
@@ -176,9 +186,9 @@ function create_marconi_accounts() {
         openstack endpoint create \
             $MARCONI_SERVICE \
             --region RegionOne \
-            --publicurl "http://$SERVICE_HOST:8888" \
-            --adminurl "http://$SERVICE_HOST:8888" \
-            --internalurl "http://$SERVICE_HOST:8888"
+            --publicurl "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT" \
+            --adminurl "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT" \
+            --internalurl "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT"
     fi
 
 }

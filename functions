@@ -2,10 +2,15 @@
 #
 # The following variables are assumed to be defined by certain functions:
 #
+# - ``DATABASE_BACKENDS``
 # - ``ENABLED_SERVICES``
 # - ``FILES``
 # - ``GLANCE_HOSTPORT``
+# - ``REQUIREMENTS_DIR``
+# - ``STACK_USER``
 # - ``TRACK_DEPENDS``
+# - ``UNDO_REQUIREMENTS``
+#
 
 # Include the common functions
 FUNC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
@@ -45,7 +50,7 @@ function cleanup_tmp {
 # Updates the dependencies in project_dir from the
 # openstack/requirements global list before installing anything.
 #
-# Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``
+# Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``, ``UNDO_REQUIREMENTS``
 # setup_develop directory
 function setup_develop() {
     local project_dir=$1

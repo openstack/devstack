@@ -70,7 +70,8 @@ if [[ -d $dir ]]; then
 fi
 
 # Ubuntu 12.04
-# -----
+# ------------
+
 # We can regularly get kernel crashes on the 12.04 default kernel, so attempt
 # to install a new kernel
 if [[ ${DISTRO} =~ (precise) ]]; then
