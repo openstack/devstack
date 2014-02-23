@@ -10,19 +10,11 @@
 
 # MidoNet devstack destination dir
 MIDONET_DIR=${MIDONET_DIR:-$DEST/midonet}
-MIDONET_API_PORT=${MIDONET_API_PORT:-8080}
-MIDONET_API_URL=${MIDONET_API_URL:-http://localhost:$MIDONET_API_PORT/midonet-api}
 
 # MidoNet client repo
 MIDONET_CLIENT_REPO=${MIDONET_CLIENT_REPO:-https://github.com/midokura/python-midonetclient.git}
 MIDONET_CLIENT_BRANCH=${MIDONET_CLIENT_BRANCH:-master}
 MIDONET_CLIENT_DIR=${MIDONET_CLIENT_DIR:-$MIDONET_DIR/python-midonetclient}
-
-# MidoNet OpenStack repo
-MIDONET_OS_REPO=${MIDONET_OS_REPO:-https://github.com/midokura/midonet-openstack.git}
-MIDONET_OS_BRANCH=${MIDONET_OS_BRANCH:-master}
-MIDONET_OS_DIR=${MIDONET_OS_DIR:-$MIDONET_DIR/midonet-openstack}
-MIDONET_SETUP_SCRIPT=${MIDONET_SETUP_SCRIPT:-$MIDONET_OS_DIR/bin/setup_midonet_topology.py}
 
 # Save trace setting
 MY_XTRACE=$(set +o | grep xtrace)
@@ -33,19 +25,12 @@ function configure_midonet() {
 }
 
 function init_midonet() {
-
-    # Initialize DB.  Evaluate the output of setup_midonet_topology.py to set
-    # env variables for provider router ID.
-    eval `python $MIDONET_SETUP_SCRIPT $MIDONET_API_URL admin $ADMIN_PASSWORD admin provider_devices`
-    die_if_not_set $LINENO provider_router_id "Error running midonet setup script, provider_router_id was not set."
-
-    iniset /$Q_PLUGIN_CONF_FILE MIDONET provider_router_id $provider_router_id
+    :
 }
 
 function install_midonet() {
     git_clone $MIDONET_CLIENT_REPO $MIDONET_CLIENT_DIR $MIDONET_CLIENT_BRANCH
-    git_clone $MIDONET_OS_REPO $MIDONET_OS_DIR $MIDONET_OS_BRANCH
-    export PYTHONPATH=$MIDONET_CLIENT_DIR/src:$MIDONET_OS_DIR/src:$PYTHONPATH
+    export PYTHONPATH=$MIDONET_CLIENT_DIR/src:$PYTHONPATH
 }
 
 function start_midonet() {

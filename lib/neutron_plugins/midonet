@@ -1,6 +1,10 @@
 # Neutron MidoNet plugin
 # ----------------------
 
+MIDONET_DIR=${MIDONET_DIR:-$DEST/midonet}
+MIDONET_API_PORT=${MIDONET_API_PORT:-8080}
+MIDONET_API_URL=${MIDONET_API_URL:-http://localhost:$MIDONET_API_PORT/midonet-api}
+
 # Save trace setting
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
@@ -47,8 +51,8 @@ function neutron_plugin_configure_plugin_agent() {
 }
 
 function neutron_plugin_configure_service() {
-    if [[ "$MIDONET_API_URI" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE MIDONET midonet_uri $MIDONET_API_URI
+    if [[ "$MIDONET_API_URL" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE MIDONET midonet_uri $MIDONET_API_URL
     fi
     if [[ "$MIDONET_USERNAME" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE MIDONET username $MIDONET_USERNAME
@@ -58,9 +62,6 @@ function neutron_plugin_configure_service() {
     fi
     if [[ "$MIDONET_PROJECT_ID" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE MIDONET project_id $MIDONET_PROJECT_ID
-    fi
-    if [[ "$MIDONET_PROVIDER_ROUTER_ID" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE MIDONET provider_router_id $MIDONET_PROVIDER_ROUTER_ID
     fi
 
     Q_L3_ENABLED=True
