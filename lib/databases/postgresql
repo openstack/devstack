@@ -21,7 +21,7 @@ function cleanup_database_postgresql {
     stop_service postgresql
     if is_ubuntu; then
         # Get ruthless with mysql
-        sudo aptitude purge -y  ~npostgresql
+        apt_get purge -y postgresql*
         return
     elif is_fedora; then
         uninstall_package postgresql-server
