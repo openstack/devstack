@@ -110,11 +110,13 @@ def end_of_multiline(line, token):
     return False
 
 
-def check_files(files):
+def check_files(files, verbose):
     in_multiline = False
     logical_line = ""
     token = False
     for line in fileinput.input(files):
+        if verbose and fileinput.isfirstline():
+            print "Running bash8 on %s" % fileinput.filename()
         # NOTE(sdague): multiline processing of heredocs is interesting
         if not in_multiline:
             logical_line = line
@@ -141,13 +143,14 @@ def get_options():
     parser.add_argument('files', metavar='file', nargs='+',
                         help='files to scan for errors')
     parser.add_argument('-i', '--ignore', help='Rules to ignore')
+    parser.add_argument('-v', '--verbose', action='store_true', default=False)
     return parser.parse_args()
 
 
 def main():
     opts = get_options()
     register_ignores(opts.ignore)
-    check_files(opts.files)
+    check_files(opts.files, opts.verbose)
 
     if ERRORS > 0:
         print("%d bash8 error(s) found" % ERRORS)
