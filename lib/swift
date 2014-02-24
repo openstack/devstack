@@ -231,6 +231,46 @@ function _config_swift_apache_wsgi() {
     done
 }
 
+# This function generates an object/container/account configuration
+# emulating 4 nodes on different ports
+function generate_swift_config() {
+    local swift_node_config=$1
+    local node_id=$2
+    local bind_port=$3
+    local server_type=$4
+
+    log_facility=$[ node_id - 1 ]
+    node_path=${SWIFT_DATA_DIR}/${node_number}
+
+    iniuncomment ${swift_node_config} DEFAULT user
+    iniset ${swift_node_config} DEFAULT user ${STACK_USER}
+
+    iniuncomment ${swift_node_config} DEFAULT bind_port
+    iniset ${swift_node_config} DEFAULT bind_port ${bind_port}
+
+    iniuncomment ${swift_node_config} DEFAULT swift_dir
+    iniset ${swift_node_config} DEFAULT swift_dir ${SWIFT_CONF_DIR}
+
+    iniuncomment ${swift_node_config} DEFAULT devices
+    iniset ${swift_node_config} DEFAULT devices ${node_path}
+
+    iniuncomment ${swift_node_config} DEFAULT log_facility
+    iniset ${swift_node_config} DEFAULT log_facility LOG_LOCAL${log_facility}
+
+    iniuncomment ${swift_node_config} DEFAULT workers
+    iniset ${swift_node_config} DEFAULT workers 1
+
+    iniuncomment ${swift_node_config} DEFAULT disable_fallocate
+    iniset ${swift_node_config} DEFAULT disable_fallocate true
+
+    iniuncomment ${swift_node_config} DEFAULT mount_check
+    iniset ${swift_node_config} DEFAULT mount_check false
+
+    iniuncomment ${swift_node_config} ${server_type}-replicator vm_test_mode
+    iniset ${swift_node_config} ${server_type}-replicator vm_test_mode yes
+}
+
+
 # configure_swift() - Set config files, create data dirs and loop image
 function configure_swift() {
     local swift_pipeline="${SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH}"
@@ -363,45 +403,6 @@ EOF
 
     cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONF_DIR}/swift.conf
     iniset ${SWIFT_CONF_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
-
-    # This function generates an object/container/account configuration
-    # emulating 4 nodes on different ports
-    function generate_swift_config() {
-        local swift_node_config=$1
-        local node_id=$2
-        local bind_port=$3
-        local server_type=$4
-
-        log_facility=$[ node_id - 1 ]
-        node_path=${SWIFT_DATA_DIR}/${node_number}
-
-        iniuncomment ${swift_node_config} DEFAULT user
-        iniset ${swift_node_config} DEFAULT user ${STACK_USER}
-
-        iniuncomment ${swift_node_config} DEFAULT bind_port
-        iniset ${swift_node_config} DEFAULT bind_port ${bind_port}
-
-        iniuncomment ${swift_node_config} DEFAULT swift_dir
-        iniset ${swift_node_config} DEFAULT swift_dir ${SWIFT_CONF_DIR}
-
-        iniuncomment ${swift_node_config} DEFAULT devices
-        iniset ${swift_node_config} DEFAULT devices ${node_path}
-
-        iniuncomment ${swift_node_config} DEFAULT log_facility
-        iniset ${swift_node_config} DEFAULT log_facility LOG_LOCAL${log_facility}
-
-        iniuncomment ${swift_node_config} DEFAULT workers
-        iniset ${swift_node_config} DEFAULT workers 1
-
-        iniuncomment ${swift_node_config} DEFAULT disable_fallocate
-        iniset ${swift_node_config} DEFAULT disable_fallocate true
-
-        iniuncomment ${swift_node_config} DEFAULT mount_check
-        iniset ${swift_node_config} DEFAULT mount_check false
-
-        iniuncomment ${swift_node_config} ${server_type}-replicator vm_test_mode
-        iniset ${swift_node_config} ${server_type}-replicator vm_test_mode yes
-    }
 
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
         swift_node_config=${SWIFT_CONF_DIR}/object-server/${node_number}.conf
