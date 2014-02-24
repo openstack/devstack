@@ -87,11 +87,6 @@ function configure_tempest() {
     local boto_instance_type="m1.tiny"
     local ssh_connect_method="fixed"
 
-    if [[ ! -d $TEMPEST_CONFIG_DIR ]]; then
-        sudo mkdir -p $TEMPEST_CONFIG_DIR
-    fi
-    sudo chown $STACK_USER $TEMPEST_CONFIG_DIR
-
     # TODO(afazekas):
     # sudo python setup.py deploy
 
@@ -142,8 +137,12 @@ function configure_tempest() {
 
     # Create tempest.conf from tempest.conf.sample
     # copy every time, because the image UUIDS are going to change
-    sudo cp $TEMPEST_DIR/etc/tempest.conf.sample $TEMPEST_CONFIG
-    sudo chmod 644 $TEMPEST_CONFIG
+    if [[ ! -d $TEMPEST_CONFIG_DIR ]]; then
+        sudo mkdir -p $TEMPEST_CONFIG_DIR
+    fi
+    sudo chown $STACK_USER $TEMPEST_CONFIG_DIR
+    cp $TEMPEST_DIR/etc/tempest.conf.sample $TEMPEST_CONFIG
+    chmod 644 $TEMPEST_CONFIG
 
     password=${ADMIN_PASSWORD:-secrete}
 
