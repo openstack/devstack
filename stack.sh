@@ -530,9 +530,9 @@ if [[ -n "$LOGFILE" ]]; then
         # Redirect stdout/stderr to tee to write the log file
         exec 1> >( awk '
                 {
-                    cmd ="date +\"%Y-%m-%d %H:%M:%S \""
+                    cmd ="date +\"%Y-%m-%d %H:%M:%S.%3N | \""
                     cmd | getline now
-                    close("date +\"%Y-%m-%d %H:%M:%S \"")
+                    close("date +\"%Y-%m-%d %H:%M:%S.%3N | \"")
                     sub(/^/, now)
                     print
                     fflush()
