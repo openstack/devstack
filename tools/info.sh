@@ -122,13 +122,11 @@ while read line; do
             ver=${BASH_REMATCH[2]}
         else
             # Unhandled format in freeze file
-            #echo "unknown: $p"
             continue
         fi
         echo "pip|${p}|${ver}"
     else
         # No match in freeze file
-        #echo "unknown: $p"
         continue
     fi
 done <$FREEZE_FILE

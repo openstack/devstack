@@ -50,12 +50,12 @@ catalog.RegionOne.image.name = Image Service
 catalog.RegionOne.cloudformation.publicURL = http://%SERVICE_HOST%:8000/v1
 catalog.RegionOne.cloudformation.adminURL = http://%SERVICE_HOST%:8000/v1
 catalog.RegionOne.cloudformation.internalURL = http://%SERVICE_HOST%:8000/v1
-catalog.RegionOne.cloudformation.name = Heat CloudFormation Service
+catalog.RegionOne.cloudformation.name = CloudFormation service
 
 catalog.RegionOne.orchestration.publicURL = http://%SERVICE_HOST%:8004/v1/$(tenant_id)s
 catalog.RegionOne.orchestration.adminURL = http://%SERVICE_HOST%:8004/v1/$(tenant_id)s
 catalog.RegionOne.orchestration.internalURL = http://%SERVICE_HOST%:8004/v1/$(tenant_id)s
-catalog.RegionOne.orchestration.name = Heat Service
+catalog.RegionOne.orchestration.name = Orchestration Service
 
 catalog.RegionOne.metering.publicURL = http://%SERVICE_HOST%:8777/v1
 catalog.RegionOne.metering.adminURL = http://%SERVICE_HOST%:8777/v1
