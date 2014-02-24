@@ -863,42 +863,36 @@ fi
 init_service_check
 
 
-# Sysstat
+# Sysstat and friends
 # -------
 
 # If enabled, systat has to start early to track OpenStack service startup.
-if is_service_enabled sysstat; then
-    # what we want to measure
-    # -u : cpu statitics
-    # -q : load
-    # -b : io load rates
-    # -w : process creation and context switch rates
-    SYSSTAT_OPTS="-u -q -b -w"
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it sysstat "cd $TOP_DIR; ./tools/sar_filter.py $SYSSTAT_OPTS -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
-    else
-        screen_it sysstat "./tools/sar_filter.py $SYSSTAT_OPTS $SYSSTAT_INTERVAL"
-    fi
+# what we want to measure
+# -u : cpu statitics
+# -q : load
+# -b : io load rates
+# -w : process creation and context switch rates
+SYSSTAT_OPTS="-u -q -b -w"
+if [[ -n ${SCREEN_LOGDIR} ]]; then
+    screen_it sysstat "cd $TOP_DIR; ./tools/sar_filter.py $SYSSTAT_OPTS -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
+else
+    screen_it sysstat "./tools/sar_filter.py $SYSSTAT_OPTS $SYSSTAT_INTERVAL"
 fi
 
-if is_service_enabled dstat; then
-    # Per-process stats
-    DSTAT_OPTS="-tcndylp --top-cpu-adv"
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
-    else
-        screen_it dstat "dstat $DSTAT_OPTS"
-    fi
+# A better kind of sysstat, with the top process per time slice
+DSTAT_OPTS="-tcndylp --top-cpu-adv"
+if [[ -n ${SCREEN_LOGDIR} ]]; then
+    screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
+else
+    screen_it dstat "dstat $DSTAT_OPTS"
 fi
 
-if is_service_enabled pidstat; then
-    # Per-process stats
-    PIDSTAT_OPTS="-l -p ALL -T ALL"
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it pidstat "cd $TOP_DIR; pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL > $SCREEN_LOGDIR/$PIDSTAT_FILE"
-    else
-        screen_it pidstat "pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL"
-    fi
+# Per-process stats
+PIDSTAT_OPTS="-l -p ALL -T ALL"
+if [[ -n ${SCREEN_LOGDIR} ]]; then
+    screen_it pidstat "cd $TOP_DIR; pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL > $SCREEN_LOGDIR/$PIDSTAT_FILE"
+else
+    screen_it pidstat "pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL"
 fi
 
 
