@@ -26,4 +26,4 @@ fi
 
 echo "Running bash8..."
 
-./tools/bash8.py $FILES
+./tools/bash8.py -v $FILES
