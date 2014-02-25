@@ -135,6 +135,12 @@ function configure_savanna() {
         iniset $SAVANNA_CONF_FILE DEFAULT use_floating_ips true
     fi
 
+    if is_service_enabled heat; then
+        iniset $SAVANNA_CONF_FILE DEFAULT infrastructure_engine heat
+    else
+        iniset $SAVANNA_CONF_FILE DEFAULT infrastructure_engine savanna
+    fi
+
     iniset $SAVANNA_CONF_FILE DEFAULT use_syslog $SYSLOG
 
     recreate_database savanna utf8
