@@ -39,59 +39,76 @@ set +o xtrace
 # Append a new option in an ini file without replacing the old value
 # iniadd config-file section option value1 value2 value3 ...
 function iniadd() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local file=$1
     local section=$2
     local option=$3
     shift 3
     local values="$(iniget_multiline $file $section $option) $@"
     iniset_multiline $file $section $option $values
+    $xtrace
 }
 
 # Comment an option in an INI file
 # inicomment config-file section option
 function inicomment() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local file=$1
     local section=$2
     local option=$3
     sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
+    $xtrace
 }
 
 # Get an option from an INI file
 # iniget config-file section option
 function iniget() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local file=$1
     local section=$2
     local option=$3
     local line
     line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
     echo ${line#*=}
+    $xtrace
 }
 
 # Get a multiple line option from an INI file
 # iniget_multiline config-file section option
 function iniget_multiline() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local file=$1
     local section=$2
     local option=$3
     local values
     values=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { s/^$option[ \t]*=[ \t]*//gp; }" "$file")
     echo ${values}
+    $xtrace
 }
 
 # Determinate is the given option present in the INI file
 # ini_has_option config-file section option
 function ini_has_option() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local file=$1
     local section=$2
     local option=$3
     local line
     line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
+    $xtrace
     [ -n "$line" ]
 }
 
 # Set an option in an INI file
 # iniset config-file section option value
 function iniset() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local file=$1
     local section=$2
     local option=$3
@@ -113,11 +130,14 @@ $option = $value
         # Replace it
         sed -i -e '/^\['${section}'\]/,/^\[.*\]/ s'${sep}'^\('${option}'[ \t]*=[ \t]*\).*$'${sep}'\1'"${value}"${sep} "$file"
     fi
+    $xtrace
 }
 
 # Set a multiple line option in an INI file
 # iniset_multiline config-file section option value1 value2 valu3 ...
 function iniset_multiline() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local file=$1
     local section=$2
     local option=$3
@@ -142,15 +162,19 @@ function iniset_multiline() {
 $option = $v
 " "$file"
     done
+    $xtrace
 }
 
 # Uncomment an option in an INI file
 # iniuncomment config-file section option
 function iniuncomment() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local file=$1
     local section=$2
     local option=$3
     sed -i -e "/^\[$section\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" "$file"
+    $xtrace
 }
 
 # Normalize config values to True or False
@@ -158,6 +182,8 @@ function iniuncomment() {
 # Accepts as True: 1 yes Yes YES true True TRUE
 # VAR=$(trueorfalse default-value test-value)
 function trueorfalse() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local default=$1
     local testval=$2
 
@@ -165,6 +191,7 @@ function trueorfalse() {
     [[ "0 no No NO false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
     [[ "1 yes Yes YES true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
     echo "$default"
+    $xtrace
 }
 
 
@@ -675,9 +702,14 @@ function _get_package_dir() {
 # Uses globals ``OFFLINE``, ``*_proxy``
 # apt_get operation package [package ...]
 function apt_get() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
+
+    $xtrace
     $sudo DEBIAN_FRONTEND=noninteractive \
         http_proxy=$http_proxy https_proxy=$https_proxy \
         no_proxy=$no_proxy \
@@ -695,6 +727,8 @@ function apt_get() {
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
 function get_packages() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local services=$@
     local package_dir=$(_get_package_dir)
     local file_to_parse
@@ -706,6 +740,7 @@ function get_packages() {
     fi
     if [[ -z "$DISTRO" ]]; then
         GetDistro
+        echo "Found Distro $DISTRO"
     fi
     for service in ${services//,/ }; do
         # Allow individual services to specify dependencies
@@ -797,23 +832,30 @@ function get_packages() {
         done
         IFS=$OIFS
     done
+    $xtrace
 }
 
 # Distro-agnostic package installer
 # install_package package [package ...]
 function install_package() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     if is_ubuntu; then
         # if there are transient errors pulling the updates, that's fine. It may
         # be secondary repositories that we don't really care about.
         [[ "$NO_UPDATE_REPOS" = "True" ]] || apt_get update || /bin/true
         NO_UPDATE_REPOS=True
 
+        $xtrace
         apt_get install "$@"
     elif is_fedora; then
+        $xtrace
         yum_install "$@"
     elif is_suse; then
+        $xtrace
         zypper_install "$@"
     else
+        $xtrace
         exit_distro_not_supported "installing packages"
     fi
 }
@@ -1092,7 +1134,13 @@ function get_python_exec_prefix() {
 # ``TRACK_DEPENDS``, ``*_proxy``
 # pip_install package [package ...]
 function pip_install {
-    [[ "$OFFLINE" = "True" || -z "$@" ]] && return
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    if [[ "$OFFLINE" = "True" || -z "$@" ]]; then
+        $xtrace
+        return
+    fi
+
     if [[ -z "$os_PACKAGE" ]]; then
         GetOSVersion
     fi
@@ -1121,6 +1169,7 @@ function pip_install {
     # this problem. See https://github.com/pypa/pip/issues/709
     local pip_build_tmp=$(mktemp --tmpdir -d pip-build.XXXXX)
 
+    $xtrace
     $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
@@ -1235,32 +1284,36 @@ function enable_service() {
 # Uses global ``ENABLED_SERVICES``
 # is_service_enabled service [service ...]
 function is_service_enabled() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local enabled=1
     services=$@
     for service in ${services}; do
-        [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
+        [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && enabled=0
 
         # Look for top-level 'enabled' function for this service
         if type is_${service}_enabled >/dev/null 2>&1; then
             # A function exists for this service, use it
             is_${service}_enabled
-            return $?
+            enabled=$?
         fi
 
         # TODO(dtroyer): Remove these legacy special-cases after the is_XXX_enabled()
         #                are implemented
 
-        [[ ${service} == n-cell-* && ${ENABLED_SERVICES} =~ "n-cell" ]] && return 0
-        [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && return 0
-        [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0
-        [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && return 0
-        [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && return 0
-        [[ ${service} == "ironic" && ${ENABLED_SERVICES} =~ "ir-" ]] && return 0
-        [[ ${service} == "neutron" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
-        [[ ${service} == "trove" && ${ENABLED_SERVICES} =~ "tr-" ]] && return 0
-        [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && return 0
-        [[ ${service} == s-* && ${ENABLED_SERVICES} =~ "swift" ]] && return 0
+        [[ ${service} == n-cell-* && ${ENABLED_SERVICES} =~ "n-cell" ]] && enabled=0
+        [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && enabled=0
+        [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && enabled=0
+        [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && enabled=0
+        [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && enabled=0
+        [[ ${service} == "ironic" && ${ENABLED_SERVICES} =~ "ir-" ]] && enabled=0
+        [[ ${service} == "neutron" && ${ENABLED_SERVICES} =~ "q-" ]] && enabled=0
+        [[ ${service} == "trove" && ${ENABLED_SERVICES} =~ "tr-" ]] && enabled=0
+        [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && enabled=0
+        [[ ${service} == s-* && ${ENABLED_SERVICES} =~ "swift" ]] && enabled=0
     done
-    return 1
+    $xtrace
+    return $enabled
 }
 
 # Toggle enable/disable_service for services that must run exclusive of each other
@@ -1286,6 +1339,8 @@ function use_exclusive_service {
 # Only run the command if the target file (the last arg) is not on an
 # NFS filesystem.
 function _safe_permission_operation() {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
     local args=( $@ )
     local last
     local sudo_cmd
@@ -1299,6 +1354,7 @@ function _safe_permission_operation() {
     fi
 
     if is_nfs_directory "$dir_to_check" ; then
+        $xtrace
         return 0
     fi
 
@@ -1308,6 +1364,7 @@ function _safe_permission_operation() {
         sudo_cmd="sudo"
     fi
 
+    $xtrace
     $sudo_cmd $@
 }
 

@@ -529,6 +529,7 @@ if [[ -n "$LOGFILE" ]]; then
     if [[ "$VERBOSE" == "True" ]]; then
         # Redirect stdout/stderr to tee to write the log file
         exec 1> >( awk '
+                /((set \+o$)|xtrace)/ { next }
                 {
                     cmd ="date +\"%Y-%m-%d %H:%M:%S.%3N | \""
                     cmd | getline now
