@@ -67,7 +67,7 @@ function cleanup_rpc_backend {
         sudo killall epmd || sudo killall -9 epmd
         if is_ubuntu; then
             # And the Erlang runtime too
-            sudo aptitude purge -y ~nerlang
+            apt_get purge -y erlang*
         fi
     elif is_service_enabled qpid; then
         if is_fedora; then
