@@ -21,7 +21,7 @@ function cleanup_database_mysql {
     if is_ubuntu; then
         # Get ruthless with mysql
         stop_service $MYSQL
-        sudo aptitude purge -y ~nmysql-server
+        apt_get purge -y mysql*
         sudo rm -rf /var/lib/mysql
         return
     elif is_fedora; then
