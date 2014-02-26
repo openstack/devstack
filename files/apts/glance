@@ -1,5 +1,5 @@
 gcc
-libffi-dev          # testonly
+libffi-dev
 libmysqlclient-dev  # testonly
 libpq-dev           # testonly
 libssl-dev          # testonly
