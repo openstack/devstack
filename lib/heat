@@ -214,7 +214,7 @@ function create_heat_accounts() {
         --description "Manages users and projects created by heat"
     openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
         --os-identity-api-version=3 role add \
-        --user ${U_ID} --domain ${D_ID} admin
+        --user heat_domain_admin --domain ${D_ID} admin
     iniset $HEAT_CONF DEFAULT stack_domain_admin heat_domain_admin
     iniset $HEAT_CONF DEFAULT stack_domain_admin_password $SERVICE_PASSWORD
 }
