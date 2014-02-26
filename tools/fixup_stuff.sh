@@ -98,10 +98,6 @@ if [[ $DISTRO =~ (rhel6) ]]; then
         sudo setenforce 0
     fi
 
-    # make sure we have the "optional" repo enabled; it provides some
-    # packages like libffi-devel for example
-    sudo yum-config-manager --enable rhel-6-server-optional-rpms
-
     # If the ``dbus`` package was installed by DevStack dependencies the
     # uuid may not be generated because the service was never started (PR#598200),
     # causing Nova to stop later on complaining that ``/var/lib/dbus/machine-id``

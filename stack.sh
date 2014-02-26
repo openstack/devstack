@@ -194,6 +194,10 @@ if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
         yum_install ${RHEL6_EPEL_RPM} || \
             die $LINENO "Error installing EPEL repo, cannot continue"
     fi
+
+    # ... and also optional to be enabled
+    sudo yum-config-manager --enable rhel-6-server-optional-rpms
+
 fi
 
 
