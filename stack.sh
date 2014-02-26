@@ -294,14 +294,8 @@ SYSLOG=`trueorfalse False $SYSLOG`
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
 SYSLOG_PORT=${SYSLOG_PORT:-516}
 
-# Enable sysstat logging
-SYSSTAT_FILE=${SYSSTAT_FILE:-"sysstat.dat"}
-SYSSTAT_INTERVAL=${SYSSTAT_INTERVAL:-"1"}
-
+# for DSTAT logging
 DSTAT_FILE=${DSTAT_FILE:-"dstat.txt"}
-
-PIDSTAT_FILE=${PIDSTAT_FILE:-"pidstat.txt"}
-PIDSTAT_INTERVAL=${PIDSTAT_INTERVAL:-"5"}
 
 # Use color for logging output (only available if syslog is not used)
 LOG_COLOR=`trueorfalse True $LOG_COLOR`
@@ -863,22 +857,8 @@ fi
 # Initialize the directory for service status check
 init_service_check
 
-
-# Sysstat and friends
+# Dstat
 # -------
-
-# If enabled, systat has to start early to track OpenStack service startup.
-# what we want to measure
-# -u : cpu statitics
-# -q : load
-# -b : io load rates
-# -w : process creation and context switch rates
-SYSSTAT_OPTS="-u -q -b -w"
-if [[ -n ${SCREEN_LOGDIR} ]]; then
-    screen_it sysstat "cd $TOP_DIR; ./tools/sar_filter.py $SYSSTAT_OPTS -o $SCREEN_LOGDIR/$SYSSTAT_FILE $SYSSTAT_INTERVAL"
-else
-    screen_it sysstat "./tools/sar_filter.py $SYSSTAT_OPTS $SYSSTAT_INTERVAL"
-fi
 
 # A better kind of sysstat, with the top process per time slice
 DSTAT_OPTS="-tcndylp --top-cpu-adv"
@@ -887,15 +867,6 @@ if [[ -n ${SCREEN_LOGDIR} ]]; then
 else
     screen_it dstat "dstat $DSTAT_OPTS"
 fi
-
-# Per-process stats
-PIDSTAT_OPTS="-l -p ALL -T ALL"
-if [[ -n ${SCREEN_LOGDIR} ]]; then
-    screen_it pidstat "cd $TOP_DIR; pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL > $SCREEN_LOGDIR/$PIDSTAT_FILE"
-else
-    screen_it pidstat "pidstat $PIDSTAT_OPTS $PIDSTAT_INTERVAL"
-fi
-
 
 # Start Services
 # ==============
