@@ -181,7 +181,7 @@ if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
     # Installing Open vSwitch on RHEL6 requires enabling the RDO repo.
     RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack-havana/rdo-release-havana.rpm"}
     RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-havana"}
-    if ! yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
+    if ! sudo yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
         echo "RDO repo not detected; installing"
         yum_install $RHEL6_RDO_REPO_RPM || \
             die $LINENO "Error installing RDO repo, cannot continue"
@@ -189,7 +189,7 @@ if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
 
     # RHEL6 requires EPEL for many Open Stack dependencies
     RHEL6_EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
-    if ! yum repolist enabled epel | grep -q 'epel'; then
+    if ! sudo yum repolist enabled epel | grep -q 'epel'; then
         echo "EPEL not detected; installing"
         yum_install ${RHEL6_EPEL_RPM} || \
             die $LINENO "Error installing EPEL repo, cannot continue"
