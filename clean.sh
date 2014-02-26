@@ -119,4 +119,10 @@ if [[ -n "$SCREEN_LOGDIR" ]] && [[ -d "$SCREEN_LOGDIR" ]]; then
 fi
 
 # Clean up files
-rm -f $TOP_DIR/.stackenv
+
+FILES_TO_CLEAN=".localrc.auto docs-files docs/ shocco/ stack-screenrc test*.conf* test.ini*"
+FILES_TO_CLEAN+=".stackenv .prereqs"
+
+for file in FILES_TO_CLEAN; do
+    rm -f $TOP_DIR/$file
+done
