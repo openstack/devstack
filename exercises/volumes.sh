@@ -27,11 +27,12 @@ TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 # Import common functions
 source $TOP_DIR/functions
 
-# Import project functions
-source $TOP_DIR/lib/cinder
-
 # Import configuration
 source $TOP_DIR/openrc
+
+# Import project functions
+source $TOP_DIR/lib/cinder
+source $TOP_DIR/lib/neutron
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc
