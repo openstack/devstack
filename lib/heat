@@ -207,6 +207,16 @@ function create_heat_accounts() {
         --description "Owns users and projects created by heat" \
         | grep ' id ' | get_field 2)
     iniset $HEAT_CONF DEFAULT stack_user_domain ${D_ID}
+
+    openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+        --os-identity-api-version=3 user create --password $SERVICE_PASSWORD \
+        --domain $D_ID heat_domain_admin \
+        --description "Manages users and projects created by heat"
+    openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+        --os-identity-api-version=3 role add \
+        --user ${U_ID} --domain ${D_ID} admin
+    iniset $HEAT_CONF DEFAULT stack_domain_admin heat_domain_admin
+    iniset $HEAT_CONF DEFAULT stack_domain_admin_password $SERVICE_PASSWORD
 }
 
 # Restore xtrace
