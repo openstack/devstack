@@ -44,60 +44,6 @@ function cleanup_tmp {
 }
 
 
-# ``pip install -e`` the package, which processes the dependencies
-# using pip before running `setup.py develop`
-#
-# Updates the dependencies in project_dir from the
-# openstack/requirements global list before installing anything.
-#
-# Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``, ``UNDO_REQUIREMENTS``
-# setup_develop directory
-function setup_develop() {
-    local project_dir=$1
-
-    echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
-
-    # Don't update repo if local changes exist
-    # Don't use buggy "git diff --quiet"
-    (cd $project_dir && git diff --exit-code >/dev/null)
-    local update_requirements=$?
-
-    if [ $update_requirements -eq 0 ]; then
-        (cd $REQUIREMENTS_DIR; \
-            $SUDO_CMD python update.py $project_dir)
-    fi
-
-    setup_develop_no_requirements_update $project_dir
-
-    # We've just gone and possibly modified the user's source tree in an
-    # automated way, which is considered bad form if it's a development
-    # tree because we've screwed up their next git checkin. So undo it.
-    #
-    # However... there are some circumstances, like running in the gate
-    # where we really really want the overridden version to stick. So provide
-    # a variable that tells us whether or not we should UNDO the requirements
-    # changes (this will be set to False in the OpenStack ci gate)
-    if [ $UNDO_REQUIREMENTS = "True" ]; then
-        if [ $update_requirements -eq 0 ]; then
-            (cd $project_dir && git reset --hard)
-        fi
-    fi
-}
-
-
-# ``pip install -e`` the package, which processes the dependencies
-# using pip before running `setup.py develop`
-# Uses globals ``STACK_USER``
-# setup_develop_no_requirements_update directory
-function setup_develop_no_requirements_update() {
-    local project_dir=$1
-
-    pip_install -e $project_dir
-    # ensure that further actions can do things like setup.py sdist
-    safe_chown -R $STACK_USER $1/*.egg-info
-}
-
-
 # Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:
 #
