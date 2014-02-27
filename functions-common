@@ -1125,7 +1125,8 @@ function service_check() {
     fi
 
     # Check if there is any falure flag file under $SERVICE_DIR/$SCREEN_NAME
-    failures=`ls "$SERVICE_DIR/$SCREEN_NAME"/*.failure 2>/dev/null`
+    # make this -o errexit safe
+    failures=`ls "$SERVICE_DIR/$SCREEN_NAME"/*.failure 2>/dev/null || /bin/true`
 
     for service in $failures; do
         service=`basename $service`
