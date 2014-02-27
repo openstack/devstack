@@ -80,6 +80,17 @@ fi
 # (currently only implemented for MySQL backend)
 DATABASE_QUERY_LOGGING=$(trueorfalse True $DATABASE_QUERY_LOGGING)
 
+# Set a timeout for git operations.  If git is still running when the
+# timeout expires, the command will be retried up to 3 times.  This is
+# in the format for timeout(1);
+#
+#  DURATION is a floating point number with an optional suffix: 's'
+#  for seconds (the default), 'm' for minutes, 'h' for hours or 'd'
+#  for days.
+#
+# Zero disables timeouts
+GIT_TIMEOUT=${GIT_TIMEOUT:-0}
+
 # Repositories
 # ------------
 
