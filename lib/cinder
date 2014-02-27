@@ -496,8 +496,12 @@ function start_cinder() {
             sudo stop tgt || true
             sudo start tgt
         elif is_fedora; then
-            # bypass redirection to systemctl during restart
-            sudo /sbin/service --skip-redirect tgtd restart
+            if [[ $DISTRO =~ (rhel6) ]]; then
+                sudo /sbin/service tgtd restart
+            else
+                # bypass redirection to systemctl during restart
+                sudo /sbin/service --skip-redirect tgtd restart
+            fi
         elif is_suse; then
             restart_service tgtd
         else
