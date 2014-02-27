@@ -63,6 +63,9 @@ TEMPEST_VOLUME_DRIVER=${TEMPEST_VOLUME_DRIVER:-default}
 TEMPEST_VOLUME_VENDOR=${TEMPEST_VOLUME_VENDOR:-"Open Source"}
 TEMPEST_STORAGE_PROTOCOL=${TEMPEST_STORAGE_PROTOCOL:-iSCSI}
 
+# Neutron/Network variables
+IPV6_ENABLED=$(trueorfalse True $IPV6_ENABLED)
+
 # Functions
 # ---------
 
@@ -284,11 +287,13 @@ function configure_tempest() {
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" password "$password" # DEPRECATED
 
+    # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
     iniset $TEMPEST_CONFIG network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONFIG network public_network_id "$public_network_id"
     iniset $TEMPEST_CONFIG network public_router_id "$public_router_id"
     iniset $TEMPEST_CONFIG network default_network "$FIXED_RANGE"
+    iniset $TEMPEST_CONFIG network ipv6_enabled "$IPV6_ENABLED"
 
     # boto
     iniset $TEMPEST_CONFIG boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"

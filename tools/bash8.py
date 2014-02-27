@@ -25,6 +25,7 @@
 # - E001: check that lines do not end with trailing whitespace
 # - E002: ensure that indents are only spaces, and not hard tabs
 # - E003: ensure all indents are a multiple of 4 spaces
+# - E004: file did not end with a newline
 #
 # Structure errors
 #
@@ -34,6 +35,7 @@
 #
 # - E010: *do* not on the same line as *for*
 # - E011: *then* not on the same line as *if*
+# - E012: heredoc didn't end before EOF
 
 import argparse
 import fileinput
@@ -54,11 +56,16 @@ def should_ignore(error):
     return IGNORE and re.search(IGNORE, error)
 
 
-def print_error(error, line):
+def print_error(error, line,
+                filename=None, filelineno=None):
+    if not filename:
+        filename = fileinput.filename()
+    if not filelineno:
+        filelineno = fileinput.filelineno()
     global ERRORS
     ERRORS = ERRORS + 1
     print("%s: '%s'" % (error, line.rstrip('\n')))
-    print(" - %s: L%s" % (fileinput.filename(), fileinput.filelineno()))
+    print(" - %s: L%s" % (filename, filelineno))
 
 
 def not_continuation(line):
@@ -112,17 +119,44 @@ def end_of_multiline(line, token):
 
 def check_files(files, verbose):
     in_multiline = False
+    multiline_start = 0
+    multiline_line = ""
     logical_line = ""
     token = False
+    prev_file = None
+    prev_line = ""
+    prev_lineno = 0
+
     for line in fileinput.input(files):
-        if verbose and fileinput.isfirstline():
-            print "Running bash8 on %s" % fileinput.filename()
+        if fileinput.isfirstline():
+            # if in_multiline when the new file starts then we didn't
+            # find the end of a heredoc in the last file.
+            if in_multiline:
+                print_error('E012: heredoc did not end before EOF',
+                            multiline_line,
+                            filename=prev_file, filelineno=multiline_start)
+                in_multiline = False
+
+            # last line of a previous file should always end with a
+            # newline
+            if prev_file and not prev_line.endswith('\n'):
+                print_error('E004: file did not end with a newline',
+                            prev_line,
+                            filename=prev_file, filelineno=prev_lineno)
+
+            prev_file = fileinput.filename()
+
+            if verbose:
+                print "Running bash8 on %s" % fileinput.filename()
+
         # NOTE(sdague): multiline processing of heredocs is interesting
         if not in_multiline:
             logical_line = line
             token = starts_multiline(line)
             if token:
                 in_multiline = True
+                multiline_start = fileinput.filelineno()
+                multiline_line = line
                 continue
         else:
             logical_line = logical_line + line
@@ -136,6 +170,8 @@ def check_files(files, verbose):
         check_for_do(logical_line)
         check_if_then(logical_line)
 
+        prev_line = logical_line
+        prev_lineno = fileinput.filelineno()
 
 def get_options():
     parser = argparse.ArgumentParser(

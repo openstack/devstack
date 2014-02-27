@@ -181,7 +181,7 @@ if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
     # Installing Open vSwitch on RHEL6 requires enabling the RDO repo.
     RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack-havana/rdo-release-havana.rpm"}
     RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-havana"}
-    if ! yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
+    if ! sudo yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
         echo "RDO repo not detected; installing"
         yum_install $RHEL6_RDO_REPO_RPM || \
             die $LINENO "Error installing RDO repo, cannot continue"
@@ -189,7 +189,7 @@ if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
 
     # RHEL6 requires EPEL for many Open Stack dependencies
     RHEL6_EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
-    if ! yum repolist enabled epel | grep -q 'epel'; then
+    if ! sudo yum repolist enabled epel | grep -q 'epel'; then
         echo "EPEL not detected; installing"
         yum_install ${RHEL6_EPEL_RPM} || \
             die $LINENO "Error installing EPEL repo, cannot continue"
@@ -526,7 +526,7 @@ if [[ -n "$LOGFILE" ]]; then
     exec 3>&1
     if [[ "$VERBOSE" == "True" ]]; then
         # Redirect stdout/stderr to tee to write the log file
-        exec 1> >( awk '
+        exec 1> >( awk -v logfile=${LOGFILE} '
                 /((set \+o$)|xtrace)/ { next }
                 {
                     cmd ="date +\"%Y-%m-%d %H:%M:%S.%3N | \""
@@ -534,8 +534,9 @@ if [[ -n "$LOGFILE" ]]; then
                     close("date +\"%Y-%m-%d %H:%M:%S.%3N | \"")
                     sub(/^/, now)
                     print
-                    fflush()
-                }' | tee "${LOGFILE}" ) 2>&1
+                    print > logfile
+                    fflush("")
+                }' ) 2>&1
         # Set up a second fd for output
         exec 6> >( tee "${SUMFILE}" )
     else
@@ -583,21 +584,24 @@ fi
 # -----------------------
 
 # Kill background processes on exit
-trap clean EXIT
-clean() {
+trap exit_trap EXIT
+function exit_trap {
     local r=$?
-    kill >/dev/null 2>&1 $(jobs -p)
+    echo "exit_trap called, cleaning up child processes"
+    kill 2>&1 $(jobs -p)
     exit $r
 }
 
-
 # Exit on any errors so that errors don't compound
-trap failed ERR
-failed() {
+trap err_trap ERR
+function err_trap {
     local r=$?
-    kill >/dev/null 2>&1 $(jobs -p)
     set +o xtrace
-    [ -n "$LOGFILE" ] && echo "${0##*/} failed: full log in $LOGFILE"
+    if [[ -n "$LOGFILE" ]]; then
+        echo "${0##*/} failed: full log in $LOGFILE"
+    else
+        echo "${0##*/} failed"
+    fi
     exit $r
 }
 
