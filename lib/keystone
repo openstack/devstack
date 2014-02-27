@@ -70,6 +70,8 @@ KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
 KEYSTONE_SERVICE_PORT_INT=${KEYSTONE_SERVICE_PORT_INT:-5001}
 KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
+# Bind hosts
+KEYSTONE_ADMIN_BIND_HOST=${KEYSTONE_ADMIN_BIND_HOST:-$KEYSTONE_SERVICE_HOST}
 # Set the tenant for service accounts in Keystone
 SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}
 
@@ -178,7 +180,7 @@ function configure_keystone() {
     # Set the URL advertised in the ``versions`` structure returned by the '/' route
     iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(public_port)s/"
     iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(admin_port)s/"
-    iniset $KEYSTONE_CONF DEFAULT admin_bind_host "$KEYSTONE_SERVICE_HOST"
+    iniset $KEYSTONE_CONF DEFAULT admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
 
     # Register SSL certificates if provided
     if is_ssl_enabled_service key; then
