@@ -15,6 +15,7 @@
 # - Process Functions
 # - Python Functions
 # - Service Functions
+# - System Functions
 #
 # The following variables are assumed to be defined by certain functions:
 #
@@ -1419,8 +1420,8 @@ function use_exclusive_service {
 }
 
 
-# System Function
-# ===============
+# System Functions
+# ================
 
 # Only run the command if the target file (the last arg) is not on an
 # NFS filesystem.
