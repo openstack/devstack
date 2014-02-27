@@ -140,10 +140,12 @@ function install_nova_hypervisor() {
         install_package kvm
         install_package libvirt-bin
         install_package python-libvirt
+        install_package python-guestfs
     elif is_fedora || is_suse; then
         install_package kvm
         install_package libvirt
         install_package libvirt-python
+        install_package python-libguestfs
     fi
 
     # Install and configure **LXC** if specified.  LXC is another approach to
