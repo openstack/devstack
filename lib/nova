@@ -374,15 +374,17 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
     iniset $NOVA_CONF DEFAULT osapi_compute_extension "nova.api.openstack.compute.contrib.standard_extensions"
     iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
-    iniset $NOVA_CONF DEFAULT osapi_compute_workers "4"
-    iniset $NOVA_CONF DEFAULT ec2_workers "4"
-    iniset $NOVA_CONF DEFAULT metadata_workers "4"
-    iniset $NOVA_CONF conductor workers "4"
+    iniset $NOVA_CONF DEFAULT osapi_compute_workers "2"
+    iniset $NOVA_CONF DEFAULT ec2_workers "1"
+    iniset $NOVA_CONF DEFAULT metadata_workers "2"
+    iniset $NOVA_CONF conductor workers "2"
     iniset $NOVA_CONF DEFAULT sql_connection `database_connection_url nova`
     iniset $NOVA_CONF DEFAULT fatal_deprecations "True"
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
     iniset $NOVA_CONF DEFAULT metadata_listen "0.0.0.0" 
+    iniset $NOVA_CONF DEFAULT libvirt_inject_password "True" 
+    iniset $NOVA_CONF DEFAULT libvirt_inject_key "True" 
 
     if is_fedora; then
         # nova defaults to /usr/local/bin, but fedora pip likes to
