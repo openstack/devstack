@@ -587,8 +587,11 @@ fi
 trap exit_trap EXIT
 function exit_trap {
     local r=$?
-    echo "exit_trap called, cleaning up child processes"
-    kill 2>&1 $(jobs -p)
+    jobs=$(jobs -p)
+    if [[ -n $jobs ]]; then
+        echo "exit_trap: cleaning up child processes"
+        kill 2>&1 $jobs
+    fi
     exit $r
 }
 
