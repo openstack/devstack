@@ -6,10 +6,6 @@
 # - ``ENABLED_SERVICES``
 # - ``FILES``
 # - ``GLANCE_HOSTPORT``
-# - ``REQUIREMENTS_DIR``
-# - ``STACK_USER``
-# - ``TRACK_DEPENDS``
-# - ``UNDO_REQUIREMENTS``
 #
 
 # Include the common functions
