@@ -51,7 +51,7 @@ function cleanup_tmp {
 # - ``GLANCE_HOSTPORT``
 #
 # upload_image image-url glance-token
-function upload_image() {
+function upload_image {
     local image_url=$1
     local token=$2
 
@@ -341,7 +341,7 @@ function use_database {
 
 # Wait for an HTTP server to start answering requests
 # wait_for_service timeout url
-function wait_for_service() {
+function wait_for_service {
     local timeout=$1
     local url=$2
     timeout $timeout sh -c "while ! curl --noproxy '*' -s $url >/dev/null; do sleep 1; done"
@@ -351,7 +351,7 @@ function wait_for_service() {
 # ping check
 # Uses globals ``ENABLED_SERVICES``
 # ping_check from-net ip boot-timeout expected
-function ping_check() {
+function ping_check {
     if is_service_enabled neutron; then
         _ping_check_neutron  "$1" $2 $3 $4
         return
@@ -361,7 +361,7 @@ function ping_check() {
 
 # ping check for nova
 # Uses globals ``MULTI_HOST``, ``PRIVATE_NETWORK``
-function _ping_check_novanet() {
+function _ping_check_novanet {
     local from_net=$1
     local ip=$2
     local boot_timeout=$3
@@ -386,7 +386,7 @@ function _ping_check_novanet() {
 }
 
 # Get ip of instance
-function get_instance_ip(){
+function get_instance_ip {
     local vm_id=$1
     local network_name=$2
     local nova_result="$(nova show $vm_id)"
@@ -401,7 +401,7 @@ function get_instance_ip(){
 # ssh check
 
 # ssh_check net-name key-file floating-ip default-user active-timeout
-function ssh_check() {
+function ssh_check {
     if is_service_enabled neutron; then
         _ssh_check_neutron  "$1" $2 $3 $4 $5
         return
@@ -409,7 +409,7 @@ function ssh_check() {
     _ssh_check_novanet "$1" $2 $3 $4 $5
 }
 
-function _ssh_check_novanet() {
+function _ssh_check_novanet {
     local NET_NAME=$1
     local KEY_FILE=$2
     local FLOATING_IP=$3
@@ -425,7 +425,7 @@ function _ssh_check_novanet() {
 # Get the location of the $module-rootwrap executables, where module is cinder
 # or nova.
 # get_rootwrap_location module
-function get_rootwrap_location() {
+function get_rootwrap_location {
     local module=$1
 
     echo "$(get_python_exec_prefix)/$module-rootwrap"
@@ -434,7 +434,7 @@ function get_rootwrap_location() {
 
 # Path permissions sanity check
 # check_path_perm_sanity path
-function check_path_perm_sanity() {
+function check_path_perm_sanity {
     # Ensure no element of the path has 0700 permissions, which is very
     # likely to cause issues for daemons.  Inspired by default 0700
     # homedir permissions on RHEL and common practice of making DEST in
@@ -505,7 +505,7 @@ function _vercmp_r {
 # The above will return "0", as the versions are equal.
 #
 # vercmp_numbers ver1 ver2
-vercmp_numbers() {
+function vercmp_numbers {
     typeset v1=$1 v2=$2 sep
     typeset -a ver1 ver2
 
@@ -523,7 +523,7 @@ vercmp_numbers() {
 # Defaults are respectively 'project_name' and 'user_name'
 #
 # setup_colorized_logging something.conf SOMESECTION
-function setup_colorized_logging() {
+function setup_colorized_logging {
     local conf_file=$1
     local conf_section=$2
     local project_var=${3:-"project_name"}

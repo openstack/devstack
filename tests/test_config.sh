@@ -12,7 +12,7 @@ source $TOP/lib/config
 
 # check_result() tests and reports the result values
 # check_result "actual" "expected"
-function check_result() {
+function check_result {
     local actual=$1
     local expected=$2
     if [[ "$actual" == "$expected" ]]; then
@@ -26,7 +26,7 @@ TEST_1C_ADD="[eee]
 type=new
 multi = foo2"
 
-function create_test1c() {
+function create_test1c {
     cat >test1c.conf <<EOF
 [eee]
 # original comment
@@ -34,7 +34,7 @@ type=original
 EOF
 }
 
-function create_test2a() {
+function create_test2a {
     cat >test2a.conf <<EOF
 [ddd]
 # original comment

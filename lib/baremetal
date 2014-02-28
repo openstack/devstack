@@ -166,7 +166,7 @@ BM_SHELL_IN_A_BOX=${BM_SHELL_IN_A_BOX:-http://shellinabox.googlecode.com/files/s
 # Check if baremetal is properly enabled
 # Returns false if VIRT_DRIVER is not baremetal, or if ENABLED_SERVICES
 # does not contain "baremetal"
-function is_baremetal() {
+function is_baremetal {
     if [[ "$ENABLED_SERVICES" =~ 'baremetal' && "$VIRT_DRIVER" = 'baremetal' ]]; then
         return 0
     fi
@@ -175,7 +175,7 @@ function is_baremetal() {
 
 # Install diskimage-builder and shell-in-a-box
 # so that we can build the deployment kernel & ramdisk
-function prepare_baremetal_toolchain() {
+function prepare_baremetal_toolchain {
     git_clone $BM_IMAGE_BUILD_REPO $BM_IMAGE_BUILD_DIR $BM_IMAGE_BUILD_BRANCH
     git_clone $BM_POSEUR_REPO $BM_POSEUR_DIR $BM_POSEUR_BRANCH
 
@@ -197,7 +197,7 @@ function prepare_baremetal_toolchain() {
 }
 
 # set up virtualized environment for devstack-gate testing
-function create_fake_baremetal_env() {
+function create_fake_baremetal_env {
     local bm_poseur="$BM_POSEUR_DIR/bm_poseur"
     # TODO(deva): add support for >1 VM
     sudo $bm_poseur $BM_POSEUR_EXTRA_OPTS create-bridge
@@ -211,14 +211,14 @@ function create_fake_baremetal_env() {
     BM_SECOND_MAC='12:34:56:78:90:12'
 }
 
-function cleanup_fake_baremetal_env() {
+function cleanup_fake_baremetal_env {
     local bm_poseur="$BM_POSEUR_DIR/bm_poseur"
     sudo $bm_poseur $BM_POSEUR_EXTRA_OPTS destroy-vm
     sudo $bm_poseur $BM_POSEUR_EXTRA_OPTS destroy-bridge
 }
 
 # prepare various directories needed by baremetal hypervisor
-function configure_baremetal_nova_dirs() {
+function configure_baremetal_nova_dirs {
     # ensure /tftpboot is prepared
     sudo mkdir -p /tftpboot
     sudo mkdir -p /tftpboot/pxelinux.cfg
@@ -249,7 +249,7 @@ function configure_baremetal_nova_dirs() {
 
 # build deploy kernel+ramdisk, then upload them to glance
 # this function sets BM_DEPLOY_KERNEL_ID and BM_DEPLOY_RAMDISK_ID
-function upload_baremetal_deploy() {
+function upload_baremetal_deploy {
     token=$1
 
     if [ "$BM_BUILD_DEPLOY_RAMDISK" = "True" ]; then
@@ -281,7 +281,7 @@ function upload_baremetal_deploy() {
 # create a basic baremetal flavor, associated with deploy kernel & ramdisk
 #
 # Usage: create_baremetal_flavor <aki_uuid> <ari_uuid>
-function create_baremetal_flavor() {
+function create_baremetal_flavor {
     aki=$1
     ari=$2
     nova flavor-create $BM_FLAVOR_NAME $BM_FLAVOR_ID \
@@ -298,7 +298,7 @@ function create_baremetal_flavor() {
 # Sets KERNEL_ID and RAMDISK_ID
 #
 # Usage: extract_and_upload_k_and_r_from_image $token $file
-function extract_and_upload_k_and_r_from_image() {
+function extract_and_upload_k_and_r_from_image {
     token=$1
     file=$2
     image_name=$(basename "$file" ".qcow2")
@@ -339,7 +339,7 @@ function extract_and_upload_k_and_r_from_image() {
 # Takes the same parameters, but has some peculiarities which made it
 # easier to create a separate method, rather than complicate the logic
 # of the existing function.
-function upload_baremetal_image() {
+function upload_baremetal_image {
     local image_url=$1
     local token=$2
 
@@ -429,7 +429,7 @@ function upload_baremetal_image() {
     DEFAULT_IMAGE_NAME="${IMAGE_NAME%.img}"
 }
 
-function clear_baremetal_of_all_nodes() {
+function clear_baremetal_of_all_nodes {
     list=$(nova baremetal-node-list | awk -F '| ' 'NR>3 {print $2}' )
     for node in $list; do
         nova baremetal-node-delete $node
@@ -440,7 +440,7 @@ function clear_baremetal_of_all_nodes() {
 # Defaults to using BM_FIRST_MAC and BM_SECOND_MAC if parameters not specified
 #
 # Usage: add_baremetal_node <first_mac> <second_mac>
-function add_baremetal_node() {
+function add_baremetal_node {
     mac_1=${1:-$BM_FIRST_MAC}
     mac_2=${2:-$BM_SECOND_MAC}
 

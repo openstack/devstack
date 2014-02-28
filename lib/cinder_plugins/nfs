@@ -27,7 +27,7 @@ set +o xtrace
 # ------------
 
 # configure_cinder_driver - Set config files, create data dirs, etc
-function configure_cinder_driver() {
+function configure_cinder_driver {
     iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.nfs.NfsDriver"
     iniset $CINDER_CONF DEFAULT nfs_shares_config "$CINDER_CONF_DIR/nfs_shares.conf"
     echo "$CINDER_NFS_SERVERPATH" | sudo tee "$CINDER_CONF_DIR/nfs_shares.conf"

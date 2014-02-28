@@ -57,25 +57,25 @@ function is_ironic_enabled {
 }
 
 # install_ironic() - Collect source and prepare
-function install_ironic() {
+function install_ironic {
     git_clone $IRONIC_REPO $IRONIC_DIR $IRONIC_BRANCH
     setup_develop $IRONIC_DIR
 }
 
 # install_ironicclient() - Collect sources and prepare
-function install_ironicclient() {
+function install_ironicclient {
     git_clone $IRONICCLIENT_REPO $IRONICCLIENT_DIR $IRONICCLIENT_BRANCH
     setup_develop $IRONICCLIENT_DIR
 }
 
 # cleanup_ironic() - Remove residual data files, anything left over from previous
 # runs that would need to clean up.
-function cleanup_ironic() {
+function cleanup_ironic {
     sudo rm -rf $IRONIC_AUTH_CACHE_DIR
 }
 
 # configure_ironic() - Set config files, create data dirs, etc
-function configure_ironic() {
+function configure_ironic {
     if [[ ! -d $IRONIC_CONF_DIR ]]; then
         sudo mkdir -p $IRONIC_CONF_DIR
     fi
@@ -101,7 +101,7 @@ function configure_ironic() {
 
 # configure_ironic_api() - Is used by configure_ironic(). Performs
 # API specific configuration.
-function configure_ironic_api() {
+function configure_ironic_api {
     iniset $IRONIC_CONF_FILE DEFAULT auth_strategy keystone
     iniset $IRONIC_CONF_FILE DEFAULT policy_file $IRONIC_POLICY_JSON
     iniset $IRONIC_CONF_FILE keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
@@ -120,7 +120,7 @@ function configure_ironic_api() {
 
 # configure_ironic_conductor() - Is used by configure_ironic().
 # Sets conductor specific settings.
-function configure_ironic_conductor() {
+function configure_ironic_conductor {
     cp $IRONIC_DIR/etc/ironic/rootwrap.conf $IRONIC_ROOTWRAP_CONF
     cp -r $IRONIC_DIR/etc/ironic/rootwrap.d $IRONIC_CONF_DIR
 
@@ -128,7 +128,7 @@ function configure_ironic_conductor() {
 }
 
 # create_ironic_cache_dir() - Part of the init_ironic() process
-function create_ironic_cache_dir() {
+function create_ironic_cache_dir {
     # Create cache dir
     sudo mkdir -p $IRONIC_AUTH_CACHE_DIR/api
     sudo chown $STACK_USER $IRONIC_AUTH_CACHE_DIR/api
@@ -143,7 +143,7 @@ function create_ironic_cache_dir() {
 # Tenant               User       Roles
 # ------------------------------------------------------------------
 # service              ironic     admin        # if enabled
-create_ironic_accounts() {
+function create_ironic_accounts {
 
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
@@ -178,7 +178,7 @@ create_ironic_accounts() {
 
 
 # init_ironic() - Initialize databases, etc.
-function init_ironic() {
+function init_ironic {
     # (Re)create  ironic database
     recreate_database ironic utf8
 
@@ -189,7 +189,7 @@ function init_ironic() {
 }
 
 # start_ironic() - Start running processes, including screen
-function start_ironic() {
+function start_ironic {
     # Start Ironic API server, if enabled.
     if is_service_enabled ir-api; then
         start_ironic_api
@@ -203,7 +203,7 @@ function start_ironic() {
 
 # start_ironic_api() - Used by start_ironic().
 # Starts Ironic API server.
-function start_ironic_api() {
+function start_ironic_api {
     screen_it ir-api "cd $IRONIC_DIR; $IRONIC_BIN_DIR/ironic-api --config-file=$IRONIC_CONF_FILE"
     echo "Waiting for ir-api ($IRONIC_HOSTPORT) to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$IRONIC_HOSTPORT; do sleep 1; done"; then
@@ -213,13 +213,13 @@ function start_ironic_api() {
 
 # start_ironic_conductor() - Used by start_ironic().
 # Starts Ironic conductor.
-function start_ironic_conductor() {
+function start_ironic_conductor {
     screen_it ir-cond "cd $IRONIC_DIR; $IRONIC_BIN_DIR/ironic-conductor --config-file=$IRONIC_CONF_FILE"
     # TODO(romcheg): Find a way to check whether the conductor has started.
 }
 
 # stop_ironic() - Stop running processes
-function stop_ironic() {
+function stop_ironic {
     # Kill the Ironic screen windows
     screen -S $SCREEN_NAME -p ir-api -X kill
     screen -S $SCREEN_NAME -p ir-cond -X kill

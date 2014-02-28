@@ -105,18 +105,18 @@ create_ceilometer_accounts() {
 
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_ceilometer() {
+function cleanup_ceilometer {
     mongo ceilometer --eval "db.dropDatabase();"
 }
 
 # configure_ceilometerclient() - Set config files, create data dirs, etc
-function configure_ceilometerclient() {
+function configure_ceilometerclient {
     setup_develop $CEILOMETERCLIENT_DIR
     sudo install -D -m 0644 -o $STACK_USER {$CEILOMETERCLIENT_DIR/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
 }
 
 # configure_ceilometer() - Set config files, create data dirs, etc
-function configure_ceilometer() {
+function configure_ceilometer {
     setup_develop $CEILOMETER_DIR
 
     [ ! -d $CEILOMETER_CONF_DIR ] && sudo mkdir -m 755 -p $CEILOMETER_CONF_DIR
@@ -162,7 +162,7 @@ function configure_ceilometer() {
     fi
 }
 
-function configure_mongodb() {
+function configure_mongodb {
     if is_fedora; then
         # install mongodb client
         install_package mongodb
@@ -174,7 +174,7 @@ function configure_mongodb() {
 }
 
 # init_ceilometer() - Initialize etc.
-function init_ceilometer() {
+function init_ceilometer {
     # Create cache dir
     sudo mkdir -p $CEILOMETER_AUTH_CACHE_DIR
     sudo chown $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
@@ -187,17 +187,17 @@ function init_ceilometer() {
 }
 
 # install_ceilometer() - Collect source and prepare
-function install_ceilometer() {
+function install_ceilometer {
     git_clone $CEILOMETER_REPO $CEILOMETER_DIR $CEILOMETER_BRANCH
 }
 
 # install_ceilometerclient() - Collect source and prepare
-function install_ceilometerclient() {
+function install_ceilometerclient {
     git_clone $CEILOMETERCLIENT_REPO $CEILOMETERCLIENT_DIR $CEILOMETERCLIENT_BRANCH
 }
 
 # start_ceilometer() - Start running processes, including screen
-function start_ceilometer() {
+function start_ceilometer {
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
         screen_it ceilometer-acompute "cd ; sg $LIBVIRT_GROUP \"ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
     fi
@@ -216,7 +216,7 @@ function start_ceilometer() {
 }
 
 # stop_ceilometer() - Stop running processes
-function stop_ceilometer() {
+function stop_ceilometer {
     # Kill the ceilometer screen windows
     for serv in ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
         screen_stop $serv

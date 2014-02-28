@@ -32,7 +32,7 @@ source $TOP_DIR/lib/cinder
 TEMPFILE=`mktemp`
 RECLONE=True
 
-function log_message() {
+function log_message {
     MESSAGE=$1
     STEP_HEADER=$2
     if [[ "$STEP_HEADER" = "True" ]]; then

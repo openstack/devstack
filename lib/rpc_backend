@@ -25,7 +25,7 @@ set +o xtrace
 
 # Make sure we only have one rpc backend enabled.
 # Also check the specified rpc backend is available on your platform.
-function check_rpc_backend() {
+function check_rpc_backend {
     local rpc_needed=1
     # We rely on the fact that filenames in lib/* match the service names
     # that can be passed as arguments to is_service_enabled.
@@ -91,7 +91,7 @@ function cleanup_rpc_backend {
 }
 
 # install rpc backend
-function install_rpc_backend() {
+function install_rpc_backend {
     if is_service_enabled rabbit; then
         # Install rabbitmq-server
         # the temp file is necessary due to LP: #878600
@@ -135,7 +135,7 @@ function install_rpc_backend() {
 }
 
 # restart the rpc backend
-function restart_rpc_backend() {
+function restart_rpc_backend {
     if is_service_enabled rabbit; then
         # Start rabbitmq-server
         echo_summary "Starting RabbitMQ"
@@ -165,7 +165,7 @@ function restart_rpc_backend() {
 }
 
 # iniset cofiguration
-function iniset_rpc_backend() {
+function iniset_rpc_backend {
     local package=$1
     local file=$2
     local section=$3
@@ -193,7 +193,7 @@ function iniset_rpc_backend() {
 
 # Check if qpid can be used on the current distro.
 # qpid_is_supported
-function qpid_is_supported() {
+function qpid_is_supported {
     if [[ -z "$DISTRO" ]]; then
         GetDistro
     fi

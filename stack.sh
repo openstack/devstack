@@ -468,7 +468,7 @@ fi
 # -----------------
 
 # Draw a spinner so the user knows something is happening
-function spinner() {
+function spinner {
     local delay=0.75
     local spinstr='/-\|'
     printf "..." >&3
@@ -483,7 +483,7 @@ function spinner() {
 
 # Echo text to the log file, summary log file and stdout
 # echo_summary "something to say"
-function echo_summary() {
+function echo_summary {
     if [[ -t 3 && "$VERBOSE" != "True" ]]; then
         kill >/dev/null 2>&1 $LAST_SPINNER_PID
         if [ ! -z "$LAST_SPINNER_PID" ]; then
@@ -499,7 +499,7 @@ function echo_summary() {
 
 # Echo text only to stdout, no log files
 # echo_nolog "something not for the logs"
-function echo_nolog() {
+function echo_nolog {
     echo $@ >&3
 }
 

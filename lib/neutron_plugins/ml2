@@ -33,7 +33,7 @@ Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS:-}
 # L3 Plugin to load for ML2
 ML2_L3_PLUGIN=${ML2_L3_PLUGIN:-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
 
-function populate_ml2_config() {
+function populate_ml2_config {
     CONF=$1
     SECTION=$2
     OPTS=$3
@@ -47,7 +47,7 @@ function populate_ml2_config() {
     done
 }
 
-function neutron_plugin_configure_common() {
+function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/ml2
     Q_PLUGIN_CONF_FILENAME=ml2_conf.ini
     Q_DB_NAME="neutron_ml2"
@@ -57,7 +57,7 @@ function neutron_plugin_configure_common() {
     _neutron_service_plugin_class_add $ML2_L3_PLUGIN
 }
 
-function neutron_plugin_configure_service() {
+function neutron_plugin_configure_service {
     if [[ "$Q_ML2_TENANT_NETWORK_TYPE" != "" ]]; then
         Q_SRV_EXTRA_OPTS+=(tenant_network_types=$Q_ML2_TENANT_NETWORK_TYPE)
     elif [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
@@ -114,7 +114,7 @@ function neutron_plugin_configure_service() {
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vlan $Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS
 }
 
-function has_neutron_plugin_security_group() {
+function has_neutron_plugin_security_group {
     return 0
 }
 

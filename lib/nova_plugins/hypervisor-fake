@@ -27,13 +27,13 @@ set +o xtrace
 # ------------
 
 # clean_nova_hypervisor - Clean up an installation
-function cleanup_nova_hypervisor() {
+function cleanup_nova_hypervisor {
     # This function intentionally left blank
     :
 }
 
 # configure_nova_hypervisor - Set config files, create data dirs, etc
-function configure_nova_hypervisor() {
+function configure_nova_hypervisor {
     iniset $NOVA_CONF DEFAULT compute_driver "nova.virt.fake.FakeDriver"
     # Disable arbitrary limits
     iniset $NOVA_CONF DEFAULT quota_instances -1
@@ -51,19 +51,19 @@ function configure_nova_hypervisor() {
 }
 
 # install_nova_hypervisor() - Install external components
-function install_nova_hypervisor() {
+function install_nova_hypervisor {
     # This function intentionally left blank
     :
 }
 
 # start_nova_hypervisor - Start any required external services
-function start_nova_hypervisor() {
+function start_nova_hypervisor {
     # This function intentionally left blank
     :
 }
 
 # stop_nova_hypervisor - Stop any external services
-function stop_nova_hypervisor() {
+function stop_nova_hypervisor {
     # This function intentionally left blank
     :
 }

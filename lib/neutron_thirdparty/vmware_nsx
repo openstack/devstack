@@ -22,11 +22,11 @@ NSX_GATEWAY_NETWORK_INTERFACE=${NSX_GATEWAY_NETWORK_INTERFACE:-eth2}
 # is invoked by unstack.sh
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.0/24}
 
-function configure_vmware_nsx() {
+function configure_vmware_nsx {
     :
 }
 
-function init_vmware_nsx() {
+function init_vmware_nsx {
     if ! is_set NSX_GATEWAY_NETWORK_CIDR; then
         NSX_GATEWAY_NETWORK_CIDR=$PUBLIC_NETWORK_GATEWAY/${FLOATING_RANGE#*/}
         echo "The IP address to set on br-ex was not specified. "
@@ -52,15 +52,15 @@ function init_vmware_nsx() {
     sudo ip addr add dev $PUBLIC_BRIDGE $NSX_GATEWAY_NETWORK_CIDR
 }
 
-function install_vmware_nsx() {
+function install_vmware_nsx {
     :
 }
 
-function start_vmware_nsx() {
+function start_vmware_nsx {
     :
 }
 
-function stop_vmware_nsx() {
+function stop_vmware_nsx {
     if ! is_set NSX_GATEWAY_NETWORK_CIDR; then
         NSX_GATEWAY_NETWORK_CIDR=$PUBLIC_NETWORK_GATEWAY/${FLOATING_RANGE#*/}
         echo "The IP address expected on br-ex was not specified. "
@@ -78,7 +78,7 @@ function stop_vmware_nsx() {
     done
 }
 
-function check_vmware_nsx() {
+function check_vmware_nsx {
     neutron-check-nsx-config $NEUTRON_CONF_DIR/plugins/vmware/nsx.ini
 }
 

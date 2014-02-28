@@ -166,7 +166,7 @@ TNAME="jeos_template_for_devstack"
 SNAME_TEMPLATE="jeos_snapshot_for_devstack"
 SNAME_FIRST_BOOT="before_first_boot"
 
-function wait_for_VM_to_halt() {
+function wait_for_VM_to_halt {
     set +x
     echo "Waiting for the VM to halt.  Progress in-VM can be checked with vncviewer:"
     mgmt_ip=$(echo $XENAPI_CONNECTION_URL | tr -d -c '1234567890.')
@@ -318,7 +318,7 @@ xe vm-snapshot vm="$GUEST_NAME" new-name-label="$SNAME_FIRST_BOOT"
 #
 xe vm-start vm="$GUEST_NAME"
 
-function ssh_no_check() {
+function ssh_no_check {
     ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "$@"
 }
 
@@ -349,7 +349,7 @@ DOMID=$(get_domid "$GUEST_NAME")
 xenstore-write /local/domain/$DOMID/authorized_keys/$DOMZERO_USER "$(cat /root/dom0key.pub)"
 xenstore-chmod -u /local/domain/$DOMID/authorized_keys/$DOMZERO_USER r$DOMID
 
-function run_on_appliance() {
+function run_on_appliance {
     ssh \
         -i /root/dom0key \
         -o UserKnownHostsFile=/dev/null \

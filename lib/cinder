@@ -102,7 +102,7 @@ function is_cinder_enabled {
 # _clean_lvm_lv removes all cinder LVM volumes
 #
 # Usage: _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
-function _clean_lvm_lv() {
+function _clean_lvm_lv {
     local vg=$1
     local lv_prefix=$2
 
@@ -119,7 +119,7 @@ function _clean_lvm_lv() {
 # volume group used by cinder
 #
 # Usage: _clean_lvm_backing_file() $VOLUME_GROUP
-function _clean_lvm_backing_file() {
+function _clean_lvm_backing_file {
     local vg=$1
 
     # if there is no logical volume left, it's safe to attempt a cleanup
@@ -136,7 +136,7 @@ function _clean_lvm_backing_file() {
 
 # cleanup_cinder() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_cinder() {
+function cleanup_cinder {
     # ensure the volume group is cleared up because fails might
     # leave dead volumes in the group
     TARGETS=$(sudo tgtadm --op show --mode target)
@@ -181,7 +181,7 @@ function cleanup_cinder() {
 }
 
 # configure_cinder_rootwrap() - configure Cinder's rootwrap
-function configure_cinder_rootwrap() {
+function configure_cinder_rootwrap {
     # Set the paths of certain binaries
     CINDER_ROOTWRAP=$(get_rootwrap_location cinder)
 
@@ -212,7 +212,7 @@ function configure_cinder_rootwrap() {
 }
 
 # configure_cinder() - Set config files, create data dirs, etc
-function configure_cinder() {
+function configure_cinder {
     if [[ ! -d $CINDER_CONF_DIR ]]; then
         sudo mkdir -p $CINDER_CONF_DIR
     fi
@@ -328,7 +328,7 @@ function configure_cinder() {
 # service              cinder     admin        # if enabled
 
 # Migrated from keystone_data.sh
-create_cinder_accounts() {
+function create_cinder_accounts {
 
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
@@ -373,14 +373,14 @@ create_cinder_accounts() {
 }
 
 # create_cinder_cache_dir() - Part of the init_cinder() process
-function create_cinder_cache_dir() {
+function create_cinder_cache_dir {
     # Create cache dir
     sudo mkdir -p $CINDER_AUTH_CACHE_DIR
     sudo chown $STACK_USER $CINDER_AUTH_CACHE_DIR
     rm -f $CINDER_AUTH_CACHE_DIR/*
 }
 
-create_cinder_volume_group() {
+function create_cinder_volume_group {
     # According to the ``CINDER_MULTI_LVM_BACKEND`` value, configure one or two default volumes
     # group called ``stack-volumes`` (and ``stack-volumes2``) for the volume
     # service if it (they) does (do) not yet exist. If you don't wish to use a
@@ -428,7 +428,7 @@ create_cinder_volume_group() {
 }
 
 # init_cinder() - Initialize database and volume group
-function init_cinder() {
+function init_cinder {
     # Force nova volumes off
     NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/osapi_volume,//")
 
@@ -464,20 +464,20 @@ function init_cinder() {
 }
 
 # install_cinder() - Collect source and prepare
-function install_cinder() {
+function install_cinder {
     git_clone $CINDER_REPO $CINDER_DIR $CINDER_BRANCH
     setup_develop $CINDER_DIR
 }
 
 # install_cinderclient() - Collect source and prepare
-function install_cinderclient() {
+function install_cinderclient {
     git_clone $CINDERCLIENT_REPO $CINDERCLIENT_DIR $CINDERCLIENT_BRANCH
     setup_develop $CINDERCLIENT_DIR
     sudo install -D -m 0644 -o $STACK_USER {$CINDERCLIENT_DIR/tools/,/etc/bash_completion.d/}cinder.bash_completion
 }
 
 # apply config.d approach for cinder volumes directory
-function _configure_tgt_for_config_d() {
+function _configure_tgt_for_config_d {
     if [[ ! -d /etc/tgt/stack.d/ ]]; then
         sudo ln -sf $CINDER_STATE_PATH/volumes /etc/tgt/stack.d
         echo "include /etc/tgt/stack.d/*" | sudo tee -a /etc/tgt/targets.conf
@@ -485,7 +485,7 @@ function _configure_tgt_for_config_d() {
 }
 
 # start_cinder() - Start running processes, including screen
-function start_cinder() {
+function start_cinder {
     if is_service_enabled c-vol; then
         # Delete any old stack.conf
         sudo rm -f /etc/tgt/conf.d/stack.conf
@@ -529,7 +529,7 @@ function start_cinder() {
 }
 
 # stop_cinder() - Stop running processes
-function stop_cinder() {
+function stop_cinder {
     # Kill the cinder screen windows
     for serv in c-api c-bak c-sch c-vol; do
         screen_stop $serv

@@ -18,7 +18,7 @@ TOP_DIR=$(cd $TOOLS_DIR/..; pwd)
 set -o errexit
 set -o xtrace
 
-usage() {
+function usage {
     echo "Usage: $0 - Download and prepare Ubuntu UEC images"
     echo ""
     echo "$0 [-r rootsize] release imagefile [kernel]"
@@ -31,7 +31,7 @@ usage() {
 }
 
 # Clean up any resources that may be in use
-cleanup() {
+function cleanup {
     set +o errexit
 
     # Mop up temporary files

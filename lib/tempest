@@ -70,7 +70,7 @@ IPV6_ENABLED=$(trueorfalse True $IPV6_ENABLED)
 # ---------
 
 # configure_tempest() - Set config files, create data dirs, etc
-function configure_tempest() {
+function configure_tempest {
     setup_develop $TEMPEST_DIR
     local image_lines
     local images
@@ -359,12 +359,12 @@ function configure_tempest() {
 }
 
 # install_tempest() - Collect source and prepare
-function install_tempest() {
+function install_tempest {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
 }
 
 # init_tempest() - Initialize ec2 images
-function init_tempest() {
+function init_tempest {
     local base_image_name=cirros-0.3.1-x86_64
     # /opt/stack/devstack/files/images/cirros-0.3.1-x86_64-uec
     local image_dir="$FILES/images/${base_image_name}-uec"

@@ -55,7 +55,7 @@ TEMPEST_SERVICES+=,savanna
 # Tenant      User       Roles
 # ------------------------------
 # service     savanna    admin
-function create_savanna_accounts() {
+function create_savanna_accounts {
 
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
@@ -88,14 +88,14 @@ function create_savanna_accounts() {
 
 # cleanup_savanna() - Remove residual data files, anything left over from
 # previous runs that would need to clean up.
-function cleanup_savanna() {
+function cleanup_savanna {
 
     # Cleanup auth cache dir
     sudo rm -rf $SAVANNA_AUTH_CACHE_DIR
 }
 
 # configure_savanna() - Set config files, create data dirs, etc
-function configure_savanna() {
+function configure_savanna {
 
     if [[ ! -d $SAVANNA_CONF_DIR ]]; then
         sudo mkdir -p $SAVANNA_CONF_DIR
@@ -148,18 +148,18 @@ function configure_savanna() {
 }
 
 # install_savanna() - Collect source and prepare
-function install_savanna() {
+function install_savanna {
     git_clone $SAVANNA_REPO $SAVANNA_DIR $SAVANNA_BRANCH
     setup_develop $SAVANNA_DIR
 }
 
 # start_savanna() - Start running processes, including screen
-function start_savanna() {
+function start_savanna {
     screen_it savanna "cd $SAVANNA_DIR && $SAVANNA_BIN_DIR/savanna-api --config-file $SAVANNA_CONF_FILE"
 }
 
 # stop_savanna() - Stop running processes
-function stop_savanna() {
+function stop_savanna {
     # Kill the Savanna screen windows
     screen -S $SCREEN_NAME -p savanna -X kill
 }

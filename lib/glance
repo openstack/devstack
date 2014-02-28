@@ -68,14 +68,14 @@ function is_glance_enabled {
 
 # cleanup_glance() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_glance() {
+function cleanup_glance {
     # kill instances (nova)
     # delete image files (glance)
     sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR $GLANCE_AUTH_CACHE_DIR
 }
 
 # configure_glance() - Set config files, create data dirs, etc
-function configure_glance() {
+function configure_glance {
     if [[ ! -d $GLANCE_CONF_DIR ]]; then
         sudo mkdir -p $GLANCE_CONF_DIR
     fi
@@ -160,7 +160,7 @@ function configure_glance() {
 }
 
 # create_glance_cache_dir() - Part of the init_glance() process
-function create_glance_cache_dir() {
+function create_glance_cache_dir {
     # Create cache dir
     sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
     sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/api
@@ -171,7 +171,7 @@ function create_glance_cache_dir() {
 }
 
 # init_glance() - Initialize databases, etc.
-function init_glance() {
+function init_glance {
     # Delete existing images
     rm -rf $GLANCE_IMAGE_DIR
     mkdir -p $GLANCE_IMAGE_DIR
@@ -190,19 +190,19 @@ function init_glance() {
 }
 
 # install_glanceclient() - Collect source and prepare
-function install_glanceclient() {
+function install_glanceclient {
     git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
     setup_develop $GLANCECLIENT_DIR
 }
 
 # install_glance() - Collect source and prepare
-function install_glance() {
+function install_glance {
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
     setup_develop $GLANCE_DIR
 }
 
 # start_glance() - Start running processes, including screen
-function start_glance() {
+function start_glance {
     screen_it g-reg "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
     screen_it g-api "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
@@ -212,7 +212,7 @@ function start_glance() {
 }
 
 # stop_glance() - Stop running processes
-function stop_glance() {
+function stop_glance {
     # Kill the Glance screen windows
     screen_stop g-api
     screen_stop g-reg

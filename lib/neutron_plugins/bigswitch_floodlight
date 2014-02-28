@@ -8,15 +8,15 @@ set +o xtrace
 source $TOP_DIR/lib/neutron_plugins/ovs_base
 source $TOP_DIR/lib/neutron_thirdparty/bigswitch_floodlight     # for third party service specific configuration values
 
-function neutron_plugin_create_nova_conf() {
+function neutron_plugin_create_nova_conf {
     :
 }
 
-function neutron_plugin_install_agent_packages() {
+function neutron_plugin_install_agent_packages {
     _neutron_ovs_base_install_agent_packages
 }
 
-function neutron_plugin_configure_common() {
+function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/bigswitch
     Q_PLUGIN_CONF_FILENAME=restproxy.ini
     Q_DB_NAME="restproxy_neutron"
@@ -25,23 +25,23 @@ function neutron_plugin_configure_common() {
     BS_FL_CONTROLLER_TIMEOUT=${BS_FL_CONTROLLER_TIMEOUT:-10}
 }
 
-function neutron_plugin_configure_debug_command() {
+function neutron_plugin_configure_debug_command {
     _neutron_ovs_base_configure_debug_command
 }
 
-function neutron_plugin_configure_dhcp_agent() {
+function neutron_plugin_configure_dhcp_agent {
     :
 }
 
-function neutron_plugin_configure_l3_agent() {
+function neutron_plugin_configure_l3_agent {
     _neutron_ovs_base_configure_l3_agent
 }
 
-function neutron_plugin_configure_plugin_agent() {
+function neutron_plugin_configure_plugin_agent {
     :
 }
 
-function neutron_plugin_configure_service() {
+function neutron_plugin_configure_service {
     iniset /$Q_PLUGIN_CONF_FILE restproxy servers $BS_FL_CONTROLLERS_PORT
     iniset /$Q_PLUGIN_CONF_FILE restproxy servertimeout $BS_FL_CONTROLLER_TIMEOUT
     if [ "$BS_FL_VIF_DRIVER" = "ivs" ]; then
@@ -49,7 +49,7 @@ function neutron_plugin_configure_service() {
     fi
 }
 
-function neutron_plugin_setup_interface_driver() {
+function neutron_plugin_setup_interface_driver {
     local conf_file=$1
     if [ "$BS_FL_VIF_DRIVER" = "ivs" ]; then
         iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.IVSInterfaceDriver
@@ -59,12 +59,12 @@ function neutron_plugin_setup_interface_driver() {
 }
 
 
-function has_neutron_plugin_security_group() {
+function has_neutron_plugin_security_group {
     # 1 means False here
     return 1
 }
 
-function neutron_plugin_check_adv_test_requirements() {
+function neutron_plugin_check_adv_test_requirements {
     is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
 }
 

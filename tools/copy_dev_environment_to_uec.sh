@@ -22,7 +22,7 @@ cd $TOP_DIR
 source ./stackrc
 
 # Echo usage
-usage() {
+function usage {
     echo "Add stack user and keys"
     echo ""
     echo "Usage: $0 [full path to raw uec base image]"

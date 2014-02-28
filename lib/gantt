@@ -47,42 +47,42 @@ GANTT_BIN_DIR=$(get_python_exec_prefix)
 
 # cleanup_gantt() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_gantt() {
+function cleanup_gantt {
     echo "Cleanup Gantt"
 }
 
 # configure_gantt() - Set config files, create data dirs, etc
-function configure_gantt() {
+function configure_gantt {
     echo "Configure Gantt"
 }
 
 # init_gantt() - Initialize database and volume group
-function init_gantt() {
+function init_gantt {
     echo "Initialize Gantt"
 }
 
 # install_gantt() - Collect source and prepare
-function install_gantt() {
+function install_gantt {
     git_clone $GANTT_REPO $GANTT_DIR $GANTT_BRANCH
     setup_develop $GANTT_DIR
 }
 
 # install_ganttclient() - Collect source and prepare
-function install_ganttclient() {
+function install_ganttclient {
     echo "Install Gantt Client"
 #    git_clone $GANTTCLIENT_REPO $GANTTCLIENT_DIR $GANTTCLIENT_BRANCH
 #    setup_develop $GANTTCLIENT_DIR
 }
 
 # start_gantt() - Start running processes, including screen
-function start_gantt() {
+function start_gantt {
     if is_service_enabled gantt; then
         screen_it gantt "cd $GANTT_DIR && $GANTT_BIN_DIR/gantt-scheduler --config-file $GANTT_CONF"
     fi
 }
 
 # stop_gantt() - Stop running processes
-function stop_gantt() {
+function stop_gantt {
     echo "Stop Gantt"
     screen_stop gantt
 }

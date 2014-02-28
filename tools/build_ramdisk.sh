@@ -14,7 +14,7 @@ if [ ! "$#" -eq "1" ]; then
 fi
 
 # Clean up any resources that may be in use
-cleanup() {
+function cleanup {
     set +o errexit
 
     # Mop up temporary files
@@ -87,7 +87,7 @@ fi
 # Finds and returns full device path for the next available NBD device.
 # Exits script if error connecting or none free.
 # map_nbd image
-function map_nbd() {
+function map_nbd {
     for i in `seq 0 15`; do
         if [ ! -e /sys/block/nbd$i/pid ]; then
             NBD=/dev/nbd$i

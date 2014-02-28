@@ -21,7 +21,7 @@ STACK_USER="$3"
 DOMZERO_USER="$4"
 
 
-function setup_domzero_user() {
+function setup_domzero_user {
     local username
 
     username="$1"

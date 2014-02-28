@@ -21,14 +21,14 @@ RYU_APPS=${RYU_APPS:-ryu.app.simple_isolation,ryu.app.rest}
 # configure_ryu can be called multiple times as neutron_pluing/ryu may call
 # this function for neutron-ryu-agent
 _RYU_CONFIGURED=${_RYU_CONFIGURED:-False}
-function configure_ryu() {
+function configure_ryu {
     if [[ "$_RYU_CONFIGURED" == "False" ]]; then
         setup_develop $RYU_DIR
         _RYU_CONFIGURED=True
     fi
 }
 
-function init_ryu() {
+function init_ryu {
     RYU_CONF_DIR=/etc/ryu
     if [[ ! -d $RYU_CONF_DIR ]]; then
         sudo mkdir -p $RYU_CONF_DIR
@@ -60,22 +60,22 @@ neutron_controller_addr=tcp:$RYU_OFP_HOST:$RYU_OFP_PORT
 # Make this function idempotent and avoid cloning same repo many times
 # with RECLONE=yes
 _RYU_INSTALLED=${_RYU_INSTALLED:-False}
-function install_ryu() {
+function install_ryu {
     if [[ "$_RYU_INSTALLED" == "False" ]]; then
         git_clone $RYU_REPO $RYU_DIR $RYU_BRANCH
         _RYU_INSTALLED=True
     fi
 }
 
-function start_ryu() {
+function start_ryu {
     screen_it ryu "cd $RYU_DIR && $RYU_DIR/bin/ryu-manager --config-file $RYU_CONF"
 }
 
-function stop_ryu() {
+function stop_ryu {
     :
 }
 
-function check_ryu() {
+function check_ryu {
     :
 }
 

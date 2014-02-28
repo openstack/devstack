@@ -92,7 +92,7 @@ fi
 # ---------
 # cleanup_keystone() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_keystone() {
+function cleanup_keystone {
     # kill instances (nova)
     # delete image files (glance)
     # This function intentionally left blank
@@ -100,14 +100,14 @@ function cleanup_keystone() {
 }
 
 # _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
-function _cleanup_keystone_apache_wsgi() {
+function _cleanup_keystone_apache_wsgi {
     sudo rm -f $KEYSTONE_WSGI_DIR/*.wsgi
     disable_apache_site keystone
     sudo rm -f /etc/$APACHE_NAME/$APACHE_CONF_DIR/keystone
 }
 
 # _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
-function _config_keystone_apache_wsgi() {
+function _config_keystone_apache_wsgi {
     sudo mkdir -p $KEYSTONE_WSGI_DIR
 
     # copy proxy vhost and wsgi file
@@ -127,7 +127,7 @@ function _config_keystone_apache_wsgi() {
 }
 
 # configure_keystone() - Set config files, create data dirs, etc
-function configure_keystone() {
+function configure_keystone {
     if [[ ! -d $KEYSTONE_CONF_DIR ]]; then
         sudo mkdir -p $KEYSTONE_CONF_DIR
     fi
@@ -274,7 +274,7 @@ function configure_keystone() {
 # invisible_to_admin   demo       Member
 
 # Migrated from keystone_data.sh
-create_keystone_accounts() {
+function create_keystone_accounts {
 
     # admin
     ADMIN_TENANT=$(openstack project create \
@@ -348,14 +348,14 @@ create_keystone_accounts() {
 
 # Configure the API version for the OpenStack projects.
 # configure_API_version conf_file version
-function configure_API_version() {
+function configure_API_version {
     local conf_file=$1
     local api_version=$2
     iniset $conf_file keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$api_version
 }
 
 # init_keystone() - Initialize databases, etc.
-function init_keystone() {
+function init_keystone {
     if is_service_enabled ldap; then
         init_ldap
     fi
@@ -379,14 +379,14 @@ function init_keystone() {
 }
 
 # install_keystoneclient() - Collect source and prepare
-function install_keystoneclient() {
+function install_keystoneclient {
     git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
     setup_develop $KEYSTONECLIENT_DIR
     sudo install -D -m 0644 -o $STACK_USER {$KEYSTONECLIENT_DIR/tools/,/etc/bash_completion.d/}keystone.bash_completion
 }
 
 # install_keystone() - Collect source and prepare
-function install_keystone() {
+function install_keystone {
     # only install ldap if the service has been enabled
     if is_service_enabled ldap; then
         install_ldap
@@ -410,7 +410,7 @@ function install_keystone() {
 }
 
 # start_keystone() - Start running processes, including screen
-function start_keystone() {
+function start_keystone {
     # Get right service port for testing
     local service_port=$KEYSTONE_SERVICE_PORT
     if is_service_enabled tls-proxy; then
@@ -438,7 +438,7 @@ function start_keystone() {
 }
 
 # stop_keystone() - Stop running processes
-function stop_keystone() {
+function stop_keystone {
     # Kill the Keystone screen window
     screen_stop key
 }

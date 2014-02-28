@@ -27,7 +27,7 @@ set +o xtrace
 # ------------
 
 # configure_cinder_driver - Set config files, create data dirs, etc
-function configure_cinder_driver() {
+function configure_cinder_driver {
     iniset $CINDER_CONF DEFAULT volume_driver "cinder.volume.drivers.xenapi.sm.XenAPINFSDriver"
     iniset $CINDER_CONF DEFAULT xenapi_connection_url "$CINDER_XENAPI_CONNECTION_URL"
     iniset $CINDER_CONF DEFAULT xenapi_connection_username "$CINDER_XENAPI_CONNECTION_USERNAME"

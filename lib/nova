@@ -144,7 +144,7 @@ function is_n-cell_enabled {
 }
 
 # Helper to clean iptables rules
-function clean_iptables() {
+function clean_iptables {
     # Delete rules
     sudo iptables -S -v | sed "s/-c [0-9]* [0-9]* //g" | grep "nova" | grep "\-A" |  sed "s/-A/-D/g" | awk '{print "sudo iptables",$0}' | bash
     # Delete nat rules
@@ -157,7 +157,7 @@ function clean_iptables() {
 
 # cleanup_nova() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_nova() {
+function cleanup_nova {
     if is_service_enabled n-cpu; then
         # Clean iptables from previous runs
         clean_iptables
@@ -191,7 +191,7 @@ function cleanup_nova() {
 }
 
 # configure_nova_rootwrap() - configure Nova's rootwrap
-function configure_nova_rootwrap() {
+function configure_nova_rootwrap {
     # Deploy new rootwrap filters files (owned by root).
     # Wipe any existing rootwrap.d files first
     if [[ -d $NOVA_CONF_DIR/rootwrap.d ]]; then
@@ -219,7 +219,7 @@ function configure_nova_rootwrap() {
 }
 
 # configure_nova() - Set config files, create data dirs, etc
-function configure_nova() {
+function configure_nova {
     # Put config files in ``/etc/nova`` for everyone to find
     if [[ ! -d $NOVA_CONF_DIR ]]; then
         sudo mkdir -p $NOVA_CONF_DIR
@@ -367,7 +367,7 @@ create_nova_accounts() {
 }
 
 # create_nova_conf() - Create a new nova.conf file
-function create_nova_conf() {
+function create_nova_conf {
     # Remove legacy ``nova.conf``
     rm -f $NOVA_DIR/bin/nova.conf
 
@@ -515,7 +515,7 @@ function create_nova_conf() {
     iniset $NOVA_CONF DEFAULT glance_api_servers "$GLANCE_HOSTPORT"
 }
 
-function init_nova_cells() {
+function init_nova_cells {
     if is_service_enabled n-cell; then
         cp $NOVA_CONF $NOVA_CELLS_CONF
         iniset $NOVA_CELLS_CONF DEFAULT sql_connection `database_connection_url $NOVA_CELLS_DB`
@@ -542,14 +542,14 @@ function init_nova_cells() {
 }
 
 # create_nova_cache_dir() - Part of the init_nova() process
-function create_nova_cache_dir() {
+function create_nova_cache_dir {
     # Create cache dir
     sudo mkdir -p $NOVA_AUTH_CACHE_DIR
     sudo chown $STACK_USER $NOVA_AUTH_CACHE_DIR
     rm -f $NOVA_AUTH_CACHE_DIR/*
 }
 
-function create_nova_conf_nova_network() {
+function create_nova_conf_nova_network {
     iniset $NOVA_CONF DEFAULT network_manager "nova.network.manager.$NETWORK_MANAGER"
     iniset $NOVA_CONF DEFAULT public_interface "$PUBLIC_INTERFACE"
     iniset $NOVA_CONF DEFAULT vlan_interface "$VLAN_INTERFACE"
@@ -560,14 +560,14 @@ function create_nova_conf_nova_network() {
 }
 
 # create_nova_keys_dir() - Part of the init_nova() process
-function create_nova_keys_dir() {
+function create_nova_keys_dir {
     # Create keys dir
     sudo mkdir -p ${NOVA_STATE_PATH}/keys
     sudo chown -R $STACK_USER ${NOVA_STATE_PATH}
 }
 
 # init_nova() - Initialize databases, etc.
-function init_nova() {
+function init_nova {
     # All nova components talk to a central database.
     # Only do this step once on the API node for an entire cluster.
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-api; then
@@ -596,14 +596,14 @@ function init_nova() {
 }
 
 # install_novaclient() - Collect source and prepare
-function install_novaclient() {
+function install_novaclient {
     git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
     setup_develop $NOVACLIENT_DIR
     sudo install -D -m 0644 -o $STACK_USER {$NOVACLIENT_DIR/tools/,/etc/bash_completion.d/}nova.bash_completion
 }
 
 # install_nova() - Collect source and prepare
-function install_nova() {
+function install_nova {
     if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
         install_nova_hypervisor
     fi
@@ -638,7 +638,7 @@ function install_nova() {
 }
 
 # start_nova_api() - Start the API process ahead of other things
-function start_nova_api() {
+function start_nova_api {
     # Get right service port for testing
     local service_port=$NOVA_SERVICE_PORT
     if is_service_enabled tls-proxy; then
@@ -658,7 +658,7 @@ function start_nova_api() {
 }
 
 # start_nova_compute() - Start the compute process
-function start_nova_compute() {
+function start_nova_compute {
     if is_service_enabled n-cell; then
         local compute_cell_conf=$NOVA_CELLS_CONF
     else
@@ -693,7 +693,7 @@ function start_nova_compute() {
 }
 
 # start_nova() - Start running processes, including screen
-function start_nova_rest() {
+function start_nova_rest {
     local api_cell_conf=$NOVA_CONF
     if is_service_enabled n-cell; then
         local compute_cell_conf=$NOVA_CELLS_CONF
@@ -722,13 +722,13 @@ function start_nova_rest() {
         screen_it n-obj "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-objectstore --config-file $api_cell_conf"
 }
 
-function start_nova() {
+function start_nova {
     start_nova_compute
     start_nova_rest
 }
 
 # stop_nova() - Stop running processes (non-screen)
-function stop_nova() {
+function stop_nova {
     # Kill the nova screen windows
     # Some services are listed here twice since more than one instance
     # of a service may be running in certain configs.

@@ -61,7 +61,7 @@ STUD_CIPHERS='TLSv1+HIGH:!DES:!aNULL:!eNULL:@STRENGTH'
 OPENSSL=${OPENSSL:-/usr/bin/openssl}
 
 # Do primary CA configuration
-function configure_CA() {
+function configure_CA {
     # build common config file
 
     # Verify ``TLS_IP`` is good
@@ -73,7 +73,7 @@ function configure_CA() {
 
 # Creates a new CA directory structure
 # create_CA_base ca-dir
-function create_CA_base() {
+function create_CA_base {
     local ca_dir=$1
 
     if [[ -d $ca_dir ]]; then
@@ -92,7 +92,7 @@ function create_CA_base() {
 
 # Create a new CA configuration file
 # create_CA_config ca-dir common-name
-function create_CA_config() {
+function create_CA_config {
     local ca_dir=$1
     local common_name=$2
 
@@ -145,7 +145,7 @@ keyUsage                = cRLSign, keyCertSign
 
 # Create a new signing configuration file
 # create_signing_config ca-dir
-function create_signing_config() {
+function create_signing_config {
     local ca_dir=$1
 
     echo "
@@ -225,7 +225,7 @@ function init_cert {
 
 # make_cert creates and signs a new certificate with the given commonName and CA
 # make_cert ca-dir cert-name "common-name" ["alt-name" ...]
-function make_cert() {
+function make_cert {
     local ca_dir=$1
     local cert_name=$2
     local common_name=$3
@@ -261,7 +261,7 @@ function make_cert() {
 
 # Make an intermediate CA to sign everything else
 # make_int_CA ca-dir signing-ca-dir
-function make_int_CA() {
+function make_int_CA {
     local ca_dir=$1
     local signing_ca_dir=$2
 
@@ -291,7 +291,7 @@ function make_int_CA() {
 
 # Make a root CA to sign other CAs
 # make_root_CA ca-dir
-function make_root_CA() {
+function make_root_CA {
     local ca_dir=$1
 
     # Create the root CA
@@ -319,7 +319,7 @@ function make_root_CA() {
 # is a short-circuit boolean, i.e it returns on the first match.
 #
 # Uses global ``SSL_ENABLED_SERVICES``
-function is_ssl_enabled_service() {
+function is_ssl_enabled_service {
     services=$@
     for service in ${services}; do
         [[ ,${SSL_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
@@ -337,7 +337,7 @@ function is_ssl_enabled_service() {
 # example for keystone this would be KEYSTONE_SSL_CERT, KEYSTONE_SSL_KEY and
 # KEYSTONE_SSL_CA. If it does not find these certificates the program will
 # quit.
-function ensure_certificates() {
+function ensure_certificates {
     local service=$1
 
     local cert_var="${service}_SSL_CERT"
@@ -362,7 +362,7 @@ function ensure_certificates() {
 
 # Starts the TLS proxy for the given IP/ports
 # start_tls_proxy front-host front-port back-host back-port
-function start_tls_proxy() {
+function start_tls_proxy {
     local f_host=$1
     local f_port=$2
     local b_host=$3
