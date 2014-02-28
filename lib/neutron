@@ -59,10 +59,6 @@
 # LinuxBridge plugin, please see the top level README file under the
 # Neutron section.
 
-# Save trace setting
-XTRACE=$(set +o | grep xtrace)
-set +o xtrace
-
 
 # Neutron Network Configuration
 # -----------------------------
@@ -127,81 +123,80 @@ Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-False}
 # See _configure_neutron_common() for details about setting it up
 declare -a Q_PLUGIN_EXTRA_CONF_FILES
 
-if is_service_enabled neutron; then
-    Q_RR_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
-    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
-        Q_RR_COMMAND="sudo"
-    else
-        NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
-        Q_RR_COMMAND="sudo $NEUTRON_ROOTWRAP $Q_RR_CONF_FILE"
-    fi
 
-    # Provider Network Configurations
-    # --------------------------------
-
-    # The following variables control the Neutron openvswitch and
-    # linuxbridge plugins' allocation of tenant networks and
-    # availability of provider networks. If these are not configured
-    # in ``localrc``, tenant networks will be local to the host (with no
-    # remote connectivity), and no physical resources will be
-    # available for the allocation of provider networks.
-
-    # To use GRE tunnels for tenant networks, set to True in
-    # ``localrc``. GRE tunnels are only supported by the openvswitch
-    # plugin, and currently only on Ubuntu.
-    ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-False}
-
-    # If using GRE tunnels for tenant networks, specify the range of
-    # tunnel IDs from which tenant networks are allocated. Can be
-    # overriden in ``localrc`` in necesssary.
-    TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGE:-1:1000}
-
-    # To use VLANs for tenant networks, set to True in localrc. VLANs
-    # are supported by the openvswitch and linuxbridge plugins, each
-    # requiring additional configuration described below.
-    ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
-
-    # If using VLANs for tenant networks, set in ``localrc`` to specify
-    # the range of VLAN VIDs from which tenant networks are
-    # allocated. An external network switch must be configured to
-    # trunk these VLANs between hosts for multi-host connectivity.
-    #
-    # Example: ``TENANT_VLAN_RANGE=1000:1999``
-    TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
-
-    # If using VLANs for tenant networks, or if using flat or VLAN
-    # provider networks, set in ``localrc`` to the name of the physical
-    # network, and also configure ``OVS_PHYSICAL_BRIDGE`` for the
-    # openvswitch agent or ``LB_PHYSICAL_INTERFACE`` for the linuxbridge
-    # agent, as described below.
-    #
-    # Example: ``PHYSICAL_NETWORK=default``
-    PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
-
-    # With the openvswitch plugin, if using VLANs for tenant networks,
-    # or if using flat or VLAN provider networks, set in ``localrc`` to
-    # the name of the OVS bridge to use for the physical network. The
-    # bridge will be created if it does not already exist, but a
-    # physical interface must be manually added to the bridge as a
-    # port for external connectivity.
-    #
-    # Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
-    OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
-
-    # With the linuxbridge plugin, if using VLANs for tenant networks,
-    # or if using flat or VLAN provider networks, set in ``localrc`` to
-    # the name of the network interface to use for the physical
-    # network.
-    #
-    # Example: ``LB_PHYSICAL_INTERFACE=eth1``
-    LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
-
-    # With the openvswitch plugin, set to True in ``localrc`` to enable
-    # provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
-    #
-    # Example: ``OVS_ENABLE_TUNNELING=True``
-    OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
+Q_RR_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
+if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+    Q_RR_COMMAND="sudo"
+else
+    NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
+    Q_RR_COMMAND="sudo $NEUTRON_ROOTWRAP $Q_RR_CONF_FILE"
 fi
+
+# Provider Network Configurations
+# --------------------------------
+
+# The following variables control the Neutron openvswitch and
+# linuxbridge plugins' allocation of tenant networks and
+# availability of provider networks. If these are not configured
+# in ``localrc``, tenant networks will be local to the host (with no
+# remote connectivity), and no physical resources will be
+# available for the allocation of provider networks.
+
+# To use GRE tunnels for tenant networks, set to True in
+# ``localrc``. GRE tunnels are only supported by the openvswitch
+# plugin, and currently only on Ubuntu.
+ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-False}
+
+# If using GRE tunnels for tenant networks, specify the range of
+# tunnel IDs from which tenant networks are allocated. Can be
+# overriden in ``localrc`` in necesssary.
+TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGE:-1:1000}
+
+# To use VLANs for tenant networks, set to True in localrc. VLANs
+# are supported by the openvswitch and linuxbridge plugins, each
+# requiring additional configuration described below.
+ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
+
+# If using VLANs for tenant networks, set in ``localrc`` to specify
+# the range of VLAN VIDs from which tenant networks are
+# allocated. An external network switch must be configured to
+# trunk these VLANs between hosts for multi-host connectivity.
+#
+# Example: ``TENANT_VLAN_RANGE=1000:1999``
+TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
+
+# If using VLANs for tenant networks, or if using flat or VLAN
+# provider networks, set in ``localrc`` to the name of the physical
+# network, and also configure ``OVS_PHYSICAL_BRIDGE`` for the
+# openvswitch agent or ``LB_PHYSICAL_INTERFACE`` for the linuxbridge
+# agent, as described below.
+#
+# Example: ``PHYSICAL_NETWORK=default``
+PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
+
+# With the openvswitch plugin, if using VLANs for tenant networks,
+# or if using flat or VLAN provider networks, set in ``localrc`` to
+# the name of the OVS bridge to use for the physical network. The
+# bridge will be created if it does not already exist, but a
+# physical interface must be manually added to the bridge as a
+# port for external connectivity.
+#
+# Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
+OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
+
+# With the linuxbridge plugin, if using VLANs for tenant networks,
+# or if using flat or VLAN provider networks, set in ``localrc`` to
+# the name of the network interface to use for the physical
+# network.
+#
+# Example: ``LB_PHYSICAL_INTERFACE=eth1``
+LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
+
+# With the openvswitch plugin, set to True in ``localrc`` to enable
+# provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
+#
+# Example: ``OVS_ENABLE_TUNNELING=True``
+OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
 
 # Neutron plugin specific functions
 # ---------------------------------
@@ -239,6 +234,11 @@ fi
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,neutron
+
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
 
 
 # Functions
