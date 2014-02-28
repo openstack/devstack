@@ -165,46 +165,6 @@ fi
 # Set up logging level
 VERBOSE=$(trueorfalse True $VERBOSE)
 
-
-# Additional repos
-# ================
-
-# Some distros need to add repos beyond the defaults provided by the vendor
-# to pick up required packages.
-
-# The Debian Wheezy official repositories do not contain all required packages,
-# add gplhost repository.
-if [[ "$os_VENDOR" =~ (Debian) ]]; then
-    echo 'deb http://archive.gplhost.com/debian grizzly main' | sudo tee /etc/apt/sources.list.d/gplhost_wheezy-backports.list
-    echo 'deb http://archive.gplhost.com/debian grizzly-backports main' | sudo tee -a /etc/apt/sources.list.d/gplhost_wheezy-backports.list
-    apt_get update
-    apt_get install --force-yes gplhost-archive-keyring
-fi
-
-if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-    # Installing Open vSwitch on RHEL6 requires enabling the RDO repo.
-    RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack-havana/rdo-release-havana.rpm"}
-    RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-havana"}
-    if ! sudo yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
-        echo "RDO repo not detected; installing"
-        yum_install $RHEL6_RDO_REPO_RPM || \
-            die $LINENO "Error installing RDO repo, cannot continue"
-    fi
-
-    # RHEL6 requires EPEL for many Open Stack dependencies
-    RHEL6_EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
-    if ! sudo yum repolist enabled epel | grep -q 'epel'; then
-        echo "EPEL not detected; installing"
-        yum_install ${RHEL6_EPEL_RPM} || \
-            die $LINENO "Error installing EPEL repo, cannot continue"
-    fi
-
-    # ... and also optional to be enabled
-    sudo yum-config-manager --enable rhel-6-server-optional-rpms
-
-fi
-
-
 # root Access
 # -----------
 
@@ -239,6 +199,47 @@ chmod 0440 $TEMPFILE
 sudo chown root:root $TEMPFILE
 sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
 
+# Additional repos
+# ----------------
+
+# Some distros need to add repos beyond the defaults provided by the vendor
+# to pick up required packages.
+
+# The Debian Wheezy official repositories do not contain all required packages,
+# add gplhost repository.
+if [[ "$os_VENDOR" =~ (Debian) ]]; then
+    echo 'deb http://archive.gplhost.com/debian grizzly main' | sudo tee /etc/apt/sources.list.d/gplhost_wheezy-backports.list
+    echo 'deb http://archive.gplhost.com/debian grizzly-backports main' | sudo tee -a /etc/apt/sources.list.d/gplhost_wheezy-backports.list
+    apt_get update
+    apt_get install --force-yes gplhost-archive-keyring
+fi
+
+if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
+    # Installing Open vSwitch on RHEL6 requires enabling the RDO repo.
+    RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack-havana/rdo-release-havana.rpm"}
+    RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-havana"}
+    if ! sudo yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
+        echo "RDO repo not detected; installing"
+        yum_install $RHEL6_RDO_REPO_RPM || \
+            die $LINENO "Error installing RDO repo, cannot continue"
+    fi
+
+    # RHEL6 requires EPEL for many Open Stack dependencies
+    RHEL6_EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
+    if ! sudo yum repolist enabled epel | grep -q 'epel'; then
+        echo "EPEL not detected; installing"
+        yum_install ${RHEL6_EPEL_RPM} || \
+            die $LINENO "Error installing EPEL repo, cannot continue"
+    fi
+
+    # ... and also optional to be enabled
+    is_package_installed yum-utils || install_package yum-utils
+    sudo yum-config-manager --enable rhel-6-server-optional-rpms
+
+fi
+
+# Filesystem setup
+# ----------------
 
 # Create the destination directory and ensure it is writable by the user
 # and read/executable by everybody for daemons (e.g. apache run for horizon)
@@ -256,6 +257,15 @@ if [ -z "`grep ^127.0.0.1 /etc/hosts | grep $LOCAL_HOSTNAME`" ]; then
     sudo sed -i "s/\(^127.0.0.1.*\)/\1 $LOCAL_HOSTNAME/" /etc/hosts
 fi
 
+# Destination path for service data
+DATA_DIR=${DATA_DIR:-${DEST}/data}
+sudo mkdir -p $DATA_DIR
+safe_chown -R $STACK_USER $DATA_DIR
+
+
+# Common Configuration
+# --------------------
+
 # Set ``OFFLINE`` to ``True`` to configure ``stack.sh`` to run cleanly without
 # Internet access. ``stack.sh`` must have been previously run with Internet
 # access to install prerequisites and fetch repositories.
@@ -268,15 +278,6 @@ ERROR_ON_CLONE=`trueorfalse False $ERROR_ON_CLONE`
 
 # Whether to enable the debug log level in OpenStack services
 ENABLE_DEBUG_LOG_LEVEL=`trueorfalse True $ENABLE_DEBUG_LOG_LEVEL`
-
-# Destination path for service data
-DATA_DIR=${DATA_DIR:-${DEST}/data}
-sudo mkdir -p $DATA_DIR
-safe_chown -R $STACK_USER $DATA_DIR
-
-
-# Common Configuration
-# ====================
 
 # Set fixed and floating range here so we can make sure not to use addresses
 # from either range when attempting to guess the IP to use for the host.
