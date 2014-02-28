@@ -178,6 +178,10 @@ fi
 nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || \
     die $LINENO "Failure deleting security group rule from $SECGROUP"
 
+if ! timeout $ASSOCIATE_TIMEOUT sh -c "while nova secgroup-list-rules $SECGROUP | grep -q icmp; do sleep 1; done"; then
+    die $LINENO "Security group rule not deleted from $SECGROUP"
+fi
+
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
     # Test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
