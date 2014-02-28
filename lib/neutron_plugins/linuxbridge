@@ -7,14 +7,14 @@ set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/linuxbridge_agent
 
-function neutron_plugin_configure_common() {
+function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/linuxbridge
     Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
     Q_DB_NAME="neutron_linux_bridge"
     Q_PLUGIN_CLASS="neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2"
 }
 
-function neutron_plugin_configure_service() {
+function neutron_plugin_configure_service {
     if [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE vlans tenant_network_type vlan
     else
@@ -47,7 +47,7 @@ function neutron_plugin_configure_service() {
     done
 }
 
-function has_neutron_plugin_security_group() {
+function has_neutron_plugin_security_group {
     # 0 means True here
     return 0
 }

@@ -6,15 +6,15 @@
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-function neutron_plugin_create_nova_conf() {
+function neutron_plugin_create_nova_conf {
     :
 }
 
-function neutron_plugin_setup_interface_driver() {
+function neutron_plugin_setup_interface_driver {
     :
 }
 
-function neutron_plugin_configure_common() {
+function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/plumgrid
     Q_PLUGIN_CONF_FILENAME=plumgrid.ini
     Q_DB_NAME="plumgrid_neutron"
@@ -26,7 +26,7 @@ function neutron_plugin_configure_common() {
     PLUMGRID_TIMEOUT=${PLUMGRID_TIMEOUT:-70}
 }
 
-function neutron_plugin_configure_service() {
+function neutron_plugin_configure_service {
     iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector director_server $PLUMGRID_DIRECTOR_IP
     iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector director_server_port $PLUMGRID_DIRECTOR_PORT
     iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector username $PLUMGRID_ADMIN
@@ -34,21 +34,21 @@ function neutron_plugin_configure_service() {
     iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector servertimeout $PLUMGRID_TIMEOUT
 }
 
-function neutron_plugin_configure_debug_command() {
+function neutron_plugin_configure_debug_command {
     :
 }
 
-function is_neutron_ovs_base_plugin() {
+function is_neutron_ovs_base_plugin {
     # False
     return 1
 }
 
-function has_neutron_plugin_security_group() {
+function has_neutron_plugin_security_group {
     # False
     return 1
 }
 
-function neutron_plugin_check_adv_test_requirements() {
+function neutron_plugin_check_adv_test_requirements {
     is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
 }
 # Restore xtrace

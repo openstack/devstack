@@ -4,7 +4,7 @@ EXECUTOR_NUMBER=$1
 ADAPTER=$2
 RC=$3
 
-function usage() {
+function usage {
     echo "Usage: $0 - Run a test"
     echo ""
     echo "$0 [EXECUTOR_NUMBER] [ADAPTER] [RC (optional)]"

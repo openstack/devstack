@@ -27,7 +27,7 @@ set +o xtrace
 # ------------
 
 # configure_cinder_driver - Set config files, create data dirs, etc
-function configure_cinder_driver() {
+function configure_cinder_driver {
     # To use glusterfs, set the following in localrc:
     # CINDER_DRIVER=glusterfs
     # CINDER_GLUSTERFS_SHARES="127.0.0.1:/vol1;127.0.0.1:/vol2"

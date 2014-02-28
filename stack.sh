@@ -5,11 +5,12 @@
 # **Glance**, **Heat**, **Horizon**, **Keystone**, **Nova**, **Neutron**,
 # and **Swift**
 
-# This script allows you to specify configuration options of what git
-# repositories to use, enabled services, network configuration and various
-# passwords.  If you are crafty you can run the script on multiple nodes using
-# shared settings for common resources (mysql, rabbitmq) and build a multi-node
-# developer install.
+# This script's options can be changed by setting appropriate environment
+# variables.  You can configure things like which git repositories to use,
+# services to enable, OS images to use, etc.  Default values are located in the
+# ``stackrc`` file. If you are crafty you can run the script on multiple nodes
+# using shared settings for common resources (eg., mysql or rabbitmq) and build
+# a multi-node developer install.
 
 # To keep this script simple we assume you are running on a recent **Ubuntu**
 # (12.04 Precise or newer) or **Fedora** (F18 or newer) machine.  (It may work
@@ -29,6 +30,9 @@ unset LANG
 unset LANGUAGE
 LC_ALL=C
 export LC_ALL
+
+# Make sure umask is sane
+umask 022
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
@@ -464,7 +468,7 @@ fi
 # -----------------
 
 # Draw a spinner so the user knows something is happening
-function spinner() {
+function spinner {
     local delay=0.75
     local spinstr='/-\|'
     printf "..." >&3
@@ -479,7 +483,7 @@ function spinner() {
 
 # Echo text to the log file, summary log file and stdout
 # echo_summary "something to say"
-function echo_summary() {
+function echo_summary {
     if [[ -t 3 && "$VERBOSE" != "True" ]]; then
         kill >/dev/null 2>&1 $LAST_SPINNER_PID
         if [ ! -z "$LAST_SPINNER_PID" ]; then
@@ -495,7 +499,7 @@ function echo_summary() {
 
 # Echo text only to stdout, no log files
 # echo_nolog "something not for the logs"
-function echo_nolog() {
+function echo_nolog {
     echo $@ >&3
 }
 
@@ -587,8 +591,11 @@ fi
 trap exit_trap EXIT
 function exit_trap {
     local r=$?
-    echo "exit_trap called, cleaning up child processes"
-    kill 2>&1 $(jobs -p)
+    jobs=$(jobs -p)
+    if [[ -n $jobs ]]; then
+        echo "exit_trap: cleaning up child processes"
+        kill 2>&1 $jobs
+    fi
     exit $r
 }
 

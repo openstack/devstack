@@ -10,15 +10,15 @@ AGENT_VPN_BINARY="$NEUTRON_BIN_DIR/neutron-vpn-agent"
 VPN_PLUGIN="neutron.services.vpn.plugin.VPNDriverPlugin"
 IPSEC_PACKAGE=${IPSEC_PACKAGE:-"openswan"}
 
-function neutron_vpn_install_agent_packages() {
+function neutron_vpn_install_agent_packages {
     install_package $IPSEC_PACKAGE
 }
 
-function neutron_vpn_configure_common() {
+function neutron_vpn_configure_common {
     _neutron_service_plugin_class_add $VPN_PLUGIN
 }
 
-function neutron_vpn_stop() {
+function neutron_vpn_stop {
     local ipsec_data_dir=$DATA_DIR/neutron/ipsec
     local pids
     if [ -d $ipsec_data_dir ]; then

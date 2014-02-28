@@ -47,14 +47,14 @@ TEMPEST_SERVICES+=,heat
 
 # cleanup_heat() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_heat() {
+function cleanup_heat {
     sudo rm -rf $HEAT_AUTH_CACHE_DIR
     sudo rm -rf $HEAT_ENV_DIR
     sudo rm -rf $HEAT_TEMPLATES_DIR
 }
 
 # configure_heat() - Set config files, create data dirs, etc
-function configure_heat() {
+function configure_heat {
     setup_develop $HEAT_DIR
 
     if [[ ! -d $HEAT_CONF_DIR ]]; then
@@ -137,7 +137,7 @@ function configure_heat() {
 }
 
 # init_heat() - Initialize database
-function init_heat() {
+function init_heat {
 
     # (re)create heat database
     recreate_database heat utf8
@@ -147,26 +147,26 @@ function init_heat() {
 }
 
 # create_heat_cache_dir() - Part of the init_heat() process
-function create_heat_cache_dir() {
+function create_heat_cache_dir {
     # Create cache dirs
     sudo mkdir -p $HEAT_AUTH_CACHE_DIR
     sudo chown $STACK_USER $HEAT_AUTH_CACHE_DIR
 }
 
 # install_heatclient() - Collect source and prepare
-function install_heatclient() {
+function install_heatclient {
     git_clone $HEATCLIENT_REPO $HEATCLIENT_DIR $HEATCLIENT_BRANCH
     setup_develop $HEATCLIENT_DIR
     sudo install -D -m 0644 -o $STACK_USER {$HEATCLIENT_DIR/tools/,/etc/bash_completion.d/}heat.bash_completion
 }
 
 # install_heat() - Collect source and prepare
-function install_heat() {
+function install_heat {
     git_clone $HEAT_REPO $HEAT_DIR $HEAT_BRANCH
 }
 
 # start_heat() - Start running processes, including screen
-function start_heat() {
+function start_heat {
     screen_it h-eng "cd $HEAT_DIR; bin/heat-engine --config-file=$HEAT_CONF"
     screen_it h-api "cd $HEAT_DIR; bin/heat-api --config-file=$HEAT_CONF"
     screen_it h-api-cfn "cd $HEAT_DIR; bin/heat-api-cfn --config-file=$HEAT_CONF"
@@ -174,7 +174,7 @@ function start_heat() {
 }
 
 # stop_heat() - Stop running processes
-function stop_heat() {
+function stop_heat {
     # Kill the screen windows
     for serv in h-eng h-api h-api-cfn h-api-cw; do
         screen_stop $serv
@@ -198,7 +198,7 @@ function disk_image_create {
 
 # create_heat_accounts() - Set up common required heat accounts
 # Note this is in addition to what is in files/keystone_data.sh
-function create_heat_accounts() {
+function create_heat_accounts {
     # Note we have to pass token/endpoint here because the current endpoint and
     # version negotiation in OSC means just --os-identity-api-version=3 won't work
     KS_ENDPOINT_V3="$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"

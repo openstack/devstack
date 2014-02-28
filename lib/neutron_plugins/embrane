@@ -7,7 +7,7 @@ set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/openvswitch
 
-save_function() {
+function save_function {
     local ORIG_FUNC=$(declare -f $1)
     local NEW_FUNC="$2${ORIG_FUNC#$1}"
     eval "$NEW_FUNC"
@@ -15,14 +15,14 @@ save_function() {
 
 save_function neutron_plugin_configure_service _neutron_plugin_configure_service
 
-function neutron_plugin_configure_common() {
+function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/embrane
     Q_PLUGIN_CONF_FILENAME=heleos_conf.ini
     Q_DB_NAME="ovs_neutron"
     Q_PLUGIN_CLASS="neutron.plugins.embrane.plugins.embrane_ovs_plugin.EmbraneOvsPlugin"
 }
 
-function neutron_plugin_configure_service() {
+function neutron_plugin_configure_service {
     _neutron_plugin_configure_service
     iniset /$Q_PLUGIN_CONF_FILE heleos esm_mgmt $HELEOS_ESM_MGMT
     iniset /$Q_PLUGIN_CONF_FILE heleos admin_username $HELEOS_ADMIN_USERNAME

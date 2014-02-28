@@ -102,6 +102,21 @@ def check_indents(line):
         if (len(m.group('indent')) % 4) != 0:
             print_error('E003: Indent not multiple of 4', line)
 
+def check_function_decl(line):
+    failed = False
+    if line.startswith("function"):
+        if not re.search('^function [\w-]* \{$', line):
+            failed = True
+    else:
+        # catch the case without "function", e.g.
+        # things like '^foo() {'
+        if re.search('^\s*?\(\)\s*?\{', line):
+            failed = True
+
+    if failed:
+        print_error('E020: Function declaration not in format '
+                    ' "^function name {$"', line)
+
 
 def starts_multiline(line):
     m = re.search("[^<]<<\s*(?P<token>\w+)", line)
@@ -169,6 +184,7 @@ def check_files(files, verbose):
         check_indents(logical_line)
         check_for_do(logical_line)
         check_if_then(logical_line)
+        check_function_decl(logical_line)
 
         prev_line = logical_line
         prev_lineno = fileinput.filelineno()

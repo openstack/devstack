@@ -31,7 +31,7 @@ TREMA_SS_CONFIG=$TREMA_SS_ETC_DIR/sliceable.conf
 TREMA_SS_APACHE_CONFIG=/etc/apache2/sites-available/sliceable_switch.conf
 
 # configure_trema - Set config files, create data dirs, etc
-function configure_trema() {
+function configure_trema {
     # prepare dir
     for d in $TREMA_SS_ETC_DIR $TREMA_SS_DB_DIR $TREMA_SS_SCRIPT_DIR; do
         sudo mkdir -p $d
@@ -41,7 +41,7 @@ function configure_trema() {
 }
 
 # init_trema - Initialize databases, etc.
-function init_trema() {
+function init_trema {
     local _pwd=$(pwd)
 
     # Initialize databases for Sliceable Switch
@@ -70,7 +70,7 @@ function init_trema() {
         $TREMA_SS_CONFIG
 }
 
-function gem_install() {
+function gem_install {
     [[ "$OFFLINE" = "True" ]] && return
     [ -n "$RUBYGEMS_CMD" ] || get_gem_command
 
@@ -79,7 +79,7 @@ function gem_install() {
     sudo $RUBYGEMS_CMD install $pkg
 }
 
-function get_gem_command() {
+function get_gem_command {
     # Trema requires ruby 1.8, so gem1.8 is checked first
     RUBYGEMS_CMD=$(which gem1.8 || which gem)
     if [ -z "$RUBYGEMS_CMD" ]; then
@@ -87,7 +87,7 @@ function get_gem_command() {
     fi
 }
 
-function install_trema() {
+function install_trema {
     # Trema
     gem_install trema
     # Sliceable Switch
@@ -97,7 +97,7 @@ function install_trema() {
     make -C $TREMA_DIR/apps/sliceable_switch
 }
 
-function start_trema() {
+function start_trema {
     # APACHE_NAME is defined in init_horizon (in lib/horizon)
     restart_service $APACHE_NAME
 
@@ -105,11 +105,11 @@ function start_trema() {
         trema run -d -c $TREMA_SS_CONFIG
 }
 
-function stop_trema() {
+function stop_trema {
     sudo TREMA_TMP=$TREMA_TMP_DIR trema killall
 }
 
-function check_trema() {
+function check_trema {
     :
 }
 

@@ -40,7 +40,7 @@ FILES=$TOP_DIR/files
 # ---------------
 
 # get_package_path python-package    # in import notation
-function get_package_path() {
+function get_package_path {
     local package=$1
     echo $(python -c "import os; import $package; print(os.path.split(os.path.realpath($package.__file__))[0])")
 }

@@ -8,11 +8,11 @@ set +o xtrace
 BS_FL_CONTROLLERS_PORT=${BS_FL_CONTROLLERS_PORT:-localhost:80}
 BS_FL_OF_PORT=${BS_FL_OF_PORT:-6633}
 
-function configure_bigswitch_floodlight() {
+function configure_bigswitch_floodlight {
     :
 }
 
-function init_bigswitch_floodlight() {
+function init_bigswitch_floodlight {
     install_neutron_agent_packages
 
     echo -n "Installing OVS managed by the openflow controllers:"
@@ -32,19 +32,19 @@ function init_bigswitch_floodlight() {
     sudo ovs-vsctl --no-wait set-controller ${OVS_BRIDGE} ${ctrls}
 }
 
-function install_bigswitch_floodlight() {
+function install_bigswitch_floodlight {
     :
 }
 
-function start_bigswitch_floodlight() {
+function start_bigswitch_floodlight {
     :
 }
 
-function stop_bigswitch_floodlight() {
+function stop_bigswitch_floodlight {
     :
 }
 
-function check_bigswitch_floodlight() {
+function check_bigswitch_floodlight {
     :
 }
 

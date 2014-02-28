@@ -27,7 +27,7 @@ REQUIREMENTS_DIR=$DEST/requirements
 # ------------
 
 # unfubar_setuptools() - Unbreak the giant mess that is the current state of setuptools
-function unfubar_setuptools() {
+function unfubar_setuptools {
     # this is a giant game of who's on first, but it does consistently work
     # there is hope that upstream python packaging fixes this in the future
     echo_summary "Unbreaking setuptools"
@@ -40,7 +40,7 @@ function unfubar_setuptools() {
 
 
 # install_infra() - Collect source and prepare
-function install_infra() {
+function install_infra {
     # bring down global requirements
     git_clone $REQUIREMENTS_REPO $REQUIREMENTS_DIR $REQUIREMENTS_BRANCH
 

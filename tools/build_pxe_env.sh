@@ -17,7 +17,7 @@ PXEDIR=${PXEDIR:-/opt/ramstack/pxe}
 PROGDIR=`dirname $0`
 
 # Clean up any resources that may be in use
-cleanup() {
+function cleanup {
     set +o errexit
 
     # Mop up temporary files

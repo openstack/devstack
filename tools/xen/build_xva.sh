@@ -42,7 +42,7 @@ source xenrc
 #
 GUEST_NAME="$1"
 
-function _print_interface_config() {
+function _print_interface_config {
     local device_nr
     local ip_address
     local netmask
@@ -68,7 +68,7 @@ function _print_interface_config() {
     echo "  post-up ethtool -K $device tx off"
 }
 
-function print_interfaces_config() {
+function print_interfaces_config {
     echo "auto lo"
     echo "iface lo inet loopback"
 

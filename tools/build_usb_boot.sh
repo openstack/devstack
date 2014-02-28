@@ -13,7 +13,7 @@ DEST_DIR=${1:-/tmp/syslinux-boot}
 PXEDIR=${PXEDIR:-/opt/ramstack/pxe}
 
 # Clean up any resources that may be in use
-cleanup() {
+function cleanup {
     set +o errexit
 
     # Mop up temporary files

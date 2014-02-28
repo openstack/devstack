@@ -34,7 +34,7 @@ PECAN_DIR=$DEST/pecan
 # ------------
 
 # install_stackforge() - Collect source and prepare
-function install_stackforge() {
+function install_stackforge {
     # TODO(sdague): remove this once we get to Icehouse, this just makes
     # for a smoother transition of existing users.
     cleanup_stackforge
@@ -47,7 +47,7 @@ function install_stackforge() {
 }
 
 # cleanup_stackforge() - purge possibly old versions of stackforge libraries
-function cleanup_stackforge() {
+function cleanup_stackforge {
     # this means we've got an old version installed, lets get rid of it
     # otherwise python hates itself
     for lib in wsme pecan; do

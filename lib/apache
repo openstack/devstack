@@ -50,7 +50,7 @@ fi
 #
 # Uses global ``APACHE_ENABLED_SERVICES``
 # APACHE_ENABLED_SERVICES service [service ...]
-function is_apache_enabled_service() {
+function is_apache_enabled_service {
     services=$@
     for service in ${services}; do
         [[ ,${APACHE_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
@@ -59,7 +59,7 @@ function is_apache_enabled_service() {
 }
 
 # install_apache_wsgi() - Install Apache server and wsgi module
-function install_apache_wsgi() {
+function install_apache_wsgi {
     # Apache installation, because we mark it NOPRIME
     if is_ubuntu; then
         # Install apache2, which is NOPRIME'd
@@ -79,7 +79,7 @@ function install_apache_wsgi() {
 }
 
 # enable_apache_site() - Enable a particular apache site
-function enable_apache_site() {
+function enable_apache_site {
     local site=$@
     if is_ubuntu; then
         sudo a2ensite ${site}
@@ -90,7 +90,7 @@ function enable_apache_site() {
 }
 
 # disable_apache_site() - Disable a particular apache site
-function disable_apache_site() {
+function disable_apache_site {
     local site=$@
     if is_ubuntu; then
         sudo a2dissite ${site}
@@ -100,12 +100,12 @@ function disable_apache_site() {
 }
 
 # start_apache_server() - Start running apache server
-function start_apache_server() {
+function start_apache_server {
     start_service $APACHE_NAME
 }
 
 # stop_apache_server() - Stop running apache server
-function stop_apache_server() {
+function stop_apache_server {
     if [ -n "$APACHE_NAME" ]; then
         stop_service $APACHE_NAME
     else
@@ -114,7 +114,7 @@ function stop_apache_server() {
 }
 
 # restart_apache_server
-function restart_apache_server() {
+function restart_apache_server {
     restart_service $APACHE_NAME
 }
 

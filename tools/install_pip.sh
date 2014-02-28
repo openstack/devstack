@@ -50,7 +50,7 @@ PIP_TAR_URL=https://pypi.python.org/packages/source/p/pip/pip-$INSTALL_PIP_VERSI
 GetDistro
 echo "Distro: $DISTRO"
 
-function get_versions() {
+function get_versions {
     PIP=$(which pip 2>/dev/null || which pip-python 2>/dev/null || true)
     if [[ -n $PIP ]]; then
         PIP_VERSION=$($PIP --version | awk '{ print $2}')
@@ -61,7 +61,7 @@ function get_versions() {
 }
 
 
-function install_get_pip() {
+function install_get_pip {
     if [[ ! -r $FILES/get-pip.py ]]; then
         (cd $FILES; \
             curl -O $PIP_GET_PIP_URL; \
@@ -70,7 +70,7 @@ function install_get_pip() {
     sudo -E python $FILES/get-pip.py
 }
 
-function install_pip_tarball() {
+function install_pip_tarball {
     (cd $FILES; \
         curl -O $PIP_TAR_URL; \
         tar xvfz pip-$INSTALL_PIP_VERSION.tar.gz 1>/dev/null; \

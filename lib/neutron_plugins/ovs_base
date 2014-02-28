@@ -8,19 +8,19 @@ set +o xtrace
 OVS_BRIDGE=${OVS_BRIDGE:-br-int}
 PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
 
-function is_neutron_ovs_base_plugin() {
+function is_neutron_ovs_base_plugin {
     # Yes, we use OVS.
     return 0
 }
 
-function _neutron_ovs_base_setup_bridge() {
+function _neutron_ovs_base_setup_bridge {
     local bridge=$1
     neutron-ovs-cleanup
     sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge
     sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
 }
 
-function neutron_ovs_base_cleanup() {
+function neutron_ovs_base_cleanup {
     # remove all OVS ports that look like Neutron created ports
     for port in $(sudo ovs-vsctl list port | grep -o -e tap[0-9a-f\-]* -e q[rg]-[0-9a-f\-]*); do
         sudo ovs-vsctl del-port ${port}
@@ -32,7 +32,7 @@ function neutron_ovs_base_cleanup() {
     done
 }
 
-function _neutron_ovs_base_install_agent_packages() {
+function _neutron_ovs_base_install_agent_packages {
     local kernel_version
     # Install deps
     # FIXME add to ``files/apts/neutron``, but don't install if not needed!
@@ -50,11 +50,11 @@ function _neutron_ovs_base_install_agent_packages() {
     fi
 }
 
-function _neutron_ovs_base_configure_debug_command() {
+function _neutron_ovs_base_configure_debug_command {
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
 }
 
-function _neutron_ovs_base_configure_firewall_driver() {
+function _neutron_ovs_base_configure_firewall_driver {
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
     else
@@ -62,7 +62,7 @@ function _neutron_ovs_base_configure_firewall_driver() {
     fi
 }
 
-function _neutron_ovs_base_configure_l3_agent() {
+function _neutron_ovs_base_configure_l3_agent {
     iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
 
     neutron-ovs-cleanup
@@ -72,7 +72,7 @@ function _neutron_ovs_base_configure_l3_agent() {
     sudo ip addr flush dev $PUBLIC_BRIDGE
 }
 
-function _neutron_ovs_base_configure_nova_vif_driver() {
+function _neutron_ovs_base_configure_nova_vif_driver {
     :
 }
 

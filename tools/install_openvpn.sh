@@ -22,7 +22,7 @@ if [ -e vpnrc ]; then
 fi
 
 # Do some IP manipulation
-function cidr2netmask() {
+function cidr2netmask {
     set -- $(( 5 - ($1 / 8) )) 255 255 255 255 $(( (255 << (8 - ($1 % 8))) & 255 )) 0 0 0
     if [[ $1 -gt 1 ]]; then
         shift $1
@@ -50,7 +50,7 @@ VPN_CLIENT_DHCP="${VPN_CLIENT_DHCP:-net.1 net.254}"
 VPN_DIR=/etc/openvpn
 CA_DIR=$VPN_DIR/easy-rsa
 
-usage() {
+function usage {
     echo "$0 - OpenVPN install and certificate generation"
     echo ""
     echo "$0 --client name"
@@ -102,7 +102,7 @@ if [ ! -r $CA_DIR/keys/dh1024.pem ]; then
     openvpn --genkey --secret $CA_DIR/keys/ta.key  ## Build a TLS key
 fi
 
-do_server() {
+function do_server {
     NAME=$1
     # Generate server certificate
     $CA_DIR/pkitool --server $NAME
@@ -162,7 +162,7 @@ EOF
     /etc/init.d/openvpn restart
 }
 
-do_client() {
+function do_client {
     NAME=$1
     # Generate a client certificate
     $CA_DIR/pkitool $NAME

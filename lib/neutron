@@ -59,10 +59,6 @@
 # LinuxBridge plugin, please see the top level README file under the
 # Neutron section.
 
-# Save trace setting
-XTRACE=$(set +o | grep xtrace)
-set +o xtrace
-
 
 # Neutron Network Configuration
 # -----------------------------
@@ -127,81 +123,80 @@ Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-False}
 # See _configure_neutron_common() for details about setting it up
 declare -a Q_PLUGIN_EXTRA_CONF_FILES
 
-if is_service_enabled neutron; then
-    Q_RR_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
-    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
-        Q_RR_COMMAND="sudo"
-    else
-        NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
-        Q_RR_COMMAND="sudo $NEUTRON_ROOTWRAP $Q_RR_CONF_FILE"
-    fi
 
-    # Provider Network Configurations
-    # --------------------------------
-
-    # The following variables control the Neutron openvswitch and
-    # linuxbridge plugins' allocation of tenant networks and
-    # availability of provider networks. If these are not configured
-    # in ``localrc``, tenant networks will be local to the host (with no
-    # remote connectivity), and no physical resources will be
-    # available for the allocation of provider networks.
-
-    # To use GRE tunnels for tenant networks, set to True in
-    # ``localrc``. GRE tunnels are only supported by the openvswitch
-    # plugin, and currently only on Ubuntu.
-    ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-False}
-
-    # If using GRE tunnels for tenant networks, specify the range of
-    # tunnel IDs from which tenant networks are allocated. Can be
-    # overriden in ``localrc`` in necesssary.
-    TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGE:-1:1000}
-
-    # To use VLANs for tenant networks, set to True in localrc. VLANs
-    # are supported by the openvswitch and linuxbridge plugins, each
-    # requiring additional configuration described below.
-    ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
-
-    # If using VLANs for tenant networks, set in ``localrc`` to specify
-    # the range of VLAN VIDs from which tenant networks are
-    # allocated. An external network switch must be configured to
-    # trunk these VLANs between hosts for multi-host connectivity.
-    #
-    # Example: ``TENANT_VLAN_RANGE=1000:1999``
-    TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
-
-    # If using VLANs for tenant networks, or if using flat or VLAN
-    # provider networks, set in ``localrc`` to the name of the physical
-    # network, and also configure ``OVS_PHYSICAL_BRIDGE`` for the
-    # openvswitch agent or ``LB_PHYSICAL_INTERFACE`` for the linuxbridge
-    # agent, as described below.
-    #
-    # Example: ``PHYSICAL_NETWORK=default``
-    PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
-
-    # With the openvswitch plugin, if using VLANs for tenant networks,
-    # or if using flat or VLAN provider networks, set in ``localrc`` to
-    # the name of the OVS bridge to use for the physical network. The
-    # bridge will be created if it does not already exist, but a
-    # physical interface must be manually added to the bridge as a
-    # port for external connectivity.
-    #
-    # Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
-    OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
-
-    # With the linuxbridge plugin, if using VLANs for tenant networks,
-    # or if using flat or VLAN provider networks, set in ``localrc`` to
-    # the name of the network interface to use for the physical
-    # network.
-    #
-    # Example: ``LB_PHYSICAL_INTERFACE=eth1``
-    LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
-
-    # With the openvswitch plugin, set to True in ``localrc`` to enable
-    # provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
-    #
-    # Example: ``OVS_ENABLE_TUNNELING=True``
-    OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
+Q_RR_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
+if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+    Q_RR_COMMAND="sudo"
+else
+    NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
+    Q_RR_COMMAND="sudo $NEUTRON_ROOTWRAP $Q_RR_CONF_FILE"
 fi
+
+# Provider Network Configurations
+# --------------------------------
+
+# The following variables control the Neutron openvswitch and
+# linuxbridge plugins' allocation of tenant networks and
+# availability of provider networks. If these are not configured
+# in ``localrc``, tenant networks will be local to the host (with no
+# remote connectivity), and no physical resources will be
+# available for the allocation of provider networks.
+
+# To use GRE tunnels for tenant networks, set to True in
+# ``localrc``. GRE tunnels are only supported by the openvswitch
+# plugin, and currently only on Ubuntu.
+ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-False}
+
+# If using GRE tunnels for tenant networks, specify the range of
+# tunnel IDs from which tenant networks are allocated. Can be
+# overriden in ``localrc`` in necesssary.
+TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGE:-1:1000}
+
+# To use VLANs for tenant networks, set to True in localrc. VLANs
+# are supported by the openvswitch and linuxbridge plugins, each
+# requiring additional configuration described below.
+ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
+
+# If using VLANs for tenant networks, set in ``localrc`` to specify
+# the range of VLAN VIDs from which tenant networks are
+# allocated. An external network switch must be configured to
+# trunk these VLANs between hosts for multi-host connectivity.
+#
+# Example: ``TENANT_VLAN_RANGE=1000:1999``
+TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
+
+# If using VLANs for tenant networks, or if using flat or VLAN
+# provider networks, set in ``localrc`` to the name of the physical
+# network, and also configure ``OVS_PHYSICAL_BRIDGE`` for the
+# openvswitch agent or ``LB_PHYSICAL_INTERFACE`` for the linuxbridge
+# agent, as described below.
+#
+# Example: ``PHYSICAL_NETWORK=default``
+PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
+
+# With the openvswitch plugin, if using VLANs for tenant networks,
+# or if using flat or VLAN provider networks, set in ``localrc`` to
+# the name of the OVS bridge to use for the physical network. The
+# bridge will be created if it does not already exist, but a
+# physical interface must be manually added to the bridge as a
+# port for external connectivity.
+#
+# Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
+OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
+
+# With the linuxbridge plugin, if using VLANs for tenant networks,
+# or if using flat or VLAN provider networks, set in ``localrc`` to
+# the name of the network interface to use for the physical
+# network.
+#
+# Example: ``LB_PHYSICAL_INTERFACE=eth1``
+LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
+
+# With the openvswitch plugin, set to True in ``localrc`` to enable
+# provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
+#
+# Example: ``OVS_ENABLE_TUNNELING=True``
+OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
 
 # Neutron plugin specific functions
 # ---------------------------------
@@ -241,6 +236,11 @@ fi
 TEMPEST_SERVICES+=,neutron
 
 
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
 # Functions
 # ---------
 
@@ -253,7 +253,7 @@ function is_neutron_enabled {
 
 # configure_neutron()
 # Set common config for all neutron server and agents.
-function configure_neutron() {
+function configure_neutron {
     _configure_neutron_common
     iniset_rpc_backend neutron $NEUTRON_CONF DEFAULT
 
@@ -289,7 +289,7 @@ function configure_neutron() {
     _configure_neutron_debug_command
 }
 
-function create_nova_conf_neutron() {
+function create_nova_conf_neutron {
     iniset $NOVA_CONF DEFAULT network_api_class "nova.network.neutronv2.api.API"
     iniset $NOVA_CONF DEFAULT neutron_admin_username "$Q_ADMIN_USERNAME"
     iniset $NOVA_CONF DEFAULT neutron_admin_password "$SERVICE_PASSWORD"
@@ -316,7 +316,7 @@ function create_nova_conf_neutron() {
 }
 
 # create_neutron_cache_dir() - Part of the _neutron_setup_keystone() process
-function create_neutron_cache_dir() {
+function create_neutron_cache_dir {
     # Create cache dir
     sudo mkdir -p $NEUTRON_AUTH_CACHE_DIR
     sudo chown $STACK_USER $NEUTRON_AUTH_CACHE_DIR
@@ -330,7 +330,7 @@ function create_neutron_cache_dir() {
 # service              neutron    admin        # if enabled
 
 # Migrated from keystone_data.sh
-function create_neutron_accounts() {
+function create_neutron_accounts {
 
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
@@ -362,7 +362,7 @@ function create_neutron_accounts() {
     fi
 }
 
-function create_neutron_initial_network() {
+function create_neutron_initial_network {
     TENANT_ID=$(openstack project list | grep " demo " | get_field 1)
     die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for demo"
 
@@ -429,27 +429,27 @@ function create_neutron_initial_network() {
 }
 
 # init_neutron() - Initialize databases, etc.
-function init_neutron() {
+function init_neutron {
     recreate_database $Q_DB_NAME utf8
     # Run Neutron db migrations
     $NEUTRON_BIN_DIR/neutron-db-manage --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE upgrade head
 }
 
 # install_neutron() - Collect source and prepare
-function install_neutron() {
+function install_neutron {
     git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
     setup_develop $NEUTRON_DIR
 }
 
 # install_neutronclient() - Collect source and prepare
-function install_neutronclient() {
+function install_neutronclient {
     git_clone $NEUTRONCLIENT_REPO $NEUTRONCLIENT_DIR $NEUTRONCLIENT_BRANCH
     setup_develop $NEUTRONCLIENT_DIR
     sudo install -D -m 0644 -o $STACK_USER {$NEUTRONCLIENT_DIR/tools/,/etc/bash_completion.d/}neutron.bash_completion
 }
 
 # install_neutron_agent_packages() - Collect source and prepare
-function install_neutron_agent_packages() {
+function install_neutron_agent_packages {
     # install packages that are specific to plugin agent(s)
     if is_service_enabled q-agt q-dhcp q-l3; then
         neutron_plugin_install_agent_packages
@@ -461,7 +461,7 @@ function install_neutron_agent_packages() {
 }
 
 # Start running processes, including screen
-function start_neutron_service_and_check() {
+function start_neutron_service_and_check {
     # build config-file options
     local cfg_file
     local CFG_FILE_OPTIONS="--config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
@@ -477,7 +477,7 @@ function start_neutron_service_and_check() {
 }
 
 # Start running processes, including screen
-function start_neutron_agents() {
+function start_neutron_agents {
     # Start up the neutron agents if enabled
     screen_it q-agt "cd $NEUTRON_DIR && python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
     screen_it q-dhcp "cd $NEUTRON_DIR && python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
@@ -510,7 +510,7 @@ function start_neutron_agents() {
 }
 
 # stop_neutron() - Stop running processes (non-screen)
-function stop_neutron() {
+function stop_neutron {
     if is_service_enabled q-dhcp; then
         pid=$(ps aux | awk '/[d]nsmasq.+interface=(tap|ns-)/ { print $2 }')
         [ ! -z "$pid" ] && sudo kill -9 $pid
@@ -535,7 +535,7 @@ function stop_neutron() {
 
 # cleanup_neutron() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_neutron() {
+function cleanup_neutron {
     if is_neutron_ovs_base_plugin; then
         neutron_ovs_base_cleanup
     fi
@@ -549,7 +549,7 @@ function cleanup_neutron() {
 # _configure_neutron_common()
 # Set common config for all neutron server and agents.
 # This MUST be called before other ``_configure_neutron_*`` functions.
-function _configure_neutron_common() {
+function _configure_neutron_common {
     # Put config files in ``NEUTRON_CONF_DIR`` for everyone to find
     if [[ ! -d $NEUTRON_CONF_DIR ]]; then
         sudo mkdir -p $NEUTRON_CONF_DIR
@@ -611,7 +611,7 @@ function _configure_neutron_common() {
     _neutron_setup_rootwrap
 }
 
-function _configure_neutron_debug_command() {
+function _configure_neutron_debug_command {
     if [[ "$Q_USE_DEBUG_COMMAND" != "True" ]]; then
         return
     fi
@@ -628,7 +628,7 @@ function _configure_neutron_debug_command() {
     neutron_plugin_configure_debug_command
 }
 
-function _configure_neutron_dhcp_agent() {
+function _configure_neutron_dhcp_agent {
     AGENT_DHCP_BINARY="$NEUTRON_BIN_DIR/neutron-dhcp-agent"
     Q_DHCP_CONF_FILE=$NEUTRON_CONF_DIR/dhcp_agent.ini
 
@@ -652,7 +652,7 @@ function _configure_neutron_dhcp_agent() {
     neutron_plugin_configure_dhcp_agent
 }
 
-function _configure_neutron_l3_agent() {
+function _configure_neutron_l3_agent {
     Q_L3_ENABLED=True
     # for l3-agent, only use per tenant router if we have namespaces
     Q_L3_ROUTER_PER_TENANT=$Q_USE_NAMESPACE
@@ -676,7 +676,7 @@ function _configure_neutron_l3_agent() {
     neutron_plugin_configure_l3_agent
 }
 
-function _configure_neutron_metadata_agent() {
+function _configure_neutron_metadata_agent {
     AGENT_META_BINARY="$NEUTRON_BIN_DIR/neutron-metadata-agent"
     Q_META_CONF_FILE=$NEUTRON_CONF_DIR/metadata_agent.ini
 
@@ -691,30 +691,29 @@ function _configure_neutron_metadata_agent() {
 
 }
 
-function _configure_neutron_lbaas() {
+function _configure_neutron_lbaas {
     neutron_agent_lbaas_configure_common
     neutron_agent_lbaas_configure_agent
 }
 
-function _configure_neutron_metering() {
+function _configure_neutron_metering {
     neutron_agent_metering_configure_common
     neutron_agent_metering_configure_agent
 }
 
-function _configure_neutron_fwaas() {
+function _configure_neutron_fwaas {
     neutron_fwaas_configure_common
     neutron_fwaas_configure_driver
 }
 
-function _configure_neutron_vpn()
-{
+function _configure_neutron_vpn {
     neutron_vpn_install_agent_packages
     neutron_vpn_configure_common
 }
 
 # _configure_neutron_plugin_agent() - Set config files for neutron plugin agent
 # It is called when q-agt is enabled.
-function _configure_neutron_plugin_agent() {
+function _configure_neutron_plugin_agent {
     # Specify the default root helper prior to agent configuration to
     # ensure that an agent's configuration can override the default
     iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_COMMAND"
@@ -727,7 +726,7 @@ function _configure_neutron_plugin_agent() {
 
 # _configure_neutron_service() - Set config files for neutron service
 # It is called when q-svc is enabled.
-function _configure_neutron_service() {
+function _configure_neutron_service {
     Q_API_PASTE_FILE=$NEUTRON_CONF_DIR/api-paste.ini
     Q_POLICY_FILE=$NEUTRON_CONF_DIR/policy.json
 
@@ -765,7 +764,7 @@ function _configure_neutron_service() {
 #------------------
 
 # _neutron_service_plugin_class_add() - add service plugin class
-function _neutron_service_plugin_class_add() {
+function _neutron_service_plugin_class_add {
     local service_plugin_class=$1
     if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
         Q_SERVICE_PLUGIN_CLASSES=$service_plugin_class
@@ -775,7 +774,7 @@ function _neutron_service_plugin_class_add() {
 }
 
 # _neutron_setup_rootwrap() - configure Neutron's rootwrap
-function _neutron_setup_rootwrap() {
+function _neutron_setup_rootwrap {
     if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
         return
     fi
@@ -815,7 +814,7 @@ function _neutron_setup_rootwrap() {
 }
 
 # Configures keystone integration for neutron service and agents
-function _neutron_setup_keystone() {
+function _neutron_setup_keystone {
     local conf_file=$1
     local section=$2
     local use_auth_url=$3
@@ -842,7 +841,7 @@ function _neutron_setup_keystone() {
     fi
 }
 
-function _neutron_setup_interface_driver() {
+function _neutron_setup_interface_driver {
 
     # ovs_use_veth needs to be set before the plugin configuration
     # occurs to allow plugins to override the setting.
@@ -854,14 +853,14 @@ function _neutron_setup_interface_driver() {
 # Functions for Neutron Exercises
 #--------------------------------
 
-function delete_probe() {
+function delete_probe {
     local from_net="$1"
     net_id=`_get_net_id $from_net`
     probe_id=`neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}'`
     neutron-debug --os-tenant-name admin --os-username admin probe-delete $probe_id
 }
 
-function setup_neutron_debug() {
+function setup_neutron_debug {
     if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
         public_net_id=`_get_net_id $PUBLIC_NETWORK_NAME`
         neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $public_net_id
@@ -870,23 +869,23 @@ function setup_neutron_debug() {
     fi
 }
 
-function teardown_neutron_debug() {
+function teardown_neutron_debug {
     delete_probe $PUBLIC_NETWORK_NAME
     delete_probe $PRIVATE_NETWORK_NAME
 }
 
-function _get_net_id() {
+function _get_net_id {
     neutron --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD net-list | grep $1 | awk '{print $2}'
 }
 
-function _get_probe_cmd_prefix() {
+function _get_probe_cmd_prefix {
     local from_net="$1"
     net_id=`_get_net_id $from_net`
     probe_id=`neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}' | head -n 1`
     echo "$Q_RR_COMMAND ip netns exec qprobe-$probe_id"
 }
 
-function _ping_check_neutron() {
+function _ping_check_neutron {
     local from_net=$1
     local ip=$2
     local timeout_sec=$3
@@ -908,7 +907,7 @@ function _ping_check_neutron() {
 }
 
 # ssh check
-function _ssh_check_neutron() {
+function _ssh_check_neutron {
     local from_net=$1
     local key_file=$2
     local ip=$3
@@ -934,39 +933,39 @@ for f in $TOP_DIR/lib/neutron_thirdparty/*; do
     fi
 done
 
-function _neutron_third_party_do() {
+function _neutron_third_party_do {
     for third_party in ${NEUTRON_THIRD_PARTIES//,/ }; do
         ${1}_${third_party}
     done
 }
 
 # configure_neutron_third_party() - Set config files, create data dirs, etc
-function configure_neutron_third_party() {
+function configure_neutron_third_party {
     _neutron_third_party_do configure
 }
 
 # init_neutron_third_party() - Initialize databases, etc.
-function init_neutron_third_party() {
+function init_neutron_third_party {
     _neutron_third_party_do init
 }
 
 # install_neutron_third_party() - Collect source and prepare
-function install_neutron_third_party() {
+function install_neutron_third_party {
     _neutron_third_party_do install
 }
 
 # start_neutron_third_party() - Start running processes, including screen
-function start_neutron_third_party() {
+function start_neutron_third_party {
     _neutron_third_party_do start
 }
 
 # stop_neutron_third_party - Stop running processes (non-screen)
-function stop_neutron_third_party() {
+function stop_neutron_third_party {
     _neutron_third_party_do stop
 }
 
 # check_neutron_third_party_integration() - Check that third party integration is sane
-function check_neutron_third_party_integration() {
+function check_neutron_third_party_integration {
     _neutron_third_party_do check
 }
 

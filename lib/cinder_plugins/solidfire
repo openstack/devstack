@@ -27,7 +27,7 @@ set +o xtrace
 # ------------
 
 # configure_cinder_driver - Set config files, create data dirs, etc
-function configure_cinder_driver() {
+function configure_cinder_driver {
     # To use solidfire, set the following in localrc:
     # CINDER_DRIVER=solidfire
     # SAN_IP=<mvip>
