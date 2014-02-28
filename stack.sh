@@ -5,11 +5,12 @@
 # **Glance**, **Heat**, **Horizon**, **Keystone**, **Nova**, **Neutron**,
 # and **Swift**
 
-# This script allows you to specify configuration options of what git
-# repositories to use, enabled services, network configuration and various
-# passwords.  If you are crafty you can run the script on multiple nodes using
-# shared settings for common resources (mysql, rabbitmq) and build a multi-node
-# developer install.
+# This script's options can be changed by setting appropriate environment
+# variables.  You can configure things like which git repositories to use,
+# services to enable, OS images to use, etc.  Default values are located in the
+# ``stackrc`` file. If you are crafty you can run the script on multiple nodes
+# using shared settings for common resources (eg., mysql or rabbitmq) and build
+# a multi-node developer install.
 
 # To keep this script simple we assume you are running on a recent **Ubuntu**
 # (12.04 Precise or newer) or **Fedora** (F18 or newer) machine.  (It may work
@@ -29,6 +30,9 @@ unset LANG
 unset LANGUAGE
 LC_ALL=C
 export LC_ALL
+
+# Make sure umask is sane
+umask 022
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
