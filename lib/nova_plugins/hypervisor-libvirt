@@ -87,7 +87,7 @@ EOF
             cat <<EOF | sudo tee $rules_dir/50-libvirt-$STACK_USER.rules
 polkit.addRule(function(action, subject) {
     if (action.id == 'org.libvirt.unix.manage' &&
-        subject.user == '"$STACK_USER"') {
+        subject.user == '$STACK_USER') {
         return polkit.Result.YES;
     }
 });
