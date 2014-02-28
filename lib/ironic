@@ -186,9 +186,6 @@ function init_ironic() {
     $IRONIC_BIN_DIR/ironic-dbsync
 
     create_ironic_cache_dir
-
-    # Create keystone artifacts for Ironic.
-    create_ironic_accounts
 }
 
 # start_ironic() - Start running processes, including screen
