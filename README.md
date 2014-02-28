@@ -163,7 +163,7 @@ services are started in background and managed by `swift-init` tool.
 Basic Setup
 
 In order to enable Neutron a single node setup, you'll need the
-following settings in your `localrc` section:
+following settings in your `local.conf`:
 
     disable_service n-net
     enable_service q-svc
@@ -172,7 +172,6 @@ following settings in your `localrc` section:
     enable_service q-l3
     enable_service q-meta
     enable_service q-metering
-    enable_service neutron
     # Optional, to enable tempest configuration as part of DevStack
     enable_service tempest
 
@@ -180,24 +179,44 @@ Then run `stack.sh` as normal.
 
 DevStack supports setting specific Neutron configuration flags to the
 service, Open vSwitch plugin and LinuxBridge plugin configuration files.
-To make use of this feature, the following variables are defined and can
-be configured in your `localrc` section:
+To make use of this feature, the settings can be added to ``local.conf``.
+The old ``Q_XXX_EXTRA_XXX_OPTS`` variables are deprecated and will be removed
+in the near future.  The ``local.conf`` headers for the replacements are:
 
-    Variable Name             Config File  Section Modified
-    -------------------------------------------------------------------------------------
-    Q_SRV_EXTRA_OPTS          Plugin       `OVS` (for Open Vswitch) or `LINUX_BRIDGE` (for LinuxBridge)
-    Q_AGENT_EXTRA_AGENT_OPTS  Plugin       AGENT
-    Q_AGENT_EXTRA_SRV_OPTS    Plugin       `OVS` (for Open Vswitch) or `LINUX_BRIDGE` (for LinuxBridge)
-    Q_SRV_EXTRA_DEFAULT_OPTS  Service      DEFAULT
+* ``Q_SRV_EXTRA_OPTS``:
 
-An example of using the variables in your `localrc` section is below:
+    [[post-config|/$Q_PLUGIN_CONF_FILE]]
+    [linuxbridge]   # or [ovs]
 
-    Q_AGENT_EXTRA_AGENT_OPTS=(tunnel_type=vxlan vxlan_udp_port=8472)
-    Q_SRV_EXTRA_OPTS=(tenant_network_type=vxlan)
+* ``Q_AGENT_EXTRA_AGENT_OPTS``:
+
+    [[post-config|/$Q_PLUGIN_CONF_FILE]]
+    [agent]
+
+* ``Q_AGENT_EXTRA_SRV_OPTS``:
+
+    [[post-config|/$Q_PLUGIN_CONF_FILE]]
+    [linuxbridge]   # or [ovs]
+
+* ``Q_SRV_EXTRA_DEFAULT_OPTS``:
+
+    [[post-config|$NEUTRON_CONF]]
+    [DEFAULT]
+
+Example extra config in `local.conf`:
+
+    [[post-config|/$Q_PLUGIN_CONF_FILE]]
+    [agent]
+    tunnel_type=vxlan
+    vxlan_udp_port=8472
+
+    [[post-config|$NEUTRON_CONF]]
+    [DEFAULT]
+    tenant_network_type=vxlan
 
 DevStack also supports configuring the Neutron ML2 plugin. The ML2 plugin
-can run with the OVS, LinuxBridge, or Hyper-V agents on compute hosts. A
-simple way to configure the ml2 plugin is shown below:
+can run with the OVS, LinuxBridge, or Hyper-V agents on compute hosts. This
+is a simple way to configure the ml2 plugin:
 
     # VLAN configuration
     Q_PLUGIN=ml2
@@ -223,7 +242,6 @@ To change this, set the `Q_AGENT` variable to the agent you want to run
     Q_ML2_PLUGIN_GRE_TYPE_OPTIONS    GRE TypeDriver options. Defaults to none.
     Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS  VXLAN TypeDriver options. Defaults to none.
     Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS   VLAN TypeDriver options. Defaults to none.
-    Q_AGENT_EXTRA_AGENT_OPTS         Extra configuration options to pass to the OVS or LinuxBridge Agent.
 
 # Heat
 
