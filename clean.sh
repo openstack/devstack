@@ -123,6 +123,6 @@ fi
 FILES_TO_CLEAN=".localrc.auto docs-files docs/ shocco/ stack-screenrc test*.conf* test.ini*"
 FILES_TO_CLEAN+=".stackenv .prereqs"
 
-for file in FILES_TO_CLEAN; do
+for file in $FILES_TO_CLEAN; do
     rm -f $TOP_DIR/$file
 done
