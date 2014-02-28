@@ -60,29 +60,19 @@ function create_sahara_accounts {
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    SAHARA_USER=$(openstack user create \
-        sahara \
-        --password "$SERVICE_PASSWORD" \
-        --project $SERVICE_TENANT \
-        --email sahara@example.com \
-        | grep " id " | get_field 2)
-    openstack role add \
-        $ADMIN_ROLE \
-        --project $SERVICE_TENANT \
-        --user $SAHARA_USER
+    SAHARA_USER=$(get_or_create_user "sahara" \
+        "$SERVICE_PASSWORD" $SERVICE_TENANT "sahara@example.com")
+    get_or_add_user_role $ADMIN_ROLE $SAHARA_USER $SERVICE_TENANT
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        SAHARA_SERVICE=$(openstack service create \
-            sahara \
-            --type=data_processing \
-            --description="Sahara Data Processing" \
-            | grep " id " | get_field 2)
-        openstack endpoint create \
-            $SAHARA_SERVICE \
-            --region RegionOne \
-            --publicurl "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
-            --adminurl "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
-            --internalurl "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s"
+
+        SAHARA_SERVICE=$(get_or_create_service "sahara" \
+            "data_processing" "Sahara Data Processing")
+        get_or_create_endpoint $SAHARA_SERVICE \
+            "$REGION_NAME" \
+            "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
+            "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
+            "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s"
     fi
 }
 

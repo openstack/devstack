@@ -339,39 +339,26 @@ function create_cinder_accounts {
 
     # Cinder
     if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
-        CINDER_USER=$(openstack user create \
-            cinder \
-            --password "$SERVICE_PASSWORD" \
-            --project $SERVICE_TENANT \
-            --email cinder@example.com \
-            | grep " id " | get_field 2)
-        openstack role add \
-            $ADMIN_ROLE \
-            --project $SERVICE_TENANT \
-            --user $CINDER_USER
+
+        CINDER_USER=$(get_or_create_user "cinder" \
+            "$SERVICE_PASSWORD" $SERVICE_TENANT "cinder@example.com")
+        get_or_add_user_role $ADMIN_ROLE $CINDER_USER $SERVICE_TENANT
+
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            CINDER_SERVICE=$(openstack service create \
-                cinder \
-                --type=volume \
-                --description="Cinder Volume Service" \
-                | grep " id " | get_field 2)
-            openstack endpoint create \
-                $CINDER_SERVICE \
-                --region RegionOne \
-                --publicurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
-                --adminurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
-                --internalurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
-            CINDER_V2_SERVICE=$(openstack service create \
-                cinderv2 \
-                --type=volumev2 \
-                --description="Cinder Volume Service V2" \
-                | grep " id " | get_field 2)
-            openstack endpoint create \
-                $CINDER_V2_SERVICE \
-                --region RegionOne \
-                --publicurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
-                --adminurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
-                --internalurl "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s"
+
+            CINDER_SERVICE=$(get_or_create_service "cinder" \
+                "volume" "Cinder Volume Service")
+            get_or_create_endpoint $CINDER_SERVICE "$REGION_NAME" \
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
+
+            CINDER_V2_SERVICE=$(get_or_create_service "cinderv2" \
+                "volumev2" "Cinder Volume Service V2")
+            get_or_create_endpoint $CINDER_V2_SERVICE "$REGION_NAME" \
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s"
         fi
     fi
 }

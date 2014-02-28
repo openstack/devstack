@@ -19,6 +19,9 @@ else
     STACK_USER=$(whoami)
 fi
 
+# Specify region name Region
+REGION_NAME=${REGION_NAME:-RegionOne}
+
 # Specify which services to launch.  These generally correspond to
 # screen tabs. To change the default list, use the ``enable_service`` and
 # ``disable_service`` functions in ``local.conf``.

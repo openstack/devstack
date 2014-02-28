@@ -719,6 +719,109 @@ function policy_add {
     mv ${tmpfile} ${policy_file}
 }
 
+# Gets or creates user
+# Usage: get_or_create_user <username> <password> <project> <email>
+function get_or_create_user {
+    # Gets user id
+    USER_ID=$(
+        # Gets user id
+        openstack user show $1 -f value -c id 2>/dev/null ||
+        # Creates new user
+        openstack user create \
+            $1 \
+            --password "$2" \
+            --project $3 \
+            --email $4 \
+            -f value -c id
+    )
+    echo $USER_ID
+}
+
+# Gets or creates project
+# Usage: get_or_create_project <name>
+function get_or_create_project {
+    # Gets project id
+    PROJECT_ID=$(
+        # Gets project id
+        openstack project show $1 -f value -c id 2>/dev/null ||
+        # Creates new project if not exists
+        openstack project create $1 -f value -c id
+    )
+    echo $PROJECT_ID
+}
+
+# Gets or creates role
+# Usage: get_or_create_role <name>
+function get_or_create_role {
+    ROLE_ID=$(
+        # Gets role id
+        openstack role show $1 -f value -c id 2>/dev/null ||
+        # Creates role if not exists
+        openstack role create $1 -f value -c id
+    )
+    echo $ROLE_ID
+}
+
+# Gets or adds user role
+# Usage: get_or_add_user_role <role> <user> <project>
+function get_or_add_user_role {
+    # Gets user role id
+    USER_ROLE_ID=$(openstack user role list \
+        $2 \
+        --project $3 \
+        --column "ID" \
+        --column "Name" \
+        | grep " $1 " | get_field 1)
+    if [[ -z "$USER_ROLE_ID" ]]; then
+        # Adds role to user
+        USER_ROLE_ID=$(openstack role add \
+            $1 \
+            --user $2 \
+            --project $3 \
+            | grep " id " | get_field 2)
+    fi
+    echo $USER_ROLE_ID
+}
+
+# Gets or creates service
+# Usage: get_or_create_service <name> <type> <description>
+function get_or_create_service {
+    # Gets service id
+    SERVICE_ID=$(
+        # Gets service id
+        openstack service show $1 -f value -c id 2>/dev/null ||
+        # Creates new service if not exists
+        openstack service create \
+            $1 \
+            --type=$2 \
+            --description="$3" \
+            -f value -c id
+    )
+    echo $SERVICE_ID
+}
+
+# Gets or creates endpoint
+# Usage: get_or_create_endpoint <service> <region> <publicurl> <adminurl> <internalurl>
+function get_or_create_endpoint {
+    # Gets endpoint id
+    ENDPOINT_ID=$(openstack endpoint list \
+        --column "ID" \
+        --column "Region" \
+        --column "Service Name" \
+        | grep " $2 " \
+        | grep " $1 " | get_field 1)
+    if [[ -z "$ENDPOINT_ID" ]]; then
+        # Creates new endpoint
+        ENDPOINT_ID=$(openstack endpoint create \
+            $1 \
+            --region $2 \
+            --publicurl $3 \
+            --adminurl $4 \
+            --internalurl $5 \
+            | grep " id " | get_field 2)
+    fi
+    echo $ENDPOINT_ID
+}
 
 # Package Functions
 # =================

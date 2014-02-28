@@ -542,50 +542,40 @@ function create_swift_accounts {
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    SWIFT_USER=$(openstack user create \
-        swift \
-        --password "$SERVICE_PASSWORD" \
-        --project $SERVICE_TENANT \
-        --email=swift@example.com \
-        | grep " id " | get_field 2)
-    openstack role add \
-        $ADMIN_ROLE \
-        --project $SERVICE_TENANT \
-        --user $SWIFT_USER
+    SWIFT_USER=$(get_or_create_user "swift" \
+        "$SERVICE_PASSWORD" $SERVICE_TENANT "swift@example.com")
+    get_or_add_user_role $ADMIN_ROLE $SWIFT_USER $SERVICE_TENANT
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        SWIFT_SERVICE=$(openstack service create \
-            swift \
-            --type="object-store" \
-            --description="Swift Service" \
-            | grep " id " | get_field 2)
-        openstack endpoint create \
-            $SWIFT_SERVICE \
-            --region RegionOne \
-            --publicurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
-            --adminurl "http://$SERVICE_HOST:8080" \
-            --internalurl "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
+
+        SWIFT_SERVICE=$(get_or_create_service "swift" \
+            "object-store" "Swift Service")
+        get_or_create_endpoint $SWIFT_SERVICE \
+            "$REGION_NAME" \
+            "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
+            "http://$SERVICE_HOST:8080" \
+            "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
     fi
 
-    SWIFT_TENANT_TEST1=$(openstack project create swifttenanttest1 | grep " id " | get_field 2)
+    SWIFT_TENANT_TEST1=$(get_or_create_project swifttenanttest1)
     die_if_not_set $LINENO SWIFT_TENANT_TEST1 "Failure creating SWIFT_TENANT_TEST1"
-    SWIFT_USER_TEST1=$(openstack user create swiftusertest1 --password=$SWIFTUSERTEST1_PASSWORD \
-        --project "$SWIFT_TENANT_TEST1" --email=test@example.com | grep " id " | get_field 2)
+    SWIFT_USER_TEST1=$(get_or_create_user swiftusertest1 $SWIFTUSERTEST1_PASSWORD \
+        "$SWIFT_TENANT_TEST1" "test@example.com")
     die_if_not_set $LINENO SWIFT_USER_TEST1 "Failure creating SWIFT_USER_TEST1"
-    openstack role add --user $SWIFT_USER_TEST1 --project $SWIFT_TENANT_TEST1 $ADMIN_ROLE
+    get_or_add_user_role $ADMIN_ROLE $SWIFT_USER_TEST1 $SWIFT_TENANT_TEST1
 
-    SWIFT_USER_TEST3=$(openstack user create swiftusertest3 --password=$SWIFTUSERTEST3_PASSWORD \
-        --project "$SWIFT_TENANT_TEST1" --email=test3@example.com | grep " id " | get_field 2)
+    SWIFT_USER_TEST3=$(get_or_create_user swiftusertest3 $SWIFTUSERTEST3_PASSWORD \
+        "$SWIFT_TENANT_TEST1" "test3@example.com")
     die_if_not_set $LINENO SWIFT_USER_TEST3 "Failure creating SWIFT_USER_TEST3"
-    openstack role add --user $SWIFT_USER_TEST3 --project $SWIFT_TENANT_TEST1 $ANOTHER_ROLE
+    get_or_add_user_role $ANOTHER_ROLE $SWIFT_USER_TEST3 $SWIFT_TENANT_TEST1
 
-    SWIFT_TENANT_TEST2=$(openstack project create swifttenanttest2 | grep " id " | get_field 2)
+    SWIFT_TENANT_TEST2=$(get_or_create_project swifttenanttest2)
     die_if_not_set $LINENO SWIFT_TENANT_TEST2 "Failure creating SWIFT_TENANT_TEST2"
 
-    SWIFT_USER_TEST2=$(openstack user create swiftusertest2 --password=$SWIFTUSERTEST2_PASSWORD \
-        --project "$SWIFT_TENANT_TEST2" --email=test2@example.com | grep " id " | get_field 2)
+    SWIFT_USER_TEST2=$(get_or_create_user swiftusertest2 $SWIFTUSERTEST2_PASSWORD \
+        "$SWIFT_TENANT_TEST2" "test2@example.com")
     die_if_not_set $LINENO SWIFT_USER_TEST2 "Failure creating SWIFT_USER_TEST2"
-    openstack role add --user $SWIFT_USER_TEST2 --project $SWIFT_TENANT_TEST2 $ADMIN_ROLE
+    get_or_add_user_role $ADMIN_ROLE $SWIFT_USER_TEST2 $SWIFT_TENANT_TEST2
 }
 
 # init_swift() - Initialize rings

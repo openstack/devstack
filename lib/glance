@@ -164,36 +164,28 @@ function configure_glance {
 
 function create_glance_accounts {
     if is_service_enabled g-api; then
-        openstack user create \
-            --password "$SERVICE_PASSWORD" \
-            --project $SERVICE_TENANT_NAME \
-            glance
-        openstack role add \
-            --project $SERVICE_TENANT_NAME \
-            --user glance \
-            service
+
+        GLANCE_USER=$(get_or_create_user "glance" \
+            "$SERVICE_PASSWORD" $SERVICE_TENANT_NAME "glance@example.com")
+        get_or_add_user_role service $GLANCE_USER $SERVICE_TENANT_NAME
+
         # required for swift access
         if is_service_enabled s-proxy; then
-            openstack user create \
-                --password "$SERVICE_PASSWORD" \
-                --project $SERVICE_TENANT_NAME \
-                glance-swift
-            openstack role add \
-                --project $SERVICE_TENANT_NAME \
-                --user glance-swift \
-                ResellerAdmin
+
+            GLANCE_SWIFT_USER=$(get_or_create_user "glance-swift" \
+                "$SERVICE_PASSWORD" $SERVICE_TENANT_NAME "glance-swift@example.com")
+            get_or_add_user_role "ResellerAdmin" $GLANCE_SWIFT_USER $SERVICE_TENANT_NAME
         fi
+
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            openstack service create \
-                --type image \
-                --description "Glance Image Service" \
-                glance
-            openstack endpoint create \
-                --region RegionOne \
-                --publicurl "http://$GLANCE_HOSTPORT" \
-                --adminurl "http://$GLANCE_HOSTPORT" \
-                --internalurl "http://$GLANCE_HOSTPORT" \
-                glance
+
+            GLANCE_SERVICE=$(get_or_create_service "glance" \
+                "image" "Glance Image Service")
+            get_or_create_endpoint $GLANCE_SERVICE \
+                "$REGION_NAME" \
+                "http://$GLANCE_HOSTPORT" \
+                "http://$GLANCE_HOSTPORT" \
+                "http://$GLANCE_HOSTPORT"
         fi
     fi
 }

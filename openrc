@@ -53,12 +53,16 @@ export OS_PASSWORD=${ADMIN_PASSWORD:-secrete}
 # easier with this off.
 export OS_NO_CACHE=${OS_NO_CACHE:-1}
 
+# Region
+export OS_REGION_NAME=${REGION_NAME:-RegionOne}
+
 # Set api HOST_IP endpoint.  SERVICE_HOST may also be used to specify the endpoint,
 # which is convenient for some localrc configurations.
 HOST_IP=${HOST_IP:-127.0.0.1}
 SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
 SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
+KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
 
 # Some exercises call glance directly.  On a single-node installation, Glance
 # should be listening on HOST_IP.  If its running elsewhere, it can be set here
@@ -72,7 +76,7 @@ export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
 # the user/tenant has access to - including nova, glance, keystone, swift, ...
 # We currently recommend using the 2.0 *identity api*.
 #
-export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:5000/v${OS_IDENTITY_API_VERSION}
+export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:5000/v${OS_IDENTITY_API_VERSION}
 
 # Set the pointer to our CA certificate chain.  Harmless if TLS is not used.
 export OS_CACERT=${OS_CACERT:-$INT_CA_DIR/ca-chain.pem}
