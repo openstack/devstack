@@ -197,8 +197,49 @@ function disk_image_create {
 }
 
 # create_heat_accounts() - Set up common required heat accounts
-# Note this is in addition to what is in files/keystone_data.sh
 function create_heat_accounts {
+    # migrated from files/keystone_data.sh
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+
+    HEAT_USER=$(openstack user create \
+        heat \
+        --password "$SERVICE_PASSWORD" \
+        --project $SERVICE_TENANT \
+        --email heat@example.com \
+        | grep " id " | get_field 2)
+    openstack role add \
+        $ADMIN_ROLE \
+        --project $SERVICE_TENANT \
+        --user $HEAT_USER
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        HEAT_SERVICE=$(openstack service create \
+            heat \
+            --type=orchestration \
+            --description="Heat Orchestration Service" \
+            | grep " id " | get_field 2)
+        openstack endpoint create \
+                $HEAT_SERVICE \
+                --region RegionOne \
+                --publicurl "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
+                --adminurl "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
+                --internalurl "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s"
+        HEAT_CFN_SERVICE=$(openstack service create \
+            heat \
+            --type=cloudformation \
+            --description="Heat CloudFormation Service" \
+            | grep " id " | get_field 2)
+        openstack endpoint create \
+                $HEAT_CFN_SERVICE \
+                --region RegionOne \
+                --publicurl "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
+                --adminurl "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
+                --internalurl "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1"
+    fi
+
+    # heat_stack_user role is for users created by Heat
+    openstack role create heat_stack_user
+
     # Note we have to pass token/endpoint here because the current endpoint and
     # version negotiation in OSC means just --os-identity-api-version=3 won't work
     KS_ENDPOINT_V3="$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
