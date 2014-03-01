@@ -95,6 +95,7 @@ function configure_marconi {
     sudo chown $USER $MARCONI_API_LOG_DIR
 
     iniset $MARCONI_CONF DEFAULT verbose True
+    iniset $MARCONI_CONF DEFAULT use_syslog $SYSLOG
     iniset $MARCONI_CONF 'drivers:transport:wsgi' bind $MARCONI_SERVICE_HOST
 
     iniset $MARCONI_CONF keystone_authtoken auth_protocol http
