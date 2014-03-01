@@ -180,9 +180,11 @@ function init_ceilometer {
     sudo chown $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
     rm -f $CEILOMETER_AUTH_CACHE_DIR/*
 
-    if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
-        recreate_database ceilometer utf8
-        $CEILOMETER_BIN_DIR/ceilometer-dbsync
+    if is_service_enabled mysql postgresql; then
+        if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
+            recreate_database ceilometer utf8
+            $CEILOMETER_BIN_DIR/ceilometer-dbsync
+        fi
     fi
 }
 
