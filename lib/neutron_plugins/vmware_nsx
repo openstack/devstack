@@ -41,8 +41,7 @@ function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/vmware
     Q_PLUGIN_CONF_FILENAME=nsx.ini
     Q_DB_NAME="neutron_nsx"
-    # TODO(armando-migliaccio): rename this once the code rename is complete
-    Q_PLUGIN_CLASS="neutron.plugins.nicira.NeutronPlugin.NvpPluginV2"
+    Q_PLUGIN_CLASS="neutron.plugins.vmware.plugin.NsxPlugin"
 }
 
 function neutron_plugin_configure_debug_command {

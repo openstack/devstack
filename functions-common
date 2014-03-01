@@ -26,7 +26,10 @@
 # - ``PIP_DOWNLOAD_CACHE``
 # - ``PIP_USE_MIRRORS``
 # - ``RECLONE``
+# - ``REQUIREMENTS_DIR``
+# - ``STACK_USER``
 # - ``TRACK_DEPENDS``
+# - ``UNDO_REQUIREMENTS``
 # - ``http_proxy``, ``https_proxy``, ``no_proxy``
 
 # Save trace setting
