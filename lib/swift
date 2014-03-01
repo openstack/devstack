@@ -301,7 +301,7 @@ function configure_swift {
     # rsyncd.conf just prepared for 4 nodes
     if is_ubuntu; then
         sudo sed -i '/^RSYNC_ENABLE=false/ { s/false/true/ }' /etc/default/rsync
-    else
+    elif [ -e /etc/xinetd.d/rsync ]; then
         sudo sed -i '/disable *= *yes/ { s/yes/no/ }' /etc/xinetd.d/rsync
     fi
 
@@ -635,8 +635,10 @@ function start_swift {
     # Start rsync
     if is_ubuntu; then
         sudo /etc/init.d/rsync restart || :
+    elif [ -e /etc/xinetd.d/rsync ]; then
+        start_service xinetd
     else
-        sudo systemctl start xinetd.service
+        start_service rsyncd
     fi
 
     if is_apache_enabled_service swift; then
