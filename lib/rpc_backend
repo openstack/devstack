@@ -186,7 +186,7 @@ function iniset_rpc_backend {
         fi
     elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_kombu
-        iniset $file $section rabbit_host $RABBIT_HOST
+        iniset $file $section rabbit_hosts $RABBIT_HOST
         iniset $file $section rabbit_password $RABBIT_PASSWORD
     fi
 }
