@@ -104,8 +104,7 @@ function start_nova_hypervisor {
     fi
 
     # Make sure we copied the image in Glance
-    DOCKER_IMAGE=$(glance image-list | egrep " $DOCKER_IMAGE_NAME ")
-    if ! is_set DOCKER_IMAGE ; then
+    if ! (glance image-show "$DOCKER_IMAGE"); then
         docker push $DOCKER_REPOSITORY_NAME
     fi
 }
