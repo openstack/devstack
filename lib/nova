@@ -245,9 +245,8 @@ function configure_nova {
         inicomment $NOVA_API_PASTE_INI filter:authtoken cafile
         inicomment $NOVA_API_PASTE_INI filter:authtoken admin_user
         inicomment $NOVA_API_PASTE_INI filter:authtoken admin_password
+        inicomment $NOVA_API_PASTE_INI filter:authtoken signing_dir
     fi
-
-    inicomment $NOVA_API_PASTE_INI filter:authtoken signing_dir
 
     if is_service_enabled n-cpu; then
         # Force IP forwarding on, just on case
