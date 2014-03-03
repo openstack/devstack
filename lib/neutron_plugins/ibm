@@ -1,0 +1,133 @@
+# Neutron IBM SDN-VE plugin
+# ---------------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+source $TOP_DIR/lib/neutron_plugins/ovs_base
+
+function neutron_plugin_install_agent_packages {
+    _neutron_ovs_base_install_agent_packages
+}
+
+function _neutron_interface_setup {
+    # Setup one interface on the integration bridge if needed
+    # The plugin agent to be used if more than one interface is used
+    local bridge=$1
+    local interface=$2
+    sudo ovs-vsctl --no-wait -- --may-exist add-port $bridge $interface
+}
+
+function neutron_setup_integration_bridge {
+    # Setup integration bridge if needed
+    if [[ "$SDNVE_INTEGRATION_BRIDGE" != "" ]]; then
+        neutron_ovs_base_cleanup
+        _neutron_ovs_base_setup_bridge $SDNVE_INTEGRATION_BRIDGE
+        if [[ "$SDNVE_INTERFACE_MAPPINGS" != "" ]]; then
+            interfaces=(${SDNVE_INTERFACE_MAPPINGS//[,:]/ })
+            _neutron_interface_setup $SDNVE_INTEGRATION_BRIDGE ${interfaces[1]}
+        fi
+    fi
+
+    # Set controller to SDNVE controller (1st of list) if exists
+    if [[ "$SDNVE_CONTROLLER_IPS" != "" ]]; then
+        # Get the first controller
+        controllers=(${SDNVE_CONTROLLER_IPS//[\[,\]]/ })
+        SDNVE_IP=${controllers[0]}
+        sudo ovs-vsctl set-controller $SDNVE_INTEGRATION_BRIDGE tcp:$SDNVE_IP
+    fi
+}
+
+function neutron_plugin_create_nova_conf {
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+    # if n-cpu is enabled, then setup integration bridge
+    if is_service_enabled n-cpu; then
+        neutron_setup_integration_bridge
+    fi
+}
+
+function is_neutron_ovs_base_plugin {
+    if [[ "$SDNVE_INTEGRATION_BRIDGE" != "" ]]; then
+        # Yes, we use OVS.
+        return 0
+    else
+        # No, we do not use OVS.
+        return 1
+    fi
+}
+
+function neutron_plugin_configure_common {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/ibm
+    Q_PLUGIN_CONF_FILENAME=sdnve_neutron_plugin.ini
+    Q_DB_NAME="sdnve_neutron"
+    Q_PLUGIN_CLASS="neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2"
+}
+
+function neutron_plugin_configure_service {
+    # Define extra "SDNVE" configuration options when q-svc is configured
+
+    iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
+
+    if [[ "$SDNVE_CONTROLLER_IPS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE sdnve controller_ips $SDNVE_CONTROLLER_IPS
+    fi
+
+    if [[ "$SDNVE_INTEGRATION_BRIDGE" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE sdnve integration_bridge $SDNVE_INTEGRATION_BRIDGE
+    fi
+
+    if [[ "$SDNVE_RESET_BRIDGE" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE sdnve reset_bridge $SDNVE_RESET_BRIDGE
+    fi
+
+    if [[ "$SDNVE_OUT_OF_BAND" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE sdnve out_of_band $SDNVE_OUT_OF_BAND
+    fi
+
+    if [[ "$SDNVE_INTERFACE_MAPPINGS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE sdnve interface_mappings $SDNVE_INTERFACE_MAPPINGS
+    fi
+
+    if [[ "$SDNVE_FAKE_CONTROLLER" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE sdnve use_fake_controller $SDNVE_FAKE_CONTROLLER
+    fi
+
+
+    iniset $NEUTRON_CONF DEFAULT notification_driver neutron.openstack.common.notifier.no_op_notifier
+
+}
+
+function neutron_plugin_configure_plugin_agent {
+    AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-ibm-agent"
+}
+
+function neutron_plugin_configure_debug_command {
+    :
+}
+
+function neutron_plugin_setup_interface_driver {
+    return 0
+}
+
+function has_neutron_plugin_security_group {
+    # Does not support Security Groups
+    return 1
+}
+
+function neutron_ovs_base_cleanup {
+    if [[ "$SDNVE_RESET_BRIDGE" != False ]]; then
+        # remove all OVS ports that look like Neutron created ports
+        for port in $(sudo ovs-vsctl list port | grep -o -e tap[0-9a-f\-]* -e q[rg]-[0-9a-f\-]*); do
+            sudo ovs-vsctl del-port ${port}
+        done
+
+        # remove integration bridge created by Neutron
+        for bridge in $(sudo ovs-vsctl list-br | grep -o -e ${SDNVE_INTEGRATION_BRIDGE}); do
+            sudo ovs-vsctl del-br ${bridge}
+        done
+    fi
+}
+
+# Restore xtrace
+$MY_XTRACE
