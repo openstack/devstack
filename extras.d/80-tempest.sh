@@ -9,7 +9,7 @@ if is_service_enabled tempest; then
         install_tempest
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         # Tempest config must come after layer 2 services are running
-        :
+        create_tempest_accounts
     elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
         echo_summary "Initializing Tempest"
         configure_tempest

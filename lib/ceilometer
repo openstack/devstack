@@ -69,6 +69,11 @@ function is_ceilometer_enabled {
 
 # create_ceilometer_accounts() - Set up common required ceilometer accounts
 
+# Project              User         Roles
+# ------------------------------------------------------------------
+# SERVICE_TENANT_NAME  ceilometer   admin
+# SERVICE_TENANT_NAME  ceilometer   ResellerAdmin (if Swift is enabled)
+
 create_ceilometer_accounts() {
 
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
@@ -98,6 +103,13 @@ create_ceilometer_accounts() {
                 --publicurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/" \
                 --adminurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/" \
                 --internalurl "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/"
+        fi
+        if is_service_enabled swift; then
+            # Ceilometer needs ResellerAdmin role to access swift account stats.
+            openstack role add \
+                --project $SERVICE_TENANT_NAME \
+                --user ceilometer \
+                ResellerAdmin
         fi
     fi
 }

@@ -316,9 +316,10 @@ function configure_nova {
 
 # create_nova_accounts() - Set up common required nova accounts
 
-# Tenant               User       Roles
+# Project              User         Roles
 # ------------------------------------------------------------------
-# service              nova       admin, [ResellerAdmin (swift only)]
+# SERVICE_TENANT_NAME  nova         admin
+# SERVICE_TENANT_NAME  nova         ResellerAdmin (if Swift is enabled)
 
 # Migrated from keystone_data.sh
 create_nova_accounts() {
@@ -361,6 +362,48 @@ create_nova_accounts() {
                 --publicurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
                 --adminurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
                 --internalurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3"
+        fi
+    fi
+
+    if is_service_enabled n-api; then
+        # Swift
+        if is_service_enabled swift; then
+            # Nova needs ResellerAdmin role to download images when accessing
+            # swift through the s3 api.
+            openstack role add \
+                --project $SERVICE_TENANT_NAME \
+                --user nova \
+                ResellerAdmin
+        fi
+
+        # EC2
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
+            openstack service create \
+                --type ec2 \
+                --description "EC2 Compatibility Layer" \
+                ec2
+            openstack endpoint create \
+                --region RegionOne \
+                --publicurl "http://$SERVICE_HOST:8773/services/Cloud" \
+                --adminurl "http://$SERVICE_HOST:8773/services/Admin" \
+                --internalurl "http://$SERVICE_HOST:8773/services/Cloud" \
+                ec2
+        fi
+    fi
+
+    # S3
+    if is_service_enabled n-obj swift3; then
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+            openstack service create \
+                --type s3 \
+                --description "S3" \
+                s3
+            openstack endpoint create \
+                --region RegionOne \
+                --publicurl "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
+                --adminurl "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
+                --internalurl "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
+                s3
         fi
     fi
 }
