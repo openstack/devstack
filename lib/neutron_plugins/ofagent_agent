@@ -1,0 +1,94 @@
+# OpenFlow Agent plugin
+# ----------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+source $TOP_DIR/lib/neutron_plugins/ovs_base
+source $TOP_DIR/lib/neutron_thirdparty/ryu  # for RYU_DIR, install_ryu, etc
+
+function neutron_plugin_create_nova_conf {
+    _neutron_ovs_base_configure_nova_vif_driver
+}
+
+function neutron_plugin_install_agent_packages {
+    _neutron_ovs_base_install_agent_packages
+
+    # This agent uses ryu to talk with switches
+    install_package $(get_packages "ryu")
+    install_ryu
+    configure_ryu
+}
+
+function neutron_plugin_configure_debug_command {
+    _neutron_ovs_base_configure_debug_command
+}
+
+function neutron_plugin_configure_dhcp_agent {
+    iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
+}
+
+function neutron_plugin_configure_l3_agent {
+    _neutron_ovs_base_configure_l3_agent
+    iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
+}
+
+function neutron_plugin_configure_plugin_agent {
+    # Set up integration bridge
+    _neutron_ovs_base_setup_bridge $OVS_BRIDGE
+    _neutron_ovs_base_configure_firewall_driver
+
+    # Check a supported openflow version
+    OF_VERSION=`ovs-ofctl --version | grep "OpenFlow versions" | awk '{print $3}' | cut -d':' -f2`
+    if [ `vercmp_numbers "$OF_VERSION" "0x3"` -lt "0" ]; then
+        die $LINENO "This agent requires OpenFlow 1.3+ capable switch."
+    fi
+
+    # Enable tunnel networks if selected
+    if [[ "$OVS_ENABLE_TUNNELING" = "True" ]]; then
+        # Verify tunnels are supported
+        # REVISIT - also check kernel module support for GRE and patch ports
+        OVS_VERSION=`ovs-vsctl --version | head -n 1 | grep -E -o "[0-9]+\.[0-9]+"`
+        if [ `vercmp_numbers "$OVS_VERSION" "1.4"` -lt "0" ]; then
+            die $LINENO "You are running OVS version $OVS_VERSION. OVS 1.4+ is required for tunneling between multiple hosts."
+        fi
+        iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
+        iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $HOST_IP
+    fi
+
+    # Setup physical network bridge mappings.  Override
+    # ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc`` for more
+    # complex physical network configurations.
+    if [[ "$OVS_BRIDGE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
+        OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
+
+        # Configure bridge manually with physical interface as port for multi-node
+        sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_PHYSICAL_BRIDGE
+    fi
+    if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings $OVS_BRIDGE_MAPPINGS
+    fi
+    AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-ofagent-agent"
+
+    # Define extra "AGENT" configuration options when q-agt is configured by defining
+    # defining the array ``Q_AGENT_EXTRA_AGENT_OPTS``.
+    # For Example: ``Q_AGENT_EXTRA_AGENT_OPTS=(foo=true bar=2)``
+    for I in "${Q_AGENT_EXTRA_AGENT_OPTS[@]}"; do
+        # Replace the first '=' with ' ' for iniset syntax
+        iniset /$Q_PLUGIN_CONF_FILE agent ${I/=/ }
+    done
+}
+
+function neutron_plugin_setup_interface_driver {
+    local conf_file=$1
+    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+    iniset $conf_file DEFAULT ovs_use_veth True
+}
+
+function neutron_plugin_check_adv_test_requirements {
+    is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
+}
+
+# Restore xtrace
+$MY_XTRACE
