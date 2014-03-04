@@ -77,14 +77,6 @@ BM_POWER_MANAGER=${BM_POWER_MANAGER:-nova.virt.baremetal.fake.FakePowerManager}
 # These should be customized to your environment and hardware
 # -----------------------------------------------------------
 
-# whether to create a fake environment, eg. for devstack-gate
-BM_USE_FAKE_ENV=`trueorfalse False $BM_USE_FAKE_ENV`
-
-# Extra options to pass to bm_poseur
-# change the bridge name or IP: --bridge br99 --bridge-ip 192.0.2.1
-# change the virtualization type: --engine qemu
-BM_POSEUR_EXTRA_OPTS=${BM_POSEUR_EXTRA_OPTS:-}
-
 # To provide PXE, configure nova-network's dnsmasq rather than run the one
 # dedicated to baremetal. When enable this, make sure these conditions are
 # fulfilled:
@@ -97,15 +89,10 @@ BM_POSEUR_EXTRA_OPTS=${BM_POSEUR_EXTRA_OPTS:-}
 BM_DNSMASQ_FROM_NOVA_NETWORK=`trueorfalse False $BM_DNSMASQ_FROM_NOVA_NETWORK`
 
 # BM_DNSMASQ_IFACE should match FLAT_NETWORK_BRIDGE
-if [ "$BM_USE_FAKE_ENV" ]; then
-    BM_DNSMASQ_IFACE=${BM_DNSMASQ_IFACE:-br99}
-    BM_DNSMASQ_RANGE=${BM_DNSMASQ_RANGE:-192.0.2.32,192.0.2.48}
-else
-    BM_DNSMASQ_IFACE=${BM_DNSMASQ_IFACE:-eth0}
-    # if testing on a physical network,
-    # BM_DNSMASQ_RANGE must be changed to suit your network
-    BM_DNSMASQ_RANGE=${BM_DNSMASQ_RANGE:-}
-fi
+BM_DNSMASQ_IFACE=${BM_DNSMASQ_IFACE:-eth0}
+# if testing on a physical network,
+# BM_DNSMASQ_RANGE must be changed to suit your network
+BM_DNSMASQ_RANGE=${BM_DNSMASQ_RANGE:-}
 
 # BM_DNSMASQ_DNS provide dns server to bootstrap clients
 BM_DNSMASQ_DNS=${BM_DNSMASQ_DNS:-}
@@ -143,7 +130,6 @@ BM_FLAVOR_ARCH=${BM_FLAVOR_ARCH:-$BM_CPU_ARCH}
 # Below this, we set some path and filenames.
 # Defaults are probably sufficient.
 BM_IMAGE_BUILD_DIR=${BM_IMAGE_BUILD_DIR:-$DEST/diskimage-builder}
-BM_POSEUR_DIR=${BM_POSEUR_DIR:-$DEST/bm_poseur}
 
 # Use DIB to create deploy ramdisk and kernel.
 BM_BUILD_DEPLOY_RAMDISK=`trueorfalse True $BM_BUILD_DEPLOY_RAMDISK`
@@ -177,7 +163,6 @@ function is_baremetal {
 # so that we can build the deployment kernel & ramdisk
 function prepare_baremetal_toolchain {
     git_clone $BM_IMAGE_BUILD_REPO $BM_IMAGE_BUILD_DIR $BM_IMAGE_BUILD_BRANCH
-    git_clone $BM_POSEUR_REPO $BM_POSEUR_DIR $BM_POSEUR_BRANCH
 
     local shellinabox_basename=$(basename $BM_SHELL_IN_A_BOX)
     if [[ ! -e $DEST/$shellinabox_basename ]]; then
@@ -194,27 +179,6 @@ function prepare_baremetal_toolchain {
         make
         sudo make install
     fi
-}
-
-# set up virtualized environment for devstack-gate testing
-function create_fake_baremetal_env {
-    local bm_poseur="$BM_POSEUR_DIR/bm_poseur"
-    # TODO(deva): add support for >1 VM
-    sudo $bm_poseur $BM_POSEUR_EXTRA_OPTS create-bridge
-    sudo $bm_poseur $BM_POSEUR_EXTRA_OPTS create-vm
-    BM_FIRST_MAC=$(sudo $bm_poseur get-macs)
-
-    # NOTE: there is currently a limitation in baremetal driver
-    # that requires second MAC even if it is not used.
-    # Passing a fake value allows this to work.
-    # TODO(deva): remove this after driver issue is fixed.
-    BM_SECOND_MAC='12:34:56:78:90:12'
-}
-
-function cleanup_fake_baremetal_env {
-    local bm_poseur="$BM_POSEUR_DIR/bm_poseur"
-    sudo $bm_poseur $BM_POSEUR_EXTRA_OPTS destroy-vm
-    sudo $bm_poseur $BM_POSEUR_EXTRA_OPTS destroy-bridge
 }
 
 # prepare various directories needed by baremetal hypervisor
