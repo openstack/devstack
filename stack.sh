@@ -1053,9 +1053,6 @@ if is_service_enabled nova && is_baremetal; then
     echo_summary "Preparing for nova baremetal"
     prepare_baremetal_toolchain
     configure_baremetal_nova_dirs
-    if [[ "$BM_USE_FAKE_ENV" = "True" ]]; then
-        create_fake_baremetal_env
-    fi
 fi
 
 
