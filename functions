@@ -55,7 +55,7 @@ function upload_image {
     mkdir -p $FILES/images
     IMAGE_FNAME=`basename "$image_url"`
     if [[ $image_url != file* ]]; then
-        # Downloads the image (uec ami+aki style), then extracts it.
+        # Downloads the image (uec ami+akistyle), then extracts it.
         if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
             wget -c $image_url -O $FILES/$IMAGE_FNAME
             if [[ $? -ne 0 ]]; then
@@ -103,12 +103,12 @@ function upload_image {
         vmdk_net_adapter=""
 
         # vmdk adapter type
-        vmdk_adapter_type="$(head -25 $IMAGE | grep -a -F -m 1 'ddb.adapterType =' $IMAGE)"
+        vmdk_adapter_type="$(head -25 $IMAGE | { grep -a -F -m 1 'ddb.adapterType =' $IMAGE || true; })"
         vmdk_adapter_type="${vmdk_adapter_type#*\"}"
         vmdk_adapter_type="${vmdk_adapter_type%?}"
 
         # vmdk disk type
-        vmdk_create_type="$(head -25 $IMAGE | grep -a -F -m 1 'createType=' $IMAGE)"
+        vmdk_create_type="$(head -25 $IMAGE | { grep -a -F -m 1 'createType=' $IMAGE || true; })"
         vmdk_create_type="${vmdk_create_type#*\"}"
         vmdk_create_type="${vmdk_create_type%\"*}"
 
@@ -119,7 +119,7 @@ function upload_image {
         elif [[ "$vmdk_create_type" = "monolithicFlat" || \
         "$vmdk_create_type" = "vmfs" ]]; then
             # Attempt to retrieve the *-flat.vmdk
-            flat_fname="$(head -25 $IMAGE | grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $IMAGE)"
+            flat_fname="$(head -25 $IMAGE | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $IMAGE || true; })"
             flat_fname="${flat_fname#*\"}"
             flat_fname="${flat_fname%?}"
             if [[ -z "$flat_name" ]]; then
@@ -190,7 +190,7 @@ function upload_image {
                 fi
                 if $descriptor_found; then
                     vmdk_adapter_type="$(head -25 $descriptor_url |"`
-                    `"grep -a -F -m 1 'ddb.adapterType =' $descriptor_url)"
+                    `" { grep -a -F -m 1 'ddb.adapterType =' $descriptor_url || true; })"
                     vmdk_adapter_type="${vmdk_adapter_type#*\"}"
                     vmdk_adapter_type="${vmdk_adapter_type%?}"
                 fi
@@ -203,7 +203,7 @@ function upload_image {
         # NOTE: For backwards compatibility reasons, colons may be used in place
         # of semi-colons for property delimiters but they are not permitted
         # characters in NTFS filesystems.
-        property_string=`echo "$IMAGE_NAME" | grep -oP '(?<=-)(?!.*-).*[:;].*[:;].*$'`
+        property_string=`echo "$IMAGE_NAME" | { grep -oP '(?<=-)(?!.*-).*[:;].*[:;].*$' || true; }`
         IFS=':;' read -a props <<< "$property_string"
         vmdk_disktype="${props[0]:-$vmdk_disktype}"
         vmdk_adapter_type="${props[1]:-$vmdk_adapter_type}"
