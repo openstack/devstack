@@ -104,7 +104,10 @@ function configure_marconi {
     iniset $MARCONI_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $MARCONI_CONF keystone_authtoken signing_dir $MARCONI_AUTH_CACHE_DIR
 
-    if [[ "$MARCONI_BACKEND" = 'mongodb' ]]; then
+    if [ "$MARCONI_BACKEND" = 'mysql' ] || [ "$MARCONI_BACKEND" = 'postgresql' ] ; then
+        iniset $MARCONI_CONF drivers storage sqlalchemy
+        iniset $MARCONI_CONF 'drivers:storage:sqlalchemy' uri `database_connection_url marconi`
+    else
         iniset $MARCONI_CONF drivers storage mongodb
         iniset $MARCONI_CONF 'drivers:storage:mongodb' uri mongodb://localhost:27017/marconi
         configure_mongodb
