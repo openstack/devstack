@@ -131,8 +131,12 @@ function configure_tempest() {
 
     password=${ADMIN_PASSWORD:-secrete}
 
-    # See files/keystone_data.sh where alt_demo user
-    # and tenant are set up...
+    # See files/keystone_data.sh and stack.sh where admin, demo and alt_demo
+    # user and tenant are set up...
+    ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+    ADMIN_TENANT_NAME=${ADMIN_TENANT_NAME:-admin}
+    TEMPEST_USERNAME=${TEMPEST_USERNAME:-demo}
+    TEMPEST_TENANT_NAME=${TEMPEST_TENANT_NAME:-demo}
     ALT_USERNAME=${ALT_USERNAME:-alt_demo}
     ALT_TENANT_NAME=${ALT_TENANT_NAME:-alt_demo}
 
@@ -216,11 +220,16 @@ function configure_tempest() {
 
     # Identity
     iniset $TEMPEST_CONF identity uri "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v2.0/"
+    iniset $TEMPEST_CONF identity uri_v3 "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v3/"
+    iniset $TEMPEST_CONF identity username $TEMPEST_USERNAME
     iniset $TEMPEST_CONF identity password "$password"
+    iniset $TEMPEST_CONF identity tenant_name $TEMPEST_TENANT_NAME
     iniset $TEMPEST_CONF identity alt_username $ALT_USERNAME
     iniset $TEMPEST_CONF identity alt_password "$password"
     iniset $TEMPEST_CONF identity alt_tenant_name $ALT_TENANT_NAME
+    iniset $TEMPEST_CONF identity admin_username $ADMIN_USERNAME
     iniset $TEMPEST_CONF identity admin_password "$password"
+    iniset $TEMPEST_CONF identity admin_tenant_name $ADMIN_TENANT_NAME
 
     # Image
     # for the gate we want to be able to override this variable so we aren't
@@ -251,7 +260,9 @@ function configure_tempest() {
     iniset $TEMPEST_CONF compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
 
     # Compute admin
+    iniset $TEMPEST_CONF "compute-admin" username $ADMIN_USERNAME
     iniset $TEMPEST_CONF "compute-admin" password "$password" # DEPRECATED
+    iniset $TEMPEST_CONF "compute-admin" tenant_name $ADMIN_TENANT_NAME
 
     iniset $TEMPEST_CONF network api_version 2.0
     iniset $TEMPEST_CONF network tenant_networks_reachable "$tenant_networks_reachable"
