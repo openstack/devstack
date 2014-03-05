@@ -209,7 +209,7 @@ function start_ceilometer {
     screen_it ceilometer-api "cd ; ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
 
     # only die on API if it was actually intended to be turned on
-    if service_enabled ceilometer-api; then
+    if is_service_enabled ceilometer-api; then
         echo "Waiting for ceilometer-api to start..."
         if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -s http://localhost:8777/v2/ >/dev/null; do sleep 1; done"; then
             die $LINENO "ceilometer-api did not start"
