@@ -53,41 +53,6 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]] && [[ "$ENABLED_SERVICES" =~ "s-proxy" |
         --role ResellerAdmin
 fi
 
-# Heat
-if [[ "$ENABLED_SERVICES" =~ "heat" ]]; then
-    keystone user-create --name=heat \
-        --pass="$SERVICE_PASSWORD" \
-        --tenant $SERVICE_TENANT_NAME \
-        --email=heat@example.com
-    keystone user-role-add --tenant $SERVICE_TENANT_NAME \
-        --user heat \
-        --role service
-    # heat_stack_user role is for users created by Heat
-    keystone role-create --name heat_stack_user
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        keystone service-create \
-            --name=heat-cfn \
-            --type=cloudformation \
-            --description="Heat CloudFormation Service"
-        keystone endpoint-create \
-            --region RegionOne \
-            --service heat-cfn \
-            --publicurl "http://$SERVICE_HOST:$HEAT_API_CFN_PORT/v1" \
-            --adminurl "http://$SERVICE_HOST:$HEAT_API_CFN_PORT/v1" \
-            --internalurl "http://$SERVICE_HOST:$HEAT_API_CFN_PORT/v1"
-        keystone service-create \
-            --name=heat \
-            --type=orchestration \
-            --description="Heat Service"
-        keystone endpoint-create \
-            --region RegionOne \
-            --service heat \
-            --publicurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
-            --adminurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
-            --internalurl "http://$SERVICE_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s"
-    fi
-fi
-
 # Glance
 if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
     keystone user-create \
