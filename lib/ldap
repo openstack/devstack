@@ -154,7 +154,7 @@ function stop_ldap {
 
 # clear_ldap_state() - Clear LDAP State
 function clear_ldap_state {
-    ldapdelete -x -w $LDAP_PASSWORD -D "$LDAP_MANAGER_DN" -H $LDAP_URL -r "$LDAP_BASE_DN"
+    ldapdelete -x -w $LDAP_PASSWORD -D "$LDAP_MANAGER_DN" -H $LDAP_URL -r "$LDAP_BASE_DN" || :
 }
 
 # Restore xtrace
