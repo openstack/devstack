@@ -9,8 +9,6 @@ git
 lsof # useful when debugging
 openssh-server
 openssl
-vim-nox
-locate # useful when debugging
 python-virtualenv
 python-unittest2
 iputils-ping
