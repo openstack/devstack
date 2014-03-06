@@ -57,6 +57,18 @@ function configure_nova_hypervisor {
     iniset $GLANCE_API_CONF DEFAULT container_formats ami,ari,aki,bare,ovf,docker
 }
 
+# is_docker_running - Return 0 (true) if Docker is running, otherwise 1
+function is_docker_running {
+    local docker_pid
+    if [ -f "$DOCKER_PID_FILE" ]; then
+        docker_pid=$(cat "$DOCKER_PID_FILE")
+    fi
+    if [[ -z "$docker_pid" ]] || ! ps -p "$docker_pid" | grep [d]ocker; then
+        return 1
+    fi
+    return 0
+}
+
 # install_nova_hypervisor() - Install external components
 function install_nova_hypervisor {
     # So far this is Ubuntu only
@@ -69,19 +81,15 @@ function install_nova_hypervisor {
         die $LINENO "Docker is not installed.  Please run tools/docker/install_docker.sh"
     fi
 
-    local docker_pid
-    read docker_pid <$DOCKER_PID_FILE
-    if [[ -z $docker_pid ]] || ! ps -p $docker_pid | grep [d]ocker; then
+    if ! (is_docker_running); then
         die $LINENO "Docker not running"
     fi
 }
 
 # start_nova_hypervisor - Start any required external services
 function start_nova_hypervisor {
-    local docker_pid
-    read docker_pid <$DOCKER_PID_FILE
-    if [[ -z $docker_pid ]] || ! ps -p $docker_pid | grep [d]ocker; then
-        die $LINENO "Docker not running, start the daemon"
+    if ! (is_docker_running); then
+        die $LINENO "Docker not running"
     fi
 
     # Start the Docker registry container
