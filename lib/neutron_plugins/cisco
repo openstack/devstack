@@ -23,7 +23,7 @@ Q_CISCO_PLUGIN_VLAN_RANGES=${Q_CISCO_PLUGIN_VLAN_RANGES:-vlan:1:4094}
 # Specify ncclient package information
 NCCLIENT_DIR=$DEST/ncclient
 NCCLIENT_VERSION=${NCCLIENT_VERSION:-0.3.1}
-NCCLIENT_REPO=${NCCLIENT_REPO:-${GIT_BASE}/CiscoSystems/ncclient.git}
+NCCLIENT_REPO=${NCCLIENT_REPO:-git://github.com/CiscoSystems/ncclient.git}
 NCCLIENT_BRANCH=${NCCLIENT_BRANCH:-master}
 
 # This routine put a prefix on an existing function name
