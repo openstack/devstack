@@ -105,7 +105,8 @@ function configure_marconi {
     iniset $MARCONI_CONF keystone_authtoken signing_dir $MARCONI_AUTH_CACHE_DIR
 
     if [[ "$MARCONI_BACKEND" = 'mongodb' ]]; then
-        iniset $MARCONI_CONF database connection mongodb://localhost:27017/marconi
+        iniset $MARCONI_CONF drivers storage mongodb
+        iniset $MARCONI_CONF 'drivers:storage:mongodb' uri mongodb://localhost:27017/marconi
         configure_mongodb
         cleanup_marconi
     fi
