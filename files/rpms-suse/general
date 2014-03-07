@@ -1,15 +1,20 @@
+bc
 bridge-utils
 ca-certificates-mozilla
 curl
 euca2ools
+findutils-locate # useful when debugging
 git-core
 iputils
+libopenssl-devel # to rebuild pyOpenSSL if needed
+lsof # useful when debugging
+make
 openssh
 openssl
 psmisc
-python-setuptools # instead of python-distribute; dist:sle11sp2
 python-cmd2 # dist:opensuse-12.3
 python-pylint
+python-setuptools # instead of python-distribute; dist:sle11sp2
 python-unittest2
 screen
 tar
@@ -17,7 +22,3 @@ tcpdump
 unzip
 vim-enhanced
 wget
-bc
-
-findutils-locate # useful when debugging
-lsof # useful when debugging
