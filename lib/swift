@@ -67,8 +67,8 @@ fi
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-$SWIFT_LOOPBACK_DISK_SIZE_DEFAULT}
 
 # Set ``SWIFT_EXTRAS_MIDDLEWARE`` to extras middlewares.
-# Default is ``staticweb, tempurl, formpost``
-SWIFT_EXTRAS_MIDDLEWARE=${SWIFT_EXTRAS_MIDDLEWARE:-tempurl formpost staticweb}
+# Default is ``staticweb, formpost``
+SWIFT_EXTRAS_MIDDLEWARE=${SWIFT_EXTRAS_MIDDLEWARE:-formpost staticweb}
 
 # Set ``SWIFT_EXTRAS_MIDDLEWARE_LAST`` to extras middlewares that need to be at
 # the end of the pipeline.
