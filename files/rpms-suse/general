@@ -3,7 +3,6 @@ bridge-utils
 ca-certificates-mozilla
 curl
 euca2ools
-findutils-locate # useful when debugging
 git-core
 iputils
 libopenssl-devel # to rebuild pyOpenSSL if needed
@@ -20,5 +19,4 @@ screen
 tar
 tcpdump
 unzip
-vim-enhanced
 wget

@@ -687,6 +687,11 @@ function stop_swift {
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi
     # Dump all of the servers
+    # Maintain the iteration as screen_stop() has some desirable side-effects
+    for type in proxy object container account; do
+        screen_stop s-${type}
+    done
+    # Blast out any stragglers
     pkill -f swift-
 }
 
