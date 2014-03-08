@@ -129,6 +129,7 @@ function configure_ceilometer {
 
     iniset $CEILOMETER_CONF DEFAULT notification_topics 'notifications'
     iniset $CEILOMETER_CONF DEFAULT verbose True
+    iniset $CEILOMETER_CONF DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
 
     # Install the policy file for the API server
     cp $CEILOMETER_DIR/etc/ceilometer/policy.json $CEILOMETER_CONF_DIR
