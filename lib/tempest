@@ -267,6 +267,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG identity admin_username $ADMIN_USERNAME
     iniset $TEMPEST_CONFIG identity admin_password "$password"
     iniset $TEMPEST_CONFIG identity admin_tenant_name $ADMIN_TENANT_NAME
+    iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
 
     # Image
     # for the gate we want to be able to override this variable so we aren't
