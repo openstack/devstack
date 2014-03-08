@@ -267,6 +267,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG identity admin_username $ADMIN_USERNAME
     iniset $TEMPEST_CONFIG identity admin_password "$password"
     iniset $TEMPEST_CONFIG identity admin_tenant_name $ADMIN_TENANT_NAME
+    iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
 
     # Image
     # for the gate we want to be able to override this variable so we aren't
@@ -293,9 +294,9 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute ssh_connect_method $ssh_connect_method
 
     # Compute admin
-    iniset $TEMPEST_CONFIG "compute-admin" username $USERNAME
-    iniset $TEMPEST_CONFIG "compute-admin" password "$password" # DEPRECATED
-    iniset $TEMPEST_CONFIG "compute-admin" tenant_name $TENANT_NAME
+    iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
+    iniset $TEMPEST_CONFIG "compute-admin" password "$password"
+    iniset $TEMPEST_CONFIG "compute-admin" tenant_name $ADMIN_TENANT_NAME
 
     # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
