@@ -34,7 +34,8 @@ MARCONI_DIR=$DEST/marconi
 MARCONICLIENT_DIR=$DEST/python-marconiclient
 MARCONI_CONF_DIR=/etc/marconi
 MARCONI_CONF=$MARCONI_CONF_DIR/marconi.conf
-MARCONI_API_LOG_DIR=/var/log/marconi-api
+MARCONI_API_LOG_DIR=/var/log/marconi
+MARCONI_API_LOG_FILE=$MARCONI_API_LOG_DIR/queues.log
 MARCONI_AUTH_CACHE_DIR=${MARCONI_AUTH_CACHE_DIR:-/var/cache/marconi}
 
 # Support potential entry-points console scripts
@@ -96,6 +97,7 @@ function configure_marconi {
 
     iniset $MARCONI_CONF DEFAULT verbose True
     iniset $MARCONI_CONF DEFAULT use_syslog $SYSLOG
+    iniset $MARCONI_CONF DEFAULT log_file $MARCONI_API_LOG_FILE
     iniset $MARCONI_CONF 'drivers:transport:wsgi' bind $MARCONI_SERVICE_HOST
 
     iniset $MARCONI_CONF keystone_authtoken auth_protocol http
@@ -152,7 +154,7 @@ function install_marconiclient {
 
 # start_marconi() - Start running processes, including screen
 function start_marconi {
-    screen_it marconi-server "marconi-server --config-file $MARCONI_CONF"
+    screen_it marconi-server "marconi-server --config-file $MARCONI_CONF 2>&1"
     echo "Waiting for Marconi to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- $MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT/v1/health; do sleep 1; done"; then
         die $LINENO "Marconi did not start"
