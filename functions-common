@@ -938,9 +938,24 @@ function yum_install {
     [[ "$OFFLINE" = "True" ]] && return
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
+
+    # The manual check for missing packages is because yum -y assumes
+    # missing packages are OK.  See
+    # https://bugzilla.redhat.com/show_bug.cgi?id=965567
     $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
         no_proxy=$no_proxy \
-        yum install -y "$@"
+        yum install -y "$@" 2>&1 | \
+        awk '
+            BEGIN { fail=0 }
+            /No package/ { fail=1 }
+            { print }
+            END { exit fail }' || \
+                die $LINENO "Missing packages detected"
+
+    # also ensure we catch a yum failure
+    if [[ ${PIPESTATUS[0]} != 0 ]]; then
+        die $LINENO "Yum install failure"
+    fi
 }
 
 # zypper wrapper to set arguments correctly

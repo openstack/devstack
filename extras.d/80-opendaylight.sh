@@ -1,7 +1,9 @@
 # opendaylight.sh - DevStack extras script
 
-# Need this first to get the is_***_enabled for ODL
-source $TOP_DIR/lib/opendaylight
+if is_service_enabled odl-server odl-compute; then
+    # Initial source
+    [[ "$1" == "source" ]] && source $TOP_DIR/lib/opendaylight
+fi
 
 if is_service_enabled odl-server; then
     if [[ "$1" == "source" ]]; then
