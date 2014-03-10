@@ -1,0 +1,177 @@
+# lib/sahara
+
+# Dependencies:
+# ``functions`` file
+# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_sahara
+# configure_sahara
+# start_sahara
+# stop_sahara
+# cleanup_sahara
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# Set up default repos
+SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
+SAHARA_BRANCH=${SAHARA_BRANCH:-master}
+
+# Set up default directories
+SAHARA_DIR=$DEST/sahara
+SAHARA_CONF_DIR=${SAHARA_CONF_DIR:-/etc/sahara}
+SAHARA_CONF_FILE=${SAHARA_CONF_DIR}/sahara.conf
+SAHARA_DEBUG=${SAHARA_DEBUG:-True}
+
+SAHARA_SERVICE_HOST=${SAHARA_SERVICE_HOST:-$SERVICE_HOST}
+SAHARA_SERVICE_PORT=${SAHARA_SERVICE_PORT:-8386}
+SAHARA_SERVICE_PROTOCOL=${SAHARA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+
+SAHARA_AUTH_CACHE_DIR=${SAHARA_AUTH_CACHE_DIR:-/var/cache/sahara}
+
+# Support entry points installation of console scripts
+if [[ -d $SAHARA_DIR/bin ]]; then
+    SAHARA_BIN_DIR=$SAHARA_DIR/bin
+else
+    SAHARA_BIN_DIR=$(get_python_exec_prefix)
+fi
+
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,sahara
+
+# For backward compatibility with current tests in Tempest
+TEMPEST_SERVICES+=,savanna
+
+
+# Functions
+# ---------
+
+# create_sahara_accounts() - Set up common required sahara accounts
+#
+# Tenant      User       Roles
+# ------------------------------
+# service     sahara    admin
+function create_sahara_accounts {
+
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+
+    SAHARA_USER=$(openstack user create \
+        sahara \
+        --password "$SERVICE_PASSWORD" \
+        --project $SERVICE_TENANT \
+        --email sahara@example.com \
+        | grep " id " | get_field 2)
+    openstack role add \
+        $ADMIN_ROLE \
+        --project $SERVICE_TENANT \
+        --user $SAHARA_USER
+
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        SAHARA_SERVICE=$(openstack service create \
+            sahara \
+            --type=data_processing \
+            --description="Sahara Data Processing" \
+            | grep " id " | get_field 2)
+        openstack endpoint create \
+            $SAHARA_SERVICE \
+            --region RegionOne \
+            --publicurl "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
+            --adminurl "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
+            --internalurl "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s"
+    fi
+}
+
+# cleanup_sahara() - Remove residual data files, anything left over from
+# previous runs that would need to clean up.
+function cleanup_sahara {
+
+    # Cleanup auth cache dir
+    sudo rm -rf $SAHARA_AUTH_CACHE_DIR
+}
+
+# configure_sahara() - Set config files, create data dirs, etc
+function configure_sahara {
+
+    if [[ ! -d $SAHARA_CONF_DIR ]]; then
+        sudo mkdir -p $SAHARA_CONF_DIR
+    fi
+    sudo chown $STACK_USER $SAHARA_CONF_DIR
+
+    # Copy over sahara configuration file and configure common parameters.
+    # TODO(slukjanov): rename when sahara internals will be updated
+    cp $SAHARA_DIR/etc/savanna/savanna.conf.sample $SAHARA_CONF_FILE
+
+    # Create auth cache dir
+    sudo mkdir -p $SAHARA_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $SAHARA_AUTH_CACHE_DIR
+    rm -rf $SAHARA_AUTH_CACHE_DIR/*
+
+    # Set obsolete keystone auth configs for backward compatibility
+    iniset $SAHARA_CONF_FILE DEFAULT os_auth_host $KEYSTONE_SERVICE_HOST
+    iniset $SAHARA_CONF_FILE DEFAULT os_auth_port $KEYSTONE_SERVICE_PORT
+    iniset $SAHARA_CONF_FILE DEFAULT os_auth_protocol $KEYSTONE_SERVICE_PROTOCOL
+    iniset $SAHARA_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
+    iniset $SAHARA_CONF_FILE DEFAULT os_admin_username sahara
+    iniset $SAHARA_CONF_FILE DEFAULT os_admin_tenant_name $SERVICE_TENANT_NAME
+
+    # Set actual keystone auth configs
+    iniset $SAHARA_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
+    iniset $SAHARA_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $SAHARA_CONF_FILE keystone_authtoken admin_user sahara
+    iniset $SAHARA_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
+    iniset $SAHARA_CONF_FILE keystone_authtoken signing_dir $SAHARA_AUTH_CACHE_DIR
+    iniset $SAHARA_CONF_FILE keystone_authtoken cafile $KEYSTONE_SSL_CA
+
+    iniset $SAHARA_CONF_FILE DEFAULT debug $SAHARA_DEBUG
+
+    iniset $SAHARA_CONF_FILE database connection `database_connection_url sahara`
+
+    if is_service_enabled neutron; then
+        iniset $SAHARA_CONF_FILE DEFAULT use_neutron true
+        iniset $SAHARA_CONF_FILE DEFAULT use_floating_ips true
+    fi
+
+    if is_service_enabled heat; then
+        iniset $SAHARA_CONF_FILE DEFAULT infrastructure_engine heat
+    else
+        iniset $SAHARA_CONF_FILE DEFAULT infrastructure_engine direct
+    fi
+
+    iniset $SAHARA_CONF_FILE DEFAULT use_syslog $SYSLOG
+
+    recreate_database sahara utf8
+    $SAHARA_BIN_DIR/sahara-db-manage --config-file $SAHARA_CONF_FILE upgrade head
+}
+
+# install_sahara() - Collect source and prepare
+function install_sahara {
+    git_clone $SAHARA_REPO $SAHARA_DIR $SAHARA_BRANCH
+    setup_develop $SAHARA_DIR
+}
+
+# start_sahara() - Start running processes, including screen
+function start_sahara {
+    screen_it sahara "cd $SAHARA_DIR && $SAHARA_BIN_DIR/sahara-api --config-file $SAHARA_CONF_FILE"
+}
+
+# stop_sahara() - Stop running processes
+function stop_sahara {
+    # Kill the Sahara screen windows
+    screen -S $SCREEN_NAME -p sahara -X kill
+}
+
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
