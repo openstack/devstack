@@ -122,7 +122,7 @@ function upload_image {
             flat_fname="$(head -25 $IMAGE | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $IMAGE || true; })"
             flat_fname="${flat_fname#*\"}"
             flat_fname="${flat_fname%?}"
-            if [[ -z "$flat_name" ]]; then
+            if [[ -z "$flat_fname" ]]; then
                 flat_fname="$IMAGE_NAME-flat.vmdk"
             fi
             path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
@@ -133,27 +133,16 @@ function upload_image {
                 if [[ ! -f $FILES/$flat_fname || \
                 "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
                     wget -c $flat_url -O $FILES/$flat_fname
-                    if [[ $? -ne 0 ]]; then
-                        echo "Flat disk not found: $flat_url"
-                        flat_found=false
-                    fi
                 fi
-                if $flat_found; then
-                    IMAGE="$FILES/${flat_fname}"
-                fi
+                IMAGE="$FILES/${flat_fname}"
             else
                 IMAGE=$(echo $flat_url | sed "s/^file:\/\///g")
                 if [[ ! -f $IMAGE || "$(stat -c "%s" $IMAGE)" == "0" ]]; then
                     echo "Flat disk not found: $flat_url"
-                    flat_found=false
-                fi
-                if ! $flat_found; then
-                    IMAGE=$(echo $image_url | sed "s/^file:\/\///g")
+                    return 1
                 fi
             fi
-            if $flat_found; then
-                IMAGE_NAME="${flat_fname}"
-            fi
+            IMAGE_NAME="${flat_fname}"
             vmdk_disktype="preallocated"
         elif [[ "$vmdk_create_type" = "streamOptimized" ]]; then
             vmdk_disktype="streamOptimized"
@@ -163,33 +152,27 @@ function upload_image {
             if [[ ${IMAGE_NAME: -5} != "-flat" ]]; then
                 warn $LINENO "Expected filename suffix: '-flat'."`
                             `" Filename provided: ${IMAGE_NAME}"
-            fi
-
-            descriptor_fname="${IMAGE_NAME:0:${#IMAGE_NAME} - 5}.vmdk"
-            path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
-            flat_path="${image_url:0:$path_len}"
-            descriptor_url=$flat_path$descriptor_fname
-            warn $LINENO "$descriptor_data_pair_msg"`
-                            `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
-            if [[ $flat_path != file* ]]; then
-                if [[ ! -f $FILES/$descriptor_fname || \
-                "$(stat -c "%s" $FILES/$descriptor_fname)" = "0" ]]; then
-                    wget -c $descriptor_url -O $FILES/$descriptor_fname
-                    if [[ $? -ne 0 ]]; then
-                        warn $LINENO "Descriptor not found $descriptor_url"
-                        descriptor_found=false
+            else
+                descriptor_fname="${IMAGE_NAME:0:${#IMAGE_NAME} - 5}.vmdk"
+                path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
+                flat_path="${image_url:0:$path_len}"
+                descriptor_url=$flat_path$descriptor_fname
+                warn $LINENO "$descriptor_data_pair_msg"`
+                                `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
+                if [[ $flat_path != file* ]]; then
+                    if [[ ! -f $FILES/$descriptor_fname || \
+                    "$(stat -c "%s" $FILES/$descriptor_fname)" = "0" ]]; then
+                        wget -c $descriptor_url -O $FILES/$descriptor_fname
+                    fi
+                    descriptor_url="$FILES/$descriptor_fname"
+                else
+                    descriptor_url=$(echo $descriptor_url | sed "s/^file:\/\///g")
+                    if [[ ! -f $descriptor_url || \
+                    "$(stat -c "%s" $descriptor_url)" == "0" ]]; then
+                        echo "Descriptor not found: $descriptor_url"
+                        return 1
                     fi
                 fi
-                descriptor_url="$FILES/$descriptor_fname"
-            else
-                descriptor_url=$(echo $descriptor_url | sed "s/^file:\/\///g")
-                if [[ ! -f $descriptor_url || \
-                "$(stat -c "%s" $descriptor_url)" == "0" ]]; then
-                    warn $LINENO "Descriptor not found $descriptor_url"
-                    descriptor_found=false
-                fi
-            fi
-            if $descriptor_found; then
                 vmdk_adapter_type="$(head -25 $descriptor_url | { grep -a -F -m 1 'ddb.adapterType =' $descriptor_url || true; })"
                 vmdk_adapter_type="${vmdk_adapter_type#*\"}"
                 vmdk_adapter_type="${vmdk_adapter_type%?}"
