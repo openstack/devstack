@@ -110,6 +110,10 @@ Q_USE_DEBUG_COMMAND=${Q_USE_DEBUG_COMMAND:-False}
 Q_ROUTER_NAME=${Q_ROUTER_NAME:-router1}
 # nova vif driver that all plugins should use
 NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+Q_NOTIFY_NOVA_PORT_STATUS_CHANGE=${Q_NOTIFY_NOVA_PORT_STATUS_CHANGE:-True}
+Q_NOTIFY_NOVA_ON_PORT_DATA_CHANGES=${Q_NOTIFY_NOVA_PORT_CHANGE:-True}
+VIF_PLUGGING_IS_FATAL=${VIF_PLUGGING_IS_FATAL:-True}
+VIF_PLUGGING_TIMEOUT=${VIF_PLUGGING_TIMEOUT:-300}
 
 # The next two variables are configured by plugin
 # e.g.  _configure_neutron_l3_agent or lib/neutron_plugins/*
@@ -313,6 +317,9 @@ function create_nova_conf_neutron {
     if is_service_enabled q-meta; then
         iniset $NOVA_CONF DEFAULT service_neutron_metadata_proxy "True"
     fi
+
+    iniset $NOVA_CONF DEFAULT vif_plugging_is_fatal "$VIF_PLUGGING_IS_FATAL"
+    iniset $NOVA_CONF DEFAULT vif_plugging_timeout "$VIF_PLUGGING_TIMEOUT"
 }
 
 # create_neutron_cache_dir() - Part of the _neutron_setup_keystone() process
@@ -753,6 +760,16 @@ function _configure_neutron_service {
         # Replace the first '=' with ' ' for iniset syntax
         iniset $NEUTRON_CONF DEFAULT ${I/=/ }
     done
+
+    # Configuration for neutron notifations to nova.
+    iniset $NEUTRON_CONF DEFAULT notify_nova_port_status_change $Q_NOTIFY_NOVA_PORT_STATUS_CHANGE
+    iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_ON_PORT_DATA_CHANGES
+    iniset $NEUTRON_CONF DEFAULT nova_url "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2"
+    iniset $NEUTRON_CONF DEFAULT nova_admin_username nova $NOVA_USER
+    iniset $NEUTRON_CONF DEFAULT nova_admin_password $SERVICE_PASSWORD
+    ADMIN_TENANT_ID=$(openstack project list | awk "/ service / { print \$2 }")
+    iniset $NEUTRON_CONF DEFAULT nova_admin_tenant_id $ADMIN_TENANT_ID
+    iniset $NEUTRON_CONF DEFAULT nova_admin_auth_url  "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
 
     # Configure plugin
     neutron_plugin_configure_service
