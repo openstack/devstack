@@ -1,4 +1,2 @@
-python-gevent
-python-gflags
-python-netifaces
+python-eventlet
 python-sphinx
