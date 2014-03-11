@@ -25,6 +25,8 @@ set +o xtrace
 
 # File injection is disabled by default in Nova.  This will turn it back on.
 ENABLE_FILE_INJECTION=${ENABLE_FILE_INJECTION:-False}
+# if we should turn on massive libvirt debugging
+DEBUG_LIBVIRT=$(trueorfalse False $DEBUG_LIBVIRT)
 
 
 # Entry Points
@@ -104,13 +106,15 @@ EOF
     add_user_to_group $STACK_USER $LIBVIRT_GROUP
 
     # Enable server side traces for libvirtd
-    local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:event 3:json 3:file 1:util"
-    local log_outputs="1:file:/var/log/libvirt/libvirtd.log"
-    if ! grep -q "log_filters=\"$log_filters\"" /etc/libvirt/libvirtd.conf; then
-        echo "log_filters=\"$log_filters\"" | sudo tee -a /etc/libvirt/libvirtd.conf
-    fi
-    if ! grep -q "log_outputs=\"$log_outputs\"" /etc/libvirt/libvirtd.conf; then
-        echo "log_outputs=\"$log_outputs\"" | sudo tee -a /etc/libvirt/libvirtd.conf
+    if [[ "$DEBUG_LIBVIRT" = "True" ]] ; then
+        local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:event 3:json 3:file 1:util"
+        local log_outputs="1:file:/var/log/libvirt/libvirtd.log"
+        if ! grep -q "log_filters=\"$log_filters\"" /etc/libvirt/libvirtd.conf; then
+            echo "log_filters=\"$log_filters\"" | sudo tee -a /etc/libvirt/libvirtd.conf
+        fi
+        if ! grep -q "log_outputs=\"$log_outputs\"" /etc/libvirt/libvirtd.conf; then
+            echo "log_outputs=\"$log_outputs\"" | sudo tee -a /etc/libvirt/libvirtd.conf
+        fi
     fi
 
     # libvirt detects various settings on startup, as we potentially changed
