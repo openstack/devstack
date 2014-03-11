@@ -8,5 +8,6 @@ python-devel
 python-eventlet
 python-greenlet
 python-iso8601
+python-pyOpenSSL
 python-wsgiref
 python-xattr
