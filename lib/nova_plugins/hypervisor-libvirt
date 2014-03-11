@@ -22,6 +22,8 @@ set +o xtrace
 # Defaults
 # --------
 
+# File injection is disabled by default in Nova.  This will turn it back on.
+ENABLE_FILE_INJECTION=${ENABLE_FILE_INJECTION:-False}
 
 # Entry Points
 # ------------
@@ -113,6 +115,10 @@ EOF"
     # Power architecture currently does not support graphical consoles.
     if is_arch "ppc64"; then
         iniset $NOVA_CONF DEFAULT vnc_enabled "false"
+    fi
+    if [[ "$ENABLE_FILE_INJECTION" = "False" ]] ; then
+        # Disable file injection by default
+        iniset $NOVA_CONF libvirt_inject_partition '-2'
     fi
 }
 
