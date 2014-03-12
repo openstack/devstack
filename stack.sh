@@ -742,6 +742,8 @@ if is_service_enabled nova; then
 fi
 
 if is_service_enabled horizon; then
+    # django openstack_auth
+    install_django_openstack_auth
     # dashboard
     install_horizon
     configure_horizon
