@@ -109,6 +109,9 @@ export_proxy_variables
 # Destination path for installation ``DEST``
 DEST=${DEST:-/opt/stack}
 
+# We are going to be installing various packages that need to be
+# world-readable, so ensure our umask isn't too strict.
+umask 022
 
 # Sanity Check
 # ------------
