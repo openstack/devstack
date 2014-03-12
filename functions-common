@@ -517,12 +517,14 @@ function git_clone {
     GIT_DEST=$2
     GIT_REF=$3
     RECLONE=$(trueorfalse False $RECLONE)
+    local orig_dir=`pwd`
 
     if [[ "$OFFLINE" = "True" ]]; then
         echo "Running in offline mode, clones already exist"
         # print out the results so we know what change was used in the logs
         cd $GIT_DEST
         git show --oneline | head -1
+        cd $orig_dir
         return
     fi
 
@@ -572,6 +574,7 @@ function git_clone {
     # print out the results so we know what change was used in the logs
     cd $GIT_DEST
     git show --oneline | head -1
+    cd $orig_dir
 }
 
 # git can sometimes get itself infinitely stuck with transient network
