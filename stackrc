@@ -320,9 +320,6 @@ case "$VIRT_DRIVER" in
     openvz)
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ubuntu-12.04-x86_64}
         IMAGE_URLS=${IMAGE_URLS:-"http://download.openvz.org/template/precreated/ubuntu-12.04-x86_64.tar.gz"};;
-    docker)
-        DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros}
-        IMAGE_URLS=${IMAGE_URLS:-};;
     libvirt)
         case "$LIBVIRT_TYPE" in
             lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc

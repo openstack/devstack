@@ -73,7 +73,7 @@ does not run if started as root.
 This is a recent change (Oct 2013) from the previous behaviour of
 automatically creating a ``stack`` user.  Automatically creating
 user accounts is not the right response to running as root, so
-that bit is now an explicit step using ``tools/create-stack-user.sh``. 
+that bit is now an explicit step using ``tools/create-stack-user.sh``.
 Run that (as root!) or just check it out to see what DevStack's
 expectations are for the account it runs under.  Many people simply
 use their usual login (the default 'ubuntu' login on a UEC image
@@ -252,10 +252,6 @@ If tempest has been successfully configured, a basic set of smoke tests can be r
 # DevStack on Xenserver
 
 If you would like to use Xenserver as the hypervisor, please refer to the instructions in `./tools/xen/README.md`.
-
-# DevStack on Docker
-
-If you would like to use Docker as the hypervisor, please refer to the instructions in `./tools/docker/README.md`.
 
 # Additional Projects
 
