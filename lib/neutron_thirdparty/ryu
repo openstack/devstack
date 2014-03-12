@@ -18,14 +18,8 @@ RYU_OFP_PORT=${RYU_OFP_PORT:-6633}
 # Ryu Applications
 RYU_APPS=${RYU_APPS:-ryu.app.simple_isolation,ryu.app.rest}
 
-# configure_ryu can be called multiple times as neutron_pluing/ryu may call
-# this function for neutron-ryu-agent
-_RYU_CONFIGURED=${_RYU_CONFIGURED:-False}
 function configure_ryu {
-    if [[ "$_RYU_CONFIGURED" == "False" ]]; then
-        setup_develop $RYU_DIR
-        _RYU_CONFIGURED=True
-    fi
+    :
 }
 
 function init_ryu {
@@ -63,6 +57,7 @@ _RYU_INSTALLED=${_RYU_INSTALLED:-False}
 function install_ryu {
     if [[ "$_RYU_INSTALLED" == "False" ]]; then
         git_clone $RYU_REPO $RYU_DIR $RYU_BRANCH
+        export PYTHONPATH=$RYU_DIR:$PYTHONPATH
         _RYU_INSTALLED=True
     fi
 }

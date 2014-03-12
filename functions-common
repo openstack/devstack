@@ -1248,7 +1248,7 @@ function setup_develop {
     # ``errexit`` requires us to trap the exit code when the repo is changed
     local update_requirements=$(cd $project_dir && git diff --exit-code >/dev/null || echo "changed")
 
-    if [[ $update_requirements = "changed" ]]; then
+    if [[ $update_requirements != "changed" ]]; then
         (cd $REQUIREMENTS_DIR; \
             $SUDO_CMD python update.py $project_dir)
     fi
@@ -1264,7 +1264,7 @@ function setup_develop {
     # a variable that tells us whether or not we should UNDO the requirements
     # changes (this will be set to False in the OpenStack ci gate)
     if [ $UNDO_REQUIREMENTS = "True" ]; then
-        if [[ $update_requirements = "changed" ]]; then
+        if [[ $update_requirements != "changed" ]]; then
             (cd $project_dir && git reset --hard)
         fi
     fi
