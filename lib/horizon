@@ -26,6 +26,7 @@ set +o xtrace
 
 # Set up default directories
 HORIZON_DIR=$DEST/horizon
+HORIZONAUTH_DIR=$DEST/django_openstack_auth
 
 # local_settings.py is used to customize Dashboard settings.
 # The example file in Horizon repo is used by default.
@@ -153,6 +154,12 @@ function init_horizon {
     # has been successfully started (see start_horizon() and functions::screen_it())
     sudo rm -f /var/log/$APACHE_NAME/horizon_*
 
+}
+
+# install_django_openstack_auth() - Collect source and prepare
+function install_django_openstack_auth {
+    git_clone $HORIZONAUTH_REPO $HORIZONAUTH_DIR $HORIZONAUTH_BRANCH
+    setup_develop $HORIZONAUTH_DIR
 }
 
 # install_horizon() - Collect source and prepare
