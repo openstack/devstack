@@ -106,7 +106,9 @@ create_ceilometer_accounts() {
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_ceilometer {
-    mongo ceilometer --eval "db.dropDatabase();"
+    if [ "$CEILOMETER_BACKEND" != 'mysql' ] && [ "$CEILOMETER_BACKEND" != 'postgresql' ] ; then
+        mongo ceilometer --eval "db.dropDatabase();"
+    fi
 }
 
 # configure_ceilometerclient() - Set config files, create data dirs, etc
@@ -164,14 +166,27 @@ function configure_ceilometer {
 }
 
 function configure_mongodb {
+    # server package is the same on all
+    local packages=mongodb-server
+
     if is_fedora; then
-        # install mongodb client
-        install_package mongodb
+        # mongodb client + python bindings
+        packages="${packages} mongodb pymongo"
+    else
+        packages="${packages} python-pymongo"
+    fi
+
+    install_package ${packages}
+
+    if is_fedora; then
         # ensure smallfiles selected to minimize freespace requirements
         sudo sed -i '/--smallfiles/!s/OPTIONS=\"/OPTIONS=\"--smallfiles /' /etc/sysconfig/mongod
 
         restart_service mongod
     fi
+
+    # give mongodb time to start-up
+    sleep 5
 }
 
 # init_ceilometer() - Initialize etc.
