@@ -308,7 +308,7 @@ function configure_nova {
     # Rebuild the config file from scratch
     create_nova_conf
 
-    if [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
+    if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
         # Configure hypervisor plugin
         configure_nova_hypervisor
     fi
