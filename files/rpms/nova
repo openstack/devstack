@@ -17,11 +17,9 @@ mysql-server # NOPRIME
 parted
 polkit
 python-boto
-python-carrot
 python-cheetah
 python-eventlet
 python-feedparser
-python-gflags
 python-greenlet
 python-iso8601
 python-kombu
@@ -42,4 +40,3 @@ rabbitmq-server # NOPRIME
 qpid-cpp-server # NOPRIME
 sqlite
 sudo
-vconfig

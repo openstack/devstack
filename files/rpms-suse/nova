@@ -24,7 +24,6 @@ python-Routes
 python-SQLAlchemy
 python-Tempita
 python-boto
-python-carrot
 python-cheetah
 python-eventlet
 python-feedparser
@@ -37,7 +36,6 @@ python-mox
 python-mysql
 python-numpy # needed by websockify for spice console
 python-paramiko
-python-python-gflags
 python-sqlalchemy-migrate
 python-suds
 python-xattr # needed for glance which is needed for nova --- this shouldn't be here
