@@ -4,6 +4,7 @@ iputils-ping
 iputils-arping
 mysql-server #NOPRIME
 sudo
+python-dev
 python-boto
 python-iso8601
 python-paste
