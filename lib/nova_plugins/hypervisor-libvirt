@@ -118,7 +118,7 @@ EOF"
     fi
     if [[ "$ENABLE_FILE_INJECTION" = "False" ]] ; then
         # Disable file injection by default
-        iniset $NOVA_CONF libvirt_inject_partition '-2'
+        iniset $NOVA_CONF DEFAULT libvirt_inject_partition '-2'
     fi
 }
 
