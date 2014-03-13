@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# **savanna.sh**
+# **sahara.sh**
 
-# Sanity check that Savanna started if enabled
+# Sanity check that Sahara started if enabled
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -33,9 +33,9 @@ source $TOP_DIR/openrc
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
-is_service_enabled savanna || exit 55
+is_service_enabled sahara || exit 55
 
-curl http://$SERVICE_HOST:8386/ 2>/dev/null | grep -q 'Auth' || die $LINENO "Savanna API not functioning!"
+curl http://$SERVICE_HOST:8386/ 2>/dev/null | grep -q 'Auth' || die $LINENO "Sahara API isn't functioning!"
 
 set +o xtrace
 echo "*********************************************************************"
