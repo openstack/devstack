@@ -541,6 +541,7 @@ if [[ -n "$LOGFILE" ]]; then
                     print
                     print > logfile
                     fflush("")
+                    fflush(logfile)
                 }' ) 2>&1
         # Set up a second fd for output
         exec 6> >( tee "${SUMFILE}" )
