@@ -11,8 +11,8 @@ python-greenlet
 python-iso8601
 python-kombu
 #rhel6 gets via pip
-python-paste        # dist:f18,f19,f20,rhel7
-python-paste-deploy # dist:f18,f19,f20,rhel7
+python-paste        # dist:f19,f20,rhel7
+python-paste-deploy # dist:f19,f20,rhel7
 python-qpid
 python-routes
 python-sqlalchemy

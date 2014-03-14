@@ -1,0 +1,69 @@
+# Nuage Neutron Plugin
+# ----------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+function neutron_plugin_create_nova_conf {
+    NOVA_OVS_BRIDGE=${NOVA_OVS_BRIDGE:-"br-int"}
+    iniset $NOVA_CONF DEFAULT neutron_ovs_bridge $NOVA_OVS_BRIDGE
+    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+    LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
+    iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
+}
+
+function neutron_plugin_install_agent_packages {
+    :
+}
+
+function neutron_plugin_configure_common {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/nuage
+    Q_PLUGIN_CONF_FILENAME=nuage_plugin.ini
+    Q_DB_NAME="nuage_neutron"
+    Q_PLUGIN_CLASS="neutron.plugins.nuage.plugin.NuagePlugin"
+    Q_PLUGIN_EXTENSIONS_PATH=neutron/plugins/nuage/extensions
+    #Nuage specific Neutron defaults. Actual value must be set and sourced
+    NUAGE_CNA_SERVERS=${NUAGE_CNA_SERVERS:-'localhost:8443'}
+    NUAGE_CNA_SERVER_AUTH=${NUAGE_CNA_SERVER_AUTH:-'username:password'}
+    NUAGE_CNA_ORGANIZATION=${NUAGE_CNA_ORGANIZATION:-'org'}
+    NUAGE_CNA_SERVER_SSL=${NUAGE_CNA_SERVER_SSL:-'True'}
+    NUAGE_CNA_BASE_URI=${NUAGE_CNA_BASE_URI:-'/'}
+    NUAGE_CNA_AUTH_RESOURCE=${NUAGE_CNA_AUTH_RESOURCE:-'/'}
+    NUAGE_CNA_DEF_NETPART_NAME=${NUAGE_CNA_DEF_NETPART_NAME:-''}
+}
+
+function neutron_plugin_configure_debug_command {
+    :
+}
+
+function neutron_plugin_configure_dhcp_agent {
+    :
+}
+
+function neutron_plugin_configure_l3_agent {
+    :
+}
+
+function neutron_plugin_configure_plugin_agent {
+    :
+}
+
+function neutron_plugin_configure_service {
+    iniset $NEUTRON_CONF DEFAULT api_extensions_path neutron/plugins/nuage/extensions/
+    iniset /$Q_PLUGIN_CONF_FILE restproxy base_uri $NUAGE_CNA_BASE_URI
+    iniset /$Q_PLUGIN_CONF_FILE restproxy serverssl $NUAGE_CNA_SERVER_SSL
+    iniset /$Q_PLUGIN_CONF_FILE restproxy serverauth $NUAGE_CNA_SERVER_AUTH
+    iniset /$Q_PLUGIN_CONF_FILE restproxy organization $NUAGE_CNA_ORGANIZATION
+    iniset /$Q_PLUGIN_CONF_FILE restproxy server $NUAGE_CNA_SERVERS
+    iniset /$Q_PLUGIN_CONF_FILE restproxy auth_resource $NUAGE_CNA_AUTH_RESOURCE
+    iniset /$Q_PLUGIN_CONF_FILE restproxy default_net_partition_name $NUAGE_CNA_DEF_NETPART_NAME
+}
+
+function has_neutron_plugin_security_group {
+    # 1 means False here
+    return 1
+}
+
+# Restore xtrace
+$MY_XTRACE

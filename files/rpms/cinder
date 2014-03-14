@@ -4,4 +4,4 @@ qemu-img
 python-devel
 postgresql-devel
 iscsi-initiator-utils
-python-lxml         #dist:f18,f19,f20,rhel7
+python-lxml         #dist:f19,f20,rhel7
