@@ -15,6 +15,7 @@ python-setuptools
 python-prettytable # dist:rhel6 [1]
 python-unittest2
 python-virtualenv
+python-devel
 screen
 tar
 tcpdump

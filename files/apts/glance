@@ -5,7 +5,6 @@ libpq-dev           # testonly
 libssl-dev          # testonly
 libxml2-dev
 libxslt1-dev        # testonly
-python-dev
 python-eventlet
 python-routes
 python-greenlet
