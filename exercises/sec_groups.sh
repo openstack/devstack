@@ -37,9 +37,6 @@ source $TOP_DIR/exerciserc
 # the exercise is skipped
 is_service_enabled n-api || exit 55
 
-# Skip if the hypervisor is Docker
-[[ "$VIRT_DRIVER" == "docker" ]] && exit 55
-
 
 # Testing Security Groups
 # =======================

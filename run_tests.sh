@@ -27,3 +27,16 @@ fi
 echo "Running bash8..."
 
 ./tools/bash8.py -v $FILES
+
+
+# Test that no one is trying to land crazy refs as branches
+
+echo "Ensuring we don't have crazy refs"
+
+REFS=`grep BRANCH stackrc | grep -v -- '-master'`
+rc=$?
+if [[ $rc -eq 0 ]]; then
+    echo "Branch defaults must be master. Found:"
+    echo $REFS
+    exit 1
+fi

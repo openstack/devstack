@@ -41,9 +41,6 @@ source $TOP_DIR/exerciserc
 # exercise is skipped.
 is_service_enabled cinder || exit 55
 
-# Also skip if the hypervisor is Docker
-[[ "$VIRT_DRIVER" == "docker" ]] && exit 55
-
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 
