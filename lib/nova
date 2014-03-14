@@ -716,6 +716,7 @@ function start_nova {
 }
 
 function stop_nova_compute {
+    screen_stop n-cpu
     if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
         stop_nova_hypervisor
     fi
@@ -725,7 +726,7 @@ function stop_nova_rest {
     # Kill the nova screen windows
     # Some services are listed here twice since more than one instance
     # of a service may be running in certain configs.
-    for serv in n-api n-cpu n-crt n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cond n-cell n-cell n-api-meta n-obj; do
+    for serv in n-api n-crt n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cond n-cell n-cell n-api-meta n-obj; do
         screen_stop $serv
     done
 }
