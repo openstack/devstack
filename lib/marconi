@@ -154,7 +154,7 @@ function install_marconiclient {
 
 # start_marconi() - Start running processes, including screen
 function start_marconi {
-    screen_it marconi-server "marconi-server --config-file $MARCONI_CONF 2>&1"
+    screen_it marconi-server "marconi-server --config-file $MARCONI_CONF"
     echo "Waiting for Marconi to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- $MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT/v1/health; do sleep 1; done"; then
         die $LINENO "Marconi did not start"
