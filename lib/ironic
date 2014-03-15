@@ -18,22 +18,47 @@
 # - stop_ironic
 # - cleanup_ironic
 
-# Save trace setting
+# Save trace and pipefail settings
 XTRACE=$(set +o | grep xtrace)
+PIPEFAIL=$(set +o | grep pipefail)
 set +o xtrace
-
+set +o pipefail
 
 # Defaults
 # --------
 
 # Set up default directories
 IRONIC_DIR=$DEST/ironic
+IRONIC_DATA_DIR=$DATA_DIR/ironic
+IRONIC_STATE_PATH=/var/lib/ironic
 IRONICCLIENT_DIR=$DEST/python-ironicclient
 IRONIC_AUTH_CACHE_DIR=${IRONIC_AUTH_CACHE_DIR:-/var/cache/ironic}
 IRONIC_CONF_DIR=${IRONIC_CONF_DIR:-/etc/ironic}
 IRONIC_CONF_FILE=$IRONIC_CONF_DIR/ironic.conf
 IRONIC_ROOTWRAP_CONF=$IRONIC_CONF_DIR/rootwrap.conf
 IRONIC_POLICY_JSON=$IRONIC_CONF_DIR/policy.json
+
+# Set up defaults for functional / integration testing
+IRONIC_SCRIPTS_DIR=${IRONIC_SCRIPTS_DIR:-$TOP_DIR/tools/ironic/scripts}
+IRONIC_TEMPLATES_DIR=${IRONIC_TEMPLATES_DIR:-$TOP_DIR/tools/ironic/templates}
+IRONIC_BAREMETAL_BASIC_OPS=$(trueorfalse False $IRONIC_BAREMETAL_BASIC_OPS)
+IRONIC_SSH_USERNAME=${IRONIC_SSH_USERNAME:-`whoami`}
+IRONIC_SSH_KEY_DIR=${IRONIC_SSH_KEY_DIR:-$IRONIC_DATA_DIR/ssh_keys}
+IRONIC_SSH_KEY_FILENAME=${IRONIC_SSH_KEY_FILENAME:-ironic_key}
+IRONIC_KEY_FILE=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME
+IRONIC_SSH_VIRT_TYPE=${IRONIC_SSH_VIRT_TYPE:-virsh}
+IRONIC_TFTPBOOT_DIR=${IRONIC_TFTPBOOT_DIR:-$IRONIC_DATA_DIR/tftpboot}
+IRONIC_VM_SSH_PORT=${IRONIC_VM_SSH_PORT:-2222}
+IRONIC_VM_SSH_ADDRESS=${IRONIC_VM_SSH_ADDRESS:-$HOST_IP}
+IRONIC_VM_COUNT=${IRONIC_VM_COUNT:-1}
+IRONIC_VM_SPECS_CPU=${IRONIC_VM_SPECS_CPU:-1}
+IRONIC_VM_SPECS_RAM=${IRONIC_VM_SPECS_RAM:-256}
+IRONIC_VM_SPECS_DISK=${IRONIC_VM_SPECS_DISK:-10}
+IRONIC_VM_EMULATOR=${IRONIC_VM_EMULATOR:-/usr/bin/qemu-system-x86_64}
+IRONIC_VM_NETWORK_BRIDGE=${IRONIC_VM_NETWORK_BRIDGE:-brbm}
+IRONIC_VM_NETWORK_RANGE=${IRONIC_VM_NETWORK_RANGE:-192.0.2.0/24}
+IRONIC_VM_MACS_CSV_FILE=${IRONIC_VM_MACS_CSV_FILE:-$IRONIC_DATA_DIR/ironic_macs.csv}
+IRONIC_AUTHORIZED_KEYS_FILE=${IRONIC_AUTHORIZED_KEYS_FILE:-$HOME/.ssh/authorized_keys}
 
 # Support entry points installation of console scripts
 IRONIC_BIN_DIR=$(get_python_exec_prefix)
@@ -86,8 +111,8 @@ function configure_ironic {
     iniset $IRONIC_CONF_FILE DEFAULT debug True
     inicomment $IRONIC_CONF_FILE DEFAULT log_file
     iniset $IRONIC_CONF_FILE DEFAULT sql_connection `database_connection_url ironic`
+    iniset $IRONIC_CONF_FILE DEFAULT state_path $IRONIC_STATE_PATH
     iniset $IRONIC_CONF_FILE DEFAULT use_syslog $SYSLOG
-
     # Configure Ironic conductor, if it was enabled.
     if is_service_enabled ir-cond; then
         configure_ironic_conductor
@@ -96,6 +121,10 @@ function configure_ironic {
     # Configure Ironic API, if it was enabled.
     if is_service_enabled ir-api; then
         configure_ironic_api
+    fi
+
+    if [[ "$IRONIC_BAREMETAL_BASIC_OPS" == "True" ]]; then
+        configure_ironic_auxiliary
     fi
 }
 
@@ -125,6 +154,10 @@ function configure_ironic_conductor {
     cp -r $IRONIC_DIR/etc/ironic/rootwrap.d $IRONIC_CONF_DIR
 
     iniset $IRONIC_CONF_FILE DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
+    iniset $IRONIC_CONF_FILE conductor api_url http://$SERVICE_HOST:6385
+    iniset $IRONIC_CONF_FILE pxe tftp_server $SERVICE_HOST
+    iniset $IRONIC_CONF_FILE pxe tftp_root $IRONIC_TFTPBOOT_DIR
+    iniset $IRONIC_CONF_FILE pxe tftp_master_path $IRONIC_TFTPBOOT_DIR/master_images
 }
 
 # create_ironic_cache_dir() - Part of the init_ironic() process
@@ -225,9 +258,233 @@ function stop_ironic {
     screen -S $SCREEN_NAME -p ir-cond -X kill
 }
 
+function is_ironic {
+    if ( is_service_enabled ir-cond && is_service_enabled ir-api ); then
+        return 0
+    fi
+    return 1
+}
 
-# Restore xtrace
+function configure_ironic_dirs {
+    sudo mkdir -p $IRONIC_DATA_DIR
+    sudo mkdir -p $IRONIC_STATE_PATH
+    sudo mkdir -p $IRONIC_TFTPBOOT_DIR
+    sudo chown -R $STACK_USER $IRONIC_DATA_DIR $IRONIC_STATE_PATH
+    sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_TFTPBOOT_DIR
+    if is_ubuntu; then
+        PXEBIN=/usr/lib/syslinux/pxelinux.0
+    elif is_fedora; then
+        PXEBIN=/usr/share/syslinux/pxelinux.0
+    fi
+    if [ ! -f $PXEBIN ]; then
+        die $LINENO "pxelinux.0 (from SYSLINUX) not found."
+    fi
+
+    cp $PXEBIN $IRONIC_TFTPBOOT_DIR
+    mkdir -p $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
+}
+
+function ironic_ensure_libvirt_group {
+    groups $STACK_USER | grep -q $LIBVIRT_GROUP || adduser $STACK_USER $LIBVIRT_GROUP
+}
+
+function create_bridge_and_vms {
+    ironic_ensure_libvirt_group
+
+    # Call libvirt setup scripts in a new shell to ensure any new group membership
+    sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/setup-network"
+
+    sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/create-nodes \
+        $IRONIC_VM_SPECS_CPU $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK \
+        amd64 $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE $IRONIC_VM_EMULATOR" >> $IRONIC_VM_MACS_CSV_FILE
+
+}
+
+function enroll_vms {
+
+    CHASSIS_ID=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
+    IRONIC_NET_ID=$(neutron net-list | grep private | get_field 1)
+    local idx=0
+
+    # work around; need to know what netns neutron uses for private network
+    neutron port-create private
+
+    while read MAC; do
+
+        NODE_ID=$(ironic node-create --chassis_uuid $CHASSIS_ID --driver pxe_ssh \
+            -i ssh_virt_type=$IRONIC_SSH_VIRT_TYPE \
+            -i ssh_address=$IRONIC_VM_SSH_ADDRESS \
+            -i ssh_port=$IRONIC_VM_SSH_PORT \
+            -i ssh_username=$IRONIC_SSH_USERNAME \
+            -i ssh_key_filename=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME \
+            -p cpus=$IRONIC_VM_SPECS_CPU \
+            -p memory_mb=$IRONIC_VM_SPECS_RAM \
+            -p local_gb=$IRONIC_VM_SPECS_DISK \
+            -p cpu_arch=x86_64 \
+            | grep " uuid " | get_field 2)
+
+        ironic port-create --address $MAC --node_uuid $NODE_ID
+
+        idx=$((idx+1))
+
+    done < $IRONIC_VM_MACS_CSV_FILE
+
+    # create the nova flavor
+    nova flavor-create baremetal auto $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK $IRONIC_VM_SPECS_CPU
+    nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$BM_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$BM_DEPLOY_RAMDISK_ID"
+
+    # intentional sleep to make sure the tag has been set to port
+    sleep 10
+    TAPDEV=$(sudo ip netns exec qdhcp-${IRONIC_NET_ID} ip link list | grep tap | cut -d':' -f2 | cut -b2-)
+    TAG_ID=$(sudo ovs-vsctl show |grep ${TAPDEV} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
+
+    # make sure veth pair is not existing, otherwise delete its links
+    sudo ip link show ovs-tap1 && sudo ip link delete ovs-tap1
+    sudo ip link show brbm-tap1 && sudo ip link delete brbm-tap1
+    # create veth pair for future interconnection between br-int and brbm
+    sudo ip link add brbm-tap1 type veth peer name ovs-tap1
+    sudo ip link set dev brbm-tap1 up
+    sudo ip link set dev ovs-tap1 up
+
+    sudo ovs-vsctl -- --if-exists del-port ovs-tap1 -- add-port br-int ovs-tap1 tag=$TAG_ID
+    sudo ovs-vsctl -- --if-exists del-port brbm-tap1 -- add-port $IRONIC_VM_NETWORK_BRIDGE brbm-tap1
+}
+
+function configure_tftpd {
+    # enable tftp natting for allowing connections to SERVICE_HOST's tftp server
+    sudo modprobe nf_conntrack_tftp
+    sudo modprobe nf_nat_tftp
+
+    if is_ubuntu; then
+        PXEBIN=/usr/lib/syslinux/pxelinux.0
+    elif is_fedora; then
+        PXEBIN=/usr/share/syslinux/pxelinux.0
+    fi
+    if [ ! -f $PXEBIN ]; then
+        die $LINENO "pxelinux.0 (from SYSLINUX) not found."
+    fi
+
+    # stop tftpd and setup serving via xinetd
+    stop_service tftpd-hpa || true
+    [ -f /etc/init/tftpd-hpa.conf ] && echo "manual" | sudo tee /etc/init/tftpd-hpa.override
+    sudo cp $IRONIC_TEMPLATES_DIR/tftpd-xinetd.template /etc/xinetd.d/tftp
+    sudo sed -e "s|%TFTPBOOT_DIR%|$IRONIC_TFTPBOOT_DIR|g" -i /etc/xinetd.d/tftp
+
+    # setup tftp file mapping to satisfy requests at the root (booting) and
+    # /tftpboot/ sub-dir (as per deploy-ironic elements)
+    echo "r ^([^/]) $IRONIC_TFTPBOOT_DIR/\1" >$IRONIC_TFTPBOOT_DIR/map-file
+    echo "r ^(/tftpboot/) $IRONIC_TFTPBOOT_DIR/\2" >>$IRONIC_TFTPBOOT_DIR/map-file
+
+    chmod -R 0755 $IRONIC_TFTPBOOT_DIR
+    restart_service xinetd
+}
+
+function configure_ironic_ssh_keypair {
+    # Generating ssh key pair for stack user
+    if [[ ! -d $IRONIC_SSH_KEY_DIR ]]; then
+        mkdir -p $IRONIC_SSH_KEY_DIR
+    fi
+    if [[ ! -d $HOME/.ssh ]]; then
+        mkdir -p $HOME/.ssh
+        chmod 700 $HOME/.ssh
+    fi
+    echo -e 'n\n' | ssh-keygen -q -t rsa -P '' -f $IRONIC_KEY_FILE
+    cat $IRONIC_KEY_FILE.pub | tee -a $IRONIC_AUTHORIZED_KEYS_FILE
+}
+
+function ironic_ssh_check {
+    local KEY_FILE=$1
+    local FLOATING_IP=$2
+    local PORT=$3
+    local DEFAULT_INSTANCE_USER=$4
+    local ACTIVE_TIMEOUT=$5
+    if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -p $PORT -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success; do sleep 1; done"; then
+        die $LINENO "server didn't become ssh-able!"
+    fi
+}
+
+function configure_ironic_sshd {
+    # Ensure sshd server accepts connections from localhost only
+
+    SSH_CONFIG=/etc/ssh/sshd_config
+    HOST_PORT=$IRONIC_VM_SSH_ADDRESS:$IRONIC_VM_SSH_PORT
+    if ! sudo grep ListenAddress $SSH_CONFIG | grep $HOST_PORT; then
+        echo "ListenAddress $HOST_PORT" | sudo tee -a $SSH_CONFIG
+    fi
+
+    SSH_SERVICE_NAME=sshd
+    if is_ubuntu; then
+        SSH_SERVICE_NAME=ssh
+    fi
+
+    restart_service $SSH_SERVICE_NAME
+    # to ensure ssh service is up and running
+    sleep 3
+    ironic_ssh_check $IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME $IRONIC_VM_SSH_ADDRESS $IRONIC_VM_SSH_PORT $IRONIC_SSH_USERNAME 10
+
+}
+
+function configure_ironic_auxiliary {
+    configure_ironic_dirs
+    configure_ironic_ssh_keypair
+    configure_ironic_sshd
+}
+
+function prepare_baremetal_basic_ops {
+
+    # install diskimage-builder
+    git_clone $BM_IMAGE_BUILD_REPO $BM_IMAGE_BUILD_DIR $BM_IMAGE_BUILD_BRANCH
+
+    # make sure all needed service were enabled
+    for srv in nova glance key neutron; do
+        if ! is_service_enabled "$srv"; then
+            die $LINENO "$srv should be enabled for ironic tests"
+        fi
+    done
+
+    SCREEN_NAME=${SCREEN_NAME:-stack}
+    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
+
+    # stop all nova services
+    stop_nova || true
+
+    # remove any nova services failure status
+    find $SERVICE_DIR/$SCREEN_NAME -name 'n-*.failure' -exec rm -f '{}' \;
+
+    # start them again
+    start_nova_api
+    start_nova
+
+    TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
+    die_if_not_set $LINENO TOKEN "Keystone fail to get token"
+
+    echo_summary "Creating and uploading baremetal images for ironic"
+
+    # build and upload separate deploy kernel & ramdisk
+    upload_baremetal_deploy $TOKEN
+
+    create_bridge_and_vms
+    enroll_vms
+    configure_tftpd
+}
+
+function cleanup_baremetal_basic_ops {
+    rm -f $IRONIC_VM_MACS_CSV_FILE
+    if [ -f $IRONIC_KEY_FILE ]; then
+        KEY=`cat $IRONIC_KEY_FILE.pub`
+        # remove public key from authorized_keys
+        grep -v "$KEY" $IRONIC_AUTHORIZED_KEYS_FILE > temp && mv temp $IRONIC_AUTHORIZED_KEYS_FILE
+        chmod 0600 $IRONIC_AUTHORIZED_KEYS_FILE
+    fi
+    sudo rm -rf $IRONIC_DATA_DIR $IRONIC_STATE_PATH
+    sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/cleanup-nodes $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE"
+    sudo rm -rf /etc/xinetd.d/tftp /etc/init/tftpd-hpa.override
+    restart_service xinetd
+}
+
+# Restore xtrace + pipefail
 $XTRACE
+$PIPEFAIL
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

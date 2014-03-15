@@ -45,6 +45,13 @@ TEMPEST_SERVICES+=,heat
 # Functions
 # ---------
 
+# Test if any Heat services are enabled
+# is_heat_enabled
+function is_heat_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"h-" ]] && return 0
+    return 1
+}
+
 # cleanup_heat() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_heat {

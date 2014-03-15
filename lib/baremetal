@@ -140,7 +140,10 @@ BM_DEPLOY_KERNEL=${BM_DEPLOY_KERNEL:-}
 
 # If you need to add any extra flavors to the deploy ramdisk image
 # eg, specific network drivers, specify them here
-BM_DEPLOY_FLAVOR=${BM_DEPLOY_FLAVOR:-}
+#
+# NOTE(deva): this will be moved to lib/ironic in a future patch
+#             for now, set the default to a suitable value for Ironic's needs
+BM_DEPLOY_FLAVOR=${BM_DEPLOY_FLAVOR:--a amd64 ubuntu deploy-ironic}
 
 # set URL and version for google shell-in-a-box
 BM_SHELL_IN_A_BOX=${BM_SHELL_IN_A_BOX:-http://shellinabox.googlecode.com/files/shellinabox-2.14.tar.gz}
@@ -220,7 +223,7 @@ function upload_baremetal_deploy {
         BM_DEPLOY_KERNEL=bm-deploy.kernel
         BM_DEPLOY_RAMDISK=bm-deploy.initramfs
         if [ ! -e "$TOP_DIR/files/$BM_DEPLOY_KERNEL" -o ! -e "$TOP_DIR/files/$BM_DEPLOY_RAMDISK" ]; then
-            $BM_IMAGE_BUILD_DIR/bin/ramdisk-image-create $BM_DEPLOY_FLAVOR deploy \
+            $BM_IMAGE_BUILD_DIR/bin/ramdisk-image-create $BM_DEPLOY_FLAVOR \
                 -o $TOP_DIR/files/bm-deploy
         fi
     fi

@@ -267,7 +267,7 @@ DEFAULT_VIRT_DRIVER=libvirt
 is_package_installed xenserver-core && DEFAULT_VIRT_DRIVER=xenserver
 VIRT_DRIVER=${VIRT_DRIVER:-$DEFAULT_VIRT_DRIVER}
 case "$VIRT_DRIVER" in
-    libvirt)
+    ironic|libvirt)
         LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
         if [[ "$os_VENDOR" =~ (Debian) ]]; then
             LIBVIRT_GROUP=libvirt
