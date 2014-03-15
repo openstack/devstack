@@ -55,7 +55,13 @@ export_proxy_variables
 # ================
 
 # Install package requirements
-install_package $(get_packages general $ENABLED_SERVICES)
+PACKAGES=$(get_packages general $ENABLED_SERVICES)
+if is_ubuntu && echo $PACKAGES | grep -q dkms ; then
+    # ensure headers for the running kernel are installed for any DKMS builds
+    PACKAGES="$PACKAGES linux-headers-$(uname -r)"
+fi
+
+install_package $PACKAGES
 
 if [[ -n "$SYSLOG" && "$SYSLOG" != "False" ]]; then
     if is_ubuntu || is_fedora; then

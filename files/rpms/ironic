@@ -1,0 +1,9 @@
+libguestfs
+libvirt
+libvirt-python
+openssh-clients
+openvswitch
+python-libguestfs
+syslinux
+tftp-server
+xinetd

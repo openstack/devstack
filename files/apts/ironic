@@ -1,0 +1,10 @@
+libguestfs0
+libvirt-bin
+openssh-client
+openvswitch-switch
+openvswitch-datapath-dkms
+python-libguestfs
+python-libvirt
+syslinux
+tftpd-hpa
+xinetd
