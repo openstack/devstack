@@ -1356,12 +1356,14 @@ if [[ -n "$DEPRECATED_TEXT" ]]; then
     echo_summary "WARNING: $DEPRECATED_TEXT"
 fi
 
+# TODO(dtroyer): Remove EXTRA_OPTS after stable/icehouse branch is cut
 # Specific warning for deprecated configs
 if [[ -n "$EXTRA_OPTS" ]]; then
     echo ""
     echo_summary "WARNING: EXTRA_OPTS is used"
     echo "You are using EXTRA_OPTS to pass configuration into nova.conf."
     echo "Please convert that configuration in localrc to a nova.conf section in local.conf:"
+    echo "EXTRA_OPTS will be removed early in the Juno development cycle"
     echo "
 [[post-config|\$NOVA_CONF]]
 [DEFAULT]
@@ -1372,11 +1374,13 @@ if [[ -n "$EXTRA_OPTS" ]]; then
     done
 fi
 
+# TODO(dtroyer): Remove EXTRA_BAREMETAL_OPTS after stable/icehouse branch is cut
 if [[ -n "$EXTRA_BAREMETAL_OPTS" ]]; then
     echo ""
-    echo_summary "WARNING: EXTRA_OPTS is used"
-    echo "You are using EXTRA_OPTS to pass configuration into nova.conf."
+    echo_summary "WARNING: EXTRA_BAREMETAL_OPTS is used"
+    echo "You are using EXTRA_BAREMETAL_OPTS to pass configuration into nova.conf."
     echo "Please convert that configuration in localrc to a nova.conf section in local.conf:"
+    echo "EXTRA_BAREMETAL_OPTS will be removed early in the Juno development cycle"
     echo "
 [[post-config|\$NOVA_CONF]]
 [baremetal]
@@ -1387,13 +1391,49 @@ if [[ -n "$EXTRA_BAREMETAL_OPTS" ]]; then
     done
 fi
 
+# TODO(dtroyer): Remove Q_AGENT_EXTRA_AGENT_OPTS after stable/juno branch is cut
+if [[ -n "$Q_AGENT_EXTRA_AGENT_OPTS" ]]; then
+    echo ""
+    echo_summary "WARNING: Q_AGENT_EXTRA_AGENT_OPTS is used"
+    echo "You are using Q_AGENT_EXTRA_AGENT_OPTS to pass configuration into $NEUTRON_CONF."
+    echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
+    echo "Q_AGENT_EXTRA_AGENT_OPTS will be removed early in the 'K' development cycle"
+    echo "
+[[post-config|/\$Q_PLUGIN_CONF_FILE]]
+[DEFAULT]
+"
+    for I in "${Q_AGENT_EXTRA_AGENT_OPTS[@]}"; do
+        # Replace the first '=' with ' ' for iniset syntax
+        echo ${I}
+    done
+fi
+
+# TODO(dtroyer): Remove Q_AGENT_EXTRA_SRV_OPTS after stable/juno branch is cut
+if [[ -n "$Q_AGENT_EXTRA_SRV_OPTS" ]]; then
+    echo ""
+    echo_summary "WARNING: Q_AGENT_EXTRA_SRV_OPTS is used"
+    echo "You are using Q_AGENT_EXTRA_SRV_OPTS to pass configuration into $NEUTRON_CONF."
+    echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
+    echo "Q_AGENT_EXTRA_AGENT_OPTS will be removed early in the 'K' development cycle"
+    echo "
+[[post-config|/\$Q_PLUGIN_CONF_FILE]]
+[DEFAULT]
+"
+    for I in "${Q_AGENT_EXTRA_SRV_OPTS[@]}"; do
+        # Replace the first '=' with ' ' for iniset syntax
+        echo ${I}
+    done
+fi
+
+# TODO(dtroyer): Remove Q_DHCP_EXTRA_DEFAULT_OPTS after stable/icehouse branch is cut
 if [[ -n "$Q_DHCP_EXTRA_DEFAULT_OPTS" ]]; then
     echo ""
     echo_summary "WARNING: Q_DHCP_EXTRA_DEFAULT_OPTS is used"
     echo "You are using Q_DHCP_EXTRA_DEFAULT_OPTS to pass configuration into $Q_DHCP_CONF_FILE."
     echo "Please convert that configuration in localrc to a $Q_DHCP_CONF_FILE section in local.conf:"
+    echo "Q_DHCP_EXTRA_DEFAULT_OPTS will be removed early in the Juno development cycle"
     echo "
-[[post-config|\$Q_DHCP_CONF_FILE]]
+[[post-config|/\$Q_DHCP_CONF_FILE]]
 [DEFAULT]
 "
     for I in "${Q_DHCP_EXTRA_DEFAULT_OPTS[@]}"; do
@@ -1402,11 +1442,13 @@ if [[ -n "$Q_DHCP_EXTRA_DEFAULT_OPTS" ]]; then
     done
 fi
 
+# TODO(dtroyer): Remove Q_SRV_EXTRA_DEFAULT_OPTS after stable/icehouse branch is cut
 if [[ -n "$Q_SRV_EXTRA_DEFAULT_OPTS" ]]; then
     echo ""
     echo_summary "WARNING: Q_SRV_EXTRA_DEFAULT_OPTS is used"
     echo "You are using Q_SRV_EXTRA_DEFAULT_OPTS to pass configuration into $NEUTRON_CONF."
     echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
+    echo "Q_SRV_EXTRA_DEFAULT_OPTS will be removed early in the Juno development cycle"
     echo "
 [[post-config|\$NEUTRON_CONF]]
 [DEFAULT]
