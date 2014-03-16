@@ -7,7 +7,6 @@
 # Dependencies:
 # ``functions`` file
 # ``nova`` configuration
-# ``STACK_USER`` has to be defined
 
 # install_nova_hypervisor - install any external requirements
 # configure_nova_hypervisor - make configuration changes, including those to other services
@@ -19,14 +18,13 @@
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+source $TOP_DIR/lib/nova_plugins/functions-libvirt
 
 # Defaults
 # --------
 
 # File injection is disabled by default in Nova.  This will turn it back on.
 ENABLE_FILE_INJECTION=${ENABLE_FILE_INJECTION:-False}
-# if we should turn on massive libvirt debugging
-DEBUG_LIBVIRT=$(trueorfalse False $DEBUG_LIBVIRT)
 
 
 # Entry Points
@@ -40,88 +38,7 @@ function cleanup_nova_hypervisor {
 
 # configure_nova_hypervisor - Set config files, create data dirs, etc
 function configure_nova_hypervisor {
-    if is_service_enabled neutron && is_neutron_ovs_base_plugin && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF; then
-        # Add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
-        cat <<EOF | sudo tee -a $QEMU_CONF
-cgroup_device_acl = [
-    "/dev/null", "/dev/full", "/dev/zero",
-    "/dev/random", "/dev/urandom",
-    "/dev/ptmx", "/dev/kvm", "/dev/kqemu",
-    "/dev/rtc", "/dev/hpet","/dev/net/tun",
-]
-EOF
-    fi
-
-    if is_ubuntu; then
-        LIBVIRT_DAEMON=libvirt-bin
-    else
-        LIBVIRT_DAEMON=libvirtd
-    fi
-
-    if is_fedora || is_suse; then
-        if is_fedora && [[ $DISTRO =~ (rhel6) || "$os_RELEASE" -le "17" ]]; then
-            cat <<EOF | sudo tee /etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
-[libvirt Management Access]
-Identity=unix-group:$LIBVIRT_GROUP
-Action=org.libvirt.unix.manage
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-EOF
-        elif is_suse && [[ $os_RELEASE = 12.2 || "$os_VENDOR" = "SUSE LINUX" ]]; then
-            # openSUSE < 12.3 or SLE
-            # Work around the fact that polkit-default-privs overrules pklas
-            # with 'unix-group:$group'.
-            cat <<EOF | sudo tee /etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
-[libvirt Management Access]
-Identity=unix-user:$STACK_USER
-Action=org.libvirt.unix.manage
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-EOF
-        else
-            # Starting with fedora 18 and opensuse-12.3 enable stack-user to
-            # virsh -c qemu:///system by creating a policy-kit rule for
-            # stack-user using the new Javascript syntax
-            rules_dir=/etc/polkit-1/rules.d
-            sudo mkdir -p $rules_dir
-            cat <<EOF | sudo tee $rules_dir/50-libvirt-$STACK_USER.rules
-polkit.addRule(function(action, subject) {
-    if (action.id == 'org.libvirt.unix.manage' &&
-        subject.user == '$STACK_USER') {
-        return polkit.Result.YES;
-    }
-});
-EOF
-            unset rules_dir
-        fi
-    fi
-
-    # The user that nova runs as needs to be member of **libvirtd** group otherwise
-    # nova-compute will be unable to use libvirt.
-    if ! getent group $LIBVIRT_GROUP >/dev/null; then
-        sudo groupadd $LIBVIRT_GROUP
-    fi
-    add_user_to_group $STACK_USER $LIBVIRT_GROUP
-
-    # Enable server side traces for libvirtd
-    if [[ "$DEBUG_LIBVIRT" = "True" ]] ; then
-        local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:event 3:json 3:file 1:util"
-        local log_outputs="1:file:/var/log/libvirt/libvirtd.log"
-        if ! grep -q "log_filters=\"$log_filters\"" /etc/libvirt/libvirtd.conf; then
-            echo "log_filters=\"$log_filters\"" | sudo tee -a /etc/libvirt/libvirtd.conf
-        fi
-        if ! grep -q "log_outputs=\"$log_outputs\"" /etc/libvirt/libvirtd.conf; then
-            echo "log_outputs=\"$log_outputs\"" | sudo tee -a /etc/libvirt/libvirtd.conf
-        fi
-    fi
-
-    # libvirt detects various settings on startup, as we potentially changed
-    # the system configuration (modules, filesystems), we need to restart
-    # libvirt to detect those changes.
-    restart_service $LIBVIRT_DAEMON
-
+    configure_libvirt
     iniset $NOVA_CONF DEFAULT libvirt_type "$LIBVIRT_TYPE"
     iniset $NOVA_CONF DEFAULT libvirt_cpu_mode "none"
     iniset $NOVA_CONF DEFAULT use_usb_tablet "False"
@@ -150,17 +67,7 @@ EOF
 
 # install_nova_hypervisor() - Install external components
 function install_nova_hypervisor {
-    if is_ubuntu; then
-        install_package kvm
-        install_package libvirt-bin
-        install_package python-libvirt
-        install_package python-guestfs
-    elif is_fedora || is_suse; then
-        install_package kvm
-        install_package libvirt
-        install_package libvirt-python
-        install_package python-libguestfs
-    fi
+    install_libvirt
 
     # Install and configure **LXC** if specified.  LXC is another approach to
     # splitting a system into many smaller parts.  LXC uses cgroups and chroot
