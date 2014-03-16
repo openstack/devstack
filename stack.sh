@@ -538,10 +538,10 @@ if [[ -n "$LOGFILE" ]]; then
                     cmd | getline now
                     close("date +\"%Y-%m-%d %H:%M:%S.%3N | \"")
                     sub(/^/, now)
-                    print
                     print > logfile
-                    fflush("")
                     fflush(logfile)
+                    print
+                    fflush("")
                 }' ) 2>&1
         # Set up a second fd for output
         exec 6> >( tee "${SUMFILE}" )
