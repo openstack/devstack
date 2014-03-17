@@ -163,6 +163,13 @@ function configure_ceilometer {
         configure_mongodb
         cleanup_ceilometer
     fi
+
+    if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
+        iniset $CEILOMETER_CONF DEFAULT hypervisor_inspector vsphere
+        iniset $CEILOMETER_CONF vmware host_ip "$VMWAREAPI_IP"
+        iniset $CEILOMETER_CONF vmware host_username "$VMWAREAPI_USER"
+        iniset $CEILOMETER_CONF vmware host_password "$VMWAREAPI_PASSWORD"
+    fi
 }
 
 function configure_mongodb {
@@ -218,6 +225,9 @@ function install_ceilometerclient {
 function start_ceilometer {
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
         screen_it ceilometer-acompute "cd ; sg $LIBVIRT_GROUP \"ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
+    fi
+    if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
+        screen_it ceilometer-acompute "cd ; ceilometer-agent-compute --config-file $CEILOMETER_CONF"
     fi
     screen_it ceilometer-acentral "cd ; ceilometer-agent-central --config-file $CEILOMETER_CONF"
     screen_it ceilometer-anotification "cd ; ceilometer-agent-notification --config-file $CEILOMETER_CONF"
