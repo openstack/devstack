@@ -348,7 +348,7 @@ function ensure_certificates {
     local key=${!key_var}
     local ca=${!ca_var}
 
-    if [[ !($cert && $key && $ca) ]]; then
+    if [[ -z "$cert" || -z "$key" || -z "$ca" ]]; then
         die $LINENO "Missing either the ${cert_var} ${key_var} or ${ca_var}" \
                     "variable to enable SSL for ${service}"
     fi
