@@ -46,10 +46,6 @@ fi
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,sahara
 
-# For backward compatibility with current tests in Tempest
-TEMPEST_SERVICES+=,savanna
-
-
 # Functions
 # ---------
 

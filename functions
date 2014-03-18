@@ -273,7 +273,7 @@ function upload_image {
     esac
 
     if is_arch "ppc64"; then
-        IMG_PROPERTY="--property hw_disk_bus=scsi --property hw_cdrom_bus=scsi"
+        IMG_PROPERTY="--property hw_cdrom_bus=scsi"
     fi
 
     if [ "$CONTAINER_FORMAT" = "bare" ]; then

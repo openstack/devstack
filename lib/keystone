@@ -266,9 +266,11 @@ function configure_keystone {
 
 # Tenant               User       Roles
 # ------------------------------------------------------------------
-# service              --         --
-# --                   --         Member
 # admin                admin      admin
+# service              --         --
+# --                   --         service
+# --                   --         ResellerAdmin
+# --                   --         Member
 # demo                 admin      admin
 # demo                 demo       Member, anotherrole
 # invisible_to_admin   demo       Member
@@ -294,10 +296,17 @@ function create_keystone_accounts {
         --project $ADMIN_TENANT \
         --user $ADMIN_USER
 
-    # service
-    SERVICE_TENANT=$(openstack project create \
-        $SERVICE_TENANT_NAME \
-        | grep " id " | get_field 2)
+    # Create service project/role
+    openstack project create $SERVICE_TENANT_NAME
+
+    # Service role, so service users do not have to be admins
+    openstack role create service
+
+    # The ResellerAdmin role is used by Nova and Ceilometer so we need to keep it.
+    # The admin role in swift allows a user to act as an admin for their tenant,
+    # but ResellerAdmin is needed for a user to act as any tenant. The name of this
+    # role is also configurable in swift-proxy.conf
+    openstack role create ResellerAdmin
 
     # The Member role is used by Horizon and Swift so we need to keep it:
     MEMBER_ROLE=$(openstack role create \
