@@ -159,6 +159,49 @@ function configure_glance {
     cp -p $GLANCE_DIR/etc/schema-image.json $GLANCE_SCHEMA_JSON
 }
 
+# create_glance_accounts() - Set up common required glance accounts
+
+# Project              User         Roles
+# ------------------------------------------------------------------
+# SERVICE_TENANT_NAME  glance       service
+# SERVICE_TENANT_NAME  glance-swift ResellerAdmin (if Swift is enabled)
+
+function create_glance_accounts {
+    if is_service_enabled g-api; then
+        openstack user create \
+            --password "$SERVICE_PASSWORD" \
+            --project $SERVICE_TENANT_NAME \
+            glance
+        openstack role add \
+            --project $SERVICE_TENANT_NAME \
+            --user glance \
+            service
+        # required for swift access
+        if is_service_enabled s-proxy; then
+            openstack user create \
+                --password "$SERVICE_PASSWORD" \
+                --project $SERVICE_TENANT_NAME \
+                glance-swift
+            openstack role add \
+                --project $SERVICE_TENANT_NAME \
+                --user glance-swift \
+                ResellerAdmin
+        fi
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+            openstack service create \
+                --type image \
+                --description "Glance Image Service" \
+                glance
+            openstack endpoint create \
+                --region RegionOne \
+                --publicurl "http://$GLANCE_HOSTPORT" \
+                --adminurl "http://$GLANCE_HOSTPORT" \
+                --internalurl "http://$GLANCE_HOSTPORT" \
+                glance
+        fi
+    fi
+}
+
 # create_glance_cache_dir() - Part of the init_glance() process
 function create_glance_cache_dir {
     # Create cache dir

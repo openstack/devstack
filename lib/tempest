@@ -372,6 +372,30 @@ function configure_tempest {
     $errexit
 }
 
+# create_tempest_accounts() - Set up common required tempest accounts
+
+# Project              User         Roles
+# ------------------------------------------------------------------
+# alt_demo             alt_demo     Member
+
+# Migrated from keystone_data.sh
+function create_tempest_accounts {
+    if is_service_enabled tempest; then
+        # Tempest has some tests that validate various authorization checks
+        # between two regular users in separate tenants
+        openstack project create \
+            alt_demo
+        openstack user create \
+            --project alt_demo \
+            --password "$ADMIN_PASSWORD" \
+            alt_demo
+        openstack role add \
+            --project alt_demo \
+            --user alt_demo \
+            Member
+    fi
+}
+
 # install_tempest() - Collect source and prepare
 function install_tempest {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH

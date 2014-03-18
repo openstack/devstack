@@ -908,14 +908,13 @@ if is_service_enabled key; then
         SERVICE_ENDPOINT=http://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT_INT/v2.0
     fi
 
-    # Do the keystone-specific bits from keystone_data.sh
-    export OS_SERVICE_TOKEN=$SERVICE_TOKEN
-    export OS_SERVICE_ENDPOINT=$SERVICE_ENDPOINT
-    # Add temporarily to make openstackclient work
+    # Setup OpenStackclient token-flow auth
     export OS_TOKEN=$SERVICE_TOKEN
     export OS_URL=$SERVICE_ENDPOINT
+
     create_keystone_accounts
     create_nova_accounts
+    create_glance_accounts
     create_cinder_accounts
     create_neutron_accounts
 
@@ -923,7 +922,7 @@ if is_service_enabled key; then
         create_ceilometer_accounts
     fi
 
-    if is_service_enabled swift || is_service_enabled s-proxy; then
+    if is_service_enabled swift; then
         create_swift_accounts
     fi
 
@@ -931,20 +930,14 @@ if is_service_enabled key; then
         create_heat_accounts
     fi
 
-    # ``keystone_data.sh`` creates services, admin and demo users, and roles.
-    ADMIN_PASSWORD=$ADMIN_PASSWORD SERVICE_TENANT_NAME=$SERVICE_TENANT_NAME SERVICE_PASSWORD=$SERVICE_PASSWORD \
-    SERVICE_TOKEN=$SERVICE_TOKEN SERVICE_ENDPOINT=$SERVICE_ENDPOINT SERVICE_HOST=$SERVICE_HOST \
-    S3_SERVICE_PORT=$S3_SERVICE_PORT KEYSTONE_CATALOG_BACKEND=$KEYSTONE_CATALOG_BACKEND \
-    DEVSTACK_DIR=$TOP_DIR ENABLED_SERVICES=$ENABLED_SERVICES \
-        bash -x $FILES/keystone_data.sh
-
-    # Set up auth creds now that keystone is bootstrapped
+    # Begone token-flow auth
     unset OS_TOKEN OS_URL
+
+    # Set up password-flow auth creds now that keystone is bootstrapped
     export OS_AUTH_URL=$SERVICE_ENDPOINT
     export OS_TENANT_NAME=admin
     export OS_USERNAME=admin
     export OS_PASSWORD=$ADMIN_PASSWORD
-    unset OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
 fi
 
 
