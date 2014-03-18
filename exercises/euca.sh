@@ -36,6 +36,9 @@ source $TOP_DIR/eucarc
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
+# Import project functions
+source $TOP_DIR/lib/neutron
+
 # If nova api is not enabled we exit with exitcode 55 so that
 # the exercise is skipped
 is_service_enabled n-api || exit 55
@@ -82,7 +85,7 @@ fi
 
 # Volumes
 # -------
-if is_service_enabled c-vol && ! is_service_enabled n-cell; then
+if is_service_enabled c-vol && ! is_service_enabled n-cell && [ "$VIRT_DRIVER" != "ironic" ]; then
     VOLUME_ZONE=`euca-describe-availability-zones | head -n1 | cut -f2`
     die_if_not_set $LINENO VOLUME_ZONE "Failure to find zone for volume"
 
