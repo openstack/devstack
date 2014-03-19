@@ -51,8 +51,18 @@ else
     GLANCE_BIN_DIR=$(get_python_exec_prefix)
 fi
 
+if is_ssl_enabled_service "glance" || is_service_enabled tls-proxy; then
+    GLANCE_SERVICE_PROTOCOL="https"
+fi
+
 # Glance connection info.  Note the port must be specified.
-GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$SERVICE_HOST:9292}
+GLANCE_SERVICE_HOST=${GLANCE_SERVICE_HOST:-$SERVICE_HOST}
+GLANCE_SERVICE_PORT=${GLANCE_SERVICE_PORT:-9292}
+GLANCE_SERVICE_PORT_INT=${GLANCE_SERVICE_PORT_INT:-19292}
+GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT}
+GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+GLANCE_REGISTRY_PORT=${GLANCE_REGISTRY_PORT:-9191}
+GLANCE_REGISTRY_PORT_INT=${GLANCE_REGISTRY_PORT_INT:-19191}
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,glance
@@ -148,6 +158,26 @@ function configure_glance {
         iniset $GLANCE_API_CONF glance_store stores "file, http, swift"
     fi
 
+    if is_service_enabled tls-proxy; then
+        iniset $GLANCE_API_CONF DEFAULT bind_port $GLANCE_SERVICE_PORT_INT
+        iniset $GLANCE_REGISTRY_CONF DEFAULT bind_port $GLANCE_REGISTRY_PORT_INT
+    fi
+
+    # Register SSL certificates if provided
+    if is_ssl_enabled_service glance; then
+        ensure_certificates GLANCE
+
+        iniset $GLANCE_API_CONF DEFAULT cert_file "$GLANCE_SSL_CERT"
+        iniset $GLANCE_API_CONF DEFAULT key_file "$GLANCE_SSL_KEY"
+
+        iniset $GLANCE_REGISTRY_CONF DEFAULT cert_file "$GLANCE_SSL_CERT"
+        iniset $GLANCE_REGISTRY_CONF DEFAULT key_file "$GLANCE_SSL_KEY"
+    fi
+
+    if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
+        iniset $GLANCE_API_CONF DEFAULT registry_client_protocol https
+    fi
+
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
 
     cp -p $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
@@ -176,6 +206,14 @@ function configure_glance {
     cp -p $GLANCE_DIR/etc/schema-image.json $GLANCE_SCHEMA_JSON
 
     cp -p $GLANCE_DIR/etc/metadefs/*.json $GLANCE_METADEF_DIR
+
+    if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+        CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
+        CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
+
+        iniset $GLANCE_API_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
+        iniset $GLANCE_CACHE_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
+    fi
 }
 
 # create_glance_accounts() - Set up common required glance accounts
@@ -206,9 +244,9 @@ function create_glance_accounts {
                 "image" "Glance Image Service")
             get_or_create_endpoint $glance_service \
                 "$REGION_NAME" \
-                "http://$GLANCE_HOSTPORT" \
-                "http://$GLANCE_HOSTPORT" \
-                "http://$GLANCE_HOSTPORT"
+                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
+                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
+                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
         fi
     fi
 }
@@ -265,10 +303,17 @@ function install_glance {
 
 # start_glance() - Start running processes, including screen
 function start_glance {
+    local service_protocol=$GLANCE_SERVICE_PROTOCOL
+    if is_service_enabled tls-proxy; then
+        start_tls_proxy '*' $GLANCE_SERVICE_PORT $GLANCE_SERVICE_HOST $GLANCE_SERVICE_PORT_INT &
+        start_tls_proxy '*' $GLANCE_REGISTRY_PORT $GLANCE_SERVICE_HOST $GLANCE_REGISTRY_PORT_INT &
+    fi
+
     run_process g-reg "$GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
     run_process g-api "$GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
+
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
+    if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT; then
         die $LINENO "g-api did not start"
     fi
 }

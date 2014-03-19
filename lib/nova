@@ -44,11 +44,20 @@ NOVA_CELLS_DB=${NOVA_CELLS_DB:-nova_cell}
 
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 
+if is_ssl_enabled_service "nova" || is_service_enabled tls-proxy; then
+    NOVA_SERVICE_PROTOCOL="https"
+    EC2_SERVICE_PROTOCOL="https"
+else
+    EC2_SERVICE_PROTOCOL="http"
+fi
+
 # Public facing bits
 NOVA_SERVICE_HOST=${NOVA_SERVICE_HOST:-$SERVICE_HOST}
 NOVA_SERVICE_PORT=${NOVA_SERVICE_PORT:-8774}
 NOVA_SERVICE_PORT_INT=${NOVA_SERVICE_PORT_INT:-18774}
 NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+EC2_SERVICE_PORT=${EC2_SERVICE_PORT:-8773}
+EC2_SERVICE_PORT_INT=${EC2_SERVICE_PORT_INT:-18773}
 
 # Support entry points installation of console scripts
 if [[ -d $NOVA_DIR/bin ]]; then
@@ -375,9 +384,9 @@ create_nova_accounts() {
                 "ec2" "EC2 Compatibility Layer")
             get_or_create_endpoint $ec2_service \
                 "$REGION_NAME" \
-                "http://$SERVICE_HOST:8773/services/Cloud" \
-                "http://$SERVICE_HOST:8773/services/Admin" \
-                "http://$SERVICE_HOST:8773/services/Cloud"
+                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/services/Cloud" \
+                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/services/Admin" \
+                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/services/Cloud"
         fi
     fi
 
@@ -439,6 +448,16 @@ function create_nova_conf {
         fi
 
         configure_auth_token_middleware $NOVA_CONF nova $NOVA_AUTH_CACHE_DIR
+    fi
+
+    if is_service_enabled cinder; then
+        iniset $NOVA_CONF DEFAULT volume_api_class "nova.volume.cinder.API"
+        if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+            CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
+            CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
+            iniset $NOVA_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
+            iniset $NOVA_CONF DEFAULT cinder_ca_certificates_file $SSL_BUNDLE_FILE
+        fi
     fi
 
     if [ -n "$NOVA_STATE_PATH" ]; then
@@ -508,12 +527,31 @@ function create_nova_conf {
     fi
 
     iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
+    iniset $NOVA_CONF DEFAULT keystone_ec2_url $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
     iniset_rpc_backend nova $NOVA_CONF DEFAULT
-    iniset $NOVA_CONF glance api_servers "$GLANCE_HOSTPORT"
+    iniset $NOVA_CONF glance api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
 
     iniset $NOVA_CONF DEFAULT osci_compute_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT ec2_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
+
+    if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
+        iniset $NOVA_CONF DEFAULT glance_protocol https
+    fi
+
+    # Register SSL certificates if provided
+    if is_ssl_enabled_service nova; then
+        ensure_certificates NOVA
+
+        iniset $NOVA_CONF DEFAULT ssl_cert_file "$NOVA_SSL_CERT"
+        iniset $NOVA_CONF DEFAULT ssl_key_file "$NOVA_SSL_KEY"
+
+        iniset $NOVA_CONF DEFAULT enabled_ssl_apis "$NOVA_ENABLED_APIS"
+    fi
+
+    if is_service_enabled tls-proxy; then
+        iniset $NOVA_CONF DEFAULT ec2_listen_port $EC2_SERVICE_PORT_INT
+    fi
 }
 
 function init_nova_cells {
@@ -642,19 +680,22 @@ function install_nova {
 function start_nova_api {
     # Get right service port for testing
     local service_port=$NOVA_SERVICE_PORT
+    local service_protocol=$NOVA_SERVICE_PROTOCOL
     if is_service_enabled tls-proxy; then
         service_port=$NOVA_SERVICE_PORT_INT
+        service_protocol="http"
     fi
 
     run_process n-api "$NOVA_BIN_DIR/nova-api"
     echo "Waiting for nova-api to start..."
-    if ! wait_for_service $SERVICE_TIMEOUT http://$SERVICE_HOST:$service_port; then
+    if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$SERVICE_HOST:$service_port; then
         die $LINENO "nova-api did not start"
     fi
 
     # Start proxies if enabled
     if is_service_enabled tls-proxy; then
         start_tls_proxy '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT &
+        start_tls_proxy '*' $EC2_SERVICE_PORT $NOVA_SERVICE_HOST $EC2_SERVICE_PORT_INT &
     fi
 }
 
