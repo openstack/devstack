@@ -334,11 +334,12 @@ function configure_swift {
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server node_timeout 120
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server conn_timeout 20
 
-    # Configure Ceilometer
-    if is_service_enabled ceilometer; then
-        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer use "egg:ceilometer#swift"
-        SWIFT_EXTRAS_MIDDLEWARE_LAST="${SWIFT_EXTRAS_MIDDLEWARE_LAST} ceilometer"
-    fi
+    # Skipped due to bug 1294789
+    ## Configure Ceilometer
+    #if is_service_enabled ceilometer; then
+    #    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer use "egg:ceilometer#swift"
+    #    SWIFT_EXTRAS_MIDDLEWARE_LAST="${SWIFT_EXTRAS_MIDDLEWARE_LAST} ceilometer"
+    #fi
 
     # Restrict the length of auth tokens in the swift proxy-server logs.
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:proxy-logging reveal_sensitive_prefix ${SWIFT_LOG_TOKEN_LENGTH}
