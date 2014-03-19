@@ -97,7 +97,7 @@ Of course, use real passwords if this machine is exposed.
     # Download a vhd and a uec image
     IMAGE_URLS="\
     https://github.com/downloads/citrix-openstack/warehouse/cirros-0.3.0-x86_64-disk.vhd.tgz,\
-    http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-uec.tar.gz"
+    http://download.cirros-cloud.net/0.3.2/cirros-0.3.2-x86_64-uec.tar.gz"
 
     # Explicitly set virt driver
     VIRT_DRIVER=xenserver
