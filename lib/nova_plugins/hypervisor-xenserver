@@ -63,9 +63,13 @@ function configure_nova_hypervisor {
     local ssh_dom0
     ssh_dom0="sudo -u $DOMZERO_USER ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$dom0_ip"
 
+    # Find where the plugins should go in dom0
+    xen_functions=`cat $TOP_DIR/tools/xen/functions`
+    PLUGIN_DIR=`$ssh_dom0 "$xen_functions; set -eux; xapi_plugin_location"`
+
     # install nova plugins to dom0
     tar -czf - -C $NOVA_DIR/plugins/xenserver/xenapi/etc/xapi.d/plugins/ ./ |
-        $ssh_dom0 'tar -xzf - -C /etc/xapi.d/plugins/ && chmod a+x /etc/xapi.d/plugins/*'
+        $ssh_dom0 "tar -xzf - -C $PLUGIN_DIR && chmod a+x $PLUGIN_DIR/*"
 
     # install console logrotate script
     tar -czf - -C $NOVA_DIR/tools/xenserver/ rotate_xen_guest_logs.sh |
