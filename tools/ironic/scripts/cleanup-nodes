@@ -8,9 +8,12 @@
 set -exu
 
 LIBVIRT_STORAGE_POOL=${LIBVIRT_STORAGE_POOL:-"default"}
+LIBVIRT_CONNECT_URI=${LIBVIRT_CONNECT_URI:-"qemu:///system"}
 
 VM_COUNT=$1
 NETWORK_BRIDGE=$2
+
+export VIRSH_DEFAULT_CONNECT_URI=$LIBVIRT_CONNECT_URI
 
 for (( idx=0; idx<$VM_COUNT; idx++ )); do
     NAME="baremetal${NETWORK_BRIDGE}_${idx}"
