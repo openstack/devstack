@@ -824,6 +824,10 @@ function get_packages {
             if [[ ! $file_to_parse =~ neutron ]]; then
                 file_to_parse="${file_to_parse} neutron"
             fi
+        elif [[ $service == ir-* ]]; then
+            if [[ ! $file_to_parse =~ ironic ]]; then
+                file_to_parse="${file_to_parse} ironic"
+            fi
         fi
     done
 
