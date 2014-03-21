@@ -102,8 +102,7 @@ function configure_sahara {
     sudo chown $STACK_USER $SAHARA_CONF_DIR
 
     # Copy over sahara configuration file and configure common parameters.
-    # TODO(slukjanov): rename when sahara internals will be updated
-    cp $SAHARA_DIR/etc/savanna/savanna.conf.sample $SAHARA_CONF_FILE
+    cp $SAHARA_DIR/etc/sahara/sahara.conf.sample $SAHARA_CONF_FILE
 
     # Create auth cache dir
     sudo mkdir -p $SAHARA_AUTH_CACHE_DIR
