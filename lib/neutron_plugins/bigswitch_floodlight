@@ -38,7 +38,12 @@ function neutron_plugin_configure_l3_agent {
 }
 
 function neutron_plugin_configure_plugin_agent {
-    :
+    # Set up integration bridge
+    _neutron_ovs_base_setup_bridge $OVS_BRIDGE
+    iniset /$Q_PLUGIN_CONF_FILE restproxyagent integration_bridge $OVS_BRIDGE
+    AGENT_BINARY="$NEUTRON_DIR/neutron/plugins/bigswitch/agent/restproxy_agent.py"
+
+    _neutron_ovs_base_configure_firewall_driver
 }
 
 function neutron_plugin_configure_service {
@@ -61,7 +66,7 @@ function neutron_plugin_setup_interface_driver {
 
 function has_neutron_plugin_security_group {
     # 1 means False here
-    return 1
+    return 0
 }
 
 function neutron_plugin_check_adv_test_requirements {
