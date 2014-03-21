@@ -180,7 +180,7 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while nova secgroup-list-rules $SECGROUP 
 fi
 
 # FIXME (anthony): make xs support security groups
-if [ "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
+if [ "$VIRT_DRIVER" != "ironic" -a "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
     # Test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
     ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT Fail
 fi
