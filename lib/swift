@@ -455,6 +455,9 @@ EOF
     sudo chown -R ${STACK_USER}:adm ${swift_log_dir}
     sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
         tee /etc/rsyslog.d/10-swift.conf
+    # restart syslog to take the changes
+    sudo killall -HUP rsyslogd
+
     if is_apache_enabled_service swift; then
         _config_swift_apache_wsgi
     fi
@@ -628,8 +631,6 @@ function install_swiftclient {
 
 # start_swift() - Start running processes, including screen
 function start_swift {
-    # (re)start rsyslog
-    restart_service rsyslog
     # (re)start memcached to make sure we have a clean memcache.
     restart_service memcached
 
