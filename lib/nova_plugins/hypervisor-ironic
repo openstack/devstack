@@ -37,7 +37,8 @@ function configure_nova_hypervisor {
     configure_libvirt
     iniset $NOVA_CONF ironic sql_connection `database_connection_url nova_bm`
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.firewall.NoopFirewallDriver"}
-    iniset $NOVA_CONF DEFAULT compute_driver ironic.nova.virt.ironic.IronicDriver
+    iniset $NOVA_CONF DEFAULT compute_driver nova.virt.ironic.IronicDriver
+
     iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
     iniset $NOVA_CONF DEFAULT scheduler_host_manager ironic.nova.scheduler.ironic_host_manager.IronicHostManager
     iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
