@@ -37,6 +37,7 @@ HEAT_CONF_DIR=/etc/heat
 HEAT_CONF=$HEAT_CONF_DIR/heat.conf
 HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 HEAT_TEMPLATES_DIR=$HEAT_CONF_DIR/templates
+HEAT_STACK_DOMAIN=`trueorfalse True $HEAT_STACK_DOMAIN`
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,heat
@@ -260,24 +261,26 @@ function create_heat_accounts {
     openstack role add $HEAT_OWNER_ROLE --project demo --user admin
     openstack role add $HEAT_OWNER_ROLE --project admin --user admin
 
-    # Note we have to pass token/endpoint here because the current endpoint and
-    # version negotiation in OSC means just --os-identity-api-version=3 won't work
-    KS_ENDPOINT_V3="$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
-    D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
-        --os-identity-api-version=3 domain create heat \
-        --description "Owns users and projects created by heat" \
-        | grep ' id ' | get_field 2)
-    iniset $HEAT_CONF DEFAULT stack_user_domain ${D_ID}
+    if [[ "$HEAT_STACK_DOMAIN" == "True" ]]; then
+        # Note we have to pass token/endpoint here because the current endpoint and
+        # version negotiation in OSC means just --os-identity-api-version=3 won't work
+        KS_ENDPOINT_V3="$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
+        D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+            --os-identity-api-version=3 domain create heat \
+            --description "Owns users and projects created by heat" \
+            | grep ' id ' | get_field 2)
+        iniset $HEAT_CONF DEFAULT stack_user_domain ${D_ID}
 
-    openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
-        --os-identity-api-version=3 user create --password $SERVICE_PASSWORD \
-        --domain $D_ID heat_domain_admin \
-        --description "Manages users and projects created by heat"
-    openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
-        --os-identity-api-version=3 role add \
-        --user heat_domain_admin --domain ${D_ID} admin
-    iniset $HEAT_CONF DEFAULT stack_domain_admin heat_domain_admin
-    iniset $HEAT_CONF DEFAULT stack_domain_admin_password $SERVICE_PASSWORD
+        openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+            --os-identity-api-version=3 user create --password $SERVICE_PASSWORD \
+            --domain $D_ID heat_domain_admin \
+            --description "Manages users and projects created by heat"
+        openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+            --os-identity-api-version=3 role add \
+            --user heat_domain_admin --domain ${D_ID} admin
+        iniset $HEAT_CONF DEFAULT stack_domain_admin heat_domain_admin
+        iniset $HEAT_CONF DEFAULT stack_domain_admin_password $SERVICE_PASSWORD
+    fi
 }
 
 # Restore xtrace
