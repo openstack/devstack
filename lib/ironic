@@ -288,20 +288,12 @@ function configure_ironic_dirs {
     mkdir -p $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
 }
 
-function ironic_ensure_libvirt_group {
-    groups $STACK_USER | grep -q $LIBVIRT_GROUP || adduser $STACK_USER $LIBVIRT_GROUP
-}
-
 function create_bridge_and_vms {
-    ironic_ensure_libvirt_group
-
     # Call libvirt setup scripts in a new shell to ensure any new group membership
     sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/setup-network"
-
     sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/create-nodes \
         $IRONIC_VM_SPECS_CPU $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK \
         amd64 $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE $IRONIC_VM_EMULATOR" >> $IRONIC_VM_MACS_CSV_FILE
-
 }
 
 function enroll_vms {

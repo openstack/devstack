@@ -7,10 +7,14 @@
 
 set -exu
 
+LIBVIRT_CONNECT_URI=${LIBVIRT_CONNECT_URI:-"qemu:///system"}
+
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 BRIDGE_SUFFIX=${1:-''}
 BRIDGE_NAME=brbm$BRIDGE_SUFFIX
+
+export VIRSH_DEFAULT_CONNECT_URI="$LIBVIRT_CONNECT_URI"
 
 # Only add bridge if missing
 (sudo ovs-vsctl list-br | grep ${BRIDGE_NAME}$) || sudo ovs-vsctl add-br ${BRIDGE_NAME}

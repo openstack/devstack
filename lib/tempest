@@ -293,6 +293,9 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
     iniset $TEMPEST_CONFIG compute ssh_connect_method $ssh_connect_method
 
+    # Compute Features
+    iniset $TEMPEST_CONFIG compute-feature-enabled resize True
+
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
     iniset $TEMPEST_CONFIG "compute-admin" password "$password"

@@ -27,6 +27,9 @@ EMULATOR=$7
 
 LIBVIRT_NIC_DRIVER=${LIBVIRT_NIC_DRIVER:-"e1000"}
 LIBVIRT_STORAGE_POOL=${LIBVIRT_STORAGE_POOL:-"default"}
+LIBVIRT_CONNECT_URI=${LIBVIRT_CONNECT_URI:-"qemu:///system"}
+
+export VIRSH_DEFAULT_CONNECT_URI=$LIBVIRT_CONNECT_URI
 
 if ! virsh pool-list --all | grep -q $LIBVIRT_STORAGE_POOL; then
     virsh pool-define-as --name $LIBVIRT_STORAGE_POOL dir --target /var/lib/libvirt/images >&2

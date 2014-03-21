@@ -18,6 +18,7 @@
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+source $TOP_DIR/lib/nova_plugins/functions-libvirt
 
 # Defaults
 # --------
@@ -33,6 +34,7 @@ function cleanup_nova_hypervisor {
 
 # configure_nova_hypervisor - Set config files, create data dirs, etc
 function configure_nova_hypervisor {
+    configure_libvirt
     iniset $NOVA_CONF ironic sql_connection `database_connection_url nova_bm`
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.firewall.NoopFirewallDriver"}
     iniset $NOVA_CONF DEFAULT compute_driver ironic.nova.virt.ironic.IronicDriver
@@ -50,8 +52,7 @@ function configure_nova_hypervisor {
 
 # install_nova_hypervisor() - Install external components
 function install_nova_hypervisor {
-    # This function intentionally left blank
-    :
+    install_libvirt
 }
 
 # start_nova_hypervisor - Start any required external services
