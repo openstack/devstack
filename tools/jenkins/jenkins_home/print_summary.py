@@ -18,8 +18,8 @@ import urllib
 
 
 def print_usage():
-    print ("Usage: %s [jenkins_url (eg. http://50.56.12.202:8080/)]"
-           % sys.argv[0])
+    print("Usage: %s [jenkins_url (eg. http://50.56.12.202:8080/)]"
+          % sys.argv[0])
     sys.exit()
 
 
