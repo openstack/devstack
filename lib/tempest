@@ -277,7 +277,6 @@ function configure_tempest {
     fi
 
     # Compute
-    iniset $TEMPEST_CONFIG compute change_password_available False
     iniset $TEMPEST_CONFIG compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     iniset $TEMPEST_CONFIG compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
     iniset $TEMPEST_CONFIG compute network_for_ssh $PRIVATE_NETWORK_NAME
@@ -289,12 +288,13 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute image_alt_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
     iniset $TEMPEST_CONFIG compute flavor_ref $flavor_ref
     iniset $TEMPEST_CONFIG compute flavor_ref_alt $flavor_ref_alt
-    iniset $TEMPEST_CONFIG compute live_migration_available ${LIVE_MIGRATION_AVAILABLE:-False}
-    iniset $TEMPEST_CONFIG compute use_block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
     iniset $TEMPEST_CONFIG compute ssh_connect_method $ssh_connect_method
 
     # Compute Features
     iniset $TEMPEST_CONFIG compute-feature-enabled resize True
+    iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
+    iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
+    iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
 
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
