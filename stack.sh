@@ -595,7 +595,9 @@ trap exit_trap EXIT
 function exit_trap {
     local r=$?
     jobs=$(jobs -p)
-    if [[ -n $jobs ]]; then
+    # Only do the kill when we're logging through a process substitution,
+    # which currently is only to verbose logfile
+    if [[ -n $jobs && -n "$LOGFILE" && "$VERBOSE" == "True" ]]; then
         echo "exit_trap: cleaning up child processes"
         kill 2>&1 $jobs
     fi
