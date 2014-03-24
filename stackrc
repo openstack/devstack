@@ -226,8 +226,8 @@ TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
 
 # diskimage-builder
-BM_IMAGE_BUILD_REPO=${BM_IMAGE_BUILD_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
-BM_IMAGE_BUILD_BRANCH=${BM_IMAGE_BUILD_BRANCH:-master}
+DIB_REPO=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
+DIB_BRANCH=${DIB_BRANCH:-master}
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=${NOVNC_REPO:-https://github.com/kanaka/noVNC.git}

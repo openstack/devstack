@@ -64,6 +64,19 @@ IRONIC_VM_NETWORK_RANGE=${IRONIC_VM_NETWORK_RANGE:-192.0.2.0/24}
 IRONIC_VM_MACS_CSV_FILE=${IRONIC_VM_MACS_CSV_FILE:-$IRONIC_DATA_DIR/ironic_macs.csv}
 IRONIC_AUTHORIZED_KEYS_FILE=${IRONIC_AUTHORIZED_KEYS_FILE:-$HOME/.ssh/authorized_keys}
 
+DIB_DIR=${DIB_DIR:-$DEST/diskimage-builder}
+
+# Use DIB to create deploy ramdisk and kernel.
+IRONIC_BUILD_DEPLOY_RAMDISK=`trueorfalse True $IRONIC_BUILD_DEPLOY_RAMDISK`
+# If not use DIB, these files are used as deploy ramdisk/kernel.
+# (The value must be a absolute path)
+IRONIC_DEPLOY_RAMDISK=${IRONIC_DEPLOY_RAMDISK:-}
+IRONIC_DEPLOY_KERNEL=${IRONIC_DEPLOY_KERNEL:-}
+IRONIC_DEPLOY_ELEMENT=${IRONIC_DEPLOY_ELEMENT:-deploy-ironic}
+
+#TODO(agordeev): replace 'ubuntu' with host distro name getting
+IRONIC_DEPLOY_FLAVOR=${IRONIC_DEPLOY_FLAVOR:-ubuntu $IRONIC_DEPLOY_ELEMENT}
+
 # Support entry points installation of console scripts
 IRONIC_BIN_DIR=$(get_python_exec_prefix)
 
@@ -327,7 +340,7 @@ function enroll_vms {
 
     # create the nova flavor
     nova flavor-create baremetal auto $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK $IRONIC_VM_SPECS_CPU
-    nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$BM_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$BM_DEPLOY_RAMDISK_ID"
+    nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$IRONIC_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$IRONIC_DEPLOY_RAMDISK_ID"
 
     # intentional sleep to make sure the tag has been set to port
     sleep 10
@@ -426,10 +439,55 @@ function configure_ironic_auxiliary {
     configure_ironic_sshd
 }
 
+# build deploy kernel+ramdisk, then upload them to glance
+# this function sets IRONIC_DEPLOY_KERNEL_ID and IRONIC_DEPLOY_RAMDISK_ID
+function upload_baremetal_ironic_deploy {
+    token=$1
+
+    if [ -z "$IRONIC_DEPLOY_KERNEL" -o -z "$IRONIC_DEPLOY_RAMDISK" ]; then
+        IRONIC_DEPLOY_KERNEL_PATH=$TOP_DIR/files/ir-deploy.kernel
+        IRONIC_DEPLOY_RAMDISK_PATH=$TOP_DIR/files/ir-deploy.initramfs
+    else
+        IRONIC_DEPLOY_KERNEL_PATH=$IRONIC_DEPLOY_KERNEL
+        IRONIC_DEPLOY_RAMDISK_PATH=$IRONIC_DEPLOY_RAMDISK
+    fi
+
+    if [ ! -e "$IRONIC_DEPLOY_RAMDISK_PATH" -o ! -e "$IRONIC_DEPLOY_KERNEL_PATH" ]; then
+        # files don't exist, need to build them
+        if [ "$IRONIC_BUILD_DEPLOY_RAMDISK" = "True" ]; then
+            # we can build them only if we're not offline
+            if [ "$OFFLINE" != "True" ]; then
+                $DIB_DIR/bin/ramdisk-image-create $IRONIC_DEPLOY_FLAVOR \
+                    -o $TOP_DIR/files/ir-deploy
+            else
+                die $LINENO "Deploy kernel+ramdisk files don't exist and cannot be build in OFFLINE mode"
+            fi
+        else
+            die $LINENO "Deploy kernel+ramdisk files don't exist and their building was disabled explicitly by IRONIC_BUILD_DEPLOY_RAMDISK"
+        fi
+    fi
+
+    # load them into glance
+    IRONIC_DEPLOY_KERNEL_ID=$(glance \
+        --os-auth-token $token \
+        --os-image-url http://$GLANCE_HOSTPORT \
+        image-create \
+        --name $(basename $IRONIC_DEPLOY_KERNEL_PATH) \
+        --is-public True --disk-format=aki \
+        < $IRONIC_DEPLOY_KERNEL_PATH  | grep ' id ' | get_field 2)
+    IRONIC_DEPLOY_RAMDISK_ID=$(glance \
+        --os-auth-token $token \
+        --os-image-url http://$GLANCE_HOSTPORT \
+        image-create \
+        --name $(basename $IRONIC_DEPLOY_RAMDISK_PATH) \
+        --is-public True --disk-format=ari \
+        < $IRONIC_DEPLOY_RAMDISK_PATH  | grep ' id ' | get_field 2)
+}
+
 function prepare_baremetal_basic_ops {
 
     # install diskimage-builder
-    git_clone $BM_IMAGE_BUILD_REPO $BM_IMAGE_BUILD_DIR $BM_IMAGE_BUILD_BRANCH
+    git_clone $DIB_REPO $DIB_DIR $DIB_BRANCH
 
     # make sure all needed service were enabled
     for srv in nova glance key neutron; do
@@ -457,7 +515,7 @@ function prepare_baremetal_basic_ops {
     echo_summary "Creating and uploading baremetal images for ironic"
 
     # build and upload separate deploy kernel & ramdisk
-    upload_baremetal_deploy $TOKEN
+    upload_baremetal_ironic_deploy $TOKEN
 
     create_bridge_and_vms
     enroll_vms
