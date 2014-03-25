@@ -171,8 +171,8 @@ function configure_ironic_conductor {
     cp -r $IRONIC_DIR/etc/ironic/rootwrap.d $IRONIC_CONF_DIR
 
     iniset $IRONIC_CONF_FILE DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
-    iniset $IRONIC_CONF_FILE conductor api_url http://$SERVICE_HOST:6385
-    iniset $IRONIC_CONF_FILE pxe tftp_server $SERVICE_HOST
+    iniset $IRONIC_CONF_FILE conductor api_url http://$HOST_IP:6385
+    iniset $IRONIC_CONF_FILE pxe tftp_server $HOST_IP
     iniset $IRONIC_CONF_FILE pxe tftp_root $IRONIC_TFTPBOOT_DIR
     iniset $IRONIC_CONF_FILE pxe tftp_master_path $IRONIC_TFTPBOOT_DIR/master_images
 }
