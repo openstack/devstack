@@ -39,6 +39,9 @@ HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 HEAT_TEMPLATES_DIR=$HEAT_CONF_DIR/templates
 HEAT_STACK_DOMAIN=`trueorfalse True $HEAT_STACK_DOMAIN`
 
+# other default options
+HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-trusts}
+
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,heat
 
@@ -248,18 +251,21 @@ function create_heat_accounts {
     # heat_stack_user role is for users created by Heat
     openstack role create heat_stack_user
 
-    # heat_stack_owner role is given to users who create Heat stacks,
-    # it's the default role used by heat to delegate to the heat service
-    # user (for performing deferred operations via trusts), see heat.conf
-    HEAT_OWNER_ROLE=$(openstack role create \
-        heat_stack_owner \
-        | grep " id " | get_field 2)
+    if [[ $HEAT_DEFERRED_AUTH == trusts ]]; then
+        # heat_stack_owner role is given to users who create Heat stacks,
+        # it's the default role used by heat to delegate to the heat service
+        # user (for performing deferred operations via trusts), see heat.conf
+        HEAT_OWNER_ROLE=$(openstack role create \
+            heat_stack_owner \
+            | grep " id " | get_field 2)
 
-    # Give the role to the demo and admin users so they can create stacks
-    # in either of the projects created by devstack
-    openstack role add $HEAT_OWNER_ROLE --project demo --user demo
-    openstack role add $HEAT_OWNER_ROLE --project demo --user admin
-    openstack role add $HEAT_OWNER_ROLE --project admin --user admin
+        # Give the role to the demo and admin users so they can create stacks
+        # in either of the projects created by devstack
+        openstack role add $HEAT_OWNER_ROLE --project demo --user demo
+        openstack role add $HEAT_OWNER_ROLE --project demo --user admin
+        openstack role add $HEAT_OWNER_ROLE --project admin --user admin
+        iniset $HEAT_CONF DEFAULT deferred_auth_method trusts
+    fi
 
     if [[ "$HEAT_STACK_DOMAIN" == "True" ]]; then
         # Note we have to pass token/endpoint here because the current endpoint and
