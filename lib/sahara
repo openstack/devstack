@@ -28,7 +28,6 @@ SAHARA_BRANCH=${SAHARA_BRANCH:-master}
 SAHARA_DIR=$DEST/sahara
 SAHARA_CONF_DIR=${SAHARA_CONF_DIR:-/etc/sahara}
 SAHARA_CONF_FILE=${SAHARA_CONF_DIR}/sahara.conf
-SAHARA_DEBUG=${SAHARA_DEBUG:-True}
 
 SAHARA_SERVICE_HOST=${SAHARA_SERVICE_HOST:-$SERVICE_HOST}
 SAHARA_SERVICE_PORT=${SAHARA_SERVICE_PORT:-8386}
@@ -125,7 +124,8 @@ function configure_sahara {
     iniset $SAHARA_CONF_FILE keystone_authtoken signing_dir $SAHARA_AUTH_CACHE_DIR
     iniset $SAHARA_CONF_FILE keystone_authtoken cafile $KEYSTONE_SSL_CA
 
-    iniset $SAHARA_CONF_FILE DEFAULT debug $SAHARA_DEBUG
+    iniset $SAHARA_CONF_FILE DEFAULT verbose True
+    iniset $SAHARA_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
     iniset $SAHARA_CONF_FILE database connection `database_connection_url sahara`
 
