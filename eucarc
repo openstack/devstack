@@ -22,7 +22,7 @@ source $RC_DIR/openrc
 export EC2_URL=$(keystone catalog --service ec2 | awk '/ publicURL / { print $4 }')
 
 # Create EC2 credentials for the current user
-CREDS=$(keystone ec2-credentials-create)
+CREDS=$(openstack ec2 credentials create)
 export EC2_ACCESS_KEY=$(echo "$CREDS" | awk '/ access / { print $4 }')
 export EC2_SECRET_KEY=$(echo "$CREDS" | awk '/ secret / { print $4 }')
 

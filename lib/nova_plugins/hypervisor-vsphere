@@ -39,7 +39,7 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF vmware host_ip "$VMWAREAPI_IP"
     iniset $NOVA_CONF vmware host_username "$VMWAREAPI_USER"
     iniset $NOVA_CONF vmware host_password "$VMWAREAPI_PASSWORD"
-    iniset $NOVA_CONF vmware cluster_name "$VMWAREAPI_CLUSTER"
+    iniset_multiline $NOVA_CONF vmware cluster_name "$VMWAREAPI_CLUSTER"
     if is_service_enabled neutron; then
         iniset $NOVA_CONF vmware integration_bridge $OVS_BRIDGE
     fi
