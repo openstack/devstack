@@ -884,7 +884,7 @@ init_service_check
 # -------
 
 # A better kind of sysstat, with the top process per time slice
-DSTAT_OPTS="-tcndylp --top-cpu-adv"
+DSTAT_OPTS="-tcndrylp --top-cpu-adv"
 if [[ -n ${SCREEN_LOGDIR} ]]; then
     screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
 else
