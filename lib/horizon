@@ -114,11 +114,9 @@ function init_horizon {
 
     local horizon_conf=/etc/$APACHE_NAME/$APACHE_CONF_DIR/horizon.conf
     if is_ubuntu; then
-        # Clean up the old config name
-        sudo rm -f /etc/apache2/sites-enabled/000-default
-        # Be a good citizen and use the distro tools here
+        disable_apache_site 000-default
         sudo touch $horizon_conf
-        sudo a2ensite horizon.conf
+        enable_apache_site horizon.conf
     elif is_fedora; then
         sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
     elif is_suse; then
