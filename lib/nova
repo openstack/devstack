@@ -139,7 +139,7 @@ function is_nova_enabled {
 # Test if any Nova Cell services are enabled
 # is_nova_enabled
 function is_n-cell_enabled {
-    [[ ,${ENABLED_SERVICES} =~ ,"n-cell-" ]] && return 0
+    [[ ,${ENABLED_SERVICES} =~ ,"n-cell" ]] && return 0
     return 1
 }
 
