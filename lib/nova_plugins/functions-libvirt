@@ -18,7 +18,7 @@ DEBUG_LIBVIRT=$(trueorfalse False $DEBUG_LIBVIRT)
 # Installs required distro-specific libvirt packages.
 function install_libvirt {
     if is_ubuntu; then
-        install_package kvm
+        install_package qemu-kvm
         install_package libvirt-bin
         install_package python-libvirt
         install_package python-guestfs
