@@ -213,7 +213,7 @@ REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-master}
 # storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
 SWIFT_BRANCH=${SWIFT_BRANCH:-master}
-SWIFT3_REPO=${SWIFT3_REPO:-http://github.com/fujita/swift3.git}
+SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/stackforge/swift3.git}
 SWIFT3_BRANCH=${SWIFT3_BRANCH:-master}
 
 # python swift client library
