@@ -489,7 +489,7 @@ function create_swift_disk {
     truncate -s ${SWIFT_LOOPBACK_DISK_SIZE} ${SWIFT_DISK_IMAGE}
 
     # Make a fresh XFS filesystem
-    mkfs.xfs -f -i size=1024  ${SWIFT_DISK_IMAGE}
+    /sbin/mkfs.xfs -f -i size=1024  ${SWIFT_DISK_IMAGE}
 
     # Mount the disk with mount options to make it as efficient as possible
     mkdir -p ${SWIFT_DATA_DIR}/drives/sdb1
