@@ -17,7 +17,7 @@ MIDONET_CLIENT_BRANCH=${MIDONET_CLIENT_BRANCH:-master}
 MIDONET_CLIENT_DIR=${MIDONET_CLIENT_DIR:-$MIDONET_DIR/python-midonetclient}
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+MN3_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 function configure_midonet {
@@ -46,4 +46,4 @@ function check_midonet {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$MN3_XTRACE

@@ -2,7 +2,7 @@
 # ---------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+OVS_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/openvswitch_agent
@@ -57,4 +57,4 @@ function has_neutron_plugin_security_group {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$OVS_XTRACE

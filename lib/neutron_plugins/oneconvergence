@@ -1,7 +1,7 @@
 # Neutron One Convergence plugin
 # ---------------------------
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+OC_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/ovs_base
@@ -73,4 +73,4 @@ function neutron_plugin_create_nova_conf {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$OC_XTRACE

@@ -2,7 +2,7 @@
 # -----------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+RYU3_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -75,4 +75,4 @@ function check_ryu {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$RYU3_XTRACE
