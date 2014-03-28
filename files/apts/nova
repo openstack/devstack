@@ -12,7 +12,7 @@ iptables
 ebtables
 sqlite3
 sudo
-kvm # NOPRIME
+qemu-kvm # NOPRIME
 qemu # dist:wheezy,jessie NOPRIME
 libvirt-bin # NOPRIME
 libjs-jquery-tablesorter # Needed for coverage html reports
