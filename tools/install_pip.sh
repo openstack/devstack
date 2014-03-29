@@ -71,12 +71,13 @@ function install_get_pip {
 }
 
 function install_pip_tarball {
-    (cd $FILES; \
-        curl -O $PIP_TAR_URL; \
-        tar xvfz pip-$INSTALL_PIP_VERSION.tar.gz 1>/dev/null; \
-        cd pip-$INSTALL_PIP_VERSION; \
-        sudo -E python setup.py install 1>/dev/null; \
-    )
+    if [[ ! -r $FILES/pip-$INSTALL_PIP_VERSION.tar.gz ]]; then
+        (cd $FILES; \
+            curl -O $PIP_TAR_URL; \
+            tar xvfz pip-$INSTALL_PIP_VERSION.tar.gz 1>/dev/null)
+    fi
+    (cd $FILES/pip-$INSTALL_PIP_VERSION; \
+        sudo -E python setup.py install 1>/dev/null)
 }
 
 # Show starting versions
