@@ -3,7 +3,7 @@ dnsmasq-utils # dist:opensuse-12.3
 ebtables
 iptables
 iputils
-mysql-community-server # NOPRIME
+mariadb # NOPRIME
 python-boto
 python-eventlet
 python-greenlet
