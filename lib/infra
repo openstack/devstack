@@ -46,7 +46,7 @@ function install_infra {
 
     # Install pbr
     git_clone $PBR_REPO $PBR_DIR $PBR_BRANCH
-    setup_develop $PBR_DIR
+    setup_install $PBR_DIR
 }
 
 # Restore xtrace

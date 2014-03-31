@@ -40,10 +40,10 @@ function install_stackforge {
     cleanup_stackforge
 
     git_clone $WSME_REPO $WSME_DIR $WSME_BRANCH
-    setup_develop_no_requirements_update $WSME_DIR
+    setup_package $WSME_DIR
 
     git_clone $PECAN_REPO $PECAN_DIR $PECAN_BRANCH
-    setup_develop_no_requirements_update $PECAN_DIR
+    setup_package $PECAN_DIR
 }
 
 # cleanup_stackforge() - purge possibly old versions of stackforge libraries
