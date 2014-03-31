@@ -27,15 +27,13 @@ OSLOMSG_DIR=$DEST/oslo.messaging
 
 # install_oslo() - Collect source and prepare
 function install_oslo() {
-    # TODO(sdague): remove this once we get to Icehouse, this just makes
-    # for a smoother transition of existing users.
     cleanup_oslo
 
     git_clone $OSLOCFG_REPO $OSLOCFG_DIR $OSLOCFG_BRANCH
-    setup_develop $OSLOCFG_DIR
+    setup_install $OSLOCFG_DIR
 
     git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
-    setup_develop $OSLOMSG_DIR
+    setup_install $OSLOMSG_DIR
 }
 
 # cleanup_oslo() - purge possibly old versions of oslo

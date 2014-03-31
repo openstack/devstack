@@ -1269,12 +1269,26 @@ function safe_chmod() {
     _safe_permission_operation chmod $@
 }
 
+# this should be used if you want to install globally, all libraries should
+# use this, especially *oslo* ones
+function setup_install {
+    local project_dir=$1
+    setup_package_with_req_sync $project_dir
+}
+
+# this should be used for projects which run services, like all services
+function setup_develop {
+    local project_dir=$1
+    setup_package_with_req_sync $project_dir -e
+}
+
 # ``pip install -e`` the package, which processes the dependencies
 # using pip before running `setup.py develop`
 # Uses globals ``STACK_USER``, ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``
 # setup_develop directory
-function setup_develop() {
+function setup_package_with_req_sync() {
     local project_dir=$1
+    local flags=$2
 
     echo "cd $REQUIREMENTS_DIR; $SUDO_CMD python update.py $project_dir"
 
@@ -1287,9 +1301,11 @@ function setup_develop() {
             $SUDO_CMD python update.py $project_dir)
     fi
 
-    pip_install -e $project_dir
+    pip_install $flags $project_dir
     # ensure that further actions can do things like setup.py sdist
-    safe_chown -R $STACK_USER $1/*.egg-info
+    if [[ "$flags" == "-e" ]]; then
+        safe_chown -R $STACK_USER $1/*.egg-info
+    fi
 
     # Undo requirements changes, if we made them
     if [ $update_requirements -eq 0 ]; then
