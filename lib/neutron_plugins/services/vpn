@@ -2,7 +2,7 @@
 # ---------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+VPN_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -30,4 +30,4 @@ function neutron_vpn_stop {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$VPN_XTRACE

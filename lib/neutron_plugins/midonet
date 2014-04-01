@@ -6,7 +6,7 @@ MIDONET_API_PORT=${MIDONET_API_PORT:-8080}
 MIDONET_API_URL=${MIDONET_API_URL:-http://localhost:$MIDONET_API_PORT/midonet-api}
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+MN_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 function is_neutron_ovs_base_plugin {
@@ -84,4 +84,4 @@ function neutron_plugin_check_adv_test_requirements {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$MN_XTRACE

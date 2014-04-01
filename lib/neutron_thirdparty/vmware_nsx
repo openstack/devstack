@@ -11,7 +11,7 @@
 # * NSX_GATEWAY_NETWORK_CIDR         --> CIDR to configure br-ex, e.g. 172.24.4.211/24
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+NSX3_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 # This is the interface that connects the Devstack instance
@@ -83,4 +83,4 @@ function check_vmware_nsx {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$NSX3_XTRACE

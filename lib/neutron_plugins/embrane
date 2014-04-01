@@ -2,7 +2,7 @@
 # ---------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+EMBR_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/openvswitch
@@ -37,4 +37,4 @@ function neutron_plugin_configure_service {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$EMBR_XTRACE
