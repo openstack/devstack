@@ -35,10 +35,12 @@ function cleanup_nova_hypervisor {
 # configure_nova_hypervisor - Set config files, create data dirs, etc
 function configure_nova_hypervisor {
     configure_libvirt
-    iniset $NOVA_CONF ironic sql_connection `database_connection_url nova_bm`
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.firewall.NoopFirewallDriver"}
-    iniset $NOVA_CONF DEFAULT compute_driver nova.virt.ironic.IronicDriver
 
+    # NOTE(adam_g): The ironic compute driver currently lives in the ironic
+    # tree.  We purposely configure Nova to load it from there until it moves
+    # back into Nova proper.
+    iniset $NOVA_CONF DEFAULT compute_driver ironic.nova.virt.ironic.IronicDriver
     iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
     iniset $NOVA_CONF DEFAULT scheduler_host_manager ironic.nova.scheduler.ironic_host_manager.IronicHostManager
     iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
@@ -49,6 +51,7 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF ironic admin_url $KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
     iniset $NOVA_CONF ironic admin_tenant_name demo
     iniset $NOVA_CONF ironic api_endpoint http://$SERVICE_HOST:6385/v1
+    iniset $NOVA_CONF ironic sql_connection `database_connection_url nova_bm`
 }
 
 # install_nova_hypervisor() - Install external components
