@@ -22,7 +22,7 @@
 # --------
 
 # Source repo/branch for DevStack
-MASTER_REPO=${MASTER_REPO:-https://github.com/openstack-dev/devstack.git}
+MASTER_REPO=${MASTER_REPO:-git://git.openstack.org/openstack-dev/devstack}
 MASTER_BRANCH=${MASTER_BRANCH:-master}
 
 # http://devstack.org is a GitHub gh-pages site in the https://github.com/cloudbuilders/devtack.git repo
