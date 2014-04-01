@@ -2,7 +2,7 @@
 # ---------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+IBM_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/ovs_base
@@ -130,4 +130,4 @@ function neutron_ovs_base_cleanup {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$IBM_XTRACE

@@ -13,7 +13,7 @@ TREMA_APPS_REPO=${TREMA_APPS_REPO:-https://github.com/trema/apps.git}
 TREMA_APPS_BRANCH=${TREMA_APPS_BRANCH:-master}
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+TREMA3_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 TREMA_DIR=${TREMA_DIR:-$DEST/trema}
@@ -114,4 +114,4 @@ function check_trema {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$TREMA3_XTRACE

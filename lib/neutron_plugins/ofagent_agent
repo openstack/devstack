@@ -2,7 +2,7 @@
 # ----------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+OFA_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/ovs_base
@@ -91,4 +91,4 @@ function neutron_plugin_check_adv_test_requirements {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$OFA_XTRACE

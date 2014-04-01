@@ -2,7 +2,7 @@
 # ---------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+FW_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 FWAAS_PLUGIN=neutron.services.firewall.fwaas_plugin.FirewallPlugin
@@ -24,4 +24,4 @@ function neutron_fwaas_stop {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$FW_XTRACE

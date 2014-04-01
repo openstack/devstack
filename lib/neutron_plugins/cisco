@@ -2,7 +2,7 @@
 # ---------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+CISCO_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 # Scecify the VSM parameters
@@ -324,4 +324,4 @@ function neutron_plugin_setup_interface_driver {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$CISCO_XTRACE

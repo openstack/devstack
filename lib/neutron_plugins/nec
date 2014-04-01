@@ -2,7 +2,7 @@
 # ---------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+NEC_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 # Configuration parameters
@@ -127,4 +127,4 @@ function neutron_plugin_check_adv_test_requirements {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$NEC_XTRACE

@@ -2,7 +2,7 @@
 # ------------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+ML2_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 # Enable this to simply and quickly enable tunneling with ML2.
@@ -119,4 +119,4 @@ function has_neutron_plugin_security_group {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$ML2_XTRACE
