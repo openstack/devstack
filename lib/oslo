@@ -34,44 +34,29 @@ TASKFLOW_DIR=$DEST/taskflow
 
 # install_oslo() - Collect source and prepare
 function install_oslo {
-    # TODO(sdague): remove this once we get to Icehouse, this just makes
-    # for a smoother transition of existing users.
-    cleanup_oslo
-
     git_clone $CLIFF_REPO $CLIFF_DIR $CLIFF_BRANCH
-    setup_develop $CLIFF_DIR
+    setup_install $CLIFF_DIR
 
     git_clone $OSLOCFG_REPO $OSLOCFG_DIR $OSLOCFG_BRANCH
-    setup_develop $OSLOCFG_DIR
+    setup_install $OSLOCFG_DIR
 
     git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
-    setup_develop $OSLOMSG_DIR
+    setup_install $OSLOMSG_DIR
 
     git_clone $OSLORWRAP_REPO $OSLORWRAP_DIR $OSLORWRAP_BRANCH
-    setup_develop $OSLORWRAP_DIR
+    setup_install $OSLORWRAP_DIR
 
     git_clone $OSLOVMWARE_REPO $OSLOVMWARE_DIR $OSLOVMWARE_BRANCH
-    setup_develop $OSLOVMWARE_DIR
+    setup_install $OSLOVMWARE_DIR
 
     git_clone $PYCADF_REPO $PYCADF_DIR $PYCADF_BRANCH
-    setup_develop $PYCADF_DIR
+    setup_install $PYCADF_DIR
 
     git_clone $STEVEDORE_REPO $STEVEDORE_DIR $STEVEDORE_BRANCH
-    setup_develop $STEVEDORE_DIR
+    setup_install $STEVEDORE_DIR
 
     git_clone $TASKFLOW_REPO $TASKFLOW_DIR $TASKFLOW_BRANCH
-    setup_develop $TASKFLOW_DIR
-}
-
-# cleanup_oslo() - purge possibly old versions of oslo
-function cleanup_oslo {
-    # this means we've got an old oslo installed, lets get rid of it
-    if ! python -c 'import oslo.config' 2>/dev/null; then
-        echo "Found old oslo.config... removing to ensure consistency"
-        local PIP_CMD=$(get_pip_command)
-        pip_install oslo.config
-        sudo $PIP_CMD uninstall -y oslo.config
-    fi
+    setup_install $TASKFLOW_DIR
 }
 
 # Restore xtrace
