@@ -147,6 +147,9 @@ function configure_trove {
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT sql_connection `database_connection_url trove`
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT add_addresses True
+    iniset $TROVE_CONF_DIR/trove.conf DEFAULT nova_compute_url $NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2
+    iniset $TROVE_CONF_DIR/trove.conf DEFAULT cinder_url $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1
+    iniset $TROVE_CONF_DIR/trove.conf DEFAULT swift_url http://$SERVICE_HOST:8080/v1/AUTH_
 
     iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT rabbit_password $RABBIT_PASSWORD
     sed -i "s/localhost/$NETWORK_GATEWAY/g" $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
@@ -164,6 +167,9 @@ function configure_trove {
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_user radmin
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_tenant_name trove
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
+        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_compute_url $NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2
+        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT cinder_url $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1
+        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT swift_url http://$SERVICE_HOST:8080/v1/AUTH_
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
         setup_trove_logging $TROVE_CONF_DIR/trove-taskmanager.conf
     fi
