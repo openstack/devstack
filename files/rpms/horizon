@@ -1,5 +1,4 @@
 Django
-django-registration
 gcc
 httpd # NOPRIME
 mod_wsgi  # NOPRIME
