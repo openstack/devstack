@@ -12,8 +12,7 @@ kvm # NOPRIME
 qemu # NOPRIME
 libvirt # NOPRIME
 libvirt-python # NOPRIME
-libxml2-python
-mysql-community-server # NOPRIME
+mariadb # NOPRIME
 parted
 polkit
 python-M2Crypto
@@ -24,20 +23,19 @@ python-Routes
 python-SQLAlchemy
 python-Tempita
 python-boto
-python-carrot
 python-cheetah
 python-eventlet
 python-feedparser
 python-greenlet
 python-iso8601
 python-kombu
+python-libxml2
 python-lockfile
 python-lxml # needed for glance which is needed for nova --- this shouldn't be here
 python-mox
 python-mysql
 python-numpy # needed by websockify for spice console
 python-paramiko
-python-python-gflags
 python-sqlalchemy-migrate
 python-suds
 python-xattr # needed for glance which is needed for nova --- this shouldn't be here

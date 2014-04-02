@@ -19,6 +19,8 @@
 #
 #     SCREEN_LOGDIR=/opt/stack/screen-logs
 
+set -o pipefail
+
 CERT_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$(cd $CERT_DIR/..; pwd)
 

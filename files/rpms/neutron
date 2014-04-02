@@ -21,4 +21,3 @@ rabbitmq-server # NOPRIME
 qpid-cpp-server        # NOPRIME
 sqlite
 sudo
-vconfig
