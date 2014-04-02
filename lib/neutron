@@ -495,7 +495,7 @@ function start_neutron_agents {
         L3_CONF_FILES="$L3_CONF_FILES --config-file $Q_FWAAS_CONF_FILE"
     fi
     if is_service_enabled q-vpn; then
-        screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY $L3_CONF_FILES"
+        screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY $VPN_CONF_FILES"
     else
         screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY $L3_CONF_FILES"
     fi
@@ -658,6 +658,7 @@ function _configure_neutron_dhcp_agent {
 }
 
 function _configure_neutron_l3_agent {
+    local cfg_file
     Q_L3_ENABLED=True
     # for l3-agent, only use per tenant router if we have namespaces
     Q_L3_ROUTER_PER_TENANT=$Q_USE_NAMESPACE
@@ -667,6 +668,15 @@ function _configure_neutron_l3_agent {
 
     if is_service_enabled q-fwaas; then
         Q_FWAAS_CONF_FILE=$NEUTRON_CONF_DIR/fwaas_driver.ini
+    fi
+
+    if is_service_enabled q-vpn; then
+        Q_VPN_CONF_FILE=$NEUTRON_CONF_DIR/vpn_agent.ini
+        cp $NEUTRON_DIR/etc/vpn_agent.ini $Q_VPN_CONF_FILE
+        VPN_CONF_FILES="--config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE --config-file=$Q_VPN_CONF_FILE"
+        for cfg_file in ${Q_VPN_EXTRA_CONF_FILES[@]}; do
+            VPN_CONF_FILES+=" --config-file $cfg_file"
+        done
     fi
 
     cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
