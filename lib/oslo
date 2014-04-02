@@ -34,6 +34,10 @@ TASKFLOW_DIR=$DEST/taskflow
 
 # install_oslo() - Collect source and prepare
 function install_oslo {
+    # TODO(sdague): remove this once we get to Icehouse, this just makes
+    # for a smoother transition of existing users.
+    cleanup_oslo
+
     git_clone $CLIFF_REPO $CLIFF_DIR $CLIFF_BRANCH
     setup_install $CLIFF_DIR
 
@@ -57,6 +61,17 @@ function install_oslo {
 
     git_clone $TASKFLOW_REPO $TASKFLOW_DIR $TASKFLOW_BRANCH
     setup_install $TASKFLOW_DIR
+}
+
+# cleanup_oslo() - purge possibly old versions of oslo
+function cleanup_oslo {
+    # this means we've got an old oslo installed, lets get rid of it
+    if ! python -c 'import oslo.config' 2>/dev/null; then
+        echo "Found old oslo.config... removing to ensure consistency"
+        local PIP_CMD=$(get_pip_command)
+        pip_install oslo.config
+        sudo $PIP_CMD uninstall -y oslo.config
+    fi
 }
 
 # Restore xtrace
