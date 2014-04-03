@@ -290,7 +290,7 @@ FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 
 HOST_IP=$(get_default_host_ip $FIXED_RANGE $FLOATING_RANGE "$HOST_IP_IFACE" "$HOST_IP")
 if [ "$HOST_IP" == "" ]; then
-    die $LINENO "Could not determine host ip address. Either localrc specified dhcp on ${HOST_IP_IFACE} or defaulted"
+    die $LINENO "Could not determine host ip address.  See local.conf for suggestions on setting HOST_IP."
 fi
 
 # Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
