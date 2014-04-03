@@ -6,7 +6,6 @@ mysql-devel         # testonly
 openssl-devel       # testonly
 postgresql-devel    # testonly
 python-argparse
-python-devel
 python-eventlet
 python-greenlet
 python-lxml         #dist:f19,f20,rhel7

@@ -1,7 +1,6 @@
 lvm2
 scsi-target-utils
 qemu-img
-python-devel
 postgresql-devel
 iscsi-initiator-utils
 python-lxml         #dist:f19,f20,rhel7

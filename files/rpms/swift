@@ -4,7 +4,6 @@ libffi-devel
 memcached
 python-configobj
 python-coverage
-python-devel
 python-eventlet
 python-greenlet
 python-netifaces
