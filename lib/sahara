@@ -142,6 +142,11 @@ function configure_sahara {
 
     iniset $SAHARA_CONF_FILE DEFAULT use_syslog $SYSLOG
 
+    # Format logging
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+        setup_colorized_logging $SAHARA_CONF_FILE DEFAULT
+    fi
+
     recreate_database sahara utf8
     $SAHARA_BIN_DIR/sahara-db-manage --config-file $SAHARA_CONF_FILE upgrade head
 }
