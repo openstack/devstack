@@ -82,8 +82,6 @@ function merge_config_file {
     local matchgroup=$2
     local configfile=$3
 
-    [[ -r $configfile ]] || touch $configfile
-
     get_meta_section $file $matchgroup $configfile | \
     $CONFIG_AWK_CMD -v configfile=$configfile '
         BEGIN { section = "" }
@@ -114,7 +112,7 @@ function merge_config_group {
 
     for group in $matchgroups; do
         for configfile in $(get_meta_section_files $localfile $group); do
-            if [[ -d $(dirname $configfile) ]]; then
+            if [[ -d $(dirname $(eval "echo $configfile")) ]]; then
                 merge_config_file $localfile $group $configfile
             fi
         done
