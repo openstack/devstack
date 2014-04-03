@@ -42,6 +42,17 @@ type=original
 EOF
 }
 
+function setup_test4 {
+    mkdir -p test-etc
+    cat >test-etc/test4.conf <<EOF
+[fff]
+# original comment
+type=original
+EOF
+    TEST4_DIR="test-etc"
+    TEST4_FILE="test4.conf"
+}
+
 cat >test.conf <<EOF
 [[test1|test1a.conf]]
 [default]
@@ -76,8 +87,11 @@ $TEST_1C_ADD
 attribute=value
  
 # the above line has a single space
-EOF
 
+[[test4|\$TEST4_DIR/\$TEST4_FILE]]
+[fff]
+type=new
+EOF
 
 echo -n "get_meta_section_files: test0 doesn't exist: "
 VAL=$(get_meta_section_files test.conf test0)
@@ -192,4 +206,24 @@ EXPECT_VAL="
 attribute = value"
 check_result "$VAL" "$EXPECT_VAL"
 
+echo -n "merge_config_group test4 variable filename: "
+setup_test4
+merge_config_group test.conf test4
+VAL=$(cat test-etc/test4.conf)
+EXPECT_VAL="[fff]
+# original comment
+type=new"
+check_result "$VAL" "$EXPECT_VAL"
+
+echo -n "merge_config_group test4 variable filename (not exist): "
+setup_test4
+rm test-etc/test4.conf
+merge_config_group test.conf test4
+VAL=$(cat test-etc/test4.conf)
+EXPECT_VAL="
+[fff]
+type = new"
+check_result "$VAL" "$EXPECT_VAL"
+
 rm -f test.conf test1c.conf test2a.conf test-space.conf
+rm -rf test-etc
