@@ -274,7 +274,7 @@ function configure_neutron {
     if is_service_enabled q-fwaas; then
         _configure_neutron_fwaas
     fi
-    if is_service_enabled q-svc; then
+    if is_service_enabled q-agt q-svc; then
         _configure_neutron_service
     fi
     if is_service_enabled q-agt; then
