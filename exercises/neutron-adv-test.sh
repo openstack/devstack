@@ -100,15 +100,6 @@ PUBLIC_ROUTER1_NET="admin-net1"
 DEMO1_ROUTER1_NET="demo1-net1"
 DEMO2_ROUTER1_NET="demo2-net1"
 
-KEYSTONE="keystone"
-
-# Manually create a token by querying keystone (sending JSON data).  Keystone
-# returns a token and catalog of endpoints.  We use python to parse the token
-# and save it.
-
-TOKEN=`keystone token-get | grep ' id ' | awk '{print $4}'`
-die_if_not_set $LINENO TOKEN "Keystone fail to get token"
-
 # Various functions
 # -----------------
 
@@ -150,21 +141,21 @@ function get_image_id {
 
 function get_tenant_id {
     local TENANT_NAME=$1
-    local TENANT_ID=`keystone tenant-list | grep " $TENANT_NAME " | head -n 1 | get_field 1`
+    local TENANT_ID=`openstack project list | grep " $TENANT_NAME " | head -n 1 | get_field 1`
     die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for $TENANT_NAME"
     echo "$TENANT_ID"
 }
 
 function get_user_id {
     local USER_NAME=$1
-    local USER_ID=`keystone user-list | grep $USER_NAME | awk '{print $2}'`
+    local USER_ID=`openstack user list | grep $USER_NAME | awk '{print $2}'`
     die_if_not_set $LINENO USER_ID "Failure retrieving USER_ID for $USER_NAME"
     echo "$USER_ID"
 }
 
 function get_role_id {
     local ROLE_NAME=$1
-    local ROLE_ID=`keystone role-list | grep $ROLE_NAME | awk '{print $2}'`
+    local ROLE_ID=`openstack role list | grep $ROLE_NAME | awk '{print $2}'`
     die_if_not_set $LINENO ROLE_ID "Failure retrieving ROLE_ID for $ROLE_NAME"
     echo "$ROLE_ID"
 }
@@ -199,28 +190,21 @@ function neutron_debug_admin {
 }
 
 function add_tenant {
-    local TENANT=$1
-    local USER=$2
-
-    $KEYSTONE tenant-create --name=$TENANT
-    $KEYSTONE user-create --name=$USER --pass=${ADMIN_PASSWORD}
-
-    local USER_ID=$(get_user_id $USER)
-    local TENANT_ID=$(get_tenant_id $TENANT)
-
-    $KEYSTONE user-role-add --user-id $USER_ID --role-id $(get_role_id Member) --tenant-id $TENANT_ID
+    openstack project create $1
+    openstack user create $2 --password ${ADMIN_PASSWORD} --project $1
+    openstack role add Member --project $1 --user $2
 }
 
 function remove_tenant {
     local TENANT=$1
     local TENANT_ID=$(get_tenant_id $TENANT)
-    $KEYSTONE tenant-delete $TENANT_ID
+    openstack project delete $TENANT_ID
 }
 
 function remove_user {
     local USER=$1
     local USER_ID=$(get_user_id $USER)
-    $KEYSTONE user-delete $USER_ID
+    openstack user delete $USER_ID
 }
 
 function create_tenants {
