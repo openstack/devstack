@@ -274,6 +274,10 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
 
+    if is_service_enabled swift; then
+        iniset $CINDER_CONF DEFAULT backup_swift_url "http://$SERVICE_HOST:8080/v1/AUTH_"
+    fi
+
     if is_service_enabled ceilometer; then
         iniset $CINDER_CONF DEFAULT notification_driver "cinder.openstack.common.notifier.rpc_notifier"
     fi
