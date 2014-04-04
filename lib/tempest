@@ -321,11 +321,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
     # Orchestration test image
-    if [[ ! -z "$HEAT_FETCHED_TEST_IMAGE" ]]; then
-        iniset $TEMPEST_CONFIG orchestration image_ref "$HEAT_FETCHED_TEST_IMAGE"
-    elif [[ "$HEAT_CREATE_TEST_IMAGE" = "True" ]]; then
-        disk_image_create /usr/share/tripleo-image-elements "vm fedora heat-cfntools" "i386" "fedora-vm-heat-cfntools-tempest"
-        iniset $TEMPEST_CONFIG orchestration image_ref "fedora-vm-heat-cfntools-tempest"
+    if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
+        iniset $TEMPEST_CONFIG orchestration image_ref $(basename "$HEAT_CFN_IMAGE_URL" ".qcow2")
     fi
 
     # Scenario
