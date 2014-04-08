@@ -153,6 +153,7 @@ function configure_tempest {
     # user and tenant are set up...
     ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
     ADMIN_TENANT_NAME=${ADMIN_TENANT_NAME:-admin}
+    ADMIN_DOMAIN_NAME=${ADMIN_DOMAIN_NAME:-Default}
     TEMPEST_USERNAME=${TEMPEST_USERNAME:-demo}
     TEMPEST_TENANT_NAME=${TEMPEST_TENANT_NAME:-demo}
     ALT_USERNAME=${ALT_USERNAME:-alt_demo}
@@ -267,6 +268,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG identity admin_username $ADMIN_USERNAME
     iniset $TEMPEST_CONFIG identity admin_password "$password"
     iniset $TEMPEST_CONFIG identity admin_tenant_name $ADMIN_TENANT_NAME
+    iniset $TEMPEST_CONFIG identity admin_domain_name $ADMIN_DOMAIN_NAME
     iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
 
     # Image
