@@ -496,19 +496,6 @@ function prepare_baremetal_basic_ops {
         fi
     done
 
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-
-    # stop all nova services
-    stop_nova || true
-
-    # remove any nova services failure status
-    find $SERVICE_DIR/$SCREEN_NAME -name 'n-*.failure' -exec rm -f '{}' \;
-
-    # start them again
-    start_nova_api
-    start_nova
-
     TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
     die_if_not_set $LINENO TOKEN "Keystone fail to get token"
 
@@ -520,6 +507,11 @@ function prepare_baremetal_basic_ops {
     create_bridge_and_vms
     enroll_vms
     configure_tftpd
+
+    # restart nova-compute to ensure its resource tracking is up to
+    # date with newly enrolled nodes
+    stop_nova_compute || true
+    start_nova_compute
 }
 
 function cleanup_baremetal_basic_ops {
