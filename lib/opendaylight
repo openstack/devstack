@@ -35,6 +35,15 @@ source $TOP_DIR/lib/neutron_plugins/ovs_base
 # ODL_MGR_IP=
 ODL_MGR_IP=${ODL_MGR_IP:-$SERVICE_HOST}
 
+# The ODL endpoint URL
+ODL_ENDPOINT=${ODL_ENDPOINT:-http://${ODL_MGR_IP}:8080/controller/nb/v2/neutron}
+
+# The ODL username
+ODL_USERNAME=${ODL_USERNAME:-admin}
+
+# The ODL password
+ODL_PASSWORD=${ODL_PASSWORD:-admin}
+
 # <define global variables here that belong to this project>
 ODL_DIR=$DEST/opendaylight
 
@@ -78,6 +87,12 @@ function configure_opendaylight {
 
     # Configure OpenFlow 1.3
     echo "ovsdb.of.version=1.3" >> $ODL_DIR/opendaylight/configuration/config.ini
+}
+
+function configure_ml2_odl {
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_odl url=$ODL_ENDPOINT
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_odl username=$ODL_USERNAME
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_odl password=$ODL_PASSWORD
 }
 
 # init_opendaylight() - Initialize databases, etc.

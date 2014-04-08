@@ -14,6 +14,7 @@ if is_service_enabled odl-server; then
         configure_opendaylight
         init_opendaylight
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
+        configure_ml2_odl
         # This has to start before Neutron
         start_opendaylight
     elif [[ "$1" == "stack" && "$2" == "post-extra" ]]; then
