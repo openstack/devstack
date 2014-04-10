@@ -359,6 +359,11 @@ function configure_tempest {
     # Networking
     iniset $TEMPEST_CONFIG network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
 
+    # Baremetal
+    if [ "$VIRT_DRIVER" = "ironic" ] ; then
+        iniset $TEMPEST_CONFIG baremetal driver_enabled True
+    fi
+
     # service_available
     for service in ${TEMPEST_SERVICES//,/ }; do
         if is_service_enabled $service ; then
