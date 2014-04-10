@@ -418,9 +418,9 @@ function init_tempest {
         ( #new namespace
             # tenant:demo ; user: demo
             source $TOP_DIR/accrc/demo/demo
-            euca-bundle-image -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
-            euca-bundle-image -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
-            euca-bundle-image -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -r x86_64 -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -r x86_64 -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -r x86_64 -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
         ) 2>&1 </dev/null | cat
     else
         echo "Boto materials are not prepared"
