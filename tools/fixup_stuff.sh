@@ -145,4 +145,11 @@ if [[ $DISTRO =~ (rhel6) ]]; then
     # work unmolested.
     sudo ln -sf /usr/bin/nosetests1.1 /usr/local/bin/nosetests
 
+    # workaround for https://code.google.com/p/unittest-ext/issues/detail?id=79
+    install_package python-unittest2 patch
+    pip_install discover
+    (cd /usr/lib/python2.6/site-packages/; sudo patch <"$FILES/patches/unittest2-discover.patch" || echo 'Assume already applied')
+    # Make sure the discover.pyc is up to date
+    sudo rm /usr/lib/python2.6/site-packages/discover.pyc || true
+    sudo python -c 'import discover'
 fi
