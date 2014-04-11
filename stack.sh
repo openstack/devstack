@@ -1004,9 +1004,13 @@ if is_service_enabled n-net q-dhcp; then
     fi
 
     clean_iptables
-    rm -rf ${NOVA_STATE_PATH}/networks
-    sudo mkdir -p ${NOVA_STATE_PATH}/networks
-    safe_chown -R ${USER} ${NOVA_STATE_PATH}/networks
+
+    if is_service_enabled n-net; then
+        rm -rf ${NOVA_STATE_PATH}/networks
+        sudo mkdir -p ${NOVA_STATE_PATH}/networks
+        safe_chown -R ${USER} ${NOVA_STATE_PATH}/networks
+    fi
+
     # Force IP forwarding on, just in case
     sudo sysctl -w net.ipv4.ip_forward=1
 fi
