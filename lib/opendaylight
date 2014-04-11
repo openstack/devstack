@@ -132,9 +132,8 @@ function install_opendaylight-compute {
         # Ensure that the service is started
         restart_service openvswitch
     elif is_suse; then
-        install_package openvswitch
+        install_package openvswitch-switch
         restart_service openvswitch-switch
-        restart_service openvswitch-controller
     fi
 }
 
