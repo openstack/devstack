@@ -438,8 +438,8 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
 
-    if is_fedora; then
-        # nova defaults to /usr/local/bin, but fedora pip likes to
+    if is_fedora || is_suse; then
+        # nova defaults to /usr/local/bin, but fedora and suse pip like to
         # install things in /usr/bin
         iniset $NOVA_CONF DEFAULT bindir "/usr/bin"
     fi
