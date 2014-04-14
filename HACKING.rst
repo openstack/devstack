@@ -20,7 +20,7 @@ in `How To Contribute`__ in the OpenStack wiki.  `DevStack's LaunchPad project`_
 contains the usual links for blueprints, bugs, tec.
 
 __ contribute_
-.. _contribute: http://wiki.openstack.org/HowToContribute.
+.. _contribute: http://wiki.openstack.org/HowToContribute
 
 __ lp_
 .. _lp: https://launchpad.net/~devstack
@@ -231,7 +231,7 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
 
 Bash Style Guidelines
 ~~~~~~~~~~~~~~~~~~~~~
-Devstack defines a bash set of best practices for maintaining large
+DevStack defines a bash set of best practices for maintaining large
 collections of bash scripts. These should be considered as part of the
 review process.
 
