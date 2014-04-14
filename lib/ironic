@@ -317,8 +317,13 @@ function enroll_vms {
     IRONIC_NET_ID=$(neutron net-list | grep private | get_field 1)
     local idx=0
 
-    # work around; need to know what netns neutron uses for private network
-    neutron port-create private
+    # work around; need to know what netns neutron uses for private network.
+    # Without knowing how to interconnect the networks, PXE won't work properly
+    # for fake baremetal instances. The network should be configured prior all
+    # the instances operation. If we don't do this, the first port creation
+    # only happens in the middle of fake baremetal instance's spawning by nova,
+    # so we'll end up with unbootable fake baremetal VM due to broken PXE.
+    PORT_ID=$(neutron port-create private | grep " id " | get_field 2)
 
     while read MAC; do
 
@@ -359,6 +364,10 @@ function enroll_vms {
 
     sudo ovs-vsctl -- --if-exists del-port ovs-tap1 -- add-port br-int ovs-tap1 tag=$TAG_ID
     sudo ovs-vsctl -- --if-exists del-port brbm-tap1 -- add-port $IRONIC_VM_NETWORK_BRIDGE brbm-tap1
+
+    # Remove the port needed only for workaround. For additional info read the
+    # comment at the beginning of this function
+    neutron port-delete $PORT_ID
 }
 
 function configure_tftpd {

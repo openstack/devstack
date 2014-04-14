@@ -149,6 +149,14 @@ if [[ ! ${DISTRO} =~ (precise|saucy|trusty|7.0|wheezy|sid|testing|jessie|f19|f20
     fi
 fi
 
+# Look for obsolete stuff
+if [[ ,${ENABLED_SERVICES} =~ ,"swift" ]]; then
+    echo "FATAL: 'swift' is not supported as a service name"
+    echo "FATAL: Use the actual swift service names to enable tham as required:"
+    echo "FATAL: s-proxy s-object s-container s-account"
+    exit 1
+fi
+
 # Make sure we only have one rpc backend enabled,
 # and the specified rpc backend is available on your platform.
 check_rpc_backend

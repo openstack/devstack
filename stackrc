@@ -21,9 +21,9 @@ fi
 
 # Specify which services to launch.  These generally correspond to
 # screen tabs. To change the default list, use the ``enable_service`` and
-# ``disable_service`` functions in ``localrc``.
-# For example, to enable Swift add this to ``localrc``:
-#  enable_service swift
+# ``disable_service`` functions in ``local.conf``.
+# For example, to enable Swift add this to ``local.conf``:
+#  enable_service s-proxy s-object s-container s-account
 # In order to enable Neutron (a single node setup) add the following
 # settings in `` localrc``:
 #  disable_service n-net
@@ -32,7 +32,6 @@ fi
 #  enable_service q-dhcp
 #  enable_service q-l3
 #  enable_service q-meta
-#  enable_service neutron
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
 
