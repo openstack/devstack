@@ -119,7 +119,6 @@ function configure_heat {
 
     # ec2authtoken
     iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
-    iniset $HEAT_CONF ec2authtoken keystone_ec2_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
 
     # paste_deploy
     [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_CONF paste_deploy flavor standalone
