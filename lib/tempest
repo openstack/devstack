@@ -322,9 +322,18 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG boto http_socket_timeout 30
     iniset $TEMPEST_CONFIG boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
-    # Orchestration test image
-    if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
-        iniset $TEMPEST_CONFIG orchestration image_ref $(basename "$HEAT_CFN_IMAGE_URL" ".qcow2")
+    # Orchestration Tests
+    if is_service_enabled heat; then
+        if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
+            iniset $TEMPEST_CONFIG orchestration image_ref $(basename "$HEAT_CFN_IMAGE_URL" ".qcow2")
+        fi
+        # build a specialized heat flavor that is likely to be fast
+        available_flavors=$(nova flavor-list)
+        if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
+            nova flavor-create m1.heat 451 1024 0 2
+        fi
+        iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
+        iniset $TEMPEST_CONFIG orchestration build_timeout 900
     fi
 
     # Scenario
