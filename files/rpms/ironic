@@ -1,6 +1,8 @@
+iptables
 libguestfs
 libvirt
 libvirt-python
+net-tools
 openssh-clients
 openvswitch
 python-libguestfs
