@@ -303,6 +303,10 @@ function configure_nova {
                 sudo chown -R $STACK_USER $NOVA_INSTANCES_PATH
             fi
         fi
+        if is_suse; then
+            # iscsid is not started by default
+            start_service iscsid
+        fi
     fi
 
     # Rebuild the config file from scratch
