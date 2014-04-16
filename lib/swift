@@ -453,10 +453,13 @@ EOF
     rm -rf ${swift_log_dir}
     mkdir -p ${swift_log_dir}/hourly
     sudo chown -R ${STACK_USER}:adm ${swift_log_dir}
-    sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
-        tee /etc/rsyslog.d/10-swift.conf
-    # restart syslog to take the changes
-    sudo killall -HUP rsyslogd
+
+    if [[ $SYSLOG != "False" ]]; then
+        sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
+            tee /etc/rsyslog.d/10-swift.conf
+        # restart syslog to take the changes
+        sudo killall -HUP rsyslogd
+    fi
 
     if is_apache_enabled_service swift; then
         _config_swift_apache_wsgi
