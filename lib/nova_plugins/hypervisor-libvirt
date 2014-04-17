@@ -39,8 +39,8 @@ function cleanup_nova_hypervisor {
 # configure_nova_hypervisor - Set config files, create data dirs, etc
 function configure_nova_hypervisor {
     configure_libvirt
-    iniset $NOVA_CONF DEFAULT libvirt_type "$LIBVIRT_TYPE"
-    iniset $NOVA_CONF DEFAULT libvirt_cpu_mode "none"
+    iniset $NOVA_CONF libvirt virt_type "$LIBVIRT_TYPE"
+    iniset $NOVA_CONF libvirt cpu_mode "none"
     iniset $NOVA_CONF DEFAULT use_usb_tablet "False"
     iniset $NOVA_CONF DEFAULT default_ephemeral_format "ext4"
     iniset $NOVA_CONF DEFAULT compute_driver "libvirt.LibvirtDriver"
