@@ -153,6 +153,7 @@ function configure_tempest {
     # user and tenant are set up...
     ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
     ADMIN_TENANT_NAME=${ADMIN_TENANT_NAME:-admin}
+    ADMIN_DOMAIN_NAME=${ADMIN_DOMAIN_NAME:-Default}
     TEMPEST_USERNAME=${TEMPEST_USERNAME:-demo}
     TEMPEST_TENANT_NAME=${TEMPEST_TENANT_NAME:-demo}
     ALT_USERNAME=${ALT_USERNAME:-alt_demo}
@@ -267,6 +268,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG identity admin_username $ADMIN_USERNAME
     iniset $TEMPEST_CONFIG identity admin_password "$password"
     iniset $TEMPEST_CONFIG identity admin_tenant_name $ADMIN_TENANT_NAME
+    iniset $TEMPEST_CONFIG identity admin_domain_name $ADMIN_DOMAIN_NAME
     iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
 
     # Image
@@ -320,9 +322,18 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG boto http_socket_timeout 30
     iniset $TEMPEST_CONFIG boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
 
-    # Orchestration test image
-    if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
-        iniset $TEMPEST_CONFIG orchestration image_ref $(basename "$HEAT_CFN_IMAGE_URL" ".qcow2")
+    # Orchestration Tests
+    if is_service_enabled heat; then
+        if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
+            iniset $TEMPEST_CONFIG orchestration image_ref $(basename "$HEAT_CFN_IMAGE_URL" ".qcow2")
+        fi
+        # build a specialized heat flavor that is likely to be fast
+        available_flavors=$(nova flavor-list)
+        if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
+            nova flavor-create m1.heat 451 1024 0 2
+        fi
+        iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
+        iniset $TEMPEST_CONFIG orchestration build_timeout 900
     fi
 
     # Scenario
@@ -356,6 +367,11 @@ function configure_tempest {
 
     # Networking
     iniset $TEMPEST_CONFIG network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
+
+    # Baremetal
+    if [ "$VIRT_DRIVER" = "ironic" ] ; then
+        iniset $TEMPEST_CONFIG baremetal driver_enabled True
+    fi
 
     # service_available
     for service in ${TEMPEST_SERVICES//,/ }; do
@@ -416,9 +432,9 @@ function init_tempest {
         ( #new namespace
             # tenant:demo ; user: demo
             source $TOP_DIR/accrc/demo/demo
-            euca-bundle-image -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
-            euca-bundle-image -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
-            euca-bundle-image -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -r x86_64 -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -r x86_64 -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
+            euca-bundle-image -r x86_64 -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
         ) 2>&1 </dev/null | cat
     else
         echo "Boto materials are not prepared"

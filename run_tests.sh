@@ -51,7 +51,7 @@ pass_fail $? 0 bash8
 
 echo "Ensuring we don't have crazy refs"
 
-REFS=`grep BRANCH stackrc | grep -v -- '-master'`
+REFS=`grep BRANCH stackrc | egrep -v -- '(-master|-stable/icehouse)'`
 rc=$?
 pass_fail $rc 1 crazy-refs
 if [[ $rc -eq 0 ]]; then
