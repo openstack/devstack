@@ -330,8 +330,8 @@ case "$VIRT_DRIVER" in
         esac
         ;;
     vsphere)
-        DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-debian-2.6.32-i686}
-        IMAGE_URLS=${IMAGE_URLS:-"http://partnerweb.vmware.com/programs/vmdkimage/cirros-0.3.0-i386-disk.vmdk"};;
+        DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.2-i386-disk.vmdk}
+        IMAGE_URLS=${IMAGE_URLS:-"http://partnerweb.vmware.com/programs/vmdkimage/cirros-0.3.2-i386-disk.vmdk"};;
     xenserver)
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.0-x86_64-disk}
         IMAGE_URLS=${IMAGE_URLS:-"https://github.com/downloads/citrix-openstack/warehouse/cirros-0.3.0-x86_64-disk.vhd.tgz"};;
