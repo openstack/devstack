@@ -28,7 +28,6 @@
 # - ``DEFAULT_INSTANCE_TYPE``
 # - ``DEFAULT_INSTANCE_USER``
 # - ``CINDER_MULTI_LVM_BACKEND``
-# - ``HEAT_CREATE_TEST_IMAGE``
 #
 # ``stack.sh`` calls the entry points in this order:
 #
