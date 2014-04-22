@@ -347,15 +347,22 @@ if [[ "$HEAT_FETCHED_TEST_IMAGE" == "Fedora-i386-20-20131211.1-sda" ]]; then
     HEAT_CFN_IMAGE_URL="https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/i386/$HEAT_FETCHED_TEST_IMAGE.qcow2"
     IMAGE_URLS+=",https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/i386/$HEAT_FETCHED_TEST_IMAGE.qcow2"
 elif [[ "$HEAT_FETCHED_TEST_IMAGE" == "Fedora-x86_64-20-20131211.1-sda" ]]; then
-    HEAT_CFN_IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"
-    IMAGE_URLS+=",https://download.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"
+    HEAT_CFN_IMAGE_URL="https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"
+    IMAGE_URLS+=",https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"
 fi
 
 # Uncomment after nodepool changes land
-#if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
-#    HEAT_CFN_IMAGE_URL=${HEAT_CFN_IMAGE_URL:-"https://download.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"}
-#    IMAGE_URLS+=",$HEAT_CFN_IMAGE_URL"
-#fi
+# if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
+#     HEAT_CFN_IMAGE_URL=${HEAT_CFN_IMAGE_URL:-"https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"}
+#     IMAGE_URLS+=",$HEAT_CFN_IMAGE_URL"
+# fi
+
+# Staging Area for New Images, have them here for at least 24hrs for nodepool
+# to cache them otherwise the failure rates in the gate are too high
+PRECACHE_IMAGES=$(trueorfalse False $PRECACHE_IMAGES)
+if [[ "$PRECACHE_IMAGES" == "True" ]]; then
+    IMAGE_URLS+=",https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"
+fi
 
 # 10Gb default volume backing file size
 VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-10250M}
