@@ -1231,9 +1231,9 @@ function pip_install {
 
     $xtrace
     $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
-        HTTP_PROXY=$http_proxy \
-        HTTPS_PROXY=$https_proxy \
-        NO_PROXY=$no_proxy \
+        http_proxy=$http_proxy \
+        https_proxy=$https_proxy \
+        no_proxy=$no_proxy \
         $CMD_PIP install --build=${pip_build_tmp} \
         $PIP_MIRROR_OPT $@ \
         && $SUDO_PIP rm -rf ${pip_build_tmp}
