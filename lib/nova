@@ -428,7 +428,6 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
     iniset $NOVA_CONF DEFAULT s3_host "$SERVICE_HOST"
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
-    iniset $NOVA_CONF DEFAULT osapi_compute_extension "nova.api.openstack.compute.contrib.standard_extensions"
     iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
     iniset $NOVA_CONF DEFAULT osapi_compute_workers "4"
     iniset $NOVA_CONF DEFAULT ec2_workers "4"
@@ -468,9 +467,6 @@ function create_nova_conf {
 
     iniset $NOVA_CONF keystone_authtoken signing_dir $NOVA_AUTH_CACHE_DIR
 
-    if is_service_enabled cinder; then
-        iniset $NOVA_CONF DEFAULT volume_api_class "nova.volume.cinder.API"
-    fi
     if [ -n "$NOVA_STATE_PATH" ]; then
         iniset $NOVA_CONF DEFAULT state_path "$NOVA_STATE_PATH"
         iniset $NOVA_CONF DEFAULT lock_path "$NOVA_STATE_PATH"
