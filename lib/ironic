@@ -42,7 +42,7 @@ IRONIC_POLICY_JSON=$IRONIC_CONF_DIR/policy.json
 IRONIC_SCRIPTS_DIR=${IRONIC_SCRIPTS_DIR:-$TOP_DIR/tools/ironic/scripts}
 IRONIC_TEMPLATES_DIR=${IRONIC_TEMPLATES_DIR:-$TOP_DIR/tools/ironic/templates}
 IRONIC_BAREMETAL_BASIC_OPS=$(trueorfalse False $IRONIC_BAREMETAL_BASIC_OPS)
-IRONIC_DRIVERS_WHITELIST=${IRONIC_DRIVERS_WHITELIST:-fake,pxe_ssh}
+IRONIC_ENABLED_DRIVERS=${IRONIC_ENABLED_DRIVERS:-fake,pxe_ssh,pxe_ipmitool}
 IRONIC_SSH_USERNAME=${IRONIC_SSH_USERNAME:-`whoami`}
 IRONIC_SSH_KEY_DIR=${IRONIC_SSH_KEY_DIR:-$IRONIC_DATA_DIR/ssh_keys}
 IRONIC_SSH_KEY_FILENAME=${IRONIC_SSH_KEY_FILENAME:-ironic_key}
@@ -181,7 +181,7 @@ function configure_ironic_conductor {
     sudo mv $TEMPFILE /etc/sudoers.d/ironic-rootwrap
 
     iniset $IRONIC_CONF_FILE DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
-    iniset $IRONIC_CONF_FILE DEFAULT drivers_whitelist $IRONIC_DRIVERS_WHITELIST
+    iniset $IRONIC_CONF_FILE DEFAULT enabled_drivers $IRONIC_ENABLED_DRIVERS
     iniset $IRONIC_CONF_FILE conductor api_url http://$HOST_IP:6385
     iniset $IRONIC_CONF_FILE pxe tftp_server $HOST_IP
     iniset $IRONIC_CONF_FILE pxe tftp_root $IRONIC_TFTPBOOT_DIR
