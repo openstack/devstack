@@ -24,6 +24,30 @@ function neutron_plugin_configure_common {
     Q_PLUGIN_CLASS="neutron.plugins.brocade.NeutronPlugin.BrocadePluginV2"
 }
 
+function neutron_plugin_configure_service {
+
+    if [[ "$BROCADE_SWITCH_OS_VERSION" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE switch osversion $BROCADE_SWITCH_OS_VERSION
+    fi
+
+    if [[ "$BROCADE_SWITCH_OS_TYPE" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE switch ostype $BROCADE_SWITCH_OS_TYPE
+    fi
+
+    if [[ "$BROCADE_SWITCH_PASSWORD" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE switch password $BROCADE_SWITCH_PASSWORD
+    fi
+
+    if [[ "$BROCADE_SWITCH_USERNAME" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE switch username $BROCADE_SWITCH_USERNAME
+    fi
+
+    if [[ "$BROCADE_SWITCH_IPADDR" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE switch address $BROCADE_SWITCH_IPADDR
+    fi
+
+}
+
 function neutron_plugin_configure_debug_command {
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge
 }
