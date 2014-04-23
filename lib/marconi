@@ -42,7 +42,7 @@ MARCONI_AUTH_CACHE_DIR=${MARCONI_AUTH_CACHE_DIR:-/var/cache/marconi}
 MARCONI_BIN_DIR=$(get_python_exec_prefix)
 
 # Set up database backend
-MARCONI_BACKEND=${MARCONI_BACKEND:-mongodb}
+MARCONI_BACKEND=${MARCONI_BACKEND:-sqlite}
 
 
 # Set Marconi repository
@@ -109,8 +109,8 @@ function configure_marconi {
     if [ "$MARCONI_BACKEND" = 'mysql' ] || [ "$MARCONI_BACKEND" = 'postgresql' ] ; then
         iniset $MARCONI_CONF drivers storage sqlalchemy
         iniset $MARCONI_CONF 'drivers:storage:sqlalchemy' uri `database_connection_url marconi`
-    else
-        iniset $MARCONI_CONF drivers storage mongodb
+    elif [ "$MARCONI_BACKEND" = 'mongodb' ] ; then
+        iniset $MARCONI_CONF  drivers storage mongodb
         iniset $MARCONI_CONF 'drivers:storage:mongodb' uri mongodb://localhost:27017/marconi
         configure_mongodb
         cleanup_marconi
@@ -154,7 +154,7 @@ function install_marconiclient {
 
 # start_marconi() - Start running processes, including screen
 function start_marconi {
-    screen_it marconi-server "marconi-server --config-file $MARCONI_CONF"
+    screen_it marconi-server "marconi-server --config-file $MARCONI_CONF --daemon"
     echo "Waiting for Marconi to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- $MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT/v1/health; do sleep 1; done"; then
         die $LINENO "Marconi did not start"
