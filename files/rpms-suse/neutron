@@ -1,5 +1,5 @@
 dnsmasq
-dnsmasq-utils # dist:opensuse-12.3
+dnsmasq-utils # dist:opensuse-12.3,opensuse-13.1
 ebtables
 iptables
 iputils
