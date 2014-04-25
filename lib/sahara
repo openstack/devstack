@@ -35,6 +35,8 @@ SAHARA_SERVICE_PROTOCOL=${SAHARA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
 SAHARA_AUTH_CACHE_DIR=${SAHARA_AUTH_CACHE_DIR:-/var/cache/sahara}
 
+SAHARA_ENABLED_PLUGINS=${SAHARA_ENABLED_PLUGINS:-vanilla,hdp,fake}
+
 # Support entry points installation of console scripts
 if [[ -d $SAHARA_DIR/bin ]]; then
     SAHARA_BIN_DIR=$SAHARA_DIR/bin
@@ -129,6 +131,8 @@ function configure_sahara {
 
     iniset $SAHARA_CONF_FILE DEFAULT verbose True
     iniset $SAHARA_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+
+    iniset $SAHARA_CONF_FILE DEFAULT plugins $SAHARA_ENABLED_PLUGINS
 
     iniset $SAHARA_CONF_FILE database connection `database_connection_url sahara`
 
