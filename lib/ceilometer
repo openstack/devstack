@@ -155,10 +155,11 @@ function configure_ceilometer {
     fi
 
     # the compute and central agents need these credentials in order to
-    # call out to the public nova and glance APIs
-    iniset $CEILOMETER_CONF DEFAULT os_username ceilometer
-    iniset $CEILOMETER_CONF DEFAULT os_password $SERVICE_PASSWORD
-    iniset $CEILOMETER_CONF DEFAULT os_tenant_name $SERVICE_TENANT_NAME
+    # call out to other services' public APIs
+    # the alarm evaluator needs these options to call ceilometer APIs
+    iniset $CEILOMETER_CONF service_credentials os_username ceilometer
+    iniset $CEILOMETER_CONF service_credentials os_password $SERVICE_PASSWORD
+    iniset $CEILOMETER_CONF service_credentials os_tenant_name $SERVICE_TENANT_NAME
 
     iniset $CEILOMETER_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $CEILOMETER_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
