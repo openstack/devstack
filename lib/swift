@@ -160,21 +160,23 @@ function _config_swift_apache_wsgi {
     local proxy_port=${SWIFT_DEFAULT_BIND_PORT:-8080}
 
     # copy proxy vhost and wsgi file
-    sudo cp ${SWIFT_DIR}/examples/apache2/proxy-server.template ${apache_vhost_dir}/proxy-server
+    local file=${apache_vhost_dir}/proxy-server.conf
+    sudo cp ${SWIFT_DIR}/examples/apache2/proxy-server.template $file
     sudo sed -e "
         /^#/d;/^$/d;
         s/%PORT%/$proxy_port/g;
         s/%SERVICENAME%/proxy-server/g;
         s/%APACHE_NAME%/${APACHE_NAME}/g;
         s/%USER%/${STACK_USER}/g;
-    " -i ${apache_vhost_dir}/proxy-server
+    " -i $file
     enable_apache_site proxy-server
 
-    sudo cp ${SWIFT_DIR}/examples/wsgi/proxy-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/proxy-server.wsgi
+    local file=${SWIFT_APACHE_WSGI_DIR}/proxy-server.wsgi
+    sudo cp ${SWIFT_DIR}/examples/wsgi/proxy-server.wsgi.template $file
     sudo sed -e "
         /^#/d;/^$/d;
         s/%SERVICECONF%/proxy-server.conf/g;
-    " -i ${SWIFT_APACHE_WSGI_DIR}/proxy-server.wsgi
+    " -i $file
 
     # copy apache vhost file and set name and port
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
@@ -182,52 +184,58 @@ function _config_swift_apache_wsgi {
         container_port=$[CONTAINER_PORT_BASE + 10 * ($node_number - 1)]
         account_port=$[ACCOUNT_PORT_BASE + 10 * ($node_number - 1)]
 
-        sudo cp ${SWIFT_DIR}/examples/apache2/object-server.template ${apache_vhost_dir}/object-server-${node_number}
+        local file=${apache_vhost_dir}/object-server-${node_number}.conf
+        sudo cp ${SWIFT_DIR}/examples/apache2/object-server.template $file
         sudo sed -e "
             s/%PORT%/$object_port/g;
             s/%SERVICENAME%/object-server-${node_number}/g;
             s/%APACHE_NAME%/${APACHE_NAME}/g;
             s/%USER%/${STACK_USER}/g;
-        " -i ${apache_vhost_dir}/object-server-${node_number}
+        " -i $file
         enable_apache_site object-server-${node_number}
 
-        sudo cp ${SWIFT_DIR}/examples/wsgi/object-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/object-server-${node_number}.wsgi
+        local file=${SWIFT_APACHE_WSGI_DIR}/object-server-${node_number}.wsgi
+        sudo cp ${SWIFT_DIR}/examples/wsgi/object-server.wsgi.template $file
         sudo sed -e "
             /^#/d;/^$/d;
             s/%SERVICECONF%/object-server\/${node_number}.conf/g;
-        " -i ${SWIFT_APACHE_WSGI_DIR}/object-server-${node_number}.wsgi
+        " -i $file
 
-        sudo cp ${SWIFT_DIR}/examples/apache2/container-server.template ${apache_vhost_dir}/container-server-${node_number}
+        local file=${apache_vhost_dir}/container-server-${node_number}.conf
+        sudo cp ${SWIFT_DIR}/examples/apache2/container-server.template $file
         sudo sed -e "
             /^#/d;/^$/d;
             s/%PORT%/$container_port/g;
             s/%SERVICENAME%/container-server-${node_number}/g;
             s/%APACHE_NAME%/${APACHE_NAME}/g;
             s/%USER%/${STACK_USER}/g;
-        " -i ${apache_vhost_dir}/container-server-${node_number}
+        " -i $file
         enable_apache_site container-server-${node_number}
 
-        sudo cp ${SWIFT_DIR}/examples/wsgi/container-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/container-server-${node_number}.wsgi
+        local file=${SWIFT_APACHE_WSGI_DIR}/container-server-${node_number}.wsgi
+        sudo cp ${SWIFT_DIR}/examples/wsgi/container-server.wsgi.template $file
         sudo sed -e "
             /^#/d;/^$/d;
             s/%SERVICECONF%/container-server\/${node_number}.conf/g;
-        " -i ${SWIFT_APACHE_WSGI_DIR}/container-server-${node_number}.wsgi
+        " -i $file
 
-        sudo cp ${SWIFT_DIR}/examples/apache2/account-server.template ${apache_vhost_dir}/account-server-${node_number}
+        local file=${apache_vhost_dir}/account-server-${node_number}.conf
+        sudo cp ${SWIFT_DIR}/examples/apache2/account-server.template $file
         sudo sed -e "
             /^#/d;/^$/d;
             s/%PORT%/$account_port/g;
             s/%SERVICENAME%/account-server-${node_number}/g;
             s/%APACHE_NAME%/${APACHE_NAME}/g;
             s/%USER%/${STACK_USER}/g;
-        " -i ${apache_vhost_dir}/account-server-${node_number}
+        " -i $file
         enable_apache_site account-server-${node_number}
 
-        sudo cp ${SWIFT_DIR}/examples/wsgi/account-server.wsgi.template ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
+        local file=${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
+        sudo cp ${SWIFT_DIR}/examples/wsgi/account-server.wsgi.template $file
         sudo sed -e "
             /^#/d;/^$/d;
             s/%SERVICECONF%/account-server\/${node_number}.conf/g;
-        " -i ${SWIFT_APACHE_WSGI_DIR}/account-server-${node_number}.wsgi
+        " -i $file
     done
 }
 
