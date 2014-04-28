@@ -342,10 +342,15 @@ esac
 
 # Use 64bit fedora image if heat is enabled
 if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
-    HEAT_CFN_IMAGE_URL=${HEAT_CFN_IMAGE_URL:-"https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"}
-    IMAGE_URLS+=",$HEAT_CFN_IMAGE_URL"
+    case "$VIRT_DRIVER" in
+        libvirt|baremetal|ironic)
+            HEAT_CFN_IMAGE_URL=${HEAT_CFN_IMAGE_URL:-"https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"}
+            IMAGE_URLS+=",$HEAT_CFN_IMAGE_URL"
+            ;;
+        *)
+            ;;
+    esac
 fi
-
 # Staging Area for New Images, have them here for at least 24hrs for nodepool
 # to cache them otherwise the failure rates in the gate are too high
 PRECACHE_IMAGES=$(trueorfalse False $PRECACHE_IMAGES)
