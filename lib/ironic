@@ -53,11 +53,12 @@ IRONIC_VM_SSH_PORT=${IRONIC_VM_SSH_PORT:-22}
 IRONIC_VM_SSH_ADDRESS=${IRONIC_VM_SSH_ADDRESS:-$HOST_IP}
 IRONIC_VM_COUNT=${IRONIC_VM_COUNT:-1}
 IRONIC_VM_SPECS_CPU=${IRONIC_VM_SPECS_CPU:-1}
-# NOTE(agordeev): both ubuntu and fedora deploy images won't work with 256MB of RAM.
-#                 System halts and throws kernel panic during initramfs unpacking.
-#                 Ubuntu needs at least 384MB, but fedora requires 448.
-#                 So placing 512 here to satisfy both.
-IRONIC_VM_SPECS_RAM=${IRONIC_VM_SPECS_RAM:-512}
+# NOTE(adam_g): Kernels 3.12 and newer user tmpfs by default for initramfs.
+#               DIB produced ramdisks tend to be ~250MB but tmpfs will only allow
+#               use of 50% of available memory before ENOSPC.  Set minimum 1GB
+#               for nodes to avoid (LP: #1311987) and ensure consistency across
+#               older and newer kernels.
+IRONIC_VM_SPECS_RAM=${IRONIC_VM_SPECS_RAM:-1024}
 IRONIC_VM_SPECS_DISK=${IRONIC_VM_SPECS_DISK:-10}
 IRONIC_VM_EMULATOR=${IRONIC_VM_EMULATOR:-/usr/bin/qemu-system-x86_64}
 IRONIC_VM_NETWORK_BRIDGE=${IRONIC_VM_NETWORK_BRIDGE:-brbm}
