@@ -11,7 +11,7 @@ Q_ML2_TENANT_NETWORK_TYPE=${Q_ML2_TENANT_NETWORK_TYPE:-}
 # This has to be set here since the agent will set this in the config file
 if [[ "$Q_ML2_TENANT_NETWORK_TYPE" != "" ]]; then
     Q_AGENT_EXTRA_AGENT_OPTS+=(tunnel_types=$Q_ML2_TENANT_NETWORK_TYPE)
-elif [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
+elif [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
     Q_AGENT_EXTRA_AGENT_OPTS+=(tunnel_types=gre)
 fi
 
@@ -60,12 +60,12 @@ function neutron_plugin_configure_common {
 function neutron_plugin_configure_service {
     if [[ "$Q_ML2_TENANT_NETWORK_TYPE" != "" ]]; then
         Q_SRV_EXTRA_OPTS+=(tenant_network_types=$Q_ML2_TENANT_NETWORK_TYPE)
-    elif [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
+    elif [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
         # This assumes you want a simple configuration, and will overwrite
         # Q_SRV_EXTRA_OPTS if set in addition to ENABLE_TENANT_TUNNELS.
         Q_SRV_EXTRA_OPTS+=(tenant_network_types=gre)
         Q_ML2_PLUGIN_GRE_TYPE_OPTIONS=(tunnel_id_ranges=$TENANT_TUNNEL_RANGES)
-    elif [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
+    elif [[ "$ENABLE_TENANT_VLANS" == "True" ]]; then
         Q_SRV_EXTRA_OPTS+=(tenant_network_types=vlan)
     else
         echo "WARNING - The ml2 plugin is using local tenant networks, with no connectivity between hosts."
@@ -74,7 +74,7 @@ function neutron_plugin_configure_service {
     # Allow for overrding VLAN configuration (for example, to configure provider
     # VLANs) by first checking if Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS is set.
     if [ "$Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS" == "" ]; then
-        if [[ "$ML2_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+        if [[ "$ML2_VLAN_RANGES" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
             ML2_VLAN_RANGES=$PHYSICAL_NETWORK
             if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
                 ML2_VLAN_RANGES=$ML2_VLAN_RANGES:$TENANT_VLAN_RANGE
