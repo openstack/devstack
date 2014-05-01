@@ -24,14 +24,16 @@ function neutron_plugin_configure_common {
     PLUMGRID_ADMIN=${PLUMGRID_ADMIN:-username}
     PLUMGRID_PASSWORD=${PLUMGRID_PASSWORD:-password}
     PLUMGRID_TIMEOUT=${PLUMGRID_TIMEOUT:-70}
+    PLUMGRID_DRIVER=${PLUMGRID_DRIVER:-neutron.plugins.plumgrid.drivers.fake_plumlib.Plumlib}
 }
 
 function neutron_plugin_configure_service {
-    iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector director_server $PLUMGRID_DIRECTOR_IP
-    iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector director_server_port $PLUMGRID_DIRECTOR_PORT
-    iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector username $PLUMGRID_ADMIN
-    iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector password $PLUMGRID_PASSWORD
-    iniset /$Q_PLUGIN_CONF_FILE PLUMgridDirector servertimeout $PLUMGRID_TIMEOUT
+    iniset /$Q_PLUGIN_CONF_FILE plumgriddirector director_server $PLUMGRID_DIRECTOR_IP
+    iniset /$Q_PLUGIN_CONF_FILE plumgriddirector director_server_port $PLUMGRID_DIRECTOR_PORT
+    iniset /$Q_PLUGIN_CONF_FILE plumgriddirector username $PLUMGRID_ADMIN
+    iniset /$Q_PLUGIN_CONF_FILE plumgriddirector password $PLUMGRID_PASSWORD
+    iniset /$Q_PLUGIN_CONF_FILE plumgriddirector servertimeout $PLUMGRID_TIMEOUT
+    iniset /$Q_PLUGIN_CONF_FILE plumgriddirector driver $PLUMGRID_DRIVER
 }
 
 function neutron_plugin_configure_debug_command {
