@@ -59,6 +59,7 @@ IRONIC_VM_SPECS_CPU=${IRONIC_VM_SPECS_CPU:-1}
 #                 So placing 512 here to satisfy both.
 IRONIC_VM_SPECS_RAM=${IRONIC_VM_SPECS_RAM:-512}
 IRONIC_VM_SPECS_DISK=${IRONIC_VM_SPECS_DISK:-10}
+IRONIC_VM_EPHEMERAL_DISK=${IRONIC_VM_EPHEMERAL_DISK:-0}
 IRONIC_VM_EMULATOR=${IRONIC_VM_EMULATOR:-/usr/bin/qemu-system-x86_64}
 IRONIC_VM_NETWORK_BRIDGE=${IRONIC_VM_NETWORK_BRIDGE:-brbm}
 IRONIC_VM_NETWORK_RANGE=${IRONIC_VM_NETWORK_RANGE:-192.0.2.0/24}
@@ -355,7 +356,8 @@ function enroll_vms {
     done < $IRONIC_VM_MACS_CSV_FILE
 
     # create the nova flavor
-    nova flavor-create baremetal auto $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK $IRONIC_VM_SPECS_CPU
+    adjusted_disk=$(($IRONIC_VM_SPECS_DISK - $IRONIC_VM_EPHEMERAL_DISK))
+    nova flavor-create --ephemeral $IRONIC_VM_EPHEMERAL_DISK baremetal auto $IRONIC_VM_SPECS_RAM $adjusted_disk $IRONIC_VM_SPECS_CPU
     nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$IRONIC_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$IRONIC_DEPLOY_RAMDISK_ID"
 
     # intentional sleep to make sure the tag has been set to port
