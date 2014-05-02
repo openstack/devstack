@@ -76,7 +76,6 @@ function configure_tempest {
     local num_images
     local image_uuid
     local image_uuid_alt
-    local errexit
     local password
     local line
     local flavors
@@ -91,11 +90,6 @@ function configure_tempest {
 
     # TODO(afazekas):
     # sudo python setup.py deploy
-
-    # This function exits on an error so that errors don't compound and you see
-    # only the first error that occurred.
-    errexit=$(set +o | grep errexit)
-    set -o errexit
 
     # Save IFS
     ifs=$IFS
@@ -383,8 +377,6 @@ function configure_tempest {
 
     # Restore IFS
     IFS=$ifs
-    #Restore errexit
-    $errexit
 }
 
 # create_tempest_accounts() - Set up common required tempest accounts

@@ -4,7 +4,7 @@
 
 # Creates baremetal poseur nodes for ironic testing purposes
 
-set -exu
+set -ex
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
@@ -24,6 +24,7 @@ esac
 TOTAL=$(($5 - 1))
 BRIDGE=$6
 EMULATOR=$7
+LOGDIR=$8
 
 LIBVIRT_NIC_DRIVER=${LIBVIRT_NIC_DRIVER:-"e1000"}
 LIBVIRT_STORAGE_POOL=${LIBVIRT_STORAGE_POOL:-"default"}
@@ -43,6 +44,10 @@ if [ "$pool_state" != "running" ] ; then
   virsh pool-start $LIBVIRT_STORAGE_POOL >&2
 fi
 
+if [ -n "$LOGDIR" ] ; then
+  mkdir -p "$LOGDIR"
+fi
+
 PREALLOC=
 if [ -f /etc/debian_version ]; then
     PREALLOC="--prealloc-metadata"
@@ -51,6 +56,11 @@ fi
 DOMS=""
 for idx in $(seq 0 $TOTAL) ; do
     NAME="baremetal${BRIDGE}_${idx}"
+    if [ -n "$LOGDIR" ] ; then
+      VM_LOGGING="--console-log $LOGDIR/${NAME}_console.log"
+    else
+      VM_LOGGING=""
+    fi
     DOMS="$DOMS $NAME"
     VOL_NAME="baremetal${BRIDGE}-${idx}.qcow2"
     (virsh list --all | grep -q $NAME) && continue
@@ -62,7 +72,10 @@ for idx in $(seq 0 $TOTAL) ; do
     # Pre-touch the VM to set +C, as it can only be set on empty files.
     sudo touch "$volume_path"
     sudo chattr +C "$volume_path" || true
-    $TOP_DIR/scripts/configure-vm --bootdev network --name $NAME --image "$volume_path" --arch $ARCH --cpus $CPU --memory $MEM --libvirt-nic-driver $LIBVIRT_NIC_DRIVER --emulator $EMULATOR --network $BRIDGE >&2
+    $TOP_DIR/scripts/configure-vm \
+      --bootdev network --name $NAME --image "$volume_path" \
+      --arch $ARCH --cpus $CPU --memory $MEM --libvirt-nic-driver $LIBVIRT_NIC_DRIVER \
+      --emulator $EMULATOR --network $BRIDGE $VM_LOGGING >&2
 done
 
 for dom in $DOMS ; do

@@ -10,8 +10,8 @@ source $TOP_DIR/lib/neutron_plugins/ovs_base
 function neutron_plugin_create_nova_conf {
     _neutron_ovs_base_configure_nova_vif_driver
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-        iniset $NOVA_CONF DEFAULT xenapi_vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
-        iniset $NOVA_CONF DEFAULT xenapi_ovs_integration_bridge $XEN_INTEGRATION_BRIDGE
+        iniset $NOVA_CONF xenserver vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
+        iniset $NOVA_CONF xenserver ovs_integration_bridge $XEN_INTEGRATION_BRIDGE
         # Disable nova's firewall so that it does not conflict with neutron
         iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
     fi
