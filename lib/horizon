@@ -45,7 +45,10 @@ function _horizon_config_set {
     local option=$3
     local value=$4
 
-    if grep -q "^$section" $file; then
+    if [ -z "$section" ]; then
+        sed -e "/^$option/d" -i $local_settings
+        echo -e "\n$option=$value" >> $file
+    elif grep -q "^$section" $file; then
         line=$(sed -ne "/^$section/,/^}/ { /^ *'$option':/ p; }" $file)
         if [ -n "$line" ]; then
             sed -i -e "/^$section/,/^}/ s/^\( *'$option'\) *:.*$/\1: $value,/" $file
@@ -101,6 +104,13 @@ function init_horizon {
     # enable VPN dashboard in case service is enabled
     if is_service_enabled q-vpn; then
         _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_vpn True
+    fi
+
+    _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
+    _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://%s:${KEYSTONE_SERVICE_PORT}/v2.0\" % OPENSTACK_HOST"
+
+    if [ -f $SSL_BUNDLE_FILE ]; then
+        _horizon_config_set $local_settings "" OPENSTACK_SSL_CACERT \"${SSL_BUNDLE_FILE}\"
     fi
 
     # Create an empty directory that apache uses as docroot
