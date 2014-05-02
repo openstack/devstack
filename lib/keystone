@@ -450,6 +450,8 @@ function start_keystone {
 function stop_keystone {
     # Kill the Keystone screen window
     screen_stop key
+    # Cleanup the WSGI files and VHOST
+    _cleanup_keystone_apache_wsgi
 }
 
 
