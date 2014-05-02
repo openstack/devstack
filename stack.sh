@@ -494,14 +494,18 @@ function spinner {
     done
 }
 
+function kill_spinner {
+    if [ ! -z "$LAST_SPINNER_PID" ]; then
+        kill >/dev/null 2>&1 $LAST_SPINNER_PID
+        printf "\b\b\bdone\n" >&3
+    fi
+}
+
 # Echo text to the log file, summary log file and stdout
 # echo_summary "something to say"
 function echo_summary {
     if [[ -t 3 && "$VERBOSE" != "True" ]]; then
-        kill >/dev/null 2>&1 $LAST_SPINNER_PID
-        if [ ! -z "$LAST_SPINNER_PID" ]; then
-            printf "\b\b\bdone\n" >&3
-        fi
+        kill_spinner
         echo -n -e $@ >&6
         spinner &
         LAST_SPINNER_PID=$!
@@ -612,6 +616,10 @@ function exit_trap {
         echo "exit_trap: cleaning up child processes"
         kill 2>&1 $jobs
     fi
+
+    # Kill the last spinner process
+    kill_spinner
+
     exit $r
 }
 
