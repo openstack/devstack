@@ -393,11 +393,16 @@ function enroll_vms {
     neutron port-delete $PORT_ID
 }
 
-function configure_tftpd {
-    # enable tftp natting for allowing connections to SERVICE_HOST's tftp server
+function configure_iptables {
+    # enable tftp natting for allowing connections to HOST_IP's tftp server
     sudo modprobe nf_conntrack_tftp
     sudo modprobe nf_nat_tftp
+    # nodes boot from TFTP and callback to the API server listening on $HOST_IP
+    sudo iptables -I INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
+    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport 6385 -j ACCEPT || true
+}
 
+function configure_tftpd {
     if is_ubuntu; then
         PXEBIN=/usr/lib/syslinux/pxelinux.0
     elif is_fedora; then
@@ -520,6 +525,7 @@ function prepare_baremetal_basic_ops {
     create_bridge_and_vms
     enroll_vms
     configure_tftpd
+    configure_iptables
 
     # restart nova-compute to ensure its resource tracking is up to
     # date with newly enrolled nodes
@@ -539,6 +545,10 @@ function cleanup_baremetal_basic_ops {
     sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/cleanup-nodes $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE"
     sudo rm -rf /etc/xinetd.d/tftp /etc/init/tftpd-hpa.override
     restart_service xinetd
+    sudo iptables -D INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
+    sudo iptables -D INPUT -d $HOST_IP -p tcp --dport 6385 -j ACCEPT || true
+    sudo rmmod nf_conntrack_tftp || true
+    sudo rmmod nf_nat_tftp || true
 }
 
 # Restore xtrace + pipefail
