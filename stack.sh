@@ -150,7 +150,7 @@ if [[ ! ${DISTRO} =~ (precise|saucy|trusty|7.0|wheezy|sid|testing|jessie|f19|f20
 fi
 
 # Look for obsolete stuff
-if [[ ,${ENABLED_SERVICES} =~ ,"swift" ]]; then
+if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
     echo "FATAL: 'swift' is not supported as a service name"
     echo "FATAL: Use the actual swift service names to enable tham as required:"
     echo "FATAL: s-proxy s-object s-container s-account"
