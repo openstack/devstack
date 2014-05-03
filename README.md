@@ -124,7 +124,7 @@ Apache web server is enabled for wsgi services by setting
 `APACHE_ENABLED_SERVICES` in your ``localrc`` section.  Remember to
 enable these services at first as above.
 
-    APACHE_ENABLED_SERVICES+=keystone,swift
+    APACHE_ENABLED_SERVICES+=key,swift
 
 # Swift
 
