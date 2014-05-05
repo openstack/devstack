@@ -61,6 +61,9 @@ ODL_ARGS=${ODL_ARGS:-"-XX:MaxPermSize=384m"}
 # How long to pause after ODL starts to let it complete booting
 ODL_BOOT_WAIT=${ODL_BOOT_WAIT:-60}
 
+# The physical provider network to device mapping
+ODL_PROVIDER_MAPPINGS=${ODL_PROVIDER_MAPPINGS:-physnet1:eth1}
+
 # Set up default directories
 
 

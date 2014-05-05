@@ -47,9 +47,9 @@ if is_service_enabled odl-compute; then
         ODL_MGR_PORT=${ODL_MGR_PORT:-6640}
         read ovstbl <<< $(sudo ovs-vsctl get Open_vSwitch . _uuid)
         sudo ovs-vsctl set-manager tcp:$ODL_MGR_IP:$ODL_MGR_PORT
-        if [[ -n "$OVS_BRIDGE_MAPPINGS" ]] && [[ "$ENABLE_TENANT_VLANS" == "True" ]]; then
+        if [[ -n "$ODL_PROVIDER_MAPPINGS" ]] && [[ "$ENABLE_TENANT_VLANS" == "True" ]]; then
             sudo ovs-vsctl set Open_vSwitch $ovstbl \
-                other_config:bridge_mappings=$OVS_BRIDGE_MAPPINGS
+                other_config:provider_mappings=$ODL_PROVIDER_MAPPINGS
         fi
         sudo ovs-vsctl set Open_vSwitch $ovstbl other_config:local_ip=$ODL_LOCAL_IP
     elif [[ "$1" == "stack" && "$2" == "post-extra" ]]; then
