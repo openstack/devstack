@@ -1,0 +1,16 @@
+diff -r b2efb7df637b discover.py
+--- a/discover.py	Thu Mar 24 00:31:02 2011 -0400
++++ b/discover.py	Thu Nov 28 12:02:19 2013 +0000
+@@ -82,7 +82,11 @@
+     """
+     testMethodPrefix = 'test'
+     sortTestMethodsUsing = cmp
+-    suiteClass = unittest.TestSuite
++    try:
++        import unittest2
++        suiteClass = unittest2.TestSuite
++    except ImportError:
++        suiteClass = unittest.TestSuite
+     _top_level_dir = None
+ 
+     def loadTestsFromTestCase(self, testCaseClass):
