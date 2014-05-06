@@ -253,11 +253,17 @@ function configure_keystone {
     fi
 
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] &&  ! is_apache_enabled_service key ; then
         setup_colorized_logging $KEYSTONE_CONF DEFAULT
     fi
 
     if is_apache_enabled_service key; then
+        iniset $KEYSTONE_CONF DEFAULT debug "True"
+        # Eliminate the %(asctime)s.%(msecs)03d from the log format strings
+        iniset $KEYSTONE_CONF DEFAULT logging_context_format_string "%(process)d %(levelname)s %(name)s [%(request_id)s %(user_identity)s] %(instance)s%(message)s"
+        iniset $KEYSTONE_CONF DEFAULT logging_default_format_string "%(process)d %(levelname)s %(name)s [-] %(instance)s%(message)s"
+        iniset $KEYSTONE_CONF DEFAULT logging_debug_format_suffix "%(funcName)s %(pathname)s:%(lineno)d"
+        iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(process)d TRACE %(name)s %(instance)s"
         _config_keystone_apache_wsgi
     fi
 }
