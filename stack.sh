@@ -543,10 +543,11 @@ if [[ -n "$LOGFILE" ]]; then
 
     # Redirect output according to config
 
-    # Copy stdout to fd 3
+    # Set fd 3 to a copy of stdout. So we can set fd 1 without losing
+    # stdout later.
     exec 3>&1
     if [[ "$VERBOSE" == "True" ]]; then
-        # Redirect stdout/stderr to tee to write the log file
+        # Set fd 1 and 2 to write the log file
         exec 1> >( awk -v logfile=${LOGFILE} '
                 /((set \+o$)|xtrace)/ { next }
                 {
@@ -559,7 +560,7 @@ if [[ -n "$LOGFILE" ]]; then
                     print
                     fflush("")
                 }' ) 2>&1
-        # Set up a second fd for output
+        # Set fd 6 to summary log file
         exec 6> >( tee "${SUMFILE}" )
     else
         # Set fd 1 and 2 to primary logfile
@@ -574,7 +575,8 @@ if [[ -n "$LOGFILE" ]]; then
     ln -sf $SUMFILE $LOGDIR/$LOGFILENAME.summary
 else
     # Set up output redirection without log files
-    # Copy stdout to fd 3
+    # Set fd 3 to a copy of stdout. So we can set fd 1 without losing
+    # stdout later.
     exec 3>&1
     if [[ "$VERBOSE" != "True" ]]; then
         # Throw away stdout and stderr
