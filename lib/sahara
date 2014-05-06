@@ -166,7 +166,7 @@ function install_sahara {
 
 # start_sahara() - Start running processes, including screen
 function start_sahara {
-    screen_it sahara "cd $SAHARA_DIR && $SAHARA_BIN_DIR/sahara-api --config-file $SAHARA_CONF_FILE"
+    screen_it sahara "cd $SAHARA_DIR && $SAHARA_BIN_DIR/sahara-all --config-file $SAHARA_CONF_FILE"
 }
 
 # stop_sahara() - Stop running processes
