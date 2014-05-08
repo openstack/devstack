@@ -34,7 +34,7 @@ Optional Arguments
 -P include password to the rc files; with -A it assume all users password is the same
 -A try with all user
 -u <username> create files just for the specified user
--C <tanent_name> create user and tenant, the specifid tenant will be the user's tenant
+-C <tenant_name> create user and tenant, the specifid tenant will be the user's tenant
 -r <name> when combined with -C and the (-u) user exists it will be the user's tenant role in the (-C)tenant (default: Member)
 -p <userpass> password for the user
 --os-username <username>
@@ -62,8 +62,8 @@ ADDPASS=""
 
 # The services users usually in the service tenant.
 # rc files for service users, is out of scope.
-# Supporting different tanent for services is out of scope.
-SKIP_TENANT=",service," # tenant names are between commas(,)
+# Supporting different tenant for services is out of scope.
+SKIP_TENANT="service"
 MODE=""
 ROLE=Member
 USER_NAME=""
@@ -126,15 +126,15 @@ fi
 
 export -n SERVICE_TOKEN SERVICE_ENDPOINT OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
 
-EC2_URL=http://localhost:8773/service/Cloud
-S3_URL=http://localhost:3333
+EC2_URL=`openstack endpoint show ec2 | grep " ec2.publicURL " | cut -d " " -f4`
+if [[ -z $EC2_URL ]]; then
+    EC2_URL=http://localhost:8773/service/Cloud
+fi
 
-ec2=`keystone endpoint-get --service ec2 | awk '/\|[[:space:]]*ec2.publicURL/ {print $4}'`
-[ -n "$ec2" ] && EC2_URL=$ec2
-
-s3=`keystone endpoint-get --service s3 | awk '/\|[[:space:]]*s3.publicURL/ {print $4}'`
-[ -n "$s3" ] && S3_URL=$s3
-
+S3_URL=`openstack endpoint show s3 | grep " s3.publicURL " | cut -d " " -f4`
+if [[ -z $S3_URL ]]; then
+    S3_URL=http://localhost:3333
+fi
 
 mkdir -p "$ACCOUNT_DIR"
 ACCOUNT_DIR=`readlink -f "$ACCOUNT_DIR"`
@@ -158,13 +158,13 @@ function add_entry {
     local user_passwd=$5
 
     # The admin user can see all user's secret AWS keys, it does not looks good
-    local line=`keystone ec2-credentials-list --user_id $user_id | grep -E "^\\|[[:space:]]*($tenant_name|$tenant_id)[[:space:]]*\\|" | head -n 1`
+    local line=`openstack ec2 credentials list --user $user_id | grep " $tenant_id "`
     if [ -z "$line" ]; then
-        keystone ec2-credentials-create --user-id $user_id --tenant-id $tenant_id 1>&2
-        line=`keystone ec2-credentials-list --user_id $user_id | grep -E "^\\|[[:space:]]*($tenant_name|$tenant_id)[[:space:]]*\\|" | head -n 1`
+        openstack ec2 credentials create --user $user_id --project $tenant_id 1>&2
+        line=`openstack ec2 credentials list --user $user_id | grep " $tenant_id "`
     fi
     local ec2_access_key ec2_secret_key
-    read ec2_access_key ec2_secret_key <<<  `echo $line | awk '{print $4 " " $6 }'`
+    read ec2_access_key ec2_secret_key <<<  `echo $line | awk '{print $2 " " $4 }'`
     mkdir -p "$ACCOUNT_DIR/$tenant_name"
     local rcfile="$ACCOUNT_DIR/$tenant_name/$user_name"
     # The certs subject part are the tenant ID "dash" user ID, but the CN should be the first part of the DN
@@ -212,41 +212,35 @@ EOF
 }
 
 #admin users expected
-function create_or_get_tenant {
-    local tenant_name=$1
-    local tenant_id=`keystone tenant-list | awk '/\|[[:space:]]*'"$tenant_name"'[[:space:]]*\|.*\|/ {print $2}'`
-    if [ -n "$tenant_id" ]; then
-        echo $tenant_id
-    else
-        keystone tenant-create --name "$tenant_name" | awk '/\|[[:space:]]*id[[:space:]]*\|.*\|/ {print $4}'
+function create_or_get_project {
+    local name=$1
+    local id
+    eval $(openstack project show -f shell -c id $name)
+    if [[ -z $id ]]; then
+        eval $(openstack project create -f shell -c id $name)
     fi
+    echo $id
 }
 
 function create_or_get_role {
-    local role_name=$1
-    local role_id=`keystone role-list| awk '/\|[[:space:]]*'"$role_name"'[[:space:]]*\|/ {print $2}'`
-    if [ -n "$role_id" ]; then
-        echo $role_id
-    else
-        keystone role-create --name "$role_name" |awk '/\|[[:space:]]*id[[:space:]]*\|.*\|/ {print $4}'
+    local name=$1
+    local id
+    eval $(openstack role show -f shell -c id $name)
+    if [[ -z $id ]]; then
+        eval $(openstack role create -f shell -c id $name)
     fi
+    echo $id
 }
 
 # Provides empty string when the user does not exists
 function get_user_id {
-    local user_name=$1
-    keystone user-list | awk '/^\|[^|]*\|[[:space:]]*'"$user_name"'[[:space:]]*\|.*\|/ {print $2}'
+    openstack user list | grep " $1 " | cut -d " " -f2
 }
 
 if [ $MODE != "create" ]; then
-# looks like I can't ask for all tenant related to a specified  user
-    for tenant_id_at_name in `keystone tenant-list | awk 'BEGIN {IGNORECASE = 1} /true[[:space:]]*\|$/ {print  $2 "@" $4}'`; do
-        read tenant_id tenant_name <<< `echo "$tenant_id_at_name" | sed 's/@/ /'`
-        if echo $SKIP_TENANT| grep -q ",$tenant_name,"; then
-            continue;
-        fi
-        for user_id_at_name in `keystone user-list --tenant-id $tenant_id | awk 'BEGIN {IGNORECASE = 1} /true[[:space:]]*\|[^|]*\|$/ {print  $2 "@" $4}'`; do
-            read user_id user_name <<< `echo "$user_id_at_name" | sed 's/@/ /'`
+# looks like I can't ask for all tenant related to a specified user
+    openstack project list --long --quote none -f csv | grep ',True' | grep -v "${SKIP_TENANT}" | while IFS=, read tenant_id tenant_name desc enabled; do
+        openstack user list --project $tenant_id --long --quote none -f csv | grep ',True' | while IFS=, read user_id user_name project email enabled; do
             if [ $MODE = one -a "$user_name" != "$USER_NAME" ]; then
                 continue;
             fi
@@ -263,18 +257,16 @@ if [ $MODE != "create" ]; then
     done
 else
     tenant_name=$TENANT
-    tenant_id=`create_or_get_tenant "$TENANT"`
+    tenant_id=$(create_or_get_project "$TENANT")
     user_name=$USER_NAME
     user_id=`get_user_id $user_name`
     if [ -z "$user_id" ]; then
-        #new user
-        user_id=`keystone user-create --name "$user_name" --tenant-id "$tenant_id" --pass "$USER_PASS" --email "$user_name@example.com" | awk '/\|[[:space:]]*id[[:space:]]*\|.*\|/ {print $4}'`
-        #The password is in the cmd line. It is not a good thing
+        eval $(openstack user create "$user_name" --project "$tenant_id" --password "$USER_PASS" --email "$user_name@example.com" -f shell -c id)
+        user_id=$id
         add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
     else
-        #new role
-        role_id=`create_or_get_role "$ROLE"`
-        keystone user-role-add --user-id "$user_id" --tenant-id "$tenant_id" --role-id "$role_id"
+        role_id=$(create_or_get_role "$ROLE")
+        openstack role add "$role_id" --user "$user_id" --project "$tenant_id"
         add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
     fi
 fi
