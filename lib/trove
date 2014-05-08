@@ -21,8 +21,11 @@ set +o xtrace
 
 # Defaults
 # --------
-
-NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
+if is_service_enabled neutron; then
+    TROVE_HOST_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.1}
+else
+    TROVE_HOST_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
+fi
 
 # Set up default configuration
 TROVE_DIR=$DEST/trove
@@ -152,7 +155,7 @@ function configure_trove {
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT swift_url http://$SERVICE_HOST:8080/v1/AUTH_
 
     iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT rabbit_password $RABBIT_PASSWORD
-    sed -i "s/localhost/$NETWORK_GATEWAY/g" $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
+    sed -i "s/localhost/$TROVE_HOST_GATEWAY/g" $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
 
     setup_trove_logging $TROVE_CONF_DIR/trove.conf
     setup_trove_logging $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
