@@ -35,7 +35,7 @@ function neutron_plugin_configure_plugin_agent {
     # Setup physical network interface mappings.  Override
     # ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc`` for more
     # complex physical network configurations.
-    if [[ "$LB_INTERFACE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$LB_PHYSICAL_INTERFACE" != "" ]]; then
+    if [[ "$LB_INTERFACE_MAPPINGS" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$LB_PHYSICAL_INTERFACE" != "" ]]; then
         LB_INTERFACE_MAPPINGS=$PHYSICAL_NETWORK:$LB_PHYSICAL_INTERFACE
     fi
     if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then

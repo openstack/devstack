@@ -15,10 +15,10 @@ function neutron_plugin_configure_common {
 }
 
 function neutron_plugin_configure_service {
-    if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
+    if [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs tenant_network_type gre
         iniset /$Q_PLUGIN_CONF_FILE ovs tunnel_id_ranges $TENANT_TUNNEL_RANGES
-    elif [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
+    elif [[ "$ENABLE_TENANT_VLANS" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs tenant_network_type vlan
     else
         echo "WARNING - The openvswitch plugin is using local tenant networks, with no connectivity between hosts."
@@ -26,7 +26,7 @@ function neutron_plugin_configure_service {
 
     # Override ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc``
     # for more complex physical network configurations.
-    if [[ "$OVS_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+    if [[ "$OVS_VLAN_RANGES" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
         OVS_VLAN_RANGES=$PHYSICAL_NETWORK
         if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
             OVS_VLAN_RANGES=$OVS_VLAN_RANGES:$TENANT_VLAN_RANGE
@@ -37,7 +37,7 @@ function neutron_plugin_configure_service {
     fi
 
     # Enable tunnel networks if selected
-    if [[ $OVS_ENABLE_TUNNELING = "True" ]]; then
+    if [[ $OVS_ENABLE_TUNNELING == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
     fi
 
