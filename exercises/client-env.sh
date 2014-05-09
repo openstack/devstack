@@ -28,7 +28,7 @@ TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 source $TOP_DIR/functions
 
 # Import configuration
-source $TOP_DIR/openrc
+source $TOP_DIR/openrc admin
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc
