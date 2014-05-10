@@ -15,7 +15,7 @@ function neutron_plugin_configure_common {
 }
 
 function neutron_plugin_configure_service {
-    if [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
+    if [[ "$ENABLE_TENANT_VLANS" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE vlans tenant_network_type vlan
     else
         echo "WARNING - The linuxbridge plugin is using local tenant networks, with no connectivity between hosts."
@@ -23,7 +23,7 @@ function neutron_plugin_configure_service {
 
     # Override ``LB_VLAN_RANGES`` and ``LB_INTERFACE_MAPPINGS`` in ``localrc``
     # for more complex physical network configurations.
-    if [[ "$LB_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+    if [[ "$LB_VLAN_RANGES" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
         LB_VLAN_RANGES=$PHYSICAL_NETWORK
         if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
             LB_VLAN_RANGES=$LB_VLAN_RANGES:$TENANT_VLAN_RANGE

@@ -9,7 +9,7 @@ source $TOP_DIR/lib/neutron_plugins/ovs_base
 
 function neutron_plugin_create_nova_conf {
     _neutron_ovs_base_configure_nova_vif_driver
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    if [ "$VIRT_DRIVER" == 'xenserver' ]; then
         iniset $NOVA_CONF xenserver vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
         iniset $NOVA_CONF xenserver ovs_integration_bridge $XEN_INTEGRATION_BRIDGE
         # Disable nova's firewall so that it does not conflict with neutron
@@ -40,7 +40,7 @@ function neutron_plugin_configure_plugin_agent {
     _neutron_ovs_base_configure_firewall_driver
 
     # Setup agent for tunneling
-    if [[ "$OVS_ENABLE_TUNNELING" = "True" ]]; then
+    if [[ "$OVS_ENABLE_TUNNELING" == "True" ]]; then
         # Verify tunnels are supported
         # REVISIT - also check kernel module support for GRE and patch ports
         OVS_VERSION=`ovs-vsctl --version | head -n 1 | grep -E -o "[0-9]+\.[0-9]+"`
@@ -54,7 +54,7 @@ function neutron_plugin_configure_plugin_agent {
     # Setup physical network bridge mappings.  Override
     # ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc`` for more
     # complex physical network configurations.
-    if [[ "$OVS_BRIDGE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
+    if [[ "$OVS_BRIDGE_MAPPINGS" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
         OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
 
         # Configure bridge manually with physical interface as port for multi-node
@@ -65,7 +65,7 @@ function neutron_plugin_configure_plugin_agent {
     fi
     AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-openvswitch-agent"
 
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    if [ "$VIRT_DRIVER" == 'xenserver' ]; then
         # Make a copy of our config for domU
         sudo cp /$Q_PLUGIN_CONF_FILE "/$Q_PLUGIN_CONF_FILE.domu"
 
