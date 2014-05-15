@@ -103,6 +103,10 @@ SWIFT_REPLICAS_SEQ=$(seq ${SWIFT_REPLICAS})
 # trace through the logs when looking for its use.
 SWIFT_LOG_TOKEN_LENGTH=${SWIFT_LOG_TOKEN_LENGTH:-12}
 
+# Set ``SWIFT_MAX_HEADER_SIZE`` to configure the maximun length of headers in
+# Swift API
+SWIFT_MAX_HEADER_SIZE=${SWIFT_MAX_HEADER_SIZE:-16384}
+
 # Set ``OBJECT_PORT_BASE``, ``CONTAINER_PORT_BASE``, ``ACCOUNT_PORT_BASE``
 # Port bases used in port number calclution for the service "nodes"
 # The specified port number will be used, the additinal ports calculated by
@@ -404,6 +408,7 @@ EOF
 
     cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONF_DIR}/swift.conf
     iniset ${SWIFT_CONF_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
+    iniset ${SWIFT_CONF_DIR}/swift.conf swift-constraints max_header_size ${SWIFT_MAX_HEADER_SIZE}
 
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
         swift_node_config=${SWIFT_CONF_DIR}/object-server/${node_number}.conf
