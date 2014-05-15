@@ -410,7 +410,7 @@ function read_password {
             echo "Invalid chars in password.  Try again:"
         done
         if [ ! $pw ]; then
-            pw=`openssl rand -hex 10`
+            pw=$(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 20)
         fi
         eval "$var=$pw"
         echo "$var=$pw" >> $localrc
