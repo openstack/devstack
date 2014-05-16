@@ -2,11 +2,16 @@ DevStack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
 
 # Goals
 
-* To quickly build dev OpenStack environments in a clean Ubuntu or Fedora environment
-* To describe working configurations of OpenStack (which code branches work together?  what do config files look like for those branches?)
-* To make it easier for developers to dive into OpenStack so that they can productively contribute without having to understand every part of the system at once
+* To quickly build dev OpenStack environments in a clean Ubuntu or Fedora
+  environment
+* To describe working configurations of OpenStack (which code branches
+  work together?  what do config files look like for those branches?)
+* To make it easier for developers to dive into OpenStack so that they can
+  productively contribute without having to understand every part of the
+  system at once
 * To make it easy to prototype cross-project features
-* To provide an environment for the OpenStack CI testing on every commit to the projects
+* To provide an environment for the OpenStack CI testing on every commit
+  to the projects
 
 Read more at http://devstack.org.
 
@@ -42,12 +47,14 @@ your VM.  To start a dev cloud run the following NOT AS ROOT (see
 
     ./stack.sh
 
-When the script finishes executing, you should be able to access OpenStack endpoints, like so:
+When the script finishes executing, you should be able to access OpenStack
+endpoints, like so:
 
 * Horizon: http://myhost/
 * Keystone: http://myhost:5000/v2.0/
 
-We also provide an environment file that you can use to interact with your cloud via CLI:
+We also provide an environment file that you can use to interact with your
+cloud via CLI:
 
     # source openrc file to load your environment with OpenStack CLI creds
     . openrc
@@ -63,7 +70,12 @@ If the EC2 API is your cup-o-tea, you can create credentials and use euca2ools:
 
 # DevStack Execution Environment
 
-DevStack runs rampant over the system it runs on, installing things and uninstalling other things.  Running this on a system you care about is a recipe for disappointment, or worse.  Alas, we're all in the virtualization business here, so run it in a VM.  And take advantage of the snapshot capabilities of your hypervisor of choice to reduce testing cycle times.  You might even save enough time to write one more feature before the next feature freeze...
+DevStack runs rampant over the system it runs on, installing things and
+uninstalling other things.  Running this on a system you care about is a recipe
+for disappointment, or worse.  Alas, we're all in the virtualization business
+here, so run it in a VM.  And take advantage of the snapshot capabilities
+of your hypervisor of choice to reduce testing cycle times.  You might even save
+enough time to write one more feature before the next feature freeze...
 
 ``stack.sh`` needs to have root access for a lot of tasks, but uses ``sudo``
 for all of those tasks.  However, it needs to be not-root for most of its
@@ -93,7 +105,8 @@ See the **Local Configuration** section below for more details.
 
 # Database Backend
 
-Multiple database backends are available. The available databases are defined in the lib/databases directory.
+Multiple database backends are available. The available databases are defined
+in the lib/databases directory.
 `mysql` is the default database, choose a different one by putting the
 following in the `localrc` section:
 
@@ -235,10 +248,14 @@ To change this, set the `Q_AGENT` variable to the agent you want to run
 (e.g. linuxbridge).
 
     Variable Name                    Notes
-    -------------------------------------------------------------------------------------
-    Q_AGENT                          This specifies which agent to run with the ML2 Plugin (either `openvswitch` or `linuxbridge`).
-    Q_ML2_PLUGIN_MECHANISM_DRIVERS   The ML2 MechanismDrivers to load. The default is none. Note, ML2 will work with the OVS and LinuxBridge agents by default.
-    Q_ML2_PLUGIN_TYPE_DRIVERS        The ML2 TypeDrivers to load. Defaults to all available TypeDrivers.
+    ----------------------------------------------------------------------------
+    Q_AGENT                          This specifies which agent to run with the
+                                     ML2 Plugin (either `openvswitch` or `linuxbridge`).
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS   The ML2 MechanismDrivers to load. The default
+                                     is none. Note, ML2 will work with the OVS
+                                     and LinuxBridge agents by default.
+    Q_ML2_PLUGIN_TYPE_DRIVERS        The ML2 TypeDrivers to load. Defaults to
+                                     all available TypeDrivers.
     Q_ML2_PLUGIN_GRE_TYPE_OPTIONS    GRE TypeDriver options. Defaults to none.
     Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS  VXLAN TypeDriver options. Defaults to none.
     Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS   VLAN TypeDriver options. Defaults to none.
@@ -262,14 +279,16 @@ you'll need the following settings in your `localrc` section:
 
 # Tempest
 
-If tempest has been successfully configured, a basic set of smoke tests can be run as follows:
+If tempest has been successfully configured, a basic set of smoke
+tests can be run as follows:
 
     $ cd /opt/stack/tempest
     $ nosetests tempest/scenario/test_network_basic_ops.py
 
 # DevStack on Xenserver
 
-If you would like to use Xenserver as the hypervisor, please refer to the instructions in `./tools/xen/README.md`.
+If you would like to use Xenserver as the hypervisor, please refer
+to the instructions in `./tools/xen/README.md`.
 
 # Additional Projects
 
@@ -283,8 +302,10 @@ for more information.
 
 # Multi-Node Setup
 
-A more interesting setup involves running multiple compute nodes, with Neutron networks connecting VMs on different compute nodes.
-You should run at least one "controller node", which should have a `stackrc` that includes at least:
+A more interesting setup involves running multiple compute nodes, with Neutron
+networks connecting VMs on different compute nodes.
+You should run at least one "controller node", which should have a `stackrc`
+that includes at least:
 
     disable_service n-net
     enable_service q-svc
@@ -299,7 +320,8 @@ will balance VMs across hosts:
 
     SCHEDULER=nova.scheduler.simple.SimpleScheduler
 
-You can then run many compute nodes, each of which should have a `stackrc` which includes the following, with the IP address of the above controller node:
+You can then run many compute nodes, each of which should have a `stackrc`
+which includes the following, with the IP address of the above controller node:
 
     ENABLED_SERVICES=n-cpu,rabbit,g-api,neutron,q-agt
     SERVICE_HOST=[IP of controller node]
@@ -310,22 +332,31 @@ You can then run many compute nodes, each of which should have a `stackrc` which
 
 # Cells
 
-Cells is a new scaling option with a full spec at http://wiki.openstack.org/blueprint-nova-compute-cells.
+Cells is a new scaling option with a full spec at:
+http://wiki.openstack.org/blueprint-nova-compute-cells.
 
 To setup a cells environment add the following to your `localrc` section:
 
     enable_service n-cell
 
-Be aware that there are some features currently missing in cells, one notable one being security groups.  The exercises have been patched to disable functionality not supported by cells.
+Be aware that there are some features currently missing in cells, one notable
+one being security groups.  The exercises have been patched to disable
+functionality not supported by cells.
 
 
 # Local Configuration
 
-Historically DevStack has used ``localrc`` to contain all local configuration and customizations. More and more of the configuration variables available for DevStack are passed-through to the individual project configuration files.  The old mechanism for this required specific code for each file and did not scale well.  This is handled now by a master local configuration file.
+Historically DevStack has used ``localrc`` to contain all local configuration
+and customizations. More and more of the configuration variables available for
+DevStack are passed-through to the individual project configuration files.
+The old mechanism for this required specific code for each file and did not
+scale well.  This is handled now by a master local configuration file.
 
 # local.conf
 
-The new config file ``local.conf`` is an extended-INI format that introduces a new meta-section header that provides some additional information such as a phase name and destination config filename:
+The new config file ``local.conf`` is an extended-INI format that introduces
+a new meta-section header that provides some additional information such
+as a phase name and destination config filename:
 
     [[ <phase> | <config-file-name> ]]
 
@@ -339,11 +370,15 @@ If the path of the config file does not exist it is skipped.
 The defined phases are:
 
 * **local** - extracts ``localrc`` from ``local.conf`` before ``stackrc`` is sourced
-* **post-config** - runs after the layer 2 services are configured and before they are started
-* **extra** - runs after services are started and before any files in ``extra.d`` are executed
+* **post-config** - runs after the layer 2 services are configured
+                    and before they are started
+* **extra** - runs after services are started and before any files
+              in ``extra.d`` are executed
 * **post-extra** - runs after files in ``extra.d`` are executed
 
-The file is processed strictly in sequence; meta-sections may be specified more than once but if any settings are duplicated the last to appear in the file will be used.
+The file is processed strictly in sequence; meta-sections may be specified more
+than once but if any settings are duplicated the last to appear in the file
+will be used.
 
     [[post-config|$NOVA_CONF]]
     [DEFAULT]
