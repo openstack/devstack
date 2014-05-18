@@ -1,5 +1,4 @@
 curl
-gcc
 memcached
 python-PasteDeploy
 python-WebOb

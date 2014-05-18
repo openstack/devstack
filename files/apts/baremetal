@@ -1,6 +1,5 @@
 busybox
 dnsmasq
-gcc
 ipmitool
 make
 open-iscsi

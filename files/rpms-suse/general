@@ -3,6 +3,7 @@ bridge-utils
 ca-certificates-mozilla
 curl
 euca2ools
+gcc
 git-core
 iputils
 libopenssl-devel # to rebuild pyOpenSSL if needed

@@ -5,6 +5,7 @@ screen
 unzip
 wget
 psmisc
+gcc
 git
 lsof # useful when debugging
 openssh-server

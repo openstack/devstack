@@ -1,4 +1,3 @@
-gcc
 libffi-dev
 libmysqlclient-dev  # testonly
 libpq-dev           # testonly
