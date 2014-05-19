@@ -28,6 +28,23 @@ function install_libvirt {
         install_package libvirt-python
         install_package python-libguestfs
     fi
+
+    # workaround for
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1098376; if we see
+    # the empty Xen proc file then remove the xen/libxl plugin
+    # shared-libraries (yum remove would uninstall libvirt due to
+    # dependencies, so let's avoid that...)
+    if is_fedora && [ -f /proc/xen/capabilities ] && \
+        [ $(stat -c '%s' /proc/xen/capabilities) -eq 0 ]; then
+        sudo rm -f /usr/lib64/libvirt/connection-driver/libvirt_driver_libxl.so
+        sudo rm -f /usr/lib64/libvirt/connection-driver/libvirt_driver_xen.so
+
+        # another bug requires these to be restarted to avoid
+        # potential hang of libvirtd
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1098866
+        sudo service dbus restart
+        sudo service firewalld restart
+    fi
 }
 
 # Configures the installed libvirt system so that is accessible by
