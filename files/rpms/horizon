@@ -1,5 +1,4 @@
 Django
-gcc
 httpd # NOPRIME
 mod_wsgi  # NOPRIME
 pylint

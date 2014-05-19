@@ -1,4 +1,3 @@
-gcc
 libxml2-devel
 python-PasteDeploy
 python-Routes

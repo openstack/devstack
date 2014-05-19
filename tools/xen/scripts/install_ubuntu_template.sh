@@ -14,6 +14,9 @@ set -o xtrace
 # This directory
 BASE_DIR=$(cd $(dirname "$0") && pwd)
 
+# Source the top level functions
+source $BASE_DIR/../../../functions
+
 # For default setings see xenrc
 source $BASE_DIR/../xenrc
 

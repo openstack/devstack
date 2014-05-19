@@ -1,5 +1,4 @@
 curl
-gcc
 libffi-devel
 memcached
 python-configobj

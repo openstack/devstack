@@ -1,5 +1,4 @@
 # Trema
-gcc
 make
 ruby1.8
 rubygems1.8

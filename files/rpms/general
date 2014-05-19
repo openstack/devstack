@@ -2,13 +2,13 @@ bridge-utils
 curl
 dbus
 euca2ools # only for testing client
-gcc # dist:rhel6 [2]
+gcc
 git-core
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
-libxml2-devel # dist:rhel6 [2]
-libxslt-devel # dist:rhel6 [2]
+libxml2-devel
+libxslt-devel
 psmisc
 pylint
 python-setuptools
@@ -28,7 +28,3 @@ bc
 # but others have versioned (<=0.7).  So if a later version (0.7.1)
 # gets installed in response to an unversioned dependency, it breaks.
 # This pre-installs a compatible 0.6(ish) version from RHEL
-
-# [2] : RHEL6 rpm versions of python-lxml is old, and has to be
-# removed.  Several tools rely on it, so we install the dependencies
-# pip needs to build it here (see tools/install_prereqs.sh)
