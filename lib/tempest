@@ -55,7 +55,7 @@ BUILD_INTERVAL=1
 BUILD_TIMEOUT=196
 
 
-BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-0.3.1"
+BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-${CIRROS_VERSION}"
 
 # Cinder/Volume variables
 TEMPEST_VOLUME_DRIVER=${TEMPEST_VOLUME_DRIVER:-default}
@@ -305,9 +305,9 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
     iniset $TEMPEST_CONFIG boto s3_url "http://$SERVICE_HOST:${S3_SERVICE_PORT:-3333}"
     iniset $TEMPEST_CONFIG boto s3_materials_path "$BOTO_MATERIALS_PATH"
-    iniset $TEMPEST_CONFIG boto ari_manifest cirros-0.3.1-x86_64-initrd.manifest.xml
-    iniset $TEMPEST_CONFIG boto ami_manifest cirros-0.3.1-x86_64-blank.img.manifest.xml
-    iniset $TEMPEST_CONFIG boto aki_manifest cirros-0.3.1-x86_64-vmlinuz.manifest.xml
+    iniset $TEMPEST_CONFIG boto ari_manifest cirros-${CIRROS_VERSION}-x86_64-initrd.manifest.xml
+    iniset $TEMPEST_CONFIG boto ami_manifest cirros-${CIRROS_VERSION}-x86_64-blank.img.manifest.xml
+    iniset $TEMPEST_CONFIG boto aki_manifest cirros-${CIRROS_VERSION}-x86_64-vmlinuz.manifest.xml
     iniset $TEMPEST_CONFIG boto instance_type "$boto_instance_type"
     iniset $TEMPEST_CONFIG boto http_socket_timeout 30
     iniset $TEMPEST_CONFIG boto ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
@@ -327,7 +327,10 @@ function configure_tempest {
     fi
 
     # Scenario
-    iniset $TEMPEST_CONFIG scenario img_dir "$FILES/images/cirros-0.3.1-x86_64-uec"
+    iniset $TEMPEST_CONFIG scenario img_dir "$FILES/images/cirros-${CIRROS_VERSION}-x86_64-uec"
+    iniset $TEMPEST_CONFIG scenario ami_img_file "cirros-${CIRROS_VERSION}-x86_64-blank.img"
+    iniset $TEMPEST_CONFIG scenario ari_img_file "cirros-${CIRROS_VERSION}-x86_64-initrd"
+    iniset $TEMPEST_CONFIG scenario aki_img_file "cirros-${CIRROS_VERSION}-x86_64-vmlinuz"
 
     # Large Ops Number
     iniset $TEMPEST_CONFIG scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
@@ -408,8 +411,8 @@ function install_tempest {
 
 # init_tempest() - Initialize ec2 images
 function init_tempest {
-    local base_image_name=cirros-0.3.1-x86_64
-    # /opt/stack/devstack/files/images/cirros-0.3.1-x86_64-uec
+    local base_image_name=cirros-${CIRROS_VERSION}-x86_64
+    # /opt/stack/devstack/files/images/cirros-${CIRROS_VERSION}-x86_64-uec
     local image_dir="$FILES/images/${base_image_name}-uec"
     local kernel="$image_dir/${base_image_name}-vmlinuz"
     local ramdisk="$image_dir/${base_image_name}-initrd"

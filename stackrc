@@ -305,12 +305,14 @@ esac
 #    glance as a disk image.  If it ends in .gz, it is uncompressed first.
 #    example:
 #      http://cloud-images.ubuntu.com/releases/precise/release/ubuntu-12.04-server-cloudimg-armel-disk1.img
-#      http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-rootfs.img.gz
+#      http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-rootfs.img.gz
 #  * OpenVZ image:
 #    OpenVZ uses its own format of image, and does not support UEC style images
 
 #IMAGE_URLS="http://smoser.brickies.net/ubuntu/ttylinux-uec/ttylinux-uec-amd64-11.2_2.6.35-15_1.tar.gz" # old ttylinux-uec image
-#IMAGE_URLS="http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-disk.img" # cirros full disk image
+#IMAGE_URLS="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-disk.img" # cirros full disk image
+
+CIRROS_VERSION=${CIRROS_VERSION:-"0.3.2"}
 
 # Set default image based on ``VIRT_DRIVER`` and ``LIBVIRT_TYPE``, either of
 # which may be set in ``localrc``.  Also allow ``DEFAULT_IMAGE_NAME`` and
@@ -322,11 +324,11 @@ case "$VIRT_DRIVER" in
     libvirt)
         case "$LIBVIRT_TYPE" in
             lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
-                DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.1-x86_64-rootfs}
-                IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-rootfs.img.gz"};;
+                DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-rootfs}
+                IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-rootfs.img.gz"};;
             *) # otherwise, use the uec style image (with kernel, ramdisk, disk)
-                DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.1-x86_64-uec}
-                IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-uec.tar.gz"};;
+                DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-uec}
+                IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz"};;
         esac
         ;;
     vsphere)
@@ -336,8 +338,8 @@ case "$VIRT_DRIVER" in
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.0-x86_64-disk}
         IMAGE_URLS=${IMAGE_URLS:-"https://github.com/downloads/citrix-openstack/warehouse/cirros-0.3.0-x86_64-disk.vhd.tgz"};;
     *) # Default to Cirros with kernel, ramdisk and disk image
-        DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.1-x86_64-uec}
-        IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-uec.tar.gz"};;
+        DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-uec}
+        IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz"};;
 esac
 
 # Use 64bit fedora image if heat is enabled
