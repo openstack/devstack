@@ -48,7 +48,7 @@ function configure_nova_hypervisor {
     # ironic section
     iniset $NOVA_CONF ironic admin_username admin
     iniset $NOVA_CONF ironic admin_password $ADMIN_PASSWORD
-    iniset $NOVA_CONF ironic admin_url $KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+    iniset $NOVA_CONF ironic admin_url $KEYSTONE_AUTH_URI/v2.0
     iniset $NOVA_CONF ironic admin_tenant_name demo
     iniset $NOVA_CONF ironic api_endpoint http://$SERVICE_HOST:6385/v1
     iniset $NOVA_CONF ironic sql_connection `database_connection_url nova_bm`

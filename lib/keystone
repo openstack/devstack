@@ -87,6 +87,10 @@ if is_ssl_enabled_service "key"; then
     KEYSTONE_SERVICE_PROTOCOL="https"
 fi
 
+# complete URIs
+KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_PROTOCOL}://${KEYSTONE_AUTH_HOST}:${KEYSTONE_AUTH_PORT}
+KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}
+
 # Functions
 # ---------
 # cleanup_keystone() - Remove residual data files, anything left over from previous
