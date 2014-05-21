@@ -163,6 +163,7 @@ function configure_ceilometer {
     iniset $CEILOMETER_CONF service_credentials os_username ceilometer
     iniset $CEILOMETER_CONF service_credentials os_password $SERVICE_PASSWORD
     iniset $CEILOMETER_CONF service_credentials os_tenant_name $SERVICE_TENANT_NAME
+    iniset $CEILOMETER_CONF service_credentials os_auth_url $OS_AUTH_URL
 
     iniset $CEILOMETER_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $CEILOMETER_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
