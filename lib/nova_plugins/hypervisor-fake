@@ -47,7 +47,7 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF DEFAULT quota_security_groups -1
     iniset $NOVA_CONF DEFAULT quota_security_group_rules -1
     iniset $NOVA_CONF DEFAULT quota_key_pairs -1
-    iniset $NOVA_CONF DEFAULT scheduler_default_filters "RetryFilter,AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter"
+    iniset $NOVA_CONF DEFAULT scheduler_default_filters "RetryFilter,AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,CoreFilter,RamFilter,DiskFilter"
 }
 
 # install_nova_hypervisor() - Install external components
