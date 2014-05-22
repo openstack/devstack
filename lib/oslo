@@ -22,6 +22,7 @@ set +o xtrace
 # --------
 CLIFF_DIR=$DEST/cliff
 OSLOCFG_DIR=$DEST/oslo.config
+OSLODB_DIR=$DEST/oslo.db
 OSLOMSG_DIR=$DEST/oslo.messaging
 OSLORWRAP_DIR=$DEST/oslo.rootwrap
 OSLOVMWARE_DIR=$DEST/oslo.vmware

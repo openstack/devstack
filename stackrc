@@ -169,6 +169,10 @@ CLIFF_BRANCH=${CLIFF_BRANCH:-master}
 OSLOCFG_REPO=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
 OSLOCFG_BRANCH=${OSLOCFG_BRANCH:-master}
 
+# oslo.db
+OSLODB_REPO=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
+OSLODB_BRANCH=${OSLODB_BRANCH:-master}
+
 # oslo.messaging
 OSLOMSG_REPO=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
 OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
