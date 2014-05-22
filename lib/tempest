@@ -300,6 +300,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network public_router_id "$public_router_id"
     iniset $TEMPEST_CONFIG network default_network "$FIXED_RANGE"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6 "$IPV6_ENABLED"
+    iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
 
     # boto
     iniset $TEMPEST_CONFIG boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
