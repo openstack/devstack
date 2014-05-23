@@ -110,8 +110,8 @@ Q_USE_DEBUG_COMMAND=${Q_USE_DEBUG_COMMAND:-False}
 Q_ROUTER_NAME=${Q_ROUTER_NAME:-router1}
 # nova vif driver that all plugins should use
 NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
-Q_NOTIFY_NOVA_PORT_STATUS_CHANGE=${Q_NOTIFY_NOVA_PORT_STATUS_CHANGE:-True}
-Q_NOTIFY_NOVA_ON_PORT_DATA_CHANGES=${Q_NOTIFY_NOVA_PORT_CHANGE:-True}
+Q_NOTIFY_NOVA_PORT_STATUS_CHANGES=${Q_NOTIFY_NOVA_PORT_STATUS_CHANGES:-True}
+Q_NOTIFY_NOVA_PORT_DATA_CHANGES=${Q_NOTIFY_NOVA_PORT_DATA_CHANGES:-True}
 VIF_PLUGGING_IS_FATAL=${VIF_PLUGGING_IS_FATAL:-True}
 VIF_PLUGGING_TIMEOUT=${VIF_PLUGGING_TIMEOUT:-300}
 
@@ -777,8 +777,8 @@ function _configure_neutron_service {
     done
 
     # Configuration for neutron notifations to nova.
-    iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_change $Q_NOTIFY_NOVA_PORT_STATUS_CHANGE
-    iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_ON_PORT_DATA_CHANGES
+    iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
+    iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
     iniset $NEUTRON_CONF DEFAULT nova_url "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2"
     iniset $NEUTRON_CONF DEFAULT nova_admin_username nova
     iniset $NEUTRON_CONF DEFAULT nova_admin_password $SERVICE_PASSWORD
