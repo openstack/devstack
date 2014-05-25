@@ -154,7 +154,7 @@ function install_marconiclient {
 
 # start_marconi() - Start running processes, including screen
 function start_marconi {
-    if [[ ${USE_SCREEN,,} == "false" ]];; then
+    if [[ "$USE_SCREEN" = "False" ]]; then
         screen_it marconi-server "marconi-server --config-file $MARCONI_CONF --daemon"
     else
         screen_it marconi-server "marconi-server --config-file $MARCONI_CONF"
