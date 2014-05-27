@@ -11,6 +11,7 @@
 # - is_apache_enabled_service
 # - install_apache_wsgi
 # - config_apache_wsgi
+# - apache_site_config_for
 # - enable_apache_site
 # - disable_apache_site
 # - start_apache_server
@@ -78,6 +79,51 @@ function install_apache_wsgi {
     fi
 }
 
+# apache_site_config_for() - The filename of the site's configuration file.
+# This function uses the global variables APACHE_NAME and APACHE_CONF_DIR.
+#
+# On Ubuntu 14.04, the site configuration file must have a .conf suffix for a2ensite and a2dissite to
+# recognise it. a2ensite and a2dissite ignore the .conf suffix used as parameter. The default sites'
+# files are 000-default.conf and default-ssl.conf.
+#
+# On Ubuntu 12.04, the site configuration file may have any format, as long as it is in
+# /etc/apache2/sites-available/. a2ensite and a2dissite need the entire file name to work. The default
+# sites' files are default and default-ssl.
+#
+# On Fedora, any file in /etc/httpd/conf.d/ whose name ends with .conf is enabled.
+#
+# On RHEL and CentOS, things should hopefully work as in Fedora.
+#
+# The table below summarizes what should happen on each distribution:
+# +----------------------+--------------------+--------------------------+--------------------------+
+# | Distribution         | File name          | Site enabling command    | Site disabling command   |
+# +----------------------+--------------------+--------------------------+--------------------------+
+# | Ubuntu 12.04         | site               | a2ensite site            | a2dissite site           |
+# | Ubuntu 14.04         | site.conf          | a2ensite site            | a2dissite site           |
+# | Fedora, RHEL, CentOS | site.conf.disabled | mv site.conf{.disabled,} | mv site.conf{,.disabled} |
+# +----------------------+--------------------+--------------------------+--------------------------+
+function apache_site_config_for {
+    local site=$@
+    if is_ubuntu; then
+        local apache_version=$(sudo /usr/sbin/apache2ctl -v | awk '/Server version/ {print $3}' | cut -f2 -d/)
+        if [[ "$apache_version" =~ ^2\.2\. ]]; then
+            # Ubuntu 12.04 - Apache 2.2
+            echo /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}
+        else
+            # Ubuntu 14.04 - Apache 2.4
+            echo /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf
+        fi
+    elif is_fedora; then
+        # fedora conf.d is only imported if it ends with .conf so this is approx the same
+        local enabled_site_file="/etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf"
+        if [ -f $enabled_site_file ]; then
+            echo ${enabled_site_file}
+        else
+            echo ${enabled_site_file}.disabled
+        fi
+    fi
+}
+
 # enable_apache_site() - Enable a particular apache site
 function enable_apache_site {
     local site=$@
@@ -85,7 +131,7 @@ function enable_apache_site {
         sudo a2ensite ${site}
     elif is_fedora; then
         # fedora conf.d is only imported if it ends with .conf so this is approx the same
-        sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site} /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf
+        sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf.disabled /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf
     fi
 }
 
@@ -95,7 +141,7 @@ function disable_apache_site {
     if is_ubuntu; then
         sudo a2dissite ${site}
     elif is_fedora; then
-        sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}
+        sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf.disabled
     fi
 }
 
