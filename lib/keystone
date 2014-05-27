@@ -41,6 +41,10 @@ KEYSTONE_WSGI_DIR=${KEYSTONE_WSGI_DIR:-/var/www/keystone}
 
 KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 
+# Set up additional extensions, such as oauth1, federation
+# Example of KEYSTONE_EXTENSIONS=oauth1,federation
+KEYSTONE_EXTENSIONS=${KEYSTONE_EXTENSIONS:-}
+
 # Select the backend for Keystone's service catalog
 KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
@@ -152,6 +156,8 @@ function configure_keystone {
         # compatibility with mixed cfg and paste.deploy configuration
         KEYSTONE_PASTE_INI="$KEYSTONE_CONF"
     fi
+
+    configure_keystone_extensions
 
     # Rewrite stock ``keystone.conf``
 
@@ -273,6 +279,25 @@ function configure_keystone {
     fi
 }
 
+function configure_keystone_extensions {
+    # Add keystone extension into keystone v3 application pipeline
+    local extension_value
+    local api_v3
+    local extension
+    local api_v3_extension
+    for extension_value in ${KEYSTONE_EXTENSIONS//,/ }; do
+        if [[ -z "${extension_value}" ]]; then
+            continue
+        fi
+        api_v3=$(iniget $KEYSTONE_PASTE_INI pipeline:api_v3 pipeline)
+        extension=$(echo $api_v3 | sed -ne "/${extension_value}/ p;" )
+        if [[ -z $extension ]]; then
+            api_v3_extension=$(echo $api_v3 | sed -ne "s/service_v3/${extension_value}_extension service_v3/p;" )
+            iniset $KEYSTONE_PASTE_INI pipeline:api_v3 pipeline "$api_v3_extension"
+        fi
+    done
+}
+
 # create_keystone_accounts() - Sets up common required keystone accounts
 
 # Tenant               User       Roles
@@ -385,6 +410,14 @@ function init_keystone {
 
     # Initialize keystone database
     $KEYSTONE_DIR/bin/keystone-manage db_sync
+
+    local extension_value
+    for extension_value in ${KEYSTONE_EXTENSIONS//,/ }; do
+        if [[ -z "${extension_value}" ]]; then
+            continue
+        fi
+        $KEYSTONE_DIR/bin/keystone-manage db_sync --extension "${extension_value}"
+    done
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" != "uuid" ]]; then
         # Set up certificates
