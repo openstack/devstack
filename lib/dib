@@ -21,6 +21,8 @@ set +o xtrace
 DIB_DIR=$DEST/diskimage-builder
 TIE_DIR=$DEST/tripleo-image-elements
 DIB_IMAGE_CACHE=$DATA_DIR/diskimage-builder/image-create
+DIB_PIP_REPO=$DATA_DIR/diskimage-builder/pip-repo
+DIB_PIP_REPO_PORT=${DIB_PIP_REPO_PORT:-8899}
 OCC_DIR=$DEST/os-collect-config
 ORC_DIR=$DEST/os-refresh-config
 OAC_DIR=$DEST/os-apply-config
@@ -40,6 +42,86 @@ function install_dib {
     git_clone $ORC_REPO $ORC_DIR $ORC_BRANCH
     git_clone $OAC_REPO $OAC_DIR $OAC_BRANCH
     mkdir -p $DIB_IMAGE_CACHE
+}
+
+# build_dib_pip_repo() - Builds a local pip repo from local projects
+function build_dib_pip_repo {
+    local project_dirs=$1
+    local projpath proj package
+
+    rm -rf $DIB_PIP_REPO
+    mkdir -p $DIB_PIP_REPO
+
+    echo "<html><body>" > $DIB_PIP_REPO/index.html
+    for projpath in $project_dirs; do
+        proj=$(basename $projpath)
+        mkdir -p $DIB_PIP_REPO/$proj
+        pushd $projpath
+        rm -rf dist
+        python setup.py sdist
+        pushd dist
+        package=$(ls *)
+        mv $package $DIB_PIP_REPO/$proj/$package
+        popd
+
+        echo "<html><body><a href=\"$package\">$package</a></body></html>" > $DIB_PIP_REPO/$proj/index.html
+        echo "<a href=\"$proj\">$proj</a><br/>" >> $DIB_PIP_REPO/index.html
+
+        popd
+    done
+
+    echo "</body></html>" >> $DIB_PIP_REPO/index.html
+
+    local dib_pip_repo_apache_conf=$(apache_site_config_for dib_pip_repo)
+
+    sudo cp $FILES/apache-dib-pip-repo.template $dib_pip_repo_apache_conf
+    sudo sed -e "
+        s|%DIB_PIP_REPO%|$DIB_PIP_REPO|g;
+        s|%DIB_PIP_REPO_PORT%|$DIB_PIP_REPO_PORT|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+    " -i $dib_pip_repo_apache_conf
+    enable_apache_site dib_pip_repo
+}
+
+# disk_image_create_upload() - Creates and uploads a diskimage-builder built image
+function disk_image_create_upload {
+
+    local image_name=$1
+    local image_elements=$2
+    local elements_path=$3
+
+    local image_path=$TOP_DIR/files/$image_name.qcow2
+
+    # Set the local pip repo as the primary index mirror so the
+    # image is built with local packages
+    local pypi_mirror_url=http://$SERVICE_HOST:$DIB_PIP_REPO_PORT/
+    local pypi_mirror_url_1
+
+    if [ -a $HOME/.pip/pip.conf ]; then
+        # Add the current pip.conf index-url as an extra-index-url
+        # in the image build
+        pypi_mirror_url_1=$(iniget $HOME/.pip/pip.conf global index-url)
+    else
+        # If no pip.conf, set upstream pypi as an extra mirror
+        # (this also sets the .pydistutils.cfg index-url)
+        pypi_mirror_url_1=http://pypi.python.org/simple
+    fi
+
+    # The disk-image-create command to run
+    ELEMENTS_PATH=$elements_path \
+    PYPI_MIRROR_URL=$pypi_mirror_url \
+    PYPI_MIRROR_URL_1=$pypi_mirror_url_1 \
+    disk-image-create -a amd64 $image_elements \
+        --image-cache $DIB_IMAGE_CACHE \
+        -o $image_path
+
+    local token=$(keystone token-get | grep ' id ' | get_field 2)
+    die_if_not_set $LINENO token "Keystone fail to get token"
+
+    glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT \
+        image-create --name $image_name --is-public True \
+        --container-format=bare --disk-format qcow2 \
+        < $image_path
 }
 
 # Restore xtrace
