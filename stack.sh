@@ -1026,7 +1026,7 @@ if is_service_enabled n-net q-dhcp; then
     if is_service_enabled n-net; then
         rm -rf ${NOVA_STATE_PATH}/networks
         sudo mkdir -p ${NOVA_STATE_PATH}/networks
-        safe_chown -R ${USER} ${NOVA_STATE_PATH}/networks
+        safe_chown -R ${STACK_USER} ${NOVA_STATE_PATH}/networks
     fi
 
     # Force IP forwarding on, just in case
