@@ -695,6 +695,13 @@ function get_default_host_ip {
     echo $host_ip
 }
 
+# Generates hex string from ``size`` byte of pseudo random data
+# generate_hex_string size
+function generate_hex_string {
+    local size=$1
+    hexdump -n "$size" -v -e '/1 "%02x"' /dev/urandom
+}
+
 # Grab a numbered field from python prettytable output
 # Fields are numbered starting with 1
 # Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
