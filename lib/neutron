@@ -403,6 +403,7 @@ function create_neutron_initial_network {
         die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specifiy the PROVIDER_NETWORK_TYPE"
         NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" --provider:segmentation_id "$SEGMENTATION_ID" --router:external=true --shared | grep ' id ' | get_field 2)
         SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+        SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode slaac --gateway $V6_NETWORK_GATEWAY --name $PROVIDER_SUBNET_NAME_V6 $NET_ID $FIXED_RANGE_V6 | grep 'id' | get_field 2)
         sudo ip link set $OVS_PHYSICAL_BRIDGE up
         sudo ip link set br-int up
         sudo ip link set $PUBLIC_INTERFACE up
