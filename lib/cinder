@@ -233,8 +233,6 @@ function configure_cinder {
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_password
     inicomment $CINDER_API_PASTE_INI filter:authtoken signing_dir
 
-    cp $CINDER_DIR/etc/cinder/cinder.conf.sample $CINDER_CONF
-
     iniset $CINDER_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
     iniset $CINDER_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
     iniset $CINDER_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
