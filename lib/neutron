@@ -115,6 +115,9 @@ Q_NOTIFY_NOVA_PORT_DATA_CHANGES=${Q_NOTIFY_NOVA_PORT_DATA_CHANGES:-True}
 VIF_PLUGGING_IS_FATAL=${VIF_PLUGGING_IS_FATAL:-True}
 VIF_PLUGGING_TIMEOUT=${VIF_PLUGGING_TIMEOUT:-300}
 
+## Provider Network Information
+PROVIDER_SUBNET_NAME=${PROVIDER_SUBNET_NAME:-"provider_net"}
+
 # The next two variables are configured by plugin
 # e.g.  _configure_neutron_l3_agent or lib/neutron_plugins/*
 #
@@ -395,6 +398,14 @@ function create_neutron_initial_network {
         die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $TENANT_ID"
         sudo ifconfig $OVS_PHYSICAL_BRIDGE up
         sudo route add default gw $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
+    elif is_provider_network; then
+        die_if_not_set $LINENO SEGMENTATION_ID "A SEGMENTATION_ID is required to use provider networking"
+        die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specifiy the PROVIDER_NETWORK_TYPE"
+        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" --provider:segmentation_id "$SEGMENTATION_ID" --router:external=true --shared | grep ' id ' | get_field 2)
+        SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+        sudo ip link set $OVS_PHYSICAL_BRIDGE up
+        sudo ip link set br-int up
+        sudo ip link set $PUBLIC_INTERFACE up
     else
         NET_ID=$(neutron net-create --tenant-id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
@@ -494,6 +505,13 @@ function start_neutron_agents {
     screen_it q-dhcp "cd $NEUTRON_DIR && python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
     L3_CONF_FILES="--config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
+
+    if is_provider_network; then
+        sudo ovs-vsctl add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
+        sudo ip link set $OVS_PHYSICAL_BRIDGE up
+        sudo ip link set br-int up
+        sudo ip link set $PUBLIC_INTERFACE up
+    fi
 
     if is_service_enabled q-fwaas; then
         L3_CONF_FILES="$L3_CONF_FILES --config-file $Q_FWAAS_CONF_FILE"
@@ -997,6 +1015,13 @@ function stop_neutron_third_party {
 # check_neutron_third_party_integration() - Check that third party integration is sane
 function check_neutron_third_party_integration {
     _neutron_third_party_do check
+}
+
+function is_provider_network {
+    if [ "$Q_USE_PROVIDER_NETWORKING" == "True" ] && [ "$Q_L3_ENABLED" == "False" ]; then
+        return 0
+    fi
+    return 1
 }
 
 
