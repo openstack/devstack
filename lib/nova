@@ -75,8 +75,13 @@ QEMU_CONF=/etc/libvirt/qemu.conf
 
 # Set default defaults here as some hypervisor drivers override these
 PUBLIC_INTERFACE_DEFAULT=br100
-GUEST_INTERFACE_DEFAULT=eth0
 FLAT_NETWORK_BRIDGE_DEFAULT=br100
+# set the GUEST_INTERFACE_DEFAULT to some interface on the box so that
+# the default isn't completely crazy. This will match eth*, em*, or
+# the new p* interfaces, then basically picks the first
+# alphabetically. It's probably wrong, however it's less wrong than
+# always using 'eth0' which doesn't exist on new Linux distros at all.
+GUEST_INTERFACE_DEFAULT=$(route -n | awk '{print $8}' | grep ^[ep] | sort | head -1)
 
 # Get hypervisor configuration
 # ----------------------------
