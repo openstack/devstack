@@ -87,6 +87,9 @@ if is_ssl_enabled_service "key"; then
     KEYSTONE_SERVICE_PROTOCOL="https"
 fi
 
+# Apache configuration file for keystone
+KEYSTONE_APACHE_CONF_FILE=$(apache_site_config_for keystone)
+
 
 # Functions
 # ---------
@@ -103,7 +106,7 @@ function cleanup_keystone {
 function _cleanup_keystone_apache_wsgi {
     sudo rm -f $KEYSTONE_WSGI_DIR/*.wsgi
     disable_apache_site keystone
-    sudo rm -f /etc/$APACHE_NAME/$APACHE_CONF_DIR/keystone
+    sudo rm -f $KEYSTONE_APACHE_CONF_FILE
 }
 
 # _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
@@ -114,7 +117,7 @@ function _config_keystone_apache_wsgi {
     sudo cp $KEYSTONE_DIR/httpd/keystone.py $KEYSTONE_WSGI_DIR/main
     sudo cp $KEYSTONE_DIR/httpd/keystone.py $KEYSTONE_WSGI_DIR/admin
 
-    sudo cp $FILES/apache-keystone.template /etc/$APACHE_NAME/$APACHE_CONF_DIR/keystone
+    sudo cp $FILES/apache-keystone.template $KEYSTONE_APACHE_CONF_FILE
     sudo sed -e "
         s|%PUBLICPORT%|$KEYSTONE_SERVICE_PORT|g;
         s|%ADMINPORT%|$KEYSTONE_AUTH_PORT|g;
@@ -122,7 +125,7 @@ function _config_keystone_apache_wsgi {
         s|%PUBLICWSGI%|$KEYSTONE_WSGI_DIR/main|g;
         s|%ADMINWSGI%|$KEYSTONE_WSGI_DIR/admin|g;
         s|%USER%|$STACK_USER|g
-    " -i /etc/$APACHE_NAME/$APACHE_CONF_DIR/keystone
+    " -i $KEYSTONE_APACHE_CONF_FILE
     enable_apache_site keystone
 }
 

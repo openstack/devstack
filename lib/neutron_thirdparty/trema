@@ -28,7 +28,7 @@ TREMA_TMP_DIR=$TREMA_DATA_DIR/trema
 TREMA_LOG_LEVEL=${TREMA_LOG_LEVEL:-info}
 
 TREMA_SS_CONFIG=$TREMA_SS_ETC_DIR/sliceable.conf
-TREMA_SS_APACHE_CONFIG=/etc/apache2/sites-available/sliceable_switch.conf
+TREMA_SS_APACHE_CONFIG=$(apache_site_config_for sliceable_switch)
 
 # configure_trema - Set config files, create data dirs, etc
 function configure_trema {
@@ -61,8 +61,9 @@ function init_trema {
     sudo cp $TREMA_SS_DIR/apache/sliceable_switch $TREMA_SS_APACHE_CONFIG
     sudo sed -i -e "s|/home/sliceable_switch/script|$TREMA_SS_SCRIPT_DIR|" \
         $TREMA_SS_APACHE_CONFIG
+    # TODO(gabriel-bezerra): use some function from lib/apache to enable these modules
     sudo a2enmod rewrite actions
-    sudo a2ensite sliceable_switch.conf
+    enable_apache_site sliceable_switch
 
     cp $TREMA_SS_DIR/sliceable_switch_null.conf $TREMA_SS_CONFIG
     sed -i -e "s|^\$apps_dir.*$|\$apps_dir = \"$TREMA_DIR/apps\"|" \
@@ -98,8 +99,7 @@ function install_trema {
 }
 
 function start_trema {
-    # APACHE_NAME is defined in init_horizon (in lib/horizon)
-    restart_service $APACHE_NAME
+    restart_apache_server
 
     sudo LOGGING_LEVEL=$TREMA_LOG_LEVEL TREMA_TMP=$TREMA_TMP_DIR \
         trema run -d -c $TREMA_SS_CONFIG
