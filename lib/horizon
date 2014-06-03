@@ -123,21 +123,6 @@ function init_horizon {
     fi
 
     local horizon_conf=$(apache_site_config_for horizon)
-    if is_ubuntu; then
-        disable_apache_site 000-default
-        sudo touch $horizon_conf
-        enable_apache_site horizon
-    elif is_fedora; then
-        sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
-    elif is_suse; then
-        : # nothing to do
-    else
-        exit_distro_not_supported "horizon apache configuration"
-    fi
-
-    # Remove old log files that could mess with how devstack detects whether Horizon
-    # has been successfully started (see start_horizon() and functions::screen_it())
-    sudo rm -f /var/log/$APACHE_NAME/horizon_*
 
     # Configure apache to run horizon
     sudo sh -c "sed -e \"
@@ -148,6 +133,23 @@ function init_horizon {
         s,%DEST%,$DEST,g;
         s,%HORIZON_REQUIRE%,$HORIZON_REQUIRE,g;
     \" $FILES/apache-horizon.template >$horizon_conf"
+
+    if is_ubuntu; then
+        disable_apache_site 000-default
+        sudo touch $horizon_conf
+    elif is_fedora; then
+        sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
+    elif is_suse; then
+        : # nothing to do
+    else
+        exit_distro_not_supported "horizon apache configuration"
+    fi
+    enable_apache_site horizon
+
+    # Remove old log files that could mess with how devstack detects whether Horizon
+    # has been successfully started (see start_horizon() and functions::screen_it())
+    sudo rm -f /var/log/$APACHE_NAME/horizon_*
+
 }
 
 # install_horizon() - Collect source and prepare
