@@ -16,6 +16,10 @@ source ${FUNC_DIR}/functions-common
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+# Check if a function already exists
+function function_exists {
+    declare -f -F $1 > /dev/null
+}
 
 # Checks if installed Apache is <= given version
 # $1 = x.y.z (version string of Apache)
@@ -527,6 +531,20 @@ function setup_colorized_logging {
     iniset $conf_file $conf_section logging_exception_prefix "%(color)s%(asctime)s.%(msecs)03d TRACE %(name)s [01;35m%(instance)s[00m"
 }
 
+# These functions are provided for basic fall-back functionality for
+# projects that include parts of devstack (grenade).  stack.sh will
+# override these with more specific versions for devstack (with fancy
+# spinners, etc).  We never override an existing version
+if ! function_exists echo_summary; then
+    function echo_summary {
+        echo $@
+    }
+fi
+if ! function_exists echo_nolog; then
+    function echo_nolog {
+        echo $@
+    }
+fi
 
 # Restore xtrace
 $XTRACE
