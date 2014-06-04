@@ -25,6 +25,7 @@ source $TOP_DIR/functions
 FILES=$TOP_DIR/files
 
 PIP_GET_PIP_URL=https://bootstrap.pypa.io/get-pip.py
+LOCAL_PIP="$FILES/$(basename $PIP_GET_PIP_URL)"
 
 GetDistro
 echo "Distro: $DISTRO"
@@ -40,13 +41,12 @@ function get_versions() {
 }
 
 
-function install_get_pip() {
-    if [[ ! -r $FILES/get-pip.py ]]; then
-        (cd $FILES; \
-            curl $PIP_GET_PIP_URL; \
-        )
+function install_get_pip {
+    if [[ ! -r $LOCAL_PIP ]]; then
+        curl -o $LOCAL_PIP $PIP_GET_PIP_URL || \
+            die $LINENO "Download of get-pip.py failed"
     fi
-    sudo python $FILES/get-pip.py
+    sudo -E python $LOCAL_PIP
 }
 
 # Show starting versions
