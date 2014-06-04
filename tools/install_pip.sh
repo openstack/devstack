@@ -24,27 +24,7 @@ source $TOP_DIR/functions
 
 FILES=$TOP_DIR/files
 
-# Handle arguments
-
-INSTALL_PIP_VERSION=${INSTALL_PIP_VERSION:-"1.4.1"}
-while [[ -n "$1" ]]; do
-    case $1 in
-        --force)
-            FORCE=1
-            ;;
-        --pip-version)
-            INSTALL_PIP_VERSION="$2"
-            shift
-            ;;
-        --use-get-pip)
-            USE_GET_PIP=1;
-            ;;
-    esac
-    shift
-done
-
-PIP_GET_PIP_URL=https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-PIP_TAR_URL=https://pypi.python.org/packages/source/p/pip/pip-$INSTALL_PIP_VERSION.tar.gz
+PIP_GET_PIP_URL=https://bootstrap.pypa.io/get-pip.py
 
 GetDistro
 echo "Distro: $DISTRO"
@@ -69,15 +49,6 @@ function install_get_pip() {
     sudo python $FILES/get-pip.py
 }
 
-function install_pip_tarball() {
-    (cd $FILES; \
-        curl -O $PIP_TAR_URL; \
-        tar xvfz pip-$INSTALL_PIP_VERSION.tar.gz 1>/dev/null; \
-        cd pip-$INSTALL_PIP_VERSION; \
-        sudo python setup.py install 1>/dev/null; \
-    )
-}
-
 # Show starting versions
 get_versions
 
@@ -86,10 +57,6 @@ get_versions
 # Eradicate any and all system packages
 uninstall_package python-pip
 
-if [[ -n "$USE_GET_PIP" ]]; then
-    install_get_pip
-else
-    install_pip_tarball
-fi
+install_get_pip
 
 get_versions
