@@ -1,4 +1,5 @@
 MySQL-python
+dnsmasq # for q-dhcp
 dnsmasq-utils # for dhcp_release
 ebtables
 iptables
