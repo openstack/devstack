@@ -147,6 +147,11 @@ function configure_ironic {
         configure_ironic_api
     fi
 
+    # Format logging
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+        setup_colorized_logging $IRONIC_CONF_FILE DEFAULT
+    fi
+
     if [[ "$IRONIC_BAREMETAL_BASIC_OPS" == "True" ]]; then
         configure_ironic_auxiliary
     fi
