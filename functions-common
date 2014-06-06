@@ -881,27 +881,41 @@ function get_packages {
 
 # Distro-agnostic package installer
 # install_package package [package ...]
-function install_package {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    if is_ubuntu; then
-        # if there are transient errors pulling the updates, that's fine. It may
-        # be secondary repositories that we don't really care about.
-        [[ "$NO_UPDATE_REPOS" = "True" ]] || apt_get update || /bin/true
-        NO_UPDATE_REPOS=True
+function update_package_repo {
+    if [[ "NO_UPDATE_REPOS" = "True" ]]; then
+        return 0
+    fi
 
+    if is_ubuntu; then
+        local xtrace=$(set +o | grep xtrace)
+        set +o xtrace
+        if [[ "$REPOS_UPDATED" != "True" || "$RETRY_UPDATE" = "True" ]]; then
+            # if there are transient errors pulling the updates, that's fine.
+            # It may be secondary repositories that we don't really care about.
+            apt_get update  || /bin/true
+            REPOS_UPDATED=True
+        fi
         $xtrace
+    fi
+}
+
+function real_install_package {
+    if is_ubuntu; then
         apt_get install "$@"
     elif is_fedora; then
-        $xtrace
         yum_install "$@"
     elif is_suse; then
-        $xtrace
         zypper_install "$@"
     else
-        $xtrace
         exit_distro_not_supported "installing packages"
     fi
+}
+
+# Distro-agnostic package installer
+# install_package package [package ...]
+function install_package {
+    update_package_repo
+    real_install_package $@ || RETRY_UPDATE=True update_package_repo && real_install_package $@
 }
 
 # Distro-agnostic function to tell if a package is installed
