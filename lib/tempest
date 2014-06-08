@@ -336,6 +336,11 @@ function configure_tempest {
     # Large Ops Number
     iniset $TEMPEST_CONFIG scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
 
+    # Telemetry
+    # Ceilometer API optimization happened in juno that allows to run more tests in tempest.
+    # Once Tempest retires support for icehouse this flag can be removed.
+    iniset $TEMPEST_CONFIG telemetry too_slow_to_test "False"
+
     # Volume
     if ! is_service_enabled c-bak; then
         iniset $TEMPEST_CONFIG volume-feature-enabled backup False
