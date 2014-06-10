@@ -60,4 +60,6 @@ uninstall_package python-pip
 
 install_get_pip
 
+pip_install -U setuptools
+
 get_versions
