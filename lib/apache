@@ -31,13 +31,13 @@ APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
 # Set up apache name and configuration directory
 if is_ubuntu; then
     APACHE_NAME=apache2
-    APACHE_CONF_DIR=sites-available
+    APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/sites-available}
 elif is_fedora; then
     APACHE_NAME=httpd
-    APACHE_CONF_DIR=conf.d
+    APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/conf.d}
 elif is_suse; then
     APACHE_NAME=apache2
-    APACHE_CONF_DIR=vhosts.d
+    APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/vhosts.d}
 fi
 
 # Functions
@@ -108,14 +108,14 @@ function apache_site_config_for {
         local apache_version=$(sudo /usr/sbin/apache2ctl -v | awk '/Server version/ {print $3}' | cut -f2 -d/)
         if [[ "$apache_version" =~ ^2\.2\. ]]; then
             # Ubuntu 12.04 - Apache 2.2
-            echo /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}
+            echo $APACHE_CONF_DIR/${site}
         else
             # Ubuntu 14.04 - Apache 2.4
-            echo /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf
+            echo $APACHE_CONF_DIR/${site}.conf
         fi
     elif is_fedora; then
         # fedora conf.d is only imported if it ends with .conf so this is approx the same
-        local enabled_site_file="/etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf"
+        local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
         if [ -f $enabled_site_file ]; then
             echo ${enabled_site_file}
         else
@@ -130,8 +130,11 @@ function enable_apache_site {
     if is_ubuntu; then
         sudo a2ensite ${site}
     elif is_fedora; then
-        # fedora conf.d is only imported if it ends with .conf so this is approx the same
-        sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf.disabled /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf
+        local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
+        # Do nothing if site already enabled or no site config exists
+        if [[ -f ${enabled_site_file}.disabled ]] && [[ ! -f ${enabled_site_file} ]]; then
+            sudo mv ${enabled_site_file}.disabled ${enabled_site_file}
+        fi
     fi
 }
 
@@ -141,7 +144,11 @@ function disable_apache_site {
     if is_ubuntu; then
         sudo a2dissite ${site}
     elif is_fedora; then
-        sudo mv /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf /etc/$APACHE_NAME/$APACHE_CONF_DIR/${site}.conf.disabled
+        local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
+        # Do nothing if no site config exists
+        if [[ -f ${enabled_site_file} ]]; then
+            sudo mv ${enabled_site_file} ${enabled_site_file}.disabled
+        fi
     fi
 }
 

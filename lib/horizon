@@ -75,6 +75,9 @@ function cleanup_horizon {
             sudo rm /usr/bin/node
         fi
     fi
+
+    local horizon_conf=$(apache_site_config_for horizon)
+    sudo rm -f $horizon_conf
 }
 
 # configure_horizon() - Set config files, create data dirs, etc
