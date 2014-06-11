@@ -548,25 +548,14 @@ if [[ -n "$LOGFILE" ]]; then
     exec 3>&1
     if [[ "$VERBOSE" == "True" ]]; then
         # Set fd 1 and 2 to write the log file
-        exec 1> >( awk -v logfile=${LOGFILE} '
-                /((set \+o$)|xtrace)/ { next }
-                {
-                    cmd ="date +\"%Y-%m-%d %H:%M:%S.%3N | \""
-                    cmd | getline now
-                    close("date +\"%Y-%m-%d %H:%M:%S.%3N | \"")
-                    sub(/^/, now)
-                    print > logfile
-                    fflush(logfile)
-                    print
-                    fflush("")
-                }' ) 2>&1
+        exec 1> >( ./tools/outfilter.py -v -o "${LOGFILE}" ) 2>&1
         # Set fd 6 to summary log file
-        exec 6> >( tee "${SUMFILE}" )
+        exec 6> >( ./tools/outfilter.py -o "${SUMFILE}" )
     else
         # Set fd 1 and 2 to primary logfile
-        exec 1> "${LOGFILE}" 2>&1
+        exec 1> >( ./tools/outfilter.py -o "${LOGFILE}" ) 2>&1
         # Set fd 6 to summary logfile and stdout
-        exec 6> >( tee "${SUMFILE}" >&3 )
+        exec 6> >( ./tools/outfilter.py -v -o "${SUMFILE}" >&3 )
     fi
 
     echo_summary "stack.sh log $LOGFILE"
@@ -583,7 +572,7 @@ else
         exec 1>/dev/null 2>&1
     fi
     # Always send summary fd to original stdout
-    exec 6>&3
+    exec 6> >( ./tools/outfilter.py -v >&3 )
 fi
 
 # Set up logging of screen windows
