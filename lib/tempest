@@ -242,9 +242,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute build_timeout $BUILD_TIMEOUT
     iniset $TEMPEST_CONFIG volume build_timeout $BUILD_TIMEOUT
     iniset $TEMPEST_CONFIG boto build_timeout $BUILD_TIMEOUT
-    iniset $TEMPEST_CONFIG compute build_interval $BUILD_INTERVAL
-    iniset $TEMPEST_CONFIG volume build_interval $BUILD_INTERVAL
-    iniset $TEMPEST_CONFIG boto build_interval $BUILD_INTERVAL
     iniset $TEMPEST_CONFIG boto http_socket_timeout 5
 
     # Identity
