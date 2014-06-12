@@ -81,6 +81,7 @@ FLAT_NETWORK_BRIDGE_DEFAULT=br100
 # the new p* interfaces, then basically picks the first
 # alphabetically. It's probably wrong, however it's less wrong than
 # always using 'eth0' which doesn't exist on new Linux distros at all.
+is_package_installed net-tools || install_package net-tools
 GUEST_INTERFACE_DEFAULT=$(route -n | awk '{print $8}' | grep ^[ep] | sort | head -1)
 
 # Get hypervisor configuration
