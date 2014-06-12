@@ -357,6 +357,8 @@ function enroll_vms {
     while read MAC; do
 
         NODE_ID=$(ironic node-create --chassis_uuid $CHASSIS_ID --driver pxe_ssh \
+            -i pxe_deploy_kernel=$IRONIC_DEPLOY_KERNEL_ID \
+            -i pxe_deploy_ramdisk=$IRONIC_DEPLOY_RAMDISK_ID \
             -i ssh_virt_type=$IRONIC_SSH_VIRT_TYPE \
             -i ssh_address=$IRONIC_VM_SSH_ADDRESS \
             -i ssh_port=$IRONIC_VM_SSH_PORT \
@@ -377,6 +379,10 @@ function enroll_vms {
     # create the nova flavor
     adjusted_disk=$(($IRONIC_VM_SPECS_DISK - $IRONIC_VM_EPHEMERAL_DISK))
     nova flavor-create --ephemeral $IRONIC_VM_EPHEMERAL_DISK baremetal auto $IRONIC_VM_SPECS_RAM $adjusted_disk $IRONIC_VM_SPECS_CPU
+    # TODO(lucasagomes): Remove the 'baremetal:deploy_kernel_id'
+    # and 'baremetal:deploy_ramdisk_id' parameters
+    # from the flavor after the completion of
+    # https://blueprints.launchpad.net/ironic/+spec/add-node-instance-info
     nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$IRONIC_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$IRONIC_DEPLOY_RAMDISK_ID"
 
     # intentional sleep to make sure the tag has been set to port
