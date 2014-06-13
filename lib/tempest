@@ -316,10 +316,10 @@ function configure_tempest {
         if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
             iniset $TEMPEST_CONFIG orchestration image_ref $(basename "$HEAT_CFN_IMAGE_URL" ".qcow2")
         fi
-        # build a specialized heat flavor that is likely to be fast
+        # build a specialized heat flavor
         available_flavors=$(nova flavor-list)
         if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
-            nova flavor-create m1.heat 451 1024 0 2
+            nova flavor-create m1.heat 451 512 0 1
         fi
         iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
         iniset $TEMPEST_CONFIG orchestration build_timeout 900
