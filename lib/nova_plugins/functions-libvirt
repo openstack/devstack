@@ -29,12 +29,16 @@ function install_libvirt {
         install_package python-libguestfs
     fi
 
-    # Restart dbus/firewalld after install of libvirt to avoid a
-    # problem with polkit, which libvirtd brings in.  See
+    # Restart firewalld after install of libvirt to avoid a problem
+    # with polkit, which libvirtd brings in.  See
     # https://bugzilla.redhat.com/show_bug.cgi?id=1099031
+
+    # Note there is a difference between F20 rackspace cloud images
+    # and HP images used in the gate; rackspace has firewalld but hp
+    # cloud doesn't.  RHEL6 doesn't have firewalld either.  So we
+    # don't care if it fails.
     if is_fedora; then
-        sudo service dbus restart
-        sudo service firewalld restart
+        sudo service firewalld restart || true
     fi
 }
 
