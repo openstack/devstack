@@ -87,16 +87,18 @@ if [[ ${DISTRO} =~ (precise) ]]; then
 fi
 
 
-# RHEL6
-# -----
-
-if [[ $DISTRO =~ (rhel6) ]]; then
-
+if is_fedora; then
     # Disable selinux to avoid configuring to allow Apache access
     # to Horizon files (LP#1175444)
     if selinuxenabled; then
         sudo setenforce 0
     fi
+fi
+
+# RHEL6
+# -----
+
+if [[ $DISTRO =~ (rhel6) ]]; then
 
     # If the ``dbus`` package was installed by DevStack dependencies the
     # uuid may not be generated because the service was never started (PR#598200),
