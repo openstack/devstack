@@ -58,7 +58,7 @@ function neutron_plugin_configure_dhcp_agent {
 
 function neutron_plugin_configure_l3_agent {
     # VMware NSX plugin does not run L3 agent
-    die $LINENO "q-l3 should must not be executed with VMware NSX plugin!"
+    die $LINENO "q-l3 should not be executed with VMware NSX plugin!"
 }
 
 function neutron_plugin_configure_plugin_agent {
