@@ -81,7 +81,12 @@ FLAT_NETWORK_BRIDGE_DEFAULT=br100
 # the new p* interfaces, then basically picks the first
 # alphabetically. It's probably wrong, however it's less wrong than
 # always using 'eth0' which doesn't exist on new Linux distros at all.
-GUEST_INTERFACE_DEFAULT=$(route -n | awk '{print $8}' | grep ^[ep] | sort | head -1)
+GUEST_INTERFACE_DEFAULT=$(ip link \
+    | grep 'state UP' \
+    | awk '{print $2}' \
+    | sed 's/://' \
+    | grep ^[ep] \
+    | head -1)
 
 # Get hypervisor configuration
 # ----------------------------
@@ -241,16 +246,6 @@ function configure_nova {
 
         # Get the sample configuration file in place
         cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
-
-        # Comment out the keystone configs in Nova's api-paste.ini.
-        # We are using nova.conf to configure this instead.
-        inicomment $NOVA_API_PASTE_INI filter:authtoken auth_host
-        inicomment $NOVA_API_PASTE_INI filter:authtoken auth_protocol
-        inicomment $NOVA_API_PASTE_INI filter:authtoken admin_tenant_name
-        inicomment $NOVA_API_PASTE_INI filter:authtoken cafile
-        inicomment $NOVA_API_PASTE_INI filter:authtoken admin_user
-        inicomment $NOVA_API_PASTE_INI filter:authtoken admin_password
-        inicomment $NOVA_API_PASTE_INI filter:authtoken signing_dir
     fi
 
     if is_service_enabled n-cpu; then
