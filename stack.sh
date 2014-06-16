@@ -246,7 +246,12 @@ if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
 
     # ... and also optional to be enabled
     is_package_installed yum-utils || install_package yum-utils
-    sudo yum-config-manager --enable rhel-6-server-optional-rpms
+    if [[ $DISTRO =~ (rhel7) ]]; then
+        OPTIONAL_REPO=rhel-7-server-optional-rpms
+    else
+        OPTIONAL_REPO=rhel-6-server-optional-rpms
+    fi
+    sudo yum-config-manager --enable ${OPTIONAL_REPO}
 
 fi
 
