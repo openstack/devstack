@@ -1081,7 +1081,7 @@ function screen_it {
             # sleep to allow bash to be ready to be send the command - we are
             # creating a new window in screen and then sends characters, so if
             # bash isn't running by the time we send the command, nothing happens
-            sleep 1.5
+            sleep 3
 
             NL=`echo -ne '\015'`
             # This fun command does the following:
