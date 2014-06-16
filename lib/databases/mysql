@@ -88,6 +88,7 @@ function configure_database_mysql {
     # set default db type to InnoDB
     sudo bash -c "source $TOP_DIR/functions && \
         iniset $MY_CONF mysqld bind-address 0.0.0.0 && \
+        iniset $MY_CONF mysqld sql_mode STRICT_ALL_TABLES && \
         iniset $MY_CONF mysqld default-storage-engine InnoDB"
 
 
