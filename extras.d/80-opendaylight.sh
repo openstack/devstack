@@ -40,7 +40,9 @@ if is_service_enabled odl-compute; then
     elif [[ "$1" == "stack" && "$2" == "install" ]]; then
         install_opendaylight-compute
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
-        create_nova_conf_neutron
+        if is_service_enabled nova; then
+            create_nova_conf_neutron
+        fi
     elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
         echo_summary "Initializing OpenDaylight"
         ODL_LOCAL_IP=${ODL_LOCAL_IP:-$HOST_IP}
