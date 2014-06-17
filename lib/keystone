@@ -55,7 +55,7 @@ KEYSTONE_IDENTITY_BACKEND=${KEYSTONE_IDENTITY_BACKEND:-sql}
 KEYSTONE_ASSIGNMENT_BACKEND=${KEYSTONE_ASSIGNMENT_BACKEND:-sql}
 
 # Select Keystone's token format
-# Choose from 'UUID' and 'PKI'
+# Choose from 'UUID', 'PKI', or 'PKIZ'
 KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-PKI}
 
 # Set Keystone interface configuration
@@ -202,6 +202,8 @@ function configure_keystone {
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" = "UUID" ]]; then
         iniset $KEYSTONE_CONF token provider keystone.token.providers.uuid.Provider
+    elif [[ "$KEYSTONE_TOKEN_FORMAT" = "PKIZ" ]]; then
+        iniset $KEYSTONE_CONF token provider keystone.token.providers.pkiz.Provider
     fi
 
     iniset $KEYSTONE_CONF database connection `database_connection_url keystone`
@@ -382,7 +384,7 @@ function init_keystone {
     # Initialize keystone database
     $KEYSTONE_DIR/bin/keystone-manage db_sync
 
-    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" ]]; then
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "PKI" || "$KEYSTONE_TOKEN_FORMAT" == "PKIZ" ]]; then
         # Set up certificates
         rm -rf $KEYSTONE_CONF_DIR/ssl
         $KEYSTONE_DIR/bin/keystone-manage pki_setup
