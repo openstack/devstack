@@ -133,9 +133,8 @@ function configure_trove {
     # Copy api-paste file over to the trove conf dir and configure it
     cp $TROVE_LOCAL_CONF_DIR/api-paste.ini $TROVE_CONF_DIR/api-paste.ini
     TROVE_API_PASTE_INI=$TROVE_CONF_DIR/api-paste.ini
-    iniset $TROVE_API_PASTE_INI filter:authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $TROVE_API_PASTE_INI filter:authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $TROVE_API_PASTE_INI filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+
+    iniset $TROVE_API_PASTE_INI filter:authtoken identity_uri $KEYSTONE_AUTH_URI
     iniset $TROVE_API_PASTE_INI filter:authtoken cafile $KEYSTONE_SSL_CA
     iniset $TROVE_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $TROVE_API_PASTE_INI filter:authtoken admin_user trove
@@ -158,7 +157,7 @@ function configure_trove {
 
     # (Re)create trove taskmanager conf file if needed
     if is_service_enabled tr-tmgr; then
-        TROVE_AUTH_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT//v$IDENTITY_API_VERSION
+        TROVE_AUTH_ENDPOINT=$KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION
 
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT rabbit_password $RABBIT_PASSWORD
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT sql_connection `database_connection_url trove`

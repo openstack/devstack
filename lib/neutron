@@ -726,7 +726,7 @@ function _configure_neutron_metadata_agent {
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
-    _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT True True True
+    _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT True True
 
 }
 
@@ -868,18 +868,9 @@ function _neutron_setup_keystone {
     local section=$2
     local use_auth_url=$3
     local skip_auth_cache=$4
-    local use_service_port=$5
-    local keystone_port=$KEYSTONE_AUTH_PORT
-    if [[ -n $use_service_port ]]; then
-        keystone_port=$KEYSTONE_SERVICE_PORT
-    fi
-    if [[ -n $use_auth_url ]]; then
-        iniset $conf_file $section auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_AUTH_HOST:$keystone_port/v2.0"
-    else
-        iniset $conf_file $section auth_host $KEYSTONE_SERVICE_HOST
-        iniset $conf_file $section auth_port $keystone_port
-        iniset $conf_file $section auth_protocol $KEYSTONE_SERVICE_PROTOCOL
-    fi
+
+    iniset $conf_file $section auth_uri $KEYSTONE_SERVICE_URI
+    iniset $conf_file $section identity_uri $KEYSTONE_AUTH_URI
     iniset $conf_file $section admin_tenant_name $SERVICE_TENANT_NAME
     iniset $conf_file $section admin_user $Q_ADMIN_USERNAME
     iniset $conf_file $section admin_password $SERVICE_PASSWORD

@@ -90,7 +90,7 @@ function install_apache_wsgi {
 # /etc/apache2/sites-available/. a2ensite and a2dissite need the entire file name to work. The default
 # sites' files are default and default-ssl.
 #
-# On Fedora, any file in /etc/httpd/conf.d/ whose name ends with .conf is enabled.
+# On Fedora and openSUSE, any file in /etc/httpd/conf.d/ whose name ends with .conf is enabled.
 #
 # On RHEL and CentOS, things should hopefully work as in Fedora.
 #
@@ -113,7 +113,7 @@ function apache_site_config_for {
             # Ubuntu 14.04 - Apache 2.4
             echo $APACHE_CONF_DIR/${site}.conf
         fi
-    elif is_fedora; then
+    elif is_fedora || is_suse; then
         # fedora conf.d is only imported if it ends with .conf so this is approx the same
         local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
         if [ -f $enabled_site_file ]; then
@@ -129,7 +129,7 @@ function enable_apache_site {
     local site=$@
     if is_ubuntu; then
         sudo a2ensite ${site}
-    elif is_fedora; then
+    elif is_fedora || is_suse; then
         local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
         # Do nothing if site already enabled or no site config exists
         if [[ -f ${enabled_site_file}.disabled ]] && [[ ! -f ${enabled_site_file} ]]; then
@@ -143,7 +143,7 @@ function disable_apache_site {
     local site=$@
     if is_ubuntu; then
         sudo a2dissite ${site}
-    elif is_fedora; then
+    elif is_fedora || is_suse; then
         local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
         # Do nothing if no site config exists
         if [[ -f ${enabled_site_file} ]]; then

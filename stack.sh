@@ -246,7 +246,12 @@ if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
 
     # ... and also optional to be enabled
     is_package_installed yum-utils || install_package yum-utils
-    sudo yum-config-manager --enable rhel-6-server-optional-rpms
+    if [[ $DISTRO =~ (rhel7) ]]; then
+        OPTIONAL_REPO=rhel-7-server-optional-rpms
+    else
+        OPTIONAL_REPO=rhel-6-server-optional-rpms
+    fi
+    sudo yum-config-manager --enable ${OPTIONAL_REPO}
 
 fi
 
@@ -913,7 +918,7 @@ if is_service_enabled key; then
     start_keystone
 
     # Set up a temporary admin URI for Keystone
-    SERVICE_ENDPOINT=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v2.0
+    SERVICE_ENDPOINT=$KEYSTONE_AUTH_URI/v2.0
 
     if is_service_enabled tls-proxy; then
         export OS_CACERT=$INT_CA_DIR/ca-chain.pem
@@ -1346,7 +1351,7 @@ fi
 
 # If Keystone is present you can point ``nova`` cli to this server
 if is_service_enabled key; then
-    echo "Keystone is serving at $KEYSTONE_AUTH_PROTOCOL://$SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/"
+    echo "Keystone is serving at $KEYSTONE_SERVICE_URI/v2.0/"
     echo "Examples on using novaclient command line is in exercise.sh"
     echo "The default users are: admin and demo"
     echo "The password: $ADMIN_PASSWORD"
