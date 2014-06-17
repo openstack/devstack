@@ -107,9 +107,7 @@ function configure_heat {
     fi
 
     # keystone authtoken
-    iniset $HEAT_CONF keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $HEAT_CONF keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $HEAT_CONF keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $HEAT_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
     configure_API_version $HEAT_CONF $IDENTITY_API_VERSION
     iniset $HEAT_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
     iniset $HEAT_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
@@ -118,7 +116,7 @@ function configure_heat {
     iniset $HEAT_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR
 
     # ec2authtoken
-    iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0
+    iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
 
     # paste_deploy
     [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_CONF paste_deploy flavor standalone
@@ -269,7 +267,7 @@ function create_heat_accounts {
     if [[ "$HEAT_STACK_DOMAIN" == "True" ]]; then
         # Note we have to pass token/endpoint here because the current endpoint and
         # version negotiation in OSC means just --os-identity-api-version=3 won't work
-        KS_ENDPOINT_V3="$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
+        KS_ENDPOINT_V3="$KEYSTONE_SERVICE_URI/v3"
         D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
             --os-identity-api-version=3 domain create heat \
             --description "Owns users and projects created by heat" \
