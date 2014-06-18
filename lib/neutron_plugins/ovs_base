@@ -65,8 +65,9 @@ function _neutron_ovs_base_configure_l3_agent {
     iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
 
     neutron-ovs-cleanup
-    sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
-    sudo ovs-vsctl --no-wait br-set-external-id $PUBLIC_BRIDGE bridge-id $PUBLIC_BRIDGE
+    # --no-wait causes a race condition if $PUBLIC_BRIDGE is not up when ip addr flush is called
+    sudo ovs-vsctl -- --may-exist add-br $PUBLIC_BRIDGE
+    sudo ovs-vsctl br-set-external-id $PUBLIC_BRIDGE bridge-id $PUBLIC_BRIDGE
     # ensure no IP is configured on the public bridge
     sudo ip addr flush dev $PUBLIC_BRIDGE
 }
