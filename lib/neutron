@@ -302,13 +302,13 @@ function configure_neutron {
 
 function create_nova_conf_neutron {
     iniset $NOVA_CONF DEFAULT network_api_class "nova.network.neutronv2.api.API"
-    iniset $NOVA_CONF DEFAULT neutron_admin_username "$Q_ADMIN_USERNAME"
-    iniset $NOVA_CONF DEFAULT neutron_admin_password "$SERVICE_PASSWORD"
-    iniset $NOVA_CONF DEFAULT neutron_admin_auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
-    iniset $NOVA_CONF DEFAULT neutron_auth_strategy "$Q_AUTH_STRATEGY"
-    iniset $NOVA_CONF DEFAULT neutron_admin_tenant_name "$SERVICE_TENANT_NAME"
-    iniset $NOVA_CONF DEFAULT neutron_region_name "RegionOne"
-    iniset $NOVA_CONF DEFAULT neutron_url "http://$Q_HOST:$Q_PORT"
+    iniset $NOVA_CONF neutron admin_username "$Q_ADMIN_USERNAME"
+    iniset $NOVA_CONF neutron admin_password "$SERVICE_PASSWORD"
+    iniset $NOVA_CONF neutron admin_auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+    iniset $NOVA_CONF neutron auth_strategy "$Q_AUTH_STRATEGY"
+    iniset $NOVA_CONF neutron admin_tenant_name "$SERVICE_TENANT_NAME"
+    iniset $NOVA_CONF neutron region_name "RegionOne"
+    iniset $NOVA_CONF neutron url "http://$Q_HOST:$Q_PORT"
 
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
