@@ -256,7 +256,7 @@ function init_ironic {
     recreate_database ironic utf8
 
     # Migrate ironic database
-    $IRONIC_BIN_DIR/ironic-dbsync
+    $IRONIC_BIN_DIR/ironic-dbsync --config-file=$IRONIC_CONF_FILE
 
     create_ironic_cache_dir
 }

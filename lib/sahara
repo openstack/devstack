@@ -110,14 +110,6 @@ function configure_sahara {
     sudo chown $STACK_USER $SAHARA_AUTH_CACHE_DIR
     rm -rf $SAHARA_AUTH_CACHE_DIR/*
 
-    # Set obsolete keystone auth configs for backward compatibility
-    iniset $SAHARA_CONF_FILE DEFAULT os_auth_host $KEYSTONE_AUTH_HOST
-    iniset $SAHARA_CONF_FILE DEFAULT os_auth_port $KEYSTONE_AUTH_PORT
-    iniset $SAHARA_CONF_FILE DEFAULT os_auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $SAHARA_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
-    iniset $SAHARA_CONF_FILE DEFAULT os_admin_username sahara
-    iniset $SAHARA_CONF_FILE DEFAULT os_admin_tenant_name $SERVICE_TENANT_NAME
-
     # Set actual keystone auth configs
     iniset $SAHARA_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
     iniset $SAHARA_CONF_FILE keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
