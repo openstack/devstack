@@ -30,6 +30,9 @@ PYCADF_DIR=$DEST/pycadf
 STEVEDORE_DIR=$DEST/stevedore
 TASKFLOW_DIR=$DEST/taskflow
 
+# Support entry points installation of console scripts
+OSLO_BIN_DIR=$(get_python_exec_prefix)
+
 # Entry Points
 # ------------
 
