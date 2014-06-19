@@ -652,7 +652,7 @@ source $TOP_DIR/tools/install_prereqs.sh
 
 # Configure an appropriate python environment
 if [[ "$OFFLINE" != "True" ]]; then
-    $TOP_DIR/tools/install_pip.sh
+    PYPI_ALTERNATIVE_URL=$PYPI_ALTERNATIVE_URL $TOP_DIR/tools/install_pip.sh
 fi
 
 # Do the ugly hacks for borken packages and distros
