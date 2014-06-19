@@ -56,7 +56,7 @@ KEYSTONE_ASSIGNMENT_BACKEND=${KEYSTONE_ASSIGNMENT_BACKEND:-sql}
 
 # Select Keystone's token format
 # Choose from 'UUID', 'PKI', or 'PKIZ'
-KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-PKI}
+KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-PKIZ}
 
 # Set Keystone interface configuration
 KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
@@ -206,8 +206,8 @@ function configure_keystone {
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" = "UUID" ]]; then
         iniset $KEYSTONE_CONF token provider keystone.token.providers.uuid.Provider
-    elif [[ "$KEYSTONE_TOKEN_FORMAT" = "PKIZ" ]]; then
-        iniset $KEYSTONE_CONF token provider keystone.token.providers.pkiz.Provider
+    elif [[ "$KEYSTONE_TOKEN_FORMAT" = "PKI" ]]; then
+        iniset $KEYSTONE_CONF token provider keystone.token.providers.pki.Provider
     fi
 
     iniset $KEYSTONE_CONF database connection `database_connection_url keystone`

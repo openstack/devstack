@@ -58,6 +58,7 @@ function install_ryu {
     if [[ "$_RYU_INSTALLED" == "False" ]]; then
         git_clone $RYU_REPO $RYU_DIR $RYU_BRANCH
         export PYTHONPATH=$RYU_DIR:$PYTHONPATH
+        pip_install $(cat $RYU_DIR/tools/pip-requires)
         _RYU_INSTALLED=True
     fi
 }

@@ -250,7 +250,7 @@ function upload_image {
             xdir="$FILES/images/$IMAGE_NAME"
             rm -Rf "$xdir";
             mkdir "$xdir"
-            tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
+            tar -zxf $IMAGE -C "$xdir"
             KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
                 [ -f "$f" ] && echo "$f" && break; done; true)
             RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
