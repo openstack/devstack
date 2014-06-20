@@ -133,11 +133,23 @@ Example (Qpid):
 
 # Apache Frontend
 
-Apache web server is enabled for wsgi services by setting
-`APACHE_ENABLED_SERVICES` in your ``localrc`` section.  Remember to
-enable these services at first as above.
+Apache web server can be enabled for wsgi services that support being deployed
+under HTTPD + mod_wsgi. By default, services that recommend running under
+HTTPD + mod_wsgi are deployed under Apache. To use an alternative deployment
+strategy (e.g. eventlet) for services that support an alternative to HTTPD +
+mod_wsgi set ``ENABLE_HTTPD_MOD_WSGI_SERVICES`` to ``False`` in your
+``local.conf``.
 
-    APACHE_ENABLED_SERVICES+=key,swift
+Each service that can be run under HTTPD + mod_wsgi also has an override
+toggle available that can be set in your ``local.conf``.
+
+Example (Keystone):
+
+    KEYSTONE_USE_MOD_WSGI="True"
+
+Example (Swift):
+
+    SWIFT_USE_MOD_WSGI="True"
 
 # Swift
 

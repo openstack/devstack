@@ -118,6 +118,8 @@ ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,swift
 
+# Toggle for deploying Keystone under HTTPD + mod_wsgi
+SWIFT_USE_MOD_WSGI=${SWIFT_USE_MOD_WSGI:-False}
 
 # Functions
 # ---------
@@ -139,7 +141,7 @@ function cleanup_swift {
         rm ${SWIFT_DISK_IMAGE}
     fi
     rm -rf ${SWIFT_DATA_DIR}/run/
-    if is_apache_enabled_service swift; then
+    if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
         _cleanup_swift_apache_wsgi
     fi
 }
@@ -470,7 +472,7 @@ EOF
         sudo killall -HUP rsyslogd
     fi
 
-    if is_apache_enabled_service swift; then
+    if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
         _config_swift_apache_wsgi
     fi
 }
@@ -621,7 +623,7 @@ function init_swift {
 function install_swift {
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
     setup_develop $SWIFT_DIR
-    if is_apache_enabled_service swift; then
+    if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
         install_apache_wsgi
     fi
 }
@@ -645,7 +647,7 @@ function start_swift {
         start_service rsyncd
     fi
 
-    if is_apache_enabled_service swift; then
+    if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
         restart_apache_server
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
         screen_it s-proxy "cd $SWIFT_DIR && sudo tail -f /var/log/$APACHE_NAME/proxy-server"
@@ -682,7 +684,7 @@ function start_swift {
 # stop_swift() - Stop running processes (non-screen)
 function stop_swift {
 
-    if is_apache_enabled_service swift; then
+    if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest stop && return 0
     fi
 
