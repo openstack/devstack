@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>DevStack - Recent Changes</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/css/local.css" rel="stylesheet">
+    <style type="text/css">
+      body { padding-top: 60px; }
+      dd { padding: 10px; }
+    </style>
+    
+    <!-- Le javascripts -->
+    <script src="assets/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="assets/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">DevStack</a>
+          <ul class="nav pull-right">
+            <li><a href="overview.html">Overview</a></li>
+            <li><a href="changes.html">Changes</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="http://github.com/openstack-dev/devstack">GitHub</a></li>
+            <li><a href="https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z">Gerrit</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container" id="home">
+      
+      <section id="faq" class="span12">
+
+        <div class='row pull-left'>
+          <h2>Recent Changes <small>What's been happening?</small></h2>
+          <p>This is an incomplete list of recent changes to DevStack.  For the complete list see <a href="https://review.openstack.org/#/q/status:merged+project:openstack-dev/devstack,n,z">the DevStack project in Gerrit</a>.</p>
+          <dl class='pull-left'>
+            <!--
+            <dt></dt>
+            <dd> <em>Commit <a href="https://review.openstack.org/x">x</a> merged dd_mmm_yyyy</em></dd>
+            -->
+            <dt>Install libguestfs with Nova Compute</dt>
+            <dd>Add for Ubuntu installations; this eliminates use of NBD. <em>Commit <a href="https://review.openstack.org/70237">70237</a> merged 31 Jan 2014</em></dd>
+            <dt>Fix Tempest config settings</dt>
+            <dd>Cleans up a number of configuration issues between DevStack and Tempest. <em>Commit <a href="https://review.openstack.org/68532">68532</a> merged 31 Jan 2014</em></dd>
+            <dt>Merge Gantt support</dt>
+            <dd>Gantt support is added to the repo as a plugin. <em>Commit <a href="https://review.openstack.org/67666">67666</a> merged 31 Jan 2014</em></dd>
+            <dt>Set Keystone admin_bind_host</dt>
+            <dd>This works around an odd problem with Keystone's use of port 35357 and its use as an ephemeral port. <em>Commit <a href="https://review.openstack.org/57577">57577</a> merged 30 Jan 2014</em></dd>
+            <dt>Generate Tempest service list</dt>
+            <dd>This eliminates the manual maintenance of the services Tempest checks for. <em>Commit <a href="https://review.openstack.org/70015">70015</a> merged 30 Jan 2014</em></dd>
+            <dt>Fix stop_swift()</dt>
+            <dd>Kill all swift processes correctly with pkill. <em>Commit <a href="https://review.openstack.org/69440">69440</a> merged 28 Jan 2014</em></dd>
+            <dt>Update Cinder cert script to use run_tempest</dt>
+            <dd>Update following changes to Tempest's run_tests.sh script. <em>Commit <a href="https://review.openstack.org/66904">66904</a> merged 25 Jan 2014</em></dd>
+            <dt>Add missing mongodb client</dt>
+            <dd>The mongodb client was skipped on Fedora. <em>Commit <a href="https://review.openstack.org/65147">65147</a> merged 25 Jan 2014</em></dd>
+            <dt>Fix reverting local changes in repo</dt>
+            <dd>Work around a bug in <code>git diff --quiet</code> used in reverting the repo changes during global requirements handling. <em>Commit <a href="https://review.openstack.org/68546">68546</a> merged 25 Jan 2014</em></dd>
+            <dt>Add cirros 3.0 image for Xenserver</dt>
+            <dd>Xenserver wants the cirros 3.0 vhd image <em>Commit <a href="https://review.openstack.org/68136">68136</a> merged 25 Jan 2014</em></dd>
+            <dt>Tweak upload_image.sh for .vmdk</dt>
+            <dd>Relax the vmdk regex for parsing metadata out of the filename. <em>Commit <a href="https://review.openstack.org/68821">68821</a> merged 25 Jan 2014</em></dd>
+            <dt>Keystone use common logging</dt>
+            <dd>Switch Keystone to use common logging configuration. <em>Commit <a href="https://review.openstack.org/68530">68530</a> merged 25 Jan 2014</em></dd>
+            <dt>Do not set bind_host for Heat APIs</dt>
+            <dd>Let the Heat API service bind to 0.0.0.0 to be consistent with other DevStack services. <em>Commit <a href="https://review.openstack.org/67683">67683</a> merged 25 Jan 2014</em></dd>
+            <dt>Fine tune libvirt logging</dt>
+            <dd>Disable client-side log and tune server-side to usable levels. <em>Commit <a href="https://review.openstack.org/68194">68194</a> merged 24 Jan 2014</em></dd>
+            <dt>Add check framework for Neutron server/backen integration</dt>
+            <dd>Add the framework to verify Neutron controllers and backend service configurations per plugin requirements. <em>Commit <a href="https://review.openstack.org/64754">64754</a> merged 17 Jan 2014</em></dd>
+            <dt>Add Marconi to Tempest config</dt>
+            <dd>Check if Marconi is enabled in Tempest configuration <em>Commit <a href="https://review.openstack.org/65478">65478</a> merged 13 Jan 2014</em></dd>
+            <dt>Enable libvirt logging</dt>
+            <dd>Enable server- and client-side logging for libvirt <em>Commit <a href="https://review.openstack.org/65834">65834</a> merged 13 Jan 2014</em></dd>
+            <dt>Clean up Heat/Cloud Formation catalog template</dt>
+            <dd>The service catalog entries in the template file for orchestration and cloud formation were out of whack. <em>Commit <a href="https://review.openstack.org/65916">65916</a> merged 13 Jan 2014</em></dd>
+            <dt>Create Ceilometer service accounts</dt>
+            <dd>Create the Ceilometer service accounts in Keystone. <em>Commit <a href="https://review.openstack.org/65678">65678</a> merged 13 Jan 2014</em></dd>
+            <dt>Freshen Ubuntu supported eleases</dt>
+            <dd>Remove oneiric and quantal support. <em>Commit <a href="https://review.openstack.org/64836">64836</a> merged 13 Jan 2014</em></dd>
+            <dt>Strengthen server shutdown</dt>
+            <dd>Add screen_stop() to kill server process groups to ensure shutdown of child processes. <em>Commit <a href="https://review.openstack.org/66080">66080</a> merged 13 Jan 2014</em></dd>
+            <dt>Support for VMware NSX plugin</dt>
+            <dd>This is the Nicira NVP plugin renamed. <em>Commit <a href="https://review.openstack.org/65002">65002</a> merged 13 Jan 2014</em></dd>
+            <dt>Remove --tenant_id usage</dt>
+            <dd>Remove remaining uses of <code>--tenant_id</code> and replace with <code>--tenant-id</code>. <em>Commit <a href="https://review.openstack.org/65682">65682</a> merged 11 Jan 2014</em></dd>
+            <dt>Identity API version configuration for Cinder, Glance and Heat</dt>
+            <dd>Use IDENTITY_API_VERISON to configure Cinder, Glance and Heat. <em>Commit <a href="https://review.openstack.org/57620">57620</a> merged 11 Jan 2014</em></dd>
+            <dt>Fedora 20 Support</dt>
+            <dd>Add support for Fedora 20, remove Fedora 16 and 17 support. <em>Commit <a href="https://review.openstack.org/63647">63647</a> merged 11 Jan 2014</em></dd>
+            <dt>Trove service availablility in Tempest</dt>
+            <dd>Check if Trove is enabled in Tempest configuration. <em>Commit <a href="https://review.openstack.org/64913">64913</a> merged 11 Jan 2014</em></dd>
+
+            <dt>Change libvirtd log level to DEBUG</dt>
+            <dd>Keep libvirtd logs in the gate log stash. <em>Commit <a href="https://review.openstack.org/63992">63992</a> merged 02 Jan 2014</em></dd>
+            <dt>Fix section start bug in get_meta_section()</dt>
+            <dd>get_meta_section() would incorrectly interpret '[[' and ']]' in shell command lines inside local.conf. <em>Commit <a href="https://review.openstack.org/63280">63280</a> merged 21 Dec 2013</em></dd>
+            <dt>Use Fedora 20 final release</dt>
+            <dd>Set the URL to get the final Fedora 20 release image. <em>Commit <a href="https://review.openstack.org/63200">63200</a> merged 21 Dec 2013</em></dd>
+            <dt>Use Ubuntu 'saucy' as XenAPI DomU</dt>
+            <dd>Updated the XenAPI DomU to Ubuntu Saucy release. <em>Commit <a href="https://review.openstack.org/60107">60107</a> merged 21 Dec 2013</em></dd>
+            <dt>Begin support for RHEL7 Beta</dt>
+            <dd>Adjust the sed regex in GetOSVersion() to handle text between the version and codename in RHEL-style release strings. <em>Commit <a href="https://review.openstack.org/62543">62543</a> merged 17 Dec 2013</em></dd>
+            <dt>Configure Tempest tests for network extensions</dt>
+            <dd>Puts the value of NETWORK_API_EXTENSIONS into tempest.conf. <em>Commit <a href="https://review.openstack.org/62054">62054</a> merged 17 Dec 2013</em></dd>
+            <dt>Default floating IP range to /24</dt>
+            <dd>Set the default FLOATING_RANGE=172.24.4.0/24 to accomodate parallel testing in Tempest. <em>Commit <a href="https://review.openstack.org/58284">58284</a> merged 17 Dec 2013</em></dd>
+            <dt>Support oslo-rootwrap in Cinder</dt>
+            <dd>Cinder can use both cinder-rootwrap and oslo-rootwrap for a transitional period. <em>Commit <a href="https://review.openstack.org/62003">62003</a> merged 16 Dec 2013</em></dd>
+            <dt>Heat tests can use test image if present</dt>
+            <dd>If HEAT_CREATE_TEST_IMAGE is defined and the image named in its value is present Heat will use it rather than invoke diskimage-builder. <em>Commit <a href="https://review.openstack.org/59893">59893</a> merged 15 Dec 2013</em></dd>
+            <dt>Fix iniset() pipe ('|') bug</dt>
+            <dd>iniset() did not properly handle a value containing a pipe ('|') character. <em>Commit <a href="https://review.openstack.org/60170">60170</a> merged 14 Dec 2013</em></dd>
+            <dt>Define Q_L3_ENABLED=True for MidoNet plugin</dt>
+            <dd>Q_L3_ENABLED=True for MidoNet plugin. <em>Commit <a href="https://review.openstack.org/56459">56459</a> merged 12 Dec 2013</em></dd>
+            <dt>Fix Swift workers for non-proxies</dt>
+            <dd>Swift spawned more proxy workers than required in DevStack environments, reduce it to '1'. <em>Commit <a href="https://review.openstack.org/61122">61122</a> merged 12 Dec 2013</em></dd>
+            <dt>Add Keystone auth port to Nova config</dt>
+            <dd>Set keystone_authtoken:auth_port to KEYSTONE_AUTH_PORT in nova.conf. <em>Commit <a href="https://review.openstack.org/60736">60736</a> merged 12 Dec 2013</em></dd>
+            <dt>Increase additional flavor RAM on ppc64</dt>
+            <dd>Create the nano and micro flavors with 128MB and 256MB RAM respectively on ppc64. <em>Commit <a href="https://review.openstack.org/60606">60606</a> merged 12 Dec 2013</em></dd>
+            <dt>Increase XenAPI DomU memory</dt>
+            <dd>Increase XenAPI DomU memory (OSDOMU_MEM_MB) to 4GB by default. <em>Commit <a href="https://review.openstack.org/59792">59792</a> merged 10 Dec 2013</em></dd>
+            <dt>Assign unique names to fake nova-computes</dt>
+            <dd>Assign each fake nova-compute instance a unique name so the scheduler works properly. <em>Commit <a href="https://review.openstack.org/58700">58700</a> merged 09 Dec 2013</em></dd>
+            <dt>Fix whitespace bugs in merge_config_file()</dt>
+            <dd>Merge_config_file() did not properly skip lines with only whitespace. <em>Commit <a href="https://review.openstack.org/60112">60112</a> merged 09 Dec 2013</em></dd>
+            <dt>Setup Savanna user and endpoints</dt>
+            <dd>Create savanna user, and savanna and data_processing endpoints. <em>Commit <a href="https://review.openstack.org/60077">60077</a> merged 09 Dec 2013</em></dd>
+            <dt>Display DevStack status at XenAPI DomU login</dt>
+            <dd>Add DevStack setup setvice status to /etc/issue so it is displayed at the DomU login. <em>Commit <a href="https://review.openstack.org/48444">48444</a> merged 09 Dec 2013</em></dd>
+            <dt>Fix install_get_pip using proxy</dt>
+            <dd>install_get_pip did not work properly through an HTTP proxy. <em>Commit <a href="https://review.openstack.org/60242">60242</a> merged 07 Dec 2013</em></dd>
+            <dt>Add color logs to Trove</dt>
+            <dd>Add the colorized log output to Trove. <em>Commit <a href="https://review.openstack.org/58363">58363</a> merged 06 Dec 2013</em></dd>
+            <dt>Update LDAP support</dt>
+            <dd>Update DevStack's LDAP support to make the DN configurable. <em>Commit <a href="https://review.openstack.org/58590">58590</a> merged 06 Dec 2013</em></dd>
+            <dt>Add Marconi support</dt>
+            <dd>Add Marconi support via extras.d plugin. <em>Commit <a href="https://review.openstack.org/47999">47999</a> merged 05 Dec 2013</em></dd>
+            <dt>Split Ceilometer collector service</dt>
+            <dd>Split Celio collector service into ceilometer-collector and ceilometer-agent-notification. <em>Commit <a href="https://review.openstack.org/58600">58600</a> merged 05 Dec 2013</em></dd>
+            <dt>Add 'post-extra' configuration phase</dt>
+            <dd>The 'post-extra' configuration phase is processed after the 'extra' plugin phase is executed. <em>Commit <a href="https://review.openstack.org/55583">55583</a> merged 05 Dec 2013</em></dd>
+            <dt>Enable user interaction with stack.sh in XenAPI</dt>
+            <dd>Multiple changes to how DevStack is configured to run under XenServer. <em>Commit <a href="https://review.openstack.org/48092">48092</a> merged 04 Dec 2013</em></dd>
+            <dt>Handle VMDK metadata</dt>
+            <dd>upload_image.sh now attempts to get the metadata for a *.vmdk file from *-flat.vmdk. <em>Commit <a href="https://review.openstack.org/58356">58356</a> merged 04 Dec 2013</em></dd>
+            <dt>Deploy Keystone with SSL</dt>
+            <dd>Configure Keystone to use SSL rather than using the tls-proxy function. <em>Commit <a href="https://review.openstack.org/47076">47076</a> merged 03 Dec 2013</em></dd>
+            <dt>change default Git base to git.openstack.org</dt>
+            <dd>Pull repos from git.openstack.org where possible. <em>Commit <a href="https://review.openstack.org/56749">56749</a> merged 02 Dec 2013</em></dd>
+            <dt>Fix Neutron color log format</dt>
+            <dd>Fix Neutron color log format. <em>Commit <a href="https://review.openstack.org/58350">58350</a> merged 01 Dec 2013</em></dd>
+            <dt>Truncate PKI token logging</dt>
+            <dd>Limit the PKI token logged to 12 characters. <em>Commit <a href="https://review.openstack.org/57526">57526</a> merged 26 Nov 2013</em></dd>
+            <dt>Support memchace for Keystone token backend</dt>
+            <dd>Use memcache backend with KEYSTONE_TOKEN_BACKEND=memcache. <em>Commit <a href="https://review.openstack.org/56691">56691</a> merged 26 Nov 2013</em></dd>
+            <dt>Remove powervm hypervisor support</dt>
+            <dd>The powervm arch is EOL, will be replaced in the future. <em>Commit <a href="https://review.openstack.org/57789">57789</a> merged 25 Nov 2013</em></dd>
+            <dt>Increase default Swift timeouts</dt>
+            <dd>node_timeout and conn_timeout needed to be increased for testing in slow VM environments. <em>Commit <a href="https://review.openstack.org/57514">57514</a> merged 25 Nov 2013</em></dd>
+            <dt>Add hacking rules for shell scripts</dt>
+            <dd>Record the previously unwritten rules for common formatting. <em>Commit <a href="https://review.openstack.org/55024">55024</a> merged 24 Nov 2013</em></dd>
+            <dt>Default to Cinder API v2</dt>
+            <dd>Set OS_VOLUME_API_VERSION=2 by default. <em>Commit <a href="https://review.openstack.org/43045">43045</a> merged 22 Nov 2013</em></dd>
+            <dt>Drop nodejs dependency</dt>
+            <dd>Horizon no longer needs nodejs. <em>Commit <a href="https://review.openstack.org/55255">55255</a> merged 22 Nov 2013</em></dd>
+            <dt>Change to use STACK_USER rather than USER</dt>
+            <dd>This changes DevStack to use STACK_USER for username references. <em>Commit <a href="https://review.openstack.org/57212">57212</a> merged 22 Nov 2013</em></dd>
+            <dt>Enable specifying FLAT_NETWORK_BRIDGE in XenAPI</dt>
+            <dd>Set FLAT_NETWORK_BRIDGE for DomU. <em>Commit <a href="https://review.openstack.org/48296">48296</a> merged 22 Nov 2013</em></dd>
+            <dt>Add file: URL handling to upload_image.sh</dt>
+            <dd>upload_image.sh can now use file: URLs as the image source. <em>Commit <a href="https://review.openstack.org/56721">56721</a> merged 21 Nov 2013</em></dd>
+            <dt>Increase Swift backing storage size</dt>
+            <dd>Swift now has SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=6G. <em>Commit <a href="https://review.openstack.org/56116">56116</a> merged 13 Nov 2013</em></dd>
+            <dt>Fix Horizon config for Apache 2.4</dt>
+            <dd>Handle Apache config differences according to Apache version and not distro release. <em>Commit <a href="https://review.openstack.org/54738">54738</a> merged 11 Nov 2013</em></dd>
+            <dt>Add FORCE_CONFIG_DRIVE to nova.conf</dt>
+            <dd>Add FORCE_CONFIG_DRIVE, default to 'always'. <em>Commit <a href="https://review.openstack.org/54746">54746</a> merged 01 Nov 2013</em></dd>
+            <dt>Turn off Nova firewall when using Neutron</dt>
+            <dd>Sets firewall_driver when Neutron is enabled. <em>Commit <a href="https://review.openstack.org/54827">54827</a> merged 01 Nov 2013</em></dd>
+            <dt>Use nova.conf for auth_token config</dt>
+            <dd>Eliminates using api-paste.ini. <em>Commit <a href="https://review.openstack.org/53212">53212</a> merged 01 Nov 2013</em></dd>
+            <dt>Use conder.conf for auth_token config</dt>
+            <dd>Eliminates using api-paste.ini. <em>Commit <a href="https://review.openstack.org/53213">53213</a> merged 01 Nov 2013</em></dd>
+            <dt>Add Cinder support for NFS driver</dt>
+            <dd>Set CINDER_DRIVER=nfs. <em>Commit <a href="https://review.openstack.org/53276">53276</a> merged 31 Oct 2013</em></dd>
+            <dt>Add Postgres for Ceilometer backend</dt>
+            <dd>Set CEILOMETER_BACKEND=postgresql. <em>Commit <a href="https://review.openstack.org/53715">53715</a> merged 31 Oct 2013</em></dd>
+            <dt>Add Ubuntu Trusty</dt>
+            <dd>Add support for Ubuntu Trusty. <em>Commit <a href="https://review.openstack.org/53965">53965</a> merged 30 Oct 2013</em></dd>
+            <dt>Enable Keystone auth in Ironic</dt>
+            <dd>Always use Keystone for Ironic auth. <em>Commit <a href="https://review.openstack.org/51845">51845</a> merged 25 Oct 2013</em></dd>
+            <dt>Add bash8 tool</dt>
+            <dd>Perform basic format tests in CI gate. <em>Commit <a href="https://review.openstack.org/51676">51676</a> merged 23 Oct 2013</em></dd>
+            <dt>Add Savanna support</dt>
+            <dd>Add Savanna support using the plugin mech. <em>Commit <a href="https://review.openstack.org/50601">50601</a> merged 22 Oct 2013</em></dd>
+            <dt>Install Ironic client</dt>
+            <dd>Add python-ironicclient repo. <em>Commit <a href="https://review.openstack.org/51853">51853</a> merged 22 Oct 2013</em></dd>
+
+            <dt>Fix fixup_stuff.sh for RHEL6</dt>
+            <dd>fixup_stuff.sh didn't work properly on RHEL6/Python 2.6 <em>Commit <a href="https://review.openstack.org/52176">52176</a> merged 17 Oct 2013</em></dd>
+            <dt>Add more extras.d hooks</dt>
+            <dd>Add more hooks to call into extras.d to support adding services without modifying core DevStack scripts. <em>Commit <a href="https://review.openstack.org/51939">51939</a> merged 16 Oct 2013</em></dd>
+            <dt>Add run_tests.sh</dt>
+            <dd>Add a simple run_tests.sh for running bash8. <em>Commit <a href="https://review.openstack.org/51711">51711</a> merged 15 Oct 2013</em></dd>
+            <dt>Add bash8 style checker</dt>
+            <dd>Add bash8 to check certain style constraints in shell scripts. <em>Commit <a href="https://review.openstack.org/51676">51676</a> merged 15 Oct 2013</em></dd>
+            <dt>Add trove-conductor service</dt>
+            <dd>Add trove-conductor service to Trove support <em>Commit <a href="https://review.openstack.org/49237">49237</a> merged 14 Oct 2013</em></dd>
+            <dt>Add new local configuration file</dt>
+            <dd>Add local.conf support to replace localrc, includes ability to set values in arbitrary config files. <em>Commit <a href="https://review.openstack.org/46768">46768</a> merged 14 Oct 2013</em></dd>
+            <dt>Remove 'stack' account creation from stack.sh</dt>
+            <dd>This forces stack.sh to not be run as root and provides the account creation as a separate script. <em>Commit <a href="https://review.openstack.org/49798">49798</a> merged 05 Oct 2013</em></dd>
+            <dt>Support running Keystone under Apache</dt>
+            <dd>Run Keystone under Apache along with Swift and Horizon <em>Commit <a href="https://review.openstack.org/46866">46866</a> merged 26 Sep 2013</em></dd>
+            <dt>Increase default Swift storage for Tempest</dt>
+            <dd>When Tempest is enabled increase the default Swift storage to 4Gb  <em>Commit <a href="https://review.openstack.org/46770">46770</a> merged 18 Sep 2013</em></dd>
+            <dt>Keystone mixed backend support</dt>
+            <dd>Add support for Keystone to use mixed backend configuration <em>Commit <a href="https://review.openstack.org/44605">44605</a> merged 16 Sep 2013</em></dd>
+            <dt>Add Trove support</dt>
+            <dd>Add support for Trove service <em>Commit <a href="https://review.openstack.org/38169">38169</a> merged 12 Sep 2013</em></dd>
+            <dt>Enable Neutron L3 plugon</dt>
+            <dd>Support Neutron's L3 plugin <em>Commit <a href="https://review.openstack.org/20909">20909</a> merged 10 Sep 2013</em></dd>
+            <dt>Configure VPNaaS panel in Horizon</dt>
+            <dd>If enabled configure VPNaaS panel in Horizon by default <em>Commit <a href="https://review.openstack.org/45751">45751</a> merged 10 Sep 2013</em></dd>
+            <dt>Enable multi-threaded Nova API servers</dt>
+            <dd>Sets the Nova API servers to use four worker threads by default <em>Commit <a href="https://review.openstack.org/45314">45314</a> merged 09 Sep 2031</em></dd>
+            <dt>Handle .vmdk custom properties</dt>
+            <dd>Parses property values out of the .vmdk filename and includes them in the glance upload. <em>Commit <a href="https://review.openstack.org/45181">45181</a> merged 09 Sep 2013</em></dd>
+            <dt>Use pip 1.4.1</dt>
+            <dd>Adds pip option --pre <em>Commit <a href="https://review.openstack.org/45436">45436</a> merged 06 Sep 2031</em></dd>
+            <dt>Rename Ceilometer alarm service</dt>
+            <dd>Change 'ceilometer-alarm-eval' to 'ceilometer-alarm-singleton' and 'ceilometer-alarm-notifier' <em>Commit <a href="https://review.openstack.org/45214">45214</a> merged 06 Sep 2013</em></dd>
+            <dt>Support OpenSwan in Neutron VPNaaS</dt>
+            <dd>Neutron VPNaaS changed IPSec to OpenSwan <em>Commit <a href="https://review.openstack.org/42265">42265</a> merged 06 Sep 2013</em></dd>
+            <dt>Change Ceilometer backend default to MySQL</dt>
+            <dd>Issues with MongoDB 2.4 availability resulted in this change <em>Commit <a href="https://review.openstack.org/43851">43851</a> merged 05 Sep 2013</em></dd>
+            <dt>Add Ironic support</dt>
+            <dd>Add Ironic as a supported service <em>Commit <a href="https://review.openstack.org/41053">41053</a> merged 03 Sep 2013</em></dd>
+            <dt>Add support for Docker hypervisor</dt>
+            <dd>Add Docker support and the hypervisor plugin mechanism <em>Commit <a href="https://review.openstack.org/40759">40759</a> merged 30 Aug 2013</em></dd>
+
+            <dt>Add support for Heat resource templates</dt>
+            <dd>Install Heat resource template files. <em>Commit <a href="https://review.openstack.org/43631">43631</a> merged 29 Aug 2013</em></dd>
+            <dt>Support Neutron FWaaS</dt>
+            <dd>Add support for OpenStack Networking Firewall (FWaaS). <em>Commit <a href="https://review.openstack.org/37147">37147</a> merged 29 Aug 2013</em></dd>
+            <dt>Add new #testonly tag for package prereq files</dt>
+            <dd>Add INSTALL_TESTONLY_PACKAGES to enable installing packages marked with #testonly.  These packages are required only for running unit tests. <em>Commit <a href="https://review.openstack.org/38127">38127</a> merged 28 Aug 2013</em></dd>
+            <dt>Add support for Heat environments</dt>
+            <dd>Install Heat global environment config files. <em>Commit <a href="https://review.openstack.org/43387">43387</a> merged 28 Aug 2013</em></dd>
+            <dt>Configure bash completion</dt>
+            <dd>Configure bash completion for cinder, keystone, neutron, nova and nova-manage. <em>Commit <a href="https://review.openstack.org/41928">41928</a> merged 26 Aug 2013</em></dd>
+            <dt>Change horizon Apache config file to horizon.conf</dt>
+            <dd>Add .conf to horizon Apache config file to be consistent with Fedora practice. <em>Commit <a href="https://review.openstack.org/40352">40352</a> merged 22 Aug 2013</em></dd>
+            <dt>Echo service start failures</dt>
+            <dd>Echo service start failures to console so status is obvious in gate logs. <em>Commit <a href="https://review.openstack.org/42427">42427</a> merged 16 Aug 2013</em></dd>
+            <dt>Colorize Heat logs</dt>
+            <dd>Add Nova-style color support to Heat logging. <em>Commit <a href="https://review.openstack.org/40342">40342</a> merged 16 Aug 2013</em></dd>
+            <dt>Add Cinder support to VMware configuration</dt>
+            <dd>Configures Cinder to use VMware backend. <em>Commit <a href="https://review.openstack.org/41612">41612</a> merged 15 Aug 2013</em></dd>
+            <dt>Default PIP_USE_MIRRORS to False</dt>
+            <dd>Pip mirrors no longer used by default, can stil be enabled with PIP_USE_MIRRORS=True. <em>Commit <a href="https://review.openstack.org/40623">40623</a> merged 13 Aug 2013</em></dd>
+            <dt>Configure Volume API v2</dt>
+            <dd>Configure both SQL and template backends with Volume API v2. <em>Commit <a href="https://review.openstack.org/22489">22489</a> merged 13 Aug 2013</em></dd>
+            <dt>Enable Tempest debug logging</dt>
+            <dd>Enable Tempest debug logging for the same output verbosity under testr. <em>Commit <a href="https://review.openstack.org/41113">41113</a> merged 12 Aug 2013</em></dd>
+            <dt>Configure Cinder for Ceilometer notifications</dt>
+            <dd>Enable Cinder to send notifications when Ceilometer is enabled. <em>Commit <a href="https://review.openstack.org/41108">41108</a> merged 12 Aug 2013</em></dd>
+            <dt>Support Heat-only configuration</dt>
+            <dd>Allows stack.sh to start a standalone Heat installation. <em>Commit <a href="https://review.openstack.org/39602">39602</a> merged 10 Aug 2013</em></dd>
+            <dt>Add tools/install_pip.sh</dt>
+            <dd>Install pip from source in order to get a current version rather than the out-of-date OS-supplied version <em>Commit <a href="https://review.openstack.org/39827">39827</a> merged 08 Aug 2013</em></dd>
+            <dt>Add call trace to error message</dt>
+            <dd>Display the bash call stack in die() output. <em>Commit <a href="https://review.openstack.org/39887">39887</a> merged 08 Aug 2013</em></dd>
+            <dt>Configure Keystone client in Cinder</dt>
+            <dd>Configure auth creds in Cinder to allow queries to Keystone. <em>Commit <a href="https://review.openstack.org/39747">39747</a> merged 07 Aug 2013</em></dd>
+            <dt>Update all repos to global requirements</dt>
+            <dd>Force update project repos to global requirements before tests.  <em>Commit <a href="https://review.openstack.org/35705">35705</a> merged 06 Aug 2013</em></dd>
+            <dt>Don't add 'bulk' middleware for Swift</dt>
+            <dd>The bulk middleware is already in the sample so don't add it. <em>Commit <a href="https://review.openstack.org/39826">39826</a> merged 06 Aug 2013</em></dd>
+            <dt>Enable using Apache as Swift frontend</dt>
+            <dd>Refactor apache functions into lib/apache; configure apache2 vhost and wsgi files for Swift proxy, account, container and object server. <em>Commit <a href="https://review.openstack.org/33946">33946</a> merged 02 Aug 2013</em></dd>
+            <dt>Launch Ceilometer alarm services</dt>
+            <dd>Add ceilometer-alarm-notify and ceilometer-alarm-eval to the Ceilometer services. <em>Commit <a href="https://review.openstack.org/39300">39300</a> merged 01 Aug 2013</em></dd>
+            <dt>Fix Tempest logging configuration</dt>
+            <dd>Correctly set the tempest output logging to dump all of tempest logs into a tempest.log file.  Also fixes logging in the gate no longer print every log message on the console. <em>Commit <a href="https://review.openstack.org/39571">39571</a> merged 31 Jul 2013</em></dd>
+            <dt>Install Oslo from source</dt>
+            <dd>Install the gradulated Oslo libraries from source into $DEST. <em>Commit <a href="https://review.openstack.org/39450">39450</a> merged 31 Jul 2013</em></dd>
+            <dt>Multiple fixes for cell support</dt>
+            <dd>Start Nova cell services; skip unsupported exercises; use 'default' security group in exercises. <em>Commit <a href="https://review.openstack.org/38897">38897</a> merged 29 Jul 2013</em></dd>
+            <dt>Add MySQL support for Ceilometer</dt>
+            <dd>Add MySQL storage support for Ceilometer. <em>Commit <a href="https://review.openstack.org/37413">37413</a> merged 19 Jul 2013</em></dd>
+            <dt>Create Compute API v3 endpoint</dt>
+            <dd>Configures SQL and templated backends for Compute API v3.  The service type is 'computev3'. <em>Commit <a href="https://review.openstack.org/33277">33277</a> merged 18 Jul 2013</em></dd>
+            <dt>Add Neutron VPNaaS support</dt>
+            <dd>Add Support for OpenStack Networking VPNaaS (IPSec) <em>Commit <a href="https://review.openstack.org/32174">32174</a> merged 15 Jul 2013</em></dd>
+            <dt>Configure Swift functional tests</dt>
+            <dd>The default Swift configuration now has functional tests properly configured. <em>Commit <a href="https://review.openstack.org/35793">35793</a> merged 12 Jul 2013</em></dd>
+            <dt>Enable all Nova notifications</dt>
+            <dd>Nova now sends all notification events to Ceilometer. <em>Commit <a href="https://review.openstack.org/35258">35258</a> merged 08 Jul 2013</em></dd>
+            <dt>Add IDENTITY_API_VERSION</dt>
+            <dd>IDENTITY_API_VERSION defaults to '2.0', enables setting '3' for API v3. <em>Commit <a href="https://review.openstack.org/34884">34884</a> merged 08 Jul 2013</em></dd>
+
+            <dt>Rename Qunatum repos to Neutron</dt>
+            <dd>Part of the project renaming process.  This does not change the process short names ('q-api', 'q-agt', etc) or the variable names starting with <code>Q_</code>.  Some Nova and Horizon changes remain to be completed.  The change has been applied to stable/grizzly (35860) and stable/folsom (35861). <em>Commit <a href="https://review.openstack.org/35981">35981, 35861, 35860, 35859</a> merged 07 Jul 2013</em></dd>
+            <dt>Direct installation of Python prerequisites</dt>
+            <dd>Python prereqs are now installed by pip (and not easy_install) directly from each projects <code>requirements.txt</code>. <em>Commit <a href="https://review.openstack.org/35696">35696</a> merged 07 Jul 2013</em></dd>
+            <dt>Enable Fedora 19</dt>
+            <dd>Fedora 19 is now supported directly. <em>Commit <a href="https://review.openstack.org/35071">35071</a> merged 03 Jul 2013</em></dd>
+            <dt>Fix Cinder clones on RHEL 6/CentOS</dt>
+            <dd>On RHEL 6/CentOS 6 cloned LVM volumes required more space for metadata storage. <em>Commit <a href="https://review.openstack.org/34640">34640</a> merged 28 Jun 2013</em></dd>
+            <dt>Use lower case section names in Quantum</dt>
+            <dd>The service code now supports lowercase section names, change DevStack to use them by default. <em>Commit <a href="https://review.openstack.org/34177">34177</a> merged 27 Jun 2013</em></dd>
+            <dt>Set default VOLUME_BACKING_FILE to 10Gb</dt>
+            <dd>The previous default of 5Gb was not large enough for some Tempest usage requirements. <em>Commit <a href="https://review.openstack.org/33885">33885</a> merged 21 Jun 2013</em></dd>
+            <dt>Use service role for service accounts</dt>
+            <dd>Use an account with service role assigned rather than a full admin account for swift, heat, ceilometer. Ceilometer was later restored to admin account in <a href="https://review.openstack.org/33838">33838</a>. <em>Commit <a href="https://review.openstack.org/31687">31687</a> merged 16 Jun 2013</em></dd>
+            <dt>Enable Nova API v3</dt>
+            <dd>Nova disables API v3 by default so explicitly enable it. <em>Commit <a href="https://review.openstack.org/311980">31190</a> merged 31 May 2013</em></dd>
+            <dt>Enable Debian support</dt>
+            <dd>Allows Devstack to run on Debian as an unsupported OS. <em>Commit <a href="https://review.openstack.org/28215">28215</a> merged 9 May 2013</em></dd>
+            <dt>Default SWIFT_DATA_DIR to use $DATA_DIR</dt>
+            <dd>Previously SWIFT_DATA_DIR was in $DEST/data. <em>Commit <a href="https://review.openstack.org/27749">27749</a> merged 3 May 2013</em></dd>
+            <dt>Set default S3_URL port to 8080</dt>
+            <dd>Set port to 8080 if swift3 is enabled, previously was nove objectstore value of 3333. <em>Commit <a href="https://review.openstack.org/27404">27404</a> merged 25 Apr 2013</em></dd>
+
+            <dt>Use example settings in horizon repo as local_settings.py</dt>
+            <dd>Removes <code>files/horizon_settings.py</code> and copies the same file from the Horizon repo. <em>Commit <a href="https://review.openstack.org/25510">25510</a> merged 28 Mar 2013</em></dd>
+            <dt>Add support for iso files as glance images</dt>
+            <dd>Add support for iso files as glance images <em>Commit <a href="https://review.openstack.org/25290">25290</a> merged 28 Mar 2013</em></dd>
+
+            <dt>Allow processes to run without screen</dt>
+            <dd>Add <code>USE_SCREEN=False</code> to <code>localrc</code> to cause all server processes to run without <code>screen</code>.  This is expected to be used primarily in the CI tests and should address the failures seen when <code>screen</code> does not start a process. <em>Commit <a href="https://review.openstack.org/23148">23148</a> merged 20 Mar 2013</em></dd>
+            <dt>Add clean.sh</dt>
+            <dd>This is intended to remove as much of the non-packaged (both OS and pip) remnants of DevStack from the system.  It is suitable for changing queue managers and databases as those packages are uninstalled.  It does not change the network configuration that Nova performs nor does it even attempt to undo anything that Quantum does. <em>Commit <a href="https://review.openstack.org/24360">24360</a> merged 15 Mar 2013</em></dd>
+            <dt>Add support for running a specific set of exercises</dt>
+            <dd>Set <code>RUN_EXERCISES</code> to a comma separated list of exercise names to run. <code>SKIP_EXERCISES</code> is ignored in this mode. <em>Commit <a href="https://review.openstack.org/23846">23846</a> merged 15 Mar 2013</em></dd>
+            <dt>Deprecate DATABASE_TYPE and use_database</dt>
+            <dd>This changes the way that a database is selected back to using only <code>ENABLED_SERVICES</code>.  Backward compatibility is maintained until after Grizzly is released. <em>Commit <a href="https://review.openstack.org/22635">22635</a> merged 22 Feb 2013</em></dd>
+            <dt>Create tools/install_prereqs.sh</dt>
+            <dd>This factors out the installation/upgrade of required OS packages so it can run independently of <code>stack.sh</code>.  It also adds a time marker so it does not run again within a set amount of time, default is 2 hours. Remove <code>.prereqs</code> to reset this timeout. <em>Commit <a href="https://review.openstack.org/21397">21397</a> merged 10 Feb 2013</em></dd>
+            <dt>Add initial LDAP support</dt>
+            <dd>Installs and configures OpenLDAP for Keystone.  Select by adding <code>enable_service ldap</code> and <code>KEYSTONE_IDENTITY_BACKEND=ldap</code> to <code>localrc</code>. <em>Commit <a href="https://review.openstack.org/20249">20249</a> merged 07 Feb 2013</em></dd>
+            <dt>Add variable to set Keystone token backend</dt>
+            <dd>Change the default Keystone token backend from <code>kvs</code> to <code>sql</code>by setting <code>KEYSTONE_TOKEN_BACKEND=sql</code>. <em>Commit <a href="https://review.openstack.org/20739">20739</a> merged 30 Jan 2013</em></dd>
+            <dt>Add Sheepdog support in Cinder</dt>
+            <dd>This enables using Sheepdog as a Cinder backend storage by setting <code>CINDER_DRIVER=sheepdog</code>. <em>Commit <a href="https://review.openstack.org/19931">19931</a> merged 18 Jan 2013</em></dd>
+            <dt>Support SPICE</dt>
+            <dd>Adds an 'n-spice' service (off by default) that supports SPICE in the Nova libvirt driver.  It also allows running in a SPICE only environment. <em>Commit <a href="https://review.openstack.org/19934">19934</a> merged 18 Jan 2013</em></dd>
+
+            <dt>Add a mechanism to automatically load additional projects at the end of <code>stack.sh</code></dt>
+            <dd>This differs from loca.sh in that scripts can be dropped into <code>local.d</code> and <code>stack.sh</code> will source them in alphanumeric order. <em>Commit <a href="https://review.openstack.org/19367">19367</a> merged 11 Jan 2013</em></dd>
+            <dt>Add support fir <code>baremetal</code> hypervisor</dt>
+            <dd>This is the first of a set of commits that enable baremetal support. <em>Commit <a href="https://review.openstack.org/15941">15941</a> merged 28 Dec 2012</em></dd>
+            <dt>Add support for OpenSuSE 12.2</dt>
+            <dd>This is actually just the commit to remove the need for FORCE=yes, OpenSuSE support has been coming along for a while. <em>Commit <a href="https://review.openstack.org/18479">18479</a> merged 27 Dec 2012</em></dd>
+            <dt>Save selected environment variables from <code>stack.sh</code> for later use</dt>
+            <dd>Write a set of environment variables to <code>.stackenv</code> so they can be quickly used by other scripts.  These are mostly the variables that are derived and not statically set. <code>.stackenv</code> is overwritten on every <code>stack.sh</code> run.<em>Commit <a href="https://review.openstack.org/18094">18094</a> merged 19 Dec 2012</em></dd>
+            <dt>Enable Tempest by default</dt>
+            <dd>Tempest is now downloaded and configured by default in DevStack.  This is to encourage more developers to use it as part of their workflow. Tempest configuration is now handled in <code>lib/tempest</code>; <code>tools/configure_tempest.sh</code> has been removed. <em>Commit <a href="https://review.openstack.org/17808">17808</a> merged 12 Dec 2012</em></dd>
+
+            <dt>Add PostgreSQL support</dt>
+            <dd>Adds an abstraction layer to database configuration and adds support for PostgreSQL under that.  MySQL is still the default.  To use add <code>use_database postgresql</code> to <code>localrc</code><em>Commit <a href="https://review.openstack.org/15224">15224</a> merged 05 Nov 2012</em></dd>
+            <dt>Add PKI token configuration support</dt>
+            <dd>Adds configuration KEYSTONE_TOKEN_FORMAT to select <code>PKI</code> or <code>UUID</code> token format. The default is <code>PKI</code>.<em>Commit <a href="https://review.openstack.org/14895">14895</a> merged 29 Oct 2012</em></dd>
+            <dt>Add Ubuntu Raring Ringtail support</dt>
+            <dd>Adds raring to the list of supported Ubuntu releases<em>Commit <a href="https://review.openstack.org/14692">14692</a> merged 24 Oct 2012</em></dd>
+            <dt>Add support for Quantum Ryu plugin</dt>
+            <dd>Ryu plugin lets Quantum link Open vSwitch and Ryu OpenFlow controller<em>Commit <a href="https://review.openstack.org/10117">10117</a> merged 20 Oct 2012</em></dd>
+            <dt>Configure and launch HEAT API</dt>
+            <dd>Creates a new enpoint using service type 'orchestration'.<em>Commit <a href="https://review.openstack.org/14195">14195</a> merged 10 Oct 2012</em></dd>
+            <dt>Fix upload image handling</dt>
+            <dd>Detect qcow, raw, vdi, vmdk image formats and sets Glance's disk format accordingly. <em>Commit <a href="https://review.openstack.org/13044">13044</a> merged 24 Sep 2012</em></dd>
+
+            <dt>Add non-verbose output mode</dt>
+            <dd>Set <code>VERBOSE=False</code> in <code>localrc</code> and see only periodic status messages on the screen.  The detailed output continues to be written to the log file if <code>LOGFILE</code> is set. <em>Commit <a href="https://review.openstack.org/12996/">12996</a> merged 17 Sep 2012</em></dt>
+
+            <dt>Move data directories out of source repos</dt>
+            <dd>Data for Glance (images and cache) and Nova (instances, all state info) have historically been in the source repo. They have been moved to <code>$DEST/data/&lt;project&gt;</code> by default. <em>Commit <a hred="https://review.openstack.org/12989/">12989</a> merged 14 Sep 2012</em></dd>
+
+            <dt>Change default Keystone backend to SQL</dt>
+            <dd>Keystone now uses the SQL backend by default enabling the use of the CRUD API; now <code>keystone service-create ...</code> works.  Set <code>KEYSTONE_CATALOG_BACKEND=template</code> to maintain the previous behaviour. <em>Commit <a href="https://review.openstack.org/12746/">12746</a> merged 12 Sep 2012</em></dd>
+
+            <dt>Set <code>FLAT_INTERFACE</code> for local-only use</dt>
+            <dd>Allow <code>FLAT_INTERFACE</code> to be defined as <code>""</code> to prevent the <code>HOST_IP</code> from being moved to <code>br100</code>. <em>Commit <a href="https://review.openstack.org/12671/">12671</a> merged 09 Sep 2012</em></dd>
+
+            <dt>Add support for Quantum L3 agent</dt>
+            <dd>Only available with OpenVSwitch plugin. <em>Commit <a href="https://review.openstack.org/11380/">11380</a> merged 08 Sep 2012</em></dd>
+
+            <dt>Configure Glance caching</dt>
+            <dd>Configure Glance caching and cache management. <em>Commit <a href="https://review.openstack.org/12207/">12207</a> merged 07 Sep 2012</em></dd>
+
+            <dt>Add ZeroMQ RPC backend</dt>
+            <dd>Support ZeroMQ in addition to RabbitMQ and Qpid. But only one at a time. <em>Commit <a href="https://review.openstack.org/9278/">9278</a> merged 01 Sep 2012</em></dd>
+
+            <dt>Add Heat support</dt>
+            <dd>Support Heat via the standard <code>ENABLED_SERVICES</code> configuration. <em>Commit <a href="https://review.openstack.org/11266/">11266</a> merged 28 Aug 2012</em></dd>
+
+            <dt>Ceilometer is now supported.</dt>
+            <dd>There is a description of how to get stared with it at <a href="https://lists.launchpad.net/openstack/msg15940.html">https://lists.launchpad.net/openstack/msg15940.html</a>. <em>Commit <a href="https://review.openstack.org/10363">10363</a> merged 17 Aug 2012</em></dd>
+
+            <dt>Colored logs in cinder</dt>
+            <dd>Chmouel has brought Vishy's colored log file patch to Cinder. <em>Commit <a href="https://review.openstack.org/10769">10769</a> merged 16 Aug 2012</em></dd>
+
+            <dt>Keystone auth middleware from Swift</dt>
+            <dd>Swift now uses <code>keystoneauth</code> by default. Commit <a href="https://review.openstack.org/10876">10876</a> merged 16 Aug 2012</dd>
+
+            <dt>Add support for <code>NO_PROXY</code></dt>
+            <dd>Added support for the standard no_proxy environment variable. <em>Commit <a href="https://review.openstack.org/10264">10264</a> merged 10 Aug 2012</em></dd>
+
+            <dt>Use default route to find <code>HOST_IP</code></dt>
+            <dd>This changed the login for hunting down the value of <code>HOST_IP</code> to look on the interface that has the default route. <em>Commit <a href="https://review.openstack.org/9291">9291</a> merged 10 Aug 2012</em></dd>
+
+            <dt>Enable testing of OpenVZ guests</dt>
+            <dd>Allows using OpenVZ virtualization layer. <em>Commit <a href="https://review.openstack.org/10317">10317</a> merged 07 Aug 2012</em></dd>
+
+            <dt>Cinder is the default volume service</dt>
+            <dd>DevStack is now configured to use Cinder as its volume service by default. <em>Commit <a hred="https://review.openstack.org/9662">9662</a> merged 27 Jul 2012</em></dd>
+
+            <dt>Increase size of default volume backing file</dt>
+            <dd>The volume backing file is now 5Gb by default.  It can still be set using <code>VOLUME_BACKING_FILE_SIZE</code> in <code>localrc</code>. <em>Commit <a href="https://review.openstack.org/9837">9837</a> merged 19 Jul 2012</em></dd>
+
+            <dt>Configure pip cache location</dt>
+            <dd>Set <code>PIP_DOWNLOAD_CACHE</code> to the location of a root-writable directory to cache downloaded packages. <em>Commit <a href="https://review.openstack.org/9766">9766</a> merged 16 Jul 2012</em></dd>
+
+            <dt>Add functions to manipulate <code>ENABLED_SERVICES</code>
+            <dd>Now <code>ENABLED_SERVICES</code> can be edited in <code>localrc</code> by using <code>enable_service()</code> and <code>disable_service()</code>.  <em>Commit <a href="https://review.openstack.org/9407">9407</a> merged 13 Jul 2012</em></dd>
+
+            <dt>Change default Nova virt driver configuration</dt>
+            <dd>Change the Nova configuration to use <code>compute_driver</code> rather than <code>connection_type</code>. <em>Commit <a href="https://review.openstack.org/9635">9635</a> merged 13 Jul 2012</em></dd>
+
+            <dt>Add support for Keystone PKI</dt>
+            <dd>Initializes Keystone's PKI configuration to support delegation and scaling. <em>Commit <a href="https://review.openstack.org/9240">9240</a> merged 13 Jul 2012</em></dd>
+
+            <dt>Disable Swift S3 support by default</dt>
+            <dd>Swift's S3 API support can be enabled by adding <code>swift3</code> to <code>ENABLED_SERVICES</code>.  Commit <a href="https://review.openstack.org/9346">9346</a> merged 12 Jul 2012</em></dd>
+
+            <dt>Set libvirt CPU mode</dt>
+            <dd>Force <code>libvirt_cpu_move=none</code> to work around some nested virtualization issues.  <em>Commit <a href="https://review.openstack.org/9718">9718</a> merged 12 Jul 2012</em></dd>
+
+            <dt>Support Nova rootwrap</dt>
+            <dd>Add support for Nova rootwrap configuration. <em>Commits <a href="https://review.openstack.org/8842/">8842</a> merged 25 Jun 2012 and <a href="https://review.openstack.org/8750/">8750</a> merged 20 Jun 2012</em></dd>
+
+            <dt>Add Cinder support</dt>
+            <dd>Cinder can now be enabled by adding <code>c-api,c-sch,c-vol</code> to <code>ENABLED-sERVICES</code>. This also changed a couple of defaults: <code>VOLUME_GROUP</code> is now <code>stack-volumes</code> and <code>VOLUME_BACKING_FILE</code> is now <code>${DEST}/data/${VOLUME_GROUP}-backing-file</code>. <em>Commit <a href="https://review.openstack.org/7042">7042</a> merged 20 Jun 2012</em></dd>
+
+            <dt>Set default image for exercises</dt>
+            <dd>Set <code>DEFAULT_IMAGE_NAME</code> in <code>stackrc</code> to the cirros images downloaded.  This avoids the ambiguous search for an 'ami'.  <em>Commit <a href="https://review.openstack.org/7910">7910</a> merged 14 Jun 2012</em></dd>
+
+            <dt>Use default Swift config files</dt>
+            <dd>Use the configuration files shipped with Swift source rather than carrying files in the DevStack sources. <em>Commit <a href="https://review.openstack.org/8223">8223</a> merged 14 Jun 2012</em></dd>
+
+            <dt>Install Swift client</dt>
+            <dd>Install the new Swift client when Swift is enabled. <em>Commit <a href="https://review.openstack.org/7663">7663</a> merged 11 Jun 2012</em></dd>
+
+            <dt>Use pip to install Python dependencies</dt>
+            <dd>Use the dependencies in the <code>*.egg-info/requires.txt</code> and <code>*.egg-info/dependency_links.txt</code> to prevent <code>easy_install</code> from resolving the dependencies. <em>Commit <a href="https://review.openstack.org/8289">8289</a> merged 07 Jun 2012</em></dd>
+
+            <dt>Remove support for DevStack pip dependencies</dt>
+            <dd>Remove DevStack Python dependency files <code>files/pips/*</code> and handle Python dependencies through <code>tools/pip-requires</code>. <em>Commit <a href="https://review.openstack.org/8263">8263</a> merged 07 Jun 2012</em></dd>
+
+            <dt>Update XenServer support</dt>
+            <dd>Updates to work with <code>xcp-xapi</code> package on Ubuntu 12.04 and fix a number of other minor install problems. <em>Commits <a href="https://review.openstack.org/7673/">7673</a> and <a href="https://review.openstack.org/7449/">7449</a> merged 01 Jun 2012</em></dd>
+
+            <dt>Enable Quantum multi-node</dt>
+            <dd>Enable running Quantum agents on multiple nodes. <em>Commit <a href="https://review.openstack.org/7001">7001</a> merged 26 May 2012</em></dd>
+
+            <dt>Reinitialize Swift data store</dt>
+            <dd>Create a new XFS filesystem on the Swift data store on every <code>stack.sh</code> run. <em>Commit <a href="https://review.openstack.org/7554">7554</a> merged 22 May 2012</em></dd>
+
+            <dt>Add support for Qpid</dt>
+            <dd>Configure Qpid RPC by replacing <code>rabbit</code> with <code>qpid</code> in <code>ENABLED_SERVICES</code>. <em>Commit <a href="https://review.openstack.org/6501">6501</a> merged 17 May 2012</em></dd>
+
+            <dt>Glance uses Swift if enabled</dt>
+            <dd>If Swift is enabled Glance will store images there by default. <em>Commit <a href="https://review.openstack.org/7277">7277</a> merged 15 May 2012</em></dd>
+
+            <dt>Add Quantum linuxbridge support</dt>
+            <dd>Support using linuxbridge in Quantum. <em>Commit <a href="https://review.openstack.org/7300">7300</a> merged 10 May 2012</em></dd>
+
+            <dt>Change Nova volume name template</dt>
+            <dd>Change Nova's <code>volume_name_template</code> to <code>${VOLUME_NAME_PREFIX}%s</code>. <em>Commit <a href="https://review.openstack.org/7004">7004</a> merged 02 May 2012</em></dd>
+
+            <dt>Change MySQL engine default</dt>
+            <dd>Use InnoDB engine in MySQL by default. <em>Commit <a href="https://review.openstack.org/6185">6185</a> merged 30 Apr 2012</em></dd>
+
+            <dt>Add Glance client</dt>
+            <dd>Add new <code>python-glanceclient</code> to override the clinet in the Glance repo. <em>Config <a href="https://review.openstack.org/6533">6533</a> merged 26 Apr 2012</em></dd>
+          </dl>
+        </div>        
+
+      </section>
+
+      <footer>
+        <p>&copy; Openstack Foundation 2011-2014 &mdash; An <a href="https://www.openstack.org/">OpenStack</a> <a href="https://wiki.openstack.org/wiki/Programs">program</a></p>
+      </footer>
+
+    </div> <!-- /container -->
+  </body>
+</html>

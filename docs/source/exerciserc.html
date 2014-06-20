@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>DevStack - exerciserc</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/css/local.css" rel="stylesheet">
+    <style type="text/css">
+      body { padding-top: 60px; }
+      dd { padding: 10px; }
+    </style>
+    
+    <!-- Le javascripts -->
+    <script src="../assets/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../assets/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">DevStack</a>
+          <ul class="nav pull-right">
+            <li><a href="overview.html">Overview</a></li>
+            <li><a href="changes.html">Changes</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="http://github.com/openstack-dev/devstack">GitHub</a></li>
+            <li><a href="https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z">Gerrit</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <section class="span12">
+        <div class="page-header">
+          <h2>exerciserc <small>Exercise settings</small></h2>
+          <p><code>exerciserc</code> is used to configure settings for the
+          exercise scripts.  The values shown below are the default values.
+          Thse can all be overridden by setting them in the <code>localrc</code>
+          section.</p>
+        </div>
+        <dl>
+
+          <dt>ACTIVE_TIMEOUT</dt>
+          <dd>Max time to wait while vm goes from build to active state
+            <pre>ACTIVE_TIMEOUT==30</pre></dd>
+
+          <dt>ASSOCIATE_TIMEOUT</dt>
+          <dd>Max time to wait for proper IP association and dis-association.
+            <pre>ASSOCIATE_TIMEOUT=15</pre></dd>
+
+          <dt>BOOT_TIMEOUT</dt>
+          <dd>Max time till the vm is bootable
+            <pre>BOOT_TIMEOUT=30</pre></dd>
+
+          <dt>RUNNING_TIMEOUT</dt>
+          <dd>Max time from run instance command until it is running
+            <pre>RUNNING_TIMEOUT=$(($BOOT_TIMEOUT + $ACTIVE_TIMEOUT))</pre></dd>
+
+          <dt>TERMINATE_TIMEOUT</dt>
+          <dd>Max time to wait for a vm to terminate
+            <pre>TERMINATE_TIMEOUT=30</pre></dd>
+
+        </dl>
+      </section
+
+      <footer>
+        <p>&copy; Openstack Foundation 2011-2013 &mdash; An
+        <a href="https://wiki.openstack.org/wiki/Programs">OpenStack program</a>
+        created by <a href="http://www.rackspace.com/cloud/private_edition/">Rackspace Cloud Builders</a></p>
+      </footer>
+
+    </div> <!-- /container -->
+
+  </body>
+</html>

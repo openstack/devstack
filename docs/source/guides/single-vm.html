@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Single Machine Guide - DevStack</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="../assets/css/bootstrap.css" rel="stylesheet">
+    <link href="../assets/css/local.css" rel="stylesheet">
+    <style type="text/css">
+      body { padding-top: 60px; }
+      dd { padding: 10px; }
+    </style>
+    
+    <!-- Le javascripts -->
+    <script src="../assets/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../assets/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">DevStack</a>
+          <ul class="nav pull-right">
+            <li><a href="../overview.html">Overview</a></li>
+            <li><a href="../changes.html">Changes</a></li>
+            <li><a href="../faq.html">FAQ</a></li>
+            <li><a href="http://github.com/openstack-dev/devstack">GitHub</a></li>
+            <li><a href="https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z">Gerrit</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <section id="overview">
+        <h1>Running a Cloud in a VM</h1>
+        <p>Use the cloud to build the cloud! Use your cloud to launch new versions of OpenStack 
+        in about 5 minutes.  When you break it, start over!  The VMs launched in the cloud will 
+        be slow as they are running in QEMU (emulation), but their primary use is testing
+        OpenStack development and operation.  Speed not required.</p>
+      </section>
+
+      <section id="prerequisites">
+        <div class="page-header">
+          <h2>Prerequisites <small>Cloud & Image</small></h2>
+        </div>
+
+        <h3>Virtual Machine</h3>
+        <p>DevStack should run in any virtual machine running a supported Linux release.  It will perform best with 2Gb or more of RAM.</p>
+
+        <h3>OpenStack Deployment &amp; cloud-init</h3>
+        <p>If the cloud service has an image with <code>cloud-init</code> pre-installed, use it.  You can
+        get one from <a href="http://uec-images.ubuntu.com">Ubuntu's Daily Build</a>
+        site if necessary.  This will enable you to launch VMs with userdata that installs 
+        everything at boot time.  The userdata script below will install and run
+        DevStack with a minimal configuration.  The use of <code>cloud-init</code>
+        is outside the scope of this document, refer to <a href"http://cloudinit.readthedocs.org/en/latest/index.html">the
+        <code>cloud-init</code> docs</a> for more information.</p>
+
+        <p>If you are directly using a hypervisor like Xen, kvm or VirtualBox you can manually kick off
+        the script below as a non-root user in a bare-bones server installation.</p>
+      </section>
+
+      <section id="requirements">
+        <div class="page-header">
+          <h2>Installation <small>shake and bake</small></h2>
+        </div>
+
+        <h3>Launching With Cloud-Init</h3>
+        <p>This cloud config grabs the latest version of DevStack via git, creates a minimal 
+        <code>local.conf</code> file and kicks off <code>stack.sh</code>.  It should
+        be passed as the user-data file when booting the VM.</p>
+        <pre>#cloud-config
+
+users:
+  - default
+  - name: stack
+    lock_passwd: False
+    sudo: ["ALL=(ALL) NOPASSWD:ALL\nDefaults:stack !requiretty"]
+    shell: /bin/bash
+
+write_files:
+  - content: |
+        #!/bin/sh
+        DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update || sudo yum update -qy
+        DEBIAN_FRONTEND=noninteractive sudo apt-get install -qqy git || sudo yum install -qy git
+        sudo chown stack:stack /home/stack
+        cd /home/stack
+        git clone https://github.com/openstack-dev/devstack.git
+        cd devstack
+        echo '[[local|localrc]]' > local.conf
+        echo ADMIN_PASSWORD=password >> local.conf
+        echo MYSQL_PASSWORD=password >> local.conf
+        echo RABBIT_PASSWORD=password >> local.conf
+        echo SERVICE_PASSWORD=password >> local.conf
+        echo SERVICE_TOKEN=tokentoken >> local.conf
+        ./stack.sh
+    path: /home/stack/start.sh
+    permissions: 0755
+
+runcmd:
+  - su -l stack ./start.sh</pre>
+        <p>As DevStack will refuse to run as root, this configures <code>cloud-init</code>
+        to create a non-root user and run the <code>start.sh</code> script as that user.</p>
+
+        <h3>Launching By Hand</h3>
+        <p>Using a hypervisor directly, launch the VM and either manually perform the steps in the 
+        embedded shell script above or copy it into the VM.</p>
+
+        <h3>Using OpenStack</h3>
+        <p>At this point you should be able to access the dashboard.  Launch VMs and if you give them floating IPs access those VMs from other machines on your network.</p>
+
+        <p>One interesting use case is for developers working on a VM on their laptop.  Once
+        <code>stack.sh</code> has completed once, all of the pre-requisite packages are installed
+        in the VM and the source trees checked out.  Setting <code>OFFLINE=True</code> in
+        <code>local.conf</code> enables <code>stack.sh</code> to run multiple times without an Internet
+        connection.  DevStack, making hacking at the lake possible since 2012!</p>
+      </section>
+
+      <footer>
+        <p>&copy; Openstack Foundation 2011-2014 &mdash; An <a href="https://www.openstack.org/">OpenStack</a> <a href="https://wiki.openstack.org/wiki/Programs">program</a></p>
+      </footer>
+
+    </div> <!-- /container -->
+
+  </body>
+</html>
