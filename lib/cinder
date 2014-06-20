@@ -275,7 +275,7 @@ function configure_cinder {
     fi
 
     if is_service_enabled ceilometer; then
-        iniset $CINDER_CONF DEFAULT notification_driver "cinder.openstack.common.notifier.rpc_notifier"
+        iniset $CINDER_CONF DEFAULT notification_driver "messaging"
     fi
 
     if is_service_enabled tls-proxy; then
