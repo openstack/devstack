@@ -616,6 +616,11 @@ function exit_trap {
     # Kill the last spinner process
     kill_spinner
 
+    if [[ $r -ne 0 ]]; then
+        echo "Error on exit"
+        ./tools/worlddump.py -d $LOGDIR
+    fi
+
     exit $r
 }
 
