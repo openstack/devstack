@@ -548,7 +548,7 @@ function create_nova_conf {
 
     iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
     iniset_rpc_backend nova $NOVA_CONF DEFAULT
-    iniset $NOVA_CONF DEFAULT glance_api_servers "$GLANCE_HOSTPORT"
+    iniset $NOVA_CONF glance api_servers "$GLANCE_HOSTPORT"
 }
 
 function init_nova_cells {
