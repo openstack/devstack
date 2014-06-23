@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Multi-Node Lab Server Guide - DevStack</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="../assets/css/bootstrap.css" rel="stylesheet">
+    <link href="../assets/css/local.css" rel="stylesheet">
+    <style type="text/css">
+      body { padding-top: 60px; }
+      dd { padding: 10px; }
+    </style>
+    
+    <!-- Le javascripts -->
+    <script src="../assets/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../assets/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">DevStack</a>
+          <ul class="nav pull-right">
+            <li><a href="../overview.html">Overview</a></li>
+            <li><a href="../changes.html">Changes</a></li>
+            <li><a href="../faq.html">FAQ</a></li>
+            <li><a href="http://github.com/openstack-dev/devstack">GitHub</a></li>
+            <li><a href="https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z">Gerrit</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <section id="overview">
+        <h1>Multi-Node Lab: Serious Stuff</h1>
+        <p>Here is OpenStack in a realistic test configuration with multiple physical servers.</p>
+      </section>
+
+      <section id="prerequisites">
+        <div class="page-header">
+          <h2>Prerequisites <small>Linux & Network</small></h2>
+        </div>
+        
+        <h3>Minimal Install</h3>
+        <p>You need to have a fresh install of Linux on all of your nodes.  You can download the <a href="https://help.ubuntu.com/community/Installation/MinimalCD">Minimal CD</a> for Ubuntu 12.04 (only 27MB) since DevStack will download &amp; install all the additional dependencies.  The netinstall ISO is available for <a href="http://mirrors.kernel.org/fedora/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso">Fedora</a> and <a href="http://mirrors.kernel.org/centos/6.5/isos/x86_64/CentOS-6.5-x86_64-netinstall.iso">CentOS/RHEL</a>.</p>
+
+        <p>Install a couple of packages to bootstrap configuration:</p>
+        <pre>apt-get install -y git sudo || yum install -y git sudo</pre>
+
+        <h3>Network Configuration</h3>
+        <p>The first iteration of the lab uses OpenStack's FlatDHCP network controller so
+        only a single network will be required.  It should be on its own subnet without DHCP;
+        the host IPs and floating IP pool(s) will come out of this block. This example 
+        uses the following:</p>
+        <ul>
+          <li>Gateway: 192.168.42.1</li>
+          <li>Physical nodes: 192.168.42.11-192.168.42.99</li>
+          <li>Floating IPs: 192.168.42.128-192.168.42.254</li>
+        </ul>
+        <p>Configure each node with a static IP.
+        For Ubuntu edit <code>/etc/network/interfaces</code>:</p>
+
+        <pre>auto eth0
+iface eth0 inet static
+    address 192.168.42.11
+    netmask 255.255.255.0
+    gateway 192.168.42.1
+</pre>
+        <p>For Fedora and CentOS/RHEL edit
+        <code>/etc/sysconfig/network-scripts/ifcfg-eth0</code>:</p>
+
+        <pre>BOOTPROTO=static
+IPADDR=192.168.42.11
+NETMASK=255.255.255.0
+GATEWAY=192.168.42.1
+</pre>
+
+<!-- save these for the VLAN version
+   auto eth0.926
+   iface eth0.926 inet static
+           address 10.4.144.3
+           netmask 255.255.240.0
+           #gateway 10.4.144.1
+           up ifconfig eth0.926
+   
+   auto eth0.605
+   iface eth0.605 inet static
+           address 172.16.103.3
+           netmask 255.255.255.0
+           #gateway 172.16.103.1
+           up ifconfig eth0.605 up
+-->
+
+      </section>
+
+      <section id="installation">
+        <div class="page-header">
+          <h2>Installation <small>shake and bake</small></h2>
+        </div>
+
+        <h3>Add the DevStack User</h3>
+        <p>OpenStack runs as a non-root user that has sudo access to root.  There is nothing special
+        about the name, we'll use <code>stack</code> here. Every node must use the same name and
+        preferably uid. If you created a user during the OS install you can use it and give it
+        sudo priviledges below.  Otherwise create the stack user:</p>
+        <pre>groupadd stack
+useradd -g stack -s /bin/bash -d /opt/stack -m stack</pre>
+        <p>This user will be making many changes to your system during installation and operation
+        so it needs to have sudo priviledges to root without a password:</p>
+        <pre>echo "stack ALL=(ALL) NOPASSWD: ALL" &gt;&gt; /etc/sudoers</pre>
+        <p>From here on use the <code>stack</code> user.  <b>Logout</b> and <b>login</b> as the 
+        <code>stack</code> user.</p>
+
+        <h3>Set Up Ssh</h3>
+        <p>Set up the stack user on each node with an ssh key for access:</p>
+        <pre>mkdir ~/.ssh; chmod 700 ~/.ssh
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyYjfgyPazTvGpd8OaAvtU2utL8W6gWC4JdRS1J95GhNNfQd657yO6s1AH5KYQWktcE6FO/xNUC2reEXSGC7ezy+sGO1kj9Limv5vrvNHvF1+wts0Cmyx61D2nQw35/Qz8BvpdJANL7VwP/cFI/p3yhvx2lsnjFE3hN8xRB2LtLUopUSVdBwACOVUmH2G+2BWMJDjVINd2DPqRIA4Zhy09KJ3O1Joabr0XpQL0yt/I9x8BVHdAx6l9U0tMg9dj5+tAjZvMAFfye3PJcYwwsfJoFxC8w/SLtqlFX7Ehw++8RtvomvuipLdmWCy+T9hIkl+gHYE4cS3OIqXH7f49jdJf jesse@spacey.local" > ~/.ssh/authorized_keys</pre>
+
+        <h3>Download DevStack</h3>
+        <p>Grab the latest version of DevStack from github:</p>
+        <pre>git clone https://github.com/openstack-dev/devstack.git
+cd devstack</pre>
+
+        <p>Up to this point all of the steps apply to each node in the cluster.  From here on
+        there are some differences between the cluster controller (aka 'head node') and the
+        compute nodes.</p>
+
+        <h3>Configure Cluster Controller</h3>
+        <p>The cluster controller runs all OpenStack services.  Configure the cluster controller's DevStack in <code>local.conf</code>:</p>
+        <pre>[[local|localrc]]
+HOST_IP=192.168.42.11
+FLAT_INTERFACE=eth0
+FIXED_RANGE=10.4.128.0/20
+FIXED_NETWORK_SIZE=4096
+FLOATING_RANGE=192.168.42.128/25
+MULTI_HOST=1
+LOGFILE=/opt/stack/logs/stack.sh.log
+ADMIN_PASSWORD=labstack
+MYSQL_PASSWORD=supersecret
+RABBIT_PASSWORD=supersecrete
+SERVICE_PASSWORD=supersecrete
+SERVICE_TOKEN=xyzpdqlazydog</pre>
+<!-- save for vlan
+FLAT_INTERFACE=eth0.926
+-->
+
+        <p>In the multi-node configuration the first 10 or so IPs in the private subnet are usually reserved.  Add this to <code>local.sh</code> to have it run after every <code>stack.sh</code> run:</p>
+        <pre>for i in `seq 2 10`; do /opt/stack/nova/bin/nova-manage fixed reserve 10.4.128.$i; done</pre>
+
+        <p>Fire up OpenStack:</p>
+        <pre>./stack.sh</pre>
+        <p>A stream of activity ensues.  When complete you will see a summary of
+        <code>stack.sh</code>'s work, including the relevant URLs, accounts and passwords to poke at your
+        shiny new OpenStack.  The most recent log file is available in <code>stack.sh.log</code>.</p>
+
+        <h3>Configure Compute Nodes</h3>
+        <p>The compute nodes only run the OpenStack worker services.  For additional machines, create a <code>local.conf</code> with:</p>
+        <pre>HOST_IP=192.168.42.12 # change this per compute node
+FLAT_INTERFACE=eth0
+FIXED_RANGE=10.4.128.0/20
+FIXED_NETWORK_SIZE=4096
+FLOATING_RANGE=192.168.42.128/25
+MULTI_HOST=1
+LOGFILE=/opt/stack/logs/stack.sh.log
+ADMIN_PASSWORD=labstack
+MYSQL_PASSWORD=supersecret
+RABBIT_PASSWORD=supersecrete
+SERVICE_PASSWORD=supersecrete
+SERVICE_TOKEN=xyzpdqlazydog
+DATABASE_TYPE=mysql
+SERVICE_HOST=192.168.42.11
+MYSQL_HOST=192.168.42.11
+RABBIT_HOST=192.168.42.11
+GLANCE_HOSTPORT=192.168.42.11:9292
+ENABLED_SERVICES=n-cpu,n-net,n-api,c-sch,c-api,c-vol</pre>
+<!-- save for vlan
+FLAT_INTERFACE=eth0.926
+-->
+
+        <p>Fire up OpenStack:</p>
+        <pre>./stack.sh</pre>
+        <p>A stream of activity ensues.  When complete you will see a summary of
+        <code>stack.sh</code>'s work, including the relevant URLs, accounts and passwords to poke at your
+        shiny new OpenStack.  The most recent log file is available in <code>stack.sh.log</code>.</p>
+
+        <h3>Cleaning Up After DevStack</h3>
+        <p>Shutting down OpenStack is now as simple as running the included <code>unstack.sh</code> script:</p>
+        <pre>./unstack.sh</pre>
+
+        <p>A more aggressive cleanup can be performed using <code>clean.sh</code>.  It removes certain troublesome packages and attempts to leave the system in a state where changing the database or queue manager can be reliably performed.
+        <pre>./clean.sh</pre>
+
+        <p>Sometimes running instances are not cleaned up.  DevStack attempts to do this when it
+        runs but there are times it needs to still be done by hand:</p>
+        <pre>sudo rm -rf /etc/libvirt/qemu/inst*
+sudo virsh list | grep inst | awk '{print $1}' | xargs -n1 virsh destroy</pre>
+
+      </section>
+
+      <section id="options">
+        <div class="page-header">
+          <h2>Options <small>pimp your stack</small></h2>
+        </div>
+
+        <h3>Additional Users</h3>
+        <p>DevStack creates two OpenStack users (<code>admin</code> and <code>demo</code>) and two tenants (also <code>admin</code> and <code>demo</code>).  <code>admin</code> is exactly what it sounds like, a priveleged administrative account that is a member of both the <code>admin</code> and <code>demo</code> tenants.  <code>demo</code> is a normal user account that is only a member of the <code>demo</code> tenant.  Creating additional OpenStack users can be done through the dashboard, sometimes it is easier to do them in bulk from a script, especially since they get blown away every time
+        <code>stack.sh</code> runs.  The following steps are ripe for scripting:</p>
+        <pre># Get admin creds
+. openrc admin admin
+        
+# List existing tenants
+keystone tenant-list
+
+# List existing users
+keystone user-list
+
+# Add a user and tenant
+NAME=bob
+PASSWORD=BigSecrete
+TENANT=$NAME
+keystone tenant-create --name=$NAME
+keystone user-create --name=$NAME --pass=$PASSWORD
+keystone user-role-add --user-id=&lt;bob-user-id&gt; --tenant-id=&lt;bob-tenant-id&gt; --role-id=&lt;member-role-id&gt;
+# member-role-id comes from the existing member role created by stack.sh
+# keystone role-list</pre>
+
+        <h3>Swift</h3>
+        <p>Swift requires a significant amount of resources and is disabled by default in DevStack.
+        The support in DevStack is geared toward a minimal installation but can be used for
+        testing.  To implement a true multi-node test of Swift required more than DevStack provides.  
+        Enabling it is as simple as enabling the <code>swift</code> service in <code>local.conf</code>:
+        <pre>enable_service swift</pre>
+
+        <p>Swift will put its data files in <code>SWIFT_DATA_DIR</code> (default <code>/opt/stack/data/swift</code>).
+        The size of the data 'partition' created (really a loop-mounted file) is set by
+        <code>SWIFT_LOOPBACK_DISK_SIZE</code>.  The Swift config files are located in 
+        <code>SWIFT_CONFIG_DIR</code> (default <code>/etc/swift</code>).  All of these settings can be overridden in
+        (wait for it...) <code>local.conf</code>.</p>
+
+        <h3>Volumes</h3>
+        <p>DevStack will automatically use an existing LVM volume group named <code>stack-volumes</code> 
+        to store cloud-created volumes. If <code>stack-volumes</code> doesn't exist, DevStack 
+        will set up a 5Gb loop-mounted file to contain it.  This obviously limits the
+        number and size of volumes that can be created inside OpenStack.  The size can be
+        overridden by setting <code>VOLUME_BACKING_FILE_SIZE</code> in <code>local.conf</code>.</p>
+
+        <p><code>stack-volumes</code> can be pre-created on any physical volume supported by
+        Linux's LVM.  The name of the volume group can be changed by setting <code>VOLUME_GROUP</code>
+        in <code>localrc</code>. <code>stack.sh</code> deletes
+        all logical volumes in <code>VOLUME_GROUP</code> that begin with 
+        <code>VOLUME_NAME_PREFIX</code> as part of cleaning up from previous runs.
+        It is recommended to not use the root volume group as <code>VOLUME_GROUP</code>.</p>
+
+        <p>The details of creating the volume group depends on the server hardware involved 
+        but looks something like this:</p>
+        <pre>pvcreate /dev/sdc
+vgcreate stack-volumes /dev/sdc</pre>
+
+        <h3>Syslog</h3>
+        <p>DevStack is capable of using <code>rsyslog</code> to agregate logging across the cluster.
+        It is off by default; to turn it on set <code>SYSLOG=True</code> in <code>local.conf</code>.
+        <code>SYSLOG_HOST</code> defaults to <code>HOST_IP</code>; on the compute nodes it 
+        must be set to the IP of the cluster controller to send syslog output there.  In the example
+        above, add this to the compute node <code>local.conf</code>:</p>
+        <pre>SYSLOG_HOST=192.168.42.11</pre>
+
+        <h3>Using Alternate Repositories/Branches</h3>
+        <p>The git repositories for all of the OpenStack services are defined in <code>stackrc</code>.
+        Since this file is a part of the DevStack package changes to it will probably be overwritten
+        as updates are applied.  Every setting in <code>stackrc</code> can be redefined in
+        <code>local.conf</code>.</p>
+
+        <p>To change the repository or branch that a particular OpenStack service is created from,
+        simply change the value of <code>*_REPO</code> or <code>*_BRANCH</code> corresponding to
+        that service.</p>
+
+        <p>After making changes to the repository or branch, if <code>RECLONE</code> is not set
+        in <code>localrc</code> it may be necessary to remove the corresponding directory from
+        <code>/opt/stack</code> to force git to re-clone the repository.</p>
+
+        <p>For example, to pull Nova from a proposed release candidate in the primary Nova 
+        repository:</p>
+        <pre>NOVA_BRANCH=rc-proposed</pre>
+
+        <p>To pull Glance from an experimental fork:</p>
+        <pre>GLANCE_BRANCH=try-something-big
+GLANCE_REPO=https://github.com/mcuser/glance.git</pre>
+
+      </section>
+
+      <section id="Notes">
+        <div class="page-header">
+          <h2>Notes <small>stuff you might need to know</small></h2>
+        </div>
+
+        <h3>Reset the Bridge</h3>
+        <p>How to reset the bridge configuration:</p>
+        <pre>sudo brctl delif br100 eth0.926
+sudo ip link set dev br100 down
+sudo brctl delbr br100</pre>
+<!--
+   sudo rm /etc/libvirt/qemu/*.xml
+-->
+
+        <h3>Set MySQL Password</h3>
+        <p>If you forgot to set the root password you can do this:</p>
+        <pre>mysqladmin -u root -pnova password 'supersecret'</pre>
+
+      </section>
+
+      <footer>
+        <p>&copy; Openstack Foundation 2011-2014 &mdash; An <a href="https://www.openstack.org/">OpenStack</a> <a href="https://wiki.openstack.org/wiki/Programs">program</a></p>
+      </footer>
+
+    </div> <!-- /container -->
+
+  </body>
+</html>

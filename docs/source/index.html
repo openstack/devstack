@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>DevStack - Deploying OpenStack for Developers</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/css/local.css" rel="stylesheet">
+    <style type="text/css">
+      body { padding-top: 60px; }
+      dd { padding: 10px; }
+    </style>
+
+    <!-- Le javascripts -->
+    <script src="assets/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="assets/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">DevStack</a>
+          <ul class="nav pull-right">
+            <li><a href="overview.html">Overview</a></li>
+            <li><a href="changes.html">Changes</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="http://github.com/openstack-dev/devstack">GitHub</a></li>
+            <li><a href="https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z">Gerrit</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container" id="home">
+
+      <div class="hero-unit">
+        <div class="pull-left">
+          <h1 id="main_header">DevStack - an OpenStack Community Production</h1>
+          <div class="sub_header">
+            <p></p>
+            <p>A documented shell script to build complete OpenStack development environments. <br /><br />
+              An OpenStack program maintained by the developer community.</p>
+          </div>
+        </div>
+        <div class="pull-left">
+          <ol id="getting_started">
+            <li id="ubuntu">Setup a fresh supported Linux installation.</li>
+            <li id="github">
+              Clone devstack from devstack.
+              <pre>git clone https://github.com/openstack-dev/devstack.git</pre>
+            </li>
+            <li id="install">
+              Deploy your OpenStack Cloud
+              <pre>cd devstack &amp;&amp; ./stack.sh</pre>
+            </li>
+          </ol>
+        </div>
+        <div class="clear">&nbsp;</div>
+      </div>
+
+
+      <section id="quickstart" class="span12">
+        <div class="page-header">
+          <h2>Quick Start <small>This ain't your first rodeo</small></h2>
+        </div>
+        <ol>
+            <li value="0">
+              <h3>Select a Linux Distribution</h3>
+              <p>Only Ubuntu 12.04 (Precise), Fedora 20 and CentOS/RHEL 6.5 are documented here.  OpenStack also runs and is packaged on other flavors of Linux such as OpenSUSE and Debian.</p>
+            </li>
+            <li>
+              <h3>Install Selected OS</h3>
+              <p>In order to correctly install all the dependencies, we assume a specific minimal version of the supported distributions to make it as easy as possible.  We recommend using a minimal install of Ubuntu or Fedora server in a VM if this is your first time.</p>
+            </li>
+            <li>
+              <h3>Download DevStack</h3>
+              <pre>git clone https://github.com/openstack-dev/devstack.git</pre>
+              <p>The <code>devstack</code> repo contains a script that installs OpenStack and templates for configuration files</p>
+            </li>
+            <li>
+              <h3>Configure</h3>
+              <p>While optional, we recommend a <a href="configuration.html">minimal configuration</a> be set up as you may not want our default values for everything.</p>
+            </li>
+            <li>
+              <h3>Start the install</h3>
+              <pre>cd devstack; ./stack.sh</pre>
+              <p>It takes a few minutes, we recommend <a href="stack.sh.html">reading the script</a> while it is building.</p>
+            </li>
+        </ol>
+      </section>
+
+      <section id="guides" class='span12'>
+        <div class="page-header">
+          <h2>Guides <small>Walk through various setups used by stackers</small></h2>
+        </div>
+
+        <div class='row span8'>
+          <h2>OpenStack on VMs</h2>
+          <table class='table table-striped table-bordered'>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Virtual Machine</td>
+                <td>Run OpenStack in a VM.  The VMs launched in your cloud will be slow as they are running in QEMU (emulation), but it is useful if you don't have spare hardware laying around.</td>
+                <td><a class="btn btn-small btn-primary table-action" href="guides/single-vm.html">Read &raquo;</a></td>
+              </tr>
+
+<!--
+              <tr>
+                <td>LXC Containers</td>
+                <td>Already running Ubuntu on your machine?  Using containers lets you build even faster.</td>
+                <td>Coming soon!</td>
+              </tr>
+-->
+            </tbody>
+            <tfoot>
+              <td colspan="3">1 Guide</td>
+            </tfoot>
+          </table>
+        </div>
+        <div class="wat span3 pull-right">
+          <h4>What is this?</h4>
+          <p>These guides tell you how to virtualize your OpenStack cloud in virtual machines. This means that you can get started without having to purchase any hardware.</p>
+        </div>
+
+        <div class='row span8'>
+          <h2>OpenStack on Hardware</h2>
+          <table class='table table-striped table-bordered'>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>All-In-One</td>
+                <td>Run OpenStack on dedicated hardware to get real performance in your VMs.  This can include a server-class machine or a laptop at home.</td>
+                <td><a class="btn btn-small btn-primary table-action" href="guides/single-machine.html">Read &raquo;</a></td>
+              </tr>
+
+              <tr>
+                <td>Multi-Node + VLANs</td>
+                <td>Setup a multi-node cluster with dedicated VLANs for VMs &amp; Management.</td>
+                <td><a class="btn btn-small btn-primary table-action" href="guides/multinode-lab.html">Read &raquo;</a></td>
+              </tr>
+
+<!--
+              <tr>
+                <td>Stack-in-a-Box</td>
+                <td>Run OpenStack from a RAM disk to give it a spin without touching your existing OS installation.  Includes PXE and USB boot methods.</td>
+                <td><a class="btn btn-small btn-primary table-action" href="guides/ramdisk.html">Read &raquo;</a></td>
+              </tr>
+-->
+            </tbody>
+            <tfoot>
+              <td colspan="3">2 Guides</td>
+            </tfoot>
+          </table>
+        </div>
+        <div class="wat span3 pull-right">
+          <h4>What is this?</h4>
+          <p>These guides tell you how to deploy a development environment on real hardware. Guides range from running OpenStack on a single laptop to running a multi-node deployment on datacenter hardware.</p>
+        </div>
+
+      </section>
+
+      <section id="docs" class="span12">
+        <div class="page-header">
+          <h2>Documentation <small>Help yourself to stack</small></h2>
+        </div>
+
+        <div class='row span5 pull-left'>
+          <h2>Overview</h2>
+          <p><a href="overview.html">An overview of DevStack goals and priorities</a></p>
+          <h2>Configuration</h2>
+          <p><a href="configuration.html">Configuring and customizing the stack</a></p>
+          <h2>Plugins</h2>
+          <p><a href="plugins.html">Extending DevStack with new features</a></p>
+        </div>
+
+        <div class='span5 pull-right'>
+          <h2>Recent Changes</h2>
+          <p><a href="changes.html">An incomplete summary of recent changes</a></p>
+          <h2>FAQ</h2>
+          <p><a href="faq.html">The DevStack FAQ</a></p>
+          <h2>Contributing</h2>
+          <p><a href="contributing.html">Pitching in to make DevStack a better place</a></p>
+        </div>
+
+      </section>
+
+      <section id="docs" class="span12">
+        <div class="page-header">
+          <h2>Code <small>A look at the bits that make it all go</small></h2>
+        </div>
+
+        <div class='row span5 pull-left'>
+          <h2>Scripts <small>Generated documentation of DevStack scripts.</small></h2>
+          <table class='table table-striped table-bordered'>
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>stack.sh</td>
+                <td><a href="stack.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>functions</td>
+                <td><a href="functions.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/apache</td>
+                <td><a href="lib/apache.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/baremetal</td>
+                <td><a href="lib/baremetal.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/ceilometer</td>
+                <td><a href="lib/ceilometer.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/cinder</td>
+                <td><a href="lib/cinder.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/config</td>
+                <td><a href="lib/config.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/database</td>
+                <td><a href="lib/database.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/glance</td>
+                <td><a href="lib/glance.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/heat</td>
+                <td><a href="lib/heat.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/horizon</td>
+                <td><a href="lib/horizon.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/infra</td>
+                <td><a href="lib/infra.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/ironic</td>
+                <td><a href="lib/ironic.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/keystone</td>
+                <td><a href="lib/keystone.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/ldap</td>
+                <td><a href="lib/ldap.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/marconi</td>
+                <td><a href="lib/marconi.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/neutron</td>
+                <td><a href="lib/neutron.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/nova</td>
+                <td><a href="lib/nova.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/oslo</td>
+                <td><a href="lib/oslo.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/rpc_backend</td>
+                <td><a href="lib/rpc_backend.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/savanna</td>
+                <td><a href="lib/savanna.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/savanna-dashboard</td>
+                <td><a href="lib/savanna-dashboard.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/stackforge</td>
+                <td><a href="lib/stackforge.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/swift</td>
+                <td><a href="lib/swift.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/tempest</td>
+                <td><a href="lib/tempest.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/tls</td>
+                <td><a href="lib/tls.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>lib/trove</td>
+                <td><a href="lib/trove.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>unstack.sh</td>
+                <td><a href="unstack.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>clean.sh</td>
+                <td><a href="clean.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>run_tests.sh</td>
+                <td><a href="run_tests.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>extras.d/70-marconi.sh</td>
+                <td><a href="extras.d/70-marconi.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>extras.d/70-savanna.sh</td>
+                <td><a href="extras.d/70-savanna.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>extras.d/80-tempest.sh</td>
+                <td><a href="extras.d/80-tempest.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/info.sh</td>
+                <td><a href="tools/info.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/build_docs.sh</td>
+                <td><a href="tools/build_docs.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/create_userrc.sh</td>
+                <td><a href="tools/create_userrc.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/fixup_stuff.sh</td>
+                <td><a href="tools/fixup_stuff.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/install_prereqs.sh</td>
+                <td><a href="tools/install_prereqs.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/install_pip.sh</td>
+                <td><a href="tools/install_pip.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/upload_image.sh</td>
+                <td><a href="tools/upload_image.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <td colspan="3">40 bash scripts</td>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class='span5 pull-right'>
+          <h2>Configuration <small>Setting the table</small></h2>
+          <table class='table table-striped table-bordered'>
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>local.conf</td>
+                <td><a href="local.conf.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>stackrc</td>
+                <td><a href="stackrc.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>openrc</td>
+                <td><a href="openrc.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exerciserc</td>
+                <td><a href="exerciserc.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>eucarc</td>
+                <td><a href="eucarc.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <td colspan="3">5 configuration files</td>
+            </tfoot>
+          </table>
+
+          <h2>Samples <small>Generated documentation of DevStack sample files.</small></h2>
+          <table class='table table-striped table-bordered'>
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>local.sh</td>
+                <td><a href="samples/local.sh.html" class="btn btn-small btn-success table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>localrc</td>
+                <td><a href="samples/localrc.html" class="btn btn-small btn-success table-action">Read &raquo;</a></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <td colspan="3">2 sample files</td>
+            </tfoot>
+          </table>
+
+        <div class='row span5 pull-right'>
+          <h2>Exercises <small>Generated documentation of DevStack scripts.</small></h2>
+          <table class='table table-striped table-bordered'>
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>exercise.sh</td>
+                <td><a href="exercise.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/aggregates.sh</td>
+                <td><a href="exercises/aggregates.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/boot_from_volume.sh</td>
+                <td><a href="exercises/boot_from_volume.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/bundle.sh</td>
+                <td><a href="exercises/bundle.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/client-args.sh</td>
+                <td><a href="exercises/client-args.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/client-env.sh</td>
+                <td><a href="exercises/client-env.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/euca.sh</td>
+                <td><a href="exercises/euca.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/floating_ips.sh</td>
+                <td><a href="exercises/floating_ips.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/horizon.sh</td>
+                <td><a href="exercises/horizon.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/neutron-adv-test.sh</td>
+                <td><a href="exercises/neutron-adv-test.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/sec_groups.sh</td>
+                <td><a href="exercises/sec_groups.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/swift.sh</td>
+                <td><a href="exercises/swift.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>exercises/volumes.sh</td>
+                <td><a href="exercises/volumes.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <td colspan="3">13 exercise scripts</td>
+            </tfoot>
+          </table>
+
+        </div>
+
+      </section>
+
+      <footer>
+        <p>&copy; Openstack Foundation 2011-2014 &mdash; An <a href="https://www.openstack.org/">OpenStack</a> <a href="https://wiki.openstack.org/wiki/Programs">program</a></p>
+      </footer>
+
+    </div> <!-- /container -->
+  </body>
+</html>
