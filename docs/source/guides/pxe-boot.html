@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>PXE Boot Server Guide - DevStack</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="../assets/css/bootstrap.css" rel="stylesheet">
+    <link href="../assets/css/local.css" rel="stylesheet">
+    <style type="text/css">
+      body { padding-top: 60px; }
+      dd { padding: 10px; }
+    </style>
+    
+    <!-- Le javascripts -->
+    <script src="../assets/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../assets/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">DevStack</a>
+          <ul class="nav pull-right">
+            <li><a href="../overview.html">Overview</a></li>
+            <li><a href="../changes.html">Changes</a></li>
+            <li><a href="../faq.html">FAQ</a></li>
+            <li><a href="http://github.com/openstack-dev/devstack">GitHub</a></li>
+            <li><a href="https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z">Gerrit</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <section id="overview">
+        <h1>PXE Boot Server Guide: Magic Dust for Network Boot</h1>
+        <p>Boot DevStack from a PXE server to a RAM disk.</p>
+      </section>
+
+      <section id="requirements">
+        <div class="page-header">
+          <h2>Prerequisites <small>Hardware & OpenWRT</small></h2>
+        </div>
+        
+        <h3>Hardware</h3>
+        <p>The whole point of this exercise is to have a highly portable boot server, so using a small router with a USB port is the desired platform.  This guide uses a Buffalo WZR-HP-G300NH as an example, but it is easily generalized for other supported platforms. See openwrt.org for more.</p>
+        
+        <h3>OpenWRT</h3>
+        <p>Any recent 'Backfire' build of OpenWRT will work for the boot server project.  We build from trunk and have made the images available at <a href="http://openwrt.xr7.org/openwrt">http://openwrt.xr7.org/openwrt</a>.</p>
+      </section>
+
+      <section id="installation">
+        <div class="page-header">
+          <h2>Installation <small>bit blasting</small></h2>
+        </div>
+
+        <h3>Install the Image</h3>
+        <p>This process follows <a href="http://wiki.openwrt.org/toh/buffalo/wzr-hp-g300h">the OpenWRT doc OEM Install</a> to tftp the new image onto the router.  You need a computer to set up the router, we assume it is a recent Linux or OS/X installation.</p>
+        <ul>
+          <li>Get openwrt-ar71xx-wzr-hp-g300nh-squashfs-tftp.bin
+            <pre>wget http://openwrt.xr7.org/openwrt/ar71xx/openwrt-ar71xx-wzr-hp-g300nh-squashfs-tftp.bin</pre>
+          </li>
+          <li>Connect computer to LAN port 4 (closest to WAN port)</li>
+          <li>Set computer interface to IP address in the 192.168.11.2</li>
+          <li>Add static arp entry for router
+            <pre>arp -s 192.168.11.1 &lt;mac-address&gt;</pre>
+          </li>
+          <li>Start TFTP transfer attempt
+            <pre>tftp 192.168.11.1
+binary
+rexmt 1
+timeout 60
+put openwrt-ar71xx-wzr-hp-g300nh-squashfs-tftp.bin</pre>
+          </li>
+          <li>Power on router. Router will reboot and initialize on 192.168.1.1.</li>
+          <li>Delete static arp entry for router
+            <pre>arp -d 192.168.11.1</pre>
+          </li>
+          <li>Set computer to DHCP, connect and telnet to router and set root password.</li>
+        </ul>
+
+        <h3>Configure the Router</h3>
+        <ul>
+          <li>Update <code>/etc/opkg.conf</code> to point to our repo:
+            <pre>src/gz packages http://192.168.5.13/openwrt/build/ar71xx/packages</pre>
+          </li>
+          <li>Configure anon mounts:
+            <pre>uci delete fstab.@mount[0]
+uci commit fstab
+/etc/init.d/fstab restart</pre>
+          </li>
+          <li>Reset the DHCP address range.  DevStack will claim the upper 
+            /25 of the router's LAN address space for floating IPs so the
+            default DHCP address range needs to be moved:
+            <pre>uci set dhcp.lan.start=65
+uci set dhcp.lan.limit=60
+uci commit dhcp</pre>
+          </li>
+          <li>Enable TFTP:
+            <pre>uci set dhcp.@dnsmasq[0].enable_tftp=1
+uci set dhcp.@dnsmasq[0].tftp_root=/mnt/sda1/tftpboot
+uci set dhcp.@dnsmasq[0].dhcp_boot=pxelinux.0
+uci commit dhcp
+/etc/init.d/dnsmasq restart</pre>
+          </li>
+        </ul>
+
+        <h3>Set Up tftpboot</h3>
+        <ul>
+          <li>Create the <code>/tmp/tftpboot</code> structure and populate it:
+            <pre>cd ~/devstack
+tools/build_pxe_boot.sh /tmp</pre>
+            This calls <code>tools/build_ramdisk.sh</code> to create a 2GB ramdisk 
+            containing a complete development Oneiric OS plus the 
+            OpenStack code checkouts.
+          </li>
+          <li>Copy <code>tftpboot</code> to a USB drive:
+            <pre>mount /dev/sdb1 /mnt/tmp
+rsync -a /tmp/tftpboot/ /mnt/tmp/tftpboot/
+umount /mnt/tmp</pre>
+          </li>
+          <li>Plug USB drive into router.  It will be automounted and is ready to serve content.</li>
+        </ul>
+
+        <p>Now <a href="ramdisk.html">return</a> to the RAM disk Guide to kick
+           off your DevStack experience.</p>
+
+      </section>
+
+      <footer>
+        <p>&copy; Openstack Foundation 2011-2013 &mdash; this is not an official OpenStack project...</p>
+      </footer>
+
+    </div> <!-- /container -->
+
+  </body>
+</html>

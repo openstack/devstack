@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>DevStack - Overview</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/css/local.css" rel="stylesheet">
+    <style type="text/css">
+      body { padding-top: 60px; }
+      dd { padding: 10px; }
+    </style>
+
+    <!-- Le javascripts -->
+    <script src="assets/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="assets/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">DevStack</a>
+          <ul class="nav pull-right">
+            <li><a href="overview.html">Overview</a></li>
+            <li><a href="changes.html">Changes</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="http://github.com/openstack-dev/devstack">GitHub</a></li>
+            <li><a href="https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z">Gerrit</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container" id="home">
+
+      <section id="overview" class="span12">
+
+        <div class='row pull-left'>
+          <h2>Contributing <small>Help us help you</small></h2>
+          <p>DevStack uses the standard OpenStack contribution process as outlined in <a href="https://wiki.openstack.org/wiki/How_To_Contribute">the OpenStack wiki 'How To Contribute'</a>.  This means that you will need to meet the requirements of the Contribututors License Agreement (CLA).  If you have already done that for another OpenStack project you are good to go.</p>
+
+          <h3>Things To Know</h3>
+
+          <br /><strong>Where Things Are</strong>
+          <p>The official DevStack repository is located at <code>git://github.com/openstack-dev/devstack.git</code> and <code>git://git.openstack.org/openstack-dev/devstack.git</code>, both mirrors of the official repo maintained by Gerrit.</p>
+          <p>The <a href="https://blueprints.launchpad.net/devstack">blueprint</a> and <a href="https://bugs.launchpad.net/devstack">bug trackers</a> are on Launchpad.  It should be noted that DevStack generally does not use these as strongly as other projects, but we're trying to change that.</p>
+          <p>The <a href="https://review.openstack.org/#/q/project:openstack-dev/devstack,n,z">Gerrit review queue</a> is, however, used for all commits except for the text of this website.  That should also change in the near future.</p>
+
+          <br /><strong>HACKING.rst</strong>
+          <p>Like most OpenStack projects, DevStack includes a <code>HACKING.rst</code> file that describes the layout, style and conventions of the project.  Because <code>HACKING.rst</code> is in the main DevStack repo it is considered authoritative.  Much of the content on this page is taken from there.</p>
+
+          <br /><strong>bash8 Formatting</strong>
+          <p>Around the time of the OpenStack Havana release we added a tool to do style checking in DevStack similar to what pep8/flake8 do for Python projects.  It is still _very_ simplistic, focusing mostly on stray whitespace to help prevent -1 on reviews that are otherwise acceptable.  Oddly enough it is called <code>bash8</code>.  It will be expanded to enforce some of the documentation rules in comments that are used in formatting the script pages for devstack.org and possibly even simple code formatting.  Run it on the entire project with <code>./run_tests.sh</code>.</p>
+
+          <h3>Code</h3>
+
+          <br /><strong>Repo Layout</strong>
+          <p>The DevStack repo generally keeps all of the primary scripts at the root level.</p>
+          <p><code>exercises</code> - contains the test scripts used to validate and demonstrate some OpenStack functions.  These scripts know how to exit early or skip services that are not enabled.</p>
+          <p><code>extras.d</code> - contains the dispatch scripts called by the hooks in <code>stack.sh</code>, <code>unstack.sh</code> and <code>clean.sh</code>.  See <a href="plugins.html">the plugins docs</a> for more information.</p>
+          <p><code>files</code> - contains a variety of otherwise lost files used in configuring and operating DevStack.  This includes templates for configuration files and the system dependency information.  This is also where image files are downloaded and expanded if necessary.</p>
+          <p><code>lib</code> - contains the sub-scripts specific to each project.  This is where the work of managing a project's services is located.  Each top-level project (Keystone, Nova, etc) has a file here.  Additionally there are some for system services and project plugins.</p>
+          <p><code>samples</code> - contains a sample of the local files not included in the DevStack repo.</p>
+          <p><code>tests</code> - the DevStack test suite is rather sparse, mostly consisting of test of specific fragile functions in the <code>functions</code> file.</p>
+          <p><code>tools</code> - contains a collection of stand-alone scripts, some of which have aged a bit (does anyone still do pamdisk installs?).  While these may reference the top-level DevStack configuration they can generally be run alone.  There are also some sub-directories to support specific environments such as XenServer and Docker.</p>
+          
+
+
+      </section>
+
+      <footer>
+        <p>&copy; Openstack Foundation 2011-2013 &mdash; An <a href="https://wiki.openstack.org/wiki/Programs">OpenStack program</a> created by <a href="http://www.rackspace.com/cloud/private_edition/">Rackspace Cloud Builders</a></p>
+      </footer>
+
+    </div> <!-- /container -->
+  </body>
+</html>

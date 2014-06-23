@@ -1,0 +1,122 @@
+
+a.brand {
+	background: url(../images/small_logo.png) no-repeat left 6px;
+	width: 166px;
+	text-indent: -9999px;
+}
+
+code {
+  background-color: #ffffff;
+}
+
+#home .hero-unit {
+  background: url(../images/header_bg.png) top left repeat-x;
+	color: #fff;
+	padding-left: 25px;
+	padding-right: 25px;
+	height: 161px;
+}
+
+#home .hero-unit {
+	margin-right: ;
+}
+
+h1#main_header {
+	background: url(../images/logo.png) top left no-repeat;
+	text-indent: -9999px;
+}
+
+.sub_header {
+	font-size: 12px;
+	font-family: "anivers";
+	font-weight: normal;
+	width: 420px;
+}
+
+#home .hero-unit a {
+	color: #fff;
+	text-decoration: underline;
+}
+
+.clear {
+	clear: both;
+}
+
+ol#getting_started {
+	list-style: none;
+	width: 396px;
+	margin-top: -45px;
+	margin-right: 0;
+	margin-left: 72px;
+}
+
+ol#getting_started li {
+	background: url(../images/quickstart.png) top left no-repeat;
+}
+
+ol#getting_started li pre {
+	font-size: 11px;
+	padding: 5px;
+	background: #4d7ead;
+	border-color: #2c5d8d;
+	color: #fff;
+	overflow: auto;
+}
+
+li#ubuntu {
+	height: 46px;
+	padding: ;
+	padding-left: 82px;
+	padding-top: 27px;
+	margin-bottom: 14px;
+}
+
+li#github {
+	background-position: left -70px !important;
+	height: 61px;
+	padding: ;
+	padding-left: 82px;
+	padding-top: 4px;
+	margin-bottom: 25px;
+}
+
+
+li#install {
+	background-position: left bottom !important;
+	height: 61px;
+	padding: ;
+	padding-left: 82px;
+	padding-top: 4px;
+	margin-bottom: 25px;
+}
+
+h2 small {
+	font-size: 12px;
+	font-style: italic;
+}
+
+.container section {
+	margin-bottom: 25px;
+}
+
+
+thead, tfoot{
+	background: #ededed;
+	color: #444444;
+}
+
+table {
+	color: #444;
+}
+a.table-action {
+	display: block;
+	width: 45px;
+}
+
+footer {
+	clear: both;
+}
+
+.wat {
+	margin-top: 33px;
+}
