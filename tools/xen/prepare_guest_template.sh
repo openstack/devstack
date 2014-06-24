@@ -70,7 +70,7 @@ if [ -e "$ISO_DIR" ]; then
 else
     echo "WARNING: no XenServer tools found, falling back to 5.6 tools"
     TOOLS_URL="https://github.com/downloads/citrix-openstack/warehouse/xe-guest-utilities_5.6.100-651_amd64.deb"
-    wget $TOOLS_URL -O $XS_TOOLS_FILE_NAME
+    curl --no-sessionid -L -o "$XS_TOOLS_FILE_NAME" $TOOLS_URL
     cp $XS_TOOLS_FILE_NAME "${STAGING_DIR}${XS_TOOLS_PATH}"
     rm -rf $XS_TOOLS_FILE_NAME
 fi
