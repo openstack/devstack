@@ -383,12 +383,11 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
         sleep 10
     done
     echo -n "devstack is running"
-    while ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "service devstack status | grep -q running"; do
-        sleep 10
-        echo -n "."
-    done
-    echo "done!"
     set -x
+
+    # Watch devstack's output
+    pid=`ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS pgrep run.sh`
+    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "tail --pid $pid -n +1 -f /tmp/devstack/log/stack.log"
 
     # Fail if devstack did not succeed
     ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'test -e /var/run/devstack.succeeded'
