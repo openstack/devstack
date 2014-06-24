@@ -122,22 +122,10 @@ function install_opendaylight {
     unzip -u $ODL_PKG
 }
 
-# install_opendaylight-compute - Make sure OVS is install
+# install_opendaylight-compute - Make sure OVS is installed
 function install_opendaylight-compute {
-    local kernel_version
-    # Install deps
-    # FIXME add to ``files/apts/neutron``, but don't install if not needed!
-    if is_ubuntu; then
-        kernel_version=`cat /proc/version | cut -d " " -f3`
-        install_package make fakeroot dkms openvswitch-switch openvswitch-datapath-dkms linux-headers-$kernel_version
-    elif is_fedora; then
-        install_package openvswitch
-        # Ensure that the service is started
-        restart_service openvswitch
-    elif is_suse; then
-        install_package openvswitch-switch
-        restart_service openvswitch-switch
-    fi
+    # packages are the same as for Neutron OVS agent
+    _neutron_ovs_base_install_agent_packages
 }
 
 # start_opendaylight() - Start running processes, including screen
