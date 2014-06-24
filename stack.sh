@@ -211,6 +211,11 @@ sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
 # Additional repos
 # ----------------
 
+# For debian/ubuntu make apt attempt to retry network ops on it's own
+if is_ubuntu; then
+    echo 'APT::Acquire::Retries "20";' | sudo tee /etc/apt/apt.conf.d/80retry
+fi
+
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
 
@@ -234,7 +239,7 @@ if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
     fi
     # RHEL requires EPEL for many Open Stack dependencies
     if [[ $DISTRO =~ (rhel7) ]]; then
-        EPEL_RPM=${RHEL7_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/beta/7/x86_64/epel-release-7-0.1.noarch.rpm"}
+        EPEL_RPM=${RHEL7_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/beta/7/x86_64/epel-release-7-0.2.noarch.rpm"}
     else
         EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
     fi
