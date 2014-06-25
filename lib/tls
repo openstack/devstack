@@ -18,6 +18,9 @@
 # - configure_proxy
 # - start_tls_proxy
 
+# - stop_tls_proxy
+# - cleanup_CA
+
 # - make_root_CA
 # - make_int_CA
 # - make_cert ca-dir cert-name "common-name" ["alt-name" ...]
@@ -371,6 +374,22 @@ function start_tls_proxy {
     stud $STUD_PROTO -f $f_host,$f_port -b $b_host,$b_port $DEVSTACK_CERT 2>/dev/null
 }
 
+
+# Cleanup Functions
+# ===============
+
+
+# Stops all stud processes. This should be done only after all services
+# using tls configuration are down.
+function stop_tls_proxy {
+    killall stud
+}
+
+
+# Remove CA along with configuration, as well as the local server certificate
+function cleanup_CA {
+    rm -rf "$DATA_DIR/CA" "$DEVSTACK_CERT"
+}
 
 # Tell emacs to use shell-script-mode
 ## Local variables:
