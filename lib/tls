@@ -231,31 +231,34 @@ function make_cert {
     local common_name=$3
     local alt_names=$4
 
-    # Generate a signing request
-    $OPENSSL req \
-        -sha1 \
-        -newkey rsa \
-        -nodes \
-        -keyout $ca_dir/private/$cert_name.key \
-        -out $ca_dir/$cert_name.csr \
-        -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}"
+    # Only generate the certificate if it doesn't exist yet on the disk
+    if [ ! -r "$ca_dir/$cert_name.crt" ]; then
+        # Generate a signing request
+        $OPENSSL req \
+            -sha1 \
+            -newkey rsa \
+            -nodes \
+            -keyout $ca_dir/private/$cert_name.key \
+            -out $ca_dir/$cert_name.csr \
+            -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}"
 
-    if [[ -z "$alt_names" ]]; then
-        alt_names="DNS:${common_name}"
-    else
-        alt_names="DNS:${common_name},${alt_names}"
+        if [[ -z "$alt_names" ]]; then
+            alt_names="DNS:${common_name}"
+        else
+            alt_names="DNS:${common_name},${alt_names}"
+        fi
+
+        # Sign the request valid for 1 year
+        SUBJECT_ALT_NAME="$alt_names" \
+        $OPENSSL ca -config $ca_dir/signing.conf \
+            -extensions req_extensions \
+            -days 365 \
+            -notext \
+            -in $ca_dir/$cert_name.csr \
+            -out $ca_dir/$cert_name.crt \
+            -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}" \
+            -batch
     fi
-
-    # Sign the request valid for 1 year
-    SUBJECT_ALT_NAME="$alt_names" \
-    $OPENSSL ca -config $ca_dir/signing.conf \
-        -extensions req_extensions \
-        -days 365 \
-        -notext \
-        -in $ca_dir/$cert_name.csr \
-        -out $ca_dir/$cert_name.crt \
-        -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}" \
-        -batch
 }
 
 
@@ -270,23 +273,25 @@ function make_int_CA {
     create_CA_config $ca_dir 'Intermediate CA'
     create_signing_config $ca_dir
 
-    # Create a signing certificate request
-    $OPENSSL req -config $ca_dir/ca.conf \
-        -sha1 \
-        -newkey rsa \
-        -nodes \
-        -keyout $ca_dir/private/cacert.key \
-        -out $ca_dir/cacert.csr \
-        -outform PEM
+    if [ ! -r "$ca_dir/cacert.pem" ]; then
+        # Create a signing certificate request
+        $OPENSSL req -config $ca_dir/ca.conf \
+            -sha1 \
+            -newkey rsa \
+            -nodes \
+            -keyout $ca_dir/private/cacert.key \
+            -out $ca_dir/cacert.csr \
+            -outform PEM
 
-    # Sign the intermediate request valid for 1 year
-    $OPENSSL ca -config $signing_ca_dir/ca.conf \
-        -extensions ca_extensions \
-        -days 365 \
-        -notext \
-        -in $ca_dir/cacert.csr \
-        -out $ca_dir/cacert.pem \
-        -batch
+        # Sign the intermediate request valid for 1 year
+        $OPENSSL ca -config $signing_ca_dir/ca.conf \
+            -extensions ca_extensions \
+            -days 365 \
+            -notext \
+            -in $ca_dir/cacert.csr \
+            -out $ca_dir/cacert.pem \
+            -batch
+    fi
 }
 
 # Make a root CA to sign other CAs
