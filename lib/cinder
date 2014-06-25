@@ -269,6 +269,10 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
+    # NOTE(thingee): Cinder V1 API is deprecated and defaults to off as of
+    # Juno. Keep it enabled so we can continue testing while it's still
+    # supported.
+    iniset $CINDER_CONF DEFAULT enable_v1_api true
 
     if is_service_enabled swift; then
         iniset $CINDER_CONF DEFAULT backup_swift_url "http://$SERVICE_HOST:8080/v1/AUTH_"
