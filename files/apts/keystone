@@ -11,3 +11,4 @@ python-greenlet
 python-routes
 libldap2-dev
 libsasl2-dev
+libkrb5-dev
