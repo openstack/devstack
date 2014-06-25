@@ -22,3 +22,4 @@ python-cmd2 # dist:precise
 python-dev
 python2.7
 bc
+libyaml-dev
