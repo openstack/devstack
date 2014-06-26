@@ -1058,44 +1058,100 @@ function run_process {
     echo $!
 }
 
+function _start_in_screen {
+    local service=$1
+    local cmd=$2
+    local screen_name=${SCREEN_NAME:-stack}
+    local status_dir=${SERVICE_DIR:-${DEST}/status}
+    local service_dir="$status_dir/$screen_name"
+    local pid="$service_dir/$service.pid"
+    local failure="$service_dir/$service.failure"
+
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        local logfile=${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log
+        local shortlog=${SCREEN_LOGDIR}/screen-${service}.log
+        # this whole dance is done because of slow nodes
+        screen -S $screen_name -p $service -X logfile ${logfile}
+        screen -S $screen_name -p $service -X log on
+        ln -sf ${logfile} ${shortlog}
+    fi
+
+    NL=`echo -ne '\015'`
+    # This fun command does the following:
+    # - the passed server command is backgrounded
+    # - the pid of the background process is saved in the usual place
+    # - the server process is brought back to the foreground
+    # - if the server process exits prematurely the fg command errors
+    #   and a message is written to stdout and the service failure file
+    # The pid saved can be used in screen_stop() as a process group
+    # id to kill off all child processes
+    echo "Running: $cmd & echo \$! >$pid; fg || echo \"$service failed to start\" | tee \"$failure\"$NL"
+    screen -S $screen_name -p $service -X stuff "$cmd & echo \$! >$pid; fg || echo \"$service failed to start\" | tee \"$failure\"$NL"
+}
+
+
+function _is_running_in_screen {
+    local service=$1
+    local screen_name=${SCREEN_NAME:-stack}
+    local status_dir=${SERVICE_DIR:-${DEST}/status}
+    local service_dir="$status_dir/$screen_name"
+    local pid="$service_dir/$service.pid"
+    local failure="$service_dir/$service.failure"
+    if [[ ! -e "$pid" && ! -e "$failure" ]]; then
+        # if we don't have a pid or a failure for why, the command may not
+        # have stuffed in there
+        echo "Warning: neither $pid nor $failure exist, $service didn't seem to start"
+        return 1
+    fi
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        # if we should be logging, but we don't have a log file, something is wrong
+        local logfile=${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log
+        if [[ ! -e "$logfile" ]]; then
+            echo "Warning: expected logfile $logfile not found, something wrong with starting $service"
+            return 1
+        fi
+    fi
+    return 0
+}
+
 # Helper to launch a service in a named screen
 # screen_it service "command-line"
 function screen_it {
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    local service=$1
+    local cmd=$2
+    local screen_name=${SCREEN_NAME:-stack}
+    local status_dir=${SERVICE_DIR:-${DEST}/status}
+    local service_dir="$status_dir/$screen_name"
+    local use_screen=$(trueorfalse True $USE_SCREEN)
+    local pid="$service_dir/$service.pid"
 
     if is_service_enabled $1; then
         # Append the service to the screen rc file
-        screen_rc "$1" "$2"
+        screen_rc "$service" "$cmd"
 
-        if [[ "$USE_SCREEN" = "True" ]]; then
-            screen -S $SCREEN_NAME -X screen -t $1
+        if [[ "$use_screen" = "True" ]]; then
+            screen -S $screen_name -X screen -t $service
 
-            if [[ -n ${SCREEN_LOGDIR} ]]; then
-                screen -S $SCREEN_NAME -p $1 -X logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log
-                screen -S $SCREEN_NAME -p $1 -X log on
-                ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
-            fi
-
-            # sleep to allow bash to be ready to be send the command - we are
-            # creating a new window in screen and then sends characters, so if
-            # bash isn't running by the time we send the command, nothing happens
-            sleep 3
-
-            NL=`echo -ne '\015'`
-            # This fun command does the following:
-            # - the passed server command is backgrounded
-            # - the pid of the background process is saved in the usual place
-            # - the server process is brought back to the foreground
-            # - if the server process exits prematurely the fg command errors
-            #   and a message is written to stdout and the service failure file
-            # The pid saved can be used in screen_stop() as a process group
-            # id to kill off all child processes
-            screen -S $SCREEN_NAME -p $1 -X stuff "$2 & echo \$! >$SERVICE_DIR/$SCREEN_NAME/$1.pid; fg || echo \"$1 failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
+            # this retry loop brought to you by slow compute nodes, screen raciness,
+            # and frustration in upgrading.
+            local screen_tries=0
+            while [ "$screen_tries" -lt 10 ]; do
+                _start_in_screen "$service" "$cmd"
+                if _is_running_in_screen $service; then
+                    screen_tries=10
+                else
+                    screen_tries=$[screen_tries + 1]
+                    echo "Failed to start service after $screen_tries attempt(s), retrying"
+                    if [[ "$screen_tries" -eq 10 ]]; then
+                        echo "Too many retries, giving up"
+                        exit 1
+                    fi
+                    sleep 1
+                fi
+            done
         else
             # Spawn directly without screen
-            run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$1.pid
+            run_process "$service" "$cmd" >$pid
         fi
     fi
 }
