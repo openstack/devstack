@@ -24,7 +24,7 @@ source $TOP_DIR/functions
 
 FILES=$TOP_DIR/files
 
-PIP_GET_PIP_URL=https://bootstrap.pypa.io/get-pip.py
+PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/get-pip.py"}
 LOCAL_PIP="$FILES/$(basename $PIP_GET_PIP_URL)"
 
 GetDistro
