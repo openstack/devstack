@@ -662,6 +662,7 @@ source $TOP_DIR/tools/install_prereqs.sh
 
 # Configure an appropriate python environment
 if [[ "$OFFLINE" != "True" ]]; then
+    export PIP_GET_PIP_URL
     $TOP_DIR/tools/install_pip.sh
 fi
 
