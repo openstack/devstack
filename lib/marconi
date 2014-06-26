@@ -42,7 +42,7 @@ MARCONI_AUTH_CACHE_DIR=${MARCONI_AUTH_CACHE_DIR:-/var/cache/marconi}
 MARCONI_BIN_DIR=$(get_python_exec_prefix)
 
 # Set up database backend
-MARCONI_BACKEND=${MARCONI_BACKEND:-sqlite}
+MARCONI_BACKEND=${MARCONI_BACKEND:-mongodb}
 
 
 # Set Marconi repository
@@ -77,6 +77,13 @@ function is_marconi_enabled {
 function cleanup_marconi {
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! mongo marconi --eval 'db.dropDatabase();'; do sleep 1; done"; then
         die $LINENO "Mongo DB did not start"
+    else
+        full_version=$(mongo marconi --eval 'db.dropDatabase();')
+        mongo_version=`echo $full_version | cut -d' ' -f4`
+        required_mongo_version='2.2'
+        if [[ $mongo_version < $required_mongo_version ]]; then
+            die $LINENO "Marconi needs Mongo DB version >= 2.2 to run."
+        fi
     fi
 }
 
