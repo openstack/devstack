@@ -32,26 +32,24 @@ function neutron_ovs_base_cleanup {
     done
 }
 
+function _neutron_ovs_base_install_ubuntu_dkms {
+    # install Dynamic Kernel Module Support packages if needed
+    local kernel_version=$(uname -r)
+    local kernel_major_minor=`echo $kernel_version | cut -d. -f1-2`
+    # From kernel 3.13 on, openvswitch-datapath-dkms is not needed
+    if [ `vercmp_numbers "$kernel_major_minor" "3.13"` -lt "0" ]; then
+        install_package "dkms openvswitch-datapath-dkms linux-headers-$kernel_version"
+    fi
+}
+
 function _neutron_ovs_base_install_agent_packages {
-    local kernel_version
     # Install deps
-    # FIXME add to ``files/apts/neutron``, but don't install if not needed!
+    install_package $(get_packages "openvswitch")
     if is_ubuntu; then
-        kernel_version=`cat /proc/version | cut -d " " -f3`
-        ovs_packages="make fakeroot dkms openvswitch-switch"
-        # From kernel 3.13 on, openvswitch-datapath-dkms is not needed
-        kernel_major_minor=`echo $kernel_version | cut -d. -f1-2`
-        if [ `vercmp_numbers "$kernel_major_minor" "3.13"` -lt "0" ]; then
-            ovs_packages="$ovs_packages openvswitch-datapath-dkms"
-        fi
-        ovs_packages="$ovs_packages linux-headers-$kernel_version"
-        install_package $ovs_packages
+        _neutron_ovs_base_install_ubuntu_dkms
     elif is_fedora; then
-        install_package openvswitch
-        # Ensure that the service is started
         restart_service openvswitch
     elif is_suse; then
-        install_package openvswitch-switch
         restart_service openvswitch-switch
     fi
 }
