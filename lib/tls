@@ -18,9 +18,9 @@
 # - configure_proxy
 # - start_tls_proxy
 
-# - make_root_ca
-# - make_int_ca
-# - new_cert $INT_CA_DIR int-server "abc"
+# - make_root_CA
+# - make_int_CA
+# - make_cert ca-dir cert-name "common-name" ["alt-name" ...]
 # - start_tls_proxy HOST_IP 5000 localhost 5000
 # - ensure_certificates
 # - is_ssl_enabled_service
