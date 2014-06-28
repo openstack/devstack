@@ -6,6 +6,7 @@ parted
 iputils-arping
 mysql-server # NOPRIME
 python-mysqldb
+python-mysql.connector
 python-xattr # needed for glance which is needed for nova --- this shouldn't be here
 python-lxml # needed for glance which is needed for nova --- this shouldn't be here
 gawk
