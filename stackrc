@@ -95,7 +95,7 @@ GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 
 # Base GIT Repo URL
 # Another option is http://review.openstack.org/p
-GIT_BASE=${GIT_BASE:-git://git.openstack.org}
+GIT_BASE=${GIT_BASE:-https://git.openstack.org}
 
 # metering service
 CEILOMETER_REPO=${CEILOMETER_REPO:-${GIT_BASE}/openstack/ceilometer.git}
