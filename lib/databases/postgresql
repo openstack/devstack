@@ -23,7 +23,7 @@ function cleanup_database_postgresql {
         # Get ruthless with mysql
         apt_get purge -y postgresql*
         return
-    elif is_fedora; then
+    elif is_fedora || is_suse; then
         uninstall_package postgresql-server
     else
         return
