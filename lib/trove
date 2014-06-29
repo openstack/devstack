@@ -33,6 +33,10 @@ TROVECLIENT_DIR=$DEST/python-troveclient
 TROVE_CONF_DIR=/etc/trove
 TROVE_LOCAL_CONF_DIR=$TROVE_DIR/etc/trove
 TROVE_AUTH_CACHE_DIR=${TROVE_AUTH_CACHE_DIR:-/var/cache/trove}
+TROVE_DATASTORE_TYPE=${TROVE_DATASTORE_TYPE:-"mysql"}
+TROVE_DATASTORE_VERSION=${TROVE_DATASTORE_VERSION:-"5.5"}
+TROVE_DATASTORE_PACKAGE=${TROVE_DATASTORE_PACKAGE:-"mysql-server-5.5"}
+TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu_mysql.qcow2/ubuntu_mysql.qcow2"}
 
 # Support entry points installation of console scripts
 if [[ -d $TROVE_DIR/bin ]]; then
@@ -148,12 +152,8 @@ function configure_trove {
 
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT sql_connection `database_connection_url trove`
-
-    iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT rabbit_password $RABBIT_PASSWORD
-    sed -i "s/localhost/$TROVE_HOST_GATEWAY/g" $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
-
+    iniset $TROVE_CONF_DIR/trove.conf DEFAULT default_datastore $TROVE_DATASTORE_TYPE
     setup_trove_logging $TROVE_CONF_DIR/trove.conf
-    setup_trove_logging $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
 
     # (Re)create trove taskmanager conf file if needed
     if is_service_enabled tr-tmgr; then
@@ -180,6 +180,18 @@ function configure_trove {
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT control_exchange trove
         setup_trove_logging $TROVE_CONF_DIR/trove-conductor.conf
     fi
+
+    # Set up Guest Agent conf
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT rabbit_host $TROVE_HOST_GATEWAY
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT rabbit_password $RABBIT_PASSWORD
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT nova_proxy_admin_user radmin
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT nova_proxy_admin_tenant_name trove
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT control_exchange trove
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT log_dir /tmp/
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT log_file trove-guestagent.log
+    setup_trove_logging $TROVE_CONF_DIR/trove-guestagent.conf
 }
 
 # install_troveclient() - Collect source and prepare
@@ -194,11 +206,22 @@ function install_trove {
 
 # init_trove() - Initializes Trove Database as a Service
 function init_trove {
-    #(Re)Create trove db
+    # (Re)Create trove db
     recreate_database trove utf8
 
-    #Initialize the trove database
+    # Initialize the trove database
     $TROVE_BIN_DIR/trove-manage db_sync
+
+    # Upload the trove-guest image to glance
+    TROVE_GUEST_IMAGE_ID=$(upload_image $TROVE_GUEST_IMAGE_URL $TOKEN | grep ' id ' | get_field 2)
+
+    # Initialize appropriate datastores / datastore versions
+    $TROVE_BIN_DIR/trove-manage datastore_update "$TROVE_DATASTORE_TYPE" ""
+    $TROVE_BIN_DIR/trove-manage datastore_version_update "$TROVE_DATASTORE_TYPE" "$TROVE_DATASTORE_VERSION" "$TROVE_DATASTORE_TYPE" \
+        "$TROVE_GUEST_IMAGE_ID" "$TROVE_DATASTORE_PACKAGE" 1
+    $TROVE_BIN_DIR/trove-manage datastore_version_update "$TROVE_DATASTORE_TYPE" "inactive_version" "inactive_manager" "$TROVE_GUEST_IMAGE_ID" "" 0
+    $TROVE_BIN_DIR/trove-manage datastore_update "$TROVE_DATASTORE_TYPE" "$TROVE_DATASTORE_VERSION"
+    $TROVE_BIN_DIR/trove-manage datastore_update "Inactive_Datastore" ""
 }
 
 # start_trove() - Start running processes, including screen
