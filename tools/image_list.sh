@@ -10,7 +10,7 @@ source $TOP_DIR/functions
 DRIVERS="openvz ironic libvirt vsphere xenserver dummy"
 
 # Extra variables to trigger getting additional images.
-ENABLED_SERVICES=h-api
+export ENABLED_SERVICES="h-api,tr-api"
 HEAT_FETCHED_TEST_IMAGE="Fedora-i386-20-20131211.1-sda"
 PRECACHE_IMAGES=True
 
