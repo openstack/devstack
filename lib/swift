@@ -354,7 +354,12 @@ function configure_swift {
     if is_service_enabled swift3;then
         swift_pipeline+=" swift3 s3token "
     fi
-    swift_pipeline+=" authtoken keystoneauth tempauth "
+
+    if is_service_enabled key;then
+        swift_pipeline+=" authtoken keystoneauth"
+    fi
+    swift_pipeline+=" tempauth "
+
     sed -i "/^pipeline/ { s/tempauth/${swift_pipeline} ${SWIFT_EXTRAS_MIDDLEWARE}/ ;}" ${SWIFT_CONFIG_PROXY_SERVER}
     sed -i "/^pipeline/ { s/proxy-server/${SWIFT_EXTRAS_MIDDLEWARE_LAST} proxy-server/ ; }" ${SWIFT_CONFIG_PROXY_SERVER}
 
