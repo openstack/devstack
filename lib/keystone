@@ -39,6 +39,7 @@ KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
 KEYSTONE_AUTH_CACHE_DIR=${KEYSTONE_AUTH_CACHE_DIR:-/var/cache/keystone}
 KEYSTONE_WSGI_DIR=${KEYSTONE_WSGI_DIR:-/var/www/keystone}
 
+KEYSTONEMIDDLEWARE_DIR=$DEST/keystonemiddleware
 KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 
 # Set up additional extensions, such as oauth1, federation
@@ -436,6 +437,12 @@ function install_keystoneclient {
     git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
     setup_develop $KEYSTONECLIENT_DIR
     sudo install -D -m 0644 -o $STACK_USER {$KEYSTONECLIENT_DIR/tools/,/etc/bash_completion.d/}keystone.bash_completion
+}
+
+# install_keystonemiddleware() - Collect source and prepare
+function install_keystonemiddleware {
+    git_clone $KEYSTONEMIDDLEWARE_REPO $KEYSTONEMIDDLEWARE_DIR $KEYSTONEMIDDLEWARE_BRANCH
+    setup_install $KEYSTONEMIDDLEWARE_DIR
 }
 
 # install_keystone() - Collect source and prepare
