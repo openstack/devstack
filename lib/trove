@@ -36,7 +36,6 @@ TROVE_AUTH_CACHE_DIR=${TROVE_AUTH_CACHE_DIR:-/var/cache/trove}
 TROVE_DATASTORE_TYPE=${TROVE_DATASTORE_TYPE:-"mysql"}
 TROVE_DATASTORE_VERSION=${TROVE_DATASTORE_VERSION:-"5.5"}
 TROVE_DATASTORE_PACKAGE=${TROVE_DATASTORE_PACKAGE:-"mysql-server-5.5"}
-TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu_mysql.qcow2/ubuntu_mysql.qcow2"}
 
 # Support entry points installation of console scripts
 if [[ -d $TROVE_DIR/bin ]]; then
