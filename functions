@@ -21,18 +21,6 @@ function function_exists {
     declare -f -F $1 > /dev/null
 }
 
-# Checks if installed Apache is <= given version
-# $1 = x.y.z (version string of Apache)
-function check_apache_version {
-    local cmd="apachectl"
-    if ! [[ -x $(which apachectl 2>/dev/null) ]]; then
-        cmd="/usr/sbin/apachectl"
-    fi
-
-    local version=$($cmd -v | grep version | grep -Po 'Apache/\K[^ ]*')
-    expr "$version" '>=' $1 > /dev/null
-}
-
 
 # Cleanup anything from /tmp on unstack
 # clean_tmp
