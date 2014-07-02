@@ -35,17 +35,19 @@ fi
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
 
-# core compute (glance / keystone / nova (+ nova-network))
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-novnc,n-xvnc,n-cauth
-# cinder
-ENABLED_SERVICES+=,c-sch,c-api,c-vol
-# heat
-ENABLED_SERVICES+=,h-eng,h-api,h-api-cfn,h-api-cw
-# dashboard
-ENABLED_SERVICES+=,horizon
-# additional services
-ENABLED_SERVICES+=,rabbit,tempest,mysql
-
+# this allows us to pass ENABLED_SERVICES
+if [[ -z "$ENABLED_SERVICES" ]]; then
+    # core compute (glance / keystone / nova (+ nova-network))
+    ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-novnc,n-xvnc,n-cauth
+    # cinder
+    ENABLED_SERVICES+=,c-sch,c-api,c-vol
+    # heat
+    ENABLED_SERVICES+=,h-eng,h-api,h-api-cfn,h-api-cw
+    # dashboard
+    ENABLED_SERVICES+=,horizon
+    # additional services
+    ENABLED_SERVICES+=,rabbit,tempest,mysql
+fi
 
 # Tell Tempest which services are available.  The default is set here as
 # Tempest falls late in the configuration sequence.  This differs from
@@ -152,6 +154,10 @@ KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
 # python keystone client library to nova that horizon uses
 KEYSTONECLIENT_REPO=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
 KEYSTONECLIENT_BRANCH=${KEYSTONECLIENT_BRANCH:-master}
+
+# keystone middleware
+KEYSTONEMIDDLEWARE_REPO=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/keystonemiddleware.git}
+KEYSTONEMIDDLEWARE_BRANCH=${KEYSTONEMIDDLEWARE_BRANCH:-master}
 
 # compute service
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
@@ -361,6 +367,19 @@ if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
             ;;
     esac
 fi
+
+# Trove needs a custom image for it's work
+if [[ "$ENABLED_SERVICES" =~ 'tr-api' ]]; then
+    case "$VIRT_DRIVER" in
+        libvirt|baremetal|ironic)
+            TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu_mysql.qcow2/ubuntu_mysql.qcow2"}
+            IMAGE_URLS+=",${TROVE_GUEST_IMAGE_URL}"
+            ;;
+        *)
+            ;;
+    esac
+fi
+
 # Staging Area for New Images, have them here for at least 24hrs for nodepool
 # to cache them otherwise the failure rates in the gate are too high
 PRECACHE_IMAGES=$(trueorfalse False $PRECACHE_IMAGES)

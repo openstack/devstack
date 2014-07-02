@@ -722,6 +722,9 @@ if is_service_enabled heat horizon; then
     install_heatclient
 fi
 
+# Install middleware
+install_keystonemiddleware
+
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
 setup_develop $OPENSTACKCLIENT_DIR
 
