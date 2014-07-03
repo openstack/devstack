@@ -53,6 +53,9 @@ CEILOMETER_SERVICE_PROTOCOL=http
 CEILOMETER_SERVICE_HOST=$SERVICE_HOST
 CEILOMETER_SERVICE_PORT=${CEILOMETER_SERVICE_PORT:-8777}
 
+# To enable OSprofiler change value of this variable to "notifications,profiler"
+CEILOMETER_NOTIFICATION_TOPICS=${CEILOMETER_NOTIFICATION_TOPICS:-notifications}
+
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,ceilometer
 
@@ -141,7 +144,7 @@ function configure_ceilometer {
 
     iniset_rpc_backend ceilometer $CEILOMETER_CONF DEFAULT
 
-    iniset $CEILOMETER_CONF DEFAULT notification_topics 'notifications'
+    iniset $CEILOMETER_CONF DEFAULT notification_topics "$CEILOMETER_NOTIFICATION_TOPICS"
     iniset $CEILOMETER_CONF DEFAULT verbose True
     iniset $CEILOMETER_CONF DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
 
