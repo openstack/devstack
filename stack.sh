@@ -1245,6 +1245,7 @@ fi
 if is_service_enabled cinder; then
     echo_summary "Starting Cinder"
     start_cinder
+    create_volume_types
 fi
 if is_service_enabled ceilometer; then
     echo_summary "Starting Ceilometer"
@@ -1499,6 +1500,19 @@ if [[ -n "$Q_SRV_EXTRA_DEFAULT_OPTS" ]]; then
         # Replace the first '=' with ' ' for iniset syntax
         echo ${I}
     done
+fi
+
+# TODO(dtroyer): Remove CINDER_MULTI_LVM_BACKEND after stable/juno branch is cut
+if [[ "$CINDER_MULTI_LVM_BACKEND" = "True" ]]; then
+    echo ""
+    echo_summary "WARNING: CINDER_MULTI_LVM_BACKEND is used"
+    echo "You are using CINDER_MULTI_LVM_BACKEND to configure Cinder's multiple LVM backends"
+    echo "Please convert that configuration in local.conf to use CINDER_ENABLED_BACKENDS."
+    echo "CINDER_ENABLED_BACKENDS will be removed early in the 'K' development cycle"
+    echo "
+[[local|localrc]]
+CINDER_ENABLED_BACKENDS=lvm:lvmdriver-1,lvm:lvmdriver-2
+"
 fi
 
 # Indicate how long this took to run (bash maintained variable ``SECONDS``)
