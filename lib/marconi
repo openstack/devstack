@@ -178,29 +178,19 @@ function create_marconi_accounts {
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    MARCONI_USER=$(openstack user create \
-        marconi \
-        --password "$SERVICE_PASSWORD" \
-        --project $SERVICE_TENANT \
-        --email marconi@example.com \
-        | grep " id " | get_field 2)
-    openstack role add \
-        $ADMIN_ROLE \
-        --project $SERVICE_TENANT \
-        --user $MARCONI_USER
+    MARCONI_USER=$(get_or_create_user "marconi" \
+        "$SERVICE_PASSWORD" $SERVICE_TENANT "marconi@example.com")
+    get_or_add_user_role $ADMIN_ROLE $MARCONI_USER $SERVICE_TENANT
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        MARCONI_SERVICE=$(openstack service create \
-            marconi \
-            --type=queuing \
-            --description="Marconi Service" \
-            | grep " id " | get_field 2)
-        openstack endpoint create \
-            $MARCONI_SERVICE \
-            --region RegionOne \
-            --publicurl "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT" \
-            --adminurl "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT" \
-            --internalurl "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT"
+
+        MARCONI_SERVICE=$(get_or_create_service "marconi" \
+            "queuing" "Marconi Service")
+        get_or_create_endpoint $MARCONI_SERVICE \
+            "$REGION_NAME" \
+            "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT" \
+            "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT" \
+            "$MARCONI_SERVICE_PROTOCOL://$MARCONI_SERVICE_HOST:$MARCONI_SERVICE_PORT"
     fi
 
 }

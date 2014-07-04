@@ -81,28 +81,20 @@ function create_trove_accounts {
     SERVICE_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     if [[ "$ENABLED_SERVICES" =~ "trove" ]]; then
-        TROVE_USER=$(openstack user create \
-            trove \
-            --password "$SERVICE_PASSWORD" \
-            --project $SERVICE_TENANT \
-            --email trove@example.com \
-            | grep " id " | get_field 2)
-        openstack role add \
-            $SERVICE_ROLE \
-            --project $SERVICE_TENANT \
-            --user $TROVE_USER
+
+        TROVE_USER=$(get_or_create_user "trove" \
+            "$SERVICE_PASSWORD" $SERVICE_TENANT "trove@example.com")
+        get_or_add_user_role $SERVICE_ROLE $TROVE_USER $SERVICE_TENANT
+
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            TROVE_SERVICE=$(openstack service create \
-                trove \
-                --type=database \
-                --description="Trove Service" \
-                | grep " id " | get_field 2)
-            openstack endpoint create \
-                $TROVE_SERVICE \
-                --region RegionOne \
-                --publicurl "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s" \
-                --adminurl "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s" \
-                --internalurl "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s"
+
+            TROVE_SERVICE=$(get_or_create_service "trove" \
+                "database" "Trove Service")
+            get_or_create_endpoint $TROVE_SERVICE \
+                "$REGION_NAME" \
+                "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s" \
+                "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s" \
+                "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s"
         fi
     fi
 }

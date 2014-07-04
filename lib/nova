@@ -333,39 +333,28 @@ create_nova_accounts() {
 
     # Nova
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
-        NOVA_USER=$(openstack user create \
-            nova \
-            --password "$SERVICE_PASSWORD" \
-            --project $SERVICE_TENANT \
-            --email nova@example.com \
-            | grep " id " | get_field 2)
-        openstack role add \
-            $ADMIN_ROLE \
-            --project $SERVICE_TENANT \
-            --user $NOVA_USER
+
+        NOVA_USER=$(get_or_create_user "nova" \
+            "$SERVICE_PASSWORD" $SERVICE_TENANT "nova@example.com")
+        get_or_add_user_role $ADMIN_ROLE $NOVA_USER $SERVICE_TENANT
+
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            NOVA_SERVICE=$(openstack service create \
-                nova \
-                --type=compute \
-                --description="Nova Compute Service" \
-                | grep " id " | get_field 2)
-            openstack endpoint create \
-                $NOVA_SERVICE \
-                --region RegionOne \
-                --publicurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
-                --adminurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
-                --internalurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s"
-            NOVA_V3_SERVICE=$(openstack service create \
-                novav3 \
-                --type=computev3 \
-                --description="Nova Compute Service V3" \
-                | grep " id " | get_field 2)
-            openstack endpoint create \
-                $NOVA_V3_SERVICE \
-                --region RegionOne \
-                --publicurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
-                --adminurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
-                --internalurl "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3"
+
+            NOVA_SERVICE=$(get_or_create_service "nova" \
+                "compute" "Nova Compute Service")
+            get_or_create_endpoint $NOVA_SERVICE \
+                "$REGION_NAME" \
+                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
+                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
+                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s"
+
+            NOVA_V3_SERVICE=$(get_or_create_service "novav3" \
+                "computev3" "Nova Compute Service V3")
+            get_or_create_endpoint $NOVA_V3_SERVICE \
+                "$REGION_NAME" \
+                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
+                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
+                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3"
         fi
     fi
 
@@ -374,40 +363,32 @@ create_nova_accounts() {
         if is_service_enabled swift; then
             # Nova needs ResellerAdmin role to download images when accessing
             # swift through the s3 api.
-            openstack role add \
-                --project $SERVICE_TENANT_NAME \
-                --user nova \
-                ResellerAdmin
+            get_or_add_user_role ResellerAdmin nova $SERVICE_TENANT_NAME
         fi
 
         # EC2
         if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
-            openstack service create \
-                --type ec2 \
-                --description "EC2 Compatibility Layer" \
-                ec2
-            openstack endpoint create \
-                --region RegionOne \
-                --publicurl "http://$SERVICE_HOST:8773/services/Cloud" \
-                --adminurl "http://$SERVICE_HOST:8773/services/Admin" \
-                --internalurl "http://$SERVICE_HOST:8773/services/Cloud" \
-                ec2
+
+            EC2_SERVICE=$(get_or_create_service "ec2" \
+                "ec2" "EC2 Compatibility Layer")
+            get_or_create_endpoint $EC2_SERVICE \
+                "$REGION_NAME" \
+                "http://$SERVICE_HOST:8773/services/Cloud" \
+                "http://$SERVICE_HOST:8773/services/Admin" \
+                "http://$SERVICE_HOST:8773/services/Cloud"
         fi
     fi
 
     # S3
     if is_service_enabled n-obj swift3; then
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            openstack service create \
-                --type s3 \
-                --description "S3" \
-                s3
-            openstack endpoint create \
-                --region RegionOne \
-                --publicurl "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
-                --adminurl "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
-                --internalurl "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
-                s3
+
+            S3_SERVICE=$(get_or_create_service "s3" "s3" "S3")
+            get_or_create_endpoint $S3_SERVICE \
+                "$REGION_NAME" \
+                "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
+                "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
+                "http://$SERVICE_HOST:$S3_SERVICE_PORT"
         fi
     fi
 }

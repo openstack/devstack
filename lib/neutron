@@ -307,7 +307,7 @@ function create_nova_conf_neutron {
     iniset $NOVA_CONF neutron admin_auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
     iniset $NOVA_CONF neutron auth_strategy "$Q_AUTH_STRATEGY"
     iniset $NOVA_CONF neutron admin_tenant_name "$SERVICE_TENANT_NAME"
-    iniset $NOVA_CONF neutron region_name "RegionOne"
+    iniset $NOVA_CONF neutron region_name "$REGION_NAME"
     iniset $NOVA_CONF neutron url "http://$Q_HOST:$Q_PORT"
 
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
@@ -350,28 +350,20 @@ function create_neutron_accounts {
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
-        NEUTRON_USER=$(openstack user create \
-            neutron \
-            --password "$SERVICE_PASSWORD" \
-            --project $SERVICE_TENANT \
-            --email neutron@example.com \
-            | grep " id " | get_field 2)
-        openstack role add \
-            $ADMIN_ROLE \
-            --project $SERVICE_TENANT \
-            --user $NEUTRON_USER
+
+        NEUTRON_USER=$(get_or_create_user "neutron" \
+            "$SERVICE_PASSWORD" $SERVICE_TENANT "neutron@example.com")
+        get_or_add_user_role $ADMIN_ROLE $NEUTRON_USER $SERVICE_TENANT
+
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            NEUTRON_SERVICE=$(openstack service create \
-                neutron \
-                --type=network \
-                --description="Neutron Service" \
-                | grep " id " | get_field 2)
-            openstack endpoint create \
-                $NEUTRON_SERVICE \
-                --region RegionOne \
-                --publicurl "http://$SERVICE_HOST:9696/" \
-                --adminurl "http://$SERVICE_HOST:9696/" \
-                --internalurl "http://$SERVICE_HOST:9696/"
+
+            NEUTRON_SERVICE=$(get_or_create_service "neutron" \
+                "network" "Neutron Service")
+            get_or_create_endpoint $NEUTRON_SERVICE \
+                "$REGION_NAME" \
+                "http://$SERVICE_HOST:9696/" \
+                "http://$SERVICE_HOST:9696/" \
+                "http://$SERVICE_HOST:9696/"
         fi
     fi
 }

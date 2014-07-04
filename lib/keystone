@@ -278,6 +278,8 @@ function configure_keystone {
         iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(process)d TRACE %(name)s %(instance)s"
         _config_keystone_apache_wsgi
     fi
+
+    iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
 }
 
 function configure_keystone_extensions {
@@ -316,79 +318,55 @@ function configure_keystone_extensions {
 function create_keystone_accounts {
 
     # admin
-    ADMIN_TENANT=$(openstack project create \
-        admin \
-        | grep " id " | get_field 2)
-    ADMIN_USER=$(openstack user create \
-        admin \
-        --project "$ADMIN_TENANT" \
-        --email admin@example.com \
-        --password "$ADMIN_PASSWORD" \
-        | grep " id " | get_field 2)
-    ADMIN_ROLE=$(openstack role create \
-        admin \
-        | grep " id " | get_field 2)
-    openstack role add \
-        $ADMIN_ROLE \
-        --project $ADMIN_TENANT \
-        --user $ADMIN_USER
+    ADMIN_TENANT=$(get_or_create_project "admin")
+    ADMIN_USER=$(get_or_create_user "admin" \
+        "$ADMIN_PASSWORD" "$ADMIN_TENANT" "admin@example.com")
+    ADMIN_ROLE=$(get_or_create_role "admin")
+    get_or_add_user_role $ADMIN_ROLE $ADMIN_USER $ADMIN_TENANT
 
     # Create service project/role
-    openstack project create $SERVICE_TENANT_NAME
+    get_or_create_project "$SERVICE_TENANT_NAME"
 
     # Service role, so service users do not have to be admins
-    openstack role create service
+    get_or_create_role service
 
     # The ResellerAdmin role is used by Nova and Ceilometer so we need to keep it.
     # The admin role in swift allows a user to act as an admin for their tenant,
     # but ResellerAdmin is needed for a user to act as any tenant. The name of this
     # role is also configurable in swift-proxy.conf
-    openstack role create ResellerAdmin
+    get_or_create_role ResellerAdmin
 
     # The Member role is used by Horizon and Swift so we need to keep it:
-    MEMBER_ROLE=$(openstack role create \
-        Member \
-        | grep " id " | get_field 2)
+    MEMBER_ROLE=$(get_or_create_role "Member")
+
     # ANOTHER_ROLE demonstrates that an arbitrary role may be created and used
     # TODO(sleepsonthefloor): show how this can be used for rbac in the future!
-    ANOTHER_ROLE=$(openstack role create \
-        anotherrole \
-        | grep " id " | get_field 2)
+
+    ANOTHER_ROLE=$(get_or_create_role "anotherrole")
 
     # invisible tenant - admin can't see this one
-    INVIS_TENANT=$(openstack project create \
-        invisible_to_admin \
-        | grep " id " | get_field 2)
+    INVIS_TENANT=$(get_or_create_project "invisible_to_admin")
 
     # demo
-    DEMO_TENANT=$(openstack project create \
-        demo \
-        | grep " id " | get_field 2)
-    DEMO_USER=$(openstack user create \
-        demo \
-        --project $DEMO_TENANT \
-        --email demo@example.com \
-        --password "$ADMIN_PASSWORD" \
-        | grep " id " | get_field 2)
+    DEMO_TENANT=$(get_or_create_project "demo")
+    DEMO_USER=$(get_or_create_user "demo" \
+        "$ADMIN_PASSWORD" "$DEMO_TENANT" "demo@example.com")
 
-    openstack role add --project $DEMO_TENANT --user $DEMO_USER $MEMBER_ROLE
-    openstack role add --project $DEMO_TENANT --user $ADMIN_USER $ADMIN_ROLE
-    openstack role add --project $DEMO_TENANT --user $DEMO_USER $ANOTHER_ROLE
-    openstack role add --project $INVIS_TENANT --user $DEMO_USER $MEMBER_ROLE
+    get_or_add_user_role $MEMBER_ROLE $DEMO_USER $DEMO_TENANT
+    get_or_add_user_role $ADMIN_ROLE $ADMIN_USER $DEMO_TENANT
+    get_or_add_user_role $ANOTHER_ROLE $DEMO_USER $DEMO_TENANT
+    get_or_add_user_role $MEMBER_ROLE $DEMO_USER $INVIS_TENANT
 
     # Keystone
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        KEYSTONE_SERVICE=$(openstack service create \
-            keystone \
-            --type identity \
-            --description "Keystone Identity Service" \
-            | grep " id " | get_field 2)
-        openstack endpoint create \
-            $KEYSTONE_SERVICE \
-            --region RegionOne \
-            --publicurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION" \
-            --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v$IDENTITY_API_VERSION" \
-            --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION"
+
+        KEYSTONE_SERVICE=$(get_or_create_service "keystone" \
+            "identity" "Keystone Identity Service")
+        get_or_create_endpoint $KEYSTONE_SERVICE \
+            "$REGION_NAME" \
+            "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION" \
+            "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v$IDENTITY_API_VERSION" \
+            "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION"
     fi
 }
 
