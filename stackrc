@@ -183,6 +183,10 @@ OSLOCFG_BRANCH=${OSLOCFG_BRANCH:-master}
 OSLODB_REPO=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
 OSLODB_BRANCH=${OSLODB_BRANCH:-master}
 
+# oslo.i18n
+OSLOI18N_REPO=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
+OSLOI18N_BRANCH=${OSLOI18N_BRANCH:-master}
+
 # oslo.messaging
 OSLOMSG_REPO=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
 OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
