@@ -10,7 +10,6 @@ source $TOP_DIR/lib/neutron_plugins/linuxbridge_agent
 function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/linuxbridge
     Q_PLUGIN_CONF_FILENAME=linuxbridge_conf.ini
-    Q_DB_NAME="neutron_linux_bridge"
     Q_PLUGIN_CLASS="neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2"
 }
 

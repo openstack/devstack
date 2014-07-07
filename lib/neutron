@@ -85,6 +85,8 @@ NEUTRON_CONF_DIR=/etc/neutron
 NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
 
+# Default name for Neutron database
+Q_DB_NAME=${Q_DB_NAME:-neutron}
 # Default Neutron Plugin
 Q_PLUGIN=${Q_PLUGIN:-ml2}
 # Default Neutron Port

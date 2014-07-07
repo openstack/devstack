@@ -10,7 +10,6 @@ source $TOP_DIR/lib/neutron_plugins/openvswitch_agent
 function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/openvswitch
     Q_PLUGIN_CONF_FILENAME=ovs_neutron_plugin.ini
-    Q_DB_NAME="ovs_neutron"
     Q_PLUGIN_CLASS="neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2"
 }
 

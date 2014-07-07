@@ -197,7 +197,6 @@ function neutron_plugin_configure_common {
         Q_PLUGIN_CONF_FILENAME=cisco_plugins.ini
     fi
     Q_PLUGIN_CLASS="neutron.plugins.cisco.network_plugin.PluginV2"
-    Q_DB_NAME=cisco_neutron
 }
 
 function neutron_plugin_configure_debug_command {
