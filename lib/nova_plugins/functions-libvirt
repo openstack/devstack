@@ -112,7 +112,15 @@ EOF
 
     # Enable server side traces for libvirtd
     if [[ "$DEBUG_LIBVIRT" = "True" ]] ; then
-        local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:event 3:json 3:file 1:util"
+        if is_ubuntu; then
+            # Unexpectedly binary package builds in ubuntu get fully qualified
+            # source file paths, not relative paths. This screws with the matching
+            # of '1:libvirt' making everything turn on. So use libvirt.c for now.
+            # This will have to be re-visited when Ubuntu ships libvirt >= 1.2.3
+            local log_filters="1:libvirt.c 1:qemu 1:conf 1:security 3:object 3:event 3:json 3:file 1:util"
+        else
+            local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:object 3:event 3:json 3:file 1:util"
+        fi
         local log_outputs="1:file:/var/log/libvirt/libvirtd.log"
         if ! grep -q "log_filters=\"$log_filters\"" /etc/libvirt/libvirtd.conf; then
             echo "log_filters=\"$log_filters\"" | sudo tee -a /etc/libvirt/libvirtd.conf
