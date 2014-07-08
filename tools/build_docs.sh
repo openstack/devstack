@@ -113,6 +113,15 @@ FQ_HTML_BUILD=$(cd $HTML_BUILD && pwd)
 # Get repo static
 cp -pr $FQ_DOCS_SOURCE/* $FQ_HTML_BUILD
 
+# Insert automated bits
+GLOG=$(mktemp gitlogXXXX)
+git log \
+    --pretty=format:'            <li>%s - <em>Commit <a href="https://review.openstack.org/#q,%h,n,z">%h</a> %cd</em></li>' \
+    --date=short \
+    --since '6 months ago' | grep -v Merge >$GLOG
+sed -e $"/%GIT_LOG%/r $GLOG" $FQ_DOCS_SOURCE/changes.html >$FQ_HTML_BUILD/changes.html
+rm -f $GLOG
+
 # Build list of scripts to process
 FILES=""
 for f in $(find . -name .git -prune -o \( -type f -name \*.sh -not -path \*shocco/\* -print \)); do
