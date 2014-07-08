@@ -52,6 +52,12 @@ if [[ -z "$ENABLED_SERVICES" ]]; then
     ENABLED_SERVICES+=,rabbit,tempest,mysql
 fi
 
+# Global toggle for enabling services under mod_wsgi. If this is set to
+# ``True`` all services that use HTTPD + mod_wsgi as the preferred method of
+# deployment, will be deployed under Apache. If this is set to ``False`` all
+# services will rely on the local toggle variable (e.g. ``KEYSTONE_USE_MOD_WSGI``)
+ENABLE_HTTPD_MOD_WSGI_SERVICES=True
+
 # Tell Tempest which services are available.  The default is set here as
 # Tempest falls late in the configuration sequence.  This differs from
 # ``ENABLED_SERVICES`` in that the project names are used here rather than

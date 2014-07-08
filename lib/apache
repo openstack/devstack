@@ -8,7 +8,6 @@
 #
 # lib/apache exports the following functions:
 #
-# - is_apache_enabled_service
 # - install_apache_wsgi
 # - config_apache_wsgi
 # - apache_site_config_for
@@ -42,23 +41,6 @@ fi
 
 # Functions
 # ---------
-
-# is_apache_enabled_service() checks if the service(s) specified as arguments are
-# apache enabled by the user in ``APACHE_ENABLED_SERVICES`` as web front end.
-#
-# Multiple services specified as arguments are ``OR``'ed together; the test
-# is a short-circuit boolean, i.e it returns on the first match.
-#
-# Uses global ``APACHE_ENABLED_SERVICES``
-# APACHE_ENABLED_SERVICES service [service ...]
-function is_apache_enabled_service {
-    services=$@
-    for service in ${services}; do
-        [[ ,${APACHE_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
-    done
-    return 1
-}
-
 # install_apache_wsgi() - Install Apache server and wsgi module
 function install_apache_wsgi {
     # Apache installation, because we mark it NOPRIME
