@@ -384,7 +384,7 @@ fi
 # Trove needs a custom image for it's work
 if [[ "$ENABLED_SERVICES" =~ 'tr-api' ]]; then
     case "$VIRT_DRIVER" in
-        libvirt|baremetal|ironic)
+        libvirt|baremetal|ironic|xenapi)
             TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu_mysql.qcow2/ubuntu_mysql.qcow2"}
             IMAGE_URLS+=",${TROVE_GUEST_IMAGE_URL}"
             ;;
