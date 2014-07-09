@@ -1,4 +1,3 @@
-libffi-devel
 libxml2-devel       # testonly
 libxslt-devel       # testonly
 mysql-devel         # testonly
