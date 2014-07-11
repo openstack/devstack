@@ -193,6 +193,12 @@ function configure_keystone {
         iniset $KEYSTONE_CONF assignment driver "keystone.assignment.backends.$KEYSTONE_ASSIGNMENT_BACKEND.Assignment"
     fi
 
+    # Configure rabbitmq credentials
+    if is_service_enabled rabbit; then
+        iniset $KEYSTONE_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $KEYSTONE_CONF DEFAULT rabbit_host $RABBIT_HOST
+    fi
+
     # Set the URL advertised in the ``versions`` structure returned by the '/' route
     iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(public_port)s/"
     iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(admin_port)s/"
