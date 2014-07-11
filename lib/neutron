@@ -296,6 +296,9 @@ function configure_neutron {
     if is_service_enabled q-meta; then
         _configure_neutron_metadata_agent
     fi
+    if is_service_enabled ceilometer; then
+        _configure_neutron_ceilometer_notifications
+    fi
 
     _configure_neutron_debug_command
 }
@@ -720,6 +723,10 @@ function _configure_neutron_metadata_agent {
 
     _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT True True
 
+}
+
+function _configure_neutron_ceilometer_notifications {
+    iniset $NEUTRON_CONF DEFAULT notification_driver neutron.openstack.common.notifier.rpc_notifier
 }
 
 function _configure_neutron_lbaas {
