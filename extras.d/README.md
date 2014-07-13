@@ -22,9 +22,24 @@ sourced with one or more arguments, the first of which defines the hook phase:
     stack: called by stack.sh.  There are four possible values for
         the second arg to distinguish the phase stack.sh is in:
 
-        arg 2:  install | post-config | extra | post-extra
+        arg 2:  pre-install | install | post-config | extra
 
     unstack: called by unstack.sh
 
     clean: called by clean.sh.  Remember, clean.sh also calls unstack.sh
         so that work need not be repeated.
+
+The `stack` phase sub-phases are called from `stack.sh` in the following places:
+
+    pre-install - After all system prerequisites have been installed but before any
+        DevStack-specific services are installed (including database and rpc).
+
+    install - After all OpenStack services have been installed and configured
+        but before any OpenStack services have been started.  Changes to OpenStack
+        service configurations should be done here.
+
+    post-config - After OpenStack services have been initialized but still before
+        they have been started. (This is probably mis-named, think of it as post-init.)
+
+    extra - After everything is started.
+
