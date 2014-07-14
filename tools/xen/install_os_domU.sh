@@ -207,6 +207,8 @@ if [ -z "$templateuuid" ]; then
             -e "s,\(d-i mirror/http/hostname string\).*,\1 $UBUNTU_INST_HTTP_HOSTNAME,g" \
             -e "s,\(d-i mirror/http/directory string\).*,\1 $UBUNTU_INST_HTTP_DIRECTORY,g" \
             -e "s,\(d-i mirror/http/proxy string\).*,\1 $UBUNTU_INST_HTTP_PROXY,g" \
+            -e "s,\(d-i passwd/root-password password\).*,\1 $GUEST_PASSWORD,g" \
+            -e "s,\(d-i passwd/root-password-again password\).*,\1 $GUEST_PASSWORD,g" \
             -i "${HTTP_SERVER_LOCATION}/devstackubuntupreseed.cfg"
     fi
 
