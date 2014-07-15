@@ -180,6 +180,7 @@ function configure_trove {
     iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
     iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
     iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT control_exchange trove
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT ignore_users os_admin
     iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT log_dir /tmp/
     iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT log_file trove-guestagent.log
     setup_trove_logging $TROVE_CONF_DIR/trove-guestagent.conf
