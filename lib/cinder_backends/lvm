@@ -1,0 +1,179 @@
+# lib/cinder_backends/lvm
+# Configure the LVM backend
+
+# Enable with:
+#
+#   CINDER_ENABLED_BACKENDS+=,lvm:lvmname
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# CINDER_CONF
+# DATA_DIR
+
+# clean_cinder_backend_lvm - called from clean_cinder()
+# configure_cinder_backend_lvm - called from configure_cinder()
+# init_cinder_backend_lvm - called from init_cinder()
+
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# Name of the lvm volume groups to use/create for iscsi volumes
+# This monkey-motion is for compatibility with icehouse-generation Grenade
+# If ``VOLUME_GROUP`` is set, use it, otherwise we'll build a VG name based
+# on ``VOLUME_GROUP_NAME`` that includes the backend name
+# Grenade doesn't use ``VOLUME_GROUP2`` so it is left out
+VOLUME_GROUP_NAME=${VOLUME_GROUP:-${VOLUME_GROUP_NAME:-stack-volumes}}
+
+# TODO: resurrect backing device...need to know how to set values
+#VOLUME_BACKING_DEVICE=${VOLUME_BACKING_DEVICE:-}
+
+VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
+
+
+# Entry Points
+# ------------
+
+# Compatibility for getting a volume group name from either ``VOLUME_GROUP``
+# or from ``VOLUME_GROUP_NAME`` plus the backend name
+function get_volume_group_name {
+    local be_name=$1
+
+    # Again with the icehouse-generation compatibility
+    local volume_group_name=$VOLUME_GROUP_NAME
+    if [[ -z $VOLUME_GROUP ]]; then
+        volume_group_name+="-$be_name"
+    fi
+    echo $volume_group_name
+}
+
+function cleanup_cinder_backend_lvm {
+    local be_name=$1
+
+    # Again with the icehouse-generation compatibility
+    local volume_group_name=$(get_volume_group_name $be_name)
+
+    # Campsite rule: leave behind a volume group at least as clean as we found it
+    _clean_lvm_lv ${volume_group_name} $VOLUME_NAME_PREFIX
+    _clean_lvm_backing_file ${volume_group_name} $DATA_DIR/${volume_group_name}-backing-file
+}
+
+# configure_cinder_backend_lvm - Set config files, create data dirs, etc
+# configure_cinder_backend_lvm $name
+function configure_cinder_backend_lvm {
+    local be_name=$1
+
+    # Again with the icehouse-generation compatibility
+    local volume_group_name=$(get_volume_group_name $be_name)
+
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.lvm.LVMISCSIDriver"
+    iniset $CINDER_CONF $be_name volume_group $volume_group_name
+
+    if [[ "$CINDER_SECURE_DELETE" == "False" ]]; then
+        iniset $CINDER_CONF $be_name volume_clear none
+    fi
+}
+
+
+function init_cinder_backend_lvm {
+    local be_name=$1
+
+    # Again with the icehouse-generation compatibility
+    local volume_group_name=$(get_volume_group_name $be_name)
+
+    # Start with a clean volume group
+    _create_cinder_volume_group ${volume_group_name} $DATA_DIR/${volume_group_name}-backing-file
+
+    if is_fedora || is_suse; then
+        # service is not started by default
+        start_service tgtd
+    fi
+
+    # Remove iscsi targets
+    sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
+    _clean_lvm_lv ${volume_group_name} $VOLUME_NAME_PREFIX
+}
+
+
+# _clean_lvm_lv removes all cinder LVM volumes
+#
+# Usage: _clean_lvm_lv volume-group-name $VOLUME_NAME_PREFIX
+function _clean_lvm_lv {
+    local vg=$1
+    local lv_prefix=$2
+
+    # Clean out existing volumes
+    for lv in $(sudo lvs --noheadings -o lv_name $vg 2>/dev/null); do
+        # lv_prefix prefixes the LVs we want
+        if [[ "${lv#$lv_prefix}" != "$lv" ]]; then
+            sudo lvremove -f $vg/$lv
+        fi
+    done
+}
+
+# _clean_lvm_backing_file() removes the backing file of the
+# volume group used by cinder
+#
+# Usage: _clean_lvm_backing_file() volume-group-name backing-file-name
+function _clean_lvm_backing_file {
+    local vg=$1
+    local backing_file=$2
+
+    # if there is no logical volume left, it's safe to attempt a cleanup
+    # of the backing file
+    if [[ -z "$(sudo lvs --noheadings -o lv_name $vg 2>/dev/null)" ]]; then
+        # if the backing physical device is a loop device, it was probably setup by devstack
+        VG_DEV=$(sudo losetup -j $backing_file | awk -F':' '/backing-file/ { print $1}')
+        if [[ -n "$VG_DEV" ]] && [[ -e "$VG_DEV" ]]; then
+            sudo losetup -d $VG_DEV
+            rm -f $backing_file
+        fi
+    fi
+}
+
+# _create_cinder_volume_group volume-group-name backing-file-name
+function _create_cinder_volume_group {
+    # According to the ``CINDER_MULTI_LVM_BACKEND`` value, configure one or two default volumes
+    # group called ``stack-volumes`` (and ``stack-volumes2``) for the volume
+    # service if it (they) does (do) not yet exist. If you don't wish to use a
+    # file backed volume group, create your own volume group called ``stack-volumes``
+    # and ``stack-volumes2`` before invoking ``stack.sh``.
+    #
+    # The two backing files are ``VOLUME_BACKING_FILE_SIZE`` in size, and they are stored in
+    # the ``DATA_DIR``.
+
+    local vg_name=$1
+    local backing_file=$2
+
+    if ! sudo vgs $vg_name; then
+        # TODO: fix device handling
+        if [ -z "$VOLUME_BACKING_DEVICE" ]; then
+            # Only create if the file doesn't already exists
+            [[ -f $backing_file ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $backing_file
+            DEV=`sudo losetup -f --show $backing_file`
+
+            # Only create if the loopback device doesn't contain $VOLUME_GROUP
+            if ! sudo vgs $vg_name; then
+                sudo vgcreate $vg_name $DEV
+            fi
+        else
+            sudo vgcreate $vg_name $VOLUME_BACKING_DEVICE
+        fi
+    fi
+}
+
+
+# Restore xtrace
+$MY_XTRACE
+
+# mode: shell-script
+# End:

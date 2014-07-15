@@ -1,0 +1,43 @@
+# lib/cinder_backends/nfs
+# Configure the nfs backend
+
+# Enable with:
+#
+#   CINDER_ENABLED_BACKENDS+=,nfs:<volume-type-name>
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# CINDER_CONF
+# CINDER_CONF_DIR
+# CINDER_NFS_SERVERPATH - contents of nfs shares config file
+
+# configure_cinder_backend_nfs - Configure Cinder for NFS backends
+
+# Save trace setting
+NFS_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_backend_nfs - Set config files, create data dirs, etc
+function configure_cinder_backend_nfs {
+    local be_name=$1
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.nfs.NfsDriver"
+    iniset $CINDER_CONF $be_name nfs_shares_config "$CINDER_CONF_DIR/nfs-shares-$be_name.conf"
+
+    echo "$CINDER_NFS_SERVERPATH" | tee "$CINDER_CONF_DIR/nfs-shares-$be_name.conf"
+}
+
+
+# Restore xtrace
+$NFS_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
