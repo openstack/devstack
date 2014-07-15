@@ -407,8 +407,7 @@ fi
 # 10Gb default volume backing file size
 VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-10250M}
 
-# Name of the LVM volume group to use/create for iscsi volumes
-VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
+# Prefixes for volume and instance names
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
 INSTANCE_NAME_PREFIX=${INSTANCE_NAME_PREFIX:-instance-}
 

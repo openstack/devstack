@@ -28,6 +28,7 @@ set +o xtrace
 # set up default driver
 CINDER_DRIVER=${CINDER_DRIVER:-default}
 CINDER_PLUGINS=$TOP_DIR/lib/cinder_plugins
+CINDER_BACKENDS=$TOP_DIR/lib/cinder_backends
 
 # grab plugin config if specified via cinder_driver
 if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
@@ -57,8 +58,23 @@ else
     CINDER_BIN_DIR=$(get_python_exec_prefix)
 fi
 
+
+# Maintain this here for backward-compatibility with the old configuration
+# DEPRECATED: Use CINDER_ENABLED_BACKENDS instead
 # Support for multi lvm backend configuration (default is no support)
 CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
+
+# Default backends
+# The backend format is type:name where type is one of the supported backend
+# types (lvm, nfs, etc) and name is the identifier used in the Cinder
+# configuration and for the volume type name.  Multiple backends are
+# comma-separated.
+if [[ $CINDER_MULTI_LVM_BACKEND == "False" ]]; then
+    CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1}
+else
+    CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1,lvm:lvmdriver-2}
+fi
+
 
 # Should cinder perform secure deletion of volumes?
 # Defaults to true, can be set to False to avoid this bug when testing:
@@ -73,20 +89,20 @@ CINDER_SECURE_DELETE=`trueorfalse True $CINDER_SECURE_DELETE`
 # https://bugs.launchpad.net/cinder/+bug/1180976
 CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 
-# Name of the lvm volume groups to use/create for iscsi volumes
-VOLUME_GROUP=${VOLUME_GROUP:-stack-volumes}
-VOLUME_BACKING_FILE=${VOLUME_BACKING_FILE:-$DATA_DIR/${VOLUME_GROUP}-backing-file}
-VOLUME_BACKING_DEVICE=${VOLUME_BACKING_DEVICE:-}
-
-# VOLUME_GROUP2 is used only if CINDER_MULTI_LVM_BACKEND = True
-VOLUME_GROUP2=${VOLUME_GROUP2:-stack-volumes2}
-VOLUME_BACKING_FILE2=${VOLUME_BACKING_FILE2:-$DATA_DIR/${VOLUME_GROUP2}-backing-file}
-VOLUME_BACKING_DEVICE2=${VOLUME_BACKING_DEVICE2:-}
-
-VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
-
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,cinder
+
+
+# Source the enabled backends
+if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
+    for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
+        BE_TYPE=${be%%:*}
+        BE_NAME=${be##*:}
+        if [[ -r $CINDER_BACKENDS/${BE_TYPE} ]]; then
+            source $CINDER_BACKENDS/${BE_TYPE}
+        fi
+    done
+fi
 
 
 # Functions
@@ -97,41 +113,6 @@ TEMPEST_SERVICES+=,cinder
 function is_cinder_enabled {
     [[ ,${ENABLED_SERVICES} =~ ,"c-" ]] && return 0
     return 1
-}
-
-# _clean_lvm_lv removes all cinder LVM volumes
-#
-# Usage: _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
-function _clean_lvm_lv {
-    local vg=$1
-    local lv_prefix=$2
-
-    # Clean out existing volumes
-    for lv in `sudo lvs --noheadings -o lv_name $vg`; do
-        # lv_prefix prefixes the LVs we want
-        if [[ "${lv#$lv_prefix}" != "$lv" ]]; then
-            sudo lvremove -f $vg/$lv
-        fi
-    done
-}
-
-# _clean_lvm_backing_file() removes the backing file of the
-# volume group used by cinder
-#
-# Usage: _clean_lvm_backing_file() $VOLUME_GROUP
-function _clean_lvm_backing_file {
-    local vg=$1
-
-    # if there is no logical volume left, it's safe to attempt a cleanup
-    # of the backing file
-    if [ -z "`sudo lvs --noheadings -o lv_name $vg`" ]; then
-        # if the backing physical device is a loop device, it was probably setup by devstack
-        if [[ -n "$VG_DEV" ]] && [[ -e "$VG_DEV" ]]; then
-            VG_DEV=$(sudo losetup -j $DATA_DIR/${vg}-backing-file | awk -F':' '/backing-file/ { print $1}')
-            sudo losetup -d $VG_DEV
-            rm -f $DATA_DIR/${vg}-backing-file
-        fi
-    fi
 }
 
 # cleanup_cinder() - Remove residual data files, anything left over from previous
@@ -160,23 +141,20 @@ function cleanup_cinder {
         done
     fi
 
-    if is_service_enabled cinder; then
-        sudo rm -rf $CINDER_STATE_PATH/volumes/*
-    fi
-
     if is_ubuntu; then
         stop_service tgt
     else
         stop_service tgtd
     fi
 
-    # Campsite rule: leave behind a volume group at least as clean as we found it
-    _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
-    _clean_lvm_backing_file $VOLUME_GROUP
-
-    if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
-        _clean_lvm_lv $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
-        _clean_lvm_backing_file $VOLUME_GROUP2
+    if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
+        for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
+            BE_TYPE=${be%%:*}
+            BE_NAME=${be##*:}
+            if type cleanup_cinder_backend_${BE_TYPE} >/dev/null 2>&1; then
+                cleanup_cinder_backend_${BE_TYPE} ${BE_NAME}
+            fi
+        done
     fi
 }
 
@@ -243,23 +221,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $CINDER_CONF DEFAULT verbose True
-    if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
-        iniset $CINDER_CONF DEFAULT enabled_backends lvmdriver-1,lvmdriver-2
-        iniset $CINDER_CONF lvmdriver-1 volume_group $VOLUME_GROUP
-        iniset $CINDER_CONF lvmdriver-1 volume_driver cinder.volume.drivers.lvm.LVMISCSIDriver
-        iniset $CINDER_CONF lvmdriver-1 volume_backend_name LVM_iSCSI
-        iniset $CINDER_CONF lvmdriver-2 volume_group $VOLUME_GROUP2
-        iniset $CINDER_CONF lvmdriver-2 volume_driver cinder.volume.drivers.lvm.LVMISCSIDriver
-        iniset $CINDER_CONF lvmdriver-2 volume_backend_name LVM_iSCSI_2
-        # NOTE(mriedem): Work around Cinder "wishlist" bug 1255593
-        if [[ "$CINDER_SECURE_DELETE" == "False" ]]; then
-            iniset $CINDER_CONF lvmdriver-1 volume_clear none
-            iniset $CINDER_CONF lvmdriver-2 volume_clear none
-        fi
-    else
-        iniset $CINDER_CONF DEFAULT volume_group $VOLUME_GROUP
-        iniset $CINDER_CONF DEFAULT volume_name_template ${VOLUME_NAME_PREFIX}%s
-    fi
+
     iniset $CINDER_CONF DEFAULT my_ip "$CINDER_SERVICE_HOST"
     iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
     iniset $CINDER_CONF DEFAULT sql_connection `database_connection_url cinder`
@@ -273,6 +235,26 @@ function configure_cinder {
     # Juno. Keep it enabled so we can continue testing while it's still
     # supported.
     iniset $CINDER_CONF DEFAULT enable_v1_api true
+
+    if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
+        enabled_backends=""
+        default_type=""
+        for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
+            BE_TYPE=${be%%:*}
+            BE_NAME=${be##*:}
+            if type configure_cinder_backend_${BE_TYPE} >/dev/null 2>&1; then
+                configure_cinder_backend_${BE_TYPE} ${BE_NAME}
+            fi
+            if [[ -z "$default_type" ]]; then
+                default_type=$BE_TYPE}
+            fi
+            enabled_backends+=$BE_NAME,
+        done
+        iniset $CINDER_CONF DEFAULT enabled_backends ${enabled_backends%,*}
+        if [[ -n "$default_type" ]]; then
+            iniset $CINDER_CONF DEFAULT default_volume_type ${enabled_backends%,*}
+        fi
+    fi
 
     if is_service_enabled swift; then
         iniset $CINDER_CONF DEFAULT backup_swift_url "http://$SERVICE_HOST:8080/v1/AUTH_"
@@ -371,53 +353,6 @@ function create_cinder_cache_dir {
     rm -f $CINDER_AUTH_CACHE_DIR/*
 }
 
-function create_cinder_volume_group {
-    # According to the ``CINDER_MULTI_LVM_BACKEND`` value, configure one or two default volumes
-    # group called ``stack-volumes`` (and ``stack-volumes2``) for the volume
-    # service if it (they) does (do) not yet exist. If you don't wish to use a
-    # file backed volume group, create your own volume group called ``stack-volumes``
-    # and ``stack-volumes2`` before invoking ``stack.sh``.
-    #
-    # The two backing files are ``VOLUME_BACKING_FILE_SIZE`` in size, and they are stored in
-    # the ``DATA_DIR``.
-
-    if ! sudo vgs $VOLUME_GROUP; then
-        if [ -z "$VOLUME_BACKING_DEVICE" ]; then
-            # Only create if the file doesn't already exists
-            [[ -f $VOLUME_BACKING_FILE ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE
-            DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE`
-
-            # Only create if the loopback device doesn't contain $VOLUME_GROUP
-            if ! sudo vgs $VOLUME_GROUP; then
-                sudo vgcreate $VOLUME_GROUP $DEV
-            fi
-        else
-            sudo vgcreate $VOLUME_GROUP $VOLUME_BACKING_DEVICE
-        fi
-    fi
-    if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
-        #set up the second volume if CINDER_MULTI_LVM_BACKEND is enabled
-
-        if ! sudo vgs $VOLUME_GROUP2; then
-            if [ -z "$VOLUME_BACKING_DEVICE2" ]; then
-                # Only create if the file doesn't already exists
-                [[ -f $VOLUME_BACKING_FILE2 ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $VOLUME_BACKING_FILE2
-
-                DEV=`sudo losetup -f --show $VOLUME_BACKING_FILE2`
-
-                # Only create if the loopback device doesn't contain $VOLUME_GROUP
-                if ! sudo vgs $VOLUME_GROUP2; then
-                    sudo vgcreate $VOLUME_GROUP2 $DEV
-                fi
-            else
-                sudo vgcreate $VOLUME_GROUP2 $VOLUME_BACKING_DEVICE2
-            fi
-        fi
-    fi
-
-    mkdir -p $CINDER_STATE_PATH/volumes
-}
-
 # init_cinder() - Initialize database and volume group
 function init_cinder {
     # Force nova volumes off
@@ -431,26 +366,17 @@ function init_cinder {
         $CINDER_BIN_DIR/cinder-manage db sync
     fi
 
-    if is_service_enabled c-vol; then
-
-        create_cinder_volume_group
-
-        if sudo vgs $VOLUME_GROUP; then
-            if is_fedora || is_suse; then
-                # service is not started by default
-                start_service tgtd
+    if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
+        for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
+            BE_TYPE=${be%%:*}
+            BE_NAME=${be##*:}
+            if type init_cinder_backend_${BE_TYPE} >/dev/null 2>&1; then
+                init_cinder_backend_${BE_TYPE} ${BE_NAME}
             fi
-
-            # Remove iscsi targets
-            sudo tgtadm --op show --mode target | grep $VOLUME_NAME_PREFIX | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
-            # Start with a clean volume group
-            _clean_lvm_lv $VOLUME_GROUP $VOLUME_NAME_PREFIX
-            if [ "$CINDER_MULTI_LVM_BACKEND" = "True" ]; then
-                _clean_lvm_lv $VOLUME_GROUP2 $VOLUME_NAME_PREFIX
-            fi
-        fi
+        done
     fi
 
+    mkdir -p $CINDER_STATE_PATH/volumes
     create_cinder_cache_dir
 }
 
@@ -502,6 +428,11 @@ function start_cinder {
     fi
 
     screen_it c-api "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
+    echo "Waiting for Cinder API to start..."
+    if ! wait_for_service $SERVICE_TIMEOUT $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT; then
+        die $LINENO "c-api did not start"
+    fi
+
     screen_it c-sch "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
     screen_it c-bak "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-backup --config-file $CINDER_CONF"
     screen_it c-vol "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
@@ -530,6 +461,30 @@ function stop_cinder {
             stop_service tgtd
         fi
     fi
+}
+
+# create_volume_types() - Create Cinder's configured volume types
+function create_volume_types {
+    # Create volume types
+    if is_service_enabled c-api && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
+        for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
+            BE_TYPE=${be%%:*}
+            BE_NAME=${be##*:}
+            if type configure_cinder_backend_${BE_TYPE} >/dev/null 2>&1; then
+                # openstack volume type create --property volume_backend_name="${BE_TYPE}" ${BE_NAME}
+                cinder type-create ${BE_NAME} && \
+                    cinder type-key ${BE_NAME} set volume_backend_name="${BE_NAME}"
+            fi
+        done
+    fi
+}
+
+# Compatibility for Grenade
+
+function create_cinder_volume_group {
+    # During a transition period Grenade needs to have this function defined
+    # It is effectively a no-op in the Grenade 'target' use case
+    :
 }
 
 

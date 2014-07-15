@@ -203,6 +203,13 @@ OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
 # Example: ``LB_PHYSICAL_INTERFACE=eth1``
 LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-}
 
+# When Neutron tunnels are enabled it is needed to specify the
+# IP address of the end point in the local server. This IP is set
+# by default to the same IP address that the HOST IP.
+# This variable can be used to specify a different end point IP address
+# Example: ``TUNNEL_ENDPOINT_IP=1.1.1.1``
+TUNNEL_ENDPOINT_IP=${TUNNEL_ENDPOINT_IP:-$HOST_IP}
+
 # With the openvswitch plugin, set to True in ``localrc`` to enable
 # provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
 #
@@ -295,6 +302,9 @@ function configure_neutron {
     fi
     if is_service_enabled q-meta; then
         _configure_neutron_metadata_agent
+    fi
+    if is_service_enabled ceilometer; then
+        _configure_neutron_ceilometer_notifications
     fi
 
     _configure_neutron_debug_command
@@ -720,6 +730,10 @@ function _configure_neutron_metadata_agent {
 
     _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT True True
 
+}
+
+function _configure_neutron_ceilometer_notifications {
+    iniset $NEUTRON_CONF DEFAULT notification_driver neutron.openstack.common.notifier.rpc_notifier
 }
 
 function _configure_neutron_lbaas {

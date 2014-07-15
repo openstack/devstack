@@ -20,6 +20,7 @@ euca2ools # only for testing client
 tar
 python-cmd2 # dist:precise
 python-dev
+python-mock # testonly
 python2.7
 bc
 libyaml-dev
