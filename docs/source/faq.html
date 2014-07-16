@@ -18,7 +18,7 @@
       body { padding-top: 60px; }
       dd { padding: 10px; }
     </style>
-    
+
     <!-- Le javascripts -->
     <script src="assets/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="assets/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
@@ -42,7 +42,7 @@
     </div>
 
     <div class="container" id="home">
-      
+
       <section id="faq" class="span12">
 
         <div class='row pull-left'>
@@ -68,16 +68,16 @@
 
             <dt>Q: Why a shell script, why not chef/puppet/...</dt>
             <dd>A: The script is meant to be read by humans (as well as ran by computers); it is the primary documentation after all.  Using a recipe system requires everyone to agree and understand chef or puppet.</dd>
-    
+
             <dt>Q: Why not use Crowbar?</dt>
             <dd>A: DevStack is optimized for documentation &amp; developers.  As some of us use <a href="https://github.com/dellcloudedge/crowbar">Crowbar</a> for production deployments, we hope developers documenting how they setup systems for new features supports projects like Crowbar.</dd>
-    
+
             <dt>Q: I'd like to help!</dt>
-            <dd>A: That isn't a question, but please do!  The source for DevStack is <a href="http://github.com/openstack-dev/devstack">github</a> and bug reports go to <a href="http://bugs.launchpad.net/devstack/">LaunchPad</a>.  Contributions follow the usual process as described in the <a href="http://wiki.openstack.org/HowToContribute">OpenStack wiki</a> even though DevStack is not an official OpenStack project.  This site is housed in the CloudBuilder's <a href="http://github.com/cloudbuilders/devstack">github</a> in the gh-pages branch.</dd>
-    
+            <dd>A: That isn't a question, but please do!  The source for DevStack is <a href="http://github.com/openstack-dev/devstack">github</a> and bug reports go to <a href="http://bugs.launchpad.net/devstack/">LaunchPad</a>.  Contributions follow the usual process as described in the <a href="http://wiki.openstack.org/HowToContribute">OpenStack wiki</a>. DevStack is not a core project but a gating project and therefore an official OpenStack project. This site is housed in the CloudBuilder's <a href="http://github.com/cloudbuilders/devstack">github</a> in the gh-pages branch.</dd>
+
             <dt>Q: Why not use packages?</dt>
             <dd>A: Unlike packages, DevStack leaves your cloud ready to develop - checkouts of the code and services running in screen. However, many people are doing the hard work of packaging and recipes for production deployments.  We hope this script serves as a way to communicate configuration changes between developers and packagers.</dd>
-    
+
             <dt>Q: Why isn't $MY_FAVORITE_DISTRO supported?</dt>
             <dd>A: DevStack is meant for developers and those who want to see how OpenStack really works.  DevStack is known to run on the distro/release combinations listed in <code>README.md</code>.  DevStack is only supported on releases other than those documented in <code>README.md</code> on a best-effort basis.</dd>
 
@@ -96,7 +96,7 @@
           <dl class='pull-left'>
             <dt>Q: Can DevStack handle a multi-node installation?</dt>
             <dd>A: Indirectly, yes.  You run DevStack on each node with the appropriate configuration in <code>local.conf</code>.  The primary considerations are turning off the services not required on the secondary nodes, making sure the passwords match and setting the various API URLs to the right place.</dd>
-    
+
             <dt>Q: How can I document the environment that DevStack is using?</dt>
             <dd>A: DevStack includes a script (<code>tools/info.sh</code>) that gathers the versions of the relevant installed apt packages, pip packages and git repos.  This is a good way to verify what Python modules are installed.</dd>
 
