@@ -530,6 +530,12 @@ function echo_nolog {
     echo $@ >&3
 }
 
+if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
+    # poor old python2.6 doesn't have argparse by default, which
+    # outfilter.py uses
+    is_package_installed python-argparse || install_package python-argparse
+fi
+
 # Set up logging for ``stack.sh``
 # Set ``LOGFILE`` to turn on logging
 # Append '.xxxxxxxx' to the given name to maintain history
