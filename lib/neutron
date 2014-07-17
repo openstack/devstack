@@ -492,6 +492,10 @@ function install_neutronclient {
 
 # install_neutron_agent_packages() - Collect source and prepare
 function install_neutron_agent_packages {
+    # radvd doesn't come with the OS. Install it if the l3 service is enabled.
+    if is_service_enabled q-l3; then
+        install_package radvd
+    fi
     # install packages that are specific to plugin agent(s)
     if is_service_enabled q-agt q-dhcp q-l3; then
         neutron_plugin_install_agent_packages

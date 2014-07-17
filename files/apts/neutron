@@ -23,3 +23,4 @@ rabbitmq-server # NOPRIME
 qpidd # NOPRIME
 sqlite3
 vlan
+radvd # NOPRIME
