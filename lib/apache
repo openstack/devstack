@@ -150,7 +150,12 @@ function stop_apache_server {
 
 # restart_apache_server
 function restart_apache_server {
-    restart_service $APACHE_NAME
+    # Apache can be slow to stop, doing an explicit stop, sleep, start helps
+    # to mitigate issues where apache will claim a port it's listening on is
+    # still in use and fail to start.
+    stop_service $APACHE_NAME
+    sleep 3
+    start_service $APACHE_NAME
 }
 
 # Restore xtrace
