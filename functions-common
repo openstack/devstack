@@ -435,7 +435,9 @@ function GetDistro {
         else
             DISTRO="sle${os_RELEASE}sp${os_UPDATE}"
         fi
-    elif [[ "$os_VENDOR" =~ (Red Hat) || "$os_VENDOR" =~ (CentOS) ]]; then
+    elif [[ "$os_VENDOR" =~ (Red Hat) || \
+        "$os_VENDOR" =~ (CentOS) || \
+        "$os_VENDOR" =~ (OracleServer) ]]; then
         # Drop the . release as we assume it's compatible
         DISTRO="rhel${os_RELEASE::1}"
     elif [[ "$os_VENDOR" =~ (XenServer) ]]; then
@@ -463,7 +465,8 @@ function is_fedora {
         GetOSVersion
     fi
 
-    [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || [ "$os_VENDOR" = "CentOS" ]
+    [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
+        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleServer" ]
 }
 
 
