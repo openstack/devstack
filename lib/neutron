@@ -625,7 +625,7 @@ function _configure_neutron_common {
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
     cp $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
 
-    iniset /$Q_PLUGIN_CONF_FILE database connection `database_connection_url $Q_DB_NAME`
+    iniset $NEUTRON_CONF database connection `database_connection_url $Q_DB_NAME`
     iniset $NEUTRON_CONF DEFAULT state_path $DATA_DIR/neutron
 
     # If addition config files are set, make sure their path name is set as well
