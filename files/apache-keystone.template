@@ -20,3 +20,7 @@ Listen %ADMINPORT%
     LogLevel debug
     CustomLog /var/log/%APACHE_NAME%/access.log combined
 </VirtualHost>
+
+# Workaround for missing path on RHEL6, see
+#  https://bugzilla.redhat.com/show_bug.cgi?id=1121019
+WSGISocketPrefix /var/run/%APACHE_NAME%
