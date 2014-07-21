@@ -217,7 +217,7 @@ function create_heat_accounts {
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     HEAT_USER=$(get_or_create_user "heat" \
-        "$SERVICE_PASSWORD" $SERVICE_TENANT "heat@example.com")
+        "$SERVICE_PASSWORD" $SERVICE_TENANT)
     get_or_add_user_role $ADMIN_ROLE $HEAT_USER $SERVICE_TENANT
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then

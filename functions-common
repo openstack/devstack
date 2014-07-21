@@ -723,8 +723,13 @@ function policy_add {
 }
 
 # Gets or creates user
-# Usage: get_or_create_user <username> <password> <project> <email>
+# Usage: get_or_create_user <username> <password> <project> [<email>]
 function get_or_create_user {
+    if [[ ! -z "$4" ]]; then
+        local EMAIL="--email=$4"
+    else
+        local EMAIL=""
+    fi
     # Gets user id
     USER_ID=$(
         # Gets user id
@@ -734,7 +739,7 @@ function get_or_create_user {
             $1 \
             --password "$2" \
             --project $3 \
-            --email $4 \
+            $EMAIL \
             -f value -c id
     )
     echo $USER_ID

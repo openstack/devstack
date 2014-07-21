@@ -83,7 +83,7 @@ function create_trove_accounts {
     if [[ "$ENABLED_SERVICES" =~ "trove" ]]; then
 
         TROVE_USER=$(get_or_create_user "trove" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT "trove@example.com")
+            "$SERVICE_PASSWORD" $SERVICE_TENANT)
         get_or_add_user_role $SERVICE_ROLE $TROVE_USER $SERVICE_TENANT
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then

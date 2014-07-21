@@ -335,7 +335,7 @@ create_nova_accounts() {
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
 
         NOVA_USER=$(get_or_create_user "nova" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT "nova@example.com")
+            "$SERVICE_PASSWORD" $SERVICE_TENANT)
         get_or_add_user_role $ADMIN_ROLE $NOVA_USER $SERVICE_TENANT
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then

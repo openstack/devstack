@@ -85,7 +85,7 @@ create_ceilometer_accounts() {
     # Ceilometer
     if [[ "$ENABLED_SERVICES" =~ "ceilometer-api" ]]; then
         CEILOMETER_USER=$(get_or_create_user "ceilometer" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT "ceilometer@example.com")
+            "$SERVICE_PASSWORD" $SERVICE_TENANT)
         get_or_add_user_role $ADMIN_ROLE $CEILOMETER_USER $SERVICE_TENANT
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
