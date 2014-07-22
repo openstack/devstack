@@ -1,5 +1,6 @@
 dnsmasq-base
 dnsmasq-utils # for dhcp_release
+conntrack
 kpartx
 parted
 iputils-arping

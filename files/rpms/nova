@@ -1,6 +1,7 @@
 MySQL-python
 curl
 dnsmasq-utils # for dhcp_release
+conntrack-tools
 ebtables
 gawk
 genisoimage # required for config_drive
