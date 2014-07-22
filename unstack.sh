@@ -122,9 +122,10 @@ if is_service_enabled horizon; then
     stop_horizon
 fi
 
-# Kill TLS proxies
+# Kill TLS proxies and cleanup certificates
 if is_service_enabled tls-proxy; then
-    killall stud
+    stop_tls_proxy
+    cleanup_CA
 fi
 
 SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*

@@ -207,6 +207,8 @@ if [ -z "$templateuuid" ]; then
             -e "s,\(d-i mirror/http/hostname string\).*,\1 $UBUNTU_INST_HTTP_HOSTNAME,g" \
             -e "s,\(d-i mirror/http/directory string\).*,\1 $UBUNTU_INST_HTTP_DIRECTORY,g" \
             -e "s,\(d-i mirror/http/proxy string\).*,\1 $UBUNTU_INST_HTTP_PROXY,g" \
+            -e "s,\(d-i passwd/root-password password\).*,\1 $GUEST_PASSWORD,g" \
+            -e "s,\(d-i passwd/root-password-again password\).*,\1 $GUEST_PASSWORD,g" \
             -i "${HTTP_SERVER_LOCATION}/devstackubuntupreseed.cfg"
     fi
 
@@ -382,10 +384,16 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
     while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "service devstack status | grep -q running"; do
         sleep 10
     done
-    echo -n "devstack is running"
+    echo -n "devstack service is running, waiting for stack.sh to start logging..."
+
+    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "test -e /tmp/devstack/log/stack.log"; do
+        sleep 10
+    done
     set -x
 
-    # Watch devstack's output
+    # Watch devstack's output (which doesn't start until stack.sh is running,
+    # but wait for run.sh (which starts stack.sh) to exit as that is what
+    # hopefully writes the succeded cookie.
     pid=`ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS pgrep run.sh`
     ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "tail --pid $pid -n +1 -f /tmp/devstack/log/stack.log"
 

@@ -246,13 +246,13 @@ function configure_cinder {
                 configure_cinder_backend_${BE_TYPE} ${BE_NAME}
             fi
             if [[ -z "$default_type" ]]; then
-                default_type=$BE_TYPE}
+                default_type=$BE_TYPE
             fi
             enabled_backends+=$BE_NAME,
         done
         iniset $CINDER_CONF DEFAULT enabled_backends ${enabled_backends%,*}
         if [[ -n "$default_type" ]]; then
-            iniset $CINDER_CONF DEFAULT default_volume_type ${enabled_backends%,*}
+            iniset $CINDER_CONF DEFAULT default_volume_type ${default_type}
         fi
     fi
 
