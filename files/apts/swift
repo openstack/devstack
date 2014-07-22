@@ -1,5 +1,4 @@
 curl
-libffi-dev
 memcached
 python-configobj
 python-coverage
