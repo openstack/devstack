@@ -7,6 +7,7 @@ git-core
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
+libffi-devel
 libxml2-devel
 libxslt-devel
 psmisc

@@ -1,4 +1,3 @@
-libffi-dev
 libmysqlclient-dev  # testonly
 libpq-dev           # testonly
 libssl-dev          # testonly
