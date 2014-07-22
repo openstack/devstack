@@ -17,7 +17,7 @@ OpenStack releases starting with Diablo (stable/diablo).
 
 Contributing code to DevStack follows the usual OpenStack process as described
 in `How To Contribute`__ in the OpenStack wiki.  `DevStack's LaunchPad project`__
-contains the usual links for blueprints, bugs, tec.
+contains the usual links for blueprints, bugs, etc.
 
 __ contribute_
 .. _contribute: http://wiki.openstack.org/HowToContribute
