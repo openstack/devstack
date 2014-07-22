@@ -363,7 +363,8 @@ case "$VIRT_DRIVER" in
         IMAGE_URLS=${IMAGE_URLS:-"http://partnerweb.vmware.com/programs/vmdkimage/cirros-0.3.2-i386-disk.vmdk"};;
     xenserver)
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.0-x86_64-disk}
-        IMAGE_URLS=${IMAGE_URLS:-"https://github.com/downloads/citrix-openstack/warehouse/cirros-0.3.0-x86_64-disk.vhd.tgz"};;
+        IMAGE_URLS=${IMAGE_URLS:-"https://github.com/downloads/citrix-openstack/warehouse/cirros-0.3.0-x86_64-disk.vhd.tgz"}
+        IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
     *) # Default to Cirros with kernel, ramdisk and disk image
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-uec}
         IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz"};;
