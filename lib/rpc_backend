@@ -94,11 +94,7 @@ function cleanup_rpc_backend {
 function install_rpc_backend {
     if is_service_enabled rabbit; then
         # Install rabbitmq-server
-        # the temp file is necessary due to LP: #878600
-        tfile=$(mktemp)
-        install_package rabbitmq-server > "$tfile" 2>&1
-        cat "$tfile"
-        rm -f "$tfile"
+        install_package rabbitmq-server
     elif is_service_enabled qpid; then
         if is_fedora; then
             install_package qpid-cpp-server
