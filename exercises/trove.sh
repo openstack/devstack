@@ -35,8 +35,12 @@ source $TOP_DIR/exerciserc
 
 is_service_enabled trove || exit 55
 
-# can we get a list versions
-curl http://$SERVICE_HOST:8779/ 2>/dev/null | grep -q 'versions' || die $LINENO "Trove API not functioning!"
+# can try to get datastore id
+DSTORE_ID=$(trove datastore-list | tail -n +4 |head -3 | get_field 1)
+die_if_not_set $LINENO  DSTORE_ID "Trove API not functioning!"
+
+DV_ID=$(trove datastore-version-list $DSTORE_ID | tail -n +4 | get_field 1)
+die_if_not_set $LINENO DV_ID "Trove API not functioning!"
 
 set +o xtrace
 echo "*********************************************************************"
