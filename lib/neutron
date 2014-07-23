@@ -120,6 +120,21 @@ VIF_PLUGGING_TIMEOUT=${VIF_PLUGGING_TIMEOUT:-300}
 ## Provider Network Information
 PROVIDER_SUBNET_NAME=${PROVIDER_SUBNET_NAME:-"provider_net"}
 
+# Use flat providernet for public network
+#
+# If Q_USE_PROVIDERNET_FOR_PUBLIC=True, use a flat provider network
+# for external interface of neutron l3-agent.  In that case,
+# PUBLIC_PHYSICAL_NETWORK specifies provider:physical_network value
+# used for the network.  In case of openvswitch agent, you should
+# add the corresponding entry to your OVS_BRIDGE_MAPPINGS.
+#
+# eg.
+#    Q_USE_PROVIDERNET_FOR_PUBLIC=True
+#    PUBLIC_PHYSICAL_NETWORK=public
+#    OVS_BRIDGE_MAPPINGS=public:br-ex
+Q_USE_PROVIDERNET_FOR_PUBLIC=${Q_USE_PROVIDERNET_FOR_PUBLIC:-False}
+PUBLIC_PHYSICAL_NETWORK=${PUBLIC_PHYSICAL_NETWORK:-public}
+
 # The next two variables are configured by plugin
 # e.g.  _configure_neutron_l3_agent or lib/neutron_plugins/*
 #
@@ -446,7 +461,11 @@ function create_neutron_initial_network {
         fi
         neutron router-interface-add $ROUTER_ID $SUBNET_ID
         # Create an external network, and a subnet. Configure the external network as router gw
-        EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True | grep ' id ' | get_field 2)
+        if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
+            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True --provider:network_type=flat --provider:physical_network=${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
+        else
+            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True | grep ' id ' | get_field 2)
+        fi
         die_if_not_set $LINENO EXT_NET_ID "Failure creating EXT_NET_ID for $PUBLIC_NETWORK_NAME"
         EXT_GW_IP=$(neutron subnet-create --ip_version 4 ${Q_FLOATING_ALLOCATION_POOL:+--allocation-pool $Q_FLOATING_ALLOCATION_POOL} --gateway $PUBLIC_NETWORK_GATEWAY --name $PUBLIC_SUBNET_NAME $EXT_NET_ID $FLOATING_RANGE -- --enable_dhcp=False | grep 'gateway_ip' | get_field 2)
         die_if_not_set $LINENO EXT_GW_IP "Failure creating EXT_GW_IP"
