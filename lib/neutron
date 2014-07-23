@@ -362,7 +362,7 @@ function create_neutron_accounts {
     if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
 
         NEUTRON_USER=$(get_or_create_user "neutron" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT "neutron@example.com")
+            "$SERVICE_PASSWORD" $SERVICE_TENANT)
         get_or_add_user_role $ADMIN_ROLE $NEUTRON_USER $SERVICE_TENANT
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then

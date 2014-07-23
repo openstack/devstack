@@ -323,7 +323,7 @@ function create_cinder_accounts {
     if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
 
         CINDER_USER=$(get_or_create_user "cinder" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT "cinder@example.com")
+            "$SERVICE_PASSWORD" $SERVICE_TENANT)
         get_or_add_user_role $ADMIN_ROLE $CINDER_USER $SERVICE_TENANT
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then

@@ -330,7 +330,7 @@ function create_keystone_accounts {
     # admin
     ADMIN_TENANT=$(get_or_create_project "admin")
     ADMIN_USER=$(get_or_create_user "admin" \
-        "$ADMIN_PASSWORD" "$ADMIN_TENANT" "admin@example.com")
+        "$ADMIN_PASSWORD" "$ADMIN_TENANT")
     ADMIN_ROLE=$(get_or_create_role "admin")
     get_or_add_user_role $ADMIN_ROLE $ADMIN_USER $ADMIN_TENANT
 
