@@ -85,7 +85,7 @@ create_ceilometer_accounts() {
     # Ceilometer
     if [[ "$ENABLED_SERVICES" =~ "ceilometer-api" ]]; then
         CEILOMETER_USER=$(get_or_create_user "ceilometer" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT "ceilometer@example.com")
+            "$SERVICE_PASSWORD" $SERVICE_TENANT)
         get_or_add_user_role $ADMIN_ROLE $CEILOMETER_USER $SERVICE_TENANT
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
@@ -113,16 +113,8 @@ function cleanup_ceilometer {
     fi
 }
 
-# configure_ceilometerclient() - Set config files, create data dirs, etc
-function configure_ceilometerclient {
-    setup_develop $CEILOMETERCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$CEILOMETERCLIENT_DIR/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
-}
-
 # configure_ceilometer() - Set config files, create data dirs, etc
 function configure_ceilometer {
-    setup_develop $CEILOMETER_DIR
-
     [ ! -d $CEILOMETER_CONF_DIR ] && sudo mkdir -m 755 -p $CEILOMETER_CONF_DIR
     sudo chown $STACK_USER $CEILOMETER_CONF_DIR
 
@@ -218,11 +210,15 @@ function init_ceilometer {
 # install_ceilometer() - Collect source and prepare
 function install_ceilometer {
     git_clone $CEILOMETER_REPO $CEILOMETER_DIR $CEILOMETER_BRANCH
+    setup_develop $CEILOMETER_DIR
+
 }
 
 # install_ceilometerclient() - Collect source and prepare
 function install_ceilometerclient {
     git_clone $CEILOMETERCLIENT_REPO $CEILOMETERCLIENT_DIR $CEILOMETERCLIENT_BRANCH
+    setup_develop $CEILOMETERCLIENT_DIR
+    sudo install -D -m 0644 -o $STACK_USER {$CEILOMETERCLIENT_DIR/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
 }
 
 # start_ceilometer() - Start running processes, including screen

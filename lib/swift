@@ -550,7 +550,7 @@ function create_swift_accounts {
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
     SWIFT_USER=$(get_or_create_user "swift" \
-        "$SERVICE_PASSWORD" $SERVICE_TENANT "swift@example.com")
+        "$SERVICE_PASSWORD" $SERVICE_TENANT)
     get_or_add_user_role $ADMIN_ROLE $SWIFT_USER $SERVICE_TENANT
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then

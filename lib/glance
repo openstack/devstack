@@ -166,7 +166,7 @@ function create_glance_accounts {
     if is_service_enabled g-api; then
 
         GLANCE_USER=$(get_or_create_user "glance" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT_NAME "glance@example.com")
+            "$SERVICE_PASSWORD" $SERVICE_TENANT_NAME)
         get_or_add_user_role service $GLANCE_USER $SERVICE_TENANT_NAME
 
         # required for swift access

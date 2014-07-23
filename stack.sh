@@ -802,7 +802,6 @@ if is_service_enabled ceilometer; then
     install_ceilometer
     echo_summary "Configuring Ceilometer"
     configure_ceilometer
-    configure_ceilometerclient
 fi
 
 if is_service_enabled heat; then
