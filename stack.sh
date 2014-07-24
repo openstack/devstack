@@ -152,7 +152,7 @@ fi
 # Look for obsolete stuff
 if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
     echo "FATAL: 'swift' is not supported as a service name"
-    echo "FATAL: Use the actual swift service names to enable tham as required:"
+    echo "FATAL: Use the actual swift service names to enable them as required:"
     echo "FATAL: s-proxy s-object s-container s-account"
     exit 1
 fi
@@ -671,7 +671,7 @@ if [[ "$OFFLINE" != "True" ]]; then
     $TOP_DIR/tools/install_pip.sh
 fi
 
-# Do the ugly hacks for borken packages and distros
+# Do the ugly hacks for broken packages and distros
 $TOP_DIR/tools/fixup_stuff.sh
 
 
