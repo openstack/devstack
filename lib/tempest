@@ -371,6 +371,15 @@ function configure_tempest {
     # Baremetal
     if [ "$VIRT_DRIVER" = "ironic" ] ; then
         iniset $TEMPEST_CONFIG baremetal driver_enabled True
+        iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
+        iniset $TEMPEST_CONFIG compute-feature-enabled console_output False
+        iniset $TEMPEST_CONFIG compute-feature-enabled interface_attach False
+        iniset $TEMPEST_CONFIG compute-feature-enabled live_migration False
+        iniset $TEMPEST_CONFIG compute-feature-enabled pause False
+        iniset $TEMPEST_CONFIG compute-feature-enabled rescue False
+        iniset $TEMPEST_CONFIG compute-feature-enabled resize False
+        iniset $TEMPEST_CONFIG compute-feature-enabled shelve False
+        iniset $TEMPEST_CONFIG compute-feature-enabled snapshot False
     fi
 
     # service_available
