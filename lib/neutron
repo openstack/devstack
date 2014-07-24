@@ -143,6 +143,17 @@ else
     Q_RR_COMMAND="sudo $NEUTRON_ROOTWRAP $Q_RR_CONF_FILE"
 fi
 
+
+# Distributed Virtual Router (DVR) configuration
+# Can be:
+#     legacy   - No DVR functionality
+#     dvr_snat - Controller or single node DVR
+#     dvr      - Compute node in multi-node DVR
+Q_DVR_MODE=${Q_DVR_MODE:-legacy}
+if [[ "$Q_DVR_MODE" != "legacy" ]]; then
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,linuxbridge,l2population
+fi
+
 # Provider Network Configurations
 # --------------------------------
 
@@ -302,6 +313,10 @@ function configure_neutron {
     fi
     if is_service_enabled q-meta; then
         _configure_neutron_metadata_agent
+    fi
+
+    if [[ "$Q_DVR_MODE" != "legacy" ]]; then
+        _configure_dvr
     fi
     if is_service_enabled ceilometer; then
         _configure_neutron_ceilometer_notifications
@@ -574,7 +589,7 @@ function cleanup_neutron {
     fi
 
     # delete all namespaces created by neutron
-    for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|qlbaas)-[0-9a-f-]*'); do
+    for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|qlbaas|fip|snat)-[0-9a-f-]*'); do
         sudo ip netns delete ${ns}
     done
 }
@@ -755,6 +770,12 @@ function _configure_neutron_vpn {
     neutron_vpn_install_agent_packages
     neutron_vpn_configure_common
 }
+
+function _configure_dvr {
+    iniset $NEUTRON_CONF DEFAULT router_distributed True
+    iniset $Q_L3_CONF_FILE DEFAULT agent_mode $Q_DVR_MODE
+}
+
 
 # _configure_neutron_plugin_agent() - Set config files for neutron plugin agent
 # It is called when q-agt is enabled.

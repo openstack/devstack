@@ -112,6 +112,12 @@ function neutron_plugin_configure_service {
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vxlan $Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vlan $Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS
+
+    if [[ "$Q_DVR_MODE" != "legacy" ]]; then
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE agent l2_population=True
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE agent tunnel_types=vxlan
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE agent enable_distributed_routing=True
+    fi
 }
 
 function has_neutron_plugin_security_group {
