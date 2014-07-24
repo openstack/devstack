@@ -317,9 +317,6 @@ fi
 # Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
 SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
 
-# Allow the use of an alternate protocol (such as https) for service endpoints
-SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
-
 # Configure services to use syslog instead of writing to individual log files
 SYSLOG=`trueorfalse False $SYSLOG`
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
