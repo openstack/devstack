@@ -1490,23 +1490,6 @@ if [[ -n "$Q_DHCP_EXTRA_DEFAULT_OPTS" ]]; then
     done
 fi
 
-# TODO(dtroyer): Remove Q_SRV_EXTRA_DEFAULT_OPTS after stable/icehouse branch is cut
-if [[ -n "$Q_SRV_EXTRA_DEFAULT_OPTS" ]]; then
-    echo ""
-    echo_summary "WARNING: Q_SRV_EXTRA_DEFAULT_OPTS is used"
-    echo "You are using Q_SRV_EXTRA_DEFAULT_OPTS to pass configuration into $NEUTRON_CONF."
-    echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
-    echo "Q_SRV_EXTRA_DEFAULT_OPTS will be removed early in the Juno development cycle"
-    echo "
-[[post-config|\$NEUTRON_CONF]]
-[DEFAULT]
-"
-    for I in "${Q_SRV_EXTRA_DEFAULT_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        echo ${I}
-    done
-fi
-
 # TODO(dtroyer): Remove CINDER_MULTI_LVM_BACKEND after stable/juno branch is cut
 if [[ "$CINDER_MULTI_LVM_BACKEND" = "True" ]]; then
     echo ""
