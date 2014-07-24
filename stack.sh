@@ -1422,23 +1422,6 @@ if [[ -n "$EXTRA_OPTS" ]]; then
     done
 fi
 
-# TODO(dtroyer): Remove EXTRA_BAREMETAL_OPTS after stable/icehouse branch is cut
-if [[ -n "$EXTRA_BAREMETAL_OPTS" ]]; then
-    echo ""
-    echo_summary "WARNING: EXTRA_BAREMETAL_OPTS is used"
-    echo "You are using EXTRA_BAREMETAL_OPTS to pass configuration into nova.conf."
-    echo "Please convert that configuration in localrc to a nova.conf section in local.conf:"
-    echo "EXTRA_BAREMETAL_OPTS will be removed early in the Juno development cycle"
-    echo "
-[[post-config|\$NOVA_CONF]]
-[baremetal]
-"
-    for I in "${EXTRA_BAREMETAL_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        echo ${I}
-    done
-fi
-
 # TODO(dtroyer): Remove Q_AGENT_EXTRA_AGENT_OPTS after stable/juno branch is cut
 if [[ -n "$Q_AGENT_EXTRA_AGENT_OPTS" ]]; then
     echo ""
