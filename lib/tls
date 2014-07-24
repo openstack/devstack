@@ -323,7 +323,8 @@ function make_root_CA {
 #
 # Uses global ``SSL_ENABLED_SERVICES``
 function is_ssl_enabled_service {
-    services=$@
+    local services=$@
+    local service=""
     for service in ${services}; do
         [[ ,${SSL_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
     done

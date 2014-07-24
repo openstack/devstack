@@ -993,7 +993,7 @@ function get_packages {
 # Distro-agnostic package installer
 # install_package package [package ...]
 function update_package_repo {
-    if [[ "NO_UPDATE_REPOS" = "True" ]]; then
+    if [[ "$NO_UPDATE_REPOS" = "True" ]]; then
         return 0
     fi
 

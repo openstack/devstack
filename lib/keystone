@@ -496,6 +496,9 @@ function stop_keystone {
     _cleanup_keystone_apache_wsgi
 }
 
+function is_keystone_enabled {
+    return is_service_enabled key
+}
 
 # Restore xtrace
 $XTRACE
