@@ -480,18 +480,6 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT notification_driver "messaging"
     fi
 
-    # Provide some transition from ``EXTRA_FLAGS`` to ``EXTRA_OPTS``
-    if [[ -z "$EXTRA_OPTS" && -n "$EXTRA_FLAGS" ]]; then
-        EXTRA_OPTS=$EXTRA_FLAGS
-    fi
-
-    # Define extra nova conf flags by defining the array ``EXTRA_OPTS``.
-    # For Example: ``EXTRA_OPTS=(foo=true bar=2)``
-    for I in "${EXTRA_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        iniset $NOVA_CONF DEFAULT ${I/=/ }
-    done
-
     # All nova-compute workers need to know the vnc configuration options
     # These settings don't hurt anything if n-xvnc and n-novnc are disabled
     if is_service_enabled n-cpu; then

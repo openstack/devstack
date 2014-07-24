@@ -1395,24 +1395,6 @@ if [[ -n "$DEPRECATED_TEXT" ]]; then
     echo_summary "WARNING: $DEPRECATED_TEXT"
 fi
 
-# TODO(dtroyer): Remove EXTRA_OPTS after stable/icehouse branch is cut
-# Specific warning for deprecated configs
-if [[ -n "$EXTRA_OPTS" ]]; then
-    echo ""
-    echo_summary "WARNING: EXTRA_OPTS is used"
-    echo "You are using EXTRA_OPTS to pass configuration into nova.conf."
-    echo "Please convert that configuration in localrc to a nova.conf section in local.conf:"
-    echo "EXTRA_OPTS will be removed early in the Juno development cycle"
-    echo "
-[[post-config|\$NOVA_CONF]]
-[DEFAULT]
-"
-    for I in "${EXTRA_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        echo ${I}
-    done
-fi
-
 # TODO(dtroyer): Remove Q_AGENT_EXTRA_AGENT_OPTS after stable/juno branch is cut
 if [[ -n "$Q_AGENT_EXTRA_AGENT_OPTS" ]]; then
     echo ""
