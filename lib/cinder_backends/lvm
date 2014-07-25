@@ -112,6 +112,7 @@ function _clean_lvm_lv {
     local lv_prefix=$2
 
     # Clean out existing volumes
+    local lv
     for lv in $(sudo lvs --noheadings -o lv_name $vg 2>/dev/null); do
         # lv_prefix prefixes the LVs we want
         if [[ "${lv#$lv_prefix}" != "$lv" ]]; then
@@ -132,9 +133,9 @@ function _clean_lvm_backing_file {
     # of the backing file
     if [[ -z "$(sudo lvs --noheadings -o lv_name $vg 2>/dev/null)" ]]; then
         # if the backing physical device is a loop device, it was probably setup by devstack
-        VG_DEV=$(sudo losetup -j $backing_file | awk -F':' '/backing-file/ { print $1}')
-        if [[ -n "$VG_DEV" ]] && [[ -e "$VG_DEV" ]]; then
-            sudo losetup -d $VG_DEV
+        local vg_dev=$(sudo losetup -j $backing_file | awk -F':' '/backing-file/ { print $1}')
+        if [[ -n "$vg_dev" ]] && [[ -e "$vg_dev" ]]; then
+            sudo losetup -d $vg_dev
             rm -f $backing_file
         fi
     fi
@@ -159,11 +160,11 @@ function _create_cinder_volume_group {
         if [ -z "$VOLUME_BACKING_DEVICE" ]; then
             # Only create if the file doesn't already exists
             [[ -f $backing_file ]] || truncate -s $VOLUME_BACKING_FILE_SIZE $backing_file
-            DEV=`sudo losetup -f --show $backing_file`
+            local vg_dev=`sudo losetup -f --show $backing_file`
 
             # Only create if the loopback device doesn't contain $VOLUME_GROUP
             if ! sudo vgs $vg_name; then
-                sudo vgcreate $vg_name $DEV
+                sudo vgcreate $vg_name $vg_dev
             fi
         else
             sudo vgcreate $vg_name $VOLUME_BACKING_DEVICE
