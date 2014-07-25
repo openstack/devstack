@@ -219,15 +219,6 @@ fi
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
 
-# The Debian Wheezy official repositories do not contain all required packages,
-# add gplhost repository.
-if [[ "$os_VENDOR" =~ (Debian) ]]; then
-    echo 'deb http://archive.gplhost.com/debian grizzly main' | sudo tee /etc/apt/sources.list.d/gplhost_wheezy-backports.list
-    echo 'deb http://archive.gplhost.com/debian grizzly-backports main' | sudo tee -a /etc/apt/sources.list.d/gplhost_wheezy-backports.list
-    apt_get update
-    apt_get install --force-yes gplhost-archive-keyring
-fi
-
 if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
     # Installing Open vSwitch on RHEL requires enabling the RDO repo.
     RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack-icehouse/rdo-release-icehouse.rpm"}
