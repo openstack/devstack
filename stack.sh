@@ -37,6 +37,56 @@ umask 022
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
+
+# Sanity Checks
+# -------------
+
+# Clean up last environment var cache
+if [[ -r $TOP_DIR/.stackenv ]]; then
+    rm $TOP_DIR/.stackenv
+fi
+
+# ``stack.sh`` keeps the list of ``apt`` and ``rpm`` dependencies and config
+# templates and other useful files in the ``files`` subdirectory
+FILES=$TOP_DIR/files
+if [ ! -d $FILES ]; then
+    die $LINENO "missing devstack/files"
+fi
+
+# ``stack.sh`` keeps function libraries here
+# Make sure ``$TOP_DIR/lib`` directory is present
+if [ ! -d $TOP_DIR/lib ]; then
+    die $LINENO "missing devstack/lib"
+fi
+
+# Check if run as root
+# OpenStack is designed to be run as a non-root user; Horizon will fail to run
+# as **root** since Apache will not serve content from **root** user).
+# ``stack.sh`` must not be run as **root**.  It aborts and suggests one course of
+# action to create a suitable user account.
+
+if [[ $EUID -eq 0 ]]; then
+    echo "You are running this script as root."
+    echo "Cut it out."
+    echo "Really."
+    echo "If you need an account to run DevStack, do this (as root, heh) to create $STACK_USER:"
+    echo "$TOP_DIR/tools/create-stack-user.sh"
+    exit 1
+fi
+
+# Check to see if we are already running DevStack
+# Note that this may fail if USE_SCREEN=False
+if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].$SCREEN_NAME"; then
+    echo "You are already running a stack.sh session."
+    echo "To rejoin this session type 'screen -x stack'."
+    echo "To destroy this session, type './unstack.sh'."
+    exit 1
+fi
+
+
+# Prepare the environment
+# -----------------------
+
 # Import common functions
 source $TOP_DIR/functions
 
@@ -47,6 +97,15 @@ source $TOP_DIR/lib/config
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 # and ``DISTRO``
 GetDistro
+
+# Warn users who aren't on an explicitly supported distro, but allow them to
+# override check and attempt installation with ``FORCE=yes ./stack``
+if [[ ! ${DISTRO} =~ (precise|trusty|7.0|wheezy|sid|testing|jessie|f19|f20|rhel6|rhel7) ]]; then
+    echo "WARNING: this script has not been tested on $DISTRO"
+    if [[ "$FORCE" != "yes" ]]; then
+        die $LINENO "If you wish to run this script anyway run with FORCE=yes"
+    fi
+fi
 
 
 # Global Settings
@@ -110,27 +169,6 @@ export_proxy_variables
 DEST=${DEST:-/opt/stack}
 
 
-# Sanity Check
-# ------------
-
-# Clean up last environment var cache
-if [[ -r $TOP_DIR/.stackenv ]]; then
-    rm $TOP_DIR/.stackenv
-fi
-
-# ``stack.sh`` keeps the list of ``apt`` and ``rpm`` dependencies and config
-# templates and other useful files in the ``files`` subdirectory
-FILES=$TOP_DIR/files
-if [ ! -d $FILES ]; then
-    die $LINENO "missing devstack/files"
-fi
-
-# ``stack.sh`` keeps function libraries here
-# Make sure ``$TOP_DIR/lib`` directory is present
-if [ ! -d $TOP_DIR/lib ]; then
-    die $LINENO "missing devstack/lib"
-fi
-
 # Import common services (database, message queue) configuration
 source $TOP_DIR/lib/database
 source $TOP_DIR/lib/rpc_backend
@@ -140,14 +178,6 @@ source $TOP_DIR/lib/rpc_backend
 # calling disable_service().
 disable_negated_services
 
-# Warn users who aren't on an explicitly supported distro, but allow them to
-# override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (precise|trusty|7.0|wheezy|sid|testing|jessie|f19|f20|rhel6|rhel7) ]]; then
-    echo "WARNING: this script has not been tested on $DISTRO"
-    if [[ "$FORCE" != "yes" ]]; then
-        die $LINENO "If you wish to run this script anyway run with FORCE=yes"
-    fi
-fi
 
 # Look for obsolete stuff
 if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
@@ -157,38 +187,9 @@ if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
     exit 1
 fi
 
-# Make sure we only have one rpc backend enabled,
-# and the specified rpc backend is available on your platform.
-check_rpc_backend
 
-# Check to see if we are already running DevStack
-# Note that this may fail if USE_SCREEN=False
-if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].$SCREEN_NAME"; then
-    echo "You are already running a stack.sh session."
-    echo "To rejoin this session type 'screen -x stack'."
-    echo "To destroy this session, type './unstack.sh'."
-    exit 1
-fi
-
-# Set up logging level
-VERBOSE=$(trueorfalse True $VERBOSE)
-
-# root Access
-# -----------
-
-# OpenStack is designed to be run as a non-root user; Horizon will fail to run
-# as **root** since Apache will not serve content from **root** user).
-# ``stack.sh`` must not be run as **root**.  It aborts and suggests one course of
-# action to create a suitable user account.
-
-if [[ $EUID -eq 0 ]]; then
-    echo "You are running this script as root."
-    echo "Cut it out."
-    echo "Really."
-    echo "If you need an account to run DevStack, do this (as root, heh) to create $STACK_USER:"
-    echo "$TOP_DIR/tools/create-stack-user.sh"
-    exit 1
-fi
+# Configure sudo
+# --------------
 
 # We're not **root**, make sure ``sudo`` is available
 is_package_installed sudo || install_package sudo
