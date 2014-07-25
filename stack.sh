@@ -109,7 +109,7 @@ fi
 
 
 # Global Settings
-# ===============
+# ---------------
 
 # Check for a ``localrc`` section embedded in ``local.conf`` and extract if
 # ``localrc`` does not already exist
@@ -165,19 +165,10 @@ source $TOP_DIR/stackrc
 # Make sure the proxy config is visible to sub-processes
 export_proxy_variables
 
-# Destination path for installation ``DEST``
-DEST=${DEST:-/opt/stack}
-
-
-# Import common services (database, message queue) configuration
-source $TOP_DIR/lib/database
-source $TOP_DIR/lib/rpc_backend
-
 # Remove services which were negated in ENABLED_SERVICES
 # using the "-" prefix (e.g., "-rabbit") instead of
 # calling disable_service().
 disable_negated_services
-
 
 # Look for obsolete stuff
 if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
@@ -187,6 +178,8 @@ if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
     exit 1
 fi
 
+# Set up logging level
+VERBOSE=$(trueorfalse True $VERBOSE)
 
 # Configure sudo
 # --------------
@@ -209,8 +202,9 @@ chmod 0440 $TEMPFILE
 sudo chown root:root $TEMPFILE
 sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
 
-# Additional repos
-# ----------------
+
+# Configure Distro Repositories
+# -----------------------------
 
 # For debian/ubuntu make apt attempt to retry network ops on it's own
 if is_ubuntu; then
@@ -252,8 +246,12 @@ if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
 
 fi
 
-# Filesystem setup
-# ----------------
+
+# Configure Target Directories
+# ----------------------------
+
+# Destination path for installation ``DEST``
+DEST=${DEST:-/opt/stack}
 
 # Create the destination directory and ensure it is writable by the user
 # and read/executable by everybody for daemons (e.g. apache run for horizon)
@@ -264,17 +262,18 @@ safe_chmod 0755 $DEST
 # a basic test for $DEST path permissions (fatal on error unless skipped)
 check_path_perm_sanity ${DEST}
 
+# Destination path for service data
+DATA_DIR=${DATA_DIR:-${DEST}/data}
+sudo mkdir -p $DATA_DIR
+safe_chown -R $STACK_USER $DATA_DIR
+
+# Configure proper hostname
 # Certain services such as rabbitmq require that the local hostname resolves
 # correctly.  Make sure it exists in /etc/hosts so that is always true.
 LOCAL_HOSTNAME=`hostname -s`
 if [ -z "`grep ^127.0.0.1 /etc/hosts | grep $LOCAL_HOSTNAME`" ]; then
     sudo sed -i "s/\(^127.0.0.1.*\)/\1 $LOCAL_HOSTNAME/" /etc/hosts
 fi
-
-# Destination path for service data
-DATA_DIR=${DATA_DIR:-${DEST}/data}
-sudo mkdir -p $DATA_DIR
-safe_chown -R $STACK_USER $DATA_DIR
 
 
 # Common Configuration
@@ -326,6 +325,14 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # Reset the bundle of CA certificates
 SSL_BUNDLE_FILE="$DATA_DIR/ca-bundle.pem"
 rm -f $SSL_BUNDLE_FILE
+
+# Import common services (database, message queue) configuration
+source $TOP_DIR/lib/database
+source $TOP_DIR/lib/rpc_backend
+
+# Make sure we only have one rpc backend enabled,
+# and the specified rpc backend is available on your platform.
+check_rpc_backend
 
 
 # Configure Projects
