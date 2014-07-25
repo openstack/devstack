@@ -50,7 +50,7 @@ function _horizon_config_set {
         sed -e "/^$option/d" -i $local_settings
         echo -e "\n$option=$value" >> $file
     elif grep -q "^$section" $file; then
-        line=$(sed -ne "/^$section/,/^}/ { /^ *'$option':/ p; }" $file)
+        local line=$(sed -ne "/^$section/,/^}/ { /^ *'$option':/ p; }" $file)
         if [ -n "$line" ]; then
             sed -i -e "/^$section/,/^}/ s/^\( *'$option'\) *:.*$/\1: $value,/" $file
         else
@@ -89,7 +89,7 @@ function configure_horizon {
 # init_horizon() - Initialize databases, etc.
 function init_horizon {
     # ``local_settings.py`` is used to override horizon default settings.
-    local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
+    local local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
 
     if is_service_enabled neutron; then
@@ -121,9 +121,9 @@ function init_horizon {
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
     # Apache 2.4 uses mod_authz_host for access control now (instead of "Allow")
-    HORIZON_REQUIRE=''
+    local horizon_require=''
     if check_apache_version "2.4" ; then
-        HORIZON_REQUIRE='Require all granted'
+        horizon_require='Require all granted'
     fi
 
     local horizon_conf=$(apache_site_config_for horizon)
@@ -135,7 +135,7 @@ function init_horizon {
         s,%HORIZON_DIR%,$HORIZON_DIR,g;
         s,%APACHE_NAME%,$APACHE_NAME,g;
         s,%DEST%,$DEST,g;
-        s,%HORIZON_REQUIRE%,$HORIZON_REQUIRE,g;
+        s,%HORIZON_REQUIRE%,$horizon_require,g;
     \" $FILES/apache-horizon.template >$horizon_conf"
 
     if is_ubuntu; then
