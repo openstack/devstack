@@ -17,7 +17,6 @@ function neutron_plugin_setup_interface_driver {
 function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/plumgrid
     Q_PLUGIN_CONF_FILENAME=plumgrid.ini
-    Q_DB_NAME="plumgrid_neutron"
     Q_PLUGIN_CLASS="neutron.plugins.plumgrid.plumgrid_plugin.plumgrid_plugin.NeutronPluginPLUMgridV2"
     PLUMGRID_DIRECTOR_IP=${PLUMGRID_DIRECTOR_IP:-localhost}
     PLUMGRID_DIRECTOR_PORT=${PLUMGRID_DIRECTOR_PORT:-7766}

@@ -18,7 +18,6 @@ save_function neutron_plugin_configure_service _neutron_plugin_configure_service
 function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/embrane
     Q_PLUGIN_CONF_FILENAME=heleos_conf.ini
-    Q_DB_NAME="ovs_neutron"
     Q_PLUGIN_CLASS="neutron.plugins.embrane.plugins.embrane_ovs_plugin.EmbraneOvsPlugin"
 }
 
