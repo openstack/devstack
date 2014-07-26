@@ -415,6 +415,7 @@ function create_tempest_accounts {
 # install_tempest() - Collect source and prepare
 function install_tempest {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
+    pip_install "tox<1.7"
 }
 
 # init_tempest() - Initialize ec2 images
