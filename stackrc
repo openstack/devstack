@@ -431,6 +431,9 @@ INSTALL_TESTONLY_PACKAGES=${INSTALL_TESTONLY_PACKAGES:-False}
 # Undo requirements changes by global requirements
 UNDO_REQUIREMENTS=${UNDO_REQUIREMENTS:-True}
 
+# Allow the use of an alternate protocol (such as https) for service endpoints
+SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
+
 # Local variables:
 # mode: shell-script
 # End:
