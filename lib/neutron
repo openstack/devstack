@@ -816,14 +816,6 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
     _neutron_setup_keystone $NEUTRON_CONF keystone_authtoken
 
-    # Define extra "DEFAULT" configuration options when q-svc is configured by
-    # defining the array ``Q_SRV_EXTRA_DEFAULT_OPTS``.
-    # For Example: ``Q_SRV_EXTRA_DEFAULT_OPTS=(foo=true bar=2)``
-    for I in "${Q_SRV_EXTRA_DEFAULT_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        iniset $NEUTRON_CONF DEFAULT ${I/=/ }
-    done
-
     # Configuration for neutron notifations to nova.
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
