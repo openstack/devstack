@@ -19,7 +19,6 @@ function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/oneconvergence
     Q_PLUGIN_CONF_FILENAME=nvsdplugin.ini
     Q_PLUGIN_CLASS="neutron.plugins.oneconvergence.plugin.OneConvergencePluginV2"
-    Q_DB_NAME='oc_nvsd_neutron'
 }
 
 # Configure plugin specific information

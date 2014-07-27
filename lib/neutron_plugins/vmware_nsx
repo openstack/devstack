@@ -40,7 +40,6 @@ function neutron_plugin_install_agent_packages {
 function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/vmware
     Q_PLUGIN_CONF_FILENAME=nsx.ini
-    Q_DB_NAME="neutron_nsx"
     Q_PLUGIN_CLASS="neutron.plugins.vmware.plugin.NsxPlugin"
 }
 

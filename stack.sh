@@ -152,7 +152,7 @@ fi
 # Look for obsolete stuff
 if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
     echo "FATAL: 'swift' is not supported as a service name"
-    echo "FATAL: Use the actual swift service names to enable tham as required:"
+    echo "FATAL: Use the actual swift service names to enable them as required:"
     echo "FATAL: s-proxy s-object s-container s-account"
     exit 1
 fi
@@ -218,15 +218,6 @@ fi
 
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
-
-# The Debian Wheezy official repositories do not contain all required packages,
-# add gplhost repository.
-if [[ "$os_VENDOR" =~ (Debian) ]]; then
-    echo 'deb http://archive.gplhost.com/debian grizzly main' | sudo tee /etc/apt/sources.list.d/gplhost_wheezy-backports.list
-    echo 'deb http://archive.gplhost.com/debian grizzly-backports main' | sudo tee -a /etc/apt/sources.list.d/gplhost_wheezy-backports.list
-    apt_get update
-    apt_get install --force-yes gplhost-archive-keyring
-fi
 
 if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
     # Installing Open vSwitch on RHEL requires enabling the RDO repo.
@@ -316,9 +307,6 @@ fi
 
 # Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
 SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
-
-# Allow the use of an alternate protocol (such as https) for service endpoints
-SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 
 # Configure services to use syslog instead of writing to individual log files
 SYSLOG=`trueorfalse False $SYSLOG`
@@ -671,7 +659,7 @@ if [[ "$OFFLINE" != "True" ]]; then
     $TOP_DIR/tools/install_pip.sh
 fi
 
-# Do the ugly hacks for borken packages and distros
+# Do the ugly hacks for broken packages and distros
 $TOP_DIR/tools/fixup_stuff.sh
 
 
@@ -1422,23 +1410,6 @@ if [[ -n "$EXTRA_OPTS" ]]; then
     done
 fi
 
-# TODO(dtroyer): Remove EXTRA_BAREMETAL_OPTS after stable/icehouse branch is cut
-if [[ -n "$EXTRA_BAREMETAL_OPTS" ]]; then
-    echo ""
-    echo_summary "WARNING: EXTRA_BAREMETAL_OPTS is used"
-    echo "You are using EXTRA_BAREMETAL_OPTS to pass configuration into nova.conf."
-    echo "Please convert that configuration in localrc to a nova.conf section in local.conf:"
-    echo "EXTRA_BAREMETAL_OPTS will be removed early in the Juno development cycle"
-    echo "
-[[post-config|\$NOVA_CONF]]
-[baremetal]
-"
-    for I in "${EXTRA_BAREMETAL_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        echo ${I}
-    done
-fi
-
 # TODO(dtroyer): Remove Q_AGENT_EXTRA_AGENT_OPTS after stable/juno branch is cut
 if [[ -n "$Q_AGENT_EXTRA_AGENT_OPTS" ]]; then
     echo ""
@@ -1485,23 +1456,6 @@ if [[ -n "$Q_DHCP_EXTRA_DEFAULT_OPTS" ]]; then
 [DEFAULT]
 "
     for I in "${Q_DHCP_EXTRA_DEFAULT_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        echo ${I}
-    done
-fi
-
-# TODO(dtroyer): Remove Q_SRV_EXTRA_DEFAULT_OPTS after stable/icehouse branch is cut
-if [[ -n "$Q_SRV_EXTRA_DEFAULT_OPTS" ]]; then
-    echo ""
-    echo_summary "WARNING: Q_SRV_EXTRA_DEFAULT_OPTS is used"
-    echo "You are using Q_SRV_EXTRA_DEFAULT_OPTS to pass configuration into $NEUTRON_CONF."
-    echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
-    echo "Q_SRV_EXTRA_DEFAULT_OPTS will be removed early in the Juno development cycle"
-    echo "
-[[post-config|\$NEUTRON_CONF]]
-[DEFAULT]
-"
-    for I in "${Q_SRV_EXTRA_DEFAULT_OPTS[@]}"; do
         # Replace the first '=' with ' ' for iniset syntax
         echo ${I}
     done

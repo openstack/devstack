@@ -19,7 +19,6 @@ function neutron_plugin_install_agent_packages {
 function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/bigswitch
     Q_PLUGIN_CONF_FILENAME=restproxy.ini
-    Q_DB_NAME="restproxy_neutron"
     Q_PLUGIN_CLASS="neutron.plugins.bigswitch.plugin.NeutronRestProxyV2"
     BS_FL_CONTROLLERS_PORT=${BS_FL_CONTROLLERS_PORT:-localhost:80}
     BS_FL_CONTROLLER_TIMEOUT=${BS_FL_CONTROLLER_TIMEOUT:-10}

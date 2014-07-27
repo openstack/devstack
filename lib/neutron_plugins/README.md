@@ -25,7 +25,7 @@ functions
   install_package bridge-utils
 * ``neutron_plugin_configure_common`` :
   set plugin-specific variables, ``Q_PLUGIN_CONF_PATH``, ``Q_PLUGIN_CONF_FILENAME``,
-  ``Q_DB_NAME``, ``Q_PLUGIN_CLASS``
+  ``Q_PLUGIN_CLASS``
 * ``neutron_plugin_configure_debug_command``
 * ``neutron_plugin_configure_dhcp_agent``
 * ``neutron_plugin_configure_l3_agent``

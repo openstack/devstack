@@ -58,12 +58,6 @@ function configure_nova_hypervisor {
         sudo cp "$FILES/dnsmasq-for-baremetal-from-nova-network.conf" "$BM_DNSMASQ_CONF"
         iniset $NOVA_CONF DEFAULT dnsmasq_config_file "$BM_DNSMASQ_CONF"
     fi
-
-    # Define extra baremetal nova conf flags by defining the array ``EXTRA_BAREMETAL_OPTS``.
-    for I in "${EXTRA_BAREMETAL_OPTS[@]}"; do
-        # Attempt to convert flags to options
-        iniset $NOVA_CONF baremetal ${I/=/ }
-    done
 }
 
 # install_nova_hypervisor() - Install external components
