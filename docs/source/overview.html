@@ -47,8 +47,8 @@
 
         <div class='row pull-left'>
           <h2>Overview <small>DevStack from a cloud-height view</small></h2>
-          <p>DevStack is not and has never been intended to be a general OpenStack installer.  It has evolved to support a large number of configuration options and alternative platforms and support services.  However, that evolution has grown well beyond what was originally intended and the majority of configuration combinations are rarely, if ever, tested.  DevStack was never meant to be everything to everyone and can not continue in that direction.</p>
-          <p>Below is a list of what is specifically is supported (read that as "tested and assumed to work") going forward.</p>
+          <p>DevStack has evolved to support a large number of configuration options and alternative platforms and support services.  That evolution has grown well beyond what was originally intended and the majority of configuration combinations are rarely, if ever, tested.  DevStack is not a general OpenStack installer and was never meant to be everything to everyone..</p>
+          <p>Below is a list of what is specifically is supported (read that as "tested") going forward.</p>
 
           <h2>Supported Components</h2>
 
@@ -93,7 +93,7 @@
           </ul>
 
           <h3>Services</h3>
-          <p>The default services configured by DevStack are Identity (Keystone), Object Storage (Swift), Image Storage (Glance), Block Storage (Cinder), Compute (Nova), Network (Nova), Dashboard (Horizon)</p>
+          <p>The default services configured by DevStack are Identity (Keystone), Object Storage (Swift), Image Storage (Glance), Block Storage (Cinder), Compute (Nova), Network (Nova), Dashboard (Horizon), Orchestration (Heat)</p>
           <p>Additional services not included directly in DevStack can be tied in to <code>stack.sh</code> using the <a href="plugins.html">plugin mechanism</a> to call scripts that perform the configuration and startup of the service.</p>
 
           <h3>Node Configurations</h3>
@@ -103,7 +103,7 @@
           </ul>
 
           <h3>Exercises</h3>
-          <p>The DevStack exercise scripts have been replaced as integration and gating test with Tempest.  They will continue to be maintained as they are valuable as demonstrations of using OpenStack from the command line and for quick operational testing.</p>
+          <p>The DevStack exercise scripts are no longer used as integration and gate testing as that job has transitioned to Tempest.  They are still maintained as a demonstrations of using OpenStack from the command line and for quick operational testing.</p>
 
         </div>        
 
