@@ -3,7 +3,9 @@
 set -e
 set -o xtrace
 
-declare -a on_exit_hooks
+if [ -z "${on_exit_hooks:-}" ]; then
+    on_exit_hooks=()
+fi
 
 on_exit()
 {
