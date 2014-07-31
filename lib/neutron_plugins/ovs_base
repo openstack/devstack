@@ -7,6 +7,7 @@ set +o xtrace
 
 OVS_BRIDGE=${OVS_BRIDGE:-br-int}
 PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
+OVS_DATAPATH_TYPE=${OVS_DATAPATH_TYPE:-""}
 
 function is_neutron_ovs_base_plugin {
     # Yes, we use OVS.
@@ -17,6 +18,9 @@ function _neutron_ovs_base_setup_bridge {
     local bridge=$1
     neutron-ovs-cleanup
     sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge
+    if [[ $OVS_DATAPATH_TYPE != "" ]]; then
+        sudo ovs-vsctl set Bridge $bridge datapath_type=${OVS_DATAPATH_TYPE}
+    fi
     sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
 }
 
