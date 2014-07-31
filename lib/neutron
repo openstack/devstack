@@ -388,9 +388,9 @@ function create_neutron_accounts {
                 "network" "Neutron Service")
             get_or_create_endpoint $NEUTRON_SERVICE \
                 "$REGION_NAME" \
-                "http://$SERVICE_HOST:9696/" \
-                "http://$SERVICE_HOST:9696/" \
-                "http://$SERVICE_HOST:9696/"
+                "http://$SERVICE_HOST:$Q_PORT/" \
+                "http://$SERVICE_HOST:$Q_PORT/" \
+                "http://$SERVICE_HOST:$Q_PORT/"
         fi
     fi
 }
