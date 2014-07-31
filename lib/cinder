@@ -238,21 +238,21 @@ function configure_cinder {
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
         enabled_backends=""
-        default_type=""
+        default_name=""
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
             BE_TYPE=${be%%:*}
             BE_NAME=${be##*:}
             if type configure_cinder_backend_${BE_TYPE} >/dev/null 2>&1; then
                 configure_cinder_backend_${BE_TYPE} ${BE_NAME}
             fi
-            if [[ -z "$default_type" ]]; then
-                default_type=$BE_TYPE
+            if [[ -z "$default_name" ]]; then
+                default_name=$BE_NAME
             fi
             enabled_backends+=$BE_NAME,
         done
         iniset $CINDER_CONF DEFAULT enabled_backends ${enabled_backends%,*}
-        if [[ -n "$default_type" ]]; then
-            iniset $CINDER_CONF DEFAULT default_volume_type ${default_type}
+        if [[ -n "$default_name" ]]; then
+            iniset $CINDER_CONF DEFAULT default_volume_type ${default_name}
         fi
     fi
 
