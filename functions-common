@@ -1328,7 +1328,10 @@ function pip_install {
     if [[ -z "$os_PACKAGE" ]]; then
         GetOSVersion
     fi
-    if [[ $TRACK_DEPENDS = True ]]; then
+    if [[ $TRACK_DEPENDS = True && ! "$@" =~ virtualenv ]]; then
+        # TRACK_DEPENDS=True installation creates a circular dependency when
+        # we attempt to install virtualenv into a virualenv, so we must global
+        # that installation.
         source $DEST/.venv/bin/activate
         CMD_PIP=$DEST/.venv/bin/pip
         SUDO_PIP="env"
