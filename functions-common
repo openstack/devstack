@@ -500,6 +500,7 @@ function is_ubuntu {
 # ``get_release_name_from_branch branch-name``
 function get_release_name_from_branch {
     local branch=$1
+
     if [[ $branch =~ "stable/" ]]; then
         echo ${branch#*/}
     else
@@ -510,72 +511,73 @@ function get_release_name_from_branch {
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
-# Set global RECLONE=yes to simulate a clone when dest-dir exists
-# Set global ERROR_ON_CLONE=True to abort execution with an error if the git repo
+# Set global ``RECLONE=yes`` to simulate a clone when dest-dir exists
+# Set global ``ERROR_ON_CLONE=True`` to abort execution with an error if the git repo
 # does not exist (default is False, meaning the repo will be cloned).
-# Uses global ``OFFLINE``
+# Uses globals ``ERROR_ON_CLONE``, ``OFFLINE``, ``RECLONE``
 # git_clone remote dest-dir branch
 function git_clone {
-    GIT_REMOTE=$1
-    GIT_DEST=$2
-    GIT_REF=$3
+    local git_remote=$1
+    local git_dest=$2
+    local git_ref=$3
+    local orig_dir=$(pwd)
+
     RECLONE=$(trueorfalse False $RECLONE)
-    local orig_dir=`pwd`
 
     if [[ "$OFFLINE" = "True" ]]; then
         echo "Running in offline mode, clones already exist"
         # print out the results so we know what change was used in the logs
-        cd $GIT_DEST
+        cd $git_dest
         git show --oneline | head -1
         cd $orig_dir
         return
     fi
 
-    if echo $GIT_REF | egrep -q "^refs"; then
+    if echo $git_ref | egrep -q "^refs"; then
         # If our branch name is a gerrit style refs/changes/...
-        if [[ ! -d $GIT_DEST ]]; then
+        if [[ ! -d $git_dest ]]; then
             [[ "$ERROR_ON_CLONE" = "True" ]] && \
                 die $LINENO "Cloning not allowed in this configuration"
-            git_timed clone $GIT_REMOTE $GIT_DEST
+            git_timed clone $git_remote $git_dest
         fi
-        cd $GIT_DEST
-        git_timed fetch $GIT_REMOTE $GIT_REF && git checkout FETCH_HEAD
+        cd $git_dest
+        git_timed fetch $git_remote $git_ref && git checkout FETCH_HEAD
     else
         # do a full clone only if the directory doesn't exist
-        if [[ ! -d $GIT_DEST ]]; then
+        if [[ ! -d $git_dest ]]; then
             [[ "$ERROR_ON_CLONE" = "True" ]] && \
                 die $LINENO "Cloning not allowed in this configuration"
-            git_timed clone $GIT_REMOTE $GIT_DEST
-            cd $GIT_DEST
+            git_timed clone $git_remote $git_dest
+            cd $git_dest
             # This checkout syntax works for both branches and tags
-            git checkout $GIT_REF
+            git checkout $git_ref
         elif [[ "$RECLONE" = "True" ]]; then
             # if it does exist then simulate what clone does if asked to RECLONE
-            cd $GIT_DEST
+            cd $git_dest
             # set the url to pull from and fetch
-            git remote set-url origin $GIT_REMOTE
+            git remote set-url origin $git_remote
             git_timed fetch origin
             # remove the existing ignored files (like pyc) as they cause breakage
             # (due to the py files having older timestamps than our pyc, so python
             # thinks the pyc files are correct using them)
-            find $GIT_DEST -name '*.pyc' -delete
+            find $git_dest -name '*.pyc' -delete
 
-            # handle GIT_REF accordingly to type (tag, branch)
-            if [[ -n "`git show-ref refs/tags/$GIT_REF`" ]]; then
-                git_update_tag $GIT_REF
-            elif [[ -n "`git show-ref refs/heads/$GIT_REF`" ]]; then
-                git_update_branch $GIT_REF
-            elif [[ -n "`git show-ref refs/remotes/origin/$GIT_REF`" ]]; then
-                git_update_remote_branch $GIT_REF
+            # handle git_ref accordingly to type (tag, branch)
+            if [[ -n "`git show-ref refs/tags/$git_ref`" ]]; then
+                git_update_tag $git_ref
+            elif [[ -n "`git show-ref refs/heads/$git_ref`" ]]; then
+                git_update_branch $git_ref
+            elif [[ -n "`git show-ref refs/remotes/origin/$git_ref`" ]]; then
+                git_update_remote_branch $git_ref
             else
-                die $LINENO "$GIT_REF is neither branch nor tag"
+                die $LINENO "$git_ref is neither branch nor tag"
             fi
 
         fi
     fi
 
     # print out the results so we know what change was used in the logs
-    cd $GIT_DEST
+    cd $git_dest
     git show --oneline | head -1
     cd $orig_dir
 }
@@ -614,35 +616,32 @@ function git_timed {
 # git update using reference as a branch.
 # git_update_branch ref
 function git_update_branch {
+    local git_branch=$1
 
-    GIT_BRANCH=$1
-
-    git checkout -f origin/$GIT_BRANCH
+    git checkout -f origin/$git_branch
     # a local branch might not exist
-    git branch -D $GIT_BRANCH || true
-    git checkout -b $GIT_BRANCH
+    git branch -D $git_branch || true
+    git checkout -b $git_branch
 }
 
 # git update using reference as a branch.
 # git_update_remote_branch ref
 function git_update_remote_branch {
+    local git_branch=$1
 
-    GIT_BRANCH=$1
-
-    git checkout -b $GIT_BRANCH -t origin/$GIT_BRANCH
+    git checkout -b $git_branch -t origin/$git_branch
 }
 
 # git update using reference as a tag. Be careful editing source at that repo
 # as working copy will be in a detached mode
 # git_update_tag ref
 function git_update_tag {
+    local git_tag=$1
 
-    GIT_TAG=$1
-
-    git tag -d $GIT_TAG
+    git tag -d $git_tag
     # fetching given tag only
-    git_timed fetch origin tag $GIT_TAG
-    git checkout -f $GIT_TAG
+    git_timed fetch origin tag $git_tag
+    git checkout -f $git_tag
 }
 
 

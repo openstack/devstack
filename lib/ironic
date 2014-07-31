@@ -110,6 +110,7 @@ function install_ironic {
 function install_ironicclient {
     git_clone $IRONICCLIENT_REPO $IRONICCLIENT_DIR $IRONICCLIENT_BRANCH
     setup_develop $IRONICCLIENT_DIR
+    sudo install -D -m 0644 -o $STACK_USER {$IRONICCLIENT_DIR/tools/,/etc/bash_completion.d/}ironic.bash_completion
 }
 
 # cleanup_ironic() - Remove residual data files, anything left over from previous
