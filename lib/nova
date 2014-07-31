@@ -173,14 +173,15 @@ function cleanup_nova {
         clean_iptables
 
         # Destroy old instances
-        instances=`sudo virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
+        local instances=`sudo virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
         if [ ! "$instances" = "" ]; then
             echo $instances | xargs -n1 sudo virsh destroy || true
             echo $instances | xargs -n1 sudo virsh undefine --managed-save || true
         fi
 
         # Logout and delete iscsi sessions
-        tgts=$(sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d ' ' -f2)
+        local tgts=$(sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d ' ' -f2)
+        local target
         for target in $tgts; do
             sudo iscsiadm --mode node -T $target --logout || true
         done
@@ -218,14 +219,14 @@ function configure_nova_rootwrap {
     sudo chown root:root $NOVA_CONF_DIR/rootwrap.conf
     sudo chmod 0644 $NOVA_CONF_DIR/rootwrap.conf
     # Specify rootwrap.conf as first parameter to nova-rootwrap
-    ROOTWRAP_SUDOER_CMD="$NOVA_ROOTWRAP $NOVA_CONF_DIR/rootwrap.conf *"
+    local rootwrap_sudoer_cmd="$NOVA_ROOTWRAP $NOVA_CONF_DIR/rootwrap.conf *"
 
     # Set up the rootwrap sudoers for nova
-    TEMPFILE=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
-    chmod 0440 $TEMPFILE
-    sudo chown root:root $TEMPFILE
-    sudo mv $TEMPFILE /etc/sudoers.d/nova-rootwrap
+    local tempfile=`mktemp`
+    echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudoer_cmd" >$tempfile
+    chmod 0440 $tempfile
+    sudo chown root:root $tempfile
+    sudo mv $tempfile /etc/sudoers.d/nova-rootwrap
 }
 
 # configure_nova() - Set config files, create data dirs, etc
@@ -274,7 +275,7 @@ function configure_nova {
             if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
                 if is_ubuntu; then
                     if [[ ! "$DISTRO" > natty ]]; then
-                        cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
+                        local cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
                         sudo mkdir -p /cgroup
                         if ! grep -q cgroup /etc/fstab; then
                             echo "$cgline" | sudo tee -a /etc/fstab
@@ -328,29 +329,29 @@ function configure_nova {
 # Migrated from keystone_data.sh
 create_nova_accounts() {
 
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
 
     # Nova
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
 
-        NOVA_USER=$(get_or_create_user "nova" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT)
-        get_or_add_user_role $ADMIN_ROLE $NOVA_USER $SERVICE_TENANT
+        local nova_user=$(get_or_create_user "nova" \
+            "$SERVICE_PASSWORD" $service_tenant)
+        get_or_add_user_role $admin_role $nova_user $service_tenant
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            NOVA_SERVICE=$(get_or_create_service "nova" \
+            local nova_service=$(get_or_create_service "nova" \
                 "compute" "Nova Compute Service")
-            get_or_create_endpoint $NOVA_SERVICE \
+            get_or_create_endpoint $nova_service \
                 "$REGION_NAME" \
                 "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
                 "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
                 "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s"
 
-            NOVA_V3_SERVICE=$(get_or_create_service "novav3" \
+            local nova_v3_service=$(get_or_create_service "novav3" \
                 "computev3" "Nova Compute Service V3")
-            get_or_create_endpoint $NOVA_V3_SERVICE \
+            get_or_create_endpoint $nova_v3_service \
                 "$REGION_NAME" \
                 "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
                 "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v3" \
@@ -369,9 +370,9 @@ create_nova_accounts() {
         # EC2
         if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
 
-            EC2_SERVICE=$(get_or_create_service "ec2" \
+            local ec2_service=$(get_or_create_service "ec2" \
                 "ec2" "EC2 Compatibility Layer")
-            get_or_create_endpoint $EC2_SERVICE \
+            get_or_create_endpoint $ec2_service \
                 "$REGION_NAME" \
                 "http://$SERVICE_HOST:8773/services/Cloud" \
                 "http://$SERVICE_HOST:8773/services/Admin" \
@@ -383,8 +384,8 @@ create_nova_accounts() {
     if is_service_enabled n-obj swift3; then
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            S3_SERVICE=$(get_or_create_service "s3" "s3" "S3")
-            get_or_create_endpoint $S3_SERVICE \
+            local s3_service=$(get_or_create_service "s3" "s3" "S3")
+            get_or_create_endpoint $s3_service \
                 "$REGION_NAME" \
                 "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
                 "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
@@ -675,6 +676,7 @@ function start_nova_compute {
         # Use 'sg' to execute nova-compute as a member of the **$LIBVIRT_GROUP** group.
         screen_it n-cpu "cd $NOVA_DIR && sg $LIBVIRT_GROUP '$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf'"
     elif [[ "$VIRT_DRIVER" = 'fake' ]]; then
+        local i
         for i in `seq 1 $NUMBER_FAKE_NOVA_COMPUTE`; do
             screen_it n-cpu "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf --config-file <(echo -e '[DEFAULT]\nhost=${HOSTNAME}${i}')"
         done
