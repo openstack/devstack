@@ -59,20 +59,21 @@
           <br /><strong>HACKING.rst</strong>
           <p>Like most OpenStack projects, DevStack includes a <code>HACKING.rst</code> file that describes the layout, style and conventions of the project.  Because <code>HACKING.rst</code> is in the main DevStack repo it is considered authoritative.  Much of the content on this page is taken from there.</p>
 
-          <br /><strong>bash8 Formatting</strong>
-          <p>Around the time of the OpenStack Havana release we added a tool to do style checking in DevStack similar to what pep8/flake8 do for Python projects.  It is still _very_ simplistic, focusing mostly on stray whitespace to help prevent -1 on reviews that are otherwise acceptable.  Oddly enough it is called <code>bash8</code>.  It will be expanded to enforce some of the documentation rules in comments that are used in formatting the script pages for devstack.org and possibly even simple code formatting.  Run it on the entire project with <code>./run_tests.sh</code>.</p>
+          <br /><strong>bashate Formatting</strong>
+          <p>Around the time of the OpenStack Havana release we added a tool to do style checking in DevStack similar to what pep8/flake8 do for Python projects.  It is still _very_ simplistic, focusing mostly on stray whitespace to help prevent -1 on reviews that are otherwise acceptable.  Oddly enough it is called <code>bashate</code>.  It will be expanded to enforce some of the documentation rules in comments that are used in formatting the script pages for devstack.org and possibly even simple code formatting.  Run it on the entire project with <code>./run_tests.sh</code>.</p>
 
           <h3>Code</h3>
 
           <br /><strong>Repo Layout</strong>
           <p>The DevStack repo generally keeps all of the primary scripts at the root level.</p>
-          <p><code>exercises</code> - contains the test scripts used to validate and demonstrate some OpenStack functions.  These scripts know how to exit early or skip services that are not enabled.</p>
-          <p><code>extras.d</code> - contains the dispatch scripts called by the hooks in <code>stack.sh</code>, <code>unstack.sh</code> and <code>clean.sh</code>.  See <a href="plugins.html">the plugins docs</a> for more information.</p>
-          <p><code>files</code> - contains a variety of otherwise lost files used in configuring and operating DevStack.  This includes templates for configuration files and the system dependency information.  This is also where image files are downloaded and expanded if necessary.</p>
-          <p><code>lib</code> - contains the sub-scripts specific to each project.  This is where the work of managing a project's services is located.  Each top-level project (Keystone, Nova, etc) has a file here.  Additionally there are some for system services and project plugins.</p>
-          <p><code>samples</code> - contains a sample of the local files not included in the DevStack repo.</p>
+          <p><code>docs</code> - Contains the source for this website.  It is built using <code>tools/build_docs.sh</code>.</p>
+          <p><code>exercises</code> - Contains the test scripts used to validate and demonstrate some OpenStack functions.  These scripts know how to exit early or skip services that are not enabled.</p>
+          <p><code>extras.d</code> - Contains the dispatch scripts called by the hooks in <code>stack.sh</code>, <code>unstack.sh</code> and <code>clean.sh</code>.  See <a href="plugins.html">the plugins docs</a> for more information.</p>
+          <p><code>files</code> - Contains a variety of otherwise lost files used in configuring and operating DevStack.  This includes templates for configuration files and the system dependency information.  This is also where image files are downloaded and expanded if necessary.</p>
+          <p><code>lib</code> - Contains the sub-scripts specific to each project.  This is where the work of managing a project's services is located.  Each top-level project (Keystone, Nova, etc) has a file here.  Additionally there are some for system services and project plugins.</p>
+          <p><code>samples</code> - Contains a sample of the local files not included in the DevStack repo.</p>
           <p><code>tests</code> - the DevStack test suite is rather sparse, mostly consisting of test of specific fragile functions in the <code>functions</code> file.</p>
-          <p><code>tools</code> - contains a collection of stand-alone scripts, some of which have aged a bit (does anyone still do pamdisk installs?).  While these may reference the top-level DevStack configuration they can generally be run alone.  There are also some sub-directories to support specific environments such as XenServer and Docker.</p>
+          <p><code>tools</code> - Contains a collection of stand-alone scripts, some of which have aged a bit (does anyone still do ramdisk installs?).  While these may reference the top-level DevStack configuration they can generally be run alone.  There are also some sub-directories to support specific environments such as XenServer.</p>
           
 
 
