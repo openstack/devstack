@@ -49,6 +49,7 @@ function iniadd {
     local section=$2
     local option=$3
     shift 3
+
     local values="$(iniget_multiline $file $section $option) $@"
     iniset_multiline $file $section $option $values
     $xtrace
@@ -62,6 +63,7 @@ function inicomment {
     local file=$1
     local section=$2
     local option=$3
+
     sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
     $xtrace
 }
@@ -75,6 +77,7 @@ function iniget {
     local section=$2
     local option=$3
     local line
+
     line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
     echo ${line#*=}
     $xtrace
@@ -89,6 +92,7 @@ function iniget_multiline {
     local section=$2
     local option=$3
     local values
+
     values=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { s/^$option[ \t]*=[ \t]*//gp; }" "$file")
     echo ${values}
     $xtrace
@@ -103,6 +107,7 @@ function ini_has_option {
     local section=$2
     local option=$3
     local line
+
     line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
     $xtrace
     [ -n "$line" ]
@@ -145,6 +150,7 @@ function iniset_multiline {
     local file=$1
     local section=$2
     local option=$3
+
     shift 3
     local values
     for v in $@; do
@@ -237,28 +243,28 @@ function die {
 # die_if_not_set $LINENO env-var "message"
 function die_if_not_set {
     local exitcode=$?
-    FXTRACE=$(set +o | grep xtrace)
+    local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local line=$1; shift
     local evar=$1; shift
     if ! is_set $evar || [ $exitcode != 0 ]; then
         die $line "$*"
     fi
-    $FXTRACE
+    $xtrace
 }
 
 # Prints line number and "message" in error format
 # err $LINENO "message"
 function err {
     local exitcode=$?
-    errXTRACE=$(set +o | grep xtrace)
+    local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local msg="[ERROR] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg 1>&2;
     if [[ -n ${SCREEN_LOGDIR} ]]; then
         echo $msg >> "${SCREEN_LOGDIR}/error.log"
     fi
-    $errXTRACE
+    $xtrace
     return $exitcode
 }
 
@@ -268,14 +274,14 @@ function err {
 # err_if_not_set $LINENO env-var "message"
 function err_if_not_set {
     local exitcode=$?
-    errinsXTRACE=$(set +o | grep xtrace)
+    local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local line=$1; shift
     local evar=$1; shift
     if ! is_set $evar || [ $exitcode != 0 ]; then
         err $line "$*"
     fi
-    $errinsXTRACE
+    $xtrace
     return $exitcode
 }
 
@@ -304,14 +310,14 @@ function is_set {
 # warn $LINENO "message"
 function warn {
     local exitcode=$?
-    errXTRACE=$(set +o | grep xtrace)
+    local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local msg="[WARNING] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg 1>&2;
     if [[ -n ${SCREEN_LOGDIR} ]]; then
         echo $msg >> "${SCREEN_LOGDIR}/error.log"
     fi
-    $errXTRACE
+    $xtrace
     return $exitcode
 }
 
@@ -322,13 +328,16 @@ function warn {
 # Determine OS Vendor, Release and Update
 # Tested with OS/X, Ubuntu, RedHat, CentOS, Fedora
 # Returns results in global variables:
-# os_VENDOR - vendor name
-# os_RELEASE - release
-# os_UPDATE - update
-# os_PACKAGE - package type
-# os_CODENAME - vendor's codename for release
+# ``os_VENDOR`` - vendor name: ``Ubuntu``, ``Fedora``, etc
+# ``os_RELEASE`` - major release: ``14.04`` (Ubuntu), ``20`` (Fedora)
+# ``os_UPDATE`` - update: ex. the ``5`` in ``RHEL6.5``
+# ``os_PACKAGE`` - package type: ``deb`` or ``rpm``
+# ``os_CODENAME`` - vendor's codename for release: ``snow leopard``, ``trusty``
+declare os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
+
 # GetOSVersion
 function GetOSVersion {
+
     # Figure out which vendor we are
     if [[ -x "`which sw_vers 2>/dev/null`" ]]; then
         # OS/X
@@ -418,6 +427,8 @@ function GetOSVersion {
 
 # Translate the OS version values into common nomenclature
 # Sets global ``DISTRO`` from the ``os_*`` values
+declare DISTRO
+
 function GetDistro {
     GetOSVersion
     if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) ]]; then
@@ -452,9 +463,7 @@ function GetDistro {
 # Utility function for checking machine architecture
 # is_arch arch-type
 function is_arch {
-    ARCH_TYPE=$1
-
-    [[ "$(uname -m)" == "$ARCH_TYPE" ]]
+    [[ "$(uname -m)" == "$1" ]]
 }
 
 # Determine if current distribution is a Fedora-based distribution
@@ -661,16 +670,17 @@ function get_default_host_ip {
     # Search for an IP unless an explicit is set by ``HOST_IP`` environment variable
     if [ -z "$host_ip" -o "$host_ip" == "dhcp" ]; then
         host_ip=""
-        host_ips=`LC_ALL=C ip -f inet addr show ${host_ip_iface} | awk '/inet/ {split($2,parts,"/");  print parts[1]}'`
-        for IP in $host_ips; do
+        local host_ips=$(LC_ALL=C ip -f inet addr show ${host_ip_iface} | awk '/inet/ {split($2,parts,"/");  print parts[1]}')
+        local ip
+        for ip in $host_ips; do
             # Attempt to filter out IP addresses that are part of the fixed and
             # floating range. Note that this method only works if the ``netaddr``
             # python library is installed. If it is not installed, an error
             # will be printed and the first IP from the interface will be used.
             # If that is not correct set ``HOST_IP`` in ``localrc`` to the correct
             # address.
-            if ! (address_in_net $IP $fixed_range || address_in_net $IP $floating_range); then
-                host_ip=$IP
+            if ! (address_in_net $ip $fixed_range || address_in_net $ip $floating_range); then
+                host_ip=$ip
                 break;
             fi
         done
@@ -683,6 +693,7 @@ function get_default_host_ip {
 # Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
 # get_field field-number
 function get_field {
+    local data field
     while read data; do
         if [ "$1" -lt 0 ]; then
             field="(\$(NF$1))"
@@ -725,12 +736,12 @@ function policy_add {
 # Usage: get_or_create_user <username> <password> <project> [<email>]
 function get_or_create_user {
     if [[ ! -z "$4" ]]; then
-        local EMAIL="--email=$4"
+        local email="--email=$4"
     else
-        local EMAIL=""
+        local email=""
     fi
     # Gets user id
-    USER_ID=$(
+    local user_id=$(
         # Gets user id
         openstack user show $1 -f value -c id 2>/dev/null ||
         # Creates new user
@@ -738,63 +749,63 @@ function get_or_create_user {
             $1 \
             --password "$2" \
             --project $3 \
-            $EMAIL \
+            $email \
             -f value -c id
     )
-    echo $USER_ID
+    echo $user_id
 }
 
 # Gets or creates project
 # Usage: get_or_create_project <name>
 function get_or_create_project {
     # Gets project id
-    PROJECT_ID=$(
+    local project_id=$(
         # Gets project id
         openstack project show $1 -f value -c id 2>/dev/null ||
         # Creates new project if not exists
         openstack project create $1 -f value -c id
     )
-    echo $PROJECT_ID
+    echo $project_id
 }
 
 # Gets or creates role
 # Usage: get_or_create_role <name>
 function get_or_create_role {
-    ROLE_ID=$(
+    local role_id=$(
         # Gets role id
         openstack role show $1 -f value -c id 2>/dev/null ||
         # Creates role if not exists
         openstack role create $1 -f value -c id
     )
-    echo $ROLE_ID
+    echo $role_id
 }
 
 # Gets or adds user role
 # Usage: get_or_add_user_role <role> <user> <project>
 function get_or_add_user_role {
     # Gets user role id
-    USER_ROLE_ID=$(openstack user role list \
+    local user_role_id=$(openstack user role list \
         $2 \
         --project $3 \
         --column "ID" \
         --column "Name" \
         | grep " $1 " | get_field 1)
-    if [[ -z "$USER_ROLE_ID" ]]; then
+    if [[ -z "$user_role_id" ]]; then
         # Adds role to user
-        USER_ROLE_ID=$(openstack role add \
+        user_role_id=$(openstack role add \
             $1 \
             --user $2 \
             --project $3 \
             | grep " id " | get_field 2)
     fi
-    echo $USER_ROLE_ID
+    echo $user_role_id
 }
 
 # Gets or creates service
 # Usage: get_or_create_service <name> <type> <description>
 function get_or_create_service {
     # Gets service id
-    SERVICE_ID=$(
+    local service_id=$(
         # Gets service id
         openstack service show $1 -f value -c id 2>/dev/null ||
         # Creates new service if not exists
@@ -804,22 +815,22 @@ function get_or_create_service {
             --description="$3" \
             -f value -c id
     )
-    echo $SERVICE_ID
+    echo $service_id
 }
 
 # Gets or creates endpoint
 # Usage: get_or_create_endpoint <service> <region> <publicurl> <adminurl> <internalurl>
 function get_or_create_endpoint {
     # Gets endpoint id
-    ENDPOINT_ID=$(openstack endpoint list \
+    local endpoint_id=$(openstack endpoint list \
         --column "ID" \
         --column "Region" \
         --column "Service Name" \
         | grep " $2 " \
         | grep " $1 " | get_field 1)
-    if [[ -z "$ENDPOINT_ID" ]]; then
+    if [[ -z "$endpoint_id" ]]; then
         # Creates new endpoint
-        ENDPOINT_ID=$(openstack endpoint create \
+        endpoint_id=$(openstack endpoint create \
             $1 \
             --region $2 \
             --publicurl $3 \
@@ -827,8 +838,9 @@ function get_or_create_endpoint {
             --internalurl $5 \
             | grep " id " | get_field 2)
     fi
-    echo $ENDPOINT_ID
+    echo $endpoint_id
 }
+
 
 # Package Functions
 # =================
@@ -990,6 +1002,7 @@ function get_packages {
 }
 
 # Distro-agnostic package installer
+# Uses globals ``NO_UPDATE_REPOS``, ``REPOS_UPDATED``, ``RETRY_UPDATE``
 # install_package package [package ...]
 function update_package_repo {
     if [[ "$NO_UPDATE_REPOS" = "True" ]]; then
@@ -1090,6 +1103,7 @@ function yum_install {
 }
 
 # zypper wrapper to set arguments correctly
+# Uses globals ``OFFLINE``, ``*_proxy``
 # zypper_install package [package ...]
 function zypper_install {
     [[ "$OFFLINE" = "True" ]] && return
@@ -1106,7 +1120,8 @@ function zypper_install {
 # _run_process() is designed to be backgrounded by run_process() to simulate a
 # fork.  It includes the dirty work of closing extra filehandles and preparing log
 # files to produce the same logs as screen_it().  The log filename is derived
-# from the service name and global-and-now-misnamed SCREEN_LOGDIR
+# from the service name and global-and-now-misnamed ``SCREEN_LOGDIR``
+# Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_LOGDIR``
 # _run_process service "command-line"
 function _run_process {
     local service=$1
@@ -1132,6 +1147,7 @@ function _run_process {
 
 # Helper to remove the ``*.failure`` files under ``$SERVICE_DIR/$SCREEN_NAME``.
 # This is used for ``service_check`` when all the ``screen_it`` are called finished
+# Uses globals ``SCREEN_NAME``, ``SERVICE_DIR``
 # init_service_check
 function init_service_check {
     SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -1149,15 +1165,15 @@ function init_service_check {
 function is_running {
     local name=$1
     ps auxw | grep -v grep | grep ${name} > /dev/null
-    RC=$?
+    local exitcode=$?
     # some times I really hate bash reverse binary logic
-    return $RC
+    return $exitcode
 }
 
 # run_process() launches a child process that closes all file descriptors and
 # then exec's the passed in command.  This is meant to duplicate the semantics
 # of screen_it() without screen.  PIDs are written to
-# $SERVICE_DIR/$SCREEN_NAME/$service.pid
+# ``$SERVICE_DIR/$SCREEN_NAME/$service.pid``
 # run_process service "command-line"
 function run_process {
     local service=$1
@@ -1169,6 +1185,8 @@ function run_process {
 }
 
 # Helper to launch a service in a named screen
+# Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_NAME``, ``SCREEN_LOGDIR``,
+# ``SERVICE_DIR``, ``USE_SCREEN``
 # screen_it service "command-line"
 function screen_it {
     SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -1211,6 +1229,7 @@ function screen_it {
 }
 
 # Screen rc file builder
+# Uses globals ``SCREEN_NAME``, ``SCREENRC``
 # screen_rc service "command-line"
 function screen_rc {
     SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -1241,6 +1260,7 @@ function screen_rc {
 # If a PID is available use it, kill the whole process group via TERM
 # If screen is being used kill the screen window; this will catch processes
 # that did not leave a PID behind
+# Uses globals ``SCREEN_NAME``, ``SERVICE_DIR``, ``USE_SCREEN``
 # screen_stop service
 function screen_stop {
     SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -1261,6 +1281,7 @@ function screen_stop {
 }
 
 # Helper to get the status of each running service
+# Uses globals ``SCREEN_NAME``, ``SERVICE_DIR``
 # service_check
 function service_check {
     local service
@@ -1330,18 +1351,19 @@ function pip_install {
     fi
     if [[ $TRACK_DEPENDS = True ]]; then
         source $DEST/.venv/bin/activate
-        CMD_PIP=$DEST/.venv/bin/pip
-        SUDO_PIP="env"
+        local cmd_pip=$DEST/.venv/bin/pip
+        local sudo_pip="env"
     else
-        SUDO_PIP="sudo"
-        CMD_PIP=$(get_pip_command)
+        local cmd_pip=$(get_pip_command)
+        local sudo_pip="sudo"
     fi
 
     # Mirror option not needed anymore because pypi has CDN available,
     # but it's useful in certain circumstances
     PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-False}
+    local pip_mirror_opt=""
     if [[ "$PIP_USE_MIRRORS" != "False" ]]; then
-        PIP_MIRROR_OPT="--use-mirrors"
+        pip_mirror_opt="--use-mirrors"
     fi
 
     # pip < 1.4 has a bug where it will use an already existing build
@@ -1354,13 +1376,13 @@ function pip_install {
     local pip_build_tmp=$(mktemp --tmpdir -d pip-build.XXXXX)
 
     $xtrace
-    $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
+    $sudo_pip PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         http_proxy=$http_proxy \
         https_proxy=$https_proxy \
         no_proxy=$no_proxy \
-        $CMD_PIP install --build=${pip_build_tmp} \
-        $PIP_MIRROR_OPT $@ \
-        && $SUDO_PIP rm -rf ${pip_build_tmp}
+        $cmd_pip install --build=${pip_build_tmp} \
+        $pip_mirror_opt $@ \
+        && $sudo_pip rm -rf ${pip_build_tmp}
 }
 
 # this should be used if you want to install globally, all libraries should
@@ -1395,7 +1417,7 @@ function setup_package_with_req_sync {
 
     if [[ $update_requirements != "changed" ]]; then
         (cd $REQUIREMENTS_DIR; \
-            $SUDO_CMD python update.py $project_dir)
+            python update.py $project_dir)
     fi
 
     setup_package $project_dir $flags
@@ -1502,6 +1524,7 @@ function disable_service {
 # enable_service service [service ...]
 function enable_service {
     local tmpsvcs="${ENABLED_SERVICES}"
+    local service
     for service in $@; do
         if ! is_service_enabled $service; then
             tmpsvcs+=",$service"
@@ -1538,7 +1561,8 @@ function is_service_enabled {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local enabled=1
-    services=$@
+    local services=$@
+    local service
     for service in ${services}; do
         [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && enabled=0
 
@@ -1574,8 +1598,9 @@ function is_service_enabled {
 function use_exclusive_service {
     local options=${!1}
     local selection=$3
-    out=$2
+    local out=$2
     [ -z $selection ] || [[ ! "$options" =~ "$selection" ]] && return 1
+    local opt
     for opt in $options;do
         [[ "$opt" = "$selection" ]] && enable_service $opt || disable_service $opt
     done
@@ -1599,7 +1624,7 @@ function _safe_permission_operation {
 
     let last="${#args[*]} - 1"
 
-    dir_to_check=${args[$last]}
+    local dir_to_check=${args[$last]}
     if [ ! -d "$dir_to_check" ]; then
         dir_to_check=`dirname "$dir_to_check"`
     fi
