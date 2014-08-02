@@ -76,7 +76,7 @@
         <ol>
             <li value="0">
               <h3>Select a Linux Distribution</h3>
-              <p>Only Ubuntu 12.04 (Precise), Fedora 20 and CentOS/RHEL 6.5 are documented here.  OpenStack also runs and is packaged on other flavors of Linux such as OpenSUSE and Debian.</p>
+              <p>Only Ubuntu 14.04 (Trusty), Fedora 20 and CentOS/RHEL 6.5 are documented here.  OpenStack also runs and is packaged on other flavors of Linux such as OpenSUSE and Debian.</p>
             </li>
             <li>
               <h3>Install Selected OS</h3>
@@ -89,7 +89,7 @@
             </li>
             <li>
               <h3>Configure</h3>
-              <p>While optional, we recommend a <a href="configuration.html">minimal configuration</a> be set up as you may not want our default values for everything.</p>
+              <p>We recommend at least a <a href="configuration.html">minimal configuration</a> be set up.</p>
             </li>
             <li>
               <h3>Start the install</h3>
@@ -231,6 +231,10 @@
                 <td><a href="functions.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
               <tr>
+                <td>functions-common</td>
+                <td><a href="functions-common.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
                 <td>lib/apache</td>
                 <td><a href="lib/apache.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
@@ -303,12 +307,12 @@
                 <td><a href="lib/rpc_backend.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
               <tr>
-                <td>lib/savanna</td>
-                <td><a href="lib/savanna.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+                <td>lib/sahara</td>
+                <td><a href="lib/sahara.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
               <tr>
-                <td>lib/savanna-dashboard</td>
-                <td><a href="lib/savanna-dashboard.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+                <td>lib/savanna</td>
+                <td><a href="lib/savanna.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
               <tr>
                 <td>lib/stackforge</td>
@@ -343,49 +347,34 @@
                 <td><a href="run_tests.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
               <tr>
+                <td>extras.d/50-ironic.sh</td>
+                <td><a href="extras.d/50-ironic.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
                 <td>extras.d/70-marconi.sh</td>
                 <td><a href="extras.d/70-marconi.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>extras.d/70-sahara.sh</td>
+                <td><a href="extras.d/70-sahara.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
               <tr>
                 <td>extras.d/70-savanna.sh</td>
                 <td><a href="extras.d/70-savanna.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
               <tr>
+                <td>extras.d/70-trove.sh</td>
+                <td><a href="extras.d/70-trove.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>extras.d/80-opendaylight.sh</td>
+                <td><a href="extras.d/80-opendaylight.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
                 <td>extras.d/80-tempest.sh</td>
                 <td><a href="extras.d/80-tempest.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
-              <tr>
-                <td>tools/info.sh</td>
-                <td><a href="tools/info.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
-              </tr>
-              <tr>
-                <td>tools/build_docs.sh</td>
-                <td><a href="tools/build_docs.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
-              </tr>
-              <tr>
-                <td>tools/create_userrc.sh</td>
-                <td><a href="tools/create_userrc.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
-              </tr>
-              <tr>
-                <td>tools/fixup_stuff.sh</td>
-                <td><a href="tools/fixup_stuff.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
-              </tr>
-              <tr>
-                <td>tools/install_prereqs.sh</td>
-                <td><a href="tools/install_prereqs.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
-              </tr>
-              <tr>
-                <td>tools/install_pip.sh</td>
-                <td><a href="tools/install_pip.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
-              </tr>
-              <tr>
-                <td>tools/upload_image.sh</td>
-                <td><a href="tools/upload_image.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
-              </tr>
             </tbody>
-            <tfoot>
-              <td colspan="3">40 bash scripts</td>
-            </tfoot>
           </table>
         </div>
 
@@ -420,9 +409,46 @@
                 <td><a href="eucarc.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
             </tbody>
-            <tfoot>
-              <td colspan="3">5 configuration files</td>
-            </tfoot>
+          </table>
+
+          <h2>Tools <small>Support scripts</small></h2>
+          <table class='table table-striped table-bordered'>
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>tools/info.sh</td>
+                <td><a href="tools/info.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/build_docs.sh</td>
+                <td><a href="tools/build_docs.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/create_userrc.sh</td>
+                <td><a href="tools/create_userrc.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/fixup_stuff.sh</td>
+                <td><a href="tools/fixup_stuff.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/install_prereqs.sh</td>
+                <td><a href="tools/install_prereqs.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/install_pip.sh</td>
+                <td><a href="tools/install_pip.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+              <tr>
+                <td>tools/upload_image.sh</td>
+                <td><a href="tools/upload_image.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+            </tbody>
           </table>
 
           <h2>Samples <small>Generated documentation of DevStack sample files.</small></h2>
@@ -443,9 +469,6 @@
                 <td><a href="samples/localrc.html" class="btn btn-small btn-success table-action">Read &raquo;</a></td>
               </tr>
             </tbody>
-            <tfoot>
-              <td colspan="3">2 sample files</td>
-            </tfoot>
           </table>
 
         <div class='row span5 pull-right'>
@@ -494,9 +517,18 @@
                 <td>exercises/horizon.sh</td>
                 <td><a href="exercises/horizon.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
+                <td>exercises/marconi.sh</td>
+                <td><a href="exercises/marconi.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
               <tr>
                 <td>exercises/neutron-adv-test.sh</td>
                 <td><a href="exercises/neutron-adv-test.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+                <td>exercises/sahara.sh</td>
+                <td><a href="exercises/sahara.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
+                <td>exercises/savanna.sh</td>
+                <td><a href="exercises/savanna.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
               <tr>
                 <td>exercises/sec_groups.sh</td>
@@ -506,14 +538,14 @@
                 <td>exercises/swift.sh</td>
                 <td><a href="exercises/swift.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
+                <td>exercises/trove.sh</td>
+                <td><a href="exercises/trove.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
+              </tr>
               <tr>
                 <td>exercises/volumes.sh</td>
                 <td><a href="exercises/volumes.sh.html" class="btn btn-small btn-primary table-action">Read &raquo;</a></td>
               </tr>
             </tbody>
-            <tfoot>
-              <td colspan="3">13 exercise scripts</td>
-            </tfoot>
           </table>
 
         </div>

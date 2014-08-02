@@ -58,7 +58,7 @@
           <h3>local.conf</h3>
           <p>The new configuration file is <code>local.conf</code> and resides in the root DevStack directory like the old <code>localrc</code> file.  It is a modified INI format file that introduces a meta-section header to carry additional information regarding the configuration files to be changed.</p>
 
-          <p>The new header is similar to a normal INI section header but with two '[[ ]]' chars and two internal fields separated by a pipe ('|'):</p>
+          <p>The new header is similar to a normal INI section header but with double brackets (<code>[[ ... ]]</code>) and two internal fields separated by a pipe (<code>|</code>):</p>
 <pre>[[ &lt;phase&gt; | &lt;config-file-name&gt; ]]
 </pre>
 
@@ -67,6 +67,8 @@
           <p>The defined phases are:</p>
           <ul>
             <li><strong>local</strong> - extracts <code>localrc</code> from <code>local.conf</code> before <code>stackrc</code> is sourced</li>
+            <li><strong>pre-install</strong> - runs after the system packages are installed but before any of the source repositories are installed</li>
+            <li><strong>install</strong> - runs immediately after the repo installations are complete</li>
             <li><strong>post-config</strong> - runs after the layer 2 services are configured and before they are started</li>
             <li><strong>extra</strong> - runs after services are started and before any files in <code>extra.d</code> are executed
           </ul>
@@ -96,7 +98,7 @@ LOGFILE=$DEST/logs/stack.sh.log
 <pre>[[post-config|/$Q_PLUGIN_CONF_FILE]]
 </pre>
 
-          <p>The existing ``EXTRAS_OPTS`` and similar variables are now deprecated.  If used a warning will be printed at the end of the <code>stack.sh</code> run.</p>
+          <p>Also note that the <code>localrc</code> section is sourced as a shell script fragment amd <string>MUST</strong> conform to the shell requirements, specifically no whitespace around <code>=</code> (equals).</p>
 
           <a id="minimal"></a>
           <h3>Minimal Configuration</h3>
@@ -205,14 +207,6 @@ ENABLED_SERVICES=n-vol,n-cpu,n-net,n-api</pre></dd>
 
           <h3>Examples</h3>
           <ul>
-            <li>Convert EXTRA_OPTS from (<code>localrc</code>):
-<pre>EXTRA_OPTS=api_rate_limit=False
-</pre>
-    to (<code>local.conf</code>):
-<pre>[[post-config|$NOVA_CONF]]
-[DEFAULT]
-api_rate_limit = False
-</pre></li>
             <li>Eliminate a Cinder pass-through (<code>CINDER_PERIODIC_INTERVAL</code>):
 <pre>[[post-config|$CINDER_CONF]]
 [DEFAULT]

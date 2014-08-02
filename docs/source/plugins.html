@@ -67,7 +67,12 @@ if is_service_enabled template; then
         source $TOP_DIR/lib/template
     fi
 
-    if [[ "$1" == "stack" && "$2" == "install" ]]; then
+    if [[ "$1" == "stack" && "$2" == "pre-install" ]]; then
+        # Set up system services
+        echo_summary "Configuring system services Template"
+        install_package cowsay
+
+    elif [[ "$1" == "stack" && "$2" == "install" ]]; then
         # Perform installation of service source
         echo_summary "Installing Template"
         install_template
@@ -103,6 +108,7 @@ fi
             <li><strong>source</strong> - Called by each script that utilizes <code>extras.d</code> hooks; this replaces directly sourcing the <code>lib/*</code> script.</li>
             <li><strong>stack</strong> - Called by <code>stack.sh</code> three times for different phases of its run:
               <ul>
+                <li><strong>pre-install</strong> - Called after system (OS) setup is complete and before project source is installed.</li>
                 <li><strong>install</strong> - Called after the layer 1 and 2 projects source and their dependencies have been installed.</li>
                 <li><strong>post-config</strong> - Called after the layer 1 and 2 services have been configured.  All configuration files for enabled services should exist at this point.</li>
                 <li><strong>extra</strong> - Called near the end after layer 1 and 2 services have been started.  This is the existing hook and has not otherwise changed.</li>

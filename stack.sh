@@ -95,7 +95,7 @@ fi
 # ``stackrc`` sources ``localrc`` to allow you to safely override those settings.
 
 if [[ ! -r $TOP_DIR/stackrc ]]; then
-    log_error $LINENO "missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
+    die $LINENO "missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
 fi
 source $TOP_DIR/stackrc
 
@@ -122,13 +122,13 @@ fi
 # templates and other useful files in the ``files`` subdirectory
 FILES=$TOP_DIR/files
 if [ ! -d $FILES ]; then
-    log_error $LINENO "missing devstack/files"
+    die $LINENO "missing devstack/files"
 fi
 
 # ``stack.sh`` keeps function libraries here
 # Make sure ``$TOP_DIR/lib`` directory is present
 if [ ! -d $TOP_DIR/lib ]; then
-    log_error $LINENO "missing devstack/lib"
+    die $LINENO "missing devstack/lib"
 fi
 
 # Import common services (database, message queue) configuration

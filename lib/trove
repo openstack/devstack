@@ -204,10 +204,21 @@ function init_trove {
     # Initialize the trove database
     $TROVE_BIN_DIR/trove-manage db_sync
 
-    # Upload the trove-guest image to glance
-    TROVE_GUEST_IMAGE_ID=$(upload_image $TROVE_GUEST_IMAGE_URL $TOKEN | grep ' id ' | get_field 2)
+    # If no guest image is specified, skip remaining setup
+    [ -z "$TROVE_GUEST_IMAGE_URL"] && return 0
 
-    # Initialize appropriate datastores / datastore versions
+    # Find the glance id for the trove guest image
+    # The image is uploaded by stack.sh -- see $IMAGE_URLS handling
+    GUEST_IMAGE_NAME=$(basename "$TROVE_GUEST_IMAGE_URL")
+    GUEST_IMAGE_NAME=${GUEST_IMAGE_NAME%.*}
+    TROVE_GUEST_IMAGE_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-list | grep "${GUEST_IMAGE_NAME}" | get_field 1)
+    if [ -z "$TROVE_GUEST_IMAGE_ID" ]; then
+        # If no glance id is found, skip remaining setup
+        echo "Datastore ${TROVE_DATASTORE_TYPE} will not be created: guest image ${GUEST_IMAGE_NAME} not found."
+        return 1
+    fi
+
+    # Now that we have the guest image id, initialize appropriate datastores / datastore versions
     $TROVE_BIN_DIR/trove-manage datastore_update "$TROVE_DATASTORE_TYPE" ""
     $TROVE_BIN_DIR/trove-manage datastore_version_update "$TROVE_DATASTORE_TYPE" "$TROVE_DATASTORE_VERSION" "$TROVE_DATASTORE_TYPE" \
         "$TROVE_GUEST_IMAGE_ID" "$TROVE_DATASTORE_PACKAGE" 1
