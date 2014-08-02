@@ -166,10 +166,10 @@ fi
 # remote connectivity), and no physical resources will be
 # available for the allocation of provider networks.
 
-# To use GRE tunnels for tenant networks, set to True in
-# ``localrc``. GRE tunnels are only supported by the openvswitch
-# plugin, and currently only on Ubuntu.
-ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-False}
+# To disable tunnels (GRE or VXLAN) for tenant networks,
+# set to False in ``local.conf``.
+# GRE tunnels are only supported by the openvswitch.
+ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-True}
 
 # If using GRE tunnels for tenant networks, specify the range of
 # tunnel IDs from which tenant networks are allocated. Can be
