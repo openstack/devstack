@@ -55,26 +55,28 @@ function upload_image {
     local image_url=$1
     local token=$2
 
+    local image image_fname image_name
+
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
-    IMAGE_FNAME=`basename "$image_url"`
+    image_fname=`basename "$image_url"`
     if [[ $image_url != file* ]]; then
         # Downloads the image (uec ami+akistyle), then extracts it.
-        if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
-            wget -c $image_url -O $FILES/$IMAGE_FNAME
+        if [[ ! -f $FILES/$image_fname || "$(stat -c "%s" $FILES/$image_fname)" = "0" ]]; then
+            wget -c $image_url -O $FILES/$image_fname
             if [[ $? -ne 0 ]]; then
                 echo "Not found: $image_url"
                 return
             fi
         fi
-        IMAGE="$FILES/${IMAGE_FNAME}"
+        image="$FILES/${image_fname}"
     else
         # File based URL (RFC 1738): file://host/path
         # Remote files are not considered here.
         # *nix: file:///home/user/path/file
         # windows: file:///C:/Documents%20and%20Settings/user/path/file
-        IMAGE=$(echo $image_url | sed "s/^file:\/\///g")
-        if [[ ! -f $IMAGE || "$(stat -c "%s" $IMAGE)" == "0" ]]; then
+        image=$(echo $image_url | sed "s/^file:\/\///g")
+        if [[ ! -f $image || "$(stat -c "%s" $image)" == "0" ]]; then
             echo "Not found: $image_url"
             return
         fi
@@ -82,14 +84,14 @@ function upload_image {
 
     # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
     if [[ "$image_url" =~ 'openvz' ]]; then
-        IMAGE_NAME="${IMAGE_FNAME%.tar.gz}"
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format ami --disk-format ami < "${IMAGE}"
+        image_name="${image_fname%.tar.gz}"
+        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name" --is-public=True --container-format ami --disk-format ami < "${image}"
         return
     fi
 
     # vmdk format images
     if [[ "$image_url" =~ '.vmdk' ]]; then
-        IMAGE_NAME="${IMAGE_FNAME%.vmdk}"
+        image_name="${image_fname%.vmdk}"
 
         # Before we can upload vmdk type images to glance, we need to know it's
         # disk type, storage adapter, and networking adapter. These values are
@@ -102,17 +104,17 @@ function upload_image {
         # If the filename does not follow the above format then the vsphere
         # driver will supply default values.
 
-        vmdk_adapter_type=""
-        vmdk_disktype=""
-        vmdk_net_adapter=""
+        local vmdk_disktype=""
+        local vmdk_net_adapter=""
+        local path_len
 
         # vmdk adapter type
-        vmdk_adapter_type="$(head -25 $IMAGE | { grep -a -F -m 1 'ddb.adapterType =' $IMAGE || true; })"
+        local vmdk_adapter_type="$(head -25 $image | { grep -a -F -m 1 'ddb.adapterType =' $image || true; })"
         vmdk_adapter_type="${vmdk_adapter_type#*\"}"
         vmdk_adapter_type="${vmdk_adapter_type%?}"
 
         # vmdk disk type
-        vmdk_create_type="$(head -25 $IMAGE | { grep -a -F -m 1 'createType=' $IMAGE || true; })"
+        local vmdk_create_type="$(head -25 $image | { grep -a -F -m 1 'createType=' $image || true; })"
         vmdk_create_type="${vmdk_create_type#*\"}"
         vmdk_create_type="${vmdk_create_type%\"*}"
 
@@ -120,17 +122,16 @@ function upload_image {
                                     `"should use a descriptor-data pair."
         if [[ "$vmdk_create_type" = "monolithicSparse" ]]; then
             vmdk_disktype="sparse"
-        elif [[ "$vmdk_create_type" = "monolithicFlat" || \
-        "$vmdk_create_type" = "vmfs" ]]; then
+        elif [[ "$vmdk_create_type" = "monolithicFlat" || "$vmdk_create_type" = "vmfs" ]]; then
             # Attempt to retrieve the *-flat.vmdk
-            flat_fname="$(head -25 $IMAGE | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $IMAGE || true; })"
+            local flat_fname="$(head -25 $image | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $image || true; })"
             flat_fname="${flat_fname#*\"}"
             flat_fname="${flat_fname%?}"
             if [[ -z "$flat_fname" ]]; then
-                flat_fname="$IMAGE_NAME-flat.vmdk"
+                flat_fname="$image_name-flat.vmdk"
             fi
-            path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
-            flat_url="${image_url:0:$path_len}$flat_fname"
+            path_len=`expr ${#image_url} - ${#image_fname}`
+            local flat_url="${image_url:0:$path_len}$flat_fname"
             warn $LINENO "$descriptor_data_pair_msg"`
                             `" Attempt to retrieve the *-flat.vmdk: $flat_url"
             if [[ $flat_url != file* ]]; then
@@ -138,29 +139,29 @@ function upload_image {
                 "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
                     wget -c $flat_url -O $FILES/$flat_fname
                 fi
-                IMAGE="$FILES/${flat_fname}"
+                image="$FILES/${flat_fname}"
             else
-                IMAGE=$(echo $flat_url | sed "s/^file:\/\///g")
-                if [[ ! -f $IMAGE || "$(stat -c "%s" $IMAGE)" == "0" ]]; then
+                image=$(echo $flat_url | sed "s/^file:\/\///g")
+                if [[ ! -f $image || "$(stat -c "%s" $image)" == "0" ]]; then
                     echo "Flat disk not found: $flat_url"
                     return 1
                 fi
             fi
-            IMAGE_NAME="${flat_fname}"
+            image_name="${flat_fname}"
             vmdk_disktype="preallocated"
         elif [[ "$vmdk_create_type" = "streamOptimized" ]]; then
             vmdk_disktype="streamOptimized"
         elif [[ -z "$vmdk_create_type" ]]; then
             # *-flat.vmdk provided: attempt to retrieve the descriptor (*.vmdk)
             # to retrieve appropriate metadata
-            if [[ ${IMAGE_NAME: -5} != "-flat" ]]; then
+            if [[ ${image_name: -5} != "-flat" ]]; then
                 warn $LINENO "Expected filename suffix: '-flat'."`
-                            `" Filename provided: ${IMAGE_NAME}"
+                            `" Filename provided: ${image_name}"
             else
-                descriptor_fname="${IMAGE_NAME:0:${#IMAGE_NAME} - 5}.vmdk"
-                path_len=`expr ${#image_url} - ${#IMAGE_FNAME}`
-                flat_path="${image_url:0:$path_len}"
-                descriptor_url=$flat_path$descriptor_fname
+                descriptor_fname="${image_name:0:${#image_name} - 5}.vmdk"
+                path_len=`expr ${#image_url} - ${#image_fname}`
+                local flat_path="${image_url:0:$path_len}"
+                local descriptor_url=$flat_path$descriptor_fname
                 warn $LINENO "$descriptor_data_pair_msg"`
                                 `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
                 if [[ $flat_path != file* ]]; then
@@ -189,35 +190,35 @@ function upload_image {
         # NOTE: For backwards compatibility reasons, colons may be used in place
         # of semi-colons for property delimiters but they are not permitted
         # characters in NTFS filesystems.
-        property_string=`echo "$IMAGE_NAME" | { grep -oP '(?<=-)(?!.*-).*[:;].*[:;].*$' || true; }`
+        property_string=`echo "$image_name" | { grep -oP '(?<=-)(?!.*-).*[:;].*[:;].*$' || true; }`
         IFS=':;' read -a props <<< "$property_string"
         vmdk_disktype="${props[0]:-$vmdk_disktype}"
         vmdk_adapter_type="${props[1]:-$vmdk_adapter_type}"
         vmdk_net_adapter="${props[2]:-$vmdk_net_adapter}"
 
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format bare --disk-format vmdk --property vmware_disktype="$vmdk_disktype" --property vmware_adaptertype="$vmdk_adapter_type" --property hw_vif_model="$vmdk_net_adapter" < "${IMAGE}"
+        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name" --is-public=True --container-format bare --disk-format vmdk --property vmware_disktype="$vmdk_disktype" --property vmware_adaptertype="$vmdk_adapter_type" --property hw_vif_model="$vmdk_net_adapter" < "${image}"
         return
     fi
 
     # XenServer-vhd-ovf-format images are provided as .vhd.tgz
     # and should not be decompressed prior to loading
     if [[ "$image_url" =~ '.vhd.tgz' ]]; then
-        IMAGE_NAME="${IMAGE_FNAME%.vhd.tgz}"
-        FORCE_VM_MODE=""
-        if [[ "$IMAGE_NAME" =~ 'cirros' ]]; then
+        image_name="${image_fname%.vhd.tgz}"
+        local force_vm_mode=""
+        if [[ "$image_name" =~ 'cirros' ]]; then
             # Cirros VHD image currently only boots in PV mode.
             # Nova defaults to PV for all VHD images, but
             # the glance setting is needed for booting
             # directly from volume.
-            FORCE_VM_MODE="--property vm_mode=xen"
+            force_vm_mode="--property vm_mode=xen"
         fi
         glance \
             --os-auth-token $token \
             --os-image-url http://$GLANCE_HOSTPORT \
             image-create \
-            --name "$IMAGE_NAME" --is-public=True \
+            --name "$image_name" --is-public=True \
             --container-format=ovf --disk-format=vhd \
-            $FORCE_VM_MODE < "${IMAGE}"
+            $force_vm_mode < "${image}"
         return
     fi
 
@@ -225,93 +226,94 @@ function upload_image {
     # and should not be decompressed prior to loading.
     # Setting metadata, so PV mode is used.
     if [[ "$image_url" =~ '.xen-raw.tgz' ]]; then
-        IMAGE_NAME="${IMAGE_FNAME%.xen-raw.tgz}"
+        image_name="${image_fname%.xen-raw.tgz}"
         glance \
             --os-auth-token $token \
             --os-image-url http://$GLANCE_HOSTPORT \
             image-create \
-            --name "$IMAGE_NAME" --is-public=True \
+            --name "$image_name" --is-public=True \
             --container-format=tgz --disk-format=raw \
-            --property vm_mode=xen < "${IMAGE}"
+            --property vm_mode=xen < "${image}"
         return
     fi
 
-    KERNEL=""
-    RAMDISK=""
-    DISK_FORMAT=""
-    CONTAINER_FORMAT=""
-    UNPACK=""
-    case "$IMAGE_FNAME" in
+    local kernel=""
+    local ramdisk=""
+    local disk_format=""
+    local container_format=""
+    local unpack=""
+    local img_property=""
+    case "$image_fname" in
         *.tar.gz|*.tgz)
             # Extract ami and aki files
-            [ "${IMAGE_FNAME%.tar.gz}" != "$IMAGE_FNAME" ] &&
-                IMAGE_NAME="${IMAGE_FNAME%.tar.gz}" ||
-                IMAGE_NAME="${IMAGE_FNAME%.tgz}"
-            xdir="$FILES/images/$IMAGE_NAME"
+            [ "${image_fname%.tar.gz}" != "$image_fname" ] &&
+                image_name="${image_fname%.tar.gz}" ||
+                image_name="${image_fname%.tgz}"
+            local xdir="$FILES/images/$image_name"
             rm -Rf "$xdir";
             mkdir "$xdir"
-            tar -zxf $IMAGE -C "$xdir"
-            KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
+            tar -zxf $image -C "$xdir"
+            kernel=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
                 [ -f "$f" ] && echo "$f" && break; done; true)
-            RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
+            ramdisk=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
                 [ -f "$f" ] && echo "$f" && break; done; true)
-            IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
+            image=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
                 [ -f "$f" ] && echo "$f" && break; done; true)
-            if [[ -z "$IMAGE_NAME" ]]; then
-                IMAGE_NAME=$(basename "$IMAGE" ".img")
+            if [[ -z "$image_name" ]]; then
+                image_name=$(basename "$image" ".img")
             fi
             ;;
         *.img)
-            IMAGE_NAME=$(basename "$IMAGE" ".img")
-            format=$(qemu-img info ${IMAGE} | awk '/^file format/ { print $3; exit }')
+            image_name=$(basename "$image" ".img")
+            local format=$(qemu-img info ${image} | awk '/^file format/ { print $3; exit }')
             if [[ ",qcow2,raw,vdi,vmdk,vpc," =~ ",$format," ]]; then
-                DISK_FORMAT=$format
+                disk_format=$format
             else
-                DISK_FORMAT=raw
+                disk_format=raw
             fi
-            CONTAINER_FORMAT=bare
+            container_format=bare
             ;;
         *.img.gz)
-            IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
-            DISK_FORMAT=raw
-            CONTAINER_FORMAT=bare
-            UNPACK=zcat
+            image_name=$(basename "$image" ".img.gz")
+            disk_format=raw
+            container_format=bare
+            unpack=zcat
             ;;
         *.qcow2)
-            IMAGE_NAME=$(basename "$IMAGE" ".qcow2")
-            DISK_FORMAT=qcow2
-            CONTAINER_FORMAT=bare
+            image_name=$(basename "$image" ".qcow2")
+            disk_format=qcow2
+            container_format=bare
             ;;
         *.iso)
-            IMAGE_NAME=$(basename "$IMAGE" ".iso")
-            DISK_FORMAT=iso
-            CONTAINER_FORMAT=bare
+            image_name=$(basename "$image" ".iso")
+            disk_format=iso
+            container_format=bare
             ;;
-        *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
+        *) echo "Do not know what to do with $image_fname"; false;;
     esac
 
     if is_arch "ppc64"; then
-        IMG_PROPERTY="--property hw_cdrom_bus=scsi"
+        img_property="--property hw_cdrom_bus=scsi"
     fi
 
-    if [ "$CONTAINER_FORMAT" = "bare" ]; then
-        if [ "$UNPACK" = "zcat" ]; then
-            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" $IMG_PROPERTY --is-public True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
+    if [ "$container_format" = "bare" ]; then
+        if [ "$unpack" = "zcat" ]; then
+            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name" $img_property --is-public True --container-format=$container_format --disk-format $disk_format < <(zcat --force "${image}")
         else
-            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" $IMG_PROPERTY --is-public True --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < "${IMAGE}"
+            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name" $img_property --is-public True --container-format=$container_format --disk-format $disk_format < "${image}"
         fi
     else
         # Use glance client to add the kernel the root filesystem.
         # We parse the results of the first upload to get the glance ID of the
         # kernel for use when uploading the root filesystem.
-        KERNEL_ID=""; RAMDISK_ID="";
-        if [ -n "$KERNEL" ]; then
-            KERNEL_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" $IMG_PROPERTY --is-public True --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
+        local kernel_id="" ramdisk_id="";
+        if [ -n "$kernel" ]; then
+            kernel_id=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name-kernel" $img_property --is-public True --container-format aki --disk-format aki < "$kernel" | grep ' id ' | get_field 2)
         fi
-        if [ -n "$RAMDISK" ]; then
-            RAMDISK_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" $IMG_PROPERTY --is-public True --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
+        if [ -n "$ramdisk" ]; then
+            ramdisk_id=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name-ramdisk" $img_property --is-public True --container-format ari --disk-format ari < "$ramdisk" | grep ' id ' | get_field 2)
         fi
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" $IMG_PROPERTY --is-public True --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
+        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "${image_name%.img}" $img_property --is-public True --container-format ami --disk-format ami ${kernel_id:+--property kernel_id=$kernel_id} ${ramdisk_id:+--property ramdisk_id=$ramdisk_id} < "${image}"
     fi
 }
 
