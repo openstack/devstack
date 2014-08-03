@@ -134,7 +134,7 @@ function foreach_tenant_net {
 }
 
 function get_image_id {
-    local IMAGE_ID=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+    local IMAGE_ID=$(openstack image list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
     die_if_not_set $LINENO IMAGE_ID "Failure retrieving IMAGE_ID"
     echo "$IMAGE_ID"
 }

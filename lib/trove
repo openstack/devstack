@@ -211,7 +211,7 @@ function init_trove {
     # The image is uploaded by stack.sh -- see $IMAGE_URLS handling
     GUEST_IMAGE_NAME=$(basename "$TROVE_GUEST_IMAGE_URL")
     GUEST_IMAGE_NAME=${GUEST_IMAGE_NAME%.*}
-    TROVE_GUEST_IMAGE_ID=$(glance --os-auth-token $TOKEN --os-image-url http://$GLANCE_HOSTPORT image-list | grep "${GUEST_IMAGE_NAME}" | get_field 1)
+    TROVE_GUEST_IMAGE_ID=$(openstack --os-token $TOKEN --os-url http://$GLANCE_HOSTPORT image list | grep "${GUEST_IMAGE_NAME}" | get_field 1)
     if [ -z "$TROVE_GUEST_IMAGE_ID" ]; then
         # If no glance id is found, skip remaining setup
         echo "Datastore ${TROVE_DATASTORE_TYPE} will not be created: guest image ${GUEST_IMAGE_NAME} not found."

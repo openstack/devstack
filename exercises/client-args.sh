@@ -122,7 +122,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
-        if glance $TENANT_ARG $ARGS image-list; then
+        if openstack $TENANT_ARG $ARGS image list; then
             STATUS_GLANCE="Succeeded"
         else
             STATUS_GLANCE="Failed"
