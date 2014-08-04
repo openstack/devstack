@@ -25,3 +25,4 @@ python2.7
 bc
 libyaml-dev
 libffi-dev
+libssl-dev # for pyOpenSSL
