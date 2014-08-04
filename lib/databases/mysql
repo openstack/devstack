@@ -47,22 +47,22 @@ function recreate_database_mysql {
 }
 
 function configure_database_mysql {
-    local slow_log
+    local my_conf mysql slow_log
     echo_summary "Configuring and starting MySQL"
 
     if is_ubuntu; then
-        MY_CONF=/etc/mysql/my.cnf
-        MYSQL=mysql
+        my_conf=/etc/mysql/my.cnf
+        mysql=mysql
     elif is_fedora; then
         if [[ $DISTRO =~ (rhel7) ]]; then
-            MYSQL=mariadb
+            mysql=mariadb
         else
-            MYSQL=mysqld
+            mysql=mysqld
         fi
-        MY_CONF=/etc/my.cnf
+        my_conf=/etc/my.cnf
     elif is_suse; then
-        MY_CONF=/etc/my.cnf
-        MYSQL=mysql
+        my_conf=/etc/my.cnf
+        mysql=mysql
     else
         exit_distro_not_supported "mysql configuration"
     fi
@@ -70,7 +70,7 @@ function configure_database_mysql {
     # Start mysql-server
     if is_fedora || is_suse; then
         # service is not started by default
-        start_service $MYSQL
+        start_service $mysql
     fi
 
     # Set the root password - only works the first time. For Ubuntu, we already
@@ -87,9 +87,9 @@ function configure_database_mysql {
     # Change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and
     # set default db type to InnoDB
     sudo bash -c "source $TOP_DIR/functions && \
-        iniset $MY_CONF mysqld bind-address 0.0.0.0 && \
-        iniset $MY_CONF mysqld sql_mode STRICT_ALL_TABLES && \
-        iniset $MY_CONF mysqld default-storage-engine InnoDB"
+        iniset $my_conf mysqld bind-address 0.0.0.0 && \
+        iniset $my_conf mysqld sql_mode STRICT_ALL_TABLES && \
+        iniset $my_conf mysqld default-storage-engine InnoDB"
 
 
     if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
@@ -102,19 +102,19 @@ function configure_database_mysql {
         sudo sed -e '/log.slow.queries/d' \
             -e '/long.query.time/d' \
             -e '/log.queries.not.using.indexes/d' \
-            -i $MY_CONF
+            -i $my_conf
 
         # Turn on slow query log, log all queries (any query taking longer than
         # 0 seconds) and log all non-indexed queries
         sudo bash -c "source $TOP_DIR/functions && \
-            iniset $MY_CONF mysqld slow-query-log 1 && \
-            iniset $MY_CONF mysqld slow-query-log-file $slow_log && \
-            iniset $MY_CONF mysqld long-query-time 0 && \
-            iniset $MY_CONF mysqld log-queries-not-using-indexes 1"
+            iniset $my_conf mysqld slow-query-log 1 && \
+            iniset $my_conf mysqld slow-query-log-file $slow_log && \
+            iniset $my_conf mysqld long-query-time 0 && \
+            iniset $my_conf mysqld log-queries-not-using-indexes 1"
 
     fi
 
-    restart_service $MYSQL
+    restart_service $mysql
 }
 
 function install_database_mysql {
