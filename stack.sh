@@ -219,7 +219,7 @@ fi
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
 
-if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
+if [[ is_fedora && $DISTRO == "rhel6" ]]; then
     # Installing Open vSwitch on RHEL requires enabling the RDO repo.
     RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack-icehouse/rdo-release-icehouse.rpm"}
     RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-icehouse"}
@@ -228,10 +228,13 @@ if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
         yum_install $RHEL6_RDO_REPO_RPM || \
             die $LINENO "Error installing RDO repo, cannot continue"
     fi
+fi
+
+if [[ is_fedora && ( $DISTRO == "rhel6" || $DISTRO == "rhel7" ) ]]; then
     # RHEL requires EPEL for many Open Stack dependencies
-    if [[ $DISTRO =~ (rhel7) ]]; then
+    if [[ $DISTRO == "rhel7" ]]; then
         EPEL_RPM=${RHEL7_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/beta/7/x86_64/epel-release-7-0.2.noarch.rpm"}
-    else
+    elif [[ $DISTRO == "rhel6" ]]; then
         EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
     fi
     if ! sudo yum repolist enabled epel | grep -q 'epel'; then
@@ -242,13 +245,12 @@ if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
 
     # ... and also optional to be enabled
     is_package_installed yum-utils || install_package yum-utils
-    if [[ $DISTRO =~ (rhel7) ]]; then
+    if [[ $DISTRO == "rhel7" ]]; then
         OPTIONAL_REPO=rhel-7-server-optional-rpms
-    else
+    elif [[ $DISTRO == "rhel6" ]]; then
         OPTIONAL_REPO=rhel-6-server-optional-rpms
     fi
     sudo yum-config-manager --enable ${OPTIONAL_REPO}
-
 fi
 
 # Filesystem setup
@@ -518,7 +520,7 @@ function echo_nolog {
     echo $@ >&3
 }
 
-if [[ is_fedora && $DISTRO =~ (rhel) ]]; then
+if [[ is_fedora && $DISTRO == "rhel6" ]]; then
     # poor old python2.6 doesn't have argparse by default, which
     # outfilter.py uses
     is_package_installed python-argparse || install_package python-argparse
