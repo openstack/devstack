@@ -366,6 +366,15 @@ case "$VIRT_DRIVER" in
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.0-x86_64-disk}
         IMAGE_URLS=${IMAGE_URLS:-"https://github.com/downloads/citrix-openstack/warehouse/cirros-0.3.0-x86_64-disk.vhd.tgz"}
         IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
+    ironic)
+        # Ironic can do both partition and full disk images, depending on the driver
+        if [[ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]]; then
+            DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-disk}
+        else
+            DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-uec}
+        fi
+        IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz"}
+        IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-disk.img";;
     *) # Default to Cirros with kernel, ramdisk and disk image
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec}
         IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec.tar.gz"};;
