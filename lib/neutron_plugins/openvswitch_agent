@@ -67,7 +67,7 @@ function neutron_plugin_configure_plugin_agent {
 
     if [ "$VIRT_DRIVER" == 'xenserver' ]; then
         # Make a copy of our config for domU
-        sudo cp /$Q_PLUGIN_CONF_FILE "/$Q_PLUGIN_CONF_FILE.domu"
+        sudo cp /$Q_PLUGIN_CONF_FILE "/$Q_PLUGIN_CONF_FILE.domU"
 
         # Deal with Dom0's L2 Agent:
         Q_RR_DOM0_COMMAND="$NEUTRON_BIN_DIR/neutron-rootwrap-xen-dom0 $Q_RR_CONF_FILE"
