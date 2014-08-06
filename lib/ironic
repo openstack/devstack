@@ -175,15 +175,15 @@ function configure_ironic_api {
 function configure_ironic_conductor {
     cp $IRONIC_DIR/etc/ironic/rootwrap.conf $IRONIC_ROOTWRAP_CONF
     cp -r $IRONIC_DIR/etc/ironic/rootwrap.d $IRONIC_CONF_DIR
-    IRONIC_ROOTWRAP=$(get_rootwrap_location ironic)
-    ROOTWRAP_ISUDOER_CMD="$IRONIC_ROOTWRAP $IRONIC_CONF_DIR/rootwrap.conf *"
+    local ironic_rootwrap=$(get_rootwrap_location ironic)
+    local rootwrap_isudoer_cmd="$ironic_rootwrap $IRONIC_CONF_DIR/rootwrap.conf *"
 
     # Set up the rootwrap sudoers for ironic
-    TEMPFILE=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_ISUDOER_CMD" >$TEMPFILE
-    chmod 0440 $TEMPFILE
-    sudo chown root:root $TEMPFILE
-    sudo mv $TEMPFILE /etc/sudoers.d/ironic-rootwrap
+    local tempfile=`mktemp`
+    echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_isudoer_cmd" >$tempfile
+    chmod 0440 $tempfile
+    sudo chown root:root $tempfile
+    sudo mv $tempfile /etc/sudoers.d/ironic-rootwrap
 
     iniset $IRONIC_CONF_FILE DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
     iniset $IRONIC_CONF_FILE DEFAULT enabled_drivers $IRONIC_ENABLED_DRIVERS
@@ -214,22 +214,22 @@ function create_ironic_cache_dir {
 # service              ironic     admin        # if enabled
 function create_ironic_accounts {
 
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
 
     # Ironic
     if [[ "$ENABLED_SERVICES" =~ "ir-api" ]]; then
         # Get ironic user if exists
 
-        IRONIC_USER=$(get_or_create_user "ironic" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT)
-        get_or_add_user_role $ADMIN_ROLE $IRONIC_USER $SERVICE_TENANT
+        local ironic_user=$(get_or_create_user "ironic" \
+            "$SERVICE_PASSWORD" $service_tenant)
+        get_or_add_user_role $admin_role $ironic_user $service_tenant
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            IRONIC_SERVICE=$(get_or_create_service "ironic" \
+            local ironic_service=$(get_or_create_service "ironic" \
                 "baremetal" "Ironic baremetal provisioning service")
-            get_or_create_endpoint $IRONIC_SERVICE \
+            get_or_create_endpoint $ironic_service \
                 "$REGION_NAME" \
                 "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT" \
                 "$IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT" \
@@ -301,15 +301,15 @@ function configure_ironic_dirs {
     sudo chown -R $STACK_USER $IRONIC_DATA_DIR $IRONIC_STATE_PATH
     sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_TFTPBOOT_DIR
     if is_ubuntu; then
-        PXEBIN=/usr/lib/syslinux/pxelinux.0
+        local pxebin=/usr/lib/syslinux/pxelinux.0
     elif is_fedora; then
-        PXEBIN=/usr/share/syslinux/pxelinux.0
+        local pxebin=/usr/share/syslinux/pxelinux.0
     fi
-    if [ ! -f $PXEBIN ]; then
+    if [ ! -f $pxebin ]; then
         die $LINENO "pxelinux.0 (from SYSLINUX) not found."
     fi
 
-    cp $PXEBIN $IRONIC_TFTPBOOT_DIR
+    cp $pxebin $IRONIC_TFTPBOOT_DIR
     mkdir -p $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
 }
 
@@ -317,20 +317,20 @@ function create_bridge_and_vms {
     # Call libvirt setup scripts in a new shell to ensure any new group membership
     sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/setup-network"
     if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
-        LOG_ARG="$IRONIC_VM_LOG_DIR"
+        local log_arg="$IRONIC_VM_LOG_DIR"
     else
-        LOG_ARG=""
+        local log_arg=""
     fi
     sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/create-nodes \
         $IRONIC_VM_SPECS_CPU $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK \
         amd64 $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE $IRONIC_VM_EMULATOR \
-        $LOG_ARG" >> $IRONIC_VM_MACS_CSV_FILE
+        $log_arg" >> $IRONIC_VM_MACS_CSV_FILE
 }
 
 function enroll_vms {
 
-    CHASSIS_ID=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
-    IRONIC_NET_ID=$(neutron net-list | grep private | get_field 1)
+    local chassis_id=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
+    local ironic_net_id=$(neutron net-list | grep private | get_field 1)
     local idx=0
 
     # work around; need to know what netns neutron uses for private network.
@@ -339,11 +339,11 @@ function enroll_vms {
     # the instances operation. If we don't do this, the first port creation
     # only happens in the middle of fake baremetal instance's spawning by nova,
     # so we'll end up with unbootable fake baremetal VM due to broken PXE.
-    PORT_ID=$(neutron port-create private | grep " id " | get_field 2)
+    local port_id=$(neutron port-create private | grep " id " | get_field 2)
 
     while read MAC; do
 
-        NODE_ID=$(ironic node-create --chassis_uuid $CHASSIS_ID --driver pxe_ssh \
+        local node_id=$(ironic node-create --chassis_uuid $chassis_id --driver pxe_ssh \
             -i pxe_deploy_kernel=$IRONIC_DEPLOY_KERNEL_ID \
             -i pxe_deploy_ramdisk=$IRONIC_DEPLOY_RAMDISK_ID \
             -i ssh_virt_type=$IRONIC_SSH_VIRT_TYPE \
@@ -357,14 +357,14 @@ function enroll_vms {
             -p cpu_arch=x86_64 \
             | grep " uuid " | get_field 2)
 
-        ironic port-create --address $MAC --node_uuid $NODE_ID
+        ironic port-create --address $MAC --node_uuid $node_id
 
         idx=$((idx+1))
 
     done < $IRONIC_VM_MACS_CSV_FILE
 
     # create the nova flavor
-    adjusted_disk=$(($IRONIC_VM_SPECS_DISK - $IRONIC_VM_EPHEMERAL_DISK))
+    local adjusted_disk=$(($IRONIC_VM_SPECS_DISK - $IRONIC_VM_EPHEMERAL_DISK))
     nova flavor-create --ephemeral $IRONIC_VM_EPHEMERAL_DISK baremetal auto $IRONIC_VM_SPECS_RAM $adjusted_disk $IRONIC_VM_SPECS_CPU
     # TODO(lucasagomes): Remove the 'baremetal:deploy_kernel_id'
     # and 'baremetal:deploy_ramdisk_id' parameters
@@ -374,8 +374,8 @@ function enroll_vms {
 
     # intentional sleep to make sure the tag has been set to port
     sleep 10
-    TAPDEV=$(sudo ip netns exec qdhcp-${IRONIC_NET_ID} ip link list | grep tap | cut -d':' -f2 | cut -b2-)
-    TAG_ID=$(sudo ovs-vsctl show |grep ${TAPDEV} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
+    local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep tap | cut -d':' -f2 | cut -b2-)
+    local tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
 
     # make sure veth pair is not existing, otherwise delete its links
     sudo ip link show ovs-tap1 && sudo ip link delete ovs-tap1
@@ -385,12 +385,12 @@ function enroll_vms {
     sudo ip link set dev brbm-tap1 up
     sudo ip link set dev ovs-tap1 up
 
-    sudo ovs-vsctl -- --if-exists del-port ovs-tap1 -- add-port br-int ovs-tap1 tag=$TAG_ID
+    sudo ovs-vsctl -- --if-exists del-port ovs-tap1 -- add-port br-int ovs-tap1 tag=$tag_id
     sudo ovs-vsctl -- --if-exists del-port brbm-tap1 -- add-port $IRONIC_VM_NETWORK_BRIDGE brbm-tap1
 
     # Remove the port needed only for workaround. For additional info read the
     # comment at the beginning of this function
-    neutron port-delete $PORT_ID
+    neutron port-delete $port_id
 }
 
 function configure_iptables {
@@ -404,11 +404,11 @@ function configure_iptables {
 
 function configure_tftpd {
     if is_ubuntu; then
-        PXEBIN=/usr/lib/syslinux/pxelinux.0
+        local pxebin=/usr/lib/syslinux/pxelinux.0
     elif is_fedora; then
-        PXEBIN=/usr/share/syslinux/pxelinux.0
+        local pxebin=/usr/share/syslinux/pxelinux.0
     fi
-    if [ ! -f $PXEBIN ]; then
+    if [ ! -f $pxebin ]; then
         die $LINENO "pxelinux.0 (from SYSLINUX) not found."
     fi
 
@@ -441,12 +441,12 @@ function configure_ironic_ssh_keypair {
 }
 
 function ironic_ssh_check {
-    local KEY_FILE=$1
-    local FLOATING_IP=$2
-    local PORT=$3
-    local DEFAULT_INSTANCE_USER=$4
-    local ACTIVE_TIMEOUT=$5
-    if ! timeout $ACTIVE_TIMEOUT sh -c "while ! ssh -p $PORT -o StrictHostKeyChecking=no -i $KEY_FILE ${DEFAULT_INSTANCE_USER}@$FLOATING_IP echo success; do sleep 1; done"; then
+    local key_file=$1
+    local floating_ip=$2
+    local port=$3
+    local default_instance_user=$4
+    local active_timeout=$5
+    if ! timeout $active_timeout sh -c "while ! ssh -p $port -o StrictHostKeyChecking=no -i $key_file ${default_instance_user}@$floating_ip echo success; do sleep 1; done"; then
         die $LINENO "server didn't become ssh-able!"
     fi
 }
@@ -458,16 +458,17 @@ function configure_ironic_auxiliary {
 }
 
 # build deploy kernel+ramdisk, then upload them to glance
-# this function sets IRONIC_DEPLOY_KERNEL_ID and IRONIC_DEPLOY_RAMDISK_ID
+# this function sets ``IRONIC_DEPLOY_KERNEL_ID``, ``IRONIC_DEPLOY_RAMDISK_ID``
 function upload_baremetal_ironic_deploy {
-    token=$1
+    local token=$1
+    declare -g IRONIC_DEPLOY_KERNEL_ID IRONIC_DEPLOY_RAMDISK_ID
 
     if [ -z "$IRONIC_DEPLOY_KERNEL" -o -z "$IRONIC_DEPLOY_RAMDISK" ]; then
-        IRONIC_DEPLOY_KERNEL_PATH=$TOP_DIR/files/ir-deploy.kernel
-        IRONIC_DEPLOY_RAMDISK_PATH=$TOP_DIR/files/ir-deploy.initramfs
+        local IRONIC_DEPLOY_KERNEL_PATH=$TOP_DIR/files/ir-deploy.kernel
+        local IRONIC_DEPLOY_RAMDISK_PATH=$TOP_DIR/files/ir-deploy.initramfs
     else
-        IRONIC_DEPLOY_KERNEL_PATH=$IRONIC_DEPLOY_KERNEL
-        IRONIC_DEPLOY_RAMDISK_PATH=$IRONIC_DEPLOY_RAMDISK
+        local IRONIC_DEPLOY_KERNEL_PATH=$IRONIC_DEPLOY_KERNEL
+        local IRONIC_DEPLOY_RAMDISK_PATH=$IRONIC_DEPLOY_RAMDISK
     fi
 
     if [ ! -e "$IRONIC_DEPLOY_RAMDISK_PATH" -o ! -e "$IRONIC_DEPLOY_KERNEL_PATH" ]; then
@@ -508,19 +509,20 @@ function prepare_baremetal_basic_ops {
     git_clone $DIB_REPO $DIB_DIR $DIB_BRANCH
 
     # make sure all needed service were enabled
+    local srv
     for srv in nova glance key neutron; do
         if ! is_service_enabled "$srv"; then
             die $LINENO "$srv should be enabled for ironic tests"
         fi
     done
 
-    TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
-    die_if_not_set $LINENO TOKEN "Keystone fail to get token"
+    local token=$(keystone token-get | grep ' id ' | get_field 2)
+    die_if_not_set $LINENO token "Keystone fail to get token"
 
     echo_summary "Creating and uploading baremetal images for ironic"
 
     # build and upload separate deploy kernel & ramdisk
-    upload_baremetal_ironic_deploy $TOKEN
+    upload_baremetal_ironic_deploy $token
 
     create_bridge_and_vms
     enroll_vms
@@ -536,9 +538,9 @@ function prepare_baremetal_basic_ops {
 function cleanup_baremetal_basic_ops {
     rm -f $IRONIC_VM_MACS_CSV_FILE
     if [ -f $IRONIC_KEY_FILE ]; then
-        KEY=`cat $IRONIC_KEY_FILE.pub`
+        local key=$(cat $IRONIC_KEY_FILE.pub)
         # remove public key from authorized_keys
-        grep -v "$KEY" $IRONIC_AUTHORIZED_KEYS_FILE > temp && mv temp $IRONIC_AUTHORIZED_KEYS_FILE
+        grep -v "$key" $IRONIC_AUTHORIZED_KEYS_FILE > temp && mv temp $IRONIC_AUTHORIZED_KEYS_FILE
         chmod 0600 $IRONIC_AUTHORIZED_KEYS_FILE
     fi
     sudo rm -rf $IRONIC_DATA_DIR $IRONIC_STATE_PATH

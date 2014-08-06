@@ -84,7 +84,6 @@ if [[ -d $TOP_DIR/extras.d ]]; then
 fi
 
 # Clean projects
-cleanup_oslo
 cleanup_cinder
 cleanup_glance
 cleanup_keystone
