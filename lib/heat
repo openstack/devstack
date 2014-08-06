@@ -190,6 +190,7 @@ function start_heat {
 # stop_heat() - Stop running processes
 function stop_heat {
     # Kill the screen windows
+    local serv
     for serv in h-eng h-api h-api-cfn h-api-cw; do
         screen_stop $serv
     done
@@ -213,26 +214,26 @@ function disk_image_create {
 # create_heat_accounts() - Set up common required heat accounts
 function create_heat_accounts {
     # migrated from files/keystone_data.sh
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    HEAT_USER=$(get_or_create_user "heat" \
-        "$SERVICE_PASSWORD" $SERVICE_TENANT)
-    get_or_add_user_role $ADMIN_ROLE $HEAT_USER $SERVICE_TENANT
+    local heat_user=$(get_or_create_user "heat" \
+        "$SERVICE_PASSWORD" $service_tenant)
+    get_or_add_user_role $admin_role $heat_user $service_tenant
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-        HEAT_SERVICE=$(get_or_create_service "heat" \
+        local heat_service=$(get_or_create_service "heat" \
                 "orchestration" "Heat Orchestration Service")
-        get_or_create_endpoint $HEAT_SERVICE \
+        get_or_create_endpoint $heat_service \
             "$REGION_NAME" \
             "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
             "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
             "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s"
 
-        HEAT_CFN_SERVICE=$(get_or_create_service "heat-cfn" \
+        local heat_cfn_service=$(get_or_create_service "heat-cfn" \
                 "cloudformation" "Heat CloudFormation Service")
-        get_or_create_endpoint $HEAT_CFN_SERVICE \
+        get_or_create_endpoint $heat_cfn_service \
             "$REGION_NAME" \
             "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
             "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
@@ -247,36 +248,36 @@ function create_heat_accounts {
         # heat_stack_owner role is given to users who create Heat stacks,
         # it's the default role used by heat to delegate to the heat service
         # user (for performing deferred operations via trusts), see heat.conf
-        HEAT_OWNER_ROLE=$(get_or_create_role "heat_stack_owner")
+        local heat_owner_role=$(get_or_create_role "heat_stack_owner")
 
         # Give the role to the demo and admin users so they can create stacks
         # in either of the projects created by devstack
-        get_or_add_user_role $HEAT_OWNER_ROLE demo demo
-        get_or_add_user_role $HEAT_OWNER_ROLE admin demo
-        get_or_add_user_role $HEAT_OWNER_ROLE admin admin
+        get_or_add_user_role $heat_owner_role demo demo
+        get_or_add_user_role $heat_owner_role admin demo
+        get_or_add_user_role $heat_owner_role admin admin
         iniset $HEAT_CONF DEFAULT deferred_auth_method trusts
     fi
 
     if [[ "$HEAT_STACK_DOMAIN" == "True" ]]; then
         # Note we have to pass token/endpoint here because the current endpoint and
         # version negotiation in OSC means just --os-identity-api-version=3 won't work
-        KS_ENDPOINT_V3="$KEYSTONE_SERVICE_URI/v3"
+        local ks_endpoint_v3="$KEYSTONE_SERVICE_URI/v3"
 
-        D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+        D_ID=$(openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
             --os-identity-api-version=3 domain list | grep ' heat ' | get_field 1)
 
         if [[ -z "$D_ID" ]]; then
-            D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+            D_ID=$(openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
                 --os-identity-api-version=3 domain create heat \
                 --description "Owns users and projects created by heat" \
                 | grep ' id ' | get_field 2)
             iniset $HEAT_CONF DEFAULT stack_user_domain ${D_ID}
 
-            openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+            openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
                 --os-identity-api-version=3 user create --password $SERVICE_PASSWORD \
                 --domain $D_ID heat_domain_admin \
                 --description "Manages users and projects created by heat"
-            openstack --os-token $OS_TOKEN --os-url=$KS_ENDPOINT_V3 \
+            openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
                 --os-identity-api-version=3 role add \
                 --user heat_domain_admin --domain ${D_ID} admin
             iniset $HEAT_CONF DEFAULT stack_domain_admin heat_domain_admin
