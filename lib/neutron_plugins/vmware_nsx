@@ -105,9 +105,6 @@ function neutron_plugin_configure_service {
     if [[ "$NSX_PASSWORD" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT nsx_password $NSX_PASSWORD
     fi
-    if [[ "$NSX_REQ_TIMEOUT" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE DEFAULT req_timeout $NSX_REQ_TIMEOUT
-    fi
     if [[ "$NSX_HTTP_TIMEOUT" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE DEFAULT http_timeout $NSX_HTTP_TIMEOUT
     fi
