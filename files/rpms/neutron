@@ -22,3 +22,4 @@ rabbitmq-server # NOPRIME
 qpid-cpp-server        # NOPRIME
 sqlite
 sudo
+radvd # NOPRIME
