@@ -85,6 +85,20 @@ NEUTRON_CONF_DIR=/etc/neutron
 NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
 
+# Agent binaries.  Note, binary paths for other agents are set in per-service
+# scripts in lib/neutron_plugins/services/
+AGENT_DHCP_BINARY="$NEUTRON_BIN_DIR/neutron-dhcp-agent"
+AGENT_L3_BINARY=${AGENT_L3_BINARY:-"$NEUTRON_BIN_DIR/neutron-l3-agent"}
+AGENT_META_BINARY="$NEUTRON_BIN_DIR/neutron-metadata-agent"
+
+# Agent config files. Note, plugin-specific Q_PLUGIN_CONF_FILE is set and
+# loaded from per-plugin  scripts in lib/neutron_plugins/
+Q_DHCP_CONF_FILE=$NEUTRON_CONF_DIR/dhcp_agent.ini
+Q_L3_CONF_FILE=$NEUTRON_CONF_DIR/l3_agent.ini
+Q_FWAAS_CONF_FILE=$NEUTRON_CONF_DIR/fwaas_driver.ini
+Q_VPN_CONF_FILE=$NEUTRON_CONF_DIR/vpn_agent.ini
+Q_META_CONF_FILE=$NEUTRON_CONF_DIR/metadata_agent.ini
+
 # Default name for Neutron database
 Q_DB_NAME=${Q_DB_NAME:-neutron}
 # Default Neutron Plugin
@@ -274,6 +288,51 @@ set +o xtrace
 
 # Functions
 # ---------
+
+function _determine_config_server {
+    local cfg_file
+    local opts="--config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
+    for cfg_file in ${Q_PLUGIN_EXTRA_CONF_FILES[@]}; do
+        opts+=" --config-file /$cfg_file"
+    done
+    echo "$opts"
+}
+
+function _determine_config_vpn {
+    local cfg_file
+    local opts="--config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE --config-file=$Q_VPN_CONF_FILE"
+    if is_service_enabled q-fwaas; then
+        opts+=" --config-file $Q_FWAAS_CONF_FILE"
+    fi
+    for cfg_file in ${Q_VPN_EXTRA_CONF_FILES[@]}; do
+        opts+=" --config-file $cfg_file"
+    done
+    echo "$opts"
+
+}
+
+function _determine_config_l3 {
+    local opts="--config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
+    if is_service_enabled q-fwaas; then
+        opts+=" --config-file $Q_FWAAS_CONF_FILE"
+    fi
+    echo "$opts"
+}
+
+# For services and agents that require it, dynamically construct a list of
+# --config-file arguments that are passed to the binary.
+function determine_config_files {
+    local opts=""
+    case "$1" in
+        "neutron-server") opts="$(_determine_config_server)" ;;
+        "neutron-vpn-agent") opts="$(_determine_config_vpn)" ;;
+        "neutron-l3-agent") opts="$(_determine_config_l3)" ;;
+    esac
+    if [ -z "$opts" ] ; then
+        die $LINENO "Could not determine config files for $1."
+    fi
+    echo "$opts"
+}
 
 # Test if any Neutron services are enabled
 # is_neutron_enabled
@@ -508,14 +567,9 @@ function install_neutron_agent_packages {
 
 # Start running processes, including screen
 function start_neutron_service_and_check {
-    # build config-file options
-    local cfg_file
-    local CFG_FILE_OPTIONS="--config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
-    for cfg_file in ${Q_PLUGIN_EXTRA_CONF_FILES[@]}; do
-        CFG_FILE_OPTIONS+=" --config-file /$cfg_file"
-    done
+    local cfg_file_options="$(determine_config_files neutron-server)"
     # Start the Neutron service
-    screen_it q-svc "cd $NEUTRON_DIR && python $NEUTRON_BIN_DIR/neutron-server $CFG_FILE_OPTIONS"
+    screen_it q-svc "cd $NEUTRON_DIR && python $NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
     echo "Waiting for Neutron to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$Q_HOST:$Q_PORT; do sleep 1; done"; then
         die $LINENO "Neutron did not start"
@@ -528,8 +582,6 @@ function start_neutron_agents {
     screen_it q-agt "cd $NEUTRON_DIR && python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
     screen_it q-dhcp "cd $NEUTRON_DIR && python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
-    L3_CONF_FILES="--config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE"
-
     if is_provider_network; then
         sudo ovs-vsctl add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
         sudo ip link set $OVS_PHYSICAL_BRIDGE up
@@ -537,14 +589,10 @@ function start_neutron_agents {
         sudo ip link set $PUBLIC_INTERFACE up
     fi
 
-    if is_service_enabled q-fwaas; then
-        L3_CONF_FILES="$L3_CONF_FILES --config-file $Q_FWAAS_CONF_FILE"
-        VPN_CONF_FILES="$VPN_CONF_FILES --config-file $Q_FWAAS_CONF_FILE"
-    fi
     if is_service_enabled q-vpn; then
-        screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY $VPN_CONF_FILES"
+        screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY $(determine_config_files neutron-vpn-agent)"
     else
-        screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY $L3_CONF_FILES"
+        screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY $(determine_config_files neutron-l3-agent)"
     fi
 
     screen_it q-meta "cd $NEUTRON_DIR && python $AGENT_META_BINARY --config-file $NEUTRON_CONF --config-file=$Q_META_CONF_FILE"
@@ -681,8 +729,6 @@ function _configure_neutron_debug_command {
 }
 
 function _configure_neutron_dhcp_agent {
-    AGENT_DHCP_BINARY="$NEUTRON_BIN_DIR/neutron-dhcp-agent"
-    Q_DHCP_CONF_FILE=$NEUTRON_CONF_DIR/dhcp_agent.ini
 
     cp $NEUTRON_DIR/etc/dhcp_agent.ini $Q_DHCP_CONF_FILE
 
@@ -702,20 +748,8 @@ function _configure_neutron_l3_agent {
     # for l3-agent, only use per tenant router if we have namespaces
     Q_L3_ROUTER_PER_TENANT=$Q_USE_NAMESPACE
 
-    AGENT_L3_BINARY=${AGENT_L3_BINARY:-"$NEUTRON_BIN_DIR/neutron-l3-agent"}
-    Q_L3_CONF_FILE=$NEUTRON_CONF_DIR/l3_agent.ini
-
-    if is_service_enabled q-fwaas; then
-        Q_FWAAS_CONF_FILE=$NEUTRON_CONF_DIR/fwaas_driver.ini
-    fi
-
     if is_service_enabled q-vpn; then
-        Q_VPN_CONF_FILE=$NEUTRON_CONF_DIR/vpn_agent.ini
         cp $NEUTRON_DIR/etc/vpn_agent.ini $Q_VPN_CONF_FILE
-        VPN_CONF_FILES="--config-file $NEUTRON_CONF --config-file=$Q_L3_CONF_FILE --config-file=$Q_VPN_CONF_FILE"
-        for cfg_file in ${Q_VPN_EXTRA_CONF_FILES[@]}; do
-            VPN_CONF_FILES+=" --config-file $cfg_file"
-        done
     fi
 
     cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
@@ -731,9 +765,6 @@ function _configure_neutron_l3_agent {
 }
 
 function _configure_neutron_metadata_agent {
-    AGENT_META_BINARY="$NEUTRON_BIN_DIR/neutron-metadata-agent"
-    Q_META_CONF_FILE=$NEUTRON_CONF_DIR/metadata_agent.ini
-
     cp $NEUTRON_DIR/etc/metadata_agent.ini $Q_META_CONF_FILE
 
     iniset $Q_META_CONF_FILE DEFAULT verbose True
