@@ -52,7 +52,11 @@ TEMPEST_STATE_PATH=${TEMPEST_STATE_PATH:=$DATA_DIR/tempest}
 NOVA_SOURCE_DIR=$DEST/nova
 
 BUILD_INTERVAL=1
-BUILD_TIMEOUT=196
+
+# This is the timeout that tempest will wait for a VM to change state,
+# spawn, delete, etc.
+# The default is set to 196 seconds.
+BUILD_TIMEOUT=${BUILD_TIMEOUT:-196}
 
 
 BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-${CIRROS_VERSION}"
