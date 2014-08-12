@@ -349,7 +349,7 @@ function create_nova_conf_neutron {
     iniset $NOVA_CONF libvirt vif_driver "$NOVA_VIF_DRIVER"
     iniset $NOVA_CONF DEFAULT linuxnet_interface_driver "$LINUXNET_VIF_DRIVER"
     if is_service_enabled q-meta; then
-        iniset $NOVA_CONF DEFAULT service_neutron_metadata_proxy "True"
+        iniset $NOVA_CONF neutron service_metadata_proxy "True"
     fi
 
     iniset $NOVA_CONF DEFAULT vif_plugging_is_fatal "$VIF_PLUGGING_IS_FATAL"
