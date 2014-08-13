@@ -96,6 +96,10 @@ function configure_glance {
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_user glance
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
     iniset $GLANCE_REGISTRY_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/registry
+    if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
+        iniset $GLANCE_REGISTRY_CONF DEFAULT notification_driver messaging
+    fi
+    iniset_rpc_backend glance $GLANCE_REGISTRY_CONF DEFAULT
 
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
