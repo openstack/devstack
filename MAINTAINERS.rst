@@ -28,20 +28,54 @@ Maintainers
 
 .. contents:: :local:
 
-Fedora/CentOS/RHEL
-~~~~~~~~~~~~~~~~~~
 
- * Ian Wienand <iwienand@redhat.com>
+Ceph
+~~~~
 
-Xen
-~~~
+* Sebastien Han <sebastien.han@enovance.com>
 
 Cinder
 ~~~~~~
 
+Fedora/CentOS/RHEL
+~~~~~~~~~~~~~~~~~~
+
+* Ian Wienand <iwienand@redhat.com>
+
 Neutron
 ~~~~~~~
 
-tempest
+OpenDaylight
+~~~~~~~~~~~~
+
+* Kyle Mestery <kmestery@cisco.com>
+
+Sahara
+~~~~~~
+
+* Sergey Lukjanov <slukjanov@mirantis.com>
+
+SUSE
+~~~~
+
+* Ralf Haferkamp <rhafer@suse.de>
+* Vincent Untz <vuntz@suse.com>
+
+Tempest
 ~~~~~~~
 
+Trove
+~~~~~
+
+* Nikhil Manchanda <SlickNik@gmail.com>
+* Michael Basnight <mbasnight@gmail.com>
+
+Xen
+~~~
+* Bob Ball <bob.ball@citrix.com>
+
+Zaqar (Marconi)
+~~~~~~~~~~~~~~~
+
+* Flavio Percoco <flaper87@gmail.com>
+* Malini Kamalambal <malini.kamalambal@rackspace.com>
