@@ -71,7 +71,11 @@ function _neutron_ovs_base_configure_firewall_driver {
 }
 
 function _neutron_ovs_base_configure_l3_agent {
-    iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+    if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
+        iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge ""
+    else
+        iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+    fi
 
     neutron-ovs-cleanup
     # --no-wait causes a race condition if $PUBLIC_BRIDGE is not up when ip addr flush is called
