@@ -446,6 +446,7 @@ function init_tempest {
     if [ -f "$kernel" -a -f "$ramdisk" -a -f "$disk_image" -a  "$VIRT_DRIVER" != "openvz" \
         -a \( "$LIBVIRT_TYPE" != "lxc" -o "$VIRT_DRIVER" != "libvirt" \) ]; then
         echo "Prepare aki/ari/ami Images"
+        mkdir -p $BOTO_MATERIALS_PATH
         ( #new namespace
             # tenant:demo ; user: demo
             source $TOP_DIR/accrc/demo/demo
