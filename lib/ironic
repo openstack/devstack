@@ -102,6 +102,12 @@ function is_ironic_enabled {
 
 # install_ironic() - Collect source and prepare
 function install_ironic {
+    # make sure all needed service were enabled
+    for srv in nova glance key; do
+        if ! is_service_enabled "$srv"; then
+            die $LINENO "$srv should be enabled for Ironic."
+        fi
+    done
     git_clone $IRONIC_REPO $IRONIC_DIR $IRONIC_BRANCH
     setup_develop $IRONIC_DIR
 }
@@ -119,11 +125,33 @@ function cleanup_ironic {
     sudo rm -rf $IRONIC_AUTH_CACHE_DIR
 }
 
-# configure_ironic() - Set config files, create data dirs, etc
-function configure_ironic {
+# configure_ironic_dirs() - Create all directories required by Ironic and
+# associated services.
+function configure_ironic_dirs {
     if [[ ! -d $IRONIC_CONF_DIR ]]; then
         sudo mkdir -p $IRONIC_CONF_DIR
     fi
+    sudo mkdir -p $IRONIC_DATA_DIR
+    sudo mkdir -p $IRONIC_STATE_PATH
+    sudo mkdir -p $IRONIC_TFTPBOOT_DIR
+    sudo chown -R $STACK_USER $IRONIC_DATA_DIR $IRONIC_STATE_PATH
+    sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_TFTPBOOT_DIR
+    if is_ubuntu; then
+        local pxebin=/usr/lib/syslinux/pxelinux.0
+    elif is_fedora; then
+        local pxebin=/usr/share/syslinux/pxelinux.0
+    fi
+    if [ ! -f $pxebin ]; then
+        die $LINENO "pxelinux.0 (from SYSLINUX) not found."
+    fi
+
+    cp $pxebin $IRONIC_TFTPBOOT_DIR
+    mkdir -p $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
+}
+
+# configure_ironic() - Set config files, create data dirs, etc
+function configure_ironic {
+    configure_ironic_dirs
     sudo chown $STACK_USER $IRONIC_CONF_DIR
 
     # Copy over ironic configuration file and configure common parameters.
@@ -146,10 +174,6 @@ function configure_ironic {
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $IRONIC_CONF_FILE DEFAULT
-    fi
-
-    if [[ "$IRONIC_BAREMETAL_BASIC_OPS" == "True" ]]; then
-        configure_ironic_auxiliary
     fi
 }
 
@@ -294,23 +318,33 @@ function is_ironic {
     return 1
 }
 
-function configure_ironic_dirs {
-    sudo mkdir -p $IRONIC_DATA_DIR
-    sudo mkdir -p $IRONIC_STATE_PATH
-    sudo mkdir -p $IRONIC_TFTPBOOT_DIR
-    sudo chown -R $STACK_USER $IRONIC_DATA_DIR $IRONIC_STATE_PATH
-    sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_TFTPBOOT_DIR
-    if is_ubuntu; then
-        local pxebin=/usr/lib/syslinux/pxelinux.0
-    elif is_fedora; then
-        local pxebin=/usr/share/syslinux/pxelinux.0
-    fi
-    if [ ! -f $pxebin ]; then
-        die $LINENO "pxelinux.0 (from SYSLINUX) not found."
-    fi
+function create_ovs_taps {
+    local ironic_net_id=$(neutron net-list | grep private | get_field 1)
 
-    cp $pxebin $IRONIC_TFTPBOOT_DIR
-    mkdir -p $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
+    # Work around: No netns exists on host until a Neutron port is created.  We
+    # need to create one in Neutron to know what netns to tap into prior to the
+    # first node booting.
+    local port_id=$(neutron port-create private | grep " id " | get_field 2)
+
+    # intentional sleep to make sure the tag has been set to port
+    sleep 10
+
+    local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep tap | cut -d':' -f2 | cut -b2-)
+    local tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
+
+    # make sure veth pair is not existing, otherwise delete its links
+    sudo ip link show ovs-tap1 && sudo ip link delete ovs-tap1
+    sudo ip link show brbm-tap1 && sudo ip link delete brbm-tap1
+    # create veth pair for future interconnection between br-int and brbm
+    sudo ip link add brbm-tap1 type veth peer name ovs-tap1
+    sudo ip link set dev brbm-tap1 up
+    sudo ip link set dev ovs-tap1 up
+
+    sudo ovs-vsctl -- --if-exists del-port ovs-tap1 -- add-port br-int ovs-tap1 tag=$tag_id
+    sudo ovs-vsctl -- --if-exists del-port brbm-tap1 -- add-port $IRONIC_VM_NETWORK_BRIDGE brbm-tap1
+
+    # Remove the port needed only for workaround.
+    neutron port-delete $port_id
 }
 
 function create_bridge_and_vms {
@@ -325,24 +359,13 @@ function create_bridge_and_vms {
         $IRONIC_VM_SPECS_CPU $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK \
         amd64 $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE $IRONIC_VM_EMULATOR \
         $log_arg" >> $IRONIC_VM_MACS_CSV_FILE
+    create_ovs_taps
 }
 
 function enroll_vms {
-
     local chassis_id=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
-    local ironic_net_id=$(neutron net-list | grep private | get_field 1)
     local idx=0
-
-    # work around; need to know what netns neutron uses for private network.
-    # Without knowing how to interconnect the networks, PXE won't work properly
-    # for fake baremetal instances. The network should be configured prior all
-    # the instances operation. If we don't do this, the first port creation
-    # only happens in the middle of fake baremetal instance's spawning by nova,
-    # so we'll end up with unbootable fake baremetal VM due to broken PXE.
-    local port_id=$(neutron port-create private | grep " id " | get_field 2)
-
     while read MAC; do
-
         local node_id=$(ironic node-create --chassis_uuid $chassis_id --driver pxe_ssh \
             -i pxe_deploy_kernel=$IRONIC_DEPLOY_KERNEL_ID \
             -i pxe_deploy_ramdisk=$IRONIC_DEPLOY_RAMDISK_ID \
@@ -360,7 +383,6 @@ function enroll_vms {
         ironic port-create --address $MAC --node_uuid $node_id
 
         idx=$((idx+1))
-
     done < $IRONIC_VM_MACS_CSV_FILE
 
     # create the nova flavor
@@ -371,26 +393,6 @@ function enroll_vms {
     # from the flavor after the completion of
     # https://blueprints.launchpad.net/ironic/+spec/add-node-instance-info
     nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$IRONIC_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$IRONIC_DEPLOY_RAMDISK_ID"
-
-    # intentional sleep to make sure the tag has been set to port
-    sleep 10
-    local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep tap | cut -d':' -f2 | cut -b2-)
-    local tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
-
-    # make sure veth pair is not existing, otherwise delete its links
-    sudo ip link show ovs-tap1 && sudo ip link delete ovs-tap1
-    sudo ip link show brbm-tap1 && sudo ip link delete brbm-tap1
-    # create veth pair for future interconnection between br-int and brbm
-    sudo ip link add brbm-tap1 type veth peer name ovs-tap1
-    sudo ip link set dev brbm-tap1 up
-    sudo ip link set dev ovs-tap1 up
-
-    sudo ovs-vsctl -- --if-exists del-port ovs-tap1 -- add-port br-int ovs-tap1 tag=$tag_id
-    sudo ovs-vsctl -- --if-exists del-port brbm-tap1 -- add-port $IRONIC_VM_NETWORK_BRIDGE brbm-tap1
-
-    # Remove the port needed only for workaround. For additional info read the
-    # comment at the beginning of this function
-    neutron port-delete $port_id
 }
 
 function configure_iptables {
@@ -452,7 +454,6 @@ function ironic_ssh_check {
 }
 
 function configure_ironic_auxiliary {
-    configure_ironic_dirs
     configure_ironic_ssh_keypair
     ironic_ssh_check $IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME $IRONIC_VM_SSH_ADDRESS $IRONIC_VM_SSH_PORT $IRONIC_SSH_USERNAME 10
 }
@@ -460,8 +461,11 @@ function configure_ironic_auxiliary {
 # build deploy kernel+ramdisk, then upload them to glance
 # this function sets ``IRONIC_DEPLOY_KERNEL_ID``, ``IRONIC_DEPLOY_RAMDISK_ID``
 function upload_baremetal_ironic_deploy {
-    local token=$1
     declare -g IRONIC_DEPLOY_KERNEL_ID IRONIC_DEPLOY_RAMDISK_ID
+    echo_summary "Creating and uploading baremetal images for ironic"
+
+    # install diskimage-builder
+    git_clone $DIB_REPO $DIB_DIR $DIB_BRANCH
 
     if [ -z "$IRONIC_DEPLOY_KERNEL" -o -z "$IRONIC_DEPLOY_RAMDISK" ]; then
         local IRONIC_DEPLOY_KERNEL_PATH=$TOP_DIR/files/ir-deploy.kernel
@@ -486,6 +490,9 @@ function upload_baremetal_ironic_deploy {
         fi
     fi
 
+    local token=$(keystone token-get | grep ' id ' | get_field 2)
+    die_if_not_set $LINENO token "Keystone fail to get token"
+
     # load them into glance
     IRONIC_DEPLOY_KERNEL_ID=$(glance \
         --os-auth-token $token \
@@ -504,35 +511,12 @@ function upload_baremetal_ironic_deploy {
 }
 
 function prepare_baremetal_basic_ops {
-
-    # install diskimage-builder
-    git_clone $DIB_REPO $DIB_DIR $DIB_BRANCH
-
-    # make sure all needed service were enabled
-    local srv
-    for srv in nova glance key neutron; do
-        if ! is_service_enabled "$srv"; then
-            die $LINENO "$srv should be enabled for ironic tests"
-        fi
-    done
-
-    local token=$(keystone token-get | grep ' id ' | get_field 2)
-    die_if_not_set $LINENO token "Keystone fail to get token"
-
-    echo_summary "Creating and uploading baremetal images for ironic"
-
-    # build and upload separate deploy kernel & ramdisk
-    upload_baremetal_ironic_deploy $token
-
+    upload_baremetal_ironic_deploy
     create_bridge_and_vms
     enroll_vms
     configure_tftpd
     configure_iptables
-
-    # restart nova-compute to ensure its resource tracking is up to
-    # date with newly enrolled nodes
-    stop_nova_compute || true
-    start_nova_compute
+    configure_ironic_auxiliary
 }
 
 function cleanup_baremetal_basic_ops {
