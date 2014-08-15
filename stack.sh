@@ -662,7 +662,7 @@ if [[ "$OFFLINE" != "True" ]]; then
 fi
 
 # Do the ugly hacks for broken packages and distros
-$TOP_DIR/tools/fixup_stuff.sh
+source $TOP_DIR/tools/fixup_stuff.sh
 
 
 # Extras Pre-install
