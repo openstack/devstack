@@ -115,6 +115,10 @@ OBJECT_PORT_BASE=${OBJECT_PORT_BASE:-6013}
 CONTAINER_PORT_BASE=${CONTAINER_PORT_BASE:-6011}
 ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 
+# Enable tempurl feature
+SWIFT_ENABLE_TEMPURLS=${SWIFT_ENABLE_TEMPURLS:-False}
+SWIFT_TEMPURL_KEY=${SWIFT_TEMPURL_KEY}
+
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,swift
 
@@ -679,6 +683,10 @@ function start_swift {
             screen_it s-${type} "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
         done
     fi
+
+    if [[ "$SWIFT_ENABLE_TEMPURLS" == "True" ]]; then
+        swift_configure_tempurls
+    fi
 }
 
 # stop_swift() - Stop running processes (non-screen)
@@ -699,6 +707,13 @@ function stop_swift {
     done
     # Blast out any stragglers
     pkill -f swift-
+}
+
+function swift_configure_tempurls {
+    OS_USERNAME=swift \
+        OS_TENANT_NAME=$SERVICE_TENANT_NAME \
+        OS_PASSWORD=$SERVICE_PASSWORD \
+        swift post -m "Temp-URL-Key: $SWIFT_TEMPURL_KEY"
 }
 
 # Restore xtrace

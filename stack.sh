@@ -216,6 +216,14 @@ if is_ubuntu; then
     echo 'APT::Acquire::Retries "20";' | sudo tee /etc/apt/apt.conf.d/80retry
 fi
 
+# upstream Rackspace centos7 images have an issue where cloud-init is
+# installed via pip because there were not official packages when the
+# image was created (fix in the works).  Remove all pip packages
+# before we do anything else
+if [[ $DISTRO = "rhel7" && is_rackspace ]]; then
+    (sudo pip freeze | xargs sudo pip uninstall -y) || true
+fi
+
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
 
@@ -474,6 +482,10 @@ if is_service_enabled s-proxy; then
     # ``SWIFT_HASH`` is a random unique string for a swift cluster that
     # can never change.
     read_password SWIFT_HASH "ENTER A RANDOM SWIFT HASH."
+
+    if [[ -z "$SWIFT_TEMPURL_KEY" ]] && [[ "$SWIFT_ENABLE_TEMPURLS" == "True" ]]; then
+        read_password SWIFT_TEMPURL_KEY "ENTER A KEY FOR SWIFT TEMPURLS."
+    fi
 fi
 
 
