@@ -494,19 +494,19 @@ function upload_baremetal_ironic_deploy {
     die_if_not_set $LINENO token "Keystone fail to get token"
 
     # load them into glance
-    IRONIC_DEPLOY_KERNEL_ID=$(glance \
-        --os-auth-token $token \
-        --os-image-url http://$GLANCE_HOSTPORT \
-        image-create \
-        --name $(basename $IRONIC_DEPLOY_KERNEL_PATH) \
-        --is-public True --disk-format=aki \
+    IRONIC_DEPLOY_KERNEL_ID=$(openstack \
+        --os-token $token \
+        --os-url http://$GLANCE_HOSTPORT \
+        image create \
+        $(basename $IRONIC_DEPLOY_KERNEL_PATH) \
+        --public --disk-format=aki \
         < $IRONIC_DEPLOY_KERNEL_PATH  | grep ' id ' | get_field 2)
-    IRONIC_DEPLOY_RAMDISK_ID=$(glance \
-        --os-auth-token $token \
-        --os-image-url http://$GLANCE_HOSTPORT \
-        image-create \
-        --name $(basename $IRONIC_DEPLOY_RAMDISK_PATH) \
-        --is-public True --disk-format=ari \
+    IRONIC_DEPLOY_RAMDISK_ID=$(openstack \
+        --os-token $token \
+        --os-url http://$GLANCE_HOSTPORT \
+        image create \
+        $(basename $IRONIC_DEPLOY_RAMDISK_PATH) \
+        --public --disk-format=ari \
         < $IRONIC_DEPLOY_RAMDISK_PATH  | grep ' id ' | get_field 2)
 }
 

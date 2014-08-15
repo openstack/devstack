@@ -85,7 +85,7 @@ function upload_image {
     # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
     if [[ "$image_url" =~ 'openvz' ]]; then
         image_name="${image_fname%.tar.gz}"
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name" --is-public=True --container-format ami --disk-format ami < "${image}"
+        openstack --os-token $token --os-url http://$GLANCE_HOSTPORT image create "$image_name" --public --container-format ami --disk-format ami < "${image}"
         return
     fi
 
@@ -196,7 +196,7 @@ function upload_image {
         vmdk_adapter_type="${props[1]:-$vmdk_adapter_type}"
         vmdk_net_adapter="${props[2]:-$vmdk_net_adapter}"
 
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name" --is-public=True --container-format bare --disk-format vmdk --property vmware_disktype="$vmdk_disktype" --property vmware_adaptertype="$vmdk_adapter_type" --property hw_vif_model="$vmdk_net_adapter" < "${image}"
+        openstack --os-token $token --os-url http://$GLANCE_HOSTPORT image create "$image_name" --public --container-format bare --disk-format vmdk --property vmware_disktype="$vmdk_disktype" --property vmware_adaptertype="$vmdk_adapter_type" --property hw_vif_model="$vmdk_net_adapter" < "${image}"
         return
     fi
 
@@ -212,11 +212,11 @@ function upload_image {
             # directly from volume.
             force_vm_mode="--property vm_mode=xen"
         fi
-        glance \
-            --os-auth-token $token \
-            --os-image-url http://$GLANCE_HOSTPORT \
-            image-create \
-            --name "$image_name" --is-public=True \
+        openstack \
+            --os-token $token \
+            --os-url http://$GLANCE_HOSTPORT \
+            image create \
+            "$image_name" --public \
             --container-format=ovf --disk-format=vhd \
             $force_vm_mode < "${image}"
         return
@@ -227,11 +227,11 @@ function upload_image {
     # Setting metadata, so PV mode is used.
     if [[ "$image_url" =~ '.xen-raw.tgz' ]]; then
         image_name="${image_fname%.xen-raw.tgz}"
-        glance \
-            --os-auth-token $token \
-            --os-image-url http://$GLANCE_HOSTPORT \
-            image-create \
-            --name "$image_name" --is-public=True \
+        openstack \
+            --os-token $token \
+            --os-url http://$GLANCE_HOSTPORT \
+            image create \
+            "$image_name" --public \
             --container-format=tgz --disk-format=raw \
             --property vm_mode=xen < "${image}"
         return
@@ -307,9 +307,9 @@ function upload_image {
 
     if [ "$container_format" = "bare" ]; then
         if [ "$unpack" = "zcat" ]; then
-            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name" $img_property --is-public True --container-format=$container_format --disk-format $disk_format < <(zcat --force "${image}")
+            openstack --os-token $token --os-url http://$GLANCE_HOSTPORT image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(zcat --force "${image}")
         else
-            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name" $img_property --is-public True --container-format=$container_format --disk-format $disk_format < "${image}"
+            openstack --os-token $token --os-url http://$GLANCE_HOSTPORT image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < "${image}"
         fi
     else
         # Use glance client to add the kernel the root filesystem.
@@ -317,12 +317,12 @@ function upload_image {
         # kernel for use when uploading the root filesystem.
         local kernel_id="" ramdisk_id="";
         if [ -n "$kernel" ]; then
-            kernel_id=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name-kernel" $img_property --is-public True --container-format aki --disk-format aki < "$kernel" | grep ' id ' | get_field 2)
+            kernel_id=$(openstack --os-token $token --os-url http://$GLANCE_HOSTPORT image create "$image_name-kernel" $img_property --public --container-format aki --disk-format aki < "$kernel" | grep ' id ' | get_field 2)
         fi
         if [ -n "$ramdisk" ]; then
-            ramdisk_id=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$image_name-ramdisk" $img_property --is-public True --container-format ari --disk-format ari < "$ramdisk" | grep ' id ' | get_field 2)
+            ramdisk_id=$(openstack --os-token $token --os-url http://$GLANCE_HOSTPORT image create "$image_name-ramdisk" $img_property --public --container-format ari --disk-format ari < "$ramdisk" | grep ' id ' | get_field 2)
         fi
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "${image_name%.img}" $img_property --is-public True --container-format ami --disk-format ami ${kernel_id:+--property kernel_id=$kernel_id} ${ramdisk_id:+--property ramdisk_id=$ramdisk_id} < "${image}"
+        openstack --os-token $token --os-url http://$GLANCE_HOSTPORT image create "${image_name%.img}" $img_property --public --container-format ami --disk-format ami ${kernel_id:+--property kernel_id=$kernel_id} ${ramdisk_id:+--property ramdisk_id=$ramdisk_id} < "${image}"
     fi
 }
 
