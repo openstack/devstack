@@ -500,6 +500,7 @@ function upload_baremetal_ironic_deploy {
         image create \
         $(basename $IRONIC_DEPLOY_KERNEL_PATH) \
         --public --disk-format=aki \
+        --container-format=aki \
         < $IRONIC_DEPLOY_KERNEL_PATH  | grep ' id ' | get_field 2)
     IRONIC_DEPLOY_RAMDISK_ID=$(openstack \
         --os-token $token \
@@ -507,6 +508,7 @@ function upload_baremetal_ironic_deploy {
         image create \
         $(basename $IRONIC_DEPLOY_RAMDISK_PATH) \
         --public --disk-format=ari \
+        --container-format=ari \
         < $IRONIC_DEPLOY_RAMDISK_PATH  | grep ' id ' | get_field 2)
 }
 
