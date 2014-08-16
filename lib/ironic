@@ -76,6 +76,12 @@ IRONIC_DEPLOY_RAMDISK=${IRONIC_DEPLOY_RAMDISK:-}
 IRONIC_DEPLOY_KERNEL=${IRONIC_DEPLOY_KERNEL:-}
 IRONIC_DEPLOY_ELEMENT=${IRONIC_DEPLOY_ELEMENT:-deploy-ironic}
 
+IRONIC_AGENT_TARBALL=${IRONIC_AGENT_TARBALL:-http://tarballs.openstack.org/ironic-python-agent/coreos/ipa-coreos.tar.gz}
+
+# Which deploy driver to use - valid choices right now
+# are 'pxe_ssh' and 'agent_ssh'.
+IRONIC_DEPLOY_DRIVER=${IRONIC_DEPLOY_DRIVER:-pxe_ssh}
+
 #TODO(agordeev): replace 'ubuntu' with host distro name getting
 IRONIC_DEPLOY_FLAVOR=${IRONIC_DEPLOY_FLAVOR:-ubuntu $IRONIC_DEPLOY_ELEMENT}
 
@@ -217,6 +223,22 @@ function configure_ironic_conductor {
     iniset $IRONIC_CONF_FILE pxe tftp_master_path $IRONIC_TFTPBOOT_DIR/master_images
     if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
         iniset $IRONIC_CONF_FILE pxe pxe_append_params "nofb nomodeset vga=normal console=ttyS0"
+    fi
+    if [[ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]] ; then
+        if [[ "$SWIFT_ENABLE_TEMPURLS" == "True" ]] ; then
+            iniset $IRONIC_CONF_FILE glance swift_temp_url_key $SWIFT_TEMPURL_KEY
+        else
+            die $LINENO "SWIFT_ENABLE_TEMPURLS must be True to use agent_ssh driver in Ironic."
+        fi
+        iniset $IRONIC_CONF_FILE glance swift_endpoint_url http://${HOST_IP}:8080
+        iniset $IRONIC_CONF_FILE glance swift_api_version v1
+        iniset $IRONIC_CONF_FILE glance swift_account AUTH_${SERVICE_TENANT}
+        iniset $IRONIC_CONF_FILE glance swift_container glance
+        iniset $IRONIC_CONF_FILE glance swift_temp_url_duration 3600
+        iniset $IRONIC_CONF_FILE agent heartbeat_timeout 30
+        if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
+            iniset $IRONIC_CONF_FILE agent agent_pxe_append_params "nofb nomodeset vga=normal console=ttyS0"
+        fi
     fi
 }
 
@@ -365,10 +387,21 @@ function create_bridge_and_vms {
 function enroll_vms {
     local chassis_id=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
     local idx=0
+
+    if [[ "$IRONIC_DEPLOY_DRIVER" == "pxe_ssh" ]] ; then
+        local _IRONIC_DEPLOY_KERNEL_KEY=pxe_deploy_kernel
+        local _IRONIC_DEPLOY_RAMDISK_KEY=pxe_deploy_ramdisk
+    elif [[ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]] ; then
+        local _IRONIC_DEPLOY_KERNEL_KEY=deploy_kernel
+        local _IRONIC_DEPLOY_RAMDISK_KEY=deploy_ramdisk
+    fi
+
     while read MAC; do
-        local node_id=$(ironic node-create --chassis_uuid $chassis_id --driver pxe_ssh \
-            -i pxe_deploy_kernel=$IRONIC_DEPLOY_KERNEL_ID \
-            -i pxe_deploy_ramdisk=$IRONIC_DEPLOY_RAMDISK_ID \
+
+        local node_id=$(ironic node-create --chassis_uuid $chassis_id \
+            --driver $IRONIC_DEPLOY_DRIVER \
+            -i $_IRONIC_DEPLOY_KERNEL_KEY=$IRONIC_DEPLOY_KERNEL_ID \
+            -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID \
             -i ssh_virt_type=$IRONIC_SSH_VIRT_TYPE \
             -i ssh_address=$IRONIC_VM_SSH_ADDRESS \
             -i ssh_port=$IRONIC_VM_SSH_PORT \
@@ -480,13 +513,27 @@ function upload_baremetal_ironic_deploy {
         if [ "$IRONIC_BUILD_DEPLOY_RAMDISK" = "True" ]; then
             # we can build them only if we're not offline
             if [ "$OFFLINE" != "True" ]; then
-                $DIB_DIR/bin/ramdisk-image-create $IRONIC_DEPLOY_FLAVOR \
-                    -o $TOP_DIR/files/ir-deploy
+                if [ "$IRONIC_DEPLOY_RAMDISK" == "agent_ssh" ]; then
+                    die $LINENO "Ironic-python-agent build is not yet supported"
+                else
+                    $DIB_DIR/bin/ramdisk-image-create $IRONIC_DEPLOY_FLAVOR \
+                        -o $TOP_DIR/files/ir-deploy
+                fi
             else
                 die $LINENO "Deploy kernel+ramdisk files don't exist and cannot be build in OFFLINE mode"
             fi
         else
-            die $LINENO "Deploy kernel+ramdisk files don't exist and their building was disabled explicitly by IRONIC_BUILD_DEPLOY_RAMDISK"
+            if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
+                # download the agent image tarball
+                wget "$IRONIC_AGENT_TARBALL" -O ironic_agent_tarball.tar.gz
+                tar zxfv ironic_agent_tarball.tar.gz
+                mv UPLOAD/coreos_production_pxe.vmlinuz $IRONIC_DEPLOY_KERNEL_PATH
+                mv UPLOAD/coreos_production_pxe_image-oem.cpio.gz $IRONIC_DEPLOY_RAMDISK_PATH
+                rm -rf UPLOAD
+                rm ironic_agent_tarball.tar.gz
+            else
+                die $LINENO "Deploy kernel+ramdisk files don't exist and their building was disabled explicitly by IRONIC_BUILD_DEPLOY_RAMDISK"
+            fi
         fi
     fi
 
@@ -500,6 +547,7 @@ function upload_baremetal_ironic_deploy {
         image create \
         $(basename $IRONIC_DEPLOY_KERNEL_PATH) \
         --public --disk-format=aki \
+        --container-format=aki \
         < $IRONIC_DEPLOY_KERNEL_PATH  | grep ' id ' | get_field 2)
     IRONIC_DEPLOY_RAMDISK_ID=$(openstack \
         --os-token $token \
@@ -507,6 +555,7 @@ function upload_baremetal_ironic_deploy {
         image create \
         $(basename $IRONIC_DEPLOY_RAMDISK_PATH) \
         --public --disk-format=ari \
+        --container-format=ari \
         < $IRONIC_DEPLOY_RAMDISK_PATH  | grep ' id ' | get_field 2)
 }
 
