@@ -37,7 +37,7 @@ function install_libvirt {
     # and HP images used in the gate; rackspace has firewalld but hp
     # cloud doesn't.  RHEL6 doesn't have firewalld either.  So we
     # don't care if it fails.
-    if is_fedora; then
+    if is_fedora && is_package_installed firewalld; then
         sudo service firewalld restart || true
     fi
 }
