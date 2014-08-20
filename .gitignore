@@ -5,6 +5,7 @@
 *.pem
 .localrc.auto
 .prereqs
+.tox
 .stackenv
 accrc
 docs/files
