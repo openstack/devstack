@@ -1,0 +1,41 @@
+# lib/apache
+# Functions to start and stop dstat
+
+# Dependencies:
+#
+# - ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# - start_dstat
+# - stop_dstat
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+# for DSTAT logging
+DSTAT_FILE=${DSTAT_FILE:-"dstat.txt"}
+
+
+# start_dstat() - Start running processes, including screen
+function start_dstat {
+    # A better kind of sysstat, with the top process per time slice
+    DSTAT_OPTS="-tcmndrylp --top-cpu-adv"
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
+    else
+        screen_it dstat "dstat $DSTAT_OPTS"
+    fi
+}
+
+# stop_dstat() stop dstat process
+function stop_dstat {
+    screen_stop dstat
+}
+
+# Restore xtrace
+$XTRACE

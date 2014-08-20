@@ -162,6 +162,8 @@ if is_service_enabled trove; then
     cleanup_trove
 fi
 
+stop_dstat
+
 # Clean up the remainder of the screen processes
 SCREEN=$(which screen)
 if [[ -n "$SCREEN" ]]; then
