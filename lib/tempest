@@ -292,6 +292,10 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
+    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions ${COMPUTE_API_EXTENSIONS:-"all"}
+    iniset $TEMPEST_CONFIG compute-feature-disabled api_extensions ${DISABLE_COMPUTE_API_EXTENSIONS}
+    iniset $TEMPEST_CONFIG compute-feature-enabled api_v3_extensions ${COMPUTE_API_V3_EXTENSIONS:-"all"}
+    iniset $TEMPEST_CONFIG compute-feature-disabled api_v3_extensions ${DISABLE_COMPUTE_API_V3_EXTENSIONS}
 
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
@@ -306,6 +310,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network default_network "$FIXED_RANGE"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6 "$IPV6_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
+    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions ${NETWORK_API_EXTENSIONS:-"all"}
+    iniset $TEMPEST_CONFIG network-feature-disabled api_extensions ${DISABLE_NETWORK_API_EXTENSIONS}
 
     # boto
     iniset $TEMPEST_CONFIG boto ec2_url "http://$SERVICE_HOST:8773/services/Cloud"
@@ -346,7 +352,13 @@ function configure_tempest {
     # Once Tempest retires support for icehouse this flag can be removed.
     iniset $TEMPEST_CONFIG telemetry too_slow_to_test "False"
 
+    # Object storage
+    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis ${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
+    iniset $TEMPEST_CONFIG object-storage-feature-disabled discoverable_apis ${OBJECT_STORAGE_DISABLE_API_EXTENSIONS}
+
     # Volume
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions ${VOLUME_API_EXTENSIONS:-"all"}
+    iniset $TEMPEST_CONFIG volume-feature-disabled api_extensions ${DISABLE_VOLUME_API_EXTENSIONS}
     if ! is_service_enabled c-bak; then
         iniset $TEMPEST_CONFIG volume-feature-enabled backup False
     fi
@@ -368,9 +380,6 @@ function configure_tempest {
 
     # cli
     iniset $TEMPEST_CONFIG cli cli_dir $NOVA_BIN_DIR
-
-    # Networking
-    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
 
     # Baremetal
     if [ "$VIRT_DRIVER" = "ironic" ] ; then
