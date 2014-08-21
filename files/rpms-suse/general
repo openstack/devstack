@@ -5,6 +5,7 @@ curl
 euca2ools
 gcc
 git-core
+graphviz # testonly - docs
 iputils
 libopenssl-devel # to rebuild pyOpenSSL if needed
 lsof # useful when debugging
