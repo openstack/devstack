@@ -127,10 +127,6 @@ BM_FLAVOR_ID=${BM_FLAVOR_ID:-11}
 BM_FLAVOR_ARCH=${BM_FLAVOR_ARCH:-$BM_CPU_ARCH}
 
 
-# Below this, we set some path and filenames.
-# Defaults are probably sufficient.
-DIB_DIR=${DIB_DIR:-$DEST/diskimage-builder}
-
 # Use DIB to create deploy ramdisk and kernel.
 BM_BUILD_DEPLOY_RAMDISK=`trueorfalse True $BM_BUILD_DEPLOY_RAMDISK`
 # If not use DIB, these files are used as deploy ramdisk/kernel.
@@ -165,8 +161,9 @@ function is_baremetal {
 # Install diskimage-builder and shell-in-a-box
 # so that we can build the deployment kernel & ramdisk
 function prepare_baremetal_toolchain {
-    git_clone $DIB_REPO $DIB_DIR $DIB_BUILD_BRANCH
-
+    if [[ $(type -P ramdisk-image-create) == "" ]]; then
+        pip_install diskimage_builder
+    fi
     local shellinabox_basename=$(basename $BM_SHELL_IN_A_BOX)
     if [[ ! -e $DEST/$shellinabox_basename ]]; then
         cd $DEST
@@ -223,7 +220,7 @@ function upload_baremetal_deploy {
         BM_DEPLOY_KERNEL=bm-deploy.kernel
         BM_DEPLOY_RAMDISK=bm-deploy.initramfs
         if [ ! -e "$TOP_DIR/files/$BM_DEPLOY_KERNEL" -o ! -e "$TOP_DIR/files/$BM_DEPLOY_RAMDISK" ]; then
-            $DIB_DIR/bin/ramdisk-image-create $BM_DEPLOY_FLAVOR \
+            ramdisk-image-create $BM_DEPLOY_FLAVOR \
                 -o $TOP_DIR/files/bm-deploy
         fi
     fi
@@ -271,7 +268,7 @@ function extract_and_upload_k_and_r_from_image {
     image_name=$(basename "$file" ".qcow2")
 
     # this call returns the file names as "$kernel,$ramdisk"
-    out=$($DIB_DIR/bin/disk-image-get-kernel \
+    out=$(disk-image-get-kernel \
             -x -d $TOP_DIR/files -o bm-deploy -i $file)
     if [ $? -ne 0 ]; then
         die $LINENO "Failed to get kernel and ramdisk from $file"
