@@ -136,6 +136,10 @@ CINDER_BRANCH=${CINDER_BRANCH:-master}
 CINDERCLIENT_REPO=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
 CINDERCLIENT_BRANCH=${CINDERCLIENT_BRANCH:-master}
 
+# diskimage-builder
+DIB_REPO=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
+DIB_BRANCH=${DIB_BRANCH:-master}
+
 # image catalog service
 GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
 GLANCE_BRANCH=${GLANCE_BRANCH:-master}
@@ -151,6 +155,14 @@ HEAT_BRANCH=${HEAT_BRANCH:-master}
 # python heat client library
 HEATCLIENT_REPO=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
 HEATCLIENT_BRANCH=${HEATCLIENT_BRANCH:-master}
+
+# heat-cfntools server agent
+HEAT_CFNTOOLS_REPO=${HEAT_CFNTOOLS_REPO:-${GIT_BASE}/openstack/heat-cfntools.git}
+HEAT_CFNTOOLS_BRANCH=${HEAT_CFNTOOLS_BRANCH:-master}
+
+# heat example templates and elements
+HEAT_TEMPLATES_REPO=${HEAT_TEMPLATES_REPO:-${GIT_BASE}/openstack/heat-templates.git}
+HEAT_TEMPLATES_BRANCH=${HEAT_TEMPLATES_BRANCH:-master}
 
 # django powered web control panel for openstack
 HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
@@ -188,9 +200,21 @@ NOVA_BRANCH=${NOVA_BRANCH:-master}
 NOVACLIENT_REPO=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
 NOVACLIENT_BRANCH=${NOVACLIENT_BRANCH:-master}
 
+# os-apply-config configuration template tool
+OAC_REPO=${OAC_REPO:-${GIT_BASE}/openstack/os-apply-config.git}
+OAC_BRANCH=${OAC_BRANCH:-master}
+
+# os-collect-config configuration agent
+OCC_REPO=${OCC_REPO:-${GIT_BASE}/openstack/os-collect-config.git}
+OCC_BRANCH=${OCC_BRANCH:-master}
+
 # consolidated openstack python client
 OPENSTACKCLIENT_REPO=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
 OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
+
+# os-refresh-config configuration run-parts tool
+ORC_REPO=${ORC_REPO:-${GIT_BASE}/openstack/os-refresh-config.git}
+ORC_BRANCH=${ORC_BRANCH:-master}
 
 # cliff command line framework
 CLIFF_REPO=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
@@ -262,10 +286,9 @@ SWIFTCLIENT_BRANCH=${SWIFTCLIENT_BRANCH:-master}
 TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
 TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
-
-# diskimage-builder
-DIB_REPO=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
-DIB_BRANCH=${DIB_BRANCH:-master}
+# Tripleo elements for diskimage-builder images
+TIE_REPO=${TIE_REPO:-${GIT_BASE}/openstack/tripleo-image-elements.git}
+TIE_BRANCH=${TIE_BRANCH:-master}
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=${NOVNC_REPO:-https://github.com/kanaka/noVNC.git}

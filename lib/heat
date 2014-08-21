@@ -31,6 +31,8 @@ set +o xtrace
 # set up default directories
 HEAT_DIR=$DEST/heat
 HEATCLIENT_DIR=$DEST/python-heatclient
+HEAT_CFNTOOLS_DIR=$DEST/heat-cfntools
+HEAT_TEMPLATES_REPO_DIR=$DEST/heat-templates
 HEAT_AUTH_CACHE_DIR=${HEAT_AUTH_CACHE_DIR:-/var/cache/heat}
 HEAT_STANDALONE=`trueorfalse False $HEAT_STANDALONE`
 HEAT_CONF_DIR=/etc/heat
@@ -177,6 +179,12 @@ function install_heatclient {
 # install_heat() - Collect source and prepare
 function install_heat {
     git_clone $HEAT_REPO $HEAT_DIR $HEAT_BRANCH
+}
+
+# install_heat_other() - Collect source and prepare
+function install_heat_other {
+    git_clone $HEAT_CFNTOOLS_REPO $HEAT_CFNTOOLS_DIR $HEAT_CFNTOOLS_BRANCH
+    git_clone $HEAT_TEMPLATES_REPO $HEAT_TEMPLATES_REPO_DIR $HEAT_TEMPLATES_BRANCH
 }
 
 # start_heat() - Start running processes, including screen

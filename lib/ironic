@@ -66,8 +66,6 @@ IRONIC_AUTHORIZED_KEYS_FILE=${IRONIC_AUTHORIZED_KEYS_FILE:-$HOME/.ssh/authorized
 IRONIC_VM_LOG_CONSOLE=${IRONIC_VM_LOG_CONSOLE:-True}
 IRONIC_VM_LOG_DIR=${IRONIC_VM_LOG_DIR:-$IRONIC_DATA_DIR/logs/}
 
-DIB_DIR=${DIB_DIR:-$DEST/diskimage-builder}
-
 # Use DIB to create deploy ramdisk and kernel.
 IRONIC_BUILD_DEPLOY_RAMDISK=`trueorfalse True $IRONIC_BUILD_DEPLOY_RAMDISK`
 # If not use DIB, these files are used as deploy ramdisk/kernel.
@@ -498,7 +496,9 @@ function upload_baremetal_ironic_deploy {
     echo_summary "Creating and uploading baremetal images for ironic"
 
     # install diskimage-builder
-    git_clone $DIB_REPO $DIB_DIR $DIB_BRANCH
+    if [[ $(type -P ramdisk-image-create) == "" ]]; then
+        pip_install diskimage_builder
+    fi
 
     if [ -z "$IRONIC_DEPLOY_KERNEL" -o -z "$IRONIC_DEPLOY_RAMDISK" ]; then
         local IRONIC_DEPLOY_KERNEL_PATH=$TOP_DIR/files/ir-deploy.kernel
@@ -516,7 +516,7 @@ function upload_baremetal_ironic_deploy {
                 if [ "$IRONIC_DEPLOY_RAMDISK" == "agent_ssh" ]; then
                     die $LINENO "Ironic-python-agent build is not yet supported"
                 else
-                    $DIB_DIR/bin/ramdisk-image-create $IRONIC_DEPLOY_FLAVOR \
+                    ramdisk-image-create $IRONIC_DEPLOY_FLAVOR \
                         -o $TOP_DIR/files/ir-deploy
                 fi
             else

@@ -812,6 +812,7 @@ fi
 
 if is_service_enabled heat; then
     install_heat
+    install_heat_other
     cleanup_heat
     configure_heat
 fi
