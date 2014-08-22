@@ -1,0 +1,15 @@
+Listen %DIB_PIP_REPO_PORT%
+
+<VirtualHost *:%DIB_PIP_REPO_PORT%>
+    DocumentRoot %DIB_PIP_REPO%
+    <Directory %DIB_PIP_REPO%>
+        DirectoryIndex index.html
+        Require all granted
+        Order allow,deny
+        allow from all
+    </Directory>
+
+    ErrorLog /var/log/%APACHE_NAME%/dib_pip_repo_error.log
+    LogLevel warn
+    CustomLog /var/log/%APACHE_NAME%/dib_pip_repo_access.log combined
+</VirtualHost>
