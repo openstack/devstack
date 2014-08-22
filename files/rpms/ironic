@@ -1,5 +1,6 @@
 ipmitool
 iptables
+ipxe-bootimgs
 libguestfs
 libvirt
 libvirt-python

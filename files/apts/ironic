@@ -1,5 +1,6 @@
 ipmitool
 iptables
+ipxe
 libguestfs0
 libvirt-bin
 openssh-client
