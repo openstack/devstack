@@ -1272,6 +1272,10 @@ if is_service_enabled heat; then
     init_heat
     echo_summary "Starting Heat"
     start_heat
+    if [ "$HEAT_CREATE_TEST_IMAGE" = "True" ]; then
+        echo_summary "Building Heat functional test image"
+        build_heat_functional_test_image
+    fi
 fi
 
 

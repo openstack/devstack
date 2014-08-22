@@ -204,21 +204,6 @@ function stop_heat {
     done
 }
 
-function disk_image_create {
-    local elements_path=$1
-    local elements=$2
-    local arch=$3
-    local output=$TOP_DIR/files/$4
-    if [[ -f "$output.qcow2" ]]; then
-        echo "Image file already exists: $output_file"
-    else
-        ELEMENTS_PATH=$elements_path disk-image-create \
-            $elements -a $arch -o $output
-    fi
-    # upload with fake URL so that image in $TOP_DIR/files is used
-    upload_image "http://localhost/$output.qcow2" $TOKEN
-}
-
 # create_heat_accounts() - Set up common required heat accounts
 function create_heat_accounts {
     # migrated from files/keystone_data.sh
@@ -292,6 +277,23 @@ function create_heat_accounts {
             iniset $HEAT_CONF DEFAULT stack_domain_admin_password $SERVICE_PASSWORD
         fi
     fi
+}
+
+# build_heat_functional_test_image() - Build and upload functional test image
+function build_heat_functional_test_image {
+    build_dib_pip_repo "$OCC_DIR $OAC_DIR $ORC_DIR $HEAT_CFNTOOLS_DIR"
+    local image_name=heat-functional-tests-image
+
+    # The elements to invoke disk-image-create with
+    local image_elements="vm fedora selinux-permissive pypi \
+        os-collect-config os-refresh-config os-apply-config heat-cfntools \
+        heat-config heat-config-cfn-init heat-config-puppet heat-config-script"
+
+    # Elements path for tripleo-image-elements and heat-templates software-config
+    local elements_path=$TIE_DIR/elements:$HEAT_TEMPLATES_REPO_DIR/hot/software-config/elements
+
+    disk_image_create_upload "$image_name" "$image_elements" "$elements_path"
+    iniset $TEMPEST_CONFIG orchestration image_ref $image_name
 }
 
 # Restore xtrace

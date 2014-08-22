@@ -93,6 +93,32 @@ IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:6385}
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,ironic
 
+# Enable iPXE
+IRONIC_IPXE_ENABLED=$(trueorfalse False $IRONIC_IPXE_ENABLED)
+IRONIC_HTTP_DIR=${IRONIC_HTTP_DIR:-$IRONIC_DATA_DIR/httpboot}
+IRONIC_HTTP_SERVER=${IRONIC_HTTP_SERVER:-$HOST_IP}
+IRONIC_HTTP_PORT=${IRONIC_HTTP_PORT:-8088}
+
+# get_pxe_boot_file() - Get the PXE/iPXE boot file path
+function get_pxe_boot_file {
+    local relpath=syslinux/pxelinux.0
+    if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
+        relpath=ipxe/undionly.kpxe
+    fi
+
+    local pxe_boot_file
+    if is_ubuntu; then
+        pxe_boot_file=/usr/lib/$relpath
+    elif is_fedora || is_suse; then
+        pxe_boot_file=/usr/share/$relpath
+    fi
+
+    echo $pxe_boot_file
+}
+
+# PXE boot image
+IRONIC_PXE_BOOT_IMAGE=${IRONIC_PXE_BOOT_IMAGE:-$(get_pxe_boot_file)}
+
 
 # Functions
 # ---------
@@ -114,6 +140,10 @@ function install_ironic {
     done
     git_clone $IRONIC_REPO $IRONIC_DIR $IRONIC_BRANCH
     setup_develop $IRONIC_DIR
+
+    if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
+        install_apache_wsgi
+    fi
 }
 
 # install_ironicclient() - Collect sources and prepare
@@ -121,6 +151,25 @@ function install_ironicclient {
     git_clone $IRONICCLIENT_REPO $IRONICCLIENT_DIR $IRONICCLIENT_BRANCH
     setup_develop $IRONICCLIENT_DIR
     sudo install -D -m 0644 -o $STACK_USER {$IRONICCLIENT_DIR/tools/,/etc/bash_completion.d/}ironic.bash_completion
+}
+
+# _cleanup_ironic_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+function _cleanup_ironic_apache_wsgi {
+    sudo rm -rf $IRONIC_HTTP_DIR
+    disable_apache_site ironic
+    sudo rm -f $(apache_site_config_for ironic)
+    restart_apache_server
+}
+
+# _config_ironic_apache_wsgi() - Set WSGI config files of Ironic
+function _config_ironic_apache_wsgi {
+    local ironic_apache_conf=$(apache_site_config_for ironic)
+    sudo cp $FILES/apache-ironic.template $ironic_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$IRONIC_HTTP_PORT|g;
+        s|%HTTPROOT%|$IRONIC_HTTP_DIR|g;
+    " -i $ironic_apache_conf
+    enable_apache_site ironic
 }
 
 # cleanup_ironic() - Remove residual data files, anything left over from previous
@@ -135,22 +184,24 @@ function configure_ironic_dirs {
     if [[ ! -d $IRONIC_CONF_DIR ]]; then
         sudo mkdir -p $IRONIC_CONF_DIR
     fi
+
+    if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
+        sudo mkdir -p $IRONIC_HTTP_DIR
+        sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_HTTP_DIR
+    fi
+
     sudo mkdir -p $IRONIC_DATA_DIR
     sudo mkdir -p $IRONIC_STATE_PATH
     sudo mkdir -p $IRONIC_TFTPBOOT_DIR
     sudo chown -R $STACK_USER $IRONIC_DATA_DIR $IRONIC_STATE_PATH
     sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_TFTPBOOT_DIR
-    if is_ubuntu; then
-        local pxebin=/usr/lib/syslinux/pxelinux.0
-    elif is_fedora; then
-        local pxebin=/usr/share/syslinux/pxelinux.0
-    fi
-    if [ ! -f $pxebin ]; then
-        die $LINENO "pxelinux.0 (from SYSLINUX) not found."
+    mkdir -p $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
+
+    if [ ! -f $IRONIC_PXE_BOOT_IMAGE ]; then
+        die $LINENO "PXE boot file $IRONIC_PXE_BOOT_IMAGE not found."
     fi
 
-    cp $pxebin $IRONIC_TFTPBOOT_DIR
-    mkdir -p $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
+    cp $IRONIC_PXE_BOOT_IMAGE $IRONIC_TFTPBOOT_DIR
 }
 
 # configure_ironic() - Set config files, create data dirs, etc
@@ -178,6 +229,10 @@ function configure_ironic {
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $IRONIC_CONF_FILE DEFAULT
+    fi
+
+    if [[ "$IRONIC_IPXE_ENABLED" == "True" ]]; then
+        _config_ironic_apache_wsgi
     fi
 }
 
@@ -237,6 +292,15 @@ function configure_ironic_conductor {
         if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
             iniset $IRONIC_CONF_FILE agent agent_pxe_append_params "nofb nomodeset vga=normal console=ttyS0"
         fi
+    fi
+
+    if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
+        local pxebin=`basename $IRONIC_PXE_BOOT_IMAGE`
+        iniset $IRONIC_CONF_FILE pxe ipxe_enabled True
+        iniset $IRONIC_CONF_FILE pxe pxe_config_template '\$pybasedir/drivers/modules/ipxe_config.template'
+        iniset $IRONIC_CONF_FILE pxe pxe_bootfile_name $pxebin
+        iniset $IRONIC_CONF_FILE pxe http_root $IRONIC_HTTP_DIR
+        iniset $IRONIC_CONF_FILE pxe http_url "http://$IRONIC_HTTP_SERVER:$IRONIC_HTTP_PORT"
     fi
 }
 
@@ -305,6 +369,11 @@ function start_ironic {
     if is_service_enabled ir-cond; then
         start_ironic_conductor
     fi
+
+    # Start Apache if iPXE is enabled
+    if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
+        restart_apache_server
+    fi
 }
 
 # start_ironic_api() - Used by start_ironic().
@@ -329,6 +398,11 @@ function stop_ironic {
     # Kill the Ironic screen windows
     screen -S $SCREEN_NAME -p ir-api -X kill
     screen -S $SCREEN_NAME -p ir-cond -X kill
+
+    # Cleanup the WSGI files
+    if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
+        _cleanup_ironic_apache_wsgi
+    fi
 }
 
 function is_ironic {
@@ -436,15 +510,6 @@ function configure_iptables {
 }
 
 function configure_tftpd {
-    if is_ubuntu; then
-        local pxebin=/usr/lib/syslinux/pxelinux.0
-    elif is_fedora; then
-        local pxebin=/usr/share/syslinux/pxelinux.0
-    fi
-    if [ ! -f $pxebin ]; then
-        die $LINENO "pxelinux.0 (from SYSLINUX) not found."
-    fi
-
     # stop tftpd and setup serving via xinetd
     stop_service tftpd-hpa || true
     [ -f /etc/init/tftpd-hpa.conf ] && echo "manual" | sudo tee /etc/init/tftpd-hpa.override
