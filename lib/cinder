@@ -96,10 +96,10 @@ TEMPEST_SERVICES+=,cinder
 # Source the enabled backends
 if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
     for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
-        BE_TYPE=${be%%:*}
-        BE_NAME=${be##*:}
-        if [[ -r $CINDER_BACKENDS/${BE_TYPE} ]]; then
-            source $CINDER_BACKENDS/${BE_TYPE}
+        be_type=${be%%:*}
+        be_name=${be##*:}
+        if [[ -r $CINDER_BACKENDS/${be_type} ]]; then
+            source $CINDER_BACKENDS/${be_type}
         fi
     done
 fi
@@ -120,7 +120,7 @@ function is_cinder_enabled {
 function cleanup_cinder {
     # ensure the volume group is cleared up because fails might
     # leave dead volumes in the group
-    TARGETS=$(sudo tgtadm --op show --mode target)
+    local targets=$(sudo tgtadm --op show --mode target)
     if [ $? -ne 0 ]; then
         # If tgt driver isn't running this won't work obviously
         # So check the response and restart if need be
@@ -130,11 +130,11 @@ function cleanup_cinder {
         else
             restart_service tgtd
         fi
-        TARGETS=$(sudo tgtadm --op show --mode target)
+        targets=$(sudo tgtadm --op show --mode target)
     fi
 
-    if [[ -n "$TARGETS" ]]; then
-        iqn_list=( $(grep --no-filename -r iqn $SCSI_PERSIST_DIR | sed 's/<target //' | sed 's/>//') )
+    if [[ -n "$targets" ]]; then
+        local iqn_list=( $(grep --no-filename -r iqn $SCSI_PERSIST_DIR | sed 's/<target //' | sed 's/>//') )
         for i in "${iqn_list[@]}"; do
             echo removing iSCSI target: $i
             sudo tgt-admin --delete $i
@@ -148,11 +148,12 @@ function cleanup_cinder {
     fi
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
+        local be be_name be_type
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
-            BE_TYPE=${be%%:*}
-            BE_NAME=${be##*:}
-            if type cleanup_cinder_backend_${BE_TYPE} >/dev/null 2>&1; then
-                cleanup_cinder_backend_${BE_TYPE} ${BE_NAME}
+            be_type=${be%%:*}
+            be_name=${be##*:}
+            if type cleanup_cinder_backend_${be_type} >/dev/null 2>&1; then
+                cleanup_cinder_backend_${be_type} ${be_name}
             fi
         done
     fi
@@ -161,7 +162,7 @@ function cleanup_cinder {
 # configure_cinder_rootwrap() - configure Cinder's rootwrap
 function configure_cinder_rootwrap {
     # Set the paths of certain binaries
-    CINDER_ROOTWRAP=$(get_rootwrap_location cinder)
+    local cinder_rootwrap=$(get_rootwrap_location cinder)
 
     # Deploy new rootwrap filters files (owned by root).
     # Wipe any existing rootwrap.d files first
@@ -179,14 +180,14 @@ function configure_cinder_rootwrap {
     sudo chown root:root $CINDER_CONF_DIR/rootwrap.conf
     sudo chmod 0644 $CINDER_CONF_DIR/rootwrap.conf
     # Specify rootwrap.conf as first parameter to rootwrap
-    ROOTWRAP_CSUDOER_CMD="$CINDER_ROOTWRAP $CINDER_CONF_DIR/rootwrap.conf *"
+    ROOTWRAP_CSUDOER_CMD="$cinder_rootwrap $CINDER_CONF_DIR/rootwrap.conf *"
 
     # Set up the rootwrap sudoers for cinder
-    TEMPFILE=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CSUDOER_CMD" >$TEMPFILE
-    chmod 0440 $TEMPFILE
-    sudo chown root:root $TEMPFILE
-    sudo mv $TEMPFILE /etc/sudoers.d/cinder-rootwrap
+    local tempfile=`mktemp`
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CSUDOER_CMD" >$tempfile
+    chmod 0440 $tempfile
+    sudo chown root:root $tempfile
+    sudo mv $tempfile /etc/sudoers.d/cinder-rootwrap
 }
 
 # configure_cinder() - Set config files, create data dirs, etc
@@ -237,18 +238,19 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT enable_v1_api true
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
-        enabled_backends=""
-        default_name=""
+        local enabled_backends=""
+        local default_name=""
+        local be be_name be_type
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
-            BE_TYPE=${be%%:*}
-            BE_NAME=${be##*:}
-            if type configure_cinder_backend_${BE_TYPE} >/dev/null 2>&1; then
-                configure_cinder_backend_${BE_TYPE} ${BE_NAME}
+            be_type=${be%%:*}
+            be_name=${be##*:}
+            if type configure_cinder_backend_${be_type} >/dev/null 2>&1; then
+                configure_cinder_backend_${be_type} ${be_name}
             fi
-            if [[ -z "$default_name" ]]; then
-                default_name=$BE_NAME
+            if [[ -z "$default_type" ]]; then
+                default_name=$be_type
             fi
-            enabled_backends+=$BE_NAME,
+            enabled_backends+=$be_name,
         done
         iniset $CINDER_CONF DEFAULT enabled_backends ${enabled_backends%,*}
         if [[ -n "$default_name" ]]; then
@@ -316,28 +318,28 @@ function configure_cinder {
 # Migrated from keystone_data.sh
 function create_cinder_accounts {
 
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
 
     # Cinder
     if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
 
-        CINDER_USER=$(get_or_create_user "cinder" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT)
-        get_or_add_user_role $ADMIN_ROLE $CINDER_USER $SERVICE_TENANT
+        local cinder_user=$(get_or_create_user "cinder" \
+            "$SERVICE_PASSWORD" $service_tenant)
+        get_or_add_user_role $admin_role $cinder_user $service_tenant
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            CINDER_SERVICE=$(get_or_create_service "cinder" \
+            local cinder_service=$(get_or_create_service "cinder" \
                 "volume" "Cinder Volume Service")
-            get_or_create_endpoint $CINDER_SERVICE "$REGION_NAME" \
+            get_or_create_endpoint $cinder_service "$REGION_NAME" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
 
-            CINDER_V2_SERVICE=$(get_or_create_service "cinderv2" \
+            local cinder_v2_service=$(get_or_create_service "cinderv2" \
                 "volumev2" "Cinder Volume Service V2")
-            get_or_create_endpoint $CINDER_V2_SERVICE "$REGION_NAME" \
+            get_or_create_endpoint $cinder_v2_service "$REGION_NAME" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s"
@@ -354,6 +356,7 @@ function create_cinder_cache_dir {
 }
 
 # init_cinder() - Initialize database and volume group
+# Uses global ``NOVA_ENABLED_APIS``
 function init_cinder {
     # Force nova volumes off
     NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/osapi_volume,//")
@@ -367,11 +370,12 @@ function init_cinder {
     fi
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
+        local be be_name be_type
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
-            BE_TYPE=${be%%:*}
-            BE_NAME=${be##*:}
-            if type init_cinder_backend_${BE_TYPE} >/dev/null 2>&1; then
-                init_cinder_backend_${BE_TYPE} ${BE_NAME}
+            be_type=${be%%:*}
+            be_name=${be##*:}
+            if type init_cinder_backend_${be_type} >/dev/null 2>&1; then
+                init_cinder_backend_${be_type} ${be_name}
             fi
         done
     fi
@@ -450,6 +454,7 @@ function start_cinder {
 # stop_cinder() - Stop running processes
 function stop_cinder {
     # Kill the cinder screen windows
+    local serv
     for serv in c-api c-bak c-sch c-vol; do
         screen_stop $serv
     done
@@ -467,12 +472,13 @@ function stop_cinder {
 function create_volume_types {
     # Create volume types
     if is_service_enabled c-api && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
+        local be be_name be_type
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
-            BE_TYPE=${be%%:*}
-            BE_NAME=${be##*:}
-            # openstack volume type create --property volume_backend_name="${BE_TYPE}" ${BE_NAME}
-            cinder type-create ${BE_NAME} && \
-                cinder type-key ${BE_NAME} set volume_backend_name="${BE_NAME}"
+            be_type=${be%%:*}
+            be_name=${be##*:}
+            # openstack volume type create --property volume_backend_name="${be_type}" ${be_name}
+            cinder type-create ${be_name} && \
+                cinder type-key ${be_name} set volume_backend_name="${be_name}"
         done
     fi
 }

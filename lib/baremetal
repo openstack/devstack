@@ -232,6 +232,7 @@ function upload_baremetal_deploy {
         image create \
         $BM_DEPLOY_KERNEL \
         --public --disk-format=aki \
+        --container-format=aki \
         < $TOP_DIR/files/$BM_DEPLOY_KERNEL  | grep ' id ' | get_field 2)
     BM_DEPLOY_RAMDISK_ID=$(openstack \
         --os-token $token \
@@ -239,6 +240,7 @@ function upload_baremetal_deploy {
         image create \
         $BM_DEPLOY_RAMDISK \
         --public --disk-format=ari \
+        --container-format=ari \
         < $TOP_DIR/files/$BM_DEPLOY_RAMDISK  | grep ' id ' | get_field 2)
 }
 
@@ -287,6 +289,7 @@ function extract_and_upload_k_and_r_from_image {
         image create \
         $image_name-kernel \
         --public --disk-format=aki \
+        --container-format=aki \
         < $TOP_DIR/files/$OUT_KERNEL | grep ' id ' | get_field 2)
     RAMDISK_ID=$(openstack \
         --os-token $token \
@@ -294,6 +297,7 @@ function extract_and_upload_k_and_r_from_image {
         image create \
         $image_name-initrd \
         --public --disk-format=ari \
+        --container-format=ari \
         < $TOP_DIR/files/$OUT_RAMDISK | grep ' id ' | get_field 2)
 }
 

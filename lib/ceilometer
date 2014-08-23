@@ -79,19 +79,19 @@ function is_ceilometer_enabled {
 
 create_ceilometer_accounts() {
 
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
 
     # Ceilometer
     if [[ "$ENABLED_SERVICES" =~ "ceilometer-api" ]]; then
-        CEILOMETER_USER=$(get_or_create_user "ceilometer" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT)
-        get_or_add_user_role $ADMIN_ROLE $CEILOMETER_USER $SERVICE_TENANT
+        local ceilometer_user=$(get_or_create_user "ceilometer" \
+            "$SERVICE_PASSWORD" $service_tenant)
+        get_or_add_user_role $admin_role $ceilometer_user $service_tenant
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            CEILOMETER_SERVICE=$(get_or_create_service "ceilometer" \
+            local ceilometer_service=$(get_or_create_service "ceilometer" \
                 "metering" "OpenStack Telemetry Service")
-            get_or_create_endpoint $CEILOMETER_SERVICE \
+            get_or_create_endpoint $ceilometer_service \
                 "$REGION_NAME" \
                 "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/" \
                 "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/" \

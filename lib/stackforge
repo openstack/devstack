@@ -29,6 +29,7 @@ set +o xtrace
 # --------
 WSME_DIR=$DEST/wsme
 PECAN_DIR=$DEST/pecan
+SQLALCHEMY_MIGRATE_DIR=$DEST/sqlalchemy-migrate
 
 # Entry Points
 # ------------
@@ -40,6 +41,9 @@ function install_stackforge {
 
     git_clone $PECAN_REPO $PECAN_DIR $PECAN_BRANCH
     setup_package $PECAN_DIR
+
+    git_clone $SQLALCHEMY_MIGRATE_REPO $SQLALCHEMY_MIGRATE_DIR $SQLALCHEMY_MIGRATE_BRANCH
+    setup_package $SQLALCHEMY_MIGRATE_DIR
 }
 
 # Restore xtrace

@@ -84,6 +84,7 @@ function create_CA_base {
         return 0
     fi
 
+    local i
     for i in certs crl newcerts private; do
         mkdir -p $ca_dir/$i
     done

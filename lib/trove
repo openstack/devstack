@@ -76,21 +76,20 @@ function setup_trove_logging {
 # service              trove     admin        # if enabled
 
 function create_trove_accounts {
-    # Trove
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    SERVICE_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    local service_role=$(openstack role list | awk "/ admin / { print \$2 }")
 
     if [[ "$ENABLED_SERVICES" =~ "trove" ]]; then
 
-        TROVE_USER=$(get_or_create_user "trove" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT)
-        get_or_add_user_role $SERVICE_ROLE $TROVE_USER $SERVICE_TENANT
+        local trove_user=$(get_or_create_user "trove" \
+            "$SERVICE_PASSWORD" $service_tenant)
+        get_or_add_user_role $service_role $trove_user $service_tenant
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            TROVE_SERVICE=$(get_or_create_service "trove" \
+            local trove_service=$(get_or_create_service "trove" \
                 "database" "Trove Service")
-            get_or_create_endpoint $TROVE_SERVICE \
+            get_or_create_endpoint $trove_service \
                 "$REGION_NAME" \
                 "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s" \
                 "http://$SERVICE_HOST:8779/v1.0/\$(tenant_id)s" \
@@ -237,6 +236,7 @@ function start_trove {
 # stop_trove() - Stop running processes
 function stop_trove {
     # Kill the trove screen windows
+    local serv
     for serv in tr-api tr-tmgr tr-cond; do
         screen_stop $serv
     done

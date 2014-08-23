@@ -110,6 +110,7 @@ function merge_config_group {
 
     [[ -r $localfile ]] || return 0
 
+    local configfile group
     for group in $matchgroups; do
         for configfile in $(get_meta_section_files $localfile $group); do
             if [[ -d $(dirname $(eval "echo $configfile")) ]]; then
