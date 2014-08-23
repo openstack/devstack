@@ -319,6 +319,10 @@ WSME_BRANCH=${WSME_BRANCH:-master}
 PECAN_REPO=${PECAN_REPO:-${GIT_BASE}/stackforge/pecan.git}
 PECAN_BRANCH=${PECAN_BRANCH:-master}
 
+# sqlalchemy-migrate
+SQLALCHEMY_MIGRATE_REPO=${SQLALCHEMY_MIGRATE_REPO:-${GIT_BASE}/stackforge/sqlalchemy-migrate.git}
+SQLALCHEMY_MIGRATE_BRANCH=${SQLALCHEMY_MIGRATE_BRANCH:-master}
+
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
