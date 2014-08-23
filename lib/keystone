@@ -328,11 +328,11 @@ function configure_keystone_extensions {
 function create_keystone_accounts {
 
     # admin
-    ADMIN_TENANT=$(get_or_create_project "admin")
-    ADMIN_USER=$(get_or_create_user "admin" \
-        "$ADMIN_PASSWORD" "$ADMIN_TENANT")
-    ADMIN_ROLE=$(get_or_create_role "admin")
-    get_or_add_user_role $ADMIN_ROLE $ADMIN_USER $ADMIN_TENANT
+    local admin_tenant=$(get_or_create_project "admin")
+    local admin_user=$(get_or_create_user "admin" \
+        "$ADMIN_PASSWORD" "$admin_tenant")
+    local admin_role=$(get_or_create_role "admin")
+    get_or_add_user_role $admin_role $admin_user $admin_tenant
 
     # Create service project/role
     get_or_create_project "$SERVICE_TENANT_NAME"
@@ -347,25 +347,25 @@ function create_keystone_accounts {
     get_or_create_role ResellerAdmin
 
     # The Member role is used by Horizon and Swift so we need to keep it:
-    MEMBER_ROLE=$(get_or_create_role "Member")
+    local member_role=$(get_or_create_role "Member")
 
     # ANOTHER_ROLE demonstrates that an arbitrary role may be created and used
     # TODO(sleepsonthefloor): show how this can be used for rbac in the future!
 
-    ANOTHER_ROLE=$(get_or_create_role "anotherrole")
+    local another_role=$(get_or_create_role "anotherrole")
 
     # invisible tenant - admin can't see this one
-    INVIS_TENANT=$(get_or_create_project "invisible_to_admin")
+    local invis_tenant=$(get_or_create_project "invisible_to_admin")
 
     # demo
-    DEMO_TENANT=$(get_or_create_project "demo")
-    DEMO_USER=$(get_or_create_user "demo" \
-        "$ADMIN_PASSWORD" "$DEMO_TENANT" "demo@example.com")
+    local demo_tenant=$(get_or_create_project "demo")
+    local demo_user=$(get_or_create_user "demo" \
+        "$ADMIN_PASSWORD" "$demo_tenant" "demo@example.com")
 
-    get_or_add_user_role $MEMBER_ROLE $DEMO_USER $DEMO_TENANT
-    get_or_add_user_role $ADMIN_ROLE $ADMIN_USER $DEMO_TENANT
-    get_or_add_user_role $ANOTHER_ROLE $DEMO_USER $DEMO_TENANT
-    get_or_add_user_role $MEMBER_ROLE $DEMO_USER $INVIS_TENANT
+    get_or_add_user_role $member_role $demo_user $demo_tenant
+    get_or_add_user_role $admin_role $admin_user $demo_tenant
+    get_or_add_user_role $another_role $demo_user $demo_tenant
+    get_or_add_user_role $member_role $demo_user $invis_tenant
 
     # Keystone
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
