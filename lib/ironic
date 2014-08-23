@@ -439,6 +439,10 @@ function create_ovs_taps {
 
     # Remove the port needed only for workaround.
     neutron port-delete $port_id
+
+    # Finally, share the fixed tenant network across all tenants.  This allows the host
+    # to serve TFTP to a single network namespace via the tap device created above.
+    neutron net-update $ironic_net_id --shared true
 }
 
 function create_bridge_and_vms {
