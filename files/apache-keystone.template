@@ -6,7 +6,7 @@ Listen %ADMINPORT%
     WSGIProcessGroup keystone-public
     WSGIScriptAlias / %PUBLICWSGI%
     WSGIApplicationGroup %{GLOBAL}
-    ErrorLog /var/log/%APACHE_NAME%/keystone
+    ErrorLog /var/log/%APACHE_NAME%/keystone.log
     LogLevel debug
     CustomLog /var/log/%APACHE_NAME%/access.log combined
 </VirtualHost>
@@ -16,7 +16,7 @@ Listen %ADMINPORT%
     WSGIProcessGroup keystone-admin
     WSGIScriptAlias / %ADMINWSGI%
     WSGIApplicationGroup %{GLOBAL}
-    ErrorLog /var/log/%APACHE_NAME%/keystone
+    ErrorLog /var/log/%APACHE_NAME%/keystone.log
     LogLevel debug
     CustomLog /var/log/%APACHE_NAME%/access.log combined
 </VirtualHost>
