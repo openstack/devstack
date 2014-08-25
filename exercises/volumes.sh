@@ -68,10 +68,10 @@ nova list
 # ------
 
 # List the images available
-glance image-list
+openstack image list
 
 # Grab the id of the image to launch
-IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+IMAGE=$(openstack image list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
 die_if_not_set $LINENO IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 
 # Security Groups
