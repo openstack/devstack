@@ -111,6 +111,14 @@ function configure_sahara {
     iniset $SAHARA_CONF_FILE keystone_authtoken signing_dir $SAHARA_AUTH_CACHE_DIR
     iniset $SAHARA_CONF_FILE keystone_authtoken cafile $KEYSTONE_SSL_CA
 
+    # Set configuration to send notifications
+
+    if is_service_enabled ceilometer; then
+        iniset $SAHARA_CONF_FILE DEFAULT enable_notifications "true"
+        iniset $SAHARA_CONF_FILE DEFAULT notification_driver "messaging"
+        iniset_rpc_backend sahara $SAHARA_CONF_FILE DEFAULT
+    fi
+
     iniset $SAHARA_CONF_FILE DEFAULT verbose True
     iniset $SAHARA_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
