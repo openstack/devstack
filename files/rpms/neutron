@@ -5,6 +5,7 @@ ebtables
 iptables
 iputils
 mysql-connector-python
+mysql-devel  # testonly
 mysql-server # NOPRIME
 openvswitch # NOPRIME
 python-boto
