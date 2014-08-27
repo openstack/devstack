@@ -22,8 +22,10 @@ set +o xtrace
 # --------
 CLIFF_DIR=$DEST/cliff
 OSLOCFG_DIR=$DEST/oslo.config
+OSLOCON_DIR=$DEST/oslo.concurrency
 OSLODB_DIR=$DEST/oslo.db
 OSLOI18N_DIR=$DEST/oslo.i18n
+OSLOMID_DIR=$DEST/oslo.middleware
 OSLOMSG_DIR=$DEST/oslo.messaging
 OSLORWRAP_DIR=$DEST/oslo.rootwrap
 OSLOVMWARE_DIR=$DEST/oslo.vmware
@@ -47,6 +49,12 @@ function install_oslo {
 
     git_clone $OSLOCFG_REPO $OSLOCFG_DIR $OSLOCFG_BRANCH
     setup_install $OSLOCFG_DIR
+
+    git_clone $OSLOCON_REPO $OSLOCON_DIR $OSLOCON_BRANCH
+    setup_install $OSLOCON_DIR
+
+    git_clone $OSLOMID_REPO $OSLOMID_DIR $OSLOMID_BRANCH
+    setup_install $OSLOMID_DIR
 
     git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
     setup_install $OSLOMSG_DIR
