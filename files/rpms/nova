@@ -16,6 +16,7 @@ libxml2-python
 numpy # needed by websockify for spice console
 m2crypto
 mysql-connector-python
+mysql-devel  # testonly
 mysql-server # NOPRIME
 parted
 polkit

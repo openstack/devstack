@@ -2,6 +2,7 @@ ebtables
 iptables
 iputils-ping
 iputils-arping
+libmysqlclient-dev  # testonly
 mysql-server #NOPRIME
 sudo
 python-boto

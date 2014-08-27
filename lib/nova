@@ -84,6 +84,10 @@ GUEST_INTERFACE_DEFAULT=$(ip link \
     | grep ^[ep] \
     | head -1)
 
+# $NOVA_VNC_ENABLED can be used to forcibly enable vnc configuration.
+# In multi-node setups allows compute hosts to not run n-novnc.
+NOVA_VNC_ENABLED=$(trueorfalse False $NOVA_VNC_ENABLED)
+
 # Get hypervisor configuration
 # ----------------------------
 
@@ -485,7 +489,7 @@ function create_nova_conf {
         iniset $NOVA_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
     fi
 
-    if is_service_enabled n-novnc || is_service_enabled n-xvnc; then
+    if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
         # Address on which instance vncservers will listen on compute hosts.
         # For multi-host, this should be the management ip of the compute host.
         VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
