@@ -52,10 +52,6 @@ GetDistro
 echo "os|distro=$DISTRO"
 echo "os|vendor=$os_VENDOR"
 echo "os|release=$os_RELEASE"
-if [ -n "$os_UPDATE" ]; then
-    echo "os|version=$os_UPDATE"
-fi
-
 
 # Repos
 # -----

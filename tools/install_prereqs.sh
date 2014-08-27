@@ -28,7 +28,7 @@ if [[ -z "$TOP_DIR" ]]; then
     source $TOP_DIR/functions
 
     # Determine what system we are running on.  This provides ``os_VENDOR``,
-    # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
+    # ``os_RELEASE``, ``os_PACKAGE``, ``os_CODENAME``
     # and ``DISTRO``
     GetDistro
 
