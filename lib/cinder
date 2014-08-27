@@ -514,10 +514,15 @@ function start_cinder {
         sudo tgtadm --mode system --op update --name debug --value on
     fi
 
-    screen_it c-api "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
-    screen_it c-sch "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
-    screen_it c-bak "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-backup --config-file $CINDER_CONF"
-    screen_it c-vol "cd $CINDER_DIR && $CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
+    run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
+    echo "Waiting for Cinder API to start..."
+    if ! wait_for_service $SERVICE_TIMEOUT $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT; then
+        die $LINENO "c-api did not start"
+    fi
+
+    run_process c-sch "$CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
+    run_process c-bak "$CINDER_BIN_DIR/cinder-backup --config-file $CINDER_CONF"
+    run_process c-vol "$CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
 
     # NOTE(jdg): For cinder, startup order matters.  To ensure that repor_capabilities is received
     # by the scheduler start the cinder-volume service last (or restart it) after the scheduler
