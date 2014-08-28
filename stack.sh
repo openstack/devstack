@@ -69,17 +69,8 @@ if [[ $EUID -eq 0 ]]; then
     echo "You are running this script as root."
     echo "Cut it out."
     echo "Really."
-    echo "If you need an account to run DevStack, do this (as root, heh) to create $STACK_USER:"
+    echo "If you need an account to run DevStack, do this (as root, heh) to create a non-root account:"
     echo "$TOP_DIR/tools/create-stack-user.sh"
-    exit 1
-fi
-
-# Check to see if we are already running DevStack
-# Note that this may fail if USE_SCREEN=False
-if type -p screen >/dev/null && screen -ls | egrep -q "[0-9].$SCREEN_NAME"; then
-    echo "You are already running a stack.sh session."
-    echo "To rejoin this session type 'screen -x stack'."
-    echo "To destroy this session, type './unstack.sh'."
     exit 1
 fi
 
@@ -130,6 +121,7 @@ if [[ -r $TOP_DIR/local.conf ]]; then
     done
 fi
 
+
 # ``stack.sh`` is customizable by setting environment variables.  Override a
 # default setting via export::
 #
@@ -157,6 +149,15 @@ if [[ ! -r $TOP_DIR/stackrc ]]; then
     die $LINENO "missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
 fi
 source $TOP_DIR/stackrc
+
+# Check to see if we are already running DevStack
+# Note that this may fail if USE_SCREEN=False
+if type -p screen > /dev/null && screen -ls | egrep -q "[0-9]\.$SCREEN_NAME"; then
+    echo "You are already running a stack.sh session."
+    echo "To rejoin this session type 'screen -x stack'."
+    echo "To destroy this session, type './unstack.sh'."
+    exit 1
+fi
 
 
 # Local Settings
