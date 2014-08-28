@@ -247,8 +247,8 @@ function configure_cinder {
             if type configure_cinder_backend_${be_type} >/dev/null 2>&1; then
                 configure_cinder_backend_${be_type} ${be_name}
             fi
-            if [[ -z "$default_type" ]]; then
-                default_name=$be_type
+            if [[ -z "$default_name" ]]; then
+                default_name=$be_name
             fi
             enabled_backends+=$be_name,
         done
