@@ -11,6 +11,7 @@ iputils
 kpartx
 kvm # NOPRIME
 libvirt-bin # NOPRIME
+libvirt-devel # NOPRIME
 libvirt-python # NOPRIME
 libxml2-python
 numpy # needed by websockify for spice console

@@ -18,6 +18,7 @@ sudo
 qemu-kvm # NOPRIME
 qemu # dist:wheezy,jessie NOPRIME
 libvirt-bin # NOPRIME
+libvirt-dev # NOPRIME
 pm-utils
 libjs-jquery-tablesorter # Needed for coverage html reports
 vlan
