@@ -1423,51 +1423,55 @@ if [[ -n "$DEPRECATED_TEXT" ]]; then
     echo_summary "WARNING: $DEPRECATED_TEXT"
 fi
 
-# TODO(dtroyer): Remove Q_AGENT_EXTRA_AGENT_OPTS after stable/juno branch is cut
-if [[ -n "$Q_AGENT_EXTRA_AGENT_OPTS" ]]; then
-    echo ""
-    echo_summary "WARNING: Q_AGENT_EXTRA_AGENT_OPTS is used"
-    echo "You are using Q_AGENT_EXTRA_AGENT_OPTS to pass configuration into $NEUTRON_CONF."
-    echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
-    echo "Q_AGENT_EXTRA_AGENT_OPTS will be removed early in the 'K' development cycle"
-    echo "
+if is_service_enabled neutron; then
+    # TODO(dtroyer): Remove Q_AGENT_EXTRA_AGENT_OPTS after stable/juno branch is cut
+    if [[ -n "$Q_AGENT_EXTRA_AGENT_OPTS" ]]; then
+        echo ""
+        echo_summary "WARNING: Q_AGENT_EXTRA_AGENT_OPTS is used"
+        echo "You are using Q_AGENT_EXTRA_AGENT_OPTS to pass configuration into $NEUTRON_CONF."
+        echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
+        echo "Q_AGENT_EXTRA_AGENT_OPTS will be removed early in the 'K' development cycle"
+        echo "
 [[post-config|/\$Q_PLUGIN_CONF_FILE]]
 [DEFAULT]
 "
-    for I in "${Q_AGENT_EXTRA_AGENT_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        echo ${I}
-    done
-fi
+        for I in "${Q_AGENT_EXTRA_AGENT_OPTS[@]}"; do
+            # Replace the first '=' with ' ' for iniset syntax
+            echo ${I}
+        done
+    fi
 
-# TODO(dtroyer): Remove Q_AGENT_EXTRA_SRV_OPTS after stable/juno branch is cut
-if [[ -n "$Q_AGENT_EXTRA_SRV_OPTS" ]]; then
-    echo ""
-    echo_summary "WARNING: Q_AGENT_EXTRA_SRV_OPTS is used"
-    echo "You are using Q_AGENT_EXTRA_SRV_OPTS to pass configuration into $NEUTRON_CONF."
-    echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
-    echo "Q_AGENT_EXTRA_AGENT_OPTS will be removed early in the 'K' development cycle"
-    echo "
+    # TODO(dtroyer): Remove Q_AGENT_EXTRA_SRV_OPTS after stable/juno branch is cut
+    if [[ -n "$Q_AGENT_EXTRA_SRV_OPTS" ]]; then
+        echo ""
+        echo_summary "WARNING: Q_AGENT_EXTRA_SRV_OPTS is used"
+        echo "You are using Q_AGENT_EXTRA_SRV_OPTS to pass configuration into $NEUTRON_CONF."
+        echo "Please convert that configuration in localrc to a $NEUTRON_CONF section in local.conf:"
+        echo "Q_AGENT_EXTRA_AGENT_OPTS will be removed early in the 'K' development cycle"
+        echo "
 [[post-config|/\$Q_PLUGIN_CONF_FILE]]
 [DEFAULT]
 "
-    for I in "${Q_AGENT_EXTRA_SRV_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        echo ${I}
-    done
+        for I in "${Q_AGENT_EXTRA_SRV_OPTS[@]}"; do
+            # Replace the first '=' with ' ' for iniset syntax
+            echo ${I}
+        done
+    fi
 fi
 
-# TODO(dtroyer): Remove CINDER_MULTI_LVM_BACKEND after stable/juno branch is cut
-if [[ "$CINDER_MULTI_LVM_BACKEND" = "True" ]]; then
-    echo ""
-    echo_summary "WARNING: CINDER_MULTI_LVM_BACKEND is used"
-    echo "You are using CINDER_MULTI_LVM_BACKEND to configure Cinder's multiple LVM backends"
-    echo "Please convert that configuration in local.conf to use CINDER_ENABLED_BACKENDS."
-    echo "CINDER_ENABLED_BACKENDS will be removed early in the 'K' development cycle"
-    echo "
+if is_service_enabled cinder; then
+    # TODO(dtroyer): Remove CINDER_MULTI_LVM_BACKEND after stable/juno branch is cut
+    if [[ "$CINDER_MULTI_LVM_BACKEND" = "True" ]]; then
+        echo ""
+        echo_summary "WARNING: CINDER_MULTI_LVM_BACKEND is used"
+        echo "You are using CINDER_MULTI_LVM_BACKEND to configure Cinder's multiple LVM backends"
+        echo "Please convert that configuration in local.conf to use CINDER_ENABLED_BACKENDS."
+        echo "CINDER_ENABLED_BACKENDS will be removed early in the 'K' development cycle"
+        echo "
 [[local|localrc]]
 CINDER_ENABLED_BACKENDS=lvm:lvmdriver-1,lvm:lvmdriver-2
 "
+    fi
 fi
 
 # Indicate how long this took to run (bash maintained variable ``SECONDS``)
