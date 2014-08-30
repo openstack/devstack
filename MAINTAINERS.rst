@@ -55,6 +55,11 @@ Sahara
 
 * Sergey Lukjanov <slukjanov@mirantis.com>
 
+Swift
+~~~~~
+
+* Chmouel Boudjnah <chmouel@enovance.com>
+
 SUSE
 ~~~~
 
