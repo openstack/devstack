@@ -123,6 +123,13 @@ function _config_keystone_apache_wsgi {
     sudo mkdir -p $KEYSTONE_WSGI_DIR
 
     local keystone_apache_conf=$(apache_site_config_for keystone)
+    local apache_version=$(get_apache_version)
+
+    if [[ ${apache_version#*\.} -ge 4 ]]; then
+        # Apache 2.4 supports custom error log formats
+        # this should mirror the original log formatting.
+        local errorlogformat='ErrorLogFormat "%{cu}t %M"'
+    fi
 
     # copy proxy vhost and wsgi file
     sudo cp $KEYSTONE_DIR/httpd/keystone.py $KEYSTONE_WSGI_DIR/main
@@ -136,6 +143,7 @@ function _config_keystone_apache_wsgi {
         s|%PUBLICWSGI%|$KEYSTONE_WSGI_DIR/main|g;
         s|%ADMINWSGI%|$KEYSTONE_WSGI_DIR/admin|g;
         s|%USER%|$STACK_USER|g
+        s|%ERRORLOGFORMAT%|$errorlogformat|g;
     " -i $keystone_apache_conf
     enable_apache_site keystone
 }
