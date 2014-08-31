@@ -61,6 +61,28 @@ function install_apache_wsgi {
     fi
 }
 
+# get_apache_version() - return the version of Apache installed
+# This function is used to determine the Apache version installed. There are
+# various differences between Apache 2.2 and 2.4 that warrant special handling.
+function get_apache_version {
+    if is_ubuntu; then
+        local version_str=$(sudo /usr/sbin/apache2ctl -v | awk '/Server version/ {print $3}' | cut -f2 -d/)
+    elif is_fedora; then
+        local version_str=$(rpm -qa --queryformat '%{VERSION}' httpd)
+    elif is_suse; then
+        local version_str=$(rpm -qa --queryformat '%{VERSION}' apache2)
+    else
+        exit_distro_not_supported "cannot determine apache version"
+    fi
+    if [[ "$version_str" =~ ^2\.2\. ]]; then
+        echo "2.2"
+    elif [[ "$version_str" =~ ^2\.4\. ]]; then
+        echo "2.4"
+    else
+        exit_distro_not_supported "apache version not supported"
+    fi
+}
+
 # apache_site_config_for() - The filename of the site's configuration file.
 # This function uses the global variables APACHE_NAME and APACHE_CONF_DIR.
 #
@@ -87,8 +109,8 @@ function install_apache_wsgi {
 function apache_site_config_for {
     local site=$@
     if is_ubuntu; then
-        local apache_version=$(sudo /usr/sbin/apache2ctl -v | awk '/Server version/ {print $3}' | cut -f2 -d/)
-        if [[ "$apache_version" =~ ^2\.2\. ]]; then
+        local apache_version=$(get_apache_version)
+        if [[ "$apache_version" == "2.2" ]]; then
             # Ubuntu 12.04 - Apache 2.2
             echo $APACHE_CONF_DIR/${site}
         else
