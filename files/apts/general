@@ -7,6 +7,7 @@ wget
 psmisc
 gcc
 git
+graphviz # testonly - docs
 lsof # useful when debugging
 openssh-server
 openssl

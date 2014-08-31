@@ -4,6 +4,7 @@ dbus
 euca2ools # only for testing client
 gcc
 git-core
+graphviz # testonly - docs
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
