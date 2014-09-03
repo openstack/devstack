@@ -426,7 +426,7 @@ function read_password {
             echo "Invalid chars in password.  Try again:"
         done
         if [ ! $pw ]; then
-            pw=$(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 20)
+            pw=$(generate_hex_string 10)
         fi
         eval "$var=$pw"
         echo "$var=$pw" >> $localrc
@@ -1211,11 +1211,7 @@ fi
 
 # Create a randomized default value for the keymgr's fixed_key
 if is_service_enabled nova; then
-    FIXED_KEY=""
-    for i in $(seq 1 64); do
-        FIXED_KEY+=$(echo "obase=16; $(($RANDOM % 16))" | bc);
-    done;
-    iniset $NOVA_CONF keymgr fixed_key "$FIXED_KEY"
+    iniset $NOVA_CONF keymgr fixed_key $(generate_hex_string 32)
 fi
 
 if is_service_enabled zeromq; then
