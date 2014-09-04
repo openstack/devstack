@@ -6,6 +6,9 @@ proto
 src
 localrc
 local.sh
+.tox
+.stackenv
+accrc
 files/*.gz
 files/*.qcow2
 files/images
