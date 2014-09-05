@@ -237,11 +237,11 @@ function configure_keystone {
     iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
 
     if [[ "$KEYSTONE_TOKEN_BACKEND" = "sql" ]]; then
-        iniset $KEYSTONE_CONF token driver keystone.token.backends.sql.Token
+        iniset $KEYSTONE_CONF token driver keystone.token.persistence.backends.sql.Token
     elif [[ "$KEYSTONE_TOKEN_BACKEND" = "memcache" ]]; then
-        iniset $KEYSTONE_CONF token driver keystone.token.backends.memcache.Token
+        iniset $KEYSTONE_CONF token driver keystone.token.persistence.backends.memcache.Token
     else
-        iniset $KEYSTONE_CONF token driver keystone.token.backends.kvs.Token
+        iniset $KEYSTONE_CONF token driver keystone.token.persistence.backends.kvs.Token
     fi
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then

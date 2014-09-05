@@ -4,7 +4,6 @@ if is_service_enabled sahara; then
     if [[ "$1" == "source" ]]; then
         # Initial source
         source $TOP_DIR/lib/sahara
-        source $TOP_DIR/lib/sahara-dashboard
     elif [[ "$1" == "stack" && "$2" == "install" ]]; then
         echo_summary "Installing sahara"
         install_sahara
