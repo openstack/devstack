@@ -125,9 +125,25 @@ function configure_zaqar {
         iniset $ZAQAR_CONF  drivers storage mongodb
         iniset $ZAQAR_CONF 'drivers:storage:mongodb' uri mongodb://localhost:27017/zaqar
         configure_mongodb
+    elif [ "$ZAQAR_BACKEND" = 'redis' ] ; then
+        iniset $ZAQAR_CONF  drivers storage redis
+        iniset $ZAQAR_CONF 'drivers:storage:redis' uri redis://localhost:6379
+        configure_redis
     fi
 
     cleanup_zaqar
+}
+
+function configure_redis {
+    if is_ubuntu; then
+        install_package redis-server
+    elif is_fedora; then
+        install_package redis
+    else
+        exit_distro_not_supported "redis installation"
+    fi
+
+    install_package python-redis
 }
 
 function configure_mongodb {
