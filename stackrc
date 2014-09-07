@@ -220,6 +220,10 @@ ORC_BRANCH=${ORC_BRANCH:-master}
 CLIFF_REPO=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
 CLIFF_BRANCH=${CLIFF_BRANCH:-master}
 
+# oslo.concurrency
+OSLOCON_REPO=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
+OSLOCON_BRANCH=${OSLOCON_BRANCH:-master}
+
 # oslo.config
 OSLOCFG_REPO=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
 OSLOCFG_BRANCH=${OSLOCFG_BRANCH:-master}
@@ -232,9 +236,17 @@ OSLODB_BRANCH=${OSLODB_BRANCH:-master}
 OSLOI18N_REPO=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
 OSLOI18N_BRANCH=${OSLOI18N_BRANCH:-master}
 
+# oslo.log
+OSLOLOG_REPO=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
+OSLOLOG_BRANCH=${OSLOLOG_BRANCH:-master}
+
 # oslo.messaging
 OSLOMSG_REPO=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
 OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
+
+# oslo.middleware
+OSLOMID_REPO=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
+OSLOMID_BRANCH=${OSLOMID_BRANCH:-master}
 
 # oslo.rootwrap
 OSLORWRAP_REPO=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
