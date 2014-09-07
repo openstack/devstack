@@ -323,9 +323,6 @@ SYSLOG=`trueorfalse False $SYSLOG`
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
 SYSLOG_PORT=${SYSLOG_PORT:-516}
 
-# for DSTAT logging
-DSTAT_FILE=${DSTAT_FILE:-"dstat.txt"}
-
 # Use color for logging output (only available if syslog is not used)
 LOG_COLOR=`trueorfalse True $LOG_COLOR`
 
@@ -369,6 +366,7 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
+source $TOP_DIR/lib/dstat
 
 # Extras Source
 # --------------
@@ -948,12 +946,7 @@ init_service_check
 # -------
 
 # A better kind of sysstat, with the top process per time slice
-DSTAT_OPTS="-tcmndrylp --top-cpu-adv"
-if [[ -n ${SCREEN_LOGDIR} ]]; then
-    screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
-else
-    screen_it dstat "dstat $DSTAT_OPTS"
-fi
+start_dstat
 
 # Start Services
 # ==============
