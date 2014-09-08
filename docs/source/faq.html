@@ -73,7 +73,7 @@
             <dd>A: DevStack is optimized for documentation &amp; developers.  As some of us use <a href="https://github.com/dellcloudedge/crowbar">Crowbar</a> for production deployments, we hope developers documenting how they setup systems for new features supports projects like Crowbar.</dd>
 
             <dt>Q: I'd like to help!</dt>
-            <dd>A: That isn't a question, but please do!  The source for DevStack is <a href="http://github.com/openstack-dev/devstack">github</a> and bug reports go to <a href="http://bugs.launchpad.net/devstack/">LaunchPad</a>.  Contributions follow the usual process as described in the <a href="http://wiki.openstack.org/HowToContribute">OpenStack wiki</a>. DevStack is not a core project but a gating project and therefore an official OpenStack project. This site is housed in the CloudBuilder's <a href="http://github.com/cloudbuilders/devstack">github</a> in the gh-pages branch.</dd>
+            <dd>A: That isn't a question, but please do!  The source for DevStack is <a href="http://github.com/openstack-dev/devstack">github</a> and bug reports go to <a href="http://bugs.launchpad.net/devstack/">LaunchPad</a>.  Contributions follow the usual process as described in the <a href="http://wiki.openstack.org/HowToContribute">OpenStack wiki</a> even though DevStack is not an official OpenStack project.  This site is housed in the CloudBuilder's <a href="http://github.com/cloudbuilders/devstack">github</a> in the gh-pages branch.</dd>
 
             <dt>Q: Why not use packages?</dt>
             <dd>A: Unlike packages, DevStack leaves your cloud ready to develop - checkouts of the code and services running in screen. However, many people are doing the hard work of packaging and recipes for production deployments.  We hope this script serves as a way to communicate configuration changes between developers and packagers.</dd>
@@ -85,7 +85,7 @@
             <dd>A: Fedora and CentOS/RHEL are supported via rpm dependency files and specific checks in <code>stack.sh</code>.  Support will follow the pattern set with the Ubuntu testing, i.e. only a single release of the distro will receive regular testing, others will be handled on a best-effort basis.</dd>
 
             <dt>Q: Are there any differences between Ubuntu and Fedora support?</dt>
-            <dd>A: LXC support is not complete on Fedora; Neutron is not fully supported prior to Fedora 18 due lack of OpenVSwitch packages.</dd>
+            <dd>A: Neutron is not fully supported prior to Fedora 18 due lack of OpenVSwitch packages.</dd>
 
             <dt>Q: How about RHEL 6?</dt>
             <dd>A: RHEL 6 has Python 2.6 and many old modules packaged and is a challenge to support.  There are a number of specific RHEL6 work-arounds in <code>stack.sh</code> to handle this.  But the testing on py26 is valuable so we do it...</dd>
