@@ -20,6 +20,7 @@
 # start_zaqar
 # stop_zaqar
 # cleanup_zaqar
+# cleanup_zaqar_mongodb
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -72,9 +73,17 @@ function is_zaqar_enabled {
     return 1
 }
 
-# cleanup_zaqar() - Remove residual data files, anything left over from previous
-# runs that a clean run would need to clean up
+# cleanup_zaqar() - Cleans up general things from previous
+# runs and storage specific left overs.
 function cleanup_zaqar {
+    if [ "$ZAQAR_BACKEND" = 'mongodb' ] ; then
+        cleanup_zaqar_mongodb
+    fi
+}
+
+# cleanup_zaqar_mongodb() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_zaqar_mongodb {
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! mongo zaqar --eval 'db.dropDatabase();'; do sleep 1; done"; then
         die $LINENO "Mongo DB did not start"
     else
@@ -116,8 +125,9 @@ function configure_zaqar {
         iniset $ZAQAR_CONF  drivers storage mongodb
         iniset $ZAQAR_CONF 'drivers:storage:mongodb' uri mongodb://localhost:27017/zaqar
         configure_mongodb
-        cleanup_zaqar
     fi
+
+    cleanup_zaqar
 }
 
 function configure_mongodb {
