@@ -74,7 +74,8 @@ IRONIC_DEPLOY_RAMDISK=${IRONIC_DEPLOY_RAMDISK:-}
 IRONIC_DEPLOY_KERNEL=${IRONIC_DEPLOY_KERNEL:-}
 IRONIC_DEPLOY_ELEMENT=${IRONIC_DEPLOY_ELEMENT:-deploy-ironic}
 
-IRONIC_AGENT_TARBALL=${IRONIC_AGENT_TARBALL:-http://tarballs.openstack.org/ironic-python-agent/coreos/ipa-coreos.tar.gz}
+IRONIC_AGENT_KERNEL_URL=${IRONIC_AGENT_KERNEL_URL:-http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe.vmlinuz}
+IRONIC_AGENT_RAMDISK_URL=${IRONIC_AGENT_RAMDISK_URL:-http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe-oem.cpio.gz}
 
 # Which deploy driver to use - valid choices right now
 # are 'pxe_ssh' and 'agent_ssh'.
@@ -594,12 +595,8 @@ function upload_baremetal_ironic_deploy {
         else
             if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
                 # download the agent image tarball
-                wget "$IRONIC_AGENT_TARBALL" -O ironic_agent_tarball.tar.gz
-                tar zxfv ironic_agent_tarball.tar.gz
-                mv UPLOAD/coreos_production_pxe.vmlinuz $IRONIC_DEPLOY_KERNEL_PATH
-                mv UPLOAD/coreos_production_pxe_image-oem.cpio.gz $IRONIC_DEPLOY_RAMDISK_PATH
-                rm -rf UPLOAD
-                rm ironic_agent_tarball.tar.gz
+                wget "$IRONIC_AGENT_KERNEL_URL" -O $IRONIC_DEPLOY_KERNEL_PATH
+                wget "$IRONIC_AGENT_RAMDISK_URL" -O $IRONIC_DEPLOY_RAMDISK_PATH
             else
                 die $LINENO "Deploy kernel+ramdisk files don't exist and their building was disabled explicitly by IRONIC_BUILD_DEPLOY_RAMDISK"
             fi

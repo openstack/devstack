@@ -1616,6 +1616,7 @@ function is_service_enabled {
         [[ ${service} == "trove" && ${ENABLED_SERVICES} =~ "tr-" ]] && enabled=0
         [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && enabled=0
         [[ ${service} == s-* && ${ENABLED_SERVICES} =~ "swift" ]] && enabled=0
+        [[ ${service} == key-* && ${ENABLED_SERVICES} =~ "key" ]] && enabled=0
     done
     $xtrace
     return $enabled

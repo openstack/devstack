@@ -476,6 +476,7 @@ function start_keystone {
     if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
         restart_apache_server
         screen_it key "cd $KEYSTONE_DIR && sudo tail -f /var/log/$APACHE_NAME/keystone.log"
+        screen_it key-access "sudo tail -f /var/log/$APACHE_NAME/keystone_access.log"
     else
         # Start Keystone in a screen window
         screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF --debug"
