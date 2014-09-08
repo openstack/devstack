@@ -311,6 +311,9 @@ SWIFTCLIENT_BRANCH=${SWIFTCLIENT_BRANCH:-master}
 TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
 TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
+TEMPEST_LIB_REPO=${TEMPEST_LIB_REPO:-${GIT_BASE}/openstack/tempest-lib.git}
+TEMPEST_LIB_BRANCH=${TEMPEST_LIB_BRANCH:-master}
+
 # Tripleo elements for diskimage-builder images
 TIE_REPO=${TIE_REPO:-${GIT_BASE}/openstack/tripleo-image-elements.git}
 TIE_BRANCH=${TIE_BRANCH:-master}
