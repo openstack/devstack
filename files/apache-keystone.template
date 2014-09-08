@@ -8,7 +8,7 @@ Listen %ADMINPORT%
     WSGIApplicationGroup %{GLOBAL}
     %ERRORLOGFORMAT%
     ErrorLog /var/log/%APACHE_NAME%/keystone.log
-    CustomLog /var/log/%APACHE_NAME%/access.log combined
+    CustomLog /var/log/%APACHE_NAME%/keystone_access.log combined
 </VirtualHost>
 
 <VirtualHost *:%ADMINPORT%>
@@ -18,7 +18,7 @@ Listen %ADMINPORT%
     WSGIApplicationGroup %{GLOBAL}
     %ERRORLOGFORMAT%
     ErrorLog /var/log/%APACHE_NAME%/keystone.log
-    CustomLog /var/log/%APACHE_NAME%/access.log combined
+    CustomLog /var/log/%APACHE_NAME%/keystone_access.log combined
 </VirtualHost>
 
 # Workaround for missing path on RHEL6, see
