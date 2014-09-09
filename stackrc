@@ -172,9 +172,11 @@ HORIZON_BRANCH=${HORIZON_BRANCH:-master}
 HORIZONAUTH_REPO=${HORIZONAUTH_REPO:-${GIT_BASE}/openstack/django_openstack_auth.git}
 HORIZONAUTH_BRANCH=${HORIZONAUTH_BRANCH:-master}
 
-# baremetal provisionint service
+# baremetal provisioning service
 IRONIC_REPO=${IRONIC_REPO:-${GIT_BASE}/openstack/ironic.git}
 IRONIC_BRANCH=${IRONIC_BRANCH:-master}
+IRONIC_PYTHON_AGENT_REPO=${IRONIC_PYTHON_AGENT_REPO:-${GIT_BASE}/openstack/ironic-python-agent.git}
+IRONIC_PYTHON_AGENT_BRANCH=${IRONIC_PYTHON_AGENT_BRANCH:-master}
 
 # ironic client
 IRONICCLIENT_REPO=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}

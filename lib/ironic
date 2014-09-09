@@ -29,6 +29,7 @@ set +o pipefail
 
 # Set up default directories
 IRONIC_DIR=$DEST/ironic
+IRONIC_PYTHON_AGENT_DIR=$DEST/ironic-python-agent
 IRONIC_DATA_DIR=$DATA_DIR/ironic
 IRONIC_STATE_PATH=/var/lib/ironic
 IRONICCLIENT_DIR=$DEST/python-ironicclient
@@ -559,6 +560,19 @@ function configure_ironic_auxiliary {
     ironic_ssh_check $IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME $IRONIC_VM_SSH_ADDRESS $IRONIC_VM_SSH_PORT $IRONIC_SSH_USERNAME 10
 }
 
+function build_ipa_coreos_ramdisk {
+    echo "Building ironic-python-agent deploy ramdisk"
+    local kernel_path=$1
+    local ramdisk_path=$2
+    git_clone $IRONIC_PYTHON_AGENT_REPO $IRONIC_PYTHON_AGENT_DIR $IRONIC_PYTHON_AGENT_BRANCH
+    cd $IRONIC_PYTHON_AGENT_DIR
+    imagebuild/coreos/build_coreos_image.sh
+    cp imagebuild/coreos/UPLOAD/coreos_production_pxe_image-oem.cpio.gz $ramdisk_path
+    cp imagebuild/coreos/UPLOAD/coreos_production_pxe.vmlinuz $kernel_path
+    sudo rm -rf UPLOAD
+    cd -
+}
+
 # build deploy kernel+ramdisk, then upload them to glance
 # this function sets ``IRONIC_DEPLOY_KERNEL_ID``, ``IRONIC_DEPLOY_RAMDISK_ID``
 function upload_baremetal_ironic_deploy {
@@ -583,8 +597,8 @@ function upload_baremetal_ironic_deploy {
         if [ "$IRONIC_BUILD_DEPLOY_RAMDISK" = "True" ]; then
             # we can build them only if we're not offline
             if [ "$OFFLINE" != "True" ]; then
-                if [ "$IRONIC_DEPLOY_RAMDISK" == "agent_ssh" ]; then
-                    die $LINENO "Ironic-python-agent build is not yet supported"
+                if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
+                    build_ipa_coreos_ramdisk $IRONIC_DEPLOY_KERNEL_PATH $IRONIC_DEPLOY_RAMDISK_PATH
                 else
                     ramdisk-image-create $IRONIC_DEPLOY_FLAVOR \
                         -o $TOP_DIR/files/ir-deploy

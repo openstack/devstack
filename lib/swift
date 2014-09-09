@@ -556,6 +556,7 @@ function create_swift_accounts {
 
     local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
+    local another_role=$(openstack role list | awk "/ anotherrole / { print \$2 }")
 
     local swift_user=$(get_or_create_user "swift" \
         "$SERVICE_PASSWORD" $service_tenant)
@@ -582,7 +583,7 @@ function create_swift_accounts {
     local swift_user_test3=$(get_or_create_user swiftusertest3 $swiftusertest3_password \
         "$swift_tenant_test1" "test3@example.com")
     die_if_not_set $LINENO swift_user_test3 "Failure creating swift_user_test3"
-    get_or_add_user_role $ANOTHER_ROLE $swift_user_test3 $swift_tenant_test1
+    get_or_add_user_role $another_role $swift_user_test3 $swift_tenant_test1
 
     local swift_tenant_test2=$(get_or_create_project swifttenanttest2)
     die_if_not_set $LINENO swift_tenant_test2 "Failure creating swift_tenant_test2"
