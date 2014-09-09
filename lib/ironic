@@ -266,7 +266,7 @@ function start_ironic {
 # start_ironic_api() - Used by start_ironic().
 # Starts Ironic API server.
 function start_ironic_api {
-    screen_it ir-api "cd $IRONIC_DIR; $IRONIC_BIN_DIR/ironic-api --config-file=$IRONIC_CONF_FILE"
+    run_process ir-api "$IRONIC_BIN_DIR/ironic-api --config-file=$IRONIC_CONF_FILE"
     echo "Waiting for ir-api ($IRONIC_HOSTPORT) to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$IRONIC_HOSTPORT; do sleep 1; done"; then
         die $LINENO "ir-api did not start"
@@ -276,7 +276,7 @@ function start_ironic_api {
 # start_ironic_conductor() - Used by start_ironic().
 # Starts Ironic conductor.
 function start_ironic_conductor {
-    screen_it ir-cond "cd $IRONIC_DIR; $IRONIC_BIN_DIR/ironic-conductor --config-file=$IRONIC_CONF_FILE"
+    run_process ir-cond "$IRONIC_BIN_DIR/ironic-conductor --config-file=$IRONIC_CONF_FILE"
     # TODO(romcheg): Find a way to check whether the conductor has started.
 }
 

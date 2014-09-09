@@ -235,16 +235,19 @@ function install_ceilometerclient {
 
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer {
+    run_process ceilometer-acentral "ceilometer-agent-central --config-file $CEILOMETER_CONF"
+    run_process ceilometer-anotification "ceilometer-agent-notification --config-file $CEILOMETER_CONF"
+    run_process ceilometer-collector "ceilometer-collector --config-file $CEILOMETER_CONF"
+    run_process ceilometer-api "ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
+
+    # Start the compute agent last to allow time for the collector to
+    # fully wake up and connect to the message bus. See bug #1355809
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
-        screen_it ceilometer-acompute "cd ; sg $LIBVIRT_GROUP \"ceilometer-agent-compute --config-file $CEILOMETER_CONF\""
+        run_process ceilometer-acompute "sg $LIBVIRT_GROUP 'ceilometer-agent-compute --config-file $CEILOMETER_CONF'"
     fi
     if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
-        screen_it ceilometer-acompute "cd ; ceilometer-agent-compute --config-file $CEILOMETER_CONF"
+        run_process ceilometer-acompute "ceilometer-agent-compute --config-file $CEILOMETER_CONF"
     fi
-    screen_it ceilometer-acentral "cd ; ceilometer-agent-central --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-anotification "cd ; ceilometer-agent-notification --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-collector "cd ; ceilometer-collector --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-api "cd ; ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
 
     # only die on API if it was actually intended to be turned on
     if is_service_enabled ceilometer-api; then
@@ -254,15 +257,15 @@ function start_ceilometer {
         fi
     fi
 
-    screen_it ceilometer-alarm-notifier "cd ; ceilometer-alarm-notifier --config-file $CEILOMETER_CONF"
-    screen_it ceilometer-alarm-evaluator "cd ; ceilometer-alarm-evaluator --config-file $CEILOMETER_CONF"
+    run_process ceilometer-alarm-notifier "ceilometer-alarm-notifier --config-file $CEILOMETER_CONF"
+    run_process ceilometer-alarm-evaluator "ceilometer-alarm-evaluator --config-file $CEILOMETER_CONF"
 }
 
 # stop_ceilometer() - Stop running processes
 function stop_ceilometer {
     # Kill the ceilometer screen windows
     for serv in ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
-        screen_stop $serv
+        stop_process $serv
     done
 }
 

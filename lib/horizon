@@ -128,6 +128,7 @@ function init_horizon {
 
     # Remove old log files that could mess with how devstack detects whether Horizon
     # has been successfully started (see start_horizon() and functions::screen_it())
+    # and run_process
     sudo rm -f /var/log/$APACHE_NAME/horizon_*
 
     # Configure apache to run horizon
@@ -158,7 +159,7 @@ function install_horizon {
 # start_horizon() - Start running processes, including screen
 function start_horizon {
     restart_apache_server
-    screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
+    tail_log horizon /var/log/$APACHE_NAME/horizon_error.log
 }
 
 # stop_horizon() - Stop running processes (non-screen)

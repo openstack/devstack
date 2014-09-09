@@ -428,10 +428,10 @@ function start_keystone {
 
     if is_apache_enabled_service key; then
         restart_apache_server
-        screen_it key "cd $KEYSTONE_DIR && sudo tail -f /var/log/$APACHE_NAME/keystone"
+        tail_log key /var/log/$APACHE_NAME/keystone
     else
         # Start Keystone in a screen window
-        screen_it key "cd $KEYSTONE_DIR && $KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF --debug"
+        run_process key "$KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF --debug"
     fi
 
     echo "Waiting for keystone to start..."
@@ -449,7 +449,9 @@ function start_keystone {
 # stop_keystone() - Stop running processes
 function stop_keystone {
     # Kill the Keystone screen window
-    screen_stop key
+    stop_process key
+    # Cleanup the WSGI files and VHOST
+    _cleanup_keystone_apache_wsgi
 }
 
 function is_keystone_enabled {

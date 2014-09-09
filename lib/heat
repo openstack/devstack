@@ -177,17 +177,17 @@ function install_heat {
 
 # start_heat() - Start running processes, including screen
 function start_heat {
-    screen_it h-eng "cd $HEAT_DIR; bin/heat-engine --config-file=$HEAT_CONF"
-    screen_it h-api "cd $HEAT_DIR; bin/heat-api --config-file=$HEAT_CONF"
-    screen_it h-api-cfn "cd $HEAT_DIR; bin/heat-api-cfn --config-file=$HEAT_CONF"
-    screen_it h-api-cw "cd $HEAT_DIR; bin/heat-api-cloudwatch --config-file=$HEAT_CONF"
+    run_process h-eng "$HEAT_DIR/bin/heat-engine --config-file=$HEAT_CONF"
+    run_process h-api "$HEAT_DIR/bin/heat-api --config-file=$HEAT_CONF"
+    run_process h-api-cfn "$HEAT_DIR/bin/heat-api-cfn --config-file=$HEAT_CONF"
+    run_process h-api-cw "$HEAT_DIR/bin/heat-api-cloudwatch --config-file=$HEAT_CONF"
 }
 
 # stop_heat() - Stop running processes
 function stop_heat {
     # Kill the screen windows
     for serv in h-eng h-api h-api-cfn h-api-cw; do
-        screen_stop $serv
+        stop_process $serv
     done
 }
 

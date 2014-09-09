@@ -246,8 +246,8 @@ function install_glance {
 
 # start_glance() - Start running processes, including screen
 function start_glance {
-    screen_it g-reg "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
-    screen_it g-api "cd $GLANCE_DIR; $GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
+    run_process g-reg "$GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
+    run_process g-api "$GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$GLANCE_HOSTPORT; do sleep 1; done"; then
         die $LINENO "g-api did not start"
@@ -257,8 +257,8 @@ function start_glance {
 # stop_glance() - Stop running processes
 function stop_glance {
     # Kill the Glance screen windows
-    screen_stop g-api
-    screen_stop g-reg
+    stop_process g-api
+    stop_process g-reg
 }
 
 
