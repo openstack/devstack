@@ -591,7 +591,7 @@ function install_neutron_agent_packages {
 function start_neutron_service_and_check {
     local cfg_file_options="$(determine_config_files neutron-server)"
     # Start the Neutron service
-    screen_it q-svc "cd $NEUTRON_DIR && python $NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
+    run_process q-svc "python $NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
     echo "Waiting for Neutron to start..."
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$Q_HOST:$Q_PORT; do sleep 1; done"; then
         die $LINENO "Neutron did not start"
@@ -601,8 +601,8 @@ function start_neutron_service_and_check {
 # Start running processes, including screen
 function start_neutron_agents {
     # Start up the neutron agents if enabled
-    screen_it q-agt "cd $NEUTRON_DIR && python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
-    screen_it q-dhcp "cd $NEUTRON_DIR && python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
+    run_process q-agt "python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
+    run_process q-dhcp "python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
     if is_provider_network; then
         sudo ovs-vsctl add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
@@ -612,24 +612,24 @@ function start_neutron_agents {
     fi
 
     if is_service_enabled q-vpn; then
-        screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY $(determine_config_files neutron-vpn-agent)"
+        run_process q-vpn "$AGENT_VPN_BINARY $(determine_config_files neutron-vpn-agent)"
     else
-        screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY $(determine_config_files neutron-l3-agent)"
+        run_process q-l3 "python $AGENT_L3_BINARY $(determine_config_files neutron-l3-agent)"
     fi
 
-    screen_it q-meta "cd $NEUTRON_DIR && python $AGENT_META_BINARY --config-file $NEUTRON_CONF --config-file=$Q_META_CONF_FILE"
+    run_process q-meta "python $AGENT_META_BINARY --config-file $NEUTRON_CONF --config-file=$Q_META_CONF_FILE"
 
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         # For XenServer, start an agent for the domU openvswitch
-        screen_it q-domua "cd $NEUTRON_DIR && python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE.domU"
+        run_process q-domua "python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE.domU"
     fi
 
     if is_service_enabled q-lbaas; then
-        screen_it q-lbaas "cd $NEUTRON_DIR && python $AGENT_LBAAS_BINARY --config-file $NEUTRON_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
+        run_process q-lbaas "python $AGENT_LBAAS_BINARY --config-file $NEUTRON_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
     fi
 
     if is_service_enabled q-metering; then
-        screen_it q-metering "cd $NEUTRON_DIR && python $AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
+        run_process q-metering "python $AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
     fi
 }
 
