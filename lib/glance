@@ -34,6 +34,7 @@ GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
 GLANCE_AUTH_CACHE_DIR=${GLANCE_AUTH_CACHE_DIR:-/var/cache/glance}
 
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
+GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
 GLANCE_REGISTRY_CONF=$GLANCE_CONF_DIR/glance-registry.conf
 GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
 GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
@@ -80,6 +81,11 @@ function configure_glance {
         sudo mkdir -p $GLANCE_CONF_DIR
     fi
     sudo chown $STACK_USER $GLANCE_CONF_DIR
+
+    if [[ ! -d $GLANCE_METADEF_DIR ]]; then
+        sudo mkdir -p $GLANCE_METADEF_DIR
+    fi
+    sudo chown $STACK_USER $GLANCE_METADEF_DIR
 
     # Copy over our glance configurations and update them
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
@@ -177,6 +183,8 @@ function configure_glance {
 
     cp -p $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
     cp -p $GLANCE_DIR/etc/schema-image.json $GLANCE_SCHEMA_JSON
+
+    cp -p $GLANCE_DIR/etc/metadefs/*.json $GLANCE_METADEF_DIR
 }
 
 # create_glance_accounts() - Set up common required glance accounts
@@ -240,6 +248,9 @@ function init_glance {
 
     # Migrate glance database
     $GLANCE_BIN_DIR/glance-manage db_sync
+
+    # Load metadata definitions
+    $GLANCE_BIN_DIR/glance-manage db_load_metadefs
 
     create_glance_cache_dir
 }
