@@ -55,6 +55,7 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
+source $TOP_DIR/lib/dstat
 
 # Extras Source
 # --------------
