@@ -99,6 +99,8 @@ function init_horizon {
     local local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
 
+    _horizon_config_set $local_settings "" COMPRESS_OFFLINE True
+
     _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
     _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/v2.0\""
     if [[ -n "$KEYSTONE_TOKEN_HASH_ALGORITHM" ]]; then
@@ -139,6 +141,9 @@ function init_horizon {
     # has been successfully started (see start_horizon() and functions::screen_it())
     # and run_process
     sudo rm -f /var/log/$APACHE_NAME/horizon_*
+
+    DJANGO_SETTINGS_MODULE=openstack_dashboard.settings django-admin.py collectstatic --noinput
+    DJANGO_SETTINGS_MODULE=openstack_dashboard.settings django-admin.py compress --force
 
 }
 
