@@ -175,6 +175,7 @@ function start_zaqar {
 
 # stop_zaqar() - Stop running processes
 function stop_zaqar {
+    local serv
     # Kill the zaqar screen windows
     for serv in zaqar-server; do
         screen -S $SCREEN_NAME -p $serv -X kill
@@ -182,18 +183,18 @@ function stop_zaqar {
 }
 
 function create_zaqar_accounts {
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    ZAQAR_USER=$(get_or_create_user "zaqar" \
-        "$SERVICE_PASSWORD" $SERVICE_TENANT)
-    get_or_add_user_role $ADMIN_ROLE $ZAQAR_USER $SERVICE_TENANT
+    local zaqar_user=$(get_or_create_user "zaqar" \
+        "$SERVICE_PASSWORD" $service_tenant)
+    get_or_add_user_role $ADMIN_ROLE $zaqar_user $service_tenant
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-        ZAQAR_SERVICE=$(get_or_create_service "zaqar" \
+        local zaqar_service=$(get_or_create_service "zaqar" \
             "queuing" "Zaqar Service")
-        get_or_create_endpoint $ZAQAR_SERVICE \
+        get_or_create_endpoint $zaqar_service \
             "$REGION_NAME" \
             "$ZAQAR_SERVICE_PROTOCOL://$ZAQAR_SERVICE_HOST:$ZAQAR_SERVICE_PORT" \
             "$ZAQAR_SERVICE_PROTOCOL://$ZAQAR_SERVICE_HOST:$ZAQAR_SERVICE_PORT" \
