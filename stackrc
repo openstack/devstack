@@ -144,6 +144,9 @@ DIB_BRANCH=${DIB_BRANCH:-master}
 GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
 GLANCE_BRANCH=${GLANCE_BRANCH:-master}
 
+GLANCE_STORE_REPO=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
+GLANCE_STORE_BRANCH=${GLANCE_STORE_BRANCH:-master}
+
 # python glance client library
 GLANCECLIENT_REPO=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
 GLANCECLIENT_BRANCH=${GLANCECLIENT_BRANCH:-master}
