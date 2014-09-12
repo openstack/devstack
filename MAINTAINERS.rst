@@ -50,6 +50,18 @@ OpenDaylight
 
 * Kyle Mestery <kmestery@cisco.com>
 
+OpenFlow Agent (ofagent)
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+* YAMAMOTO Takashi <yamamoto@valinux.co.jp>
+* Fumihiko Kakuma <kakuma@valinux.co.jp>
+
+Ryu
+~~~
+
+* YAMAMOTO Takashi <yamamoto@valinux.co.jp>
+* Fumihiko Kakuma <kakuma@valinux.co.jp>
+
 Sahara
 ~~~~~~
 
