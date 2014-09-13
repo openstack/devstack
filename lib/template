@@ -75,13 +75,17 @@ function install_XXXX {
 
 # start_XXXX() - Start running processes, including screen
 function start_XXXX {
-    # screen_it XXXX "cd $XXXX_DIR && $XXXX_DIR/bin/XXXX-bin"
+    # The quoted command must be a single command and not include an
+    # shell metacharacters, redirections or shell builtins.
+    # run_process XXXX "$XXXX_DIR/bin/XXXX-bin"
     :
 }
 
 # stop_XXXX() - Stop running processes (non-screen)
 function stop_XXXX {
-    # FIXME(dtroyer): stop only our screen screen window?
+    # for serv in serv-a serv-b; do
+    #     stop_process $serv
+    # done
     :
 }
 

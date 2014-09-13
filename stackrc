@@ -508,6 +508,11 @@ UNDO_REQUIREMENTS=${UNDO_REQUIREMENTS:-True}
 # Allow the use of an alternate protocol (such as https) for service endpoints
 SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 
+# Sets the maximum number of workers for various services and can restrict
+# the memory used where there are a large number of CPUs present
+# (the default number of workers for many services is the number of CPUs)
+# API_WORKERS=4
+
 # Local variables:
 # mode: shell-script
 # End:

@@ -37,7 +37,6 @@ umask 022
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
-
 # Sanity Checks
 # -------------
 
@@ -73,7 +72,6 @@ if [[ $EUID -eq 0 ]]; then
     echo "$TOP_DIR/tools/create-stack-user.sh"
     exit 1
 fi
-
 
 # Prepare the environment
 # -----------------------
@@ -639,9 +637,9 @@ function exit_trap {
     if [[ $r -ne 0 ]]; then
         echo "Error on exit"
         if [[ -z $LOGDIR ]]; then
-            ./tools/worlddump.py
+            $TOP_DIR/tools/worlddump.py
         else
-            ./tools/worlddump.py -d $LOGDIR
+            $TOP_DIR/tools/worlddump.py -d $LOGDIR
         fi
     fi
 
@@ -1210,7 +1208,7 @@ fi
 
 if is_service_enabled zeromq; then
     echo_summary "Starting zermomq receiver"
-    screen_it zeromq "cd $NOVA_DIR && $OSLO_BIN_DIR/oslo-messaging-zmq-receiver"
+    run_process zeromq "$OSLO_BIN_DIR/oslo-messaging-zmq-receiver"
 fi
 
 # Launch the nova-api and wait for it to answer before continuing
@@ -1318,7 +1316,7 @@ if is_service_enabled nova && is_baremetal; then
     fi
     # ensure callback daemon is running
     sudo pkill nova-baremetal-deploy-helper || true
-    screen_it baremetal "cd ; nova-baremetal-deploy-helper"
+    run_process baremetal "nova-baremetal-deploy-helper"
 fi
 
 # Save some values we generated for later use

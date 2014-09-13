@@ -28,12 +28,14 @@ functions to be implemented
   git clone xxx
 
 * ``start_<third_party>``:
-  start running processes, including screen
+  start running processes, including screen if USE_SCREEN=True
   e.g.
-  screen_it XXXX "cd $XXXXY_DIR && $XXXX_DIR/bin/XXXX-bin"
+  run_process XXXX "$XXXX_DIR/bin/XXXX-bin"
 
 * ``stop_<third_party>``:
   stop running processes (non-screen)
+  e.g.
+  stop_process XXXX
 
 * ``check_<third_party>``:
   verify that the integration between neutron server and third-party components is sane

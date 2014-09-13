@@ -20,7 +20,6 @@ mysql-devel  # testonly
 mysql-server # NOPRIME
 parted
 polkit
-python-boto
 python-cheetah
 python-eventlet
 python-feedparser

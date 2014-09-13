@@ -23,7 +23,6 @@ python-PasteDeploy
 python-Routes
 python-SQLAlchemy
 python-Tempita
-python-boto
 python-cheetah
 python-eventlet
 python-feedparser

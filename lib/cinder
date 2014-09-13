@@ -307,6 +307,9 @@ function configure_cinder {
     iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
 
+    if [ -n "$API_WORKERS" ]; then
+        iniset $CINDER_CONF DEFAULT osapi_volume_workers "$API_WORKERS"
+    fi
 }
 
 # create_cinder_accounts() - Set up common required cinder accounts
@@ -456,7 +459,7 @@ function stop_cinder {
     # Kill the cinder screen windows
     local serv
     for serv in c-api c-bak c-sch c-vol; do
-        screen_stop $serv
+        stop_process $serv
     done
 
     if is_service_enabled c-vol; then

@@ -77,14 +77,14 @@ function install_ganttclient {
 # start_gantt() - Start running processes, including screen
 function start_gantt {
     if is_service_enabled gantt; then
-        screen_it gantt "cd $GANTT_DIR && $GANTT_BIN_DIR/gantt-scheduler --config-file $GANTT_CONF"
+        run_process gantt "$GANTT_BIN_DIR/gantt-scheduler --config-file $GANTT_CONF"
     fi
 }
 
 # stop_gantt() - Stop running processes
 function stop_gantt {
     echo "Stop Gantt"
-    screen_stop gantt
+    stop_process gantt
 }
 
 # Restore xtrace
