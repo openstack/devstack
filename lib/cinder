@@ -459,7 +459,7 @@ function stop_cinder {
     # Kill the cinder screen windows
     local serv
     for serv in c-api c-bak c-sch c-vol; do
-        screen_stop $serv
+        stop_process $serv
     done
 
     if is_service_enabled c-vol; then

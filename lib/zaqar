@@ -162,9 +162,9 @@ function install_zaqarclient {
 # start_zaqar() - Start running processes, including screen
 function start_zaqar {
     if [[ "$USE_SCREEN" = "False" ]]; then
-        screen_it zaqar-server "zaqar-server --config-file $ZAQAR_CONF --daemon"
+        run_process zaqar-server "zaqar-server --config-file $ZAQAR_CONF --daemon"
     else
-        screen_it zaqar-server "zaqar-server --config-file $ZAQAR_CONF"
+        run_process zaqar-server "zaqar-server --config-file $ZAQAR_CONF"
     fi
 
     echo "Waiting for Zaqar to start..."
