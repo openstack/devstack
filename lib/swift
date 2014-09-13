@@ -426,7 +426,7 @@ EOF
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
         local swift_node_config=${SWIFT_CONF_DIR}/object-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/object-server.conf-sample ${swift_node_config}
-        generate_swift_config ${swift_node_config} ${node_number} $[OBJECT_PORT_BASE + 10 * (node_number - 1)] object
+        generate_swift_config ${swift_node_config} ${node_number} $(( OBJECT_PORT_BASE + 10 * (node_number - 1) )) object
         iniset ${swift_node_config} filter:recon recon_cache_path  ${SWIFT_DATA_DIR}/cache
         # Using a sed and not iniset/iniuncomment because we want to a global
         # modification and make sure it works for new sections.
@@ -434,14 +434,14 @@ EOF
 
         swift_node_config=${SWIFT_CONF_DIR}/container-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/container-server.conf-sample ${swift_node_config}
-        generate_swift_config ${swift_node_config} ${node_number} $[CONTAINER_PORT_BASE + 10 * (node_number - 1)] container
+        generate_swift_config ${swift_node_config} ${node_number} $(( CONTAINER_PORT_BASE + 10 * (node_number - 1) )) container
         iniuncomment ${swift_node_config} app:container-server allow_versions
         iniset ${swift_node_config} app:container-server allow_versions  "true"
         sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
 
         swift_node_config=${SWIFT_CONF_DIR}/account-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/account-server.conf-sample ${swift_node_config}
-        generate_swift_config ${swift_node_config} ${node_number} $[ACCOUNT_PORT_BASE + 10 * (node_number - 1)] account
+        generate_swift_config ${swift_node_config} ${node_number} $(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) )) account
         sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
     done
 
@@ -614,9 +614,9 @@ function init_swift {
         swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
 
         for node_number in ${SWIFT_REPLICAS_SEQ}; do
-            swift-ring-builder object.builder add z${node_number}-127.0.0.1:$[OBJECT_PORT_BASE + 10 * (node_number - 1)]/sdb1 1
-            swift-ring-builder container.builder add z${node_number}-127.0.0.1:$[CONTAINER_PORT_BASE + 10 * (node_number - 1)]/sdb1 1
-            swift-ring-builder account.builder add z${node_number}-127.0.0.1:$[ACCOUNT_PORT_BASE + 10 * (node_number - 1)]/sdb1 1
+            swift-ring-builder object.builder add z${node_number}-127.0.0.1:$(( OBJECT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+            swift-ring-builder container.builder add z${node_number}-127.0.0.1:$(( CONTAINER_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+            swift-ring-builder account.builder add z${node_number}-127.0.0.1:$(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
         done
         swift-ring-builder object.builder rebalance
         swift-ring-builder container.builder rebalance
