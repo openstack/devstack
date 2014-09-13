@@ -4,7 +4,6 @@ ebtables
 iptables
 iputils
 mariadb # NOPRIME
-python-boto
 python-eventlet
 python-greenlet
 python-iso8601

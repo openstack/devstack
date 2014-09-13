@@ -8,7 +8,6 @@ mysql-connector-python
 mysql-devel  # testonly
 mysql-server # NOPRIME
 openvswitch # NOPRIME
-python-boto
 python-eventlet
 python-greenlet
 python-iso8601
