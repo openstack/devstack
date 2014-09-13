@@ -639,9 +639,9 @@ function exit_trap {
     if [[ $r -ne 0 ]]; then
         echo "Error on exit"
         if [[ -z $LOGDIR ]]; then
-            ./tools/worlddump.py
+            $TOP_DIR/tools/worlddump.py
         else
-            ./tools/worlddump.py -d $LOGDIR
+            $TOP_DIR/tools/worlddump.py -d $LOGDIR
         fi
     fi
 
