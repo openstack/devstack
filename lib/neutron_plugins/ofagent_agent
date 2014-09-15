@@ -34,10 +34,18 @@ function neutron_plugin_configure_l3_agent {
     iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
 }
 
+function _neutron_ofagent_configure_firewall_driver {
+    if [[ "$Q_USE_SECGROUP" == "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+    else
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
+    fi
+}
+
 function neutron_plugin_configure_plugin_agent {
     # Set up integration bridge
     _neutron_ovs_base_setup_bridge $OVS_BRIDGE
-    _neutron_ovs_base_configure_firewall_driver
+    _neutron_ofagent_configure_firewall_driver
 
     # Check a supported openflow version
     OF_VERSION=`ovs-ofctl --version | grep "OpenFlow versions" | awk '{print $3}' | cut -d':' -f2`
