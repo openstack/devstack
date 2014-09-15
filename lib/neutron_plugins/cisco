@@ -20,36 +20,10 @@ Q_CISCO_PLUGIN_VXLAN_ID_RANGES=${Q_CISCO_PLUGIN_VXLAN_ID_RANGES:-5000:10000}
 # Specify the VLAN range
 Q_CISCO_PLUGIN_VLAN_RANGES=${Q_CISCO_PLUGIN_VLAN_RANGES:-vlan:1:4094}
 
-# Specify ncclient package information
-NCCLIENT_DIR=$DEST/ncclient
-NCCLIENT_VERSION=${NCCLIENT_VERSION:-0.3.1}
-NCCLIENT_REPO=${NCCLIENT_REPO:-git://github.com/CiscoSystems/ncclient.git}
-NCCLIENT_BRANCH=${NCCLIENT_BRANCH:-master}
-
 # This routine put a prefix on an existing function name
 function _prefix_function {
     declare -F $1 > /dev/null || die "$1 doesn't exist"
     eval "$(echo "${2}_${1}()"; declare -f ${1} | tail -n +2)"
-}
-
-function _has_ovs_subplugin {
-    local subplugin
-    for subplugin in ${Q_CISCO_PLUGIN_SUBPLUGINS[@]}; do
-        if [[ "$subplugin" == "openvswitch" ]]; then
-            return 0
-        fi
-    done
-    return 1
-}
-
-function _has_nexus_subplugin {
-    local subplugin
-    for subplugin in ${Q_CISCO_PLUGIN_SUBPLUGINS[@]}; do
-        if [[ "$subplugin" == "nexus" ]]; then
-            return 0
-        fi
-    done
-    return 1
 }
 
 function _has_n1kv_subplugin {
@@ -60,27 +34,6 @@ function _has_n1kv_subplugin {
         fi
     done
     return 1
-}
-
-# This routine populates the cisco config file with the information for
-# a particular nexus switch
-function _config_switch {
-    local cisco_cfg_file=$1
-    local switch_ip=$2
-    local username=$3
-    local password=$4
-    local ssh_port=$5
-    shift 5
-
-    local section="NEXUS_SWITCH:$switch_ip"
-    iniset $cisco_cfg_file $section username $username
-    iniset $cisco_cfg_file $section password $password
-    iniset $cisco_cfg_file $section ssh_port $ssh_port
-
-    while [[ ${#@} != 0 ]]; do
-        iniset  $cisco_cfg_file $section $1 $2
-        shift 2
-    done
 }
 
 # Prefix openvswitch plugin routines with "ovs" in order to differentiate from
@@ -98,73 +51,17 @@ _prefix_function neutron_plugin_configure_service ovs
 _prefix_function neutron_plugin_setup_interface_driver ovs
 _prefix_function has_neutron_plugin_security_group ovs
 
-# Check the version of the installed ncclient package
-function check_ncclient_version {
-python << EOF
-version = '$NCCLIENT_VERSION'
-import sys
-try:
-    import pkg_resources
-    import ncclient
-    module_version = pkg_resources.get_distribution('ncclient').version
-    if version != module_version:
-        sys.exit(1)
-except:
-    sys.exit(1)
-EOF
-}
-
-# Install the ncclient package
-function install_ncclient {
-    git_clone $NCCLIENT_REPO $NCCLIENT_DIR $NCCLIENT_BRANCH
-    (cd $NCCLIENT_DIR; sudo python setup.py install)
-}
-
-# Check if the required version of ncclient has been installed
-function is_ncclient_installed {
-    # Check if the Cisco ncclient repository exists
-    if [[ -d $NCCLIENT_DIR ]]; then
-        remotes=$(cd $NCCLIENT_DIR; git remote -v | grep fetch | awk '{ print $2}')
-        for remote in $remotes; do
-            if [[ $remote == $NCCLIENT_REPO ]]; then
-                break;
-            fi
-        done
-        if [[ $remote != $NCCLIENT_REPO ]]; then
-            return 1
-        fi
-    else
-        return 1
-    fi
-
-    # Check if the ncclient is installed with the right version
-    if ! check_ncclient_version; then
-        return 1
-    fi
-    return 0
-}
-
 function has_neutron_plugin_security_group {
-    if _has_ovs_subplugin; then
-        ovs_has_neutron_plugin_security_group
-    else
-        return 1
-    fi
+    return 1
 }
 
 function is_neutron_ovs_base_plugin {
-    # Cisco uses OVS if openvswitch subplugin is deployed
-    _has_ovs_subplugin
     return
 }
 
 # populate required nova configuration parameters
 function neutron_plugin_create_nova_conf {
-    if _has_ovs_subplugin; then
-        ovs_neutron_plugin_create_nova_conf
-    else
-        _neutron_ovs_base_configure_nova_vif_driver
-    fi
+    _neutron_ovs_base_configure_nova_vif_driver
 }
 
 function neutron_plugin_install_agent_packages {
@@ -177,32 +74,14 @@ function neutron_plugin_configure_common {
     # setup default subplugins
     if [ ! -v Q_CISCO_PLUGIN_SUBPLUGINS ]; then
         declare -ga Q_CISCO_PLUGIN_SUBPLUGINS
-        Q_CISCO_PLUGIN_SUBPLUGINS=(openvswitch nexus)
+        Q_CISCO_PLUGIN_SUBPLUGINS=(n1kv)
     fi
-    if _has_ovs_subplugin; then
-        ovs_neutron_plugin_configure_common
-        Q_PLUGIN_EXTRA_CONF_PATH=etc/neutron/plugins/cisco
-        Q_PLUGIN_EXTRA_CONF_FILES=(cisco_plugins.ini)
-        # Copy extra config files to /etc so that they can be modified
-        # later according to Cisco-specific localrc settings.
-        mkdir -p /$Q_PLUGIN_EXTRA_CONF_PATH
-        local f
-        local extra_conf_file
-        for (( f=0; $f < ${#Q_PLUGIN_EXTRA_CONF_FILES[@]}; f+=1 )); do
-            extra_conf_file=$Q_PLUGIN_EXTRA_CONF_PATH/${Q_PLUGIN_EXTRA_CONF_FILES[$f]}
-            cp $NEUTRON_DIR/$extra_conf_file /$extra_conf_file
-        done
-    else
-        Q_PLUGIN_CONF_PATH=etc/neutron/plugins/cisco
-        Q_PLUGIN_CONF_FILENAME=cisco_plugins.ini
-    fi
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/cisco
+    Q_PLUGIN_CONF_FILENAME=cisco_plugins.ini
     Q_PLUGIN_CLASS="neutron.plugins.cisco.network_plugin.PluginV2"
 }
 
 function neutron_plugin_configure_debug_command {
-    if _has_ovs_subplugin; then
-        ovs_neutron_plugin_configure_debug_command
-    fi
 }
 
 function neutron_plugin_configure_dhcp_agent {
@@ -210,53 +89,6 @@ function neutron_plugin_configure_dhcp_agent {
 }
 
 function neutron_plugin_configure_l3_agent {
-    if _has_ovs_subplugin; then
-        ovs_neutron_plugin_configure_l3_agent
-    fi
-}
-
-function _configure_nexus_subplugin {
-    local cisco_cfg_file=$1
-
-    # Install a known compatible ncclient from the Cisco repository if necessary
-    if ! is_ncclient_installed; then
-        # Preserve the two global variables
-        local offline=$OFFLINE
-        local reclone=$RECLONE
-        # Change their values to allow installation
-        OFFLINE=False
-        RECLONE=yes
-        install_ncclient
-        # Restore their values
-        OFFLINE=$offline
-        RECLONE=$reclone
-    fi
-
-    # Setup default nexus switch information
-    if [ ! -v Q_CISCO_PLUGIN_SWITCH_INFO ]; then
-        declare -A Q_CISCO_PLUGIN_SWITCH_INFO
-        HOST_NAME=$(hostname)
-        Q_CISCO_PLUGIN_SWITCH_INFO=([1.1.1.1]=stack:stack:22:${HOST_NAME}:1/10)
-    else
-        iniset $cisco_cfg_file CISCO nexus_driver neutron.plugins.cisco.nexus.cisco_nexus_network_driver_v2.CiscoNEXUSDriver
-    fi
-
-    # Setup the switch configurations
-    local nswitch
-    local sw_info
-    local segment
-    local sw_info_array
-    declare -i count=0
-    for nswitch in ${!Q_CISCO_PLUGIN_SWITCH_INFO[@]}; do
-        sw_info=${Q_CISCO_PLUGIN_SWITCH_INFO[$nswitch]}
-        sw_info_array=${sw_info//:/ }
-        sw_info_array=( $sw_info_array )
-        count=${#sw_info_array[@]}
-        if [[ $count < 5 || $(( ($count-3) % 2 )) != 0 ]]; then
-            die $LINENO "Incorrect switch configuration: ${Q_CISCO_PLUGIN_SWITCH_INFO[$nswitch]}"
-        fi
-        _config_switch $cisco_cfg_file $nswitch ${sw_info_array[@]}
-    done
 }
 
 # Configure n1kv plugin
@@ -279,47 +111,28 @@ function _configure_n1kv_subplugin {
 }
 
 function neutron_plugin_configure_plugin_agent {
-    if _has_ovs_subplugin; then
-        ovs_neutron_plugin_configure_plugin_agent
-    fi
 }
 
 function neutron_plugin_configure_service {
     local subplugin
     local cisco_cfg_file
 
-    if _has_ovs_subplugin; then
-        ovs_neutron_plugin_configure_service
-        cisco_cfg_file=/${Q_PLUGIN_EXTRA_CONF_FILES[0]}
-    else
-        cisco_cfg_file=/$Q_PLUGIN_CONF_FILE
-    fi
+    cisco_cfg_file=/$Q_PLUGIN_CONF_FILE
 
     # Setup the [CISCO_PLUGINS] section
     if [[ ${#Q_CISCO_PLUGIN_SUBPLUGINS[@]} > 2 ]]; then
         die $LINENO "At most two subplugins are supported."
     fi
 
-    if _has_ovs_subplugin && _has_n1kv_subplugin; then
-        die $LINENO "OVS subplugin and n1kv subplugin cannot coexist"
-    fi
-
     # Setup the subplugins
-    inicomment $cisco_cfg_file CISCO_PLUGINS nexus_plugin
     inicomment $cisco_cfg_file CISCO_PLUGINS vswitch_plugin
     inicomment $cisco_cfg_file CISCO_TEST host
     for subplugin in ${Q_CISCO_PLUGIN_SUBPLUGINS[@]}; do
         case $subplugin in
-            nexus) iniset $cisco_cfg_file CISCO_PLUGINS nexus_plugin neutron.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin;;
-            openvswitch) iniset $cisco_cfg_file CISCO_PLUGINS vswitch_plugin neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2;;
             n1kv) iniset $cisco_cfg_file CISCO_PLUGINS vswitch_plugin neutron.plugins.cisco.n1kv.n1kv_neutron_plugin.N1kvNeutronPluginV2;;
             *) die $LINENO "Unsupported cisco subplugin: $subplugin";;
         esac
     done
-
-    if _has_nexus_subplugin; then
-        _configure_nexus_subplugin $cisco_cfg_file
-    fi
 
     if _has_n1kv_subplugin; then
         _configure_n1kv_subplugin $cisco_cfg_file
