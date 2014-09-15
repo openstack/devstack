@@ -15,7 +15,7 @@ python-kombu
 #rhel6 gets via pip
 python-paste        # dist:f19,f20,rhel7
 python-paste-deploy # dist:f19,f20,rhel7
-python-qpid
+python-qpid # NOPRIME
 python-routes
 python-sqlalchemy
 python-suds

@@ -17,7 +17,7 @@ python-sqlalchemy
 python-mysqldb
 python-mysql.connector
 python-pyudev
-python-qpid # dist:precise
+python-qpid # NOPRIME
 dnsmasq-base
 dnsmasq-utils # for dhcp_release only available in dist:precise
 rabbitmq-server # NOPRIME
