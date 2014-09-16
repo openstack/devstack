@@ -154,7 +154,7 @@ function configure_ceilometer {
 
     if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
         iniset $CEILOMETER_CONF database connection `database_connection_url ceilometer`
-        iniset $CEILOMETER_CONF DEFAULT collector_workers $(( ($(nproc) + 1) / 2 ))
+        iniset $CEILOMETER_CONF DEFAULT collector_workers $API_WORKERS
     else
         iniset $CEILOMETER_CONF database connection mongodb://localhost:27017/ceilometer
         configure_mongodb

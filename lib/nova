@@ -518,11 +518,9 @@ function create_nova_conf {
     iniset_rpc_backend nova $NOVA_CONF DEFAULT
     iniset $NOVA_CONF glance api_servers "$GLANCE_HOSTPORT"
 
-    if [ -n "$API_WORKERS" ]; then
-        iniset $NOVA_CONF DEFAULT osci_compute_workers "$API_WORKERS"
-        iniset $NOVA_CONF DEFAULT ec2_workers "$API_WORKERS"
-        iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
-    fi
+    iniset $NOVA_CONF DEFAULT osci_compute_workers "$API_WORKERS"
+    iniset $NOVA_CONF DEFAULT ec2_workers "$API_WORKERS"
+    iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
 }
 
 function init_nova_cells {
