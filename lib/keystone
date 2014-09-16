@@ -6,6 +6,7 @@
 # - ``functions`` file
 # - ``tls`` file
 # - ``DEST``, ``STACK_USER``
+# - ``FILES``
 # - ``IDENTITY_API_VERSION``
 # - ``BASE_SQL_CONN``
 # - ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
@@ -104,18 +105,13 @@ KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${K
 # cleanup_keystone() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_keystone {
-    # kill instances (nova)
-    # delete image files (glance)
-    # This function intentionally left blank
-    :
+    _cleanup_keystone_apache_wsgi
 }
 
 # _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
 function _cleanup_keystone_apache_wsgi {
     sudo rm -f $KEYSTONE_WSGI_DIR/*.wsgi
-    disable_apache_site keystone
     sudo rm -f $(apache_site_config_for keystone)
-    restart_apache_server
 }
 
 # _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
@@ -145,7 +141,6 @@ function _config_keystone_apache_wsgi {
         s|%USER%|$STACK_USER|g
         s|%ERRORLOGFORMAT%|$errorlogformat|g;
     " -i $keystone_apache_conf
-    enable_apache_site keystone
 }
 
 # configure_keystone() - Set config files, create data dirs, etc
@@ -473,6 +468,7 @@ function start_keystone {
     fi
 
     if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
+        enable_apache_site keystone
         restart_apache_server
         tail_log key /var/log/$APACHE_NAME/keystone.log
         tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
@@ -498,10 +494,12 @@ function start_keystone {
 
 # stop_keystone() - Stop running processes
 function stop_keystone {
+    if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
+        disable_apache_site keystone
+        restart_apache_server
+    fi
     # Kill the Keystone screen window
     stop_process key
-    # Cleanup the WSGI files and VHOST
-    _cleanup_keystone_apache_wsgi
 }
 
 function is_keystone_enabled {
