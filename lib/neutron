@@ -799,7 +799,7 @@ function _configure_neutron_metadata_agent {
 }
 
 function _configure_neutron_ceilometer_notifications {
-    iniset $NEUTRON_CONF DEFAULT notification_driver neutron.openstack.common.notifier.rpc_notifier
+    iniset $NEUTRON_CONF DEFAULT notification_driver messaging
 }
 
 function _configure_neutron_lbaas {
