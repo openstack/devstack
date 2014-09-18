@@ -142,8 +142,8 @@ function cleanup_ceph_remote {
 }
 
 function cleanup_ceph_embedded {
-    sudo pkill -f ceph-mon
-    sudo pkill -f ceph-osd
+    sudo killall -w -9 ceph-mon
+    sudo killall -w -9 ceph-osd
     sudo rm -rf ${CEPH_DATA_DIR}/*/*
     if egrep -q ${CEPH_DATA_DIR} /proc/mounts; then
         sudo umount ${CEPH_DATA_DIR}
