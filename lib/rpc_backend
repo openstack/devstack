@@ -182,6 +182,11 @@ EOF
         sudo mkdir -p /var/run/openstack
         sudo chown $STACK_USER /var/run/openstack
     fi
+
+    # If using the QPID broker, install the QPID python client API
+    if is_service_enabled qpid || [ -n "$QPID_HOST" ]; then
+        install_package python-qpid
+    fi
 }
 
 # restart the rpc backend
