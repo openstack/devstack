@@ -57,7 +57,9 @@ cgroup_device_acl = [
 EOF
     fi
 
-    if [ "$os_VENDOR" = "Ubuntu" ]; then
+    # Since the release of Debian Wheezy the libvirt init script is libvirtd
+    # and not libvirtd-bin anymore.
+    if is_ubuntu && [ ! -f /etc/init.d/libvirtd ]; then
         LIBVIRT_DAEMON=libvirt-bin
     else
         LIBVIRT_DAEMON=libvirtd
