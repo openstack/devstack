@@ -110,14 +110,7 @@ function configure_heat {
         setup_colorized_logging $HEAT_CONF DEFAULT tenant user
     fi
 
-    # keystone authtoken
-    iniset $HEAT_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-    configure_API_version $HEAT_CONF $IDENTITY_API_VERSION
-    iniset $HEAT_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
-    iniset $HEAT_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $HEAT_CONF keystone_authtoken admin_user heat
-    iniset $HEAT_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $HEAT_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR
+    configure_auth_token_middleware $HEAT_CONF heat $HEAT_AUTH_CACHE_DIR
 
     if is_ssl_enabled_service "key"; then
         iniset $HEAT_CONF clients_keystone ca_file $KEYSTONE_SSL_CA

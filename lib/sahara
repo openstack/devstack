@@ -106,16 +106,7 @@ function configure_sahara {
     sudo chown $STACK_USER $SAHARA_AUTH_CACHE_DIR
     rm -rf $SAHARA_AUTH_CACHE_DIR/*
 
-    # Set actual keystone auth configs
-    iniset $SAHARA_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
-    iniset $SAHARA_CONF_FILE keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $SAHARA_CONF_FILE keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $SAHARA_CONF_FILE keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $SAHARA_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $SAHARA_CONF_FILE keystone_authtoken admin_user sahara
-    iniset $SAHARA_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $SAHARA_CONF_FILE keystone_authtoken signing_dir $SAHARA_AUTH_CACHE_DIR
-    iniset $SAHARA_CONF_FILE keystone_authtoken cafile $KEYSTONE_SSL_CA
+    configure_auth_token_middleware $SAHARA_CONF_FILE sahara $SAHARA_AUTH_CACHE_DIR
 
     # Set configuration to send notifications
 

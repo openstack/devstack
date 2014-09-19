@@ -438,16 +438,8 @@ function create_nova_conf {
             iniset $NOVA_CONF DEFAULT osapi_compute_listen_port "$NOVA_SERVICE_PORT_INT"
         fi
 
-        # Add keystone authtoken configuration
-
-        iniset $NOVA_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-        iniset $NOVA_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-        iniset $NOVA_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
-        iniset $NOVA_CONF keystone_authtoken admin_user nova
-        iniset $NOVA_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+        configure_auth_token_middleware $NOVA_CONF nova $NOVA_AUTH_CACHE_DIR
     fi
-
-    iniset $NOVA_CONF keystone_authtoken signing_dir $NOVA_AUTH_CACHE_DIR
 
     if [ -n "$NOVA_STATE_PATH" ]; then
         iniset $NOVA_CONF DEFAULT state_path "$NOVA_STATE_PATH"
