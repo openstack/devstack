@@ -516,6 +516,11 @@ SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 # (the default number of workers for many services is the number of CPUs)
 # API_WORKERS=4
 
+# Service startup timeout
+SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
+
+# Following entries need to be last items in file
+
 # Local variables:
 # mode: shell-script
 # End:
