@@ -269,7 +269,7 @@ function generate_swift_config {
     iniset ${swift_node_config} DEFAULT log_facility LOG_LOCAL${log_facility}
 
     iniuncomment ${swift_node_config} DEFAULT workers
-    iniset ${swift_node_config} DEFAULT workers 1
+    iniset ${swift_node_config} DEFAULT workers ${API_WORKERS:-1}
 
     iniuncomment ${swift_node_config} DEFAULT disable_fallocate
     iniset ${swift_node_config} DEFAULT disable_fallocate true
