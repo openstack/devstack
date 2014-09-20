@@ -307,9 +307,7 @@ function configure_cinder {
     iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
 
-    if [ -n "$API_WORKERS" ]; then
-        iniset $CINDER_CONF DEFAULT osapi_volume_workers "$API_WORKERS"
-    fi
+    iniset $CINDER_CONF DEFAULT osapi_volume_workers "$API_WORKERS"
 }
 
 # create_cinder_accounts() - Set up common required cinder accounts

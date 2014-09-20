@@ -138,9 +138,7 @@ function configure_glance {
     # sections.
     iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
 
-    if [ -n "$API_WORKERS" ]; then
-        iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
-    fi
+    iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
 
     # Store the images in swift if enabled.
     if is_service_enabled s-proxy; then
