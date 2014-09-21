@@ -1,3 +1,4 @@
+MySQL-python
 python-greenlet
 libxslt-devel       # dist:f20
 python-lxml         #dist:f19,f20

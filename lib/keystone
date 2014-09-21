@@ -293,6 +293,9 @@ function configure_keystone {
     fi
 
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
+
+    iniset $KEYSTONE_CONF DEFAULT admin_workers "$API_WORKERS"
+    # Public workers will use the server default, typically number of CPU.
 }
 
 function configure_keystone_extensions {
