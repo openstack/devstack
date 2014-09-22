@@ -128,12 +128,7 @@ function configure_trove {
     cp $TROVE_LOCAL_CONF_DIR/api-paste.ini $TROVE_CONF_DIR/api-paste.ini
     TROVE_API_PASTE_INI=$TROVE_CONF_DIR/api-paste.ini
 
-    iniset $TROVE_API_PASTE_INI filter:authtoken identity_uri $KEYSTONE_AUTH_URI
-    iniset $TROVE_API_PASTE_INI filter:authtoken cafile $KEYSTONE_SSL_CA
-    iniset $TROVE_API_PASTE_INI filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $TROVE_API_PASTE_INI filter:authtoken admin_user trove
-    iniset $TROVE_API_PASTE_INI filter:authtoken admin_password $SERVICE_PASSWORD
-    iniset $TROVE_API_PASTE_INI filter:authtoken signing_dir $TROVE_AUTH_CACHE_DIR
+    configure_auth_token_middleware $TROVE_API_PASTE_INI trove $TROVE_AUTH_CACHE_DIR filter:authtoken
 
     # (Re)create trove conf files
     rm -f $TROVE_CONF_DIR/trove.conf

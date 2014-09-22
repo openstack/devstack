@@ -96,13 +96,7 @@ function configure_glance {
     iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $dburl
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
-    configure_API_version $GLANCE_REGISTRY_CONF $IDENTITY_API_VERSION
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_user glance
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $GLANCE_REGISTRY_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/registry
+    configure_auth_token_middleware $GLANCE_REGISTRY_CONF glance $GLANCE_AUTH_CACHE_DIR/registry
     if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
         iniset $GLANCE_REGISTRY_CONF DEFAULT notification_driver messaging
     fi
@@ -115,17 +109,11 @@ function configure_glance {
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
     iniset $GLANCE_API_CONF paste_deploy flavor keystone+cachemanagement
-    iniset $GLANCE_API_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-    iniset $GLANCE_API_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
-    configure_API_version $GLANCE_API_CONF $IDENTITY_API_VERSION
-    iniset $GLANCE_API_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $GLANCE_API_CONF keystone_authtoken admin_user glance
-    iniset $GLANCE_API_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+    configure_auth_token_middleware $GLANCE_API_CONF glance $GLANCE_AUTH_CACHE_DIR/api
     if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
         iniset $GLANCE_API_CONF DEFAULT notification_driver messaging
     fi
     iniset_rpc_backend glance $GLANCE_API_CONF DEFAULT
-    iniset $GLANCE_API_CONF keystone_authtoken signing_dir $GLANCE_AUTH_CACHE_DIR/api
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         iniset $GLANCE_API_CONF DEFAULT container_formats "ami,ari,aki,bare,ovf,tgz"
         iniset $GLANCE_API_CONF DEFAULT disk_formats "ami,ari,aki,vhd,raw,iso"

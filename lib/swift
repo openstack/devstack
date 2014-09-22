@@ -382,15 +382,7 @@ function configure_swift {
 
     # Configure Keystone
     sed -i '/^# \[filter:authtoken\]/,/^# \[filter:keystoneauth\]$/ s/^#[ \t]*//' ${SWIFT_CONFIG_PROXY_SERVER}
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cafile $KEYSTONE_SSL_CA
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_password $SERVICE_PASSWORD
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken signing_dir $SWIFT_AUTH_CACHE_DIR
+    configure_auth_token_middleware ${SWIFT_CONFIG_PROXY_SERVER} swift $SWIFT_AUTH_CACHE_DIR filter:authtoken
     # This causes the authtoken middleware to use the same python logging
     # adapter provided by the swift proxy-server, so that request transaction
     # IDs will included in all of its log messages.
