@@ -212,12 +212,7 @@ function configure_cinder {
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_password
     inicomment $CINDER_API_PASTE_INI filter:authtoken signing_dir
 
-    iniset $CINDER_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-    iniset $CINDER_CONF keystone_authtoken cafile $KEYSTONE_SSL_CA
-    iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $CINDER_CONF keystone_authtoken admin_user cinder
-    iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $CINDER_CONF keystone_authtoken signing_dir $CINDER_AUTH_CACHE_DIR
+    configure_auth_token_middleware $CINDER_CONF cinder $CINDER_AUTH_CACHE_DIR
 
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -302,10 +297,6 @@ function configure_cinder {
             -e 's/snapshot_autoextend_percent =.*/snapshot_autoextend_percent = 20/' \
             /etc/lvm/lvm.conf
     fi
-    configure_API_version $CINDER_CONF $IDENTITY_API_VERSION
-    iniset $CINDER_CONF keystone_authtoken admin_user cinder
-    iniset $CINDER_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $CINDER_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
 
     iniset $CINDER_CONF DEFAULT osapi_volume_workers "$API_WORKERS"
 }

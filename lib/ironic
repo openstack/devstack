@@ -243,14 +243,8 @@ function configure_ironic {
 function configure_ironic_api {
     iniset $IRONIC_CONF_FILE DEFAULT auth_strategy keystone
     iniset $IRONIC_CONF_FILE DEFAULT policy_file $IRONIC_POLICY_JSON
-    iniset $IRONIC_CONF_FILE keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-    iniset $IRONIC_CONF_FILE keystone_authtoken cafile $KEYSTONE_SSL_CA
-    iniset $IRONIC_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_SERVICE_URI
-    iniset $IRONIC_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $IRONIC_CONF_FILE keystone_authtoken admin_user ironic
-    iniset $IRONIC_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
+    configure_auth_token_middleware $IRONIC_CONF_FILE ironic $IRONIC_AUTH_CACHE_DIR/api
     iniset_rpc_backend ironic $IRONIC_CONF_FILE DEFAULT
-    iniset $IRONIC_CONF_FILE keystone_authtoken signing_dir $IRONIC_AUTH_CACHE_DIR/api
 
     cp -p $IRONIC_DIR/etc/ironic/policy.json $IRONIC_POLICY_JSON
 }
