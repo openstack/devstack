@@ -112,6 +112,9 @@ function init_horizon {
 
     _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
     _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/v2.0\""
+    if [[ -n "$KEYSTONE_TOKEN_HASH_ALGORITHM" ]]; then
+        _horizon_config_set $local_settings "" OPENSTACK_TOKEN_HASH_ALGORITHM \""$KEYSTONE_TOKEN_HASH_ALGORITHM"\"
+    fi
 
     if [ -f $SSL_BUNDLE_FILE ]; then
         _horizon_config_set $local_settings "" OPENSTACK_SSL_CACERT \"${SSL_BUNDLE_FILE}\"
