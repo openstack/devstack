@@ -296,6 +296,10 @@ function configure_keystone {
 
     iniset $KEYSTONE_CONF DEFAULT admin_workers "$API_WORKERS"
     # Public workers will use the server default, typically number of CPU.
+
+    if [[ -n "$KEYSTONE_TOKEN_HASH_ALGORITHM" ]]; then
+        iniset $KEYSTONE_CONF token hash_algorithm "$KEYSTONE_TOKEN_HASH_ALGORITHM"
+    fi
 }
 
 function configure_keystone_extensions {
@@ -417,6 +421,9 @@ function configure_auth_token_middleware {
     iniset $conf_file $section admin_user $admin_user
     iniset $conf_file $section admin_password $SERVICE_PASSWORD
     iniset $conf_file $section signing_dir $signing_dir
+    if [[ -n "$KEYSTONE_TOKEN_HASH_ALGORITHM" ]]; then
+        iniset $conf_file keystone_authtoken hash_algorithms "$KEYSTONE_TOKEN_HASH_ALGORITHM"
+    fi
 }
 
 # init_keystone() - Initialize databases, etc.
