@@ -123,12 +123,6 @@ function init_horizon {
     # Create an empty directory that apache uses as docroot
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
-    # Apache 2.4 uses mod_authz_host for access control now (instead of "Allow")
-    local horizon_require=''
-    if check_apache_version "2.4" ; then
-        horizon_require='Require all granted'
-    fi
-
     local horizon_conf=$(apache_site_config_for horizon)
 
     # Configure apache to run horizon
@@ -138,7 +132,6 @@ function init_horizon {
         s,%HORIZON_DIR%,$HORIZON_DIR,g;
         s,%APACHE_NAME%,$APACHE_NAME,g;
         s,%DEST%,$DEST,g;
-        s,%HORIZON_REQUIRE%,$horizon_require,g;
     \" $FILES/apache-horizon.template >$horizon_conf"
 
     if is_ubuntu; then

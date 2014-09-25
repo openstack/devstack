@@ -17,10 +17,16 @@
 
     <Directory %HORIZON_DIR%/>
         Options Indexes FollowSymLinks MultiViews
-        %HORIZON_REQUIRE%
         AllowOverride None
-        Order allow,deny
-        allow from all
+        # Apache 2.4 uses mod_authz_host for access control now (instead of
+        #  "Allow")
+        <IfVersion < 2.4>
+            Order allow,deny
+            Allow from all
+        </IfVersion>
+        <IfVersion >= 2.4>
+            Require all granted
+        </IfVersion>
     </Directory>
 
     ErrorLog /var/log/%APACHE_NAME%/horizon_error.log
