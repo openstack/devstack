@@ -9,7 +9,7 @@ python-greenlet
 python-iso8601
 python-kombu
 python-mysql
-python-mysql.connector
+python-mysql-connector-python
 python-Paste
 python-PasteDeploy
 python-pyudev
