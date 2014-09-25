@@ -290,15 +290,12 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute ssh_connect_method $ssh_connect_method
 
     # Compute Features
-    iniset $TEMPEST_CONFIG compute-feature-enabled api_v3 ${TEMPEST_NOVA_API_V3:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled resize True
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions ${COMPUTE_API_EXTENSIONS:-"all"}
     iniset $TEMPEST_CONFIG compute-feature-disabled api_extensions ${DISABLE_COMPUTE_API_EXTENSIONS}
-    iniset $TEMPEST_CONFIG compute-feature-enabled api_v3_extensions ${COMPUTE_API_V3_EXTENSIONS:-"all"}
-    iniset $TEMPEST_CONFIG compute-feature-disabled api_v3_extensions ${DISABLE_COMPUTE_API_V3_EXTENSIONS}
 
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
