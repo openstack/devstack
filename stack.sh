@@ -340,6 +340,15 @@ source $TOP_DIR/lib/rpc_backend
 # and the specified rpc backend is available on your platform.
 check_rpc_backend
 
+# Use native SSL for servers in SSL_ENABLED_SERVICES
+USE_SSL=$(trueorfalse False $USE_SSL)
+
+# Service to enable with SSL if USE_SSL is True
+SSL_ENABLED_SERVICES="key,nova,cinder,glance,s-proxy,neutron"
+
+if is_service_enabled tls-proxy && [ "$USE_SSL" == "True" ]; then
+    die $LINENO "tls-proxy and SSL are mutually exclusive"
+fi
 
 # Configure Projects
 # ==================
@@ -822,7 +831,7 @@ if is_service_enabled heat; then
     configure_heat
 fi
 
-if is_service_enabled tls-proxy; then
+if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
     configure_CA
     init_CA
     init_cert

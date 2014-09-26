@@ -29,12 +29,19 @@ set +o xtrace
 # Defaults
 # --------
 
+if is_ssl_enabled_service "s-proxy" || is_service_enabled tls-proxy; then
+    SWIFT_SERVICE_PROTOCOL="https"
+fi
+
 # Set up default directories
 SWIFT_DIR=$DEST/swift
 SWIFTCLIENT_DIR=$DEST/python-swiftclient
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
 SWIFT3_DIR=$DEST/swift3
+
+SWIFT_SERVICE_PROTOCOL=${SWIFT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+SWIFT_DEFAULT_BIND_PORT_INT=${SWIFT_DEFAULT_BIND_PORT_INT:-8081}
 
 # TODO: add logging to different location.
 
@@ -334,7 +341,18 @@ function configure_swift {
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT log_level DEBUG
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
+    if is_service_enabled tls-proxy; then
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT_INT}
+    else
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
+    fi
+
+    if is_ssl_enabled_service s-proxy; then
+        ensure_certificates SWIFT
+
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT cert_file "$SWIFT_SSL_CERT"
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT key_file "$SWIFT_SSL_KEY"
+    fi
 
     # Devstack is commonly run in a small slow environment, so bump the
     # timeouts up.
@@ -401,7 +419,7 @@ paste.filter_factory = keystoneclient.middleware.s3_token:filter_factory
 auth_port = ${KEYSTONE_AUTH_PORT}
 auth_host = ${KEYSTONE_AUTH_HOST}
 auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
-cafile = ${KEYSTONE_SSL_CA}
+cafile = ${SSL_BUNDLE_FILE}
 auth_token = ${SERVICE_TOKEN}
 admin_token = ${SERVICE_TOKEN}
 
@@ -560,9 +578,9 @@ function create_swift_accounts {
             "object-store" "Swift Service")
         get_or_create_endpoint $swift_service \
             "$REGION_NAME" \
-            "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
-            "http://$SERVICE_HOST:8080" \
-            "http://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080" \
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
     fi
 
     local swift_tenant_test1=$(get_or_create_project swifttenanttest1)
@@ -675,6 +693,10 @@ function start_swift {
     for type in proxy ${todo}; do
         swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
     done
+    if is_service_enabled tls-proxy; then
+        local proxy_port=${SWIFT_DEFAULT_BIND_PORT:-8080}
+        start_tls_proxy '*' $proxy_port $SERVICE_HOST $SWIFT_DEFAULT_BIND_PORT_INT &
+    fi
     run_process s-proxy "$SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
     if [[ ${SWIFT_REPLICAS} == 1 ]]; then
         for type in object container account; do

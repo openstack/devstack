@@ -95,7 +95,7 @@ KEYSTONE_VALID_IDENTITY_BACKENDS=kvs,ldap,pam,sql
 KEYSTONE_VALID_ASSIGNMENT_BACKENDS=kvs,ldap,sql
 
 # if we are running with SSL use https protocols
-if is_ssl_enabled_service "key"; then
+if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
     KEYSTONE_AUTH_PROTOCOL="https"
     KEYSTONE_SERVICE_PROTOCOL="https"
 fi
@@ -123,7 +123,21 @@ function _config_keystone_apache_wsgi {
     sudo mkdir -p $KEYSTONE_WSGI_DIR
 
     local keystone_apache_conf=$(apache_site_config_for keystone)
-    local apache_version=$(get_apache_version)
+    local keystone_ssl=""
+    local keystone_certfile=""
+    local keystone_keyfile=""
+    local keystone_service_port=$KEYSTONE_SERVICE_PORT
+    local keystone_auth_port=$KEYSTONE_AUTH_PORT
+
+    if is_ssl_enabled_service key; then
+        keystone_ssl="SSLEngine On"
+        keystone_certfile="SSLCertificateFile $KEYSTONE_SSL_CERT"
+        keystone_keyfile="SSLCertificateKeyFile $KEYSTONE_SSL_KEY"
+    fi
+    if is_service_enabled tls-proxy; then
+        keystone_service_port=$KEYSTONE_SERVICE_PORT_INT
+        keystone_auth_port=$KEYSTONE_AUTH_PORT_INT
+    fi
 
     # copy proxy vhost and wsgi file
     sudo cp $KEYSTONE_DIR/httpd/keystone.py $KEYSTONE_WSGI_DIR/main
@@ -131,11 +145,14 @@ function _config_keystone_apache_wsgi {
 
     sudo cp $FILES/apache-keystone.template $keystone_apache_conf
     sudo sed -e "
-        s|%PUBLICPORT%|$KEYSTONE_SERVICE_PORT|g;
-        s|%ADMINPORT%|$KEYSTONE_AUTH_PORT|g;
+        s|%PUBLICPORT%|$keystone_service_port|g;
+        s|%ADMINPORT%|$keystone_auth_port|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
         s|%PUBLICWSGI%|$KEYSTONE_WSGI_DIR/main|g;
         s|%ADMINWSGI%|$KEYSTONE_WSGI_DIR/admin|g;
+        s|%SSLENGINE%|$keystone_ssl|g;
+        s|%SSLCERTFILE%|$keystone_certfile|g;
+        s|%SSLKEYFILE%|$keystone_keyfile|g;
         s|%USER%|$STACK_USER|g
     " -i $keystone_apache_conf
 }
@@ -200,8 +217,13 @@ function configure_keystone {
     fi
 
     # Set the URL advertised in the ``versions`` structure returned by the '/' route
-    iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(public_port)s/"
-    iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(admin_port)s/"
+    if is_service_enabled tls-proxy; then
+        iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/"
+        iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/"
+    else
+        iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(public_port)s/"
+        iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:%(admin_port)s/"
+    fi
     iniset $KEYSTONE_CONF DEFAULT admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
 
     # Register SSL certificates if provided
@@ -412,7 +434,7 @@ function configure_auth_token_middleware {
     iniset $conf_file $section auth_port $KEYSTONE_AUTH_PORT
     iniset $conf_file $section auth_protocol $KEYSTONE_AUTH_PROTOCOL
     iniset $conf_file $section identity_uri $KEYSTONE_AUTH_URI
-    iniset $conf_file $section cafile $KEYSTONE_SSL_CA
+    iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     configure_API_version $conf_file $IDENTITY_API_VERSION $section
     iniset $conf_file $section admin_tenant_name $SERVICE_TENANT_NAME
     iniset $conf_file $section admin_user $admin_user
@@ -489,6 +511,9 @@ function install_keystone {
     setup_develop $KEYSTONE_DIR
     if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
         install_apache_wsgi
+        if is_ssl_enabled_service "key"; then
+            enable_mod_ssl
+        fi
     fi
 }
 
@@ -496,8 +521,10 @@ function install_keystone {
 function start_keystone {
     # Get right service port for testing
     local service_port=$KEYSTONE_SERVICE_PORT
+    local auth_protocol=$KEYSTONE_AUTH_PROTOCOL
     if is_service_enabled tls-proxy; then
         service_port=$KEYSTONE_SERVICE_PORT_INT
+        auth_protocol="http"
     fi
 
     if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
@@ -514,7 +541,7 @@ function start_keystone {
     # Check that the keystone service is running. Even if the tls tunnel
     # should be enabled, make sure the internal port is checked using
     # unencryted traffic at this point.
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -k -s http://$KEYSTONE_SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -k -s $auth_protocol://$KEYSTONE_SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
         die $LINENO "keystone did not start"
     fi
 

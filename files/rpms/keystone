@@ -9,5 +9,6 @@ python-routes
 python-sqlalchemy
 python-webob
 sqlite
+mod_ssl
 
 # Deps installed via pip for RHEL

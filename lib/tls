@@ -14,6 +14,7 @@
 #
 # - configure_CA
 # - init_CA
+# - cleanup_CA
 
 # - configure_proxy
 # - start_tls_proxy
@@ -27,6 +28,7 @@
 # - start_tls_proxy HOST_IP 5000 localhost 5000
 # - ensure_certificates
 # - is_ssl_enabled_service
+# - enable_mod_ssl
 
 # Defaults
 # --------
@@ -34,14 +36,9 @@
 if is_service_enabled tls-proxy; then
     # TODO(dtroyer): revisit this below after the search for HOST_IP has been done
     TLS_IP=${TLS_IP:-$SERVICE_IP}
-
-    # Set the default ``SERVICE_PROTOCOL`` for TLS
-    SERVICE_PROTOCOL=https
 fi
 
-# Make up a hostname for cert purposes
-# will be added to /etc/hosts?
-DEVSTACK_HOSTNAME=secure.devstack.org
+DEVSTACK_HOSTNAME=$(hostname -f)
 DEVSTACK_CERT_NAME=devstack-cert
 DEVSTACK_CERT=$DATA_DIR/$DEVSTACK_CERT_NAME.pem
 
@@ -209,6 +206,29 @@ function init_CA {
 
     # Create the CA bundle
     cat $ROOT_CA_DIR/cacert.pem $INT_CA_DIR/cacert.pem >>$INT_CA_DIR/ca-chain.pem
+    cat $INT_CA_DIR/ca-chain.pem >> $SSL_BUNDLE_FILE
+
+    if is_fedora; then
+        sudo cp $INT_CA_DIR/ca-chain.pem /usr/share/pki/ca-trust-source/anchors/devstack-chain.pem
+        sudo update-ca-trust
+    elif is_ubuntu; then
+        sudo cp $INT_CA_DIR/ca-chain.pem /usr/local/share/ca-certificates/devstack-int.crt
+        sudo cp $ROOT_CA_DIR/cacert.pem /usr/local/share/ca-certificates/devstack-root.crt
+        sudo update-ca-certificates
+    fi
+}
+
+# Clean up the CA files
+# cleanup_CA
+function cleanup_CA {
+    if is_fedora; then
+        sudo rm -f /usr/share/pki/ca-trust-source/anchors/devstack-chain.pem
+        sudo update-ca-trust
+    elif is_ubuntu; then
+        sudo rm -f /usr/local/share/ca-certificates/devstack-int.crt
+        sudo rm -f /usr/local/share/ca-certificates/devstack-root.crt
+        sudo update-ca-certificates
+    fi
 }
 
 # Create an initial server cert
@@ -331,6 +351,9 @@ function make_root_CA {
 function is_ssl_enabled_service {
     local services=$@
     local service=""
+    if [ "$USE_SSL" == "False" ]; then
+        return 1
+    fi
     for service in ${services}; do
         [[ ,${SSL_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
     done
@@ -345,8 +368,12 @@ function is_ssl_enabled_service {
 # The function expects to find a certificate, key and CA certificate in the
 # variables {service}_SSL_CERT, {service}_SSL_KEY and {service}_SSL_CA. For
 # example for keystone this would be KEYSTONE_SSL_CERT, KEYSTONE_SSL_KEY and
-# KEYSTONE_SSL_CA. If it does not find these certificates the program will
-# quit.
+# KEYSTONE_SSL_CA.
+#
+# If it does not find these certificates then the devstack-issued server
+# certificate, key and CA certificate will be associated with the service.
+#
+# If only some of the variables are provided then the function will quit.
 function ensure_certificates {
     local service=$1
 
@@ -358,12 +385,35 @@ function ensure_certificates {
     local key=${!key_var}
     local ca=${!ca_var}
 
-    if [[ -z "$cert" || -z "$key" || -z "$ca" ]]; then
+    if [[ -z "$cert" && -z "$key" && -z "$ca" ]]; then
+        local cert="$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt"
+        local key="$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key"
+        local ca="$INT_CA_DIR/ca-chain.pem"
+        eval ${service}_SSL_CERT=\$cert
+        eval ${service}_SSL_KEY=\$key
+        eval ${service}_SSL_CA=\$ca
+        return # the CA certificate is already in the bundle
+    elif [[ -z "$cert" || -z "$key" || -z "$ca" ]]; then
         die $LINENO "Missing either the ${cert_var} ${key_var} or ${ca_var}" \
                     "variable to enable SSL for ${service}"
     fi
 
     cat $ca >> $SSL_BUNDLE_FILE
+}
+
+# Enable the mod_ssl plugin in Apache
+function enable_mod_ssl {
+    echo "Enabling mod_ssl"
+
+    if is_ubuntu; then
+        sudo a2enmod ssl
+    elif is_fedora; then
+        # Fedora enables mod_ssl by default
+        :
+    fi
+    if ! sudo `which httpd || which apache2ctl` -M | grep -w -q ssl_module; then
+        die $LINENO "mod_ssl is not enabled in apache2/httpd, please check for it manually and run stack.sh again"
+    fi
 }
 
 

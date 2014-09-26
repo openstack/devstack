@@ -46,6 +46,9 @@ CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
 CINDER_API_PASTE_INI=$CINDER_CONF_DIR/api-paste.ini
 
 # Public facing bits
+if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+    CINDER_SERVICE_PROTOCOL="https"
+fi
 CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
 CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
 CINDER_SERVICE_PORT_INT=${CINDER_SERVICE_PORT_INT:-18776}
@@ -299,6 +302,20 @@ function configure_cinder {
     fi
 
     iniset $CINDER_CONF DEFAULT osapi_volume_workers "$API_WORKERS"
+
+    iniset $CINDER_CONF DEFAULT glance_api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
+    if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
+        iniset $CINDER_CONF DEFAULT glance_protocol https
+    fi
+
+    # Register SSL certificates if provided
+    if is_ssl_enabled_service cinder; then
+        ensure_certificates CINDER
+
+        iniset $CINDER_CONF DEFAULT ssl_cert_file "$CINDER_SSL_CERT"
+        iniset $CINDER_CONF DEFAULT ssl_key_file "$CINDER_SSL_KEY"
+    fi
+
 }
 
 # create_cinder_accounts() - Set up common required cinder accounts
@@ -399,6 +416,12 @@ function _configure_tgt_for_config_d {
 
 # start_cinder() - Start running processes, including screen
 function start_cinder {
+    local service_port=$CINDER_SERVICE_PORT
+    local service_protocol=$CINDER_SERVICE_PROTOCOL
+    if is_service_enabled tls-proxy; then
+        service_port=$CINDER_SERVICE_PORT_INT
+        service_protocol="http"
+    fi
     if is_service_enabled c-vol; then
         # Delete any old stack.conf
         sudo rm -f /etc/tgt/conf.d/stack.conf
@@ -425,7 +448,7 @@ function start_cinder {
 
     run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
     echo "Waiting for Cinder API to start..."
-    if ! wait_for_service $SERVICE_TIMEOUT $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT; then
+    if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$CINDER_SERVICE_HOST:$service_port; then
         die $LINENO "c-api did not start"
     fi
 

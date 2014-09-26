@@ -113,7 +113,7 @@ function configure_heat {
     configure_auth_token_middleware $HEAT_CONF heat $HEAT_AUTH_CACHE_DIR
 
     if is_ssl_enabled_service "key"; then
-        iniset $HEAT_CONF clients_keystone ca_file $KEYSTONE_SSL_CA
+        iniset $HEAT_CONF clients_keystone ca_file $SSL_BUNDLE_FILE
     fi
 
     # ec2authtoken
@@ -130,6 +130,18 @@ function configure_heat {
 
     # Cloudwatch API
     iniset $HEAT_CONF heat_api_cloudwatch bind_port $HEAT_API_CW_PORT
+
+    if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
+        iniset $HEAT_CONF clients_keystone ca_file $SSL_BUNDLE_FILE
+    fi
+
+    if is_ssl_enabled_service "nova" || is_service_enabled tls-proxy; then
+        iniset $HEAT_CONF clients_nova ca_file $SSL_BUNDLE_FILE
+    fi
+
+    if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+        iniset $HEAT_CONF clients_cinder ca_file $SSL_BUNDLE_FILE
+    fi
 
     # heat environment
     sudo mkdir -p $HEAT_ENV_DIR

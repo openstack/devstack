@@ -69,6 +69,11 @@ PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.1}
 PRIVATE_SUBNET_NAME=${PRIVATE_SUBNET_NAME:-"private-subnet"}
 PUBLIC_SUBNET_NAME=${PUBLIC_SUBNET_NAME:-"public-subnet"}
 
+if is_ssl_enabled_service "neutron" || is_service_enabled tls-proxy; then
+    Q_PROTOCOL="https"
+fi
+
+
 # Set up default directories
 NEUTRON_DIR=$DEST/neutron
 NEUTRONCLIENT_DIR=$DEST/python-neutronclient
@@ -105,8 +110,12 @@ Q_DB_NAME=${Q_DB_NAME:-neutron}
 Q_PLUGIN=${Q_PLUGIN:-ml2}
 # Default Neutron Port
 Q_PORT=${Q_PORT:-9696}
+# Default Neutron Internal Port when using TLS proxy
+Q_PORT_INT=${Q_PORT_INT:-19696}
 # Default Neutron Host
 Q_HOST=${Q_HOST:-$SERVICE_HOST}
+# Default protocol
+Q_PROTOCOL=${Q_PROTOCOL:-$SERVICE_PROTOCOL}
 # Default admin username
 Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-neutron}
 # Default auth strategy
@@ -409,7 +418,7 @@ function create_nova_conf_neutron {
     iniset $NOVA_CONF neutron auth_strategy "$Q_AUTH_STRATEGY"
     iniset $NOVA_CONF neutron admin_tenant_name "$SERVICE_TENANT_NAME"
     iniset $NOVA_CONF neutron region_name "$REGION_NAME"
-    iniset $NOVA_CONF neutron url "http://$Q_HOST:$Q_PORT"
+    iniset $NOVA_CONF neutron url "${Q_PROTOCOL}://$Q_HOST:$Q_PORT"
 
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
@@ -462,9 +471,9 @@ function create_neutron_accounts {
                 "network" "Neutron Service")
             get_or_create_endpoint $neutron_service \
                 "$REGION_NAME" \
-                "http://$SERVICE_HOST:$Q_PORT/" \
-                "http://$SERVICE_HOST:$Q_PORT/" \
-                "http://$SERVICE_HOST:$Q_PORT/"
+                "$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/" \
+                "$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/" \
+                "$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/"
         fi
     fi
 }
@@ -590,11 +599,24 @@ function install_neutron_agent_packages {
 # Start running processes, including screen
 function start_neutron_service_and_check {
     local cfg_file_options="$(determine_config_files neutron-server)"
+    local service_port=$Q_PORT
+    local service_protocol=$Q_PROTOCOL
+    if is_service_enabled tls-proxy; then
+        service_port=$Q_PORT_INT
+        service_protocol="http"
+    fi
     # Start the Neutron service
     run_process q-svc "python $NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
     echo "Waiting for Neutron to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$Q_HOST:$Q_PORT; do sleep 1; done"; then
+    if is_ssl_enabled_service "neutron"; then
+        ssl_ca="--ca-certificate=${SSL_BUNDLE_FILE}"
+    fi
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget ${ssl_ca} --no-proxy -q -O- $service_protocol://$Q_HOST:$service_port; do sleep 1; done"; then
         die $LINENO "Neutron did not start"
+    fi
+    # Start proxy if enabled
+    if is_service_enabled tls-proxy; then
+        start_tls_proxy '*' $Q_PORT $Q_HOST $Q_PORT_INT &
     fi
 }
 
@@ -728,6 +750,23 @@ function _configure_neutron_common {
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $NEUTRON_CONF DEFAULT project_id
+    fi
+
+    if is_service_enabled tls-proxy; then
+        # Set the service port for a proxy to take the original
+        iniset $NEUTRON_CONF DEFAULT bind_port "$Q_PORT_INT"
+    fi
+
+    if is_ssl_enabled_service "nova"; then
+        iniset $NEUTRON_CONF DEFAULT nova_ca_certificates_file "$SSL_BUNDLE_FILE"
+    fi
+
+    if is_ssl_enabled_service "neutron"; then
+        ensure_certificates NEUTRON
+
+        iniset $NEUTRON_CONF DEFAULT use_ssl True
+        iniset $NEUTRON_CONF DEFAULT ssl_cert_file "$NEUTRON_SSL_CERT"
+        iniset $NEUTRON_CONF DEFAULT ssl_key_file "$NEUTRON_SSL_KEY"
     fi
 
     _neutron_setup_rootwrap
