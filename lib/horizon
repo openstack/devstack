@@ -92,24 +92,6 @@ function init_horizon {
     local local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
 
-    if is_service_enabled neutron; then
-        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_security_group $Q_USE_SECGROUP
-    fi
-    # enable loadbalancer dashboard in case service is enabled
-    if is_service_enabled q-lbaas; then
-        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_lb True
-    fi
-
-    # enable firewall dashboard in case service is enabled
-    if is_service_enabled q-fwaas; then
-        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_firewall True
-    fi
-
-    # enable VPN dashboard in case service is enabled
-    if is_service_enabled q-vpn; then
-        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_vpn True
-    fi
-
     _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
     _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/v2.0\""
     if [[ -n "$KEYSTONE_TOKEN_HASH_ALGORITHM" ]]; then
