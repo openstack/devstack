@@ -45,8 +45,8 @@ function is_neutron_ovs_base_plugin {
 }
 
 function has_neutron_plugin_security_group {
-    # False
-    return 1
+    # return 0 means enabled
+    return 0
 }
 
 function neutron_plugin_check_adv_test_requirements {
