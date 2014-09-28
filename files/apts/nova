@@ -42,7 +42,6 @@ python-sqlalchemy
 python-suds
 python-lockfile
 python-m2crypto
-python-kombu
 python-feedparser
 python-iso8601
 python-qpid # NOPRIME

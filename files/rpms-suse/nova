@@ -28,7 +28,6 @@ python-eventlet
 python-feedparser
 python-greenlet
 python-iso8601
-python-kombu
 python-libxml2
 python-lockfile
 python-lxml # needed for glance which is needed for nova --- this shouldn't be here

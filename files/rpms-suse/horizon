@@ -12,7 +12,6 @@ python-beautifulsoup
 python-coverage
 python-dateutil
 python-eventlet
-python-kombu
 python-mox
 python-nose
 python-pylint
