@@ -421,7 +421,6 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT scheduler_driver "$SCHEDULER"
     iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF"
     iniset $NOVA_CONF DEFAULT force_dhcp_release "True"
-    iniset $NOVA_CONF DEFAULT fixed_range ""
     iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
     iniset $NOVA_CONF DEFAULT s3_host "$SERVICE_HOST"
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
@@ -530,7 +529,7 @@ function create_nova_conf {
     iniset_rpc_backend nova $NOVA_CONF DEFAULT
     iniset $NOVA_CONF glance api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
 
-    iniset $NOVA_CONF DEFAULT osci_compute_workers "$API_WORKERS"
+    iniset $NOVA_CONF DEFAULT osapi_compute_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT ec2_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
 
