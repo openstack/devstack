@@ -10,11 +10,8 @@ AGENT_LBAAS_BINARY="$NEUTRON_BIN_DIR/neutron-lbaas-agent"
 LBAAS_PLUGIN=neutron.services.loadbalancer.plugin.LoadBalancerPlugin
 
 function neutron_agent_lbaas_install_agent_packages {
-    if is_ubuntu || is_fedora; then
+    if is_ubuntu || is_fedora || is_suse; then
         install_package haproxy
-    elif is_suse; then
-        ### FIXME: Find out if package can be pushed to Factory
-        echo "HAProxy packages can be installed from server:http project in OBS"
     fi
 }
 
