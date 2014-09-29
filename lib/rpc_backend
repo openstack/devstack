@@ -44,7 +44,7 @@ function check_rpc_backend {
     local rpc_backend_cnt=0
     for svc in qpid zeromq rabbit; do
         is_service_enabled $svc &&
-        ((rpc_backend_cnt++))
+        (( rpc_backend_cnt++ )) || true
     done
     if [ "$rpc_backend_cnt" -gt 1 ]; then
         echo "ERROR: only one rpc backend may be enabled,"

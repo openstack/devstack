@@ -171,6 +171,7 @@ function wait_for_VM_to_halt {
     echo "Waiting for the VM to halt.  Progress in-VM can be checked with vncviewer:"
     mgmt_ip=$(echo $XENAPI_CONNECTION_URL | tr -d -c '1234567890.')
     domid=$(get_domid "$GUEST_NAME")
+    sleep 20 # Wait for the vnc-port to be written
     port=$(xenstore-read /local/domain/$domid/console/vnc-port)
     echo "vncviewer -via root@$mgmt_ip localhost:${port:2}"
     while true; do
