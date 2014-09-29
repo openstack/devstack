@@ -41,6 +41,7 @@ CEILOMETER_CONF_DIR=/etc/ceilometer
 CEILOMETER_CONF=$CEILOMETER_CONF_DIR/ceilometer.conf
 CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
 CEILOMETER_AUTH_CACHE_DIR=${CEILOMETER_AUTH_CACHE_DIR:-/var/cache/ceilometer}
+CEILOMETER_WSGI_DIR=${CEILOMETER_WSGI_DIR:-/var/www/ceilometer}
 
 # Support potential entry-points console scripts
 CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
@@ -52,6 +53,7 @@ CEILOMETER_BACKEND=${CEILOMETER_BACKEND:-mysql}
 CEILOMETER_SERVICE_PROTOCOL=http
 CEILOMETER_SERVICE_HOST=$SERVICE_HOST
 CEILOMETER_SERVICE_PORT=${CEILOMETER_SERVICE_PORT:-8777}
+CEILOMETER_USE_MOD_WSGI=$(trueorfalse False $CEILOMETER_USE_MOD_WSGI)
 
 # To enable OSprofiler change value of this variable to "notifications,profiler"
 CEILOMETER_NOTIFICATION_TOPICS=${CEILOMETER_NOTIFICATION_TOPICS:-notifications}
@@ -105,12 +107,39 @@ create_ceilometer_accounts() {
 }
 
 
+# _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+function _cleanup_ceilometer_apache_wsgi {
+    sudo rm -f $CEILOMETER_WSGI_DIR/*
+    sudo rm -f $(apache_site_config_for ceilometer)
+}
+
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_ceilometer {
     if [ "$CEILOMETER_BACKEND" != 'mysql' ] && [ "$CEILOMETER_BACKEND" != 'postgresql' ] ; then
         mongo ceilometer --eval "db.dropDatabase();"
     fi
+    if [ "$CEILOMETER_USE_MOD_WSGI" == "True" ]; then
+        _cleanup_ceilometer_apache_wsgi
+    fi
+}
+
+function _config_ceilometer_apache_wsgi {
+    sudo mkdir -p $CEILOMETER_WSGI_DIR
+
+    local ceilometer_apache_conf=$(apache_site_config_for ceilometer)
+    local apache_version=$(get_apache_version)
+
+    # copy proxy vhost and wsgi file
+    sudo cp $CEILOMETER_DIR/ceilometer/api/app.wsgi $CEILOMETER_WSGI_DIR/app
+
+    sudo cp $FILES/apache-ceilometer.template $ceilometer_apache_conf
+    sudo sed -e "
+        s|%PORT%|$CEILOMETER_SERVICE_PORT|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%WSGIAPP%|$CEILOMETER_WSGI_DIR/app|g;
+        s|%USER%|$STACK_USER|g
+    " -i $ceilometer_apache_conf
 }
 
 # configure_ceilometer() - Set config files, create data dirs, etc
@@ -162,6 +191,11 @@ function configure_ceilometer {
         iniset $CEILOMETER_CONF vmware host_ip "$VMWAREAPI_IP"
         iniset $CEILOMETER_CONF vmware host_username "$VMWAREAPI_USER"
         iniset $CEILOMETER_CONF vmware host_password "$VMWAREAPI_PASSWORD"
+    fi
+
+    if [ "$CEILOMETER_USE_MOD_WSGI" == "True" ]; then
+        iniset $CEILOMETER_CONF api pecan_debug "False"
+        _config_ceilometer_apache_wsgi
     fi
 }
 
@@ -223,7 +257,16 @@ function start_ceilometer {
     run_process ceilometer-acentral "ceilometer-agent-central --config-file $CEILOMETER_CONF"
     run_process ceilometer-anotification "ceilometer-agent-notification --config-file $CEILOMETER_CONF"
     run_process ceilometer-collector "ceilometer-collector --config-file $CEILOMETER_CONF"
-    run_process ceilometer-api "ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
+
+    if [[ "$CEILOMETER_USE_MOD_WSGI" == "False" ]]; then
+        run_process ceilometer-api "ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
+    else
+        enable_apache_site ceilometer
+        restart_apache_server
+        tail_log ceilometer /var/log/$APACHE_NAME/ceilometer.log
+        tail_log ceilometer-api /var/log/$APACHE_NAME/ceilometer_access.log
+    fi
+
 
     # Start the compute agent last to allow time for the collector to
     # fully wake up and connect to the message bus. See bug #1355809
@@ -248,6 +291,10 @@ function start_ceilometer {
 
 # stop_ceilometer() - Stop running processes
 function stop_ceilometer {
+    if [ "$CEILOMETER_USE_MOD_WSGI" == "True" ]; then
+        disable_apache_site ceilometer
+        restart_apache_server
+    fi
     # Kill the ceilometer screen windows
     for serv in ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
         stop_process $serv
