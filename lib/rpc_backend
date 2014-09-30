@@ -132,39 +132,14 @@ function install_rpc_backend {
         # Install rabbitmq-server
         install_package rabbitmq-server
     elif is_service_enabled qpid; then
-        local qpid_conf_file=/etc/qpid/qpidd.conf
         if is_fedora; then
             install_package qpid-cpp-server
-            if [[ $DISTRO =~ (rhel6) ]]; then
-                qpid_conf_file=/etc/qpidd.conf
-                # RHEL6 leaves "auth=yes" in /etc/qpidd.conf, it needs to
-                # be no or you get GSS authentication errors as it
-                # attempts to default to this.
-                sudo sed -i.bak 's/^auth=yes$/auth=no/' $qpid_conf_file
-            fi
         elif is_ubuntu; then
             install_package qpidd
-            sudo sed -i '/PLAIN/!s/mech_list: /mech_list: PLAIN /' /etc/sasl2/qpidd.conf
-            sudo chmod o+r /etc/qpid/qpidd.sasldb
         else
             exit_distro_not_supported "qpid installation"
         fi
-        # If AMQP 1.0 is specified, ensure that the version of the
-        # broker can support AMQP 1.0 and configure the queue and
-        # topic address patterns used by oslo.messaging.
-        if [ "$RPC_MESSAGING_PROTOCOL" == "AMQP1" ]; then
-            QPIDD=$(type -p qpidd)
-            if ! $QPIDD --help | grep -q "queue-patterns"; then
-                exit_distro_not_supported "qpidd with AMQP 1.0 support"
-            fi
-            if ! grep -q "queue-patterns=exclusive" $qpid_conf_file; then
-                cat <<EOF | sudo tee --append $qpid_conf_file
-queue-patterns=exclusive
-queue-patterns=unicast
-topic-patterns=broadcast
-EOF
-            fi
-        fi
+        _configure_qpid
     elif is_service_enabled zeromq; then
         # NOTE(ewindisch): Redis is not strictly necessary
         # but there is a matchmaker driver that works
@@ -240,10 +215,9 @@ function iniset_rpc_backend {
             iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_qpid
         fi
         iniset $file $section qpid_hostname ${QPID_HOST:-$SERVICE_HOST}
-        if is_ubuntu; then
-            QPID_PASSWORD=`sudo strings /etc/qpid/qpidd.sasldb | grep -B1 admin | head -1`
+        if [ -n "$QPID_USERNAME" ]; then
+            iniset $file $section qpid_username $QPID_USERNAME
             iniset $file $section qpid_password $QPID_PASSWORD
-            iniset $file $section qpid_username admin
         fi
     elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_kombu
@@ -263,6 +237,83 @@ function qpid_is_supported {
     ( ! is_suse )
 }
 
+# Set up the various configuration files used by the qpidd broker
+function _configure_qpid {
+
+    # the location of the configuration files have changed since qpidd 0.14
+    local qpid_conf_file
+    if [ -e /etc/qpid/qpidd.conf ]; then
+        qpid_conf_file=/etc/qpid/qpidd.conf
+    elif [ -e /etc/qpidd.conf ]; then
+        qpid_conf_file=/etc/qpidd.conf
+    else
+        exit_distro_not_supported "qpidd.conf file not found!"
+    fi
+
+    # force the ACL file to a known location
+    local qpid_acl_file=/etc/qpid/qpidd.acl
+    if [ ! -e $qpid_acl_file ]; then
+        sudo mkdir -p -m 755 `dirname $qpid_acl_file`
+        sudo touch $qpid_acl_file
+        sudo chmod o+r $qpid_acl_file
+    fi
+    sudo sed -i.bak '/^acl-file=/d' $qpid_conf_file
+    echo "acl-file=$qpid_acl_file" | sudo tee --append $qpid_conf_file
+
+    sudo sed -i '/^auth=/d' $qpid_conf_file
+    if [ -z "$QPID_USERNAME" ]; then
+        # no QPID user configured, so disable authentication
+        # and access control
+        echo "auth=no" | sudo tee --append $qpid_conf_file
+        cat <<EOF | sudo tee $qpid_acl_file
+acl allow all all
+EOF
+    else
+        # Configure qpidd to use PLAIN authentication, and add
+        # QPID_USERNAME to the ACL:
+        echo "auth=yes" | sudo tee --append $qpid_conf_file
+        if [ -z "$QPID_PASSWORD" ]; then
+            read_password QPID_PASSWORD "ENTER A PASSWORD FOR QPID USER $QPID_USERNAME"
+        fi
+        # Create ACL to allow $QPID_USERNAME full access
+        cat <<EOF | sudo tee $qpid_acl_file
+group admin ${QPID_USERNAME}@QPID
+acl allow admin all
+acl deny all all
+EOF
+        # Add user to SASL database
+        if is_ubuntu; then
+            install_package sasl2-bin
+        elif is_fedora; then
+            install_package cyrus-sasl-lib
+        fi
+        local sasl_conf_file=/etc/sasl2/qpidd.conf
+        sudo sed -i.bak '/PLAIN/!s/mech_list: /mech_list: PLAIN /' $sasl_conf_file
+        local sasl_db=`sudo grep sasldb_path $sasl_conf_file | cut -f 2 -d ":" | tr -d [:blank:]`
+        if [ ! -e $sasl_db ]; then
+            sudo mkdir -p -m 755 `dirname $sasl_db`
+        fi
+        echo $QPID_PASSWORD | sudo saslpasswd2 -c -p -f $sasl_db -u QPID $QPID_USERNAME
+        sudo chmod o+r $sasl_db
+    fi
+
+    # If AMQP 1.0 is specified, ensure that the version of the
+    # broker can support AMQP 1.0 and configure the queue and
+    # topic address patterns used by oslo.messaging.
+    if [ "$RPC_MESSAGING_PROTOCOL" == "AMQP1" ]; then
+        QPIDD=$(type -p qpidd)
+        if ! $QPIDD --help | grep -q "queue-patterns"; then
+            exit_distro_not_supported "qpidd with AMQP 1.0 support"
+        fi
+        if ! grep -q "queue-patterns=exclusive" $qpid_conf_file; then
+            cat <<EOF | sudo tee --append $qpid_conf_file
+queue-patterns=exclusive
+queue-patterns=unicast
+topic-patterns=broadcast
+EOF
+        fi
+    fi
+}
 
 # Restore xtrace
 $XTRACE
