@@ -136,10 +136,6 @@ CINDER_BRANCH=${CINDER_BRANCH:-master}
 CINDERCLIENT_REPO=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
 CINDERCLIENT_BRANCH=${CINDERCLIENT_BRANCH:-master}
 
-# diskimage-builder
-DIB_REPO=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
-DIB_BRANCH=${DIB_BRANCH:-master}
-
 # image catalog service
 GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
 GLANCE_BRANCH=${GLANCE_BRANCH:-master}
