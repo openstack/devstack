@@ -222,68 +222,68 @@ ORC_REPO=${ORC_REPO:-${GIT_BASE}/openstack/os-refresh-config.git}
 ORC_BRANCH=${ORC_BRANCH:-master}
 
 # cliff command line framework
-CLIFF_REPO=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
-CLIFF_BRANCH=${CLIFF_BRANCH:-master}
+GITREPO["cliff"]=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
+GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
 
 # oslo.concurrency
-OSLOCON_REPO=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
-OSLOCON_BRANCH=${OSLOCON_BRANCH:-master}
+GITREPO["oslo.concurrency"]=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
+GITBRANCH["olso.concurrency"]=${OSLOCON_BRANCH:-master}
 
 # oslo.config
-OSLOCFG_REPO=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
-OSLOCFG_BRANCH=${OSLOCFG_BRANCH:-master}
+GITREPO["oslo.config"]=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
+GITBRANCH["oslo.config"]=${OSLOCFG_BRANCH:-master}
 
 # oslo.db
-OSLODB_REPO=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
-OSLODB_BRANCH=${OSLODB_BRANCH:-master}
+GITREPO["olso.db"]=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
+GITBRANCH["olso.db"]=${OSLODB_BRANCH:-master}
 
 # oslo.i18n
-OSLOI18N_REPO=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
-OSLOI18N_BRANCH=${OSLOI18N_BRANCH:-master}
+GITREPO["olso.i18n"]=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
+GITBRANCH["olso.i18n"]=${OSLOI18N_BRANCH:-master}
 
 # oslo.log
-OSLOLOG_REPO=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
-OSLOLOG_BRANCH=${OSLOLOG_BRANCH:-master}
+GITREPO["olso.log"]=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
+GITBRANCH["olso.log"]=${OSLOLOG_BRANCH:-master}
 
 # oslo.messaging
-OSLOMSG_REPO=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
-OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
+GITREPO["olso.messaging"]=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
+GITBRANCH["olso.messaging"]=${OSLOMSG_BRANCH:-master}
 
 # oslo.middleware
-OSLOMID_REPO=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
-OSLOMID_BRANCH=${OSLOMID_BRANCH:-master}
+GITREPO["oslo.middleware"]=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
+GITBRANCH["oslo.middleware"]=${OSLOMID_BRANCH:-master}
 
 # oslo.rootwrap
-OSLORWRAP_REPO=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
-OSLORWRAP_BRANCH=${OSLORWRAP_BRANCH:-master}
+GITREPO["olso.rootwrap"]=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
+GITBRANCH["olso.rootwrap"]=${OSLORWRAP_BRANCH:-master}
 
 # oslo.serialization
-OSLOSERIALIZATION_REPO=${OSLOSERIALIZATION_REPO:-${GIT_BASE}/openstack/oslo.serialization.git}
-OSLOSERIALIZATION_BRANCH=${OSLOSERIALIZATION_BRANCH:-master}
+GITREPO["olso.serialization"]=${OSLOSERIALIZATION_REPO:-${GIT_BASE}/openstack/oslo.serialization.git}
+GITBRANCH["olso.serialization"]=${OSLOSERIALIZATION_BRANCH:-master}
 
 # oslo.utils
-OSLOUTILS_REPO=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
-OSLOUTILS_BRANCH=${OSLOUTILS_BRANCH:-master}
+GITREPO["olso.utils"]=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
+GITBRANCH["olso.utils"]=${OSLOUTILS_BRANCH:-master}
 
 # oslo.vmware
-OSLOVMWARE_REPO=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
-OSLOVMWARE_BRANCH=${OSLOVMWARE_BRANCH:-master}
+GITREPO["olso.vmware"]=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
+GITBRANCH["olso.vmware"]=${OSLOVMWARE_BRANCH:-master}
 
 # pycadf auditing library
-PYCADF_REPO=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
-PYCADF_BRANCH=${PYCADF_BRANCH:-master}
+GITREPO["pycadf"]=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
+GITBRANCH["pycadf"]=${PYCADF_BRANCH:-master}
 
 # stevedore plugin manager
-STEVEDORE_REPO=${STEVEDORE_REPO:-${GIT_BASE}/openstack/stevedore.git}
-STEVEDORE_BRANCH=${STEVEDORE_BRANCH:-master}
+GITREPO["stevedore"]=${STEVEDORE_REPO:-${GIT_BASE}/openstack/stevedore.git}
+GITBRANCH["stevedore"]=${STEVEDORE_BRANCH:-master}
 
 # taskflow plugin manager
-TASKFLOW_REPO=${TASKFLOW_REPO:-${GIT_BASE}/openstack/taskflow.git}
-TASKFLOW_BRANCH=${TASKFLOW_BRANCH:-master}
+GITREPO["taskflow"]=${TASKFLOW_REPO:-${GIT_BASE}/openstack/taskflow.git}
+GITBRANCH["taskflow"]=${TASKFLOW_BRANCH:-master}
 
 # pbr drives the setuptools configs
-PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
-PBR_BRANCH=${PBR_BRANCH:-master}
+GITREPO["pbr"]=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
+GITBRANCH["pbr"]=${PBR_BRANCH:-master}
 
 # neutron service
 NEUTRON_REPO=${NEUTRON_REPO:-${GIT_BASE}/openstack/neutron.git}

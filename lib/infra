@@ -19,7 +19,7 @@ set +o xtrace
 
 # Defaults
 # --------
-PBR_DIR=$DEST/pbr
+GITDIR["pbr"]=$DEST/pbr
 REQUIREMENTS_DIR=$DEST/requirements
 
 # Entry Points
@@ -31,8 +31,12 @@ function install_infra {
     git_clone $REQUIREMENTS_REPO $REQUIREMENTS_DIR $REQUIREMENTS_BRANCH
 
     # Install pbr
-    git_clone $PBR_REPO $PBR_DIR $PBR_BRANCH
-    setup_install $PBR_DIR
+    if use_library_from_git "pbr"; then
+        git_clone_by_name "pbr"
+        setup_lib "pbr"
+    else
+        pip_install "pbr"
+    fi
 }
 
 # Restore xtrace
