@@ -1523,9 +1523,8 @@ function pip_install {
         http_proxy=$http_proxy \
         https_proxy=$https_proxy \
         no_proxy=$no_proxy \
-        $cmd_pip install --build=${pip_build_tmp} \
-        $pip_mirror_opt $@ \
-        && $sudo_pip rm -rf ${pip_build_tmp}
+        $cmd_pip install \
+        $pip_mirror_opt $@
 
     if [[ "$INSTALL_TESTONLY_PACKAGES" == "True" ]]; then
         local test_req="$@/test-requirements.txt"
@@ -1534,9 +1533,8 @@ function pip_install {
                 http_proxy=$http_proxy \
                 https_proxy=$https_proxy \
                 no_proxy=$no_proxy \
-                $cmd_pip install --build=${pip_build_tmp} \
-                $pip_mirror_opt -r $test_req \
-                && $sudo_pip rm -rf ${pip_build_tmp}
+                $cmd_pip install \
+                $pip_mirror_opt -r $test_req
         fi
     fi
 }
