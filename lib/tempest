@@ -45,6 +45,8 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["tempest-lib"]=$DEST/tempest-lib
+
 TEMPEST_DIR=$DEST/tempest
 TEMPEST_CONFIG_DIR=${TEMPEST_CONFIG_DIR:-$TEMPEST_DIR/etc}
 TEMPEST_CONFIG=$TEMPEST_CONFIG_DIR/tempest.conf
@@ -414,6 +416,14 @@ function create_tempest_accounts {
             --project alt_demo \
             --user alt_demo \
             Member
+    fi
+}
+
+# install_tempest_lib() - Collect source, prepare, and install tempest-lib
+function install_tempest_lib {
+    if use_library_from_git "tempest-lib"; then
+        git_clone_by_name "tempest-lib"
+        setup_dev_lib "tempest-lib"
     fi
 }
 

@@ -36,6 +36,11 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+# Global Config Variables
+declare -A GITREPO
+declare -A GITBRANCH
+declare -A GITDIR
+
 
 # Config Functions
 # ================
@@ -576,6 +581,18 @@ function git_clone {
     git show --oneline | head -1
     cd $orig_dir
 }
+
+# A variation on git clone that lets us specify a project by it's
+# actual name, like oslo.config. This is exceptionally useful in the
+# library installation case
+function git_clone_by_name {
+    local name=$1
+    local repo=${GITREPO[$name]}
+    local dir=${GITDIR[$name]}
+    local branch=${GITBRANCH[$name]}
+    git_clone $repo $dir $branch
+}
+
 
 # git can sometimes get itself infinitely stuck with transient network
 # errors or other issues with the remote end.  This wraps git in a
@@ -1367,6 +1384,37 @@ function pip_install {
         $CMD_PIP install --build=${pip_build_tmp} \
         $PIP_MIRROR_OPT $@ \
         && $SUDO_PIP rm -rf ${pip_build_tmp}
+}
+
+# should we use this library from their git repo, or should we let it
+# get pulled in via pip dependencies.
+function use_library_from_git {
+    local name=$1
+    local enabled=1
+    [[ ,${LIBS_FROM_GIT}, =~ ,${name}, ]] && enabled=0
+    return $enabled
+}
+
+# setup a library by name. If we are trying to use the library from
+# git, we'll do a git based install, otherwise we'll punt and the
+# library should be installed by a requirements pull from another
+# project.
+function setup_lib {
+    local name=$1
+    local dir=${GITDIR[$name]}
+    setup_install $dir
+}
+
+# setup a library by name in editiable mode. If we are trying to use
+# the library from git, we'll do a git based install, otherwise we'll
+# punt and the library should be installed by a requirements pull from
+# another project.
+#
+# use this for non namespaced libraries
+function setup_dev_lib {
+    local name=$1
+    local dir=${GITDIR[$name]}
+    setup_develop $dir
 }
 
 # this should be used if you want to install globally, all libraries should

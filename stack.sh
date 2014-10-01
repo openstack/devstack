@@ -360,9 +360,6 @@ if [[ -d $TOP_DIR/extras.d ]]; then
     done
 fi
 
-# Set the destination directories for other OpenStack projects
-OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
-
 # Interactive Configuration
 # -------------------------
 
@@ -693,8 +690,13 @@ if is_service_enabled heat horizon; then
     install_heatclient
 fi
 
-git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
-setup_develop $OPENSTACKCLIENT_DIR
+# install the OpenStack client, needed for most setup commands
+if use_library_from_git "python-openstackclient"; then
+    git_clone_by_name "python-openstackclient"
+    setup_dev_lib "python-openstackclient"
+else
+    pip_install python-openstackclient
+fi
 
 if is_service_enabled key; then
     install_keystone
@@ -750,7 +752,6 @@ if is_service_enabled ceilometer; then
     install_ceilometer
     echo_summary "Configuring Ceilometer"
     configure_ceilometer
-    configure_ceilometerclient
 fi
 
 if is_service_enabled heat; then
