@@ -243,7 +243,7 @@ function start_ceilometer {
     # Start the compute agent last to allow time for the collector to
     # fully wake up and connect to the message bus. See bug #1355809
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
-        run_process ceilometer-acompute "sg $LIBVIRT_GROUP 'ceilometer-agent-compute --config-file $CEILOMETER_CONF'"
+        run_process ceilometer-acompute "ceilometer-agent-compute --config-file $CEILOMETER_CONF" $LIBVIRT_GROUP
     fi
     if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
         run_process ceilometer-acompute "ceilometer-agent-compute --config-file $CEILOMETER_CONF"
