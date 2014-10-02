@@ -32,10 +32,7 @@ OAC_DIR=$DEST/os-apply-config
 
 # install_dib() - Collect source and prepare
 function install_dib {
-    git_clone $DIB_REPO $DIB_DIR $DIB_BRANCH
-    pushd $DIB_DIR
-    pip_install ./
-    popd
+    pip_install diskimage-builder
 
     git_clone $TIE_REPO $TIE_DIR $TIE_BRANCH
     git_clone $OCC_REPO $OCC_DIR $OCC_BRANCH
