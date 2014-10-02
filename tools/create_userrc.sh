@@ -37,6 +37,7 @@ Optional Arguments
 -C <tenant_name> create user and tenant, the specifid tenant will be the user's tenant
 -r <name> when combined with -C and the (-u) user exists it will be the user's tenant role in the (-C)tenant (default: Member)
 -p <userpass> password for the user
+--heat-url <heat_url>
 --os-username <username>
 --os-password <admin password>
 --os-tenant-name <tenant_name>
@@ -53,12 +54,13 @@ $0 -P -C mytenant -u myuser -p mypass
 EOF
 }
 
-if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-name:,os-tenant-id:,os-auth-url:,target-dir:,skip-tenant:,os-cacert:,help,debug -- "$@"); then
+if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-name:,os-tenant-id:,os-auth-url:,target-dir:,heat-url:,skip-tenant:,os-cacert:,help,debug -- "$@"); then
     display_help
     exit 1
 fi
 eval set -- $options
 ADDPASS=""
+HEAT_URL=""
 
 # The services users usually in the service tenant.
 # rc files for service users, is out of scope.
@@ -79,6 +81,7 @@ while [ $# -gt 0 ]; do
     --os-auth-url) export OS_AUTH_URL=$2; shift ;;
     --os-cacert) export OS_CACERT=$2; shift ;;
     --target-dir) ACCOUNT_DIR=$2; shift ;;
+    --heat-url) HEAT_URL=$2; shift ;;
     --debug) set -o xtrace ;;
     -u) MODE=${MODE:-one};  USER_NAME=$2; shift ;;
     -p) USER_PASS=$2; shift ;;
@@ -208,6 +211,10 @@ export NOVA_CERT="$ACCOUNT_DIR/cacert.pem"
 EOF
     if [ -n "$ADDPASS" ]; then
         echo "export OS_PASSWORD=\"$user_passwd\"" >>"$rcfile"
+    fi
+    if [ -n "$HEAT_URL" ]; then
+        echo "export HEAT_URL=\"$HEAT_URL/$tenant_id\"" >>"$rcfile"
+        echo "export OS_NO_CLIENT_AUTH=True" >>"$rcfile"
     fi
 }
 
