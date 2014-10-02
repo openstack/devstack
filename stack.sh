@@ -997,7 +997,7 @@ if is_service_enabled key; then
         create_swift_accounts
     fi
 
-    if is_service_enabled heat; then
+    if is_service_enabled heat && [[ "$HEAT_STANDALONE" != "True" ]]; then
         create_heat_accounts
     fi
 
@@ -1296,6 +1296,10 @@ if is_service_enabled nova && is_service_enabled key; then
 
     if [ -f $SSL_BUNDLE_FILE ]; then
         USERRC_PARAMS="$USERRC_PARAMS --os-cacert $SSL_BUNDLE_FILE"
+    fi
+
+    if [[ "$HEAT_STANDALONE" = "True" ]]; then
+        USERRC_PARAMS="$USERRC_PARAMS --heat-url http://$HEAT_API_HOST:$HEAT_API_PORT/v1"
     fi
 
     $TOP_DIR/tools/create_userrc.sh $USERRC_PARAMS
