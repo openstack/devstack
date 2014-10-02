@@ -1159,7 +1159,7 @@ fi
 
 if is_service_enabled zeromq; then
     echo_summary "Starting zermomq receiver"
-    screen_it zeromq "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-rpc-zmq-receiver"
+    run_process zeromq "$OSLO_BIN_DIR/oslo-messaging-zmq-receiver"
 fi
 
 # Launch the nova-api and wait for it to answer before continuing
@@ -1262,7 +1262,7 @@ if is_service_enabled nova && is_baremetal; then
     fi
     # ensure callback daemon is running
     sudo pkill nova-baremetal-deploy-helper || true
-    screen_it baremetal "cd ; nova-baremetal-deploy-helper"
+    run_process baremetal "nova-baremetal-deploy-helper"
 fi
 
 # Save some values we generated for later use

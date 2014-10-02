@@ -984,10 +984,13 @@ function zypper_install {
 # files to produce the same logs as screen_it().  The log filename is derived
 # from the service name and global-and-now-misnamed ``SCREEN_LOGDIR``
 # Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_LOGDIR``, ``SCREEN_NAME``, ``SERVICE_DIR``
-# _old_run_process service "command-line"
+# If an optional group is provided sg will be used to set the group of
+# the command.
+# _run_process service "command-line" [group]
 function _run_process {
     local service=$1
     local command="$2"
+    local group=$3
 
     # Undo logging redirections and close the extra descriptors
     exec 1>&3
@@ -996,8 +999,8 @@ function _run_process {
     exec 6>&-
 
     if [[ -n ${SCREEN_LOGDIR} ]]; then
-        exec 1>&${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log 2>&1
-        ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
+        exec 1>&${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log 2>&1
+        ln -sf ${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${service}.log
 
         # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
         export PYTHONUNBUFFERED=1
@@ -1005,7 +1008,11 @@ function _run_process {
 
     # Run under ``setsid`` to force the process to become a session and group leader.
     # The pid saved can be used with pkill -g to get the entire process group.
-    setsid $command & echo $! >$SERVICE_DIR/$SCREEN_NAME/$1.pid
+    if [[ -n "$group" ]]; then
+        setsid sg $group "$command" & echo $! >$SERVICE_DIR/$SCREEN_NAME/$service.pid
+    else
+        setsid $command & echo $! >$SERVICE_DIR/$SCREEN_NAME/$service.pid
+    fi
 
     # Just silently exit this process
     exit 0
@@ -1037,17 +1044,20 @@ function is_running {
 
 # Run a single service under screen or directly
 # If the command includes shell metachatacters (;<>*) it must be run using a shell
-# run_process service "command-line"
+# If an optional group is provided sg will be used to run the
+# command as that group.
+# run_process service "command-line" [group]
 function run_process {
     local service=$1
     local command="$2"
+    local group=$3
 
     if is_service_enabled $service; then
         if [[ "$USE_SCREEN" = "True" ]]; then
-            screen_service "$service" "$command"
+            screen_service "$service" "$command" "$group"
         else
             # Spawn directly without screen
-            _run_process "$service" "$command" &
+            _run_process "$service" "$command" "$group" &
         fi
     fi
 }
@@ -1055,11 +1065,13 @@ function run_process {
 # Helper to launch a service in a named screen
 # Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_NAME``, ``SCREEN_LOGDIR``,
 # ``SERVICE_DIR``, ``USE_SCREEN``
-# screen_service service "command-line"
-# Run a command in a shell in a screen window
+# screen_service service "command-line" [group]
+# Run a command in a shell in a screen window, if an optional group
+# is provided, use sg to set the group of the command.
 function screen_service {
     local service=$1
     local command="$2"
+    local group=$3
 
     SCREEN_NAME=${SCREEN_NAME:-stack}
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
@@ -1089,8 +1101,11 @@ function screen_service {
         # - the server process is brought back to the foreground
         # - if the server process exits prematurely the fg command errors
         #   and a message is written to stdout and the service failure file
-        # The pid saved can be used in screen_stop() as a process group
+        # The pid saved can be used in stop_process() as a process group
         # id to kill off all child processes
+        if [[ -n "$group" ]]; then
+            command="sg $group '$command'"
+        fi
         screen -S $SCREEN_NAME -p $service -X stuff "$command & echo \$! >$SERVICE_DIR/$SCREEN_NAME/${service}.pid; fg || echo \"$service failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/${service}.failure\"$NL"
     fi
 }
@@ -1126,7 +1141,8 @@ function screen_rc {
 # If a PID is available use it, kill the whole process group via TERM
 # If screen is being used kill the screen window; this will catch processes
 # that did not leave a PID behind
-# screen_stop service
+# Uses globals ``SCREEN_NAME``, ``SERVICE_DIR``, ``USE_SCREEN``
+# screen_stop_service service
 function screen_stop_service {
     local service=$1
 
@@ -1191,6 +1207,17 @@ function service_check {
 
     if [ -n "$failures" ]; then
         die $LINENO "More details about the above errors can be found with screen, with ./rejoin-stack.sh"
+    fi
+}
+
+# Tail a log file in a screen if USE_SCREEN is true.
+function tail_log {
+    local service=$1
+    local logfile=$2
+
+    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    if [[ "$USE_SCREEN" = "True" ]]; then
+        screen_service "$service" "sudo tail -f $logfile"
     fi
 }
 
@@ -1532,6 +1559,7 @@ function is_service_enabled {
         #                are implemented
 
         [[ ${service} == n-cell-* && ${ENABLED_SERVICES} =~ "n-cell" ]] && enabled=0
+        [[ ${service} == n-cpu-* && ${ENABLED_SERVICES} =~ "n-cpu" ]] && enabled=0
         [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && enabled=0
         [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && enabled=0
         [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && enabled=0

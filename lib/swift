@@ -646,10 +646,10 @@ function start_swift {
     if is_apache_enabled_service swift; then
         restart_apache_server
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
-        screen_it s-proxy "cd $SWIFT_DIR && sudo tail -f /var/log/$APACHE_NAME/proxy-server"
+        tail_log s-proxy /var/log/$APACHE_NAME/proxy-server
         if [[ ${SWIFT_REPLICAS} == 1 ]]; then
             for type in object container account; do
-                screen_it s-${type} "cd $SWIFT_DIR && sudo tail -f /var/log/$APACHE_NAME/${type}-server-1"
+                tail_log s-${type} /var/log/$APACHE_NAME/${type}-server-1
             done
         fi
         return 0
@@ -669,10 +669,10 @@ function start_swift {
     for type in proxy ${todo}; do
         swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
     done
-    screen_it s-proxy "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
+    run_process s-proxy "$SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
     if [[ ${SWIFT_REPLICAS} == 1 ]]; then
         for type in object container account; do
-            screen_it s-${type} "cd $SWIFT_DIR && $SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
+            run_process s-${type} "$SWIFT_DIR/bin/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
         done
     fi
 }
@@ -689,9 +689,9 @@ function stop_swift {
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi
     # Dump all of the servers
-    # Maintain the iteration as screen_stop() has some desirable side-effects
+    # Maintain the iteration as stop_process() has some desirable side-effects
     for type in proxy object container account; do
-        screen_stop s-${type}
+        stop_process s-${type}
     done
     # Blast out any stragglers
     pkill -f swift-

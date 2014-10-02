@@ -1,9 +1,9 @@
 #!/bin/bash
-# tests/exec.sh - Test DevStack screen_it() and screen_stop()
+# tests/exec.sh - Test DevStack run_process() and stop_process()
 #
 # exec.sh start|stop|status
 #
-# Set USE_SCREEN to change the default
+# Set USE_SCREEN True|False to change use of screen.
 #
 # This script emulates the basic exec envirnment in ``stack.sh`` to test
 # the process spawn and kill operations.
@@ -94,12 +94,12 @@ fi
 if [[ "$1" == "start" ]]; then
     echo "Start service"
     setup_screen
-    screen_it fake-service "$TOP_DIR/tests/fake-service.sh"
+    run_process fake-service "$TOP_DIR/tests/fake-service.sh"
     sleep 1
     status
 elif [[ "$1" == "stop" ]]; then
     echo "Stop service"
-    screen_stop fake-service
+    stop_process fake-service
     status
 elif [[ "$1" == "status" ]]; then
     status
