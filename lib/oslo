@@ -20,21 +20,21 @@ set +o xtrace
 
 # Defaults
 # --------
-CLIFF_DIR=$DEST/cliff
-OSLOCFG_DIR=$DEST/oslo.config
-OSLOCON_DIR=$DEST/oslo.concurrency
-OSLODB_DIR=$DEST/oslo.db
-OSLOI18N_DIR=$DEST/oslo.i18n
-OSLOLOG_DIR=$DEST/oslo.log
-OSLOMID_DIR=$DEST/oslo.middleware
-OSLOMSG_DIR=$DEST/oslo.messaging
-OSLORWRAP_DIR=$DEST/oslo.rootwrap
-OSLOSERIALIZATION_DIR=$DEST/oslo.serialization
-OSLOUTILS_DIR=$DEST/oslo.utils
-OSLOVMWARE_DIR=$DEST/oslo.vmware
-PYCADF_DIR=$DEST/pycadf
-STEVEDORE_DIR=$DEST/stevedore
-TASKFLOW_DIR=$DEST/taskflow
+GITDIR["cliff"]=$DEST/cliff
+GITDIR["oslo.config"]=$DEST/oslo.config
+GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
+GITDIR["oslo.db"]=$DEST/oslo.db
+GITDIR["oslo.i18n"]=$DEST/oslo.i18n
+GITDIR["oslo.log"]=$DEST/oslo.log
+GITDIR["oslo.middleware"]=$DEST/oslo.middleware
+GITDIR["oslo.messaging"]=$DEST/oslo.messaging
+GITDIR["oslo.rootwrap"]=$DEST/oslo.rootwrap
+GITDIR["oslo.serialization"]=$DEST/oslo.serialization
+GITDIR["oslo.utils"]=$DEST/oslo.utils
+GITDIR["oslo.vmware"]=$DEST/oslo.vmware
+GITDIR["pycadf"]=$DEST/pycadf
+GITDIR["stevedore"]=$DEST/stevedore
+GITDIR["taskflow"]=$DEST/taskflow
 
 # Support entry points installation of console scripts
 OSLO_BIN_DIR=$(get_python_exec_prefix)
@@ -42,52 +42,31 @@ OSLO_BIN_DIR=$(get_python_exec_prefix)
 # Entry Points
 # ------------
 
+function _do_install_oslo_lib {
+    local name=$1
+    if use_library_from_git "$name"; then
+        git_clone_by_name "$name"
+        setup_lib "$name"
+    fi
+}
+
 # install_oslo() - Collect source and prepare
 function install_oslo {
-    git_clone $CLIFF_REPO $CLIFF_DIR $CLIFF_BRANCH
-    setup_install $CLIFF_DIR
-
-    git_clone $OSLOI18N_REPO $OSLOI18N_DIR $OSLOI18N_BRANCH
-    setup_install $OSLOI18N_DIR
-
-    git_clone $OSLOUTILS_REPO $OSLOUTILS_DIR $OSLOUTILS_BRANCH
-    setup_install $OSLOUTILS_DIR
-
-    git_clone $OSLOSERIALIZATION_REPO $OSLOSERIALIZATION_DIR $OSLOSERIALIZATION_BRANCH
-    setup_install $OSLOSERIALIZATION_DIR
-
-    git_clone $OSLOCFG_REPO $OSLOCFG_DIR $OSLOCFG_BRANCH
-    setup_install $OSLOCFG_DIR
-
-    git_clone $OSLOCON_REPO $OSLOCON_DIR $OSLOCON_BRANCH
-    setup_install $OSLOCON_DIR
-
-    git_clone $OSLOLOG_REPO $OSLOLOG_DIR $OSLOLOG_BRANCH
-    setup_install $OSLOLOG_DIR
-
-    git_clone $OSLOMID_REPO $OSLOMID_DIR $OSLOMID_BRANCH
-    setup_install $OSLOMID_DIR
-
-    git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
-    setup_install $OSLOMSG_DIR
-
-    git_clone $OSLORWRAP_REPO $OSLORWRAP_DIR $OSLORWRAP_BRANCH
-    setup_install $OSLORWRAP_DIR
-
-    git_clone $OSLODB_REPO $OSLODB_DIR $OSLODB_BRANCH
-    setup_install $OSLODB_DIR
-
-    git_clone $OSLOVMWARE_REPO $OSLOVMWARE_DIR $OSLOVMWARE_BRANCH
-    setup_install $OSLOVMWARE_DIR
-
-    git_clone $PYCADF_REPO $PYCADF_DIR $PYCADF_BRANCH
-    setup_install $PYCADF_DIR
-
-    git_clone $STEVEDORE_REPO $STEVEDORE_DIR $STEVEDORE_BRANCH
-    setup_install $STEVEDORE_DIR
-
-    git_clone $TASKFLOW_REPO $TASKFLOW_DIR $TASKFLOW_BRANCH
-    setup_install $TASKFLOW_DIR
+    _do_install_oslo_lib "cliff"
+    _do_install_oslo_lib "oslo.i18n"
+    _do_install_oslo_lib "oslo.utils"
+    _do_install_oslo_lib "oslo.serialization"
+    _do_install_oslo_lib "oslo.config"
+    _do_install_oslo_lib "oslo.concurrency"
+    _do_install_oslo_lib "oslo.log"
+    _do_install_oslo_lib "oslo.middleware"
+    _do_install_oslo_lib "oslo.messaging"
+    _do_install_oslo_lib "oslo.rootwrap"
+    _do_install_oslo_lib "oslo.db"
+    _do_install_oslo_lib "olso.vmware"
+    _do_install_oslo_lib "pycadf"
+    _do_install_oslo_lib "stevedore"
+    _do_install_oslo_lib "taskflow"
 }
 
 # Restore xtrace
