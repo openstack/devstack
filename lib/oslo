@@ -63,7 +63,7 @@ function install_oslo {
     _do_install_oslo_lib "oslo.messaging"
     _do_install_oslo_lib "oslo.rootwrap"
     _do_install_oslo_lib "oslo.db"
-    _do_install_oslo_lib "olso.vmware"
+    _do_install_oslo_lib "oslo.vmware"
     _do_install_oslo_lib "pycadf"
     _do_install_oslo_lib "stevedore"
     _do_install_oslo_lib "taskflow"

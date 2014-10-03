@@ -223,47 +223,47 @@ GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
 
 # oslo.concurrency
 GITREPO["oslo.concurrency"]=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
-GITBRANCH["olso.concurrency"]=${OSLOCON_BRANCH:-master}
+GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-master}
 
 # oslo.config
 GITREPO["oslo.config"]=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
 GITBRANCH["oslo.config"]=${OSLOCFG_BRANCH:-master}
 
 # oslo.db
-GITREPO["olso.db"]=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
-GITBRANCH["olso.db"]=${OSLODB_BRANCH:-master}
+GITREPO["oslo.db"]=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
+GITBRANCH["oslo.db"]=${OSLODB_BRANCH:-master}
 
 # oslo.i18n
-GITREPO["olso.i18n"]=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
-GITBRANCH["olso.i18n"]=${OSLOI18N_BRANCH:-master}
+GITREPO["oslo.i18n"]=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
+GITBRANCH["oslo.i18n"]=${OSLOI18N_BRANCH:-master}
 
 # oslo.log
-GITREPO["olso.log"]=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
-GITBRANCH["olso.log"]=${OSLOLOG_BRANCH:-master}
+GITREPO["oslo.log"]=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
+GITBRANCH["oslo.log"]=${OSLOLOG_BRANCH:-master}
 
 # oslo.messaging
-GITREPO["olso.messaging"]=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
-GITBRANCH["olso.messaging"]=${OSLOMSG_BRANCH:-master}
+GITREPO["oslo.messaging"]=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
+GITBRANCH["oslo.messaging"]=${OSLOMSG_BRANCH:-master}
 
 # oslo.middleware
 GITREPO["oslo.middleware"]=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
 GITBRANCH["oslo.middleware"]=${OSLOMID_BRANCH:-master}
 
 # oslo.rootwrap
-GITREPO["olso.rootwrap"]=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
-GITBRANCH["olso.rootwrap"]=${OSLORWRAP_BRANCH:-master}
+GITREPO["oslo.rootwrap"]=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
+GITBRANCH["oslo.rootwrap"]=${OSLORWRAP_BRANCH:-master}
 
 # oslo.serialization
-GITREPO["olso.serialization"]=${OSLOSERIALIZATION_REPO:-${GIT_BASE}/openstack/oslo.serialization.git}
-GITBRANCH["olso.serialization"]=${OSLOSERIALIZATION_BRANCH:-master}
+GITREPO["oslo.serialization"]=${OSLOSERIALIZATION_REPO:-${GIT_BASE}/openstack/oslo.serialization.git}
+GITBRANCH["oslo.serialization"]=${OSLOSERIALIZATION_BRANCH:-master}
 
 # oslo.utils
-GITREPO["olso.utils"]=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
-GITBRANCH["olso.utils"]=${OSLOUTILS_BRANCH:-master}
+GITREPO["oslo.utils"]=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
+GITBRANCH["oslo.utils"]=${OSLOUTILS_BRANCH:-master}
 
 # oslo.vmware
-GITREPO["olso.vmware"]=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
-GITBRANCH["olso.vmware"]=${OSLOVMWARE_BRANCH:-master}
+GITREPO["oslo.vmware"]=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
+GITBRANCH["oslo.vmware"]=${OSLOVMWARE_BRANCH:-master}
 
 # pycadf auditing library
 GITREPO["pycadf"]=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
