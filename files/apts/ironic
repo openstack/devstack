@@ -9,6 +9,9 @@ openvswitch-switch
 openvswitch-datapath-dkms
 python-libguestfs
 python-libvirt
+qemu
+qemu-kvm
+qemu-utils
 syslinux
 tftpd-hpa
 xinetd
