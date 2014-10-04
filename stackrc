@@ -3,6 +3,9 @@
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
+# Source required devstack functions and globals
+source $RC_DIR/functions
+
 # Destination path for installation
 DEST=/opt/stack
 
