@@ -580,6 +580,11 @@ SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 # Also sets the minimum number of workers to 2.
 API_WORKERS=${API_WORKERS:=$(( ($(nproc)/2)<2 ? 2 : ($(nproc)/2) ))}
 
+# Service startup timeout
+SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
+
+# Following entries need to be last items in file
+
 # Local variables:
 # mode: shell-script
 # End:
