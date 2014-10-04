@@ -21,17 +21,6 @@ function function_exists {
     declare -f -F $1 > /dev/null
 }
 
-
-# Cleanup anything from /tmp on unstack
-# clean_tmp
-function cleanup_tmp {
-    local tmp_dir=${TMPDIR:-/tmp}
-
-    # see comments in pip_install
-    sudo rm -rf ${tmp_dir}/pip-build.*
-}
-
-
 # Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:
 #

@@ -173,5 +173,3 @@ if [[ -n "$SCREEN" ]]; then
         screen -X -S $SESSION quit
     fi
 fi
-
-cleanup_tmp
