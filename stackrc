@@ -3,6 +3,9 @@
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
+# Source required devstack functions and globals
+source $RC_DIR/functions
+
 # Destination path for installation
 DEST=/opt/stack
 
@@ -576,6 +579,11 @@ SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 # (the default number of workers for many services is the number of CPUs)
 # Also sets the minimum number of workers to 2.
 API_WORKERS=${API_WORKERS:=$(( ($(nproc)/2)<2 ? 2 : ($(nproc)/2) ))}
+
+# Service startup timeout
+SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
+
+# Following entries need to be last items in file
 
 # Local variables:
 # mode: shell-script
