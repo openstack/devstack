@@ -114,11 +114,11 @@ GATEWAY=192.168.42.1
         <p>OpenStack runs as a non-root user that has sudo access to root.  There is nothing special
         about the name, we'll use <code>stack</code> here. Every node must use the same name and
         preferably uid. If you created a user during the OS install you can use it and give it
-        sudo priviledges below.  Otherwise create the stack user:</p>
+        sudo privileges below.  Otherwise create the stack user:</p>
         <pre>groupadd stack
 useradd -g stack -s /bin/bash -d /opt/stack -m stack</pre>
         <p>This user will be making many changes to your system during installation and operation
-        so it needs to have sudo priviledges to root without a password:</p>
+        so it needs to have sudo privileges to root without a password:</p>
         <pre>echo "stack ALL=(ALL) NOPASSWD: ALL" &gt;&gt; /etc/sudoers</pre>
         <p>From here on use the <code>stack</code> user.  <b>Logout</b> and <b>login</b> as the 
         <code>stack</code> user.</p>
@@ -221,7 +221,7 @@ sudo virsh list | grep inst | awk '{print $1}' | xargs -n1 virsh destroy</pre>
         </div>
 
         <h3>Additional Users</h3>
-        <p>DevStack creates two OpenStack users (<code>admin</code> and <code>demo</code>) and two tenants (also <code>admin</code> and <code>demo</code>).  <code>admin</code> is exactly what it sounds like, a priveleged administrative account that is a member of both the <code>admin</code> and <code>demo</code> tenants.  <code>demo</code> is a normal user account that is only a member of the <code>demo</code> tenant.  Creating additional OpenStack users can be done through the dashboard, sometimes it is easier to do them in bulk from a script, especially since they get blown away every time
+        <p>DevStack creates two OpenStack users (<code>admin</code> and <code>demo</code>) and two tenants (also <code>admin</code> and <code>demo</code>).  <code>admin</code> is exactly what it sounds like, a privileged administrative account that is a member of both the <code>admin</code> and <code>demo</code> tenants.  <code>demo</code> is a normal user account that is only a member of the <code>demo</code> tenant.  Creating additional OpenStack users can be done through the dashboard, sometimes it is easier to do them in bulk from a script, especially since they get blown away every time
         <code>stack.sh</code> runs.  The following steps are ripe for scripting:</p>
         <pre># Get admin creds
 . openrc admin admin
@@ -275,7 +275,7 @@ keystone user-role-add --user-id=&lt;bob-user-id&gt; --tenant-id=&lt;bob-tenant-
 vgcreate stack-volumes /dev/sdc</pre>
 
         <h3>Syslog</h3>
-        <p>DevStack is capable of using <code>rsyslog</code> to agregate logging across the cluster.
+        <p>DevStack is capable of using <code>rsyslog</code> to aggregate logging across the cluster.
         It is off by default; to turn it on set <code>SYSLOG=True</code> in <code>local.conf</code>.
         <code>SYSLOG_HOST</code> defaults to <code>HOST_IP</code>; on the compute nodes it 
         must be set to the IP of the cluster controller to send syslog output there.  In the example

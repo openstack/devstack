@@ -69,9 +69,9 @@
         </div>
 
         <h3>Add your user</h3>
-        <p>We need to add a user to install DevStack.  (if you created a user during install you can skip this step and just give the user sudo priviledges below)</p>
+        <p>We need to add a user to install DevStack.  (if you created a user during install you can skip this step and just give the user sudo privileges below)</p>
         <pre>adduser stack</pre>
-        <p>Since this user will be making many changes to your system, it will need to have sudo priviledges:</p>
+        <p>Since this user will be making many changes to your system, it will need to have sudo privileges:</p>
         <pre>apt-get install sudo -y || yum install -y sudo
 echo "stack ALL=(ALL) NOPASSWD: ALL" &gt;&gt; /etc/sudoers</pre>
         <p>From here on you should use the user you created.  <b>Logout</b> and <b>login</b> as that user.</p>
@@ -113,7 +113,7 @@ SERVICE_PASSWORD=iheartksl</pre>
         <h3>Using OpenStack</h3>
         <p>At this point you should be able to access the dashboard from other computers on the 
         local network.  In this example that would be http://192.168.1.201/ for the dashboard (aka Horizon).
-        Launch VMs and if you give them floating IPs and security group access those VMs will be accessable from other machines on your network.</p>
+        Launch VMs and if you give them floating IPs and security group access those VMs will be accessible from other machines on your network.</p>
 
         <p>Some examples of using the OpenStack command-line clients <code>nova</code> and <code>glance</code>
         are in the shakedown scripts in <code>devstack/exercises</code>.  <code>exercise.sh</code>
