@@ -17,7 +17,7 @@
 ##                  prevent stray files in the workspace being added tot he docs)
 ## -o <out-dir>     Write the static HTML output to <out-dir>
 ##                  (Note that <out-dir> will be deleted and re-created to ensure it is clean)
-## -g               Update the old gh-pages repo  (set PUSH=1 to actualy push up to RCB)
+## -g               Update the old gh-pages repo  (set PUSH=1 to actually push up to RCB)
 
 # Defaults
 # --------

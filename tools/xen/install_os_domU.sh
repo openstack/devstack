@@ -394,7 +394,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
 
     # Watch devstack's output (which doesn't start until stack.sh is running,
     # but wait for run.sh (which starts stack.sh) to exit as that is what
-    # hopefully writes the succeded cookie.
+    # hopefully writes the succeeded cookie.
     pid=`ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS pgrep run.sh`
     ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "tail --pid $pid -n +1 -f /tmp/devstack/log/stack.log"
 
