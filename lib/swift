@@ -557,9 +557,11 @@ function create_swift_disk {
 
 function create_swift_accounts {
     # Defines specific passwords used by tools/create_userrc.sh
-    local swiftusertest1_password=testing
-    local swiftusertest2_password=testing2
-    local swiftusertest3_password=testing3
+    # As these variables are used by create_userrc.sh, they must be exported
+    # The _password suffix is expected by create_userrc.sh
+    export swiftusertest1_password=testing
+    export swiftusertest2_password=testing2
+    export swiftusertest3_password=testing3
 
     KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 
