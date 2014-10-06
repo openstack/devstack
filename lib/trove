@@ -201,7 +201,7 @@ function install_trove {
 # init_trove() - Initializes Trove Database as a Service
 function init_trove {
     # (Re)Create trove db
-    recreate_database trove utf8
+    recreate_database trove
 
     # Initialize the trove database
     $TROVE_BIN_DIR/trove-manage db_sync

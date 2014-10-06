@@ -448,7 +448,7 @@ function init_keystone {
     fi
 
     # (Re)create keystone database
-    recreate_database keystone utf8
+    recreate_database keystone
 
     # Initialize keystone database
     $KEYSTONE_DIR/bin/keystone-manage db_sync

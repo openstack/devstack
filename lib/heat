@@ -170,7 +170,7 @@ function configure_heat {
 function init_heat {
 
     # (re)create heat database
-    recreate_database heat utf8
+    recreate_database heat
 
     $HEAT_DIR/bin/heat-manage db_sync
     create_heat_cache_dir

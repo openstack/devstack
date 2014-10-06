@@ -380,7 +380,7 @@ function create_ironic_accounts {
 # init_ironic() - Initialize databases, etc.
 function init_ironic {
     # (Re)create  ironic database
-    recreate_database ironic utf8
+    recreate_database ironic
 
     # Migrate ironic database
     $IRONIC_BIN_DIR/ironic-dbsync --config-file=$IRONIC_CONF_FILE

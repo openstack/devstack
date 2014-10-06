@@ -37,10 +37,9 @@ function cleanup_database_postgresql {
 
 function recreate_database_postgresql {
     local db=$1
-    local charset=$2
     # Avoid unsightly error when calling dropdb when the database doesn't exist
     psql -h$DATABASE_HOST -U$DATABASE_USER -dtemplate1 -c "DROP DATABASE IF EXISTS $db"
-    createdb -h $DATABASE_HOST -U$DATABASE_USER -l C -T template0 -E $charset $db
+    createdb -h $DATABASE_HOST -U$DATABASE_USER -l C -T template0 -E utf8 $db
 }
 
 function configure_database_postgresql {
