@@ -247,7 +247,7 @@ keystone user-role-add --user-id=&lt;bob-user-id&gt; --tenant-id=&lt;bob-tenant-
         The support in DevStack is geared toward a minimal installation but can be used for
         testing.  To implement a true multi-node test of Swift required more than DevStack provides.  
         Enabling it is as simple as enabling the <code>swift</code> service in <code>local.conf</code>:
-        <pre>enable_service swift</pre>
+        <pre>enable_service s-proxy s-object s-container s-account</pre>
 
         <p>Swift will put its data files in <code>SWIFT_DATA_DIR</code> (default <code>/opt/stack/data/swift</code>).
         The size of the data 'partition' created (really a loop-mounted file) is set by
