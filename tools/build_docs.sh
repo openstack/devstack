@@ -4,7 +4,7 @@
 #
 # - Install shocco if not found on PATH and INSTALL_SHOCCO is set
 # - Clone MASTER_REPO branch MASTER_BRANCH
-# - Re-creates ``docs/html`` directory from existing repo + new generated script docs
+# - Re-creates ``doc/build/html`` directory from existing repo + new generated script docs
 
 # Usage:
 ## build_docs.sh [-o <out-dir>] [-g] [master|<repo> [<branch>]]
@@ -29,8 +29,8 @@ MASTER_BRANCH=${MASTER_BRANCH:-master}
 # http://devstack.org is a GitHub gh-pages site in the https://github.com/cloudbuilders/devtack.git repo
 GH_PAGES_REPO=git@github.com:cloudbuilders/devstack.git
 
-DOCS_SOURCE=docs/source
-HTML_BUILD=docs/html
+DOCS_SOURCE=doc/source
+HTML_BUILD=doc/build/html
 
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
@@ -136,7 +136,7 @@ for f in $(find functions functions-common lib samples -type f -name \*); do
     mkdir -p $FQ_HTML_BUILD/`dirname $f`;
     $SHOCCO $f > $FQ_HTML_BUILD/$f.html
 done
-echo "$FILES" >docs/files
+echo "$FILES" >doc/files
 
 if [[ -n $GH_UPDATE ]]; then
     GH_ROOT=$(mktemp -d work-gh-XXXX)
