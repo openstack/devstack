@@ -234,15 +234,35 @@ fi
 
 if [[ is_fedora && ( $DISTRO == "rhel6" || $DISTRO == "rhel7" ) ]]; then
     # RHEL requires EPEL for many Open Stack dependencies
-    if [[ $DISTRO == "rhel7" ]]; then
-        EPEL_RPM=${RHEL7_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/beta/7/x86_64/epel-release-7-1.noarch.rpm"}
-    elif [[ $DISTRO == "rhel6" ]]; then
-        EPEL_RPM=${RHEL6_EPEL_RPM:-"http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"}
-    fi
     if ! sudo yum repolist enabled epel | grep -q 'epel'; then
         echo "EPEL not detected; installing"
-        yum_install ${EPEL_RPM} || \
+        # This trick installs the latest epel-release from a bootstrap
+        # repo, then removes itself (as epel-release installed the
+        # "real" repo).
+        #
+        # you would think that rather than this, you could use
+        # $releasever directly in .repo file we create below.  However
+        # RHEL gives a $releasever of "6Server" which breaks the path;
+        # see https://bugzilla.redhat.com/show_bug.cgi?id=1150759
+        if [[ $DISTRO == "rhel7" ]]; then
+            epel_ver="7"
+        elif [[ $DISTRO == "rhel6" ]]; then
+            epel_ver="6"
+        fi
+
+        cat <<EOF | sudo tee /etc/yum.repos.d/epel-bootstrap.repo
+[epel]
+name=Bootstrap EPEL
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$epel_ver&arch=\$basearch
+failovermethod=priority
+enabled=0
+gpgcheck=0
+EOF
+        # bare yum call due to --enablerepo
+        sudo yum --enablerepo=epel -y install epel-release || \
             die $LINENO "Error installing EPEL repo, cannot continue"
+        # epel rpm has installed it's version
+        sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
     fi
 
     # ... and also optional to be enabled
