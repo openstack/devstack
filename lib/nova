@@ -330,14 +330,12 @@ function configure_nova {
 }
 
 # create_nova_accounts() - Set up common required nova accounts
-
+#
 # Project              User         Roles
 # ------------------------------------------------------------------
 # SERVICE_TENANT_NAME  nova         admin
 # SERVICE_TENANT_NAME  nova         ResellerAdmin (if Swift is enabled)
-
-# Migrated from keystone_data.sh
-create_nova_accounts() {
+function create_nova_accounts {
 
     local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
