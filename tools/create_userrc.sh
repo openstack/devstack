@@ -245,7 +245,7 @@ function get_user_id {
 }
 
 if [ $MODE != "create" ]; then
-# looks like I can't ask for all tenant related to a specified user
+    # looks like I can't ask for all tenant related to a specified user
     openstack project list --long --quote none -f csv | grep ',True' | grep -v "${SKIP_TENANT}" | while IFS=, read tenant_id tenant_name desc enabled; do
         openstack user list --project $tenant_id --long --quote none -f csv | grep ',True' | while IFS=, read user_id user_name project email enabled; do
             if [ $MODE = one -a "$user_name" != "$USER_NAME" ]; then
@@ -253,8 +253,7 @@ if [ $MODE != "create" ]; then
             fi
 
             # Checks for a specific password defined for an user.
-            # Example for an username johndoe:
-            #                     JOHNDOE_PASSWORD=1234
+            # Example for an username johndoe: JOHNDOE_PASSWORD=1234
             eval SPECIFIC_UPASSWORD="\$${USER_NAME^^}_PASSWORD"
             if [ -n "$SPECIFIC_UPASSWORD" ]; then
                 USER_PASS=$SPECIFIC_UPASSWORD
