@@ -48,10 +48,10 @@ function upload_image {
         fi
         image="$FILES/${image_fname}"
     else
-        # File based URL (RFC 1738): file://host/path
+        # File based URL (RFC 1738): ``file://host/path``
         # Remote files are not considered here.
-        # *nix: file:///home/user/path/file
-        # windows: file:///C:/Documents%20and%20Settings/user/path/file
+        # unix: ``file:///home/user/path/file``
+        # windows: ``file:///C:/Documents%20and%20Settings/user/path/file``
         image=$(echo $image_url | sed "s/^file:\/\///g")
         if [[ ! -f $image || "$(stat -c "%s" $image)" == "0" ]]; then
             echo "Not found: $image_url"
@@ -100,7 +100,7 @@ function upload_image {
         if [[ "$vmdk_create_type" = "monolithicSparse" ]]; then
             vmdk_disktype="sparse"
         elif [[ "$vmdk_create_type" = "monolithicFlat" || "$vmdk_create_type" = "vmfs" ]]; then
-            # Attempt to retrieve the *-flat.vmdk
+            # Attempt to retrieve the ``*-flat.vmdk``
             local flat_fname="$(head -25 $image | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $image || true; })"
             flat_fname="${flat_fname#*\"}"
             flat_fname="${flat_fname%?}"

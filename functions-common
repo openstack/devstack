@@ -31,6 +31,7 @@
 # - ``TRACK_DEPENDS``
 # - ``UNDO_REQUIREMENTS``
 # - ``http_proxy``, ``https_proxy``, ``no_proxy``
+#
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -1270,7 +1271,8 @@ function screen_service {
         # - the pid of the background process is saved in the usual place
         # - the server process is brought back to the foreground
         # - if the server process exits prematurely the fg command errors
-        #   and a message is written to stdout and the service failure file
+        # and a message is written to stdout and the service failure file
+        #
         # The pid saved can be used in stop_process() as a process group
         # id to kill off all child processes
         if [[ -n "$group" ]]; then

@@ -16,6 +16,7 @@
 #
 # Authors:
 #   Alon Marx <alonma@il.ibm.com>
+#
 
 # lib/cinder_plugins/xiv
 # Configure the xiv_ds8k driver for xiv testing
@@ -61,7 +62,7 @@ function configure_cinder_backend_xiv {
     fi
 
     # For reference:
-    # XIV_DS8K_BACKEND='IBM-XIV_'${SAN_IP}'_'${SAN_CLUSTERNAME}'_'${CONNECTION_TYPE}
+    # ``XIV_DS8K_BACKEND='IBM-XIV_'${SAN_IP}'_'${SAN_CLUSTERNAME}'_'${CONNECTION_TYPE}``
     iniset $CINDER_CONF DEFAULT xiv_ds8k_driver_version $XIV_DRIVER_VERSION
 
     iniset $CINDER_CONF $be_name san_ip $SAN_IP

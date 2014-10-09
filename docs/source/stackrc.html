@@ -66,8 +66,8 @@
             Certificate Authentication), Cinder (Scheduler, API, Volume), Horizon, MySQL, RabbitMQ, Tempest.
             <pre>ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,tempest,$DATABASE_TYPE</pre>
             Other services that are not enabled by default can be enabled in
-            <code>localrc</code>. For example, to add Swift:
-            <pre>enable_service swift</pre>
+            <code>localrc</code>. For example, to add Swift, use the following service names:
+            <pre>enable_service s-proxy s-object s-container s-account</pre>
             A service can similarly be disabled:
             <pre>disable_service horizon</pre></dd>
 

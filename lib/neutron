@@ -186,9 +186,10 @@ fi
 
 # Distributed Virtual Router (DVR) configuration
 # Can be:
-#     legacy   - No DVR functionality
-#     dvr_snat - Controller or single node DVR
-#     dvr      - Compute node in multi-node DVR
+# - ``legacy``   - No DVR functionality
+# - ``dvr_snat`` - Controller or single node DVR
+# - ``dvr``      - Compute node in multi-node DVR
+#
 Q_DVR_MODE=${Q_DVR_MODE:-legacy}
 if [[ "$Q_DVR_MODE" != "legacy" ]]; then
     Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,linuxbridge,l2population

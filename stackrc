@@ -120,7 +120,7 @@ GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 # ------------
 
 # Base GIT Repo URL
-# Another option is http://review.openstack.org/p
+# Another option is https://git.openstack.org
 GIT_BASE=${GIT_BASE:-git://git.openstack.org}
 
 ##############
