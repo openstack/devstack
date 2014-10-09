@@ -95,6 +95,15 @@ type=new
 [[test-quote|test-quote.conf]]
 [foo]
 foo="foo bar" "baz"
+
+[[test5|test-equals.conf]]
+[DEFAULT]
+drivers = driver=python.import.path.Driver
+
+[[test6|test-strip.conf]]
+[DEFAULT]
+# next line has trailing space
+attr = strip_trailing_space 
 EOF
 
 echo -n "get_meta_section_files: test0 doesn't exist: "
@@ -238,5 +247,25 @@ EXPECT_VAL="
 type = new"
 check_result "$VAL" "$EXPECT_VAL"
 
-rm -f test.conf test1c.conf test2a.conf test-quote.conf test-space.conf
+echo -n "merge_config_file test5 equals in value: "
+rm -f test-equals.conf
+merge_config_file test.conf test5 test-equals.conf
+VAL=$(cat test-equals.conf)
+# iniset adds a blank line if it creates the file...
+EXPECT_VAL="
+[DEFAULT]
+drivers = driver=python.import.path.Driver"
+check_result "$VAL" "$EXPECT_VAL"
+
+echo -n "merge_config_file test6 value stripped: "
+rm -f test-strip.conf
+merge_config_file test.conf test6 test-strip.conf
+VAL=$(cat test-strip.conf)
+# iniset adds a blank line if it creates the file...
+EXPECT_VAL="
+[DEFAULT]
+attr = strip_trailing_space"
+check_result "$VAL" "$EXPECT_VAL"
+
+rm -f test.conf test1c.conf test2a.conf test-quote.conf test-space.conf test-equals.conf test-strip.conf
 rm -rf test-etc
