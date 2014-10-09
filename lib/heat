@@ -276,7 +276,7 @@ function create_heat_accounts {
                 --os-identity-api-version=3 domain create heat \
                 --description "Owns users and projects created by heat" \
                 | grep ' id ' | get_field 2)
-            iniset $HEAT_CONF DEFAULT stack_user_domain ${D_ID}
+            iniset $HEAT_CONF DEFAULT stack_user_domain_id ${D_ID}
 
             openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
                 --os-identity-api-version=3 user create --password $SERVICE_PASSWORD \
