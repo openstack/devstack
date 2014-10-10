@@ -119,6 +119,33 @@ function ini_has_option {
     [ -n "$line" ]
 }
 
+# Add another config line for a multi-line option.
+# It's normally called after iniset of the same option and assumes
+# that the section already exists.
+#
+# Note that iniset_multiline requires all the 'lines' to be supplied
+# in the argument list. Doing that will cause incorrect configuration
+# if spaces are used in the config values.
+#
+# iniadd_literal config-file section option value
+function iniadd_literal {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local value=$4
+
+    [[ -z $section || -z $option ]] && return
+
+    # Add it
+    sed -i -e "/^\[$section\]/ a\\
+$option = $value
+" "$file"
+
+    $xtrace
+}
+
 # Set an option in an INI file
 # iniset config-file section option value
 function iniset {
