@@ -20,12 +20,27 @@ set +o xtrace
 # set up default directories
 DIB_DIR=$DEST/diskimage-builder
 TIE_DIR=$DEST/tripleo-image-elements
+
+# NOTE: Setting DIB_APT_SOURCES assumes you will be building
+# Debian/Ubuntu based images. Leave unset for other flavors.
+DIB_APT_SOURCES=${DIB_APT_SOURCES:-""}
+DIB_BUILD_OFFLINE=$(trueorfalse False $DIB_BUILD_OFFLINE)
 DIB_IMAGE_CACHE=$DATA_DIR/diskimage-builder/image-create
 DIB_PIP_REPO=$DATA_DIR/diskimage-builder/pip-repo
 DIB_PIP_REPO_PORT=${DIB_PIP_REPO_PORT:-8899}
+
 OCC_DIR=$DEST/os-collect-config
 ORC_DIR=$DEST/os-refresh-config
 OAC_DIR=$DEST/os-apply-config
+
+# Include the apt-sources element in builds if we have an
+# alternative sources.list specified.
+if [ -n "$DIB_APT_SOURCES" ]; then
+    if [ ! -e "$DIB_APT_SOURCES" ]; then
+        die $LINENO "DIB_APT_SOURCES set but not found at $DIB_APT_SOURCES"
+    fi
+    EXTRA_ELEMENTS="apt-sources"
+fi
 
 # Functions
 # ---------
@@ -106,9 +121,11 @@ function disk_image_create_upload {
 
     # The disk-image-create command to run
     ELEMENTS_PATH=$elements_path \
+    DIB_APT_SOURCES=$DIB_APT_SOURCES \
+    DIB_OFFLINE=$DIB_BUILD_OFFLINE \
     PYPI_MIRROR_URL=$pypi_mirror_url \
     PYPI_MIRROR_URL_1=$pypi_mirror_url_1 \
-    disk-image-create -a amd64 $image_elements \
+    disk-image-create -a amd64 $image_elements $EXTRA_ELEMENTS \
         --image-cache $DIB_IMAGE_CACHE \
         -o $image_path
 
