@@ -91,6 +91,10 @@ attribute=value
 [[test4|\$TEST4_DIR/\$TEST4_FILE]]
 [fff]
 type=new
+
+[[test-quote|test-quote.conf]]
+[foo]
+foo="foo bar" "baz"
 EOF
 
 echo -n "get_meta_section_files: test0 doesn't exist: "
@@ -206,6 +210,15 @@ EXPECT_VAL="
 attribute = value"
 check_result "$VAL" "$EXPECT_VAL"
 
+echo -n "merge_config_file test-quote: "
+rm -f test-quote.conf
+merge_config_file test.conf test-quote test-quote.conf
+VAL=$(cat test-quote.conf)
+EXPECT_VAL='
+[foo]
+foo = "foo bar" "baz"'
+check_result "$VAL" "$EXPECT_VAL"
+
 echo -n "merge_config_group test4 variable filename: "
 setup_test4
 merge_config_group test.conf test4
@@ -225,5 +238,5 @@ EXPECT_VAL="
 type = new"
 check_result "$VAL" "$EXPECT_VAL"
 
-rm -f test.conf test1c.conf test2a.conf test-space.conf
+rm -f test.conf test1c.conf test2a.conf test-quote.conf test-space.conf
 rm -rf test-etc

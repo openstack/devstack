@@ -82,6 +82,8 @@ function merge_config_file {
     local matchgroup=$2
     local configfile=$3
 
+    # note in the awk below, \x27 is ascii for ' -- this avoids
+    # having to do nasty quoting games
     get_meta_section $file $matchgroup $configfile | \
     $CONFIG_AWK_CMD -v configfile=$configfile '
         BEGIN { section = "" }
@@ -95,7 +97,7 @@ function merge_config_file {
         }
         /^[^ \t]+/ {
             split($0, d, " *= *")
-            print "iniset " configfile " " section " " d[1] " \"" d[2] "\""
+            print "iniset " configfile " " section " " d[1] " \x27" d[2] "\x27 "
         }
     ' | while read a; do eval "$a"; done
 
