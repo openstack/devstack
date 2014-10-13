@@ -254,7 +254,8 @@ if [ $MODE != "create" ]; then
 
             # Checks for a specific password defined for an user.
             # Example for an username johndoe: JOHNDOE_PASSWORD=1234
-            eval SPECIFIC_UPASSWORD="\$${USER_NAME^^}_PASSWORD"
+            # This mechanism is used by lib/swift
+            eval SPECIFIC_UPASSWORD="\$${user_name}_password"
             if [ -n "$SPECIFIC_UPASSWORD" ]; then
                 USER_PASS=$SPECIFIC_UPASSWORD
             fi
