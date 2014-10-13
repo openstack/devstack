@@ -96,8 +96,17 @@ function merge_config_file {
             next
         }
         /^[^ \t]+/ {
-            split($0, d, " *= *")
-            print "iniset " configfile " " section " " d[1] " \x27" d[2] "\x27 "
+            # get offset of first '=' in $0
+            eq_idx = index($0, "=")
+            # extract attr & value from $0
+            attr = substr($0, 1, eq_idx - 1)
+            value = substr($0, eq_idx + 1)
+            # only need to strip trailing whitespace from attr
+            sub(/[ \t]*$/, "", attr)
+            # need to strip leading & trailing whitespace from value
+            sub(/^[ \t]*/, "", value)
+            sub(/[ \t]*$/, "", value)
+            print "iniset " configfile " " section " " attr " \x27" value "\x27"
         }
     ' | while read a; do eval "$a"; done
 
