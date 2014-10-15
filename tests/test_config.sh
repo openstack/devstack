@@ -103,7 +103,11 @@ drivers = driver=python.import.path.Driver
 [[test6|test-strip.conf]]
 [DEFAULT]
 # next line has trailing space
-attr = strip_trailing_space 
+attr = strip_trailing_space
+
+[[test7|test-colon.conf]]
+[DEFAULT]
+servers=10.11.12.13:80
 EOF
 
 echo -n "get_meta_section_files: test0 doesn't exist: "
@@ -267,5 +271,14 @@ EXPECT_VAL="
 attr = strip_trailing_space"
 check_result "$VAL" "$EXPECT_VAL"
 
-rm -f test.conf test1c.conf test2a.conf test-quote.conf test-space.conf test-equals.conf test-strip.conf
+echo -n "merge_config_file test7 colon in value: "
+rm -f test-colon.conf
+merge_config_file test.conf test7 test-colon.conf
+VAL=$(cat test-colon.conf)
+EXPECT_VAL="
+[DEFAULT]
+servers = 10.11.12.13:80"
+check_result "$VAL" "$EXPECT_VAL"
+
+rm -f test.conf test1c.conf test2a.conf test-quote.conf test-space.conf test-equals.conf test-strip.conf test-colon.conf
 rm -rf test-etc
