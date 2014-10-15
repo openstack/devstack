@@ -17,3 +17,4 @@ python-mox
 python-coverage
 python-cherrypy3 # why?
 python-migrate
+libpcre3-dev  # pyScss
