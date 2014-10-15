@@ -522,8 +522,7 @@ function is_ubuntu {
 # ``get_release_name_from_branch branch-name``
 function get_release_name_from_branch {
     local branch=$1
-
-    if [[ $branch =~ "stable/" ]]; then
+    if [[ $branch =~ "stable/" || $branch =~ "proposed/" ]]; then
         echo ${branch#*/}
     else
         echo "master"
