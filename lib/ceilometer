@@ -73,13 +73,12 @@ function is_ceilometer_enabled {
 }
 
 # create_ceilometer_accounts() - Set up common required ceilometer accounts
-
+#
 # Project              User         Roles
 # ------------------------------------------------------------------
 # SERVICE_TENANT_NAME  ceilometer   admin
 # SERVICE_TENANT_NAME  ceilometer   ResellerAdmin (if Swift is enabled)
-
-create_ceilometer_accounts() {
+function create_ceilometer_accounts {
 
     local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
