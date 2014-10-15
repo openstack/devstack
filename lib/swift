@@ -468,12 +468,21 @@ EOF
     iniset ${testfile} func_test username3 swiftusertest3
     iniset ${testfile} func_test account2 swifttenanttest2
     iniset ${testfile} func_test username2 swiftusertest2
+    iniset ${testfile} func_test account4 swifttenanttest4
+    iniset ${testfile} func_test username4 swiftusertest4
+    iniset ${testfile} func_test password4 testing4
+    iniset ${testfile} func_test domain4 swift_test
 
     if is_service_enabled key;then
         iniuncomment ${testfile} func_test auth_version
+        local auth_vers=$(iniget ${testfile} func_test auth_version)
         iniset ${testfile} func_test auth_host ${KEYSTONE_SERVICE_HOST}
         iniset ${testfile} func_test auth_port ${KEYSTONE_AUTH_PORT}
-        iniset ${testfile} func_test auth_prefix /v2.0/
+        if [[ $auth_vers == "3" ]]; then
+            iniset ${testfile} func_test auth_prefix /v3/
+        else
+            iniset ${testfile} func_test auth_prefix /v2.0/
+        fi
     fi
 
     local swift_log_dir=${SWIFT_DATA_DIR}/logs
@@ -548,12 +557,13 @@ function create_swift_disk {
 # since we want to make it compatible with tempauth which use
 # underscores for separators.
 
-# Tenant               User       Roles
+# Tenant             User               Roles          Domain
 # ------------------------------------------------------------------
-# service            swift              service
-# swifttenanttest1   swiftusertest1     admin
-# swifttenanttest1   swiftusertest3     anotherrole
-# swifttenanttest2   swiftusertest2     admin
+# service            swift              service        default
+# swifttenanttest1   swiftusertest1     admin          default
+# swifttenanttest1   swiftusertest3     anotherrole    default
+# swifttenanttest2   swiftusertest2     admin          default
+# swifttenanttest4   swiftusertest4     admin          swift_test
 
 function create_swift_accounts {
     # Defines specific passwords used by tools/create_userrc.sh
@@ -562,6 +572,7 @@ function create_swift_accounts {
     export swiftusertest1_password=testing
     export swiftusertest2_password=testing2
     export swiftusertest3_password=testing3
+    export swiftusertest4_password=testing4
 
     KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 
@@ -603,6 +614,16 @@ function create_swift_accounts {
         "$swift_tenant_test2" "test2@example.com")
     die_if_not_set $LINENO swift_user_test2 "Failure creating swift_user_test2"
     get_or_add_user_role $admin_role $swift_user_test2 $swift_tenant_test2
+
+    local swift_domain=$(get_or_create_domain swift_test 'Used for swift functional testing')
+    die_if_not_set $LINENO swift_domain "Failure creating swift_test domain"
+
+    local swift_tenant_test4=$(get_or_create_project swifttenanttest4 $swift_domain)
+    die_if_not_set $LINENO swift_tenant_test4 "Failure creating swift_tenant_test4"
+    local swift_user_test4=$(get_or_create_user swiftusertest4 $swiftusertest4_password \
+        $swift_tenant_test4 "test4@example.com" $swift_domain)
+    die_if_not_set $LINENO swift_user_test4 "Failure creating swift_user_test4"
+    get_or_add_user_role $admin_role $swift_user_test4 $swift_tenant_test4
 }
 
 # init_swift() - Initialize rings
