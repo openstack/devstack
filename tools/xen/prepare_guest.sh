@@ -114,7 +114,6 @@ function setup_vimrc {
     if [ ! -e $1 ]; then
         # Simple but usable vimrc
         cat > $1 <<EOF
-syntax on
 se ts=4
 se expandtab
 se shiftwidth=4
