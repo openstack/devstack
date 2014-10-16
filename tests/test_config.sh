@@ -108,6 +108,27 @@ attr = strip_trailing_space
 [[test7|test-colon.conf]]
 [DEFAULT]
 servers=10.11.12.13:80
+
+[[test-multi-sections|test-multi-sections.conf]]
+[sec-1]
+cfg_item1 = abcd
+cfg_item2 = efgh
+
+[sec-2]
+cfg_item1 = abcd
+cfg_item3 = /1/2/3/4:5
+cfg_item4 = end
+
+[sec-3]
+cfg_item5 = 5555
+cfg_item6 = 6666
+cfg_item5 = 5555another
+
+[[test-multiline|test-multiline.conf]]
+[multi]
+cfg_item1 = "ab":"cd", "ef":   "gh"
+cfg_item1 = abcd
+cfg_item2 = efgh
 EOF
 
 echo -n "get_meta_section_files: test0 doesn't exist: "
@@ -189,8 +210,39 @@ VAL=$(cat test2a.conf)
 # iniset adds a blank line if it creates the file...
 EXPECT_VAL="
 [ddd]
-additional = true
-type = new"
+type = new
+additional = true"
+check_result "$VAL" "$EXPECT_VAL"
+
+echo -n "merge_config_file test-multi-sections: "
+rm -f test-multi-sections.conf
+merge_config_file test.conf test-multi-sections test-multi-sections.conf
+VAL=$(cat test-multi-sections.conf)
+EXPECT_VAL='
+[sec-1]
+cfg_item1 = abcd
+cfg_item2 = efgh
+
+[sec-2]
+cfg_item1 = abcd
+cfg_item3 = /1/2/3/4:5
+cfg_item4 = end
+
+[sec-3]
+cfg_item5 = 5555
+cfg_item5 = 5555another
+cfg_item6 = 6666'
+check_result "$VAL" "$EXPECT_VAL"
+
+echo -n "merge_config_file test-multiline: "
+rm -f test-multiline.conf
+merge_config_file test.conf test-multiline test-multiline.conf
+VAL=$(cat test-multiline.conf)
+EXPECT_VAL='
+[multi]
+cfg_item1 = "ab":"cd", "ef":   "gh"
+cfg_item1 = abcd
+cfg_item2 = efgh'
 check_result "$VAL" "$EXPECT_VAL"
 
 echo -n "merge_config_group test2: "
@@ -200,8 +252,8 @@ VAL=$(cat test2a.conf)
 # iniset adds a blank line if it creates the file...
 EXPECT_VAL="
 [ddd]
-additional = true
-type = new"
+type = new
+additional = true"
 check_result "$VAL" "$EXPECT_VAL"
 
 echo -n "merge_config_group test2 no conf file: "
@@ -281,4 +333,5 @@ servers = 10.11.12.13:80"
 check_result "$VAL" "$EXPECT_VAL"
 
 rm -f test.conf test1c.conf test2a.conf test-quote.conf test-space.conf test-equals.conf test-strip.conf test-colon.conf
+rm -f test-multiline.conf test-multi-sections.conf
 rm -rf test-etc
