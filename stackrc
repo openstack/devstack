@@ -131,47 +131,47 @@ GIT_BASE=${GIT_BASE:-git://git.openstack.org}
 
 # metering service
 CEILOMETER_REPO=${CEILOMETER_REPO:-${GIT_BASE}/openstack/ceilometer.git}
-CEILOMETER_BRANCH=${CEILOMETER_BRANCH:-master}
+CEILOMETER_BRANCH=${CEILOMETER_BRANCH:-stable/juno}
 
 # volume service
 CINDER_REPO=${CINDER_REPO:-${GIT_BASE}/openstack/cinder.git}
-CINDER_BRANCH=${CINDER_BRANCH:-master}
+CINDER_BRANCH=${CINDER_BRANCH:-stable/juno}
 
 # image catalog service
 GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
-GLANCE_BRANCH=${GLANCE_BRANCH:-master}
+GLANCE_BRANCH=${GLANCE_BRANCH:-stable/juno}
 
 # heat service
 HEAT_REPO=${HEAT_REPO:-${GIT_BASE}/openstack/heat.git}
-HEAT_BRANCH=${HEAT_BRANCH:-master}
+HEAT_BRANCH=${HEAT_BRANCH:-stable/juno}
 
 # django powered web control panel for openstack
 HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
-HORIZON_BRANCH=${HORIZON_BRANCH:-master}
+HORIZON_BRANCH=${HORIZON_BRANCH:-stable/juno}
 
 # baremetal provisioning service
 IRONIC_REPO=${IRONIC_REPO:-${GIT_BASE}/openstack/ironic.git}
-IRONIC_BRANCH=${IRONIC_BRANCH:-master}
+IRONIC_BRANCH=${IRONIC_BRANCH:-stable/juno}
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
-KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
+KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-stable/juno}
 
 # neutron service
 NEUTRON_REPO=${NEUTRON_REPO:-${GIT_BASE}/openstack/neutron.git}
-NEUTRON_BRANCH=${NEUTRON_BRANCH:-master}
+NEUTRON_BRANCH=${NEUTRON_BRANCH:-stable/juno}
 
 # compute service
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
-NOVA_BRANCH=${NOVA_BRANCH:-master}
+NOVA_BRANCH=${NOVA_BRANCH:-stable/juno}
 
 # storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
-SWIFT_BRANCH=${SWIFT_BRANCH:-master}
+SWIFT_BRANCH=${SWIFT_BRANCH:-stable/juno}
 
 # trove service
 TROVE_REPO=${TROVE_REPO:-${GIT_BASE}/openstack/trove.git}
-TROVE_BRANCH=${TROVE_BRANCH:-master}
+TROVE_BRANCH=${TROVE_BRANCH:-stable/juno}
 
 ##############
 #
@@ -181,7 +181,7 @@ TROVE_BRANCH=${TROVE_BRANCH:-master}
 
 # consolidated openstack requirements
 REQUIREMENTS_REPO=${REQUIREMENTS_REPO:-${GIT_BASE}/openstack/requirements.git}
-REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-master}
+REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-stable/juno}
 
 # Tempest test suite
 TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
