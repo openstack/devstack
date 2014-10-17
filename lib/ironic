@@ -354,6 +354,15 @@ function init_ironic {
     create_ironic_cache_dir
 }
 
+# _ironic_bm_vm_names() - Generates list of names for baremetal VMs.
+function _ironic_bm_vm_names {
+    local idx
+    local num_vms=$(($IRONIC_VM_COUNT - 1))
+    for idx in $(seq 0 $num_vms); do
+        echo "baremetal${IRONIC_VM_NETWORK_BRIDGE}_${idx}"
+    done
+}
+
 # start_ironic() - Start running processes, including screen
 function start_ironic {
     # Start Ironic API server, if enabled.
@@ -449,10 +458,13 @@ function create_bridge_and_vms {
     else
         local log_arg=""
     fi
-    sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/create-nodes \
-        $IRONIC_VM_SPECS_CPU $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK \
-        amd64 $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE $IRONIC_VM_EMULATOR \
-        $log_arg" >> $IRONIC_VM_MACS_CSV_FILE
+    local vm_name
+    for vm_name in $(_ironic_bm_vm_names); do
+        sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/create-node $vm_name \
+            $IRONIC_VM_SPECS_CPU $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK \
+            amd64 $IRONIC_VM_NETWORK_BRIDGE $IRONIC_VM_EMULATOR \
+            $log_arg" >> $IRONIC_VM_MACS_CSV_FILE
+    done
     create_ovs_taps
 }
 
@@ -655,7 +667,12 @@ function cleanup_baremetal_basic_ops {
         chmod 0600 $IRONIC_AUTHORIZED_KEYS_FILE
     fi
     sudo rm -rf $IRONIC_DATA_DIR $IRONIC_STATE_PATH
-    sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/cleanup-nodes $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE"
+
+    local vm_name
+    for vm_name in $(_ironic_bm_vm_names); do
+        sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/cleanup-node $vm_name $IRONIC_VM_NETWORK_BRIDGE"
+    done
+
     sudo rm -rf /etc/xinetd.d/tftp /etc/init/tftpd-hpa.override
     restart_service xinetd
     sudo iptables -D INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
