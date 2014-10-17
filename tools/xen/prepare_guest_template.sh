@@ -93,3 +93,28 @@ EOF
 # Need to set barrier=0 to avoid a Xen bug
 # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/824089
 sed -i -e 's/errors=/barrier=0,errors=/' $STAGING_DIR/etc/fstab
+
+# Update ubuntu repositories
+cat > $STAGING_DIR/etc/apt/sources.list << EOF
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} main restricted
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} main restricted
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates main restricted
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates main restricted
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} universe
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} universe
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates universe
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates universe
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} multiverse
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} multiverse
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates multiverse
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates multiverse
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-backports main restricted universe multiverse
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-backports main restricted universe multiverse
+
+deb http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security main restricted
+deb-src http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security main restricted
+deb http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security universe
+deb-src http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security universe
+deb http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security multiverse
+deb-src http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security multiverse
+EOF
