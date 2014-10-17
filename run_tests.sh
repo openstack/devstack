@@ -43,7 +43,7 @@ fi
 
 echo "Running bash8..."
 
-./tools/bash8.py -v $FILES
+tox -ebashate
 pass_fail $? 0 bash8
 
 
