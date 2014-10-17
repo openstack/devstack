@@ -244,6 +244,11 @@ else
     vm_uuid=$(xe vm-install template="$TNAME" new-name-label="$GUEST_NAME")
 fi
 
+if [ -n "${EXIT_AFTER_JEOS_INSTALLATION:-}" ]; then
+    echo "User requested to quit after JEOS instalation"
+    exit 0
+fi
+
 #
 # Prepare VM for DevStack
 #

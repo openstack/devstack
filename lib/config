@@ -86,7 +86,11 @@ function merge_config_file {
     # having to do nasty quoting games
     get_meta_section $file $matchgroup $configfile | \
     $CONFIG_AWK_CMD -v configfile=$configfile '
-        BEGIN { section = "" }
+        BEGIN {
+            section = ""
+            last_section = ""
+            section_count = 0
+        }
         /^\[.+\]/ {
             gsub("[][]", "", $1);
             section=$1
@@ -106,10 +110,48 @@ function merge_config_file {
             # need to strip leading & trailing whitespace from value
             sub(/^[ \t]*/, "", value)
             sub(/[ \t]*$/, "", value)
-            print "iniset " configfile " " section " " attr " \x27" value "\x27"
+
+            # cfg_attr_count: number of config lines per [section, attr]
+            # cfg_attr: three dimensional array to keep all the config lines per [section, attr]
+            # cfg_section: keep the section names in the same order as they appear in local.conf
+            # cfg_sec_attr_name: keep the attr names in the same order as they appear in local.conf
+            if (! (section, attr) in cfg_attr_count) {
+                if (section != last_section) {
+                    cfg_section[section_count++] = section
+                    last_section = section
+                }
+                attr_count = cfg_sec_attr_count[section_count - 1]++
+                cfg_sec_attr_name[section_count - 1, attr_count] = attr
+
+                cfg_attr[section, attr, 0] = value
+                cfg_attr_count[section, attr] = 1
+            } else {
+                lno = cfg_attr_count[section, attr]++
+                cfg_attr[section, attr, lno] = value
+            }
+        }
+        END {
+            # Process each section in order
+            for (sno = 0; sno < section_count; sno++) {
+                section = cfg_section[sno]
+                # The ini routines simply append a config item immediately
+                # after the section header. To keep the same order as defined
+                # in local.conf, invoke the ini routines in the reverse order
+                for (attr_no = cfg_sec_attr_count[sno] - 1; attr_no >=0; attr_no--) {
+                    attr = cfg_sec_attr_name[sno, attr_no]
+                    if (cfg_attr_count[section, attr] == 1)
+                        print "iniset " configfile " " section " " attr " \x27" cfg_attr[section, attr, 0] "\x27"
+                    else {
+                        # For multiline, invoke the ini routines in the reverse order
+                        count = cfg_attr_count[section, attr]
+                        print "iniset " configfile " " section " " attr " \x27" cfg_attr[section, attr, count - 1] "\x27"
+                        for (l = count -2; l >= 0; l--)
+                            print "iniadd_literal " configfile " " section " " attr " \x27" cfg_attr[section, attr, l] "\x27"
+                    }
+                }
+            }
         }
     ' | while read a; do eval "$a"; done
-
 }
 
 
