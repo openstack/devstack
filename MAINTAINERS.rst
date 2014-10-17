@@ -48,7 +48,7 @@ Neutron
 OpenDaylight
 ~~~~~~~~~~~~
 
-* Kyle Mestery <kmestery@cisco.com>
+* Kyle Mestery <mestery@mestery.com>
 
 OpenFlow Agent (ofagent)
 ~~~~~~~~~~~~~~~~~~~~~~~~

@@ -148,15 +148,30 @@ PROVIDER_SUBNET_NAME=${PROVIDER_SUBNET_NAME:-"provider_net"}
 # If Q_USE_PROVIDERNET_FOR_PUBLIC=True, use a flat provider network
 # for external interface of neutron l3-agent.  In that case,
 # PUBLIC_PHYSICAL_NETWORK specifies provider:physical_network value
-# used for the network.  In case of openvswitch agent, you should
-# add the corresponding entry to your OVS_BRIDGE_MAPPINGS.
+# used for the network.  In case of ofagent, you should add the
+# corresponding entry to your OFAGENT_PHYSICAL_INTERFACE_MAPPINGS.
+# For openvswitch agent, you should add the corresponding entry to
+# your OVS_BRIDGE_MAPPINGS.
 #
-# eg.
+# eg.  (ofagent)
+#    Q_USE_PROVIDERNET_FOR_PUBLIC=True
+#    Q_USE_PUBLIC_VETH=True
+#    PUBLIC_PHYSICAL_NETWORK=public
+#    OFAGENT_PHYSICAL_INTERFACE_MAPPINGS=public:veth-pub-int
+#
+# eg.  (openvswitch agent)
 #    Q_USE_PROVIDERNET_FOR_PUBLIC=True
 #    PUBLIC_PHYSICAL_NETWORK=public
 #    OVS_BRIDGE_MAPPINGS=public:br-ex
 Q_USE_PROVIDERNET_FOR_PUBLIC=${Q_USE_PROVIDERNET_FOR_PUBLIC:-False}
 PUBLIC_PHYSICAL_NETWORK=${PUBLIC_PHYSICAL_NETWORK:-public}
+
+# If Q_USE_PUBLIC_VETH=True, create and use a veth pair instead of
+# PUBLIC_BRIDGE.  This is intended to be used with
+# Q_USE_PROVIDERNET_FOR_PUBLIC=True.
+Q_USE_PUBLIC_VETH=${Q_USE_PUBLIC_VETH:-False}
+Q_PUBLIC_VETH_EX=${Q_PUBLIC_VETH_EX:-veth-pub-ex}
+Q_PUBLIC_VETH_INT=${Q_PUBLIC_VETH_INT:-veth-pub-int}
 
 # The next two variables are configured by plugin
 # e.g.  _configure_neutron_l3_agent or lib/neutron_plugins/*
@@ -543,12 +558,20 @@ function create_neutron_initial_network {
         if is_service_enabled q-l3; then
             # logic is specific to using the l3-agent for l3
             if is_neutron_ovs_base_plugin && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
-                # Disable in-band as we are going to use local port
-                # to communicate with VMs
-                sudo ovs-vsctl set Bridge $PUBLIC_BRIDGE other_config:disable-in-band=true
+                local ext_gw_interface
+
+                if [[ "$Q_USE_PUBLIC_VETH" = "True" ]]; then
+                    ext_gw_interface=$Q_PUBLIC_VETH_EX
+                else
+                    # Disable in-band as we are going to use local port
+                    # to communicate with VMs
+                    sudo ovs-vsctl set Bridge $PUBLIC_BRIDGE \
+                        other_config:disable-in-band=true
+                    ext_gw_interface=$PUBLIC_BRIDGE
+                fi
                 CIDR_LEN=${FLOATING_RANGE#*/}
-                sudo ip addr add $EXT_GW_IP/$CIDR_LEN dev $PUBLIC_BRIDGE
-                sudo ip link set $PUBLIC_BRIDGE up
+                sudo ip addr add $EXT_GW_IP/$CIDR_LEN dev $ext_gw_interface
+                sudo ip link set $ext_gw_interface up
                 ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' '{ print $8; }'`
                 die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
                 sudo route add -net $FIXED_RANGE gw $ROUTER_GW_IP

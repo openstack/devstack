@@ -77,6 +77,10 @@ function neutron_plugin_configure_plugin_agent {
     if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings $OVS_BRIDGE_MAPPINGS
     fi
+    if [[ "$OFAGENT_PHYSICAL_INTERFACE_MAPPINGS" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE agent physical_interface_mappings \
+            $OFAGENT_PHYSICAL_INTERFACE_MAPPINGS
+    fi
     AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-ofagent-agent"
 
     iniset /$Q_PLUGIN_CONF_FILE agent tunnel_types $Q_TUNNEL_TYPES
