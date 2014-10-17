@@ -65,16 +65,6 @@ EOF
     exit 1
 fi
 
-# Install plugins
-
-## Install the netwrap xapi plugin to support agent control of dom0 networking
-if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
-    NEUTRON_ZIPBALL_URL=${NEUTRON_ZIPBALL_URL:-$(zip_snapshot_location $NEUTRON_REPO $NEUTRON_BRANCH)}
-    EXTRACTED_NEUTRON=$(extract_remote_zipball "$NEUTRON_ZIPBALL_URL")
-    install_xapi_plugins_from "$EXTRACTED_NEUTRON"
-    rm -rf "$EXTRACTED_NEUTRON"
-fi
-
 #
 # Configure Networking
 #
@@ -88,9 +78,7 @@ setup_network "$PUB_BRIDGE_OR_NET_NAME"
 
 # With neutron, one more network is required, which is internal to the
 # hypervisor, and used by the VMs
-if is_service_enabled neutron; then
-    setup_network "$XEN_INT_BRIDGE_OR_NET_NAME"
-fi
+setup_network "$XEN_INT_BRIDGE_OR_NET_NAME"
 
 if parameter_is_specified "FLAT_NETWORK_BRIDGE"; then
     if [ "$(bridge_for "$VM_BRIDGE_OR_NET_NAME")" != "$(bridge_for "$FLAT_NETWORK_BRIDGE")" ]; then
@@ -292,14 +280,12 @@ $THIS_DIR/build_xva.sh "$GUEST_NAME"
 # Attach a network interface for the integration network (so that the bridge
 # is created by XenServer). This is required for Neutron. Also pass that as a
 # kernel parameter for DomU
-if is_service_enabled neutron; then
-    attach_network "$XEN_INT_BRIDGE_OR_NET_NAME"
+attach_network "$XEN_INT_BRIDGE_OR_NET_NAME"
 
-    XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
-    append_kernel_cmdline \
-        "$GUEST_NAME" \
-        "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
-fi
+XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
+append_kernel_cmdline \
+    "$GUEST_NAME" \
+    "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
 
 FLAT_NETWORK_BRIDGE="${FLAT_NETWORK_BRIDGE:-$(bridge_for "$VM_BRIDGE_OR_NET_NAME")}"
 append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
