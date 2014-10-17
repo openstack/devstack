@@ -1251,7 +1251,7 @@ function run_process {
 
     if is_service_enabled $service; then
         if [[ "$USE_SCREEN" = "True" ]]; then
-            screen_service "$service" "$command" "$group"
+            screen_process "$service" "$command" "$group"
         else
             # Spawn directly without screen
             _run_process "$service" "$command" "$group" &
@@ -1259,14 +1259,14 @@ function run_process {
     fi
 }
 
-# Helper to launch a service in a named screen
+# Helper to launch a process in a named screen
 # Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_NAME``, ``SCREEN_LOGDIR``,
 # ``SERVICE_DIR``, ``USE_SCREEN``
-# screen_service service "command-line" [group]
+# screen_process name "command-line" [group]
 # Run a command in a shell in a screen window, if an optional group
 # is provided, use sg to set the group of the command.
-function screen_service {
-    local service=$1
+function screen_process {
+    local name=$1
     local command="$2"
     local group=$3
 
@@ -1274,38 +1274,36 @@ function screen_service {
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
     USE_SCREEN=$(trueorfalse True $USE_SCREEN)
 
-    if is_service_enabled $service; then
-        # Append the service to the screen rc file
-        screen_rc "$service" "$command"
+    # Append the process to the screen rc file
+    screen_rc "$name" "$command"
 
-        screen -S $SCREEN_NAME -X screen -t $service
+    screen -S $SCREEN_NAME -X screen -t $name
 
-        if [[ -n ${SCREEN_LOGDIR} ]]; then
-            screen -S $SCREEN_NAME -p $service -X logfile ${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log
-            screen -S $SCREEN_NAME -p $service -X log on
-            ln -sf ${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${service}.log
-        fi
-
-        # sleep to allow bash to be ready to be send the command - we are
-        # creating a new window in screen and then sends characters, so if
-        # bash isn't running by the time we send the command, nothing happens
-        sleep 3
-
-        NL=`echo -ne '\015'`
-        # This fun command does the following:
-        # - the passed server command is backgrounded
-        # - the pid of the background process is saved in the usual place
-        # - the server process is brought back to the foreground
-        # - if the server process exits prematurely the fg command errors
-        # and a message is written to stdout and the service failure file
-        #
-        # The pid saved can be used in stop_process() as a process group
-        # id to kill off all child processes
-        if [[ -n "$group" ]]; then
-            command="sg $group '$command'"
-        fi
-        screen -S $SCREEN_NAME -p $service -X stuff "$command & echo \$! >$SERVICE_DIR/$SCREEN_NAME/${service}.pid; fg || echo \"$service failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/${service}.failure\"$NL"
+    if [[ -n ${SCREEN_LOGDIR} ]]; then
+        screen -S $SCREEN_NAME -p $name -X logfile ${SCREEN_LOGDIR}/screen-${name}.${CURRENT_LOG_TIME}.log
+        screen -S $SCREEN_NAME -p $name -X log on
+        ln -sf ${SCREEN_LOGDIR}/screen-${name}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${name}.log
     fi
+
+    # sleep to allow bash to be ready to be send the command - we are
+    # creating a new window in screen and then sends characters, so if
+    # bash isn't running by the time we send the command, nothing happens
+    sleep 3
+
+    NL=`echo -ne '\015'`
+    # This fun command does the following:
+    # - the passed server command is backgrounded
+    # - the pid of the background process is saved in the usual place
+    # - the server process is brought back to the foreground
+    # - if the server process exits prematurely the fg command errors
+    # and a message is written to stdout and the process failure file
+    #
+    # The pid saved can be used in stop_process() as a process group
+    # id to kill off all child processes
+    if [[ -n "$group" ]]; then
+        command="sg $group '$command'"
+    fi
+    screen -S $SCREEN_NAME -p $name -X stuff "$command & echo \$! >$SERVICE_DIR/$SCREEN_NAME/${name}.pid; fg || echo \"$name failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/${name}.failure\"$NL"
 }
 
 # Screen rc file builder
@@ -1412,12 +1410,12 @@ function service_check {
 
 # Tail a log file in a screen if USE_SCREEN is true.
 function tail_log {
-    local service=$1
+    local name=$1
     local logfile=$2
 
     USE_SCREEN=$(trueorfalse True $USE_SCREEN)
     if [[ "$USE_SCREEN" = "True" ]]; then
-        screen_service "$service" "sudo tail -f $logfile"
+        screen_process "$name" "sudo tail -f $logfile"
     fi
 }
 
@@ -1476,7 +1474,7 @@ function screen_it {
         screen_rc "$1" "$2"
 
         if [[ "$USE_SCREEN" = "True" ]]; then
-            screen_service "$1" "$2"
+            screen_process "$1" "$2"
         else
             # Spawn directly without screen
             old_run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$1.pid
