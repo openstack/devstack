@@ -48,7 +48,7 @@ ZAQAR_BACKEND=${ZAQAR_BACKEND:-mongodb}
 
 # Set Zaqar repository
 ZAQAR_REPO=${ZAQAR_REPO:-${GIT_BASE}/openstack/zaqar.git}
-ZAQAR_BRANCH=${ZAQAR_BRANCH:-master}
+ZAQAR_BRANCH=${ZAQAR_BRANCH:-stable/juno}
 
 # Set client library repository
 ZAQARCLIENT_REPO=${ZAQARCLIENT_REPO:-${GIT_BASE}/openstack/python-zaqarclient.git}

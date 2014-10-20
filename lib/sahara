@@ -23,7 +23,7 @@ set +o xtrace
 
 # Set up default repos
 SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
-SAHARA_BRANCH=${SAHARA_BRANCH:-master}
+SAHARA_BRANCH=${SAHARA_BRANCH:-stable/juno}
 
 SAHARA_PYTHONCLIENT_REPO=${SAHARA_PYTHONCLIENT_REPO:-${GIT_BASE}/openstack/python-saharaclient.git}
 SAHARA_PYTHONCLIENT_BRANCH=${SAHARA_PYTHONCLIENT_BRANCH:-master}
