@@ -155,6 +155,11 @@ function configure_ceilometer {
     iniset $CEILOMETER_CONF DEFAULT verbose True
     iniset $CEILOMETER_CONF DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
 
+    if [[ -n "$CEILOMETER_COORDINATION_URL" ]]; then
+        iniset $CEILOMETER_CONF coordination backend_url $CEILOMETER_COORDINATION_URL
+        iniset $CEILOMETER_CONF compute workload_partitioning True
+    fi
+
     # Install the policy file for the API server
     cp $CEILOMETER_DIR/etc/ceilometer/policy.json $CEILOMETER_CONF_DIR
     iniset $CEILOMETER_CONF DEFAULT policy_file $CEILOMETER_CONF_DIR/policy.json
@@ -242,6 +247,9 @@ function install_ceilometer {
     git_clone $CEILOMETER_REPO $CEILOMETER_DIR $CEILOMETER_BRANCH
     setup_develop $CEILOMETER_DIR
 
+    if echo $CEILOMETER_COORDINATION_URL | grep -q '^memcached:'; then
+        install_package memcached
+    fi
 }
 
 # install_ceilometerclient() - Collect source and prepare
