@@ -19,6 +19,7 @@
 #
 # The following variables are assumed to be defined by certain functions:
 #
+# - ``GIT_DEPTH``
 # - ``ENABLED_SERVICES``
 # - ``ERROR_ON_CLONE``
 # - ``FILES``
@@ -562,15 +563,21 @@ function get_release_name_from_branch {
 # Set global ``RECLONE=yes`` to simulate a clone when dest-dir exists
 # Set global ``ERROR_ON_CLONE=True`` to abort execution with an error if the git repo
 # does not exist (default is False, meaning the repo will be cloned).
-# Uses globals ``ERROR_ON_CLONE``, ``OFFLINE``, ``RECLONE``
+# Set global ``GIT_DEPTH=<number>`` to limit the history depth of the git clone
+# Uses globals ``ERROR_ON_CLONE``, ``OFFLINE``, ``RECLONE``, ``GIT_DEPTH``
 # git_clone remote dest-dir branch
 function git_clone {
     local git_remote=$1
     local git_dest=$2
     local git_ref=$3
     local orig_dir=$(pwd)
+    local git_clone_flags=""
 
     RECLONE=$(trueorfalse False $RECLONE)
+
+    if [[ "$GIT_DEPTH" ]]; then
+        git_clone_flags="$git_clone_flags --depth $GIT_DEPTH"
+    fi
 
     if [[ "$OFFLINE" = "True" ]]; then
         echo "Running in offline mode, clones already exist"
@@ -586,7 +593,7 @@ function git_clone {
         if [[ ! -d $git_dest ]]; then
             [[ "$ERROR_ON_CLONE" = "True" ]] && \
                 die $LINENO "Cloning not allowed in this configuration"
-            git_timed clone $git_remote $git_dest
+            git_timed clone $git_clone_flags $git_remote $git_dest
         fi
         cd $git_dest
         git_timed fetch $git_remote $git_ref && git checkout FETCH_HEAD
@@ -595,7 +602,7 @@ function git_clone {
         if [[ ! -d $git_dest ]]; then
             [[ "$ERROR_ON_CLONE" = "True" ]] && \
                 die $LINENO "Cloning not allowed in this configuration"
-            git_timed clone $git_remote $git_dest
+            git_timed clone $git_clone_flags $git_remote $git_dest
             cd $git_dest
             # This checkout syntax works for both branches and tags
             git checkout $git_ref
