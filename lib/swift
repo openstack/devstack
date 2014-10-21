@@ -196,9 +196,9 @@ function _config_swift_apache_wsgi {
     # copy apache vhost file and set name and port
     local node_number
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
-        local object_port=$[OBJECT_PORT_BASE + 10 * ($node_number - 1)]
-        local container_port=$[CONTAINER_PORT_BASE + 10 * ($node_number - 1)]
-        local account_port=$[ACCOUNT_PORT_BASE + 10 * ($node_number - 1)]
+        local object_port=$(( OBJECT_PORT_BASE + 10 * (node_number - 1) ))
+        local container_port=$(( CONTAINER_PORT_BASE + 10 * (node_number - 1) ))
+        local account_port=$(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) ))
 
         sudo cp ${SWIFT_DIR}/examples/apache2/object-server.template $(apache_site_config_for object-server-${node_number})
         sudo sed -e "
@@ -257,7 +257,7 @@ function generate_swift_config_services {
     local bind_port=$3
     local server_type=$4
 
-    log_facility=$[ node_id - 1 ]
+    log_facility=$(( node_id - 1 ))
     local node_path=${SWIFT_DATA_DIR}/${node_number}
 
     iniuncomment ${swift_node_config} DEFAULT user
