@@ -34,7 +34,7 @@
             <li><a href="../overview.html">Overview</a></li>
             <li><a href="../changes.html">Changes</a></li>
             <li><a href="../faq.html">FAQ</a></li>
-            <li><a href="http://github.com/openstack-dev/devstack">GitHub</a></li>
+            <li><a href="https://git.openstack.org/cgit/openstack-dev/devstack">git.openstack.org</a></li>
             <li><a href="https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z">Gerrit</a></li>
           </ul>
         </div>
@@ -96,7 +96,7 @@ write_files:
         DEBIAN_FRONTEND=noninteractive sudo apt-get install -qqy git || sudo yum install -qy git
         sudo chown stack:stack /home/stack
         cd /home/stack
-        git clone https://github.com/openstack-dev/devstack.git
+        git clone https://git.openstack.org/openstack-dev/devstack
         cd devstack
         echo '[[local|localrc]]' > local.conf
         echo ADMIN_PASSWORD=password >> local.conf
