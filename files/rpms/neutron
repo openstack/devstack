@@ -12,8 +12,8 @@ python-eventlet
 python-greenlet
 python-iso8601
 #rhel6 gets via pip
-python-paste        # dist:f19,f20,rhel7
-python-paste-deploy # dist:f19,f20,rhel7
+python-paste        # dist:f19,f20,f21,rhel7
+python-paste-deploy # dist:f19,f20,f21,rhel7
 python-qpid # NOPRIME
 python-routes
 python-sqlalchemy
