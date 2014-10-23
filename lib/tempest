@@ -372,7 +372,7 @@ function configure_tempest {
     fi
 
     if [ $TEMPEST_VOLUME_DRIVER != "default" -o \
-        $TEMPEST_VOLUME_VENDOR != $TEMPEST_DEFAULT_VOLUME_VENDOR ]; then
+        "$TEMPEST_VOLUME_VENDOR" != "$TEMPEST_DEFAULT_VOLUME_VENDOR" ]; then
         iniset $TEMPEST_CONFIG volume vendor_name "$TEMPEST_VOLUME_VENDOR"
     fi
     if [ $TEMPEST_VOLUME_DRIVER != "default" -o \
