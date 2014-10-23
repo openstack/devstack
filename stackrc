@@ -348,8 +348,8 @@ esac
 # TODO(sdague) this next block can be removed after nodepool has the 64bit image in it's cache
 HEAT_FETCHED_TEST_IMAGE=${HEAT_FETCHED_TEST_IMAGE:-""}
 if [[ "$HEAT_FETCHED_TEST_IMAGE" == "Fedora-i386-20-20131211.1-sda" ]]; then
-    HEAT_CFN_IMAGE_URL="https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/i386/$HEAT_FETCHED_TEST_IMAGE.qcow2"
-    IMAGE_URLS+=",https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/i386/$HEAT_FETCHED_TEST_IMAGE.qcow2"
+    HEAT_CFN_IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/20/Images/i386/$HEAT_FETCHED_TEST_IMAGE.qcow2"
+    IMAGE_URLS+=",https://download.fedoraproject.org/pub/fedora/linux/releases/20/Images/i386/$HEAT_FETCHED_TEST_IMAGE.qcow2"
 elif [[ "$HEAT_FETCHED_TEST_IMAGE" == "Fedora-x86_64-20-20131211.1-sda" ]]; then
     HEAT_CFN_IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"
     IMAGE_URLS+=",https://download.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2"
