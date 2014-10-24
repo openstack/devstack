@@ -281,7 +281,8 @@ function configure_ironic_conductor {
         fi
         iniset $IRONIC_CONF_FILE glance swift_endpoint_url http://${HOST_IP}:8080
         iniset $IRONIC_CONF_FILE glance swift_api_version v1
-        iniset $IRONIC_CONF_FILE glance swift_account AUTH_${SERVICE_TENANT}
+        local tenant_id=$(get_or_create_project $SERVICE_TENANT_NAME)
+        iniset $IRONIC_CONF_FILE glance swift_account AUTH_${tenant_id}
         iniset $IRONIC_CONF_FILE glance swift_container glance
         iniset $IRONIC_CONF_FILE glance swift_temp_url_duration 3600
         iniset $IRONIC_CONF_FILE agent heartbeat_timeout 30
