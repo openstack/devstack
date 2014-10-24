@@ -55,6 +55,3 @@ Set Up USB Drive
 
 Now `return <ramdisk.html>`__ to the RAM disk Guide to kick off your
 DevStack experience.
-
-© Openstack Foundation 2011-2013 — this is not an official OpenStack
-project...

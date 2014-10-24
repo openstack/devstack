@@ -50,8 +50,3 @@ Certificates for Bundling
         EC2_CERT=cert.pem
         NOVA_CERT=cacert.pem
         EUCALYPTUS_CERT=${NOVA_CERT}
-
-© Openstack Foundation 2011-2013 — An `OpenStack
-program <https://wiki.openstack.org/wiki/Programs>`__ created by
-`Rackspace Cloud
-Builders <http://www.rackspace.com/cloud/private_edition/>`__

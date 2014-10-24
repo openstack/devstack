@@ -117,8 +117,3 @@ functions:
 -  ``start_nova_hypervisor`` - start any external services
 -  ``stop_nova_hypervisor`` - stop any external services
 -  ``cleanup_nova_hypervisor`` - remove transient data and cache
-
-© Openstack Foundation 2011-2013 — An `OpenStack
-program <https://wiki.openstack.org/wiki/Programs>`__ created by
-`Rackspace Cloud
-Builders <http://www.rackspace.com/cloud/private_edition/>`__

@@ -14,7 +14,3 @@ and has been replaced by ```local.conf`` <local.conf.html>`__. DevStack
 will continue to use ``localrc`` if it is present and ignore the
 ``localrc`` section in ``local.conf.``. Remove ``localrc`` to switch to
 using the new file.
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__
