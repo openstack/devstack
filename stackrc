@@ -522,11 +522,11 @@ if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
     esac
 fi
 
-# Trove needs a custom image for it's work
+# Trove needs a custom image for its work
 if [[ "$ENABLED_SERVICES" =~ 'tr-api' ]]; then
     case "$VIRT_DRIVER" in
         libvirt|baremetal|ironic|xenapi)
-            TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu_mysql.qcow2/ubuntu_mysql.qcow2"}
+            TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu/mysql.qcow2"}
             IMAGE_URLS+=",${TROVE_GUEST_IMAGE_URL}"
             ;;
         *)
