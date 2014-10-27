@@ -138,8 +138,3 @@ accessible from other machines on your network.
 Some examples of using the OpenStack command-line clients ``nova`` and
 ``glance`` are in the shakedown scripts in ``devstack/exercises``.
 ``exercise.sh`` will run all of those scripts and report on the results.
-
-© Openstack Foundation 2011-2013 — An `OpenStack
-program <https://wiki.openstack.org/wiki/Programs>`__ created by
-`Rackspace Cloud
-Builders <http://www.rackspace.com/cloud/private_edition/>`__

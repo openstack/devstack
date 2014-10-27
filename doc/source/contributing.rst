@@ -98,8 +98,3 @@ have aged a bit (does anyone still do ramdisk installs?). While these
 may reference the top-level DevStack configuration they can generally be
 run alone. There are also some sub-directories to support specific
 environments such as XenServer.
-
-© Openstack Foundation 2011-2013 — An `OpenStack
-program <https://wiki.openstack.org/wiki/Programs>`__ created by
-`Rackspace Cloud
-Builders <http://www.rackspace.com/cloud/private_edition/>`__

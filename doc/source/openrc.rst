@@ -81,8 +81,3 @@ KEYSTONECLIENT\_DEBUG, NOVACLIENT\_DEBUG
 
         # export KEYSTONECLIENT_DEBUG=1
         # export NOVACLIENT_DEBUG=1
-
-© Openstack Foundation 2011-2013 — An `OpenStack
-program <https://wiki.openstack.org/wiki/Programs>`__ created by
-`Rackspace Cloud
-Builders <http://www.rackspace.com/cloud/private_edition/>`__

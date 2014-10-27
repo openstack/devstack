@@ -97,7 +97,3 @@ The DevStack exercise scripts are no longer used as integration and gate
 testing as that job has transitioned to Tempest. They are still
 maintained as a demonstrations of using OpenStack from the command line
 and for quick operational testing.
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__
