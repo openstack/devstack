@@ -1606,6 +1606,16 @@ function setup_develop {
     setup_package_with_req_sync $project_dir -e
 }
 
+# determine if a project as specified by directory is in
+# projects.txt. This will not be an exact match because we throw away
+# the namespacing when we clone, but it should be good enough in all
+# practical ways.
+function is_in_projects_txt {
+    local project_dir=$1
+    local project_name=$(basename $project_dir)
+    return grep "/$project_name\$" $REQUIREMENTS_DIR/projects.txt >/dev/null
+}
+
 # ``pip install -e`` the package, which processes the dependencies
 # using pip before running `setup.py develop`
 #
@@ -1624,8 +1634,19 @@ function setup_package_with_req_sync {
     local update_requirements=$(cd $project_dir && git diff --exit-code >/dev/null || echo "changed")
 
     if [[ $update_requirements != "changed" ]]; then
-        (cd $REQUIREMENTS_DIR; \
-            python update.py $project_dir)
+        if [[ "$REQUIREMENTS_MODE" == "soft" ]]; then
+            if is_in_projects_txt $project_dir; then
+                (cd $REQUIREMENTS_DIR; \
+                    python update.py $project_dir)
+            else
+                # soft update projects not found in requirements project.txt
+                (cd $REQUIREMENTS_DIR; \
+                    python update.py -s $project_dir)
+            fi
+        else
+            (cd $REQUIREMENTS_DIR; \
+                python update.py $project_dir)
+        fi
     fi
 
     setup_package $project_dir $flags
