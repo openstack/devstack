@@ -71,7 +71,3 @@ Service Repos
 
         NOVA_REPO=https://review.openstack.org/p/openstack/nova
         NOVA_BRANCH=refs/changes/50/5050/1
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__

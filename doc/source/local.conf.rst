@@ -14,7 +14,3 @@ local.conf User settings
 ``localrc`` file. See `the description of
 local.conf <configuration.html>`__ for more details about the mechanics
 of the file.
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__

@@ -377,7 +377,3 @@ exercises/volumes.sh
 exercises/zaqar.sh
 
 `Read » <exercises/zaqar.sh.html>`__
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__

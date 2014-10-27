@@ -47,8 +47,3 @@ TERMINATE\_TIMEOUT
     ::
 
         TERMINATE_TIMEOUT=30
-
-© Openstack Foundation 2011-2013 — An `OpenStack
-program <https://wiki.openstack.org/wiki/Programs>`__ created by
-`Rackspace Cloud
-Builders <http://www.rackspace.com/cloud/private_edition/>`__

@@ -104,7 +104,3 @@ packages are installed in the VM and the source trees checked out.
 Setting ``OFFLINE=True`` in ``local.conf`` enables ``stack.sh`` to run
 multiple times without an Internet connection. DevStack, making hacking
 at the lake possible since 2012!
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__

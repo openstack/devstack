@@ -178,7 +178,3 @@ Q: ``tools/fixup_stuff.sh`` is broken and shouldn't 'fix' just one version of pa
     problems than we'll add them to the script. Knowing about the broken
     future releases is valuable rather than polling to see if it has
     been fixed.
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__

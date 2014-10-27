@@ -354,7 +354,3 @@ Examples
        RABBIT_PASSWORD=$ADMIN_PASSWORD
        SERVICE_PASSWORD=$ADMIN_PASSWORD
        SERVICE_TOKEN=a682f596-76f3-11e3-b3b2-e716f9080d50
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__

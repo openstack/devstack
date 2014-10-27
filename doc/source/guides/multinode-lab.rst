@@ -376,7 +376,3 @@ If you forgot to set the root password you can do this:
 ::
 
     mysqladmin -u root -pnova password 'supersecret'
-
-© Openstack Foundation 2011-2014 — An
-`OpenStack <https://www.openstack.org/>`__
-`program <https://wiki.openstack.org/wiki/Programs>`__

@@ -84,6 +84,3 @@ Fire It Up
        screen -x
 
 -  Connect to the dashboard at ``http://<ip-address>/``
-
-© Openstack Foundation 2011-2013 — this is not an official OpenStack
-project...
