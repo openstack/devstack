@@ -234,36 +234,41 @@ fi
 
 if [[ is_fedora && ( $DISTRO == "rhel6" || $DISTRO == "rhel7" ) ]]; then
     # RHEL requires EPEL for many Open Stack dependencies
-    if ! sudo yum repolist enabled epel | grep -q 'epel'; then
-        echo "EPEL not detected; installing"
-        # This trick installs the latest epel-release from a bootstrap
-        # repo, then removes itself (as epel-release installed the
-        # "real" repo).
-        #
-        # you would think that rather than this, you could use
-        # $releasever directly in .repo file we create below.  However
-        # RHEL gives a $releasever of "6Server" which breaks the path;
-        # see https://bugzilla.redhat.com/show_bug.cgi?id=1150759
-        if [[ $DISTRO == "rhel7" ]]; then
-            epel_ver="7"
-        elif [[ $DISTRO == "rhel6" ]]; then
-            epel_ver="6"
-        fi
 
-        cat <<EOF | sudo tee /etc/yum.repos.d/epel-bootstrap.repo
-[epel]
+    # note we always remove and install latest -- some environments
+    # use snapshot images, and if EPEL version updates they break
+    # unless we update them to latest version.
+    if sudo yum repolist enabled epel | grep -q 'epel'; then
+        uninstall_package epel-release || true
+    fi
+
+    # This trick installs the latest epel-release from a bootstrap
+    # repo, then removes itself (as epel-release installed the
+    # "real" repo).
+    #
+    # you would think that rather than this, you could use
+    # $releasever directly in .repo file we create below.  However
+    # RHEL gives a $releasever of "6Server" which breaks the path;
+    # see https://bugzilla.redhat.com/show_bug.cgi?id=1150759
+    if [[ $DISTRO == "rhel7" ]]; then
+        epel_ver="7"
+    elif [[ $DISTRO == "rhel6" ]]; then
+        epel_ver="6"
+    fi
+
+    cat <<EOF | sudo tee /etc/yum.repos.d/epel-bootstrap.repo
+[epel-bootstrap]
 name=Bootstrap EPEL
 mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$epel_ver&arch=\$basearch
 failovermethod=priority
 enabled=0
 gpgcheck=0
 EOF
-        # bare yum call due to --enablerepo
-        sudo yum --enablerepo=epel -y install epel-release || \
-            die $LINENO "Error installing EPEL repo, cannot continue"
-        # epel rpm has installed it's version
-        sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
-    fi
+    # bare yum call due to --enablerepo
+    sudo yum --enablerepo=epel-bootstrap -y install epel-release || \
+        die $LINENO "Error installing EPEL repo, cannot continue"
+    # epel rpm has installed it's version
+    sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
 
     # ... and also optional to be enabled
     is_package_installed yum-utils || install_package yum-utils

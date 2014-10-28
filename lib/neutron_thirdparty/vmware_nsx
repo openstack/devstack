@@ -8,7 +8,7 @@
 # * enable_service vmware_nsx        --> to execute this third-party addition
 # * PUBLIC_BRIDGE                    --> bridge used for external connectivity, typically br-ex
 # * NSX_GATEWAY_NETWORK_INTERFACE    --> interface used to communicate with the NSX Gateway
-# * NSX_GATEWAY_NETWORK_CIDR         --> CIDR to configure br-ex, e.g. 172.24.4.211/24
+# * NSX_GATEWAY_NETWORK_CIDR         --> CIDR to configure $PUBLIC_BRIDGE, e.g. 172.24.4.211/24
 
 # Save trace setting
 NSX3_XTRACE=$(set +o | grep xtrace)
@@ -29,7 +29,7 @@ function configure_vmware_nsx {
 function init_vmware_nsx {
     if ! is_set NSX_GATEWAY_NETWORK_CIDR; then
         NSX_GATEWAY_NETWORK_CIDR=$PUBLIC_NETWORK_GATEWAY/${FLOATING_RANGE#*/}
-        echo "The IP address to set on br-ex was not specified. "
+        echo "The IP address to set on $PUBLIC_BRIDGE was not specified. "
         echo "Defaulting to "$NSX_GATEWAY_NETWORK_CIDR
     fi
     # Make sure the interface is up, but not configured
@@ -42,14 +42,15 @@ function init_vmware_nsx {
     # only with mac learning enabled, portsecurity and security profiles disabled
     # The public bridge might not exist for the NSX plugin if Q_USE_DEBUG_COMMAND is off
     # Try to create it anyway
-    sudo ovs-vsctl --no-wait -- --may-exist add-br $PUBLIC_BRIDGE
-    sudo ovs-vsctl -- --may-exist add-port $PUBLIC_BRIDGE $NSX_GATEWAY_NETWORK_INTERFACE
+    sudo ovs-vsctl --may-exist add-br $PUBLIC_BRIDGE
+    sudo ovs-vsctl --may-exist add-port $PUBLIC_BRIDGE $NSX_GATEWAY_NETWORK_INTERFACE
     nsx_gw_net_if_mac=$(ip link show $NSX_GATEWAY_NETWORK_INTERFACE | awk '/ether/ {print $2}')
     sudo ip link set address $nsx_gw_net_if_mac dev $PUBLIC_BRIDGE
     for address in $addresses; do
         sudo ip addr add dev $PUBLIC_BRIDGE $address
     done
     sudo ip addr add dev $PUBLIC_BRIDGE $NSX_GATEWAY_NETWORK_CIDR
+    sudo ip link set $PUBLIC_BRIDGE up
 }
 
 function install_vmware_nsx {
@@ -63,7 +64,7 @@ function start_vmware_nsx {
 function stop_vmware_nsx {
     if ! is_set NSX_GATEWAY_NETWORK_CIDR; then
         NSX_GATEWAY_NETWORK_CIDR=$PUBLIC_NETWORK_GATEWAY/${FLOATING_RANGE#*/}
-        echo "The IP address expected on br-ex was not specified. "
+        echo "The IP address expected on $PUBLIC_BRIDGE was not specified. "
         echo "Defaulting to "$NSX_GATEWAY_NETWORK_CIDR
     fi
     sudo ip addr del $NSX_GATEWAY_NETWORK_CIDR dev $PUBLIC_BRIDGE
