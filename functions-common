@@ -797,38 +797,70 @@ function policy_add {
     mv ${tmpfile} ${policy_file}
 }
 
+# Gets or creates a domain
+# Usage: get_or_create_domain <name> <description>
+function get_or_create_domain {
+    local os_url="$KEYSTONE_SERVICE_URI/v3"
+    # Gets domain id
+    local domain_id=$(
+        # Gets domain id
+        openstack --os-token=$OS_TOKEN --os-url=$os_url \
+            --os-identity-api-version=3 domain show $1 \
+            -f value -c id 2>/dev/null ||
+        # Creates new domain
+        openstack --os-token=$OS_TOKEN --os-url=$os_url \
+            --os-identity-api-version=3 domain create $1 \
+            --description "$2" \
+            -f value -c id
+    )
+    echo $domain_id
+}
+
 # Gets or creates user
-# Usage: get_or_create_user <username> <password> <project> [<email>]
+# Usage: get_or_create_user <username> <password> <project> [<email> [<domain>]]
 function get_or_create_user {
     if [[ ! -z "$4" ]]; then
         local email="--email=$4"
     else
         local email=""
     fi
+    local os_cmd="openstack"
+    local domain=""
+    if [[ ! -z "$5" ]]; then
+        domain="--domain=$5"
+        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI/v3 --os-identity-api-version=3"
+    fi
     # Gets user id
     local user_id=$(
         # Gets user id
-        openstack user show $1 -f value -c id 2>/dev/null ||
+        $os_cmd user show $1 $domain -f value -c id 2>/dev/null ||
         # Creates new user
-        openstack user create \
+        $os_cmd user create \
             $1 \
             --password "$2" \
             --project $3 \
             $email \
+            $domain \
             -f value -c id
     )
     echo $user_id
 }
 
 # Gets or creates project
-# Usage: get_or_create_project <name>
+# Usage: get_or_create_project <name> [<domain>]
 function get_or_create_project {
     # Gets project id
+    local os_cmd="openstack"
+    local domain=""
+    if [[ ! -z "$2" ]]; then
+        domain="--domain=$2"
+        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI/v3 --os-identity-api-version=3"
+    fi
     local project_id=$(
         # Gets project id
-        openstack project show $1 -f value -c id 2>/dev/null ||
+        $os_cmd project show $1 $domain -f value -c id 2>/dev/null ||
         # Creates new project if not exists
-        openstack project create $1 -f value -c id
+        $os_cmd project create $1 $domain -f value -c id
     )
     echo $project_id
 }
