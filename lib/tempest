@@ -287,7 +287,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute image_ref $image_uuid
     iniset $TEMPEST_CONFIG compute image_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
     iniset $TEMPEST_CONFIG compute image_ref_alt $image_uuid_alt
-    iniset $TEMPEST_CONFIG compute image_alt_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
+    iniset $TEMPEST_CONFIG compute image_alt_ssh_user ${ALT_INSTANCE_USER:-cirros}
     iniset $TEMPEST_CONFIG compute flavor_ref $flavor_ref
     iniset $TEMPEST_CONFIG compute flavor_ref_alt $flavor_ref_alt
     iniset $TEMPEST_CONFIG compute ssh_connect_method $ssh_connect_method
