@@ -43,21 +43,11 @@
 # to run Neutron on this host, make sure that q-svc is also in
 # ``ENABLED_SERVICES``.
 #
-# If you're planning to use the Neutron openvswitch plugin, set
-# ``Q_PLUGIN`` to "openvswitch" and make sure the q-agt service is enabled
-# in ``ENABLED_SERVICES``.  If you're planning to use the Neutron
-# linuxbridge plugin, set ``Q_PLUGIN`` to "linuxbridge" and make sure the
-# q-agt service is enabled in ``ENABLED_SERVICES``.
-#
 # See "Neutron Network Configuration" below for additional variables
 # that must be set in localrc for connectivity across hosts with
 # Neutron.
 #
 # With Neutron networking the NETWORK_MANAGER variable is ignored.
-#
-# To enable specific configuration options for either the Open vSwitch or
-# LinuxBridge plugin, please see the top level README file under the
-# Neutron section.
 
 
 # Neutron Network Configuration
@@ -213,12 +203,11 @@ fi
 # Provider Network Configurations
 # --------------------------------
 
-# The following variables control the Neutron openvswitch and
-# linuxbridge plugins' allocation of tenant networks and
-# availability of provider networks. If these are not configured
-# in ``localrc``, tenant networks will be local to the host (with no
-# remote connectivity), and no physical resources will be
-# available for the allocation of provider networks.
+# The following variables control the Neutron ML2 plugins' allocation
+# of tenant networks and availability of provider networks. If these
+# are not configured in ``localrc``, tenant networks will be local to
+# the host (with no remote connectivity), and no physical resources
+# will be available for the allocation of provider networks.
 
 # To disable tunnels (GRE or VXLAN) for tenant networks,
 # set to False in ``local.conf``.
@@ -231,8 +220,8 @@ ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-True}
 TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGES:-1:1000}
 
 # To use VLANs for tenant networks, set to True in localrc. VLANs
-# are supported by the openvswitch and linuxbridge plugins, each
-# requiring additional configuration described below.
+# are supported by the ML2 plugins, requiring additional configuration
+# described below.
 ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
 
 # If using VLANs for tenant networks, set in ``localrc`` to specify
@@ -252,7 +241,7 @@ TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
 # Example: ``PHYSICAL_NETWORK=default``
 PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
 
-# With the openvswitch plugin, if using VLANs for tenant networks,
+# With the openvswitch agent, if using VLANs for tenant networks,
 # or if using flat or VLAN provider networks, set in ``localrc`` to
 # the name of the OVS bridge to use for the physical network. The
 # bridge will be created if it does not already exist, but a
@@ -262,7 +251,7 @@ PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
 # Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
 OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
 
-# With the linuxbridge plugin, if using VLANs for tenant networks,
+# With the linuxbridge agent, if using VLANs for tenant networks,
 # or if using flat or VLAN provider networks, set in ``localrc`` to
 # the name of the network interface to use for the physical
 # network.
