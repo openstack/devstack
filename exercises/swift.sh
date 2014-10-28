@@ -45,16 +45,16 @@ CONTAINER=ex-swift
 # =============
 
 # Check if we have to swift via keystone
-swift stat || die $LINENO "Failure geting status"
+swift stat || die $LINENO "Failure getting status"
 
 # We start by creating a test container
-swift post $CONTAINER || die $LINENO "Failure creating container $CONTAINER"
+openstack container create $CONTAINER || die $LINENO "Failure creating container $CONTAINER"
 
 # add some files into it.
-swift upload $CONTAINER /etc/issue || die $LINENO "Failure uploading file to container $CONTAINER"
+openstack object create $CONTAINER /etc/issue || die $LINENO "Failure uploading file to container $CONTAINER"
 
 # list them
-swift list $CONTAINER || die $LINENO "Failure listing contents of container $CONTAINER"
+openstack object list $CONTAINER || die $LINENO "Failure listing contents of container $CONTAINER"
 
 # And we may want to delete them now that we have tested that
 # everything works.
