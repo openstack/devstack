@@ -306,74 +306,40 @@ Samples Generated documentation of DevStack sample files.
 Exercises Generated documentation of DevStack scripts.
 ------------------------------------------------------
 
-Filename
-
-Link
-
-exercise.sh
-
-`Read » <exercise.sh.html>`__
-
-exercises/aggregates.sh
-
-`Read » <exercises/aggregates.sh.html>`__
-
-exercises/boot\_from\_volume.sh
-
-`Read » <exercises/boot_from_volume.sh.html>`__
-
-exercises/bundle.sh
-
-`Read » <exercises/bundle.sh.html>`__
-
-exercises/client-args.sh
-
-`Read » <exercises/client-args.sh.html>`__
-
-exercises/client-env.sh
-
-`Read » <exercises/client-env.sh.html>`__
-
-exercises/euca.sh
-
-`Read » <exercises/euca.sh.html>`__
-
-exercises/floating\_ips.sh
-
-`Read » <exercises/floating_ips.sh.html>`__
-
-exercises/horizon.sh
-
-`Read » <exercises/horizon.sh.html>`__
-
-exercises/neutron-adv-test.sh
-
-`Read » <exercises/neutron-adv-test.sh.html>`__
-
-exercises/sahara.sh
-
-`Read » <exercises/sahara.sh.html>`__
-
-exercises/savanna.sh
-
-`Read » <exercises/savanna.sh.html>`__
-
-exercises/sec\_groups.sh
-
-`Read » <exercises/sec_groups.sh.html>`__
-
-exercises/swift.sh
-
-`Read » <exercises/swift.sh.html>`__
-
-exercises/trove.sh
-
-`Read » <exercises/trove.sh.html>`__
-
-exercises/volumes.sh
-
-`Read » <exercises/volumes.sh.html>`__
-
-exercises/zaqar.sh
-
-`Read » <exercises/zaqar.sh.html>`__
++---------------------------------+-------------------------------------------------+
+| Filename                        | Link                                            |
++=================================+=================================================+
+| exercise.sh                     | `Read » <exercise.sh.html>`__                   |
++---------------------------------+-------------------------------------------------+
+| exercises/aggregates.sh         | `Read » <exercises/aggregates.sh.html>`__       |
++---------------------------------+-------------------------------------------------+
+| exercises/boot\_from\_volume.sh | `Read » <exercises/boot_from_volume.sh.html>`__ |
++---------------------------------+-------------------------------------------------+
+| exercises/bundle.sh             | `Read » <exercises/bundle.sh.html>`__           |
++---------------------------------+-------------------------------------------------+
+| exercises/client-args.sh        | `Read » <exercises/client-args.sh.html>`__      |
++---------------------------------+-------------------------------------------------+
+| exercises/client-env.sh         | `Read » <exercises/client-env.sh.html>`__       |
++---------------------------------+-------------------------------------------------+
+| exercises/euca.sh               | `Read » <exercises/euca.sh.html>`__             |
++---------------------------------+-------------------------------------------------+
+| exercises/floating\_ips.sh      | `Read » <exercises/floating_ips.sh.html>`__     |
++---------------------------------+-------------------------------------------------+
+| exercises/horizon.sh            | `Read » <exercises/horizon.sh.html>`__          |
++---------------------------------+-------------------------------------------------+
+| exercises/neutron-adv-test.sh   | `Read » <exercises/neutron-adv-test.sh.html>`__ |
++---------------------------------+-------------------------------------------------+
+| exercises/sahara.sh             | `Read » <exercises/sahara.sh.html>`__           |
++---------------------------------+-------------------------------------------------+
+| exercises/savanna.sh            | `Read » <exercises/savanna.sh.html>`__          |
++---------------------------------+-------------------------------------------------+
+| exercises/sec\_groups.sh        | `Read » <exercises/sec_groups.sh.html>`__       |
++---------------------------------+-------------------------------------------------+
+| exercises/swift.sh              | `Read » <exercises/swift.sh.html>`__            |
++---------------------------------+-------------------------------------------------+
+| exercises/trove.sh              | `Read » <exercises/trove.sh.html>`__            |
++---------------------------------+-------------------------------------------------+
+| exercises/volumes.sh            | `Read » <exercises/volumes.sh.html>`__          |
++---------------------------------+-------------------------------------------------+
+| exercises/zaqar.sh              | `Read » <exercises/zaqar.sh.html>`__            |
++---------------------------------+-------------------------------------------------+
