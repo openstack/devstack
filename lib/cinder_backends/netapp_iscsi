@@ -1,0 +1,64 @@
+# lib/cinder_backends/netapp_iscsi
+# Configure the NetApp iSCSI driver
+
+# Enable with:
+#
+#  iSCSI:
+#   CINDER_ENABLED_BACKENDS+=,netapp_iscsi:<volume-type-name>
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# ``CINDER_CONF``
+# ``CINDER_CONF_DIR``
+# ``CINDER_ENABLED_BACKENDS``
+
+# configure_cinder_backend_netapp_iscsi - configure iSCSI
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_backend_netapp_iscsi - Set config files, create data dirs, etc
+function configure_cinder_backend_netapp_iscsi {
+    # To use NetApp, set the following in local.conf:
+    # CINDER_ENABLED_BACKENDS+=,netapp_iscsi:<volume-type-name>
+    # NETAPP_MODE=ontap_7mode|ontap_cluster
+    # NETAPP_IP=<mgmt-ip>
+    # NETAPP_LOGIN=<admin-account>
+    # NETAPP_PASSWORD=<admin-password>
+    # NETAPP_ISCSI_VOLUME_LIST=<volumes>
+
+    # In ontap_cluster mode, the following also needs to be defined:
+    # NETAPP_ISCSI_VSERVER=<vserver-name>
+
+    local be_name=$1
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.netapp.common.NetAppDriver"
+    iniset $CINDER_CONF $be_name netapp_storage_family ${NETAPP_MODE:-ontap_7mode}
+    iniset $CINDER_CONF $be_name netapp_server_hostname $NETAPP_IP
+    iniset $CINDER_CONF $be_name netapp_login $NETAPP_LOGIN
+    iniset $CINDER_CONF $be_name netapp_password $NETAPP_PASSWORD
+    iniset $CINDER_CONF $be_name netapp_volume_list $NETAPP_ISCSI_VOLUME_LIST
+
+    iniset $CINDER_CONF $be_name netapp_storage_protocol iscsi
+    iniset $CINDER_CONF $be_name netapp_transport_type https
+
+    if [[ "$NETAPP_MODE" == "ontap_cluster" ]]; then
+        iniset $CINDER_CONF $be_name netapp_vserver $NETAPP_ISCSI_VSERVER
+    fi
+}
+
+
+# Restore xtrace
+$MY_XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
