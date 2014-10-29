@@ -116,6 +116,17 @@ DATABASE_QUERY_LOGGING=$(trueorfalse True $DATABASE_QUERY_LOGGING)
 # Zero disables timeouts
 GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 
+# Requirements enforcing mode
+#
+# - strict (default) : ensure all project requirements files match
+#   what's in global requirements.
+#
+# - soft : enforce requirements on everything in
+#   requirements/projects.txt, but do soft updates on all other
+#   repositories (i.e. sync versions for requirements that are in g-r,
+#   but pass through any extras)
+REQUIREMENTS_MODE=${REQUIREMENTS_MODE:-strict}
+
 # Repositories
 # ------------
 
@@ -522,11 +533,11 @@ if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
     esac
 fi
 
-# Trove needs a custom image for it's work
+# Trove needs a custom image for its work
 if [[ "$ENABLED_SERVICES" =~ 'tr-api' ]]; then
     case "$VIRT_DRIVER" in
         libvirt|baremetal|ironic|xenapi)
-            TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu_mysql.qcow2/ubuntu_mysql.qcow2"}
+            TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu/mysql.qcow2"}
             IMAGE_URLS+=",${TROVE_GUEST_IMAGE_URL}"
             ;;
         *)
