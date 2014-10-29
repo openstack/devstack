@@ -785,7 +785,7 @@ function _configure_neutron_common {
 
     iniset $NEUTRON_CONF database connection `database_connection_url $Q_DB_NAME`
     iniset $NEUTRON_CONF DEFAULT state_path $DATA_DIR/neutron
-
+    iniset $NEUTRON_CONF DEFAULT use_syslog $SYSLOG
     # If addition config files are set, make sure their path name is set as well
     if [[ ${#Q_PLUGIN_EXTRA_CONF_FILES[@]} > 0 && $Q_PLUGIN_EXTRA_CONF_PATH == '' ]]; then
         die $LINENO "Neutron additional plugin config not set.. exiting"
