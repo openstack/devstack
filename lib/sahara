@@ -104,6 +104,7 @@ function configure_sahara {
     # Create auth cache dir
     sudo mkdir -p $SAHARA_AUTH_CACHE_DIR
     sudo chown $STACK_USER $SAHARA_AUTH_CACHE_DIR
+    sudo chmod 700 $SAHARA_AUTH_CACHE_DIR
     rm -rf $SAHARA_AUTH_CACHE_DIR/*
 
     configure_auth_token_middleware $SAHARA_CONF_FILE sahara $SAHARA_AUTH_CACHE_DIR
