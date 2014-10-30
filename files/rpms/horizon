@@ -19,3 +19,4 @@ python-sphinx
 python-sqlalchemy
 python-webob
 pyxattr
+pcre-devel  # pyScss

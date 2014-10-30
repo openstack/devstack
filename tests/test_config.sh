@@ -92,9 +92,9 @@ attribute=value
 [fff]
 type=new
 
-[[test-quote|test-quote.conf]]
+[[test-env|test-env.conf]]
 [foo]
-foo="foo bar" "baz"
+foo=\${FOO_BAR_BAZ}
 
 [[test5|test-equals.conf]]
 [DEFAULT]
@@ -126,9 +126,11 @@ cfg_item5 = 5555another
 
 [[test-multiline|test-multiline.conf]]
 [multi]
-cfg_item1 = "ab":"cd", "ef":   "gh"
+cfg_item1 = ab:cd:ef:gh
 cfg_item1 = abcd
 cfg_item2 = efgh
+cfg_item2 = \${FOO_BAR_BAZ}
+
 EOF
 
 echo -n "get_meta_section_files: test0 doesn't exist: "
@@ -236,14 +238,17 @@ check_result "$VAL" "$EXPECT_VAL"
 
 echo -n "merge_config_file test-multiline: "
 rm -f test-multiline.conf
+FOO_BAR_BAZ="foo bar baz"
 merge_config_file test.conf test-multiline test-multiline.conf
 VAL=$(cat test-multiline.conf)
 EXPECT_VAL='
 [multi]
-cfg_item1 = "ab":"cd", "ef":   "gh"
+cfg_item1 = ab:cd:ef:gh
 cfg_item1 = abcd
-cfg_item2 = efgh'
+cfg_item2 = efgh
+cfg_item2 = foo bar baz'
 check_result "$VAL" "$EXPECT_VAL"
+unset FOO_BAR_BAZ
 
 echo -n "merge_config_group test2: "
 rm test2a.conf
@@ -275,14 +280,16 @@ EXPECT_VAL="
 attribute = value"
 check_result "$VAL" "$EXPECT_VAL"
 
-echo -n "merge_config_file test-quote: "
-rm -f test-quote.conf
-merge_config_file test.conf test-quote test-quote.conf
-VAL=$(cat test-quote.conf)
+echo -n "merge_config_file test-env: "
+rm -f test-env.conf
+FOO_BAR_BAZ="foo bar baz"
+merge_config_file test.conf test-env test-env.conf
+VAL=$(cat test-env.conf)
 EXPECT_VAL='
 [foo]
-foo = "foo bar" "baz"'
+foo = foo bar baz'
 check_result "$VAL" "$EXPECT_VAL"
+unset FOO_BAR_BAZ
 
 echo -n "merge_config_group test4 variable filename: "
 setup_test4
@@ -332,6 +339,8 @@ EXPECT_VAL="
 servers = 10.11.12.13:80"
 check_result "$VAL" "$EXPECT_VAL"
 
-rm -f test.conf test1c.conf test2a.conf test-quote.conf test-space.conf test-equals.conf test-strip.conf test-colon.conf
-rm -f test-multiline.conf test-multi-sections.conf
+rm -f test.conf test1c.conf test2a.conf \
+    test-space.conf test-equals.conf test-strip.conf \
+    test-colon.conf test-env.conf test-multiline.conf \
+    test-multi-sections.conf
 rm -rf test-etc
