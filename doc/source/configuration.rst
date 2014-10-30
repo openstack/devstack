@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <overview.html>`__
--  `Changes <changes.html>`__
--  `FAQ <faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-Configuration Making it go my way
----------------------------------
+=============
+Configuration
+=============
 
 DevStack has always tried to be mostly-functional with a minimal amount
 of configuration. The number of options has ballooned as projects add

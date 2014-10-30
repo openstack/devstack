@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <overview.html>`__
--  `Changes <changes.html>`__
--  `FAQ <faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-Contributing Help us help you
------------------------------
+============
+Contributing
+============
 
 DevStack uses the standard OpenStack contribution process as outlined in
 `the OpenStack wiki 'How To

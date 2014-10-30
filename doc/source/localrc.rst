@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <overview.html>`__
--  `Changes <changes.html>`__
--  `FAQ <faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-localrc User settings
----------------------
+=====================
+localrc - The Old Way
+=====================
 
 ``localrc`` is the old file used to configure DevStack. It is deprecated
 and has been replaced by ```local.conf`` <local.conf.html>`__. DevStack

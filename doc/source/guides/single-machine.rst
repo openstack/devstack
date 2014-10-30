@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <../overview.html>`__
--  `Changes <../changes.html>`__
--  `FAQ <../faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-All-In-One: Dedicated Hardware
-==============================
+==========
+All-In-One
+==========
 
 Things are about to get real! Using OpenStack in containers or VMs is
 nice for kicking the tires, but doesn't compare to the feeling you get

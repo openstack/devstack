@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <overview.html>`__
--  `Changes <changes.html>`__
--  `FAQ <faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-Overview DevStack from a cloud-height view
-------------------------------------------
+========
+Overview
+========
 
 DevStack has evolved to support a large number of configuration options
 and alternative platforms and support services. That evolution has grown
