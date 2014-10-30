@@ -1,40 +1,19 @@
-`DevStack </>`__
-
--  `Overview <overview.rst>`__
--  `Changes <changes.rst>`__
--  `FAQ <faq.rst>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-.. toctree::
-   :glob:
-   :maxdepth: 2
-
-   *
-   guides/*
-   
-
-
 DevStack - an OpenStack Community Production
 ============================================
 
-| A documented shell script to build complete OpenStack development environments.
-|  An OpenStack program maintained by the developer community.
+.. toctree::
+   :glob:
+   :maxdepth: 1
 
-#. Setup a fresh supported Linux installation.
-#. Clone devstack from git.openstack.org.
+   overview
+   configuration
+   plugins
+   faq
+   changes
+   contributing
 
-   ::
+   guides/*
 
-       git clone https://git.openstack.org/openstack-dev/devstack
-
-#. Deploy your OpenStack Cloud
-
-   ::
-
-       cd devstack && ./stack.sh
-
- 
 
 Quick Start This ain't your first rodeo
 ---------------------------------------
@@ -75,68 +54,45 @@ Quick Start This ain't your first rodeo
    It takes a few minutes, we recommend `reading the
    script <stack.sh.html>`__ while it is building.
 
-Guides Walk through various setups used by stackers
----------------------------------------------------
+Guides
+======
+
+Walk through various setups used by stackers
 
 OpenStack on VMs
 ----------------
-
-Title
-
-Description
-
-Link
-
-Virtual Machine
-
-Run OpenStack in a VM. The VMs launched in your cloud will be slow as
-they are running in QEMU (emulation), but it is useful if you don't have
-spare hardware laying around.
-
-`Read » <guides/single-vm.html>`__
-
-1 Guide
-
-What is this?
-^^^^^^^^^^^^^
 
 These guides tell you how to virtualize your OpenStack cloud in virtual
 machines. This means that you can get started without having to purchase
 any hardware.
 
+Virtual Machine
+~~~~~~~~~~~~~~~
+
+`Run OpenStack in a VM <guides/single-vm.html>`__. The VMs launched in your cloud will be slow as
+they are running in QEMU (emulation), but it is useful if you don't have
+spare hardware laying around. `[Read] <guides/single-vm.html>`__
+
 OpenStack on Hardware
 ---------------------
-
-Title
-
-Description
-
-Link
-
-All-In-One
-
-Run OpenStack on dedicated hardware to get real performance in your VMs.
-This can include a server-class machine or a laptop at home.
-
-`Read » <guides/single-machine.html>`__
-
-Multi-Node + VLANs
-
-Setup a multi-node cluster with dedicated VLANs for VMs & Management.
-
-`Read » <guides/multinode-lab.html>`__
-
-2 Guides
-
-What is this?
-^^^^^^^^^^^^^
 
 These guides tell you how to deploy a development environment on real
 hardware. Guides range from running OpenStack on a single laptop to
 running a multi-node deployment on datacenter hardware.
 
-Documentation Help yourself to stack
-------------------------------------
+All-In-One
+~~~~~~~~~~
+
+`Run OpenStack on dedicated hardware <guides/single-machine.html>`__ to get real performance in your VMs.
+This can include a server-class machine or a laptop at home. `[Read] <guides/single-machine.html>`__
+
+Multi-Node + VLANs
+~~~~~~~~~~~~~~~~~~
+
+`Setup a multi-node cluster <guides/multinode-lab.html>`__ with dedicated VLANs for VMs & Management. `[Read] <guides/multinode-lab.html>`__
+
+Documentation
+=============
 
 Overview
 --------
@@ -168,11 +124,15 @@ Contributing
 
 `Pitching in to make DevStack a better place <contributing.html>`__
 
-Code A look at the bits that make it all go
--------------------------------------------
+Code
+====
 
-Scripts Generated documentation of DevStack scripts.
-----------------------------------------------------
+A look at the bits that make it all go
+
+Scripts
+-------
+
+Generated documentation of DevStack scripts.
 
 +-------------------------------+----------------------------------------------+
 | Filename                      | Link                                         |
@@ -254,8 +214,8 @@ Scripts Generated documentation of DevStack scripts.
 | extras.d/80-tempest.sh        | `Read » <extras.d/80-tempest.html>`__        |
 +-------------------------------+----------------------------------------------+
 
-Configuration Setting the table
--------------------------------
+Configuration
+-------------
 
 +--------------+--------------------------------+
 | Filename     | Link                           |
@@ -271,8 +231,8 @@ Configuration Setting the table
 | eucarc       | `Read » <eucarc.html>`__       |
 +--------------+--------------------------------+
 
-Tools Support scripts
----------------------
+Tools
+-----
 
 +-----------------------------+----------------------------------------------+
 | Filename                    | Link                                         |
@@ -292,8 +252,10 @@ Tools Support scripts
 | tools/upload\_image.sh      | `Read » <tools/upload_image.sh.html>`__      |
 +-----------------------------+----------------------------------------------+
 
-Samples Generated documentation of DevStack sample files.
----------------------------------------------------------
+Samples
+-------
+
+Generated documentation of DevStack sample files.
 
 +------------+--------------------------------------+
 | Filename   | Link                                 |
@@ -303,8 +265,8 @@ Samples Generated documentation of DevStack sample files.
 | localrc    | `Read » <samples/localrc.html>`__    |
 +------------+--------------------------------------+
 
-Exercises Generated documentation of DevStack scripts.
-------------------------------------------------------
+Exercises
+---------
 
 +---------------------------------+-------------------------------------------------+
 | Filename                        | Link                                            |
@@ -343,3 +305,9 @@ Exercises Generated documentation of DevStack scripts.
 +---------------------------------+-------------------------------------------------+
 | exercises/zaqar.sh              | `Read » <exercises/zaqar.sh.html>`__            |
 +---------------------------------+-------------------------------------------------+
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+
+   *
