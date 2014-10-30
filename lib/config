@@ -82,8 +82,6 @@ function merge_config_file {
     local matchgroup=$2
     local configfile=$3
 
-    # note in the awk below, \x27 is ascii for ' -- this avoids
-    # having to do nasty quoting games
     get_meta_section $file $matchgroup $configfile | \
     $CONFIG_AWK_CMD -v configfile=$configfile '
         BEGIN {
@@ -140,13 +138,13 @@ function merge_config_file {
                 for (attr_no = cfg_sec_attr_count[sno] - 1; attr_no >=0; attr_no--) {
                     attr = cfg_sec_attr_name[sno, attr_no]
                     if (cfg_attr_count[section, attr] == 1)
-                        print "iniset " configfile " " section " " attr " \x27" cfg_attr[section, attr, 0] "\x27"
+                        print "iniset " configfile " " section " " attr " \"" cfg_attr[section, attr, 0] "\""
                     else {
                         # For multiline, invoke the ini routines in the reverse order
                         count = cfg_attr_count[section, attr]
-                        print "iniset " configfile " " section " " attr " \x27" cfg_attr[section, attr, count - 1] "\x27"
+                        print "iniset " configfile " " section " " attr " \"" cfg_attr[section, attr, count - 1] "\""
                         for (l = count -2; l >= 0; l--)
-                            print "iniadd_literal " configfile " " section " " attr " \x27" cfg_attr[section, attr, l] "\x27"
+                            print "iniadd_literal " configfile " " section " " attr " \"" cfg_attr[section, attr, l] "\""
                     }
                 }
             }
