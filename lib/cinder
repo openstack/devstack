@@ -306,6 +306,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT glance_api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
     if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
         iniset $CINDER_CONF DEFAULT glance_protocol https
+        iniset $CINDER_CONF DEFAULT glance_ca_certificates_file $SSL_BUNDLE_FILE
     fi
 
     # Register SSL certificates if provided
