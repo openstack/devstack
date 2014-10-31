@@ -1,5 +1,8 @@
-# Neutron Open vSwitch plugin
-# ---------------------------
+# Common code used by cisco and embrane plugins
+# ---------------------------------------------
+
+# This module used to be for Open vSwitch monolithic plugin,
+# which has been removed in Juno.
 
 # Save trace setting
 OVS_XTRACE=$(set +o | grep xtrace)
