@@ -993,6 +993,8 @@ function get_packages {
     local file_to_parse
     local service
 
+    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False $INSTALL_TESTONLY_PACKAGES)
+
     if [[ -z "$package_dir" ]]; then
         echo "No package directory supplied"
         return 1
@@ -1599,6 +1601,7 @@ function pip_install {
         $cmd_pip install \
         $pip_mirror_opt $@
 
+    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False $INSTALL_TESTONLY_PACKAGES)
     if [[ "$INSTALL_TESTONLY_PACKAGES" == "True" ]]; then
         local test_req="$@/test-requirements.txt"
         if [[ -e "$test_req" ]]; then
