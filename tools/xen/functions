@@ -19,10 +19,6 @@ function xapi_plugin_location {
     return 1
 }
 
-function zip_snapshot_location {
-    echo $1 | sed "s,^git://,http://,g;s:\.git$::;s:$:/zipball/$2:g"
-}
-
 function create_directory_for_kernels {
     if [ -d "/boot/guest" ]; then
         echo "INFO: /boot/guest directory already exists, using that" >&2
@@ -41,42 +37,6 @@ function create_directory_for_images {
         mkdir -p $LOCALPATH
         ln -s $LOCALPATH /images
     fi
-}
-
-function extract_remote_zipball {
-    local ZIPBALL_URL=$1
-
-    local LOCAL_ZIPBALL=$(mktemp)
-    local EXTRACTED_FILES=$(mktemp -d)
-
-    {
-        if ! wget -nv $ZIPBALL_URL -O $LOCAL_ZIPBALL --no-check-certificate; then
-            die_with_error "Failed to download [$ZIPBALL_URL]"
-        fi
-        unzip -q -o $LOCAL_ZIPBALL -d $EXTRACTED_FILES
-        rm -f $LOCAL_ZIPBALL
-    } >&2
-
-    echo "$EXTRACTED_FILES"
-}
-
-function find_xapi_plugins_dir {
-    find $1 -path '*/xapi.d/plugins' -type d -print
-}
-
-function install_xapi_plugins_from {
-    local XAPI_PLUGIN_DIR
-    local EXTRACTED_FILES
-    local EXTRACTED_PLUGINS_DIR
-
-    EXTRACTED_FILES="$1"
-
-    XAPI_PLUGIN_DIR=$(xapi_plugin_location)
-
-    EXTRACTED_PLUGINS_DIR=$(find_xapi_plugins_dir $EXTRACTED_FILES)
-
-    cp -pr $EXTRACTED_PLUGINS_DIR/* $XAPI_PLUGIN_DIR
-    chmod a+x ${XAPI_PLUGIN_DIR}*
 }
 
 function get_local_sr {
