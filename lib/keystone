@@ -287,7 +287,7 @@ function configure_keystone {
         " -i $KEYSTONE_CATALOG
 
         # Configure ``keystone.conf`` to use templates
-        iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.TemplatedCatalog"
+        iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.Catalog"
         iniset $KEYSTONE_CONF catalog template_file "$KEYSTONE_CATALOG"
     fi
 

@@ -1,5 +1,8 @@
-# Neutron Open vSwitch plugin
-# ---------------------------
+# Common code used by cisco and embrane plugins
+# ---------------------------------------------
+
+# This module used to be for Open vSwitch monolithic plugin,
+# which has been removed in Juno.
 
 # Save trace setting
 OVS_XTRACE=$(set +o | grep xtrace)
@@ -33,11 +36,6 @@ function neutron_plugin_configure_service {
     fi
     if [[ "$OVS_VLAN_RANGES" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs network_vlan_ranges $OVS_VLAN_RANGES
-    fi
-
-    # Enable tunnel networks if selected
-    if [[ $OVS_ENABLE_TUNNELING == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
     fi
 
     _neutron_ovs_base_configure_firewall_driver

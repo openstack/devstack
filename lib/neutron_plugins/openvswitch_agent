@@ -47,7 +47,6 @@ function neutron_plugin_configure_plugin_agent {
         if [ `vercmp_numbers "$OVS_VERSION" "1.4"` -lt "0" ] && ! is_service_enabled q-svc ; then
             die $LINENO "You are running OVS version $OVS_VERSION. OVS 1.4+ is required for tunneling between multiple hosts."
         fi
-        iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
         iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $TUNNEL_ENDPOINT_IP
     fi
 
