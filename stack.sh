@@ -523,6 +523,7 @@ source $TOP_DIR/lib/tls
 source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/stackforge
+source $TOP_DIR/lib/lvm
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
@@ -938,6 +939,10 @@ init_service_check
 
 # A better kind of sysstat, with the top process per time slice
 start_dstat
+
+# Initialize default LVM volume group
+# -----------------------------------
+init_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME $VOLUME_BACKING_FILE_SIZE
 
 # Start Services
 # ==============
