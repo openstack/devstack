@@ -38,11 +38,6 @@ function neutron_plugin_configure_service {
         iniset /$Q_PLUGIN_CONF_FILE ovs network_vlan_ranges $OVS_VLAN_RANGES
     fi
 
-    # Enable tunnel networks if selected
-    if [[ $OVS_ENABLE_TUNNELING == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
-    fi
-
     _neutron_ovs_base_configure_firewall_driver
 
     # Define extra "OVS" configuration options when q-svc is configured by defining
