@@ -575,7 +575,7 @@ function git_clone {
 
     RECLONE=$(trueorfalse False $RECLONE)
 
-    if [[ "$GIT_DEPTH" ]]; then
+    if [[ -n "${GIT_DEPTH}" ]]; then
         git_clone_flags="$git_clone_flags --depth $GIT_DEPTH"
     fi
 
