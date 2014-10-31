@@ -118,3 +118,10 @@ deb-src http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security univer
 deb http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security multiverse
 deb-src http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security multiverse
 EOF
+
+rm -f $STAGING_DIR/etc/apt/apt.conf
+if [ -n "$UBUNTU_INST_HTTP_PROXY" ]; then
+    cat > $STAGING_DIR/etc/apt/apt.conf << EOF
+Acquire::http::Proxy "$UBUNTU_INST_HTTP_PROXY";
+EOF
+fi
