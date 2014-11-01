@@ -28,11 +28,12 @@ set +o pipefail
 # --------
 
 # Set up default directories
+GITDIR["ironicclient"]=$DEST/python-ironicclient
+
 IRONIC_DIR=$DEST/ironic
 IRONIC_PYTHON_AGENT_DIR=$DEST/ironic-python-agent
 IRONIC_DATA_DIR=$DATA_DIR/ironic
 IRONIC_STATE_PATH=/var/lib/ironic
-IRONICCLIENT_DIR=$DEST/python-ironicclient
 IRONIC_AUTH_CACHE_DIR=${IRONIC_AUTH_CACHE_DIR:-/var/cache/ironic}
 IRONIC_CONF_DIR=${IRONIC_CONF_DIR:-/etc/ironic}
 IRONIC_CONF_FILE=$IRONIC_CONF_DIR/ironic.conf
@@ -150,9 +151,14 @@ function install_ironic {
 
 # install_ironicclient() - Collect sources and prepare
 function install_ironicclient {
-    git_clone $IRONICCLIENT_REPO $IRONICCLIENT_DIR $IRONICCLIENT_BRANCH
-    setup_develop $IRONICCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$IRONICCLIENT_DIR/tools/,/etc/bash_completion.d/}ironic.bash_completion
+    if use_library_from_git "ironicclient"; then
+        git_clone_by_name "ironicclient"
+        setup_develop "ironicclient"
+        sudo install -D -m 0644 -o $STACK_USER {$IRONICCLIENT_DIR/tools/,/etc/bash_completion.d/}ironic.bash_completion
+    else
+        # nothing actually "requires" ironicclient, so force instally from pypi
+        pip_install python-ironicclient
+    fi
 }
 
 # _cleanup_ironic_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file

@@ -28,8 +28,9 @@ else
 fi
 
 # Set up default configuration
+GITDIR["troveclient"]=$DEST/python-troveclient
+
 TROVE_DIR=$DEST/trove
-TROVECLIENT_DIR=$DEST/python-troveclient
 TROVE_CONF_DIR=/etc/trove
 TROVE_LOCAL_CONF_DIR=$TROVE_DIR/etc/trove
 TROVE_AUTH_CACHE_DIR=${TROVE_AUTH_CACHE_DIR:-/var/cache/trove}
@@ -109,10 +110,6 @@ function cleanup_trove {
     rm -fr $TROVE_CONF_DIR/*
 }
 
-# configure_troveclient() - Set config files, create data dirs, etc
-function configure_troveclient {
-    setup_develop $TROVECLIENT_DIR
-}
 
 # configure_trove() - Set config files, create data dirs, etc
 function configure_trove {
@@ -184,7 +181,10 @@ function configure_trove {
 
 # install_troveclient() - Collect source and prepare
 function install_troveclient {
-    git_clone $TROVECLIENT_REPO $TROVECLIENT_DIR $TROVECLIENT_BRANCH
+    if use_library_from_git "troveclient"; then
+        git_clone_by_name "troveclient"
+        setup_develop "troveclient"
+    fi
 }
 
 # install_trove() - Collect source and prepare

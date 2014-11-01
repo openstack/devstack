@@ -77,8 +77,10 @@ fi
 
 
 # Set up default directories
+GITDIR["neutronclient"]=$DEST/python-neutronclient
+
+
 NEUTRON_DIR=$DEST/neutron
-NEUTRONCLIENT_DIR=$DEST/python-neutronclient
 NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 # Support entry points installation of console scripts
@@ -601,9 +603,11 @@ function install_neutron {
 
 # install_neutronclient() - Collect source and prepare
 function install_neutronclient {
-    git_clone $NEUTRONCLIENT_REPO $NEUTRONCLIENT_DIR $NEUTRONCLIENT_BRANCH
-    setup_develop $NEUTRONCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$NEUTRONCLIENT_DIR/tools/,/etc/bash_completion.d/}neutron.bash_completion
+    if use_library_from_git "neutronclient"; then
+        git_clone_by_name "neutronclient"
+        setup_develop "neutronclient"
+        sudo install -D -m 0644 -o $STACK_USER {$NEUTRONCLIENT_DIR/tools/,/etc/bash_completion.d/}neutron.bash_completion
+    fi
 }
 
 # install_neutron_agent_packages() - Collect source and prepare

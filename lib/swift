@@ -34,8 +34,10 @@ if is_ssl_enabled_service "s-proxy" || is_service_enabled tls-proxy; then
 fi
 
 # Set up default directories
+GITDIR["swiftclient"]=$DEST/python-swiftclient
+
+
 SWIFT_DIR=$DEST/swift
-SWIFTCLIENT_DIR=$DEST/python-swiftclient
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
 SWIFT3_DIR=$DEST/swift3
@@ -675,8 +677,10 @@ function install_swift {
 }
 
 function install_swiftclient {
-    git_clone $SWIFTCLIENT_REPO $SWIFTCLIENT_DIR $SWIFTCLIENT_BRANCH
-    setup_develop $SWIFTCLIENT_DIR
+    if use_library_from_git "swiftclient"; then
+        git_clone_by_name "swiftclient"
+        setup_develop "swiftclient"
+    fi
 }
 
 # start_swift() - Start running processes, including screen

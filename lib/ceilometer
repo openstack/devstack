@@ -35,8 +35,9 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["ceilometerclient"]=$DEST/python-ceilometerclient
+
 CEILOMETER_DIR=$DEST/ceilometer
-CEILOMETERCLIENT_DIR=$DEST/python-ceilometerclient
 CEILOMETER_CONF_DIR=/etc/ceilometer
 CEILOMETER_CONF=$CEILOMETER_CONF_DIR/ceilometer.conf
 CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
@@ -254,9 +255,11 @@ function install_ceilometer {
 
 # install_ceilometerclient() - Collect source and prepare
 function install_ceilometerclient {
-    git_clone $CEILOMETERCLIENT_REPO $CEILOMETERCLIENT_DIR $CEILOMETERCLIENT_BRANCH
-    setup_develop $CEILOMETERCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$CEILOMETERCLIENT_DIR/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
+    if use_library_from_git "ceilometerclient"; then
+        git_clone_by_name "ceilometerclient"
+        setup_develop "ceilometerclient"
+        sudo install -D -m 0644 -o $STACK_USER {$CEILOMETERCLIENT_DIR/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
+    fi
 }
 
 # start_ceilometer() - Start running processes, including screen

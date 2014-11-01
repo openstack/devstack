@@ -29,8 +29,9 @@ set +o xtrace
 # --------
 
 # set up default directories
+GITDIR["heatclient"]=$DEST/python-heatclient
+
 HEAT_DIR=$DEST/heat
-HEATCLIENT_DIR=$DEST/python-heatclient
 HEAT_CFNTOOLS_DIR=$DEST/heat-cfntools
 HEAT_TEMPLATES_REPO_DIR=$DEST/heat-templates
 HEAT_AUTH_CACHE_DIR=${HEAT_AUTH_CACHE_DIR:-/var/cache/heat}
@@ -183,9 +184,11 @@ function create_heat_cache_dir {
 
 # install_heatclient() - Collect source and prepare
 function install_heatclient {
-    git_clone $HEATCLIENT_REPO $HEATCLIENT_DIR $HEATCLIENT_BRANCH
-    setup_develop $HEATCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$HEATCLIENT_DIR/tools/,/etc/bash_completion.d/}heat.bash_completion
+    if use_library_from_git "heatclient"; then
+        git_clone_by_name "heatclient"
+        setup_develop "heatclient"
+        sudo install -D -m 0644 -o $STACK_USER {$HEATCLIENT_DIR/tools/,/etc/bash_completion.d/}heat.bash_completion
+    fi
 }
 
 # install_heat() - Collect source and prepare

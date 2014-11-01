@@ -1621,6 +1621,7 @@ function use_library_from_git {
     return $enabled
 }
 
+
 # setup a library by name. If we are trying to use the library from
 # git, we'll do a git based install, otherwise we'll punt and the
 # library should be installed by a requirements pull from another
