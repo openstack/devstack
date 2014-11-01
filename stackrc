@@ -133,7 +133,7 @@ GIT_BASE=${GIT_BASE:-git://git.openstack.org}
 CEILOMETER_REPO=${CEILOMETER_REPO:-${GIT_BASE}/openstack/ceilometer.git}
 CEILOMETER_BRANCH=${CEILOMETER_BRANCH:-stable/juno}
 
-# volume service
+# block storage service
 CINDER_REPO=${CINDER_REPO:-${GIT_BASE}/openstack/cinder.git}
 CINDER_BRANCH=${CINDER_BRANCH:-stable/juno}
 
@@ -165,7 +165,11 @@ NEUTRON_BRANCH=${NEUTRON_BRANCH:-stable/juno}
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
 NOVA_BRANCH=${NOVA_BRANCH:-stable/juno}
 
-# storage service
+# data processing service
+SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
+SAHARA_BRANCH=${SAHARA_BRANCH:-master}
+
+# object storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
 SWIFT_BRANCH=${SWIFT_BRANCH:-stable/juno}
 
@@ -188,8 +192,8 @@ TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
 TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
 # TODO(sdague): this should end up as a library component like below
-TEMPEST_LIB_REPO=${TEMPEST_LIB_REPO:-${GIT_BASE}/openstack/tempest-lib.git}
-TEMPEST_LIB_BRANCH=${TEMPEST_LIB_BRANCH:-master}
+GITREPO["tempest-lib"]=${TEMPEST_LIB_REPO:-${GIT_BASE}/openstack/tempest-lib.git}
+GITBRANCH["tempest-lib"]=${TEMPEST_LIB_BRANCH:-master}
 
 
 ##############
@@ -199,48 +203,54 @@ TEMPEST_LIB_BRANCH=${TEMPEST_LIB_BRANCH:-master}
 ##############
 
 # ceilometer client library
-CEILOMETERCLIENT_REPO=${CEILOMETERCLIENT_REPO:-${GIT_BASE}/openstack/python-ceilometerclient.git}
-CEILOMETERCLIENT_BRANCH=${CEILOMETERCLIENT_BRANCH:-master}
+GITREPO["python-ceilometerclient"]=${CEILOMETERCLIENT_REPO:-${GIT_BASE}/openstack/python-ceilometerclient.git}
+GITBRANCH["python-ceilometerclient"]=${CEILOMETERCLIENT_BRANCH:-master}
 
 # volume client
-CINDERCLIENT_REPO=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
-CINDERCLIENT_BRANCH=${CINDERCLIENT_BRANCH:-master}
+GITREPO["python-cinderclient"]=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
+GITBRANCH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-master}
 
 # python glance client library
-GLANCECLIENT_REPO=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
-GLANCECLIENT_BRANCH=${GLANCECLIENT_BRANCH:-master}
+GITREPO["python-glanceclient"]=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
+GITBRANCH["python-glanceclient"]=${GLANCECLIENT_BRANCH:-master}
 
 # python heat client library
-HEATCLIENT_REPO=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
-HEATCLIENT_BRANCH=${HEATCLIENT_BRANCH:-master}
+GITREPO["python-heatclient"]=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
+GITBRANCH["python-heatclient"]=${HEATCLIENT_BRANCH:-master}
 
 # ironic client
-IRONICCLIENT_REPO=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
-IRONICCLIENT_BRANCH=${IRONICCLIENT_BRANCH:-master}
+GITREPO["python-ironicclient"]=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
+GITBRANCH["python-ironicclient"]=${IRONICCLIENT_BRANCH:-master}
 
 # python keystone client library to nova that horizon uses
-KEYSTONECLIENT_REPO=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
-KEYSTONECLIENT_BRANCH=${KEYSTONECLIENT_BRANCH:-master}
+GITREPO["python-keystoneclient"]=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
+GITBRANCH["python-keystoneclient"]=${KEYSTONECLIENT_BRANCH:-master}
 
 # neutron client
-NEUTRONCLIENT_REPO=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
-NEUTRONCLIENT_BRANCH=${NEUTRONCLIENT_BRANCH:-master}
+GITREPO["python-neutronclient"]=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
+GITBRANCH["python-neutronclient"]=${NEUTRONCLIENT_BRANCH:-master}
 
 # python client library to nova that horizon (and others) use
-NOVACLIENT_REPO=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
-NOVACLIENT_BRANCH=${NOVACLIENT_BRANCH:-master}
+GITREPO["python-novaclient"]=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
+GITBRANCH["python-novaclient"]=${NOVACLIENT_BRANCH:-master}
+
+# python saharaclient
+GITREPO["python-saharaclient"]=${SAHARACLIENT_REPO:-${GIT_BASE}/openstack/python-saharaclient.git}
+GITBRANCH["python-saharaclient"]=${SAHARACLIENT_BRANCH:-master}
 
 # python swift client library
-SWIFTCLIENT_REPO=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
-SWIFTCLIENT_BRANCH=${SWIFTCLIENT_BRANCH:-master}
+GITREPO["python-swiftclient"]=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
+GITBRANCH["python-swiftclient"]=${SWIFTCLIENT_BRANCH:-master}
 
 # trove client library test
-TROVECLIENT_REPO=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
-TROVECLIENT_BRANCH=${TROVECLIENT_BRANCH:-master}
+GITREPO["python-troveclient"]=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
+GITBRANCH["python-troveclient"]=${TROVECLIENT_BRANCH:-master}
 
 # consolidated openstack python client
-OPENSTACKCLIENT_REPO=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
-OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
+GITREPO["python-openstackclient"]=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
+GITBRANCH["python-openstackclient"]=${OPENSTACKCLIENT_BRANCH:-master}
+# this doesn't exist in a lib file, so set it here
+GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 
 ###################
 #
@@ -319,8 +329,8 @@ GITBRANCH["pbr"]=${PBR_BRANCH:-master}
 ##################
 
 # glance store library
-GLANCE_STORE_REPO=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
-GLANCE_STORE_BRANCH=${GLANCE_STORE_BRANCH:-master}
+GITREPO["glance_store"]=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
+GITBRANCH["glance_store"]=${GLANCE_STORE_BRANCH:-master}
 
 # heat-cfntools server agent
 HEAT_CFNTOOLS_REPO=${HEAT_CFNTOOLS_REPO:-${GIT_BASE}/openstack/heat-cfntools.git}
@@ -331,12 +341,12 @@ HEAT_TEMPLATES_REPO=${HEAT_TEMPLATES_REPO:-${GIT_BASE}/openstack/heat-templates.
 HEAT_TEMPLATES_BRANCH=${HEAT_TEMPLATES_BRANCH:-master}
 
 # django openstack_auth library
-HORIZONAUTH_REPO=${HORIZONAUTH_REPO:-${GIT_BASE}/openstack/django_openstack_auth.git}
-HORIZONAUTH_BRANCH=${HORIZONAUTH_BRANCH:-master}
+GITREPO["django_openstack_auth"]=${HORIZONAUTH_REPO:-${GIT_BASE}/openstack/django_openstack_auth.git}
+GITBRANCH["django_openstack_auth"]=${HORIZONAUTH_BRANCH:-master}
 
 # keystone middleware
-KEYSTONEMIDDLEWARE_REPO=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/keystonemiddleware.git}
-KEYSTONEMIDDLEWARE_BRANCH=${KEYSTONEMIDDLEWARE_BRANCH:-master}
+GITREPO["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/keystonemiddleware.git}
+GITBRANCH["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_BRANCH:-master}
 
 # s3 support for swift
 SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/stackforge/swift3.git}

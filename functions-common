@@ -1594,6 +1594,17 @@ function setup_lib {
     setup_install $dir
 }
 
+# setup a library by name in editiable mode. If we are trying to use
+# the library from git, we'll do a git based install, otherwise we'll
+# punt and the library should be installed by a requirements pull from
+# another project.
+#
+# use this for non namespaced libraries
+function setup_dev_lib {
+    local name=$1
+    local dir=${GITDIR[$name]}
+    setup_develop $dir
+}
 
 # this should be used if you want to install globally, all libraries should
 # use this, especially *oslo* ones
