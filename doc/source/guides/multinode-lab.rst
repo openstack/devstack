@@ -167,6 +167,7 @@ machines, create a ``local.conf`` with:
 
 ::
 
+    [[local|localrc]]
     HOST_IP=192.168.42.12 # change this per compute node
     FLAT_INTERFACE=eth0
     FIXED_RANGE=10.4.128.0/20
