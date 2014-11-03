@@ -279,7 +279,7 @@ function configure_ironic_conductor {
         else
             die $LINENO "SWIFT_ENABLE_TEMPURLS must be True to use agent_ssh driver in Ironic."
         fi
-        iniset $IRONIC_CONF_FILE glance swift_endpoint_url http://${HOST_IP}:8080
+        iniset $IRONIC_CONF_FILE glance swift_endpoint_url http://${HOST_IP}:${SWIFT_DEFAULT_BIND_PORT:-8080}
         iniset $IRONIC_CONF_FILE glance swift_api_version v1
         local tenant_id=$(get_or_create_project $SERVICE_TENANT_NAME)
         iniset $IRONIC_CONF_FILE glance swift_account AUTH_${tenant_id}
@@ -523,7 +523,11 @@ function configure_iptables {
     sudo modprobe nf_nat_tftp
     # nodes boot from TFTP and callback to the API server listening on $HOST_IP
     sudo iptables -I INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
-    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport 6385 -j ACCEPT || true
+    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport $IRONIC_HOSTPORT -j ACCEPT || true
+    if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
+        # agent ramdisk gets instance image from swift
+        sudo iptables -I INPUT -d $HOST_IP -p tcp --dport ${SWIFT_DEFAULT_BIND_PORT:-8080} -j ACCEPT || true
+    fi
 }
 
 function configure_tftpd {
@@ -678,6 +682,10 @@ function cleanup_baremetal_basic_ops {
     restart_service xinetd
     sudo iptables -D INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
     sudo iptables -D INPUT -d $HOST_IP -p tcp --dport 6385 -j ACCEPT || true
+    if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
+        # agent ramdisk gets instance image from swift
+        sudo iptables -D INPUT -d $HOST_IP -p tcp --dport ${SWIFT_DEFAULT_BIND_PORT:-8080} -j ACCEPT || true
+    fi
     sudo rmmod nf_conntrack_tftp || true
     sudo rmmod nf_nat_tftp || true
 }
