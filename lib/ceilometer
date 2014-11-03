@@ -242,6 +242,18 @@ function init_ceilometer {
     fi
 }
 
+# install_redis() - Install the redis server.
+function install_redis {
+    if is_ubuntu; then
+        install_package redis-server
+    else
+        # This will fail (correctly) where a redis package is unavailable
+        install_package redis
+    fi
+
+    restart_service redis
+}
+
 # install_ceilometer() - Collect source and prepare
 function install_ceilometer {
     git_clone $CEILOMETER_REPO $CEILOMETER_DIR $CEILOMETER_BRANCH
@@ -249,6 +261,8 @@ function install_ceilometer {
 
     if echo $CEILOMETER_COORDINATION_URL | grep -q '^memcached:'; then
         install_package memcached
+    elif echo $CEILOMETER_COORDINATION_URL | grep -q '^redis:'; then
+        install_redis
     fi
 }
 

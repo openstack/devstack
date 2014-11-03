@@ -50,17 +50,24 @@ fi
 # exception into the Kernel for the Keystone AUTH ports.
 keystone_ports=${KEYSTONE_AUTH_PORT:-35357},${KEYSTONE_AUTH_PORT_INT:-35358}
 
-# Get any currently reserved ports, strip off leading whitespace
-reserved_ports=$(sysctl net.ipv4.ip_local_reserved_ports | awk -F'=' '{print $2;}' | sed 's/^ //')
+# only do the reserved ports when available, on some system (like containers)
+# where it's not exposed we are almost pretty sure these ports would be
+# exclusive for our devstack.
+if sysctl net.ipv4.ip_local_reserved_ports >/dev/null 2>&1; then
+    # Get any currently reserved ports, strip off leading whitespace
+    reserved_ports=$(sysctl net.ipv4.ip_local_reserved_ports | awk -F'=' '{print $2;}' | sed 's/^ //')
 
-if [[ -z "${reserved_ports}" ]]; then
-    # If there are no currently reserved ports, reserve the keystone ports
-    sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports}
+    if [[ -z "${reserved_ports}" ]]; then
+        # If there are no currently reserved ports, reserve the keystone ports
+        sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports}
+    else
+        # If there are currently reserved ports, keep those and also reserve the
+        # keystone specific ports. Duplicate reservations are merged into a single
+        # reservation (or range) automatically by the kernel.
+        sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports},${reserved_ports}
+    fi
 else
-    # If there are currently reserved ports, keep those and also reserve the
-    # keystone specific ports. Duplicate reservations are merged into a single
-    # reservation (or range) automatically by the kernel.
-    sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports},${reserved_ports}
+    echo_summary "WARNING: unable to reserve keystone ports"
 fi
 
 
