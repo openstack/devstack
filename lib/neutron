@@ -274,6 +274,14 @@ TUNNEL_ENDPOINT_IP=${TUNNEL_ENDPOINT_IP:-$HOST_IP}
 # Example: ``OVS_ENABLE_TUNNELING=True``
 OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
 
+# Use DHCP agent for providing metadata service in the case of
+# without L3 agent (No Route Agent), set to True in localrc.
+ENABLE_ISOLATED_METADATA=${ENABLE_ISOLATED_METADATA:-False}
+
+# Add a static route as dhcp option, so the request to 169.254.169.254
+# will be able to reach through a route(DHCP agent)
+# This option require ENABLE_ISOLATED_METADATA = True
+ENABLE_METADATA_NETWORK=${ENABLE_METADATA_NETWORK:-False}
 # Neutron plugin specific functions
 # ---------------------------------
 
@@ -830,6 +838,17 @@ function _configure_neutron_dhcp_agent {
     iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+
+    if ! is_service_enabled q-l3; then
+        if [[ "$ENABLE_ISOLATED_METADATA" = "True" ]]; then
+            iniset $Q_DHCP_CONF_FILE DEFAULT enable_isolated_metadata $ENABLE_ISOLATED_METADATA
+            iniset $Q_DHCP_CONF_FILE DEFAULT enable_metadata_network $ENABLE_METADATA_NETWORK
+        else
+            if [[ "$ENABLE_METADATA_NETWORK" = "True" ]]; then
+                die "$LINENO" "Enable isolated metadata is a must for metadata network"
+            fi
+        fi
+    fi
 
     _neutron_setup_interface_driver $Q_DHCP_CONF_FILE
 
