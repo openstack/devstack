@@ -1,6 +1,6 @@
-=============
-Cloud in a VM
-=============
+====================
+All-In-One Single VM
+====================
 
 Use the cloud to build the cloud! Use your cloud to launch new versions
 of OpenStack in about 5 minutes. When you break it, start over! The VMs
