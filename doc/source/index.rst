@@ -42,8 +42,8 @@ Quick Start This ain't your first rodeo
 
 #. Configure
 
-   We recommend at least a `minimal
-   configuration <configuration.html>`__ be set up.
+   We recommend at least a :doc:`minimal
+   configuration <configuration>` be set up.
 
 #. Start the install
 
@@ -69,9 +69,9 @@ any hardware.
 Virtual Machine
 ~~~~~~~~~~~~~~~
 
-`Run OpenStack in a VM <guides/single-vm.html>`__. The VMs launched in your cloud will be slow as
+:doc:`Run OpenStack in a VM <guides/single-vm>`. The VMs launched in your cloud will be slow as
 they are running in QEMU (emulation), but it is useful if you don't have
-spare hardware laying around. `[Read] <guides/single-vm.html>`__
+spare hardware laying around. :doc:`[Read] <guides/single-vm>`
 
 OpenStack on Hardware
 ---------------------
@@ -83,13 +83,13 @@ running a multi-node deployment on datacenter hardware.
 All-In-One
 ~~~~~~~~~~
 
-`Run OpenStack on dedicated hardware <guides/single-machine.html>`__ to get real performance in your VMs.
-This can include a server-class machine or a laptop at home. `[Read] <guides/single-machine.html>`__
+:doc:`Run OpenStack on dedicated hardware <guides/single-machine>` to get real performance in your VMs.
+This can include a server-class machine or a laptop at home. :doc:`[Read] <guides/single-machine>`
 
 Multi-Node + VLANs
 ~~~~~~~~~~~~~~~~~~
 
-`Setup a multi-node cluster <guides/multinode-lab.html>`__ with dedicated VLANs for VMs & Management. `[Read] <guides/multinode-lab.html>`__
+:doc:`Setup a multi-node cluster <guides/multinode-lab>` with dedicated VLANs for VMs & Management. :doc:`[Read] <guides/multinode-lab>`
 
 Documentation
 =============
@@ -97,32 +97,32 @@ Documentation
 Overview
 --------
 
-`An overview of DevStack goals and priorities <overview.html>`__
+:doc:`An overview of DevStack goals and priorities <overview>`
 
 Configuration
 -------------
 
-`Configuring and customizing the stack <configuration.html>`__
+:doc:`Configuring and customizing the stack <configuration>`
 
 Plugins
 -------
 
-`Extending DevStack with new features <plugins.html>`__
+:doc:`Extending DevStack with new features <plugins>`
 
 Recent Changes
 --------------
 
-`An incomplete summary of recent changes <changes.html>`__
+:doc:`An incomplete summary of recent changes <changes>`
 
 FAQ
 ---
 
-`The DevStack FAQ <faq.html>`__
+:doc:`The DevStack FAQ <faq>`
 
 Contributing
 ------------
 
-`Pitching in to make DevStack a better place <contributing.html>`__
+:doc:`Pitching in to make DevStack a better place <contributing>`
 
 Code
 ====
