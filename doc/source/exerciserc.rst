@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <overview.html>`__
--  `Changes <changes.html>`__
--  `FAQ <faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-exerciserc Exercise settings
-----------------------------
+==============================
+exerciserc - Exercise Settings
+==============================
 
 ``exerciserc`` is used to configure settings for the exercise scripts.
 The values shown below are the default values. Thse can all be

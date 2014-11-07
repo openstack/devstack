@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <overview.html>`__
--  `Changes <changes.html>`__
--  `FAQ <faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-openrc User authentication settings
------------------------------------
+=====================================
+openrc - User Authentication Settings
+=====================================
 
 ``openrc`` configures login credentials suitable for use with the
 OpenStack command-line tools. ``openrc`` sources ``stackrc`` at the

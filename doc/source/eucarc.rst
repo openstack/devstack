@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <overview.html>`__
--  `Changes <changes.html>`__
--  `FAQ <faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-eucarc EC2 settings
--------------------
+=====================
+eucarc - EC2 Settings
+=====================
 
 ``eucarc`` creates EC2 credentials for the current user as defined by
 ``OS_TENANT_NAME:OS_USERNAME``. ``eucarc`` sources ``openrc`` at the

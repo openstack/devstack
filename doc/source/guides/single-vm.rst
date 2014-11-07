@@ -1,13 +1,6 @@
-`DevStack </>`__
-
--  `Overview <../overview.html>`__
--  `Changes <../changes.html>`__
--  `FAQ <../faq.html>`__
--  `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
--  `Gerrit <https://review.openstack.org/#/q/status:open+project:openstack-dev/devstack,n,z>`__
-
-Running a Cloud in a VM
-=======================
+=============
+Cloud in a VM
+=============
 
 Use the cloud to build the cloud! Use your cloud to launch new versions
 of OpenStack in about 5 minutes. When you break it, start over! The VMs
