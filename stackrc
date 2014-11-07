@@ -44,7 +44,7 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 # this allows us to pass ENABLED_SERVICES
 if [[ -z "$ENABLED_SERVICES" ]]; then
     # core compute (glance / keystone / nova (+ nova-network))
-    ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-novnc,n-xvnc,n-cauth
+    ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-xvnc,n-cauth
     # cinder
     ENABLED_SERVICES+=,c-sch,c-api,c-vol
     # heat
