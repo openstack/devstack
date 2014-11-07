@@ -90,16 +90,6 @@ source $TOP_DIR/lib/config
 # and ``DISTRO``
 GetDistro
 
-# Warn users who aren't on an explicitly supported distro, but allow them to
-# override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (precise|trusty|7.0|wheezy|sid|testing|jessie|f19|f20|rhel6|rhel7) ]]; then
-    echo "WARNING: this script has not been tested on $DISTRO"
-    if [[ "$FORCE" != "yes" ]]; then
-        die $LINENO "If you wish to run this script anyway run with FORCE=yes"
-    fi
-fi
-
-
 # Global Settings
 # ---------------
 
@@ -150,6 +140,15 @@ if [[ ! -r $TOP_DIR/stackrc ]]; then
     die $LINENO "missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
 fi
 source $TOP_DIR/stackrc
+
+# Warn users who aren't on an explicitly supported distro, but allow them to
+# override check and attempt installation with ``FORCE=yes ./stack``
+if [[ ! ${DISTRO} =~ (precise|trusty|7.0|wheezy|sid|testing|jessie|f19|f20|rhel6|rhel7) ]]; then
+    echo "WARNING: this script has not been tested on $DISTRO"
+    if [[ "$FORCE" != "yes" ]]; then
+        die $LINENO "If you wish to run this script anyway run with FORCE=yes"
+    fi
+fi
 
 # Check to see if we are already running DevStack
 # Note that this may fail if USE_SCREEN=False
