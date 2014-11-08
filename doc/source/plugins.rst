@@ -8,8 +8,8 @@ support for additional projects and features.
 Extras.d Hooks
 ~~~~~~~~~~~~~~
 
-These relatively new hooks are an extension of the existing calls from
-``stack.sh`` at the end of its run, plus ``unstack.sh`` and
+These hooks are an extension of the service calls in
+``stack.sh`` at specific points in its run, plus ``unstack.sh`` and
 ``clean.sh``. A number of the higher-layer projects are implemented in
 DevStack using this mechanism.
 

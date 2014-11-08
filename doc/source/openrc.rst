@@ -8,29 +8,30 @@ beginning (which in turn sources the ``localrc`` setion of
 ``local.conf``) in order to pick up ``HOST_IP`` and/or ``SERVICE_HOST``
 to use in the endpoints. The values shown below are the default values.
 
-OS\_TENANT\_NAME
-    The introduction of Keystone to the OpenStack ecosystem has
-    standardized the term *tenant* as the entity that owns resources. In
-    some places references still exist to the original Nova term
-    *project* for this use. Also, *tenant\_name* is preferred to
-    *tenant\_id*.
+OS\_PROJECT\_NAME (OS\_TENANT\_NAME)
+    Keystone has
+    standardized the term *project* as the entity that owns resources. In
+    some places references still exist to the previous term
+    *tenant* for this use. Also, *project\_name* is preferred to
+    *project\_id*.  OS\_TENANT\_NAME remains supported for compatibility
+    with older tools.
 
     ::
 
-        OS_TENANT_NAME=demo
+        OS_PROJECT_NAME=demo
 
 OS\_USERNAME
-    In addition to the owning entity (tenant), Nova stores the entity
-    performing the action as the *user*.
+    In addition to the owning entity (project), OpenStack calls the entity
+    performing the action *user*.
 
     ::
 
         OS_USERNAME=demo
 
 OS\_PASSWORD
-    With Keystone you pass the keystone password instead of an api key.
-    Recent versions of novaclient use OS\_PASSWORD instead of
-    NOVA\_API\_KEYs or NOVA\_PASSWORD.
+    Keystone's default authentication requires a password be provided.
+    The usual cautions about putting passwords in environment variables
+    apply, for most DevStack uses this may be an acceptable tradeoff.
 
     ::
 
@@ -39,7 +40,7 @@ OS\_PASSWORD
 HOST\_IP, SERVICE\_HOST
     Set API endpoint host using ``HOST_IP``. ``SERVICE_HOST`` may also
     be used to specify the endpoint, which is convenient for some
-    ``localrc`` configurations. Typically, ``HOST_IP`` is set in the
+    ``local.conf`` configurations. Typically, ``HOST_IP`` is set in the
     ``localrc`` section.
 
     ::
@@ -56,15 +57,6 @@ OS\_AUTH\_URL
     ::
 
         OS_AUTH_URL=http://$SERVICE_HOST:5000/v2.0
-
-GLANCE\_HOST
-    Some exercises call Glance directly. On a single-node installation,
-    Glance should be listening on ``HOST_IP``. If its running elsewhere
-    it can be set here.
-
-    ::
-
-        GLANCE_HOST=$HOST_IP
 
 KEYSTONECLIENT\_DEBUG, NOVACLIENT\_DEBUG
     Set command-line client log level to ``DEBUG``. These are commented

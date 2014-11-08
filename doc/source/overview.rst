@@ -73,7 +73,7 @@ Compute (Nova), Network (Nova), Dashboard (Horizon), Orchestration
 (Heat)
 
 Additional services not included directly in DevStack can be tied in to
-``stack.sh`` using the `plugin mechanism <plugins.html>`__ to call
+``stack.sh`` using the :doc:`plugin mechanism <plugins>` to call
 scripts that perform the configuration and startup of the service.
 
 Node Configurations
