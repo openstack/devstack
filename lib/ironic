@@ -177,7 +177,7 @@ function _config_ironic_apache_wsgi {
 # cleanup_ironic() - Remove residual data files, anything left over from previous
 # runs that would need to clean up.
 function cleanup_ironic {
-    sudo rm -rf $IRONIC_AUTH_CACHE_DIR
+    sudo rm -rf $IRONIC_AUTH_CACHE_DIR $IRONIC_CONF_DIR
 }
 
 # configure_ironic_dirs() - Create all directories required by Ironic and
