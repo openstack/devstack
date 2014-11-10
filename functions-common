@@ -25,7 +25,6 @@
 # - ``FILES``
 # - ``OFFLINE``
 # - ``PIP_DOWNLOAD_CACHE``
-# - ``PIP_USE_MIRRORS``
 # - ``RECLONE``
 # - ``REQUIREMENTS_DIR``
 # - ``STACK_USER``
@@ -1559,7 +1558,7 @@ function get_python_exec_prefix {
 }
 
 # Wrapper for ``pip install`` to set cache and proxy environment variables
-# Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``, ``PIP_USE_MIRRORS``,
+# Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``,
 # ``TRACK_DEPENDS``, ``*_proxy``
 # pip_install package [package ...]
 function pip_install {
@@ -1585,21 +1584,13 @@ function pip_install {
         local sudo_pip="sudo"
     fi
 
-    # Mirror option not needed anymore because pypi has CDN available,
-    # but it's useful in certain circumstances
-    PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-False}
-    local pip_mirror_opt=""
-    if [[ "$PIP_USE_MIRRORS" != "False" ]]; then
-        pip_mirror_opt="--use-mirrors"
-    fi
-
     $xtrace
     $sudo_pip PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
         http_proxy=$http_proxy \
         https_proxy=$https_proxy \
         no_proxy=$no_proxy \
         $cmd_pip install \
-        $pip_mirror_opt $@
+        $@
 
     INSTALL_TESTONLY_PACKAGES=$(trueorfalse False $INSTALL_TESTONLY_PACKAGES)
     if [[ "$INSTALL_TESTONLY_PACKAGES" == "True" ]]; then
@@ -1610,7 +1601,7 @@ function pip_install {
                 https_proxy=$https_proxy \
                 no_proxy=$no_proxy \
                 $cmd_pip install \
-                $pip_mirror_opt -r $test_req
+                -r $test_req
         fi
     fi
 }
