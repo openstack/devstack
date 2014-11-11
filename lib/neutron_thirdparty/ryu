@@ -1,56 +1,15 @@
-# Ryu OpenFlow Controller
-# -----------------------
+# Ryu SDN Framework
+# -----------------
+
+# Used by ofagent.
+# TODO(yamamoto): Switch to pip_install once the development was settled
 
 # Save trace setting
 RYU3_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-
 RYU_DIR=$DEST/ryu
-# Ryu API Host
-RYU_API_HOST=${RYU_API_HOST:-127.0.0.1}
-# Ryu API Port
-RYU_API_PORT=${RYU_API_PORT:-8080}
-# Ryu OFP Host
-RYU_OFP_HOST=${RYU_OFP_HOST:-127.0.0.1}
-# Ryu OFP Port
-RYU_OFP_PORT=${RYU_OFP_PORT:-6633}
-# Ryu Applications
-RYU_APPS=${RYU_APPS:-ryu.app.simple_isolation,ryu.app.rest}
 
-function configure_ryu {
-    :
-}
-
-function init_ryu {
-    RYU_CONF_DIR=/etc/ryu
-    if [[ ! -d $RYU_CONF_DIR ]]; then
-        sudo mkdir -p $RYU_CONF_DIR
-    fi
-    sudo chown $STACK_USER $RYU_CONF_DIR
-    RYU_CONF=$RYU_CONF_DIR/ryu.conf
-    sudo rm -rf $RYU_CONF
-
-    # Ryu configuration
-    RYU_CONF_CONTENTS=${RYU_CONF_CONTENTS:-"[DEFAULT]
-app_lists=$RYU_APPS
-wsapi_host=$RYU_API_HOST
-wsapi_port=$RYU_API_PORT
-ofp_listen_host=$RYU_OFP_HOST
-ofp_tcp_listen_port=$RYU_OFP_PORT
-neutron_url=http://$Q_HOST:$Q_PORT
-neutron_admin_username=$Q_ADMIN_USERNAME
-neutron_admin_password=$SERVICE_PASSWORD
-neutron_admin_tenant_name=$SERVICE_TENANT_NAME
-neutron_admin_auth_url=$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0
-neutron_auth_strategy=$Q_AUTH_STRATEGY
-neutron_controller_addr=tcp:$RYU_OFP_HOST:$RYU_OFP_PORT
-"}
-    echo "${RYU_CONF_CONTENTS}" > $RYU_CONF
-}
-
-# install_ryu can be called multiple times as neutron_pluing/ryu may call
-# this function for neutron-ryu-agent
 # Make this function idempotent and avoid cloning same repo many times
 # with RECLONE=yes
 _RYU_INSTALLED=${_RYU_INSTALLED:-False}
@@ -61,18 +20,6 @@ function install_ryu {
         pip_install $(cat $RYU_DIR/tools/pip-requires)
         _RYU_INSTALLED=True
     fi
-}
-
-function start_ryu {
-    run_process ryu "$RYU_DIR/bin/ryu-manager --config-file $RYU_CONF"
-}
-
-function stop_ryu {
-    :
-}
-
-function check_ryu {
-    :
 }
 
 # Restore xtrace
