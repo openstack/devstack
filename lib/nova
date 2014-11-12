@@ -29,8 +29,10 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["novaclient"]=$DEST/python-novaclient
+
+
 NOVA_DIR=$DEST/nova
-NOVACLIENT_DIR=$DEST/python-novaclient
 NOVA_STATE_PATH=${NOVA_STATE_PATH:=$DATA_DIR/nova}
 # INSTANCES_PATH is the previous name for this
 NOVA_INSTANCES_PATH=${NOVA_INSTANCES_PATH:=${INSTANCES_PATH:=$NOVA_STATE_PATH/instances}}
@@ -637,9 +639,11 @@ function init_nova {
 
 # install_novaclient() - Collect source and prepare
 function install_novaclient {
-    git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
-    setup_develop $NOVACLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$NOVACLIENT_DIR/tools/,/etc/bash_completion.d/}nova.bash_completion
+    if use_library_from_git "novaclient"; then
+        git_clone_by_name "novaclient"
+        setup_develop "novaclient"
+        sudo install -D -m 0644 -o $STACK_USER {$NOVACLIENT_DIR/tools/,/etc/bash_completion.d/}nova.bash_completion
+    fi
 }
 
 # install_nova() - Collect source and prepare

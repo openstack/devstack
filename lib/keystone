@@ -33,6 +33,8 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["keystoneclient"]=$DEST/python-keystoneclient
+
 KEYSTONE_DIR=$DEST/keystone
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
@@ -45,7 +47,6 @@ else
 fi
 
 KEYSTONEMIDDLEWARE_DIR=$DEST/keystonemiddleware
-KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 
 # Set up additional extensions, such as oauth1, federation
 # Example of KEYSTONE_EXTENSIONS=oauth1,federation
@@ -479,9 +480,11 @@ function init_keystone {
 
 # install_keystoneclient() - Collect source and prepare
 function install_keystoneclient {
-    git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
-    setup_develop $KEYSTONECLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$KEYSTONECLIENT_DIR/tools/,/etc/bash_completion.d/}keystone.bash_completion
+    if use_library_from_git "keystoneclient"; then
+        git_clone_by_name "keystoneclient"
+        setup_develop "keystoneclient"
+        sudo install -D -m 0644 -o $STACK_USER {$KEYSTONECLIENT_DIR/tools/,/etc/bash_completion.d/}keystone.bash_completion
+    fi
 }
 
 # install_keystonemiddleware() - Collect source and prepare
