@@ -27,9 +27,10 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["glanceclient"]=$DEST/python-glanceclient
+
 GLANCE_DIR=$DEST/glance
 GLANCE_STORE_DIR=$DEST/glance_store
-GLANCECLIENT_DIR=$DEST/python-glanceclient
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
 GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
 GLANCE_AUTH_CACHE_DIR=${GLANCE_AUTH_CACHE_DIR:-/var/cache/glance}
@@ -286,8 +287,10 @@ function init_glance {
 
 # install_glanceclient() - Collect source and prepare
 function install_glanceclient {
-    git_clone $GLANCECLIENT_REPO $GLANCECLIENT_DIR $GLANCECLIENT_BRANCH
-    setup_develop $GLANCECLIENT_DIR
+    if use_library_from_git "glanceclient"; then
+        git_clone_by_name "glanceclient"
+        setup_develop "glanceclient"
+    fi
 }
 
 # install_glance() - Collect source and prepare

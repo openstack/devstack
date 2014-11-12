@@ -36,8 +36,9 @@ if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
 fi
 
 # set up default directories
+GITDIR["cinderclient"]=$DEST/python-cinderclient
+
 CINDER_DIR=$DEST/cinder
-CINDERCLIENT_DIR=$DEST/python-cinderclient
 CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
 CINDER_AUTH_CACHE_DIR=${CINDER_AUTH_CACHE_DIR:-/var/cache/cinder}
 
@@ -402,9 +403,11 @@ function install_cinder {
 
 # install_cinderclient() - Collect source and prepare
 function install_cinderclient {
-    git_clone $CINDERCLIENT_REPO $CINDERCLIENT_DIR $CINDERCLIENT_BRANCH
-    setup_develop $CINDERCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$CINDERCLIENT_DIR/tools/,/etc/bash_completion.d/}cinder.bash_completion
+    if use_library_from_git "cinderclient"; then
+        git_clone_by_name "cinderclient"
+        setup_develop "cinderclient"
+        sudo install -D -m 0644 -o $STACK_USER {$CINDERCLIENT_DIR/tools/,/etc/bash_completion.d/}cinder.bash_completion
+    fi
 }
 
 # apply config.d approach for cinder volumes directory

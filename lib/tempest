@@ -45,11 +45,12 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["tempest_lib"]=$DEST/tempest-lib
+
 TEMPEST_DIR=$DEST/tempest
 TEMPEST_CONFIG_DIR=${TEMPEST_CONFIG_DIR:-$TEMPEST_DIR/etc}
 TEMPEST_CONFIG=$TEMPEST_CONFIG_DIR/tempest.conf
 TEMPEST_STATE_PATH=${TEMPEST_STATE_PATH:=$DATA_DIR/tempest}
-TEMPEST_LIB_DIR=$DEST/tempest-lib
 
 NOVA_SOURCE_DIR=$DEST/nova
 
@@ -441,8 +442,10 @@ function create_tempest_accounts {
 
 # install_tempest_lib() - Collect source, prepare, and install tempest-lib
 function install_tempest_lib {
-    git_clone $TEMPEST_LIB_REPO $TEMPEST_LIB_DIR $TEMPEST_LIB_BRANCH
-    setup_develop $TEMPEST_LIB_DIR
+    if use_library_from_git "tempest_lib"; then
+        git_clone_by_name "tempest_lib"
+        setup_develop "tempest_lib"
+    fi
 }
 
 # install_tempest() - Collect source and prepare
