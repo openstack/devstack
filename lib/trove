@@ -28,7 +28,7 @@ else
 fi
 
 # Set up default configuration
-GITDIR["troveclient"]=$DEST/python-troveclient
+GITDIR["python-troveclient"]=$DEST/python-troveclient
 
 TROVE_DIR=$DEST/trove
 TROVE_CONF_DIR=/etc/trove
@@ -181,9 +181,9 @@ function configure_trove {
 
 # install_troveclient() - Collect source and prepare
 function install_troveclient {
-    if use_library_from_git "troveclient"; then
-        git_clone_by_name "troveclient"
-        setup_develop "troveclient"
+    if use_library_from_git "python-troveclient"; then
+        git_clone_by_name "python-troveclient"
+        setup_dev_lib "python-troveclient"
     fi
 }
 

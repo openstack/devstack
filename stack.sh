@@ -584,7 +584,7 @@ if [[ -d $TOP_DIR/extras.d ]]; then
 fi
 
 # Set the destination directories for other OpenStack projects
-GITDIR["openstackclient"]=$DEST/python-openstackclient
+GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 
 # Interactive Configuration
 # -------------------------
@@ -788,9 +788,9 @@ fi
 install_keystonemiddleware
 
 # install the OpenStack client, needed for most setup commands
-if use_library_from_git "openstackclient"; then
-    git_clone_by_name "openstackclient"
-    setup_develop "openstackclient"
+if use_library_from_git "python-openstackclient"; then
+    git_clone_by_name "python-openstackclient"
+    setup_dev_lib "python-openstackclient"
 else
     pip_install python-openstackclient
 fi
