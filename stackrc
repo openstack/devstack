@@ -144,7 +144,7 @@ GIT_BASE=${GIT_BASE:-git://git.openstack.org}
 CEILOMETER_REPO=${CEILOMETER_REPO:-${GIT_BASE}/openstack/ceilometer.git}
 CEILOMETER_BRANCH=${CEILOMETER_BRANCH:-master}
 
-# volume service
+# block storage service
 CINDER_REPO=${CINDER_REPO:-${GIT_BASE}/openstack/cinder.git}
 CINDER_BRANCH=${CINDER_BRANCH:-master}
 
@@ -176,7 +176,11 @@ NEUTRON_BRANCH=${NEUTRON_BRANCH:-master}
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
 NOVA_BRANCH=${NOVA_BRANCH:-master}
 
-# storage service
+# data processing service
+SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
+SAHARA_BRANCH=${SAHARA_BRANCH:-master}
+
+# object storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
 SWIFT_BRANCH=${SWIFT_BRANCH:-master}
 
@@ -240,6 +244,10 @@ GITBRANCH["python-neutronclient"]=${NEUTRONCLIENT_BRANCH:-master}
 # python client library to nova that horizon (and others) use
 GITREPO["python-novaclient"]=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
 GITBRANCH["python-novaclient"]=${NOVACLIENT_BRANCH:-master}
+
+# python saharaclient
+GITREPO["python-saharaclient"]=${SAHARACLIENT_REPO:-${GIT_BASE}/openstack/python-saharaclient.git}
+GITBRANCH["python-saharaclient"]=${SAHARACLIENT_BRANCH:-master}
 
 # python swift client library
 GITREPO["python-swiftclient"]=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
@@ -330,8 +338,8 @@ GITBRANCH["pbr"]=${PBR_BRANCH:-master}
 ##################
 
 # glance store library
-GLANCE_STORE_REPO=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
-GLANCE_STORE_BRANCH=${GLANCE_STORE_BRANCH:-master}
+GITREPO["glance_store"]=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
+GITBRANCH["glance_store"]=${GLANCE_STORE_BRANCH:-master}
 
 # heat-cfntools server agent
 HEAT_CFNTOOLS_REPO=${HEAT_CFNTOOLS_REPO:-${GIT_BASE}/openstack/heat-cfntools.git}
