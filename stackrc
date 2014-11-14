@@ -219,7 +219,7 @@ GITBRANCH["python-ceilometerclient"]=${CEILOMETERCLIENT_BRANCH:-master}
 
 # volume client
 GITREPO["python-cinderclient"]=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
-GITBRACH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-master}
+GITBRANCH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-master}
 
 # python glance client library
 GITREPO["python-glanceclient"]=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
