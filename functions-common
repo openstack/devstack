@@ -831,15 +831,14 @@ function get_or_create_user {
     fi
     # Gets user id
     local user_id=$(
-        # Gets user id
-        $os_cmd user show $1 $domain -f value -c id 2>/dev/null ||
-        # Creates new user
+        # Creates new user with --or-show
         $os_cmd user create \
             $1 \
             --password "$2" \
             --project $3 \
             $email \
             $domain \
+            --or-show \
             -f value -c id
     )
     echo $user_id
@@ -856,10 +855,8 @@ function get_or_create_project {
         os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI/v3 --os-identity-api-version=3"
     fi
     local project_id=$(
-        # Gets project id
-        $os_cmd project show $1 $domain -f value -c id 2>/dev/null ||
-        # Creates new project if not exists
-        $os_cmd project create $1 $domain -f value -c id
+        # Creates new project with --or-show
+        $os_cmd project create $1 $domain --or-show -f value -c id
     )
     echo $project_id
 }
@@ -868,10 +865,8 @@ function get_or_create_project {
 # Usage: get_or_create_role <name>
 function get_or_create_role {
     local role_id=$(
-        # Gets role id
-        openstack role show $1 -f value -c id 2>/dev/null ||
-        # Creates role if not exists
-        openstack role create $1 -f value -c id
+        # Creates role with --or-show
+        openstack role create $1 --or-show -f value -c id
     )
     echo $role_id
 }
