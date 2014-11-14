@@ -33,7 +33,7 @@ set +o xtrace
 # --------
 
 # Set up default directories
-GITDIR["keystoneclient"]=$DEST/python-keystoneclient
+GITDIR["python-keystoneclient"]=$DEST/python-keystoneclient
 
 KEYSTONE_DIR=$DEST/keystone
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
@@ -480,10 +480,10 @@ function init_keystone {
 
 # install_keystoneclient() - Collect source and prepare
 function install_keystoneclient {
-    if use_library_from_git "keystoneclient"; then
-        git_clone_by_name "keystoneclient"
-        setup_develop "keystoneclient"
-        sudo install -D -m 0644 -o $STACK_USER {$KEYSTONECLIENT_DIR/tools/,/etc/bash_completion.d/}keystone.bash_completion
+    if use_library_from_git "python-keystoneclient"; then
+        git_clone_by_name "python-keystoneclient"
+        setup_dev_lib "python-keystoneclient"
+        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-keystoneclient"]}/tools/,/etc/bash_completion.d/}keystone.bash_completion
     fi
 }
 
