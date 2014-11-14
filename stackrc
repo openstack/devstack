@@ -210,48 +210,48 @@ GITBRANCH["tempest_lib"]=${TEMPEST_LIB_BRANCH:-master}
 ##############
 
 # ceilometer client library
-GITREPO["ceilometerclient"]=${CEILOMETERCLIENT_REPO:-${GIT_BASE}/openstack/python-ceilometerclient.git}
-GITBRANCH["ceilometerclient"]=${CEILOMETERCLIENT_BRANCH:-master}
+GITREPO["python-ceilometerclient"]=${CEILOMETERCLIENT_REPO:-${GIT_BASE}/openstack/python-ceilometerclient.git}
+GITBRANCH["python-ceilometerclient"]=${CEILOMETERCLIENT_BRANCH:-master}
 
 # volume client
-GITREPO["cinderclient"]=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
-GITBRACH["cinderclient"]=${CINDERCLIENT_BRANCH:-master}
+GITREPO["python-cinderclient"]=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
+GITBRACH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-master}
 
 # python glance client library
-GITREPO["glanceclient"]=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
-GITBRANCH["glanceclient"]=${GLANCECLIENT_BRANCH:-master}
+GITREPO["python-glanceclient"]=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
+GITBRANCH["python-glanceclient"]=${GLANCECLIENT_BRANCH:-master}
 
 # python heat client library
-GITREPO["heatclient"]=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
-GITBRANCH["heatclient"]=${HEATCLIENT_BRANCH:-master}
+GITREPO["python-heatclient"]=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
+GITBRANCH["python-heatclient"]=${HEATCLIENT_BRANCH:-master}
 
 # ironic client
-GITREPO["ironicclient"]=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
-GITBRANCH["ironicclient"]=${IRONICCLIENT_BRANCH:-master}
+GITREPO["python-ironicclient"]=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
+GITBRANCH["python-ironicclient"]=${IRONICCLIENT_BRANCH:-master}
 
 # python keystone client library to nova that horizon uses
-GITREPO["keystoneclient"]=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
-GITBRANCH["keystoneclient"]=${KEYSTONECLIENT_BRANCH:-master}
+GITREPO["python-keystoneclient"]=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
+GITBRANCH["python-keystoneclient"]=${KEYSTONECLIENT_BRANCH:-master}
 
 # neutron client
-GITREPO["neutronclient"]=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
-GITBRANCH["neutronclient"]=${NEUTRONCLIENT_BRANCH:-master}
+GITREPO["python-neutronclient"]=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
+GITBRANCH["python-neutronclient"]=${NEUTRONCLIENT_BRANCH:-master}
 
 # python client library to nova that horizon (and others) use
-GITREPO["novaclient"]=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
-GITBRANCH["novaclient"]=${NOVACLIENT_BRANCH:-master}
+GITREPO["python-novaclient"]=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
+GITBRANCH["python-novaclient"]=${NOVACLIENT_BRANCH:-master}
 
 # python swift client library
-GITREPO["swiftclient"]=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
-GITBRANCH["swiftclient"]=${SWIFTCLIENT_BRANCH:-master}
+GITREPO["python-swiftclient"]=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
+GITBRANCH["python-swiftclient"]=${SWIFTCLIENT_BRANCH:-master}
 
 # trove client library test
-GITREPO["troveclient"]=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
-GITBRANCH["troveclient"]=${TROVECLIENT_BRANCH:-master}
+GITREPO["python-troveclient"]=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
+GITBRANCH["python-troveclient"]=${TROVECLIENT_BRANCH:-master}
 
 # consolidated openstack python client
-GITREPO["openstackclient"]=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
-GITBRANCH["openstackclient"]=${OPENSTACKCLIENT_BRANCH:-master}
+GITREPO["python-openstackclient"]=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
+GITBRANCH["python-openstackclient"]=${OPENSTACKCLIENT_BRANCH:-master}
 
 ###################
 #

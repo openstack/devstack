@@ -67,7 +67,7 @@ fi
 
 
 # Set up default directories
-GITDIR["neutronclient"]=$DEST/python-neutronclient
+GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 
 
 NEUTRON_DIR=$DEST/neutron
@@ -620,10 +620,10 @@ function install_neutron {
 
 # install_neutronclient() - Collect source and prepare
 function install_neutronclient {
-    if use_library_from_git "neutronclient"; then
-        git_clone_by_name "neutronclient"
-        setup_develop "neutronclient"
-        sudo install -D -m 0644 -o $STACK_USER {$NEUTRONCLIENT_DIR/tools/,/etc/bash_completion.d/}neutron.bash_completion
+    if use_library_from_git "python-neutronclient"; then
+        git_clone_by_name "python-neutronclient"
+        setup_dev_lib "python-neutronclient"
+        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-neutronclient"]}/tools/,/etc/bash_completion.d/}neutron.bash_completion
     fi
 }
 
