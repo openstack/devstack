@@ -22,15 +22,10 @@ set +o xtrace
 # --------
 
 # Set up default repos
-SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
-SAHARA_BRANCH=${SAHARA_BRANCH:-master}
-
-SAHARA_PYTHONCLIENT_REPO=${SAHARA_PYTHONCLIENT_REPO:-${GIT_BASE}/openstack/python-saharaclient.git}
-SAHARA_PYTHONCLIENT_BRANCH=${SAHARA_PYTHONCLIENT_BRANCH:-master}
 
 # Set up default directories
+GITDIR["python-saharaclient"]=$DEST/python-saharaclient
 SAHARA_DIR=$DEST/sahara
-SAHARA_PYTHONCLIENT_DIR=$DEST/python-saharaclient
 
 SAHARA_CONF_DIR=${SAHARA_CONF_DIR:-/etc/sahara}
 SAHARA_CONF_FILE=${SAHARA_CONF_DIR}/sahara.conf
@@ -158,8 +153,10 @@ function install_sahara {
 
 # install_python_saharaclient() - Collect source and prepare
 function install_python_saharaclient {
-    git_clone $SAHARA_PYTHONCLIENT_REPO $SAHARA_PYTHONCLIENT_DIR $SAHARA_PYTHONCLIENT_BRANCH
-    setup_develop $SAHARA_PYTHONCLIENT_DIR
+    if use_library_from_git "python-saharaclient"; then
+        git_clone_by_name "python-saharaclient"
+        setup_dev_lib "python-saharaclient"
+    fi
 }
 
 # start_sahara() - Start running processes, including screen
