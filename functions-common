@@ -945,7 +945,7 @@ function get_or_create_endpoint {
 function _get_package_dir {
     local pkg_dir
     if is_ubuntu; then
-        pkg_dir=$FILES/apts
+        pkg_dir=$FILES/debs
     elif is_fedora; then
         pkg_dir=$FILES/rpms
     elif is_suse; then
@@ -975,7 +975,7 @@ function apt_get {
 }
 
 # get_packages() collects a list of package names of any type from the
-# prerequisite files in ``files/{apts|rpms}``.  The list is intended
+# prerequisite files in ``files/{debs|rpms}``.  The list is intended
 # to be passed to a package installer such as apt or yum.
 #
 # Only packages required for the services in 1st argument will be
