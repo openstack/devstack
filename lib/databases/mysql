@@ -26,10 +26,10 @@ function cleanup_database_mysql {
         sudo rm -rf /etc/mysql
         return
     elif is_fedora; then
-        if [[ $DISTRO =~ (rhel7) ]]; then
-            MYSQL=mariadb
-        else
+        if [[ $DISTRO =~ (rhel6) ]]; then
             MYSQL=mysqld
+        else
+            MYSQL=mariadb
         fi
     elif is_suse; then
         MYSQL=mysql
@@ -54,10 +54,10 @@ function configure_database_mysql {
         my_conf=/etc/mysql/my.cnf
         mysql=mysql
     elif is_fedora; then
-        if [[ $DISTRO =~ (rhel7) ]]; then
-            mysql=mariadb
-        else
+        if [[ $DISTRO =~ (rhel6) ]]; then
             mysql=mysqld
+        else
+            mysql=mariadb
         fi
         my_conf=/etc/my.cnf
     elif is_suse; then
@@ -142,10 +142,10 @@ EOF
     fi
     # Install mysql-server
     if is_ubuntu || is_fedora; then
-        if [[ $DISTRO =~ (rhel7) ]]; then
-            install_package mariadb-server
-        else
+        if [[ $DISTRO =~ (rhel6) ]]; then
             install_package mysql-server
+        else
+            install_package mariadb-server
         fi
     elif is_suse; then
         if ! is_package_installed mariadb; then
