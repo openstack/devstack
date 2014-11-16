@@ -16,9 +16,9 @@ download the `Minimal
 CD <https://help.ubuntu.com/community/Installation/MinimalCD>`__ for
 Ubuntu releases since DevStack will download & install all the
 additional dependencies. The netinstall ISO is available for
-`Fedora <http://mirrors.kernel.org/fedora/releases/18/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso>`__
+`Fedora <http://mirrors.kernel.org/fedora/releases/>`__
 and
-`CentOS/RHEL <http://mirrors.kernel.org/centos/6.5/isos/x86_64/CentOS-6.5-x86_64-netinstall.iso>`__.
+`CentOS/RHEL <http://mirrors.kernel.org/centos/>`__.
 
 Install a couple of packages to bootstrap configuration:
 
@@ -284,7 +284,7 @@ Volumes
 
 DevStack will automatically use an existing LVM volume group named
 ``stack-volumes`` to store cloud-created volumes. If ``stack-volumes``
-doesn't exist, DevStack will set up a 5Gb loop-mounted file to contain
+doesn't exist, DevStack will set up a 10Gb loop-mounted file to contain
 it. This obviously limits the number and size of volumes that can be
 created inside OpenStack. The size can be overridden by setting
 ``VOLUME_BACKING_FILE_SIZE`` in ``local.conf``.
