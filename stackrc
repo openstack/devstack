@@ -350,8 +350,8 @@ HEAT_TEMPLATES_REPO=${HEAT_TEMPLATES_REPO:-${GIT_BASE}/openstack/heat-templates.
 HEAT_TEMPLATES_BRANCH=${HEAT_TEMPLATES_BRANCH:-master}
 
 # django openstack_auth library
-HORIZONAUTH_REPO=${HORIZONAUTH_REPO:-${GIT_BASE}/openstack/django_openstack_auth.git}
-HORIZONAUTH_BRANCH=${HORIZONAUTH_BRANCH:-master}
+GITREPO["django_openstack_auth"]=${HORIZONAUTH_REPO:-${GIT_BASE}/openstack/django_openstack_auth.git}
+GITBRANCH["django_openstack_auth"]=${HORIZONAUTH_BRANCH:-master}
 
 # keystone middleware
 KEYSTONEMIDDLEWARE_REPO=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/keystonemiddleware.git}
