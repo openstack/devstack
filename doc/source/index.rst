@@ -12,11 +12,8 @@ DevStack - an OpenStack Community Production
    changes
    contributing
 
-   guides/*
-
-
-Quick Start This ain't your first rodeo
----------------------------------------
+Quick Start
+-----------
 
 #. Select a Linux Distribution
 
@@ -59,40 +56,36 @@ Guides
 
 Walk through various setups used by stackers
 
-OpenStack on VMs
-----------------
+.. toctree::
+   :glob:
+   :maxdepth: 1
 
-These guides tell you how to virtualize your OpenStack cloud in virtual
-machines. This means that you can get started without having to purchase
-any hardware.
+   guides/single-vm
+   guides/single-machine
+   guides/multinode-lab
 
-Virtual Machine
-~~~~~~~~~~~~~~~
+All-In-One Single VM
+--------------------
 
-:doc:`Run OpenStack in a VM <guides/single-vm>`. The VMs launched in your cloud will be slow as
+Run :doc:`OpenStack in a VM <guides/single-vm>`. The VMs launched in your cloud will be slow as
 they are running in QEMU (emulation), but it is useful if you don't have
 spare hardware laying around. :doc:`[Read] <guides/single-vm>`
 
-OpenStack on Hardware
----------------------
+All-In-One Single Machine
+-------------------------
 
-These guides tell you how to deploy a development environment on real
-hardware. Guides range from running OpenStack on a single laptop to
-running a multi-node deployment on datacenter hardware.
+Run :doc:`OpenStack on dedicated hardware <guides/single-machine>`  This can include a
+server-class machine or a laptop at home.
+:doc:`[Read] <guides/single-machine>`
 
-All-In-One
-~~~~~~~~~~
+Multi-Node Lab
+--------------
 
-:doc:`Run OpenStack on dedicated hardware <guides/single-machine>` to get real performance in your VMs.
-This can include a server-class machine or a laptop at home. :doc:`[Read] <guides/single-machine>`
+Setup a :doc:`multi-node cluster <guides/multinode-lab>` with dedicated VLANs for VMs & Management.
+:doc:`[Read] <guides/multinode-lab>`
 
-Multi-Node + VLANs
-~~~~~~~~~~~~~~~~~~
-
-:doc:`Setup a multi-node cluster <guides/multinode-lab>` with dedicated VLANs for VMs & Management. :doc:`[Read] <guides/multinode-lab>`
-
-Documentation
-=============
+DevStack Documentation
+======================
 
 Overview
 --------
@@ -127,187 +120,102 @@ Contributing
 Code
 ====
 
-A look at the bits that make it all go
+*A look at the bits that make it all go*
 
 Scripts
 -------
 
-Generated documentation of DevStack scripts.
+* `stack.sh <stack.sh.html>`__ - The main script
+* `functions <functions.html>`__ - DevStack-specific functions
+* `functions-common <functions-common.html>`__ - Functions shared with other projects
+* `lib/apache <lib/apache.html>`__
+* `lib/baremetal <lib/baremetal.html>`__
+* `lib/ceilometer <lib/ceilometer.html>`__
+* `lib/ceph <lib/ceph.html>`__
+* `lib/cinder <lib/cinder.html>`__
+* `lib/config <lib/config.html>`__
+* `lib/database <lib/database.html>`__
+* `lib/dib <lib/dib.html>`__
+* `lib/dstat <lib/dstat.html>`__
+* `lib/glance <lib/glance.html>`__
+* `lib/heat <lib/heat.html>`__
+* `lib/horizon <lib/horizon.html>`__
+* `lib/infra <lib/infra.html>`__
+* `lib/ironic <lib/ironic.html>`__
+* `lib/keystone <lib/keystone.html>`__
+* `lib/ldap <lib/ldap.html>`__
+* `lib/neutron <lib/neutron.html>`__
+* `lib/nova <lib/nova.html>`__
+* `lib/opendaylight <lib/opendaylight.html>`__
+* `lib/oslo <lib/oslo.html>`__
+* `lib/rpc\_backend <lib/rpc_backend.html>`__
+* `lib/sahara <lib/sahara.html>`__
+* `lib/stackforge <lib/stackforge.html>`__
+* `lib/swift <lib/swift.html>`__
+* `lib/tempest <lib/tempest.html>`__
+* `lib/tls <lib/tls.html>`__
+* `lib/trove <lib/trove.html>`__
+* `lib/zaqar <lib/zaqar.html>`__
+* `unstack.sh <unstack.sh.html>`__
+* `clean.sh <clean.sh.html>`__
+* `run\_tests.sh <run_tests.sh.html>`__
 
-+-------------------------------+----------------------------------------------+
-| Filename                      | Link                                         |
-+===============================+==============================================+
-| stack.sh                      | `Read » <stack.sh.html>`__                   |
-+-------------------------------+----------------------------------------------+
-| functions                     | `Read » <functions.html>`__                  |
-+-------------------------------+----------------------------------------------+
-| functions-common              | `Read » <functions-common.html>`__           |
-+-------------------------------+----------------------------------------------+
-| lib/apache                    | `Read » <lib/apache.html>`__                 |
-+-------------------------------+----------------------------------------------+
-| lib/baremetal                 | `Read » <lib/baremetal.html>`__              |
-+-------------------------------+----------------------------------------------+
-| lib/ceilometer                | `Read » <lib/ceilometer.html>`__             |
-+-------------------------------+----------------------------------------------+
-| lib/cinder                    | `Read » <lib/cinder.html>`__                 |
-+-------------------------------+----------------------------------------------+
-| lib/config                    | `Read » <lib/config.html>`__                 |
-+-------------------------------+----------------------------------------------+
-| lib/database                  | `Read » <lib/database.html>`__               |
-+-------------------------------+----------------------------------------------+
-| lib/glance                    | `Read » <lib/glance.html>`__                 |
-+-------------------------------+----------------------------------------------+
-| lib/heat                      | `Read » <lib/heat.html>`__                   |
-+-------------------------------+----------------------------------------------+
-| lib/horizon                   | `Read » <lib/horizon.html>`__                |
-+-------------------------------+----------------------------------------------+
-| lib/infra                     | `Read » <lib/infra.html>`__                  |
-+-------------------------------+----------------------------------------------+
-| lib/ironic                    | `Read » <lib/ironic.html>`__                 |
-+-------------------------------+----------------------------------------------+
-| lib/keystone                  | `Read » <lib/keystone.html>`__               |
-+-------------------------------+----------------------------------------------+
-| lib/ldap                      | `Read » <lib/ldap.html>`__                   |
-+-------------------------------+----------------------------------------------+
-| lib/zaqar                     | `Read » <lib/zaqar.html>`__                  |
-+-------------------------------+----------------------------------------------+
-| lib/neutron                   | `Read » <lib/neutron.html>`__                |
-+-------------------------------+----------------------------------------------+
-| lib/nova                      | `Read » <lib/nova.html>`__                   |
-+-------------------------------+----------------------------------------------+
-| lib/oslo                      | `Read » <lib/oslo.html>`__                   |
-+-------------------------------+----------------------------------------------+
-| lib/rpc\_backend              | `Read » <lib/rpc_backend.html>`__            |
-+-------------------------------+----------------------------------------------+
-| lib/sahara                    | `Read » <lib/sahara.html>`__                 |
-+-------------------------------+----------------------------------------------+
-| lib/savanna                   | `Read » <lib/savanna.html>`__                |
-+-------------------------------+----------------------------------------------+
-| lib/stackforge                | `Read » <lib/stackforge.html>`__             |
-+-------------------------------+----------------------------------------------+
-| lib/swift                     | `Read » <lib/swift.html>`__                  |
-+-------------------------------+----------------------------------------------+
-| lib/tempest                   | `Read » <lib/tempest.html>`__                |
-+-------------------------------+----------------------------------------------+
-| lib/tls                       | `Read » <lib/tls.html>`__                    |
-+-------------------------------+----------------------------------------------+
-| lib/trove                     | `Read » <lib/trove.html>`__                  |
-+-------------------------------+----------------------------------------------+
-| unstack.sh                    | `Read » <unstack.sh.html>`__                 |
-+-------------------------------+----------------------------------------------+
-| clean.sh                      | `Read » <clean.sh.html>`__                   |
-+-------------------------------+----------------------------------------------+
-| run\_tests.sh                 | `Read » <run_tests.sh.html>`__               |
-+-------------------------------+----------------------------------------------+
-| extras.d/50-ironic.sh         | `Read » <extras.d/50-ironic.html>`__         |
-+-------------------------------+----------------------------------------------+
-| extras.d/70-zaqar.sh          | `Read » <extras.d/70-zaqar.html>`__          |
-+-------------------------------+----------------------------------------------+
-| extras.d/70-sahara.sh         | `Read » <extras.d/70-sahara.html>`__         |
-+-------------------------------+----------------------------------------------+
-| extras.d/70-savanna.sh        | `Read » <extras.d/70-savanna.html>`__        |
-+-------------------------------+----------------------------------------------+
-| extras.d/70-trove.sh          | `Read » <extras.d/70-trove.html>`__          |
-+-------------------------------+----------------------------------------------+
-| extras.d/80-opendaylight.sh   | `Read » <extras.d/80-opendaylight.html>`__   |
-+-------------------------------+----------------------------------------------+
-| extras.d/80-tempest.sh        | `Read » <extras.d/80-tempest.html>`__        |
-+-------------------------------+----------------------------------------------+
+* `extras.d/40-dib.sh <extras.d/40-dib.sh.html>`__
+* `extras.d/50-ironic.sh <extras.d/50-ironic.sh.html>`__
+* `extras.d/60-ceph.sh <extras.d/60-ceph.sh.html>`__
+* `extras.d/70-sahara.sh <extras.d/70-sahara.sh.html>`__
+* `extras.d/70-trove.sh <extras.d/70-trove.sh.html>`__
+* `extras.d/70-zaqar.sh <extras.d/70-zaqar.sh.html>`__
+* `extras.d/80-opendaylight.sh <extras.d/80-opendaylight.sh.html>`__
+* `extras.d/80-tempest.sh <extras.d/80-tempest.sh.html>`__
 
 Configuration
 -------------
-
-+--------------+--------------------------------+
-| Filename     | Link                           |
-+==============+================================+
-| local.conf   | `Read » <local.conf.html>`__   |
-+--------------+--------------------------------+
-| stackrc      | `Read » <stackrc.html>`__      |
-+--------------+--------------------------------+
-| openrc       | `Read » <openrc.html>`__       |
-+--------------+--------------------------------+
-| exerciserc   | `Read » <exerciserc.html>`__   |
-+--------------+--------------------------------+
-| eucarc       | `Read » <eucarc.html>`__       |
-+--------------+--------------------------------+
-
-Tools
------
-
-+-----------------------------+----------------------------------------------+
-| Filename                    | Link                                         |
-+=============================+==============================================+
-| tools/info.sh               | `Read » <tools/info.sh.html>`__              |
-+-----------------------------+----------------------------------------------+
-| tools/build\_docs.sh        | `Read » <tools/build_docs.sh.html>`__        |
-+-----------------------------+----------------------------------------------+
-| tools/create\_userrc.sh     | `Read » <tools/create_userrc.sh.html>`__     |
-+-----------------------------+----------------------------------------------+
-| tools/fixup\_stuff.sh       | `Read » <tools/fixup_stuff.sh.html>`__       |
-+-----------------------------+----------------------------------------------+
-| tools/install\_prereqs.sh   | `Read » <tools/install_prereqs.sh.html>`__   |
-+-----------------------------+----------------------------------------------+
-| tools/install\_pip.sh       | `Read » <tools/install_pip.sh.html>`__       |
-+-----------------------------+----------------------------------------------+
-| tools/upload\_image.sh      | `Read » <tools/upload_image.sh.html>`__      |
-+-----------------------------+----------------------------------------------+
-
-Samples
--------
-
-Generated documentation of DevStack sample files.
-
-+------------+--------------------------------------+
-| Filename   | Link                                 |
-+============+======================================+
-| local.sh   | `Read » <samples/local.sh.html>`__   |
-+------------+--------------------------------------+
-| localrc    | `Read » <samples/localrc.html>`__    |
-+------------+--------------------------------------+
-
-Exercises
----------
-
-+---------------------------------+-------------------------------------------------+
-| Filename                        | Link                                            |
-+=================================+=================================================+
-| exercise.sh                     | `Read » <exercise.sh.html>`__                   |
-+---------------------------------+-------------------------------------------------+
-| exercises/aggregates.sh         | `Read » <exercises/aggregates.sh.html>`__       |
-+---------------------------------+-------------------------------------------------+
-| exercises/boot\_from\_volume.sh | `Read » <exercises/boot_from_volume.sh.html>`__ |
-+---------------------------------+-------------------------------------------------+
-| exercises/bundle.sh             | `Read » <exercises/bundle.sh.html>`__           |
-+---------------------------------+-------------------------------------------------+
-| exercises/client-args.sh        | `Read » <exercises/client-args.sh.html>`__      |
-+---------------------------------+-------------------------------------------------+
-| exercises/client-env.sh         | `Read » <exercises/client-env.sh.html>`__       |
-+---------------------------------+-------------------------------------------------+
-| exercises/euca.sh               | `Read » <exercises/euca.sh.html>`__             |
-+---------------------------------+-------------------------------------------------+
-| exercises/floating\_ips.sh      | `Read » <exercises/floating_ips.sh.html>`__     |
-+---------------------------------+-------------------------------------------------+
-| exercises/horizon.sh            | `Read » <exercises/horizon.sh.html>`__          |
-+---------------------------------+-------------------------------------------------+
-| exercises/neutron-adv-test.sh   | `Read » <exercises/neutron-adv-test.sh.html>`__ |
-+---------------------------------+-------------------------------------------------+
-| exercises/sahara.sh             | `Read » <exercises/sahara.sh.html>`__           |
-+---------------------------------+-------------------------------------------------+
-| exercises/savanna.sh            | `Read » <exercises/savanna.sh.html>`__          |
-+---------------------------------+-------------------------------------------------+
-| exercises/sec\_groups.sh        | `Read » <exercises/sec_groups.sh.html>`__       |
-+---------------------------------+-------------------------------------------------+
-| exercises/swift.sh              | `Read » <exercises/swift.sh.html>`__            |
-+---------------------------------+-------------------------------------------------+
-| exercises/trove.sh              | `Read » <exercises/trove.sh.html>`__            |
-+---------------------------------+-------------------------------------------------+
-| exercises/volumes.sh            | `Read » <exercises/volumes.sh.html>`__          |
-+---------------------------------+-------------------------------------------------+
-| exercises/zaqar.sh              | `Read » <exercises/zaqar.sh.html>`__            |
-+---------------------------------+-------------------------------------------------+
 
 .. toctree::
    :glob:
    :maxdepth: 1
 
-   *
+   local.conf
+   stackrc
+   openrc
+   exerciserc
+   eucarc
+
+Tools
+-----
+
+* `tools/build\_docs.sh <tools/build_docs.sh.html>`__
+* `tools/create-stack-user.sh <tools/create-stack-user.sh.html>`__
+* `tools/create\_userrc.sh <tools/create_userrc.sh.html>`__
+* `tools/fixup\_stuff.sh <tools/fixup_stuff.sh.html>`__
+* `tools/info.sh <tools/info.sh.html>`__
+* `tools/install\_pip.sh <tools/install_pip.sh.html>`__
+* `tools/install\_prereqs.sh <tools/install_prereqs.sh.html>`__
+* `tools/make\_cert.sh <tools/make_cert.sh.html>`__
+* `tools/upload\_image.sh <tools/upload_image.sh.html>`__
+
+Samples
+-------
+
+* `local.sh <samples/local.sh.html>`__
+
+Exercises
+---------
+
+* `exercise.sh <exercise.sh.html>`__
+* `exercises/aggregates.sh <exercises/aggregates.sh.html>`__
+* `exercises/boot\_from\_volume.sh <exercises/boot_from_volume.sh.html>`__
+* `exercises/bundle.sh <exercises/bundle.sh.html>`__
+* `exercises/client-args.sh <exercises/client-args.sh.html>`__
+* `exercises/client-env.sh <exercises/client-env.sh.html>`__
+* `exercises/euca.sh <exercises/euca.sh.html>`__
+* `exercises/floating\_ips.sh <exercises/floating_ips.sh.html>`__
+* `exercises/horizon.sh <exercises/horizon.sh.html>`__
+* `exercises/neutron-adv-test.sh <exercises/neutron-adv-test.sh.html>`__
+* `exercises/sahara.sh <exercises/sahara.sh.html>`__
+* `exercises/sec\_groups.sh <exercises/sec_groups.sh.html>`__
+* `exercises/swift.sh <exercises/swift.sh.html>`__
+* `exercises/trove.sh <exercises/trove.sh.html>`__
+* `exercises/volumes.sh <exercises/volumes.sh.html>`__
+* `exercises/zaqar.sh <exercises/zaqar.sh.html>`__

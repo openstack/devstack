@@ -1,6 +1,6 @@
-==========
-All-In-One
-==========
+=========================
+All-In-One Single Machine
+=========================
 
 Things are about to get real! Using OpenStack in containers or VMs is
 nice for kicking the tires, but doesn't compare to the feeling you get
