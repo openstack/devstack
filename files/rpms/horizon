@@ -12,8 +12,8 @@ python-httplib2
 python-migrate
 python-mox
 python-nose
-python-paste        #dist:f19,f20
-python-paste-deploy #dist:f19,f20
+python-paste        #dist:f19,f20,f21
+python-paste-deploy #dist:f19,f20,f21
 python-routes
 python-sphinx
 python-sqlalchemy
