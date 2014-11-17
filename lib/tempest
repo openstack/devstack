@@ -300,6 +300,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
+    iniset $TEMPEST_CONFIG compute-feature-enabled xml_api_v2 ${COMPUTE_XML_API_V2:-True}
 
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
