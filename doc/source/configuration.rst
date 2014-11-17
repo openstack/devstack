@@ -22,7 +22,7 @@ simplify this process and meet the following goals:
 -  allow settings in arbitrary configuration files to be changed
 
 local.conf
-~~~~~~~~~~
+==========
 
 The new configuration file is ``local.conf`` and resides in the root
 DevStack directory like the old ``localrc`` file. It is a modified INI
@@ -96,7 +96,7 @@ fragment amd MUST conform to the shell requirements, specifically no
 whitespace around ``=`` (equals).
 
 Minimal Configuration
-~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 While ``stack.sh`` is happy to run without a ``localrc`` section in
 ``local.conf``, devlife is better when there are a few minimal variables
@@ -136,9 +136,11 @@ available for ``openrc`` to set ``OS_AUTH_URL``. ``HOST_IP`` is not set
 by default.
 
 Common Configuration Variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==============================
 
-Set DevStack install directory
+Installation Directory
+----------------------
+
     | *Default: ``DEST=/opt/stack``*
     |  The DevStack install directory is set by the ``DEST`` variable.
     |  By setting it early in the ``localrc`` section you can reference it
@@ -150,7 +152,27 @@ Set DevStack install directory
 
         DEST=/opt/stack
 
-stack.sh logging
+Libraries from Git
+------------------
+
+   | *Default: ``LIBS_FROM_GIT=""``*
+
+   | By default devstack installs OpenStack server components from
+     git, however it installs client libraries from released versions
+     on pypi. This is appropriate if you are working on server
+     development, but if you want to see how an unreleased version of
+     the client affects the system you can have devstack install it
+     from upstream, or from local git trees.
+   | Multiple libraries can be specified as a comma separated list.
+   |
+
+   ::
+
+      LIBS_FROM_GIT=python-keystoneclient,oslo.config
+
+Enable Logging
+--------------
+
     | *Defaults: ``LOGFILE="" LOGDAYS=7 LOG_COLOR=True``*
     |  By default ``stack.sh`` output is only written to the console
        where is runs. It can be sent to a file in addition to the console
@@ -178,7 +200,9 @@ stack.sh logging
 
         LOG_COLOR=False
 
-Screen logging
+Logging the Screen Output
+-------------------------
+
     | *Default: ``SCREEN_LOGDIR=""``*
     |  By default DevStack runs the OpenStack services using ``screen``
        which is useful for watching log and debug output. However, in
@@ -196,7 +220,9 @@ Screen logging
     *Note the use of ``DEST`` to locate the main install directory; this
     is why we suggest setting it in ``local.conf``.*
 
-One syslog to bind them all
+Enabling Syslog
+---------------
+
     | *Default: ``SYSLOG=False SYSLOG_HOST=$HOST_IP SYSLOG_PORT=516``*
     |  Logging all services to a single syslog can be convenient. Enable
        syslogging by setting ``SYSLOG`` to ``True``. If the destination log
@@ -211,6 +237,8 @@ One syslog to bind them all
         SYSLOG_PORT=516
 
 A clean install every time
+--------------------------
+
     | *Default: ``RECLONE=""``*
     |  By default ``stack.sh`` only clones the project repos if they do
        not exist in ``$DEST``. ``stack.sh`` will freshen each repo on each
@@ -222,10 +250,18 @@ A clean install every time
 
         RECLONE=yes
 
-                    Swift
-                    Default: SWIFT_HASH="" SWIFT_REPLICAS=1 SWIFT_DATA_DIR=$DEST/data/swift
-                    Swift is now used as the back-end for the S3-like object store.  When enabled Nova's objectstore (n-obj in ENABLED_SERVICES) is automatically disabled. Enable Swift by adding it services to ENABLED_SERVICES:
-                    enable_service s-proxy s-object s-container s-account
+Swift
+-----
+
+    | Default: SWIFT_HASH=""
+    | SWIFT_REPLICAS=1
+    | SWIFT_DATA_DIR=$DEST/data/swift
+
+    | Swift is now used as the back-end for the S3-like object store.
+      When enabled Nova's objectstore (n-obj in ENABLED_SERVICES) is
+      automatically disabled. Enable Swift by adding it services to
+      ENABLED_SERVICES: enable_service s-proxy s-object s-container
+      s-account
 
     Setting Swift's hash value is required and you will be prompted for
     it if Swift is enabled so just set it to something already:
@@ -259,6 +295,8 @@ A clean install every time
     work correctly.*
 
 Service Catalog Backend
+-----------------------
+
     | *Default: ``KEYSTONE_CATALOG_BACKEND=sql``*
     |  DevStack uses Keystone's ``sql`` service catalog backend. An
        alternate ``template`` backend is also available. However, it does
@@ -274,6 +312,8 @@ Service Catalog Backend
     ``files/keystone_data.sh``
 
 Cinder
+------
+
     | Default:
     | VOLUME_GROUP="stack-volumes" VOLUME_NAME_PREFIX="volume-" VOLUME_BACKING_FILE_SIZE=10250M
     |  The logical volume group used to hold the Cinder-managed volumes
@@ -289,6 +329,8 @@ Cinder
         VOLUME_BACKING_FILE_SIZE=10250M
 
 Multi-host DevStack
+-------------------
+
     | *Default: ``MULTI_HOST=False``*
     |  Running DevStack with multiple hosts requires a custom
        ``local.conf`` section for each host. The master is the same as a
@@ -311,6 +353,8 @@ Multi-host DevStack
         ENABLED_SERVICES=n-vol,n-cpu,n-net,n-api
 
 API rate limits
+---------------
+
     | Default: ``API_RATE_LIMIT=True``
     | Integration tests such as Tempest will likely run afoul of the
       default rate limits configured for Nova. Turn off rate limiting
@@ -322,7 +366,7 @@ API rate limits
         API_RATE_LIMIT=False
 
 Examples
-~~~~~~~~
+========
 
 -  Eliminate a Cinder pass-through (``CINDER_PERIODIC_INTERVAL``):
 

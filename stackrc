@@ -134,6 +134,19 @@ REQUIREMENTS_MODE=${REQUIREMENTS_MODE:-strict}
 # Another option is https://git.openstack.org
 GIT_BASE=${GIT_BASE:-git://git.openstack.org}
 
+# Which libraries should we install from git instead of using released
+# versions on pypi?
+#
+# By default devstack is now installing libraries from pypi instead of
+# from git repositories by default. This works great if you are
+# developing server components, but if you want to develop libraries
+# and see them live in devstack you need to tell devstack it should
+# install them from git.
+#
+# ex: LIBS_FROM_GIT=python-keystoneclient,oslo.config
+#
+# Will install those 2 libraries from git, the rest from pypi.
+
 ##############
 #
 #  OpenStack Server Components
