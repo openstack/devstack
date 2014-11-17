@@ -78,8 +78,10 @@ def main():
             params['emulator'] = "/usr/bin/qemu-kvm"
 
     if args.console_log:
+        params['bios_serial'] = "<bios useserial='yes'/>"
         params['console_log'] = CONSOLE_LOG % {'console_log': args.console_log}
     else:
+        params['bios_serial'] = ''
         params['console_log'] = ''
     libvirt_template = source_template % params
     conn = libvirt.open("qemu:///system")
