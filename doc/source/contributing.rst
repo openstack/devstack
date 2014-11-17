@@ -59,16 +59,17 @@ Code
 The DevStack repo generally keeps all of the primary scripts at the root
 level.
 
-``docs`` - Contains the source for this website. It is built using
-``tools/build_docs.sh``.
+``doc`` - Contains the Sphinx source for the documentation.
+``tools/build_docs.sh`` is used to generate the HTML versions of the
+DevStack scripts.  A complete doc build can be run with ``tox -edocs``.
 
-``exercises`` - Contains the test scripts used to validate and
+``exercises`` - Contains the test scripts used to sanity-check and
 demonstrate some OpenStack functions. These scripts know how to exit
 early or skip services that are not enabled.
 
 ``extras.d`` - Contains the dispatch scripts called by the hooks in
-``stack.sh``, ``unstack.sh`` and ``clean.sh``. See `the plugins
-docs <plugins.html>`__ for more information.
+``stack.sh``, ``unstack.sh`` and ``clean.sh``. See :doc:`the plugins
+docs <plugins>` for more information.
 
 ``files`` - Contains a variety of otherwise lost files used in
 configuring and operating DevStack. This includes templates for
@@ -84,10 +85,10 @@ there are some for system services and project plugins.
 DevStack repo.
 
 ``tests`` - the DevStack test suite is rather sparse, mostly consisting
-of test of specific fragile functions in the ``functions`` file.
+of test of specific fragile functions in the ``functions`` and
+``functions-common`` files.
 
-``tools`` - Contains a collection of stand-alone scripts, some of which
-have aged a bit (does anyone still do ramdisk installs?). While these
+``tools`` - Contains a collection of stand-alone scripts. While these
 may reference the top-level DevStack configuration they can generally be
 run alone. There are also some sub-directories to support specific
 environments such as XenServer.

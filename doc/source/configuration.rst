@@ -74,7 +74,7 @@ A specific meta-section ``local|localrc`` is used to provide a default
 ``localrc`` file (actually ``.localrc.auto``). This allows all custom
 settings for DevStack to be contained in a single file. If ``localrc``
 exists it will be used instead to preserve backward-compatibility. More
-details on the `contents of localrc <localrc.html>`__ are available.
+details on the :doc:`contents of local.conf <local.conf>` are available.
 
 ::
 
