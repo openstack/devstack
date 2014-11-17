@@ -279,6 +279,10 @@ GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-master}
 GITREPO["oslo.config"]=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
 GITBRANCH["oslo.config"]=${OSLOCFG_BRANCH:-master}
 
+# oslo.context
+GITREPO["oslo.context"]=${OSLOCTX_REPO:-${GIT_BASE}/openstack/oslo.context.git}
+GITBRANCH["oslo.context"]=${OSLOCTX_BRANCH:-master}
+
 # oslo.db
 GITREPO["oslo.db"]=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
 GITBRANCH["oslo.db"]=${OSLODB_BRANCH:-master}

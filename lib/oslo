@@ -23,6 +23,7 @@ set +o xtrace
 GITDIR["cliff"]=$DEST/cliff
 GITDIR["oslo.config"]=$DEST/oslo.config
 GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
+GITDIR["oslo.context"]=$DEST/oslo.context
 GITDIR["oslo.db"]=$DEST/oslo.db
 GITDIR["oslo.i18n"]=$DEST/oslo.i18n
 GITDIR["oslo.log"]=$DEST/oslo.log
