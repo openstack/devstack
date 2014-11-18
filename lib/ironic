@@ -40,6 +40,18 @@ IRONIC_CONF_FILE=$IRONIC_CONF_DIR/ironic.conf
 IRONIC_ROOTWRAP_CONF=$IRONIC_CONF_DIR/rootwrap.conf
 IRONIC_POLICY_JSON=$IRONIC_CONF_DIR/policy.json
 
+# Deploy to hardware platform
+IRONIC_HW_NODE_CPU=${IRONIC_HW_NODE_CPU:-1}
+IRONIC_HW_NODE_RAM=${IRONIC_HW_NODE_RAM:-512}
+IRONIC_HW_NODE_DISK=${IRONIC_HW_NODE_DISK:-10}
+IRONIC_HW_EPHEMERAL_DISK=${IRONIC_HW_EPHEMERAL_DISK:-0}
+# The file is composed of multiple lines, each line includes four field
+# separated by white space: IPMI address, MAC address, IPMI username
+# and IPMI password.
+# An example:
+#   192.168.110.107 00:1e:67:57:50:4c root otc123
+IRONIC_IPMIINFO_FILE=${IRONIC_IPMIINFO_FILE:-$IRONIC_DATA_DIR/hardware_info}
+
 # Set up defaults for functional / integration testing
 IRONIC_SCRIPTS_DIR=${IRONIC_SCRIPTS_DIR:-$TOP_DIR/tools/ironic/scripts}
 IRONIC_TEMPLATES_DIR=${IRONIC_TEMPLATES_DIR:-$TOP_DIR/tools/ironic/templates}
@@ -51,6 +63,7 @@ IRONIC_SSH_KEY_FILENAME=${IRONIC_SSH_KEY_FILENAME:-ironic_key}
 IRONIC_KEY_FILE=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME
 IRONIC_SSH_VIRT_TYPE=${IRONIC_SSH_VIRT_TYPE:-virsh}
 IRONIC_TFTPBOOT_DIR=${IRONIC_TFTPBOOT_DIR:-$IRONIC_DATA_DIR/tftpboot}
+IRONIC_TFTPSERVER_IP=${IRONIC_TFTPSERVER_IP:-$HOST_IP}
 IRONIC_VM_SSH_PORT=${IRONIC_VM_SSH_PORT:-22}
 IRONIC_VM_SSH_ADDRESS=${IRONIC_VM_SSH_ADDRESS:-$HOST_IP}
 IRONIC_VM_COUNT=${IRONIC_VM_COUNT:-1}
@@ -80,7 +93,7 @@ IRONIC_AGENT_KERNEL_URL=${IRONIC_AGENT_KERNEL_URL:-http://tarballs.openstack.org
 IRONIC_AGENT_RAMDISK_URL=${IRONIC_AGENT_RAMDISK_URL:-http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz}
 
 # Which deploy driver to use - valid choices right now
-# are 'pxe_ssh' and 'agent_ssh'.
+# are 'pxe_ssh', 'pxe_ipmitool' and 'agent_ssh'.
 IRONIC_DEPLOY_DRIVER=${IRONIC_DEPLOY_DRIVER:-pxe_ssh}
 
 #TODO(agordeev): replace 'ubuntu' with host distro name getting
@@ -133,6 +146,11 @@ function is_ironic_enabled {
     return 1
 }
 
+function is_ironic_hardware {
+    is_ironic_enabled && [[ -n "${IRONIC_DEPLOY_DRIVER##*_ssh}" ]] && return 0
+    return 1
+}
+
 # install_ironic() - Collect source and prepare
 function install_ironic {
     # make sure all needed service were enabled
@@ -146,6 +164,14 @@ function install_ironic {
 
     if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
         install_apache_wsgi
+    fi
+
+    if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] && is_ubuntu; then
+        # Ubuntu packaging+apparmor issue prevents libvirt from loading
+        # the ROM from /usr/share/misc.  Workaround by installing it directly
+        # to a directory that it can read from. (LP: #1393548)
+        sudo rm -rf /usr/share/qemu/sgabios.bin
+        sudo cp /usr/share/misc/sgabios.bin /usr/share/qemu/sgabios.bin
     fi
 }
 
@@ -273,7 +299,7 @@ function configure_ironic_conductor {
     iniset $IRONIC_CONF_FILE DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
     iniset $IRONIC_CONF_FILE DEFAULT enabled_drivers $IRONIC_ENABLED_DRIVERS
     iniset $IRONIC_CONF_FILE conductor api_url http://$HOST_IP:6385
-    iniset $IRONIC_CONF_FILE pxe tftp_server $HOST_IP
+    iniset $IRONIC_CONF_FILE pxe tftp_server $IRONIC_TFTPSERVER_IP
     iniset $IRONIC_CONF_FILE pxe tftp_root $IRONIC_TFTPBOOT_DIR
     iniset $IRONIC_CONF_FILE pxe tftp_master_path $IRONIC_TFTPBOOT_DIR/master_images
     if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
@@ -475,7 +501,7 @@ function create_bridge_and_vms {
     create_ovs_taps
 }
 
-function enroll_vms {
+function enroll_nodes {
     local chassis_id=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
     local idx=0
 
@@ -487,34 +513,65 @@ function enroll_vms {
         local _IRONIC_DEPLOY_RAMDISK_KEY=deploy_ramdisk
     fi
 
-    while read MAC; do
-
-        local node_id=$(ironic node-create --chassis_uuid $chassis_id \
-            --driver $IRONIC_DEPLOY_DRIVER \
+    if ! is_ironic_hardware; then
+        local ironic_node_cpu=$IRONIC_VM_SPECS_CPU
+        local ironic_node_ram=$IRONIC_VM_SPECS_RAM
+        local ironic_node_disk=$IRONIC_VM_SPECS_DISK
+        local ironic_ephemeral_disk=$IRONIC_VM_EPHEMERAL_DISK
+        local ironic_hwinfo_file=$IRONIC_VM_MACS_CSV_FILE
+        local node_options="\
             -i $_IRONIC_DEPLOY_KERNEL_KEY=$IRONIC_DEPLOY_KERNEL_ID \
             -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID \
             -i ssh_virt_type=$IRONIC_SSH_VIRT_TYPE \
             -i ssh_address=$IRONIC_VM_SSH_ADDRESS \
             -i ssh_port=$IRONIC_VM_SSH_PORT \
             -i ssh_username=$IRONIC_SSH_USERNAME \
-            -i ssh_key_filename=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME \
-            -p cpus=$IRONIC_VM_SPECS_CPU \
-            -p memory_mb=$IRONIC_VM_SPECS_RAM \
-            -p local_gb=$IRONIC_VM_SPECS_DISK \
+            -i ssh_key_filename=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME"
+    else
+        local ironic_node_cpu=$IRONIC_HW_NODE_CPU
+        local ironic_node_ram=$IRONIC_HW_NODE_RAM
+        local ironic_node_disk=$IRONIC_HW_NODE_DISK
+        local ironic_ephemeral_disk=$IRONIC_HW_EPHEMERAL_DISK
+        if [[ -z "${IRONIC_DEPLOY_DRIVER##*_ipmitool}" ]]; then
+            local ironic_hwinfo_file=$IRONIC_IPMIINFO_FILE
+        fi
+    fi
+
+    while read hardware_info; do
+        if ! is_ironic_hardware; then
+            local mac_address=$hardware_info
+        elif [[ -z "${IRONIC_DEPLOY_DRIVER##*_ipmitool}" ]]; then
+            local ipmi_address=$(echo $hardware_info |awk  '{print $1}')
+            local mac_address=$(echo $hardware_info |awk '{print $2}')
+            local ironic_ipmi_username=$(echo $hardware_info |awk '{print $3}')
+            local ironic_ipmi_passwd=$(echo $hardware_info |awk '{print $4}')
+            # Currently we require all hardware platform have same CPU/RAM/DISK info
+            # in future, this can be enhanced to support different type, and then
+            # we create the bare metal flavor with minimum value
+            local node_options="-i ipmi_address=$ipmi_address -i ipmi_password=$ironic_ipmi_passwd\
+                -i ipmi_username=$ironic_ipmi_username"
+        fi
+
+        local node_id=$(ironic node-create --chassis_uuid $chassis_id \
+            --driver $IRONIC_DEPLOY_DRIVER \
+            -p cpus=$ironic_node_cpu\
+            -p memory_mb=$ironic_node_ram\
+            -p local_gb=$ironic_node_disk\
             -p cpu_arch=x86_64 \
+            $node_options \
             | grep " uuid " | get_field 2)
 
-        ironic port-create --address $MAC --node_uuid $node_id
+        ironic port-create --address $mac_address --node_uuid $node_id
 
         idx=$((idx+1))
-    done < $IRONIC_VM_MACS_CSV_FILE
+    done < $ironic_hwinfo_file
 
     # create the nova flavor
     # NOTE(adam_g): Attempting to use an autogenerated UUID for flavor id here uncovered
     # bug (LP: #1333852) in Trove.  This can be changed to use an auto flavor id when the
     # bug is fixed in Juno.
-    local adjusted_disk=$(($IRONIC_VM_SPECS_DISK - $IRONIC_VM_EPHEMERAL_DISK))
-    nova flavor-create --ephemeral $IRONIC_VM_EPHEMERAL_DISK baremetal 551 $IRONIC_VM_SPECS_RAM $adjusted_disk $IRONIC_VM_SPECS_CPU
+    local adjusted_disk=$(($ironic_node_disk - $ironic_ephemeral_disk))
+    nova flavor-create --ephemeral $ironic_ephemeral_disk baremetal 551 $ironic_node_ram $adjusted_disk $ironic_node_cpu
 
     # TODO(lucasagomes): Remove the 'baremetal:deploy_kernel_id'
     # and 'baremetal:deploy_ramdisk_id' parameters
@@ -662,11 +719,15 @@ function upload_baremetal_ironic_deploy {
 
 function prepare_baremetal_basic_ops {
     upload_baremetal_ironic_deploy
-    create_bridge_and_vms
-    enroll_vms
+    if ! is_ironic_hardware; then
+        create_bridge_and_vms
+    fi
+    enroll_nodes
     configure_tftpd
     configure_iptables
-    configure_ironic_auxiliary
+    if ! is_ironic_hardware; then
+        configure_ironic_auxiliary
+    fi
 }
 
 function cleanup_baremetal_basic_ops {
