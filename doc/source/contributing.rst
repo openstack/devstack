@@ -10,9 +10,9 @@ License Agreement (CLA). If you have already done that for another
 OpenStack project you are good to go.
 
 Things To Know
-~~~~~~~~~~~~~~
+==============
 
-| 
+|
 | **Where Things Are**
 
 The official DevStack repository is located at
@@ -30,7 +30,7 @@ queue <https://review.openstack.org/#/q/project:openstack-dev/devstack,n,z>`__
 is, however, used for all commits except for the text of this website.
 That should also change in the near future.
 
-| 
+|
 | **HACKING.rst**
 
 Like most OpenStack projects, DevStack includes a ``HACKING.rst`` file
@@ -38,7 +38,7 @@ that describes the layout, style and conventions of the project. Because
 ``HACKING.rst`` is in the main DevStack repo it is considered
 authoritative. Much of the content on this page is taken from there.
 
-| 
+|
 | **bashate Formatting**
 
 Around the time of the OpenStack Havana release we added a tool to do
@@ -51,9 +51,9 @@ the script pages for devstack.org and possibly even simple code
 formatting. Run it on the entire project with ``./run_tests.sh``.
 
 Code
-~~~~
+====
 
-| 
+|
 | **Repo Layout**
 
 The DevStack repo generally keeps all of the primary scripts at the root

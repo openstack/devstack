@@ -9,16 +9,16 @@ launched in the cloud will be slow as they are running in QEMU
 operation. Speed not required.
 
 Prerequisites Cloud & Image
----------------------------
+===========================
 
 Virtual Machine
-~~~~~~~~~~~~~~~
+---------------
 
 DevStack should run in any virtual machine running a supported Linux
 release. It will perform best with 2Gb or more of RAM.
 
 OpenStack Deployment & cloud-init
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 If the cloud service has an image with ``cloud-init`` pre-installed, use
 it. You can get one from `Ubuntu's Daily
@@ -33,10 +33,10 @@ can manually kick off the script below as a non-root user in a
 bare-bones server installation.
 
 Installation shake and bake
----------------------------
+===========================
 
 Launching With Cloud-Init
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 
 This cloud config grabs the latest version of DevStack via git, creates
 a minimal ``local.conf`` file and kicks off ``stack.sh``. It should be
@@ -79,13 +79,13 @@ As DevStack will refuse to run as root, this configures ``cloud-init``
 to create a non-root user and run the ``start.sh`` script as that user.
 
 Launching By Hand
-~~~~~~~~~~~~~~~~~
+-----------------
 
 Using a hypervisor directly, launch the VM and either manually perform
 the steps in the embedded shell script above or copy it into the VM.
 
 Using OpenStack
-~~~~~~~~~~~~~~~
+---------------
 
 At this point you should be able to access the dashboard. Launch VMs and
 if you give them floating IPs access those VMs from other machines on
