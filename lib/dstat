@@ -24,7 +24,7 @@ DSTAT_FILE=${DSTAT_FILE:-"dstat.txt"}
 # start_dstat() - Start running processes, including screen
 function start_dstat {
     # A better kind of sysstat, with the top process per time slice
-    DSTAT_OPTS="-tcmndrylp --top-cpu-adv"
+    DSTAT_OPTS="-tcmndrylpg --top-cpu-adv"
     if [[ -n ${SCREEN_LOGDIR} ]]; then
         screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
     else
