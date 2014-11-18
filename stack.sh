@@ -303,7 +303,7 @@ safe_chown -R $STACK_USER $DATA_DIR
 # Configure proper hostname
 # Certain services such as rabbitmq require that the local hostname resolves
 # correctly.  Make sure it exists in /etc/hosts so that is always true.
-LOCAL_HOSTNAME=`hostname -s`
+LOCAL_HOSTNAME="localhost `hostname -s`"
 if [ -z "`grep ^127.0.0.1 /etc/hosts | grep $LOCAL_HOSTNAME`" ]; then
     sudo sed -i "s/\(^127.0.0.1.*\)/\1 $LOCAL_HOSTNAME/" /etc/hosts
 fi
