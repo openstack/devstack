@@ -12,6 +12,7 @@ python-libvirt
 qemu
 qemu-kvm
 qemu-utils
+sgabios
 syslinux
 tftpd-hpa
 xinetd
