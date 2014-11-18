@@ -1,4 +1,4 @@
-# lib/apache
+# lib/dstat
 # Functions to start and stop dstat
 
 # Dependencies:
