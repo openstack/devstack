@@ -104,7 +104,8 @@ IRONIC_BIN_DIR=$(get_python_exec_prefix)
 
 # Ironic connection info.  Note the port must be specified.
 IRONIC_SERVICE_PROTOCOL=http
-IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:6385}
+IRONIC_SERVICE_PORT=${IRONIC_SERVICE_PORT:-6385}
+IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:$IRONIC_SERVICE_PORT}
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,ironic
@@ -209,7 +210,7 @@ function _config_ironic_apache_wsgi {
 # cleanup_ironic() - Remove residual data files, anything left over from previous
 # runs that would need to clean up.
 function cleanup_ironic {
-    sudo rm -rf $IRONIC_AUTH_CACHE_DIR
+    sudo rm -rf $IRONIC_AUTH_CACHE_DIR $IRONIC_CONF_DIR
 }
 
 # configure_ironic_dirs() - Create all directories required by Ironic and
@@ -277,6 +278,7 @@ function configure_ironic_api {
     iniset $IRONIC_CONF_FILE DEFAULT policy_file $IRONIC_POLICY_JSON
     configure_auth_token_middleware $IRONIC_CONF_FILE ironic $IRONIC_AUTH_CACHE_DIR/api
     iniset_rpc_backend ironic $IRONIC_CONF_FILE DEFAULT
+    iniset $IRONIC_CONF_FILE api port $IRONIC_SERVICE_PORT
 
     cp -p $IRONIC_DIR/etc/ironic/policy.json $IRONIC_POLICY_JSON
 }
@@ -298,7 +300,7 @@ function configure_ironic_conductor {
 
     iniset $IRONIC_CONF_FILE DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
     iniset $IRONIC_CONF_FILE DEFAULT enabled_drivers $IRONIC_ENABLED_DRIVERS
-    iniset $IRONIC_CONF_FILE conductor api_url http://$HOST_IP:6385
+    iniset $IRONIC_CONF_FILE conductor api_url $IRONIC_SERVICE_PROTOCOL://$HOST_IP:$IRONIC_SERVICE_PORT
     iniset $IRONIC_CONF_FILE pxe tftp_server $IRONIC_TFTPSERVER_IP
     iniset $IRONIC_CONF_FILE pxe tftp_root $IRONIC_TFTPBOOT_DIR
     iniset $IRONIC_CONF_FILE pxe tftp_master_path $IRONIC_TFTPBOOT_DIR/master_images
@@ -419,7 +421,7 @@ function start_ironic {
 function start_ironic_api {
     run_process ir-api "$IRONIC_BIN_DIR/ironic-api --config-file=$IRONIC_CONF_FILE"
     echo "Waiting for ir-api ($IRONIC_HOSTPORT) to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$IRONIC_HOSTPORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- $IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT; do sleep 1; done"; then
         die $LINENO "ir-api did not start"
     fi
 }
@@ -586,7 +588,7 @@ function configure_iptables {
     sudo modprobe nf_nat_tftp
     # nodes boot from TFTP and callback to the API server listening on $HOST_IP
     sudo iptables -I INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
-    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport $IRONIC_HOSTPORT -j ACCEPT || true
+    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport $IRONIC_SERVICE_PORT -j ACCEPT || true
     if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
         # agent ramdisk gets instance image from swift
         sudo iptables -I INPUT -d $HOST_IP -p tcp --dport ${SWIFT_DEFAULT_BIND_PORT:-8080} -j ACCEPT || true
@@ -748,7 +750,7 @@ function cleanup_baremetal_basic_ops {
     sudo rm -rf /etc/xinetd.d/tftp /etc/init/tftpd-hpa.override
     restart_service xinetd
     sudo iptables -D INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
-    sudo iptables -D INPUT -d $HOST_IP -p tcp --dport 6385 -j ACCEPT || true
+    sudo iptables -D INPUT -d $HOST_IP -p tcp --dport $IRONIC_SERVICE_PORT -j ACCEPT || true
     if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
         # agent ramdisk gets instance image from swift
         sudo iptables -D INPUT -d $HOST_IP -p tcp --dport ${SWIFT_DEFAULT_BIND_PORT:-8080} -j ACCEPT || true

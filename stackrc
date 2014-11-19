@@ -203,8 +203,8 @@ TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
 TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
 # TODO(sdague): this should end up as a library component like below
-GITREPO["tempest_lib"]=${TEMPEST_LIB_REPO:-${GIT_BASE}/openstack/tempest-lib.git}
-GITBRANCH["tempest_lib"]=${TEMPEST_LIB_BRANCH:-master}
+GITREPO["tempest-lib"]=${TEMPEST_LIB_REPO:-${GIT_BASE}/openstack/tempest-lib.git}
+GITBRANCH["tempest-lib"]=${TEMPEST_LIB_BRANCH:-master}
 
 
 ##############
@@ -278,6 +278,10 @@ GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-master}
 # oslo.config
 GITREPO["oslo.config"]=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
 GITBRANCH["oslo.config"]=${OSLOCFG_BRANCH:-master}
+
+# oslo.context
+GITREPO["oslo.context"]=${OSLOCTX_REPO:-${GIT_BASE}/openstack/oslo.context.git}
+GITBRANCH["oslo.context"]=${OSLOCTX_BRANCH:-master}
 
 # oslo.db
 GITREPO["oslo.db"]=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
