@@ -142,8 +142,16 @@ function init_horizon {
     # and run_process
     sudo rm -f /var/log/$APACHE_NAME/horizon_*
 
-    DJANGO_SETTINGS_MODULE=openstack_dashboard.settings django-admin.py collectstatic --noinput
-    DJANGO_SETTINGS_MODULE=openstack_dashboard.settings django-admin.py compress --force
+    # Setup alias for django-admin which could be different depending on distro
+    local django_admin
+    if type -p django-admin > /dev/null; then
+        django_admin=django-admin
+    else
+        django_admin=django-admin.py
+    fi
+
+    DJANGO_SETTINGS_MODULE=openstack_dashboard.settings $django_admin collectstatic --noinput
+    DJANGO_SETTINGS_MODULE=openstack_dashboard.settings $django_admin compress --force
 
 }
 
