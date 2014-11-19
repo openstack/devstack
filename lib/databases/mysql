@@ -142,7 +142,7 @@ EOF
     fi
     # Install mysql-server
     if is_ubuntu || is_fedora; then
-        if [[ $DISTRO =~ (rhel6) ]]; then
+        if [[ $DISTRO =~ (rhel6|precise) ]]; then
             install_package mysql-server
         else
             install_package mariadb-server
