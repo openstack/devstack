@@ -564,10 +564,8 @@ function enroll_nodes {
             # we create the bare metal flavor with minimum value
             local node_options="-i ipmi_address=$ipmi_address -i ipmi_password=$ironic_ipmi_passwd\
                 -i ipmi_username=$ironic_ipmi_username"
-            if is_deployed_by_agent; then
-                node_options+=" -i $_IRONIC_DEPLOY_KERNEL_KEY=$IRONIC_DEPLOY_KERNEL_ID"
-                node_options+=" -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID"
-            fi
+            node_options+=" -i $_IRONIC_DEPLOY_KERNEL_KEY=$IRONIC_DEPLOY_KERNEL_ID"
+            node_options+=" -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID"
         fi
 
         local node_id=$(ironic node-create --chassis_uuid $chassis_id \
@@ -591,11 +589,7 @@ function enroll_nodes {
     local adjusted_disk=$(($ironic_node_disk - $ironic_ephemeral_disk))
     nova flavor-create --ephemeral $ironic_ephemeral_disk baremetal 551 $ironic_node_ram $adjusted_disk $ironic_node_cpu
 
-    # TODO(lucasagomes): Remove the 'baremetal:deploy_kernel_id'
-    # and 'baremetal:deploy_ramdisk_id' parameters
-    # from the flavor after the completion of
-    # https://blueprints.launchpad.net/ironic/+spec/add-node-instance-info
-    nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$IRONIC_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$IRONIC_DEPLOY_RAMDISK_ID"
+    nova flavor-key baremetal set "cpu_arch"="x86_64"
 
     if [ "$VIRT_DRIVER" == "ironic" ]; then
         wait_for_nova_resources $total_nodes
