@@ -13,10 +13,10 @@ Below is a list of what is specifically is supported (read that as
 "tested") going forward.
 
 Supported Components
---------------------
+====================
 
 Base OS
-~~~~~~~
+-------
 
 *The OpenStack Technical Committee (TC) has defined the current CI
 strategy to include the latest Ubuntu release and the latest RHEL
@@ -33,7 +33,7 @@ release (for Python 2.6 testing).*
    side-effects on other OS platforms.
 
 Databases
-~~~~~~~~~
+---------
 
 *As packaged by the host OS*
 
@@ -41,7 +41,7 @@ Databases
 -  PostgreSQL
 
 Queues
-~~~~~~
+------
 
 *As packaged by the host OS*
 
@@ -49,14 +49,14 @@ Queues
 -  Qpid
 
 Web Server
-~~~~~~~~~~
+----------
 
 *As packaged by the host OS*
 
 -  Apache
 
 OpenStack Network
-~~~~~~~~~~~~~~~~~
+-----------------
 
 *Default to Nova Network, optionally use Neutron*
 
@@ -65,7 +65,7 @@ OpenStack Network
    mode using linuxbridge or OpenVSwitch.
 
 Services
-~~~~~~~~
+--------
 
 The default services configured by DevStack are Identity (Keystone),
 Object Storage (Swift), Image Storage (Glance), Block Storage (Cinder),
@@ -77,14 +77,14 @@ Additional services not included directly in DevStack can be tied in to
 scripts that perform the configuration and startup of the service.
 
 Node Configurations
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 -  single node
 -  multi-node is not tested regularly by the core team, and even then
    only minimal configurations are reviewed
 
 Exercises
-~~~~~~~~~
+---------
 
 The DevStack exercise scripts are no longer used as integration and gate
 testing as that job has transitioned to Tempest. They are still

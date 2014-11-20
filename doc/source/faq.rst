@@ -7,7 +7,7 @@ FAQ
 -  `Miscellaneous <#misc>`__
 
 General Questions
-~~~~~~~~~~~~~~~~~
+=================
 
 Q: Can I use DevStack for production?
     A: No. We mean it. Really. DevStack makes some implementation
@@ -77,7 +77,7 @@ Q: How about RHEL 6?
     is valuable so we do it...
 
 Operation and Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+===========================
 
 Q: Can DevStack handle a multi-node installation?
     A: Indirectly, yes. You run DevStack on each node with the
@@ -157,7 +157,7 @@ Q: Why are my configuration changes ignored?
     ``FORCE_PREREQ=1`` and the package checks will never be skipped.
 
 Miscellaneous
-~~~~~~~~~~~~~
+=============
 
 Q: ``tools/fixup_stuff.sh`` is broken and shouldn't 'fix' just one version of packages.
     A: [Another not-a-question] No it isn't. Stuff in there is to
