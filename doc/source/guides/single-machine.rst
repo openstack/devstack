@@ -7,10 +7,10 @@ nice for kicking the tires, but doesn't compare to the feeling you get
 with hardware.
 
 Prerequisites Linux & Network
------------------------------
+=============================
 
 Minimal Install
-~~~~~~~~~~~~~~~
+---------------
 
 You need to have a system with a fresh install of Linux. You can
 download the `Minimal
@@ -25,7 +25,7 @@ work but you may need to tell Network Manager to keep its fingers off
 the interface(s) that OpenStack uses for bridging.
 
 Network Configuration
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 Determine the network configuration on the interface used to integrate
 your OpenStack cloud with your existing network. For example, if the IPs
@@ -36,10 +36,10 @@ To make things easier later change your host to use a static IP instead
 of DHCP (i.e. 192.168.1.201).
 
 Installation shake and bake
----------------------------
+===========================
 
 Add your user
-~~~~~~~~~~~~~
+-------------
 
 We need to add a user to install DevStack. (if you created a user during
 install you can skip this step and just give the user sudo privileges
@@ -61,7 +61,7 @@ From here on you should use the user you created. **Logout** and
 **login** as that user.
 
 Download DevStack
-~~~~~~~~~~~~~~~~~
+-----------------
 
 We'll grab the latest version of DevStack via https:
 
@@ -72,7 +72,7 @@ We'll grab the latest version of DevStack via https:
     cd devstack
 
 Run DevStack
-~~~~~~~~~~~~
+------------
 
 Now to configure ``stack.sh``. DevStack includes a sample in
 ``devstack/samples/local.conf``. Create ``local.conf`` as shown below to
@@ -120,7 +120,7 @@ see a summary of ``stack.sh``'s work, including the relevant URLs,
 accounts and passwords to poke at your shiny new OpenStack.
 
 Using OpenStack
-~~~~~~~~~~~~~~~
+---------------
 
 At this point you should be able to access the dashboard from other
 computers on the local network. In this example that would be

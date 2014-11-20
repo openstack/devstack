@@ -6,10 +6,10 @@ Here is OpenStack in a realistic test configuration with multiple
 physical servers.
 
 Prerequisites Linux & Network
------------------------------
+=============================
 
 Minimal Install
-~~~~~~~~~~~~~~~
+---------------
 
 You need to have a system with a fresh install of Linux. You can
 download the `Minimal
@@ -27,7 +27,7 @@ Install a couple of packages to bootstrap configuration:
     apt-get install -y git sudo || yum install -y git sudo
 
 Network Configuration
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 The first iteration of the lab uses OpenStack's FlatDHCP network
 controller so only a single network will be required. It should be on
@@ -60,10 +60,10 @@ For Fedora and CentOS/RHEL edit
     GATEWAY=192.168.42.1
 
 Installation shake and bake
----------------------------
+===========================
 
 Add the DevStack User
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 OpenStack runs as a non-root user that has sudo access to root. There is
 nothing special about the name, we'll use ``stack`` here. Every node
@@ -88,7 +88,7 @@ From here on use the ``stack`` user. **Logout** and **login** as the
 ``stack`` user.
 
 Set Up Ssh
-~~~~~~~~~~
+----------
 
 Set up the stack user on each node with an ssh key for access:
 
@@ -98,7 +98,7 @@ Set up the stack user on each node with an ssh key for access:
     echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyYjfgyPazTvGpd8OaAvtU2utL8W6gWC4JdRS1J95GhNNfQd657yO6s1AH5KYQWktcE6FO/xNUC2reEXSGC7ezy+sGO1kj9Limv5vrvNHvF1+wts0Cmyx61D2nQw35/Qz8BvpdJANL7VwP/cFI/p3yhvx2lsnjFE3hN8xRB2LtLUopUSVdBwACOVUmH2G+2BWMJDjVINd2DPqRIA4Zhy09KJ3O1Joabr0XpQL0yt/I9x8BVHdAx6l9U0tMg9dj5+tAjZvMAFfye3PJcYwwsfJoFxC8w/SLtqlFX7Ehw++8RtvomvuipLdmWCy+T9hIkl+gHYE4cS3OIqXH7f49jdJf jesse@spacey.local" > ~/.ssh/authorized_keys
 
 Download DevStack
-~~~~~~~~~~~~~~~~~
+-----------------
 
 Grab the latest version of DevStack:
 
@@ -112,7 +112,7 @@ From here on there are some differences between the cluster controller
 (aka 'head node') and the compute nodes.
 
 Configure Cluster Controller
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 The cluster controller runs all OpenStack services. Configure the
 cluster controller's DevStack in ``local.conf``:
@@ -153,7 +153,7 @@ to poke at your shiny new OpenStack. The most recent log file is
 available in ``stack.sh.log``.
 
 Configure Compute Nodes
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 The compute nodes only run the OpenStack worker services. For additional
 machines, create a ``local.conf`` with:
@@ -196,7 +196,7 @@ to poke at your shiny new OpenStack. The most recent log file is
 available in ``stack.sh.log``.
 
 Cleaning Up After DevStack
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 Shutting down OpenStack is now as simple as running the included
 ``unstack.sh`` script:
@@ -223,10 +223,10 @@ this when it runs but there are times it needs to still be done by hand:
     sudo virsh list | grep inst | awk '{print $1}' | xargs -n1 virsh destroy
 
 Options pimp your stack
------------------------
+=======================
 
 Additional Users
-~~~~~~~~~~~~~~~~
+----------------
 
 DevStack creates two OpenStack users (``admin`` and ``demo``) and two
 tenants (also ``admin`` and ``demo``). ``admin`` is exactly what it
@@ -242,7 +242,7 @@ for scripting:
 
     # Get admin creds
     . openrc admin admin
-            
+
     # List existing tenants
     keystone tenant-list
 
@@ -260,7 +260,7 @@ for scripting:
     # keystone role-list
 
 Swift
-~~~~~
+-----
 
 Swift requires a significant amount of resources and is disabled by
 default in DevStack. The support in DevStack is geared toward a minimal
@@ -280,7 +280,7 @@ Swift config files are located in ``SWIFT_CONFIG_DIR`` (default
 it...) ``local.conf``.
 
 Volumes
-~~~~~~~
+-------
 
 DevStack will automatically use an existing LVM volume group named
 ``stack-volumes`` to store cloud-created volumes. If ``stack-volumes``
@@ -305,7 +305,7 @@ involved but looks something like this:
     vgcreate stack-volumes /dev/sdc
 
 Syslog
-~~~~~~
+------
 
 DevStack is capable of using ``rsyslog`` to aggregate logging across the
 cluster. It is off by default; to turn it on set ``SYSLOG=True`` in
@@ -319,7 +319,7 @@ output there. In the example above, add this to the compute node
     SYSLOG_HOST=192.168.42.11
 
 Using Alternate Repositories/Branches
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------
 
 The git repositories for all of the OpenStack services are defined in
 ``stackrc``. Since this file is a part of the DevStack package changes
@@ -349,10 +349,10 @@ To pull Glance from an experimental fork:
     GLANCE_REPO=https://github.com/mcuser/glance.git
 
 Notes stuff you might need to know
-----------------------------------
+==================================
 
 Reset the Bridge
-~~~~~~~~~~~~~~~~
+----------------
 
 How to reset the bridge configuration:
 
@@ -363,7 +363,7 @@ How to reset the bridge configuration:
     sudo brctl delbr br100
 
 Set MySQL Password
-~~~~~~~~~~~~~~~~~~
+------------------
 
 If you forgot to set the root password you can do this:
 

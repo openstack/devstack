@@ -6,7 +6,7 @@ DevStack has a couple of plugin mechanisms to allow easily adding
 support for additional projects and features.
 
 Extras.d Hooks
-~~~~~~~~~~~~~~
+==============
 
 These hooks are an extension of the service calls in
 ``stack.sh`` at specific points in its run, plus ``unstack.sh`` and
@@ -93,7 +93,7 @@ The arguments are:
    but after ``unstack.sh`` has been called.
 
 Hypervisor
-~~~~~~~~~~
+==========
 
 Hypervisor plugins are fairly new and condense most hypervisor
 configuration into one place.
