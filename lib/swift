@@ -54,8 +54,7 @@ SWIFT_DISK_IMAGE=${SWIFT_DATA_DIR}/drives/images/swift.img
 
 # Set ``SWIFT_CONF_DIR`` to the location of the configuration files.
 # Default is ``/etc/swift``.
-# TODO(dtroyer): remove SWIFT_CONFIG_DIR after cutting stable/grizzly
-SWIFT_CONF_DIR=${SWIFT_CONF_DIR:-${SWIFT_CONFIG_DIR:-/etc/swift}}
+SWIFT_CONF_DIR=${SWIFT_CONF_DIR:-/etc/swift}
 
 if is_service_enabled s-proxy && is_service_enabled swift3; then
     # If we are using swift3, we can default the s3 port to swift instead
