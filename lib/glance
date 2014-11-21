@@ -28,7 +28,7 @@ set +o xtrace
 
 # Set up default directories
 GITDIR["python-glanceclient"]=$DEST/python-glanceclient
-GIRDIR["glance_store"]=$DEST/glance_store
+GITDIR["glance_store"]=$DEST/glance_store
 
 GLANCE_DIR=$DEST/glance
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}

@@ -273,6 +273,8 @@ GITBRANCH["python-troveclient"]=${TROVECLIENT_BRANCH:-master}
 # consolidated openstack python client
 GITREPO["python-openstackclient"]=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
 GITBRANCH["python-openstackclient"]=${OPENSTACKCLIENT_BRANCH:-master}
+# this doesn't exist in a lib file, so set it here
+GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 
 ###################
 #

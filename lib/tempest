@@ -450,7 +450,7 @@ function create_tempest_accounts {
 function install_tempest_lib {
     if use_library_from_git "tempest-lib"; then
         git_clone_by_name "tempest-lib"
-        setup_develop "tempest-lib"
+        setup_dev_lib "tempest-lib"
     fi
 }
 

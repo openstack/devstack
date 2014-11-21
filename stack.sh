@@ -575,9 +575,6 @@ if [[ -d $TOP_DIR/extras.d ]]; then
     done
 fi
 
-# Set the destination directories for other OpenStack projects
-GITDIR["python-openstackclient"]=$DEST/python-openstackclient
-
 # Interactive Configuration
 # -------------------------
 
