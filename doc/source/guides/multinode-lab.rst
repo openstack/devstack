@@ -275,7 +275,7 @@ simple as enabling the ``swift`` service in ``local.conf``:
 Swift will put its data files in ``SWIFT_DATA_DIR`` (default
 ``/opt/stack/data/swift``). The size of the data 'partition' created
 (really a loop-mounted file) is set by ``SWIFT_LOOPBACK_DISK_SIZE``. The
-Swift config files are located in ``SWIFT_CONFIG_DIR`` (default
+Swift config files are located in ``SWIFT_CONF_DIR`` (default
 ``/etc/swift``). All of these settings can be overridden in (wait for
 it...) ``local.conf``.
 

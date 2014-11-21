@@ -18,7 +18,6 @@ function neutron_plugin_install_agent_packages {
     # This agent uses ryu to talk with switches
     install_package $(get_packages "ryu")
     install_ryu
-    configure_ryu
 }
 
 function neutron_plugin_configure_debug_command {

@@ -365,6 +365,35 @@ API rate limits
 
         API_RATE_LIMIT=False
 
+IP Version
+    | Default: ``IP_VERSION=4``
+    | This setting can be used to configure DevStack to create either an IPv4,
+      IPv6, or dual stack tenant data network by setting ``IP_VERSION`` to
+      either ``IP_VERSION=4``, ``IP_VERSION=6``, or ``IP_VERSION=4+6``
+      respectively. This functionality requires that the Neutron networking
+      service is enabled by setting the following options:
+    |
+
+    ::
+
+        disable_service n-net
+        enable_service q-svc q-agt q-dhcp q-l3
+
+    | The following optional variables can be used to alter the default IPv6
+      behavior:
+    |
+
+    ::
+
+        IPV6_RA_MODE=slaac
+        IPV6_ADDRESS_MODE=slaac
+        FIXED_RANGE_V6=fd$IPV6_GLOBAL_ID::/64
+        IPV6_PRIVATE_NETWORK_GATEWAY=fd$IPV6_GLOBAL_ID::1
+
+    | *Note: ``FIXED_RANGE_V6`` and ``IPV6_PRIVATE_NETWORK_GATEWAY``
+      can be configured with any valid IPv6 prefix. The default values make
+      use of an auto-generated ``IPV6_GLOBAL_ID`` to comply with RFC 4193.*
+
 Examples
 ========
 
