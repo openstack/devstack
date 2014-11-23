@@ -42,6 +42,7 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF libvirt virt_type "$LIBVIRT_TYPE"
     iniset $NOVA_CONF libvirt cpu_mode "none"
     iniset $NOVA_CONF libvirt use_usb_tablet "False"
+    iniset $NOVA_CONF libvirt live_migration_uri "qemu+ssh://$STACK_USER@%s/system"
     iniset $NOVA_CONF DEFAULT default_ephemeral_format "ext4"
     iniset $NOVA_CONF DEFAULT compute_driver "libvirt.LibvirtDriver"
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
