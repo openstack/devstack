@@ -63,6 +63,7 @@ Walk through various setups used by stackers
    guides/single-vm
    guides/single-machine
    guides/multinode-lab
+   guides/neutron
 
 All-In-One Single VM
 --------------------
@@ -83,6 +84,13 @@ Multi-Node Lab
 
 Setup a :doc:`multi-node cluster <guides/multinode-lab>` with dedicated VLANs for VMs & Management.
 :doc:`[Read] <guides/multinode-lab>`
+
+DevStack with Neutron Networking
+--------------------------------
+
+Building a DevStack cluster with :doc:`Neutron Networking <guides/neutron>`.
+This guide is meant for building lab environments with a dedicated
+control node and multiple compute nodes.
 
 DevStack Documentation
 ======================
