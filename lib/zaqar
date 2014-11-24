@@ -112,6 +112,7 @@ function configure_zaqar {
     sudo chown $USER $ZAQAR_API_LOG_DIR
 
     iniset $ZAQAR_CONF DEFAULT verbose True
+    iniset $ZAQAR_CONF DEFAULT admin_mode True
     iniset $ZAQAR_CONF DEFAULT use_syslog $SYSLOG
     iniset $ZAQAR_CONF DEFAULT log_file $ZAQAR_API_LOG_FILE
     iniset $ZAQAR_CONF 'drivers:transport:wsgi' bind $ZAQAR_SERVICE_HOST
