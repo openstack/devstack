@@ -85,12 +85,6 @@ function cleanup_horizon {
 # configure_horizon() - Set config files, create data dirs, etc
 function configure_horizon {
     setup_develop $HORIZON_DIR
-
-    # Compile message catalogs.
-    # Horizon is installed as develop mode, so we can compile here.
-    # Message catalog compilation is handled by Django admin script,
-    # so compiling them after the installation avoids Django installation twice.
-    (cd $HORIZON_DIR; ./run_tests.sh -N --compilemessages)
 }
 
 # init_horizon() - Initialize databases, etc.
@@ -147,9 +141,6 @@ function install_django_openstack_auth {
     if use_library_from_git "django_openstack_auth"; then
         local dir=${GITDIR["django_openstack_auth"]}
         git_clone_by_name "django_openstack_auth"
-        # Compile message catalogs before installation
-        _prepare_message_catalog_compilation
-        (cd $dir; python setup.py compile_catalog)
         setup_dev_lib "django_openstack_auth"
     fi
     # if we aren't using this library from git, then we just let it
