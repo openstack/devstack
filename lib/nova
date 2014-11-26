@@ -257,7 +257,7 @@ function configure_nova {
 
     configure_nova_rootwrap
 
-    if is_service_enabled n-api; then
+    if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
         # Remove legacy paste config if present
         rm -f $NOVA_DIR/bin/nova-api-paste.ini
 
