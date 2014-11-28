@@ -1,4 +1,5 @@
 apache2  # NOPRIME
+gettext
 libapache2-mod-wsgi  # NOPRIME
 python-beautifulsoup
 python-dateutil

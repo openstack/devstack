@@ -167,7 +167,7 @@ NOVA_BRANCH=${NOVA_BRANCH:-stable/juno}
 
 # data processing service
 SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
-SAHARA_BRANCH=${SAHARA_BRANCH:-master}
+SAHARA_BRANCH=${SAHARA_BRANCH:-stable/juno}
 
 # object storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
