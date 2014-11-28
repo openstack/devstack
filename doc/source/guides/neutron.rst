@@ -23,7 +23,7 @@ the machine.
 
 eth1 is manually configured at boot to not have an IP address.
 Consult your operating system documentation for the appropriate
-technique. For Ubuntu, the contents of `/etc/networking/interfaces`
+technique. For Ubuntu, the contents of `/etc/network/interfaces`
 contains:
 
 ::
