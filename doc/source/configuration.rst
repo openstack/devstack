@@ -92,7 +92,7 @@ added:
     [[post-config|/$Q_PLUGIN_CONF_FILE]]
 
 Also note that the ``localrc`` section is sourced as a shell script
-fragment amd MUST conform to the shell requirements, specifically no
+fragment and MUST conform to the shell requirements, specifically no
 whitespace around ``=`` (equals).
 
 Minimal Configuration
@@ -131,7 +131,7 @@ used for both the local networking and Nova's fixed and floating ranges.
 
 ``HOST_IP`` is normally detected on the first run of ``stack.sh`` but
 often is indeterminate on later runs due to the IP being moved from an
-Ethernet integace to a bridge on the host. Setting it here also makes it
+Ethernet interface to a bridge on the host. Setting it here also makes it
 available for ``openrc`` to set ``OS_AUTH_URL``. ``HOST_IP`` is not set
 by default.
 
@@ -208,7 +208,7 @@ Logging the Screen Output
        which is useful for watching log and debug output. However, in
        automated testing the interactive ``screen`` sessions may not be
        available after the fact; setting ``SCREEN_LOGDIR`` enables logging
-       of the ``screen`` sessions in the specified diretory. There will be
+       of the ``screen`` sessions in the specified directory. There will be
        one file per ``screen`` session named for the session name and a
        timestamp.
     |
