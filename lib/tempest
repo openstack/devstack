@@ -304,7 +304,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions ${COMPUTE_API_EXTENSIONS:-"all"}
-    iniset $TEMPEST_CONFIG compute-feature-enabled xml_api_v2 ${TEMPEST_ENABLE_NOVA_XML_API:-True}
     iniset $TEMPEST_CONFIG compute-feature-disabled api_extensions ${DISABLE_COMPUTE_API_EXTENSIONS}
 
     # Compute admin
