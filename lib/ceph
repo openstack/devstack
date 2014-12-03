@@ -106,8 +106,13 @@ function cleanup_ceph {
         sudo rm -f ${CEPH_DISK_IMAGE}
     fi
     uninstall_package ceph ceph-common python-ceph libcephfs1 > /dev/null 2>&1
-    VIRSH_UUID=$(sudo virsh secret-list | awk '/^ ?[0-9a-z]/ { print $1 }')
-    sudo virsh secret-undefine ${VIRSH_UUID} >/dev/null 2>&1
+    if is_service_enabled cinder || is_service_enabled nova; then
+        local virsh_uuid=$(sudo virsh secret-list | awk '/^ ?[0-9a-z]/ { print $1 }')
+        sudo virsh secret-undefine ${virsh_uuid} >/dev/null 2>&1
+    fi
+    if is_service_enabled nova; then
+        iniset $NOVA_CONF libvirt rbd_secret_uuid ""
+    fi
 }
 
 # configure_ceph() - Set config files, create data dirs, etc
