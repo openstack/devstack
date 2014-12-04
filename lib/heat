@@ -94,7 +94,6 @@ function configure_heat {
 
     cp $HEAT_DIR/etc/heat/api-paste.ini $HEAT_API_PASTE_FILE
     cp $HEAT_DIR/etc/heat/policy.json $HEAT_POLICY_FILE
-    cp $HEAT_DIR/etc/heat/heat.conf.sample $HEAT_CONF
 
     # common options
     iniset_rpc_backend heat $HEAT_CONF DEFAULT
