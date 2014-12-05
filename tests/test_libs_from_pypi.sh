@@ -27,7 +27,7 @@ for i in $TOP/lib/*; do
     fi
 done
 
-ALL_LIBS="python-novaclient oslo.config pbr python-troveclient python-keystoneclient taskflow pycadf python-glanceclient python-ironicclient tempest-lib oslo.messaging oslo.log cliff python-heatclient stevedore python-cinderclient oslo.db oslo.vmware keystonemiddleware python-saharaclient django_openstack_auth python-openstackclient oslo.rootwrap oslo.i18n python-ceilometerclient python-swiftclient python-neutronclient"
+ALL_LIBS="python-novaclient oslo.config pbr python-troveclient python-keystoneclient taskflow pycadf python-glanceclient python-ironicclient tempest-lib oslo.messaging cliff python-heatclient stevedore python-cinderclient oslo.vmware keystonemiddleware python-saharaclient django_openstack_auth python-openstackclient oslo.rootwrap python-ceilometerclient python-swiftclient python-neutronclient"
 
 # Generate the above list with
 # echo ${!GITREPO[@]}
