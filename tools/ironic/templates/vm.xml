@@ -6,6 +6,7 @@
     <type arch='%(arch)s' machine='pc-1.0'>hvm</type>
     <boot dev='%(bootdev)s'/>
     <bootmenu enable='no'/>
+    %(bios_serial)s
   </os>
   <features>
     <acpi/>
