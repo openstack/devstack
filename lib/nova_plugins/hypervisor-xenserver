@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/nova_plugins/hypervisor-xenserver
 # Configure the XenServer hypervisor
 

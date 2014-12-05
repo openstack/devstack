@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/cinder
 # Install and start **Cinder** volume service
 

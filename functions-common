@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # functions-common - Common functions used by DevStack components
 #
 # The canonical copy of this file is maintained in the DevStack repo.

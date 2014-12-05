@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/nova_plugins/hypervisor-ironic
 # Configure the ironic hypervisor
 

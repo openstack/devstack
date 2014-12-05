@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/ironic
 # Functions to control the configuration and operation of the **Ironic** service
 

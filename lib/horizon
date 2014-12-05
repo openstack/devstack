@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/horizon
 # Functions to control the configuration and operation of the horizon service
 

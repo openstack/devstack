@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/infra
 #
 # Functions to install infrastructure projects needed by other projects

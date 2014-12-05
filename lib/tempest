@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/tempest
 # Install and configure Tempest
 

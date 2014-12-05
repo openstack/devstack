@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/config - Configuration file manipulation functions
 
 # These functions have no external dependencies and the following side-effects:

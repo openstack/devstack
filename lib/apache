@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/apache
 # Functions to control configuration and operation of apache web server
 

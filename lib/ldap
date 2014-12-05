@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/ldap
 # Functions to control the installation and configuration of **ldap**
 

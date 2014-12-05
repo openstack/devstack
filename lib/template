@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/template
 # Functions to control the configuration and operation of the XXXX service
 # <do not include this template file in ``stack.sh``!>

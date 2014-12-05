@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/cinder_plugins/nfs
 # Configure the nfs driver
 

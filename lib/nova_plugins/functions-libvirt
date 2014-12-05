@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/nova_plugins/functions-libvirt
 # Common libvirt configuration functions
 
