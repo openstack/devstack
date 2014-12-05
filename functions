@@ -82,7 +82,7 @@ function upload_image {
         # driver will supply default values.
 
         local vmdk_disktype=""
-        local vmdk_net_adapter=""
+        local vmdk_net_adapter="e1000"
         local path_len
 
         # vmdk adapter type
