@@ -635,12 +635,6 @@ function init_nova {
         if is_service_enabled n-cell; then
             recreate_database $NOVA_CELLS_DB latin1
         fi
-
-        # (Re)create nova baremetal database
-        if is_baremetal; then
-            recreate_database nova_bm latin1
-            $NOVA_BIN_DIR/nova-baremetal-manage db sync
-        fi
     fi
 
     create_nova_cache_dir
