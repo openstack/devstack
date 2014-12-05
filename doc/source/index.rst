@@ -1,6 +1,8 @@
 DevStack - an OpenStack Community Production
 ============================================
 
+.. image:: assets/images/logo-blue.png
+
 .. toctree::
    :glob:
    :maxdepth: 1
