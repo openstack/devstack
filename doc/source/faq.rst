@@ -46,8 +46,8 @@ Q: I'd like to help!
     `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
     and bug reports go to
     `LaunchPad <http://bugs.launchpad.net/devstack/>`__. Contributions
-    follow the usual process as described in the `OpenStack
-    wiki <http://wiki.openstack.org/HowToContribute>`__. This Sphinx
+    follow the usual process as described in the `developer
+    guide <http://docs.openstack.org/infra/manual/developers.html>`__. This Sphinx
     documentation is housed in the doc directory.
 Q: Why not use packages?
     A: Unlike packages, DevStack leaves your cloud ready to develop -
