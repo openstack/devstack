@@ -71,6 +71,7 @@ KEYSTONE_ASSIGNMENT_BACKEND=${KEYSTONE_ASSIGNMENT_BACKEND:-sql}
 
 # Select Keystone's token format
 # Choose from 'UUID', 'PKI', or 'PKIZ'
+KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-}
 KEYSTONE_TOKEN_FORMAT=$(echo ${KEYSTONE_TOKEN_FORMAT} | tr '[:upper:]' '[:lower:]')
 
 # Set Keystone interface configuration

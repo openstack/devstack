@@ -40,6 +40,12 @@ PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin
 # Keep track of the devstack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
+# Check for uninitialized variables, a big cause of bugs
+NOUNSET=${NOUNSET:-}
+if [[ -n "$NOUNSET" ]]; then
+    set -o nounset
+fi
+
 # Sanity Checks
 # -------------
 
@@ -78,6 +84,9 @@ fi
 
 # Prepare the environment
 # -----------------------
+
+# Initialize variables:
+LAST_SPINNER_PID=""
 
 # Import common functions
 source $TOP_DIR/functions
@@ -172,12 +181,12 @@ export_proxy_variables
 disable_negated_services
 
 # Look for obsolete stuff
-if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
-    echo "FATAL: 'swift' is not supported as a service name"
-    echo "FATAL: Use the actual swift service names to enable them as required:"
-    echo "FATAL: s-proxy s-object s-container s-account"
-    exit 1
-fi
+# if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
+#     echo "FATAL: 'swift' is not supported as a service name"
+#     echo "FATAL: Use the actual swift service names to enable them as required:"
+#     echo "FATAL: s-proxy s-object s-container s-account"
+#     exit 1
+# fi
 
 # Configure sudo
 # --------------
@@ -311,7 +320,7 @@ fi
 # -----------------
 
 # Set up logging level
-VERBOSE=$(trueorfalse True $VERBOSE)
+VERBOSE=$(trueorfalse True VERBOSE)
 
 # Draw a spinner so the user knows something is happening
 function spinner {
@@ -482,47 +491,6 @@ set -o errexit
 # an error.  It is also useful for following along as the install occurs.
 set -o xtrace
 
-
-# Common Configuration
-# --------------------
-
-# Set ``OFFLINE`` to ``True`` to configure ``stack.sh`` to run cleanly without
-# Internet access. ``stack.sh`` must have been previously run with Internet
-# access to install prerequisites and fetch repositories.
-OFFLINE=`trueorfalse False $OFFLINE`
-
-# Set ``ERROR_ON_CLONE`` to ``True`` to configure ``stack.sh`` to exit if
-# the destination git repository does not exist during the ``git_clone``
-# operation.
-ERROR_ON_CLONE=`trueorfalse False $ERROR_ON_CLONE`
-
-# Whether to enable the debug log level in OpenStack services
-ENABLE_DEBUG_LOG_LEVEL=`trueorfalse True $ENABLE_DEBUG_LOG_LEVEL`
-
-# Set fixed and floating range here so we can make sure not to use addresses
-# from either range when attempting to guess the IP to use for the host.
-# Note that setting FIXED_RANGE may be necessary when running DevStack
-# in an OpenStack cloud that uses either of these address ranges internally.
-FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.0/24}
-FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
-FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
-
-HOST_IP=$(get_default_host_ip $FIXED_RANGE $FLOATING_RANGE "$HOST_IP_IFACE" "$HOST_IP")
-if [ "$HOST_IP" == "" ]; then
-    die $LINENO "Could not determine host ip address.  See local.conf for suggestions on setting HOST_IP."
-fi
-
-# Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
-SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
-
-# Configure services to use syslog instead of writing to individual log files
-SYSLOG=`trueorfalse False $SYSLOG`
-SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
-SYSLOG_PORT=${SYSLOG_PORT:-516}
-
-# Use color for logging output (only available if syslog is not used)
-LOG_COLOR=`trueorfalse True $LOG_COLOR`
-
 # Reset the bundle of CA certificates
 SSL_BUNDLE_FILE="$DATA_DIR/ca-bundle.pem"
 rm -f $SSL_BUNDLE_FILE
@@ -534,9 +502,6 @@ source $TOP_DIR/lib/rpc_backend
 # Make sure we only have one rpc backend enabled,
 # and the specified rpc backend is available on your platform.
 check_rpc_backend
-
-# Use native SSL for servers in SSL_ENABLED_SERVICES
-USE_SSL=$(trueorfalse False $USE_SSL)
 
 # Service to enable with SSL if USE_SSL is True
 SSL_ENABLED_SERVICES="key,nova,cinder,glance,s-proxy,neutron"
@@ -708,7 +673,7 @@ source $TOP_DIR/tools/install_prereqs.sh
 
 # Configure an appropriate python environment
 if [[ "$OFFLINE" != "True" ]]; then
-    PYPI_ALTERNATIVE_URL=$PYPI_ALTERNATIVE_URL $TOP_DIR/tools/install_pip.sh
+    PYPI_ALTERNATIVE_URL=${PYPI_ALTERNATIVE_URL:-""} $TOP_DIR/tools/install_pip.sh
 fi
 
 # Do the ugly hacks for broken packages and distros
@@ -944,13 +909,14 @@ fi
 # Configure screen
 # ----------------
 
-USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+USE_SCREEN=$(trueorfalse True USE_SCREEN)
 if [[ "$USE_SCREEN" == "True" ]]; then
     # Create a new named screen to run processes in
     screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
     sleep 1
 
     # Set a reasonable status bar
+    SCREEN_HARDSTATUS=${SCREEN_HARDSTATUS-:}
     if [ -z "$SCREEN_HARDSTATUS" ]; then
         SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'
     fi

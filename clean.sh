@@ -18,7 +18,7 @@ source $TOP_DIR/functions
 FILES=$TOP_DIR/files
 
 # Load local configuration
-source $TOP_DIR/stackrc
+source $TOP_DIR/openrc
 
 # Get the variables that are set in stack.sh
 if [[ -r $TOP_DIR/.stackenv ]]; then

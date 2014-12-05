@@ -15,7 +15,7 @@ set +o xtrace
 # --------
 
 # if we should turn on massive libvirt debugging
-DEBUG_LIBVIRT=$(trueorfalse False $DEBUG_LIBVIRT)
+DEBUG_LIBVIRT=$(trueorfalse False DEBUG_LIBVIRT)
 
 # Installs required distro-specific libvirt packages.
 function install_libvirt {

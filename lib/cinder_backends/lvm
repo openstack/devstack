@@ -33,6 +33,7 @@ set +o xtrace
 # If ``VOLUME_GROUP`` is set, use it, otherwise we'll build a VG name based
 # on ``VOLUME_GROUP_NAME`` that includes the backend name
 # Grenade doesn't use ``VOLUME_GROUP2`` so it is left out
+VOLUME_GROUP=${VOLUME_GROUP:-}
 VOLUME_GROUP_NAME=${VOLUME_GROUP:-${VOLUME_GROUP_NAME:-stack-volumes}}
 
 # TODO: resurrect backing device...need to know how to set values

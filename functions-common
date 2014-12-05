@@ -21,7 +21,6 @@
 #
 # The following variables are assumed to be defined by certain functions:
 #
-# - ``GIT_DEPTH``
 # - ``ENABLED_SERVICES``
 # - ``ERROR_ON_CLONE``
 # - ``FILES``
@@ -42,6 +41,8 @@ set +o xtrace
 declare -A GITREPO
 declare -A GITBRANCH
 declare -A GITDIR
+
+TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
 # Config Functions
 # ================
@@ -243,7 +244,8 @@ function trueorfalse {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local default=$1
-    local testval=$2
+    local literal=$2
+    local testval=${!literal}
 
     [[ -z "$testval" ]] && { echo "$default"; return; }
     [[ "0 no No NO false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
@@ -252,6 +254,14 @@ function trueorfalse {
     $xtrace
 }
 
+function isset {
+    nounset=$(set +o | grep nounset)
+    set +o nounset
+    [[ -n "${!1+x}" ]]
+    result=$?
+    $nounset
+    return $result
+}
 
 # Control Functions
 # =================
@@ -381,7 +391,11 @@ function warn {
 # ``os_UPDATE`` - update: ex. the ``5`` in ``RHEL6.5``
 # ``os_PACKAGE`` - package type: ``deb`` or ``rpm``
 # ``os_CODENAME`` - vendor's codename for release: ``snow leopard``, ``trusty``
-declare os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
+os_VENDOR=""
+os_RELEASE=""
+os_UPDATE=""
+os_PACKAGE=""
+os_CODENAME=""
 
 # GetOSVersion
 function GetOSVersion {
@@ -577,8 +591,7 @@ function get_release_name_from_branch {
 # Set global ``RECLONE=yes`` to simulate a clone when dest-dir exists
 # Set global ``ERROR_ON_CLONE=True`` to abort execution with an error if the git repo
 # does not exist (default is False, meaning the repo will be cloned).
-# Set global ``GIT_DEPTH=<number>`` to limit the history depth of the git clone
-# Uses globals ``ERROR_ON_CLONE``, ``OFFLINE``, ``RECLONE``, ``GIT_DEPTH``
+# Uses globals ``ERROR_ON_CLONE``, ``OFFLINE``, ``RECLONE``
 # git_clone remote dest-dir branch
 function git_clone {
     local git_remote=$1
@@ -587,8 +600,7 @@ function git_clone {
     local orig_dir=$(pwd)
     local git_clone_flags=""
 
-    RECLONE=$(trueorfalse False $RECLONE)
-
+    RECLONE=$(trueorfalse False RECLONE)
     if [[ -n "${GIT_DEPTH}" ]]; then
         git_clone_flags="$git_clone_flags --depth $GIT_DEPTH"
     fi
@@ -978,9 +990,10 @@ function apt_get {
     [[ "$(id -u)" = "0" ]] && sudo="env"
 
     $xtrace
+
     $sudo DEBIAN_FRONTEND=noninteractive \
-        http_proxy=$http_proxy https_proxy=$https_proxy \
-        no_proxy=$no_proxy \
+        http_proxy=${http_proxy:-} https_proxy=${https_proxy:-} \
+        no_proxy=${no_proxy:-} \
         apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
 }
 
@@ -999,10 +1012,10 @@ function get_packages {
     set +o xtrace
     local services=$@
     local package_dir=$(_get_package_dir)
-    local file_to_parse
-    local service
+    local file_to_parse=""
+    local service=""
 
-    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False $INSTALL_TESTONLY_PACKAGES)
+    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False INSTALL_TESTONLY_PACKAGES)
 
     if [[ -z "$package_dir" ]]; then
         echo "No package directory supplied"
@@ -1112,6 +1125,10 @@ function get_packages {
 # Uses globals ``NO_UPDATE_REPOS``, ``REPOS_UPDATED``, ``RETRY_UPDATE``
 # install_package package [package ...]
 function update_package_repo {
+    NO_UPDATE_REPOS=${NO_UPDATE_REPOS:-False}
+    REPOS_UPDATED=${REPOS_UPDATED:-False}
+    RETRY_UPDATE=${RETRY_UPDATE:-False}
+
     if [[ "$NO_UPDATE_REPOS" = "True" ]]; then
         return 0
     fi
@@ -1321,7 +1338,7 @@ function screen_process {
 
     SCREEN_NAME=${SCREEN_NAME:-stack}
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
     # Append the process to the screen rc file
     screen_rc "$name" "$command"
@@ -1394,7 +1411,7 @@ function screen_stop_service {
 
     SCREEN_NAME=${SCREEN_NAME:-stack}
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
     if is_service_enabled $service; then
         # Clean up the screen window
@@ -1412,7 +1429,7 @@ function stop_process {
     local service=$1
 
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
     if is_service_enabled $service; then
         # Kill via pid if we have one available
@@ -1462,7 +1479,7 @@ function tail_log {
     local name=$1
     local logfile=$2
 
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    USE_SCREEN=$(trueorfalse True USE_SCREEN)
     if [[ "$USE_SCREEN" = "True" ]]; then
         screen_process "$name" "sudo tail -f $logfile"
     fi
@@ -1572,7 +1589,8 @@ function get_python_exec_prefix {
 function pip_install {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
-    if [[ "$OFFLINE" = "True" || -z "$@" ]]; then
+    local offline=${OFFLINE:-False}
+    if [[ "$offline" == "True" || -z "$@" ]]; then
         $xtrace
         return
     fi
@@ -1601,20 +1619,20 @@ function pip_install {
 
     $xtrace
     $sudo_pip \
-        http_proxy=$http_proxy \
-        https_proxy=$https_proxy \
-        no_proxy=$no_proxy \
+        http_proxy=${http_proxy:-} \
+        https_proxy=${https_proxy:-} \
+        no_proxy=${no_proxy:-} \
         $cmd_pip install \
         $@
 
-    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False $INSTALL_TESTONLY_PACKAGES)
+    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False INSTALL_TESTONLY_PACKAGES)
     if [[ "$INSTALL_TESTONLY_PACKAGES" == "True" ]]; then
         local test_req="$@/test-requirements.txt"
         if [[ -e "$test_req" ]]; then
             $sudo_pip \
-                http_proxy=$http_proxy \
-                https_proxy=$https_proxy \
-                no_proxy=$no_proxy \
+                http_proxy=${http_proxy:-} \
+                https_proxy=${https_proxy:-} \
+                no_proxy=${no_proxy:-} \
                 $cmd_pip install \
                 -r $test_req
         fi
@@ -2084,13 +2102,13 @@ function cp_it {
 #     http_proxy=http://proxy.example.com:3128/ no_proxy=repo.example.net ./stack.sh
 
 function export_proxy_variables {
-    if [[ -n "$http_proxy" ]]; then
+    if isset http_proxy ; then
         export http_proxy=$http_proxy
     fi
-    if [[ -n "$https_proxy" ]]; then
+    if isset https_proxy ; then
         export https_proxy=$https_proxy
     fi
-    if [[ -n "$no_proxy" ]]; then
+    if isset no_proxy ; then
         export no_proxy=$no_proxy
     fi
 }

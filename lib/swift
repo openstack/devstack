@@ -82,7 +82,7 @@ SWIFT_EXTRAS_MIDDLEWARE=${SWIFT_EXTRAS_MIDDLEWARE:-formpost staticweb}
 
 # Set ``SWIFT_EXTRAS_MIDDLEWARE_LAST`` to extras middlewares that need to be at
 # the end of the pipeline.
-SWIFT_EXTRAS_MIDDLEWARE_LAST=${SWIFT_EXTRAS_MIDDLEWARE_LAST}
+SWIFT_EXTRAS_MIDDLEWARE_LAST=${SWIFT_EXTRAS_MIDDLEWARE_LAST:-}
 
 # Set ``SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH`` to extras middlewares that need to be at
 # the beginning of the pipeline, before authentication middlewares.
@@ -127,7 +127,7 @@ ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 
 # Enable tempurl feature
 SWIFT_ENABLE_TEMPURLS=${SWIFT_ENABLE_TEMPURLS:-False}
-SWIFT_TEMPURL_KEY=${SWIFT_TEMPURL_KEY}
+SWIFT_TEMPURL_KEY=${SWIFT_TEMPURL_KEY:-}
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,swift
