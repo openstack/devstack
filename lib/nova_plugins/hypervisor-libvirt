@@ -64,6 +64,11 @@ function configure_nova_hypervisor {
         # disable it here for now to avoid surprises later.
         iniset $NOVA_CONF libvirt inject_partition '-2'
     fi
+
+    if [[ "$LIBVIRT_TYPE" = "parallels" ]]; then
+        iniset $NOVA_CONF libvirt connection_uri "parallels+unix:///system"
+        iniset $NOVA_CONF libvirt images_type "ploop"
+    fi
 }
 
 # install_nova_hypervisor() - Install external components
