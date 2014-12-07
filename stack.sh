@@ -561,7 +561,6 @@ source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
-source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 
@@ -1136,14 +1135,6 @@ if is_service_enabled nova; then
     init_nova_cells
 fi
 
-# Extra things to prepare nova for baremetal, before nova starts
-if is_service_enabled nova && is_baremetal; then
-    echo_summary "Preparing for nova baremetal"
-    prepare_baremetal_toolchain
-    configure_baremetal_nova_dirs
-fi
-
-
 # Extras Configuration
 # ====================
 
@@ -1197,28 +1188,16 @@ if is_service_enabled g-reg; then
     TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
     die_if_not_set $LINENO TOKEN "Keystone fail to get token"
 
-    if is_baremetal; then
-        echo_summary "Creating and uploading baremetal images"
+    echo_summary "Uploading images"
 
-        # build and upload separate deploy kernel & ramdisk
-        upload_baremetal_deploy $TOKEN
-
-        # upload images, separating out the kernel & ramdisk for PXE boot
-        for image_url in ${IMAGE_URLS//,/ }; do
-            upload_baremetal_image $image_url $TOKEN
-        done
-    else
-        echo_summary "Uploading images"
-
-        # Option to upload legacy ami-tty, which works with xenserver
-        if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
-            IMAGE_URLS="${IMAGE_URLS:+${IMAGE_URLS},}https://github.com/downloads/citrix-openstack/warehouse/tty.tgz"
-        fi
-
-        for image_url in ${IMAGE_URLS//,/ }; do
-            upload_image $image_url $TOKEN
-        done
+    # Option to upload legacy ami-tty, which works with xenserver
+    if [[ -n "$UPLOAD_LEGACY_TTY" ]]; then
+        IMAGE_URLS="${IMAGE_URLS:+${IMAGE_URLS},}https://github.com/downloads/citrix-openstack/warehouse/tty.tgz"
     fi
+
+    for image_url in ${IMAGE_URLS//,/ }; do
+        upload_image $image_url $TOKEN
+    done
 fi
 
 # Create an access key and secret key for nova ec2 register image
@@ -1324,32 +1303,6 @@ if is_service_enabled nova && is_service_enabled key; then
     $TOP_DIR/tools/create_userrc.sh $USERRC_PARAMS
 fi
 
-
-# If we are running nova with baremetal driver, there are a few
-# last-mile configuration bits to attend to, which must happen
-# after n-api and n-sch have started.
-# Also, creating the baremetal flavor must happen after images
-# are loaded into glance, though just knowing the IDs is sufficient here
-if is_service_enabled nova && is_baremetal; then
-    # create special flavor for baremetal if we know what images to associate
-    [[ -n "$BM_DEPLOY_KERNEL_ID" ]] && [[ -n "$BM_DEPLOY_RAMDISK_ID" ]] && \
-        create_baremetal_flavor $BM_DEPLOY_KERNEL_ID $BM_DEPLOY_RAMDISK_ID
-
-    # otherwise user can manually add it later by calling nova-baremetal-manage
-    [[ -n "$BM_FIRST_MAC" ]] && add_baremetal_node
-
-    if [[ "$BM_DNSMASQ_FROM_NOVA_NETWORK" = "False" ]]; then
-        # NOTE: we do this here to ensure that our copy of dnsmasq is running
-        sudo pkill dnsmasq || true
-        sudo dnsmasq --conf-file= --port=0 --enable-tftp --tftp-root=/tftpboot \
-            --dhcp-boot=pxelinux.0 --bind-interfaces --pid-file=/var/run/dnsmasq.pid \
-            --interface=$BM_DNSMASQ_IFACE --dhcp-range=$BM_DNSMASQ_RANGE \
-            ${BM_DNSMASQ_DNS:+--dhcp-option=option:dns-server,$BM_DNSMASQ_DNS}
-    fi
-    # ensure callback daemon is running
-    sudo pkill nova-baremetal-deploy-helper || true
-    run_process baremetal "nova-baremetal-deploy-helper"
-fi
 
 # Save some values we generated for later use
 CURRENT_RUN_TIME=$(date "+$TIMESTAMP_FORMAT")

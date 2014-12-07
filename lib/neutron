@@ -529,25 +529,7 @@ function create_neutron_initial_network {
     TENANT_ID=$(openstack project list | grep " demo " | get_field 1)
     die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for demo"
 
-    # Create a small network
-    # Since neutron command is executed in admin context at this point,
-    # ``--tenant-id`` needs to be specified.
-    if is_baremetal; then
-        if [[ "$PUBLIC_INTERFACE" == '' || "$OVS_PHYSICAL_BRIDGE" == '' ]]; then
-            die $LINENO "Neutron settings for baremetal not set.. exiting"
-        fi
-        sudo ovs-vsctl add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
-        for IP in $(ip addr show dev $PUBLIC_INTERFACE | grep ' inet ' | awk '{print $2}'); do
-            sudo ip addr del $IP dev $PUBLIC_INTERFACE
-            sudo ip addr add $IP dev $OVS_PHYSICAL_BRIDGE
-        done
-        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant-id $TENANT_ID --provider:network_type flat --provider:physical_network "$PHYSICAL_NETWORK" | grep ' id ' | get_field 2)
-        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
-        SUBNET_ID=$(neutron subnet-create --tenant-id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --gateway $NETWORK_GATEWAY --name $PRIVATE_SUBNET_NAME $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
-        die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $TENANT_ID"
-        sudo ifconfig $OVS_PHYSICAL_BRIDGE up
-        sudo route add default gw $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
-    elif is_provider_network; then
+    if is_provider_network; then
         die_if_not_set $LINENO PHYSICAL_NETWORK "You must specify the PHYSICAL_NETWORK"
         die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specifiy the PROVIDER_NETWORK_TYPE"
         NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
