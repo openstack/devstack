@@ -551,7 +551,7 @@ esac
 # Use 64bit fedora image if heat is enabled
 if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
     case "$VIRT_DRIVER" in
-        libvirt|baremetal|ironic)
+        libvirt|ironic)
             HEAT_CFN_IMAGE_URL=${HEAT_CFN_IMAGE_URL:-"https://download.fedoraproject.org/pub/alt/openstack/20/x86_64/Fedora-x86_64-20-20140618-sda.qcow2"}
             IMAGE_URLS+=",$HEAT_CFN_IMAGE_URL"
             ;;
@@ -563,7 +563,7 @@ fi
 # Trove needs a custom image for its work
 if [[ "$ENABLED_SERVICES" =~ 'tr-api' ]]; then
     case "$VIRT_DRIVER" in
-        libvirt|baremetal|ironic|xenapi)
+        libvirt|ironic|xenapi)
             TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu/mysql.qcow2"}
             IMAGE_URLS+=",${TROVE_GUEST_IMAGE_URL}"
             ;;
