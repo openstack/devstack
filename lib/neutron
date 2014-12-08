@@ -99,6 +99,9 @@ GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 
 
 NEUTRON_DIR=$DEST/neutron
+NEUTRON_FWAAS_DIR=$DEST/neutron-fwaas
+NEUTRON_LBAAS_DIR=$DEST/neutron-lbaas
+NEUTRON_VPNAAS_DIR=$DEST/neutron-vpnaas
 NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 # Support entry points installation of console scripts
@@ -596,6 +599,18 @@ function init_neutron {
 function install_neutron {
     git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
     setup_develop $NEUTRON_DIR
+    if is_service_enabled q-fwaas; then
+        git_clone $NEUTRON_FWAAS_REPO $NEUTRON_FWAAS_DIR $NEUTRON_FWAAS_BRANCH
+        setup_develop $NEUTRON_FWAAS_DIR
+    fi
+    if is_service_enabled q-lbaas; then
+        git_clone $NEUTRON_LBAAS_REPO $NEUTRON_LBAAS_DIR $NEUTRON_LBAAS_BRANCH
+        setup_develop $NEUTRON_LBAAS_DIR
+    fi
+    if is_service_enabled q-vpn; then
+        git_clone $NEUTRON_VPNAAS_REPO $NEUTRON_VPNAAS_DIR $NEUTRON_VPNAAS_BRANCH
+        setup_develop $NEUTRON_VPNAAS_DIR
+    fi
 
     if [ "$VIRT_DRIVER" == 'xenserver' ]; then
         local dom0_ip

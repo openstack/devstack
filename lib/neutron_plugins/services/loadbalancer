@@ -7,7 +7,7 @@ set +o xtrace
 
 
 AGENT_LBAAS_BINARY="$NEUTRON_BIN_DIR/neutron-lbaas-agent"
-LBAAS_PLUGIN=neutron.services.loadbalancer.plugin.LoadBalancerPlugin
+LBAAS_PLUGIN=neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPlugin
 
 function neutron_agent_lbaas_install_agent_packages {
     if is_ubuntu || is_fedora || is_suse; then
