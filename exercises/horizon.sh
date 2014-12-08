@@ -36,7 +36,7 @@ source $TOP_DIR/exerciserc
 is_service_enabled horizon || exit 55
 
 # can we get the front page
-curl http://$SERVICE_HOST 2>/dev/null | grep -q '<h3>Log In</h3>' || die $LINENO "Horizon front page not functioning!"
+curl http://$SERVICE_HOST 2>/dev/null | grep -q '<h3.*>Log In</h3>' || die $LINENO "Horizon front page not functioning!"
 
 set +o xtrace
 echo "*********************************************************************"
