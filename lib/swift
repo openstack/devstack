@@ -315,7 +315,7 @@ function configure_swift {
     local csyncfile=${SWIFT_CONF_DIR}/container-sync-realms.conf
     cp ${SWIFT_DIR}/etc/container-sync-realms.conf-sample ${csyncfile}
     iniset ${csyncfile} realm1 key realm1key
-    iniset ${csyncfile} realm1 cluster_name1 "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/"
+    iniset ${csyncfile} realm1 cluster_name1 "http://$SERVICE_HOST:8080/v1/"
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${STACK_USER}
