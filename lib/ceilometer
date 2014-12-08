@@ -1,13 +1,32 @@
 # lib/ceilometer
 # Install and start **Ceilometer** service
 
-# To enable a minimal set of Ceilometer services, add the following to localrc:
+# To enable a minimal set of Ceilometer services, add the following to the
+# localrc section of local.conf:
 #
 #   enable_service ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api
 #
-# To ensure Ceilometer alarming services are enabled also, further add to the localrc:
+# To ensure Ceilometer alarming services are enabled also, further add to the
+# localrc section of local.conf:
 #
 #   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
+#
+# To ensure events are stored, add the following section to local.conf:
+#
+#   [[post-config|$CEILOMETER_CONF]]
+#   [notification]
+#   store_events=True
+#
+# Several variables set in the localrc section adjust common behaviors
+# of Ceilometer (see within for additional settings):
+#
+#   CEILOMETER_USE_MOD_WSGI:       When True, run the api under mod_wsgi.
+#   CEILOMETER_PIPELINE_INTERVAL:  The number of seconds between pipeline processing
+#                                  runs. Default 600.
+#   CEILOMETER_BACKEND:            The database backend (e.g. 'mysql', 'mongodb')
+#   CEILOMETER_COORDINATION_URL:   The URL for a group membership service provided
+#                                  by tooz.
+
 
 # Dependencies:
 #
