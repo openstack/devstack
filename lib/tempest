@@ -304,6 +304,24 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled xml_api_v2 ${COMPUTE_XML_API_V2:-True}
 
+    DEFAULT_COMPUTE_EXT="NMN, OS-DCF, OS-EXT-AZ, OS-EXT-IMG-SIZE, OS-EXT-IPS, OS-EXT-IPS-MAC, OS-EXT-SRV-ATTR, OS-EXT-STS, OS-EXT-VIF-NET, "
+    DEFAULT_COMPUTE_EXT+="OS-FLV-DISABLED, OS-FLV-EXT-DATA, OS-SCH-HNT, OS-SRV-USG, os-admin-actions, os-agents, os-aggregates, "
+    DEFAULT_COMPUTE_EXT+="os-assisted-volume-snapshots, os-attach-interfaces, os-availability-zone, os-baremetal-ext-status, "
+    DEFAULT_COMPUTE_EXT+="os-baremetal-nodes, os-block-device-mapping-v2-boot, os-cell-capacities, os-cells, os-certificates, os-cloudpipe, "
+    DEFAULT_COMPUTE_EXT+="os-cloudpipe-update, os-config-drive, os-console-auth-tokens, os-console-output, os-consoles, os-create-server-ext, "
+    DEFAULT_COMPUTE_EXT+="os-deferred-delete, os-evacuate, os-extended-floating-ips, os-extended-hypervisors, os-extended-quotas, "
+    DEFAULT_COMPUTE_EXT+="os-extended-services, os-extended-services-delete, os-extended-volumes, os-fixed-ips, os-flavor-access, "
+    DEFAULT_COMPUTE_EXT+="os-flavor-extra-specs, os-flavor-manage, os-flavor-rxtx, os-flavor-swap, os-floating-ip-dns, os-floating-ip-pools, "
+    DEFAULT_COMPUTE_EXT+="os-floating-ips, os-floating-ips-bulk, os-fping, os-hide-server-addresses, os-hosts, os-hypervisors, "
+    DEFAULT_COMPUTE_EXT+="os-instance-actions, os-instance_usage_audit_log, os-keypairs, os-migrations, os-multiple-create, os-networks, "
+    DEFAULT_COMPUTE_EXT+="os-networks-associate, os-preserve-ephemeral-rebuild, os-quota-class-sets, os-quota-sets, os-rescue, "
+    DEFAULT_COMPUTE_EXT+="os-security-group-default-rules, os-security-groups, os-server-diagnostics, os-server-external-events, "
+    DEFAULT_COMPUTE_EXT+="os-server-groups, os-server-password, os-server-start-stop, os-services, os-shelve, os-simple-tenant-usage, "
+    DEFAULT_COMPUTE_EXT+="os-tenant-networks, os-used-limits, os-used-limits-for-admin, os-user-data, os-user-quotas, os-virtual-interfaces, "
+    DEFAULT_COMPUTE_EXT+="os-volume-attachment-update, os-volumes"
+
+    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions ${COMPUTE_API_EXTENSIONS:-$DEFAULT_COMPUTE_EXT}
+
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
     iniset $TEMPEST_CONFIG "compute-admin" password "$password"
@@ -365,6 +383,16 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG volume storage_protocol $TEMPEST_STORAGE_PROTOCOL
     fi
 
+    DEFAULT_VOLUME_EXT="OS-SCH-HNT, backups, encryption, os-admin-actions, os-availability-zone, "
+    DEFAULT_VOLUME_EXT+="os-extended-services, os-extended-snapshot-attributes, os-hosts, os-image-create, "
+    DEFAULT_VOLUME_EXT+="os-quota-class-sets, os-quota-sets, os-services, os-snapshot-actions, "
+    DEFAULT_VOLUME_EXT+="os-types-extra-specs, os-types-manage, os-used-limits, os-vol-host-attr, "
+    DEFAULT_VOLUME_EXT+="os-vol-image-meta, os-vol-mig-status-attr, os-vol-tenant-attr, os-volume-actions, "
+    DEFAULT_VOLUME_EXT+="os-volume-encryption-metadata, os-volume-manage, os-volume-transfer, "
+    DEFAULT_VOLUME_EXT+="os-volume-unmanage, qos-specs"
+
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions ${VOLUME_API_EXTENSIONS:-$DEFAULT_VOLUME_EXT}
+
     # Dashboard
     iniset $TEMPEST_CONFIG dashboard dashboard_url "http://$SERVICE_HOST/"
     iniset $TEMPEST_CONFIG dashboard login_url "http://$SERVICE_HOST/auth/login/"
@@ -372,14 +400,22 @@ function configure_tempest {
     # cli
     iniset $TEMPEST_CONFIG cli cli_dir $NOVA_BIN_DIR
 
+    DEFAULT_NET_EXT="agent, allowed-address-pairs, binding, dhcp_agent_scheduler, ext-gw-mode, external-net"
+    DEFAULT_NET_EXT+=", extra_dhcp_opt, extraroute, fwaas, l3_agent_scheduler, lbaas"
+    DEFAULT_NET_EXT+=", lbaas_agent_scheduler, metering, multi-provider, provider, quotas"
+    DEFAULT_NET_EXT+=", router, security-group, service-type, vpnaas"
     # Networking
-    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-all}"
+    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions ${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}
 
     # Baremetal
     if [ "$VIRT_DRIVER" = "ironic" ] ; then
         iniset $TEMPEST_CONFIG baremetal driver_enabled True
     fi
 
+    DEFAULT_SWIFT_EXT="account_quotas, bulk_delete, bulk_upload, container_quotas, container_sync, crossdomain"
+    DEFAULT_SWIFT_EXT+=", formpost, keystoneauth, ratelimit, slo, staticweb, tempauth, tempurl"
+    # Object Storage
+    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis ${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_EXT}
     # service_available
     for service in ${TEMPEST_SERVICES//,/ }; do
         if is_service_enabled $service ; then
