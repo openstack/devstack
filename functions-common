@@ -319,8 +319,8 @@ function err {
     set +o xtrace
     local msg="[ERROR] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg 1>&2;
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        echo $msg >> "${SCREEN_LOGDIR}/error.log"
+    if [[ -n ${LOGDIR} ]]; then
+        echo $msg >> "${LOGDIR}/error.log"
     fi
     $xtrace
     return $exitcode
@@ -372,8 +372,8 @@ function warn {
     set +o xtrace
     local msg="[WARNING] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg 1>&2;
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        echo $msg >> "${SCREEN_LOGDIR}/error.log"
+    if [[ -n ${LOGDIR} ]]; then
+        echo $msg >> "${LOGDIR}/error.log"
     fi
     $xtrace
     return $exitcode
@@ -1261,8 +1261,8 @@ function zypper_install {
 # _run_process() is designed to be backgrounded by run_process() to simulate a
 # fork.  It includes the dirty work of closing extra filehandles and preparing log
 # files to produce the same logs as screen_it().  The log filename is derived
-# from the service name and global-and-now-misnamed ``SCREEN_LOGDIR``
-# Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_LOGDIR``, ``SCREEN_NAME``, ``SERVICE_DIR``
+# from the service name.
+# Uses globals ``CURRENT_LOG_TIME``, ``LOGDIR``, ``SCREEN_LOGDIR``, ``SCREEN_NAME``, ``SERVICE_DIR``
 # If an optional group is provided sg will be used to set the group of
 # the command.
 # _run_process service "command-line" [group]
@@ -1277,9 +1277,14 @@ function _run_process {
     exec 3>&-
     exec 6>&-
 
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        exec 1>&${SCREEN_LOGDIR}/screen-${service}.log.${CURRENT_LOG_TIME} 2>&1
-        ln -sf ${SCREEN_LOGDIR}/screen-${service}.log.${CURRENT_LOG_TIME} ${SCREEN_LOGDIR}/screen-${service}.log
+    local real_logfile="${LOGDIR}/${service}.log.${CURRENT_LOG_TIME}"
+    if [[ -n ${LOGDIR} ]]; then
+        exec 1>&"$real_logfile" 2>&1
+        ln -sf "$real_logfile" ${LOGDIR}/${service}.log
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            # Drop the backward-compat symlink
+            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${service}.log
+        fi
 
         # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
         export PYTHONUNBUFFERED=1
@@ -1343,7 +1348,7 @@ function run_process {
 }
 
 # Helper to launch a process in a named screen
-# Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_NAME``, ``SCREEN_LOGDIR``,
+# Uses globals ``CURRENT_LOG_TIME``, ```LOGDIR``, ``SCREEN_LOGDIR``, `SCREEN_NAME``,
 # ``SERVICE_DIR``, ``USE_SCREEN``
 # screen_process name "command-line" [group]
 # Run a command in a shell in a screen window, if an optional group
@@ -1362,10 +1367,18 @@ function screen_process {
 
     screen -S $SCREEN_NAME -X screen -t $name
 
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen -S $SCREEN_NAME -p $name -X logfile ${SCREEN_LOGDIR}/screen-${name}.log.${CURRENT_LOG_TIME}
+    local real_logfile="${LOGDIR}/${name}.log.${CURRENT_LOG_TIME}"
+    echo "LOGDIR: $LOGDIR"
+    echo "SCREEN_LOGDIR: $SCREEN_LOGDIR"
+    echo "log: $real_logfile"
+    if [[ -n ${LOGDIR} ]]; then
+        screen -S $SCREEN_NAME -p $name -X logfile "$real_logfile"
         screen -S $SCREEN_NAME -p $name -X log on
-        ln -sf ${SCREEN_LOGDIR}/screen-${name}.log.${CURRENT_LOG_TIME} ${SCREEN_LOGDIR}/screen-${name}.log
+        ln -sf "$real_logfile" ${LOGDIR}/${name}.log
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            # Drop the backward-compat symlink
+            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${1}.log
+        fi
     fi
 
     # sleep to allow bash to be ready to be send the command - we are
@@ -1410,8 +1423,8 @@ function screen_rc {
         echo "screen -t $1 bash" >> $SCREENRC
         echo "stuff \"$2$NL\"" >> $SCREENRC
 
-        if [[ -n ${SCREEN_LOGDIR} ]]; then
-            echo "logfile ${SCREEN_LOGDIR}/screen-${1}.log.${CURRENT_LOG_TIME}" >>$SCREENRC
+        if [[ -n ${LOGDIR} ]]; then
+            echo "logfile ${LOGDIR}/${1}.log.${CURRENT_LOG_TIME}" >>$SCREENRC
             echo "log on" >>$SCREENRC
         fi
     fi
