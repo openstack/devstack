@@ -621,6 +621,12 @@ API_WORKERS=${API_WORKERS:=$(( ($(nproc)/2)<2 ? 2 : ($(nproc)/2) ))}
 # Service startup timeout
 SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 
+# Support alternative yum -- in future Fedora 'dnf' will become the
+# only supported installer, but for now 'yum' and 'dnf' are both
+# available in parallel with compatible CLIs.  Allow manual switching
+# till we get to the point we need to handle this automatically
+YUM=${YUM:-yum}
+
 # Following entries need to be last items in file
 
 # Local variables:
