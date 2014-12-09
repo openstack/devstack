@@ -72,7 +72,7 @@ CEPH_REPLICAS_SEQ=$(seq ${CEPH_REPLICAS})
 # ------------
 
 function get_ceph_version {
-    local ceph_version_str=$(sudo ceph daemon mon.$(hostname) version | cut -d '"' -f 4)
+    local ceph_version_str=$(sudo ceph daemon mon.$(hostname) version | cut -d '"' -f 4 | cut -f 1,2 -d '.')
     echo $ceph_version_str
 }
 
@@ -167,7 +167,7 @@ EOF
     # pools data and metadata were removed in the Giant release so depending on the version we apply different commands
     local ceph_version=$(get_ceph_version)
     # change pool replica size according to the CEPH_REPLICAS set by the user
-    if [[ ${ceph_version%.*} -eq 0 ]] && [[ ${ceph_version##*.} -lt 87 ]]; then
+    if [[ ${ceph_version%%.*} -eq 0 ]] && [[ ${ceph_version##*.} -lt 87 ]]; then
         sudo ceph -c ${CEPH_CONF_FILE} osd pool set rbd size ${CEPH_REPLICAS}
         sudo ceph -c ${CEPH_CONF_FILE} osd pool set data size ${CEPH_REPLICAS}
         sudo ceph -c ${CEPH_CONF_FILE} osd pool set metadata size ${CEPH_REPLICAS}
