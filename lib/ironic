@@ -741,6 +741,9 @@ function upload_baremetal_ironic_deploy {
 }
 
 function prepare_baremetal_basic_ops {
+    if ! is_ironic_hardware; then
+        configure_ironic_auxiliary
+    fi
     upload_baremetal_ironic_deploy
     if ! is_ironic_hardware; then
         create_bridge_and_vms
@@ -748,9 +751,6 @@ function prepare_baremetal_basic_ops {
     enroll_nodes
     configure_tftpd
     configure_iptables
-    if ! is_ironic_hardware; then
-        configure_ironic_auxiliary
-    fi
 }
 
 function cleanup_baremetal_basic_ops {
