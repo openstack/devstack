@@ -251,17 +251,6 @@ function create_heat_accounts {
     get_or_create_role "heat_stack_user"
 
     if [[ $HEAT_DEFERRED_AUTH == trusts ]]; then
-
-        # heat_stack_owner role is given to users who create Heat stacks,
-        # it's the default role used by heat to delegate to the heat service
-        # user (for performing deferred operations via trusts), see heat.conf
-        local heat_owner_role=$(get_or_create_role "heat_stack_owner")
-
-        # Give the role to the demo and admin users so they can create stacks
-        # in either of the projects created by devstack
-        get_or_add_user_role $heat_owner_role demo demo
-        get_or_add_user_role $heat_owner_role admin demo
-        get_or_add_user_role $heat_owner_role admin admin
         iniset $HEAT_CONF DEFAULT deferred_auth_method trusts
     fi
 
