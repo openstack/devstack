@@ -60,7 +60,7 @@ IRONIC_ENABLED_DRIVERS=${IRONIC_ENABLED_DRIVERS:-fake,pxe_ssh,pxe_ipmitool}
 IRONIC_SSH_USERNAME=${IRONIC_SSH_USERNAME:-`whoami`}
 IRONIC_SSH_KEY_DIR=${IRONIC_SSH_KEY_DIR:-$IRONIC_DATA_DIR/ssh_keys}
 IRONIC_SSH_KEY_FILENAME=${IRONIC_SSH_KEY_FILENAME:-ironic_key}
-IRONIC_KEY_FILE=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME
+IRONIC_KEY_FILE=${IRONIC_KEY_FILE:-$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME}
 IRONIC_SSH_VIRT_TYPE=${IRONIC_SSH_VIRT_TYPE:-virsh}
 IRONIC_TFTPBOOT_DIR=${IRONIC_TFTPBOOT_DIR:-$IRONIC_DATA_DIR/tftpboot}
 IRONIC_TFTPSERVER_IP=${IRONIC_TFTPSERVER_IP:-$HOST_IP}
@@ -460,7 +460,7 @@ function create_ovs_taps {
     # intentional sleep to make sure the tag has been set to port
     sleep 10
 
-    local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep tap | cut -d':' -f2 | cut -b2-)
+    local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep " tap" | cut -d':' -f2 | cut -b2-)
     local tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
 
     # make sure veth pair is not existing, otherwise delete its links
@@ -632,15 +632,16 @@ function configure_tftpd {
 }
 
 function configure_ironic_ssh_keypair {
-    # Generating ssh key pair for stack user
-    if [[ ! -d $IRONIC_SSH_KEY_DIR ]]; then
-        mkdir -p $IRONIC_SSH_KEY_DIR
-    fi
     if [[ ! -d $HOME/.ssh ]]; then
         mkdir -p $HOME/.ssh
         chmod 700 $HOME/.ssh
     fi
-    echo -e 'n\n' | ssh-keygen -q -t rsa -P '' -f $IRONIC_KEY_FILE
+    if [[ ! -e $IRONIC_KEY_FILE ]]; then
+        if [[ ! -d $(dirname $IRONIC_KEY_FILE) ]]; then
+            mkdir -p $(dirname $IRONIC_KEY_FILE)
+        fi
+        echo -e 'n\n' | ssh-keygen -q -t rsa -P '' -f $IRONIC_KEY_FILE
+    fi
     cat $IRONIC_KEY_FILE.pub | tee -a $IRONIC_AUTHORIZED_KEYS_FILE
 }
 
@@ -657,7 +658,7 @@ function ironic_ssh_check {
 
 function configure_ironic_auxiliary {
     configure_ironic_ssh_keypair
-    ironic_ssh_check $IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME $IRONIC_VM_SSH_ADDRESS $IRONIC_VM_SSH_PORT $IRONIC_SSH_USERNAME 10
+    ironic_ssh_check $IRONIC_KEY_FILE $IRONIC_VM_SSH_ADDRESS $IRONIC_VM_SSH_PORT $IRONIC_SSH_USERNAME 10
 }
 
 function build_ipa_coreos_ramdisk {
@@ -740,6 +741,9 @@ function upload_baremetal_ironic_deploy {
 }
 
 function prepare_baremetal_basic_ops {
+    if ! is_ironic_hardware; then
+        configure_ironic_auxiliary
+    fi
     upload_baremetal_ironic_deploy
     if ! is_ironic_hardware; then
         create_bridge_and_vms
@@ -747,9 +751,6 @@ function prepare_baremetal_basic_ops {
     enroll_nodes
     configure_tftpd
     configure_iptables
-    if ! is_ironic_hardware; then
-        configure_ironic_auxiliary
-    fi
 }
 
 function cleanup_baremetal_basic_ops {
