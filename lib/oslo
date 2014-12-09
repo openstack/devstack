@@ -21,14 +21,14 @@ set +o xtrace
 # Defaults
 # --------
 GITDIR["cliff"]=$DEST/cliff
-GITDIR["oslo.config"]=$DEST/oslo.config
 GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
+GITDIR["oslo.config"]=$DEST/oslo.config
 GITDIR["oslo.context"]=$DEST/oslo.context
 GITDIR["oslo.db"]=$DEST/oslo.db
 GITDIR["oslo.i18n"]=$DEST/oslo.i18n
 GITDIR["oslo.log"]=$DEST/oslo.log
-GITDIR["oslo.middleware"]=$DEST/oslo.middleware
 GITDIR["oslo.messaging"]=$DEST/oslo.messaging
+GITDIR["oslo.middleware"]=$DEST/oslo.middleware
 GITDIR["oslo.rootwrap"]=$DEST/oslo.rootwrap
 GITDIR["oslo.serialization"]=$DEST/oslo.serialization
 GITDIR["oslo.utils"]=$DEST/oslo.utils
@@ -54,16 +54,17 @@ function _do_install_oslo_lib {
 # install_oslo() - Collect source and prepare
 function install_oslo {
     _do_install_oslo_lib "cliff"
-    _do_install_oslo_lib "oslo.i18n"
-    _do_install_oslo_lib "oslo.utils"
-    _do_install_oslo_lib "oslo.serialization"
-    _do_install_oslo_lib "oslo.config"
     _do_install_oslo_lib "oslo.concurrency"
-    _do_install_oslo_lib "oslo.log"
-    _do_install_oslo_lib "oslo.middleware"
-    _do_install_oslo_lib "oslo.messaging"
-    _do_install_oslo_lib "oslo.rootwrap"
+    _do_install_oslo_lib "oslo.config"
+    _do_install_oslo_lib "oslo.context"
     _do_install_oslo_lib "oslo.db"
+    _do_install_oslo_lib "oslo.i18n"
+    _do_install_oslo_lib "oslo.log"
+    _do_install_oslo_lib "oslo.messaging"
+    _do_install_oslo_lib "oslo.middleware"
+    _do_install_oslo_lib "oslo.rootwrap"
+    _do_install_oslo_lib "oslo.serialization"
+    _do_install_oslo_lib "oslo.utils"
     _do_install_oslo_lib "oslo.vmware"
     _do_install_oslo_lib "pycadf"
     _do_install_oslo_lib "stevedore"
