@@ -36,6 +36,7 @@ GITDIR["oslo.vmware"]=$DEST/oslo.vmware
 GITDIR["pycadf"]=$DEST/pycadf
 GITDIR["stevedore"]=$DEST/stevedore
 GITDIR["taskflow"]=$DEST/taskflow
+GITDIR["tooz"]=$DEST/tooz
 
 # Support entry points installation of console scripts
 OSLO_BIN_DIR=$(get_python_exec_prefix)
@@ -69,6 +70,7 @@ function install_oslo {
     _do_install_oslo_lib "pycadf"
     _do_install_oslo_lib "stevedore"
     _do_install_oslo_lib "taskflow"
+    _do_install_oslo_lib "tooz"
 }
 
 # Restore xtrace
