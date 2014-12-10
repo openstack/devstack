@@ -346,6 +346,10 @@ GITBRANCH["stevedore"]=${STEVEDORE_BRANCH:-master}
 GITREPO["taskflow"]=${TASKFLOW_REPO:-${GIT_BASE}/openstack/taskflow.git}
 GITBRANCH["taskflow"]=${TASKFLOW_BRANCH:-master}
 
+# tooz plugin manager
+GITREPO["tooz"]=${TOOZ_REPO:-${GIT_BASE}/openstack/tooz.git}
+GITBRANCH["tooz"]=${TOOZ_BRANCH:-master}
+
 # pbr drives the setuptools configs
 GITREPO["pbr"]=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
 GITBRANCH["pbr"]=${PBR_BRANCH:-master}
