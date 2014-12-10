@@ -20,7 +20,7 @@ set +o xtrace
 # Defaults
 # --------
 # for DSTAT logging
-DSTAT_FILE=${DSTAT_FILE:-"dstat.txt"}
+DSTAT_FILE=${DSTAT_FILE:-"dstat.log"}
 
 
 # start_dstat() - Start running processes, including screen
