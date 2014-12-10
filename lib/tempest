@@ -248,7 +248,7 @@ function configure_tempest {
         fi
     fi
 
-    iniset $TEMPEST_CONF DEFAULT use_syslog $SYSLOG
+    iniset $TEMPEST_CONFIG DEFAULT use_syslog $SYSLOG
     # Oslo
     iniset $TEMPEST_CONFIG DEFAULT lock_path $TEMPEST_STATE_PATH
     mkdir -p $TEMPEST_STATE_PATH
