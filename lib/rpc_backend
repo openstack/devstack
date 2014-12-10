@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/rpc_backend
 # Interface for interactig with different rpc backend
 # rpc backend settings

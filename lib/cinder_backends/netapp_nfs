@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/cinder_backends/netapp_nfs
 # Configure the NetApp NFS driver
 

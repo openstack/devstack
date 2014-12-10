@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/cinder_plugins/vsphere
 # Configure the vsphere driver
 

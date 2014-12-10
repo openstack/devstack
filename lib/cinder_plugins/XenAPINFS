@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/cinder_plugins/XenAPINFS
 # Configure the XenAPINFS driver
 

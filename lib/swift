@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/swift
 # Functions to control the configuration and operation of the **Swift** service
 
