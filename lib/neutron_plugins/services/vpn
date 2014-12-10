@@ -7,7 +7,7 @@ set +o xtrace
 
 
 AGENT_VPN_BINARY="$NEUTRON_BIN_DIR/neutron-vpn-agent"
-VPN_PLUGIN=${VPN_PLUGIN:-"neutron.services.vpn.plugin.VPNDriverPlugin"}
+VPN_PLUGIN=${VPN_PLUGIN:-"neutron_vpnaas.services.vpn.plugin.VPNDriverPlugin"}
 IPSEC_PACKAGE=${IPSEC_PACKAGE:-"openswan"}
 
 function neutron_vpn_install_agent_packages {
