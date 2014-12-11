@@ -214,6 +214,7 @@ function configure_keystone {
 
     # Configure rabbitmq credentials
     if is_service_enabled rabbit; then
+        iniset $KEYSTONE_CONF DEFAULT rabbit_userid $RABBIT_USERID
         iniset $KEYSTONE_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
         iniset $KEYSTONE_CONF DEFAULT rabbit_host $RABBIT_HOST
     fi
