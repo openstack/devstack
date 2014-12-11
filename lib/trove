@@ -141,6 +141,7 @@ function configure_trove {
     rm -f $TROVE_CONF_DIR/trove-taskmanager.conf
     rm -f $TROVE_CONF_DIR/trove-conductor.conf
 
+    iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_userid $RABBIT_USERID
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT sql_connection `database_connection_url trove`
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT add_addresses True
@@ -148,6 +149,7 @@ function configure_trove {
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT cinder_url $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT swift_url http://$SERVICE_HOST:8080/v1/AUTH_
 
+    iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT rabbit_userid $RABBIT_USERID
     iniset $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample DEFAULT rabbit_password $RABBIT_PASSWORD
     sed -i "s/localhost/$NETWORK_GATEWAY/g" $TROVE_LOCAL_CONF_DIR/trove-guestagent.conf.sample
 
@@ -158,6 +160,7 @@ function configure_trove {
     if is_service_enabled tr-tmgr; then
         TROVE_AUTH_ENDPOINT=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT//v$IDENTITY_API_VERSION
 
+        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT rabbit_userid $RABBIT_USERID
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT rabbit_password $RABBIT_PASSWORD
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT sql_connection `database_connection_url trove`
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT taskmanager_manager trove.taskmanager.manager.Manager
@@ -173,6 +176,7 @@ function configure_trove {
 
     # (Re)create trove conductor conf file if needed
     if is_service_enabled tr-cond; then
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT rabbit_userid $RABBIT_USERID
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT rabbit_password $RABBIT_PASSWORD
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT sql_connection `database_connection_url trove`
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_user radmin
