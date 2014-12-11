@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/tls
 # Functions to control the configuration and operation of the TLS proxy service
 

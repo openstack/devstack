@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # functions - DevStack-specific functions
 #
 # The following variables are assumed to be defined by certain functions:

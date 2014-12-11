@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Neutron NEC OpenFlow plugin
 # ---------------------------
 

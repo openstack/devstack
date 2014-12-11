@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/databases/mysql
 # Functions to control the configuration and operation of the **MySQL** database backend
 

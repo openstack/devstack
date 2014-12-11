@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/cinder_plugins/glusterfs
 # Configure the glusterfs driver
 

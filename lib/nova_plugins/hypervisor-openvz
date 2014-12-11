@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/nova_plugins/hypervisor-openvz
 # Configure the openvz hypervisor
 

@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/database
 # Interface for interacting with different database backends
 
