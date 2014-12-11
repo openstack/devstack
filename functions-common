@@ -1162,7 +1162,7 @@ function uninstall_package {
     if is_ubuntu; then
         apt_get purge "$@"
     elif is_fedora; then
-        sudo yum remove -y "$@"
+        sudo $YUM remove -y "$@" ||:
     elif is_suse; then
         sudo zypper rm "$@"
     else
@@ -1171,7 +1171,7 @@ function uninstall_package {
 }
 
 # Wrapper for ``yum`` to set proxy environment variables
-# Uses globals ``OFFLINE``, ``*_proxy``
+# Uses globals ``OFFLINE``, ``*_proxy``, ``YUM``
 # yum_install package [package ...]
 function yum_install {
     [[ "$OFFLINE" = "True" ]] && return
@@ -1183,7 +1183,7 @@ function yum_install {
     # https://bugzilla.redhat.com/show_bug.cgi?id=965567
     $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
         no_proxy=$no_proxy \
-        yum install -y "$@" 2>&1 | \
+        $YUM install -y "$@" 2>&1 | \
         awk '
             BEGIN { fail=0 }
             /No package/ { fail=1 }
@@ -1193,7 +1193,7 @@ function yum_install {
 
     # also ensure we catch a yum failure
     if [[ ${PIPESTATUS[0]} != 0 ]]; then
-        die $LINENO "Yum install failure"
+        die $LINENO "$YUM install failure"
     fi
 }
 
