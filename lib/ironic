@@ -444,13 +444,6 @@ function stop_ironic {
     fi
 }
 
-function is_ironic {
-    if ( is_service_enabled ir-cond && is_service_enabled ir-api ); then
-        return 0
-    fi
-    return 1
-}
-
 function create_ovs_taps {
     local ironic_net_id=$(neutron net-list | grep private | get_field 1)
 
