@@ -7,7 +7,7 @@
 # Dependencies:
 #
 # - ``functions`` file
-# - ``RABBIT_{HOST|PASSWORD}`` must be defined when RabbitMQ is used
+# - ``RABBIT_{HOST|PASSWORD|USERID}`` must be defined when RabbitMQ is used
 # - ``RPC_MESSAGING_PROTOCOL`` option for configuring the messaging protocol
 
 # ``stack.sh`` calls the entry points in this order:
@@ -68,6 +68,9 @@ function check_rpc_backend {
 function cleanup_rpc_backend {
     if is_service_enabled rabbit; then
         # Obliterate rabbitmq-server
+        if [ -n "$RABBIT_USERID" ]; then
+            sudo rabbitmqctl delete_user "$RABBIT_USERID"
+        fi
         uninstall_package rabbitmq-server
         sudo killall epmd || sudo killall -9 epmd
         if is_ubuntu; then
@@ -180,15 +183,16 @@ function restart_rpc_backend {
                 # service is not started by default
                 restart_service rabbitmq-server
             fi
+            rabbit_setuser "$RABBIT_USERID" "$RABBIT_PASSWORD"
             # change the rabbit password since the default is "guest"
-            sudo rabbitmqctl change_password guest $RABBIT_PASSWORD && break
+            sudo rabbitmqctl change_password $RABBIT_USERID $RABBIT_PASSWORD && break
             [[ $i -eq "10" ]] && die $LINENO "Failed to set rabbitmq password"
         done
         if is_service_enabled n-cell; then
             # Add partitioned access for the child cell
             if [ -z `sudo rabbitmqctl list_vhosts | grep child_cell` ]; then
                 sudo rabbitmqctl add_vhost child_cell
-                sudo rabbitmqctl set_permissions -p child_cell guest ".*" ".*" ".*"
+                sudo rabbitmqctl set_permissions -p child_cell $RABBIT_USERID ".*" ".*" ".*"
             fi
         fi
     elif is_service_enabled qpid; then
@@ -225,6 +229,7 @@ function iniset_rpc_backend {
         iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_kombu
         iniset $file $section rabbit_hosts $RABBIT_HOST
         iniset $file $section rabbit_password $RABBIT_PASSWORD
+        iniset $file $section rabbit_userid $RABBIT_USERID
     fi
 }
 
@@ -237,6 +242,21 @@ function qpid_is_supported {
 
     # Qpid is not in openSUSE
     ( ! is_suse )
+}
+
+function rabbit_setuser {
+    local user="$1" pass="$2" found="" out=""
+    out=$(sudo rabbitmqctl list_users) ||
+        { echo "failed to list users" 1>&2; return 1; }
+    found=$(echo "$out" | awk '$1 == user { print $1 }' "user=$user")
+    if [ "$found" = "$user" ]; then
+        sudo rabbitmqctl change_password "$user" "$pass" ||
+            { echo "failed changing pass for '$user'" 1>&2; return 1; }
+    else
+        sudo rabbitmqctl add_user "$user" "$pass" ||
+            { echo "failed changing pass for $user"; return 1; }
+    fi
+    sudo rabbitmqctl set_permissions "$user" ".*" ".*" ".*"
 }
 
 # Set up the various configuration files used by the qpidd broker
