@@ -144,6 +144,7 @@ function merge_config_file {
                     else {
                         # For multiline, invoke the ini routines in the reverse order
                         count = cfg_attr_count[section, attr]
+                        print "inidelete " configfile " " section " " attr
                         print "iniset " configfile " " section " " attr " \"" cfg_attr[section, attr, count - 1] "\""
                         for (l = count -2; l >= 0; l--)
                             print "iniadd_literal " configfile " " section " " attr " \"" cfg_attr[section, attr, l] "\""

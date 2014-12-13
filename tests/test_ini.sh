@@ -34,6 +34,32 @@ empty =
 [eee]
 multi = foo1
 multi = foo2
+
+# inidelete(a)
+[del_separate_options]
+a=b
+b=c
+
+# inidelete(a)
+[del_same_option]
+a=b
+a=c
+
+# inidelete(a)
+[del_missing_option]
+b=c
+
+# inidelete(a)
+[del_missing_option_multi]
+b=c
+b=d
+
+# inidelete(a)
+[del_no_options]
+
+# inidelete(a)
+# no section - del_no_section
+
 EOF
 
 # Test with missing arguments
@@ -236,5 +262,34 @@ if [[ "$VAL" == "foobar1 foobar2" ]]; then
 else
     echo "iniadd with non-exsting failed: $VAL"
 fi
+
+# Test inidelete
+del_cases="
+    del_separate_options
+    del_same_option
+    del_missing_option
+    del_missing_option_multi
+    del_no_options
+    del_no_section"
+
+for x in $del_cases; do
+    inidelete test.ini $x a
+    VAL=$(iniget_multiline test.ini $x a)
+    if [ -z "$VAL" ]; then
+        echo "OK: inidelete $x"
+    else
+        echo "inidelete $x failed: $VAL"
+    fi
+    if [ "$x" = "del_separate_options" -o \
+        "$x" = "del_missing_option" -o \
+        "$x" = "del_missing_option_multi" ]; then
+        VAL=$(iniget_multiline test.ini $x b)
+        if [ "$VAL" = "c" -o "$VAL" = "c d" ]; then
+            echo "OK: inidelete other_options $x"
+        else
+            echo "inidelete other_option $x failed: $VAL"
+        fi
+    fi
+done
 
 rm test.ini
