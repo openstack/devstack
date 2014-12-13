@@ -73,9 +73,7 @@ EOF
 # Install basics
 apt-get update
 apt-get install -y cracklib-runtime curl wget ssh openssh-server tcpdump ethtool
-apt-get install -y curl wget ssh openssh-server python-pip git sudo python-netaddr
-apt-get install -y coreutils
-pip install xenapi
+apt-get install -y git sudo python-netaddr coreutils
 
 # Install XenServer guest utilities
 dpkg -i $XS_TOOLS_PATH
