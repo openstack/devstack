@@ -31,10 +31,10 @@ function unfubar_setuptools {
     # this is a giant game of who's on first, but it does consistently work
     # there is hope that upstream python packaging fixes this in the future
     echo_summary "Unbreaking setuptools"
-    pip_install -U setuptools
+    pip_install -U "setuptools<8.0"
     pip_install -U pip
     uninstall_package python-setuptools
-    pip_install -U setuptools
+    pip_install -U "setuptools<8.0"
     pip_install -U pip
 }
 
