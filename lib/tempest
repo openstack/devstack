@@ -298,7 +298,31 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
-    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions ${COMPUTE_API_EXTENSIONS:-"all"}
+
+    DEFAULT_COMPUTE_EXT="NMN, OS-DCF, OS-EXT-AZ, OS-EXT-IMG-SIZE, OS-EXT-IPS, OS-EXT-IPS-MAC, OS-EXT-SRV-ATTR, OS-EXT-STS"
+    DEFAULT_COMPUTE_EXT+=", OS-EXT-VIF-NET, OS-FLV-DISABLED, OS-FLV-EXT-DATA, OS-SCH-HNT, OS-SRV-USG"
+    DEFAULT_COMPUTE_EXT+=", os-admin-actions, os-agents, os-aggregates, os-assisted-volume-snapshots"
+    DEFAULT_COMPUTE_EXT+=", os-attach-interfaces, os-availability-zone, os-baremetal-ext-status, os-baremetal-nodes"
+    DEFAULT_COMPUTE_EXT+=", os-block-device-mapping-v2-boot, os-cell-capacities, os-cells, os-certificates"
+    DEFAULT_COMPUTE_EXT+=", os-cloudpipe, os-cloudpipe-update, os-config-drive, os-console-auth-tokens"
+    DEFAULT_COMPUTE_EXT+=", os-console-output, os-consoles, os-create-server-ext, os-deferred-delete, os-evacuate"
+    DEFAULT_COMPUTE_EXT+=", os-extended-evacuate-find-host, os-extended-floating-ips, os-extended-hypervisors"
+    DEFAULT_COMPUTE_EXT+=", os-extended-networks, os-extended-quotas, os-extended-rescue-with-image"
+    DEFAULT_COMPUTE_EXT+=", os-extended-services, os-extended-services-delete, os-extended-volumes, os-fixed-ips"
+    DEFAULT_COMPUTE_EXT+=", os-flavor-access, os-flavor-extra-specs, os-flavor-manage, os-flavor-rxtx"
+    DEFAULT_COMPUTE_EXT+=", os-flavor-swap, os-floating-ip-dns, os-floating-ip-pools, os-floating-ips"
+    DEFAULT_COMPUTE_EXT+=", os-floating-ips-bulk, os-fping, os-hide-server-addresses, os-hosts, os-hypervisor-status"
+    DEFAULT_COMPUTE_EXT+=", os-hypervisors, os-instance-actions, os-instance_usage_audit_log, os-keypairs"
+    DEFAULT_COMPUTE_EXT+=", os-migrations, os-multiple-create, os-networks, os-networks-associate"
+    DEFAULT_COMPUTE_EXT+=", os-preserve-ephemeral-rebuild, os-quota-class-sets, os-quota-sets, os-rescue"
+    DEFAULT_COMPUTE_EXT+=", os-security-group-default-rules, os-security-groups, os-server-diagnostics"
+    DEFAULT_COMPUTE_EXT+=", os-server-external-events, os-server-group-quotas, os-server-groups"
+    DEFAULT_COMPUTE_EXT+=", os-server-list-multi-status, os-server-password, os-server-start-stop, os-services"
+    DEFAULT_COMPUTE_EXT+=", os-shelve, os-simple-tenant-usage, os-tenant-networks, os-used-limits"
+    DEFAULT_COMPUTE_EXT+=", os-used-limits-for-admin, os-user-data, os-user-quotas, os-virtual-interfaces"
+    DEFAULT_COMPUTE_EXT+=", os-volume-attachment-update, os-volumes"
+
+    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions ${COMPUTE_API_EXTENSIONS:-$DEFAULT_COMPUTE_EXT}
     iniset $TEMPEST_CONFIG compute-feature-enabled xml_api_v2 ${COMPUTE_XML_API_V2:-True}
     iniset $TEMPEST_CONFIG compute-feature-disabled api_extensions ${DISABLE_COMPUTE_API_EXTENSIONS}
 
@@ -315,7 +339,10 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network default_network "$FIXED_RANGE"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6 "$IPV6_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
-    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions ${NETWORK_API_EXTENSIONS:-"all"}
+    DEFAULT_NET_EXT="agent, allowed-address-pairs, binding, dhcp_agent_scheduler, dvr, ext-gw-mode, external-net, extra_dhcp_opt"
+    DEFAULT_NET_EXT+=", extraroute, fwaas, l3-ha, l3_agent_scheduler, lbaas, lbaas_agent_scheduler, metering"
+    DEFAULT_NET_EXT+=", multi-provider, provider, quotas, router, security-group, service-type, vpnaas"
+    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions ${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}
     iniset $TEMPEST_CONFIG network-feature-disabled api_extensions ${DISABLE_NETWORK_API_EXTENSIONS}
     iniset $TEMPEST_CONFIG network-feature-enabled xml_api True
 
@@ -359,11 +386,20 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG telemetry too_slow_to_test "False"
 
     # Object storage
-    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis ${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
+    DEFAULT_SWIFT_OPT="account_quotas, bulk_delete, bulk_upload, container_quotas, container_sync, crossdomain, formpost"
+    DEFAULT_SWIFT_OPT+=", keystoneauth, ratelimit, slo, staticweb, tempauth, tempurl"
+    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis ${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_OPT}
     iniset $TEMPEST_CONFIG object-storage-feature-disabled discoverable_apis ${OBJECT_STORAGE_DISABLE_API_EXTENSIONS}
 
     # Volume
-    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions ${VOLUME_API_EXTENSIONS:-"all"}
+    DEFAULT_VOL_EXT="OS-SCH-HNT, backups, cgsnapshots, consistencygroups, encryption, os-admin-actions, os-availability-zone"
+    DEFAULT_VOL_EXT+=", os-extended-services, os-extended-snapshot-attributes, os-hosts, os-image-create"
+    DEFAULT_VOL_EXT+=", os-quota-class-sets, os-quota-sets, os-services, os-snapshot-actions, os-types-extra-specs"
+    DEFAULT_VOL_EXT+=", os-types-manage, os-used-limits, os-vol-host-attr, os-vol-image-meta"
+    DEFAULT_VOL_EXT+=", os-vol-mig-status-attr, os-vol-tenant-attr, os-volume-actions, os-volume-encryption-metadata"
+    DEFAULT_VOL_EXT+=", os-volume-manage, os-volume-replication, os-volume-transfer, os-volume-unmanage, qos-specs"
+    DEFAULT_VOL_EXT+=", scheduler-stats"
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions ${VOLUME_API_EXTENSIONS:-$DEFAULT_VOL_EXT}
     iniset $TEMPEST_CONFIG volume-feature-disabled api_extensions ${DISABLE_VOLUME_API_EXTENSIONS}
     if ! is_service_enabled c-bak; then
         iniset $TEMPEST_CONFIG volume-feature-enabled backup False
