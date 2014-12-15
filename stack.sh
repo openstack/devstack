@@ -212,17 +212,6 @@ fi
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
 
-if is_fedora && [ $DISTRO == "rhel6" ]; then
-    # Installing Open vSwitch on RHEL requires enabling the RDO repo.
-    RHEL6_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"http://rdo.fedorapeople.org/openstack-icehouse/rdo-release-icehouse.rpm"}
-    RHEL6_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-icehouse"}
-    if ! sudo yum repolist enabled $RHEL6_RDO_REPO_ID | grep -q $RHEL6_RDO_REPO_ID; then
-        echo "RDO repo not detected; installing"
-        yum_install $RHEL6_RDO_REPO_RPM || \
-            die $LINENO "Error installing RDO repo, cannot continue"
-    fi
-fi
-
 if is_fedora && [[ $DISTRO == "rhel6" || $DISTRO == "rhel7" ]]; then
     # RHEL requires EPEL for many Open Stack dependencies
 
@@ -269,6 +258,23 @@ EOF
         OPTIONAL_REPO=rhel-6-server-optional-rpms
     fi
     sudo yum-config-manager --enable ${OPTIONAL_REPO}
+
+    # Installing Open vSwitch on RHEL requires enabling the RDO repo.
+    # Note no juno packages for rhel6
+    if [[ $DISTRO == "rhel6" ]]; then
+        RHEL_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm"}
+        RHEL_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-icehouse"}
+    elif [[ $DISTRO == "rhel7" ]]; then
+        RHEL_RDO_REPO_RPM=${RHEL7_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm"}
+        RHEL_RDO_REPO_ID=${RHEL7_RDO_REPO_ID:-"openstack-juno"}
+    fi
+
+    if ! sudo yum repolist enabled $RHEL_RDO_REPO_ID | grep -q $RHEL_RDO_REPO_ID; then
+        echo "RDO repo not detected; installing"
+        yum_install $RHEL_RDO_REPO_RPM || \
+            die $LINENO "Error installing RDO repo, cannot continue"
+    fi
+
 fi
 
 
