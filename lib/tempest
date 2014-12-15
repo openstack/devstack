@@ -372,7 +372,7 @@ function configure_tempest {
     # Orchestration Tests
     if is_service_enabled heat; then
         if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
-            iniset $TEMPEST_CONFIG orchestration image_ref $(basename "$HEAT_CFN_IMAGE_URL" ".qcow2")
+            iniset $TEMPEST_CONFIG orchestration image_ref $(basename "${HEAT_CFN_IMAGE_URL%.*}")
         fi
         # build a specialized heat flavor
         available_flavors=$(nova flavor-list)
