@@ -699,7 +699,7 @@ function start_neutron_agents {
     run_process q-dhcp "python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
     if is_provider_network; then
-        sudo ovs-vsctl add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
+        sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
         sudo ip link set $OVS_PHYSICAL_BRIDGE up
         sudo ip link set br-int up
         sudo ip link set $PUBLIC_INTERFACE up
