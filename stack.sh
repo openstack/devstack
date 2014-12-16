@@ -704,6 +704,19 @@ if [[ "$OFFLINE" != "True" ]]; then
     PYPI_ALTERNATIVE_URL=$PYPI_ALTERNATIVE_URL $TOP_DIR/tools/install_pip.sh
 fi
 
+TRACK_DEPENDS=${TRACK_DEPENDS:-False}
+
+# Install python packages into a virtualenv so that we can track them
+if [[ $TRACK_DEPENDS = True ]]; then
+    echo_summary "Installing Python packages into a virtualenv $DEST/.venv"
+    pip_install -U virtualenv
+
+    rm -rf $DEST/.venv
+    virtualenv --system-site-packages $DEST/.venv
+    source $DEST/.venv/bin/activate
+    $DEST/.venv/bin/pip freeze > $DEST/requires-pre-pip
+fi
+
 # Do the ugly hacks for broken packages and distros
 source $TOP_DIR/tools/fixup_stuff.sh
 
@@ -727,19 +740,6 @@ fi
 
 if is_service_enabled neutron; then
     install_neutron_agent_packages
-fi
-
-TRACK_DEPENDS=${TRACK_DEPENDS:-False}
-
-# Install python packages into a virtualenv so that we can track them
-if [[ $TRACK_DEPENDS = True ]]; then
-    echo_summary "Installing Python packages into a virtualenv $DEST/.venv"
-    pip_install -U virtualenv
-
-    rm -rf $DEST/.venv
-    virtualenv --system-site-packages $DEST/.venv
-    source $DEST/.venv/bin/activate
-    $DEST/.venv/bin/pip freeze > $DEST/requires-pre-pip
 fi
 
 # Check Out and Install Source
