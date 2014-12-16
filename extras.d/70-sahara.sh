@@ -15,6 +15,7 @@ if is_service_enabled sahara; then
         create_sahara_accounts
     elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
         echo_summary "Initializing sahara"
+        sahara_register_images
         start_sahara
     fi
 
