@@ -642,8 +642,10 @@ initialize_database_backends && echo "Using $DATABASE_TYPE database backend" || 
 # Queue Configuration
 
 # Rabbit connection info
+# In multi node devstack, second node needs RABBIT_USERID, but rabbit
+# isn't enabled.
+RABBIT_USERID=${RABBIT_USERID:-stackrabbit}
 if is_service_enabled rabbit; then
-    RABBIT_USERID=${RABBIT_USERID:-stackrabbit}
     RABBIT_HOST=${RABBIT_HOST:-$SERVICE_HOST}
     read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 fi
