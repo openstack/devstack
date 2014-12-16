@@ -73,7 +73,6 @@ function cleanup_heat {
 
 # configure_heat() - Set config files, create data dirs, etc
 function configure_heat {
-    setup_develop $HEAT_DIR
     if [[ "$HEAT_STANDALONE" = "True" ]]; then
         setup_develop $HEAT_DIR/contrib/heat_keystoneclient_v2
     fi
@@ -195,6 +194,7 @@ function install_heatclient {
 # install_heat() - Collect source and prepare
 function install_heat {
     git_clone $HEAT_REPO $HEAT_DIR $HEAT_BRANCH
+    setup_develop $HEAT_DIR
 }
 
 # install_heat_other() - Collect source and prepare
