@@ -146,7 +146,7 @@ function configure_trove {
     if is_service_enabled tr-tmgr; then
         TROVE_AUTH_ENDPOINT=$KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION
 
-        iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_userid $RABBIT_USERID
+        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT rabbit_userid $RABBIT_USERID
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT rabbit_password $RABBIT_PASSWORD
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT sql_connection `database_connection_url trove`
         iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT taskmanager_manager trove.taskmanager.manager.Manager
@@ -159,7 +159,7 @@ function configure_trove {
 
     # (Re)create trove conductor conf file if needed
     if is_service_enabled tr-cond; then
-        iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_userid $RABBIT_USERID
+        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT rabbit_userid $RABBIT_USERID
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT rabbit_password $RABBIT_PASSWORD
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT sql_connection `database_connection_url trove`
         iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_user radmin
@@ -171,7 +171,7 @@ function configure_trove {
     fi
 
     # Set up Guest Agent conf
-    iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_userid $RABBIT_USERID
+    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT rabbit_userid $RABBIT_USERID
     iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT rabbit_host $TROVE_HOST_GATEWAY
     iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT nova_proxy_admin_user radmin
