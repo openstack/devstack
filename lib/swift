@@ -132,7 +132,7 @@ SWIFT_TEMPURL_KEY=${SWIFT_TEMPURL_KEY}
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,swift
 
-# Toggle for deploying Keystone under HTTPD + mod_wsgi
+# Toggle for deploying Swift under HTTPD + mod_wsgi
 SWIFT_USE_MOD_WSGI=${SWIFT_USE_MOD_WSGI:-False}
 
 # Functions
