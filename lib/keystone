@@ -106,6 +106,10 @@ fi
 KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_PROTOCOL}://${KEYSTONE_AUTH_HOST}:${KEYSTONE_AUTH_PORT}
 KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}
 
+# V3 URIs
+KEYSTONE_AUTH_URI_V3=$KEYSTONE_AUTH_URI/v3
+KEYSTONE_SERVICE_URI_V3=$KEYSTONE_SERVICE_URI/v3
+
 # Functions
 # ---------
 # cleanup_keystone() - Remove residual data files, anything left over from previous
@@ -393,6 +397,9 @@ function create_keystone_accounts {
     get_or_add_user_role $admin_role $admin_user $demo_tenant
     get_or_add_user_role $another_role $demo_user $demo_tenant
     get_or_add_user_role $member_role $demo_user $invis_tenant
+
+    get_or_create_group "developers" "default" "openstack developers"
+    get_or_create_group "testers" "default"
 
     # Keystone
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then

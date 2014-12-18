@@ -815,7 +815,7 @@ function policy_add {
 # Gets or creates a domain
 # Usage: get_or_create_domain <name> <description>
 function get_or_create_domain {
-    local os_url="$KEYSTONE_SERVICE_URI/v3"
+    local os_url="$KEYSTONE_SERVICE_URI_V3"
     # Gets domain id
     local domain_id=$(
         # Gets domain id
@@ -831,6 +831,23 @@ function get_or_create_domain {
     echo $domain_id
 }
 
+# Gets or creates group
+# Usage: get_or_create_group <groupname> [<domain> <description>]
+function get_or_create_group {
+    local domain=${2:+--domain ${2}}
+    local desc="${3:-}"
+    local os_url="$KEYSTONE_SERVICE_URI_V3"
+    # Gets group id
+    local group_id=$(
+        # Creates new group with --or-show
+        openstack --os-token=$OS_TOKEN --os-url=$os_url \
+            --os-identity-api-version=3 group create $1 \
+            $domain --description "$desc" --or-show \
+            -f value -c id
+    )
+    echo $group_id
+}
+
 # Gets or creates user
 # Usage: get_or_create_user <username> <password> <project> [<email> [<domain>]]
 function get_or_create_user {
@@ -843,7 +860,7 @@ function get_or_create_user {
     local domain=""
     if [[ ! -z "$5" ]]; then
         domain="--domain=$5"
-        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI/v3 --os-identity-api-version=3"
+        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI_V3 --os-identity-api-version=3"
     fi
     # Gets user id
     local user_id=$(
@@ -868,7 +885,7 @@ function get_or_create_project {
     local domain=""
     if [[ ! -z "$2" ]]; then
         domain="--domain=$2"
-        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI/v3 --os-identity-api-version=3"
+        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI_V3 --os-identity-api-version=3"
     fi
     local project_id=$(
         # Creates new project with --or-show
