@@ -116,7 +116,7 @@ function cleanup_keystone {
 
 # _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
 function _cleanup_keystone_apache_wsgi {
-    sudo rm -f $KEYSTONE_WSGI_DIR/*.wsgi
+    sudo rm -f $KEYSTONE_WSGI_DIR/*
     sudo rm -f $(apache_site_config_for keystone)
 }
 
