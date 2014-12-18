@@ -22,6 +22,7 @@ Listen %ADMINPORT%
     WSGIProcessGroup keystone-admin
     WSGIScriptAlias / %ADMINWSGI%
     WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
     <IfVersion >= 2.4>
       ErrorLogFormat "%{cu}t %M"
     </IfVersion>
