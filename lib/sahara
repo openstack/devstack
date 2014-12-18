@@ -131,6 +131,9 @@ function configure_sahara {
     if is_service_enabled neutron; then
         iniset $SAHARA_CONF_FILE DEFAULT use_neutron true
         iniset $SAHARA_CONF_FILE DEFAULT use_floating_ips true
+    else
+        iniset $SAHARA_CONF_FILE DEFAULT use_neutron false
+        iniset $SAHARA_CONF_FILE DEFAULT use_floating_ips false
     fi
 
     if is_service_enabled heat; then
