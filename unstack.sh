@@ -66,6 +66,8 @@ if [[ -d $TOP_DIR/extras.d ]]; then
     done
 fi
 
+load_plugin_settings
+
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 GetOSVersion
@@ -78,11 +80,7 @@ fi
 # ==========
 
 # Phase: unstack
-if [[ -d $TOP_DIR/extras.d ]]; then
-    for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i unstack
-    done
-fi
+run_phase unstack
 
 if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
     source $TOP_DIR/openrc

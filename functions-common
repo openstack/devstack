@@ -44,7 +44,6 @@ declare -A GITREPO
 declare -A GITBRANCH
 declare -A GITDIR
 
-
 # Config Functions
 # ================
 
@@ -1719,6 +1718,97 @@ function setup_package {
     # ensure that further actions can do things like setup.py sdist
     if [[ "$flags" == "-e" ]]; then
         safe_chown -R $STACK_USER $1/*.egg-info
+    fi
+}
+
+# Plugin Functions
+# =================
+
+DEVSTACK_PLUGINS=${DEVSTACK_PLUGINS:-""}
+
+# enable_plugin <name> <url> [branch]
+#
+# ``name`` is an arbitrary name - (aka: glusterfs, nova-docker, zaqar)
+# ``url`` is a git url
+# ``branch`` is a gitref. If it's not set, defaults to master
+function enable_plugin {
+    local name=$1
+    local url=$2
+    local branch=${3:-master}
+    DEVSTACK_PLUGINS+=",$name"
+    GITREPO[$name]=$url
+    GITDIR[$name]=$DEST/$name
+    GITBRANCH[$name]=$branch
+}
+
+# fetch_plugins
+#
+# clones all plugins
+function fetch_plugins {
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
+
+    # short circuit if nothing to do
+    if [[ -z $plugins ]]; then
+        return
+    fi
+
+    echo "Fetching devstack plugins"
+    for plugin in ${plugins//,/ }; do
+        git_clone_by_name $plugin
+    done
+}
+
+# load_plugin_settings
+#
+# Load settings from plugins in the order that they were registered
+function load_plugin_settings {
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
+
+    # short circuit if nothing to do
+    if [[ -z $plugins ]]; then
+        return
+    fi
+
+    echo "Loading plugin settings"
+    for plugin in ${plugins//,/ }; do
+        local dir=${GITDIR[$plugin]}
+        # source any known settings
+        if [[ -f $dir/devstack/settings ]]; then
+            source $dir/devstack/settings
+        fi
+    done
+}
+
+# run_plugins
+#
+# Run the devstack/plugin.sh in all the plugin directories. These are
+# run in registration order.
+function run_plugins {
+    local mode=$1
+    local phase=$2
+    for plugin in ${plugins//,/ }; do
+        local dir=${GITDIR[$plugin]}
+        if [[ -f $dir/devstack/plugin.sh ]]; then
+            source $dir/devstack/plugin.sh $mode $phase
+        fi
+    done
+}
+
+function run_phase {
+    local mode=$1
+    local phase=$2
+    if [[ -d $TOP_DIR/extras.d ]]; then
+        for i in $TOP_DIR/extras.d/*.sh; do
+            [[ -r $i ]] && source $i $mode $phase
+        done
+    fi
+    # the source phase corresponds to settings loading in plugins
+    if [[ "$mode" == "source" ]]; then
+        load_plugin_settings
+    else
+        run_plugins $mode $phase
     fi
 }
 
