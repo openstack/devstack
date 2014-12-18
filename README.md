@@ -215,21 +215,6 @@ in the near future.  The ``local.conf`` headers for the replacements are:
     [[post-config|/$Q_PLUGIN_CONF_FILE]]
     [linuxbridge]   # or [ovs]
 
-* ``Q_AGENT_EXTRA_AGENT_OPTS``:
-
-    [[post-config|/$Q_PLUGIN_CONF_FILE]]
-    [agent]
-
-* ``Q_AGENT_EXTRA_SRV_OPTS``:
-
-    [[post-config|/$Q_PLUGIN_CONF_FILE]]
-    [linuxbridge]   # or [ovs]
-
-* ``Q_SRV_EXTRA_DEFAULT_OPTS``:
-
-    [[post-config|$NEUTRON_CONF]]
-    [DEFAULT]
-
 Example extra config in `local.conf`:
 
     [[post-config|/$Q_PLUGIN_CONF_FILE]]
