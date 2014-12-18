@@ -4,7 +4,6 @@ python-CherryPy # why? (coming from apts)
 python-Paste
 python-PasteDeploy
 python-Routes
-python-Sphinx
 python-SQLAlchemy
 python-WebOb
 python-anyjson
