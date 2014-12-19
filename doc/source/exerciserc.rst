@@ -3,7 +3,7 @@ exerciserc - Exercise Settings
 ==============================
 
 ``exerciserc`` is used to configure settings for the exercise scripts.
-The values shown below are the default values. Thse can all be
+The values shown below are the default values. These can all be
 overridden by setting them in the ``localrc`` section.
 
 ACTIVE\_TIMEOUT
