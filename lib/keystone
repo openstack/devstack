@@ -407,15 +407,6 @@ function create_keystone_accounts {
     fi
 }
 
-# Configure the API version for the OpenStack projects.
-# configure_API_version conf_file version [section]
-function configure_API_version {
-    local conf_file=$1
-    local api_version=$2
-    local section=${3:-keystone_authtoken}
-    iniset $conf_file $section auth_uri $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$api_version
-}
-
 # Configure the service to use the auth token middleware.
 #
 # configure_auth_token_middleware conf_file admin_user signing_dir [section]
@@ -429,15 +420,16 @@ function configure_auth_token_middleware {
     local signing_dir=$3
     local section=${4:-keystone_authtoken}
 
-    iniset $conf_file $section auth_host $KEYSTONE_AUTH_HOST
-    iniset $conf_file $section auth_port $KEYSTONE_AUTH_PORT
-    iniset $conf_file $section auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $conf_file $section identity_uri $KEYSTONE_AUTH_URI
+    iniset $conf_file $section auth_plugin password
+    iniset $conf_file $section auth_url $KEYSTONE_AUTH_URI
+    iniset $conf_file $section username $admin_user
+    iniset $conf_file $section password $SERVICE_PASSWORD
+    iniset $conf_file $section user_domain_id default
+    iniset $conf_file $section project_name $SERVICE_TENANT_NAME
+    iniset $conf_file $section project_domain_id default
+
+    iniset $conf_file $section auth_uri $KEYSTONE_SERVICE_URI
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
-    configure_API_version $conf_file $IDENTITY_API_VERSION $section
-    iniset $conf_file $section admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $conf_file $section admin_user $admin_user
-    iniset $conf_file $section admin_password $SERVICE_PASSWORD
     iniset $conf_file $section signing_dir $signing_dir
 }
 
