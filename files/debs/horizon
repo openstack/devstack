@@ -12,7 +12,6 @@ python-webob
 pylint
 python-eventlet
 python-nose
-python-sphinx
 python-mox
 python-coverage
 python-cherrypy3 # why?
