@@ -68,6 +68,13 @@ function configure_pypi_alternative_url {
 
 }
 
+# Setuptools 8 implements PEP 440, and 8.0.4 adds a warning triggered any time
+# pkg_resources inspects the list of installed Python packages if there are
+# non-compliant version numbers in the egg-info (for example, from distro
+# system packaged Python libraries). This is off by default after 8.2 but can
+# be enabled by uncommenting the lines below.
+#PYTHONWARNINGS=$PYTHONWARNINGS,always::RuntimeWarning:pkg_resources
+#export PYTHONWARNINGS
 
 # Show starting versions
 get_versions
