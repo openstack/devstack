@@ -123,7 +123,7 @@ Q: Why not use [STRIKEOUT:``tools/pip-requires``]\ ``requirements.txt`` to grab 
     [STRIKEOUT:The majority of deployments will use packages to install
     OpenStack that will have distro-based packages as dependencies.
     DevStack installs as many of these Python packages as possible to
-    mimic the expected production environemnt.] Certain Linux
+    mimic the expected production environment.] Certain Linux
     distributions have a 'lack of workaround' in their Python
     configurations that installs vendor packaged Python modules and
     pip-installed modules to the SAME DIRECTORY TREE. This is causing

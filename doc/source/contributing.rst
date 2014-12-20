@@ -5,7 +5,7 @@ Contributing
 DevStack uses the standard OpenStack contribution process as outlined in
 `the OpenStack wiki 'How To
 Contribute' <https://wiki.openstack.org/wiki/How_To_Contribute>`__. This
-means that you will need to meet the requirements of the Contribututors
+means that you will need to meet the requirements of the Contributors
 License Agreement (CLA). If you have already done that for another
 OpenStack project you are good to go.
 

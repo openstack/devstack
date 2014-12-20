@@ -4,7 +4,7 @@ openrc - User Authentication Settings
 
 ``openrc`` configures login credentials suitable for use with the
 OpenStack command-line tools. ``openrc`` sources ``stackrc`` at the
-beginning (which in turn sources the ``localrc`` setion of
+beginning (which in turn sources the ``localrc`` section of
 ``local.conf``) in order to pick up ``HOST_IP`` and/or ``SERVICE_HOST``
 to use in the endpoints. The values shown below are the default values.
 
