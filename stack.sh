@@ -215,7 +215,7 @@ fi
 # image was created (fix in the works).  Remove all pip packages
 # before we do anything else
 if [[ $DISTRO = "rhel7" && is_rackspace ]]; then
-    (sudo pip freeze | xargs sudo pip uninstall -y) || true
+    (sudo -H pip freeze | xargs sudo -H pip uninstall -y) || true
 fi
 
 # Some distros need to add repos beyond the defaults provided by the vendor
