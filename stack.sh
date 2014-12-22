@@ -1030,6 +1030,14 @@ if is_service_enabled key; then
 fi
 
 
+# ZeroMQ
+# ------
+if is_service_enabled zeromq; then
+    echo_summary "Starting zeromq receiver"
+    run_process zeromq "$OSLO_BIN_DIR/oslo-messaging-zmq-receiver"
+fi
+
+
 # Horizon
 # -------
 
@@ -1206,11 +1214,6 @@ fi
 # Create a randomized default value for the keymgr's fixed_key
 if is_service_enabled nova; then
     iniset $NOVA_CONF keymgr fixed_key $(generate_hex_string 32)
-fi
-
-if is_service_enabled zeromq; then
-    echo_summary "Starting zermomq receiver"
-    run_process zeromq "$OSLO_BIN_DIR/oslo-messaging-zmq-receiver"
 fi
 
 # Launch the nova-api and wait for it to answer before continuing
