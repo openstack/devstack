@@ -272,12 +272,12 @@ function init_ceilometer {
 function install_redis {
     if is_ubuntu; then
         install_package redis-server
+        restart_service redis-server
     else
         # This will fail (correctly) where a redis package is unavailable
         install_package redis
+        restart_service redis
     fi
-
-    restart_service redis
 }
 
 # install_ceilometer() - Collect source and prepare
