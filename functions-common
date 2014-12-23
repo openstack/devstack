@@ -1578,7 +1578,7 @@ function pip_install {
         local sudo_pip="env"
     else
         local cmd_pip=$(get_pip_command)
-        local sudo_pip="sudo"
+        local sudo_pip="sudo -H"
     fi
 
     $xtrace
