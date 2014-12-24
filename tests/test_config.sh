@@ -91,6 +91,46 @@ attribute=value
 [[test4|\$TEST4_DIR/\$TEST4_FILE]]
 [fff]
 type=new
+
+[[test-env|test-env.conf]]
+[foo]
+foo=\${FOO_BAR_BAZ}
+
+[[test5|test-equals.conf]]
+[DEFAULT]
+drivers = driver=python.import.path.Driver
+
+[[test6|test-strip.conf]]
+[DEFAULT]
+# next line has trailing space
+attr = strip_trailing_space
+
+[[test7|test-colon.conf]]
+[DEFAULT]
+servers=10.11.12.13:80
+
+[[test-multi-sections|test-multi-sections.conf]]
+[sec-1]
+cfg_item1 = abcd
+cfg_item2 = efgh
+
+[sec-2]
+cfg_item1 = abcd
+cfg_item3 = /1/2/3/4:5
+cfg_item4 = end
+
+[sec-3]
+cfg_item5 = 5555
+cfg_item6 = 6666
+cfg_item5 = 5555another
+
+[[test-multiline|test-multiline.conf]]
+[multi]
+cfg_item1 = ab:cd:ef:gh
+cfg_item1 = abcd
+cfg_item2 = efgh
+cfg_item2 = \${FOO_BAR_BAZ}
+
 EOF
 
 echo -n "get_meta_section_files: test0 doesn't exist: "
@@ -172,9 +212,43 @@ VAL=$(cat test2a.conf)
 # iniset adds a blank line if it creates the file...
 EXPECT_VAL="
 [ddd]
-additional = true
-type = new"
+type = new
+additional = true"
 check_result "$VAL" "$EXPECT_VAL"
+
+echo -n "merge_config_file test-multi-sections: "
+rm -f test-multi-sections.conf
+merge_config_file test.conf test-multi-sections test-multi-sections.conf
+VAL=$(cat test-multi-sections.conf)
+EXPECT_VAL='
+[sec-1]
+cfg_item1 = abcd
+cfg_item2 = efgh
+
+[sec-2]
+cfg_item1 = abcd
+cfg_item3 = /1/2/3/4:5
+cfg_item4 = end
+
+[sec-3]
+cfg_item5 = 5555
+cfg_item5 = 5555another
+cfg_item6 = 6666'
+check_result "$VAL" "$EXPECT_VAL"
+
+echo -n "merge_config_file test-multiline: "
+rm -f test-multiline.conf
+FOO_BAR_BAZ="foo bar baz"
+merge_config_file test.conf test-multiline test-multiline.conf
+VAL=$(cat test-multiline.conf)
+EXPECT_VAL='
+[multi]
+cfg_item1 = ab:cd:ef:gh
+cfg_item1 = abcd
+cfg_item2 = efgh
+cfg_item2 = foo bar baz'
+check_result "$VAL" "$EXPECT_VAL"
+unset FOO_BAR_BAZ
 
 echo -n "merge_config_group test2: "
 rm test2a.conf
@@ -183,8 +257,8 @@ VAL=$(cat test2a.conf)
 # iniset adds a blank line if it creates the file...
 EXPECT_VAL="
 [ddd]
-additional = true
-type = new"
+type = new
+additional = true"
 check_result "$VAL" "$EXPECT_VAL"
 
 echo -n "merge_config_group test2 no conf file: "
@@ -206,6 +280,17 @@ EXPECT_VAL="
 attribute = value"
 check_result "$VAL" "$EXPECT_VAL"
 
+echo -n "merge_config_file test-env: "
+rm -f test-env.conf
+FOO_BAR_BAZ="foo bar baz"
+merge_config_file test.conf test-env test-env.conf
+VAL=$(cat test-env.conf)
+EXPECT_VAL='
+[foo]
+foo = foo bar baz'
+check_result "$VAL" "$EXPECT_VAL"
+unset FOO_BAR_BAZ
+
 echo -n "merge_config_group test4 variable filename: "
 setup_test4
 merge_config_group test.conf test4
@@ -225,5 +310,37 @@ EXPECT_VAL="
 type = new"
 check_result "$VAL" "$EXPECT_VAL"
 
-rm -f test.conf test1c.conf test2a.conf test-space.conf
+echo -n "merge_config_file test5 equals in value: "
+rm -f test-equals.conf
+merge_config_file test.conf test5 test-equals.conf
+VAL=$(cat test-equals.conf)
+# iniset adds a blank line if it creates the file...
+EXPECT_VAL="
+[DEFAULT]
+drivers = driver=python.import.path.Driver"
+check_result "$VAL" "$EXPECT_VAL"
+
+echo -n "merge_config_file test6 value stripped: "
+rm -f test-strip.conf
+merge_config_file test.conf test6 test-strip.conf
+VAL=$(cat test-strip.conf)
+# iniset adds a blank line if it creates the file...
+EXPECT_VAL="
+[DEFAULT]
+attr = strip_trailing_space"
+check_result "$VAL" "$EXPECT_VAL"
+
+echo -n "merge_config_file test7 colon in value: "
+rm -f test-colon.conf
+merge_config_file test.conf test7 test-colon.conf
+VAL=$(cat test-colon.conf)
+EXPECT_VAL="
+[DEFAULT]
+servers = 10.11.12.13:80"
+check_result "$VAL" "$EXPECT_VAL"
+
+rm -f test.conf test1c.conf test2a.conf \
+    test-space.conf test-equals.conf test-strip.conf \
+    test-colon.conf test-env.conf test-multiline.conf \
+    test-multi-sections.conf
 rm -rf test-etc

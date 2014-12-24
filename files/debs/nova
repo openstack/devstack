@@ -1,0 +1,48 @@
+dnsmasq-base
+dnsmasq-utils # for dhcp_release
+conntrack
+kpartx
+parted
+iputils-arping
+libmysqlclient-dev  # testonly
+mysql-server # NOPRIME
+python-mysqldb
+python-mysql.connector
+python-xattr # needed for glance which is needed for nova --- this shouldn't be here
+python-lxml # needed for glance which is needed for nova --- this shouldn't be here
+gawk
+iptables
+ebtables
+sqlite3
+sudo
+qemu-kvm # NOPRIME
+qemu # dist:wheezy,jessie NOPRIME
+libvirt-bin # NOPRIME
+libvirt-dev # NOPRIME
+pm-utils
+libjs-jquery-tablesorter # Needed for coverage html reports
+vlan
+curl
+genisoimage # required for config_drive
+rabbitmq-server # NOPRIME
+qpidd # NOPRIME
+socat # used by ajaxterm
+python-mox
+python-paste
+python-migrate
+python-greenlet
+python-libvirt # NOPRIME
+python-libxml2
+python-routes
+python-numpy # used by websockify for spice console
+python-pastedeploy
+python-eventlet
+python-cheetah
+python-tempita
+python-sqlalchemy
+python-suds
+python-lockfile
+python-m2crypto
+python-feedparser
+python-iso8601
+python-qpid # NOPRIME

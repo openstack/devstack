@@ -1,7 +1,12 @@
+#!/bin/bash
+#
 # stackrc
 #
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
+
+# Source required devstack functions and globals
+source $RC_DIR/functions
 
 # Destination path for installation
 DEST=/opt/stack
@@ -41,7 +46,7 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 # this allows us to pass ENABLED_SERVICES
 if [[ -z "$ENABLED_SERVICES" ]]; then
     # core compute (glance / keystone / nova (+ nova-network))
-    ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-novnc,n-xvnc,n-cauth
+    ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-xvnc,n-cauth
     # cinder
     ENABLED_SERVICES+=,c-sch,c-api,c-vol
     # heat
@@ -113,51 +118,265 @@ DATABASE_QUERY_LOGGING=$(trueorfalse True $DATABASE_QUERY_LOGGING)
 # Zero disables timeouts
 GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 
+# Requirements enforcing mode
+#
+# - strict (default) : ensure all project requirements files match
+#   what's in global requirements.
+#
+# - soft : enforce requirements on everything in
+#   requirements/projects.txt, but do soft updates on all other
+#   repositories (i.e. sync versions for requirements that are in g-r,
+#   but pass through any extras)
+REQUIREMENTS_MODE=${REQUIREMENTS_MODE:-strict}
+
 # Repositories
 # ------------
 
 # Base GIT Repo URL
-# Another option is http://review.openstack.org/p
+# Another option is https://git.openstack.org
 GIT_BASE=${GIT_BASE:-git://git.openstack.org}
+
+# Which libraries should we install from git instead of using released
+# versions on pypi?
+#
+# By default devstack is now installing libraries from pypi instead of
+# from git repositories by default. This works great if you are
+# developing server components, but if you want to develop libraries
+# and see them live in devstack you need to tell devstack it should
+# install them from git.
+#
+# ex: LIBS_FROM_GIT=python-keystoneclient,oslo.config
+#
+# Will install those 2 libraries from git, the rest from pypi.
+
+##############
+#
+#  OpenStack Server Components
+#
+##############
 
 # metering service
 CEILOMETER_REPO=${CEILOMETER_REPO:-${GIT_BASE}/openstack/ceilometer.git}
 CEILOMETER_BRANCH=${CEILOMETER_BRANCH:-master}
 
-# ceilometer client library
-CEILOMETERCLIENT_REPO=${CEILOMETERCLIENT_REPO:-${GIT_BASE}/openstack/python-ceilometerclient.git}
-CEILOMETERCLIENT_BRANCH=${CEILOMETERCLIENT_BRANCH:-master}
-
-# volume service
+# block storage service
 CINDER_REPO=${CINDER_REPO:-${GIT_BASE}/openstack/cinder.git}
 CINDER_BRANCH=${CINDER_BRANCH:-master}
-
-# volume client
-CINDERCLIENT_REPO=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
-CINDERCLIENT_BRANCH=${CINDERCLIENT_BRANCH:-master}
-
-# diskimage-builder
-DIB_REPO=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
-DIB_BRANCH=${DIB_BRANCH:-master}
 
 # image catalog service
 GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
 GLANCE_BRANCH=${GLANCE_BRANCH:-master}
 
-GLANCE_STORE_REPO=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
-GLANCE_STORE_BRANCH=${GLANCE_STORE_BRANCH:-master}
-
-# python glance client library
-GLANCECLIENT_REPO=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
-GLANCECLIENT_BRANCH=${GLANCECLIENT_BRANCH:-master}
-
 # heat service
 HEAT_REPO=${HEAT_REPO:-${GIT_BASE}/openstack/heat.git}
 HEAT_BRANCH=${HEAT_BRANCH:-master}
 
+# django powered web control panel for openstack
+HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
+HORIZON_BRANCH=${HORIZON_BRANCH:-master}
+
+# baremetal provisioning service
+IRONIC_REPO=${IRONIC_REPO:-${GIT_BASE}/openstack/ironic.git}
+IRONIC_BRANCH=${IRONIC_BRANCH:-master}
+
+# unified auth system (manages accounts/tokens)
+KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
+KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
+
+# neutron service
+NEUTRON_REPO=${NEUTRON_REPO:-${GIT_BASE}/openstack/neutron.git}
+NEUTRON_BRANCH=${NEUTRON_BRANCH:-master}
+
+# neutron fwaas service
+NEUTRON_FWAAS_REPO=${NEUTRON_FWAAS_REPO:-${GIT_BASE}/openstack/neutron-fwaas.git}
+NEUTRON_FWAAS_BRANCH=${NEUTRON_FWAAS_BRANCH:-master}
+
+# neutron lbaas service
+NEUTRON_LBAAS_REPO=${NEUTRON_LBAAS_REPO:-${GIT_BASE}/openstack/neutron-lbaas.git}
+NEUTRON_LBAAS_BRANCH=${NEUTRON_LBAAS_BRANCH:-master}
+
+# neutron vpnaas service
+NEUTRON_VPNAAS_REPO=${NEUTRON_VPNAAS_REPO:-${GIT_BASE}/openstack/neutron-vpnaas.git}
+NEUTRON_VPNAAS_BRANCH=${NEUTRON_VPNAAS_BRANCH:-master}
+
+# compute service
+NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
+NOVA_BRANCH=${NOVA_BRANCH:-master}
+
+# data processing service
+SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
+SAHARA_BRANCH=${SAHARA_BRANCH:-master}
+
+# object storage service
+SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
+SWIFT_BRANCH=${SWIFT_BRANCH:-master}
+
+# trove service
+TROVE_REPO=${TROVE_REPO:-${GIT_BASE}/openstack/trove.git}
+TROVE_BRANCH=${TROVE_BRANCH:-master}
+
+##############
+#
+#  Testing Components
+#
+##############
+
+# consolidated openstack requirements
+REQUIREMENTS_REPO=${REQUIREMENTS_REPO:-${GIT_BASE}/openstack/requirements.git}
+REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-master}
+
+# Tempest test suite
+TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
+TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
+
+# TODO(sdague): this should end up as a library component like below
+GITREPO["tempest-lib"]=${TEMPEST_LIB_REPO:-${GIT_BASE}/openstack/tempest-lib.git}
+GITBRANCH["tempest-lib"]=${TEMPEST_LIB_BRANCH:-master}
+
+
+##############
+#
+#  OpenStack Client Library Componets
+#
+##############
+
+# ceilometer client library
+GITREPO["python-ceilometerclient"]=${CEILOMETERCLIENT_REPO:-${GIT_BASE}/openstack/python-ceilometerclient.git}
+GITBRANCH["python-ceilometerclient"]=${CEILOMETERCLIENT_BRANCH:-master}
+
+# volume client
+GITREPO["python-cinderclient"]=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
+GITBRANCH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-master}
+
+# python glance client library
+GITREPO["python-glanceclient"]=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
+GITBRANCH["python-glanceclient"]=${GLANCECLIENT_BRANCH:-master}
+
 # python heat client library
-HEATCLIENT_REPO=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
-HEATCLIENT_BRANCH=${HEATCLIENT_BRANCH:-master}
+GITREPO["python-heatclient"]=${HEATCLIENT_REPO:-${GIT_BASE}/openstack/python-heatclient.git}
+GITBRANCH["python-heatclient"]=${HEATCLIENT_BRANCH:-master}
+
+# ironic client
+GITREPO["python-ironicclient"]=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
+GITBRANCH["python-ironicclient"]=${IRONICCLIENT_BRANCH:-master}
+
+# python keystone client library to nova that horizon uses
+GITREPO["python-keystoneclient"]=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
+GITBRANCH["python-keystoneclient"]=${KEYSTONECLIENT_BRANCH:-master}
+
+# neutron client
+GITREPO["python-neutronclient"]=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
+GITBRANCH["python-neutronclient"]=${NEUTRONCLIENT_BRANCH:-master}
+
+# python client library to nova that horizon (and others) use
+GITREPO["python-novaclient"]=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
+GITBRANCH["python-novaclient"]=${NOVACLIENT_BRANCH:-master}
+
+# python saharaclient
+GITREPO["python-saharaclient"]=${SAHARACLIENT_REPO:-${GIT_BASE}/openstack/python-saharaclient.git}
+GITBRANCH["python-saharaclient"]=${SAHARACLIENT_BRANCH:-master}
+
+# python swift client library
+GITREPO["python-swiftclient"]=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
+GITBRANCH["python-swiftclient"]=${SWIFTCLIENT_BRANCH:-master}
+
+# trove client library test
+GITREPO["python-troveclient"]=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
+GITBRANCH["python-troveclient"]=${TROVECLIENT_BRANCH:-master}
+
+# consolidated openstack python client
+GITREPO["python-openstackclient"]=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
+GITBRANCH["python-openstackclient"]=${OPENSTACKCLIENT_BRANCH:-master}
+# this doesn't exist in a lib file, so set it here
+GITDIR["python-openstackclient"]=$DEST/python-openstackclient
+
+###################
+#
+#  Oslo Libraries
+#
+###################
+
+# cliff command line framework
+GITREPO["cliff"]=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
+GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
+
+# oslo.concurrency
+GITREPO["oslo.concurrency"]=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
+GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-master}
+
+# oslo.config
+GITREPO["oslo.config"]=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
+GITBRANCH["oslo.config"]=${OSLOCFG_BRANCH:-master}
+
+# oslo.context
+GITREPO["oslo.context"]=${OSLOCTX_REPO:-${GIT_BASE}/openstack/oslo.context.git}
+GITBRANCH["oslo.context"]=${OSLOCTX_BRANCH:-master}
+
+# oslo.db
+GITREPO["oslo.db"]=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
+GITBRANCH["oslo.db"]=${OSLODB_BRANCH:-master}
+
+# oslo.i18n
+GITREPO["oslo.i18n"]=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
+GITBRANCH["oslo.i18n"]=${OSLOI18N_BRANCH:-master}
+
+# oslo.log
+GITREPO["oslo.log"]=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
+GITBRANCH["oslo.log"]=${OSLOLOG_BRANCH:-master}
+
+# oslo.messaging
+GITREPO["oslo.messaging"]=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
+GITBRANCH["oslo.messaging"]=${OSLOMSG_BRANCH:-master}
+
+# oslo.middleware
+GITREPO["oslo.middleware"]=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
+GITBRANCH["oslo.middleware"]=${OSLOMID_BRANCH:-master}
+
+# oslo.rootwrap
+GITREPO["oslo.rootwrap"]=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
+GITBRANCH["oslo.rootwrap"]=${OSLORWRAP_BRANCH:-master}
+
+# oslo.serialization
+GITREPO["oslo.serialization"]=${OSLOSERIALIZATION_REPO:-${GIT_BASE}/openstack/oslo.serialization.git}
+GITBRANCH["oslo.serialization"]=${OSLOSERIALIZATION_BRANCH:-master}
+
+# oslo.utils
+GITREPO["oslo.utils"]=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
+GITBRANCH["oslo.utils"]=${OSLOUTILS_BRANCH:-master}
+
+# oslo.vmware
+GITREPO["oslo.vmware"]=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
+GITBRANCH["oslo.vmware"]=${OSLOVMWARE_BRANCH:-master}
+
+# pycadf auditing library
+GITREPO["pycadf"]=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
+GITBRANCH["pycadf"]=${PYCADF_BRANCH:-master}
+
+# stevedore plugin manager
+GITREPO["stevedore"]=${STEVEDORE_REPO:-${GIT_BASE}/openstack/stevedore.git}
+GITBRANCH["stevedore"]=${STEVEDORE_BRANCH:-master}
+
+# taskflow plugin manager
+GITREPO["taskflow"]=${TASKFLOW_REPO:-${GIT_BASE}/openstack/taskflow.git}
+GITBRANCH["taskflow"]=${TASKFLOW_BRANCH:-master}
+
+# tooz plugin manager
+GITREPO["tooz"]=${TOOZ_REPO:-${GIT_BASE}/openstack/tooz.git}
+GITBRANCH["tooz"]=${TOOZ_BRANCH:-master}
+
+# pbr drives the setuptools configs
+GITREPO["pbr"]=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
+GITBRANCH["pbr"]=${PBR_BRANCH:-master}
+
+##################
+#
+#  Libraries managed by OpenStack programs (non oslo)
+#
+##################
+
+# glance store library
+GITREPO["glance_store"]=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
+GITBRANCH["glance_store"]=${GLANCE_STORE_BRANCH:-master}
 
 # heat-cfntools server agent
 HEAT_CFNTOOLS_REPO=${HEAT_CFNTOOLS_REPO:-${GIT_BASE}/openstack/heat-cfntools.git}
@@ -167,43 +386,28 @@ HEAT_CFNTOOLS_BRANCH=${HEAT_CFNTOOLS_BRANCH:-master}
 HEAT_TEMPLATES_REPO=${HEAT_TEMPLATES_REPO:-${GIT_BASE}/openstack/heat-templates.git}
 HEAT_TEMPLATES_BRANCH=${HEAT_TEMPLATES_BRANCH:-master}
 
-# django powered web control panel for openstack
-HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
-HORIZON_BRANCH=${HORIZON_BRANCH:-master}
-
 # django openstack_auth library
-HORIZONAUTH_REPO=${HORIZONAUTH_REPO:-${GIT_BASE}/openstack/django_openstack_auth.git}
-HORIZONAUTH_BRANCH=${HORIZONAUTH_BRANCH:-master}
-
-# baremetal provisioning service
-IRONIC_REPO=${IRONIC_REPO:-${GIT_BASE}/openstack/ironic.git}
-IRONIC_BRANCH=${IRONIC_BRANCH:-master}
-IRONIC_PYTHON_AGENT_REPO=${IRONIC_PYTHON_AGENT_REPO:-${GIT_BASE}/openstack/ironic-python-agent.git}
-IRONIC_PYTHON_AGENT_BRANCH=${IRONIC_PYTHON_AGENT_BRANCH:-master}
-
-# ironic client
-IRONICCLIENT_REPO=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
-IRONICCLIENT_BRANCH=${IRONICCLIENT_BRANCH:-master}
-
-# unified auth system (manages accounts/tokens)
-KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
-KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
-
-# python keystone client library to nova that horizon uses
-KEYSTONECLIENT_REPO=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
-KEYSTONECLIENT_BRANCH=${KEYSTONECLIENT_BRANCH:-master}
+GITREPO["django_openstack_auth"]=${HORIZONAUTH_REPO:-${GIT_BASE}/openstack/django_openstack_auth.git}
+GITBRANCH["django_openstack_auth"]=${HORIZONAUTH_BRANCH:-master}
 
 # keystone middleware
-KEYSTONEMIDDLEWARE_REPO=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/keystonemiddleware.git}
-KEYSTONEMIDDLEWARE_BRANCH=${KEYSTONEMIDDLEWARE_BRANCH:-master}
+GITREPO["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/keystonemiddleware.git}
+GITBRANCH["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_BRANCH:-master}
 
-# compute service
-NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
-NOVA_BRANCH=${NOVA_BRANCH:-master}
+# s3 support for swift
+SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/stackforge/swift3.git}
+SWIFT3_BRANCH=${SWIFT3_BRANCH:-master}
 
-# python client library to nova that horizon (and others) use
-NOVACLIENT_REPO=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
-NOVACLIENT_BRANCH=${NOVACLIENT_BRANCH:-master}
+
+##################
+#
+#  TripleO Components
+#
+##################
+
+# diskimage-builder
+DIB_REPO=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
+DIB_BRANCH=${DIB_BRANCH:-master}
 
 # os-apply-config configuration template tool
 OAC_REPO=${OAC_REPO:-${GIT_BASE}/openstack/os-apply-config.git}
@@ -213,130 +417,19 @@ OAC_BRANCH=${OAC_BRANCH:-master}
 OCC_REPO=${OCC_REPO:-${GIT_BASE}/openstack/os-collect-config.git}
 OCC_BRANCH=${OCC_BRANCH:-master}
 
-# consolidated openstack python client
-OPENSTACKCLIENT_REPO=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
-OPENSTACKCLIENT_BRANCH=${OPENSTACKCLIENT_BRANCH:-master}
-
 # os-refresh-config configuration run-parts tool
 ORC_REPO=${ORC_REPO:-${GIT_BASE}/openstack/os-refresh-config.git}
 ORC_BRANCH=${ORC_BRANCH:-master}
-
-# cliff command line framework
-CLIFF_REPO=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
-CLIFF_BRANCH=${CLIFF_BRANCH:-master}
-
-# oslo.concurrency
-OSLOCON_REPO=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
-OSLOCON_BRANCH=${OSLOCON_BRANCH:-master}
-
-# oslo.config
-OSLOCFG_REPO=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
-OSLOCFG_BRANCH=${OSLOCFG_BRANCH:-master}
-
-# oslo.db
-OSLODB_REPO=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
-OSLODB_BRANCH=${OSLODB_BRANCH:-master}
-
-# oslo.i18n
-OSLOI18N_REPO=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
-OSLOI18N_BRANCH=${OSLOI18N_BRANCH:-master}
-
-# oslo.log
-OSLOLOG_REPO=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
-OSLOLOG_BRANCH=${OSLOLOG_BRANCH:-master}
-
-# oslo.messaging
-OSLOMSG_REPO=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
-OSLOMSG_BRANCH=${OSLOMSG_BRANCH:-master}
-
-# oslo.middleware
-OSLOMID_REPO=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
-OSLOMID_BRANCH=${OSLOMID_BRANCH:-master}
-
-# oslo.rootwrap
-OSLORWRAP_REPO=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
-OSLORWRAP_BRANCH=${OSLORWRAP_BRANCH:-master}
-
-# oslo.serialization
-OSLOSERIALIZATION_REPO=${OSLOSERIALIZATION_REPO:-${GIT_BASE}/openstack/oslo.serialization.git}
-OSLOSERIALIZATION_BRANCH=${OSLOSERIALIZATION_BRANCH:-master}
-
-# oslo.utils
-OSLOUTILS_REPO=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
-OSLOUTILS_BRANCH=${OSLOUTILS_BRANCH:-master}
-
-# oslo.vmware
-OSLOVMWARE_REPO=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
-OSLOVMWARE_BRANCH=${OSLOVMWARE_BRANCH:-master}
-
-# pycadf auditing library
-PYCADF_REPO=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
-PYCADF_BRANCH=${PYCADF_BRANCH:-master}
-
-# stevedore plugin manager
-STEVEDORE_REPO=${STEVEDORE_REPO:-${GIT_BASE}/openstack/stevedore.git}
-STEVEDORE_BRANCH=${STEVEDORE_BRANCH:-master}
-
-# taskflow plugin manager
-TASKFLOW_REPO=${TASKFLOW_REPO:-${GIT_BASE}/openstack/taskflow.git}
-TASKFLOW_BRANCH=${TASKFLOW_BRANCH:-master}
-
-# pbr drives the setuptools configs
-PBR_REPO=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
-PBR_BRANCH=${PBR_BRANCH:-master}
-
-# neutron service
-NEUTRON_REPO=${NEUTRON_REPO:-${GIT_BASE}/openstack/neutron.git}
-NEUTRON_BRANCH=${NEUTRON_BRANCH:-master}
-
-# neutron client
-NEUTRONCLIENT_REPO=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
-NEUTRONCLIENT_BRANCH=${NEUTRONCLIENT_BRANCH:-master}
-
-# consolidated openstack requirements
-REQUIREMENTS_REPO=${REQUIREMENTS_REPO:-${GIT_BASE}/openstack/requirements.git}
-REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-master}
-
-# storage service
-SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
-SWIFT_BRANCH=${SWIFT_BRANCH:-master}
-SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/stackforge/swift3.git}
-SWIFT3_BRANCH=${SWIFT3_BRANCH:-master}
-
-# python swift client library
-SWIFTCLIENT_REPO=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
-SWIFTCLIENT_BRANCH=${SWIFTCLIENT_BRANCH:-master}
-
-# Tempest test suite
-TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
-TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
-
-TEMPEST_LIB_REPO=${TEMPEST_LIB_REPO:-${GIT_BASE}/openstack/tempest-lib.git}
-TEMPEST_LIB_BRANCH=${TEMPEST_LIB_BRANCH:-master}
 
 # Tripleo elements for diskimage-builder images
 TIE_REPO=${TIE_REPO:-${GIT_BASE}/openstack/tripleo-image-elements.git}
 TIE_BRANCH=${TIE_BRANCH:-master}
 
-# a websockets/html5 or flash powered VNC console for vm instances
-NOVNC_REPO=${NOVNC_REPO:-https://github.com/kanaka/noVNC.git}
-NOVNC_BRANCH=${NOVNC_BRANCH:-master}
-
-# ryu service
-RYU_REPO=${RYU_REPO:-https://github.com/osrg/ryu.git}
-RYU_BRANCH=${RYU_BRANCH:-master}
-
-# a websockets/html5 or flash powered SPICE console for vm instances
-SPICE_REPO=${SPICE_REPO:-http://anongit.freedesktop.org/git/spice/spice-html5.git}
-SPICE_BRANCH=${SPICE_BRANCH:-master}
-
-# trove service
-TROVE_REPO=${TROVE_REPO:-${GIT_BASE}/openstack/trove.git}
-TROVE_BRANCH=${TROVE_BRANCH:-master}
-
-# trove client library test
-TROVECLIENT_REPO=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
-TROVECLIENT_BRANCH=${TROVECLIENT_BRANCH:-master}
+#################
+#
+#  Additional Libraries
+#
+#################
 
 # stackforge libraries that are used by OpenStack core services
 # wsme
@@ -350,6 +443,32 @@ PECAN_BRANCH=${PECAN_BRANCH:-master}
 # sqlalchemy-migrate
 SQLALCHEMY_MIGRATE_REPO=${SQLALCHEMY_MIGRATE_REPO:-${GIT_BASE}/stackforge/sqlalchemy-migrate.git}
 SQLALCHEMY_MIGRATE_BRANCH=${SQLALCHEMY_MIGRATE_BRANCH:-master}
+
+
+#################
+#
+#  3rd Party Components (non pip installable)
+#
+#  NOTE(sdague): these should be converted to release version installs or removed
+#
+#################
+
+# ironic python agent
+IRONIC_PYTHON_AGENT_REPO=${IRONIC_PYTHON_AGENT_REPO:-${GIT_BASE}/openstack/ironic-python-agent.git}
+IRONIC_PYTHON_AGENT_BRANCH=${IRONIC_PYTHON_AGENT_BRANCH:-master}
+
+# a websockets/html5 or flash powered VNC console for vm instances
+NOVNC_REPO=${NOVNC_REPO:-https://github.com/kanaka/noVNC.git}
+NOVNC_BRANCH=${NOVNC_BRANCH:-master}
+
+# ryu service
+RYU_REPO=${RYU_REPO:-https://github.com/osrg/ryu.git}
+RYU_BRANCH=${RYU_BRANCH:-master}
+
+# a websockets/html5 or flash powered SPICE console for vm instances
+SPICE_REPO=${SPICE_REPO:-http://anongit.freedesktop.org/git/spice/spice-html5.git}
+SPICE_BRANCH=${SPICE_BRANCH:-master}
+
 
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
@@ -450,8 +569,8 @@ esac
 # Use 64bit fedora image if heat is enabled
 if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
     case "$VIRT_DRIVER" in
-        libvirt|baremetal|ironic)
-            HEAT_CFN_IMAGE_URL=${HEAT_CFN_IMAGE_URL:-"http://dl.fedoraproject.org/pub/alt/openstack/20/x86_64/Fedora-x86_64-20-20140618-sda.qcow2"}
+        libvirt|ironic)
+            HEAT_CFN_IMAGE_URL=${HEAT_CFN_IMAGE_URL:-"https://download.fedoraproject.org/pub/alt/openstack/20/x86_64/Fedora-x86_64-20-20140618-sda.qcow2"}
             IMAGE_URLS+=",$HEAT_CFN_IMAGE_URL"
             ;;
         *)
@@ -459,11 +578,11 @@ if [[ "$ENABLED_SERVICES" =~ 'h-api' ]]; then
     esac
 fi
 
-# Trove needs a custom image for it's work
+# Trove needs a custom image for its work
 if [[ "$ENABLED_SERVICES" =~ 'tr-api' ]]; then
     case "$VIRT_DRIVER" in
-        libvirt|baremetal|ironic|xenapi)
-            TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu_mysql.qcow2/ubuntu_mysql.qcow2"}
+        libvirt|ironic|xenapi)
+            TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu/mysql.qcow2"}
             IMAGE_URLS+=",${TROVE_GUEST_IMAGE_URL}"
             ;;
         *)
@@ -476,7 +595,7 @@ fi
 PRECACHE_IMAGES=$(trueorfalse False $PRECACHE_IMAGES)
 if [[ "$PRECACHE_IMAGES" == "True" ]]; then
     # staging in update for nodepool
-    IMAGE_URL="http://dl.fedoraproject.org/pub/alt/openstack/20/x86_64/Fedora-x86_64-20-20140618-sda.qcow2"
+    IMAGE_URL="https://download.fedoraproject.org/pub/alt/openstack/20/x86_64/Fedora-x86_64-20-20140618-sda.qcow2"
     if ! [[ "$IMAGE_URLS"  =~ "$IMAGE_URL" ]]; then
         IMAGE_URLS+=",$IMAGE_URL"
     fi
@@ -516,6 +635,17 @@ SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 # (the default number of workers for many services is the number of CPUs)
 # Also sets the minimum number of workers to 2.
 API_WORKERS=${API_WORKERS:=$(( ($(nproc)/2)<2 ? 2 : ($(nproc)/2) ))}
+
+# Service startup timeout
+SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
+
+# Support alternative yum -- in future Fedora 'dnf' will become the
+# only supported installer, but for now 'yum' and 'dnf' are both
+# available in parallel with compatible CLIs.  Allow manual switching
+# till we get to the point we need to handle this automatically
+YUM=${YUM:-yum}
+
+# Following entries need to be last items in file
 
 # Local variables:
 # mode: shell-script

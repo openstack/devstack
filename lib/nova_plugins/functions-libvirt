@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/nova_plugins/functions-libvirt
 # Common libvirt configuration functions
 
@@ -10,7 +12,7 @@ LV_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 # Defaults
-# -------
+# --------
 
 # if we should turn on massive libvirt debugging
 DEBUG_LIBVIRT=$(trueorfalse False $DEBUG_LIBVIRT)

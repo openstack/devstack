@@ -1,0 +1,30 @@
+bridge-utils
+pylint
+python-setuptools
+screen
+unzip
+wget
+psmisc
+gcc
+git
+graphviz # testonly - docs
+lsof # useful when debugging
+openssh-server
+openssl
+python-virtualenv
+python-unittest2
+iputils-ping
+wget
+curl
+tcpdump
+euca2ools # only for testing client
+tar
+python-cmd2 # dist:precise
+python-dev
+python-mock # testonly
+python2.7
+bc
+libyaml-dev
+libffi-dev
+libssl-dev # for pyOpenSSL
+gettext  # used for compiling message catalogs

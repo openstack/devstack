@@ -37,6 +37,7 @@ Optional Arguments
 -C <tenant_name> create user and tenant, the specifid tenant will be the user's tenant
 -r <name> when combined with -C and the (-u) user exists it will be the user's tenant role in the (-C)tenant (default: Member)
 -p <userpass> password for the user
+--heat-url <heat_url>
 --os-username <username>
 --os-password <admin password>
 --os-tenant-name <tenant_name>
@@ -53,12 +54,13 @@ $0 -P -C mytenant -u myuser -p mypass
 EOF
 }
 
-if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-name:,os-tenant-id:,os-auth-url:,target-dir:,skip-tenant:,os-cacert:,help,debug -- "$@"); then
+if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-name:,os-tenant-id:,os-auth-url:,target-dir:,heat-url:,skip-tenant:,os-cacert:,help,debug -- "$@"); then
     display_help
     exit 1
 fi
 eval set -- $options
 ADDPASS=""
+HEAT_URL=""
 
 # The services users usually in the service tenant.
 # rc files for service users, is out of scope.
@@ -79,6 +81,7 @@ while [ $# -gt 0 ]; do
     --os-auth-url) export OS_AUTH_URL=$2; shift ;;
     --os-cacert) export OS_CACERT=$2; shift ;;
     --target-dir) ACCOUNT_DIR=$2; shift ;;
+    --heat-url) HEAT_URL=$2; shift ;;
     --debug) set -o xtrace ;;
     -u) MODE=${MODE:-one};  USER_NAME=$2; shift ;;
     -p) USER_PASS=$2; shift ;;
@@ -209,6 +212,10 @@ EOF
     if [ -n "$ADDPASS" ]; then
         echo "export OS_PASSWORD=\"$user_passwd\"" >>"$rcfile"
     fi
+    if [ -n "$HEAT_URL" ]; then
+        echo "export HEAT_URL=\"$HEAT_URL/$tenant_id\"" >>"$rcfile"
+        echo "export OS_NO_CLIENT_AUTH=True" >>"$rcfile"
+    fi
 }
 
 #admin users expected
@@ -238,7 +245,7 @@ function get_user_id {
 }
 
 if [ $MODE != "create" ]; then
-# looks like I can't ask for all tenant related to a specified user
+    # looks like I can't ask for all tenant related to a specified user
     openstack project list --long --quote none -f csv | grep ',True' | grep -v "${SKIP_TENANT}" | while IFS=, read tenant_id tenant_name desc enabled; do
         openstack user list --project $tenant_id --long --quote none -f csv | grep ',True' | while IFS=, read user_id user_name project email enabled; do
             if [ $MODE = one -a "$user_name" != "$USER_NAME" ]; then
@@ -246,9 +253,9 @@ if [ $MODE != "create" ]; then
             fi
 
             # Checks for a specific password defined for an user.
-            # Example for an username johndoe:
-            #                     JOHNDOE_PASSWORD=1234
-            eval SPECIFIC_UPASSWORD="\$${USER_NAME^^}_PASSWORD"
+            # Example for an username johndoe: JOHNDOE_PASSWORD=1234
+            # This mechanism is used by lib/swift
+            eval SPECIFIC_UPASSWORD="\$${user_name}_password"
             if [ -n "$SPECIFIC_UPASSWORD" ]; then
                 USER_PASS=$SPECIFIC_UPASSWORD
             fi

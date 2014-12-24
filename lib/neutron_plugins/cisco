@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Neutron Cisco plugin
 # ---------------------------
 
@@ -82,6 +84,7 @@ function neutron_plugin_configure_common {
 }
 
 function neutron_plugin_configure_debug_command {
+    :
 }
 
 function neutron_plugin_configure_dhcp_agent {
@@ -89,6 +92,7 @@ function neutron_plugin_configure_dhcp_agent {
 }
 
 function neutron_plugin_configure_l3_agent {
+    :
 }
 
 # Configure n1kv plugin
@@ -111,6 +115,7 @@ function _configure_n1kv_subplugin {
 }
 
 function neutron_plugin_configure_plugin_agent {
+    :
 }
 
 function neutron_plugin_configure_service {

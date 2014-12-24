@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/ceph
 # Functions to control the configuration and operation of the **Ceph** storage service
 
@@ -71,6 +73,11 @@ CEPH_REPLICAS_SEQ=$(seq ${CEPH_REPLICAS})
 # Functions
 # ------------
 
+function get_ceph_version {
+    local ceph_version_str=$(sudo ceph daemon mon.$(hostname) version | cut -d '"' -f 4 | cut -f 1,2 -d '.')
+    echo $ceph_version_str
+}
+
 # import_libvirt_secret_ceph() - Imports Cinder user key into libvirt
 # so it can connect to the Ceph cluster while attaching a Cinder block device
 function import_libvirt_secret_ceph {
@@ -101,8 +108,13 @@ function cleanup_ceph {
         sudo rm -f ${CEPH_DISK_IMAGE}
     fi
     uninstall_package ceph ceph-common python-ceph libcephfs1 > /dev/null 2>&1
-    VIRSH_UUID=$(sudo virsh secret-list | awk '/^ ?[0-9a-z]/ { print $1 }')
-    sudo virsh secret-undefine ${VIRSH_UUID} >/dev/null 2>&1
+    if is_service_enabled cinder || is_service_enabled nova; then
+        local virsh_uuid=$(sudo virsh secret-list | awk '/^ ?[0-9a-z]/ { print $1 }')
+        sudo virsh secret-undefine ${virsh_uuid} >/dev/null 2>&1
+    fi
+    if is_service_enabled nova; then
+        iniset $NOVA_CONF libvirt rbd_secret_uuid ""
+    fi
 }
 
 # configure_ceph() - Set config files, create data dirs, etc
@@ -154,10 +166,16 @@ EOF
         sleep 5
     done
 
+    # pools data and metadata were removed in the Giant release so depending on the version we apply different commands
+    local ceph_version=$(get_ceph_version)
     # change pool replica size according to the CEPH_REPLICAS set by the user
-    sudo ceph -c ${CEPH_CONF_FILE} osd pool set data size ${CEPH_REPLICAS}
-    sudo ceph -c ${CEPH_CONF_FILE} osd pool set rbd size ${CEPH_REPLICAS}
-    sudo ceph -c ${CEPH_CONF_FILE} osd pool set metadata size ${CEPH_REPLICAS}
+    if [[ ${ceph_version%%.*} -eq 0 ]] && [[ ${ceph_version##*.} -lt 87 ]]; then
+        sudo ceph -c ${CEPH_CONF_FILE} osd pool set rbd size ${CEPH_REPLICAS}
+        sudo ceph -c ${CEPH_CONF_FILE} osd pool set data size ${CEPH_REPLICAS}
+        sudo ceph -c ${CEPH_CONF_FILE} osd pool set metadata size ${CEPH_REPLICAS}
+    else
+        sudo ceph -c ${CEPH_CONF_FILE} osd pool set rbd size ${CEPH_REPLICAS}
+    fi
 
     # create a simple rule to take OSDs instead of host with CRUSH
     # then apply this rules to the default pool
@@ -197,8 +215,12 @@ function configure_ceph_glance {
     fi
     sudo ceph -c ${CEPH_CONF_FILE} auth get-or-create client.${GLANCE_CEPH_USER} mon "allow r" osd "allow class-read object_prefix rbd_children, allow rwx pool=${GLANCE_CEPH_POOL}" | sudo tee ${CEPH_CONF_DIR}/ceph.client.${GLANCE_CEPH_USER}.keyring
     sudo chown ${STACK_USER}:$(id -g -n $whoami) ${CEPH_CONF_DIR}/ceph.client.${GLANCE_CEPH_USER}.keyring
+
+    # NOTE(eharney): When Glance has fully migrated to Glance store,
+    # default_store can be removed from [DEFAULT].  (See lib/glance.)
     iniset $GLANCE_API_CONF DEFAULT default_store rbd
     iniset $GLANCE_API_CONF DEFAULT show_image_direct_url True
+    iniset $GLANCE_API_CONF glance_store default_store rbd
     iniset $GLANCE_API_CONF glance_store stores "file, http, rbd"
     iniset $GLANCE_API_CONF glance_store rbd_store_ceph_conf $CEPH_CONF_FILE
     iniset $GLANCE_API_CONF glance_store rbd_store_user $GLANCE_CEPH_USER
@@ -221,6 +243,11 @@ function configure_ceph_nova {
     iniset $NOVA_CONF libvirt images_type rbd
     iniset $NOVA_CONF libvirt images_rbd_pool ${NOVA_CEPH_POOL}
     iniset $NOVA_CONF libvirt images_rbd_ceph_conf ${CEPH_CONF_FILE}
+
+    if ! is_service_enabled cinder; then
+        sudo ceph -c ${CEPH_CONF_FILE} auth get-or-create client.${CINDER_CEPH_USER} mon "allow r" osd "allow class-read object_prefix rbd_children, allow rwx pool=${CINDER_CEPH_POOL}, allow rwx pool=${NOVA_CEPH_POOL},allow rx pool=${GLANCE_CEPH_POOL}" | sudo tee ${CEPH_CONF_DIR}/ceph.client.${CINDER_CEPH_USER}.keyring > /dev/null
+        sudo chown ${STACK_USER}:$(id -g -n $whoami) ${CEPH_CONF_DIR}/ceph.client.${CINDER_CEPH_USER}.keyring
+    fi
 }
 
 # configure_ceph_cinder() - Cinder config needs to come after Cinder is set up

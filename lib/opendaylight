@@ -1,11 +1,13 @@
+#!/bin/bash
+#
 # lib/opendaylight
 # Functions to control the configuration and operation of the opendaylight service
 
 # Dependencies:
 #
-# - ``functions`` file
-# # ``DEST`` must be defined
-# # ``STACK_USER`` must be defined
+# ``functions`` file
+# ``DEST`` must be defined
+# ``STACK_USER`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
@@ -44,27 +46,31 @@ ODL_USERNAME=${ODL_USERNAME:-admin}
 # The ODL password
 ODL_PASSWORD=${ODL_PASSWORD:-admin}
 
+# Short name of ODL package
+ODL_NAME=${ODL_NAME:-distribution-karaf-0.2.1-Helium-SR1}
+
 # <define global variables here that belong to this project>
 ODL_DIR=$DEST/opendaylight
 
 # The OpenDaylight Package, currently using 'Hydrogen' release
-ODL_PKG=${ODL_PKG:-distributions-virtualization-0.1.1-osgipackage.zip}
+ODL_PKG=${ODL_PKG:-distribution-karaf-0.2.1-Helium-SR1.zip}
 
 # The OpenDaylight URL
-ODL_URL=${ODL_URL:-https://nexus.opendaylight.org/content/repositories/opendaylight.release/org/opendaylight/integration/distributions-virtualization/0.1.1}
+ODL_URL=${ODL_URL:-https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.2.1-Helium-SR1/}
 
 # Default arguments for OpenDaylight. This is typically used to set
 # Java memory options.
-#   ODL_ARGS=Xmx1024m -XX:MaxPermSize=512m
+# ``ODL_ARGS=Xmx1024m -XX:MaxPermSize=512m``
 ODL_ARGS=${ODL_ARGS:-"-XX:MaxPermSize=384m"}
 
 # How long to pause after ODL starts to let it complete booting
-ODL_BOOT_WAIT=${ODL_BOOT_WAIT:-60}
+ODL_BOOT_WAIT=${ODL_BOOT_WAIT:-20}
 
 # The physical provider network to device mapping
 ODL_PROVIDER_MAPPINGS=${ODL_PROVIDER_MAPPINGS:-physnet1:eth1}
 
-# Set up default directories
+# Enable OpenDaylight l3 forwarding
+ODL_L3=${ODL_L3:-False}
 
 
 # Entry Points
@@ -85,11 +91,26 @@ function cleanup_opendaylight {
 
 # configure_opendaylight() - Set config files, create data dirs, etc
 function configure_opendaylight {
-    # Remove simple forwarder
-    rm -f $ODL_DIR/opendaylight/plugins/org.opendaylight.controller.samples.simpleforwarding*
+    # Add odl-ovsdb-openstack if it's not already there
+    local ODLOVSDB=$(cat $ODL_DIR/$ODL_NAME/etc/org.apache.karaf.features.cfg | grep featuresBoot= | grep odl)
+    if [ "$ODLOVSDB" == "" ]; then
+        sed -i '/^featuresBoot=/ s/$/,odl-ovsdb-openstack/' $ODL_DIR/$ODL_NAME/etc/org.apache.karaf.features.cfg
+    fi
 
-    # Configure OpenFlow 1.3
-    echo "ovsdb.of.version=1.3" >> $ODL_DIR/opendaylight/configuration/config.ini
+    # Configure OpenFlow 1.3 if it's not there
+    local OFLOW13=$(cat $ODL_DIR/$ODL_NAME/etc/custom.properties | grep ^of.version)
+    if [ "$OFLOW13" == "" ]; then
+        echo "ovsdb.of.version=1.3" >> $ODL_DIR/$ODL_NAME/etc/custom.properties
+    fi
+
+    # Configure L3 if the user wants it
+    if [ "${ODL_L3}" == "True" ]; then
+        # Configure L3 FWD if it's not there
+        local L3FWD=$(cat $ODL_DIR/$ODL_NAME/etc/custom.properties | grep ^ovsdb.l3.fwd.enabled)
+        if [ "$L3FWD" == "" ]; then
+            echo "ovsdb.l3.fwd.enabled=yes" >> $ODL_DIR/$ODL_NAME/etc/custom.properties
+        fi
+    fi
 }
 
 function configure_ml2_odl {
@@ -139,9 +160,8 @@ function start_opendaylight {
     # The flags to ODL have the following meaning:
     #   -of13: runs ODL using OpenFlow 1.3 protocol support.
     #   -virt ovsdb: Runs ODL in "virtualization" mode with OVSDB support
-    # NOTE(chdent): Leaving this as screen_it instead of run_process until
-    # the right thing for this service is determined.
-    screen_it odl-server "cd $ODL_DIR/opendaylight && JAVA_HOME=$JHOME ./run.sh $ODL_ARGS -of13 -virt ovsdb"
+
+    run_process odl-server "cd $ODL_DIR/$ODL_NAME && JAVA_HOME=$JHOME bin/karaf"
 
     # Sleep a bit to let OpenDaylight finish starting up
     sleep $ODL_BOOT_WAIT

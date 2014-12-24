@@ -1,13 +1,34 @@
+#!/bin/bash
+#
 # lib/ceilometer
 # Install and start **Ceilometer** service
 
-# To enable a minimal set of Ceilometer services, add the following to localrc:
+# To enable a minimal set of Ceilometer services, add the following to the
+# localrc section of local.conf:
 #
 #   enable_service ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api
 #
-# To ensure Ceilometer alarming services are enabled also, further add to the localrc:
+# To ensure Ceilometer alarming services are enabled also, further add to the
+# localrc section of local.conf:
 #
 #   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
+#
+# To ensure events are stored, add the following section to local.conf:
+#
+#   [[post-config|$CEILOMETER_CONF]]
+#   [notification]
+#   store_events=True
+#
+# Several variables set in the localrc section adjust common behaviors
+# of Ceilometer (see within for additional settings):
+#
+#   CEILOMETER_USE_MOD_WSGI:       When True, run the api under mod_wsgi.
+#   CEILOMETER_PIPELINE_INTERVAL:  The number of seconds between pipeline processing
+#                                  runs. Default 600.
+#   CEILOMETER_BACKEND:            The database backend (e.g. 'mysql', 'mongodb')
+#   CEILOMETER_COORDINATION_URL:   The URL for a group membership service provided
+#                                  by tooz.
+
 
 # Dependencies:
 #
@@ -35,8 +56,9 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["python-ceilometerclient"]=$DEST/python-ceilometerclient
+
 CEILOMETER_DIR=$DEST/ceilometer
-CEILOMETERCLIENT_DIR=$DEST/python-ceilometerclient
 CEILOMETER_CONF_DIR=/etc/ceilometer
 CEILOMETER_CONF=$CEILOMETER_CONF_DIR/ceilometer.conf
 CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
@@ -73,13 +95,12 @@ function is_ceilometer_enabled {
 }
 
 # create_ceilometer_accounts() - Set up common required ceilometer accounts
-
+#
 # Project              User         Roles
 # ------------------------------------------------------------------
 # SERVICE_TENANT_NAME  ceilometer   admin
 # SERVICE_TENANT_NAME  ceilometer   ResellerAdmin (if Swift is enabled)
-
-create_ceilometer_accounts() {
+function create_ceilometer_accounts {
 
     local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
@@ -156,6 +177,11 @@ function configure_ceilometer {
     iniset $CEILOMETER_CONF DEFAULT verbose True
     iniset $CEILOMETER_CONF DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
 
+    if [[ -n "$CEILOMETER_COORDINATION_URL" ]]; then
+        iniset $CEILOMETER_CONF coordination backend_url $CEILOMETER_COORDINATION_URL
+        iniset $CEILOMETER_CONF compute workload_partitioning True
+    fi
+
     # Install the policy file for the API server
     cp $CEILOMETER_DIR/etc/ceilometer/policy.json $CEILOMETER_CONF_DIR
     iniset $CEILOMETER_CONF DEFAULT policy_file $CEILOMETER_CONF_DIR/policy.json
@@ -178,10 +204,14 @@ function configure_ceilometer {
     configure_auth_token_middleware $CEILOMETER_CONF ceilometer $CEILOMETER_AUTH_CACHE_DIR
 
     if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
-        iniset $CEILOMETER_CONF database connection `database_connection_url ceilometer`
+        iniset $CEILOMETER_CONF database alarm_connection $(database_connection_url ceilometer)
+        iniset $CEILOMETER_CONF database event_connection $(database_connection_url ceilometer)
+        iniset $CEILOMETER_CONF database metering_connection $(database_connection_url ceilometer)
         iniset $CEILOMETER_CONF DEFAULT collector_workers $API_WORKERS
     else
-        iniset $CEILOMETER_CONF database connection mongodb://localhost:27017/ceilometer
+        iniset $CEILOMETER_CONF database alarm_connection mongodb://localhost:27017/ceilometer
+        iniset $CEILOMETER_CONF database event_connection mongodb://localhost:27017/ceilometer
+        iniset $CEILOMETER_CONF database metering_connection mongodb://localhost:27017/ceilometer
         configure_mongodb
         cleanup_ceilometer
     fi
@@ -238,18 +268,37 @@ function init_ceilometer {
     fi
 }
 
+# install_redis() - Install the redis server.
+function install_redis {
+    if is_ubuntu; then
+        install_package redis-server
+    else
+        # This will fail (correctly) where a redis package is unavailable
+        install_package redis
+    fi
+
+    restart_service redis
+}
+
 # install_ceilometer() - Collect source and prepare
 function install_ceilometer {
     git_clone $CEILOMETER_REPO $CEILOMETER_DIR $CEILOMETER_BRANCH
     setup_develop $CEILOMETER_DIR
 
+    if echo $CEILOMETER_COORDINATION_URL | grep -q '^memcached:'; then
+        install_package memcached
+    elif echo $CEILOMETER_COORDINATION_URL | grep -q '^redis:'; then
+        install_redis
+    fi
 }
 
 # install_ceilometerclient() - Collect source and prepare
 function install_ceilometerclient {
-    git_clone $CEILOMETERCLIENT_REPO $CEILOMETERCLIENT_DIR $CEILOMETERCLIENT_BRANCH
-    setup_develop $CEILOMETERCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$CEILOMETERCLIENT_DIR/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
+    if use_library_from_git "python-ceilometerclient"; then
+        git_clone_by_name "python-ceilometerclient"
+        setup_dev_lib "python-ceilometerclient"
+        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-ceilometerclient"]}/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
+    fi
 }
 
 # start_ceilometer() - Start running processes, including screen

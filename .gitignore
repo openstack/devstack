@@ -8,8 +8,8 @@
 .tox
 .stackenv
 accrc
-docs/files
-docs/html
+doc/files
+doc/build
 files/*.gz
 files/*.qcow2
 files/images

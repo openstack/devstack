@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/keystone
 # Functions to control the configuration and operation of **Keystone**
 
@@ -33,6 +35,9 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["python-keystoneclient"]=$DEST/python-keystoneclient
+GITDIR["keystonemiddleware"]=$DEST/keystonemiddleware
+
 KEYSTONE_DIR=$DEST/keystone
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
@@ -43,9 +48,6 @@ if is_suse; then
 else
     KEYSTONE_WSGI_DIR=${KEYSTONE_WSGI_DIR:-/var/www/keystone}
 fi
-
-KEYSTONEMIDDLEWARE_DIR=$DEST/keystonemiddleware
-KEYSTONECLIENT_DIR=$DEST/python-keystoneclient
 
 # Set up additional extensions, such as oauth1, federation
 # Example of KEYSTONE_EXTENSIONS=oauth1,federation
@@ -212,6 +214,7 @@ function configure_keystone {
 
     # Configure rabbitmq credentials
     if is_service_enabled rabbit; then
+        iniset $KEYSTONE_CONF DEFAULT rabbit_userid $RABBIT_USERID
         iniset $KEYSTONE_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
         iniset $KEYSTONE_CONF DEFAULT rabbit_host $RABBIT_HOST
     fi
@@ -287,7 +290,7 @@ function configure_keystone {
         " -i $KEYSTONE_CATALOG
 
         # Configure ``keystone.conf`` to use templates
-        iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.TemplatedCatalog"
+        iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.Catalog"
         iniset $KEYSTONE_CONF catalog template_file "$KEYSTONE_CATALOG"
     fi
 
@@ -315,10 +318,6 @@ function configure_keystone {
 
     iniset $KEYSTONE_CONF DEFAULT admin_workers "$API_WORKERS"
     # Public workers will use the server default, typically number of CPU.
-
-    if [[ -n "$KEYSTONE_TOKEN_HASH_ALGORITHM" ]]; then
-        iniset $KEYSTONE_CONF token hash_algorithm "$KEYSTONE_TOKEN_HASH_ALGORITHM"
-    fi
 }
 
 function configure_keystone_extensions {
@@ -440,9 +439,6 @@ function configure_auth_token_middleware {
     iniset $conf_file $section admin_user $admin_user
     iniset $conf_file $section admin_password $SERVICE_PASSWORD
     iniset $conf_file $section signing_dir $signing_dir
-    if [[ -n "$KEYSTONE_TOKEN_HASH_ALGORITHM" ]]; then
-        iniset $conf_file keystone_authtoken hash_algorithms "$KEYSTONE_TOKEN_HASH_ALGORITHM"
-    fi
 }
 
 # init_keystone() - Initialize databases, etc.
@@ -479,15 +475,19 @@ function init_keystone {
 
 # install_keystoneclient() - Collect source and prepare
 function install_keystoneclient {
-    git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
-    setup_develop $KEYSTONECLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$KEYSTONECLIENT_DIR/tools/,/etc/bash_completion.d/}keystone.bash_completion
+    if use_library_from_git "python-keystoneclient"; then
+        git_clone_by_name "python-keystoneclient"
+        setup_dev_lib "python-keystoneclient"
+        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-keystoneclient"]}/tools/,/etc/bash_completion.d/}keystone.bash_completion
+    fi
 }
 
 # install_keystonemiddleware() - Collect source and prepare
 function install_keystonemiddleware {
-    git_clone $KEYSTONEMIDDLEWARE_REPO $KEYSTONEMIDDLEWARE_DIR $KEYSTONEMIDDLEWARE_BRANCH
-    setup_install $KEYSTONEMIDDLEWARE_DIR
+    if use_library_from_git "keystonemiddleware"; then
+        git_clone_by_name "keystonemiddleware"
+        setup_dev_lib "keystonemiddleware"
+    fi
 }
 
 # install_keystone() - Collect source and prepare

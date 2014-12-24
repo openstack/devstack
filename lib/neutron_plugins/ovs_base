@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # common functions for ovs based plugin
 # -------------------------------------
 
@@ -60,7 +62,11 @@ function _neutron_ovs_base_install_agent_packages {
 }
 
 function _neutron_ovs_base_configure_debug_command {
-    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+    if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
+        iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge ""
+    else
+        iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
+    fi
 }
 
 function _neutron_ovs_base_configure_firewall_driver {
@@ -79,11 +85,20 @@ function _neutron_ovs_base_configure_l3_agent {
     fi
 
     neutron-ovs-cleanup
-    # --no-wait causes a race condition if $PUBLIC_BRIDGE is not up when ip addr flush is called
-    sudo ovs-vsctl -- --may-exist add-br $PUBLIC_BRIDGE
-    sudo ovs-vsctl br-set-external-id $PUBLIC_BRIDGE bridge-id $PUBLIC_BRIDGE
-    # ensure no IP is configured on the public bridge
-    sudo ip addr flush dev $PUBLIC_BRIDGE
+    if [[ "$Q_USE_PUBLIC_VETH" = "True" ]]; then
+        ip link show $Q_PUBLIC_VETH_INT > /dev/null 2>&1 ||
+        sudo ip link add $Q_PUBLIC_VETH_INT type veth \
+            peer name $Q_PUBLIC_VETH_EX
+        sudo ip link set $Q_PUBLIC_VETH_INT up
+        sudo ip link set $Q_PUBLIC_VETH_EX up
+        sudo ip addr flush dev $Q_PUBLIC_VETH_EX
+    else
+        # --no-wait causes a race condition if $PUBLIC_BRIDGE is not up when ip addr flush is called
+        sudo ovs-vsctl -- --may-exist add-br $PUBLIC_BRIDGE
+        sudo ovs-vsctl br-set-external-id $PUBLIC_BRIDGE bridge-id $PUBLIC_BRIDGE
+        # ensure no IP is configured on the public bridge
+        sudo ip addr flush dev $PUBLIC_BRIDGE
+    fi
 }
 
 function _neutron_ovs_base_configure_nova_vif_driver {

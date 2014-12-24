@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/stackforge
 #
 # Functions to install stackforge libraries that we depend on so

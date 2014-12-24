@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/databases/postgresql
 # Functions to control the configuration and operation of the **PostgreSQL** database backend
 

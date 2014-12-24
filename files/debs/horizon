@@ -1,0 +1,19 @@
+apache2  # NOPRIME
+libapache2-mod-wsgi  # NOPRIME
+python-beautifulsoup
+python-dateutil
+python-paste
+python-pastedeploy
+python-anyjson
+python-routes
+python-xattr
+python-sqlalchemy
+python-webob
+pylint
+python-eventlet
+python-nose
+python-mox
+python-coverage
+python-cherrypy3 # why?
+python-migrate
+libpcre3-dev  # pyScss

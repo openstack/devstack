@@ -22,18 +22,11 @@ set -o xtrace
 # This directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
-# Source lower level functions
-. $TOP_DIR/../../functions
-
 # Include onexit commands
 . $TOP_DIR/scripts/on_exit.sh
 
 # xapi functions
 . $TOP_DIR/functions
-
-# Determine what system we are running on.
-# Might not be XenServer if we're using xenserver-core
-GetDistro
 
 # Source params - override xenrc params in your localrc to suite your taste
 source xenrc
@@ -93,3 +86,35 @@ EOF
 # Need to set barrier=0 to avoid a Xen bug
 # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/824089
 sed -i -e 's/errors=/barrier=0,errors=/' $STAGING_DIR/etc/fstab
+
+# Update ubuntu repositories
+cat > $STAGING_DIR/etc/apt/sources.list << EOF
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} main restricted
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} main restricted
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates main restricted
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates main restricted
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} universe
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} universe
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates universe
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates universe
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} multiverse
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE} multiverse
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates multiverse
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-updates multiverse
+deb http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-backports main restricted universe multiverse
+deb-src http://${UBUNTU_INST_HTTP_HOSTNAME}${UBUNTU_INST_HTTP_DIRECTORY} ${UBUNTU_INST_RELEASE}-backports main restricted universe multiverse
+
+deb http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security main restricted
+deb-src http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security main restricted
+deb http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security universe
+deb-src http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security universe
+deb http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security multiverse
+deb-src http://security.ubuntu.com/ubuntu ${UBUNTU_INST_RELEASE}-security multiverse
+EOF
+
+rm -f $STAGING_DIR/etc/apt/apt.conf
+if [ -n "$UBUNTU_INST_HTTP_PROXY" ]; then
+    cat > $STAGING_DIR/etc/apt/apt.conf << EOF
+Acquire::http::Proxy "$UBUNTU_INST_HTTP_PROXY";
+EOF
+fi

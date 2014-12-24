@@ -53,7 +53,6 @@ source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
-source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 
@@ -173,5 +172,3 @@ if [[ -n "$SCREEN" ]]; then
         screen -X -S $SESSION quit
     fi
 fi
-
-cleanup_tmp

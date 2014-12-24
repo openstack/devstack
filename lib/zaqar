@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/zaqar
 # Install and start **Zaqar** service
 
@@ -20,6 +22,7 @@
 # start_zaqar
 # stop_zaqar
 # cleanup_zaqar
+# cleanup_zaqar_mongodb
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -72,9 +75,17 @@ function is_zaqar_enabled {
     return 1
 }
 
-# cleanup_zaqar() - Remove residual data files, anything left over from previous
-# runs that a clean run would need to clean up
+# cleanup_zaqar() - Cleans up general things from previous
+# runs and storage specific left overs.
 function cleanup_zaqar {
+    if [ "$ZAQAR_BACKEND" = 'mongodb' ] ; then
+        cleanup_zaqar_mongodb
+    fi
+}
+
+# cleanup_zaqar_mongodb() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_zaqar_mongodb {
     if ! timeout $SERVICE_TIMEOUT sh -c "while ! mongo zaqar --eval 'db.dropDatabase();'; do sleep 1; done"; then
         die $LINENO "Mongo DB did not start"
     else
@@ -102,7 +113,9 @@ function configure_zaqar {
     [ ! -d $ZAQAR_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $ZAQAR_API_LOG_DIR
     sudo chown $USER $ZAQAR_API_LOG_DIR
 
+    iniset $ZAQAR_CONF DEFAULT debug True
     iniset $ZAQAR_CONF DEFAULT verbose True
+    iniset $ZAQAR_CONF DEFAULT admin_mode True
     iniset $ZAQAR_CONF DEFAULT use_syslog $SYSLOG
     iniset $ZAQAR_CONF DEFAULT log_file $ZAQAR_API_LOG_FILE
     iniset $ZAQAR_CONF 'drivers:transport:wsgi' bind $ZAQAR_SERVICE_HOST
@@ -116,8 +129,25 @@ function configure_zaqar {
         iniset $ZAQAR_CONF  drivers storage mongodb
         iniset $ZAQAR_CONF 'drivers:storage:mongodb' uri mongodb://localhost:27017/zaqar
         configure_mongodb
-        cleanup_zaqar
+    elif [ "$ZAQAR_BACKEND" = 'redis' ] ; then
+        iniset $ZAQAR_CONF  drivers storage redis
+        iniset $ZAQAR_CONF 'drivers:storage:redis' uri redis://localhost:6379
+        configure_redis
     fi
+
+    cleanup_zaqar
+}
+
+function configure_redis {
+    if is_ubuntu; then
+        install_package redis-server
+    elif is_fedora; then
+        install_package redis
+    else
+        exit_distro_not_supported "redis installation"
+    fi
+
+    install_package python-redis
 }
 
 function configure_mongodb {

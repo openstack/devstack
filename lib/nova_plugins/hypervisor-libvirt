@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/nova_plugins/hypervisor-libvirt
 # Configure the libvirt hypervisor
 
@@ -42,6 +44,7 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF libvirt virt_type "$LIBVIRT_TYPE"
     iniset $NOVA_CONF libvirt cpu_mode "none"
     iniset $NOVA_CONF libvirt use_usb_tablet "False"
+    iniset $NOVA_CONF libvirt live_migration_uri "qemu+ssh://$STACK_USER@%s/system"
     iniset $NOVA_CONF DEFAULT default_ephemeral_format "ext4"
     iniset $NOVA_CONF DEFAULT compute_driver "libvirt.LibvirtDriver"
     LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.libvirt.firewall.IptablesFirewallDriver"}
@@ -62,6 +65,11 @@ function configure_nova_hypervisor {
         # File injection is being disabled by default in the near future -
         # disable it here for now to avoid surprises later.
         iniset $NOVA_CONF libvirt inject_partition '-2'
+    fi
+
+    if [[ "$LIBVIRT_TYPE" = "parallels" ]]; then
+        iniset $NOVA_CONF libvirt connection_uri "parallels+unix:///system"
+        iniset $NOVA_CONF libvirt images_type "ploop"
     fi
 }
 

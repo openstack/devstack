@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/sahara
 
 # Dependencies:
@@ -22,15 +24,10 @@ set +o xtrace
 # --------
 
 # Set up default repos
-SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
-SAHARA_BRANCH=${SAHARA_BRANCH:-master}
-
-SAHARA_PYTHONCLIENT_REPO=${SAHARA_PYTHONCLIENT_REPO:-${GIT_BASE}/openstack/python-saharaclient.git}
-SAHARA_PYTHONCLIENT_BRANCH=${SAHARA_PYTHONCLIENT_BRANCH:-master}
 
 # Set up default directories
+GITDIR["python-saharaclient"]=$DEST/python-saharaclient
 SAHARA_DIR=$DEST/sahara
-SAHARA_PYTHONCLIENT_DIR=$DEST/python-saharaclient
 
 SAHARA_CONF_DIR=${SAHARA_CONF_DIR:-/etc/sahara}
 SAHARA_CONF_FILE=${SAHARA_CONF_DIR}/sahara.conf
@@ -98,12 +95,17 @@ function configure_sahara {
     fi
     sudo chown $STACK_USER $SAHARA_CONF_DIR
 
+    if [[ -f $SAHARA_DIR/etc/sahara/policy.json ]]; then
+        cp -p $SAHARA_DIR/etc/sahara/policy.json $SAHARA_CONF_DIR
+    fi
+
     # Copy over sahara configuration file and configure common parameters.
     cp $SAHARA_DIR/etc/sahara/sahara.conf.sample $SAHARA_CONF_FILE
 
     # Create auth cache dir
     sudo mkdir -p $SAHARA_AUTH_CACHE_DIR
     sudo chown $STACK_USER $SAHARA_AUTH_CACHE_DIR
+    sudo chmod 700 $SAHARA_AUTH_CACHE_DIR
     rm -rf $SAHARA_AUTH_CACHE_DIR/*
 
     configure_auth_token_middleware $SAHARA_CONF_FILE sahara $SAHARA_AUTH_CACHE_DIR
@@ -153,8 +155,10 @@ function install_sahara {
 
 # install_python_saharaclient() - Collect source and prepare
 function install_python_saharaclient {
-    git_clone $SAHARA_PYTHONCLIENT_REPO $SAHARA_PYTHONCLIENT_DIR $SAHARA_PYTHONCLIENT_BRANCH
-    setup_develop $SAHARA_PYTHONCLIENT_DIR
+    if use_library_from_git "python-saharaclient"; then
+        git_clone_by_name "python-saharaclient"
+        setup_dev_lib "python-saharaclient"
+    fi
 }
 
 # start_sahara() - Start running processes, including screen

@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/gantt
 # Install and start **Gantt** scheduler service
 

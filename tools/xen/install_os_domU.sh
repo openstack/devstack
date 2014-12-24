@@ -22,18 +22,11 @@ fi
 # This directory
 THIS_DIR=$(cd $(dirname "$0") && pwd)
 
-# Source lower level functions
-. $THIS_DIR/../../functions
-
 # Include onexit commands
 . $THIS_DIR/scripts/on_exit.sh
 
 # xapi functions
 . $THIS_DIR/functions
-
-# Determine what system we are running on.
-# Might not be XenServer if we're using xenserver-core
-GetDistro
 
 #
 # Get Settings
@@ -65,16 +58,6 @@ EOF
     exit 1
 fi
 
-# Install plugins
-
-## Install the netwrap xapi plugin to support agent control of dom0 networking
-if [[ "$ENABLED_SERVICES" =~ "q-agt" && "$Q_PLUGIN" = "openvswitch" ]]; then
-    NEUTRON_ZIPBALL_URL=${NEUTRON_ZIPBALL_URL:-$(zip_snapshot_location $NEUTRON_REPO $NEUTRON_BRANCH)}
-    EXTRACTED_NEUTRON=$(extract_remote_zipball "$NEUTRON_ZIPBALL_URL")
-    install_xapi_plugins_from "$EXTRACTED_NEUTRON"
-    rm -rf "$EXTRACTED_NEUTRON"
-fi
-
 #
 # Configure Networking
 #
@@ -88,9 +71,7 @@ setup_network "$PUB_BRIDGE_OR_NET_NAME"
 
 # With neutron, one more network is required, which is internal to the
 # hypervisor, and used by the VMs
-if is_service_enabled neutron; then
-    setup_network "$XEN_INT_BRIDGE_OR_NET_NAME"
-fi
+setup_network "$XEN_INT_BRIDGE_OR_NET_NAME"
 
 if parameter_is_specified "FLAT_NETWORK_BRIDGE"; then
     if [ "$(bridge_for "$VM_BRIDGE_OR_NET_NAME")" != "$(bridge_for "$FLAT_NETWORK_BRIDGE")" ]; then
@@ -244,6 +225,11 @@ else
     vm_uuid=$(xe vm-install template="$TNAME" new-name-label="$GUEST_NAME")
 fi
 
+if [ -n "${EXIT_AFTER_JEOS_INSTALLATION:-}" ]; then
+    echo "User requested to quit after JEOS instalation"
+    exit 0
+fi
+
 #
 # Prepare VM for DevStack
 #
@@ -287,14 +273,12 @@ $THIS_DIR/build_xva.sh "$GUEST_NAME"
 # Attach a network interface for the integration network (so that the bridge
 # is created by XenServer). This is required for Neutron. Also pass that as a
 # kernel parameter for DomU
-if is_service_enabled neutron; then
-    attach_network "$XEN_INT_BRIDGE_OR_NET_NAME"
+attach_network "$XEN_INT_BRIDGE_OR_NET_NAME"
 
-    XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
-    append_kernel_cmdline \
-        "$GUEST_NAME" \
-        "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
-fi
+XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
+append_kernel_cmdline \
+    "$GUEST_NAME" \
+    "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
 
 FLAT_NETWORK_BRIDGE="${FLAT_NETWORK_BRIDGE:-$(bridge_for "$VM_BRIDGE_OR_NET_NAME")}"
 append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
@@ -394,7 +378,7 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
 
     # Watch devstack's output (which doesn't start until stack.sh is running,
     # but wait for run.sh (which starts stack.sh) to exit as that is what
-    # hopefully writes the succeded cookie.
+    # hopefully writes the succeeded cookie.
     pid=`ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS pgrep run.sh`
     ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "tail --pid $pid -n +1 -f /tmp/devstack/log/stack.log"
 

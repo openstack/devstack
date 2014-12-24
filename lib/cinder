@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/cinder
 # Install and start **Cinder** volume service
 
@@ -36,8 +38,9 @@ if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
 fi
 
 # set up default directories
+GITDIR["python-cinderclient"]=$DEST/python-cinderclient
+
 CINDER_DIR=$DEST/cinder
-CINDERCLIENT_DIR=$DEST/python-cinderclient
 CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
 CINDER_AUTH_CACHE_DIR=${CINDER_AUTH_CACHE_DIR:-/var/cache/cinder}
 
@@ -257,7 +260,7 @@ function configure_cinder {
     fi
 
     if is_service_enabled swift; then
-        iniset $CINDER_CONF DEFAULT backup_swift_url "http://$SERVICE_HOST:8080/v1/AUTH_"
+        iniset $CINDER_CONF DEFAULT backup_swift_url "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_"
     fi
 
     if is_service_enabled ceilometer; then
@@ -306,6 +309,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT glance_api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
     if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
         iniset $CINDER_CONF DEFAULT glance_protocol https
+        iniset $CINDER_CONF DEFAULT glance_ca_certificates_file $SSL_BUNDLE_FILE
     fi
 
     # Register SSL certificates if provided
@@ -401,9 +405,11 @@ function install_cinder {
 
 # install_cinderclient() - Collect source and prepare
 function install_cinderclient {
-    git_clone $CINDERCLIENT_REPO $CINDERCLIENT_DIR $CINDERCLIENT_BRANCH
-    setup_develop $CINDERCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$CINDERCLIENT_DIR/tools/,/etc/bash_completion.d/}cinder.bash_completion
+    if use_library_from_git "python-cinderclient"; then
+        git_clone_by_name "python-cinderclient"
+        setup_dev_lib "python-cinderclient"
+        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-cinderclient"]}/tools/,/etc/bash_completion.d/}cinder.bash_completion
+    fi
 }
 
 # apply config.d approach for cinder volumes directory

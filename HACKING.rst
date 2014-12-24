@@ -10,8 +10,8 @@ and so is limited to Bash (version 3 and up) and compatible shells.
 Shell script was chosen because it best illustrates the steps used to
 set up and interact with OpenStack components.
 
-DevStack's official repository is located on GitHub at
-https://github.com/openstack-dev/devstack.git.  Besides the master branch that
+DevStack's official repository is located on git.openstack.org at
+https://git.openstack.org/openstack-dev/devstack.  Besides the master branch that
 tracks the OpenStack trunk branches a separate branch is maintained for all
 OpenStack releases starting with Diablo (stable/diablo).
 
@@ -126,14 +126,9 @@ and can stay in the project file.
 Documentation
 -------------
 
-The official DevStack repo on GitHub does not include a gh-pages branch that
-GitHub uses to create static web sites.  That branch is maintained in the
-`CloudBuilders DevStack repo`__ mirror that supports the
-http://devstack.org site.  This is the primary DevStack
-documentation along with the DevStack scripts themselves.
-
-__ repo_
-.. _repo: https://github.com/cloudbuilders/devstack
+The DevStack repo now contains all of the static pages of devstack.org in
+the ``doc/source`` directory. The OpenStack CI system rebuilds the docs after every
+commit and updates devstack.org (now a redirect to docs.openstack.org/developer/devstack).
 
 All of the scripts are processed with shocco_ to render them with the comments
 as text describing the script below.  For this reason we tend to be a little
@@ -144,6 +139,8 @@ uses Markdown headers to divide the script into logical sections.
 .. _shocco: https://github.com/dtroyer/shocco/tree/rst_support
 
 The script used to drive <code>shocco</code> is <code>tools/build_docs.sh</code>.
+The complete docs build is also handled with <code>tox -edocs</code> per the
+OpenStack project standard.
 
 
 Exercises
@@ -235,8 +232,12 @@ DevStack defines a bash set of best practices for maintaining large
 collections of bash scripts. These should be considered as part of the
 review process.
 
-We have a preliminary enforcing script for this called bash8 (only a
-small number of these rules are enforced).
+DevStack uses the bashate_ style checker
+to enforce basic guidelines, similar to pep8 and flake8 tools for Python. The
+list below is not complete for what bashate checks, nor is it all checked
+by bashate.  So many lines of code, so little time.
+
+.. _bashate: https://pypi.python.org/pypi/bashate
 
 Whitespace Rules
 ----------------

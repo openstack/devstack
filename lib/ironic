@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/ironic
 # Functions to control the configuration and operation of the **Ironic** service
 
@@ -28,16 +30,29 @@ set +o pipefail
 # --------
 
 # Set up default directories
+GITDIR["python-ironicclient"]=$DEST/python-ironicclient
+
 IRONIC_DIR=$DEST/ironic
 IRONIC_PYTHON_AGENT_DIR=$DEST/ironic-python-agent
 IRONIC_DATA_DIR=$DATA_DIR/ironic
 IRONIC_STATE_PATH=/var/lib/ironic
-IRONICCLIENT_DIR=$DEST/python-ironicclient
 IRONIC_AUTH_CACHE_DIR=${IRONIC_AUTH_CACHE_DIR:-/var/cache/ironic}
 IRONIC_CONF_DIR=${IRONIC_CONF_DIR:-/etc/ironic}
 IRONIC_CONF_FILE=$IRONIC_CONF_DIR/ironic.conf
 IRONIC_ROOTWRAP_CONF=$IRONIC_CONF_DIR/rootwrap.conf
 IRONIC_POLICY_JSON=$IRONIC_CONF_DIR/policy.json
+
+# Deploy to hardware platform
+IRONIC_HW_NODE_CPU=${IRONIC_HW_NODE_CPU:-1}
+IRONIC_HW_NODE_RAM=${IRONIC_HW_NODE_RAM:-512}
+IRONIC_HW_NODE_DISK=${IRONIC_HW_NODE_DISK:-10}
+IRONIC_HW_EPHEMERAL_DISK=${IRONIC_HW_EPHEMERAL_DISK:-0}
+# The file is composed of multiple lines, each line includes four field
+# separated by white space: IPMI address, MAC address, IPMI username
+# and IPMI password.
+# An example:
+#   192.168.110.107 00:1e:67:57:50:4c root otc123
+IRONIC_IPMIINFO_FILE=${IRONIC_IPMIINFO_FILE:-$IRONIC_DATA_DIR/hardware_info}
 
 # Set up defaults for functional / integration testing
 IRONIC_SCRIPTS_DIR=${IRONIC_SCRIPTS_DIR:-$TOP_DIR/tools/ironic/scripts}
@@ -47,9 +62,10 @@ IRONIC_ENABLED_DRIVERS=${IRONIC_ENABLED_DRIVERS:-fake,pxe_ssh,pxe_ipmitool}
 IRONIC_SSH_USERNAME=${IRONIC_SSH_USERNAME:-`whoami`}
 IRONIC_SSH_KEY_DIR=${IRONIC_SSH_KEY_DIR:-$IRONIC_DATA_DIR/ssh_keys}
 IRONIC_SSH_KEY_FILENAME=${IRONIC_SSH_KEY_FILENAME:-ironic_key}
-IRONIC_KEY_FILE=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME
+IRONIC_KEY_FILE=${IRONIC_KEY_FILE:-$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME}
 IRONIC_SSH_VIRT_TYPE=${IRONIC_SSH_VIRT_TYPE:-virsh}
 IRONIC_TFTPBOOT_DIR=${IRONIC_TFTPBOOT_DIR:-$IRONIC_DATA_DIR/tftpboot}
+IRONIC_TFTPSERVER_IP=${IRONIC_TFTPSERVER_IP:-$HOST_IP}
 IRONIC_VM_SSH_PORT=${IRONIC_VM_SSH_PORT:-22}
 IRONIC_VM_SSH_ADDRESS=${IRONIC_VM_SSH_ADDRESS:-$HOST_IP}
 IRONIC_VM_COUNT=${IRONIC_VM_COUNT:-1}
@@ -79,7 +95,7 @@ IRONIC_AGENT_KERNEL_URL=${IRONIC_AGENT_KERNEL_URL:-http://tarballs.openstack.org
 IRONIC_AGENT_RAMDISK_URL=${IRONIC_AGENT_RAMDISK_URL:-http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz}
 
 # Which deploy driver to use - valid choices right now
-# are 'pxe_ssh' and 'agent_ssh'.
+# are 'pxe_ssh', 'pxe_ipmitool', 'agent_ssh' and 'agent_ipmitool'.
 IRONIC_DEPLOY_DRIVER=${IRONIC_DEPLOY_DRIVER:-pxe_ssh}
 
 #TODO(agordeev): replace 'ubuntu' with host distro name getting
@@ -90,7 +106,8 @@ IRONIC_BIN_DIR=$(get_python_exec_prefix)
 
 # Ironic connection info.  Note the port must be specified.
 IRONIC_SERVICE_PROTOCOL=http
-IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:6385}
+IRONIC_SERVICE_PORT=${IRONIC_SERVICE_PORT:-6385}
+IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:$IRONIC_SERVICE_PORT}
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,ironic
@@ -132,6 +149,16 @@ function is_ironic_enabled {
     return 1
 }
 
+function is_ironic_hardware {
+    is_ironic_enabled && [[ -n "${IRONIC_DEPLOY_DRIVER##*_ssh}" ]] && return 0
+    return 1
+}
+
+function is_deployed_by_agent {
+    [[ -z "${IRONIC_DEPLOY_DRIVER%%agent*}" ]] && return 0
+    return 1
+}
+
 # install_ironic() - Collect source and prepare
 function install_ironic {
     # make sure all needed service were enabled
@@ -150,9 +177,14 @@ function install_ironic {
 
 # install_ironicclient() - Collect sources and prepare
 function install_ironicclient {
-    git_clone $IRONICCLIENT_REPO $IRONICCLIENT_DIR $IRONICCLIENT_BRANCH
-    setup_develop $IRONICCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$IRONICCLIENT_DIR/tools/,/etc/bash_completion.d/}ironic.bash_completion
+    if use_library_from_git "python-ironicclient"; then
+        git_clone_by_name "python-ironicclient"
+        setup_dev_lib "python-ironicclient"
+        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-ironicclient"]}/tools/,/etc/bash_completion.d/}ironic.bash_completion
+    else
+        # nothing actually "requires" ironicclient, so force instally from pypi
+        pip_install python-ironicclient
+    fi
 }
 
 # _cleanup_ironic_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
@@ -177,7 +209,7 @@ function _config_ironic_apache_wsgi {
 # cleanup_ironic() - Remove residual data files, anything left over from previous
 # runs that would need to clean up.
 function cleanup_ironic {
-    sudo rm -rf $IRONIC_AUTH_CACHE_DIR
+    sudo rm -rf $IRONIC_AUTH_CACHE_DIR $IRONIC_CONF_DIR
 }
 
 # configure_ironic_dirs() - Create all directories required by Ironic and
@@ -245,6 +277,7 @@ function configure_ironic_api {
     iniset $IRONIC_CONF_FILE DEFAULT policy_file $IRONIC_POLICY_JSON
     configure_auth_token_middleware $IRONIC_CONF_FILE ironic $IRONIC_AUTH_CACHE_DIR/api
     iniset_rpc_backend ironic $IRONIC_CONF_FILE DEFAULT
+    iniset $IRONIC_CONF_FILE api port $IRONIC_SERVICE_PORT
 
     cp -p $IRONIC_DIR/etc/ironic/policy.json $IRONIC_POLICY_JSON
 }
@@ -266,27 +299,28 @@ function configure_ironic_conductor {
 
     iniset $IRONIC_CONF_FILE DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
     iniset $IRONIC_CONF_FILE DEFAULT enabled_drivers $IRONIC_ENABLED_DRIVERS
-    iniset $IRONIC_CONF_FILE conductor api_url http://$HOST_IP:6385
-    iniset $IRONIC_CONF_FILE pxe tftp_server $HOST_IP
+    iniset $IRONIC_CONF_FILE conductor api_url $IRONIC_SERVICE_PROTOCOL://$HOST_IP:$IRONIC_SERVICE_PORT
+    iniset $IRONIC_CONF_FILE pxe tftp_server $IRONIC_TFTPSERVER_IP
     iniset $IRONIC_CONF_FILE pxe tftp_root $IRONIC_TFTPBOOT_DIR
     iniset $IRONIC_CONF_FILE pxe tftp_master_path $IRONIC_TFTPBOOT_DIR/master_images
     if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
         iniset $IRONIC_CONF_FILE pxe pxe_append_params "nofb nomodeset vga=normal console=ttyS0"
     fi
-    if [[ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]] ; then
+    if is_deployed_by_agent; then
         if [[ "$SWIFT_ENABLE_TEMPURLS" == "True" ]] ; then
             iniset $IRONIC_CONF_FILE glance swift_temp_url_key $SWIFT_TEMPURL_KEY
         else
             die $LINENO "SWIFT_ENABLE_TEMPURLS must be True to use agent_ssh driver in Ironic."
         fi
-        iniset $IRONIC_CONF_FILE glance swift_endpoint_url http://${HOST_IP}:8080
+        iniset $IRONIC_CONF_FILE glance swift_endpoint_url http://${HOST_IP}:${SWIFT_DEFAULT_BIND_PORT:-8080}
         iniset $IRONIC_CONF_FILE glance swift_api_version v1
-        iniset $IRONIC_CONF_FILE glance swift_account AUTH_${SERVICE_TENANT}
+        local tenant_id=$(get_or_create_project $SERVICE_TENANT_NAME)
+        iniset $IRONIC_CONF_FILE glance swift_account AUTH_${tenant_id}
         iniset $IRONIC_CONF_FILE glance swift_container glance
         iniset $IRONIC_CONF_FILE glance swift_temp_url_duration 3600
         iniset $IRONIC_CONF_FILE agent heartbeat_timeout 30
         if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
-            iniset $IRONIC_CONF_FILE agent agent_pxe_append_params "nofb nomodeset vga=normal console=ttyS0"
+            iniset $IRONIC_CONF_FILE agent agent_pxe_append_params "nofb nomodeset vga=normal console=ttyS0 systemd.journald.forward_to_console=yes"
         fi
     fi
 
@@ -354,6 +388,15 @@ function init_ironic {
     create_ironic_cache_dir
 }
 
+# _ironic_bm_vm_names() - Generates list of names for baremetal VMs.
+function _ironic_bm_vm_names {
+    local idx
+    local num_vms=$(($IRONIC_VM_COUNT - 1))
+    for idx in $(seq 0 $num_vms); do
+        echo "baremetal${IRONIC_VM_NETWORK_BRIDGE}_${idx}"
+    done
+}
+
 # start_ironic() - Start running processes, including screen
 function start_ironic {
     # Start Ironic API server, if enabled.
@@ -377,7 +420,7 @@ function start_ironic {
 function start_ironic_api {
     run_process ir-api "$IRONIC_BIN_DIR/ironic-api --config-file=$IRONIC_CONF_FILE"
     echo "Waiting for ir-api ($IRONIC_HOSTPORT) to start..."
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- http://$IRONIC_HOSTPORT; do sleep 1; done"; then
+    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget --no-proxy -q -O- $IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT; do sleep 1; done"; then
         die $LINENO "ir-api did not start"
     fi
 }
@@ -401,13 +444,6 @@ function stop_ironic {
     fi
 }
 
-function is_ironic {
-    if ( is_service_enabled ir-cond && is_service_enabled ir-api ); then
-        return 0
-    fi
-    return 1
-}
-
 function create_ovs_taps {
     local ironic_net_id=$(neutron net-list | grep private | get_field 1)
 
@@ -419,7 +455,7 @@ function create_ovs_taps {
     # intentional sleep to make sure the tag has been set to port
     sleep 10
 
-    local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep tap | cut -d':' -f2 | cut -b2-)
+    local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep " tap" | cut -d':' -f2 | cut -b2-)
     local tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
 
     # make sure veth pair is not existing, otherwise delete its links
@@ -449,59 +485,115 @@ function create_bridge_and_vms {
     else
         local log_arg=""
     fi
-    sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/create-nodes \
-        $IRONIC_VM_SPECS_CPU $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK \
-        amd64 $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE $IRONIC_VM_EMULATOR \
-        $log_arg" >> $IRONIC_VM_MACS_CSV_FILE
+    local vm_name
+    for vm_name in $(_ironic_bm_vm_names); do
+        sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/create-node $vm_name \
+            $IRONIC_VM_SPECS_CPU $IRONIC_VM_SPECS_RAM $IRONIC_VM_SPECS_DISK \
+            amd64 $IRONIC_VM_NETWORK_BRIDGE $IRONIC_VM_EMULATOR \
+            $log_arg" >> $IRONIC_VM_MACS_CSV_FILE
+    done
     create_ovs_taps
 }
 
-function enroll_vms {
+function wait_for_nova_resources {
+    # After nodes have been enrolled, we need to wait for both ironic and
+    # nova's periodic tasks to populate the resource tracker with available
+    # nodes and resources. Wait up to 2 minutes for a given resource before
+    # timing out.
+    local resource=$1
+    local expected_count=$2
+    echo_summary "Waiting 2 minutes for Nova resource tracker to pick up $resource >= $expected_count"
+    for i in $(seq 1 120); do
+        if [ $(nova hypervisor-stats | grep " $resource " | get_field 2) -ge $expected_count ]; then
+            return 0
+        fi
+        sleep 1
+    done
+    die $LINENO "Timed out waiting for Nova hypervisor-stats $resource >= $expected_count"
+}
+
+function enroll_nodes {
     local chassis_id=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
-    local idx=0
 
     if [[ "$IRONIC_DEPLOY_DRIVER" == "pxe_ssh" ]] ; then
         local _IRONIC_DEPLOY_KERNEL_KEY=pxe_deploy_kernel
         local _IRONIC_DEPLOY_RAMDISK_KEY=pxe_deploy_ramdisk
-    elif [[ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]] ; then
+    elif is_deployed_by_agent; then
         local _IRONIC_DEPLOY_KERNEL_KEY=deploy_kernel
         local _IRONIC_DEPLOY_RAMDISK_KEY=deploy_ramdisk
     fi
 
-    while read MAC; do
-
-        local node_id=$(ironic node-create --chassis_uuid $chassis_id \
-            --driver $IRONIC_DEPLOY_DRIVER \
+    if ! is_ironic_hardware; then
+        local ironic_node_cpu=$IRONIC_VM_SPECS_CPU
+        local ironic_node_ram=$IRONIC_VM_SPECS_RAM
+        local ironic_node_disk=$IRONIC_VM_SPECS_DISK
+        local ironic_ephemeral_disk=$IRONIC_VM_EPHEMERAL_DISK
+        local ironic_hwinfo_file=$IRONIC_VM_MACS_CSV_FILE
+        local node_options="\
             -i $_IRONIC_DEPLOY_KERNEL_KEY=$IRONIC_DEPLOY_KERNEL_ID \
             -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID \
             -i ssh_virt_type=$IRONIC_SSH_VIRT_TYPE \
             -i ssh_address=$IRONIC_VM_SSH_ADDRESS \
             -i ssh_port=$IRONIC_VM_SSH_PORT \
             -i ssh_username=$IRONIC_SSH_USERNAME \
-            -i ssh_key_filename=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME \
-            -p cpus=$IRONIC_VM_SPECS_CPU \
-            -p memory_mb=$IRONIC_VM_SPECS_RAM \
-            -p local_gb=$IRONIC_VM_SPECS_DISK \
+            -i ssh_key_filename=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME"
+    else
+        local ironic_node_cpu=$IRONIC_HW_NODE_CPU
+        local ironic_node_ram=$IRONIC_HW_NODE_RAM
+        local ironic_node_disk=$IRONIC_HW_NODE_DISK
+        local ironic_ephemeral_disk=$IRONIC_HW_EPHEMERAL_DISK
+        if [[ -z "${IRONIC_DEPLOY_DRIVER##*_ipmitool}" ]]; then
+            local ironic_hwinfo_file=$IRONIC_IPMIINFO_FILE
+        fi
+    fi
+
+    local total_nodes=0
+    local total_cpus=0
+    while read hardware_info; do
+        if ! is_ironic_hardware; then
+            local mac_address=$hardware_info
+        elif [[ -z "${IRONIC_DEPLOY_DRIVER##*_ipmitool}" ]]; then
+            local ipmi_address=$(echo $hardware_info |awk  '{print $1}')
+            local mac_address=$(echo $hardware_info |awk '{print $2}')
+            local ironic_ipmi_username=$(echo $hardware_info |awk '{print $3}')
+            local ironic_ipmi_passwd=$(echo $hardware_info |awk '{print $4}')
+            # Currently we require all hardware platform have same CPU/RAM/DISK info
+            # in future, this can be enhanced to support different type, and then
+            # we create the bare metal flavor with minimum value
+            local node_options="-i ipmi_address=$ipmi_address -i ipmi_password=$ironic_ipmi_passwd\
+                -i ipmi_username=$ironic_ipmi_username"
+            node_options+=" -i $_IRONIC_DEPLOY_KERNEL_KEY=$IRONIC_DEPLOY_KERNEL_ID"
+            node_options+=" -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID"
+        fi
+
+        local node_id=$(ironic node-create --chassis_uuid $chassis_id \
+            --driver $IRONIC_DEPLOY_DRIVER \
+            -p cpus=$ironic_node_cpu\
+            -p memory_mb=$ironic_node_ram\
+            -p local_gb=$ironic_node_disk\
             -p cpu_arch=x86_64 \
+            $node_options \
             | grep " uuid " | get_field 2)
 
-        ironic port-create --address $MAC --node_uuid $node_id
+        ironic port-create --address $mac_address --node_uuid $node_id
 
-        idx=$((idx+1))
-    done < $IRONIC_VM_MACS_CSV_FILE
+        total_nodes=$((total_nodes+1))
+        total_cpus=$((total_cpus+$ironic_node_cpu))
+    done < $ironic_hwinfo_file
 
     # create the nova flavor
     # NOTE(adam_g): Attempting to use an autogenerated UUID for flavor id here uncovered
     # bug (LP: #1333852) in Trove.  This can be changed to use an auto flavor id when the
     # bug is fixed in Juno.
-    local adjusted_disk=$(($IRONIC_VM_SPECS_DISK - $IRONIC_VM_EPHEMERAL_DISK))
-    nova flavor-create --ephemeral $IRONIC_VM_EPHEMERAL_DISK baremetal 551 $IRONIC_VM_SPECS_RAM $adjusted_disk $IRONIC_VM_SPECS_CPU
+    local adjusted_disk=$(($ironic_node_disk - $ironic_ephemeral_disk))
+    nova flavor-create --ephemeral $ironic_ephemeral_disk baremetal 551 $ironic_node_ram $adjusted_disk $ironic_node_cpu
 
-    # TODO(lucasagomes): Remove the 'baremetal:deploy_kernel_id'
-    # and 'baremetal:deploy_ramdisk_id' parameters
-    # from the flavor after the completion of
-    # https://blueprints.launchpad.net/ironic/+spec/add-node-instance-info
-    nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$IRONIC_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$IRONIC_DEPLOY_RAMDISK_ID"
+    nova flavor-key baremetal set "cpu_arch"="x86_64"
+
+    if [ "$VIRT_DRIVER" == "ironic" ]; then
+        wait_for_nova_resources "count" $total_nodes
+        wait_for_nova_resources "vcpus" $total_cpus
+    fi
 }
 
 function configure_iptables {
@@ -510,7 +602,11 @@ function configure_iptables {
     sudo modprobe nf_nat_tftp
     # nodes boot from TFTP and callback to the API server listening on $HOST_IP
     sudo iptables -I INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
-    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport 6385 -j ACCEPT || true
+    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport $IRONIC_SERVICE_PORT -j ACCEPT || true
+    if is_deployed_by_agent; then
+        # agent ramdisk gets instance image from swift
+        sudo iptables -I INPUT -d $HOST_IP -p tcp --dport ${SWIFT_DEFAULT_BIND_PORT:-8080} -j ACCEPT || true
+    fi
 }
 
 function configure_tftpd {
@@ -530,15 +626,16 @@ function configure_tftpd {
 }
 
 function configure_ironic_ssh_keypair {
-    # Generating ssh key pair for stack user
-    if [[ ! -d $IRONIC_SSH_KEY_DIR ]]; then
-        mkdir -p $IRONIC_SSH_KEY_DIR
-    fi
     if [[ ! -d $HOME/.ssh ]]; then
         mkdir -p $HOME/.ssh
         chmod 700 $HOME/.ssh
     fi
-    echo -e 'n\n' | ssh-keygen -q -t rsa -P '' -f $IRONIC_KEY_FILE
+    if [[ ! -e $IRONIC_KEY_FILE ]]; then
+        if [[ ! -d $(dirname $IRONIC_KEY_FILE) ]]; then
+            mkdir -p $(dirname $IRONIC_KEY_FILE)
+        fi
+        echo -e 'n\n' | ssh-keygen -q -t rsa -P '' -f $IRONIC_KEY_FILE
+    fi
     cat $IRONIC_KEY_FILE.pub | tee -a $IRONIC_AUTHORIZED_KEYS_FILE
 }
 
@@ -555,7 +652,7 @@ function ironic_ssh_check {
 
 function configure_ironic_auxiliary {
     configure_ironic_ssh_keypair
-    ironic_ssh_check $IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME $IRONIC_VM_SSH_ADDRESS $IRONIC_VM_SSH_PORT $IRONIC_SSH_USERNAME 10
+    ironic_ssh_check $IRONIC_KEY_FILE $IRONIC_VM_SSH_ADDRESS $IRONIC_VM_SSH_PORT $IRONIC_SSH_USERNAME 10
 }
 
 function build_ipa_coreos_ramdisk {
@@ -583,8 +680,8 @@ function upload_baremetal_ironic_deploy {
     fi
 
     if [ -z "$IRONIC_DEPLOY_KERNEL" -o -z "$IRONIC_DEPLOY_RAMDISK" ]; then
-        local IRONIC_DEPLOY_KERNEL_PATH=$TOP_DIR/files/ir-deploy.kernel
-        local IRONIC_DEPLOY_RAMDISK_PATH=$TOP_DIR/files/ir-deploy.initramfs
+        local IRONIC_DEPLOY_KERNEL_PATH=$TOP_DIR/files/ir-deploy-$IRONIC_DEPLOY_DRIVER.kernel
+        local IRONIC_DEPLOY_RAMDISK_PATH=$TOP_DIR/files/ir-deploy-$IRONIC_DEPLOY_DRIVER.initramfs
     else
         local IRONIC_DEPLOY_KERNEL_PATH=$IRONIC_DEPLOY_KERNEL
         local IRONIC_DEPLOY_RAMDISK_PATH=$IRONIC_DEPLOY_RAMDISK
@@ -595,17 +692,17 @@ function upload_baremetal_ironic_deploy {
         if [ "$IRONIC_BUILD_DEPLOY_RAMDISK" = "True" ]; then
             # we can build them only if we're not offline
             if [ "$OFFLINE" != "True" ]; then
-                if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
+                if is_deployed_by_agent; then
                     build_ipa_coreos_ramdisk $IRONIC_DEPLOY_KERNEL_PATH $IRONIC_DEPLOY_RAMDISK_PATH
                 else
                     ramdisk-image-create $IRONIC_DEPLOY_FLAVOR \
-                        -o $TOP_DIR/files/ir-deploy
+                        -o $TOP_DIR/files/ir-deploy-$IRONIC_DEPLOY_DRIVER
                 fi
             else
                 die $LINENO "Deploy kernel+ramdisk files don't exist and cannot be build in OFFLINE mode"
             fi
         else
-            if [ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]; then
+            if is_deployed_by_agent; then
                 # download the agent image tarball
                 wget "$IRONIC_AGENT_KERNEL_URL" -O $IRONIC_DEPLOY_KERNEL_PATH
                 wget "$IRONIC_AGENT_RAMDISK_URL" -O $IRONIC_DEPLOY_RAMDISK_PATH
@@ -638,12 +735,16 @@ function upload_baremetal_ironic_deploy {
 }
 
 function prepare_baremetal_basic_ops {
+    if ! is_ironic_hardware; then
+        configure_ironic_auxiliary
+    fi
     upload_baremetal_ironic_deploy
-    create_bridge_and_vms
-    enroll_vms
+    if ! is_ironic_hardware; then
+        create_bridge_and_vms
+    fi
+    enroll_nodes
     configure_tftpd
     configure_iptables
-    configure_ironic_auxiliary
 }
 
 function cleanup_baremetal_basic_ops {
@@ -655,11 +756,20 @@ function cleanup_baremetal_basic_ops {
         chmod 0600 $IRONIC_AUTHORIZED_KEYS_FILE
     fi
     sudo rm -rf $IRONIC_DATA_DIR $IRONIC_STATE_PATH
-    sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/cleanup-nodes $IRONIC_VM_COUNT $IRONIC_VM_NETWORK_BRIDGE"
+
+    local vm_name
+    for vm_name in $(_ironic_bm_vm_names); do
+        sudo su $STACK_USER -c "$IRONIC_SCRIPTS_DIR/cleanup-node $vm_name $IRONIC_VM_NETWORK_BRIDGE"
+    done
+
     sudo rm -rf /etc/xinetd.d/tftp /etc/init/tftpd-hpa.override
     restart_service xinetd
     sudo iptables -D INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
-    sudo iptables -D INPUT -d $HOST_IP -p tcp --dport 6385 -j ACCEPT || true
+    sudo iptables -D INPUT -d $HOST_IP -p tcp --dport $IRONIC_SERVICE_PORT -j ACCEPT || true
+    if is_deployed_by_agent; then
+        # agent ramdisk gets instance image from swift
+        sudo iptables -D INPUT -d $HOST_IP -p tcp --dport ${SWIFT_DEFAULT_BIND_PORT:-8080} -j ACCEPT || true
+    fi
     sudo rmmod nf_conntrack_tftp || true
     sudo rmmod nf_nat_tftp || true
 }

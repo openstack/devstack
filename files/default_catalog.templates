@@ -12,6 +12,12 @@ catalog.RegionOne.compute.internalURL = http://%SERVICE_HOST%:8774/v2/$(tenant_i
 catalog.RegionOne.compute.name = Compute Service
 
 
+catalog.RegionOne.computev21.publicURL = http://%SERVICE_HOST%:8774/v2.1/$(tenant_id)s
+catalog.RegionOne.computev21.adminURL = http://%SERVICE_HOST%:8774/v2.1/$(tenant_id)s
+catalog.RegionOne.computev21.internalURL = http://%SERVICE_HOST%:8774/v2.1/$(tenant_id)s
+catalog.RegionOne.computev21.name = Compute Service V2.1
+
+
 catalog.RegionOne.volume.publicURL = http://%SERVICE_HOST%:8776/v1/$(tenant_id)s
 catalog.RegionOne.volume.adminURL = http://%SERVICE_HOST%:8776/v1/$(tenant_id)s
 catalog.RegionOne.volume.internalURL = http://%SERVICE_HOST%:8776/v1/$(tenant_id)s

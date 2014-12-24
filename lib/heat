@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/heat
 # Install and start **Heat** service
 
@@ -29,8 +31,9 @@ set +o xtrace
 # --------
 
 # set up default directories
+GITDIR["python-heatclient"]=$DEST/python-heatclient
+
 HEAT_DIR=$DEST/heat
-HEATCLIENT_DIR=$DEST/python-heatclient
 HEAT_CFNTOOLS_DIR=$DEST/heat-cfntools
 HEAT_TEMPLATES_REPO_DIR=$DEST/heat-templates
 HEAT_AUTH_CACHE_DIR=${HEAT_AUTH_CACHE_DIR:-/var/cache/heat}
@@ -40,6 +43,8 @@ HEAT_CONF=$HEAT_CONF_DIR/heat.conf
 HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 HEAT_TEMPLATES_DIR=$HEAT_CONF_DIR/templates
 HEAT_STACK_DOMAIN=`trueorfalse True $HEAT_STACK_DOMAIN`
+HEAT_API_HOST=${HEAT_API_HOST:-$HOST_IP}
+HEAT_API_PORT=${HEAT_API_PORT:-8004}
 
 # other default options
 HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-trusts}
@@ -69,6 +74,9 @@ function cleanup_heat {
 # configure_heat() - Set config files, create data dirs, etc
 function configure_heat {
     setup_develop $HEAT_DIR
+    if [[ "$HEAT_STANDALONE" = "True" ]]; then
+        setup_develop $HEAT_DIR/contrib/heat_keystoneclient_v2
+    fi
 
     if [[ ! -d $HEAT_CONF_DIR ]]; then
         sudo mkdir -p $HEAT_CONF_DIR
@@ -83,14 +91,11 @@ function configure_heat {
     HEAT_ENGINE_PORT=${HEAT_ENGINE_PORT:-8001}
     HEAT_API_CW_HOST=${HEAT_API_CW_HOST:-$HOST_IP}
     HEAT_API_CW_PORT=${HEAT_API_CW_PORT:-8003}
-    HEAT_API_HOST=${HEAT_API_HOST:-$HOST_IP}
-    HEAT_API_PORT=${HEAT_API_PORT:-8004}
     HEAT_API_PASTE_FILE=$HEAT_CONF_DIR/api-paste.ini
     HEAT_POLICY_FILE=$HEAT_CONF_DIR/policy.json
 
     cp $HEAT_DIR/etc/heat/api-paste.ini $HEAT_API_PASTE_FILE
     cp $HEAT_DIR/etc/heat/policy.json $HEAT_POLICY_FILE
-    cp $HEAT_DIR/etc/heat/heat.conf.sample $HEAT_CONF
 
     # common options
     iniset_rpc_backend heat $HEAT_CONF DEFAULT
@@ -120,7 +125,11 @@ function configure_heat {
     iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
 
     # paste_deploy
-    [[ "$HEAT_STANDALONE" = "True" ]] && iniset $HEAT_CONF paste_deploy flavor standalone
+    if [[ "$HEAT_STANDALONE" = "True" ]]; then
+        iniset $HEAT_CONF paste_deploy flavor standalone
+        iniset $HEAT_CONF DEFAULT keystone_backend heat_keystoneclient_v2.client.KeystoneClientV2
+        iniset $HEAT_CONF clients_heat url "http://$HEAT_API_HOST:$HEAT_API_PORT/v1/%(tenant_id)s"
+    fi
 
     # OpenStack API
     iniset $HEAT_CONF heat_api bind_port $HEAT_API_PORT
@@ -176,9 +185,11 @@ function create_heat_cache_dir {
 
 # install_heatclient() - Collect source and prepare
 function install_heatclient {
-    git_clone $HEATCLIENT_REPO $HEATCLIENT_DIR $HEATCLIENT_BRANCH
-    setup_develop $HEATCLIENT_DIR
-    sudo install -D -m 0644 -o $STACK_USER {$HEATCLIENT_DIR/tools/,/etc/bash_completion.d/}heat.bash_completion
+    if use_library_from_git "python-heatclient"; then
+        git_clone_by_name "python-heatclient"
+        setup_dev_lib "python-heatclient"
+        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-heatclient"]}/tools/,/etc/bash_completion.d/}heat.bash_completion
+    fi
 }
 
 # install_heat() - Collect source and prepare
@@ -242,17 +253,6 @@ function create_heat_accounts {
     get_or_create_role "heat_stack_user"
 
     if [[ $HEAT_DEFERRED_AUTH == trusts ]]; then
-
-        # heat_stack_owner role is given to users who create Heat stacks,
-        # it's the default role used by heat to delegate to the heat service
-        # user (for performing deferred operations via trusts), see heat.conf
-        local heat_owner_role=$(get_or_create_role "heat_stack_owner")
-
-        # Give the role to the demo and admin users so they can create stacks
-        # in either of the projects created by devstack
-        get_or_add_user_role $heat_owner_role demo demo
-        get_or_add_user_role $heat_owner_role admin demo
-        get_or_add_user_role $heat_owner_role admin admin
         iniset $HEAT_CONF DEFAULT deferred_auth_method trusts
     fi
 
@@ -269,7 +269,7 @@ function create_heat_accounts {
                 --os-identity-api-version=3 domain create heat \
                 --description "Owns users and projects created by heat" \
                 | grep ' id ' | get_field 2)
-            iniset $HEAT_CONF DEFAULT stack_user_domain ${D_ID}
+            iniset $HEAT_CONF DEFAULT stack_user_domain_id ${D_ID}
 
             openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
                 --os-identity-api-version=3 user create --password $SERVICE_PASSWORD \

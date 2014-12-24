@@ -11,7 +11,6 @@ if is_service_enabled trove; then
         cleanup_trove
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         echo_summary "Configuring Trove"
-        configure_troveclient
         configure_trove
 
         if is_service_enabled key; then
