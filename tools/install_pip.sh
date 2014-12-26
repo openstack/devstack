@@ -46,7 +46,7 @@ function install_get_pip {
         curl -o $LOCAL_PIP $PIP_GET_PIP_URL || \
             die $LINENO "Download of get-pip.py failed"
     fi
-    sudo -E python $LOCAL_PIP
+    sudo -H -E python $LOCAL_PIP
 }
 
 
@@ -68,6 +68,13 @@ function configure_pypi_alternative_url {
 
 }
 
+# Setuptools 8 implements PEP 440, and 8.0.4 adds a warning triggered any time
+# pkg_resources inspects the list of installed Python packages if there are
+# non-compliant version numbers in the egg-info (for example, from distro
+# system packaged Python libraries). This is off by default after 8.2 but can
+# be enabled by uncommenting the lines below.
+#PYTHONWARNINGS=$PYTHONWARNINGS,always::RuntimeWarning:pkg_resources
+#export PYTHONWARNINGS
 
 # Show starting versions
 get_versions
@@ -83,6 +90,6 @@ if [[ -n $PYPI_ALTERNATIVE_URL ]]; then
     configure_pypi_alternative_url
 fi
 
-pip_install -U "setuptools<8.0"
+pip_install -U setuptools
 
 get_versions
