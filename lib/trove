@@ -207,7 +207,7 @@ function init_trove {
     $TROVE_BIN_DIR/trove-manage db_sync
 
     # If no guest image is specified, skip remaining setup
-    [ -z "$TROVE_GUEST_IMAGE_URL"] && return 0
+    [ -z "$TROVE_GUEST_IMAGE_URL" ] && return 0
 
     # Find the glance id for the trove guest image
     # The image is uploaded by stack.sh -- see $IMAGE_URLS handling
