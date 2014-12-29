@@ -46,7 +46,7 @@ function install_get_pip {
         curl -o $LOCAL_PIP $PIP_GET_PIP_URL || \
             die $LINENO "Download of get-pip.py failed"
     fi
-    sudo -E python $LOCAL_PIP
+    sudo -H -E python $LOCAL_PIP
 }
 
 
