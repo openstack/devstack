@@ -44,6 +44,13 @@ fi
 if ! getent passwd $STACK_USER >/dev/null; then
     echo "Creating a user called $STACK_USER"
     useradd -g $STACK_USER -s /bin/bash -d $DEST -m $STACK_USER
+
+    # TODO(fungi): Remove after sudo -H pip is used in all supported branches
+    #
+    # Create user's ~/.cache directory with proper permissions, ensuring later
+    # 'sudo pip install's do not create it owned by root.
+    mkdir -p ~$STACK_USER/.cache
+    chown -R $STACK_USER:$STACK_USER ~$STACK_USER/.cache
 fi
 
 echo "Giving stack user passwordless sudo privileges"
