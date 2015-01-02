@@ -751,7 +751,7 @@ function stop_neutron {
 # cleanup_neutron() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_neutron {
-    if [[ is_provider_network && is_ironic_hardware ]]; then
+    if is_provider_network && is_ironic_hardware; then
         for IP in $(ip addr show dev $OVS_PHYSICAL_BRIDGE | grep ' inet ' | awk '{print $2}'); do
             sudo ip addr del $IP dev $OVS_PHYSICAL_BRIDGE
             sudo ip addr add $IP dev $PUBLIC_INTERFACE
