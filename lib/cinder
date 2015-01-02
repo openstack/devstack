@@ -292,7 +292,7 @@ function configure_cinder {
         configure_cinder_driver
     fi
 
-    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
+    if is_fedora && [[ $DISTRO =~ (rhel6) ]]; then
         # Cinder clones are slightly larger due to some extra
         # metadata.  RHEL6 will not allow auto-extending of LV's
         # without this, leading to clones giving hard-to-track disk
