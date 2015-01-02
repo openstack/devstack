@@ -47,16 +47,16 @@ ODL_USERNAME=${ODL_USERNAME:-admin}
 ODL_PASSWORD=${ODL_PASSWORD:-admin}
 
 # Short name of ODL package
-ODL_NAME=${ODL_NAME:-distribution-karaf-0.2.1-Helium-SR1}
+ODL_NAME=${ODL_NAME:-distribution-karaf-0.2.1-Helium-SR1.1}
 
 # <define global variables here that belong to this project>
 ODL_DIR=$DEST/opendaylight
 
 # The OpenDaylight Package, currently using 'Hydrogen' release
-ODL_PKG=${ODL_PKG:-distribution-karaf-0.2.1-Helium-SR1.zip}
+ODL_PKG=${ODL_PKG:-distribution-karaf-0.2.1-Helium-SR1.1.zip}
 
 # The OpenDaylight URL
-ODL_URL=${ODL_URL:-https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.2.1-Helium-SR1/}
+ODL_URL=${ODL_URL:-https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.2.1-Helium-SR1.1/}
 
 # Default arguments for OpenDaylight. This is typically used to set
 # Java memory options.
