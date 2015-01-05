@@ -464,6 +464,13 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute-feature-enabled suspend False
     fi
 
+    # Libvirt-LXC
+    if [ "$VIRT_DRIVER" = "libvirt" ] && [ "$LIBVIRT_TYPE" = "lxc" ]; then
+        iniset $TEMPEST_CONFIG compute-feature-enabled rescue False
+        iniset $TEMPEST_CONFIG compute-feature-enabled resize False
+        iniset $TEMPEST_CONFIG compute-feature-enabled suspend False
+    fi
+
     # service_available
     for service in ${TEMPEST_SERVICES//,/ }; do
         if is_service_enabled $service ; then
