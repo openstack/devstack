@@ -42,6 +42,9 @@ IRONIC_CONF_FILE=$IRONIC_CONF_DIR/ironic.conf
 IRONIC_ROOTWRAP_CONF=$IRONIC_CONF_DIR/rootwrap.conf
 IRONIC_POLICY_JSON=$IRONIC_CONF_DIR/policy.json
 
+# Deploy callback timeout can be changed from its default (1800), if required.
+IRONIC_CALLBACK_TIMEOUT=${IRONIC_CALLBACK_TIMEOUT:-}
+
 # Deploy to hardware platform
 IRONIC_HW_NODE_CPU=${IRONIC_HW_NODE_CPU:-1}
 IRONIC_HW_NODE_RAM=${IRONIC_HW_NODE_RAM:-512}
@@ -300,6 +303,9 @@ function configure_ironic_conductor {
     iniset $IRONIC_CONF_FILE DEFAULT rootwrap_config $IRONIC_ROOTWRAP_CONF
     iniset $IRONIC_CONF_FILE DEFAULT enabled_drivers $IRONIC_ENABLED_DRIVERS
     iniset $IRONIC_CONF_FILE conductor api_url $IRONIC_SERVICE_PROTOCOL://$HOST_IP:$IRONIC_SERVICE_PORT
+    if [[ -n "$IRONIC_CALLBACK_TIMEOUT" ]]; then
+        iniset $IRONIC_CONF_FILE conductor deploy_callback_timeout $IRONIC_CALLBACK_TIMEOUT
+    fi
     iniset $IRONIC_CONF_FILE pxe tftp_server $IRONIC_TFTPSERVER_IP
     iniset $IRONIC_CONF_FILE pxe tftp_root $IRONIC_TFTPBOOT_DIR
     iniset $IRONIC_CONF_FILE pxe tftp_master_path $IRONIC_TFTPBOOT_DIR/master_images
