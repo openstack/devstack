@@ -221,9 +221,9 @@ function iniset_rpc_backend {
     local file=$2
     local section=$3
     if is_service_enabled zeromq; then
-        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_zmq
+        iniset $file $section rpc_backend "zmq"
         iniset $file $section rpc_zmq_matchmaker \
-            ${package}.openstack.common.rpc.matchmaker_redis.MatchMakerRedis
+            oslo.messaging._drivers.matchmaker_redis.MatchMakerRedis
         # Set MATCHMAKER_REDIS_HOST if running multi-node.
         MATCHMAKER_REDIS_HOST=${MATCHMAKER_REDIS_HOST:-127.0.0.1}
         iniset $file matchmaker_redis host $MATCHMAKER_REDIS_HOST
