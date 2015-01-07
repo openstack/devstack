@@ -570,15 +570,14 @@ source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 
+# Clone all external plugins
+fetch_plugins
+
 # Extras Source
 # --------------
 
 # Phase: source
-if [[ -d $TOP_DIR/extras.d ]]; then
-    for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i source
-    done
-fi
+run_phase source
 
 # Interactive Configuration
 # -------------------------
@@ -720,12 +719,7 @@ source $TOP_DIR/tools/fixup_stuff.sh
 # ------------------
 
 # Phase: pre-install
-if [[ -d $TOP_DIR/extras.d ]]; then
-    for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i stack pre-install
-    done
-fi
-
+run_phase stack pre-install
 
 install_rpc_backend
 
@@ -871,11 +865,7 @@ fi
 # --------------
 
 # Phase: install
-if [[ -d $TOP_DIR/extras.d ]]; then
-    for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i stack install
-    done
-fi
+run_phase stack install
 
 if [[ $TRACK_DEPENDS = True ]]; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip
@@ -1148,11 +1138,7 @@ fi
 # ====================
 
 # Phase: post-config
-if [[ -d $TOP_DIR/extras.d ]]; then
-    for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i stack post-config
-    done
-fi
+run_phase stack post-config
 
 
 # Local Configuration
@@ -1334,11 +1320,7 @@ merge_config_group $TOP_DIR/local.conf extra
 # ==========
 
 # Phase: extra
-if [[ -d $TOP_DIR/extras.d ]]; then
-    for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i stack extra
-    done
-fi
+run_phase stack extra
 
 # Local Configuration
 # ===================
