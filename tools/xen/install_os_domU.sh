@@ -22,18 +22,11 @@ fi
 # This directory
 THIS_DIR=$(cd $(dirname "$0") && pwd)
 
-# Source lower level functions
-. $THIS_DIR/../../functions
-
 # Include onexit commands
 . $THIS_DIR/scripts/on_exit.sh
 
 # xapi functions
 . $THIS_DIR/functions
-
-# Determine what system we are running on.
-# Might not be XenServer if we're using xenserver-core
-GetDistro
 
 #
 # Get Settings
