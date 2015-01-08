@@ -123,11 +123,8 @@ function configure_trove {
     sudo chown -R $STACK_USER: ${TROVE_CONF_DIR}
     sudo chown -R $STACK_USER: ${TROVE_AUTH_CACHE_DIR}
 
-    # Copy api-paste file over to the trove conf dir and configure it
+    # Copy api-paste file over to the trove conf dir
     cp $TROVE_LOCAL_CONF_DIR/api-paste.ini $TROVE_CONF_DIR/api-paste.ini
-    TROVE_API_PASTE_INI=$TROVE_CONF_DIR/api-paste.ini
-
-    configure_auth_token_middleware $TROVE_API_PASTE_INI trove $TROVE_AUTH_CACHE_DIR filter:authtoken
 
     # (Re)create trove conf files
     rm -f $TROVE_CONF_DIR/trove.conf
@@ -141,6 +138,7 @@ function configure_trove {
     setup_trove_logging $TROVE_CONF_DIR/trove.conf
     iniset $TROVE_CONF_DIR/trove.conf DEFAULT trove_api_workers "$API_WORKERS"
 
+    configure_auth_token_middleware $TROVE_CONF_DIR/trove.conf trove $TROVE_AUTH_CACHE_DIR
 
     # (Re)create trove taskmanager conf file if needed
     if is_service_enabled tr-tmgr; then
