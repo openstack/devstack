@@ -110,6 +110,12 @@ if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
     done
 fi
 
+# Change the default nova_catalog_info and nova_catalog_admin_info values in
+# cinder so that the service name cinder is searching for matches that set for
+# nova in keystone.
+CINDER_NOVA_CATALOG_INFO=${CINDER_NOVA_CATALOG_INFO:-compute:nova:publicURL}
+CINDER_NOVA_CATALOG_ADMIN_INFO=${CINDER_NOVA_CATALOG_ADMIN_INFO:-compute:nova:adminURL}
+
 
 # Functions
 # ---------
@@ -219,6 +225,9 @@ function configure_cinder {
     inicomment $CINDER_API_PASTE_INI filter:authtoken signing_dir
 
     configure_auth_token_middleware $CINDER_CONF cinder $CINDER_AUTH_CACHE_DIR
+
+    iniset $CINDER_CONF DEFAULT nova_catalog_info $CINDER_NOVA_CATALOG_INFO
+    iniset $CINDER_CONF DEFAULT nova_catalog_admin_info $CINDER_NOVA_CATALOG_ADMIN_INFO
 
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
