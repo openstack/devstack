@@ -1803,6 +1803,9 @@ function load_plugin_settings {
 function run_plugins {
     local mode=$1
     local phase=$2
+
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
     for plugin in ${plugins//,/ }; do
         local dir=${GITDIR[$plugin]}
         if [[ -f $dir/devstack/plugin.sh ]]; then
