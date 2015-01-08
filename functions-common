@@ -147,6 +147,21 @@ $option = $value
     $xtrace
 }
 
+function inidelete {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+
+    [[ -z $section || -z $option ]] && return
+
+    # Remove old values
+    sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
+
+    $xtrace
+}
+
 # Set an option in an INI file
 # iniset config-file section option value
 function iniset {
@@ -1788,6 +1803,9 @@ function load_plugin_settings {
 function run_plugins {
     local mode=$1
     local phase=$2
+
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
     for plugin in ${plugins//,/ }; do
         local dir=${GITDIR[$plugin]}
         if [[ -f $dir/devstack/plugin.sh ]]; then
