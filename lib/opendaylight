@@ -72,6 +72,11 @@ ODL_PROVIDER_MAPPINGS=${ODL_PROVIDER_MAPPINGS:-physnet1:eth1}
 # Enable OpenDaylight l3 forwarding
 ODL_L3=${ODL_L3:-False}
 
+# Enable debug logs for odl ovsdb
+ODL_NETVIRT_DEBUG_LOGS=${ODL_NETVIRT_DEBUG_LOGS:-False}
+
+# The logging config file in ODL
+ODL_LOGGING_CONFIG=${ODL_LOGGING_CONFIG:-${ODL_DIR}/${ODL_NAME}/etc/org.ops4j.pax.logging.cfg}
 
 # Entry Points
 # ------------
@@ -109,6 +114,22 @@ function configure_opendaylight {
         local L3FWD=$(cat $ODL_DIR/$ODL_NAME/etc/custom.properties | grep ^ovsdb.l3.fwd.enabled)
         if [ "$L3FWD" == "" ]; then
             echo "ovsdb.l3.fwd.enabled=yes" >> $ODL_DIR/$ODL_NAME/etc/custom.properties
+        fi
+    fi
+
+    # Configure DEBUG logs for network virtualization in odl, if the user wants it
+    if [ "${ODL_NETVIRT_DEBUG_LOGS}" == "True" ]; then
+        local OVSDB_DEBUG_LOGS=$(cat $ODL_LOGGING_CONFIG | grep ^log4j.logger.org.opendaylight.ovsdb)
+        if [ "${OVSDB_DEBUG_LOGS}" == "" ]; then
+            echo 'log4j.logger.org.opendaylight.ovsdb = TRACE' >> $ODL_LOGGING_CONFIG
+            echo 'log4j.logger.org.opendaylight.ovsdb.lib = INFO' >> $ODL_LOGGING_CONFIG
+            echo 'log4j.logger.org.opendaylight.ovsdb.openstack.netvirt.impl.NeutronL3Adapter = DEBUG' >> $ODL_LOGGING_CONFIG
+            echo 'log4j.logger.org.opendaylight.ovsdb.openstack.netvirt.impl.TenantNetworkManagerImpl = DEBUG' >> $ODL_LOGGING_CONFIG
+            echo 'log4j.logger.org.opendaylight.ovsdb.plugin.md.OvsdbInventoryManager = INFO' >> $ODL_LOGGING_CONFIG
+        fi
+        local ODL_NEUTRON_DEBUG_LOGS=$(cat $ODL_LOGGING_CONFIG | grep ^log4j.logger.org.opendaylight.controller.networkconfig.neutron)
+        if [ "${ODL_NEUTRON_DEBUG_LOGS}" == "" ]; then
+            echo 'log4j.logger.org.opendaylight.controller.networkconfig.neutron = TRACE' >> $ODL_LOGGING_CONFIG
         fi
     fi
 }
