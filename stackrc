@@ -278,10 +278,6 @@ GITBRANCH["oslo.db"]=${OSLODB_BRANCH:-master}
 GITREPO["oslo.i18n"]=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
 GITBRANCH["oslo.i18n"]=${OSLOI18N_BRANCH:-master}
 
-# oslo.log
-GITREPO["oslo.log"]=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
-GITBRANCH["oslo.log"]=${OSLOLOG_BRANCH:-master}
-
 # oslo.messaging
 GITREPO["oslo.messaging"]=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
 GITBRANCH["oslo.messaging"]=${OSLOMSG_BRANCH:-master}

@@ -25,7 +25,6 @@ GITDIR["oslo.config"]=$DEST/oslo.config
 GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
 GITDIR["oslo.db"]=$DEST/oslo.db
 GITDIR["oslo.i18n"]=$DEST/oslo.i18n
-GITDIR["oslo.log"]=$DEST/oslo.log
 GITDIR["oslo.middleware"]=$DEST/oslo.middleware
 GITDIR["oslo.messaging"]=$DEST/oslo.messaging
 GITDIR["oslo.rootwrap"]=$DEST/oslo.rootwrap
@@ -58,7 +57,6 @@ function install_oslo {
     _do_install_oslo_lib "oslo.serialization"
     _do_install_oslo_lib "oslo.config"
     _do_install_oslo_lib "oslo.concurrency"
-    _do_install_oslo_lib "oslo.log"
     _do_install_oslo_lib "oslo.middleware"
     _do_install_oslo_lib "oslo.messaging"
     _do_install_oslo_lib "oslo.rootwrap"
