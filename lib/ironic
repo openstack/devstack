@@ -536,7 +536,7 @@ function enroll_nodes {
             -i ssh_address=$IRONIC_VM_SSH_ADDRESS \
             -i ssh_port=$IRONIC_VM_SSH_PORT \
             -i ssh_username=$IRONIC_SSH_USERNAME \
-            -i ssh_key_filename=$IRONIC_SSH_KEY_DIR/$IRONIC_SSH_KEY_FILENAME"
+            -i ssh_key_filename=$IRONIC_KEY_FILE"
     else
         local ironic_node_cpu=$IRONIC_HW_NODE_CPU
         local ironic_node_ram=$IRONIC_HW_NODE_RAM
