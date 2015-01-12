@@ -23,22 +23,27 @@ function cleanup_database_mysql {
     if is_ubuntu; then
         # Get ruthless with mysql
         stop_service $MYSQL
-        apt_get purge -y mysql*
+        uninstall_package mysql-server mariadb-server
         sudo rm -rf /var/lib/mysql
         sudo rm -rf /etc/mysql
         return
     elif is_fedora; then
         if [[ $DISTRO =~ (rhel6) ]]; then
-            MYSQL=mysqld
+            stop_service mysqld
+            uninstall_package mysql-server
+            sudo rm -rf /var/lib/mysql
         else
-            MYSQL=mariadb
+            stop_service mariadb
+            uninstall_package mariadb-server
+            sudo rm -rf /var/lib/mysql
         fi
     elif is_suse; then
-        MYSQL=mysql
+        stop_service mysql
+        uninstall_package mysql-community-server
+        sudo rm -rf /var/lib/mysql
     else
         return
     fi
-    stop_service $MYSQL
 }
 
 function recreate_database_mysql {
