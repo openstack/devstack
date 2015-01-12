@@ -33,7 +33,8 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 # For example, to enable Swift add this to ``local.conf``:
 #  enable_service s-proxy s-object s-container s-account
 # In order to enable Neutron (a single node setup) add the following
-# settings in `` localrc``:
+# settings in ``local.conf``:
+#  [[local|localrc]]
 #  disable_service n-net
 #  enable_service q-svc
 #  enable_service q-agt
@@ -529,8 +530,8 @@ CIRROS_VERSION=${CIRROS_VERSION:-"0.3.2"}
 CIRROS_ARCH=${CIRROS_ARCH:-"x86_64"}
 
 # Set default image based on ``VIRT_DRIVER`` and ``LIBVIRT_TYPE``, either of
-# which may be set in ``localrc``.  Also allow ``DEFAULT_IMAGE_NAME`` and
-# ``IMAGE_URLS`` to be set directly in ``localrc``.
+# which may be set in ``local.conf``.  Also allow ``DEFAULT_IMAGE_NAME`` and
+# ``IMAGE_URLS`` to be set in the `localrc` section of ``local.conf``.
 case "$VIRT_DRIVER" in
     openvz)
         DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ubuntu-12.04-x86_64}

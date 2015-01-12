@@ -143,7 +143,7 @@ source $TOP_DIR/stackrc
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (precise|trusty|7.0|wheezy|sid|testing|jessie|f19|f20|f21|rhel6|rhel7) ]]; then
+if [[ ! ${DISTRO} =~ (precise|trusty|7.0|wheezy|sid|testing|jessie|f20|f21|rhel6|rhel7) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         die $LINENO "If you wish to run this script anyway run with FORCE=yes"
@@ -1030,6 +1030,14 @@ if is_service_enabled key; then
 fi
 
 
+# ZeroMQ
+# ------
+if is_service_enabled zeromq; then
+    echo_summary "Starting zeromq receiver"
+    run_process zeromq "$OSLO_BIN_DIR/oslo-messaging-zmq-receiver"
+fi
+
+
 # Horizon
 # -------
 
@@ -1206,11 +1214,6 @@ fi
 # Create a randomized default value for the keymgr's fixed_key
 if is_service_enabled nova; then
     iniset $NOVA_CONF keymgr fixed_key $(generate_hex_string 32)
-fi
-
-if is_service_enabled zeromq; then
-    echo_summary "Starting zermomq receiver"
-    run_process zeromq "$OSLO_BIN_DIR/oslo-messaging-zmq-receiver"
 fi
 
 # Launch the nova-api and wait for it to answer before continuing

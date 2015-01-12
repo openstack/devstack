@@ -769,8 +769,8 @@ function start_nova_rest {
 }
 
 function start_nova {
-    start_nova_compute
     start_nova_rest
+    start_nova_compute
 }
 
 function stop_nova_compute {
