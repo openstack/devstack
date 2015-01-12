@@ -87,11 +87,20 @@ function cleanup_rpc_backend {
         fi
     elif is_service_enabled zeromq; then
         if is_fedora; then
-            uninstall_package zeromq python-zmq redis
+            uninstall_package zeromq python-zmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                uninstall_package redis python-redis
+            fi
         elif is_ubuntu; then
-            uninstall_package libzmq1 python-zmq redis-server
+            uninstall_package libzmq1 python-zmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                uninstall_package redis-server python-redis
+            fi
         elif is_suse; then
-            uninstall_package libzmq1 python-pyzmq redis
+            uninstall_package libzmq1 python-pyzmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                uninstall_package redis python-redis
+            fi
         else
             exit_distro_not_supported "zeromq installation"
         fi
@@ -150,11 +159,20 @@ function install_rpc_backend {
         # but there is a matchmaker driver that works
         # really well & out of the box for multi-node.
         if is_fedora; then
-            install_package zeromq python-zmq redis
+            install_package zeromq python-zmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                install_package redis python-redis
+            fi
         elif is_ubuntu; then
-            install_package libzmq1 python-zmq redis-server
+            install_package libzmq1 python-zmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                install_package redis-server python-redis
+            fi
         elif is_suse; then
-            install_package libzmq1 python-pyzmq redis
+            install_package libzmq1 python-pyzmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                install_package redis python-redis
+            fi
         else
             exit_distro_not_supported "zeromq installation"
         fi
