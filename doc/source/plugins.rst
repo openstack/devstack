@@ -131,6 +131,31 @@ An example would be as follows::
 
   enable_plugin glusterfs https://github.com/sdague/devstack-plugins glusterfs
 
+Plugins for gate jobs
+---------------------
+
+All OpenStack plugins that wish to be used as gate jobs need to exist
+in OpenStack's gerrit. Both ``openstack`` namespace and ``stackforge``
+namespace are fine. This allows testing of the plugin as well as
+provides network isolation against upstream git repository failures
+(which we see often enough to be an issue).
+
+Ideally plugins will be implemented as ``devstack`` directory inside
+the project they are testing. For example, the stackforge/ec2-api
+project has it's pluggin support in it's tree.
+
+In the cases where there is no "project tree" per say (like
+integrating a backend storage configuration such as ceph or glusterfs)
+it's also allowed to build a dedicated
+``stackforge/devstack-plugin-FOO`` project to house the plugin.
+
+Note jobs must not require cloning of repositories during tests.
+Tests must list their repository in the ``PROJECTS`` variable for
+`devstack-gate
+<https://git.openstack.org/cgit/openstack-infra/devstack-gate/tree/devstack-vm-gate-wrap.sh>`_
+for the repository to be available to the test.  Further information
+is provided in the project creator's guide.
+
 Hypervisor
 ==========
 
