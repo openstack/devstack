@@ -1011,7 +1011,6 @@ function get_packages {
     fi
     if [[ -z "$DISTRO" ]]; then
         GetDistro
-        echo "Found Distro $DISTRO"
     fi
     for service in ${services//,/ }; do
         # Allow individual services to specify dependencies
