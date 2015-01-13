@@ -42,7 +42,7 @@ function upload_image {
     if [[ $image_url != file* ]]; then
         # Downloads the image (uec ami+akistyle), then extracts it.
         if [[ ! -f $FILES/$image_fname || "$(stat -c "%s" $FILES/$image_fname)" = "0" ]]; then
-            wget -c $image_url -O $FILES/$image_fname
+            wget --progress=dot:giga -c $image_url -O $FILES/$image_fname
             if [[ $? -ne 0 ]]; then
                 echo "Not found: $image_url"
                 return
@@ -116,7 +116,7 @@ function upload_image {
             if [[ $flat_url != file* ]]; then
                 if [[ ! -f $FILES/$flat_fname || \
                 "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
-                    wget -c $flat_url -O $FILES/$flat_fname
+                    wget --progress=dot:giga -c $flat_url -O $FILES/$flat_fname
                 fi
                 image="$FILES/${flat_fname}"
             else
