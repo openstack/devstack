@@ -908,7 +908,7 @@ function _configure_neutron_l3_agent {
     Q_L3_ROUTER_PER_TENANT=$Q_USE_NAMESPACE
 
     if is_service_enabled q-vpn; then
-        cp $NEUTRON_DIR/etc/vpn_agent.ini $Q_VPN_CONF_FILE
+        cp $NEUTRON_VPNAAS_DIR/etc/vpn_agent.ini $Q_VPN_CONF_FILE
     fi
 
     cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
@@ -1034,22 +1034,28 @@ function _neutron_service_plugin_class_add {
     fi
 }
 
+# _neutron_deploy_rootwrap_filters() - deploy rootwrap filters to $Q_CONF_ROOTWRAP_D (owned by root).
+function _neutron_deploy_rootwrap_filters {
+    local srcdir=$1
+    mkdir -p -m 755 $Q_CONF_ROOTWRAP_D
+    sudo cp -pr $srcdir/etc/neutron/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
+    sudo chown -R root:root $Q_CONF_ROOTWRAP_D
+    sudo chmod 644 $Q_CONF_ROOTWRAP_D/*
+}
+
 # _neutron_setup_rootwrap() - configure Neutron's rootwrap
 function _neutron_setup_rootwrap {
     if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
         return
     fi
-    # Deploy new rootwrap filters files (owned by root).
     # Wipe any existing ``rootwrap.d`` files first
     Q_CONF_ROOTWRAP_D=$NEUTRON_CONF_DIR/rootwrap.d
     if [[ -d $Q_CONF_ROOTWRAP_D ]]; then
         sudo rm -rf $Q_CONF_ROOTWRAP_D
     fi
-    # Deploy filters to ``$NEUTRON_CONF_DIR/rootwrap.d``
-    mkdir -p -m 755 $Q_CONF_ROOTWRAP_D
-    cp -pr $NEUTRON_DIR/etc/neutron/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
-    sudo chown -R root:root $Q_CONF_ROOTWRAP_D
-    sudo chmod 644 $Q_CONF_ROOTWRAP_D/*
+
+    _neutron_deploy_rootwrap_filters $NEUTRON_DIR
+
     # Set up ``rootwrap.conf``, pointing to ``$NEUTRON_CONF_DIR/rootwrap.d``
     # location moved in newer versions, prefer new location
     if test -r $NEUTRON_DIR/etc/neutron/rootwrap.conf; then
