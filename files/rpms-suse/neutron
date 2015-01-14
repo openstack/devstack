@@ -1,3 +1,4 @@
+acl     # testonly
 dnsmasq
 dnsmasq-utils # dist:opensuse-12.3,opensuse-13.1
 ebtables
