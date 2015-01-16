@@ -27,3 +27,4 @@ bc
 libyaml-dev
 libffi-dev
 libssl-dev # for pyOpenSSL
+gettext  # used for compiling message catalogs
