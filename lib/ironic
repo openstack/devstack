@@ -663,12 +663,12 @@ function upload_baremetal_ironic_deploy {
 }
 
 function prepare_baremetal_basic_ops {
+    configure_ironic_auxiliary
     upload_baremetal_ironic_deploy
     create_bridge_and_vms
     enroll_vms
     configure_tftpd
     configure_iptables
-    configure_ironic_auxiliary
 }
 
 function cleanup_baremetal_basic_ops {
