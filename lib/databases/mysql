@@ -14,12 +14,22 @@ set +o xtrace
 
 register_database mysql
 
+# Linux distros, thank you for being incredibly consistent
+MYSQL=mysql
+if is_fedora; then
+    if [[ $DISTRO =~ (rhel6) ]]; then
+        MYSQL=mysqld
+    else
+        MYSQL=mariadb
+    fi
+fi
 
 # Functions
 # ---------
 
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database_mysql {
+    stop_service $MYSQL
     if is_ubuntu; then
         # Get ruthless with mysql
         stop_service $MYSQL

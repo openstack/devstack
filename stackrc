@@ -43,9 +43,17 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 #  enable_service q-meta
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
+function isset {
+    local nounset=$(set +o | grep nounset)
+    set +o nounset
+    [[ -n "${!1+x}" ]]
+    result=$?
+    $nounset
+    return $result
+}
 
 # this allows us to pass ENABLED_SERVICES
-if [[ -z "$ENABLED_SERVICES" ]]; then
+if ! isset ENABLED_SERVICES ; then
     # core compute (glance / keystone / nova (+ nova-network))
     ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-xvnc,n-cauth
     # cinder
@@ -106,7 +114,7 @@ fi
 
 # This can be used to turn database query logging on and off
 # (currently only implemented for MySQL backend)
-DATABASE_QUERY_LOGGING=$(trueorfalse True $DATABASE_QUERY_LOGGING)
+DATABASE_QUERY_LOGGING=$(trueorfalse True DATABASE_QUERY_LOGGING)
 
 # Set a timeout for git operations.  If git is still running when the
 # timeout expires, the command will be retried up to 3 times.  This is
@@ -593,7 +601,7 @@ fi
 
 # Staging Area for New Images, have them here for at least 24hrs for nodepool
 # to cache them otherwise the failure rates in the gate are too high
-PRECACHE_IMAGES=$(trueorfalse False $PRECACHE_IMAGES)
+PRECACHE_IMAGES=$(trueorfalse False PRECACHE_IMAGES)
 if [[ "$PRECACHE_IMAGES" == "True" ]]; then
     # staging in update for nodepool
     IMAGE_URL="https://download.fedoraproject.org/pub/alt/openstack/20/x86_64/Fedora-x86_64-20-20140618-sda.qcow2"
@@ -645,6 +653,54 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # available in parallel with compatible CLIs.  Allow manual switching
 # till we get to the point we need to handle this automatically
 YUM=${YUM:-yum}
+
+# Common Configuration
+# --------------------
+
+# Set ``OFFLINE`` to ``True`` to configure ``stack.sh`` to run cleanly without
+# Internet access. ``stack.sh`` must have been previously run with Internet
+# access to install prerequisites and fetch repositories.
+OFFLINE=$(trueorfalse False OFFLINE)
+
+# Set ``ERROR_ON_CLONE`` to ``True`` to configure ``stack.sh`` to exit if
+# the destination git repository does not exist during the ``git_clone``
+# operation.
+ERROR_ON_CLONE=$(trueorfalse False ERROR_ON_CLONE)
+
+# Whether to enable the debug log level in OpenStack services
+ENABLE_DEBUG_LOG_LEVEL=$(trueorfalse True ENABLE_DEBUG_LOG_LEVEL)
+
+# Set fixed and floating range here so we can make sure not to use addresses
+# from either range when attempting to guess the IP to use for the host.
+# Note that setting FIXED_RANGE may be necessary when running DevStack
+# in an OpenStack cloud that uses either of these address ranges internally.
+FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.0/24}
+FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
+FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
+HOST_IP_IFACE=${HOST_IP_IFACE:-}
+HOST_IP=${HOST_IP:-}
+
+HOST_IP=$(get_default_host_ip $FIXED_RANGE $FLOATING_RANGE "$HOST_IP_IFACE" "$HOST_IP")
+if [ "$HOST_IP" == "" ]; then
+    die $LINENO "Could not determine host ip address.  See local.conf for suggestions on setting HOST_IP."
+fi
+
+# Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
+SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+
+# Configure services to use syslog instead of writing to individual log files
+SYSLOG=$(trueorfalse False SYSLOG)
+SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
+SYSLOG_PORT=${SYSLOG_PORT:-516}
+
+# Use color for logging output (only available if syslog is not used)
+LOG_COLOR=$(trueorfalse True LOG_COLOR)
+
+# Set global ``GIT_DEPTH=<number>`` to limit the history depth of the git clone
+GIT_DEPTH=${GIT_DEPTH:-1}
+
+# Use native SSL for servers in SSL_ENABLED_SERVICES
+USE_SSL=$(trueorfalse False USE_SSL)
 
 # Following entries need to be last items in file
 

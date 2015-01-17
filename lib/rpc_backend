@@ -21,6 +21,11 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+RPC_MESSAGING_PROTOCOL=${RPC_MESSAGING_PROTOCOL:-0.9}
+
+# TODO(sdague): RPC backend selection is super wonky because we treat
+# messaging server as a service, which it really isn't for multi host
+QPID_HOST=${QPID_HOST:-}
 
 # Functions
 # ---------
@@ -68,9 +73,6 @@ function check_rpc_backend {
 function cleanup_rpc_backend {
     if is_service_enabled rabbit; then
         # Obliterate rabbitmq-server
-        if [ -n "$RABBIT_USERID" ]; then
-            sudo rabbitmqctl delete_user "$RABBIT_USERID"
-        fi
         uninstall_package rabbitmq-server
         sudo killall epmd || sudo killall -9 epmd
         if is_ubuntu; then

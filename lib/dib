@@ -26,7 +26,7 @@ TIE_DIR=$DEST/tripleo-image-elements
 # NOTE: Setting DIB_APT_SOURCES assumes you will be building
 # Debian/Ubuntu based images. Leave unset for other flavors.
 DIB_APT_SOURCES=${DIB_APT_SOURCES:-""}
-DIB_BUILD_OFFLINE=$(trueorfalse False $DIB_BUILD_OFFLINE)
+DIB_BUILD_OFFLINE=$(trueorfalse False DIB_BUILD_OFFLINE)
 DIB_IMAGE_CACHE=$DATA_DIR/diskimage-builder/image-create
 DIB_PIP_REPO=$DATA_DIR/diskimage-builder/pip-repo
 DIB_PIP_REPO_PORT=${DIB_PIP_REPO_PORT:-8899}
