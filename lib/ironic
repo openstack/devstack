@@ -463,18 +463,20 @@ function create_bridge_and_vms {
 }
 
 function wait_for_nova_resources {
-    # After nodes have been enrolled, we need to wait for n-cpu's periodic
-    # task populate the resource tracker with available nodes.  Wait for 2
-    # minutes before timing out.
-    local expected_count=$1
-    echo_summary "Waiting 2 minutes for Nova resource tracker to pick up $expected_count Ironic nodes"
+    # After nodes have been enrolled, we need to wait for both ironic and
+    # nova's periodic tasks to populate the resource tracker with available
+    # nodes and resources. Wait up to 2 minutes for a given resource before
+    # timing out.
+    local resource=$1
+    local expected_count=$2
+    echo_summary "Waiting 2 minutes for Nova resource tracker to pick up $resource >= $expected_count"
     for i in $(seq 1 120); do
-        if [ $(nova hypervisor-stats | grep " count " | get_field 2) -ge $expected_count ]; then
+        if [ $(nova hypervisor-stats | grep " $resource " | get_field 2) -ge $expected_count ]; then
             return 0
         fi
         sleep 1
     done
-    die $LINENO "Nova hypervisor-stats did not register at least $expected_count nodes"
+    die $LINENO "Timed out waiting for Nova hypervisor-stats $resource >= $expected_count"
 }
 
 function enroll_vms {
@@ -489,6 +491,7 @@ function enroll_vms {
     fi
 
     local total_nodes=0
+    local total_cpus=0
     while read MAC; do
 
         local node_id=$(ironic node-create --chassis_uuid $chassis_id \
@@ -509,6 +512,7 @@ function enroll_vms {
         ironic port-create --address $MAC --node_uuid $node_id
 
         total_nodes=$((total_nodes+1))
+        total_cpus=$((total_cpus+$IRONIC_VM_SPECS_CPU))
     done < $IRONIC_VM_MACS_CSV_FILE
 
     # create the nova flavor
@@ -525,7 +529,8 @@ function enroll_vms {
     nova flavor-key baremetal set "cpu_arch"="x86_64" "baremetal:deploy_kernel_id"="$IRONIC_DEPLOY_KERNEL_ID" "baremetal:deploy_ramdisk_id"="$IRONIC_DEPLOY_RAMDISK_ID"
 
     if [ "$VIRT_DRIVER" == "ironic" ]; then
-        wait_for_nova_resources $total_nodes
+        wait_for_nova_resources "count" $total_nodes
+        wait_for_nova_resources "vcpus" $total_cpus
     fi
 }
 
