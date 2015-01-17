@@ -173,7 +173,7 @@ function install_horizon {
     # Apache installation, because we mark it NOPRIME
     install_apache_wsgi
 
-    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH
 }
 
 # start_horizon() - Start running processes, including screen

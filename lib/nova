@@ -106,7 +106,7 @@ GUEST_INTERFACE_DEFAULT=$(ip link \
 
 # $NOVA_VNC_ENABLED can be used to forcibly enable vnc configuration.
 # In multi-node setups allows compute hosts to not run n-novnc.
-NOVA_VNC_ENABLED=$(trueorfalse False $NOVA_VNC_ENABLED)
+NOVA_VNC_ENABLED=$(trueorfalse False NOVA_VNC_ENABLED)
 
 # Get hypervisor configuration
 # ----------------------------
@@ -145,11 +145,11 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 # ``MULTI_HOST`` is a mode where each compute node runs its own network node.  This
 # allows network operations and routing for a VM to occur on the server that is
 # running the VM - removing a SPOF and bandwidth bottleneck.
-MULTI_HOST=`trueorfalse False $MULTI_HOST`
+MULTI_HOST=$(trueorfalse False MULTI_HOST)
 
 # ``NOVA_ALLOW_MOVE_TO_SAME_HOST` can be set to False in multi node devstack,
 # where there are at least two nova-computes.
-NOVA_ALLOW_MOVE_TO_SAME_HOST=`trueorfalse True $NOVA_ALLOW_MOVE_TO_SAME_HOST`
+NOVA_ALLOW_MOVE_TO_SAME_HOST=$(trueorfalse True NOVA_ALLOW_MOVE_TO_SAME_HOST)
 
 # Test floating pool and range are used for testing.  They are defined
 # here until the admin APIs can replace nova-manage
@@ -657,7 +657,7 @@ function install_nova {
 
     if is_service_enabled n-novnc; then
         # a websockets/html5 or flash powered VNC console for vm instances
-        NOVNC_FROM_PACKAGE=`trueorfalse False $NOVNC_FROM_PACKAGE`
+        NOVNC_FROM_PACKAGE=$(trueorfalse False NOVNC_FROM_PACKAGE)
         if [ "$NOVNC_FROM_PACKAGE" = "True" ]; then
             NOVNC_WEB_DIR=/usr/share/novnc
             install_package novnc
@@ -669,7 +669,7 @@ function install_nova {
 
     if is_service_enabled n-spice; then
         # a websockets/html5 or flash powered SPICE console for vm instances
-        SPICE_FROM_PACKAGE=`trueorfalse True $SPICE_FROM_PACKAGE`
+        SPICE_FROM_PACKAGE=$(trueorfalse True SPICE_FROM_PACKAGE)
         if [ "$SPICE_FROM_PACKAGE" = "True" ]; then
             SPICE_WEB_DIR=/usr/share/spice-html5
             install_package spice-html5

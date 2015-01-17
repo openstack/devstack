@@ -6,11 +6,22 @@
 # mysql and rabbit are left running as OpenStack code refreshes
 # do not require them to be restarted.
 #
-# Stop all processes by setting ``UNSTACK_ALL`` or specifying ``--all``
+# Stop all processes by setting ``UNSTACK_ALL`` or specifying ``-a``
 # on the command line
+
+UNSTACK_ALL=""
+
+while getopts ":a" opt; do
+    case $opt in
+        a)
+            UNSTACK_ALL=""
+            ;;
+    esac
+done
 
 # Keep track of the current devstack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
+FILES=$TOP_DIR/files
 
 # Import common functions
 source $TOP_DIR/functions
@@ -19,7 +30,7 @@ source $TOP_DIR/functions
 source $TOP_DIR/lib/database
 
 # Load local configuration
-source $TOP_DIR/stackrc
+source $TOP_DIR/openrc
 
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
@@ -71,10 +82,6 @@ load_plugin_settings
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 GetOSVersion
-
-if [[ "$1" == "--all" ]]; then
-    UNSTACK_ALL=${UNSTACK_ALL:-1}
-fi
 
 # Run extras
 # ==========

@@ -54,7 +54,7 @@ function configure_nova_hypervisor {
         iniset $NOVA_CONF DEFAULT vnc_enabled "false"
     fi
 
-    ENABLE_FILE_INJECTION=$(trueorfalse False $ENABLE_FILE_INJECTION)
+    ENABLE_FILE_INJECTION=$(trueorfalse False ENABLE_FILE_INJECTION)
     if [[ "$ENABLE_FILE_INJECTION" = "True" ]] ; then
         # When libguestfs is available for file injection, enable using
         # libguestfs to inspect the image and figure out the proper

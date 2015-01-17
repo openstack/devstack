@@ -68,7 +68,7 @@ fi
 # Maintain this here for backward-compatibility with the old configuration
 # DEPRECATED: Use CINDER_ENABLED_BACKENDS instead
 # Support for multi lvm backend configuration (default is no support)
-CINDER_MULTI_LVM_BACKEND=$(trueorfalse False $CINDER_MULTI_LVM_BACKEND)
+CINDER_MULTI_LVM_BACKEND=$(trueorfalse False CINDER_MULTI_LVM_BACKEND)
 
 # Default backends
 # The backend format is type:name where type is one of the supported backend
@@ -85,7 +85,7 @@ fi
 # Should cinder perform secure deletion of volumes?
 # Defaults to true, can be set to False to avoid this bug when testing:
 # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1023755
-CINDER_SECURE_DELETE=`trueorfalse True $CINDER_SECURE_DELETE`
+CINDER_SECURE_DELETE=$(trueorfalse True CINDER_SECURE_DELETE)
 
 # Cinder reports allocations back to the scheduler on periodic intervals
 # it turns out we can get an "out of space" issue when we run tests too

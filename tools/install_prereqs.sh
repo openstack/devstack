@@ -8,9 +8,15 @@
 #
 # -f        Force an install run now
 
-if [[ -n "$1" &&  "$1" = "-f" ]]; then
-    FORCE_PREREQ=1
-fi
+FORCE_PREREQ=0
+
+while getopts ":f" opt; do
+    case $opt in
+        f)
+            FORCE_PREREQ=1
+            ;;
+    esac
+done
 
 # If TOP_DIR is set we're being sourced rather than running stand-alone
 # or in a sub-shell

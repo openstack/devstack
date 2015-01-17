@@ -353,7 +353,7 @@ function _ping_check_novanet {
     local boot_timeout=$3
     local expected=${4:-"True"}
     local check_command=""
-    MULTI_HOST=`trueorfalse False $MULTI_HOST`
+    MULTI_HOST=$(trueorfalse False MULTI_HOST)
     if [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
         return
     fi
