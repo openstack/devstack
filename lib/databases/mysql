@@ -33,7 +33,7 @@ function cleanup_database_mysql {
     if is_ubuntu; then
         # Get ruthless with mysql
         stop_service $MYSQL
-        uninstall_package mysql-common mariadb-common
+        apt_get purge -y mysql* mariadb*
         sudo rm -rf /var/lib/mysql
         sudo rm -rf /etc/mysql
         return
