@@ -26,7 +26,6 @@ qpidd # dist:precise NOPRIME
 socat # used by ajaxterm
 python-mox
 python-paste
-python-migrate
 python-greenlet
 python-libvirt # NOPRIME
 python-libxml2

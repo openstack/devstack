@@ -18,4 +18,3 @@ python-mox
 python-kombu
 python-coverage
 python-cherrypy3 # why?
-python-migrate
