@@ -196,7 +196,7 @@ controller node.
         SEGMENTATION_ID=2010
 
 In this configuration we are defining FIXED_RANGE to be a
-subnet that exists in the private RFC1918 address space - however in
+subnet that exists in the private RFC1918 address space - however
 in a real setup FIXED_RANGE would be a public IP address range, so
 that you could access your instances from the public internet.
 
