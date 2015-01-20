@@ -1278,8 +1278,8 @@ function _run_process {
     exec 6>&-
 
     if [[ -n ${SCREEN_LOGDIR} ]]; then
-        exec 1>&${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log 2>&1
-        ln -sf ${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${service}.log
+        exec 1>&${SCREEN_LOGDIR}/screen-${service}.log.${CURRENT_LOG_TIME} 2>&1
+        ln -sf ${SCREEN_LOGDIR}/screen-${service}.log.${CURRENT_LOG_TIME} ${SCREEN_LOGDIR}/screen-${service}.log
 
         # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
         export PYTHONUNBUFFERED=1
@@ -1363,9 +1363,9 @@ function screen_process {
     screen -S $SCREEN_NAME -X screen -t $name
 
     if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen -S $SCREEN_NAME -p $name -X logfile ${SCREEN_LOGDIR}/screen-${name}.${CURRENT_LOG_TIME}.log
+        screen -S $SCREEN_NAME -p $name -X logfile ${SCREEN_LOGDIR}/screen-${name}.log.${CURRENT_LOG_TIME}
         screen -S $SCREEN_NAME -p $name -X log on
-        ln -sf ${SCREEN_LOGDIR}/screen-${name}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${name}.log
+        ln -sf ${SCREEN_LOGDIR}/screen-${name}.log.${CURRENT_LOG_TIME} ${SCREEN_LOGDIR}/screen-${name}.log
     fi
 
     # sleep to allow bash to be ready to be send the command - we are
@@ -1411,7 +1411,7 @@ function screen_rc {
         echo "stuff \"$2$NL\"" >> $SCREENRC
 
         if [[ -n ${SCREEN_LOGDIR} ]]; then
-            echo "logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log" >>$SCREENRC
+            echo "logfile ${SCREEN_LOGDIR}/screen-${1}.log.${CURRENT_LOG_TIME}" >>$SCREENRC
             echo "log on" >>$SCREENRC
         fi
     fi
@@ -1523,8 +1523,8 @@ function _old_run_process {
     exec 6>&-
 
     if [[ -n ${SCREEN_LOGDIR} ]]; then
-        exec 1>&${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log 2>&1
-        ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
+        exec 1>&${SCREEN_LOGDIR}/screen-${1}.log.${CURRENT_LOG_TIME} 2>&1
+        ln -sf ${SCREEN_LOGDIR}/screen-${1}.log.${CURRENT_LOG_TIME} ${SCREEN_LOGDIR}/screen-${1}.log
 
         # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
         export PYTHONUNBUFFERED=1
