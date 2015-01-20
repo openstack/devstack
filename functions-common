@@ -601,7 +601,7 @@ function git_clone {
     local git_clone_flags=""
 
     RECLONE=$(trueorfalse False RECLONE)
-    if [[ -n "${GIT_DEPTH}" ]]; then
+    if [[ "${GIT_DEPTH}" -gt 0 ]]; then
         git_clone_flags="$git_clone_flags --depth $GIT_DEPTH"
     fi
 

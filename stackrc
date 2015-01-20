@@ -697,7 +697,8 @@ SYSLOG_PORT=${SYSLOG_PORT:-516}
 LOG_COLOR=$(trueorfalse True LOG_COLOR)
 
 # Set global ``GIT_DEPTH=<number>`` to limit the history depth of the git clone
-GIT_DEPTH=${GIT_DEPTH:-1}
+# Set to 0 to disable shallow cloning
+GIT_DEPTH=${GIT_DEPTH:-0}
 
 # Use native SSL for servers in SSL_ENABLED_SERVICES
 USE_SSL=$(trueorfalse False USE_SSL)
