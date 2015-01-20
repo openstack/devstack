@@ -379,15 +379,14 @@ if [[ -n "$LOGFILE" || -n "$SCREEN_LOGDIR" ]]; then
 fi
 
 if [[ -n "$LOGFILE" ]]; then
-    # First clean up old log files.  Use the user-specified ``LOGFILE``
-    # as the template to search for, appending '.*' to match the date
-    # we added on earlier runs.
-    LOGDIR=$(dirname "$LOGFILE")
-    LOGFILENAME=$(basename "$LOGFILE")
-    mkdir -p $LOGDIR
-    find $LOGDIR -maxdepth 1 -name $LOGFILENAME.\* -mtime +$LOGDAYS -exec rm {} \;
+    # Clean up old log files.  Append '.*' to the user-specified
+    # ``LOGFILE`` to match the date in the search template.
+    local logfile_dir="${LOGFILE%/*}"           # dirname
+    local logfile_name="${LOGFILE##*/}"         # basename
+    mkdir -p $logfile_dir
+    find $logfile_dir -maxdepth 1 -name $logfile_name.\* -mtime +$LOGDAYS -exec rm {} \;
     LOGFILE=$LOGFILE.${CURRENT_LOG_TIME}
-    SUMFILE=$LOGFILE.${CURRENT_LOG_TIME}.summary
+    SUMFILE=$LOGFILE.summary.${CURRENT_LOG_TIME}
 
     # Redirect output according to config
 
@@ -408,8 +407,8 @@ if [[ -n "$LOGFILE" ]]; then
 
     echo_summary "stack.sh log $LOGFILE"
     # Specified logfile name always links to the most recent log
-    ln -sf $LOGFILE $LOGDIR/$LOGFILENAME
-    ln -sf $SUMFILE $LOGDIR/$LOGFILENAME.summary
+    ln -sf $LOGFILE $logfile_dir/$logfile_name
+    ln -sf $SUMFILE $logfile_dir/$logfile_name.summary
 else
     # Set up output redirection without log files
     # Set fd 3 to a copy of stdout. So we can set fd 1 without losing
@@ -523,6 +522,7 @@ source $TOP_DIR/lib/tls
 source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/oslo
 source $TOP_DIR/lib/stackforge
+source $TOP_DIR/lib/lvm
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
@@ -938,6 +938,10 @@ init_service_check
 
 # A better kind of sysstat, with the top process per time slice
 start_dstat
+
+# Initialize default LVM volume group
+# -----------------------------------
+init_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME $VOLUME_BACKING_FILE_SIZE
 
 # Start Services
 # ==============

@@ -58,9 +58,8 @@ function cleanup_database_mysql {
 
 function recreate_database_mysql {
     local db=$1
-    local charset=$2
     mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "DROP DATABASE IF EXISTS $db;"
-    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "CREATE DATABASE $db CHARACTER SET $charset;"
+    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "CREATE DATABASE $db CHARACTER SET utf8;"
 }
 
 function configure_database_mysql {
@@ -138,10 +137,10 @@ function install_database_mysql {
     if is_ubuntu; then
         # Seed configuration with mysql password so that apt-get install doesn't
         # prompt us for a password upon install.
-        cat <<MYSQL_PRESEED | sudo debconf-set-selections
-mysql-server-5.1 mysql-server/root_password password $DATABASE_PASSWORD
-mysql-server-5.1 mysql-server/root_password_again password $DATABASE_PASSWORD
-mysql-server-5.1 mysql-server/start_on_boot boolean true
+        sudo debconf-set-selections <<MYSQL_PRESEED
+mysql-server mysql-server/root_password password $DATABASE_PASSWORD
+mysql-server mysql-server/root_password_again password $DATABASE_PASSWORD
+mysql-server mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
     fi
 

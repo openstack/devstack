@@ -99,11 +99,9 @@ function initialize_database_backends {
 
 # Recreate a given database
 #  $1 The name of the database
-#  $2 The character set/encoding of the database
 function recreate_database {
     local db=$1
-    local charset=$2
-    recreate_database_$DATABASE_TYPE $db $charset
+    recreate_database_$DATABASE_TYPE $db
 }
 
 # Install the database
