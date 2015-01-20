@@ -29,6 +29,18 @@ function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/midonet
     Q_PLUGIN_CONF_FILENAME=midonet.ini
     Q_PLUGIN_CLASS="neutron.plugins.midonet.plugin.MidonetPluginV2"
+
+    # MidoNet implements LBaaS API in the plugin, not as an LBaaS driver.
+    # In this model, the plugin references the 'neutron_lbaas' module but
+    # does not require starting an LBaaS service.  Devstack, however, clones
+    # 'neutron_lbaas' only if 'lbaas' service is enabled.  To get around this,
+    # always clone 'neutron_lbaas' so that it is made available to the plugin.
+    # Also, discontinue if the 'lbaas' service is enabled.
+    if is_service_enabled q-lbaas; then
+        die $LINENO "LBaaS service should be disabled for the MidoNet plugin"
+    fi
+    git_clone $NEUTRON_LBAAS_REPO $NEUTRON_LBAAS_DIR $NEUTRON_LBAAS_BRANCH
+    setup_develop $NEUTRON_LBAAS_DIR
 }
 
 function neutron_plugin_configure_debug_command {
