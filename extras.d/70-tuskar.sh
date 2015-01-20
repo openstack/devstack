@@ -131,7 +131,7 @@ function configure_tuskar {
 function init_tuskar {
 
     # (re)create tuskar database
-    recreate_database tuskar utf8
+    recreate_database tuskar
 
     tuskar-dbsync --config-file $TUSKAR_CONF
     create_tuskar_cache_dir

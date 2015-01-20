@@ -279,7 +279,7 @@ function init_glance {
     mkdir -p $GLANCE_CACHE_DIR
 
     # (Re)create glance database
-    recreate_database glance utf8
+    recreate_database glance
 
     # Migrate glance database
     $GLANCE_BIN_DIR/glance-manage db_sync

@@ -265,7 +265,7 @@ function init_ceilometer {
 
     if is_service_enabled mysql postgresql; then
         if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
-            recreate_database ceilometer utf8
+            recreate_database ceilometer
             $CEILOMETER_BIN_DIR/ceilometer-dbsync
         fi
     fi

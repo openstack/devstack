@@ -143,7 +143,7 @@ function configure_sahara {
         setup_colorized_logging $SAHARA_CONF_FILE DEFAULT
     fi
 
-    recreate_database sahara utf8
+    recreate_database sahara
     $SAHARA_BIN_DIR/sahara-db-manage --config-file $SAHARA_CONF_FILE upgrade head
 }
 

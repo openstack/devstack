@@ -387,7 +387,7 @@ function init_cinder {
 
     if is_service_enabled $DATABASE_BACKENDS; then
         # (Re)create cinder database
-        recreate_database cinder utf8
+        recreate_database cinder
 
         # Migrate cinder database
         $CINDER_BIN_DIR/cinder-manage db sync

@@ -628,16 +628,13 @@ function init_nova {
     # Only do this step once on the API node for an entire cluster.
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-api; then
         # (Re)create nova database
-        # Explicitly use latin1: to avoid lp#829209, nova expects the database to
-        # use latin1 by default, and then upgrades the database to utf8 (see the
-        # 082_essex.py in nova)
-        recreate_database nova latin1
+        recreate_database nova
 
         # Migrate nova database
         $NOVA_BIN_DIR/nova-manage db sync
 
         if is_service_enabled n-cell; then
-            recreate_database $NOVA_CELLS_DB latin1
+            recreate_database $NOVA_CELLS_DB
         fi
     fi
 
