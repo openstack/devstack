@@ -547,6 +547,11 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT ec2_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
 
+    if [[ "$NOVA_BACKEND" == "LVM" ]]; then
+        iniset $NOVA_CONF libvirt images_type "lvm"
+        iniset $NOVA_CONF libvirt images_volume_group $DEFAULT_VOLUME_GROUP_NAME
+    fi
+
     if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
         iniset $NOVA_CONF DEFAULT glance_protocol https
     fi

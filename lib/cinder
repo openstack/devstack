@@ -76,9 +76,9 @@ CINDER_MULTI_LVM_BACKEND=$(trueorfalse False CINDER_MULTI_LVM_BACKEND)
 # configuration and for the volume type name.  Multiple backends are
 # comma-separated.
 if [[ $CINDER_MULTI_LVM_BACKEND == "False" ]]; then
-    CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1}
+    CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:${DEFAULT_VOLUME_GROUP_NAME##*-}}
 else
-    CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1,lvm:lvmdriver-2}
+    CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:${DEFAULT_VOLUME_GROUP_NAME##*-},lvm:cinder}
 fi
 
 
