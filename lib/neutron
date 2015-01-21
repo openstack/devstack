@@ -837,6 +837,9 @@ function _configure_neutron_common {
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $NEUTRON_CONF DEFAULT project_id
+    else
+        # Show user_name and project_name by default like in nova
+        iniset $NEUTRON_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
     fi
 
     if is_service_enabled tls-proxy; then
