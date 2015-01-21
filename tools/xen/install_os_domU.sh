@@ -371,14 +371,19 @@ if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" =
     done
     echo -n "devstack service is running, waiting for stack.sh to start logging..."
 
-    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "test -e /tmp/devstack/log/stack.log"; do
-        sleep 10
-    done
-    set -x
-
     pid=`ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "cat /opt/stack/run_sh.pid"`
-    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "tail --pid $pid -n +1 -f /tmp/devstack/log/stack.log"
+    if [ -n "$SCREEN_LOGDIR" ]; then
+        while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "test -e ${SCREEN_LOGDIR}/stack.log"; do
+            sleep 10
+        done
 
+        ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "tail --pid $pid -n +1 -f ${SCREEN_LOGDIR}/stack.log"
+    else
+        echo -n "SCREEN_LOGDIR not set; just waiting for process $pid to finish"
+        ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "wait $pid"
+    fi
+
+    set -x
     # Fail if devstack did not succeed
     ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'test -e /opt/stack/runsh.succeeded'
 
