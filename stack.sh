@@ -381,10 +381,10 @@ fi
 if [[ -n "$LOGFILE" ]]; then
     # Clean up old log files.  Append '.*' to the user-specified
     # ``LOGFILE`` to match the date in the search template.
-    local logfile_dir="${LOGFILE%/*}"           # dirname
-    local logfile_name="${LOGFILE##*/}"         # basename
-    mkdir -p $logfile_dir
-    find $logfile_dir -maxdepth 1 -name $logfile_name.\* -mtime +$LOGDAYS -exec rm {} \;
+    LOGFILE_DIR="${LOGFILE%/*}"           # dirname
+    LOGFILE_NAME="${LOGFILE##*/}"         # basename
+    mkdir -p $LOGFILE_DIR
+    find $LOGFILE_DIR -maxdepth 1 -name $LOGFILE_NAME.\* -mtime +$LOGDAYS -exec rm {} \;
     LOGFILE=$LOGFILE.${CURRENT_LOG_TIME}
     SUMFILE=$LOGFILE.summary.${CURRENT_LOG_TIME}
 
@@ -407,8 +407,8 @@ if [[ -n "$LOGFILE" ]]; then
 
     echo_summary "stack.sh log $LOGFILE"
     # Specified logfile name always links to the most recent log
-    ln -sf $LOGFILE $logfile_dir/$logfile_name
-    ln -sf $SUMFILE $logfile_dir/$logfile_name.summary
+    ln -sf $LOGFILE $LOGFILE_DIR/$LOGFILE_NAME
+    ln -sf $SUMFILE $LOGFILE_DIR/$LOGFILE_NAME.summary
 else
     # Set up output redirection without log files
     # Set fd 3 to a copy of stdout. So we can set fd 1 without losing
