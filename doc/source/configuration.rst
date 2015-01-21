@@ -352,19 +352,6 @@ Multi-host DevStack
         GLANCE_HOSTPORT=w.x.y.z:9292
         ENABLED_SERVICES=n-vol,n-cpu,n-net,n-api
 
-API rate limits
----------------
-
-    | Default: ``API_RATE_LIMIT=True``
-    | Integration tests such as Tempest will likely run afoul of the
-      default rate limits configured for Nova. Turn off rate limiting
-      during testing by setting ``API_RATE_LIMIT=False``.*
-    |
-
-    ::
-
-        API_RATE_LIMIT=False
-
 IP Version
     | Default: ``IP_VERSION=4``
     | This setting can be used to configure DevStack to create either an IPv4,
