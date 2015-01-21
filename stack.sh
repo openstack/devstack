@@ -916,7 +916,7 @@ if [[ "$USE_SCREEN" == "True" ]]; then
     sleep 1
 
     # Set a reasonable status bar
-    SCREEN_HARDSTATUS=${SCREEN_HARDSTATUS-:}
+    SCREEN_HARDSTATUS=${SCREEN_HARDSTATUS:-}
     if [ -z "$SCREEN_HARDSTATUS" ]; then
         SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'
     fi
