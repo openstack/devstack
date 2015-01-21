@@ -119,9 +119,7 @@ script
 
     chown -R $STACK_USER /opt/stack
 
-    if su -c "/opt/stack/run.sh" $STACK_USER; then
-        touch /var/run/devstack.succeeded
-    fi
+    su -c "/opt/stack/run.sh" $STACK_USER
 
     # Update /etc/issue
     {
@@ -177,8 +175,19 @@ fi
 cat <<EOF >$STAGING_DIR/opt/stack/run.sh
 #!/bin/bash
 set -eux
-cd /opt/stack/devstack
-./unstack.sh || true
-./stack.sh
+(
+  flock -n 9 || exit 1
+
+  [ -e /opt/stack/runsh.succeeded ] && rm /opt/stack/runsh.succeeded
+  echo \$\$ >> /opt/stack/run_sh.pid
+
+  cd /opt/stack/devstack
+  ./unstack.sh || true
+  ./stack.sh
+
+  # Got to the end - success
+  touch /opt/stack/runsh.succeeded
+  rm /opt/stack/run_sh.pid
+) 9> /opt/stack/.runsh_lock
 EOF
 chmod 755 $STAGING_DIR/opt/stack/run.sh
