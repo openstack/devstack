@@ -69,6 +69,8 @@ else
     HEAT_STACK_DOMAIN=$(trueorfalse True HEAT_STACK_DOMAIN)
     HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-trusts}
 fi
+HEAT_PLUGIN_DIR=${HEAT_PLUGIN_DIR:-$DATA_DIR/heat/plugins}
+ENABLE_HEAT_PLUGINS=${ENABLE_HEAT_PLUGINS:-}
 
 # Functions
 # ---------
@@ -188,6 +190,35 @@ function configure_heat {
     # copy the default templates
     cp $HEAT_DIR/etc/heat/templates/* $HEAT_TEMPLATES_DIR/
 
+    # Enable heat plugins.
+    # NOTE(nic): The symlink nonsense is necessary because when
+    # plugins are installed in "developer mode", the final component
+    # of their target directory is always "resources", which confuses
+    # Heat's plugin loader into believing that all plugins are named
+    # "resources", and therefore are all the same plugin; so it
+    # will only load one of them.  Linking them all to a common
+    # location with unique names avoids that type of collision,
+    # while still allowing the plugins to be edited in-tree.
+    local err_count=0
+
+    if [ -n "$ENABLE_HEAT_PLUGINS" ]; then
+        mkdir -p $HEAT_PLUGIN_DIR
+        # Clean up cruft from any previous runs
+        rm -f $HEAT_PLUGIN_DIR/*
+        iniset $HEAT_CONF DEFAULT plugin_dirs $HEAT_PLUGIN_DIR
+    fi
+
+    for heat_plugin in $ENABLE_HEAT_PLUGINS; do
+        if [ -d $HEAT_DIR/contrib/$heat_plugin ]; then
+            setup_package $HEAT_DIR/contrib/$heat_plugin -e
+            ln -s $HEAT_DIR/contrib/$heat_plugin/$heat_plugin/resources $HEAT_PLUGIN_DIR/$heat_plugin
+        else
+            : # clear retval on the test so that we can roll up errors
+            err $LINENO "Requested Heat plugin(${heat_plugin}) not found."
+            err_count=$(($err_count + 1))
+        fi
+    done
+    [ $err_count -eq 0 ] || die $LINENO "$err_count of the requested Heat plugins could not be installed."
 }
 
 # init_heat() - Initialize database
