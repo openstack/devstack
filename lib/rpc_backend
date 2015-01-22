@@ -54,13 +54,15 @@ function check_rpc_backend {
         (( rpc_backend_cnt++ )) || true
     done
     if [ "$rpc_backend_cnt" -gt 1 ]; then
-        echo "ERROR: only one rpc backend may be enabled,"
-        echo "       set only one of 'rabbit', 'qpid', 'zeromq'"
-        echo "       via ENABLED_SERVICES."
+        die $LINENO \
+            "Only one rpc backend may be enabled, " \
+            "set only one of 'rabbit', 'qpid', 'zeromq' " \
+            "via ENABLED_SERVICES."
     elif [ "$rpc_backend_cnt" == 0 ] && [ "$rpc_needed" == 0 ]; then
-        echo "ERROR: at least one rpc backend must be enabled,"
-        echo "       set one of 'rabbit', 'qpid', 'zeromq'"
-        echo "       via ENABLED_SERVICES."
+        die $LINENO \
+            "at least one rpc backend must be enabled, " \
+            "set one of 'rabbit', 'qpid', 'zeromq'" \
+            "via ENABLED_SERVICES."
     fi
 
     if is_service_enabled qpid && ! qpid_is_supported; then
