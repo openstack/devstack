@@ -132,6 +132,7 @@ function configure_heat {
 
     # OpenStack API
     iniset $HEAT_CONF heat_api bind_port $HEAT_API_PORT
+    iniset $HEAT_CONF heat_api workers "$API_WORKERS"
 
     # Cloudformation API
     iniset $HEAT_CONF heat_api_cfn bind_port $HEAT_API_CFN_PORT
