@@ -24,7 +24,7 @@ Q: Then why selinux in enforcing mode?
     by packaging in "real" deployments. To remove additional protections
     that will be desired/required in production would be a step
     backward.
-Q: But selinux is disabled in RHEL 6!
+Q: But selinux is disabled in RHEL!
     A: Today it is, yes. That is a specific exception that certain
     DevStack contributors fought strongly against. The primary reason it
     was allowed was to support using RHEL6 as the Python 2.6 test
@@ -70,11 +70,6 @@ Q: What about Fedora/RHEL/CentOS?
 Q: Are there any differences between Ubuntu and Fedora support?
     A: Neutron is not fully supported prior to Fedora 18 due lack of
     OpenVSwitch packages.
-Q: How about RHEL 6?
-    A: RHEL 6 has Python 2.6 and many old modules packaged and is a
-    challenge to support. There are a number of specific RHEL6
-    work-arounds in ``stack.sh`` to handle this. But the testing on py26
-    is valuable so we do it...
 
 Operation and Configuration
 ===========================

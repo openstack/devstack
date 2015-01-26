@@ -303,18 +303,6 @@ function configure_cinder {
         configure_cinder_driver
     fi
 
-    if is_fedora && [[ $DISTRO =~ (rhel6) ]]; then
-        # Cinder clones are slightly larger due to some extra
-        # metadata.  RHEL6 will not allow auto-extending of LV's
-        # without this, leading to clones giving hard-to-track disk
-        # I/O errors.
-        # see https://bugzilla.redhat.com/show_bug.cgi?id=975052
-        sudo sed -i~ \
-            -e 's/snapshot_autoextend_threshold =.*/snapshot_autoextend_threshold = 80/' \
-            -e 's/snapshot_autoextend_percent =.*/snapshot_autoextend_percent = 20/' \
-            /etc/lvm/lvm.conf
-    fi
-
     iniset $CINDER_CONF DEFAULT osapi_volume_workers "$API_WORKERS"
 
     iniset $CINDER_CONF DEFAULT glance_api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
@@ -446,12 +434,8 @@ function start_cinder {
         if is_ubuntu; then
             sudo service tgt restart
         elif is_fedora; then
-            if [[ $DISTRO =~ (rhel6) ]]; then
-                sudo /sbin/service tgtd restart
-            else
-                # bypass redirection to systemctl during restart
-                sudo /sbin/service --skip-redirect tgtd restart
-            fi
+            # bypass redirection to systemctl during restart
+            sudo /sbin/service --skip-redirect tgtd restart
         elif is_suse; then
             restart_service tgtd
         else

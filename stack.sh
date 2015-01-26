@@ -152,7 +152,7 @@ source $TOP_DIR/stackrc
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (precise|trusty|7.0|wheezy|sid|testing|jessie|f20|f21|rhel6|rhel7) ]]; then
+if [[ ! ${DISTRO} =~ (precise|trusty|7.0|wheezy|sid|testing|jessie|f20|f21|rhel7) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         die $LINENO "If you wish to run this script anyway run with FORCE=yes"
@@ -221,7 +221,7 @@ fi
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
 
-if is_fedora && [[ $DISTRO == "rhel6" || $DISTRO == "rhel7" ]]; then
+if is_fedora && [[ $DISTRO == "rhel7" ]]; then
     # RHEL requires EPEL for many Open Stack dependencies
 
     # note we always remove and install latest -- some environments
@@ -239,16 +239,10 @@ if is_fedora && [[ $DISTRO == "rhel6" || $DISTRO == "rhel7" ]]; then
     # $releasever directly in .repo file we create below.  However
     # RHEL gives a $releasever of "6Server" which breaks the path;
     # see https://bugzilla.redhat.com/show_bug.cgi?id=1150759
-    if [[ $DISTRO == "rhel7" ]]; then
-        epel_ver="7"
-    elif [[ $DISTRO == "rhel6" ]]; then
-        epel_ver="6"
-    fi
-
     cat <<EOF | sudo tee /etc/yum.repos.d/epel-bootstrap.repo
 [epel-bootstrap]
 name=Bootstrap EPEL
-mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$epel_ver&arch=\$basearch
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-7&arch=\$basearch
 failovermethod=priority
 enabled=0
 gpgcheck=0
@@ -261,22 +255,10 @@ EOF
 
     # ... and also optional to be enabled
     is_package_installed yum-utils || install_package yum-utils
-    if [[ $DISTRO == "rhel7" ]]; then
-        OPTIONAL_REPO=rhel-7-server-optional-rpms
-    elif [[ $DISTRO == "rhel6" ]]; then
-        OPTIONAL_REPO=rhel-6-server-optional-rpms
-    fi
-    sudo yum-config-manager --enable ${OPTIONAL_REPO}
+    sudo yum-config-manager --enable rhel-7-server-optional-rpms
 
-    # Installing Open vSwitch on RHEL requires enabling the RDO repo.
-    # Note no juno packages for rhel6
-    if [[ $DISTRO == "rhel6" ]]; then
-        RHEL_RDO_REPO_RPM=${RHEL6_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm"}
-        RHEL_RDO_REPO_ID=${RHEL6_RDO_REPO_ID:-"openstack-icehouse"}
-    elif [[ $DISTRO == "rhel7" ]]; then
-        RHEL_RDO_REPO_RPM=${RHEL7_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm"}
-        RHEL_RDO_REPO_ID=${RHEL7_RDO_REPO_ID:-"openstack-juno"}
-    fi
+    RHEL_RDO_REPO_RPM=${RHEL7_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm"}
+    RHEL_RDO_REPO_ID=${RHEL7_RDO_REPO_ID:-"openstack-juno"}
 
     if ! sudo yum repolist enabled $RHEL_RDO_REPO_ID | grep -q $RHEL_RDO_REPO_ID; then
         echo "RDO repo not detected; installing"
@@ -361,12 +343,6 @@ function echo_summary {
 function echo_nolog {
     echo $@ >&3
 }
-
-if is_fedora && [ $DISTRO == "rhel6" ]; then
-    # poor old python2.6 doesn't have argparse by default, which
-    # outfilter.py uses
-    is_package_installed python-argparse || install_package python-argparse
-fi
 
 # Set up logging for ``stack.sh``
 # Set ``LOGFILE`` to turn on logging
