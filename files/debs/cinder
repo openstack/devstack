@@ -1,4 +1,4 @@
-tgt
+tgt # NOPRIME
 lvm2
 qemu-utils
 libpq-dev
