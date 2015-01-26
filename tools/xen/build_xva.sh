@@ -104,7 +104,7 @@ console output
 task
 
 pre-start script
-    rm -f /var/run/devstack.succeeded
+    rm -f /opt/stack/runsh.succeeded
 end script
 
 script
@@ -127,7 +127,7 @@ script
         IPADDR=\$(ip -4 address show eth0 | sed -n 's/.*inet \\([0-9\.]\\+\\).*/\1/p')
         echo "  Management IP:   \$IPADDR"
         echo -n "  Devstack run:    "
-        if [ -e /var/run/devstack.succeeded ]; then
+        if [ -e /opt/stack/runsh.succeeded ]; then
             echo "SUCCEEDED"
         else
             echo "FAILED"
