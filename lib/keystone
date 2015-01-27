@@ -427,10 +427,6 @@ function install_keystone {
     if is_apache_enabled_service key; then
         install_apache_wsgi
     fi
-
-    # FIXME(dtroyer): Work around a pycadf release that breaks icehouse
-    #                 Remove once a proper cap is in requirements.txt
-    pip_install 'pycadf==0.6.0'
 }
 
 # start_keystone() - Start running processes, including screen
