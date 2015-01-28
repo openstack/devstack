@@ -246,12 +246,7 @@ function stop_heat {
 
 # create_heat_accounts() - Set up common required heat accounts
 function create_heat_accounts {
-    # migrated from files/keystone_data.sh
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
-
-    local heat_user=$(get_or_create_user "heat" "$SERVICE_PASSWORD")
-    get_or_add_user_role $admin_role $heat_user $service_tenant
+    create_service_user "heat" "admin"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

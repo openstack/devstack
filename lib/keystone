@@ -414,6 +414,20 @@ function create_keystone_accounts {
     fi
 }
 
+# Create a user that is capable of verifying keystone tokens for use with auth_token middleware.
+#
+# create_service_user <name> [role]
+#
+# The role defaults to the service role. It is allowed to be provided as optional as historically
+# a lot of projects have configured themselves with the admin or other role here if they are
+# using this user for other purposes beyond simply auth_token middleware.
+function create_service_user {
+    local role=${2:-service}
+
+    local user=$(get_or_create_user "$1" "$SERVICE_PASSWORD")
+    get_or_add_user_role "$role" "$user" "$SERVICE_TENANT_NAME"
+}
+
 # Configure the service to use the auth token middleware.
 #
 # configure_auth_token_middleware conf_file admin_user signing_dir [section]

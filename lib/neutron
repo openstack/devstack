@@ -507,14 +507,9 @@ function create_neutron_cache_dir {
 
 # Migrated from keystone_data.sh
 function create_neutron_accounts {
-
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local service_role=$(openstack role list | awk "/ service / { print \$2 }")
-
     if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
 
-        local neutron_user=$(get_or_create_user "neutron" "$SERVICE_PASSWORD")
-        get_or_add_user_role $service_role $neutron_user $service_tenant
+        create_service_user "neutron"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

@@ -215,11 +215,7 @@ function stop_zaqar {
 }
 
 function create_zaqar_accounts {
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
-
-    local zaqar_user=$(get_or_create_user "zaqar" "$SERVICE_PASSWORD")
-    get_or_add_user_role $ADMIN_ROLE $zaqar_user $service_tenant
+    create_service_user "zaqar" "admin"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
