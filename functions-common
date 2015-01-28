@@ -860,17 +860,17 @@ function get_or_create_group {
 }
 
 # Gets or creates user
-# Usage: get_or_create_user <username> <password> <project> [<email> [<domain>]]
+# Usage: get_or_create_user <username> <password> [<email> [<domain>]]
 function get_or_create_user {
-    if [[ ! -z "$4" ]]; then
-        local email="--email=$4"
+    if [[ ! -z "$3" ]]; then
+        local email="--email=$3"
     else
         local email=""
     fi
     local os_cmd="openstack"
     local domain=""
-    if [[ ! -z "$5" ]]; then
-        domain="--domain=$5"
+    if [[ ! -z "$4" ]]; then
+        domain="--domain=$4"
         os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI_V3 --os-identity-api-version=3"
     fi
     # Gets user id
@@ -879,7 +879,6 @@ function get_or_create_user {
         $os_cmd user create \
             $1 \
             --password "$2" \
-            --project $3 \
             $email \
             $domain \
             --or-show \
