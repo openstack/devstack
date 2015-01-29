@@ -1026,6 +1026,7 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
     iniset $NEUTRON_CONF DEFAULT nova_url "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2"
+    iniset $NEUTRON_CONF DEFAULT nova_region_name $REGION_NAME
     iniset $NEUTRON_CONF DEFAULT nova_admin_username nova
     iniset $NEUTRON_CONF DEFAULT nova_admin_password $SERVICE_PASSWORD
     ADMIN_TENANT_ID=$(openstack project list | awk "/ service / { print \$2 }")
