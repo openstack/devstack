@@ -17,11 +17,7 @@ register_database mysql
 # Linux distros, thank you for being incredibly consistent
 MYSQL=mysql
 if is_fedora; then
-    if [[ $DISTRO =~ (rhel6) ]]; then
-        MYSQL=mysqld
-    else
-        MYSQL=mariadb
-    fi
+    MYSQL=mariadb
 fi
 
 # Functions
@@ -38,15 +34,9 @@ function cleanup_database_mysql {
         sudo rm -rf /etc/mysql
         return
     elif is_fedora; then
-        if [[ $DISTRO =~ (rhel6) ]]; then
-            stop_service mysqld
-            uninstall_package mysql-server
-            sudo rm -rf /var/lib/mysql
-        else
-            stop_service mariadb
-            uninstall_package mariadb-server
-            sudo rm -rf /var/lib/mysql
-        fi
+        stop_service mariadb
+        uninstall_package mariadb-server
+        sudo rm -rf /var/lib/mysql
     elif is_suse; then
         stop_service mysql
         uninstall_package mysql-community-server
@@ -70,11 +60,7 @@ function configure_database_mysql {
         my_conf=/etc/mysql/my.cnf
         mysql=mysql
     elif is_fedora; then
-        if [[ $DISTRO =~ (rhel6) ]]; then
-            mysql=mysqld
-        else
-            mysql=mariadb
-        fi
+        mysql=mariadb
         my_conf=/etc/my.cnf
     elif is_suse; then
         my_conf=/etc/my.cnf
@@ -110,7 +96,7 @@ function configure_database_mysql {
 
     if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
         echo_summary "Enabling MySQL query logging"
-        if is_fedora && ! [[ $DISTRO =~ (rhel6) ]]; then
+        if is_fedora; then
             slow_log=/var/log/mariadb/mariadb-slow.log
         else
             slow_log=/var/log/mysql/mysql-slow.log
@@ -158,11 +144,7 @@ EOF
     fi
     # Install mysql-server
     if is_fedora; then
-        if [[ $DISTRO =~ (rhel6) ]]; then
-            install_package mysql-server
-        else
-            install_package mariadb-server
-        fi
+        install_package mariadb-server
     elif is_ubuntu; then
         install_package mysql-server
     elif is_suse; then

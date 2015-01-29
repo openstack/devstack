@@ -49,11 +49,7 @@ function configure_database_postgresql {
         pg_hba=/var/lib/pgsql/data/pg_hba.conf
         pg_conf=/var/lib/pgsql/data/postgresql.conf
         if ! sudo [ -e $pg_hba ]; then
-            if ! [[ $DISTRO =~ (rhel6) ]]; then
-                sudo postgresql-setup initdb
-            else
-                sudo service postgresql initdb
-            fi
+            sudo postgresql-setup initdb
         fi
     elif is_ubuntu; then
         pg_dir=`find /etc/postgresql -name pg_hba.conf|xargs dirname`

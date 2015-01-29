@@ -13,7 +13,6 @@ libxml2-devel
 libxslt-devel
 psmisc
 pylint
-python-prettytable # dist:rhel6 [1]
 python-unittest2
 python-virtualenv
 python-devel
@@ -27,8 +26,3 @@ bc
 libyaml-devel
 gettext  # used for compiling message catalogs
 net-tools
-
-# [1] : some of installed tools have unversioned dependencies on this,
-# but others have versioned (<=0.7).  So if a later version (0.7.1)
-# gets installed in response to an unversioned dependency, it breaks.
-# This pre-installs a compatible 0.6(ish) version from RHEL

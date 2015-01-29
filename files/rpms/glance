@@ -6,8 +6,8 @@ postgresql-devel    # testonly
 python-argparse
 python-eventlet
 python-greenlet
-python-lxml         #dist:f19,f20,f21,rhel7
-python-paste-deploy #dist:f19,f20,f21,rhel7
+python-lxml
+python-paste-deploy
 python-routes
 python-sqlalchemy
 pyxattr
