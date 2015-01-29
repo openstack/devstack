@@ -48,8 +48,9 @@ function configure_cinder_backend_lvm {
     local be_name=$1
 
     iniset $CINDER_CONF $be_name volume_backend_name $be_name
-    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.lvm.LVMISCSIDriver"
+    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.lvm.LVMVolumeDriver"
     iniset $CINDER_CONF $be_name volume_group $VOLUME_GROUP_NAME-$be_name
+    iniset $CINDER_CONF $be_name iscsi_helper "tgtadm"
 
     if [[ "$CINDER_SECURE_DELETE" == "False" ]]; then
         iniset $CINDER_CONF $be_name volume_clear none

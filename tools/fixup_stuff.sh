@@ -12,12 +12,10 @@
 # - httplib2 0.8 permissions are 600 in the package and
 #   pip 1.4 doesn't fix it (1.3 did)
 #
-# - RHEL6:
-#
+# - Fedora:
 #   - set selinux not enforcing
-#   - (re)start messagebus daemon
-#   - remove distro packages python-crypto and python-lxml
-#   - pre-install hgtools to work around a bug in RHEL6 distribute
+#   - uninstall firewalld (f20 only)
+
 
 # If TOP_DIR is set we're being sourced rather than running stand-alone
 # or in a sub-shell
@@ -124,65 +122,4 @@ if is_fedora; then
         fi
     fi
 
-fi
-
-# RHEL6
-# -----
-
-if [[ $DISTRO =~ (rhel6) ]]; then
-
-    # install_pip.sh installs the latest setuptools over the packaged
-    # version.  We can't really uninstall the packaged version if it
-    # is there, because it may remove other important things like
-    # cloud-init.  Things work, but there can be an old egg file left
-    # around from the package that causes some really strange
-    # setuptools errors.  Remove it, if it is there
-    sudo rm -f /usr/lib/python2.6/site-packages/setuptools-0.6*.egg-info
-
-    # If the ``dbus`` package was installed by DevStack dependencies the
-    # uuid may not be generated because the service was never started (PR#598200),
-    # causing Nova to stop later on complaining that ``/var/lib/dbus/machine-id``
-    # does not exist.
-    sudo service messagebus restart
-
-    # The following workarounds break xenserver
-    if [ "$VIRT_DRIVER" != 'xenserver' ]; then
-        # An old version of ``python-crypto`` (2.0.1) may be installed on a
-        # fresh system via Anaconda and the dependency chain
-        # ``cas`` -> ``python-paramiko`` -> ``python-crypto``.
-        # ``pip uninstall pycrypto`` will remove the packaged ``.egg-info``
-        # file but leave most of the actual library files behind in
-        # ``/usr/lib64/python2.6/Crypto``. Later ``pip install pycrypto``
-        # will install over the packaged files resulting
-        # in a useless mess of old, rpm-packaged files and pip-installed files.
-        # Remove the package so that ``pip install python-crypto`` installs
-        # cleanly.
-        # Note: other RPM packages may require ``python-crypto`` as well.
-        # For example, RHEL6 does not install ``python-paramiko packages``.
-        uninstall_package python-crypto
-
-        # A similar situation occurs with ``python-lxml``, which is required by
-        # ``ipa-client``, an auditing package we don't care about.  The
-        # build-dependencies needed for ``pip install lxml`` (``gcc``,
-        # ``libxml2-dev`` and ``libxslt-dev``) are present in
-        # ``files/rpms/general``.
-        uninstall_package python-lxml
-    fi
-
-    # ``setup.py`` contains a ``setup_requires`` package that is supposed
-    # to be transient.  However, RHEL6 distribute has a bug where
-    # ``setup_requires`` registers entry points that are not cleaned
-    # out properly after the setup-phase resulting in installation failures
-    # (bz#924038).  Pre-install the problem package so the ``setup_requires``
-    # dependency is satisfied and it will not be installed transiently.
-    # Note we do this before the track-depends in ``stack.sh``.
-    pip_install hgtools
-
-    # workaround for https://code.google.com/p/unittest-ext/issues/detail?id=79
-    install_package python-unittest2 patch
-    pip_install discover
-    (cd /usr/lib/python2.6/site-packages/; sudo patch <"$FILES/patches/unittest2-discover.patch" || echo 'Assume already applied')
-    # Make sure the discover.pyc is up to date
-    sudo rm /usr/lib/python2.6/site-packages/discover.pyc || true
-    sudo python -c 'import discover'
 fi

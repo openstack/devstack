@@ -27,8 +27,12 @@ DSTAT_FILE=${DSTAT_FILE:-"dstat.log"}
 function start_dstat {
     # A better kind of sysstat, with the top process per time slice
     DSTAT_OPTS="-tcmndrylpg --top-cpu-adv --top-io-adv"
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
+    if [[ -n ${LOGDIR} ]]; then
+        screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $LOGDIR/$DSTAT_FILE"
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            # Drop the backward-compat symlink
+            ln -sf $LOGDIR/$DSTAT_FILE ${SCREEN_LOGDIR}/$DSTAT_FILE
+        fi
     else
         screen_it dstat "dstat $DSTAT_OPTS"
     fi

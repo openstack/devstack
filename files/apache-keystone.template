@@ -32,7 +32,3 @@ Listen %ADMINPORT%
     %SSLCERTFILE%
     %SSLKEYFILE%
 </VirtualHost>
-
-# Workaround for missing path on RHEL6, see
-#  https://bugzilla.redhat.com/show_bug.cgi?id=1121019
-WSGISocketPrefix /var/run/%APACHE_NAME%

@@ -72,14 +72,6 @@ function _horizon_config_set {
 # cleanup_horizon() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_horizon {
-    if is_fedora && [[ $DISTRO =~ (rhel6) ]]; then
-        # If ``/usr/bin/node`` points into ``$DEST``
-        # we installed it via ``install_nodejs``
-        if [[ $(readlink -f /usr/bin/node) =~ ($DEST) ]]; then
-            sudo rm /usr/bin/node
-        fi
-    fi
-
     local horizon_conf=$(apache_site_config_for horizon)
     sudo rm -f $horizon_conf
 }
