@@ -117,6 +117,25 @@ function init_lvm_volume_group {
     _clean_lvm_volume_group $vg
 }
 
+# Sentinal value to ensure that init of default lvm volume group is
+# only performed once across calls of init_default_lvm_volume_group.
+_DEFAULT_LVM_INIT=${_DEFAULT_LVM_INIT:-0}
+
+# init_default_lvm_volume_group() initializes a default volume group
+# intended to be shared between cinder and nova.  It is idempotent;
+# the init of the default volume group is guaranteed to be performed
+# only once so that either or both of the dependent services can
+# safely call this function.
+#
+# Usage: init_default_lvm_volume_group()
+function init_default_lvm_volume_group {
+    if [[ "$_DEFAULT_LVM_INIT" = "0" ]]; then
+        init_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME $VOLUME_BACKING_FILE_SIZE
+        _DEFAULT_LVM_INIT=1
+    fi
+}
+
+
 # Restore xtrace
 $MY_XTRACE
 
