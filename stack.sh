@@ -352,6 +352,10 @@ TIMESTAMP_FORMAT=${TIMESTAMP_FORMAT:-"%F-%H%M%S"}
 LOGDAYS=${LOGDAYS:-7}
 CURRENT_LOG_TIME=$(date "+$TIMESTAMP_FORMAT")
 
+if [[ -n ${LOGDIR:-} ]]; then
+    mkdir -p $LOGDIR
+fi
+
 if [[ -n "$LOGFILE" ]]; then
     # Clean up old log files.  Append '.*' to the user-specified
     # ``LOGFILE`` to match the date in the search template.
@@ -913,10 +917,6 @@ init_service_check
 
 # A better kind of sysstat, with the top process per time slice
 start_dstat
-
-# Initialize default LVM volume group
-# -----------------------------------
-init_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME $VOLUME_BACKING_FILE_SIZE
 
 # Start Services
 # ==============
