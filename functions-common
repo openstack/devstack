@@ -245,7 +245,7 @@ function trueorfalse {
     set +o xtrace
     local default=$1
     local literal=$2
-    local testval=${!literal}
+    local testval=${!literal:-}
 
     [[ -z "$testval" ]] && { echo "$default"; return; }
     [[ "0 no No NO false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
