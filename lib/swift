@@ -409,16 +409,27 @@ function configure_swift {
     # Configure Crossdomain
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:crossdomain use "egg:swift#crossdomain"
 
-    # Configure Keystone
-    sed -i '/^# \[filter:authtoken\]/,/^# \[filter:keystoneauth\]$/ s/^#[ \t]*//' ${SWIFT_CONFIG_PROXY_SERVER}
-    configure_auth_token_middleware ${SWIFT_CONFIG_PROXY_SERVER} swift $SWIFT_AUTH_CACHE_DIR filter:authtoken
+
     # This causes the authtoken middleware to use the same python logging
     # adapter provided by the swift proxy-server, so that request transaction
     # IDs will included in all of its log messages.
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken log_name swift
 
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles
+    # NOTE(jamielennox): swift cannot use the regular configure_auth_token_middleware function because swift
+    # doesn't use oslo.config which is the only way to configure auth plugins with the middleare.
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken paste.filter_factory keystonemiddleware.auth_token:filter_factory
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken identity_uri $KEYSTONE_AUTH_URI
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_password $SERVICE_PASSWORD
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_uri $KEYSTONE_SERVICE_URI
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cafile $SSL_BUNDLE_FILE
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken signing_dir $SWIFT_AUTH_CACHE_DIR
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken delay_auth_decision 1
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cache swift.cache
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken include_service_catalog False
+
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use "egg:swift#keystoneauth"
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles "Member, admin"
 
     # Configure Tempauth. In the sample config file, Keystoneauth is commented
