@@ -28,7 +28,7 @@ function _neutron_ovs_base_setup_bridge {
 
 function neutron_ovs_base_cleanup {
     # remove all OVS ports that look like Neutron created ports
-    for port in $(sudo ovs-vsctl list port | grep -o -e tap[0-9a-f\-]* -e q[rg]-[0-9a-f\-]*); do
+    for port in $(sudo ovs-vsctl list port | grep -o -e [a-zA-Z\-]*tap[0-9a-f\-]* -e q[rg]-[0-9a-f\-]*); do
         sudo ovs-vsctl del-port ${port}
     done
 
