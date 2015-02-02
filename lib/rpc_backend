@@ -243,7 +243,7 @@ function iniset_rpc_backend {
     if is_service_enabled zeromq; then
         iniset $file $section rpc_backend "zmq"
         iniset $file $section rpc_zmq_matchmaker \
-            oslo.messaging._drivers.matchmaker_redis.MatchMakerRedis
+            oslo_messaging._drivers.matchmaker_redis.MatchMakerRedis
         # Set MATCHMAKER_REDIS_HOST if running multi-node.
         MATCHMAKER_REDIS_HOST=${MATCHMAKER_REDIS_HOST:-127.0.0.1}
         iniset $file matchmaker_redis host $MATCHMAKER_REDIS_HOST
@@ -252,7 +252,7 @@ function iniset_rpc_backend {
         if [ "$RPC_MESSAGING_PROTOCOL" == "AMQP1" ]; then
             iniset $file $section rpc_backend "amqp"
         else
-            iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_qpid
+            iniset $file $section rpc_backend "qpid"
         fi
         iniset $file $section qpid_hostname ${QPID_HOST:-$SERVICE_HOST}
         if [ -n "$QPID_USERNAME" ]; then
@@ -260,7 +260,7 @@ function iniset_rpc_backend {
             iniset $file $section qpid_password $QPID_PASSWORD
         fi
     elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
-        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_kombu
+        iniset $file $section rpc_backend "rabbit"
         iniset $file $section rabbit_hosts $RABBIT_HOST
         iniset $file $section rabbit_password $RABBIT_PASSWORD
         iniset $file $section rabbit_userid $RABBIT_USERID
