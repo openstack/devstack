@@ -1208,7 +1208,7 @@ function uninstall_package {
     if is_ubuntu; then
         apt_get purge "$@"
     elif is_fedora; then
-        sudo $YUM remove -y "$@" ||:
+        sudo ${YUM:-yum} remove -y "$@" ||:
     elif is_suse; then
         sudo zypper rm "$@"
     else
@@ -1229,7 +1229,7 @@ function yum_install {
     # https://bugzilla.redhat.com/show_bug.cgi?id=965567
     $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
         no_proxy=$no_proxy \
-        $YUM install -y "$@" 2>&1 | \
+        ${YUM:-yum} install -y "$@" 2>&1 | \
         awk '
             BEGIN { fail=0 }
             /No package/ { fail=1 }
@@ -1239,7 +1239,7 @@ function yum_install {
 
     # also ensure we catch a yum failure
     if [[ ${PIPESTATUS[0]} != 0 ]]; then
-        die $LINENO "$YUM install failure"
+        die $LINENO "${YUM:-yum} install failure"
     fi
 }
 
