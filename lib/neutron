@@ -749,12 +749,20 @@ function start_neutron_agents {
 # stop_neutron() - Stop running processes (non-screen)
 function stop_neutron {
     if is_service_enabled q-dhcp; then
+        stop_process q-dhcp
         pid=$(ps aux | awk '/[d]nsmasq.+interface=(tap|ns-)/ { print $2 }')
         [ ! -z "$pid" ] && sudo kill -9 $pid
     fi
+
+    stop_process q-svc
+    stop_process q-l3
+
     if is_service_enabled q-meta; then
         sudo pkill -9 -f neutron-ns-metadata-proxy || :
+        stop_process q-meta
     fi
+
+    stop_process q-agt
 
     if is_service_enabled q-lbaas; then
         neutron_lbaas_stop

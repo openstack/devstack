@@ -23,7 +23,7 @@ function neutron_agent_metering_configure_agent {
 }
 
 function neutron_metering_stop {
-    :
+    stop_process q-metering
 }
 
 # Restore xtrace

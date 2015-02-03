@@ -28,6 +28,7 @@ function neutron_vpn_stop {
     if [ -n "$pids" ]; then
         sudo kill $pids
     fi
+    stop_process q-vpn
 }
 
 # Restore xtrace
