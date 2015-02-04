@@ -184,7 +184,7 @@ function start_sahara {
 # stop_sahara() - Stop running processes
 function stop_sahara {
     # Kill the Sahara screen windows
-    screen -S $SCREEN_NAME -p sahara -X kill
+    stop_process sahara
 }
 
 

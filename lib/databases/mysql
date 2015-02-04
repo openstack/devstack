@@ -28,17 +28,14 @@ function cleanup_database_mysql {
     stop_service $MYSQL
     if is_ubuntu; then
         # Get ruthless with mysql
-        stop_service $MYSQL
         apt_get purge -y mysql* mariadb*
         sudo rm -rf /var/lib/mysql
         sudo rm -rf /etc/mysql
         return
     elif is_fedora; then
-        stop_service mariadb
         uninstall_package mariadb-server
         sudo rm -rf /var/lib/mysql
     elif is_suse; then
-        stop_service mysql
         uninstall_package mysql-community-server
         sudo rm -rf /var/lib/mysql
     else
