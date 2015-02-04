@@ -13,11 +13,11 @@
 # a multi-node developer install.
 
 # To keep this script simple we assume you are running on a recent **Ubuntu**
-# (12.04 Precise or newer) or **Fedora** (F18 or newer) machine.  (It may work
-# on other platforms but support for those platforms is left to those who added
-# them to DevStack.)  It should work in a VM or physical server.  Additionally
-# we maintain a list of ``apt`` and ``rpm`` dependencies and other configuration
-# files in this repo.
+# (14.04 Trusty or newer), **Fedora** (F20 or newer), or **CentOS/RHEL**
+# (7 or newer) machine. (It may work on other platforms but support for those
+# platforms is left to those who added them to DevStack.) It should work in
+# a VM or physical server. Additionally, we maintain a list of ``apt`` and
+# ``rpm`` dependencies and other configuration files in this repo.
 
 # Learn more and get the most recent version at http://devstack.org
 
