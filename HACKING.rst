@@ -20,7 +20,7 @@ in `How To Contribute`__ in the OpenStack wiki.  `DevStack's LaunchPad project`_
 contains the usual links for blueprints, bugs, etc.
 
 __ contribute_
-.. _contribute: http://wiki.openstack.org/HowToContribute
+.. _contribute: http://docs.openstack.org/infra/manual/developers.html
 
 __ lp_
 .. _lp: https://launchpad.net/~devstack

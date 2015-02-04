@@ -791,15 +791,20 @@ function cleanup_neutron {
     done
 }
 
-# _configure_neutron_common()
-# Set common config for all neutron server and agents.
-# This MUST be called before other ``_configure_neutron_*`` functions.
-function _configure_neutron_common {
+
+function _create_neutron_conf_dir {
     # Put config files in ``NEUTRON_CONF_DIR`` for everyone to find
     if [[ ! -d $NEUTRON_CONF_DIR ]]; then
         sudo mkdir -p $NEUTRON_CONF_DIR
     fi
     sudo chown $STACK_USER $NEUTRON_CONF_DIR
+}
+
+# _configure_neutron_common()
+# Set common config for all neutron server and agents.
+# This MUST be called before other ``_configure_neutron_*`` functions.
+function _configure_neutron_common {
+    _create_neutron_conf_dir
 
     cp $NEUTRON_DIR/etc/neutron.conf $NEUTRON_CONF
 
@@ -957,6 +962,9 @@ function _configure_neutron_ceilometer_notifications {
 }
 
 function _configure_neutron_lbaas {
+    if [ -f $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf ]; then
+        cp $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_agent_lbaas_configure_common
     neutron_agent_lbaas_configure_agent
 }
@@ -967,11 +975,17 @@ function _configure_neutron_metering {
 }
 
 function _configure_neutron_fwaas {
+    if [ -f $NEUTRON_FWAAS_DIR/etc/neutron_fwaas.conf ]; then
+        cp $NEUTRON_FWAAS_DIR/etc/neutron_fwaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_fwaas_configure_common
     neutron_fwaas_configure_driver
 }
 
 function _configure_neutron_vpn {
+    if [ -f $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf ]; then
+        cp $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_vpn_install_agent_packages
     neutron_vpn_configure_common
 }
