@@ -15,7 +15,7 @@ Virtual Machine
 ---------------
 
 DevStack should run in any virtual machine running a supported Linux
-release. It will perform best with 2Gb or more of RAM.
+release. It will perform best with 4Gb or more of RAM.
 
 OpenStack Deployment & cloud-init
 ---------------------------------
