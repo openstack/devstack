@@ -957,6 +957,9 @@ function _configure_neutron_ceilometer_notifications {
 }
 
 function _configure_neutron_lbaas {
+    if [ -f $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf ]; then
+        cp $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_agent_lbaas_configure_common
     neutron_agent_lbaas_configure_agent
 }
@@ -967,11 +970,17 @@ function _configure_neutron_metering {
 }
 
 function _configure_neutron_fwaas {
+    if [ -f $NEUTRON_FWAAS_DIR/etc/neutron_fwaas.conf ]; then
+        cp $NEUTRON_FWAAS_DIR/etc/neutron_fwaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_fwaas_configure_common
     neutron_fwaas_configure_driver
 }
 
 function _configure_neutron_vpn {
+    if [ -f $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf ]; then
+        cp $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_vpn_install_agent_packages
     neutron_vpn_configure_common
 }
