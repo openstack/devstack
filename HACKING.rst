@@ -6,7 +6,7 @@ General
 -------
 
 DevStack is written in UNIX shell script.  It uses a number of bash-isms
-and so is limited to Bash (version 3 and up) and compatible shells.
+and so is limited to Bash (version 4 and up) and compatible shells.
 Shell script was chosen because it best illustrates the steps used to
 set up and interact with OpenStack components.
 
