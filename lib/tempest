@@ -95,7 +95,8 @@ function remove_disabled_extensions {
 
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest {
-    setup_develop $TEMPEST_DIR
+    # install testr since its used to process tempest logs
+    pip_install `grep -h testrepository $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1`
     local image_lines
     local images
     local num_images
@@ -319,7 +320,8 @@ function configure_tempest {
     # Run verify_tempest_config -ur to retrieve enabled extensions on API endpoints
     # NOTE(mtreinish): This must be done after auth settings are added to the tempest config
     local tmp_cfg_file=$(mktemp)
-    $TEMPEST_DIR/tempest/cmd/verify_tempest_config.py -uro $tmp_cfg_file
+    cd $TEMPEST_DIR
+    tox -evenv -- verify-tempest-config -uro $tmp_cfg_file
 
     local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
