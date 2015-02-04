@@ -341,6 +341,10 @@ GITBRANCH["oslo.messaging"]=${OSLOMSG_BRANCH:-master}
 GITREPO["oslo.middleware"]=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
 GITBRANCH["oslo.middleware"]=${OSLOMID_BRANCH:-master}
 
+# oslo.policy
+GITREPO["oslo.policy"]=${OSLOPOLICY_REPO:-${GIT_BASE}/openstack/oslo.policy.git}
+GITBRANCH["oslo.policy"]=${OSLOPOLICY_BRANCH:-master}
+
 # oslo.rootwrap
 GITREPO["oslo.rootwrap"]=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
 GITBRANCH["oslo.rootwrap"]=${OSLORWRAP_BRANCH:-master}
