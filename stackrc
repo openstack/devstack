@@ -198,6 +198,9 @@ NEUTRON_FWAAS_REPO=${NEUTRON_FWAAS_REPO:-${GIT_BASE}/openstack/neutron-fwaas.git
 NEUTRON_FWAAS_BRANCH=${NEUTRON_FWAAS_BRANCH:-master}
 
 # neutron lbaas service
+# The neutron-lbaas specific entries are deprecated and replaced by the neutron-lbaas
+# devstack plugin and should be removed in a future release, possibly as soon as Liberty.
+
 NEUTRON_LBAAS_REPO=${NEUTRON_LBAAS_REPO:-${GIT_BASE}/openstack/neutron-lbaas.git}
 NEUTRON_LBAAS_BRANCH=${NEUTRON_LBAAS_BRANCH:-master}
 
