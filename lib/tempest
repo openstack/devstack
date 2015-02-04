@@ -73,7 +73,8 @@ IPV6_ENABLED=$(trueorfalse True $IPV6_ENABLED)
 
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest {
-    setup_develop $TEMPEST_DIR
+    # install testr since its used to process tempest logs
+    pip_install `grep -h testrepository $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1`
     local image_lines
     local images
     local num_images
