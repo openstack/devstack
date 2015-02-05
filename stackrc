@@ -32,11 +32,15 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 # ``disable_service`` functions in ``local.conf``.
 # For example, to enable Swift add this to ``local.conf``:
 #  enable_service s-proxy s-object s-container s-account
-# In order to enable nova-networking add the following settings in
-# `` local.conf ``:
+# In order to enable Neutron (a single node setup) add the following
+# settings in ``local.conf``:
 #  [[local|localrc]]
-#  disable_service q-svc q-agt q-dhcp q-l3 q-meta
-#  enable_service n-net
+#  disable_service n-net
+#  enable_service q-svc
+#  enable_service q-agt
+#  enable_service q-dhcp
+#  enable_service q-l3
+#  enable_service q-meta
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
 function isset {
@@ -50,16 +54,14 @@ function isset {
 
 # this allows us to pass ENABLED_SERVICES
 if ! isset ENABLED_SERVICES ; then
-    # core compute (glance / keystone / nova)
-    ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch,n-xvnc,n-cauth
+    # core compute (glance / keystone / nova (+ nova-network))
+    ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-xvnc,n-cauth
     # cinder
     ENABLED_SERVICES+=,c-sch,c-api,c-vol
     # heat
     ENABLED_SERVICES+=,h-eng,h-api,h-api-cfn,h-api-cw
     # dashboard
     ENABLED_SERVICES+=,horizon
-    # neutron
-    ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta
     # additional services
     ENABLED_SERVICES+=,rabbit,tempest,mysql
 fi
