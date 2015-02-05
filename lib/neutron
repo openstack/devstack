@@ -10,24 +10,25 @@
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# - install_neutron
-# - install_neutronclient
 # - install_neutron_agent_packages
+# - install_neutronclient
+# - install_neutron
 # - install_neutron_third_party
 # - configure_neutron
 # - init_neutron
 # - configure_neutron_third_party
 # - init_neutron_third_party
 # - start_neutron_third_party
-# - create_neutron_cache_dir
 # - create_nova_conf_neutron
 # - start_neutron_service_and_check
+# - check_neutron_third_party_integration
 # - start_neutron_agents
 # - create_neutron_initial_network
 # - setup_neutron_debug
 #
 # ``unstack.sh`` calls the entry points in this order:
 #
+# - teardown_neutron_debug
 # - stop_neutron
 # - stop_neutron_third_party
 # - cleanup_neutron
