@@ -5,6 +5,7 @@ ebtables
 iptables
 iputils
 mariadb # NOPRIME
+postgresql-devel        # testonly
 python-eventlet
 python-greenlet
 python-iso8601
