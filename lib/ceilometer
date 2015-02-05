@@ -190,6 +190,7 @@ function configure_ceilometer {
     iniset $CEILOMETER_CONF DEFAULT policy_file $CEILOMETER_CONF_DIR/policy.json
 
     cp $CEILOMETER_DIR/etc/ceilometer/pipeline.yaml $CEILOMETER_CONF_DIR
+    cp $CEILOMETER_DIR/etc/ceilometer/event_pipeline.yaml $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/api_paste.ini $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/event_definitions.yaml $CEILOMETER_CONF_DIR
 
