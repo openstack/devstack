@@ -232,15 +232,14 @@ function configure_glance {
 function create_glance_accounts {
     if is_service_enabled g-api; then
 
-        local glance_user=$(get_or_create_user "glance" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT_NAME)
+        local glance_user=$(get_or_create_user "glance" "$SERVICE_PASSWORD")
         get_or_add_user_role service $glance_user $SERVICE_TENANT_NAME
 
         # required for swift access
         if is_service_enabled s-proxy; then
 
             local glance_swift_user=$(get_or_create_user "glance-swift" \
-                "$SERVICE_PASSWORD" $SERVICE_TENANT_NAME "glance-swift@example.com")
+                "$SERVICE_PASSWORD" "glance-swift@example.com")
             get_or_add_user_role "ResellerAdmin" $glance_swift_user $SERVICE_TENANT_NAME
         fi
 

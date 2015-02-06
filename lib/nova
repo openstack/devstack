@@ -359,8 +359,7 @@ function create_nova_accounts {
     # Nova
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
 
-        local nova_user=$(get_or_create_user "nova" \
-            "$SERVICE_PASSWORD" $service_tenant)
+        local nova_user=$(get_or_create_user "nova" "$SERVICE_PASSWORD")
         get_or_add_user_role $admin_role $nova_user $service_tenant
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
