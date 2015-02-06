@@ -180,8 +180,7 @@ function create_tuskar_accounts {
     local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
     local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    local tuskar_user=$(get_or_create_user "tuskar" \
-        "$SERVICE_PASSWORD" $service_tenant)
+    local tuskar_user=$(get_or_create_user "tuskar" "$SERVICE_PASSWORD")
     get_or_add_user_role $admin_role $tuskar_user $service_tenant
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
