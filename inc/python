@@ -1,0 +1,223 @@
+#!/bin/bash
+#
+# **inc/python** - Python-related functions
+#
+# Support for pip/setuptools interfaces and virtual environments
+#
+# External functions used:
+# - GetOSVersion
+# - is_fedora
+# - is_suse
+# - safe_chown
+
+# Save trace setting
+INC_PY_TRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Python Functions
+# ================
+
+# Get the path to the pip command.
+# get_pip_command
+function get_pip_command {
+    which pip || which pip-python
+
+    if [ $? -ne 0 ]; then
+        die $LINENO "Unable to find pip; cannot continue"
+    fi
+}
+
+# Get the path to the direcotry where python executables are installed.
+# get_python_exec_prefix
+function get_python_exec_prefix {
+    if is_fedora || is_suse; then
+        echo "/usr/bin"
+    else
+        echo "/usr/local/bin"
+    fi
+}
+
+# Wrapper for ``pip install`` to set cache and proxy environment variables
+# Uses globals ``INSTALL_TESTONLY_PACKAGES``, ``OFFLINE``, ``TRACK_DEPENDS``,
+# ``*_proxy``
+# pip_install package [package ...]
+function pip_install {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local offline=${OFFLINE:-False}
+    if [[ "$offline" == "True" || -z "$@" ]]; then
+        $xtrace
+        return
+    fi
+
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ $TRACK_DEPENDS = True && ! "$@" =~ virtualenv ]]; then
+        # TRACK_DEPENDS=True installation creates a circular dependency when
+        # we attempt to install virtualenv into a virualenv, so we must global
+        # that installation.
+        source $DEST/.venv/bin/activate
+        local cmd_pip=$DEST/.venv/bin/pip
+        local sudo_pip="env"
+    else
+        local cmd_pip=$(get_pip_command)
+        local sudo_pip="sudo -H"
+    fi
+
+    local pip_version=$(python -c "import pip; \
+                        print(pip.__version__.strip('.')[0])")
+    if (( pip_version<6 )); then
+        die $LINENO "Currently installed pip version ${pip_version} does not" \
+            "meet minimum requirements (>=6)."
+    fi
+
+    $xtrace
+    $sudo_pip \
+        http_proxy=${http_proxy:-} \
+        https_proxy=${https_proxy:-} \
+        no_proxy=${no_proxy:-} \
+        $cmd_pip install \
+        $@
+
+    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False INSTALL_TESTONLY_PACKAGES)
+    if [[ "$INSTALL_TESTONLY_PACKAGES" == "True" ]]; then
+        local test_req="$@/test-requirements.txt"
+        if [[ -e "$test_req" ]]; then
+            $sudo_pip \
+                http_proxy=${http_proxy:-} \
+                https_proxy=${https_proxy:-} \
+                no_proxy=${no_proxy:-} \
+                $cmd_pip install \
+                -r $test_req
+        fi
+    fi
+}
+
+# should we use this library from their git repo, or should we let it
+# get pulled in via pip dependencies.
+function use_library_from_git {
+    local name=$1
+    local enabled=1
+    [[ ,${LIBS_FROM_GIT}, =~ ,${name}, ]] && enabled=0
+    return $enabled
+}
+
+# setup a library by name. If we are trying to use the library from
+# git, we'll do a git based install, otherwise we'll punt and the
+# library should be installed by a requirements pull from another
+# project.
+function setup_lib {
+    local name=$1
+    local dir=${GITDIR[$name]}
+    setup_install $dir
+}
+
+# setup a library by name in editiable mode. If we are trying to use
+# the library from git, we'll do a git based install, otherwise we'll
+# punt and the library should be installed by a requirements pull from
+# another project.
+#
+# use this for non namespaced libraries
+function setup_dev_lib {
+    local name=$1
+    local dir=${GITDIR[$name]}
+    setup_develop $dir
+}
+
+# this should be used if you want to install globally, all libraries should
+# use this, especially *oslo* ones
+function setup_install {
+    local project_dir=$1
+    setup_package_with_req_sync $project_dir
+}
+
+# this should be used for projects which run services, like all services
+function setup_develop {
+    local project_dir=$1
+    setup_package_with_req_sync $project_dir -e
+}
+
+# determine if a project as specified by directory is in
+# projects.txt. This will not be an exact match because we throw away
+# the namespacing when we clone, but it should be good enough in all
+# practical ways.
+function is_in_projects_txt {
+    local project_dir=$1
+    local project_name=$(basename $project_dir)
+    return grep "/$project_name\$" $REQUIREMENTS_DIR/projects.txt >/dev/null
+}
+
+# ``pip install -e`` the package, which processes the dependencies
+# using pip before running `setup.py develop`
+#
+# Updates the dependencies in project_dir from the
+# openstack/requirements global list before installing anything.
+#
+# Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``, ``UNDO_REQUIREMENTS``
+# setup_develop directory
+function setup_package_with_req_sync {
+    local project_dir=$1
+    local flags=$2
+
+    # Don't update repo if local changes exist
+    # Don't use buggy "git diff --quiet"
+    # ``errexit`` requires us to trap the exit code when the repo is changed
+    local update_requirements=$(cd $project_dir && git diff --exit-code >/dev/null || echo "changed")
+
+    if [[ $update_requirements != "changed" ]]; then
+        if [[ "$REQUIREMENTS_MODE" == "soft" ]]; then
+            if is_in_projects_txt $project_dir; then
+                (cd $REQUIREMENTS_DIR; \
+                    python update.py $project_dir)
+            else
+                # soft update projects not found in requirements project.txt
+                (cd $REQUIREMENTS_DIR; \
+                    python update.py -s $project_dir)
+            fi
+        else
+            (cd $REQUIREMENTS_DIR; \
+                python update.py $project_dir)
+        fi
+    fi
+
+    setup_package $project_dir $flags
+
+    # We've just gone and possibly modified the user's source tree in an
+    # automated way, which is considered bad form if it's a development
+    # tree because we've screwed up their next git checkin. So undo it.
+    #
+    # However... there are some circumstances, like running in the gate
+    # where we really really want the overridden version to stick. So provide
+    # a variable that tells us whether or not we should UNDO the requirements
+    # changes (this will be set to False in the OpenStack ci gate)
+    if [ $UNDO_REQUIREMENTS = "True" ]; then
+        if [[ $update_requirements != "changed" ]]; then
+            (cd $project_dir && git reset --hard)
+        fi
+    fi
+}
+
+# ``pip install -e`` the package, which processes the dependencies
+# using pip before running `setup.py develop`
+# Uses globals ``STACK_USER``
+# setup_develop_no_requirements_update directory
+function setup_package {
+    local project_dir=$1
+    local flags=$2
+
+    pip_install $flags $project_dir
+    # ensure that further actions can do things like setup.py sdist
+    if [[ "$flags" == "-e" ]]; then
+        safe_chown -R $STACK_USER $1/*.egg-info
+    fi
+}
+
+
+# Restore xtrace
+$INC_PY_TRACE
+
+# Local variables:
+# mode: shell-script
+# End:
