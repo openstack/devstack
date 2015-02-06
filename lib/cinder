@@ -454,10 +454,7 @@ function start_cinder {
         _configure_tgt_for_config_d
         if is_ubuntu; then
             sudo service tgt restart
-        elif is_fedora; then
-            # bypass redirection to systemctl during restart
-            sudo /sbin/service --skip-redirect tgtd restart
-        elif is_suse; then
+        elif is_fedora || is_suse; then
             restart_service tgtd
         else
             # note for other distros: unstack.sh also uses the tgt/tgtd service
