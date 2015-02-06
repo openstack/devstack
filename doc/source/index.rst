@@ -155,7 +155,6 @@ Scripts
 * `lib/ldap <lib/ldap.html>`__
 * `lib/neutron <lib/neutron.html>`__
 * `lib/nova <lib/nova.html>`__
-* `lib/opendaylight <lib/opendaylight.html>`__
 * `lib/oslo <lib/oslo.html>`__
 * `lib/rpc\_backend <lib/rpc_backend.html>`__
 * `lib/sahara <lib/sahara.html>`__
@@ -176,7 +175,6 @@ Scripts
 * `extras.d/70-trove.sh <extras.d/70-trove.sh.html>`__
 * `extras.d/70-tuskar.sh <extras.d/70-tuskar.sh.html>`__
 * `extras.d/70-zaqar.sh <extras.d/70-zaqar.sh.html>`__
-* `extras.d/80-opendaylight.sh <extras.d/80-opendaylight.sh.html>`__
 * `extras.d/80-tempest.sh <extras.d/80-tempest.sh.html>`__
 
 Configuration
