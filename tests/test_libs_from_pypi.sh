@@ -17,6 +17,8 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 
 export TOP_DIR=$TOP
 
+# we don't actually care about the HOST_IP
+HOST_IP="don't care"
 # Import common functions
 source $TOP/functions
 source $TOP/stackrc
