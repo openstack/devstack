@@ -33,6 +33,9 @@ SAHARA_DIR=$DEST/sahara
 SAHARA_CONF_DIR=${SAHARA_CONF_DIR:-/etc/sahara}
 SAHARA_CONF_FILE=${SAHARA_CONF_DIR}/sahara.conf
 
+if is_ssl_enabled_service "sahara"; then
+    SAHARA_SERVICE_PROTOCOL="https"
+fi
 SAHARA_SERVICE_HOST=${SAHARA_SERVICE_HOST:-$SERVICE_HOST}
 SAHARA_SERVICE_PORT=${SAHARA_SERVICE_PORT:-8386}
 SAHARA_SERVICE_PROTOCOL=${SAHARA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
@@ -163,6 +166,14 @@ function configure_sahara {
 
     if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
         iniset $SAHARA_CONF_FILE keystone ca_file $SSL_BUNDLE_FILE
+    fi
+
+    # Register SSL certificates if provided
+    if is_ssl_enabled_service sahara; then
+        ensure_certificates SAHARA
+
+        iniset $SAHARA_CONF_FILE ssl cert_file "$SAHARA_SSL_CERT"
+        iniset $SAHARA_CONF_FILE ssl key_file "$SAHARA_SSL_KEY"
     fi
 
     iniset $SAHARA_CONF_FILE DEFAULT use_syslog $SYSLOG
