@@ -108,6 +108,7 @@ do the following:
     MYSQL_PASSWORD=iheartdatabases
     RABBIT_PASSWORD=flopsymopsy
     SERVICE_PASSWORD=iheartksl
+    SERVICE_TOKEN=xyzpdqlazydog
 
 Run DevStack:
 
