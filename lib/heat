@@ -134,10 +134,6 @@ function configure_heat {
     iniset $HEAT_CONF keystone_authtoken cafile $SSL_BUNDLE_FILE
     iniset $HEAT_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR
 
-    if is_ssl_enabled_service "key"; then
-        iniset $HEAT_CONF clients_keystone ca_file $SSL_BUNDLE_FILE
-    fi
-
     # ec2authtoken
     iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
 
