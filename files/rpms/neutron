@@ -9,6 +9,7 @@ mysql-connector-python
 mysql-devel  # testonly
 mysql-server # NOPRIME
 openvswitch # NOPRIME
+postgresql-devel        # testonly
 python-eventlet
 python-greenlet
 python-iso8601
