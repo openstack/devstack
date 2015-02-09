@@ -61,11 +61,7 @@ TEMPEST_SERVICES+=,sahara
 # service     sahara    admin
 function create_sahara_accounts {
 
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
-
-    local sahara_user=$(get_or_create_user "sahara" "$SERVICE_PASSWORD")
-    get_or_add_user_role $admin_role $sahara_user $service_tenant
+    create_service_user "sahara" "admin"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

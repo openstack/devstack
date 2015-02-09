@@ -176,12 +176,8 @@ function stop_tuskar {
 
 # create_tuskar_accounts() - Set up common required tuskar accounts
 function create_tuskar_accounts {
-    # migrated from files/keystone_data.sh
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    local tuskar_user=$(get_or_create_user "tuskar" "$SERVICE_PASSWORD")
-    get_or_add_user_role $admin_role $tuskar_user $service_tenant
+    create_service_user "tuskar" "admin"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

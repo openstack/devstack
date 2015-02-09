@@ -358,15 +358,11 @@ function create_ironic_cache_dir {
 # service              ironic     admin        # if enabled
 function create_ironic_accounts {
 
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
-
     # Ironic
     if [[ "$ENABLED_SERVICES" =~ "ir-api" ]]; then
         # Get ironic user if exists
 
-        local ironic_user=$(get_or_create_user "ironic" "$SERVICE_PASSWORD")
-        get_or_add_user_role $admin_role $ironic_user $service_tenant
+        create_service_user "ironic" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

@@ -330,14 +330,10 @@ function configure_cinder {
 # Migrated from keystone_data.sh
 function create_cinder_accounts {
 
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
-
     # Cinder
     if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
 
-        local cinder_user=$(get_or_create_user "cinder" "$SERVICE_PASSWORD")
-        get_or_add_user_role $admin_role $cinder_user $service_tenant
+        create_service_user "cinder" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
