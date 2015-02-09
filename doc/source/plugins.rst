@@ -16,7 +16,7 @@ DevStack using this mechanism.
 The script in ``extras.d`` is expected to be mostly a dispatcher to
 functions in a ``lib/*`` script. The scripts are named with a
 zero-padded two digits sequence number prefix to control the order that
-the scripts are called, and with a suffix of ``.sh``. DevSack reserves
+the scripts are called, and with a suffix of ``.sh``. DevStack reserves
 for itself the sequence numbers 00 through 09 and 90 through 99.
 
 Below is a template that shows handlers for the possible command-line
