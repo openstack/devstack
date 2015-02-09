@@ -6,6 +6,7 @@ iputils-arping
 libmysqlclient-dev  # testonly
 mysql-server #NOPRIME
 sudo
+postgresql-server-dev-all       # testonly
 python-iso8601
 python-paste
 python-routes

@@ -79,13 +79,9 @@ function setup_trove_logging {
 # service              trove     admin        # if enabled
 
 function create_trove_accounts {
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local service_role=$(openstack role list | awk "/ admin / { print \$2 }")
-
     if [[ "$ENABLED_SERVICES" =~ "trove" ]]; then
 
-        local trove_user=$(get_or_create_user "trove" "$SERVICE_PASSWORD")
-        get_or_add_user_role $service_role $trove_user $service_tenant
+        create_service_user "trove" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

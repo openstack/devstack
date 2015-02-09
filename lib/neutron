@@ -10,24 +10,25 @@
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# - install_neutron
-# - install_neutronclient
 # - install_neutron_agent_packages
+# - install_neutronclient
+# - install_neutron
 # - install_neutron_third_party
 # - configure_neutron
 # - init_neutron
 # - configure_neutron_third_party
 # - init_neutron_third_party
 # - start_neutron_third_party
-# - create_neutron_cache_dir
 # - create_nova_conf_neutron
 # - start_neutron_service_and_check
+# - check_neutron_third_party_integration
 # - start_neutron_agents
 # - create_neutron_initial_network
 # - setup_neutron_debug
 #
 # ``unstack.sh`` calls the entry points in this order:
 #
+# - teardown_neutron_debug
 # - stop_neutron
 # - stop_neutron_third_party
 # - cleanup_neutron
@@ -507,14 +508,9 @@ function create_neutron_cache_dir {
 
 # Migrated from keystone_data.sh
 function create_neutron_accounts {
-
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local service_role=$(openstack role list | awk "/ service / { print \$2 }")
-
     if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
 
-        local neutron_user=$(get_or_create_user "neutron" "$SERVICE_PASSWORD")
-        get_or_add_user_role $service_role $neutron_user $service_tenant
+        create_service_user "neutron"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

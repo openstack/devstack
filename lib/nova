@@ -353,14 +353,10 @@ function configure_nova {
 # SERVICE_TENANT_NAME  nova         ResellerAdmin (if Swift is enabled)
 function create_nova_accounts {
 
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
-
     # Nova
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
 
-        local nova_user=$(get_or_create_user "nova" "$SERVICE_PASSWORD")
-        get_or_add_user_role $admin_role $nova_user $service_tenant
+        create_service_user "nova" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
