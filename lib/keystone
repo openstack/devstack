@@ -309,8 +309,9 @@ function configure_keystone {
         setup_colorized_logging $KEYSTONE_CONF DEFAULT
     fi
 
+    iniset $KEYSTONE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+
     if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
-        iniset $KEYSTONE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         # Eliminate the %(asctime)s.%(msecs)03d from the log format strings
         iniset $KEYSTONE_CONF DEFAULT logging_context_format_string "%(process)d %(levelname)s %(name)s [%(request_id)s %(user_identity)s] %(instance)s%(message)s"
         iniset $KEYSTONE_CONF DEFAULT logging_default_format_string "%(process)d %(levelname)s %(name)s [-] %(instance)s%(message)s"
@@ -532,12 +533,8 @@ function start_keystone {
         tail_log key /var/log/$APACHE_NAME/keystone.log
         tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
     else
-        local EXTRA_PARAMS=""
-        if [ "$ENABLE_DEBUG_LOG_LEVEL" == "True" ]; then
-            EXTRA_PARAMS="--debug"
-        fi
         # Start Keystone in a screen window
-        run_process key "$KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF $EXTRA_PARAMS"
+        run_process key "$KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF"
     fi
 
     echo "Waiting for keystone to start..."
