@@ -124,6 +124,10 @@ function configure_sahara {
     if is_service_enabled neutron; then
         iniset $SAHARA_CONF_FILE DEFAULT use_neutron true
         iniset $SAHARA_CONF_FILE DEFAULT use_floating_ips true
+
+        if is_ssl_enabled_service "neutron" || is_service_enabled tls-proxy; then
+            iniset $SAHARA_CONF_FILE neutron ca_file $SSL_BUNDLE_FILE
+        fi
     else
         iniset $SAHARA_CONF_FILE DEFAULT use_neutron false
         iniset $SAHARA_CONF_FILE DEFAULT use_floating_ips false
@@ -131,8 +135,28 @@ function configure_sahara {
 
     if is_service_enabled heat; then
         iniset $SAHARA_CONF_FILE DEFAULT infrastructure_engine heat
+
+        if is_ssl_enabled_service "heat" || is_service_enabled tls-proxy; then
+            iniset $SAHARA_CONF_FILE heat ca_file $SSL_BUNDLE_FILE
+        fi
     else
         iniset $SAHARA_CONF_FILE DEFAULT infrastructure_engine direct
+    fi
+
+    if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+        iniset $SAHARA_CONF_FILE cinder ca_file $SSL_BUNDLE_FILE
+    fi
+
+    if is_ssl_enabled_service "nova" || is_service_enabled tls-proxy; then
+        iniset $SAHARA_CONF_FILE nova ca_file $SSL_BUNDLE_FILE
+    fi
+
+    if is_ssl_enabled_service "swift" || is_service_enabled tls-proxy; then
+        iniset $SAHARA_CONF_FILE swift ca_file $SSL_BUNDLE_FILE
+    fi
+
+    if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
+        iniset $SAHARA_CONF_FILE keystone ca_file $SSL_BUNDLE_FILE
     fi
 
     iniset $SAHARA_CONF_FILE DEFAULT use_syslog $SYSLOG

@@ -500,7 +500,6 @@ source $TOP_DIR/lib/tls
 # Source project function libraries
 source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/oslo
-source $TOP_DIR/lib/stackforge
 source $TOP_DIR/lib/lvm
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
@@ -698,11 +697,6 @@ install_infra
 
 # Install oslo libraries that have graduated
 install_oslo
-
-# Install stackforge libraries for testing
-if is_service_enabled stackforge_libs; then
-    install_stackforge
-fi
 
 # Install clients libraries
 install_keystoneclient
