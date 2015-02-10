@@ -167,7 +167,6 @@ Scripts
 * `lib/oslo <lib/oslo.html>`__
 * `lib/rpc\_backend <lib/rpc_backend.html>`__
 * `lib/sahara <lib/sahara.html>`__
-* `lib/stackforge <lib/stackforge.html>`__
 * `lib/swift <lib/swift.html>`__
 * `lib/tempest <lib/tempest.html>`__
 * `lib/tls <lib/tls.html>`__
