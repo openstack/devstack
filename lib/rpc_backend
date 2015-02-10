@@ -342,6 +342,7 @@ EOF
             install_package sasl2-bin
         elif is_fedora; then
             install_package cyrus-sasl-lib
+            install_package cyrus-sasl-plain
         fi
         local sasl_conf_file=/etc/sasl2/qpidd.conf
         sudo sed -i.bak '/PLAIN/!s/mech_list: /mech_list: PLAIN /' $sasl_conf_file
