@@ -63,6 +63,12 @@ BUILD_INTERVAL=1
 BUILD_TIMEOUT=${BUILD_TIMEOUT:-196}
 
 
+# This must be False on stable branches, as master tempest
+# deps do not match stable branch deps. Set this to True to
+# have tempest installed in devstack by default.
+INSTALL_TEMPEST=${INSTALL_TEMPEST:-"False"}
+
+
 BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-${CIRROS_VERSION}"
 BOTO_CONF=/etc/boto.cfg
 
@@ -94,8 +100,12 @@ function remove_disabled_extensions {
 
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest {
-    # install testr since its used to process tempest logs
-    pip_install $(get_from_global_requirements testrepository)
+    if [[ "$INSTALL_TEMPEST" == "True" ]]; then
+        setup_develop $TEMPEST_DIR
+    else
+        # install testr since its used to process tempest logs
+        pip_install $(get_from_global_requirements testrepository)
+    fi
 
     local image_lines
     local images

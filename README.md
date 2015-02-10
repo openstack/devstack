@@ -282,7 +282,15 @@ If tempest has been successfully configured, a basic set of smoke
 tests can be run as follows:
 
     $ cd /opt/stack/tempest
-    $ nosetests tempest/scenario/test_network_basic_ops.py
+    $ tox -efull  tempest.scenario.test_network_basic_ops
+
+By default tempest is downloaded and the config file is generated, but the
+tempest package is not installed in the system's global site-packages (the
+package install includes installing dependences). So tempest won't run
+outside of tox. If you would like to install it add the following to your
+``localrc`` section:
+
+    INSTALL_TEMPEST=True
 
 # DevStack on Xenserver
 
