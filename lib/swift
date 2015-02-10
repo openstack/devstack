@@ -603,7 +603,7 @@ function create_swift_accounts {
 
     local another_role=$(openstack role list | awk "/ anotherrole / { print \$2 }")
 
-    create_service_user "swift" "admin"
+    create_service_user "swift"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

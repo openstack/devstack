@@ -215,7 +215,7 @@ function stop_zaqar {
 }
 
 function create_zaqar_accounts {
-    create_service_user "zaqar" "admin"
+    create_service_user "zaqar"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

@@ -333,7 +333,7 @@ function create_cinder_accounts {
     # Cinder
     if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
 
-        create_service_user "cinder" "admin"
+        create_service_user "cinder"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
