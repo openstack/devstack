@@ -620,18 +620,18 @@ function create_swift_accounts {
     die_if_not_set $LINENO swift_tenant_test1 "Failure creating swift_tenant_test1"
     SWIFT_USER_TEST1=$(get_or_create_user swiftusertest1 $swiftusertest1_password "test@example.com")
     die_if_not_set $LINENO SWIFT_USER_TEST1 "Failure creating SWIFT_USER_TEST1"
-    get_or_add_user_role admin $SWIFT_USER_TEST1 $swift_tenant_test1
+    get_or_add_user_project_role admin $SWIFT_USER_TEST1 $swift_tenant_test1
 
     local swift_user_test3=$(get_or_create_user swiftusertest3 $swiftusertest3_password "test3@example.com")
     die_if_not_set $LINENO swift_user_test3 "Failure creating swift_user_test3"
-    get_or_add_user_role $another_role $swift_user_test3 $swift_tenant_test1
+    get_or_add_user_project_role $another_role $swift_user_test3 $swift_tenant_test1
 
     local swift_tenant_test2=$(get_or_create_project swifttenanttest2)
     die_if_not_set $LINENO swift_tenant_test2 "Failure creating swift_tenant_test2"
 
     local swift_user_test2=$(get_or_create_user swiftusertest2 $swiftusertest2_password "test2@example.com")
     die_if_not_set $LINENO swift_user_test2 "Failure creating swift_user_test2"
-    get_or_add_user_role admin $swift_user_test2 $swift_tenant_test2
+    get_or_add_user_project_role admin $swift_user_test2 $swift_tenant_test2
 
     local swift_domain=$(get_or_create_domain swift_test 'Used for swift functional testing')
     die_if_not_set $LINENO swift_domain "Failure creating swift_test domain"
@@ -641,7 +641,7 @@ function create_swift_accounts {
 
     local swift_user_test4=$(get_or_create_user swiftusertest4 $swiftusertest4_password "test4@example.com" $swift_domain)
     die_if_not_set $LINENO swift_user_test4 "Failure creating swift_user_test4"
-    get_or_add_user_role admin $swift_user_test4 $swift_tenant_test4
+    get_or_add_user_project_role admin $swift_user_test4 $swift_tenant_test4
 }
 
 # init_swift() - Initialize rings

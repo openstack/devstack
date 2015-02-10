@@ -121,7 +121,7 @@ function create_ceilometer_accounts {
         fi
         if is_service_enabled swift; then
             # Ceilometer needs ResellerAdmin role to access swift account stats.
-            get_or_add_user_role "ResellerAdmin" "ceilometer" $SERVICE_TENANT_NAME
+            get_or_add_user_project_role "ResellerAdmin" "ceilometer" $SERVICE_TENANT_NAME
         fi
     fi
 }

@@ -365,7 +365,7 @@ function create_keystone_accounts {
     local admin_tenant=$(get_or_create_project "admin")
     local admin_user=$(get_or_create_user "admin" "$ADMIN_PASSWORD")
     local admin_role=$(get_or_create_role "admin")
-    get_or_add_user_role $admin_role $admin_user $admin_tenant
+    get_or_add_user_project_role $admin_role $admin_user $admin_tenant
 
     # Create service project/role
     get_or_create_project "$SERVICE_TENANT_NAME"
@@ -394,10 +394,10 @@ function create_keystone_accounts {
     local demo_user=$(get_or_create_user "demo" \
         "$ADMIN_PASSWORD" "demo@example.com")
 
-    get_or_add_user_role $member_role $demo_user $demo_tenant
-    get_or_add_user_role $admin_role $admin_user $demo_tenant
-    get_or_add_user_role $another_role $demo_user $demo_tenant
-    get_or_add_user_role $member_role $demo_user $invis_tenant
+    get_or_add_user_project_role $member_role $demo_user $demo_tenant
+    get_or_add_user_project_role $admin_role $admin_user $demo_tenant
+    get_or_add_user_project_role $another_role $demo_user $demo_tenant
+    get_or_add_user_project_role $member_role $demo_user $invis_tenant
 
     get_or_create_group "developers" "default" "openstack developers"
     get_or_create_group "testers" "default"
@@ -426,7 +426,7 @@ function create_service_user {
     local role=${2:-service}
 
     local user=$(get_or_create_user "$1" "$SERVICE_PASSWORD")
-    get_or_add_user_role "$role" "$user" "$SERVICE_TENANT_NAME"
+    get_or_add_user_project_role "$role" "$user" "$SERVICE_TENANT_NAME"
 }
 
 # Configure the service to use the auth token middleware.
