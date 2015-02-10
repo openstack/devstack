@@ -436,26 +436,6 @@ TIE_BRANCH=${TIE_BRANCH:-master}
 
 #################
 #
-#  Additional Libraries
-#
-#################
-
-# stackforge libraries that are used by OpenStack core services
-# wsme
-WSME_REPO=${WSME_REPO:-${GIT_BASE}/stackforge/wsme.git}
-WSME_BRANCH=${WSME_BRANCH:-master}
-
-# pecan
-PECAN_REPO=${PECAN_REPO:-${GIT_BASE}/stackforge/pecan.git}
-PECAN_BRANCH=${PECAN_BRANCH:-master}
-
-# sqlalchemy-migrate
-SQLALCHEMY_MIGRATE_REPO=${SQLALCHEMY_MIGRATE_REPO:-${GIT_BASE}/stackforge/sqlalchemy-migrate.git}
-SQLALCHEMY_MIGRATE_BRANCH=${SQLALCHEMY_MIGRATE_BRANCH:-master}
-
-
-#################
-#
 #  3rd Party Components (non pip installable)
 #
 #  NOTE(sdague): these should be converted to release version installs or removed
