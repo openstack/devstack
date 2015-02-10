@@ -178,12 +178,32 @@ if [ -z "$templateuuid" ]; then
     PRESEED_URL=${PRESEED_URL:-""}
     if [ -z "$PRESEED_URL" ]; then
         PRESEED_URL="${HOST_IP}/devstackubuntupreseed.cfg"
+
         HTTP_SERVER_LOCATION="/opt/xensource/www"
         if [ ! -e $HTTP_SERVER_LOCATION ]; then
             HTTP_SERVER_LOCATION="/var/www/html"
             mkdir -p $HTTP_SERVER_LOCATION
         fi
+
+        # Copy the tools DEB to the XS web server
+        XS_TOOLS_URL="https://github.com/downloads/citrix-openstack/warehouse/xe-guest-utilities_5.6.100-651_amd64.deb"
+        ISO_DIR="/opt/xensource/packages/iso"
+        XS_TOOLS_FILE_NAME="xs-tools.deb"
+        XS_TOOLS_PATH="/root/$XS_TOOLS_FILE_NAME"
+        if [ -e "$ISO_DIR" ]; then
+            TOOLS_ISO=$(ls -1 $ISO_DIR/xs-tools-*.iso | head -1)
+            TMP_DIR=/tmp/temp.$RANDOM
+            mkdir -p $TMP_DIR
+            mount -o loop $TOOLS_ISO $TMP_DIR
+            DEB_FILE=$(ls $TMP_DIR/Linux/*amd64.deb)
+            cp $DEB_FILE $HTTP_SERVER_LOCATION
+            umount $TMP_DIR
+            rmdir $TMP_DIR
+            XS_TOOLS_URL=${HOST_IP}/$(basename $DEB_FILE)
+        fi
+
         cp -f $THIS_DIR/devstackubuntupreseed.cfg $HTTP_SERVER_LOCATION
+        cp -f $THIS_DIR/devstackubuntu_latecommand.sh $HTTP_SERVER_LOCATION/latecommand.sh
 
         sed \
             -e "s,\(d-i mirror/http/hostname string\).*,\1 $UBUNTU_INST_HTTP_HOSTNAME,g" \
@@ -191,7 +211,12 @@ if [ -z "$templateuuid" ]; then
             -e "s,\(d-i mirror/http/proxy string\).*,\1 $UBUNTU_INST_HTTP_PROXY,g" \
             -e "s,\(d-i passwd/root-password password\).*,\1 $GUEST_PASSWORD,g" \
             -e "s,\(d-i passwd/root-password-again password\).*,\1 $GUEST_PASSWORD,g" \
+            -e "s,\(d-i preseed/late_command string\).*,\1 in-target mkdir -p /tmp; in-target wget --no-proxy ${HOST_IP}/latecommand.sh -O /root/latecommand.sh; in-target bash /root/latecommand.sh,g" \
             -i "${HTTP_SERVER_LOCATION}/devstackubuntupreseed.cfg"
+
+        sed \
+            -e "s,@XS_TOOLS_URL@,$XS_TOOLS_URL,g" \
+            -i "${HTTP_SERVER_LOCATION}/latecommand.sh"
     fi
 
     # Update the template
