@@ -356,6 +356,8 @@ function create_nova_accounts {
     # Nova
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
 
+        # NOTE(jamielennox): Nova doesn't need the admin role here, however neutron uses
+        # this service user when notifying nova of changes and that requires the admin role.
         create_service_user "nova" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
