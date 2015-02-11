@@ -292,6 +292,9 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG identity admin_tenant_id $ADMIN_TENANT_ID
     iniset $TEMPEST_CONFIG identity admin_domain_name $ADMIN_DOMAIN_NAME
     iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
+    if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
+        iniset $TEMPEST_CONFIG identity ca_certificates_file $SSL_BUNDLE_FILE
+    fi
 
     # Image
     # for the gate we want to be able to override this variable so we aren't
@@ -482,7 +485,7 @@ function configure_tempest {
         fi
     done
 
-    if is_ssl_enabled_service "keystone" || is_service_enabled tls-proxy; then
+    if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
         # Use the BOTO_CONFIG environment variable to point to this file
         iniset $BOTO_CONF Boto ca_certificates_file $SSL_BUNDLE_FILE
         sudo chown $STACK_USER $BOTO_CONF
