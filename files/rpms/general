@@ -26,3 +26,4 @@ bc
 libyaml-devel
 gettext  # used for compiling message catalogs
 net-tools
+java-1.7.0-openjdk-headless  # NOPRIME
