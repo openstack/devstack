@@ -65,7 +65,7 @@ BUILD_TIMEOUT=${BUILD_TIMEOUT:-196}
 
 
 BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-${CIRROS_VERSION}"
-BOTO_CONF=$TEMPEST_DIR/boto.cfg
+BOTO_CONF=/etc/boto.cfg
 
 # Cinder/Volume variables
 TEMPEST_VOLUME_DRIVER=${TEMPEST_VOLUME_DRIVER:-default}
