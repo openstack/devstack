@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # **clean.sh**
 
@@ -83,7 +83,10 @@ if [[ -d $TOP_DIR/extras.d ]]; then
 fi
 
 # Clean projects
-cleanup_cinder
+
+# BUG: cinder tgt doesn't exit cleanly if it's not running.
+cleanup_cinder || /bin/true
+
 cleanup_glance
 cleanup_keystone
 cleanup_nova

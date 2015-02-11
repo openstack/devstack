@@ -40,7 +40,10 @@ function start_dstat {
 
 # stop_dstat() stop dstat process
 function stop_dstat {
-    screen_stop dstat
+    # dstat runs as a console, not as a service, and isn't trackable
+    # via the normal mechanisms for devstack. So lets just do a
+    # killall and move on.
+    killall dstat || /bin/true
 }
 
 # Restore xtrace
