@@ -356,6 +356,8 @@ function create_nova_accounts {
     # Nova
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
 
+        # NOTE(jamielennox): Nova doesn't need the admin role here, however neutron uses
+        # this service user when notifying nova of changes and that requires the admin role.
         create_service_user "nova" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
@@ -383,7 +385,7 @@ function create_nova_accounts {
         if is_service_enabled swift; then
             # Nova needs ResellerAdmin role to download images when accessing
             # swift through the s3 api.
-            get_or_add_user_role ResellerAdmin nova $SERVICE_TENANT_NAME
+            get_or_add_user_project_role ResellerAdmin nova $SERVICE_TENANT_NAME
         fi
 
         # EC2

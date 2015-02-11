@@ -81,7 +81,7 @@ function setup_trove_logging {
 function create_trove_accounts {
     if [[ "$ENABLED_SERVICES" =~ "trove" ]]; then
 
-        create_service_user "trove" "admin"
+        create_service_user "trove"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

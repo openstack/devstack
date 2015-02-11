@@ -108,7 +108,7 @@ function create_ceilometer_accounts {
     # Ceilometer
     if [[ "$ENABLED_SERVICES" =~ "ceilometer-api" ]]; then
 
-        create_service_user "ceilometer" "admin"
+        create_service_user "ceilometer"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
             local ceilometer_service=$(get_or_create_service "ceilometer" \
@@ -121,7 +121,7 @@ function create_ceilometer_accounts {
         fi
         if is_service_enabled swift; then
             # Ceilometer needs ResellerAdmin role to access swift account stats.
-            get_or_add_user_role "ResellerAdmin" "ceilometer" $SERVICE_TENANT_NAME
+            get_or_add_user_project_role "ResellerAdmin" "ceilometer" $SERVICE_TENANT_NAME
         fi
     fi
 }

@@ -61,7 +61,7 @@ TEMPEST_SERVICES+=,sahara
 # service     sahara    admin
 function create_sahara_accounts {
 
-    create_service_user "sahara" "admin"
+    create_service_user "sahara"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
