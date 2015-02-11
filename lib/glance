@@ -183,6 +183,12 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT registry_client_protocol https
     fi
 
+    # Format logging
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+        setup_colorized_logging $GLANCE_API_CONF DEFAULT "project_id" "user_id"
+        setup_colorized_logging $GLANCE_REGISTRY_CONF DEFAULT "project_id" "user_id"
+    fi
+
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
 
     cp -p $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
