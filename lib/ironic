@@ -362,7 +362,8 @@ function create_ironic_accounts {
     if [[ "$ENABLED_SERVICES" =~ "ir-api" ]]; then
         # Get ironic user if exists
 
-        create_service_user "ironic"
+        # NOTE(Shrews): This user MUST have admin level privileges!
+        create_service_user "ironic" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

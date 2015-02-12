@@ -395,9 +395,9 @@ function create_nova_accounts {
                 "ec2" "EC2 Compatibility Layer")
             get_or_create_endpoint $ec2_service \
                 "$REGION_NAME" \
-                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/services/Cloud" \
-                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/services/Admin" \
-                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/services/Cloud"
+                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/" \
+                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/" \
+                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/"
         fi
     fi
 
