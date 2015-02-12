@@ -84,13 +84,6 @@ function neutron_plugin_configure_plugin_agent {
     AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-ofagent-agent"
 
     iniset /$Q_PLUGIN_CONF_FILE agent tunnel_types $Q_TUNNEL_TYPES
-    # Define extra "AGENT" configuration options when q-agt is configured by defining
-    # defining the array ``Q_AGENT_EXTRA_AGENT_OPTS``.
-    # For Example: ``Q_AGENT_EXTRA_AGENT_OPTS=(foo=true bar=2)``
-    for I in "${Q_AGENT_EXTRA_AGENT_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE agent ${I/=/ }
-    done
 }
 
 function neutron_plugin_setup_interface_driver {

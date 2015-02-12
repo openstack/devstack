@@ -29,7 +29,6 @@
 # - ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
 # - ``DEFAULT_INSTANCE_TYPE``
 # - ``DEFAULT_INSTANCE_USER``
-# - ``CINDER_MULTI_LVM_BACKEND``
 # - ``CINDER_ENABLED_BACKENDS``
 #
 # ``stack.sh`` calls the entry points in this order:
