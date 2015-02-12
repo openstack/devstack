@@ -739,6 +739,9 @@ if is_service_enabled keystone; then
 fi
 
 if is_service_enabled s-proxy; then
+    if is_service_enabled ceilometer; then
+        install_ceilometermiddleware
+    fi
     stack_install_service swift
     configure_swift
 
