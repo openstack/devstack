@@ -34,7 +34,13 @@ GITDIR["python-troveclient"]=$DEST/python-troveclient
 
 TROVE_DIR=$DEST/trove
 TROVE_CONF_DIR=/etc/trove
+TROVE_CONF=$TROVE_CONF_DIR/trove.conf
+TROVE_TASKMANAGER_CONF=$TROVE_CONF_DIR/trove-taskmanager.conf
+TROVE_CONDUCTOR_CONF=$TROVE_CONF_DIR/trove-conductor.conf
+TROVE_API_PASTE_INI=$TROVE_CONF_DIR/api-paste.ini
+
 TROVE_LOCAL_CONF_DIR=$TROVE_DIR/etc/trove
+TROVE_LOCAL_API_PASTE_INI=$TROVE_LOCAL_CONF_DIR/api-paste.ini
 TROVE_AUTH_CACHE_DIR=${TROVE_AUTH_CACHE_DIR:-/var/cache/trove}
 TROVE_DATASTORE_TYPE=${TROVE_DATASTORE_TYPE:-"mysql"}
 TROVE_DATASTORE_VERSION=${TROVE_DATASTORE_VERSION:-"5.5"}
@@ -46,6 +52,7 @@ if [[ -d $TROVE_DIR/bin ]]; then
 else
     TROVE_BIN_DIR=$(get_python_exec_prefix)
 fi
+TROVE_MANAGE=$TROVE_BIN_DIR/trove-manage
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,trove
@@ -119,48 +126,48 @@ function configure_trove {
     sudo chown -R $STACK_USER: ${TROVE_AUTH_CACHE_DIR}
 
     # Copy api-paste file over to the trove conf dir
-    cp $TROVE_LOCAL_CONF_DIR/api-paste.ini $TROVE_CONF_DIR/api-paste.ini
+    cp $TROVE_LOCAL_API_PASTE_INI $TROVE_API_PASTE_INI
 
     # (Re)create trove conf files
-    rm -f $TROVE_CONF_DIR/trove.conf
-    rm -f $TROVE_CONF_DIR/trove-taskmanager.conf
-    rm -f $TROVE_CONF_DIR/trove-conductor.conf
+    rm -f $TROVE_CONF
+    rm -f $TROVE_TASKMANAGER_CONF
+    rm -f $TROVE_CONDUCTOR_CONF
 
-    iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_userid $RABBIT_USERID
-    iniset $TROVE_CONF_DIR/trove.conf DEFAULT rabbit_password $RABBIT_PASSWORD
-    iniset $TROVE_CONF_DIR/trove.conf DEFAULT sql_connection `database_connection_url trove`
-    iniset $TROVE_CONF_DIR/trove.conf DEFAULT default_datastore $TROVE_DATASTORE_TYPE
-    setup_trove_logging $TROVE_CONF_DIR/trove.conf
-    iniset $TROVE_CONF_DIR/trove.conf DEFAULT trove_api_workers "$API_WORKERS"
+    iniset $TROVE_CONF DEFAULT rabbit_userid $RABBIT_USERID
+    iniset $TROVE_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+    iniset $TROVE_CONF DEFAULT sql_connection `database_connection_url trove`
+    iniset $TROVE_CONF DEFAULT default_datastore $TROVE_DATASTORE_TYPE
+    setup_trove_logging $TROVE_CONF
+    iniset $TROVE_CONF DEFAULT trove_api_workers "$API_WORKERS"
 
-    configure_auth_token_middleware $TROVE_CONF_DIR/trove.conf trove $TROVE_AUTH_CACHE_DIR
+    configure_auth_token_middleware $TROVE_CONF trove $TROVE_AUTH_CACHE_DIR
 
     # (Re)create trove taskmanager conf file if needed
     if is_service_enabled tr-tmgr; then
         TROVE_AUTH_ENDPOINT=$KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION
 
-        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT rabbit_userid $RABBIT_USERID
-        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT rabbit_password $RABBIT_PASSWORD
-        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT sql_connection `database_connection_url trove`
-        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT taskmanager_manager trove.taskmanager.manager.Manager
-        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_user radmin
-        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_tenant_name trove
-        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
-        iniset $TROVE_CONF_DIR/trove-taskmanager.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
-        setup_trove_logging $TROVE_CONF_DIR/trove-taskmanager.conf
+        iniset $TROVE_TASKMANAGER_CONF DEFAULT rabbit_userid $RABBIT_USERID
+        iniset $TROVE_TASKMANAGER_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $TROVE_TASKMANAGER_CONF DEFAULT sql_connection `database_connection_url trove`
+        iniset $TROVE_TASKMANAGER_CONF DEFAULT taskmanager_manager trove.taskmanager.manager.Manager
+        iniset $TROVE_TASKMANAGER_CONF DEFAULT nova_proxy_admin_user radmin
+        iniset $TROVE_TASKMANAGER_CONF DEFAULT nova_proxy_admin_tenant_name trove
+        iniset $TROVE_TASKMANAGER_CONF DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
+        iniset $TROVE_TASKMANAGER_CONF DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
+        setup_trove_logging $TROVE_TASKMANAGER_CONF
     fi
 
     # (Re)create trove conductor conf file if needed
     if is_service_enabled tr-cond; then
-        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT rabbit_userid $RABBIT_USERID
-        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT rabbit_password $RABBIT_PASSWORD
-        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT sql_connection `database_connection_url trove`
-        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_user radmin
-        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_tenant_name trove
-        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
-        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
-        iniset $TROVE_CONF_DIR/trove-conductor.conf DEFAULT control_exchange trove
-        setup_trove_logging $TROVE_CONF_DIR/trove-conductor.conf
+        iniset $TROVE_CONDUCTOR_CONF DEFAULT rabbit_userid $RABBIT_USERID
+        iniset $TROVE_CONDUCTOR_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+        iniset $TROVE_CONDUCTOR_CONF DEFAULT sql_connection `database_connection_url trove`
+        iniset $TROVE_CONDUCTOR_CONF DEFAULT nova_proxy_admin_user radmin
+        iniset $TROVE_CONDUCTOR_CONF DEFAULT nova_proxy_admin_tenant_name trove
+        iniset $TROVE_CONDUCTOR_CONF DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
+        iniset $TROVE_CONDUCTOR_CONF DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
+        iniset $TROVE_CONDUCTOR_CONF DEFAULT control_exchange trove
+        setup_trove_logging $TROVE_CONDUCTOR_CONF
     fi
 
     # Set up Guest Agent conf
@@ -197,7 +204,7 @@ function init_trove {
     recreate_database trove
 
     # Initialize the trove database
-    $TROVE_BIN_DIR/trove-manage db_sync
+    $TROVE_MANAGE db_sync
 
     # If no guest image is specified, skip remaining setup
     [ -z "$TROVE_GUEST_IMAGE_URL" ] && return 0
@@ -214,19 +221,19 @@ function init_trove {
     fi
 
     # Now that we have the guest image id, initialize appropriate datastores / datastore versions
-    $TROVE_BIN_DIR/trove-manage datastore_update "$TROVE_DATASTORE_TYPE" ""
-    $TROVE_BIN_DIR/trove-manage datastore_version_update "$TROVE_DATASTORE_TYPE" "$TROVE_DATASTORE_VERSION" "$TROVE_DATASTORE_TYPE" \
+    $TROVE_MANAGE datastore_update "$TROVE_DATASTORE_TYPE" ""
+    $TROVE_MANAGE datastore_version_update "$TROVE_DATASTORE_TYPE" "$TROVE_DATASTORE_VERSION" "$TROVE_DATASTORE_TYPE" \
         "$TROVE_GUEST_IMAGE_ID" "$TROVE_DATASTORE_PACKAGE" 1
-    $TROVE_BIN_DIR/trove-manage datastore_version_update "$TROVE_DATASTORE_TYPE" "inactive_version" "inactive_manager" "$TROVE_GUEST_IMAGE_ID" "" 0
-    $TROVE_BIN_DIR/trove-manage datastore_update "$TROVE_DATASTORE_TYPE" "$TROVE_DATASTORE_VERSION"
-    $TROVE_BIN_DIR/trove-manage datastore_update "Inactive_Datastore" ""
+    $TROVE_MANAGE datastore_version_update "$TROVE_DATASTORE_TYPE" "inactive_version" "inactive_manager" "$TROVE_GUEST_IMAGE_ID" "" 0
+    $TROVE_MANAGE datastore_update "$TROVE_DATASTORE_TYPE" "$TROVE_DATASTORE_VERSION"
+    $TROVE_MANAGE datastore_update "Inactive_Datastore" ""
 }
 
 # start_trove() - Start running processes, including screen
 function start_trove {
-    run_process tr-api "$TROVE_BIN_DIR/trove-api --config-file=$TROVE_CONF_DIR/trove.conf --debug"
-    run_process tr-tmgr "$TROVE_BIN_DIR/trove-taskmanager --config-file=$TROVE_CONF_DIR/trove-taskmanager.conf --debug"
-    run_process tr-cond "$TROVE_BIN_DIR/trove-conductor --config-file=$TROVE_CONF_DIR/trove-conductor.conf --debug"
+    run_process tr-api "$TROVE_BIN_DIR/trove-api --config-file=$TROVE_CONF --debug"
+    run_process tr-tmgr "$TROVE_BIN_DIR/trove-taskmanager --config-file=$TROVE_TASKMANAGER_CONF --debug"
+    run_process tr-cond "$TROVE_BIN_DIR/trove-conductor --config-file=$TROVE_CONDUCTOR_CONF --debug"
 }
 
 # stop_trove() - Stop running processes
