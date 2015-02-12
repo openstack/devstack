@@ -19,7 +19,7 @@ Nested Virtualization Configuration
 Configure Nested KVM for Intel-based Machines
 ---------------------------------------------
 
-Procedure to enable nested KVM virtualization on AMD-based machines.
+Procedure to enable nested KVM virtualization on Intel-based machines.
 
 Check if the nested KVM Kernel parameter is enabled:
 
