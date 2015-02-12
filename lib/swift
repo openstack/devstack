@@ -603,7 +603,9 @@ function create_swift_accounts {
 
     local another_role=$(openstack role list | awk "/ anotherrole / { print \$2 }")
 
-    create_service_user "swift"
+    # NOTE(jroll): Swift doesn't need the admin role here, however Ironic uses
+    # temp urls, which break when uploaded by a non-admin role
+    create_service_user "swift" "admin"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
