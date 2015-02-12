@@ -77,6 +77,7 @@ function configure_cinder_backend_conf_lvm {
     local line
 
     for pv_info in $(sudo pvs --noheadings -o name,vg_name --separator ';'); do
+        echo_summary "Evaluate PV info for Cinder lvm.conf: $pv_info"
         IFS=';' read pv vg <<< $pv_info
         for line in ${conf_entries}; do
             IFS='=' read label group <<< $line
