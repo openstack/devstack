@@ -601,7 +601,7 @@ fi
 
 # Keystone
 
-if is_service_enabled key; then
+if is_service_enabled keystone; then
     # The ``SERVICE_TOKEN`` is used to bootstrap the Keystone database.  It is
     # just a string and is not a 'real' Keystone token.
     read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
@@ -725,7 +725,7 @@ else
 fi
 
 
-if is_service_enabled key; then
+if is_service_enabled keystone; then
     if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
         install_keystone
         configure_keystone
@@ -918,7 +918,7 @@ start_dstat
 # Keystone
 # --------
 
-if is_service_enabled key; then
+if is_service_enabled keystone; then
     echo_summary "Starting Keystone"
 
     if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
@@ -1143,7 +1143,7 @@ if is_service_enabled g-reg; then
 fi
 
 # Create an access key and secret key for nova ec2 register image
-if is_service_enabled key && is_service_enabled swift3 && is_service_enabled nova; then
+if is_service_enabled keystone && is_service_enabled swift3 && is_service_enabled nova; then
     eval $(openstack ec2 credentials create --user nova --project $SERVICE_TENANT_NAME -f shell -c access -c secret)
     iniset $NOVA_CONF DEFAULT s3_access_key "$access"
     iniset $NOVA_CONF DEFAULT s3_secret_key "$secret"
@@ -1226,7 +1226,7 @@ fi
 # This step also creates certificates for tenants and users,
 # which is helpful in image bundle steps.
 
-if is_service_enabled nova && is_service_enabled key; then
+if is_service_enabled nova && is_service_enabled keystone; then
     USERRC_PARAMS="-PA --target-dir $TOP_DIR/accrc"
 
     if [ -f $SSL_BUNDLE_FILE ]; then
@@ -1314,7 +1314,7 @@ if is_service_enabled horizon; then
 fi
 
 # If Keystone is present you can point ``nova`` cli to this server
-if is_service_enabled key; then
+if is_service_enabled keystone; then
     echo "Keystone is serving at $KEYSTONE_SERVICE_URI/v2.0/"
     echo "Examples on using novaclient command line is in exercise.sh"
     echo "The default users are: admin and demo"
