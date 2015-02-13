@@ -123,3 +123,9 @@ if is_fedora; then
     fi
 
 fi
+
+# The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has
+# connection issues under proxy, hence uninstalling python-virtualenv package
+# and installing the latest version using pip.
+uninstall_package python-virtualenv
+pip_install -U virtualenv
