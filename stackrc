@@ -114,7 +114,7 @@ fi
 
 # This can be used to turn database query logging on and off
 # (currently only implemented for MySQL backend)
-DATABASE_QUERY_LOGGING=$(trueorfalse True DATABASE_QUERY_LOGGING)
+DATABASE_QUERY_LOGGING=$(trueorfalse False DATABASE_QUERY_LOGGING)
 
 # Set a timeout for git operations.  If git is still running when the
 # timeout expires, the command will be retried up to 3 times.  This is
