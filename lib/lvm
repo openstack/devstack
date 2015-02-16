@@ -86,7 +86,7 @@ function _create_lvm_volume_group {
     local backing_file=$DATA_DIR/$vg$BACKING_FILE_SUFFIX
     if ! sudo vgs $vg; then
         # Only create if the file doesn't already exists
-        [[ -f $DATA_DIR/$backing_file ]] || truncate -s $size $backing_file
+        [[ -f $backing_file ]] || truncate -s $size $backing_file
         local vg_dev=`sudo losetup -f --show $backing_file`
 
         # Only create volume group if it doesn't already exist
