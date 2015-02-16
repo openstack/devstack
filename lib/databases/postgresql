@@ -100,6 +100,9 @@ EOF
     else
         exit_distro_not_supported "postgresql installation"
     fi
+
+    # Install Python client module
+    pip_install MySQL-python psycopg2
 }
 
 function database_connection_url_postgresql {
