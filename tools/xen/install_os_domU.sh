@@ -258,6 +258,7 @@ fi
 #
 # Prepare VM for DevStack
 #
+xe vm-param-set other-config:os-vpx=true uuid="$vm_uuid"
 
 # Install XenServer tools, and other such things
 $THIS_DIR/prepare_guest_template.sh "$GUEST_NAME"
