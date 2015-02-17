@@ -131,5 +131,4 @@ vm_uuid=$(xe_min vm-install template="$TEMPLATE_NAME" new-name-label="$NAME_LABE
 destroy_vifs "$vm_uuid"
 set_auto_start "$vm_uuid"
 create_vif "$vm_uuid"
-xe vm-param-set other-config:os-vpx=true uuid="$vm_uuid"
 xe vm-param-set actions-after-reboot=Destroy uuid="$vm_uuid"
