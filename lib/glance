@@ -31,8 +31,16 @@ set +o xtrace
 # Set up default directories
 GITDIR["python-glanceclient"]=$DEST/python-glanceclient
 GITDIR["glance_store"]=$DEST/glance_store
-
 GLANCE_DIR=$DEST/glance
+
+# Glance virtual environment
+if [[ ${USE_VENV} = True ]]; then
+    PROJECT_VENV["glance"]=${GLANCE_DIR}.venv
+    GLANCE_BIN_DIR=${PROJECT_VENV["glance"]}/bin
+else
+    GLANCE_BIN_DIR=$(get_python_exec_prefix)
+fi
+
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
 GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
 GLANCE_AUTH_CACHE_DIR=${GLANCE_AUTH_CACHE_DIR:-/var/cache/glance}
@@ -46,13 +54,6 @@ GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
 GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
 GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
 GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
-
-# Support entry points installation of console scripts
-if [[ -d $GLANCE_DIR/bin ]]; then
-    GLANCE_BIN_DIR=$GLANCE_DIR/bin
-else
-    GLANCE_BIN_DIR=$(get_python_exec_prefix)
-fi
 
 if is_ssl_enabled_service "glance" || is_service_enabled tls-proxy; then
     GLANCE_SERVICE_PROTOCOL="https"
