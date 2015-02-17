@@ -278,7 +278,18 @@ function configure_ironic {
 function configure_ironic_api {
     iniset $IRONIC_CONF_FILE DEFAULT auth_strategy keystone
     iniset $IRONIC_CONF_FILE DEFAULT policy_file $IRONIC_POLICY_JSON
-    configure_auth_token_middleware $IRONIC_CONF_FILE ironic $IRONIC_AUTH_CACHE_DIR/api
+
+    # TODO(Yuki Nishiwaki): This is a temporary work-around until Ironic is fixed(bug#1422632).
+    # These codes need to be changed to use the function of configure_auth_token_middleware
+    # after Ironic conforms to the new auth plugin.
+    iniset $IRONIC_CONF_FILE keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
+    iniset $IRONIC_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
+    iniset $IRONIC_CONF_FILE keystone_authtoken admin_user ironic
+    iniset $IRONIC_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
+    iniset $IRONIC_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $IRONIC_CONF_FILE keystone_authtoken cafile $SSL_BUNDLE_FILE
+    iniset $IRONIC_CONF_FILE keystone_authtoken signing_dir $IRONIC_AUTH_CACHE_DIR/api
+
     iniset_rpc_backend ironic $IRONIC_CONF_FILE DEFAULT
     iniset $IRONIC_CONF_FILE api port $IRONIC_SERVICE_PORT
 
