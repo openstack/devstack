@@ -552,7 +552,7 @@ function create_neutron_initial_network {
         sudo ip link set $PUBLIC_INTERFACE up
     else
         NET_ID=$(neutron net-create --tenant-id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
-        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $TENANT_ID"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
             # Create IPv4 private subnet
