@@ -2,7 +2,7 @@ Listen %PUBLICPORT%
 Listen %ADMINPORT%
 
 <VirtualHost *:%PUBLICPORT%>
-    WSGIDaemonProcess keystone-public processes=5 threads=1 user=%USER% display-name=%{GROUP}
+    WSGIDaemonProcess keystone-public processes=5 threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
     WSGIProcessGroup keystone-public
     WSGIScriptAlias / %PUBLICWSGI%
     WSGIApplicationGroup %{GLOBAL}
@@ -18,7 +18,7 @@ Listen %ADMINPORT%
 </VirtualHost>
 
 <VirtualHost *:%ADMINPORT%>
-    WSGIDaemonProcess keystone-admin processes=5 threads=1 user=%USER% display-name=%{GROUP}
+    WSGIDaemonProcess keystone-admin processes=5 threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
     WSGIProcessGroup keystone-admin
     WSGIScriptAlias / %ADMINWSGI%
     WSGIApplicationGroup %{GLOBAL}
