@@ -12,6 +12,7 @@ openssl-devel # to rebuild pyOpenSSL if needed
 libffi-devel
 libxml2-devel
 libxslt-devel
+pkgconfig
 psmisc
 pylint
 python-devel

@@ -23,3 +23,4 @@ libffi-dev
 libssl-dev # for pyOpenSSL
 gettext  # used for compiling message catalogs
 openjdk-7-jre-headless  # NOPRIME
+pkg-config
