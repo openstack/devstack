@@ -80,7 +80,7 @@ Q: Why can't I use another shell?
 Q: But, but, can't I test on OS/X?
    A: Yes, even you, core developer who complained about this, needs to
    install bash 4 via homebrew to keep running tests on OS/X.  Get a Real
-   Operating System.   (For most of you who don't know, I am refering to
+   Operating System.   (For most of you who don't know, I am referring to
    myself.)
 
 Operation and Configuration
@@ -118,13 +118,13 @@ Q: How do I run a specific OpenStack milestone?
     ::
 
         [[local|localrc]]
-        GLANCE_BRANCH=stable/grizzly
-        HORIZON_BRANCH=stable/grizzly
-        KEYSTONE_BRANCH=stable/grizzly
-        NOVA_BRANCH=stable/grizzly
-        GLANCE_BRANCH=stable/grizzly
-        NEUTRON_BRANCH=stable/grizzly
-        SWIFT_BRANCH=1.10.0
+        GLANCE_BRANCH=stable/juno
+        HORIZON_BRANCH=stable/juno
+        KEYSTONE_BRANCH=stable/juno
+        NOVA_BRANCH=stable/juno
+        GLANCE_BRANCH=stable/juno
+        NEUTRON_BRANCH=stable/juno
+        SWIFT_BRANCH=2.2.1
 
 Q: Why not use [STRIKEOUT:``tools/pip-requires``]\ ``requirements.txt`` to grab project dependencies?
     [STRIKEOUT:The majority of deployments will use packages to install
