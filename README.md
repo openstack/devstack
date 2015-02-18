@@ -25,9 +25,9 @@ in a clean and disposable vm when you are first getting started.
 The DevStack master branch generally points to trunk versions of OpenStack
 components.  For older, stable versions, look for branches named
 stable/[release] in the DevStack repo.  For example, you can do the
-following to create a grizzly OpenStack cloud:
+following to create a juno OpenStack cloud:
 
-    git checkout stable/grizzly
+    git checkout stable/juno
     ./stack.sh
 
 You can also pick specific OpenStack project releases by setting the appropriate
