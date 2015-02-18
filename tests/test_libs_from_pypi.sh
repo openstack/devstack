@@ -29,7 +29,7 @@ for i in $TOP/lib/*; do
     fi
 done
 
-ALL_LIBS="python-novaclient oslo.config pbr oslo.context python-troveclient python-keystoneclient taskflow oslo.middleware pycadf python-glanceclient python-ironicclient tempest-lib oslo.messaging oslo.log cliff python-heatclient stevedore python-cinderclient glance_store oslo.concurrency oslo.db oslo.vmware keystonemiddleware oslo.serialization python-saharaclient django_openstack_auth python-openstackclient oslo.rootwrap oslo.i18n python-ceilometerclient oslo.utils python-swiftclient python-neutronclient tooz"
+ALL_LIBS="python-novaclient oslo.config pbr oslo.context python-troveclient python-keystoneclient taskflow oslo.middleware pycadf python-glanceclient python-ironicclient tempest-lib oslo.messaging oslo.log cliff python-heatclient stevedore python-cinderclient glance_store oslo.concurrency oslo.db oslo.vmware keystonemiddleware oslo.serialization python-saharaclient django_openstack_auth python-openstackclient oslo.rootwrap oslo.i18n python-ceilometerclient oslo.utils python-swiftclient python-neutronclient tooz ceilometermiddleware"
 
 # Generate the above list with
 # echo ${!GITREPO[@]}

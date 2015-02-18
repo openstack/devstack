@@ -149,12 +149,10 @@ SNAME_FIRST_BOOT="before_first_boot"
 
 function wait_for_VM_to_halt {
     set +x
-    echo "Waiting for the VM to halt.  Progress in-VM can be checked with vncviewer:"
+    echo "Waiting for the VM to halt.  Progress in-VM can be checked with XenCenter or xl console:"
     mgmt_ip=$(echo $XENAPI_CONNECTION_URL | tr -d -c '1234567890.')
     domid=$(get_domid "$GUEST_NAME")
-    sleep 20 # Wait for the vnc-port to be written
-    port=$(xenstore-read /local/domain/$domid/console/vnc-port)
-    echo "vncviewer -via root@$mgmt_ip localhost:${port:2}"
+    echo "ssh root@$mgmt_ip \"xl console $domid\""
     while true; do
         state=$(xe_min vm-list name-label="$GUEST_NAME" power-state=halted)
         if [ -n "$state" ]; then
