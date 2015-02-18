@@ -94,6 +94,9 @@ source $TOP_DIR/functions
 # Import config functions
 source $TOP_DIR/lib/config
 
+# Import 'public' stack.sh functions
+source $TOP_DIR/lib/stack
+
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 # and ``DISTRO``
@@ -742,13 +745,13 @@ fi
 
 if is_service_enabled keystone; then
     if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
-        install_keystone
+        stack_install_service keystone
         configure_keystone
     fi
 fi
 
 if is_service_enabled s-proxy; then
-    install_swift
+    stack_install_service swift
     configure_swift
 
     # swift3 middleware to provide S3 emulation to Swift
@@ -762,23 +765,23 @@ fi
 
 if is_service_enabled g-api n-api; then
     # image catalog service
-    install_glance
+    stack_install_service glance
     configure_glance
 fi
 
 if is_service_enabled cinder; then
-    install_cinder
+    stack_install_service cinder
     configure_cinder
 fi
 
 if is_service_enabled neutron; then
-    install_neutron
+    stack_install_service neutron
     install_neutron_third_party
 fi
 
 if is_service_enabled nova; then
     # compute service
-    install_nova
+    stack_install_service nova
     cleanup_nova
     configure_nova
 fi
@@ -787,19 +790,19 @@ if is_service_enabled horizon; then
     # django openstack_auth
     install_django_openstack_auth
     # dashboard
-    install_horizon
+    stack_install_service horizon
     configure_horizon
 fi
 
 if is_service_enabled ceilometer; then
     install_ceilometerclient
-    install_ceilometer
+    stack_install_service ceilometer
     echo_summary "Configuring Ceilometer"
     configure_ceilometer
 fi
 
 if is_service_enabled heat; then
-    install_heat
+    stack_install_service heat
     install_heat_other
     cleanup_heat
     configure_heat
