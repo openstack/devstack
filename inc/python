@@ -95,6 +95,17 @@ function pip_install {
     fi
 }
 
+# get version of a package from global requirements file
+# get_from_global_requirements <package>
+function get_from_global_requirements {
+    local package=$1
+    local required_pkg=$(grep -h ${package} $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1)
+    if [[ $required_pkg == ""  ]]; then
+        die $LINENO "Can't find package $package in requirements"
+    fi
+    echo $required_pkg
+}
+
 # should we use this library from their git repo, or should we let it
 # get pulled in via pip dependencies.
 function use_library_from_git {
