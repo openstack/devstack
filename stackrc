@@ -112,6 +112,11 @@ elif [[ -f $RC_DIR/.localrc.auto ]]; then
     source $RC_DIR/.localrc.auto
 fi
 
+# Configure wheel cache location
+export WHEELHOUSE=${WHEELHOUSE:-$DEST/.wheelhouse}
+export PIP_WHEEL_DIR=${PIP_WHEEL_DIR:-$WHEELHOUSE}
+export PIP_FIND_LINKS=${PIP_FIND_LINKS:-file://$WHEELHOUSE}
+
 # This can be used to turn database query logging on and off
 # (currently only implemented for MySQL backend)
 DATABASE_QUERY_LOGGING=$(trueorfalse True DATABASE_QUERY_LOGGING)
