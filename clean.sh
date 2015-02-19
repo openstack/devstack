@@ -119,6 +119,10 @@ if [[ -n "$SCREEN_LOGDIR" ]] && [[ -d "$SCREEN_LOGDIR" ]]; then
     sudo rm -rf $SCREEN_LOGDIR
 fi
 
+# Clean up venvs
+DIRS_TO_CLEAN="$WHEELHOUSE"
+rm -rf $DIRS_TO_CLEAN
+
 # Clean up files
 
 FILES_TO_CLEAN=".localrc.auto docs/files docs/html shocco/ stack-screenrc test*.conf* test.ini*"

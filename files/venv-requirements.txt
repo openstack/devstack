@@ -1,0 +1,10 @@
+lxml
+MySQL-python
+netifaces
+numpy
+posix-ipc
+psycopg2
+pycrypto
+pyOpenSSL
+PyYAML
+xattr
