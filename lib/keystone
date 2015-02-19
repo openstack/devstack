@@ -111,8 +111,17 @@ KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${K
 KEYSTONE_AUTH_URI_V3=$KEYSTONE_AUTH_URI/v3
 KEYSTONE_SERVICE_URI_V3=$KEYSTONE_SERVICE_URI/v3
 
+
 # Functions
 # ---------
+
+# Test if Keystone is enabled
+# is_keystone_enabled
+function is_keystone_enabled {
+    [[ ,${ENABLED_SERVICES}, =~ ,"key", ]] && return 0
+    return 1
+}
+
 # cleanup_keystone() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_keystone {
@@ -576,9 +585,6 @@ function stop_keystone {
     stop_process key
 }
 
-function is_keystone_enabled {
-    return is_service_enabled key
-}
 
 # Restore xtrace
 $XTRACE

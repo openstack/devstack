@@ -527,13 +527,6 @@ function is_arch {
     [[ "$(uname -m)" == "$1" ]]
 }
 
-# Quick check for a rackspace host; n.b. rackspace provided images
-# have these Xen tools installed but a custom image may not.
-function is_rackspace {
-    [ -f /usr/bin/xenstore-ls ] && \
-        sudo /usr/bin/xenstore-ls vm-data | grep -q "Rackspace"
-}
-
 # Determine if current distribution is a Fedora-based distribution
 # (Fedora, RHEL, CentOS, etc).
 # is_fedora
@@ -1817,7 +1810,6 @@ function is_service_enabled {
         [[ ${service} == "trove" && ${ENABLED_SERVICES} =~ "tr-" ]] && enabled=0
         [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && enabled=0
         [[ ${service} == s-* && ${ENABLED_SERVICES} =~ "swift" ]] && enabled=0
-        [[ ${service} == key-* && ${ENABLED_SERVICES} =~ "key" ]] && enabled=0
     done
     $xtrace
     return $enabled
