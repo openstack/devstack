@@ -34,26 +34,13 @@ if [[ -z "$TOP_DIR" ]]; then
 
     source $TOP_DIR/stackrc
 
-    trap err_trap ERR
-
 fi
-
-# Exit on any errors so that errors don't compound
-function err_trap {
-    local r=$?
-    set +o xtrace
-
-    rm -rf $TMP_VENV_PATH
-
-    exit $r
-}
 
 # Build new venv
 virtualenv $VENV_DEST
 
 # Install modern pip
-$VENV_DEST/bin/pip install -U pip
+PIP_VIRTUAL_ENV=$VENV_DEST pip_install -U pip
 
-for pkg in ${MORE_PACKAGES}; do
-    pip_install_venv $VENV_DEST $pkg
-done
+# Install additional packages
+PIP_VIRTUAL_ENV=$VENV_DEST pip_install ${MORE_PACKAGES}

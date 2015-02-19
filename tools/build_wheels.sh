@@ -36,10 +36,6 @@ fi
 # Get additional packages to build
 MORE_PACKAGES="$@"
 
-# Set a fall-back default, assume that since this script is being called
-# package builds are to happen even if WHEELHOUSE is not configured
-export WHEELHOUSE=${WHEELHOUSE:-.wheelhouse}
-
 # Exit on any errors so that errors don't compound
 function err_trap {
     local r=$?
