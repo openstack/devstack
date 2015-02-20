@@ -1,14 +1,7 @@
 curl
 memcached
-python-configobj
-python-coverage
-python-eventlet
-python-greenlet
-python-netifaces
+# NOTE python-nose only exists because of swift functional job, we should probably
+# figure out a more consistent way of installing this from test-requirements.txt instead
 python-nose
-python-pastedeploy
-python-simplejson
-python-webob
-python-xattr
 sqlite3
 xfsprogs
