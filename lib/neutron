@@ -780,9 +780,41 @@ function stop_neutron {
     fi
 }
 
+# _move_neutron_addresses_route() - Move the primary IP to the OVS bridge
+# on startup, or back to the public interface on cleanup
+function _move_neutron_addresses_route {
+    local from_intf=$1
+    local to_intf=$2
+    local add_ovs_port=$3
+
+    if [[ -n "$from_intf" && -n "$to_intf" ]]; then
+        # Remove the primary IP address from $from_intf and add it to $to_intf,
+        # along with the default route, if it exists.  Also, when called
+        # on configure we will also add $from_intf as a port on $to_intf,
+        # assuming it is an OVS bridge.
+
+        local IP_BRD=$(ip -4 a s dev $from_intf | awk '/inet/ { print $2, $3, $4; exit }')
+        local DEFAULT_ROUTE_GW=$(ip r | awk "/default.+$from_intf/ { print \$3; exit }")
+        local ADD_OVS_PORT=""
+
+        if [ "$DEFAULT_ROUTE_GW" != "" ]; then
+            ADD_DEFAULT_ROUTE="sudo ip r replace default via $DEFAULT_ROUTE_GW dev $to_intf"
+        fi
+
+        if [[ "$add_ovs_port" == "True" ]]; then
+            ADD_OVS_PORT="sudo ovs-vsctl add-port $to_intf $from_intf"
+        fi
+
+        sudo ip addr del $IP_BRD dev $from_intf; sudo ip addr add $IP_BRD dev $to_intf; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE
+    fi
+}
+
 # cleanup_neutron() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_neutron {
+
+    _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False
+
     if is_provider_network && is_ironic_hardware; then
         for IP in $(ip addr show dev $OVS_PHYSICAL_BRIDGE | grep ' inet ' | awk '{print $2}'); do
             sudo ip addr del $IP dev $OVS_PHYSICAL_BRIDGE
@@ -960,6 +992,8 @@ function _configure_neutron_l3_agent {
     _neutron_setup_interface_driver $Q_L3_CONF_FILE
 
     neutron_plugin_configure_l3_agent
+
+    _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True
 }
 
 function _configure_neutron_metadata_agent {
@@ -1235,8 +1269,10 @@ function _neutron_configure_router_v4 {
         if is_neutron_ovs_base_plugin && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
             local ext_gw_interface=$(_neutron_get_ext_gw_interface)
             local cidr_len=${FLOATING_RANGE#*/}
-            sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
-            sudo ip link set $ext_gw_interface up
+            if [[ $(ip addr show dev $ext_gw_interface | grep -c $ext_gw_ip) == 0 && $Q_USE_PROVIDERNET_FOR_PUBLIC == "False" ]]; then
+                sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
+                sudo ip link set $ext_gw_interface up
+            fi
             ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' -v subnet_id=$PUB_SUBNET_ID '$4 == subnet_id { print $8; }'`
             die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
             sudo route add -net $FIXED_RANGE gw $ROUTER_GW_IP
