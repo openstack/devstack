@@ -685,7 +685,7 @@ fi
 
 # Pre-build some problematic wheels
 if [[ ! -d ${WHEELHOUSE:-} ]]; then
-    source tools/build_wheels.sh
+    source $TOP_DIR/tools/build_wheels.sh
 fi
 
 
