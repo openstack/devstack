@@ -147,13 +147,13 @@ function configure_zaqar {
 function configure_redis {
     if is_ubuntu; then
         install_package redis-server
+        pip_install redis
     elif is_fedora; then
         install_package redis
+        pip_install redis
     else
         exit_distro_not_supported "redis installation"
     fi
-
-    install_package python-redis
 }
 
 function configure_mongodb {
