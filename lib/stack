@@ -18,7 +18,7 @@ function stack_install_service {
     if type install_${service} >/dev/null 2>&1; then
         if [[ -n ${PROJECT_VENV[$service]:-} ]]; then
             rm -rf ${PROJECT_VENV[$service]}
-            source tools/build_venv.sh ${PROJECT_VENV[$service]}
+            source $TOP_DIR/tools/build_venv.sh ${PROJECT_VENV[$service]}
             export PIP_VIRTUAL_ENV=${PROJECT_VENV[$service]:-}
         fi
         install_${service}

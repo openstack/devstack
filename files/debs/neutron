@@ -7,17 +7,8 @@ libmysqlclient-dev  # testonly
 mysql-server #NOPRIME
 sudo
 postgresql-server-dev-all       # testonly
-python-iso8601
-python-paste
-python-routes
-python-suds
-python-pastedeploy
-python-greenlet
-python-eventlet
-python-sqlalchemy
 python-mysqldb
 python-mysql.connector
-python-pyudev
 python-qpid # NOPRIME
 dnsmasq-base
 dnsmasq-utils # for dhcp_release only available in dist:precise
