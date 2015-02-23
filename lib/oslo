@@ -31,6 +31,7 @@ GITDIR["oslo.i18n"]=$DEST/oslo.i18n
 GITDIR["oslo.log"]=$DEST/oslo.log
 GITDIR["oslo.messaging"]=$DEST/oslo.messaging
 GITDIR["oslo.middleware"]=$DEST/oslo.middleware
+GITDIR["oslo.policy"]=$DEST/oslo.policy
 GITDIR["oslo.rootwrap"]=$DEST/oslo.rootwrap
 GITDIR["oslo.serialization"]=$DEST/oslo.serialization
 GITDIR["oslo.utils"]=$DEST/oslo.utils
@@ -65,6 +66,7 @@ function install_oslo {
     _do_install_oslo_lib "oslo.log"
     _do_install_oslo_lib "oslo.messaging"
     _do_install_oslo_lib "oslo.middleware"
+    _do_install_oslo_lib "oslo.policy"
     _do_install_oslo_lib "oslo.rootwrap"
     _do_install_oslo_lib "oslo.serialization"
     _do_install_oslo_lib "oslo.utils"
