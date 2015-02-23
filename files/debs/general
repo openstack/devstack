@@ -4,6 +4,7 @@ unzip
 wget
 psmisc
 gcc
+g++
 git
 graphviz # testonly - docs
 lsof # useful when debugging
