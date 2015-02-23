@@ -76,6 +76,8 @@ fi
 # ==========
 
 # Phase: clean
+run_phase clean
+
 if [[ -d $TOP_DIR/extras.d ]]; then
     for i in $TOP_DIR/extras.d/*.sh; do
         [[ -r $i ]] && source $i clean
