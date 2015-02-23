@@ -103,13 +103,16 @@ function _create_lvm_volume_group {
 function init_lvm_volume_group {
     local vg=$1
     local size=$2
-    # Start with a clean volume group
-    _create_lvm_volume_group $vg $size
 
+    # Start the lvmetad and tgtd services
     if is_fedora || is_suse; then
-        # service is not started by default
+        # services is not started by default
+        start_service lvm2-lvmetad
         start_service tgtd
     fi
+
+    # Start with a clean volume group
+    _create_lvm_volume_group $vg $size
 
     # Remove iscsi targets
     sudo tgtadm --op show --mode target | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
