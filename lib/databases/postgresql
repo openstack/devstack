@@ -102,7 +102,7 @@ EOF
     fi
 
     # Install Python client module
-    pip_install MySQL-python psycopg2
+    pip_install psycopg2
 }
 
 function database_connection_url_postgresql {
