@@ -67,6 +67,7 @@ Walk through various setups used by stackers
    guides/multinode-lab
    guides/neutron
    guides/devstack-with-nested-kvm
+   guides/nova
 
 All-In-One Single VM
 --------------------
@@ -101,6 +102,11 @@ DevStack with KVM-based Nested Virtualization
 Procedure to setup :doc:`DevStack with KVM-based Nested Virtualization
 <guides/devstack-with-nested-kvm>`. With this setup, Nova instances
 will be more performant than with plain QEMU emulation.
+
+Nova and devstack
+--------------------------------
+
+Guide to working with nova features :doc:`Nova and devstack <guides/nova>`.
 
 DevStack Documentation
 ======================
