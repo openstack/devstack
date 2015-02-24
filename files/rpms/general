@@ -3,6 +3,7 @@ curl
 dbus
 euca2ools # only for testing client
 gcc
+gcc-c++
 git-core
 graphviz # testonly - docs
 openssh-server
