@@ -340,7 +340,7 @@ function start_ceilometer {
     # only die on API if it was actually intended to be turned on
     if is_service_enabled ceilometer-api; then
         echo "Waiting for ceilometer-api to start..."
-        if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -s http://localhost:8777/v2/ >/dev/null; do sleep 1; done"; then
+        if ! wait_for_service $SERVICE_TIMEOUT $CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/v2/; then
             die $LINENO "ceilometer-api did not start"
         fi
     fi
