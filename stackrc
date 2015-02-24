@@ -119,7 +119,7 @@ export PIP_FIND_LINKS=${PIP_FIND_LINKS:-file://$WHEELHOUSE}
 
 # This can be used to turn database query logging on and off
 # (currently only implemented for MySQL backend)
-DATABASE_QUERY_LOGGING=$(trueorfalse True DATABASE_QUERY_LOGGING)
+DATABASE_QUERY_LOGGING=$(trueorfalse False DATABASE_QUERY_LOGGING)
 
 # Set a timeout for git operations.  If git is still running when the
 # timeout expires, the command will be retried up to 3 times.  This is
@@ -345,6 +345,10 @@ GITBRANCH["oslo.messaging"]=${OSLOMSG_BRANCH:-master}
 # oslo.middleware
 GITREPO["oslo.middleware"]=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
 GITBRANCH["oslo.middleware"]=${OSLOMID_BRANCH:-master}
+
+# oslo.policy
+GITREPO["oslo.policy"]=${OSLOPOLICY_REPO:-${GIT_BASE}/openstack/oslo.policy.git}
+GITBRANCH["oslo.policy"]=${OSLOPOLICY_BRANCH:-master}
 
 # oslo.rootwrap
 GITREPO["oslo.rootwrap"]=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
