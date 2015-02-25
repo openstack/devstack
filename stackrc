@@ -43,14 +43,6 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 #  enable_service q-meta
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
-function isset {
-    local nounset=$(set +o | grep nounset)
-    set +o nounset
-    [[ -n "${!1+x}" ]]
-    result=$?
-    $nounset
-    return $result
-}
 
 # this allows us to pass ENABLED_SERVICES
 if ! isset ENABLED_SERVICES ; then
