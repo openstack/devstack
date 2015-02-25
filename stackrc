@@ -314,6 +314,10 @@ GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 GITREPO["cliff"]=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
 GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
 
+# debtcollector deprecation framework/helpers
+GITREPO["debtcollector"]=${DEBTCOLLECTOR_REPO:-${GIT_BASE}/openstack/debtcollector.git}
+GITBRANCH["debtcollector"]=${DEBTCOLLECTOR_BRANCH:-master}
+
 # oslo.concurrency
 GITREPO["oslo.concurrency"]=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
 GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-master}
