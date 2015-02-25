@@ -43,14 +43,6 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 #  enable_service q-meta
 #  # Optional, to enable tempest configuration as part of devstack
 #  enable_service tempest
-function isset {
-    local nounset=$(set +o | grep nounset)
-    set +o nounset
-    [[ -n "${!1+x}" ]]
-    result=$?
-    $nounset
-    return $result
-}
 
 # this allows us to pass ENABLED_SERVICES
 if ! isset ENABLED_SERVICES ; then
@@ -313,6 +305,10 @@ GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 # cliff command line framework
 GITREPO["cliff"]=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
 GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
+
+# debtcollector deprecation framework/helpers
+GITREPO["debtcollector"]=${DEBTCOLLECTOR_REPO:-${GIT_BASE}/openstack/debtcollector.git}
+GITBRANCH["debtcollector"]=${DEBTCOLLECTOR_BRANCH:-master}
 
 # oslo.concurrency
 GITREPO["oslo.concurrency"]=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}

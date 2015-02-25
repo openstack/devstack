@@ -23,6 +23,7 @@ set +o xtrace
 # Defaults
 # --------
 GITDIR["cliff"]=$DEST/cliff
+GITDIR["debtcollector"]=$DEST/debtcollector
 GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
 GITDIR["oslo.config"]=$DEST/oslo.config
 GITDIR["oslo.context"]=$DEST/oslo.context
@@ -58,6 +59,7 @@ function _do_install_oslo_lib {
 # install_oslo() - Collect source and prepare
 function install_oslo {
     _do_install_oslo_lib "cliff"
+    _do_install_oslo_lib "debtcollector"
     _do_install_oslo_lib "oslo.concurrency"
     _do_install_oslo_lib "oslo.config"
     _do_install_oslo_lib "oslo.context"
