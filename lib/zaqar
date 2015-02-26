@@ -37,8 +37,6 @@ ZAQAR_DIR=$DEST/zaqar
 ZAQARCLIENT_DIR=$DEST/python-zaqarclient
 ZAQAR_CONF_DIR=/etc/zaqar
 ZAQAR_CONF=$ZAQAR_CONF_DIR/zaqar.conf
-ZAQAR_API_LOG_DIR=/var/log/zaqar
-ZAQAR_API_LOG_FILE=$ZAQAR_API_LOG_DIR/queues.log
 ZAQAR_AUTH_CACHE_DIR=${ZAQAR_AUTH_CACHE_DIR:-/var/cache/zaqar}
 
 # Support potential entry-points console scripts
@@ -110,14 +108,10 @@ function configure_zaqar {
     [ ! -d $ZAQAR_CONF_DIR ] && sudo mkdir -m 755 -p $ZAQAR_CONF_DIR
     sudo chown $USER $ZAQAR_CONF_DIR
 
-    [ ! -d $ZAQAR_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $ZAQAR_API_LOG_DIR
-    sudo chown $USER $ZAQAR_API_LOG_DIR
-
     iniset $ZAQAR_CONF DEFAULT debug True
     iniset $ZAQAR_CONF DEFAULT verbose True
     iniset $ZAQAR_CONF DEFAULT admin_mode True
     iniset $ZAQAR_CONF DEFAULT use_syslog $SYSLOG
-    iniset $ZAQAR_CONF DEFAULT log_file $ZAQAR_API_LOG_FILE
     iniset $ZAQAR_CONF 'drivers:transport:wsgi' bind $ZAQAR_SERVICE_HOST
 
     configure_auth_token_middleware $ZAQAR_CONF zaqar $ZAQAR_AUTH_CACHE_DIR
