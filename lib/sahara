@@ -39,7 +39,7 @@ SAHARA_SERVICE_PROTOCOL=${SAHARA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
 SAHARA_AUTH_CACHE_DIR=${SAHARA_AUTH_CACHE_DIR:-/var/cache/sahara}
 
-SAHARA_ENABLED_PLUGINS=${SAHARA_ENABLED_PLUGINS:-vanilla,hdp,fake}
+SAHARA_ENABLED_PLUGINS=${SAHARA_ENABLED_PLUGINS:-vanilla,hdp,cdh,spark,fake}
 
 # Support entry points installation of console scripts
 if [[ -d $SAHARA_DIR/bin ]]; then
