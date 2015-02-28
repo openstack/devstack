@@ -57,7 +57,7 @@ TMP_VENV_PATH=$(mktemp -d tmp-venv-XXXX)
 virtualenv $TMP_VENV_PATH
 
 # Install modern pip and wheel
-$TMP_VENV_PATH/bin/pip install -U pip wheel
+PIP_VIRTUAL_ENV=$TMP_VENV_PATH pip_install -U pip wheel
 
 # VENV_PACKAGES is a list of packages we want to pre-install
 VENV_PACKAGE_FILE=$FILES/venv-requirements.txt
