@@ -787,6 +787,28 @@ function get_field {
     done
 }
 
+# install default policy
+# copy over a default policy.json and policy.d for projects
+function install_default_policy {
+    local project=$1
+    local project_uc=$(echo $1|tr a-z A-Z)
+    local conf_dir="${project_uc}_CONF_DIR"
+    # eval conf dir to get the variable
+    conf_dir="${!conf_dir}"
+    local project_dir="${project_uc}_DIR"
+    # eval project dir to get the variable
+    project_dir="${!project_dir}"
+    local sample_conf_dir="${project_dir}/etc/${project}"
+    local sample_policy_dir="${project_dir}/etc/${project}/policy.d"
+
+    # first copy any policy.json
+    cp -p $sample_conf_dir/policy.json $conf_dir
+    # then optionally copy over policy.d
+    if [[ -d $sample_policy_dir ]]; then
+        cp -r $sample_policy_dir $conf_dir/policy.d
+    fi
+}
+
 # Add a policy to a policy.json file
 # Do nothing if the policy already exists
 # ``policy_add policy_file policy_name policy_permissions``
