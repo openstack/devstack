@@ -934,7 +934,7 @@ function _configure_neutron_l3_agent {
     Q_L3_ROUTER_PER_TENANT=$Q_USE_NAMESPACE
 
     if is_service_enabled q-vpn; then
-        cp $NEUTRON_VPNAAS_DIR/etc/vpn_agent.ini $Q_VPN_CONF_FILE
+        neutron_vpn_configure_agent
     fi
 
     cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
