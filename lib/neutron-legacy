@@ -65,7 +65,7 @@ GATEWAY_TIMEOUT=30
 # -----------------------------
 
 # Subnet IP version
-IP_VERSION=${IP_VERSION:-4}
+IP_VERSION=${IP_VERSION:-"4+6"}
 # Validate IP_VERSION
 if [[ $IP_VERSION != "4" ]] && [[ $IP_VERSION != "6" ]] && [[ $IP_VERSION != "4+6" ]]; then
     die $LINENO "IP_VERSION must be either 4, 6, or 4+6"
