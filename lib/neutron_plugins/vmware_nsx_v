@@ -1,6 +1,6 @@
 #!/bin/bash
-
-# This file is needed so Q_PLUGIN=vmware_nsx will work.
+#
+# This file is needed so Q_PLUGIN=vmware_nsx_v will work.
 
 # FIXME(salv-orlando): This function should not be here, but unfortunately
 # devstack calls it before the external plugins are fetched

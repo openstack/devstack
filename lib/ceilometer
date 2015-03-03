@@ -13,21 +13,16 @@
 #
 #   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
 #
-# To ensure events are stored, add the following section to local.conf:
-#
-#   [[post-config|$CEILOMETER_CONF]]
-#   [notification]
-#   store_events=True
-#
 # Several variables set in the localrc section adjust common behaviors
 # of Ceilometer (see within for additional settings):
 #
 #   CEILOMETER_USE_MOD_WSGI:       When True, run the api under mod_wsgi.
 #   CEILOMETER_PIPELINE_INTERVAL:  The number of seconds between pipeline processing
 #                                  runs. Default 600.
-#   CEILOMETER_BACKEND:            The database backend (e.g. 'mysql', 'mongodb')
+#   CEILOMETER_BACKEND:            The database backend (e.g. 'mysql', 'mongodb', 'es')
 #   CEILOMETER_COORDINATION_URL:   The URL for a group membership service provided
 #                                  by tooz.
+#   CEILOMETER_EVENTS:             Enable event collection
 
 
 # Dependencies:
@@ -80,6 +75,7 @@ CEILOMETER_USE_MOD_WSGI=$(trueorfalse False CEILOMETER_USE_MOD_WSGI)
 
 # To enable OSprofiler change value of this variable to "notifications,profiler"
 CEILOMETER_NOTIFICATION_TOPICS=${CEILOMETER_NOTIFICATION_TOPICS:-notifications}
+CEILOMETER_EVENTS=${CEILOMETER_EVENTS:-True}
 
 CEILOMETER_COORDINATION_URL=${CEILOMETER_COORDINATION_URL:-}
 CEILOMETER_PIPELINE_INTERVAL=${CEILOMETER_PIPELINE_INTERVAL:-}
@@ -137,8 +133,10 @@ function _cleanup_ceilometer_apache_wsgi {
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_ceilometer {
-    if [ "$CEILOMETER_BACKEND" != 'mysql' ] && [ "$CEILOMETER_BACKEND" != 'postgresql' ] ; then
+    if [ "$CEILOMETER_BACKEND" = 'mongodb' ] ; then
         mongo ceilometer --eval "db.dropDatabase();"
+    elif [ "$CEILOMETER_BACKEND" = 'es' ] ; then
+        curl -XDELETE "localhost:9200/events_*"
     fi
     if [ "$CEILOMETER_USE_MOD_WSGI" == "True" ]; then
         _cleanup_ceilometer_apache_wsgi
@@ -206,11 +204,21 @@ function configure_ceilometer {
 
     configure_auth_token_middleware $CEILOMETER_CONF ceilometer $CEILOMETER_AUTH_CACHE_DIR
 
+    iniset $CEILOMETER_CONF notification store_events $CEILOMETER_EVENTS
+
     if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
         iniset $CEILOMETER_CONF database alarm_connection $(database_connection_url ceilometer)
         iniset $CEILOMETER_CONF database event_connection $(database_connection_url ceilometer)
         iniset $CEILOMETER_CONF database metering_connection $(database_connection_url ceilometer)
         iniset $CEILOMETER_CONF DEFAULT collector_workers $API_WORKERS
+    elif [ "$CEILOMETER_BACKEND" = 'es' ] ; then
+        # es is only supported for events. we will use sql for alarming/metering.
+        iniset $CEILOMETER_CONF database alarm_connection $(database_connection_url ceilometer)
+        iniset $CEILOMETER_CONF database event_connection es://localhost:9200
+        iniset $CEILOMETER_CONF database metering_connection $(database_connection_url ceilometer)
+        iniset $CEILOMETER_CONF DEFAULT collector_workers $API_WORKERS
+        ${TOP_DIR}/pkg/elasticsearch.sh start
+        cleanup_ceilometer
     else
         iniset $CEILOMETER_CONF database alarm_connection mongodb://localhost:27017/ceilometer
         iniset $CEILOMETER_CONF database event_connection mongodb://localhost:27017/ceilometer
@@ -264,7 +272,7 @@ function init_ceilometer {
     rm -f $CEILOMETER_AUTH_CACHE_DIR/*
 
     if is_service_enabled mysql postgresql; then
-        if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
+        if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] || [ "$CEILOMETER_BACKEND" = 'es' ] ; then
             recreate_database ceilometer
             $CEILOMETER_BIN_DIR/ceilometer-dbsync
         fi
@@ -292,6 +300,11 @@ function install_ceilometer {
         install_package memcached
     elif echo $CEILOMETER_COORDINATION_URL | grep -q '^redis:'; then
         install_redis
+    fi
+
+    if [ "$CEILOMETER_BACKEND" = 'es' ] ; then
+        ${TOP_DIR}/pkg/elasticsearch.sh download
+        ${TOP_DIR}/pkg/elasticsearch.sh install
     fi
 }
 
