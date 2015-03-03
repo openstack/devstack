@@ -564,7 +564,7 @@ function start_keystone {
     # Check that the keystone service is running. Even if the tls tunnel
     # should be enabled, make sure the internal port is checked using
     # unencryted traffic at this point.
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -k -s $auth_protocol://$KEYSTONE_SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/ >/dev/null; do sleep 1; done"; then
+    if ! wait_for_service $SERVICE_TIMEOUT $auth_protocol://$KEYSTONE_SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/; then
         die $LINENO "keystone did not start"
     fi
 
