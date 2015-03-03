@@ -4,6 +4,7 @@ iptables
 ipxe
 libguestfs0
 libvirt-bin
+open-iscsi
 openssh-client
 openvswitch-switch
 openvswitch-datapath-dkms
