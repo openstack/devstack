@@ -47,11 +47,20 @@ function configure_elasticsearch {
     :
 }
 
+function _check_elasticsearch_ready {
+    # poll elasticsearch to see if it's started
+    if ! wait_for_service 30 http://localhost:9200; then
+        die $LINENO "Maximum timeout reached. Could not connect to ElasticSearch"
+    fi
+}
+
 function start_elasticsearch {
     if is_ubuntu; then
         sudo /etc/init.d/elasticsearch start
+        _check_elasticsearch_ready
     elif is_fedora; then
         sudo /bin/systemctl start elasticsearch.service
+        _check_elasticsearch_ready
     else
         echo "Unsupported architecture...can not start elasticsearch."
     fi
