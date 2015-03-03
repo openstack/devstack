@@ -37,6 +37,7 @@ TROVE_CONF_DIR=/etc/trove
 TROVE_CONF=$TROVE_CONF_DIR/trove.conf
 TROVE_TASKMANAGER_CONF=$TROVE_CONF_DIR/trove-taskmanager.conf
 TROVE_CONDUCTOR_CONF=$TROVE_CONF_DIR/trove-conductor.conf
+TROVE_GUESTAGENT_CONF=$TROVE_CONF_DIR/trove-guestagent.conf
 TROVE_API_PASTE_INI=$TROVE_CONF_DIR/api-paste.ini
 
 TROVE_LOCAL_CONF_DIR=$TROVE_DIR/etc/trove
@@ -171,18 +172,18 @@ function configure_trove {
     fi
 
     # Set up Guest Agent conf
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT rabbit_userid $RABBIT_USERID
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT rabbit_host $TROVE_HOST_GATEWAY
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT rabbit_password $RABBIT_PASSWORD
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT nova_proxy_admin_user radmin
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT nova_proxy_admin_tenant_name trove
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT control_exchange trove
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT ignore_users os_admin
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT log_dir /var/log/trove/
-    iniset $TROVE_CONF_DIR/trove-guestagent.conf DEFAULT log_file trove-guestagent.log
-    setup_trove_logging $TROVE_CONF_DIR/trove-guestagent.conf
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT rabbit_userid $RABBIT_USERID
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT rabbit_host $TROVE_HOST_GATEWAY
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT nova_proxy_admin_user radmin
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT nova_proxy_admin_tenant_name trove
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT trove_auth_url $TROVE_AUTH_ENDPOINT
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT control_exchange trove
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT ignore_users os_admin
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT log_dir /var/log/trove/
+    iniset $TROVE_GUESTAGENT_CONF DEFAULT log_file trove-guestagent.log
+    setup_trove_logging $TROVE_GUESTAGENT_CONF
 }
 
 # install_troveclient() - Collect source and prepare
