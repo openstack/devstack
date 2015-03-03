@@ -361,6 +361,10 @@ GITBRANCH["oslo.serialization"]=${OSLOSERIALIZATION_BRANCH:-master}
 GITREPO["oslo.utils"]=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
 GITBRANCH["oslo.utils"]=${OSLOUTILS_BRANCH:-master}
 
+# oslo.versionedobjects
+GITREPO["oslo.versionedobjects"]=${OSLOVERSIONEDOBJECTS_REPO:-${GIT_BASE}/openstack/oslo.versionedobjects.git}
+GITBRANCH["oslo.versionedobjects"]=${OSLOVERSIONEDOBJECTS_BRANCH:-master}
+
 # oslo.vmware
 GITREPO["oslo.vmware"]=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
 GITBRANCH["oslo.vmware"]=${OSLOVMWARE_BRANCH:-master}
