@@ -15,7 +15,6 @@ libxslt-devel
 psmisc
 pylint
 python-unittest2
-python-virtualenv
 python-devel
 screen
 tar
