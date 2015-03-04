@@ -1601,25 +1601,6 @@ function enable_plugin {
     GITBRANCH[$name]=$branch
 }
 
-# is_plugin_enabled
-#
-# Has a particular plugin been enabled?
-function is_plugin_enabled {
-    local plugins=$@
-    local plugin
-    local enabled=1
-
-    # short circuit if nothing to do
-    if [[ -z ${DEVSTACK_PLUGINS} ]]; then
-        return $enabled
-    fi
-
-    for plugin in ${plugins}; do
-        [[ ,${DEVSTACK_PLUGINS}, =~ ,${plugin}, ]] && enabled=0
-    done
-    return $enabled
-}
-
 # fetch_plugins
 #
 # clones all plugins
