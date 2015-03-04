@@ -121,6 +121,16 @@ IRONIC_HTTP_DIR=${IRONIC_HTTP_DIR:-$IRONIC_DATA_DIR/httpboot}
 IRONIC_HTTP_SERVER=${IRONIC_HTTP_SERVER:-$HOST_IP}
 IRONIC_HTTP_PORT=${IRONIC_HTTP_PORT:-8088}
 
+# NOTE(lucasagomes): This flag is used to differentiate the nodes that
+# uses IPA as their deploy ramdisk from nodes that uses the agent_* drivers
+# (which also uses IPA but depends on Swift Temp URLs to work). At present,
+# all drivers that uses the iSCSI approach for their deployment supports
+# using both, IPA or bash ramdisks for the deployment. In the future we
+# want to remove the support for the bash ramdisk in favor of IPA, once
+# we get there this flag can be removed, and all conditionals that uses
+# it should just run by default.
+IRONIC_DEPLOY_DRIVER_ISCSI_WITH_IPA=$(trueorfalse False IRONIC_DEPLOY_DRIVER_ISCSI_WITH_IPA)
+
 # get_pxe_boot_file() - Get the PXE/iPXE boot file path
 function get_pxe_boot_file {
     local relpath=syslinux/pxelinux.0
@@ -159,6 +169,11 @@ function is_ironic_hardware {
 
 function is_deployed_by_agent {
     [[ -z "${IRONIC_DEPLOY_DRIVER%%agent*}" ]] && return 0
+    return 1
+}
+
+function is_deployed_with_ipa_ramdisk {
+    is_deployed_by_agent || [[ "$IRONIC_DEPLOY_DRIVER_ISCSI_WITH_IPA" == "True" ]] && return 0
     return 1
 }
 
@@ -329,7 +344,11 @@ function configure_ironic_conductor {
     iniset $IRONIC_CONF_FILE pxe tftp_root $IRONIC_TFTPBOOT_DIR
     iniset $IRONIC_CONF_FILE pxe tftp_master_path $IRONIC_TFTPBOOT_DIR/master_images
     if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
-        iniset $IRONIC_CONF_FILE pxe pxe_append_params "nofb nomodeset vga=normal console=ttyS0"
+        local pxe_params="nofb nomodeset vga=normal console=ttyS0"
+        if is_deployed_with_ipa_ramdisk; then
+            pxe_params+=" systemd.journald.forward_to_console=yes"
+        fi
+        iniset $IRONIC_CONF_FILE pxe pxe_append_params "$pxe_params"
     fi
     if is_deployed_by_agent; then
         if [[ "$SWIFT_ENABLE_TEMPURLS" == "True" ]] ; then
@@ -344,9 +363,6 @@ function configure_ironic_conductor {
         iniset $IRONIC_CONF_FILE glance swift_container glance
         iniset $IRONIC_CONF_FILE glance swift_temp_url_duration 3600
         iniset $IRONIC_CONF_FILE agent heartbeat_timeout 30
-        if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] ; then
-            iniset $IRONIC_CONF_FILE agent agent_pxe_append_params "nofb nomodeset vga=normal console=ttyS0 systemd.journald.forward_to_console=yes"
-        fi
     fi
 
     if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
@@ -717,7 +733,7 @@ function upload_baremetal_ironic_deploy {
         if [ "$IRONIC_BUILD_DEPLOY_RAMDISK" = "True" ]; then
             # we can build them only if we're not offline
             if [ "$OFFLINE" != "True" ]; then
-                if is_deployed_by_agent; then
+                if is_deployed_with_ipa_ramdisk; then
                     build_ipa_coreos_ramdisk $IRONIC_DEPLOY_KERNEL_PATH $IRONIC_DEPLOY_RAMDISK_PATH
                 else
                     ramdisk-image-create $IRONIC_DEPLOY_FLAVOR \
@@ -727,7 +743,7 @@ function upload_baremetal_ironic_deploy {
                 die $LINENO "Deploy kernel+ramdisk files don't exist and cannot be build in OFFLINE mode"
             fi
         else
-            if is_deployed_by_agent; then
+            if is_deployed_with_ipa_ramdisk; then
                 # download the agent image tarball
                 wget "$IRONIC_AGENT_KERNEL_URL" -O $IRONIC_DEPLOY_KERNEL_PATH
                 wget "$IRONIC_AGENT_RAMDISK_URL" -O $IRONIC_DEPLOY_RAMDISK_PATH
