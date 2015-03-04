@@ -3,4 +3,3 @@ scsi-target-utils
 qemu-img
 postgresql-devel
 iscsi-initiator-utils
-python-lxml

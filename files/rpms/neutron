@@ -10,15 +10,6 @@ mysql-devel  # testonly
 mysql-server # NOPRIME
 openvswitch # NOPRIME
 postgresql-devel        # testonly
-python-eventlet
-python-greenlet
-python-iso8601
-python-paste
-python-paste-deploy
-python-qpid # NOPRIME
-python-routes
-python-sqlalchemy
-python-suds
 rabbitmq-server # NOPRIME
 qpid-cpp-server        # NOPRIME
 sqlite

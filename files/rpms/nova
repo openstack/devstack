@@ -21,22 +21,6 @@ mysql-devel  # testonly
 mysql-server # NOPRIME
 parted
 polkit
-python-cheetah
-python-eventlet
-python-feedparser
-python-greenlet
-python-iso8601
-python-lockfile
-python-migrate
-python-mox
-python-paramiko
-python-paste
-python-paste-deploy
-python-qpid # NOPRIME
-python-routes
-python-sqlalchemy
-python-suds
-python-tempita
 rabbitmq-server # NOPRIME
 qpid-cpp-server # NOPRIME
 sqlite
