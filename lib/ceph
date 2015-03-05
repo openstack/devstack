@@ -71,7 +71,7 @@ CEPH_REPLICAS=${CEPH_REPLICAS:-1}
 CEPH_REPLICAS_SEQ=$(seq ${CEPH_REPLICAS})
 
 # Connect to an existing Ceph cluster
-REMOTE_CEPH=$(trueorfalse False $REMOTE_CEPH)
+REMOTE_CEPH=$(trueorfalse False REMOTE_CEPH)
 REMOTE_CEPH_ADMIN_KEY_PATH=${REMOTE_CEPH_ADMIN_KEY_PATH:-$CEPH_CONF_DIR/ceph.client.admin.keyring}
 
 
