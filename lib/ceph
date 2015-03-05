@@ -71,7 +71,7 @@ CEPH_REPLICAS=${CEPH_REPLICAS:-1}
 CEPH_REPLICAS_SEQ=$(seq ${CEPH_REPLICAS})
 
 # Connect to an existing Ceph cluster
-REMOTE_CEPH=$(trueorfalse False $REMOTE_CEPH)
+REMOTE_CEPH=$(trueorfalse False REMOTE_CEPH)
 REMOTE_CEPH_ADMIN_KEY_PATH=${REMOTE_CEPH_ADMIN_KEY_PATH:-$CEPH_CONF_DIR/ceph.client.admin.keyring}
 
 
@@ -151,14 +151,14 @@ function cleanup_ceph_embedded {
     if [[ -e ${CEPH_DISK_IMAGE} ]]; then
         sudo rm -f ${CEPH_DISK_IMAGE}
     fi
+
+    # purge ceph config file and keys
+    sudo rm -rf ${CEPH_CONF_DIR}/*
 }
 
 function cleanup_ceph_general {
     undefine_virsh_secret
     uninstall_package ceph ceph-common python-ceph libcephfs1 > /dev/null 2>&1
-
-    # purge ceph config file and keys
-    sudo rm -rf ${CEPH_CONF_DIR}/*
 }
 
 
