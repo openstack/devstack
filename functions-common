@@ -973,13 +973,18 @@ function get_or_create_endpoint {
 
 # _get_package_dir
 function _get_package_dir {
+    local base_dir=$1
     local pkg_dir
+
+    if [[ -z "$base_dir" ]]; then
+        base_dir=$FILES
+    fi
     if is_ubuntu; then
-        pkg_dir=$FILES/debs
+        pkg_dir=$base_dir/debs
     elif is_fedora; then
-        pkg_dir=$FILES/rpms
+        pkg_dir=$base_dir/rpms
     elif is_suse; then
-        pkg_dir=$FILES/rpms-suse
+        pkg_dir=$base_dir/rpms-suse
     else
         exit_distro_not_supported "list of packages"
     fi
@@ -1005,84 +1010,14 @@ function apt_get {
         apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
 }
 
-# get_packages() collects a list of package names of any type from the
-# prerequisite files in ``files/{debs|rpms}``.  The list is intended
-# to be passed to a package installer such as apt or yum.
-#
-# Only packages required for the services in 1st argument will be
-# included.  Two bits of metadata are recognized in the prerequisite files:
-#
-# - ``# NOPRIME`` defers installation to be performed later in `stack.sh`
-# - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
-#   of the package to the distros listed.  The distro names are case insensitive.
-function get_packages {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local services=$@
-    local package_dir=$(_get_package_dir)
-    local file_to_parse=""
-    local service=""
+function _parse_package_files {
+    local files_to_parse=$@
 
-    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False INSTALL_TESTONLY_PACKAGES)
-
-    if [[ -z "$package_dir" ]]; then
-        echo "No package directory supplied"
-        return 1
-    fi
     if [[ -z "$DISTRO" ]]; then
         GetDistro
     fi
-    for service in ${services//,/ }; do
-        # Allow individual services to specify dependencies
-        if [[ -e ${package_dir}/${service} ]]; then
-            file_to_parse="${file_to_parse} $service"
-        fi
-        # NOTE(sdague) n-api needs glance for now because that's where
-        # glance client is
-        if [[ $service == n-api ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
-                file_to_parse="${file_to_parse} nova"
-            fi
-            if [[ ! $file_to_parse =~ glance ]]; then
-                file_to_parse="${file_to_parse} glance"
-            fi
-        elif [[ $service == c-* ]]; then
-            if [[ ! $file_to_parse =~ cinder ]]; then
-                file_to_parse="${file_to_parse} cinder"
-            fi
-        elif [[ $service == ceilometer-* ]]; then
-            if [[ ! $file_to_parse =~ ceilometer ]]; then
-                file_to_parse="${file_to_parse} ceilometer"
-            fi
-        elif [[ $service == s-* ]]; then
-            if [[ ! $file_to_parse =~ swift ]]; then
-                file_to_parse="${file_to_parse} swift"
-            fi
-        elif [[ $service == n-* ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
-                file_to_parse="${file_to_parse} nova"
-            fi
-        elif [[ $service == g-* ]]; then
-            if [[ ! $file_to_parse =~ glance ]]; then
-                file_to_parse="${file_to_parse} glance"
-            fi
-        elif [[ $service == key* ]]; then
-            if [[ ! $file_to_parse =~ keystone ]]; then
-                file_to_parse="${file_to_parse} keystone"
-            fi
-        elif [[ $service == q-* ]]; then
-            if [[ ! $file_to_parse =~ neutron ]]; then
-                file_to_parse="${file_to_parse} neutron"
-            fi
-        elif [[ $service == ir-* ]]; then
-            if [[ ! $file_to_parse =~ ironic ]]; then
-                file_to_parse="${file_to_parse} ironic"
-            fi
-        fi
-    done
 
-    for file in ${file_to_parse}; do
-        local fname=${package_dir}/${file}
+    for fname in ${files_to_parse}; do
         local OIFS line package distros distro
         [[ -e $fname ]] || continue
 
@@ -1126,6 +1061,102 @@ function get_packages {
         done
         IFS=$OIFS
     done
+}
+
+# get_packages() collects a list of package names of any type from the
+# prerequisite files in ``files/{debs|rpms}``.  The list is intended
+# to be passed to a package installer such as apt or yum.
+#
+# Only packages required for the services in 1st argument will be
+# included.  Two bits of metadata are recognized in the prerequisite files:
+#
+# - ``# NOPRIME`` defers installation to be performed later in `stack.sh`
+# - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
+#   of the package to the distros listed.  The distro names are case insensitive.
+function get_packages {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local services=$@
+    local package_dir=$(_get_package_dir)
+    local file_to_parse=""
+    local service=""
+
+    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False INSTALL_TESTONLY_PACKAGES)
+
+    if [[ -z "$package_dir" ]]; then
+        echo "No package directory supplied"
+        return 1
+    fi
+    for service in ${services//,/ }; do
+        # Allow individual services to specify dependencies
+        if [[ -e ${package_dir}/${service} ]]; then
+            file_to_parse="${file_to_parse} ${package_dir}/${service}"
+        fi
+        # NOTE(sdague) n-api needs glance for now because that's where
+        # glance client is
+        if [[ $service == n-api ]]; then
+            if [[ ! $file_to_parse =~ nova ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/nova"
+            fi
+            if [[ ! $file_to_parse =~ glance ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/glance"
+            fi
+        elif [[ $service == c-* ]]; then
+            if [[ ! $file_to_parse =~ cinder ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/cinder"
+            fi
+        elif [[ $service == ceilometer-* ]]; then
+            if [[ ! $file_to_parse =~ ceilometer ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/ceilometer"
+            fi
+        elif [[ $service == s-* ]]; then
+            if [[ ! $file_to_parse =~ swift ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/swift"
+            fi
+        elif [[ $service == n-* ]]; then
+            if [[ ! $file_to_parse =~ nova ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/nova"
+            fi
+        elif [[ $service == g-* ]]; then
+            if [[ ! $file_to_parse =~ glance ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/glance"
+            fi
+        elif [[ $service == key* ]]; then
+            if [[ ! $file_to_parse =~ keystone ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/keystone"
+            fi
+        elif [[ $service == q-* ]]; then
+            if [[ ! $file_to_parse =~ neutron ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/neutron"
+            fi
+        elif [[ $service == ir-* ]]; then
+            if [[ ! $file_to_parse =~ ironic ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/ironic"
+            fi
+        fi
+    done
+    echo "$(_parse_package_files $file_to_parse)"
+    $xtrace
+}
+
+# get_plugin_packages() collects a list of package names of any type from a
+# plugin's prerequisite files in ``$PLUGIN/devstack/files/{debs|rpms}``.  The
+# list is intended to be passed to a package installer such as apt or yum.
+#
+# Only packages required for enabled and collected plugins will included.
+#
+# The same metadata used in the main devstack prerequisite files may be used
+# in these prerequisite files, see get_packages() for more info.
+function get_plugin_packages {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local files_to_parse=""
+    local package_dir=""
+    for plugin in ${DEVSTACK_PLUGINS//,/ }; do
+        local package_dir="$(_get_package_dir ${GITDIR[$plugin]}/devstack/files)"
+        files_to_parse+="$package_dir/$plugin"
+    done
+    echo "$(_parse_package_files $files_to_parse)"
     $xtrace
 }
 
