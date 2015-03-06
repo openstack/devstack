@@ -358,6 +358,10 @@ GITBRANCH["oslo.serialization"]=${OSLOSERIALIZATION_BRANCH:-master}
 GITREPO["oslo.utils"]=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
 GITBRANCH["oslo.utils"]=${OSLOUTILS_BRANCH:-master}
 
+# oslo.versionedobjects
+GITREPO["oslo.versionedobjects"]=${OSLOVERSIONEDOBJECTS_REPO:-${GIT_BASE}/openstack/oslo.versionedobjects.git}
+GITBRANCH["oslo.versionedobjects"]=${OSLOVERSIONEDOBJECTS_BRANCH:-master}
+
 # oslo.vmware
 GITREPO["oslo.vmware"]=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
 GITBRANCH["oslo.vmware"]=${OSLOVMWARE_BRANCH:-master}
@@ -419,13 +423,9 @@ GITBRANCH["ceilometermiddleware"]=${CEILOMETERMIDDLEWARE_BRANCH:-master}
 
 ##################
 #
-#  TripleO Components
+#  TripleO / Heat Agent Components
 #
 ##################
-
-# diskimage-builder
-DIB_REPO=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
-DIB_BRANCH=${DIB_BRANCH:-master}
 
 # os-apply-config configuration template tool
 OAC_REPO=${OAC_REPO:-${GIT_BASE}/openstack/os-apply-config.git}
@@ -438,10 +438,6 @@ OCC_BRANCH=${OCC_BRANCH:-master}
 # os-refresh-config configuration run-parts tool
 ORC_REPO=${ORC_REPO:-${GIT_BASE}/openstack/os-refresh-config.git}
 ORC_BRANCH=${ORC_BRANCH:-master}
-
-# Tripleo elements for diskimage-builder images
-TIE_REPO=${TIE_REPO:-${GIT_BASE}/openstack/tripleo-image-elements.git}
-TIE_BRANCH=${TIE_BRANCH:-master}
 
 #################
 #
