@@ -36,6 +36,7 @@ GITDIR["oslo.policy"]=$DEST/oslo.policy
 GITDIR["oslo.rootwrap"]=$DEST/oslo.rootwrap
 GITDIR["oslo.serialization"]=$DEST/oslo.serialization
 GITDIR["oslo.utils"]=$DEST/oslo.utils
+GITDIR["oslo.versionedobjects"]=$DEST/oslo.versionedobjects
 GITDIR["oslo.vmware"]=$DEST/oslo.vmware
 GITDIR["pycadf"]=$DEST/pycadf
 GITDIR["stevedore"]=$DEST/stevedore
@@ -72,6 +73,7 @@ function install_oslo {
     _do_install_oslo_lib "oslo.rootwrap"
     _do_install_oslo_lib "oslo.serialization"
     _do_install_oslo_lib "oslo.utils"
+    _do_install_oslo_lib "oslo.versionedobjects"
     _do_install_oslo_lib "oslo.vmware"
     _do_install_oslo_lib "pycadf"
     _do_install_oslo_lib "stevedore"
