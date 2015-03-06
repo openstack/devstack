@@ -136,7 +136,7 @@ function configure_trove {
 
     iniset $TROVE_CONF DEFAULT rabbit_userid $RABBIT_USERID
     iniset $TROVE_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
-    iniset $TROVE_CONF DEFAULT sql_connection `database_connection_url trove`
+    iniset $TROVE_CONF database connection `database_connection_url trove`
     iniset $TROVE_CONF DEFAULT default_datastore $TROVE_DATASTORE_TYPE
     setup_trove_logging $TROVE_CONF
     iniset $TROVE_CONF DEFAULT trove_api_workers "$API_WORKERS"
@@ -149,7 +149,7 @@ function configure_trove {
 
         iniset $TROVE_TASKMANAGER_CONF DEFAULT rabbit_userid $RABBIT_USERID
         iniset $TROVE_TASKMANAGER_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
-        iniset $TROVE_TASKMANAGER_CONF DEFAULT sql_connection `database_connection_url trove`
+        iniset $TROVE_TASKMANAGER_CONF database connection `database_connection_url trove`
         iniset $TROVE_TASKMANAGER_CONF DEFAULT taskmanager_manager trove.taskmanager.manager.Manager
         iniset $TROVE_TASKMANAGER_CONF DEFAULT nova_proxy_admin_user radmin
         iniset $TROVE_TASKMANAGER_CONF DEFAULT nova_proxy_admin_tenant_name trove
@@ -162,7 +162,7 @@ function configure_trove {
     if is_service_enabled tr-cond; then
         iniset $TROVE_CONDUCTOR_CONF DEFAULT rabbit_userid $RABBIT_USERID
         iniset $TROVE_CONDUCTOR_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
-        iniset $TROVE_CONDUCTOR_CONF DEFAULT sql_connection `database_connection_url trove`
+        iniset $TROVE_CONDUCTOR_CONF database connection `database_connection_url trove`
         iniset $TROVE_CONDUCTOR_CONF DEFAULT nova_proxy_admin_user radmin
         iniset $TROVE_CONDUCTOR_CONF DEFAULT nova_proxy_admin_tenant_name trove
         iniset $TROVE_CONDUCTOR_CONF DEFAULT nova_proxy_admin_pass $RADMIN_USER_PASS

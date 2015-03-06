@@ -273,7 +273,7 @@ function configure_ironic {
     cp $IRONIC_DIR/etc/ironic/ironic.conf.sample $IRONIC_CONF_FILE
     iniset $IRONIC_CONF_FILE DEFAULT debug True
     inicomment $IRONIC_CONF_FILE DEFAULT log_file
-    iniset $IRONIC_CONF_FILE DEFAULT sql_connection `database_connection_url ironic`
+    iniset $IRONIC_CONF_FILE database connection `database_connection_url ironic`
     iniset $IRONIC_CONF_FILE DEFAULT state_path $IRONIC_STATE_PATH
     iniset $IRONIC_CONF_FILE DEFAULT use_syslog $SYSLOG
     # Configure Ironic conductor, if it was enabled.
