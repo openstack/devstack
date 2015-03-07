@@ -2,7 +2,7 @@ cryptography
 lxml
 MySQL-python
 netifaces
-numpy
+#numpy    # slowest wheel by far, stop building until we are actually using the output
 posix-ipc
 psycopg2
 pycrypto
