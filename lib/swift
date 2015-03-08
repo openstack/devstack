@@ -64,11 +64,19 @@ if is_service_enabled s-proxy && is_service_enabled swift3; then
     S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
 fi
 
-# DevStack will create a loop-back disk formatted as XFS to store the
-# swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
-# kilobytes.
-# Default is 1 gigabyte.
-SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1G
+if is_service_enabled g-api; then
+    # Minimum Cinder volume size is 1G so if Swift backend for Glance is
+    # only 1G we can not upload volume to image.
+    # Increase Swift disk size up to 2G
+    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=2G
+else
+    # DevStack will create a loop-back disk formatted as XFS to store the
+    # swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
+    # kilobytes.
+    # Default is 1 gigabyte.
+    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1G
+fi
+
 # if tempest enabled the default size is 6 Gigabyte.
 if is_service_enabled tempest; then
     SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-6G}
