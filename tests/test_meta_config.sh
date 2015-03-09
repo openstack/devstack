@@ -4,11 +4,9 @@
 
 TOP=$(cd $(dirname "$0")/.. && pwd)
 
-# Import common functions
-source $TOP/functions
-
 # Import config functions
-source $TOP/lib/config
+source $TOP/inc/ini-config
+source $TOP/inc/meta-config
 
 # check_result() tests and reports the result values
 # check_result "actual" "expected"

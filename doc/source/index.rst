@@ -156,7 +156,6 @@ Scripts
 * `lib/ceilometer <lib/ceilometer.html>`__
 * `lib/ceph <lib/ceph.html>`__
 * `lib/cinder <lib/cinder.html>`__
-* `lib/config <lib/config.html>`__
 * `lib/database <lib/database.html>`__
 * `lib/dstat <lib/dstat.html>`__
 * `lib/glance <lib/glance.html>`__
@@ -187,6 +186,12 @@ Scripts
 * `extras.d/70-tuskar.sh <extras.d/70-tuskar.sh.html>`__
 * `extras.d/70-zaqar.sh <extras.d/70-zaqar.sh.html>`__
 * `extras.d/80-tempest.sh <extras.d/80-tempest.sh.html>`__
+
+* `inc/ini-config <inc/ini-config.html>`__
+* `inc/meta-config <inc/meta-config.html>`__
+* `inc/python <inc/python.html>`__
+
+* `pkg/elasticsearch.sh <pkg/elasticsearch.sh.html>`_
 
 Configuration
 -------------
