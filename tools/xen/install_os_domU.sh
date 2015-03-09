@@ -227,7 +227,7 @@ if [ -z "$templateuuid" ]; then
         -n "$UBUNTU_INST_BRIDGE_OR_NET_NAME" \
         -l "$GUEST_NAME"
 
-    set_vm_memory "$GUEST_NAME" "$OSDOMU_MEM_MB"
+    set_vm_memory "$GUEST_NAME" "1024"
 
     xe vm-start vm="$GUEST_NAME"
 
