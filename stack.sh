@@ -785,7 +785,7 @@ else
     # https://review.openstack.org/#/c/157606/
     pip_install "python-neutronclient>=2.3.4,<2.3.11"
 
-    pip_install "python-openstackclient<=1.0.1"
+    pip_install "python-openstackclient<=0.4.1"
 fi
 
 if [[ $TRACK_DEPENDS = True ]]; then
