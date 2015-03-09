@@ -242,6 +242,8 @@ function configure_cinder {
     # supported.
     iniset $CINDER_CONF DEFAULT enable_v1_api true
 
+    iniset $CINDER_CONF DEFAULT os_region_name "$REGION_NAME"
+
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
         local enabled_backends=""
         local default_name=""
