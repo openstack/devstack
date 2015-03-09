@@ -702,6 +702,7 @@ install_rpc_backend
 
 if is_service_enabled $DATABASE_BACKENDS; then
     install_database
+    install_database_python
 fi
 
 if is_service_enabled neutron; then

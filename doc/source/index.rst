@@ -210,6 +210,8 @@ Tools
 -----
 
 * `tools/build\_docs.sh <tools/build_docs.sh.html>`__
+* `tools/build\_venv.sh <tools/build_venv.sh.html>`__
+* `tools/build\_wheels.sh <tools/build_wheels.sh.html>`__
 * `tools/create-stack-user.sh <tools/create-stack-user.sh.html>`__
 * `tools/create\_userrc.sh <tools/create_userrc.sh.html>`__
 * `tools/fixup\_stuff.sh <tools/fixup_stuff.sh.html>`__

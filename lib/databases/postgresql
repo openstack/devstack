@@ -100,9 +100,12 @@ EOF
     else
         exit_distro_not_supported "postgresql installation"
     fi
+}
 
+function install_database_python_postgresql {
     # Install Python client module
     pip_install psycopg2
+    ADDITIONAL_VENV_PACKAGES+=",psycopg2"
 }
 
 function database_connection_url_postgresql {

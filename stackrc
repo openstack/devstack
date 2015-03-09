@@ -104,6 +104,16 @@ elif [[ -f $RC_DIR/.localrc.auto ]]; then
     source $RC_DIR/.localrc.auto
 fi
 
+# Enable use of Python virtual environments.  Individual project use of
+# venvs are controlled by the PROJECT_VENV array; every project with
+# an entry in the array will be installed into the named venv.
+# By default this will put each project into its own venv.
+USE_VENV=$(trueorfalse False USE_VENV)
+
+# Add packages that need to be installed into a venv but are not in any
+# requirmenets files here, in a comma-separated list
+ADDITIONAL_VENV_PACKAGES=${ADITIONAL_VENV_PACKAGES:-""}
+
 # Configure wheel cache location
 export WHEELHOUSE=${WHEELHOUSE:-$DEST/.wheelhouse}
 export PIP_WHEEL_DIR=${PIP_WHEEL_DIR:-$WHEELHOUSE}
