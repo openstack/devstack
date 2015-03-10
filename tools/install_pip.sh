@@ -42,9 +42,21 @@ function get_versions {
 
 
 function install_get_pip {
-    if [[ ! -r $LOCAL_PIP ]]; then
-        curl --retry 6 --retry-delay 5 -o $LOCAL_PIP $PIP_GET_PIP_URL || \
+    # the openstack gate and others put a cached version of get-pip.py
+    # for this to find, explicitly to avoid download issues.
+    #
+    # However, if devstack *did* download the file, we want to check
+    # for updates; people can leave thier stacks around for a long
+    # time and in the mean-time pip might get upgraded.
+    #
+    # Thus we use curl's "-z" feature to always check the modified
+    # since and only download if a new version is out -- but only if
+    # it seems we downloaded the file originally.
+    if [[ ! -r $LOCAL_PIP || -r $LOCAL_PIP.downloaded ]]; then
+        curl --retry 6 --retry-delay 5 \
+            -z $LOCAL_PIP -o $LOCAL_PIP $PIP_GET_PIP_URL || \
             die $LINENO "Download of get-pip.py failed"
+        touch $LOCAL_PIP.downloaded
     fi
     sudo -H -E python $LOCAL_PIP
 }
