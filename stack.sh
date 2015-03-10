@@ -21,6 +21,13 @@
 
 # Learn more and get the most recent version at http://devstack.org
 
+# check if someone has invoked with "sh"
+if [[ "${POSIXLY_CORRECT}" == "y" ]]; then
+    echo "You appear to be running bash in POSIX compatability mode."
+    echo "devstack uses bash features. \"./stack.sh\" should do the right thing"
+    exit 1
+fi
+
 # Make sure custom grep options don't get in the way
 unset GREP_OPTIONS
 
