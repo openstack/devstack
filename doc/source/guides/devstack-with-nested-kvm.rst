@@ -129,7 +129,7 @@ DevStack's ``local.conf``:
     LIBVIRT_TYPE=kvm
 
 
-Once DevStack is configured succesfully, verify if the Nova instances
+Once DevStack is configured successfully, verify if the Nova instances
 are using KVM by noticing the QEMU CLI invoked by Nova is using the
 parameter `accel=kvm`, e.g.:
 
