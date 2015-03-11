@@ -871,7 +871,7 @@ function _configure_neutron_common {
     fi
 
     if is_ssl_enabled_service "nova"; then
-        iniset $NEUTRON_CONF DEFAULT nova_ca_certificates_file "$SSL_BUNDLE_FILE"
+        iniset $NEUTRON_CONF nova cafile $SSL_BUNDLE_FILE
     fi
 
     if is_ssl_enabled_service "neutron"; then
@@ -1045,13 +1045,15 @@ function _configure_neutron_service {
     # Configuration for neutron notifations to nova.
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
-    iniset $NEUTRON_CONF DEFAULT nova_url "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2"
-    iniset $NEUTRON_CONF DEFAULT nova_region_name $REGION_NAME
-    iniset $NEUTRON_CONF DEFAULT nova_admin_username nova
-    iniset $NEUTRON_CONF DEFAULT nova_admin_password $SERVICE_PASSWORD
-    ADMIN_TENANT_ID=$(openstack project list | awk "/ service / { print \$2 }")
-    iniset $NEUTRON_CONF DEFAULT nova_admin_tenant_id $ADMIN_TENANT_ID
-    iniset $NEUTRON_CONF DEFAULT nova_admin_auth_url  "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+
+    iniset $NEUTRON_CONF nova auth_plugin password
+    iniset $NEUTRON_CONF nova auth_url $KEYSTONE_AUTH_URI
+    iniset $NEUTRON_CONF nova username nova
+    iniset $NEUTRON_CONF nova password $SERVICE_PASSWORD
+    iniset $NEUTRON_CONF nova user_domain_id default
+    iniset $NEUTRON_CONF nova project_name $SERVICE_TENANT_NAME
+    iniset $NEUTRON_CONF nova project_domain_id default
+    iniset $NEUTRON_CONF nova region_name $REGION_NAME
 
     # Configure plugin
     neutron_plugin_configure_service
