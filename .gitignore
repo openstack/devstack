@@ -14,7 +14,7 @@ files/*.gz
 files/*.qcow2
 files/images
 files/pip-*
-files/get-pip.py
+files/get-pip.py*
 local.conf
 local.sh
 localrc
