@@ -415,16 +415,8 @@ function configure_swift {
     # IDs will included in all of its log messages.
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken log_name swift
 
-    # NOTE(jamielennox): swift cannot use the regular configure_auth_token_middleware function because swift
-    # doesn't use oslo.config which is the only way to configure auth plugins with the middleare.
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken paste.filter_factory keystonemiddleware.auth_token:filter_factory
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken identity_uri $KEYSTONE_AUTH_URI
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_user swift
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_password $SERVICE_PASSWORD
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken auth_uri $KEYSTONE_SERVICE_URI
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cafile $SSL_BUNDLE_FILE
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken signing_dir $SWIFT_AUTH_CACHE_DIR
+    configure_auth_token_middleware $SWIFT_CONFIG_PROXY_SERVER swift $SWIFT_AUTH_CACHE_DIR filter:authtoken
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken delay_auth_decision 1
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cache swift.cache
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken include_service_catalog False
