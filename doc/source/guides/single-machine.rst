@@ -67,7 +67,7 @@ We'll grab the latest version of DevStack via https:
 
 ::
 
-    sudo apt-get install git -y || yum install -y git
+    sudo apt-get install git -y || sudo yum install -y git
     git clone https://git.openstack.org/openstack-dev/devstack
     cd devstack
 
