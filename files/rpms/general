@@ -14,7 +14,6 @@ libxml2-devel
 libxslt-devel
 psmisc
 pylint
-python-unittest2
 python-devel
 screen
 tar
