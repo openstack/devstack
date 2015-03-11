@@ -10,7 +10,6 @@ lsof # useful when debugging
 openssh-server
 openssl
 python-virtualenv
-python-unittest2
 iputils-ping
 wget
 curl
