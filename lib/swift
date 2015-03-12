@@ -441,16 +441,15 @@ function configure_swift {
 
     if is_service_enabled swift3; then
         cat <<EOF >>${SWIFT_CONFIG_PROXY_SERVER}
-# NOTE(chmou): s3token middleware is not updated yet to use only
-# username and password.
 [filter:s3token]
 paste.filter_factory = keystoneclient.middleware.s3_token:filter_factory
 auth_port = ${KEYSTONE_AUTH_PORT}
 auth_host = ${KEYSTONE_AUTH_HOST}
 auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
 cafile = ${SSL_BUNDLE_FILE}
-auth_token = ${SERVICE_TOKEN}
-admin_token = ${SERVICE_TOKEN}
+admin_user = swift
+admin_tenant_name = ${SERVICE_TENANT_NAME}
+admin_password = ${SERVICE_PASSWORD}
 
 [filter:swift3]
 use = egg:swift3#swift3
