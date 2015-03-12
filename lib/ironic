@@ -180,7 +180,11 @@ function is_deployed_with_ipa_ramdisk {
 # install_ironic() - Collect source and prepare
 function install_ironic {
     # make sure all needed service were enabled
-    for srv in nova glance key; do
+    local req_services="mysql rabbit key"
+    if [[ "$VIRT_DRIVER" == "ironic" ]]; then
+        req_services+=" nova glance neutron"
+    fi
+    for srv in $req_services; do
         if ! is_service_enabled "$srv"; then
             die $LINENO "$srv should be enabled for Ironic."
         fi
