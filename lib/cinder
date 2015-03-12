@@ -228,7 +228,6 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $CINDER_CONF DEFAULT verbose True
 
-    iniset $CINDER_CONF DEFAULT my_ip "$CINDER_SERVICE_HOST"
     iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
     iniset $CINDER_CONF DEFAULT sql_connection `database_connection_url cinder`
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
