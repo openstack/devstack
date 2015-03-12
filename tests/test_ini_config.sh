@@ -4,8 +4,8 @@
 
 TOP=$(cd $(dirname "$0")/.. && pwd)
 
-# Import common functions
-source $TOP/functions
+# Import config functions
+source $TOP/inc/ini-config
 
 
 echo "Testing INI functions"

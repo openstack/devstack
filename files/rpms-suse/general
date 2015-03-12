@@ -16,7 +16,6 @@ openssl
 psmisc
 python-cmd2 # dist:opensuse-12.3
 python-pylint
-python-unittest2
 screen
 tar
 tcpdump
