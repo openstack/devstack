@@ -321,7 +321,7 @@ function configure_tempest {
     DEFAULT_COMPUTE_EXT+="os-tenant-networks, os-used-limits, os-used-limits-for-admin, os-user-data, os-user-quotas, os-virtual-interfaces, "
     DEFAULT_COMPUTE_EXT+="os-volume-attachment-update, os-volumes"
 
-    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions ${COMPUTE_API_EXTENSIONS:-$DEFAULT_COMPUTE_EXT}
+    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions "${COMPUTE_API_EXTENSIONS:-$DEFAULT_COMPUTE_EXT}"
 
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
@@ -399,7 +399,7 @@ function configure_tempest {
     DEFAULT_VOLUME_EXT+="os-volume-encryption-metadata, os-volume-manage, os-volume-transfer, "
     DEFAULT_VOLUME_EXT+="os-volume-unmanage, qos-specs"
 
-    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions ${VOLUME_API_EXTENSIONS:-$DEFAULT_VOLUME_EXT}
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions "${VOLUME_API_EXTENSIONS:-$DEFAULT_VOLUME_EXT}"
 
     # Dashboard
     iniset $TEMPEST_CONFIG dashboard dashboard_url "http://$SERVICE_HOST/"
@@ -413,7 +413,7 @@ function configure_tempest {
     DEFAULT_NET_EXT+=", lbaas_agent_scheduler, metering, multi-provider, provider, quotas"
     DEFAULT_NET_EXT+=", router, security-group, service-type, vpnaas"
     # Networking
-    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions ${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}
+    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}"
 
     # Baremetal
     if [ "$VIRT_DRIVER" = "ironic" ] ; then
@@ -423,7 +423,7 @@ function configure_tempest {
     DEFAULT_SWIFT_EXT="account_quotas, bulk_delete, bulk_upload, container_quotas, container_sync, crossdomain"
     DEFAULT_SWIFT_EXT+=", formpost, keystoneauth, ratelimit, slo, staticweb, tempauth, tempurl"
     # Object Storage
-    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis ${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_EXT}
+    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis "${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_EXT}"
     # service_available
     for service in ${TEMPEST_SERVICES//,/ }; do
         if is_service_enabled $service ; then
