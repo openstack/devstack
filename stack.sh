@@ -92,7 +92,7 @@ LAST_SPINNER_PID=""
 source $TOP_DIR/functions
 
 # Import config functions
-source $TOP_DIR/lib/config
+source $TOP_DIR/inc/meta-config
 
 # Import 'public' stack.sh functions
 source $TOP_DIR/lib/stack

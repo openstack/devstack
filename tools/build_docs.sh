@@ -81,7 +81,7 @@ for f in $(find . -name .git -prune -o \( -type f -name \*.sh -not -path \*shocc
     mkdir -p $FQ_HTML_BUILD/`dirname $f`;
     $SHOCCO $f > $FQ_HTML_BUILD/$f.html
 done
-for f in $(find functions functions-common lib samples -type f -name \*); do
+for f in $(find functions functions-common inc lib pkg samples -type f -name \*); do
     echo $f
     FILES+="$f "
     mkdir -p $FQ_HTML_BUILD/`dirname $f`;
