@@ -482,9 +482,8 @@ function start_ironic_conductor {
 
 # stop_ironic() - Stop running processes
 function stop_ironic {
-    # Kill the Ironic screen windows
-    screen -S $SCREEN_NAME -p ir-api -X kill
-    screen -S $SCREEN_NAME -p ir-cond -X kill
+    stop_process ir-api
+    stop_process ir-cond
 
     # Cleanup the WSGI files
     if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
