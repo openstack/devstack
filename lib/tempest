@@ -315,6 +315,9 @@ function configure_tempest {
 
     # Auth
     iniset $TEMPEST_CONFIG auth allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
+    if [[ "$TEMPEST_AUTH_VERSION" == "v3" ]]; then
+        iniset $TEMPEST_CONFIG auth tempest_roles "Member"
+    fi
 
     # Compute
     iniset $TEMPEST_CONFIG compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
