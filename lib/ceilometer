@@ -169,7 +169,7 @@ function configure_ceilometer {
     [ ! -d $CEILOMETER_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $CEILOMETER_API_LOG_DIR
     sudo chown $STACK_USER $CEILOMETER_API_LOG_DIR
 
-    iniset_rpc_backend ceilometer $CEILOMETER_CONF DEFAULT
+    iniset_rpc_backend ceilometer $CEILOMETER_CONF
 
     iniset $CEILOMETER_CONF DEFAULT notification_topics "$CEILOMETER_NOTIFICATION_TOPICS"
     iniset $CEILOMETER_CONF DEFAULT verbose True

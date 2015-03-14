@@ -105,7 +105,7 @@ function configure_heat {
     cp $HEAT_DIR/etc/heat/policy.json $HEAT_POLICY_FILE
 
     # common options
-    iniset_rpc_backend heat $HEAT_CONF DEFAULT
+    iniset_rpc_backend heat $HEAT_CONF
     iniset $HEAT_CONF DEFAULT heat_metadata_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT
     iniset $HEAT_CONF DEFAULT heat_waitcondition_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1/waitcondition
     iniset $HEAT_CONF DEFAULT heat_watch_server_url http://$HEAT_API_CW_HOST:$HEAT_API_CW_PORT

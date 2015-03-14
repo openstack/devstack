@@ -313,7 +313,7 @@ function configure_ironic_api {
     iniset $IRONIC_CONF_FILE keystone_authtoken cafile $SSL_BUNDLE_FILE
     iniset $IRONIC_CONF_FILE keystone_authtoken signing_dir $IRONIC_AUTH_CACHE_DIR/api
 
-    iniset_rpc_backend ironic $IRONIC_CONF_FILE DEFAULT
+    iniset_rpc_backend ironic $IRONIC_CONF_FILE
     iniset $IRONIC_CONF_FILE api port $IRONIC_SERVICE_PORT
 
     cp -p $IRONIC_DIR/etc/ironic/policy.json $IRONIC_POLICY_JSON

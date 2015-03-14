@@ -422,7 +422,7 @@ function is_neutron_enabled {
 # Set common config for all neutron server and agents.
 function configure_neutron {
     _configure_neutron_common
-    iniset_rpc_backend neutron $NEUTRON_CONF DEFAULT
+    iniset_rpc_backend neutron $NEUTRON_CONF
 
     # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
     if is_service_enabled q-lbaas; then
