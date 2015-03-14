@@ -349,6 +349,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions $compute_api_extensions
+    # TODO(mriedem): Remove the preserve_ports flag when Juno is end of life.
+    iniset $TEMPEST_CONFIG compute-feature-enabled preserve_ports True
 
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
