@@ -163,11 +163,7 @@ function _config_ceilometer_apache_wsgi {
 
 # configure_ceilometer() - Set config files, create data dirs, etc
 function configure_ceilometer {
-    [ ! -d $CEILOMETER_CONF_DIR ] && sudo mkdir -m 755 -p $CEILOMETER_CONF_DIR
-    sudo chown $STACK_USER $CEILOMETER_CONF_DIR
-
-    [ ! -d $CEILOMETER_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $CEILOMETER_API_LOG_DIR
-    sudo chown $STACK_USER $CEILOMETER_API_LOG_DIR
+    sudo install -d -o $STACK_USER -m 755 $CEILOMETER_CONF_DIR $CEILOMETER_API_LOG_DIR
 
     iniset_rpc_backend ceilometer $CEILOMETER_CONF DEFAULT
 
@@ -267,8 +263,7 @@ function configure_mongodb {
 # init_ceilometer() - Initialize etc.
 function init_ceilometer {
     # Create cache dir
-    sudo mkdir -p $CEILOMETER_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
     rm -f $CEILOMETER_AUTH_CACHE_DIR/*
 
     if is_service_enabled mysql postgresql; then

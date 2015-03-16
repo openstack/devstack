@@ -175,14 +175,10 @@ function _config_keystone_apache_wsgi {
 
 # configure_keystone() - Set config files, create data dirs, etc
 function configure_keystone {
-    if [[ ! -d $KEYSTONE_CONF_DIR ]]; then
-        sudo mkdir -p $KEYSTONE_CONF_DIR
-    fi
-    sudo chown $STACK_USER $KEYSTONE_CONF_DIR
+    sudo install -d -o $STACK_USER $KEYSTONE_CONF_DIR
 
     if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
-        cp -p $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
-        chmod 600 $KEYSTONE_CONF
+        install -m 600 $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
         cp -p $KEYSTONE_DIR/etc/policy.json $KEYSTONE_CONF_DIR
         if [[ -f "$KEYSTONE_DIR/etc/keystone-paste.ini" ]]; then
             cp -p "$KEYSTONE_DIR/etc/keystone-paste.ini" "$KEYSTONE_PASTE_INI"
@@ -490,8 +486,7 @@ function init_keystone {
         $KEYSTONE_DIR/bin/keystone-manage pki_setup
 
         # Create cache dir
-        sudo mkdir -p $KEYSTONE_AUTH_CACHE_DIR
-        sudo chown $STACK_USER $KEYSTONE_AUTH_CACHE_DIR
+        sudo install -d -o $STACK_USER $KEYSTONE_AUTH_CACHE_DIR
         rm -f $KEYSTONE_AUTH_CACHE_DIR/*
     fi
 }

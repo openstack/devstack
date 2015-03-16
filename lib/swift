@@ -306,8 +306,8 @@ function configure_swift {
     # Make sure to kill all swift processes first
     swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
-    sudo mkdir -p ${SWIFT_CONF_DIR}/{object,container,account}-server
-    sudo chown -R ${STACK_USER}: ${SWIFT_CONF_DIR}
+    sudo install -d -o ${STACK_USER} ${SWIFT_CONF_DIR}
+    sudo install -d -o ${STACK_USER} ${SWIFT_CONF_DIR}/{object,container,account}-server
 
     if [[ "$SWIFT_CONF_DIR" != "/etc/swift" ]]; then
         # Some swift tools are hard-coded to use ``/etc/swift`` and are apparently not going to be fixed.
@@ -534,8 +534,7 @@ function create_swift_disk {
     # changing the permissions so we can run it as our user.
 
     local user_group=$(id -g ${STACK_USER})
-    sudo mkdir -p ${SWIFT_DATA_DIR}/{drives,cache,run,logs}
-    sudo chown -R ${STACK_USER}:${user_group} ${SWIFT_DATA_DIR}
+    sudo install -d -o ${STACK_USER} -g ${user_group} ${SWIFT_DATA_DIR}/{drives,cache,run,logs}
 
     # Create a loopback disk and format it to XFS.
     if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
@@ -675,8 +674,7 @@ function init_swift {
     } && popd >/dev/null
 
     # Create cache dir
-    sudo mkdir -p $SWIFT_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $SWIFT_AUTH_CACHE_DIR
+    sudo install -d -o ${STACK_USER} $SWIFT_AUTH_CACHE_DIR
     rm -f $SWIFT_AUTH_CACHE_DIR/*
 }
 

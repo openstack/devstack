@@ -90,15 +90,7 @@ function cleanup_glance {
 
 # configure_glance() - Set config files, create data dirs, etc
 function configure_glance {
-    if [[ ! -d $GLANCE_CONF_DIR ]]; then
-        sudo mkdir -p $GLANCE_CONF_DIR
-    fi
-    sudo chown $STACK_USER $GLANCE_CONF_DIR
-
-    if [[ ! -d $GLANCE_METADEF_DIR ]]; then
-        sudo mkdir -p $GLANCE_METADEF_DIR
-    fi
-    sudo chown $STACK_USER $GLANCE_METADEF_DIR
+    sudo install -d -o $STACK_USER $GLANCE_CONF_DIR $GLANCE_METADEF_DIR
 
     # Copy over our glance configurations and update them
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
@@ -263,12 +255,8 @@ function create_glance_accounts {
 # create_glance_cache_dir() - Part of the init_glance() process
 function create_glance_cache_dir {
     # Create cache dir
-    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
-    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/api
-    rm -f $GLANCE_AUTH_CACHE_DIR/api/*
-    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
-    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/registry
-    rm -f $GLANCE_AUTH_CACHE_DIR/registry/*
+    sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry
+    rm -f $GLANCE_AUTH_CACHE_DIR/api/* $GLANCE_AUTH_CACHE_DIR/registry/*
 }
 
 # init_glance() - Initialize databases, etc.

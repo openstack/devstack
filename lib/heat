@@ -85,10 +85,7 @@ function configure_heat {
         setup_develop $HEAT_DIR/contrib/heat_keystoneclient_v2
     fi
 
-    if [[ ! -d $HEAT_CONF_DIR ]]; then
-        sudo mkdir -p $HEAT_CONF_DIR
-    fi
-    sudo chown $STACK_USER $HEAT_CONF_DIR
+    sudo install -d -o $STACK_USER $HEAT_CONF_DIR
     # remove old config files
     rm -f $HEAT_CONF_DIR/heat-*.conf
 
@@ -172,15 +169,11 @@ function configure_heat {
         iniset $HEAT_CONF DEFAULT enable_stack_abandon true
     fi
 
-    # heat environment
-    sudo mkdir -p $HEAT_ENV_DIR
-    sudo chown $STACK_USER $HEAT_ENV_DIR
+    sudo install -d -o $STACK_USER $HEAT_ENV_DIR $HEAT_TEMPLATES_DIR
+
     # copy the default environment
     cp $HEAT_DIR/etc/heat/environment.d/* $HEAT_ENV_DIR/
 
-    # heat template resources.
-    sudo mkdir -p $HEAT_TEMPLATES_DIR
-    sudo chown $STACK_USER $HEAT_TEMPLATES_DIR
     # copy the default templates
     cp $HEAT_DIR/etc/heat/templates/* $HEAT_TEMPLATES_DIR/
 
@@ -199,8 +192,7 @@ function init_heat {
 # create_heat_cache_dir() - Part of the init_heat() process
 function create_heat_cache_dir {
     # Create cache dirs
-    sudo mkdir -p $HEAT_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $HEAT_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $HEAT_AUTH_CACHE_DIR
 }
 
 # install_heatclient() - Collect source and prepare

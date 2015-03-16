@@ -232,16 +232,15 @@ function configure_nova_rootwrap {
     if [[ -d $NOVA_CONF_DIR/rootwrap.d ]]; then
         sudo rm -rf $NOVA_CONF_DIR/rootwrap.d
     fi
+
     # Deploy filters to /etc/nova/rootwrap.d
-    sudo mkdir -m 755 $NOVA_CONF_DIR/rootwrap.d
-    sudo cp $NOVA_DIR/etc/nova/rootwrap.d/*.filters $NOVA_CONF_DIR/rootwrap.d
-    sudo chown -R root:root $NOVA_CONF_DIR/rootwrap.d
-    sudo chmod 644 $NOVA_CONF_DIR/rootwrap.d/*
+    sudo install -d -o root -g root -m 755 $NOVA_CONF_DIR/rootwrap.d
+    sudo install -o root -g root -m 644  $NOVA_DIR/etc/nova/rootwrap.d/*.filters $NOVA_CONF_DIR/rootwrap.d
+
     # Set up rootwrap.conf, pointing to /etc/nova/rootwrap.d
-    sudo cp $NOVA_DIR/etc/nova/rootwrap.conf $NOVA_CONF_DIR/
+    sudo install -o root -g root -m 644 $NOVA_DIR/etc/nova/rootwrap.conf $NOVA_CONF_DIR
     sudo sed -e "s:^filters_path=.*$:filters_path=$NOVA_CONF_DIR/rootwrap.d:" -i $NOVA_CONF_DIR/rootwrap.conf
-    sudo chown root:root $NOVA_CONF_DIR/rootwrap.conf
-    sudo chmod 0644 $NOVA_CONF_DIR/rootwrap.conf
+
     # Specify rootwrap.conf as first parameter to nova-rootwrap
     local rootwrap_sudoer_cmd="$NOVA_ROOTWRAP $NOVA_CONF_DIR/rootwrap.conf *"
 
@@ -256,10 +255,7 @@ function configure_nova_rootwrap {
 # configure_nova() - Set config files, create data dirs, etc
 function configure_nova {
     # Put config files in ``/etc/nova`` for everyone to find
-    if [[ ! -d $NOVA_CONF_DIR ]]; then
-        sudo mkdir -p $NOVA_CONF_DIR
-    fi
-    sudo chown $STACK_USER $NOVA_CONF_DIR
+    sudo install -d -o $STACK_USER $NOVA_CONF_DIR
 
     cp -p $NOVA_DIR/etc/nova/policy.json $NOVA_CONF_DIR
 
@@ -318,8 +314,7 @@ function configure_nova {
         # ----------------
 
         # Nova stores each instance in its own directory.
-        sudo mkdir -p $NOVA_INSTANCES_PATH
-        sudo chown -R $STACK_USER $NOVA_INSTANCES_PATH
+        sudo install -d -o $STACK_USER $NOVA_INSTANCES_PATH
 
         # You can specify a different disk to be mounted and used for backing the
         # virtual machines.  If there is a partition labeled nova-instances we
@@ -603,8 +598,7 @@ function init_nova_cells {
 # create_nova_cache_dir() - Part of the init_nova() process
 function create_nova_cache_dir {
     # Create cache dir
-    sudo mkdir -p $NOVA_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $NOVA_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $NOVA_AUTH_CACHE_DIR
     rm -f $NOVA_AUTH_CACHE_DIR/*
 }
 
@@ -621,8 +615,7 @@ function create_nova_conf_nova_network {
 # create_nova_keys_dir() - Part of the init_nova() process
 function create_nova_keys_dir {
     # Create keys dir
-    sudo mkdir -p ${NOVA_STATE_PATH}/keys
-    sudo chown -R $STACK_USER ${NOVA_STATE_PATH}
+    sudo install -d -o $STACK_USER ${NOVA_STATE_PATH} ${NOVA_STATE_PATH}/keys
 }
 
 # init_nova() - Initialize databases, etc.

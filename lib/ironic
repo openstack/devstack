@@ -233,21 +233,13 @@ function cleanup_ironic {
 # configure_ironic_dirs() - Create all directories required by Ironic and
 # associated services.
 function configure_ironic_dirs {
-    if [[ ! -d $IRONIC_CONF_DIR ]]; then
-        sudo mkdir -p $IRONIC_CONF_DIR
-    fi
+    sudo install -d -o $STACK_USER $IRONIC_CONF_DIR $STACK_USER $IRONIC_DATA_DIR \
+        $IRONIC_STATE_PATH $IRONIC_TFTPBOOT_DIR $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
+    sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_TFTPBOOT_DIR
 
     if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
-        sudo mkdir -p $IRONIC_HTTP_DIR
-        sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_HTTP_DIR
+        sudo install -d -o $STACK_USER -g $LIBVIRT_GROUP $IRONIC_HTTP_DIR
     fi
-
-    sudo mkdir -p $IRONIC_DATA_DIR
-    sudo mkdir -p $IRONIC_STATE_PATH
-    sudo mkdir -p $IRONIC_TFTPBOOT_DIR
-    sudo chown -R $STACK_USER $IRONIC_DATA_DIR $IRONIC_STATE_PATH
-    sudo chown -R $STACK_USER:$LIBVIRT_GROUP $IRONIC_TFTPBOOT_DIR
-    mkdir -p $IRONIC_TFTPBOOT_DIR/pxelinux.cfg
 
     if [ ! -f $IRONIC_PXE_BOOT_IMAGE ]; then
         die $LINENO "PXE boot file $IRONIC_PXE_BOOT_IMAGE not found."
@@ -267,7 +259,6 @@ function configure_ironic_dirs {
 # configure_ironic() - Set config files, create data dirs, etc
 function configure_ironic {
     configure_ironic_dirs
-    sudo chown $STACK_USER $IRONIC_CONF_DIR
 
     # Copy over ironic configuration file and configure common parameters.
     cp $IRONIC_DIR/etc/ironic/ironic.conf.sample $IRONIC_CONF_FILE
