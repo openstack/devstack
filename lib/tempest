@@ -323,9 +323,9 @@ function configure_tempest {
     DEFAULT_COMPUTE_EXT+=", os-used-limits-for-admin, os-user-data, os-user-quotas, os-virtual-interfaces"
     DEFAULT_COMPUTE_EXT+=", os-volume-attachment-update, os-volumes"
 
-    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions ${COMPUTE_API_EXTENSIONS:-$DEFAULT_COMPUTE_EXT}
+    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions "${COMPUTE_API_EXTENSIONS:-$DEFAULT_COMPUTE_EXT}"
     iniset $TEMPEST_CONFIG compute-feature-enabled xml_api_v2 ${COMPUTE_XML_API_V2:-True}
-    iniset $TEMPEST_CONFIG compute-feature-disabled api_extensions ${DISABLE_COMPUTE_API_EXTENSIONS}
+    iniset $TEMPEST_CONFIG compute-feature-disabled api_extensions "${DISABLE_COMPUTE_API_EXTENSIONS}"
 
     # Compute admin
     iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
@@ -343,8 +343,8 @@ function configure_tempest {
     DEFAULT_NET_EXT="agent, allowed-address-pairs, binding, dhcp_agent_scheduler, dvr, ext-gw-mode, external-net, extra_dhcp_opt"
     DEFAULT_NET_EXT+=", extraroute, fwaas, l3-ha, l3_agent_scheduler, lbaas, lbaas_agent_scheduler, metering"
     DEFAULT_NET_EXT+=", multi-provider, provider, quotas, router, security-group, service-type, vpnaas"
-    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions ${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}
-    iniset $TEMPEST_CONFIG network-feature-disabled api_extensions ${DISABLE_NETWORK_API_EXTENSIONS}
+    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions "${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}"
+    iniset $TEMPEST_CONFIG network-feature-disabled api_extensions "${DISABLE_NETWORK_API_EXTENSIONS}"
     iniset $TEMPEST_CONFIG network-feature-enabled xml_api True
 
     # boto - disabled
@@ -396,8 +396,8 @@ function configure_tempest {
     # Object storage
     DEFAULT_SWIFT_OPT="account_quotas, bulk_delete, bulk_upload, container_quotas, container_sync, crossdomain, formpost"
     DEFAULT_SWIFT_OPT+=", keystoneauth, ratelimit, slo, staticweb, tempauth, tempurl"
-    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis ${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_OPT}
-    iniset $TEMPEST_CONFIG object-storage-feature-disabled discoverable_apis ${OBJECT_STORAGE_DISABLE_API_EXTENSIONS}
+    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis "${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_OPT}"
+    iniset $TEMPEST_CONFIG object-storage-feature-disabled discoverable_apis "${OBJECT_STORAGE_DISABLE_API_EXTENSIONS}"
 
     # Volume
     DEFAULT_VOL_EXT="OS-SCH-HNT, backups, cgsnapshots, consistencygroups, encryption, os-admin-actions, os-availability-zone"
@@ -407,8 +407,8 @@ function configure_tempest {
     DEFAULT_VOL_EXT+=", os-vol-mig-status-attr, os-vol-tenant-attr, os-volume-actions, os-volume-encryption-metadata"
     DEFAULT_VOL_EXT+=", os-volume-manage, os-volume-replication, os-volume-transfer, os-volume-unmanage, qos-specs"
     DEFAULT_VOL_EXT+=", scheduler-stats"
-    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions ${VOLUME_API_EXTENSIONS:-$DEFAULT_VOL_EXT}
-    iniset $TEMPEST_CONFIG volume-feature-disabled api_extensions ${DISABLE_VOLUME_API_EXTENSIONS}
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions "${VOLUME_API_EXTENSIONS:-$DEFAULT_VOL_EXT}"
+    iniset $TEMPEST_CONFIG volume-feature-disabled api_extensions "${DISABLE_VOLUME_API_EXTENSIONS}"
     if ! is_service_enabled c-bak; then
         iniset $TEMPEST_CONFIG volume-feature-enabled backup False
     fi
