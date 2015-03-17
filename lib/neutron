@@ -153,6 +153,7 @@ Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
 # RHEL's support for namespaces requires using veths with ovs
 Q_OVS_USE_VETH=${Q_OVS_USE_VETH:-False}
 Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
+Q_USE_ROOTWRAP_DAEMON=$(trueorfalse True Q_USE_ROOTWRAP_DAEMON)
 # Meta data IP
 Q_META_DATA_IP=${Q_META_DATA_IP:-$SERVICE_HOST}
 # Allow Overlapping IP among subnets
@@ -226,6 +227,9 @@ if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
 else
     NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
     Q_RR_COMMAND="sudo $NEUTRON_ROOTWRAP $Q_RR_CONF_FILE"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        Q_RR_DAEMON_COMMAND="sudo $NEUTRON_ROOTWRAP-daemon $Q_RR_CONF_FILE"
+    fi
 fi
 
 
@@ -896,6 +900,9 @@ function _configure_neutron_debug_command {
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 
     _neutron_setup_interface_driver $NEUTRON_TEST_CONFIG_FILE
 
@@ -910,6 +917,9 @@ function _configure_neutron_dhcp_agent {
     iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 
     if ! is_service_enabled q-l3; then
         if [[ "$ENABLE_ISOLATED_METADATA" = "True" ]]; then
@@ -943,6 +953,9 @@ function _configure_neutron_l3_agent {
     iniset $Q_L3_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_L3_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $Q_L3_CONF_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 
     _neutron_setup_interface_driver $Q_L3_CONF_FILE
 
@@ -956,6 +969,9 @@ function _configure_neutron_metadata_agent {
     iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $Q_META_CONF_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 
     # Configures keystone for metadata_agent
     # The third argument "True" sets auth_url needed to communicate with keystone
@@ -1008,6 +1024,9 @@ function _configure_neutron_plugin_agent {
     # Specify the default root helper prior to agent configuration to
     # ensure that an agent's configuration can override the default
     iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE  agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
     iniset $NEUTRON_CONF DEFAULT verbose True
     iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
@@ -1106,16 +1125,21 @@ function _neutron_setup_rootwrap {
     sudo chmod 0644 $Q_RR_CONF_FILE
     # Specify ``rootwrap.conf`` as first parameter to neutron-rootwrap
     ROOTWRAP_SUDOER_CMD="$NEUTRON_ROOTWRAP $Q_RR_CONF_FILE *"
+    ROOTWRAP_DAEMON_SUDOER_CMD="$NEUTRON_ROOTWRAP-daemon $Q_RR_CONF_FILE"
 
     # Set up the rootwrap sudoers for neutron
     TEMPFILE=`mktemp`
     echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_DAEMON_SUDOER_CMD" >>$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/neutron-rootwrap
 
     # Update the root_helper
     iniset $NEUTRON_CONF agent root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $NEUTRON_CONF agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 }
 
 # Configures keystone integration for neutron service and agents
