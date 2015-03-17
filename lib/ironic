@@ -427,6 +427,11 @@ function create_ironic_accounts {
 
 # init_ironic() - Initialize databases, etc.
 function init_ironic {
+    # Save private network as cleaning network
+    local cleaning_network_uuid
+    cleaning_network_uuid=$(neutron net-list | grep private | get_field 1)
+    iniset $IRONIC_CONF_FILE neutron cleaning_network_uuid ${cleaning_network_uuid}
+
     # (Re)create  ironic database
     recreate_database ironic
 
