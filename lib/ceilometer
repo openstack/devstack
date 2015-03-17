@@ -322,6 +322,8 @@ function install_ceilometermiddleware {
     if use_library_from_git "ceilometermiddleware"; then
         git_clone_by_name "ceilometermiddleware"
         setup_dev_lib "ceilometermiddleware"
+    else
+        pip_install ceilometermiddleware
     fi
 }
 
