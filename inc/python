@@ -94,9 +94,9 @@ function pip_install {
 
     $xtrace
     $sudo_pip \
-        http_proxy=${http_proxy:-} \
-        https_proxy=${https_proxy:-} \
-        no_proxy=${no_proxy:-} \
+        http_proxy="${http_proxy:-}" \
+        https_proxy="${https_proxy:-}" \
+        no_proxy="${no_proxy:-}" \
         PIP_FIND_LINKS=$PIP_FIND_LINKS \
         $cmd_pip install \
         $@
