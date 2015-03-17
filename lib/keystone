@@ -226,12 +226,7 @@ function configure_keystone {
         iniset $KEYSTONE_CONF assignment driver "keystone.assignment.backends.$KEYSTONE_ASSIGNMENT_BACKEND.Assignment"
     fi
 
-    # Configure rabbitmq credentials
-    if is_service_enabled rabbit; then
-        iniset $KEYSTONE_CONF DEFAULT rabbit_userid $RABBIT_USERID
-        iniset $KEYSTONE_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
-        iniset $KEYSTONE_CONF DEFAULT rabbit_host $RABBIT_HOST
-    fi
+    iniset_rpc_backend keystone $KEYSTONE_CONF DEFAULT
 
     # Set the URL advertised in the ``versions`` structure returned by the '/' route
     if is_service_enabled tls-proxy; then
