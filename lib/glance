@@ -185,8 +185,8 @@ function configure_glance {
 
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $GLANCE_API_CONF DEFAULT "project_id" "user_id"
-        setup_colorized_logging $GLANCE_REGISTRY_CONF DEFAULT "project_id" "user_id"
+        setup_colorized_logging $GLANCE_API_CONF DEFAULT tenant user
+        setup_colorized_logging $GLANCE_REGISTRY_CONF DEFAULT tenant user
     fi
 
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
