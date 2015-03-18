@@ -378,6 +378,18 @@ IP Version
       can be configured with any valid IPv6 prefix. The default values make
       use of an auto-generated ``IPV6_GLOBAL_ID`` to comply with RFC 4193.*
 
+Unit tests dependencies install
+-------------------------------
+
+    | *Default: ``INSTALL_TESTONLY_PACKAGES=False``*
+    |  In order to be able to run unit tests with script ``run_test.sh``,
+       the required package dependencies need to be installed.
+       Setting this option as below does the work.
+
+    ::
+
+        INSTALL_TESTONLY_PACKAGES=True
+
 Examples
 ========
 
