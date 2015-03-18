@@ -427,6 +427,10 @@ GITBRANCH["ceilometermiddleware"]=${CEILOMETERMIDDLEWARE_BRANCH:-master}
 #
 ##################
 
+# run-parts script required by os-refresh-config
+DIB_UTILS_REPO=${DIB_UTILS_REPO:-${GIT_BASE}/openstack/dib-utils.git}
+DIB_UTILS_BRANCH=${DIB_UTILS_BRANCH:-master}
+
 # os-apply-config configuration template tool
 OAC_REPO=${OAC_REPO:-${GIT_BASE}/openstack/os-apply-config.git}
 OAC_BRANCH=${OAC_BRANCH:-master}

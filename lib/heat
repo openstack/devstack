@@ -36,6 +36,7 @@ HEAT_DIR=$DEST/heat
 HEAT_CFNTOOLS_DIR=$DEST/heat-cfntools
 HEAT_TEMPLATES_REPO_DIR=$DEST/heat-templates
 OCC_DIR=$DEST/os-collect-config
+DIB_UTILS_DIR=$DEST/dib-utils
 ORC_DIR=$DEST/os-refresh-config
 OAC_DIR=$DEST/os-apply-config
 
@@ -224,6 +225,10 @@ function install_heat {
 function install_heat_other {
     git_clone $HEAT_CFNTOOLS_REPO $HEAT_CFNTOOLS_DIR $HEAT_CFNTOOLS_BRANCH
     git_clone $HEAT_TEMPLATES_REPO $HEAT_TEMPLATES_REPO_DIR $HEAT_TEMPLATES_BRANCH
+    git_clone $OAC_REPO $OAC_DIR $OAC_BRANCH
+    git_clone $OCC_REPO $OCC_DIR $OCC_BRANCH
+    git_clone $ORC_REPO $ORC_DIR $ORC_BRANCH
+    git_clone $DIB_UTILS_REPO $DIB_UTILS_DIR $DIB_UTILS_BRANCH
 }
 
 # start_heat() - Start running processes, including screen
@@ -304,7 +309,7 @@ function create_heat_accounts {
 
 # build_heat_pip_mirror() - Build a pip mirror containing heat agent projects
 function build_heat_pip_mirror {
-    local project_dirs="$OCC_DIR $OAC_DIR $ORC_DIR $HEAT_CFNTOOLS_DIR"
+    local project_dirs="$OCC_DIR $OAC_DIR $ORC_DIR $HEAT_CFNTOOLS_DIR $DIB_UTILS_DIR"
     local projpath proj package
 
     rm -rf $HEAT_PIP_REPO
