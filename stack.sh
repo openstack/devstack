@@ -1316,6 +1316,15 @@ service_check
 # Prepare bash completion for OSC
 openstack complete | sudo tee /etc/bash_completion.d/osc.bash_completion > /dev/null
 
+# If cinder is configured, set global_filter for PV devices
+if is_service_enabled cinder; then
+    if is_ubuntu; then
+        echo_summary "Configuring lvm.conf global device filter"
+        set_lvm_filter
+    else
+        echo_summary "Skip setting lvm filters for non Ubuntu systems"
+    fi
+fi
 
 # Fin
 # ===

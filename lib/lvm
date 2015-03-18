@@ -138,6 +138,31 @@ function init_default_lvm_volume_group {
     fi
 }
 
+# set_lvm_filter() Gather all devices configured for LVM and
+# use them to build a global device filter
+# set_lvm_filter() Create a device filter
+# and add to /etc/lvm.conf.  Note this uses
+# all current PV's in use by LVM on the
+# system to build it's filter.
+#
+# Usage: set_lvm_filter()
+function set_lvm_filter {
+    local filter_suffix='"r|.*|" ]'
+    local filter_string="global_filter = [ "
+    local pv
+    local vg
+    local line
+
+    for pv_info in $(sudo pvs --noheadings -o name); do
+        pv=$(echo -e "${pv_info}" | sed 's/ //g' | sed 's/\/dev\///g')
+        new="\"a|$pv|\", "
+        filter_string=$filter_string$new
+    done
+    filter_string=$filter_string$filter_suffix
+
+    sudo sed -i "/# global_filter = \[*\]/a\    $global_filter$filter_string" /etc/lvm/lvm.conf
+    echo_summary "set lvm.conf device global_filter to: $filter_string"
+}
 
 # Restore xtrace
 $MY_XTRACE
