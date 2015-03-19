@@ -246,6 +246,7 @@ function GetOSVersion {
         # CentOS Linux release 6.0 (Final)
         # Fedora release 16 (Verne)
         # XenServer release 6.2.0-70446c (xenenterprise)
+        # Oracle Linux release 7
         os_CODENAME=""
         for r in "Red Hat" CentOS Fedora XenServer; do
             os_VENDOR=$r
@@ -259,6 +260,9 @@ function GetOSVersion {
             fi
             os_VENDOR=""
         done
+        if [ "$os_VENDOR" = "Red Hat" ] && [[ -r /etc/oracle-release ]]; then
+            os_VENDOR=OracleLinux
+        fi
         os_PACKAGE="rpm"
     elif [[ -r /etc/SuSE-release ]]; then
         for r in openSUSE "SUSE Linux"; do
@@ -310,7 +314,7 @@ function GetDistro {
         fi
     elif [[ "$os_VENDOR" =~ (Red Hat) || \
         "$os_VENDOR" =~ (CentOS) || \
-        "$os_VENDOR" =~ (OracleServer) ]]; then
+        "$os_VENDOR" =~ (OracleLinux) ]]; then
         # Drop the . release as we assume it's compatible
         DISTRO="rhel${os_RELEASE::1}"
     elif [[ "$os_VENDOR" =~ (XenServer) ]]; then
@@ -328,6 +332,17 @@ function is_arch {
     [[ "$(uname -m)" == "$1" ]]
 }
 
+# Determine if current distribution is an Oracle distribution
+# is_oraclelinux
+function is_oraclelinux {
+    if [[ -z "$os_VENDOR" ]]; then
+        GetOSVersion
+    fi
+
+    [ "$os_VENDOR" = "OracleLinux" ]
+}
+
+
 # Determine if current distribution is a Fedora-based distribution
 # (Fedora, RHEL, CentOS, etc).
 # is_fedora
@@ -337,7 +352,7 @@ function is_fedora {
     fi
 
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
-        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleServer" ]
+        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleLinux" ]
 }
 
 
