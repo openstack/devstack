@@ -302,6 +302,7 @@ function configure_swift {
     local node_number
     local swift_node_config
     local swift_log_dir
+    local user_group
 
     # Make sure to kill all swift processes first
     swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
@@ -505,10 +506,12 @@ EOF
         fi
     fi
 
+    local user_group=$(id -g ${STACK_USER})
+    sudo install -d -o ${STACK_USER} -g ${user_group} ${SWIFT_DATA_DIR}
+
     local swift_log_dir=${SWIFT_DATA_DIR}/logs
-    rm -rf ${swift_log_dir}
-    mkdir -p ${swift_log_dir}/hourly
-    sudo chown -R ${STACK_USER}:adm ${swift_log_dir}
+    sudo rm -rf ${swift_log_dir}
+    sudo install -d -o ${STACK_USER} -g adm ${swift_log_dir}/hourly
 
     if [[ $SYSLOG != "False" ]]; then
         sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
