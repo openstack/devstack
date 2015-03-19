@@ -399,6 +399,7 @@ function configure_tempest {
         fi
         iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
         iniset $TEMPEST_CONFIG orchestration build_timeout 900
+        iniset $TEMPEST_CONFIG orchestration stack_owner_role "_member_"
     fi
 
     # Scenario
