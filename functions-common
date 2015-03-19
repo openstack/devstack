@@ -918,42 +918,42 @@ function get_packages {
         # NOTE(sdague) n-api needs glance for now because that's where
         # glance client is
         if [[ $service == n-api ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/nova ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/nova"
             fi
-            if [[ ! $file_to_parse =~ glance ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/glance ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/glance"
             fi
         elif [[ $service == c-* ]]; then
-            if [[ ! $file_to_parse =~ cinder ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/cinder ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/cinder"
             fi
         elif [[ $service == ceilometer-* ]]; then
-            if [[ ! $file_to_parse =~ ceilometer ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/ceilometer ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/ceilometer"
             fi
         elif [[ $service == s-* ]]; then
-            if [[ ! $file_to_parse =~ swift ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/swift ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/swift"
             fi
         elif [[ $service == n-* ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/nova ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/nova"
             fi
         elif [[ $service == g-* ]]; then
-            if [[ ! $file_to_parse =~ glance ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/glance ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/glance"
             fi
         elif [[ $service == key* ]]; then
-            if [[ ! $file_to_parse =~ keystone ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/keystone ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/keystone"
             fi
         elif [[ $service == q-* ]]; then
-            if [[ ! $file_to_parse =~ neutron ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/neutron ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/neutron"
             fi
         elif [[ $service == ir-* ]]; then
-            if [[ ! $file_to_parse =~ ironic ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/ironic ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/ironic"
             fi
         fi
