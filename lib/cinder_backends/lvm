@@ -19,7 +19,6 @@
 # clean_cinder_backend_lvm - called from clean_cinder()
 # configure_cinder_backend_lvm - called from configure_cinder()
 # init_cinder_backend_lvm - called from init_cinder()
-# configure_cinder_backend_conf_lvm - called from configure_cinder()
 
 
 # Save trace setting
@@ -66,36 +65,6 @@ function init_cinder_backend_lvm {
     init_lvm_volume_group $VOLUME_GROUP_NAME-$be_name $VOLUME_BACKING_FILE_SIZE
 }
 
-# configure_cinder_backend_conf_lvm - Sets device filter in /etc/cinder/lvm.conf
-# init_cinder_backend_lvm
-function configure_cinder_backend_conf_lvm {
-    local filter_suffix='"r/.*/" ]'
-    local filter_string="filter = [ "
-    local conf_entries=$(grep volume_group /etc/cinder/cinder.conf | sed "s/ //g")
-    local pv
-    local vg
-    local line
-
-    for pv_info in $(sudo pvs --noheadings -o name,vg_name --separator ';'); do
-        echo_summary "Evaluate PV info for Cinder lvm.conf: $pv_info"
-        IFS=';' read pv vg <<< "$pv_info"
-        for line in ${conf_entries}; do
-            IFS='=' read label group <<< "$line"
-            group=$(echo $group|sed "s/^ *//g")
-            if [[ "$vg" == "$group" ]]; then
-                new="\"a$pv/\", "
-                filter_string=$filter_string$new
-            fi
-        done
-    done
-    filter_string=$filter_string$filter_suffix
-
-    # FIXME(jdg): Possible odd case that the lvm.conf file has been modified
-    # and doesn't have a filter entry to search/replace.  For devstack don't
-    # know that we care, but could consider adding a check and add
-    sudo sed -i "s#^[ \t]*filter.*#    $filter_string#g" /etc/cinder/lvm.conf
-    echo "set LVM filter_strings: $filter_string"
-}
 # Restore xtrace
 $MY_XTRACE
 

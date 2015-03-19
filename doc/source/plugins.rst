@@ -179,3 +179,24 @@ functions:
 -  ``start_nova_hypervisor`` - start any external services
 -  ``stop_nova_hypervisor`` - stop any external services
 -  ``cleanup_nova_hypervisor`` - remove transient data and cache
+
+System Packages
+===============
+
+Devstack provides a framework for getting packages installed at an early
+phase of its execution. This packages may be defined in a plugin as files
+that contain new-line separated lists of packages required by the plugin
+
+Supported packaging systems include apt and yum across multiple distributions.
+To enable a plugin to hook into this and install package dependencies, packages
+may be listed at the following locations in the top-level of the plugin
+repository:
+
+- ``./devstack/files/debs/$plugin_name`` - Packages to install when running
+  on Ubuntu, Debian or Linux Mint.
+
+- ``./devstack/files/rpms/$plugin_name`` - Packages to install when running
+  on Red Hat, Fedora, CentOS or XenServer.
+
+- ``./devstack/files/rpms-suse/$plugin_name`` - Packages to install when
+  running on SUSE Linux or openSUSE.

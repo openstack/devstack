@@ -62,6 +62,8 @@ export_proxy_variables
 
 # Install package requirements
 PACKAGES=$(get_packages general $ENABLED_SERVICES)
+PACKAGES="$PACKAGES $(get_plugin_packages)"
+
 if is_ubuntu && echo $PACKAGES | grep -q dkms ; then
     # ensure headers for the running kernel are installed for any DKMS builds
     PACKAGES="$PACKAGES linux-headers-$(uname -r)"

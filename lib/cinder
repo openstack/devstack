@@ -372,15 +372,9 @@ function init_cinder {
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
         local be be_name be_type
-        local has_lvm=0
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
             be_type=${be%%:*}
             be_name=${be##*:}
-
-            if [[ $be_type == 'lvm' ]]; then
-                has_lvm=1
-            fi
-
             if type init_cinder_backend_${be_type} >/dev/null 2>&1; then
                 # Always init the default volume group for lvm.
                 if [[ "$be_type" == "lvm" ]]; then
@@ -389,17 +383,6 @@ function init_cinder {
                 init_cinder_backend_${be_type} ${be_name}
             fi
         done
-    fi
-
-    # Keep it simple, set a marker if there's an LVM backend
-    # use the created VG's to setup lvm filters
-    if [[ $has_lvm == 1 ]]; then
-        # Order matters here, not only obviously to make
-        # sure the VG's are created, but also some distros
-        # do some customizations to lvm.conf on init, we
-        # want to make sure we copy those over
-        sudo cp /etc/lvm/lvm.conf /etc/cinder/lvm.conf
-        configure_cinder_backend_conf_lvm
     fi
 
     mkdir -p $CINDER_STATE_PATH/volumes
