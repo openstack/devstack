@@ -1072,8 +1072,8 @@ function yum_install {
     # The manual check for missing packages is because yum -y assumes
     # missing packages are OK.  See
     # https://bugzilla.redhat.com/show_bug.cgi?id=965567
-    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
-        no_proxy=$no_proxy \
+    $sudo http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}" \
+        no_proxy="${no_proxy:-}" \
         ${YUM:-yum} install -y "$@" 2>&1 | \
         awk '
             BEGIN { fail=0 }
@@ -1095,7 +1095,8 @@ function zypper_install {
     [[ "$OFFLINE" = "True" ]] && return
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
-    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
+    $sudo http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}" \
+        no_proxy="${no_proxy:-}" \
         zypper --non-interactive install --auto-agree-with-licenses "$@"
 }
 
