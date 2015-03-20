@@ -437,7 +437,7 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT s3_host "$SERVICE_HOST"
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
     iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
-    iniset $NOVA_CONF DEFAULT sql_connection `database_connection_url nova`
+    iniset $NOVA_CONF database connection `database_connection_url nova`
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
 
@@ -471,7 +471,7 @@ function create_nova_conf {
 
     if [ -n "$NOVA_STATE_PATH" ]; then
         iniset $NOVA_CONF DEFAULT state_path "$NOVA_STATE_PATH"
-        iniset $NOVA_CONF DEFAULT lock_path "$NOVA_STATE_PATH"
+        iniset $NOVA_CONF oslo_concurrency lock_path "$NOVA_STATE_PATH"
     fi
     if [ -n "$NOVA_INSTANCES_PATH" ]; then
         iniset $NOVA_CONF DEFAULT instances_path "$NOVA_INSTANCES_PATH"
@@ -577,7 +577,7 @@ function create_nova_conf {
 function init_nova_cells {
     if is_service_enabled n-cell; then
         cp $NOVA_CONF $NOVA_CELLS_CONF
-        iniset $NOVA_CELLS_CONF DEFAULT sql_connection `database_connection_url $NOVA_CELLS_DB`
+        iniset $NOVA_CELLS_CONF database connection `database_connection_url $NOVA_CELLS_DB`
         iniset $NOVA_CELLS_CONF DEFAULT rabbit_virtual_host child_cell
         iniset $NOVA_CELLS_CONF DEFAULT dhcpbridge_flagfile $NOVA_CELLS_CONF
         iniset $NOVA_CELLS_CONF cells enable True

@@ -275,7 +275,7 @@ function configure_tempest {
 
     iniset $TEMPEST_CONFIG DEFAULT use_syslog $SYSLOG
     # Oslo
-    iniset $TEMPEST_CONFIG DEFAULT lock_path $TEMPEST_STATE_PATH
+    iniset $TEMPEST_CONFIG oslo_concurrency lock_path $TEMPEST_STATE_PATH
     mkdir -p $TEMPEST_STATE_PATH
     iniset $TEMPEST_CONFIG DEFAULT use_stderr False
     iniset $TEMPEST_CONFIG DEFAULT log_file tempest.log

@@ -229,12 +229,12 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT verbose True
 
     iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
-    iniset $CINDER_CONF DEFAULT sql_connection `database_connection_url cinder`
+    iniset $CINDER_CONF database connection `database_connection_url cinder`
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.contrib.standard_extensions
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
-    iniset $CINDER_CONF DEFAULT lock_path $CINDER_STATE_PATH
+    iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
     # NOTE(thingee): Cinder V1 API is deprecated and defaults to off as of
     # Juno. Keep it enabled so we can continue testing while it's still
