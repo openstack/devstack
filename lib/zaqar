@@ -105,8 +105,7 @@ function configure_zaqarclient {
 function configure_zaqar {
     setup_develop $ZAQAR_DIR
 
-    [ ! -d $ZAQAR_CONF_DIR ] && sudo mkdir -m 755 -p $ZAQAR_CONF_DIR
-    sudo chown $USER $ZAQAR_CONF_DIR
+    sudo install -d -o $STACK_USER -m 755 $ZAQAR_CONF_DIR
 
     iniset $ZAQAR_CONF DEFAULT debug True
     iniset $ZAQAR_CONF DEFAULT verbose True
@@ -168,8 +167,7 @@ function configure_mongodb {
 # init_zaqar() - Initialize etc.
 function init_zaqar {
     # Create cache dir
-    sudo mkdir -p $ZAQAR_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $ZAQAR_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $ZAQAR_AUTH_CACHE_DIR
     rm -f $ZAQAR_AUTH_CACHE_DIR/*
 }
 

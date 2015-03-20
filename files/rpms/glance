@@ -3,12 +3,4 @@ libxslt-devel       # testonly
 mysql-devel         # testonly
 openssl-devel       # testonly
 postgresql-devel    # testonly
-python-argparse
-python-eventlet
-python-greenlet
-python-lxml
-python-paste-deploy
-python-routes
-python-sqlalchemy
-pyxattr
 zlib-devel          # testonly

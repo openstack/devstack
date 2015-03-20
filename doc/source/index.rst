@@ -12,7 +12,7 @@ DevStack - an OpenStack Community Production
    plugins
    faq
    changes
-   contributing
+   hacking
 
 Quick Start
 -----------
@@ -139,7 +139,7 @@ FAQ
 Contributing
 ------------
 
-:doc:`Pitching in to make DevStack a better place <contributing>`
+:doc:`Pitching in to make DevStack a better place <hacking>`
 
 Code
 ====

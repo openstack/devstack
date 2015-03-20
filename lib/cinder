@@ -174,16 +174,15 @@ function configure_cinder_rootwrap {
     if [[ -d $CINDER_CONF_DIR/rootwrap.d ]]; then
         sudo rm -rf $CINDER_CONF_DIR/rootwrap.d
     fi
+
     # Deploy filters to /etc/cinder/rootwrap.d
-    sudo mkdir -m 755 $CINDER_CONF_DIR/rootwrap.d
-    sudo cp $CINDER_DIR/etc/cinder/rootwrap.d/*.filters $CINDER_CONF_DIR/rootwrap.d
-    sudo chown -R root:root $CINDER_CONF_DIR/rootwrap.d
-    sudo chmod 644 $CINDER_CONF_DIR/rootwrap.d/*
+    sudo install -d -o root -g root -m 755 $CINDER_CONF_DIR/rootwrap.d
+    sudo install -o root -g root -m 644 $CINDER_DIR/etc/cinder/rootwrap.d/*.filters $CINDER_CONF_DIR/rootwrap.d
+
     # Set up rootwrap.conf, pointing to /etc/cinder/rootwrap.d
-    sudo cp $CINDER_DIR/etc/cinder/rootwrap.conf $CINDER_CONF_DIR/
+    sudo install -o root -g root -m 644 $CINDER_DIR/etc/cinder/rootwrap.conf $CINDER_CONF_DIR
     sudo sed -e "s:^filters_path=.*$:filters_path=$CINDER_CONF_DIR/rootwrap.d:" -i $CINDER_CONF_DIR/rootwrap.conf
-    sudo chown root:root $CINDER_CONF_DIR/rootwrap.conf
-    sudo chmod 0644 $CINDER_CONF_DIR/rootwrap.conf
+
     # Specify rootwrap.conf as first parameter to rootwrap
     ROOTWRAP_CSUDOER_CMD="$cinder_rootwrap $CINDER_CONF_DIR/rootwrap.conf *"
 
@@ -197,10 +196,7 @@ function configure_cinder_rootwrap {
 
 # configure_cinder() - Set config files, create data dirs, etc
 function configure_cinder {
-    if [[ ! -d $CINDER_CONF_DIR ]]; then
-        sudo mkdir -p $CINDER_CONF_DIR
-    fi
-    sudo chown $STACK_USER $CINDER_CONF_DIR
+    sudo install -d -o $STACK_USER -m 755 $CINDER_CONF_DIR
 
     cp -p $CINDER_DIR/etc/cinder/policy.json $CINDER_CONF_DIR
 
@@ -229,12 +225,12 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT verbose True
 
     iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
-    iniset $CINDER_CONF DEFAULT sql_connection `database_connection_url cinder`
+    iniset $CINDER_CONF database connection `database_connection_url cinder`
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.contrib.standard_extensions
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
-    iniset $CINDER_CONF DEFAULT lock_path $CINDER_STATE_PATH
+    iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
     # NOTE(thingee): Cinder V1 API is deprecated and defaults to off as of
     # Juno. Keep it enabled so we can continue testing while it's still
@@ -351,8 +347,7 @@ function create_cinder_accounts {
 # create_cinder_cache_dir() - Part of the init_cinder() process
 function create_cinder_cache_dir {
     # Create cache dir
-    sudo mkdir -p $CINDER_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $CINDER_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $CINDER_AUTH_CACHE_DIR
     rm -f $CINDER_AUTH_CACHE_DIR/*
 }
 
