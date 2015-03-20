@@ -121,10 +121,7 @@ function configure_trove {
     setup_develop $TROVE_DIR
 
     # Create the trove conf dir and cache dirs if they don't exist
-    sudo mkdir -p ${TROVE_CONF_DIR}
-    sudo mkdir -p ${TROVE_AUTH_CACHE_DIR}
-    sudo chown -R $STACK_USER: ${TROVE_CONF_DIR}
-    sudo chown -R $STACK_USER: ${TROVE_AUTH_CACHE_DIR}
+    sudo install -d -o $STACK_USER ${TROVE_CONF_DIR} ${TROVE_AUTH_CACHE_DIR}
 
     # Copy api-paste file over to the trove conf dir
     cp $TROVE_LOCAL_API_PASTE_INI $TROVE_API_PASTE_INI

@@ -170,12 +170,8 @@ function configure_tempest {
 
     # Create tempest.conf from tempest.conf.sample
     # copy every time, because the image UUIDS are going to change
-    if [[ ! -d $TEMPEST_CONFIG_DIR ]]; then
-        sudo mkdir -p $TEMPEST_CONFIG_DIR
-    fi
-    sudo chown $STACK_USER $TEMPEST_CONFIG_DIR
-    cp $TEMPEST_DIR/etc/tempest.conf.sample $TEMPEST_CONFIG
-    chmod 644 $TEMPEST_CONFIG
+    sudo install -d -o $STACK_USER $TEMPEST_CONFIG_DIR
+    install -m 644 $TEMPEST_DIR/etc/tempest.conf.sample $TEMPEST_CONFIG
 
     password=${ADMIN_PASSWORD:-secrete}
 
