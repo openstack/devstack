@@ -165,7 +165,7 @@ function _config_ceilometer_apache_wsgi {
 function configure_ceilometer {
     sudo install -d -o $STACK_USER -m 755 $CEILOMETER_CONF_DIR $CEILOMETER_API_LOG_DIR
 
-    iniset_rpc_backend ceilometer $CEILOMETER_CONF DEFAULT
+    iniset_rpc_backend ceilometer $CEILOMETER_CONF
 
     iniset $CEILOMETER_CONF DEFAULT notification_topics "$CEILOMETER_NOTIFICATION_TOPICS"
     iniset $CEILOMETER_CONF DEFAULT verbose True

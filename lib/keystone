@@ -222,7 +222,7 @@ function configure_keystone {
         iniset $KEYSTONE_CONF assignment driver "keystone.assignment.backends.$KEYSTONE_ASSIGNMENT_BACKEND.Assignment"
     fi
 
-    iniset_rpc_backend keystone $KEYSTONE_CONF DEFAULT
+    iniset_rpc_backend keystone $KEYSTONE_CONF
 
     # Set the URL advertised in the ``versions`` structure returned by the '/' route
     iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/"

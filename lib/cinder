@@ -277,7 +277,7 @@ function configure_cinder {
         iniset $CINDER_CONF DEFAULT use_syslog True
     fi
 
-    iniset_rpc_backend cinder $CINDER_CONF DEFAULT
+    iniset_rpc_backend cinder $CINDER_CONF
 
     if [[ "$CINDER_SECURE_DELETE" == "False" ]]; then
         iniset $CINDER_CONF DEFAULT secure_delete False

@@ -246,7 +246,7 @@ function get_transport_url {
 function iniset_rpc_backend {
     local package=$1
     local file=$2
-    local section=$3
+    local section=${3:-DEFAULT}
     if is_service_enabled zeromq; then
         iniset $file $section rpc_backend "zmq"
         iniset $file $section rpc_zmq_host `hostname`

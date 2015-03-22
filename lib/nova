@@ -532,7 +532,7 @@ function create_nova_conf {
 
     iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
     iniset $NOVA_CONF DEFAULT keystone_ec2_url $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
-    iniset_rpc_backend nova $NOVA_CONF DEFAULT
+    iniset_rpc_backend nova $NOVA_CONF
     iniset $NOVA_CONF glance api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
 
     iniset $NOVA_CONF DEFAULT osapi_compute_workers "$API_WORKERS"
