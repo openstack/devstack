@@ -104,7 +104,7 @@ function configure_glance {
     if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
         iniset $GLANCE_REGISTRY_CONF DEFAULT notification_driver messaging
     fi
-    iniset_rpc_backend glance $GLANCE_REGISTRY_CONF DEFAULT
+    iniset_rpc_backend glance $GLANCE_REGISTRY_CONF
 
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -117,7 +117,7 @@ function configure_glance {
     if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
         iniset $GLANCE_API_CONF DEFAULT notification_driver messaging
     fi
-    iniset_rpc_backend glance $GLANCE_API_CONF DEFAULT
+    iniset_rpc_backend glance $GLANCE_API_CONF
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         iniset $GLANCE_API_CONF DEFAULT container_formats "ami,ari,aki,bare,ovf,tgz"
         iniset $GLANCE_API_CONF DEFAULT disk_formats "ami,ari,aki,vhd,raw,iso"

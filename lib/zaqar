@@ -132,7 +132,7 @@ function configure_zaqar {
         iniset $ZAQAR_CONF DEFAULT notification_driver messaging
         iniset $ZAQAR_CONF DEFAULT control_exchange zaqar
     fi
-    iniset_rpc_backend zaqar $ZAQAR_CONF DEFAULT
+    iniset_rpc_backend zaqar $ZAQAR_CONF
 
     cleanup_zaqar
 }
