@@ -358,11 +358,6 @@ function configure_tempest {
     # TODO(mriedem): Remove the preserve_ports flag when Juno is end of life.
     iniset $TEMPEST_CONFIG compute-feature-enabled preserve_ports True
 
-    # Compute admin
-    iniset $TEMPEST_CONFIG "compute-admin" username $ADMIN_USERNAME
-    iniset $TEMPEST_CONFIG "compute-admin" password "$password"
-    iniset $TEMPEST_CONFIG "compute-admin" tenant_name $ADMIN_TENANT_NAME
-
     # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
     iniset $TEMPEST_CONFIG network tenant_networks_reachable "$tenant_networks_reachable"
