@@ -23,7 +23,7 @@
 
 # check if someone has invoked with "sh"
 if [[ "${POSIXLY_CORRECT}" == "y" ]]; then
-    echo "You appear to be running bash in POSIX compatability mode."
+    echo "You appear to be running bash in POSIX compatibility mode."
     echo "devstack uses bash features. \"./stack.sh\" should do the right thing"
     exit 1
 fi
