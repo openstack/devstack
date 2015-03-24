@@ -113,6 +113,11 @@ directory. Inside this directory there can be 2 files.
   services using ``run_process`` as it only works with enabled
   services.
 
+  Be careful to allow users to override global-variables for
+  customizing their environment.  Usually it is best to provide a
+  default value only if the variable is unset or empty; e.g. in bash
+  syntax ``FOO=${FOO:-default}``.
+
 - ``plugin.sh`` - the actual plugin. It will be executed by devstack
   during it's run. The run order will be done in the registration
   order for these plugins, and will occur immediately after all in
