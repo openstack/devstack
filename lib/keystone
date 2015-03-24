@@ -227,21 +227,21 @@ function configure_keystone {
     # Set the URL advertised in the ``versions`` structure returned by the '/' route
     iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/"
     iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/"
-    iniset $KEYSTONE_CONF DEFAULT admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
+    iniset $KEYSTONE_CONF eventlet_server admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
 
     # Register SSL certificates if provided
     if is_ssl_enabled_service key; then
         ensure_certificates KEYSTONE
 
-        iniset $KEYSTONE_CONF ssl enable True
-        iniset $KEYSTONE_CONF ssl certfile $KEYSTONE_SSL_CERT
-        iniset $KEYSTONE_CONF ssl keyfile $KEYSTONE_SSL_KEY
+        iniset $KEYSTONE_CONF eventlet_server_ssl enable True
+        iniset $KEYSTONE_CONF eventlet_server_ssl certfile $KEYSTONE_SSL_CERT
+        iniset $KEYSTONE_CONF eventlet_server_ssl keyfile $KEYSTONE_SSL_KEY
     fi
 
     if is_service_enabled tls-proxy; then
         # Set the service ports for a proxy to take the originals
-        iniset $KEYSTONE_CONF DEFAULT public_port $KEYSTONE_SERVICE_PORT_INT
-        iniset $KEYSTONE_CONF DEFAULT admin_port $KEYSTONE_AUTH_PORT_INT
+        iniset $KEYSTONE_CONF eventlet_server public_port $KEYSTONE_SERVICE_PORT_INT
+        iniset $KEYSTONE_CONF eventlet_server admin_port $KEYSTONE_AUTH_PORT_INT
     fi
 
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
@@ -317,7 +317,7 @@ function configure_keystone {
 
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
 
-    iniset $KEYSTONE_CONF DEFAULT admin_workers "$API_WORKERS"
+    iniset $KEYSTONE_CONF eventlet_server admin_workers "$API_WORKERS"
     # Public workers will use the server default, typically number of CPU.
 }
 
