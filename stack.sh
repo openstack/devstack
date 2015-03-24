@@ -278,6 +278,10 @@ EOF
             die $LINENO "Error installing RDO repo, cannot continue"
     fi
 
+    if is_oraclelinux; then
+        sudo yum-config-manager --enable ol7_optional_latest ol7_addons ol7_MySQL56
+    fi
+
 fi
 
 
