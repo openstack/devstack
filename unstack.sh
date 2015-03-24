@@ -173,10 +173,6 @@ if is_service_enabled neutron; then
     cleanup_neutron
 fi
 
-if is_service_enabled trove; then
-    cleanup_trove
-fi
-
 if is_service_enabled dstat; then
     stop_dstat
 fi

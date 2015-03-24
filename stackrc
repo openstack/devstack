@@ -231,11 +231,6 @@ SAHARA_BRANCH=${SAHARA_BRANCH:-master}
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
 SWIFT_BRANCH=${SWIFT_BRANCH:-master}
 
-# trove service
-TROVE_REPO=${TROVE_REPO:-${GIT_BASE}/openstack/trove.git}
-TROVE_BRANCH=${TROVE_BRANCH:-master}
-
-
 ##############
 #
 #  Testing Components
@@ -300,10 +295,6 @@ GITBRANCH["python-saharaclient"]=${SAHARACLIENT_BRANCH:-master}
 # python swift client library
 GITREPO["python-swiftclient"]=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
 GITBRANCH["python-swiftclient"]=${SWIFTCLIENT_BRANCH:-master}
-
-# trove client library test
-GITREPO["python-troveclient"]=${TROVECLIENT_REPO:-${GIT_BASE}/openstack/python-troveclient.git}
-GITBRANCH["python-troveclient"]=${TROVECLIENT_BRANCH:-master}
 
 # consolidated openstack python client
 GITREPO["python-openstackclient"]=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
@@ -577,16 +568,15 @@ case "$VIRT_DRIVER" in
         IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec.tar.gz"};;
 esac
 
-# Trove needs a custom image for its work
-if [[ "$ENABLED_SERVICES" =~ 'tr-api' ]]; then
-    case "$VIRT_DRIVER" in
-        libvirt|ironic|xenapi)
-            TROVE_GUEST_IMAGE_URL=${TROVE_GUEST_IMAGE_URL:-"http://tarballs.openstack.org/trove/images/ubuntu/mysql.qcow2"}
-            IMAGE_URLS+=",${TROVE_GUEST_IMAGE_URL}"
-            ;;
-        *)
-            ;;
-    esac
+# Staging Area for New Images, have them here for at least 24hrs for nodepool
+# to cache them otherwise the failure rates in the gate are too high
+PRECACHE_IMAGES=$(trueorfalse False PRECACHE_IMAGES)
+if [[ "$PRECACHE_IMAGES" == "True" ]]; then
+
+    IMAGE_URL="http://tarballs.openstack.org/trove/images/ubuntu/mysql.qcow2"
+    if ! [[ "$IMAGE_URLS"  =~ "$IMAGE_URL" ]]; then
+        IMAGE_URLS+=",$IMAGE_URL"
+    fi
 fi
 
 # 10Gb default volume backing file size

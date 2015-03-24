@@ -29,7 +29,7 @@ for i in $TOP/lib/*; do
     fi
 done
 
-ALL_LIBS="python-novaclient oslo.config pbr oslo.context python-troveclient"
+ALL_LIBS="python-novaclient oslo.config pbr oslo.context"
 ALL_LIBS+=" python-keystoneclient taskflow oslo.middleware pycadf"
 ALL_LIBS+=" python-glanceclient python-ironicclient tempest-lib"
 ALL_LIBS+=" oslo.messaging oslo.log cliff python-heatclient stevedore"

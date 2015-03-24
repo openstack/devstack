@@ -75,12 +75,6 @@ SUSE
 Tempest
 ~~~~~~~
 
-Trove
-~~~~~
-
-* Nikhil Manchanda <SlickNik@gmail.com>
-* Michael Basnight <mbasnight@gmail.com>
-
 Xen
 ~~~
 * Bob Ball <bob.ball@citrix.com>
