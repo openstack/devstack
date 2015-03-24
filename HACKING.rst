@@ -320,3 +320,48 @@ Variables and Functions
 - function names should_have_underscores, NotCamelCase.
 - functions should be declared as per the regex ^function foo {$
   with code starting on the next line
+
+
+Review Criteria
+===============
+
+There are some broad criteria that will be followed when reviewing
+your change
+
+* **Is it passing tests** -- your change will not be reviewed
+  throughly unless the official CI has run successfully against it.
+
+* **Does this belong in DevStack** -- DevStack reviewers have a
+  default position of "no" but are ready to be convinced by your
+  change.
+
+  For very large changes, you should consider :doc:`the plugins system
+  <plugins>` to see if your code is better abstracted from the main
+  repository.
+
+  For smaller changes, you should always consider if the change can be
+  encapsulated by per-user settings in ``local.conf``.  A common example
+  is adding a simple config-option to an ``ini`` file.  Specific flags
+  are not usually required for this, although adding documentation
+  about how to achieve a larger goal (which might include turning on
+  various settings, etc) is always welcome.
+
+* **Work-arounds** -- often things get broken and DevStack can be in a
+  position to fix them.  Work-arounds are fine, but should be
+  presented in the context of fixing the root-cause of the problem.
+  This means it is well-commented in the code and the change-log and
+  mostly likely includes links to changes or bugs that fix the
+  underlying problem.
+
+* **Should this be upstream** -- DevStack generally does not override
+  default choices provided by projects and attempts to not
+  unexpectedly modify behaviour.
+
+* **Context in commit messages** -- DevStack touches many different
+  areas and reviewers need context around changes to make good
+  decisions.  We also always want it to be clear to someone -- perhaps
+  even years from now -- why we were motivated to make a change at the
+  time.
+
+* **Reviewers** -- please see ``MAINTAINERS.rst`` for a list of people
+  that should be added to reviews of various sub-systems.
