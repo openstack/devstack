@@ -49,7 +49,7 @@ source $TOP_DIR/functions
 source $TOP_DIR/openrc
 
 # Import neutron functions
-source $TOP_DIR/lib/neutron
+source $TOP_DIR/lib/neutron-legacy
 
 # If neutron is not enabled we exit with exitcode 55, which means exercise is skipped.
 neutron_plugin_check_adv_test_requirements || exit 55
