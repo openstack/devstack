@@ -883,16 +883,6 @@ function _parse_package_files {
                 fi
             fi
 
-            # Look for # testonly in comment
-            if [[ $line =~ (.*)#.*testonly.* ]]; then
-                package=${BASH_REMATCH[1]}
-                # Are we installing test packages? (test for the default value)
-                if [[ $INSTALL_TESTONLY_PACKAGES = "False" ]]; then
-                    # If not installing test packages the skip this package
-                    inst_pkg=0
-                fi
-            fi
-
             if [[ $inst_pkg = 1 ]]; then
                 echo $package
             fi

@@ -101,18 +101,17 @@ function pip_install {
         $cmd_pip install \
         $@
 
-    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False INSTALL_TESTONLY_PACKAGES)
-    if [[ "$INSTALL_TESTONLY_PACKAGES" == "True" ]]; then
-        local test_req="$@/test-requirements.txt"
-        if [[ -e "$test_req" ]]; then
-            $sudo_pip \
-                http_proxy=${http_proxy:-} \
-                https_proxy=${https_proxy:-} \
-                no_proxy=${no_proxy:-} \
-                PIP_FIND_LINKS=$PIP_FIND_LINKS \
-                $cmd_pip install \
-                -r $test_req
-        fi
+    # Also install test requirements
+    local test_req="$@/test-requirements.txt"
+    if [[ -e "$test_req" ]]; then
+        echo "Installing test-requirements for $test_req"
+        $sudo_pip \
+            http_proxy=${http_proxy:-} \
+            https_proxy=${https_proxy:-} \
+            no_proxy=${no_proxy:-} \
+            PIP_FIND_LINKS=$PIP_FIND_LINKS \
+            $cmd_pip install \
+            -r $test_req
     fi
 }
 

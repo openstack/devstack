@@ -5,7 +5,7 @@ euca2ools # only for testing client
 gcc
 gcc-c++
 git-core
-graphviz # testonly - docs
+graphviz # needed only for docs
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
