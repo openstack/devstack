@@ -1,10 +1,11 @@
+# Once we can prebuild wheels before a devstack run, uncomment the skipped libraries
 cryptography
-lxml
+# lxml # still install from from packages
 MySQL-python
-netifaces
+# netifaces # still install from packages
 #numpy    # slowest wheel by far, stop building until we are actually using the output
 posix-ipc
-psycopg2
+# psycopg # still install from packages
 pycrypto
 pyOpenSSL
 PyYAML
