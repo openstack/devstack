@@ -6,7 +6,7 @@ euca2ools
 gcc
 gcc-c++
 git-core
-graphviz # testonly - docs
+graphviz # docs
 iputils
 libopenssl-devel # to rebuild pyOpenSSL if needed
 lsof # useful when debugging

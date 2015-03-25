@@ -1,6 +1,6 @@
-libmysqlclient-dev  # testonly
-libpq-dev           # testonly
-libssl-dev          # testonly
+libmysqlclient-dev
+libpq-dev
+libssl-dev
 libxml2-dev
-libxslt1-dev        # testonly
-zlib1g-dev           # testonly
+libxslt1-dev
+zlib1g-dev

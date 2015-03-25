@@ -1,6 +1,6 @@
-libxml2-devel       # testonly
-libxslt-devel       # testonly
-mysql-devel         # testonly
-openssl-devel       # testonly
-postgresql-devel    # testonly
-zlib-devel          # testonly
+libxml2-devel
+libxslt-devel
+mysql-devel
+openssl-devel
+postgresql-devel
+zlib-devel
