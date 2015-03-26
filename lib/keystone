@@ -37,8 +37,16 @@ set +o xtrace
 # Set up default directories
 GITDIR["python-keystoneclient"]=$DEST/python-keystoneclient
 GITDIR["keystonemiddleware"]=$DEST/keystonemiddleware
-
 KEYSTONE_DIR=$DEST/keystone
+
+# Keystone virtual environment
+if [[ ${USE_VENV} = True ]]; then
+    PROJECT_VENV["keystone"]=${KEYSTONE_DIR}.venv
+    KEYSTONE_BIN_DIR=${PROJECT_VENV["keystone"]}/bin
+else
+    KEYSTONE_BIN_DIR=$(get_python_exec_prefix)
+fi
+
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
@@ -144,6 +152,7 @@ function _config_keystone_apache_wsgi {
     local keystone_keyfile=""
     local keystone_service_port=$KEYSTONE_SERVICE_PORT
     local keystone_auth_port=$KEYSTONE_AUTH_PORT
+    local venv_path=""
 
     if is_ssl_enabled_service key; then
         keystone_ssl="SSLEngine On"
@@ -153,6 +162,9 @@ function _config_keystone_apache_wsgi {
     if is_service_enabled tls-proxy; then
         keystone_service_port=$KEYSTONE_SERVICE_PORT_INT
         keystone_auth_port=$KEYSTONE_AUTH_PORT_INT
+    fi
+    if [[ ${USE_VENV} = True ]]; then
+        venv_path="python-path=${PROJECT_VENV["keystone"]}/lib/python2.7/site-packages"
     fi
 
     # copy proxy vhost and wsgi file
@@ -169,7 +181,8 @@ function _config_keystone_apache_wsgi {
         s|%SSLENGINE%|$keystone_ssl|g;
         s|%SSLCERTFILE%|$keystone_certfile|g;
         s|%SSLKEYFILE%|$keystone_keyfile|g;
-        s|%USER%|$STACK_USER|g
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
     " -i $keystone_apache_conf
 }
 
@@ -460,20 +473,20 @@ function init_keystone {
     recreate_database keystone
 
     # Initialize keystone database
-    $KEYSTONE_DIR/bin/keystone-manage db_sync
+    $KEYSTONE_BIN_DIR/keystone-manage db_sync
 
     local extension_value
     for extension_value in ${KEYSTONE_EXTENSIONS//,/ }; do
         if [[ -z "${extension_value}" ]]; then
             continue
         fi
-        $KEYSTONE_DIR/bin/keystone-manage db_sync --extension "${extension_value}"
+        $KEYSTONE_BIN_DIR/keystone-manage db_sync --extension "${extension_value}"
     done
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" != "uuid" ]]; then
         # Set up certificates
         rm -rf $KEYSTONE_CONF_DIR/ssl
-        $KEYSTONE_DIR/bin/keystone-manage pki_setup
+        $KEYSTONE_BIN_DIR/keystone-manage pki_setup
 
         # Create cache dir
         sudo install -d -o $STACK_USER $KEYSTONE_AUTH_CACHE_DIR
@@ -492,9 +505,14 @@ function install_keystoneclient {
 
 # install_keystonemiddleware() - Collect source and prepare
 function install_keystonemiddleware {
+    # install_keystonemiddleware() is called when keystonemiddleware is needed
+    # to provide an opportunity to install it from the source repo
     if use_library_from_git "keystonemiddleware"; then
         git_clone_by_name "keystonemiddleware"
         setup_dev_lib "keystonemiddleware"
+    else
+        # When not installing from repo, keystonemiddleware is still needed...
+        pip_install keystonemiddleware
     fi
 }
 
@@ -542,7 +560,7 @@ function start_keystone {
         tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
     else
         # Start Keystone in a screen window
-        run_process key "$KEYSTONE_DIR/bin/keystone-all --config-file $KEYSTONE_CONF"
+        run_process key "$KEYSTONE_BIN_DIR/keystone-all --config-file $KEYSTONE_CONF"
     fi
 
     echo "Waiting for keystone to start..."
