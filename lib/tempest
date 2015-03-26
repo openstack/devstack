@@ -175,6 +175,10 @@ function configure_tempest {
 
     password=${ADMIN_PASSWORD:-secrete}
 
+    # Do we want to make a configuration where Tempest has admin on
+    # the cloud. We don't always want to so that we can ensure Tempest
+    # would work on a public cloud.
+    TEMPEST_HAS_ADMIN=$(trueorfalse True TEMPEST_HAS_ADMIN)
     # See files/keystone_data.sh and stack.sh where admin, demo and alt_demo
     # user and tenant are set up...
     ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
@@ -292,11 +296,13 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG identity alt_username $ALT_USERNAME
     iniset $TEMPEST_CONFIG identity alt_password "$password"
     iniset $TEMPEST_CONFIG identity alt_tenant_name $ALT_TENANT_NAME
-    iniset $TEMPEST_CONFIG identity admin_username $ADMIN_USERNAME
-    iniset $TEMPEST_CONFIG identity admin_password "$password"
-    iniset $TEMPEST_CONFIG identity admin_tenant_name $ADMIN_TENANT_NAME
-    iniset $TEMPEST_CONFIG identity admin_tenant_id $ADMIN_TENANT_ID
-    iniset $TEMPEST_CONFIG identity admin_domain_name $ADMIN_DOMAIN_NAME
+    if [[ "$TEMPEST_HAS_ADMIN" == "True" ]]; then
+        iniset $TEMPEST_CONFIG identity admin_username $ADMIN_USERNAME
+        iniset $TEMPEST_CONFIG identity admin_password "$password"
+        iniset $TEMPEST_CONFIG identity admin_tenant_name $ADMIN_TENANT_NAME
+        iniset $TEMPEST_CONFIG identity admin_tenant_id $ADMIN_TENANT_ID
+        iniset $TEMPEST_CONFIG identity admin_domain_name $ADMIN_DOMAIN_NAME
+    fi
     iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
     if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
         iniset $TEMPEST_CONFIG identity ca_certificates_file $SSL_BUNDLE_FILE
@@ -310,6 +316,9 @@ function configure_tempest {
     fi
 
     # Auth
+    #
+    #
+    TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-$TEMPEST_HAS_ADMIN}
     iniset $TEMPEST_CONFIG auth allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     iniset $TEMPEST_CONFIG auth tempest_roles "Member"
 
@@ -331,7 +340,7 @@ function configure_tempest {
     # NOTE(mtreinish): This must be done after auth settings are added to the tempest config
     local tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
-    tox -evenv -- verify-tempest-config -uro $tmp_cfg_file
+    tox -revenv -- verify-tempest-config -uro $tmp_cfg_file
 
     local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then

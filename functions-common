@@ -1501,6 +1501,33 @@ function load_plugin_settings {
     done
 }
 
+# plugin_override_defaults
+#
+# Run an extremely early setting phase for plugins that allows default
+# overriding of services.
+function plugin_override_defaults {
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
+
+    # short circuit if nothing to do
+    if [[ -z $plugins ]]; then
+        return
+    fi
+
+    echo "Overriding Configuration Defaults"
+    for plugin in ${plugins//,/ }; do
+        local dir=${GITDIR[$plugin]}
+        # source any overrides
+        if [[ -f $dir/devstack/override-defaults ]]; then
+            # be really verbose that an override is happening, as it
+            # may not be obvious if things fail later.
+            echo "$plugin has overriden the following defaults"
+            cat $dir/devstack/override-defaults
+            source $dir/devstack/override-defaults
+        fi
+    done
+}
+
 # run_plugins
 #
 # Run the devstack/plugin.sh in all the plugin directories. These are
@@ -1530,6 +1557,8 @@ function run_phase {
     # the source phase corresponds to settings loading in plugins
     if [[ "$mode" == "source" ]]; then
         load_plugin_settings
+    elif [[ "$mode" == "override_defaults" ]]; then
+        plugin_override_defaults
     else
         run_plugins $mode $phase
     fi

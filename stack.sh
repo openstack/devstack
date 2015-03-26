@@ -89,6 +89,9 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
+# Print the kernel version
+uname -a
+
 # Prepare the environment
 # -----------------------
 
@@ -506,6 +509,10 @@ fi
 
 # Configure Projects
 # ==================
+
+# Plugin Phase 0: override_defaults - allow pluggins to override
+# defaults before other services are run
+run_phase override_defaults
 
 # Import apache functions
 source $TOP_DIR/lib/apache

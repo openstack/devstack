@@ -247,6 +247,21 @@ A clean install every time
 
         RECLONE=yes
 
+Upgrade packages installed by pip
+---------------------------------
+
+    | *Default: ``PIP_UPGRADE=""``*
+    |  By default ``stack.sh`` only installs Python packages if no version
+       is currently installed or the current version does not match a specified
+       requirement. If ``PIP_UPGRADE`` is set to ``True`` then existing required
+       Python packages will be upgraded to the most recent version that
+       matches requirements.
+    |
+
+    ::
+
+        PIP_UPGRADE=True
+
 Swift
 -----
 
