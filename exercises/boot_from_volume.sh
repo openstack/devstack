@@ -32,7 +32,7 @@ source $TOP_DIR/functions
 
 # Import project functions
 source $TOP_DIR/lib/cinder
-source $TOP_DIR/lib/neutron
+source $TOP_DIR/lib/neutron-legacy
 
 # Import configuration
 source $TOP_DIR/openrc
