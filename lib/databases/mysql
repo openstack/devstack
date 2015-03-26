@@ -151,9 +151,12 @@ EOF
     else
         exit_distro_not_supported "mysql installation"
     fi
+}
 
+function install_database_python_mysql {
     # Install Python client module
     pip_install MySQL-python
+    ADDITIONAL_VENV_PACKAGES+=",MySQL-python"
 }
 
 function database_connection_url_mysql {

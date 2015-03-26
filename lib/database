@@ -109,6 +109,11 @@ function install_database {
     install_database_$DATABASE_TYPE
 }
 
+# Install the database Python packages
+function install_database_python {
+    install_database_python_$DATABASE_TYPE
+}
+
 # Configure and start the database
 function configure_database {
     configure_database_$DATABASE_TYPE

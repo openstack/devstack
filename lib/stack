@@ -16,13 +16,17 @@
 function stack_install_service {
     local service=$1
     if type install_${service} >/dev/null 2>&1; then
-        if [[ -n ${PROJECT_VENV[$service]:-} ]]; then
+        if [[ ${USE_VENV} = True && -n ${PROJECT_VENV[$service]:-} ]]; then
             rm -rf ${PROJECT_VENV[$service]}
-            source $TOP_DIR/tools/build_venv.sh ${PROJECT_VENV[$service]}
+            source $TOP_DIR/tools/build_venv.sh ${PROJECT_VENV[$service]} ${ADDITIONAL_VENV_PACKAGES//,/ }
             export PIP_VIRTUAL_ENV=${PROJECT_VENV[$service]:-}
+
+            # Install other OpenStack prereqs that might come from source repos
+            install_oslo
+            install_keystonemiddleware
         fi
         install_${service}
-        if [[ -n ${PROJECT_VENV[$service]:-} ]]; then
+        if [[ ${USE_VENV} = True && -n ${PROJECT_VENV[$service]:-} ]]; then
             unset PIP_VIRTUAL_ENV
         fi
     fi
