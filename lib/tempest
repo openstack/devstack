@@ -282,6 +282,7 @@ function configure_tempest {
 
     # Compute
     iniset $TEMPEST_CONFIG compute allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
+    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
     iniset $TEMPEST_CONFIG compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
     iniset $TEMPEST_CONFIG compute network_for_ssh $PRIVATE_NETWORK_NAME
     iniset $TEMPEST_CONFIG compute ip_version_for_ssh 4
