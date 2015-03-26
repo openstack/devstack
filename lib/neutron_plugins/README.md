@@ -13,7 +13,7 @@ Plugin specific configuration variables should be in this file.
 
 functions
 ---------
-``lib/neutron`` calls the following functions when the ``$Q_PLUGIN`` is enabled
+``lib/neutron-legacy`` calls the following functions when the ``$Q_PLUGIN`` is enabled
 
 * ``neutron_plugin_create_nova_conf`` :
   set ``NOVA_VIF_DRIVER`` and optionally set options in nova_conf

@@ -1,12 +1,12 @@
-acl     # testonly
+acl
 ebtables
 iptables
 iputils-ping
 iputils-arping
-libmysqlclient-dev  # testonly
+libmysqlclient-dev
 mysql-server #NOPRIME
 sudo
-postgresql-server-dev-all       # testonly
+postgresql-server-dev-all
 python-mysqldb
 python-mysql.connector
 python-qpid # NOPRIME

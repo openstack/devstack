@@ -1,11 +1,11 @@
-acl     # testonly
+acl
 dnsmasq
 dnsmasq-utils # dist:opensuse-12.3,opensuse-13.1
 ebtables
 iptables
 iputils
 mariadb # NOPRIME
-postgresql-devel        # testonly
+postgresql-devel
 python-eventlet
 python-greenlet
 python-iso8601

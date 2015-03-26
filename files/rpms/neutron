@@ -1,15 +1,15 @@
 MySQL-python
-acl     # testonly
+acl
 dnsmasq # for q-dhcp
 dnsmasq-utils # for dhcp_release
 ebtables
 iptables
 iputils
 mysql-connector-python
-mysql-devel  # testonly
+mysql-devel
 mysql-server # NOPRIME
 openvswitch # NOPRIME
-postgresql-devel        # testonly
+postgresql-devel
 rabbitmq-server # NOPRIME
 qpid-cpp-server        # NOPRIME
 sqlite

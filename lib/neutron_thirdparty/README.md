@@ -10,7 +10,7 @@ Third party program specific configuration variables should be in this file.
 
 functions
 ---------
-``lib/neutron`` calls the following functions when the ``<third_party>`` is enabled
+``lib/neutron-legacy`` calls the following functions when the ``<third_party>`` is enabled
 
 functions to be implemented
 * ``configure_<third_party>``:

@@ -68,6 +68,7 @@ Walk through various setups used by stackers
    guides/neutron
    guides/devstack-with-nested-kvm
    guides/nova
+   guides/devstack-with-lbaas-v2
 
 All-In-One Single VM
 --------------------
@@ -165,7 +166,7 @@ Scripts
 * `lib/ironic <lib/ironic.html>`__
 * `lib/keystone <lib/keystone.html>`__
 * `lib/ldap <lib/ldap.html>`__
-* `lib/neutron <lib/neutron.html>`__
+* `lib/neutron-legacy <lib/neutron-legacy.html>`__
 * `lib/nova <lib/nova.html>`__
 * `lib/oslo <lib/oslo.html>`__
 * `lib/rpc\_backend <lib/rpc_backend.html>`__
