@@ -124,6 +124,8 @@ function configure_heat {
         setup_colorized_logging $HEAT_CONF DEFAULT tenant user
     fi
 
+    iniset $HEAT_CONF DEFAULT deferred_auth_method $HEAT_DEFERRED_AUTH
+
     # NOTE(jamielennox): heat re-uses specific values from the
     # keystone_authtoken middleware group and so currently fails when using the
     # auth plugin setup. This should be fixed in heat.  Heat is also the only
@@ -267,10 +269,6 @@ function create_heat_accounts {
 
         # heat_stack_user role is for users created by Heat
         get_or_create_role "heat_stack_user"
-    fi
-
-    if [[ $HEAT_DEFERRED_AUTH == trusts ]]; then
-        iniset $HEAT_CONF DEFAULT deferred_auth_method trusts
     fi
 
     if [[ "$HEAT_STACK_DOMAIN" == "True" ]]; then
