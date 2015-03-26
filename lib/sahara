@@ -113,12 +113,13 @@ function configure_sahara {
 
     configure_auth_token_middleware $SAHARA_CONF_FILE sahara $SAHARA_AUTH_CACHE_DIR
 
+    iniset_rpc_backend sahara $SAHARA_CONF_FILE DEFAULT
+
     # Set configuration to send notifications
 
     if is_service_enabled ceilometer; then
         iniset $SAHARA_CONF_FILE DEFAULT enable_notifications "true"
         iniset $SAHARA_CONF_FILE DEFAULT notification_driver "messaging"
-        iniset_rpc_backend sahara $SAHARA_CONF_FILE
     fi
 
     iniset $SAHARA_CONF_FILE DEFAULT verbose True
@@ -203,12 +204,16 @@ function sahara_register_images {
 # start_sahara() - Start running processes, including screen
 function start_sahara {
     run_process sahara "$SAHARA_BIN_DIR/sahara-all --config-file $SAHARA_CONF_FILE"
+    run_process sahara-api "$SAHARA_BIN_DIR/sahara-api --config-file $SAHARA_CONF_FILE"
+    run_process sahara-eng "$SAHARA_BIN_DIR/sahara-engine --config-file $SAHARA_CONF_FILE"
 }
 
 # stop_sahara() - Stop running processes
 function stop_sahara {
     # Kill the Sahara screen windows
     stop_process sahara
+    stop_process sahara-api
+    stop_process sahara-eng
 }
 
 
