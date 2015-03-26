@@ -337,6 +337,7 @@ function build_heat_pip_mirror {
     " -i $heat_pip_repo_apache_conf
     enable_apache_site heat_pip_repo
     restart_apache_server
+    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport $HEAT_PIP_REPO_PORT -j ACCEPT || true
 }
 
 # Restore xtrace
