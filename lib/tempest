@@ -331,7 +331,7 @@ function configure_tempest {
     # NOTE(mtreinish): This must be done after auth settings are added to the tempest config
     local tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
-    tox -evenv -- verify-tempest-config -uro $tmp_cfg_file
+    tox -revenv -- verify-tempest-config -uro $tmp_cfg_file
 
     local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
