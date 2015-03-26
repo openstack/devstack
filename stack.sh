@@ -89,6 +89,9 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
+# Print the kernel version
+uname -a
+
 # Prepare the environment
 # -----------------------
 
