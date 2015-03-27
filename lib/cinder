@@ -39,8 +39,16 @@ fi
 
 # set up default directories
 GITDIR["python-cinderclient"]=$DEST/python-cinderclient
-
 CINDER_DIR=$DEST/cinder
+
+# Cinder virtual environment
+if [[ ${USE_VENV} = True ]]; then
+    PROJECT_VENV["cinder"]=${CINDER_DIR}.venv
+    CINDER_BIN_DIR=${PROJECT_VENV["cinder"]}/bin
+else
+    CINDER_BIN_DIR=$(get_python_exec_prefix)
+fi
+
 CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
 CINDER_AUTH_CACHE_DIR=${CINDER_AUTH_CACHE_DIR:-/var/cache/cinder}
 
@@ -56,13 +64,6 @@ CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
 CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
 CINDER_SERVICE_PORT_INT=${CINDER_SERVICE_PORT_INT:-18776}
 CINDER_SERVICE_PROTOCOL=${CINDER_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
-
-# Support entry points installation of console scripts
-if [[ -d $CINDER_DIR/bin ]]; then
-    CINDER_BIN_DIR=$CINDER_DIR/bin
-else
-    CINDER_BIN_DIR=$(get_python_exec_prefix)
-fi
 
 
 # Default backends
@@ -164,12 +165,11 @@ function cleanup_cinder {
     fi
 }
 
+# Deploy new rootwrap filters files and configure sudo
 # configure_cinder_rootwrap() - configure Cinder's rootwrap
 function configure_cinder_rootwrap {
-    # Set the paths of certain binaries
-    local cinder_rootwrap=$(get_rootwrap_location cinder)
+    local cinder_rootwrap=$CINDER_BIN_DIR/cinder-rootwrap
 
-    # Deploy new rootwrap filters files (owned by root).
     # Wipe any existing rootwrap.d files first
     if [[ -d $CINDER_CONF_DIR/rootwrap.d ]]; then
         sudo rm -rf $CINDER_CONF_DIR/rootwrap.d
@@ -188,10 +188,17 @@ function configure_cinder_rootwrap {
 
     # Set up the rootwrap sudoers for cinder
     local tempfile=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CSUDOER_CMD" >$tempfile
+    echo "Defaults:$STACK_USER secure_path=$CINDER_BIN_DIR:/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >$tempfile
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CSUDOER_CMD" >>$tempfile
     chmod 0440 $tempfile
     sudo chown root:root $tempfile
     sudo mv $tempfile /etc/sudoers.d/cinder-rootwrap
+
+    # So rootwrap and PATH are broken beyond belief.  WTF relies on a SECURE operation
+    # to blindly follow PATH???  We learned that was a bad idea in the 80's!
+    # So to fix this in a venv, we must exploit the very hole we want to close by dropping
+    # a copy of the venv rootwrap binary into /usr/local/bin.
+    #sudo cp -p $cinder_rootwrap /usr/local/bin
 }
 
 # configure_cinder() - Set config files, create data dirs, etc
