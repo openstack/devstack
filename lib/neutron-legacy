@@ -1263,7 +1263,7 @@ function _neutron_configure_router_v4 {
         if is_neutron_ovs_base_plugin && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
             local ext_gw_interface=$(_neutron_get_ext_gw_interface)
             local cidr_len=${FLOATING_RANGE#*/}
-            if [[ $(ip addr show dev $ext_gw_interface | grep -c $ext_gw_ip) == 0 && $Q_USE_PROVIDERNET_FOR_PUBLIC == "False" ]]; then
+            if [[ $(ip addr show dev $ext_gw_interface | grep -c $ext_gw_ip) == 0 && ( $Q_USE_PROVIDERNET_FOR_PUBLIC == "False" || $Q_USE_PUBLIC_VETH == "True" ) ]]; then
                 sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
                 sudo ip link set $ext_gw_interface up
             fi

@@ -32,9 +32,16 @@ set +o xtrace
 
 # Set up default directories
 GITDIR["python-novaclient"]=$DEST/python-novaclient
-
-
 NOVA_DIR=$DEST/nova
+
+# Nova virtual environment
+if [[ ${USE_VENV} = True ]]; then
+    PROJECT_VENV["nova"]=${NOVA_DIR}.venv
+    NOVA_BIN_DIR=${PROJECT_VENV["nova"]}/bin
+else
+    NOVA_BIN_DIR=$(get_python_exec_prefix)
+fi
+
 NOVA_STATE_PATH=${NOVA_STATE_PATH:=$DATA_DIR/nova}
 # INSTANCES_PATH is the previous name for this
 NOVA_INSTANCES_PATH=${NOVA_INSTANCES_PATH:=${INSTANCES_PATH:=$NOVA_STATE_PATH/instances}}
@@ -68,16 +75,6 @@ NOVA_SERVICE_PORT_INT=${NOVA_SERVICE_PORT_INT:-18774}
 NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 EC2_SERVICE_PORT=${EC2_SERVICE_PORT:-8773}
 EC2_SERVICE_PORT_INT=${EC2_SERVICE_PORT_INT:-18773}
-
-# Support entry points installation of console scripts
-if [[ -d $NOVA_DIR/bin ]]; then
-    NOVA_BIN_DIR=$NOVA_DIR/bin
-else
-    NOVA_BIN_DIR=$(get_python_exec_prefix)
-fi
-
-# Set the paths of certain binaries
-NOVA_ROOTWRAP=$(get_rootwrap_location nova)
 
 # Option to enable/disable config drive
 # NOTE: Set FORCE_CONFIG_DRIVE="False" to turn OFF config drive
@@ -225,9 +222,11 @@ function cleanup_nova {
     #fi
 }
 
+# Deploy new rootwrap filters files and configure sudo
 # configure_nova_rootwrap() - configure Nova's rootwrap
 function configure_nova_rootwrap {
-    # Deploy new rootwrap filters files (owned by root).
+    nova_rootwrap=$NOVA_BIN_DIR/nova-rootwrap
+
     # Wipe any existing rootwrap.d files first
     if [[ -d $NOVA_CONF_DIR/rootwrap.d ]]; then
         sudo rm -rf $NOVA_CONF_DIR/rootwrap.d
@@ -242,14 +241,21 @@ function configure_nova_rootwrap {
     sudo sed -e "s:^filters_path=.*$:filters_path=$NOVA_CONF_DIR/rootwrap.d:" -i $NOVA_CONF_DIR/rootwrap.conf
 
     # Specify rootwrap.conf as first parameter to nova-rootwrap
-    local rootwrap_sudoer_cmd="$NOVA_ROOTWRAP $NOVA_CONF_DIR/rootwrap.conf *"
+    local rootwrap_sudoer_cmd="$nova_rootwrap $NOVA_CONF_DIR/rootwrap.conf *"
 
     # Set up the rootwrap sudoers for nova
     local tempfile=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudoer_cmd" >$tempfile
+    echo "Defaults:$STACK_USER secure_path=$NOVA_BIN_DIR:/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >$tempfile
+    echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudoer_cmd" >>$tempfile
     chmod 0440 $tempfile
     sudo chown root:root $tempfile
     sudo mv $tempfile /etc/sudoers.d/nova-rootwrap
+
+    # So rootwrap and PATH are broken beyond belief.  WTF relies on a SECURE operation
+    # to blindly follow PATH???  We learned that was a bad idea in the 80's!
+    # So to fix this in a venv, we must exploit the very hole we want to close by dropping
+    # a copy of the venv rootwrap binary into /usr/local/bin.
+    #sudo cp -p $nova_rootwrap /usr/local/bin
 }
 
 # configure_nova() - Set config files, create data dirs, etc
@@ -696,6 +702,10 @@ function start_nova_api {
         service_protocol="http"
     fi
 
+    # Hack to set the path for rootwrap
+    local old_path=$PATH
+    export PATH=$NOVA_BIN_DIR:$PATH
+
     run_process n-api "$NOVA_BIN_DIR/nova-api"
     echo "Waiting for nova-api to start..."
     if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$SERVICE_HOST:$service_port; then
@@ -707,10 +717,16 @@ function start_nova_api {
         start_tls_proxy '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT &
         start_tls_proxy '*' $EC2_SERVICE_PORT $NOVA_SERVICE_HOST $EC2_SERVICE_PORT_INT &
     fi
+
+    export PATH=$old_path
 }
 
 # start_nova_compute() - Start the compute process
 function start_nova_compute {
+    # Hack to set the path for rootwrap
+    local old_path=$PATH
+    export PATH=$NOVA_BIN_DIR:$PATH
+
     if is_service_enabled n-cell; then
         local compute_cell_conf=$NOVA_CELLS_CONF
     else
@@ -738,10 +754,16 @@ function start_nova_compute {
         fi
         run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf"
     fi
+
+    export PATH=$old_path
 }
 
 # start_nova() - Start running processes, including screen
 function start_nova_rest {
+    # Hack to set the path for rootwrap
+    local old_path=$PATH
+    export PATH=$NOVA_BIN_DIR:$PATH
+
     local api_cell_conf=$NOVA_CONF
     if is_service_enabled n-cell; then
         local compute_cell_conf=$NOVA_CELLS_CONF
@@ -769,6 +791,8 @@ function start_nova_rest {
     # Swift will act as s3 objectstore.
     is_service_enabled swift3 || \
         run_process n-obj "$NOVA_BIN_DIR/nova-objectstore --config-file $api_cell_conf"
+
+    export PATH=$old_path
 }
 
 function start_nova {
