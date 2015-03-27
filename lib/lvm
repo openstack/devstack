@@ -108,15 +108,20 @@ function init_lvm_volume_group {
     if is_fedora || is_suse; then
         # services is not started by default
         start_service lvm2-lvmetad
-        start_service tgtd
+        if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
+            start_service tgtd
+        fi
     fi
 
     # Start with a clean volume group
     _create_lvm_volume_group $vg $size
 
     # Remove iscsi targets
-    sudo tgtadm --op show --mode target | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
-
+    if [ "$CINDER_ISCSI_HELPER" = "lioadm" ]; then
+        sudo cinder-rtstool get-targets | sudo xargs -rn 1 cinder-rtstool delete
+    else
+        sudo tgtadm --op show --mode target | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
+    fi
     _clean_lvm_volume_group $vg
 }
 
