@@ -909,8 +909,6 @@ function get_packages {
     local file_to_parse=""
     local service=""
 
-    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False INSTALL_TESTONLY_PACKAGES)
-
     if [[ -z "$package_dir" ]]; then
         echo "No package directory supplied"
         return 1
