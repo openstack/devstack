@@ -89,6 +89,8 @@ CINDER_SECURE_DELETE=$(trueorfalse True CINDER_SECURE_DELETE)
 # https://bugs.launchpad.net/cinder/+bug/1180976
 CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 
+CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-tgtadm}
+
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,cinder
 
@@ -126,31 +128,35 @@ function is_cinder_enabled {
 function cleanup_cinder {
     # ensure the volume group is cleared up because fails might
     # leave dead volumes in the group
-    local targets=$(sudo tgtadm --op show --mode target)
-    if [ $? -ne 0 ]; then
-        # If tgt driver isn't running this won't work obviously
-        # So check the response and restart if need be
-        echo "tgtd seems to be in a bad state, restarting..."
-        if is_ubuntu; then
-            restart_service tgt
-        else
-            restart_service tgtd
+    if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
+        local targets=$(sudo tgtadm --op show --mode target)
+        if [ $? -ne 0 ]; then
+            # If tgt driver isn't running this won't work obviously
+            # So check the response and restart if need be
+            echo "tgtd seems to be in a bad state, restarting..."
+            if is_ubuntu; then
+                restart_service tgt
+            else
+                restart_service tgtd
+            fi
+            targets=$(sudo tgtadm --op show --mode target)
         fi
-        targets=$(sudo tgtadm --op show --mode target)
-    fi
 
-    if [[ -n "$targets" ]]; then
-        local iqn_list=( $(grep --no-filename -r iqn $SCSI_PERSIST_DIR | sed 's/<target //' | sed 's/>//') )
-        for i in "${iqn_list[@]}"; do
-            echo removing iSCSI target: $i
-            sudo tgt-admin --delete $i
-        done
-    fi
+        if [[ -n "$targets" ]]; then
+            local iqn_list=( $(grep --no-filename -r iqn $SCSI_PERSIST_DIR | sed 's/<target //' | sed 's/>//') )
+            for i in "${iqn_list[@]}"; do
+                echo removing iSCSI target: $i
+                sudo tgt-admin --delete $i
+            done
+        fi
 
-    if is_ubuntu; then
-        stop_service tgt
+        if is_ubuntu; then
+            stop_service tgt
+        else
+            stop_service tgtd
+        fi
     else
-        stop_service tgtd
+        sudo cinder-rtstool get-targets | sudo xargs -rn 1 cinder-rtstool delete
     fi
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
@@ -231,7 +237,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $CINDER_CONF DEFAULT verbose True
 
-    iniset $CINDER_CONF DEFAULT iscsi_helper tgtadm
+    iniset $CINDER_CONF DEFAULT iscsi_helper "$CINDER_ISCSI_HELPER"
     iniset $CINDER_CONF database connection `database_connection_url cinder`
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
@@ -395,6 +401,13 @@ function init_cinder {
 function install_cinder {
     git_clone $CINDER_REPO $CINDER_DIR $CINDER_BRANCH
     setup_develop $CINDER_DIR
+    if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
+        if is_fedora; then
+            install_package scsi-target-utils
+        else
+            install_package tgt
+        fi
+    fi
 }
 
 # install_cinderclient() - Collect source and prepare
@@ -422,21 +435,23 @@ function start_cinder {
         service_port=$CINDER_SERVICE_PORT_INT
         service_protocol="http"
     fi
-    if is_service_enabled c-vol; then
-        # Delete any old stack.conf
-        sudo rm -f /etc/tgt/conf.d/stack.conf
-        _configure_tgt_for_config_d
-        if is_ubuntu; then
-            sudo service tgt restart
-        elif is_fedora || is_suse; then
-            restart_service tgtd
-        else
-            # note for other distros: unstack.sh also uses the tgt/tgtd service
-            # name, and would need to be adjusted too
-            exit_distro_not_supported "restarting tgt"
+    if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
+        if is_service_enabled c-vol; then
+            # Delete any old stack.conf
+            sudo rm -f /etc/tgt/conf.d/stack.conf
+            _configure_tgt_for_config_d
+            if is_ubuntu; then
+                sudo service tgt restart
+            elif is_fedora || is_suse; then
+                restart_service tgtd
+            else
+                # note for other distros: unstack.sh also uses the tgt/tgtd service
+                # name, and would need to be adjusted too
+                exit_distro_not_supported "restarting tgt"
+            fi
+            # NOTE(gfidente): ensure tgtd is running in debug mode
+            sudo tgtadm --mode system --op update --name debug --value on
         fi
-        # NOTE(gfidente): ensure tgtd is running in debug mode
-        sudo tgtadm --mode system --op update --name debug --value on
     fi
 
     run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
@@ -466,14 +481,6 @@ function stop_cinder {
     for serv in c-api c-bak c-sch c-vol; do
         stop_process $serv
     done
-
-    if is_service_enabled c-vol; then
-        if is_ubuntu; then
-            stop_service tgt
-        else
-            stop_service tgtd
-        fi
-    fi
 }
 
 # create_volume_types() - Create Cinder's configured volume types
