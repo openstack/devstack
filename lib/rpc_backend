@@ -1,8 +1,7 @@
 #!/bin/bash
 #
 # lib/rpc_backend
-# Interface for interactig with different rpc backend
-# rpc backend settings
+# Interface for interactig with different RPC backends
 
 # Dependencies:
 #
@@ -27,9 +26,9 @@ RPC_MESSAGING_PROTOCOL=${RPC_MESSAGING_PROTOCOL:-0.9}
 # messaging server as a service, which it really isn't for multi host
 QPID_HOST=${QPID_HOST:-}
 
+
 # Functions
 # ---------
-
 
 # Make sure we only have one rpc backend enabled.
 # Also check the specified rpc backend is available on your platform.

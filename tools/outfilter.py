@@ -14,8 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# This is an output filter to filter and timestamp the logs from grenade and
-# devstack. Largely our awk filters got beyond the complexity level which were
+# This is an output filter to filter and timestamp the logs from Grenade and
+# DevStack. Largely our awk filters got beyond the complexity level which were
 # sustainable, so this provides us much more control in a single place.
 #
 # The overhead of running python should be less than execing `date` a million
@@ -32,7 +32,7 @@ HAS_DATE = re.compile('^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3} \|')
 
 def get_options():
     parser = argparse.ArgumentParser(
-        description='Filter output by devstack and friends')
+        description='Filter output by DevStack and friends')
     parser.add_argument('-o', '--outfile',
                         help='Output file for content',
                         default=None)
@@ -52,7 +52,7 @@ def main():
     if opts.outfile:
         outfile = open(opts.outfile, 'a', 0)
 
-    # otherwise fileinput reprocess args as files
+    # Otherwise fileinput reprocess args as files
     sys.argv = []
     while True:
         line = sys.stdin.readline()
@@ -63,9 +63,9 @@ def main():
         if skip_line(line):
             continue
 
-        # this prevents us from nesting date lines, because
-        # we'd like to pull this in directly in grenade and not double
-        # up on devstack lines
+        # This prevents us from nesting date lines, because
+        # we'd like to pull this in directly in Grenade and not double
+        # up on DevStack lines
         if HAS_DATE.search(line) is None:
             now = datetime.datetime.utcnow()
             line = ("%s | %s" % (

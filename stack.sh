@@ -16,17 +16,10 @@
 # (14.04 Trusty or newer), **Fedora** (F20 or newer), or **CentOS/RHEL**
 # (7 or newer) machine. (It may work on other platforms but support for those
 # platforms is left to those who added them to DevStack.) It should work in
-# a VM or physical server. Additionally, we maintain a list of ``apt`` and
+# a VM or physical server. Additionally, we maintain a list of ``deb`` and
 # ``rpm`` dependencies and other configuration files in this repo.
 
 # Learn more and get the most recent version at http://devstack.org
-
-# check if someone has invoked with "sh"
-if [[ "${POSIXLY_CORRECT}" == "y" ]]; then
-    echo "You appear to be running bash in POSIX compatibility mode."
-    echo "devstack uses bash features. \"./stack.sh\" should do the right thing"
-    exit 1
-fi
 
 # Make sure custom grep options don't get in the way
 unset GREP_OPTIONS
@@ -44,7 +37,7 @@ umask 022
 # Not all distros have sbin in PATH for regular users.
 PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin
 
-# Keep track of the devstack directory
+# Keep track of the DevStack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
 # Check for uninitialized variables, a big cause of bugs
@@ -52,6 +45,10 @@ NOUNSET=${NOUNSET:-}
 if [[ -n "$NOUNSET" ]]; then
     set -o nounset
 fi
+
+
+# Configuration
+# =============
 
 # Sanity Checks
 # -------------
@@ -61,7 +58,7 @@ if [[ -r $TOP_DIR/.stackenv ]]; then
     rm $TOP_DIR/.stackenv
 fi
 
-# ``stack.sh`` keeps the list of ``apt`` and ``rpm`` dependencies and config
+# ``stack.sh`` keeps the list of ``deb`` and ``rpm`` dependencies, config
 # templates and other useful files in the ``files`` subdirectory
 FILES=$TOP_DIR/files
 if [ ! -d $FILES ]; then
@@ -69,12 +66,23 @@ if [ ! -d $FILES ]; then
 fi
 
 # ``stack.sh`` keeps function libraries here
+# Make sure ``$TOP_DIR/inc`` directory is present
+if [ ! -d $TOP_DIR/inc ]; then
+    die $LINENO "missing devstack/inc"
+fi
+
+# ``stack.sh`` keeps project libraries here
 # Make sure ``$TOP_DIR/lib`` directory is present
 if [ ! -d $TOP_DIR/lib ]; then
     die $LINENO "missing devstack/lib"
 fi
 
-# Check if run as root
+# Check if run in POSIX shell
+if [[ "${POSIXLY_CORRECT}" == "y" ]]; then
+    echo "You are running POSIX compatibility mode, DevStack requires bash 4.2 or newer."
+    exit 1
+fi
+
 # OpenStack is designed to be run as a non-root user; Horizon will fail to run
 # as **root** since Apache will not serve content from **root** user).
 # ``stack.sh`` must not be run as **root**.  It aborts and suggests one course of
@@ -89,8 +97,6 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
-# Print the kernel version
-uname -a
 
 # Prepare the environment
 # -----------------------
@@ -111,6 +117,7 @@ source $TOP_DIR/lib/stack
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 # and ``DISTRO``
 GetDistro
+
 
 # Global Settings
 # ---------------
@@ -134,7 +141,6 @@ if [[ -r $TOP_DIR/local.conf ]]; then
     done
 fi
 
-
 # ``stack.sh`` is customizable by setting environment variables.  Override a
 # default setting via export::
 #
@@ -145,18 +151,20 @@ fi
 #
 #     DATABASE_PASSWORD=simple ./stack.sh
 #
-# Persistent variables can be placed in a ``localrc`` file::
+# Persistent variables can be placed in a ``local.conf`` file::
 #
+#     [[local|localrc]]
 #     DATABASE_PASSWORD=anothersecret
 #     DATABASE_USER=hellaroot
 #
 # We try to have sensible defaults, so you should be able to run ``./stack.sh``
-# in most cases.  ``localrc`` is not distributed with DevStack and will never
+# in most cases.  ``local.conf`` is not distributed with DevStack and will never
 # be overwritten by a DevStack update.
 #
 # DevStack distributes ``stackrc`` which contains locations for the OpenStack
 # repositories, branches to configure, and other configuration defaults.
-# ``stackrc`` sources ``localrc`` to allow you to safely override those settings.
+# ``stackrc`` sources the ``localrc`` section of ``local.conf`` to allow you to
+# safely override those settings.
 
 if [[ ! -r $TOP_DIR/stackrc ]]; then
     die $LINENO "missing $TOP_DIR/stackrc - did you grab more than just stack.sh?"
@@ -188,34 +196,27 @@ fi
 # Make sure the proxy config is visible to sub-processes
 export_proxy_variables
 
-# Remove services which were negated in ENABLED_SERVICES
+# Remove services which were negated in ``ENABLED_SERVICES``
 # using the "-" prefix (e.g., "-rabbit") instead of
 # calling disable_service().
 disable_negated_services
 
-# Look for obsolete stuff
-# if [[ ,${ENABLED_SERVICES}, =~ ,"swift", ]]; then
-#     echo "FATAL: 'swift' is not supported as a service name"
-#     echo "FATAL: Use the actual swift service names to enable them as required:"
-#     echo "FATAL: s-proxy s-object s-container s-account"
-#     exit 1
-# fi
 
 # Configure sudo
 # --------------
 
-# We're not **root**, make sure ``sudo`` is available
+# We're not as **root** so make sure ``sudo`` is available
 is_package_installed sudo || install_package sudo
 
 # UEC images ``/etc/sudoers`` does not have a ``#includedir``, add one
 sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
     echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
 
-# Set up devstack sudoers
+# Set up DevStack sudoers
 TEMPFILE=`mktemp`
 echo "$STACK_USER ALL=(root) NOPASSWD:ALL" >$TEMPFILE
-# Some binaries might be under /sbin or /usr/sbin, so make sure sudo will
-# see them by forcing PATH
+# Some binaries might be under ``/sbin`` or ``/usr/sbin``, so make sure sudo will
+# see them by forcing ``PATH``
 echo "Defaults:$STACK_USER secure_path=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >> $TEMPFILE
 echo "Defaults:$STACK_USER !requiretty" >> $TEMPFILE
 chmod 0440 $TEMPFILE
@@ -226,7 +227,7 @@ sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
 # Configure Distro Repositories
 # -----------------------------
 
-# For debian/ubuntu make apt attempt to retry network ops on it's own
+# For Debian/Ubuntu make apt attempt to retry network ops on it's own
 if is_ubuntu; then
     echo 'APT::Acquire::Retries "20";' | sudo tee /etc/apt/apt.conf.d/80retry  >/dev/null
 fi
@@ -237,7 +238,7 @@ fi
 if is_fedora && [[ $DISTRO == "rhel7" ]]; then
     # RHEL requires EPEL for many Open Stack dependencies
 
-    # note we always remove and install latest -- some environments
+    # NOTE: We always remove and install latest -- some environments
     # use snapshot images, and if EPEL version updates they break
     # unless we update them to latest version.
     if sudo yum repolist enabled epel | grep -q 'epel'; then
@@ -248,7 +249,7 @@ if is_fedora && [[ $DISTRO == "rhel7" ]]; then
     # repo, then removes itself (as epel-release installed the
     # "real" repo).
     #
-    # you would think that rather than this, you could use
+    # You would think that rather than this, you could use
     # $releasever directly in .repo file we create below.  However
     # RHEL gives a $releasever of "6Server" which breaks the path;
     # see https://bugzilla.redhat.com/show_bug.cgi?id=1150759
@@ -265,7 +266,7 @@ EOF
     sudo yum-config-manager --enable epel-bootstrap
     yum_install epel-release || \
         die $LINENO "Error installing EPEL repo, cannot continue"
-    # epel rpm has installed it's version
+    # EPEL rpm has installed it's version
     sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
 
     # ... and also optional to be enabled
@@ -300,7 +301,7 @@ sudo mkdir -p $DEST
 safe_chown -R $STACK_USER $DEST
 safe_chmod 0755 $DEST
 
-# a basic test for $DEST path permissions (fatal on error unless skipped)
+# Basic test for ``$DEST`` path permissions (fatal on error unless skipped)
 check_path_perm_sanity ${DEST}
 
 # Destination path for service data
@@ -488,6 +489,9 @@ set -o errexit
 # an error.  It is also useful for following along as the install occurs.
 set -o xtrace
 
+# Print the kernel version
+uname -a
+
 # Reset the bundle of CA certificates
 SSL_BUNDLE_FILE="$DATA_DIR/ca-bundle.pem"
 rm -f $SSL_BUNDLE_FILE
@@ -500,7 +504,7 @@ source $TOP_DIR/lib/rpc_backend
 # and the specified rpc backend is available on your platform.
 check_rpc_backend
 
-# Service to enable with SSL if USE_SSL is True
+# Service to enable with SSL if ``USE_SSL`` is True
 SSL_ENABLED_SERVICES="key,nova,cinder,glance,s-proxy,neutron"
 
 if is_service_enabled tls-proxy && [ "$USE_SSL" == "True" ]; then
@@ -514,7 +518,7 @@ fi
 # defaults before other services are run
 run_phase override_defaults
 
-# Import apache functions
+# Import Apache functions
 source $TOP_DIR/lib/apache
 
 # Import TLS functions
@@ -598,8 +602,9 @@ function read_password {
 
 
 # Database Configuration
+# ----------------------
 
-# To select between database backends, add the following to ``localrc``:
+# To select between database backends, add the following to ``local.conf``:
 #
 #    disable_service mysql
 #    enable_service postgresql
@@ -611,9 +616,10 @@ initialize_database_backends && echo "Using $DATABASE_TYPE database backend" || 
 
 
 # Queue Configuration
+# -------------------
 
 # Rabbit connection info
-# In multi node devstack, second node needs RABBIT_USERID, but rabbit
+# In multi node DevStack, second node needs ``RABBIT_USERID``, but rabbit
 # isn't enabled.
 RABBIT_USERID=${RABBIT_USERID:-stackrabbit}
 if is_service_enabled rabbit; then
@@ -623,6 +629,7 @@ fi
 
 
 # Keystone
+# --------
 
 if is_service_enabled keystone; then
     # The ``SERVICE_TOKEN`` is used to bootstrap the Keystone database.  It is
@@ -634,14 +641,14 @@ if is_service_enabled keystone; then
     read_password ADMIN_PASSWORD "ENTER A PASSWORD TO USE FOR HORIZON AND KEYSTONE (20 CHARS OR LESS)."
 
     # Keystone can now optionally install OpenLDAP by enabling the ``ldap``
-    # service in ``localrc`` (e.g. ``enable_service ldap``).
+    # service in ``local.conf`` (e.g. ``enable_service ldap``).
     # To clean out the Keystone contents in OpenLDAP set ``KEYSTONE_CLEAR_LDAP``
-    # to ``yes`` (e.g. ``KEYSTONE_CLEAR_LDAP=yes``) in ``localrc``.  To enable the
+    # to ``yes`` (e.g. ``KEYSTONE_CLEAR_LDAP=yes``) in ``local.conf``.  To enable the
     # Keystone Identity Driver (``keystone.identity.backends.ldap.Identity``)
     # set ``KEYSTONE_IDENTITY_BACKEND`` to ``ldap`` (e.g.
-    # ``KEYSTONE_IDENTITY_BACKEND=ldap``) in ``localrc``.
+    # ``KEYSTONE_IDENTITY_BACKEND=ldap``) in ``local.conf``.
 
-    # only request ldap password if the service is enabled
+    # Only request LDAP password if the service is enabled
     if is_service_enabled ldap; then
         read_password LDAP_PASSWORD "ENTER A PASSWORD TO USE FOR LDAP"
     fi
@@ -649,6 +656,7 @@ fi
 
 
 # Swift
+# -----
 
 if is_service_enabled s-proxy; then
     # We only ask for Swift Hash if we have enabled swift service.
@@ -672,14 +680,14 @@ fi
 echo_summary "Installing package prerequisites"
 source $TOP_DIR/tools/install_prereqs.sh
 
-# Configure an appropriate python environment
+# Configure an appropriate Python environment
 if [[ "$OFFLINE" != "True" ]]; then
     PYPI_ALTERNATIVE_URL=${PYPI_ALTERNATIVE_URL:-""} $TOP_DIR/tools/install_pip.sh
 fi
 
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
-# Install python packages into a virtualenv so that we can track them
+# Install Python packages into a virtualenv so that we can track them
 if [[ $TRACK_DEPENDS = True ]]; then
     echo_summary "Installing Python packages into a virtualenv $DEST/.venv"
     pip_install -U virtualenv
@@ -728,10 +736,10 @@ echo_summary "Installing OpenStack project source"
 # Install required infra support libraries
 install_infra
 
-# Install oslo libraries that have graduated
+# Install Oslo libraries
 install_oslo
 
-# Install clients libraries
+# Install client libraries
 install_keystoneclient
 install_glanceclient
 install_cinderclient
@@ -749,7 +757,6 @@ fi
 # Install middleware
 install_keystonemiddleware
 
-
 if is_service_enabled keystone; then
     if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
         stack_install_service keystone
@@ -766,7 +773,7 @@ if is_service_enabled s-proxy; then
 
     # swift3 middleware to provide S3 emulation to Swift
     if is_service_enabled swift3; then
-        # replace the nova-objectstore port by the swift port
+        # Replace the nova-objectstore port by the swift port
         S3_SERVICE_PORT=8080
         git_clone $SWIFT3_REPO $SWIFT3_DIR $SWIFT3_BRANCH
         setup_develop $SWIFT3_DIR
@@ -774,23 +781,25 @@ if is_service_enabled s-proxy; then
 fi
 
 if is_service_enabled g-api n-api; then
-    # image catalog service
+    # Image catalog service
     stack_install_service glance
     configure_glance
 fi
 
 if is_service_enabled cinder; then
+    # Block volume service
     stack_install_service cinder
     configure_cinder
 fi
 
 if is_service_enabled neutron; then
+    # Network service
     stack_install_service neutron
     install_neutron_third_party
 fi
 
 if is_service_enabled nova; then
-    # compute service
+    # Compute service
     stack_install_service nova
     cleanup_nova
     configure_nova
@@ -822,9 +831,10 @@ if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
     configure_CA
     init_CA
     init_cert
-    # Add name to /etc/hosts
-    # don't be naive and add to existing line!
+    # Add name to ``/etc/hosts``.
+    # Don't be naive and add to existing line!
 fi
+
 
 # Extras Install
 # --------------
@@ -832,15 +842,13 @@ fi
 # Phase: install
 run_phase stack install
 
-
-# install the OpenStack client, needed for most setup commands
+# Install the OpenStack client, needed for most setup commands
 if use_library_from_git "python-openstackclient"; then
     git_clone_by_name "python-openstackclient"
     setup_dev_lib "python-openstackclient"
 else
     pip_install 'python-openstackclient>=1.0.2'
 fi
-
 
 if [[ $TRACK_DEPENDS = True ]]; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip
@@ -934,7 +942,7 @@ if [[ "$USE_SCREEN" == "True" ]]; then
     screen -r $SCREEN_NAME -X setenv PROMPT_COMMAND /bin/true
 fi
 
-# Clear screen rc file
+# Clear ``screenrc`` file
 SCREENRC=$TOP_DIR/$SCREEN_NAME-screenrc
 if [[ -e $SCREENRC ]]; then
     rm -f $SCREENRC
@@ -943,14 +951,16 @@ fi
 # Initialize the directory for service status check
 init_service_check
 
+
+# Start Services
+# ==============
+
 # Dstat
-# -------
+# -----
 
 # A better kind of sysstat, with the top process per time slice
 start_dstat
 
-# Start Services
-# ==============
 
 # Keystone
 # --------
@@ -972,7 +982,7 @@ if is_service_enabled keystone; then
         SERVICE_ENDPOINT=http://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT_INT/v2.0
     fi
 
-    # Setup OpenStackclient token-flow auth
+    # Setup OpenStackClient token-endpoint auth
     export OS_TOKEN=$SERVICE_TOKEN
     export OS_URL=$SERVICE_ENDPOINT
 
@@ -994,10 +1004,10 @@ if is_service_enabled keystone; then
         create_heat_accounts
     fi
 
-    # Begone token-flow auth
+    # Begone token auth
     unset OS_TOKEN OS_URL
 
-    # Set up password-flow auth creds now that keystone is bootstrapped
+    # Set up password auth credentials now that Keystone is bootstrapped
     export OS_AUTH_URL=$SERVICE_ENDPOINT
     export OS_TENANT_NAME=admin
     export OS_USERNAME=admin
@@ -1042,7 +1052,7 @@ if is_service_enabled neutron; then
     echo_summary "Configuring Neutron"
 
     configure_neutron
-    # Run init_neutron only on the node hosting the neutron API server
+    # Run init_neutron only on the node hosting the Neutron API server
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled q-svc; then
         init_neutron
     fi
@@ -1118,6 +1128,7 @@ if is_service_enabled nova; then
     init_nova_cells
 fi
 
+
 # Extras Configuration
 # ====================
 
@@ -1128,7 +1139,7 @@ run_phase stack post-config
 # Local Configuration
 # ===================
 
-# Apply configuration from local.conf if it exists for layer 2 services
+# Apply configuration from ``local.conf`` if it exists for layer 2 services
 # Phase: post-config
 merge_config_group $TOP_DIR/local.conf post-config
 
@@ -1150,18 +1161,16 @@ if is_service_enabled glance; then
     start_glance
 fi
 
+
 # Install Images
 # ==============
 
-# Upload an image to glance.
+# Upload an image to Glance.
 #
-# The default image is cirros, a small testing image which lets you login as **root**
-# cirros has a ``cloud-init`` analog supporting login via keypair and sending
+# The default image is CirrOS, a small testing image which lets you login as **root**
+# CirrOS has a ``cloud-init`` analog supporting login via keypair and sending
 # scripts as userdata.
-# See https://help.ubuntu.com/community/CloudInit for more on cloud-init
-#
-# Override ``IMAGE_URLS`` with a comma-separated list of UEC images.
-#  * **precise**: http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64.tar.gz
+# See https://help.ubuntu.com/community/CloudInit for more on ``cloud-init``
 
 if is_service_enabled g-reg; then
     TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
@@ -1179,7 +1188,7 @@ if is_service_enabled g-reg; then
     done
 fi
 
-# Create an access key and secret key for nova ec2 register image
+# Create an access key and secret key for Nova EC2 register image
 if is_service_enabled keystone && is_service_enabled swift3 && is_service_enabled nova; then
     eval $(openstack ec2 credentials create --user nova --project $SERVICE_TENANT_NAME -f shell -c access -c secret)
     iniset $NOVA_CONF DEFAULT s3_access_key "$access"
@@ -1242,7 +1251,7 @@ if is_service_enabled ceilometer; then
     start_ceilometer
 fi
 
-# Configure and launch heat engine, api and metadata
+# Configure and launch Heat engine, api and metadata
 if is_service_enabled heat; then
     # Initialize heat
     echo_summary "Configuring Heat"
@@ -1287,30 +1296,34 @@ for i in BASE_SQL_CONN ENABLED_SERVICES HOST_IP LOGFILE \
 done
 
 
-# Local Configuration
-# ===================
+# Wrapup configuration
+# ====================
 
-# Apply configuration from local.conf if it exists for layer 2 services
+# local.conf extra
+# ----------------
+
+# Apply configuration from ``local.conf`` if it exists for layer 2 services
 # Phase: extra
 merge_config_group $TOP_DIR/local.conf extra
 
 
 # Run extras
-# ==========
+# ----------
 
 # Phase: extra
 run_phase stack extra
 
-# Local Configuration
-# ===================
 
-# Apply configuration from local.conf if it exists for layer 2 services
+# local.conf post-extra
+# ---------------------
+
+# Apply late configuration from ``local.conf`` if it exists for layer 2 services
 # Phase: post-extra
 merge_config_group $TOP_DIR/local.conf post-extra
 
 
 # Run local script
-# ================
+# ----------------
 
 # Run ``local.sh`` if it exists to perform user-managed tasks
 if [[ -x $TOP_DIR/local.sh ]]; then
@@ -1338,6 +1351,7 @@ if is_service_enabled cinder; then
     fi
 fi
 
+
 # Fin
 # ===
 
@@ -1354,11 +1368,12 @@ fi
 
 
 # Using the cloud
-# ---------------
+# ===============
 
 echo ""
 echo ""
 echo ""
+echo "This is your host ip: $HOST_IP"
 
 # If you installed Horizon on this server you should be able
 # to access the site using your browser.
@@ -1368,14 +1383,10 @@ fi
 
 # If Keystone is present you can point ``nova`` cli to this server
 if is_service_enabled keystone; then
-    echo "Keystone is serving at $KEYSTONE_SERVICE_URI/v2.0/"
-    echo "Examples on using novaclient command line is in exercise.sh"
+    echo "Keystone is serving at $KEYSTONE_SERVICE_URI/"
     echo "The default users are: admin and demo"
     echo "The password: $ADMIN_PASSWORD"
 fi
-
-# Echo ``HOST_IP`` - useful for ``build_uec.sh``, which uses dhcp to give the instance an address
-echo "This is your host ip: $HOST_IP"
 
 # Warn that a deprecated feature was used
 if [[ -n "$DEPRECATED_TEXT" ]]; then

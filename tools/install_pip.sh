@@ -16,7 +16,7 @@ set -o xtrace
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 
-# Change dir to top of devstack
+# Change dir to top of DevStack
 cd $TOP_DIR
 
 # Import common functions
@@ -42,11 +42,11 @@ function get_versions {
 
 
 function install_get_pip {
-    # the openstack gate and others put a cached version of get-pip.py
+    # The OpenStack gate and others put a cached version of get-pip.py
     # for this to find, explicitly to avoid download issues.
     #
-    # However, if devstack *did* download the file, we want to check
-    # for updates; people can leave thier stacks around for a long
+    # However, if DevStack *did* download the file, we want to check
+    # for updates; people can leave their stacks around for a long
     # time and in the mean-time pip might get upgraded.
     #
     # Thus we use curl's "-z" feature to always check the modified
@@ -74,7 +74,7 @@ function configure_pypi_alternative_url {
         touch $PIP_CONFIG_FILE
     fi
     if ! ini_has_option "$PIP_CONFIG_FILE" "global" "index-url"; then
-        #it means that the index-url does not exist
+        # It means that the index-url does not exist
         iniset "$PIP_CONFIG_FILE" "global" "index-url" "$PYPI_OVERRIDE"
     fi
 

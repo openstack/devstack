@@ -6,13 +6,13 @@
 
 set -ex
 
-# Keep track of the devstack directory
+# Keep track of the DevStack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
 NAME=$1
 CPU=$2
 MEM=$(( 1024 * $3 ))
-# extra G to allow fuzz for partition table : flavor size and registered size
+# Extra G to allow fuzz for partition table : flavor size and registered size
 # need to be different to actual size.
 DISK=$(( $4 + 1))
 

@@ -55,8 +55,9 @@ NOVA_CELLS_DB=${NOVA_CELLS_DB:-nova_cell}
 
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 # NOVA_API_VERSION valid options
-#   - default - setup API end points as nova does out of the box
-#   - v21default - make v21 the default on /v2
+# - default - setup API end points as nova does out of the box
+# - v21default - make v21 the default on /v2
+#
 # NOTE(sdague): this is for transitional testing of the Nova v21 API.
 # Expect to remove in L or M.
 NOVA_API_VERSION=${NOVA_API_VERSION-default}
@@ -77,7 +78,7 @@ EC2_SERVICE_PORT=${EC2_SERVICE_PORT:-8773}
 EC2_SERVICE_PORT_INT=${EC2_SERVICE_PORT_INT:-18773}
 
 # Option to enable/disable config drive
-# NOTE: Set FORCE_CONFIG_DRIVE="False" to turn OFF config drive
+# NOTE: Set ``FORCE_CONFIG_DRIVE="False"`` to turn OFF config drive
 FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"True"}
 
 # Nova supports pluggable schedulers.  The default ``FilterScheduler``
@@ -89,11 +90,11 @@ QEMU_CONF=/etc/libvirt/qemu.conf
 # Set default defaults here as some hypervisor drivers override these
 PUBLIC_INTERFACE_DEFAULT=br100
 FLAT_NETWORK_BRIDGE_DEFAULT=br100
-# set the GUEST_INTERFACE_DEFAULT to some interface on the box so that
-# the default isn't completely crazy. This will match eth*, em*, or
-# the new p* interfaces, then basically picks the first
+# Set ``GUEST_INTERFACE_DEFAULT`` to some interface on the box so that
+# the default isn't completely crazy. This will match ``eth*``, ``em*``, or
+# the new ``p*`` interfaces, then basically picks the first
 # alphabetically. It's probably wrong, however it's less wrong than
-# always using 'eth0' which doesn't exist on new Linux distros at all.
+# always using ``eth0`` which doesn't exist on new Linux distros at all.
 GUEST_INTERFACE_DEFAULT=$(ip link \
     | grep 'state UP' \
     | awk '{print $2}' \
@@ -101,8 +102,8 @@ GUEST_INTERFACE_DEFAULT=$(ip link \
     | grep ^[ep] \
     | head -1)
 
-# $NOVA_VNC_ENABLED can be used to forcibly enable vnc configuration.
-# In multi-node setups allows compute hosts to not run n-novnc.
+# ``NOVA_VNC_ENABLED`` can be used to forcibly enable VNC configuration.
+# In multi-node setups allows compute hosts to not run ``n-novnc``.
 NOVA_VNC_ENABLED=$(trueorfalse False NOVA_VNC_ENABLED)
 
 # Get hypervisor configuration
@@ -144,7 +145,7 @@ FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 # running the VM - removing a SPOF and bandwidth bottleneck.
 MULTI_HOST=$(trueorfalse False MULTI_HOST)
 
-# ``NOVA_ALLOW_MOVE_TO_SAME_HOST` can be set to False in multi node devstack,
+# ``NOVA_ALLOW_MOVE_TO_SAME_HOST`` can be set to False in multi node DevStack,
 # where there are at least two nova-computes.
 NOVA_ALLOW_MOVE_TO_SAME_HOST=$(trueorfalse True NOVA_ALLOW_MOVE_TO_SAME_HOST)
 

@@ -971,7 +971,7 @@ function get_packages {
 #
 # Only packages required for enabled and collected plugins will included.
 #
-# The same metadata used in the main devstack prerequisite files may be used
+# The same metadata used in the main DevStack prerequisite files may be used
 # in these prerequisite files, see get_packages() for more info.
 function get_plugin_packages {
     local xtrace=$(set +o | grep xtrace)
@@ -1471,7 +1471,7 @@ function fetch_plugins {
         return
     fi
 
-    echo "Fetching devstack plugins"
+    echo "Fetching DevStack plugins"
     for plugin in ${plugins//,/ }; do
         git_clone_by_name $plugin
     done

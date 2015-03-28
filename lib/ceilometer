@@ -4,7 +4,7 @@
 # Install and start **Ceilometer** service
 
 # To enable a minimal set of Ceilometer services, add the following to the
-# localrc section of local.conf:
+# ``localrc`` section of ``local.conf``:
 #
 #   enable_service ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api
 #
@@ -17,13 +17,10 @@
 # of Ceilometer (see within for additional settings):
 #
 #   CEILOMETER_USE_MOD_WSGI:       When True, run the api under mod_wsgi.
-#   CEILOMETER_PIPELINE_INTERVAL:  The number of seconds between pipeline processing
-#                                  runs. Default 600.
-#   CEILOMETER_BACKEND:            The database backend (e.g. 'mysql', 'mongodb', 'es')
-#   CEILOMETER_COORDINATION_URL:   The URL for a group membership service provided
-#                                  by tooz.
+#   CEILOMETER_PIPELINE_INTERVAL:  Seconds between pipeline processing runs. Default 600.
+#   CEILOMETER_BACKEND:            Database backend (e.g. 'mysql', 'mongodb', 'es')
+#   CEILOMETER_COORDINATION_URL:   URL for group membership service provided by tooz.
 #   CEILOMETER_EVENTS:             Enable event collection
-
 
 # Dependencies:
 #
@@ -94,7 +91,7 @@ function is_ceilometer_enabled {
     return 1
 }
 
-# create_ceilometer_accounts() - Set up common required ceilometer accounts
+# create_ceilometer_accounts() - Set up common required Ceilometer accounts
 #
 # Project              User         Roles
 # ------------------------------------------------------------------
@@ -117,14 +114,14 @@ function create_ceilometer_accounts {
                 "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/"
         fi
         if is_service_enabled swift; then
-            # Ceilometer needs ResellerAdmin role to access swift account stats.
+            # Ceilometer needs ResellerAdmin role to access Swift account stats.
             get_or_add_user_project_role "ResellerAdmin" "ceilometer" $SERVICE_TENANT_NAME
         fi
     fi
 }
 
 
-# _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+# _cleanup_keystone_apache_wsgi() - Remove WSGI files, disable and remove Apache vhost file
 function _cleanup_ceilometer_apache_wsgi {
     sudo rm -f $CEILOMETER_WSGI_DIR/*
     sudo rm -f $(apache_site_config_for ceilometer)
@@ -149,7 +146,7 @@ function _config_ceilometer_apache_wsgi {
     local ceilometer_apache_conf=$(apache_site_config_for ceilometer)
     local apache_version=$(get_apache_version)
 
-    # copy proxy vhost and wsgi file
+    # Copy proxy vhost and wsgi file
     sudo cp $CEILOMETER_DIR/ceilometer/api/app.wsgi $CEILOMETER_WSGI_DIR/app
 
     sudo cp $FILES/apache-ceilometer.template $ceilometer_apache_conf
@@ -189,9 +186,9 @@ function configure_ceilometer {
         sed -i "s/interval:.*/interval: ${CEILOMETER_PIPELINE_INTERVAL}/" $CEILOMETER_CONF_DIR/pipeline.yaml
     fi
 
-    # the compute and central agents need these credentials in order to
-    # call out to other services' public APIs
-    # the alarm evaluator needs these options to call ceilometer APIs
+    # The compute and central agents need these credentials in order to
+    # call out to other services' public APIs.
+    # The alarm evaluator needs these options to call ceilometer APIs
     iniset $CEILOMETER_CONF service_credentials os_username ceilometer
     iniset $CEILOMETER_CONF service_credentials os_password $SERVICE_PASSWORD
     iniset $CEILOMETER_CONF service_credentials os_tenant_name $SERVICE_TENANT_NAME
@@ -237,7 +234,7 @@ function configure_ceilometer {
 }
 
 function configure_mongodb {
-    # server package is the same on all
+    # Server package is the same on all
     local packages=mongodb-server
 
     if is_fedora; then
@@ -250,13 +247,13 @@ function configure_mongodb {
     install_package ${packages}
 
     if is_fedora; then
-        # ensure smallfiles selected to minimize freespace requirements
+        # Ensure smallfiles is selected to minimize freespace requirements
         sudo sed -i '/--smallfiles/!s/OPTIONS=\"/OPTIONS=\"--smallfiles /' /etc/sysconfig/mongod
 
         restart_service mongod
     fi
 
-    # give mongodb time to start-up
+    # Give mongodb time to start-up
     sleep 5
 }
 
@@ -347,7 +344,7 @@ function start_ceilometer {
         run_process ceilometer-acompute "ceilometer-agent-compute --config-file $CEILOMETER_CONF"
     fi
 
-    # only die on API if it was actually intended to be turned on
+    # Only die on API if it was actually intended to be turned on
     if is_service_enabled ceilometer-api; then
         echo "Waiting for ceilometer-api to start..."
         if ! wait_for_service $SERVICE_TIMEOUT $CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/v2/; then

@@ -4,7 +4,7 @@
 #
 # Note: this is expected to start running as jenkins
 
-# Step 1: give back sudoers permissions to devstack
+# Step 1: give back sudoers permissions to DevStack
 TEMPFILE=`mktemp`
 echo "stack ALL=(root) NOPASSWD:ALL" >$TEMPFILE
 chmod 0440 $TEMPFILE

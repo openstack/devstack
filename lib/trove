@@ -21,6 +21,7 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+
 # Defaults
 # --------
 if is_service_enabled neutron; then
@@ -80,7 +81,7 @@ function setup_trove_logging {
     fi
 }
 
-# create_trove_accounts() - Set up common required trove accounts
+# create_trove_accounts() - Set up common required Trove accounts
 
 # Tenant               User       Roles
 # ------------------------------------------------------------------
@@ -114,7 +115,6 @@ function cleanup_trove {
     rm -fr $TROVE_AUTH_CACHE_DIR/*
     rm -fr $TROVE_CONF_DIR/*
 }
-
 
 # configure_trove() - Set config files, create data dirs, etc
 function configure_trove {
