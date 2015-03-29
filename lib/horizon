@@ -129,7 +129,7 @@ function init_horizon {
     fi
     enable_apache_site horizon
 
-    # Remove old log files that could mess with how devstack detects whether Horizon
+    # Remove old log files that could mess with how DevStack detects whether Horizon
     # has been successfully started (see start_horizon() and functions::screen_it())
     # and run_process
     sudo rm -f /var/log/$APACHE_NAME/horizon_*

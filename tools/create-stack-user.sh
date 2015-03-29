@@ -17,7 +17,7 @@
 
 set -o errexit
 
-# Keep track of the devstack directory
+# Keep track of the DevStack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
 # Import common functions

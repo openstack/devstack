@@ -53,7 +53,7 @@ IRONIC_HW_EPHEMERAL_DISK=${IRONIC_HW_EPHEMERAL_DISK:-0}
 # The file is composed of multiple lines, each line includes four field
 # separated by white space: IPMI address, MAC address, IPMI username
 # and IPMI password.
-# An example:
+#
 #   192.168.110.107 00:1e:67:57:50:4c root otc123
 IRONIC_IPMIINFO_FILE=${IRONIC_IPMIINFO_FILE:-$IRONIC_DATA_DIR/hardware_info}
 
@@ -99,10 +99,10 @@ IRONIC_AGENT_KERNEL_URL=${IRONIC_AGENT_KERNEL_URL:-http://tarballs.openstack.org
 IRONIC_AGENT_RAMDISK_URL=${IRONIC_AGENT_RAMDISK_URL:-http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz}
 
 # Which deploy driver to use - valid choices right now
-# are 'pxe_ssh', 'pxe_ipmitool', 'agent_ssh' and 'agent_ipmitool'.
+# are ``pxe_ssh``, ``pxe_ipmitool``, ``agent_ssh`` and ``agent_ipmitool``.
 IRONIC_DEPLOY_DRIVER=${IRONIC_DEPLOY_DRIVER:-pxe_ssh}
 
-#TODO(agordeev): replace 'ubuntu' with host distro name getting
+# TODO(agordeev): replace 'ubuntu' with host distro name getting
 IRONIC_DEPLOY_FLAVOR=${IRONIC_DEPLOY_FLAVOR:-ubuntu $IRONIC_DEPLOY_ELEMENT}
 
 # Support entry points installation of console scripts

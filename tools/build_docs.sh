@@ -2,8 +2,8 @@
 
 # **build_docs.sh** - Build the docs for DevStack
 #
-# - Install shocco if not found on PATH and INSTALL_SHOCCO is set
-# - Clone MASTER_REPO branch MASTER_BRANCH
+# - Install shocco if not found on ``PATH`` and ``INSTALL_SHOCCO`` is set
+# - Clone ``MASTER_REPO`` branch ``MASTER_BRANCH``
 # - Re-creates ``doc/build/html`` directory from existing repo + new generated script docs
 
 # Usage:
@@ -16,7 +16,7 @@
 
 HTML_BUILD=doc/build/html
 
-# Keep track of the devstack directory
+# Keep track of the DevStack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
 # Uses this shocco branch: https://github.com/dtroyer/shocco/tree/rst_support
