@@ -62,6 +62,9 @@ function trueorfalse {
     $xtrace
 }
 
+function isset {
+    [[ -v "$1" ]]
+}
 
 # Control Functions
 # =================

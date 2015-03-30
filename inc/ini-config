@@ -205,16 +205,6 @@ function iniuncomment {
     $xtrace
 }
 
-function isset {
-    nounset=$(set +o | grep nounset)
-    set +o nounset
-    [[ -n "${!1+x}" ]]
-    result=$?
-    $nounset
-    return $result
-}
-
-
 # Restore xtrace
 $INC_CONF_TRACE
 
