@@ -514,6 +514,9 @@ fi
 # Configure Projects
 # ==================
 
+# Clone all external plugins
+fetch_plugins
+
 # Plugin Phase 0: override_defaults - allow pluggins to override
 # defaults before other services are run
 run_phase override_defaults
@@ -539,9 +542,6 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
-
-# Clone all external plugins
-fetch_plugins
 
 # Extras Source
 # --------------
