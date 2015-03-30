@@ -562,6 +562,8 @@ function init_tempest {
             echo "Prepare aki/ari/ami Images"
             mkdir -p $BOTO_MATERIALS_PATH
             ( #new namespace
+                # euca2ools should be installed to call euca-* commands
+                is_package_installed euca2ools || install_package euca2ools
                 # tenant:demo ; user: demo
                 source $TOP_DIR/accrc/demo/demo
                 euca-bundle-image -r ${CIRROS_ARCH} -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
