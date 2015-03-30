@@ -95,6 +95,8 @@ Also note that the ``localrc`` section is sourced as a shell script
 fragment and MUST conform to the shell requirements, specifically no
 whitespace around ``=`` (equals).
 
+.. _minimal-configuration:
+
 Minimal Configuration
 =====================
 
