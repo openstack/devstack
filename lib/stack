@@ -2,14 +2,17 @@
 #
 # lib/stack
 #
-# These functions are code snippets pulled out of stack.sh for easier
+# These functions are code snippets pulled out of ``stack.sh`` for easier
 # re-use by Grenade.  They can assume the same environment is available
-# as in the lower part of stack.sh, namely a valid stackrc has been sourced
-# as well as all of the lib/* files for the services have been sourced.
+# as in the lower part of ``stack.sh``, namely a valid stackrc has been sourced
+# as well as all of the ``lib/*`` files for the services have been sourced.
 #
 # For clarity, all functions declared here that came from ``stack.sh``
 # shall be named with the prefix ``stack_``.
 
+
+# Functions
+# ---------
 
 # Generic service install handles venv creation if confgured for service
 # stack_install_service service

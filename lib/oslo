@@ -2,7 +2,7 @@
 #
 # lib/oslo
 #
-# Functions to install oslo libraries from git
+# Functions to install **Oslo** libraries from git
 #
 # We need this to handle the fact that projects would like to use
 # pre-released versions of oslo libraries.
@@ -46,8 +46,9 @@ GITDIR["tooz"]=$DEST/tooz
 # Support entry points installation of console scripts
 OSLO_BIN_DIR=$(get_python_exec_prefix)
 
-# Entry Points
-# ------------
+
+# Functions
+# ---------
 
 function _do_install_oslo_lib {
     local name=$1

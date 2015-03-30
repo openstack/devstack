@@ -2,7 +2,7 @@
 
 # **info.sh**
 
-# Produce a report on the state of devstack installs
+# Produce a report on the state of DevStack installs
 #
 # Output fields are separated with '|' chars
 # Output types are git,localrc,os,pip,pkg:
@@ -14,7 +14,7 @@
 #   pkg|<package>|<version>
 
 function usage {
-    echo "$0 - Report on the devstack configuration"
+    echo "$0 - Report on the DevStack configuration"
     echo ""
     echo "Usage: $0"
     exit 1

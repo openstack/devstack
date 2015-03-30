@@ -2,7 +2,7 @@
 
 # **exercise.sh**
 
-# Keep track of the current devstack directory.
+# Keep track of the current DevStack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
 # Import common functions
@@ -14,11 +14,11 @@ source $TOP_DIR/stackrc
 # Run everything in the exercises/ directory that isn't explicitly disabled
 
 # comma separated list of script basenames to skip
-# to refrain from exercising euca.sh use SKIP_EXERCISES=euca
+# to refrain from exercising euca.sh use ``SKIP_EXERCISES=euca``
 SKIP_EXERCISES=${SKIP_EXERCISES:-""}
 
 # comma separated list of script basenames to run
-# to run only euca.sh use RUN_EXERCISES=euca
+# to run only euca.sh use ``RUN_EXERCISES=euca``
 basenames=${RUN_EXERCISES:-""}
 
 EXERCISE_DIR=$TOP_DIR/exercises
@@ -27,7 +27,7 @@ if [[ -z "${basenames}" ]]; then
     # Locate the scripts we should run
     basenames=$(for b in `ls $EXERCISE_DIR/*.sh`; do basename $b .sh; done)
 else
-    # If RUN_EXERCISES was specified, ignore SKIP_EXERCISES.
+    # If ``RUN_EXERCISES`` was specified, ignore ``SKIP_EXERCISES``.
     SKIP_EXERCISES=
 fi
 
@@ -56,7 +56,7 @@ for script in $basenames; do
     fi
 done
 
-# output status of exercise run
+# Output status of exercise run
 echo "====================================================================="
 for script in $skips; do
     echo SKIP $script

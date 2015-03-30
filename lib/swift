@@ -38,7 +38,6 @@ fi
 # Set up default directories
 GITDIR["python-swiftclient"]=$DEST/python-swiftclient
 
-
 SWIFT_DIR=$DEST/swift
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
@@ -59,7 +58,7 @@ SWIFT_DISK_IMAGE=${SWIFT_DATA_DIR}/drives/images/swift.img
 SWIFT_CONF_DIR=${SWIFT_CONF_DIR:-/etc/swift}
 
 if is_service_enabled s-proxy && is_service_enabled swift3; then
-    # If we are using swift3, we can default the s3 port to swift instead
+    # If we are using ``swift3``, we can default the S3 port to swift instead
     # of nova-objectstore
     S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
 fi
@@ -137,11 +136,12 @@ ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 SWIFT_ENABLE_TEMPURLS=${SWIFT_ENABLE_TEMPURLS:-False}
 SWIFT_TEMPURL_KEY=${SWIFT_TEMPURL_KEY:-}
 
+# Toggle for deploying Swift under HTTPD + mod_wsgi
+SWIFT_USE_MOD_WSGI=${SWIFT_USE_MOD_WSGI:-False}
+
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,swift
 
-# Toggle for deploying Swift under HTTPD + mod_wsgi
-SWIFT_USE_MOD_WSGI=${SWIFT_USE_MOD_WSGI:-False}
 
 # Functions
 # ---------
@@ -303,7 +303,6 @@ function generate_swift_config_services {
     sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
 }
 
-
 # configure_swift() - Set config files, create data dirs and loop image
 function configure_swift {
     local swift_pipeline="${SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH}"
@@ -374,12 +373,9 @@ function configure_swift {
         iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT key_file "$SWIFT_SSL_KEY"
     fi
 
-    # Devstack is commonly run in a small slow environment, so bump the
-    # timeouts up.
-    # node_timeout is how long between read operations a node takes to
-    # respond to the proxy server
-    # conn_timeout is all about how long it takes a connect() system call to
-    # return
+    # DevStack is commonly run in a small slow environment, so bump the timeouts up.
+    # ``node_timeout`` is the node read operation response time to the proxy server
+    # ``conn_timeout`` is how long it takes a connect() system call to return
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server node_timeout 120
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server conn_timeout 20
 
@@ -394,10 +390,10 @@ function configure_swift {
         SWIFT_EXTRAS_MIDDLEWARE_LAST="${SWIFT_EXTRAS_MIDDLEWARE_LAST} ceilometer"
     fi
 
-    # Restrict the length of auth tokens in the swift proxy-server logs.
+    # Restrict the length of auth tokens in the Swift ``proxy-server`` logs.
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:proxy-logging reveal_sensitive_prefix ${SWIFT_LOG_TOKEN_LENGTH}
 
-    # By default Swift will be installed with keystone and tempauth middleware
+    # By default Swift will be installed with Keystone and tempauth middleware
     # and add the swift3 middleware if its configured for it. The token for
     # tempauth would be prefixed with the reseller_prefix setting `TEMPAUTH_` the
     # token for keystoneauth would have the standard reseller_prefix `AUTH_`
@@ -413,17 +409,13 @@ function configure_swift {
     sed -i "/^pipeline/ { s/tempauth/${swift_pipeline} ${SWIFT_EXTRAS_MIDDLEWARE}/ ;}" ${SWIFT_CONFIG_PROXY_SERVER}
     sed -i "/^pipeline/ { s/proxy-server/${SWIFT_EXTRAS_MIDDLEWARE_LAST} proxy-server/ ; }" ${SWIFT_CONFIG_PROXY_SERVER}
 
-
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
-
-
 
     # Configure Crossdomain
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:crossdomain use "egg:swift#crossdomain"
 
-
-    # This causes the authtoken middleware to use the same python logging
-    # adapter provided by the swift proxy-server, so that request transaction
+    # Configure authtoken middleware to use the same Python logging
+    # adapter provided by the Swift ``proxy-server``, so that request transaction
     # IDs will included in all of its log messages.
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken log_name swift
 
@@ -436,7 +428,7 @@ function configure_swift {
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use "egg:swift#keystoneauth"
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles "Member, admin"
 
-    # Configure Tempauth. In the sample config file, Keystoneauth is commented
+    # Configure Tempauth. In the sample config file Keystoneauth is commented
     # out. Make sure we uncomment Tempauth after we uncomment Keystoneauth
     # otherwise, this code also sets the reseller_prefix for Keystoneauth.
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth account_autocreate
@@ -579,7 +571,8 @@ function create_swift_disk {
         sudo chown -R ${STACK_USER}: ${node}
     done
 }
-# create_swift_accounts() - Set up standard swift accounts and extra
+
+# create_swift_accounts() - Set up standard Swift accounts and extra
 # one for tests we do this by attaching all words in the account name
 # since we want to make it compatible with tempauth which use
 # underscores for separators.
@@ -593,9 +586,9 @@ function create_swift_disk {
 # swifttenanttest4   swiftusertest4     admin          swift_test
 
 function create_swift_accounts {
-    # Defines specific passwords used by tools/create_userrc.sh
-    # As these variables are used by create_userrc.sh, they must be exported
-    # The _password suffix is expected by create_userrc.sh
+    # Defines specific passwords used by ``tools/create_userrc.sh``
+    # As these variables are used by ``create_userrc.sh,`` they must be exported
+    # The _password suffix is expected by ``create_userrc.sh``.
     export swiftusertest1_password=testing
     export swiftusertest2_password=testing2
     export swiftusertest3_password=testing3
@@ -725,8 +718,8 @@ function start_swift {
 
     # By default with only one replica we are launching the proxy,
     # container, account and object server in screen in foreground and
-    # other services in background. If we have SWIFT_REPLICAS set to something
-    # greater than one we first spawn all the swift services then kill the proxy
+    # other services in background. If we have ``SWIFT_REPLICAS`` set to something
+    # greater than one we first spawn all the Swift services then kill the proxy
     # service so we can run it in foreground in screen.  ``swift-init ...
     # {stop|restart}`` exits with '1' if no servers are running, ignore it just
     # in case
@@ -762,7 +755,7 @@ function stop_swift {
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest stop && return 0
     fi
 
-    # screen normally killed by unstack.sh
+    # screen normally killed by ``unstack.sh``
     if type -p swift-init >/dev/null; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi

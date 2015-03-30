@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # lib/lvm
 # Configure the default LVM volume group used by Cinder and Nova
 
@@ -32,8 +34,8 @@ DEFAULT_VOLUME_GROUP_NAME=$VOLUME_GROUP_NAME-default
 BACKING_FILE_SUFFIX=-backing-file
 
 
-# Entry Points
-# ------------
+# Functions
+# ---------
 
 # _clean_lvm_volume_group removes all default LVM volumes
 #
@@ -52,7 +54,7 @@ function _clean_lvm_volume_group {
 function _clean_lvm_backing_file {
     local backing_file=$1
 
-    # if the backing physical device is a loop device, it was probably setup by devstack
+    # If the backing physical device is a loop device, it was probably setup by DevStack
     if [[ -n "$backing_file" ]] && [[ -e "$backing_file" ]]; then
         local vg_dev=$(sudo losetup -j $backing_file | awk -F':' '/'$BACKING_FILE_SUFFIX'/ { print $1}')
         sudo losetup -d $vg_dev

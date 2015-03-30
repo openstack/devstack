@@ -5,7 +5,7 @@
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
-# Source required devstack functions and globals
+# Source required DevStack functions and globals
 source $RC_DIR/functions
 
 # Destination path for installation
@@ -41,20 +41,20 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 #  enable_service q-dhcp
 #  enable_service q-l3
 #  enable_service q-meta
-#  # Optional, to enable tempest configuration as part of devstack
+#  # Optional, to enable tempest configuration as part of DevStack
 #  enable_service tempest
 
-# this allows us to pass ENABLED_SERVICES
+# This allows us to pass ``ENABLED_SERVICES``
 if ! isset ENABLED_SERVICES ; then
-    # core compute (glance / keystone / nova (+ nova-network))
+    # Compute (Glance / Keystone / Nova (+ nova-network))
     ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,n-sch,n-novnc,n-xvnc,n-cauth
-    # cinder
+    # Cinder
     ENABLED_SERVICES+=,c-sch,c-api,c-vol
-    # heat
+    # Heat
     ENABLED_SERVICES+=,h-eng,h-api,h-api-cfn,h-api-cw
-    # dashboard
+    # Dashboard
     ENABLED_SERVICES+=,horizon
-    # additional services
+    # Additional services
     ENABLED_SERVICES+=,rabbit,tempest,mysql
 fi
 
@@ -79,7 +79,7 @@ ENABLE_HTTPD_MOD_WSGI_SERVICES=True
 # Tell Tempest which services are available.  The default is set here as
 # Tempest falls late in the configuration sequence.  This differs from
 # ``ENABLED_SERVICES`` in that the project names are used here rather than
-# the service names, i.e.: TEMPEST_SERVICES="key,glance,nova"
+# the service names, i.e.: ``TEMPEST_SERVICES="key,glance,nova"``
 TEMPEST_SERVICES=""
 
 # Set the default Nova APIs to enable
@@ -145,6 +145,7 @@ GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 #   but pass through any extras)
 REQUIREMENTS_MODE=${REQUIREMENTS_MODE:-strict}
 
+
 # Repositories
 # ------------
 
@@ -155,15 +156,16 @@ GIT_BASE=${GIT_BASE:-git://git.openstack.org}
 # Which libraries should we install from git instead of using released
 # versions on pypi?
 #
-# By default devstack is now installing libraries from pypi instead of
+# By default DevStack is now installing libraries from pypi instead of
 # from git repositories by default. This works great if you are
 # developing server components, but if you want to develop libraries
-# and see them live in devstack you need to tell devstack it should
+# and see them live in DevStack you need to tell DevStack it should
 # install them from git.
 #
 # ex: LIBS_FROM_GIT=python-keystoneclient,oslo.config
 #
 # Will install those 2 libraries from git, the rest from pypi.
+
 
 ##############
 #
@@ -230,6 +232,7 @@ SWIFT_BRANCH=${SWIFT_BRANCH:-master}
 # trove service
 TROVE_REPO=${TROVE_REPO:-${GIT_BASE}/openstack/trove.git}
 TROVE_BRANCH=${TROVE_BRANCH:-master}
+
 
 ##############
 #
@@ -305,6 +308,7 @@ GITREPO["python-openstackclient"]=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/
 GITBRANCH["python-openstackclient"]=${OPENSTACKCLIENT_BRANCH:-master}
 # this doesn't exist in a lib file, so set it here
 GITDIR["python-openstackclient"]=$DEST/python-openstackclient
+
 
 ###################
 #
@@ -396,6 +400,7 @@ GITBRANCH["tooz"]=${TOOZ_BRANCH:-master}
 GITREPO["pbr"]=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
 GITBRANCH["pbr"]=${PBR_BRANCH:-master}
 
+
 ##################
 #
 #  Libraries managed by OpenStack programs (non oslo)
@@ -453,6 +458,7 @@ OCC_BRANCH=${OCC_BRANCH:-master}
 ORC_REPO=${ORC_REPO:-${GIT_BASE}/openstack/os-refresh-config.git}
 ORC_BRANCH=${ORC_BRANCH:-master}
 
+
 #################
 #
 #  3rd Party Components (non pip installable)
@@ -472,7 +478,6 @@ NOVNC_BRANCH=${NOVNC_BRANCH:-master}
 # a websockets/html5 or flash powered SPICE console for vm instances
 SPICE_REPO=${SPICE_REPO:-http://anongit.freedesktop.org/git/spice/spice-html5.git}
 SPICE_BRANCH=${SPICE_BRANCH:-master}
-
 
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
@@ -641,7 +646,7 @@ ENABLE_DEBUG_LOG_LEVEL=$(trueorfalse True ENABLE_DEBUG_LOG_LEVEL)
 
 # Set fixed and floating range here so we can make sure not to use addresses
 # from either range when attempting to guess the IP to use for the host.
-# Note that setting FIXED_RANGE may be necessary when running DevStack
+# Note that setting ``FIXED_RANGE`` may be necessary when running DevStack
 # in an OpenStack cloud that uses either of these address ranges internally.
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.0/24}
 FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
@@ -669,8 +674,9 @@ LOG_COLOR=$(trueorfalse True LOG_COLOR)
 # Set to 0 to disable shallow cloning
 GIT_DEPTH=${GIT_DEPTH:-0}
 
-# Use native SSL for servers in SSL_ENABLED_SERVICES
+# Use native SSL for servers in ``SSL_ENABLED_SERVICES``
 USE_SSL=$(trueorfalse False USE_SSL)
+
 
 # Following entries need to be last items in file
 
@@ -692,7 +698,6 @@ USE_SSL=$(trueorfalse False USE_SSL)
 
 # For compat, if SCREEN_LOGDIR is set, it will be used to create back-compat symlinks to the LOGDIR
 # symlinks to SCREEN_LOGDIR (compat)
-
 
 # Set up new logging defaults
 if [[ -z "${LOGDIR:-}" ]]; then
@@ -718,8 +723,8 @@ if [[ -z "${LOGDIR:-}" ]]; then
     unset default_logdir logfile
 fi
 
-# LOGDIR is always set at this point so it is not useful as a 'enable' for service logs
-# SCREEN_LOGDIR may be set, it is useful to enable the compat symlinks
+# ``LOGDIR`` is always set at this point so it is not useful as a 'enable' for service logs
+# ``SCREEN_LOGDIR`` may be set, it is useful to enable the compat symlinks
 
 # Local variables:
 # mode: shell-script

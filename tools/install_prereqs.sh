@@ -18,10 +18,10 @@ while getopts ":f" opt; do
     esac
 done
 
-# If TOP_DIR is set we're being sourced rather than running stand-alone
+# If ``TOP_DIR`` is set we're being sourced rather than running stand-alone
 # or in a sub-shell
 if [[ -z "$TOP_DIR" ]]; then
-    # Keep track of the devstack directory
+    # Keep track of the DevStack directory
     TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
     # Import common functions
@@ -65,7 +65,7 @@ PACKAGES=$(get_packages general $ENABLED_SERVICES)
 PACKAGES="$PACKAGES $(get_plugin_packages)"
 
 if is_ubuntu && echo $PACKAGES | grep -q dkms ; then
-    # ensure headers for the running kernel are installed for any DKMS builds
+    # Ensure headers for the running kernel are installed for any DKMS builds
     PACKAGES="$PACKAGES linux-headers-$(uname -r)"
 fi
 

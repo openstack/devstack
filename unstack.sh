@@ -19,7 +19,7 @@ while getopts ":a" opt; do
     esac
 done
 
-# Keep track of the current devstack directory.
+# Keep track of the current DevStack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 FILES=$TOP_DIR/files
 

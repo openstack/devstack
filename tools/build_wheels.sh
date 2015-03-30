@@ -4,21 +4,22 @@
 #
 # build_wheels.sh [package [...]]
 #
-# System package prerequisites listed in files/*/devlibs will be installed
+# System package prerequisites listed in ``files/*/devlibs`` will be installed
 #
 # Builds wheels for all virtual env requirements listed in
 # ``venv-requirements.txt`` plus any supplied on the command line.
 #
-# Assumes ``tools/install_pip.sh`` has been run and a suitable pip/setuptools is available.
+# Assumes:
+# - ``tools/install_pip.sh`` has been run and a suitable ``pip/setuptools`` is available.
 
-# If TOP_DIR is set we're being sourced rather than running stand-alone
+# If ``TOP_DIR`` is set we're being sourced rather than running stand-alone
 # or in a sub-shell
 if [[ -z "$TOP_DIR" ]]; then
 
     set -o errexit
     set -o nounset
 
-    # Keep track of the devstack directory
+    # Keep track of the DevStack directory
     TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
     FILES=$TOP_DIR/files
 
@@ -59,7 +60,7 @@ virtualenv $TMP_VENV_PATH
 # Install modern pip and wheel
 PIP_VIRTUAL_ENV=$TMP_VENV_PATH pip_install -U pip wheel
 
-# VENV_PACKAGES is a list of packages we want to pre-install
+# ``VENV_PACKAGES`` is a list of packages we want to pre-install
 VENV_PACKAGE_FILE=$FILES/venv-requirements.txt
 if [[ -r $VENV_PACKAGE_FILE ]]; then
     VENV_PACKAGES=$(grep -v '^#' $VENV_PACKAGE_FILE)
