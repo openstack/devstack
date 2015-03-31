@@ -801,7 +801,7 @@ function _move_neutron_addresses_route {
         fi
 
         if [[ "$add_ovs_port" == "True" ]]; then
-            ADD_OVS_PORT="sudo ovs-vsctl add-port $to_intf $from_intf"
+            ADD_OVS_PORT="sudo ovs-vsctl --may-exist add-port $to_intf $from_intf"
         fi
 
         sudo ip addr del $IP_BRD dev $from_intf; sudo ip addr add $IP_BRD dev $to_intf; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE
