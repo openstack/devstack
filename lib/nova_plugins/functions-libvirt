@@ -24,13 +24,13 @@ function install_libvirt {
         install_package libvirt-bin libvirt-dev
         pip_install libvirt-python
         install_package libguestfs0
-        #install_package python-guestfs
+        install_package python-guestfs
         #pip_install <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
         install_package kvm
         install_package libvirt libvirt-devel
         pip_install libvirt-python
-        #install_package python-libguestfs
+        install_package python-libguestfs
     fi
 
     # Restart firewalld after install of libvirt to avoid a problem
