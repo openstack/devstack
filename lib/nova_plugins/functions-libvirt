@@ -23,11 +23,15 @@ DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
 # Installs required distro-specific libvirt packages.
 function install_libvirt {
     if is_ubuntu; then
-        install_package qemu-kvm
+        if is_arch "aarch64" && [[ ${DISTRO} =~ (trusty|utopic) ]]; then
+            install_package qemu-system
+        else
+            install_package qemu-kvm
+            install_package libguestfs0
+            install_package python-guestfs
+        fi
         install_package libvirt-bin libvirt-dev
         pip_install libvirt-python
-        install_package libguestfs0
-        install_package python-guestfs
         #pip_install <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
         install_package kvm
