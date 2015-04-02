@@ -370,6 +370,7 @@ function configure_ironic_conductor {
         iniset $IRONIC_CONF_FILE glance swift_container glance
         iniset $IRONIC_CONF_FILE glance swift_temp_url_duration 3600
         iniset $IRONIC_CONF_FILE agent heartbeat_timeout 30
+        iniset $IRONIC_CONF_FILE agent agent_erase_devices_priority 0
     fi
 
     if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
