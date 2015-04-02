@@ -42,6 +42,7 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF DEFAULT scheduler_host_manager nova.scheduler.ironic_host_manager.IronicHostManager
     iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
     iniset $NOVA_CONF DEFAULT reserved_host_memory_mb 0
+    iniset $NOVA_CONF DEFAULT force_config_drive False
     # ironic section
     iniset $NOVA_CONF ironic admin_username admin
     iniset $NOVA_CONF ironic admin_password $ADMIN_PASSWORD
