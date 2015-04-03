@@ -14,8 +14,11 @@ set +o xtrace
 # Defaults
 # --------
 
-# if we should turn on massive libvirt debugging
-DEBUG_LIBVIRT=$(trueorfalse False DEBUG_LIBVIRT)
+# Turn on selective debug log filters for libvirt.
+# (NOTE: Enabling this by default, because the log filters enabled in
+# 'configure_libvirt' function further below are _selective_ and not
+# extremely verbose.)
+DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
 
 # Installs required distro-specific libvirt packages.
 function install_libvirt {
