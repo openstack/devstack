@@ -171,42 +171,6 @@ function cleanup_cinder {
     fi
 }
 
-# Deploy new rootwrap filters files and configure sudo
-# configure_cinder_rootwrap() - configure Cinder's rootwrap
-function configure_cinder_rootwrap {
-    local cinder_rootwrap=$CINDER_BIN_DIR/cinder-rootwrap
-
-    # Wipe any existing rootwrap.d files first
-    if [[ -d $CINDER_CONF_DIR/rootwrap.d ]]; then
-        sudo rm -rf $CINDER_CONF_DIR/rootwrap.d
-    fi
-
-    # Deploy filters to /etc/cinder/rootwrap.d
-    sudo install -d -o root -g root -m 755 $CINDER_CONF_DIR/rootwrap.d
-    sudo install -o root -g root -m 644 $CINDER_DIR/etc/cinder/rootwrap.d/*.filters $CINDER_CONF_DIR/rootwrap.d
-
-    # Set up rootwrap.conf, pointing to /etc/cinder/rootwrap.d
-    sudo install -o root -g root -m 644 $CINDER_DIR/etc/cinder/rootwrap.conf $CINDER_CONF_DIR
-    sudo sed -e "s:^filters_path=.*$:filters_path=$CINDER_CONF_DIR/rootwrap.d:" -i $CINDER_CONF_DIR/rootwrap.conf
-
-    # Specify rootwrap.conf as first parameter to rootwrap
-    ROOTWRAP_CSUDOER_CMD="$cinder_rootwrap $CINDER_CONF_DIR/rootwrap.conf *"
-
-    # Set up the rootwrap sudoers for cinder
-    local tempfile=`mktemp`
-    echo "Defaults:$STACK_USER secure_path=$CINDER_BIN_DIR:/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >$tempfile
-    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_CSUDOER_CMD" >>$tempfile
-    chmod 0440 $tempfile
-    sudo chown root:root $tempfile
-    sudo mv $tempfile /etc/sudoers.d/cinder-rootwrap
-
-    # So rootwrap and PATH are broken beyond belief.  WTF relies on a SECURE operation
-    # to blindly follow PATH???  We learned that was a bad idea in the 80's!
-    # So to fix this in a venv, we must exploit the very hole we want to close by dropping
-    # a copy of the venv rootwrap binary into /usr/local/bin.
-    #sudo cp -p $cinder_rootwrap /usr/local/bin
-}
-
 # configure_cinder() - Set config files, create data dirs, etc
 function configure_cinder {
     sudo install -d -o $STACK_USER -m 755 $CINDER_CONF_DIR
@@ -215,7 +179,7 @@ function configure_cinder {
 
     rm -f $CINDER_CONF
 
-    configure_cinder_rootwrap
+    configure_rootwrap cinder $CINDER_BIN_DIR/cinder-rootwrap $CINDER_DIR/etc/cinder
 
     cp $CINDER_DIR/etc/cinder/api-paste.ini $CINDER_API_PASTE_INI
 

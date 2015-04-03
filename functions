@@ -15,6 +15,7 @@ FUNC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 source ${FUNC_DIR}/functions-common
 source ${FUNC_DIR}/inc/ini-config
 source ${FUNC_DIR}/inc/python
+source ${FUNC_DIR}/inc/rootwrap
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
