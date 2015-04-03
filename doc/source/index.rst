@@ -41,8 +41,7 @@ Quick Start
 
 #. Configure
 
-   We recommend at least a :doc:`minimal
-   configuration <configuration>` be set up.
+   We recommend at least a :ref:`minimal-configuration` be set up.
 
 #. Start the install
 

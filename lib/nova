@@ -223,42 +223,6 @@ function cleanup_nova {
     #fi
 }
 
-# Deploy new rootwrap filters files and configure sudo
-# configure_nova_rootwrap() - configure Nova's rootwrap
-function configure_nova_rootwrap {
-    nova_rootwrap=$NOVA_BIN_DIR/nova-rootwrap
-
-    # Wipe any existing rootwrap.d files first
-    if [[ -d $NOVA_CONF_DIR/rootwrap.d ]]; then
-        sudo rm -rf $NOVA_CONF_DIR/rootwrap.d
-    fi
-
-    # Deploy filters to /etc/nova/rootwrap.d
-    sudo install -d -o root -g root -m 755 $NOVA_CONF_DIR/rootwrap.d
-    sudo install -o root -g root -m 644  $NOVA_DIR/etc/nova/rootwrap.d/*.filters $NOVA_CONF_DIR/rootwrap.d
-
-    # Set up rootwrap.conf, pointing to /etc/nova/rootwrap.d
-    sudo install -o root -g root -m 644 $NOVA_DIR/etc/nova/rootwrap.conf $NOVA_CONF_DIR
-    sudo sed -e "s:^filters_path=.*$:filters_path=$NOVA_CONF_DIR/rootwrap.d:" -i $NOVA_CONF_DIR/rootwrap.conf
-
-    # Specify rootwrap.conf as first parameter to nova-rootwrap
-    local rootwrap_sudoer_cmd="$nova_rootwrap $NOVA_CONF_DIR/rootwrap.conf *"
-
-    # Set up the rootwrap sudoers for nova
-    local tempfile=`mktemp`
-    echo "Defaults:$STACK_USER secure_path=$NOVA_BIN_DIR:/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >$tempfile
-    echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudoer_cmd" >>$tempfile
-    chmod 0440 $tempfile
-    sudo chown root:root $tempfile
-    sudo mv $tempfile /etc/sudoers.d/nova-rootwrap
-
-    # So rootwrap and PATH are broken beyond belief.  WTF relies on a SECURE operation
-    # to blindly follow PATH???  We learned that was a bad idea in the 80's!
-    # So to fix this in a venv, we must exploit the very hole we want to close by dropping
-    # a copy of the venv rootwrap binary into /usr/local/bin.
-    #sudo cp -p $nova_rootwrap /usr/local/bin
-}
-
 # configure_nova() - Set config files, create data dirs, etc
 function configure_nova {
     # Put config files in ``/etc/nova`` for everyone to find
@@ -266,7 +230,7 @@ function configure_nova {
 
     install_default_policy nova
 
-    configure_nova_rootwrap
+    configure_rootwrap nova $NOVA_BIN_DIR/nova-rootwrap $NOVA_DIR/etc/nova
 
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
         # Get the sample configuration file in place

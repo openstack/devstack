@@ -768,6 +768,27 @@ function get_or_add_user_project_role {
     echo $user_role_id
 }
 
+# Gets or adds group role to project
+# Usage: get_or_add_group_project_role <role> <group> <project>
+function get_or_add_group_project_role {
+    # Gets group role id
+    local group_role_id=$(openstack role list \
+        --group $2 \
+        --project $3 \
+        --column "ID" \
+        --column "Name" \
+        | grep " $1 " | get_field 1)
+    if [[ -z "$group_role_id" ]]; then
+        # Adds role to group
+        group_role_id=$(openstack role add \
+            $1 \
+            --group $2 \
+            --project $3 \
+            | grep " id " | get_field 2)
+    fi
+    echo $group_role_id
+}
+
 # Gets or creates service
 # Usage: get_or_create_service <name> <type> <description>
 function get_or_create_service {
