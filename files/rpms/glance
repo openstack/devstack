@@ -1,15 +1,6 @@
-libxml2-devel       # testonly
-libxslt-devel       # testonly
-mysql-devel         # testonly
-openssl-devel       # testonly
-postgresql-devel    # testonly
-python-argparse
-python-eventlet
-python-greenlet
-python-lxml         #dist:f19,f20,f21,rhel7
-python-paste-deploy #dist:f19,f20,f21,rhel7
-python-routes
-python-sqlalchemy
-python-wsgiref      #dist:f18,f19,f20,f21
-pyxattr
-zlib-devel          # testonly
+libxml2-devel
+libxslt-devel
+mysql-devel
+openssl-devel
+postgresql-devel
+zlib-devel

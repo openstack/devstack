@@ -13,7 +13,7 @@ function neutron_fwaas_configure_common {
 
 function neutron_fwaas_configure_driver {
     FWAAS_DRIVER_CONF_FILENAME=/etc/neutron/fwaas_driver.ini
-    cp $NEUTRON_DIR/etc/fwaas_driver.ini $FWAAS_DRIVER_CONF_FILENAME
+    cp $NEUTRON_FWAAS_DIR/etc/fwaas_driver.ini $FWAAS_DRIVER_CONF_FILENAME
 
     iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas enabled True
     iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas driver "neutron_fwaas.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver"

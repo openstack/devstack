@@ -4,7 +4,7 @@
 # Install and start **Ceilometer** service
 
 # To enable a minimal set of Ceilometer services, add the following to the
-# localrc section of local.conf:
+# ``localrc`` section of ``local.conf``:
 #
 #   enable_service ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api
 #
@@ -13,22 +13,14 @@
 #
 #   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
 #
-# To ensure events are stored, add the following section to local.conf:
-#
-#   [[post-config|$CEILOMETER_CONF]]
-#   [notification]
-#   store_events=True
-#
 # Several variables set in the localrc section adjust common behaviors
 # of Ceilometer (see within for additional settings):
 #
 #   CEILOMETER_USE_MOD_WSGI:       When True, run the api under mod_wsgi.
-#   CEILOMETER_PIPELINE_INTERVAL:  The number of seconds between pipeline processing
-#                                  runs. Default 600.
-#   CEILOMETER_BACKEND:            The database backend (e.g. 'mysql', 'mongodb')
-#   CEILOMETER_COORDINATION_URL:   The URL for a group membership service provided
-#                                  by tooz.
-
+#   CEILOMETER_PIPELINE_INTERVAL:  Seconds between pipeline processing runs. Default 600.
+#   CEILOMETER_BACKEND:            Database backend (e.g. 'mysql', 'mongodb', 'es')
+#   CEILOMETER_COORDINATION_URL:   URL for group membership service provided by tooz.
+#   CEILOMETER_EVENTS:             Enable event collection
 
 # Dependencies:
 #
@@ -57,6 +49,7 @@ set +o xtrace
 
 # Set up default directories
 GITDIR["python-ceilometerclient"]=$DEST/python-ceilometerclient
+GITDIR["ceilometermiddleware"]=$DEST/ceilometermiddleware
 
 CEILOMETER_DIR=$DEST/ceilometer
 CEILOMETER_CONF_DIR=/etc/ceilometer
@@ -75,10 +68,14 @@ CEILOMETER_BACKEND=${CEILOMETER_BACKEND:-mysql}
 CEILOMETER_SERVICE_PROTOCOL=http
 CEILOMETER_SERVICE_HOST=$SERVICE_HOST
 CEILOMETER_SERVICE_PORT=${CEILOMETER_SERVICE_PORT:-8777}
-CEILOMETER_USE_MOD_WSGI=$(trueorfalse False $CEILOMETER_USE_MOD_WSGI)
+CEILOMETER_USE_MOD_WSGI=$(trueorfalse False CEILOMETER_USE_MOD_WSGI)
 
 # To enable OSprofiler change value of this variable to "notifications,profiler"
 CEILOMETER_NOTIFICATION_TOPICS=${CEILOMETER_NOTIFICATION_TOPICS:-notifications}
+CEILOMETER_EVENTS=${CEILOMETER_EVENTS:-True}
+
+CEILOMETER_COORDINATION_URL=${CEILOMETER_COORDINATION_URL:-}
+CEILOMETER_PIPELINE_INTERVAL=${CEILOMETER_PIPELINE_INTERVAL:-}
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,ceilometer
@@ -94,7 +91,7 @@ function is_ceilometer_enabled {
     return 1
 }
 
-# create_ceilometer_accounts() - Set up common required ceilometer accounts
+# create_ceilometer_accounts() - Set up common required Ceilometer accounts
 #
 # Project              User         Roles
 # ------------------------------------------------------------------
@@ -102,14 +99,10 @@ function is_ceilometer_enabled {
 # SERVICE_TENANT_NAME  ceilometer   ResellerAdmin (if Swift is enabled)
 function create_ceilometer_accounts {
 
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
-
     # Ceilometer
     if [[ "$ENABLED_SERVICES" =~ "ceilometer-api" ]]; then
-        local ceilometer_user=$(get_or_create_user "ceilometer" \
-            "$SERVICE_PASSWORD" $service_tenant)
-        get_or_add_user_role $admin_role $ceilometer_user $service_tenant
+
+        create_service_user "ceilometer" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
             local ceilometer_service=$(get_or_create_service "ceilometer" \
@@ -121,14 +114,14 @@ function create_ceilometer_accounts {
                 "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/"
         fi
         if is_service_enabled swift; then
-            # Ceilometer needs ResellerAdmin role to access swift account stats.
-            get_or_add_user_role "ResellerAdmin" "ceilometer" $SERVICE_TENANT_NAME
+            # Ceilometer needs ResellerAdmin role to access Swift account stats.
+            get_or_add_user_project_role "ResellerAdmin" "ceilometer" $SERVICE_TENANT_NAME
         fi
     fi
 }
 
 
-# _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+# _cleanup_keystone_apache_wsgi() - Remove WSGI files, disable and remove Apache vhost file
 function _cleanup_ceilometer_apache_wsgi {
     sudo rm -f $CEILOMETER_WSGI_DIR/*
     sudo rm -f $(apache_site_config_for ceilometer)
@@ -137,8 +130,10 @@ function _cleanup_ceilometer_apache_wsgi {
 # cleanup_ceilometer() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_ceilometer {
-    if [ "$CEILOMETER_BACKEND" != 'mysql' ] && [ "$CEILOMETER_BACKEND" != 'postgresql' ] ; then
+    if [ "$CEILOMETER_BACKEND" = 'mongodb' ] ; then
         mongo ceilometer --eval "db.dropDatabase();"
+    elif [ "$CEILOMETER_BACKEND" = 'es' ] ; then
+        curl -XDELETE "localhost:9200/events_*"
     fi
     if [ "$CEILOMETER_USE_MOD_WSGI" == "True" ]; then
         _cleanup_ceilometer_apache_wsgi
@@ -151,7 +146,7 @@ function _config_ceilometer_apache_wsgi {
     local ceilometer_apache_conf=$(apache_site_config_for ceilometer)
     local apache_version=$(get_apache_version)
 
-    # copy proxy vhost and wsgi file
+    # Copy proxy vhost and wsgi file
     sudo cp $CEILOMETER_DIR/ceilometer/api/app.wsgi $CEILOMETER_WSGI_DIR/app
 
     sudo cp $FILES/apache-ceilometer.template $ceilometer_apache_conf
@@ -165,13 +160,9 @@ function _config_ceilometer_apache_wsgi {
 
 # configure_ceilometer() - Set config files, create data dirs, etc
 function configure_ceilometer {
-    [ ! -d $CEILOMETER_CONF_DIR ] && sudo mkdir -m 755 -p $CEILOMETER_CONF_DIR
-    sudo chown $STACK_USER $CEILOMETER_CONF_DIR
+    sudo install -d -o $STACK_USER -m 755 $CEILOMETER_CONF_DIR $CEILOMETER_API_LOG_DIR
 
-    [ ! -d $CEILOMETER_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $CEILOMETER_API_LOG_DIR
-    sudo chown $STACK_USER $CEILOMETER_API_LOG_DIR
-
-    iniset_rpc_backend ceilometer $CEILOMETER_CONF DEFAULT
+    iniset_rpc_backend ceilometer $CEILOMETER_CONF
 
     iniset $CEILOMETER_CONF DEFAULT notification_topics "$CEILOMETER_NOTIFICATION_TOPICS"
     iniset $CEILOMETER_CONF DEFAULT verbose True
@@ -187,6 +178,7 @@ function configure_ceilometer {
     iniset $CEILOMETER_CONF DEFAULT policy_file $CEILOMETER_CONF_DIR/policy.json
 
     cp $CEILOMETER_DIR/etc/ceilometer/pipeline.yaml $CEILOMETER_CONF_DIR
+    cp $CEILOMETER_DIR/etc/ceilometer/event_pipeline.yaml $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/api_paste.ini $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/event_definitions.yaml $CEILOMETER_CONF_DIR
 
@@ -194,20 +186,32 @@ function configure_ceilometer {
         sed -i "s/interval:.*/interval: ${CEILOMETER_PIPELINE_INTERVAL}/" $CEILOMETER_CONF_DIR/pipeline.yaml
     fi
 
-    # the compute and central agents need these credentials in order to
-    # call out to other services' public APIs
-    # the alarm evaluator needs these options to call ceilometer APIs
+    # The compute and central agents need these credentials in order to
+    # call out to other services' public APIs.
+    # The alarm evaluator needs these options to call ceilometer APIs
     iniset $CEILOMETER_CONF service_credentials os_username ceilometer
     iniset $CEILOMETER_CONF service_credentials os_password $SERVICE_PASSWORD
     iniset $CEILOMETER_CONF service_credentials os_tenant_name $SERVICE_TENANT_NAME
+    iniset $CEILOMETER_CONF service_credentials os_region_name $REGION_NAME
+    iniset $CEILOMETER_CONF service_credentials os_auth_url $KEYSTONE_SERVICE_URI/v2.0
 
     configure_auth_token_middleware $CEILOMETER_CONF ceilometer $CEILOMETER_AUTH_CACHE_DIR
+
+    iniset $CEILOMETER_CONF notification store_events $CEILOMETER_EVENTS
 
     if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
         iniset $CEILOMETER_CONF database alarm_connection $(database_connection_url ceilometer)
         iniset $CEILOMETER_CONF database event_connection $(database_connection_url ceilometer)
         iniset $CEILOMETER_CONF database metering_connection $(database_connection_url ceilometer)
         iniset $CEILOMETER_CONF DEFAULT collector_workers $API_WORKERS
+    elif [ "$CEILOMETER_BACKEND" = 'es' ] ; then
+        # es is only supported for events. we will use sql for alarming/metering.
+        iniset $CEILOMETER_CONF database alarm_connection $(database_connection_url ceilometer)
+        iniset $CEILOMETER_CONF database event_connection es://localhost:9200
+        iniset $CEILOMETER_CONF database metering_connection $(database_connection_url ceilometer)
+        iniset $CEILOMETER_CONF DEFAULT collector_workers $API_WORKERS
+        ${TOP_DIR}/pkg/elasticsearch.sh start
+        cleanup_ceilometer
     else
         iniset $CEILOMETER_CONF database alarm_connection mongodb://localhost:27017/ceilometer
         iniset $CEILOMETER_CONF database event_connection mongodb://localhost:27017/ceilometer
@@ -230,7 +234,7 @@ function configure_ceilometer {
 }
 
 function configure_mongodb {
-    # server package is the same on all
+    # Server package is the same on all
     local packages=mongodb-server
 
     if is_fedora; then
@@ -243,26 +247,25 @@ function configure_mongodb {
     install_package ${packages}
 
     if is_fedora; then
-        # ensure smallfiles selected to minimize freespace requirements
+        # Ensure smallfiles is selected to minimize freespace requirements
         sudo sed -i '/--smallfiles/!s/OPTIONS=\"/OPTIONS=\"--smallfiles /' /etc/sysconfig/mongod
 
         restart_service mongod
     fi
 
-    # give mongodb time to start-up
+    # Give mongodb time to start-up
     sleep 5
 }
 
 # init_ceilometer() - Initialize etc.
 function init_ceilometer {
     # Create cache dir
-    sudo mkdir -p $CEILOMETER_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $CEILOMETER_AUTH_CACHE_DIR
     rm -f $CEILOMETER_AUTH_CACHE_DIR/*
 
     if is_service_enabled mysql postgresql; then
-        if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] ; then
-            recreate_database ceilometer utf8
+        if [ "$CEILOMETER_BACKEND" = 'mysql' ] || [ "$CEILOMETER_BACKEND" = 'postgresql' ] || [ "$CEILOMETER_BACKEND" = 'es' ] ; then
+            recreate_database ceilometer
             $CEILOMETER_BIN_DIR/ceilometer-dbsync
         fi
     fi
@@ -272,12 +275,12 @@ function init_ceilometer {
 function install_redis {
     if is_ubuntu; then
         install_package redis-server
+        restart_service redis-server
     else
         # This will fail (correctly) where a redis package is unavailable
         install_package redis
+        restart_service redis
     fi
-
-    restart_service redis
 }
 
 # install_ceilometer() - Collect source and prepare
@@ -290,6 +293,11 @@ function install_ceilometer {
     elif echo $CEILOMETER_COORDINATION_URL | grep -q '^redis:'; then
         install_redis
     fi
+
+    if [ "$CEILOMETER_BACKEND" = 'es' ] ; then
+        ${TOP_DIR}/pkg/elasticsearch.sh download
+        ${TOP_DIR}/pkg/elasticsearch.sh install
+    fi
 }
 
 # install_ceilometerclient() - Collect source and prepare
@@ -298,6 +306,16 @@ function install_ceilometerclient {
         git_clone_by_name "python-ceilometerclient"
         setup_dev_lib "python-ceilometerclient"
         sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-ceilometerclient"]}/tools/,/etc/bash_completion.d/}ceilometer.bash_completion
+    fi
+}
+
+# install_ceilometermiddleware() - Collect source and prepare
+function install_ceilometermiddleware {
+    if use_library_from_git "ceilometermiddleware"; then
+        git_clone_by_name "ceilometermiddleware"
+        setup_dev_lib "ceilometermiddleware"
+    else
+        pip_install ceilometermiddleware
     fi
 }
 
@@ -326,10 +344,10 @@ function start_ceilometer {
         run_process ceilometer-acompute "ceilometer-agent-compute --config-file $CEILOMETER_CONF"
     fi
 
-    # only die on API if it was actually intended to be turned on
+    # Only die on API if it was actually intended to be turned on
     if is_service_enabled ceilometer-api; then
         echo "Waiting for ceilometer-api to start..."
-        if ! timeout $SERVICE_TIMEOUT sh -c "while ! curl --noproxy '*' -s http://localhost:8777/v2/ >/dev/null; do sleep 1; done"; then
+        if ! wait_for_service $SERVICE_TIMEOUT $CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/v2/; then
             die $LINENO "ceilometer-api did not start"
         fi
     fi

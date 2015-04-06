@@ -131,7 +131,7 @@ export -n SERVICE_TOKEN SERVICE_ENDPOINT OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
 
 EC2_URL=$(openstack endpoint show -f value -c publicurl ec2 || true)
 if [[ -z $EC2_URL ]]; then
-    EC2_URL=http://localhost:8773/services/Cloud
+    EC2_URL=http://localhost:8773/
 fi
 
 S3_URL=$(openstack endpoint show -f value -c publicurl s3 || true)

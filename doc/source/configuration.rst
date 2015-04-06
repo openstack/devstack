@@ -95,6 +95,8 @@ Also note that the ``localrc`` section is sourced as a shell script
 fragment and MUST conform to the shell requirements, specifically no
 whitespace around ``=`` (equals).
 
+.. _minimal-configuration:
+
 Minimal Configuration
 =====================
 
@@ -170,6 +172,30 @@ Libraries from Git
 
       LIBS_FROM_GIT=python-keystoneclient,oslo.config
 
+Virtual Environments
+--------------------
+
+  | *Default: ``USE_VENV=False``*
+  |   Enable the use of Python virtual environments by setting ``USE_VENV``
+      to ``True``.  This will enable the creation of venvs for each project
+      that is defined in the ``PROJECT_VENV`` array.
+
+  | *Default: ``PROJECT_VENV['<project>']='<project-dir>.venv'*
+  |   Each entry in the ``PROJECT_VENV`` array contains the directory name
+      of a venv to be used for the project.  The array index is the project
+      name.  Multiple projects can use the same venv if desired.
+
+  ::
+
+    PROJECT_VENV["glance"]=${GLANCE_DIR}.venv
+
+  | *Default: ``ADDITIONAL_VENV_PACKAGES=""``*
+  |   A comma-separated list of additional packages to be installed into each
+      venv.  Often projects will not have certain packages listed in its
+      ``requirements.txt`` file because they are 'optional' requirements,
+      i.e. only needed for certain configurations.  By default, the enabled
+      databases will have their Python bindings added when they are enabled.
+
 Enable Logging
 --------------
 
@@ -200,22 +226,19 @@ Enable Logging
 
         LOG_COLOR=False
 
-Logging the Screen Output
--------------------------
+Logging the Service Output
+--------------------------
 
-    | *Default: ``SCREEN_LOGDIR=""``*
-    |  By default DevStack runs the OpenStack services using ``screen``
-       which is useful for watching log and debug output. However, in
-       automated testing the interactive ``screen`` sessions may not be
-       available after the fact; setting ``SCREEN_LOGDIR`` enables logging
-       of the ``screen`` sessions in the specified directory. There will be
-       one file per ``screen`` session named for the session name and a
-       timestamp.
+    | *Default: ``LOGDIR=""``*
+    |  DevStack will log the stdout output of the services it starts.
+       When using ``screen`` this logs the output in the screen windows
+       to a file.  Without ``screen`` this simply redirects stdout of
+       the service process to a file in ``LOGDIR``.
     |
 
     ::
 
-        SCREEN_LOGDIR=$DEST/logs/screen
+        LOGDIR=$DEST/logs
 
     *Note the use of ``DEST`` to locate the main install directory; this
     is why we suggest setting it in ``local.conf``.*
@@ -249,6 +272,21 @@ A clean install every time
     ::
 
         RECLONE=yes
+
+Upgrade packages installed by pip
+---------------------------------
+
+    | *Default: ``PIP_UPGRADE=""``*
+    |  By default ``stack.sh`` only installs Python packages if no version
+       is currently installed or the current version does not match a specified
+       requirement. If ``PIP_UPGRADE`` is set to ``True`` then existing required
+       Python packages will be upgraded to the most recent version that
+       matches requirements.
+    |
+
+    ::
+
+        PIP_UPGRADE=True
 
 Swift
 -----
@@ -352,19 +390,6 @@ Multi-host DevStack
         GLANCE_HOSTPORT=w.x.y.z:9292
         ENABLED_SERVICES=n-vol,n-cpu,n-net,n-api
 
-API rate limits
----------------
-
-    | Default: ``API_RATE_LIMIT=True``
-    | Integration tests such as Tempest will likely run afoul of the
-      default rate limits configured for Nova. Turn off rate limiting
-      during testing by setting ``API_RATE_LIMIT=False``.*
-    |
-
-    ::
-
-        API_RATE_LIMIT=False
-
 IP Version
     | Default: ``IP_VERSION=4``
     | This setting can be used to configure DevStack to create either an IPv4,
@@ -413,8 +438,8 @@ Examples
        FIXED_RANGE=10.254.1.0/24
        NETWORK_GATEWAY=10.254.1.1
        LOGDAYS=1
-       LOGFILE=$DEST/logs/stack.sh.log
-       SCREEN_LOGDIR=$DEST/logs/screen
+       LOGDIR=$DEST/logs
+       LOGFILE=$LOGDIR/stack.sh.log
        ADMIN_PASSWORD=quiet
        DATABASE_PASSWORD=$ADMIN_PASSWORD
        RABBIT_PASSWORD=$ADMIN_PASSWORD

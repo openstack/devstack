@@ -70,6 +70,11 @@ CINDER_CEPH_UUID=${CINDER_CEPH_UUID:-$(uuidgen)}
 CEPH_REPLICAS=${CEPH_REPLICAS:-1}
 CEPH_REPLICAS_SEQ=$(seq ${CEPH_REPLICAS})
 
+# Connect to an existing Ceph cluster
+REMOTE_CEPH=$(trueorfalse False REMOTE_CEPH)
+REMOTE_CEPH_ADMIN_KEY_PATH=${REMOTE_CEPH_ADMIN_KEY_PATH:-$CEPH_CONF_DIR/ceph.client.admin.keyring}
+
+
 # Functions
 # ------------
 
@@ -94,28 +99,68 @@ EOF
     sudo rm -f secret.xml
 }
 
+# undefine_virsh_secret() - Undefine Cinder key secret from libvirt
+function undefine_virsh_secret {
+    if is_service_enabled cinder || is_service_enabled nova; then
+        local virsh_uuid=$(sudo virsh secret-list | awk '/^ ?[0-9a-z]/ { print $1 }')
+        sudo virsh secret-undefine ${virsh_uuid} >/dev/null 2>&1
+    fi
+}
+
+
+# check_os_support_ceph() - Check if the operating system provides a decent version of Ceph
+function check_os_support_ceph {
+    if [[ ! ${DISTRO} =~ (trusty|f20|f21) ]]; then
+        echo "WARNING: your distro $DISTRO does not provide (at least) the Firefly release. Please use Ubuntu Trusty or Fedora 20 (and higher)"
+        if [[ "$FORCE_CEPH_INSTALL" != "yes" ]]; then
+            die $LINENO "If you wish to install Ceph on this distribution anyway run with FORCE_CEPH_INSTALL=yes"
+        fi
+        NO_UPDATE_REPOS=False
+    fi
+}
+
 # cleanup_ceph() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_ceph {
-    sudo pkill -f ceph-mon
-    sudo pkill -f ceph-osd
+function cleanup_ceph_remote {
+    # do a proper cleanup from here to avoid leftover on the remote Ceph cluster
+    if is_service_enabled glance; then
+        sudo ceph osd pool delete $GLANCE_CEPH_POOL $GLANCE_CEPH_POOL --yes-i-really-really-mean-it > /dev/null 2>&1
+        sudo ceph auth del client.$GLANCE_CEPH_USER > /dev/null 2>&1
+    fi
+    if is_service_enabled cinder; then
+        sudo ceph osd pool delete $CINDER_CEPH_POOL $CINDER_CEPH_POOL --yes-i-really-really-mean-it > /dev/null 2>&1
+        sudo ceph auth del client.$CINDER_CEPH_USER > /dev/null 2>&1
+    fi
+    if is_service_enabled c-bak; then
+        sudo ceph osd pool delete $CINDER_BAK_CEPH_POOL $CINDER_BAK_CEPH_POOL --yes-i-really-really-mean-it > /dev/null 2>&1
+        sudo ceph auth del client.$CINDER_BAK_CEPH_USER > /dev/null 2>&1
+    fi
+    if is_service_enabled nova; then
+        iniset $NOVA_CONF libvirt rbd_secret_uuid ""
+        sudo ceph osd pool delete $NOVA_CEPH_POOL $NOVA_CEPH_POOL --yes-i-really-really-mean-it > /dev/null 2>&1
+    fi
+}
+
+function cleanup_ceph_embedded {
+    sudo killall -w -9 ceph-mon
+    sudo killall -w -9 ceph-osd
     sudo rm -rf ${CEPH_DATA_DIR}/*/*
-    sudo rm -rf ${CEPH_CONF_DIR}/*
     if egrep -q ${CEPH_DATA_DIR} /proc/mounts; then
         sudo umount ${CEPH_DATA_DIR}
     fi
     if [[ -e ${CEPH_DISK_IMAGE} ]]; then
         sudo rm -f ${CEPH_DISK_IMAGE}
     fi
-    uninstall_package ceph ceph-common python-ceph libcephfs1 > /dev/null 2>&1
-    if is_service_enabled cinder || is_service_enabled nova; then
-        local virsh_uuid=$(sudo virsh secret-list | awk '/^ ?[0-9a-z]/ { print $1 }')
-        sudo virsh secret-undefine ${virsh_uuid} >/dev/null 2>&1
-    fi
-    if is_service_enabled nova; then
-        iniset $NOVA_CONF libvirt rbd_secret_uuid ""
-    fi
+
+    # purge ceph config file and keys
+    sudo rm -rf ${CEPH_CONF_DIR}/*
 }
+
+function cleanup_ceph_general {
+    undefine_virsh_secret
+    uninstall_package ceph ceph-common python-ceph libcephfs1 > /dev/null 2>&1
+}
+
 
 # configure_ceph() - Set config files, create data dirs, etc
 function configure_ceph {
@@ -132,7 +177,7 @@ function configure_ceph {
     sudo mkdir /var/lib/ceph/mon/ceph-$(hostname)
 
     # create a default ceph configuration file
-    sudo tee -a ${CEPH_CONF_FILE} > /dev/null <<EOF
+    sudo tee ${CEPH_CONF_FILE} > /dev/null <<EOF
 [global]
 fsid = ${CEPH_FSID}
 mon_initial_members = $(hostname)
@@ -205,14 +250,17 @@ EOF
     done
 }
 
-# configure_ceph_glance() - Glance config needs to come after Glance is set up
-function configure_ceph_glance {
+function configure_ceph_embedded_glance {
     # configure Glance service options, ceph pool, ceph user and ceph key
-    sudo ceph -c ${CEPH_CONF_FILE} osd pool create ${GLANCE_CEPH_POOL} ${GLANCE_CEPH_POOL_PG} ${GLANCE_CEPH_POOL_PGP}
     sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${GLANCE_CEPH_POOL} size ${CEPH_REPLICAS}
     if [[ $CEPH_REPLICAS -ne 1 ]]; then
         sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${GLANCE_CEPH_POOL} crush_ruleset ${RULE_ID}
     fi
+}
+
+# configure_ceph_glance() - Glance config needs to come after Glance is set up
+function configure_ceph_glance {
+    sudo ceph -c ${CEPH_CONF_FILE} osd pool create ${GLANCE_CEPH_POOL} ${GLANCE_CEPH_POOL_PG} ${GLANCE_CEPH_POOL_PGP}
     sudo ceph -c ${CEPH_CONF_FILE} auth get-or-create client.${GLANCE_CEPH_USER} mon "allow r" osd "allow class-read object_prefix rbd_children, allow rwx pool=${GLANCE_CEPH_POOL}" | sudo tee ${CEPH_CONF_DIR}/ceph.client.${GLANCE_CEPH_USER}.keyring
     sudo chown ${STACK_USER}:$(id -g -n $whoami) ${CEPH_CONF_DIR}/ceph.client.${GLANCE_CEPH_USER}.keyring
 
@@ -227,14 +275,17 @@ function configure_ceph_glance {
     iniset $GLANCE_API_CONF glance_store rbd_store_pool $GLANCE_CEPH_POOL
 }
 
-# configure_ceph_nova() - Nova config needs to come after Nova is set up
-function configure_ceph_nova {
+function configure_ceph_embedded_nova {
     # configure Nova service options, ceph pool, ceph user and ceph key
-    sudo ceph -c ${CEPH_CONF_FILE} osd pool create ${NOVA_CEPH_POOL} ${NOVA_CEPH_POOL_PG} ${NOVA_CEPH_POOL_PGP}
     sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${NOVA_CEPH_POOL} size ${CEPH_REPLICAS}
     if [[ $CEPH_REPLICAS -ne 1 ]]; then
         sudo -c ${CEPH_CONF_FILE} ceph osd pool set ${NOVA_CEPH_POOL} crush_ruleset ${RULE_ID}
     fi
+}
+
+# configure_ceph_nova() - Nova config needs to come after Nova is set up
+function configure_ceph_nova {
+    sudo ceph -c ${CEPH_CONF_FILE} osd pool create ${NOVA_CEPH_POOL} ${NOVA_CEPH_POOL_PG} ${NOVA_CEPH_POOL_PGP}
     iniset $NOVA_CONF libvirt rbd_user ${CINDER_CEPH_USER}
     iniset $NOVA_CONF libvirt rbd_secret_uuid ${CINDER_CEPH_UUID}
     iniset $NOVA_CONF libvirt inject_key false
@@ -250,15 +301,17 @@ function configure_ceph_nova {
     fi
 }
 
-# configure_ceph_cinder() - Cinder config needs to come after Cinder is set up
-function configure_ceph_cinder {
+function configure_ceph_embedded_cinder {
     # Configure Cinder service options, ceph pool, ceph user and ceph key
-    sudo ceph -c ${CEPH_CONF_FILE} osd pool create ${CINDER_CEPH_POOL} ${CINDER_CEPH_POOL_PG} ${CINDER_CEPH_POOL_PGP}
     sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${CINDER_CEPH_POOL} size ${CEPH_REPLICAS}
     if [[ $CEPH_REPLICAS -ne 1 ]]; then
         sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${CINDER_CEPH_POOL} crush_ruleset ${RULE_ID}
-
     fi
+}
+
+# configure_ceph_cinder() - Cinder config needs to come after Cinder is set up
+function configure_ceph_cinder {
+    sudo ceph -c ${CEPH_CONF_FILE} osd pool create ${CINDER_CEPH_POOL} ${CINDER_CEPH_POOL_PG} ${CINDER_CEPH_POOL_PGP}
     sudo ceph -c ${CEPH_CONF_FILE} auth get-or-create client.${CINDER_CEPH_USER} mon "allow r" osd "allow class-read object_prefix rbd_children, allow rwx pool=${CINDER_CEPH_POOL}, allow rwx pool=${NOVA_CEPH_POOL},allow rx pool=${GLANCE_CEPH_POOL}" | sudo tee ${CEPH_CONF_DIR}/ceph.client.${CINDER_CEPH_USER}.keyring
     sudo chown ${STACK_USER}:$(id -g -n $whoami) ${CEPH_CONF_DIR}/ceph.client.${CINDER_CEPH_USER}.keyring
 }
@@ -272,15 +325,12 @@ function init_ceph {
 }
 
 # install_ceph() - Collect source and prepare
+function install_ceph_remote {
+    install_package ceph-common
+}
+
 function install_ceph {
-    # NOTE(dtroyer): At some point it'll be easier to test for unsupported distros,
-    #                leveraging the list in stack.sh
-    if [[ ${os_CODENAME} =~ trusty ]] || [[ ${os_CODENAME} =~ Schrödinger’sCat ]] || [[ ${os_CODENAME} =~ Heisenbug ]]; then
-        NO_UPDATE_REPOS=False
-        install_package ceph
-    else
-        exit_distro_not_supported "Ceph since your distro doesn't provide (at least) the Firefly release. Please use Ubuntu Trusty or Fedora 19/20"
-    fi
+    install_package ceph
 }
 
 # start_ceph() - Start running processes, including screen

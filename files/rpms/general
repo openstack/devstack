@@ -3,20 +3,18 @@ curl
 dbus
 euca2ools # only for testing client
 gcc
+gcc-c++
 git-core
-graphviz # testonly - docs
+graphviz # needed only for docs
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
 libffi-devel
 libxml2-devel
 libxslt-devel
+pkgconfig
 psmisc
 pylint
-python-setuptools
-python-prettytable # dist:rhel6 [1]
-python-unittest2
-python-virtualenv
 python-devel
 screen
 tar
@@ -28,8 +26,6 @@ bc
 libyaml-devel
 gettext  # used for compiling message catalogs
 net-tools
-
-# [1] : some of installed tools have unversioned dependencies on this,
-# but others have versioned (<=0.7).  So if a later version (0.7.1)
-# gets installed in response to an unversioned dependency, it breaks.
-# This pre-installs a compatible 0.6(ish) version from RHEL
+java-1.7.0-openjdk-headless  # NOPRIME rhel7,f20
+java-1.8.0-openjdk-headless  # NOPRIME f21,f22
+pyOpenSSL # version in pip uses too much memory

@@ -6,7 +6,7 @@ General
 -------
 
 DevStack is written in UNIX shell script.  It uses a number of bash-isms
-and so is limited to Bash (version 3 and up) and compatible shells.
+and so is limited to Bash (version 4 and up) and compatible shells.
 Shell script was chosen because it best illustrates the steps used to
 set up and interact with OpenStack components.
 
@@ -20,27 +20,67 @@ in `How To Contribute`__ in the OpenStack wiki.  `DevStack's LaunchPad project`_
 contains the usual links for blueprints, bugs, etc.
 
 __ contribute_
-.. _contribute: http://wiki.openstack.org/HowToContribute
+.. _contribute: http://docs.openstack.org/infra/manual/developers.html
 
 __ lp_
 .. _lp: https://launchpad.net/~devstack
+
+The `Gerrit review
+queue <https://review.openstack.org/#/q/project:openstack-dev/devstack,n,z>`__
+is used for all commits.
 
 The primary script in DevStack is ``stack.sh``, which performs the bulk of the
 work for DevStack's use cases.  There is a subscript ``functions`` that contains
 generally useful shell functions and is used by a number of the scripts in
 DevStack.
 
-The ``lib`` directory contains sub-scripts for projects or packages that ``stack.sh``
-sources to perform much of the work related to those projects.  These sub-scripts
-contain configuration defaults and functions to configure, start and stop the project
-or package.  These variables and functions are also used by related projects,
-such as Grenade, to manage a DevStack installation.
-
 A number of additional scripts can be found in the ``tools`` directory that may
 be useful in supporting DevStack installations.  Of particular note are ``info.sh``
 to collect and report information about the installed system, and ``install_prereqs.sh``
 that handles installation of the prerequisite packages for DevStack.  It is
 suitable, for example, to pre-load a system for making a snapshot.
+
+Repo Layout
+-----------
+
+The DevStack repo generally keeps all of the primary scripts at the root
+level.
+
+``doc`` - Contains the Sphinx source for the documentation.
+``tools/build_docs.sh`` is used to generate the HTML versions of the
+DevStack scripts.  A complete doc build can be run with ``tox -edocs``.
+
+``exercises`` - Contains the test scripts used to sanity-check and
+demonstrate some OpenStack functions. These scripts know how to exit
+early or skip services that are not enabled.
+
+``extras.d`` - Contains the dispatch scripts called by the hooks in
+``stack.sh``, ``unstack.sh`` and ``clean.sh``. See :doc:`the plugins
+docs <plugins>` for more information.
+
+``files`` - Contains a variety of otherwise lost files used in
+configuring and operating DevStack. This includes templates for
+configuration files and the system dependency information. This is also
+where image files are downloaded and expanded if necessary.
+
+``lib`` - Contains the sub-scripts specific to each project. This is
+where the work of managing a project's services is located. Each
+top-level project (Keystone, Nova, etc) has a file here. Additionally
+there are some for system services and project plugins.  These
+variables and functions are also used by related projects, such as
+Grenade, to manage a DevStack installation.
+
+``samples`` - Contains a sample of the local files not included in the
+DevStack repo.
+
+``tests`` - the DevStack test suite is rather sparse, mostly consisting
+of test of specific fragile functions in the ``functions`` and
+``functions-common`` files.
+
+``tools`` - Contains a collection of stand-alone scripts. While these
+may reference the top-level DevStack configuration they can generally be
+run alone. There are also some sub-directories to support specific
+environments such as XenServer.
 
 
 Scripts
@@ -110,8 +150,8 @@ follows:
 * Global configuration that may be referenced in ``local.conf``, i.e. ``DEST``, ``DATA_DIR``
 * Global service configuration like ``ENABLED_SERVICES``
 * Variables used by multiple services that do not have a clear owner, i.e.
-  ``VOLUME_BACKING_FILE_SIZE`` (nova-volumes and cinder) or ``PUBLIC_NETWORK_NAME``
-  (nova-network and neutron)
+  ``VOLUME_BACKING_FILE_SIZE`` (nova-compute, nova-volumes and cinder) or
+  ``PUBLIC_NETWORK_NAME`` (nova-network and neutron)
 * Variables that can not be cleanly declared in a project file due to
   dependency ordering, i.e. the order of sourcing the project files can
   not be changed for other reasons but the earlier file needs to dereference a
@@ -249,6 +289,7 @@ Whitespace Rules
 
 Control Structure Rules
 -----------------------
+
 - then should be on the same line as the if
 - do should be on the same line as the for
 
@@ -270,6 +311,7 @@ Example::
 
 Variables and Functions
 -----------------------
+
 - functions should be used whenever possible for clarity
 - functions should use ``local`` variables as much as possible to
   ensure they are isolated from the rest of the environment
@@ -278,3 +320,48 @@ Variables and Functions
 - function names should_have_underscores, NotCamelCase.
 - functions should be declared as per the regex ^function foo {$
   with code starting on the next line
+
+
+Review Criteria
+===============
+
+There are some broad criteria that will be followed when reviewing
+your change
+
+* **Is it passing tests** -- your change will not be reviewed
+  throughly unless the official CI has run successfully against it.
+
+* **Does this belong in DevStack** -- DevStack reviewers have a
+  default position of "no" but are ready to be convinced by your
+  change.
+
+  For very large changes, you should consider :doc:`the plugins system
+  <plugins>` to see if your code is better abstracted from the main
+  repository.
+
+  For smaller changes, you should always consider if the change can be
+  encapsulated by per-user settings in ``local.conf``.  A common example
+  is adding a simple config-option to an ``ini`` file.  Specific flags
+  are not usually required for this, although adding documentation
+  about how to achieve a larger goal (which might include turning on
+  various settings, etc) is always welcome.
+
+* **Work-arounds** -- often things get broken and DevStack can be in a
+  position to fix them.  Work-arounds are fine, but should be
+  presented in the context of fixing the root-cause of the problem.
+  This means it is well-commented in the code and the change-log and
+  mostly likely includes links to changes or bugs that fix the
+  underlying problem.
+
+* **Should this be upstream** -- DevStack generally does not override
+  default choices provided by projects and attempts to not
+  unexpectedly modify behaviour.
+
+* **Context in commit messages** -- DevStack touches many different
+  areas and reviewers need context around changes to make good
+  decisions.  We also always want it to be clear to someone -- perhaps
+  even years from now -- why we were motivated to make a change at the
+  time.
+
+* **Reviewers** -- please see ``MAINTAINERS.rst`` for a list of people
+  that should be added to reviews of various sub-systems.

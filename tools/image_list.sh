@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Keep track of the devstack directory
+# Keep track of the DevStack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
 source $TOP_DIR/functions
@@ -8,6 +8,8 @@ source $TOP_DIR/functions
 # Possible virt drivers, if we have more, add them here. Always keep
 # dummy in the end position to trigger the fall through case.
 DRIVERS="openvz ironic libvirt vsphere xenserver dummy"
+
+CIRROS_ARCHS="x86_64 i386"
 
 # Extra variables to trigger getting additional images.
 export ENABLED_SERVICES="h-api,tr-api"
@@ -17,12 +19,15 @@ PRECACHE_IMAGES=True
 # Loop over all the virt drivers and collect all the possible images
 ALL_IMAGES=""
 for driver in $DRIVERS; do
-    VIRT_DRIVER=$driver
-    URLS=$(source $TOP_DIR/stackrc && echo $IMAGE_URLS)
-    if [[ ! -z "$ALL_IMAGES" ]]; then
-        ALL_IMAGES+=,
-    fi
-    ALL_IMAGES+=$URLS
+    for arch in $CIRROS_ARCHS; do
+        CIRROS_ARCH=$arch
+        VIRT_DRIVER=$driver
+        URLS=$(source $TOP_DIR/stackrc && echo $IMAGE_URLS)
+        if [[ ! -z "$ALL_IMAGES" ]]; then
+            ALL_IMAGES+=,
+        fi
+        ALL_IMAGES+=$URLS
+    done
 done
 
 # Make a nice list

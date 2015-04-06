@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # **unstack.sh**
 
@@ -6,11 +6,22 @@
 # mysql and rabbit are left running as OpenStack code refreshes
 # do not require them to be restarted.
 #
-# Stop all processes by setting ``UNSTACK_ALL`` or specifying ``--all``
+# Stop all processes by setting ``UNSTACK_ALL`` or specifying ``-a``
 # on the command line
 
-# Keep track of the current devstack directory.
+UNSTACK_ALL=""
+
+while getopts ":a" opt; do
+    case $opt in
+        a)
+            UNSTACK_ALL=""
+            ;;
+    esac
+done
+
+# Keep track of the current DevStack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
+FILES=$TOP_DIR/files
 
 # Import common functions
 source $TOP_DIR/functions
@@ -19,7 +30,7 @@ source $TOP_DIR/functions
 source $TOP_DIR/lib/database
 
 # Load local configuration
-source $TOP_DIR/stackrc
+source $TOP_DIR/openrc
 
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
@@ -34,6 +45,10 @@ fi
 # Configure Projects
 # ==================
 
+# Plugin Phase 0: override_defaults - allow pluggins to override
+# defaults before other services are run
+run_phase override_defaults
+
 # Import apache functions
 source $TOP_DIR/lib/apache
 
@@ -43,7 +58,7 @@ source $TOP_DIR/lib/tls
 # Source project function libraries
 source $TOP_DIR/lib/infra
 source $TOP_DIR/lib/oslo
-source $TOP_DIR/lib/stackforge
+source $TOP_DIR/lib/lvm
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
@@ -52,7 +67,7 @@ source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
-source $TOP_DIR/lib/neutron
+source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 
@@ -66,23 +81,17 @@ if [[ -d $TOP_DIR/extras.d ]]; then
     done
 fi
 
+load_plugin_settings
+
 # Determine what system we are running on.  This provides ``os_VENDOR``,
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 GetOSVersion
-
-if [[ "$1" == "--all" ]]; then
-    UNSTACK_ALL=${UNSTACK_ALL:-1}
-fi
 
 # Run extras
 # ==========
 
 # Phase: unstack
-if [[ -d $TOP_DIR/extras.d ]]; then
-    for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i unstack
-    done
-fi
+run_phase unstack
 
 if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
     source $TOP_DIR/openrc
@@ -107,7 +116,7 @@ if is_service_enabled glance; then
     stop_glance
 fi
 
-if is_service_enabled key; then
+if is_service_enabled keystone; then
     stop_keystone
 fi
 
@@ -127,13 +136,19 @@ if is_service_enabled tls-proxy; then
     stop_tls_proxy
     cleanup_CA
 fi
+if [ "$USE_SSL" == "True" ]; then
+    cleanup_CA
+fi
 
 SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*
 
+# BUG: tgt likes to exit 1 on service stop if everything isn't
+# perfect, we should clean up cinder stop paths.
+
 # Get the iSCSI volumes
 if is_service_enabled cinder; then
-    stop_cinder
-    cleanup_cinder
+    stop_cinder || /bin/true
+    cleanup_cinder || /bin/true
 fi
 
 if [[ -n "$UNSTACK_ALL" ]]; then
@@ -162,7 +177,9 @@ if is_service_enabled trove; then
     cleanup_trove
 fi
 
-stop_dstat
+if is_service_enabled dstat; then
+    stop_dstat
+fi
 
 # Clean up the remainder of the screen processes
 SCREEN=$(which screen)
@@ -172,3 +189,6 @@ if [[ -n "$SCREEN" ]]; then
         screen -X -S $SESSION quit
     fi
 fi
+
+# BUG: maybe it doesn't exist? We should isolate this further down.
+clean_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME || /bin/true

@@ -1,6 +1,5 @@
 lvm2
-scsi-target-utils
+scsi-target-utils # NOPRIME
 qemu-img
 postgresql-devel
 iscsi-initiator-utils
-python-lxml         #dist:f19,f20,f21,rhel7

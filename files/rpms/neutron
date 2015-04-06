@@ -1,23 +1,15 @@
 MySQL-python
+acl
 dnsmasq # for q-dhcp
 dnsmasq-utils # for dhcp_release
 ebtables
 iptables
 iputils
 mysql-connector-python
-mysql-devel  # testonly
+mysql-devel
 mysql-server # NOPRIME
 openvswitch # NOPRIME
-python-eventlet
-python-greenlet
-python-iso8601
-#rhel6 gets via pip
-python-paste        # dist:f19,f20,f21,rhel7
-python-paste-deploy # dist:f19,f20,f21,rhel7
-python-qpid # NOPRIME
-python-routes
-python-sqlalchemy
-python-suds
+postgresql-devel
 rabbitmq-server # NOPRIME
 qpid-cpp-server        # NOPRIME
 sqlite

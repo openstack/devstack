@@ -31,8 +31,16 @@ set +o xtrace
 # Set up default directories
 GITDIR["python-glanceclient"]=$DEST/python-glanceclient
 GITDIR["glance_store"]=$DEST/glance_store
-
 GLANCE_DIR=$DEST/glance
+
+# Glance virtual environment
+if [[ ${USE_VENV} = True ]]; then
+    PROJECT_VENV["glance"]=${GLANCE_DIR}.venv
+    GLANCE_BIN_DIR=${PROJECT_VENV["glance"]}/bin
+else
+    GLANCE_BIN_DIR=$(get_python_exec_prefix)
+fi
+
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
 GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
 GLANCE_AUTH_CACHE_DIR=${GLANCE_AUTH_CACHE_DIR:-/var/cache/glance}
@@ -46,13 +54,6 @@ GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
 GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
 GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
 GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
-
-# Support entry points installation of console scripts
-if [[ -d $GLANCE_DIR/bin ]]; then
-    GLANCE_BIN_DIR=$GLANCE_DIR/bin
-else
-    GLANCE_BIN_DIR=$(get_python_exec_prefix)
-fi
 
 if is_ssl_enabled_service "glance" || is_service_enabled tls-proxy; then
     GLANCE_SERVICE_PROTOCOL="https"
@@ -69,7 +70,6 @@ GLANCE_REGISTRY_PORT_INT=${GLANCE_REGISTRY_PORT_INT:-19191}
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,glance
-
 
 # Functions
 # ---------
@@ -91,15 +91,7 @@ function cleanup_glance {
 
 # configure_glance() - Set config files, create data dirs, etc
 function configure_glance {
-    if [[ ! -d $GLANCE_CONF_DIR ]]; then
-        sudo mkdir -p $GLANCE_CONF_DIR
-    fi
-    sudo chown $STACK_USER $GLANCE_CONF_DIR
-
-    if [[ ! -d $GLANCE_METADEF_DIR ]]; then
-        sudo mkdir -p $GLANCE_METADEF_DIR
-    fi
-    sudo chown $STACK_USER $GLANCE_METADEF_DIR
+    sudo install -d -o $STACK_USER $GLANCE_CONF_DIR $GLANCE_METADEF_DIR
 
     # Copy over our glance configurations and update them
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
@@ -113,7 +105,7 @@ function configure_glance {
     if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
         iniset $GLANCE_REGISTRY_CONF DEFAULT notification_driver messaging
     fi
-    iniset_rpc_backend glance $GLANCE_REGISTRY_CONF DEFAULT
+    iniset_rpc_backend glance $GLANCE_REGISTRY_CONF
 
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -126,7 +118,7 @@ function configure_glance {
     if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
         iniset $GLANCE_API_CONF DEFAULT notification_driver messaging
     fi
-    iniset_rpc_backend glance $GLANCE_API_CONF DEFAULT
+    iniset_rpc_backend glance $GLANCE_API_CONF
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
         iniset $GLANCE_API_CONF DEFAULT container_formats "ami,ari,aki,bare,ovf,tgz"
         iniset $GLANCE_API_CONF DEFAULT disk_formats "ami,ari,aki,vhd,raw,iso"
@@ -184,6 +176,12 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT registry_client_protocol https
     fi
 
+    # Format logging
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+        setup_colorized_logging $GLANCE_API_CONF DEFAULT tenant user
+        setup_colorized_logging $GLANCE_REGISTRY_CONF DEFAULT tenant user
+    fi
+
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
 
     cp -p $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
@@ -232,16 +230,14 @@ function configure_glance {
 function create_glance_accounts {
     if is_service_enabled g-api; then
 
-        local glance_user=$(get_or_create_user "glance" \
-            "$SERVICE_PASSWORD" $SERVICE_TENANT_NAME)
-        get_or_add_user_role service $glance_user $SERVICE_TENANT_NAME
+        create_service_user "glance"
 
         # required for swift access
         if is_service_enabled s-proxy; then
 
             local glance_swift_user=$(get_or_create_user "glance-swift" \
-                "$SERVICE_PASSWORD" $SERVICE_TENANT_NAME "glance-swift@example.com")
-            get_or_add_user_role "ResellerAdmin" $glance_swift_user $SERVICE_TENANT_NAME
+                "$SERVICE_PASSWORD" "glance-swift@example.com")
+            get_or_add_user_project_role "ResellerAdmin" $glance_swift_user $SERVICE_TENANT_NAME
         fi
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
@@ -260,12 +256,8 @@ function create_glance_accounts {
 # create_glance_cache_dir() - Part of the init_glance() process
 function create_glance_cache_dir {
     # Create cache dir
-    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/api
-    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/api
-    rm -f $GLANCE_AUTH_CACHE_DIR/api/*
-    sudo mkdir -p $GLANCE_AUTH_CACHE_DIR/registry
-    sudo chown $STACK_USER $GLANCE_AUTH_CACHE_DIR/registry
-    rm -f $GLANCE_AUTH_CACHE_DIR/registry/*
+    sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry
+    rm -f $GLANCE_AUTH_CACHE_DIR/api/* $GLANCE_AUTH_CACHE_DIR/registry/*
 }
 
 # init_glance() - Initialize databases, etc.
@@ -279,7 +271,7 @@ function init_glance {
     mkdir -p $GLANCE_CACHE_DIR
 
     # (Re)create glance database
-    recreate_database glance utf8
+    recreate_database glance
 
     # Migrate glance database
     $GLANCE_BIN_DIR/glance-manage db_sync
@@ -310,6 +302,10 @@ function install_glance {
 
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
     setup_develop $GLANCE_DIR
+    if is_service_enabled g-graffiti; then
+        ${TOP_DIR}/pkg/elasticsearch.sh download
+        ${TOP_DIR}/pkg/elasticsearch.sh install
+    fi
 }
 
 # start_glance() - Start running processes, including screen
@@ -323,6 +319,9 @@ function start_glance {
     run_process g-reg "$GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
     run_process g-api "$GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
 
+    if is_service_enabled g-graffiti; then
+        ${TOP_DIR}/pkg/elasticsearch.sh start
+    fi
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
     if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT; then
         die $LINENO "g-api did not start"
@@ -335,7 +334,6 @@ function stop_glance {
     stop_process g-api
     stop_process g-reg
 }
-
 
 # Restore xtrace
 $XTRACE

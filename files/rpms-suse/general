@@ -4,8 +4,9 @@ ca-certificates-mozilla
 curl
 euca2ools
 gcc
+gcc-c++
 git-core
-graphviz # testonly - docs
+graphviz # docs
 iputils
 libopenssl-devel # to rebuild pyOpenSSL if needed
 lsof # useful when debugging
@@ -15,8 +16,6 @@ openssl
 psmisc
 python-cmd2 # dist:opensuse-12.3
 python-pylint
-python-setuptools # instead of python-distribute; dist:sle11sp2
-python-unittest2
 screen
 tar
 tcpdump

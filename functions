@@ -13,6 +13,9 @@
 # Include the common functions
 FUNC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 source ${FUNC_DIR}/functions-common
+source ${FUNC_DIR}/inc/ini-config
+source ${FUNC_DIR}/inc/python
+source ${FUNC_DIR}/inc/rootwrap
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -42,7 +45,7 @@ function upload_image {
     if [[ $image_url != file* ]]; then
         # Downloads the image (uec ami+akistyle), then extracts it.
         if [[ ! -f $FILES/$image_fname || "$(stat -c "%s" $FILES/$image_fname)" = "0" ]]; then
-            wget -c $image_url -O $FILES/$image_fname
+            wget --progress=dot:giga -c $image_url -O $FILES/$image_fname
             if [[ $? -ne 0 ]]; then
                 echo "Not found: $image_url"
                 return
@@ -116,7 +119,7 @@ function upload_image {
             if [[ $flat_url != file* ]]; then
                 if [[ ! -f $FILES/$flat_fname || \
                 "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
-                    wget -c $flat_url -O $FILES/$flat_fname
+                    wget --progress=dot:giga -c $flat_url -O $FILES/$flat_fname
                 fi
                 image="$FILES/${flat_fname}"
             else
@@ -324,13 +327,15 @@ function use_database {
     fi
 }
 
+#Macro for curl statements. curl requires -g option for literal IPv6 addresses.
+CURL_GET="${CURL_GET:-curl -g}"
 
 # Wait for an HTTP server to start answering requests
 # wait_for_service timeout url
 function wait_for_service {
     local timeout=$1
     local url=$2
-    timeout $timeout sh -c "while ! curl -k --noproxy '*' -s $url >/dev/null; do sleep 1; done"
+    timeout $timeout sh -c "while ! $CURL_GET -k --noproxy '*' -s $url >/dev/null; do sleep 1; done"
 }
 
 
@@ -353,7 +358,7 @@ function _ping_check_novanet {
     local boot_timeout=$3
     local expected=${4:-"True"}
     local check_command=""
-    MULTI_HOST=`trueorfalse False $MULTI_HOST`
+    MULTI_HOST=$(trueorfalse False MULTI_HOST)
     if [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
         return
     fi
@@ -435,7 +440,7 @@ function check_path_perm_sanity {
             echo "*** DEST path element"
             echo "***    ${rebuilt_path}"
             echo "*** appears to have 0700 permissions."
-            echo "*** This is very likely to cause fatal issues for devstack daemons."
+            echo "*** This is very likely to cause fatal issues for DevStack daemons."
 
             if [[ -n "$SKIP_PATH_SANITY" ]]; then
                 return
@@ -522,8 +527,8 @@ function setup_colorized_logging {
 }
 
 # These functions are provided for basic fall-back functionality for
-# projects that include parts of devstack (grenade).  stack.sh will
-# override these with more specific versions for devstack (with fancy
+# projects that include parts of DevStack (Grenade).  stack.sh will
+# override these with more specific versions for DevStack (with fancy
 # spinners, etc).  We never override an existing version
 if ! function_exists echo_summary; then
     function echo_summary {

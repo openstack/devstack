@@ -10,24 +10,25 @@
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# - install_neutron
-# - install_neutronclient
 # - install_neutron_agent_packages
+# - install_neutronclient
+# - install_neutron
 # - install_neutron_third_party
 # - configure_neutron
 # - init_neutron
 # - configure_neutron_third_party
 # - init_neutron_third_party
 # - start_neutron_third_party
-# - create_neutron_cache_dir
 # - create_nova_conf_neutron
 # - start_neutron_service_and_check
+# - check_neutron_third_party_integration
 # - start_neutron_agents
 # - create_neutron_initial_network
 # - setup_neutron_debug
 #
 # ``unstack.sh`` calls the entry points in this order:
 #
+# - teardown_neutron_debug
 # - stop_neutron
 # - stop_neutron_third_party
 # - cleanup_neutron
@@ -152,6 +153,7 @@ Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
 # RHEL's support for namespaces requires using veths with ovs
 Q_OVS_USE_VETH=${Q_OVS_USE_VETH:-False}
 Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
+Q_USE_ROOTWRAP_DAEMON=$(trueorfalse True Q_USE_ROOTWRAP_DAEMON)
 # Meta data IP
 Q_META_DATA_IP=${Q_META_DATA_IP:-$SERVICE_HOST}
 # Allow Overlapping IP among subnets
@@ -225,6 +227,9 @@ if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
 else
     NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
     Q_RR_COMMAND="sudo $NEUTRON_ROOTWRAP $Q_RR_CONF_FILE"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        Q_RR_DAEMON_COMMAND="sudo $NEUTRON_ROOTWRAP-daemon $Q_RR_CONF_FILE"
+    fi
 fi
 
 
@@ -421,7 +426,7 @@ function is_neutron_enabled {
 # Set common config for all neutron server and agents.
 function configure_neutron {
     _configure_neutron_common
-    iniset_rpc_backend neutron $NEUTRON_CONF DEFAULT
+    iniset_rpc_backend neutron $NEUTRON_CONF
 
     # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
     if is_service_enabled q-lbaas; then
@@ -494,8 +499,7 @@ function create_nova_conf_neutron {
 # create_neutron_cache_dir() - Part of the _neutron_setup_keystone() process
 function create_neutron_cache_dir {
     # Create cache dir
-    sudo mkdir -p $NEUTRON_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $NEUTRON_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $NEUTRON_AUTH_CACHE_DIR
     rm -f $NEUTRON_AUTH_CACHE_DIR/*
 }
 
@@ -507,15 +511,9 @@ function create_neutron_cache_dir {
 
 # Migrated from keystone_data.sh
 function create_neutron_accounts {
-
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local service_role=$(openstack role list | awk "/ service / { print \$2 }")
-
     if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
 
-        local neutron_user=$(get_or_create_user "neutron" \
-            "$SERVICE_PASSWORD" $service_tenant)
-        get_or_add_user_role $service_role $neutron_user $service_tenant
+        create_service_user "neutron"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
@@ -534,18 +532,33 @@ function create_neutron_initial_network {
     TENANT_ID=$(openstack project list | grep " demo " | get_field 1)
     die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for demo"
 
+    # Allow drivers that need to create an initial network to do so here
+    if type -p neutron_plugin_create_initial_network_profile > /dev/null; then
+        neutron_plugin_create_initial_network_profile $PHYSICAL_NETWORK
+    fi
+
     if is_provider_network; then
         die_if_not_set $LINENO PHYSICAL_NETWORK "You must specify the PHYSICAL_NETWORK"
         die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specifiy the PROVIDER_NETWORK_TYPE"
         NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
-        SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
-        SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode slaac --gateway $V6_NETWORK_GATEWAY --name $PROVIDER_SUBNET_NAME_V6 $NET_ID $FIXED_RANGE_V6 | grep 'id' | get_field 2)
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
+
+        if [[ "$IP_VERSION" =~ 4.* ]]; then
+            SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+            die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $TENANT_ID"
+        fi
+
+        if [[ "$IP_VERSION" =~ .*6 ]]; then
+            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode slaac --gateway $V6_NETWORK_GATEWAY --name $PROVIDER_SUBNET_NAME_V6 $NET_ID $FIXED_RANGE_V6 | grep 'id' | get_field 2)
+            die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $PROVIDER_SUBNET_NAME_V6 $TENANT_ID"
+        fi
+
         sudo ip link set $OVS_PHYSICAL_BRIDGE up
         sudo ip link set br-int up
         sudo ip link set $PUBLIC_INTERFACE up
     else
         NET_ID=$(neutron net-create --tenant-id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
-        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $TENANT_ID"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
             # Create IPv4 private subnet
@@ -592,9 +605,19 @@ function create_neutron_initial_network {
 
 # init_neutron() - Initialize databases, etc.
 function init_neutron {
-    recreate_database $Q_DB_NAME utf8
+    recreate_database $Q_DB_NAME
     # Run Neutron db migrations
     $NEUTRON_BIN_DIR/neutron-db-manage --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE upgrade head
+    for svc in fwaas lbaas vpnaas; do
+        if [ "$svc" = "vpnaas" ]; then
+            q_svc="q-vpn"
+        else
+            q_svc="q-$svc"
+        fi
+        if is_service_enabled $q_svc; then
+            $NEUTRON_BIN_DIR/neutron-db-manage --service $svc --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE upgrade head
+        fi
+    done
 }
 
 # install_neutron() - Collect source and prepare
@@ -689,7 +712,7 @@ function start_neutron_agents {
     run_process q-dhcp "python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
     if is_provider_network; then
-        sudo ovs-vsctl add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
+        sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
         sudo ip link set $OVS_PHYSICAL_BRIDGE up
         sudo ip link set br-int up
         sudo ip link set $PUBLIC_INTERFACE up
@@ -727,12 +750,20 @@ function start_neutron_agents {
 # stop_neutron() - Stop running processes (non-screen)
 function stop_neutron {
     if is_service_enabled q-dhcp; then
+        stop_process q-dhcp
         pid=$(ps aux | awk '/[d]nsmasq.+interface=(tap|ns-)/ { print $2 }')
         [ ! -z "$pid" ] && sudo kill -9 $pid
     fi
+
+    stop_process q-svc
+    stop_process q-l3
+
     if is_service_enabled q-meta; then
         sudo pkill -9 -f neutron-ns-metadata-proxy || :
+        stop_process q-meta
     fi
+
+    stop_process q-agt
 
     if is_service_enabled q-lbaas; then
         neutron_lbaas_stop
@@ -748,10 +779,42 @@ function stop_neutron {
     fi
 }
 
+# _move_neutron_addresses_route() - Move the primary IP to the OVS bridge
+# on startup, or back to the public interface on cleanup
+function _move_neutron_addresses_route {
+    local from_intf=$1
+    local to_intf=$2
+    local add_ovs_port=$3
+
+    if [[ -n "$from_intf" && -n "$to_intf" ]]; then
+        # Remove the primary IP address from $from_intf and add it to $to_intf,
+        # along with the default route, if it exists.  Also, when called
+        # on configure we will also add $from_intf as a port on $to_intf,
+        # assuming it is an OVS bridge.
+
+        local IP_BRD=$(ip -4 a s dev $from_intf | awk '/inet/ { print $2, $3, $4; exit }')
+        local DEFAULT_ROUTE_GW=$(ip r | awk "/default.+$from_intf/ { print \$3; exit }")
+        local ADD_OVS_PORT=""
+
+        if [ "$DEFAULT_ROUTE_GW" != "" ]; then
+            ADD_DEFAULT_ROUTE="sudo ip r replace default via $DEFAULT_ROUTE_GW dev $to_intf"
+        fi
+
+        if [[ "$add_ovs_port" == "True" ]]; then
+            ADD_OVS_PORT="sudo ovs-vsctl --may-exist add-port $to_intf $from_intf"
+        fi
+
+        sudo ip addr del $IP_BRD dev $from_intf; sudo ip addr add $IP_BRD dev $to_intf; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE
+    fi
+}
+
 # cleanup_neutron() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_neutron {
-    if [[ is_provider_network && is_ironic_hardware ]]; then
+
+    _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False
+
+    if is_provider_network && is_ironic_hardware; then
         for IP in $(ip addr show dev $OVS_PHYSICAL_BRIDGE | grep ' inet ' | awk '{print $2}'); do
             sudo ip addr del $IP dev $OVS_PHYSICAL_BRIDGE
             sudo ip addr add $IP dev $PUBLIC_INTERFACE
@@ -769,15 +832,17 @@ function cleanup_neutron {
     done
 }
 
+
+function _create_neutron_conf_dir {
+    # Put config files in ``NEUTRON_CONF_DIR`` for everyone to find
+    sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
+}
+
 # _configure_neutron_common()
 # Set common config for all neutron server and agents.
 # This MUST be called before other ``_configure_neutron_*`` functions.
 function _configure_neutron_common {
-    # Put config files in ``NEUTRON_CONF_DIR`` for everyone to find
-    if [[ ! -d $NEUTRON_CONF_DIR ]]; then
-        sudo mkdir -p $NEUTRON_CONF_DIR
-    fi
-    sudo chown $STACK_USER $NEUTRON_CONF_DIR
+    _create_neutron_conf_dir
 
     cp $NEUTRON_DIR/etc/neutron.conf $NEUTRON_CONF
 
@@ -827,6 +892,9 @@ function _configure_neutron_common {
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $NEUTRON_CONF DEFAULT project_id
+    else
+        # Show user_name and project_name by default like in nova
+        iniset $NEUTRON_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
     fi
 
     if is_service_enabled tls-proxy; then
@@ -835,7 +903,7 @@ function _configure_neutron_common {
     fi
 
     if is_ssl_enabled_service "nova"; then
-        iniset $NEUTRON_CONF DEFAULT nova_ca_certificates_file "$SSL_BUNDLE_FILE"
+        iniset $NEUTRON_CONF nova cafile $SSL_BUNDLE_FILE
     fi
 
     if is_ssl_enabled_service "neutron"; then
@@ -860,6 +928,9 @@ function _configure_neutron_debug_command {
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 
     _neutron_setup_interface_driver $NEUTRON_TEST_CONFIG_FILE
 
@@ -874,6 +945,9 @@ function _configure_neutron_dhcp_agent {
     iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_DHCP_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 
     if ! is_service_enabled q-l3; then
         if [[ "$ENABLE_ISOLATED_METADATA" = "True" ]]; then
@@ -898,7 +972,7 @@ function _configure_neutron_l3_agent {
     Q_L3_ROUTER_PER_TENANT=$Q_USE_NAMESPACE
 
     if is_service_enabled q-vpn; then
-        cp $NEUTRON_DIR/etc/vpn_agent.ini $Q_VPN_CONF_FILE
+        neutron_vpn_configure_agent
     fi
 
     cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
@@ -907,10 +981,17 @@ function _configure_neutron_l3_agent {
     iniset $Q_L3_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_L3_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $Q_L3_CONF_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 
     _neutron_setup_interface_driver $Q_L3_CONF_FILE
 
     neutron_plugin_configure_l3_agent
+
+    if [[ $(ip -4 a s dev "$PUBLIC_INTERFACE" | grep -c 'inet') != 0 ]]; then
+        _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True
+    fi
 }
 
 function _configure_neutron_metadata_agent {
@@ -920,8 +1001,13 @@ function _configure_neutron_metadata_agent {
     iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $Q_META_CONF_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 
-    _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT
+    # Configures keystone for metadata_agent
+    # The third argument "True" sets auth_url needed to communicate with keystone
+    _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT True
 
 }
 
@@ -930,6 +1016,9 @@ function _configure_neutron_ceilometer_notifications {
 }
 
 function _configure_neutron_lbaas {
+    if [ -f $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf ]; then
+        cp $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_agent_lbaas_configure_common
     neutron_agent_lbaas_configure_agent
 }
@@ -940,11 +1029,17 @@ function _configure_neutron_metering {
 }
 
 function _configure_neutron_fwaas {
+    if [ -f $NEUTRON_FWAAS_DIR/etc/neutron_fwaas.conf ]; then
+        cp $NEUTRON_FWAAS_DIR/etc/neutron_fwaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_fwaas_configure_common
     neutron_fwaas_configure_driver
 }
 
 function _configure_neutron_vpn {
+    if [ -f $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf ]; then
+        cp $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf $NEUTRON_CONF_DIR
+    fi
     neutron_vpn_install_agent_packages
     neutron_vpn_configure_common
 }
@@ -961,6 +1056,9 @@ function _configure_neutron_plugin_agent {
     # Specify the default root helper prior to agent configuration to
     # ensure that an agent's configuration can override the default
     iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE  agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
     iniset $NEUTRON_CONF DEFAULT verbose True
     iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
@@ -998,12 +1096,15 @@ function _configure_neutron_service {
     # Configuration for neutron notifations to nova.
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
-    iniset $NEUTRON_CONF DEFAULT nova_url "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2"
-    iniset $NEUTRON_CONF DEFAULT nova_admin_username nova
-    iniset $NEUTRON_CONF DEFAULT nova_admin_password $SERVICE_PASSWORD
-    ADMIN_TENANT_ID=$(openstack project list | awk "/ service / { print \$2 }")
-    iniset $NEUTRON_CONF DEFAULT nova_admin_tenant_id $ADMIN_TENANT_ID
-    iniset $NEUTRON_CONF DEFAULT nova_admin_auth_url  "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v2.0"
+
+    iniset $NEUTRON_CONF nova auth_plugin password
+    iniset $NEUTRON_CONF nova auth_url $KEYSTONE_AUTH_URI
+    iniset $NEUTRON_CONF nova username nova
+    iniset $NEUTRON_CONF nova password $SERVICE_PASSWORD
+    iniset $NEUTRON_CONF nova user_domain_id default
+    iniset $NEUTRON_CONF nova project_name $SERVICE_TENANT_NAME
+    iniset $NEUTRON_CONF nova project_domain_id default
+    iniset $NEUTRON_CONF nova region_name $REGION_NAME
 
     # Configure plugin
     neutron_plugin_configure_service
@@ -1022,50 +1123,64 @@ function _neutron_service_plugin_class_add {
     fi
 }
 
+# _neutron_deploy_rootwrap_filters() - deploy rootwrap filters to $Q_CONF_ROOTWRAP_D (owned by root).
+function _neutron_deploy_rootwrap_filters {
+    local srcdir=$1
+    sudo install -d -o root -m 755 $Q_CONF_ROOTWRAP_D
+    sudo install -o root -m 644 $srcdir/etc/neutron/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
+}
+
 # _neutron_setup_rootwrap() - configure Neutron's rootwrap
 function _neutron_setup_rootwrap {
     if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
         return
     fi
-    # Deploy new rootwrap filters files (owned by root).
     # Wipe any existing ``rootwrap.d`` files first
     Q_CONF_ROOTWRAP_D=$NEUTRON_CONF_DIR/rootwrap.d
     if [[ -d $Q_CONF_ROOTWRAP_D ]]; then
         sudo rm -rf $Q_CONF_ROOTWRAP_D
     fi
-    # Deploy filters to ``$NEUTRON_CONF_DIR/rootwrap.d``
-    mkdir -p -m 755 $Q_CONF_ROOTWRAP_D
-    cp -pr $NEUTRON_DIR/etc/neutron/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
-    sudo chown -R root:root $Q_CONF_ROOTWRAP_D
-    sudo chmod 644 $Q_CONF_ROOTWRAP_D/*
+
+    _neutron_deploy_rootwrap_filters $NEUTRON_DIR
+
     # Set up ``rootwrap.conf``, pointing to ``$NEUTRON_CONF_DIR/rootwrap.d``
     # location moved in newer versions, prefer new location
     if test -r $NEUTRON_DIR/etc/neutron/rootwrap.conf; then
-        sudo cp -p $NEUTRON_DIR/etc/neutron/rootwrap.conf $Q_RR_CONF_FILE
+        sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/neutron/rootwrap.conf $Q_RR_CONF_FILE
     else
-        sudo cp -p $NEUTRON_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
+        sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
     fi
     sudo sed -e "s:^filters_path=.*$:filters_path=$Q_CONF_ROOTWRAP_D:" -i $Q_RR_CONF_FILE
-    sudo chown root:root $Q_RR_CONF_FILE
-    sudo chmod 0644 $Q_RR_CONF_FILE
     # Specify ``rootwrap.conf`` as first parameter to neutron-rootwrap
     ROOTWRAP_SUDOER_CMD="$NEUTRON_ROOTWRAP $Q_RR_CONF_FILE *"
+    ROOTWRAP_DAEMON_SUDOER_CMD="$NEUTRON_ROOTWRAP-daemon $Q_RR_CONF_FILE"
 
     # Set up the rootwrap sudoers for neutron
     TEMPFILE=`mktemp`
     echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_DAEMON_SUDOER_CMD" >>$TEMPFILE
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
     sudo mv $TEMPFILE /etc/sudoers.d/neutron-rootwrap
 
     # Update the root_helper
     iniset $NEUTRON_CONF agent root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $NEUTRON_CONF agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
 }
 
 # Configures keystone integration for neutron service and agents
 function _neutron_setup_keystone {
     local conf_file=$1
     local section=$2
+    local use_auth_url=$3
+
+    # Configures keystone for metadata_agent
+    # metadata_agent needs auth_url to communicate with keystone
+    if [[ "$use_auth_url" == "True" ]]; then
+        iniset $conf_file $section auth_url $KEYSTONE_SERVICE_URI/v2.0
+    fi
 
     create_neutron_cache_dir
     configure_auth_token_middleware $conf_file $Q_ADMIN_USERNAME $NEUTRON_AUTH_CACHE_DIR $section
@@ -1148,8 +1263,10 @@ function _neutron_configure_router_v4 {
         if is_neutron_ovs_base_plugin && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
             local ext_gw_interface=$(_neutron_get_ext_gw_interface)
             local cidr_len=${FLOATING_RANGE#*/}
-            sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
-            sudo ip link set $ext_gw_interface up
+            if [[ $(ip addr show dev $ext_gw_interface | grep -c $ext_gw_ip) == 0 && ( $Q_USE_PROVIDERNET_FOR_PUBLIC == "False" || $Q_USE_PUBLIC_VETH == "True" ) ]]; then
+                sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
+                sudo ip link set $ext_gw_interface up
+            fi
             ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' -v subnet_id=$PUB_SUBNET_ID '$4 == subnet_id { print $8; }'`
             die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
             sudo route add -net $FIXED_RANGE gw $ROUTER_GW_IP

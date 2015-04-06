@@ -17,6 +17,8 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 
 export TOP_DIR=$TOP
 
+# we don't actually care about the HOST_IP
+HOST_IP="don't care"
 # Import common functions
 source $TOP/functions
 source $TOP/stackrc
@@ -27,7 +29,17 @@ for i in $TOP/lib/*; do
     fi
 done
 
-ALL_LIBS="python-novaclient oslo.config pbr oslo.context python-troveclient python-keystoneclient taskflow oslo.middleware pycadf python-glanceclient python-ironicclient tempest-lib oslo.messaging oslo.log cliff python-heatclient stevedore python-cinderclient glance_store oslo.concurrency oslo.db oslo.vmware keystonemiddleware oslo.serialization python-saharaclient django_openstack_auth python-openstackclient oslo.rootwrap oslo.i18n python-ceilometerclient oslo.utils python-swiftclient python-neutronclient tooz"
+ALL_LIBS="python-novaclient oslo.config pbr oslo.context python-troveclient"
+ALL_LIBS+=" python-keystoneclient taskflow oslo.middleware pycadf"
+ALL_LIBS+=" python-glanceclient python-ironicclient tempest-lib"
+ALL_LIBS+=" oslo.messaging oslo.log cliff python-heatclient stevedore"
+ALL_LIBS+=" python-cinderclient glance_store oslo.concurrency oslo.db"
+ALL_LIBS+=" oslo.versionedobjects oslo.vmware keystonemiddleware"
+ALL_LIBS+=" oslo.serialization python-saharaclient django_openstack_auth"
+ALL_LIBS+=" python-openstackclient oslo.rootwrap oslo.i18n"
+ALL_LIBS+=" python-ceilometerclient oslo.utils python-swiftclient"
+ALL_LIBS+=" python-neutronclient tooz ceilometermiddleware oslo.policy"
+ALL_LIBS+=" debtcollector"
 
 # Generate the above list with
 # echo ${!GITREPO[@]}

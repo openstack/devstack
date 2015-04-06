@@ -14,38 +14,39 @@ set +o xtrace
 
 register_database mysql
 
+# Linux distros, thank you for being incredibly consistent
+MYSQL=mysql
+if is_fedora && ! is_oraclelinux; then
+    MYSQL=mariadb
+fi
 
 # Functions
 # ---------
 
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database_mysql {
+    stop_service $MYSQL
     if is_ubuntu; then
         # Get ruthless with mysql
-        stop_service $MYSQL
-        apt_get purge -y mysql*
+        apt_get purge -y mysql* mariadb*
         sudo rm -rf /var/lib/mysql
         sudo rm -rf /etc/mysql
         return
+    elif is_suse || is_oraclelinux; then
+        uninstall_package mysql-community-server
+        sudo rm -rf /var/lib/mysql
     elif is_fedora; then
-        if [[ $DISTRO =~ (rhel6) ]]; then
-            MYSQL=mysqld
-        else
-            MYSQL=mariadb
-        fi
-    elif is_suse; then
-        MYSQL=mysql
+        uninstall_package mariadb-server
+        sudo rm -rf /var/lib/mysql
     else
         return
     fi
-    stop_service $MYSQL
 }
 
 function recreate_database_mysql {
     local db=$1
-    local charset=$2
     mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "DROP DATABASE IF EXISTS $db;"
-    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "CREATE DATABASE $db CHARACTER SET $charset;"
+    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "CREATE DATABASE $db CHARACTER SET utf8;"
 }
 
 function configure_database_mysql {
@@ -55,16 +56,12 @@ function configure_database_mysql {
     if is_ubuntu; then
         my_conf=/etc/mysql/my.cnf
         mysql=mysql
-    elif is_fedora; then
-        if [[ $DISTRO =~ (rhel6) ]]; then
-            mysql=mysqld
-        else
-            mysql=mariadb
-        fi
-        my_conf=/etc/my.cnf
-    elif is_suse; then
+    elif is_suse || is_oraclelinux; then
         my_conf=/etc/my.cnf
         mysql=mysql
+    elif is_fedora; then
+        mysql=mariadb
+        my_conf=/etc/my.cnf
     else
         exit_distro_not_supported "mysql configuration"
     fi
@@ -96,7 +93,7 @@ function configure_database_mysql {
 
     if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
         echo_summary "Enabling MySQL query logging"
-        if is_fedora && ! [[ $DISTRO =~ (rhel6) ]]; then
+        if is_fedora; then
             slow_log=/var/log/mariadb/mariadb-slow.log
         else
             slow_log=/var/log/mysql/mysql-slow.log
@@ -123,10 +120,10 @@ function install_database_mysql {
     if is_ubuntu; then
         # Seed configuration with mysql password so that apt-get install doesn't
         # prompt us for a password upon install.
-        cat <<MYSQL_PRESEED | sudo debconf-set-selections
-mysql-server-5.1 mysql-server/root_password password $DATABASE_PASSWORD
-mysql-server-5.1 mysql-server/root_password_again password $DATABASE_PASSWORD
-mysql-server-5.1 mysql-server/start_on_boot boolean true
+        sudo debconf-set-selections <<MYSQL_PRESEED
+mysql-server mysql-server/root_password password $DATABASE_PASSWORD
+mysql-server mysql-server/root_password_again password $DATABASE_PASSWORD
+mysql-server mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
     fi
 
@@ -143,21 +140,23 @@ EOF
         chmod 0600 $HOME/.my.cnf
     fi
     # Install mysql-server
-    if is_fedora; then
-        if [[ $DISTRO =~ (rhel6) ]]; then
-            install_package mysql-server
-        else
-            install_package mariadb-server
-        fi
-    elif is_ubuntu; then
-        install_package mysql-server
-    elif is_suse; then
+    if is_suse || is_oraclelinux; then
         if ! is_package_installed mariadb; then
             install_package mysql-community-server
         fi
+    elif is_fedora; then
+        install_package mariadb-server
+    elif is_ubuntu; then
+        install_package mysql-server
     else
         exit_distro_not_supported "mysql installation"
     fi
+}
+
+function install_database_python_mysql {
+    # Install Python client module
+    pip_install MySQL-python
+    ADDITIONAL_VENV_PACKAGES+=",MySQL-python"
 }
 
 function database_connection_url_mysql {

@@ -12,14 +12,14 @@ DevStack - an OpenStack Community Production
    plugins
    faq
    changes
-   contributing
+   hacking
 
 Quick Start
 -----------
 
 #. Select a Linux Distribution
 
-   Only Ubuntu 14.04 (Trusty), Fedora 20 and CentOS/RHEL 6.5 are
+   Only Ubuntu 14.04 (Trusty), Fedora 20 and CentOS/RHEL 7 are
    documented here. OpenStack also runs and is packaged on other flavors
    of Linux such as OpenSUSE and Debian.
 
@@ -41,8 +41,7 @@ Quick Start
 
 #. Configure
 
-   We recommend at least a :doc:`minimal
-   configuration <configuration>` be set up.
+   We recommend at least a :ref:`minimal-configuration` be set up.
 
 #. Start the install
 
@@ -66,6 +65,9 @@ Walk through various setups used by stackers
    guides/single-machine
    guides/multinode-lab
    guides/neutron
+   guides/devstack-with-nested-kvm
+   guides/nova
+   guides/devstack-with-lbaas-v2
 
 All-In-One Single VM
 --------------------
@@ -93,6 +95,18 @@ DevStack with Neutron Networking
 Building a DevStack cluster with :doc:`Neutron Networking <guides/neutron>`.
 This guide is meant for building lab environments with a dedicated
 control node and multiple compute nodes.
+
+DevStack with KVM-based Nested Virtualization
+---------------------------------------------
+
+Procedure to setup :doc:`DevStack with KVM-based Nested Virtualization
+<guides/devstack-with-nested-kvm>`. With this setup, Nova instances
+will be more performant than with plain QEMU emulation.
+
+Nova and devstack
+--------------------------------
+
+Guide to working with nova features :doc:`Nova and devstack <guides/nova>`.
 
 DevStack Documentation
 ======================
@@ -125,7 +139,7 @@ FAQ
 Contributing
 ------------
 
-:doc:`Pitching in to make DevStack a better place <contributing>`
+:doc:`Pitching in to make DevStack a better place <hacking>`
 
 Code
 ====
@@ -142,9 +156,7 @@ Scripts
 * `lib/ceilometer <lib/ceilometer.html>`__
 * `lib/ceph <lib/ceph.html>`__
 * `lib/cinder <lib/cinder.html>`__
-* `lib/config <lib/config.html>`__
 * `lib/database <lib/database.html>`__
-* `lib/dib <lib/dib.html>`__
 * `lib/dstat <lib/dstat.html>`__
 * `lib/glance <lib/glance.html>`__
 * `lib/heat <lib/heat.html>`__
@@ -153,13 +165,11 @@ Scripts
 * `lib/ironic <lib/ironic.html>`__
 * `lib/keystone <lib/keystone.html>`__
 * `lib/ldap <lib/ldap.html>`__
-* `lib/neutron <lib/neutron.html>`__
+* `lib/neutron-legacy <lib/neutron-legacy.html>`__
 * `lib/nova <lib/nova.html>`__
-* `lib/opendaylight <lib/opendaylight.html>`__
 * `lib/oslo <lib/oslo.html>`__
 * `lib/rpc\_backend <lib/rpc_backend.html>`__
 * `lib/sahara <lib/sahara.html>`__
-* `lib/stackforge <lib/stackforge.html>`__
 * `lib/swift <lib/swift.html>`__
 * `lib/tempest <lib/tempest.html>`__
 * `lib/tls <lib/tls.html>`__
@@ -169,15 +179,19 @@ Scripts
 * `clean.sh <clean.sh.html>`__
 * `run\_tests.sh <run_tests.sh.html>`__
 
-* `extras.d/40-dib.sh <extras.d/40-dib.sh.html>`__
 * `extras.d/50-ironic.sh <extras.d/50-ironic.sh.html>`__
 * `extras.d/60-ceph.sh <extras.d/60-ceph.sh.html>`__
 * `extras.d/70-sahara.sh <extras.d/70-sahara.sh.html>`__
 * `extras.d/70-trove.sh <extras.d/70-trove.sh.html>`__
 * `extras.d/70-tuskar.sh <extras.d/70-tuskar.sh.html>`__
 * `extras.d/70-zaqar.sh <extras.d/70-zaqar.sh.html>`__
-* `extras.d/80-opendaylight.sh <extras.d/80-opendaylight.sh.html>`__
 * `extras.d/80-tempest.sh <extras.d/80-tempest.sh.html>`__
+
+* `inc/ini-config <inc/ini-config.html>`__
+* `inc/meta-config <inc/meta-config.html>`__
+* `inc/python <inc/python.html>`__
+
+* `pkg/elasticsearch.sh <pkg/elasticsearch.sh.html>`_
 
 Configuration
 -------------
@@ -196,6 +210,8 @@ Tools
 -----
 
 * `tools/build\_docs.sh <tools/build_docs.sh.html>`__
+* `tools/build\_venv.sh <tools/build_venv.sh.html>`__
+* `tools/build\_wheels.sh <tools/build_wheels.sh.html>`__
 * `tools/create-stack-user.sh <tools/create-stack-user.sh.html>`__
 * `tools/create\_userrc.sh <tools/create_userrc.sh.html>`__
 * `tools/fixup\_stuff.sh <tools/fixup_stuff.sh.html>`__

@@ -8,8 +8,7 @@
 #   ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng
 
 # Dependencies:
-#
-# - functions
+# (none)
 
 # stack.sh
 # ---------
@@ -36,18 +35,34 @@ GITDIR["python-heatclient"]=$DEST/python-heatclient
 HEAT_DIR=$DEST/heat
 HEAT_CFNTOOLS_DIR=$DEST/heat-cfntools
 HEAT_TEMPLATES_REPO_DIR=$DEST/heat-templates
+OCC_DIR=$DEST/os-collect-config
+DIB_UTILS_DIR=$DEST/dib-utils
+ORC_DIR=$DEST/os-refresh-config
+OAC_DIR=$DEST/os-apply-config
+
+HEAT_PIP_REPO=$DATA_DIR/heat-pip-repo
+HEAT_PIP_REPO_PORT=${HEAT_PIP_REPO_PORT:-8899}
+
 HEAT_AUTH_CACHE_DIR=${HEAT_AUTH_CACHE_DIR:-/var/cache/heat}
-HEAT_STANDALONE=`trueorfalse False $HEAT_STANDALONE`
+HEAT_STANDALONE=$(trueorfalse False HEAT_STANDALONE)
+HEAT_ENABLE_ADOPT_ABANDON=$(trueorfalse False HEAT_ENABLE_ADOPT_ABANDON)
 HEAT_CONF_DIR=/etc/heat
 HEAT_CONF=$HEAT_CONF_DIR/heat.conf
 HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 HEAT_TEMPLATES_DIR=$HEAT_CONF_DIR/templates
-HEAT_STACK_DOMAIN=`trueorfalse True $HEAT_STACK_DOMAIN`
 HEAT_API_HOST=${HEAT_API_HOST:-$HOST_IP}
 HEAT_API_PORT=${HEAT_API_PORT:-8004}
 
+
 # other default options
-HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-trusts}
+if [[ "$HEAT_STANDALONE" = "True" ]]; then
+    # for standalone, use defaults which require no service user
+    HEAT_STACK_DOMAIN=`trueorfalse False $HEAT_STACK_DOMAIN`
+    HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-password}
+else
+    HEAT_STACK_DOMAIN=`trueorfalse True $HEAT_STACK_DOMAIN`
+    HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-trusts}
+fi
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,heat
@@ -69,19 +84,13 @@ function cleanup_heat {
     sudo rm -rf $HEAT_AUTH_CACHE_DIR
     sudo rm -rf $HEAT_ENV_DIR
     sudo rm -rf $HEAT_TEMPLATES_DIR
+    sudo rm -rf $HEAT_CONF_DIR
 }
 
 # configure_heat() - Set config files, create data dirs, etc
 function configure_heat {
-    setup_develop $HEAT_DIR
-    if [[ "$HEAT_STANDALONE" = "True" ]]; then
-        setup_develop $HEAT_DIR/contrib/heat_keystoneclient_v2
-    fi
 
-    if [[ ! -d $HEAT_CONF_DIR ]]; then
-        sudo mkdir -p $HEAT_CONF_DIR
-    fi
-    sudo chown $STACK_USER $HEAT_CONF_DIR
+    sudo install -d -o $STACK_USER $HEAT_CONF_DIR
     # remove old config files
     rm -f $HEAT_CONF_DIR/heat-*.conf
 
@@ -98,7 +107,7 @@ function configure_heat {
     cp $HEAT_DIR/etc/heat/policy.json $HEAT_POLICY_FILE
 
     # common options
-    iniset_rpc_backend heat $HEAT_CONF DEFAULT
+    iniset_rpc_backend heat $HEAT_CONF
     iniset $HEAT_CONF DEFAULT heat_metadata_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT
     iniset $HEAT_CONF DEFAULT heat_waitcondition_server_url http://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1/waitcondition
     iniset $HEAT_CONF DEFAULT heat_watch_server_url http://$HEAT_API_CW_HOST:$HEAT_API_CW_PORT
@@ -115,24 +124,32 @@ function configure_heat {
         setup_colorized_logging $HEAT_CONF DEFAULT tenant user
     fi
 
-    configure_auth_token_middleware $HEAT_CONF heat $HEAT_AUTH_CACHE_DIR
+    iniset $HEAT_CONF DEFAULT deferred_auth_method $HEAT_DEFERRED_AUTH
 
-    if is_ssl_enabled_service "key"; then
-        iniset $HEAT_CONF clients_keystone ca_file $SSL_BUNDLE_FILE
+    # NOTE(jamielennox): heat re-uses specific values from the
+    # keystone_authtoken middleware group and so currently fails when using the
+    # auth plugin setup. This should be fixed in heat.  Heat is also the only
+    # service that requires the auth_uri to include a /v2.0. Remove this custom
+    # setup when bug #1300246 is resolved.
+    iniset $HEAT_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
+    if [[ "$HEAT_STANDALONE" = "True" ]]; then
+        iniset $HEAT_CONF paste_deploy flavor standalone
+        iniset $HEAT_CONF clients_heat url "http://$HEAT_API_HOST:$HEAT_API_PORT/v1/%(tenant_id)s"
+    else
+        iniset $HEAT_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
+        iniset $HEAT_CONF keystone_authtoken admin_user heat
+        iniset $HEAT_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
+        iniset $HEAT_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+        iniset $HEAT_CONF keystone_authtoken cafile $SSL_BUNDLE_FILE
+        iniset $HEAT_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR
     fi
 
     # ec2authtoken
     iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
 
-    # paste_deploy
-    if [[ "$HEAT_STANDALONE" = "True" ]]; then
-        iniset $HEAT_CONF paste_deploy flavor standalone
-        iniset $HEAT_CONF DEFAULT keystone_backend heat_keystoneclient_v2.client.KeystoneClientV2
-        iniset $HEAT_CONF clients_heat url "http://$HEAT_API_HOST:$HEAT_API_PORT/v1/%(tenant_id)s"
-    fi
-
     # OpenStack API
     iniset $HEAT_CONF heat_api bind_port $HEAT_API_PORT
+    iniset $HEAT_CONF heat_api workers "$API_WORKERS"
 
     # Cloudformation API
     iniset $HEAT_CONF heat_api_cfn bind_port $HEAT_API_CFN_PORT
@@ -152,15 +169,16 @@ function configure_heat {
         iniset $HEAT_CONF clients_cinder ca_file $SSL_BUNDLE_FILE
     fi
 
-    # heat environment
-    sudo mkdir -p $HEAT_ENV_DIR
-    sudo chown $STACK_USER $HEAT_ENV_DIR
+    if [[ "$HEAT_ENABLE_ADOPT_ABANDON" = "True" ]]; then
+        iniset $HEAT_CONF DEFAULT enable_stack_adopt true
+        iniset $HEAT_CONF DEFAULT enable_stack_abandon true
+    fi
+
+    sudo install -d -o $STACK_USER $HEAT_ENV_DIR $HEAT_TEMPLATES_DIR
+
     # copy the default environment
     cp $HEAT_DIR/etc/heat/environment.d/* $HEAT_ENV_DIR/
 
-    # heat template resources.
-    sudo mkdir -p $HEAT_TEMPLATES_DIR
-    sudo chown $STACK_USER $HEAT_TEMPLATES_DIR
     # copy the default templates
     cp $HEAT_DIR/etc/heat/templates/* $HEAT_TEMPLATES_DIR/
 
@@ -170,7 +188,7 @@ function configure_heat {
 function init_heat {
 
     # (re)create heat database
-    recreate_database heat utf8
+    recreate_database heat
 
     $HEAT_DIR/bin/heat-manage db_sync
     create_heat_cache_dir
@@ -179,8 +197,7 @@ function init_heat {
 # create_heat_cache_dir() - Part of the init_heat() process
 function create_heat_cache_dir {
     # Create cache dirs
-    sudo mkdir -p $HEAT_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $HEAT_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $HEAT_AUTH_CACHE_DIR
 }
 
 # install_heatclient() - Collect source and prepare
@@ -195,12 +212,17 @@ function install_heatclient {
 # install_heat() - Collect source and prepare
 function install_heat {
     git_clone $HEAT_REPO $HEAT_DIR $HEAT_BRANCH
+    setup_develop $HEAT_DIR
 }
 
 # install_heat_other() - Collect source and prepare
 function install_heat_other {
     git_clone $HEAT_CFNTOOLS_REPO $HEAT_CFNTOOLS_DIR $HEAT_CFNTOOLS_BRANCH
     git_clone $HEAT_TEMPLATES_REPO $HEAT_TEMPLATES_REPO_DIR $HEAT_TEMPLATES_BRANCH
+    git_clone $OAC_REPO $OAC_DIR $OAC_BRANCH
+    git_clone $OCC_REPO $OCC_DIR $OCC_BRANCH
+    git_clone $ORC_REPO $ORC_DIR $ORC_BRANCH
+    git_clone $DIB_UTILS_REPO $DIB_UTILS_DIR $DIB_UTILS_BRANCH
 }
 
 # start_heat() - Start running processes, including screen
@@ -222,60 +244,51 @@ function stop_heat {
 
 # create_heat_accounts() - Set up common required heat accounts
 function create_heat_accounts {
-    # migrated from files/keystone_data.sh
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
+    if [[ "$HEAT_STANDALONE" != "True" ]]; then
 
-    local heat_user=$(get_or_create_user "heat" \
-        "$SERVICE_PASSWORD" $service_tenant)
-    get_or_add_user_role $admin_role $heat_user $service_tenant
+        create_service_user "heat" "admin"
 
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-        local heat_service=$(get_or_create_service "heat" \
-                "orchestration" "Heat Orchestration Service")
-        get_or_create_endpoint $heat_service \
-            "$REGION_NAME" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s"
+            local heat_service=$(get_or_create_service "heat" \
+                    "orchestration" "Heat Orchestration Service")
+            get_or_create_endpoint $heat_service \
+                "$REGION_NAME" \
+                "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
+                "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
+                "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s"
 
-        local heat_cfn_service=$(get_or_create_service "heat-cfn" \
-                "cloudformation" "Heat CloudFormation Service")
-        get_or_create_endpoint $heat_cfn_service \
-            "$REGION_NAME" \
-            "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
-            "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
-            "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1"
-    fi
+            local heat_cfn_service=$(get_or_create_service "heat-cfn" \
+                    "cloudformation" "Heat CloudFormation Service")
+            get_or_create_endpoint $heat_cfn_service \
+                "$REGION_NAME" \
+                "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
+                "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
+                "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1"
+        fi
 
-    # heat_stack_user role is for users created by Heat
-    get_or_create_role "heat_stack_user"
-
-    if [[ $HEAT_DEFERRED_AUTH == trusts ]]; then
-        iniset $HEAT_CONF DEFAULT deferred_auth_method trusts
+        # heat_stack_user role is for users created by Heat
+        get_or_create_role "heat_stack_user"
     fi
 
     if [[ "$HEAT_STACK_DOMAIN" == "True" ]]; then
         # Note we have to pass token/endpoint here because the current endpoint and
         # version negotiation in OSC means just --os-identity-api-version=3 won't work
-        local ks_endpoint_v3="$KEYSTONE_SERVICE_URI/v3"
-
-        D_ID=$(openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
+        D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KEYSTONE_SERVICE_URI_V3 \
             --os-identity-api-version=3 domain list | grep ' heat ' | get_field 1)
 
         if [[ -z "$D_ID" ]]; then
-            D_ID=$(openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
+            D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KEYSTONE_SERVICE_URI_V3 \
                 --os-identity-api-version=3 domain create heat \
                 --description "Owns users and projects created by heat" \
                 | grep ' id ' | get_field 2)
             iniset $HEAT_CONF DEFAULT stack_user_domain_id ${D_ID}
 
-            openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
+            openstack --os-token $OS_TOKEN --os-url=$KEYSTONE_SERVICE_URI_V3 \
                 --os-identity-api-version=3 user create --password $SERVICE_PASSWORD \
                 --domain $D_ID heat_domain_admin \
                 --description "Manages users and projects created by heat"
-            openstack --os-token $OS_TOKEN --os-url=$ks_endpoint_v3 \
+            openstack --os-token $OS_TOKEN --os-url=$KEYSTONE_SERVICE_URI_V3 \
                 --os-identity-api-version=3 role add \
                 --user heat_domain_admin --domain ${D_ID} admin
             iniset $HEAT_CONF DEFAULT stack_domain_admin heat_domain_admin
@@ -284,21 +297,45 @@ function create_heat_accounts {
     fi
 }
 
-# build_heat_functional_test_image() - Build and upload functional test image
-function build_heat_functional_test_image {
-    build_dib_pip_repo "$OCC_DIR $OAC_DIR $ORC_DIR $HEAT_CFNTOOLS_DIR"
-    local image_name=heat-functional-tests-image
+# build_heat_pip_mirror() - Build a pip mirror containing heat agent projects
+function build_heat_pip_mirror {
+    local project_dirs="$OCC_DIR $OAC_DIR $ORC_DIR $HEAT_CFNTOOLS_DIR $DIB_UTILS_DIR"
+    local projpath proj package
 
-    # The elements to invoke disk-image-create with
-    local image_elements="vm fedora selinux-permissive pypi \
-        os-collect-config os-refresh-config os-apply-config heat-cfntools \
-        heat-config heat-config-cfn-init heat-config-puppet heat-config-script"
+    rm -rf $HEAT_PIP_REPO
+    mkdir -p $HEAT_PIP_REPO
 
-    # Elements path for tripleo-image-elements and heat-templates software-config
-    local elements_path=$TIE_DIR/elements:$HEAT_TEMPLATES_REPO_DIR/hot/software-config/elements
+    echo "<html><body>" > $HEAT_PIP_REPO/index.html
+    for projpath in $project_dirs; do
+        proj=$(basename $projpath)
+        mkdir -p $HEAT_PIP_REPO/$proj
+        pushd $projpath
+        rm -rf dist
+        python setup.py sdist
+        pushd dist
+        package=$(ls *)
+        mv $package $HEAT_PIP_REPO/$proj/$package
+        popd
 
-    disk_image_create_upload "$image_name" "$image_elements" "$elements_path"
-    iniset $TEMPEST_CONFIG orchestration image_ref $image_name
+        echo "<html><body><a href=\"$package\">$package</a></body></html>" > $HEAT_PIP_REPO/$proj/index.html
+        echo "<a href=\"$proj\">$proj</a><br/>" >> $HEAT_PIP_REPO/index.html
+
+        popd
+    done
+
+    echo "</body></html>" >> $HEAT_PIP_REPO/index.html
+
+    local heat_pip_repo_apache_conf=$(apache_site_config_for heat_pip_repo)
+
+    sudo cp $FILES/apache-heat-pip-repo.template $heat_pip_repo_apache_conf
+    sudo sed -e "
+        s|%HEAT_PIP_REPO%|$HEAT_PIP_REPO|g;
+        s|%HEAT_PIP_REPO_PORT%|$HEAT_PIP_REPO_PORT|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+    " -i $heat_pip_repo_apache_conf
+    enable_apache_site heat_pip_repo
+    restart_apache_server
+    sudo iptables -I INPUT -d $HOST_IP -p tcp --dport $HEAT_PIP_REPO_PORT -j ACCEPT || true
 }
 
 # Restore xtrace

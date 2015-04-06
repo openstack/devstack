@@ -15,18 +15,15 @@
 # - OpenStack Functions
 # - Package Functions
 # - Process Functions
-# - Python Functions
 # - Service Functions
 # - System Functions
 #
 # The following variables are assumed to be defined by certain functions:
 #
-# - ``GIT_DEPTH``
 # - ``ENABLED_SERVICES``
 # - ``ERROR_ON_CLONE``
 # - ``FILES``
 # - ``OFFLINE``
-# - ``PIP_DOWNLOAD_CACHE``
 # - ``RECLONE``
 # - ``REQUIREMENTS_DIR``
 # - ``STACK_USER``
@@ -44,183 +41,8 @@ declare -A GITREPO
 declare -A GITBRANCH
 declare -A GITDIR
 
+TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
-# Config Functions
-# ================
-
-# Append a new option in an ini file without replacing the old value
-# iniadd config-file section option value1 value2 value3 ...
-function iniadd {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-    shift 3
-
-    local values="$(iniget_multiline $file $section $option) $@"
-    iniset_multiline $file $section $option $values
-    $xtrace
-}
-
-# Comment an option in an INI file
-# inicomment config-file section option
-function inicomment {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-
-    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
-    $xtrace
-}
-
-# Get an option from an INI file
-# iniget config-file section option
-function iniget {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-    local line
-
-    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
-    echo ${line#*=}
-    $xtrace
-}
-
-# Get a multiple line option from an INI file
-# iniget_multiline config-file section option
-function iniget_multiline {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-    local values
-
-    values=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { s/^$option[ \t]*=[ \t]*//gp; }" "$file")
-    echo ${values}
-    $xtrace
-}
-
-# Determinate is the given option present in the INI file
-# ini_has_option config-file section option
-function ini_has_option {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-    local line
-
-    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
-    $xtrace
-    [ -n "$line" ]
-}
-
-# Add another config line for a multi-line option.
-# It's normally called after iniset of the same option and assumes
-# that the section already exists.
-#
-# Note that iniset_multiline requires all the 'lines' to be supplied
-# in the argument list. Doing that will cause incorrect configuration
-# if spaces are used in the config values.
-#
-# iniadd_literal config-file section option value
-function iniadd_literal {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-    local value=$4
-
-    [[ -z $section || -z $option ]] && return
-
-    # Add it
-    sed -i -e "/^\[$section\]/ a\\
-$option = $value
-" "$file"
-
-    $xtrace
-}
-
-# Set an option in an INI file
-# iniset config-file section option value
-function iniset {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-    local value=$4
-
-    [[ -z $section || -z $option ]] && return
-
-    if ! grep -q "^\[$section\]" "$file" 2>/dev/null; then
-        # Add section at the end
-        echo -e "\n[$section]" >>"$file"
-    fi
-    if ! ini_has_option "$file" "$section" "$option"; then
-        # Add it
-        sed -i -e "/^\[$section\]/ a\\
-$option = $value
-" "$file"
-    else
-        local sep=$(echo -ne "\x01")
-        # Replace it
-        sed -i -e '/^\['${section}'\]/,/^\[.*\]/ s'${sep}'^\('${option}'[ \t]*=[ \t]*\).*$'${sep}'\1'"${value}"${sep} "$file"
-    fi
-    $xtrace
-}
-
-# Set a multiple line option in an INI file
-# iniset_multiline config-file section option value1 value2 valu3 ...
-function iniset_multiline {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-
-    shift 3
-    local values
-    for v in $@; do
-        # The later sed command inserts each new value in the line next to
-        # the section identifier, which causes the values to be inserted in
-        # the reverse order. Do a reverse here to keep the original order.
-        values="$v ${values}"
-    done
-    if ! grep -q "^\[$section\]" "$file"; then
-        # Add section at the end
-        echo -e "\n[$section]" >>"$file"
-    else
-        # Remove old values
-        sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
-    fi
-    # Add new ones
-    for v in $values; do
-        sed -i -e "/^\[$section\]/ a\\
-$option = $v
-" "$file"
-    done
-    $xtrace
-}
-
-# Uncomment an option in an INI file
-# iniuncomment config-file section option
-function iniuncomment {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local file=$1
-    local section=$2
-    local option=$3
-    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" "$file"
-    $xtrace
-}
 
 # Normalize config values to True or False
 # Accepts as False: 0 no No NO false False FALSE
@@ -230,7 +52,8 @@ function trueorfalse {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local default=$1
-    local testval=$2
+    local literal=$2
+    local testval=${!literal:-}
 
     [[ -z "$testval" ]] && { echo "$default"; return; }
     [[ "0 no No NO false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
@@ -239,6 +62,9 @@ function trueorfalse {
     $xtrace
 }
 
+function isset {
+    [[ -v "$1" ]]
+}
 
 # Control Functions
 # =================
@@ -296,8 +122,8 @@ function err {
     set +o xtrace
     local msg="[ERROR] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg 1>&2;
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        echo $msg >> "${SCREEN_LOGDIR}/error.log"
+    if [[ -n ${LOGDIR} ]]; then
+        echo $msg >> "${LOGDIR}/error.log"
     fi
     $xtrace
     return $exitcode
@@ -349,8 +175,8 @@ function warn {
     set +o xtrace
     local msg="[WARNING] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg 1>&2;
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        echo $msg >> "${SCREEN_LOGDIR}/error.log"
+    if [[ -n ${LOGDIR} ]]; then
+        echo $msg >> "${LOGDIR}/error.log"
     fi
     $xtrace
     return $exitcode
@@ -368,7 +194,11 @@ function warn {
 # ``os_UPDATE`` - update: ex. the ``5`` in ``RHEL6.5``
 # ``os_PACKAGE`` - package type: ``deb`` or ``rpm``
 # ``os_CODENAME`` - vendor's codename for release: ``snow leopard``, ``trusty``
-declare os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
+os_VENDOR=""
+os_RELEASE=""
+os_UPDATE=""
+os_PACKAGE=""
+os_CODENAME=""
 
 # GetOSVersion
 function GetOSVersion {
@@ -419,6 +249,7 @@ function GetOSVersion {
         # CentOS Linux release 6.0 (Final)
         # Fedora release 16 (Verne)
         # XenServer release 6.2.0-70446c (xenenterprise)
+        # Oracle Linux release 7
         os_CODENAME=""
         for r in "Red Hat" CentOS Fedora XenServer; do
             os_VENDOR=$r
@@ -432,6 +263,9 @@ function GetOSVersion {
             fi
             os_VENDOR=""
         done
+        if [ "$os_VENDOR" = "Red Hat" ] && [[ -r /etc/oracle-release ]]; then
+            os_VENDOR=OracleLinux
+        fi
         os_PACKAGE="rpm"
     elif [[ -r /etc/SuSE-release ]]; then
         for r in openSUSE "SUSE Linux"; do
@@ -483,7 +317,7 @@ function GetDistro {
         fi
     elif [[ "$os_VENDOR" =~ (Red Hat) || \
         "$os_VENDOR" =~ (CentOS) || \
-        "$os_VENDOR" =~ (OracleServer) ]]; then
+        "$os_VENDOR" =~ (OracleLinux) ]]; then
         # Drop the . release as we assume it's compatible
         DISTRO="rhel${os_RELEASE::1}"
     elif [[ "$os_VENDOR" =~ (XenServer) ]]; then
@@ -501,12 +335,16 @@ function is_arch {
     [[ "$(uname -m)" == "$1" ]]
 }
 
-# Quick check for a rackspace host; n.b. rackspace provided images
-# have these Xen tools installed but a custom image may not.
-function is_rackspace {
-    [ -f /usr/bin/xenstore-ls ] && \
-        sudo /usr/bin/xenstore-ls vm-data | grep -q "Rackspace"
+# Determine if current distribution is an Oracle distribution
+# is_oraclelinux
+function is_oraclelinux {
+    if [[ -z "$os_VENDOR" ]]; then
+        GetOSVersion
+    fi
+
+    [ "$os_VENDOR" = "OracleLinux" ]
 }
+
 
 # Determine if current distribution is a Fedora-based distribution
 # (Fedora, RHEL, CentOS, etc).
@@ -517,7 +355,7 @@ function is_fedora {
     fi
 
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
-        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleServer" ]
+        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleLinux" ]
 }
 
 
@@ -564,8 +402,7 @@ function get_release_name_from_branch {
 # Set global ``RECLONE=yes`` to simulate a clone when dest-dir exists
 # Set global ``ERROR_ON_CLONE=True`` to abort execution with an error if the git repo
 # does not exist (default is False, meaning the repo will be cloned).
-# Set global ``GIT_DEPTH=<number>`` to limit the history depth of the git clone
-# Uses globals ``ERROR_ON_CLONE``, ``OFFLINE``, ``RECLONE``, ``GIT_DEPTH``
+# Uses globals ``ERROR_ON_CLONE``, ``OFFLINE``, ``RECLONE``
 # git_clone remote dest-dir branch
 function git_clone {
     local git_remote=$1
@@ -574,9 +411,8 @@ function git_clone {
     local orig_dir=$(pwd)
     local git_clone_flags=""
 
-    RECLONE=$(trueorfalse False $RECLONE)
-
-    if [[ -n "${GIT_DEPTH}" ]]; then
+    RECLONE=$(trueorfalse False RECLONE)
+    if [[ "${GIT_DEPTH}" -gt 0 ]]; then
         git_clone_flags="$git_clone_flags --depth $GIT_DEPTH"
     fi
 
@@ -724,11 +560,11 @@ function get_default_host_ip {
     local host_ip_iface=$3
     local host_ip=$4
 
-    # Find the interface used for the default route
-    host_ip_iface=${host_ip_iface:-$(ip route | sed -n '/^default/{ s/.*dev \(\w\+\)\s\+.*/\1/; p; }' | head -1)}
     # Search for an IP unless an explicit is set by ``HOST_IP`` environment variable
     if [ -z "$host_ip" -o "$host_ip" == "dhcp" ]; then
         host_ip=""
+        # Find the interface used for the default route
+        host_ip_iface=${host_ip_iface:-$(ip route | awk '/default/ {print $5}' | head -1)}
         local host_ips=$(LC_ALL=C ip -f inet addr show ${host_ip_iface} | awk '/inet/ {split($2,parts,"/");  print parts[1]}')
         local ip
         for ip in $host_ips; do
@@ -770,6 +606,28 @@ function get_field {
     done
 }
 
+# install default policy
+# copy over a default policy.json and policy.d for projects
+function install_default_policy {
+    local project=$1
+    local project_uc=$(echo $1|tr a-z A-Z)
+    local conf_dir="${project_uc}_CONF_DIR"
+    # eval conf dir to get the variable
+    conf_dir="${!conf_dir}"
+    local project_dir="${project_uc}_DIR"
+    # eval project dir to get the variable
+    project_dir="${!project_dir}"
+    local sample_conf_dir="${project_dir}/etc/${project}"
+    local sample_policy_dir="${project_dir}/etc/${project}/policy.d"
+
+    # first copy any policy.json
+    cp -p $sample_conf_dir/policy.json $conf_dir
+    # then optionally copy over policy.d
+    if [[ -d $sample_policy_dir ]]; then
+        cp -r $sample_policy_dir $conf_dir/policy.d
+    fi
+}
+
 # Add a policy to a policy.json file
 # Do nothing if the policy already exists
 # ``policy_add policy_file policy_name policy_permissions``
@@ -801,7 +659,7 @@ function policy_add {
 # Gets or creates a domain
 # Usage: get_or_create_domain <name> <description>
 function get_or_create_domain {
-    local os_url="$KEYSTONE_SERVICE_URI/v3"
+    local os_url="$KEYSTONE_SERVICE_URI_V3"
     # Gets domain id
     local domain_id=$(
         # Gets domain id
@@ -817,19 +675,36 @@ function get_or_create_domain {
     echo $domain_id
 }
 
+# Gets or creates group
+# Usage: get_or_create_group <groupname> [<domain> <description>]
+function get_or_create_group {
+    local domain=${2:+--domain ${2}}
+    local desc="${3:-}"
+    local os_url="$KEYSTONE_SERVICE_URI_V3"
+    # Gets group id
+    local group_id=$(
+        # Creates new group with --or-show
+        openstack --os-token=$OS_TOKEN --os-url=$os_url \
+            --os-identity-api-version=3 group create $1 \
+            $domain --description "$desc" --or-show \
+            -f value -c id
+    )
+    echo $group_id
+}
+
 # Gets or creates user
-# Usage: get_or_create_user <username> <password> <project> [<email> [<domain>]]
+# Usage: get_or_create_user <username> <password> [<email> [<domain>]]
 function get_or_create_user {
-    if [[ ! -z "$4" ]]; then
-        local email="--email=$4"
+    if [[ ! -z "$3" ]]; then
+        local email="--email=$3"
     else
         local email=""
     fi
     local os_cmd="openstack"
     local domain=""
-    if [[ ! -z "$5" ]]; then
-        domain="--domain=$5"
-        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI/v3 --os-identity-api-version=3"
+    if [[ ! -z "$4" ]]; then
+        domain="--domain=$4"
+        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI_V3 --os-identity-api-version=3"
     fi
     # Gets user id
     local user_id=$(
@@ -837,7 +712,6 @@ function get_or_create_user {
         $os_cmd user create \
             $1 \
             --password "$2" \
-            --project $3 \
             $email \
             $domain \
             --or-show \
@@ -854,7 +728,7 @@ function get_or_create_project {
     local domain=""
     if [[ ! -z "$2" ]]; then
         domain="--domain=$2"
-        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI/v3 --os-identity-api-version=3"
+        os_cmd="$os_cmd --os-url=$KEYSTONE_SERVICE_URI_V3 --os-identity-api-version=3"
     fi
     local project_id=$(
         # Creates new project with --or-show
@@ -873,12 +747,12 @@ function get_or_create_role {
     echo $role_id
 }
 
-# Gets or adds user role
-# Usage: get_or_add_user_role <role> <user> <project>
-function get_or_add_user_role {
+# Gets or adds user role to project
+# Usage: get_or_add_user_project_role <role> <user> <project>
+function get_or_add_user_project_role {
     # Gets user role id
-    local user_role_id=$(openstack user role list \
-        $2 \
+    local user_role_id=$(openstack role list \
+        --user $2 \
         --project $3 \
         --column "ID" \
         --column "Name" \
@@ -894,6 +768,27 @@ function get_or_add_user_role {
     echo $user_role_id
 }
 
+# Gets or adds group role to project
+# Usage: get_or_add_group_project_role <role> <group> <project>
+function get_or_add_group_project_role {
+    # Gets group role id
+    local group_role_id=$(openstack role list \
+        --group $2 \
+        --project $3 \
+        --column "ID" \
+        --column "Name" \
+        | grep " $1 " | get_field 1)
+    if [[ -z "$group_role_id" ]]; then
+        # Adds role to group
+        group_role_id=$(openstack role add \
+            $1 \
+            --group $2 \
+            --project $3 \
+            | grep " id " | get_field 2)
+    fi
+    echo $group_role_id
+}
+
 # Gets or creates service
 # Usage: get_or_create_service <name> <type> <description>
 function get_or_create_service {
@@ -903,8 +798,8 @@ function get_or_create_service {
         openstack service show $1 -f value -c id 2>/dev/null ||
         # Creates new service if not exists
         openstack service create \
-            $1 \
-            --type=$2 \
+            $2 \
+            --name $1 \
             --description="$3" \
             -f value -c id
     )
@@ -940,13 +835,18 @@ function get_or_create_endpoint {
 
 # _get_package_dir
 function _get_package_dir {
+    local base_dir=$1
     local pkg_dir
+
+    if [[ -z "$base_dir" ]]; then
+        base_dir=$FILES
+    fi
     if is_ubuntu; then
-        pkg_dir=$FILES/debs
+        pkg_dir=$base_dir/debs
     elif is_fedora; then
-        pkg_dir=$FILES/rpms
+        pkg_dir=$base_dir/rpms
     elif is_suse; then
-        pkg_dir=$FILES/rpms-suse
+        pkg_dir=$base_dir/rpms-suse
     else
         exit_distro_not_supported "list of packages"
     fi
@@ -965,91 +865,21 @@ function apt_get {
     [[ "$(id -u)" = "0" ]] && sudo="env"
 
     $xtrace
+
     $sudo DEBIAN_FRONTEND=noninteractive \
-        http_proxy=$http_proxy https_proxy=$https_proxy \
-        no_proxy=$no_proxy \
+        http_proxy=${http_proxy:-} https_proxy=${https_proxy:-} \
+        no_proxy=${no_proxy:-} \
         apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
 }
 
-# get_packages() collects a list of package names of any type from the
-# prerequisite files in ``files/{debs|rpms}``.  The list is intended
-# to be passed to a package installer such as apt or yum.
-#
-# Only packages required for the services in 1st argument will be
-# included.  Two bits of metadata are recognized in the prerequisite files:
-#
-# - ``# NOPRIME`` defers installation to be performed later in `stack.sh`
-# - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
-#   of the package to the distros listed.  The distro names are case insensitive.
-function get_packages {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    local services=$@
-    local package_dir=$(_get_package_dir)
-    local file_to_parse
-    local service
+function _parse_package_files {
+    local files_to_parse=$@
 
-    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False $INSTALL_TESTONLY_PACKAGES)
-
-    if [[ -z "$package_dir" ]]; then
-        echo "No package directory supplied"
-        return 1
-    fi
     if [[ -z "$DISTRO" ]]; then
         GetDistro
-        echo "Found Distro $DISTRO"
     fi
-    for service in ${services//,/ }; do
-        # Allow individual services to specify dependencies
-        if [[ -e ${package_dir}/${service} ]]; then
-            file_to_parse="${file_to_parse} $service"
-        fi
-        # NOTE(sdague) n-api needs glance for now because that's where
-        # glance client is
-        if [[ $service == n-api ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
-                file_to_parse="${file_to_parse} nova"
-            fi
-            if [[ ! $file_to_parse =~ glance ]]; then
-                file_to_parse="${file_to_parse} glance"
-            fi
-        elif [[ $service == c-* ]]; then
-            if [[ ! $file_to_parse =~ cinder ]]; then
-                file_to_parse="${file_to_parse} cinder"
-            fi
-        elif [[ $service == ceilometer-* ]]; then
-            if [[ ! $file_to_parse =~ ceilometer ]]; then
-                file_to_parse="${file_to_parse} ceilometer"
-            fi
-        elif [[ $service == s-* ]]; then
-            if [[ ! $file_to_parse =~ swift ]]; then
-                file_to_parse="${file_to_parse} swift"
-            fi
-        elif [[ $service == n-* ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
-                file_to_parse="${file_to_parse} nova"
-            fi
-        elif [[ $service == g-* ]]; then
-            if [[ ! $file_to_parse =~ glance ]]; then
-                file_to_parse="${file_to_parse} glance"
-            fi
-        elif [[ $service == key* ]]; then
-            if [[ ! $file_to_parse =~ keystone ]]; then
-                file_to_parse="${file_to_parse} keystone"
-            fi
-        elif [[ $service == q-* ]]; then
-            if [[ ! $file_to_parse =~ neutron ]]; then
-                file_to_parse="${file_to_parse} neutron"
-            fi
-        elif [[ $service == ir-* ]]; then
-            if [[ ! $file_to_parse =~ ironic ]]; then
-                file_to_parse="${file_to_parse} ironic"
-            fi
-        fi
-    done
 
-    for file in ${file_to_parse}; do
-        local fname=${package_dir}/${file}
+    for fname in ${files_to_parse}; do
         local OIFS line package distros distro
         [[ -e $fname ]] || continue
 
@@ -1077,22 +907,106 @@ function get_packages {
                 fi
             fi
 
-            # Look for # testonly in comment
-            if [[ $line =~ (.*)#.*testonly.* ]]; then
-                package=${BASH_REMATCH[1]}
-                # Are we installing test packages? (test for the default value)
-                if [[ $INSTALL_TESTONLY_PACKAGES = "False" ]]; then
-                    # If not installing test packages the skip this package
-                    inst_pkg=0
-                fi
-            fi
-
             if [[ $inst_pkg = 1 ]]; then
                 echo $package
             fi
         done
         IFS=$OIFS
     done
+}
+
+# get_packages() collects a list of package names of any type from the
+# prerequisite files in ``files/{debs|rpms}``.  The list is intended
+# to be passed to a package installer such as apt or yum.
+#
+# Only packages required for the services in 1st argument will be
+# included.  Two bits of metadata are recognized in the prerequisite files:
+#
+# - ``# NOPRIME`` defers installation to be performed later in `stack.sh`
+# - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
+#   of the package to the distros listed.  The distro names are case insensitive.
+function get_packages {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local services=$@
+    local package_dir=$(_get_package_dir)
+    local file_to_parse=""
+    local service=""
+
+    if [[ -z "$package_dir" ]]; then
+        echo "No package directory supplied"
+        return 1
+    fi
+    for service in ${services//,/ }; do
+        # Allow individual services to specify dependencies
+        if [[ -e ${package_dir}/${service} ]]; then
+            file_to_parse="${file_to_parse} ${package_dir}/${service}"
+        fi
+        # NOTE(sdague) n-api needs glance for now because that's where
+        # glance client is
+        if [[ $service == n-api ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/nova ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/nova"
+            fi
+            if [[ ! $file_to_parse =~ $package_dir/glance ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/glance"
+            fi
+        elif [[ $service == c-* ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/cinder ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/cinder"
+            fi
+        elif [[ $service == ceilometer-* ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/ceilometer ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/ceilometer"
+            fi
+        elif [[ $service == s-* ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/swift ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/swift"
+            fi
+        elif [[ $service == n-* ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/nova ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/nova"
+            fi
+        elif [[ $service == g-* ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/glance ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/glance"
+            fi
+        elif [[ $service == key* ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/keystone ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/keystone"
+            fi
+        elif [[ $service == q-* ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/neutron ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/neutron"
+            fi
+        elif [[ $service == ir-* ]]; then
+            if [[ ! $file_to_parse =~ $package_dir/ironic ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/ironic"
+            fi
+        fi
+    done
+    echo "$(_parse_package_files $file_to_parse)"
+    $xtrace
+}
+
+# get_plugin_packages() collects a list of package names of any type from a
+# plugin's prerequisite files in ``$PLUGIN/devstack/files/{debs|rpms}``.  The
+# list is intended to be passed to a package installer such as apt or yum.
+#
+# Only packages required for enabled and collected plugins will included.
+#
+# The same metadata used in the main DevStack prerequisite files may be used
+# in these prerequisite files, see get_packages() for more info.
+function get_plugin_packages {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local files_to_parse=""
+    local package_dir=""
+    for plugin in ${DEVSTACK_PLUGINS//,/ }; do
+        local package_dir="$(_get_package_dir ${GITDIR[$plugin]}/devstack/files)"
+        files_to_parse+="$package_dir/$plugin"
+    done
+    echo "$(_parse_package_files $files_to_parse)"
     $xtrace
 }
 
@@ -1100,6 +1014,10 @@ function get_packages {
 # Uses globals ``NO_UPDATE_REPOS``, ``REPOS_UPDATED``, ``RETRY_UPDATE``
 # install_package package [package ...]
 function update_package_repo {
+    NO_UPDATE_REPOS=${NO_UPDATE_REPOS:-False}
+    REPOS_UPDATED=${REPOS_UPDATED:-False}
+    RETRY_UPDATE=${RETRY_UPDATE:-False}
+
     if [[ "$NO_UPDATE_REPOS" = "True" ]]; then
         return 0
     fi
@@ -1162,7 +1080,7 @@ function uninstall_package {
     if is_ubuntu; then
         apt_get purge "$@"
     elif is_fedora; then
-        sudo $YUM remove -y "$@" ||:
+        sudo ${YUM:-yum} remove -y "$@" ||:
     elif is_suse; then
         sudo zypper rm "$@"
     else
@@ -1181,9 +1099,9 @@ function yum_install {
     # The manual check for missing packages is because yum -y assumes
     # missing packages are OK.  See
     # https://bugzilla.redhat.com/show_bug.cgi?id=965567
-    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
-        no_proxy=$no_proxy \
-        $YUM install -y "$@" 2>&1 | \
+    $sudo http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}" \
+        no_proxy="${no_proxy:-}" \
+        ${YUM:-yum} install -y "$@" 2>&1 | \
         awk '
             BEGIN { fail=0 }
             /No package/ { fail=1 }
@@ -1193,7 +1111,7 @@ function yum_install {
 
     # also ensure we catch a yum failure
     if [[ ${PIPESTATUS[0]} != 0 ]]; then
-        die $LINENO "$YUM install failure"
+        die $LINENO "${YUM:-yum} install failure"
     fi
 }
 
@@ -1204,7 +1122,8 @@ function zypper_install {
     [[ "$OFFLINE" = "True" ]] && return
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
-    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
+    $sudo http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}" \
+        no_proxy="${no_proxy:-}" \
         zypper --non-interactive install --auto-agree-with-licenses "$@"
 }
 
@@ -1215,8 +1134,8 @@ function zypper_install {
 # _run_process() is designed to be backgrounded by run_process() to simulate a
 # fork.  It includes the dirty work of closing extra filehandles and preparing log
 # files to produce the same logs as screen_it().  The log filename is derived
-# from the service name and global-and-now-misnamed ``SCREEN_LOGDIR``
-# Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_LOGDIR``, ``SCREEN_NAME``, ``SERVICE_DIR``
+# from the service name.
+# Uses globals ``CURRENT_LOG_TIME``, ``LOGDIR``, ``SCREEN_LOGDIR``, ``SCREEN_NAME``, ``SERVICE_DIR``
 # If an optional group is provided sg will be used to set the group of
 # the command.
 # _run_process service "command-line" [group]
@@ -1231,9 +1150,14 @@ function _run_process {
     exec 3>&-
     exec 6>&-
 
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        exec 1>&${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log 2>&1
-        ln -sf ${SCREEN_LOGDIR}/screen-${service}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${service}.log
+    local real_logfile="${LOGDIR}/${service}.log.${CURRENT_LOG_TIME}"
+    if [[ -n ${LOGDIR} ]]; then
+        exec 1>&"$real_logfile" 2>&1
+        ln -sf "$real_logfile" ${LOGDIR}/${service}.log
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            # Drop the backward-compat symlink
+            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${service}.log
+        fi
 
         # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
         export PYTHONUNBUFFERED=1
@@ -1297,7 +1221,7 @@ function run_process {
 }
 
 # Helper to launch a process in a named screen
-# Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_NAME``, ``SCREEN_LOGDIR``,
+# Uses globals ``CURRENT_LOG_TIME``, ```LOGDIR``, ``SCREEN_LOGDIR``, `SCREEN_NAME``,
 # ``SERVICE_DIR``, ``USE_SCREEN``
 # screen_process name "command-line" [group]
 # Run a command in a shell in a screen window, if an optional group
@@ -1309,17 +1233,25 @@ function screen_process {
 
     SCREEN_NAME=${SCREEN_NAME:-stack}
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
     # Append the process to the screen rc file
     screen_rc "$name" "$command"
 
     screen -S $SCREEN_NAME -X screen -t $name
 
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen -S $SCREEN_NAME -p $name -X logfile ${SCREEN_LOGDIR}/screen-${name}.${CURRENT_LOG_TIME}.log
+    local real_logfile="${LOGDIR}/${name}.log.${CURRENT_LOG_TIME}"
+    echo "LOGDIR: $LOGDIR"
+    echo "SCREEN_LOGDIR: $SCREEN_LOGDIR"
+    echo "log: $real_logfile"
+    if [[ -n ${LOGDIR} ]]; then
+        screen -S $SCREEN_NAME -p $name -X logfile "$real_logfile"
         screen -S $SCREEN_NAME -p $name -X log on
-        ln -sf ${SCREEN_LOGDIR}/screen-${name}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${name}.log
+        ln -sf "$real_logfile" ${LOGDIR}/${name}.log
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            # Drop the backward-compat symlink
+            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${1}.log
+        fi
     fi
 
     # sleep to allow bash to be ready to be send the command - we are
@@ -1364,8 +1296,8 @@ function screen_rc {
         echo "screen -t $1 bash" >> $SCREENRC
         echo "stuff \"$2$NL\"" >> $SCREENRC
 
-        if [[ -n ${SCREEN_LOGDIR} ]]; then
-            echo "logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log" >>$SCREENRC
+        if [[ -n ${LOGDIR} ]]; then
+            echo "logfile ${LOGDIR}/${1}.log.${CURRENT_LOG_TIME}" >>$SCREENRC
             echo "log on" >>$SCREENRC
         fi
     fi
@@ -1382,7 +1314,7 @@ function screen_stop_service {
 
     SCREEN_NAME=${SCREEN_NAME:-stack}
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
     if is_service_enabled $service; then
         # Clean up the screen window
@@ -1400,7 +1332,7 @@ function stop_process {
     local service=$1
 
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
     if is_service_enabled $service; then
         # Kill via pid if we have one available
@@ -1450,7 +1382,7 @@ function tail_log {
     local name=$1
     local logfile=$2
 
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
+    USE_SCREEN=$(trueorfalse True USE_SCREEN)
     if [[ "$USE_SCREEN" = "True" ]]; then
         screen_process "$name" "sudo tail -f $logfile"
     fi
@@ -1477,8 +1409,8 @@ function _old_run_process {
     exec 6>&-
 
     if [[ -n ${SCREEN_LOGDIR} ]]; then
-        exec 1>&${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log 2>&1
-        ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
+        exec 1>&${SCREEN_LOGDIR}/screen-${1}.log.${CURRENT_LOG_TIME} 2>&1
+        ln -sf ${SCREEN_LOGDIR}/screen-${1}.log.${CURRENT_LOG_TIME} ${SCREEN_LOGDIR}/screen-${1}.log
 
         # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
         export PYTHONUNBUFFERED=1
@@ -1531,194 +1463,126 @@ function screen_stop {
 }
 
 
-# Python Functions
-# ================
+# Plugin Functions
+# =================
 
-# Get the path to the pip command.
-# get_pip_command
-function get_pip_command {
-    which pip || which pip-python
+DEVSTACK_PLUGINS=${DEVSTACK_PLUGINS:-""}
 
-    if [ $? -ne 0 ]; then
-        die $LINENO "Unable to find pip; cannot continue"
-    fi
+# enable_plugin <name> <url> [branch]
+#
+# ``name`` is an arbitrary name - (aka: glusterfs, nova-docker, zaqar)
+# ``url`` is a git url
+# ``branch`` is a gitref. If it's not set, defaults to master
+function enable_plugin {
+    local name=$1
+    local url=$2
+    local branch=${3:-master}
+    DEVSTACK_PLUGINS+=",$name"
+    GITREPO[$name]=$url
+    GITDIR[$name]=$DEST/$name
+    GITBRANCH[$name]=$branch
 }
 
-# Get the path to the direcotry where python executables are installed.
-# get_python_exec_prefix
-function get_python_exec_prefix {
-    if is_fedora || is_suse; then
-        echo "/usr/bin"
-    else
-        echo "/usr/local/bin"
-    fi
-}
+# fetch_plugins
+#
+# clones all plugins
+function fetch_plugins {
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
 
-# Wrapper for ``pip install`` to set cache and proxy environment variables
-# Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``,
-# ``TRACK_DEPENDS``, ``*_proxy``
-# pip_install package [package ...]
-function pip_install {
-    local xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-    if [[ "$OFFLINE" = "True" || -z "$@" ]]; then
-        $xtrace
+    # short circuit if nothing to do
+    if [[ -z $plugins ]]; then
         return
     fi
 
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
+    echo "Fetching DevStack plugins"
+    for plugin in ${plugins//,/ }; do
+        git_clone_by_name $plugin
+    done
+}
+
+# load_plugin_settings
+#
+# Load settings from plugins in the order that they were registered
+function load_plugin_settings {
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
+
+    # short circuit if nothing to do
+    if [[ -z $plugins ]]; then
+        return
     fi
-    if [[ $TRACK_DEPENDS = True && ! "$@" =~ virtualenv ]]; then
-        # TRACK_DEPENDS=True installation creates a circular dependency when
-        # we attempt to install virtualenv into a virualenv, so we must global
-        # that installation.
-        source $DEST/.venv/bin/activate
-        local cmd_pip=$DEST/.venv/bin/pip
-        local sudo_pip="env"
+
+    echo "Loading plugin settings"
+    for plugin in ${plugins//,/ }; do
+        local dir=${GITDIR[$plugin]}
+        # source any known settings
+        if [[ -f $dir/devstack/settings ]]; then
+            source $dir/devstack/settings
+        fi
+    done
+}
+
+# plugin_override_defaults
+#
+# Run an extremely early setting phase for plugins that allows default
+# overriding of services.
+function plugin_override_defaults {
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
+
+    # short circuit if nothing to do
+    if [[ -z $plugins ]]; then
+        return
+    fi
+
+    echo "Overriding Configuration Defaults"
+    for plugin in ${plugins//,/ }; do
+        local dir=${GITDIR[$plugin]}
+        # source any overrides
+        if [[ -f $dir/devstack/override-defaults ]]; then
+            # be really verbose that an override is happening, as it
+            # may not be obvious if things fail later.
+            echo "$plugin has overriden the following defaults"
+            cat $dir/devstack/override-defaults
+            source $dir/devstack/override-defaults
+        fi
+    done
+}
+
+# run_plugins
+#
+# Run the devstack/plugin.sh in all the plugin directories. These are
+# run in registration order.
+function run_plugins {
+    local mode=$1
+    local phase=$2
+
+    local plugins="${DEVSTACK_PLUGINS}"
+    local plugin
+    for plugin in ${plugins//,/ }; do
+        local dir=${GITDIR[$plugin]}
+        if [[ -f $dir/devstack/plugin.sh ]]; then
+            source $dir/devstack/plugin.sh $mode $phase
+        fi
+    done
+}
+
+function run_phase {
+    local mode=$1
+    local phase=$2
+    if [[ -d $TOP_DIR/extras.d ]]; then
+        for i in $TOP_DIR/extras.d/*.sh; do
+            [[ -r $i ]] && source $i $mode $phase
+        done
+    fi
+    # the source phase corresponds to settings loading in plugins
+    if [[ "$mode" == "source" ]]; then
+        load_plugin_settings
+    elif [[ "$mode" == "override_defaults" ]]; then
+        plugin_override_defaults
     else
-        local cmd_pip=$(get_pip_command)
-        local sudo_pip="sudo -H"
-    fi
-
-    $xtrace
-    $sudo_pip PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
-        http_proxy=$http_proxy \
-        https_proxy=$https_proxy \
-        no_proxy=$no_proxy \
-        $cmd_pip install \
-        $@
-
-    INSTALL_TESTONLY_PACKAGES=$(trueorfalse False $INSTALL_TESTONLY_PACKAGES)
-    if [[ "$INSTALL_TESTONLY_PACKAGES" == "True" ]]; then
-        local test_req="$@/test-requirements.txt"
-        if [[ -e "$test_req" ]]; then
-            $sudo_pip PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
-                http_proxy=$http_proxy \
-                https_proxy=$https_proxy \
-                no_proxy=$no_proxy \
-                $cmd_pip install \
-                -r $test_req
-        fi
-    fi
-}
-
-# should we use this library from their git repo, or should we let it
-# get pulled in via pip dependencies.
-function use_library_from_git {
-    local name=$1
-    local enabled=1
-    [[ ,${LIBS_FROM_GIT}, =~ ,${name}, ]] && enabled=0
-    return $enabled
-}
-
-# setup a library by name. If we are trying to use the library from
-# git, we'll do a git based install, otherwise we'll punt and the
-# library should be installed by a requirements pull from another
-# project.
-function setup_lib {
-    local name=$1
-    local dir=${GITDIR[$name]}
-    setup_install $dir
-}
-
-# setup a library by name in editiable mode. If we are trying to use
-# the library from git, we'll do a git based install, otherwise we'll
-# punt and the library should be installed by a requirements pull from
-# another project.
-#
-# use this for non namespaced libraries
-function setup_dev_lib {
-    local name=$1
-    local dir=${GITDIR[$name]}
-    setup_develop $dir
-}
-
-# this should be used if you want to install globally, all libraries should
-# use this, especially *oslo* ones
-function setup_install {
-    local project_dir=$1
-    setup_package_with_req_sync $project_dir
-}
-
-# this should be used for projects which run services, like all services
-function setup_develop {
-    local project_dir=$1
-    setup_package_with_req_sync $project_dir -e
-}
-
-# determine if a project as specified by directory is in
-# projects.txt. This will not be an exact match because we throw away
-# the namespacing when we clone, but it should be good enough in all
-# practical ways.
-function is_in_projects_txt {
-    local project_dir=$1
-    local project_name=$(basename $project_dir)
-    return grep "/$project_name\$" $REQUIREMENTS_DIR/projects.txt >/dev/null
-}
-
-# ``pip install -e`` the package, which processes the dependencies
-# using pip before running `setup.py develop`
-#
-# Updates the dependencies in project_dir from the
-# openstack/requirements global list before installing anything.
-#
-# Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``, ``UNDO_REQUIREMENTS``
-# setup_develop directory
-function setup_package_with_req_sync {
-    local project_dir=$1
-    local flags=$2
-
-    # Don't update repo if local changes exist
-    # Don't use buggy "git diff --quiet"
-    # ``errexit`` requires us to trap the exit code when the repo is changed
-    local update_requirements=$(cd $project_dir && git diff --exit-code >/dev/null || echo "changed")
-
-    if [[ $update_requirements != "changed" ]]; then
-        if [[ "$REQUIREMENTS_MODE" == "soft" ]]; then
-            if is_in_projects_txt $project_dir; then
-                (cd $REQUIREMENTS_DIR; \
-                    python update.py $project_dir)
-            else
-                # soft update projects not found in requirements project.txt
-                (cd $REQUIREMENTS_DIR; \
-                    python update.py -s $project_dir)
-            fi
-        else
-            (cd $REQUIREMENTS_DIR; \
-                python update.py $project_dir)
-        fi
-    fi
-
-    setup_package $project_dir $flags
-
-    # We've just gone and possibly modified the user's source tree in an
-    # automated way, which is considered bad form if it's a development
-    # tree because we've screwed up their next git checkin. So undo it.
-    #
-    # However... there are some circumstances, like running in the gate
-    # where we really really want the overridden version to stick. So provide
-    # a variable that tells us whether or not we should UNDO the requirements
-    # changes (this will be set to False in the OpenStack ci gate)
-    if [ $UNDO_REQUIREMENTS = "True" ]; then
-        if [[ $update_requirements != "changed" ]]; then
-            (cd $project_dir && git reset --hard)
-        fi
-    fi
-}
-
-# ``pip install -e`` the package, which processes the dependencies
-# using pip before running `setup.py develop`
-# Uses globals ``STACK_USER``
-# setup_develop_no_requirements_update directory
-function setup_package {
-    local project_dir=$1
-    local flags=$2
-
-    pip_install $flags $project_dir
-    # ensure that further actions can do things like setup.py sdist
-    if [[ "$flags" == "-e" ]]; then
-        safe_chown -R $STACK_USER $1/*.egg-info
+        run_plugins $mode $phase
     fi
 }
 
@@ -1857,7 +1721,6 @@ function is_service_enabled {
         [[ ${service} == "trove" && ${ENABLED_SERVICES} =~ "tr-" ]] && enabled=0
         [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && enabled=0
         [[ ${service} == s-* && ${ENABLED_SERVICES} =~ "swift" ]] && enabled=0
-        [[ ${service} == key-* && ${ENABLED_SERVICES} =~ "key" ]] && enabled=0
     done
     $xtrace
     return $enabled
@@ -1972,13 +1835,13 @@ function cp_it {
 #     http_proxy=http://proxy.example.com:3128/ no_proxy=repo.example.net ./stack.sh
 
 function export_proxy_variables {
-    if [[ -n "$http_proxy" ]]; then
+    if isset http_proxy ; then
         export http_proxy=$http_proxy
     fi
-    if [[ -n "$https_proxy" ]]; then
+    if isset https_proxy ; then
         export https_proxy=$https_proxy
     fi
-    if [[ -n "$no_proxy" ]]; then
+    if isset no_proxy ; then
         export no_proxy=$no_proxy
     fi
 }

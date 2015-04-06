@@ -196,3 +196,20 @@ if is_ubuntu; then
         echo "is_package_installed() on deleted package failed"
     fi
 fi
+
+# test isset function
+echo  "Testing isset()"
+you_should_not_have_this_variable=42
+
+if isset "you_should_not_have_this_variable"; then
+    echo "OK"
+else
+    echo "\"you_should_not_have_this_variable\" not declared. failed"
+fi
+
+unset you_should_not_have_this_variable
+if isset "you_should_not_have_this_variable"; then
+    echo "\"you_should_not_have_this_variable\" looks like declared variable. failed"
+else
+    echo "OK"
+fi

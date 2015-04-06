@@ -17,28 +17,10 @@ libxml2-python
 numpy # needed by websockify for spice console
 m2crypto
 mysql-connector-python
-mysql-devel  # testonly
+mysql-devel
 mysql-server # NOPRIME
 parted
 polkit
-python-cheetah
-python-eventlet
-python-feedparser
-python-greenlet
-python-iso8601
-python-lockfile
-python-migrate
-python-mox
-python-paramiko # dist:f19,f20,f21,rhel7
-# ^ on RHEL6, brings in python-crypto which conflicts with version from
-# pip we need
-python-paste        # dist:f19,f20,f21,rhel7
-python-paste-deploy # dist:f19,f20,f21,rhel7
-python-qpid # NOPRIME
-python-routes
-python-sqlalchemy
-python-suds
-python-tempita
 rabbitmq-server # NOPRIME
 qpid-cpp-server # NOPRIME
 sqlite

@@ -66,7 +66,7 @@ def process_list():
 Process Listing
 ===============
 """
-    psraw = os.popen("ps auxw").read()
+    psraw = os.popen("ps axo user,ppid,pid,pcpu,pmem,vsz,rss,tty,stat,start,time,args").read()
     print psraw
 
 

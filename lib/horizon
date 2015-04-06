@@ -72,14 +72,6 @@ function _horizon_config_set {
 # cleanup_horizon() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_horizon {
-    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-        # If ``/usr/bin/node`` points into ``$DEST``
-        # we installed it via ``install_nodejs``
-        if [[ $(readlink -f /usr/bin/node) =~ ($DEST) ]]; then
-            sudo rm /usr/bin/node
-        fi
-    fi
-
     local horizon_conf=$(apache_site_config_for horizon)
     sudo rm -f $horizon_conf
 }
@@ -102,6 +94,7 @@ function init_horizon {
     cp $HORIZON_SETTINGS $local_settings
 
     _horizon_config_set $local_settings "" COMPRESS_OFFLINE True
+    _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_DEFAULT_ROLE \"Member\"
 
     _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
     _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/v2.0\""
@@ -136,7 +129,7 @@ function init_horizon {
     fi
     enable_apache_site horizon
 
-    # Remove old log files that could mess with how devstack detects whether Horizon
+    # Remove old log files that could mess with how DevStack detects whether Horizon
     # has been successfully started (see start_horizon() and functions::screen_it())
     # and run_process
     sudo rm -f /var/log/$APACHE_NAME/horizon_*
@@ -173,7 +166,7 @@ function install_horizon {
     # Apache installation, because we mark it NOPRIME
     install_apache_wsgi
 
-    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH
 }
 
 # start_horizon() - Start running processes, including screen
@@ -190,8 +183,7 @@ function stop_horizon {
 # NOTE: It can be moved to common functions, but it is only used by compilation
 # of django_openstack_auth catalogs at the moment.
 function _prepare_message_catalog_compilation {
-    local babel_package=$(grep ^Babel $REQUIREMENTS_DIR/global-requirements.txt)
-    pip_install "$babel_package"
+    pip_install $(get_from_global_requirements Babel)
 }
 
 

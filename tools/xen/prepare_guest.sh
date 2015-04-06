@@ -16,9 +16,8 @@ set -o xtrace
 
 # Configurable nuggets
 GUEST_PASSWORD="$1"
-XS_TOOLS_PATH="$2"
-STACK_USER="$3"
-DOMZERO_USER="$4"
+STACK_USER="$2"
+DOMZERO_USER="$3"
 
 
 function setup_domzero_user {
@@ -69,16 +68,6 @@ EOF
 EOF
 
 }
-
-# Install basics
-apt-get update
-apt-get install -y cracklib-runtime curl wget ssh openssh-server tcpdump ethtool
-apt-get install -y git sudo python-netaddr coreutils
-
-# Install XenServer guest utilities
-dpkg -i $XS_TOOLS_PATH
-update-rc.d -f xe-linux-distribution remove
-update-rc.d xe-linux-distribution defaults
 
 # Make a small cracklib dictionary, so that passwd still works, but we don't
 # have the big dictionary.

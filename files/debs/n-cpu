@@ -1,7 +1,6 @@
-# Stuff for diablo volumes
-lvm2
+qemu-utils
+lvm2 # NOPRIME
 open-iscsi
-open-iscsi-utils # Deprecated since quantal dist:precise
 genisoimage
 sysfsutils
 sg3-utils

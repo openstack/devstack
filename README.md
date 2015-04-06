@@ -25,9 +25,9 @@ in a clean and disposable vm when you are first getting started.
 The DevStack master branch generally points to trunk versions of OpenStack
 components.  For older, stable versions, look for branches named
 stable/[release] in the DevStack repo.  For example, you can do the
-following to create a grizzly OpenStack cloud:
+following to create a juno OpenStack cloud:
 
-    git checkout stable/grizzly
+    git checkout stable/juno
     ./stack.sh
 
 You can also pick specific OpenStack project releases by setting the appropriate
@@ -215,21 +215,6 @@ in the near future.  The ``local.conf`` headers for the replacements are:
     [[post-config|/$Q_PLUGIN_CONF_FILE]]
     [linuxbridge]   # or [ovs]
 
-* ``Q_AGENT_EXTRA_AGENT_OPTS``:
-
-    [[post-config|/$Q_PLUGIN_CONF_FILE]]
-    [agent]
-
-* ``Q_AGENT_EXTRA_SRV_OPTS``:
-
-    [[post-config|/$Q_PLUGIN_CONF_FILE]]
-    [linuxbridge]   # or [ovs]
-
-* ``Q_SRV_EXTRA_DEFAULT_OPTS``:
-
-    [[post-config|$NEUTRON_CONF]]
-    [DEFAULT]
-
 Example extra config in `local.conf`:
 
     [[post-config|/$Q_PLUGIN_CONF_FILE]]
@@ -264,14 +249,17 @@ To change this, set the `Q_AGENT` variable to the agent you want to run
     Variable Name                    Notes
     ----------------------------------------------------------------------------
     Q_AGENT                          This specifies which agent to run with the
-                                     ML2 Plugin (either `openvswitch` or `linuxbridge`).
+                                     ML2 Plugin (Typically either `openvswitch`
+                                     or `linuxbridge`).
+                                     Defaults to `openvswitch`.
     Q_ML2_PLUGIN_MECHANISM_DRIVERS   The ML2 MechanismDrivers to load. The default
-                                     is none. Note, ML2 will work with the OVS
-                                     and LinuxBridge agents by default.
+                                     is `openvswitch,linuxbridge`.
     Q_ML2_PLUGIN_TYPE_DRIVERS        The ML2 TypeDrivers to load. Defaults to
                                      all available TypeDrivers.
-    Q_ML2_PLUGIN_GRE_TYPE_OPTIONS    GRE TypeDriver options. Defaults to none.
-    Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS  VXLAN TypeDriver options. Defaults to none.
+    Q_ML2_PLUGIN_GRE_TYPE_OPTIONS    GRE TypeDriver options. Defaults to
+                                     `tunnel_id_ranges=1:1000'.
+    Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS  VXLAN TypeDriver options. Defaults to
+                                     `vni_ranges=1001:2000`
     Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS   VLAN TypeDriver options. Defaults to none.
 
 # Heat
@@ -297,7 +285,15 @@ If tempest has been successfully configured, a basic set of smoke
 tests can be run as follows:
 
     $ cd /opt/stack/tempest
-    $ nosetests tempest/scenario/test_network_basic_ops.py
+    $ tox -efull  tempest.scenario.test_network_basic_ops
+
+By default tempest is downloaded and the config file is generated, but the
+tempest package is not installed in the system's global site-packages (the
+package install includes installing dependences). So tempest won't run
+outside of tox. If you would like to install it add the following to your
+``localrc`` section:
+
+    INSTALL_TEMPEST=True
 
 # DevStack on Xenserver
 

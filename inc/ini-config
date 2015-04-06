@@ -1,0 +1,213 @@
+#!/bin/bash
+#
+# **inc/ini-config** - Configuration/INI functions
+#
+# Support for manipulating INI-style configuration files
+#
+# These functions have no external dependencies and no side-effects
+
+# Save trace setting
+INC_CONF_TRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Config Functions
+# ================
+
+# Append a new option in an ini file without replacing the old value
+# iniadd config-file section option value1 value2 value3 ...
+function iniadd {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    shift 3
+
+    local values="$(iniget_multiline $file $section $option) $@"
+    iniset_multiline $file $section $option $values
+    $xtrace
+}
+
+# Comment an option in an INI file
+# inicomment config-file section option
+function inicomment {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+
+    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
+    $xtrace
+}
+
+# Get an option from an INI file
+# iniget config-file section option
+function iniget {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local line
+
+    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
+    echo ${line#*=}
+    $xtrace
+}
+
+# Get a multiple line option from an INI file
+# iniget_multiline config-file section option
+function iniget_multiline {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local values
+
+    values=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { s/^$option[ \t]*=[ \t]*//gp; }" "$file")
+    echo ${values}
+    $xtrace
+}
+
+# Determinate is the given option present in the INI file
+# ini_has_option config-file section option
+function ini_has_option {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local line
+
+    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
+    $xtrace
+    [ -n "$line" ]
+}
+
+# Add another config line for a multi-line option.
+# It's normally called after iniset of the same option and assumes
+# that the section already exists.
+#
+# Note that iniset_multiline requires all the 'lines' to be supplied
+# in the argument list. Doing that will cause incorrect configuration
+# if spaces are used in the config values.
+#
+# iniadd_literal config-file section option value
+function iniadd_literal {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local value=$4
+
+    [[ -z $section || -z $option ]] && return
+
+    # Add it
+    sed -i -e "/^\[$section\]/ a\\
+$option = $value
+" "$file"
+
+    $xtrace
+}
+
+# Remove an option from an INI file
+# inidelete config-file section option
+function inidelete {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+
+    [[ -z $section || -z $option ]] && return
+
+    # Remove old values
+    sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
+
+    $xtrace
+}
+
+# Set an option in an INI file
+# iniset config-file section option value
+function iniset {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local value=$4
+
+    [[ -z $section || -z $option ]] && return
+
+    if ! grep -q "^\[$section\]" "$file" 2>/dev/null; then
+        # Add section at the end
+        echo -e "\n[$section]" >>"$file"
+    fi
+    if ! ini_has_option "$file" "$section" "$option"; then
+        # Add it
+        sed -i -e "/^\[$section\]/ a\\
+$option = $value
+" "$file"
+    else
+        local sep=$(echo -ne "\x01")
+        # Replace it
+        sed -i -e '/^\['${section}'\]/,/^\[.*\]/ s'${sep}'^\('${option}'[ \t]*=[ \t]*\).*$'${sep}'\1'"${value}"${sep} "$file"
+    fi
+    $xtrace
+}
+
+# Set a multiple line option in an INI file
+# iniset_multiline config-file section option value1 value2 valu3 ...
+function iniset_multiline {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+
+    shift 3
+    local values
+    for v in $@; do
+        # The later sed command inserts each new value in the line next to
+        # the section identifier, which causes the values to be inserted in
+        # the reverse order. Do a reverse here to keep the original order.
+        values="$v ${values}"
+    done
+    if ! grep -q "^\[$section\]" "$file"; then
+        # Add section at the end
+        echo -e "\n[$section]" >>"$file"
+    else
+        # Remove old values
+        sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
+    fi
+    # Add new ones
+    for v in $values; do
+        sed -i -e "/^\[$section\]/ a\\
+$option = $v
+" "$file"
+    done
+    $xtrace
+}
+
+# Uncomment an option in an INI file
+# iniuncomment config-file section option
+function iniuncomment {
+    local xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" "$file"
+    $xtrace
+}
+
+# Restore xtrace
+$INC_CONF_TRACE
+
+# Local variables:
+# mode: shell-script
+# End:

@@ -90,3 +90,7 @@ Zaqar (Marconi)
 
 * Flavio Percoco <flaper87@gmail.com>
 * Malini Kamalambal <malini.kamalambal@rackspace.com>
+
+Oracle Linux
+~~~~~~~~~~~~
+* Wiekus Beukes <wiekus.beukes@oracle.com>

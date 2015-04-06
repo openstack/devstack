@@ -149,12 +149,10 @@ SNAME_FIRST_BOOT="before_first_boot"
 
 function wait_for_VM_to_halt {
     set +x
-    echo "Waiting for the VM to halt.  Progress in-VM can be checked with vncviewer:"
+    echo "Waiting for the VM to halt.  Progress in-VM can be checked with XenCenter or xl console:"
     mgmt_ip=$(echo $XENAPI_CONNECTION_URL | tr -d -c '1234567890.')
     domid=$(get_domid "$GUEST_NAME")
-    sleep 20 # Wait for the vnc-port to be written
-    port=$(xenstore-read /local/domain/$domid/console/vnc-port)
-    echo "vncviewer -via root@$mgmt_ip localhost:${port:2}"
+    echo "ssh root@$mgmt_ip \"xl console $domid\""
     while true; do
         state=$(xe_min vm-list name-label="$GUEST_NAME" power-state=halted)
         if [ -n "$state" ]; then
@@ -178,12 +176,32 @@ if [ -z "$templateuuid" ]; then
     PRESEED_URL=${PRESEED_URL:-""}
     if [ -z "$PRESEED_URL" ]; then
         PRESEED_URL="${HOST_IP}/devstackubuntupreseed.cfg"
+
         HTTP_SERVER_LOCATION="/opt/xensource/www"
         if [ ! -e $HTTP_SERVER_LOCATION ]; then
             HTTP_SERVER_LOCATION="/var/www/html"
             mkdir -p $HTTP_SERVER_LOCATION
         fi
+
+        # Copy the tools DEB to the XS web server
+        XS_TOOLS_URL="https://github.com/downloads/citrix-openstack/warehouse/xe-guest-utilities_5.6.100-651_amd64.deb"
+        ISO_DIR="/opt/xensource/packages/iso"
+        XS_TOOLS_FILE_NAME="xs-tools.deb"
+        XS_TOOLS_PATH="/root/$XS_TOOLS_FILE_NAME"
+        if [ -e "$ISO_DIR" ]; then
+            TOOLS_ISO=$(ls -1 $ISO_DIR/xs-tools-*.iso | head -1)
+            TMP_DIR=/tmp/temp.$RANDOM
+            mkdir -p $TMP_DIR
+            mount -o loop $TOOLS_ISO $TMP_DIR
+            DEB_FILE=$(ls $TMP_DIR/Linux/*amd64.deb)
+            cp $DEB_FILE $HTTP_SERVER_LOCATION
+            umount $TMP_DIR
+            rmdir $TMP_DIR
+            XS_TOOLS_URL=${HOST_IP}/$(basename $DEB_FILE)
+        fi
+
         cp -f $THIS_DIR/devstackubuntupreseed.cfg $HTTP_SERVER_LOCATION
+        cp -f $THIS_DIR/devstackubuntu_latecommand.sh $HTTP_SERVER_LOCATION/latecommand.sh
 
         sed \
             -e "s,\(d-i mirror/http/hostname string\).*,\1 $UBUNTU_INST_HTTP_HOSTNAME,g" \
@@ -191,7 +209,12 @@ if [ -z "$templateuuid" ]; then
             -e "s,\(d-i mirror/http/proxy string\).*,\1 $UBUNTU_INST_HTTP_PROXY,g" \
             -e "s,\(d-i passwd/root-password password\).*,\1 $GUEST_PASSWORD,g" \
             -e "s,\(d-i passwd/root-password-again password\).*,\1 $GUEST_PASSWORD,g" \
+            -e "s,\(d-i preseed/late_command string\).*,\1 in-target mkdir -p /tmp; in-target wget --no-proxy ${HOST_IP}/latecommand.sh -O /root/latecommand.sh; in-target bash /root/latecommand.sh,g" \
             -i "${HTTP_SERVER_LOCATION}/devstackubuntupreseed.cfg"
+
+        sed \
+            -e "s,@XS_TOOLS_URL@,$XS_TOOLS_URL,g" \
+            -i "${HTTP_SERVER_LOCATION}/latecommand.sh"
     fi
 
     # Update the template
@@ -204,7 +227,7 @@ if [ -z "$templateuuid" ]; then
         -n "$UBUNTU_INST_BRIDGE_OR_NET_NAME" \
         -l "$GUEST_NAME"
 
-    set_vm_memory "$GUEST_NAME" "$OSDOMU_MEM_MB"
+    set_vm_memory "$GUEST_NAME" "1024"
 
     xe vm-start vm="$GUEST_NAME"
 
@@ -233,6 +256,7 @@ fi
 #
 # Prepare VM for DevStack
 #
+xe vm-param-set other-config:os-vpx=true uuid="$vm_uuid"
 
 # Install XenServer tools, and other such things
 $THIS_DIR/prepare_guest_template.sh "$GUEST_NAME"
@@ -365,25 +389,27 @@ COPYENV=${COPYENV:-1}
 if [ "$WAIT_TILL_LAUNCH" = "1" ]  && [ -e ~/.ssh/id_rsa.pub  ] && [ "$COPYENV" = "1" ]; then
     set +x
 
-    echo "VM Launched - Waiting for devstack to start"
-    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "service devstack status | grep -q running"; do
+    echo "VM Launched - Waiting for run.sh"
+    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "test -e /opt/stack/run_sh.pid"; do
         sleep 10
     done
     echo -n "devstack service is running, waiting for stack.sh to start logging..."
 
-    while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "test -e /tmp/devstack/log/stack.log"; do
-        sleep 10
-    done
+    pid=`ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "cat /opt/stack/run_sh.pid"`
+    if [ -n "$SCREEN_LOGDIR" ]; then
+        while ! ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "test -e ${SCREEN_LOGDIR}/stack.log"; do
+            sleep 10
+        done
+
+        ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "tail --pid $pid -n +1 -f ${SCREEN_LOGDIR}/stack.log"
+    else
+        echo -n "SCREEN_LOGDIR not set; just waiting for process $pid to finish"
+        ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "wait $pid"
+    fi
+
     set -x
-
-    # Watch devstack's output (which doesn't start until stack.sh is running,
-    # but wait for run.sh (which starts stack.sh) to exit as that is what
-    # hopefully writes the succeeded cookie.
-    pid=`ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS pgrep run.sh`
-    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS "tail --pid $pid -n +1 -f /tmp/devstack/log/stack.log"
-
     # Fail if devstack did not succeed
-    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'test -e /var/run/devstack.succeeded'
+    ssh_no_check -q stack@$OS_VM_MANAGEMENT_ADDRESS 'test -e /opt/stack/runsh.succeeded'
 
     set +x
     echo "################################################################################"
@@ -401,7 +427,7 @@ else
     echo ""
     echo "ssh into your domU now: 'ssh stack@$OS_VM_MANAGEMENT_ADDRESS' using your password"
     echo "and then do: 'sudo service devstack status' to check if devstack is still running."
-    echo "Check that /var/run/devstack.succeeded exists"
+    echo "Check that /opt/stack/runsh.succeeded exists"
     echo ""
     echo "When devstack completes, you can visit the OpenStack Dashboard"
     echo "at http://$OS_VM_SERVICES_ADDRESS, and contact other services at the usual ports."

@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# lib/stack
+#
+# These functions are code snippets pulled out of ``stack.sh`` for easier
+# re-use by Grenade.  They can assume the same environment is available
+# as in the lower part of ``stack.sh``, namely a valid stackrc has been sourced
+# as well as all of the ``lib/*`` files for the services have been sourced.
+#
+# For clarity, all functions declared here that came from ``stack.sh``
+# shall be named with the prefix ``stack_``.
+
+
+# Functions
+# ---------
+
+# Generic service install handles venv creation if confgured for service
+# stack_install_service service
+function stack_install_service {
+    local service=$1
+    if type install_${service} >/dev/null 2>&1; then
+        if [[ ${USE_VENV} = True && -n ${PROJECT_VENV[$service]:-} ]]; then
+            rm -rf ${PROJECT_VENV[$service]}
+            source $TOP_DIR/tools/build_venv.sh ${PROJECT_VENV[$service]} ${ADDITIONAL_VENV_PACKAGES//,/ }
+            export PIP_VIRTUAL_ENV=${PROJECT_VENV[$service]:-}
+
+            # Install other OpenStack prereqs that might come from source repos
+            install_oslo
+            install_keystonemiddleware
+        fi
+        install_${service}
+        if [[ ${USE_VENV} = True && -n ${PROJECT_VENV[$service]:-} ]]; then
+            unset PIP_VIRTUAL_ENV
+        fi
+    fi
+}

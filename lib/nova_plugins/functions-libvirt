@@ -14,20 +14,25 @@ set +o xtrace
 # Defaults
 # --------
 
-# if we should turn on massive libvirt debugging
-DEBUG_LIBVIRT=$(trueorfalse False $DEBUG_LIBVIRT)
+# Turn on selective debug log filters for libvirt.
+# (NOTE: Enabling this by default, because the log filters enabled in
+# 'configure_libvirt' function further below are _selective_ and not
+# extremely verbose.)
+DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
 
 # Installs required distro-specific libvirt packages.
 function install_libvirt {
     if is_ubuntu; then
         install_package qemu-kvm
-        install_package libvirt-bin
-        install_package python-libvirt
+        install_package libvirt-bin libvirt-dev
+        pip_install libvirt-python
+        install_package libguestfs0
         install_package python-guestfs
+        #pip_install <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
         install_package kvm
-        install_package libvirt
-        install_package libvirt-python
+        install_package libvirt libvirt-devel
+        pip_install libvirt-python
         install_package python-libguestfs
     fi
 
@@ -37,8 +42,7 @@ function install_libvirt {
 
     # Note there is a difference between F20 rackspace cloud images
     # and HP images used in the gate; rackspace has firewalld but hp
-    # cloud doesn't.  RHEL6 doesn't have firewalld either.  So we
-    # don't care if it fails.
+    # cloud doesn't.
     if is_fedora && is_package_installed firewalld; then
         sudo service firewalld restart || true
     fi
@@ -68,34 +72,12 @@ EOF
     fi
 
     if is_fedora || is_suse; then
-        if is_fedora && [[ $DISTRO =~ (rhel6) || "$os_RELEASE" -le "17" ]]; then
-            cat <<EOF | sudo tee /etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
-[libvirt Management Access]
-Identity=unix-group:$LIBVIRT_GROUP
-Action=org.libvirt.unix.manage
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-EOF
-        elif is_suse && [[ $os_RELEASE = 12.2 || "$os_VENDOR" = "SUSE LINUX" ]]; then
-            # openSUSE < 12.3 or SLE
-            # Work around the fact that polkit-default-privs overrules pklas
-            # with 'unix-group:$group'.
-            cat <<EOF | sudo tee /etc/polkit-1/localauthority/50-local.d/50-libvirt-remote-access.pkla
-[libvirt Management Access]
-Identity=unix-user:$STACK_USER
-Action=org.libvirt.unix.manage
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-EOF
-        else
-            # Starting with fedora 18 and opensuse-12.3 enable stack-user to
-            # virsh -c qemu:///system by creating a policy-kit rule for
-            # stack-user using the new Javascript syntax
-            rules_dir=/etc/polkit-1/rules.d
-            sudo mkdir -p $rules_dir
-            cat <<EOF | sudo tee $rules_dir/50-libvirt-$STACK_USER.rules
+        # Starting with fedora 18 and opensuse-12.3 enable stack-user to
+        # virsh -c qemu:///system by creating a policy-kit rule for
+        # stack-user using the new Javascript syntax
+        rules_dir=/etc/polkit-1/rules.d
+        sudo mkdir -p $rules_dir
+        cat <<EOF | sudo tee $rules_dir/50-libvirt-$STACK_USER.rules
 polkit.addRule(function(action, subject) {
     if (action.id == 'org.libvirt.unix.manage' &&
         subject.user == '$STACK_USER') {
@@ -103,8 +85,7 @@ polkit.addRule(function(action, subject) {
     }
 });
 EOF
-            unset rules_dir
-        fi
+        unset rules_dir
     fi
 
     # The user that nova runs as needs to be member of **libvirtd** group otherwise
@@ -121,9 +102,9 @@ EOF
             # source file paths, not relative paths. This screws with the matching
             # of '1:libvirt' making everything turn on. So use libvirt.c for now.
             # This will have to be re-visited when Ubuntu ships libvirt >= 1.2.3
-            local log_filters="1:libvirt.c 1:qemu 1:conf 1:security 3:object 3:event 3:json 3:file 1:util"
+            local log_filters="1:libvirt.c 1:qemu 1:conf 1:security 3:object 3:event 3:json 3:file 1:util 1:qemu_monitor"
         else
-            local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:object 3:event 3:json 3:file 1:util"
+            local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:object 3:event 3:json 3:file 1:util 1:qemu_monitor"
         fi
         local log_outputs="1:file:/var/log/libvirt/libvirtd.log"
         if ! grep -q "log_filters=\"$log_filters\"" /etc/libvirt/libvirtd.conf; then
@@ -134,10 +115,18 @@ EOF
         fi
     fi
 
+    # Update the libvirt cpu map with a gate64 cpu model. This enables nova
+    # live migration for 64bit guest OSes on heterogenous cloud "hardware".
+    if [[ -f /usr/share/libvirt/cpu_map.xml ]] ; then
+        sudo $TOP_DIR/tools/cpu_map_update.py /usr/share/libvirt/cpu_map.xml
+    fi
+
     # libvirt detects various settings on startup, as we potentially changed
     # the system configuration (modules, filesystems), we need to restart
-    # libvirt to detect those changes.
-    restart_service $LIBVIRT_DAEMON
+    # libvirt to detect those changes. Use a stop start as otherwise the new
+    # cpu_map is not loaded properly on some systems (Ubuntu).
+    stop_service $LIBVIRT_DAEMON
+    start_service $LIBVIRT_DAEMON
 }
 
 

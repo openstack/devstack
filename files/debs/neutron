@@ -1,21 +1,14 @@
+acl
 ebtables
 iptables
 iputils-ping
 iputils-arping
-libmysqlclient-dev  # testonly
+libmysqlclient-dev
 mysql-server #NOPRIME
 sudo
-python-iso8601
-python-paste
-python-routes
-python-suds
-python-pastedeploy
-python-greenlet
-python-eventlet
-python-sqlalchemy
+postgresql-server-dev-all
 python-mysqldb
 python-mysql.connector
-python-pyudev
 python-qpid # NOPRIME
 dnsmasq-base
 dnsmasq-utils # for dhcp_release only available in dist:precise
@@ -24,3 +17,4 @@ qpidd # NOPRIME
 sqlite3
 vlan
 radvd # NOPRIME
+uuid-runtime

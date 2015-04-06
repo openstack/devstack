@@ -1,14 +1,4 @@
 MySQL-python
-python-greenlet
-libxslt-devel       # dist:f20,f21
-python-lxml         #dist:f19,f20,f21
-python-paste        #dist:f19,f20,f21
-python-paste-deploy #dist:f19,f20,f21
-python-paste-script #dist:f19,f20,f21
-python-routes
-python-sqlalchemy
-python-webob
+libxslt-devel
 sqlite
 mod_ssl
-
-# Deps installed via pip for RHEL

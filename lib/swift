@@ -38,7 +38,6 @@ fi
 # Set up default directories
 GITDIR["python-swiftclient"]=$DEST/python-swiftclient
 
-
 SWIFT_DIR=$DEST/swift
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
@@ -59,16 +58,24 @@ SWIFT_DISK_IMAGE=${SWIFT_DATA_DIR}/drives/images/swift.img
 SWIFT_CONF_DIR=${SWIFT_CONF_DIR:-/etc/swift}
 
 if is_service_enabled s-proxy && is_service_enabled swift3; then
-    # If we are using swift3, we can default the s3 port to swift instead
+    # If we are using ``swift3``, we can default the S3 port to swift instead
     # of nova-objectstore
     S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
 fi
 
-# DevStack will create a loop-back disk formatted as XFS to store the
-# swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
-# kilobytes.
-# Default is 1 gigabyte.
-SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1G
+if is_service_enabled g-api; then
+    # Minimum Cinder volume size is 1G so if Swift backend for Glance is
+    # only 1G we can not upload volume to image.
+    # Increase Swift disk size up to 2G
+    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=2G
+else
+    # DevStack will create a loop-back disk formatted as XFS to store the
+    # swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
+    # kilobytes.
+    # Default is 1 gigabyte.
+    SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1G
+fi
+
 # if tempest enabled the default size is 6 Gigabyte.
 if is_service_enabled tempest; then
     SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-6G}
@@ -82,7 +89,7 @@ SWIFT_EXTRAS_MIDDLEWARE=${SWIFT_EXTRAS_MIDDLEWARE:-formpost staticweb}
 
 # Set ``SWIFT_EXTRAS_MIDDLEWARE_LAST`` to extras middlewares that need to be at
 # the end of the pipeline.
-SWIFT_EXTRAS_MIDDLEWARE_LAST=${SWIFT_EXTRAS_MIDDLEWARE_LAST}
+SWIFT_EXTRAS_MIDDLEWARE_LAST=${SWIFT_EXTRAS_MIDDLEWARE_LAST:-}
 
 # Set ``SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH`` to extras middlewares that need to be at
 # the beginning of the pipeline, before authentication middlewares.
@@ -127,13 +134,14 @@ ACCOUNT_PORT_BASE=${ACCOUNT_PORT_BASE:-6012}
 
 # Enable tempurl feature
 SWIFT_ENABLE_TEMPURLS=${SWIFT_ENABLE_TEMPURLS:-False}
-SWIFT_TEMPURL_KEY=${SWIFT_TEMPURL_KEY}
+SWIFT_TEMPURL_KEY=${SWIFT_TEMPURL_KEY:-}
+
+# Toggle for deploying Swift under HTTPD + mod_wsgi
+SWIFT_USE_MOD_WSGI=${SWIFT_USE_MOD_WSGI:-False}
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,swift
 
-# Toggle for deploying Swift under HTTPD + mod_wsgi
-SWIFT_USE_MOD_WSGI=${SWIFT_USE_MOD_WSGI:-False}
 
 # Functions
 # ---------
@@ -295,7 +303,6 @@ function generate_swift_config_services {
     sed -i -e "s,#[ ]*recon_cache_path .*,recon_cache_path = ${SWIFT_DATA_DIR}/cache," ${swift_node_config}
 }
 
-
 # configure_swift() - Set config files, create data dirs and loop image
 function configure_swift {
     local swift_pipeline="${SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH}"
@@ -306,8 +313,8 @@ function configure_swift {
     # Make sure to kill all swift processes first
     swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
-    sudo mkdir -p ${SWIFT_CONF_DIR}/{object,container,account}-server
-    sudo chown -R ${STACK_USER}: ${SWIFT_CONF_DIR}
+    sudo install -d -o ${STACK_USER} ${SWIFT_CONF_DIR}
+    sudo install -d -o ${STACK_USER} ${SWIFT_CONF_DIR}/{object,container,account}-server
 
     if [[ "$SWIFT_CONF_DIR" != "/etc/swift" ]]; then
         # Some swift tools are hard-coded to use ``/etc/swift`` and are apparently not going to be fixed.
@@ -366,26 +373,27 @@ function configure_swift {
         iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT key_file "$SWIFT_SSL_KEY"
     fi
 
-    # Devstack is commonly run in a small slow environment, so bump the
-    # timeouts up.
-    # node_timeout is how long between read operations a node takes to
-    # respond to the proxy server
-    # conn_timeout is all about how long it takes a connect() system call to
-    # return
+    # DevStack is commonly run in a small slow environment, so bump the timeouts up.
+    # ``node_timeout`` is the node read operation response time to the proxy server
+    # ``conn_timeout`` is how long it takes a connect() system call to return
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server node_timeout 120
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server conn_timeout 20
 
     # Configure Ceilometer
     if is_service_enabled ceilometer; then
         iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer "set log_level" "WARN"
-        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer use "egg:ceilometer#swift"
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer paste.filter_factory "ceilometermiddleware.swift:filter_factory"
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer control_exchange "swift"
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer url $(get_transport_url)
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer driver "messaging"
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer topic "notifications"
         SWIFT_EXTRAS_MIDDLEWARE_LAST="${SWIFT_EXTRAS_MIDDLEWARE_LAST} ceilometer"
     fi
 
-    # Restrict the length of auth tokens in the swift proxy-server logs.
+    # Restrict the length of auth tokens in the Swift ``proxy-server`` logs.
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:proxy-logging reveal_sensitive_prefix ${SWIFT_LOG_TOKEN_LENGTH}
 
-    # By default Swift will be installed with keystone and tempauth middleware
+    # By default Swift will be installed with Keystone and tempauth middleware
     # and add the swift3 middleware if its configured for it. The token for
     # tempauth would be prefixed with the reseller_prefix setting `TEMPAUTH_` the
     # token for keystoneauth would have the standard reseller_prefix `AUTH_`
@@ -393,7 +401,7 @@ function configure_swift {
         swift_pipeline+=" swift3 s3token "
     fi
 
-    if is_service_enabled key;then
+    if is_service_enabled keystone; then
         swift_pipeline+=" authtoken keystoneauth"
     fi
     swift_pipeline+=" tempauth "
@@ -401,39 +409,43 @@ function configure_swift {
     sed -i "/^pipeline/ { s/tempauth/${swift_pipeline} ${SWIFT_EXTRAS_MIDDLEWARE}/ ;}" ${SWIFT_CONFIG_PROXY_SERVER}
     sed -i "/^pipeline/ { s/proxy-server/${SWIFT_EXTRAS_MIDDLEWARE_LAST} proxy-server/ ; }" ${SWIFT_CONFIG_PROXY_SERVER}
 
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth account_autocreate
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
-
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix "TEMPAUTH"
 
     # Configure Crossdomain
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:crossdomain use "egg:swift#crossdomain"
 
-    # Configure Keystone
-    sed -i '/^# \[filter:authtoken\]/,/^# \[filter:keystoneauth\]$/ s/^#[ \t]*//' ${SWIFT_CONFIG_PROXY_SERVER}
-    configure_auth_token_middleware ${SWIFT_CONFIG_PROXY_SERVER} swift $SWIFT_AUTH_CACHE_DIR filter:authtoken
-    # This causes the authtoken middleware to use the same python logging
-    # adapter provided by the swift proxy-server, so that request transaction
+    # Configure authtoken middleware to use the same Python logging
+    # adapter provided by the Swift ``proxy-server``, so that request transaction
     # IDs will included in all of its log messages.
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken log_name swift
 
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken paste.filter_factory keystonemiddleware.auth_token:filter_factory
+    configure_auth_token_middleware $SWIFT_CONFIG_PROXY_SERVER swift $SWIFT_AUTH_CACHE_DIR filter:authtoken
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken delay_auth_decision 1
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cache swift.cache
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken include_service_catalog False
+
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth use "egg:swift#keystoneauth"
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:keystoneauth operator_roles "Member, admin"
+
+    # Configure Tempauth. In the sample config file Keystoneauth is commented
+    # out. Make sure we uncomment Tempauth after we uncomment Keystoneauth
+    # otherwise, this code also sets the reseller_prefix for Keystoneauth.
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth account_autocreate
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix "TEMPAUTH"
 
     if is_service_enabled swift3; then
         cat <<EOF >>${SWIFT_CONFIG_PROXY_SERVER}
-# NOTE(chmou): s3token middleware is not updated yet to use only
-# username and password.
 [filter:s3token]
 paste.filter_factory = keystoneclient.middleware.s3_token:filter_factory
 auth_port = ${KEYSTONE_AUTH_PORT}
 auth_host = ${KEYSTONE_AUTH_HOST}
 auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
 cafile = ${SSL_BUNDLE_FILE}
-auth_token = ${SERVICE_TOKEN}
-admin_token = ${SERVICE_TOKEN}
+admin_user = swift
+admin_tenant_name = ${SERVICE_TENANT_NAME}
+admin_password = ${SERVICE_PASSWORD}
 
 [filter:swift3]
 use = egg:swift3#swift3
@@ -481,7 +493,7 @@ EOF
     iniset ${testfile} func_test password4 testing4
     iniset ${testfile} func_test domain4 swift_test
 
-    if is_service_enabled key;then
+    if is_service_enabled keystone; then
         iniuncomment ${testfile} func_test auth_version
         local auth_vers=$(iniget ${testfile} func_test auth_version)
         iniset ${testfile} func_test auth_host ${KEYSTONE_SERVICE_HOST}
@@ -518,8 +530,7 @@ function create_swift_disk {
     # changing the permissions so we can run it as our user.
 
     local user_group=$(id -g ${STACK_USER})
-    sudo mkdir -p ${SWIFT_DATA_DIR}/{drives,cache,run,logs}
-    sudo chown -R ${STACK_USER}:${user_group} ${SWIFT_DATA_DIR}
+    sudo install -d -o ${STACK_USER} -g ${user_group} ${SWIFT_DATA_DIR}/{drives,cache,run,logs}
 
     # Create a loopback disk and format it to XFS.
     if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
@@ -560,7 +571,8 @@ function create_swift_disk {
         sudo chown -R ${STACK_USER}: ${node}
     done
 }
-# create_swift_accounts() - Set up standard swift accounts and extra
+
+# create_swift_accounts() - Set up standard Swift accounts and extra
 # one for tests we do this by attaching all words in the account name
 # since we want to make it compatible with tempauth which use
 # underscores for separators.
@@ -574,9 +586,9 @@ function create_swift_disk {
 # swifttenanttest4   swiftusertest4     admin          swift_test
 
 function create_swift_accounts {
-    # Defines specific passwords used by tools/create_userrc.sh
-    # As these variables are used by create_userrc.sh, they must be exported
-    # The _password suffix is expected by create_userrc.sh
+    # Defines specific passwords used by ``tools/create_userrc.sh``
+    # As these variables are used by ``create_userrc.sh,`` they must be exported
+    # The _password suffix is expected by ``create_userrc.sh``.
     export swiftusertest1_password=testing
     export swiftusertest2_password=testing2
     export swiftusertest3_password=testing3
@@ -584,13 +596,11 @@ function create_swift_accounts {
 
     KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
     local another_role=$(openstack role list | awk "/ anotherrole / { print \$2 }")
 
-    local swift_user=$(get_or_create_user "swift" \
-        "$SERVICE_PASSWORD" $service_tenant)
-    get_or_add_user_role $admin_role $swift_user $service_tenant
+    # NOTE(jroll): Swift doesn't need the admin role here, however Ironic uses
+    # temp urls, which break when uploaded by a non-admin role
+    create_service_user "swift" "admin"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
@@ -605,33 +615,30 @@ function create_swift_accounts {
 
     local swift_tenant_test1=$(get_or_create_project swifttenanttest1)
     die_if_not_set $LINENO swift_tenant_test1 "Failure creating swift_tenant_test1"
-    SWIFT_USER_TEST1=$(get_or_create_user swiftusertest1 $swiftusertest1_password \
-        "$swift_tenant_test1" "test@example.com")
+    SWIFT_USER_TEST1=$(get_or_create_user swiftusertest1 $swiftusertest1_password "test@example.com")
     die_if_not_set $LINENO SWIFT_USER_TEST1 "Failure creating SWIFT_USER_TEST1"
-    get_or_add_user_role $admin_role $SWIFT_USER_TEST1 $swift_tenant_test1
+    get_or_add_user_project_role admin $SWIFT_USER_TEST1 $swift_tenant_test1
 
-    local swift_user_test3=$(get_or_create_user swiftusertest3 $swiftusertest3_password \
-        "$swift_tenant_test1" "test3@example.com")
+    local swift_user_test3=$(get_or_create_user swiftusertest3 $swiftusertest3_password "test3@example.com")
     die_if_not_set $LINENO swift_user_test3 "Failure creating swift_user_test3"
-    get_or_add_user_role $another_role $swift_user_test3 $swift_tenant_test1
+    get_or_add_user_project_role $another_role $swift_user_test3 $swift_tenant_test1
 
     local swift_tenant_test2=$(get_or_create_project swifttenanttest2)
     die_if_not_set $LINENO swift_tenant_test2 "Failure creating swift_tenant_test2"
 
-    local swift_user_test2=$(get_or_create_user swiftusertest2 $swiftusertest2_password \
-        "$swift_tenant_test2" "test2@example.com")
+    local swift_user_test2=$(get_or_create_user swiftusertest2 $swiftusertest2_password "test2@example.com")
     die_if_not_set $LINENO swift_user_test2 "Failure creating swift_user_test2"
-    get_or_add_user_role $admin_role $swift_user_test2 $swift_tenant_test2
+    get_or_add_user_project_role admin $swift_user_test2 $swift_tenant_test2
 
     local swift_domain=$(get_or_create_domain swift_test 'Used for swift functional testing')
     die_if_not_set $LINENO swift_domain "Failure creating swift_test domain"
 
     local swift_tenant_test4=$(get_or_create_project swifttenanttest4 $swift_domain)
     die_if_not_set $LINENO swift_tenant_test4 "Failure creating swift_tenant_test4"
-    local swift_user_test4=$(get_or_create_user swiftusertest4 $swiftusertest4_password \
-        $swift_tenant_test4 "test4@example.com" $swift_domain)
+
+    local swift_user_test4=$(get_or_create_user swiftusertest4 $swiftusertest4_password "test4@example.com" $swift_domain)
     die_if_not_set $LINENO swift_user_test4 "Failure creating swift_user_test4"
-    get_or_add_user_role $admin_role $swift_user_test4 $swift_tenant_test4
+    get_or_add_user_project_role admin $swift_user_test4 $swift_tenant_test4
 }
 
 # init_swift() - Initialize rings
@@ -664,8 +671,7 @@ function init_swift {
     } && popd >/dev/null
 
     # Create cache dir
-    sudo mkdir -p $SWIFT_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $SWIFT_AUTH_CACHE_DIR
+    sudo install -d -o ${STACK_USER} $SWIFT_AUTH_CACHE_DIR
     rm -f $SWIFT_AUTH_CACHE_DIR/*
 }
 
@@ -712,8 +718,8 @@ function start_swift {
 
     # By default with only one replica we are launching the proxy,
     # container, account and object server in screen in foreground and
-    # other services in background. If we have SWIFT_REPLICAS set to something
-    # greater than one we first spawn all the swift services then kill the proxy
+    # other services in background. If we have ``SWIFT_REPLICAS`` set to something
+    # greater than one we first spawn all the Swift services then kill the proxy
     # service so we can run it in foreground in screen.  ``swift-init ...
     # {stop|restart}`` exits with '1' if no servers are running, ignore it just
     # in case
@@ -749,7 +755,7 @@ function stop_swift {
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest stop && return 0
     fi
 
-    # screen normally killed by unstack.sh
+    # screen normally killed by ``unstack.sh``
     if type -p swift-init >/dev/null; then
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi

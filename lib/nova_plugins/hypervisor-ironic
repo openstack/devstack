@@ -54,8 +54,8 @@ function configure_nova_hypervisor {
 
 # install_nova_hypervisor() - Install external components
 function install_nova_hypervisor {
-    if ! is_service_enabled neutron; then
-        die $LINENO "Neutron should be enabled for usage of the Ironic Nova driver."
+    if is_ironic_hardware; then
+        return
     fi
     install_libvirt
     if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] && is_ubuntu; then

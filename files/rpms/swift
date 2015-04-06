@@ -1,15 +1,7 @@
 curl
 memcached
-python-configobj
-python-coverage
-python-eventlet
-python-greenlet
-python-netifaces
-python-nose
-python-paste-deploy # dist:f19,f20,f21,rhel7
-python-simplejson
-python-webob
 pyxattr
 sqlite
 xfsprogs
 xinetd
+rsync-daemon # dist:f22,f23

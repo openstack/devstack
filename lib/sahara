@@ -11,6 +11,7 @@
 # install_sahara
 # install_python_saharaclient
 # configure_sahara
+# sahara_register_images
 # start_sahara
 # stop_sahara
 # cleanup_sahara
@@ -38,7 +39,7 @@ SAHARA_SERVICE_PROTOCOL=${SAHARA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
 SAHARA_AUTH_CACHE_DIR=${SAHARA_AUTH_CACHE_DIR:-/var/cache/sahara}
 
-SAHARA_ENABLED_PLUGINS=${SAHARA_ENABLED_PLUGINS:-vanilla,hdp,fake}
+SAHARA_ENABLED_PLUGINS=${SAHARA_ENABLED_PLUGINS:-vanilla,hdp,cdh,spark,fake}
 
 # Support entry points installation of console scripts
 if [[ -d $SAHARA_DIR/bin ]]; then
@@ -60,18 +61,29 @@ TEMPEST_SERVICES+=,sahara
 # service     sahara    admin
 function create_sahara_accounts {
 
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    local admin_role=$(openstack role list | awk "/ admin / { print \$2 }")
-
-    local sahara_user=$(get_or_create_user "sahara" \
-        "$SERVICE_PASSWORD" $service_tenant)
-    get_or_add_user_role $admin_role $sahara_user $service_tenant
+    create_service_user "sahara"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-        local sahara_service=$(get_or_create_service "sahara" \
-            "data_processing" "Sahara Data Processing")
-        get_or_create_endpoint $sahara_service \
+        # TODO: remove "data_processing" service when #1356053 will be fixed
+        local sahara_service_old=$(openstack service create \
+            "data_processing" \
+            --name "sahara" \
+            --description "Sahara Data Processing" \
+            -f value -c id
+        )
+        local sahara_service_new=$(openstack service create \
+            "data-processing" \
+            --name "sahara" \
+            --description "Sahara Data Processing" \
+            -f value -c id
+        )
+        get_or_create_endpoint $sahara_service_old \
+            "$REGION_NAME" \
+            "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
+            "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
+            "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s"
+        get_or_create_endpoint $sahara_service_new \
             "$REGION_NAME" \
             "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
             "$SAHARA_SERVICE_PROTOCOL://$SAHARA_SERVICE_HOST:$SAHARA_SERVICE_PORT/v1.1/\$(tenant_id)s" \
@@ -89,33 +101,25 @@ function cleanup_sahara {
 
 # configure_sahara() - Set config files, create data dirs, etc
 function configure_sahara {
-
-    if [[ ! -d $SAHARA_CONF_DIR ]]; then
-        sudo mkdir -p $SAHARA_CONF_DIR
-    fi
-    sudo chown $STACK_USER $SAHARA_CONF_DIR
+    sudo install -d -o $STACK_USER $SAHARA_CONF_DIR
 
     if [[ -f $SAHARA_DIR/etc/sahara/policy.json ]]; then
         cp -p $SAHARA_DIR/etc/sahara/policy.json $SAHARA_CONF_DIR
     fi
 
-    # Copy over sahara configuration file and configure common parameters.
-    cp $SAHARA_DIR/etc/sahara/sahara.conf.sample $SAHARA_CONF_FILE
-
     # Create auth cache dir
-    sudo mkdir -p $SAHARA_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $SAHARA_AUTH_CACHE_DIR
-    sudo chmod 700 $SAHARA_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER -m 700 $SAHARA_AUTH_CACHE_DIR
     rm -rf $SAHARA_AUTH_CACHE_DIR/*
 
     configure_auth_token_middleware $SAHARA_CONF_FILE sahara $SAHARA_AUTH_CACHE_DIR
+
+    iniset_rpc_backend sahara $SAHARA_CONF_FILE DEFAULT
 
     # Set configuration to send notifications
 
     if is_service_enabled ceilometer; then
         iniset $SAHARA_CONF_FILE DEFAULT enable_notifications "true"
         iniset $SAHARA_CONF_FILE DEFAULT notification_driver "messaging"
-        iniset_rpc_backend sahara $SAHARA_CONF_FILE DEFAULT
     fi
 
     iniset $SAHARA_CONF_FILE DEFAULT verbose True
@@ -127,13 +131,38 @@ function configure_sahara {
 
     if is_service_enabled neutron; then
         iniset $SAHARA_CONF_FILE DEFAULT use_neutron true
-        iniset $SAHARA_CONF_FILE DEFAULT use_floating_ips true
+
+        if is_ssl_enabled_service "neutron" || is_service_enabled tls-proxy; then
+            iniset $SAHARA_CONF_FILE neutron ca_file $SSL_BUNDLE_FILE
+        fi
+    else
+        iniset $SAHARA_CONF_FILE DEFAULT use_neutron false
     fi
 
     if is_service_enabled heat; then
         iniset $SAHARA_CONF_FILE DEFAULT infrastructure_engine heat
+
+        if is_ssl_enabled_service "heat" || is_service_enabled tls-proxy; then
+            iniset $SAHARA_CONF_FILE heat ca_file $SSL_BUNDLE_FILE
+        fi
     else
         iniset $SAHARA_CONF_FILE DEFAULT infrastructure_engine direct
+    fi
+
+    if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+        iniset $SAHARA_CONF_FILE cinder ca_file $SSL_BUNDLE_FILE
+    fi
+
+    if is_ssl_enabled_service "nova" || is_service_enabled tls-proxy; then
+        iniset $SAHARA_CONF_FILE nova ca_file $SSL_BUNDLE_FILE
+    fi
+
+    if is_ssl_enabled_service "swift" || is_service_enabled tls-proxy; then
+        iniset $SAHARA_CONF_FILE swift ca_file $SSL_BUNDLE_FILE
+    fi
+
+    if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
+        iniset $SAHARA_CONF_FILE keystone ca_file $SSL_BUNDLE_FILE
     fi
 
     iniset $SAHARA_CONF_FILE DEFAULT use_syslog $SYSLOG
@@ -143,7 +172,7 @@ function configure_sahara {
         setup_colorized_logging $SAHARA_CONF_FILE DEFAULT
     fi
 
-    recreate_database sahara utf8
+    recreate_database sahara
     $SAHARA_BIN_DIR/sahara-db-manage --config-file $SAHARA_CONF_FILE upgrade head
 }
 
@@ -161,15 +190,30 @@ function install_python_saharaclient {
     fi
 }
 
+# sahara_register_images() - Registers images in sahara image registry
+function sahara_register_images {
+    if is_service_enabled heat && [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
+        # Register heat image for Fake plugin
+        local fake_plugin_properties="--property _sahara_tag_0.1=True"
+        fake_plugin_properties+=" --property _sahara_tag_fake=True"
+        fake_plugin_properties+=" --property _sahara_username=fedora"
+        openstack --os-url $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT image set $(basename "$HEAT_CFN_IMAGE_URL" ".qcow2") $fake_plugin_properties
+    fi
+}
+
 # start_sahara() - Start running processes, including screen
 function start_sahara {
     run_process sahara "$SAHARA_BIN_DIR/sahara-all --config-file $SAHARA_CONF_FILE"
+    run_process sahara-api "$SAHARA_BIN_DIR/sahara-api --config-file $SAHARA_CONF_FILE"
+    run_process sahara-eng "$SAHARA_BIN_DIR/sahara-engine --config-file $SAHARA_CONF_FILE"
 }
 
 # stop_sahara() - Stop running processes
 function stop_sahara {
     # Kill the Sahara screen windows
-    screen -S $SCREEN_NAME -p sahara -X kill
+    stop_process sahara
+    stop_process sahara-api
+    stop_process sahara-eng
 }
 
 

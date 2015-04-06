@@ -24,7 +24,7 @@ Q: Then why selinux in enforcing mode?
     by packaging in "real" deployments. To remove additional protections
     that will be desired/required in production would be a step
     backward.
-Q: But selinux is disabled in RHEL 6!
+Q: But selinux is disabled in RHEL!
     A: Today it is, yes. That is a specific exception that certain
     DevStack contributors fought strongly against. The primary reason it
     was allowed was to support using RHEL6 as the Python 2.6 test
@@ -46,8 +46,8 @@ Q: I'd like to help!
     `git.openstack.org <https://git.openstack.org/cgit/openstack-dev/devstack>`__
     and bug reports go to
     `LaunchPad <http://bugs.launchpad.net/devstack/>`__. Contributions
-    follow the usual process as described in the `OpenStack
-    wiki <http://wiki.openstack.org/HowToContribute>`__. This Sphinx
+    follow the usual process as described in the `developer
+    guide <http://docs.openstack.org/infra/manual/developers.html>`__. This Sphinx
     documentation is housed in the doc directory.
 Q: Why not use packages?
     A: Unlike packages, DevStack leaves your cloud ready to develop -
@@ -70,11 +70,18 @@ Q: What about Fedora/RHEL/CentOS?
 Q: Are there any differences between Ubuntu and Fedora support?
     A: Neutron is not fully supported prior to Fedora 18 due lack of
     OpenVSwitch packages.
-Q: How about RHEL 6?
-    A: RHEL 6 has Python 2.6 and many old modules packaged and is a
-    challenge to support. There are a number of specific RHEL6
-    work-arounds in ``stack.sh`` to handle this. But the testing on py26
-    is valuable so we do it...
+Q: Why can't I use another shell?
+    A: DevStack now uses some specific bash-ism that require Bash 4, such
+    as associative arrays. Simple compatibility patches have been accepted
+    in the past when they are not complex, at this point no additional
+    compatibility patches will be considered except for shells matching
+    the array functionality as it is very ingrained in the repo and project
+    management.
+Q: But, but, can't I test on OS/X?
+   A: Yes, even you, core developer who complained about this, needs to
+   install bash 4 via homebrew to keep running tests on OS/X.  Get a Real
+   Operating System.   (For most of you who don't know, I am referring to
+   myself.)
 
 Operation and Configuration
 ===========================
@@ -111,13 +118,13 @@ Q: How do I run a specific OpenStack milestone?
     ::
 
         [[local|localrc]]
-        GLANCE_BRANCH=stable/grizzly
-        HORIZON_BRANCH=stable/grizzly
-        KEYSTONE_BRANCH=stable/grizzly
-        NOVA_BRANCH=stable/grizzly
-        GLANCE_BRANCH=stable/grizzly
-        NEUTRON_BRANCH=stable/grizzly
-        SWIFT_BRANCH=1.10.0
+        GLANCE_BRANCH=stable/juno
+        HORIZON_BRANCH=stable/juno
+        KEYSTONE_BRANCH=stable/juno
+        NOVA_BRANCH=stable/juno
+        GLANCE_BRANCH=stable/juno
+        NEUTRON_BRANCH=stable/juno
+        SWIFT_BRANCH=2.2.1
 
 Q: Why not use [STRIKEOUT:``tools/pip-requires``]\ ``requirements.txt`` to grab project dependencies?
     [STRIKEOUT:The majority of deployments will use packages to install

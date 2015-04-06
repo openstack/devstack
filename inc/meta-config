@@ -1,7 +1,9 @@
 #!/bin/bash
 #
-# lib/config - Configuration file manipulation functions
-
+# **lib/meta-config** - Configuration file manipulation functions
+#
+# Support for DevStack's local.conf meta-config sections
+#
 # These functions have no external dependencies and the following side-effects:
 #
 # CONFIG_AWK_CMD is defined, default is ``awk``
@@ -18,7 +20,7 @@
 # file-name is the destination of the config file
 
 # Save trace setting
-C_XTRACE=$(set +o | grep xtrace)
+INC_META_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -144,6 +146,7 @@ function merge_config_file {
                     else {
                         # For multiline, invoke the ini routines in the reverse order
                         count = cfg_attr_count[section, attr]
+                        print "inidelete " configfile " " section " " attr
                         print "iniset " configfile " " section " " attr " \"" cfg_attr[section, attr, count - 1] "\""
                         for (l = count -2; l >= 0; l--)
                             print "iniadd_literal " configfile " " section " " attr " \"" cfg_attr[section, attr, l] "\""
@@ -175,7 +178,7 @@ function merge_config_group {
 
 
 # Restore xtrace
-$C_XTRACE
+$INC_META_XTRACE
 
 # Local variables:
 # mode: shell-script

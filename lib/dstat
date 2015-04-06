@@ -20,15 +20,19 @@ set +o xtrace
 # Defaults
 # --------
 # for DSTAT logging
-DSTAT_FILE=${DSTAT_FILE:-"dstat.txt"}
+DSTAT_FILE=${DSTAT_FILE:-"dstat.log"}
 
 
 # start_dstat() - Start running processes, including screen
 function start_dstat {
     # A better kind of sysstat, with the top process per time slice
-    DSTAT_OPTS="-tcmndrylpg --top-cpu-adv"
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $SCREEN_LOGDIR/$DSTAT_FILE"
+    DSTAT_OPTS="-tcmndrylpg --top-cpu-adv --top-io-adv"
+    if [[ -n ${LOGDIR} ]]; then
+        screen_it dstat "cd $TOP_DIR; dstat $DSTAT_OPTS | tee $LOGDIR/$DSTAT_FILE"
+        if [[ -n ${SCREEN_LOGDIR} && ${SCREEN_LOGDIR} != ${LOGDIR} ]]; then
+            # Drop the backward-compat symlink
+            ln -sf $LOGDIR/$DSTAT_FILE ${SCREEN_LOGDIR}/$DSTAT_FILE
+        fi
     else
         screen_it dstat "dstat $DSTAT_OPTS"
     fi
@@ -36,7 +40,10 @@ function start_dstat {
 
 # stop_dstat() stop dstat process
 function stop_dstat {
-    screen_stop dstat
+    # dstat runs as a console, not as a service, and isn't trackable
+    # via the normal mechanisms for DevStack. So lets just do a
+    # killall and move on.
+    killall dstat || /bin/true
 }
 
 # Restore xtrace

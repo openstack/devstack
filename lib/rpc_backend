@@ -1,8 +1,7 @@
 #!/bin/bash
 #
 # lib/rpc_backend
-# Interface for interactig with different rpc backend
-# rpc backend settings
+# Interface for interactig with different RPC backends
 
 # Dependencies:
 #
@@ -21,10 +20,15 @@
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+RPC_MESSAGING_PROTOCOL=${RPC_MESSAGING_PROTOCOL:-0.9}
+
+# TODO(sdague): RPC backend selection is super wonky because we treat
+# messaging server as a service, which it really isn't for multi host
+QPID_HOST=${QPID_HOST:-}
+
 
 # Functions
 # ---------
-
 
 # Make sure we only have one rpc backend enabled.
 # Also check the specified rpc backend is available on your platform.
@@ -68,11 +72,9 @@ function check_rpc_backend {
 function cleanup_rpc_backend {
     if is_service_enabled rabbit; then
         # Obliterate rabbitmq-server
-        if [ -n "$RABBIT_USERID" ]; then
-            sudo rabbitmqctl delete_user "$RABBIT_USERID"
-        fi
         uninstall_package rabbitmq-server
-        sudo killall epmd || sudo killall -9 epmd
+        # in case it's not actually running, /bin/true at the end
+        sudo killall epmd || sudo killall -9 epmd || /bin/true
         if is_ubuntu; then
             # And the Erlang runtime too
             apt_get purge -y erlang*
@@ -87,11 +89,20 @@ function cleanup_rpc_backend {
         fi
     elif is_service_enabled zeromq; then
         if is_fedora; then
-            uninstall_package zeromq python-zmq redis
+            uninstall_package zeromq python-zmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                uninstall_package redis python-redis
+            fi
         elif is_ubuntu; then
-            uninstall_package libzmq1 python-zmq redis-server
+            uninstall_package libzmq1 python-zmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                uninstall_package redis-server python-redis
+            fi
         elif is_suse; then
-            uninstall_package libzmq1 python-pyzmq redis
+            uninstall_package libzmq1 python-pyzmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                uninstall_package redis python-redis
+            fi
         else
             exit_distro_not_supported "zeromq installation"
         fi
@@ -146,15 +157,21 @@ function install_rpc_backend {
         fi
         _configure_qpid
     elif is_service_enabled zeromq; then
-        # NOTE(ewindisch): Redis is not strictly necessary
-        # but there is a matchmaker driver that works
-        # really well & out of the box for multi-node.
         if is_fedora; then
-            install_package zeromq python-zmq redis
+            install_package zeromq python-zmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                install_package redis python-redis
+            fi
         elif is_ubuntu; then
-            install_package libzmq1 python-zmq redis-server
+            install_package libzmq1 python-zmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                install_package redis-server python-redis
+            fi
         elif is_suse; then
-            install_package libzmq1 python-pyzmq redis
+            install_package libzmq1 python-pyzmq
+            if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+                install_package redis python-redis
+            fi
         else
             exit_distro_not_supported "zeromq installation"
         fi
@@ -215,24 +232,37 @@ function restart_rpc_backend {
     fi
 }
 
+# builds transport url string
+function get_transport_url {
+    if is_service_enabled qpid || [ -n "$QPID_HOST" ]; then
+        echo "qpid://$QPID_USERNAME:$QPID_PASSWORD@$QPID_HOST:5672/"
+    elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
+        echo "rabbit://$RABBIT_USERID:$RABBIT_PASSWORD@$RABBIT_HOST:5672/"
+    fi
+}
+
 # iniset cofiguration
 function iniset_rpc_backend {
     local package=$1
     local file=$2
-    local section=$3
+    local section=${3:-DEFAULT}
     if is_service_enabled zeromq; then
-        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_zmq
-        iniset $file $section rpc_zmq_matchmaker \
-            ${package}.openstack.common.rpc.matchmaker_redis.MatchMakerRedis
-        # Set MATCHMAKER_REDIS_HOST if running multi-node.
-        MATCHMAKER_REDIS_HOST=${MATCHMAKER_REDIS_HOST:-127.0.0.1}
-        iniset $file matchmaker_redis host $MATCHMAKER_REDIS_HOST
+        iniset $file $section rpc_backend "zmq"
+        iniset $file $section rpc_zmq_host `hostname`
+        if [ "$ZEROMQ_MATCHMAKER" == "redis" ]; then
+            iniset $file $section rpc_zmq_matchmaker \
+                oslo.messaging._drivers.matchmaker_redis.MatchMakerRedis
+            MATCHMAKER_REDIS_HOST=${MATCHMAKER_REDIS_HOST:-127.0.0.1}
+            iniset $file matchmaker_redis host $MATCHMAKER_REDIS_HOST
+        else
+            die $LINENO "Other matchmaker drivers not supported"
+        fi
     elif is_service_enabled qpid || [ -n "$QPID_HOST" ]; then
         # For Qpid use the 'amqp' oslo.messaging transport when AMQP 1.0 is used
         if [ "$RPC_MESSAGING_PROTOCOL" == "AMQP1" ]; then
             iniset $file $section rpc_backend "amqp"
         else
-            iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_qpid
+            iniset $file $section rpc_backend "qpid"
         fi
         iniset $file $section qpid_hostname ${QPID_HOST:-$SERVICE_HOST}
         if [ -n "$QPID_USERNAME" ]; then
@@ -240,10 +270,10 @@ function iniset_rpc_backend {
             iniset $file $section qpid_password $QPID_PASSWORD
         fi
     elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
-        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_kombu
-        iniset $file $section rabbit_hosts $RABBIT_HOST
-        iniset $file $section rabbit_password $RABBIT_PASSWORD
-        iniset $file $section rabbit_userid $RABBIT_USERID
+        iniset $file $section rpc_backend "rabbit"
+        iniset $file oslo_messaging_rabbit rabbit_hosts $RABBIT_HOST
+        iniset $file oslo_messaging_rabbit rabbit_password $RABBIT_PASSWORD
+        iniset $file oslo_messaging_rabbit rabbit_userid $RABBIT_USERID
     fi
 }
 
@@ -322,6 +352,7 @@ EOF
             install_package sasl2-bin
         elif is_fedora; then
             install_package cyrus-sasl-lib
+            install_package cyrus-sasl-plain
         fi
         local sasl_conf_file=/etc/sasl2/qpidd.conf
         sudo sed -i.bak '/PLAIN/!s/mech_list: /mech_list: PLAIN /' $sasl_conf_file

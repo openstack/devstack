@@ -37,8 +37,6 @@ ZAQAR_DIR=$DEST/zaqar
 ZAQARCLIENT_DIR=$DEST/python-zaqarclient
 ZAQAR_CONF_DIR=/etc/zaqar
 ZAQAR_CONF=$ZAQAR_CONF_DIR/zaqar.conf
-ZAQAR_API_LOG_DIR=/var/log/zaqar
-ZAQAR_API_LOG_FILE=$ZAQAR_API_LOG_DIR/queues.log
 ZAQAR_AUTH_CACHE_DIR=${ZAQAR_AUTH_CACHE_DIR:-/var/cache/zaqar}
 
 # Support potential entry-points console scripts
@@ -107,17 +105,12 @@ function configure_zaqarclient {
 function configure_zaqar {
     setup_develop $ZAQAR_DIR
 
-    [ ! -d $ZAQAR_CONF_DIR ] && sudo mkdir -m 755 -p $ZAQAR_CONF_DIR
-    sudo chown $USER $ZAQAR_CONF_DIR
-
-    [ ! -d $ZAQAR_API_LOG_DIR ] &&  sudo mkdir -m 755 -p $ZAQAR_API_LOG_DIR
-    sudo chown $USER $ZAQAR_API_LOG_DIR
+    sudo install -d -o $STACK_USER -m 755 $ZAQAR_CONF_DIR
 
     iniset $ZAQAR_CONF DEFAULT debug True
     iniset $ZAQAR_CONF DEFAULT verbose True
     iniset $ZAQAR_CONF DEFAULT admin_mode True
     iniset $ZAQAR_CONF DEFAULT use_syslog $SYSLOG
-    iniset $ZAQAR_CONF DEFAULT log_file $ZAQAR_API_LOG_FILE
     iniset $ZAQAR_CONF 'drivers:transport:wsgi' bind $ZAQAR_SERVICE_HOST
 
     configure_auth_token_middleware $ZAQAR_CONF zaqar $ZAQAR_AUTH_CACHE_DIR
@@ -135,19 +128,25 @@ function configure_zaqar {
         configure_redis
     fi
 
+    if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
+        iniset $ZAQAR_CONF DEFAULT notification_driver messaging
+        iniset $ZAQAR_CONF DEFAULT control_exchange zaqar
+    fi
+    iniset_rpc_backend zaqar $ZAQAR_CONF
+
     cleanup_zaqar
 }
 
 function configure_redis {
     if is_ubuntu; then
         install_package redis-server
+        pip_install redis
     elif is_fedora; then
         install_package redis
+        pip_install redis
     else
         exit_distro_not_supported "redis installation"
     fi
-
-    install_package python-redis
 }
 
 function configure_mongodb {
@@ -168,8 +167,7 @@ function configure_mongodb {
 # init_zaqar() - Initialize etc.
 function init_zaqar {
     # Create cache dir
-    sudo mkdir -p $ZAQAR_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $ZAQAR_AUTH_CACHE_DIR
+    sudo install -d -o $STACK_USER $ZAQAR_AUTH_CACHE_DIR
     rm -f $ZAQAR_AUTH_CACHE_DIR/*
 }
 
@@ -209,12 +207,7 @@ function stop_zaqar {
 }
 
 function create_zaqar_accounts {
-    local service_tenant=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
-
-    local zaqar_user=$(get_or_create_user "zaqar" \
-        "$SERVICE_PASSWORD" $service_tenant)
-    get_or_add_user_role $ADMIN_ROLE $zaqar_user $service_tenant
+    create_service_user "zaqar"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 

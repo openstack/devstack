@@ -1,15 +1,7 @@
 python-lxml
-python-pastescript
-python-pastedeploy
-python-paste
 sqlite3
-python-pysqlite2
-python-sqlalchemy
 python-mysqldb
 python-mysql.connector
-python-webob
-python-greenlet
-python-routes
 libldap2-dev
 libsasl2-dev
 libkrb5-dev

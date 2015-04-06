@@ -1,5 +1,5 @@
 lvm2
-tgt
+tgt # NOPRIME
 qemu-tools
 python-devel
 postgresql-devel

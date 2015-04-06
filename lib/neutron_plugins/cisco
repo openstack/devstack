@@ -144,6 +144,10 @@ function neutron_plugin_configure_service {
     fi
 }
 
+function neutron_plugin_create_initial_network_profile {
+    neutron cisco-network-profile-create default_network_profile vlan --segment_range 1-3000 --physical_network "$1"
+}
+
 function neutron_plugin_setup_interface_driver {
     local conf_file=$1
     iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
