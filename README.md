@@ -333,7 +333,7 @@ will balance VMs across hosts:
 You can then run many compute nodes, each of which should have a `stackrc`
 which includes the following, with the IP address of the above controller node:
 
-    ENABLED_SERVICES=n-cpu,rabbit,g-api,neutron,q-agt
+    ENABLED_SERVICES=n-cpu,rabbit,neutron,q-agt
     SERVICE_HOST=[IP of controller node]
     MYSQL_HOST=$SERVICE_HOST
     RABBIT_HOST=$SERVICE_HOST
