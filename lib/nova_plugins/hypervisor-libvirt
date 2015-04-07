@@ -54,6 +54,12 @@ function configure_nova_hypervisor {
         iniset $NOVA_CONF DEFAULT vnc_enabled "false"
     fi
 
+    # arm64-specific configuration
+    if is_arch "aarch64"; then
+        # arm64 architecture currently does not support graphical consoles.
+        iniset $NOVA_CONF DEFAULT vnc_enabled "false"
+    fi
+
     ENABLE_FILE_INJECTION=$(trueorfalse False ENABLE_FILE_INJECTION)
     if [[ "$ENABLE_FILE_INJECTION" = "True" ]] ; then
         # When libguestfs is available for file injection, enable using
