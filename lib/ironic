@@ -765,7 +765,7 @@ function upload_baremetal_ironic_deploy {
         fi
     fi
 
-    local token=$(keystone token-get | grep ' id ' | get_field 2)
+    local token=$(openstack token issue -c id -f value)
     die_if_not_set $LINENO token "Keystone fail to get token"
 
     # load them into glance
