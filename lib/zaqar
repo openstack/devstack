@@ -140,10 +140,10 @@ function configure_zaqar {
 function configure_redis {
     if is_ubuntu; then
         install_package redis-server
-        pip_install redis
+        pip_install_gr redis
     elif is_fedora; then
         install_package redis
-        pip_install redis
+        pip_install_gr redis
     else
         exit_distro_not_supported "redis installation"
     fi

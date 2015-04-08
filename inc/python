@@ -52,6 +52,18 @@ function get_python_exec_prefix {
     fi
 }
 
+# Wrapper for ``pip install`` that only installs versions of libraries
+# from the global-requirements specification.
+#
+# Uses globals ``REQUIREMENTS_DIR``
+#
+# pip_install_gr packagename
+function pip_install_gr {
+    local name=$1
+    local clean_name=$(get_from_global_requirements $name)
+    pip_install $clean_name
+}
+
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_VIRTUAL_ENV``,
 # ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``
@@ -125,7 +137,7 @@ function pip_install {
 # get_from_global_requirements <package>
 function get_from_global_requirements {
     local package=$1
-    local required_pkg=$(grep -h ${package} $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1)
+    local required_pkg=$(grep -h ^${package} $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1)
     if [[ $required_pkg == ""  ]]; then
         die $LINENO "Can't find package $package in requirements"
     fi

@@ -94,7 +94,7 @@ CRONTAB
 
 # install_nova_hypervisor() - Install external components
 function install_nova_hypervisor {
-    pip_install xenapi
+    pip_install_gr xenapi
 }
 
 # start_nova_hypervisor - Start any required external services

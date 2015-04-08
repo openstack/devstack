@@ -103,7 +103,7 @@ function configure_tempest {
         setup_develop $TEMPEST_DIR
     else
         # install testr since its used to process tempest logs
-        pip_install $(get_from_global_requirements testrepository)
+        pip_install_gr testrepository
     fi
 
     local image_lines

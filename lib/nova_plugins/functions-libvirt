@@ -31,12 +31,12 @@ function install_libvirt {
             install_package python-guestfs
         fi
         install_package libvirt-bin libvirt-dev
-        pip_install libvirt-python
-        #pip_install <there-si-no-guestfs-in-pypi>
+        pip_install_gr libvirt-python
+        #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
         install_package kvm
         install_package libvirt libvirt-devel
-        pip_install libvirt-python
+        pip_install_gr libvirt-python
         install_package python-libguestfs
     fi
 

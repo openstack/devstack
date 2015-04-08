@@ -847,7 +847,7 @@ if use_library_from_git "python-openstackclient"; then
     git_clone_by_name "python-openstackclient"
     setup_dev_lib "python-openstackclient"
 else
-    pip_install 'python-openstackclient>=1.0.2'
+    pip_install_gr python-openstackclient
 fi
 
 if [[ $TRACK_DEPENDS = True ]]; then
