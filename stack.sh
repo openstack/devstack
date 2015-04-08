@@ -714,6 +714,9 @@ fi
 # Extras Pre-install
 # ------------------
 
+# Install required infra support libraries
+install_infra
+
 # Phase: pre-install
 run_phase stack pre-install
 
@@ -732,9 +735,6 @@ fi
 # ----------------------------
 
 echo_summary "Installing OpenStack project source"
-
-# Install required infra support libraries
-install_infra
 
 # Install Oslo libraries
 install_oslo
