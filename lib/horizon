@@ -178,8 +178,7 @@ function stop_horizon {
 # NOTE: It can be moved to common functions, but it is only used by compilation
 # of django_openstack_auth catalogs at the moment.
 function _prepare_message_catalog_compilation {
-    local babel_package=$(grep ^Babel $REQUIREMENTS_DIR/global-requirements.txt)
-    pip_install "$babel_package"
+    pip_install_gr Babel
 }
 
 # Restore xtrace

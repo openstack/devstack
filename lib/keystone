@@ -491,6 +491,9 @@ function install_keystonemiddleware {
     if use_library_from_git "keystonemiddleware"; then
         git_clone_by_name "keystonemiddleware"
         setup_dev_lib "keystonemiddleware"
+    else
+        # When not installing from repo, keystonemiddleware is still needed...
+        pip_install_gr keystonemiddleware
     fi
 }
 

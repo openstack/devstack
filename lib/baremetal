@@ -162,7 +162,7 @@ function is_baremetal {
 # so that we can build the deployment kernel & ramdisk
 function prepare_baremetal_toolchain {
     if [[ $(type -P ramdisk-image-create) == "" ]]; then
-        pip_install diskimage_builder
+        pip_install_gr diskimage-builder
     fi
     local shellinabox_basename=$(basename $BM_SHELL_IN_A_BOX)
     if [[ ! -e $DEST/$shellinabox_basename ]]; then

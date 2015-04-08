@@ -125,7 +125,7 @@ function install_rpc_backend {
         # TODO(kgiusti) can remove once python qpid bindings are
         # available on all supported platforms _and_ pyngus is added
         # to the requirements.txt file in oslo.messaging
-        pip_install pyngus
+        pip_install_gr pyngus
     fi
 
     if is_service_enabled rabbit; then

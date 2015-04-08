@@ -78,7 +78,8 @@ IPV6_SUBNET_ATTRIBUTES_ENABLED=$(trueorfalse True $IPV6_SUBNET_ATTRIBUTES_ENABLE
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest {
     # install testr since its used to process tempest logs
-    pip_install `grep -h testrepository $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1`
+    pip_install_gr testrepository
+
     local image_lines
     local images
     local num_images

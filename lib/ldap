@@ -138,7 +138,6 @@ function install_ldap {
         sudo ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/cosine.ldif
         sudo ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif
     fi
-
     rm -rf $tmp_ldap_dir
 }
 
