@@ -273,6 +273,12 @@ function iniset_rpc_backend {
         iniset $file oslo_messaging_rabbit rabbit_hosts $RABBIT_HOST
         iniset $file oslo_messaging_rabbit rabbit_password $RABBIT_PASSWORD
         iniset $file oslo_messaging_rabbit rabbit_userid $RABBIT_USERID
+        if [ -n "$RABBIT_HEARTBEAT_TIMEOUT_THRESHOLD" ]; then
+            iniset $file oslo_messaging_rabbit heartbeat_timeout_threshold $RABBIT_HEARTBEAT_TIMEOUT_THRESHOLD
+        fi
+        if [ -n "$RABBIT_HEARTBEAT_RATE" ]; then
+            iniset $file oslo_messaging_rabbit heartbeat_rate $RABBIT_HEARTBEAT_RATE
+        fi
     fi
 }
 
