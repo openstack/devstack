@@ -1288,8 +1288,13 @@ function screen_service {
 
         # sleep to allow bash to be ready to be send the command - we are
         # creating a new window in screen and then sends characters, so if
-        # bash isn't running by the time we send the command, nothing happens
-        sleep 3
+        # bash isn't running by the time we send the command, nothing
+        # happens.  This sleep was added originally to handle gate runs
+        # where we needed this to be at least 3 seconds to pass
+        # consistently on slow clouds. Now this is configurable so that we
+        # can determine a reasonable value for the local case which should
+        # be much smaller.
+        sleep ${SCREEN_SLEEP:-3}
 
         NL=`echo -ne '\015'`
         # This fun command does the following:
