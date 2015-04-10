@@ -142,7 +142,7 @@ function install_ldap {
         sudo ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif
     fi
 
-    pip_install ldappool
+    pip_install_gr ldappool
 
     rm -rf $tmp_ldap_dir
 }

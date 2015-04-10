@@ -103,7 +103,7 @@ function configure_tempest {
         setup_develop $TEMPEST_DIR
     else
         # install testr since its used to process tempest logs
-        pip_install $(get_from_global_requirements testrepository)
+        pip_install_gr testrepository
     fi
 
     local image_lines
@@ -574,6 +574,8 @@ function init_tempest {
             echo "Prepare aki/ari/ami Images"
             mkdir -p $BOTO_MATERIALS_PATH
             ( #new namespace
+                # euca2ools should be installed to call euca-* commands
+                is_package_installed euca2ools || install_package euca2ools
                 # tenant:demo ; user: demo
                 source $TOP_DIR/accrc/demo/demo
                 euca-bundle-image -r ${CIRROS_ARCH} -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"

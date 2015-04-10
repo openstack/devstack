@@ -104,7 +104,7 @@ EOF
 
 function install_database_python_postgresql {
     # Install Python client module
-    pip_install psycopg2
+    pip_install_gr psycopg2
     ADDITIONAL_VENV_PACKAGES+=",psycopg2"
 }
 

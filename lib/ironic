@@ -206,7 +206,7 @@ function install_ironicclient {
         sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-ironicclient"]}/tools/,/etc/bash_completion.d/}ironic.bash_completion
     else
         # nothing actually "requires" ironicclient, so force instally from pypi
-        pip_install python-ironicclient
+        pip_install_gr python-ironicclient
     fi
 }
 
@@ -729,7 +729,7 @@ function upload_baremetal_ironic_deploy {
 
     # install diskimage-builder
     if [[ $(type -P ramdisk-image-create) == "" ]]; then
-        pip_install diskimage_builder
+        pip_install_gr "diskimage-builder"
     fi
 
     if [ -z "$IRONIC_DEPLOY_KERNEL" -o -z "$IRONIC_DEPLOY_RAMDISK" ]; then

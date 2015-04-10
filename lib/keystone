@@ -524,7 +524,7 @@ function install_keystonemiddleware {
         setup_dev_lib "keystonemiddleware"
     else
         # When not installing from repo, keystonemiddleware is still needed...
-        pip_install keystonemiddleware
+        pip_install_gr keystonemiddleware
     fi
 }
 

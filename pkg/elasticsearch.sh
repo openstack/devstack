@@ -77,7 +77,7 @@ function stop_elasticsearch {
 }
 
 function install_elasticsearch {
-    pip_install elasticsearch
+    pip_install_gr elasticsearch
     if is_package_installed elasticsearch; then
         echo "Note: elasticsearch was already installed."
         return
