@@ -685,6 +685,18 @@ function start_neutron_agents {
 
 # stop_neutron() - Stop running processes (non-screen)
 function stop_neutron {
+    stop_process q-svc
+    stop_process q-agent
+    stop_process q-dhcp
+    stop_process q-lbaas
+    stop_process q-fwaas
+    stop_process q-vpn
+    stop_process q-l3
+    stop_process q-metering
+
+    # BUG: this is all legacy gorp by previous attempts that don't
+    # really understand how devstack works. It can probably mostly be
+    # removed.
     if is_service_enabled q-dhcp; then
         pid=$(ps aux | awk '/[d]nsmasq.+interface=(tap|ns-)/ { print $2 }')
         [ ! -z "$pid" ] && sudo kill -9 $pid
