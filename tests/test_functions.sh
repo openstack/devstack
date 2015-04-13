@@ -137,6 +137,31 @@ test_disable_negated_services 'a,aa,-a' 'aa'
 test_disable_negated_services 'a,av2,-a,a' 'av2'
 test_disable_negated_services 'a,-a,av2' 'av2'
 
+echo "Testing remove_disabled_services()"
+
+function test_remove_disabled_services {
+    local service_list="$1"
+    local remove_list="$2"
+    local expected="$3"
+
+    results=$(remove_disabled_services "$service_list" "$remove_list")
+    if [ "$results" = "$expected" ]; then
+        passed "OK: '$service_list' - '$remove_list' -> '$results'"
+    else
+        failed "getting '$expected' from '$service_list' - '$remove_list' failed: '$results'"
+    fi
+}
+
+test_remove_disabled_services 'a,b,c' 'a,c' 'b'
+test_remove_disabled_services 'a,b,c' 'b' 'a,c'
+test_remove_disabled_services 'a,b,c,d' 'a,c d' 'b'
+test_remove_disabled_services 'a,b c,d' 'a d' 'b,c'
+test_remove_disabled_services 'a,b,c' 'a,b,c' ''
+test_remove_disabled_services 'a,b,c' 'd' 'a,b,c'
+test_remove_disabled_services 'a,b,c' '' 'a,b,c'
+test_remove_disabled_services '' 'a,b,c' ''
+test_remove_disabled_services '' '' ''
+
 echo "Testing is_package_installed()"
 
 if [[ -z "$os_PACKAGE" ]]; then
