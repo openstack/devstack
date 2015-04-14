@@ -264,10 +264,10 @@ To change this, set the `Q_AGENT` variable to the agent you want to run
 
 # Heat
 
-Heat is enabled by default (see `stackrc` file). To disable it explicitly
+Heat is disabled by default (see `stackrc` file). To enable it explicitly
 you'll need the following settings in your `localrc` section:
 
-    disable_service heat h-api h-api-cfn h-api-cw h-eng
+    enable_service heat h-api h-api-cfn h-api-cw h-eng
 
 Heat can also run in standalone mode, and be configured to orchestrate
 on an external OpenStack cloud. To launch only Heat in standalone mode
