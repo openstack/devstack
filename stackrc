@@ -49,7 +49,7 @@ if ! isset ENABLED_SERVICES ; then
     # Keystone - nothing works without keystone
     ENABLED_SERVICES=key
     # Nova - services to support libvirt based openstack clouds
-    ENABLED_SERVICES+=,n-api,n-cpu,n-net,n-cond,n-sch,n-novnc
+    ENABLED_SERVICES+=,n-api,n-cpu,n-net,n-cond,n-sch,n-novnc,n-crt
     # Glance services needed for Nova
     ENABLED_SERVICES+=,g-api,g-reg
     # Cinder
