@@ -1621,14 +1621,38 @@ function disable_all_services {
 # Uses global ``ENABLED_SERVICES``
 # disable_negated_services
 function disable_negated_services {
-    local tmpsvcs="${ENABLED_SERVICES}"
+    local to_remove=""
+    local remaining=""
+    local enabled=""
     local service
-    for service in ${tmpsvcs//,/ }; do
+
+    # build up list of services that should be removed; i.e. they
+    # begin with "-"
+    for service in ${ENABLED_SERVICES//,/ }; do
         if [[ ${service} == -* ]]; then
-            tmpsvcs=$(echo ${tmpsvcs}|sed -r "s/(,)?(-)?${service#-}(,)?/,/g")
+            to_remove+=",${service#-}"
+        else
+            remaining+=",${service}"
         fi
     done
-    ENABLED_SERVICES=$(_cleanup_service_list "$tmpsvcs")
+
+    # go through the service list.  if this service appears in the "to
+    # be removed" list, drop it
+    for service in ${remaining//,/ }; do
+        local remove
+        local add=1
+        for remove in ${to_remove//,/ }; do
+            if [[ ${remove} == ${service} ]]; then
+                add=0
+                break
+            fi
+        done
+        if [[ $add == 1 ]]; then
+            enabled="${enabled},$service"
+        fi
+    done
+
+    ENABLED_SERVICES=$(_cleanup_service_list "$enabled")
 }
 
 # disable_service() removes the services passed as argument to the
