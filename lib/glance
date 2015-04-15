@@ -100,6 +100,7 @@ function configure_glance {
     local dburl=`database_connection_url glance`
     iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $dburl
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
+    iniset $GLANCE_REGISTRY_CONF DEFAULT workers "$API_WORKERS"
     iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
     configure_auth_token_middleware $GLANCE_REGISTRY_CONF glance $GLANCE_AUTH_CACHE_DIR/registry
     if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
