@@ -12,9 +12,11 @@ doc/files
 doc/build
 files/*.gz
 files/*.qcow2
+files/*.img
 files/images
 files/pip-*
 files/get-pip.py*
+files/ir-deploy*
 local.conf
 local.sh
 localrc
