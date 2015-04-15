@@ -1235,9 +1235,6 @@ function screen_process {
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
     USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
-    # Append the process to the screen rc file
-    screen_rc "$name" "$command"
-
     screen -S $SCREEN_NAME -X screen -t $name
 
     local real_logfile="${LOGDIR}/${name}.log.${CURRENT_LOG_TIME}"
@@ -1277,6 +1274,10 @@ function screen_process {
     if [[ -n "$group" ]]; then
         command="sg $group '$command'"
     fi
+
+    # Append the process to the screen rc file
+    screen_rc "$name" "$command"
+
     screen -S $SCREEN_NAME -p $name -X stuff "$command & echo \$! >$SERVICE_DIR/$SCREEN_NAME/${name}.pid; fg || echo \"$name failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/${name}.failure\"$NL"
 }
 
