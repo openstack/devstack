@@ -76,6 +76,7 @@ fi
 # ==========
 
 # Phase: clean
+load_plugin_settings
 run_phase clean
 
 if [[ -d $TOP_DIR/extras.d ]]; then
