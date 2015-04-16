@@ -476,14 +476,6 @@ function stop_cinder {
     for serv in c-api c-bak c-sch c-vol; do
         stop_process $serv
     done
-
-    if is_service_enabled c-vol; then
-        if is_ubuntu; then
-            stop_service tgt
-        else
-            stop_service tgtd
-        fi
-    fi
 }
 
 # create_volume_types() - Create Cinder's configured volume types
