@@ -340,39 +340,42 @@ function wait_for_service {
 
 
 # ping check
-# Uses globals ``ENABLED_SERVICES``
-# ping_check from-net ip boot-timeout expected
+# Uses globals ``ENABLED_SERVICES``, ``TOP_DIR``, ``MULTI_HOST``, ``PRIVATE_NETWORK``
+# ping_check <ip> [boot-timeout] [from_net] [expected]
 function ping_check {
-    if is_service_enabled neutron; then
-        _ping_check_neutron  "$1" $2 $3 $4
-        return
-    fi
-    _ping_check_novanet "$1" $2 $3 $4
-}
+    local ip=$1
+    local timeout=${2:-30}
+    local from_net=${3:-""}
+    local expected=${4:-True}
+    local op="!"
+    local failmsg="[Fail] Couldn't ping server"
+    local ping_cmd="ping"
 
-# ping check for nova
-# Uses globals ``MULTI_HOST``, ``PRIVATE_NETWORK``
-function _ping_check_novanet {
-    local from_net=$1
-    local ip=$2
-    local boot_timeout=$3
-    local expected=${4:-"True"}
-    local check_command=""
-    MULTI_HOST=$(trueorfalse False MULTI_HOST)
-    if [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
-        return
-    fi
-    if [[ "$expected" = "True" ]]; then
-        check_command="while ! ping -c1 -w1 $ip; do sleep 1; done"
-    else
-        check_command="while ping -c1 -w1 $ip; do sleep 1; done"
-    fi
-    if ! timeout $boot_timeout sh -c "$check_command"; then
-        if [[ "$expected" = "True" ]]; then
-            die $LINENO "[Fail] Couldn't ping server"
-        else
-            die $LINENO "[Fail] Could ping server"
+    # if we don't specify a from_net we're expecting things to work
+    # fine from our local box.
+    if [[ -n "$from_net" ]]; then
+        if is_service_enabled neutron; then
+            ping_cmd="$TOP_DIR/tools/ping_neutron.sh $from_net"
+        elif [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
+            # there is no way to address the multihost / private case, bail here for compatibility.
+            # TODO: remove this cruft and redo code to handle this at the caller level.
+            return
         fi
+    fi
+
+    # inverse the logic if we're testing no connectivity
+    if [[ "$expected" != "True" ]]; then
+        op=""
+        failmsg="[Fail] Could ping server"
+    fi
+
+    # Because we've transformed this command so many times, print it
+    # out at the end.
+    local check_command="while $op $ping_cmd -c1 -w1 $ip; do sleep 1; done"
+    echo "Checking connectivity with $check_command"
+
+    if ! timeout $timeout sh -c "$check_command"; then
+        die $LINENO $failmsg
     fi
 }
 

@@ -1404,27 +1404,6 @@ function _get_probe_cmd_prefix {
     echo "$Q_RR_COMMAND ip netns exec qprobe-$probe_id"
 }
 
-function _ping_check_neutron {
-    local from_net=$1
-    local ip=$2
-    local timeout_sec=$3
-    local expected=${4:-"True"}
-    local check_command=""
-    probe_cmd=`_get_probe_cmd_prefix $from_net`
-    if [[ "$expected" = "True" ]]; then
-        check_command="while ! $probe_cmd ping -w 1 -c 1 $ip; do sleep 1; done"
-    else
-        check_command="while $probe_cmd ping -w 1 -c 1 $ip; do sleep 1; done"
-    fi
-    if ! timeout $timeout_sec sh -c "$check_command"; then
-        if [[ "$expected" = "True" ]]; then
-            die $LINENO "[Fail] Couldn't ping server"
-        else
-            die $LINENO "[Fail] Could ping server"
-        fi
-    fi
-}
-
 # ssh check
 function _ssh_check_neutron {
     local from_net=$1
