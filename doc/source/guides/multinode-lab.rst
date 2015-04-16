@@ -229,10 +229,10 @@ Additional Users
 ----------------
 
 DevStack creates two OpenStack users (``admin`` and ``demo``) and two
-tenants (also ``admin`` and ``demo``). ``admin`` is exactly what it
+projects (also ``admin`` and ``demo``). ``admin`` is exactly what it
 sounds like, a privileged administrative account that is a member of
-both the ``admin`` and ``demo`` tenants. ``demo`` is a normal user
-account that is only a member of the ``demo`` tenant. Creating
+both the ``admin`` and ``demo`` projects. ``demo`` is a normal user
+account that is only a member of the ``demo`` project. Creating
 additional OpenStack users can be done through the dashboard, sometimes
 it is easier to do them in bulk from a script, especially since they get
 blown away every time ``stack.sh`` runs. The following steps are ripe
@@ -243,21 +243,21 @@ for scripting:
     # Get admin creds
     . openrc admin admin
 
-    # List existing tenants
-    keystone tenant-list
+    # List existing projects
+    openstack project list
 
     # List existing users
-    keystone user-list
+    openstack user list
 
-    # Add a user and tenant
+    # Add a user and project
     NAME=bob
     PASSWORD=BigSecrete
-    TENANT=$NAME
-    keystone tenant-create --name=$NAME
-    keystone user-create --name=$NAME --pass=$PASSWORD
-    keystone user-role-add --user-id=<bob-user-id> --tenant-id=<bob-tenant-id> --role-id=<member-role-id>
-    # member-role-id comes from the existing member role created by stack.sh
-    # keystone role-list
+    PROJECT=$NAME
+    openstack project create $PROJECT
+    openstack user create $NAME --password=$PASSWORD --project $PROJECT
+    openstack role add Member --user $NAME --project $PROJECT
+    # The Member role is created by stack.sh
+    # openstack role list
 
 Swift
 -----

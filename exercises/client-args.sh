@@ -69,7 +69,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
         STATUS_KEYSTONE="Skipped"
     else
         echo -e "\nTest Keystone"
-        if keystone $TENANT_ARG $ARGS catalog --service identity; then
+        if openstack $TENANT_ARG $ARGS catalog show identity; then
             STATUS_KEYSTONE="Succeeded"
         else
             STATUS_KEYSTONE="Failed"
