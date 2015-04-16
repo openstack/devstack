@@ -32,7 +32,7 @@ if [[ -z "$1" ]]; then
 fi
 
 # Get a token to authenticate to glance
-TOKEN=$(keystone token-get | grep ' id ' | get_field 2)
+TOKEN=$(openstack token issue -c id -f value)
 die_if_not_set $LINENO TOKEN "Keystone fail to get token"
 
 # Glance connection info.  Note the port must be specified.

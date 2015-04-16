@@ -287,6 +287,10 @@ function upload_image {
         img_property="--property hw_cdrom_bus=scsi"
     fi
 
+    if is_arch "aarch64"; then
+        img_property="--property hw_machine_type=virt --property hw_cdrom_bus=virtio --property os_command_line='console=ttyAMA0'"
+    fi
+
     if [ "$container_format" = "bare" ]; then
         if [ "$unpack" = "zcat" ]; then
             openstack --os-token $token --os-url $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(zcat --force "${image}")

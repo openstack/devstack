@@ -114,9 +114,16 @@ sudo rm -f /etc/tgt/conf.d/*
 cleanup_rpc_backend
 cleanup_database
 
-# Clean out data, logs and status
-LOGDIR=$(dirname "$LOGFILE")
-sudo rm -rf $DATA_DIR $LOGDIR $DEST/status
+# Clean out data and status
+sudo rm -rf $DATA_DIR $DEST/status
+
+# Clean out the log file and log directories
+if [[ -n "$LOGFILE" ]] && [[ -f "$LOGFILE" ]]; then
+    sudo rm -f $LOGFILE
+fi
+if [[ -n "$LOGDIR" ]] && [[ -d "$LOGDIR" ]]; then
+    sudo rm -rf $LOGDIR
+fi
 if [[ -n "$SCREEN_LOGDIR" ]] && [[ -d "$SCREEN_LOGDIR" ]]; then
     sudo rm -rf $SCREEN_LOGDIR
 fi

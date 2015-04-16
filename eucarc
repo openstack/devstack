@@ -19,7 +19,7 @@ RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 source $RC_DIR/openrc
 
 # Set the ec2 url so euca2ools works
-export EC2_URL=$(keystone catalog --service ec2 | awk '/ publicURL / { print $4 }')
+export EC2_URL=$(openstack catalog show ec2 | awk '/ publicURL: / { print $4 }')
 
 # Create EC2 credentials for the current user
 CREDS=$(openstack ec2 credentials create)
@@ -29,7 +29,7 @@ export EC2_SECRET_KEY=$(echo "$CREDS" | awk '/ secret / { print $4 }')
 # Euca2ools Certificate stuff for uploading bundles
 # See exercises/bundle.sh to see how to get certs using nova cli
 NOVA_KEY_DIR=${NOVA_KEY_DIR:-$RC_DIR}
-export S3_URL=$(keystone catalog --service s3 | awk '/ publicURL / { print $4 }')
+export S3_URL=$(openstack catalog show s3 | awk '/ publicURL: / { print $4 }')
 export EC2_USER_ID=42 # nova does not use user id, but bundling requires it
 export EC2_PRIVATE_KEY=${NOVA_KEY_DIR}/pk.pem
 export EC2_CERT=${NOVA_KEY_DIR}/cert.pem
