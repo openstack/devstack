@@ -237,9 +237,6 @@ function configure_keystone {
 
     iniset_rpc_backend keystone $KEYSTONE_CONF
 
-    # Set the URL advertised in the ``versions`` structure returned by the '/' route
-    iniset $KEYSTONE_CONF DEFAULT public_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/"
-    iniset $KEYSTONE_CONF DEFAULT admin_endpoint "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/"
     iniset $KEYSTONE_CONF eventlet_server admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
 
     # Register SSL certificates if provided

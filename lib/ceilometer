@@ -13,6 +13,26 @@
 #
 #   enable_service ceilometer-alarm-notifier ceilometer-alarm-evaluator
 #
+# To enable Ceilometer to collect the IPMI based meters, further add to the
+# localrc section of local.conf:
+#
+#   enable_service ceilometer-aipmi
+#
+# NOTE: Currently, there are two ways to get the IPMI based meters in
+# OpenStack. One way is to configure Ironic conductor to report those meters
+# for the nodes managed by Ironic and to have Ceilometer notification
+# agent to collect them. Ironic by default does NOT enable that reporting
+# functionality. So in order to do so, users need to set the option of
+# conductor.send_sensor_data to true in the ironic.conf configuration file
+# for the Ironic conductor service, and also enable the
+# ceilometer-anotification service.
+#
+# The other way is to use Ceilometer ipmi agent only to get the IPMI based
+# meters. To avoid duplicated meters, users need to make sure to set the
+# option of conductor.send_sensor_data to false in the ironic.conf
+# configuration file if the node on which Ceilometer ipmi agent is running
+# is also managed by Ironic.
+#
 # Several variables set in the localrc section adjust common behaviors
 # of Ceilometer (see within for additional settings):
 #
@@ -231,6 +251,11 @@ function configure_ceilometer {
         iniset $CEILOMETER_CONF api pecan_debug "False"
         _config_ceilometer_apache_wsgi
     fi
+
+    if is_service_enabled ceilometer-aipmi; then
+        # Configure rootwrap for the ipmi agent
+        configure_rootwrap ceilometer $CEILOMETER_BIN_DIR/ceilometer-rootwrap $CEILOMETER_DIR/etc/ceilometer
+    fi
 }
 
 function configure_mongodb {
@@ -327,6 +352,7 @@ function start_ceilometer {
     run_process ceilometer-acentral "ceilometer-agent-central --config-file $CEILOMETER_CONF"
     run_process ceilometer-anotification "ceilometer-agent-notification --config-file $CEILOMETER_CONF"
     run_process ceilometer-collector "ceilometer-collector --config-file $CEILOMETER_CONF"
+    run_process ceilometer-aipmi "ceilometer-agent-ipmi --config-file $CEILOMETER_CONF"
 
     if [[ "$CEILOMETER_USE_MOD_WSGI" == "False" ]]; then
         run_process ceilometer-api "ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
@@ -366,7 +392,7 @@ function stop_ceilometer {
         restart_apache_server
     fi
     # Kill the ceilometer screen windows
-    for serv in ceilometer-acompute ceilometer-acentral ceilometer-anotification ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
+    for serv in ceilometer-acompute ceilometer-acentral ceilometer-aipmi ceilometer-anotification ceilometer-collector ceilometer-api ceilometer-alarm-notifier ceilometer-alarm-evaluator; do
         stop_process $serv
     done
 }

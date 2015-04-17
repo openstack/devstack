@@ -57,9 +57,6 @@
 # Settings
 # --------
 
-# Timeout value in seconds to wait for IPv6 gateway configuration
-GATEWAY_TIMEOUT=30
-
 
 # Neutron Network Configuration
 # -----------------------------
@@ -90,12 +87,9 @@ IPV6_PUBLIC_SUBNET_NAME=${IPV6_PUBLIC_SUBNET_NAME:-ipv6-public-subnet}
 IPV6_PRIVATE_SUBNET_NAME=${IPV6_PRIVATE_SUBNET_NAME:-ipv6-private-subnet}
 FIXED_RANGE_V6=${FIXED_RANGE_V6:-fd$IPV6_GLOBAL_ID::/64}
 IPV6_PRIVATE_NETWORK_GATEWAY=${IPV6_PRIVATE_NETWORK_GATEWAY:-fd$IPV6_GLOBAL_ID::1}
-IPV6_PUBLIC_RANGE=${IPV6_PUBLIC_RANGE:-fe80:cafe:cafe::/64}
-IPV6_PUBLIC_NETWORK_GATEWAY=${IPV6_PUBLIC_NETWORK_GATEWAY:-fe80:cafe:cafe::2}
-# IPV6_ROUTER_GW_IP must be defined when IP_VERSION=4+6 as it cannot be
-# obtained conventionally until the l3-agent has support for dual-stack
-# TODO (john-davidge) Remove once l3-agent supports dual-stack
-IPV6_ROUTER_GW_IP=${IPV6_ROUTER_GW_IP:-fe80:cafe:cafe::1}
+IPV6_PUBLIC_RANGE=${IPV6_PUBLIC_RANGE:-2001:db8::/64}
+IPV6_PUBLIC_NETWORK_GATEWAY=${IPV6_PUBLIC_NETWORK_GATEWAY:-2001:db8::2}
+IPV6_ROUTER_GW_IP=${IPV6_ROUTER_GW_IP:-2001:db8::1}
 
 # Set up default directories
 GITDIR["python-neutronclient"]=$DEST/python-neutronclient
@@ -1291,20 +1285,12 @@ function _neutron_configure_router_v6 {
 
     # This logic is specific to using the l3-agent for layer 3
     if is_service_enabled q-l3; then
-        local ipv6_router_gw_port
         # Ensure IPv6 forwarding is enabled on the host
         sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # Configure and enable public bridge
-        if [[ "$IP_VERSION" = "6" ]]; then
-            # Override global IPV6_ROUTER_GW_IP with the true value from neutron
-            IPV6_ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' -v subnet_id=$ipv6_pub_subnet_id '$4 == subnet_id { print $8; }'`
-            die_if_not_set $LINENO IPV6_ROUTER_GW_IP "Failure retrieving IPV6_ROUTER_GW_IP"
-            ipv6_router_gw_port=`neutron port-list -c id -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' -v subnet_id=$ipv6_pub_subnet_id '$4 == subnet_id { print $1; }' | awk -F ' | ' '{ print $2; }'`
-            die_if_not_set $LINENO ipv6_router_gw_port "Failure retrieving ipv6_router_gw_port"
-        else
-            ipv6_router_gw_port=`neutron port-list -c id -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' -v subnet_id=$PUB_SUBNET_ID '$4 == subnet_id { print $1; }' | awk -F ' | ' '{ print $2; }'`
-            die_if_not_set $LINENO ipv6_router_gw_port "Failure retrieving ipv6_router_gw_port"
-        fi
+        # Override global IPV6_ROUTER_GW_IP with the true value from neutron
+        IPV6_ROUTER_GW_IP=`neutron port-list -c fixed_ips | grep $ipv6_pub_subnet_id | awk -F '"' -v subnet_id=$ipv6_pub_subnet_id '$4 == subnet_id { print $8; }'`
+        die_if_not_set $LINENO IPV6_ROUTER_GW_IP "Failure retrieving IPV6_ROUTER_GW_IP"
 
         # The ovs_base_configure_l3_agent function flushes the public
         # bridge's ip addresses, so turn IPv6 support in the host off
@@ -1321,28 +1307,8 @@ function _neutron_configure_router_v6 {
             local ext_gw_interface=$(_neutron_get_ext_gw_interface)
             local ipv6_cidr_len=${IPV6_PUBLIC_RANGE#*/}
 
-            # Define router_ns based on whether DVR is enabled
-            local router_ns=qrouter
-            if [[ "$Q_DVR_MODE" == "dvr_snat" ]]; then
-                router_ns=snat
-            fi
-
             # Configure interface for public bridge
             sudo ip -6 addr add $ipv6_ext_gw_ip/$ipv6_cidr_len dev $ext_gw_interface
-
-            # Wait until layer 3 agent has configured the gateway port on
-            # the public bridge, then add gateway address to the interface
-            # TODO (john-davidge) Remove once l3-agent supports dual-stack
-            if [[ "$IP_VERSION" == "4+6" ]]; then
-                if ! timeout $GATEWAY_TIMEOUT sh -c "until sudo ip netns exec $router_ns-$ROUTER_ID ip addr show qg-${ipv6_router_gw_port:0:11} | grep $ROUTER_GW_IP; do sleep 1; done"; then
-                    die $LINENO "Timeout retrieving ROUTER_GW_IP"
-                fi
-                # Configure the gateway port with the public IPv6 adress
-                sudo ip netns exec $router_ns-$ROUTER_ID ip -6 addr add $IPV6_ROUTER_GW_IP/$ipv6_cidr_len dev qg-${ipv6_router_gw_port:0:11}
-                # Add a default IPv6 route to the neutron router as the
-                # l3-agent does not add one in the dual-stack case
-                sudo ip netns exec $router_ns-$ROUTER_ID ip -6 route replace default via $ipv6_ext_gw_ip dev qg-${ipv6_router_gw_port:0:11}
-            fi
             sudo ip -6 route add $FIXED_RANGE_V6 via $IPV6_ROUTER_GW_IP dev $ext_gw_interface
         fi
         _neutron_set_router_id

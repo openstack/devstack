@@ -9,8 +9,6 @@ source $TOP_DIR/functions
 # dummy in the end position to trigger the fall through case.
 DRIVERS="openvz ironic libvirt vsphere xenserver dummy"
 
-CIRROS_ARCHS="x86_64 i386"
-
 # Extra variables to trigger getting additional images.
 export ENABLED_SERVICES="h-api,tr-api"
 HEAT_FETCHED_TEST_IMAGE="Fedora-i386-20-20131211.1-sda"
@@ -19,15 +17,12 @@ PRECACHE_IMAGES=True
 # Loop over all the virt drivers and collect all the possible images
 ALL_IMAGES=""
 for driver in $DRIVERS; do
-    for arch in $CIRROS_ARCHS; do
-        CIRROS_ARCH=$arch
-        VIRT_DRIVER=$driver
-        URLS=$(source $TOP_DIR/stackrc && echo $IMAGE_URLS)
-        if [[ ! -z "$ALL_IMAGES" ]]; then
-            ALL_IMAGES+=,
-        fi
-        ALL_IMAGES+=$URLS
-    done
+    VIRT_DRIVER=$driver
+    URLS=$(source $TOP_DIR/stackrc && echo $IMAGE_URLS)
+    if [[ ! -z "$ALL_IMAGES" ]]; then
+        ALL_IMAGES+=,
+    fi
+    ALL_IMAGES+=$URLS
 done
 
 # Make a nice list

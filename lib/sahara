@@ -33,8 +33,12 @@ SAHARA_DIR=$DEST/sahara
 SAHARA_CONF_DIR=${SAHARA_CONF_DIR:-/etc/sahara}
 SAHARA_CONF_FILE=${SAHARA_CONF_DIR}/sahara.conf
 
+if is_ssl_enabled_service "sahara" || is_service_enabled tls-proxy; then
+    SAHARA_SERVICE_PROTOCOL="https"
+fi
 SAHARA_SERVICE_HOST=${SAHARA_SERVICE_HOST:-$SERVICE_HOST}
 SAHARA_SERVICE_PORT=${SAHARA_SERVICE_PORT:-8386}
+SAHARA_SERVICE_PORT_INT=${SAHARA_SERVICE_PORT_INT:-18386}
 SAHARA_SERVICE_PROTOCOL=${SAHARA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
 SAHARA_AUTH_CACHE_DIR=${SAHARA_AUTH_CACHE_DIR:-/var/cache/sahara}
@@ -165,11 +169,24 @@ function configure_sahara {
         iniset $SAHARA_CONF_FILE keystone ca_file $SSL_BUNDLE_FILE
     fi
 
+    # Register SSL certificates if provided
+    if is_ssl_enabled_service sahara; then
+        ensure_certificates SAHARA
+
+        iniset $SAHARA_CONF_FILE ssl cert_file "$SAHARA_SSL_CERT"
+        iniset $SAHARA_CONF_FILE ssl key_file "$SAHARA_SSL_KEY"
+    fi
+
     iniset $SAHARA_CONF_FILE DEFAULT use_syslog $SYSLOG
 
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $SAHARA_CONF_FILE DEFAULT
+    fi
+
+    if is_service_enabled tls-proxy; then
+        # Set the service port for a proxy to take the original
+        iniset $SAHARA_CONF DEFAULT port $SAHARA_SERVICE_PORT_INT
     fi
 
     recreate_database sahara
@@ -203,9 +220,26 @@ function sahara_register_images {
 
 # start_sahara() - Start running processes, including screen
 function start_sahara {
+    local service_port=$SAHARA_SERVICE_PORT
+    local service_protocol=$SAHARA_SERVICE_PROTOCOL
+    if is_service_enabled tls-proxy; then
+        service_port=$SAHARA_SERVICE_PORT_INT
+        service_protocol="http"
+    fi
+
     run_process sahara "$SAHARA_BIN_DIR/sahara-all --config-file $SAHARA_CONF_FILE"
     run_process sahara-api "$SAHARA_BIN_DIR/sahara-api --config-file $SAHARA_CONF_FILE"
     run_process sahara-eng "$SAHARA_BIN_DIR/sahara-engine --config-file $SAHARA_CONF_FILE"
+
+    echo "Waiting for Sahara to start..."
+    if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$SAHARA_SERVICE_HOST:$service_port; then
+        die $LINENO "Sahara did not start"
+    fi
+
+    # Start proxies if enabled
+    if is_service_enabled tls-proxy; then
+        start_tls_proxy '*' $SAHARA_SERVICE_PORT $SAHARA_SERVICE_HOST $SAHARA_SERVICE_PORT_INT &
+    fi
 }
 
 # stop_sahara() - Stop running processes
