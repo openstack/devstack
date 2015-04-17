@@ -17,6 +17,7 @@ function check_result {
         echo "OK"
     else
         echo -e "failed: $actual != $expected\n"
+        exit 1
     fi
 }
 
