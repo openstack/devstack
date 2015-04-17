@@ -14,7 +14,29 @@
 
 # we always start with no errors
 ERROR=0
+PASS=0
 FAILED_FUNCS=""
+
+function passed {
+    local lineno=$(caller 0 | awk '{print $1}')
+    local function=$(caller 0 | awk '{print $2}')
+    local msg="$1"
+    if [ -z "$msg" ]; then
+        msg="OK"
+    fi
+    PASS=$((PASS+1))
+    echo $function:L$lineno $msg
+}
+
+function failed {
+    local lineno=$(caller 0 | awk '{print $1}')
+    local function=$(caller 0 | awk '{print $2}')
+    local msg="$1"
+    FAILED_FUNCS+="$function:L$lineno\n"
+    echo "ERROR: $function:L$lineno!"
+    echo "   $msg"
+    ERROR=$((ERROR+1))
+}
 
 function assert_equal {
     local lineno=`caller 0 | awk '{print $1}'`
@@ -24,16 +46,20 @@ function assert_equal {
         FAILED_FUNCS+="$function:L$lineno\n"
         echo "ERROR: $1 != $2 in $function:L$lineno!"
         echo "  $msg"
-        ERROR=1
+        ERROR=$((ERROR+1))
     else
+        PASS=$((PASS+1))
         echo "$function:L$lineno - ok"
     fi
 }
 
 function report_results {
-    if [[ $ERROR -eq 1 ]]; then
-        echo "Tests FAILED"
-        echo $FAILED_FUNCS
+    echo "$PASS Tests PASSED"
+    if [[ $ERROR -gt 1 ]]; then
+        echo
+        echo "The following $ERROR tests FAILED"
+        echo -e "$FAILED_FUNCS"
+        echo "---"
         exit 1
     fi
 }
