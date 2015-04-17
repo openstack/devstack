@@ -7,7 +7,7 @@ and alternative platforms and support services. That evolution has grown
 well beyond what was originally intended and the majority of
 configuration combinations are rarely, if ever, tested. DevStack is not
 a general OpenStack installer and was never meant to be everything to
-everyone..
+everyone.
 
 Below is a list of what is specifically is supported (read that as
 "tested") going forward.
@@ -58,7 +58,7 @@ Web Server
 OpenStack Network
 -----------------
 
-*Default to Nova Network, optionally use Neutron*
+*Defaults to nova network, optionally use neutron*
 
 -  Nova Network: FlatDHCP
 -  Neutron: A basic configuration approximating the original FlatDHCP
@@ -67,10 +67,10 @@ OpenStack Network
 Services
 --------
 
-The default services configured by DevStack are Identity (Keystone),
-Object Storage (Swift), Image Storage (Glance), Block Storage (Cinder),
-Compute (Nova), Network (Nova), Dashboard (Horizon), Orchestration
-(Heat)
+The default services configured by DevStack are Identity (keystone),
+Object Storage (swift), Image Service (glance), Block Storage (cinder),
+Compute (nova), Networking (nova), Dashboard (horizon), Orchestration
+(heat)
 
 Additional services not included directly in DevStack can be tied in to
 ``stack.sh`` using the :doc:`plugin mechanism <plugins>` to call
