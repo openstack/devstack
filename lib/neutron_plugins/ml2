@@ -89,7 +89,7 @@ function neutron_plugin_configure_service {
 
     # Allow for setup the flat type network
     if [[ -z "$Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS" && -n "$PHYSICAL_NETWORK" ]]; then
-            Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS="flat_networks=$Q_ML2_FLAT_PHYSNET_OPTIONS"
+            Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS="flat_networks=$PHYSICAL_NETWORK"
     fi
     # REVISIT(rkukura): Setting firewall_driver here for
     # neutron.agent.securitygroups_rpc.is_firewall_enabled() which is
