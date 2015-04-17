@@ -8,6 +8,8 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 source $TOP/inc/ini-config
 source $TOP/inc/meta-config
 
+set -e
+
 # check_result() tests and reports the result values
 # check_result "actual" "expected"
 function check_result {
