@@ -10,31 +10,32 @@ source $TOP/functions
 # Import configuration
 source $TOP/openrc
 
+source $TOP/tests/unittest.sh
 
 echo "Testing die_if_not_set()"
 
 bash -c "source $TOP/functions; X=`echo Y && true`; die_if_not_set $LINENO X 'not OK'"
 if [[ $? != 0 ]]; then
-    echo "die_if_not_set [X='Y' true] Failed"
+    failed "die_if_not_set [X='Y' true] Failed"
 else
-    echo 'OK'
+    passed 'OK'
 fi
 
 bash -c "source $TOP/functions; X=`true`; die_if_not_set $LINENO X 'OK'" > /dev/null 2>&1
 if [[ $? = 0 ]]; then
-    echo "die_if_not_set [X='' true] Failed"
+    failed "die_if_not_set [X='' true] Failed"
 fi
 
 bash -c "source $TOP/functions; X=`echo Y && false`; die_if_not_set $LINENO X 'not OK'"
 if [[ $? != 0 ]]; then
-    echo "die_if_not_set [X='Y' false] Failed"
+    failed "die_if_not_set [X='Y' false] Failed"
 else
-    echo 'OK'
+    passed 'OK'
 fi
 
 bash -c "source $TOP/functions; X=`false`; die_if_not_set $LINENO X 'OK'" > /dev/null 2>&1
 if [[ $? = 0 ]]; then
-    echo "die_if_not_set [X='' false] Failed"
+    failed "die_if_not_set [X='' false] Failed"
 fi
 
 
@@ -50,9 +51,9 @@ function test_enable_service {
     ENABLED_SERVICES="$start"
     enable_service $add
     if [ "$ENABLED_SERVICES" = "$finish" ]; then
-        echo "OK: $start + $add -> $ENABLED_SERVICES"
+        passed "OK: $start + $add -> $ENABLED_SERVICES"
     else
-        echo "changing $start to $finish with $add failed: $ENABLED_SERVICES"
+        failed "changing $start to $finish with $add failed: $ENABLED_SERVICES"
     fi
 }
 
@@ -76,9 +77,9 @@ function test_disable_service {
     ENABLED_SERVICES="$start"
     disable_service "$del"
     if [ "$ENABLED_SERVICES" = "$finish" ]; then
-        echo "OK: $start - $del -> $ENABLED_SERVICES"
+        passed "OK: $start - $del -> $ENABLED_SERVICES"
     else
-        echo "changing $start to $finish with $del failed: $ENABLED_SERVICES"
+        failed "changing $start to $finish with $del failed: $ENABLED_SERVICES"
     fi
 }
 
@@ -101,9 +102,9 @@ ENABLED_SERVICES=a,b,c
 disable_all_services
 
 if [[ -z "$ENABLED_SERVICES" ]]; then
-    echo "OK"
+    passed "OK"
 else
-    echo "disabling all services FAILED: $ENABLED_SERVICES"
+    failed "disabling all services FAILED: $ENABLED_SERVICES"
 fi
 
 echo "Testing disable_negated_services()"
@@ -116,9 +117,9 @@ function test_disable_negated_services {
     ENABLED_SERVICES="$start"
     disable_negated_services
     if [ "$ENABLED_SERVICES" = "$finish" ]; then
-        echo "OK: $start + $add -> $ENABLED_SERVICES"
+        passed "OK: $start + $add -> $ENABLED_SERVICES"
     else
-        echo "changing $start to $finish failed: $ENABLED_SERVICES"
+        failed "changing $start to $finish failed: $ENABLED_SERVICES"
     fi
 }
 
@@ -147,9 +148,9 @@ else
     VAL=1
 fi
 if [[ "$VAL" -eq 0 ]]; then
-    echo "OK"
+    passed "OK"
 else
-    echo "is_package_installed() on existing package failed"
+    failed "is_package_installed() on existing package failed"
 fi
 
 if [[ "$os_PACKAGE" = "deb" ]]; then
@@ -162,17 +163,17 @@ else
     VAL=1
 fi
 if [[ "$VAL" -eq 0 ]]; then
-    echo "OK"
+    passed "OK"
 else
-    echo "is_package_installed() on more than one existing package failed"
+    failed "is_package_installed() on more than one existing package failed"
 fi
 
 is_package_installed zzzZZZzzz
 VAL=$?
 if [[ "$VAL" -ne 0 ]]; then
-    echo "OK"
+    passed "OK"
 else
-    echo "is_package_installed() on non-existing package failed"
+    failed "is_package_installed() on non-existing package failed"
 fi
 
 # test against removed package...was a bug on Ubuntu
@@ -191,9 +192,9 @@ if is_ubuntu; then
     is_package_installed $PKG
     VAL=$?
     if [[ "$VAL" -ne 0 ]]; then
-        echo "OK"
+        passed "OK"
     else
-        echo "is_package_installed() on deleted package failed"
+        failed "is_package_installed() on deleted package failed"
     fi
 fi
 
@@ -202,14 +203,16 @@ echo  "Testing isset()"
 you_should_not_have_this_variable=42
 
 if isset "you_should_not_have_this_variable"; then
-    echo "OK"
+    passed "OK"
 else
-    echo "\"you_should_not_have_this_variable\" not declared. failed"
+    failed "\"you_should_not_have_this_variable\" not declared. failed"
 fi
 
 unset you_should_not_have_this_variable
 if isset "you_should_not_have_this_variable"; then
-    echo "\"you_should_not_have_this_variable\" looks like declared variable. failed"
+    failed "\"you_should_not_have_this_variable\" looks like declared variable."
 else
-    echo "OK"
+    passed "OK"
 fi
+
+report_results
