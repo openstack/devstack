@@ -8,6 +8,8 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 source $TOP/inc/ini-config
 source $TOP/inc/meta-config
 
+set -e
+
 # check_result() tests and reports the result values
 # check_result "actual" "expected"
 function check_result {
@@ -17,6 +19,7 @@ function check_result {
         echo "OK"
     else
         echo -e "failed: $actual != $expected\n"
+        exit 1
     fi
 }
 

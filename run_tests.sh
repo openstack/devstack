@@ -17,8 +17,6 @@
 PASSES=""
 FAILURES=""
 
-# Test that no one is trying to land crazy refs as branches
-
 for testfile in tests/test_*.sh; do
     $testfile
     if [[ $? -eq 0 ]]; then

@@ -86,6 +86,14 @@ function merge_config_file {
     local matchgroup=$2
     local configfile=$3
 
+    # note, configfile might be a variable (note the iniset, etc
+    # created in the mega-awk below is "eval"ed too, so we just leave
+    # it alone.
+    local real_configfile=$(eval echo $configfile)
+    if [ ! -f $real_configfile ]; then
+        touch $real_configfile
+    fi
+
     get_meta_section $file $matchgroup $configfile | \
     $CONFIG_AWK_CMD -v configfile=$configfile '
         BEGIN {
