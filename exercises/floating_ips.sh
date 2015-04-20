@@ -139,7 +139,7 @@ IP=$(get_instance_ip $VM_UUID $PRIVATE_NETWORK_NAME)
 die_if_not_set $LINENO IP "Failure retrieving IP address"
 
 # Private IPs can be pinged in single node deployments
-ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
+ping_check $IP $BOOT_TIMEOUT "$PRIVATE_NETWORK_NAME"
 
 # Floating IPs
 # ------------
@@ -158,7 +158,7 @@ nova add-floating-ip $VM_UUID $FLOATING_IP || \
     die $LINENO "Failure adding floating IP $FLOATING_IP to $VM_NAME"
 
 # Test we can ping our floating IP within ASSOCIATE_TIMEOUT seconds
-ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT
+ping_check $FLOATING_IP $ASSOCIATE_TIMEOUT "$PUBLIC_NETWORK_NAME"
 
 if ! is_service_enabled neutron; then
     # Allocate an IP from second floating pool
@@ -182,7 +182,7 @@ fi
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "ironic" -a "$VIRT_DRIVER" != "xenserver" -a "$VIRT_DRIVER" != "openvz" ]; then
     # Test we can aren't able to ping our floating ip within ASSOCIATE_TIMEOUT seconds
-    ping_check "$PUBLIC_NETWORK_NAME" $FLOATING_IP $ASSOCIATE_TIMEOUT Fail
+    ping_check $FLOATING_IP $ASSOCIATE_TIMEOUT "$PUBLIC_NETWORK_NAME" Fail
 fi
 
 # Clean up
