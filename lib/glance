@@ -49,8 +49,10 @@ GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
 GLANCE_REGISTRY_CONF=$GLANCE_CONF_DIR/glance-registry.conf
 GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
+GLANCE_SEARCH_CONF=$GLANCE_CONF_DIR/glance-search.conf
 GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
 GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
+GLANCE_SEARCH_PASTE_INI=$GLANCE_CONF_DIR/glance-search-paste.ini
 GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
 GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
 GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
@@ -67,6 +69,9 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT}
 GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 GLANCE_REGISTRY_PORT=${GLANCE_REGISTRY_PORT:-9191}
 GLANCE_REGISTRY_PORT_INT=${GLANCE_REGISTRY_PORT_INT:-19191}
+GLANCE_SEARCH_PORT=${GLANCE_SEARCH_PORT:-9393}
+GLANCE_SEARCH_PORT_INT=${GLANCE_SEARCH_PORT_INT:-19393}
+GLANCE_SEARCH_HOSTPORT=${GLANCE_SEARCH_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_SEARCH_PORT}
 
 # Tell Tempest this project is present
 TEMPEST_SERVICES+=,glance
@@ -87,6 +92,10 @@ function cleanup_glance {
     # kill instances (nova)
     # delete image files (glance)
     sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR $GLANCE_AUTH_CACHE_DIR
+
+    if is_service_enabled g-search; then
+        ${TOP_DIR}/pkg/elasticsearch.sh stop
+    fi
 }
 
 # configure_glance() - Set config files, create data dirs, etc
@@ -218,14 +227,38 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
         iniset $GLANCE_CACHE_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
     fi
+
+    # Configure search
+    if is_service_enabled g-search; then
+        cp $GLANCE_DIR/etc/glance-search.conf $GLANCE_SEARCH_CONF
+        iniset $GLANCE_SEARCH_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+        inicomment $GLANCE_SEARCH_CONF DEFAULT log_file
+        iniset $GLANCE_SEARCH_CONF DEFAULT use_syslog $SYSLOG
+        iniset $GLANCE_SEARCH_CONF DEFAULT sql_connection $dburl
+        iniset $GLANCE_SEARCH_CONF paste_deploy flavor keystone
+        configure_auth_token_middleware $GLANCE_SEARCH_CONF glance $GLANCE_AUTH_CACHE_DIR/search
+
+        if is_service_enabled tls-proxy; then
+            iniset $GLANCE_SEARCH_CONF DEFAULT bind_port $GLANCE_SEARCH_PORT_INT
+        fi
+        # Register SSL certificates if provided
+        if is_ssl_enabled_service glance; then
+            ensure_certificates GLANCE
+            iniset $GLANCE_SEARCH_CONF DEFAULT cert_file "$GLANCE_SSL_CERT"
+            iniset $GLANCE_SEARCH_CONF DEFAULT key_file "$GLANCE_SSL_KEY"
+        fi
+
+        cp $GLANCE_DIR/etc/glance-search-paste.ini $GLANCE_SEARCH_PASTE_INI
+    fi
 }
 
 # create_glance_accounts() - Set up common required glance accounts
 
-# Project              User         Roles
-# ------------------------------------------------------------------
-# SERVICE_TENANT_NAME  glance       service
-# SERVICE_TENANT_NAME  glance-swift ResellerAdmin (if Swift is enabled)
+# Project              User            Roles
+# ---------------------------------------------------------------------
+# SERVICE_TENANT_NAME  glance          service
+# SERVICE_TENANT_NAME  glance-swift    ResellerAdmin (if Swift is enabled)
+# SERVICE_TENANT_NAME  glance-search   search (if Search is enabled)
 
 function create_glance_accounts {
     if is_service_enabled g-api; then
@@ -251,13 +284,27 @@ function create_glance_accounts {
                 "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
         fi
     fi
+
+    # Add glance-search service and endpoints
+    if is_service_enabled g-search; then
+        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+            local glance_search_service=$(get_or_create_service "glance-search" \
+                "search" "EXPERIMENTAL - Glance Graffiti Search Service")
+
+            get_or_create_endpoint $glance_search_service \
+                "$REGION_NAME" \
+                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_SEARCH_HOSTPORT" \
+                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_SEARCH_HOSTPORT" \
+                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_SEARCH_HOSTPORT"
+        fi
+    fi
 }
 
 # create_glance_cache_dir() - Part of the init_glance() process
 function create_glance_cache_dir {
     # Create cache dir
-    sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry
-    rm -f $GLANCE_AUTH_CACHE_DIR/api/* $GLANCE_AUTH_CACHE_DIR/registry/*
+    sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry $GLANCE_AUTH_CACHE_DIR/search
+    rm -f $GLANCE_AUTH_CACHE_DIR/api/* $GLANCE_AUTH_CACHE_DIR/registry/* $GLANCE_AUTH_CACHE_DIR/search/*
 }
 
 # init_glance() - Initialize databases, etc.
@@ -280,6 +327,12 @@ function init_glance {
     $GLANCE_BIN_DIR/glance-manage db_load_metadefs
 
     create_glance_cache_dir
+
+    # Init glance search by exporting found metadefs/images to elasticsearch
+    if is_service_enabled g-search; then
+        ${TOP_DIR}/pkg/elasticsearch.sh start
+        $GLANCE_BIN_DIR/glance-index
+    fi
 }
 
 # install_glanceclient() - Collect source and prepare
@@ -301,11 +354,13 @@ function install_glance {
     fi
 
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
-    setup_develop $GLANCE_DIR
-    if is_service_enabled g-graffiti; then
+
+    if is_service_enabled g-search; then
         ${TOP_DIR}/pkg/elasticsearch.sh download
         ${TOP_DIR}/pkg/elasticsearch.sh install
     fi
+
+    setup_develop $GLANCE_DIR
 }
 
 # start_glance() - Start running processes, including screen
@@ -314,17 +369,28 @@ function start_glance {
     if is_service_enabled tls-proxy; then
         start_tls_proxy '*' $GLANCE_SERVICE_PORT $GLANCE_SERVICE_HOST $GLANCE_SERVICE_PORT_INT &
         start_tls_proxy '*' $GLANCE_REGISTRY_PORT $GLANCE_SERVICE_HOST $GLANCE_REGISTRY_PORT_INT &
+
+        # Handle g-search
+        if is_service_enabled g-search; then
+            start_tls_proxy '*' $GLANCE_SEARCH_PORT $GLANCE_SERVICE_HOST $GLANCE_SEARCH_PORT_INT &
+        fi
     fi
 
     run_process g-reg "$GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
     run_process g-api "$GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
 
-    if is_service_enabled g-graffiti; then
-        ${TOP_DIR}/pkg/elasticsearch.sh start
-    fi
     echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
     if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT; then
         die $LINENO "g-api did not start"
+    fi
+
+    # Start g-search after g-reg/g-api
+    if is_service_enabled g-search; then
+        run_process g-search "$GLANCE_BIN_DIR/glance-search --config-file=$GLANCE_CONF_DIR/glance-search.conf"
+        echo "Waiting for g-search ($GLANCE_SEARCH_HOSTPORT) to start..."
+        if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_SERVICE_PROTOCOL://$GLANCE_SEARCH_HOSTPORT; then
+            die $LINENO "g-search did not start"
+        fi
     fi
 }
 
@@ -333,6 +399,10 @@ function stop_glance {
     # Kill the Glance screen windows
     stop_process g-api
     stop_process g-reg
+
+    if is_service_enabled g-search; then
+        stop_process g-search
+    fi
 }
 
 # Restore xtrace

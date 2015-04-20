@@ -281,7 +281,7 @@ function ping_ip {
     local VM_NAME=$1
     local NET_NAME=$2
     IP=$(get_instance_ip $VM_NAME $NET_NAME)
-    ping_check $NET_NAME $IP $BOOT_TIMEOUT
+    ping_check $IP $BOOT_TIMEOUT $NET_NAME
 }
 
 function check_vm {

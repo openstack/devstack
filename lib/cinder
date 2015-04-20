@@ -264,6 +264,9 @@ function configure_cinder {
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $CINDER_CONF DEFAULT "project_id" "user_id"
+    else
+        # Set req-id, project-name and resource in log format
+        iniset $CINDER_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(levelname)s %(name)s [%(request_id)s %(project_name)s] %(resource)s%(message)s"
     fi
 
     if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
