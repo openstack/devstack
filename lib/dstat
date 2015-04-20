@@ -21,11 +21,17 @@ function start_dstat {
     # A better kind of sysstat, with the top process per time slice
     DSTAT_OPTS="-tcmndrylpg --top-cpu-adv --top-io-adv"
     run_process dstat "dstat $DSTAT_OPTS"
+
+    # To enable peakmem_tracker add:
+    #    enable_service peakmem_tracker
+    # to your localrc
+    run_process peakmem_tracker "$TOP_DIR/tools/peakmem_tracker.sh"
 }
 
 # stop_dstat() stop dstat process
 function stop_dstat {
     stop_process dstat
+    stop_process peakmem_tracker
 }
 
 # Restore xtrace
