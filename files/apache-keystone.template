@@ -1,5 +1,6 @@
 Listen %PUBLICPORT%
 Listen %ADMINPORT%
+LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" keystone_combined
 
 <VirtualHost *:%PUBLICPORT%>
     WSGIDaemonProcess keystone-public processes=5 threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
@@ -11,7 +12,7 @@ Listen %ADMINPORT%
       ErrorLogFormat "%{cu}t %M"
     </IfVersion>
     ErrorLog /var/log/%APACHE_NAME%/keystone.log
-    CustomLog /var/log/%APACHE_NAME%/keystone_access.log combined
+    CustomLog /var/log/%APACHE_NAME%/keystone_access.log keystone_combined
     %SSLENGINE%
     %SSLCERTFILE%
     %SSLKEYFILE%
@@ -27,7 +28,7 @@ Listen %ADMINPORT%
       ErrorLogFormat "%{cu}t %M"
     </IfVersion>
     ErrorLog /var/log/%APACHE_NAME%/keystone.log
-    CustomLog /var/log/%APACHE_NAME%/keystone_access.log combined
+    CustomLog /var/log/%APACHE_NAME%/keystone_access.log keystone_combined
     %SSLENGINE%
     %SSLCERTFILE%
     %SSLKEYFILE%
