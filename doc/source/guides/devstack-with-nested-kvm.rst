@@ -54,7 +54,7 @@ that by ensuring `/dev/kvm` character device is present.
 
 
 Configure Nested KVM for AMD-based Machines
---------------------------------------------
+-------------------------------------------
 
 Procedure to enable nested KVM virtualization on AMD-based machines.
 
@@ -121,7 +121,7 @@ attribute `virt_type = kvm` in `/etc/nova.conf`; otherwise, it'll fall
 back to `virt_type=qemu`, i.e. plain QEMU emulation.
 
 Optionally, to explicitly set the type of virtualization, to KVM, by the
-libvirt driver in Nova, the below config attribute can be used in
+libvirt driver in nova, the below config attribute can be used in
 DevStack's ``local.conf``:
 
 ::
