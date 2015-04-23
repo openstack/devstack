@@ -403,6 +403,12 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT s3_host "$SERVICE_HOST"
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
     iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
+    iniset $NOVA_CONF DEFAULT s3_listen "$HOST_IP"
+    iniset $NOVA_CONF DEFAULT novncproxy_host "$HOST_IP"
+    iniset $NOVA_CONF DEFAULT metadata_host "$HOST_IP"
+    iniset $NOVA_CONF DEFAULT metadata_listen "$HOST_IP"
+    iniset $NOVA_CONF DEFAULT ec2_listen "$HOST_IP"
+    iniset $NOVA_CONF DEFAULT osapi_compute_listen "$HOST_IP"
     iniset $NOVA_CONF database connection `database_connection_url nova`
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
