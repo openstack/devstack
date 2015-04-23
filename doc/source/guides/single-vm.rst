@@ -3,10 +3,10 @@ All-In-One Single VM
 ====================
 
 Use the cloud to build the cloud! Use your cloud to launch new versions
-of OpenStack in about 5 minutes. When you break it, start over! The VMs
+of OpenStack in about 5 minutes. If you break it, start over! The VMs
 launched in the cloud will be slow as they are running in QEMU
 (emulation), but their primary use is testing OpenStack development and
-operation. Speed not required.
+operation.
 
 Prerequisites Cloud & Image
 ===========================
@@ -15,7 +15,7 @@ Virtual Machine
 ---------------
 
 DevStack should run in any virtual machine running a supported Linux
-release. It will perform best with 4Gb or more of RAM.
+release. It will perform best with 4GB or more of RAM.
 
 OpenStack Deployment & cloud-init
 ---------------------------------
@@ -88,7 +88,7 @@ Using OpenStack
 ---------------
 
 At this point you should be able to access the dashboard. Launch VMs and
-if you give them floating IPs access those VMs from other machines on
+if you give them floating IPs, access those VMs from other machines on
 your network.
 
 One interesting use case is for developers working on a VM on their
