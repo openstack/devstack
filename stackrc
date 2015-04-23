@@ -553,7 +553,7 @@ case "$VIRT_DRIVER" in
                 IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs.img.gz"};;
             *) # otherwise, use the uec style image (with kernel, ramdisk, disk)
                 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec}
-                IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec.tar.gz"};;
+                IMAGE_URLS=${IMAGE_URLS:-"http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec.tar.gz",http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-uec.tar.gz};;
         esac
         ;;
     vsphere)
