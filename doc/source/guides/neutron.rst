@@ -1,14 +1,14 @@
 ======================================
-Using DevStack with Neutron Networking
+Using DevStack with neutron Networking
 ======================================
 
-This guide will walk you through using OpenStack Neutron with the ML2
+This guide will walk you through using OpenStack neutron with the ML2
 plugin and the Open vSwitch mechanism driver.
 
 Network Interface Configuration
 ===============================
 
-To use Neutron, it is suggested that two network interfaces be present
+To use neutron, it is suggested that two network interfaces be present
 in the host operating system.
 
 The first interface, eth0 is used for the OpenStack management (API,
@@ -62,7 +62,7 @@ connectivity.
 Disabling Next Generation Firewall Tools
 ========================================
 
-Devstack does not properly operate with modern firewall tools.  Specifically
+DevStack does not properly operate with modern firewall tools.  Specifically
 it will appear as if the guest VM can access the external network via ICMP,
 but UDP and TCP packets will not be delivered to the guest VM.  The root cause
 of the issue is that both ufw (Uncomplicated Firewall) and firewalld (Fedora's
@@ -96,13 +96,13 @@ disable ufw if it was enabled, do the following:
 Neutron Networking with Open vSwitch
 ====================================
 
-Configuring Neutron networking in DevStack is very similar to
+Configuring neutron, OpenStack Networking in DevStack is very similar to
 configuring `nova-network` - many of the same configuration variables
 (like `FIXED_RANGE` and `FLOATING_RANGE`) used by `nova-network` are
-used by Neutron, which is intentional.
+used by neutron, which is intentional.
 
 The only difference is the disabling of `nova-network` in your
-local.conf, and the enabling of the Neutron components.
+local.conf, and the enabling of the neutron components.
 
 
 Configuration
@@ -134,16 +134,16 @@ in a real setup FLOATING_RANGE would be a public IP address range.
 Neutron Networking with Open vSwitch and Provider Networks
 ==========================================================
 
-In some instances, it is desirable to use Neutron's provider
+In some instances, it is desirable to use neutron's provider
 networking extension, so that networks that are configured on an
-external router can be utilized by Neutron, and instances created via
+external router can be utilized by neutron, and instances created via
 Nova can attach to the network managed by the external router.
 
 For example, in some lab environments, a hardware router has been
 pre-configured by another party, and an OpenStack developer has been
 given a VLAN tag and IP address range, so that instances created via
 DevStack will use the external router for L3 connectivity, as opposed
-to the Neutron L3 service.
+to the neutron L3 service.
 
 
 Service Configuration
@@ -152,8 +152,8 @@ Service Configuration
 **Control Node**
 
 In this example, the control node will run the majority of the
-OpenStack API and management services (Keystone, Glance,
-Nova, Neutron, etc..)
+OpenStack API and management services (keystone, glance,
+nova, neutron)
 
 
 **Compute Nodes**
@@ -226,4 +226,4 @@ DevStack will automatically add the network interface defined in
 For example, with the above  configuration, a bridge is
 created, named `br-ex` which is managed by Open vSwitch, and the
 second interface on the compute node, `eth1` is attached to the
-bridge, to forward traffic sent by guest vms.
+bridge, to forward traffic sent by guest VMs.

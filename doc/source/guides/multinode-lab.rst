@@ -262,17 +262,17 @@ for scripting:
 Swift
 -----
 
-Swift requires a significant amount of resources and is disabled by
-default in DevStack. The support in DevStack is geared toward a minimal
-installation but can be used for testing. To implement a true multi-node
-test of Swift required more than DevStack provides. Enabling it is as
+Swift, OpenStack Object Storage, requires a significant amount of resources
+and is disabled by default in DevStack. The support in DevStack is geared 
+toward a minimal installation but can be used for testing. To implement a
+true multi-node test of swift, additional steps will be required. Enabling it is as
 simple as enabling the ``swift`` service in ``local.conf``:
 
 ::
 
     enable_service s-proxy s-object s-container s-account
 
-Swift will put its data files in ``SWIFT_DATA_DIR`` (default
+Swift, OpenStack Object Storage, will put its data files in ``SWIFT_DATA_DIR`` (default
 ``/opt/stack/data/swift``). The size of the data 'partition' created
 (really a loop-mounted file) is set by ``SWIFT_LOOPBACK_DISK_SIZE``. The
 Swift config files are located in ``SWIFT_CONF_DIR`` (default
@@ -334,14 +334,14 @@ After making changes to the repository or branch, if ``RECLONE`` is not
 set in ``localrc`` it may be necessary to remove the corresponding
 directory from ``/opt/stack`` to force git to re-clone the repository.
 
-For example, to pull Nova from a proposed release candidate in the
-primary Nova repository:
+For example, to pull nova, OpenStack Compute, from a proposed release candidate
+in the primary nova repository:
 
 ::
 
     NOVA_BRANCH=rc-proposed
 
-To pull Glance from an experimental fork:
+To pull glance, OpenStack Image service, from an experimental fork:
 
 ::
 
