@@ -39,6 +39,7 @@ function cleanup_cinder_backend_lvm {
 
     # Campsite rule: leave behind a volume group at least as clean as we found it
     clean_lvm_volume_group $VOLUME_GROUP_NAME-$be_name
+    clean_lvm_filter
 }
 
 # configure_cinder_backend_lvm - Set config files, create data dirs, etc
