@@ -192,3 +192,4 @@ fi
 
 # BUG: maybe it doesn't exist? We should isolate this further down.
 clean_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME || /bin/true
+clean_lvm_filter
