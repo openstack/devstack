@@ -296,7 +296,7 @@ function configure_ironic {
 # API specific configuration.
 function configure_ironic_api {
     iniset $IRONIC_CONF_FILE DEFAULT auth_strategy keystone
-    iniset $IRONIC_CONF_FILE DEFAULT policy_file $IRONIC_POLICY_JSON
+    iniset $IRONIC_CONF_FILE oslo_policy policy_file $IRONIC_POLICY_JSON
 
     # TODO(Yuki Nishiwaki): This is a temporary work-around until Ironic is fixed(bug#1422632).
     # These codes need to be changed to use the function of configure_auth_token_middleware
