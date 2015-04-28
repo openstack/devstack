@@ -174,10 +174,7 @@ function warn {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local msg="[WARNING] ${BASH_SOURCE[2]}:$1 $2"
-    echo $msg 1>&2;
-    if [[ -n ${LOGDIR} ]]; then
-        echo $msg >> "${LOGDIR}/error.log"
-    fi
+    echo $msg
     $xtrace
     return $exitcode
 }
@@ -509,7 +506,7 @@ function git_timed {
         fi
 
         count=$(($count + 1))
-        warn "timeout ${count} for git call: [git $@]"
+        warn $LINENO "timeout ${count} for git call: [git $@]"
         if [ $count -eq 3 ]; then
             die $LINENO "Maximum of 3 git retries reached"
         fi
