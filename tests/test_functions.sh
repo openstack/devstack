@@ -7,9 +7,6 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 # Import common functions
 source $TOP/functions
 
-# Import configuration
-source $TOP/openrc
-
 source $TOP/tests/unittest.sh
 
 echo "Testing die_if_not_set()"
