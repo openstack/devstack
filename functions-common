@@ -1137,6 +1137,10 @@ function zypper_install {
 # the command.
 # _run_process service "command-line" [group]
 function _run_process {
+    # disable tracing through the exec redirects, it's just confusing in the logs.
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
     local service=$1
     local command="$2"
     local group=$3
@@ -1159,6 +1163,9 @@ function _run_process {
         # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
         export PYTHONUNBUFFERED=1
     fi
+
+    # reenable xtrace before we do *real* work
+    $xtrace
 
     # Run under ``setsid`` to force the process to become a session and group leader.
     # The pid saved can be used with pkill -g to get the entire process group.
