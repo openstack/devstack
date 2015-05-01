@@ -149,6 +149,10 @@ Example (Keystone):
 
     KEYSTONE_USE_MOD_WSGI="True"
 
+Example (Nova):
+
+    NOVA_USE_MOD_WSGI="True"
+
 Example (Swift):
 
     SWIFT_USE_MOD_WSGI="True"

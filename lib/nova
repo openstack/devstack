@@ -16,6 +16,7 @@
 #
 # - install_nova
 # - configure_nova
+# - _config_nova_apache_wsgi
 # - create_nova_conf
 # - init_nova
 # - start_nova
@@ -61,6 +62,15 @@ NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 # NOTE(sdague): this is for transitional testing of the Nova v21 API.
 # Expect to remove in L or M.
 NOVA_API_VERSION=${NOVA_API_VERSION-default}
+
+if is_suse; then
+    NOVA_WSGI_DIR=${NOVA_WSGI_DIR:-/srv/www/htdocs/nova}
+else
+    NOVA_WSGI_DIR=${NOVA_WSGI_DIR:-/var/www/nova}
+fi
+
+# Toggle for deploying Nova-API under HTTPD + mod_wsgi
+NOVA_USE_MOD_WSGI=${NOVA_USE_MOD_WSGI:-False}
 
 if is_ssl_enabled_service "nova" || is_service_enabled tls-proxy; then
     NOVA_SERVICE_PROTOCOL="https"
@@ -221,6 +231,64 @@ function cleanup_nova {
     #if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
     #    cleanup_nova_hypervisor
     #fi
+}
+
+# _cleanup_nova_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+function _cleanup_nova_apache_wsgi {
+    sudo rm -f $NOVA_WSGI_DIR/*
+    sudo rm -f $(apache_site_config_for nova-api)
+    sudo rm -f $(apache_site_config_for nova-ec2-api)
+}
+
+# _config_nova_apache_wsgi() - Set WSGI config files of Keystone
+function _config_nova_apache_wsgi {
+    sudo mkdir -p $NOVA_WSGI_DIR
+
+    local nova_apache_conf=$(apache_site_config_for nova-api)
+    local nova_ec2_apache_conf=$(apache_site_config_for nova-ec2-api)
+    local nova_ssl=""
+    local nova_certfile=""
+    local nova_keyfile=""
+    local nova_api_port=$NOVA_SERVICE_PORT
+    local nova_ec2_api_port=$EC2_SERVICE_PORT
+    local venv_path=""
+
+    if is_ssl_enabled_service nova-api; then
+        nova_ssl="SSLEngine On"
+        nova_certfile="SSLCertificateFile $NOVA_SSL_CERT"
+        nova_keyfile="SSLCertificateKeyFile $NOVA_SSL_KEY"
+    fi
+    if [[ ${USE_VENV} = True ]]; then
+        venv_path="python-path=${PROJECT_VENV["nova"]}/lib/python2.7/site-packages"
+    fi
+
+    # copy proxy vhost and wsgi helper files
+    sudo cp $NOVA_DIR/nova/wsgi/nova-api.py $NOVA_WSGI_DIR/nova-api
+    sudo cp $NOVA_DIR/nova/wsgi/nova-ec2-api.py $NOVA_WSGI_DIR/nova-ec2-api
+
+    sudo cp $FILES/apache-nova-api.template $nova_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$nova_api_port|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%PUBLICWSGI%|$NOVA_WSGI_DIR/nova-api|g;
+        s|%SSLENGINE%|$nova_ssl|g;
+        s|%SSLCERTFILE%|$nova_certfile|g;
+        s|%SSLKEYFILE%|$nova_keyfile|g;
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
+    " -i $nova_apache_conf
+
+    sudo cp $FILES/apache-nova-ec2-api.template $nova_ec2_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$nova_ec2_api_port|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%PUBLICWSGI%|$NOVA_WSGI_DIR/nova-ec2-api|g;
+        s|%SSLENGINE%|$nova_ssl|g;
+        s|%SSLCERTFILE%|$nova_certfile|g;
+        s|%SSLKEYFILE%|$nova_keyfile|g;
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
+    " -i $nova_ec2_apache_conf
 }
 
 # configure_nova() - Set config files, create data dirs, etc
@@ -453,12 +521,16 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT force_config_drive "$FORCE_CONFIG_DRIVE"
     fi
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$NOVA_USE_MOD_WSGI" == "False" ]  ; then
         setup_colorized_logging $NOVA_CONF DEFAULT
     else
         # Show user_name and project_name instead of user_id and project_id
         iniset $NOVA_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
     fi
+    if [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
+        _config_nova_apache_wsgi
+    fi
+
     if is_service_enabled ceilometer; then
         iniset $NOVA_CONF DEFAULT instance_usage_audit "True"
         iniset $NOVA_CONF DEFAULT instance_usage_audit_period "hour"
@@ -655,6 +727,13 @@ function install_nova {
     git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
     setup_develop $NOVA_DIR
     sudo install -D -m 0644 -o $STACK_USER {$NOVA_DIR/tools/,/etc/bash_completion.d/}nova-manage.bash_completion
+
+    if [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
+        install_apache_wsgi
+        if is_ssl_enabled_service "nova-api"; then
+            enable_mod_ssl
+        fi
+    fi
 }
 
 # start_nova_api() - Start the API process ahead of other things
@@ -671,7 +750,18 @@ function start_nova_api {
     local old_path=$PATH
     export PATH=$NOVA_BIN_DIR:$PATH
 
-    run_process n-api "$NOVA_BIN_DIR/nova-api"
+    # If the site is not enabled then we are in a grenade scenario
+    local enabled_site_file=$(apache_site_config_for nova-api)
+    if [ -f ${enabled_site_file} ] && [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
+        enable_apache_site nova-api
+        enable_apache_site nova-ec2-api
+        restart_apache_server
+        tail_log nova /var/log/$APACHE_NAME/nova-api.log
+        tail_log nova /var/log/$APACHE_NAME/nova-ec2-api.log
+    else
+        run_process n-api "$NOVA_BIN_DIR/nova-api"
+    fi
+
     echo "Waiting for nova-api to start..."
     if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$SERVICE_HOST:$service_port; then
         die $LINENO "nova-api did not start"
@@ -780,6 +870,13 @@ function stop_nova_compute {
 }
 
 function stop_nova_rest {
+    if [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
+        disable_apache_site nova-api
+        disable_apache_site nova-ec2-api
+        restart_apache_server
+    else
+        stop_process n-api
+    fi
     # Kill the nova screen windows
     # Some services are listed here twice since more than one instance
     # of a service may be running in certain configs.
