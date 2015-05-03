@@ -311,7 +311,15 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG identity admin_tenant_id $ADMIN_TENANT_ID
         iniset $TEMPEST_CONFIG identity admin_domain_name $ADMIN_DOMAIN_NAME
     fi
-    iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
+    if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
+        # Only Identity v3 is available; then skip Identity API v2 tests
+        iniset $TEMPEST_CONFIG identity-feature-enabled v2_api False
+        # In addition, use v3 auth tokens for running all Tempest tests
+        iniset $TEMPEST_CONFIG identity auth_version v3
+    else
+        iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
+    fi
+
     if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
         iniset $TEMPEST_CONFIG identity ca_certificates_file $SSL_BUNDLE_FILE
     fi
