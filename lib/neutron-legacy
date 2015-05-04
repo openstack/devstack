@@ -1145,6 +1145,8 @@ function _neutron_setup_rootwrap {
         sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
     fi
     sudo sed -e "s:^filters_path=.*$:filters_path=$Q_CONF_ROOTWRAP_D:" -i $Q_RR_CONF_FILE
+    sudo sed -e 's:^exec_dirs=\(.*\)$:exec_dirs=\1,/usr/local/bin:' -i $Q_RR_CONF_FILE
+
     # Specify ``rootwrap.conf`` as first parameter to neutron-rootwrap
     ROOTWRAP_SUDOER_CMD="$NEUTRON_ROOTWRAP $Q_RR_CONF_FILE *"
     ROOTWRAP_DAEMON_SUDOER_CMD="$NEUTRON_ROOTWRAP-daemon $Q_RR_CONF_FILE"
