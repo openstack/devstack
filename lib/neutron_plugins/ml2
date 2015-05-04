@@ -104,8 +104,10 @@ function neutron_plugin_configure_service {
         iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
     fi
 
-    # Since we enable the tunnel TypeDrivers, also enable a local_ip
-    iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $TUNNEL_ENDPOINT_IP
+    if [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
+        # Set local_ip if TENANT_TUNNELS are enabled.
+        iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $TUNNEL_ENDPOINT_IP
+    fi
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 mechanism_drivers=$Q_ML2_PLUGIN_MECHANISM_DRIVERS
 
