@@ -254,6 +254,7 @@ function configure_keystone {
         iniset $KEYSTONE_CONF eventlet_server admin_port $KEYSTONE_AUTH_PORT_INT
     fi
 
+    iniset $KEYSTONE_CONF DEFAULT bind_host $HOST_IP
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" != "" ]]; then
@@ -468,6 +469,7 @@ function configure_auth_token_middleware {
     iniset $conf_file $section project_domain_id default
 
     iniset $conf_file $section auth_uri $KEYSTONE_SERVICE_URI
+    iniset $conf_file $section identity_uri $KEYSTONE_SERVICE_URI
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     iniset $conf_file $section signing_dir $signing_dir
 }

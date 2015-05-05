@@ -105,6 +105,7 @@ function configure_glance {
     # Copy over our glance configurations and update them
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+    iniset $GLANCE_REGISTRY_CONF DEFAULT bind_host $HOST_IP
     inicomment $GLANCE_REGISTRY_CONF DEFAULT log_file
     local dburl=`database_connection_url glance`
     iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $dburl
@@ -119,6 +120,7 @@ function configure_glance {
 
     cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+    iniset $GLANCE_API_CONF DEFAULT bind_host $HOST_IP
     inicomment $GLANCE_API_CONF DEFAULT log_file
     iniset $GLANCE_API_CONF DEFAULT sql_connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
@@ -139,6 +141,7 @@ function configure_glance {
 
     # Store specific configs
     iniset $GLANCE_API_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    iniset $GLANCE_API_CONF DEFAULT registry_host $GLANCE_SERVICE_HOST
 
     # NOTE(flaper87): Until Glance is fully migrated, set these configs in both
     # sections.
@@ -209,6 +212,7 @@ function configure_glance {
     iniset $GLANCE_CACHE_CONF DEFAULT admin_user glance
     iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_password
     iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
+    iniset $GLANCE_CACHE_CONF DEFAULT registry_host $GLANCE_SERVICE_HOST
 
     # Store specific confs
     # NOTE(flaper87): Until Glance is fully migrated, set these configs in both
