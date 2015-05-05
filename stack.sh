@@ -708,6 +708,12 @@ source $TOP_DIR/tools/fixup_stuff.sh
 # Pre-build some problematic wheels
 if [[ -n ${WHEELHOUSE:-} && ! -d ${WHEELHOUSE:-} ]]; then
     source $TOP_DIR/tools/build_wheels.sh
+
+    # Due to https://bugs.launchpad.net/swift/+bug/1451992 we have to import
+    # this package with root once so the CFFI bindings can be built. We have
+    # to therefore install it so we can import it.
+    pip_install xattr
+    sudo python -c "import xattr"
 fi
 
 
