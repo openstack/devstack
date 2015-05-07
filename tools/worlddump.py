@@ -61,6 +61,17 @@ File System Summary
     print dfraw
 
 
+def iptables_dump():
+    tables = ['filter', 'nat', 'mangle']
+    print """
+IP Tables Dump
+===============
+"""
+    for table in tables:
+        print os.popen("sudo iptables --line-numbers -L -nv -t %s"
+                       % table).read()
+
+
 def process_list():
     print """
 Process Listing
@@ -79,6 +90,7 @@ def main():
         os.dup2(f.fileno(), sys.stdout.fileno())
         disk_space()
         process_list()
+        iptables_dump()
 
 
 if __name__ == '__main__':
