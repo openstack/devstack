@@ -127,7 +127,15 @@ test_disable_negated_services 'a,-a' ''
 test_disable_negated_services 'b,a,-a' 'b'
 test_disable_negated_services 'a,b,-a' 'b'
 test_disable_negated_services 'a,-a,b' 'b'
-
+test_disable_negated_services 'a,aa,-a' 'aa'
+test_disable_negated_services 'aa,-a' 'aa'
+test_disable_negated_services 'a_a, -a_a' ''
+test_disable_negated_services 'a-b, -a-b' ''
+test_disable_negated_services 'a-b, b, -a-b' 'b'
+test_disable_negated_services 'a,-a,av2,b' 'av2,b'
+test_disable_negated_services 'a,aa,-a' 'aa'
+test_disable_negated_services 'a,av2,-a,a' 'av2'
+test_disable_negated_services 'a,-a,av2' 'av2'
 
 echo "Testing is_package_installed()"
 
