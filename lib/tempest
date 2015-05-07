@@ -364,6 +364,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions $compute_api_extensions
     # TODO(mriedem): Remove the preserve_ports flag when Juno is end of life.
     iniset $TEMPEST_CONFIG compute-feature-enabled preserve_ports True
+    # TODO(gilliard): Remove the live_migrate_paused_instances flag when Juno is end of life.
+    iniset $TEMPEST_CONFIG compute-feature-enabled live_migrate_paused_instances True
 
     # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
