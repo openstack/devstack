@@ -59,7 +59,7 @@ function neutron_plugin_configure_plugin_agent {
         OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
 
         # Configure bridge manually with physical interface as port for multi-node
-        sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_PHYSICAL_BRIDGE
+        _neutron_ovs_base_add_bridge $OVS_PHYSICAL_BRIDGE
     fi
     if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings $OVS_BRIDGE_MAPPINGS
@@ -92,7 +92,7 @@ function neutron_plugin_configure_plugin_agent {
         # Set up domU's L2 agent:
 
         # Create a bridge "br-$GUEST_INTERFACE_DEFAULT"
-        sudo ovs-vsctl --no-wait -- --may-exist add-br "br-$GUEST_INTERFACE_DEFAULT"
+        _neutron_ovs_base_add_bridge "br-$GUEST_INTERFACE_DEFAULT"
         # Add $GUEST_INTERFACE_DEFAULT to that bridge
         sudo ovs-vsctl add-port "br-$GUEST_INTERFACE_DEFAULT" $GUEST_INTERFACE_DEFAULT
 
