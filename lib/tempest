@@ -65,7 +65,7 @@ BUILD_TIMEOUT=${BUILD_TIMEOUT:-196}
 # This must be False on stable branches, as master tempest
 # deps do not match stable branch deps. Set this to True to
 # have tempest installed in DevStack by default.
-INSTALL_TEMPEST=${INSTALL_TEMPEST:-"True"}
+INSTALL_TEMPEST=${INSTALL_TEMPEST:-"False"}
 
 BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-${CIRROS_VERSION}"
 BOTO_CONF=/etc/boto.cfg
