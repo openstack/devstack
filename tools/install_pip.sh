@@ -8,6 +8,7 @@
 
 # Assumptions:
 # - update pip to $INSTALL_PIP_VERSION
+# - if USE_PYTHON3=True, PYTHON3_VERSION refers to a version already installed
 
 set -o errexit
 set -o xtrace
@@ -31,6 +32,8 @@ GetDistro
 echo "Distro: $DISTRO"
 
 function get_versions {
+    # FIXME(dhellmann): Deal with multiple python versions here? This
+    # is just used for reporting, so maybe not?
     PIP=$(which pip 2>/dev/null || which pip-python 2>/dev/null || true)
     if [[ -n $PIP ]]; then
         PIP_VERSION=$($PIP --version | awk '{ print $2}')
@@ -75,6 +78,9 @@ function install_get_pip {
         touch $LOCAL_PIP.downloaded
     fi
     sudo -H -E python $LOCAL_PIP
+    if python3_enabled; then
+        sudo -H -E python${PYTHON3_VERSION} $LOCAL_PIP
+    fi
 }
 
 
@@ -114,6 +120,7 @@ get_versions
 # python in f23 depends on the python-pip package
 if ! { is_fedora && [[ $DISTRO == "f23" ]]; }; then
     uninstall_package python-pip
+    uninstall_package python3-pip
 fi
 
 install_get_pip
@@ -122,6 +129,7 @@ if [[ -n $PYPI_ALTERNATIVE_URL ]]; then
     configure_pypi_alternative_url
 fi
 
+set -x
 pip_install -U setuptools
 
 get_versions
