@@ -60,6 +60,18 @@ virtualenv $TMP_VENV_PATH
 # Install modern pip and wheel
 PIP_VIRTUAL_ENV=$TMP_VENV_PATH pip_install -U pip wheel
 
+# BUG: cffi has a lot of issues. It has no stable ABI, if installed
+# code is built with a different ABI than the one that's detected at
+# load time, it tries to compile on the fly for the new ABI in the
+# install location (which will probably be /usr and not
+# writable). Also cffi is often included via setup_requires by
+# packages, which have different install rules (allowing betas) than
+# pip has.
+#
+# Because of this we must pip install cffi into the venv to build
+# wheels.
+PIP_VIRTUAL_ENV=$TMP_VENV_PATH pip_install_gr cffi
+
 # ``VENV_PACKAGES`` is a list of packages we want to pre-install
 VENV_PACKAGE_FILE=$FILES/venv-requirements.txt
 if [[ -r $VENV_PACKAGE_FILE ]]; then
