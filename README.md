@@ -297,7 +297,7 @@ If tempest has been successfully configured, a basic set of smoke
 tests can be run as follows:
 
     $ cd /opt/stack/tempest
-    $ nosetests tempest/scenario/test_network_basic_ops.py
+    $ tox -efull  tempest.scenario.test_network_basic_ops
 
 # DevStack on Xenserver
 

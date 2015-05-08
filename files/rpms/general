@@ -12,7 +12,6 @@ libffi-devel
 libxml2-devel
 libxslt-devel
 psmisc
-pylint
 python-setuptools
 python-prettytable # dist:rhel6 [1]
 python-virtualenv

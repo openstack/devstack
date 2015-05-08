@@ -14,7 +14,6 @@ openssh
 openssl
 psmisc
 python-cmd2 # dist:opensuse-12.3
-python-pylint
 python-setuptools # instead of python-distribute; dist:sle11sp2
 screen
 tar

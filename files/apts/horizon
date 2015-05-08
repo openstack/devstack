@@ -9,9 +9,7 @@ python-routes
 python-xattr
 python-sqlalchemy
 python-webob
-pylint
 python-eventlet
-python-nose
 python-sphinx
 python-mox
 python-coverage

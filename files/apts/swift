@@ -5,7 +5,6 @@ python-coverage
 python-eventlet
 python-greenlet
 python-netifaces
-python-nose
 python-pastedeploy
 python-simplejson
 python-webob
