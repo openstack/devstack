@@ -1,6 +1,5 @@
 Django
 httpd # NOPRIME
 mod_wsgi  # NOPRIME
-pylint
 pyxattr
 pcre-devel  # pyScss

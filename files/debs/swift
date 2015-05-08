@@ -1,8 +1,5 @@
 curl
 make
 memcached
-# NOTE python-nose only exists because of swift functional job, we should probably
-# figure out a more consistent way of installing this from test-requirements.txt instead
-python-nose
 sqlite3
 xfsprogs
