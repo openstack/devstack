@@ -18,7 +18,6 @@
 #   - (re)start messagebus daemon
 #   - remove distro packages python-crypto and python-lxml
 #   - pre-install hgtools to work around a bug in RHEL6 distribute
-#   - install nose 1.1 from EPEL
 
 set -o errexit
 set -o xtrace
@@ -160,13 +159,5 @@ if [[ $DISTRO =~ (rhel6) ]]; then
     # dependency is satisfied and it will not be installed transiently.
     # Note we do this before the track-depends in ``stack.sh``.
     pip_install hgtools
-
-
-    # RHEL6's version of ``python-nose`` is incompatible with Tempest.
-    # Install nose 1.1 (Tempest-compatible) from EPEL
-    install_package python-nose1.1
-    # Add a symlink for the new nosetests to allow tox for Tempest to
-    # work unmolested.
-    sudo ln -sf /usr/bin/nosetests1.1 /usr/local/bin/nosetests
 
 fi

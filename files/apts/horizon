@@ -10,9 +10,7 @@ python-xattr
 python-sqlalchemy
 python-webob
 python-kombu
-pylint
 python-eventlet
-python-nose
 python-sphinx
 python-mox
 python-kombu
