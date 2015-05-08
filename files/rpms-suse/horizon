@@ -12,7 +12,5 @@ python-coverage
 python-dateutil
 python-eventlet
 python-mox
-python-nose
-python-pylint
 python-sqlalchemy-migrate
 python-xattr

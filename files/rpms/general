@@ -14,7 +14,6 @@ libxml2-devel
 libxslt-devel
 pkgconfig
 psmisc
-pylint
 python-devel
 screen
 tar
