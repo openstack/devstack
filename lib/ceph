@@ -279,7 +279,7 @@ function configure_ceph_embedded_nova {
     # configure Nova service options, ceph pool, ceph user and ceph key
     sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${NOVA_CEPH_POOL} size ${CEPH_REPLICAS}
     if [[ $CEPH_REPLICAS -ne 1 ]]; then
-        sudo -c ${CEPH_CONF_FILE} ceph osd pool set ${NOVA_CEPH_POOL} crush_ruleset ${RULE_ID}
+        sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${NOVA_CEPH_POOL} crush_ruleset ${RULE_ID}
     fi
 }
 
