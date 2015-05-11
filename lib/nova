@@ -460,7 +460,6 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
     if [ "$NOVA_ALLOW_MOVE_TO_SAME_HOST" == "True" ]; then
         iniset $NOVA_CONF DEFAULT allow_resize_to_same_host "True"
-        iniset $NOVA_CONF DEFAULT allow_migrate_to_same_host "True"
     fi
     iniset $NOVA_CONF DEFAULT api_paste_config "$NOVA_API_PASTE_INI"
     iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
