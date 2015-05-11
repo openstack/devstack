@@ -8,27 +8,36 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 source $TOP/functions
 source $TOP/tests/unittest.sh
 
-function test_truefalse {
+function test_trueorfalse {
     local one=1
     local captrue=True
     local lowtrue=true
-    local abrevtrue=t
+    local uppertrue=TRUE
+    local capyes=Yes
+    local lowyes=yes
+    local upperyes=YES
+
+    for default in True False; do
+        for name in one captrue lowtrue uppertrue capyes lowyes upperyes; do
+                assert_equal "True" $(trueorfalse $default $name) "\$(trueorfalse $default $name)"
+        done
+    done
+
     local zero=0
     local capfalse=False
     local lowfalse=false
-    local abrevfalse=f
-    for against in True False; do
-        for name in one captrue lowtrue abrevtrue; do
-            assert_equal "True" $(trueorfalse $against $name) "\$(trueorfalse $against $name)"
-        done
-    done
-    for against in True False; do
-        for name in zero capfalse lowfalse abrevfalse; do
-            assert_equal "False" $(trueorfalse $against $name) "\$(trueorfalse $against $name)"
+    local upperfalse=FALSE
+    local capno=No
+    local lowno=no
+    local upperno=NO
+
+    for default in True False; do
+        for name in zero capfalse lowfalse upperfalse capno lowno upperno; do
+            assert_equal "False" $(trueorfalse $default $name) "\$(trueorfalse $default $name)"
         done
     done
 }
 
-test_truefalse
+test_trueorfalse
 
 report_results
