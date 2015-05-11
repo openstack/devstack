@@ -332,7 +332,7 @@ that includes at least:
 You likely want to change your `localrc` section to run a scheduler that
 will balance VMs across hosts:
 
-    SCHEDULER=nova.scheduler.simple.SimpleScheduler
+    SCHEDULER=nova.scheduler.filter_scheduler.FilterScheduler
 
 You can then run many compute nodes, each of which should have a `stackrc`
 which includes the following, with the IP address of the above controller node:
