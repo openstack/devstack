@@ -64,21 +64,21 @@ KEYSTONE_EXTENSIONS=${KEYSTONE_EXTENSIONS:-}
 # Toggle for deploying Keystone under HTTPD + mod_wsgi
 KEYSTONE_USE_MOD_WSGI=${KEYSTONE_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}}
 
-# Select the backend for Keystone's service catalog
+# Select the Catalog backend driver
 KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 KEYSTONE_CATALOG=$KEYSTONE_CONF_DIR/default_catalog.templates
 
-# Select the backend for Tokens
+# Select the token persistence backend driver
 KEYSTONE_TOKEN_BACKEND=${KEYSTONE_TOKEN_BACKEND:-sql}
 
-# Select the backend for Identity
+# Select the Identity backend driver
 KEYSTONE_IDENTITY_BACKEND=${KEYSTONE_IDENTITY_BACKEND:-sql}
 
-# Select the backend for Assignment
+# Select the Assignment backend driver
 KEYSTONE_ASSIGNMENT_BACKEND=${KEYSTONE_ASSIGNMENT_BACKEND:-sql}
 
-# Select Keystone's token format
-# Choose from 'UUID', 'PKI', or 'PKIZ'
+# Select Keystone's token provider (and format)
+# Choose from 'uuid', 'pki', 'pkiz', or 'fernet'
 KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-}
 KEYSTONE_TOKEN_FORMAT=$(echo ${KEYSTONE_TOKEN_FORMAT} | tr '[:upper:]' '[:lower:]')
 
@@ -98,12 +98,6 @@ KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 KEYSTONE_ADMIN_BIND_HOST=${KEYSTONE_ADMIN_BIND_HOST:-$KEYSTONE_SERVICE_HOST}
 # Set the tenant for service accounts in Keystone
 SERVICE_TENANT_NAME=${SERVICE_TENANT_NAME:-service}
-
-# valid identity backends as per dir keystone/identity/backends
-KEYSTONE_VALID_IDENTITY_BACKENDS=kvs,ldap,pam,sql
-
-# valid assignment backends as per dir keystone/identity/backends
-KEYSTONE_VALID_ASSIGNMENT_BACKENDS=kvs,ldap,sql
 
 # if we are running with SSL use https protocols
 if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
@@ -225,15 +219,8 @@ function configure_keystone {
         iniset $KEYSTONE_CONF DEFAULT member_role_name "_member_"
     fi
 
-    # check if identity backend is valid
-    if [[ "$KEYSTONE_VALID_IDENTITY_BACKENDS" =~ "$KEYSTONE_IDENTITY_BACKEND" ]]; then
-        iniset $KEYSTONE_CONF identity driver "keystone.identity.backends.$KEYSTONE_IDENTITY_BACKEND.Identity"
-    fi
-
-    # check if assignment backend is valid
-    if [[ "$KEYSTONE_VALID_ASSIGNMENT_BACKENDS" =~ "$KEYSTONE_ASSIGNMENT_BACKEND" ]]; then
-        iniset $KEYSTONE_CONF assignment driver "keystone.assignment.backends.$KEYSTONE_ASSIGNMENT_BACKEND.Assignment"
-    fi
+    iniset $KEYSTONE_CONF identity driver "$KEYSTONE_IDENTITY_BACKEND"
+    iniset $KEYSTONE_CONF assignment driver "$KEYSTONE_ASSIGNMENT_BACKEND"
 
     iniset_rpc_backend keystone $KEYSTONE_CONF
 
@@ -257,23 +244,17 @@ function configure_keystone {
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" != "" ]]; then
-        iniset $KEYSTONE_CONF token provider keystone.token.providers.$KEYSTONE_TOKEN_FORMAT.Provider
+        iniset $KEYSTONE_CONF token provider $KEYSTONE_TOKEN_FORMAT
     fi
 
     iniset $KEYSTONE_CONF database connection `database_connection_url keystone`
     iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
 
-    if [[ "$KEYSTONE_TOKEN_BACKEND" = "sql" ]]; then
-        iniset $KEYSTONE_CONF token driver keystone.token.persistence.backends.sql.Token
-    elif [[ "$KEYSTONE_TOKEN_BACKEND" = "memcache" ]]; then
-        iniset $KEYSTONE_CONF token driver keystone.token.persistence.backends.memcache.Token
-    else
-        iniset $KEYSTONE_CONF token driver keystone.token.persistence.backends.kvs.Token
-    fi
+    iniset $KEYSTONE_CONF token driver "$KEYSTONE_TOKEN_BACKEND"
 
+    iniset $KEYSTONE_CONF catalog driver "$KEYSTONE_CATALOG_BACKEND"
     if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
         # Configure ``keystone.conf`` to use sql
-        iniset $KEYSTONE_CONF catalog driver keystone.catalog.backends.sql.Catalog
         inicomment $KEYSTONE_CONF catalog template_file
     else
         cp -p $FILES/default_catalog.templates $KEYSTONE_CATALOG
@@ -300,7 +281,6 @@ function configure_keystone {
         " -i $KEYSTONE_CATALOG
 
         # Configure ``keystone.conf`` to use templates
-        iniset $KEYSTONE_CONF catalog driver "keystone.catalog.backends.templated.Catalog"
         iniset $KEYSTONE_CONF catalog template_file "$KEYSTONE_CATALOG"
     fi
 
