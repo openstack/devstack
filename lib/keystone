@@ -248,7 +248,6 @@ function configure_keystone {
     fi
 
     iniset $KEYSTONE_CONF database connection `database_connection_url keystone`
-    iniset $KEYSTONE_CONF ec2 driver "keystone.contrib.ec2.backends.sql.Ec2"
 
     iniset $KEYSTONE_CONF token driver "$KEYSTONE_TOKEN_BACKEND"
 
