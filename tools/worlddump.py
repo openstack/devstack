@@ -41,12 +41,24 @@ def warn(msg):
     print "WARN: %s" % msg
 
 
+def _dump_cmd(cmd):
+    print cmd
+    print "-" * len(cmd)
+    print
+    print os.popen(cmd).read()
+
+
+def _header(name):
+    print
+    print name
+    print "=" * len(name)
+    print
+
+
 def disk_space():
     # the df output
-    print """
-File System Summary
-===================
-"""
+    _header("File System Summary")
+
     dfraw = os.popen("df -Ph").read()
     df = [s.split() for s in dfraw.splitlines()]
     for fs in df:
@@ -63,22 +75,26 @@ File System Summary
 
 def iptables_dump():
     tables = ['filter', 'nat', 'mangle']
-    print """
-IP Tables Dump
-===============
-"""
+    _header("IP Tables Dump")
+
     for table in tables:
-        print os.popen("sudo iptables --line-numbers -L -nv -t %s"
-                       % table).read()
+        _dump_cmd("sudo iptables --line-numbers -L -nv -t %s" % table)
+
+
+def network_dump():
+    _header("Network Dump")
+
+    _dump_cmd("brctl show")
+    _dump_cmd("arp -n")
+    _dump_cmd("ip addr")
+    _dump_cmd("ip link")
+    _dump_cmd("ip route")
 
 
 def process_list():
-    print """
-Process Listing
-===============
-"""
-    psraw = os.popen("ps axo user,ppid,pid,pcpu,pmem,vsz,rss,tty,stat,start,time,args").read()
-    print psraw
+    _header("Process Listing")
+    _dump_cmd("ps axo "
+              "user,ppid,pid,pcpu,pmem,vsz,rss,tty,stat,start,time,args")
 
 
 def main():
@@ -90,6 +106,7 @@ def main():
         os.dup2(f.fileno(), sys.stdout.fileno())
         disk_space()
         process_list()
+        network_dump()
         iptables_dump()
 
 
