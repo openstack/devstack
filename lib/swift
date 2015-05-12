@@ -439,7 +439,7 @@ function configure_swift {
     if is_service_enabled swift3; then
         cat <<EOF >>${SWIFT_CONFIG_PROXY_SERVER}
 [filter:s3token]
-paste.filter_factory = keystoneclient.middleware.s3_token:filter_factory
+paste.filter_factory = keystonemiddleware.s3_token:filter_factory
 auth_port = ${KEYSTONE_AUTH_PORT}
 auth_host = ${KEYSTONE_AUTH_HOST}
 auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
