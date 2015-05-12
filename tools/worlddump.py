@@ -18,6 +18,7 @@
 
 import argparse
 import datetime
+import fnmatch
 import os
 import os.path
 import sys
@@ -97,6 +98,14 @@ def process_list():
               "user,ppid,pid,pcpu,pmem,vsz,rss,tty,stat,start,time,args")
 
 
+def compute_consoles():
+    _header("Compute consoles")
+    for root, dirnames, filenames in os.walk('/opt/stack'):
+        for filename in fnmatch.filter(filenames, 'console.log'):
+            fullpath = os.path.join(root, filename)
+            _dump_cmd("sudo cat %s" % fullpath)
+
+
 def main():
     opts = get_options()
     fname = filename(opts.dir)
@@ -108,6 +117,7 @@ def main():
         process_list()
         network_dump()
         iptables_dump()
+        compute_consoles()
 
 
 if __name__ == '__main__':
