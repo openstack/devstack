@@ -259,7 +259,7 @@ function _config_nova_apache_wsgi {
         nova_keyfile="SSLCertificateKeyFile $NOVA_SSL_KEY"
     fi
     if [[ ${USE_VENV} = True ]]; then
-        venv_path="python-path=${PROJECT_VENV["nova"]}/lib/python2.7/site-packages"
+        venv_path="python-path=${PROJECT_VENV["nova"]}/lib/$(python_version)/site-packages"
     fi
 
     # copy proxy vhost and wsgi helper files
