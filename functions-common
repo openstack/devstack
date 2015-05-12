@@ -51,14 +51,16 @@ TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 function trueorfalse {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
-    local default=$1
-    local literal=$2
-    local testval=${!literal:-}
 
-    [[ -z "$testval" ]] && { echo "$default"; return; }
-    [[ "0 no No NO false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
-    [[ "1 yes Yes YES true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
-    echo "$default"
+    local default=$1
+    local testval=${!2:-}
+
+    case "$testval" in
+        "1" | [yY]es | "YES" | [tT]rue | "TRUE" ) echo "True" ;;
+        "0" | [nN]o | "NO" | [fF]alse | "FALSE" ) echo "False" ;;
+        * )                                       echo "$default" ;;
+    esac
+
     $xtrace
 }
 
