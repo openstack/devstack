@@ -138,26 +138,12 @@ function configure_glance {
     fi
 
     # Store specific configs
-    iniset $GLANCE_API_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
-
-    # NOTE(flaper87): Until Glance is fully migrated, set these configs in both
-    # sections.
     iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
 
     iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
 
     # Store the images in swift if enabled.
     if is_service_enabled s-proxy; then
-        iniset $GLANCE_API_CONF DEFAULT default_store swift
-        iniset $GLANCE_API_CONF DEFAULT swift_store_auth_address $KEYSTONE_SERVICE_URI/v2.0/
-        iniset $GLANCE_API_CONF DEFAULT swift_store_user $SERVICE_TENANT_NAME:glance-swift
-        iniset $GLANCE_API_CONF DEFAULT swift_store_key $SERVICE_PASSWORD
-        iniset $GLANCE_API_CONF DEFAULT swift_store_create_container_on_put True
-
-        iniset $GLANCE_API_CONF DEFAULT known_stores "glance.store.filesystem.Store, glance.store.http.Store, glance.store.swift.Store"
-
-        # NOTE(flaper87): Until Glance is fully migrated, set these configs in both
-        # sections.
         iniset $GLANCE_API_CONF glance_store default_store swift
         iniset $GLANCE_API_CONF glance_store swift_store_auth_address $KEYSTONE_SERVICE_URI/v2.0/
         iniset $GLANCE_API_CONF glance_store swift_store_user $SERVICE_TENANT_NAME:glance-swift
@@ -211,9 +197,6 @@ function configure_glance {
     iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
 
     # Store specific confs
-    # NOTE(flaper87): Until Glance is fully migrated, set these configs in both
-    # sections.
-    iniset $GLANCE_CACHE_CONF DEFAULT filesystem_store_datadir $GLANCE_IMAGE_DIR/
     iniset $GLANCE_CACHE_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
 
     cp -p $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
