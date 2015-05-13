@@ -106,6 +106,10 @@ function configure_tempest {
         pip_install_gr testrepository
     fi
 
+    # Used during configuration so make sure we have the correct
+    # version installed
+    pip_install_gr python-openstackclient
+
     local image_lines
     local images
     local num_images
