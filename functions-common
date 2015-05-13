@@ -1899,6 +1899,12 @@ function maskip {
     echo $subnet
 }
 
+# Return the current python as "python<major>.<minor>"
+function python_version {
+    local python_version=$(python -c 'import sys; print("%s.%s" % sys.version_info[0:2])')
+    echo "python${python_version}"
+}
+
 # Service wrapper to restart services
 # restart_service service-name
 function restart_service {
