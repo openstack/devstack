@@ -59,12 +59,16 @@ function configure_rootwrap {
     sudo install -o root -g root -m 644 $rootwrap_conf_src_dir/rootwrap.conf /etc/${project}/rootwrap.conf
     sudo sed -e "s:^filters_path=.*$:filters_path=/etc/${project}/rootwrap.d:" -i /etc/${project}/rootwrap.conf
 
-    # Specify rootwrap.conf as first parameter to rootwrap
-    rootwrap_sudo_cmd="$rootwrap_bin /etc/${project}/rootwrap.conf *"
-
     # Set up the rootwrap sudoers
     local tempfile=$(mktemp)
+    # Specify rootwrap.conf as first parameter to rootwrap
+    rootwrap_sudo_cmd="${rootwrap_bin} /etc/${project}/rootwrap.conf *"
     echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudo_cmd" >$tempfile
+    if [ -f ${bin_dir}/${project}-rootwrap-daemon ]; then
+        # rootwrap daemon does not need any parameters
+        rootwrap_sudo_cmd="${rootwrap_bin}-daemon /etc/${project}/rootwrap.conf"
+        echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudo_cmd" >>$tempfile
+    fi
     chmod 0440 $tempfile
     sudo chown root:root $tempfile
     sudo mv $tempfile /etc/sudoers.d/${project}-rootwrap
