@@ -299,6 +299,11 @@ function configure_cinder {
         iniset $CINDER_CONF DEFAULT ssl_key_file "$CINDER_SSL_KEY"
     fi
 
+    # Set os_privileged_user credentials (used for os-assisted-snapshots)
+    iniset $CINDER_CONF DEFAULT os_privileged_user_name nova
+    iniset $CINDER_CONF DEFAULT os_privileged_user_password "$SERVICE_PASSWORD"
+    iniset $CINDER_CONF DEFAULT os_privileged_user_tenant "$SERVICE_TENANT_NAME"
+
 }
 
 # create_cinder_accounts() - Set up common required cinder accounts
