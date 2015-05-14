@@ -1213,13 +1213,6 @@ if is_service_enabled q-svc; then
 elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     NM_CONF=${NOVA_CONF}
     if is_service_enabled n-cell; then
-        # Both cells should have the same network uuid for server create
-        if [[ ! "$NETWORK_CREATE_ARGS" =~ "--uuid" ]]; then
-            NETWORK_CREATE_ARGS="$NETWORK_CREATE_ARGS --uuid $(uuidgen)"
-        fi
-        # Create a small network in the API cell
-        $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF network create "$PRIVATE_NETWORK_NAME" $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
-        # Everything else should go in the child cell
         NM_CONF=${NOVA_CELLS_CONF}
     fi
 
