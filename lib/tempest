@@ -344,7 +344,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute flavor_ref $flavor_ref
     iniset $TEMPEST_CONFIG compute flavor_ref_alt $flavor_ref_alt
     iniset $TEMPEST_CONFIG compute ssh_connect_method $ssh_connect_method
-    if ! is_service_enabled n-cell; then
+    if [[ ! $(is_service_enabled n-cell) && ! $(is_service_enabled neutron) ]]; then
         iniset $TEMPEST_CONFIG compute fixed_network_name $PRIVATE_NETWORK_NAME
     fi
 
