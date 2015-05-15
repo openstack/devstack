@@ -109,19 +109,28 @@ if is_fedora; then
     fi
 
     FORCE_FIREWALLD=$(trueorfalse False $FORCE_FIREWALLD)
-    if [[ ${DISTRO} =~ (f20) && $FORCE_FIREWALLD == "False" ]]; then
+    if [[ $FORCE_FIREWALLD == "False" ]]; then
         # On Fedora 20 firewalld interacts badly with libvirt and
-        # slows things down significantly.  However, for those cases
-        # where that combination is desired, allow this fix to be skipped.
-
-        # There was also an additional issue with firewalld hanging
-        # after install of libvirt with polkit.  See
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1099031
+        # slows things down significantly (this issue was fixed in
+        # later fedoras).  There was also an additional issue with
+        # firewalld hanging after install of libvirt with polkit [1].
+        # firewalld also causes problems with neturon+ipv6 [2]
+        #
+        # Note we do the same as the RDO packages and stop & disable,
+        # rather than remove.  This is because other packages might
+        # have the dependency [3][4].
+        #
+        # [1] https://bugzilla.redhat.com/show_bug.cgi?id=1099031
+        # [2] https://bugs.launchpad.net/neutron/+bug/1455303
+        # [3] https://github.com/redhat-openstack/openstack-puppet-modules/blob/master/firewall/manifests/linux/redhat.pp
+        # [4] http://docs.openstack.org/developer/devstack/guides/neutron.html
         if is_package_installed firewalld; then
-            uninstall_package firewalld
+            sudo systemctl disable firewalld
+            sudo systemctl enable iptables
+            sudo systemctl stop firewalld
+            sudo systemctl start iptables
         fi
     fi
-
 fi
 
 # The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has
