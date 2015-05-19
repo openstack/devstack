@@ -298,7 +298,7 @@ function configure_nova {
 
     install_default_policy nova
 
-    configure_rootwrap nova $NOVA_BIN_DIR/nova-rootwrap $NOVA_DIR/etc/nova
+    configure_rootwrap nova
 
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
         # Get the sample configuration file in place

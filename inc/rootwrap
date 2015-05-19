@@ -38,11 +38,17 @@ function add_sudo_secure_path {
 
 # Configure rootwrap
 # Make a load of assumptions otherwise we'll have 6 arguments
-# configure_rootwrap project bin conf-src-dir
+# configure_rootwrap project
 function configure_rootwrap {
-    local project=$1                    # xx
-    local rootwrap_bin=$2               # /opt/stack/xx.venv/bin/xx-rootwrap
-    local rootwrap_conf_src_dir=$3      # /opt/stack/xx/etc/xx
+    local project=$1
+    local project_uc=$(echo $1|tr a-z A-Z)
+    local bin_dir="${project_uc}_BIN_DIR"
+    bin_dir="${!bin_dir}"
+    local project_dir="${project_uc}_DIR"
+    project_dir="${!project_dir}"
+
+    local rootwrap_conf_src_dir="${project_dir}/etc/${project}"
+    local rootwrap_bin="${bin_dir}/${project}-rootwrap"
 
     # Start fresh with rootwrap filters
     sudo rm -rf /etc/${project}/rootwrap.d
