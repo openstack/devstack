@@ -11,7 +11,7 @@
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
-MYSQL_DRIVER=${MYSQL_DRIVER:-MySQL-python}
+MYSQL_DRIVER=${MYSQL_DRIVER:-PyMySQL}
 # Force over to pymysql driver by default if we are using it.
 if is_service_enabled mysql; then
     if [[ "$MYSQL_DRIVER" == "PyMySQL" ]]; then
