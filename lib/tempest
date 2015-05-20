@@ -489,6 +489,8 @@ function configure_tempest {
     if [ "$VIRT_DRIVER" = "ironic" ] ; then
         iniset $TEMPEST_CONFIG baremetal driver_enabled True
         iniset $TEMPEST_CONFIG baremetal unprovision_timeout 300
+        iniset $TEMPEST_CONFIG baremetal deploy_img_dir $FILES
+        iniset $TEMPEST_CONFIG baremetal node_uuid $IRONIC_NODE_UUID
         iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
         iniset $TEMPEST_CONFIG compute-feature-enabled console_output False
         iniset $TEMPEST_CONFIG compute-feature-enabled interface_attach False

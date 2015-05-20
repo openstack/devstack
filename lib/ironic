@@ -58,6 +58,7 @@ IRONIC_HW_EPHEMERAL_DISK=${IRONIC_HW_EPHEMERAL_DISK:-0}
 IRONIC_IPMIINFO_FILE=${IRONIC_IPMIINFO_FILE:-$IRONIC_DATA_DIR/hardware_info}
 
 # Set up defaults for functional / integration testing
+IRONIC_NODE_UUID=${IRONIC_NODE_UUID:-`uuidgen`}
 IRONIC_SCRIPTS_DIR=${IRONIC_SCRIPTS_DIR:-$TOP_DIR/tools/ironic/scripts}
 IRONIC_TEMPLATES_DIR=${IRONIC_TEMPLATES_DIR:-$TOP_DIR/tools/ironic/templates}
 IRONIC_BAREMETAL_BASIC_OPS=$(trueorfalse False IRONIC_BAREMETAL_BASIC_OPS)
@@ -619,7 +620,12 @@ function enroll_nodes {
             node_options+=" -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID"
         fi
 
-        local node_id=$(ironic node-create --chassis_uuid $chassis_id \
+        # First node created will be used for testing in ironic w/o glance
+        # scenario, so we need to know its UUID.
+        local standalone_node_uuid=$([ $total_nodes -eq 0 ] && echo "--uuid $IRONIC_NODE_UUID")
+
+        local node_id=$(ironic node-create $standalone_node_uuid\
+            --chassis_uuid $chassis_id \
             --driver $IRONIC_DEPLOY_DRIVER \
             -p cpus=$ironic_node_cpu\
             -p memory_mb=$ironic_node_ram\
