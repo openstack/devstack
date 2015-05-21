@@ -1294,6 +1294,29 @@ for i in BASE_SQL_CONN ENABLED_SERVICES HOST_IP LOGFILE \
     echo $i=${!i} >>$TOP_DIR/.stackenv
 done
 
+# Write out a clouds.yaml file
+# putting the location into a variable to allow for easier refactoring later
+# to make it overridable. There is current no usecase where doing so makes
+# sense, so I'm not actually doing it now.
+CLOUDS_YAML=~/.config/openstack/clouds.yaml
+if [ ! -e $CLOUDS_YAML ]; then
+    mkdir -p $(dirname $CLOUDS_YAML)
+    cat >"$CLOUDS_YAML" <<EOF
+clouds:
+  devstack:
+    auth:
+      auth_url: $KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION
+      username: demo
+      project_name: demo
+      password: $ADMIN_PASSWORD
+    region_name: $REGION_NAME
+    identity_api_version: $IDENTITY_API_VERSION
+EOF
+    if [ -f "$SSL_BUNDLE_FILE" ]; then
+        echo "    cacert: $SSL_BUNDLE_FILE" >>"$CLOUDS_YAML"
+    fi
+fi
+
 
 # Wrapup configuration
 # ====================

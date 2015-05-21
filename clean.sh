@@ -129,7 +129,7 @@ if [[ -n "$SCREEN_LOGDIR" ]] && [[ -d "$SCREEN_LOGDIR" ]]; then
 fi
 
 # Clean up venvs
-DIRS_TO_CLEAN="$WHEELHOUSE ${PROJECT_VENV[@]}"
+DIRS_TO_CLEAN="$WHEELHOUSE ${PROJECT_VENV[@]} .config/openstack"
 rm -rf $DIRS_TO_CLEAN
 
 # Clean up files
