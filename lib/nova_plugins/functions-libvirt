@@ -39,17 +39,6 @@ function install_libvirt {
         pip_install_gr libvirt-python
         install_package python-libguestfs
     fi
-
-    # Restart firewalld after install of libvirt to avoid a problem
-    # with polkit, which libvirtd brings in.  See
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1099031
-
-    # Note there is a difference between F20 rackspace cloud images
-    # and HP images used in the gate; rackspace has firewalld but hp
-    # cloud doesn't.
-    if is_fedora && is_package_installed firewalld; then
-        sudo service firewalld restart || true
-    fi
 }
 
 # Configures the installed libvirt system so that is accessible by
