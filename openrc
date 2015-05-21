@@ -78,8 +78,14 @@ export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
 #
 export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:5000/v${OS_IDENTITY_API_VERSION}
 
-# Set the pointer to our CA certificate chain.  Harmless if TLS is not used.
-export OS_CACERT=${OS_CACERT:-$INT_CA_DIR/ca-chain.pem}
+# Set OS_CACERT to a default CA certificate chain if it exists.
+if [[ ! -v OS_CACERT ]] ; then
+    DEFAULT_OS_CACERT=$INT_CA_DIR/ca-chain.pem
+    # If the file does not exist, this may confuse preflight sanity checks
+    if [ -e $DEFAULT_OS_CACERT ] ; then
+        export OS_CACERT=$DEFAULT_OS_CACERT
+    fi
+fi
 
 # Currently novaclient needs you to specify the *compute api* version.  This
 # needs to match the config of your catalog returned by Keystone.
