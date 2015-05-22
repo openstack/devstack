@@ -50,7 +50,6 @@ fi
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
-KEYSTONE_AUTH_CACHE_DIR=${KEYSTONE_AUTH_CACHE_DIR:-/var/cache/keystone}
 if is_suse; then
     KEYSTONE_WSGI_DIR=${KEYSTONE_WSGI_DIR:-/srv/www/htdocs/keystone}
 else
@@ -475,10 +474,6 @@ function init_keystone {
         # Set up certificates
         rm -rf $KEYSTONE_CONF_DIR/ssl
         $KEYSTONE_BIN_DIR/keystone-manage pki_setup
-
-        # Create cache dir
-        sudo install -d -o $STACK_USER $KEYSTONE_AUTH_CACHE_DIR
-        rm -f $KEYSTONE_AUTH_CACHE_DIR/*
     fi
 }
 
