@@ -19,7 +19,8 @@ function test_trueorfalse {
 
     for default in True False; do
         for name in one captrue lowtrue uppertrue capyes lowyes upperyes; do
-                assert_equal "True" $(trueorfalse $default $name) "\$(trueorfalse $default $name)"
+            local msg="trueorfalse($default $name)"
+            assert_equal "True" $(trueorfalse $default $name) "$msg"
         done
     done
 
@@ -33,7 +34,8 @@ function test_trueorfalse {
 
     for default in True False; do
         for name in zero capfalse lowfalse upperfalse capno lowno upperno; do
-            assert_equal "False" $(trueorfalse $default $name) "\$(trueorfalse $default $name)"
+            local msg="trueorfalse($default $name)"
+            assert_equal "False" $(trueorfalse $default $name) "$msg"
         done
     done
 }
