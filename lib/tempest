@@ -147,9 +147,7 @@ function configure_tempest {
                 image_uuid_alt="$IMAGE_UUID"
             fi
             images+=($IMAGE_UUID)
-        # TODO(stevemar): update this command to use openstackclient's `openstack image list`
-        # when it supports listing by status.
-        done < <(glance image-list --status=active | awk -F'|' '!/^(+--)|ID|aki|ari/ { print $3,$2 }')
+        done < <(openstack image list --property status=active | awk -F'|' '!/^(+--)|ID|aki|ari/ { print $3,$2 }')
 
         case "${#images[*]}" in
             0)
