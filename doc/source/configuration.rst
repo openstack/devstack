@@ -391,7 +391,7 @@ Multi-host DevStack
         ENABLED_SERVICES=n-vol,n-cpu,n-net,n-api
 
 IP Version
-    | Default: ``IP_VERSION=4``
+    | Default: ``IP_VERSION=4+6``
     | This setting can be used to configure DevStack to create either an IPv4,
       IPv6, or dual stack tenant data network by setting ``IP_VERSION`` to
       either ``IP_VERSION=4``, ``IP_VERSION=6``, or ``IP_VERSION=4+6``
