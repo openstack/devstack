@@ -186,7 +186,7 @@ function configure_sahara {
 
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
-        iniset $SAHARA_CONF DEFAULT port $SAHARA_SERVICE_PORT_INT
+        iniset $SAHARA_CONF_FILE DEFAULT port $SAHARA_SERVICE_PORT_INT
     fi
 
     recreate_database sahara
