@@ -91,10 +91,7 @@ function remove_disabled_extensions {
     local extensions_list=$1
     shift
     local disabled_exts=$*
-    for ext_to_remove in ${disabled_exts//,/ } ; do
-        extensions_list=${extensions_list/$ext_to_remove","}
-    done
-    echo $extensions_list
+    remove_disabled_services "$extensions_list" "$disabled_exts"
 }
 
 # configure_tempest() - Set config files, create data dirs, etc
