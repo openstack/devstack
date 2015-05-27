@@ -17,6 +17,8 @@ ERROR=0
 PASS=0
 FAILED_FUNCS=""
 
+# pass a test, printing out MSG
+#  usage: passed message
 function passed {
     local lineno=$(caller 0 | awk '{print $1}')
     local function=$(caller 0 | awk '{print $2}')
@@ -25,9 +27,11 @@ function passed {
         msg="OK"
     fi
     PASS=$((PASS+1))
-    echo $function:L$lineno $msg
+    echo "PASS: $function:L$lineno $msg"
 }
 
+# fail a test, printing out MSG
+#  usage: failed message
 function failed {
     local lineno=$(caller 0 | awk '{print $1}')
     local function=$(caller 0 | awk '{print $2}')
@@ -38,10 +42,16 @@ function failed {
     ERROR=$((ERROR+1))
 }
 
+# assert string comparision of val1 equal val2, printing out msg
+#  usage: assert_equal val1 val2 msg
 function assert_equal {
     local lineno=`caller 0 | awk '{print $1}'`
     local function=`caller 0 | awk '{print $2}'`
     local msg=$3
+
+    if [ -z "$msg" ]; then
+        msg="OK"
+    fi
     if [[ "$1" != "$2" ]]; then
         FAILED_FUNCS+="$function:L$lineno\n"
         echo "ERROR: $1 != $2 in $function:L$lineno!"
@@ -49,10 +59,13 @@ function assert_equal {
         ERROR=$((ERROR+1))
     else
         PASS=$((PASS+1))
-        echo "$function:L$lineno - ok"
+        echo "PASS: $function:L$lineno - $msg"
     fi
 }
 
+# print a summary of passing and failing tests, exiting
+# with an error if we have failed tests
+#  usage: report_results
 function report_results {
     echo "$PASS Tests PASSED"
     if [[ $ERROR -gt 1 ]]; then
