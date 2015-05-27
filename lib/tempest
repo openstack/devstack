@@ -329,6 +329,7 @@ function configure_tempest {
     if [[ ! -z "$TEMPEST_HTTP_IMAGE" ]]; then
         iniset $TEMPEST_CONFIG image http_image $TEMPEST_HTTP_IMAGE
     fi
+    iniset $TEMPEST_CONFIG image-feature-enabled deactivate_image true
 
     # Auth
     TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-$TEMPEST_HAS_ADMIN}
