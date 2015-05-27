@@ -131,6 +131,11 @@ In this configuration we are defining FLOATING_RANGE to be a
 subnet that exists in the private RFC1918 address space - however in
 in a real setup FLOATING_RANGE would be a public IP address range.
 
+Note that extension drivers for the ML2 plugin is set by
+`Q_ML2_PLUGIN_EXT_DRIVERS`, and it includes 'port_security' by default. If you
+want to remove all the extension drivers (even 'port_security'), set
+`Q_ML2_PLUGIN_EXT_DRIVERS` to blank.
+
 Neutron Networking with Open vSwitch and Provider Networks
 ==========================================================
 
