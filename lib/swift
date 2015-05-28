@@ -616,7 +616,7 @@ function create_swift_accounts {
             "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
     fi
 
-    local swift_tenant_test1=$(get_or_create_project swifttenanttest1)
+    local swift_tenant_test1=$(get_or_create_project swifttenanttest1 default)
     die_if_not_set $LINENO swift_tenant_test1 "Failure creating swift_tenant_test1"
     SWIFT_USER_TEST1=$(get_or_create_user swiftusertest1 $swiftusertest1_password "test@example.com")
     die_if_not_set $LINENO SWIFT_USER_TEST1 "Failure creating SWIFT_USER_TEST1"
@@ -626,7 +626,7 @@ function create_swift_accounts {
     die_if_not_set $LINENO swift_user_test3 "Failure creating swift_user_test3"
     get_or_add_user_project_role $another_role $swift_user_test3 $swift_tenant_test1
 
-    local swift_tenant_test2=$(get_or_create_project swifttenanttest2)
+    local swift_tenant_test2=$(get_or_create_project swifttenanttest2 default)
     die_if_not_set $LINENO swift_tenant_test2 "Failure creating swift_tenant_test2"
 
     local swift_user_test2=$(get_or_create_user swiftusertest2 $swiftusertest2_password "test2@example.com")
