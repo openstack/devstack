@@ -569,14 +569,6 @@ function wait_for_nova_resources {
 function enroll_nodes {
     local chassis_id=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
 
-    if [[ "$IRONIC_DEPLOY_DRIVER" == "pxe_ssh" ]] ; then
-        local _IRONIC_DEPLOY_KERNEL_KEY=pxe_deploy_kernel
-        local _IRONIC_DEPLOY_RAMDISK_KEY=pxe_deploy_ramdisk
-    elif is_deployed_by_agent; then
-        local _IRONIC_DEPLOY_KERNEL_KEY=deploy_kernel
-        local _IRONIC_DEPLOY_RAMDISK_KEY=deploy_ramdisk
-    fi
-
     if ! is_ironic_hardware; then
         local ironic_node_cpu=$IRONIC_VM_SPECS_CPU
         local ironic_node_ram=$IRONIC_VM_SPECS_RAM
@@ -584,8 +576,8 @@ function enroll_nodes {
         local ironic_ephemeral_disk=$IRONIC_VM_EPHEMERAL_DISK
         local ironic_hwinfo_file=$IRONIC_VM_MACS_CSV_FILE
         local node_options="\
-            -i $_IRONIC_DEPLOY_KERNEL_KEY=$IRONIC_DEPLOY_KERNEL_ID \
-            -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID \
+            -i deploy_kernel=$IRONIC_DEPLOY_KERNEL_ID \
+            -i deploy_ramdisk=$IRONIC_DEPLOY_RAMDISK_ID \
             -i ssh_virt_type=$IRONIC_SSH_VIRT_TYPE \
             -i ssh_address=$IRONIC_VM_SSH_ADDRESS \
             -i ssh_port=$IRONIC_VM_SSH_PORT \
@@ -616,8 +608,8 @@ function enroll_nodes {
             # we create the bare metal flavor with minimum value
             local node_options="-i ipmi_address=$ipmi_address -i ipmi_password=$ironic_ipmi_passwd\
                 -i ipmi_username=$ironic_ipmi_username"
-            node_options+=" -i $_IRONIC_DEPLOY_KERNEL_KEY=$IRONIC_DEPLOY_KERNEL_ID"
-            node_options+=" -i $_IRONIC_DEPLOY_RAMDISK_KEY=$IRONIC_DEPLOY_RAMDISK_ID"
+            node_options+=" -i deploy_kernel=$IRONIC_DEPLOY_KERNEL_ID"
+            node_options+=" -i deploy_ramdisk=$IRONIC_DEPLOY_RAMDISK_ID"
         fi
 
         # First node created will be used for testing in ironic w/o glance
