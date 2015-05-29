@@ -358,7 +358,7 @@ function create_keystone_accounts {
 
     # admin
     local admin_tenant=$(get_or_create_project "admin" default)
-    local admin_user=$(get_or_create_user "admin" "$ADMIN_PASSWORD")
+    local admin_user=$(get_or_create_user "admin" "$ADMIN_PASSWORD" default)
     local admin_role=$(get_or_create_role "admin")
     get_or_add_user_project_role $admin_role $admin_user $admin_tenant
 
@@ -387,7 +387,7 @@ function create_keystone_accounts {
     # demo
     local demo_tenant=$(get_or_create_project "demo" default)
     local demo_user=$(get_or_create_user "demo" \
-        "$ADMIN_PASSWORD" "demo@example.com")
+        "$ADMIN_PASSWORD" "default" "demo@example.com")
 
     get_or_add_user_project_role $member_role $demo_user $demo_tenant
     get_or_add_user_project_role $admin_role $admin_user $demo_tenant
@@ -426,7 +426,7 @@ function create_keystone_accounts {
 function create_service_user {
     local role=${2:-service}
 
-    local user=$(get_or_create_user "$1" "$SERVICE_PASSWORD")
+    local user=$(get_or_create_user "$1" "$SERVICE_PASSWORD" default)
     get_or_add_user_project_role "$role" "$user" "$SERVICE_TENANT_NAME"
 }
 

@@ -1006,6 +1006,9 @@ if is_service_enabled keystone; then
     # Begone token auth
     unset OS_TOKEN OS_URL
 
+    # force set to use v2 identity authentication even with v3 commands
+    export OS_AUTH_TYPE=v2password
+
     # Set up password auth credentials now that Keystone is bootstrapped
     export OS_AUTH_URL=$SERVICE_ENDPOINT
     export OS_TENANT_NAME=admin

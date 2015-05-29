@@ -254,7 +254,7 @@ function create_glance_accounts {
         if is_service_enabled s-proxy; then
 
             local glance_swift_user=$(get_or_create_user "glance-swift" \
-                "$SERVICE_PASSWORD" "glance-swift@example.com")
+                "$SERVICE_PASSWORD" "default" "glance-swift@example.com")
             get_or_add_user_project_role "ResellerAdmin" $glance_swift_user $SERVICE_TENANT_NAME
         fi
 

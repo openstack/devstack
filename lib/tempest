@@ -547,7 +547,7 @@ function create_tempest_accounts {
         # Tempest has some tests that validate various authorization checks
         # between two regular users in separate tenants
         get_or_create_project alt_demo default
-        get_or_create_user alt_demo "$ADMIN_PASSWORD" "alt_demo@example.com"
+        get_or_create_user alt_demo "$ADMIN_PASSWORD" "default" "alt_demo@example.com"
         get_or_add_user_project_role Member alt_demo alt_demo
     fi
 }
