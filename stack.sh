@@ -987,13 +987,15 @@ if is_service_enabled keystone; then
         start_keystone
     fi
 
+    export OS_IDENTITY_API_VERSION=3
+
     # Set up a temporary admin URI for Keystone
-    SERVICE_ENDPOINT=$KEYSTONE_AUTH_URI/v2.0
+    SERVICE_ENDPOINT=$KEYSTONE_AUTH_URI/v3
 
     if is_service_enabled tls-proxy; then
         export OS_CACERT=$INT_CA_DIR/ca-chain.pem
         # Until the client support is fixed, just use the internal endpoint
-        SERVICE_ENDPOINT=http://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT_INT/v2.0
+        SERVICE_ENDPOINT=http://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT_INT/v3
     fi
 
     # Setup OpenStackClient token-endpoint auth
@@ -1021,14 +1023,13 @@ if is_service_enabled keystone; then
     # Begone token auth
     unset OS_TOKEN OS_URL
 
-    # force set to use v2 identity authentication even with v3 commands
-    export OS_AUTH_TYPE=v2password
-
     # Set up password auth credentials now that Keystone is bootstrapped
-    export OS_AUTH_URL=$SERVICE_ENDPOINT
-    export OS_TENANT_NAME=admin
+    export OS_AUTH_URL=$KEYSTONE_AUTH_URI
     export OS_USERNAME=admin
+    export OS_USER_DOMAIN_ID=default
     export OS_PASSWORD=$ADMIN_PASSWORD
+    export OS_PROJECT_NAME=admin
+    export OS_PROJECT_DOMAIN_ID=default
     export OS_REGION_NAME=$REGION_NAME
 fi
 
