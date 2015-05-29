@@ -480,13 +480,10 @@ function stop_cinder {
 function create_volume_types {
     # Create volume types
     if is_service_enabled c-api && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
-        local be be_name be_type
+        local be be_name
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
-            be_type=${be%%:*}
             be_name=${be##*:}
-            # openstack volume type create --property volume_backend_name="${be_type}" ${be_name}
-            cinder type-create ${be_name} && \
-                cinder type-key ${be_name} set volume_backend_name="${be_name}"
+            openstack volume type create --property volume_backend_name="${be_name}" ${be_name}
         done
     fi
 }
