@@ -100,7 +100,7 @@ function init_horizon {
 
     if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
         # Only Identity v3 API is available; then use it with v3 auth tokens
-        _horizon_config_set $local_settings "" OPENSTACK_API_VERSIONS {\"identity\":\"v3\"}
+        _horizon_config_set $local_settings "" OPENSTACK_API_VERSIONS {\"identity\":3}
         _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/v3\""
     else
         _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/v2.0\""
