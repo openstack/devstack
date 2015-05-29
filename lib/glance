@@ -266,9 +266,8 @@ function create_glance_accounts {
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            local glance_service=$(get_or_create_service "glance" \
-                "image" "Glance Image Service")
-            get_or_create_endpoint $glance_service \
+            get_or_create_service "glance" "image" "Glance Image Service"
+            get_or_create_endpoint "image" \
                 "$REGION_NAME" \
                 "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
                 "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
@@ -279,10 +278,9 @@ function create_glance_accounts {
     # Add glance-search service and endpoints
     if is_service_enabled g-search; then
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            local glance_search_service=$(get_or_create_service "glance-search" \
-                "search" "EXPERIMENTAL - Glance Graffiti Search Service")
+            get_or_create_service "glance-search" "search" "EXPERIMENTAL - Glance Graffiti Search Service"
 
-            get_or_create_endpoint $glance_search_service \
+            get_or_create_endpoint "search" \
                 "$REGION_NAME" \
                 "$GLANCE_SERVICE_PROTOCOL://$GLANCE_SEARCH_HOSTPORT" \
                 "$GLANCE_SERVICE_PROTOCOL://$GLANCE_SEARCH_HOSTPORT" \

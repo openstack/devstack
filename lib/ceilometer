@@ -130,9 +130,8 @@ function create_ceilometer_accounts {
         create_service_user "ceilometer" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            local ceilometer_service=$(get_or_create_service "ceilometer" \
-                "metering" "OpenStack Telemetry Service")
-            get_or_create_endpoint $ceilometer_service \
+            get_or_create_service "ceilometer" "metering" "OpenStack Telemetry Service"
+            get_or_create_endpoint "metering" \
                 "$REGION_NAME" \
                 "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/" \
                 "$CEILOMETER_SERVICE_PROTOCOL://$CEILOMETER_SERVICE_HOST:$CEILOMETER_SERVICE_PORT/" \

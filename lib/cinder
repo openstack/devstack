@@ -327,16 +327,14 @@ function create_cinder_accounts {
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            local cinder_service=$(get_or_create_service "cinder" \
-                "volume" "Cinder Volume Service")
-            get_or_create_endpoint $cinder_service "$REGION_NAME" \
+            get_or_create_service "cinder" "volume" "Cinder Volume Service"
+            get_or_create_endpoint "volume" "$REGION_NAME" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
 
-            local cinder_v2_service=$(get_or_create_service "cinderv2" \
-                "volumev2" "Cinder Volume Service V2")
-            get_or_create_endpoint $cinder_v2_service "$REGION_NAME" \
+            get_or_create_service "cinderv2" "volumev2" "Cinder Volume Service V2"
+            get_or_create_endpoint "volumev2" "$REGION_NAME" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s"

@@ -809,6 +809,8 @@ function get_or_create_service {
         openstack service show $2 -f value -c id 2>/dev/null ||
         # Creates new service if not exists
         openstack service create \
+            --os-url $KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             $2 \
             --name $1 \
             --description="$3" \
@@ -817,27 +819,54 @@ function get_or_create_service {
     echo $service_id
 }
 
-# Gets or creates endpoint
-# Usage: get_or_create_endpoint <service> <region> <publicurl> <adminurl> <internalurl>
-function get_or_create_endpoint {
-    # Gets endpoint id
+# Create an endpoint with a specific interface
+# Usage: _get_or_create_endpoint_with_interface <service> <interface> <url> <region>
+function _get_or_create_endpoint_with_interface {
     local endpoint_id=$(openstack endpoint list \
-        --column "ID" \
-        --column "Region" \
-        --column "Service Name" \
-        | grep " $2 " \
-        | grep " $1 " | get_field 1)
+        --os-url $KEYSTONE_SERVICE_URI_V3 \
+        --os-identity-api-version=3 \
+        --service $1 \
+        --interface $2 \
+        --region $4 \
+        -c ID -f value)
     if [[ -z "$endpoint_id" ]]; then
         # Creates new endpoint
         endpoint_id=$(openstack endpoint create \
-            $1 \
-            --region $2 \
-            --publicurl $3 \
-            --adminurl $4 \
-            --internalurl $5 \
-            | grep " id " | get_field 2)
+            --os-url $KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
+            $1 $2 $3 --region $4 -f value -c id)
     fi
+
     echo $endpoint_id
+}
+
+# Gets or creates endpoint
+# Usage: get_or_create_endpoint <service> <region> <publicurl> <adminurl> <internalurl>
+function get_or_create_endpoint {
+    # NOTE(jamielennnox): when converting to v3 endpoint creation we go from
+    # creating one endpoint with multiple urls to multiple endpoints each with
+    # a different interface.  To maintain the existing function interface we
+    # create 3 endpoints and return the id of the public one. In reality
+    # returning the public id will not make a lot of difference as there are no
+    # scenarios currently that use the returned id. Ideally this behaviour
+    # should be pushed out to the service setups and let them create the
+    # endpoints they need.
+    local public_id=$(_get_or_create_endpoint_with_interface $1 public $3 $2)
+    _get_or_create_endpoint_with_interface $1 admin $4 $2
+    _get_or_create_endpoint_with_interface $1 internal $5 $2
+
+    # return the public id to indicate success, and this is the endpoint most likely wanted
+    echo $public_id
+}
+
+# Get a URL from the identity service
+# Usage: get_endpoint_url <service> <interface>
+function get_endpoint_url {
+    echo $(openstack endpoint list \
+            --service $1 --interface $2 \
+            --os-url $KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
+            -c URL -f value)
 }
 
 

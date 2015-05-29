@@ -250,17 +250,15 @@ function create_heat_accounts {
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            local heat_service=$(get_or_create_service "heat" \
-                    "orchestration" "Heat Orchestration Service")
-            get_or_create_endpoint $heat_service \
+            get_or_create_service "heat" "orchestration" "Heat Orchestration Service"
+            get_or_create_endpoint "orchestration" \
                 "$REGION_NAME" \
                 "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
                 "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
                 "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s"
 
-            local heat_cfn_service=$(get_or_create_service "heat-cfn" \
-                    "cloudformation" "Heat CloudFormation Service")
-            get_or_create_endpoint $heat_cfn_service \
+            get_or_create_service "heat-cfn" "cloudformation" "Heat CloudFormation Service"
+            get_or_create_endpoint "cloudformation"  \
                 "$REGION_NAME" \
                 "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \
                 "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \

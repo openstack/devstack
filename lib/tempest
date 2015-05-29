@@ -270,11 +270,11 @@ function configure_tempest {
         fi
     fi
 
-    EC2_URL=$(openstack endpoint show -f value -c publicurl ec2 || true)
+    EC2_URL=$(get_endpoint_url ec2 public || true)
     if [[ -z $EC2_URL ]]; then
         EC2_URL="$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/"
     fi
-    S3_URL=$(openstack endpoint show -f value -c publicurl s3 || true)
+    S3_URL=$(get_endpoint_url s3 public || true)
     if [[ -z $S3_URL ]]; then
         S3_URL="http://$SERVICE_HOST:${S3_SERVICE_PORT:-3333}"
     fi
