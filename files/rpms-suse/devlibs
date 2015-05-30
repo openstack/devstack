@@ -4,3 +4,4 @@ libxml2-devel  # lxml
 libxslt-devel  # lxml
 postgresql-devel  # psycopg2
 python-devel  # pyOpenSSL
+libmysqld-devel  # MySQL-python
