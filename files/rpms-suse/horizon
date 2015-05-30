@@ -1,13 +1,11 @@
 apache2  # NOPRIME
 apache2-mod_wsgi  # NOPRIME
-python-CherryPy # why? (coming from apts)
 python-Paste
 python-PasteDeploy
 python-Routes
 python-SQLAlchemy
 python-WebOb
 python-anyjson
-python-beautifulsoup
 python-coverage
 python-dateutil
 python-eventlet
