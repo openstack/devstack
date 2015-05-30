@@ -1842,16 +1842,7 @@ function add_user_to_group {
     local user=$1
     local group=$2
 
-    if [[ -z "$os_VENDOR" ]]; then
-        GetOSVersion
-    fi
-
-    # SLE11 and openSUSE 12.2 don't have the usual usermod
-    if ! is_suse || [[ "$os_VENDOR" = "openSUSE" && "$os_RELEASE" != "12.2" ]]; then
-        sudo usermod -a -G "$group" "$user"
-    else
-        sudo usermod -A "$group" "$user"
-    fi
+    sudo usermod -a -G "$group" "$user"
 }
 
 # Convert CIDR notation to a IPv4 netmask
