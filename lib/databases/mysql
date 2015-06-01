@@ -11,6 +11,13 @@
 MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
+MYSQL_DRIVER=${MYSQL_DRIVER:-MySQL-python}
+# Force over to pymysql driver by default if we are using it.
+if is_service_enabled mysql; then
+    if [[ "$MYSQL_DRIVER" == "PyMySQL" ]]; then
+        SQLALCHEMY_DATABASE_DRIVER=${SQLALCHEMY_DATABASE_DRIVER:-"pymysql"}
+    fi
+fi
 
 register_database mysql
 
@@ -155,8 +162,10 @@ EOF
 
 function install_database_python_mysql {
     # Install Python client module
-    pip_install_gr MySQL-python
-    ADDITIONAL_VENV_PACKAGES+=",MySQL-python"
+    pip_install_gr $MYSQL_DRIVER
+    if [[ "$MYSQL_DRIVER" == "MySQL-python" ]]; then
+        ADDITIONAL_VENV_PACKAGES+=",MySQL-python"
+    fi
 }
 
 function database_connection_url_mysql {
