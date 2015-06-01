@@ -8,7 +8,6 @@ OVSB_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 OVS_BRIDGE=${OVS_BRIDGE:-br-int}
-PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
 OVS_DATAPATH_TYPE=${OVS_DATAPATH_TYPE:-""}
 
 function is_neutron_ovs_base_plugin {
