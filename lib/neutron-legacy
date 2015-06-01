@@ -168,6 +168,10 @@ NEUTRON_CREATE_INITIAL_NETWORKS=${NEUTRON_CREATE_INITIAL_NETWORKS:-True}
 ## Provider Network Information
 PROVIDER_SUBNET_NAME=${PROVIDER_SUBNET_NAME:-"provider_net"}
 
+# Define the public bridge that will transmit traffic from VMs to the
+# physical network - used by both the OVS and Linux Bridge drivers.
+PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
+
 # Use flat providernet for public network
 #
 # If Q_USE_PROVIDERNET_FOR_PUBLIC=True, use a flat provider network
