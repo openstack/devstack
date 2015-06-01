@@ -6,17 +6,6 @@ iptables
 iputils
 mariadb # NOPRIME
 postgresql-devel
-python-eventlet
-python-greenlet
-python-iso8601
-python-mysql
-python-mysql-connector-python
-python-Paste
-python-PasteDeploy
-python-pyudev
-python-Routes
-python-SQLAlchemy
-python-suds
 rabbitmq-server # NOPRIME
 sqlite3
 sudo
@@ -24,5 +13,4 @@ vlan
 radvd # NOPRIME
 
 # FIXME: qpid is not part of openSUSE, those names are tentative
-python-qpid # NOPRIME
 qpidd # NOPRIME

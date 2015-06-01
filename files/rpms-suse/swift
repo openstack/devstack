@@ -1,15 +1,6 @@
 curl
 memcached
-python-PasteDeploy
-python-WebOb
-python-configobj
-python-coverage
 python-devel
-python-eventlet
-python-greenlet
-python-netifaces
-python-simplejson
-python-xattr
 sqlite3
 xfsprogs
 xinetd

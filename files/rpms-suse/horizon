@@ -1,14 +1,2 @@
 apache2  # NOPRIME
 apache2-mod_wsgi  # NOPRIME
-python-Paste
-python-PasteDeploy
-python-Routes
-python-SQLAlchemy
-python-WebOb
-python-anyjson
-python-coverage
-python-dateutil
-python-eventlet
-python-mox
-python-sqlalchemy-migrate
-python-xattr
