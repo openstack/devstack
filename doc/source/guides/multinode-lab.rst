@@ -178,7 +178,7 @@ machines, create a ``local.conf`` with:
     MYSQL_HOST=192.168.42.11
     RABBIT_HOST=192.168.42.11
     GLANCE_HOSTPORT=192.168.42.11:9292
-    ENABLED_SERVICES=n-cpu,n-net,n-api,c-sch,c-api,c-vol
+    ENABLED_SERVICES=n-cpu,n-net,n-api,c-vol
     NOVA_VNC_ENABLED=True
     NOVNCPROXY_URL="http://192.168.42.11:6080/vnc_auto.html"
     VNCSERVER_LISTEN=$HOST_IP
