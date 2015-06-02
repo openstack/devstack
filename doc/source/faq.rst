@@ -75,6 +75,21 @@ Can I test on OS/X?
 Some people have success with bash 4 installed via homebrew to keep
 running tests on OS/X.
 
+Can I at least source ``openrc`` with ``zsh``?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+People have reported success with a special function to run ``openrc``
+through bash for this
+
+.. code-block:: bash
+
+   function sourceopenrc {
+       pushd ~/devstack >/dev/null
+       eval $(bash -c ". openrc $1 $2;env|sed -n '/OS_/ { s/^/export /;p}'")
+       popd >/dev/null
+   }
+
+
 Operation and Configuration
 ===========================
 
