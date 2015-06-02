@@ -16,29 +16,7 @@ libvirt-python # NOPRIME
 mariadb # NOPRIME
 parted
 polkit
-python-M2Crypto
-python-m2crypto # dist:sle11sp2
-python-Paste
-python-PasteDeploy
-python-Routes
-python-SQLAlchemy
-python-Tempita
-python-cheetah
-python-eventlet
-python-feedparser
-python-greenlet
-python-iso8601
-python-libxml2
-python-lockfile
-python-lxml # needed for glance which is needed for nova --- this shouldn't be here
-python-mox
-python-mysql
-python-mysql-connector-python
-python-numpy # needed by websockify for spice console
-python-paramiko
-python-sqlalchemy-migrate
-python-suds
-python-xattr # needed for glance which is needed for nova --- this shouldn't be here
+python-devel
 rabbitmq-server # NOPRIME
 socat
 sqlite3
