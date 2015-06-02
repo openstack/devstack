@@ -75,7 +75,7 @@ rm -f $GLOG
 
 # Build list of scripts to process
 FILES=""
-for f in $(find . -name .git -prune -o \( -type f -name \*.sh -not -path \*shocco/\* -print \)); do
+for f in $(find . \( -name .git -o -name .tox \) -prune -o \( -type f -name \*.sh -not -path \*shocco/\* -print \)); do
     echo $f
     FILES+="$f "
     mkdir -p $FQ_HTML_BUILD/`dirname $f`;
