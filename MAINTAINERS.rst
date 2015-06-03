@@ -45,6 +45,13 @@ Fedora/CentOS/RHEL
 Neutron
 ~~~~~~~
 
+MidoNet
+~~~~~~~
+
+* Jaume Devesa <devvesa@gmail.com>
+* Ryu Ishimoto <ryu@midokura.com>
+* YAMAMOTO Takashi <yamamoto@midokura.com>
+
 OpenDaylight
 ~~~~~~~~~~~~
 
