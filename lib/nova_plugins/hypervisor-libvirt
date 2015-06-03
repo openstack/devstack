@@ -26,7 +26,7 @@ source $TOP_DIR/lib/nova_plugins/functions-libvirt
 # --------
 
 # File injection is disabled by default in Nova.  This will turn it back on.
-ENABLE_FILE_INJECTION=${ENABLE_FILE_INJECTION:-False}
+ENABLE_FILE_INJECTION=$(trueorfalse False ENABLE_FILE_INJECTION)
 
 
 # Entry Points
@@ -60,7 +60,6 @@ function configure_nova_hypervisor {
         iniset $NOVA_CONF DEFAULT vnc_enabled "false"
     fi
 
-    ENABLE_FILE_INJECTION=$(trueorfalse False ENABLE_FILE_INJECTION)
     if [[ "$ENABLE_FILE_INJECTION" = "True" ]] ; then
         # When libguestfs is available for file injection, enable using
         # libguestfs to inspect the image and figure out the proper
@@ -95,6 +94,14 @@ function install_nova_hypervisor {
             ### FIXME(dtroyer): figure this out
             echo "RPM-based cgroup not implemented yet"
             yum_install libcgroup-tools
+        fi
+    fi
+
+    if [[ "$ENABLE_FILE_INJECTION" = "True" ]] ; then
+        if is_ubuntu; then
+            install_package python-guestfs
+        elif is_fedora || is_suse; then
+            install_package python-libguestfs
         fi
     fi
 }
