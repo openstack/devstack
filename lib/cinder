@@ -39,6 +39,7 @@ fi
 
 # set up default directories
 GITDIR["python-cinderclient"]=$DEST/python-cinderclient
+GITDIR["os-brick"]=$DEST/os-brick
 CINDER_DIR=$DEST/cinder
 
 # Cinder virtual environment
@@ -381,6 +382,13 @@ function init_cinder {
 
 # install_cinder() - Collect source and prepare
 function install_cinder {
+    # Install os-brick from git so we make sure we're testing
+    # the latest code.
+    if use_library_from_git "os-brick"; then
+        git_clone_by_name "os-brick"
+        setup_dev_lib "os-brick"
+    fi
+
     git_clone $CINDER_REPO $CINDER_DIR $CINDER_BRANCH
     setup_develop $CINDER_DIR
     if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
