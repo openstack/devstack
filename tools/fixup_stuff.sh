@@ -126,6 +126,9 @@ if is_fedora; then
         # [4] http://docs.openstack.org/developer/devstack/guides/neutron.html
         if is_package_installed firewalld; then
             sudo systemctl disable firewalld
+            # The iptables service files are no longer included by default,
+            # at least on a baremetal Fedora 21 Server install.
+            install_package iptables-services
             sudo systemctl enable iptables
             sudo systemctl stop firewalld
             sudo systemctl start iptables
