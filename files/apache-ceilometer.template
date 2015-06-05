@@ -1,7 +1,7 @@
 Listen %PORT%
 
 <VirtualHost *:%PORT%>
-    WSGIDaemonProcess ceilometer-api processes=2 threads=10 user=%USER% display-name=%{GROUP}
+    WSGIDaemonProcess ceilometer-api processes=2 threads=10 user=%USER% display-name=%{GROUP} %VIRTUALENV%
     WSGIProcessGroup ceilometer-api
     WSGIScriptAlias / %WSGIAPP%
     WSGIApplicationGroup %{GLOBAL}
