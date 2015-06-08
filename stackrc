@@ -326,6 +326,10 @@ GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 GITREPO["cliff"]=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
 GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
 
+# async framework/helpers
+GITREPO["futurist"]=${FUTURIST_REPO:-${GIT_BASE}/openstack/futurist.git}
+GITBRANCH["futurist"]=${FUTURIST_BRANCH:-master}
+
 # debtcollector deprecation framework/helpers
 GITREPO["debtcollector"]=${DEBTCOLLECTOR_REPO:-${GIT_BASE}/openstack/debtcollector.git}
 GITBRANCH["debtcollector"]=${DEBTCOLLECTOR_BRANCH:-master}
