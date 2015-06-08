@@ -330,6 +330,10 @@ GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
 GITREPO["debtcollector"]=${DEBTCOLLECTOR_REPO:-${GIT_BASE}/openstack/debtcollector.git}
 GITBRANCH["debtcollector"]=${DEBTCOLLECTOR_BRANCH:-master}
 
+# helpful state machines
+GITREPO["automaton"]=${AUTOMATON_REPO:-${GIT_BASE}/openstack/automaton.git}
+GITBRANCH["automaton"]=${AUTOMATON_BRANCH:-master}
+
 # oslo.concurrency
 GITREPO["oslo.concurrency"]=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
 GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-master}

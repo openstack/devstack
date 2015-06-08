@@ -22,6 +22,7 @@ set +o xtrace
 
 # Defaults
 # --------
+GITDIR["automaton"]=$DEST/automaton
 GITDIR["cliff"]=$DEST/cliff
 GITDIR["debtcollector"]=$DEST/debtcollector
 GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
