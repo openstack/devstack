@@ -1356,7 +1356,7 @@ function pip_install {
         CMD_PIP=$DEST/.venv/bin/pip
         SUDO_PIP="env"
     else
-        SUDO_PIP="sudo"
+        SUDO_PIP="sudo -H"
         CMD_PIP=$(get_pip_command)
     fi
 
