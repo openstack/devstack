@@ -824,6 +824,10 @@ function cleanup_neutron {
         neutron_ovs_base_cleanup
     fi
 
+    if [[ $Q_AGENT == "linuxbridge" ]]; then
+        neutron_lb_cleanup
+    fi
+
     # delete all namespaces created by neutron
     for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|qlbaas|fip|snat)-[0-9a-f-]*'); do
         sudo ip netns delete ${ns}
