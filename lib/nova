@@ -489,6 +489,7 @@ function create_nova_conf {
         if is_service_enabled tls-proxy; then
             # Set the service port for a proxy to take the original
             iniset $NOVA_CONF DEFAULT osapi_compute_listen_port "$NOVA_SERVICE_PORT_INT"
+            iniset $NOVA_CONF DEFAULT osapi_compute_link_prefix $NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT
         fi
 
         configure_auth_token_middleware $NOVA_CONF nova $NOVA_AUTH_CACHE_DIR

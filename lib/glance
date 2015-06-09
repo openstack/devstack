@@ -154,6 +154,7 @@ function configure_glance {
 
     if is_service_enabled tls-proxy; then
         iniset $GLANCE_API_CONF DEFAULT bind_port $GLANCE_SERVICE_PORT_INT
+        iniset $GLANCE_API_CONF DEFAULT public_endpoint $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT
         iniset $GLANCE_REGISTRY_CONF DEFAULT bind_port $GLANCE_REGISTRY_PORT_INT
     fi
 
