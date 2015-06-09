@@ -138,3 +138,24 @@ fi
 # and installing the latest version using pip.
 uninstall_package python-virtualenv
 pip_install -U virtualenv
+
+# If a non-system python-requests is installed then it will use the
+# built-in CA certificate store rather than the distro-specific
+# CA certificate store. Detect this and symlink to the correct
+# one. If the value for the CA is not rooted in /etc then we know
+# we need to change it.
+capath=$(python -c "from requests import certs; print certs.where()")
+
+if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
+    if [[ ! $capath =~ ^/etc/.* && ! -L $capath ]]; then
+        if is_fedora; then
+            sudo rm -f $capath
+            sudo ln -s /etc/pki/tls/certs/ca-bundle.crt $capath
+        elif is_ubuntu; then
+            sudo rm -f $capath
+            sudo ln -s /etc/ssl/certs/ca-certificates.crt $capath
+        else
+            echo "Don't know how to set the CA bundle, expect the install to fail."
+        fi
+    fi
+fi
