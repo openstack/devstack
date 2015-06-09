@@ -5,11 +5,77 @@ Using DevStack with neutron Networking
 This guide will walk you through using OpenStack neutron with the ML2
 plugin and the Open vSwitch mechanism driver.
 
-Network Interface Configuration
-===============================
 
-To use neutron, it is suggested that two network interfaces be present
-in the host operating system.
+Using Neutron with a Single Interface
+=====================================
+
+In some instances, like on a developer laptop, there is only one
+network interface that is available. In this scenario, the physical
+interface is added to the Open vSwitch bridge, and the IP address of
+the laptop is migrated onto the bridge interface. That way, the
+physical interface can be used to transmit tenant network traffic,
+the OpenStack API traffic, and management traffic.
+
+
+Physical Network Setup
+----------------------
+
+In most cases where DevStack is being deployed with a single
+interface, there is a hardware router that is being used for external
+connectivity and DHCP. The developer machine is connected to this
+network and is on a shared subnet with other machines.
+
+.. nwdiag::
+
+        nwdiag {
+                inet [ shape = cloud ];
+                router;
+                inet -- router;
+
+                network hardware_network {
+                        address = "172.18.161.0/24"
+                        router [ address = "172.18.161.1" ];
+                        devstack_laptop [ address = "172.18.161.6" ];
+                }
+        }
+
+
+DevStack Configuration
+----------------------
+
+
+::
+
+        HOST_IP=172.18.161.6
+        SERVICE_HOST=172.18.161.6
+        MYSQL_HOST=172.18.161.6
+        RABBIT_HOST=172.18.161.6
+        GLANCE_HOSTPORT=172.18.161.6:9292
+        ADMIN_PASSWORD=secrete
+        MYSQL_PASSWORD=secrete
+        RABBIT_PASSWORD=secrete
+        SERVICE_PASSWORD=secrete
+        SERVICE_TOKEN=secrete
+
+        ## Neutron options
+        Q_USE_SECGROUP=True
+        FLOATING_RANGE="172.18.161.1/24"
+        FIXED_RANGE="10.0.0.0/24"
+        Q_FLOATING_ALLOCATION_POOL=start=172.18.161.250,end=172.18.161.254
+        PUBLIC_NETWORK_GATEWAY="172.18.161.1"
+        Q_L3_ENABLED=True
+        PUBLIC_INTERFACE=eth0
+        Q_USE_PROVIDERNET_FOR_PUBLIC=True
+        OVS_PHYSICAL_BRIDGE=br-ex
+        PUBLIC_BRIDGE=br-ex
+        OVS_BRIDGE_MAPPINGS=public:br-ex
+
+
+
+
+
+Using Neutron with Multiple Interfaces
+======================================
 
 The first interface, eth0 is used for the OpenStack management (API,
 message bus, etc) as well as for ssh for an administrator to access
