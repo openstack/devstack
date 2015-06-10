@@ -78,7 +78,7 @@ function clean_lvm_volume_group {
 }
 
 
-# _create_volume_group creates default volume group
+# _create_lvm_volume_group creates default volume group
 #
 # Usage: _create_lvm_volume_group() $vg $size
 function _create_lvm_volume_group {
