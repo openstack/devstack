@@ -1,7 +1,7 @@
 Listen %PUBLICPORT%
 
 <VirtualHost *:%PUBLICPORT%>
-    WSGIDaemonProcess nova-api processes=5 threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
+    WSGIDaemonProcess nova-api processes=%APIWORKERS% threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
     WSGIProcessGroup nova-api
     WSGIScriptAlias / %PUBLICWSGI%
     WSGIApplicationGroup %{GLOBAL}
