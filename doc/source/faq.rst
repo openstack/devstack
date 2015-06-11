@@ -10,36 +10,21 @@ General Questions
 =================
 
 Q: Can I use DevStack for production?
-    A: No. We mean it. Really. DevStack makes some implementation
-    choices that are not appropriate for production deployments. We
-    warned you!
-Q: Then why selinux in enforcing mode?
-    A: That is the default on current Fedora and RHEL releases. DevStack
-    has (rightly so) a bad reputation for its security practices; it has
-    always been meant as a development tool first and system integration
-    later. This is changing as the security issues around OpenStack's
-    use of root (for example) have been tightened and developers need to
-    be better equipped to work in these environments. ``stack.sh``'s use
-    of root is primarily to support the activities that would be handled
-    by packaging in "real" deployments. To remove additional protections
-    that will be desired/required in production would be a step
-    backward.
-Q: But selinux is disabled in RHEL!
-    A: Today it is, yes. That is a specific exception that certain
-    DevStack contributors fought strongly against. The primary reason it
-    was allowed was to support using RHEL6 as the Python 2.6 test
-    platform and that took priority time-wise. This will not be the case
-    with RHEL 7.
+
+    A: DevStack is targeted at developers and CI systems to use the
+    raw upstream code.  It makes many choices that are not appropriate
+    for production systems.
+
+    Your best choice is probably to choose a `distribution of
+    OpenStack
+    <https://www.openstack.org/marketplace/distros>`__.
+
 Q: Why a shell script, why not chef/puppet/...
     A: The script is meant to be read by humans (as well as ran by
     computers); it is the primary documentation after all. Using a
     recipe system requires everyone to agree and understand chef or
     puppet.
-Q: Why not use Crowbar?
-    A: DevStack is optimized for documentation & developers. As some of
-    us use `Crowbar <https://github.com/dellcloudedge/crowbar>`__ for
-    production deployments, we hope developers documenting how they
-    setup systems for new features supports projects like Crowbar.
+
 Q: I'd like to help!
     A: That isn't a question, but please do! The source for DevStack is
     at
@@ -49,27 +34,23 @@ Q: I'd like to help!
     follow the usual process as described in the `developer
     guide <http://docs.openstack.org/infra/manual/developers.html>`__. This Sphinx
     documentation is housed in the doc directory.
+
 Q: Why not use packages?
     A: Unlike packages, DevStack leaves your cloud ready to develop -
     checkouts of the code and services running in screen. However, many
     people are doing the hard work of packaging and recipes for
-    production deployments. We hope this script serves as a way to
-    communicate configuration changes between developers and packagers.
+    production deployments.
+
 Q: Why isn't $MY\_FAVORITE\_DISTRO supported?
     A: DevStack is meant for developers and those who want to see how
     OpenStack really works. DevStack is known to run on the
     distro/release combinations listed in ``README.md``. DevStack is
     only supported on releases other than those documented in
     ``README.md`` on a best-effort basis.
-Q: What about Fedora/RHEL/CentOS?
-    A: Fedora and CentOS/RHEL are supported via rpm dependency files and
-    specific checks in ``stack.sh``. Support will follow the pattern set
-    with the Ubuntu testing, i.e. only a single release of the distro
-    will receive regular testing, others will be handled on a
-    best-effort basis.
-Q: Are there any differences between Ubuntu and Fedora support?
-    A: Neutron is not fully supported prior to Fedora 18 due lack of
-    OpenVSwitch packages.
+
+Q: Are there any differences between Ubuntu and Centos/Fedora support?
+    A: Both should work well and are tested by DevStack CI.
+
 Q: Why can't I use another shell?
     A: DevStack now uses some specific bash-ism that require Bash 4, such
     as associative arrays. Simple compatibility patches have been accepted
@@ -77,26 +58,23 @@ Q: Why can't I use another shell?
     compatibility patches will be considered except for shells matching
     the array functionality as it is very ingrained in the repo and project
     management.
-Q: But, but, can't I test on OS/X?
-   A: Yes, even you, core developer who complained about this, needs to
-   install bash 4 via homebrew to keep running tests on OS/X.  Get a Real
-   Operating System.   (For most of you who don't know, I am referring to
-   myself.)
+
+Q: Can I test on OS/X?
+   A: Some people have success with bash 4 installed via
+   homebrew to keep running tests on OS/X.
 
 Operation and Configuration
 ===========================
 
 Q: Can DevStack handle a multi-node installation?
-    A: Indirectly, yes. You run DevStack on each node with the
-    appropriate configuration in ``local.conf``. The primary
-    considerations are turning off the services not required on the
-    secondary nodes, making sure the passwords match and setting the
-    various API URLs to the right place.
+    A: Yes, see :doc:`multinode lab guide <guides/multinode-lab>`
+
 Q: How can I document the environment that DevStack is using?
     A: DevStack includes a script (``tools/info.sh``) that gathers the
     versions of the relevant installed apt packages, pip packages and
     git repos. This is a good way to verify what Python modules are
     installed.
+
 Q: How do I turn off a service that is enabled by default?
     A: Services can be turned off by adding ``disable_service xxx`` to
     ``local.conf`` (using ``n-vol`` in this example):
@@ -113,31 +91,22 @@ Q: Is enabling a service that defaults to off done with the reverse of the above
         enable_service qpid
 
 Q: How do I run a specific OpenStack milestone?
-    A: OpenStack milestones have tags set in the git repo. Set the appropriate tag in the ``*_BRANCH`` variables in ``local.conf``.  Swift is on its own release schedule so pick a tag in the Swift repo that is just before the milestone release. For example:
+   A: OpenStack milestones have tags set in the git repo. Set the
+   appropriate tag in the ``*_BRANCH`` variables in ``local.conf``.
+   Swift is on its own release schedule so pick a tag in the Swift repo
+   that is just before the milestone release. For example:
 
     ::
 
         [[local|localrc]]
-        GLANCE_BRANCH=stable/juno
-        HORIZON_BRANCH=stable/juno
-        KEYSTONE_BRANCH=stable/juno
-        NOVA_BRANCH=stable/juno
-        GLANCE_BRANCH=stable/juno
-        NEUTRON_BRANCH=stable/juno
-        SWIFT_BRANCH=2.2.1
+        GLANCE_BRANCH=stable/kilo
+        HORIZON_BRANCH=stable/kilo
+        KEYSTONE_BRANCH=stable/kilo
+        NOVA_BRANCH=stable/kilo
+        GLANCE_BRANCH=stable/kilo
+        NEUTRON_BRANCH=stable/kilo
+        SWIFT_BRANCH=2.3.0
 
-Q: Why not use [STRIKEOUT:``tools/pip-requires``]\ ``requirements.txt`` to grab project dependencies?
-    [STRIKEOUT:The majority of deployments will use packages to install
-    OpenStack that will have distro-based packages as dependencies.
-    DevStack installs as many of these Python packages as possible to
-    mimic the expected production environment.] Certain Linux
-    distributions have a 'lack of workaround' in their Python
-    configurations that installs vendor packaged Python modules and
-    pip-installed modules to the SAME DIRECTORY TREE. This is causing
-    heartache and moving us in the direction of installing more modules
-    from PyPI than vendor packages. However, that is only being done as
-    necessary as the packaging needs to catch up to the development
-    cycle anyway so this is kept to a minimum.
 Q: What can I do about RabbitMQ not wanting to start on my fresh new VM?
     A: This is often caused by ``erlang`` not being happy with the
     hostname resolving to a reachable IP address. Make sure your
@@ -145,6 +114,7 @@ Q: What can I do about RabbitMQ not wanting to start on my fresh new VM?
     in ``/etc/hosts`` is often good enough for a single-node
     installation. And in an extreme case, use ``clean.sh`` to eradicate
     it and try again.
+
 Q: How can I set up Heat in stand-alone configuration?
     A: Configure ``local.conf`` thusly:
 
