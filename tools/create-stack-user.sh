@@ -42,7 +42,8 @@ if ! getent group $STACK_USER >/dev/null; then
 fi
 
 if ! getent passwd $STACK_USER >/dev/null; then
-    echo "Creating a user called $STACK_USER"
+    echo "Creating a user called $STACK_USER (with home $DEST)"
+    mkdir -p "${DEST%/*}"  # e.g. Debian wheezy doesn't have /opt in case of /opt/stack
     useradd -g $STACK_USER -s /bin/bash -d $DEST -m $STACK_USER
 fi
 
