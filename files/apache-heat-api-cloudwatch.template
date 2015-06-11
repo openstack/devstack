@@ -1,0 +1,27 @@
+Listen %PUBLICPORT%
+
+<VirtualHost *:%PUBLICPORT%>
+    WSGIDaemonProcess heat-api-cloudwatch processes=2 threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
+    WSGIProcessGroup heat-api-cloudwatch
+    WSGIScriptAlias / %HEAT_BIN_DIR%/heat-wsgi-api-cloudwatch
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    AllowEncodedSlashes On
+    <IfVersion >= 2.4>
+      ErrorLogFormat "%{cu}t %M"
+    </IfVersion>
+    ErrorLog /var/log/%APACHE_NAME%/heat-api-cloudwatch.log
+    %SSLENGINE%
+    %SSLCERTFILE%
+    %SSLKEYFILE%
+
+    <Directory %HEAT_BIN_DIR%>
+        <IfVersion >= 2.4>
+            Require all granted
+        </IfVersion>
+        <IfVersion < 2.4>
+            Order allow,deny
+            Allow from all
+        </IfVersion>
+    </Directory>
+</VirtualHost>

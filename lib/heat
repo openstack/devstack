@@ -16,6 +16,7 @@
 # - install_heat
 # - configure_heatclient
 # - configure_heat
+# - _config_heat_apache_wsgi
 # - init_heat
 # - start_heat
 # - stop_heat
@@ -31,6 +32,9 @@ set +o xtrace
 
 # set up default directories
 GITDIR["python-heatclient"]=$DEST/python-heatclient
+
+# Toggle for deploying Heat-API under HTTPD + mod_wsgi
+HEAT_USE_MOD_WSGI=${HEAT_USE_MOD_WSGI:-False}
 
 HEAT_DIR=$DEST/heat
 HEAT_CFNTOOLS_DIR=$DEST/heat-cfntools
@@ -117,12 +121,16 @@ function configure_heat {
     # logging
     iniset $HEAT_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $HEAT_CONF DEFAULT use_syslog $SYSLOG
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$HEAT_USE_MOD_WSGI" == "False" ]  ; then
         # Add color to logging output
         setup_colorized_logging $HEAT_CONF DEFAULT tenant user
     fi
 
     iniset $HEAT_CONF DEFAULT deferred_auth_method $HEAT_DEFERRED_AUTH
+
+    if [ "$HEAT_USE_MOD_WSGI" == "True" ]; then
+        _config_heat_apache_wsgi
+    fi
 
     # NOTE(jamielennox): heat re-uses specific values from the
     # keystone_authtoken middleware group and so currently fails when using the
@@ -211,6 +219,9 @@ function install_heatclient {
 function install_heat {
     git_clone $HEAT_REPO $HEAT_DIR $HEAT_BRANCH
     setup_develop $HEAT_DIR
+    if [ "$HEAT_USE_MOD_WSGI" == "True" ]; then
+        install_apache_wsgi
+    fi
 }
 
 # install_heat_other() - Collect source and prepare
@@ -226,19 +237,101 @@ function install_heat_other {
 # start_heat() - Start running processes, including screen
 function start_heat {
     run_process h-eng "$HEAT_BIN_DIR/heat-engine --config-file=$HEAT_CONF"
-    run_process h-api "$HEAT_BIN_DIR/heat-api --config-file=$HEAT_CONF"
-    run_process h-api-cfn "$HEAT_BIN_DIR/heat-api-cfn --config-file=$HEAT_CONF"
-    run_process h-api-cw "$HEAT_BIN_DIR/heat-api-cloudwatch --config-file=$HEAT_CONF"
+
+    # If the site is not enabled then we are in a grenade scenario
+    local enabled_site_file=$(apache_site_config_for heat-api)
+    if [ -f ${enabled_site_file} ] && [ "$HEAT_USE_MOD_WSGI" == "True" ]; then
+        enable_apache_site heat-api
+        enable_apache_site heat-api-cfn
+        enable_apache_site heat-api-cloudwatch
+        restart_apache_server
+        tail_log heat-api /var/log/$APACHE_NAME/heat-api.log
+        tail_log heat-api-cfn /var/log/$APACHE_NAME/heat-api-cfn.log
+        tail_log heat-api-cloudwatch /var/log/$APACHE_NAME/heat-api-cloudwatch.log
+    else
+        run_process h-api "$HEAT_BIN_DIR/heat-api --config-file=$HEAT_CONF"
+        run_process h-api-cfn "$HEAT_BIN_DIR/heat-api-cfn --config-file=$HEAT_CONF"
+        run_process h-api-cw "$HEAT_BIN_DIR/heat-api-cloudwatch --config-file=$HEAT_CONF"
+    fi
 }
 
 # stop_heat() - Stop running processes
 function stop_heat {
     # Kill the screen windows
-    local serv
-    for serv in h-eng h-api h-api-cfn h-api-cw; do
-        stop_process $serv
-    done
+    stop_process h-eng
+
+    if [ "$HEAT_USE_MOD_WSGI" == "True" ]; then
+        disable_apache_site heat-api
+        disable_apache_site heat-api-cfn
+        disable_apache_site heat-api-cloudwatch
+        restart_apache_server
+    else
+        local serv
+        for serv in h-api h-api-cfn h-api-cw; do
+            stop_process $serv
+        done
+    fi
+
 }
+
+# _cleanup_heat_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+function _cleanup_heat_apache_wsgi {
+    sudo rm -f $(apache_site_config_for heat-api)
+    sudo rm -f $(apache_site_config_for heat-api-cfn)
+    sudo rm -f $(apache_site_config_for heat-api-cloudwatch)
+}
+
+# _config_heat_apache_wsgi() - Set WSGI config files of Heat
+function _config_heat_apache_wsgi {
+
+    local heat_apache_conf=$(apache_site_config_for heat-api)
+    local heat_cfn_apache_conf=$(apache_site_config_for heat-api-cfn)
+    local heat_cloudwatch_apache_conf=$(apache_site_config_for heat-api-cloudwatch)
+    local heat_ssl=""
+    local heat_certfile=""
+    local heat_keyfile=""
+    local heat_api_port=$HEAT_API_PORT
+    local heat_cfn_api_port=$HEAT_API_CFN_PORT
+    local heat_cw_api_port=$HEAT_API_CW_PORT
+    local venv_path=""
+
+    sudo cp $FILES/apache-heat-api.template $heat_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$heat_api_port|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%HEAT_BIN_DIR%|$HEAT_BIN_DIR|g;
+        s|%SSLENGINE%|$heat_ssl|g;
+        s|%SSLCERTFILE%|$heat_certfile|g;
+        s|%SSLKEYFILE%|$heat_keyfile|g;
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
+    " -i $heat_apache_conf
+
+    sudo cp $FILES/apache-heat-api-cfn.template $heat_cfn_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$heat_cfn_api_port|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%HEAT_BIN_DIR%|$HEAT_BIN_DIR|g;
+        s|%SSLENGINE%|$heat_ssl|g;
+        s|%SSLCERTFILE%|$heat_certfile|g;
+        s|%SSLKEYFILE%|$heat_keyfile|g;
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
+    " -i $heat_cfn_apache_conf
+
+    sudo cp $FILES/apache-heat-api-cloudwatch.template $heat_cloudwatch_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$heat_cw_api_port|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%HEAT_BIN_DIR%|$HEAT_BIN_DIR|g;
+        s|%SSLENGINE%|$heat_ssl|g;
+        s|%SSLCERTFILE%|$heat_certfile|g;
+        s|%SSLKEYFILE%|$heat_keyfile|g;
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
+    " -i $heat_cloudwatch_apache_conf
+}
+
 
 # create_heat_accounts() - Set up common required heat accounts
 function create_heat_accounts {
