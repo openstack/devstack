@@ -53,6 +53,7 @@ NOVA_CONF=$NOVA_CONF_DIR/nova.conf
 NOVA_CELLS_CONF=$NOVA_CONF_DIR/nova-cells.conf
 NOVA_FAKE_CONF=$NOVA_CONF_DIR/nova-fake.conf
 NOVA_CELLS_DB=${NOVA_CELLS_DB:-nova_cell}
+NOVA_API_DB=${NOVA_API_DB:-nova_api}
 
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 # NOVA_API_VERSION valid options
@@ -471,6 +472,7 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
     iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
     iniset $NOVA_CONF database connection `database_connection_url nova`
+    iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
 
@@ -675,6 +677,9 @@ function init_nova {
         if is_service_enabled n-cell; then
             recreate_database $NOVA_CELLS_DB
         fi
+
+        recreate_database $NOVA_API_DB
+        $NOVA_BIN_DIR/nova-manage api_db sync
     fi
 
     create_nova_cache_dir
