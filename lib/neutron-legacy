@@ -463,6 +463,8 @@ function configure_neutron {
     fi
 
     _configure_neutron_debug_command
+
+    iniset $NEUTRON_CONF DEFAULT api_workers "$API_WORKERS"
 }
 
 function create_nova_conf_neutron {
