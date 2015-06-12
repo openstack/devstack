@@ -165,6 +165,8 @@ function install_database_python_mysql {
     pip_install_gr $MYSQL_DRIVER
     if [[ "$MYSQL_DRIVER" == "MySQL-python" ]]; then
         ADDITIONAL_VENV_PACKAGES+=",MySQL-python"
+    elif [[ "$MYSQL_DRIVER" == "PyMySQL" ]]; then
+        ADDITIONAL_VENV_PACKAGES+=",PyMySQL"
     fi
 }
 
