@@ -134,6 +134,9 @@ if [[ -r $TOP_DIR/local.conf ]]; then
             if [[ -r $TOP_DIR/localrc ]]; then
                 warn $LINENO "localrc and local.conf:[[local]] both exist, using localrc"
             else
+                if ! touch $TOP_DIR/.localrc.auto 2>/dev/null ; then
+                    die $LINENO "Could not write file \"$TOP_DIR/.localrc.auto\"."
+                fi
                 echo "# Generated file, do not edit" >$TOP_DIR/.localrc.auto
                 get_meta_section $TOP_DIR/local.conf local $lfile >>$TOP_DIR/.localrc.auto
             fi
