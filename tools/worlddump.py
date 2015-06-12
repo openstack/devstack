@@ -106,6 +106,12 @@ def compute_consoles():
             _dump_cmd("sudo cat %s" % fullpath)
 
 
+def guru_meditation_report():
+    _header("nova-compute Guru Meditation Report")
+    _dump_cmd("kill -s USR1 `pgrep nova-compute`")
+    print "guru meditation report in nova-compute log"
+
+
 def main():
     opts = get_options()
     fname = filename(opts.dir)
@@ -118,6 +124,7 @@ def main():
         network_dump()
         iptables_dump()
         compute_consoles()
+        guru_meditation_report()
 
 
 if __name__ == '__main__':
