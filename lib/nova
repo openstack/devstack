@@ -232,6 +232,10 @@ function cleanup_nova {
     #if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
     #    cleanup_nova_hypervisor
     #fi
+
+    if [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
+        _cleanup_nova_apache_wsgi
+    fi
 }
 
 # _cleanup_nova_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
@@ -277,6 +281,7 @@ function _config_nova_apache_wsgi {
         s|%SSLKEYFILE%|$nova_keyfile|g;
         s|%USER%|$STACK_USER|g;
         s|%VIRTUALENV%|$venv_path|g
+        s|%APIWORKERS%|$API_WORKERS|g
     " -i $nova_apache_conf
 
     sudo cp $FILES/apache-nova-ec2-api.template $nova_ec2_apache_conf
@@ -289,6 +294,7 @@ function _config_nova_apache_wsgi {
         s|%SSLKEYFILE%|$nova_keyfile|g;
         s|%USER%|$STACK_USER|g;
         s|%VIRTUALENV%|$venv_path|g
+        s|%APIWORKERS%|$API_WORKERS|g
     " -i $nova_ec2_apache_conf
 }
 
@@ -761,8 +767,8 @@ function start_nova_api {
         enable_apache_site nova-api
         enable_apache_site nova-ec2-api
         restart_apache_server
-        tail_log nova /var/log/$APACHE_NAME/nova-api.log
-        tail_log nova /var/log/$APACHE_NAME/nova-ec2-api.log
+        tail_log nova-api /var/log/$APACHE_NAME/nova-api.log
+        tail_log nova-ec2-api /var/log/$APACHE_NAME/nova-ec2-api.log
     else
         run_process n-api "$NOVA_BIN_DIR/nova-api"
     fi
