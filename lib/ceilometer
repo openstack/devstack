@@ -78,8 +78,13 @@ CEILOMETER_API_LOG_DIR=/var/log/ceilometer-api
 CEILOMETER_AUTH_CACHE_DIR=${CEILOMETER_AUTH_CACHE_DIR:-/var/cache/ceilometer}
 CEILOMETER_WSGI_DIR=${CEILOMETER_WSGI_DIR:-/var/www/ceilometer}
 
-# Support potential entry-points console scripts
-CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
+# Support potential entry-points console scripts in VENV or not
+if [[ ${USE_VENV} = True ]]; then
+    PROJECT_VENV["ceilometer"]=${CEILOMETER_DIR}.venv
+    CEILOMETER_BIN_DIR=${PROJECT_VENV["ceilometer"]}/bin
+else
+    CEILOMETER_BIN_DIR=$(get_python_exec_prefix)
+fi
 
 # Set up database backend
 CEILOMETER_BACKEND=${CEILOMETER_BACKEND:-mysql}
@@ -151,6 +156,8 @@ function _cleanup_ceilometer_apache_wsgi {
 # runs that a clean run would need to clean up
 function cleanup_ceilometer {
     if [ "$CEILOMETER_BACKEND" = 'mongodb' ] ; then
+        echo "### cleaning database"
+        read
         mongo ceilometer --eval "db.dropDatabase();"
     elif [ "$CEILOMETER_BACKEND" = 'es' ] ; then
         curl -XDELETE "localhost:9200/events_*"
@@ -165,16 +172,22 @@ function _config_ceilometer_apache_wsgi {
 
     local ceilometer_apache_conf=$(apache_site_config_for ceilometer)
     local apache_version=$(get_apache_version)
+    local venv_path=""
 
     # Copy proxy vhost and wsgi file
     sudo cp $CEILOMETER_DIR/ceilometer/api/app.wsgi $CEILOMETER_WSGI_DIR/app
+
+    if [[ ${USE_VENV} = True ]]; then
+        venv_path="python-path=${PROJECT_VENV["ceilometer"]}/lib/$(python_version)/site-packages"
+    fi
 
     sudo cp $FILES/apache-ceilometer.template $ceilometer_apache_conf
     sudo sed -e "
         s|%PORT%|$CEILOMETER_SERVICE_PORT|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
         s|%WSGIAPP%|$CEILOMETER_WSGI_DIR/app|g;
-        s|%USER%|$STACK_USER|g
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
     " -i $ceilometer_apache_conf
 }
 
@@ -232,12 +245,14 @@ function configure_ceilometer {
         iniset $CEILOMETER_CONF DEFAULT collector_workers $API_WORKERS
         ${TOP_DIR}/pkg/elasticsearch.sh start
         cleanup_ceilometer
-    else
+    elif [ "$CEILOMETER_BACKEND" = 'mongodb' ] ; then
         iniset $CEILOMETER_CONF database alarm_connection mongodb://localhost:27017/ceilometer
         iniset $CEILOMETER_CONF database event_connection mongodb://localhost:27017/ceilometer
         iniset $CEILOMETER_CONF database metering_connection mongodb://localhost:27017/ceilometer
         configure_mongodb
         cleanup_ceilometer
+    else
+        die $LINENO "Unable to configure unknown CEILOMETER_BACKEND $CEILOMETER_BACKEND"
     fi
 
     if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
@@ -263,10 +278,8 @@ function configure_mongodb {
     local packages=mongodb-server
 
     if is_fedora; then
-        # mongodb client + python bindings
-        packages="${packages} mongodb pymongo"
-    else
-        packages="${packages} python-pymongo"
+        # mongodb client
+        packages="${packages} mongodb"
     fi
 
     install_package ${packages}
@@ -319,6 +332,18 @@ function install_ceilometer {
         install_redis
     fi
 
+    if [ "$CEILOMETER_BACKEND" = 'mongodb' ] ; then
+        pip_install_gr pymongo
+    fi
+
+    if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+        pip_install_gr libvirt-python
+    fi
+
+    if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
+        pip_instal_gr oslo.vmware
+    fi
+
     if [ "$CEILOMETER_BACKEND" = 'es' ] ; then
         ${TOP_DIR}/pkg/elasticsearch.sh download
         ${TOP_DIR}/pkg/elasticsearch.sh install
@@ -349,13 +374,13 @@ function install_ceilometermiddleware {
 
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer {
-    run_process ceilometer-acentral "ceilometer-agent-central --config-file $CEILOMETER_CONF"
-    run_process ceilometer-anotification "ceilometer-agent-notification --config-file $CEILOMETER_CONF"
-    run_process ceilometer-collector "ceilometer-collector --config-file $CEILOMETER_CONF"
-    run_process ceilometer-aipmi "ceilometer-agent-ipmi --config-file $CEILOMETER_CONF"
+    run_process ceilometer-acentral "$CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_CONF"
+    run_process ceilometer-anotification "$CEILOMETER_BIN_DIR/ceilometer-agent-notification --config-file $CEILOMETER_CONF"
+    run_process ceilometer-collector "$CEILOMETER_BIN_DIR/ceilometer-collector --config-file $CEILOMETER_CONF"
+    run_process ceilometer-aipmi "$CEILOMETER_BIN_DIR/ceilometer-agent-ipmi --config-file $CEILOMETER_CONF"
 
     if [[ "$CEILOMETER_USE_MOD_WSGI" == "False" ]]; then
-        run_process ceilometer-api "ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
+        run_process ceilometer-api "$CEILOMETER_BIN_DIR/ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
     else
         enable_apache_site ceilometer
         restart_apache_server
@@ -367,10 +392,10 @@ function start_ceilometer {
     # Start the compute agent last to allow time for the collector to
     # fully wake up and connect to the message bus. See bug #1355809
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
-        run_process ceilometer-acompute "ceilometer-agent-compute --config-file $CEILOMETER_CONF" $LIBVIRT_GROUP
+        run_process ceilometer-acompute "$CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_CONF" $LIBVIRT_GROUP
     fi
     if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
-        run_process ceilometer-acompute "ceilometer-agent-compute --config-file $CEILOMETER_CONF"
+        run_process ceilometer-acompute "$CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_CONF"
     fi
 
     # Only die on API if it was actually intended to be turned on
@@ -381,8 +406,8 @@ function start_ceilometer {
         fi
     fi
 
-    run_process ceilometer-alarm-notifier "ceilometer-alarm-notifier --config-file $CEILOMETER_CONF"
-    run_process ceilometer-alarm-evaluator "ceilometer-alarm-evaluator --config-file $CEILOMETER_CONF"
+    run_process ceilometer-alarm-notifier "$CEILOMETER_BIN_DIR/ceilometer-alarm-notifier --config-file $CEILOMETER_CONF"
+    run_process ceilometer-alarm-evaluator "$CEILOMETER_BIN_DIR/ceilometer-alarm-evaluator --config-file $CEILOMETER_CONF"
 }
 
 # stop_ceilometer() - Stop running processes
