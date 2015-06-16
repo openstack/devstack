@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# This file is needed so Q_PLUGIN=vmware_dvs will work.
+
+# FIXME(salv-orlando): This function should not be here, but unfortunately
+# devstack calls it before the external plugins are fetched
+function has_neutron_plugin_security_group {
+    # 0 means True here
+    return 0
+}
