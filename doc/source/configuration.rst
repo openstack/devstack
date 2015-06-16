@@ -137,6 +137,11 @@ Ethernet interface to a bridge on the host. Setting it here also makes it
 available for ``openrc`` to set ``OS_AUTH_URL``. ``HOST_IP`` is not set
 by default.
 
+``HOST_IPV6`` is normally detected on the first run of ``stack.sh`` but
+will not be set if there is no IPv6 address on the default Ethernet interface.
+Setting it here also makes it available for ``openrc`` to set ``OS_AUTH_URL``.
+``HOST_IPV6`` is not set by default.
+
 Common Configuration Variables
 ==============================
 
@@ -391,6 +396,8 @@ Multi-host DevStack
         ENABLED_SERVICES=n-vol,n-cpu,n-net,n-api
 
 IP Version
+----------
+
     | Default: ``IP_VERSION=4+6``
     | This setting can be used to configure DevStack to create either an IPv4,
       IPv6, or dual stack tenant data network by setting ``IP_VERSION`` to
@@ -418,6 +425,25 @@ IP Version
     | *Note: ``FIXED_RANGE_V6`` and ``IPV6_PRIVATE_NETWORK_GATEWAY``
       can be configured with any valid IPv6 prefix. The default values make
       use of an auto-generated ``IPV6_GLOBAL_ID`` to comply with RFC 4193.*
+    |
+
+    | Default: ``SERVICE_IP_VERSION=4``
+    | This setting can be used to configure DevStack to enable services to
+      operate over either IPv4 or IPv6, by setting ``SERVICE_IP_VERSION`` to
+      either ``SERVICE_IP_VERSION=4`` or ``SERVICE_IP_VERSION=6`` respectively.
+      When set to ``4`` devstack services will open listen sockets on 0.0.0.0
+      and service endpoints will be registered using ``HOST_IP`` as the address.
+      When set to ``6`` devstack services will open listen sockets on :: and
+      service endpoints will be registered using ``HOST_IPV6`` as the address.
+      The default value for this setting is ``4``.  Dual-mode support, for
+      example ``4+6`` is not currently supported.
+    | The following optional variable can be used to alter the default IPv6
+      address used:
+    |
+
+    ::
+
+        HOST_IPV6=${some_local_ipv6_address}
 
 Examples
 ========

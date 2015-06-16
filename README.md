@@ -360,6 +360,22 @@ Be aware that there are some features currently missing in cells, one notable
 one being security groups.  The exercises have been patched to disable
 functionality not supported by cells.
 
+# IPv6
+
+By default, most Openstack services are bound to 0.0.0.0
+and service endpoints are registered as IPv4 addresses.
+A new variable was created to control this behavior, and to
+allow for operation over IPv6 instead of IPv4.
+
+For this, add the following to `local.conf`:
+
+    SERVICE_IP_VERSION=6
+
+When set to "6" devstack services will open listen sockets on ::
+and service endpoints will be registered using HOST_IPV6 as the
+address.  The default value for this setting is `4`.  Dual-mode
+support, for example `4+6` is not currently supported.
+
 
 # Local Configuration
 

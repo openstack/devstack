@@ -90,10 +90,10 @@ function configure_database_mysql {
 
     # Now update ``my.cnf`` for some local needs and restart the mysql service
 
-    # Change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0) and
+    # Change ‘bind-address’ from localhost (127.0.0.1) to any (::) and
     # set default db type to InnoDB
     sudo bash -c "source $TOP_DIR/functions && \
-        iniset $my_conf mysqld bind-address 0.0.0.0 && \
+        iniset $my_conf mysqld bind-address "$SERVICE_LISTEN_ADDRESS" && \
         iniset $my_conf mysqld sql_mode STRICT_ALL_TABLES && \
         iniset $my_conf mysqld default-storage-engine InnoDB \
         iniset $my_conf mysqld max_connections 1024 \

@@ -669,14 +669,54 @@ FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 HOST_IP_IFACE=${HOST_IP_IFACE:-}
 HOST_IP=${HOST_IP:-}
+HOST_IPV6=${HOST_IPV6:-}
 
-HOST_IP=$(get_default_host_ip $FIXED_RANGE $FLOATING_RANGE "$HOST_IP_IFACE" "$HOST_IP")
+HOST_IP=$(get_default_host_ip "$FIXED_RANGE" "$FLOATING_RANGE" "$HOST_IP_IFACE" "$HOST_IP" "inet")
 if [ "$HOST_IP" == "" ]; then
     die $LINENO "Could not determine host ip address.  See local.conf for suggestions on setting HOST_IP."
 fi
 
-# Allow the use of an alternate hostname (such as localhost/127.0.0.1) for service endpoints.
-SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+HOST_IPV6=$(get_default_host_ip "" "" "$HOST_IP_IFACE" "$HOST_IPV6" "inet6")
+
+# SERVICE IP version
+# This is the IP version that services should be listening on, as well
+# as using to register their endpoints with keystone.
+SERVICE_IP_VERSION=${SERVICE_IP_VERSION:-4}
+
+# Validate SERVICE_IP_VERSION
+# It would be nice to support "4+6" here as well, but that will require
+# multiple calls into keystone to register endpoints, so for now let's
+# just support one or the other.
+if [[ $SERVICE_IP_VERSION != "4" ]] && [[ $SERVICE_IP_VERSION != "6" ]]; then
+    die $LINENO "SERVICE_IP_VERSION must be either 4 or 6"
+fi
+
+if [[ "$SERVICE_IP_VERSION" == 4 ]]; then
+    DEF_SERVICE_HOST=$HOST_IP
+    DEF_SERVICE_LOCAL_HOST=127.0.0.1
+    DEF_SERVICE_LISTEN_ADDRESS=0.0.0.0
+fi
+
+if [[ "$SERVICE_IP_VERSION" == 6 ]]; then
+    if [ "$HOST_IPV6" == "" ]; then
+        die $LINENO "Could not determine host IPv6 address.  See local.conf for suggestions on setting HOST_IPV6."
+    fi
+
+    DEF_SERVICE_HOST=[$HOST_IPV6]
+    DEF_SERVICE_LOCAL_HOST=::1
+    DEF_SERVICE_LISTEN_ADDRESS=::
+fi
+
+# This is either 0.0.0.0 for IPv4 or :: for IPv6
+SERVICE_LISTEN_ADDRESS=${SERVICE_LISTEN_ADDRESS:-${DEF_SERVICE_LISTEN_ADDRESS}}
+
+# Allow the use of an alternate hostname (such as localhost/127.0.0.1) for
+# service endpoints.  Default is dependent on SERVICE_IP_VERSION above.
+SERVICE_HOST=${SERVICE_HOST:-${DEF_SERVICE_HOST}}
+# This is either 127.0.0.1 for IPv4 or ::1 for IPv6
+SERVICE_LOCAL_HOST=${SERVICE_LOCAL_HOST:-${DEF_SERVICE_LOCAL_HOST}}
+
+REGION_NAME=${REGION_NAME:-RegionOne}
 
 # Configure services to use syslog instead of writing to individual log files
 SYSLOG=$(trueorfalse False SYSLOG)
