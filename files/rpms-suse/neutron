@@ -11,6 +11,3 @@ sqlite3
 sudo
 vlan
 radvd # NOPRIME
-
-# FIXME: qpid is not part of openSUSE, those names are tentative
-qpidd # NOPRIME

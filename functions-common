@@ -1671,7 +1671,7 @@ function disable_service {
 # ``ENABLED_SERVICES`` list, if they are not already present.
 #
 # For example:
-#   enable_service qpid
+#   enable_service q-svc
 #
 # This function does not know about the special cases
 # for nova, glance, and neutron built into is_service_enabled().

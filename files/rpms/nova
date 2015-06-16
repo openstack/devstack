@@ -22,6 +22,5 @@ mysql-server # NOPRIME
 parted
 polkit
 rabbitmq-server # NOPRIME
-qpid-cpp-server # NOPRIME
 sqlite
 sudo

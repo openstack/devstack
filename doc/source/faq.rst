@@ -88,7 +88,7 @@ Q: Is enabling a service that defaults to off done with the reverse of the above
 
     ::
 
-        enable_service qpid
+        enable_service q-svc
 
 Q: How do I run a specific OpenStack milestone?
    A: OpenStack milestones have tags set in the git repo. Set the
