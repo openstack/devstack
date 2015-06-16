@@ -15,13 +15,21 @@ function is_neutron_ovs_base_plugin {
     return 0
 }
 
+function _neutron_ovs_base_add_bridge {
+    local bridge=$1
+    local addbr_cmd="sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge"
+
+    if [ "$OVS_DATAPATH_TYPE" != "" ] ; then
+        addbr_cmd="$addbr_cmd -- set Bridge $bridge datapath_type=${OVS_DATAPATH_TYPE}"
+    fi
+
+    $addbr_cmd
+}
+
 function _neutron_ovs_base_setup_bridge {
     local bridge=$1
     neutron-ovs-cleanup
-    sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge
-    if [[ $OVS_DATAPATH_TYPE != "" ]]; then
-        sudo ovs-vsctl set Bridge $bridge datapath_type=${OVS_DATAPATH_TYPE}
-    fi
+    _neutron_ovs_base_add_bridge $bridge
     sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
 }
 
@@ -92,7 +100,7 @@ function _neutron_ovs_base_configure_l3_agent {
         sudo ip link set $Q_PUBLIC_VETH_EX up
         sudo ip addr flush dev $Q_PUBLIC_VETH_EX
     else
-        sudo ovs-vsctl -- --may-exist add-br $PUBLIC_BRIDGE
+        _neutron_ovs_base_add_bridge $PUBLIC_BRIDGE
         sudo ovs-vsctl br-set-external-id $PUBLIC_BRIDGE bridge-id $PUBLIC_BRIDGE
     fi
 }
