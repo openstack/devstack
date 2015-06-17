@@ -156,8 +156,6 @@ function _cleanup_ceilometer_apache_wsgi {
 # runs that a clean run would need to clean up
 function cleanup_ceilometer {
     if [ "$CEILOMETER_BACKEND" = 'mongodb' ] ; then
-        echo "### cleaning database"
-        read
         mongo ceilometer --eval "db.dropDatabase();"
     elif [ "$CEILOMETER_BACKEND" = 'es' ] ; then
         curl -XDELETE "localhost:9200/events_*"
