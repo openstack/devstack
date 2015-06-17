@@ -334,12 +334,15 @@ function install_ceilometer {
         pip_install_gr pymongo
     fi
 
-    if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
-        pip_install_gr libvirt-python
-    fi
+    # Only install virt drivers if we're running nova compute
+    if is_service_enabled n-cpu ; then
+        if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+            pip_install_gr libvirt-python
+        fi
 
-    if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
-        pip_instal_gr oslo.vmware
+        if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
+            pip_instal_gr oslo.vmware
+        fi
     fi
 
     if [ "$CEILOMETER_BACKEND" = 'es' ] ; then
