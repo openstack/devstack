@@ -261,15 +261,18 @@ controller node.
 
         ## Neutron Networking options used to create Neutron Subnets
 
-        FIXED_RANGE="10.1.1.0/24"
+        FIXED_RANGE="203.0.113.0/24"
         PROVIDER_SUBNET_NAME="provider_net"
         PROVIDER_NETWORK_TYPE="vlan"
         SEGMENTATION_ID=2010
 
 In this configuration we are defining FIXED_RANGE to be a
-subnet that exists in the private RFC1918 address space - however
-in a real setup FIXED_RANGE would be a public IP address range, so
-that you could access your instances from the public internet.
+publicly routed IPv4 subnet. In this specific instance we are using
+the special TEST-NET-3 subnet defined in `RFC 5737 <http://tools.ietf.org/html/rfc5737>`_,
+which is used for documentation.  In your DevStack setup, FIXED_RANGE
+would be a public IP address range that you or your organization has
+allocated to you, so that you could access your instances from the
+public internet.
 
 The following is a snippet of the DevStack configuration on the
 compute node.
