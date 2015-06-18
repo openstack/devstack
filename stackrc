@@ -382,6 +382,10 @@ GITBRANCH["oslo.rootwrap"]=${OSLORWRAP_BRANCH:-master}
 GITREPO["oslo.serialization"]=${OSLOSERIALIZATION_REPO:-${GIT_BASE}/openstack/oslo.serialization.git}
 GITBRANCH["oslo.serialization"]=${OSLOSERIALIZATION_BRANCH:-master}
 
+# oslo.service
+GITREPO["oslo.service"]=${OSLOSERVICE_REPO:-${GIT_BASE}/openstack/oslo.service.git}
+GITBRANCH["oslo.service"]=${OSLOSERVICE_BRANCH:-master}
+
 # oslo.utils
 GITREPO["oslo.utils"]=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
 GITBRANCH["oslo.utils"]=${OSLOUTILS_BRANCH:-master}

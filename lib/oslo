@@ -37,6 +37,7 @@ GITDIR["oslo.middleware"]=$DEST/oslo.middleware
 GITDIR["oslo.policy"]=$DEST/oslo.policy
 GITDIR["oslo.rootwrap"]=$DEST/oslo.rootwrap
 GITDIR["oslo.serialization"]=$DEST/oslo.serialization
+GITDIR["oslo.service"]=$DEST/oslo.service
 GITDIR["oslo.utils"]=$DEST/oslo.utils
 GITDIR["oslo.versionedobjects"]=$DEST/oslo.versionedobjects
 GITDIR["oslo.vmware"]=$DEST/oslo.vmware
@@ -76,6 +77,7 @@ function install_oslo {
     _do_install_oslo_lib "oslo.policy"
     _do_install_oslo_lib "oslo.rootwrap"
     _do_install_oslo_lib "oslo.serialization"
+    _do_install_oslo_lib "oslo.service"
     _do_install_oslo_lib "oslo.utils"
     _do_install_oslo_lib "oslo.versionedobjects"
     _do_install_oslo_lib "oslo.vmware"
