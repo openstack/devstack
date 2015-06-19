@@ -10,6 +10,7 @@ DevStack - an OpenStack Community Production
    overview
    configuration
    plugins
+   plugin-registry
    faq
    changes
    hacking

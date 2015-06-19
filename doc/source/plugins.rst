@@ -2,103 +2,21 @@
 Plugins
 =======
 
-DevStack has a couple of plugin mechanisms to allow easily adding
-support for additional projects and features.
+The OpenStack ecosystem is wide and deep, and only growing more so
+every day. The value of DevStack is that it's simple enough to
+understand what it's doing clearly. And yet we'd like to support as
+much of the OpenStack Ecosystem as possible. We do that with plugins.
 
-Extras.d Hooks
-==============
+DevStack plugins are bits of bash code that live outside the DevStack
+tree. They are called through a strong contract, so these plugins can
+be sure that they will continue to work in the future as DevStack
+evolves.
 
-These hooks are an extension of the service calls in
-``stack.sh`` at specific points in its run, plus ``unstack.sh`` and
-``clean.sh``. A number of the higher-layer projects are implemented in
-DevStack using this mechanism.
+Plugin Interface
+================
 
-The script in ``extras.d`` is expected to be mostly a dispatcher to
-functions in a ``lib/*`` script. The scripts are named with a
-zero-padded two digits sequence number prefix to control the order that
-the scripts are called, and with a suffix of ``.sh``. DevStack reserves
-for itself the sequence numbers 00 through 09 and 90 through 99.
-
-Below is a template that shows handlers for the possible command-line
-arguments:
-
-::
-
-    # template.sh - DevStack extras.d dispatch script template
-
-    # check for service enabled
-    if is_service_enabled template; then
-
-        if [[ "$1" == "source" ]]; then
-            # Initial source of lib script
-            source $TOP_DIR/lib/template
-        fi
-
-        if [[ "$1" == "stack" && "$2" == "pre-install" ]]; then
-            # Set up system services
-            echo_summary "Configuring system services Template"
-            install_package cowsay
-
-        elif [[ "$1" == "stack" && "$2" == "install" ]]; then
-            # Perform installation of service source
-            echo_summary "Installing Template"
-            install_template
-
-        elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
-            # Configure after the other layer 1 and 2 services have been configured
-            echo_summary "Configuring Template"
-            configure_template
-
-        elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
-            # Initialize and start the template service
-            echo_summary "Initializing Template"
-            ##init_template
-        fi
-
-        if [[ "$1" == "unstack" ]]; then
-            # Shut down template services
-            # no-op
-            :
-        fi
-
-        if [[ "$1" == "clean" ]]; then
-            # Remove state and transient data
-            # Remember clean.sh first calls unstack.sh
-            # no-op
-            :
-        fi
-    fi
-
-The arguments are:
-
--  **source** - Called by each script that utilizes ``extras.d`` hooks;
-   this replaces directly sourcing the ``lib/*`` script.
--  **stack** - Called by ``stack.sh`` three times for different phases
-   of its run:
-
-   -  **pre-install** - Called after system (OS) setup is complete and
-      before project source is installed.
-   -  **install** - Called after the layer 1 and 2 projects source and
-      their dependencies have been installed.
-   -  **post-config** - Called after the layer 1 and 2 services have
-      been configured. All configuration files for enabled services
-      should exist at this point.
-   -  **extra** - Called near the end after layer 1 and 2 services have
-      been started. This is the existing hook and has not otherwise
-      changed.
-
--  **unstack** - Called by ``unstack.sh`` before other services are shut
-   down.
--  **clean** - Called by ``clean.sh`` before other services are cleaned,
-   but after ``unstack.sh`` has been called.
-
-
-Externally Hosted Plugins
-=========================
-
-Based on the extras.d hooks, DevStack supports a standard mechansim
-for including plugins from external repositories. The plugin interface
-assumes the following:
+DevStack supports a standard mechansim for including plugins from
+external repositories. The plugin interface assumes the following:
 
 An external git repository that includes a ``devstack/`` top level
 directory. Inside this directory there can be 2 files.
@@ -118,11 +36,10 @@ directory. Inside this directory there can be 2 files.
   default value only if the variable is unset or empty; e.g. in bash
   syntax ``FOO=${FOO:-default}``.
 
-- ``plugin.sh`` - the actual plugin. It will be executed by devstack
-  during it's run. The run order will be done in the registration
-  order for these plugins, and will occur immediately after all in
-  tree extras.d dispatch at the phase in question.  The plugin.sh
-  looks like the extras.d dispatcher above.
+- ``plugin.sh`` - the actual plugin. It is executed by devstack at
+  well defined points during a ``stack.sh`` run. The plugin.sh
+  internal structure is discussed bellow.
+
 
 Plugins are registered by adding the following to the localrc section
 of ``local.conf``.
@@ -141,49 +58,121 @@ An example would be as follows::
 
   enable_plugin ec2api git://git.openstack.org/stackforge/ec2api
 
-Plugins for gate jobs
----------------------
+plugin.sh contract
+==================
 
-All OpenStack plugins that wish to be used as gate jobs need to exist
-in OpenStack's gerrit. Both ``openstack`` namespace and ``stackforge``
-namespace are fine. This allows testing of the plugin as well as
-provides network isolation against upstream git repository failures
-(which we see often enough to be an issue).
+``plugin.sh`` is a bash script that will be called at specific points
+during ``stack.sh``, ``unstack.sh``, and ``clean.sh``. It will be
+called in the following way::
 
-Ideally plugins will be implemented as ``devstack`` directory inside
-the project they are testing. For example, the stackforge/ec2-api
-project has it's pluggin support in it's tree.
+  source $PATH/TO/plugin.sh <mode> [phase]
 
-In the cases where there is no "project tree" per say (like
-integrating a backend storage configuration such as ceph or glusterfs)
-it's also allowed to build a dedicated
-``stackforge/devstack-plugin-FOO`` project to house the plugin.
+``mode`` can be thought of as the major mode being called, currently
+one of: ``stack``, ``unstack``, ``clean``. ``phase`` is used by modes
+which have multiple points during their run where it's necessary to
+be able to execute code. All existing ``mode`` and ``phase`` points
+are considered **strong contracts** and won't be removed without a
+reasonable deprecation period. Additional new ``mode`` or ``phase``
+points may be added at any time if we discover we need them to support
+additional kinds of plugins in devstack.
 
-Note jobs must not require cloning of repositories during tests.
-Tests must list their repository in the ``PROJECTS`` variable for
-`devstack-gate
-<https://git.openstack.org/cgit/openstack-infra/devstack-gate/tree/devstack-vm-gate-wrap.sh>`_
-for the repository to be available to the test.  Further information
-is provided in the project creator's guide.
+The current full list of ``mode`` and ``phase`` are:
 
-Hypervisor
-==========
+-  **stack** - Called by ``stack.sh`` four times for different phases
+   of its run:
 
-Hypervisor plugins are fairly new and condense most hypervisor
-configuration into one place.
+   -  **pre-install** - Called after system (OS) setup is complete and
+      before project source is installed.
+   -  **install** - Called after the layer 1 and 2 projects source and
+      their dependencies have been installed.
+   -  **post-config** - Called after the layer 1 and 2 services have
+      been configured. All configuration files for enabled services
+      should exist at this point.
+   -  **extra** - Called near the end after layer 1 and 2 services have
+      been started.
 
-The initial plugin implemented was for Docker support and is a useful
-template for the required support. Plugins are placed in
-``lib/nova_plugins`` and named ``hypervisor-<name>`` where ``<name>`` is
-the value of ``VIRT_DRIVER``. Plugins must define the following
-functions:
+-  **unstack** - Called by ``unstack.sh`` before other services are shut
+   down.
+-  **clean** - Called by ``clean.sh`` before other services are cleaned,
+   but after ``unstack.sh`` has been called.
 
--  ``install_nova_hypervisor`` - install any external requirements
--  ``configure_nova_hypervisor`` - make configuration changes, including
-   those to other services
--  ``start_nova_hypervisor`` - start any external services
--  ``stop_nova_hypervisor`` - stop any external services
--  ``cleanup_nova_hypervisor`` - remove transient data and cache
+Example plugin
+====================
+
+An example plugin would look something as follows.
+
+``devstack/settings``::
+
+    # settings file for template
+  enable_service template
+
+
+``devstack/plugin.sh``::
+
+    # plugin.sh - DevStack plugin.sh dispatch script template
+
+    function install_template {
+        ...
+    }
+
+    function init_template {
+        ...
+    }
+
+    function configure_template {
+        ...
+    }
+
+    # check for service enabled
+    if is_service_enabled template; then
+
+        if [[ "$1" == "stack" && "$2" == "pre-install" ]]; then
+            # Set up system services
+            echo_summary "Configuring system services Template"
+            install_package cowsay
+
+        elif [[ "$1" == "stack" && "$2" == "install" ]]; then
+            # Perform installation of service source
+            echo_summary "Installing Template"
+            install_template
+
+        elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
+            # Configure after the other layer 1 and 2 services have been configured
+            echo_summary "Configuring Template"
+            configure_template
+
+        elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
+            # Initialize and start the template service
+            echo_summary "Initializing Template"
+            init_template
+        fi
+
+        if [[ "$1" == "unstack" ]]; then
+            # Shut down template services
+            # no-op
+            :
+        fi
+
+        if [[ "$1" == "clean" ]]; then
+            # Remove state and transient data
+            # Remember clean.sh first calls unstack.sh
+            # no-op
+            :
+        fi
+    fi
+
+Plugin Execution Order
+======================
+
+Plugins are run after in tree services at each of the stages
+above. For example, if you need something to happen before Keystone
+starts, you should do that at the ``post-config`` phase.
+
+Multiple plugins can be specified in your ``local.conf``. When that
+happens the plugins will be executed **in order** at each phase. This
+allows plugins to conceptually depend on each other through
+documenting to the user the order they must be declared. A formal
+dependency mechanism is beyond the scope of the current work.
 
 System Packages
 ===============
@@ -205,3 +194,47 @@ repository:
 
 - ``./devstack/files/rpms-suse/$plugin_name`` - Packages to install when
   running on SUSE Linux or openSUSE.
+
+
+Using Plugins in the OpenStack Gate
+===================================
+
+For everyday use, DevStack plugins can exist in any git tree that's
+accessible on the internet. However, when using DevStack plugins in
+the OpenStack gate, they must live in projects in OpenStack's
+gerrit. Both ``openstack`` namespace and ``stackforge`` namespace are
+fine. This allows testing of the plugin as well as provides network
+isolation against upstream git repository failures (which we see often
+enough to be an issue).
+
+Ideally a plugin will be included within the ``devstack`` directory of
+the project they are being tested. For example, the stackforge/ec2-api
+project has its pluggin support in its own tree.
+
+However, some times a DevStack plugin might be used solely to
+configure a backend service that will be used by the rest of
+OpenStack, so there is no "project tree" per say. Good examples
+include: integration of back end storage (e.g. ceph or glusterfs),
+integration of SDN controllers (e.g. ovn, OpenDayLight), or
+integration of alternate RPC systems (e.g. zmq, qpid). In these cases
+the best practice is to build a dedicated
+``stackforge/devstack-plugin-FOO`` project.
+
+To enable a plugin to be used in a gate job, the following lines will
+be needed in your project.yaml definition::
+
+  # Because we are testing a non standard project, add the
+  # our project repository. This makes zuul do the right
+  # reference magic for testing changes.
+  export PROJECTS="stackforge/ec2-api $PROJECTS"
+
+  # note the actual url here is somewhat irrelevant because it
+  # caches in nodepool, however make it a valid url for
+  # documentation purposes.
+  export DEVSTACK_LOCAL_CONFIG="enable_plugin ec2-api git://git.openstack.org/stackforge/ec2-api"
+
+See Also
+========
+
+For additional inspiration on devstack plugins you can check out the
+`Plugin Registry <plugin-registry.html>`_.
