@@ -35,7 +35,13 @@ source $TOP_DIR/exerciserc
 
 is_service_enabled sahara || exit 55
 
-$CURL_GET http://$SERVICE_HOST:8386/ 2>/dev/null | grep -q 'Auth' || die $LINENO "Sahara API isn't functioning!"
+if is_ssl_enabled_service "sahara" || is_service_enabled tls-proxy; then
+    SAHARA_SERVICE_PROTOCOL="https"
+fi
+
+SAHARA_SERVICE_PROTOCOL=${SAHARA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+
+$CURL_GET $SAHARA_SERVICE_PROTOCOL://$SERVICE_HOST:8386/ 2>/dev/null | grep -q 'Auth' || die $LINENO "Sahara API isn't functioning!"
 
 set +o xtrace
 echo "*********************************************************************"
