@@ -28,3 +28,4 @@ net-tools
 java-1.7.0-openjdk-headless  # NOPRIME rhel7
 java-1.8.0-openjdk-headless  # NOPRIME f21,f22
 pyOpenSSL # version in pip uses too much memory
+iptables-services  # NOPRIME f21,f22
