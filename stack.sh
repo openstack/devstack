@@ -669,6 +669,9 @@ if is_service_enabled s-proxy; then
     fi
 fi
 
+# Save configuration values
+save_stackenv $LINENO
+
 
 # Install Packages
 # ================
@@ -949,6 +952,9 @@ fi
 
 # Initialize the directory for service status check
 init_service_check
+
+# Save configuration values
+save_stackenv $LINENO
 
 
 # Start Services
@@ -1287,12 +1293,7 @@ fi
 
 
 # Save some values we generated for later use
-CURRENT_RUN_TIME=$(date "+$TIMESTAMP_FORMAT")
-echo "# $CURRENT_RUN_TIME" >$TOP_DIR/.stackenv
-for i in BASE_SQL_CONN ENABLED_SERVICES HOST_IP LOGFILE \
-    SERVICE_HOST SERVICE_PROTOCOL STACK_USER TLS_IP KEYSTONE_AUTH_PROTOCOL OS_CACERT; do
-    echo $i=${!i} >>$TOP_DIR/.stackenv
-done
+save_stackenv
 
 # Write out a clouds.yaml file
 # putting the location into a variable to allow for easier refactoring later

@@ -43,6 +43,25 @@ declare -A GITDIR
 
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
+# Save these variables to .stackenv
+STACK_ENV_VARS="BASE_SQL_CONN DATA_DIR DEST ENABLED_SERVICES HOST_IP \
+    KEYSTONE_AUTH_PROTOCOL KEYSTONE_AUTH_URI KEYSTONE_SERVICE_URI \
+    LOGFILE OS_CACERT SERVICE_HOST SERVICE_PROTOCOL STACK_USER TLS_IP"
+
+
+# Saves significant environment variables to .stackenv for later use
+# Refers to a lot of globals, only TOP_DIR and STACK_ENV_VARS are required to
+# function, the rest are simply saved and do not cause problems if they are undefined.
+# save_stackenv [tag]
+function save_stackenv {
+    local tag=${1:-""}
+    # Save some values we generated for later use
+    time_stamp=$(date "+$TIMESTAMP_FORMAT")
+    echo "# $time_stamp $tag" >$TOP_DIR/.stackenv
+    for i in $STACK_ENV_VARS; do
+        echo $i=${!i} >>$TOP_DIR/.stackenv
+    done
+}
 
 # Normalize config values to True or False
 # Accepts as False: 0 no No NO false False FALSE
@@ -67,6 +86,7 @@ function trueorfalse {
 function isset {
     [[ -v "$1" ]]
 }
+
 
 # Control Functions
 # =================
