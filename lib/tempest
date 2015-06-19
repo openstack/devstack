@@ -329,6 +329,7 @@ function configure_tempest {
     if [[ ! -z "$TEMPEST_HTTP_IMAGE" ]]; then
         iniset $TEMPEST_CONFIG image http_image $TEMPEST_HTTP_IMAGE
     fi
+    iniset $TEMPEST_CONFIG image-feature-enabled deactivate_image true
 
     # Image Features
     iniset $TEMPEST_CONFIG image-feature-enabled deactivate_image True
