@@ -219,15 +219,15 @@ function setup_package_with_req_sync {
         if [[ "$REQUIREMENTS_MODE" == "soft" ]]; then
             if is_in_projects_txt $project_dir; then
                 (cd $REQUIREMENTS_DIR; \
-                    python update.py $project_dir)
+                    ./.venv/bin/python update.py $project_dir)
             else
                 # soft update projects not found in requirements project.txt
                 (cd $REQUIREMENTS_DIR; \
-                    python update.py -s $project_dir)
+                    ./.venv/bin/python update.py -s $project_dir)
             fi
         else
             (cd $REQUIREMENTS_DIR; \
-                python update.py $project_dir)
+                ./.venv/bin/python update.py $project_dir)
         fi
     fi
 
