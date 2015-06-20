@@ -366,10 +366,7 @@ function install_ceilometermiddleware {
         git_clone_by_name "ceilometermiddleware"
         setup_dev_lib "ceilometermiddleware"
     else
-        # BUG: this should be a pip_install_gr except it was never
-        # included in global-requirements. Needs to be fixed by
-        # https://bugs.launchpad.net/ceilometer/+bug/1441655
-        pip_install ceilometermiddleware
+        pip_install_gr ceilometermiddleware
     fi
 }
 
