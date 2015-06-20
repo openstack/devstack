@@ -66,6 +66,10 @@ CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
 CINDER_SERVICE_PORT_INT=${CINDER_SERVICE_PORT_INT:-18776}
 CINDER_SERVICE_PROTOCOL=${CINDER_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
+# What type of LVM device should Cinder use for LVM backend
+# Defaults to default, which is thick, the other valid choice
+# is thin, which as the name implies utilizes lvm thin provisioning.
+CINDER_LVM_TYPE=${CINDER_LVM_TYPE:-default}
 
 # Default backends
 # The backend format is type:name where type is one of the supported backend
