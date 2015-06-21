@@ -1295,28 +1295,31 @@ fi
 # Save some values we generated for later use
 save_stackenv
 
-# Write out a clouds.yaml file
-# putting the location into a variable to allow for easier refactoring later
-# to make it overridable. There is current no usecase where doing so makes
-# sense, so I'm not actually doing it now.
+# Update/create user clouds.yaml file.
+# clouds.yaml will have a `devstack` entry for the `demo` user for the `demo`
+# project.
+
+# The location is a variable to allow for easier refactoring later to make it
+# overridable. There is currently no usecase where doing so makes sense, so
+# it's not currently configurable.
 CLOUDS_YAML=~/.config/openstack/clouds.yaml
-if [ ! -e $CLOUDS_YAML ]; then
-    mkdir -p $(dirname $CLOUDS_YAML)
-    cat >"$CLOUDS_YAML" <<EOF
-clouds:
-  devstack:
-    auth:
-      auth_url: $KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION
-      username: demo
-      project_name: demo
-      password: $ADMIN_PASSWORD
-    region_name: $REGION_NAME
-    identity_api_version: $IDENTITY_API_VERSION
-EOF
-    if [ -f "$SSL_BUNDLE_FILE" ]; then
-        echo "    cacert: $SSL_BUNDLE_FILE" >>"$CLOUDS_YAML"
-    fi
+
+mkdir -p $(dirname $CLOUDS_YAML)
+
+CA_CERT_ARG=''
+if [ -f "$SSL_BUNDLE_FILE" ]; then
+    CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
 fi
+$TOP_DIR/tools/update_clouds_yaml.py \
+    --file $CLOUDS_YAML \
+    --os-cloud devstack \
+    --os-region-name $REGION_NAME \
+    --os-identity-api-version $IDENTITY_API_VERSION \
+    $CA_CERT_ARG \
+    --os-auth-url $KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION \
+    --os-username demo \
+    --os-password $ADMIN_PASSWORD \
+    --os-project-name demo
 
 
 # Wrapup configuration
