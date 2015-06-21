@@ -263,6 +263,7 @@ gpgcheck=0
 EOF
     # Enable a bootstrap repo.  It is removed after finishing
     # the epel-release installation.
+    is_package_installed yum-utils || install_package yum-utils
     sudo yum-config-manager --enable epel-bootstrap
     yum_install epel-release || \
         die $LINENO "Error installing EPEL repo, cannot continue"
@@ -270,7 +271,6 @@ EOF
     sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
 
     # ... and also optional to be enabled
-    is_package_installed yum-utils || install_package yum-utils
     sudo yum-config-manager --enable rhel-7-server-optional-rpms
 
     RHEL_RDO_REPO_RPM=${RHEL7_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm"}
