@@ -37,6 +37,10 @@ function install_infra {
     PIP_VIRTUAL_ENV=$PIP_VIRTUAL_ENV pip_install -U pbr
     PIP_VIRTUAL_ENV=$PIP_VIRTUAL_ENV pip_install $REQUIREMENTS_DIR
 
+    # Unset the PIP_VIRTUAL_ENV so that PBR does not end up trapped
+    # down the VENV well
+    unset PIP_VIRTUAL_ENV
+
     # Install pbr
     if use_library_from_git "pbr"; then
         git_clone_by_name "pbr"
