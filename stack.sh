@@ -212,6 +212,15 @@ is_package_installed sudo || install_package sudo
 sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||
     echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers
 
+# Conditionally setup detailed logging for sudo
+if [[ -n "$LOG_SUDO" ]]; then
+    TEMPFILE=`mktemp`
+    echo "Defaults log_output" > $TEMPFILE
+    chmod 0440 $TEMPFILE
+    sudo chown root:root $TEMPFILE
+    sudo mv $TEMPFILE /etc/sudoers.d/00_logging
+fi
+
 # Set up DevStack sudoers
 TEMPFILE=`mktemp`
 echo "$STACK_USER ALL=(root) NOPASSWD:ALL" >$TEMPFILE
