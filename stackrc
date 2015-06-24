@@ -149,17 +149,6 @@ DATABASE_QUERY_LOGGING=$(trueorfalse False DATABASE_QUERY_LOGGING)
 # Zero disables timeouts
 GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 
-# Requirements enforcing mode
-#
-# - strict (default) : ensure all project requirements files match
-#   what's in global requirements.
-#
-# - soft : enforce requirements on everything in
-#   requirements/projects.txt, but do soft updates on all other
-#   repositories (i.e. sync versions for requirements that are in g-r,
-#   but pass through any extras)
-REQUIREMENTS_MODE=${REQUIREMENTS_MODE:-strict}
-
 
 # Repositories
 # ------------
