@@ -201,7 +201,7 @@ Enable Logging
 
     | *Defaults: ``LOGFILE="" LOGDAYS=7 LOG_COLOR=True``*
     |  By default ``stack.sh`` output is only written to the console
-       where is runs. It can be sent to a file in addition to the console
+       where it runs. It can be sent to a file in addition to the console
        by setting ``LOGFILE`` to the fully-qualified name of the
        destination log file. A timestamp will be appended to the given
        filename for each run of ``stack.sh``.
