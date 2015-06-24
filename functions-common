@@ -1913,6 +1913,19 @@ function stop_service {
     fi
 }
 
+# Test with a finite retry loop.
+#
+function test_with_retry {
+    local testcmd=$1
+    local failmsg=$2
+    local until=${3:-10}
+    local sleep=${4:-0.5}
+
+    if ! timeout $until sh -c "while ! $testcmd; do sleep $sleep; done"; then
+        die $LINENO "$failmsg"
+    fi
+}
+
 
 # Restore xtrace
 $XTRACE

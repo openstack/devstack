@@ -694,9 +694,10 @@ function start_neutron_service_and_check {
     if is_ssl_enabled_service "neutron"; then
         ssl_ca="--ca-certificate=${SSL_BUNDLE_FILE}"
     fi
-    if ! timeout $SERVICE_TIMEOUT sh -c "while ! wget ${ssl_ca} --no-proxy -q -O- $service_protocol://$Q_HOST:$service_port; do sleep 1; done"; then
-        die $LINENO "Neutron did not start"
-    fi
+
+    local testcmd="wget ${ssl_ca} --no-proxy -q -O- $service_protocol://$Q_HOST:$service_port"
+    test_with_retry "$testcmd" "Neutron did not start" $SERVICE_TIMEOUT
+
     # Start proxy if enabled
     if is_service_enabled tls-proxy; then
         start_tls_proxy '*' $Q_PORT $Q_HOST $Q_PORT_INT &
@@ -1387,9 +1388,8 @@ function _ssh_check_neutron {
     local timeout_sec=$5
     local probe_cmd = ""
     probe_cmd=`_get_probe_cmd_prefix $from_net`
-    if ! timeout $timeout_sec sh -c "while ! $probe_cmd ssh -o StrictHostKeyChecking=no -i $key_file ${user}@$ip echo success; do sleep 1; done"; then
-        die $LINENO "server didn't become ssh-able!"
-    fi
+    local testcmd="$probe_cmd ssh -o StrictHostKeyChecking=no -i $key_file ${user}@$ip echo success"
+    test_with_retry "$testcmd" "server $ip didn't become ssh-able" $timeout_sec
 }
 
 # Neutron 3rd party programs
