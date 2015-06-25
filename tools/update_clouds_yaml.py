@@ -43,6 +43,9 @@ class UpdateCloudsYaml(object):
                 'project_name': args.os_project_name,
             },
         }
+        if args.os_identity_api_version == '3':
+            self._cloud_data['auth']['user_domain_id'] = 'default'
+            self._cloud_data['auth']['project_domain_id'] = 'default'
         if args.os_cacert:
             self._cloud_data['cacert'] = args.os_cacert
 
