@@ -56,6 +56,7 @@ GLANCE_SEARCH_PASTE_INI=$GLANCE_CONF_DIR/glance-search-paste.ini
 GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
 GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
 GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
+GLANCE_SWIFT_STORE_CONF=$GLANCE_CONF_DIR/glance-swift-store.conf
 
 if is_ssl_enabled_service "glance" || is_service_enabled tls-proxy; then
     GLANCE_SERVICE_PROTOCOL="https"
@@ -145,11 +146,20 @@ function configure_glance {
     # Store the images in swift if enabled.
     if is_service_enabled s-proxy; then
         iniset $GLANCE_API_CONF glance_store default_store swift
-        iniset $GLANCE_API_CONF glance_store swift_store_auth_address $KEYSTONE_SERVICE_URI/v2.0/
-        iniset $GLANCE_API_CONF glance_store swift_store_user $SERVICE_TENANT_NAME:glance-swift
-        iniset $GLANCE_API_CONF glance_store swift_store_key $SERVICE_PASSWORD
         iniset $GLANCE_API_CONF glance_store swift_store_create_container_on_put True
+
+        iniset $GLANCE_API_CONF glance_store swift_store_config_file $GLANCE_SWIFT_STORE_CONF
+        iniset $GLANCE_API_CONF glance_store default_swift_reference ref1
         iniset $GLANCE_API_CONF glance_store stores "file, http, swift"
+
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 user $SERVICE_TENANT_NAME:glance-swift
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 key $SERVICE_PASSWORD
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v2.0/
+
+        # commenting is not strictly necessary but it's confusing to have bad values in conf
+        inicomment $GLANCE_API_CONF glance_store swift_store_user
+        inicomment $GLANCE_API_CONF glance_store swift_store_key
+        inicomment $GLANCE_API_CONF glance_store swift_store_auth_address
     fi
 
     if is_service_enabled tls-proxy; then
