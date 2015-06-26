@@ -10,6 +10,7 @@ iptables
 iputils
 kpartx
 kvm # NOPRIME
+qemu-kvm # NOPRIME
 libvirt-bin # NOPRIME
 libvirt-devel # NOPRIME
 libvirt-python # NOPRIME
