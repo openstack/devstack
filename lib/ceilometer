@@ -341,7 +341,7 @@ function install_ceilometer {
         fi
 
         if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
-            pip_instal_gr oslo.vmware
+            pip_install_gr oslo.vmware
         fi
     fi
 
