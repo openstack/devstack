@@ -360,16 +360,6 @@ function install_ceilometerclient {
     fi
 }
 
-# install_ceilometermiddleware() - Collect source and prepare
-function install_ceilometermiddleware {
-    if use_library_from_git "ceilometermiddleware"; then
-        git_clone_by_name "ceilometermiddleware"
-        setup_dev_lib "ceilometermiddleware"
-    else
-        pip_install_gr ceilometermiddleware
-    fi
-}
-
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer {
     run_process ceilometer-acentral "$CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_CONF"
