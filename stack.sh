@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 # ``stack.sh`` is an opinionated OpenStack developer installation.  It
-# installs and configures various combinations of **Ceilometer**, **Cinder**,
-# **Glance**, **Heat**, **Horizon**, **Keystone**, **Nova**, **Neutron**,
-# and **Swift**
+# installs and configures various combinations of **Cinder**, **Glance**,
+# **Heat**, **Horizon**, **Keystone**, **Nova**, **Neutron**, and **Swift**
 
 # This script's options can be changed by setting appropriate environment
 # variables.  You can configure things like which git repositories to use,
@@ -542,7 +541,6 @@ source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
-source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
@@ -826,13 +824,6 @@ if is_service_enabled horizon; then
     configure_horizon
 fi
 
-if is_service_enabled ceilometer; then
-    install_ceilometerclient
-    stack_install_service ceilometer
-    echo_summary "Configuring Ceilometer"
-    configure_ceilometer
-fi
-
 if is_service_enabled heat; then
     stack_install_service heat
     install_heat_other
@@ -1007,10 +998,6 @@ if is_service_enabled keystone; then
     create_glance_accounts
     create_cinder_accounts
     create_neutron_accounts
-
-    if is_service_enabled ceilometer; then
-        create_ceilometer_accounts
-    fi
 
     if is_service_enabled swift; then
         create_swift_accounts
@@ -1254,11 +1241,6 @@ if is_service_enabled cinder; then
     echo_summary "Starting Cinder"
     start_cinder
     create_volume_types
-fi
-if is_service_enabled ceilometer; then
-    echo_summary "Starting Ceilometer"
-    init_ceilometer
-    start_ceilometer
 fi
 
 # Configure and launch Heat engine, api and metadata

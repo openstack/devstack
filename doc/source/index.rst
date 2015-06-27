@@ -154,7 +154,6 @@ Scripts
 * `functions <functions.html>`__ - DevStack-specific functions
 * `functions-common <functions-common.html>`__ - Functions shared with other projects
 * `lib/apache <lib/apache.html>`__
-* `lib/ceilometer <lib/ceilometer.html>`__
 * `lib/ceph <lib/ceph.html>`__
 * `lib/cinder <lib/cinder.html>`__
 * `lib/database <lib/database.html>`__

@@ -65,7 +65,6 @@ source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
-source $TOP_DIR/lib/ceilometer
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
@@ -102,10 +101,6 @@ fi
 
 if is_service_enabled heat; then
     stop_heat
-fi
-
-if is_service_enabled ceilometer; then
-    stop_ceilometer
 fi
 
 if is_service_enabled nova; then

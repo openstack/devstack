@@ -1033,10 +1033,6 @@ function get_packages {
             if [[ ! $file_to_parse =~ $package_dir/cinder ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/cinder"
             fi
-        elif [[ $service == ceilometer-* ]]; then
-            if [[ ! $file_to_parse =~ $package_dir/ceilometer ]]; then
-                file_to_parse="${file_to_parse} ${package_dir}/ceilometer"
-            fi
         elif [[ $service == s-* ]]; then
             if [[ ! $file_to_parse =~ $package_dir/swift ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/swift"
@@ -1777,7 +1773,6 @@ function enable_service {
 # There are special cases for some 'catch-all' services::
 #   **nova** returns true if any service enabled start with **n-**
 #   **cinder** returns true if any service enabled start with **c-**
-#   **ceilometer** returns true if any service enabled start with **ceilometer**
 #   **glance** returns true if any service enabled start with **g-**
 #   **neutron** returns true if any service enabled start with **q-**
 #   **swift** returns true if any service enabled start with **s-**
@@ -1813,7 +1808,6 @@ function is_service_enabled {
         [[ ${service} == n-cell-* && ${ENABLED_SERVICES} =~ "n-cell" ]] && enabled=0
         [[ ${service} == n-cpu-* && ${ENABLED_SERVICES} =~ "n-cpu" ]] && enabled=0
         [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && enabled=0
-        [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && enabled=0
         [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && enabled=0
         [[ ${service} == "ironic" && ${ENABLED_SERVICES} =~ "ir-" ]] && enabled=0
         [[ ${service} == "neutron" && ${ENABLED_SERVICES} =~ "q-" ]] && enabled=0
