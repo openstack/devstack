@@ -26,6 +26,7 @@ GITDIR["automaton"]=$DEST/automaton
 GITDIR["cliff"]=$DEST/cliff
 GITDIR["debtcollector"]=$DEST/debtcollector
 GITDIR["futurist"]=$DEST/futurist
+GITDIR["oslo.cache"]=$DEST/oslo.cache
 GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
 GITDIR["oslo.config"]=$DEST/oslo.config
 GITDIR["oslo.context"]=$DEST/oslo.context
@@ -66,6 +67,7 @@ function install_oslo {
     _do_install_oslo_lib "cliff"
     _do_install_oslo_lib "debtcollector"
     _do_install_oslo_lib "futurist"
+    _do_install_oslo_lib "oslo.cache"
     _do_install_oslo_lib "oslo.concurrency"
     _do_install_oslo_lib "oslo.config"
     _do_install_oslo_lib "oslo.context"
