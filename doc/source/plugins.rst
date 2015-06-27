@@ -221,7 +221,9 @@ the best practice is to build a dedicated
 ``stackforge/devstack-plugin-FOO`` project.
 
 To enable a plugin to be used in a gate job, the following lines will
-be needed in your project.yaml definition::
+be needed in your ``jenkins/jobs/<project>.yaml`` definition in
+`project-config
+<http://git.openstack.org/cgit/openstack-infra/project-config/>`_::
 
   # Because we are testing a non standard project, add the
   # our project repository. This makes zuul do the right
