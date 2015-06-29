@@ -23,6 +23,7 @@ import os
 import os.path
 import sys
 
+from subprocess import Popen
 
 def get_options():
     parser = argparse.ArgumentParser(
@@ -46,7 +47,7 @@ def _dump_cmd(cmd):
     print cmd
     print "-" * len(cmd)
     print
-    print os.popen(cmd).read()
+    subprocess.Popen(cmd, shell=True)
 
 
 def _header(name):
