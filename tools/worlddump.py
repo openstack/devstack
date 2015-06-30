@@ -47,7 +47,7 @@ def _dump_cmd(cmd):
     print cmd
     print "-" * len(cmd)
     print
-    subprocess.Popen(cmd, shell=True)
+    Popen(cmd, shell=True)
 
 
 def _header(name):
