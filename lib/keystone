@@ -357,13 +357,13 @@ function configure_keystone_extensions {
 function create_keystone_accounts {
 
     # admin
-    local admin_tenant=$(get_or_create_project "admin")
+    local admin_tenant=$(get_or_create_project "admin" default)
     local admin_user=$(get_or_create_user "admin" "$ADMIN_PASSWORD")
     local admin_role=$(get_or_create_role "admin")
     get_or_add_user_project_role $admin_role $admin_user $admin_tenant
 
     # Create service project/role
-    get_or_create_project "$SERVICE_TENANT_NAME"
+    get_or_create_project "$SERVICE_TENANT_NAME" default
 
     # Service role, so service users do not have to be admins
     get_or_create_role service
@@ -382,10 +382,10 @@ function create_keystone_accounts {
     local another_role=$(get_or_create_role "anotherrole")
 
     # invisible tenant - admin can't see this one
-    local invis_tenant=$(get_or_create_project "invisible_to_admin")
+    local invis_tenant=$(get_or_create_project "invisible_to_admin" default)
 
     # demo
-    local demo_tenant=$(get_or_create_project "demo")
+    local demo_tenant=$(get_or_create_project "demo" default)
     local demo_user=$(get_or_create_user "demo" \
         "$ADMIN_PASSWORD" "demo@example.com")
 

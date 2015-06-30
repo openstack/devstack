@@ -366,7 +366,7 @@ function configure_ironic_conductor {
         fi
         iniset $IRONIC_CONF_FILE glance swift_endpoint_url http://${HOST_IP}:${SWIFT_DEFAULT_BIND_PORT:-8080}
         iniset $IRONIC_CONF_FILE glance swift_api_version v1
-        local tenant_id=$(get_or_create_project $SERVICE_TENANT_NAME)
+        local tenant_id=$(get_or_create_project $SERVICE_TENANT_NAME default)
         iniset $IRONIC_CONF_FILE glance swift_account AUTH_${tenant_id}
         iniset $IRONIC_CONF_FILE glance swift_container glance
         iniset $IRONIC_CONF_FILE glance swift_temp_url_duration 3600
