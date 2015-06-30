@@ -9,6 +9,20 @@ set +o xtrace
 
 function neutron_lb_cleanup {
     sudo brctl delbr $PUBLIC_BRIDGE
+
+    if [[ "$Q_ML2_TENANT_NETWORK_TYPE" = "vxlan" ]]; then
+        for port in $(sudo brctl show | grep -o -e [a-zA-Z\-]*tap[0-9a-f\-]* -e vxlan-[0-9a-f\-]*); do
+            sudo ip link delete $port
+        done
+    elif [[ "$Q_ML2_TENANT_NETWORK_TYPE" = "vlan" ]]; then
+        for port in $(sudo brctl show | grep -o -e [a-zA-Z\-]*tap[0-9a-f\-]* -e ${LB_PHYSICAL_INTERFACE}\.[0-9a-f\-]*); do
+            sudo ip link delete $port
+        done
+    fi
+    for bridge in $(sudo brctl show |grep -o -e brq[0-9a-f\-]*); do
+        sudo ip link set $bridge down
+        sudo brctl delbr $bridge
+    done
 }
 
 function is_neutron_ovs_base_plugin {
