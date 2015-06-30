@@ -95,7 +95,10 @@ function configure_database_mysql {
     sudo bash -c "source $TOP_DIR/functions && \
         iniset $my_conf mysqld bind-address 0.0.0.0 && \
         iniset $my_conf mysqld sql_mode STRICT_ALL_TABLES && \
-        iniset $my_conf mysqld default-storage-engine InnoDB"
+        iniset $my_conf mysqld default-storage-engine InnoDB \
+        iniset $my_conf mysqld max_connections 1024 \
+        iniset $my_conf mysqld query_cache_type OFF \
+        iniset $my_conf mysqld query_cache_size 0"
 
 
     if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
