@@ -722,7 +722,7 @@ function start_neutron_agents {
                 sudo ip addr del $IP dev $PUBLIC_INTERFACE
                 sudo ip addr add $IP dev $OVS_PHYSICAL_BRIDGE
             done
-            sudo route add -net $FIXED_RANGE gw $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
+            sudo ip route replace $FIXED_RANGE via $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
         fi
     fi
 
@@ -1286,7 +1286,7 @@ function _neutron_configure_router_v4 {
             fi
             ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' -v subnet_id=$PUB_SUBNET_ID '$4 == subnet_id { print $8; }'`
             die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
-            sudo route add -net $FIXED_RANGE gw $ROUTER_GW_IP
+            sudo ip route replace  $FIXED_RANGE via $ROUTER_GW_IP
         fi
         _neutron_set_router_id
     fi
@@ -1321,7 +1321,7 @@ function _neutron_configure_router_v6 {
 
             # Configure interface for public bridge
             sudo ip -6 addr add $ipv6_ext_gw_ip/$ipv6_cidr_len dev $ext_gw_interface
-            sudo ip -6 route add $FIXED_RANGE_V6 via $IPV6_ROUTER_GW_IP dev $ext_gw_interface
+            sudo ip -6 route replace $FIXED_RANGE_V6 via $IPV6_ROUTER_GW_IP dev $ext_gw_interface
         fi
         _neutron_set_router_id
     fi
