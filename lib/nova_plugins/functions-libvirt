@@ -34,6 +34,13 @@ function install_libvirt {
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
         install_package kvm
+        # there is a dependency issue with kvm (which is really just a
+        # wrapper to qemu-system-x86) that leaves some bios files out,
+        # so install qemu-kvm (which shouldn't strictly be needed, as
+        # everything has been merged into qemu-system-x86) to bring in
+        # the right packages. see
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1235890
+        install_package qemu-kvm
         install_package libvirt libvirt-devel
         pip_install_gr libvirt-python
     fi
