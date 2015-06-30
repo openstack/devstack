@@ -269,8 +269,9 @@ function GetOSVersion {
         # Fedora release 16 (Verne)
         # XenServer release 6.2.0-70446c (xenenterprise)
         # Oracle Linux release 7
+        # CloudLinux release 7.1
         os_CODENAME=""
-        for r in "Red Hat" CentOS Fedora XenServer; do
+        for r in "Red Hat" CentOS Fedora XenServer CloudLinux; do
             os_VENDOR=$r
             if [[ -n "`grep \"$r\" /etc/redhat-release`" ]]; then
                 ver=`sed -e 's/^.* \([0-9].*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
@@ -374,7 +375,8 @@ function is_fedora {
     fi
 
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
-        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleLinux" ]
+        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleLinux" ] || \
+        [ "$os_VENDOR" = "CloudLinux" ]
 }
 
 
