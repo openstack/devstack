@@ -10,6 +10,10 @@
 # - ``GLANCE_HOSTPORT``
 #
 
+# ensure we don't re-source this in the same environment
+[[ -z "$_DEVSTACK_FUNCTIONS" ]] || return 0
+declare -r _DEVSTACK_FUNCTIONS=1
+
 # Include the common functions
 FUNC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 source ${FUNC_DIR}/functions-common
