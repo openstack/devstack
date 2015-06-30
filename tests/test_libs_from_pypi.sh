@@ -40,6 +40,7 @@ ALL_LIBS+=" python-openstackclient oslo.rootwrap oslo.i18n"
 ALL_LIBS+=" python-ceilometerclient oslo.utils python-swiftclient"
 ALL_LIBS+=" python-neutronclient tooz ceilometermiddleware oslo.policy"
 ALL_LIBS+=" debtcollector os-brick automaton futurist oslo.service"
+ALL_LIBS+=" oslo.cache"
 
 # Generate the above list with
 # echo ${!GITREPO[@]}

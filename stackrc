@@ -327,6 +327,10 @@ GITBRANCH["debtcollector"]=${DEBTCOLLECTOR_BRANCH:-master}
 GITREPO["automaton"]=${AUTOMATON_REPO:-${GIT_BASE}/openstack/automaton.git}
 GITBRANCH["automaton"]=${AUTOMATON_BRANCH:-master}
 
+# oslo.cache
+GITREPO["oslo.cache"]=${OSLOCACHE_REPO:-${GIT_BASE}/openstack/oslo.cache.git}
+GITBRANCH["oslo.cache"]=${OSLOCACHE_BRANCH:-master}
+
 # oslo.concurrency
 GITREPO["oslo.concurrency"]=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
 GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-master}
