@@ -21,9 +21,9 @@ import datetime
 import fnmatch
 import os
 import os.path
+import subprocess
 import sys
 
-from subprocess import Popen
 
 def get_options():
     parser = argparse.ArgumentParser(
@@ -47,7 +47,10 @@ def _dump_cmd(cmd):
     print cmd
     print "-" * len(cmd)
     print
-    Popen(cmd, shell=True)
+    try:
+        subprocess.check_call(cmd, shell=True)
+    except subprocess.CalledProcessError:
+        print "*** Failed to run: %s" % cmd
 
 
 def _header(name):
