@@ -115,6 +115,16 @@ following in the `localrc` section:
 
 `mysql` is the default database.
 
+# RPC Backend
+
+Support for a RabbitMQ RPC backend is included. Additional RPC backends may
+be available via external plugins.  Enabling or disabling RabbitMQ is handled
+via the usual service functions and ``ENABLED_SERVICES``.
+
+Example disabling RabbitMQ in ``local.conf``:
+
+    disable_service rabbit
+
 # Apache Frontend
 
 Apache web server can be enabled for wsgi services that support being deployed
