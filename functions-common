@@ -753,7 +753,10 @@ function get_or_create_project {
 function get_or_create_role {
     local role_id=$(
         # Creates role with --or-show
-        openstack role create $1 --or-show -f value -c id
+        openstack role create $1 \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
+            --or-show -f value -c id
     )
     echo $role_id
 }
@@ -764,8 +767,10 @@ function get_or_add_user_project_role {
     # Gets user role id
     local user_role_id=$(openstack role list \
         --user $2 \
-        --project $3 \
+        --os-url=$KEYSTONE_SERVICE_URI_V3 \
+        --os-identity-api-version=3 \
         --column "ID" \
+        --project $3 \
         --column "Name" \
         | grep " $1 " | get_field 1)
     if [[ -z "$user_role_id" ]]; then
@@ -774,6 +779,8 @@ function get_or_add_user_project_role {
             $1 \
             --user $2 \
             --project $3 \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             | grep " id " | get_field 2)
     fi
     echo $user_role_id
@@ -784,18 +791,24 @@ function get_or_add_user_project_role {
 function get_or_add_group_project_role {
     # Gets group role id
     local group_role_id=$(openstack role list \
+        --os-url=$KEYSTONE_SERVICE_URI_V3 \
+        --os-identity-api-version=3 \
         --group $2 \
         --project $3 \
-        --column "ID" \
-        --column "Name" \
-        | grep " $1 " | get_field 1)
+        -c "ID" -f value)
     if [[ -z "$group_role_id" ]]; then
-        # Adds role to group
-        group_role_id=$(openstack role add \
-            $1 \
+        # Adds role to group and get it
+        openstack role add $1 \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
+            --group $2 \
+            --project $3
+        group_role_id=$(openstack role list \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             --group $2 \
             --project $3 \
-            | grep " id " | get_field 2)
+            -c "ID" -f value)
     fi
     echo $group_role_id
 }
