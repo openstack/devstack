@@ -3,6 +3,12 @@
 # Keep track of the DevStack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
+# The following "source" implicitly calls get_default_host_ip() in
+# stackrc and will die if the selected default IP happens to lie
+# in the default ranges for FIXED_RANGE or FLOATING_RANGE. Since we
+# do not really need HOST_IP to be properly set in the remainder of
+# this script, just set it to some dummy value and make stackrc happy.
+HOST_IP=SKIP
 source $TOP_DIR/functions
 
 # Possible virt drivers, if we have more, add them here. Always keep
