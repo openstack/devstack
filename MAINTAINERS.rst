@@ -63,11 +63,6 @@ OpenFlow Agent (ofagent)
 * YAMAMOTO Takashi <yamamoto@valinux.co.jp>
 * Fumihiko Kakuma <kakuma@valinux.co.jp>
 
-Sahara
-~~~~~~
-
-* Sergey Lukjanov <slukjanov@mirantis.com>
-
 Swift
 ~~~~~
 

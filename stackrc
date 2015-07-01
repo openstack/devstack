@@ -225,10 +225,6 @@ NEUTRON_VPNAAS_BRANCH=${NEUTRON_VPNAAS_BRANCH:-master}
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
 NOVA_BRANCH=${NOVA_BRANCH:-master}
 
-# data processing service
-SAHARA_REPO=${SAHARA_REPO:-${GIT_BASE}/openstack/sahara.git}
-SAHARA_BRANCH=${SAHARA_BRANCH:-master}
-
 # object storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
 SWIFT_BRANCH=${SWIFT_BRANCH:-master}
@@ -289,10 +285,6 @@ GITBRANCH["python-neutronclient"]=${NEUTRONCLIENT_BRANCH:-master}
 # python client library to nova that horizon (and others) use
 GITREPO["python-novaclient"]=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
 GITBRANCH["python-novaclient"]=${NOVACLIENT_BRANCH:-master}
-
-# python saharaclient
-GITREPO["python-saharaclient"]=${SAHARACLIENT_REPO:-${GIT_BASE}/openstack/python-saharaclient.git}
-GITBRANCH["python-saharaclient"]=${SAHARACLIENT_BRANCH:-master}
 
 # python swift client library
 GITREPO["python-swiftclient"]=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
