@@ -772,7 +772,7 @@ function stop_swift {
         stop_process s-${type}
     done
     # Blast out any stragglers
-    pkill -f swift-
+    pkill -f swift- || true
 }
 
 function swift_configure_tempurls {

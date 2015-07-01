@@ -1342,7 +1342,7 @@ function screen_stop_service {
 
     if is_service_enabled $service; then
         # Clean up the screen window
-        screen -S $SCREEN_NAME -p $service -X kill
+        screen -S $SCREEN_NAME -p $service -X kill || true
     fi
 }
 
