@@ -658,6 +658,10 @@ function configure_iptables {
         # agent ramdisk gets instance image from swift
         sudo iptables -I INPUT -d $HOST_IP -p tcp --dport ${SWIFT_DEFAULT_BIND_PORT:-8080} -j ACCEPT || true
     fi
+
+    if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
+        sudo iptables -I INPUT -d $HOST_IP -p tcp --dport $IRONIC_HTTP_PORT -j ACCEPT || true
+    fi
 }
 
 function configure_tftpd {
