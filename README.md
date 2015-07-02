@@ -115,22 +115,6 @@ following in the `localrc` section:
 
 `mysql` is the default database.
 
-# RPC Backend
-
-Multiple RPC backends are available. Currently, this
-includes RabbitMQ (default), Qpid, and ZeroMQ. Your backend of
-choice may be selected via the `localrc` section.
-
-Note that selecting more than one RPC backend will result in a failure.
-
-Example (ZeroMQ):
-
-    ENABLED_SERVICES="$ENABLED_SERVICES,-rabbit,-qpid,zeromq"
-
-Example (Qpid):
-
-    ENABLED_SERVICES="$ENABLED_SERVICES,-rabbit,-zeromq,qpid"
-
 # Apache Frontend
 
 Apache web server can be enabled for wsgi services that support being deployed

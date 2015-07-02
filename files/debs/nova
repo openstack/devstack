@@ -24,10 +24,8 @@ vlan
 curl
 genisoimage # required for config_drive
 rabbitmq-server # NOPRIME
-qpidd # NOPRIME
 socat # used by ajaxterm
 python-libvirt # NOPRIME
 python-libxml2
 python-numpy # used by websockify for spice console
 python-m2crypto
-python-qpid # NOPRIME

@@ -500,10 +500,6 @@ rm -f $SSL_BUNDLE_FILE
 source $TOP_DIR/lib/database
 source $TOP_DIR/lib/rpc_backend
 
-# Make sure we only have one rpc backend enabled,
-# and the specified rpc backend is available on your platform.
-check_rpc_backend
-
 # Service to enable with SSL if ``USE_SSL`` is True
 SSL_ENABLED_SERVICES="key,nova,cinder,glance,s-proxy,neutron"
 
@@ -1025,15 +1021,6 @@ if is_service_enabled keystone; then
     export OS_PASSWORD=$ADMIN_PASSWORD
     export OS_REGION_NAME=$REGION_NAME
 fi
-
-
-# ZeroMQ
-# ------
-if is_service_enabled zeromq; then
-    echo_summary "Starting zeromq receiver"
-    run_process zeromq "$OSLO_BIN_DIR/oslo-messaging-zmq-receiver"
-fi
-
 
 # Horizon
 # -------

@@ -128,10 +128,9 @@ function configure_zaqar {
         configure_redis
     fi
 
-    if is_service_enabled qpid || [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; then
-        iniset $ZAQAR_CONF DEFAULT notification_driver messaging
-        iniset $ZAQAR_CONF DEFAULT control_exchange zaqar
-    fi
+    iniset $ZAQAR_CONF DEFAULT notification_driver messaging
+    iniset $ZAQAR_CONF DEFAULT control_exchange zaqar
+
     iniset_rpc_backend zaqar $ZAQAR_CONF
 
     cleanup_zaqar

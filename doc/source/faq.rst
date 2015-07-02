@@ -122,7 +122,7 @@ Of course!
 
     ::
 
-        enable_service qpid
+        enable_service q-svc
 
 How do I run a specific OpenStack milestone?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
