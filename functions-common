@@ -806,7 +806,7 @@ function get_or_create_service {
     # Gets service id
     local service_id=$(
         # Gets service id
-        openstack service show $1 -f value -c id 2>/dev/null ||
+        openstack service show $2 -f value -c id 2>/dev/null ||
         # Creates new service if not exists
         openstack service create \
             $2 \
