@@ -66,7 +66,8 @@ function pip_install_gr {
 
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_VIRTUAL_ENV``,
-# ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``
+# ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``,
+# ``USE_CONSTRAINTS``
 # pip_install package [package ...]
 function pip_install {
     local xtrace=$(set +o | grep xtrace)
@@ -103,6 +104,13 @@ function pip_install {
         fi
     fi
 
+    cmd_pip="$cmd_pip install"
+
+    # Handle a constraints file, if needed.
+    if [[ "$USE_CONSTRAINTS" == "True" ]]; then
+        cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
+    fi
+
     local pip_version=$(python -c "import pip; \
                         print(pip.__version__.strip('.')[0])")
     if (( pip_version<6 )); then
@@ -116,7 +124,7 @@ function pip_install {
         https_proxy="${https_proxy:-}" \
         no_proxy="${no_proxy:-}" \
         PIP_FIND_LINKS=$PIP_FIND_LINKS \
-        $cmd_pip install $upgrade \
+        $cmd_pip $upgrade \
         $@
 
     # Also install test requirements
@@ -128,7 +136,7 @@ function pip_install {
             https_proxy=${https_proxy:-} \
             no_proxy=${no_proxy:-} \
             PIP_FIND_LINKS=$PIP_FIND_LINKS \
-            $cmd_pip install $upgrade \
+            $cmd_pip $upgrade \
             -r $test_req
     fi
 }
@@ -215,7 +223,7 @@ function setup_package_with_req_sync {
     # ``errexit`` requires us to trap the exit code when the repo is changed
     local update_requirements=$(cd $project_dir && git diff --exit-code >/dev/null || echo "changed")
 
-    if [[ $update_requirements != "changed" ]]; then
+    if [[ $update_requirements != "changed" && "$USE_CONSTRAINTS" == "False" ]]; then
         if is_in_projects_txt $project_dir; then
             (cd $REQUIREMENTS_DIR; \
                 ./.venv/bin/python update.py $project_dir)
@@ -225,6 +233,12 @@ function setup_package_with_req_sync {
             (cd $REQUIREMENTS_DIR; \
                 ./.venv/bin/python update.py -s $project_dir)
         fi
+    fi
+
+    if [ -n "$REQUIREMENTS_DIR" ]; then
+        # Constrain this package to this project directory from here on out.
+        local name=$(awk '/^name.*=/ {print $3}' $project_dir/setup.cfg)
+        $REQUIREMENTS_DIR/.venv/bin/edit-constraints $REQUIREMENTS_DIR/upper-constraints.txt -- $name "$flags $project_dir"
     fi
 
     setup_package $project_dir $flags

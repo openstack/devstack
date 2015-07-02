@@ -149,6 +149,12 @@ DATABASE_QUERY_LOGGING=$(trueorfalse False DATABASE_QUERY_LOGGING)
 # Zero disables timeouts
 GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 
+# Constraints mode
+# - False (default) : update git projects dependencies from global-requirements.
+#
+# - True : use upper-constraints.txt to constrain versions of packages intalled
+#          and do not edit projects at all.
+USE_CONSTRAINTS=${USE_CONSTRAINTS:-False}
 
 # Repositories
 # ------------
