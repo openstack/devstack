@@ -505,7 +505,7 @@ source $TOP_DIR/lib/rpc_backend
 check_rpc_backend
 
 # Service to enable with SSL if ``USE_SSL`` is True
-SSL_ENABLED_SERVICES="key,nova,cinder,glance,s-proxy,neutron,sahara"
+SSL_ENABLED_SERVICES="key,nova,cinder,glance,s-proxy,neutron"
 
 if is_service_enabled tls-proxy && [ "$USE_SSL" == "True" ]; then
     die $LINENO "tls-proxy and SSL are mutually exclusive"
