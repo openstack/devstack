@@ -154,7 +154,7 @@ GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 #
 # - True : use upper-constraints.txt to constrain versions of packages intalled
 #          and do not edit projects at all.
-USE_CONSTRAINTS=${USE_CONSTRAINTS:-False}
+USE_CONSTRAINTS=$(trueorfalse False USE_CONSTRAINTS)
 
 # Repositories
 # ------------
