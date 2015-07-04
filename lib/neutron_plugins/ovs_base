@@ -41,7 +41,7 @@ function neutron_ovs_base_cleanup {
     done
 
     # remove all OVS bridges created by Neutron
-    for bridge in $(sudo ovs-vsctl list-br | grep -o -e ${OVS_BRIDGE} -e ${PUBLIC_BRIDGE}); do
+    for bridge in $(sudo ovs-vsctl list-br | grep -o -e ${OVS_BRIDGE} -e ${PUBLIC_BRIDGE} -e ${OVS_TUNNEL_BRIDGE}); do
         sudo ovs-vsctl del-br ${bridge}
     done
 }
