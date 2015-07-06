@@ -203,7 +203,7 @@ function setup_develop {
 function is_in_projects_txt {
     local project_dir=$1
     local project_name=$(basename $project_dir)
-    return grep "/$project_name\$" $REQUIREMENTS_DIR/projects.txt >/dev/null
+    grep -q "/$project_name\$" $REQUIREMENTS_DIR/projects.txt
 }
 
 # ``pip install -e`` the package, which processes the dependencies
