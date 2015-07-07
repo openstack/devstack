@@ -405,19 +405,25 @@ function create_nova_accounts {
 
             local nova_service=$(get_or_create_service "nova" \
                 "compute" "Nova Compute Service")
+            local nova_api_url
+            if [[ "$NOVA_USE_MOD_WSGI" == "False" ]]; then
+                nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT"
+            else
+                nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST/compute"
+            fi
             get_or_create_endpoint $nova_service \
                 "$REGION_NAME" \
-                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
-                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s" \
-                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2/\$(tenant_id)s"
+                "$nova_api_url/v2/\$(tenant_id)s" \
+                "$nova_api_url/v2/\$(tenant_id)s" \
+                "$nova_api_url/v2/\$(tenant_id)s"
 
             local nova_v21_service=$(get_or_create_service "novav21" \
                 "computev21" "Nova Compute Service V2.1")
             get_or_create_endpoint $nova_v21_service \
                 "$REGION_NAME" \
-                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2.1/\$(tenant_id)s" \
-                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2.1/\$(tenant_id)s" \
-                "$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT/v2.1/\$(tenant_id)s"
+                "$nova_api_url/v2.1/\$(tenant_id)s" \
+                "$nova_api_url/v2.1/\$(tenant_id)s" \
+                "$nova_api_url/v2.1/\$(tenant_id)s"
         fi
     fi
 
