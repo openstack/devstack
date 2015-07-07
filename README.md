@@ -187,7 +187,7 @@ services are started in background and managed by `swift-init` tool.
 
 Basic Setup
 
-In order to enable Neutron a single node setup, you'll need the
+In order to enable Neutron in a single node setup, you'll need the
 following settings in your `local.conf`:
 
     disable_service n-net
@@ -197,47 +197,38 @@ following settings in your `local.conf`:
     enable_service q-l3
     enable_service q-meta
     enable_service q-metering
-    # Optional, to enable tempest configuration as part of DevStack
-    enable_service tempest
 
 Then run `stack.sh` as normal.
 
 DevStack supports setting specific Neutron configuration flags to the
-service, Open vSwitch plugin and LinuxBridge plugin configuration files.
-To make use of this feature, the settings can be added to ``local.conf``.
-The old ``Q_XXX_EXTRA_XXX_OPTS`` variables are deprecated and will be removed
-in the near future.  The ``local.conf`` headers for the replacements are:
-
-* ``Q_SRV_EXTRA_OPTS``:
+service, ML2 plugin, DHCP and L3 configuration files:
 
     [[post-config|/$Q_PLUGIN_CONF_FILE]]
-    [linuxbridge]   # or [ovs]
-
-Example extra config in `local.conf`:
-
-    [[post-config|/$Q_PLUGIN_CONF_FILE]]
-    [agent]
-    tunnel_type=vxlan
-    vxlan_udp_port=8472
+    [ml2]
+    mechanism_drivers=openvswitch,l2population
 
     [[post-config|$NEUTRON_CONF]]
     [DEFAULT]
-    tenant_network_type=vxlan
+    quota_port=42
 
-DevStack also supports configuring the Neutron ML2 plugin. The ML2 plugin
-can run with the OVS, LinuxBridge, or Hyper-V agents on compute hosts. This
-is a simple way to configure the ml2 plugin:
+    [[post-config|$Q_L3_CONF_FILE]]
+    [DEFAULT]
+    agent_mode=legacy
+
+    [[post-config|$Q_DHCP_CONF_FILE]]
+    [DEFAULT]
+    dnsmasq_dns_servers = 8.8.8.8,8.8.4.4
+
+The ML2 plugin can run with the OVS, LinuxBridge, or Hyper-V agents on compute
+hosts. This is a simple way to configure the ml2 plugin:
 
     # VLAN configuration
-    Q_PLUGIN=ml2
     ENABLE_TENANT_VLANS=True
 
     # GRE tunnel configuration
-    Q_PLUGIN=ml2
     ENABLE_TENANT_TUNNELS=True
 
     # VXLAN tunnel configuration
-    Q_PLUGIN=ml2
     Q_ML2_TENANT_NETWORK_TYPE=vxlan
 
 The above will default in DevStack to using the OVS on each compute host.
