@@ -19,18 +19,6 @@ echo "*********************************************************************"
 
 set -o errtrace
 
-trap failed ERR
-function failed {
-    local r=$?
-    set +o errtrace
-    set +o xtrace
-    echo "Failed to execute"
-    echo "Starting cleanup..."
-    delete_all
-    echo "Finished cleanup"
-    exit $r
-}
-
 # Print the commands being run so that we can see the command that triggers
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
@@ -439,6 +427,18 @@ function main {
             shift
         done
     fi
+}
+
+trap failed ERR
+function failed {
+    local r=$?
+    set +o errtrace
+    set +o xtrace
+    echo "Failed to execute"
+    echo "Starting cleanup..."
+    delete_all
+    echo "Finished cleanup"
+    exit $r
 }
 
 # Kick off script
