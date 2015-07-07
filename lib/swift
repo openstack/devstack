@@ -697,6 +697,21 @@ function install_swiftclient {
     fi
 }
 
+# install_ceilometermiddleware() - Collect source and prepare
+#   note that this doesn't really have anything to do with ceilometer;
+#   though ceilometermiddleware has ceilometer in its name as an
+#   artifact of history, it is not a ceilometer specific tool. It
+#   simply generates pycadf-based notifications about requests and
+#   responses on the swift proxy
+function install_ceilometermiddleware {
+    if use_library_from_git "ceilometermiddleware"; then
+        git_clone_by_name "ceilometermiddleware"
+        setup_dev_lib "ceilometermiddleware"
+    else
+        pip_install_gr ceilometermiddleware
+    fi
+}
+
 # start_swift() - Start running processes, including screen
 function start_swift {
     # (re)start memcached to make sure we have a clean memcache.
