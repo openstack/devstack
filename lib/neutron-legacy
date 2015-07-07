@@ -542,12 +542,12 @@ function create_neutron_initial_network {
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
-            SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+            SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY --subnetpool None $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
             die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $TENANT_ID"
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]]; then
-            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $V6_NETWORK_GATEWAY --name $PROVIDER_SUBNET_NAME_V6 $NET_ID $FIXED_RANGE_V6 | grep 'id' | get_field 2)
+            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $V6_NETWORK_GATEWAY --name $PROVIDER_SUBNET_NAME_V6 --subnetpool_id None $NET_ID $FIXED_RANGE_V6 | grep 'id' | get_field 2)
             die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $PROVIDER_SUBNET_NAME_V6 $TENANT_ID"
         fi
 
@@ -1236,6 +1236,7 @@ function _neutron_create_private_subnet_v4 {
     subnet_params+="--ip_version 4 "
     subnet_params+="--gateway $NETWORK_GATEWAY "
     subnet_params+="--name $PRIVATE_SUBNET_NAME "
+    subnet_params+="--subnetpool None "
     subnet_params+="$NET_ID $FIXED_RANGE"
     local subnet_id
     subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
@@ -1252,6 +1253,7 @@ function _neutron_create_private_subnet_v6 {
     subnet_params+="--ip_version 6 "
     subnet_params+="--gateway $IPV6_PRIVATE_NETWORK_GATEWAY "
     subnet_params+="--name $IPV6_PRIVATE_SUBNET_NAME "
+    subnet_params+="--subnetpool None "
     subnet_params+="$NET_ID $FIXED_RANGE_V6 $ipv6_modes"
     local ipv6_subnet_id
     ipv6_subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
@@ -1265,6 +1267,7 @@ function _neutron_create_public_subnet_v4 {
     subnet_params+="${Q_FLOATING_ALLOCATION_POOL:+--allocation-pool $Q_FLOATING_ALLOCATION_POOL} "
     subnet_params+="--gateway $PUBLIC_NETWORK_GATEWAY "
     subnet_params+="--name $PUBLIC_SUBNET_NAME "
+    subnet_params+="--subnetpool None "
     subnet_params+="$EXT_NET_ID $FLOATING_RANGE "
     subnet_params+="-- --enable_dhcp=False"
     local id_and_ext_gw_ip
@@ -1278,6 +1281,7 @@ function _neutron_create_public_subnet_v6 {
     local subnet_params="--ip_version 6 "
     subnet_params+="--gateway $IPV6_PUBLIC_NETWORK_GATEWAY "
     subnet_params+="--name $IPV6_PUBLIC_SUBNET_NAME "
+    subnet_params+="--subnetpool None "
     subnet_params+="$EXT_NET_ID $IPV6_PUBLIC_RANGE "
     subnet_params+="-- --enable_dhcp=False"
     local ipv6_id_and_ext_gw_ip
