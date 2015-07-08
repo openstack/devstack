@@ -9,6 +9,7 @@ set +o xtrace
 
 OVS_BRIDGE=${OVS_BRIDGE:-br-int}
 OVS_DATAPATH_TYPE=${OVS_DATAPATH_TYPE:-""}
+OVS_TUNNEL_BRIDGE=${OVS_TUNNEL_BRIDGE:-br-tun}
 
 function is_neutron_ovs_base_plugin {
     # Yes, we use OVS.
