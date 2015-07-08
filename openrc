@@ -56,17 +56,25 @@ export OS_NO_CACHE=${OS_NO_CACHE:-1}
 # Region
 export OS_REGION_NAME=${REGION_NAME:-RegionOne}
 
-# Set api HOST_IP endpoint.  SERVICE_HOST may also be used to specify the endpoint,
-# which is convenient for some localrc configurations.
-HOST_IP=${HOST_IP:-127.0.0.1}
-SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+# Set the host API endpoint. This will default to HOST_IP if SERVICE_IP_VERSION
+# is 4, else HOST_IPV6 if it's 6. SERVICE_HOST may also be used to specify the
+# endpoint, which is convenient for some localrc configurations. Additionally,
+# some exercises call Glance directly. On a single-node installation, Glance
+# should be listening on a local IP address, depending on the setting of
+# SERVICE_IP_VERSION. If its running elsewhere, it can be set here.
+if [[ $SERVICE_IP_VERSION == 6 ]]; then
+    HOST_IPV6=${HOST_IPV6:-::1}
+    SERVICE_HOST=${SERVICE_HOST:-[$HOST_IPV6]}
+    GLANCE_HOST=${GLANCE_HOST:-[$HOST_IPV6]}
+else
+    HOST_IP=${HOST_IP:-127.0.0.1}
+    SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+    GLANCE_HOST=${GLANCE_HOST:-$HOST_IP}
+fi
+
 SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
 KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
-
-# Some exercises call glance directly.  On a single-node installation, Glance
-# should be listening on HOST_IP.  If its running elsewhere, it can be set here
-GLANCE_HOST=${GLANCE_HOST:-$HOST_IP}
 
 # Identity API version
 export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
