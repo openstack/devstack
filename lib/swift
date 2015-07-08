@@ -45,6 +45,7 @@ SWIFT3_DIR=$DEST/swift3
 
 SWIFT_SERVICE_PROTOCOL=${SWIFT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 SWIFT_DEFAULT_BIND_PORT_INT=${SWIFT_DEFAULT_BIND_PORT_INT:-8081}
+SWIFT_SERVICE_LOCAL_HOST=${SWIFT_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
 
 # TODO: add logging to different location.
 
@@ -668,9 +669,9 @@ function init_swift {
         swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
 
         for node_number in ${SWIFT_REPLICAS_SEQ}; do
-            swift-ring-builder object.builder add z${node_number}-127.0.0.1:$(( OBJECT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
-            swift-ring-builder container.builder add z${node_number}-127.0.0.1:$(( CONTAINER_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
-            swift-ring-builder account.builder add z${node_number}-127.0.0.1:$(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+            swift-ring-builder object.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( OBJECT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+            swift-ring-builder container.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( CONTAINER_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+            swift-ring-builder account.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
         done
         swift-ring-builder object.builder rebalance
         swift-ring-builder container.builder rebalance

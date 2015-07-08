@@ -46,7 +46,8 @@ TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 # Save these variables to .stackenv
 STACK_ENV_VARS="BASE_SQL_CONN DATA_DIR DEST ENABLED_SERVICES HOST_IP \
     KEYSTONE_AUTH_PROTOCOL KEYSTONE_AUTH_URI KEYSTONE_SERVICE_URI \
-    LOGFILE OS_CACERT SERVICE_HOST SERVICE_PROTOCOL STACK_USER TLS_IP"
+    LOGFILE OS_CACERT SERVICE_HOST SERVICE_PROTOCOL STACK_USER TLS_IP \
+    HOST_IPV6"
 
 
 # Saves significant environment variables to .stackenv for later use
@@ -578,13 +579,14 @@ function get_default_host_ip {
     local floating_range=$2
     local host_ip_iface=$3
     local host_ip=$4
+    local af=$5
 
     # Search for an IP unless an explicit is set by ``HOST_IP`` environment variable
     if [ -z "$host_ip" -o "$host_ip" == "dhcp" ]; then
         host_ip=""
         # Find the interface used for the default route
-        host_ip_iface=${host_ip_iface:-$(ip route | awk '/default/ {print $5}' | head -1)}
-        local host_ips=$(LC_ALL=C ip -f inet addr show ${host_ip_iface} | awk '/inet/ {split($2,parts,"/");  print parts[1]}')
+        host_ip_iface=${host_ip_iface:-$(ip -f $af route | awk '/default/ {print $5}' | head -1)}
+        local host_ips=$(LC_ALL=C ip -f $af addr show ${host_ip_iface} | awk /$af'/ {split($2,parts,"/");  print parts[1]}')
         local ip
         for ip in $host_ips; do
             # Attempt to filter out IP addresses that are part of the fixed and
@@ -593,6 +595,10 @@ function get_default_host_ip {
             # will be printed and the first IP from the interface will be used.
             # If that is not correct set ``HOST_IP`` in ``localrc`` to the correct
             # address.
+            if [[ "$af" == "inet6" ]]; then
+                host_ip=$ip
+                break;
+            fi
             if ! (address_in_net $ip $fixed_range || address_in_net $ip $floating_range); then
                 host_ip=$ip
                 break;

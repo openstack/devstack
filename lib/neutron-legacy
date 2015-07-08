@@ -138,6 +138,8 @@ Q_PORT_INT=${Q_PORT_INT:-19696}
 Q_HOST=${Q_HOST:-$SERVICE_HOST}
 # Default protocol
 Q_PROTOCOL=${Q_PROTOCOL:-$SERVICE_PROTOCOL}
+# Default listen address
+Q_LISTEN_ADDRESS=${Q_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
 # Default admin username
 Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-neutron}
 # Default auth strategy
@@ -871,6 +873,7 @@ function _configure_neutron_common {
     iniset $NEUTRON_CONF database connection `database_connection_url $Q_DB_NAME`
     iniset $NEUTRON_CONF DEFAULT state_path $DATA_DIR/neutron
     iniset $NEUTRON_CONF DEFAULT use_syslog $SYSLOG
+    iniset $NEUTRON_CONF DEFAULT bind_host $Q_LISTEN_ADDRESS
     # If addition config files are set, make sure their path name is set as well
     if [[ ${#Q_PLUGIN_EXTRA_CONF_FILES[@]} > 0 && $Q_PLUGIN_EXTRA_CONF_PATH == '' ]]; then
         die $LINENO "Neutron additional plugin config not set.. exiting"

@@ -1403,7 +1403,10 @@ fi
 echo ""
 echo ""
 echo ""
-echo "This is your host ip: $HOST_IP"
+echo "This is your host IP address: $HOST_IP"
+if [ "$HOST_IPV6" != "" ]; then
+    echo "This is your host IPv6 address: $HOST_IPV6"
+fi
 
 # If you installed Horizon on this server you should be able
 # to access the site using your browser.

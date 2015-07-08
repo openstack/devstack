@@ -85,6 +85,8 @@ NOVA_SERVICE_HOST=${NOVA_SERVICE_HOST:-$SERVICE_HOST}
 NOVA_SERVICE_PORT=${NOVA_SERVICE_PORT:-8774}
 NOVA_SERVICE_PORT_INT=${NOVA_SERVICE_PORT_INT:-18774}
 NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+NOVA_SERVICE_LOCAL_HOST=${NOVA_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
+NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
 EC2_SERVICE_PORT=${EC2_SERVICE_PORT:-8773}
 EC2_SERVICE_PORT_INT=${EC2_SERVICE_PORT_INT:-18773}
 
@@ -482,11 +484,20 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
     iniset $NOVA_CONF DEFAULT s3_host "$SERVICE_HOST"
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
-    iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
+    if [[ $SERVICE_IP_VERSION == 6 ]]; then
+        iniset $NOVA_CONF DEFAULT my_ip "$HOST_IPV6"
+        iniset $NOVA_CONF DEFAULT use_ipv6 "True"
+    else
+        iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
+    fi
     iniset $NOVA_CONF database connection `database_connection_url nova`
     iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF osapi_v3 enabled "True"
+    iniset $NOVA_CONF DEFAULT osapi_compute_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
+    iniset $NOVA_CONF DEFAULT ec2_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
+    iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
+    iniset $NOVA_CONF DEFAULT s3_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
 
     if is_fedora || is_suse; then
         # nova defaults to /usr/local/bin, but fedora and suse pip like to
@@ -566,11 +577,13 @@ function create_nova_conf {
     if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
         # Address on which instance vncservers will listen on compute hosts.
         # For multi-host, this should be the management ip of the compute host.
-        VNCSERVER_LISTEN=${VNCSERVER_LISTEN=127.0.0.1}
-        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
+        VNCSERVER_LISTEN=${VNCSERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
+        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
         iniset $NOVA_CONF DEFAULT vnc_enabled true
         iniset $NOVA_CONF DEFAULT vncserver_listen "$VNCSERVER_LISTEN"
         iniset $NOVA_CONF DEFAULT vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+        iniset $NOVA_CONF DEFAULT novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $NOVA_CONF DEFAULT xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
     else
         iniset $NOVA_CONF DEFAULT vnc_enabled false
     fi
@@ -578,11 +591,12 @@ function create_nova_conf {
     if is_service_enabled n-spice; then
         # Address on which instance spiceservers will listen on compute hosts.
         # For multi-host, this should be the management ip of the compute host.
-        SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=127.0.0.1}
-        SPICESERVER_LISTEN=${SPICESERVER_LISTEN=127.0.0.1}
+        SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
+        SPICESERVER_LISTEN=${SPICESERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
         iniset $NOVA_CONF spice enabled true
         iniset $NOVA_CONF spice server_listen "$SPICESERVER_LISTEN"
         iniset $NOVA_CONF spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
+        iniset $NOVA_CONF spice html5proxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
     else
         iniset $NOVA_CONF spice enabled false
     fi
@@ -622,6 +636,7 @@ function create_nova_conf {
     fi
 
     if is_service_enabled n-sproxy; then
+        iniset $NOVA_CONF serial_console serialproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $NOVA_CONF serial_console enabled True
     fi
 }
