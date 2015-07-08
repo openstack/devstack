@@ -788,6 +788,7 @@ function _move_neutron_addresses_route {
     local from_intf=$1
     local to_intf=$2
     local add_ovs_port=$3
+    local af=$4
 
     if [[ -n "$from_intf" && -n "$to_intf" ]]; then
         # Remove the primary IP address from $from_intf and add it to $to_intf,
@@ -795,9 +796,17 @@ function _move_neutron_addresses_route {
         # on configure we will also add $from_intf as a port on $to_intf,
         # assuming it is an OVS bridge.
 
-        local IP_BRD=$(ip -4 a s dev $from_intf | awk '/inet/ { print $2, $3, $4; exit }')
+        local IP_BRD=$(ip -f $af a s dev $from_intf | awk '/inet/ { print $2, $3, $4; exit }')
         local DEFAULT_ROUTE_GW=$(ip r | awk "/default.+$from_intf/ { print \$3; exit }")
         local ADD_OVS_PORT=""
+
+        if [[ $af == "inet" ]]; then
+            IP_BRD=$(ip -f $af a s dev $from_intf | grep $HOST_IP | awk '{ print $2, $3, $4; exit }')
+        fi
+
+        if [[ $af == "inet6" ]]; then
+            IP_BRD=$(ip -f $af a s dev $from_intf | grep $HOST_IPV6 | awk '{ print $2, $3, $4; exit }')
+        fi
 
         if [ "$DEFAULT_ROUTE_GW" != "" ]; then
             ADD_DEFAULT_ROUTE="sudo ip r replace default via $DEFAULT_ROUTE_GW dev $to_intf"
@@ -815,7 +824,13 @@ function _move_neutron_addresses_route {
 # runs that a clean run would need to clean up
 function cleanup_neutron {
 
-    _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False
+    if [[ $(ip -f inet a s dev "$OVS_PHYSICAL_BRIDGE" | grep -c 'global') != 0 ]]; then
+        _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet"
+    fi
+
+    if [[ $(ip -f inet6 a s dev "$OVS_PHYSICAL_BRIDGE" | grep -c 'global') != 0 ]]; then
+        _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet6"
+    fi
 
     if is_provider_network && is_ironic_hardware; then
         for IP in $(ip addr show dev $OVS_PHYSICAL_BRIDGE | grep ' inet ' | awk '{print $2}'); do
@@ -997,8 +1012,12 @@ function _configure_neutron_l3_agent {
 
     neutron_plugin_configure_l3_agent
 
-    if [[ $(ip -4 a s dev "$PUBLIC_INTERFACE" | grep -c 'inet') != 0 ]]; then
-        _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True
+    if [[ $(ip -f inet a s dev "$PUBLIC_INTERFACE" | grep -c 'global') != 0 ]]; then
+        _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True "inet"
+    fi
+
+    if [[ $(ip -f inet6 a s dev "$PUBLIC_INTERFACE" | grep -c 'global') != 0 ]]; then
+        _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" False "inet6"
     fi
 }
 
