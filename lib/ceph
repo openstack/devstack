@@ -74,6 +74,10 @@ CEPH_REPLICAS_SEQ=$(seq ${CEPH_REPLICAS})
 REMOTE_CEPH=$(trueorfalse False REMOTE_CEPH)
 REMOTE_CEPH_ADMIN_KEY_PATH=${REMOTE_CEPH_ADMIN_KEY_PATH:-$CEPH_CONF_DIR/ceph.client.admin.keyring}
 
+# Cinder encrypted volume tests are not supported with a Ceph backend due to
+# bug 1463525.
+ATTACH_ENCRYPTED_VOLUME_AVAILABLE=False
+
 
 # Functions
 # ------------
