@@ -110,7 +110,7 @@ function configure_glance {
     iniset $GLANCE_REGISTRY_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
     inicomment $GLANCE_REGISTRY_CONF DEFAULT log_file
     local dburl=`database_connection_url glance`
-    iniset $GLANCE_REGISTRY_CONF DEFAULT sql_connection $dburl
+    iniset $GLANCE_REGISTRY_CONF database connection $dburl
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_REGISTRY_CONF DEFAULT workers "$API_WORKERS"
     iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
@@ -122,7 +122,7 @@ function configure_glance {
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_API_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
     inicomment $GLANCE_API_CONF DEFAULT log_file
-    iniset $GLANCE_API_CONF DEFAULT sql_connection $dburl
+    iniset $GLANCE_API_CONF database connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
     iniset $GLANCE_API_CONF paste_deploy flavor keystone+cachemanagement
@@ -231,7 +231,7 @@ function configure_glance {
         iniset $GLANCE_SEARCH_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
         inicomment $GLANCE_SEARCH_CONF DEFAULT log_file
         iniset $GLANCE_SEARCH_CONF DEFAULT use_syslog $SYSLOG
-        iniset $GLANCE_SEARCH_CONF DEFAULT sql_connection $dburl
+        iniset $GLANCE_SEARCH_CONF database connection $dburl
         iniset $GLANCE_SEARCH_CONF paste_deploy flavor keystone
         configure_auth_token_middleware $GLANCE_SEARCH_CONF glance $GLANCE_AUTH_CACHE_DIR/search
 
