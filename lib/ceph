@@ -162,7 +162,6 @@ function cleanup_ceph_embedded {
 
 function cleanup_ceph_general {
     undefine_virsh_secret
-    uninstall_package ceph ceph-common python-ceph libcephfs1 > /dev/null 2>&1
 }
 
 
