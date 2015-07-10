@@ -42,6 +42,10 @@ Optional Arguments
 --os-password <admin password>
 --os-project-name <project_name>
 --os-project-id <project_id>
+--os-user-domain-id <user_domain_id>
+--os-user-domain-name <user_domain_name>
+--os-project-domain-id <project_domain_id>
+--os-project-domain-name <project_domain_name>
 --os-auth-url <auth_url>
 --os-cacert <cert file>
 --target-dir <target_directory>
@@ -54,7 +58,7 @@ $0 -P -C myproject -u myuser -p mypass
 EOF
 }
 
-if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-id:,os-tenant-name:,os-project-name:,os-project-id:,os-auth-url:,target-dir:,heat-url:,skip-project:,os-cacert:,help,debug -- "$@"); then
+if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-id:,os-tenant-name:,os-project-name:,os-project-id:,os-project-domain-id:,os-project-domain-name:,os-user-domain-id:,os-user-domain-name:,os-auth-url:,target-dir:,heat-url:,skip-project:,os-cacert:,help,debug -- "$@"); then
     display_help
     exit 1
 fi
@@ -79,6 +83,10 @@ while [ $# -gt 0 ]; do
     --os-tenant-id) export OS_PROJECT_ID=$2; shift ;;
     --os-project-name) export OS_PROJECT_NAME=$2; shift ;;
     --os-project-id) export OS_PROJECT_ID=$2; shift ;;
+    --os-user-domain-id) export OS_USER_DOMAIN_ID=$2; shift ;;
+    --os-user-domain-name) export OS_USER_DOMAIN_NAME=$2; shift ;;
+    --os-project-domain-id) export OS_PROJECT_DOMAIN_ID=$2; shift ;;
+    --os-project-domain-name) export OS_PROJECT_DOMAIN_NAME=$2; shift ;;
     --skip-tenant) SKIP_PROJECT="$SKIP_PROJECT$2,"; shift ;;
     --skip-project) SKIP_PROJECT="$SKIP_PROJECT$2,"; shift ;;
     --os-auth-url) export OS_AUTH_URL=$2; shift ;;
@@ -126,6 +134,16 @@ fi
 
 if [ -z "$OS_AUTH_URL" ]; then
     export OS_AUTH_URL=http://localhost:5000/v2.0/
+fi
+
+if [ -z "$OS_USER_DOMAIN_ID" -a -z "$OS_USER_DOMAIN_NAME" ]; then
+    # purposefully not exported as it would force v3 auth within this file.
+    OS_USER_DOMAIN_ID=default
+fi
+
+if [ -z "$OS_PROJECT_DOMAIN_ID" -a -z "$OS_PROJECT_DOMAIN_NAME" ]; then
+    # purposefully not exported as it would force v3 auth within this file.
+    OS_PROJECT_DOMAIN_ID=default
 fi
 
 USER_PASS=${USER_PASS:-$OS_PASSWORD}
@@ -219,6 +237,7 @@ export EC2_PRIVATE_KEY="$ec2_private_key"
 export EC2_USER_ID=42 #not checked by nova (can be a 12-digit id)
 export EUCALYPTUS_CERT="$ACCOUNT_DIR/cacert.pem"
 export NOVA_CERT="$ACCOUNT_DIR/cacert.pem"
+export OS_AUTH_TYPE=v2password
 EOF
     if [ -n "$ADDPASS" ]; then
         echo "export OS_PASSWORD=\"$user_passwd\"" >>"$rcfile"
@@ -227,6 +246,13 @@ EOF
         echo "export HEAT_URL=\"$HEAT_URL/$project_id\"" >>"$rcfile"
         echo "export OS_NO_CLIENT_AUTH=True" >>"$rcfile"
     fi
+    for v in OS_USER_DOMAIN_ID OS_USER_DOMAIN_NAME OS_PROJECT_DOMAIN_ID OS_PROJECT_DOMAIN_NAME; do
+        if [ ${!v} ]; then
+            echo "export $v=${!v}" >>"$rcfile"
+        else
+            echo "unset $v" >>"$rcfile"
+        fi
+    done
 }
 
 #admin users expected
