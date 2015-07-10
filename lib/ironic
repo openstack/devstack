@@ -285,7 +285,7 @@ function configure_ironic {
 
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $IRONIC_CONF_FILE DEFAULT
+        setup_colorized_logging $IRONIC_CONF_FILE DEFAULT tenant user
     fi
 
     if [[ "$IRONIC_IPXE_ENABLED" == "True" ]]; then
