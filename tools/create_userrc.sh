@@ -16,45 +16,45 @@ cat <<EOF
 
 usage: $0 <options..>
 
-This script creates certificates and sourcable rc files per tenant/user.
+This script creates certificates and sourcable rc files per project/user.
 
 Target account directory hierarchy:
 target_dir-|
            |-cacert.pem
-           |-tenant1-name|
-           |             |- user1
-           |             |- user1-cert.pem
-           |             |- user1-pk.pem
-           |             |- user2
-           |             ..
-           |-tenant2-name..
+           |-project1-name|
+           |              |- user1
+           |              |- user1-cert.pem
+           |              |- user1-pk.pem
+           |              |- user2
+           |              ..
+           |-project2-name..
            ..
 
 Optional Arguments
 -P include password to the rc files; with -A it assume all users password is the same
 -A try with all user
 -u <username> create files just for the specified user
--C <tenant_name> create user and tenant, the specifid tenant will be the user's tenant
--r <name> when combined with -C and the (-u) user exists it will be the user's tenant role in the (-C)tenant (default: Member)
+-C <project_name> create user and project, the specifid project will be the user's project
+-r <name> when combined with -C and the (-u) user exists it will be the user's project role in the (-C)project (default: Member)
 -p <userpass> password for the user
 --heat-url <heat_url>
 --os-username <username>
 --os-password <admin password>
---os-tenant-name <tenant_name>
---os-tenant-id <tenant_id>
+--os-project-name <project_name>
+--os-project-id <project_id>
 --os-auth-url <auth_url>
 --os-cacert <cert file>
 --target-dir <target_directory>
---skip-tenant <tenant-name>
+--skip-project <project-name>
 --debug
 
 Example:
 $0 -AP
-$0 -P -C mytenant -u myuser -p mypass
+$0 -P -C myproject -u myuser -p mypass
 EOF
 }
 
-if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-name:,os-tenant-id:,os-auth-url:,target-dir:,heat-url:,skip-tenant:,os-cacert:,help,debug -- "$@"); then
+if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-id:,os-tenant-name:,os-project-name:,os-project-id:,os-auth-url:,target-dir:,heat-url:,skip-project:,os-cacert:,help,debug -- "$@"); then
     display_help
     exit 1
 fi
@@ -62,10 +62,10 @@ eval set -- $options
 ADDPASS=""
 HEAT_URL=""
 
-# The services users usually in the service tenant.
+# The services users usually in the service project.
 # rc files for service users, is out of scope.
-# Supporting different tenant for services is out of scope.
-SKIP_TENANT="service"
+# Supporting different project for services is out of scope.
+SKIP_PROJECT="service"
 MODE=""
 ROLE=Member
 USER_NAME=""
@@ -75,9 +75,12 @@ while [ $# -gt 0 ]; do
     -h|--help) display_help; exit 0 ;;
     --os-username) export OS_USERNAME=$2; shift ;;
     --os-password) export OS_PASSWORD=$2; shift ;;
-    --os-tenant-name) export OS_TENANT_NAME=$2; shift ;;
-    --os-tenant-id) export OS_TENANT_ID=$2; shift ;;
-    --skip-tenant) SKIP_TENANT="$SKIP_TENANT$2,"; shift ;;
+    --os-tenant-name) export OS_PROJECT_NAME=$2; shift ;;
+    --os-tenant-id) export OS_PROJECT_ID=$2; shift ;;
+    --os-project-name) export OS_PROJECT_NAME=$2; shift ;;
+    --os-project-id) export OS_PROJECT_ID=$2; shift ;;
+    --skip-tenant) SKIP_PROJECT="$SKIP_PROJECT$2,"; shift ;;
+    --skip-project) SKIP_PROJECT="$SKIP_PROJECT$2,"; shift ;;
     --os-auth-url) export OS_AUTH_URL=$2; shift ;;
     --os-cacert) export OS_CACERT=$2; shift ;;
     --target-dir) ACCOUNT_DIR=$2; shift ;;
@@ -87,7 +90,7 @@ while [ $# -gt 0 ]; do
     -p) USER_PASS=$2; shift ;;
     -A) MODE=all; ;;
     -P) ADDPASS="yes" ;;
-    -C) MODE=create; TENANT=$2; shift ;;
+    -C) MODE=create; PROJECT=$2; shift ;;
     -r) ROLE=$2; shift ;;
     (--) shift; break ;;
     (-*) echo "$0: error - unrecognized option $1" >&2; display_help; exit 1 ;;
@@ -105,8 +108,16 @@ if [ -z "$OS_PASSWORD" ]; then
     fi
 fi
 
-if [ -z "$OS_TENANT_NAME" -a -z "$OS_TENANT_ID" ]; then
-    export OS_TENANT_NAME=admin
+if [ -z "$OS_PROJECT_ID" -a "$OS_TENANT_ID" ]; then
+    export OS_PROJECT_ID=$OS_TENANT_ID
+fi
+
+if [ -z "$OS_PROJECT_NAME" -a "$OS_TENANT_NAME" ]; then
+    export OS_PROJECT_NAME=$OS_TENANT_NAME
+fi
+
+if [ -z "$OS_PROJECT_NAME" -a -z "$OS_PROJECT_ID" ]; then
+    export OS_PROJECT_NAME=admin
 fi
 
 if [ -z "$OS_USERNAME" ]; then
@@ -156,21 +167,21 @@ fi
 function add_entry {
     local user_id=$1
     local user_name=$2
-    local tenant_id=$3
-    local tenant_name=$4
+    local project_id=$3
+    local project_name=$4
     local user_passwd=$5
 
     # The admin user can see all user's secret AWS keys, it does not looks good
-    local line=`openstack ec2 credentials list --user $user_id | grep " $tenant_id "`
+    local line=`openstack ec2 credentials list --user $user_id | grep " $project_id "`
     if [ -z "$line" ]; then
-        openstack ec2 credentials create --user $user_id --project $tenant_id 1>&2
-        line=`openstack ec2 credentials list --user $user_id | grep " $tenant_id "`
+        openstack ec2 credentials create --user $user_id --project $project_id 1>&2
+        line=`openstack ec2 credentials list --user $user_id | grep " $project_id "`
     fi
     local ec2_access_key ec2_secret_key
     read ec2_access_key ec2_secret_key <<<  `echo $line | awk '{print $2 " " $4 }'`
-    mkdir -p "$ACCOUNT_DIR/$tenant_name"
-    local rcfile="$ACCOUNT_DIR/$tenant_name/$user_name"
-    # The certs subject part are the tenant ID "dash" user ID, but the CN should be the first part of the DN
+    mkdir -p "$ACCOUNT_DIR/$project_name"
+    local rcfile="$ACCOUNT_DIR/$project_name/$user_name"
+    # The certs subject part are the project ID "dash" user ID, but the CN should be the first part of the DN
     # Generally the subject DN parts should be in reverse order like the Issuer
     # The Serial does not seams correctly marked either
     local ec2_cert="$rcfile-cert.pem"
@@ -183,7 +194,7 @@ function add_entry {
         mv -f "$ec2_cert" "$ec2_cert.old"
     fi
     # It will not create certs when the password is incorrect
-    if ! nova --os-password "$user_passwd" --os-username "$user_name" --os-tenant-name "$tenant_name" x509-create-cert "$ec2_private_key" "$ec2_cert"; then
+    if ! nova --os-password "$user_passwd" --os-username "$user_name" --os-project-name "$project_name" x509-create-cert "$ec2_private_key" "$ec2_cert"; then
         if [ -e "$ec2_private_key.old" ]; then
             mv -f "$ec2_private_key.old" "$ec2_private_key"
         fi
@@ -199,8 +210,8 @@ export EC2_URL="$EC2_URL"
 export S3_URL="$S3_URL"
 # OpenStack USER ID = $user_id
 export OS_USERNAME="$user_name"
-# OpenStack Tenant ID = $tenant_id
-export OS_TENANT_NAME="$tenant_name"
+# OpenStack project ID = $project_id
+export OS_PROJECT_NAME="$project_name"
 export OS_AUTH_URL="$OS_AUTH_URL"
 export OS_CACERT="$OS_CACERT"
 export EC2_CERT="$ec2_cert"
@@ -213,7 +224,7 @@ EOF
         echo "export OS_PASSWORD=\"$user_passwd\"" >>"$rcfile"
     fi
     if [ -n "$HEAT_URL" ]; then
-        echo "export HEAT_URL=\"$HEAT_URL/$tenant_id\"" >>"$rcfile"
+        echo "export HEAT_URL=\"$HEAT_URL/$project_id\"" >>"$rcfile"
         echo "export OS_NO_CLIENT_AUTH=True" >>"$rcfile"
     fi
 }
@@ -245,9 +256,9 @@ function get_user_id {
 }
 
 if [ $MODE != "create" ]; then
-    # looks like I can't ask for all tenant related to a specified user
-    openstack project list --long --quote none -f csv | grep ',True' | grep -v "${SKIP_TENANT}" | while IFS=, read tenant_id tenant_name desc enabled; do
-        openstack user list --project $tenant_id --long --quote none -f csv | grep ',True' | while IFS=, read user_id user_name project email enabled; do
+    # looks like I can't ask for all project related to a specified user
+    openstack project list --long --quote none -f csv | grep ',True' | grep -v "${SKIP_PROJECT}" | while IFS=, read project_id project_name desc enabled; do
+        openstack user list --project $project_id --long --quote none -f csv | grep ',True' | while IFS=, read user_id user_name project email enabled; do
             if [ $MODE = one -a "$user_name" != "$USER_NAME" ]; then
                 continue;
             fi
@@ -259,21 +270,21 @@ if [ $MODE != "create" ]; then
             if [ -n "$SPECIFIC_UPASSWORD" ]; then
                 USER_PASS=$SPECIFIC_UPASSWORD
             fi
-            add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
+            add_entry "$user_id" "$user_name" "$project_id" "$project_name" "$USER_PASS"
         done
     done
 else
-    tenant_name=$TENANT
-    tenant_id=$(create_or_get_project "$TENANT")
+    project_name=$PROJECT
+    project_id=$(create_or_get_project "$PROJECT")
     user_name=$USER_NAME
     user_id=`get_user_id $user_name`
     if [ -z "$user_id" ]; then
-        eval $(openstack user create "$user_name" --project "$tenant_id" --password "$USER_PASS" --email "$user_name@example.com" -f shell -c id)
+        eval $(openstack user create "$user_name" --project "$project_id" --password "$USER_PASS" --email "$user_name@example.com" -f shell -c id)
         user_id=$id
-        add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
+        add_entry "$user_id" "$user_name" "$project_id" "$project_name" "$USER_PASS"
     else
         role_id=$(create_or_get_role "$ROLE")
-        openstack role add "$role_id" --user "$user_id" --project "$tenant_id"
-        add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
+        openstack role add "$role_id" --user "$user_id" --project "$project_id"
+        add_entry "$user_id" "$user_name" "$project_id" "$project_name" "$USER_PASS"
     fi
 fi
