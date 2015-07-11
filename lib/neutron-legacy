@@ -547,7 +547,7 @@ function create_neutron_initial_network {
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]]; then
-            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode slaac --gateway $V6_NETWORK_GATEWAY --name $PROVIDER_SUBNET_NAME_V6 $NET_ID $FIXED_RANGE_V6 | grep 'id' | get_field 2)
+            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $V6_NETWORK_GATEWAY --name $PROVIDER_SUBNET_NAME_V6 $NET_ID $FIXED_RANGE_V6 | grep 'id' | get_field 2)
             die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $PROVIDER_SUBNET_NAME_V6 $TENANT_ID"
         fi
 
