@@ -406,9 +406,8 @@ function create_keystone_accounts {
     # Keystone
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-        KEYSTONE_SERVICE=$(get_or_create_service "keystone" \
-            "identity" "Keystone Identity Service")
-        get_or_create_endpoint $KEYSTONE_SERVICE \
+        get_or_create_service "keystone" "identity" "Keystone Identity Service"
+        get_or_create_endpoint "identity" \
             "$REGION_NAME" \
             "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION" \
             "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v$IDENTITY_API_VERSION" \

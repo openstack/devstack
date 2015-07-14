@@ -210,9 +210,8 @@ function create_zaqar_accounts {
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-        local zaqar_service=$(get_or_create_service "zaqar" \
-            "messaging" "Zaqar Service")
-        get_or_create_endpoint $zaqar_service \
+        get_or_create_service "zaqar" "messaging" "Zaqar Service"
+        get_or_create_endpoint "messaging" \
             "$REGION_NAME" \
             "$ZAQAR_SERVICE_PROTOCOL://$ZAQAR_SERVICE_HOST:$ZAQAR_SERVICE_PORT" \
             "$ZAQAR_SERVICE_PROTOCOL://$ZAQAR_SERVICE_HOST:$ZAQAR_SERVICE_PORT" \

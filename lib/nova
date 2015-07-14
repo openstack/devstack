@@ -404,24 +404,22 @@ function create_nova_accounts {
         create_service_user "nova" "admin"
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-
-            local nova_service=$(get_or_create_service "nova" \
-                "compute" "Nova Compute Service")
             local nova_api_url
             if [[ "$NOVA_USE_MOD_WSGI" == "False" ]]; then
                 nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT"
             else
                 nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST/compute"
             fi
-            get_or_create_endpoint $nova_service \
+
+            get_or_create_service "nova" "compute" "Nova Compute Service"
+            get_or_create_endpoint "compute" \
                 "$REGION_NAME" \
                 "$nova_api_url/v2/\$(tenant_id)s" \
                 "$nova_api_url/v2/\$(tenant_id)s" \
                 "$nova_api_url/v2/\$(tenant_id)s"
 
-            local nova_v21_service=$(get_or_create_service "novav21" \
-                "computev21" "Nova Compute Service V2.1")
-            get_or_create_endpoint $nova_v21_service \
+            get_or_create_service "novav21" "computev21" "Nova Compute Service V2.1"
+            get_or_create_endpoint "computev21" \
                 "$REGION_NAME" \
                 "$nova_api_url/v2.1/\$(tenant_id)s" \
                 "$nova_api_url/v2.1/\$(tenant_id)s" \
@@ -440,9 +438,8 @@ function create_nova_accounts {
         # EC2
         if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
 
-            local ec2_service=$(get_or_create_service "ec2" \
-                "ec2" "EC2 Compatibility Layer")
-            get_or_create_endpoint $ec2_service \
+            get_or_create_service "ec2" "ec2" "EC2 Compatibility Layer"
+            get_or_create_endpoint "ec2" \
                 "$REGION_NAME" \
                 "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/" \
                 "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/" \
@@ -454,8 +451,8 @@ function create_nova_accounts {
     if is_service_enabled n-obj swift3; then
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            local s3_service=$(get_or_create_service "s3" "s3" "S3")
-            get_or_create_endpoint $s3_service \
+            get_or_create_service "s3" "s3" "S3"
+            get_or_create_endpoint "s3" \
                 "$REGION_NAME" \
                 "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
                 "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
