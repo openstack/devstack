@@ -245,4 +245,33 @@ else
     passed "OK"
 fi
 
+function test_export_proxy_variables {
+    echo "Testing export_proxy_variables()"
+
+    local expected results
+
+    http_proxy=http_proxy_test
+    https_proxy=https_proxy_test
+    no_proxy=no_proxy_test
+
+    export_proxy_variables
+    expected=$(echo -e "http_proxy=$http_proxy\nhttps_proxy=$https_proxy\nno_proxy=$no_proxy")
+    results=$(env | egrep '(http(s)?|no)_proxy=')
+    if [[ $expected = $results ]]; then
+        passed "OK: Proxy variables are exported when proxy variables are set"
+    else
+        failed "Expected: $expected, Failed: $results"
+    fi
+
+    unset http_proxy https_proxy no_proxy
+    export_proxy_variables
+    results=$(env | egrep '(http(s)?|no)_proxy=')
+    if [[ "" = $results ]]; then
+        passed "OK: Proxy variables aren't exported when proxy variables aren't set"
+    else
+        failed "Expected: '', Failed: $results"
+    fi
+}
+test_export_proxy_variables
+
 report_results
