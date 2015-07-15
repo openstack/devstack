@@ -838,18 +838,20 @@ function _move_neutron_addresses_route {
 # runs that a clean run would need to clean up
 function cleanup_neutron {
 
-    _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet"
+    if [[ -n "$OVS_PHYSICAL_BRIDGE" ]]; then
+        _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet"
 
-    if [[ $(ip -f inet6 a s dev "$OVS_PHYSICAL_BRIDGE" | grep -c 'global') != 0 ]]; then
-        _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet6"
-    fi
+        if [[ $(ip -f inet6 a s dev "$OVS_PHYSICAL_BRIDGE" | grep -c 'global') != 0 ]]; then
+            _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet6"
+        fi
 
-    if is_provider_network && is_ironic_hardware; then
-        for IP in $(ip addr show dev $OVS_PHYSICAL_BRIDGE | grep ' inet ' | awk '{print $2}'); do
-            sudo ip addr del $IP dev $OVS_PHYSICAL_BRIDGE
-            sudo ip addr add $IP dev $PUBLIC_INTERFACE
-        done
-        sudo route del -net $FIXED_RANGE gw $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
+        if is_provider_network && is_ironic_hardware; then
+            for IP in $(ip addr show dev $OVS_PHYSICAL_BRIDGE | grep ' inet ' | awk '{print $2}'); do
+                sudo ip addr del $IP dev $OVS_PHYSICAL_BRIDGE
+                sudo ip addr add $IP dev $PUBLIC_INTERFACE
+            done
+            sudo route del -net $FIXED_RANGE gw $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
+        fi
     fi
 
     if is_neutron_ovs_base_plugin; then
