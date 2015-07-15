@@ -16,7 +16,7 @@ upstream code.  It makes many choices that are not appropriate for
 production systems.
 
 Your best choice is probably to choose a `distribution of OpenStack
-<https://www.openstack.org/marketplace/distros/distribution>`__.
+<https://www.openstack.org/marketplace/distros/>`__.
 
 Why a shell script, why not chef/puppet/...
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
