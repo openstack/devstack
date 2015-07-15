@@ -26,7 +26,7 @@ The following are plugins that exist for official OpenStack projects.
 +--------------------+-------------------------------------------+--------------------+
 |trove               |git://git.openstack.org/openstack/trove    |                    |
 +--------------------+-------------------------------------------+--------------------+
-|zaqar               |git://git.openstack.org/openstack/zarar    |                    |
+|zaqar               |git://git.openstack.org/openstack/zaqar    |                    |
 +--------------------+-------------------------------------------+--------------------+
 
 
