@@ -219,6 +219,23 @@ function upload_image {
         return
     fi
 
+    if [[ "$image_url" =~ '.hds' ]]; then
+        image_name="${image_fname%.hds}"
+        vm_mode=${image_name##*-}
+        if [[ $vm_mode != 'exe' && $vm_mode != 'hvm' ]]; then
+            die $LINENO "Unknown vm_mode=${vm_mode} for Virtuozzo image"
+        fi
+
+        openstack \
+            --os-token $token \
+            --os-url $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT \
+            image create \
+            "$image_name" --public \
+            --container-format=bare --disk-format=ploop \
+            --property vm_mode=$vm_mode < "${image}"
+        return
+    fi
+
     local kernel=""
     local ramdisk=""
     local disk_format=""
