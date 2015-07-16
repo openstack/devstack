@@ -112,6 +112,13 @@ def compute_consoles():
 
 def guru_meditation_report():
     _header("nova-compute Guru Meditation Report")
+
+    try:
+        subprocess.check_call(["pgrep","nova-compute"])
+    except subprocess.CalledProcessError:
+        print "Skipping as nova-compute does not appear to be running"
+        return
+
     _dump_cmd("kill -s USR1 `pgrep nova-compute`")
     print "guru meditation report in nova-compute log"
 
