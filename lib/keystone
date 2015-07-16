@@ -313,6 +313,8 @@ function configure_keystone {
 
     iniset $KEYSTONE_CONF eventlet_server admin_workers "$API_WORKERS"
     # Public workers will use the server default, typically number of CPU.
+
+    iniset $KEYSTONE_CONF fernet_tokens key_repository "$KEYSTONE_CONF_DIR/fernet-keys/"
 }
 
 function configure_keystone_extensions {
@@ -475,10 +477,14 @@ function init_keystone {
         $KEYSTONE_BIN_DIR/keystone-manage db_sync --extension "${extension_value}"
     done
 
-    if [[ "$KEYSTONE_TOKEN_FORMAT" != "uuid" ]]; then
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "pki" || "$KEYSTONE_TOKEN_FORMAT" == "pkiz" ]]; then
         # Set up certificates
         rm -rf $KEYSTONE_CONF_DIR/ssl
         $KEYSTONE_BIN_DIR/keystone-manage pki_setup
+    fi
+    if [[ "$KEYSTONE_TOKEN_FORMAT" == "fernet" ]]; then
+        rm -rf "$KEYSTONE_CONF_DIR/fernet-keys/"
+        $KEYSTONE_BIN_DIR/keystone-manage fernet_setup
     fi
 }
 
