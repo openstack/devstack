@@ -485,7 +485,9 @@ function create_volume_types {
         local be be_name
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
             be_name=${be##*:}
-            openstack volume type create --property volume_backend_name="${be_name}" ${be_name}
+            # FIXME(jamielennox): Remove --os-volume-api-version pinning when
+            # osc supports volume type create on v2 api. bug #1475060
+            openstack volume type create --os-volume-api-version 1 --property volume_backend_name="${be_name}" ${be_name}
         done
     fi
 }
