@@ -490,7 +490,6 @@ function create_nova_conf {
     iniset $NOVA_CONF database connection `database_connection_url nova`
     iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
-    iniset $NOVA_CONF osapi_v3 enabled "True"
     iniset $NOVA_CONF DEFAULT osapi_compute_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT ec2_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
