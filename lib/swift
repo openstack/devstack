@@ -46,6 +46,7 @@ SWIFT3_DIR=$DEST/swift3
 SWIFT_SERVICE_PROTOCOL=${SWIFT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 SWIFT_DEFAULT_BIND_PORT_INT=${SWIFT_DEFAULT_BIND_PORT_INT:-8081}
 SWIFT_SERVICE_LOCAL_HOST=${SWIFT_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
+SWIFT_SERVICE_LISTEN_ADDRESS=${SWIFT_SERVICE_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
 
 # TODO: add logging to different location.
 
@@ -361,6 +362,9 @@ function configure_swift {
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT log_level
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT log_level DEBUG
 
+    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_ip
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_ip ${SWIFT_SERVICE_LISTEN_ADDRESS}
+
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port
     if is_service_enabled tls-proxy; then
         iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT_INT}
@@ -463,17 +467,23 @@ EOF
         local swift_node_config=${SWIFT_CONF_DIR}/object-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/object-server.conf-sample ${swift_node_config}
         generate_swift_config_services ${swift_node_config} ${node_number} $(( OBJECT_PORT_BASE + 10 * (node_number - 1) )) object
+        iniuncomment ${swift_node_config} DEFAULT bind_ip
+        iniset ${swift_node_config} DEFAULT bind_ip ${SWIFT_SERVICE_LISTEN_ADDRESS}
         iniset ${swift_node_config} filter:recon recon_cache_path  ${SWIFT_DATA_DIR}/cache
 
         swift_node_config=${SWIFT_CONF_DIR}/container-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/container-server.conf-sample ${swift_node_config}
         generate_swift_config_services ${swift_node_config} ${node_number} $(( CONTAINER_PORT_BASE + 10 * (node_number - 1) )) container
+        iniuncomment ${swift_node_config} DEFAULT bind_ip
+        iniset ${swift_node_config} DEFAULT bind_ip ${SWIFT_SERVICE_LISTEN_ADDRESS}
         iniuncomment ${swift_node_config} app:container-server allow_versions
         iniset ${swift_node_config} app:container-server allow_versions  "true"
 
         swift_node_config=${SWIFT_CONF_DIR}/account-server/${node_number}.conf
         cp ${SWIFT_DIR}/etc/account-server.conf-sample ${swift_node_config}
         generate_swift_config_services ${swift_node_config} ${node_number} $(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) )) account
+        iniuncomment ${swift_node_config} DEFAULT bind_ip
+        iniset ${swift_node_config} DEFAULT bind_ip ${SWIFT_SERVICE_LISTEN_ADDRESS}
     done
 
     # Set new accounts in tempauth to match keystone tenant/user (to make testing easier)
