@@ -46,3 +46,14 @@
     dest: "{{ devstack_data_base_dir }}/data/"
     mode: push
   when: 'inventory_hostname in groups["subnode"]|default([])'
+
+- name: Ensure the data folder and subfolders have the correct permissions
+  become: true
+  file:
+    path: "{{ devstack_data_base_dir }}/data"
+    state: directory
+    owner: stack
+    group: stack
+    mode: 0755
+    recurse: yes
+  when: 'inventory_hostname in groups["subnode"]|default([])'

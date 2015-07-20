@@ -2,4 +2,7 @@
   file:
     path: '{{ devstack_base_dir }}/logs'
     state: directory
+    mode: 0755
+    owner: stack
+    group: stack
   become: yes

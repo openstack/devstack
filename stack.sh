@@ -365,9 +365,12 @@ DEST=${DEST:-/opt/stack}
 
 # Create the destination directory and ensure it is writable by the user
 # and read/executable by everybody for daemons (e.g. apache run for horizon)
-sudo mkdir -p $DEST
-safe_chown -R $STACK_USER $DEST
-safe_chmod 0755 $DEST
+# If directory exists do not modify the permissions.
+if [[ ! -d $DEST ]]; then
+    sudo mkdir -p $DEST
+    safe_chown -R $STACK_USER $DEST
+    safe_chmod 0755 $DEST
+fi
 
 # Destination path for devstack logs
 if [[ -n ${LOGDIR:-} ]]; then
@@ -376,9 +379,11 @@ fi
 
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
-sudo mkdir -p $DATA_DIR
-safe_chown -R $STACK_USER $DATA_DIR
-safe_chmod 0755 $DATA_DIR
+if [[ ! -d $DATA_DIR ]]; then
+    sudo mkdir -p $DATA_DIR
+    safe_chown -R $STACK_USER $DATA_DIR
+    safe_chmod 0755 $DATA_DIR
+fi
 
 # Configure proper hostname
 # Certain services such as rabbitmq require that the local hostname resolves
