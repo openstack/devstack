@@ -92,14 +92,12 @@ function configure_database_mysql {
 
     # Change bind-address from localhost (127.0.0.1) to any (::) and
     # set default db type to InnoDB
-    sudo bash -c "source $TOP_DIR/functions && \
-        iniset $my_conf mysqld bind-address "$SERVICE_LISTEN_ADDRESS" && \
-        iniset $my_conf mysqld sql_mode STRICT_ALL_TABLES && \
-        iniset $my_conf mysqld default-storage-engine InnoDB && \
-        iniset $my_conf mysqld max_connections 1024 && \
-        iniset $my_conf mysqld query_cache_type OFF && \
-        iniset $my_conf mysqld query_cache_size 0"
-
+    iniset -sudo $my_conf mysqld bind-address "$SERVICE_LISTEN_ADDRESS"
+    iniset -sudo $my_conf mysqld sql_mode STRICT_ALL_TABLES
+    iniset -sudo $my_conf mysqld default-storage-engine InnoDB
+    iniset -sudo $my_conf mysqld max_connections 1024
+    iniset -sudo $my_conf mysqld query_cache_type OFF
+    iniset -sudo $my_conf mysqld query_cache_size 0
 
     if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
         echo_summary "Enabling MySQL query logging"
@@ -115,12 +113,10 @@ function configure_database_mysql {
 
         # Turn on slow query log, log all queries (any query taking longer than
         # 0 seconds) and log all non-indexed queries
-        sudo bash -c "source $TOP_DIR/functions && \
-            iniset $my_conf mysqld slow-query-log 1 && \
-            iniset $my_conf mysqld slow-query-log-file $slow_log && \
-            iniset $my_conf mysqld long-query-time 0 && \
-            iniset $my_conf mysqld log-queries-not-using-indexes 1"
-
+        iniset -sudo $my_conf mysqld slow-query-log 1
+        iniset -sudo $my_conf mysqld slow-query-log-file $slow_log
+        iniset -sudo $my_conf mysqld long-query-time 0
+        iniset -sudo $my_conf mysqld log-queries-not-using-indexes 1
     fi
 
     restart_service $mysql
