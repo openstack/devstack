@@ -88,7 +88,7 @@ host:
     parm:           nested:int
 
 To make the above value persistent across reboots, add an entry in
-/etc/modprobe.ddist.conf so it looks as below::
+/etc/modprobe.d/dist.conf so it looks as below::
 
     cat /etc/modprobe.d/dist.conf
     options kvm-amd nested=y
