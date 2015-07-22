@@ -104,7 +104,10 @@ function iniadd_literal {
     local option=$3
     local value=$4
 
-    [[ -z $section || -z $option ]] && return
+    if [[ -z $section || -z $option ]]; then
+        $xtrace
+        return
+    fi
 
     # Add it
     sed -i -e "/^\[$section\]/ a\\
@@ -123,7 +126,10 @@ function inidelete {
     local section=$2
     local option=$3
 
-    [[ -z $section || -z $option ]] && return
+    if [[ -z $section || -z $option ]]; then
+        $xtrace
+        return
+    fi
 
     # Remove old values
     sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
@@ -141,7 +147,10 @@ function iniset {
     local option=$3
     local value=$4
 
-    [[ -z $section || -z $option ]] && return
+    if [[ -z $section || -z $option ]]; then
+        $xtrace
+        return
+    fi
 
     if ! grep -q "^\[$section\]" "$file" 2>/dev/null; then
         # Add section at the end
