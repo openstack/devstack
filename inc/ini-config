@@ -159,6 +159,7 @@ function inidelete {
 
 # Set an option in an INI file
 # iniset [-sudo] config-file section option value
+#  - if the file does not exist, it is created
 function iniset {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
