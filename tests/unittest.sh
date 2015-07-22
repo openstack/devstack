@@ -27,7 +27,7 @@ function passed {
         msg="OK"
     fi
     PASS=$((PASS+1))
-    echo "PASS: $function:L$lineno $msg"
+    echo "PASS: $function:L$lineno - $msg"
 }
 
 # fail a test, printing out MSG
@@ -55,6 +55,27 @@ function assert_equal {
     if [[ "$1" != "$2" ]]; then
         FAILED_FUNCS+="$function:L$lineno\n"
         echo "ERROR: $1 != $2 in $function:L$lineno!"
+        echo "  $msg"
+        ERROR=$((ERROR+1))
+    else
+        PASS=$((PASS+1))
+        echo "PASS: $function:L$lineno - $msg"
+    fi
+}
+
+# assert variable is empty/blank, printing out msg
+#  usage: assert_empty VAR msg
+function assert_empty {
+    local lineno=`caller 0 | awk '{print $1}'`
+    local function=`caller 0 | awk '{print $2}'`
+    local msg=$2
+
+    if [ -z "$msg" ]; then
+        msg="OK"
+    fi
+    if [[ ! -z ${!1} ]]; then
+        FAILED_FUNCS+="$function:L$lineno\n"
+        echo "ERROR: $1 not empty in $function:L$lineno!"
         echo "  $msg"
         ERROR=$((ERROR+1))
     else
