@@ -1,4 +1,0 @@
-#!/bin/bash
-
-# REVISIT(yamamoto): This file is intentionally left empty
-# in order to keep Q_AGENT=ofagent_agent work.

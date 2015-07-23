@@ -19,7 +19,9 @@ fi
 
 # Default openvswitch L2 agent
 Q_AGENT=${Q_AGENT:-openvswitch}
-source $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent
+if [ -f $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent ]; then
+    source $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent
+fi
 
 # List of MechanismDrivers to load
 Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_ML2_PLUGIN_MECHANISM_DRIVERS:-openvswitch,linuxbridge}
