@@ -326,7 +326,9 @@ ENABLE_METADATA_NETWORK=${ENABLE_METADATA_NETWORK:-False}
 # ---------------------------------
 
 # Please refer to ``lib/neutron_plugins/README.md`` for details.
-source $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN
+if [ -f $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN ]; then
+    source $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN
+fi
 
 # Agent loadbalancer service plugin functions
 # -------------------------------------------
