@@ -30,6 +30,7 @@
 # - ``DEFAULT_INSTANCE_TYPE``
 # - ``DEFAULT_INSTANCE_USER``
 # - ``CINDER_ENABLED_BACKENDS``
+# - ``NOVA_ALLOW_DUPLICATE_NETWORKS``
 #
 # ``stack.sh`` calls the entry points in this order:
 #
@@ -380,6 +381,10 @@ function configure_tempest {
     # TODO(gilliard): Remove the live_migrate_paused_instances flag when Juno is end of life.
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migrate_paused_instances True
     iniset $TEMPEST_CONFIG compute-feature-enabled attach_encrypted_volume ${ATTACH_ENCRYPTED_VOLUME_AVAILABLE:-True}
+    # TODO(mriedem): Remove this when kilo-eol happens since the
+    # neutron.allow_duplicate_networks option was removed from nova in Liberty
+    # and is now the default behavior.
+    iniset $TEMPEST_CONFIG compute-feature-enabled allow_duplicate_networks ${NOVA_ALLOW_DUPLICATE_NETWORKS:-True}
 
     # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
