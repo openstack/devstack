@@ -707,11 +707,10 @@ function start_neutron_service_and_check {
     fi
 }
 
-# Start running processes, including screen
-function start_neutron_agents {
-    # Start up the neutron agents if enabled
+# Control of the l2 agent is separated out to make it easier to test partial
+# upgrades (everything upgraded except the L2 agent)
+function start_neutron_l2_agent {
     run_process q-agt "python $AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
-    run_process q-dhcp "python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
     if is_provider_network; then
         sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
@@ -726,6 +725,10 @@ function start_neutron_agents {
             sudo ip route replace $FIXED_RANGE via $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
         fi
     fi
+}
+
+function start_neutron_other_agents {
+    run_process q-dhcp "python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
     if is_service_enabled q-vpn; then
         run_process q-vpn "$AGENT_VPN_BINARY $(determine_config_files neutron-vpn-agent)"
@@ -749,8 +752,18 @@ function start_neutron_agents {
     fi
 }
 
-# stop_neutron() - Stop running processes (non-screen)
-function stop_neutron {
+# Start running processes, including screen
+function start_neutron_agents {
+    # Start up the neutron agents if enabled
+    start_neutron_l2_agent
+    start_neutron_other_agents
+}
+
+function stop_neutron_l2_agent {
+    stop_process q-agt
+}
+
+function stop_neutron_other {
     if is_service_enabled q-dhcp; then
         stop_process q-dhcp
         pid=$(ps aux | awk '/[d]nsmasq.+interface=(tap|ns-)/ { print $2 }')
@@ -765,8 +778,6 @@ function stop_neutron {
         stop_process q-meta
     fi
 
-    stop_process q-agt
-
     if is_service_enabled q-lbaas; then
         neutron_lbaas_stop
     fi
@@ -779,6 +790,12 @@ function stop_neutron {
     if is_service_enabled q-metering; then
         neutron_metering_stop
     fi
+}
+
+# stop_neutron() - Stop running processes (non-screen)
+function stop_neutron {
+    stop_neutron_other
+    stop_neutron_l2_agent
 }
 
 # _move_neutron_addresses_route() - Move the primary IP to the OVS bridge
