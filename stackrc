@@ -280,6 +280,10 @@ GITBRANCH["python-heatclient"]=${HEATCLIENT_BRANCH:-master}
 GITREPO["python-ironicclient"]=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
 GITBRANCH["python-ironicclient"]=${IRONICCLIENT_BRANCH:-master}
 
+# the base authentication plugins that clients use to authenticate
+GITREPO["keystoneauth"]=${KEYSTONEAUTH_REPO:-${GIT_BASE}/openstack/keystoneauth.git}
+GITBRANCH["keystoneauth"]=${KEYSTONEAUTH_BRANCH:-master}
+
 # python keystone client library to nova that horizon uses
 GITREPO["python-keystoneclient"]=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
 GITBRANCH["python-keystoneclient"]=${KEYSTONECLIENT_BRANCH:-master}

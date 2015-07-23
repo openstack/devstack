@@ -35,6 +35,7 @@ set +o xtrace
 # --------
 
 # Set up default directories
+GITDIR["keystoneauth"]=$DEST/keystoneauth
 GITDIR["python-keystoneclient"]=$DEST/python-keystoneclient
 GITDIR["keystonemiddleware"]=$DEST/keystonemiddleware
 KEYSTONE_DIR=$DEST/keystone
@@ -485,6 +486,14 @@ function init_keystone {
     if [[ "$KEYSTONE_TOKEN_FORMAT" == "fernet" ]]; then
         rm -rf "$KEYSTONE_CONF_DIR/fernet-keys/"
         $KEYSTONE_BIN_DIR/keystone-manage fernet_setup
+    fi
+}
+
+# install_keystoneauth() - Collect source and prepare
+function install_keystoneauth {
+    if use_library_from_git "keystoneauth"; then
+        git_clone_by_name "keystoneauth"
+        setup_dev_lib "keystoneauth"
     fi
 }
 

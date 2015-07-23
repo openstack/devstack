@@ -750,6 +750,7 @@ echo_summary "Installing OpenStack project source"
 install_oslo
 
 # Install client libraries
+install_keystoneauth
 install_keystoneclient
 install_glanceclient
 install_cinderclient
