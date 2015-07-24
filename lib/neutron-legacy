@@ -1263,9 +1263,19 @@ function _neutron_configure_router_v4 {
     # This logic is specific to using the l3-agent for layer 3
     if is_service_enabled q-l3; then
         # Configure and enable public bridge
+        local ext_gw_interface="none"
         if is_neutron_ovs_base_plugin && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
-            local ext_gw_interface=$(_neutron_get_ext_gw_interface)
+            ext_gw_interface=$(_neutron_get_ext_gw_interface)
+        elif [[ "$Q_AGENT" = "linuxbridge" ]]; then
+            # Search for the brq device the neutron router and network for $FIXED_RANGE
+            # will be using.
+            # e.x. brq3592e767-da for NET_ID 3592e767-da66-4bcb-9bec-cdb03cd96102
+            ext_gw_interface=brq${EXT_NET_ID:0:11}
+        fi
+        if [[ "$ext_gw_interface" != "none" ]]; then
             local cidr_len=${FLOATING_RANGE#*/}
+            local testcmd="ip -o link | grep -q $ext_gw_interface"
+            test_with_retry "$testcmd" "$ext_gw_interface creation failed"
             if [[ $(ip addr show dev $ext_gw_interface | grep -c $ext_gw_ip) == 0 && ( $Q_USE_PROVIDERNET_FOR_PUBLIC == "False" || $Q_USE_PUBLIC_VETH == "True" ) ]]; then
                 sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
                 sudo ip link set $ext_gw_interface up
