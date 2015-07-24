@@ -1666,7 +1666,7 @@ function setup_package_with_req_sync {
 
     if [[ $update_requirements != "changed" ]]; then
         (cd $REQUIREMENTS_DIR; \
-            ./.venv/bin/python update.py $project_dir)
+            python update.py $project_dir)
     fi
 
     setup_package $project_dir $flags

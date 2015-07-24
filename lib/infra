@@ -30,14 +30,7 @@ function install_infra {
     local PIP_VIRTUAL_ENV="$REQUIREMENTS_DIR/.venv"
     # bring down global requirements
     git_clone $REQUIREMENTS_REPO $REQUIREMENTS_DIR $REQUIREMENTS_BRANCH
-    [ ! -d $PIP_VIRTUAL_ENV ] && virtualenv $PIP_VIRTUAL_ENV
-    # We don't care about testing git pbr in the requirements venv.
-    PIP_VIRTUAL_ENV=$PIP_VIRTUAL_ENV pip_install -U pbr
-    PIP_VIRTUAL_ENV=$PIP_VIRTUAL_ENV pip_install $REQUIREMENTS_DIR
-
-    # Unset the PIP_VIRTUAL_ENV so that PBR does not end up trapped
-    # down the VENV well
-    unset PIP_VIRTUAL_ENV
+    pip_install $REQUIREMENTS_DIR
 
     # Install pbr
     if use_library_from_git "pbr"; then
