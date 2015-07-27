@@ -355,7 +355,7 @@ your change
 
 * **Should this be upstream** -- DevStack generally does not override
   default choices provided by projects and attempts to not
-  unexpectedly modify behaviour.
+  unexpectedly modify behavior.
 
 * **Context in commit messages** -- DevStack touches many different
   areas and reviewers need context around changes to make good

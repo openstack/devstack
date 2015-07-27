@@ -15,7 +15,7 @@ evolves.
 Plugin Interface
 ================
 
-DevStack supports a standard mechansim for including plugins from
+DevStack supports a standard mechanism for including plugins from
 external repositories. The plugin interface assumes the following:
 
 An external git repository that includes a ``devstack/`` top level
@@ -49,7 +49,7 @@ They are added in the following format::
   [[local|localrc]]
   enable_plugin <NAME> <GITURL> [GITREF]
 
-- ``name`` - an arbitrary name. (ex: glustfs, docker, zaqar, congress)
+- ``name`` - an arbitrary name. (ex: glusterfs, docker, zaqar, congress)
 - ``giturl`` - a valid git url that can be cloned
 - ``gitref`` - an optional git ref (branch / ref / tag) that will be
   cloned. Defaults to master.
@@ -209,7 +209,7 @@ enough to be an issue).
 
 Ideally a plugin will be included within the ``devstack`` directory of
 the project they are being tested. For example, the stackforge/ec2-api
-project has its pluggin support in its own tree.
+project has its plugin support in its own tree.
 
 However, some times a DevStack plugin might be used solely to
 configure a backend service that will be used by the rest of
