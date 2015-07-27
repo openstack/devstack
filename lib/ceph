@@ -267,6 +267,7 @@ function configure_ceph_glance {
     sudo ceph -c ${CEPH_CONF_FILE} auth get-or-create client.${GLANCE_CEPH_USER} mon "allow r" osd "allow class-read object_prefix rbd_children, allow rwx pool=${GLANCE_CEPH_POOL}" | sudo tee ${CEPH_CONF_DIR}/ceph.client.${GLANCE_CEPH_USER}.keyring
     sudo chown ${STACK_USER}:$(id -g -n $whoami) ${CEPH_CONF_DIR}/ceph.client.${GLANCE_CEPH_USER}.keyring
 
+    iniset $GLANCE_API_CONF DEFAULT show_image_direct_url True
     iniset $GLANCE_API_CONF glance_store default_store rbd
     iniset $GLANCE_API_CONF glance_store stores "file, http, rbd"
     iniset $GLANCE_API_CONF glance_store rbd_store_ceph_conf $CEPH_CONF_FILE
