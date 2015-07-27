@@ -1421,7 +1421,7 @@ fi
 # If you installed Horizon on this server you should be able
 # to access the site using your browser.
 if is_service_enabled horizon; then
-    echo "Horizon is now available at http://$SERVICE_HOST/"
+    echo "Horizon is now available at http://$SERVICE_HOST$HORIZON_APACHE_ROOT"
 fi
 
 # If Keystone is present you can point ``nova`` cli to this server

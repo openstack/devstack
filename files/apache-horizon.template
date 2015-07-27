@@ -1,5 +1,5 @@
 <VirtualHost *:80>
-    WSGIScriptAlias / %HORIZON_DIR%/openstack_dashboard/wsgi/django.wsgi
+    WSGIScriptAlias %WEBROOT% %HORIZON_DIR%/openstack_dashboard/wsgi/django.wsgi
     WSGIDaemonProcess horizon user=%USER% group=%GROUP% processes=3 threads=10 home=%HORIZON_DIR% display-name=%{GROUP}
     WSGIApplicationGroup %{GLOBAL}
 
@@ -8,7 +8,10 @@
     WSGIProcessGroup horizon
 
     DocumentRoot %HORIZON_DIR%/.blackhole/
-    Alias /media %HORIZON_DIR%/openstack_dashboard/static
+    Alias %WEBROOT%/media %HORIZON_DIR%/openstack_dashboard/static
+    Alias %WEBROOT%/static %HORIZON_DIR%/static
+
+    RedirectMatch "^/$" "%WEBROOT%/"
 
     <Directory />
         Options FollowSymLinks
