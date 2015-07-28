@@ -51,15 +51,15 @@ if [[ -z "$NET_NAME" ]]; then
     usage
 fi
 
-REMANING_ARGS="${@:2}"
+REMAINING_ARGS="${@:2}"
 
 # BUG: with duplicate network names, this fails pretty hard.
-NET_ID=$(neutron net-list $NET_NAME | grep "$NET_NAME" | awk '{print $2}')
+NET_ID=$(neutron net-list | grep "$NET_NAME" | awk '{print $2}')
 PROBE_ID=$(neutron-debug probe-list -c id -c network_id | grep "$NET_ID" | awk '{print $2}' | head -n 1)
 
 # This runs a command inside the specific netns
 NET_NS_CMD="ip netns exec qprobe-$PROBE_ID"
 
-PING_CMD="sudo $NET_NS_CMD ping $REMAING_ARGS"
+PING_CMD="sudo $NET_NS_CMD ping $REMAINING_ARGS"
 echo "Running $PING_CMD"
 $PING_CMD
