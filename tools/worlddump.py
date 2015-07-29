@@ -31,12 +31,19 @@ def get_options():
     parser.add_argument('-d', '--dir',
                         default='.',
                         help='Output directory for worlddump')
+    parser.add_argument('-n', '--name',
+                        default='',
+                        help='Additional name to tag into file')
     return parser.parse_args()
 
 
-def filename(dirname):
+def filename(dirname, name=""):
     now = datetime.datetime.utcnow()
-    return os.path.join(dirname, now.strftime("worlddump-%Y-%m-%d-%H%M%S.txt"))
+    fmt = "worlddump-%Y-%m-%d-%H%M%S"
+    if name:
+        fmt += "-" + name
+    fmt += ".txt"
+    return os.path.join(dirname, now.strftime(fmt))
 
 
 def warn(msg):
@@ -125,7 +132,7 @@ def guru_meditation_report():
 
 def main():
     opts = get_options()
-    fname = filename(opts.dir)
+    fname = filename(opts.dir, opts.name)
     print "World dumping... see %s for details" % fname
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     with open(fname, 'w') as f:
