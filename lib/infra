@@ -30,8 +30,6 @@ REQUIREMENTS_DIR=$DEST/requirements
 # install_infra() - Collect source and prepare
 function install_infra {
     local PIP_VIRTUAL_ENV="$REQUIREMENTS_DIR/.venv"
-    # bring down global requirements
-    git_clone $REQUIREMENTS_REPO $REQUIREMENTS_DIR $REQUIREMENTS_BRANCH
     [ ! -d $PIP_VIRTUAL_ENV ] && virtualenv $PIP_VIRTUAL_ENV
     # We don't care about testing git pbr in the requirements venv.
     PIP_VIRTUAL_ENV=$PIP_VIRTUAL_ENV pip_install -U pbr
