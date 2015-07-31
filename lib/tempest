@@ -424,6 +424,7 @@ function configure_tempest {
     # Ceilometer API optimization happened in Juno that allows to run more tests in tempest.
     # Once Tempest retires support for icehouse this flag can be removed.
     iniset $TEMPEST_CONFIG telemetry too_slow_to_test "False"
+    iniset $TEMPEST_CONFIG telemetry-feature-enabled events "True"
 
     # Object Store
     local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
