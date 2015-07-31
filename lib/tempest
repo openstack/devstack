@@ -167,10 +167,10 @@ function configure_tempest {
         esac
     fi
 
-    # Create ``tempest.conf`` from ``tempest.conf.sample``
-    # Copy every time because the image UUIDS are going to change
+    # (Re)create ``tempest.conf``
+    # Create every time because the image UUIDS are going to change
     sudo install -d -o $STACK_USER $TEMPEST_CONFIG_DIR
-    install -m 644 $TEMPEST_DIR/etc/tempest.conf.sample $TEMPEST_CONFIG
+    rm -f $TEMPEST_CONFIG
 
     password=${ADMIN_PASSWORD:-secrete}
 
