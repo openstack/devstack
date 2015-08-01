@@ -506,6 +506,11 @@ function install_keystone {
     fi
     git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
     setup_develop $KEYSTONE_DIR
+
+    if is_service_enabled ldap; then
+        setup_develop $KEYSTONE_DIR ldap
+    fi
+
     if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
         install_apache_wsgi
         if is_ssl_enabled_service "key"; then
