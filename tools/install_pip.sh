@@ -20,7 +20,7 @@ TOP_DIR=`cd $TOOLS_DIR/..; pwd`
 cd $TOP_DIR
 
 # Import common functions
-source $TOP_DIR/functions
+source $TOP_DIR/stackrc
 
 FILES=$TOP_DIR/files
 

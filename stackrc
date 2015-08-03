@@ -149,19 +149,15 @@ DATABASE_QUERY_LOGGING=$(trueorfalse False DATABASE_QUERY_LOGGING)
 # Zero disables timeouts
 GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 
-# Constraints mode
-# - False (default) : update git projects dependencies from global-requirements.
-#
-# - True : use upper-constraints.txt to constrain versions of packages intalled
-#          and do not edit projects at all.
-USE_CONSTRAINTS=$(trueorfalse False USE_CONSTRAINTS)
-
 # Repositories
 # ------------
 
 # Base GIT Repo URL
 # Another option is https://git.openstack.org
 GIT_BASE=${GIT_BASE:-git://git.openstack.org}
+
+# The location of REQUIREMENTS once cloned
+REQUIREMENTS_DIR=$DEST/requirements
 
 # Which libraries should we install from git instead of using released
 # versions on pypi?
@@ -626,9 +622,6 @@ USE_SCREEN=${SCREEN_DEV:-$USE_SCREEN}
 
 # Set default screen name
 SCREEN_NAME=${SCREEN_NAME:-stack}
-
-# Undo requirements changes by global requirements
-UNDO_REQUIREMENTS=${UNDO_REQUIREMENTS:-True}
 
 # Allow the use of an alternate protocol (such as https) for service endpoints
 SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}

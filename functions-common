@@ -28,7 +28,6 @@
 # - ``REQUIREMENTS_DIR``
 # - ``STACK_USER``
 # - ``TRACK_DEPENDS``
-# - ``UNDO_REQUIREMENTS``
 # - ``http_proxy``, ``https_proxy``, ``no_proxy``
 #
 

@@ -22,7 +22,6 @@ set +o xtrace
 # Defaults
 # --------
 GITDIR["pbr"]=$DEST/pbr
-REQUIREMENTS_DIR=$DEST/requirements
 
 # Entry Points
 # ------------

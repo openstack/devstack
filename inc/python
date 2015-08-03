@@ -67,7 +67,6 @@ function pip_install_gr {
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_VIRTUAL_ENV``,
 # ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``,
-# ``USE_CONSTRAINTS``
 # pip_install package [package ...]
 function pip_install {
     local xtrace=$(set +o | grep xtrace)
@@ -105,11 +104,8 @@ function pip_install {
     fi
 
     cmd_pip="$cmd_pip install"
-
-    # Handle a constraints file, if needed.
-    if [[ "$USE_CONSTRAINTS" == "True" ]]; then
-        cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
-    fi
+    # Always apply constraints
+    cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
 
     local pip_version=$(python -c "import pip; \
                         print(pip.__version__.strip('.')[0])")
@@ -187,13 +183,13 @@ function setup_dev_lib {
 # use this, especially *oslo* ones
 function setup_install {
     local project_dir=$1
-    setup_package_with_req_sync $project_dir
+    setup_package_with_constraints_edit $project_dir
 }
 
 # this should be used for projects which run services, like all services
 function setup_develop {
     local project_dir=$1
-    setup_package_with_req_sync $project_dir -e
+    setup_package_with_constraints_edit $project_dir -e
 }
 
 # determine if a project as specified by directory is in
@@ -209,31 +205,15 @@ function is_in_projects_txt {
 # ``pip install -e`` the package, which processes the dependencies
 # using pip before running `setup.py develop`
 #
-# Updates the dependencies in project_dir from the
-# openstack/requirements global list before installing anything.
+# Updates the constraints from REQUIREMENTS_DIR to reflect the
+# future installed state of this package. This ensures when we
+# install this package we get the from source version.
 #
-# Uses globals ``TRACK_DEPENDS``, ``REQUIREMENTS_DIR``, ``UNDO_REQUIREMENTS``
+# Uses globals ``REQUIREMENTS_DIR``
 # setup_develop directory
-function setup_package_with_req_sync {
+function setup_package_with_constraints_edit {
     local project_dir=$1
     local flags=$2
-
-    # Don't update repo if local changes exist
-    # Don't use buggy "git diff --quiet"
-    # ``errexit`` requires us to trap the exit code when the repo is changed
-    local update_requirements=$(cd $project_dir && git diff --exit-code >/dev/null || echo "changed")
-
-    if [[ $update_requirements != "changed" && "$USE_CONSTRAINTS" == "False" ]]; then
-        if is_in_projects_txt $project_dir; then
-            (cd $REQUIREMENTS_DIR; \
-                ./.venv/bin/python update.py $project_dir)
-        else
-            # soft update projects not found in requirements project.txt
-            echo "$project_dir not a constrained repository, soft enforcing requirements"
-            (cd $REQUIREMENTS_DIR; \
-                ./.venv/bin/python update.py -s $project_dir)
-        fi
-    fi
 
     if [ -n "$REQUIREMENTS_DIR" ]; then
         # Constrain this package to this project directory from here on out.
@@ -245,19 +225,6 @@ function setup_package_with_req_sync {
 
     setup_package $project_dir $flags
 
-    # We've just gone and possibly modified the user's source tree in an
-    # automated way, which is considered bad form if it's a development
-    # tree because we've screwed up their next git checkin. So undo it.
-    #
-    # However... there are some circumstances, like running in the gate
-    # where we really really want the overridden version to stick. So provide
-    # a variable that tells us whether or not we should UNDO the requirements
-    # changes (this will be set to False in the OpenStack ci gate)
-    if [ $UNDO_REQUIREMENTS = "True" ]; then
-        if [[ $update_requirements != "changed" ]]; then
-            (cd $project_dir && git reset --hard)
-        fi
-    fi
 }
 
 # ``pip install -e`` the package, which processes the dependencies
