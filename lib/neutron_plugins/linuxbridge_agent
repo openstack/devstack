@@ -69,6 +69,18 @@ function neutron_plugin_configure_plugin_agent {
     fi
     AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-linuxbridge-agent"
     iniset /$Q_PLUGIN_CONF_FILE agent tunnel_types $Q_TUNNEL_TYPES
+
+    # Configure vxlan tunneling
+    if [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
+        if [[ "$Q_ML2_TENANT_NETWORK_TYPE" == "vxlan" ]]; then
+            iniset /$Q_PLUGIN_CONF_FILE vxlan enable_vxlan "True"
+            iniset /$Q_PLUGIN_CONF_FILE vxlan local_ip $TUNNEL_ENDPOINT_IP
+        else
+            iniset /$Q_PLUGIN_CONF_FILE vxlan enable_vxlan "False"
+        fi
+    else
+        iniset /$Q_PLUGIN_CONF_FILE vxlan enable_vxlan "False"
+    fi
 }
 
 function neutron_plugin_setup_interface_driver {
