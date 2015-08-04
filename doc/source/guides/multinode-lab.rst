@@ -178,11 +178,16 @@ machines, create a ``local.conf`` with:
     MYSQL_HOST=192.168.42.11
     RABBIT_HOST=192.168.42.11
     GLANCE_HOSTPORT=192.168.42.11:9292
-    ENABLED_SERVICES=n-cpu,n-net,n-api,c-vol
+    ENABLED_SERVICES=n-cpu,n-net,n-api-meta,c-vol
     NOVA_VNC_ENABLED=True
     NOVNCPROXY_URL="http://192.168.42.11:6080/vnc_auto.html"
     VNCSERVER_LISTEN=$HOST_IP
     VNCSERVER_PROXYCLIENT_ADDRESS=$VNCSERVER_LISTEN
+
+**Note:** the ``n-api-meta`` service is a version of the api server
+that only serves the metadata service. It's needed because the
+computes created won't have a routing path to the metadata service on
+the controller.
 
 Fire up OpenStack:
 
@@ -263,7 +268,7 @@ Swift
 -----
 
 Swift, OpenStack Object Storage, requires a significant amount of resources
-and is disabled by default in DevStack. The support in DevStack is geared 
+and is disabled by default in DevStack. The support in DevStack is geared
 toward a minimal installation but can be used for testing. To implement a
 true multi-node test of swift, additional steps will be required. Enabling it is as
 simple as enabling the ``swift`` service in ``local.conf``:
