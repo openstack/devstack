@@ -349,7 +349,42 @@ function configure_tempest {
     cd $TEMPEST_DIR
     tox -revenv -- verify-tempest-config -uro $tmp_cfg_file
 
-    local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
+    DEFAULT_COMPUTE_EXT="NMN, OS-DCF, OS-EXT-AZ, OS-EXT-IMG-SIZE, OS-EXT-IPS"
+    DEFAULT_COMPUTE_EXT+=", OS-EXT-IPS-MAC, OS-EXT-SRV-ATTR, OS-EXT-STS"
+    DEFAULT_COMPUTE_EXT+=", OS-EXT-VIF-NET, OS-FLV-DISABLED, OS-FLV-EXT-DATA"
+    DEFAULT_COMPUTE_EXT+=", OS-SCH-HNT, OS-SRV-USG, os-admin-actions"
+    DEFAULT_COMPUTE_EXT+=", os-agents, os-aggregates, os-assisted-volume-snapshots"
+    DEFAULT_COMPUTE_EXT+=", os-attach-interfaces, os-availability-zone"
+    DEFAULT_COMPUTE_EXT+=", os-baremetal-ext-status, os-baremetal-nodes"
+    DEFAULT_COMPUTE_EXT+=", os-block-device-mapping-v2-boot"
+    DEFAULT_COMPUTE_EXT+=", os-cell-capacities, os-cells, os-certificates"
+    DEFAULT_COMPUTE_EXT+=", os-cloudpipe, os-cloudpipe-update, os-config-drive"
+    DEFAULT_COMPUTE_EXT+=", os-console-auth-tokens, os-console-output"
+    DEFAULT_COMPUTE_EXT+=", os-consoles, os-create-server-ext, os-deferred-delete"
+    DEFAULT_COMPUTE_EXT+=", os-evacuate, os-extended-evacuate-find-host"
+    DEFAULT_COMPUTE_EXT+=", os-extended-floating-ips, os-extended-hypervisors"
+    DEFAULT_COMPUTE_EXT+=", os-extended-networks, os-extended-quotas"
+    DEFAULT_COMPUTE_EXT+=", os-extended-rescue-with-image, os-extended-services"
+    DEFAULT_COMPUTE_EXT+=", os-extended-services-delete, os-extended-volumes"
+    DEFAULT_COMPUTE_EXT+=", os-fixed-ips, os-flavor-access"
+    DEFAULT_COMPUTE_EXT+=", os-flavor-extra-specs, os-flavor-manage, os-flavor-rxtx"
+    DEFAULT_COMPUTE_EXT+=", os-flavor-swap, os-floating-ip-dns, os-floating-ip-pools"
+    DEFAULT_COMPUTE_EXT+=", os-floating-ips, os-floating-ips-bulk, os-fping"
+    DEFAULT_COMPUTE_EXT+=", os-hide-server-addresses, os-hosts, os-hypervisor-status"
+    DEFAULT_COMPUTE_EXT+=", os-hypervisors, os-instance-actions, os-instance_usage_audit_log"
+    DEFAULT_COMPUTE_EXT+=", os-keypairs, os-migrations, os-multiple-create"
+    DEFAULT_COMPUTE_EXT+=", os-networks, os-networks-associate, os-preserve-ephemeral-rebuild"
+    DEFAULT_COMPUTE_EXT+=", os-quota-class-sets, os-quota-sets, os-rescue"
+    DEFAULT_COMPUTE_EXT+=", os-security-group-default-rules, os-security-groups"
+    DEFAULT_COMPUTE_EXT+=", os-server-diagnostics, os-server-external-events"
+    DEFAULT_COMPUTE_EXT+=", os-server-group-quotas, os-server-groups, os-server-list-multi-status"
+    DEFAULT_COMPUTE_EXT+=", os-server-password, os-server-sort-keys, os-server-start-stop"
+    DEFAULT_COMPUTE_EXT+=", os-services, os-shelve, os-simple-tenant-usage"
+    DEFAULT_COMPUTE_EXT+=", os-tenant-networks, os-used-limits, os-used-limits-for-admin"
+    DEFAULT_COMPUTE_EXT+=", os-user-data, os-user-quotas, os-virtual-interfaces"
+    DEFAULT_COMPUTE_EXT+=", os-volume-attachment-update, os-volumes"
+
+    local compute_api_extensions="${COMPUTE_API_EXTENSIONS:-$DEFAULT_COMPUTE_EXT}"
     if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         compute_api_extensions=${COMPUTE_API_EXTENSIONS:-$(iniget $tmp_cfg_file compute-feature-enabled api_extensions | tr -d " ")}
@@ -361,7 +396,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
-    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions $compute_api_extensions
+    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions "$compute_api_extensions"
     # TODO(mriedem): Remove the preserve_ports flag when Juno is end of life.
     iniset $TEMPEST_CONFIG compute-feature-enabled preserve_ports True
 
@@ -374,14 +409,21 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6 "$IPV6_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
 
-    local network_api_extensions=${NETWORK_API_EXTENSIONS:-"all"}
+    DEFAULT_NET_EXT="agent, allowed-address-pairs, binding"
+    DEFAULT_NET_EXT+=", dhcp_agent_scheduler, dvr, ext-gw-mode, external-net"
+    DEFAULT_NET_EXT+=", extra_dhcp_opt, extraroute, fwaas"
+    DEFAULT_NET_EXT+=", fwaasrouterinsertion, l3-ha, l3_agent_scheduler, lbaas"
+    DEFAULT_NET_EXT+=", lbaas_agent_scheduler, metering, multi-provider, net-mtu"
+    DEFAULT_NET_EXT+=", provider, quotas, router, security-group, service-type"
+    DEFAULT_NET_EXT+=", subnet_allocation, vpnaas"
+    local network_api_extensions="${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}"
     if [[ ! -z "$DISABLE_NETWORK_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         network_api_extensions=${NETWORK_API_EXTENSIONS:-$(iniget $tmp_cfg_file network-feature-enabled api_extensions | tr -d " ")}
         # Remove disabled extensions
         network_api_extensions=$(remove_disabled_extensions $network_api_extensions $DISABLE_NETWORK_API_EXTENSIONS)
     fi
-    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions $network_api_extensions
+    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions "$network_api_extensions"
 
     # boto
     iniset $TEMPEST_CONFIG boto ec2_url "$EC2_URL"
@@ -427,24 +469,38 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG telemetry-feature-enabled events "True"
 
     # Object Store
-    local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
+    DEFAULT_SWIFT_OPT="account_quotas, bulk_delete, bulk_upload, container_quotas"
+    DEFAULT_SWIFT_OPT+=", container_sync, crossdomain, formpost, ratelimit, slo"
+    DEFAULT_SWIFT_OPT+=", staticweb, tempauth, tempurl"
+
+    local object_storage_api_extensions="${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_VOL_EXT}"
     if [[ ! -z "$DISABLE_OBJECT_STORAGE_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$(iniget $tmp_cfg_file object-storage-feature-enabled discoverable_apis | tr -d " ")}
         # Remove disabled extensions
         object_storage_api_extensions=$(remove_disabled_extensions $object_storage_api_extensions $DISABLE_STORAGE_API_EXTENSIONS)
     fi
-    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis $object_storage_api_extensions
+    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis "$object_storage_api_extensions"
 
     # Volume
-    local volume_api_extensions=${VOLUME_API_EXTENSIONS:-"all"}
+    DEFAULT_VOL_EXT="OS-SCH-HNT, backups, cgsnapshots, consistencygroups"
+    DEFAULT_VOL_EXT+=", encryption, os-admin-actions, os-availability-zone"
+    DEFAULT_VOL_EXT+=", os-extended-services, os-extended-snapshot-attributes"
+    DEFAULT_VOL_EXT+=", os-hosts, os-image-create, os-quota-class-sets, os-quota-sets"
+    DEFAULT_VOL_EXT+=", os-services, os-snapshot-actions, os-types-extra-specs"
+    DEFAULT_VOL_EXT+=", os-types-manage, os-used-limits, os-vol-host-attr, os-vol-image-meta"
+    DEFAULT_VOL_EXT+=", os-vol-mig-status-attr, os-vol-tenant-attr, os-volume-actions"
+    DEFAULT_VOL_EXT+=", os-volume-encryption-metadata, os-volume-manage"
+    DEFAULT_VOL_EXT+=", os-volume-replication, os-volume-transfer, os-volume-type-access"
+    DEFAULT_VOL_EXT+=", os-volume-unmanage, qos-specs, scheduler-stats"
+    local volume_api_extensions="${VOLUME_API_EXTENSIONS:-$DEFAULT_VOL_EXT}"
     if [[ ! -z "$DISABLE_VOLUME_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         volume_api_extensions=${VOLUME_API_EXTENSIONS:-$(iniget $tmp_cfg_file volume-feature-enabled api_extensions | tr -d " ")}
         # Remove disabled extensions
         volume_api_extensions=$(remove_disabled_extensions $volume_api_extensions $DISABLE_VOLUME_API_EXTENSIONS)
     fi
-    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions $volume_api_extensions
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions "$volume_api_extensions"
 
     if ! is_service_enabled c-bak; then
         iniset $TEMPEST_CONFIG volume-feature-enabled backup False
