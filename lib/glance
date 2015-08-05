@@ -154,7 +154,10 @@ function configure_glance {
 
         iniset $GLANCE_SWIFT_STORE_CONF ref1 user $SERVICE_TENANT_NAME:glance-swift
         iniset $GLANCE_SWIFT_STORE_CONF ref1 key $SERVICE_PASSWORD
-        iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v2.0/
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 user_domain_id default
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 project_domain_id default
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_version 3
 
         # commenting is not strictly necessary but it's confusing to have bad values in conf
         inicomment $GLANCE_API_CONF glance_store swift_store_user
