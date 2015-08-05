@@ -457,6 +457,9 @@ function configure_tempest {
     fi
     iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis $object_storage_api_extensions
 
+    # Validation
+    iniset $TEMPEST_CONFIG validation run_validation ${TEMPEST_RUN_VALIDATION:-False}
+
     # Volume
     # TODO(dkranz): Remove the bootable flag when Juno is end of life.
     iniset $TEMPEST_CONFIG volume-feature-enabled bootable True
