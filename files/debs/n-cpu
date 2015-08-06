@@ -5,3 +5,4 @@ genisoimage
 sysfsutils
 sg3-utils
 python-guestfs # NOPRIME
+cryptsetup
