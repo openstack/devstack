@@ -396,6 +396,24 @@ Set the following options to point to the master
         GLANCE_HOSTPORT=w.x.y.z:9292
         ENABLED_SERVICES=n-vol,n-cpu,n-net,n-api
 
+Guest Images
+------------
+
+Images provided in URLS via the comma-separated ``IMAGE_URLS``
+variable will be downloaded and uploaded to glance by DevStack.
+
+Default guest-images are predefined for each type of hypervisor and
+their testing-requirements in ``stack.sh``.  Setting
+``DOWNLOAD_DEFAULT_IMAGES=False`` will prevent DevStack downloading
+these default images; in that case, you will want to populate
+``IMAGE_URLS`` with sufficient images to satisfy testing-requirements.
+
+    ::
+
+        DOWNLOAD_DEFAULT_IMAGES=False
+        IMAGE_URLS="http://foo.bar.com/image.qcow,"
+        IMAGE_URLS+="http://foo.bar.com/image2.qcow"
+
 IP Version
 ----------
 
