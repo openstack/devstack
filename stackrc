@@ -161,7 +161,7 @@ USE_CONSTRAINTS=$(trueorfalse False USE_CONSTRAINTS)
 
 # Base GIT Repo URL
 # Another option is https://git.openstack.org
-GIT_BASE=${GIT_BASE:-git://git.openstack.org}
+GIT_BASE=${GIT_BASE:-https://git.openstack.org}
 
 # Which libraries should we install from git instead of using released
 # versions on pypi?
