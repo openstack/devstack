@@ -85,6 +85,11 @@ def disk_space():
     print dfraw
 
 
+def ebtables_dump():
+    _header("EB Tables Dump")
+    _dump_cmd("sudo ebtables -L")
+
+
 def iptables_dump():
     tables = ['filter', 'nat', 'mangle']
     _header("IP Tables Dump")
@@ -141,6 +146,7 @@ def main():
         process_list()
         network_dump()
         iptables_dump()
+        ebtables_dump()
         compute_consoles()
         guru_meditation_report()
 
