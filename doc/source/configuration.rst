@@ -2,6 +2,10 @@
 Configuration
 =============
 
+.. contents::
+   :local:
+   :depth: 1
+
 DevStack has always tried to be mostly-functional with a minimal amount
 of configuration. The number of options has ballooned as projects add
 features, new projects added and more combinations need to be tested.
@@ -142,36 +146,96 @@ will not be set if there is no IPv6 address on the default Ethernet interface.
 Setting it here also makes it available for ``openrc`` to set ``OS_AUTH_URL``.
 ``HOST_IPV6`` is not set by default.
 
-Common Configuration Variables
-==============================
+Configuration Notes
+===================
+
+.. contents::
+   :local:
 
 Installation Directory
 ----------------------
 
-    | *Default: ``DEST=/opt/stack``*
-    |  The DevStack install directory is set by the ``DEST`` variable.
-    |  By setting it early in the ``localrc`` section you can reference it
-       in later variables. It can be useful to set it even though it is not
-       changed from the default value.
-    |
+The DevStack install directory is set by the ``DEST`` variable.  By
+default it is ``/opt/stack``.
+
+By setting it early in the ``localrc`` section you can reference it in
+later variables.  It can be useful to set it even though it is not
+changed from the default value.
 
     ::
 
         DEST=/opt/stack
 
+Logging
+-------
+
+Enable Logging
+~~~~~~~~~~~~~~
+
+By default ``stack.sh`` output is only written to the console where it
+runs. It can be sent to a file in addition to the console by setting
+``LOGFILE`` to the fully-qualified name of the destination log file. A
+timestamp will be appended to the given filename for each run of
+``stack.sh``.
+
+    ::
+
+        LOGFILE=$DEST/logs/stack.sh.log
+
+Old log files are cleaned automatically if ``LOGDAYS`` is set to the
+number of days of old log files to keep.
+
+    ::
+
+        LOGDAYS=1
+
+The some of the project logs (Nova, Cinder, etc) will be colorized by
+default (if ``SYSLOG`` is not set below); this can be turned off by
+setting ``LOG_COLOR`` to ``False``.
+
+    ::
+
+        LOG_COLOR=False
+
+Logging the Service Output
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+DevStack will log the ``stdout`` output of the services it starts.
+When using ``screen`` this logs the output in the screen windows to a
+file.  Without ``screen`` this simply redirects stdout of the service
+process to a file in ``LOGDIR``.
+
+    ::
+
+        LOGDIR=$DEST/logs
+
+*Note the use of ``DEST`` to locate the main install directory; this
+is why we suggest setting it in ``local.conf``.*
+
+Enabling Syslog
+~~~~~~~~~~~~~~~
+
+Logging all services to a single syslog can be convenient. Enable
+syslogging by setting ``SYSLOG`` to ``True``. If the destination log
+host is not localhost ``SYSLOG_HOST`` and ``SYSLOG_PORT`` can be used
+to direct the message stream to the log host.  |
+
+    ::
+
+        SYSLOG=True
+        SYSLOG_HOST=$HOST_IP
+        SYSLOG_PORT=516
+
 Libraries from Git
 ------------------
 
-   | *Default: ``LIBS_FROM_GIT=""``*
-
-   | By default devstack installs OpenStack server components from
-     git, however it installs client libraries from released versions
-     on pypi. This is appropriate if you are working on server
-     development, but if you want to see how an unreleased version of
-     the client affects the system you can have devstack install it
-     from upstream, or from local git trees.
-   | Multiple libraries can be specified as a comma separated list.
-   |
+By default devstack installs OpenStack server components from git,
+however it installs client libraries from released versions on pypi.
+This is appropriate if you are working on server development, but if
+you want to see how an unreleased version of the client affects the
+system you can have devstack install it from upstream, or from local
+git trees by specifying it in ``LIBS_FROM_GIT``.  Multiple libraries
+can be specified as a comma separated list.
 
    ::
 
@@ -180,99 +244,37 @@ Libraries from Git
 Virtual Environments
 --------------------
 
-  | *Default: ``USE_VENV=False``*
-  |   Enable the use of Python virtual environments by setting ``USE_VENV``
-      to ``True``.  This will enable the creation of venvs for each project
-      that is defined in the ``PROJECT_VENV`` array.
+Enable the use of Python virtual environments by setting ``USE_VENV``
+to ``True``.  This will enable the creation of venvs for each project
+that is defined in the ``PROJECT_VENV`` array.
 
-  | *Default: ``PROJECT_VENV['<project>']='<project-dir>.venv'*
-  |   Each entry in the ``PROJECT_VENV`` array contains the directory name
-      of a venv to be used for the project.  The array index is the project
-      name.  Multiple projects can use the same venv if desired.
+Each entry in the ``PROJECT_VENV`` array contains the directory name
+of a venv to be used for the project.  The array index is the project
+name.  Multiple projects can use the same venv if desired.
 
   ::
 
     PROJECT_VENV["glance"]=${GLANCE_DIR}.venv
 
-  | *Default: ``ADDITIONAL_VENV_PACKAGES=""``*
-  |   A comma-separated list of additional packages to be installed into each
-      venv.  Often projects will not have certain packages listed in its
-      ``requirements.txt`` file because they are 'optional' requirements,
-      i.e. only needed for certain configurations.  By default, the enabled
-      databases will have their Python bindings added when they are enabled.
+``ADDITIONAL_VENV_PACKAGES`` is a comma-separated list of additional
+packages to be installed into each venv.  Often projects will not have
+certain packages listed in its ``requirements.txt`` file because they
+are 'optional' requirements, i.e. only needed for certain
+configurations.  By default, the enabled databases will have their
+Python bindings added when they are enabled.
 
-Enable Logging
---------------
+  ::
 
-    | *Defaults: ``LOGFILE="" LOGDAYS=7 LOG_COLOR=True``*
-    |  By default ``stack.sh`` output is only written to the console
-       where it runs. It can be sent to a file in addition to the console
-       by setting ``LOGFILE`` to the fully-qualified name of the
-       destination log file. A timestamp will be appended to the given
-       filename for each run of ``stack.sh``.
-    |
+     ADDITIONAL_VENV_PACKAGES="python-foo, python-bar"
 
-    ::
-
-        LOGFILE=$DEST/logs/stack.sh.log
-
-    Old log files are cleaned automatically if ``LOGDAYS`` is set to the
-    number of days of old log files to keep.
-
-    ::
-
-        LOGDAYS=1
-
-    The some of the project logs (Nova, Cinder, etc) will be colorized
-    by default (if ``SYSLOG`` is not set below); this can be turned off
-    by setting ``LOG_COLOR`` False.
-
-    ::
-
-        LOG_COLOR=False
-
-Logging the Service Output
---------------------------
-
-    | *Default: ``LOGDIR=""``*
-    |  DevStack will log the stdout output of the services it starts.
-       When using ``screen`` this logs the output in the screen windows
-       to a file.  Without ``screen`` this simply redirects stdout of
-       the service process to a file in ``LOGDIR``.
-    |
-
-    ::
-
-        LOGDIR=$DEST/logs
-
-    *Note the use of ``DEST`` to locate the main install directory; this
-    is why we suggest setting it in ``local.conf``.*
-
-Enabling Syslog
----------------
-
-    | *Default: ``SYSLOG=False SYSLOG_HOST=$HOST_IP SYSLOG_PORT=516``*
-    |  Logging all services to a single syslog can be convenient. Enable
-       syslogging by setting ``SYSLOG`` to ``True``. If the destination log
-       host is not localhost ``SYSLOG_HOST`` and ``SYSLOG_PORT`` can be
-       used to direct the message stream to the log host.
-    |
-
-    ::
-
-        SYSLOG=True
-        SYSLOG_HOST=$HOST_IP
-        SYSLOG_PORT=516
 
 A clean install every time
 --------------------------
 
-    | *Default: ``RECLONE=""``*
-    |  By default ``stack.sh`` only clones the project repos if they do
-       not exist in ``$DEST``. ``stack.sh`` will freshen each repo on each
-       run if ``RECLONE`` is set to ``yes``. This avoids having to manually
-       remove repos in order to get the current branch from ``$GIT_BASE``.
-    |
+By default ``stack.sh`` only clones the project repos if they do not
+exist in ``$DEST``. ``stack.sh`` will freshen each repo on each run if
+``RECLONE`` is set to ``yes``. This avoids having to manually remove
+repos in order to get the current branch from ``$GIT_BASE``.
 
     ::
 
@@ -281,13 +283,11 @@ A clean install every time
 Upgrade packages installed by pip
 ---------------------------------
 
-    | *Default: ``PIP_UPGRADE=""``*
-    |  By default ``stack.sh`` only installs Python packages if no version
-       is currently installed or the current version does not match a specified
-       requirement. If ``PIP_UPGRADE`` is set to ``True`` then existing required
-       Python packages will be upgraded to the most recent version that
-       matches requirements.
-    |
+By default ``stack.sh`` only installs Python packages if no version is
+currently installed or the current version does not match a specified
+requirement. If ``PIP_UPGRADE`` is set to ``True`` then existing
+required Python packages will be upgraded to the most recent version
+that matches requirements.
 
     ::
 
@@ -296,74 +296,69 @@ Upgrade packages installed by pip
 Swift
 -----
 
-    | Default: SWIFT_HASH=""
-    | SWIFT_REPLICAS=1
-    | SWIFT_DATA_DIR=$DEST/data/swift
+Swift is now used as the back-end for the S3-like object store.  When
+enabled Nova's objectstore (``n-obj`` in ``ENABLED_SERVICES``) is
+automatically disabled. Enable Swift by adding it services to
+``ENABLED_SERVICES``
 
-    | Swift is now used as the back-end for the S3-like object store.
-      When enabled Nova's objectstore (n-obj in ENABLED_SERVICES) is
-      automatically disabled. Enable Swift by adding it services to
-      ENABLED_SERVICES: enable_service s-proxy s-object s-container
-      s-account
+    ::
 
-    Setting Swift's hash value is required and you will be prompted for
-    it if Swift is enabled so just set it to something already:
+       enable_service s-proxy s-object s-container s-account
+
+Setting Swift's hash value is required and you will be prompted for it
+if Swift is enabled so just set it to something already:
 
     ::
 
         SWIFT_HASH=66a3d6b56c1f479c8b4e70ab5c2000f5
 
-    For development purposes the default number of replicas is set to
-    ``1`` to reduce the overhead required. To better simulate a
-    production deployment set this to ``3`` or more.
+For development purposes the default number of replicas is set to
+``1`` to reduce the overhead required. To better simulate a production
+deployment set this to ``3`` or more.
 
     ::
 
         SWIFT_REPLICAS=3
 
-    The data for Swift is stored in the source tree by default (in
-    ``$DEST/swift/data``) and can be moved by setting
-    ``SWIFT_DATA_DIR``. The specified directory will be created if it
-    does not exist.
+The data for Swift is stored in the source tree by default (in
+``$DEST/swift/data``) and can be moved by setting
+``SWIFT_DATA_DIR``. The specified directory will be created if it does
+not exist.
 
     ::
 
         SWIFT_DATA_DIR=$DEST/data/swift
 
-    *Note: Previously just enabling ``swift`` was sufficient to start
-    the Swift services. That does not provide proper service
-    granularity, particularly in multi-host configurations, and is
-    considered deprecated. Some service combination tests now check for
-    specific Swift services and the old blanket acceptance will longer
-    work correctly.*
+*Note*: Previously just enabling ``swift`` was sufficient to start the
+Swift services. That does not provide proper service granularity,
+particularly in multi-host configurations, and is considered
+deprecated. Some service combination tests now check for specific
+Swift services and the old blanket acceptance will longer work
+correctly.
 
 Service Catalog Backend
 -----------------------
 
-    | *Default: ``KEYSTONE_CATALOG_BACKEND=sql``*
-    |  DevStack uses Keystone's ``sql`` service catalog backend. An
-       alternate ``template`` backend is also available. However, it does
-       not support the ``service-*`` and ``endpoint-*`` commands of the
-       ``keystone`` CLI. To do so requires the ``sql`` backend be enabled:
-    |
+By default DevStack uses Keystone's ``sql`` service catalog backend.
+An alternate ``template`` backend is also available, however, it does
+not support the ``service-*`` and ``endpoint-*`` commands of the
+``keystone`` CLI.  To do so requires the ``sql`` backend be enabled
+with ``KEYSTONE_CATALOG_BACKEND``:
 
     ::
 
         KEYSTONE_CATALOG_BACKEND=template
 
-    DevStack's default configuration in ``sql`` mode is set in
-    ``files/keystone_data.sh``
+DevStack's default configuration in ``sql`` mode is set in
+``files/keystone_data.sh``
 
 Cinder
 ------
 
-    | Default:
-    | VOLUME_GROUP="stack-volumes" VOLUME_NAME_PREFIX="volume-" VOLUME_BACKING_FILE_SIZE=10250M
-    |  The logical volume group used to hold the Cinder-managed volumes
-       is set by ``VOLUME_GROUP``, the logical volume name prefix is set
-       with ``VOLUME_NAME_PREFIX`` and the size of the volume backing file
-       is set with ``VOLUME_BACKING_FILE_SIZE``.
-    |
+The logical volume group used to hold the Cinder-managed volumes is
+set by ``VOLUME_GROUP``, the logical volume name prefix is set with
+``VOLUME_NAME_PREFIX`` and the size of the volume backing file is set
+with ``VOLUME_BACKING_FILE_SIZE``.
 
     ::
 
@@ -374,19 +369,23 @@ Cinder
 Multi-host DevStack
 -------------------
 
-    | *Default: ``MULTI_HOST=False``*
-    |  Running DevStack with multiple hosts requires a custom
-       ``local.conf`` section for each host. The master is the same as a
-       single host installation with ``MULTI_HOST=True``. The slaves have
-       fewer services enabled and a couple of host variables pointing to
-       the master.
-    |  **Master**
+Running DevStack with multiple hosts requires a custom ``local.conf``
+section for each host. The master is the same as a single host
+installation with ``MULTI_HOST=True``. The slaves have fewer services
+enabled and a couple of host variables pointing to the master.
 
+Master
+~~~~~~
+
+Set ``MULTI_HOST`` to true
     ::
 
         MULTI_HOST=True
 
-    **Slave**
+Slave
+~~~~~
+
+Set the following options to point to the master
 
     ::
 
@@ -398,22 +397,19 @@ Multi-host DevStack
 IP Version
 ----------
 
-    | Default: ``IP_VERSION=4+6``
-    | This setting can be used to configure DevStack to create either an IPv4,
-      IPv6, or dual stack tenant data network by setting ``IP_VERSION`` to
-      either ``IP_VERSION=4``, ``IP_VERSION=6``, or ``IP_VERSION=4+6``
-      respectively. This functionality requires that the Neutron networking
-      service is enabled by setting the following options:
-    |
+``IP_VERSION`` can be used to configure DevStack to create either an
+IPv4, IPv6, or dual-stack tenant data-network by with either
+``IP_VERSION=4``, ``IP_VERSION=6``, or ``IP_VERSION=4+6``
+respectively.  This functionality requires that the Neutron networking
+service is enabled by setting the following options:
 
     ::
 
         disable_service n-net
         enable_service q-svc q-agt q-dhcp q-l3
 
-    | The following optional variables can be used to alter the default IPv6
-      behavior:
-    |
+The following optional variables can be used to alter the default IPv6
+behavior:
 
     ::
 
@@ -422,24 +418,28 @@ IP Version
         FIXED_RANGE_V6=fd$IPV6_GLOBAL_ID::/64
         IPV6_PRIVATE_NETWORK_GATEWAY=fd$IPV6_GLOBAL_ID::1
 
-    | *Note: ``FIXED_RANGE_V6`` and ``IPV6_PRIVATE_NETWORK_GATEWAY``
-      can be configured with any valid IPv6 prefix. The default values make
-      use of an auto-generated ``IPV6_GLOBAL_ID`` to comply with RFC 4193.*
-    |
+*Note*: ``FIXED_RANGE_V6`` and ``IPV6_PRIVATE_NETWORK_GATEWAY`` can be
+configured with any valid IPv6 prefix. The default values make use of
+an auto-generated ``IPV6_GLOBAL_ID`` to comply with RFC4193.
 
-    | Default: ``SERVICE_IP_VERSION=4``
-    | This setting can be used to configure DevStack to enable services to
-      operate over either IPv4 or IPv6, by setting ``SERVICE_IP_VERSION`` to
-      either ``SERVICE_IP_VERSION=4`` or ``SERVICE_IP_VERSION=6`` respectively.
-      When set to ``4`` devstack services will open listen sockets on 0.0.0.0
-      and service endpoints will be registered using ``HOST_IP`` as the address.
-      When set to ``6`` devstack services will open listen sockets on :: and
-      service endpoints will be registered using ``HOST_IPV6`` as the address.
-      The default value for this setting is ``4``.  Dual-mode support, for
-      example ``4+6`` is not currently supported.
-    | The following optional variable can be used to alter the default IPv6
-      address used:
-    |
+Service Version
+~~~~~~~~~~~~~~~
+
+DevStack can enable service operation over either IPv4 or IPv6 by
+setting ``SERVICE_IP_VERSION`` to either ``SERVICE_IP_VERSION=4`` or
+``SERVICE_IP_VERSION=6`` respectively.
+
+When set to ``4`` devstack services will open listen sockets on
+``0.0.0.0`` and service endpoints will be registered using ``HOST_IP``
+as the address.
+
+When set to ``6`` devstack services will open listen sockets on ``::``
+and service endpoints will be registered using ``HOST_IPV6`` as the
+address.
+
+The default value for this setting is ``4``.  Dual-mode support, for
+example ``4+6`` is not currently supported.  ``HOST_IPV6`` can
+optionally be used to alter the default IPv6 address
 
     ::
 
