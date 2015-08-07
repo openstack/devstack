@@ -211,7 +211,6 @@ function configure_ceilometer {
     cp $CEILOMETER_DIR/etc/ceilometer/event_pipeline.yaml $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/api_paste.ini $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/event_definitions.yaml $CEILOMETER_CONF_DIR
-    cp $CEILOMETER_DIR/etc/ceilometer/meters.yaml $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/gnocchi_archive_policy_map.yaml $CEILOMETER_CONF_DIR
     cp $CEILOMETER_DIR/etc/ceilometer/gnocchi_resources.yaml $CEILOMETER_CONF_DIR
 
