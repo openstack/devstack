@@ -4,3 +4,4 @@ lvm2
 open-iscsi
 sysfsutils
 sg3_utils
+cryptsetup
