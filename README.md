@@ -77,30 +77,21 @@ here, so run it in a VM.  And take advantage of the snapshot capabilities
 of your hypervisor of choice to reduce testing cycle times.  You might even save
 enough time to write one more feature before the next feature freeze...
 
-``stack.sh`` needs to have root access for a lot of tasks, but uses ``sudo``
-for all of those tasks.  However, it needs to be not-root for most of its
-work and for all of the OpenStack services.  ``stack.sh`` specifically
-does not run if started as root.
+``stack.sh`` needs to have root access for a lot of tasks, but uses
+``sudo`` for all of those tasks.  However, it needs to be not-root for
+most of its work and for all of the OpenStack services.  ``stack.sh``
+specifically does not run if started as root.
 
-This is a recent change (Oct 2013) from the previous behaviour of
-automatically creating a ``stack`` user.  Automatically creating
-user accounts is not the right response to running as root, so
-that bit is now an explicit step using ``tools/create-stack-user.sh``.
-Run that (as root!) or just check it out to see what DevStack's
-expectations are for the account it runs under.  Many people simply
-use their usual login (the default 'ubuntu' login on a UEC image
-for example).
+DevStack will not automatically create the user, but provides a helper
+script in ``tools/create-stack-user.sh``.  Run that (as root!) or just
+check it out to see what DevStack's expectations are for the account
+it runs under.  Many people simply use their usual login (the default
+'ubuntu' login on a UEC image for example).
 
 # Customizing
 
-You can override environment variables used in `stack.sh` by creating
-file name `local.conf` with a ``localrc`` section as shown below.  It
-is likely that you will need to do this to tweak several settings for
-your environment.
-
-    [[local|localrc]]
-    VARIABLE=value
-
-Start by reading the [configuration
-guide](doc/source/configuration.rst) for details of the many available
-options.
+DevStack can be extensively configured via the configuration file
+`local.conf`.  It is likely that you will need to provide and modify
+this file if you want anything other than the most basic setup.  Start
+by reading the [configuration guide](doc/source/configuration.rst) for
+details of the configuration file and the many available options.
