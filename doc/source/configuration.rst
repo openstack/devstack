@@ -148,6 +148,34 @@ will not be set if there is no IPv6 address on the default Ethernet interface.
 Setting it here also makes it available for ``openrc`` to set ``OS_AUTH_URL``.
 ``HOST_IPV6`` is not set by default.
 
+Examples
+========
+
+-  Eliminate a Cinder pass-through (``CINDER_PERIODIC_INTERVAL``):
+
+   ::
+
+       [[post-config|$CINDER_CONF]]
+       [DEFAULT]
+       periodic_interval = 60
+
+-  Sample ``local.conf`` with screen logging enabled:
+
+   ::
+
+       [[local|localrc]]
+       FIXED_RANGE=10.254.1.0/24
+       NETWORK_GATEWAY=10.254.1.1
+       LOGDAYS=1
+       LOGDIR=$DEST/logs
+       LOGFILE=$LOGDIR/stack.sh.log
+       ADMIN_PASSWORD=quiet
+       DATABASE_PASSWORD=$ADMIN_PASSWORD
+       RABBIT_PASSWORD=$ADMIN_PASSWORD
+       SERVICE_PASSWORD=$ADMIN_PASSWORD
+       SERVICE_TOKEN=a682f596-76f3-11e3-b3b2-e716f9080d50
+
+
 Configuration Notes
 ===================
 
@@ -228,6 +256,72 @@ to direct the message stream to the log host.  |
         SYSLOG_HOST=$HOST_IP
         SYSLOG_PORT=516
 
+
+Database Backend
+----------------
+
+Multiple database backends are available. The available databases are defined
+in the lib/databases directory.
+`mysql` is the default database, choose a different one by putting the
+following in the `localrc` section:
+
+   ::
+
+      disable_service mysql
+      enable_service postgresql
+
+`mysql` is the default database.
+
+RPC Backend
+-----------
+
+Support for a RabbitMQ RPC backend is included. Additional RPC
+backends may be available via external plugins.  Enabling or disabling
+RabbitMQ is handled via the usual service functions and
+``ENABLED_SERVICES``.
+
+Example disabling RabbitMQ in ``local.conf``:
+
+::
+    disable_service rabbit
+
+
+Apache Frontend
+---------------
+
+The Apache web server can be enabled for wsgi services that support
+being deployed under HTTPD + mod_wsgi. By default, services that
+recommend running under HTTPD + mod_wsgi are deployed under Apache. To
+use an alternative deployment strategy (e.g. eventlet) for services
+that support an alternative to HTTPD + mod_wsgi set
+``ENABLE_HTTPD_MOD_WSGI_SERVICES`` to ``False`` in your
+``local.conf``.
+
+Each service that can be run under HTTPD + mod_wsgi also has an
+override toggle available that can be set in your ``local.conf``.
+
+Keystone is run under Apache with ``mod_wsgi`` by default.
+
+Example (Keystone)
+
+::
+
+    KEYSTONE_USE_MOD_WSGI="True"
+
+Example (Nova):
+
+::
+
+    NOVA_USE_MOD_WSGI="True"
+
+Example (Swift):
+
+::
+
+    SWIFT_USE_MOD_WSGI="True"
+
+
+
 Libraries from Git
 ------------------
 
@@ -295,48 +389,6 @@ that matches requirements.
 
         PIP_UPGRADE=True
 
-Swift
------
-
-Swift is now used as the back-end for the S3-like object store.  When
-enabled Nova's objectstore (``n-obj`` in ``ENABLED_SERVICES``) is
-automatically disabled. Enable Swift by adding it services to
-``ENABLED_SERVICES``
-
-    ::
-
-       enable_service s-proxy s-object s-container s-account
-
-Setting Swift's hash value is required and you will be prompted for it
-if Swift is enabled so just set it to something already:
-
-    ::
-
-        SWIFT_HASH=66a3d6b56c1f479c8b4e70ab5c2000f5
-
-For development purposes the default number of replicas is set to
-``1`` to reduce the overhead required. To better simulate a production
-deployment set this to ``3`` or more.
-
-    ::
-
-        SWIFT_REPLICAS=3
-
-The data for Swift is stored in the source tree by default (in
-``$DEST/swift/data``) and can be moved by setting
-``SWIFT_DATA_DIR``. The specified directory will be created if it does
-not exist.
-
-    ::
-
-        SWIFT_DATA_DIR=$DEST/data/swift
-
-*Note*: Previously just enabling ``swift`` was sufficient to start the
-Swift services. That does not provide proper service granularity,
-particularly in multi-host configurations, and is considered
-deprecated. Some service combination tests now check for specific
-Swift services and the old blanket acceptance will longer work
-correctly.
 
 Service Catalog Backend
 -----------------------
@@ -354,47 +406,6 @@ with ``KEYSTONE_CATALOG_BACKEND``:
 DevStack's default configuration in ``sql`` mode is set in
 ``files/keystone_data.sh``
 
-Cinder
-------
-
-The logical volume group used to hold the Cinder-managed volumes is
-set by ``VOLUME_GROUP``, the logical volume name prefix is set with
-``VOLUME_NAME_PREFIX`` and the size of the volume backing file is set
-with ``VOLUME_BACKING_FILE_SIZE``.
-
-    ::
-
-        VOLUME_GROUP="stack-volumes"
-        VOLUME_NAME_PREFIX="volume-"
-        VOLUME_BACKING_FILE_SIZE=10250M
-
-Multi-host DevStack
--------------------
-
-Running DevStack with multiple hosts requires a custom ``local.conf``
-section for each host. The master is the same as a single host
-installation with ``MULTI_HOST=True``. The slaves have fewer services
-enabled and a couple of host variables pointing to the master.
-
-Master
-~~~~~~
-
-Set ``MULTI_HOST`` to true
-    ::
-
-        MULTI_HOST=True
-
-Slave
-~~~~~
-
-Set the following options to point to the master
-
-    ::
-
-        MYSQL_HOST=w.x.y.z
-        RABBIT_HOST=w.x.y.z
-        GLANCE_HOSTPORT=w.x.y.z:9292
-        ENABLED_SERVICES=n-vol,n-cpu,n-net,n-api
 
 IP Version
 ----------
@@ -447,29 +458,163 @@ optionally be used to alter the default IPv6 address
 
         HOST_IPV6=${some_local_ipv6_address}
 
-Examples
-========
+Multi-node setup
+~~~~~~~~~~~~~~~~
 
--  Eliminate a Cinder pass-through (``CINDER_PERIODIC_INTERVAL``):
+See the :doc:`multi-node lab guide<guides/multinode-lab>`
 
-   ::
+Projects
+--------
 
-       [[post-config|$CINDER_CONF]]
-       [DEFAULT]
-       periodic_interval = 60
+Neutron
+~~~~~~~
 
--  Sample ``local.conf`` with screen logging enabled:
+See the :doc:`neutron configuration guide<guides/neutron>` for
+details on configuration of Neutron
 
-   ::
 
-       [[local|localrc]]
-       FIXED_RANGE=10.254.1.0/24
-       NETWORK_GATEWAY=10.254.1.1
-       LOGDAYS=1
-       LOGDIR=$DEST/logs
-       LOGFILE=$LOGDIR/stack.sh.log
-       ADMIN_PASSWORD=quiet
-       DATABASE_PASSWORD=$ADMIN_PASSWORD
-       RABBIT_PASSWORD=$ADMIN_PASSWORD
-       SERVICE_PASSWORD=$ADMIN_PASSWORD
-       SERVICE_TOKEN=a682f596-76f3-11e3-b3b2-e716f9080d50
+Swift
+~~~~~
+
+Swift is disabled by default.  When enabled, it is configured with
+only one replica to avoid being IO/memory intensive on a small
+VM. When running with only one replica the account, container and
+object services will run directly in screen. The others services like
+replicator, updaters or auditor runs in background.
+
+If you would like to enable Swift you can add this to your `localrc`
+section:
+
+::
+
+    enable_service s-proxy s-object s-container s-account
+
+If you want a minimal Swift install with only Swift and Keystone you
+can have this instead in your `localrc` section:
+
+::
+
+    disable_all_services
+    enable_service key mysql s-proxy s-object s-container s-account
+
+If you only want to do some testing of a real normal swift cluster
+with multiple replicas you can do so by customizing the variable
+`SWIFT_REPLICAS` in your `localrc` section (usually to 3).
+
+Swift S3
+++++++++
+
+If you are enabling `swift3` in `ENABLED_SERVICES` DevStack will
+install the swift3 middleware emulation. Swift will be configured to
+act as a S3 endpoint for Keystone so effectively replacing the
+`nova-objectstore`.
+
+Only Swift proxy server is launched in the screen session all other
+services are started in background and managed by `swift-init` tool.
+
+Heat
+~~~~
+
+Heat is disabled by default (see `stackrc` file). To enable it
+explicitly you'll need the following settings in your `localrc`
+section
+
+::
+
+    enable_service heat h-api h-api-cfn h-api-cw h-eng
+
+Heat can also run in standalone mode, and be configured to orchestrate
+on an external OpenStack cloud. To launch only Heat in standalone mode
+you'll need the following settings in your `localrc` section
+
+::
+
+    disable_all_services
+    enable_service rabbit mysql heat h-api h-api-cfn h-api-cw h-eng
+    HEAT_STANDALONE=True
+    KEYSTONE_SERVICE_HOST=...
+    KEYSTONE_AUTH_HOST=...
+
+Tempest
+~~~~~~~
+
+If tempest has been successfully configured, a basic set of smoke
+tests can be run as follows:
+
+::
+
+    $ cd /opt/stack/tempest
+    $ tox -efull  tempest.scenario.test_network_basic_ops
+
+By default tempest is downloaded and the config file is generated, but the
+tempest package is not installed in the system's global site-packages (the
+package install includes installing dependences). So tempest won't run
+outside of tox. If you would like to install it add the following to your
+``localrc`` section:
+
+::
+
+    INSTALL_TEMPEST=True
+
+
+Xenserver
+~~~~~~~~~
+
+If you would like to use Xenserver as the hypervisor, please refer to
+the instructions in `./tools/xen/README.md`.
+
+Cells
+~~~~~
+
+`Cells <http://wiki.openstack.org/blueprint-nova-compute-cells>`__ is
+an alternative scaling option.  To setup a cells environment add the
+following to your `localrc` section:
+
+::
+
+    enable_service n-cell
+
+Be aware that there are some features currently missing in cells, one
+notable one being security groups.  The exercises have been patched to
+disable functionality not supported by cells.
+
+Cinder
+~~~~~~
+
+The logical volume group used to hold the Cinder-managed volumes is
+set by ``VOLUME_GROUP``, the logical volume name prefix is set with
+``VOLUME_NAME_PREFIX`` and the size of the volume backing file is set
+with ``VOLUME_BACKING_FILE_SIZE``.
+
+    ::
+
+        VOLUME_GROUP="stack-volumes"
+        VOLUME_NAME_PREFIX="volume-"
+        VOLUME_BACKING_FILE_SIZE=10250M
+
+
+Keystone
+~~~~~~~~
+
+Multi-Region Setup
+++++++++++++++++++
+
+We want to setup two devstack (RegionOne and RegionTwo) with shared
+keystone (same users and services) and horizon.  Keystone and Horizon
+will be located in RegionOne.  Full spec is available at:
+`<https://wiki.openstack.org/wiki/Heat/Blueprints/Multi_Region_Support_for_Heat>`__.
+
+In RegionOne:
+
+::
+
+    REGION_NAME=RegionOne
+
+In RegionTwo:
+
+::
+   
+    disable_service horizon
+    KEYSTONE_SERVICE_HOST=<KEYSTONE_IP_ADDRESS_FROM_REGION_ONE>
+    KEYSTONE_AUTH_HOST=<KEYSTONE_IP_ADDRESS_FROM_REGION_ONE>
+    REGION_NAME=RegionTwo
