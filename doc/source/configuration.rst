@@ -28,8 +28,10 @@ simplify this process and meet the following goals:
 local.conf
 ==========
 
-The new configuration file is ``local.conf`` and resides in the root
-DevStack directory like the old ``localrc`` file. It is a modified INI
+The new configuration file is ``local.conf`` and should reside in the
+root Devstack directory. An example of such ``local.conf`` file
+is provided in the ``devstack/samples`` directory. Copy this file into
+the root Devstack directory and adapt it to your needs. It is a modified INI
 format file that introduces a meta-section header to carry additional
 information regarding the configuration files to be changed.
 
