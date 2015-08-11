@@ -82,6 +82,21 @@ TEMPEST_STORAGE_PROTOCOL=${TEMPEST_STORAGE_PROTOCOL:-$TEMPEST_DEFAULT_STORAGE_PR
 IPV6_ENABLED=$(trueorfalse True IPV6_ENABLED)
 IPV6_SUBNET_ATTRIBUTES_ENABLED=$(trueorfalse True IPV6_SUBNET_ATTRIBUTES_ENABLED)
 
+# Do we want to make a configuration where Tempest has admin on
+# the cloud. We don't always want to so that we can ensure Tempest
+# would work on a public cloud.
+TEMPEST_HAS_ADMIN=$(trueorfalse True TEMPEST_HAS_ADMIN)
+
+# Credential provider configuration option variables
+TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-$TEMPEST_HAS_ADMIN}
+TEMPEST_USE_TEST_ACCOUNTS=$(trueorfalse False $TEMPEST_USE_TEST_ACCOUNTS)
+
+# The number of workers tempest is expected to be run with. This is used for
+# generating a accounts.yaml for running with test-accounts. This is also the
+# same variable that devstack-gate uses to specify the number of workers that
+# it will run tempest with
+TEMPEST_CONCURRENCY=${TEMPEST_CONCURRENCY:-$(nproc)}
+
 
 # Functions
 # ---------
@@ -173,11 +188,6 @@ function configure_tempest {
     rm -f $TEMPEST_CONFIG
 
     password=${ADMIN_PASSWORD:-secrete}
-
-    # Do we want to make a configuration where Tempest has admin on
-    # the cloud. We don't always want to so that we can ensure Tempest
-    # would work on a public cloud.
-    TEMPEST_HAS_ADMIN=$(trueorfalse True TEMPEST_HAS_ADMIN)
 
     # See ``lib/keystone`` where these users and tenants are set up
     ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
@@ -334,11 +344,6 @@ function configure_tempest {
 
     # Image Features
     iniset $TEMPEST_CONFIG image-feature-enabled deactivate_image True
-
-    # Auth
-    TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-$TEMPEST_HAS_ADMIN}
-    iniset $TEMPEST_CONFIG auth allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
-    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
 
     # Compute
     iniset $TEMPEST_CONFIG compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
@@ -545,6 +550,19 @@ function configure_tempest {
         sudo chown $STACK_USER $BOTO_CONF
     fi
 
+    # Auth
+    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
+    if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
+        if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
+            tempest-account-generator -c $TEMPEST_CONFIG --os-username $ADMIN_USERNAME --os-password $ADMIN_PASSWORD --os-tenant-name $ADMIN_TENANT_NAME -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
+        else:
+            tempest-account-generator -c $TEMPEST_CONFIG --os-username $ADMIN_USERNAME --os-password $ADMIN_PASSWORD --os-tenant-name $ADMIN_TENANT_NAME -r $TEMPEST_CONCURRENCY etc/accounts.yaml
+        fi
+        iniset $TEMPEST_CONFIG auth allow_tenant_isolation False
+        iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
+    else
+        iniset $TEMPEST_CONFIG auth allow_tenant_isolation ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
+    fi
     # Restore IFS
     IFS=$ifs
 }
