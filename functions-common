@@ -852,13 +852,18 @@ function get_or_create_service {
 # Usage: _get_or_create_endpoint_with_interface <service> <interface> <url> <region>
 function _get_or_create_endpoint_with_interface {
     local endpoint_id
+    # TODO(dgonzalez): The check of the region name, as done in the grep
+    # statement below, exists only because keystone does currently
+    # not allow filtering the region name when listing endpoints. If keystone
+    # gets support for this, the check for the region name can be removed.
+    # Related bug in keystone: https://bugs.launchpad.net/keystone/+bug/1482772
     endpoint_id=$(openstack endpoint list \
         --os-url $KEYSTONE_SERVICE_URI_V3 \
         --os-identity-api-version=3 \
         --service $1 \
         --interface $2 \
         --region $4 \
-        -c ID -f value)
+        -c ID -c Region -f value | grep $4 | cut -f 1 -d " ")
     if [[ -z "$endpoint_id" ]]; then
         # Creates new endpoint
         endpoint_id=$(openstack endpoint create \
