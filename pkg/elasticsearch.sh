@@ -6,9 +6,7 @@
 # step can probably be factored out to something nicer
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 FILES=$TOP_DIR/files
-source $TOP_DIR/functions
-DEST=${DEST:-/opt/stack}
-source $TOP_DIR/lib/infra
+source $TOP_DIR/stackrc
 
 # Package source and version, all pkg files are expected to have
 # something like this, as well as a way to override them.
