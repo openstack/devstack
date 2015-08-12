@@ -864,6 +864,21 @@ if [[ -d $TOP_DIR/extras.d ]]; then
 fi
 
 
+# NOTE(mriedem): This is an unfortunate hack to workaround a problem with
+# uncapped requirements for python-novaclient in python-openstackclient 1.0.1
+# such that it pulls in the latest python-novaclient if something hasn't
+# already pulled in novaclient (like cinder) at a version that osc in juno will
+# accept. The large-ops job doesn't install cinder (since it uses the fake
+# nova virt driver) so osc is the first thing to install novaclient which
+# then causes a wedge due to capped novaclient in other juno projects.
+# So if we're running the large-ops job (per using the nova fake virt driver),
+# install novaclient per the g-r caps for stable/juno so osc doesn't pull in
+# the latest novaclient and wedge everything.
+if [[ "$VIRT_DRIVER" = 'fake' ]]; then
+    pip_install_gr python-novaclient
+fi
+
+
 # install the OpenStack client, needed for most setup commands
 if use_library_from_git "python-openstackclient"; then
     git_clone_by_name "python-openstackclient"
