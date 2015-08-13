@@ -31,6 +31,7 @@ set +o pipefail
 
 # Set up default directories
 GITDIR["python-ironicclient"]=$DEST/python-ironicclient
+GITDIR["ironic-lib"]=$DEST/ironic-lib
 
 IRONIC_DIR=$DEST/ironic
 IRONIC_PYTHON_AGENT_DIR=$DEST/ironic-python-agent
@@ -191,6 +192,12 @@ function install_ironic {
             die $LINENO "$srv should be enabled for Ironic."
         fi
     done
+
+    if use_library_from_git "ironic-lib"; then
+        git_clone_by_name "ironic-lib"
+        setup_dev_lib "ironic-lib"
+    fi
+
     git_clone $IRONIC_REPO $IRONIC_DIR $IRONIC_BRANCH
     setup_develop $IRONIC_DIR
 
