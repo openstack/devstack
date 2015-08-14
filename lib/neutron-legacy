@@ -730,7 +730,9 @@ function start_neutron_l2_agent {
 function start_neutron_other_agents {
     run_process q-dhcp "python $AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file=$Q_DHCP_CONF_FILE"
 
-    if is_service_enabled q-vpn; then
+    if is_service_enabled neutron-vpnaas; then
+        :  # Started by plugin
+    elif is_service_enabled q-vpn; then
         run_process q-vpn "$AGENT_VPN_BINARY $(determine_config_files neutron-vpn-agent)"
     else
         run_process q-l3 "python $AGENT_L3_BINARY $(determine_config_files neutron-l3-agent)"
