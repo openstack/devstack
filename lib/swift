@@ -610,7 +610,7 @@ function create_swift_accounts {
 
     KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
 
-    local another_role=$(openstack role list | awk "/ anotherrole / { print \$2 }")
+    local another_role=$(get_or_create_role "anotherrole")
 
     # NOTE(jroll): Swift doesn't need the admin role here, however Ironic uses
     # temp urls, which break when uploaded by a non-admin role
