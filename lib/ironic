@@ -618,6 +618,7 @@ function enroll_nodes {
         local node_id=$(ironic node-create $standalone_node_uuid\
             --chassis_uuid $chassis_id \
             --driver $IRONIC_DEPLOY_DRIVER \
+            --name node-$total_nodes \
             -p cpus=$ironic_node_cpu\
             -p memory_mb=$ironic_node_ram\
             -p local_gb=$ironic_node_disk\
