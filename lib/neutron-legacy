@@ -101,7 +101,6 @@ AGENT_META_BINARY="$NEUTRON_BIN_DIR/neutron-metadata-agent"
 # loaded from per-plugin  scripts in lib/neutron_plugins/
 Q_DHCP_CONF_FILE=$NEUTRON_CONF_DIR/dhcp_agent.ini
 Q_L3_CONF_FILE=$NEUTRON_CONF_DIR/l3_agent.ini
-Q_FWAAS_CONF_FILE=$NEUTRON_CONF_DIR/fwaas_driver.ini
 Q_META_CONF_FILE=$NEUTRON_CONF_DIR/metadata_agent.ini
 
 # Default name for Neutron database
@@ -267,13 +266,8 @@ source $TOP_DIR/lib/neutron_plugins/services/loadbalancer
 # Hardcoding for 1 service plugin for now
 source $TOP_DIR/lib/neutron_plugins/services/metering
 
-# Firewall Service Plugin functions
-# ---------------------------------
-source $TOP_DIR/lib/neutron_plugins/services/firewall
-
 # L3 Service functions
 source $TOP_DIR/lib/neutron_plugins/services/l3
-
 # Use security group or not
 if has_neutron_plugin_security_group; then
     Q_USE_SECGROUP=${Q_USE_SECGROUP:-True}
@@ -333,10 +327,6 @@ function configure_mutnauq {
     fi
     if is_service_enabled q-metering; then
         _configure_neutron_metering
-    fi
-    if is_service_enabled q-fwaas; then
-        deprecated "Configuring q-fwaas through devstack is deprecated"
-        _configure_neutron_fwaas
     fi
     if is_service_enabled q-agt q-svc; then
         _configure_neutron_service
@@ -435,10 +425,6 @@ function install_mutnauq {
 
     git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
     setup_develop $NEUTRON_DIR
-    if is_service_enabled q-fwaas; then
-        git_clone $NEUTRON_FWAAS_REPO $NEUTRON_FWAAS_DIR $NEUTRON_FWAAS_BRANCH
-        setup_develop $NEUTRON_FWAAS_DIR
-    fi
     if is_service_enabled q-lbaas; then
         git_clone $NEUTRON_LBAAS_REPO $NEUTRON_LBAAS_DIR $NEUTRON_LBAAS_BRANCH
         setup_develop $NEUTRON_LBAAS_DIR
@@ -579,9 +565,6 @@ function stop_mutnauq_other {
 
     if is_service_enabled q-lbaas; then
         neutron_lbaas_stop
-    fi
-    if is_service_enabled q-fwaas; then
-        neutron_fwaas_stop
     fi
     if is_service_enabled q-metering; then
         neutron_metering_stop
@@ -875,14 +858,6 @@ function _configure_neutron_lbaas {
 function _configure_neutron_metering {
     neutron_agent_metering_configure_common
     neutron_agent_metering_configure_agent
-}
-
-function _configure_neutron_fwaas {
-    if [ -f $NEUTRON_FWAAS_DIR/etc/neutron_fwaas.conf ]; then
-        cp $NEUTRON_FWAAS_DIR/etc/neutron_fwaas.conf $NEUTRON_CONF_DIR
-    fi
-    neutron_fwaas_configure_common
-    neutron_fwaas_configure_driver
 }
 
 function _configure_dvr {
