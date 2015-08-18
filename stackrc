@@ -87,6 +87,9 @@ TEMPEST_SERVICES=""
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=ec2,osapi_compute,metadata
 
+# Set the root URL for Horizon
+HORIZON_APACHE_ROOT="/dashboard"
+
 # Whether to use 'dev mode' for screen windows. Dev mode works by
 # stuffing text into the screen windows so that a developer can use
 # ctrl-c, up-arrow, enter to restart the service. Starting services
