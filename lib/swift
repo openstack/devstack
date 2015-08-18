@@ -97,7 +97,7 @@ SWIFT_EXTRAS_MIDDLEWARE_LAST=${SWIFT_EXTRAS_MIDDLEWARE_LAST:-}
 # the beginning of the pipeline, before authentication middlewares.
 SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH=${SWIFT_EXTRAS_MIDDLEWARE_NO_AUTH:-crossdomain}
 
-# The ring uses a configurable number of bits from a path’s MD5 hash as
+# The ring uses a configurable number of bits from a path's MD5 hash as
 # a partition index that designates a device. The number of bits kept
 # from the hash is known as the partition power, and 2 to the partition
 # power indicates the partition count. Partitioning the full MD5 hash

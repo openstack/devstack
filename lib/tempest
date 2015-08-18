@@ -386,7 +386,7 @@ function configure_tempest {
     # and is now the default behavior.
     iniset $TEMPEST_CONFIG compute-feature-enabled allow_duplicate_networks ${NOVA_ALLOW_DUPLICATE_NETWORKS:-True}
 
-    # Network
+    # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
     iniset $TEMPEST_CONFIG network tenant_networks_reachable "$tenant_networks_reachable"
     iniset $TEMPEST_CONFIG network public_network_id "$public_network_id"
@@ -468,7 +468,7 @@ function configure_tempest {
     if [[ ! -z "$DISABLE_VOLUME_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         volume_api_extensions=${VOLUME_API_EXTENSIONS:-$(iniget $tmp_cfg_file volume-feature-enabled api_extensions | tr -d " ")}
-        # Remove disabled extensions
+        # Remove disabled extensions
         volume_api_extensions=$(remove_disabled_extensions $volume_api_extensions $DISABLE_VOLUME_API_EXTENSIONS)
     fi
     iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions $volume_api_extensions
