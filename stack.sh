@@ -688,9 +688,6 @@ save_stackenv $LINENO
 echo_summary "Installing package prerequisites"
 source $TOP_DIR/tools/install_prereqs.sh
 
-# Normalise USE_CONSTRAINTS
-USE_CONSTRAINTS=$(trueorfalse False USE_CONSTRAINTS)
-
 # Configure an appropriate Python environment
 if [[ "$OFFLINE" != "True" ]]; then
     PYPI_ALTERNATIVE_URL=${PYPI_ALTERNATIVE_URL:-""} $TOP_DIR/tools/install_pip.sh
