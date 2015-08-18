@@ -960,9 +960,9 @@ function _configure_neutron_debug_command {
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT verbose False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-    iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper "$Q_RR_COMMAND"
+    iniset $NEUTRON_TEST_CONFIG_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
-        iniset $NEUTRON_TEST_CONFIG_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+        iniset $NEUTRON_TEST_CONFIG_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
     fi
 
     _neutron_setup_interface_driver $NEUTRON_TEST_CONFIG_FILE
@@ -977,9 +977,9 @@ function _configure_neutron_dhcp_agent {
     iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
     iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-    iniset $Q_DHCP_CONF_FILE agent root_helper "$Q_RR_COMMAND"
+    iniset $Q_DHCP_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
-        iniset $Q_DHCP_CONF_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+        iniset $Q_DHCP_CONF_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
     fi
 
     if ! is_service_enabled q-l3; then
@@ -1012,9 +1012,9 @@ function _configure_neutron_l3_agent {
     iniset $Q_L3_CONF_FILE DEFAULT verbose True
     iniset $Q_L3_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
-    iniset $Q_L3_CONF_FILE agent root_helper "$Q_RR_COMMAND"
+    iniset $Q_L3_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
-        iniset $Q_L3_CONF_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+        iniset $Q_L3_CONF_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
     fi
 
     _neutron_setup_interface_driver $Q_L3_CONF_FILE
@@ -1036,9 +1036,9 @@ function _configure_neutron_metadata_agent {
     iniset $Q_META_CONF_FILE DEFAULT verbose True
     iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
-    iniset $Q_META_CONF_FILE agent root_helper "$Q_RR_COMMAND"
+    iniset $Q_META_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
-        iniset $Q_META_CONF_FILE agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+        iniset $Q_META_CONF_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
     fi
 
     # Configures keystone for metadata_agent
