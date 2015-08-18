@@ -12,4 +12,5 @@ python-lxml
 python-mysql
 python-mysql-connector-python
 python-pysqlite
+libmysqlclient-devel
 sqlite3
