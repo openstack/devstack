@@ -85,12 +85,12 @@ function configure_database_mysql {
         sudo mysqladmin -u root password $DATABASE_PASSWORD || true
     fi
 
-    # Update the DB to give user ‘$DATABASE_USER’@’%’ full control of the all databases:
+    # Update the DB to give user '$DATABASE_USER'@'%' full control of the all databases:
     sudo mysql -uroot -p$DATABASE_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
 
     # Now update ``my.cnf`` for some local needs and restart the mysql service
 
-    # Change ‘bind-address’ from localhost (127.0.0.1) to any (::) and
+    # Change bind-address from localhost (127.0.0.1) to any (::) and
     # set default db type to InnoDB
     sudo bash -c "source $TOP_DIR/functions && \
         iniset $my_conf mysqld bind-address "$SERVICE_LISTEN_ADDRESS" && \
