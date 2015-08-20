@@ -455,6 +455,7 @@ admin_password = ${SERVICE_PASSWORD}
 
 [filter:swift3]
 use = egg:swift3#swift3
+location = ${REGION_NAME}
 EOF
     fi
 
