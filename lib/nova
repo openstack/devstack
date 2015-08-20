@@ -354,6 +354,12 @@ function configure_nova {
                             sudo mount /cgroup
                         fi
                     fi
+
+                    # enable nbd for lxc unless you're using an lvm backend
+                    # otherwise you can't boot instances
+                    if [[ "$NOVA_BACKEND" != "LVM" ]]; then
+                        sudo modprobe nbd
+                    fi
                 fi
             fi
         fi
