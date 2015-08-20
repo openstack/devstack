@@ -154,6 +154,7 @@ EOF
         fi
     elif is_fedora; then
         install_package mariadb-server
+        sudo systemctl enable mariadb
     elif is_ubuntu; then
         install_package mysql-server
     else

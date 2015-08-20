@@ -48,6 +48,9 @@ function install_rpc_backend {
         # Install rabbitmq-server
         install_package rabbitmq-server
     fi
+    if is_fedora; then
+        sudo systemctl enable rabbitmq-server
+    fi
 }
 
 # restart the rpc backend
