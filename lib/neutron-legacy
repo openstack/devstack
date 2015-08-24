@@ -885,6 +885,12 @@ function _configure_neutron_common {
 
     cp $NEUTRON_DIR/etc/neutron.conf $NEUTRON_CONF
 
+    Q_POLICY_FILE=$NEUTRON_CONF_DIR/policy.json
+    cp $NEUTRON_DIR/etc/policy.json $Q_POLICY_FILE
+
+    # allow neutron user to administer neutron to match neutron account
+    sed -i 's/"context_is_admin":  "role:admin"/"context_is_admin":  "role:admin or user_name:neutron"/g' $Q_POLICY_FILE
+
     # Set plugin-specific variables ``Q_DB_NAME``, ``Q_PLUGIN_CLASS``.
     # For main plugin config file, set ``Q_PLUGIN_CONF_PATH``, ``Q_PLUGIN_CONF_FILENAME``.
     # For addition plugin config files, set ``Q_PLUGIN_EXTRA_CONF_PATH``,
@@ -1111,13 +1117,7 @@ function _configure_neutron_plugin_agent {
 # It is called when q-svc is enabled.
 function _configure_neutron_service {
     Q_API_PASTE_FILE=$NEUTRON_CONF_DIR/api-paste.ini
-    Q_POLICY_FILE=$NEUTRON_CONF_DIR/policy.json
-
     cp $NEUTRON_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
-    cp $NEUTRON_DIR/etc/policy.json $Q_POLICY_FILE
-
-    # allow neutron user to administer neutron to match neutron account
-    sed -i 's/"context_is_admin":  "role:admin"/"context_is_admin":  "role:admin or user_name:neutron"/g' $Q_POLICY_FILE
 
     # Update either configuration file with plugin
     iniset $NEUTRON_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
