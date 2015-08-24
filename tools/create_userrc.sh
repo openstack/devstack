@@ -158,12 +158,12 @@ fi
 
 export -n SERVICE_TOKEN SERVICE_ENDPOINT OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
 
-EC2_URL=$(openstack endpoint show -f value -c publicurl ec2 || true)
+EC2_URL=$(openstack endpoint list --service ec2 --interface public --os-identity-api-version=3 -c URL -f value || true)
 if [[ -z $EC2_URL ]]; then
     EC2_URL=http://localhost:8773/
 fi
 
-S3_URL=$(openstack endpoint show -f value -c publicurl s3 || true)
+S3_URL=$(openstack endpoint list --service s3 --interface public --os-identity-api-version=3 -c URL -f value || true)
 if [[ -z $S3_URL ]]; then
     S3_URL=http://localhost:3333
 fi
