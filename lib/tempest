@@ -89,7 +89,7 @@ TEMPEST_HAS_ADMIN=$(trueorfalse True TEMPEST_HAS_ADMIN)
 
 # Credential provider configuration option variables
 TEMPEST_ALLOW_TENANT_ISOLATION=${TEMPEST_ALLOW_TENANT_ISOLATION:-$TEMPEST_HAS_ADMIN}
-TEMPEST_USE_TEST_ACCOUNTS=$(trueorfalse False $TEMPEST_USE_TEST_ACCOUNTS)
+TEMPEST_USE_TEST_ACCOUNTS=$(trueorfalse False TEMPEST_USE_TEST_ACCOUNTS)
 
 # The number of workers tempest is expected to be run with. This is used for
 # generating a accounts.yaml for running with test-accounts. This is also the
