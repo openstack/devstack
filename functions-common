@@ -591,7 +591,7 @@ function get_default_host_ip {
         host_ip=""
         # Find the interface used for the default route
         host_ip_iface=${host_ip_iface:-$(ip -f $af route | awk '/default/ {print $5}' | head -1)}
-        local host_ips=$(LC_ALL=C ip -f $af addr show ${host_ip_iface} | awk /$af'/ {split($2,parts,"/");  print parts[1]}')
+        local host_ips=$(LC_ALL=C ip -f $af addr show ${host_ip_iface} | sed /temporary/d |awk /$af'/ {split($2,parts,"/");  print parts[1]}')
         local ip
         for ip in $host_ips; do
             # Attempt to filter out IP addresses that are part of the fixed and
