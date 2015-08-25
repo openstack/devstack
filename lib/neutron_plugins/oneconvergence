@@ -68,7 +68,6 @@ function neutron_plugin_configure_plugin_agent {
 }
 
 function neutron_plugin_create_nova_conf {
-    NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
     if ( is_service_enabled n-cpu && ! ( is_service_enabled q-dhcp )) ; then
         setup_integration_bridge
     fi
