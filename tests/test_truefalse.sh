@@ -8,6 +8,14 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 source $TOP/functions
 source $TOP/tests/unittest.sh
 
+# common mistake is to use $FOO instead of "FOO"; in that case we
+# should die
+bash -c "source $TOP/functions-common; VAR=\$(trueorfalse False \$FOO)" &> /dev/null
+assert_equal 1 $? "missing test-value"
+
+VAL=$(trueorfalse False MISSING_VARIABLE)
+assert_equal "False" $VAL "blank test-value"
+
 function test_trueorfalse {
     local one=1
     local captrue=True

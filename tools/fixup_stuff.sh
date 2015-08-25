@@ -108,7 +108,7 @@ if is_fedora; then
         sudo setenforce 0
     fi
 
-    FORCE_FIREWALLD=$(trueorfalse False $FORCE_FIREWALLD)
+    FORCE_FIREWALLD=$(trueorfalse False FORCE_FIREWALLD)
     if [[ $FORCE_FIREWALLD == "False" ]]; then
         # On Fedora 20 firewalld interacts badly with libvirt and
         # slows things down significantly (this issue was fixed in

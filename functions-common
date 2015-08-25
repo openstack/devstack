@@ -106,16 +106,27 @@ function write_clouds_yaml {
         --os-project-name admin
 }
 
-# Normalize config values to True or False
-# Accepts as False: 0 no No NO false False FALSE
-# Accepts as True: 1 yes Yes YES true True TRUE
-# VAR=$(trueorfalse default-value test-value)
+# trueorfalse <True|False> <VAR>
+#
+# Normalize config-value provided in variable VAR to either "True" or
+# "False".  If VAR is unset (i.e. $VAR evaluates as empty), the value
+# of the second argument will be used as the default value.
+#
+#  Accepts as False: 0 no  No  NO  false False FALSE
+#  Accepts as True:  1 yes Yes YES true  True  TRUE
+#
+# usage:
+#  VAL=$(trueorfalse False VAL)
 function trueorfalse {
     local xtrace
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
     local default=$1
+
+    if [ -z $2 ]; then
+        die $LINENO "variable to normalize required"
+    fi
     local testval=${!2:-}
 
     case "$testval" in
