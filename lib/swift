@@ -611,9 +611,9 @@ function create_swift_accounts {
             "object-store" "Swift Service")
         get_or_create_endpoint $swift_service \
             "$REGION_NAME" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s" \
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT" \
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s"
     fi
 
     local swift_tenant_test1=$(get_or_create_project swifttenanttest1)
