@@ -167,10 +167,6 @@ NOVA_ALLOW_MOVE_TO_SAME_HOST=$(trueorfalse True NOVA_ALLOW_MOVE_TO_SAME_HOST)
 TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
 TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 
-# Tell Tempest this project is present
-TEMPEST_SERVICES+=,nova
-
-
 # Functions
 # ---------
 

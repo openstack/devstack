@@ -108,9 +108,6 @@ CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 
 CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-tgtadm}
 
-# Tell Tempest this project is present
-TEMPEST_SERVICES+=,cinder
-
 
 # Source the enabled backends
 if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
