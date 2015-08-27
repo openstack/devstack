@@ -71,15 +71,23 @@ b=d
 
 EOF
 
-# Test with missing arguments
+# set TEST_SUDO to test writing to root-owned files
+SUDO_ARG=""
+SUDO=""
+if [ -n "$TEST_SUDO" ]; then
+    SUDO="sudo "
+    SUDO_ARG="-sudo "
+    sudo chown -R root:root ${INI_TMP_ETC_DIR}
+fi
 
+# Test with missing arguments
 BEFORE=$(cat ${TEST_INI})
 
-iniset ${TEST_INI} aaa
+iniset ${SUDO_ARG} ${TEST_INI} aaa
 NO_ATTRIBUTE=$(cat ${TEST_INI})
 assert_equal "$BEFORE" "$NO_ATTRIBUTE" "test missing attribute argument"
 
-iniset ${TEST_INI}
+iniset ${SUDO_ARG} ${TEST_INI}
 NO_SECTION=$(cat ${TEST_INI})
 assert_equal "$BEFORE" "$NO_SECTION" "missing section argument"
 
@@ -87,7 +95,7 @@ assert_equal "$BEFORE" "$NO_SECTION" "missing section argument"
 VAL=$(iniget ${TEST_INI} aaa handlers)
 assert_equal "$VAL" "aa, bb" "iniget spaces in option"
 
-iniset ${TEST_INI} aaa handlers "11, 22"
+iniset ${SUDO_ARG} ${TEST_INI} aaa handlers "11, 22"
 VAL=$(iniget ${TEST_INI} aaa handlers)
 assert_equal "$VAL" "11, 22" "iniset spaces in option"
 
@@ -95,7 +103,7 @@ assert_equal "$VAL" "11, 22" "iniset spaces in option"
 VAL=$(iniget ${TEST_INI} " ccc " spaces)
 assert_equal "$VAL" "yes" "iniget with section header space"
 
-iniset ${TEST_INI} "b b" opt_ion 42
+iniset ${SUDO_ARG} ${TEST_INI} "b b" opt_ion 42
 VAL=$(iniget ${TEST_INI} "b b" opt_ion)
 assert_equal "$VAL" "42" "iniset with section header space"
 
@@ -103,7 +111,7 @@ assert_equal "$VAL" "42" "iniset with section header space"
 VAL=$(iniget ${TEST_INI} bbb handlers)
 assert_equal "$VAL" "ee,ff" "iniget at EOF"
 
-iniset ${TEST_INI} bbb handlers "33,44"
+iniset ${SUDO_ARG} ${TEST_INI} bbb handlers "33,44"
 VAL=$(iniget ${TEST_INI} bbb handlers)
 assert_equal "$VAL" "33,44" "inset at EOF"
 
@@ -122,12 +130,12 @@ else
 fi
 
 # test changing empty option
-iniset ${TEST_INI} ddd empty "42"
+iniset ${SUDO_ARG} ${TEST_INI} ddd empty "42"
 VAL=$(iniget ${TEST_INI} ddd empty)
 assert_equal "$VAL" "42" "change empty option"
 
 # test pipe in option
-iniset ${TEST_INI} aaa handlers "a|b"
+iniset ${SUDO_ARG} ${TEST_INI} aaa handlers "a|b"
 VAL=$(iniget ${TEST_INI} aaa handlers)
 assert_equal "$VAL" "a|b" "pipe in option"
 
@@ -146,23 +154,23 @@ else
 fi
 
 # Test comments
-inicomment ${TEST_INI} aaa handlers
+inicomment ${SUDO_ARG} ${TEST_INI} aaa handlers
 VAL=$(iniget ${TEST_INI} aaa handlers)
 assert_empty VAL "test inicomment"
 
 # Test multiple line iniset/iniget
-iniset_multiline ${TEST_INI} eee multi bar1 bar2
+iniset_multiline ${SUDO_ARG} ${TEST_INI} eee multi bar1 bar2
 
 VAL=$(iniget_multiline ${TEST_INI} eee multi)
 assert_equal "$VAL" "bar1 bar2" "iniget_multiline"
 
 # Test iniadd with exiting values
-iniadd ${TEST_INI} eee multi bar3
+iniadd ${SUDO_ARG} ${TEST_INI} eee multi bar3
 VAL=$(iniget_multiline ${TEST_INI} eee multi)
 assert_equal "$VAL" "bar1 bar2 bar3" "iniadd with existing values"
 
 # Test iniadd with non-exiting values
-iniadd ${TEST_INI} eee non-multi foobar1 foobar2
+iniadd ${SUDO_ARG} ${TEST_INI} eee non-multi foobar1 foobar2
 VAL=$(iniget_multiline ${TEST_INI} eee non-multi)
 assert_equal "$VAL" "foobar1 foobar2" "iniadd non-existing values"
 
@@ -176,7 +184,7 @@ del_cases="
     del_no_section"
 
 for x in $del_cases; do
-    inidelete ${TEST_INI} $x a
+    inidelete ${SUDO_ARG} ${TEST_INI} $x a
     VAL=$(iniget_multiline ${TEST_INI} $x a)
     assert_empty VAL "inidelete $x"
     if [ "$x" = "del_separate_options" -o \
@@ -191,6 +199,6 @@ for x in $del_cases; do
     fi
 done
 
-rm -rf ${INI_TMP_DIR}
+$SUDO rm -rf ${INI_TMP_DIR}
 
 report_results

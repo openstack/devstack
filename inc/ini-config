@@ -15,30 +15,40 @@ set +o xtrace
 # ================
 
 # Append a new option in an ini file without replacing the old value
-# iniadd config-file section option value1 value2 value3 ...
+# iniadd [-sudo] config-file section option value1 value2 value3 ...
 function iniadd {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="-sudo "
+        shift
+    fi
     local file=$1
     local section=$2
     local option=$3
     shift 3
 
     local values="$(iniget_multiline $file $section $option) $@"
-    iniset_multiline $file $section $option $values
+    iniset_multiline $sudo $file $section $option $values
     $xtrace
 }
 
 # Comment an option in an INI file
-# inicomment config-file section option
+# inicomment [-sudo] config-file section option
 function inicomment {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
     local file=$1
     local section=$2
     local option=$3
 
-    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
+    $sudo sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
     $xtrace
 }
 
@@ -95,10 +105,15 @@ function ini_has_option {
 # in the argument list. Doing that will cause incorrect configuration
 # if spaces are used in the config values.
 #
-# iniadd_literal config-file section option value
+# iniadd_literal [-sudo] config-file section option value
 function iniadd_literal {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
     local file=$1
     local section=$2
     local option=$3
@@ -110,7 +125,7 @@ function iniadd_literal {
     fi
 
     # Add it
-    sed -i -e "/^\[$section\]/ a\\
+    $sudo sed -i -e "/^\[$section\]/ a\\
 $option = $value
 " "$file"
 
@@ -118,10 +133,15 @@ $option = $value
 }
 
 # Remove an option from an INI file
-# inidelete config-file section option
+# inidelete [-sudo] config-file section option
 function inidelete {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
     local file=$1
     local section=$2
     local option=$3
@@ -132,16 +152,21 @@ function inidelete {
     fi
 
     # Remove old values
-    sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
+    $sudo sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
 
     $xtrace
 }
 
 # Set an option in an INI file
-# iniset config-file section option value
+# iniset [-sudo] config-file section option value
 function iniset {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
     local file=$1
     local section=$2
     local option=$3
@@ -154,26 +179,31 @@ function iniset {
 
     if ! grep -q "^\[$section\]" "$file" 2>/dev/null; then
         # Add section at the end
-        echo -e "\n[$section]" >>"$file"
+        echo -e "\n[$section]" | $sudo tee --append "$file" > /dev/null
     fi
     if ! ini_has_option "$file" "$section" "$option"; then
         # Add it
-        sed -i -e "/^\[$section\]/ a\\
+        $sudo sed -i -e "/^\[$section\]/ a\\
 $option = $value
 " "$file"
     else
         local sep=$(echo -ne "\x01")
         # Replace it
-        sed -i -e '/^\['${section}'\]/,/^\[.*\]/ s'${sep}'^\('${option}'[ \t]*=[ \t]*\).*$'${sep}'\1'"${value}"${sep} "$file"
+        $sudo sed -i -e '/^\['${section}'\]/,/^\[.*\]/ s'${sep}'^\('${option}'[ \t]*=[ \t]*\).*$'${sep}'\1'"${value}"${sep} "$file"
     fi
     $xtrace
 }
 
 # Set a multiple line option in an INI file
-# iniset_multiline config-file section option value1 value2 valu3 ...
+# iniset_multiline [-sudo] config-file section option value1 value2 valu3 ...
 function iniset_multiline {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
     local file=$1
     local section=$2
     local option=$3
@@ -188,14 +218,14 @@ function iniset_multiline {
     done
     if ! grep -q "^\[$section\]" "$file"; then
         # Add section at the end
-        echo -e "\n[$section]" >>"$file"
+        echo -e "\n[$section]" | $sudo tee --append "$file" > /dev/null
     else
         # Remove old values
-        sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
+        $sudo sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
     fi
     # Add new ones
     for v in $values; do
-        sed -i -e "/^\[$section\]/ a\\
+        $sudo sed -i -e "/^\[$section\]/ a\\
 $option = $v
 " "$file"
     done
@@ -207,10 +237,15 @@ $option = $v
 function iniuncomment {
     local xtrace=$(set +o | grep xtrace)
     set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
     local file=$1
     local section=$2
     local option=$3
-    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" "$file"
+    $sudo sed -i -e "/^\[$section\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" "$file"
     $xtrace
 }
 
