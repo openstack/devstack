@@ -256,7 +256,7 @@ function configure_cinder {
     fi
 
     if is_service_enabled swift; then
-        iniset $CINDER_CONF DEFAULT backup_swift_url "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_"
+        iniset $CINDER_CONF DEFAULT backup_swift_url "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_"
     fi
 
     if is_service_enabled ceilometer; then
