@@ -21,6 +21,10 @@
 
 # Learn more and get the most recent version at http://devstack.org
 
+# Print the commands being run so that we can see the command that triggers
+# an error.  It is also useful for following along as the install occurs.
+set -o xtrace
+
 # Make sure custom grep options don't get in the way
 unset GREP_OPTIONS
 
@@ -493,10 +497,6 @@ function err_trap {
 
 # Begin trapping error exit codes
 set -o errexit
-
-# Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following along as the install occurs.
-set -o xtrace
 
 # Print the kernel version
 uname -a
