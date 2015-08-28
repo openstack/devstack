@@ -31,17 +31,12 @@ set -o xtrace
 EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
-# Import common functions
-source $TOP_DIR/functions
-
-# Import configuration
-source $TOP_DIR/openrc
+# Test as the admin user
+# note this imports stackrc/functions, etc
+. $TOP_DIR/openrc admin admin
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc
-
-# Test as the admin user
-. $TOP_DIR/openrc admin admin
 
 # If nova api is not enabled we exit with exitcode 55 so that
 # the exercise is skipped
