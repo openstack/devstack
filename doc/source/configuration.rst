@@ -6,34 +6,15 @@ Configuration
    :local:
    :depth: 1
 
-DevStack has always tried to be mostly-functional with a minimal amount
-of configuration. The number of options has ballooned as projects add
-features, new projects added and more combinations need to be tested.
-Historically DevStack obtained all local configuration and
-customizations from a ``localrc`` file. The number of configuration
-variables that are simply passed-through to the individual project
-configuration files is also increasing. The old mechanism for this
-(``EXTRAS_OPTS`` and friends) required specific code for each file and
-did not scale well.
-
-In Oct 2013 a new configuration method was introduced (in `review
-46768 <https://review.openstack.org/#/c/46768/>`__) to hopefully
-simplify this process and meet the following goals:
-
--  contain all non-default local configuration in a single file
--  be backward-compatible with ``localrc`` to smooth the transition
-   process
--  allow settings in arbitrary configuration files to be changed
-
 local.conf
 ==========
 
-The new configuration file is ``local.conf`` and should reside in the
-root Devstack directory. An example of such ``local.conf`` file
-is provided in the ``devstack/samples`` directory. Copy this file into
-the root Devstack directory and adapt it to your needs. It is a modified INI
-format file that introduces a meta-section header to carry additional
-information regarding the configuration files to be changed.
+DevStack configuration is modified via the file ``local.conf``.  It is
+a modified INI format file that introduces a meta-section header to
+carry additional information regarding the configuration files to be
+changed.
+
+A sample is provided in ``devstack/samples``
 
 The new header is similar to a normal INI section header but with double
 brackets (``[[ ... ]]``) and two internal fields separated by a pipe
@@ -148,33 +129,14 @@ will not be set if there is no IPv6 address on the default Ethernet interface.
 Setting it here also makes it available for ``openrc`` to set ``OS_AUTH_URL``.
 ``HOST_IPV6`` is not set by default.
 
-Examples
-========
+Historical Notes
+================
 
--  Eliminate a Cinder pass-through (``CINDER_PERIODIC_INTERVAL``):
-
-   ::
-
-       [[post-config|$CINDER_CONF]]
-       [DEFAULT]
-       periodic_interval = 60
-
--  Sample ``local.conf`` with screen logging enabled:
-
-   ::
-
-       [[local|localrc]]
-       FIXED_RANGE=10.254.1.0/24
-       NETWORK_GATEWAY=10.254.1.1
-       LOGDAYS=1
-       LOGDIR=$DEST/logs
-       LOGFILE=$LOGDIR/stack.sh.log
-       ADMIN_PASSWORD=quiet
-       DATABASE_PASSWORD=$ADMIN_PASSWORD
-       RABBIT_PASSWORD=$ADMIN_PASSWORD
-       SERVICE_PASSWORD=$ADMIN_PASSWORD
-       SERVICE_TOKEN=a682f596-76f3-11e3-b3b2-e716f9080d50
-
+Historically DevStack obtained all local configuration and
+customizations from a ``localrc`` file.  In Oct 2013 the
+``local.conf`` configuration method was introduced (in `review 46768
+<https://review.openstack.org/#/c/46768/>`__) to simplify this
+process.
 
 Configuration Notes
 ===================
@@ -256,6 +218,20 @@ to direct the message stream to the log host.  |
         SYSLOG_HOST=$HOST_IP
         SYSLOG_PORT=516
 
+
+Example Logging Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For example, non-interactive installs probably wish to save output to
+a file, keep service logs and disable color in the stored files.
+
+   ::
+
+       [[local|localrc]]
+       DEST=/opt/stack/
+       LOGDIR=$DEST/logs
+       LOGFILE=$LOGDIR/stack.sh.log
+       LOG_COLOR=False
 
 Database Backend
 ----------------
