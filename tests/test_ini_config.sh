@@ -199,6 +199,11 @@ for x in $del_cases; do
     fi
 done
 
+# test file-creation
+iniset $SUDO_ARG ${INI_TMP_ETC_DIR}/test.new.ini test foo bar
+VAL=$(iniget ${INI_TMP_ETC_DIR}/test.new.ini test foo)
+assert_equal "$VAL" "bar" "iniset created file"
+
 $SUDO rm -rf ${INI_TMP_DIR}
 
 report_results
