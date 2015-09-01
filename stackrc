@@ -455,6 +455,10 @@ GITBRANCH["ceilometermiddleware"]=${CEILOMETERMIDDLEWARE_BRANCH:-master}
 GITREPO["os-brick"]=${OS_BRICK_REPO:-${GIT_BASE}/openstack/os-brick.git}
 GITBRANCH["os-brick"]=${OS_BRICK_BRANCH:-master}
 
+# ironic common lib
+GITREPO["ironic-lib"]=${IRONIC_LIB_REPO:-${GIT_BASE}/openstack/ironic-lib.git}
+GITBRANCH["ironic-lib"]=${IRONIC_LIB_BRANCH:-master}
+
 
 ##################
 #
