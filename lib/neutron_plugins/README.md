@@ -16,9 +16,7 @@ functions
 ``lib/neutron-legacy`` calls the following functions when the ``$Q_PLUGIN`` is enabled
 
 * ``neutron_plugin_create_nova_conf`` :
-  set ``NOVA_VIF_DRIVER`` and optionally set options in nova_conf
-  e.g.
-  NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+  optionally set options in nova_conf
 * ``neutron_plugin_install_agent_packages`` :
   install packages that is specific to plugin agent
   e.g.
