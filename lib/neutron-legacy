@@ -356,10 +356,6 @@ else
     Q_USE_SECGROUP=False
 fi
 
-# Tell Tempest this project is present
-TEMPEST_SERVICES+=,neutron
-
-
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
 set +o xtrace

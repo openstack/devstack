@@ -64,10 +64,6 @@ else
     HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-trusts}
 fi
 
-# Tell Tempest this project is present
-TEMPEST_SERVICES+=,heat
-
-
 # Functions
 # ---------
 
