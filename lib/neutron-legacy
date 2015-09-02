@@ -826,11 +826,11 @@ function _move_neutron_addresses_route {
         fi
 
         if [[ "$IP_BRD" != "" ]]; then
-            IP_ADD="sudo ip addr del $IP_BRD dev $from_intf"
-            IP_DEL="sudo ip addr add $IP_BRD dev $to_intf"
+            IP_DEL="sudo ip addr del $IP_BRD dev $from_intf"
+            IP_ADD="sudo ip addr add $IP_BRD dev $to_intf"
         fi
 
-        $IP_ADD; $IP_DEL; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE
+        $IP_DEL; $IP_ADD; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE
     fi
 }
 
