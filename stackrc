@@ -565,7 +565,7 @@ CIRROS_ARCH=${CIRROS_ARCH:-"x86_64"}
 # ``IMAGE_URLS`` to be set in the `localrc` section of ``local.conf``.
 DOWNLOAD_DEFAULT_IMAGES=$(trueorfalse True DOWNLOAD_DEFAULT_IMAGES)
 if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
-    if [ -n $IMAGE_URLS ]; then
+    if [[ -n "$IMAGE_URLS" ]]; then
         IMAGE_URLS+=","
     fi
     case "$VIRT_DRIVER" in
