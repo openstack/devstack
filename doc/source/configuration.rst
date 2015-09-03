@@ -383,6 +383,24 @@ DevStack's default configuration in ``sql`` mode is set in
 ``files/keystone_data.sh``
 
 
+Guest Images
+------------
+
+Images provided in URLS via the comma-separated ``IMAGE_URLS``
+variable will be downloaded and uploaded to glance by DevStack.
+
+Default guest-images are predefined for each type of hypervisor and
+their testing-requirements in ``stack.sh``.  Setting
+``DOWNLOAD_DEFAULT_IMAGES=False`` will prevent DevStack downloading
+these default images; in that case, you will want to populate
+``IMAGE_URLS`` with sufficient images to satisfy testing-requirements.
+
+    ::
+
+        DOWNLOAD_DEFAULT_IMAGES=False
+        IMAGE_URLS="http://foo.bar.com/image.qcow,"
+        IMAGE_URLS+="http://foo.bar.com/image2.qcow"
+
 IP Version
 ----------
 
