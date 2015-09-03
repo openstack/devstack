@@ -361,6 +361,14 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute fixed_network_name $PRIVATE_NETWORK_NAME
     fi
 
+    # Set the service catalog entry for Tempest to run on. Typically
+    # used to try different compute API version targets. The tempest
+    # default if 'compute', which is typically valid, so only set this
+    # if you want to change it.
+    if [[ -n "$TEMPEST_COMPUTE_TYPE" ]]; then
+        iniset $TEMPEST_CONFIG compute catalog_type $TEMPEST_COMPUTE_TYPE
+    fi
+
     # Compute Features
     # Run ``verify_tempest_config -ur`` to retrieve enabled extensions on API endpoints
     # NOTE(mtreinish): This must be done after auth settings are added to the tempest config

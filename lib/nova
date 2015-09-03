@@ -64,6 +64,11 @@ NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 # Expect to remove in L or M.
 NOVA_API_VERSION=${NOVA_API_VERSION-default}
 
+# NOVA_V2_LEGACY defines whether we force the Nova v2.0 enpoint onto
+# the Nova v2.0 legacy code base. Remove this option once the Nova
+# v2.0 legacy codebase is removed.
+NOVA_V2_LEGACY=$(trueorfalse False NOVA_V2_LEGACY)
+
 if is_suse; then
     NOVA_WSGI_DIR=${NOVA_WSGI_DIR:-/srv/www/htdocs/nova}
 else
@@ -313,6 +318,13 @@ function configure_nova {
         if [[ "$NOVA_API_VERSION" == "v21default" ]]; then
             sed -i s/": openstack_compute_api_v2$"/": openstack_compute_api_v21"/ "$NOVA_API_PASTE_INI"
         fi
+
+        # For setting up an environment where v2.0 is running on the
+        # v2.0 legacy code base.
+        if [[ "$NOVA_V2_LEGACY" == "True" ]]; then
+            sed -i s@"^/v2: openstack_compute_api_v21_legacy_v2_compatible$"@"/v2: openstack_compute_api_legacy_v2"@ \
+                "$NOVA_API_PASTE_INI"
+        fi
     fi
 
     if is_service_enabled n-cpu; then
@@ -413,15 +425,16 @@ function create_nova_accounts {
                 nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST/compute"
             fi
 
-            get_or_create_service "nova" "compute" "Nova Compute Service"
-            get_or_create_endpoint "compute" \
+            get_or_create_service "nova_legacy" "compute_legacy" \
+                "Nova Compute Service (Legacy 2.0)"
+            get_or_create_endpoint "compute_legacy" \
                 "$REGION_NAME" \
                 "$nova_api_url/v2/\$(tenant_id)s" \
                 "$nova_api_url/v2/\$(tenant_id)s" \
                 "$nova_api_url/v2/\$(tenant_id)s"
 
-            get_or_create_service "novav21" "computev21" "Nova Compute Service V2.1"
-            get_or_create_endpoint "computev21" \
+            get_or_create_service "nova" "compute" "Nova Compute Service"
+            get_or_create_endpoint "compute" \
                 "$REGION_NAME" \
                 "$nova_api_url/v2.1/\$(tenant_id)s" \
                 "$nova_api_url/v2.1/\$(tenant_id)s" \
