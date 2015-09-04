@@ -690,13 +690,16 @@ function policy_add {
 # Usage: get_or_create_domain <name> <description>
 function get_or_create_domain {
     local domain_id
+    local os_url="$KEYSTONE_SERVICE_URI_V3"
     # Gets domain id
     domain_id=$(
         # Gets domain id
-        openstack domain show $1 \
+        openstack --os-token=$OS_TOKEN --os-url=$os_url \
+            --os-identity-api-version=3 domain show $1 \
             -f value -c id 2>/dev/null ||
         # Creates new domain
-        openstack domain create $1 \
+        openstack --os-token=$OS_TOKEN --os-url=$os_url \
+            --os-identity-api-version=3 domain create $1 \
             --description "$2" \
             -f value -c id
     )
@@ -707,11 +710,13 @@ function get_or_create_domain {
 # Usage: get_or_create_group <groupname> <domain> [<description>]
 function get_or_create_group {
     local desc="${3:-}"
+    local os_url="$KEYSTONE_SERVICE_URI_V3"
     local group_id
     # Gets group id
     group_id=$(
         # Creates new group with --or-show
-        openstack group create $1 \
+        openstack --os-token=$OS_TOKEN --os-url=$os_url \
+            --os-identity-api-version=3 group create $1 \
             --domain $2 --description "$desc" --or-show \
             -f value -c id
     )
@@ -733,6 +738,8 @@ function get_or_create_user {
         openstack user create \
             $1 \
             --password "$2" \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             --domain=$3 \
             $email \
             --or-show \
@@ -747,7 +754,9 @@ function get_or_create_project {
     local project_id
     project_id=$(
         # Creates new project with --or-show
-        openstack project create $1 \
+        openstack --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
+            project create $1 \
             --domain=$2 \
             --or-show -f value -c id
     )
@@ -761,6 +770,8 @@ function get_or_create_role {
     role_id=$(
         # Creates role with --or-show
         openstack role create $1 \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             --or-show -f value -c id
     )
     echo $role_id
@@ -773,6 +784,8 @@ function get_or_add_user_project_role {
     # Gets user role id
     user_role_id=$(openstack role list \
         --user $2 \
+        --os-url=$KEYSTONE_SERVICE_URI_V3 \
+        --os-identity-api-version=3 \
         --column "ID" \
         --project $3 \
         --column "Name" \
@@ -783,6 +796,8 @@ function get_or_add_user_project_role {
             $1 \
             --user $2 \
             --project $3 \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             | grep " id " | get_field 2)
     fi
     echo $user_role_id
@@ -794,15 +809,21 @@ function get_or_add_group_project_role {
     local group_role_id
     # Gets group role id
     group_role_id=$(openstack role list \
+        --os-url=$KEYSTONE_SERVICE_URI_V3 \
+        --os-identity-api-version=3 \
         --group $2 \
         --project $3 \
         -c "ID" -f value)
     if [[ -z "$group_role_id" ]]; then
         # Adds role to group and get it
         openstack role add $1 \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             --group $2 \
             --project $3
         group_role_id=$(openstack role list \
+            --os-url=$KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             --group $2 \
             --project $3 \
             -c "ID" -f value)
@@ -820,6 +841,8 @@ function get_or_create_service {
         openstack service show $2 -f value -c id 2>/dev/null ||
         # Creates new service if not exists
         openstack service create \
+            --os-url $KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             $2 \
             --name $1 \
             --description="$3" \
@@ -838,6 +861,8 @@ function _get_or_create_endpoint_with_interface {
     # gets support for this, the check for the region name can be removed.
     # Related bug in keystone: https://bugs.launchpad.net/keystone/+bug/1482772
     endpoint_id=$(openstack endpoint list \
+        --os-url $KEYSTONE_SERVICE_URI_V3 \
+        --os-identity-api-version=3 \
         --service $1 \
         --interface $2 \
         --region $4 \
@@ -845,6 +870,8 @@ function _get_or_create_endpoint_with_interface {
     if [[ -z "$endpoint_id" ]]; then
         # Creates new endpoint
         endpoint_id=$(openstack endpoint create \
+            --os-url $KEYSTONE_SERVICE_URI_V3 \
+            --os-identity-api-version=3 \
             $1 $2 $3 --region $4 -f value -c id)
     fi
 
