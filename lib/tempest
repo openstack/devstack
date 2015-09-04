@@ -559,7 +559,7 @@ function configure_tempest {
 
     if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
         # Use the ``BOTO_CONFIG`` environment variable to point to this file
-        iniset $BOTO_CONF Boto ca_certificates_file $SSL_BUNDLE_FILE
+        iniset -sudo $BOTO_CONF Boto ca_certificates_file $SSL_BUNDLE_FILE
         sudo chown $STACK_USER $BOTO_CONF
     fi
 
