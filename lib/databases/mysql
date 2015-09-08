@@ -12,12 +12,6 @@ MY_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 MYSQL_DRIVER=${MYSQL_DRIVER:-PyMySQL}
-# Force over to pymysql driver by default if we are using it.
-if is_service_enabled mysql; then
-    if [[ "$MYSQL_DRIVER" == "PyMySQL" ]]; then
-        SQLALCHEMY_DATABASE_DRIVER=${SQLALCHEMY_DATABASE_DRIVER:-"pymysql"}
-    fi
-fi
 
 register_database mysql
 
@@ -29,6 +23,14 @@ fi
 
 # Functions
 # ---------
+
+function get_database_type_mysql {
+    if [[ "$MYSQL_DRIVER" == "PyMySQL" ]]; then
+        echo mysql+pymysql
+    else
+        echo mysql
+    fi
+}
 
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database_mysql {
