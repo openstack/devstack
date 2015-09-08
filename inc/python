@@ -157,6 +157,28 @@ function use_library_from_git {
     return $enabled
 }
 
+# determine if a package was installed from git
+function lib_installed_from_git {
+    local name=$1
+    pip freeze 2>/dev/null | grep -- "$name" | grep -q -- '-e git'
+}
+
+# check that everything that's in LIBS_FROM_GIT was actually installed
+# correctly, this helps double check issues with library fat fingering.
+function check_libs_from_git {
+    local lib=""
+    local not_installed=""
+    for lib in $(echo ${LIBS_FROM_GIT} | tr "," " "); do
+        if ! lib_installed_from_git "$lib"; then
+            not_installed+=" $lib"
+        fi
+    done
+    # if anything is not installed, say what it is.
+    if [[ -n "$not_installed" ]]; then
+        die $LINENO "The following LIBS_FROM_GIT were not installed correct: $not_installed"
+    fi
+}
+
 # setup a library by name. If we are trying to use the library from
 # git, we'll do a git based install, otherwise we'll punt and the
 # library should be installed by a requirements pull from another
