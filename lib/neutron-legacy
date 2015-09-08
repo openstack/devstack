@@ -901,7 +901,11 @@ function _configure_neutron_common {
     # If needed, move config file from ``$NEUTRON_DIR/etc/neutron`` to ``NEUTRON_CONF_DIR``
     mkdir -p /$Q_PLUGIN_CONF_PATH
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
-    cp $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
+    # NOTE(hichihara): Some neutron vendor plugins were already decomposed and
+    # there is no config file in Neutron tree. They should prepare the file in each plugin.
+    if [ -f $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE ]; then
+        cp $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
+    fi
 
     iniset $NEUTRON_CONF database connection `database_connection_url $Q_DB_NAME`
     iniset $NEUTRON_CONF DEFAULT state_path $DATA_DIR/neutron
