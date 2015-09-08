@@ -459,9 +459,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
 
     # Telemetry
-    # Ceilometer API optimization happened in Juno that allows to run more tests in tempest.
-    # Once Tempest retires support for icehouse this flag can be removed.
-    iniset $TEMPEST_CONFIG telemetry too_slow_to_test "False"
     iniset $TEMPEST_CONFIG telemetry-feature-enabled events "True"
 
     # Object Store
