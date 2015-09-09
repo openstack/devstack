@@ -20,6 +20,10 @@ The following are plugins that exist for official OpenStack projects.
 +--------------------+-------------------------------------------+--------------------+
 |Plugin Name         |URL                                        |Comments            |
 +--------------------+-------------------------------------------+--------------------+
+|aodh                |git://git.openstack.org/openstack/aodh     | alarming           |
++--------------------+-------------------------------------------+--------------------+
+|gnocchi             |git://git.openstack.org/openstack/gnocchi  | metric             |
++--------------------+-------------------------------------------+--------------------+
 |magnum              |git://git.openstack.org/openstack/magnum   |                    |
 +--------------------+-------------------------------------------+--------------------+
 |sahara              |git://git.openstack.org/openstack/sahara   |                    |
