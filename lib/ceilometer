@@ -360,10 +360,10 @@ function install_ceilometerclient {
 
 # start_ceilometer() - Start running processes, including screen
 function start_ceilometer {
-    run_process ceilometer-acentral "$CEILOMETER_BIN_DIR/ceilometer-agent-central --config-file $CEILOMETER_CONF"
+    run_process ceilometer-acentral "$CEILOMETER_BIN_DIR/ceilometer-polling --polling-namespaces central --config-file $CEILOMETER_CONF"
     run_process ceilometer-anotification "$CEILOMETER_BIN_DIR/ceilometer-agent-notification --config-file $CEILOMETER_CONF"
     run_process ceilometer-collector "$CEILOMETER_BIN_DIR/ceilometer-collector --config-file $CEILOMETER_CONF"
-    run_process ceilometer-aipmi "$CEILOMETER_BIN_DIR/ceilometer-agent-ipmi --config-file $CEILOMETER_CONF"
+    run_process ceilometer-aipmi "$CEILOMETER_BIN_DIR/ceilometer-polling --polling-namespaces ipmi --config-file $CEILOMETER_CONF"
 
     if [[ "$CEILOMETER_USE_MOD_WSGI" == "False" ]]; then
         run_process ceilometer-api "$CEILOMETER_BIN_DIR/ceilometer-api -d -v --log-dir=$CEILOMETER_API_LOG_DIR --config-file $CEILOMETER_CONF"
@@ -378,10 +378,10 @@ function start_ceilometer {
     # Start the compute agent last to allow time for the collector to
     # fully wake up and connect to the message bus. See bug #1355809
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
-        run_process ceilometer-acompute "$CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_CONF" $LIBVIRT_GROUP
+        run_process ceilometer-acompute "$CEILOMETER_BIN_DIR/ceilometer-polling --polling-namespaces compute --config-file $CEILOMETER_CONF" $LIBVIRT_GROUP
     fi
     if [[ "$VIRT_DRIVER" = 'vsphere' ]]; then
-        run_process ceilometer-acompute "$CEILOMETER_BIN_DIR/ceilometer-agent-compute --config-file $CEILOMETER_CONF"
+        run_process ceilometer-acompute "$CEILOMETER_BIN_DIR/ceilometer-polling --polling-namespaces compute --config-file $CEILOMETER_CONF"
     fi
 
     # Only die on API if it was actually intended to be turned on
