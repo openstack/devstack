@@ -801,6 +801,7 @@ function swift_configure_tempurls {
     OS_USERNAME=swift \
         OS_TENANT_NAME=$SERVICE_TENANT_NAME \
         OS_PASSWORD=$SERVICE_PASSWORD \
+        OS_AUTH_URL=$KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION \
         swift post -m "Temp-URL-Key: $SWIFT_TEMPURL_KEY"
 }
 
