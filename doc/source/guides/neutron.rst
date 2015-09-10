@@ -59,7 +59,7 @@ DevStack Configuration
 
         ## Neutron options
         Q_USE_SECGROUP=True
-        FLOATING_RANGE="172.18.161.1/24"
+        FLOATING_RANGE="172.18.161.0/24"
         FIXED_RANGE="10.0.0.0/24"
         Q_FLOATING_ALLOCATION_POOL=start=172.18.161.250,end=172.18.161.254
         PUBLIC_NETWORK_GATEWAY="172.18.161.1"
