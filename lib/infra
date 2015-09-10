@@ -41,7 +41,7 @@ function install_infra {
     # Install pbr
     if use_library_from_git "pbr"; then
         git_clone_by_name "pbr"
-        setup_lib "pbr"
+        setup_dev_lib "pbr"
     else
         # Always upgrade pbr to latest version as we may have pulled it
         # in via system packages.
