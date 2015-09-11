@@ -59,7 +59,7 @@ function _do_install_oslo_lib {
     local name=$1
     if use_library_from_git "$name"; then
         git_clone_by_name "$name"
-        setup_lib "$name"
+        setup_dev_lib "$name"
     fi
 }
 
