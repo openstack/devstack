@@ -1373,8 +1373,15 @@ if [[ -x $TOP_DIR/local.sh ]]; then
     $TOP_DIR/local.sh
 fi
 
+# Sanity checks
+# =============
+
 # Check the status of running services
 service_check
+
+# ensure that all the libraries we think we installed from git,
+# actually were.
+check_libs_from_git
 
 
 # Bash completion
