@@ -101,7 +101,7 @@ function initialize_database_backends {
     # a multi-node DevStack installation.
 
     # NOTE: Don't specify ``/db`` in this string so we can use it for multiple services
-    BASE_SQL_CONN=${BASE_SQL_CONN:-$(get_database_type)://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST}
+    BASE_SQL_CONN=${BASE_SQL_CONN:-$(get_database_type_$DATABASE_TYPE)://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST}
 
     return 0
 }
@@ -133,14 +133,6 @@ function configure_database {
 function database_connection_url {
     local db=$1
     database_connection_url_$DATABASE_TYPE $db
-}
-
-function get_database_type {
-    if [[ -n "${SQLALCHEMY_DATABASE_DRIVER}" ]]; then
-        echo "${DATABASE_TYPE}+${SQLALCHEMY_DATABASE_DRIVER}"
-    else
-        echo "${DATABASE_TYPE}"
-    fi
 }
 
 

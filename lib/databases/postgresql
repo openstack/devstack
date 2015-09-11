@@ -21,6 +21,10 @@ register_database postgresql
 # Functions
 # ---------
 
+function get_database_type_postgresql {
+    echo postgresql
+}
+
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database_postgresql {
     stop_service postgresql
