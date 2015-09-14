@@ -131,7 +131,7 @@ def guru_meditation_report():
         print "Skipping as nova-compute does not appear to be running"
         return
 
-    _dump_cmd("kill -s USR1 `pgrep nova-compute`")
+    _dump_cmd("kill -s USR2 `pgrep nova-compute`")
     print "guru meditation report in nova-compute log"
 
 
