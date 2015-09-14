@@ -353,7 +353,7 @@ function configure_keystone_extensions {
 # Group                Users      Roles                 Tenant
 # ------------------------------------------------------------------
 # admins               admin      admin                 admin
-# nonadmin             demo       Member, anotherrole   demo
+# nonadmins            demo       Member, anotherrole   demo
 
 
 # Migrated from keystone_data.sh
