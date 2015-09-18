@@ -18,11 +18,12 @@ A sample is provided in ``devstack/samples``
 
 The new header is similar to a normal INI section header but with double
 brackets (``[[ ... ]]``) and two internal fields separated by a pipe
-(``|``):
-
+(``|``). Note that there are no spaces between the double brackets and the
+internal fields. Likewise, there are no spaces between the pipe and the
+internal fields:
 ::
 
-    [[ <phase> | <config-file-name> ]]
+    '[[' <phase> '|' <config-file-name> ']]'
 
 where ``<phase>`` is one of a set of phase names defined by ``stack.sh``
 and ``<config-file-name>`` is the configuration filename. The filename
