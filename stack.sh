@@ -1034,6 +1034,73 @@ if is_service_enabled keystone; then
     export OS_REGION_NAME=$REGION_NAME
 fi
 
+# We now have a working keystone. From this point, everything can be done
+# with normal auth. Let's write out the auth config files so that if something
+# goes wrong subsequently, developers debugging have stackrc and clouds.yaml
+# files to use to poke at things
+
+# Create account rc files
+# =======================
+
+# Creates source able script files for easier user switching.
+# This step also creates certificates for tenants and users,
+# which is helpful in image bundle steps.
+
+if is_service_enabled nova && is_service_enabled keystone; then
+    USERRC_PARAMS="-PA --target-dir $TOP_DIR/accrc"
+
+    if [ -f $SSL_BUNDLE_FILE ]; then
+        USERRC_PARAMS="$USERRC_PARAMS --os-cacert $SSL_BUNDLE_FILE"
+    fi
+
+    if [[ "$HEAT_STANDALONE" = "True" ]]; then
+        USERRC_PARAMS="$USERRC_PARAMS --heat-url http://$HEAT_API_HOST:$HEAT_API_PORT/v1"
+    fi
+
+    $TOP_DIR/tools/create_userrc.sh $USERRC_PARAMS
+fi
+
+
+# Save some values we generated for later use
+save_stackenv
+
+# Update/create user clouds.yaml file.
+# clouds.yaml will have
+# - A `devstack` entry for the `demo` user for the `demo` project.
+# - A `devstack-admin` entry for the `admin` user for the `admin` project.
+
+# The location is a variable to allow for easier refactoring later to make it
+# overridable. There is currently no usecase where doing so makes sense, so
+# it's not currently configurable.
+CLOUDS_YAML=~/.config/openstack/clouds.yaml
+
+mkdir -p $(dirname $CLOUDS_YAML)
+
+CA_CERT_ARG=''
+if [ -f "$SSL_BUNDLE_FILE" ]; then
+    CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
+fi
+$TOP_DIR/tools/update_clouds_yaml.py \
+    --file $CLOUDS_YAML \
+    --os-cloud devstack \
+    --os-region-name $REGION_NAME \
+    --os-identity-api-version $IDENTITY_API_VERSION \
+    $CA_CERT_ARG \
+    --os-auth-url $KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION \
+    --os-username demo \
+    --os-password $ADMIN_PASSWORD \
+    --os-project-name demo
+$TOP_DIR/tools/update_clouds_yaml.py \
+    --file $CLOUDS_YAML \
+    --os-cloud devstack-admin \
+    --os-region-name $REGION_NAME \
+    --os-identity-api-version $IDENTITY_API_VERSION \
+    $CA_CERT_ARG \
+    --os-auth-url $KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION \
+    --os-username admin \
+    --os-password $ADMIN_PASSWORD \
+    --os-project-name admin
+
 # Horizon
 # -------
 
@@ -1273,69 +1340,6 @@ if is_service_enabled heat; then
         build_heat_pip_mirror
     fi
 fi
-
-
-# Create account rc files
-# =======================
-
-# Creates source able script files for easier user switching.
-# This step also creates certificates for tenants and users,
-# which is helpful in image bundle steps.
-
-if is_service_enabled nova && is_service_enabled keystone; then
-    USERRC_PARAMS="-PA --target-dir $TOP_DIR/accrc"
-
-    if [ -f $SSL_BUNDLE_FILE ]; then
-        USERRC_PARAMS="$USERRC_PARAMS --os-cacert $SSL_BUNDLE_FILE"
-    fi
-
-    if [[ "$HEAT_STANDALONE" = "True" ]]; then
-        USERRC_PARAMS="$USERRC_PARAMS --heat-url http://$HEAT_API_HOST:$HEAT_API_PORT/v1"
-    fi
-
-    $TOP_DIR/tools/create_userrc.sh $USERRC_PARAMS
-fi
-
-
-# Save some values we generated for later use
-save_stackenv
-
-# Update/create user clouds.yaml file.
-# clouds.yaml will have
-# - A `devstack` entry for the `demo` user for the `demo` project.
-# - A `devstack-admin` entry for the `admin` user for the `admin` project.
-
-# The location is a variable to allow for easier refactoring later to make it
-# overridable. There is currently no usecase where doing so makes sense, so
-# it's not currently configurable.
-CLOUDS_YAML=~/.config/openstack/clouds.yaml
-
-mkdir -p $(dirname $CLOUDS_YAML)
-
-CA_CERT_ARG=''
-if [ -f "$SSL_BUNDLE_FILE" ]; then
-    CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
-fi
-$TOP_DIR/tools/update_clouds_yaml.py \
-    --file $CLOUDS_YAML \
-    --os-cloud devstack \
-    --os-region-name $REGION_NAME \
-    --os-identity-api-version $IDENTITY_API_VERSION \
-    $CA_CERT_ARG \
-    --os-auth-url $KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION \
-    --os-username demo \
-    --os-password $ADMIN_PASSWORD \
-    --os-project-name demo
-$TOP_DIR/tools/update_clouds_yaml.py \
-    --file $CLOUDS_YAML \
-    --os-cloud devstack-admin \
-    --os-region-name $REGION_NAME \
-    --os-identity-api-version $IDENTITY_API_VERSION \
-    $CA_CERT_ARG \
-    --os-auth-url $KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION \
-    --os-username admin \
-    --os-password $ADMIN_PASSWORD \
-    --os-project-name admin
 
 
 # Wrapup configuration
