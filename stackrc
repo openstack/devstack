@@ -254,7 +254,7 @@ GITBRANCH["tempest-lib"]=${TEMPEST_LIB_BRANCH:-master}
 
 ##############
 #
-#  OpenStack Client Library Componets
+#  OpenStack Client Library Components
 #
 ##############
 

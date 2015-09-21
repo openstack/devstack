@@ -45,7 +45,7 @@ fi
 # Configure Projects
 # ==================
 
-# Plugin Phase 0: override_defaults - allow pluggins to override
+# Plugin Phase 0: override_defaults - allow plugins to override
 # defaults before other services are run
 run_phase override_defaults
 

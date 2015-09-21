@@ -1,5 +1,0 @@
-selinux-policy-targeted
-mongodb
-mongodb-server
-pymongo
-redis # NOPRIME

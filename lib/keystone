@@ -51,11 +51,6 @@ fi
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
-if is_suse; then
-    KEYSTONE_WSGI_DIR=${KEYSTONE_WSGI_DIR:-/srv/www/htdocs/keystone}
-else
-    KEYSTONE_WSGI_DIR=${KEYSTONE_WSGI_DIR:-/var/www/keystone}
-fi
 
 # Set up additional extensions, such as oauth1, federation
 # Example of KEYSTONE_EXTENSIONS=oauth1,federation
@@ -132,14 +127,11 @@ function cleanup_keystone {
 
 # _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
 function _cleanup_keystone_apache_wsgi {
-    sudo rm -f $KEYSTONE_WSGI_DIR/*
     sudo rm -f $(apache_site_config_for keystone)
 }
 
 # _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
 function _config_keystone_apache_wsgi {
-    sudo mkdir -p $KEYSTONE_WSGI_DIR
-
     local keystone_apache_conf=$(apache_site_config_for keystone)
     local keystone_ssl=""
     local keystone_certfile=""
@@ -161,22 +153,17 @@ function _config_keystone_apache_wsgi {
         venv_path="python-path=${PROJECT_VENV["keystone"]}/lib/$(python_version)/site-packages"
     fi
 
-    # copy proxy vhost and wsgi file
-    sudo cp $KEYSTONE_DIR/httpd/keystone.py $KEYSTONE_WSGI_DIR/main
-    sudo cp $KEYSTONE_DIR/httpd/keystone.py $KEYSTONE_WSGI_DIR/admin
-
     sudo cp $FILES/apache-keystone.template $keystone_apache_conf
     sudo sed -e "
         s|%PUBLICPORT%|$keystone_service_port|g;
         s|%ADMINPORT%|$keystone_auth_port|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
-        s|%PUBLICWSGI%|$KEYSTONE_WSGI_DIR/main|g;
-        s|%ADMINWSGI%|$KEYSTONE_WSGI_DIR/admin|g;
         s|%SSLENGINE%|$keystone_ssl|g;
         s|%SSLCERTFILE%|$keystone_certfile|g;
         s|%SSLKEYFILE%|$keystone_keyfile|g;
         s|%USER%|$STACK_USER|g;
         s|%VIRTUALENV%|$venv_path|g
+        s|%KEYSTONE_BIN%|$KEYSTONE_BIN_DIR|g
     " -i $keystone_apache_conf
 }
 
@@ -353,7 +340,7 @@ function configure_keystone_extensions {
 # Group                Users      Roles                 Tenant
 # ------------------------------------------------------------------
 # admins               admin      admin                 admin
-# nonadmin             demo       Member, anotherrole   demo
+# nonadmins            demo       Member, anotherrole   demo
 
 
 # Migrated from keystone_data.sh
