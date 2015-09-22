@@ -1034,36 +1034,6 @@ if is_service_enabled keystone; then
     export OS_REGION_NAME=$REGION_NAME
 fi
 
-# We now have a working keystone. From this point, everything can be done
-# with normal auth. Let's write out the auth config files so that if something
-# goes wrong subsequently, developers debugging have stackrc and clouds.yaml
-# files to use to poke at things
-
-# Create account rc files
-# =======================
-
-# Creates source able script files for easier user switching.
-# This step also creates certificates for tenants and users,
-# which is helpful in image bundle steps.
-
-if is_service_enabled nova && is_service_enabled keystone; then
-    USERRC_PARAMS="-PA --target-dir $TOP_DIR/accrc"
-
-    if [ -f $SSL_BUNDLE_FILE ]; then
-        USERRC_PARAMS="$USERRC_PARAMS --os-cacert $SSL_BUNDLE_FILE"
-    fi
-
-    if [[ "$HEAT_STANDALONE" = "True" ]]; then
-        USERRC_PARAMS="$USERRC_PARAMS --heat-url http://$HEAT_API_HOST:$HEAT_API_PORT/v1"
-    fi
-
-    $TOP_DIR/tools/create_userrc.sh $USERRC_PARAMS
-fi
-
-
-# Save some values we generated for later use
-save_stackenv
-
 # Write a clouds.yaml file
 write_clouds_yaml
 
@@ -1304,6 +1274,32 @@ if is_service_enabled heat; then
         build_heat_pip_mirror
     fi
 fi
+
+
+# Create account rc files
+# =======================
+
+# Creates source able script files for easier user switching.
+# This step also creates certificates for tenants and users,
+# which is helpful in image bundle steps.
+
+if is_service_enabled nova && is_service_enabled keystone; then
+    USERRC_PARAMS="-PA --target-dir $TOP_DIR/accrc"
+
+    if [ -f $SSL_BUNDLE_FILE ]; then
+        USERRC_PARAMS="$USERRC_PARAMS --os-cacert $SSL_BUNDLE_FILE"
+    fi
+
+    if [[ "$HEAT_STANDALONE" = "True" ]]; then
+        USERRC_PARAMS="$USERRC_PARAMS --heat-url http://$HEAT_API_HOST:$HEAT_API_PORT/v1"
+    fi
+
+    $TOP_DIR/tools/create_userrc.sh $USERRC_PARAMS
+fi
+
+
+# Save some values we generated for later use
+save_stackenv
 
 
 # Wrapup configuration
