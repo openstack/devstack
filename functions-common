@@ -1492,7 +1492,7 @@ function service_check {
         return
     fi
 
-    # Check if there is any falure flag file under $SERVICE_DIR/$SCREEN_NAME
+    # Check if there is any failure flag file under $SERVICE_DIR/$SCREEN_NAME
     # make this -o errexit safe
     failures=`ls "$SERVICE_DIR/$SCREEN_NAME"/*.failure 2>/dev/null || /bin/true`
 
