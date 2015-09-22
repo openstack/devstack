@@ -810,11 +810,11 @@ function _move_neutron_addresses_route {
         local ADD_OVS_PORT=""
 
         if [[ $af == "inet" ]]; then
-            IP_BRD=$(ip -f $af a s dev $from_intf | grep $HOST_IP | awk '{ print $2, $3, $4; exit }')
+            IP_BRD=$(ip -f $af a s dev $from_intf | grep inet | awk '{ print $2, $3, $4; exit }')
         fi
 
         if [[ $af == "inet6" ]]; then
-            IP_BRD=$(ip -f $af a s dev $from_intf | grep $HOST_IPV6 | awk '{ print $2, $3, $4; exit }')
+            IP_BRD=$(ip -f $af a s dev $from_intf | grep inet6 | awk '{ print $2, $3, $4; exit }')
         fi
 
         if [ "$DEFAULT_ROUTE_GW" != "" ]; then
