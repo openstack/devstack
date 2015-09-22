@@ -1842,8 +1842,7 @@ function is_service_enabled {
         # Look for top-level 'enabled' function for this service
         if type is_${service}_enabled >/dev/null 2>&1; then
             # A function exists for this service, use it
-            is_${service}_enabled
-            enabled=$?
+            is_${service}_enabled && enabled=0
         fi
 
         # TODO(dtroyer): Remove these legacy special-cases after the is_XXX_enabled()
