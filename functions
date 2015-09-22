@@ -36,10 +36,9 @@ function function_exists {
 # - ``FILES`` must be set to the cache dir
 # - ``GLANCE_HOSTPORT``
 #
-# upload_image image-url glance-token
+# upload_image image-url
 function upload_image {
     local image_url=$1
-    local token=$2
 
     local image image_fname image_name
 
