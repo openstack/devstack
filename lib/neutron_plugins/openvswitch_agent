@@ -105,6 +105,7 @@ function neutron_plugin_configure_plugin_agent {
         iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper "$Q_RR_COMMAND"
     fi
     iniset /$Q_PLUGIN_CONF_FILE agent tunnel_types $Q_TUNNEL_TYPES
+    iniset /$Q_PLUGIN_CONF_FILE ovs datapath_type $OVS_DATAPATH_TYPE
 }
 
 function neutron_plugin_setup_interface_driver {
