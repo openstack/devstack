@@ -492,8 +492,11 @@ function git_clone {
     if echo $git_ref | egrep -q "^refs"; then
         # If our branch name is a gerrit style refs/changes/...
         if [[ ! -d $git_dest ]]; then
-            [[ "$ERROR_ON_CLONE" = "True" ]] && \
+            if [[ "$ERROR_ON_CLONE" = "True" ]]; then
+                echo "The $git_dest project was not found; if this is a gate job, add"
+                echo "the project to the \$PROJECTS variable in the job definition."
                 die $LINENO "Cloning not allowed in this configuration"
+            fi
             git_timed clone $git_clone_flags $git_remote $git_dest
         fi
         cd $git_dest
@@ -501,8 +504,11 @@ function git_clone {
     else
         # do a full clone only if the directory doesn't exist
         if [[ ! -d $git_dest ]]; then
-            [[ "$ERROR_ON_CLONE" = "True" ]] && \
+            if [[ "$ERROR_ON_CLONE" = "True" ]]; then
+                echo "The $git_dest project was not found; if this is a gate job, add"
+                echo "the project to the \$PROJECTS variable in the job definition."
                 die $LINENO "Cloning not allowed in this configuration"
+            fi
             git_timed clone $git_clone_flags $git_remote $git_dest
             cd $git_dest
             # This checkout syntax works for both branches and tags
