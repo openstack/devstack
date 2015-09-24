@@ -7,6 +7,13 @@
 [[ -z "$_DEVSTACK_STACKRC" ]] || return 0
 declare -r _DEVSTACK_STACKRC=1
 
+# Sanitize language settings to avoid commands bailing out
+# with "unsupported locale setting" errors.
+unset LANG
+unset LANGUAGE
+LC_ALL=C
+export LC_ALL
+
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 

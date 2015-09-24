@@ -28,13 +28,6 @@ set -o xtrace
 # Make sure custom grep options don't get in the way
 unset GREP_OPTIONS
 
-# Sanitize language settings to avoid commands bailing out
-# with "unsupported locale setting" errors.
-unset LANG
-unset LANGUAGE
-LC_ALL=C
-export LC_ALL
-
 # Make sure umask is sane
 umask 022
 
