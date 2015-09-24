@@ -178,7 +178,7 @@ System Packages
 ===============
 
 Devstack provides a framework for getting packages installed at an early
-phase of its execution. This packages may be defined in a plugin as files
+phase of its execution. These packages may be defined in a plugin as files
 that contain new-line separated lists of packages required by the plugin
 
 Supported packaging systems include apt and yum across multiple distributions.

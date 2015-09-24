@@ -509,9 +509,9 @@ function create_ovs_taps {
     sleep 10
 
     if  [[ "$Q_USE_NAMESPACE" = "True" ]]; then
-        local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep " tap" | cut -d':' -f2 | cut -b2-)
+        local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
     else
-        local tapdev=$(sudo ip link list | grep " tap" | cut -d':' -f2 | cut -b2-)
+        local tapdev=$(sudo ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
     fi
     local tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
 

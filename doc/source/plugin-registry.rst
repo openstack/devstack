@@ -26,6 +26,8 @@ The following are plugins that exist for official OpenStack projects.
 +--------------------+-------------------------------------------+--------------------+
 |magnum              |git://git.openstack.org/openstack/magnum   |                    |
 +--------------------+-------------------------------------------+--------------------+
+|manila              |git://git.openstack.org/openstack/manila   | file shares        |
++--------------------+-------------------------------------------+--------------------+
 |mistral             |git://git.openstack.org/openstack/mistral  |                    |
 +--------------------+-------------------------------------------+--------------------+
 |rally               |git://git.openstack.org/openstack/rally    |                    |
