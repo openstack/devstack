@@ -620,6 +620,8 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT osapi_compute_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT ec2_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
+    # don't let the conductor get out of control now that we're using a pure python db driver
+    iniset $NOVA_CONF conductor workers "$API_WORKERS"
 
     iniset $NOVA_CONF cinder os_region_name "$REGION_NAME"
 
