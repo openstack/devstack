@@ -13,7 +13,7 @@ DevStack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
 * To provide an environment for the OpenStack CI testing on every commit
   to the projects
 
-Read more at http://devstack.org.
+Read more at http://docs.openstack.org/developer/devstack
 
 IMPORTANT: Be sure to carefully read `stack.sh` and any other scripts you
 execute before you run them, as they install software and will alter your
