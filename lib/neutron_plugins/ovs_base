@@ -8,7 +8,8 @@ OVSB_XTRACE=$(set +o | grep xtrace)
 set +o xtrace
 
 OVS_BRIDGE=${OVS_BRIDGE:-br-int}
-OVS_DATAPATH_TYPE=${OVS_DATAPATH_TYPE:-""}
+# OVS recognize default 'system' datapath or 'netdev' for userspace datapath
+OVS_DATAPATH_TYPE=${OVS_DATAPATH_TYPE:-system}
 OVS_TUNNEL_BRIDGE=${OVS_TUNNEL_BRIDGE:-br-tun}
 
 function is_neutron_ovs_base_plugin {
@@ -20,7 +21,7 @@ function _neutron_ovs_base_add_bridge {
     local bridge=$1
     local addbr_cmd="sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge"
 
-    if [ "$OVS_DATAPATH_TYPE" != "" ] ; then
+    if [ "$OVS_DATAPATH_TYPE" != "system" ] ; then
         addbr_cmd="$addbr_cmd -- set Bridge $bridge datapath_type=${OVS_DATAPATH_TYPE}"
     fi
 
