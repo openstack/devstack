@@ -27,6 +27,9 @@ set +o xtrace
 # Defaults
 # --------
 
+# NOTE (e0ne): Cinder API v1 is deprecated and will be disabled by default.
+CINDER_ENABLE_V1_API=$(trueorfalse False CINDER_ENABLE_V1_API)
+
 # set up default driver
 CINDER_DRIVER=${CINDER_DRIVER:-default}
 CINDER_PLUGINS=$TOP_DIR/lib/cinder_plugins
@@ -225,9 +228,12 @@ function configure_cinder {
     iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
     # NOTE(thingee): Cinder V1 API is deprecated and defaults to off as of
-    # Juno. Keep it enabled so we can continue testing while it's still
-    # supported.
-    iniset $CINDER_CONF DEFAULT enable_v1_api true
+    # Juno.
+    if [[ ${CINDER_ENABLE_V1_API} = True ]]; then
+        iniset $CINDER_CONF DEFAULT enable_v1_api true
+    else
+        iniset $CINDER_CONF DEFAULT enable_v1_api false
+    fi
 
     iniset $CINDER_CONF DEFAULT os_region_name "$REGION_NAME"
 
@@ -326,12 +332,13 @@ function create_cinder_accounts {
 
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
-            get_or_create_service "cinder" "volume" "Cinder Volume Service"
-            get_or_create_endpoint "volume" "$REGION_NAME" \
-                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
-                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
-                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
-
+            if [[ ${CINDER_ENABLE_V1_API} = True ]]; then
+                get_or_create_service "cinder" "volume" "Cinder Volume Service"
+                get_or_create_endpoint "volume" "$REGION_NAME" \
+                    "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
+                    "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
+                    "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
+            fi
             get_or_create_service "cinderv2" "volumev2" "Cinder Volume Service V2"
             get_or_create_endpoint "volumev2" "$REGION_NAME" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
@@ -482,9 +489,7 @@ function create_volume_types {
         local be be_name
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
             be_name=${be##*:}
-            # FIXME(jamielennox): Remove --os-volume-api-version pinning when
-            # osc supports volume type create on v2 api. bug #1475060
-            openstack volume type create --os-volume-api-version 1 --property volume_backend_name="${be_name}" ${be_name}
+            openstack volume type create --os-volume-api-version 2 --property volume_backend_name="${be_name}" ${be_name}
         done
     fi
 }

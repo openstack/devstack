@@ -492,6 +492,15 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG volume-feature-enabled backup False
     fi
 
+    # Use only Cinder API v2
+    if [[ ${CINDER_ENABLE_V1_API} = True ]]; then
+        iniset $TEMPEST_CONFIG volume-feature-enabled api_v1 True
+        iniset $TEMPEST_CONFIG volume catalog_type volume
+    else
+        iniset $TEMPEST_CONFIG volume-feature-enabled api_v1 False
+        iniset $TEMPEST_CONFIG volume catalog_type volumev2
+    fi
+
     # Using ``CINDER_ENABLED_BACKENDS``
     if [[ -n "$CINDER_ENABLED_BACKENDS" ]] && [[ $CINDER_ENABLED_BACKENDS =~ .*,.* ]]; then
         iniset $TEMPEST_CONFIG volume-feature-enabled multi_backend "True"
