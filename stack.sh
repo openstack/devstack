@@ -1175,7 +1175,7 @@ if is_service_enabled g-reg; then
     fi
 
     for image_url in ${IMAGE_URLS//,/ }; do
-        upload_image $image_url $TOKEN
+        upload_image $image_url
     done
 fi
 
