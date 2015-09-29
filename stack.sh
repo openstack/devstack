@@ -306,9 +306,6 @@ sudo mkdir -p $DEST
 safe_chown -R $STACK_USER $DEST
 safe_chmod 0755 $DEST
 
-# Basic test for ``$DEST`` path permissions (fatal on error unless skipped)
-check_path_perm_sanity ${DEST}
-
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 sudo mkdir -p $DATA_DIR
@@ -443,6 +440,8 @@ if [[ -n "$SCREEN_LOGDIR" ]]; then
     fi
 fi
 
+# Basic test for ``$DEST`` path permissions (fatal on error unless skipped)
+check_path_perm_sanity ${DEST}
 
 # Configure Error Traps
 # ---------------------
