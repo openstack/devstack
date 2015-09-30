@@ -13,14 +13,14 @@ set -o errexit
 set -o xtrace
 
 # Keep track of the current directory
-TOOLS_DIR=$(cd $(dirname "$0") && pwd)
-TOP_DIR=`cd $TOOLS_DIR/..; pwd`
+TOOLS_DIR=$(cd "$(dirname "$0")" && pwd)
+TOP_DIR=$(cd "$TOOLS_DIR/.." && pwd)
 
 # Change dir to top of DevStack
-cd $TOP_DIR
+cd "$TOP_DIR"
 
 # Import common functions
-source $TOP_DIR/stackrc
+source "$TOP_DIR/stackrc"
 
 FILES=$TOP_DIR/files
 
@@ -52,13 +52,16 @@ function install_get_pip {
     # Thus we use curl's "-z" feature to always check the modified
     # since and only download if a new version is out -- but only if
     # it seems we downloaded the file originally.
+    #
+    # We check also to see if we have partially downloaded the pip file
+    cleanup_pip
     if [[ ! -r $LOCAL_PIP || -r $LOCAL_PIP.downloaded ]]; then
       curl --retry 6 --retry-delay 5 \
-            -z $LOCAL_PIP -o $LOCAL_PIP $PIP_GET_PIP_URL || \
-            die $LINENO "Download of get-pip.py failed"
-        touch $LOCAL_PIP.downloaded
+            -z "$LOCAL_PIP" -o "$LOCAL_PIP $PIP_GET_PIP_URL" || \
+            die "$LINENO" "Download of get-pip.py failed"
+        touch "$LOCAL_PIP.downloaded"
     fi
-    sudo -H -E python $LOCAL_PIP
+    sudo -H -E python "$LOCAL_PIP"
 }
 
 
@@ -67,11 +70,11 @@ function configure_pypi_alternative_url {
     PIP_CONFIG_FILE="$PIP_ROOT_FOLDER/pip.conf"
     if [[ ! -d $PIP_ROOT_FOLDER ]]; then
         echo "Creating $PIP_ROOT_FOLDER"
-        mkdir $PIP_ROOT_FOLDER
+        mkdir "$PIP_ROOT_FOLDER"
     fi
     if [[ ! -f $PIP_CONFIG_FILE ]]; then
         echo "Creating $PIP_CONFIG_FILE"
-        touch $PIP_CONFIG_FILE
+        touch "$PIP_CONFIG_FILE"
     fi
     if ! ini_has_option "$PIP_CONFIG_FILE" "global" "index-url"; then
         # It means that the index-url does not exist
@@ -80,12 +83,14 @@ function configure_pypi_alternative_url {
 
 }
 
-function check_pip {
+function cleanup_pip {
   if [[ -e "$LOCAL_PIP" ]]; 
   then
    real_size=$(wget -S --spider "$PIP_GET_PIP_URL" 2>&1 | grep "Content-Length" | awk '{print $2}')
+   # Here we calculate the size of the pip file 
    downloaded_size=$(stat --format=%s "$LOCAL_PIP")
-   if [[ ! $real_size -eq $downloaded_size ]];
+   # Here we calculate the size of the before downloaded file
+   if [[ ! $real_size -eq $downloaded_size ]]; # If the files are different we do the cleanup
     then
       rm "$LOCAL_PIP"
     if [[ -e "$LOCAL_PIP.downloaded" ]]; 
