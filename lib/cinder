@@ -108,6 +108,8 @@ CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 
 CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-tgtadm}
 
+# Toggle for deploying Cinder under HTTPD + mod_wsgi
+CINDER_USE_MOD_WSGI=${CINDER_USE_MOD_WSGI:-False}
 
 # Source the enabled backends
 if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
@@ -135,6 +137,11 @@ CINDER_NOVA_CATALOG_ADMIN_INFO=${CINDER_NOVA_CATALOG_ADMIN_INFO:-compute:nova:ad
 function is_cinder_enabled {
     [[ ,${ENABLED_SERVICES} =~ ,"c-" ]] && return 0
     return 1
+}
+
+# _cinder_cleanup_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
+function _cinder_cleanup_apache_wsgi {
+    sudo rm -f $(apache_site_config_for osapi-volume)
 }
 
 # cleanup_cinder() - Remove residual data files, anything left over from previous
@@ -183,6 +190,43 @@ function cleanup_cinder {
             fi
         done
     fi
+
+    if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
+        _cinder_cleanup_apache_wsgi
+    fi
+}
+
+# _cinder_config_apache_wsgi() - Set WSGI config files
+function _cinder_config_apache_wsgi {
+    local cinder_apache_conf=$(apache_site_config_for osapi-volume)
+    local cinder_ssl=""
+    local cinder_certfile=""
+    local cinder_keyfile=""
+    local cinder_api_port=$CINDER_SERVICE_PORT
+    local venv_path=""
+
+    if is_ssl_enabled_service c-api; then
+        cinder_ssl="SSLEngine On"
+        cinder_certfile="SSLCertificateFile $CINDER_SSL_CERT"
+        cinder_keyfile="SSLCertificateKeyFile $CINDER_SSL_KEY"
+    fi
+    if [[ ${USE_VENV} = True ]]; then
+        venv_path="python-path=${PROJECT_VENV["cinder"]}/lib/python2.7/site-packages"
+    fi
+
+    # copy proxy vhost file
+    sudo cp $FILES/apache-cinder-api.template $cinder_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$cinder_api_port|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%APIWORKERS%|$API_WORKERS|g
+        s|%CINDER_BIN_DIR%|$CINDER_BIN_DIR|g;
+        s|%SSLENGINE%|$cinder_ssl|g;
+        s|%SSLCERTFILE%|$cinder_certfile|g;
+        s|%SSLKEYFILE%|$cinder_keyfile|g;
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
+    " -i $cinder_apache_conf
 }
 
 # configure_cinder() - Set config files, create data dirs, etc
@@ -276,11 +320,15 @@ function configure_cinder {
     fi
 
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
         setup_colorized_logging $CINDER_CONF DEFAULT "project_id" "user_id"
     else
         # Set req-id, project-name and resource in log format
         iniset $CINDER_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(levelname)s %(name)s [%(request_id)s %(project_name)s] %(resource)s%(message)s"
+    fi
+
+    if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
+        _cinder_config_apache_wsgi
     fi
 
     if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
@@ -399,6 +447,13 @@ function install_cinder {
             install_package tgt
         fi
     fi
+
+    if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
+        install_apache_wsgi
+        if is_ssl_enabled_service "c-api"; then
+            enable_mod_ssl
+        fi
+    fi
 }
 
 # install_cinderclient() - Collect source and prepare
@@ -446,10 +501,16 @@ function start_cinder {
         fi
     fi
 
-    run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
-    echo "Waiting for Cinder API to start..."
-    if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$CINDER_SERVICE_HOST:$service_port; then
-        die $LINENO "c-api did not start"
+    if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
+        enable_apache_site osapi-volume
+        restart_apache_server
+        tail_log c-api /var/log/$APACHE_NAME/c-api.log
+    else
+        run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
+        echo "Waiting for Cinder API to start..."
+        if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$CINDER_SERVICE_HOST:$service_port; then
+            die $LINENO "c-api did not start"
+        fi
     fi
 
     run_process c-sch "$CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
@@ -468,9 +529,16 @@ function start_cinder {
 
 # stop_cinder() - Stop running processes
 function stop_cinder {
+    if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
+        disable_apache_site osapi-volume
+        restart_apache_server
+    else
+        stop_process c-api
+    fi
+
     # Kill the cinder screen windows
     local serv
-    for serv in c-api c-bak c-sch c-vol; do
+    for serv in c-bak c-sch c-vol; do
         stop_process $serv
     done
 }
