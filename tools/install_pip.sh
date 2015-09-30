@@ -53,7 +53,7 @@ function install_get_pip {
     # since and only download if a new version is out -- but only if
     # it seems we downloaded the file originally.
     if [[ ! -r $LOCAL_PIP || -r $LOCAL_PIP.downloaded ]]; then
-        curl --retry 6 --retry-delay 5 \
+      curl --retry 6 --retry-delay 5 \
             -z $LOCAL_PIP -o $LOCAL_PIP $PIP_GET_PIP_URL || \
             die $LINENO "Download of get-pip.py failed"
         touch $LOCAL_PIP.downloaded
@@ -79,6 +79,24 @@ function configure_pypi_alternative_url {
     fi
 
 }
+
+function check_pip {
+  if [[ -e "$LOCAL_PIP" ]]; 
+  then
+   real_size=$(wget -S --spider "$PIP_GET_PIP_URL" 2>&1 | grep "Content-Length" | awk '{print $2}')
+   downloaded_size=$(stat --format=%s "$LOCAL_PIP")
+   if [[ ! $real_size -eq $downloaded_size ]];
+    then
+      rm "$LOCAL_PIP"
+    if [[ -e "$LOCAL_PIP.downloaded" ]]; 
+    then
+      rm "$LOCAL_PIP.downloaded"
+    fi
+   fi
+ fi
+  
+}
+
 
 # Setuptools 8 implements PEP 440, and 8.0.4 adds a warning triggered any time
 # pkg_resources inspects the list of installed Python packages if there are
