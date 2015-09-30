@@ -650,7 +650,12 @@ SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 # the memory used where there are a large number of CPUs present
 # (the default number of workers for many services is the number of CPUs)
 # Also sets the minimum number of workers to 2.
-API_WORKERS=${API_WORKERS:=$(( ($(nproc)/4)<2 ? 2 : ($(nproc)/4) ))}
+if [[ "$VIRT_DRIVER" = 'fake' ]]; then
+    # we need more workers for the large ops job
+    API_WORKERS=${API_WORKERS:=$(( ($(nproc)/2)<2 ? 2 : ($(nproc)/2) ))}
+else
+    API_WORKERS=${API_WORKERS:=$(( ($(nproc)/4)<2 ? 2 : ($(nproc)/4) ))}
+fi
 
 # Service startup timeout
 SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
