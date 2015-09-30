@@ -124,7 +124,7 @@ function pip_install {
         $@
 
     # Also install test requirements
-    local test_req="$@/test-requirements.txt"
+    local test_req="${!#}/test-requirements.txt"
     if [[ -e "$test_req" ]]; then
         echo "Installing test-requirements for $test_req"
         $sudo_pip \
