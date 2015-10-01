@@ -56,13 +56,6 @@ NOVA_CELLS_DB=${NOVA_CELLS_DB:-nova_cell}
 NOVA_API_DB=${NOVA_API_DB:-nova_api}
 
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
-# NOVA_API_VERSION valid options
-# - default - setup API end points as nova does out of the box
-# - v21default - make v21 the default on /v2
-#
-# NOTE(sdague): this is for transitional testing of the Nova v21 API.
-# Expect to remove in L or M.
-NOVA_API_VERSION=${NOVA_API_VERSION-default}
 
 # NOVA_V2_LEGACY defines whether we force the Nova v2.0 enpoint onto
 # the Nova v2.0 legacy code base. Remove this option once the Nova
@@ -313,11 +306,6 @@ function configure_nova {
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
         # Get the sample configuration file in place
         cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
-
-        # For testing v21 is equivalent to v2
-        if [[ "$NOVA_API_VERSION" == "v21default" ]]; then
-            sed -i s/": openstack_compute_api_v2$"/": openstack_compute_api_v21"/ "$NOVA_API_PASTE_INI"
-        fi
 
         # For setting up an environment where v2.0 is running on the
         # v2.0 legacy code base.
