@@ -727,6 +727,8 @@ install_rpc_backend
 
 if is_service_enabled $DATABASE_BACKENDS; then
     install_database
+fi
+if [ -n "$DATABASE_TYPE" ]; then
     install_database_python
 fi
 
