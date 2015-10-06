@@ -125,39 +125,6 @@ connectivity.
 
 
 
-Disabling Next Generation Firewall Tools
-========================================
-
-DevStack does not properly operate with modern firewall tools.  Specifically
-it will appear as if the guest VM can access the external network via ICMP,
-but UDP and TCP packets will not be delivered to the guest VM.  The root cause
-of the issue is that both ufw (Uncomplicated Firewall) and firewalld (Fedora's
-firewall manager) apply firewall rules to all interfaces in the system, rather
-then per-device.  One solution to this problem is to revert to iptables
-functionality.
-
-To get a functional firewall configuration for Fedora do the following:
-
-::
-
-         sudo service iptables save
-         sudo systemctl disable firewalld
-         sudo systemctl enable iptables
-         sudo systemctl stop firewalld
-         sudo systemctl start iptables
-
-
-To get a functional firewall configuration for distributions containing ufw,
-disable ufw.  Note ufw is generally not enabled by default in Ubuntu.  To
-disable ufw if it was enabled, do the following:
-
-::
-
-        sudo service iptables save
-        sudo ufw disable
-
-
-
 
 Neutron Networking with Open vSwitch
 ====================================
@@ -301,3 +268,41 @@ For example, with the above  configuration, a bridge is
 created, named `br-ex` which is managed by Open vSwitch, and the
 second interface on the compute node, `eth1` is attached to the
 bridge, to forward traffic sent by guest VMs.
+
+Miscellaneous Tips
+==================
+
+
+Disabling Next Generation Firewall Tools
+----------------------------------------
+
+DevStack does not properly operate with modern firewall tools.  Specifically
+it will appear as if the guest VM can access the external network via ICMP,
+but UDP and TCP packets will not be delivered to the guest VM.  The root cause
+of the issue is that both ufw (Uncomplicated Firewall) and firewalld (Fedora's
+firewall manager) apply firewall rules to all interfaces in the system, rather
+then per-device.  One solution to this problem is to revert to iptables
+functionality.
+
+To get a functional firewall configuration for Fedora do the following:
+
+::
+
+         sudo service iptables save
+         sudo systemctl disable firewalld
+         sudo systemctl enable iptables
+         sudo systemctl stop firewalld
+         sudo systemctl start iptables
+
+
+To get a functional firewall configuration for distributions containing ufw,
+disable ufw.  Note ufw is generally not enabled by default in Ubuntu.  To
+disable ufw if it was enabled, do the following:
+
+::
+
+        sudo service iptables save
+        sudo ufw disable
+
+
+
