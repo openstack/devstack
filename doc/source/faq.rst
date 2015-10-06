@@ -124,24 +124,30 @@ Of course!
 
         enable_service q-svc
 
-How do I run a specific OpenStack milestone?
+How do I run a specific OpenStack release?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-OpenStack milestones have tags set in the git repo. Set the
-appropriate tag in the ``*_BRANCH`` variables in ``local.conf``.
-Swift is on its own release schedule so pick a tag in the Swift repo
-that is just before the milestone release. For example:
+DevStack master tracks the upstream master of all the projects. If you
+would like to run a stable branch of OpenStack, you should use the
+corresponding stable branch of DevStack as well. For instance the
+``stable/kilo`` version of DevStack will already default to all the
+projects running at ``stable/kilo`` levels.
 
-    ::
+Note: it's also possible to manually adjust the ``*_BRANCH`` variables
+further if you would like to test specific milestones, or even custom
+out of tree branches. This is done with entries like the following in
+your ``local.conf``
+
+::
 
         [[local|localrc]]
-        GLANCE_BRANCH=stable/kilo
-        HORIZON_BRANCH=stable/kilo
-        KEYSTONE_BRANCH=stable/kilo
-        NOVA_BRANCH=stable/kilo
-        GLANCE_BRANCH=stable/kilo
-        NEUTRON_BRANCH=stable/kilo
-        SWIFT_BRANCH=2.3.0
+        GLANCE_BRANCH=11.0.0.0rc1
+        NOVA_BRANCH=12.0.0.0.rc1
+
+
+Upstream DevStack is only tested with master and stable
+branches. Setting custom BRANCH definitions is not guarunteed to
+produce working results.
 
 What can I do about RabbitMQ not wanting to start on my fresh new VM?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
