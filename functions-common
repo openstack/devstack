@@ -1476,6 +1476,22 @@ function stop_process {
         # Kill via pid if we have one available
         if [[ -r $SERVICE_DIR/$SCREEN_NAME/$service.pid ]]; then
             pkill -g $(cat $SERVICE_DIR/$SCREEN_NAME/$service.pid)
+            # oslo.service tends to stop actually shutting down
+            # reliably in between releases because someone believes it
+            # is dying too early due to some inflight work they
+            # have. This is a tension. It happens often enough we're
+            # going to just account for it in devstack and assume it
+            # doesn't work.
+            #
+            # Set OSLO_SERVICE_WORKS=True to skip this block
+            if [[ -z "$OSLO_SERVICE_WORKS" ]]; then
+                # TODO(danms): Remove this double-kill when we have
+                # this fixed in all services:
+                # https://bugs.launchpad.net/oslo-incubator/+bug/1446583
+                sleep 1
+                # /bin/true becakse pkill on a non existant process returns an error
+                pkill -g $(cat $SERVICE_DIR/$SCREEN_NAME/$service.pid) || /bin/true
+            fi
             rm $SERVICE_DIR/$SCREEN_NAME/$service.pid
         fi
         if [[ "$USE_SCREEN" = "True" ]]; then
