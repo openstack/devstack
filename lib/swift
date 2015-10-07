@@ -799,10 +799,10 @@ function stop_swift {
 
 function swift_configure_tempurls {
     OS_USERNAME=swift \
-        OS_TENANT_NAME=$SERVICE_TENANT_NAME \
+        OS_PROJECT_NAME=$SERVICE_TENANT_NAME \
         OS_PASSWORD=$SERVICE_PASSWORD \
-        OS_AUTH_URL=$KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION \
-        swift post -m "Temp-URL-Key: $SWIFT_TEMPURL_KEY"
+        OS_AUTH_URL=$SERVICE_ENDPOINT \
+        swift post --auth-version 3 -m "Temp-URL-Key: $SWIFT_TEMPURL_KEY"
 }
 
 # Restore xtrace
