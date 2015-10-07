@@ -35,9 +35,12 @@ xe_min()
 destroy_vdi()
 {
     local vbd_uuid="$1"
-    local type=$(xe_min vbd-list uuid=$vbd_uuid params=type)
-    local dev=$(xe_min vbd-list uuid=$vbd_uuid params=userdevice)
-    local vdi_uuid=$(xe_min vbd-list uuid=$vbd_uuid params=vdi-uuid)
+    local type
+    type=$(xe_min vbd-list uuid=$vbd_uuid params=type)
+    local dev
+    dev=$(xe_min vbd-list uuid=$vbd_uuid params=userdevice)
+    local vdi_uuid
+    vdi_uuid=$(xe_min vbd-list uuid=$vbd_uuid params=vdi-uuid)
 
     if [ "$type" == 'Disk' ] && [ "$dev" != 'xvda' ] && [ "$dev" != '0' ]; then
         xe vdi-destroy uuid=$vdi_uuid
@@ -47,7 +50,8 @@ destroy_vdi()
 uninstall()
 {
     local vm_uuid="$1"
-    local power_state=$(xe_min vm-list uuid=$vm_uuid params=power-state)
+    local power_state
+    power_state=$(xe_min vm-list uuid=$vm_uuid params=power-state)
 
     if [ "$power_state" != "halted" ]; then
         xe vm-shutdown vm=$vm_uuid force=true

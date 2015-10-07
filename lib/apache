@@ -72,11 +72,14 @@ function install_apache_wsgi {
 # various differences between Apache 2.2 and 2.4 that warrant special handling.
 function get_apache_version {
     if is_ubuntu; then
-        local version_str=$(sudo /usr/sbin/apache2ctl -v | awk '/Server version/ {print $3}' | cut -f2 -d/)
+        local version_str
+        version_str=$(sudo /usr/sbin/apache2ctl -v | awk '/Server version/ {print $3}' | cut -f2 -d/)
     elif is_fedora; then
-        local version_str=$(rpm -qa --queryformat '%{VERSION}' httpd)
+        local version_str
+        version_str=$(rpm -qa --queryformat '%{VERSION}' httpd)
     elif is_suse; then
-        local version_str=$(rpm -qa --queryformat '%{VERSION}' apache2)
+        local version_str
+        version_str=$(rpm -qa --queryformat '%{VERSION}' apache2)
     else
         exit_distro_not_supported "cannot determine apache version"
     fi
@@ -115,7 +118,8 @@ function get_apache_version {
 function apache_site_config_for {
     local site=$@
     if is_ubuntu; then
-        local apache_version=$(get_apache_version)
+        local apache_version
+        apache_version=$(get_apache_version)
         if [[ "$apache_version" == "2.2" ]]; then
             # Ubuntu 12.04 - Apache 2.2
             echo $APACHE_CONF_DIR/${site}

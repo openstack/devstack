@@ -41,10 +41,12 @@ function get_mem_available {
 # snapshot of current usage; i.e. checking the latest entry in the
 # file will give the peak-memory usage
 function tracker {
-    local low_point=$(get_mem_available)
+    local low_point
+    low_point=$(get_mem_available)
     while [ 1 ]; do
 
-        local mem_available=$(get_mem_available)
+        local mem_available
+        mem_available=$(get_mem_available)
 
         if [[ $mem_available -lt $low_point ]]; then
             low_point=$mem_available

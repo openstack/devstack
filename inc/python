@@ -61,7 +61,8 @@ function get_python_exec_prefix {
 # pip_install_gr packagename
 function pip_install_gr {
     local name=$1
-    local clean_name=$(get_from_global_requirements $name)
+    local clean_name
+    clean_name=$(get_from_global_requirements $name)
     pip_install $clean_name
 }
 
@@ -100,7 +101,8 @@ function pip_install {
             local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
             local sudo_pip="env"
         else
-            local cmd_pip=$(get_pip_command)
+            local cmd_pip
+            cmd_pip=$(get_pip_command)
             local sudo_pip="sudo -H"
         fi
     fi
@@ -109,7 +111,8 @@ function pip_install {
     # Always apply constraints
     cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
 
-    local pip_version=$(python -c "import pip; \
+    local pip_version
+    pip_version=$(python -c "import pip; \
                         print(pip.__version__.strip('.')[0])")
     if (( pip_version<6 )); then
         die $LINENO "Currently installed pip version ${pip_version} does not" \
@@ -143,7 +146,8 @@ function pip_install {
 # get_from_global_requirements <package>
 function get_from_global_requirements {
     local package=$1
-    local required_pkg=$(grep -i -h ^${package} $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1)
+    local required_pkg
+    required_pkg=$(grep -i -h ^${package} $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1)
     if [[ $required_pkg == ""  ]]; then
         die $LINENO "Can't find package $package in requirements"
     fi
@@ -222,7 +226,8 @@ function setup_develop {
 # practical ways.
 function is_in_projects_txt {
     local project_dir=$1
-    local project_name=$(basename $project_dir)
+    local project_name
+    project_name=$(basename $project_dir)
     grep -q "/$project_name\$" $REQUIREMENTS_DIR/projects.txt
 }
 
@@ -241,7 +246,8 @@ function setup_package_with_constraints_edit {
 
     if [ -n "$REQUIREMENTS_DIR" ]; then
         # Constrain this package to this project directory from here on out.
-        local name=$(awk '/^name.*=/ {print $3}' $project_dir/setup.cfg)
+        local name
+        name=$(awk '/^name.*=/ {print $3}' $project_dir/setup.cfg)
         $REQUIREMENTS_DIR/.venv/bin/edit-constraints \
             $REQUIREMENTS_DIR/upper-constraints.txt -- $name \
             "$flags file://$project_dir#egg=$name"

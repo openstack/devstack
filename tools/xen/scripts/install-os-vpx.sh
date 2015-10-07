@@ -100,7 +100,8 @@ create_vif()
 {
     local v="$1"
     echo "Installing VM interface on [$BRIDGE]"
-    local out_network_uuid=$(find_network "$BRIDGE")
+    local out_network_uuid
+    out_network_uuid=$(find_network "$BRIDGE")
     xe vif-create vm-uuid="$v" network-uuid="$out_network_uuid" device="0"
 }
 

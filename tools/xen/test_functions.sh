@@ -165,7 +165,8 @@ EOF
 function test_get_local_sr {
     setup_xe_response "uuid123"
 
-    local RESULT=$(. mocks && get_local_sr)
+    local RESULT
+    RESULT=$(. mocks && get_local_sr)
 
     [ "$RESULT" == "uuid123" ]
 
@@ -173,7 +174,8 @@ function test_get_local_sr {
 }
 
 function test_get_local_sr_path {
-    local RESULT=$(mock_out get_local_sr "uuid1" && get_local_sr_path)
+    local RESULT
+    RESULT=$(mock_out get_local_sr "uuid1" && get_local_sr_path)
 
     [ "/var/run/sr-mount/uuid1" == "$RESULT" ]
 }

@@ -321,7 +321,8 @@ function build_heat_pip_mirror {
 
     echo "</body></html>" >> $HEAT_PIP_REPO/index.html
 
-    local heat_pip_repo_apache_conf=$(apache_site_config_for heat_pip_repo)
+    local heat_pip_repo_apache_conf
+    heat_pip_repo_apache_conf=$(apache_site_config_for heat_pip_repo)
 
     sudo cp $FILES/apache-heat-pip-repo.template $heat_pip_repo_apache_conf
     sudo sed -e "

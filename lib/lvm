@@ -56,7 +56,8 @@ function _clean_lvm_backing_file {
 
     # If the backing physical device is a loop device, it was probably setup by DevStack
     if [[ -n "$backing_file" ]] && [[ -e "$backing_file" ]]; then
-        local vg_dev=$(sudo losetup -j $backing_file | awk -F':' '/'$BACKING_FILE_SUFFIX'/ { print $1}')
+        local vg_dev
+        vg_dev=$(sudo losetup -j $backing_file | awk -F':' '/'$BACKING_FILE_SUFFIX'/ { print $1}')
         sudo losetup -d $vg_dev
         rm -f $backing_file
     fi
@@ -89,7 +90,8 @@ function _create_lvm_volume_group {
     if ! sudo vgs $vg; then
         # Only create if the file doesn't already exists
         [[ -f $backing_file ]] || truncate -s $size $backing_file
-        local vg_dev=`sudo losetup -f --show $backing_file`
+        local vg_dev
+        vg_dev=`sudo losetup -f --show $backing_file`
 
         # Only create volume group if it doesn't already exist
         if ! sudo vgs $vg; then

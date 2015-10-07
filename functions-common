@@ -140,7 +140,8 @@ function isset {
 # backtrace level
 function backtrace {
     local level=$1
-    local deep=$((${#BASH_SOURCE[@]} - 1))
+    local deep
+    deep=$((${#BASH_SOURCE[@]} - 1))
     echo "[Call Trace]"
     while [ $level -le $deep ]; do
         echo "${BASH_SOURCE[$deep]}:${BASH_LINENO[$deep-1]}:${FUNCNAME[$deep-1]}"
@@ -477,7 +478,8 @@ function git_clone {
     local git_remote=$1
     local git_dest=$2
     local git_ref=$3
-    local orig_dir=$(pwd)
+    local orig_dir
+    orig_dir=$(pwd)
     local git_clone_flags=""
 
     RECLONE=$(trueorfalse False RECLONE)
@@ -641,7 +643,8 @@ function get_default_host_ip {
         host_ip=""
         # Find the interface used for the default route
         host_ip_iface=${host_ip_iface:-$(ip -f $af route | awk '/default/ {print $5}' | head -1)}
-        local host_ips=$(LC_ALL=C ip -f $af addr show ${host_ip_iface} | sed /temporary/d |awk /$af'/ {split($2,parts,"/");  print parts[1]}')
+        local host_ips
+        host_ips=$(LC_ALL=C ip -f $af addr show ${host_ip_iface} | sed /temporary/d |awk /$af'/ {split($2,parts,"/");  print parts[1]}')
         local ip
         for ip in $host_ips; do
             # Attempt to filter out IP addresses that are part of the fixed and
@@ -690,7 +693,8 @@ function get_field {
 # copy over a default policy.json and policy.d for projects
 function install_default_policy {
     local project=$1
-    local project_uc=$(echo $1|tr a-z A-Z)
+    local project_uc
+    project_uc=$(echo $1|tr a-z A-Z)
     local conf_dir="${project_uc}_CONF_DIR"
     # eval conf dir to get the variable
     conf_dir="${!conf_dir}"
@@ -723,7 +727,8 @@ function policy_add {
 
     # Add a terminating comma to policy lines without one
     # Remove the closing '}' and all lines following to the end-of-file
-    local tmpfile=$(mktemp)
+    local tmpfile
+    tmpfile=$(mktemp)
     uniq ${policy_file} | sed -e '
         s/]$/],/
         /^[}]/,$d
@@ -945,7 +950,8 @@ function get_or_create_endpoint {
     # scenarios currently that use the returned id. Ideally this behaviour
     # should be pushed out to the service setups and let them create the
     # endpoints they need.
-    local public_id=$(_get_or_create_endpoint_with_interface $1 public $3 $2)
+    local public_id
+    public_id=$(_get_or_create_endpoint_with_interface $1 public $3 $2)
     _get_or_create_endpoint_with_interface $1 admin $4 $2
     _get_or_create_endpoint_with_interface $1 internal $5 $2
 
@@ -1065,7 +1071,8 @@ function get_packages {
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local services=$@
-    local package_dir=$(_get_package_dir)
+    local package_dir
+    package_dir=$(_get_package_dir)
     local file_to_parse=""
     local service=""
 
@@ -1980,8 +1987,10 @@ function address_in_net {
     local ip=$1
     local range=$2
     local masklen=${range#*/}
-    local network=$(maskip ${range%/*} $(cidr2netmask $masklen))
-    local subnet=$(maskip $ip $(cidr2netmask $masklen))
+    local network
+    network=$(maskip ${range%/*} $(cidr2netmask $masklen))
+    local subnet
+    subnet=$(maskip $ip $(cidr2netmask $masklen))
     [[ $network == $subnet ]]
 }
 
@@ -2033,7 +2042,8 @@ function export_proxy_variables {
 
 # Returns true if the directory is on a filesystem mounted via NFS.
 function is_nfs_directory {
-    local mount_type=`stat -f -L -c %T $1`
+    local mount_type
+    mount_type=`stat -f -L -c %T $1`
     test "$mount_type" == "nfs"
 }
 
@@ -2044,13 +2054,15 @@ function maskip {
     local ip=$1
     local mask=$2
     local l="${ip%.*}"; local r="${ip#*.}"; local n="${mask%.*}"; local m="${mask#*.}"
-    local subnet=$((${ip%%.*}&${mask%%.*})).$((${r%%.*}&${m%%.*})).$((${l##*.}&${n##*.})).$((${ip##*.}&${mask##*.}))
+    local subnet
+    subnet=$((${ip%%.*}&${mask%%.*})).$((${r%%.*}&${m%%.*})).$((${l##*.}&${n##*.})).$((${ip##*.}&${mask##*.}))
     echo $subnet
 }
 
 # Return the current python as "python<major>.<minor>"
 function python_version {
-    local python_version=$(python -c 'import sys; print("%s.%s" % sys.version_info[0:2])')
+    local python_version
+    python_version=$(python -c 'import sys; print("%s.%s" % sys.version_info[0:2])')
     echo "python${python_version}"
 }
 

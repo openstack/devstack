@@ -806,7 +806,8 @@ function _move_neutron_addresses_route {
 
         local IP_ADD=""
         local IP_DEL=""
-        local DEFAULT_ROUTE_GW=$(ip r | awk "/default.+$from_intf/ { print \$3; exit }")
+        local DEFAULT_ROUTE_GW
+        DEFAULT_ROUTE_GW=$(ip r | awk "/default.+$from_intf/ { print \$3; exit }")
         local ADD_OVS_PORT=""
 
         if [[ $af == "inet" ]]; then
@@ -1244,7 +1245,8 @@ function _neutron_create_private_subnet_v4 {
     subnet_params+="--gateway $NETWORK_GATEWAY "
     subnet_params+="--name $PRIVATE_SUBNET_NAME "
     subnet_params+="$NET_ID $FIXED_RANGE"
-    local subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
+    local subnet_id
+    subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO subnet_id "Failure creating private IPv4 subnet for $TENANT_ID"
     echo $subnet_id
 }
@@ -1259,7 +1261,8 @@ function _neutron_create_private_subnet_v6 {
     subnet_params+="--gateway $IPV6_PRIVATE_NETWORK_GATEWAY "
     subnet_params+="--name $IPV6_PRIVATE_SUBNET_NAME "
     subnet_params+="$NET_ID $FIXED_RANGE_V6 $ipv6_modes"
-    local ipv6_subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
+    local ipv6_subnet_id
+    ipv6_subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $TENANT_ID"
     echo $ipv6_subnet_id
 }
@@ -1272,7 +1275,8 @@ function _neutron_create_public_subnet_v4 {
     subnet_params+="--name $PUBLIC_SUBNET_NAME "
     subnet_params+="$EXT_NET_ID $FLOATING_RANGE "
     subnet_params+="-- --enable_dhcp=False"
-    local id_and_ext_gw_ip=$(neutron subnet-create $subnet_params | grep -e 'gateway_ip' -e ' id ')
+    local id_and_ext_gw_ip
+    id_and_ext_gw_ip=$(neutron subnet-create $subnet_params | grep -e 'gateway_ip' -e ' id ')
     die_if_not_set $LINENO id_and_ext_gw_ip "Failure creating public IPv4 subnet"
     echo $id_and_ext_gw_ip
 }
@@ -1284,7 +1288,8 @@ function _neutron_create_public_subnet_v6 {
     subnet_params+="--name $IPV6_PUBLIC_SUBNET_NAME "
     subnet_params+="$EXT_NET_ID $IPV6_PUBLIC_RANGE "
     subnet_params+="-- --enable_dhcp=False"
-    local ipv6_id_and_ext_gw_ip=$(neutron subnet-create $subnet_params | grep -e 'gateway_ip' -e ' id ')
+    local ipv6_id_and_ext_gw_ip
+    ipv6_id_and_ext_gw_ip=$(neutron subnet-create $subnet_params | grep -e 'gateway_ip' -e ' id ')
     die_if_not_set $LINENO ipv6_id_and_ext_gw_ip "Failure creating an IPv6 public subnet"
     echo $ipv6_id_and_ext_gw_ip
 }
@@ -1293,8 +1298,10 @@ function _neutron_create_public_subnet_v6 {
 function _neutron_configure_router_v4 {
     neutron router-interface-add $ROUTER_ID $SUBNET_ID
     # Create a public subnet on the external network
-    local id_and_ext_gw_ip=$(_neutron_create_public_subnet_v4 $EXT_NET_ID)
-    local ext_gw_ip=$(echo $id_and_ext_gw_ip  | get_field 2)
+    local id_and_ext_gw_ip
+    id_and_ext_gw_ip=$(_neutron_create_public_subnet_v4 $EXT_NET_ID)
+    local ext_gw_ip
+    ext_gw_ip=$(echo $id_and_ext_gw_ip  | get_field 2)
     PUB_SUBNET_ID=$(echo $id_and_ext_gw_ip | get_field 5)
     # Configure the external network as the default router gateway
     neutron router-gateway-set $ROUTER_ID $EXT_NET_ID
@@ -1331,9 +1338,12 @@ function _neutron_configure_router_v4 {
 function _neutron_configure_router_v6 {
     neutron router-interface-add $ROUTER_ID $IPV6_SUBNET_ID
     # Create a public subnet on the external network
-    local ipv6_id_and_ext_gw_ip=$(_neutron_create_public_subnet_v6 $EXT_NET_ID)
-    local ipv6_ext_gw_ip=$(echo $ipv6_id_and_ext_gw_ip | get_field 2)
-    local ipv6_pub_subnet_id=$(echo $ipv6_id_and_ext_gw_ip | get_field 5)
+    local ipv6_id_and_ext_gw_ip
+    ipv6_id_and_ext_gw_ip=$(_neutron_create_public_subnet_v6 $EXT_NET_ID)
+    local ipv6_ext_gw_ip
+    ipv6_ext_gw_ip=$(echo $ipv6_id_and_ext_gw_ip | get_field 2)
+    local ipv6_pub_subnet_id
+    ipv6_pub_subnet_id=$(echo $ipv6_id_and_ext_gw_ip | get_field 5)
 
     # If the external network has not already been set as the default router
     # gateway when configuring an IPv4 public subnet, do so now
@@ -1351,7 +1361,8 @@ function _neutron_configure_router_v6 {
         die_if_not_set $LINENO IPV6_ROUTER_GW_IP "Failure retrieving IPV6_ROUTER_GW_IP"
 
         if is_neutron_ovs_base_plugin && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
-            local ext_gw_interface=$(_neutron_get_ext_gw_interface)
+            local ext_gw_interface
+            ext_gw_interface=$(_neutron_get_ext_gw_interface)
             local ipv6_cidr_len=${IPV6_PUBLIC_RANGE#*/}
 
             # Configure interface for public bridge

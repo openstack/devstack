@@ -150,7 +150,8 @@ function cleanup_cinder {
     # ensure the volume group is cleared up because fails might
     # leave dead volumes in the group
     if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
-        local targets=$(sudo tgtadm --op show --mode target)
+        local targets
+        targets=$(sudo tgtadm --op show --mode target)
         if [ $? -ne 0 ]; then
             # If tgt driver isn't running this won't work obviously
             # So check the response and restart if need be
@@ -198,7 +199,8 @@ function cleanup_cinder {
 
 # _cinder_config_apache_wsgi() - Set WSGI config files
 function _cinder_config_apache_wsgi {
-    local cinder_apache_conf=$(apache_site_config_for osapi-volume)
+    local cinder_apache_conf
+    cinder_apache_conf=$(apache_site_config_for osapi-volume)
     local cinder_ssl=""
     local cinder_certfile=""
     local cinder_keyfile=""

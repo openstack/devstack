@@ -190,7 +190,8 @@ function add_entry {
     local user_passwd=$5
 
     # The admin user can see all user's secret AWS keys, it does not looks good
-    local line=`openstack ec2 credentials list --user $user_id | grep " $project_id "`
+    local line
+    line=$(openstack ec2 credentials list --user $user_id | grep " $project_id " || true)
     if [ -z "$line" ]; then
         openstack ec2 credentials create --user $user_id --project $project_id 1>&2
         line=`openstack ec2 credentials list --user $user_id | grep " $project_id "`

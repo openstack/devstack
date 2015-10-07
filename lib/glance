@@ -106,7 +106,8 @@ function configure_glance {
     iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_REGISTRY_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
     inicomment $GLANCE_REGISTRY_CONF DEFAULT log_file
-    local dburl=`database_connection_url glance`
+    local dburl
+    dburl=`database_connection_url glance`
     iniset $GLANCE_REGISTRY_CONF database connection $dburl
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_REGISTRY_CONF DEFAULT workers "$API_WORKERS"
@@ -265,7 +266,8 @@ function create_glance_accounts {
         # required for swift access
         if is_service_enabled s-proxy; then
 
-            local glance_swift_user=$(get_or_create_user "glance-swift" \
+            local glance_swift_user
+            glance_swift_user=$(get_or_create_user "glance-swift" \
                 "$SERVICE_PASSWORD" "default" "glance-swift@example.com")
             get_or_add_user_project_role "ResellerAdmin" $glance_swift_user $SERVICE_TENANT_NAME
         fi

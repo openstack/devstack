@@ -20,8 +20,10 @@ FAILED_FUNCS=""
 # pass a test, printing out MSG
 #  usage: passed message
 function passed {
-    local lineno=$(caller 0 | awk '{print $1}')
-    local function=$(caller 0 | awk '{print $2}')
+    local lineno
+    lineno=$(caller 0 | awk '{print $1}')
+    local function
+    function=$(caller 0 | awk '{print $2}')
     local msg="$1"
     if [ -z "$msg" ]; then
         msg="OK"
@@ -33,8 +35,10 @@ function passed {
 # fail a test, printing out MSG
 #  usage: failed message
 function failed {
-    local lineno=$(caller 0 | awk '{print $1}')
-    local function=$(caller 0 | awk '{print $2}')
+    local lineno
+    lineno=$(caller 0 | awk '{print $1}')
+    local function
+    function=$(caller 0 | awk '{print $2}')
     local msg="$1"
     FAILED_FUNCS+="$function:L$lineno\n"
     echo "ERROR: $function:L$lineno!"
@@ -45,8 +49,10 @@ function failed {
 # assert string comparision of val1 equal val2, printing out msg
 #  usage: assert_equal val1 val2 msg
 function assert_equal {
-    local lineno=`caller 0 | awk '{print $1}'`
-    local function=`caller 0 | awk '{print $2}'`
+    local lineno
+    lineno=`caller 0 | awk '{print $1}'`
+    local function
+    function=`caller 0 | awk '{print $2}'`
     local msg=$3
 
     if [ -z "$msg" ]; then
@@ -66,8 +72,10 @@ function assert_equal {
 # assert variable is empty/blank, printing out msg
 #  usage: assert_empty VAR msg
 function assert_empty {
-    local lineno=`caller 0 | awk '{print $1}'`
-    local function=`caller 0 | awk '{print $2}'`
+    local lineno
+    lineno=`caller 0 | awk '{print $1}'`
+    local function
+    function=`caller 0 | awk '{print $2}'`
     local msg=$2
 
     if [ -z "$msg" ]; then

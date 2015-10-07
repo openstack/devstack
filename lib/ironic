@@ -225,7 +225,8 @@ function _cleanup_ironic_apache_wsgi {
 
 # _config_ironic_apache_wsgi() - Set WSGI config files of Ironic
 function _config_ironic_apache_wsgi {
-    local ironic_apache_conf=$(apache_site_config_for ironic)
+    local ironic_apache_conf
+    ironic_apache_conf=$(apache_site_config_for ironic)
     sudo cp $FILES/apache-ironic.template $ironic_apache_conf
     sudo sed -e "
         s|%PUBLICPORT%|$IRONIC_HTTP_PORT|g;
@@ -325,11 +326,13 @@ function configure_ironic_api {
 function configure_ironic_conductor {
     cp $IRONIC_DIR/etc/ironic/rootwrap.conf $IRONIC_ROOTWRAP_CONF
     cp -r $IRONIC_DIR/etc/ironic/rootwrap.d $IRONIC_CONF_DIR
-    local ironic_rootwrap=$(get_rootwrap_location ironic)
+    local ironic_rootwrap
+    ironic_rootwrap=$(get_rootwrap_location ironic)
     local rootwrap_isudoer_cmd="$ironic_rootwrap $IRONIC_CONF_DIR/rootwrap.conf *"
 
     # Set up the rootwrap sudoers for ironic
-    local tempfile=`mktemp`
+    local tempfile
+    tempfile=`mktemp`
     echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_isudoer_cmd" >$tempfile
     chmod 0440 $tempfile
     sudo chown root:root $tempfile
@@ -370,7 +373,8 @@ function configure_ironic_conductor {
         fi
         iniset $IRONIC_CONF_FILE glance swift_endpoint_url http://${HOST_IP}:${SWIFT_DEFAULT_BIND_PORT:-8080}
         iniset $IRONIC_CONF_FILE glance swift_api_version v1
-        local tenant_id=$(get_or_create_project $SERVICE_TENANT_NAME default)
+        local tenant_id
+        tenant_id=$(get_or_create_project $SERVICE_TENANT_NAME default)
         iniset $IRONIC_CONF_FILE glance swift_account AUTH_${tenant_id}
         iniset $IRONIC_CONF_FILE glance swift_container glance
         iniset $IRONIC_CONF_FILE glance swift_temp_url_duration 3600
@@ -379,7 +383,8 @@ function configure_ironic_conductor {
     fi
 
     if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
-        local pxebin=`basename $IRONIC_PXE_BOOT_IMAGE`
+        local pxebin
+        pxebin=`basename $IRONIC_PXE_BOOT_IMAGE`
         iniset $IRONIC_CONF_FILE pxe ipxe_enabled True
         iniset $IRONIC_CONF_FILE pxe pxe_config_template '\$pybasedir/drivers/modules/ipxe_config.template'
         iniset $IRONIC_CONF_FILE pxe pxe_bootfile_name $pxebin
@@ -445,7 +450,8 @@ function init_ironic {
 # _ironic_bm_vm_names() - Generates list of names for baremetal VMs.
 function _ironic_bm_vm_names {
     local idx
-    local num_vms=$(($IRONIC_VM_COUNT - 1))
+    local num_vms
+    num_vms=$(($IRONIC_VM_COUNT - 1))
     for idx in $(seq 0 $num_vms); do
         echo "baremetal${IRONIC_VM_NETWORK_BRIDGE}_${idx}"
     done
@@ -498,22 +504,27 @@ function stop_ironic {
 }
 
 function create_ovs_taps {
-    local ironic_net_id=$(neutron net-list | grep private | get_field 1)
+    local ironic_net_id
+    ironic_net_id=$(neutron net-list | grep private | get_field 1)
 
     # Work around: No netns exists on host until a Neutron port is created.  We
     # need to create one in Neutron to know what netns to tap into prior to the
     # first node booting.
-    local port_id=$(neutron port-create private | grep " id " | get_field 2)
+    local port_id
+    port_id=$(neutron port-create private | grep " id " | get_field 2)
 
     # intentional sleep to make sure the tag has been set to port
     sleep 10
 
     if  [[ "$Q_USE_NAMESPACE" = "True" ]]; then
-        local tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
+        local tapdev
+        tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
     else
-        local tapdev=$(sudo ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
+        local tapdev
+        tapdev=$(sudo ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
     fi
-    local tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
+    local tag_id
+    tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
 
     # make sure veth pair is not existing, otherwise delete its links
     sudo ip link show ovs-tap1 && sudo ip link delete ovs-tap1
@@ -570,7 +581,8 @@ function wait_for_nova_resources {
 }
 
 function enroll_nodes {
-    local chassis_id=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
+    local chassis_id
+    chassis_id=$(ironic chassis-create -d "ironic test chassis" | grep " uuid " | get_field 2)
 
     if ! is_ironic_hardware; then
         local ironic_node_cpu=$IRONIC_VM_SPECS_CPU
@@ -602,10 +614,14 @@ function enroll_nodes {
         if ! is_ironic_hardware; then
             local mac_address=$hardware_info
         elif [[ -z "${IRONIC_DEPLOY_DRIVER##*_ipmitool}" ]]; then
-            local ipmi_address=$(echo $hardware_info |awk  '{print $1}')
-            local mac_address=$(echo $hardware_info |awk '{print $2}')
-            local ironic_ipmi_username=$(echo $hardware_info |awk '{print $3}')
-            local ironic_ipmi_passwd=$(echo $hardware_info |awk '{print $4}')
+            local ipmi_address
+            ipmi_address=$(echo $hardware_info |awk  '{print $1}')
+            local mac_address
+            mac_address=$(echo $hardware_info |awk '{print $2}')
+            local ironic_ipmi_username
+            ironic_ipmi_username=$(echo $hardware_info |awk '{print $3}')
+            local ironic_ipmi_passwd
+            ironic_ipmi_passwd=$(echo $hardware_info |awk '{print $4}')
             # Currently we require all hardware platform have same CPU/RAM/DISK info
             # in future, this can be enhanced to support different type, and then
             # we create the bare metal flavor with minimum value
@@ -617,9 +633,11 @@ function enroll_nodes {
 
         # First node created will be used for testing in ironic w/o glance
         # scenario, so we need to know its UUID.
-        local standalone_node_uuid=$([ $total_nodes -eq 0 ] && echo "--uuid $IRONIC_NODE_UUID")
+        local standalone_node_uuid
+        standalone_node_uuid=$([ $total_nodes -eq 0 ] && echo "--uuid $IRONIC_NODE_UUID")
 
-        local node_id=$(ironic node-create $standalone_node_uuid\
+        local node_id
+        node_id=$(ironic node-create $standalone_node_uuid\
             --chassis_uuid $chassis_id \
             --driver $IRONIC_DEPLOY_DRIVER \
             --name node-$total_nodes \
@@ -640,7 +658,8 @@ function enroll_nodes {
     # NOTE(adam_g): Attempting to use an autogenerated UUID for flavor id here uncovered
     # bug (LP: #1333852) in Trove.  This can be changed to use an auto flavor id when the
     # bug is fixed in Juno.
-    local adjusted_disk=$(($ironic_node_disk - $ironic_ephemeral_disk))
+    local adjusted_disk
+    adjusted_disk=$(($ironic_node_disk - $ironic_ephemeral_disk))
     nova flavor-create --ephemeral $ironic_ephemeral_disk baremetal 551 $ironic_node_ram $adjusted_disk $ironic_node_cpu
 
     nova flavor-key baremetal set "cpu_arch"="x86_64"
@@ -771,7 +790,8 @@ function upload_baremetal_ironic_deploy {
         fi
     fi
 
-    local token=$(openstack token issue -c id -f value)
+    local token
+    token=$(openstack token issue -c id -f value)
     die_if_not_set $LINENO token "Keystone fail to get token"
 
     # load them into glance
@@ -809,7 +829,8 @@ function prepare_baremetal_basic_ops {
 function cleanup_baremetal_basic_ops {
     rm -f $IRONIC_VM_MACS_CSV_FILE
     if [ -f $IRONIC_KEY_FILE ]; then
-        local key=$(cat $IRONIC_KEY_FILE.pub)
+        local key
+        key=$(cat $IRONIC_KEY_FILE.pub)
         # remove public key from authorized_keys
         grep -v "$key" $IRONIC_AUTHORIZED_KEYS_FILE > temp && mv temp $IRONIC_AUTHORIZED_KEYS_FILE
         chmod 0600 $IRONIC_AUTHORIZED_KEYS_FILE

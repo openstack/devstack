@@ -10,7 +10,8 @@ set +o xtrace
 source $TOP_DIR/lib/neutron_plugins/openvswitch
 
 function save_function {
-    local ORIG_FUNC=$(declare -f $1)
+    local ORIG_FUNC
+    ORIG_FUNC=$(declare -f $1)
     local NEW_FUNC="$2${ORIG_FUNC#$1}"
     eval "$NEW_FUNC"
 }

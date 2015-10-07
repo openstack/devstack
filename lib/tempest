@@ -372,7 +372,8 @@ function configure_tempest {
     # Compute Features
     # Run ``verify_tempest_config -ur`` to retrieve enabled extensions on API endpoints
     # NOTE(mtreinish): This must be done after auth settings are added to the tempest config
-    local tmp_cfg_file=$(mktemp)
+    local tmp_cfg_file
+    tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
     tox -revenv -- verify-tempest-config -uro $tmp_cfg_file
 
