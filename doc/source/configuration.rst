@@ -408,6 +408,28 @@ these default images; in that case, you will want to populate
         IMAGE_URLS="http://foo.bar.com/image.qcow,"
         IMAGE_URLS+="http://foo.bar.com/image2.qcow"
 
+
+Instance Type
+-------------
+
+``DEFAULT_INSTANCE_TYPE`` can be used to configure the default instance
+type. When this parameter is not specified, Devstack creates additional
+micro & nano flavors for really small instances to run Tempest tests.
+
+For guests with larger memory requirements, ``DEFAULT_INSTANCE_TYPE``
+should be specified in the configuration file so Tempest selects the
+default flavors instead.
+
+KVM on Power with QEMU 2.4 requires 512 MB to load the firmware -
+`QEMU 2.4 - PowerPC <http://wiki.qemu.org/ChangeLog/2.4>`__ so users
+running instances on ppc64/ppc64le can choose one of the default
+created flavors as follows:
+
+    ::
+
+        DEFAULT_INSTANCE_TYPE=m1.tiny
+
+
 IP Version
 ----------
 
