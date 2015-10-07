@@ -42,6 +42,15 @@ function get_versions {
 
 
 function install_get_pip {
+    # If get-pip.py isn't python, delete it. This was probably an
+    # outage on the server.
+    if [[ -r $LOCAL_PIP ]]; then
+        if ! head -1 $LOCAL_PIP | grep -q '#!/usr/bin/env python'; then
+            echo "WARNING: Corrupt $LOCAL_PIP found removing"
+            rm $LOCAL_PIP
+        fi
+    fi
+
     # The OpenStack gate and others put a cached version of get-pip.py
     # for this to find, explicitly to avoid download issues.
     #
