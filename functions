@@ -341,7 +341,7 @@ function use_database {
         # No backends registered means this is likely called from ``localrc``
         # This is now deprecated usage
         DATABASE_TYPE=$1
-        DEPRECATED_TEXT="$DEPRECATED_TEXT\nThe database backend needs to be properly set in ENABLED_SERVICES; use_database is deprecated localrc\n"
+        deprecated "The database backend needs to be properly set in ENABLED_SERVICES; use_database is deprecated localrc"
     else
         # This should no longer get called...here for posterity
         use_exclusive_service DATABASE_BACKENDS DATABASE_TYPE $1

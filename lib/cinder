@@ -93,7 +93,7 @@ if [[ -n $CINDER_SECURE_DELETE ]]; then
     if [[ $CINDER_SECURE_DELETE == "False" ]]; then
         CINDER_VOLUME_CLEAR_DEFAULT="none"
     fi
-    DEPRECATED_TEXT="$DEPRECATED_TEXT\nConfigure secure Cinder volume deletion using CINDER_VOLUME_CLEAR instead of CINDER_SECURE_DELETE.\n"
+    deprecated "Configure secure Cinder volume deletion using CINDER_VOLUME_CLEAR instead of CINDER_SECURE_DELETE."
 fi
 CINDER_VOLUME_CLEAR=${CINDER_VOLUME_CLEAR:-${CINDER_VOLUME_CLEAR_DEFAULT:-zero}}
 CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
