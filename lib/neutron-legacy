@@ -1318,7 +1318,7 @@ function _neutron_configure_router_v4 {
                 sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
                 sudo ip link set $ext_gw_interface up
             fi
-            ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F '"' -v subnet_id=$PUB_SUBNET_ID '$4 == subnet_id { print $8; }'`
+            ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F'ip_address'  '{ print $2 }' | cut -f3 -d\" | tr '\n' ' '`
             die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
             sudo ip route replace  $FIXED_RANGE via $ROUTER_GW_IP
         fi
@@ -1349,7 +1349,7 @@ function _neutron_configure_router_v6 {
         sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # Configure and enable public bridge
         # Override global IPV6_ROUTER_GW_IP with the true value from neutron
-        IPV6_ROUTER_GW_IP=`neutron port-list -c fixed_ips | grep $ipv6_pub_subnet_id | awk -F '"' -v subnet_id=$ipv6_pub_subnet_id '$4 == subnet_id { print $8; }'`
+        IPV6_ROUTER_GW_IP=`neutron port-list -c fixed_ips | grep $ipv6_pub_subnet_id | awk -F'ip_address' '{ print $2 }' | cut -f3 -d\" | tr '\n' ' '`
         die_if_not_set $LINENO IPV6_ROUTER_GW_IP "Failure retrieving IPV6_ROUTER_GW_IP"
 
         if is_neutron_ovs_base_plugin; then
