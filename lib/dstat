@@ -19,8 +19,7 @@ set +o xtrace
 # start_dstat() - Start running processes, including screen
 function start_dstat {
     # A better kind of sysstat, with the top process per time slice
-    DSTAT_OPTS="-tcmndrylpg --top-cpu-adv --top-io-adv"
-    run_process dstat "dstat $DSTAT_OPTS"
+    run_process dstat "$TOP_DIR/tools/dstat.sh $LOGDIR"
 
     # To enable peakmem_tracker add:
     #    enable_service peakmem_tracker
