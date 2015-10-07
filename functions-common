@@ -111,7 +111,8 @@ function write_clouds_yaml {
 # Accepts as True: 1 yes Yes YES true True TRUE
 # VAR=$(trueorfalse default-value test-value)
 function trueorfalse {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
     local default=$1
@@ -169,7 +170,8 @@ function die {
 # die_if_not_set $LINENO env-var "message"
 function die_if_not_set {
     local exitcode=$?
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local line=$1; shift
     local evar=$1; shift
@@ -183,7 +185,8 @@ function die_if_not_set {
 # err $LINENO "message"
 function err {
     local exitcode=$?
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local msg="[ERROR] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg 1>&2;
@@ -200,7 +203,8 @@ function err {
 # err_if_not_set $LINENO env-var "message"
 function err_if_not_set {
     local exitcode=$?
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local line=$1; shift
     local evar=$1; shift
@@ -236,7 +240,8 @@ function is_set {
 # warn $LINENO "message"
 function warn {
     local exitcode=$?
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local msg="[WARNING] ${BASH_SOURCE[2]}:$1 $2"
     echo $msg
@@ -986,7 +991,8 @@ function _get_package_dir {
 # Uses globals ``OFFLINE``, ``*_proxy``
 # apt_get operation package [package ...]
 function apt_get {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
     [[ "$OFFLINE" = "True" || -z "$@" ]] && return
@@ -1055,7 +1061,8 @@ function _parse_package_files {
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
 function get_packages {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local services=$@
     local package_dir=$(_get_package_dir)
@@ -1123,7 +1130,8 @@ function get_packages {
 # The same metadata used in the main DevStack prerequisite files may be used
 # in these prerequisite files, see get_packages() for more info.
 function get_plugin_packages {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local files_to_parse=""
     local package_dir=""
@@ -1148,7 +1156,8 @@ function update_package_repo {
     fi
 
     if is_ubuntu; then
-        local xtrace=$(set +o | grep xtrace)
+        local xtrace
+    xtrace=$(set +o | grep xtrace)
         set +o xtrace
         if [[ "$REPOS_UPDATED" != "True" || "$RETRY_UPDATE" = "True" ]]; then
             # if there are transient errors pulling the updates, that's fine.
@@ -1854,7 +1863,8 @@ function enable_service {
 # Uses global ``ENABLED_SERVICES``
 # is_service_enabled service [service ...]
 function is_service_enabled {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local enabled=1
     local services=$@
@@ -1933,7 +1943,8 @@ function use_exclusive_service {
 # Only run the command if the target file (the last arg) is not on an
 # NFS filesystem.
 function _safe_permission_operation {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local args=( $@ )
     local last

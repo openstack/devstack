@@ -38,7 +38,8 @@ function get_pip_command {
 # Get the path to the direcotry where python executables are installed.
 # get_python_exec_prefix
 function get_python_exec_prefix {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     if [[ -z "$os_PACKAGE" ]]; then
         GetOSVersion
@@ -69,7 +70,8 @@ function pip_install_gr {
 # ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``,
 # pip_install package [package ...]
 function pip_install {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local upgrade=""
     local offline=${OFFLINE:-False}

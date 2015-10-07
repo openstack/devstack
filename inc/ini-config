@@ -17,7 +17,8 @@ set +o xtrace
 # Append a new option in an ini file without replacing the old value
 # iniadd [-sudo] config-file section option value1 value2 value3 ...
 function iniadd {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local sudo=""
     if [ $1 == "-sudo" ]; then
@@ -37,7 +38,8 @@ function iniadd {
 # Comment an option in an INI file
 # inicomment [-sudo] config-file section option
 function inicomment {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local sudo=""
     if [ $1 == "-sudo" ]; then
@@ -55,7 +57,8 @@ function inicomment {
 # Get an option from an INI file
 # iniget config-file section option
 function iniget {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
     local section=$2
@@ -70,7 +73,8 @@ function iniget {
 # Get a multiple line option from an INI file
 # iniget_multiline config-file section option
 function iniget_multiline {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
     local section=$2
@@ -85,7 +89,8 @@ function iniget_multiline {
 # Determinate is the given option present in the INI file
 # ini_has_option config-file section option
 function ini_has_option {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local file=$1
     local section=$2
@@ -107,7 +112,8 @@ function ini_has_option {
 #
 # iniadd_literal [-sudo] config-file section option value
 function iniadd_literal {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local sudo=""
     if [ $1 == "-sudo" ]; then
@@ -135,7 +141,8 @@ $option = $value
 # Remove an option from an INI file
 # inidelete [-sudo] config-file section option
 function inidelete {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local sudo=""
     if [ $1 == "-sudo" ]; then
@@ -161,7 +168,8 @@ function inidelete {
 # iniset [-sudo] config-file section option value
 #  - if the file does not exist, it is created
 function iniset {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local sudo=""
     if [ $1 == "-sudo" ]; then
@@ -198,7 +206,8 @@ $option = $value
 # Set a multiple line option in an INI file
 # iniset_multiline [-sudo] config-file section option value1 value2 valu3 ...
 function iniset_multiline {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local sudo=""
     if [ $1 == "-sudo" ]; then
@@ -236,7 +245,8 @@ $option = $v
 # Uncomment an option in an INI file
 # iniuncomment config-file section option
 function iniuncomment {
-    local xtrace=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local sudo=""
     if [ $1 == "-sudo" ]; then
