@@ -22,6 +22,8 @@ The following are plugins that exist for official OpenStack projects.
 +------------------+---------------------------------------------+--------------------+
 |aodh              |git://git.openstack.org/openstack/aodh       | alarming           |
 +------------------+---------------------------------------------+--------------------+
+|barbican          |git://git.openstack.org/openstack/barbican   | key management     |
++------------------+---------------------------------------------+--------------------+
 |ceilometer        |git://git.openstack.org/openstack/ceilometer | metering           |
 +------------------+---------------------------------------------+--------------------+
 |gnocchi           |git://git.openstack.org/openstack/gnocchi    | metric             |
