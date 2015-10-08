@@ -91,7 +91,7 @@ fi
 ENABLE_HTTPD_MOD_WSGI_SERVICES=True
 
 # Set the default Nova APIs to enable
-NOVA_ENABLED_APIS=ec2,osapi_compute,metadata
+NOVA_ENABLED_APIS=osapi_compute,metadata
 
 # Set the root URL for Horizon
 HORIZON_APACHE_ROOT="/dashboard"
