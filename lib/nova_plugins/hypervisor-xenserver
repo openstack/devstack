@@ -79,7 +79,7 @@ function configure_nova_hypervisor {
 
     # Create a cron job that will rotate guest logs
     $ssh_dom0 crontab - << CRONTAB
-* * * * * /root/rotate_xen_guest_logs.sh
+* * * * * /root/rotate_xen_guest_logs.sh >/dev/null 2>&1
 CRONTAB
 
     # Create directories for kernels and images
