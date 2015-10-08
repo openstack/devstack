@@ -69,7 +69,7 @@ function install_get_pip {
             timecond="-z $LOCAL_PIP"
         fi
 
-        curl --retry 6 --retry-delay 5 \
+        curl -f --retry 6 --retry-delay 5 \
             $timecond -o $LOCAL_PIP $PIP_GET_PIP_URL || \
             die $LINENO "Download of get-pip.py failed"
         touch $LOCAL_PIP.downloaded
