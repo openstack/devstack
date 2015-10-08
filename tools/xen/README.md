@@ -77,7 +77,7 @@ Of course, use real passwords if this machine is exposed.
     # NOTE: these need to be specified, otherwise devstack will try
     # to prompt for these passwords, blocking the install process.
 
-    MYSQL_PASSWORD=my_super_secret
+    DATABASE_PASSWORD=my_super_secret
     SERVICE_TOKEN=my_super_secret
     ADMIN_PASSWORD=my_super_secret
     SERVICE_PASSWORD=my_super_secret
