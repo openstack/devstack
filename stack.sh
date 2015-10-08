@@ -93,6 +93,15 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
+# Provide a safety switch for devstack. If you do a lot of devstack,
+# on a lot of different environments, you sometimes run it on the
+# wrong box. This makes there be a way to prevent that.
+if [[ -e $HOME/.no-devstack ]]; then
+    echo "You've marked this host as a no-devstack host, to save yourself from"
+    echo "running devstack accidentally. If this is in error, please remove the"
+    echo "~/.no-devstack file"
+    exit 1
+fi
 
 # Prepare the environment
 # -----------------------
