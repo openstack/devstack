@@ -183,6 +183,34 @@ given a VLAN tag and IP address range, so that instances created via
 DevStack will use the external router for L3 connectivity, as opposed
 to the neutron L3 service.
 
+Physical Network Setup
+----------------------
+
+.. nwdiag::
+
+        nwdiag {
+                inet [ shape = cloud ];
+                router;
+                inet -- router;
+
+                network provider_net {
+                        address = "203.0.113.0/24"
+                        router [ address = "203.0.113.1" ];
+                        controller;
+                        compute1;
+                        compute2;
+                }
+
+                network control_plane {
+                        router [ address = "10.0.0.1" ]
+                        address = "10.0.0.0/24"
+                        controller [ address = "10.0.0.2" ]
+                        compute1 [ address = "10.0.0.3" ]
+                        compute2 [ address = "10.0.0.4" ]
+                }
+        }
+
+
 
 Service Configuration
 ---------------------
