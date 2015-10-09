@@ -52,7 +52,7 @@ DevStack Configuration
         RABBIT_HOST=172.18.161.6
         GLANCE_HOSTPORT=172.18.161.6:9292
         ADMIN_PASSWORD=secrete
-        MYSQL_PASSWORD=secrete
+        DATABASE_PASSWORD=secrete
         RABBIT_PASSWORD=secrete
         SERVICE_PASSWORD=secrete
         SERVICE_TOKEN=secrete

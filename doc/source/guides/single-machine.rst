@@ -105,7 +105,7 @@ do the following:
     FIXED_NETWORK_SIZE=256
     FLAT_INTERFACE=eth0
     ADMIN_PASSWORD=supersecret
-    MYSQL_PASSWORD=iheartdatabases
+    DATABASE_PASSWORD=iheartdatabases
     RABBIT_PASSWORD=flopsymopsy
     SERVICE_PASSWORD=iheartksl
     SERVICE_TOKEN=xyzpdqlazydog

@@ -64,7 +64,7 @@ passed as the user-data file when booting the VM.
             cd devstack
             echo '[[local|localrc]]' > local.conf
             echo ADMIN_PASSWORD=password >> local.conf
-            echo MYSQL_PASSWORD=password >> local.conf
+            echo DATABASE_PASSWORD=password >> local.conf
             echo RABBIT_PASSWORD=password >> local.conf
             echo SERVICE_PASSWORD=password >> local.conf
             echo SERVICE_TOKEN=tokentoken >> local.conf

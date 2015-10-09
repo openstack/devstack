@@ -128,7 +128,7 @@ cluster controller's DevStack in ``local.conf``:
     MULTI_HOST=1
     LOGFILE=/opt/stack/logs/stack.sh.log
     ADMIN_PASSWORD=labstack
-    MYSQL_PASSWORD=supersecret
+    DATABASE_PASSWORD=supersecret
     RABBIT_PASSWORD=supersecrete
     SERVICE_PASSWORD=supersecrete
     SERVICE_TOKEN=xyzpdqlazydog
@@ -169,7 +169,7 @@ machines, create a ``local.conf`` with:
     MULTI_HOST=1
     LOGFILE=/opt/stack/logs/stack.sh.log
     ADMIN_PASSWORD=labstack
-    MYSQL_PASSWORD=supersecret
+    DATABASE_PASSWORD=supersecret
     RABBIT_PASSWORD=supersecrete
     SERVICE_PASSWORD=supersecrete
     SERVICE_TOKEN=xyzpdqlazydog
