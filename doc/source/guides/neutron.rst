@@ -236,7 +236,20 @@ controller node.
 
 ::
 
+        HOST_IP=10.0.0.2
+        SERVICE_HOST=10.0.0.2
+        MYSQL_HOST=10.0.0.2
+        SERVICE_HOST=10.0.0.2
+        MYSQL_HOST=10.0.0.2
+        RABBIT_HOST=10.0.0.2
+        GLANCE_HOSTPORT=10.0.0.2:9292
         PUBLIC_INTERFACE=eth1
+
+        ADMIN_PASSWORD=secrete
+        MYSQL_PASSWORD=secrete
+        RABBIT_PASSWORD=secrete
+        SERVICE_PASSWORD=secrete
+        SERVICE_TOKEN=secrete
 
         ## Neutron options
         Q_USE_SECGROUP=True
@@ -269,23 +282,36 @@ would be a public IP address range that you or your organization has
 allocated to you, so that you could access your instances from the
 public internet.
 
-The following is a snippet of the DevStack configuration on the
-compute node.
+The following is the DevStack configuration on 
+compute node 1.
 
 ::
+
+        HOST_IP=10.0.0.3
+        SERVICE_HOST=10.0.0.2
+        MYSQL_HOST=10.0.0.2
+        SERVICE_HOST=10.0.0.2
+        MYSQL_HOST=10.0.0.2
+        RABBIT_HOST=10.0.0.2
+        GLANCE_HOSTPORT=10.0.0.2:9292
+        ADMIN_PASSWORD=secrete
+        MYSQL_PASSWORD=secrete
+        RABBIT_PASSWORD=secrete
+        SERVICE_PASSWORD=secrete
+        SERVICE_TOKEN=secrete
 
         # Services that a compute node runs
         ENABLED_SERVICES=n-cpu,rabbit,q-agt
 
         ## Neutron options
-        Q_USE_SECGROUP=True
-        ENABLE_TENANT_VLANS=True
-        TENANT_VLAN_RANGE=3001:4000
         PHYSICAL_NETWORK=default
         OVS_PHYSICAL_BRIDGE=br-ex
         PUBLIC_INTERFACE=eth1
         Q_USE_PROVIDER_NETWORKING=True
         Q_L3_ENABLED=False
+
+Compute node 2's configuration will be exactly the same, except
+`HOST_IP` will be `10.0.0.4`
 
 When DevStack is configured to use provider networking (via
 `Q_USE_PROVIDER_NETWORKING` is True and `Q_L3_ENABLED` is False) -
