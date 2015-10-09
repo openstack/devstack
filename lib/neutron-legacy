@@ -1165,6 +1165,9 @@ function _neutron_service_plugin_class_add {
 
 # _neutron_deploy_rootwrap_filters() - deploy rootwrap filters to $Q_CONF_ROOTWRAP_D (owned by root).
 function _neutron_deploy_rootwrap_filters {
+    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+        return
+    fi
     local srcdir=$1
     sudo install -d -o root -m 755 $Q_CONF_ROOTWRAP_D
     sudo install -o root -m 644 $srcdir/etc/neutron/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
