@@ -1712,13 +1712,14 @@ function run_phase {
     local mode=$1
     local phase=$2
     if [[ -d $TOP_DIR/extras.d ]]; then
-        for i in $TOP_DIR/extras.d/*.sh; do
-            [[ -r $i ]] && source $i $mode $phase
+        local extra_plugin_file_name
+        for extra_plugin_file_name in $TOP_DIR/extras.d/*.sh; do
+            [[ -r $extra_plugin_file_name ]] && source $extra_plugin_file_name $mode $phase
             # NOTE(sdague): generate a big warning about using
             # extras.d in an unsupported way which will let us track
             # unsupported usage in the gate.
             local exceptions="50-ironic.sh 60-ceph.sh 80-tempest.sh"
-            local extra=$(basename $i)
+            local extra=$(basename $extra_plugin_file_name)
             if [[ ! ( $exceptions =~ "$extra" ) ]]; then
                 deprecated "extras.d support is being removed in Mitaka-1"
                 deprecated "jobs for project $extra will break after that point"
