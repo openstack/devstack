@@ -14,3 +14,12 @@ Listen %PUBLICPORT%
     %SSLCERTFILE%
     %SSLKEYFILE%
 </VirtualHost>
+
+Alias /ec2 %PUBLICWSGI%
+<Location /ec2>
+    SetHandler wsgi-script
+    Options +ExecCGI
+    WSGIProcessGroup nova-ec2-api
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+</Location>
