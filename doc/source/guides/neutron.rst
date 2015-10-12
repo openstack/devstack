@@ -35,7 +35,7 @@ network and is on a shared subnet with other machines.
                 network hardware_network {
                         address = "172.18.161.0/24"
                         router [ address = "172.18.161.1" ];
-                        devstack_laptop [ address = "172.18.161.6" ];
+                        devstack-1 [ address = "172.18.161.6" ];
                 }
         }
 
@@ -43,9 +43,13 @@ network and is on a shared subnet with other machines.
 DevStack Configuration
 ----------------------
 
+The following is a complete `local.conf` for the host named
+`devstack-1`. It will run all the API and services, as well as
+serving as a hypervisor for guest instances.
 
 ::
 
+        [[local|localrc]]
         HOST_IP=172.18.161.6
         SERVICE_HOST=172.18.161.6
         MYSQL_HOST=172.18.161.6
@@ -56,6 +60,12 @@ DevStack Configuration
         RABBIT_PASSWORD=secrete
         SERVICE_PASSWORD=secrete
         SERVICE_TOKEN=secrete
+
+        # Do not use Nova-Network
+        disable_service n-net
+        # Enable Neutron
+        ENABLED_SERVICES+=,q-svc,q-dhcp,q-meta,q-agt,q-l3
+
 
         ## Neutron options
         Q_USE_SECGROUP=True
@@ -70,6 +80,166 @@ DevStack Configuration
         PUBLIC_BRIDGE=br-ex
         OVS_BRIDGE_MAPPINGS=public:br-ex
 
+
+Adding Additional Compute Nodes
+-------------------------------
+
+Let's suppose that after installing DevStack on the first host, you
+also want to do multinode testing and networking.
+
+Physical Network Setup
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. nwdiag::
+
+        nwdiag {
+                inet [ shape = cloud ];
+                router;
+                inet -- router;
+
+                network hardware_network {
+                        address = "172.18.161.0/24"
+                        router [ address = "172.18.161.1" ];
+                        devstack-1 [ address = "172.18.161.6" ];
+                        devstack-2 [ address = "172.18.161.7" ];
+                }
+        }
+
+
+After DevStack installs and configures Neutron, traffic from guest VMs
+flows out of `devstack-2` (the compute node) and is encapsulated in a
+VXLAN tunnel back to `devstack-1` (the control node) where the L3
+agent is running.
+
+::
+
+    stack@devstack-2:~/devstack$ sudo ovs-vsctl show
+    8992d965-0ba0-42fd-90e9-20ecc528bc29
+        Bridge br-int
+            fail_mode: secure
+            Port br-int
+                Interface br-int
+                    type: internal
+            Port patch-tun
+                Interface patch-tun
+                    type: patch
+                    options: {peer=patch-int}
+        Bridge br-tun
+            fail_mode: secure
+            Port "vxlan-c0a801f6"
+                Interface "vxlan-c0a801f6"
+                    type: vxlan
+                    options: {df_default="true", in_key=flow, local_ip="172.18.161.7", out_key=flow, remote_ip="172.18.161.6"}
+            Port patch-int
+                Interface patch-int
+                    type: patch
+                    options: {peer=patch-tun}
+            Port br-tun
+                Interface br-tun
+                    type: internal
+        ovs_version: "2.0.2"
+
+Open vSwitch on the control node, where the L3 agent runs, is
+configured to de-encapsulate traffic from compute nodes, then forward
+it over the `br-ex` bridge, where `eth0` is attached.
+
+::
+
+    stack@devstack-1:~/devstack$ sudo ovs-vsctl show
+    422adeea-48d1-4a1f-98b1-8e7239077964
+        Bridge br-tun
+            fail_mode: secure
+            Port br-tun
+                Interface br-tun
+                    type: internal
+            Port patch-int
+                Interface patch-int
+                    type: patch
+                    options: {peer=patch-tun}
+            Port "vxlan-c0a801d8"
+                Interface "vxlan-c0a801d8"
+                    type: vxlan
+                    options: {df_default="true", in_key=flow, local_ip="172.18.161.6", out_key=flow, remote_ip="172.18.161.7"}
+        Bridge br-ex
+            Port phy-br-ex
+                Interface phy-br-ex
+                    type: patch
+                    options: {peer=int-br-ex}
+            Port "eth0"
+                Interface "eth0"
+            Port br-ex
+                Interface br-ex
+                    type: internal
+        Bridge br-int
+            fail_mode: secure
+            Port "tapce66332d-ea"
+                tag: 1
+                Interface "tapce66332d-ea"
+                    type: internal
+            Port "qg-65e5a4b9-15"
+                tag: 2
+                Interface "qg-65e5a4b9-15"
+                    type: internal
+            Port "qr-33e5e471-88"
+                tag: 1
+                Interface "qr-33e5e471-88"
+                    type: internal
+            Port "qr-acbe9951-70"
+                tag: 1
+                Interface "qr-acbe9951-70"
+                    type: internal
+            Port br-int
+                Interface br-int
+                    type: internal
+            Port patch-tun
+                Interface patch-tun
+                    type: patch
+                    options: {peer=patch-int}
+            Port int-br-ex
+                Interface int-br-ex
+                    type: patch
+                    options: {peer=phy-br-ex}
+        ovs_version: "2.0.2"
+
+`br-int` is a bridge that the Open vSwitch mechanism driver creates,
+which is used as the "integration bridge" where ports are created, and
+plugged into the virtual switching fabric. `br-ex` is an OVS bridge
+that is used to connect physical ports (like `eth0`), so that floating
+IP traffic for tenants can be received from the physical network
+infrastructure (and the internet), and routed to tenant network ports.
+`br-tun` is a tunnel bridge that is used to connect OpenStack nodes
+(like `devstack-2`) together. This bridge is used so that tenant
+network traffic, using the VXLAN tunneling protocol, flows between
+each compute node where tenant instances run.
+
+
+
+DevStack Compute Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The host `devstack-2` has a very minimal `local.conf`.
+
+::
+
+    [[local|localrc]]
+    HOST_IP=172.18.161.7
+    SERVICE_HOST=172.18.161.6
+    MYSQL_HOST=172.18.161.6
+    RABBIT_HOST=172.18.161.6
+    GLANCE_HOSTPORT=172.18.161.6:9292
+    ADMIN_PASSWORD=secrete
+    MYSQL_PASSWORD=secrete
+    RABBIT_PASSWORD=secrete
+    SERVICE_PASSWORD=secrete
+    SERVICE_TOKEN=secrete
+
+    ## Neutron options
+    PUBLIC_INTERFACE=eth0
+    ENABLED_SERVICES=n-cpu,rabbit,q-agt
+
+Network traffic from `eth0` on the compute nodes is then NAT'd by the
+controller node that runs Neutron's `neutron-l3-agent` and provides L3
+connectivity.
 
 
 Neutron Networking with Open vSwitch and Provider Networks
