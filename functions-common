@@ -1729,6 +1729,7 @@ function run_phase {
     # the source phase corresponds to settings loading in plugins
     if [[ "$mode" == "source" ]]; then
         load_plugin_settings
+        verify_disabled_services
     elif [[ "$mode" == "override_defaults" ]]; then
         plugin_override_defaults
     else
@@ -1784,25 +1785,26 @@ function disable_negated_services {
     ENABLED_SERVICES=$(remove_disabled_services "$remaining" "$to_remove")
 }
 
-# disable_service() removes the services passed as argument to the
-# ``ENABLED_SERVICES`` list, if they are present.
+# disable_service() prepares the services passed as argument to be
+# removed from the ``ENABLED_SERVICES`` list, if they are present.
 #
 # For example:
 #   disable_service rabbit
 #
-# This function does not know about the special cases
-# for nova, glance, and neutron built into is_service_enabled().
-# Uses global ``ENABLED_SERVICES``
+# Uses global ``DISABLED_SERVICES``
 # disable_service service [service ...]
 function disable_service {
-    local tmpsvcs=",${ENABLED_SERVICES},"
+    local disabled_svcs="${DISABLED_SERVICES}"
+    local enabled_svcs=",${ENABLED_SERVICES},"
     local service
     for service in $@; do
+        disabled_svcs+=",$service"
         if is_service_enabled $service; then
-            tmpsvcs=${tmpsvcs//,$service,/,}
+            enabled_svcs=${enabled_svcs//,$service,/,}
         fi
     done
-    ENABLED_SERVICES=$(_cleanup_service_list "$tmpsvcs")
+    DISABLED_SERVICES=$(_cleanup_service_list "$disabled_svcs")
+    ENABLED_SERVICES=$(_cleanup_service_list "$enabled_svcs")
 }
 
 # enable_service() adds the services passed as argument to the
@@ -1819,6 +1821,10 @@ function enable_service {
     local tmpsvcs="${ENABLED_SERVICES}"
     local service
     for service in $@; do
+        if [[ ,${DISABLED_SERVICES}, =~ ,${service}, ]]; then
+            warn $LINENO "Attempt to enable_service ${service} when it has been disabled"
+            continue
+        fi
         if ! is_service_enabled $service; then
             tmpsvcs+=",$service"
         fi
@@ -1921,6 +1927,18 @@ function use_exclusive_service {
     done
     eval "$out=$selection"
     return 0
+}
+
+# Make sure that nothing has manipulated ENABLED_SERVICES in a way
+# that conflicts with prior calls to disable_service.
+# Uses global ``ENABLED_SERVICES``
+function verify_disabled_services {
+    local service
+    for service in ${ENABLED_SERVICES//,/ }; do
+        if [[ ,${DISABLED_SERVICES}, =~ ,${service}, ]]; then
+            die $LINENO "ENABLED_SERVICES directly modified to overcome 'disable_service ${service}'"
+        fi
+    done
 }
 
 
