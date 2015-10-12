@@ -164,11 +164,6 @@ In this configuration we are defining FLOATING_RANGE to be a
 subnet that exists in the private RFC1918 address space - however in
 in a real setup FLOATING_RANGE would be a public IP address range.
 
-Note that extension drivers for the ML2 plugin is set by
-`Q_ML2_PLUGIN_EXT_DRIVERS`, and it includes 'port_security' by default. If you
-want to remove all the extension drivers (even 'port_security'), set
-`Q_ML2_PLUGIN_EXT_DRIVERS` to blank.
-
 Neutron Networking with Open vSwitch and Provider Networks
 ==========================================================
 
@@ -358,5 +353,11 @@ disable ufw if it was enabled, do the following:
         sudo service iptables save
         sudo ufw disable
 
+Configuring Extension Drivers for the ML2 Plugin
+------------------------------------------------
 
+Extension drivers for the ML2 plugin are set with the variable
+`Q_ML2_PLUGIN_EXT_DRIVERS`, and includes the 'port_security' extension
+by default. If you want to remove all the extension drivers (even
+'port_security'), set `Q_ML2_PLUGIN_EXT_DRIVERS` to blank.
 
