@@ -17,6 +17,9 @@ DATA_DIR=${DEST}/data
 # Destination for status files
 SERVICE_DIR=${DEST}/status
 
+# Path for subunit output file
+SUBUNIT_OUTPUT=${DEST}/devstack.subunit
+
 # Determine stack user
 if [[ $EUID -eq 0 ]]; then
     STACK_USER=stack
