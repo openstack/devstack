@@ -1366,6 +1366,8 @@ else
     exec 1>&3
 fi
 
+# Dump out the time totals
+time_totals
 
 # Using the cloud
 # ===============

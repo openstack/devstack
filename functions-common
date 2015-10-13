@@ -976,12 +976,18 @@ function apt_get {
     local sudo="sudo"
     [[ "$(id -u)" = "0" ]] && sudo="env"
 
+    # time all the apt operations
+    time_start "apt-get"
+
     $xtrace
 
     $sudo DEBIAN_FRONTEND=noninteractive \
         http_proxy=${http_proxy:-} https_proxy=${https_proxy:-} \
         no_proxy=${no_proxy:-} \
         apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
+
+    # stop the clock
+    time_stop "apt-get"
 }
 
 function _parse_package_files {
@@ -2115,6 +2121,70 @@ function test_with_retry {
     fi
 }
 
+# Timing infrastructure - figure out where large blocks of time are
+# used in DevStack
+#
+# The timing infrastructure for DevStack is about collecting buckets
+# of time that are spend in some subtask. For instance, that might be
+# 'apt', 'pip', 'osc', even database migrations. We do this by a pair
+# of functions: time_start / time_stop.
+#
+# These take a single parameter: $name - which specifies the name of
+# the bucket to be accounted against. time_totals function spits out
+# the results.
+#
+# Resolution is only in whole seconds, so should be used for long
+# running activities.
+
+declare -A TOTAL_TIME
+declare -A START_TIME
+
+# time_start $name
+#
+# starts the clock for a timer by name. Errors if that clock is
+# already started.
+function time_start {
+    local name=$1
+    local start_time=${START_TIME[$name]}
+    if [[ -n "$start_time" ]]; then
+        die $LINENO "Trying to start the clock on $name, but it's already been started"
+    fi
+    START_TIME[$name]=$(date +%s)
+}
+
+# time_stop $name
+#
+# stops the clock for a timer by name, and accumulate that time in the
+# global counter for that name. Errors if that clock had not
+# previously been started.
+function time_stop {
+    local name=$1
+    local start_time=${START_TIME[$name]}
+    if [[ -z "$start_time" ]]; then
+        die $LINENO "Trying to stop the clock on $name, but it was never started"
+    fi
+    local end_time=$(date +%s)
+    local elapsed_time=$(($end_time - $start_time))
+    local total=${TOTAL_TIME[$name]:-0}
+    # reset the clock so we can start it in the future
+    START_TIME[$name]=""
+    TOTAL_TIME[$name]=$(($total + $elapsed_time))
+}
+
+# time_totals
+#
+# prints out total time
+function time_totals {
+    echo
+    echo "========================"
+    echo "DevStack Components Timed"
+    echo "========================"
+    echo
+    for t in ${!TOTAL_TIME[*]}; do
+        local v=${TOTAL_TIME[$t]}
+        echo "$t - $v secs"
+    done
+}
 
 # Restore xtrace
 $XTRACE
