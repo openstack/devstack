@@ -4,7 +4,7 @@
 # -----------------------------
 
 # Save trace setting
-OVSA_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_OVSL2=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/ovs_base
@@ -132,4 +132,4 @@ function neutron_plugin_check_adv_test_requirements {
 }
 
 # Restore xtrace
-$OVSA_XTRACE
+$_XTRACE_NEUTRON_OVSL2

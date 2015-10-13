@@ -19,7 +19,7 @@
 # - cleanup_horizon
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_HORIZON=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -193,7 +193,7 @@ function _prepare_message_catalog_compilation {
 
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_HORIZON
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

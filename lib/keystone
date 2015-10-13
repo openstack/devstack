@@ -28,7 +28,7 @@
 # - _cleanup_keystone_apache_wsgi
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_KEYSTONE=$(set +o | grep xtrace)
 set +o xtrace
 
 # Defaults
@@ -592,7 +592,7 @@ function stop_keystone {
 
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_KEYSTONE
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

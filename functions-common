@@ -32,7 +32,7 @@
 #
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_FUNCTIONS_COMMON=$(set +o | grep xtrace)
 set +o xtrace
 
 # ensure we don't re-source this in the same environment
@@ -2254,7 +2254,7 @@ function time_totals {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_FUNCTIONS_COMMON
 
 # Local variables:
 # mode: shell-script

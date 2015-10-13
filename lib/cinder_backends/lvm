@@ -22,7 +22,7 @@
 
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+_XTRACE_CINDER_LVM=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -68,7 +68,7 @@ function init_cinder_backend_lvm {
 }
 
 # Restore xtrace
-$MY_XTRACE
+$_XTRACE_CINDER_LVM
 
 # mode: shell-script
 # End:

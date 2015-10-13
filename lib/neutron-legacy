@@ -357,7 +357,7 @@ else
 fi
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -1492,7 +1492,7 @@ function is_provider_network {
 
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_NEUTRON
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

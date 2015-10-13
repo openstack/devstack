@@ -19,7 +19,7 @@
 # configure_cinder_backend_glusterfs - Configure Cinder for GlusterFS backends
 
 # Save trace setting
-GLUSTERFS_XTRACE=$(set +o | grep xtrace)
+_XTRACE_CINDER_GLUSTERFS=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -41,7 +41,7 @@ function configure_cinder_backend_glusterfs {
 
 
 # Restore xtrace
-$GLUSTERFS_XTRACE
+$_XTRACE_CINDER_GLUSTERFS
 
 # Local variables:
 # mode: shell-script

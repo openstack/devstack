@@ -573,7 +573,8 @@ run_phase source
 
 # Generic helper to configure passwords
 function read_password {
-    XTRACE=$(set +o | grep xtrace)
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
     set +o xtrace
     var=$1; msg=$2
     pw=${!var}
@@ -616,7 +617,9 @@ function read_password {
         eval "$var=$pw"
         echo "$var=$pw" >> $localrc
     fi
-    $XTRACE
+
+    # restore previous xtrace value
+    $xtrace
 }
 
 

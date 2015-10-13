@@ -13,7 +13,7 @@
 # - stop_dstat
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_DSTAT=$(set +o | grep xtrace)
 set +o xtrace
 
 # start_dstat() - Start running processes, including screen
@@ -34,4 +34,4 @@ function stop_dstat {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_DSTAT

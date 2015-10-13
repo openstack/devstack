@@ -8,7 +8,7 @@
 # ``STACK_USER`` has to be defined
 
 # Save trace setting
-LV_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NOVA_FN_LIBVIRT=$(set +o | grep xtrace)
 set +o xtrace
 
 # Defaults
@@ -134,7 +134,7 @@ EOF
 
 
 # Restore xtrace
-$LV_XTRACE
+$_XTRACE_NOVA_FN_LIBVIRT
 
 # Local variables:
 # mode: shell-script

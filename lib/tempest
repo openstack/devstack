@@ -38,7 +38,7 @@
 # - init_tempest
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_TEMPEST=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -649,7 +649,7 @@ function init_tempest {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_TEMPEST
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

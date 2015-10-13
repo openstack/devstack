@@ -16,7 +16,7 @@
 # - install_oslo
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_LIB_OSLO=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -95,7 +95,7 @@ function install_oslo {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_LIB_OSLO
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

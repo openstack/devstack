@@ -8,7 +8,7 @@
 # - install_ldap()
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_LDAP=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -166,7 +166,7 @@ function clear_ldap_state {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_LDAP
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

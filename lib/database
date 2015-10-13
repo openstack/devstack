@@ -20,7 +20,7 @@
 # and call register_database $DATABASE_TYPE
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_LIB_DB=$(set +o | grep xtrace)
 set +o xtrace
 
 DATABASE_BACKENDS=""
@@ -137,7 +137,7 @@ function database_connection_url {
 
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_LIB_DB
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

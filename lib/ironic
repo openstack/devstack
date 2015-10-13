@@ -21,8 +21,8 @@
 # - cleanup_ironic
 
 # Save trace and pipefail settings
-XTRACE=$(set +o | grep xtrace)
-PIPEFAIL=$(set +o | grep pipefail)
+_XTRACE_IRONIC=$(set +o | grep xtrace)
+_PIPEFAIL_IRONIC=$(set +o | grep pipefail)
 set +o xtrace
 set +o pipefail
 
@@ -855,8 +855,8 @@ function cleanup_baremetal_basic_ops {
 }
 
 # Restore xtrace + pipefail
-$XTRACE
-$PIPEFAIL
+$_XTRACE_IRONIC
+$_PIPEFAIL_IRONIC
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

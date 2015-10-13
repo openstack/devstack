@@ -25,7 +25,7 @@
 # - cleanup_nova
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_LIB_NOVA=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -958,7 +958,7 @@ function stop_nova {
 
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_LIB_NOVA
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

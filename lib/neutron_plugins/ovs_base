@@ -4,7 +4,7 @@
 # -------------------------------------
 
 # Save trace setting
-OVSB_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_OVS_BASE=$(set +o | grep xtrace)
 set +o xtrace
 
 OVS_BRIDGE=${OVS_BRIDGE:-br-int}
@@ -114,4 +114,4 @@ function _neutron_ovs_base_configure_nova_vif_driver {
 }
 
 # Restore xtrace
-$OVSB_XTRACE
+$_XTRACE_NEUTRON_OVS_BASE

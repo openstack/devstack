@@ -21,7 +21,7 @@
 # - cleanup_glance
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_GLANCE=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -403,7 +403,7 @@ function stop_glance {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_GLANCE
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

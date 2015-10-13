@@ -19,7 +19,7 @@
 # - restart_apache_server
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_LIB_APACHE=$(set +o | grep xtrace)
 set +o xtrace
 
 # Allow overriding the default Apache user and group, default to
@@ -191,7 +191,7 @@ function restart_apache_server {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_LIB_APACHE
 
 # Tell emacs to use shell-script-mode
 ## Local variables:
