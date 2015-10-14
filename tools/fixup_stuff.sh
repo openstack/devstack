@@ -135,7 +135,7 @@ if is_fedora; then
         fi
     fi
 
-    if  [[ "$os_RELEASE" -ge "21" ]]; then
+    if  [[ "$os_VENDOR" == "Fedora" ]] && [[ "$os_RELEASE" -ge "21" ]]; then
         # requests ships vendored version of chardet/urllib3, but on
         # fedora these are symlinked back to the primary versions to
         # avoid duplication of code on disk.  This is fine when
@@ -152,9 +152,9 @@ if is_fedora; then
         # https://bugs.launchpad.net/glance/+bug/1476770
         # https://bugzilla.redhat.com/show_bug.cgi?id=1253823
 
-        base_path=/usr/lib/python2.7/site-packages/requests/packages
+        base_path=$(get_package_path requests)/packages
         if [ -L $base_path/chardet -o -L $base_path/urllib3 ]; then
-            sudo rm -f /usr/lib/python2.7/site-packages/requests/packages/{chardet,urllib3}
+            sudo rm -f $base_path/{chardet,urllib3}
             # install requests with the bundled urllib3 to avoid conflicts
             pip_install --upgrade --force-reinstall requests
         fi
