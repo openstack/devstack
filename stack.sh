@@ -569,7 +569,7 @@ function read_password {
     if [[ -f $RC_DIR/localrc ]]; then
         localrc=$TOP_DIR/localrc
     else
-        localrc=$TOP_DIR/.localrc.auto
+        localrc=$TOP_DIR/.localrc.password
     fi
 
     # If the password is not defined yet, proceed to prompt user for a password.
@@ -579,13 +579,15 @@ function read_password {
             touch $localrc
         fi
 
-        # Presumably if we got this far it can only be that our localrc is missing
-        # the required password.  Prompt user for a password and write to localrc.
+        # Presumably if we got this far it can only be that our
+        # localrc is missing the required password.  Prompt user for a
+        # password and write to localrc.
+
         echo ''
         echo '################################################################################'
         echo $msg
         echo '################################################################################'
-        echo "This value will be written to your localrc file so you don't have to enter it "
+        echo "This value will be written to ${localrc} file so you don't have to enter it "
         echo "again.  Use only alphanumeric characters."
         echo "If you leave this blank, a random default value will be used."
         pw=" "
