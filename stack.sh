@@ -1016,14 +1016,27 @@ if is_service_enabled keystone; then
     # Begone token auth
     unset OS_TOKEN OS_URL
 
-    # Set up password auth credentials now that Keystone is bootstrapped
-    export OS_AUTH_URL=$KEYSTONE_AUTH_URI
-    export OS_USERNAME=admin
-    export OS_USER_DOMAIN_ID=default
-    export OS_PASSWORD=$ADMIN_PASSWORD
-    export OS_PROJECT_NAME=admin
-    export OS_PROJECT_DOMAIN_ID=default
-    export OS_REGION_NAME=$REGION_NAME
+    # Rather than just export these, we write them out to a
+    # intermediate userrc file that can also be used to debug if
+    # something goes wrong between here and running
+    # tools/create_userrc.sh (this script relies on services other
+    # than keystone being available, so we can't call it right now)
+    cat > $TOP_DIR/userrc_early <<EOF
+# Use this for debugging issues before files in accrc are created
+
+# Set up password auth credentials now that Keystone is bootstrapped
+export OS_AUTH_URL=$KEYSTONE_AUTH_URI
+export OS_USERNAME=admin
+export OS_USER_DOMAIN_ID=default
+export OS_PASSWORD=$ADMIN_PASSWORD
+export OS_PROJECT_NAME=admin
+export OS_PROJECT_DOMAIN_ID=default
+export OS_REGION_NAME=$REGION_NAME
+
+EOF
+
+    source $TOP_DIR/userrc_early
+
 fi
 
 # Write a clouds.yaml file
