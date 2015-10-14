@@ -202,14 +202,16 @@ function cleanup_nova {
         clean_iptables
 
         # Destroy old instances
-        local instances=`sudo virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
+        local instances
+        instances=`sudo virsh list --all | grep $INSTANCE_NAME_PREFIX | sed "s/.*\($INSTANCE_NAME_PREFIX[0-9a-fA-F]*\).*/\1/g"`
         if [ ! "$instances" = "" ]; then
             echo $instances | xargs -n1 sudo virsh destroy || true
             echo $instances | xargs -n1 sudo virsh undefine --managed-save || true
         fi
 
         # Logout and delete iscsi sessions
-        local tgts=$(sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d ' ' -f2)
+        local tgts
+        tgts=$(sudo iscsiadm --mode node | grep $VOLUME_NAME_PREFIX | cut -d ' ' -f2)
         local target
         for target in $tgts; do
             sudo iscsiadm --mode node -T $target --logout || true
@@ -245,8 +247,10 @@ function _cleanup_nova_apache_wsgi {
 function _config_nova_apache_wsgi {
     sudo mkdir -p $NOVA_WSGI_DIR
 
-    local nova_apache_conf=$(apache_site_config_for nova-api)
-    local nova_ec2_apache_conf=$(apache_site_config_for nova-ec2-api)
+    local nova_apache_conf
+    nova_apache_conf=$(apache_site_config_for nova-api)
+    local nova_ec2_apache_conf
+    nova_ec2_apache_conf=$(apache_site_config_for nova-ec2-api)
     local nova_ssl=""
     local nova_certfile=""
     local nova_keyfile=""
@@ -784,7 +788,8 @@ function start_nova_api {
     export PATH=$NOVA_BIN_DIR:$PATH
 
     # If the site is not enabled then we are in a grenade scenario
-    local enabled_site_file=$(apache_site_config_for nova-api)
+    local enabled_site_file
+    enabled_site_file=$(apache_site_config_for nova-api)
     if [ -f ${enabled_site_file} ] && [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
         enable_apache_site nova-api
         enable_apache_site nova-ec2-api

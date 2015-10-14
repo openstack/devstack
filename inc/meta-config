@@ -89,7 +89,8 @@ function merge_config_file {
     # note, configfile might be a variable (note the iniset, etc
     # created in the mega-awk below is "eval"ed too, so we just leave
     # it alone.
-    local real_configfile=$(eval echo $configfile)
+    local real_configfile
+    real_configfile=$(eval echo $configfile)
     if [ ! -f $real_configfile ]; then
         touch $real_configfile
     fi

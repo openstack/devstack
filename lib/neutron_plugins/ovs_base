@@ -49,8 +49,10 @@ function neutron_ovs_base_cleanup {
 
 function _neutron_ovs_base_install_ubuntu_dkms {
     # install Dynamic Kernel Module Support packages if needed
-    local kernel_version=$(uname -r)
-    local kernel_major_minor=`echo $kernel_version | cut -d. -f1-2`
+    local kernel_version
+    kernel_version=$(uname -r)
+    local kernel_major_minor
+    kernel_major_minor=`echo $kernel_version | cut -d. -f1-2`
     # From kernel 3.13 on, openvswitch-datapath-dkms is not needed
     if [ `vercmp_numbers "$kernel_major_minor" "3.13"` -lt "0" ]; then
         install_package "dkms openvswitch-datapath-dkms linux-headers-$kernel_version"

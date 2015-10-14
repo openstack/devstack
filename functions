@@ -264,7 +264,8 @@ function upload_image {
             ;;
         *.img)
             image_name=$(basename "$image" ".img")
-            local format=$(qemu-img info ${image} | awk '/^file format/ { print $3; exit }')
+            local format
+            format=$(qemu-img info ${image} | awk '/^file format/ { print $3; exit }')
             if [[ ",qcow2,raw,vdi,vmdk,vpc," =~ ",$format," ]]; then
                 disk_format=$format
             else
@@ -405,7 +406,8 @@ function get_instance_ip {
     local vm_id=$1
     local network_name=$2
     local nova_result="$(nova show $vm_id)"
-    local ip=$(echo "$nova_result" | grep "$network_name" | get_field 2)
+    local ip
+    ip=$(echo "$nova_result" | grep "$network_name" | get_field 2)
     if [[ $ip = "" ]];then
         echo "$nova_result"
         die $LINENO "[Fail] Coudn't get ipaddress of VM"
@@ -455,7 +457,8 @@ function check_path_perm_sanity {
     # homedir permissions on RHEL and common practice of making DEST in
     # the stack user's homedir.
 
-    local real_path=$(readlink -f $1)
+    local real_path
+    real_path=$(readlink -f $1)
     local rebuilt_path=""
     for i in $(echo ${real_path} | tr "/" " "); do
         rebuilt_path=$rebuilt_path"/"$i

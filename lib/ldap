@@ -82,7 +82,8 @@ function cleanup_ldap {
 function init_ldap {
     local keystone_ldif
 
-    local tmp_ldap_dir=$(mktemp -d -t ldap.$$.XXXXXXXXXX)
+    local tmp_ldap_dir
+    tmp_ldap_dir=$(mktemp -d -t ldap.$$.XXXXXXXXXX)
 
     # Remove data but not schemas
     clear_ldap_state
@@ -113,7 +114,8 @@ function install_ldap {
     echo "Installing LDAP inside function"
     echo "os_VENDOR is $os_VENDOR"
 
-    local tmp_ldap_dir=$(mktemp -d -t ldap.$$.XXXXXXXXXX)
+    local tmp_ldap_dir
+    tmp_ldap_dir=$(mktemp -d -t ldap.$$.XXXXXXXXXX)
 
     printf "installing OpenLDAP"
     if is_ubuntu; then
@@ -129,7 +131,8 @@ function install_ldap {
     fi
 
     echo "LDAP_PASSWORD is $LDAP_PASSWORD"
-    local slappass=$(slappasswd -s $LDAP_PASSWORD)
+    local slappass
+    slappass=$(slappasswd -s $LDAP_PASSWORD)
     printf "LDAP secret is $slappass\n"
 
     # Create manager.ldif and add to olcdb

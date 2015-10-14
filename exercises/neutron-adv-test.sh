@@ -122,41 +122,47 @@ function foreach_tenant_net {
 }
 
 function get_image_id {
-    local IMAGE_ID=$(openstack image list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+    local IMAGE_ID
+    IMAGE_ID=$(openstack image list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
     die_if_not_set $LINENO IMAGE_ID "Failure retrieving IMAGE_ID"
     echo "$IMAGE_ID"
 }
 
 function get_tenant_id {
     local TENANT_NAME=$1
-    local TENANT_ID=`openstack project list | grep " $TENANT_NAME " | head -n 1 | get_field 1`
+    local TENANT_ID
+    TENANT_ID=`openstack project list | grep " $TENANT_NAME " | head -n 1 | get_field 1`
     die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for $TENANT_NAME"
     echo "$TENANT_ID"
 }
 
 function get_user_id {
     local USER_NAME=$1
-    local USER_ID=`openstack user list | grep $USER_NAME | awk '{print $2}'`
+    local USER_ID
+    USER_ID=`openstack user list | grep $USER_NAME | awk '{print $2}'`
     die_if_not_set $LINENO USER_ID "Failure retrieving USER_ID for $USER_NAME"
     echo "$USER_ID"
 }
 
 function get_role_id {
     local ROLE_NAME=$1
-    local ROLE_ID=`openstack role list | grep $ROLE_NAME | awk '{print $2}'`
+    local ROLE_ID
+    ROLE_ID=`openstack role list | grep $ROLE_NAME | awk '{print $2}'`
     die_if_not_set $LINENO ROLE_ID "Failure retrieving ROLE_ID for $ROLE_NAME"
     echo "$ROLE_ID"
 }
 
 function get_network_id {
     local NETWORK_NAME="$1"
-    local NETWORK_ID=`neutron net-list -F id  -- --name=$NETWORK_NAME | awk "NR==4" | awk '{print $2}'`
+    local NETWORK_ID
+    NETWORK_ID=`neutron net-list -F id  -- --name=$NETWORK_NAME | awk "NR==4" | awk '{print $2}'`
     echo $NETWORK_ID
 }
 
 function get_flavor_id {
     local INSTANCE_TYPE=$1
-    local FLAVOR_ID=`nova flavor-list | grep $INSTANCE_TYPE | awk '{print $2}'`
+    local FLAVOR_ID
+    FLAVOR_ID=`nova flavor-list | grep $INSTANCE_TYPE | awk '{print $2}'`
     die_if_not_set $LINENO FLAVOR_ID "Failure retrieving FLAVOR_ID for $INSTANCE_TYPE"
     echo "$FLAVOR_ID"
 }
@@ -185,13 +191,15 @@ function add_tenant {
 
 function remove_tenant {
     local TENANT=$1
-    local TENANT_ID=$(get_tenant_id $TENANT)
+    local TENANT_ID
+    TENANT_ID=$(get_tenant_id $TENANT)
     openstack project delete $TENANT_ID
 }
 
 function remove_user {
     local USER=$1
-    local USER_ID=$(get_user_id $USER)
+    local USER_ID
+    USER_ID=$(get_user_id $USER)
     openstack user delete $USER_ID
 }
 
@@ -221,9 +229,11 @@ function create_network {
     local NET_NAME="${TENANT}-net$NUM"
     local ROUTER_NAME="${TENANT}-router${NUM}"
     source $TOP_DIR/openrc admin admin
-    local TENANT_ID=$(get_tenant_id $TENANT)
+    local TENANT_ID
+    TENANT_ID=$(get_tenant_id $TENANT)
     source $TOP_DIR/openrc $TENANT $TENANT
-    local NET_ID=$(neutron net-create --tenant-id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
+    local NET_ID
+    NET_ID=$(neutron net-create --tenant-id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
     die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $TENANT_ID $NET_NAME $EXTRA"
     neutron subnet-create --ip-version 4 --tenant-id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
     neutron_debug_admin probe-create --device-owner compute $NET_ID
@@ -251,7 +261,8 @@ function create_vm {
     done
     #TODO (nati) Add multi-nic test
     #TODO (nati) Add public-net test
-    local VM_UUID=`nova boot --flavor $(get_flavor_id m1.tiny) \
+    local VM_UUID
+    VM_UUID=`nova boot --flavor $(get_flavor_id m1.tiny) \
         --image $(get_image_id) \
         $NIC \
         $TENANT-server$NUM | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
@@ -309,7 +320,8 @@ function delete_network {
     local NUM=$2
     local NET_NAME="${TENANT}-net$NUM"
     source $TOP_DIR/openrc admin admin
-    local TENANT_ID=$(get_tenant_id $TENANT)
+    local TENANT_ID
+    TENANT_ID=$(get_tenant_id $TENANT)
     #TODO(nati) comment out until l3-agent merged
     #for res in port subnet net router;do
     for net_id in `neutron net-list -c id -c name | grep $NET_NAME | awk '{print $2}'`;do
