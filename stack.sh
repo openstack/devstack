@@ -287,14 +287,7 @@ EOF
     # ... and also optional to be enabled
     sudo yum-config-manager --enable rhel-7-server-optional-rpms
 
-    RHEL_RDO_REPO_RPM=${RHEL7_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-kilo/rdo-release-kilo-1.noarch.rpm"}
-    RHEL_RDO_REPO_ID=${RHEL7_RDO_REPO_ID:-"openstack-kilo"}
-
-    if ! sudo yum repolist enabled $RHEL_RDO_REPO_ID | grep -q $RHEL_RDO_REPO_ID; then
-        echo "RDO repo not detected; installing"
-        yum_install $RHEL_RDO_REPO_RPM || \
-            die $LINENO "Error installing RDO repo, cannot continue"
-    fi
+    sudo yum install -y https://rdoproject.org/repos/rdo-release.rpm
 
     if is_oraclelinux; then
         sudo yum-config-manager --enable ol7_optional_latest ol7_addons ol7_MySQL56
