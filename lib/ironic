@@ -634,8 +634,10 @@ function enroll_nodes {
 
         # First node created will be used for testing in ironic w/o glance
         # scenario, so we need to know its UUID.
-        local standalone_node_uuid
-        standalone_node_uuid=$([ $total_nodes -eq 0 ] && echo "--uuid $IRONIC_NODE_UUID")
+        local standalone_node_uuid=""
+        if [ $total_nodes -eq 0 ]; then
+            standalone_node_uuid="--uuid $IRONIC_NODE_UUID"
+        fi
 
         local node_id
         node_id=$(ironic node-create $standalone_node_uuid\
