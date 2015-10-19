@@ -68,7 +68,7 @@ Alternate Configs
 | Plugin Name | URL                                                        | Comments   |
 |             |                                                            |            |
 +-------------+------------------------------------------------------------+------------+
-|glusterfs    |git://git.openstack.org/stackforge/devstack-plugin-glusterfs|            |
+|glusterfs    |git://git.openstack.org/openstack/devstack-plugin-glusterfs |            |
 +-------------+------------------------------------------------------------+------------+
 |             |                                                            |            |
 +-------------+------------------------------------------------------------+------------+
@@ -80,7 +80,7 @@ Additional Services
 | Plugin Name    | URL                                              | Comments   |
 |                |                                                  |            |
 +----------------+--------------------------------------------------+------------+
-|ec2-api         |git://git.openstack.org/stackforge/ec2api         |[as1]_      |
+|ec2-api         |git://git.openstack.org/openstack/ec2-api         |[as1]_      |
 +----------------+--------------------------------------------------+------------+
 |ironic-inspector|git://git.openstack.org/openstack/ironic-inspector|            |
 +----------------+--------------------------------------------------+------------+

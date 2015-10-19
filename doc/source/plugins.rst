@@ -56,7 +56,7 @@ They are added in the following format::
 
 An example would be as follows::
 
-  enable_plugin ec2api git://git.openstack.org/stackforge/ec2api
+  enable_plugin ec2-api git://git.openstack.org/openstack/ec2-api
 
 plugin.sh contract
 ==================
@@ -202,13 +202,12 @@ Using Plugins in the OpenStack Gate
 For everyday use, DevStack plugins can exist in any git tree that's
 accessible on the internet. However, when using DevStack plugins in
 the OpenStack gate, they must live in projects in OpenStack's
-gerrit. Both ``openstack`` namespace and ``stackforge`` namespace are
-fine. This allows testing of the plugin as well as provides network
+gerrit. This allows testing of the plugin as well as provides network
 isolation against upstream git repository failures (which we see often
 enough to be an issue).
 
 Ideally a plugin will be included within the ``devstack`` directory of
-the project they are being tested. For example, the stackforge/ec2-api
+the project they are being tested. For example, the openstack/ec2-api
 project has its plugin support in its own tree.
 
 However, some times a DevStack plugin might be used solely to
@@ -218,7 +217,7 @@ include: integration of back end storage (e.g. ceph or glusterfs),
 integration of SDN controllers (e.g. ovn, OpenDayLight), or
 integration of alternate RPC systems (e.g. zmq, qpid). In these cases
 the best practice is to build a dedicated
-``stackforge/devstack-plugin-FOO`` project.
+``openstack/devstack-plugin-FOO`` project.
 
 To enable a plugin to be used in a gate job, the following lines will
 be needed in your ``jenkins/jobs/<project>.yaml`` definition in
@@ -228,12 +227,12 @@ be needed in your ``jenkins/jobs/<project>.yaml`` definition in
   # Because we are testing a non standard project, add the
   # our project repository. This makes zuul do the right
   # reference magic for testing changes.
-  export PROJECTS="stackforge/ec2-api $PROJECTS"
+  export PROJECTS="openstack/ec2-api $PROJECTS"
 
   # note the actual url here is somewhat irrelevant because it
   # caches in nodepool, however make it a valid url for
   # documentation purposes.
-  export DEVSTACK_LOCAL_CONFIG="enable_plugin ec2-api git://git.openstack.org/stackforge/ec2-api"
+  export DEVSTACK_LOCAL_CONFIG="enable_plugin ec2-api git://git.openstack.org/openstack/ec2-api"
 
 See Also
 ========
