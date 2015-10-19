@@ -1746,7 +1746,8 @@ function run_phase {
             # extras.d in an unsupported way which will let us track
             # unsupported usage in the gate.
             local exceptions="50-ironic.sh 60-ceph.sh 80-tempest.sh"
-            local extra=$(basename $extra_plugin_file_name)
+            local extra
+            extra=$(basename $extra_plugin_file_name)
             if [[ ! ( $exceptions =~ "$extra" ) ]]; then
                 deprecated "extras.d support is being removed in Mitaka-1"
                 deprecated "jobs for project $extra will break after that point"
@@ -2184,14 +2185,21 @@ function time_start {
 # global counter for that name. Errors if that clock had not
 # previously been started.
 function time_stop {
-    local name=$1
-    local start_time=${START_TIME[$name]}
+    local name
+    local end_time
+    local elpased_time
+    local total
+    local start_time
+
+    name=$1
+    start_time=${START_TIME[$name]}
+
     if [[ -z "$start_time" ]]; then
         die $LINENO "Trying to stop the clock on $name, but it was never started"
     fi
-    local end_time=$(date +%s)
-    local elapsed_time=$(($end_time - $start_time))
-    local total=${TOTAL_TIME[$name]:-0}
+    end_time=$(date +%s)
+    elapsed_time=$(($end_time - $start_time))
+    total=${TOTAL_TIME[$name]:-0}
     # reset the clock so we can start it in the future
     START_TIME[$name]=""
     TOTAL_TIME[$name]=$(($total + $elapsed_time))
