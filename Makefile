@@ -26,7 +26,7 @@ unstack:
 	./unstack.sh
 
 wheels:
-	WHEELHOUSE=$(WHEELHOUSE) tools/build-wheels.sh
+	WHEELHOUSE=$(WHEELHOUSE) tools/build_wheels.sh
 
 docs:
 	tox -edocs
