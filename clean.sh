@@ -134,7 +134,9 @@ rm -rf $DIRS_TO_CLEAN
 
 # Clean up files
 
-FILES_TO_CLEAN=".localrc.auto docs/files docs/html shocco/ stack-screenrc test*.conf* test.ini*"
+FILES_TO_CLEAN=".localrc.auto .localrc.password "
+FILES_TO_CLEAN+="docs/files docs/html shocco/ "
+FILES_TO_CLEAN+="stack-screenrc test*.conf* test.ini* "
 FILES_TO_CLEAN+=".stackenv .prereqs"
 
 for file in $FILES_TO_CLEAN; do
