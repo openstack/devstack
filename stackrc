@@ -442,7 +442,7 @@ GITREPO["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/k
 GITBRANCH["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_BRANCH:-master}
 
 # s3 support for swift
-SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/stackforge/swift3.git}
+SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/openstack/swift3.git}
 SWIFT3_BRANCH=${SWIFT3_BRANCH:-master}
 
 # ceilometer middleware
