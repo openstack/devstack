@@ -388,6 +388,8 @@ function configure_tempest {
     if is_service_enabled n-cell; then
         # Cells doesn't support shelving/unshelving
         iniset $TEMPEST_CONFIG compute-feature-enabled shelve False
+        # Cells doesn't support hot-plugging virtual interfaces.
+        iniset $TEMPEST_CONFIG compute-feature-enabled interface_attach False
     fi
 
     # Network
