@@ -73,42 +73,39 @@ function save_stackenv {
 # - A `devstack-admin` entry for the `admin` user for the `admin` project.
 # write_clouds_yaml
 function write_clouds_yaml {
-    local clouds_yaml
+    # The location is a variable to allow for easier refactoring later to make it
+    # overridable. There is currently no usecase where doing so makes sense, so
+    # it's not currently configurable.
 
-    sudo mkdir -p /etc/openstack
+    CLOUDS_YAML=/etc/openstack/clouds.yaml
+
+    sudo mkdir -p $(dirname $CLOUDS_YAML)
     sudo chown -R $STACK_USER /etc/openstack
-    # XXX: to be removed, see https://review.openstack.org/237149/
-    # careful not to sudo this, incase ~ is NFS mounted
-    mkdir -p ~/.config/openstack
 
-    for clouds_path in /etc/openstack ~/.config/openstack ; do
-        clouds_yaml=$clouds_path/clouds.yaml
-
-        CA_CERT_ARG=''
-        if [ -f "$SSL_BUNDLE_FILE" ]; then
-            CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
-        fi
-        $TOP_DIR/tools/update_clouds_yaml.py \
-            --file $clouds_yaml \
-            --os-cloud devstack \
-            --os-region-name $REGION_NAME \
-            --os-identity-api-version 3 \
-            $CA_CERT_ARG \
-            --os-auth-url $KEYSTONE_AUTH_URI \
-            --os-username demo \
-            --os-password $ADMIN_PASSWORD \
-            --os-project-name demo
-        $TOP_DIR/tools/update_clouds_yaml.py \
-            --file $clouds_yaml \
-            --os-cloud devstack-admin \
-            --os-region-name $REGION_NAME \
-            --os-identity-api-version 3 \
-            $CA_CERT_ARG \
-            --os-auth-url $KEYSTONE_AUTH_URI \
-            --os-username admin \
-            --os-password $ADMIN_PASSWORD \
-            --os-project-name admin
-    done
+    CA_CERT_ARG=''
+    if [ -f "$SSL_BUNDLE_FILE" ]; then
+        CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
+    fi
+    $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack \
+        --os-region-name $REGION_NAME \
+        --os-identity-api-version 3 \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_AUTH_URI \
+        --os-username demo \
+        --os-password $ADMIN_PASSWORD \
+        --os-project-name demo
+    $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-admin \
+        --os-region-name $REGION_NAME \
+        --os-identity-api-version 3 \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_AUTH_URI \
+        --os-username admin \
+        --os-password $ADMIN_PASSWORD \
+        --os-project-name admin
 }
 
 # trueorfalse <True|False> <VAR>
