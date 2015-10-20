@@ -12,6 +12,7 @@ iptables-services  # NOPRIME f21,f22
 java-1.7.0-openjdk-headless  # NOPRIME rhel7
 java-1.8.0-openjdk-headless  # NOPRIME f21,f22
 libffi-devel
+libjpeg-turbo-devel # Pillow 3.0.0
 libxml2-devel # lxml
 libxslt-devel # lxml
 libyaml-devel

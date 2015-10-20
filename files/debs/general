@@ -8,6 +8,7 @@ git
 graphviz # needed for docs
 iputils-ping
 libffi-dev # for pyOpenSSL
+libjpeg-dev # Pillow 3.0.0
 libmysqlclient-dev  # MySQL-python
 libpq-dev  # psycopg2
 libssl-dev # for pyOpenSSL

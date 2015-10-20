@@ -9,6 +9,7 @@ git-core
 graphviz # docs
 iputils
 libffi-devel  # pyOpenSSL
+libjpeg8-devel # Pillow 3.0.0
 libmysqlclient-devel # MySQL-python
 libopenssl-devel # to rebuild pyOpenSSL if needed
 libxslt-devel  # lxml
@@ -26,3 +27,4 @@ tar
 tcpdump
 unzip
 wget
+zlib-devel
