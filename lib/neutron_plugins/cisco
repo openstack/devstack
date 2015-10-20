@@ -150,7 +150,7 @@ function neutron_plugin_create_initial_network_profile {
 
 function neutron_plugin_setup_interface_driver {
     local conf_file=$1
-    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+    iniset $conf_file DEFAULT interface_driver openvswitch
 }
 
 # Restore xtrace
