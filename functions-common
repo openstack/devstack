@@ -76,34 +76,37 @@ function write_clouds_yaml {
     # The location is a variable to allow for easier refactoring later to make it
     # overridable. There is currently no usecase where doing so makes sense, so
     # it's not currently configurable.
-    CLOUDS_YAML=~/.config/openstack/clouds.yaml
+    for clouds_path in /etc/openstack ~/.config/openstack ; do
+        CLOUDS_YAML=$clouds_path/clouds.yaml
 
-    mkdir -p $(dirname $CLOUDS_YAML)
+        sudo mkdir -p $(dirname $CLOUDS_YAML)
+        sudo chown -R $STACK_USER $(dirname $CLOUDS_YAML)
 
-    CA_CERT_ARG=''
-    if [ -f "$SSL_BUNDLE_FILE" ]; then
-        CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
-    fi
-    $TOP_DIR/tools/update_clouds_yaml.py \
-        --file $CLOUDS_YAML \
-        --os-cloud devstack \
-        --os-region-name $REGION_NAME \
-        --os-identity-api-version 3 \
-        $CA_CERT_ARG \
-        --os-auth-url $KEYSTONE_AUTH_URI \
-        --os-username demo \
-        --os-password $ADMIN_PASSWORD \
-        --os-project-name demo
-    $TOP_DIR/tools/update_clouds_yaml.py \
-        --file $CLOUDS_YAML \
-        --os-cloud devstack-admin \
-        --os-region-name $REGION_NAME \
-        --os-identity-api-version 3 \
-        $CA_CERT_ARG \
-        --os-auth-url $KEYSTONE_AUTH_URI \
-        --os-username admin \
-        --os-password $ADMIN_PASSWORD \
-        --os-project-name admin
+        CA_CERT_ARG=''
+        if [ -f "$SSL_BUNDLE_FILE" ]; then
+            CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
+        fi
+        $TOP_DIR/tools/update_clouds_yaml.py \
+            --file $CLOUDS_YAML \
+            --os-cloud devstack \
+            --os-region-name $REGION_NAME \
+            --os-identity-api-version 3 \
+            $CA_CERT_ARG \
+            --os-auth-url $KEYSTONE_AUTH_URI \
+            --os-username demo \
+            --os-password $ADMIN_PASSWORD \
+            --os-project-name demo
+        $TOP_DIR/tools/update_clouds_yaml.py \
+            --file $CLOUDS_YAML \
+            --os-cloud devstack-admin \
+            --os-region-name $REGION_NAME \
+            --os-identity-api-version 3 \
+            $CA_CERT_ARG \
+            --os-auth-url $KEYSTONE_AUTH_URI \
+            --os-username admin \
+            --os-password $ADMIN_PASSWORD \
+            --os-project-name admin
+    done
 }
 
 # trueorfalse <True|False> <VAR>
