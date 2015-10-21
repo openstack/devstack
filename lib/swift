@@ -813,11 +813,13 @@ function stop_swift {
 }
 
 function swift_configure_tempurls {
+    # note we are using swift credentials!
     OS_USERNAME=swift \
-        OS_PROJECT_NAME=$SERVICE_TENANT_NAME \
-        OS_PASSWORD=$SERVICE_PASSWORD \
-        OS_AUTH_URL=$SERVICE_ENDPOINT \
-        swift post --auth-version 3 -m "Temp-URL-Key: $SWIFT_TEMPURL_KEY"
+    OS_PASSWORD=$SERVICE_PASSWORD \
+    OS_PROJECT_NAME=$SERVICE_TENANT_NAME \
+    OS_AUTH_URL=$SERVICE_ENDPOINT \
+    openstack object store account \
+        set --property "Temp-URL-Key=$SWIFT_TEMPURL_KEY"
 }
 
 # Restore xtrace
