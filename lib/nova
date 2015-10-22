@@ -242,7 +242,6 @@ function cleanup_nova {
 function _cleanup_nova_apache_wsgi {
     sudo rm -f $NOVA_WSGI_DIR/*
     sudo rm -f $(apache_site_config_for nova-api)
-    sudo rm -f $(apache_site_config_for nova-ec2-api)
     sudo rm -f $(apache_site_config_for nova-metadata)
 }
 
@@ -252,15 +251,12 @@ function _config_nova_apache_wsgi {
 
     local nova_apache_conf
     nova_apache_conf=$(apache_site_config_for nova-api)
-    local nova_ec2_apache_conf
-    nova_ec2_apache_conf=$(apache_site_config_for nova-ec2-api)
     local nova_metadata_apache_conf
     nova_metadata_apache_conf=$(apache_site_config_for nova-metadata)
     local nova_ssl=""
     local nova_certfile=""
     local nova_keyfile=""
     local nova_api_port=$NOVA_SERVICE_PORT
-    local nova_ec2_api_port=$EC2_SERVICE_PORT
     local nova_metadata_port=$METADATA_SERVICE_PORT
     local venv_path=""
 
@@ -275,7 +271,6 @@ function _config_nova_apache_wsgi {
 
     # copy proxy vhost and wsgi helper files
     sudo cp $NOVA_DIR/nova/wsgi/nova-api.py $NOVA_WSGI_DIR/nova-api
-    sudo cp $NOVA_DIR/nova/wsgi/nova-ec2-api.py $NOVA_WSGI_DIR/nova-ec2-api
     sudo cp $NOVA_DIR/nova/wsgi/nova-metadata.py $NOVA_WSGI_DIR/nova-metadata
 
     sudo cp $FILES/apache-nova-api.template $nova_apache_conf
@@ -290,19 +285,6 @@ function _config_nova_apache_wsgi {
         s|%VIRTUALENV%|$venv_path|g
         s|%APIWORKERS%|$API_WORKERS|g
     " -i $nova_apache_conf
-
-    sudo cp $FILES/apache-nova-ec2-api.template $nova_ec2_apache_conf
-    sudo sed -e "
-        s|%PUBLICPORT%|$nova_ec2_api_port|g;
-        s|%APACHE_NAME%|$APACHE_NAME|g;
-        s|%PUBLICWSGI%|$NOVA_WSGI_DIR/nova-ec2-api|g;
-        s|%SSLENGINE%|$nova_ssl|g;
-        s|%SSLCERTFILE%|$nova_certfile|g;
-        s|%SSLKEYFILE%|$nova_keyfile|g;
-        s|%USER%|$STACK_USER|g;
-        s|%VIRTUALENV%|$venv_path|g
-        s|%APIWORKERS%|$API_WORKERS|g
-    " -i $nova_ec2_apache_conf
 
     sudo cp $FILES/apache-nova-metadata.template $nova_metadata_apache_conf
     sudo sed -e "
@@ -461,22 +443,6 @@ function create_nova_accounts {
             # swift through the s3 api.
             get_or_add_user_project_role ResellerAdmin nova $SERVICE_TENANT_NAME
         fi
-
-        # EC2
-        if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
-            local nova_ec2_api_url
-            if [[ "$NOVA_USE_MOD_WSGI" == "False" ]]; then
-                nova_ec2_api_url="$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:$EC2_SERVICE_PORT/"
-            else
-                nova_ec2_api_url="$EC2_SERVICE_PROTOCOL://$SERVICE_HOST/ec2"
-            fi
-            get_or_create_service "ec2" "ec2" "EC2 Compatibility Layer"
-            get_or_create_endpoint "ec2" \
-                "$REGION_NAME" \
-                "$nova_ec2_api_url" \
-                "$nova_ec2_api_url" \
-                "$nova_ec2_api_url"
-        fi
     fi
 
     # S3
@@ -522,7 +488,6 @@ function create_nova_conf {
     iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF DEFAULT osapi_compute_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
-    iniset $NOVA_CONF DEFAULT ec2_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT s3_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
 
@@ -629,12 +594,10 @@ function create_nova_conf {
     fi
 
     iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
-    iniset $NOVA_CONF DEFAULT keystone_ec2_url $KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v2.0/ec2tokens
     iniset_rpc_backend nova $NOVA_CONF
     iniset $NOVA_CONF glance api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
 
     iniset $NOVA_CONF DEFAULT osapi_compute_workers "$API_WORKERS"
-    iniset $NOVA_CONF DEFAULT ec2_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
     # don't let the conductor get out of control now that we're using a pure python db driver
     iniset $NOVA_CONF conductor workers "$API_WORKERS"
@@ -658,10 +621,6 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT ssl_key_file "$NOVA_SSL_KEY"
 
         iniset $NOVA_CONF DEFAULT enabled_ssl_apis "$NOVA_ENABLED_APIS"
-    fi
-
-    if is_service_enabled tls-proxy; then
-        iniset $NOVA_CONF DEFAULT ec2_listen_port $EC2_SERVICE_PORT_INT
     fi
 
     if is_service_enabled n-sproxy; then
@@ -817,11 +776,9 @@ function start_nova_api {
     enabled_site_file=$(apache_site_config_for nova-api)
     if [ -f ${enabled_site_file} ] && [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
         enable_apache_site nova-api
-        enable_apache_site nova-ec2-api
         enable_apache_site nova-metadata
         restart_apache_server
         tail_log nova-api /var/log/$APACHE_NAME/nova-api.log
-        tail_log nova-ec2-api /var/log/$APACHE_NAME/nova-ec2-api.log
         tail_log nova-metadata /var/log/$APACHE_NAME/nova-metadata.log
     else
         run_process n-api "$NOVA_BIN_DIR/nova-api"
@@ -937,7 +894,6 @@ function stop_nova_compute {
 function stop_nova_rest {
     if [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
         disable_apache_site nova-api
-        disable_apache_site nova-ec2-api
         disable_apache_site nova-metadata
         restart_apache_server
     else
