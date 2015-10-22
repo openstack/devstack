@@ -15,7 +15,6 @@
 #   - ``SERVICE_HOST``
 #   - ``BASE_SQL_CONN`` ``lib/database`` declares
 #   - ``PUBLIC_NETWORK_NAME``
-#   - ``Q_USE_NAMESPACE``
 #   - ``Q_ROUTER_NAME``
 #   - ``Q_L3_ENABLED``
 #   - ``VIRT_DRIVER``
@@ -132,7 +131,6 @@ function configure_tempest {
     local flavor_lines
     local public_network_id
     local public_router_id
-    local tenant_networks_reachable
     local boto_instance_type="m1.tiny"
     local ssh_connect_method="fixed"
 
@@ -246,13 +244,8 @@ function configure_tempest {
         fi
     fi
 
-    if [ "$Q_USE_NAMESPACE" != "False" ]; then
-        tenant_networks_reachable=false
-        if ! is_service_enabled n-net; then
-            ssh_connect_method="floating"
-        fi
-    else
-        tenant_networks_reachable=true
+    if ! is_service_enabled n-net; then
+        ssh_connect_method="floating"
     fi
 
     ssh_connect_method=${TEMPEST_SSH_CONNECT_METHOD:-$ssh_connect_method}
@@ -260,12 +253,6 @@ function configure_tempest {
     if [ "$Q_L3_ENABLED" = "True" ]; then
         public_network_id=$(neutron net-list | grep $PUBLIC_NETWORK_NAME | \
             awk '{print $2}')
-        if [ "$Q_USE_NAMESPACE" == "False" ]; then
-            # If namespaces are disabled, DevStack will create a single
-            # public router that tempest should be configured to use.
-            public_router_id=$(neutron router-list | awk "/ $Q_ROUTER_NAME / \
-                { print \$2 }")
-        fi
     fi
 
     EC2_URL=$(get_endpoint_url ec2 public || true)
@@ -394,7 +381,7 @@ function configure_tempest {
 
     # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
-    iniset $TEMPEST_CONFIG network tenant_networks_reachable "$tenant_networks_reachable"
+    iniset $TEMPEST_CONFIG network tenant_networks_reachable false
     iniset $TEMPEST_CONFIG network public_network_id "$public_network_id"
     iniset $TEMPEST_CONFIG network public_router_id "$public_router_id"
     iniset $TEMPEST_CONFIG network default_network "$FIXED_RANGE"

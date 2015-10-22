@@ -516,13 +516,8 @@ function create_ovs_taps {
     # intentional sleep to make sure the tag has been set to port
     sleep 10
 
-    if  [[ "$Q_USE_NAMESPACE" = "True" ]]; then
-        local tapdev
-        tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
-    else
-        local tapdev
-        tapdev=$(sudo ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
-    fi
+    local tapdev
+    tapdev=$(sudo ip netns exec qdhcp-${ironic_net_id} ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
     local tag_id
     tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
 
