@@ -144,8 +144,6 @@ Q_LISTEN_ADDRESS=${Q_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
 Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-neutron}
 # Default auth strategy
 Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
-# Use namespace or not
-Q_USE_NAMESPACE=${Q_USE_NAMESPACE:-True}
 # RHEL's support for namespaces requires using veths with ovs
 Q_OVS_USE_VETH=${Q_OVS_USE_VETH:-False}
 Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
@@ -208,7 +206,7 @@ Q_PUBLIC_VETH_INT=${Q_PUBLIC_VETH_INT:-veth-pub-int}
 # The plugin supports L3.
 Q_L3_ENABLED=${Q_L3_ENABLED:-False}
 # L3 routers exist per tenant
-Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-False}
+Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-True}
 
 # List of config file names in addition to the main plugin config file
 # See _configure_neutron_common() for details about setting it up
@@ -968,7 +966,6 @@ function _configure_neutron_debug_command {
 
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT verbose False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
-    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $NEUTRON_TEST_CONFIG_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
         iniset $NEUTRON_TEST_CONFIG_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
@@ -985,7 +982,6 @@ function _configure_neutron_dhcp_agent {
 
     iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
     iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    iniset $Q_DHCP_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_DHCP_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
         iniset $Q_DHCP_CONF_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
@@ -1009,8 +1005,6 @@ function _configure_neutron_dhcp_agent {
 
 function _configure_neutron_l3_agent {
     Q_L3_ENABLED=True
-    # for l3-agent, only use per tenant router if we have namespaces
-    Q_L3_ROUTER_PER_TENANT=$Q_USE_NAMESPACE
 
     if is_service_enabled q-vpn; then
         neutron_vpn_configure_agent
@@ -1020,7 +1014,6 @@ function _configure_neutron_l3_agent {
 
     iniset $Q_L3_CONF_FILE DEFAULT verbose True
     iniset $Q_L3_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    iniset $Q_L3_CONF_FILE DEFAULT use_namespaces $Q_USE_NAMESPACE
     iniset $Q_L3_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
         iniset $Q_L3_CONF_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
@@ -1309,7 +1302,7 @@ function _neutron_configure_router_v4 {
     if is_service_enabled q-l3; then
         # Configure and enable public bridge
         local ext_gw_interface="none"
-        if is_neutron_ovs_base_plugin && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
+        if is_neutron_ovs_base_plugin; then
             ext_gw_interface=$(_neutron_get_ext_gw_interface)
         elif [[ "$Q_AGENT" = "linuxbridge" ]]; then
             # Search for the brq device the neutron router and network for $FIXED_RANGE
@@ -1359,7 +1352,7 @@ function _neutron_configure_router_v6 {
         IPV6_ROUTER_GW_IP=`neutron port-list -c fixed_ips | grep $ipv6_pub_subnet_id | awk -F '"' -v subnet_id=$ipv6_pub_subnet_id '$4 == subnet_id { print $8; }'`
         die_if_not_set $LINENO IPV6_ROUTER_GW_IP "Failure retrieving IPV6_ROUTER_GW_IP"
 
-        if is_neutron_ovs_base_plugin && [[ "$Q_USE_NAMESPACE" = "True" ]]; then
+        if is_neutron_ovs_base_plugin; then
             local ext_gw_interface
             ext_gw_interface=$(_neutron_get_ext_gw_interface)
             local ipv6_cidr_len=${IPV6_PUBLIC_RANGE#*/}
@@ -1374,7 +1367,7 @@ function _neutron_configure_router_v6 {
 
 # Explicitly set router id in l3 agent configuration
 function _neutron_set_router_id {
-    if [[ "$Q_USE_NAMESPACE" == "False" ]]; then
+    if [[ "$Q_L3_ROUTER_PER_TENANT" == "False" ]]; then
         iniset $Q_L3_CONF_FILE DEFAULT router_id $ROUTER_ID
     fi
 }
