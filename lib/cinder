@@ -317,9 +317,7 @@ function configure_cinder {
 
     iniset_rpc_backend cinder $CINDER_CONF
 
-    if [[ "$CINDER_VOLUME_CLEAR" == "none" ]] || [[ "$CINDER_VOLUME_CLEAR" == "zero" ]] || [[ "$CINDER_VOLUME_CLEAR" == "shred" ]]; then
-        iniset $CINDER_CONF DEFAULT volume_clear $CINDER_VOLUME_CLEAR
-    fi
+    iniset $CINDER_CONF DEFAULT volume_clear $CINDER_VOLUME_CLEAR
 
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
