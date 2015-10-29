@@ -444,13 +444,18 @@ function create_nova_accounts {
 
         # EC2
         if [[ "$KEYSTONE_CATALOG_BACKEND" = "sql" ]]; then
-
+            local nova_ec2_api_url
+            if [[ "$NOVA_USE_MOD_WSGI" == "False" ]]; then
+                nova_ec2_api_url="$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:$EC2_SERVICE_PORT/"
+            else
+                nova_ec2_api_url="$EC2_SERVICE_PROTOCOL://$SERVICE_HOST/ec2"
+            fi
             get_or_create_service "ec2" "ec2" "EC2 Compatibility Layer"
             get_or_create_endpoint "ec2" \
                 "$REGION_NAME" \
-                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/" \
-                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/" \
-                "$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/"
+                "$nova_ec2_api_url" \
+                "$nova_ec2_api_url" \
+                "$nova_ec2_api_url"
         fi
     fi
 
