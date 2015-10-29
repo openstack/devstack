@@ -480,7 +480,6 @@ function create_nova_conf {
 
     # (Re)create ``nova.conf``
     rm -f $NOVA_CONF
-    iniset $NOVA_CONF DEFAULT verbose "True"
     iniset $NOVA_CONF DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
     if [ "$NOVA_ALLOW_MOVE_TO_SAME_HOST" == "True" ]; then
         iniset $NOVA_CONF DEFAULT allow_resize_to_same_host "True"
