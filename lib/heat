@@ -239,7 +239,8 @@ function start_heat {
     run_process h-eng "$HEAT_BIN_DIR/heat-engine --config-file=$HEAT_CONF"
 
     # If the site is not enabled then we are in a grenade scenario
-    local enabled_site_file=$(apache_site_config_for heat-api)
+    local enabled_site_file
+    enabled_site_file=$(apache_site_config_for heat-api)
     if [ -f ${enabled_site_file} ] && [ "$HEAT_USE_MOD_WSGI" == "True" ]; then
         enable_apache_site heat-api
         enable_apache_site heat-api-cfn
@@ -284,9 +285,12 @@ function _cleanup_heat_apache_wsgi {
 # _config_heat_apache_wsgi() - Set WSGI config files of Heat
 function _config_heat_apache_wsgi {
 
-    local heat_apache_conf=$(apache_site_config_for heat-api)
-    local heat_cfn_apache_conf=$(apache_site_config_for heat-api-cfn)
-    local heat_cloudwatch_apache_conf=$(apache_site_config_for heat-api-cloudwatch)
+    local heat_apache_conf
+    heat_apache_conf=$(apache_site_config_for heat-api)
+    local heat_cfn_apache_conf
+    heat_cfn_apache_conf=$(apache_site_config_for heat-api-cfn)
+    local heat_cloudwatch_apache_conf
+    heat_cloudwatch_apache_conf=$(apache_site_config_for heat-api-cloudwatch)
     local heat_ssl=""
     local heat_certfile=""
     local heat_keyfile=""
