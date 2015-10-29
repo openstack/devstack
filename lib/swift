@@ -44,6 +44,7 @@ SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
 SWIFT3_DIR=$DEST/swift3
 
 SWIFT_SERVICE_PROTOCOL=${SWIFT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+SWIFT_DEFAULT_BIND_PORT=${SWIFT_DEFAULT_BIND_PORT:-8080}
 SWIFT_DEFAULT_BIND_PORT_INT=${SWIFT_DEFAULT_BIND_PORT_INT:-8081}
 SWIFT_SERVICE_LOCAL_HOST=${SWIFT_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
 SWIFT_SERVICE_LISTEN_ADDRESS=${SWIFT_SERVICE_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
@@ -62,7 +63,7 @@ SWIFT_CONF_DIR=${SWIFT_CONF_DIR:-/etc/swift}
 if is_service_enabled s-proxy && is_service_enabled swift3; then
     # If we are using ``swift3``, we can default the S3 port to swift instead
     # of nova-objectstore
-    S3_SERVICE_PORT=${S3_SERVICE_PORT:-8080}
+    S3_SERVICE_PORT=${S3_SERVICE_PORT:-$SWIFT_DEFAULT_BIND_PORT}
 fi
 
 if is_service_enabled g-api; then
@@ -183,7 +184,7 @@ function _cleanup_swift_apache_wsgi {
 # _config_swift_apache_wsgi() - Set WSGI config files of Swift
 function _config_swift_apache_wsgi {
     sudo mkdir -p ${SWIFT_APACHE_WSGI_DIR}
-    local proxy_port=${SWIFT_DEFAULT_BIND_PORT:-8080}
+    local proxy_port=${SWIFT_DEFAULT_BIND_PORT}
 
     # copy proxy vhost and wsgi file
     sudo cp ${SWIFT_DIR}/examples/apache2/proxy-server.template $(apache_site_config_for proxy-server)
@@ -347,7 +348,7 @@ function configure_swift {
     local csyncfile=${SWIFT_CONF_DIR}/container-sync-realms.conf
     cp ${SWIFT_DIR}/etc/container-sync-realms.conf-sample ${csyncfile}
     iniset ${csyncfile} realm1 key realm1key
-    iniset ${csyncfile} realm1 cluster_name1 "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/"
+    iniset ${csyncfile} realm1 cluster_name1 "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/"
 
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user
     iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT user ${STACK_USER}
@@ -368,7 +369,7 @@ function configure_swift {
     if is_service_enabled tls-proxy; then
         iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT_INT}
     else
-        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT:-8080}
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT}
     fi
 
     if is_ssl_enabled_service s-proxy; then
@@ -625,9 +626,9 @@ function create_swift_accounts {
         get_or_create_service "swift" "object-store" "Swift Service"
         get_or_create_endpoint "object-store" \
             "$REGION_NAME" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:8080/v1/AUTH_\$(tenant_id)s"
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s" \
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT" \
+            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s"
     fi
 
     local swift_tenant_test1
@@ -775,7 +776,7 @@ function start_swift {
         swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
     done
     if is_service_enabled tls-proxy; then
-        local proxy_port=${SWIFT_DEFAULT_BIND_PORT:-8080}
+        local proxy_port=${SWIFT_DEFAULT_BIND_PORT}
         start_tls_proxy '*' $proxy_port $SERVICE_HOST $SWIFT_DEFAULT_BIND_PORT_INT &
     fi
     run_process s-proxy "$SWIFT_DIR/bin/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
