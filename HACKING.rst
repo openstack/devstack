@@ -250,8 +250,7 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
   database access from the exercise itself.
 
 * If specific configuration needs to be present for the exercise to complete,
-  it should be staged in ``stack.sh``, or called from ``stack.sh`` (see
-  ``files/keystone_data.sh`` for an example of this).
+  it should be staged in ``stack.sh``, or called from ``stack.sh``.
 
 * The ``OS_*`` environment variables should be the only ones used for all
   authentication to OpenStack clients as documented in the CLIAuth_ wiki page.
