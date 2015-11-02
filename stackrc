@@ -69,7 +69,7 @@ if ! isset ENABLED_SERVICES ; then
     # Dashboard
     ENABLED_SERVICES+=,horizon
     # Additional services
-    ENABLED_SERVICES+=,rabbit,tempest,mysql,dstat
+    ENABLED_SERVICES+=,rabbit,tempest,mysql,dstat,zookeeper
 fi
 
 # SQLAlchemy supports multiple database drivers for each database server

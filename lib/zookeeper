@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# lib/zookeeper
+# Functions to control the installation and configuration of **zookeeper**
+
+# Dependencies:
+#
+# - ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# - is_zookeeper_enabled
+# - install_zookeeper
+# - configure_zookeeper
+# - init_zookeeper
+# - start_zookeeper
+# - stop_zookeeper
+# - cleanup_zookeeper
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# <define global variables here that belong to this project>
+
+# Set up default directories
+ZOOKEEPER_DATA_DIR=$DEST/data/zookeeper
+ZOOKEEPER_CONF_DIR=/etc/zookeeper
+
+
+# Entry Points
+# ------------
+
+# Test if any zookeeper service us enabled
+# is_zookeeper_enabled
+function is_zookeeper_enabled {
+    [[ ,${ENABLED_SERVICES}, =~ ,"zookeeper", ]] && return 0
+    return 1
+}
+
+# cleanup_zookeeper() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_zookeeper {
+    sudo rm -rf $ZOOKEEPER_DATA_DIR
+}
+
+# configure_zookeeper() - Set config files, create data dirs, etc
+function configure_zookeeper {
+    sudo cp $FILES/zookeeper/* $ZOOKEEPER_CONF_DIR
+    sudo sed -i -e 's|.*dataDir.*|dataDir='$ZOOKEEPER_DATA_DIR'|' $ZOOKEEPER_CONF_DIR/zoo.cfg
+}
+
+# init_zookeeper() - Initialize databases, etc.
+function init_zookeeper {
+    # clean up from previous (possibly aborted) runs
+    # create required data files
+    sudo rm -rf $ZOOKEEPER_DATA_DIR
+    sudo mkdir -p $ZOOKEEPER_DATA_DIR
+}
+
+# install_zookeeper() - Collect source and prepare
+function install_zookeeper {
+    install_package zookeeperd
+}
+
+# start_zookeeper() - Start running processes, including screen
+function start_zookeeper {
+    start_service zookeeper
+}
+
+# stop_zookeeper() - Stop running processes (non-screen)
+function stop_zookeeper {
+    stop_service zookeeper
+}
+
+# Restore xtrace
+$XTRACE
+
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:
