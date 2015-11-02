@@ -17,7 +17,7 @@ Install devstack
     cd devstack
 
 
-Edit your `local.conf` to look like
+Edit your ``local.conf`` to look like
 
   ::
 

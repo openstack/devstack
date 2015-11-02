@@ -202,8 +202,8 @@ process to a file in ``LOGDIR``.
 
         LOGDIR=$DEST/logs
 
-*Note the use of ``DEST`` to locate the main install directory; this
-is why we suggest setting it in ``local.conf``.*
+Note the use of ``DEST`` to locate the main install directory; this
+is why we suggest setting it in ``local.conf``.
 
 Enabling Syslog
 ~~~~~~~~~~~~~~~
@@ -239,15 +239,15 @@ Database Backend
 
 Multiple database backends are available. The available databases are defined
 in the lib/databases directory.
-`mysql` is the default database, choose a different one by putting the
-following in the `localrc` section:
+``mysql`` is the default database, choose a different one by putting the
+following in the ``localrc`` section:
 
    ::
 
       disable_service mysql
       enable_service postgresql
 
-`mysql` is the default database.
+``mysql`` is the default database.
 
 RPC Backend
 -----------
@@ -260,6 +260,7 @@ RabbitMQ is handled via the usual service functions and
 Example disabling RabbitMQ in ``local.conf``:
 
 ::
+
     disable_service rabbit
 
 
@@ -511,7 +512,7 @@ VM. When running with only one replica the account, container and
 object services will run directly in screen. The others services like
 replicator, updaters or auditor runs in background.
 
-If you would like to enable Swift you can add this to your `localrc`
+If you would like to enable Swift you can add this to your ``localrc``
 section:
 
 ::
@@ -519,7 +520,7 @@ section:
     enable_service s-proxy s-object s-container s-account
 
 If you want a minimal Swift install with only Swift and Keystone you
-can have this instead in your `localrc` section:
+can have this instead in your ``localrc`` section:
 
 ::
 
@@ -528,24 +529,24 @@ can have this instead in your `localrc` section:
 
 If you only want to do some testing of a real normal swift cluster
 with multiple replicas you can do so by customizing the variable
-`SWIFT_REPLICAS` in your `localrc` section (usually to 3).
+``SWIFT_REPLICAS`` in your ``localrc`` section (usually to 3).
 
 Swift S3
 ++++++++
 
-If you are enabling `swift3` in `ENABLED_SERVICES` DevStack will
+If you are enabling ``swift3`` in ``ENABLED_SERVICES`` DevStack will
 install the swift3 middleware emulation. Swift will be configured to
 act as a S3 endpoint for Keystone so effectively replacing the
-`nova-objectstore`.
+``nova-objectstore``.
 
 Only Swift proxy server is launched in the screen session all other
-services are started in background and managed by `swift-init` tool.
+services are started in background and managed by ``swift-init`` tool.
 
 Heat
 ~~~~
 
-Heat is disabled by default (see `stackrc` file). To enable it
-explicitly you'll need the following settings in your `localrc`
+Heat is disabled by default (see ``stackrc`` file). To enable it
+explicitly you'll need the following settings in your ``localrc``
 section
 
 ::
@@ -554,7 +555,7 @@ section
 
 Heat can also run in standalone mode, and be configured to orchestrate
 on an external OpenStack cloud. To launch only Heat in standalone mode
-you'll need the following settings in your `localrc` section
+you'll need the following settings in your ``localrc`` section
 
 ::
 
@@ -590,14 +591,14 @@ Xenserver
 ~~~~~~~~~
 
 If you would like to use Xenserver as the hypervisor, please refer to
-the instructions in `./tools/xen/README.md`.
+the instructions in ``./tools/xen/README.md``.
 
 Cells
 ~~~~~
 
 `Cells <http://wiki.openstack.org/blueprint-nova-compute-cells>`__ is
 an alternative scaling option.  To setup a cells environment add the
-following to your `localrc` section:
+following to your ``localrc`` section:
 
 ::
 
