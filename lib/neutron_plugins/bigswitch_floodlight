@@ -58,9 +58,9 @@ function neutron_plugin_configure_service {
 function neutron_plugin_setup_interface_driver {
     local conf_file=$1
     if [ "$BS_FL_VIF_DRIVER" = "ivs" ]; then
-        iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.IVSInterfaceDriver
+        iniset $conf_file DEFAULT interface_driver ivs
     else
-        iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+        iniset $conf_file DEFAULT interface_driver openvswitch
     fi
 }
 

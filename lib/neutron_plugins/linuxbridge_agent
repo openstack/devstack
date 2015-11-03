@@ -85,7 +85,7 @@ function neutron_plugin_configure_plugin_agent {
 
 function neutron_plugin_setup_interface_driver {
     local conf_file=$1
-    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.BridgeInterfaceDriver
+    iniset $conf_file DEFAULT interface_driver linuxbridge
 }
 
 function neutron_plugin_check_adv_test_requirements {
