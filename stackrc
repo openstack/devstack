@@ -143,11 +143,6 @@ USE_VENV=$(trueorfalse False USE_VENV)
 # requirmenets files here, in a comma-separated list
 ADDITIONAL_VENV_PACKAGES=${ADITIONAL_VENV_PACKAGES:-""}
 
-# Configure wheel cache location
-export WHEELHOUSE=${WHEELHOUSE:-$DEST/.wheelhouse}
-export PIP_WHEEL_DIR=${PIP_WHEEL_DIR:-$WHEELHOUSE}
-export PIP_FIND_LINKS=${PIP_FIND_LINKS:-file://$WHEELHOUSE}
-
 # This can be used to turn database query logging on and off
 # (currently only implemented for MySQL backend)
 DATABASE_QUERY_LOGGING=$(trueorfalse False DATABASE_QUERY_LOGGING)

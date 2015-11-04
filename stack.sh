@@ -716,12 +716,6 @@ source $TOP_DIR/tools/fixup_stuff.sh
 # Install required infra support libraries
 install_infra
 
-# Pre-build some problematic wheels
-if [[ -n ${WHEELHOUSE:-} && ! -d ${WHEELHOUSE:-} ]]; then
-    source $TOP_DIR/tools/build_wheels.sh
-fi
-
-
 # Extras Pre-install
 # ------------------
 # Phase: pre-install

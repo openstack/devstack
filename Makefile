@@ -13,7 +13,6 @@
 
 # Duplicated from stackrc for now
 DEST=/opt/stack
-WHEELHOUSE=$(DEST)/.wheelhouse
 
 all:
 	echo "This just saved you from a terrible mistake!"
@@ -24,9 +23,6 @@ stack:
 
 unstack:
 	./unstack.sh
-
-wheels:
-	WHEELHOUSE=$(WHEELHOUSE) tools/build_wheels.sh
 
 docs:
 	tox -edocs
@@ -57,7 +53,7 @@ clean:
 
 # Clean out the cache too
 realclean: clean
-	rm -rf files/cirros*.tar.gz files/Fedora*.qcow2 $(WHEELHOUSE)
+	rm -rf files/cirros*.tar.gz files/Fedora*.qcow2
 
 # Repo stuffs
 
