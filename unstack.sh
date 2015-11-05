@@ -69,6 +69,7 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
+source $TOP_DIR/lib/zookeeper
 
 # Extras Source
 # --------------
@@ -170,6 +171,10 @@ fi
 
 if is_service_enabled dstat; then
     stop_dstat
+fi
+
+if is_service_enabled zookeeper; then
+    stop_zookeeper
 fi
 
 # Clean up the remainder of the screen processes
