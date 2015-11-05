@@ -1163,7 +1163,7 @@ function update_package_repo {
 
     if is_ubuntu; then
         local xtrace
-    xtrace=$(set +o | grep xtrace)
+        xtrace=$(set +o | grep xtrace)
         set +o xtrace
         if [[ "$REPOS_UPDATED" != "True" || "$RETRY_UPDATE" = "True" ]]; then
             # if there are transient errors pulling the updates, that's fine.
@@ -1775,11 +1775,17 @@ function run_phase {
 # remove extra commas from the input string (i.e. ``ENABLED_SERVICES``)
 # _cleanup_service_list service-list
 function _cleanup_service_list {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
     echo "$1" | sed -e '
         s/,,/,/g;
         s/^,//;
         s/,$//
     '
+
+    $xtrace
 }
 
 # disable_all_services() removes all current services
@@ -1797,6 +1803,10 @@ function disable_all_services {
 # Uses global ``ENABLED_SERVICES``
 # disable_negated_services
 function disable_negated_services {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
     local to_remove=""
     local remaining=""
     local service
@@ -1814,6 +1824,8 @@ function disable_negated_services {
     # go through the service list.  if this service appears in the "to
     # be removed" list, drop it
     ENABLED_SERVICES=$(remove_disabled_services "$remaining" "$to_remove")
+
+    $xtrace
 }
 
 # disable_service() prepares the services passed as argument to be
@@ -1825,6 +1837,10 @@ function disable_negated_services {
 # Uses global ``DISABLED_SERVICES``
 # disable_service service [service ...]
 function disable_service {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
     local disabled_svcs="${DISABLED_SERVICES}"
     local enabled_svcs=",${ENABLED_SERVICES},"
     local service
@@ -1836,6 +1852,8 @@ function disable_service {
     done
     DISABLED_SERVICES=$(_cleanup_service_list "$disabled_svcs")
     ENABLED_SERVICES=$(_cleanup_service_list "$enabled_svcs")
+
+    $xtrace
 }
 
 # enable_service() adds the services passed as argument to the
@@ -1849,6 +1867,10 @@ function disable_service {
 # Uses global ``ENABLED_SERVICES``
 # enable_service service [service ...]
 function enable_service {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
     local tmpsvcs="${ENABLED_SERVICES}"
     local service
     for service in $@; do
@@ -1862,6 +1884,8 @@ function enable_service {
     done
     ENABLED_SERVICES=$(_cleanup_service_list "$tmpsvcs")
     disable_negated_services
+
+    $xtrace
 }
 
 # is_service_enabled() checks if the service(s) specified as arguments are
@@ -1890,6 +1914,7 @@ function is_service_enabled {
     local xtrace
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
+
     local enabled=1
     local services=$@
     local service
@@ -1915,6 +1940,7 @@ function is_service_enabled {
         [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && enabled=0
         [[ ${service} == s-* && ${ENABLED_SERVICES} =~ "swift" ]] && enabled=0
     done
+
     $xtrace
     return $enabled
 }
@@ -1922,6 +1948,10 @@ function is_service_enabled {
 # remove specified list from the input string
 # remove_disabled_services service-list remove-list
 function remove_disabled_services {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
     local service_list=$1
     local remove_list=$2
     local service
@@ -1940,6 +1970,9 @@ function remove_disabled_services {
             enabled="${enabled},$service"
         fi
     done
+
+    $xtrace
+
     _cleanup_service_list "$enabled"
 }
 
