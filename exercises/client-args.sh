@@ -41,7 +41,6 @@ unset NOVA_PROJECT_ID
 unset NOVA_REGION_NAME
 unset NOVA_URL
 unset NOVA_USERNAME
-unset NOVA_VERSION
 
 # Save the known variables for later
 export x_TENANT_NAME=$OS_TENANT_NAME
