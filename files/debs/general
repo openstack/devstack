@@ -20,8 +20,10 @@ python2.7
 python-gdbm # needed for testr
 bc
 libyaml-dev
-libffi-dev
+libffi-dev # for pyOpenSSL
 libssl-dev # for pyOpenSSL
+libxml2-dev  # lxml
+libxslt1-dev  # lxml
 gettext  # used for compiling message catalogs
 openjdk-7-jre-headless  # NOPRIME
 pkg-config

@@ -8,7 +8,8 @@ libmysqlclient-dev
 mysql-server # NOPRIME
 python-mysqldb
 python-mysql.connector
-python-lxml # needed for glance which is needed for nova --- this shouldn't be here
+libxml2-dev # needed for building lxml
+libxslt1-dev
 gawk
 iptables
 ebtables
@@ -25,7 +26,3 @@ curl
 genisoimage # required for config_drive
 rabbitmq-server # NOPRIME
 socat # used by ajaxterm
-python-libvirt # NOPRIME
-python-libxml2
-python-numpy # used by websockify for spice console
-python-m2crypto
