@@ -54,7 +54,7 @@ combinations listed in ``README.md``. DevStack is only supported on
 releases other than those documented in ``README.md`` on a best-effort
 basis.
 
-Are there any differences between Ubuntu and Centos/Fedora support?
+Are there any differences between Ubuntu and CentOS/Fedora support?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Both should work well and are tested by DevStack CI.
@@ -146,7 +146,7 @@ your ``local.conf``
 
 
 Upstream DevStack is only tested with master and stable
-branches. Setting custom BRANCH definitions is not guarunteed to
+branches. Setting custom BRANCH definitions is not guaranteed to
 produce working results.
 
 What can I do about RabbitMQ not wanting to start on my fresh new VM?
