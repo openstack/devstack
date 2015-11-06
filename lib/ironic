@@ -672,6 +672,8 @@ function configure_iptables {
     # enable tftp natting for allowing connections to HOST_IP's tftp server
     sudo modprobe nf_conntrack_tftp
     sudo modprobe nf_nat_tftp
+    # explicitly allow DHCP - packets are occassionally being dropped here
+    sudo iptables -I INPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT || true
     # nodes boot from TFTP and callback to the API server listening on $HOST_IP
     sudo iptables -I INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
     sudo iptables -I INPUT -d $HOST_IP -p tcp --dport $IRONIC_SERVICE_PORT -j ACCEPT || true
