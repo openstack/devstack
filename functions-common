@@ -1366,7 +1366,7 @@ function run_process {
 
 # Helper to launch a process in a named screen
 # Uses globals ``CURRENT_LOG_TIME``, ```LOGDIR``, ``SCREEN_LOGDIR``, `SCREEN_NAME``,
-# ``SERVICE_DIR``, ``USE_SCREEN``
+# ``SERVICE_DIR``, ``USE_SCREEN``, ``SCREEN_IS_LOGGING``
 # screen_process name "command-line" [group]
 # Run a command in a shell in a screen window, if an optional group
 # is provided, use sg to set the group of the command.
@@ -1386,8 +1386,12 @@ function screen_process {
     echo "SCREEN_LOGDIR: $SCREEN_LOGDIR"
     echo "log: $real_logfile"
     if [[ -n ${LOGDIR} ]]; then
-        screen -S $SCREEN_NAME -p $name -X logfile "$real_logfile"
-        screen -S $SCREEN_NAME -p $name -X log on
+        if [[ "$SCREEN_IS_LOGGING" == "True" ]]; then
+            screen -S $SCREEN_NAME -p $name -X logfile "$real_logfile"
+            screen -S $SCREEN_NAME -p $name -X log on
+        fi
+        # If logging isn't active then avoid a broken symlink
+        touch "$real_logfile"
         ln -sf "$real_logfile" ${LOGDIR}/${name}.log
         if [[ -n ${SCREEN_LOGDIR} ]]; then
             # Drop the backward-compat symlink
@@ -1426,7 +1430,7 @@ function screen_process {
 }
 
 # Screen rc file builder
-# Uses globals ``SCREEN_NAME``, ``SCREENRC``
+# Uses globals ``SCREEN_NAME``, ``SCREENRC``, ``SCREEN_IS_LOGGING``
 # screen_rc service "command-line"
 function screen_rc {
     SCREEN_NAME=${SCREEN_NAME:-stack}
@@ -1446,7 +1450,7 @@ function screen_rc {
         echo "screen -t $1 bash" >> $SCREENRC
         echo "stuff \"$2$NL\"" >> $SCREENRC
 
-        if [[ -n ${LOGDIR} ]]; then
+        if [[ -n ${LOGDIR} ]] && [[ "$SCREEN_IS_LOGGING" == "True" ]]; then
             echo "logfile ${LOGDIR}/${1}.log.${CURRENT_LOG_TIME}" >>$SCREENRC
             echo "log on" >>$SCREENRC
         fi
