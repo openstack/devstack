@@ -1075,6 +1075,10 @@ function get_packages {
     local file_to_parse=""
     local service=""
 
+    if [ $# -ne 1 ]; then
+        die $LINENO "get_packages takes a single, comma-separated argument"
+    fi
+
     if [[ -z "$package_dir" ]]; then
         echo "No package directory supplied"
         return 1
