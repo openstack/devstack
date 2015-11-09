@@ -61,7 +61,7 @@ export_proxy_variables
 # ================
 
 # Install package requirements
-PACKAGES=$(get_packages general $ENABLED_SERVICES)
+PACKAGES=$(get_packages general,$ENABLED_SERVICES)
 PACKAGES="$PACKAGES $(get_plugin_packages)"
 
 if is_ubuntu && echo $PACKAGES | grep -q dkms ; then
