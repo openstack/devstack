@@ -1,8 +1,0 @@
-libffi-devel  # pyOpenSSL
-libxml2-devel  # lxml
-libxslt-devel  # lxml
-mariadb-devel  # MySQL-python
-openssl-devel  # pyOpenSSL
-postgresql-devel  # psycopg2
-python-devel  # pyOpenSSL
-redhat-rpm-config # MySQL-python rhbz-1195207 f21

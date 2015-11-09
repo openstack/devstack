@@ -27,3 +27,5 @@ libxslt1-dev  # lxml
 gettext  # used for compiling message catalogs
 openjdk-7-jre-headless  # NOPRIME
 pkg-config
+libmysqlclient-dev  # MySQL-python
+libpq-dev  # psycopg2

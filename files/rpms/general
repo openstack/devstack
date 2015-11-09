@@ -10,8 +10,8 @@ openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
 libffi-devel
-libxml2-devel
-libxslt-devel
+libxml2-devel # lxml
+libxslt-devel # lxml
 pkgconfig
 psmisc
 python-devel
@@ -29,3 +29,6 @@ java-1.7.0-openjdk-headless  # NOPRIME rhel7
 java-1.8.0-openjdk-headless  # NOPRIME f21,f22
 pyOpenSSL # version in pip uses too much memory
 iptables-services  # NOPRIME f21,f22
+mariadb-devel  # MySQL-python
+postgresql-devel  # psycopg2
+redhat-rpm-config # MySQL-python rhbz-1195207 f21

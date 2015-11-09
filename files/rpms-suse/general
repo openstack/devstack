@@ -21,3 +21,8 @@ tcpdump
 unzip
 wget
 net-tools
+libffi-devel  # pyOpenSSL
+libxslt-devel  # lxml
+postgresql-devel  # psycopg2
+libmysqlclient-devel # MySQL-python
+python-devel  # pyOpenSSL
