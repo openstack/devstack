@@ -1,6 +1,0 @@
-libmysqlclient-dev
-libpq-dev
-libssl-dev
-libxml2-dev
-libxslt1-dev
-zlib1g-dev
