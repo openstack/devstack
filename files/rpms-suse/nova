@@ -14,7 +14,6 @@ libvirt-python # NOPRIME
 mariadb # NOPRIME
 parted
 polkit
-python-devel
 # qemu as fallback if kvm cannot be used
 qemu # NOPRIME
 rabbitmq-server # NOPRIME
