@@ -488,7 +488,6 @@ function create_nova_conf_neutron {
     # optionally set options in nova_conf
     neutron_plugin_create_nova_conf
 
-    iniset $NOVA_CONF DEFAULT linuxnet_interface_driver "$LINUXNET_VIF_DRIVER"
     if is_service_enabled q-meta; then
         iniset $NOVA_CONF neutron service_metadata_proxy "True"
     fi
