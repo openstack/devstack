@@ -1,7 +1,7 @@
-# Stuff for diablo volumes
+cryptsetup
+genisoimage
 iscsi-initiator-utils
 lvm2
-genisoimage
-sysfsutils
 sg3_utils
-cryptsetup
+# Stuff for diablo volumes
+sysfsutils

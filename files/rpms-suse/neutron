@@ -7,7 +7,7 @@ iputils
 mariadb # NOPRIME
 postgresql-devel
 rabbitmq-server # NOPRIME
+radvd # NOPRIME
 sqlite3
 sudo
 vlan
-radvd # NOPRIME

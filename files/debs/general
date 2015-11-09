@@ -1,32 +1,32 @@
+bc
 bridge-utils
-screen
-unzip
-wget
-psmisc
-gcc
+curl
 g++
+gcc
+gettext  # used for compiling message catalogs
 git
 graphviz # needed for docs
-lsof # useful when debugging
-openssh-server
-openssl
 iputils-ping
-wget
-curl
-tcpdump
-tar
-python-dev
-python2.7
-python-gdbm # needed for testr
-bc
-libyaml-dev
 libffi-dev # for pyOpenSSL
+libmysqlclient-dev  # MySQL-python
+libpq-dev  # psycopg2
 libssl-dev # for pyOpenSSL
 libxml2-dev  # lxml
 libxslt1-dev  # lxml
-gettext  # used for compiling message catalogs
+libyaml-dev
+lsof # useful when debugging
 openjdk-7-jre-headless  # NOPRIME
+openssh-server
+openssl
 pkg-config
-libmysqlclient-dev  # MySQL-python
-libpq-dev  # psycopg2
+psmisc
+python2.7
+python-dev
+python-gdbm # needed for testr
+screen
+tar
+tcpdump
+unzip
+wget
+wget
 zlib1g-dev

@@ -1,6 +1,6 @@
-tgt # NOPRIME
-lvm2
-qemu-utils
 libpq-dev
+lvm2
 open-iscsi
 open-iscsi-utils # Deprecated since quantal dist:precise
+qemu-utils
+tgt # NOPRIME

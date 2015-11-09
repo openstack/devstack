@@ -1,7 +1,7 @@
+conntrack-tools
 curl
 dnsmasq
 dnsmasq-utils # dist:opensuse-12.3,opensuse-13.1
-conntrack-tools
 ebtables
 gawk
 genisoimage # required for config_drive
@@ -9,14 +9,14 @@ iptables
 iputils
 kpartx
 kvm # NOPRIME
-# qemu as fallback if kvm cannot be used
-qemu # NOPRIME
 libvirt # NOPRIME
 libvirt-python # NOPRIME
 mariadb # NOPRIME
 parted
 polkit
 python-devel
+# qemu as fallback if kvm cannot be used
+qemu # NOPRIME
 rabbitmq-server # NOPRIME
 socat
 sqlite3

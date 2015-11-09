@@ -1,26 +1,26 @@
+conntrack
+curl
 dnsmasq-base
 dnsmasq-utils # for dhcp_release
-conntrack
-kpartx
-parted
-iputils-arping
-libmysqlclient-dev
-mysql-server # NOPRIME
-python-mysqldb
-python-mysql.connector
-gawk
-iptables
 ebtables
-sqlite3
-sudo
-qemu-kvm # NOPRIME
-qemu # dist:wheezy,jessie NOPRIME
+gawk
+genisoimage # required for config_drive
+iptables
+iputils-arping
+kpartx
+libjs-jquery-tablesorter # Needed for coverage html reports
+libmysqlclient-dev
 libvirt-bin # NOPRIME
 libvirt-dev # NOPRIME
+mysql-server # NOPRIME
+parted
 pm-utils
-libjs-jquery-tablesorter # Needed for coverage html reports
-vlan
-curl
-genisoimage # required for config_drive
+python-mysql.connector
+python-mysqldb
+qemu # dist:wheezy,jessie NOPRIME
+qemu-kvm # NOPRIME
 rabbitmq-server # NOPRIME
 socat # used by ajaxterm
+sqlite3
+sudo
+vlan
