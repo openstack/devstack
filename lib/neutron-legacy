@@ -870,7 +870,10 @@ function _create_neutron_conf_dir {
 function _configure_neutron_common {
     _create_neutron_conf_dir
 
-    cp $NEUTRON_DIR/etc/neutron.conf $NEUTRON_CONF
+    # Uses oslo config generator to generate core sample configuration files
+    (cd $NEUTRON_DIR && exec ./tools/generate_config_file_samples.sh)
+
+    cp $NEUTRON_DIR/etc/neutron.conf.sample $NEUTRON_CONF
 
     Q_POLICY_FILE=$NEUTRON_CONF_DIR/policy.json
     cp $NEUTRON_DIR/etc/policy.json $Q_POLICY_FILE
@@ -895,7 +898,9 @@ function _configure_neutron_common {
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
     # NOTE(hichihara): Some neutron vendor plugins were already decomposed and
     # there is no config file in Neutron tree. They should prepare the file in each plugin.
-    if [ -f $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE ]; then
+    if [ -f "$NEUTRON_DIR/$Q_PLUGIN_CONF_FILE.sample" ]; then
+        cp "$NEUTRON_DIR/$Q_PLUGIN_CONF_FILE.sample" /$Q_PLUGIN_CONF_FILE
+    elif [ -f $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE ]; then
         cp $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
     fi
 
@@ -903,6 +908,8 @@ function _configure_neutron_common {
     iniset $NEUTRON_CONF DEFAULT state_path $DATA_DIR/neutron
     iniset $NEUTRON_CONF DEFAULT use_syslog $SYSLOG
     iniset $NEUTRON_CONF DEFAULT bind_host $Q_LISTEN_ADDRESS
+    iniset $NEUTRON_CONF oslo_concurrency lock_path $DATA_DIR/neutron/lock
+
     # If addition config files are set, make sure their path name is set as well
     if [[ ${#Q_PLUGIN_EXTRA_CONF_FILES[@]} > 0 && $Q_PLUGIN_EXTRA_CONF_PATH == '' ]]; then
         die $LINENO "Neutron additional plugin config not set.. exiting"
@@ -959,7 +966,7 @@ function _configure_neutron_debug_command {
         return
     fi
 
-    cp $NEUTRON_DIR/etc/l3_agent.ini $NEUTRON_TEST_CONFIG_FILE
+    cp $NEUTRON_DIR/etc/l3_agent.ini.sample $NEUTRON_TEST_CONFIG_FILE
 
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT verbose False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
@@ -975,7 +982,7 @@ function _configure_neutron_debug_command {
 
 function _configure_neutron_dhcp_agent {
 
-    cp $NEUTRON_DIR/etc/dhcp_agent.ini $Q_DHCP_CONF_FILE
+    cp $NEUTRON_DIR/etc/dhcp_agent.ini.sample $Q_DHCP_CONF_FILE
 
     iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
     iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -1007,7 +1014,7 @@ function _configure_neutron_l3_agent {
         neutron_vpn_configure_agent
     fi
 
-    cp $NEUTRON_DIR/etc/l3_agent.ini $Q_L3_CONF_FILE
+    cp $NEUTRON_DIR/etc/l3_agent.ini.sample $Q_L3_CONF_FILE
 
     iniset $Q_L3_CONF_FILE DEFAULT verbose True
     iniset $Q_L3_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -1028,7 +1035,7 @@ function _configure_neutron_l3_agent {
 }
 
 function _configure_neutron_metadata_agent {
-    cp $NEUTRON_DIR/etc/metadata_agent.ini $Q_META_CONF_FILE
+    cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $Q_META_CONF_FILE
 
     iniset $Q_META_CONF_FILE DEFAULT verbose True
     iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
