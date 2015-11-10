@@ -86,8 +86,10 @@ def disk_space():
 
 
 def ebtables_dump():
+    tables = ['filter', 'nat', 'broute']
     _header("EB Tables Dump")
-    _dump_cmd("sudo ebtables -L")
+    for table in tables:
+        _dump_cmd("sudo ebtables -t %s -L" % table)
 
 
 def iptables_dump():
