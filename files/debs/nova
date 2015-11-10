@@ -8,8 +8,6 @@ libmysqlclient-dev
 mysql-server # NOPRIME
 python-mysqldb
 python-mysql.connector
-libxml2-dev # needed for building lxml
-libxslt1-dev
 gawk
 iptables
 ebtables
