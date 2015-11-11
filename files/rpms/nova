@@ -1,8 +1,7 @@
-MySQL-python
+conntrack-tools
 curl
 dnsmasq # for nova-network
 dnsmasq-utils # for dhcp_release
-conntrack-tools
 ebtables
 gawk
 genisoimage # required for config_drive
@@ -10,18 +9,19 @@ iptables
 iputils
 kpartx
 kvm # NOPRIME
-qemu-kvm # NOPRIME
 libvirt-bin # NOPRIME
 libvirt-devel # NOPRIME
 libvirt-python # NOPRIME
 libxml2-python
-numpy # needed by websockify for spice console
 m2crypto
 mysql-connector-python
 mysql-devel
+MySQL-python
 mysql-server # NOPRIME
+numpy # needed by websockify for spice console
 parted
 polkit
+qemu-kvm # NOPRIME
 rabbitmq-server # NOPRIME
 sqlite
 sudo

@@ -1,18 +1,18 @@
 acl
-ebtables
-iptables
-iputils-ping
-iputils-arping
-libmysqlclient-dev
-mysql-server #NOPRIME
-sudo
-postgresql-server-dev-all
-python-mysqldb
-python-mysql.connector
 dnsmasq-base
 dnsmasq-utils # for dhcp_release only available in dist:precise
+ebtables
+iptables
+iputils-arping
+iputils-ping
+libmysqlclient-dev
+mysql-server #NOPRIME
+postgresql-server-dev-all
+python-mysql.connector
+python-mysqldb
 rabbitmq-server # NOPRIME
-sqlite3
-vlan
 radvd # NOPRIME
+sqlite3
+sudo
 uuid-runtime
+vlan

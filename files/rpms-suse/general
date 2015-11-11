@@ -8,21 +8,21 @@ gcc-c++
 git-core
 graphviz # docs
 iputils
+libffi-devel  # pyOpenSSL
+libmysqlclient-devel # MySQL-python
 libopenssl-devel # to rebuild pyOpenSSL if needed
+libxslt-devel  # lxml
 lsof # useful when debugging
 make
+net-tools
 openssh
 openssl
+postgresql-devel  # psycopg2
 psmisc
 python-cmd2 # dist:opensuse-12.3
+python-devel  # pyOpenSSL
 screen
 tar
 tcpdump
 unzip
 wget
-net-tools
-libffi-devel  # pyOpenSSL
-libxslt-devel  # lxml
-postgresql-devel  # psycopg2
-libmysqlclient-devel # MySQL-python
-python-devel  # pyOpenSSL
