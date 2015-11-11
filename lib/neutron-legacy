@@ -835,6 +835,10 @@ function cleanup_neutron {
         _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet"
 
         if [[ $(ip -f inet6 a s dev "$OVS_PHYSICAL_BRIDGE" | grep -c 'global') != 0 ]]; then
+            # ip(8) wants the prefix length when deleting
+            local v6_gateway
+            v6_gateway=$(ip -6 a s dev $OVS_PHYSICAL_BRIDGE | grep $IPV6_PUBLIC_NETWORK_GATEWAY | awk '{ print $2 }')
+            sudo ip -6 addr del $v6_gateway dev $OVS_PHYSICAL_BRIDGE
             _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet6"
         fi
 
