@@ -69,7 +69,12 @@ function install_zookeeper {
 
 # start_zookeeper() - Start running processes, including screen
 function start_zookeeper {
-    start_service zookeeper
+    # Starting twice Zookeeper on Ubuntu exits with error code 1. See LP#1513741
+    # Match both systemd and sysvinit output
+    local running="(active \(running\)|start/running)"
+    if ! is_ubuntu || ! sudo /usr/sbin/service zookeeper status | egrep -q "$running"; then
+        start_service zookeeper
+    fi
 }
 
 # stop_zookeeper() - Stop running processes (non-screen)
