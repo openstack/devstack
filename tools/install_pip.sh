@@ -110,7 +110,11 @@ get_versions
 # Do pip
 
 # Eradicate any and all system packages
-uninstall_package python-pip
+
+# python in f23 depends on the python-pip package
+if ! { is_fedora && [[ $DISTRO == "f23" ]]; }; then
+    uninstall_package python-pip
+fi
 
 install_get_pip
 
