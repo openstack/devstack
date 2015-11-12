@@ -1036,7 +1036,7 @@ function _parse_package_files {
                 # We are using BASH regexp matching feature.
                 package=${BASH_REMATCH[1]}
                 distros=${BASH_REMATCH[2]}
-                # In bash ${VAR,,} will lowecase VAR
+                # In bash ${VAR,,} will lowercase VAR
                 # Look for a match in the distro list
                 if [[ ! ${distros,,} =~ ${DISTRO,,} ]]; then
                     # If no match then skip this package
@@ -1507,7 +1507,7 @@ function stop_process {
                 # this fixed in all services:
                 # https://bugs.launchpad.net/oslo-incubator/+bug/1446583
                 sleep 1
-                # /bin/true becakse pkill on a non existant process returns an error
+                # /bin/true because pkill on a non existent process returns an error
                 pkill -g $(cat $SERVICE_DIR/$SCREEN_NAME/$service.pid) || /bin/true
             fi
             rm $SERVICE_DIR/$SCREEN_NAME/$service.pid
@@ -1715,7 +1715,7 @@ function plugin_override_defaults {
         if [[ -f $dir/devstack/override-defaults ]]; then
             # be really verbose that an override is happening, as it
             # may not be obvious if things fail later.
-            echo "$plugin has overriden the following defaults"
+            echo "$plugin has overridden the following defaults"
             cat $dir/devstack/override-defaults
             source $dir/devstack/override-defaults
         fi
