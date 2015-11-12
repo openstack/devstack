@@ -335,6 +335,10 @@ if [ -z "`grep ^127.0.0.1 /etc/hosts | grep $LOCAL_HOSTNAME`" ]; then
     sudo sed -i "s/\(^127.0.0.1.*\)/\1 $LOCAL_HOSTNAME/" /etc/hosts
 fi
 
+# Ensure python is installed
+# --------------------------
+is_package_installed python || install_package python
+
 
 # Configure Logging
 # -----------------
