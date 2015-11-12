@@ -101,7 +101,7 @@ HORIZON_APACHE_ROOT="/dashboard"
 # ctrl-c, up-arrow, enter to restart the service. Starting services
 # this way is slightly unreliable, and a bit slower, so this can
 # be disabled for automated testing by setting this value to False.
-USE_SCREEN=True
+USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
 # When using screen, should we keep a log file on disk?  You might
 # want this False if you have a long-running setup where verbose logs
