@@ -557,7 +557,7 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
-source $TOP_DIR/lib/zookeeper
+source $TOP_DIR/lib/dlm
 
 # Extras Source
 # --------------
@@ -742,11 +742,10 @@ run_phase stack pre-install
 
 install_rpc_backend
 
-if is_service_enabled zookeeper; then
-    cleanup_zookeeper
-    configure_zookeeper
-    init_zookeeper
-fi
+# NOTE(sdague): dlm install is conditional on one being enabled by configuration
+install_dlm
+configure_dlm
+
 if is_service_enabled $DATABASE_BACKENDS; then
     install_database
 fi
@@ -984,15 +983,6 @@ save_stackenv $LINENO
 
 # A better kind of sysstat, with the top process per time slice
 start_dstat
-
-
-# Zookeeper
-# -----
-
-# zookeeper for use with tooz for Distributed Lock Management capabilities etc.,
-if is_service_enabled zookeeper; then
-    start_zookeeper
-fi
 
 
 # Keystone

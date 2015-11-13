@@ -69,7 +69,7 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
-source $TOP_DIR/lib/zookeeper
+source $TOP_DIR/lib/dlm
 
 # Extras Source
 # --------------
