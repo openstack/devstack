@@ -123,13 +123,13 @@ SWIFT_REPLICAS_SEQ=$(seq ${SWIFT_REPLICAS})
 # trace through the logs when looking for its use.
 SWIFT_LOG_TOKEN_LENGTH=${SWIFT_LOG_TOKEN_LENGTH:-12}
 
-# Set ``SWIFT_MAX_HEADER_SIZE`` to configure the maximun length of headers in
+# Set ``SWIFT_MAX_HEADER_SIZE`` to configure the maximum length of headers in
 # Swift API
 SWIFT_MAX_HEADER_SIZE=${SWIFT_MAX_HEADER_SIZE:-16384}
 
 # Set ``OBJECT_PORT_BASE``, ``CONTAINER_PORT_BASE``, ``ACCOUNT_PORT_BASE``
-# Port bases used in port number calclution for the service "nodes"
-# The specified port number will be used, the additinal ports calculated by
+# Port bases used in port number calculation for the service "nodes"
+# The specified port number will be used, the additional ports calculated by
 # base_port + node_num * 10
 OBJECT_PORT_BASE=${OBJECT_PORT_BASE:-6613}
 CONTAINER_PORT_BASE=${CONTAINER_PORT_BASE:-6611}

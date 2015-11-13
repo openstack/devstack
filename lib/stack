@@ -14,7 +14,7 @@
 # Functions
 # ---------
 
-# Generic service install handles venv creation if confgured for service
+# Generic service install handles venv creation if configured for service
 # stack_install_service service
 function stack_install_service {
     local service=$1

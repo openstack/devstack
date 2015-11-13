@@ -58,7 +58,7 @@ function restart_rpc_backend {
         # NOTE(bnemec): Retry initial rabbitmq configuration to deal with
         # the fact that sometimes it fails to start properly.
         # Reference: https://bugzilla.redhat.com/show_bug.cgi?id=1144100
-        # NOTE(tonyb): Extend the orginal retry logic to only restart rabbitmq
+        # NOTE(tonyb): Extend the original retry logic to only restart rabbitmq
         # every second time around the loop.
         # See: https://bugs.launchpad.net/devstack/+bug/1449056 for details on
         # why this is needed.  This can bee seen on vivid and Debian unstable
@@ -106,7 +106,7 @@ function get_transport_url {
     fi
 }
 
-# iniset cofiguration
+# iniset configuration
 function iniset_rpc_backend {
     local package=$1
     local file=$2
