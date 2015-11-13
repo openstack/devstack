@@ -7,6 +7,7 @@
 #
 # - ``functions`` file
 # - ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+# - ``FILES``
 # - ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
 # - ``LIBVIRT_TYPE`` must be defined
 # - ``INSTANCE_NAME_PREFIX``, ``VOLUME_NAME_PREFIX`` must be defined
@@ -87,6 +88,7 @@ NOVA_SERVICE_LOCAL_HOST=${NOVA_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
 NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
 EC2_SERVICE_PORT=${EC2_SERVICE_PORT:-8773}
 EC2_SERVICE_PORT_INT=${EC2_SERVICE_PORT_INT:-18773}
+METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 
 # Option to enable/disable config drive
 # NOTE: Set ``FORCE_CONFIG_DRIVE="False"`` to turn OFF config drive
@@ -241,6 +243,7 @@ function _cleanup_nova_apache_wsgi {
     sudo rm -f $NOVA_WSGI_DIR/*
     sudo rm -f $(apache_site_config_for nova-api)
     sudo rm -f $(apache_site_config_for nova-ec2-api)
+    sudo rm -f $(apache_site_config_for nova-metadata)
 }
 
 # _config_nova_apache_wsgi() - Set WSGI config files of Keystone
@@ -251,11 +254,14 @@ function _config_nova_apache_wsgi {
     nova_apache_conf=$(apache_site_config_for nova-api)
     local nova_ec2_apache_conf
     nova_ec2_apache_conf=$(apache_site_config_for nova-ec2-api)
+    local nova_metadata_apache_conf
+    nova_metadata_apache_conf=$(apache_site_config_for nova-metadata)
     local nova_ssl=""
     local nova_certfile=""
     local nova_keyfile=""
     local nova_api_port=$NOVA_SERVICE_PORT
     local nova_ec2_api_port=$EC2_SERVICE_PORT
+    local nova_metadata_port=$METADATA_SERVICE_PORT
     local venv_path=""
 
     if is_ssl_enabled_service nova-api; then
@@ -270,6 +276,7 @@ function _config_nova_apache_wsgi {
     # copy proxy vhost and wsgi helper files
     sudo cp $NOVA_DIR/nova/wsgi/nova-api.py $NOVA_WSGI_DIR/nova-api
     sudo cp $NOVA_DIR/nova/wsgi/nova-ec2-api.py $NOVA_WSGI_DIR/nova-ec2-api
+    sudo cp $NOVA_DIR/nova/wsgi/nova-metadata.py $NOVA_WSGI_DIR/nova-metadata
 
     sudo cp $FILES/apache-nova-api.template $nova_apache_conf
     sudo sed -e "
@@ -296,6 +303,19 @@ function _config_nova_apache_wsgi {
         s|%VIRTUALENV%|$venv_path|g
         s|%APIWORKERS%|$API_WORKERS|g
     " -i $nova_ec2_apache_conf
+
+    sudo cp $FILES/apache-nova-metadata.template $nova_metadata_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$nova_metadata_port|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%PUBLICWSGI%|$NOVA_WSGI_DIR/nova-metadata|g;
+        s|%SSLENGINE%|$nova_ssl|g;
+        s|%SSLCERTFILE%|$nova_certfile|g;
+        s|%SSLKEYFILE%|$nova_keyfile|g;
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
+        s|%APIWORKERS%|$API_WORKERS|g
+    " -i $nova_metadata_apache_conf
 }
 
 # configure_nova() - Set config files, create data dirs, etc
@@ -797,9 +817,11 @@ function start_nova_api {
     if [ -f ${enabled_site_file} ] && [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
         enable_apache_site nova-api
         enable_apache_site nova-ec2-api
+        enable_apache_site nova-metadata
         restart_apache_server
         tail_log nova-api /var/log/$APACHE_NAME/nova-api.log
         tail_log nova-ec2-api /var/log/$APACHE_NAME/nova-ec2-api.log
+        tail_log nova-metadata /var/log/$APACHE_NAME/nova-metadata.log
     else
         run_process n-api "$NOVA_BIN_DIR/nova-api"
     fi
@@ -915,6 +937,7 @@ function stop_nova_rest {
     if [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
         disable_apache_site nova-api
         disable_apache_site nova-ec2-api
+        disable_apache_site nova-metadata
         restart_apache_server
     else
         stop_process n-api
