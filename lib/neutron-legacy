@@ -799,7 +799,7 @@ function _move_neutron_addresses_route {
         local IP_ADD=""
         local IP_DEL=""
         local DEFAULT_ROUTE_GW
-        DEFAULT_ROUTE_GW=$(ip r | awk "/default.+$from_intf/ { print \$3; exit }")
+        DEFAULT_ROUTE_GW=$(ip -f $af r | awk "/default.+$from_intf/ { print \$3; exit }")
         local ADD_OVS_PORT=""
 
         if [[ $af == "inet" ]]; then
@@ -811,7 +811,7 @@ function _move_neutron_addresses_route {
         fi
 
         if [ "$DEFAULT_ROUTE_GW" != "" ]; then
-            ADD_DEFAULT_ROUTE="sudo ip r replace default via $DEFAULT_ROUTE_GW dev $to_intf"
+            ADD_DEFAULT_ROUTE="sudo ip -f $af r replace default via $DEFAULT_ROUTE_GW dev $to_intf"
         fi
 
         if [[ "$add_ovs_port" == "True" ]]; then
