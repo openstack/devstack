@@ -638,7 +638,7 @@ function install_neutron {
         plugin_dir=$($ssh_dom0 "$xen_functions; set -eux; xapi_plugin_location")
 
         # install neutron plugins to dom0
-        tar -czf - -C $NEUTRON_DIR/neutron/plugins/openvswitch/agent/xenapi/etc/xapi.d/plugins/ ./ |
+        tar -czf - -C $NEUTRON_DIR/neutron/plugins/ml2/drivers/openvswitch/agent/xenapi/etc/xapi.d/plugins/ ./ |
             $ssh_dom0 "tar -xzf - -C $plugin_dir && chmod a+x $plugin_dir/*"
     fi
 }
