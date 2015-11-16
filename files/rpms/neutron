@@ -9,7 +9,6 @@ mysql-devel
 MySQL-python
 mysql-server # NOPRIME
 openvswitch # NOPRIME
-postgresql-devel
 rabbitmq-server # NOPRIME
 radvd # NOPRIME
 sqlite

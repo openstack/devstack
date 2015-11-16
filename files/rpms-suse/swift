@@ -1,6 +1,5 @@
 curl
 memcached
-python-devel
 sqlite3
 xfsprogs
 xinetd
