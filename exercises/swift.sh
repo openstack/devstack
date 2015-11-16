@@ -2,7 +2,7 @@
 
 # **swift.sh**
 
-# Test swift via the ``swift`` command line from ``python-swiftclient``
+# Test swift via the ``python-openstackclient`` command line
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -39,26 +39,29 @@ is_service_enabled s-proxy || exit 55
 
 # Container name
 CONTAINER=ex-swift
+OBJECT=/etc/issue
 
 
 # Testing Swift
 # =============
 
 # Check if we have to swift via keystone
-swift stat || die $LINENO "Failure getting status"
+openstack object store account show || die $LINENO "Failure getting account status"
 
 # We start by creating a test container
 openstack container create $CONTAINER || die $LINENO "Failure creating container $CONTAINER"
 
-# add some files into it.
-openstack object create $CONTAINER /etc/issue || die $LINENO "Failure uploading file to container $CONTAINER"
+# add a file into it.
+openstack object create $CONTAINER $OBJECT || die $LINENO "Failure uploading file to container $CONTAINER"
 
-# list them
+# list the objects
 openstack object list $CONTAINER || die $LINENO "Failure listing contents of container $CONTAINER"
 
-# And we may want to delete them now that we have tested that
-# everything works.
-swift delete $CONTAINER || die $LINENO "Failure deleting container $CONTAINER"
+# delete the object first
+openstack object delete $CONTAINER $OBJECT || die $LINENO "Failure deleting object $OBJECT in container $CONTAINER"
+
+# delete the container
+openstack container delete $CONTAINER || die $LINENO "Failure deleting container $CONTAINER"
 
 set +o xtrace
 echo "*********************************************************************"
