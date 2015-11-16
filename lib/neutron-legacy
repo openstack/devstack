@@ -801,13 +801,7 @@ function _move_neutron_addresses_route {
         DEFAULT_ROUTE_GW=$(ip -f $af r | awk "/default.+$from_intf/ { print \$3; exit }")
         local ADD_OVS_PORT=""
 
-        if [[ $af == "inet" ]]; then
-            IP_BRD=$(ip -f $af a s dev $from_intf | grep inet | awk '{ print $2, $3, $4; exit }')
-        fi
-
-        if [[ $af == "inet6" ]]; then
-            IP_BRD=$(ip -f $af a s dev $from_intf | grep 'scope global' | sed '/temporary/d' | awk '{ print $2, $3, $4; exit }')
-        fi
+        IP_BRD=$(ip -f $af a s dev $from_intf scope global primary | grep inet | awk '{ print $2, $3, $4; exit }')
 
         if [ "$DEFAULT_ROUTE_GW" != "" ]; then
             ADD_DEFAULT_ROUTE="sudo ip -f $af r replace default via $DEFAULT_ROUTE_GW dev $to_intf"
