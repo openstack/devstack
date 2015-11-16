@@ -23,7 +23,7 @@
 #
 # Optional Dependencies:
 #
-# - ``ALT_*`` (similar vars exists in keystone_data.sh)
+# - ``ALT_*``
 # - ``LIVE_MIGRATION_AVAILABLE``
 # - ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
 # - ``DEFAULT_INSTANCE_TYPE``

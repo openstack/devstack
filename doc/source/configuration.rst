@@ -394,7 +394,7 @@ with ``KEYSTONE_CATALOG_BACKEND``:
         KEYSTONE_CATALOG_BACKEND=template
 
 DevStack's default configuration in ``sql`` mode is set in
-``files/keystone_data.sh``
+``lib/keystone``
 
 
 Guest Images
