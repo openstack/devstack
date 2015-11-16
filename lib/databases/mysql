@@ -143,7 +143,7 @@ MYSQL_PRESEED
 [client]
 user=$DATABASE_USER
 password=$DATABASE_PASSWORD
-host=$DATABASE_HOST
+host=$MYSQL_HOST
 EOF
         chmod 0600 $HOME/.my.cnf
     fi
