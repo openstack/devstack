@@ -340,8 +340,8 @@ nova, neutron)
 **Compute Nodes**
 
 In this example, the nodes that will host guest instances will run
-the `neutron-openvswitch-agent` for network connectivity, as well as
-the compute service `nova-compute`.
+the ``neutron-openvswitch-agent`` for network connectivity, as well as
+the compute service ``nova-compute``.
 
 DevStack Configuration
 ----------------------
@@ -426,16 +426,16 @@ compute node 1.
         Q_L3_ENABLED=False
 
 Compute node 2's configuration will be exactly the same, except
-`HOST_IP` will be `10.0.0.4`
+``HOST_IP`` will be ``10.0.0.4``
 
 When DevStack is configured to use provider networking (via
-`Q_USE_PROVIDER_NETWORKING` is True and `Q_L3_ENABLED` is False) -
+``Q_USE_PROVIDER_NETWORKING`` is True and ``Q_L3_ENABLED`` is False) -
 DevStack will automatically add the network interface defined in
-`PUBLIC_INTERFACE` to the `OVS_PHYSICAL_BRIDGE`
+``PUBLIC_INTERFACE`` to the ``OVS_PHYSICAL_BRIDGE``
 
 For example, with the above  configuration, a bridge is
-created, named `br-ex` which is managed by Open vSwitch, and the
-second interface on the compute node, `eth1` is attached to the
+created, named ``br-ex`` which is managed by Open vSwitch, and the
+second interface on the compute node, ``eth1`` is attached to the
 bridge, to forward traffic sent by guest VMs.
 
 Miscellaneous Tips
@@ -477,7 +477,7 @@ Configuring Extension Drivers for the ML2 Plugin
 ------------------------------------------------
 
 Extension drivers for the ML2 plugin are set with the variable
-`Q_ML2_PLUGIN_EXT_DRIVERS`, and includes the 'port_security' extension
+``Q_ML2_PLUGIN_EXT_DRIVERS``, and includes the 'port_security' extension
 by default. If you want to remove all the extension drivers (even
-'port_security'), set `Q_ML2_PLUGIN_EXT_DRIVERS` to blank.
+'port_security'), set ``Q_ML2_PLUGIN_EXT_DRIVERS`` to blank.
 

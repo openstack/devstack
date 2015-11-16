@@ -50,7 +50,7 @@ the host:
     parm:           nested:bool
 
 Start your VM, now it should have KVM capabilities -- you can verify
-that by ensuring `/dev/kvm` character device is present.
+that by ensuring ``/dev/kvm`` character device is present.
 
 
 Configure Nested KVM for AMD-based Machines
@@ -97,7 +97,7 @@ To make the above value persistent across reboots, add an entry in
 Expose Virtualization Extensions to DevStack VM
 -----------------------------------------------
 
-Edit the VM's libvirt XML configuration via `virsh` utility:
+Edit the VM's libvirt XML configuration via ``virsh`` utility:
 
 ::
 
@@ -115,10 +115,10 @@ Ensure DevStack VM is Using KVM
 -------------------------------
 
 Before invoking ``stack.sh`` in the VM, ensure that KVM is enabled. This
-can be verified by checking for the presence of the file `/dev/kvm` in
+can be verified by checking for the presence of the file ``/dev/kvm`` in
 your VM. If it is present, DevStack will default to using the config
-attribute `virt_type = kvm` in `/etc/nova.conf`; otherwise, it'll fall
-back to `virt_type=qemu`, i.e. plain QEMU emulation.
+attribute ``virt_type = kvm`` in ``/etc/nova.conf``; otherwise, it'll fall
+back to ``virt_type=qemu``, i.e. plain QEMU emulation.
 
 Optionally, to explicitly set the type of virtualization, to KVM, by the
 libvirt driver in nova, the below config attribute can be used in
@@ -131,7 +131,7 @@ DevStack's ``local.conf``:
 
 Once DevStack is configured successfully, verify if the Nova instances
 are using KVM by noticing the QEMU CLI invoked by Nova is using the
-parameter `accel=kvm`, e.g.:
+parameter ``accel=kvm``, e.g.:
 
 ::
 
