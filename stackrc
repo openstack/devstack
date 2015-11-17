@@ -679,6 +679,16 @@ GIT_DEPTH=${GIT_DEPTH:-0}
 # Use native SSL for servers in ``SSL_ENABLED_SERVICES``
 USE_SSL=$(trueorfalse False USE_SSL)
 
+# ebtables is inherently racey. If you run it by two or more processes
+# simultaneously it will collide, badly, in the kernel and produce
+# failures or corruption of ebtables. The only way around it is for
+# all tools running ebtables to only ever do so with the --concurrent
+# flag. This requires libvirt >= 1.2.11.
+#
+# If you don't have this then the following work around will replace
+# ebtables with a wrapper script so that it is safe to run without
+# that flag.
+EBTABLES_RACE_FIX=$(trueorfalse False EBTABLES_RACE_FIX)
 
 # Following entries need to be last items in file
 

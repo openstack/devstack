@@ -32,6 +32,11 @@ function install_libvirt {
         fi
         install_package libvirt-bin libvirt-dev
         pip_install_gr libvirt-python
+        if [[ "$EBTABLES_RACE_FIX" == "True" ]]; then
+            # Work around for bug #1501558. We can remove this once we
+            # get to a version of Ubuntu that has new enough libvirt.
+            TOP_DIR=$TOP_DIR $TOP_DIR/tools/install_ebtables_workaround.sh
+        fi
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
         install_package kvm
