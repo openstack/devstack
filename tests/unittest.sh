@@ -92,16 +92,17 @@ function assert_empty {
     fi
 }
 
-# print a summary of passing and failing tests, exiting
-# with an error if we have failed tests
+# Print a summary of passing and failing tests and exit
+# (with an error if we have failed tests)
 #  usage: report_results
 function report_results {
     echo "$PASS Tests PASSED"
-    if [[ $ERROR -gt 1 ]]; then
+    if [[ $ERROR -gt 0 ]]; then
         echo
         echo "The following $ERROR tests FAILED"
         echo -e "$FAILED_FUNCS"
         echo "---"
         exit 1
     fi
+    exit 0
 }
