@@ -925,8 +925,8 @@ fi
 restart_rpc_backend
 
 
-# Export Certicate Authority Bundle
-# ---------------------------------
+# Export Certificate Authority Bundle
+# -----------------------------------
 
 # If certificates were used and written to the SSL bundle file then these
 # should be exported so clients can validate their connections.

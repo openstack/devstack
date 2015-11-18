@@ -256,7 +256,7 @@ ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-True}
 
 # If using GRE tunnels for tenant networks, specify the range of
 # tunnel IDs from which tenant networks are allocated. Can be
-# overriden in ``localrc`` in necesssary.
+# overridden in ``localrc`` in necessary.
 TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGES:-1:1000}
 
 # To use VLANs for tenant networks, set to True in localrc. VLANs
@@ -536,7 +536,7 @@ function create_neutron_initial_network {
 
     if is_provider_network; then
         die_if_not_set $LINENO PHYSICAL_NETWORK "You must specify the PHYSICAL_NETWORK"
-        die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specifiy the PROVIDER_NETWORK_TYPE"
+        die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specify the PROVIDER_NETWORK_TYPE"
         NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
 
@@ -1126,7 +1126,7 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
     _neutron_setup_keystone $NEUTRON_CONF keystone_authtoken
 
-    # Configuration for neutron notifations to nova.
+    # Configuration for neutron notifications to nova.
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
 
