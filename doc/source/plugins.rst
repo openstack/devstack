@@ -19,7 +19,16 @@ DevStack supports a standard mechanism for including plugins from
 external repositories. The plugin interface assumes the following:
 
 An external git repository that includes a ``devstack/`` top level
-directory. Inside this directory there can be 2 files.
+directory. Inside this directory there can be 3 files.
+
+- ``override_defaults`` - a file containing global variables that
+  will be sourced before the lib/* files. This allows the plugin
+  to override the defaults that are otherwise set in the lib/*
+  files.
+
+  For example, override_defaults may export CINDER_ENABLED_BACKENDS
+  to include the plugin-specific storage backend and thus be able
+  to override the default lvm only storage backend for Cinder.
 
 - ``settings`` - a file containing global variables that will be
   sourced very early in the process. This is helpful if other plugins
@@ -38,7 +47,7 @@ directory. Inside this directory there can be 2 files.
 
 - ``plugin.sh`` - the actual plugin. It is executed by devstack at
   well defined points during a ``stack.sh`` run. The plugin.sh
-  internal structure is discussed bellow.
+  internal structure is discussed below.
 
 
 Plugins are registered by adding the following to the localrc section
