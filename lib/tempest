@@ -357,6 +357,30 @@ function configure_tempest {
         compute_api_extensions=$(remove_disabled_extensions $compute_api_extensions $DISABLE_COMPUTE_API_EXTENSIONS)
     fi
 
+    # Set the microversion range for compute tests.
+    # This is used to run the Nova microversions tests.
+    # Setting [None, latest] range of microversion which allow Tempest to run all microversions tests.
+    # NOTE- To avoid microversion tests failure on stable branch, we need to change "tempest_compute_max_microversion"
+    #       for stable branch on each release which should be changed from "latest" to max supported version of that release.
+    local tempest_compute_min_microversion=${TEMPEST_COMPUTE_MIN_MICROVERSION:-None}
+    local tempest_compute_max_microversion=${TEMPEST_COMPUTE_MAX_MICROVERSION:-"latest"}
+    # Reset microversions to None where v2.0 is running which does not support microversion.
+    # Both "None" means no microversion testing.
+    if [[ "$TEMPEST_COMPUTE_TYPE" == "compute_legacy" ]]; then
+        tempest_compute_min_microversion=None
+        tempest_compute_max_microversion=None
+    fi
+    if [ "$tempest_compute_min_microversion" == "None" ]; then
+        inicomment $TEMPEST_CONFIG compute-feature-enabled min_microversion
+    else
+        iniset $TEMPEST_CONFIG compute-feature-enabled min_microversion $tempest_compute_min_microversion
+    fi
+    if [ "$tempest_compute_max_microversion" == "None" ]; then
+        inicomment $TEMPEST_CONFIG compute-feature-enabled max_microversion
+    else
+        iniset $TEMPEST_CONFIG compute-feature-enabled max_microversion $tempest_compute_max_microversion
+    fi
+
     iniset $TEMPEST_CONFIG compute-feature-enabled resize True
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
