@@ -24,7 +24,7 @@ function check_result {
 }
 
 # mock function-common:die so that it does not
-# interupt our test script
+# interrupt our test script
 function die {
     exit -1
 }

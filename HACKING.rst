@@ -328,7 +328,7 @@ There are some broad criteria that will be followed when reviewing
 your change
 
 * **Is it passing tests** -- your change will not be reviewed
-  throughly unless the official CI has run successfully against it.
+  thoroughly unless the official CI has run successfully against it.
 
 * **Does this belong in DevStack** -- DevStack reviewers have a
   default position of "no" but are ready to be convinced by your

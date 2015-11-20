@@ -92,7 +92,7 @@ IRONIC_VM_LOG_DIR=${IRONIC_VM_LOG_DIR:-$IRONIC_DATA_DIR/logs/}
 # Use DIB to create deploy ramdisk and kernel.
 IRONIC_BUILD_DEPLOY_RAMDISK=$(trueorfalse True IRONIC_BUILD_DEPLOY_RAMDISK)
 # If not use DIB, these files are used as deploy ramdisk/kernel.
-# (The value must be a absolute path)
+# (The value must be an absolute path)
 IRONIC_DEPLOY_RAMDISK=${IRONIC_DEPLOY_RAMDISK:-}
 IRONIC_DEPLOY_KERNEL=${IRONIC_DEPLOY_KERNEL:-}
 IRONIC_DEPLOY_ELEMENT=${IRONIC_DEPLOY_ELEMENT:-deploy-ironic}
@@ -672,7 +672,7 @@ function configure_iptables {
     # enable tftp natting for allowing connections to HOST_IP's tftp server
     sudo modprobe nf_conntrack_tftp
     sudo modprobe nf_nat_tftp
-    # explicitly allow DHCP - packets are occassionally being dropped here
+    # explicitly allow DHCP - packets are occasionally being dropped here
     sudo iptables -I INPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT || true
     # nodes boot from TFTP and callback to the API server listening on $HOST_IP
     sudo iptables -I INPUT -d $HOST_IP -p udp --dport 69 -j ACCEPT || true
