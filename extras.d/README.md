@@ -14,10 +14,13 @@ The scripts are sourced at the beginning of each script that calls them. The
 entire `stack.sh` variable space is available.  The scripts are
 sourced with one or more arguments, the first of which defines the hook phase:
 
-    source | stack | unstack | clean
+    override_defaults | source | stack | unstack | clean
 
-    source: always called first in any of the scripts, used to set the
-        initial defaults in a lib/* script or similar
+    override_defaults: always called first in any of the scripts, used to
+        override defaults (if need be) that are otherwise set in lib/* scripts
+
+    source: called by stack.sh. Used to set the initial defaults in a lib/*
+        script or similar
 
     stack: called by stack.sh.  There are four possible values for
         the second arg to distinguish the phase stack.sh is in:
