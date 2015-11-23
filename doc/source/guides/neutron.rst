@@ -354,8 +354,6 @@ controller node.
         HOST_IP=10.0.0.2
         SERVICE_HOST=10.0.0.2
         MYSQL_HOST=10.0.0.2
-        SERVICE_HOST=10.0.0.2
-        MYSQL_HOST=10.0.0.2
         RABBIT_HOST=10.0.0.2
         GLANCE_HOSTPORT=10.0.0.2:9292
         PUBLIC_INTERFACE=eth1
@@ -397,14 +395,12 @@ would be a public IP address range that you or your organization has
 allocated to you, so that you could access your instances from the
 public internet.
 
-The following is the DevStack configuration on 
+The following is the DevStack configuration on
 compute node 1.
 
 ::
 
         HOST_IP=10.0.0.3
-        SERVICE_HOST=10.0.0.2
-        MYSQL_HOST=10.0.0.2
         SERVICE_HOST=10.0.0.2
         MYSQL_HOST=10.0.0.2
         RABBIT_HOST=10.0.0.2
