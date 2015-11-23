@@ -46,7 +46,7 @@ function failed {
     ERROR=$((ERROR+1))
 }
 
-# assert string comparision of val1 equal val2, printing out msg
+# assert string comparison of val1 equal val2, printing out msg
 #  usage: assert_equal val1 val2 msg
 function assert_equal {
     local lineno

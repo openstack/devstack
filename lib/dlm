@@ -46,7 +46,7 @@ ZOOKEEPER_CONF_DIR=/etc/zookeeper
 # - cleanup_dlm
 
 # This should be declared in the settings file of any plugin or
-# service that needs to have a dlm in their enviroment.
+# service that needs to have a dlm in their environment.
 function use_dlm {
     enable_service $(dlm_backend)
 }
