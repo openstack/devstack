@@ -450,10 +450,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG validation network_for_ssh $PRIVATE_NETWORK_NAME
 
     # Volume
-    # TODO(dkranz): Remove the bootable flag when Juno is end of life.
-    iniset $TEMPEST_CONFIG volume-feature-enabled bootable True
-    # TODO(jordanP): Remove the extend_with_snapshot flag when Juno is end of life.
-    iniset $TEMPEST_CONFIG volume-feature-enabled extend_with_snapshot True
     # TODO(obutenko): Remove the incremental_backup_force flag when Kilo and Juno is end of life.
     iniset $TEMPEST_CONFIG volume-feature-enabled incremental_backup_force True
     # TODO(ynesenenko): Remove the volume_services flag when Liberty and Kilo will correct work with host info.
