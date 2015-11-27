@@ -75,6 +75,7 @@ fi
 
 # Check if run in POSIX shell
 if [[ "${POSIXLY_CORRECT}" == "y" ]]; then
+    set +o xtrace
     echo "You are running POSIX compatibility mode, DevStack requires bash 4.2 or newer."
     exit 1
 fi
@@ -85,11 +86,11 @@ fi
 # action to create a suitable user account.
 
 if [[ $EUID -eq 0 ]]; then
-    echo "You are running this script as root."
-    echo "Cut it out."
-    echo "Really."
-    echo "If you need an account to run DevStack, do this (as root, heh) to create a non-root account:"
-    echo "$TOP_DIR/tools/create-stack-user.sh"
+    set +o xtrace
+    echo "DevStack should be run as a user with sudo permissions, "
+    echo "not root."
+    echo "A \"stack\" user configured correctly can be created with:"
+    echo " $TOP_DIR/tools/create-stack-user.sh"
     exit 1
 fi
 
@@ -98,6 +99,7 @@ fi
 # virtual env, and will fail in really odd ways if you do this. Make
 # this explicit as it has come up on the mailing list.
 if [[ -n "$VIRTUAL_ENV" ]]; then
+    set +o xtrace
     echo "You appear to be running under a python virtualenv."
     echo "DevStack does not support this, as we may break the"
     echo "virtualenv you are currently in by modifying "
@@ -111,6 +113,7 @@ fi
 # on a lot of different environments, you sometimes run it on the
 # wrong box. This makes there be a way to prevent that.
 if [[ -e $HOME/.no-devstack ]]; then
+    set +o xtrace
     echo "You've marked this host as a no-devstack host, to save yourself from"
     echo "running devstack accidentally. If this is in error, please remove the"
     echo "~/.no-devstack file"
