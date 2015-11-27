@@ -24,7 +24,7 @@
 # - _cleanup_swift_apache_wsgi
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_LIB_SWIFT=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -823,7 +823,7 @@ function swift_configure_tempurls {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_LIB_SWIFT
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

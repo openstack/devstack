@@ -8,7 +8,7 @@
 # - DATABASE_{HOST,USER,PASSWORD} must be defined
 
 # Save trace setting
-PG_XTRACE=$(set +o | grep xtrace)
+_XTRACE_PG=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -119,7 +119,7 @@ function database_connection_url_postgresql {
 
 
 # Restore xtrace
-$PG_XTRACE
+$_XTRACE_PG
 
 # Local variables:
 # mode: shell-script

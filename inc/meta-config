@@ -20,7 +20,7 @@
 # file-name is the destination of the config file
 
 # Save trace setting
-INC_META_XTRACE=$(set +o | grep xtrace)
+_XTRACE_INC_META=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -197,7 +197,7 @@ function merge_config_group {
 
 
 # Restore xtrace
-$INC_META_XTRACE
+$_XTRACE_INC_META
 
 # Local variables:
 # mode: shell-script

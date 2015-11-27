@@ -19,7 +19,7 @@
 # - cleanup_dlm
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_DLM=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -100,7 +100,7 @@ function install_dlm {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_DLM
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

@@ -15,7 +15,7 @@
 # - install_infra
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_INFRA=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -50,7 +50,7 @@ function install_infra {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_INFRA
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

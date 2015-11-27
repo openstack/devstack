@@ -21,7 +21,7 @@
 # - cleanup_XXXX
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_TEMPLATE=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -92,7 +92,7 @@ function stop_XXXX {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_TEMPLATE
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

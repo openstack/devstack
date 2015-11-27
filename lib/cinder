@@ -20,7 +20,7 @@
 # - cleanup_cinder
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_CINDER=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -567,7 +567,7 @@ function create_cinder_volume_group {
 
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_CINDER
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

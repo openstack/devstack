@@ -21,7 +21,7 @@
 # of this file which is a standard interface.
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_RPC_BACKEND=$(set +o | grep xtrace)
 set +o xtrace
 
 # Functions
@@ -141,7 +141,7 @@ function rabbit_setuser {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_RPC_BACKEND
 
 # Tell emacs to use shell-script-mode
 ## Local variables:

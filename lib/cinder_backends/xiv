@@ -42,7 +42,7 @@
 # configure_cinder_backend_xiv - Configure Cinder for xiv backends
 
 # Save trace setting
-XIV_XTRACE=$(set +o | grep xtrace)
+_XTRACE_CINDER_XIV=$(set +o | grep xtrace)
 set +o xtrace
 
 # Defaults
@@ -79,7 +79,7 @@ function configure_cinder_backend_xiv {
 }
 
 # Restore xtrace
-$XIV_XTRACE
+$_XTRACE_CINDER_XIV
 
 # Local variables:
 # mode: shell-script

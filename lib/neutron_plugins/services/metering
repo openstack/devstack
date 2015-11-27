@@ -4,7 +4,7 @@
 # ---------------------------
 
 # Save trace setting
-METER_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NETURON_METER=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -29,4 +29,5 @@ function neutron_metering_stop {
 }
 
 # Restore xtrace
-$METER_XTRACE
+$_XTRACE_NETURON_METER
+

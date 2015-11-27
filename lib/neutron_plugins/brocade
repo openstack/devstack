@@ -4,7 +4,7 @@
 # ----------------------
 
 # Save trace setting
-BRCD_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_BROCADE=$(set +o | grep xtrace)
 set +o xtrace
 
 function is_neutron_ovs_base_plugin {
@@ -81,4 +81,4 @@ function neutron_plugin_check_adv_test_requirements {
 }
 
 # Restore xtrace
-$BRCD_XTRACE
+$_XTRACE_NEUTRON_BROCADE

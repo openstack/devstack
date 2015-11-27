@@ -15,7 +15,7 @@
 # configure_cinder_backend_vmdk - Configure Cinder for VMware vmdk backends
 
 # Save trace setting
-VMDK_XTRACE=$(set +o | grep xtrace)
+_XTRACE_CINDER_VMDK=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -40,7 +40,7 @@ function configure_cinder_backend_vmdk {
 
 
 # Restore xtrace
-$VMDK_XTRACE
+$_XTRACE_CINDER_VMDK
 
 # Local variables:
 # mode: shell-script

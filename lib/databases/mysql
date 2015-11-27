@@ -8,7 +8,7 @@
 # - DATABASE_{HOST,USER,PASSWORD} must be defined
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+_XTRACE_DB_MYSQL=$(set +o | grep xtrace)
 set +o xtrace
 
 MYSQL_DRIVER=${MYSQL_DRIVER:-PyMySQL}
@@ -178,7 +178,7 @@ function database_connection_url_mysql {
 
 
 # Restore xtrace
-$MY_XTRACE
+$_XTRACE_DB_MYSQL
 
 # Local variables:
 # mode: shell-script

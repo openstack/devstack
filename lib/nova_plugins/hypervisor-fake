@@ -17,7 +17,7 @@
 # cleanup_nova_hypervisor - remove transient data and cache
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+_XTRACE_VIRTFAKE=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -72,7 +72,7 @@ function stop_nova_hypervisor {
 
 
 # Restore xtrace
-$MY_XTRACE
+$_XTRACE_VIRTFAKE
 
 # Local variables:
 # mode: shell-script

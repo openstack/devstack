@@ -4,7 +4,7 @@
 # -----------------------------
 
 # Save trace setting
-PLUGIN_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_LB=$(set +o | grep xtrace)
 set +o xtrace
 
 function neutron_lb_cleanup {
@@ -93,4 +93,4 @@ function neutron_plugin_check_adv_test_requirements {
 }
 
 # Restore xtrace
-$PLUGIN_XTRACE
+$_XTRACE_NEUTRON_LB

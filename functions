@@ -22,7 +22,7 @@ source ${FUNC_DIR}/inc/python
 source ${FUNC_DIR}/inc/rootwrap
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_FUNCTIONS=$(set +o | grep xtrace)
 set +o xtrace
 
 # Check if a function already exists
@@ -603,7 +603,7 @@ function create_disk {
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_FUNCTIONS
 
 # Local variables:
 # mode: shell-script

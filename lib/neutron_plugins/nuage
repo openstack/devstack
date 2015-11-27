@@ -4,7 +4,7 @@
 # ----------------------
 
 # Save trace setting
-NU_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_NU=$(set +o | grep xtrace)
 set +o xtrace
 
 function neutron_plugin_create_nova_conf {
@@ -66,4 +66,4 @@ function has_neutron_plugin_security_group {
 }
 
 # Restore xtrace
-$NU_XTRACE
+$_XTRACE_NEUTRON_NU

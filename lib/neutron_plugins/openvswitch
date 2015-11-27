@@ -7,7 +7,7 @@
 # which has been removed in Juno.
 
 # Save trace setting
-OVS_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_OVS=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/openvswitch_agent
@@ -56,4 +56,5 @@ function has_neutron_plugin_security_group {
 }
 
 # Restore xtrace
-$OVS_XTRACE
+$_XTRACE_NEUTRON_OVS
+

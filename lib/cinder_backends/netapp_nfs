@@ -20,7 +20,7 @@
 # configure_cinder_backend_netapp_nfs - configure NFS
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+_XTRACE_CINDER_NETAPP=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -70,7 +70,7 @@ function cleanup_cinder_backend_netapp_nfs {
 
 
 # Restore xtrace
-$MY_XTRACE
+$_XTRACE_CINDER_NETAPP
 
 # Local variables:
 # mode: shell-script

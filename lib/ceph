@@ -18,7 +18,7 @@
 # - cleanup_ceph
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_LIB_CEPH=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -375,7 +375,7 @@ function stop_ceph {
 
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_LIB_CEPH
 
 ## Local variables:
 ## mode: shell-script

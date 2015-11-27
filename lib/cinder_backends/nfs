@@ -19,7 +19,7 @@
 # configure_cinder_backend_nfs - Configure Cinder for NFS backends
 
 # Save trace setting
-NFS_XTRACE=$(set +o | grep xtrace)
+_XTRACE_CINDER_NFS=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -38,7 +38,7 @@ function configure_cinder_backend_nfs {
 
 
 # Restore xtrace
-$NFS_XTRACE
+$_XTRACE_CINDER_NFS
 
 # Local variables:
 # mode: shell-script
