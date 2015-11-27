@@ -44,6 +44,7 @@ The defined phases are:
    before they are started
 -  **extra** - runs after services are started and before any files in
    ``extra.d`` are executed
+-  **post-extra** - runs after files in ``extra.d`` are executed
 
 The file is processed strictly in sequence; meta-sections may be
 specified more than once but if any settings are duplicated the last to
