@@ -44,6 +44,18 @@ Quick Start
 
    We recommend at least a :ref:`minimal-configuration` be set up.
 
+#. Add Stack User
+
+   Devstack should be run as a non-root user with sudo enabled
+   (standard logins to cloud images such as "ubuntu" or "cloud-user"
+   are usually fine).
+
+   You can quickly create a separate `stack` user to run DevStack with
+
+   ::
+
+       devstack/tools/create-stack-user.sh; su stack
+
 #. Start the install
 
    ::
