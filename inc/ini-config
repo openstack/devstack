@@ -205,7 +205,7 @@ $option = $value
 }
 
 # Set a multiple line option in an INI file
-# iniset_multiline [-sudo] config-file section option value1 value2 valu3 ...
+# iniset_multiline [-sudo] config-file section option value1 value2 value3 ...
 function iniset_multiline {
     local xtrace
     xtrace=$(set +o | grep xtrace)

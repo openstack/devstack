@@ -5,7 +5,7 @@
 #
 # Set USE_SCREEN True|False to change use of screen.
 #
-# This script emulates the basic exec envirnment in ``stack.sh`` to test
+# This script emulates the basic exec environment in ``stack.sh`` to test
 # the process spawn and kill operations.
 
 if [[ -z $1 ]]; then
