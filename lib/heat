@@ -65,6 +65,12 @@ if [[ "$HEAT_STANDALONE" = "True" ]]; then
     # for standalone, use defaults which require no service user
     HEAT_STACK_DOMAIN=$(trueorfalse False HEAT_STACK_DOMAIN)
     HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-password}
+    if [[ ${HEAT_DEFERRED_AUTH} != "password" ]]; then
+        # Heat does not support keystone trusts when deployed in
+        # standalone mode
+        die $LINENO \
+            'HEAT_DEFERRED_AUTH can only be set to "password" when HEAT_STANDALONE is True.'
+    fi
 else
     HEAT_STACK_DOMAIN=$(trueorfalse True HEAT_STACK_DOMAIN)
     HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-trusts}
