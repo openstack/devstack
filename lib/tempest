@@ -196,8 +196,8 @@ function configure_tempest {
     if is_service_enabled nova; then
         # If ``DEFAULT_INSTANCE_TYPE`` is not declared, use the new behavior
         # Tempest creates its own instance types
+        available_flavors=$(nova flavor-list)
         if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
-            available_flavors=$(nova flavor-list)
             if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
                 nova flavor-create m1.nano 42 64 0 1
             fi
@@ -210,15 +210,14 @@ function configure_tempest {
         else
             # Check Nova for existing flavors, if ``DEFAULT_INSTANCE_TYPE`` is set use it.
             boto_instance_type=$DEFAULT_INSTANCE_TYPE
-            flavor_lines=`nova flavor-list`
             IFS=$'\r\n'
             flavors=""
-            for line in $flavor_lines; do
+            for line in $available_flavors; do
                 f=$(echo $line | awk "/ $DEFAULT_INSTANCE_TYPE / { print \$2 }")
                 flavors="$flavors $f"
             done
 
-            for line in $flavor_lines; do
+            for line in $available_flavors; do
                 flavors="$flavors `echo $line | grep -v "^\(|\s*ID\|+--\)" | cut -d' ' -f2`"
             done
 
