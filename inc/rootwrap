@@ -22,14 +22,14 @@ function add_sudo_secure_path {
     local line
 
     # This is pretty simplistic for now - assume only the first line is used
-    if [[ -r SUDO_SECURE_PATH_FILE ]]; then
+    if [[ -r $SUDO_SECURE_PATH_FILE ]]; then
         line=$(head -1 $SUDO_SECURE_PATH_FILE)
     else
         line="Defaults:$STACK_USER secure_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/usr/bin:/bin"
     fi
 
     # Only add ``dir`` if it is not already present
-    if [[ $line =~ $dir ]]; then
+    if [[ ! $line =~ $dir ]]; then
         echo "${line}:$dir" | sudo tee $SUDO_SECURE_PATH_FILE
         sudo chmod 400 $SUDO_SECURE_PATH_FILE
         sudo chown root:root $SUDO_SECURE_PATH_FILE
