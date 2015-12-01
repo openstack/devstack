@@ -14,8 +14,11 @@ function neutron_fwaas_configure_common {
 }
 
 function neutron_fwaas_configure_driver {
+    # Uses oslo config generator to generate FWaaS sample configuration files
+    (cd $NEUTRON_FWAAS_DIR && exec ./tools/generate_config_file_samples.sh)
+
     FWAAS_DRIVER_CONF_FILENAME=/etc/neutron/fwaas_driver.ini
-    cp $NEUTRON_FWAAS_DIR/etc/fwaas_driver.ini $FWAAS_DRIVER_CONF_FILENAME
+    cp $NEUTRON_FWAAS_DIR/etc/fwaas_driver.ini.sample $FWAAS_DRIVER_CONF_FILENAME
 
     iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas enabled True
     iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas driver "neutron_fwaas.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver"
