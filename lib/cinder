@@ -355,7 +355,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT os_privileged_user_name nova
     iniset $CINDER_CONF DEFAULT os_privileged_user_password "$SERVICE_PASSWORD"
     iniset $CINDER_CONF DEFAULT os_privileged_user_tenant "$SERVICE_TENANT_NAME"
-
+    iniset $CINDER_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 }
 
 # create_cinder_accounts() - Set up common required cinder accounts

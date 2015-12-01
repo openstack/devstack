@@ -668,6 +668,7 @@ function create_nova_conf {
         iniset $NOVA_CONF serial_console serialproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $NOVA_CONF serial_console enabled True
     fi
+    iniset $NOVA_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 }
 
 function init_nova_cells {
