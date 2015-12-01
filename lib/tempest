@@ -462,6 +462,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG volume-feature-enabled bootable True
     # TODO(jordanP): Remove the extend_with_snapshot flag when Juno is end of life.
     iniset $TEMPEST_CONFIG volume-feature-enabled extend_with_snapshot True
+    # TODO(obutenko): Remove the incremental_backup_force flag when Kilo and Juno is end of life.
+    iniset $TEMPEST_CONFIG volume-feature-enabled incremental_backup_force True
 
     local volume_api_extensions=${VOLUME_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_VOLUME_API_EXTENSIONS" ]]; then
