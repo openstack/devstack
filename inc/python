@@ -17,7 +17,7 @@ set +o xtrace
 
 # Global Config Variables
 
-# PROJECT_VENV contains the name of the virtual enviromnet for each
+# PROJECT_VENV contains the name of the virtual environment for each
 # project.  A null value installs to the system Python directories.
 declare -A PROJECT_VENV
 
@@ -35,7 +35,7 @@ function get_pip_command {
     fi
 }
 
-# Get the path to the direcotry where python executables are installed.
+# Get the path to the directory where python executables are installed.
 # get_python_exec_prefix
 function get_python_exec_prefix {
     local xtrace
@@ -93,7 +93,7 @@ function pip_install {
     fi
     if [[ $TRACK_DEPENDS = True && ! "$@" =~ virtualenv ]]; then
         # TRACK_DEPENDS=True installation creates a circular dependency when
-        # we attempt to install virtualenv into a virualenv, so we must global
+        # we attempt to install virtualenv into a virtualenv, so we must global
         # that installation.
         source $DEST/.venv/bin/activate
         local cmd_pip=$DEST/.venv/bin/pip
@@ -199,7 +199,7 @@ function setup_lib {
     setup_install $dir
 }
 
-# setup a library by name in editiable mode. If we are trying to use
+# setup a library by name in editable mode. If we are trying to use
 # the library from git, we'll do a git based install, otherwise we'll
 # punt and the library should be installed by a requirements pull from
 # another project.
