@@ -88,7 +88,6 @@ function install_elasticsearch {
         sudo dpkg -i ${FILES}/elasticsearch-${ELASTICSEARCH_VERSION}.deb
         sudo update-rc.d elasticsearch defaults 95 10
     elif is_fedora; then
-        if [[ "$os_RELEASE" -ge "21" ]]; then
             is_package_installed java-1.8.0-openjdk-headless || install_package java-1.8.0-openjdk-headless
         else
             is_package_installed java-1.7.0-openjdk-headless || install_package java-1.7.0-openjdk-headless

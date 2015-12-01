@@ -20,7 +20,7 @@ Quick Start
 
 #. Select a Linux Distribution
 
-   Only Ubuntu 14.04 (Trusty), Fedora 21 (or Fedora 22) and CentOS/RHEL
+   Only Ubuntu 14.04 (Trusty), Fedora 22 (or Fedora 23) and CentOS/RHEL
    7 are documented here. OpenStack also runs and is packaged on other
    flavors of Linux such as OpenSUSE and Debian.
 
