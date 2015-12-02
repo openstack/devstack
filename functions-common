@@ -864,6 +864,29 @@ function _get_package_dir {
     echo "$pkg_dir"
 }
 
+# Wrapper for ``apt-get update`` to try multiple times on the update
+# to address bad package mirrors (which happen all the time).
+function apt_get_update {
+    # only do this once per run
+    if [[ "$REPOS_UPDATED" == "True" && "$RETRY_UPDATE" != "True" ]]; then
+        return
+    fi
+
+    # bail if we are offline
+    [[ "$OFFLINE" = "True" ]] && return
+
+    local sudo="sudo"
+    [[ "$(id -u)" = "0" ]] && sudo="env"
+
+    local proxies="http_proxy=${http_proxy:-} https_proxy=${https_proxy:-} no_proxy=${no_proxy:-} "
+    local update_cmd="$sudo $proxies apt-get update"
+    if ! timeout 300 sh -c "while ! $update_cmd; do sleep 30; done"; then
+        die $LINENO "Failed to update apt repos, we're dead now"
+    fi
+
+    REPOS_UPDATED=True
+}
+
 # Wrapper for ``apt-get`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``*_proxy``
 # apt_get operation package [package ...]
@@ -1034,15 +1057,7 @@ function update_package_repo {
     fi
 
     if is_ubuntu; then
-        local xtrace=$(set +o | grep xtrace)
-        set +o xtrace
-        if [[ "$REPOS_UPDATED" != "True" || "$RETRY_UPDATE" = "True" ]]; then
-            # if there are transient errors pulling the updates, that's fine.
-            # It may be secondary repositories that we don't really care about.
-            apt_get update  || /bin/true
-            REPOS_UPDATED=True
-        fi
-        $xtrace
+        apt_get_update
     fi
 }
 
