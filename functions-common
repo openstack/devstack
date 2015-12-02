@@ -410,6 +410,8 @@ function GetDistro {
         DISTRO="rhel${os_RELEASE::1}"
     elif [[ "$os_VENDOR" =~ (XenServer) ]]; then
         DISTRO="xs$os_RELEASE"
+    elif [[ "$os_VENDOR" =~ (kvmibm) ]]; then
+        DISTRO="${os_VENDOR}${os_RELEASE::1}"
     else
         # Catch-all for now is Vendor + Release + Update
         DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
@@ -444,7 +446,7 @@ function is_fedora {
 
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
         [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleLinux" ] || \
-        [ "$os_VENDOR" = "CloudLinux" ]
+        [ "$os_VENDOR" = "CloudLinux" ] || [ "$os_VENDOR" = "kvmibm" ]
 }
 
 

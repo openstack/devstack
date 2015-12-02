@@ -38,7 +38,10 @@ function install_libvirt {
         fi
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
-        install_package kvm
+        # On "KVM for IBM z Systems", kvm does not have its own package
+        if [[ ! ${DISTRO} =~ "kvmibm1" ]]; then
+            install_package kvm
+        fi
         # there is a dependency issue with kvm (which is really just a
         # wrapper to qemu-system-x86) that leaves some bios files out,
         # so install qemu-kvm (which shouldn't strictly be needed, as
