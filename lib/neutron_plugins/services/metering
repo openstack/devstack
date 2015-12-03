@@ -21,7 +21,7 @@ function neutron_agent_metering_configure_agent {
 
     METERING_AGENT_CONF_FILENAME="$METERING_AGENT_CONF_PATH/metering_agent.ini"
 
-    cp $NEUTRON_DIR/etc/metering_agent.ini $METERING_AGENT_CONF_FILENAME
+    cp $NEUTRON_DIR/etc/metering_agent.ini.sample $METERING_AGENT_CONF_FILENAME
 }
 
 function neutron_metering_stop {
