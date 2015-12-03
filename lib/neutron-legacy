@@ -112,6 +112,9 @@ NEUTRON_CONF_DIR=/etc/neutron
 NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
 
+# Default provider for load balancer service
+DEFAULT_LB_PROVIDER=LOADBALANCER:Haproxy:neutron_lbaas.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+
 # Agent binaries.  Note, binary paths for other agents are set in per-service
 # scripts in lib/neutron_plugins/services/
 AGENT_DHCP_BINARY="$NEUTRON_BIN_DIR/neutron-dhcp-agent"
@@ -1058,8 +1061,12 @@ function _configure_neutron_ceilometer_notifications {
 }
 
 function _configure_neutron_lbaas {
-    if [ -f $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf ]; then
-        cp $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf $NEUTRON_CONF_DIR
+    # Uses oslo config generator to generate LBaaS sample configuration files
+    (cd $NEUTRON_LBAAS_DIR && exec ./tools/generate_config_file_samples.sh)
+
+    if [ -f $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf.sample ]; then
+        cp $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf.sample $NEUTRON_CONF_DIR/neutron_lbaas.conf
+        iniset $NEUTRON_CONF_DIR/neutron_lbaas.conf service_providers service_provider $DEFAULT_LB_PROVIDER
     fi
     neutron_agent_lbaas_configure_common
     neutron_agent_lbaas_configure_agent
