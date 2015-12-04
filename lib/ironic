@@ -365,6 +365,9 @@ function configure_ironic_conductor {
         iniset $IRONIC_CONF_FILE pxe pxe_append_params "$pxe_params"
     fi
 
+    # Set these options for scenarios in which the agent fetches the image
+    # directly from glance, and don't set them where the image is pushed
+    # over iSCSI.
     if is_deployed_by_agent; then
         if [[ "$SWIFT_ENABLE_TEMPURLS" == "True" ]] ; then
             iniset $IRONIC_CONF_FILE glance swift_temp_url_key $SWIFT_TEMPURL_KEY
@@ -379,8 +382,12 @@ function configure_ironic_conductor {
         iniset $IRONIC_CONF_FILE glance swift_container glance
         iniset $IRONIC_CONF_FILE glance swift_temp_url_duration 3600
         iniset $IRONIC_CONF_FILE agent heartbeat_timeout 30
-        iniset $IRONIC_CONF_FILE agent agent_erase_devices_priority 0
     fi
+
+    # FIXME: this really needs to be tested in the gate.
+    # For now, any test using the agent ramdisk should skip cleaning
+    # because it is too slow to run in the gate.
+    iniset $IRONIC_CONF_FILE agent agent_erase_devices_priority 0
 
     if [[ "$IRONIC_IPXE_ENABLED" == "True" ]] ; then
         local pxebin
