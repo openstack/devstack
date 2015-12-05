@@ -550,9 +550,11 @@ function create_neutron_initial_network {
             die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $PROVIDER_SUBNET_NAME_V6 $TENANT_ID"
         fi
 
-        sudo ip link set $OVS_PHYSICAL_BRIDGE up
-        sudo ip link set br-int up
-        sudo ip link set $PUBLIC_INTERFACE up
+        if [[ $Q_AGENT == "openvswitch" ]]; then
+            sudo ip link set $OVS_PHYSICAL_BRIDGE up
+            sudo ip link set br-int up
+            sudo ip link set $PUBLIC_INTERFACE up
+        fi
     else
         NET_ID=$(neutron net-create --tenant-id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $TENANT_ID"
@@ -698,7 +700,7 @@ function start_neutron_service_and_check {
 function start_neutron_l2_agent {
     run_process q-agt "$AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
 
-    if is_provider_network; then
+    if is_provider_network && [[ $Q_AGENT == "openvswitch" ]]; then
         sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
         sudo ip link set $OVS_PHYSICAL_BRIDGE up
         sudo ip link set br-int up
