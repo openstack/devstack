@@ -8,7 +8,6 @@ iputils-ping
 libmysqlclient-dev
 mysql-server #NOPRIME
 postgresql-server-dev-all
-python-mysql.connector
 python-mysqldb
 rabbitmq-server # NOPRIME
 radvd # NOPRIME

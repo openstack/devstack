@@ -1,6 +1,5 @@
 libkrb5-dev
 libldap2-dev
 libsasl2-dev
-python-mysql.connector
 python-mysqldb
 sqlite3
