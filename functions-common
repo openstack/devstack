@@ -597,6 +597,7 @@ function git_timed {
         timeout=${GIT_TIMEOUT}
     fi
 
+    time_start "git_timed"
     until timeout -s SIGINT ${timeout} git "$@"; do
         # 124 is timeout(1)'s special return code when it reached the
         # timeout; otherwise assume fatal failure
@@ -611,6 +612,7 @@ function git_timed {
         fi
         sleep 5
     done
+    time_stop "git_timed"
 }
 
 # git update using reference as a branch.
@@ -1373,6 +1375,7 @@ function run_process {
     local command="$2"
     local group=$3
 
+    time_start "run_process"
     if is_service_enabled $service; then
         if [[ "$USE_SCREEN" = "True" ]]; then
             screen_process "$service" "$command" "$group"
@@ -1381,6 +1384,7 @@ function run_process {
             _run_process "$service" "$command" "$group" &
         fi
     fi
+    time_stop "run_process"
 }
 
 # Helper to launch a process in a named screen
@@ -2196,9 +2200,11 @@ function test_with_retry {
     local until=${3:-10}
     local sleep=${4:-0.5}
 
+    time_start "test_with_retry"
     if ! timeout $until sh -c "while ! $testcmd; do sleep $sleep; done"; then
         die $LINENO "$failmsg"
     fi
+    time_stop "test_with_retry"
 }
 
 # Timing infrastructure - figure out where large blocks of time are
