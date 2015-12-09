@@ -28,10 +28,13 @@ declare -A PROJECT_VENV
 # Get the path to the pip command.
 # get_pip_command
 function get_pip_command {
-    which pip || which pip-python
+    local version="$1"
+    # NOTE(dhellmann): I don't know if we actually get a pip3.4-python
+    # under any circumstances.
+    which pip${version} || which pip${version}-python
 
     if [ $? -ne 0 ]; then
-        die $LINENO "Unable to find pip; cannot continue"
+        die $LINENO "Unable to find pip${version}; cannot continue"
     fi
 }
 
@@ -64,6 +67,13 @@ function pip_install_gr {
     local clean_name
     clean_name=$(get_from_global_requirements $name)
     pip_install $clean_name
+}
+
+# Determine the python versions supported by a package
+function get_python_versions_for_package {
+    local name=$1
+    cd $name && python setup.py --classifiers \
+        | grep 'Language' | cut -f5 -d: | grep '\.' | tr '\n' ' '
 }
 
 # Wrapper for ``pip install`` to set cache and proxy environment variables
@@ -104,8 +114,22 @@ function pip_install {
             local sudo_pip="env"
         else
             local cmd_pip
-            cmd_pip=$(get_pip_command)
+            cmd_pip=$(get_pip_command $PYTHON2_VERSION)
             local sudo_pip="sudo -H"
+            if python3_enabled; then
+                # Look at the package classifiers to find the python
+                # versions supported, and if we find the version of
+                # python3 we've been told to use, use that instead of the
+                # default pip
+                local package_dir=${!#}
+                local python_versions
+                if [[ -d "$package_dir" ]]; then
+                    python_versions=$(get_python_versions_for_package $package_dir)
+                    if [[ $python_versions =~ $PYTHON3_VERSION ]]; then
+                        cmd_pip=$(get_pip_command $PYTHON3_VERSION)
+                    fi
+                fi
+            fi
         fi
     fi
 
@@ -113,6 +137,8 @@ function pip_install {
     # Always apply constraints
     cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
 
+    # FIXME(dhellmann): Need to force multiple versions of pip for
+    # packages like setuptools?
     local pip_version
     pip_version=$(python -c "import pip; \
                         print(pip.__version__.strip('.')[0])")
@@ -276,6 +302,21 @@ function setup_package {
     fi
 }
 
+# Report whether python 3 should be used
+function python3_enabled {
+    if [[ $USE_PYTHON3 == "True" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Install python3 packages
+function install_python3 {
+    if is_ubuntu; then
+        apt_get install python3.4 python3.4-dev
+    fi
+}
 
 # Restore xtrace
 $INC_PY_TRACE

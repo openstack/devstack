@@ -81,6 +81,9 @@ if [[ -n "$SYSLOG" && "$SYSLOG" != "False" ]]; then
     fi
 fi
 
+if python3_enabled; then
+    install_python3
+fi
 
 # Mark end of run
 # ---------------
