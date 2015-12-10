@@ -26,6 +26,13 @@ _PIPEFAIL_IRONIC=$(set +o | grep pipefail)
 set +o xtrace
 set +o pipefail
 
+# NOTE(jroll) this is used for the transition to a devstack plugin in
+# the ironic tree.
+IRONIC_USING_PLUGIN=$(trueorfalse False IRONIC_USING_PLUGIN)
+if [[ "$IRONIC_USING_PLUGIN" == "True" ]] ; then
+    return 0
+fi
+
 # Defaults
 # --------
 

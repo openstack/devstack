@@ -1,5 +1,12 @@
 # ironic.sh - Devstack extras script to install ironic
 
+# NOTE(jroll) this is used for the transition to a devstack plugin in
+# the ironic tree.
+IRONIC_USING_PLUGIN=$(trueorfalse False IRONIC_USING_PLUGIN)
+if [[ "$IRONIC_USING_PLUGIN" == "True" ]] ; then
+    return 0
+fi
+
 if is_service_enabled ir-api ir-cond; then
     if [[ "$1" == "source" ]]; then
         # Initial source
