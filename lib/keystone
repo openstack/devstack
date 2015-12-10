@@ -218,8 +218,6 @@ function configure_keystone {
 
     iniset_rpc_backend keystone $KEYSTONE_CONF
 
-    iniset $KEYSTONE_CONF eventlet_server admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
-
     # Register SSL certificates if provided
     if is_ssl_enabled_service key; then
         ensure_certificates KEYSTONE
@@ -296,12 +294,13 @@ function configure_keystone {
         iniset $KEYSTONE_CONF DEFAULT logging_debug_format_suffix "%(funcName)s %(pathname)s:%(lineno)d"
         iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(process)d TRACE %(name)s %(instance)s"
         _config_keystone_apache_wsgi
+    else
+        iniset $KEYSTONE_CONF eventlet_server admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
+        iniset $KEYSTONE_CONF eventlet_server admin_workers "$API_WORKERS"
+        # Public workers will use the server default, typically number of CPU.
     fi
 
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
-
-    iniset $KEYSTONE_CONF eventlet_server admin_workers "$API_WORKERS"
-    # Public workers will use the server default, typically number of CPU.
 
     iniset $KEYSTONE_CONF fernet_tokens key_repository "$KEYSTONE_CONF_DIR/fernet-keys/"
 }
