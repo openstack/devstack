@@ -50,7 +50,6 @@ source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron-legacy
-source $TOP_DIR/lib/ironic
 
 
 # Extras Source

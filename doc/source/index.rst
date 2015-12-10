@@ -174,7 +174,6 @@ Scripts
 * `lib/heat <lib/heat.html>`__
 * `lib/horizon <lib/horizon.html>`__
 * `lib/infra <lib/infra.html>`__
-* `lib/ironic <lib/ironic.html>`__
 * `lib/keystone <lib/keystone.html>`__
 * `lib/ldap <lib/ldap.html>`__
 * `lib/neutron-legacy <lib/neutron-legacy.html>`__
@@ -189,7 +188,6 @@ Scripts
 * `clean.sh <clean.sh.html>`__
 * `run\_tests.sh <run_tests.sh.html>`__
 
-* `extras.d/50-ironic.sh <extras.d/50-ironic.sh.html>`__
 * `extras.d/60-ceph.sh <extras.d/60-ceph.sh.html>`__
 * `extras.d/70-tuskar.sh <extras.d/70-tuskar.sh.html>`__
 * `extras.d/80-tempest.sh <extras.d/80-tempest.sh.html>`__

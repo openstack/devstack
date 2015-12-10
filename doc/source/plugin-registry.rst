@@ -30,6 +30,8 @@ The following are plugins that exist for official OpenStack projects.
 +------------------+---------------------------------------------+--------------------+
 |gnocchi           |git://git.openstack.org/openstack/gnocchi    | metric             |
 +------------------+---------------------------------------------+--------------------+
+|ironic            |git://git.openstack.org/openstack/ironic     | baremetal          |
++------------------+---------------------------------------------+--------------------+
 |magnum            |git://git.openstack.org/openstack/magnum     |                    |
 +------------------+---------------------------------------------+--------------------+
 |manila            |git://git.openstack.org/openstack/manila     | file shares        |

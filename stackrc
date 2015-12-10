@@ -225,10 +225,6 @@ HEAT_BRANCH=${HEAT_BRANCH:-master}
 HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
 HORIZON_BRANCH=${HORIZON_BRANCH:-master}
 
-# baremetal provisioning service
-IRONIC_REPO=${IRONIC_REPO:-${GIT_BASE}/openstack/ironic.git}
-IRONIC_BRANCH=${IRONIC_BRANCH:-master}
-
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
 KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
@@ -298,6 +294,8 @@ GITBRANCH["python-heatclient"]=${HEATCLIENT_BRANCH:-master}
 # ironic client
 GITREPO["python-ironicclient"]=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
 GITBRANCH["python-ironicclient"]=${IRONICCLIENT_BRANCH:-master}
+# ironic plugin is out of tree, but nova uses it. set GITDIR here.
+GITDIR["python-ironicclient"]=$DEST/python-ironicclient
 
 # the base authentication plugins that clients use to authenticate
 GITREPO["keystoneauth"]=${KEYSTONEAUTH_REPO:-${GIT_BASE}/openstack/keystoneauth.git}
@@ -484,6 +482,8 @@ GITBRANCH["os-brick"]=${OS_BRICK_BRANCH:-master}
 # ironic common lib
 GITREPO["ironic-lib"]=${IRONIC_LIB_REPO:-${GIT_BASE}/openstack/ironic-lib.git}
 GITBRANCH["ironic-lib"]=${IRONIC_LIB_BRANCH:-master}
+# this doesn't exist in a lib file, so set it here
+GITDIR["ironic-lib"]=$DEST/ironic-lib
 
 
 ##################

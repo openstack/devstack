@@ -954,6 +954,15 @@ function get_endpoint_url {
             -c URL -f value)
 }
 
+# check if we are using ironic with hardware
+# TODO(jroll) this is a kludge left behind when ripping ironic code
+# out of tree, as it is used by nova and neutron.
+# figure out a way to refactor nova/neutron code to eliminate this
+function is_ironic_hardware {
+    is_service_enabled ironic && [[ -n "${IRONIC_DEPLOY_DRIVER##*_ssh}" ]] && return 0
+    return 1
+}
+
 
 # Package Functions
 # =================
@@ -1764,7 +1773,7 @@ function run_phase {
             # white listed elements in tree. We want these to move out
             # over time as well, but they are in tree, so we need to
             # manage that.
-            local exceptions="50-ironic.sh 60-ceph.sh 80-tempest.sh"
+            local exceptions="60-ceph.sh 80-tempest.sh"
             local extra
             extra=$(basename $extra_plugin_file_name)
             if [[ ! ( $exceptions =~ "$extra" ) ]]; then
@@ -1952,7 +1961,6 @@ function is_service_enabled {
         [[ ${service} == n-cpu-* && ${ENABLED_SERVICES} =~ "n-cpu" ]] && enabled=0
         [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && enabled=0
         [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && enabled=0
-        [[ ${service} == "ironic" && ${ENABLED_SERVICES} =~ "ir-" ]] && enabled=0
         [[ ${service} == "neutron" && ${ENABLED_SERVICES} =~ "q-" ]] && enabled=0
         [[ ${service} == "trove" && ${ENABLED_SERVICES} =~ "tr-" ]] && enabled=0
         [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && enabled=0
