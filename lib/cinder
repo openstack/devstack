@@ -270,10 +270,6 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
     iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
-    # NOTE(thingee): Cinder V1 API is deprecated and defaults to off as of
-    # Juno. Keep it enabled so we can continue testing while it's still
-    # supported.
-    iniset $CINDER_CONF DEFAULT enable_v1_api true
 
     iniset $CINDER_CONF DEFAULT os_region_name "$REGION_NAME"
 
@@ -550,9 +546,7 @@ function create_volume_types {
         local be be_name
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
             be_name=${be##*:}
-            # FIXME(jamielennox): Remove --os-volume-api-version pinning when
-            # osc supports volume type create on v2 api. bug #1475060
-            openstack volume type create --os-volume-api-version 1 --property volume_backend_name="${be_name}" ${be_name}
+            openstack volume type create --property volume_backend_name="${be_name}" ${be_name}
         done
     fi
 }
