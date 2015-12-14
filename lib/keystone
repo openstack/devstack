@@ -52,10 +52,6 @@ KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
 
-# Set up additional extensions, such as oauth1, federation
-# Example of KEYSTONE_EXTENSIONS=oauth1,federation
-KEYSTONE_EXTENSIONS=${KEYSTONE_EXTENSIONS:-}
-
 # Toggle for deploying Keystone under HTTPD + mod_wsgi
 KEYSTONE_USE_MOD_WSGI=${KEYSTONE_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}}
 
@@ -192,8 +188,6 @@ function configure_keystone {
         inidelete $KEYSTONE_PASTE_INI composite:admin \\/v2.0
     fi
 
-    configure_keystone_extensions
-
     # Rewrite stock ``keystone.conf``
 
     if is_service_enabled ldap; then
@@ -303,25 +297,6 @@ function configure_keystone {
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
 
     iniset $KEYSTONE_CONF fernet_tokens key_repository "$KEYSTONE_CONF_DIR/fernet-keys/"
-}
-
-function configure_keystone_extensions {
-    # Add keystone extension into keystone v3 application pipeline
-    local extension_value
-    local api_v3
-    local extension
-    local api_v3_extension
-    for extension_value in ${KEYSTONE_EXTENSIONS//,/ }; do
-        if [[ -z "${extension_value}" ]]; then
-            continue
-        fi
-        api_v3=$(iniget $KEYSTONE_PASTE_INI pipeline:api_v3 pipeline)
-        extension=$(echo $api_v3 | sed -ne "/${extension_value}/ p;" )
-        if [[ -z $extension ]]; then
-            api_v3_extension=$(echo $api_v3 | sed -ne "s/service_v3/${extension_value}_extension service_v3/p;" )
-            iniset $KEYSTONE_PASTE_INI pipeline:api_v3 pipeline "$api_v3_extension"
-        fi
-    done
 }
 
 # create_keystone_accounts() - Sets up common required keystone accounts
@@ -467,14 +442,6 @@ function init_keystone {
 
     # Initialize keystone database
     $KEYSTONE_BIN_DIR/keystone-manage db_sync
-
-    local extension_value
-    for extension_value in ${KEYSTONE_EXTENSIONS//,/ }; do
-        if [[ -z "${extension_value}" ]]; then
-            continue
-        fi
-        $KEYSTONE_BIN_DIR/keystone-manage db_sync --extension "${extension_value}"
-    done
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" == "pki" || "$KEYSTONE_TOKEN_FORMAT" == "pkiz" ]]; then
         # Set up certificates
