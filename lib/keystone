@@ -62,6 +62,7 @@ KEYSTONE_USE_MOD_WSGI=${KEYSTONE_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}
 # KEYSTONE_DEPLOY defines how keystone is deployed, allowed values:
 # - mod_wsgi : Run keystone under Apache HTTPd mod_wsgi
 # - eventlet : Run keystone-all
+# - uwsgi : Run keystone under uwsgi
 if [ -z "$KEYSTONE_DEPLOY" ]; then
     if [ -z "$KEYSTONE_USE_MOD_WSGI" ]; then
         KEYSTONE_DEPLOY=mod_wsgi
@@ -244,16 +245,15 @@ function configure_keystone {
     # Register SSL certificates if provided
     if is_ssl_enabled_service key; then
         ensure_certificates KEYSTONE
-
-        iniset $KEYSTONE_CONF eventlet_server_ssl enable True
-        iniset $KEYSTONE_CONF eventlet_server_ssl certfile $KEYSTONE_SSL_CERT
-        iniset $KEYSTONE_CONF eventlet_server_ssl keyfile $KEYSTONE_SSL_KEY
     fi
+
+    local service_port=$KEYSTONE_SERVICE_PORT
+    local auth_port=$KEYSTONE_AUTH_PORT
 
     if is_service_enabled tls-proxy; then
         # Set the service ports for a proxy to take the originals
-        iniset $KEYSTONE_CONF eventlet_server public_port $KEYSTONE_SERVICE_PORT_INT
-        iniset $KEYSTONE_CONF eventlet_server admin_port $KEYSTONE_AUTH_PORT_INT
+        service_port=$KEYSTONE_SERVICE_PORT_INT
+        auth_port=$KEYSTONE_AUTH_PORT_INT
 
         iniset $KEYSTONE_CONF DEFAULT public_endpoint $KEYSTONE_SERVICE_URI
         iniset $KEYSTONE_CONF DEFAULT admin_endpoint $KEYSTONE_AUTH_URI
@@ -273,7 +273,7 @@ function configure_keystone {
     fi
 
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$KEYSTONE_DEPLOY" == "eventlet" ]  ; then
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$KEYSTONE_DEPLOY" != "mod_wsgi" ] ; then
         setup_colorized_logging $KEYSTONE_CONF DEFAULT
     fi
 
@@ -285,7 +285,58 @@ function configure_keystone {
         iniset $KEYSTONE_CONF DEFAULT logging_debug_format_suffix "%(asctime)s.%(msecs)03d %(funcName)s %(pathname)s:%(lineno)d"
         iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(asctime)s.%(msecs)03d %(process)d TRACE %(name)s %(instance)s"
         _config_keystone_apache_wsgi
-    else
+    elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
+        # iniset creates these files when it's called if they don't exist.
+        KEYSTONE_PUBLIC_UWSGI_FILE=$KEYSTONE_CONF_DIR/keystone-uwsgi-public.ini
+        KEYSTONE_ADMIN_UWSGI_FILE=$KEYSTONE_CONF_DIR/keystone-uwsgi-admin.ini
+
+        rm -f "$KEYSTONE_PUBLIC_UWSGI_FILE"
+        rm -f "$KEYSTONE_ADMIN_UWSGI_FILE"
+
+        if is_ssl_enabled_service key; then
+            iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi https $KEYSTONE_SERVICE_HOST:$service_port,$KEYSTONE_SSL_CERT,$KEYSTONE_SSL_KEY
+            iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi https $KEYSTONE_ADMIN_BIND_HOST:$auth_port,$KEYSTONE_SSL_CERT,$KEYSTONE_SSL_KEY
+        else
+            iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi http $KEYSTONE_SERVICE_HOST:$service_port
+            iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi http $KEYSTONE_ADMIN_BIND_HOST:$auth_port
+        fi
+
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi wsgi-file "$KEYSTONE_BIN_DIR/keystone-wsgi-public"
+        # This is running standalone
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi master true
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi threads $(nproc)
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi enable-threads true
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi plugins python
+        # uwsgi recommends this to prevent thundering herd on accept.
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi thunder-lock true
+        # Override the default size for headers from the 4k default.
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi buffer-size 65535
+        # Make sure the client doesn't try to re-use the connection.
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi add-header "Connection: close"
+
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi wsgi-file "$KEYSTONE_BIN_DIR/keystone-wsgi-admin"
+        # This is running standalone
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi master true
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi threads $API_WORKERS
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi enable-threads true
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi plugins python
+        # uwsgi recommends this to prevent thundering herd on accept.
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi thunder-lock true
+        # Override the default size for headers from the 4k default.
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi buffer-size 65535
+        # Make sure the client doesn't try to re-use the connection.
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi add-header "Connection: close"
+
+    else # eventlet
+        if is_ssl_enabled_service key; then
+            iniset $KEYSTONE_CONF eventlet_server_ssl enable True
+            iniset $KEYSTONE_CONF eventlet_server_ssl certfile $KEYSTONE_SSL_CERT
+            iniset $KEYSTONE_CONF eventlet_server_ssl keyfile $KEYSTONE_SSL_KEY
+        fi
+
+        iniset $KEYSTONE_CONF eventlet_server public_port $service_port
+        iniset $KEYSTONE_CONF eventlet_server admin_port $auth_port
+
         iniset $KEYSTONE_CONF eventlet_server admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
         iniset $KEYSTONE_CONF eventlet_server admin_workers "$API_WORKERS"
         # Public workers will use the server default, typically number of CPU.
@@ -530,7 +581,10 @@ function start_keystone {
         restart_apache_server
         tail_log key /var/log/$APACHE_NAME/keystone.log
         tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
-    else
+    elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
+        run_process key "uwsgi $KEYSTONE_PUBLIC_UWSGI_FILE" "" "key-p"
+        run_process key "uwsgi $KEYSTONE_ADMIN_UWSGI_FILE" "" "key-a"
+    else # eventlet
         # Start Keystone in a screen window
         run_process key "$KEYSTONE_BIN_DIR/keystone-all --config-file $KEYSTONE_CONF"
     fi
