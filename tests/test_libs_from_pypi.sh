@@ -42,6 +42,7 @@ ALL_LIBS+=" python-neutronclient tooz ceilometermiddleware oslo.policy"
 ALL_LIBS+=" debtcollector os-brick automaton futurist oslo.service"
 ALL_LIBS+=" oslo.cache oslo.reports"
 ALL_LIBS+=" keystoneauth ironic-lib oslo.privsep"
+ALL_LIBS+=" diskimage-builder"
 
 # Generate the above list with
 # echo ${!GITREPO[@]}
