@@ -724,10 +724,10 @@ function install_default_policy {
     local sample_policy_dir="${project_dir}/etc/${project}/policy.d"
 
     # first copy any policy.json
-    cp -p $sample_conf_dir/policy.json $conf_dir
+    sudo cp -p $sample_conf_dir/policy.json $conf_dir
     # then optionally copy over policy.d
     if [[ -d $sample_policy_dir ]]; then
-        cp -r $sample_policy_dir $conf_dir/policy.d
+        sudo cp -r $sample_policy_dir $conf_dir/policy.d
     fi
 }
 
