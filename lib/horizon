@@ -83,10 +83,7 @@ function configure_horizon {
     # Message catalog compilation is handled by Django admin script,
     # so compiling them after the installation avoids Django installation twice.
     (cd $HORIZON_DIR; ./run_tests.sh -N --compilemessages)
-}
 
-# init_horizon() - Initialize databases, etc.
-function init_horizon {
     # ``local_settings.py`` is used to override horizon default settings.
     local local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
@@ -113,6 +110,7 @@ function init_horizon {
     horizon_conf=$(apache_site_config_for horizon)
 
     # Configure apache to run horizon
+    # Set up the django horizon application to serve via apache/wsgi
     sudo sh -c "sed -e \"
         s,%USER%,$APACHE_USER,g;
         s,%GROUP%,$APACHE_GROUP,g;
@@ -133,7 +131,10 @@ function init_horizon {
         exit_distro_not_supported "horizon apache configuration"
     fi
     enable_apache_site horizon
+}
 
+# init_horizon() - Initialize databases, etc.
+function init_horizon {
     # Remove old log files that could mess with how DevStack detects whether Horizon
     # has been successfully started (see start_horizon() and functions::screen_it())
     # and run_process
@@ -147,6 +148,7 @@ function init_horizon {
         django_admin=django-admin.py
     fi
 
+    # These need to be run after horizon plugins are configured.
     DJANGO_SETTINGS_MODULE=openstack_dashboard.settings $django_admin collectstatic --noinput
     DJANGO_SETTINGS_MODULE=openstack_dashboard.settings $django_admin compress --force
 

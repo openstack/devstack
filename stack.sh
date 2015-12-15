@@ -840,7 +840,6 @@ if is_service_enabled horizon; then
     install_django_openstack_auth
     # dashboard
     stack_install_service horizon
-    configure_horizon
 fi
 
 if is_service_enabled heat; then
@@ -1060,12 +1059,9 @@ write_clouds_yaml
 # Horizon
 # -------
 
-# Set up the django horizon application to serve via apache/wsgi
-
 if is_service_enabled horizon; then
-    echo_summary "Configuring and starting Horizon"
-    init_horizon
-    start_horizon
+    echo_summary "Configuring Horizon"
+    configure_horizon
 fi
 
 
@@ -1288,6 +1284,12 @@ if is_service_enabled heat; then
         echo_summary "Building Heat pip mirror"
         build_heat_pip_mirror
     fi
+fi
+
+if is_service_enabled horizon; then
+    echo_summary "Starting Horizon"
+    init_horizon
+    start_horizon
 fi
 
 
