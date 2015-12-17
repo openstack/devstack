@@ -29,7 +29,9 @@ function neutron_vpn_configure_common {
 }
 
 function neutron_vpn_configure_agent {
-    cp $NEUTRON_VPNAAS_DIR/etc/vpn_agent.ini $Q_VPN_CONF_FILE
+    # Uses oslo config generator to generate LBaaS sample configuration files
+    (cd $NEUTRON_VPNAAS_DIR && exec ./tools/generate_config_file_samples.sh)
+    cp $NEUTRON_VPNAAS_DIR/etc/vpn_agent.ini.sample $Q_VPN_CONF_FILE
     if [[ "$IPSEC_PACKAGE" == "strongswan" ]]; then
         iniset_multiline $Q_VPN_CONF_FILE vpnagent vpn_device_driver neutron_vpnaas.services.vpn.device_drivers.strongswan_ipsec.StrongSwanDriver
         if is_fedora; then

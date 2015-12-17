@@ -1086,8 +1086,10 @@ function _configure_neutron_fwaas {
 }
 
 function _configure_neutron_vpn {
-    if [ -f $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf ]; then
-        cp $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf $NEUTRON_CONF_DIR
+    # Uses oslo config generator to generate VPNaaS sample configuration files
+    (cd $NEUTRON_VPNAAS_DIR && exec ./tools/generate_config_file_samples.sh)
+    if [ -f $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf.sample ]; then
+        cp $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf.sample $NEUTRON_CONF_DIR/neutron_vpnaas.conf
     fi
     neutron_vpn_install_agent_packages
     neutron_vpn_configure_common
