@@ -21,12 +21,12 @@ external repositories. The plugin interface assumes the following:
 An external git repository that includes a ``devstack/`` top level
 directory. Inside this directory there can be 3 files.
 
-- ``override_defaults`` - a file containing global variables that
+- ``override-defaults`` - a file containing global variables that
   will be sourced before the lib/* files. This allows the plugin
   to override the defaults that are otherwise set in the lib/*
   files.
 
-  For example, override_defaults may export CINDER_ENABLED_BACKENDS
+  For example, override-defaults may export CINDER_ENABLED_BACKENDS
   to include the plugin-specific storage backend and thus be able
   to override the default lvm only storage backend for Cinder.
 
