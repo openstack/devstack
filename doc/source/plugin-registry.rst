@@ -26,6 +26,8 @@ The following are plugins that exist for official OpenStack projects.
 +------------------+---------------------------------------------+--------------------+
 |ceilometer        |git://git.openstack.org/openstack/ceilometer | metering           |
 +------------------+---------------------------------------------+--------------------+
+|congress          |git://git.openstack.org/openstack/congress   | governance         |
++------------------+---------------------------------------------+--------------------+
 |gnocchi           |git://git.openstack.org/openstack/gnocchi    | metric             |
 +------------------+---------------------------------------------+--------------------+
 |magnum            |git://git.openstack.org/openstack/magnum     |                    |
