@@ -13,7 +13,7 @@
 LOGDIR=$1
 
 # Command line arguments for primary DStat process.
-DSTAT_OPTS="-tcmndrylpg --top-cpu-adv --top-io-adv"
+DSTAT_OPTS="-tcmndrylpg --top-cpu-adv --top-io-adv --swap"
 
 # Command-line arguments for secondary background DStat process.
 DSTAT_CSV_OPTS="-tcmndrylpg --output $LOGDIR/dstat-csv.log"
