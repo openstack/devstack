@@ -115,6 +115,9 @@ export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/d
 # Default provider for load balancer service
 DEFAULT_LB_PROVIDER=LOADBALANCER:Haproxy:neutron_lbaas.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
 
+# Default provider for VPN service
+DEFAULT_VPN_PROVIDER=VPN:openswan:neutron_vpnaas.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+
 # Agent binaries.  Note, binary paths for other agents are set in per-service
 # scripts in lib/neutron_plugins/services/
 AGENT_DHCP_BINARY="$NEUTRON_BIN_DIR/neutron-dhcp-agent"
@@ -1092,6 +1095,7 @@ function _configure_neutron_vpn {
     (cd $NEUTRON_VPNAAS_DIR && exec ./tools/generate_config_file_samples.sh)
     if [ -f $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf.sample ]; then
         cp $NEUTRON_VPNAAS_DIR/etc/neutron_vpnaas.conf.sample $NEUTRON_CONF_DIR/neutron_vpnaas.conf
+        iniset $NEUTRON_CONF_DIR/neutron_vpnaas.conf service_providers service_provider $DEFAULT_VPN_PROVIDER
     fi
     neutron_vpn_install_agent_packages
     neutron_vpn_configure_common
