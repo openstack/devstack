@@ -28,6 +28,8 @@ The following are plugins that exist for official OpenStack projects.
 +------------------+---------------------------------------------+--------------------+
 |congress          |git://git.openstack.org/openstack/congress   | governance         |
 +------------------+---------------------------------------------+--------------------+
+|cue               |git://git.openstack.org/openstack/cue        | message-broker     |
++------------------+---------------------------------------------+--------------------+
 |gnocchi           |git://git.openstack.org/openstack/gnocchi    | metric             |
 +------------------+---------------------------------------------+--------------------+
 |magnum            |git://git.openstack.org/openstack/magnum     |                    |
