@@ -72,18 +72,6 @@ if ! isset ENABLED_SERVICES ; then
     ENABLED_SERVICES+=,rabbit,tempest,mysql,dstat
 fi
 
-# SQLAlchemy supports multiple database drivers for each database server
-# type. For example, deployer may use MySQLdb, MySQLConnector, or oursql
-# to access MySQL database.
-#
-# When defined, the variable controls which database driver is used to
-# connect to database server. Otherwise using default driver defined for
-# each database type.
-#
-# You can find the list of currently supported drivers for each database
-# type at: http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
-# SQLALCHEMY_DATABASE_DRIVER="mysqldb"
-
 # Global toggle for enabling services under mod_wsgi. If this is set to
 # ``True`` all services that use HTTPD + mod_wsgi as the preferred method of
 # deployment, will be deployed under Apache. If this is set to ``False`` all

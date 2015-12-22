@@ -15,7 +15,6 @@ libvirt-devel # NOPRIME
 libvirt-python # NOPRIME
 libxml2-python
 m2crypto
-mysql-connector-python
 mysql-devel
 MySQL-python
 mysql-server # NOPRIME

@@ -15,7 +15,6 @@ libvirt-dev # NOPRIME
 mysql-server # NOPRIME
 parted
 pm-utils
-python-mysql.connector
 python-mysqldb
 qemu # dist:wheezy,jessie NOPRIME
 qemu-kvm # NOPRIME
