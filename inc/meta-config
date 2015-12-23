@@ -195,6 +195,25 @@ function merge_config_group {
     done
 }
 
+function extract_localrc_section {
+    local configfile=$1    # top_dir/local.conf
+    local localrcfile=$2   # top_dir/localrc
+    local localautofile=$3 # top_dir/.localrc.auto
+
+    if [[ -r $configfile ]]; then
+        LRC=$(get_meta_section_files $configfile local)
+        for lfile in $LRC; do
+            if [[ "$lfile" == "localrc" ]]; then
+                if [[ -r $localrcfile ]]; then
+                    echo "localrc and local.conf:[[local]] both exist, using localrc"
+                else
+                    echo "# Generated file, do not edit" >$localautofile
+                    get_meta_section $configfile local $lfile >>$localautofile
+                fi
+            fi
+        done
+    fi
+}
 
 # Restore xtrace
 $_XTRACE_INC_META
