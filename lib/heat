@@ -56,6 +56,10 @@ HEAT_ENV_DIR=$HEAT_CONF_DIR/environment.d
 HEAT_TEMPLATES_DIR=$HEAT_CONF_DIR/templates
 HEAT_API_HOST=${HEAT_API_HOST:-$HOST_IP}
 HEAT_API_PORT=${HEAT_API_PORT:-8004}
+HEAT_SERVICE_USER=${HEAT_SERVICE_USER:-heat}
+HEAT_TRUSTEE_USER=${HEAT_TRUSTEE_USER:-$HEAT_SERVICE_USER}
+HEAT_TRUSTEE_PASSWORD=${HEAT_TRUSTEE_PASSWORD:-$SERVICE_PASSWORD}
+HEAT_TRUSTEE_DOMAIN=${HEAT_TRUSTEE_DOMAIN:-default}
 
 # Support entry points installation of console scripts
 HEAT_BIN_DIR=$(get_python_exec_prefix)
@@ -73,7 +77,7 @@ if [[ "$HEAT_STANDALONE" = "True" ]]; then
     fi
 else
     HEAT_STACK_DOMAIN=$(trueorfalse True HEAT_STACK_DOMAIN)
-    HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-trusts}
+    HEAT_DEFERRED_AUTH=${HEAT_DEFERRED_AUTH:-}
 fi
 HEAT_PLUGIN_DIR=${HEAT_PLUGIN_DIR:-$DATA_DIR/heat/plugins}
 ENABLE_HEAT_PLUGINS=${ENABLE_HEAT_PLUGINS:-}
@@ -134,29 +138,38 @@ function configure_heat {
         setup_colorized_logging $HEAT_CONF DEFAULT tenant user
     fi
 
-    iniset $HEAT_CONF DEFAULT deferred_auth_method $HEAT_DEFERRED_AUTH
+    if [ ! -z "$HEAT_DEFERRED_AUTH" ]; then
+        iniset $HEAT_CONF DEFAULT deferred_auth_method $HEAT_DEFERRED_AUTH
+    fi
 
     if [ "$HEAT_USE_MOD_WSGI" == "True" ]; then
         _config_heat_apache_wsgi
     fi
 
-    # NOTE(jamielennox): heat re-uses specific values from the
-    # keystone_authtoken middleware group and so currently fails when using the
-    # auth plugin setup. This should be fixed in heat.  Heat is also the only
-    # service that requires the auth_uri to include a /v2.0. Remove this custom
-    # setup when bug #1300246 is resolved.
-    iniset $HEAT_CONF keystone_authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
     if [[ "$HEAT_STANDALONE" = "True" ]]; then
         iniset $HEAT_CONF paste_deploy flavor standalone
         iniset $HEAT_CONF clients_heat url "http://$HEAT_API_HOST:$HEAT_API_PORT/v1/%(tenant_id)s"
     else
         iniset $HEAT_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-        iniset $HEAT_CONF keystone_authtoken admin_user heat
+        iniset $HEAT_CONF keystone_authtoken admin_user $HEAT_SERVICE_USER
         iniset $HEAT_CONF keystone_authtoken admin_password $SERVICE_PASSWORD
         iniset $HEAT_CONF keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
         iniset $HEAT_CONF keystone_authtoken cafile $SSL_BUNDLE_FILE
         iniset $HEAT_CONF keystone_authtoken signing_dir $HEAT_AUTH_CACHE_DIR
     fi
+
+    # If HEAT_DEFERRED_AUTH is unset or explicitly set to trusts, configure
+    # the section for the client plugin associated with the trustee
+    if [ -z "$HEAT_DEFERRED_AUTH" -o "trusts" == "$HEAT_DEFERRED_AUTH" ]; then
+        iniset $HEAT_CONF trustee auth_plugin password
+        iniset $HEAT_CONF trustee auth_url $KEYSTONE_AUTH_URI
+        iniset $HEAT_CONF trustee username $HEAT_TRUSTEE_USER
+        iniset $HEAT_CONF trustee password $HEAT_TRUSTEE_PASSWORD
+        iniset $HEAT_CONF trustee user_domain_id $HEAT_TRUSTEE_DOMAIN
+    fi
+
+    # clients_keystone
+    iniset $HEAT_CONF clients_keystone auth_uri $KEYSTONE_AUTH_URI
 
     # ec2authtoken
     iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
