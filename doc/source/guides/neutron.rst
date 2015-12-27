@@ -383,6 +383,7 @@ controller node.
         ## Neutron Networking options used to create Neutron Subnets
 
         FIXED_RANGE="203.0.113.0/24"
+        NETWORK_GATEWAY=203.0.113.1
         PROVIDER_SUBNET_NAME="provider_net"
         PROVIDER_NETWORK_TYPE="vlan"
         SEGMENTATION_ID=2010
