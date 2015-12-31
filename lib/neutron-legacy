@@ -171,6 +171,9 @@ NEUTRON_CREATE_INITIAL_NETWORKS=${NEUTRON_CREATE_INITIAL_NETWORKS:-True}
 
 ## Provider Network Information
 PROVIDER_SUBNET_NAME=${PROVIDER_SUBNET_NAME:-"provider_net"}
+IPV6_PROVIDER_SUBNET_NAME=${IPV6_PROVIDER_SUBNET_NAME:-"provider_net_v6"}
+IPV6_PROVIDER_FIXED_RANGE=${IPV6_PROVIDER_FIXED_RANGE:-}
+IPV6_PROVIDER_NETWORK_GATEWAY=${IPV6_PROVIDER_NETWORK_GATEWAY:-}
 
 # Define the public bridge that will transmit traffic from VMs to the
 # physical network - used by both the OVS and Linux Bridge drivers.
@@ -551,9 +554,9 @@ function create_neutron_initial_network {
             die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $TENANT_ID"
         fi
 
-        if [[ "$IP_VERSION" =~ .*6 ]]; then
-            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $V6_NETWORK_GATEWAY --name $PROVIDER_SUBNET_NAME_V6 --subnetpool_id None $NET_ID $FIXED_RANGE_V6 | grep 'id' | get_field 2)
-            die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $PROVIDER_SUBNET_NAME_V6 $TENANT_ID"
+        if [[ "$IP_VERSION" =~ .*6 ]] && [[ -n "$IPV6_PROVIDER_FIXED_RANGE" ]] && [[ -n "$IPV6_PROVIDER_NETWORK_GATEWAY" ]]; then
+            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME --subnetpool None $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
+            die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $TENANT_ID"
         fi
 
         if [[ $Q_AGENT == "openvswitch" ]]; then
