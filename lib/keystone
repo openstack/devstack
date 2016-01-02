@@ -225,6 +225,9 @@ function configure_keystone {
         # Set the service ports for a proxy to take the originals
         iniset $KEYSTONE_CONF eventlet_server public_port $KEYSTONE_SERVICE_PORT_INT
         iniset $KEYSTONE_CONF eventlet_server admin_port $KEYSTONE_AUTH_PORT_INT
+
+        iniset $KEYSTONE_CONF DEFAULT public_endpoint $KEYSTONE_SERVICE_URI
+        iniset $KEYSTONE_CONF DEFAULT admin_endpoint $KEYSTONE_AUTH_URI
     fi
 
     iniset $KEYSTONE_CONF DEFAULT admin_token "$SERVICE_TOKEN"

@@ -169,6 +169,9 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT bind_port $GLANCE_SERVICE_PORT_INT
         iniset $GLANCE_API_CONF DEFAULT public_endpoint $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT
         iniset $GLANCE_REGISTRY_CONF DEFAULT bind_port $GLANCE_REGISTRY_PORT_INT
+
+        iniset $GLANCE_API_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
+        iniset $GLANCE_REGISTRY_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
     fi
 
     # Register SSL certificates if provided
