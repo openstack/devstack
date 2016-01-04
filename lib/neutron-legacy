@@ -783,6 +783,10 @@ function stop_neutron_other {
     if is_service_enabled q-metering; then
         neutron_metering_stop
     fi
+
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        sudo pkill -9 -f $NEUTRON_ROOTWRAP-daemon || :
+    fi
 }
 
 # stop_neutron() - Stop running processes (non-screen)
