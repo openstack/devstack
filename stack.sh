@@ -266,9 +266,7 @@ fi
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
 
-if is_fedora && [[ $DISTRO == "rhel7" ]]; then
-    # RHEL requires EPEL for many Open Stack dependencies
-
+function _install_epel_and_rdo {
     # NOTE: We always remove and install latest -- some environments
     # use snapshot images, and if EPEL version updates they break
     # unless we update them to latest version.
@@ -298,18 +296,27 @@ EOF
     sudo yum-config-manager --enable epel-bootstrap
     yum_install epel-release || \
         die $LINENO "Error installing EPEL repo, cannot continue"
-    # EPEL rpm has installed it's version
     sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
 
     # ... and also optional to be enabled
     sudo yum-config-manager --enable rhel-7-server-optional-rpms
 
+    # install the lastest RDO
     sudo yum install -y https://rdoproject.org/repos/rdo-release.rpm
 
     if is_oraclelinux; then
         sudo yum-config-manager --enable ol7_optional_latest ol7_addons ol7_MySQL56
     fi
+}
 
+# If you have all the repos installed above already setup (e.g. a CI
+# situation where they are on your image) you may choose to skip this
+# to speed things up
+SKIP_EPEL_INSTALL=$(trueorfalse False SKIP_EPEL_INSTALL)
+
+if is_fedora && [[ $DISTRO == "rhel7" ]] && \
+        [[ ${SKIP_EPEL_INSTALL} != True ]]; then
+    _install_epel_and_rdo
 fi
 
 
