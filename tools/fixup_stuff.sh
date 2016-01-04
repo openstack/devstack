@@ -129,3 +129,7 @@ fi
 # and installing the latest version using pip.
 uninstall_package python-virtualenv
 pip_install -U virtualenv
+
+# NOTE(mkoderer): PBR has a missing requirement to testrepository
+# Can be removed when bug #1530026 is fixed.
+pip_install testrepository
