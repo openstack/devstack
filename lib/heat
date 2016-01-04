@@ -415,28 +415,13 @@ function create_heat_accounts {
     fi
 
     if [[ "$HEAT_STACK_DOMAIN" == "True" ]]; then
-        # Note we have to pass token/endpoint here because the current endpoint and
-        # version negotiation in OSC means just --os-identity-api-version=3 won't work
-        D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KEYSTONE_SERVICE_URI_V3 \
-            --os-identity-api-version=3 domain list | grep ' heat ' | get_field 1)
-
-        if [[ -z "$D_ID" ]]; then
-            D_ID=$(openstack --os-token $OS_TOKEN --os-url=$KEYSTONE_SERVICE_URI_V3 \
-                --os-identity-api-version=3 domain create heat \
-                --description "Owns users and projects created by heat" \
-                | grep ' id ' | get_field 2)
-            iniset $HEAT_CONF DEFAULT stack_user_domain_id ${D_ID}
-
-            openstack --os-token $OS_TOKEN --os-url=$KEYSTONE_SERVICE_URI_V3 \
-                --os-identity-api-version=3 user create --password $SERVICE_PASSWORD \
-                --domain $D_ID heat_domain_admin \
-                --description "Manages users and projects created by heat"
-            openstack --os-token $OS_TOKEN --os-url=$KEYSTONE_SERVICE_URI_V3 \
-                --os-identity-api-version=3 role add \
-                --user heat_domain_admin --domain ${D_ID} admin
-            iniset $HEAT_CONF DEFAULT stack_domain_admin heat_domain_admin
-            iniset $HEAT_CONF DEFAULT stack_domain_admin_password $SERVICE_PASSWORD
-        fi
+        # domain -> heat and user -> heat_domain_admin
+        domain_id=$(get_or_create_domain heat 'Owns users and projects created by heat')
+        iniset $HEAT_CONF DEFAULT stack_user_domain_id ${domain_id}
+        get_or_create_user heat_domain_admin $SERVICE_PASSWORD heat
+        get_or_add_user_domain_role admin heat_domain_admin heat
+        iniset $HEAT_CONF DEFAULT stack_domain_admin heat_domain_admin
+        iniset $HEAT_CONF DEFAULT stack_domain_admin_password $SERVICE_PASSWORD
     fi
 }
 
