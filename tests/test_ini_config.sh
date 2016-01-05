@@ -80,6 +80,11 @@ if [ -n "$TEST_SUDO" ]; then
     sudo chown -R root:root ${INI_TMP_ETC_DIR}
 fi
 
+# test iniget_sections
+VAL=$(iniget_sections "${TEST_INI}")
+assert_equal "$VAL" "default aaa bbb ccc ddd eee del_separate_options \
+del_same_option del_missing_option del_missing_option_multi del_no_options"
+
 # Test with missing arguments
 BEFORE=$(cat ${TEST_INI})
 
