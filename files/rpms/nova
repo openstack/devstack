@@ -7,7 +7,7 @@ gawk
 genisoimage # required for config_drive
 iptables
 iputils
-kernel-modules # dist:f21,f22,f23
+kernel-modules # dist:f22,f23
 kpartx
 kvm # NOPRIME
 libvirt-bin # NOPRIME

@@ -135,7 +135,7 @@ if is_fedora; then
         fi
     fi
 
-    if  [[ "$os_VENDOR" == "Fedora" ]] && [[ "$os_RELEASE" -ge "21" ]]; then
+    if  [[ "$os_VENDOR" == "Fedora" ]] && [[ "$os_RELEASE" -ge "22" ]]; then
         # requests ships vendored version of chardet/urllib3, but on
         # fedora these are symlinked back to the primary versions to
         # avoid duplication of code on disk.  This is fine when
