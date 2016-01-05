@@ -81,7 +81,7 @@ function get_python_versions_for_package {
 # ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``,
 # pip_install package [package ...]
 function pip_install {
-    local xtrace
+    local xtrace result
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local upgrade=""
@@ -155,10 +155,11 @@ function pip_install {
         PIP_FIND_LINKS=$PIP_FIND_LINKS \
         $cmd_pip $upgrade \
         $@
+    result=$?
 
     # Also install test requirements
     local test_req="${!#}/test-requirements.txt"
-    if [[ -e "$test_req" ]]; then
+    if [[ $result == 0 ]] && [[ -e "$test_req" ]]; then
         echo "Installing test-requirements for $test_req"
         $sudo_pip \
             http_proxy=${http_proxy:-} \
@@ -167,9 +168,11 @@ function pip_install {
             PIP_FIND_LINKS=$PIP_FIND_LINKS \
             $cmd_pip $upgrade \
             -r $test_req
+        result=$?
     fi
 
     time_stop "pip_install"
+    return $result
 }
 
 # get version of a package from global requirements file
