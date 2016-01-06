@@ -1069,11 +1069,6 @@ function _configure_neutron_metadata_agent {
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
         iniset $Q_META_CONF_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
     fi
-
-    # Configures keystone for metadata_agent
-    # The third argument "True" sets auth_url needed to communicate with keystone
-    _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT True
-
 }
 
 function _configure_neutron_ceilometer_notifications {
@@ -1241,17 +1236,10 @@ function _neutron_setup_rootwrap {
     fi
 }
 
-# Configures keystone integration for neutron service and agents
+# Configures keystone integration for neutron service
 function _neutron_setup_keystone {
     local conf_file=$1
     local section=$2
-    local use_auth_url=$3
-
-    # Configures keystone for metadata_agent
-    # metadata_agent needs auth_url to communicate with keystone
-    if [[ "$use_auth_url" == "True" ]]; then
-        iniset $conf_file $section auth_url $KEYSTONE_SERVICE_URI/v2.0
-    fi
 
     create_neutron_cache_dir
     configure_auth_token_middleware $conf_file $Q_ADMIN_USERNAME $NEUTRON_AUTH_CACHE_DIR $section
