@@ -1348,10 +1348,11 @@ function _run_process {
     exec 3>&-
     exec 6>&-
 
-    local real_logfile="${LOGDIR}/${service}.log.${CURRENT_LOG_TIME}"
+    local logfile="${service}.log.${CURRENT_LOG_TIME}"
+    local real_logfile="${LOGDIR}/${logfile}"
     if [[ -n ${LOGDIR} ]]; then
         exec 1>&"$real_logfile" 2>&1
-        ln -sf "$real_logfile" ${LOGDIR}/${service}.log
+        bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${service}.log"
         if [[ -n ${SCREEN_LOGDIR} ]]; then
             # Drop the backward-compat symlink
             ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${service}.log
@@ -1440,7 +1441,8 @@ function screen_process {
 
     screen -S $SCREEN_NAME -X screen -t $name
 
-    local real_logfile="${LOGDIR}/${name}.log.${CURRENT_LOG_TIME}"
+    local logfile="${name}.log.${CURRENT_LOG_TIME}"
+    local real_logfile="${LOGDIR}/${logfile}"
     echo "LOGDIR: $LOGDIR"
     echo "SCREEN_LOGDIR: $SCREEN_LOGDIR"
     echo "log: $real_logfile"
@@ -1451,7 +1453,7 @@ function screen_process {
         fi
         # If logging isn't active then avoid a broken symlink
         touch "$real_logfile"
-        ln -sf "$real_logfile" ${LOGDIR}/${name}.log
+        bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${name}.log"
         if [[ -n ${SCREEN_LOGDIR} ]]; then
             # Drop the backward-compat symlink
             ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${1}.log
