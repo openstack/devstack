@@ -802,7 +802,8 @@ function _move_neutron_addresses_route {
     local from_intf=$1
     local to_intf=$2
     local add_ovs_port=$3
-    local af=$4
+    local del_ovs_port=$4
+    local af=$5
 
     if [[ -n "$from_intf" && -n "$to_intf" ]]; then
         # Remove the primary IP address from $from_intf and add it to $to_intf,
@@ -816,6 +817,7 @@ function _move_neutron_addresses_route {
         local DEFAULT_ROUTE_GW
         DEFAULT_ROUTE_GW=$(ip -f $af r | awk "/default.+$from_intf/ { print \$3; exit }")
         local ADD_OVS_PORT=""
+        local DEL_OVS_PORT=""
 
         IP_BRD=$(ip -f $af a s dev $from_intf scope global primary | grep inet | awk '{ print $2, $3, $4; exit }')
 
@@ -827,13 +829,19 @@ function _move_neutron_addresses_route {
             ADD_OVS_PORT="sudo ovs-vsctl --may-exist add-port $to_intf $from_intf"
         fi
 
+        if [[ "$del_ovs_port" == "True" ]]; then
+            DEL_OVS_PORT="sudo ovs-vsctl --if-exists del-port $from_intf $to_intf"
+        fi
+
         if [[ "$IP_BRD" != "" ]]; then
             IP_DEL="sudo ip addr del $IP_BRD dev $from_intf"
             IP_ADD="sudo ip addr add $IP_BRD dev $to_intf"
             IP_UP="sudo ip link set $to_intf up"
         fi
 
-        $IP_DEL; $IP_ADD; $IP_UP; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE
+        # The add/del OVS port calls have to happen either before or
+        # after the address is moved in order to not leave it orphaned.
+        $DEL_OVS_PORT; $IP_DEL; $IP_ADD; $IP_UP; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE
     fi
 }
 
@@ -842,14 +850,14 @@ function _move_neutron_addresses_route {
 function cleanup_neutron {
 
     if [[ -n "$OVS_PHYSICAL_BRIDGE" ]]; then
-        _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet"
+        _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False True "inet"
 
         if [[ $(ip -f inet6 a s dev "$OVS_PHYSICAL_BRIDGE" | grep -c 'global') != 0 ]]; then
             # ip(8) wants the prefix length when deleting
             local v6_gateway
             v6_gateway=$(ip -6 a s dev $OVS_PHYSICAL_BRIDGE | grep $IPV6_PUBLIC_NETWORK_GATEWAY | awk '{ print $2 }')
             sudo ip -6 addr del $v6_gateway dev $OVS_PHYSICAL_BRIDGE
-            _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False "inet6"
+            _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False False "inet6"
         fi
 
         if is_provider_network && is_ironic_hardware; then
@@ -1044,10 +1052,10 @@ function _configure_neutron_l3_agent {
 
     neutron_plugin_configure_l3_agent
 
-    _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True "inet"
+    _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True False "inet"
 
     if [[ $(ip -f inet6 a s dev "$PUBLIC_INTERFACE" | grep -c 'global') != 0 ]]; then
-        _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" False "inet6"
+        _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" False False "inet6"
     fi
 }
 
