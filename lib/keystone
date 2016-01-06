@@ -68,6 +68,12 @@ KEYSTONE_IDENTITY_BACKEND=${KEYSTONE_IDENTITY_BACKEND:-sql}
 # Select the Assignment backend driver
 KEYSTONE_ASSIGNMENT_BACKEND=${KEYSTONE_ASSIGNMENT_BACKEND:-sql}
 
+# Select the Role backend driver
+KEYSTONE_ROLE_BACKEND=${KEYSTONE_ROLE_BACKEND:-sql}
+
+# Select the Resource backend driver
+KEYSTONE_RESOURCE_BACKEND=${KEYSTONE_RESOURCE_BACKEND:-sql}
+
 # Select Keystone's token provider (and format)
 # Choose from 'uuid', 'pki', 'pkiz', or 'fernet'
 KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-}
@@ -209,6 +215,8 @@ function configure_keystone {
 
     iniset $KEYSTONE_CONF identity driver "$KEYSTONE_IDENTITY_BACKEND"
     iniset $KEYSTONE_CONF assignment driver "$KEYSTONE_ASSIGNMENT_BACKEND"
+    iniset $KEYSTONE_CONF role driver "$KEYSTONE_ROLE_BACKEND"
+    iniset $KEYSTONE_CONF resource driver "$KEYSTONE_RESOURCE_BACKEND"
 
     iniset_rpc_backend keystone $KEYSTONE_CONF
 
