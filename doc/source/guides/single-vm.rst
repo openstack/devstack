@@ -67,7 +67,6 @@ passed as the user-data file when booting the VM.
             echo DATABASE_PASSWORD=password >> local.conf
             echo RABBIT_PASSWORD=password >> local.conf
             echo SERVICE_PASSWORD=password >> local.conf
-            echo SERVICE_TOKEN=tokentoken >> local.conf
             ./stack.sh
         path: /home/stack/start.sh
         permissions: 0755

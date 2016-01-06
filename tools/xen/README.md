@@ -78,7 +78,6 @@ Of course, use real passwords if this machine is exposed.
     # to prompt for these passwords, blocking the install process.
 
     DATABASE_PASSWORD=my_super_secret
-    SERVICE_TOKEN=my_super_secret
     ADMIN_PASSWORD=my_super_secret
     SERVICE_PASSWORD=my_super_secret
     RABBIT_PASSWORD=my_super_secret
