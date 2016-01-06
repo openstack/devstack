@@ -421,7 +421,7 @@ function configure_auth_token_middleware {
     local signing_dir=$3
     local section=${4:-keystone_authtoken}
 
-    iniset $conf_file $section auth_plugin password
+    iniset $conf_file $section auth_type password
     iniset $conf_file $section auth_url $KEYSTONE_AUTH_URI
     iniset $conf_file $section username $admin_user
     iniset $conf_file $section password $SERVICE_PASSWORD
