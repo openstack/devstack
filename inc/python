@@ -242,15 +242,31 @@ function setup_dev_lib {
 
 # this should be used if you want to install globally, all libraries should
 # use this, especially *oslo* ones
+#
+# setup_install project_dir [extras]
+# project_dir: directory of project repo (e.g., /opt/stack/keystone)
+# extras: comma-separated list of optional dependencies to install
+#         (e.g., ldap,memcache).
+#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+# The command is like "pip install <project_dir>[<extras>]"
 function setup_install {
     local project_dir=$1
-    setup_package_with_constraints_edit $project_dir
+    local extras=$2
+    _setup_package_with_constraints_edit $project_dir "" $extras
 }
 
 # this should be used for projects which run services, like all services
+#
+# setup_develop project_dir [extras]
+# project_dir: directory of project repo (e.g., /opt/stack/keystone)
+# extras: comma-separated list of optional dependencies to install
+#         (e.g., ldap,memcache).
+#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+# The command is like "pip install -e <project_dir>[<extras>]"
 function setup_develop {
     local project_dir=$1
-    setup_package_with_constraints_edit $project_dir -e
+    local extras=$2
+    _setup_package_with_constraints_edit $project_dir -e $extras
 }
 
 # determine if a project as specified by directory is in
@@ -272,10 +288,17 @@ function is_in_projects_txt {
 # install this package we get the from source version.
 #
 # Uses globals ``REQUIREMENTS_DIR``
-# setup_develop directory
-function setup_package_with_constraints_edit {
+# _setup_package_with_constraints_edit project_dir flags [extras]
+# project_dir: directory of project repo (e.g., /opt/stack/keystone)
+# flags: pip CLI options/flags
+# extras: comma-separated list of optional dependencies to install
+#         (e.g., ldap,memcache).
+#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+# The command is like "pip install <flags> <project_dir>[<extras>]"
+function _setup_package_with_constraints_edit {
     local project_dir=$1
     local flags=$2
+    local extras=$3
 
     if [ -n "$REQUIREMENTS_DIR" ]; then
         # Constrain this package to this project directory from here on out.
@@ -286,19 +309,38 @@ function setup_package_with_constraints_edit {
             "$flags file://$project_dir#egg=$name"
     fi
 
-    setup_package $project_dir $flags
+    setup_package $project_dir "$flags" $extras
 
 }
 
 # ``pip install -e`` the package, which processes the dependencies
 # using pip before running `setup.py develop`
+#
 # Uses globals ``STACK_USER``
-# setup_develop_no_requirements_update directory
+# setup_package project_dir [flags] [extras]
+# project_dir: directory of project repo (e.g., /opt/stack/keystone)
+# flags: pip CLI options/flags
+# extras: comma-separated list of optional dependencies to install
+#         (e.g., ldap,memcache).
+#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+# The command is like "pip install <flags> <project_dir>[<extras>]"
 function setup_package {
     local project_dir=$1
     local flags=$2
+    local extras=$3
 
-    pip_install $flags $project_dir
+    # if the flags variable exists, and it doesn't look like a flag,
+    # assume it's actually the extras list.
+    if [[ -n "$flags" && -z "$extras" && ! "$flags" =~ ^-.* ]]; then
+        extras=$flags
+        flags=""
+    fi
+
+    if [[ ! -z "$extras" ]]; then
+        extras="[$extras]"
+    fi
+
+    pip_install $flags "$project_dir$extras"
     # ensure that further actions can do things like setup.py sdist
     if [[ "$flags" == "-e" ]]; then
         safe_chown -R $STACK_USER $1/*.egg-info
