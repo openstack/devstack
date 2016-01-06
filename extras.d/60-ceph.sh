@@ -32,7 +32,7 @@ if is_service_enabled ceph; then
             echo_summary "Configuring Cinder for Ceph"
             configure_ceph_cinder
         fi
-        if is_service_enabled cinder || is_service_enabled nova; then
+        if is_service_enabled n-cpu; then
             # NOTE (leseb): the part below is a requirement to attach Ceph block devices
             echo_summary "Configuring libvirt secret"
             import_libvirt_secret_ceph
