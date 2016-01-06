@@ -35,7 +35,6 @@
 #
 # - install_tempest
 # - configure_tempest
-# - init_tempest
 
 # Save trace setting
 _XTRACE_TEMPEST=$(set +o | grep xtrace)
@@ -66,9 +65,6 @@ BUILD_TIMEOUT=${BUILD_TIMEOUT:-196}
 # deps do not match stable branch deps. Set this to True to
 # have tempest installed in DevStack by default.
 INSTALL_TEMPEST=${INSTALL_TEMPEST:-"True"}
-
-BOTO_MATERIALS_PATH="$FILES/images/s3-materials/cirros-${CIRROS_VERSION}"
-BOTO_CONF=/etc/boto.cfg
 
 # Cinder/Volume variables
 TEMPEST_VOLUME_DRIVER=${TEMPEST_VOLUME_DRIVER:-default}
@@ -131,7 +127,6 @@ function configure_tempest {
     local flavor_lines
     local public_network_id
     local public_router_id
-    local boto_instance_type="m1.tiny"
     local ssh_connect_method="fixed"
 
     # Save IFS
@@ -202,14 +197,12 @@ function configure_tempest {
                 nova flavor-create m1.nano 42 64 0 1
             fi
             flavor_ref=42
-            boto_instance_type=m1.nano
             if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
                 nova flavor-create m1.micro 84 128 0 1
             fi
             flavor_ref_alt=84
         else
             # Check Nova for existing flavors, if ``DEFAULT_INSTANCE_TYPE`` is set use it.
-            boto_instance_type=$DEFAULT_INSTANCE_TYPE
             IFS=$'\r\n'
             flavors=""
             for line in $available_flavors; do
@@ -254,15 +247,6 @@ function configure_tempest {
             awk '{print $2}')
     fi
 
-    EC2_URL=$(get_endpoint_url ec2 public || true)
-    if [[ -z $EC2_URL ]]; then
-        EC2_URL="$EC2_SERVICE_PROTOCOL://$SERVICE_HOST:8773/"
-    fi
-    S3_URL=$(get_endpoint_url s3 public || true)
-    if [[ -z $S3_URL ]]; then
-        S3_URL="http://$SERVICE_HOST:${S3_SERVICE_PORT:-3333}"
-    fi
-
     iniset $TEMPEST_CONFIG DEFAULT use_syslog $SYSLOG
 
     # Oslo
@@ -275,8 +259,6 @@ function configure_tempest {
     # Timeouts
     iniset $TEMPEST_CONFIG compute build_timeout $BUILD_TIMEOUT
     iniset $TEMPEST_CONFIG volume build_timeout $BUILD_TIMEOUT
-    iniset $TEMPEST_CONFIG boto build_timeout $BUILD_TIMEOUT
-    iniset $TEMPEST_CONFIG boto http_socket_timeout 5
 
     # Identity
     iniset $TEMPEST_CONFIG identity uri "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v2.0/"
@@ -422,16 +404,6 @@ function configure_tempest {
     fi
     iniset $TEMPEST_CONFIG network-feature-enabled api_extensions $network_api_extensions
 
-    # boto
-    iniset $TEMPEST_CONFIG boto ec2_url "$EC2_URL"
-    iniset $TEMPEST_CONFIG boto s3_url "$S3_URL"
-    iniset $TEMPEST_CONFIG boto s3_materials_path "$BOTO_MATERIALS_PATH"
-    iniset $TEMPEST_CONFIG boto ari_manifest cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-initrd.manifest.xml
-    iniset $TEMPEST_CONFIG boto ami_manifest cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-blank.img.manifest.xml
-    iniset $TEMPEST_CONFIG boto aki_manifest cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-vmlinuz.manifest.xml
-    iniset $TEMPEST_CONFIG boto instance_type "$boto_instance_type"
-    iniset $TEMPEST_CONFIG boto http_socket_timeout 30
-
     # Orchestration Tests
     if is_service_enabled heat; then
         if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
@@ -574,12 +546,6 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG service_available cinder "False"
     fi
 
-    if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
-        # Use the ``BOTO_CONFIG`` environment variable to point to this file
-        iniset -sudo $BOTO_CONF Boto ca_certificates_file $SSL_BUNDLE_FILE
-        sudo chown $STACK_USER $BOTO_CONF
-    fi
-
     # Auth
     iniset $TEMPEST_CONFIG auth tempest_roles "Member"
     if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
@@ -639,35 +605,6 @@ function install_tempest {
     PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/full
     install_tempest_lib
     popd
-}
-
-# init_tempest() - Initialize EC2 images
-function init_tempest {
-    local base_image_name=cirros-${CIRROS_VERSION}-${CIRROS_ARCH}
-    # /opt/stack/devstack/files/images/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec
-    local image_dir="$FILES/images/${base_image_name}-uec"
-    local kernel="$image_dir/${base_image_name}-vmlinuz"
-    local ramdisk="$image_dir/${base_image_name}-initrd"
-    local disk_image="$image_dir/${base_image_name}-blank.img"
-    if is_service_enabled nova; then
-        # If the CirrOS uec downloaded and the system is UEC capable
-        if [ -f "$kernel" -a -f "$ramdisk" -a -f "$disk_image" -a  "$VIRT_DRIVER" != "openvz" \
-            -a \( "$LIBVIRT_TYPE" != "lxc" -o "$VIRT_DRIVER" != "libvirt" \) ]; then
-            echo "Prepare aki/ari/ami Images"
-            mkdir -p $BOTO_MATERIALS_PATH
-            ( #new namespace
-                # euca2ools should be installed to call euca-* commands
-                is_package_installed euca2ools || install_package euca2ools
-                # tenant:demo ; user: demo
-                source $TOP_DIR/accrc/demo/demo
-                euca-bundle-image -r ${CIRROS_ARCH} -i "$kernel" --kernel true -d "$BOTO_MATERIALS_PATH"
-                euca-bundle-image -r ${CIRROS_ARCH} -i "$ramdisk" --ramdisk true -d "$BOTO_MATERIALS_PATH"
-                euca-bundle-image -r ${CIRROS_ARCH} -i "$disk_image" -d "$BOTO_MATERIALS_PATH"
-            ) 2>&1 </dev/null | cat
-        else
-            echo "Boto materials are not prepared"
-        fi
-    fi
 }
 
 # Restore xtrace
