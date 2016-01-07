@@ -149,19 +149,7 @@ GetDistro
 
 # Phase: local
 rm -f $TOP_DIR/.localrc.auto
-if [[ -r $TOP_DIR/local.conf ]]; then
-    LRC=$(get_meta_section_files $TOP_DIR/local.conf local)
-    for lfile in $LRC; do
-        if [[ "$lfile" == "localrc" ]]; then
-            if [[ -r $TOP_DIR/localrc ]]; then
-                warn $LINENO "localrc and local.conf:[[local]] both exist, using localrc"
-            else
-                echo "# Generated file, do not edit" >$TOP_DIR/.localrc.auto
-                get_meta_section $TOP_DIR/local.conf local $lfile >>$TOP_DIR/.localrc.auto
-            fi
-        fi
-    done
-fi
+extract_localrc_section $TOP_DIR/local.conf $TOP_DIR/localrc $TOP_DIR/.localrc.auto
 
 # ``stack.sh`` is customizable by setting environment variables.  Override a
 # default setting via export::

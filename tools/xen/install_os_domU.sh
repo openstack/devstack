@@ -12,13 +12,6 @@ set -o xtrace
 
 export LC_ALL=C
 
-# Abort if localrc is not set
-if [ ! -e ../../localrc ]; then
-    echo "You must have a localrc with ALL necessary passwords defined before proceeding."
-    echo "See the xen README for required passwords."
-    exit 1
-fi
-
 # This directory
 THIS_DIR=$(cd $(dirname "$0") && pwd)
 
@@ -31,6 +24,10 @@ THIS_DIR=$(cd $(dirname "$0") && pwd)
 #
 # Get Settings
 #
+TOP_DIR=$(cd $THIS_DIR/../../ && pwd)
+source $TOP_DIR/inc/meta-config
+rm -f $TOP_DIR/.localrc.auto
+extract_localrc_section $TOP_DIR/local.conf $TOP_DIR/localrc $TOP_DIR/.localrc.auto
 
 # Source params - override xenrc params in your localrc to suit your taste
 source $THIS_DIR/xenrc
