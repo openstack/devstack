@@ -467,6 +467,8 @@ function install_cinderclient {
 function _configure_tgt_for_config_d {
     if [[ ! -d /etc/tgt/stack.d/ ]]; then
         sudo ln -sf $CINDER_STATE_PATH/volumes /etc/tgt/stack.d
+    fi
+    if ! grep -q "include /etc/tgt/stack.d/*" /etc/tgt/targets.conf; then
         echo "include /etc/tgt/stack.d/*" | sudo tee -a /etc/tgt/targets.conf
     fi
 }
