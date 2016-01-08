@@ -979,8 +979,6 @@ function get_or_create_endpoint {
 function get_endpoint_url {
     echo $(openstack endpoint list \
             --service $1 --interface $2 \
-            --os-url $KEYSTONE_SERVICE_URI_V3 \
-            --os-identity-api-version=3 \
             -c URL -f value)
 }
 
