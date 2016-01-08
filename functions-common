@@ -1065,7 +1065,7 @@ function apt_get {
     $sudo DEBIAN_FRONTEND=noninteractive \
         http_proxy=${http_proxy:-} https_proxy=${https_proxy:-} \
         no_proxy=${no_proxy:-} \
-        apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
+        apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@" < /dev/null
     result=$?
 
     # stop the clock
