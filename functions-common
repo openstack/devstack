@@ -1245,7 +1245,9 @@ function real_install_package {
 # install_package package [package ...]
 function install_package {
     update_package_repo
-    real_install_package $@ || RETRY_UPDATE=True update_package_repo && real_install_package $@
+    if ! real_install_package "$@"; then
+        RETRY_UPDATE=True update_package_repo && real_install_package "$@"
+    fi
 }
 
 # Distro-agnostic function to tell if a package is installed
