@@ -1334,17 +1334,13 @@ function yum_install {
             BEGIN { fail=0 }
             /No package/ { fail=1 }
             { print }
-            END { exit fail }'
-        result=$?
+            END { exit fail }' || \
+                die $LINENO "Missing packages detected"
 
-    if [ $result != 0 ]; then
-        echo $LINENO "Missing packages detected"
-    elif [[ ${PIPESTATUS[0]} != 0 ]]; then
-        # also ensure we catch a yum failure
-        echo $LINENO "${YUM:-yum} install failure"
-        result=1
+    # also ensure we catch a yum failure
+    if [[ ${PIPESTATUS[0]} != 0 ]]; then
+        die $LINENO "${YUM:-yum} install failure"
     fi
-    return $result
 }
 
 # zypper wrapper to set arguments correctly
