@@ -957,6 +957,9 @@ function _configure_neutron_common {
     fi
 
     _neutron_setup_rootwrap
+
+    # push mtu into instances to avoid packet drops when tunnelling is used
+    iniset $NEUTRON_CONF DEFAULT advertise_mtu "True"
 }
 
 function _configure_neutron_debug_command {
