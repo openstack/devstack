@@ -450,7 +450,7 @@ function create_nova_accounts {
     fi
 
     # S3
-    if is_service_enabled n-obj swift3; then
+    if is_service_enabled swift3; then
         if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
 
             get_or_create_service "s3" "s3" "S3"
@@ -869,11 +869,6 @@ function start_nova_rest {
     run_process n-cauth "$NOVA_BIN_DIR/nova-consoleauth --config-file $api_cell_conf"
     run_process n-sproxy "$NOVA_BIN_DIR/nova-serialproxy --config-file $api_cell_conf"
 
-    # Starting the nova-objectstore only if swift3 service is not enabled.
-    # Swift will act as s3 objectstore.
-    is_service_enabled swift3 || \
-        run_process n-obj "$NOVA_BIN_DIR/nova-objectstore --config-file $api_cell_conf"
-
     export PATH=$old_path
 }
 
@@ -907,7 +902,7 @@ function stop_nova_rest {
     # Kill the nova screen windows
     # Some services are listed here twice since more than one instance
     # of a service may be running in certain configs.
-    for serv in n-api n-crt n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cond n-cell n-cell n-api-meta n-obj n-sproxy; do
+    for serv in n-api n-crt n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cond n-cell n-cell n-api-meta n-sproxy; do
         stop_process $serv
     done
 }

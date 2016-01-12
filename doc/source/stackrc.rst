@@ -20,7 +20,7 @@ ENABLED\_SERVICES
 
     ::
 
-        ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,c-sch,c-api,c-vol,n-sch,n-cauth,horizon,rabbit,tempest,$DATABASE_TYPE
+        ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-cpu,n-net,n-cond,c-sch,c-api,c-vol,n-sch,n-cauth,horizon,rabbit,tempest,$DATABASE_TYPE
 
     Other services that are not enabled by default can be enabled in
     ``localrc``. For example, to add Swift, use the following service

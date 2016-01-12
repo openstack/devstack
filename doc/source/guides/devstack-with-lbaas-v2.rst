@@ -46,7 +46,7 @@ Edit your ``local.conf`` to look like
     # Horizon
     ENABLED_SERVICES+=,horizon
     # Nova
-    ENABLED_SERVICES+=,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch
+    ENABLED_SERVICES+=,n-api,n-crt,n-cpu,n-cond,n-sch
     # Glance
     ENABLED_SERVICES+=,g-api,g-reg
     # Neutron
