@@ -1320,27 +1320,35 @@ function uninstall_package {
 # Uses globals ``OFFLINE``, ``*_proxy``, ``YUM``
 # yum_install package [package ...]
 function yum_install {
+    local result parse_yum_result
+
     [[ "$OFFLINE" = "True" ]] && return
-    local sudo="sudo"
-    [[ "$(id -u)" = "0" ]] && sudo="env"
+
+    time_start "yum_install"
+
+    # Warning: this would not work if yum output message
+    # have been translated to another language
+    parse_yum_result='\
+        BEGIN { result=0 }\
+        /^YUM_FAILED/ { exit $2 }\
+        /^No package/ { result=1 }\
+        //{ print }\
+        END { exit result }'
 
     # The manual check for missing packages is because yum -y assumes
-    # missing packages are OK.  See
-    # https://bugzilla.redhat.com/show_bug.cgi?id=965567
-    $sudo http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}" \
-        no_proxy="${no_proxy:-}" \
-        ${YUM:-yum} install -y "$@" 2>&1 | \
-        awk '
-            BEGIN { fail=0 }
-            /No package/ { fail=1 }
-            { print }
-            END { exit fail }' || \
-                die $LINENO "Missing packages detected"
+    # missing packages are OK.
+    # See https://bugzilla.redhat.com/show_bug.cgi?id=965567
+    (sudo_with_proxies "${YUM:-yum}" install -y "$@" 2>&1 || echo YUM_FAILED $?) \
+        | awk "$parse_yum_result"
+    result=$?
 
-    # also ensure we catch a yum failure
-    if [[ ${PIPESTATUS[0]} != 0 ]]; then
-        die $LINENO "${YUM:-yum} install failure"
+    if [ "$result" != 0 ]; then
+        echo $LINENO "${YUM:-yum}" install failure: $result
     fi
+
+    time_stop "yum_install"
+
+    return "$result"
 }
 
 # zypper wrapper to set arguments correctly
@@ -2277,6 +2285,18 @@ function test_with_retry {
         die $LINENO "$failmsg"
     fi
     time_stop "test_with_retry"
+}
+
+# Like sudo but forwarding http_proxy https_proxy no_proxy environment vars.
+# If it is run as superuser then sudo is replaced by env.
+#
+function sudo_with_proxies {
+    local sudo
+
+    [[ "$(id -u)" = "0" ]] && sudo="env" || sudo="sudo"
+
+    $sudo http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}"\
+        no_proxy="${no_proxy:-}" "$@"
 }
 
 # Timing infrastructure - figure out where large blocks of time are
