@@ -40,6 +40,12 @@ Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS-port_security}
 # L3 Plugin to load for ML2
 ML2_L3_PLUGIN=${ML2_L3_PLUGIN:-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
 
+# Underlying path MTU for physical network managing br-tun; use '-' instead of
+# ':-' to allow people to explicitly override this to blank, to disable
+# automatic MTU calculation for tunnelled tenant networks
+Q_ML2_PLUGIN_PATH_MTU=${Q_ML2_PLUGIN_PATH_MTU-1500}
+
+
 function populate_ml2_config {
     CONF=$1
     SECTION=$2
@@ -75,6 +81,12 @@ function neutron_plugin_configure_service {
         Q_SRV_EXTRA_OPTS+=(tenant_network_types=vlan)
     else
         echo "WARNING - The ml2 plugin is using local tenant networks, with no connectivity between hosts."
+    fi
+
+    # Enable ml2 mtu calculation mechanism for networks by providing path mtu
+    # value for physical devices that are used for br-tun traffic
+    if [[ "$ENABLE_TENANT_TUNNELS" == "True" ]] && [[ "$Q_ML2_PLUGIN_PATH_MTU" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE ml2 path_mtu "$Q_ML2_PLUGIN_PATH_MTU"
     fi
 
     # Allow for overrding VLAN configuration (for example, to configure provider
