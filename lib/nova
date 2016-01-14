@@ -635,7 +635,19 @@ function create_nova_conf {
 
     # Setup logging for nova-dhcpbridge command line
     sudo cp "$NOVA_CONF" "$NOVA_CONF_DIR/nova-dhcpbridge.conf"
-    iniset "$NOVA_CONF_DIR/nova-dhcpbridge.conf" DEFAULT log_file "/opt/stack/logs/nova-dhcpbridge.log"
+
+    local service="n-dhcp"
+    local logfile="${service}.log.${CURRENT_LOG_TIME}"
+    local real_logfile="${LOGDIR}/${logfile}"
+    if [[ -n ${LOGDIR} ]]; then
+        bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${service}.log"
+        iniset "$NOVA_CONF_DIR/nova-dhcpbridge.conf" DEFAULT log_file "$real_logfile"
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            # Drop the backward-compat symlink
+            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${service}.log
+        fi
+    fi
+
     iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF_DIR/nova-dhcpbridge.conf"
 }
 
