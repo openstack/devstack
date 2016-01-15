@@ -44,6 +44,7 @@ GITDIR["oslo.service"]=$DEST/oslo.service
 GITDIR["oslo.utils"]=$DEST/oslo.utils
 GITDIR["oslo.versionedobjects"]=$DEST/oslo.versionedobjects
 GITDIR["oslo.vmware"]=$DEST/oslo.vmware
+GITDIR["osprofiler"]=$DEST/osprofiler
 GITDIR["pycadf"]=$DEST/pycadf
 GITDIR["stevedore"]=$DEST/stevedore
 GITDIR["taskflow"]=$DEST/taskflow

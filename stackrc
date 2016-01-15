@@ -407,6 +407,10 @@ GITBRANCH["oslo.versionedobjects"]=${OSLOVERSIONEDOBJECTS_BRANCH:-master}
 GITREPO["oslo.vmware"]=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
 GITBRANCH["oslo.vmware"]=${OSLOVMWARE_BRANCH:-master}
 
+# osprofiler
+GITREPO["osprofiler"]=${OSPROFILER_REPO:-${GIT_BASE}/openstack/osprofiler.git}
+GITBRANCH["osprofiler"]=${OSPROFILER_BRANCH:-master}
+
 # pycadf auditing library
 GITREPO["pycadf"]=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
 GITBRANCH["pycadf"]=${PYCADF_BRANCH:-master}
