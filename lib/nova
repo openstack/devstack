@@ -478,7 +478,6 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
     iniset $NOVA_CONF DEFAULT scheduler_driver "$SCHEDULER"
     iniset $NOVA_CONF DEFAULT scheduler_default_filters "$FILTERS"
-    iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF"
     iniset $NOVA_CONF DEFAULT force_dhcp_release "True"
     iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
     iniset $NOVA_CONF DEFAULT s3_host "$SERVICE_HOST"
@@ -633,6 +632,11 @@ function create_nova_conf {
         iniset $NOVA_CONF serial_console enabled True
     fi
     iniset $NOVA_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
+
+    # Setup logging for nova-dhcpbridge command line
+    sudo cp "$NOVA_CONF" "$NOVA_CONF_DIR/nova-dhcpbridge.conf"
+    iniset "$NOVA_CONF_DIR/nova-dhcpbridge.conf" DEFAULT log_file "/opt/stack/logs/nova-dhcpbridge.log"
+    iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF_DIR/nova-dhcpbridge.conf"
 }
 
 function init_nova_cells {
