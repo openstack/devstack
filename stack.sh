@@ -652,9 +652,6 @@ fi
 # --------
 
 if is_service_enabled keystone; then
-    # The ``SERVICE_TOKEN`` is used to bootstrap the Keystone database.  It is
-    # just a string and is not a 'real' Keystone token.
-    read_password SERVICE_TOKEN "ENTER A SERVICE_TOKEN TO USE FOR THE SERVICE ADMIN TOKEN."
     # Services authenticate to Identity with servicename/``SERVICE_PASSWORD``
     read_password SERVICE_PASSWORD "ENTER A SERVICE_PASSWORD TO USE FOR THE SERVICE AUTHENTICATION."
     # Horizon currently truncates usernames and passwords at 20 characters
@@ -994,22 +991,34 @@ if is_service_enabled keystone; then
     if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
         init_keystone
         start_keystone
+        bootstrap_keystone
     fi
-
-    export OS_IDENTITY_API_VERSION=3
-
-    # Set up a temporary admin URI for Keystone
-    SERVICE_ENDPOINT=$KEYSTONE_AUTH_URI/v3
 
     if is_service_enabled tls-proxy; then
         export OS_CACERT=$INT_CA_DIR/ca-chain.pem
-        # Until the client support is fixed, just use the internal endpoint
-        SERVICE_ENDPOINT=http://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT_INT/v3
     fi
 
-    # Setup OpenStackClient token-endpoint auth
-    export OS_TOKEN=$SERVICE_TOKEN
-    export OS_URL=$SERVICE_ENDPOINT
+    # Rather than just export these, we write them out to a
+    # intermediate userrc file that can also be used to debug if
+    # something goes wrong between here and running
+    # tools/create_userrc.sh (this script relies on services other
+    # than keystone being available, so we can't call it right now)
+    cat > $TOP_DIR/userrc_early <<EOF
+# Use this for debugging issues before files in accrc are created
+
+# Set up password auth credentials now that Keystone is bootstrapped
+export OS_IDENTITY_API_VERSION=3
+export OS_AUTH_URL=$KEYSTONE_AUTH_URI
+export OS_USERNAME=admin
+export OS_USER_DOMAIN_ID=default
+export OS_PASSWORD=$ADMIN_PASSWORD
+export OS_PROJECT_NAME=admin
+export OS_PROJECT_DOMAIN_ID=default
+export OS_REGION_NAME=$REGION_NAME
+
+EOF
+
+    source $TOP_DIR/userrc_early
 
     create_keystone_accounts
     create_nova_accounts
@@ -1024,30 +1033,6 @@ if is_service_enabled keystone; then
     if is_service_enabled heat; then
         create_heat_accounts
     fi
-
-    # Begone token auth
-    unset OS_TOKEN OS_URL
-
-    # Rather than just export these, we write them out to a
-    # intermediate userrc file that can also be used to debug if
-    # something goes wrong between here and running
-    # tools/create_userrc.sh (this script relies on services other
-    # than keystone being available, so we can't call it right now)
-    cat > $TOP_DIR/userrc_early <<EOF
-# Use this for debugging issues before files in accrc are created
-
-# Set up password auth credentials now that Keystone is bootstrapped
-export OS_AUTH_URL=$KEYSTONE_AUTH_URI
-export OS_USERNAME=admin
-export OS_USER_DOMAIN_ID=default
-export OS_PASSWORD=$ADMIN_PASSWORD
-export OS_PROJECT_NAME=admin
-export OS_PROJECT_DOMAIN_ID=default
-export OS_REGION_NAME=$REGION_NAME
-
-EOF
-
-    source $TOP_DIR/userrc_early
 
 fi
 
