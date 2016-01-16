@@ -557,7 +557,7 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT instance_usage_audit "True"
         iniset $NOVA_CONF DEFAULT instance_usage_audit_period "hour"
         iniset $NOVA_CONF DEFAULT notify_on_state_change "vm_and_task_state"
-        iniset $NOVA_CONF DEFAULT notification_driver "messaging"
+        iniset $NOVA_CONF oslo_messaging_notifications driver "messaging"
     fi
 
     # All nova-compute workers need to know the vnc configuration options
