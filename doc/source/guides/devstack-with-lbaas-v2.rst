@@ -34,7 +34,6 @@ Edit your ``local.conf`` to look like
     DATABASE_PASSWORD=password
     ADMIN_PASSWORD=password
     SERVICE_PASSWORD=password
-    SERVICE_TOKEN=password
     RABBIT_PASSWORD=password
     # Enable Logging
     LOGFILE=$DEST/logs/stack.sh.log

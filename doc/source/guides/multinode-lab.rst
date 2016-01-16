@@ -131,7 +131,6 @@ cluster controller's DevStack in ``local.conf``:
     DATABASE_PASSWORD=supersecret
     RABBIT_PASSWORD=supersecrete
     SERVICE_PASSWORD=supersecrete
-    SERVICE_TOKEN=xyzpdqlazydog
 
 In the multi-node configuration the first 10 or so IPs in the private
 subnet are usually reserved. Add this to ``local.sh`` to have it run
@@ -172,7 +171,6 @@ machines, create a ``local.conf`` with:
     DATABASE_PASSWORD=supersecret
     RABBIT_PASSWORD=supersecrete
     SERVICE_PASSWORD=supersecrete
-    SERVICE_TOKEN=xyzpdqlazydog
     DATABASE_TYPE=mysql
     SERVICE_HOST=192.168.42.11
     MYSQL_HOST=$SERVICE_HOST

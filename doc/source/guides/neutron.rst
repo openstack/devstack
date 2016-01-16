@@ -59,7 +59,6 @@ serving as a hypervisor for guest instances.
         DATABASE_PASSWORD=secrete
         RABBIT_PASSWORD=secrete
         SERVICE_PASSWORD=secrete
-        SERVICE_TOKEN=secrete
 
         # Do not use Nova-Network
         disable_service n-net
@@ -231,7 +230,6 @@ The host `devstack-2` has a very minimal `local.conf`.
     MYSQL_PASSWORD=secrete
     RABBIT_PASSWORD=secrete
     SERVICE_PASSWORD=secrete
-    SERVICE_TOKEN=secrete
 
     ## Neutron options
     PUBLIC_INTERFACE=eth0
@@ -362,7 +360,6 @@ controller node.
         MYSQL_PASSWORD=secrete
         RABBIT_PASSWORD=secrete
         SERVICE_PASSWORD=secrete
-        SERVICE_TOKEN=secrete
 
         ## Neutron options
         Q_USE_SECGROUP=True
@@ -410,7 +407,6 @@ compute node 1.
         MYSQL_PASSWORD=secrete
         RABBIT_PASSWORD=secrete
         SERVICE_PASSWORD=secrete
-        SERVICE_TOKEN=secrete
 
         # Services that a compute node runs
         ENABLED_SERVICES=n-cpu,rabbit,q-agt
