@@ -289,6 +289,9 @@ function configure_tempest {
     if [[ ! -z "$TEMPEST_HTTP_IMAGE" ]]; then
         iniset $TEMPEST_CONFIG image http_image $TEMPEST_HTTP_IMAGE
     fi
+    if [ "$VIRT_DRIVER" = "xenserver" ]; then
+        iniset $TEMPEST_CONFIG image disk_formats "ami,ari,aki,vhd,raw,iso"
+    fi
 
     # Image Features
     iniset $TEMPEST_CONFIG image-feature-enabled deactivate_image True
