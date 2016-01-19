@@ -137,6 +137,7 @@ FILES_TO_CLEAN=".localrc.auto .localrc.password "
 FILES_TO_CLEAN+="docs/files docs/html shocco/ "
 FILES_TO_CLEAN+="stack-screenrc test*.conf* test.ini* "
 FILES_TO_CLEAN+=".stackenv .prereqs"
+FILES_TO_CLEAN+="/etc/openstack/ ~/.config/openstack"
 
 for file in $FILES_TO_CLEAN; do
     rm -rf $TOP_DIR/$file
