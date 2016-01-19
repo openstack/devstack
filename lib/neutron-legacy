@@ -993,7 +993,6 @@ function _configure_neutron_debug_command {
 
     cp $NEUTRON_DIR/etc/l3_agent.ini.sample $NEUTRON_TEST_CONFIG_FILE
 
-    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT verbose False
     iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
     iniset $NEUTRON_TEST_CONFIG_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
@@ -1009,7 +1008,6 @@ function _configure_neutron_dhcp_agent {
 
     cp $NEUTRON_DIR/etc/dhcp_agent.ini.sample $Q_DHCP_CONF_FILE
 
-    iniset $Q_DHCP_CONF_FILE DEFAULT verbose True
     iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_DHCP_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
@@ -1041,7 +1039,6 @@ function _configure_neutron_l3_agent {
 
     cp $NEUTRON_DIR/etc/l3_agent.ini.sample $Q_L3_CONF_FILE
 
-    iniset $Q_L3_CONF_FILE DEFAULT verbose True
     iniset $Q_L3_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_L3_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
@@ -1062,7 +1059,6 @@ function _configure_neutron_l3_agent {
 function _configure_neutron_metadata_agent {
     cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $Q_META_CONF_FILE
 
-    iniset $Q_META_CONF_FILE DEFAULT verbose True
     iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
@@ -1126,7 +1122,6 @@ function _configure_neutron_plugin_agent {
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE  agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
     fi
-    iniset $NEUTRON_CONF DEFAULT verbose True
     iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
     # Configure agent for plugin
@@ -1146,7 +1141,6 @@ function _configure_neutron_service {
         iniset $NEUTRON_CONF DEFAULT service_plugins $Q_SERVICE_PLUGIN_CLASSES
     fi
 
-    iniset $NEUTRON_CONF DEFAULT verbose True
     iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $NEUTRON_CONF oslo_policy policy_file $Q_POLICY_FILE
     iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips $Q_ALLOW_OVERLAPPING_IP
