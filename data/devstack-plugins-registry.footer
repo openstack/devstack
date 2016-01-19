@@ -1,0 +1,28 @@
+
+Drivers
+=======
+
++--------------------+-------------------------------------------------+------------------+
+|Plugin Name         |URL                                              |Comments          |
++--------------------+-------------------------------------------------+------------------+
+|dragonflow          |git://git.openstack.org/openstack/dragonflow     |[d1]_             |
++--------------------+-------------------------------------------------+------------------+
+|odl                 |git://git.openstack.org/openstack/networking-odl |[d2]_             |
++--------------------+-------------------------------------------------+------------------+
+
+.. [d1] demonstrates example of installing 3rd party SDN controller
+.. [d2] demonstrates a pretty advanced set of modes that that allow
+        one to run OpenDayLight either from a pre-existing install, or
+        also from source
+
+Alternate Configs
+=================
+
++-------------+------------------------------------------------------------+------------+
+| Plugin Name | URL                                                        | Comments   |
+|             |                                                            |            |
++-------------+------------------------------------------------------------+------------+
+|glusterfs    |git://git.openstack.org/openstack/devstack-plugin-glusterfs |            |
++-------------+------------------------------------------------------------+------------+
+|             |                                                            |            |
++-------------+------------------------------------------------------------+------------+
