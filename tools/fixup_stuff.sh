@@ -128,7 +128,7 @@ fi
 # connection issues under proxy, hence uninstalling python-virtualenv package
 # and installing the latest version using pip.
 uninstall_package python-virtualenv
-pip_install -U virtualenv
+pip_install -U "virtualenv<14"
 
 # NOTE(mkoderer): PBR has a missing requirement to testrepository
 # Can be removed when bug #1530026 is fixed.

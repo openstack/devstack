@@ -58,7 +58,7 @@ function install_get_pip {
             die $LINENO "Download of get-pip.py failed"
         touch $LOCAL_PIP.downloaded
     fi
-    sudo -H -E python $LOCAL_PIP
+    sudo -H -E python $LOCAL_PIP -c $TOOLS_DIR/cap-pip.txt
 }
 
 

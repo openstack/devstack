@@ -51,7 +51,7 @@ function err_trap {
 install_package $(get_packages devlibs)
 
 # Get a modern ``virtualenv``
-pip_install virtualenv
+pip_install "virtualenv<14"
 
 # Prepare the workspace
 TMP_VENV_PATH=$(mktemp -d tmp-venv-XXXX)
