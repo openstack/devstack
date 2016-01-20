@@ -430,6 +430,7 @@ function configure_auth_token_middleware {
     iniset $conf_file $section auth_uri $KEYSTONE_SERVICE_URI
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     iniset $conf_file $section signing_dir $signing_dir
+    iniset $conf_file $section memcache_servers $SERVICE_HOST:11211
 }
 
 # init_keystone() - Initialize databases, etc.
@@ -483,6 +484,9 @@ function install_keystonemiddleware {
         # When not installing from repo, keystonemiddleware is still needed...
         pip_install_gr keystonemiddleware
     fi
+    # Install the memcache library so keystonemiddleware can cache tokens in a
+    # shared location.
+    pip_install_gr python-memcached
 }
 
 # install_keystone() - Collect source and prepare
@@ -491,17 +495,7 @@ function install_keystone {
     if is_service_enabled ldap; then
         install_ldap
     fi
-    if [[ "$KEYSTONE_TOKEN_BACKEND" = "memcache" ]]; then
-        # Install memcached and the memcache Python library that keystone uses.
-        # Unfortunately the Python library goes by different names in the .deb
-        # and .rpm circles.
-        install_package memcached
-        if is_ubuntu; then
-            install_package python-memcache
-        else
-            install_package python-memcached
-        fi
-    fi
+
     git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
     setup_develop $KEYSTONE_DIR
 
@@ -550,6 +544,9 @@ function start_keystone {
         start_tls_proxy '*' $KEYSTONE_SERVICE_PORT $KEYSTONE_SERVICE_HOST $KEYSTONE_SERVICE_PORT_INT &
         start_tls_proxy '*' $KEYSTONE_AUTH_PORT $KEYSTONE_AUTH_HOST $KEYSTONE_AUTH_PORT_INT &
     fi
+
+    # (re)start memcached to make sure we have a clean memcache.
+    restart_service memcached
 }
 
 # stop_keystone() - Stop running processes
