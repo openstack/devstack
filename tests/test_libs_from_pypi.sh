@@ -40,7 +40,7 @@ ALL_LIBS+=" python-openstackclient oslo.rootwrap oslo.i18n"
 ALL_LIBS+=" oslo.utils python-swiftclient"
 ALL_LIBS+=" python-neutronclient tooz ceilometermiddleware oslo.policy"
 ALL_LIBS+=" debtcollector os-brick automaton futurist oslo.service"
-ALL_LIBS+=" oslo.cache oslo.reports"
+ALL_LIBS+=" oslo.cache oslo.reports osprofiler"
 ALL_LIBS+=" keystoneauth ironic-lib oslo.privsep"
 
 # Generate the above list with
