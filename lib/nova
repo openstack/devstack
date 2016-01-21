@@ -563,9 +563,9 @@ function create_nova_conf {
     # These settings don't hurt anything if n-xvnc and n-novnc are disabled
     if is_service_enabled n-cpu; then
         NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
-        iniset $NOVA_CONF DEFAULT novncproxy_base_url "$NOVNCPROXY_URL"
+        iniset $NOVA_CONF vnc novncproxy_base_url "$NOVNCPROXY_URL"
         XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
-        iniset $NOVA_CONF DEFAULT xvpvncproxy_base_url "$XVPVNCPROXY_URL"
+        iniset $NOVA_CONF vnc xvpvncproxy_base_url "$XVPVNCPROXY_URL"
         SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:6082/spice_auto.html"}
         iniset $NOVA_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
     fi
@@ -575,13 +575,13 @@ function create_nova_conf {
         # For multi-host, this should be the management ip of the compute host.
         VNCSERVER_LISTEN=${VNCSERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
         VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
-        iniset $NOVA_CONF DEFAULT vnc_enabled true
-        iniset $NOVA_CONF DEFAULT vncserver_listen "$VNCSERVER_LISTEN"
-        iniset $NOVA_CONF DEFAULT vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+        iniset $NOVA_CONF vnc enabled true
+        iniset $NOVA_CONF vnc vncserver_listen "$VNCSERVER_LISTEN"
+        iniset $NOVA_CONF vnc vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
         iniset $NOVA_CONF DEFAULT novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $NOVA_CONF DEFAULT xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
     else
-        iniset $NOVA_CONF DEFAULT vnc_enabled false
+        iniset $NOVA_CONF vnc enabled false
     fi
 
     if is_service_enabled n-spice; then
