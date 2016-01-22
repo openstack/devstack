@@ -1,4 +1,5 @@
 cyrus-sasl-devel
+memcached
 openldap2-devel
 python-devel
 sqlite3
