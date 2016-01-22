@@ -156,8 +156,6 @@ if [ -z "$MODE" ]; then
     exit 3
 fi
 
-export -n SERVICE_ENDPOINT OS_SERVICE_ENDPOINT
-
 EC2_URL=$(openstack endpoint list --service ec2 --interface public --os-identity-api-version=3 -c URL -f value || true)
 if [[ -z $EC2_URL ]]; then
     EC2_URL=http://localhost:8773/
