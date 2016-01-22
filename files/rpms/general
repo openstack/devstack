@@ -26,7 +26,6 @@ postgresql-devel  # psycopg2
 psmisc
 pyOpenSSL # version in pip uses too much memory
 python-devel
-redhat-rpm-config # MySQL-python rhbz-1195207
 screen
 tar
 tcpdump
