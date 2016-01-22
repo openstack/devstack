@@ -259,6 +259,7 @@ function configure_tempest {
     # Identity
     iniset $TEMPEST_CONFIG identity uri "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v2.0/"
     iniset $TEMPEST_CONFIG identity uri_v3 "$KEYSTONE_SERVICE_URI_V3"
+    iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v3}
     if [[ "$TEMPEST_HAS_ADMIN" == "True" ]]; then
         iniset $TEMPEST_CONFIG auth admin_username $ADMIN_USERNAME
         iniset $TEMPEST_CONFIG auth admin_password "$password"
@@ -269,10 +270,6 @@ function configure_tempest {
     if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
         # Only Identity v3 is available; then skip Identity API v2 tests
         iniset $TEMPEST_CONFIG identity-feature-enabled api_v2 False
-        # In addition, use v3 auth tokens for running all Tempest tests
-        iniset $TEMPEST_CONFIG identity auth_version v3
-    else
-        iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
     fi
 
     if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then

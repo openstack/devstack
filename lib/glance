@@ -205,7 +205,7 @@ function configure_glance {
     iniset $GLANCE_CACHE_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_CACHE_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
     iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_url
-    iniset $GLANCE_CACHE_CONF DEFAULT auth_url $KEYSTONE_AUTH_URI/v2.0
+    iniset $GLANCE_CACHE_CONF DEFAULT auth_url $KEYSTONE_AUTH_URI/v3
     iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_tenant_name
     iniset $GLANCE_CACHE_CONF DEFAULT admin_tenant_name $SERVICE_TENANT_NAME
     iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_user

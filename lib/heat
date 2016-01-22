@@ -167,7 +167,7 @@ function configure_heat {
     iniset $HEAT_CONF clients_keystone auth_uri $KEYSTONE_AUTH_URI
 
     # ec2authtoken
-    iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
+    iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_URI/v3
 
     # OpenStack API
     iniset $HEAT_CONF heat_api bind_port $HEAT_API_PORT
