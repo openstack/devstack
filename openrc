@@ -81,12 +81,12 @@ KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
 KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
 
 # Identity API version
-export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
+export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
 
 # Authenticating against an OpenStack cloud using Keystone returns a **Token**
 # and **Service Catalog**.  The catalog contains the endpoints for all services
 # the user/project has access to - including nova, glance, keystone, swift, ...
-# We currently recommend using the 2.0 *identity api*.
+# We currently recommend using the version 3 *identity api*.
 #
 export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:5000/v${OS_IDENTITY_API_VERSION}
 
