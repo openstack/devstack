@@ -30,7 +30,8 @@ def update_cpu_map(tree):
             x86 = arch
             break
     if x86 is not None:
-        # Create a gate64 cpu model that is core2duo less monitor and pse36
+        # Create a gate64 cpu model that is core2duo less monitor, pse36,
+        # vme, and ssse3.
         gate64 = ET.SubElement(x86, "model")
         gate64.set("name", "gate64")
         ET.SubElement(gate64, "vendor").set("name", "Intel")
@@ -51,13 +52,11 @@ def update_cpu_map(tree):
         ET.SubElement(gate64, "feature").set("name", "fxsr")
         ET.SubElement(gate64, "feature").set("name", "sse")
         ET.SubElement(gate64, "feature").set("name", "sse2")
-        ET.SubElement(gate64, "feature").set("name", "vme")
         ET.SubElement(gate64, "feature").set("name", "mtrr")
         ET.SubElement(gate64, "feature").set("name", "mca")
         ET.SubElement(gate64, "feature").set("name", "clflush")
         ET.SubElement(gate64, "feature").set("name", "pni")
         ET.SubElement(gate64, "feature").set("name", "nx")
-        ET.SubElement(gate64, "feature").set("name", "ssse3")
         ET.SubElement(gate64, "feature").set("name", "syscall")
         ET.SubElement(gate64, "feature").set("name", "lm")
 
