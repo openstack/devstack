@@ -127,7 +127,7 @@ function configure_tempest {
     local flavor_lines
     local public_network_id
     local public_router_id
-    local ssh_connect_method="fixed"
+    local ssh_connect_method="floating"
 
     # Save IFS
     ifs=$IFS
@@ -234,10 +234,6 @@ function configure_tempest {
                 fi
             done
         fi
-    fi
-
-    if ! is_service_enabled n-net; then
-        ssh_connect_method="floating"
     fi
 
     ssh_connect_method=${TEMPEST_SSH_CONNECT_METHOD:-$ssh_connect_method}
