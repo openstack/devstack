@@ -138,7 +138,7 @@ function configure_tempest {
     local public_router_id
     local tenant_networks_reachable
     local boto_instance_type="m1.tiny"
-    local ssh_connect_method="fixed"
+    local ssh_connect_method="floating"
 
     # Save IFS
     ifs=$IFS
@@ -261,9 +261,6 @@ function configure_tempest {
 
     if [ "$Q_USE_NAMESPACE" != "False" ]; then
         tenant_networks_reachable=false
-        if ! is_service_enabled n-net; then
-            ssh_connect_method="floating"
-        fi
     else
         tenant_networks_reachable=true
     fi
