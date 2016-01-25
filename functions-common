@@ -106,6 +106,9 @@ function write_clouds_yaml {
         --os-username admin \
         --os-password $ADMIN_PASSWORD \
         --os-project-name admin
+
+    # CLean up any old clouds.yaml files we had laying around
+    rm -f ~$STACK_USER/.config/openstack/clouds.yaml
 }
 
 # trueorfalse <True|False> <VAR>
