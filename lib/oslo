@@ -89,6 +89,7 @@ function install_oslo {
     _do_install_oslo_lib "oslo.utils"
     _do_install_oslo_lib "oslo.versionedobjects"
     _do_install_oslo_lib "oslo.vmware"
+    _do_install_oslo_lib "osprofiler"
     _do_install_oslo_lib "pycadf"
     _do_install_oslo_lib "stevedore"
     _do_install_oslo_lib "taskflow"
