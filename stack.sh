@@ -299,16 +299,6 @@ EOF
     fi
 }
 
-# If you have all the repos installed above already setup (e.g. a CI
-# situation where they are on your image) you may choose to skip this
-# to speed things up
-SKIP_EPEL_INSTALL=$(trueorfalse False SKIP_EPEL_INSTALL)
-
-if is_fedora && [[ $DISTRO == "rhel7" ]] && \
-        [[ ${SKIP_EPEL_INSTALL} != True ]]; then
-    _install_epel_and_rdo
-fi
-
 
 # Configure Target Directories
 # ----------------------------
@@ -322,6 +312,11 @@ sudo mkdir -p $DEST
 safe_chown -R $STACK_USER $DEST
 safe_chmod 0755 $DEST
 
+# Destination path for devstack logs
+if [[ -n ${LOGDIR:-} ]]; then
+    mkdir -p $LOGDIR
+fi
+
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 sudo mkdir -p $DATA_DIR
@@ -333,6 +328,16 @@ safe_chown -R $STACK_USER $DATA_DIR
 LOCAL_HOSTNAME=`hostname -s`
 if [ -z "`grep ^127.0.0.1 /etc/hosts | grep $LOCAL_HOSTNAME`" ]; then
     sudo sed -i "s/\(^127.0.0.1.*\)/\1 $LOCAL_HOSTNAME/" /etc/hosts
+fi
+
+# If you have all the repos installed above already setup (e.g. a CI
+# situation where they are on your image) you may choose to skip this
+# to speed things up
+SKIP_EPEL_INSTALL=$(trueorfalse False SKIP_EPEL_INSTALL)
+
+if is_fedora && [[ $DISTRO == "rhel7" ]] && \
+        [[ ${SKIP_EPEL_INSTALL} != True ]]; then
+    _install_epel_and_rdo
 fi
 
 # Ensure python is installed
@@ -393,10 +398,6 @@ function echo_nolog {
 TIMESTAMP_FORMAT=${TIMESTAMP_FORMAT:-"%F-%H%M%S"}
 LOGDAYS=${LOGDAYS:-7}
 CURRENT_LOG_TIME=$(date "+$TIMESTAMP_FORMAT")
-
-if [[ -n ${LOGDIR:-} ]]; then
-    mkdir -p $LOGDIR
-fi
 
 if [[ -n "$LOGFILE" ]]; then
     # Clean up old log files.  Append '.*' to the user-specified
