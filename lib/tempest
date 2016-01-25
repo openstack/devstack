@@ -473,7 +473,7 @@ function configure_tempest {
     DEFAULT_SWIFT_OPT+=", container_sync, crossdomain, formpost, ratelimit, slo"
     DEFAULT_SWIFT_OPT+=", staticweb, tempauth, tempurl"
 
-    local object_storage_api_extensions="${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_VOL_EXT}"
+    local object_storage_api_extensions="${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_OPT}"
     if [[ ! -z "$DISABLE_OBJECT_STORAGE_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$(iniget $tmp_cfg_file object-storage-feature-enabled discoverable_apis | tr -d " ")}
