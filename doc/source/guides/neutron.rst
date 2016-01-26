@@ -23,7 +23,9 @@ Physical Network Setup
 In most cases where DevStack is being deployed with a single
 interface, there is a hardware router that is being used for external
 connectivity and DHCP. The developer machine is connected to this
-network and is on a shared subnet with other machines.
+network and is on a shared subnet with other machines.  The
+`local.conf` exhibited here assumes that 1500 is a reasonable MTU to
+use on that network.
 
 .. nwdiag::
 
@@ -433,6 +435,16 @@ bridge, to forward traffic sent by guest VMs.
 
 Miscellaneous Tips
 ==================
+
+Non-Standard MTU on the Physical Network
+----------------------------------------
+
+DevStack defaults to assume that the MTU on the physical network
+is 1500.  A different MTU can be specified by adding the following to
+the `localrc` part of `local.conf` on each machine.
+
+::
+    Q_ML2_PLUGIN_PATH_MTU=1500
 
 
 Disabling Next Generation Firewall Tools
