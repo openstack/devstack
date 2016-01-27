@@ -475,6 +475,8 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT s3_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
 
+    iniset $NOVA_CONF key_manager api_class nova.keymgr.conf_key_mgr.ConfKeyManager
+
     if is_fedora || is_suse; then
         # nova defaults to /usr/local/bin, but fedora and suse pip like to
         # install things in /usr/bin
