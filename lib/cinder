@@ -259,7 +259,6 @@ function configure_cinder {
 
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    iniset $CINDER_CONF DEFAULT verbose True
 
     iniset $CINDER_CONF DEFAULT iscsi_helper "$CINDER_ISCSI_HELPER"
     iniset $CINDER_CONF database connection `database_connection_url cinder`
