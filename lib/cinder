@@ -273,6 +273,8 @@ function configure_cinder {
 
     iniset $CINDER_CONF DEFAULT os_region_name "$REGION_NAME"
 
+    iniset $CINDER_CONF key_manager api_class cinder.keymgr.conf_key_mgr.ConfKeyManager
+
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
         local enabled_backends=""
         local default_name=""
