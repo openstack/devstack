@@ -292,7 +292,7 @@ EOF
     sudo yum-config-manager --enable rhel-7-server-optional-rpms
 
     # install the lastest RDO
-    sudo yum install -y https://rdoproject.org/repos/rdo-release.rpm
+    is_package_installed rdo-release || yum_install https://rdoproject.org/repos/rdo-release.rpm
 
     if is_oraclelinux; then
         sudo yum-config-manager --enable ol7_optional_latest ol7_addons ol7_MySQL56
