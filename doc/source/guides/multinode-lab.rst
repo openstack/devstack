@@ -373,3 +373,43 @@ If you forgot to set the root password you can do this:
 ::
 
     mysqladmin -u root -pnova password 'supersecret'
+
+Live Migration
+--------------
+
+In order for live migration to work with the default live migration URI::
+
+    [libvirt]
+    live_migration_uri = qemu+ssh://stack@%s/system
+
+SSH keys need to be exchanged between each compute node:
+
+1. The SOURCE root user's public RSA key (likely in /root/.ssh/id_rsa.pub)
+   needs to be in the DESTINATION stack user's authorized_keys file
+   (~stack/.ssh/authorized_keys).  This can be accomplished by manually
+   copying the contents from the file on the SOURCE to the DESTINATION.  If
+   you have a password configured for the stack user, then you can use the
+   following command to accomplish the same thing::
+
+        ssh-copy-id -i /root/.ssh/id_rsa.pub stack@DESTINATION
+
+2. The DESTINATION host's public ECDSA key (/etc/ssh/ssh_host_ecdsa_key.pub)
+   needs to be in the SOURCE root user's known_hosts file
+   (/root/.ssh/known_hosts).  This can be accomplished by running the
+   following on the SOURCE machine (hostname must be used)::
+
+        ssh-keyscan -H DEST_HOSTNAME | sudo tee -a /root/.ssh/known_hosts
+
+In essence, this means that every compute node's root user's public RSA key
+must exist in every other compute node's stack user's authorized_keys file and
+every compute node's public ECDSA key needs to be in every other compute
+node's root user's known_hosts file.  Please note that if the root or stack
+user does not have a SSH key, one can be generated using::
+
+    ssh-keygen -t rsa
+
+The above steps are necessary because libvirtd runs as root when the
+live_migration_uri uses the "qemu:///system" family of URIs.  For more
+information, see the `libvirt documentation`_.
+
+.. _libvirt documentation: https://libvirt.org/drvqemu.html#securitydriver
