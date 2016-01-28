@@ -315,6 +315,7 @@ function configure_tempest {
     if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
         iniset $TEMPEST_CONFIG identity ca_certificates_file $SSL_BUNDLE_FILE
     fi
+    iniset $TEMPEST_CONFIG identity identity-feature-enabled api_extensions OS-EC2
 
     # Image
     # We want to be able to override this variable in the gate to avoid
