@@ -6,6 +6,8 @@ This guide will walk you through using OpenStack neutron with the ML2
 plugin and the Open vSwitch mechanism driver.
 
 
+.. _single-interface-ovs:
+
 Using Neutron with a Single Interface
 =====================================
 
@@ -76,6 +78,8 @@ serving as a hypervisor for guest instances.
         PUBLIC_NETWORK_GATEWAY="172.18.161.1"
         Q_L3_ENABLED=True
         PUBLIC_INTERFACE=eth0
+
+        # Open vSwitch provider networking configuration
         Q_USE_PROVIDERNET_FOR_PUBLIC=True
         OVS_PHYSICAL_BRIDGE=br-ex
         PUBLIC_BRIDGE=br-ex
@@ -413,7 +417,7 @@ compute node 1.
         # Services that a compute node runs
         ENABLED_SERVICES=n-cpu,rabbit,q-agt
 
-        ## Neutron options
+        ## Open vSwitch provider networking options
         PHYSICAL_NETWORK=default
         OVS_PHYSICAL_BRIDGE=br-ex
         PUBLIC_INTERFACE=eth1
@@ -486,3 +490,48 @@ Extension drivers for the ML2 plugin are set with the variable
 by default. If you want to remove all the extension drivers (even
 'port_security'), set ``Q_ML2_PLUGIN_EXT_DRIVERS`` to blank.
 
+
+Using Linux Bridge instead of Open vSwitch
+------------------------------------------
+
+The configuration for using the Linux Bridge ML2 driver is fairly
+straight forward. The Linux Bridge configuration for DevStack is similar
+to the :ref:`Open vSwitch based single interface <single-interface-ovs>`
+setup, with small modifications for the interface mappings.
+
+
+::
+
+    [[local|localrc]]
+    HOST_IP=172.18.161.6
+    SERVICE_HOST=172.18.161.6
+    MYSQL_HOST=172.18.161.6
+    RABBIT_HOST=172.18.161.6
+    GLANCE_HOSTPORT=172.18.161.6:9292
+    ADMIN_PASSWORD=secrete
+    DATABASE_PASSWORD=secrete
+    RABBIT_PASSWORD=secrete
+    SERVICE_PASSWORD=secrete
+
+    # Do not use Nova-Network
+    disable_service n-net
+    # Enable Neutron
+    ENABLED_SERVICES+=,q-svc,q-dhcp,q-meta,q-agt,q-l3
+
+
+    ## Neutron options
+    Q_USE_SECGROUP=True
+    FLOATING_RANGE="172.18.161.0/24"
+    FIXED_RANGE="10.0.0.0/24"
+    Q_FLOATING_ALLOCATION_POOL=start=172.18.161.250,end=172.18.161.254
+    PUBLIC_NETWORK_GATEWAY="172.18.161.1"
+    Q_L3_ENABLED=True
+    PUBLIC_INTERFACE=eth0
+
+    Q_USE_PROVIDERNET_FOR_PUBLIC=True
+
+    # Linuxbridge Settings
+    Q_AGENT=linuxbridge
+    LB_PHYSICAL_INTERFACE=eth0
+    PUBLIC_PHYSICAL_NETWORK=default
+    LB_INTERFACE_MAPPINGS=default:eth0
