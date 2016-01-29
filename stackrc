@@ -130,7 +130,7 @@ elif [[ -f $RC_DIR/.localrc.auto ]]; then
 fi
 
 # Configure Identity API version: 2.0, 3
-IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
+IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
 
 # Set the option ENABLE_IDENTITY_V2 to True. It defines whether the DevStack
 # deployment will be deploying the Identity v2 pipelines. If this option is set
