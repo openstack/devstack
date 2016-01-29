@@ -96,7 +96,7 @@ FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"True"}
 
 # Nova supports pluggable schedulers.  The default ``FilterScheduler``
 # should work in most cases.
-SCHEDULER=${SCHEDULER:-nova.scheduler.filter_scheduler.FilterScheduler}
+SCHEDULER=${SCHEDULER:-filter_scheduler}
 
 # The following FILTERS contains SameHostFilter and DifferentHostFilter with
 # the default filters.
