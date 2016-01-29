@@ -643,8 +643,18 @@ In RegionOne:
 In RegionTwo:
 
 ::
-   
+
     disable_service horizon
     KEYSTONE_SERVICE_HOST=<KEYSTONE_IP_ADDRESS_FROM_REGION_ONE>
     KEYSTONE_AUTH_HOST=<KEYSTONE_IP_ADDRESS_FROM_REGION_ONE>
     REGION_NAME=RegionTwo
+
+Disabling Identity API v2
++++++++++++++++++++++++++
+
+The Identity API v2 is deprecated as of Mitaka and it is recommended to only
+use the v3 API. It is possible to setup keystone without v2 API, by doing:
+
+::
+
+    ENABLE_IDENTITY_V2=False
