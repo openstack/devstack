@@ -92,6 +92,51 @@ function assert_empty {
     fi
 }
 
+# assert the arguments evaluate to true
+#  assert_true "message" arg1 arg2
+function assert_true {
+    local lineno
+    lineno=`caller 0 | awk '{print $1}'`
+    local function
+    function=`caller 0 | awk '{print $2}'`
+    local msg=$1
+    shift
+
+    $@
+    if [ $? -eq 0 ]; then
+        PASS=$((PASS+1))
+        echo "PASS: $function:L$lineno - $msg"
+    else
+        FAILED_FUNCS+="$function:L$lineno\n"
+        echo "ERROR: test failed in $function:L$lineno!"
+        echo "  $msg"
+        ERROR=$((ERROR+1))
+    fi
+}
+
+# assert the arguments evaluate to false
+#  assert_false "message" arg1 arg2
+function assert_false {
+    local lineno
+    lineno=`caller 0 | awk '{print $1}'`
+    local function
+    function=`caller 0 | awk '{print $2}'`
+    local msg=$1
+    shift
+
+    $@
+    if [ $? -eq 0 ]; then
+        FAILED_FUNCS+="$function:L$lineno\n"
+        echo "ERROR: test failed in $function:L$lineno!"
+        echo "  $msg"
+        ERROR=$((ERROR+1))
+    else
+        PASS=$((PASS+1))
+        echo "PASS: $function:L$lineno - $msg"
+    fi
+}
+
+
 # Print a summary of passing and failing tests and exit
 # (with an error if we have failed tests)
 #  usage: report_results

@@ -529,12 +529,58 @@ function vercmp_numbers {
     typeset v1=$1 v2=$2 sep
     typeset -a ver1 ver2
 
+    deprecated "vercmp_numbers is deprecated for more generic vercmp"
+
     IFS=. read -ra ver1 <<< "$v1"
     IFS=. read -ra ver2 <<< "$v2"
 
     _vercmp_r "${#ver1[@]}" "${ver1[@]}" "${ver2[@]}"
 }
 
+# vercmp ver1 op ver2
+#  Compare VER1 to VER2
+#   - op is one of < <= == >= >
+#   - returns true if satisified
+#  e.g.
+#  if vercmp 1.0 "<" 2.0; then
+#    ...
+#  fi
+function vercmp {
+    local v1=$1
+    local op=$2
+    local v2=$3
+    local result
+
+    # sort the two numbers with sort's "-V" argument.  Based on if v2
+    # swapped places with v1, we can determine ordering.
+    result=$(echo -e "$v1\n$v2" | sort -V | head -1)
+
+    case $op in
+        "==")
+            [ "$v1" = "$v2" ]
+            return
+            ;;
+        ">")
+            [ "$v1" != "$v2" ] && [ "$result" = "$v2" ]
+            return
+            ;;
+        "<")
+            [ "$v1" != "$v2" ] && [ "$result" = "$v1" ]
+            return
+            ;;
+        ">=")
+            [ "$result" = "$v2" ]
+            return
+            ;;
+        "<=")
+            [ "$result" = "$v1" ]
+            return
+            ;;
+        *)
+            die $LINENO "unrecognised op: $op"
+            ;;
+    esac
+}
 
 # This function sets log formatting options for colorizing log
 # output to stdout. It is meant to be called by lib modules.
