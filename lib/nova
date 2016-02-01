@@ -579,7 +579,7 @@ function create_nova_conf {
         iniset $NOVA_CONF vnc vncserver_listen "$VNCSERVER_LISTEN"
         iniset $NOVA_CONF vnc vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
         iniset $NOVA_CONF DEFAULT novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-        iniset $NOVA_CONF DEFAULT xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $NOVA_CONF vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
     else
         iniset $NOVA_CONF vnc enabled false
     fi
