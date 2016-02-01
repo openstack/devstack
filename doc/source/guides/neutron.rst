@@ -448,6 +448,7 @@ is 1500.  A different MTU can be specified by adding the following to
 the `localrc` part of `local.conf` on each machine.
 
 ::
+
     Q_ML2_PLUGIN_PATH_MTU=1500
 
 
