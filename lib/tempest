@@ -383,6 +383,11 @@ function configure_tempest {
 
     # Orchestration Tests
     if is_service_enabled heat; then
+        # Though this is not needed by heat, some tempest tests explicitly
+        # try to set this role. Removing them from the tempest tests breaks
+        # some non-devstack CIs.
+        get_or_create_role "heat_stack_owner"
+
         if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
             iniset $TEMPEST_CONFIG orchestration image_ref $(basename "${HEAT_CFN_IMAGE_URL%.*}")
         fi
@@ -396,7 +401,7 @@ function configure_tempest {
             iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
         fi
         iniset $TEMPEST_CONFIG orchestration build_timeout 900
-        iniset $TEMPEST_CONFIG orchestration stack_owner_role "_member_"
+        iniset $TEMPEST_CONFIG orchestration stack_owner_role "heat_stack_owner"
     fi
 
     # Scenario
