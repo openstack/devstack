@@ -86,6 +86,7 @@ function write_clouds_yaml {
     if [ -f "$SSL_BUNDLE_FILE" ]; then
         CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
     fi
+    # demo -> devstack
     $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack \
@@ -96,6 +97,20 @@ function write_clouds_yaml {
         --os-username demo \
         --os-password $ADMIN_PASSWORD \
         --os-project-name demo
+
+    # alt_demo -> devstack-alt
+    $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack \
+        --os-region-name $REGION_NAME \
+        --os-identity-api-version 3 \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_AUTH_URI \
+        --os-username alt_demo \
+        --os-password $ADMIN_PASSWORD \
+        --os-project-name alt_demo
+
+    # admin -> devstack-admin
     $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack-admin \
