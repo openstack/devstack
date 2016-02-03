@@ -87,6 +87,8 @@ load_plugin_settings
 # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
 GetOSVersion
 
+set -o xtrace
+
 # Run extras
 # ==========
 
