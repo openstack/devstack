@@ -327,6 +327,8 @@ function configure_keystone {
 # --                   --         Member
 # demo                 admin      admin
 # demo                 demo       Member, anotherrole
+# alt_demo             admin      admin
+# alt_demo             alt_demo   Member, anotherrole
 # invisible_to_admin   demo       Member
 
 # Group                Users      Roles                 Tenant
@@ -387,6 +389,18 @@ function create_keystone_accounts {
     get_or_add_user_project_role $another_role $demo_user $demo_tenant
     get_or_add_user_project_role $member_role $demo_user $invis_tenant
 
+    # alt_demo
+    local alt_demo_tenant
+    alt_demo_tenant=$(get_or_create_project "alt_demo" default)
+    local alt_demo_user
+    alt_demo_user=$(get_or_create_user "alt_demo" \
+        "$ADMIN_PASSWORD" "default" "alt_demo@example.com")
+
+    get_or_add_user_project_role $member_role $alt_demo_user $alt_demo_tenant
+    get_or_add_user_project_role $admin_role $admin_user $alt_demo_tenant
+    get_or_add_user_project_role $another_role $alt_demo_user $alt_demo_tenant
+
+    # groups
     local admin_group
     admin_group=$(get_or_create_group "admins" \
         "default" "openstack admin group")
@@ -396,6 +410,8 @@ function create_keystone_accounts {
 
     get_or_add_group_project_role $member_role $non_admin_group $demo_tenant
     get_or_add_group_project_role $another_role $non_admin_group $demo_tenant
+    get_or_add_group_project_role $member_role $non_admin_group $alt_demo_tenant
+    get_or_add_group_project_role $another_role $non_admin_group $alt_demo_tenant
     get_or_add_group_project_role $admin_role $admin_group $admin_tenant
 }
 
