@@ -695,6 +695,22 @@ if [[ "$OFFLINE" != "True" ]]; then
     PYPI_ALTERNATIVE_URL=${PYPI_ALTERNATIVE_URL:-""} $TOP_DIR/tools/install_pip.sh
 fi
 
+# NOTE(tonyb): This should be removed ASAP
+# testtools 2.0.0 was released 2016-02-04 and has a hard requirement on
+# on fixtures >=1.3.0 which isn't compatible with stable/kilo's
+# global-requirements.
+#
+# We can't land an update to requirements to cap testtools as we install
+# testtools (2.0.0) too soon and nothing we install from git in a typical
+# devstack run requires testtools (it's only listed in
+# test-requirements.txt) get 2.0.0.
+#
+# Manually force testtools to match the desired requirements spec until we
+# can:
+# . Land the g-r patch
+# . merge the update and release that in os-testr (stable/kilo)
+pip_install "testtools>=0.9.36,!=1.2.0,<2.0.0"
+
 # Install subunit for the subunit output stream
 pip_install_gr os-testr
 
