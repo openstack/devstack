@@ -14,6 +14,9 @@ unset LANGUAGE
 LC_ALL=C
 export LC_ALL
 
+# Make tracing more educational
+export PS4='+ ${BASH_SOURCE}:${FUNCNAME[0]}:L${LINENO}:   '
+
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
