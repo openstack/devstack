@@ -101,7 +101,7 @@ function write_clouds_yaml {
     # alt_demo -> devstack-alt
     $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
-        --os-cloud devstack \
+        --os-cloud devstack-alt \
         --os-region-name $REGION_NAME \
         --os-identity-api-version 3 \
         $CA_CERT_ARG \
