@@ -433,15 +433,18 @@ function configure_neutron {
 
     # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
     if is_service_enabled q-lbaas; then
+        deprecated "Configuring q-lbaas through devstack is deprecated"
         _configure_neutron_lbaas
     fi
     if is_service_enabled q-metering; then
         _configure_neutron_metering
     fi
     if is_service_enabled q-vpn; then
+        deprecated "Configuring q-vpn through devstack is deprecated"
         _configure_neutron_vpn
     fi
     if is_service_enabled q-fwaas; then
+        deprecated "Configuring q-fwaas through devstack is deprecated"
         _configure_neutron_fwaas
     fi
     if is_service_enabled q-agt q-svc; then

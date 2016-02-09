@@ -259,6 +259,7 @@ function configure_keystone {
         # Configure ``keystone.conf`` to use sql
         inicomment $KEYSTONE_CONF catalog template_file
     else
+        deprecated "Using templated service catalog in devstack is deprecated"
         cp -p $FILES/default_catalog.templates $KEYSTONE_CATALOG
 
         # Add swift endpoints to service catalog if swift is enabled
