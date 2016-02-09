@@ -321,7 +321,7 @@ function configure_tempest {
     local tmp_cfg_file
     tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
-    tox -revenv -- tempest verify-config -uro $tmp_cfg_file
+    tox -revenv -- tempest verify-config -u -r -o $tmp_cfg_file
 
     local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
