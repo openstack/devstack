@@ -1,5 +1,6 @@
 cryptsetup
 genisoimage
+gir1.2-libosinfo-1.0
 lvm2 # NOPRIME
 open-iscsi
 python-guestfs # NOPRIME

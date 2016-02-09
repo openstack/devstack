@@ -1,5 +1,6 @@
 cryptsetup
 genisoimage
+libosinfo
 lvm2
 open-iscsi
 sg3_utils
