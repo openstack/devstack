@@ -3,13 +3,7 @@ Listen %ADMINPORT%
 LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" keystone_combined
 
 <Directory %KEYSTONE_BIN%>
-    <IfVersion >= 2.4>
-        Require all granted
-    </IfVersion>
-    <IfVersion < 2.4>
-        Order allow,deny
-        Allow from all
-    </IfVersion>
+    Require all granted
 </Directory>
 
 <VirtualHost *:%PUBLICPORT%>
@@ -18,9 +12,7 @@ LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" 
     WSGIScriptAlias / %KEYSTONE_BIN%/keystone-wsgi-public
     WSGIApplicationGroup %{GLOBAL}
     WSGIPassAuthorization On
-    <IfVersion >= 2.4>
-      ErrorLogFormat "%{cu}t %M"
-    </IfVersion>
+    ErrorLogFormat "%M"
     ErrorLog /var/log/%APACHE_NAME%/keystone.log
     CustomLog /var/log/%APACHE_NAME%/keystone_access.log keystone_combined
     %SSLENGINE%
@@ -34,9 +26,7 @@ LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" 
     WSGIScriptAlias / %KEYSTONE_BIN%/keystone-wsgi-admin
     WSGIApplicationGroup %{GLOBAL}
     WSGIPassAuthorization On
-    <IfVersion >= 2.4>
-      ErrorLogFormat "%{cu}t %M"
-    </IfVersion>
+    ErrorLogFormat "%M"
     ErrorLog /var/log/%APACHE_NAME%/keystone.log
     CustomLog /var/log/%APACHE_NAME%/keystone_access.log keystone_combined
     %SSLENGINE%
