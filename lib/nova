@@ -415,29 +415,28 @@ function create_nova_accounts {
         # this service user when notifying nova of changes and that requires the admin role.
         create_service_user "nova" "admin"
 
-        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-            local nova_api_url
-            if [[ "$NOVA_USE_MOD_WSGI" == "False" ]]; then
-                nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT"
-            else
-                nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST/compute"
-            fi
-
-            get_or_create_service "nova_legacy" "compute_legacy" \
-                "Nova Compute Service (Legacy 2.0)"
-            get_or_create_endpoint "compute_legacy" \
-                "$REGION_NAME" \
-                "$nova_api_url/v2/\$(tenant_id)s" \
-                "$nova_api_url/v2/\$(tenant_id)s" \
-                "$nova_api_url/v2/\$(tenant_id)s"
-
-            get_or_create_service "nova" "compute" "Nova Compute Service"
-            get_or_create_endpoint "compute" \
-                "$REGION_NAME" \
-                "$nova_api_url/v2.1/\$(tenant_id)s" \
-                "$nova_api_url/v2.1/\$(tenant_id)s" \
-                "$nova_api_url/v2.1/\$(tenant_id)s"
+        local nova_api_url
+        if [[ "$NOVA_USE_MOD_WSGI" == "False" ]]; then
+            nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT"
+        else
+            nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST/compute"
         fi
+
+        get_or_create_service "nova_legacy" "compute_legacy" "Nova Compute Service (Legacy 2.0)"
+        get_or_create_endpoint \
+            "compute_legacy" \
+            "$REGION_NAME" \
+            "$nova_api_url/v2/\$(tenant_id)s" \
+            "$nova_api_url/v2/\$(tenant_id)s" \
+            "$nova_api_url/v2/\$(tenant_id)s"
+
+        get_or_create_service "nova" "compute" "Nova Compute Service"
+        get_or_create_endpoint \
+            "compute" \
+            "$REGION_NAME" \
+            "$nova_api_url/v2.1/\$(tenant_id)s" \
+            "$nova_api_url/v2.1/\$(tenant_id)s" \
+            "$nova_api_url/v2.1/\$(tenant_id)s"
     fi
 
     if is_service_enabled n-api; then
@@ -451,15 +450,13 @@ function create_nova_accounts {
 
     # S3
     if is_service_enabled swift3; then
-        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-
-            get_or_create_service "s3" "s3" "S3"
-            get_or_create_endpoint "s3" \
-                "$REGION_NAME" \
-                "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
-                "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
-                "http://$SERVICE_HOST:$S3_SERVICE_PORT"
-        fi
+        get_or_create_service "s3" "s3" "S3"
+        get_or_create_endpoint \
+            "s3" \
+            "$REGION_NAME" \
+            "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
+            "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
+            "http://$SERVICE_HOST:$S3_SERVICE_PORT"
     fi
 }
 

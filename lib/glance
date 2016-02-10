@@ -244,15 +244,13 @@ function create_glance_accounts {
             get_or_add_user_project_role "ResellerAdmin" $glance_swift_user $SERVICE_TENANT_NAME
         fi
 
-        if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-
-            get_or_create_service "glance" "image" "Glance Image Service"
-            get_or_create_endpoint "image" \
-                "$REGION_NAME" \
-                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
-                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
-                "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
-        fi
+        get_or_create_service "glance" "image" "Glance Image Service"
+        get_or_create_endpoint \
+            "image" \
+            "$REGION_NAME" \
+            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
+            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
+            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
     fi
 }
 

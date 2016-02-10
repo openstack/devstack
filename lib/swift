@@ -612,8 +612,6 @@ function create_swift_accounts {
     export swiftusertest3_password=testing3
     export swiftusertest4_password=testing4
 
-    KEYSTONE_CATALOG_BACKEND=${KEYSTONE_CATALOG_BACKEND:-sql}
-
     local another_role
     another_role=$(get_or_create_role "anotherrole")
 
@@ -621,15 +619,13 @@ function create_swift_accounts {
     # temp urls, which break when uploaded by a non-admin role
     create_service_user "swift" "admin"
 
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-
-        get_or_create_service "swift" "object-store" "Swift Service"
-        get_or_create_endpoint "object-store" \
-            "$REGION_NAME" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT" \
-            "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s"
-    fi
+    get_or_create_service "swift" "object-store" "Swift Service"
+    get_or_create_endpoint \
+        "object-store" \
+        "$REGION_NAME" \
+        "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s" \
+        "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT" \
+        "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s"
 
     local swift_tenant_test1
     swift_tenant_test1=$(get_or_create_project swifttenanttest1 default)
