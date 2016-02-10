@@ -478,7 +478,7 @@ function configure_neutron {
 function create_nova_conf_neutron {
     iniset $NOVA_CONF DEFAULT network_api_class "nova.network.neutronv2.api.API"
 
-    iniset $NOVA_CONF neutron auth_plugin "v3password"
+    iniset $NOVA_CONF neutron auth_type "password"
     iniset $NOVA_CONF neutron auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v3"
     iniset $NOVA_CONF neutron username "$Q_ADMIN_USERNAME"
     iniset $NOVA_CONF neutron password "$SERVICE_PASSWORD"
@@ -1155,7 +1155,7 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
 
-    iniset $NEUTRON_CONF nova auth_plugin password
+    iniset $NEUTRON_CONF nova auth_type password
     iniset $NEUTRON_CONF nova auth_url $KEYSTONE_AUTH_URI
     iniset $NEUTRON_CONF nova username nova
     iniset $NEUTRON_CONF nova password $SERVICE_PASSWORD
