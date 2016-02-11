@@ -89,7 +89,6 @@ function configure_horizon {
     cp $HORIZON_SETTINGS $local_settings
 
     _horizon_config_set $local_settings "" WEBROOT \"$HORIZON_APACHE_ROOT/\"
-    _horizon_config_set $local_settings "" CUSTOM_THEME_PATH \"themes/webroot\"
 
     _horizon_config_set $local_settings "" COMPRESS_OFFLINE True
     _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_DEFAULT_ROLE \"Member\"
