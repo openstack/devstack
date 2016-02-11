@@ -379,24 +379,6 @@ that matches requirements.
 
         PIP_UPGRADE=True
 
-
-Service Catalog Backend
------------------------
-
-By default DevStack uses Keystone's ``sql`` service catalog backend.
-An alternate ``template`` backend is also available, however, it does
-not support the ``service-*`` and ``endpoint-*`` commands of the
-``keystone`` CLI.  To do so requires the ``sql`` backend be enabled
-with ``KEYSTONE_CATALOG_BACKEND``:
-
-    ::
-
-        KEYSTONE_CATALOG_BACKEND=template
-
-DevStack's default configuration in ``sql`` mode is set in
-``lib/keystone``
-
-
 Guest Images
 ------------
 
