@@ -41,7 +41,7 @@ function configure_nova_hypervisor {
 
     iniset $NOVA_CONF DEFAULT compute_driver nova.virt.ironic.IronicDriver
     iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
-    iniset $NOVA_CONF DEFAULT scheduler_host_manager nova.scheduler.ironic_host_manager.IronicHostManager
+    iniset $NOVA_CONF DEFAULT scheduler_host_manager ironic_host_manager
     iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
     iniset $NOVA_CONF DEFAULT reserved_host_memory_mb 0
     # ironic section
