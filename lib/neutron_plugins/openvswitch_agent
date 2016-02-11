@@ -37,6 +37,7 @@ function neutron_plugin_configure_l3_agent {
 }
 
 function neutron_plugin_configure_plugin_agent {
+    local mappings_array mapping phys_bridge
     # Setup integration bridge
     _neutron_ovs_base_setup_bridge $OVS_BRIDGE
     _neutron_ovs_base_configure_firewall_driver
@@ -58,9 +59,15 @@ function neutron_plugin_configure_plugin_agent {
     # complex physical network configurations.
     if [[ "$OVS_BRIDGE_MAPPINGS" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
         OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
+    fi
 
-        # Configure bridge manually with physical interface as port for multi-node
-        _neutron_ovs_base_add_bridge $OVS_PHYSICAL_BRIDGE
+    if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
+        IFS=',' read -a mappings_array <<< "$OVS_BRIDGE_MAPPINGS"
+        for mapping in "${mappings_array[@]}"; do
+            phys_bridge=`echo $mapping | cut -f 2 -d ":"`
+            # Configure bridge manually with physical interface as port for multi-node
+            _neutron_ovs_base_add_bridge $phys_bridge
+        done
     fi
     if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings $OVS_BRIDGE_MAPPINGS
