@@ -7,7 +7,8 @@
 _XTRACE_NEUTRON_FIREWALL=$(set +o | grep xtrace)
 set +o xtrace
 
-FWAAS_PLUGIN=neutron_fwaas.services.firewall.fwaas_plugin.FirewallPlugin
+FWAAS_PLUGIN=${FWAAS_PLUGIN:-neutron_fwaas.services.firewall.fwaas_plugin.FirewallPlugin}
+FWAAS_DRIVER=${FWAAS_DRIVER:-neutron_fwaas.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver}
 
 function neutron_fwaas_configure_common {
     _neutron_service_plugin_class_add $FWAAS_PLUGIN
@@ -21,7 +22,7 @@ function neutron_fwaas_configure_driver {
     cp $NEUTRON_FWAAS_DIR/etc/fwaas_driver.ini.sample $FWAAS_DRIVER_CONF_FILENAME
 
     iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas enabled True
-    iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas driver "neutron_fwaas.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver"
+    iniset_multiline $FWAAS_DRIVER_CONF_FILENAME fwaas driver "$FWAAS_DRIVER"
 }
 
 function neutron_fwaas_stop {
