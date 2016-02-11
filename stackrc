@@ -483,6 +483,10 @@ GITBRANCH["ironic-lib"]=${IRONIC_LIB_BRANCH:-master}
 # this doesn't exist in a lib file, so set it here
 GITDIR["ironic-lib"]=$DEST/ironic-lib
 
+# diskimage-builder tool
+GITREPO["diskimage-builder"]=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
+GITBRANCH["diskimage-builder"]=${DIB_BRANCH:-master}
+GITDIR["diskimage-builder"]=$DEST/diskimage-builder
 
 ##################
 #
