@@ -110,11 +110,11 @@ How do I turn off a service that is enabled by default?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Services can be turned off by adding ``disable_service xxx`` to
-``local.conf`` (using ``n-vol`` in this example):
+``local.conf`` (using ``c-vol`` in this example):
 
     ::
 
-        disable_service n-vol
+        disable_service c-vol
 
 Is enabling a service that defaults to off done with the reverse of the above?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
