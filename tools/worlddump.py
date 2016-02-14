@@ -56,6 +56,7 @@ def _dump_cmd(cmd):
     print
     try:
         subprocess.check_call(cmd, shell=True)
+        print
     except subprocess.CalledProcessError:
         print "*** Failed to run: %s" % cmd
 
