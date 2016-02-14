@@ -686,8 +686,6 @@ function create_nova_conf_nova_network {
     iniset $NOVA_CONF DEFAULT public_interface "$PUBLIC_INTERFACE"
     iniset $NOVA_CONF DEFAULT vlan_interface "$VLAN_INTERFACE"
     iniset $NOVA_CONF DEFAULT flat_network_bridge "$FLAT_NETWORK_BRIDGE"
-    # force down dhcp leases to 5 minutes, which lets us expire faster
-    iniset $NOVA_CONF DEFAULT dhcp_lease_time 300
     if [ -n "$FLAT_INTERFACE" ]; then
         iniset $NOVA_CONF DEFAULT flat_interface "$FLAT_INTERFACE"
     fi
