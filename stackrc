@@ -488,6 +488,11 @@ GITREPO["diskimage-builder"]=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder
 GITBRANCH["diskimage-builder"]=${DIB_BRANCH:-master}
 GITDIR["diskimage-builder"]=$DEST/diskimage-builder
 
+# neutron-lib library containing neutron stable non-REST interfaces
+GITREPO["neutron-lib"]=${NEUTRON_LIB_REPO:-${GIT_BASE}/openstack/neutron-lib.git}
+GITBRANCH["neutron-lib"]=${NEUTRON_LIB_BRANCH:-master}
+GITDIR["neutron-lib"]=$DEST/neutron-lib
+
 ##################
 #
 #  TripleO / Heat Agent Components

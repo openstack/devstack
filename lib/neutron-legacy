@@ -621,6 +621,13 @@ function init_neutron {
 
 # install_neutron() - Collect source and prepare
 function install_neutron {
+    # Install neutron-lib from git so we make sure we're testing
+    # the latest code.
+    if use_library_from_git "neutron-lib"; then
+        git_clone_by_name "neutron-lib"
+        setup_dev_lib "neutron-lib"
+    fi
+
     git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
     setup_develop $NEUTRON_DIR
     if is_service_enabled q-fwaas; then
