@@ -292,112 +292,71 @@ function warn {
 # ================
 
 # Determine OS Vendor, Release and Update
-# Tested with OS/X, Ubuntu, RedHat, CentOS, Fedora
-# Returns results in global variables:
+
+#
+# NOTE : For portability, you almost certainly do not want to use
+# these variables directly!  The "is_*" functions defined below this
+# bundle up compatible platforms under larger umbrellas that we have
+# determinted are compatible enough (e.g. is_ubuntu covers Ubuntu &
+# Debian, is_fedora covers RPM-based distros).  Higher-level functions
+# such as "install_package" further abstract things in better ways.
+#
 # ``os_VENDOR`` - vendor name: ``Ubuntu``, ``Fedora``, etc
 # ``os_RELEASE`` - major release: ``14.04`` (Ubuntu), ``20`` (Fedora)
-# ``os_UPDATE`` - update: ex. the ``5`` in ``RHEL6.5``
 # ``os_PACKAGE`` - package type: ``deb`` or ``rpm``
-# ``os_CODENAME`` - vendor's codename for release: ``snow leopard``, ``trusty``
-os_VENDOR=""
-os_RELEASE=""
-os_UPDATE=""
-os_PACKAGE=""
-os_CODENAME=""
+# ``os_CODENAME`` - vendor's codename for release: ``trusty``
+
+declare os_VENDOR os_RELEASE os_PACKAGE os_CODENAME
+
+# Make a *best effort* attempt to install lsb_release packages for the
+# user if not available.  Note can't use generic install_package*
+# because they depend on this!
+function _ensure_lsb_release {
+    if [[ -x $(which lsb_release 2>/dev/null) ]]; then
+        return
+    fi
+
+    if [[ -x $(which apt-get 2>/dev/null) ]]; then
+        sudo apt-get install -y lsb-release
+    elif [[ -x $(which zypper 2>/dev/null) ]]; then
+        # XXX: old code paths seem to have assumed SUSE platforms also
+        # had "yum".  Keep this ordered above yum so we don't try to
+        # install the rh package.  suse calls it just "lsb"
+        sudo zypper -y install lsb
+    elif [[ -x $(which dnf 2>/dev/null) ]]; then
+        sudo dnf install -y redhat-lsb-core
+    elif [[ -x $(which yum 2>/dev/null) ]]; then
+        # all rh patforms (fedora, centos, rhel) have this pkg
+        sudo yum install -y redhat-lsb-core
+    else
+        die $LINENO "Unable to find or auto-install lsb_release"
+    fi
+}
 
 # GetOSVersion
+#  Set the following variables:
+#  - os_RELEASE
+#  - os_CODENAME
+#  - os_VENDOR
+#  - os_PACKAGE
 function GetOSVersion {
+    # We only support distros that provide a sane lsb_release
+    _ensure_lsb_release
 
-    # Figure out which vendor we are
-    if [[ -x "`which sw_vers 2>/dev/null`" ]]; then
-        # OS/X
-        os_VENDOR=`sw_vers -productName`
-        os_RELEASE=`sw_vers -productVersion`
-        os_UPDATE=${os_RELEASE##*.}
-        os_RELEASE=${os_RELEASE%.*}
-        os_PACKAGE=""
-        if [[ "$os_RELEASE" =~ "10.7" ]]; then
-            os_CODENAME="lion"
-        elif [[ "$os_RELEASE" =~ "10.6" ]]; then
-            os_CODENAME="snow leopard"
-        elif [[ "$os_RELEASE" =~ "10.5" ]]; then
-            os_CODENAME="leopard"
-        elif [[ "$os_RELEASE" =~ "10.4" ]]; then
-            os_CODENAME="tiger"
-        elif [[ "$os_RELEASE" =~ "10.3" ]]; then
-            os_CODENAME="panther"
-        else
-            os_CODENAME=""
-        fi
-    elif [[ -x $(which lsb_release 2>/dev/null) ]]; then
-        os_VENDOR=$(lsb_release -i -s)
-        os_RELEASE=$(lsb_release -r -s)
-        os_UPDATE=""
-        os_PACKAGE="rpm"
-        if [[ "Debian,Ubuntu,LinuxMint" =~ $os_VENDOR ]]; then
-            os_PACKAGE="deb"
-        elif [[ "SUSE LINUX" =~ $os_VENDOR ]]; then
-            lsb_release -d -s | grep -q openSUSE
-            if [[ $? -eq 0 ]]; then
-                os_VENDOR="openSUSE"
-            fi
-        elif [[ $os_VENDOR == "openSUSE project" ]]; then
-            os_VENDOR="openSUSE"
-        elif [[ $os_VENDOR =~ Red.*Hat ]]; then
-            os_VENDOR="Red Hat"
-        fi
-        os_CODENAME=$(lsb_release -c -s)
-    elif [[ -r /etc/redhat-release ]]; then
-        # Red Hat Enterprise Linux Server release 5.5 (Tikanga)
-        # Red Hat Enterprise Linux Server release 7.0 Beta (Maipo)
-        # CentOS release 5.5 (Final)
-        # CentOS Linux release 6.0 (Final)
-        # Fedora release 16 (Verne)
-        # XenServer release 6.2.0-70446c (xenenterprise)
-        # Oracle Linux release 7
-        # CloudLinux release 7.1
-        os_CODENAME=""
-        for r in "Red Hat" CentOS Fedora XenServer CloudLinux; do
-            os_VENDOR=$r
-            if [[ -n "`grep \"$r\" /etc/redhat-release`" ]]; then
-                ver=`sed -e 's/^.* \([0-9].*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
-                os_CODENAME=${ver#*|}
-                os_RELEASE=${ver%|*}
-                os_UPDATE=${os_RELEASE##*.}
-                os_RELEASE=${os_RELEASE%.*}
-                break
-            fi
-            os_VENDOR=""
-        done
-        if [ "$os_VENDOR" = "Red Hat" ] && [[ -r /etc/oracle-release ]]; then
-            os_VENDOR=OracleLinux
-        fi
-        os_PACKAGE="rpm"
-    elif [[ -r /etc/SuSE-release ]]; then
-        for r in openSUSE "SUSE Linux"; do
-            if [[ "$r" = "SUSE Linux" ]]; then
-                os_VENDOR="SUSE LINUX"
-            else
-                os_VENDOR=$r
-            fi
+    os_RELEASE=$(lsb_release -r -s)
+    os_CODENAME=$(lsb_release -c -s)
+    os_VENDOR=$(lsb_release -i -s)
 
-            if [[ -n "`grep \"$r\" /etc/SuSE-release`" ]]; then
-                os_CODENAME=`grep "CODENAME = " /etc/SuSE-release | sed 's:.* = ::g'`
-                os_RELEASE=`grep "VERSION = " /etc/SuSE-release | sed 's:.* = ::g'`
-                os_UPDATE=`grep "PATCHLEVEL = " /etc/SuSE-release | sed 's:.* = ::g'`
-                break
-            fi
-            os_VENDOR=""
-        done
-        os_PACKAGE="rpm"
-    # If lsb_release is not installed, we should be able to detect Debian OS
-    elif [[ -f /etc/debian_version ]] && [[ $(cat /proc/version) =~ "Debian" ]]; then
-        os_VENDOR="Debian"
+    if [[ $os_VENDOR =~ (Debian|Ubuntu|LinuxMint) ]]; then
         os_PACKAGE="deb"
-        os_CODENAME=$(awk '/VERSION=/' /etc/os-release | sed 's/VERSION=//' | sed -r 's/\"|\(|\)//g' | awk '{print $2}')
-        os_RELEASE=$(awk '/VERSION_ID=/' /etc/os-release | sed 's/VERSION_ID=//' | sed 's/\"//g')
+    else
+        os_PACKAGE="rpm"
     fi
-    export os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
+
+    typeset -xr os_VENDOR
+    typeset -xr os_RELEASE
+    typeset -xr os_PACKAGE
+    typeset -xr os_CODENAME
 }
 
 # Translate the OS version values into common nomenclature
@@ -407,7 +366,8 @@ declare DISTRO
 function GetDistro {
     GetOSVersion
     if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) ]]; then
-        # 'Everyone' refers to Ubuntu / Debian releases by the code name adjective
+        # 'Everyone' refers to Ubuntu / Debian releases by
+        # the code name adjective
         DISTRO=$os_CODENAME
     elif [[ "$os_VENDOR" =~ (Fedora) ]]; then
         # For Fedora, just use 'f' and the release
@@ -415,26 +375,22 @@ function GetDistro {
     elif [[ "$os_VENDOR" =~ (openSUSE) ]]; then
         DISTRO="opensuse-$os_RELEASE"
     elif [[ "$os_VENDOR" =~ (SUSE LINUX) ]]; then
-        # For SLE, also use the service pack
-        if [[ -z "$os_UPDATE" ]]; then
-            DISTRO="sle${os_RELEASE}"
-        else
-            DISTRO="sle${os_RELEASE}sp${os_UPDATE}"
-        fi
-    elif [[ "$os_VENDOR" =~ (Red Hat) || \
+        # just use major release
+        DISTRO="sle${os_RELEASE%.*}"
+    elif [[ "$os_VENDOR" =~ (Red.*Hat) || \
         "$os_VENDOR" =~ (CentOS) || \
         "$os_VENDOR" =~ (OracleLinux) ]]; then
         # Drop the . release as we assume it's compatible
+        # XXX re-evaluate when we get RHEL10
         DISTRO="rhel${os_RELEASE::1}"
     elif [[ "$os_VENDOR" =~ (XenServer) ]]; then
-        DISTRO="xs$os_RELEASE"
+        DISTRO="xs${os_RELEASE%.*}"
     elif [[ "$os_VENDOR" =~ (kvmibm) ]]; then
         DISTRO="${os_VENDOR}${os_RELEASE::1}"
     else
-        # Catch-all for now is Vendor + Release + Update
-        DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
+        die $LINENO "Unable to determine DISTRO"
     fi
-    export DISTRO
+    typeset -xr DISTRO
 }
 
 # Utility function for checking machine architecture

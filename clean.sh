@@ -26,7 +26,7 @@ if [[ -r $TOP_DIR/.stackenv ]]; then
 fi
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
-# ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
+# ``os_RELEASE``, ``os_PACKAGE``, ``os_CODENAME``
 # and ``DISTRO``
 GetDistro
 
