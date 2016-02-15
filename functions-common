@@ -365,8 +365,9 @@ declare DISTRO
 
 function GetDistro {
     GetOSVersion
-    if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) ]]; then
-        # 'Everyone' refers to Ubuntu / Debian releases by
+    if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) || \
+            "$os_VENDOR" =~ (LinuxMint) ]]; then
+        # 'Everyone' refers to Ubuntu / Debian / Mint releases by
         # the code name adjective
         DISTRO=$os_CODENAME
     elif [[ "$os_VENDOR" =~ (Fedora) ]]; then
