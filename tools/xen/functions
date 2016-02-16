@@ -23,9 +23,10 @@ function create_directory_for_kernels {
     if [ -d "/boot/guest" ]; then
         echo "INFO: /boot/guest directory already exists, using that" >&2
     else
-        local LOCALPATH="$(get_local_sr_path)/os-guest-kernels"
-        mkdir -p $LOCALPATH
-        ln -s $LOCALPATH /boot/guest
+        local local_path
+        local_path="$(get_local_sr_path)/os-guest-kernels"
+        mkdir -p $local_path
+        ln -s $local_path /boot/guest
     fi
 }
 
@@ -33,9 +34,10 @@ function create_directory_for_images {
     if [ -d "/images" ]; then
         echo "INFO: /images directory already exists, using that" >&2
     else
-        local LOCALPATH="$(get_local_sr_path)/os-images"
-        mkdir -p $LOCALPATH
-        ln -s $LOCALPATH /images
+        local local_path
+        local_path="$(get_local_sr_path)/os-images"
+        mkdir -p $local_path
+        ln -s $local_path /images
     fi
 }
 
@@ -73,7 +75,7 @@ function find_ip_by_name {
 
         if [ -z "$ipaddress" ]; then
             sleep $period
-            ((i++))
+            i=$((i+1))
         else
             echo $ipaddress
             break

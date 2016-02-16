@@ -94,12 +94,14 @@ function upload_image {
         local path_len
 
         # vmdk adapter type
-        local vmdk_adapter_type="$(head -25 $image | { grep -a -F -m 1 'ddb.adapterType =' $image || true; })"
+        local vmdk_adapter_type
+        vmdk_adapter_type="$(head -25 $image | { grep -a -F -m 1 'ddb.adapterType =' $image || true; })"
         vmdk_adapter_type="${vmdk_adapter_type#*\"}"
         vmdk_adapter_type="${vmdk_adapter_type%?}"
 
         # vmdk disk type
-        local vmdk_create_type="$(head -25 $image | { grep -a -F -m 1 'createType=' $image || true; })"
+        local vmdk_create_type
+        vmdk_create_type="$(head -25 $image | { grep -a -F -m 1 'createType=' $image || true; })"
         vmdk_create_type="${vmdk_create_type#*\"}"
         vmdk_create_type="${vmdk_create_type%\"*}"
 
@@ -109,7 +111,8 @@ function upload_image {
             vmdk_disktype="sparse"
         elif [[ "$vmdk_create_type" = "monolithicFlat" || "$vmdk_create_type" = "vmfs" ]]; then
             # Attempt to retrieve the ``*-flat.vmdk``
-            local flat_fname="$(head -25 $image | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $image || true; })"
+            local flat_fname
+            flat_fname="$(head -25 $image | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $image || true; })"
             flat_fname="${flat_fname#*\"}"
             flat_fname="${flat_fname%?}"
             if [[ -z "$flat_fname" ]]; then
@@ -407,8 +410,10 @@ function ping_check {
 function get_instance_ip {
     local vm_id=$1
     local network_name=$2
-    local nova_result="$(nova show $vm_id)"
+    local nova_result
     local ip
+
+    nova_result="$(nova show $vm_id)"
     ip=$(echo "$nova_result" | grep "$network_name" | get_field 2)
     if [[ $ip = "" ]];then
         echo "$nova_result"
