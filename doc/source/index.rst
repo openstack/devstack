@@ -76,6 +76,7 @@ Walk through various setups used by stackers
 
    guides/single-vm
    guides/single-machine
+   guides/lxc
    guides/multinode-lab
    guides/neutron
    guides/devstack-with-nested-kvm
@@ -95,6 +96,13 @@ All-In-One Single Machine
 Run :doc:`OpenStack on dedicated hardware <guides/single-machine>`  This can include a
 server-class machine or a laptop at home.
 :doc:`[Read] <guides/single-machine>`
+
+All-In-One LXC Container
+-------------------------
+
+Run :doc:`OpenStack in a LXC container <guides/lxc>`. Beneficial for intermediate
+and advanced users. The VMs launched in this cloud will be fully accelerated but
+not all OpenStack features are supported. :doc:`[Read] <guides/lxc>`
 
 Multi-Node Lab
 --------------
