@@ -101,14 +101,24 @@ def iptables_dump():
         _dump_cmd("sudo iptables --line-numbers -L -nv -t %s" % table)
 
 
+def _netns_list():
+    process = subprocess.Popen(['ip', 'netns'], stdout=subprocess.PIPE)
+    stdout, _ = process.communicate()
+    return stdout.split()
+
+
 def network_dump():
     _header("Network Dump")
 
     _dump_cmd("brctl show")
     _dump_cmd("arp -n")
-    _dump_cmd("ip addr")
-    _dump_cmd("ip link")
-    _dump_cmd("ip route")
+    ip_cmds = ["addr", "link", "route"]
+    for cmd in ip_cmds + ['netns']:
+        _dump_cmd("ip %s" % cmd)
+    for netns_ in _netns_list():
+        for cmd in ip_cmds:
+            args = {'netns': netns_, 'cmd': cmd}
+            _dump_cmd('sudo ip netns exec %(netns)s ip %(cmd)s' % args)
 
 
 def ovs_dump():
