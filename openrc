@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# source openrc [username] [tenantname]
+# source openrc [username] [projectname]
 #
-# Configure a set of credentials for $TENANT/$USERNAME:
-#   Set OS_TENANT_NAME to override the default tenant 'demo'
+# Configure a set of credentials for $PROJECT/$USERNAME:
+#   Set OS_PROJECT_NAME to override the default project 'demo'
 #   Set OS_USERNAME to override the default user name 'demo'
 #   Set ADMIN_PASSWORD to set the password for 'admin' and 'demo'
 
@@ -14,7 +14,7 @@ if [[ -n "$1" ]]; then
     OS_USERNAME=$1
 fi
 if [[ -n "$2" ]]; then
-    OS_TENANT_NAME=$2
+    OS_PROJECT_NAME=$2
 fi
 
 # Find the other rc files
@@ -34,13 +34,17 @@ fi
 # Get some necessary configuration
 source $RC_DIR/lib/tls
 
-# The introduction of Keystone to the OpenStack ecosystem has standardized the
-# term **tenant** as the entity that owns resources.  In some places references
-# still exist to the original Nova term **project** for this use.  Also,
-# **tenant_name** is preferred to **tenant_id**.
-export OS_TENANT_NAME=${OS_TENANT_NAME:-demo}
+# The OpenStack ecosystem has standardized the term **project** as the
+# entity that owns resources.  In some places **tenant** remains
+# referenced, but in all cases this just means **project**.  We will
+# warn if we need to turn on legacy **tenant** support to have a
+# working environment.
+export OS_PROJECT_NAME=${OS_PROJECT_NAME:-demo}
 
-# In addition to the owning entity (tenant), nova stores the entity performing
+echo "WARNING: setting legacy OS_TENANT_NAME to support cli tools."
+export OS_TENANT_NAME=$OS_PROJECT_NAME
+
+# In addition to the owning entity (project), nova stores the entity performing
 # the action as the **user**.
 export OS_USERNAME=${OS_USERNAME:-demo}
 
@@ -81,7 +85,7 @@ export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
 
 # Authenticating against an OpenStack cloud using Keystone returns a **Token**
 # and **Service Catalog**.  The catalog contains the endpoints for all services
-# the user/tenant has access to - including nova, glance, keystone, swift, ...
+# the user/project has access to - including nova, glance, keystone, swift, ...
 # We currently recommend using the 2.0 *identity api*.
 #
 export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:5000/v${OS_IDENTITY_API_VERSION}

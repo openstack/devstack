@@ -404,8 +404,8 @@ function configure_nova {
 #
 # Project              User         Roles
 # ------------------------------------------------------------------
-# SERVICE_TENANT_NAME  nova         admin
-# SERVICE_TENANT_NAME  nova         ResellerAdmin (if Swift is enabled)
+# SERVICE_PROJECT_NAME  nova         admin
+# SERVICE_PROJECT_NAME  nova         ResellerAdmin (if Swift is enabled)
 function create_nova_accounts {
 
     # Nova
@@ -444,7 +444,7 @@ function create_nova_accounts {
         if is_service_enabled swift; then
             # Nova needs ResellerAdmin role to download images when accessing
             # swift through the s3 api.
-            get_or_add_user_project_role ResellerAdmin nova $SERVICE_TENANT_NAME
+            get_or_add_user_project_role ResellerAdmin nova $SERVICE_PROJECT_NAME
         fi
     fi
 

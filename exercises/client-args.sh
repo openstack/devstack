@@ -43,19 +43,19 @@ unset NOVA_URL
 unset NOVA_USERNAME
 
 # Save the known variables for later
-export x_TENANT_NAME=$OS_TENANT_NAME
+export x_PROJECT_NAME=$OS_PROJECT_NAME
 export x_USERNAME=$OS_USERNAME
 export x_PASSWORD=$OS_PASSWORD
 export x_AUTH_URL=$OS_AUTH_URL
 
 # Unset the usual variables to force argument processing
-unset OS_TENANT_NAME
+unset OS_PROJECT_NAME
 unset OS_USERNAME
 unset OS_PASSWORD
 unset OS_AUTH_URL
 
 # Common authentication args
-TENANT_ARG="--os-tenant-name=$x_TENANT_NAME"
+PROJECT_ARG="--os-project-name=$x_PROJECT_NAME"
 ARGS="--os-username=$x_USERNAME --os-password=$x_PASSWORD --os-auth-url=$x_AUTH_URL"
 
 # Set global return
@@ -68,7 +68,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
         STATUS_KEYSTONE="Skipped"
     else
         echo -e "\nTest Keystone"
-        if openstack $TENANT_ARG $ARGS catalog show identity; then
+        if openstack $PROJECT_ARG $ARGS catalog show identity; then
             STATUS_KEYSTONE="Succeeded"
         else
             STATUS_KEYSTONE="Failed"
@@ -87,7 +87,7 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     else
         # Test OSAPI
         echo -e "\nTest Nova"
-        if nova $TENANT_ARG $ARGS flavor-list; then
+        if nova $PROJECT_ARG $ARGS flavor-list; then
             STATUS_NOVA="Succeeded"
         else
             STATUS_NOVA="Failed"
@@ -104,7 +104,7 @@ if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
         STATUS_CINDER="Skipped"
     else
         echo -e "\nTest Cinder"
-        if cinder $TENANT_ARG $ARGS list; then
+        if cinder $PROJECT_ARG $ARGS list; then
             STATUS_CINDER="Succeeded"
         else
             STATUS_CINDER="Failed"
@@ -121,7 +121,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
-        if openstack $TENANT_ARG $ARGS image list; then
+        if openstack $PROJECT_ARG $ARGS image list; then
             STATUS_GLANCE="Succeeded"
         else
             STATUS_GLANCE="Failed"
@@ -138,7 +138,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" || "$ENABLED_SERVICES" =~ "s-proxy" ]]; the
         STATUS_SWIFT="Skipped"
     else
         echo -e "\nTest Swift"
-        if swift $TENANT_ARG $ARGS stat; then
+        if swift $PROJECT_ARG $ARGS stat; then
             STATUS_SWIFT="Succeeded"
         else
             STATUS_SWIFT="Failed"
