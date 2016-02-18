@@ -1429,14 +1429,17 @@ function run_process {
     local service=$1
     local command="$2"
     local group=$3
+    local subservice=$4
+
+    local name=${subservice:-$service}
 
     time_start "run_process"
     if is_service_enabled $service; then
         if [[ "$USE_SCREEN" = "True" ]]; then
-            screen_process "$service" "$command" "$group"
+            screen_process "$name" "$command" "$group"
         else
             # Spawn directly without screen
-            _run_process "$service" "$command" "$group" &
+            _run_process "$name" "$command" "$group" &
         fi
     fi
     time_stop "run_process"
