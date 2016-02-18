@@ -9,12 +9,12 @@
 # Stop all processes by setting ``UNSTACK_ALL`` or specifying ``-a``
 # on the command line
 
-UNSTACK_ALL=""
+UNSTACK_ALL=${UNSTACK_ALL:-""}
 
 while getopts ":a" opt; do
     case $opt in
         a)
-            UNSTACK_ALL=""
+            UNSTACK_ALL="-1"
             ;;
     esac
 done
