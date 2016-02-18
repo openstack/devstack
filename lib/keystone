@@ -56,7 +56,21 @@ KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
 KEYSTONE_CATALOG_BACKEND="sql"
 
 # Toggle for deploying Keystone under HTTPD + mod_wsgi
+# Deprecated in Mitaka, use KEYSTONE_DEPLOY instead.
 KEYSTONE_USE_MOD_WSGI=${KEYSTONE_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}}
+
+# KEYSTONE_DEPLOY defines how keystone is deployed, allowed values:
+# - mod_wsgi : Run keystone under Apache HTTPd mod_wsgi
+# - eventlet : Run keystone-all
+if [ -z "$KEYSTONE_DEPLOY" ]; then
+    if [ -z "$KEYSTONE_USE_MOD_WSGI" ]; then
+        KEYSTONE_DEPLOY=mod_wsgi
+    elif [ "$KEYSTONE_USE_MOD_WSGI" == True ]; then
+        KEYSTONE_DEPLOY=mod_wsgi
+    else
+        KEYSTONE_DEPLOY=eventlet
+    fi
+fi
 
 # Select the token persistence backend driver
 KEYSTONE_TOKEN_BACKEND=${KEYSTONE_TOKEN_BACKEND:-sql}
@@ -259,13 +273,13 @@ function configure_keystone {
     fi
 
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$KEYSTONE_USE_MOD_WSGI" == "False" ]  ; then
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$KEYSTONE_DEPLOY" == "eventlet" ]  ; then
         setup_colorized_logging $KEYSTONE_CONF DEFAULT
     fi
 
     iniset $KEYSTONE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
-    if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
+    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         iniset $KEYSTONE_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [%(request_id)s %(user_identity)s] %(instance)s%(message)s"
         iniset $KEYSTONE_CONF DEFAULT logging_default_format_string "%(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [-] %(instance)s%(message)s"
         iniset $KEYSTONE_CONF DEFAULT logging_debug_format_suffix "%(asctime)s.%(msecs)03d %(funcName)s %(pathname)s:%(lineno)d"
@@ -493,7 +507,7 @@ function install_keystone {
         setup_develop $KEYSTONE_DIR ldap
     fi
 
-    if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
+    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         install_apache_wsgi
         if is_ssl_enabled_service "key"; then
             enable_mod_ssl
@@ -511,7 +525,7 @@ function start_keystone {
         auth_protocol="http"
     fi
 
-    if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
+    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         enable_apache_site keystone
         restart_apache_server
         tail_log key /var/log/$APACHE_NAME/keystone.log
@@ -541,7 +555,7 @@ function start_keystone {
 
 # stop_keystone() - Stop running processes
 function stop_keystone {
-    if [ "$KEYSTONE_USE_MOD_WSGI" == "True" ]; then
+    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         disable_apache_site keystone
         restart_apache_server
     fi
