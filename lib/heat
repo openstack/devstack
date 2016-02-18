@@ -196,6 +196,9 @@ function configure_heat {
         iniset $HEAT_CONF DEFAULT enable_stack_abandon true
     fi
 
+    iniset $HEAT_CONF cache enabled "True"
+    iniset $HEAT_CONF cache backend "dogpile.cache.memory"
+
     sudo install -d -o $STACK_USER $HEAT_ENV_DIR $HEAT_TEMPLATES_DIR
 
     # copy the default environment
