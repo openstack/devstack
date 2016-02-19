@@ -1096,8 +1096,9 @@ function _parse_package_files {
                 continue
             fi
 
-            # Assume we want this package
-            package=${line%#*}
+            # Assume we want this package; free-form
+            # comments allowed after a #
+            package=${line%%#*}
             inst_pkg=1
 
             # Look for # dist:xxx in comment
