@@ -73,6 +73,16 @@ PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.1}
 PRIVATE_SUBNET_NAME=${PRIVATE_SUBNET_NAME:-"private-subnet"}
 PUBLIC_SUBNET_NAME=${PUBLIC_SUBNET_NAME:-"public-subnet"}
 
+# Subnetpool defaults
+SUBNETPOOL_NAME=${SUBNETPOOL_NAME:-"shared-default-subnetpool"}
+
+SUBNETPOOL_PREFIX_V4=${SUBNETPOOL_PREFIX_V4:-10.0.0.0/24}
+SUBNETPOOL_PREFIX_V6=${SUBNETPOOL_PREFIX_V6:-2001:db8:8000::/48}
+
+SUBNETPOOL_SIZE_V4=${SUBNETPOOL_SIZE_V4:-26}
+SUBNETPOOL_SIZE_V6=${SUBNETPOOL_SIZE_V6:-64}
+
+
 if is_ssl_enabled_service "neutron" || is_service_enabled tls-proxy; then
     Q_PROTOCOL="https"
 fi
@@ -580,6 +590,8 @@ function create_neutron_initial_network {
         fi
     fi
 
+    AUTO_ALLOCATE_EXT=$(neutron ext-list | grep 'auto-allocated-topology' | get_field 1)
+    SUBNETPOOL_EXT=$(neutron ext-list | grep 'subnet_allocation' | get_field 1)
     if [[ "$Q_L3_ENABLED" == "True" ]]; then
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
@@ -592,11 +604,23 @@ function create_neutron_initial_network {
             die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $Q_ROUTER_NAME"
         fi
 
+        # if the extension is available, then mark the external
+        # network as default, and provision default subnetpools
+        EXTERNAL_NETWORK_FLAGS="--router:external"
+        if [[ -n $AUTO_ALLOCATE_EXT && -n $SUBNETPOOL_EXT ]]; then
+            EXTERNAL_NETWORK_FLAGS="$EXTERNAL_NETWORK_FLAGS --is-default"
+            if [[ "$IP_VERSION" =~ 4.* ]]; then
+                SUBNETPOOL_V4_ID=$(neutron subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
+            fi
+            if [[ "$IP_VERSION" =~ .*6 ]]; then
+                SUBNETPOOL_V6_ID=$(neutron subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --shared --is-default=True | grep ' id ' | get_field 2)
+            fi
+        fi
         # Create an external network, and a subnet. Configure the external network as router gw
         if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
-            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True --provider:network_type=flat --provider:physical_network=${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- $EXTERNAL_NETWORK_FLAGS --provider:network_type=flat --provider:physical_network=${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
         else
-            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- $EXTERNAL_NETWORK_FLAGS | grep ' id ' | get_field 2)
         fi
         die_if_not_set $LINENO EXT_NET_ID "Failure creating EXT_NET_ID for $PUBLIC_NETWORK_NAME"
 
