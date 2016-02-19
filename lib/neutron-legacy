@@ -772,7 +772,11 @@ function stop_neutron_other {
     fi
 
     stop_process q-svc
-    stop_process q-l3
+
+    if is_service_enabled q-l3; then
+        sudo pkill -f "radvd -C $DATA_DIR/neutron/ra"
+        stop_process q-l3
+    fi
 
     if is_service_enabled q-meta; then
         sudo pkill -9 -f neutron-ns-metadata-proxy || :
