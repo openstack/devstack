@@ -493,7 +493,7 @@ function create_nova_conf_neutron {
     iniset $NOVA_CONF neutron username "$Q_ADMIN_USERNAME"
     iniset $NOVA_CONF neutron password "$SERVICE_PASSWORD"
     iniset $NOVA_CONF neutron user_domain_name "Default"
-    iniset $NOVA_CONF neutron project_name "$SERVICE_TENANT_NAME"
+    iniset $NOVA_CONF neutron project_name "$SERVICE_PROJECT_NAME"
     iniset $NOVA_CONF neutron project_domain_name "Default"
     iniset $NOVA_CONF neutron auth_strategy "$Q_AUTH_STRATEGY"
     iniset $NOVA_CONF neutron region_name "$REGION_NAME"
@@ -1193,7 +1193,7 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF nova username nova
     iniset $NEUTRON_CONF nova password $SERVICE_PASSWORD
     iniset $NEUTRON_CONF nova user_domain_id default
-    iniset $NEUTRON_CONF nova project_name $SERVICE_TENANT_NAME
+    iniset $NEUTRON_CONF nova project_name $SERVICE_PROJECT_NAME
     iniset $NEUTRON_CONF nova project_domain_id default
     iniset $NEUTRON_CONF nova region_name $REGION_NAME
 

@@ -1210,7 +1210,7 @@ fi
 
 # Create an access key and secret key for Nova EC2 register image
 if is_service_enabled keystone && is_service_enabled swift3 && is_service_enabled nova; then
-    eval $(openstack ec2 credentials create --user nova --project $SERVICE_TENANT_NAME -f shell -c access -c secret)
+    eval $(openstack ec2 credentials create --user nova --project $SERVICE_PROJECT_NAME -f shell -c access -c secret)
     iniset $NOVA_CONF DEFAULT s3_access_key "$access"
     iniset $NOVA_CONF DEFAULT s3_secret_key "$secret"
     iniset $NOVA_CONF DEFAULT s3_affix_tenant "True"

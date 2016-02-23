@@ -450,7 +450,7 @@ auth_host = ${KEYSTONE_AUTH_HOST}
 auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
 cafile = ${SSL_BUNDLE_FILE}
 admin_user = swift
-admin_tenant_name = ${SERVICE_TENANT_NAME}
+admin_tenant_name = ${SERVICE_PROJECT_NAME}
 admin_password = ${SERVICE_PASSWORD}
 
 [filter:swift3]
@@ -812,7 +812,7 @@ function swift_configure_tempurls {
     # note we are using swift credentials!
     OS_USERNAME=swift \
     OS_PASSWORD=$SERVICE_PASSWORD \
-    OS_PROJECT_NAME=$SERVICE_TENANT_NAME \
+    OS_PROJECT_NAME=$SERVICE_PROJECT_NAME \
     openstack object store account \
         set --property "Temp-URL-Key=$SWIFT_TEMPURL_KEY"
 }

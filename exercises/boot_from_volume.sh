@@ -64,7 +64,7 @@ VOL_NAME=${VOL_NAME:-ex-vol-bfv}
 # Launching a server
 # ==================
 
-# List servers for tenant:
+# List servers for project:
 nova list
 
 # Images
