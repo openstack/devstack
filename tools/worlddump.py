@@ -18,6 +18,7 @@
 
 import argparse
 import datetime
+from distutils import spawn
 import fnmatch
 import os
 import os.path
@@ -61,6 +62,13 @@ def _dump_cmd(cmd):
         print "*** Failed to run: %s" % cmd
 
 
+def _find_cmd(cmd):
+    if not spawn.find_executable(cmd):
+        print "*** %s not found: skipping" % cmd
+        return False
+    return True
+
+
 def _header(name):
     print
     print name
@@ -89,6 +97,8 @@ def disk_space():
 def ebtables_dump():
     tables = ['filter', 'nat', 'broute']
     _header("EB Tables Dump")
+    if not _find_cmd('ebtables'):
+        return
     for table in tables:
         _dump_cmd("sudo ebtables -t %s -L" % table)
 
@@ -123,6 +133,11 @@ def network_dump():
 
 def ovs_dump():
     _header("Open vSwitch Dump")
+
+    # NOTE(cdent): If we're not using neutron + ovs these commands
+    # will not be present so
+    if not _find_cmd('ovs-vsctl'):
+        return
 
     # NOTE(ihrachys): worlddump is used outside of devstack context (f.e. in
     # grenade), so there is no single place to determine the bridge names from.
