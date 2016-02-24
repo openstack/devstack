@@ -4,6 +4,7 @@
 *.log.[1-9]
 *.pem
 .localrc.auto
+.localrc.password
 .prereqs
 .tox
 .stackenv
@@ -11,6 +12,8 @@ accrc
 doc/files
 doc/build
 files/*.gz
+files/*.rpm
+files/*.rpm.*
 files/*.qcow2
 files/*.img
 files/images
