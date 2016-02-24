@@ -713,9 +713,12 @@ function install_neutron_agent_packages {
 
 # Start running processes, including screen
 function start_neutron_service_and_check {
-    local cfg_file_options="$(determine_config_files neutron-server)"
     local service_port=$Q_PORT
     local service_protocol=$Q_PROTOCOL
+    local cfg_file_options
+
+    cfg_file_options="$(determine_config_files neutron-server)"
+
     if is_service_enabled tls-proxy; then
         service_port=$Q_PORT_INT
         service_protocol="http"

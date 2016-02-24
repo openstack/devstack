@@ -30,7 +30,8 @@ function iniadd {
     local option=$3
     shift 3
 
-    local values="$(iniget_multiline $file $section $option) $@"
+    local values
+    values="$(iniget_multiline $file $section $option) $@"
     iniset_multiline $sudo $file $section $option $values
     $xtrace
 }

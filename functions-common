@@ -1213,7 +1213,7 @@ function get_plugin_packages {
     local files_to_parse=""
     local package_dir=""
     for plugin in ${DEVSTACK_PLUGINS//,/ }; do
-        local package_dir="$(_get_package_dir ${GITDIR[$plugin]}/devstack/files)"
+        package_dir="$(_get_package_dir ${GITDIR[$plugin]}/devstack/files)"
         files_to_parse+=" $package_dir/$plugin"
     done
     echo "$(_parse_package_files $files_to_parse)"
