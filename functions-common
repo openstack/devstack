@@ -994,7 +994,7 @@ function get_endpoint_url {
 # out of tree, as it is used by nova and neutron.
 # figure out a way to refactor nova/neutron code to eliminate this
 function is_ironic_hardware {
-    is_service_enabled ironic && [[ -n "${IRONIC_DEPLOY_DRIVER##*_ssh}" ]] && return 0
+    is_service_enabled ironic && [[ "$IRONIC_IS_HARDWARE" == "True" ]] && return 0
     return 1
 }
 
