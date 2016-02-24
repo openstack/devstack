@@ -304,7 +304,6 @@ function configure_keystone {
 
         iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi wsgi-file "$KEYSTONE_BIN_DIR/keystone-wsgi-public"
         # This is running standalone
-        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi master true
         iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi threads $(nproc)
         iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi enable-threads true
         iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi plugins python
@@ -317,7 +316,6 @@ function configure_keystone {
 
         iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi wsgi-file "$KEYSTONE_BIN_DIR/keystone-wsgi-admin"
         # This is running standalone
-        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi master true
         iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi threads $API_WORKERS
         iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi enable-threads true
         iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi plugins python
@@ -564,6 +562,8 @@ function install_keystone {
         if is_ssl_enabled_service "key"; then
             enable_mod_ssl
         fi
+    elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
+        pip_install uwsgi
     fi
 }
 
@@ -583,8 +583,8 @@ function start_keystone {
         tail_log key /var/log/$APACHE_NAME/keystone.log
         tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
     elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
-        run_process key "uwsgi $KEYSTONE_PUBLIC_UWSGI_FILE" "" "key-p"
-        run_process key "uwsgi $KEYSTONE_ADMIN_UWSGI_FILE" "" "key-a"
+        run_process key "$KEYSTONE_BIN_DIR/uwsgi $KEYSTONE_PUBLIC_UWSGI_FILE" "" "key-p"
+        run_process key "$KEYSTONE_BIN_DIR/uwsgi $KEYSTONE_ADMIN_UWSGI_FILE" "" "key-a"
     else # eventlet
         # Start Keystone in a screen window
         run_process key "$KEYSTONE_BIN_DIR/keystone-all --config-file $KEYSTONE_CONF"
