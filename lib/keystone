@@ -361,10 +361,10 @@ function configure_keystone {
 # alt_demo             alt_demo   Member, anotherrole
 # invisible_to_admin   demo       Member
 
-# Group                Users      Roles                 Tenant
+# Group                Users            Roles                 Tenant
 # ------------------------------------------------------------------
-# admins               admin      admin                 admin
-# nonadmins            demo       Member, anotherrole   demo
+# admins               admin            admin                 admin
+# nonadmins            demo, alt_demo   Member, anotherrole   demo, alt_demo
 
 
 # Migrated from keystone_data.sh
