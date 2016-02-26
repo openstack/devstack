@@ -54,3 +54,7 @@ done
 
 test -r data/devstack-plugins-registry.footer && cat data/devstack-plugins-registry.footer
 ) > doc/source/plugin-registry.rst
+
+if [[ -n ${1} ]]; then
+    cp doc/source/plugin-registry.rst ${1}/doc/source/plugin-registry.rst
+fi
