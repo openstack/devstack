@@ -1304,15 +1304,16 @@ function yum_install {
 
     # Warning: this would not work if yum output message
     # have been translated to another language
-    parse_yum_result='\
-        BEGIN { result=0 }\
-        /^YUM_FAILED/ { exit $2 }\
-        /^No package/ { result=1 }\
-        //{ print }\
+    parse_yum_result='             \
+        BEGIN { result=0 }         \
+        /^YUM_FAILED/ { exit $2 }  \
+        /^No package/ { result=1 } \
+        /^Failed:/    { result=1 } \
+        //{ print }                \
         END { exit result }'
 
     # The manual check for missing packages is because yum -y assumes
-    # missing packages are OK.
+    # missing or failed packages are OK.
     # See https://bugzilla.redhat.com/show_bug.cgi?id=965567
     (sudo_with_proxies "${YUM:-yum}" install -y "$@" 2>&1 || echo YUM_FAILED $?) \
         | awk "$parse_yum_result"
