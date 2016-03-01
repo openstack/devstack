@@ -59,10 +59,10 @@ serving as a hypervisor for guest instances.
         MYSQL_HOST=172.18.161.6
         RABBIT_HOST=172.18.161.6
         GLANCE_HOSTPORT=172.18.161.6:9292
-        ADMIN_PASSWORD=secrete
-        DATABASE_PASSWORD=secrete
-        RABBIT_PASSWORD=secrete
-        SERVICE_PASSWORD=secrete
+        ADMIN_PASSWORD=secret
+        DATABASE_PASSWORD=secret
+        RABBIT_PASSWORD=secret
+        SERVICE_PASSWORD=secret
 
         # Do not use Nova-Network
         disable_service n-net
@@ -232,10 +232,10 @@ The host `devstack-2` has a very minimal `local.conf`.
     MYSQL_HOST=172.18.161.6
     RABBIT_HOST=172.18.161.6
     GLANCE_HOSTPORT=172.18.161.6:9292
-    ADMIN_PASSWORD=secrete
-    MYSQL_PASSWORD=secrete
-    RABBIT_PASSWORD=secrete
-    SERVICE_PASSWORD=secrete
+    ADMIN_PASSWORD=secret
+    MYSQL_PASSWORD=secret
+    RABBIT_PASSWORD=secret
+    SERVICE_PASSWORD=secret
 
     ## Neutron options
     PUBLIC_INTERFACE=eth0
@@ -362,10 +362,10 @@ controller node.
         GLANCE_HOSTPORT=10.0.0.2:9292
         PUBLIC_INTERFACE=eth1
 
-        ADMIN_PASSWORD=secrete
-        MYSQL_PASSWORD=secrete
-        RABBIT_PASSWORD=secrete
-        SERVICE_PASSWORD=secrete
+        ADMIN_PASSWORD=secret
+        MYSQL_PASSWORD=secret
+        RABBIT_PASSWORD=secret
+        SERVICE_PASSWORD=secret
 
         ## Neutron options
         Q_USE_SECGROUP=True
@@ -409,10 +409,10 @@ compute node 1.
         MYSQL_HOST=10.0.0.2
         RABBIT_HOST=10.0.0.2
         GLANCE_HOSTPORT=10.0.0.2:9292
-        ADMIN_PASSWORD=secrete
-        MYSQL_PASSWORD=secrete
-        RABBIT_PASSWORD=secrete
-        SERVICE_PASSWORD=secrete
+        ADMIN_PASSWORD=secret
+        MYSQL_PASSWORD=secret
+        RABBIT_PASSWORD=secret
+        SERVICE_PASSWORD=secret
 
         # Services that a compute node runs
         ENABLED_SERVICES=n-cpu,rabbit,q-agt
@@ -509,10 +509,10 @@ setup, with small modifications for the interface mappings.
     MYSQL_HOST=172.18.161.6
     RABBIT_HOST=172.18.161.6
     GLANCE_HOSTPORT=172.18.161.6:9292
-    ADMIN_PASSWORD=secrete
-    DATABASE_PASSWORD=secrete
-    RABBIT_PASSWORD=secrete
-    SERVICE_PASSWORD=secrete
+    ADMIN_PASSWORD=secret
+    DATABASE_PASSWORD=secret
+    RABBIT_PASSWORD=secret
+    SERVICE_PASSWORD=secret
 
     # Do not use Nova-Network
     disable_service n-net

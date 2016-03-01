@@ -176,7 +176,7 @@ function configure_tempest {
     sudo install -d -o $STACK_USER $TEMPEST_CONFIG_DIR
     rm -f $TEMPEST_CONFIG
 
-    local password=${ADMIN_PASSWORD:-secrete}
+    local password=${ADMIN_PASSWORD:-secret}
 
     # See ``lib/keystone`` where these users and tenants are set up
     local admin_username=${ADMIN_USERNAME:-admin}

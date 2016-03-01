@@ -129,8 +129,8 @@ cluster controller's DevStack in ``local.conf``:
     LOGFILE=/opt/stack/logs/stack.sh.log
     ADMIN_PASSWORD=labstack
     DATABASE_PASSWORD=supersecret
-    RABBIT_PASSWORD=supersecrete
-    SERVICE_PASSWORD=supersecrete
+    RABBIT_PASSWORD=supersecret
+    SERVICE_PASSWORD=supersecret
 
 In the multi-node configuration the first 10 or so IPs in the private
 subnet are usually reserved. Add this to ``local.sh`` to have it run
@@ -169,8 +169,8 @@ machines, create a ``local.conf`` with:
     LOGFILE=/opt/stack/logs/stack.sh.log
     ADMIN_PASSWORD=labstack
     DATABASE_PASSWORD=supersecret
-    RABBIT_PASSWORD=supersecrete
-    SERVICE_PASSWORD=supersecrete
+    RABBIT_PASSWORD=supersecret
+    SERVICE_PASSWORD=supersecret
     DATABASE_TYPE=mysql
     SERVICE_HOST=192.168.42.11
     MYSQL_HOST=$SERVICE_HOST
@@ -254,7 +254,7 @@ for scripting:
 
     # Add a user and project
     NAME=bob
-    PASSWORD=BigSecrete
+    PASSWORD=BigSecret
     PROJECT=$NAME
     openstack project create $PROJECT
     openstack user create $NAME --password=$PASSWORD --project $PROJECT
