@@ -46,10 +46,10 @@ test -r data/devstack-plugins-registry.header && cat data/devstack-plugins-regis
 sorted_plugins=$(python tools/generate-devstack-plugins-list.py)
 
 for k in ${sorted_plugins}; do
-    project=${k:0:18}
+    project=${k:0:28}
     giturl="git://git.openstack.org/openstack/${k:0:26}"
-    printf "|%-18s|%-73s|\n" "${project}" "${giturl}"
-    printf "+------------------+-------------------------------------------------------------------------+\n"
+    printf "|%-28s|%-73s|\n" "${project}" "${giturl}"
+    printf "+----------------------------+-------------------------------------------------------------------------+\n"
 done
 
 test -r data/devstack-plugins-registry.footer && cat data/devstack-plugins-registry.footer
