@@ -322,7 +322,9 @@ function configure_tempest {
     local tmp_cfg_file
     tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
-    tox -revenv --notest
+    if [[ "$OFFLINE" != "True" ]]; then
+        tox -revenv --notest
+    fi
     # NOTE(mtreinish): Respect constraints on tempest verify-config venv
     tox -evenv -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
     tox -evenv -- tempest verify-config -uro $tmp_cfg_file
