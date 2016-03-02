@@ -1,3 +1,8 @@
+..
+  Note to patch submitters: this file is covered by a periodic proposal
+  job.  You should edit the files data/devstack-plugins-registry.footer
+  data/devstack-plugins-registry.header instead of this one.
+
 ==========================
  DevStack Plugin Registry
 ==========================
