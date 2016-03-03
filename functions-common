@@ -312,20 +312,20 @@ declare os_VENDOR os_RELEASE os_PACKAGE os_CODENAME
 # user if not available.  Note can't use generic install_package*
 # because they depend on this!
 function _ensure_lsb_release {
-    if [[ -x $(which lsb_release 2>/dev/null) ]]; then
+    if [[ -x $(command -v lsb_release 2>/dev/null) ]]; then
         return
     fi
 
-    if [[ -x $(which apt-get 2>/dev/null) ]]; then
+    if [[ -x $(command -v apt-get 2>/dev/null) ]]; then
         sudo apt-get install -y lsb-release
-    elif [[ -x $(which zypper 2>/dev/null) ]]; then
+    elif [[ -x $(command -v zypper 2>/dev/null) ]]; then
         # XXX: old code paths seem to have assumed SUSE platforms also
         # had "yum".  Keep this ordered above yum so we don't try to
         # install the rh package.  suse calls it just "lsb"
         sudo zypper -n install lsb
-    elif [[ -x $(which dnf 2>/dev/null) ]]; then
+    elif [[ -x $(command -v dnf 2>/dev/null) ]]; then
         sudo dnf install -y redhat-lsb-core
-    elif [[ -x $(which yum 2>/dev/null) ]]; then
+    elif [[ -x $(command -v yum 2>/dev/null) ]]; then
         # all rh patforms (fedora, centos, rhel) have this pkg
         sudo yum install -y redhat-lsb-core
     else
