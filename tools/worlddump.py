@@ -58,8 +58,8 @@ def _dump_cmd(cmd):
     try:
         subprocess.check_call(cmd, shell=True)
         print
-    except subprocess.CalledProcessError:
-        print "*** Failed to run: %s" % cmd
+    except subprocess.CalledProcessError as e:
+        print "*** Failed to run '%(cmd)s': %(err)s" % {'cmd': cmd, 'err': e}
 
 
 def _find_cmd(cmd):
