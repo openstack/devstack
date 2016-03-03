@@ -322,7 +322,7 @@ function _ensure_lsb_release {
         # XXX: old code paths seem to have assumed SUSE platforms also
         # had "yum".  Keep this ordered above yum so we don't try to
         # install the rh package.  suse calls it just "lsb"
-        sudo zypper -y install lsb
+        sudo zypper -n install lsb
     elif [[ -x $(which dnf 2>/dev/null) ]]; then
         sudo dnf install -y redhat-lsb-core
     elif [[ -x $(which yum 2>/dev/null) ]]; then
