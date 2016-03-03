@@ -55,6 +55,8 @@ GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
 GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
 GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
 GLANCE_SWIFT_STORE_CONF=$GLANCE_CONF_DIR/glance-swift-store.conf
+GLANCE_GLARE_CONF=$GLANCE_CONF_DIR/glance-glare.conf
+GLANCE_GLARE_PASTE_INI=$GLANCE_CONF_DIR/glance-glare-paste.ini
 
 if is_ssl_enabled_service "glance" || is_service_enabled tls-proxy; then
     GLANCE_SERVICE_PROTOCOL="https"
@@ -69,6 +71,8 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT}
 GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 GLANCE_REGISTRY_PORT=${GLANCE_REGISTRY_PORT:-9191}
 GLANCE_REGISTRY_PORT_INT=${GLANCE_REGISTRY_PORT_INT:-19191}
+GLANCE_GLARE_PORT=${GLANCE_GLARE_PORT:-9494}
+GLANCE_GLARE_HOSTPORT=${GLANCE_GLARE_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_GLARE_PORT}
 
 # Functions
 # ---------
@@ -93,6 +97,9 @@ function configure_glance {
     sudo install -d -o $STACK_USER $GLANCE_CONF_DIR $GLANCE_METADEF_DIR
 
     # Copy over our glance configurations and update them
+    if is_service_enabled g-glare; then
+        cp $GLANCE_DIR/etc/glance-glare.conf $GLANCE_GLARE_CONF
+    fi
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_REGISTRY_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
@@ -129,6 +136,9 @@ function configure_glance {
 
     # Store specific configs
     iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    if is_service_enabled g-glare; then
+        iniset $GLANCE_GLARE_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    fi
     iniset $GLANCE_API_CONF DEFAULT registry_host $GLANCE_SERVICE_HOST
 
     iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
@@ -144,6 +154,23 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
         iniset $GLANCE_SWIFT_STORE_CONF ref1 user $SERVICE_PROJECT_NAME:glance-swift
+
+        # Store the glare in swift if enabled.
+        if is_service_enabled g-glare; then
+            iniset $GLANCE_GLARE_CONF glance_store default_store swift
+            iniset $GLANCE_GLARE_CONF glance_store swift_store_create_container_on_put True
+
+            iniset $GLANCE_GLARE_CONF glance_store swift_store_config_file $GLANCE_SWIFT_STORE_CONF
+            iniset $GLANCE_GLARE_CONF glance_store default_swift_reference ref1
+            iniset $GLANCE_GLARE_CONF glance_store stores "file, http, swift"
+            iniset $GLANCE_GLARE_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
+
+            # commenting is not strictly necessary but it's confusing to have bad values in conf
+            inicomment $GLANCE_GLARE_CONF glance_store swift_store_user
+            inicomment $GLANCE_GLARE_CONF glance_store swift_store_key
+            inicomment $GLANCE_GLARE_CONF glance_store swift_store_auth_address
+        fi
+
         iniset $GLANCE_SWIFT_STORE_CONF ref1 key $SERVICE_PASSWORD
         iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
         iniset $GLANCE_SWIFT_STORE_CONF ref1 user_domain_id default
@@ -220,6 +247,29 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
         iniset $GLANCE_CACHE_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
     fi
+
+    # Configure GLANCE_GLARE (Glance Glare)
+    if is_service_enabled g-glare; then
+        local dburl
+        dburl=`database_connection_url glance`
+        setup_colorized_logging $GLANCE_GLARE_CONF DEFAULT tenant user
+        iniset $GLANCE_GLARE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+        iniset $GLANCE_GLARE_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
+        iniset $GLANCE_GLARE_CONF DEFAULT bind_port $GLANCE_GLARE_PORT
+        inicomment $GLANCE_GLARE_CONF DEFAULT log_file
+        iniset $GLANCE_GLARE_CONF DEFAULT workers "$API_WORKERS"
+
+        iniset $GLANCE_GLARE_CONF database connection $dburl
+        iniset $GLANCE_GLARE_CONF paste_deploy flavor keystone
+        configure_auth_token_middleware $GLANCE_GLARE_CONF glare $GLANCE_AUTH_CACHE_DIR/artifact
+        # Register SSL certificates if provided
+        if is_ssl_enabled_service glance; then
+            ensure_certificates GLANCE
+            iniset $GLANCE_GLARE_CONF DEFAULT cert_file "$GLANCE_SSL_CERT"
+            iniset $GLANCE_GLARE_CONF DEFAULT key_file "$GLANCE_SSL_KEY"
+        fi
+        cp $GLANCE_DIR/etc/glance-glare-paste.ini $GLANCE_GLARE_PASTE_INI
+    fi
 }
 
 # create_glance_accounts() - Set up common required glance accounts
@@ -229,6 +279,7 @@ function configure_glance {
 # SERVICE_PROJECT_NAME  glance          service
 # SERVICE_PROJECT_NAME  glance-swift    ResellerAdmin (if Swift is enabled)
 # SERVICE_PROJECT_NAME  glance-search   search (if Search is enabled)
+# SERVICE_PROJECT_NAME  glare           service (if enabled)
 
 function create_glance_accounts {
     if is_service_enabled g-api; then
@@ -252,13 +303,25 @@ function create_glance_accounts {
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
     fi
+
+    # Add glance-glare service and endpoints
+    if is_service_enabled g-glare; then
+        create_service_user "glare"
+        get_or_create_service "glare" "artifact" "Glance Artifact Service"
+
+        get_or_create_endpoint "artifact" \
+            "$REGION_NAME" \
+            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT" \
+            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT" \
+            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT"
+    fi
 }
 
 # create_glance_cache_dir() - Part of the init_glance() process
 function create_glance_cache_dir {
     # Create cache dir
-    sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry $GLANCE_AUTH_CACHE_DIR/search
-    rm -f $GLANCE_AUTH_CACHE_DIR/api/* $GLANCE_AUTH_CACHE_DIR/registry/* $GLANCE_AUTH_CACHE_DIR/search/*
+    sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry $GLANCE_AUTH_CACHE_DIR/search $GLANCE_AUTH_CACHE_DIR/artifact
+    rm -f $GLANCE_AUTH_CACHE_DIR/api/* $GLANCE_AUTH_CACHE_DIR/registry/* $GLANCE_AUTH_CACHE_DIR/search/* $GLANCE_AUTH_CACHE_DIR/artifact/*
 }
 
 # init_glance() - Initialize databases, etc.
@@ -326,6 +389,15 @@ function start_glance {
     if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT; then
         die $LINENO "g-api did not start"
     fi
+
+    #Start g-glare after g-reg/g-api/g-search
+    if is_service_enabled g-glare; then
+        run_process g-glare "$GLANCE_BIN_DIR/glance-glare --config-file=$GLANCE_CONF_DIR/glance-glare.conf"
+        echo "Waiting for Glare [g-glare] ($GLANCE_GLARE_HOSTPORT) to start..."
+        if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT; then
+            die $LINENO " Glare [g-glare] did not start"
+        fi
+    fi
 }
 
 # stop_glance() - Stop running processes
@@ -333,6 +405,10 @@ function stop_glance {
     # Kill the Glance screen windows
     stop_process g-api
     stop_process g-reg
+
+    if is_service_enabled g-glare; then
+        stop_process g-glare
+    fi
 }
 
 # Restore xtrace
