@@ -1286,7 +1286,7 @@ function uninstall_package {
     elif is_fedora; then
         sudo ${YUM:-yum} remove -y "$@" ||:
     elif is_suse; then
-        sudo zypper rm "$@"
+        sudo zypper rm "$@" ||:
     else
         exit_distro_not_supported "uninstalling packages"
     fi
