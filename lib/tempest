@@ -414,12 +414,15 @@ function configure_tempest {
         if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
             iniset $TEMPEST_CONFIG orchestration image_ref $(basename "${HEAT_CFN_IMAGE_URL%.*}")
         fi
-        # build a specialized heat flavor
-        available_flavors=$(nova flavor-list)
-        if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
-            nova flavor-create m1.heat 451 512 0 1
+        # Nova might not be enabled, especially when we want to test tempest scenario/API that only create Neutron resources
+        if is_service_enabled nova; then
+            # build a specialized heat flavor
+            available_flavors=$(nova flavor-list)
+            if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
+                nova flavor-create m1.heat 451 512 0 1
+            fi
+            iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
         fi
-        iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
         iniset $TEMPEST_CONFIG orchestration build_timeout 900
         iniset $TEMPEST_CONFIG orchestration stack_owner_role "_member_"
     fi
