@@ -47,7 +47,7 @@ function recreate_database_postgresql {
 }
 
 function configure_database_postgresql {
-    local pg_conf pg_dir pg_hba root_roles
+    local pg_conf pg_dir pg_hba root_roles version
     echo_summary "Configuring and starting PostgreSQL"
     if is_fedora; then
         pg_hba=/var/lib/pgsql/data/pg_hba.conf
@@ -56,6 +56,13 @@ function configure_database_postgresql {
             sudo postgresql-setup initdb
         fi
     elif is_ubuntu; then
+        version=`psql --version | cut -d ' ' -f3 | cut -d. -f1-2`
+        if vercmp $version '>=' 9.3; then
+            if [ -z "`pg_lsclusters -h`" ]; then
+                echo 'No PostgreSQL clusters exist; will create one'
+                sudo pg_createcluster $version main --start
+            fi
+        fi
         pg_dir=`find /etc/postgresql -name pg_hba.conf|xargs dirname`
         pg_hba=$pg_dir/pg_hba.conf
         pg_conf=$pg_dir/postgresql.conf
