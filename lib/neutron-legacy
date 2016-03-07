@@ -486,8 +486,7 @@ function configure_neutron {
 }
 
 function create_nova_conf_neutron {
-    iniset $NOVA_CONF DEFAULT network_api_class "nova.network.neutronv2.api.API"
-
+    iniset $NOVA_CONF DEFAULT use_neutron True
     iniset $NOVA_CONF neutron auth_type "password"
     iniset $NOVA_CONF neutron auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v3"
     iniset $NOVA_CONF neutron username "$Q_ADMIN_USERNAME"
@@ -502,7 +501,6 @@ function create_nova_conf_neutron {
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
         iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
-        iniset $NOVA_CONF DEFAULT security_group_api neutron
     fi
 
     # optionally set options in nova_conf
