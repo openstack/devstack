@@ -41,7 +41,9 @@
 (
 declare -A plugins
 
-test -r data/devstack-plugins-registry.header && cat data/devstack-plugins-registry.header
+if [[ -r data/devstack-plugins-registry.header ]]; then
+    cat data/devstack-plugins-registry.header
+fi
 
 sorted_plugins=$(python tools/generate-devstack-plugins-list.py)
 
@@ -52,7 +54,9 @@ for k in ${sorted_plugins}; do
     printf "+----------------------------+-------------------------------------------------------------------------+\n"
 done
 
-test -r data/devstack-plugins-registry.footer && cat data/devstack-plugins-registry.footer
+if [[ -r data/devstack-plugins-registry.footer ]]; then
+    cat data/devstack-plugins-registry.footer
+fi
 ) > doc/source/plugin-registry.rst
 
 if [[ -n ${1} ]]; then
