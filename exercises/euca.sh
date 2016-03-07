@@ -17,7 +17,6 @@ set -o errexit
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
-
 # Settings
 # ========
 
@@ -89,7 +88,8 @@ if is_service_enabled c-vol && ! is_service_enabled n-cell && [ "$VIRT_DRIVER" !
     VOLUME_ZONE=`euca-describe-availability-zones | head -n1 | cut -f2`
     die_if_not_set $LINENO VOLUME_ZONE "Failure to find zone for volume"
 
-    VOLUME=`euca-create-volume -s 1 -z $VOLUME_ZONE | cut -f2`
+    VOLUME=`euca-create-volume -s 1 -z $VOLUME_ZONE` || die $LINENO "Failure to create volume"
+    VOLUME=`echo "$VOLUME" | cut -f2`
     die_if_not_set $LINENO VOLUME "Failure to create volume"
 
     # Test that volume has been created
