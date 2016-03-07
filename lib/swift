@@ -71,17 +71,20 @@ if is_service_enabled g-api; then
     # only 1G we can not upload volume to image.
     # Increase Swift disk size up to 2G
     SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=2G
+    SWIFT_MAX_FILE_SIZE_DEFAULT=1073741824 # 1G
 else
     # DevStack will create a loop-back disk formatted as XFS to store the
     # swift data. Set ``SWIFT_LOOPBACK_DISK_SIZE`` to the disk size in
     # kilobytes.
     # Default is 1 gigabyte.
     SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=1G
+    SWIFT_MAX_FILE_SIZE_DEFAULT=536870912 # 512M
 fi
 
 # if tempest enabled the default size is 6 Gigabyte.
 if is_service_enabled tempest; then
     SWIFT_LOOPBACK_DISK_SIZE_DEFAULT=${SWIFT_LOOPBACK_DISK_SIZE:-6G}
+    SWIFT_MAX_FILE_SIZE_DEFAULT=5368709122 # Swift default 5G
 fi
 
 SWIFT_LOOPBACK_DISK_SIZE=${SWIFT_LOOPBACK_DISK_SIZE:-$SWIFT_LOOPBACK_DISK_SIZE_DEFAULT}
@@ -126,6 +129,10 @@ SWIFT_LOG_TOKEN_LENGTH=${SWIFT_LOG_TOKEN_LENGTH:-12}
 # Set ``SWIFT_MAX_HEADER_SIZE`` to configure the maximum length of headers in
 # Swift API
 SWIFT_MAX_HEADER_SIZE=${SWIFT_MAX_HEADER_SIZE:-16384}
+
+# Set ``SWIFT_MAX_FILE_SIZE`` to configure the maximum file size in Swift API
+# Default 500MB because the loopback file used for swift could be 1 or 2 GB
+SWIFT_MAX_FILE_SIZE=${SWIFT_MAX_FILE_SIZE:-$SWIFT_MAX_FILE_SIZE_DEFAULT}
 
 # Set ``OBJECT_PORT_BASE``, ``CONTAINER_PORT_BASE``, ``ACCOUNT_PORT_BASE``
 # Port bases used in port number calculation for the service "nodes"
@@ -462,6 +469,7 @@ EOF
     cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONF_DIR}/swift.conf
     iniset ${SWIFT_CONF_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
     iniset ${SWIFT_CONF_DIR}/swift.conf swift-constraints max_header_size ${SWIFT_MAX_HEADER_SIZE}
+    iniset ${SWIFT_CONF_DIR}/swift.conf swift-constraints max_file_size ${SWIFT_MAX_FILE_SIZE}
 
     local node_number
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
