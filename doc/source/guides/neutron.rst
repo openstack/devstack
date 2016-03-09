@@ -546,6 +546,7 @@ automatically created by setting the ``OVS_BRIDGE_MAPPINGS`` to a list of
 physical network to bridge name associations with the following syntax:
 
 ::
+
     OVS_BRIDGE_MAPPINGS=net1name:bridge1name,net2name:bridge2name,<...>
 
 Also, ``OVS_BRIDGE_MAPPINGS`` has precedence over ``PHYSICAL_NETWORK`` and
