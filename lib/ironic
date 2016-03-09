@@ -499,11 +499,13 @@ function stop_ironic {
 
 function create_ovs_taps {
     local ironic_net_id=$(neutron net-list | grep private | get_field 1)
+    die_if_not_set $LINENO ironic_net_id "Failed to get ironic network id"
 
     # Work around: No netns exists on host until a Neutron port is created.  We
     # need to create one in Neutron to know what netns to tap into prior to the
     # first node booting.
     local port_id=$(neutron port-create private | grep " id " | get_field 2)
+    die_if_not_set $LINENO port_id "Failed to create neutron port"
 
     # intentional sleep to make sure the tag has been set to port
     sleep 10
@@ -513,7 +515,9 @@ function create_ovs_taps {
     else
         local tapdev=$(sudo ip link list | grep " tap" | cut -d':' -f2 | cut -d'@' -f1 | cut -b2-)
     fi
+    die_if_not_set $LINENO tapdev "Failed to get tap device id"
     local tag_id=$(sudo ovs-vsctl show |grep ${tapdev} -A1 -m1 | grep tag | cut -d':' -f2 | cut -b2-)
+    die_if_not_set $LINENO tag_id "Failed to get tag id"
 
     # make sure veth pair is not existing, otherwise delete its links
     sudo ip link show ovs-tap1 && sudo ip link delete ovs-tap1
@@ -771,26 +775,22 @@ function upload_baremetal_ironic_deploy {
         fi
     fi
 
-    local token=$(openstack token issue -c id -f value)
-    die_if_not_set $LINENO token "Keystone fail to get token"
-
     # load them into glance
     IRONIC_DEPLOY_KERNEL_ID=$(openstack \
-        --os-token $token \
-        --os-url http://$GLANCE_HOSTPORT \
         image create \
         $(basename $IRONIC_DEPLOY_KERNEL_PATH) \
         --public --disk-format=aki \
         --container-format=aki \
         < $IRONIC_DEPLOY_KERNEL_PATH  | grep ' id ' | get_field 2)
+    die_if_not_set $LINENO IRONIC_DEPLOY_KERNEL_ID "Failed to load kernel image into glance"
+
     IRONIC_DEPLOY_RAMDISK_ID=$(openstack \
-        --os-token $token \
-        --os-url http://$GLANCE_HOSTPORT \
         image create \
         $(basename $IRONIC_DEPLOY_RAMDISK_PATH) \
         --public --disk-format=ari \
         --container-format=ari \
         < $IRONIC_DEPLOY_RAMDISK_PATH  | grep ' id ' | get_field 2)
+    die_if_not_set $LINENO IRONIC_DEPLOY_RAMDISK_ID "Failed to load ramdisk image into glance"
 }
 
 function prepare_baremetal_basic_ops {
