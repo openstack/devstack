@@ -19,6 +19,18 @@ physical interface can be used to transmit tenant network traffic,
 the OpenStack API traffic, and management traffic.
 
 
+.. warning::
+
+    When using a single interface networking setup, there will be a
+    temporary network outage as your IP address is moved from the
+    physical NIC of your machine, to the OVS bridge. If you are SSH'd
+    into the machine from another computer, there is a risk of being
+    disconnected from your ssh session (due to arp cache
+    invalidation), which would stop the stack.sh or leave it in an
+    unfinished state. In these cases, start stack.sh inside its own
+    screen session so it can continue to run.
+
+
 Physical Network Setup
 ----------------------
 
