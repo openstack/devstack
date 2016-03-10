@@ -625,7 +625,7 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
         ironic)
             # Ironic can do both partition and full disk images, depending on the driver
-            if [[ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]]; then
+            if [[ -z "${IRONIC_DEPLOY_DRIVER%%agent*}" ]]; then
                 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-disk}
             else
                 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-uec}
