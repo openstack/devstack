@@ -32,6 +32,8 @@ projects.
 +----------------------------+-------------------------------------------------------------------------+
 |blazar                      |git://git.openstack.org/openstack/blazar                                 |
 +----------------------------+-------------------------------------------------------------------------+
+|broadview-collector         |git://git.openstack.org/openstack/broadview-collector                    |
++----------------------------+-------------------------------------------------------------------------+
 |ceilometer                  |git://git.openstack.org/openstack/ceilometer                             |
 +----------------------------+-------------------------------------------------------------------------+
 |ceilometer-powervm          |git://git.openstack.org/openstack/ceilometer-powervm                     |
