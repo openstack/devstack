@@ -1644,7 +1644,7 @@ function service_check {
     done
 
     if [ -n "$failures" ]; then
-        die $LINENO "More details about the above errors can be found with screen, with ./rejoin-stack.sh"
+        die $LINENO "More details about the above errors can be found with screen"
     fi
 }
 
