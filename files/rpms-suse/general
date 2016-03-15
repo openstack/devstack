@@ -2,7 +2,6 @@ bc
 bridge-utils
 ca-certificates-mozilla
 curl
-euca2ools
 gcc
 gcc-c++
 git-core

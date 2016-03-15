@@ -61,13 +61,6 @@ cloud via CLI:
     # list instances
     nova list
 
-If the EC2 API is your cup-o-tea, you can create credentials and use euca2ools:
-
-    # source eucarc to generate EC2 credentials and set up the environment
-    . eucarc
-    # list instances using ec2 api
-    euca-describe-instances
-
 # DevStack Execution Environment
 
 DevStack runs rampant over the system it runs on, installing things and

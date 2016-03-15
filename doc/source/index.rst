@@ -217,7 +217,6 @@ Configuration
    stackrc
    openrc
    exerciserc
-   eucarc
 
 Tools
 -----
