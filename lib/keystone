@@ -303,28 +303,22 @@ function configure_keystone {
         fi
 
         iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi wsgi-file "$KEYSTONE_BIN_DIR/keystone-wsgi-public"
-        # This is running standalone
         iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi threads $(nproc)
-        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi enable-threads true
-        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi plugins python
-        # uwsgi recommends this to prevent thundering herd on accept.
-        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi thunder-lock true
-        # Override the default size for headers from the 4k default.
-        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi buffer-size 65535
-        # Make sure the client doesn't try to re-use the connection.
-        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi add-header "Connection: close"
 
         iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi wsgi-file "$KEYSTONE_BIN_DIR/keystone-wsgi-admin"
-        # This is running standalone
         iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi threads $API_WORKERS
-        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi enable-threads true
-        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi plugins python
-        # uwsgi recommends this to prevent thundering herd on accept.
-        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi thunder-lock true
-        # Override the default size for headers from the 4k default.
-        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi buffer-size 65535
-        # Make sure the client doesn't try to re-use the connection.
-        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi add-header "Connection: close"
+
+        # Common settings
+        for file in "$KEYSTONE_PUBLIC_UWSGI_FILE" "$KEYSTONE_ADMIN_UWSGI_FILE"; do
+            iniset "$file" uwsgi enable-threads true
+            iniset "$file" uwsgi plugins python
+            # uwsgi recommends this to prevent thundering herd on accept.
+            iniset "$file" uwsgi thunder-lock true
+            # Override the default size for headers from the 4k default.
+            iniset "$file" uwsgi buffer-size 65535
+            # Make sure the client doesn't try to re-use the connection.
+            iniset "$file" uwsgi add-header "Connection: close"
+        done
 
     else # eventlet
         if is_ssl_enabled_service key; then
