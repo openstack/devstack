@@ -310,6 +310,11 @@ function configure_keystone {
 
         # Common settings
         for file in "$KEYSTONE_PUBLIC_UWSGI_FILE" "$KEYSTONE_ADMIN_UWSGI_FILE"; do
+            # This is running standalone
+            iniset "$file" uwsgi master true
+            # Set die-on-term & exit-on-reload so that uwsgi shuts down
+            iniset "$file" uwsgi die-on-term true
+            iniset "$file" uwsgi exit-on-reload true
             iniset "$file" uwsgi enable-threads true
             iniset "$file" uwsgi plugins python
             # uwsgi recommends this to prevent thundering herd on accept.
