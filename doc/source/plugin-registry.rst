@@ -106,6 +106,8 @@ projects.
 +----------------------------+-------------------------------------------------------------------------+
 |networking-bgpvpn           |git://git.openstack.org/openstack/networking-bgpvpn                      |
 +----------------------------+-------------------------------------------------------------------------+
+|networking-brocade          |git://git.openstack.org/openstack/networking-brocade                     |
++----------------------------+-------------------------------------------------------------------------+
 |networking-calico           |git://git.openstack.org/openstack/networking-calico                      |
 +----------------------------+-------------------------------------------------------------------------+
 |networking-cisco            |git://git.openstack.org/openstack/networking-cisco                       |
