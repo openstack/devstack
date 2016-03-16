@@ -537,19 +537,3 @@ setup, with small modifications for the interface mappings.
     PUBLIC_PHYSICAL_NETWORK=default
     LB_INTERFACE_MAPPINGS=default:eth0
 
-Creating specific OVS bridges for physical networks
----------------------------------------------------
-
-When using the Open vSwitch ML2 mechanism driver, it is possible to
-have multiple Open vSwitch bridges meant for physical networking be
-automatically created by setting the ``OVS_BRIDGE_MAPPINGS`` to a list of
-physical network to bridge name associations with the following syntax:
-
-::
-
-    OVS_BRIDGE_MAPPINGS=net1name:bridge1name,net2name:bridge2name,<...>
-
-Also, ``OVS_BRIDGE_MAPPINGS`` has precedence over ``PHYSICAL_NETWORK`` and
-``OVS_PHYSICAL_BRIDGE``, meaning that if the former is set, the latter
-ones will be ignored. When ``OVS_BRIDGE_MAPPINGS`` is not set, the other
-variables will still be evaluated.
