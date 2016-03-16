@@ -13,5 +13,4 @@ rabbitmq-server # NOPRIME
 radvd # NOPRIME
 sqlite3
 sudo
-uuid-runtime
 vlan
