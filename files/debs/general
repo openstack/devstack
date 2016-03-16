@@ -27,3 +27,4 @@ libxslt1-dev  # lxml
 gettext  # used for compiling message catalogs
 openjdk-7-jre-headless  # NOPRIME
 pkg-config
+uuid-runtime
