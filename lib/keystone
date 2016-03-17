@@ -281,9 +281,6 @@ function configure_keystone {
     iniset $KEYSTONE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
     if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-        iniset $KEYSTONE_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [%(request_id)s %(user_identity)s] %(instance)s%(message)s"
-        iniset $KEYSTONE_CONF DEFAULT logging_default_format_string "%(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [-] %(instance)s%(message)s"
-        iniset $KEYSTONE_CONF DEFAULT logging_debug_format_suffix "%(asctime)s.%(msecs)03d %(funcName)s %(pathname)s:%(lineno)d"
         iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(asctime)s.%(msecs)03d %(process)d TRACE %(name)s %(instance)s"
         _config_keystone_apache_wsgi
     elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
