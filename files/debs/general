@@ -3,6 +3,7 @@ screen
 unzip
 wget
 psmisc
+bsdmainutils
 gcc
 g++
 git
