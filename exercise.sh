@@ -14,11 +14,11 @@ source $TOP_DIR/stackrc
 # Run everything in the exercises/ directory that isn't explicitly disabled
 
 # comma separated list of script basenames to skip
-# to refrain from exercising euca.sh use ``SKIP_EXERCISES=euca``
+# to refrain from exercising foo.sh use ``SKIP_EXERCISES=foo``
 SKIP_EXERCISES=${SKIP_EXERCISES:-""}
 
 # comma separated list of script basenames to run
-# to run only euca.sh use ``RUN_EXERCISES=euca``
+# to run only foo.sh use ``RUN_EXERCISES=foo``
 basenames=${RUN_EXERCISES:-""}
 
 EXERCISE_DIR=$TOP_DIR/exercises

@@ -156,30 +156,6 @@ if [ -z "$MODE" ]; then
     exit 3
 fi
 
-EC2_URL=$(openstack endpoint list --service ec2 --interface public --os-identity-api-version=3 -c URL -f value || true)
-if [[ -z $EC2_URL ]]; then
-    EC2_URL=http://localhost:8773/
-fi
-
-S3_URL=$(openstack endpoint list --service s3 --interface public --os-identity-api-version=3 -c URL -f value || true)
-if [[ -z $S3_URL ]]; then
-    S3_URL=http://localhost:3333
-fi
-
-mkdir -p "$ACCOUNT_DIR"
-ACCOUNT_DIR=`readlink -f "$ACCOUNT_DIR"`
-EUCALYPTUS_CERT=$ACCOUNT_DIR/cacert.pem
-if [ -e "$EUCALYPTUS_CERT" ]; then
-    mv "$EUCALYPTUS_CERT" "$EUCALYPTUS_CERT.old"
-fi
-if ! nova x509-get-root-cert "$EUCALYPTUS_CERT"; then
-    echo "Failed to update the root certificate: $EUCALYPTUS_CERT" >&2
-    if [ -e "$EUCALYPTUS_CERT.old" ]; then
-        mv "$EUCALYPTUS_CERT.old" "$EUCALYPTUS_CERT"
-    fi
-fi
-
-
 function add_entry {
     local user_id=$1
     local user_name=$2
@@ -187,54 +163,16 @@ function add_entry {
     local project_name=$4
     local user_passwd=$5
 
-    # The admin user can see all user's secret AWS keys, it does not looks good
-    local line
-    line=$(openstack ec2 credentials list --user $user_id | grep " $project_id " || true)
-    if [ -z "$line" ]; then
-        openstack ec2 credentials create --user $user_id --project $project_id 1>&2
-        line=`openstack ec2 credentials list --user $user_id | grep " $project_id "`
-    fi
-    local ec2_access_key ec2_secret_key
-    read ec2_access_key ec2_secret_key <<<  `echo $line | awk '{print $2 " " $4 }'`
     mkdir -p "$ACCOUNT_DIR/$project_name"
     local rcfile="$ACCOUNT_DIR/$project_name/$user_name"
-    # The certs subject part are the project ID "dash" user ID, but the CN should be the first part of the DN
-    # Generally the subject DN parts should be in reverse order like the Issuer
-    # The Serial does not seams correctly marked either
-    local ec2_cert="$rcfile-cert.pem"
-    local ec2_private_key="$rcfile-pk.pem"
-    # Try to preserve the original file on fail (best effort)
-    if [ -e "$ec2_private_key" ]; then
-        mv -f "$ec2_private_key" "$ec2_private_key.old"
-    fi
-    if [ -e "$ec2_cert" ]; then
-        mv -f "$ec2_cert" "$ec2_cert.old"
-    fi
-    # It will not create certs when the password is incorrect
-    if ! nova --os-password "$user_passwd" --os-username "$user_name" --os-project-name "$project_name" x509-create-cert "$ec2_private_key" "$ec2_cert"; then
-        if [ -e "$ec2_private_key.old" ]; then
-            mv -f "$ec2_private_key.old" "$ec2_private_key"
-        fi
-        if [ -e "$ec2_cert.old" ]; then
-            mv -f "$ec2_cert.old" "$ec2_cert"
-        fi
-    fi
+
     cat >"$rcfile" <<EOF
-# you can source this file
-export EC2_ACCESS_KEY="$ec2_access_key"
-export EC2_SECRET_KEY="$ec2_secret_key"
-export EC2_URL="$EC2_URL"
-export S3_URL="$S3_URL"
 # OpenStack USER ID = $user_id
 export OS_USERNAME="$user_name"
 # OpenStack project ID = $project_id
 export OS_PROJECT_NAME="$project_name"
 export OS_AUTH_URL="$OS_AUTH_URL"
 export OS_CACERT="$OS_CACERT"
-export EC2_CERT="$ec2_cert"
-export EC2_PRIVATE_KEY="$ec2_private_key"
-export EC2_USER_ID=42 #not checked by nova (can be a 12-digit id)
-export EUCALYPTUS_CERT="$ACCOUNT_DIR/cacert.pem"
 export NOVA_CERT="$ACCOUNT_DIR/cacert.pem"
 export OS_AUTH_TYPE=v2password
 EOF

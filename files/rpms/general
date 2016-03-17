@@ -2,7 +2,6 @@ bc
 bridge-utils
 curl
 dbus
-euca2ools # only for testing client
 gcc
 gcc-c++
 gettext  # used for compiling message catalogs

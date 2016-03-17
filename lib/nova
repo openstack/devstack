@@ -74,9 +74,6 @@ NOVA_USE_MOD_WSGI=${NOVA_USE_MOD_WSGI:-False}
 
 if is_ssl_enabled_service "nova" || is_service_enabled tls-proxy; then
     NOVA_SERVICE_PROTOCOL="https"
-    EC2_SERVICE_PROTOCOL="https"
-else
-    EC2_SERVICE_PROTOCOL="http"
 fi
 
 # Public facing bits
@@ -86,8 +83,6 @@ NOVA_SERVICE_PORT_INT=${NOVA_SERVICE_PORT_INT:-18774}
 NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 NOVA_SERVICE_LOCAL_HOST=${NOVA_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
 NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
-EC2_SERVICE_PORT=${EC2_SERVICE_PORT:-8773}
-EC2_SERVICE_PORT_INT=${EC2_SERVICE_PORT_INT:-18773}
 METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 
 # Option to enable/disable config drive
@@ -140,7 +135,6 @@ NETWORK_MANAGER=${NETWORK_MANAGER:-${NET_MAN:-FlatDHCPManager}}
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
 VLAN_INTERFACE=${VLAN_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
-EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
 
 # If you are using the FlatDHCP network mode on multiple hosts, set the
 # ``FLAT_INTERFACE`` variable but make sure that the interface doesn't already
@@ -594,7 +588,6 @@ function create_nova_conf {
         iniset $NOVA_CONF spice enabled false
     fi
 
-    iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
     iniset_rpc_backend nova $NOVA_CONF
     iniset $NOVA_CONF glance api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
 
@@ -810,7 +803,6 @@ function start_nova_api {
     # Start proxies if enabled
     if is_service_enabled tls-proxy; then
         start_tls_proxy '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT &
-        start_tls_proxy '*' $EC2_SERVICE_PORT $NOVA_SERVICE_HOST $EC2_SERVICE_PORT_INT &
     fi
 
     export PATH=$old_path

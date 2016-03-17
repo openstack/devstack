@@ -83,7 +83,6 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "n-api" ]]; then
         STATUS_NOVA="Skipped"
-        STATUS_EC2="Skipped"
     else
         # Test OSAPI
         echo -e "\nTest Nova"
