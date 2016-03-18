@@ -2,12 +2,9 @@
 
 # **install_pip.sh**
 
-# install_pip.sh [--pip-version <version>] [--use-get-pip] [--force]
-#
 # Update pip and friends to a known common version
 
 # Assumptions:
-# - update pip to $INSTALL_PIP_VERSION
 # - if USE_PYTHON3=True, PYTHON3_VERSION refers to a version already installed
 
 set -o errexit
