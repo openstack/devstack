@@ -1322,13 +1322,14 @@ function yum_install {
 
     time_start "yum_install"
 
-    # Warning: this would not work if yum output message
-    # have been translated to another language
+    # - We run with LC_ALL=C so string matching *should* be OK
+    # - Exit 1 if the failure might get better with a retry.
+    # - Exit 2 if it is fatal.
     parse_yum_result='             \
         BEGIN { result=0 }         \
         /^YUM_FAILED/ { exit $2 }  \
-        /^No package/ { result=1 } \
-        /^Failed:/    { result=1 } \
+        /^No package/ { result=2 } \
+        /^Failed:/    { result=2 } \
         //{ print }                \
         END { exit result }'
 
@@ -1336,14 +1337,20 @@ function yum_install {
     # missing or failed packages are OK.
     # See https://bugzilla.redhat.com/show_bug.cgi?id=965567
     (sudo_with_proxies "${YUM:-yum}" install -y "$@" 2>&1 || echo YUM_FAILED $?) \
-        | awk "$parse_yum_result"
-    result=$?
-
-    if [ "$result" != 0 ]; then
-        echo $LINENO "${YUM:-yum}" install failure: $result
-    fi
+        | awk "$parse_yum_result" && result=$? || result=$?
 
     time_stop "yum_install"
+
+    # if we return 1, then the wrapper functions will run an update
+    # and try installing the package again as a defense against bad
+    # mirrors.  This can hide failures, especially when we have
+    # packages that are in the "Failed:" section because their rpm
+    # install scripts failed to run correctly (in this case, the
+    # package looks installed, so when the retry happens we just think
+    # the package is OK, and incorrectly continue on).
+    if [ "$result" == 2 ]; then
+        die "Detected fatal package install failure"
+    fi
 
     return "$result"
 }
