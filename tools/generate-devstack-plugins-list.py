@@ -23,8 +23,11 @@
 #     working directory
 #   * network access to https://git.openstack.org/cgit
 
+import logging
 import json
 import requests
+
+logging.basicConfig(level=logging.DEBUG)
 
 url = 'https://review.openstack.org/projects/'
 
@@ -37,6 +40,8 @@ url = 'https://review.openstack.org/projects/'
 '''
 
 def is_in_openstack_namespace(proj):
+    # only interested in openstack namespace (e.g. not retired
+    # stackforge, etc)
     return proj.startswith('openstack/')
 
 # Rather than returning a 404 for a nonexistent file, cgit delivers a
@@ -50,10 +55,13 @@ def has_devstack_plugin(proj):
     else:
         False
 
+logging.debug("Getting project list from %s" % url)
 r = requests.get(url)
 projects = sorted(filter(is_in_openstack_namespace, json.loads(r.text[4:])))
+logging.debug("Found %d projects" % len(projects))
 
 found_plugins = filter(has_devstack_plugin, projects)
 
 for project in found_plugins:
+    # strip of openstack/
     print project[10:]
