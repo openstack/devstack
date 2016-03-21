@@ -1,3 +1,5 @@
+# apparmor is an undeclared dependency for docker on ubuntu: https://github.com/docker/docker/issues/9745
+apparmor
 docker.io
 ipmitool
 iptables
