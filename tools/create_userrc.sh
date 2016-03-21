@@ -7,6 +7,22 @@
 # Warning: This script just for development purposes
 
 set -o errexit
+
+# short_source prints out the current location of the caller in a way
+# that strips redundant directories. This is useful for PS4
+# usage. Needed before we start tracing due to how we set
+# PS4. Normally we'd pick this up from stackrc, but that's not sourced
+# here.
+function short_source {
+    saveIFS=$IFS
+    IFS=" "
+    called=($(caller 0))
+    IFS=$saveIFS
+    file=${called[2]}
+    file=${file#$RC_DIR/}
+    printf "%-40s " "$file:${called[1]}:${called[0]}"
+}
+
 set -o xtrace
 
 ACCOUNT_DIR=./accrc
