@@ -14,9 +14,6 @@ unset LANGUAGE
 LC_ALL=C
 export LC_ALL
 
-# Make tracing more educational
-export PS4='+ ${BASH_SOURCE:-}:${FUNCNAME[0]:-}:L${LINENO:-}:   '
-
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
@@ -130,6 +127,16 @@ if [[ -f $RC_DIR/localrc ]]; then
 elif [[ -f $RC_DIR/.localrc.auto ]]; then
     # New-style user-supplied config extracted from local.conf
     source $RC_DIR/.localrc.auto
+fi
+
+# Use color for logging output (only available if syslog is not used)
+LOG_COLOR=$(trueorfalse True LOG_COLOR)
+
+# Make tracing more educational
+if [[ "$LOG_COLOR" == "True" ]]; then
+    export PS4='+\[$(tput setaf 242)\]$(short_source)\[$(tput sgr0)\] '
+else
+    export PS4='+ $(short_source):   '
 fi
 
 # Configure Identity API version: 2.0, 3
@@ -784,9 +791,6 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 SYSLOG=$(trueorfalse False SYSLOG)
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
 SYSLOG_PORT=${SYSLOG_PORT:-516}
-
-# Use color for logging output (only available if syslog is not used)
-LOG_COLOR=$(trueorfalse True LOG_COLOR)
 
 # Set global ``GIT_DEPTH=<number>`` to limit the history depth of the git clone
 # Set to 0 to disable shallow cloning

@@ -11,7 +11,6 @@
 # - if USE_PYTHON3=True, PYTHON3_VERSION refers to a version already installed
 
 set -o errexit
-set -o xtrace
 
 # Keep track of the current directory
 TOOLS_DIR=$(cd $(dirname "$0") && pwd)
@@ -22,6 +21,9 @@ cd $TOP_DIR
 
 # Import common functions
 source $TOP_DIR/stackrc
+
+# don't start tracing until after we've sourced the world
+set -o xtrace
 
 FILES=$TOP_DIR/files
 

@@ -30,6 +30,19 @@ function function_exists {
     declare -f -F $1 > /dev/null
 }
 
+# short_source prints out the current location of the caller in a way
+# that strips redundant directories. This is useful for PS4 usage.
+function short_source {
+    saveIFS=$IFS
+    IFS=" "
+    called=($(caller 0))
+    IFS=$saveIFS
+    file=${called[2]}
+    file=${file#$RC_DIR/}
+    printf "%-40s " "$file:${called[1]}:${called[0]}"
+}
+
+
 # Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:
 #
