@@ -1,5 +1,6 @@
 bc
 bridge-utils
+bsdmainutils
 curl
 g++
 gcc
