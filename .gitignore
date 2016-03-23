@@ -12,6 +12,7 @@ accrc
 doc/files
 doc/build
 files/*.gz
+files/*.vmdk
 files/*.rpm
 files/*.rpm.*
 files/*.qcow2
