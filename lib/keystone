@@ -61,7 +61,6 @@ KEYSTONE_USE_MOD_WSGI=${KEYSTONE_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}
 
 # KEYSTONE_DEPLOY defines how keystone is deployed, allowed values:
 # - mod_wsgi : Run keystone under Apache HTTPd mod_wsgi
-# - eventlet : Run keystone-all
 # - uwsgi : Run keystone under uwsgi
 if [ -z "$KEYSTONE_DEPLOY" ]; then
     if [ -z "$KEYSTONE_USE_MOD_WSGI" ]; then
@@ -69,7 +68,7 @@ if [ -z "$KEYSTONE_DEPLOY" ]; then
     elif [ "$KEYSTONE_USE_MOD_WSGI" == True ]; then
         KEYSTONE_DEPLOY=mod_wsgi
     else
-        KEYSTONE_DEPLOY=eventlet
+        KEYSTONE_DEPLOY=uwsgi
     fi
 fi
 
@@ -283,7 +282,7 @@ function configure_keystone {
     if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(asctime)s.%(msecs)03d %(process)d TRACE %(name)s %(instance)s"
         _config_keystone_apache_wsgi
-    elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
+    else # uwsgi
         # iniset creates these files when it's called if they don't exist.
         KEYSTONE_PUBLIC_UWSGI_FILE=$KEYSTONE_CONF_DIR/keystone-uwsgi-public.ini
         KEYSTONE_ADMIN_UWSGI_FILE=$KEYSTONE_CONF_DIR/keystone-uwsgi-admin.ini
@@ -321,20 +320,6 @@ function configure_keystone {
             # Make sure the client doesn't try to re-use the connection.
             iniset "$file" uwsgi add-header "Connection: close"
         done
-
-    else # eventlet
-        if is_ssl_enabled_service key; then
-            iniset $KEYSTONE_CONF eventlet_server_ssl enable True
-            iniset $KEYSTONE_CONF eventlet_server_ssl certfile $KEYSTONE_SSL_CERT
-            iniset $KEYSTONE_CONF eventlet_server_ssl keyfile $KEYSTONE_SSL_KEY
-        fi
-
-        iniset $KEYSTONE_CONF eventlet_server public_port $service_port
-        iniset $KEYSTONE_CONF eventlet_server admin_port $auth_port
-
-        iniset $KEYSTONE_CONF eventlet_server admin_bind_host "$KEYSTONE_ADMIN_BIND_HOST"
-        iniset $KEYSTONE_CONF eventlet_server admin_workers "$API_WORKERS"
-        # Public workers will use the server default, typically number of CPU.
     fi
 
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
@@ -583,12 +568,9 @@ function start_keystone {
         restart_apache_server
         tail_log key /var/log/$APACHE_NAME/keystone.log
         tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
-    elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
+    else # uwsgi
         run_process key "$KEYSTONE_BIN_DIR/uwsgi $KEYSTONE_PUBLIC_UWSGI_FILE" "" "key-p"
         run_process key "$KEYSTONE_BIN_DIR/uwsgi $KEYSTONE_ADMIN_UWSGI_FILE" "" "key-a"
-    else # eventlet
-        # Start Keystone in a screen window
-        run_process key "$KEYSTONE_BIN_DIR/keystone-all --config-file $KEYSTONE_CONF"
     fi
 
     echo "Waiting for keystone to start..."
