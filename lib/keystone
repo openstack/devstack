@@ -340,6 +340,12 @@ function configure_keystone {
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
 
     iniset $KEYSTONE_CONF fernet_tokens key_repository "$KEYSTONE_CONF_DIR/fernet-keys/"
+
+    # Configure the project created by the 'keystone-manage bootstrap' as the cloud-admin project.
+    # The users from this project are globally admin as before, but it also
+    # allows policy changes in order to clarify the adminess scope.
+    iniset $KEYSTONE_CONF resource admin_project_domain_name default
+    iniset $KEYSTONE_CONF resource admin_project_name admin
 }
 
 # create_keystone_accounts() - Sets up common required keystone accounts
