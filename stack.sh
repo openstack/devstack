@@ -799,7 +799,7 @@ if is_service_enabled keystone; then
     fi
 fi
 
-if is_service_enabled s-proxy; then
+if is_service_enabled swift; then
     if is_service_enabled ceilometer; then
         install_ceilometermiddleware
     fi
@@ -1118,7 +1118,7 @@ fi
 # Storage Service
 # ---------------
 
-if is_service_enabled s-proxy; then
+if is_service_enabled swift; then
     echo_summary "Configuring Swift"
     init_swift
 fi
@@ -1172,7 +1172,7 @@ merge_config_group $TOP_DIR/local.conf post-config
 # Only run the services specified in ``ENABLED_SERVICES``
 
 # Launch Swift Services
-if is_service_enabled s-proxy; then
+if is_service_enabled swift; then
     echo_summary "Starting Swift"
     start_swift
 fi
