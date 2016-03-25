@@ -325,6 +325,24 @@ function configure_tempest {
     if [[ "$OFFLINE" != "True" ]]; then
         tox -revenv --notest
     fi
+
+    # Auth
+    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
+    if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
+        if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
+            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_tenant_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
+        else
+            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_tenant_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
+        fi
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials False
+        iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
+    elif [[ $TEMPEST_HAS_ADMIN == "False" ]]; then
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
+
+    else
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
+    fi
+
     # NOTE(mtreinish): Respect constraints on tempest verify-config venv
     tox -evenv -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
     tox -evenv -- tempest verify-config -uro $tmp_cfg_file
@@ -551,23 +569,6 @@ function configure_tempest {
         # libvirt-lxc does not support boot from volume or attaching volumes
         # so basically anything with cinder is out of the question.
         iniset $TEMPEST_CONFIG service_available cinder "False"
-    fi
-
-    # Auth
-    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
-    if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
-        if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
-            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_tenant_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
-        else
-            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_tenant_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
-        fi
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials False
-        iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
-    elif [[ $TEMPEST_HAS_ADMIN == "False" ]]; then
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
-
-    else
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     fi
 
     # Restore IFS
