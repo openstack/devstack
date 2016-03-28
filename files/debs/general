@@ -1,0 +1,35 @@
+bc
+bridge-utils
+bsdmainutils
+curl
+g++
+gcc
+gettext  # used for compiling message catalogs
+git
+graphviz # needed for docs
+iputils-ping
+libffi-dev # for pyOpenSSL
+libjpeg-dev # Pillow 3.0.0
+libmysqlclient-dev  # MySQL-python
+libpq-dev  # psycopg2
+libssl-dev # for pyOpenSSL
+libxml2-dev  # lxml
+libxslt1-dev  # lxml
+libyaml-dev
+lsof # useful when debugging
+openjdk-7-jre-headless  # NOPRIME
+openssh-server
+openssl
+pkg-config
+psmisc
+python2.7
+python-dev
+python-gdbm # needed for testr
+screen
+tar
+tcpdump
+unzip
+uuid-runtime
+wget
+wget
+zlib1g-dev

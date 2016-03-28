@@ -1,24 +1,36 @@
+#!/bin/bash
+#
 # lib/tls
 # Functions to control the configuration and operation of the TLS proxy service
 
-# Dependencies:
 # !! source _before_ any services that use ``SERVICE_HOST``
-# ``functions`` file
-# ``DEST``, ``DATA_DIR`` must be defined
-# ``HOST_IP``, ``SERVICE_HOST``
-# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+#
+# Dependencies:
+#
+# - ``functions`` file
+# - ``DEST``, ``DATA_DIR`` must be defined
+# - ``HOST_IP``, ``SERVICE_HOST``
+# - ``KEYSTONE_TOKEN_FORMAT`` must be defined
 
 # Entry points:
-# configure_CA
-# init_CA
+#
+# - configure_CA
+# - init_CA
+# - cleanup_CA
 
-# configure_proxy
-# start_tls_proxy
+# - configure_proxy
+# - start_tls_proxy
 
-# make_root_ca
-# make_int_ca
-# new_cert $INT_CA_DIR int-server "abc"
-# start_tls_proxy HOST_IP 5000 localhost 5000
+# - stop_tls_proxy
+# - cleanup_CA
+
+# - make_root_CA
+# - make_int_CA
+# - make_cert ca-dir cert-name "common-name" ["alt-name" ...]
+# - start_tls_proxy HOST_IP 5000 localhost 5000
+# - ensure_certificates
+# - is_ssl_enabled_service
+# - enable_mod_ssl
 
 
 # Defaults
@@ -27,14 +39,9 @@
 if is_service_enabled tls-proxy; then
     # TODO(dtroyer): revisit this below after the search for HOST_IP has been done
     TLS_IP=${TLS_IP:-$SERVICE_IP}
-
-    # Set the default ``SERVICE_PROTOCOL`` for TLS
-    SERVICE_PROTOCOL=https
 fi
 
-# Make up a hostname for cert purposes
-# will be added to /etc/hosts?
-DEVSTACK_HOSTNAME=secure.devstack.org
+DEVSTACK_HOSTNAME=$(hostname -f)
 DEVSTACK_CERT_NAME=devstack-cert
 DEVSTACK_CERT=$DATA_DIR/$DEVSTACK_CERT_NAME.pem
 
@@ -57,7 +64,7 @@ STUD_CIPHERS='TLSv1+HIGH:!DES:!aNULL:!eNULL:@STRENGTH'
 OPENSSL=${OPENSSL:-/usr/bin/openssl}
 
 # Do primary CA configuration
-function configure_CA() {
+function configure_CA {
     # build common config file
 
     # Verify ``TLS_IP`` is good
@@ -69,7 +76,7 @@ function configure_CA() {
 
 # Creates a new CA directory structure
 # create_CA_base ca-dir
-function create_CA_base() {
+function create_CA_base {
     local ca_dir=$1
 
     if [[ -d $ca_dir ]]; then
@@ -77,6 +84,7 @@ function create_CA_base() {
         return 0
     fi
 
+    local i
     for i in certs crl newcerts private; do
         mkdir -p $ca_dir/$i
     done
@@ -85,10 +93,9 @@ function create_CA_base() {
     cp /dev/null $ca_dir/index.txt
 }
 
-
 # Create a new CA configuration file
 # create_CA_config ca-dir common-name
-function create_CA_config() {
+function create_CA_config {
     local ca_dir=$1
     local common_name=$2
 
@@ -141,7 +148,7 @@ keyUsage                = cRLSign, keyCertSign
 
 # Create a new signing configuration file
 # create_signing_config ca-dir
-function create_signing_config() {
+function create_signing_config {
     local ca_dir=$1
 
     echo "
@@ -195,12 +202,36 @@ subjectAltName          = \$ENV::SUBJECT_ALT_NAME
 # Create root and intermediate CAs
 # init_CA
 function init_CA {
+    fix_system_ca_bundle_path
     # Ensure CAs are built
     make_root_CA $ROOT_CA_DIR
     make_int_CA $INT_CA_DIR $ROOT_CA_DIR
 
     # Create the CA bundle
     cat $ROOT_CA_DIR/cacert.pem $INT_CA_DIR/cacert.pem >>$INT_CA_DIR/ca-chain.pem
+    cat $INT_CA_DIR/ca-chain.pem >> $SSL_BUNDLE_FILE
+
+    if is_fedora; then
+        sudo cp $INT_CA_DIR/ca-chain.pem /usr/share/pki/ca-trust-source/anchors/devstack-chain.pem
+        sudo update-ca-trust
+    elif is_ubuntu; then
+        sudo cp $INT_CA_DIR/ca-chain.pem /usr/local/share/ca-certificates/devstack-int.crt
+        sudo cp $ROOT_CA_DIR/cacert.pem /usr/local/share/ca-certificates/devstack-root.crt
+        sudo update-ca-certificates
+    fi
+}
+
+# Clean up the CA files
+# cleanup_CA
+function cleanup_CA {
+    if is_fedora; then
+        sudo rm -f /usr/share/pki/ca-trust-source/anchors/devstack-chain.pem
+        sudo update-ca-trust
+    elif is_ubuntu; then
+        sudo rm -f /usr/local/share/ca-certificates/devstack-int.crt
+        sudo rm -f /usr/local/share/ca-certificates/devstack-root.crt
+        sudo update-ca-certificates
+    fi
 }
 
 # Create an initial server cert
@@ -218,46 +249,47 @@ function init_cert {
     fi
 }
 
-
 # make_cert creates and signs a new certificate with the given commonName and CA
 # make_cert ca-dir cert-name "common-name" ["alt-name" ...]
-function make_cert() {
+function make_cert {
     local ca_dir=$1
     local cert_name=$2
     local common_name=$3
     local alt_names=$4
 
-    # Generate a signing request
-    $OPENSSL req \
-        -sha1 \
-        -newkey rsa \
-        -nodes \
-        -keyout $ca_dir/private/$cert_name.key \
-        -out $ca_dir/$cert_name.csr \
-        -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}"
+    # Only generate the certificate if it doesn't exist yet on the disk
+    if [ ! -r "$ca_dir/$cert_name.crt" ]; then
+        # Generate a signing request
+        $OPENSSL req \
+            -sha1 \
+            -newkey rsa \
+            -nodes \
+            -keyout $ca_dir/private/$cert_name.key \
+            -out $ca_dir/$cert_name.csr \
+            -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}"
 
-    if [[ -z "$alt_names" ]]; then
-        alt_names="DNS:${common_name}"
-    else
-        alt_names="DNS:${common_name},${alt_names}"
+        if [[ -z "$alt_names" ]]; then
+            alt_names="DNS:${common_name}"
+        else
+            alt_names="DNS:${common_name},${alt_names}"
+        fi
+
+        # Sign the request valid for 1 year
+        SUBJECT_ALT_NAME="$alt_names" \
+        $OPENSSL ca -config $ca_dir/signing.conf \
+            -extensions req_extensions \
+            -days 365 \
+            -notext \
+            -in $ca_dir/$cert_name.csr \
+            -out $ca_dir/$cert_name.crt \
+            -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}" \
+            -batch
     fi
-
-    # Sign the request valid for 1 year
-    SUBJECT_ALT_NAME="$alt_names" \
-    $OPENSSL ca -config $ca_dir/signing.conf \
-        -extensions req_extensions \
-        -days 365 \
-        -notext \
-        -in $ca_dir/$cert_name.csr \
-        -out $ca_dir/$cert_name.crt \
-        -subj "/O=${ORG_NAME}/OU=${ORG_UNIT_NAME} Servers/CN=${common_name}" \
-        -batch
 }
-
 
 # Make an intermediate CA to sign everything else
 # make_int_CA ca-dir signing-ca-dir
-function make_int_CA() {
+function make_int_CA {
     local ca_dir=$1
     local signing_ca_dir=$2
 
@@ -266,28 +298,30 @@ function make_int_CA() {
     create_CA_config $ca_dir 'Intermediate CA'
     create_signing_config $ca_dir
 
-    # Create a signing certificate request
-    $OPENSSL req -config $ca_dir/ca.conf \
-        -sha1 \
-        -newkey rsa \
-        -nodes \
-        -keyout $ca_dir/private/cacert.key \
-        -out $ca_dir/cacert.csr \
-        -outform PEM
+    if [ ! -r "$ca_dir/cacert.pem" ]; then
+        # Create a signing certificate request
+        $OPENSSL req -config $ca_dir/ca.conf \
+            -sha1 \
+            -newkey rsa \
+            -nodes \
+            -keyout $ca_dir/private/cacert.key \
+            -out $ca_dir/cacert.csr \
+            -outform PEM
 
-    # Sign the intermediate request valid for 1 year
-    $OPENSSL ca -config $signing_ca_dir/ca.conf \
-        -extensions ca_extensions \
-        -days 365 \
-        -notext \
-        -in $ca_dir/cacert.csr \
-        -out $ca_dir/cacert.pem \
-        -batch
+        # Sign the intermediate request valid for 1 year
+        $OPENSSL ca -config $signing_ca_dir/ca.conf \
+            -extensions ca_extensions \
+            -days 365 \
+            -notext \
+            -in $ca_dir/cacert.csr \
+            -out $ca_dir/cacert.pem \
+            -batch
+    fi
 }
 
 # Make a root CA to sign other CAs
 # make_root_CA ca-dir
-function make_root_CA() {
+function make_root_CA {
     local ca_dir=$1
 
     # Create the root CA
@@ -305,13 +339,114 @@ function make_root_CA() {
         -outform PEM
 }
 
+# If a non-system python-requests is installed then it will use the
+# built-in CA certificate store rather than the distro-specific
+# CA certificate store. Detect this and symlink to the correct
+# one. If the value for the CA is not rooted in /etc then we know
+# we need to change it.
+function fix_system_ca_bundle_path {
+    if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
+        local capath
+        capath=$(python -c $'try:\n from requests import certs\n print certs.where()\nexcept ImportError: pass')
+
+        if [[ ! $capath == "" && ! $capath =~ ^/etc/.* && ! -L $capath ]]; then
+            if is_fedora; then
+                sudo rm -f $capath
+                sudo ln -s /etc/pki/tls/certs/ca-bundle.crt $capath
+            elif is_ubuntu; then
+                sudo rm -f $capath
+                sudo ln -s /etc/ssl/certs/ca-certificates.crt $capath
+            else
+                echo "Don't know how to set the CA bundle, expect the install to fail."
+            fi
+        fi
+    fi
+}
+
+
+# Certificate Input Configuration
+# ===============================
+
+# check to see if the service(s) specified are to be SSL enabled.
+#
+# Multiple services specified as arguments are ``OR``'ed together; the test
+# is a short-circuit boolean, i.e it returns on the first match.
+#
+# Uses global ``SSL_ENABLED_SERVICES``
+function is_ssl_enabled_service {
+    local services=$@
+    local service=""
+    if [ "$USE_SSL" == "False" ]; then
+        return 1
+    fi
+    for service in ${services}; do
+        [[ ,${SSL_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
+    done
+    return 1
+}
+
+# Ensure that the certificates for a service are in place. This function does
+# not check that a service is SSL enabled, this should already have been
+# completed.
+#
+# The function expects to find a certificate, key and CA certificate in the
+# variables ``{service}_SSL_CERT``, ``{service}_SSL_KEY`` and ``{service}_SSL_CA``. For
+# example for keystone this would be ``KEYSTONE_SSL_CERT``, ``KEYSTONE_SSL_KEY`` and
+# ``KEYSTONE_SSL_CA``.
+#
+# If it does not find these certificates then the DevStack-issued server
+# certificate, key and CA certificate will be associated with the service.
+#
+# If only some of the variables are provided then the function will quit.
+function ensure_certificates {
+    local service=$1
+
+    local cert_var="${service}_SSL_CERT"
+    local key_var="${service}_SSL_KEY"
+    local ca_var="${service}_SSL_CA"
+
+    local cert=${!cert_var}
+    local key=${!key_var}
+    local ca=${!ca_var}
+
+    if [[ -z "$cert" && -z "$key" && -z "$ca" ]]; then
+        local cert="$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt"
+        local key="$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key"
+        local ca="$INT_CA_DIR/ca-chain.pem"
+        eval ${service}_SSL_CERT=\$cert
+        eval ${service}_SSL_KEY=\$key
+        eval ${service}_SSL_CA=\$ca
+        return # the CA certificate is already in the bundle
+    elif [[ -z "$cert" || -z "$key" || -z "$ca" ]]; then
+        die $LINENO "Missing either the ${cert_var} ${key_var} or ${ca_var}" \
+                    "variable to enable SSL for ${service}"
+    fi
+
+    cat $ca >> $SSL_BUNDLE_FILE
+}
+
+# Enable the mod_ssl plugin in Apache
+function enable_mod_ssl {
+    echo "Enabling mod_ssl"
+
+    if is_ubuntu; then
+        sudo a2enmod ssl
+    elif is_fedora; then
+        # Fedora enables mod_ssl by default
+        :
+    fi
+    if ! sudo `which httpd || which apache2ctl` -M | grep -w -q ssl_module; then
+        die $LINENO "mod_ssl is not enabled in apache2/httpd, please check for it manually and run stack.sh again"
+    fi
+}
+
 
 # Proxy Functions
 # ===============
 
 # Starts the TLS proxy for the given IP/ports
 # start_tls_proxy front-host front-port back-host back-port
-function start_tls_proxy() {
+function start_tls_proxy {
     local f_host=$1
     local f_port=$2
     local b_host=$3
@@ -321,6 +456,21 @@ function start_tls_proxy() {
 }
 
 
-# Local variables:
-# mode: shell-script
-# End:
+# Cleanup Functions
+# =================
+
+# Stops all stud processes. This should be done only after all services
+# using tls configuration are down.
+function stop_tls_proxy {
+    killall stud
+}
+
+# Remove CA along with configuration, as well as the local server certificate
+function cleanup_CA {
+    rm -rf "$DATA_DIR/CA" "$DEVSTACK_CERT"
+}
+
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

@@ -1,27 +1,5 @@
 Django
-django-registration
-gcc
 httpd # NOPRIME
 mod_wsgi  # NOPRIME
-nodejs # NOPRIME
-pylint
-python-anyjson
-python-BeautifulSoup
-python-boto
-python-coverage
-python-dateutil
-python-eventlet
-python-greenlet
-python-httplib2
-python-kombu
-python-migrate
-python-mox
-python-netaddr
-python-nose
-python-paste        #dist:f16,f17,f18,f19
-python-paste-deploy #dist:f16,f17,f18,f19
-python-routes
-python-sphinx
-python-sqlalchemy
-python-webob
+pcre-devel  # pyScss
 pyxattr

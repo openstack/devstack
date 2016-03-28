@@ -3,12 +3,13 @@
 # **aggregates.sh**
 
 # This script demonstrates how to use host aggregates:
-#  *  Create an Aggregate
-#  *  Updating Aggregate details
-#  *  Testing Aggregate metadata
-#  *  Testing Aggregate delete
-#  *  Testing General Aggregates (https://blueprints.launchpad.net/nova/+spec/general-host-aggregates)
-#  *  Testing add/remove hosts (with one host)
+#
+# *  Create an Aggregate
+# *  Updating Aggregate details
+# *  Testing Aggregate metadata
+# *  Testing Aggregate delete
+# *  Testing General Aggregates (https://blueprints.launchpad.net/nova/+spec/general-host-aggregates)
+# *  Testing add/remove hosts (with one host)
 
 echo "**************************************************"
 echo "Begin DevStack Exercise: $0"
@@ -30,18 +31,19 @@ set -o xtrace
 EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
 TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
-# Import common functions
-source $TOP_DIR/functions
-
-# Import configuration
-source $TOP_DIR/openrc
+# Test as the admin user
+# note this imports stackrc/functions, etc
+. $TOP_DIR/openrc admin admin
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc
 
-# Test as the admin user
-. $TOP_DIR/openrc admin admin
+# If nova api is not enabled we exit with exitcode 55 so that
+# the exercise is skipped
+is_service_enabled n-api || exit 55
 
+# Cells does not support aggregates.
+is_service_enabled n-cell && exit 55
 
 # Create an aggregate
 # ===================
@@ -50,7 +52,7 @@ AGGREGATE_NAME=test_aggregate_$RANDOM
 AGGREGATE2_NAME=test_aggregate_$RANDOM
 AGGREGATE_A_ZONE=nova
 
-exit_if_aggregate_present() {
+function exit_if_aggregate_present {
     aggregate_name=$1
 
     if [ $(nova aggregate-list | grep -c " $aggregate_name ") == 0 ]; then
@@ -64,7 +66,10 @@ exit_if_aggregate_present() {
 exit_if_aggregate_present $AGGREGATE_NAME
 
 AGGREGATE_ID=$(nova aggregate-create $AGGREGATE_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE_NAME " | get_field 1)
+die_if_not_set $LINENO AGGREGATE_ID "Failure creating AGGREGATE_ID for $AGGREGATE_NAME $AGGREGATE_A_ZONE"
+
 AGGREGATE2_ID=$(nova aggregate-create $AGGREGATE2_NAME $AGGREGATE_A_ZONE | grep " $AGGREGATE2_NAME " | get_field 1)
+die_if_not_set $LINENO AGGREGATE2_ID "Fail creating AGGREGATE2_ID for $AGGREGATE2_NAME $AGGREGATE_A_ZONE"
 
 # check aggregate created
 nova aggregate-list | grep -q " $AGGREGATE_NAME " || die $LINENO "Aggregate $AGGREGATE_NAME not created"
@@ -98,7 +103,7 @@ META_DATA_2_KEY=foo
 META_DATA_3_KEY=bar
 
 #ensure no additional metadata is set
-nova aggregate-details $AGGREGATE_ID | egrep "{u'availability_zone': u'$AGGREGATE_A_ZONE'}|{}"
+nova aggregate-details $AGGREGATE_ID | egrep "\|[{u ]*'availability_zone.+$AGGREGATE_A_ZONE'[ }]*\|"
 
 nova aggregate-set-metadata $AGGREGATE_ID ${META_DATA_1_KEY}=123
 nova aggregate-details $AGGREGATE_ID | grep $META_DATA_1_KEY
@@ -115,7 +120,7 @@ nova aggregate-details $AGGREGATE_ID | grep $META_DATA_3_KEY
 nova aggregate-details $AGGREGATE_ID | grep $META_DATA_2_KEY && die $LINENO "ERROR metadata was not cleared"
 
 nova aggregate-set-metadata $AGGREGATE_ID $META_DATA_3_KEY $META_DATA_1_KEY
-nova aggregate-details $AGGREGATE_ID | egrep "{u'availability_zone': u'$AGGREGATE_A_ZONE'}|{}"
+nova aggregate-details $AGGREGATE_ID | egrep "\|[{u ]*'availability_zone.+$AGGREGATE_A_ZONE'[ }]*\|"
 
 
 # Test aggregate-add/remove-host

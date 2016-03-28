@@ -29,6 +29,9 @@ function before_each_test {
 
     XE_CALLS=$(mktemp)
     truncate -s 0 $XE_CALLS
+
+    DEAD_MESSAGES=$(mktemp)
+    truncate -s 0 $DEAD_MESSAGES
 }
 
 # Teardown
@@ -62,6 +65,10 @@ function assert_xe_min {
 
 function assert_xe_param {
     grep -qe "^$1\$" $XE_CALLS
+}
+
+function assert_died_with {
+    diff -u <(echo "$1") $DEAD_MESSAGES
 }
 
 function mock_out {
@@ -109,16 +116,10 @@ function test_no_plugin_directory_found {
     grep "[ -d /usr/lib/xcp/plugins/ ]" $LIST_OF_ACTIONS
 }
 
-function test_zip_snapshot_location {
-    diff \
-    <(zip_snapshot_location "https://github.com/openstack/nova.git" "master") \
-    <(echo "https://github.com/openstack/nova/zipball/master")
-}
-
 function test_create_directory_for_kernels {
     (
         . mocks
-        mock_out get_local_sr uuid1
+        mock_out get_local_sr_path /var/run/sr-mount/uuid1
         create_directory_for_kernels
     )
 
@@ -141,7 +142,7 @@ EOF
 function test_create_directory_for_images {
     (
         . mocks
-        mock_out get_local_sr uuid1
+        mock_out get_local_sr_path /var/run/sr-mount/uuid1
         create_directory_for_images
     )
 
@@ -161,50 +162,20 @@ function test_create_directory_for_images_existing_dir {
 EOF
 }
 
-function test_extract_remote_zipball {
-    local RESULT=$(. mocks && extract_remote_zipball "someurl")
-
-    diff <(cat $LIST_OF_ACTIONS) - << EOF
-wget -nv someurl -O tempfile --no-check-certificate
-unzip -q -o tempfile -d tempdir
-rm -f tempfile
-EOF
-
-    [ "$RESULT" = "tempdir" ]
-}
-
-function test_extract_remote_zipball_wget_fail {
-    set +e
-
-    local IGNORE
-    IGNORE=$(. mocks && extract_remote_zipball "failurl")
-
-    assert_previous_command_failed
-}
-
-function test_find_nova_plugins {
-    local tmpdir=$(mktemp -d)
-
-    mkdir -p "$tmpdir/blah/blah/u/xapi.d/plugins"
-
-    [ "$tmpdir/blah/blah/u/xapi.d/plugins" = $(find_xapi_plugins_dir $tmpdir) ]
-
-    rm -rf $tmpdir
-}
-
 function test_get_local_sr {
     setup_xe_response "uuid123"
 
-    local RESULT=$(. mocks && get_local_sr)
+    local RESULT
+    RESULT=$(. mocks && get_local_sr)
 
     [ "$RESULT" == "uuid123" ]
 
-    assert_xe_min
-    assert_xe_param "sr-list" "name-label=Local storage"
+    assert_xe_param "pool-list" params=default-SR minimal=true
 }
 
 function test_get_local_sr_path {
-    local RESULT=$(mock_out get_local_sr "uuid1" && get_local_sr_path)
+    local RESULT
+    RESULT=$(mock_out get_local_sr "uuid1" && get_local_sr_path)
 
     [ "/var/run/sr-mount/uuid1" == "$RESULT" ]
 }
@@ -215,16 +186,14 @@ function test_get_local_sr_path {
 }
 
 [ "$1" = "run_tests" ] && {
-    for testname in $($0)
-    do
+    for testname in $($0); do
         echo "$testname"
         before_each_test
         (
             set -eux
             $testname
         )
-        if [ "$?" != "0" ]
-        then
+        if [ "$?" != "0" ]; then
             echo "FAIL"
             exit 1
         else

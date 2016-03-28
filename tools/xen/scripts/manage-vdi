@@ -41,7 +41,17 @@ function get_mount_device() {
        echo "Failed to find mapping"
        exit -1
     fi
-    echo "/dev/mapper/${mapping}"
+
+    local device="/dev/mapper/${mapping}"
+    for (( i = 0; i < 5; i++ )) ; do
+        if [ -b $device ] ; then
+            echo $device
+            return
+        fi
+        sleep 1
+    done
+    echo "ERROR: timed out waiting for dev-mapper"
+    exit 1
   else
     echo "/dev/$dev$part"
   fi

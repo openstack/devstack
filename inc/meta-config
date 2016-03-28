@@ -1,0 +1,223 @@
+#!/bin/bash
+#
+# **lib/meta-config** - Configuration file manipulation functions
+#
+# Support for DevStack's local.conf meta-config sections
+#
+# These functions have no external dependencies and the following side-effects:
+#
+# CONFIG_AWK_CMD is defined, default is ``awk``
+
+# Meta-config files contain multiple INI-style configuration files
+# using a specific new section header to delimit them:
+#
+#   [[group-name|file-name]]
+#
+# group-name refers to the group of configuration file changes to be processed
+# at a particular time.  These are called phases in ``stack.sh`` but
+# group here as these functions are not DevStack-specific.
+#
+# file-name is the destination of the config file
+
+# Save trace setting
+_XTRACE_INC_META=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Allow the awk command to be overridden on legacy platforms
+CONFIG_AWK_CMD=${CONFIG_AWK_CMD:-awk}
+
+# Get the section for the specific group and config file
+# get_meta_section infile group configfile
+function get_meta_section {
+    local file=$1
+    local matchgroup=$2
+    local configfile=$3
+
+    [[ -r $file ]] || return 0
+    [[ -z $configfile ]] && return 0
+
+    $CONFIG_AWK_CMD -v matchgroup=$matchgroup -v configfile=$configfile '
+        BEGIN { group = "" }
+        /^\[\[.+\|.*\]\]/ {
+            if (group == "") {
+                gsub("[][]", "", $1);
+                split($1, a, "|");
+                if (a[1] == matchgroup && a[2] == configfile) {
+                    group=a[1]
+                }
+            } else {
+                group=""
+            }
+            next
+        }
+        {
+            if (group != "")
+                print $0
+        }
+    ' $file
+}
+
+
+# Get a list of config files for a specific group
+# get_meta_section_files infile group
+function get_meta_section_files {
+    local file=$1
+    local matchgroup=$2
+
+    [[ -r $file ]] || return 0
+
+    $CONFIG_AWK_CMD -v matchgroup=$matchgroup '
+        /^\[\[.+\|.*\]\]/ {
+            gsub("[][]", "", $1);
+            split($1, a, "|");
+            if (a[1] == matchgroup)
+                print a[2]
+        }
+    ' $file
+}
+
+
+# Merge the contents of a meta-config file into its destination config file
+# If configfile does not exist it will be created.
+# merge_config_file infile group configfile
+function merge_config_file {
+    local file=$1
+    local matchgroup=$2
+    local configfile=$3
+
+    # note, configfile might be a variable (note the iniset, etc
+    # created in the mega-awk below is "eval"ed too, so we just leave
+    # it alone.
+    local real_configfile
+    real_configfile=$(eval echo $configfile)
+    if [ ! -f $real_configfile ]; then
+        touch $real_configfile || die $LINENO "could not create config file $real_configfile ($configfile)"
+    fi
+
+    get_meta_section $file $matchgroup $configfile | \
+    $CONFIG_AWK_CMD -v configfile=$configfile '
+        BEGIN {
+            section = ""
+            last_section = ""
+            section_count = 0
+        }
+        /^\[.+\]/ {
+            gsub("[][]", "", $1);
+            section=$1
+            next
+        }
+        /^ *\#/ {
+            next
+        }
+        /^[^ \t]+/ {
+            # get offset of first '=' in $0
+            eq_idx = index($0, "=")
+            # extract attr & value from $0
+            attr = substr($0, 1, eq_idx - 1)
+            value = substr($0, eq_idx + 1)
+            # only need to strip trailing whitespace from attr
+            sub(/[ \t]*$/, "", attr)
+            # need to strip leading & trailing whitespace from value
+            sub(/^[ \t]*/, "", value)
+            sub(/[ \t]*$/, "", value)
+
+            # cfg_attr_count: number of config lines per [section, attr]
+            # cfg_attr: three dimensional array to keep all the config lines per [section, attr]
+            # cfg_section: keep the section names in the same order as they appear in local.conf
+            # cfg_sec_attr_name: keep the attr names in the same order as they appear in local.conf
+            if (! (section, attr) in cfg_attr_count) {
+                if (section != last_section) {
+                    cfg_section[section_count++] = section
+                    last_section = section
+                }
+                attr_count = cfg_sec_attr_count[section_count - 1]++
+                cfg_sec_attr_name[section_count - 1, attr_count] = attr
+
+                cfg_attr[section, attr, 0] = value
+                cfg_attr_count[section, attr] = 1
+            } else {
+                lno = cfg_attr_count[section, attr]++
+                cfg_attr[section, attr, lno] = value
+            }
+        }
+        END {
+            # Process each section in order
+            for (sno = 0; sno < section_count; sno++) {
+                section = cfg_section[sno]
+                # The ini routines simply append a config item immediately
+                # after the section header. To keep the same order as defined
+                # in local.conf, invoke the ini routines in the reverse order
+                for (attr_no = cfg_sec_attr_count[sno] - 1; attr_no >=0; attr_no--) {
+                    attr = cfg_sec_attr_name[sno, attr_no]
+                    if (cfg_attr_count[section, attr] == 1)
+                        print "iniset " configfile " " section " " attr " \"" cfg_attr[section, attr, 0] "\""
+                    else {
+                        # For multiline, invoke the ini routines in the reverse order
+                        count = cfg_attr_count[section, attr]
+                        print "inidelete " configfile " " section " " attr
+                        print "iniset " configfile " " section " " attr " \"" cfg_attr[section, attr, count - 1] "\""
+                        for (l = count -2; l >= 0; l--)
+                            print "iniadd_literal " configfile " " section " " attr " \"" cfg_attr[section, attr, l] "\""
+                    }
+                }
+            }
+        }
+    ' | while read a; do eval "$a"; done
+}
+
+
+# Merge all of the files specified by group
+# merge_config_group infile group [group ...]
+function merge_config_group {
+    local localfile=$1; shift
+    local matchgroups=$@
+
+    [[ -r $localfile ]] || return 0
+
+    local configfile group
+    for group in $matchgroups; do
+        for configfile in $(get_meta_section_files $localfile $group); do
+            local realconfigfile
+            local dir
+
+            realconfigfile=$(eval "echo $configfile")
+            if [[ -z $realconfigfile ]]; then
+                die $LINENO "bogus config file specification: $configfile is undefined"
+            fi
+            dir=$(dirname $realconfigfile)
+            if [[ -d $dir ]]; then
+                merge_config_file $localfile $group $configfile
+            else
+                die $LINENO "bogus config file specification $configfile ($configfile=$realconfigfile, $dir is not a directory)"
+            fi
+        done
+    done
+}
+
+function extract_localrc_section {
+    local configfile=$1    # top_dir/local.conf
+    local localrcfile=$2   # top_dir/localrc
+    local localautofile=$3 # top_dir/.localrc.auto
+
+    if [[ -r $configfile ]]; then
+        LRC=$(get_meta_section_files $configfile local)
+        for lfile in $LRC; do
+            if [[ "$lfile" == "localrc" ]]; then
+                if [[ -r $localrcfile ]]; then
+                    echo "localrc and local.conf:[[local]] both exist, using localrc"
+                else
+                    echo "# Generated file, do not edit" >$localautofile
+                    get_meta_section $configfile local $lfile >>$localautofile
+                fi
+            fi
+        done
+    fi
+}
+
+# Restore xtrace
+$_XTRACE_INC_META
+
+# Local variables:
+# mode: shell-script
+# End:

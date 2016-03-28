@@ -1,0 +1,188 @@
+#!/bin/bash
+#
+# lib/lvm
+# Configure the default LVM volume group used by Cinder and Nova
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# DATA_DIR
+
+# clean_default_volume_group - called from clean()
+# configure_default_volume_group - called from configure()
+# init_default_volume_group - called from init()
+
+
+# Save trace setting
+_XTRACE_LVM=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+# Name of the lvm volume groups to use/create for iscsi volumes
+# This monkey-motion is for compatibility with icehouse-generation Grenade
+# If ``VOLUME_GROUP`` is set, use it, otherwise we'll build a VG name based
+# on ``VOLUME_GROUP_NAME`` that includes the backend name
+# Grenade doesn't use ``VOLUME_GROUP2`` so it is left out
+VOLUME_GROUP_NAME=${VOLUME_GROUP:-${VOLUME_GROUP_NAME:-stack-volumes}}
+DEFAULT_VOLUME_GROUP_NAME=$VOLUME_GROUP_NAME-default
+
+# Backing file name is of the form $VOLUME_GROUP$BACKING_FILE_SUFFIX
+BACKING_FILE_SUFFIX=-backing-file
+
+
+# Functions
+# ---------
+
+# _clean_lvm_volume_group removes all default LVM volumes
+#
+# Usage: clean_lvm_volume_group $vg
+function _clean_lvm_volume_group {
+    local vg=$1
+
+    # Clean out existing volumes
+    sudo lvremove -f $vg
+}
+
+# _clean_lvm_backing_file() removes the backing file of the
+# volume group
+#
+# Usage: _clean_lvm_backing_file() $backing_file
+function _clean_lvm_backing_file {
+    local backing_file=$1
+
+    # If the backing physical device is a loop device, it was probably setup by DevStack
+    if [[ -n "$backing_file" ]] && [[ -e "$backing_file" ]]; then
+        local vg_dev
+        vg_dev=$(sudo losetup -j $backing_file | awk -F':' '/'$BACKING_FILE_SUFFIX'/ { print $1}')
+        sudo losetup -d $vg_dev
+        rm -f $backing_file
+    fi
+}
+
+# clean_lvm_volume_group() cleans up the volume group and removes the
+# backing file
+#
+# Usage: clean_lvm_volume_group $vg
+function clean_lvm_volume_group {
+    local vg=$1
+
+    _clean_lvm_volume_group $vg
+    # if there is no logical volume left, it's safe to attempt a cleanup
+    # of the backing file
+    if [[ -z "$(sudo lvs --noheadings -o lv_name $vg 2>/dev/null)" ]]; then
+        _clean_lvm_backing_file $DATA_DIR/$vg$BACKING_FILE_SUFFIX
+    fi
+}
+
+
+# _create_lvm_volume_group creates default volume group
+#
+# Usage: _create_lvm_volume_group() $vg $size
+function _create_lvm_volume_group {
+    local vg=$1
+    local size=$2
+
+    local backing_file=$DATA_DIR/$vg$BACKING_FILE_SUFFIX
+    if ! sudo vgs $vg; then
+        # Only create if the file doesn't already exists
+        [[ -f $backing_file ]] || truncate -s $size $backing_file
+        local vg_dev
+        vg_dev=`sudo losetup -f --show $backing_file`
+
+        # Only create volume group if it doesn't already exist
+        if ! sudo vgs $vg; then
+            sudo vgcreate $vg $vg_dev
+        fi
+    fi
+}
+
+# init_lvm_volume_group() initializes the volume group creating the backing
+# file if necessary
+#
+# Usage: init_lvm_volume_group() $vg
+function init_lvm_volume_group {
+    local vg=$1
+    local size=$2
+
+    # Start the lvmetad and tgtd services
+    if is_fedora || is_suse; then
+        # services is not started by default
+        start_service lvm2-lvmetad
+        if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
+            start_service tgtd
+        fi
+    fi
+
+    # Start with a clean volume group
+    _create_lvm_volume_group $vg $size
+
+    # Remove iscsi targets
+    if [ "$CINDER_ISCSI_HELPER" = "lioadm" ]; then
+        sudo cinder-rtstool get-targets | sudo xargs -rn 1 cinder-rtstool delete
+    else
+        sudo tgtadm --op show --mode target | grep Target | cut -f3 -d ' ' | sudo xargs -n1 tgt-admin --delete || true
+    fi
+    _clean_lvm_volume_group $vg
+}
+
+# Sentinal value to ensure that init of default lvm volume group is
+# only performed once across calls of init_default_lvm_volume_group.
+_DEFAULT_LVM_INIT=${_DEFAULT_LVM_INIT:-0}
+
+# init_default_lvm_volume_group() initializes a default volume group
+# intended to be shared between cinder and nova.  It is idempotent;
+# the init of the default volume group is guaranteed to be performed
+# only once so that either or both of the dependent services can
+# safely call this function.
+#
+# Usage: init_default_lvm_volume_group()
+function init_default_lvm_volume_group {
+    if [[ "$_DEFAULT_LVM_INIT" = "0" ]]; then
+        init_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME $VOLUME_BACKING_FILE_SIZE
+        _DEFAULT_LVM_INIT=1
+    fi
+}
+
+# clean_lvm_filter() Remove the filter rule set in set_lvm_filter()
+#
+# Usage: clean_lvm_filter()
+function clean_lvm_filter {
+    sudo sed -i "s/^.*# from devstack$//" /etc/lvm/lvm.conf
+}
+
+# set_lvm_filter() Gather all devices configured for LVM and
+# use them to build a global device filter
+# set_lvm_filter() Create a device filter
+# and add to /etc/lvm.conf.  Note this uses
+# all current PV's in use by LVM on the
+# system to build it's filter.
+#
+# Usage: set_lvm_filter()
+function set_lvm_filter {
+    local filter_suffix='"r|.*|" ]  # from devstack'
+    local filter_string="global_filter = [ "
+    local pv
+    local vg
+    local line
+
+    for pv_info in $(sudo pvs --noheadings -o name); do
+        pv=$(echo -e "${pv_info}" | sed 's/ //g' | sed 's/\/dev\///g')
+        new="\"a|$pv|\", "
+        filter_string=$filter_string$new
+    done
+    filter_string=$filter_string$filter_suffix
+
+    clean_lvm_filter
+    sudo sed -i "/# global_filter = \[*\]/a\    $global_filter$filter_string" /etc/lvm/lvm.conf
+    echo_summary "set lvm.conf device global_filter to: $filter_string"
+}
+
+# Restore xtrace
+$_XTRACE_LVM
+
+# mode: shell-script
+# End:

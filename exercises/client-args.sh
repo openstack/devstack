@@ -41,25 +41,22 @@ unset NOVA_PROJECT_ID
 unset NOVA_REGION_NAME
 unset NOVA_URL
 unset NOVA_USERNAME
-unset NOVA_VERSION
 
 # Save the known variables for later
-export x_TENANT_NAME=$OS_TENANT_NAME
+export x_PROJECT_NAME=$OS_PROJECT_NAME
 export x_USERNAME=$OS_USERNAME
 export x_PASSWORD=$OS_PASSWORD
 export x_AUTH_URL=$OS_AUTH_URL
 
 # Unset the usual variables to force argument processing
-unset OS_TENANT_NAME
+unset OS_PROJECT_NAME
 unset OS_USERNAME
 unset OS_PASSWORD
 unset OS_AUTH_URL
 
 # Common authentication args
-TENANT_ARG="--os_tenant_name=$x_TENANT_NAME"
-TENANT_ARG_DASH="--os-tenant-name=$x_TENANT_NAME"
-ARGS="--os_username=$x_USERNAME --os_password=$x_PASSWORD --os_auth_url=$x_AUTH_URL"
-ARGS_DASH="--os-username=$x_USERNAME --os-password=$x_PASSWORD --os-auth-url=$x_AUTH_URL"
+PROJECT_ARG="--os-project-name=$x_PROJECT_NAME"
+ARGS="--os-username=$x_USERNAME --os-password=$x_PASSWORD --os-auth-url=$x_AUTH_URL"
 
 # Set global return
 RETURN=0
@@ -71,7 +68,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
         STATUS_KEYSTONE="Skipped"
     else
         echo -e "\nTest Keystone"
-        if keystone $TENANT_ARG_DASH $ARGS_DASH catalog --service identity; then
+        if openstack $PROJECT_ARG $ARGS catalog show identity; then
             STATUS_KEYSTONE="Succeeded"
         else
             STATUS_KEYSTONE="Failed"
@@ -86,11 +83,10 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "n-api" ]]; then
         STATUS_NOVA="Skipped"
-        STATUS_EC2="Skipped"
     else
         # Test OSAPI
         echo -e "\nTest Nova"
-        if nova $TENANT_ARG_DASH $ARGS_DASH flavor-list; then
+        if nova $PROJECT_ARG $ARGS flavor-list; then
             STATUS_NOVA="Succeeded"
         else
             STATUS_NOVA="Failed"
@@ -107,7 +103,7 @@ if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
         STATUS_CINDER="Skipped"
     else
         echo -e "\nTest Cinder"
-        if cinder $TENANT_ARG_DASH $ARGS_DASH list; then
+        if cinder $PROJECT_ARG $ARGS list; then
             STATUS_CINDER="Succeeded"
         else
             STATUS_CINDER="Failed"
@@ -124,7 +120,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
-        if glance $TENANT_ARG_DASH $ARGS_DASH image-list; then
+        if openstack $PROJECT_ARG $ARGS image list; then
             STATUS_GLANCE="Succeeded"
         else
             STATUS_GLANCE="Failed"
@@ -141,7 +137,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" || "$ENABLED_SERVICES" =~ "s-proxy" ]]; the
         STATUS_SWIFT="Skipped"
     else
         echo -e "\nTest Swift"
-        if swift $TENANT_ARG_DASH $ARGS_DASH stat; then
+        if swift $PROJECT_ARG $ARGS stat; then
             STATUS_SWIFT="Succeeded"
         else
             STATUS_SWIFT="Failed"
@@ -156,7 +152,7 @@ set +o xtrace
 # Results
 # =======
 
-function report() {
+function report {
     if [[ -n "$2" ]]; then
         echo "$1: $2"
     fi

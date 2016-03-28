@@ -1,0 +1,144 @@
+#!/bin/bash
+#
+# lib/nova_plugins/functions-libvirt
+# Common libvirt configuration functions
+
+# Dependencies:
+# ``functions`` file
+# ``STACK_USER`` has to be defined
+
+# Save trace setting
+_XTRACE_NOVA_FN_LIBVIRT=$(set +o | grep xtrace)
+set +o xtrace
+
+# Defaults
+# --------
+
+# Turn on selective debug log filters for libvirt.
+# (NOTE: Enabling this by default, because the log filters enabled in
+# 'configure_libvirt' function further below are _selective_ and not
+# extremely verbose.)
+DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
+
+# Installs required distro-specific libvirt packages.
+function install_libvirt {
+    if is_ubuntu; then
+        if is_arch "aarch64" && [[ ${DISTRO} == "trusty" ]]; then
+            install_package qemu-system
+        else
+            install_package qemu-kvm
+            install_package libguestfs0
+        fi
+        install_package libvirt-bin libvirt-dev
+        pip_install_gr libvirt-python
+        if [[ "$EBTABLES_RACE_FIX" == "True" ]]; then
+            # Work around for bug #1501558. We can remove this once we
+            # get to a version of Ubuntu that has new enough libvirt.
+            TOP_DIR=$TOP_DIR $TOP_DIR/tools/install_ebtables_workaround.sh
+        fi
+        #pip_install_gr <there-si-no-guestfs-in-pypi>
+    elif is_fedora || is_suse; then
+        # On "KVM for IBM z Systems", kvm does not have its own package
+        if [[ ! ${DISTRO} =~ "kvmibm1" ]]; then
+            install_package kvm
+        fi
+        # there is a dependency issue with kvm (which is really just a
+        # wrapper to qemu-system-x86) that leaves some bios files out,
+        # so install qemu-kvm (which shouldn't strictly be needed, as
+        # everything has been merged into qemu-system-x86) to bring in
+        # the right packages. see
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1235890
+        install_package qemu-kvm
+        install_package libvirt libvirt-devel
+        pip_install_gr libvirt-python
+    fi
+}
+
+# Configures the installed libvirt system so that is accessible by
+# STACK_USER via qemu:///system with management capabilities.
+function configure_libvirt {
+    if is_service_enabled neutron && is_neutron_ovs_base_plugin && ! sudo grep -q '^cgroup_device_acl' $QEMU_CONF; then
+        # Add /dev/net/tun to cgroup_device_acls, needed for type=ethernet interfaces
+        cat <<EOF | sudo tee -a $QEMU_CONF
+cgroup_device_acl = [
+    "/dev/null", "/dev/full", "/dev/zero",
+    "/dev/random", "/dev/urandom",
+    "/dev/ptmx", "/dev/kvm", "/dev/kqemu",
+    "/dev/rtc", "/dev/hpet","/dev/net/tun",
+]
+EOF
+    fi
+
+    # Since the release of Debian Wheezy the libvirt init script is libvirtd
+    # and not libvirtd-bin anymore.
+    if is_ubuntu && [ ! -f /etc/init.d/libvirtd ]; then
+        LIBVIRT_DAEMON=libvirt-bin
+    else
+        LIBVIRT_DAEMON=libvirtd
+    fi
+
+    if is_fedora || is_suse; then
+        # Starting with fedora 18 and opensuse-12.3 enable stack-user to
+        # virsh -c qemu:///system by creating a policy-kit rule for
+        # stack-user using the new Javascript syntax
+        rules_dir=/etc/polkit-1/rules.d
+        sudo mkdir -p $rules_dir
+        cat <<EOF | sudo tee $rules_dir/50-libvirt-$STACK_USER.rules
+polkit.addRule(function(action, subject) {
+    if (action.id == 'org.libvirt.unix.manage' &&
+        subject.user == '$STACK_USER') {
+        return polkit.Result.YES;
+    }
+});
+EOF
+        unset rules_dir
+    fi
+
+    # The user that nova runs as needs to be member of **libvirtd** group otherwise
+    # nova-compute will be unable to use libvirt.
+    if ! getent group $LIBVIRT_GROUP >/dev/null; then
+        sudo groupadd $LIBVIRT_GROUP
+    fi
+    add_user_to_group $STACK_USER $LIBVIRT_GROUP
+
+    # Enable server side traces for libvirtd
+    if [[ "$DEBUG_LIBVIRT" = "True" ]] ; then
+        if is_ubuntu; then
+            # Unexpectedly binary package builds in ubuntu get fully qualified
+            # source file paths, not relative paths. This screws with the matching
+            # of '1:libvirt' making everything turn on. So use libvirt.c for now.
+            # This will have to be re-visited when Ubuntu ships libvirt >= 1.2.3
+            local log_filters="1:libvirt.c 1:qemu 1:conf 1:security 3:object 3:event 3:json 3:file 1:util 1:qemu_monitor"
+        else
+            local log_filters="1:libvirt 1:qemu 1:conf 1:security 3:object 3:event 3:json 3:file 1:util 1:qemu_monitor"
+        fi
+        local log_outputs="1:file:/var/log/libvirt/libvirtd.log"
+        if ! sudo grep -q "^log_filters=\"$log_filters\"" /etc/libvirt/libvirtd.conf; then
+            echo "log_filters=\"$log_filters\"" | sudo tee -a /etc/libvirt/libvirtd.conf
+        fi
+        if ! sudo grep -q "^log_outputs=\"$log_outputs\"" /etc/libvirt/libvirtd.conf; then
+            echo "log_outputs=\"$log_outputs\"" | sudo tee -a /etc/libvirt/libvirtd.conf
+        fi
+    fi
+
+    # Update the libvirt cpu map with a gate64 cpu model. This enables nova
+    # live migration for 64bit guest OSes on heterogenous cloud "hardware".
+    if [[ -f /usr/share/libvirt/cpu_map.xml ]] ; then
+        sudo $TOP_DIR/tools/cpu_map_update.py /usr/share/libvirt/cpu_map.xml
+    fi
+
+    # libvirt detects various settings on startup, as we potentially changed
+    # the system configuration (modules, filesystems), we need to restart
+    # libvirt to detect those changes. Use a stop start as otherwise the new
+    # cpu_map is not loaded properly on some systems (Ubuntu).
+    stop_service $LIBVIRT_DAEMON
+    start_service $LIBVIRT_DAEMON
+}
+
+
+# Restore xtrace
+$_XTRACE_NOVA_FN_LIBVIRT
+
+# Local variables:
+# mode: shell-script
+# End:

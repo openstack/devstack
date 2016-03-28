@@ -1,25 +1,14 @@
-MySQL-python
+acl
+dnsmasq # for q-dhcp
 dnsmasq-utils # for dhcp_release
 ebtables
 iptables
 iputils
+mysql-devel
+MySQL-python
 mysql-server # NOPRIME
 openvswitch # NOPRIME
-python-boto
-python-eventlet
-python-greenlet
-python-iso8601
-python-kombu
-python-netaddr
-#rhel6 gets via pip
-python-paste        # dist:f16,f17,f18,f19
-python-paste-deploy # dist:f16,f17,f18,f19
-python-qpid
-python-routes
-python-sqlalchemy
-python-suds
 rabbitmq-server # NOPRIME
-qpid-cpp-server        # NOPRIME
+radvd # NOPRIME
 sqlite
 sudo
-vconfig

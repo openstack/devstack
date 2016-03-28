@@ -1,3 +1,4 @@
+iscsi-initiator-utils
 lvm2
-scsi-target-utils
 qemu-img
+scsi-target-utils # NOPRIME

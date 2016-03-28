@@ -1,0 +1,201 @@
+#!/bin/bash
+#
+# lib/apache
+# Functions to control configuration and operation of apache web server
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``STACK_USER`` must be defined
+#
+# lib/apache exports the following functions:
+#
+# - install_apache_wsgi
+# - apache_site_config_for
+# - enable_apache_site
+# - disable_apache_site
+# - start_apache_server
+# - stop_apache_server
+# - restart_apache_server
+
+# Save trace setting
+_XTRACE_LIB_APACHE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Allow overriding the default Apache user and group, default to
+# current user and his default group.
+APACHE_USER=${APACHE_USER:-$STACK_USER}
+APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
+
+
+# Set up apache name and configuration directory
+if is_ubuntu; then
+    APACHE_NAME=apache2
+    APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/sites-available}
+elif is_fedora; then
+    APACHE_NAME=httpd
+    APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/conf.d}
+elif is_suse; then
+    APACHE_NAME=apache2
+    APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/vhosts.d}
+fi
+
+# Functions
+# ---------
+# install_apache_wsgi() - Install Apache server and wsgi module
+function install_apache_wsgi {
+    # Apache installation, because we mark it NOPRIME
+    if is_ubuntu; then
+        # Install apache2, which is NOPRIME'd
+        install_package apache2 libapache2-mod-wsgi
+        # WSGI isn't enabled by default, enable it
+        sudo a2enmod wsgi
+    elif is_fedora; then
+        sudo rm -f /etc/httpd/conf.d/000-*
+        install_package httpd mod_wsgi
+    elif is_suse; then
+        install_package apache2 apache2-mod_wsgi
+        # WSGI isn't enabled by default, enable it
+        sudo a2enmod wsgi
+    else
+        exit_distro_not_supported "apache installation"
+    fi
+
+    # ensure mod_version enabled for <IfVersion ...>.  This is
+    # built-in statically on anything recent, but precise (2.2)
+    # doesn't have it enabled
+    sudo a2enmod version || true
+}
+
+# get_apache_version() - return the version of Apache installed
+# This function is used to determine the Apache version installed. There are
+# various differences between Apache 2.2 and 2.4 that warrant special handling.
+function get_apache_version {
+    if is_ubuntu; then
+        local version_str
+        version_str=$(sudo /usr/sbin/apache2ctl -v | awk '/Server version/ {print $3}' | cut -f2 -d/)
+    elif is_fedora; then
+        local version_str
+        version_str=$(rpm -qa --queryformat '%{VERSION}' httpd)
+    elif is_suse; then
+        local version_str
+        version_str=$(rpm -qa --queryformat '%{VERSION}' apache2)
+    else
+        exit_distro_not_supported "cannot determine apache version"
+    fi
+    if [[ "$version_str" =~ ^2\.2\. ]]; then
+        echo "2.2"
+    elif [[ "$version_str" =~ ^2\.4\. ]]; then
+        echo "2.4"
+    else
+        exit_distro_not_supported "apache version not supported"
+    fi
+}
+
+# apache_site_config_for() - The filename of the site's configuration file.
+# This function uses the global variables APACHE_NAME and APACHE_CONF_DIR.
+#
+# On Ubuntu 14.04, the site configuration file must have a .conf suffix for a2ensite and a2dissite to
+# recognise it. a2ensite and a2dissite ignore the .conf suffix used as parameter. The default sites'
+# files are 000-default.conf and default-ssl.conf.
+#
+# On Ubuntu 12.04, the site configuration file may have any format, as long as it is in
+# /etc/apache2/sites-available/. a2ensite and a2dissite need the entire file name to work. The default
+# sites' files are default and default-ssl.
+#
+# On Fedora and openSUSE, any file in /etc/httpd/conf.d/ whose name ends with .conf is enabled.
+#
+# On RHEL and CentOS, things should hopefully work as in Fedora.
+#
+# The table below summarizes what should happen on each distribution:
+# +----------------------+--------------------+--------------------------+--------------------------+
+# | Distribution         | File name          | Site enabling command    | Site disabling command   |
+# +----------------------+--------------------+--------------------------+--------------------------+
+# | Ubuntu 12.04         | site               | a2ensite site            | a2dissite site           |
+# | Ubuntu 14.04         | site.conf          | a2ensite site            | a2dissite site           |
+# | Fedora, RHEL, CentOS | site.conf.disabled | mv site.conf{.disabled,} | mv site.conf{,.disabled} |
+# +----------------------+--------------------+--------------------------+--------------------------+
+function apache_site_config_for {
+    local site=$@
+    if is_ubuntu; then
+        local apache_version
+        apache_version=$(get_apache_version)
+        if [[ "$apache_version" == "2.2" ]]; then
+            # Ubuntu 12.04 - Apache 2.2
+            echo $APACHE_CONF_DIR/${site}
+        else
+            # Ubuntu 14.04 - Apache 2.4
+            echo $APACHE_CONF_DIR/${site}.conf
+        fi
+    elif is_fedora || is_suse; then
+        # fedora conf.d is only imported if it ends with .conf so this is approx the same
+        local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
+        if [ -f $enabled_site_file ]; then
+            echo ${enabled_site_file}
+        else
+            echo ${enabled_site_file}.disabled
+        fi
+    fi
+}
+
+# enable_apache_site() - Enable a particular apache site
+function enable_apache_site {
+    local site=$@
+    if is_ubuntu; then
+        sudo a2ensite ${site}
+    elif is_fedora || is_suse; then
+        local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
+        # Do nothing if site already enabled or no site config exists
+        if [[ -f ${enabled_site_file}.disabled ]] && [[ ! -f ${enabled_site_file} ]]; then
+            sudo mv ${enabled_site_file}.disabled ${enabled_site_file}
+        fi
+    fi
+}
+
+# disable_apache_site() - Disable a particular apache site
+function disable_apache_site {
+    local site=$@
+    if is_ubuntu; then
+        sudo a2dissite ${site}
+    elif is_fedora || is_suse; then
+        local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
+        # Do nothing if no site config exists
+        if [[ -f ${enabled_site_file} ]]; then
+            sudo mv ${enabled_site_file} ${enabled_site_file}.disabled
+        fi
+    fi
+}
+
+# start_apache_server() - Start running apache server
+function start_apache_server {
+    start_service $APACHE_NAME
+}
+
+# stop_apache_server() - Stop running apache server
+function stop_apache_server {
+    if [ -n "$APACHE_NAME" ]; then
+        stop_service $APACHE_NAME
+    else
+        exit_distro_not_supported "apache configuration"
+    fi
+}
+
+# restart_apache_server
+function restart_apache_server {
+    # Apache can be slow to stop, doing an explicit stop, sleep, start helps
+    # to mitigate issues where apache will claim a port it's listening on is
+    # still in use and fail to start.
+    time_start "restart_apache_server"
+    stop_service $APACHE_NAME
+    sleep 3
+    start_service $APACHE_NAME
+    time_stop "restart_apache_server"
+}
+
+# Restore xtrace
+$_XTRACE_LIB_APACHE
+
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

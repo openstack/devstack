@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# lib/nova_plugins/hypervisor-ironic
+# Configure the ironic hypervisor
+
+# Enable with:
+# VIRT_DRIVER=ironic
+
+# Dependencies:
+# ``functions`` file
+# ``nova`` configuration
+
+# install_nova_hypervisor - install any external requirements
+# configure_nova_hypervisor - make configuration changes, including those to other services
+# start_nova_hypervisor - start any external services
+# stop_nova_hypervisor - stop any external services
+# cleanup_nova_hypervisor - remove transient data and cache
+
+# Save trace setting
+_XTRACE_HYP_IRONIC=$(set +o | grep xtrace)
+set +o xtrace
+
+source $TOP_DIR/lib/nova_plugins/functions-libvirt
+
+# Defaults
+# --------
+
+# Entry Points
+# ------------
+
+# clean_nova_hypervisor - Clean up an installation
+function cleanup_nova_hypervisor {
+    # This function intentionally left blank
+    :
+}
+
+# configure_nova_hypervisor - Set config files, create data dirs, etc
+function configure_nova_hypervisor {
+    configure_libvirt
+    LIBVIRT_FIREWALL_DRIVER=${LIBVIRT_FIREWALL_DRIVER:-"nova.virt.firewall.NoopFirewallDriver"}
+
+    iniset $NOVA_CONF DEFAULT compute_driver nova.virt.ironic.IronicDriver
+    iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
+    iniset $NOVA_CONF DEFAULT scheduler_host_manager ironic_host_manager
+    iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
+    iniset $NOVA_CONF DEFAULT reserved_host_memory_mb 0
+    # ironic section
+    iniset $NOVA_CONF ironic admin_username admin
+    iniset $NOVA_CONF ironic admin_password $ADMIN_PASSWORD
+    iniset $NOVA_CONF ironic admin_url $KEYSTONE_AUTH_URI/v2.0
+    iniset $NOVA_CONF ironic admin_tenant_name demo
+    iniset $NOVA_CONF ironic api_endpoint $IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT/v1
+}
+
+# install_nova_hypervisor() - Install external components
+function install_nova_hypervisor {
+    if is_ironic_hardware; then
+        return
+    fi
+    install_libvirt
+    if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] && is_ubuntu; then
+        # Ubuntu packaging+apparmor issue prevents libvirt from loading
+        # the ROM from /usr/share/misc.  Workaround by installing it directly
+        # to a directory that it can read from. (LP: #1393548)
+        sudo rm -rf /usr/share/qemu/sgabios.bin
+        sudo cp /usr/share/misc/sgabios.bin /usr/share/qemu/sgabios.bin
+    fi
+}
+
+# start_nova_hypervisor - Start any required external services
+function start_nova_hypervisor {
+    # This function intentionally left blank
+    :
+}
+
+# stop_nova_hypervisor - Stop any external services
+function stop_nova_hypervisor {
+    # This function intentionally left blank
+    :
+}
+
+
+# Restore xtrace
+$_XTRACE_HYP_IRONIC
+
+# Local variables:
+# mode: shell-script
+# End:

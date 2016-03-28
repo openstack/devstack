@@ -1,73 +1,72 @@
+#!/bin/bash
+#
 # Neutron Open vSwitch L2 agent
 # -----------------------------
 
 # Save trace setting
-PLUGIN_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_OVSL2=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/ovs_base
 
-function neutron_plugin_create_nova_conf() {
+function neutron_plugin_create_nova_conf {
     _neutron_ovs_base_configure_nova_vif_driver
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-        iniset $NOVA_CONF DEFAULT xenapi_vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
-        iniset $NOVA_CONF DEFAULT xenapi_ovs_integration_bridge $XEN_INTEGRATION_BRIDGE
+    if [ "$VIRT_DRIVER" == 'xenserver' ]; then
+        iniset $NOVA_CONF xenserver vif_driver nova.virt.xenapi.vif.XenAPIOpenVswitchDriver
+        iniset $NOVA_CONF xenserver ovs_integration_bridge $XEN_INTEGRATION_BRIDGE
         # Disable nova's firewall so that it does not conflict with neutron
         iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
     fi
 }
 
-function neutron_plugin_install_agent_packages() {
+function neutron_plugin_install_agent_packages {
     _neutron_ovs_base_install_agent_packages
 }
 
-function neutron_plugin_configure_debug_command() {
+function neutron_plugin_configure_debug_command {
     _neutron_ovs_base_configure_debug_command
 }
 
-function neutron_plugin_configure_dhcp_agent() {
+function neutron_plugin_configure_dhcp_agent {
     iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
 }
 
-function neutron_plugin_configure_l3_agent() {
+function neutron_plugin_configure_l3_agent {
     _neutron_ovs_base_configure_l3_agent
     iniset $Q_L3_CONF_FILE DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
 }
 
-function neutron_plugin_configure_plugin_agent() {
+function neutron_plugin_configure_plugin_agent {
     # Setup integration bridge
     _neutron_ovs_base_setup_bridge $OVS_BRIDGE
     _neutron_ovs_base_configure_firewall_driver
 
     # Setup agent for tunneling
-    if [[ "$OVS_ENABLE_TUNNELING" = "True" ]]; then
-        # Verify tunnels are supported
-        # REVISIT - also check kernel module support for GRE and patch ports
-        OVS_VERSION=`ovs-vsctl --version | head -n 1 | grep -E -o "[0-9]+\.[0-9]+"`
-        if [ `vercmp_numbers "$OVS_VERSION" "1.4"` -lt "0" ] && ! is_service_enabled q-svc ; then
-            die $LINENO "You are running OVS version $OVS_VERSION. OVS 1.4+ is required for tunneling between multiple hosts."
-        fi
-        iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
-        iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $HOST_IP
+    if [[ "$OVS_ENABLE_TUNNELING" == "True" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE ovs local_ip $TUNNEL_ENDPOINT_IP
+        iniset /$Q_PLUGIN_CONF_FILE ovs tunnel_bridge $OVS_TUNNEL_BRIDGE
     fi
 
     # Setup physical network bridge mappings.  Override
     # ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc`` for more
     # complex physical network configurations.
-    if [[ "$OVS_BRIDGE_MAPPINGS" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
+    if [[ "$OVS_BRIDGE_MAPPINGS" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
         OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
 
         # Configure bridge manually with physical interface as port for multi-node
-        sudo ovs-vsctl --no-wait -- --may-exist add-br $OVS_PHYSICAL_BRIDGE
+        _neutron_ovs_base_add_bridge $OVS_PHYSICAL_BRIDGE
     fi
     if [[ "$OVS_BRIDGE_MAPPINGS" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings $OVS_BRIDGE_MAPPINGS
     fi
     AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-openvswitch-agent"
 
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+    if [ "$VIRT_DRIVER" == 'xenserver' ]; then
         # Make a copy of our config for domU
-        sudo cp /$Q_PLUGIN_CONF_FILE "/$Q_PLUGIN_CONF_FILE.domu"
+        sudo cp /$Q_PLUGIN_CONF_FILE "/$Q_PLUGIN_CONF_FILE.domU"
+
+        # change domU's config file to STACK_USER
+        sudo chown $STACK_USER:$STACK_USER /$Q_PLUGIN_CONF_FILE.domU
 
         # Deal with Dom0's L2 Agent:
         Q_RR_DOM0_COMMAND="$NEUTRON_BIN_DIR/neutron-rootwrap-xen-dom0 $Q_RR_CONF_FILE"
@@ -80,7 +79,14 @@ function neutron_plugin_configure_plugin_agent() {
         # Under XS/XCP, the ovs agent needs to target the dom0
         # integration bridge.  This is enabled by using a root wrapper
         # that executes commands on dom0 via a XenAPI plugin.
+        # XenAPI does not support daemon rootwrap now, so set root_helper_daemon empty
         iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_DOM0_COMMAND"
+        iniset /$Q_PLUGIN_CONF_FILE agent root_helper_daemon ""
+
+        # Disable minimize polling, so that it can always detect OVS and Port changes
+        # This is a problem of xenserver + neutron, bug has been reported
+        # https://bugs.launchpad.net/neutron/+bug/1495423
+        iniset /$Q_PLUGIN_CONF_FILE agent minimize_polling False
 
         # Set "physical" mapping
         iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings "physnet1:$FLAT_NETWORK_BRIDGE"
@@ -91,41 +97,33 @@ function neutron_plugin_configure_plugin_agent() {
         # Set up domU's L2 agent:
 
         # Create a bridge "br-$GUEST_INTERFACE_DEFAULT"
-        sudo ovs-vsctl --no-wait -- --may-exist add-br "br-$GUEST_INTERFACE_DEFAULT"
+        _neutron_ovs_base_add_bridge "br-$GUEST_INTERFACE_DEFAULT"
         # Add $GUEST_INTERFACE_DEFAULT to that bridge
-        sudo ovs-vsctl add-port "br-$GUEST_INTERFACE_DEFAULT" $GUEST_INTERFACE_DEFAULT
+        sudo ovs-vsctl -- --may-exist add-port "br-$GUEST_INTERFACE_DEFAULT" $GUEST_INTERFACE_DEFAULT
+
+        # Create external bridge and add port
+        _neutron_ovs_base_add_bridge $PUBLIC_BRIDGE
+        sudo ovs-vsctl -- --may-exist add-port $PUBLIC_BRIDGE $PUBLIC_INTERFACE_DEFAULT
 
         # Set bridge mappings to "physnet1:br-$GUEST_INTERFACE_DEFAULT"
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs bridge_mappings "physnet1:br-$GUEST_INTERFACE_DEFAULT"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs bridge_mappings "physnet1:br-$GUEST_INTERFACE_DEFAULT,physnet-ex:$PUBLIC_BRIDGE"
         # Set integration bridge to domU's
         iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs integration_bridge $OVS_BRIDGE
         # Set root wrap
         iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper "$Q_RR_COMMAND"
     fi
-    # Define extra "AGENT" configuration options when q-agt is configured by defining
-    # defining the array ``Q_AGENT_EXTRA_AGENT_OPTS``.
-    # For Example: ``Q_AGENT_EXTRA_AGENT_OPTS=(foo=true bar=2)``
-    for I in "${Q_AGENT_EXTRA_AGENT_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE agent ${I/=/ }
-    done
-    # Define extra "OVS" configuration options when q-agt is configured by defining
-    # defining the array ``Q_AGENT_EXTRA_SRV_OPTS``.
-    # For Example: ``Q_AGENT_EXTRA_SRV_OPTS=(foo=true bar=2)``
-    for I in "${Q_AGENT_EXTRA_SRV_OPTS[@]}"; do
-        # Replace the first '=' with ' ' for iniset syntax
-        iniset /$Q_PLUGIN_CONF_FILE ovs ${I/=/ }
-    done
+    iniset /$Q_PLUGIN_CONF_FILE agent tunnel_types $Q_TUNNEL_TYPES
+    iniset /$Q_PLUGIN_CONF_FILE ovs datapath_type $OVS_DATAPATH_TYPE
 }
 
-function neutron_plugin_setup_interface_driver() {
+function neutron_plugin_setup_interface_driver {
     local conf_file=$1
-    iniset $conf_file DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+    iniset $conf_file DEFAULT interface_driver openvswitch
 }
 
-function neutron_plugin_check_adv_test_requirements() {
+function neutron_plugin_check_adv_test_requirements {
     is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
 }
 
 # Restore xtrace
-$PLUGIN_XTRACE
+$_XTRACE_NEUTRON_OVSL2

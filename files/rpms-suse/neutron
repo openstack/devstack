@@ -1,27 +1,12 @@
+acl
 dnsmasq
-dnsmasq-utils # dist:opensuse-12.3
+dnsmasq-utils # dist:opensuse-12.3,opensuse-13.1
 ebtables
 iptables
 iputils
-mysql-community-server # NOPRIME
-python-boto
-python-eventlet
-python-greenlet
-python-iso8601
-python-kombu
-python-mysql
-python-netaddr
-python-Paste
-python-PasteDeploy
-python-pyudev
-python-Routes
-python-SQLAlchemy
-python-suds
+mariadb # NOPRIME
 rabbitmq-server # NOPRIME
+radvd # NOPRIME
 sqlite3
 sudo
 vlan
-
-# FIXME: qpid is not part of openSUSE, those names are tentative
-python-qpid # NOPRIME
-qpidd # NOPRIME

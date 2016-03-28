@@ -1,72 +1,60 @@
+#!/bin/bash
+#
 # lib/horizon
 # Functions to control the configuration and operation of the horizon service
-# <do not include this template file in ``stack.sh``!>
 
 # Dependencies:
-# ``functions`` file
-# ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
-# <list other global vars that are assumed to be defined>
+#
+# - ``functions`` file
+# - ``apache`` file
+# - ``SERVICE_{TENANT_NAME|PASSWORD}`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# install_horizon
-# configure_horizon
-# init_horizon
-# start_horizon
-# stop_horizon
-# cleanup_horizon
+# - install_horizon
+# - configure_horizon
+# - init_horizon
+# - start_horizon
+# - stop_horizon
+# - cleanup_horizon
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_HORIZON=$(set +o | grep xtrace)
 set +o xtrace
 
 
 # Defaults
 # --------
 
-# <define global variables here that belong to this project>
-
 # Set up default directories
+GITDIR["django_openstack_auth"]=$DEST/django_openstack_auth
+
 HORIZON_DIR=$DEST/horizon
 
 # local_settings.py is used to customize Dashboard settings.
 # The example file in Horizon repo is used by default.
 HORIZON_SETTINGS=${HORIZON_SETTINGS:-$HORIZON_DIR/openstack_dashboard/local/local_settings.py.example}
 
-# Allow overriding the default Apache user and group, default to
-# current user and his default group.
-APACHE_USER=${APACHE_USER:-$USER}
-APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
-
-# Set up service name and configuration path
-if is_ubuntu; then
-    APACHE_NAME=apache2
-    APACHE_CONF=sites-available/horizon
-elif is_fedora; then
-    APACHE_NAME=httpd
-    APACHE_CONF=conf.d/horizon.conf
-elif is_suse; then
-    APACHE_NAME=apache2
-    APACHE_CONF=vhosts.d/horizon.conf
-fi
-
-
 # Functions
 # ---------
 
 # utility method of setting python option
-function _horizon_config_set() {
+function _horizon_config_set {
     local file=$1
     local section=$2
     local option=$3
     local value=$4
 
-    if grep -q "^$section" $file; then
+    if [ -z "$section" ]; then
+        sed -e "/^$option/d" -i $local_settings
+        echo -e "\n$option=$value" >> $file
+    elif grep -q "^$section" $file; then
+        local line
         line=$(sed -ne "/^$section/,/^}/ { /^ *'$option':/ p; }" $file)
         if [ -n "$line" ]; then
             sed -i -e "/^$section/,/^}/ s/^\( *'$option'\) *:.*$/\1: $value,/" $file
         else
-            sed -i -e "/^$section/ a\n    '$option': $value,\n" $file
+            sed -i -e "/^$section/a\    '$option': $value," $file
         fi
     else
         echo -e "\n\n$section = {\n    '$option': $value,\n}" >> $file
@@ -80,128 +68,135 @@ function _horizon_config_set() {
 
 # cleanup_horizon() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
-function cleanup_horizon() {
-    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-        # If ``/usr/bin/node`` points into ``$DEST``
-        # we installed it via ``install_nodejs``
-        if [[ $(readlink -f /usr/bin/node) =~ ($DEST) ]]; then
-            sudo rm /usr/bin/node
-        fi
-    fi
+function cleanup_horizon {
+    local horizon_conf
+    horizon_conf=$(apache_site_config_for horizon)
+    sudo rm -f $horizon_conf
 }
 
 # configure_horizon() - Set config files, create data dirs, etc
-function configure_horizon() {
+function configure_horizon {
     setup_develop $HORIZON_DIR
-}
 
-# init_horizon() - Initialize databases, etc.
-function init_horizon() {
-    # Remove stale session database.
-    rm -f $HORIZON_DIR/openstack_dashboard/local/dashboard_openstack.sqlite3
+    # Compile message catalogs.
+    # Horizon is installed as develop mode, so we can compile here.
+    # Message catalog compilation is handled by Django admin script,
+    # so compiling them after the installation avoids Django installation twice.
+    (cd $HORIZON_DIR; ./run_tests.sh -N --compilemessages)
 
     # ``local_settings.py`` is used to override horizon default settings.
-    local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
+    local local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
 
-    # enable loadbalancer dashboard in case service is enabled
-    if is_service_enabled q-lbaas; then
-        _horizon_config_set $local_settings OPENSTACK_NEUTRON_NETWORK enable_lb True
-    fi
+    _horizon_config_set $local_settings "" WEBROOT \"$HORIZON_APACHE_ROOT/\"
 
-    # Initialize the horizon database (it stores sessions and notices shown to
-    # users).  The user system is external (keystone).
-    cd $HORIZON_DIR
-    python manage.py syncdb --noinput
-    cd $TOP_DIR
+    _horizon_config_set $local_settings "" COMPRESS_OFFLINE True
+    _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_DEFAULT_ROLE \"Member\"
+
+    _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
+
+    _horizon_config_set $local_settings "" OPENSTACK_API_VERSIONS {\"identity\":3}
+    _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/v3\""
+
+    if [ -f $SSL_BUNDLE_FILE ]; then
+        _horizon_config_set $local_settings "" OPENSTACK_SSL_CACERT \"${SSL_BUNDLE_FILE}\"
+    fi
 
     # Create an empty directory that apache uses as docroot
     sudo mkdir -p $HORIZON_DIR/.blackhole
 
-    HORIZON_REQUIRE=''
-    if is_ubuntu; then
-        # Clean up the old config name
-        sudo rm -f /etc/apache2/sites-enabled/000-default
-        # Be a good citizen and use the distro tools here
-        sudo touch /etc/$APACHE_NAME/$APACHE_CONF
-        sudo a2ensite horizon
-        # WSGI isn't enabled by default, enable it
-        sudo a2enmod wsgi
-    elif is_fedora; then
-        if [[ "$os_RELEASE" -ge "18" ]]; then
-            # fedora 18 has Require all denied  in its httpd.conf
-            # and requires explicit Require all granted
-            HORIZON_REQUIRE='Require all granted'
-        fi
-        sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
-    elif is_suse; then
-        # WSGI isn't enabled by default, enable it
-        sudo a2enmod wsgi
-    else
-        exit_distro_not_supported "apache configuration"
-    fi
-
-    # Remove old log files that could mess with how devstack detects whether Horizon
-    # has been successfully started (see start_horizon() and functions::screen_it())
-    sudo rm -f /var/log/$APACHE_NAME/horizon_*
+    local horizon_conf
+    horizon_conf=$(apache_site_config_for horizon)
 
     # Configure apache to run horizon
+    # Set up the django horizon application to serve via apache/wsgi
     sudo sh -c "sed -e \"
         s,%USER%,$APACHE_USER,g;
         s,%GROUP%,$APACHE_GROUP,g;
         s,%HORIZON_DIR%,$HORIZON_DIR,g;
         s,%APACHE_NAME%,$APACHE_NAME,g;
         s,%DEST%,$DEST,g;
-        s,%HORIZON_REQUIRE%,$HORIZON_REQUIRE,g;
-    \" $FILES/apache-horizon.template >/etc/$APACHE_NAME/$APACHE_CONF"
+        s,%WEBROOT%,$HORIZON_APACHE_ROOT,g;
+    \" $FILES/apache-horizon.template >$horizon_conf"
+
+    if is_ubuntu; then
+        disable_apache_site 000-default
+        sudo touch $horizon_conf
+    elif is_fedora; then
+        sudo sed '/^Listen/s/^.*$/Listen 0.0.0.0:80/' -i /etc/httpd/conf/httpd.conf
+    elif is_suse; then
+        : # nothing to do
+    else
+        exit_distro_not_supported "horizon apache configuration"
+    fi
+    enable_apache_site horizon
+}
+
+# init_horizon() - Initialize databases, etc.
+function init_horizon {
+    # Remove old log files that could mess with how DevStack detects whether Horizon
+    # has been successfully started (see start_horizon() and functions::screen_it())
+    # and run_process
+    sudo rm -f /var/log/$APACHE_NAME/horizon_*
+
+    # Setup alias for django-admin which could be different depending on distro
+    local django_admin
+    if type -p django-admin > /dev/null; then
+        django_admin=django-admin
+    else
+        django_admin=django-admin.py
+    fi
+
+    # These need to be run after horizon plugins are configured.
+    DJANGO_SETTINGS_MODULE=openstack_dashboard.settings $django_admin collectstatic --noinput
+    DJANGO_SETTINGS_MODULE=openstack_dashboard.settings $django_admin compress --force
+
+}
+
+# install_django_openstack_auth() - Collect source and prepare
+function install_django_openstack_auth {
+    if use_library_from_git "django_openstack_auth"; then
+        local dir=${GITDIR["django_openstack_auth"]}
+        git_clone_by_name "django_openstack_auth"
+        # Compile message catalogs before installation
+        _prepare_message_catalog_compilation
+        (cd $dir; python setup.py compile_catalog)
+        setup_dev_lib "django_openstack_auth"
+    fi
+    # if we aren't using this library from git, then we just let it
+    # get dragged in by the horizon setup.
 }
 
 # install_horizon() - Collect source and prepare
-function install_horizon() {
+function install_horizon {
     # Apache installation, because we mark it NOPRIME
-    if is_ubuntu; then
-        # Install apache2, which is NOPRIME'd
-        install_package apache2 libapache2-mod-wsgi
-    elif is_fedora; then
-        sudo rm -f /etc/httpd/conf.d/000-*
-        install_package httpd mod_wsgi
-    elif is_suse; then
-        install_package apache2 apache2-mod_wsgi
-    else
-        exit_distro_not_supported "apache installation"
-    fi
+    install_apache_wsgi
 
-    # NOTE(sdague) quantal changed the name of the node binary
-    if is_ubuntu; then
-        if [[ ! -e "/usr/bin/node" ]]; then
-            install_package nodejs-legacy
-        fi
-    elif is_fedora && [[ $DISTRO =~ (rhel6) || "$os_RELEASE" -ge "18" ]]; then
-        install_package nodejs
-    fi
-
-    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH
 }
 
 # start_horizon() - Start running processes, including screen
-function start_horizon() {
-    restart_service $APACHE_NAME
-    screen_it horizon "cd $HORIZON_DIR && sudo tail -f /var/log/$APACHE_NAME/horizon_error.log"
+function start_horizon {
+    restart_apache_server
+    tail_log horizon /var/log/$APACHE_NAME/horizon_error.log
 }
 
 # stop_horizon() - Stop running processes (non-screen)
-function stop_horizon() {
-    if [ -n "$APACHE_NAME" ]; then
-        stop_service $APACHE_NAME
-    else
-        exit_distro_not_supported "apache configuration"
-    fi
+function stop_horizon {
+    stop_apache_server
+}
+
+# NOTE: It can be moved to common functions, but it is only used by compilation
+# of django_openstack_auth catalogs at the moment.
+function _prepare_message_catalog_compilation {
+    pip_install_gr Babel
 }
 
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_HORIZON
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

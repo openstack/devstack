@@ -1,0 +1,6 @@
+libkrb5-dev
+libldap2-dev
+libsasl2-dev
+memcached
+python-mysqldb
+sqlite3

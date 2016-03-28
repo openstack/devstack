@@ -1,7 +1,16 @@
 #!/bin/bash
 
+function die_with_error {
+    local err_msg
+
+    err_msg="$1"
+
+    echo "$err_msg" >&2
+    exit 1
+}
+
 function xapi_plugin_location {
-    for PLUGIN_DIR in "/etc/xapi.d/plugins/" "/usr/lib/xcp/plugins/" "/usr/lib/xapi/plugins"; do
+    for PLUGIN_DIR in "/etc/xapi.d/plugins/" "/usr/lib/xcp/plugins/" "/usr/lib/xapi/plugins" "/usr/lib64/xapi/plugins"; do
         if [ -d $PLUGIN_DIR ]; then
             echo $PLUGIN_DIR
             return 0
@@ -10,17 +19,14 @@ function xapi_plugin_location {
     return 1
 }
 
-function zip_snapshot_location {
-    echo $1 | sed "s:\.git$::;s:$:/zipball/$2:g"
-}
-
 function create_directory_for_kernels {
     if [ -d "/boot/guest" ]; then
         echo "INFO: /boot/guest directory already exists, using that" >&2
     else
-        local LOCALPATH="$(get_local_sr_path)/os-guest-kernels"
-        mkdir -p $LOCALPATH
-        ln -s $LOCALPATH /boot/guest
+        local local_path
+        local_path="$(get_local_sr_path)/os-guest-kernels"
+        mkdir -p $local_path
+        ln -s $local_path /boot/guest
     fi
 }
 
@@ -28,55 +34,28 @@ function create_directory_for_images {
     if [ -d "/images" ]; then
         echo "INFO: /images directory already exists, using that" >&2
     else
-        local LOCALPATH="$(get_local_sr_path)/os-images"
-        mkdir -p $LOCALPATH
-        ln -s $LOCALPATH /images
+        local local_path
+        local_path="$(get_local_sr_path)/os-images"
+        mkdir -p $local_path
+        ln -s $local_path /images
     fi
 }
 
-function extract_remote_zipball {
-    local ZIPBALL_URL=$1
-
-    local LOCAL_ZIPBALL=$(mktemp)
-    local EXTRACTED_FILES=$(mktemp -d)
-
-    {
-        wget -nv $ZIPBALL_URL -O $LOCAL_ZIPBALL --no-check-certificate
-        unzip -q -o $LOCAL_ZIPBALL -d $EXTRACTED_FILES
-        rm -f $LOCAL_ZIPBALL
-    } >&2
-
-    echo "$EXTRACTED_FILES"
-}
-
-function find_xapi_plugins_dir {
-    find $1 -path '*/xapi.d/plugins' -type d -print
-}
-
-function install_xapi_plugins_from_zipball {
-    local XAPI_PLUGIN_DIR
-    local EXTRACTED_FILES
-    local EXTRACTED_PLUGINS_DIR
-
-    XAPI_PLUGIN_DIR=$(xapi_plugin_location)
-
-    EXTRACTED_FILES=$(extract_remote_zipball $1)
-    EXTRACTED_PLUGINS_DIR=$(find_xapi_plugins_dir $EXTRACTED_FILES)
-
-    cp -pr $EXTRACTED_PLUGINS_DIR/* $XAPI_PLUGIN_DIR
-    rm -rf $EXTRACTED_FILES
-    chmod a+x ${XAPI_PLUGIN_DIR}*
-}
-
 function get_local_sr {
-    xe sr-list name-label="Local storage" --minimal
+    xe pool-list params=default-SR minimal=true
 }
 
 function get_local_sr_path {
-    echo "/var/run/sr-mount/$(get_local_sr)"
+    pbd_path="/var/run/sr-mount/$(get_local_sr)"
+    pbd_device_config_path=`xe pbd-list sr-uuid=$(get_local_sr) params=device-config | grep " path: "`
+    if [ -n "$pbd_device_config_path" ]; then
+        pbd_uuid=`xe pbd-list sr-uuid=$(get_local_sr) minimal=true`
+        pbd_path=`xe pbd-param-get uuid=$pbd_uuid param-name=device-config param-key=path || echo ""`
+    fi
+    echo $pbd_path
 }
 
-function find_ip_by_name() {
+function find_ip_by_name {
     local guest_name="$1"
     local interface="$2"
 
@@ -96,7 +75,7 @@ function find_ip_by_name() {
 
         if [ -z "$ipaddress" ]; then
             sleep $period
-            ((i++))
+            i=$((i+1))
         else
             echo $ipaddress
             break
@@ -104,7 +83,7 @@ function find_ip_by_name() {
     done
 }
 
-function _vm_uuid() {
+function _vm_uuid {
     local vm_name_label
 
     vm_name_label="$1"
@@ -112,14 +91,14 @@ function _vm_uuid() {
     xe vm-list name-label="$vm_name_label" --minimal
 }
 
-function _create_new_network() {
+function _create_new_network {
     local name_label
     name_label=$1
 
     xe network-create name-label="$name_label"
 }
 
-function _multiple_networks_with_name() {
+function _multiple_networks_with_name {
     local name_label
     name_label=$1
 
@@ -127,21 +106,21 @@ function _multiple_networks_with_name() {
     xe network-list name-label="$name_label" --minimal | grep -q ","
 }
 
-function _network_exists() {
+function _network_exists {
     local name_label
     name_label=$1
 
-    ! [ -z $(xe network-list name-label="$name_label" --minimal) ]
+    ! [ -z "$(xe network-list name-label="$name_label" --minimal)" ]
 }
 
-function _bridge_exists() {
+function _bridge_exists {
     local bridge
     bridge=$1
 
-    ! [ -z $(xe network-list bridge="$bridge" --minimal) ]
+    ! [ -z "$(xe network-list bridge="$bridge" --minimal)" ]
 }
 
-function _network_uuid() {
+function _network_uuid {
     local bridge_or_net_name
     bridge_or_net_name=$1
 
@@ -152,7 +131,7 @@ function _network_uuid() {
     fi
 }
 
-function add_interface() {
+function add_interface {
     local vm_name_label
     local bridge_or_network_name
 
@@ -168,7 +147,7 @@ function add_interface() {
     xe vif-create network-uuid=$net vm-uuid=$vm device=$device_number
 }
 
-function setup_network() {
+function setup_network {
     local bridge_or_net_name
     bridge_or_net_name=$1
 
@@ -187,7 +166,7 @@ EOF
     fi
 }
 
-function bridge_for() {
+function bridge_for {
     local bridge_or_net_name
     bridge_or_net_name=$1
 
@@ -198,29 +177,29 @@ function bridge_for() {
     fi
 }
 
-function xenapi_ip_on() {
+function xenapi_ip_on {
     local bridge_or_net_name
     bridge_or_net_name=$1
 
-    ifconfig $(bridge_for "$bridge_or_net_name") | grep "inet addr" | cut -d ":" -f2 | sed "s/ .*//"
+    ip -4 addr show $(bridge_for "$bridge_or_net_name") |\
+    awk '/inet/{split($2, ip, "/"); print ip[1];}'
 }
 
-function xenapi_is_listening_on() {
+function xenapi_is_listening_on {
     local bridge_or_net_name
     bridge_or_net_name=$1
 
     ! [ -z $(xenapi_ip_on "$bridge_or_net_name") ]
 }
 
-function parameter_is_specified() {
+function parameter_is_specified {
     local parameter_name
     parameter_name=$1
 
     compgen -v | grep "$parameter_name"
 }
 
-function append_kernel_cmdline()
-{
+function append_kernel_cmdline {
     local vm_name_label
     local kernel_args
 
@@ -235,8 +214,7 @@ function append_kernel_cmdline()
     xe vm-param-set PV-args="$pv_args $kernel_args" uuid=$vm
 }
 
-function destroy_all_vifs_of()
-{
+function destroy_all_vifs_of {
     local vm_name_label
 
     vm_name_label="$1"
@@ -251,11 +229,11 @@ function destroy_all_vifs_of()
     unset IFS
 }
 
-function have_multiple_hosts() {
+function have_multiple_hosts {
     xe host-list --minimal | grep -q ","
 }
 
-function attach_network() {
+function attach_network {
     local bridge_or_net_name
 
     bridge_or_net_name="$1"
@@ -267,4 +245,63 @@ function attach_network() {
     host=$(xe host-list --minimal)
 
     xe network-attach uuid=$net host-uuid=$host
+}
+
+function set_vm_memory {
+    local vm_name_label
+    local memory
+
+    vm_name_label="$1"
+    memory="$2"
+
+    local vm
+
+    vm=$(_vm_uuid "$vm_name_label")
+
+    xe vm-memory-limits-set \
+        static-min=${memory}MiB \
+        static-max=${memory}MiB \
+        dynamic-min=${memory}MiB \
+        dynamic-max=${memory}MiB \
+        uuid=$vm
+}
+
+function max_vcpus {
+    local vm_name_label
+
+    vm_name_label="$1"
+
+    local vm
+    local host
+    local cpu_count
+
+    host=$(xe host-list --minimal)
+    vm=$(_vm_uuid "$vm_name_label")
+
+    cpu_count=$(xe host-param-get \
+        param-name=cpu_info \
+        uuid=$host |
+        sed -e 's/^.*cpu_count: \([0-9]*\);.*$/\1/g')
+
+    if [ -z "$cpu_count" ]; then
+        # get dom0's vcpu count
+        cpu_count=$(cat /proc/cpuinfo | grep processor | wc -l)
+    fi
+
+    # Assert cpu_count is not empty
+    [ -n "$cpu_count" ]
+
+    # Assert ithas a numeric nonzero value
+    expr "$cpu_count" + 0
+
+    xe vm-param-set uuid=$vm VCPUs-max=$cpu_count
+    xe vm-param-set uuid=$vm VCPUs-at-startup=$cpu_count
+}
+
+function get_domid {
+    local vm_name_label
+
+    vm_name_label="$1"
+
+    xe vm-list name-label="$vm_name_label" params=dom-id minimal=true
 }

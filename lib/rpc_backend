@@ -1,61 +1,31 @@
+#!/bin/bash
+#
 # lib/rpc_backend
-# Interface for interactig with different rpc backend
-# rpc backend settings
+# Interface for installing RabbitMQ on the system
 
 # Dependencies:
-# ``functions`` file
-# ``RABBIT_{HOST|PASSWORD}`` must be defined when RabbitMQ is used
+#
+# - ``functions`` file
+# - ``RABBIT_{HOST|PASSWORD|USERID}`` must be defined when RabbitMQ is used
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# check_rpc_backend
-# install_rpc_backend
-# restart_rpc_backend
-# iniset_rpc_backend
+# - check_rpc_backend
+# - install_rpc_backend
+# - restart_rpc_backend
+# - iniset_rpc_backend (stable interface)
+#
+# Note: if implementing an out of tree plugin for an RPC backend, you
+# should install all services through normal plugin methods, then
+# redefine ``iniset_rpc_backend`` in your code. That's the one portion
+# of this file which is a standard interface.
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_RPC_BACKEND=$(set +o | grep xtrace)
 set +o xtrace
-
 
 # Functions
 # ---------
-
-
-# Make sure we only have one rpc backend enabled.
-# Also check the specified rpc backend is available on your platform.
-function check_rpc_backend() {
-    local rpc_needed=1
-    # We rely on the fact that filenames in lib/* match the service names
-    # that can be passed as arguments to is_service_enabled.
-    # We check for a call to iniset_rpc_backend in these files, meaning
-    # the service needs a backend.
-    rpc_candidates=$(grep -rl iniset_rpc_backend $TOP_DIR/lib/ | awk -F/ '{print $NF}')
-    for c in ${rpc_candidates}; do
-        if is_service_enabled $c; then
-            rpc_needed=0
-            break
-        fi
-    done
-    local rpc_backend_cnt=0
-    for svc in qpid zeromq rabbit; do
-        is_service_enabled $svc &&
-        ((rpc_backend_cnt++))
-    done
-    if [ "$rpc_backend_cnt" -gt 1 ]; then
-        echo "ERROR: only one rpc backend may be enabled,"
-        echo "       set only one of 'rabbit', 'qpid', 'zeromq'"
-        echo "       via ENABLED_SERVICES."
-    elif [ "$rpc_backend_cnt" == 0 ] && [ "$rpc_needed" == 0 ]; then
-        echo "ERROR: at least one rpc backend must be enabled,"
-        echo "       set one of 'rabbit', 'qpid', 'zeromq'"
-        echo "       via ENABLED_SERVICES."
-    fi
-
-    if is_service_enabled qpid && ! qpid_is_supported; then
-        die $LINENO "Qpid support is not available for this version of your distribution."
-    fi
-}
 
 # clean up after rpc backend - eradicate all traces so changing backends
 # produces a clean switch
@@ -63,144 +33,120 @@ function cleanup_rpc_backend {
     if is_service_enabled rabbit; then
         # Obliterate rabbitmq-server
         uninstall_package rabbitmq-server
-        sudo killall epmd
+        # in case it's not actually running, /bin/true at the end
+        sudo killall epmd || sudo killall -9 epmd || /bin/true
         if is_ubuntu; then
             # And the Erlang runtime too
-            sudo aptitude purge -y ~nerlang
+            apt_get purge -y erlang*
         fi
-    elif is_service_enabled qpid; then
-        if is_fedora; then
-            uninstall_package qpid-cpp-server
-        elif is_ubuntu; then
-            uninstall_package qpidd
-        else
-            exit_distro_not_supported "qpid installation"
-        fi
-    elif is_service_enabled zeromq; then
-        if is_fedora; then
-            uninstall_package zeromq python-zmq redis
-        elif is_ubuntu; then
-            uninstall_package libzmq1 python-zmq redis-server
-        elif is_suse; then
-            uninstall_package libzmq1 python-pyzmq redis
-        else
-            exit_distro_not_supported "zeromq installation"
-        fi
-
-        # Necessary directory for socket location.
-        sudo mkdir -p /var/run/openstack
-        sudo chown $STACK_USER /var/run/openstack
     fi
 }
 
 # install rpc backend
-function install_rpc_backend() {
+function install_rpc_backend {
     if is_service_enabled rabbit; then
         # Install rabbitmq-server
-        # the temp file is necessary due to LP: #878600
-        tfile=$(mktemp)
-        install_package rabbitmq-server > "$tfile" 2>&1
-        cat "$tfile"
-        rm -f "$tfile"
-    elif is_service_enabled qpid; then
+        install_package rabbitmq-server
         if is_fedora; then
-            install_package qpid-cpp-server
-            if [[ $DISTRO =~ (rhel6) ]]; then
-               # RHEL6 leaves "auth=yes" in /etc/qpidd.conf, it needs to
-               # be no or you get GSS authentication errors as it
-               # attempts to default to this.
-                sudo sed -i.bak 's/^auth=yes$/auth=no/' /etc/qpidd.conf
-            fi
-        elif is_ubuntu; then
-            install_package qpidd
-            sudo sed -i '/PLAIN/!s/mech_list: /mech_list: PLAIN /' /etc/sasl2/qpidd.conf
-            sudo chmod o+r /etc/qpid/qpidd.sasldb
-        else
-            exit_distro_not_supported "qpid installation"
-        fi
-    elif is_service_enabled zeromq; then
-        # NOTE(ewindisch): Redis is not strictly necessary
-        # but there is a matchmaker driver that works
-        # really well & out of the box for multi-node.
-        if is_fedora; then
-            install_package zeromq python-zmq redis
-        elif is_ubuntu; then
-            install_package libzmq1 python-zmq redis-server
-        elif is_suse; then
-            install_package libzmq1 python-pyzmq redis
-        else
-            exit_distro_not_supported "zeromq installation"
+            sudo systemctl enable rabbitmq-server
         fi
     fi
 }
 
 # restart the rpc backend
-function restart_rpc_backend() {
+function restart_rpc_backend {
     if is_service_enabled rabbit; then
         # Start rabbitmq-server
         echo_summary "Starting RabbitMQ"
-        if is_fedora || is_suse; then
-            # service is not started by default
-            restart_service rabbitmq-server
-        fi
-        # change the rabbit password since the default is "guest"
-        sudo rabbitmqctl change_password guest $RABBIT_PASSWORD
+        # NOTE(bnemec): Retry initial rabbitmq configuration to deal with
+        # the fact that sometimes it fails to start properly.
+        # Reference: https://bugzilla.redhat.com/show_bug.cgi?id=1144100
+        # NOTE(tonyb): Extend the original retry logic to only restart rabbitmq
+        # every second time around the loop.
+        # See: https://bugs.launchpad.net/devstack/+bug/1449056 for details on
+        # why this is needed.  This can bee seen on vivid and Debian unstable
+        # (May 2015)
+        # TODO(tonyb): Remove this when Debian and Ubuntu have a fixed systemd
+        # service file.
+        local i
+        for i in `seq 20`; do
+            local rc=0
+
+            [[ $i -eq "20" ]] && die $LINENO "Failed to set rabbitmq password"
+
+            if [[ $(( i % 2 )) == "0" ]] ; then
+                restart_service rabbitmq-server
+            fi
+
+            rabbit_setuser "$RABBIT_USERID" "$RABBIT_PASSWORD" || rc=$?
+            if [ $rc -ne 0 ]; then
+                continue
+            fi
+
+            # change the rabbit password since the default is "guest"
+            sudo rabbitmqctl change_password \
+                $RABBIT_USERID $RABBIT_PASSWORD || rc=$?
+            if [ $rc -ne 0 ]; then
+                continue;
+            fi
+
+            break
+        done
         if is_service_enabled n-cell; then
             # Add partitioned access for the child cell
             if [ -z `sudo rabbitmqctl list_vhosts | grep child_cell` ]; then
                 sudo rabbitmqctl add_vhost child_cell
-                sudo rabbitmqctl set_permissions -p child_cell guest ".*" ".*" ".*"
+                sudo rabbitmqctl set_permissions -p child_cell $RABBIT_USERID ".*" ".*" ".*"
             fi
         fi
-    elif is_service_enabled qpid; then
-        echo_summary "Starting qpid"
-        restart_service qpidd
     fi
 }
 
-# iniset cofiguration
-function iniset_rpc_backend() {
+# builds transport url string
+function get_transport_url {
+    if is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
+        echo "rabbit://$RABBIT_USERID:$RABBIT_PASSWORD@$RABBIT_HOST:5672/"
+    fi
+}
+
+# iniset configuration
+function iniset_rpc_backend {
     local package=$1
     local file=$2
-    local section=$3
-    if is_service_enabled zeromq; then
-        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_zmq
-        iniset $file $section rpc_zmq_matchmaker \
-            ${package}.openstack.common.rpc.matchmaker_redis.MatchMakerRedis
-        # Set MATCHMAKER_REDIS_HOST if running multi-node.
-        MATCHMAKER_REDIS_HOST=${MATCHMAKER_REDIS_HOST:-127.0.0.1}
-        iniset $file matchmaker_redis host $MATCHMAKER_REDIS_HOST
-    elif is_service_enabled qpid || [ -n "$QPID_HOST" ]; then
-        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_qpid
-        iniset $file $section qpid_hostname ${QPID_HOST:-$SERVICE_HOST}
-        if is_ubuntu; then
-            QPID_PASSWORD=`sudo strings /etc/qpid/qpidd.sasldb | grep -B1 admin | head -1`
-            iniset $file $section qpid_password $QPID_PASSWORD
-            iniset $file $section qpid_username admin
+    local section=${3:-DEFAULT}
+    if is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
+        iniset $file $section rpc_backend "rabbit"
+        iniset $file oslo_messaging_rabbit rabbit_hosts $RABBIT_HOST
+        iniset $file oslo_messaging_rabbit rabbit_password $RABBIT_PASSWORD
+        iniset $file oslo_messaging_rabbit rabbit_userid $RABBIT_USERID
+        if [ -n "$RABBIT_HEARTBEAT_TIMEOUT_THRESHOLD" ]; then
+            iniset $file oslo_messaging_rabbit heartbeat_timeout_threshold $RABBIT_HEARTBEAT_TIMEOUT_THRESHOLD
         fi
-    elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
-        iniset $file $section rpc_backend ${package}.openstack.common.rpc.impl_kombu
-        iniset $file $section rabbit_host $RABBIT_HOST
-        iniset $file $section rabbit_password $RABBIT_PASSWORD
+        if [ -n "$RABBIT_HEARTBEAT_RATE" ]; then
+            iniset $file oslo_messaging_rabbit heartbeat_rate $RABBIT_HEARTBEAT_RATE
+        fi
     fi
 }
 
-# Check if qpid can be used on the current distro.
-# qpid_is_supported
-function qpid_is_supported() {
-    if [[ -z "$DISTRO" ]]; then
-        GetDistro
+function rabbit_setuser {
+    local user="$1" pass="$2" found="" out=""
+    out=$(sudo rabbitmqctl list_users) ||
+        { echo "failed to list users" 1>&2; return 1; }
+    found=$(echo "$out" | awk '$1 == user { print $1 }' "user=$user")
+    if [ "$found" = "$user" ]; then
+        sudo rabbitmqctl change_password "$user" "$pass" ||
+            { echo "failed changing pass for '$user'" 1>&2; return 1; }
+    else
+        sudo rabbitmqctl add_user "$user" "$pass" ||
+            { echo "failed changing pass for $user"; return 1; }
     fi
-
-    # Qpid was introduced to Ubuntu in precise, disallow it on oneiric; it is
-    # not in openSUSE either right now.
-    ( ! ([[ "$DISTRO" = "oneiric" ]] || is_suse) )
+    sudo rabbitmqctl set_permissions "$user" ".*" ".*" ".*"
 }
-
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_RPC_BACKEND
 
-# Local variables:
-# mode: shell-script
-# End:
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

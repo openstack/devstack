@@ -1,3 +1,4 @@
 lvm2
-tgt
-qemu-img
+open-iscsi
+qemu-tools
+tgt # NOPRIME

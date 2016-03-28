@@ -1,0 +1,89 @@
+#!/bin/bash
+#
+# **inc/rootwrap** - Rootwrap functions
+#
+# Handle rootwrap's foibles
+
+# Uses: ``STACK_USER``
+# Defines: ``SUDO_SECURE_PATH_FILE``
+
+# Save trace setting
+INC_ROOT_TRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+# Accumulate all additions to sudo's ``secure_path`` in one file read last
+# so they all work in a venv configuration
+SUDO_SECURE_PATH_FILE=${SUDO_SECURE_PATH_FILE:-/etc/sudoers.d/zz-secure-path}
+
+# Add a directory to the common sudo ``secure_path``
+# add_sudo_secure_path dir
+function add_sudo_secure_path {
+    local dir=$1
+    local line
+
+    # This is pretty simplistic for now - assume only the first line is used
+    if [[ -r $SUDO_SECURE_PATH_FILE ]]; then
+        line=$(head -1 $SUDO_SECURE_PATH_FILE)
+    else
+        line="Defaults:$STACK_USER secure_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/usr/bin:/bin"
+    fi
+
+    # Only add ``dir`` if it is not already present
+    if [[ ! $line =~ $dir ]]; then
+        echo "${line}:$dir" | sudo tee $SUDO_SECURE_PATH_FILE
+        sudo chmod 400 $SUDO_SECURE_PATH_FILE
+        sudo chown root:root $SUDO_SECURE_PATH_FILE
+    fi
+}
+
+# Configure rootwrap
+# Make a load of assumptions otherwise we'll have 6 arguments
+# configure_rootwrap project
+function configure_rootwrap {
+    local project=$1
+    local project_uc
+    project_uc=$(echo $1|tr a-z A-Z)
+    local bin_dir="${project_uc}_BIN_DIR"
+    bin_dir="${!bin_dir}"
+    local project_dir="${project_uc}_DIR"
+    project_dir="${!project_dir}"
+
+    local rootwrap_conf_src_dir="${project_dir}/etc/${project}"
+    local rootwrap_bin="${bin_dir}/${project}-rootwrap"
+
+    # Start fresh with rootwrap filters
+    sudo rm -rf /etc/${project}/rootwrap.d
+    sudo install -d -o root -g root -m 755 /etc/${project}/rootwrap.d
+    sudo install -o root -g root -m 644 $rootwrap_conf_src_dir/rootwrap.d/*.filters /etc/${project}/rootwrap.d
+
+    # Set up rootwrap.conf, pointing to /etc/*/rootwrap.d
+    sudo install -o root -g root -m 644 $rootwrap_conf_src_dir/rootwrap.conf /etc/${project}/rootwrap.conf
+    sudo sed -e "s:^filters_path=.*$:filters_path=/etc/${project}/rootwrap.d:" -i /etc/${project}/rootwrap.conf
+
+    # Set up the rootwrap sudoers
+    local tempfile
+    tempfile=$(mktemp)
+    # Specify rootwrap.conf as first parameter to rootwrap
+    rootwrap_sudo_cmd="${rootwrap_bin} /etc/${project}/rootwrap.conf *"
+    echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudo_cmd" >$tempfile
+    if [ -f ${bin_dir}/${project}-rootwrap-daemon ]; then
+        # rootwrap daemon does not need any parameters
+        rootwrap_sudo_cmd="${rootwrap_bin}-daemon /etc/${project}/rootwrap.conf"
+        echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudo_cmd" >>$tempfile
+    fi
+    chmod 0440 $tempfile
+    sudo chown root:root $tempfile
+    sudo mv $tempfile /etc/sudoers.d/${project}-rootwrap
+
+    # Add bin dir to sudo's secure_path because rootwrap is being called
+    # without a path because BROKEN.
+    add_sudo_secure_path $(dirname $rootwrap_bin)
+}
+
+
+# Restore xtrace
+$INC_ROOT_TRACE
+
+# Local variables:
+# mode: shell-script
+# End:

@@ -2,7 +2,7 @@
 
 # **info.sh**
 
-# Produce a report on the state of devstack installs
+# Produce a report on the state of DevStack installs
 #
 # Output fields are separated with '|' chars
 # Output types are git,localrc,os,pip,pkg:
@@ -14,7 +14,7 @@
 #   pkg|<package>|<version>
 
 function usage {
-    echo "$0 - Report on the devstack configuration"
+    echo "$0 - Report on the DevStack configuration"
     echo ""
     echo "Usage: $0"
     exit 1
@@ -52,16 +52,12 @@ GetDistro
 echo "os|distro=$DISTRO"
 echo "os|vendor=$os_VENDOR"
 echo "os|release=$os_RELEASE"
-if [ -n "$os_UPDATE" ]; then
-    echo "os|version=$os_UPDATE"
-fi
-
 
 # Repos
 # -----
 
 # git_report <dir>
-function git_report() {
+function git_report {
     local dir=$1
     local proj ref branch head
     if [[ -d $dir/.git ]]; then
@@ -85,8 +81,8 @@ done
 # Packages
 # --------
 
-# - We are going to check packages only for the services needed.
-# - We are parsing the packages files and detecting metadatas.
+# - Only check packages for the services enabled
+# - Parse version info from the package metadata, not the package/file names
 
 for p in $(get_packages $ENABLED_SERVICES); do
     if [[ "$os_PACKAGE" = "deb" ]]; then
@@ -122,13 +118,11 @@ while read line; do
             ver=${BASH_REMATCH[2]}
         else
             # Unhandled format in freeze file
-            #echo "unknown: $p"
             continue
         fi
         echo "pip|${p}|${ver}"
     else
         # No match in freeze file
-        #echo "unknown: $p"
         continue
     fi
 done <$FREEZE_FILE
@@ -141,9 +135,15 @@ rm $FREEZE_FILE
 
 # Dump localrc with 'localrc|' prepended and comments and passwords left out
 if [[ -r $TOP_DIR/localrc ]]; then
+    RC=$TOP_DIR/localrc
+elif [[ -f $RC_DIR/.localrc.auto ]]; then
+    RC=$TOP_DIR/.localrc.auto
+fi
+if [[ -n $RC ]]; then
     sed -e '
-        /PASSWORD/d;
+        /^[ \t]*$/d;
+        /PASSWORD/s/=.*$/=\<password\>/;
         /^#/d;
         s/^/localrc\|/;
-    ' $TOP_DIR/localrc
+    ' $RC
 fi

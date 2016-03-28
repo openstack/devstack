@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 #
-
+# Copyright 2012, Cisco Systems
+# Copyright 2012, VMware, Inc.
+# Copyright 2012, NTT MCL, Inc.
+#
+# Please direct any questions to dedutta@cisco.com, dwendlandt@vmware.com, nachi@nttmcl.com
+#
 # **neutron-adv-test.sh**
 
 # Perform integration testing of Nova and other components with Neutron.
@@ -13,18 +18,6 @@ echo "*********************************************************************"
 # only the first error that occurred.
 
 set -o errtrace
-
-trap failed ERR
-failed() {
-    local r=$?
-    set +o errtrace
-    set +o xtrace
-    echo "Failed to execute"
-    echo "Starting cleanup..."
-    delete_all
-    echo "Finished cleanup"
-    exit $r
-}
 
 # Print the commands being run so that we can see the command that triggers
 # an error.  It is also useful for following allowing as the install occurs.
@@ -44,7 +37,7 @@ source $TOP_DIR/functions
 source $TOP_DIR/openrc
 
 # Import neutron functions
-source $TOP_DIR/lib/neutron
+source $TOP_DIR/lib/neutron-legacy
 
 # If neutron is not enabled we exit with exitcode 55, which means exercise is skipped.
 neutron_plugin_check_adv_test_requirements || exit 55
@@ -55,9 +48,9 @@ source $TOP_DIR/exerciserc
 # Neutron Settings
 # ----------------
 
-TENANTS="DEMO1"
+PROJECTS="DEMO1"
 # TODO (nati)_Test public network
-#TENANTS="DEMO1,DEMO2"
+#PROJECTS="DEMO1,DEMO2"
 
 PUBLIC_NAME="admin"
 DEMO1_NAME="demo1"
@@ -95,79 +88,82 @@ PUBLIC_ROUTER1_NET="admin-net1"
 DEMO1_ROUTER1_NET="demo1-net1"
 DEMO2_ROUTER1_NET="demo2-net1"
 
-KEYSTONE="keystone"
-
-# Manually create a token by querying keystone (sending JSON data).  Keystone
-# returns a token and catalog of endpoints.  We use python to parse the token
-# and save it.
-
-TOKEN=`keystone token-get | grep ' id ' | awk '{print $4}'`
-
 # Various functions
 # -----------------
 
-function foreach_tenant {
+function foreach_project {
     COMMAND=$1
-    for TENANT in ${TENANTS//,/ };do
-        eval ${COMMAND//%TENANT%/$TENANT}
+    for PROJECT in ${PROJECTS//,/ };do
+        eval ${COMMAND//%PROJECT%/$PROJECT}
     done
 }
 
-function foreach_tenant_resource {
+function foreach_project_resource {
     COMMAND=$1
     RESOURCE=$2
-    for TENANT in ${TENANTS//,/ };do
-        eval 'NUM=$'"${TENANT}_NUM_$RESOURCE"
+    for PROJECT in ${PROJECTS//,/ };do
+        eval 'NUM=$'"${PROJECT}_NUM_$RESOURCE"
         for i in `seq $NUM`;do
-            local COMMAND_LOCAL=${COMMAND//%TENANT%/$TENANT}
+            local COMMAND_LOCAL=${COMMAND//%PROJECT%/$PROJECT}
             COMMAND_LOCAL=${COMMAND_LOCAL//%NUM%/$i}
             eval $COMMAND_LOCAL
         done
     done
 }
 
-function foreach_tenant_vm {
+function foreach_project_vm {
     COMMAND=$1
-    foreach_tenant_resource "$COMMAND" 'VM'
+    foreach_project_resource "$COMMAND" 'VM'
 }
 
-function foreach_tenant_net {
+function foreach_project_net {
     COMMAND=$1
-    foreach_tenant_resource "$COMMAND" 'NET'
+    foreach_project_resource "$COMMAND" 'NET'
 }
 
 function get_image_id {
-    local IMAGE_ID=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+    local IMAGE_ID
+    IMAGE_ID=$(openstack image list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+    die_if_not_set $LINENO IMAGE_ID "Failure retrieving IMAGE_ID"
     echo "$IMAGE_ID"
 }
 
-function get_tenant_id {
-    local TENANT_NAME=$1
-    local TENANT_ID=`keystone tenant-list | grep " $TENANT_NAME " | head -n 1 | get_field 1`
-    echo "$TENANT_ID"
+function get_project_id {
+    local PROJECT_NAME=$1
+    local PROJECT_ID
+    PROJECT_ID=`openstack project list | grep " $PROJECT_NAME " | head -n 1 | get_field 1`
+    die_if_not_set $LINENO PROJECT_ID "Failure retrieving PROJECT_ID for $PROJECT_NAME"
+    echo "$PROJECT_ID"
 }
 
 function get_user_id {
     local USER_NAME=$1
-    local USER_ID=`keystone user-list | grep $USER_NAME | awk '{print $2}'`
+    local USER_ID
+    USER_ID=`openstack user list | grep $USER_NAME | awk '{print $2}'`
+    die_if_not_set $LINENO USER_ID "Failure retrieving USER_ID for $USER_NAME"
     echo "$USER_ID"
 }
 
 function get_role_id {
     local ROLE_NAME=$1
-    local ROLE_ID=`keystone role-list | grep $ROLE_NAME | awk '{print $2}'`
+    local ROLE_ID
+    ROLE_ID=`openstack role list | grep $ROLE_NAME | awk '{print $2}'`
+    die_if_not_set $LINENO ROLE_ID "Failure retrieving ROLE_ID for $ROLE_NAME"
     echo "$ROLE_ID"
 }
 
 function get_network_id {
     local NETWORK_NAME="$1"
-    local NETWORK_ID=`neutron net-list -F id  -- --name=$NETWORK_NAME | awk "NR==4" | awk '{print $2}'`
+    local NETWORK_ID
+    NETWORK_ID=`neutron net-list -F id  -- --name=$NETWORK_NAME | awk "NR==4" | awk '{print $2}'`
     echo $NETWORK_ID
 }
 
 function get_flavor_id {
     local INSTANCE_TYPE=$1
-    local FLAVOR_ID=`nova flavor-list | grep $INSTANCE_TYPE | awk '{print $2}'`
+    local FLAVOR_ID
+    FLAVOR_ID=`nova flavor-list | grep $INSTANCE_TYPE | awk '{print $2}'`
+    die_if_not_set $LINENO FLAVOR_ID "Failure retrieving FLAVOR_ID for $INSTANCE_TYPE"
     echo "$FLAVOR_ID"
 }
 
@@ -179,69 +175,75 @@ function confirm_server_active {
     fi
 }
 
-function add_tenant {
-    local TENANT=$1
-    local USER=$2
-
-    $KEYSTONE tenant-create --name=$TENANT
-    $KEYSTONE user-create --name=$USER --pass=${ADMIN_PASSWORD}
-
-    local USER_ID=$(get_user_id $USER)
-    local TENANT_ID=$(get_tenant_id $TENANT)
-
-    $KEYSTONE user-role-add --user-id $USER_ID --role-id $(get_role_id Member) --tenant-id $TENANT_ID
+function neutron_debug_admin {
+    local os_username=$OS_USERNAME
+    local os_project_id=$OS_PROJECT_ID
+    source $TOP_DIR/openrc admin admin
+    neutron-debug $@
+    source $TOP_DIR/openrc $os_username $os_project_id
 }
 
-function remove_tenant {
-    local TENANT=$1
-    local TENANT_ID=$(get_tenant_id $TENANT)
-    $KEYSTONE tenant-delete $TENANT_ID
+function add_project {
+    openstack project create $1
+    openstack user create $2 --password ${ADMIN_PASSWORD} --project $1
+    openstack role add Member --project $1 --user $2
+}
+
+function remove_project {
+    local PROJECT=$1
+    local PROJECT_ID
+    PROJECT_ID=$(get_project_id $PROJECT)
+    openstack project delete $PROJECT_ID
 }
 
 function remove_user {
     local USER=$1
-    local USER_ID=$(get_user_id $USER)
-    $KEYSTONE user-delete $USER_ID
+    local USER_ID
+    USER_ID=$(get_user_id $USER)
+    openstack user delete $USER_ID
 }
 
-function create_tenants {
+function create_projects {
     source $TOP_DIR/openrc admin admin
-    add_tenant demo1 demo1 demo1
-    add_tenant demo2 demo2 demo2
+    add_project demo1 demo1 demo1
+    add_project demo2 demo2 demo2
     source $TOP_DIR/openrc demo demo
 }
 
-function delete_tenants_and_users {
+function delete_projects_and_users {
     source $TOP_DIR/openrc admin admin
     remove_user demo1
-    remove_tenant demo1
+    remove_project demo1
     remove_user demo2
-    remove_tenant demo2
-    echo "removed all tenants"
+    remove_project demo2
+    echo "removed all projects"
     source $TOP_DIR/openrc demo demo
 }
 
 function create_network {
-    local TENANT=$1
+    local PROJECT=$1
     local GATEWAY=$2
     local CIDR=$3
     local NUM=$4
     local EXTRA=$5
-    local NET_NAME="${TENANT}-net$NUM"
-    local ROUTER_NAME="${TENANT}-router${NUM}"
+    local NET_NAME="${PROJECT}-net$NUM"
+    local ROUTER_NAME="${PROJECT}-router${NUM}"
     source $TOP_DIR/openrc admin admin
-    local TENANT_ID=$(get_tenant_id $TENANT)
-    source $TOP_DIR/openrc $TENANT $TENANT
-    local NET_ID=$(neutron net-create --tenant_id $TENANT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
-    neutron subnet-create --ip_version 4 --tenant_id $TENANT_ID --gateway $GATEWAY $NET_ID $CIDR
-    neutron-debug probe-create --device-owner compute $NET_ID
+    local PROJECT_ID
+    PROJECT_ID=$(get_project_id $PROJECT)
+    source $TOP_DIR/openrc $PROJECT $PROJECT
+    local NET_ID
+    NET_ID=$(neutron net-create --project-id $PROJECT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
+    die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PROJECT_ID $NET_NAME $EXTRA"
+    neutron subnet-create --ip-version 4 --project-id $PROJECT_ID --gateway $GATEWAY --subnetpool None $NET_ID $CIDR
+    neutron_debug_admin probe-create --device-owner compute $NET_ID
     source $TOP_DIR/openrc demo demo
 }
 
 function create_networks {
-    foreach_tenant_net 'create_network ${%TENANT%_NAME} ${%TENANT%_NET%NUM%_GATEWAY} ${%TENANT%_NET%NUM%_CIDR} %NUM% ${%TENANT%_NET%NUM%_EXTRA}'
+    foreach_project_net 'create_network ${%PROJECT%_NAME} ${%PROJECT%_NET%NUM%_GATEWAY} ${%PROJECT%_NET%NUM%_CIDR} %NUM% ${%PROJECT%_NET%NUM%_EXTRA}'
     #TODO(nati) test security group function
-    # allow ICMP for both tenant's security groups
+    # allow ICMP for both project's security groups
     #source $TOP_DIR/openrc demo1 demo1
     #$NOVA secgroup-add-rule default icmp -1 -1 0.0.0.0/0
     #source $TOP_DIR/openrc demo2 demo2
@@ -249,43 +251,44 @@ function create_networks {
 }
 
 function create_vm {
-    local TENANT=$1
+    local PROJECT=$1
     local NUM=$2
     local NET_NAMES=$3
-    source $TOP_DIR/openrc $TENANT $TENANT
+    source $TOP_DIR/openrc $PROJECT $PROJECT
     local NIC=""
     for NET_NAME in ${NET_NAMES//,/ };do
         NIC="$NIC --nic net-id="`get_network_id $NET_NAME`
     done
     #TODO (nati) Add multi-nic test
     #TODO (nati) Add public-net test
-    local VM_UUID=`nova boot --flavor $(get_flavor_id m1.tiny) \
+    local VM_UUID
+    VM_UUID=`nova boot --flavor $(get_flavor_id m1.tiny) \
         --image $(get_image_id) \
         $NIC \
-        $TENANT-server$NUM | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
-    die_if_not_set $LINENO VM_UUID "Failure launching $TENANT-server$NUM"
+        $PROJECT-server$NUM | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
+    die_if_not_set $LINENO VM_UUID "Failure launching $PROJECT-server$NUM"
     confirm_server_active $VM_UUID
 }
 
 function create_vms {
-    foreach_tenant_vm 'create_vm ${%TENANT%_NAME} %NUM% ${%TENANT%_VM%NUM%_NET}'
+    foreach_project_vm 'create_vm ${%PROJECT%_NAME} %NUM% ${%PROJECT%_VM%NUM%_NET}'
 }
 
 function ping_ip {
-   # Test agent connection.  Assumes namespaces are disabled, and
-   # that DHCP is in use, but not L3
-   local VM_NAME=$1
-   local NET_NAME=$2
-   IP=`nova show $VM_NAME | grep 'network' | awk '{print $5}'`
-   ping_check $NET_NAME $IP $BOOT_TIMEOUT
+    # Test agent connection.  Assumes namespaces are disabled, and
+    # that DHCP is in use, but not L3
+    local VM_NAME=$1
+    local NET_NAME=$2
+    IP=$(get_instance_ip $VM_NAME $NET_NAME)
+    ping_check $IP $BOOT_TIMEOUT $NET_NAME
 }
 
 function check_vm {
-    local TENANT=$1
+    local PROJECT=$1
     local NUM=$2
-    local VM_NAME="$TENANT-server$NUM"
+    local VM_NAME="$PROJECT-server$NUM"
     local NET_NAME=$3
-    source $TOP_DIR/openrc $TENANT $TENANT
+    source $TOP_DIR/openrc $PROJECT $PROJECT
     ping_ip $VM_NAME $NET_NAME
     # TODO (nati) test ssh connection
     # TODO (nati) test inter connection between vm
@@ -294,30 +297,31 @@ function check_vm {
 }
 
 function check_vms {
-    foreach_tenant_vm 'check_vm ${%TENANT%_NAME} %NUM% ${%TENANT%_VM%NUM%_NET}'
+    foreach_project_vm 'check_vm ${%PROJECT%_NAME} %NUM% ${%PROJECT%_VM%NUM%_NET}'
 }
 
 function shutdown_vm {
-    local TENANT=$1
+    local PROJECT=$1
     local NUM=$2
-    source $TOP_DIR/openrc $TENANT $TENANT
-    VM_NAME=${TENANT}-server$NUM
+    source $TOP_DIR/openrc $PROJECT $PROJECT
+    VM_NAME=${PROJECT}-server$NUM
     nova delete $VM_NAME
 }
 
 function shutdown_vms {
-    foreach_tenant_vm 'shutdown_vm ${%TENANT%_NAME} %NUM%'
+    foreach_project_vm 'shutdown_vm ${%PROJECT%_NAME} %NUM%'
     if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q ACTIVE; do sleep 1; done"; then
         die $LINENO "Some VMs failed to shutdown"
     fi
 }
 
 function delete_network {
-    local TENANT=$1
+    local PROJECT=$1
     local NUM=$2
-    local NET_NAME="${TENANT}-net$NUM"
+    local NET_NAME="${PROJECT}-net$NUM"
     source $TOP_DIR/openrc admin admin
-    local TENANT_ID=$(get_tenant_id $TENANT)
+    local PROJECT_ID
+    PROJECT_ID=$(get_project_id $PROJECT)
     #TODO(nati) comment out until l3-agent merged
     #for res in port subnet net router;do
     for net_id in `neutron net-list -c id -c name | grep $NET_NAME | awk '{print $2}'`;do
@@ -329,16 +333,16 @@ function delete_network {
 }
 
 function delete_networks {
-   foreach_tenant_net 'delete_network ${%TENANT%_NAME} %NUM%'
-   #TODO(nati) add secuirty group check after it is implemented
-   # source $TOP_DIR/openrc demo1 demo1
-   # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
-   # source $TOP_DIR/openrc demo2 demo2
-   # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
+    foreach_project_net 'delete_network ${%PROJECT%_NAME} %NUM%'
+    # TODO(nati) add secuirty group check after it is implemented
+    # source $TOP_DIR/openrc demo1 demo1
+    # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
+    # source $TOP_DIR/openrc demo2 demo2
+    # nova secgroup-delete-rule default icmp -1 -1 0.0.0.0/0
 }
 
 function create_all {
-    create_tenants
+    create_projects
     create_networks
     create_vms
 }
@@ -346,7 +350,7 @@ function create_all {
 function delete_all {
     shutdown_vms
     delete_networks
-    delete_tenants_and_users
+    delete_projects_and_users
 }
 
 function all {
@@ -362,8 +366,8 @@ function test_functions {
     IMAGE=$(get_image_id)
     echo $IMAGE
 
-    TENANT_ID=$(get_tenant_id demo)
-    echo $TENANT_ID
+    PROJECT_ID=$(get_project_id demo)
+    echo $PROJECT_ID
 
     FLAVOR_ID=$(get_flavor_id m1.tiny)
     echo $FLAVOR_ID
@@ -375,30 +379,22 @@ function test_functions {
 # Usage and main
 # --------------
 
-usage() {
+function usage {
     echo "$0: [-h]"
     echo "  -h, --help              Display help message"
-    echo "  -t, --tenant            Create tenants"
+    echo "  -t, --project            Create projects"
     echo "  -n, --net               Create networks"
     echo "  -v, --vm                Create vms"
     echo "  -c, --check             Check connection"
-    echo "  -x, --delete-tenants    Delete tenants"
+    echo "  -x, --delete-projects    Delete projects"
     echo "  -y, --delete-nets       Delete networks"
     echo "  -z, --delete-vms        Delete vms"
     echo "  -T, --test              Test functions"
 }
 
-main() {
+function main {
 
     echo Description
-    echo
-    echo Copyright 2012, Cisco Systems
-    echo Copyright 2012, Nicira Networks, Inc.
-    echo Copyright 2012, NTT MCL, Inc.
-    echo
-    echo Please direct any questions to dedutta@cisco.com, dan@nicira.com, nachi@nttmcl.com
-    echo
-
 
     if [ $# -eq 0 ] ; then
         # if no args are provided, run all tests
@@ -416,7 +412,7 @@ main() {
                 -v | --vm )     create_vms
                                 exit
                                 ;;
-                -t | --tenant ) create_tenants
+                -t | --project ) create_projects
                                 exit
                                 ;;
                 -c | --check )   check_vms
@@ -425,7 +421,7 @@ main() {
                 -T | --test )   test_functions
                                 exit
                                 ;;
-                -x | --delete-tenants ) delete_tenants_and_users
+                -x | --delete-projects ) delete_projects_and_users
                                 exit
                                 ;;
                 -y | --delete-nets ) delete_networks
@@ -443,6 +439,18 @@ main() {
             shift
         done
     fi
+}
+
+trap failed ERR
+function failed {
+    local r=$?
+    set +o errtrace
+    set +o xtrace
+    echo "Failed to execute"
+    echo "Starting cleanup..."
+    delete_all
+    echo "Finished cleanup"
+    exit $r
 }
 
 # Kick off script

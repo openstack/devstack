@@ -13,19 +13,17 @@ Plugin specific configuration variables should be in this file.
 
 functions
 ---------
-``lib/neutron`` calls the following functions when the ``$Q_PLUGIN`` is enabled
+``lib/neutron-legacy`` calls the following functions when the ``$Q_PLUGIN`` is enabled
 
 * ``neutron_plugin_create_nova_conf`` :
-  set ``NOVA_VIF_DRIVER`` and optionally set options in nova_conf
-  e.g.
-  NOVA_VIF_DRIVER=${NOVA_VIF_DRIVER:-"nova.virt.libvirt.vif.LibvirtGenericVIFDriver"}
+  optionally set options in nova_conf
 * ``neutron_plugin_install_agent_packages`` :
   install packages that is specific to plugin agent
   e.g.
   install_package bridge-utils
 * ``neutron_plugin_configure_common`` :
   set plugin-specific variables, ``Q_PLUGIN_CONF_PATH``, ``Q_PLUGIN_CONF_FILENAME``,
-  ``Q_DB_NAME``, ``Q_PLUGIN_CLASS``
+  ``Q_PLUGIN_CLASS``
 * ``neutron_plugin_configure_debug_command``
 * ``neutron_plugin_configure_dhcp_agent``
 * ``neutron_plugin_configure_l3_agent``

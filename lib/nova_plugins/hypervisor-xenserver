@@ -1,0 +1,118 @@
+#!/bin/bash
+#
+# lib/nova_plugins/hypervisor-xenserver
+# Configure the XenServer hypervisor
+
+# Enable with:
+# VIRT_DRIVER=xenserver
+
+# Dependencies:
+# ``functions`` file
+# ``nova`` configuration
+
+# install_nova_hypervisor - install any external requirements
+# configure_nova_hypervisor - make configuration changes, including those to other services
+# start_nova_hypervisor - start any external services
+# stop_nova_hypervisor - stop any external services
+# cleanup_nova_hypervisor - remove transient data and cache
+
+# Save trace setting
+_XTRACE_XENSERVER=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+PUBLIC_INTERFACE_DEFAULT=eth2
+GUEST_INTERFACE_DEFAULT=eth1
+# Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
+FLAT_NETWORK_BRIDGE_DEFAULT=$(sed -e 's/.* flat_network_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
+if is_service_enabled neutron; then
+    XEN_INTEGRATION_BRIDGE=$(sed -e 's/.* xen_integration_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
+fi
+
+VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
+
+
+# Entry Points
+# ------------
+
+# clean_nova_hypervisor - Clean up an installation
+function cleanup_nova_hypervisor {
+    # This function intentionally left blank
+    :
+}
+
+# configure_nova_hypervisor - Set config files, create data dirs, etc
+function configure_nova_hypervisor {
+    if [ -z "$XENAPI_CONNECTION_URL" ]; then
+        die $LINENO "XENAPI_CONNECTION_URL is not specified"
+    fi
+    read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
+    iniset $NOVA_CONF DEFAULT compute_driver "xenapi.XenAPIDriver"
+    iniset $NOVA_CONF xenserver connection_url "$XENAPI_CONNECTION_URL"
+    iniset $NOVA_CONF xenserver connection_username "$XENAPI_USER"
+    iniset $NOVA_CONF xenserver connection_password "$XENAPI_PASSWORD"
+    iniset $NOVA_CONF DEFAULT flat_injected "False"
+    # Need to avoid crash due to new firewall support
+    XEN_FIREWALL_DRIVER=${XEN_FIREWALL_DRIVER:-"nova.virt.firewall.IptablesFirewallDriver"}
+    iniset $NOVA_CONF DEFAULT firewall_driver "$XEN_FIREWALL_DRIVER"
+
+    local dom0_ip
+    dom0_ip=$(echo "$XENAPI_CONNECTION_URL" | cut -d "/" -f 3-)
+
+    local ssh_dom0
+    ssh_dom0="sudo -u $DOMZERO_USER ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$dom0_ip"
+
+    # Find where the plugins should go in dom0
+    xen_functions=`cat $TOP_DIR/tools/xen/functions`
+    PLUGIN_DIR=`$ssh_dom0 "$xen_functions; set -eux; xapi_plugin_location"`
+
+    # install nova plugins to dom0
+    tar -czf - -C $NOVA_DIR/plugins/xenserver/xenapi/etc/xapi.d/plugins/ ./ |
+        $ssh_dom0 "tar -xzf - -C $PLUGIN_DIR && chmod a+x $PLUGIN_DIR/*"
+
+    # install console logrotate script
+    tar -czf - -C $NOVA_DIR/tools/xenserver/ rotate_xen_guest_logs.sh |
+        $ssh_dom0 'tar -xzf - -C /root/ && chmod +x /root/rotate_xen_guest_logs.sh && mkdir -p /var/log/xen/guest'
+
+    # Create a cron job that will rotate guest logs
+    $ssh_dom0 crontab - << CRONTAB
+* * * * * /root/rotate_xen_guest_logs.sh >/dev/null 2>&1
+CRONTAB
+
+    # Create directories for kernels and images
+    {
+        echo "set -eux"
+        cat $TOP_DIR/tools/xen/functions
+        echo "create_directory_for_images"
+        echo "create_directory_for_kernels"
+    } | $ssh_dom0
+
+}
+
+# install_nova_hypervisor() - Install external components
+function install_nova_hypervisor {
+    pip_install_gr xenapi
+}
+
+# start_nova_hypervisor - Start any required external services
+function start_nova_hypervisor {
+    # This function intentionally left blank
+    :
+}
+
+# stop_nova_hypervisor - Stop any external services
+function stop_nova_hypervisor {
+    # This function intentionally left blank
+    :
+}
+
+
+# Restore xtrace
+$_XTRACE_XENSERVER
+
+# Local variables:
+# mode: shell-script
+# End:

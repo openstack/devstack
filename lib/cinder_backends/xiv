@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# Copyright 2014 IBM Corp.
+# Copyright (c) 2014 OpenStack Foundation
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+# Authors:
+#   Alon Marx <alonma@il.ibm.com>
+#
+
+# lib/cinder_plugins/xiv
+# Configure the xiv_ds8k driver for xiv testing
+
+# Enable xiv_ds8k driver for xiv with:
+#
+#   CINDER_ENABLED_BACKENDS+=,xiv:<volume-type-name>
+#   XIV_DRIVER_VERSION=<version-string>
+#   SAN_IP=<storage-ip-or-hostname>
+#   SAN_LOGIN=<storage-admin-account>
+#   SAN_PASSWORD=<storage-admin-password>
+#   SAN_CLUSTERNAME=<cluster-name>
+#   CONNECTION_TYPE=<connection-type> iscsi|fc
+#   XIV_CHAP=<chap-type> disabled|enabled
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# configure_cinder_backend_xiv - Configure Cinder for xiv backends
+
+# Save trace setting
+_XTRACE_CINDER_XIV=$(set +o | grep xtrace)
+set +o xtrace
+
+# Defaults
+# --------
+# Set up default directories
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_backend_xiv - Set config files, create data dirs, etc
+function configure_cinder_backend_xiv {
+
+    local be_name=$1
+
+    python -c 'from xiv_ds8k_openstack.xiv_nova_proxy import XIVNovaProxy'
+    if [ $? -ne 0 ]; then
+        die $LINENO "XIV_DS8K driver is missing. Please install first"
+    fi
+
+    # For reference:
+    # ``XIV_DS8K_BACKEND='IBM-XIV_'${SAN_IP}'_'${SAN_CLUSTERNAME}'_'${CONNECTION_TYPE}``
+    iniset $CINDER_CONF DEFAULT xiv_ds8k_driver_version $XIV_DRIVER_VERSION
+
+    iniset $CINDER_CONF $be_name san_ip $SAN_IP
+    iniset $CINDER_CONF $be_name san_login $SAN_LOGIN
+    iniset $CINDER_CONF $be_name san_password $SAN_PASSWORD
+    iniset $CINDER_CONF $be_name san_clustername $SAN_CLUSTERNAME
+    iniset $CINDER_CONF $be_name xiv_ds8k_connection_type $CONNECTION_TYPE
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver 'cinder.volume.drivers.ibm.xiv_ds8k.XIVDS8KDriver'
+    iniset $CINDER_CONF $be_name xiv_ds8k_proxy 'xiv_ds8k_openstack.xiv_nova_proxy.XIVNovaProxy'
+    iniset $CINDER_CONF $be_name xiv_chap $XIV_CHAP
+}
+
+# Restore xtrace
+$_XTRACE_CINDER_XIV
+
+# Local variables:
+# mode: shell-script
+# End:

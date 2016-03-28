@@ -1,32 +1,36 @@
+bc
 bridge-utils
 curl
 dbus
-euca2ools # only for testing client
-gcc # dist:rhel6 [2]
+gcc
+gcc-c++
+gettext  # used for compiling message catalogs
 git-core
+graphviz # needed only for docs
+iptables-services  # NOPRIME f22,f23
+java-1.7.0-openjdk-headless  # NOPRIME rhel7
+java-1.8.0-openjdk-headless  # NOPRIME f22,f23
+libffi-devel
+libjpeg-turbo-devel # Pillow 3.0.0
+libxml2-devel # lxml
+libxslt-devel # lxml
+libyaml-devel
+mariadb-devel  # MySQL-python
+net-tools
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
-libxml2-devel # dist:rhel6 [2]
-libxslt-devel # dist:rhel6 [2]
+pkgconfig
+postgresql-devel  # psycopg2
 psmisc
-pylint
-python-netaddr
-python-pip
-python-prettytable # dist:rhel6 [1]
-python-unittest2
-python-virtualenv
+pyOpenSSL # version in pip uses too much memory
+python-devel
+redhat-rpm-config # missing dep for gcc hardening flags, see rhbz#1217376
 screen
 tar
 tcpdump
 unzip
+util-linux
 wget
-
-# [1] : some of installed tools have unversioned dependencies on this,
-# but others have versioned (<=0.7).  So if a later version (0.7.1)
-# gets installed in response to an unversioned dependency, it breaks.
-# This pre-installs a compatible 0.6(ish) version from RHEL
-
-# [2] : RHEL6 rpm versions of python-lxml is old, and has to be
-# removed.  Several tools rely on it, so we install the dependencies
-# pip needs to build it here (see tools/install_prereqs.sh)
+which
+zlib-devel

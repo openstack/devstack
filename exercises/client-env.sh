@@ -28,7 +28,7 @@ TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 source $TOP_DIR/functions
 
 # Import configuration
-source $TOP_DIR/openrc
+source $TOP_DIR/openrc admin
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc
@@ -41,7 +41,6 @@ unset NOVA_PROJECT_ID
 unset NOVA_REGION_NAME
 unset NOVA_URL
 unset NOVA_USERNAME
-unset NOVA_VERSION
 
 for i in OS_TENANT_NAME OS_USERNAME OS_PASSWORD OS_AUTH_URL; do
     is_set $i
@@ -64,7 +63,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
         STATUS_KEYSTONE="Skipped"
     else
         echo -e "\nTest Keystone"
-        if keystone catalog --service identity; then
+        if openstack endpoint show identity; then
             STATUS_KEYSTONE="Succeeded"
         else
             STATUS_KEYSTONE="Failed"
@@ -79,7 +78,6 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "n-api" ]]; then
         STATUS_NOVA="Skipped"
-        STATUS_EC2="Skipped"
     else
         # Test OSAPI
         echo -e "\nTest Nova"
@@ -90,20 +88,6 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
             RETURN=1
         fi
 
-        # Test EC2 API
-        echo -e "\nTest EC2"
-        # Get EC2 creds
-        source $TOP_DIR/eucarc
-
-        if euca-describe-images; then
-            STATUS_EC2="Succeeded"
-        else
-            STATUS_EC2="Failed"
-            RETURN=1
-        fi
-
-        # Clean up side effects
-        unset NOVA_VERSION
     fi
 fi
 
@@ -132,7 +116,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
-        if glance image-list; then
+        if openstack image list; then
             STATUS_GLANCE="Succeeded"
         else
             STATUS_GLANCE="Failed"
@@ -165,7 +149,7 @@ set +o xtrace
 # Results
 # =======
 
-function report() {
+function report {
     if [[ -n "$2" ]]; then
         echo "$1: $2"
     fi
@@ -174,7 +158,6 @@ function report() {
 echo -e "\n"
 report "Keystone" $STATUS_KEYSTONE
 report "Nova" $STATUS_NOVA
-report "EC2" $STATUS_EC2
 report "Cinder" $STATUS_CINDER
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT

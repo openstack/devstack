@@ -10,7 +10,7 @@ Third party program specific configuration variables should be in this file.
 
 functions
 ---------
-``lib/neutron`` calls the following functions when the ``<third_party>`` is enabled
+``lib/neutron-legacy`` calls the following functions when the ``<third_party>`` is enabled
 
 functions to be implemented
 * ``configure_<third_party>``:
@@ -28,9 +28,14 @@ functions to be implemented
   git clone xxx
 
 * ``start_<third_party>``:
-  start running processes, including screen
+  start running processes, including screen if USE_SCREEN=True
   e.g.
-  screen_it XXXX "cd $XXXXY_DIR && $XXXX_DIR/bin/XXXX-bin"
+  run_process XXXX "$XXXX_DIR/bin/XXXX-bin"
 
 * ``stop_<third_party>``:
   stop running processes (non-screen)
+  e.g.
+  stop_process XXXX
+
+* ``check_<third_party>``:
+  verify that the integration between neutron server and third-party components is sane

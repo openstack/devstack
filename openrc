@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# source openrc [username] [tenantname]
+# source openrc [username] [projectname]
 #
-# Configure a set of credentials for $TENANT/$USERNAME:
-#   Set OS_TENANT_NAME to override the default tenant 'demo'
+# Configure a set of credentials for $PROJECT/$USERNAME:
+#   Set OS_PROJECT_NAME to override the default project 'demo'
 #   Set OS_USERNAME to override the default user name 'demo'
 #   Set ADMIN_PASSWORD to set the password for 'admin' and 'demo'
 
@@ -14,11 +14,11 @@ if [[ -n "$1" ]]; then
     OS_USERNAME=$1
 fi
 if [[ -n "$2" ]]; then
-    OS_TENANT_NAME=$2
+    OS_PROJECT_NAME=$2
 fi
 
 # Find the other rc files
-RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
+RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
 # Import common functions
 source $RC_DIR/functions
@@ -34,52 +34,72 @@ fi
 # Get some necessary configuration
 source $RC_DIR/lib/tls
 
-# The introduction of Keystone to the OpenStack ecosystem has standardized the
-# term **tenant** as the entity that owns resources.  In some places references
-# still exist to the original Nova term **project** for this use.  Also,
-# **tenant_name** is preferred to **tenant_id**.
-export OS_TENANT_NAME=${OS_TENANT_NAME:-demo}
+# The OpenStack ecosystem has standardized the term **project** as the
+# entity that owns resources.  In some places **tenant** remains
+# referenced, but in all cases this just means **project**.  We will
+# warn if we need to turn on legacy **tenant** support to have a
+# working environment.
+export OS_PROJECT_NAME=${OS_PROJECT_NAME:-demo}
 
-# In addition to the owning entity (tenant), nova stores the entity performing
+echo "WARNING: setting legacy OS_TENANT_NAME to support cli tools."
+export OS_TENANT_NAME=$OS_PROJECT_NAME
+
+# In addition to the owning entity (project), nova stores the entity performing
 # the action as the **user**.
 export OS_USERNAME=${OS_USERNAME:-demo}
 
 # With Keystone you pass the keystone password instead of an api key.
 # Recent versions of novaclient use OS_PASSWORD instead of NOVA_API_KEYs
 # or NOVA_PASSWORD.
-export OS_PASSWORD=${ADMIN_PASSWORD:-secrete}
+export OS_PASSWORD=${ADMIN_PASSWORD:-secret}
 
 # Don't put the key into a keyring by default. Testing for development is much
 # easier with this off.
 export OS_NO_CACHE=${OS_NO_CACHE:-1}
 
-# Set api HOST_IP endpoint.  SERVICE_HOST may also be used to specify the endpoint,
-# which is convenient for some localrc configurations.
-HOST_IP=${HOST_IP:-127.0.0.1}
-SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+# Region
+export OS_REGION_NAME=${REGION_NAME:-RegionOne}
+
+# Set the host API endpoint. This will default to HOST_IP if SERVICE_IP_VERSION
+# is 4, else HOST_IPV6 if it's 6. SERVICE_HOST may also be used to specify the
+# endpoint, which is convenient for some localrc configurations. Additionally,
+# some exercises call Glance directly. On a single-node installation, Glance
+# should be listening on a local IP address, depending on the setting of
+# SERVICE_IP_VERSION. If its running elsewhere, it can be set here.
+if [[ $SERVICE_IP_VERSION == 6 ]]; then
+    HOST_IPV6=${HOST_IPV6:-::1}
+    SERVICE_HOST=${SERVICE_HOST:-[$HOST_IPV6]}
+    GLANCE_HOST=${GLANCE_HOST:-[$HOST_IPV6]}
+else
+    HOST_IP=${HOST_IP:-127.0.0.1}
+    SERVICE_HOST=${SERVICE_HOST:-$HOST_IP}
+    GLANCE_HOST=${GLANCE_HOST:-$HOST_IP}
+fi
+
 SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
-
-# Some exercises call glance directly.  On a single-node installation, Glance
-# should be listening on HOST_IP.  If its running elsewhere, it can be set here
-GLANCE_HOST=${GLANCE_HOST:-$HOST_IP}
-
-# Authenticating against an Openstack cloud using Keystone returns a **Token**
-# and **Service Catalog**.  The catalog contains the endpoints for all services
-# the user/tenant has access to - including nova, glance, keystone, swift, ...
-# We currently recommend using the 2.0 *identity api*.
-#
-# *NOTE*: Using the 2.0 *identity api* does not mean that compute api is 2.0.  We
-# will use the 1.1 *compute api*
-export OS_AUTH_URL=$SERVICE_PROTOCOL://$SERVICE_HOST:5000/v2.0
-
-# Set the pointer to our CA certificate chain.  Harmless if TLS is not used.
-export OS_CACERT=$INT_CA_DIR/ca-chain.pem
+KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
+KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
 
 # Identity API version
 export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
 
-# Currently novaclient needs you to specify the *compute api* version.  This
+# Authenticating against an OpenStack cloud using Keystone returns a **Token**
+# and **Service Catalog**.  The catalog contains the endpoints for all services
+# the user/project has access to - including nova, glance, keystone, swift, ...
+# We currently recommend using the 2.0 *identity api*.
+#
+export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:5000/v${OS_IDENTITY_API_VERSION}
+
+# Set OS_CACERT to a default CA certificate chain if it exists.
+if [[ ! -v OS_CACERT ]] ; then
+    DEFAULT_OS_CACERT=$INT_CA_DIR/ca-chain.pem
+    # If the file does not exist, this may confuse preflight sanity checks
+    if [ -e $DEFAULT_OS_CACERT ] ; then
+        export OS_CACERT=$DEFAULT_OS_CACERT
+    fi
+fi
+
+# Currently cinderclient needs you to specify the *volume api* version. This
 # needs to match the config of your catalog returned by Keystone.
-export NOVA_VERSION=${NOVA_VERSION:-1.1}
-# In the future this will change names:
-export COMPUTE_API_VERSION=${COMPUTE_API_VERSION:-$NOVA_VERSION}
+export CINDER_VERSION=${CINDER_VERSION:-2}
+export OS_VOLUME_API_VERSION=${OS_VOLUME_API_VERSION:-$CINDER_VERSION}

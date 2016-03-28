@@ -5,7 +5,7 @@
 # Create a CA hierarchy (if necessary) and server certificate
 #
 # This mimics the CA structure that DevStack sets up when ``tls_proxy`` is enabled
-# but in the curent directory unless ``DATA_DIR`` is set
+# but in the current directory unless ``DATA_DIR`` is set
 
 ENABLE_TLS=True
 DATA_DIR=${DATA_DIR:-`pwd`/ca-data}

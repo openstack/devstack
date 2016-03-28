@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# lib/cinder_backends/vmdk
+# Configure the VMware vmdk backend
+
+# Enable with:
+#
+#   CINDER_ENABLED_BACKENDS+=,vmdk:<volume-type-name>
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# configure_cinder_backend_vmdk - Configure Cinder for VMware vmdk backends
+
+# Save trace setting
+_XTRACE_CINDER_VMDK=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_backend_vmdk - Set config files, create data dirs, etc
+function configure_cinder_backend_vmdk {
+    # To use VMware vmdk backend, set the following in local.conf:
+    # CINDER_ENABLED_BACKENDS+=,vmdk:<volume-type-name>
+    # VMWAREAPI_IP=<vcenter-ip>
+    # VMWAREAPI_USER=<vcenter-admin-account>
+    # VMWAREAPI_PASSWORD=<vcenter-admin-password>
+
+    local be_name=$1
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.vmware.vmdk.VMwareVcVmdkDriver"
+    iniset $CINDER_CONF $be_name vmware_host_ip "$VMWAREAPI_IP"
+    iniset $CINDER_CONF $be_name vmware_host_username "$VMWAREAPI_USER"
+    iniset $CINDER_CONF $be_name vmware_host_password "$VMWAREAPI_PASSWORD"
+}
+
+
+# Restore xtrace
+$_XTRACE_CINDER_VMDK
+
+# Local variables:
+# mode: shell-script
+# End:

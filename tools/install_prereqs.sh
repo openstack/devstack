@@ -8,21 +8,27 @@
 #
 # -f        Force an install run now
 
-if [[ -n "$1" &&  "$1" = "-f" ]]; then
-    FORCE_PREREQ=1
-fi
+FORCE_PREREQ=0
 
-# If TOP_DIR is set we're being sourced rather than running stand-alone
+while getopts ":f" opt; do
+    case $opt in
+        f)
+            FORCE_PREREQ=1
+            ;;
+    esac
+done
+
+# If ``TOP_DIR`` is set we're being sourced rather than running stand-alone
 # or in a sub-shell
 if [[ -z "$TOP_DIR" ]]; then
-    # Keep track of the devstack directory
+    # Keep track of the DevStack directory
     TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
     # Import common functions
     source $TOP_DIR/functions
 
     # Determine what system we are running on.  This provides ``os_VENDOR``,
-    # ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
+    # ``os_RELEASE``, ``os_PACKAGE``, ``os_CODENAME``
     # and ``DISTRO``
     GetDistro
 
@@ -55,7 +61,15 @@ export_proxy_variables
 # ================
 
 # Install package requirements
-install_package $(get_packages $ENABLED_SERVICES)
+PACKAGES=$(get_packages general,$ENABLED_SERVICES)
+PACKAGES="$PACKAGES $(get_plugin_packages)"
+
+if is_ubuntu && echo $PACKAGES | grep -q dkms ; then
+    # Ensure headers for the running kernel are installed for any DKMS builds
+    PACKAGES="$PACKAGES linux-headers-$(uname -r)"
+fi
+
+install_package $PACKAGES
 
 if [[ -n "$SYSLOG" && "$SYSLOG" != "False" ]]; then
     if is_ubuntu || is_fedora; then
@@ -67,6 +81,9 @@ if [[ -n "$SYSLOG" && "$SYSLOG" != "False" ]]; then
     fi
 fi
 
+if python3_enabled; then
+    install_python3
+fi
 
 # Mark end of run
 # ---------------

@@ -6,84 +6,115 @@
 
 # Warning: This script just for development purposes
 
+set -o errexit
+
+# short_source prints out the current location of the caller in a way
+# that strips redundant directories. This is useful for PS4
+# usage. Needed before we start tracing due to how we set
+# PS4. Normally we'd pick this up from stackrc, but that's not sourced
+# here.
+function short_source {
+    saveIFS=$IFS
+    IFS=" "
+    called=($(caller 0))
+    IFS=$saveIFS
+    file=${called[2]}
+    file=${file#$RC_DIR/}
+    printf "%-40s " "$file:${called[1]}:${called[0]}"
+}
+
+set -o xtrace
+
 ACCOUNT_DIR=./accrc
 
-display_help()
-{
+function display_help {
 cat <<EOF
 
 usage: $0 <options..>
 
-This script creates certificates and sourcable rc files per tenant/user.
+This script creates certificates and sourcable rc files per project/user.
 
 Target account directory hierarchy:
 target_dir-|
            |-cacert.pem
-           |-tenant1-name|
-           |             |- user1
-           |             |- user1-cert.pem
-           |             |- user1-pk.pem
-           |             |- user2
-           |             ..
-           |-tenant2-name..
+           |-project1-name|
+           |              |- user1
+           |              |- user1-cert.pem
+           |              |- user1-pk.pem
+           |              |- user2
+           |              ..
+           |-project2-name..
            ..
 
 Optional Arguments
 -P include password to the rc files; with -A it assume all users password is the same
 -A try with all user
 -u <username> create files just for the specified user
--C <tanent_name> create user and tenant, the specifid tenant will be the user's tenant
--r <name> when combined with -C and the (-u) user exists it will be the user's tenant role in the (-C)tenant (default: Member)
+-C <project_name> create user and project, the specifid project will be the user's project
+-r <name> when combined with -C and the (-u) user exists it will be the user's project role in the (-C)project (default: Member)
 -p <userpass> password for the user
+--heat-url <heat_url>
 --os-username <username>
 --os-password <admin password>
---os-tenant-name <tenant_name>
---os-tenant-id <tenant_id>
+--os-project-name <project_name>
+--os-project-id <project_id>
+--os-user-domain-id <user_domain_id>
+--os-user-domain-name <user_domain_name>
+--os-project-domain-id <project_domain_id>
+--os-project-domain-name <project_domain_name>
 --os-auth-url <auth_url>
+--os-cacert <cert file>
 --target-dir <target_directory>
---skip-tenant <tenant-name>
+--skip-project <project-name>
 --debug
 
 Example:
 $0 -AP
-$0 -P -C mytenant -u myuser -p mypass
+$0 -P -C myproject -u myuser -p mypass
 EOF
 }
 
-if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-name:,os-tenant-id:,os-auth-url:,target-dir:,skip-tenant:,help,debug -- "$@")
-then
-    #parse error
+if ! options=$(getopt -o hPAp:u:r:C: -l os-username:,os-password:,os-tenant-id:,os-tenant-name:,os-project-name:,os-project-id:,os-project-domain-id:,os-project-domain-name:,os-user-domain-id:,os-user-domain-name:,os-auth-url:,target-dir:,heat-url:,skip-project:,os-cacert:,help,debug -- "$@"); then
     display_help
     exit 1
 fi
 eval set -- $options
 ADDPASS=""
+HEAT_URL=""
 
-# The services users usually in the service tenant.
+# The services users usually in the service project.
 # rc files for service users, is out of scope.
-# Supporting different tanent for services is out of scope.
-SKIP_TENANT=",service," # tenant names are between commas(,)
+# Supporting different project for services is out of scope.
+SKIP_PROJECT="service"
 MODE=""
 ROLE=Member
 USER_NAME=""
 USER_PASS=""
-while [ $# -gt 0 ]
-do
+while [ $# -gt 0 ]; do
     case "$1" in
     -h|--help) display_help; exit 0 ;;
     --os-username) export OS_USERNAME=$2; shift ;;
     --os-password) export OS_PASSWORD=$2; shift ;;
-    --os-tenant-name) export OS_TENANT_NAME=$2; shift ;;
-    --os-tenant-id) export OS_TENANT_ID=$2; shift ;;
-    --skip-tenant) SKIP_TENANT="$SKIP_TENANT$2,"; shift ;;
+    --os-tenant-name) export OS_PROJECT_NAME=$2; shift ;;
+    --os-tenant-id) export OS_PROJECT_ID=$2; shift ;;
+    --os-project-name) export OS_PROJECT_NAME=$2; shift ;;
+    --os-project-id) export OS_PROJECT_ID=$2; shift ;;
+    --os-user-domain-id) export OS_USER_DOMAIN_ID=$2; shift ;;
+    --os-user-domain-name) export OS_USER_DOMAIN_NAME=$2; shift ;;
+    --os-project-domain-id) export OS_PROJECT_DOMAIN_ID=$2; shift ;;
+    --os-project-domain-name) export OS_PROJECT_DOMAIN_NAME=$2; shift ;;
+    --skip-tenant) SKIP_PROJECT="$SKIP_PROJECT$2,"; shift ;;
+    --skip-project) SKIP_PROJECT="$SKIP_PROJECT$2,"; shift ;;
     --os-auth-url) export OS_AUTH_URL=$2; shift ;;
+    --os-cacert) export OS_CACERT=$2; shift ;;
     --target-dir) ACCOUNT_DIR=$2; shift ;;
+    --heat-url) HEAT_URL=$2; shift ;;
     --debug) set -o xtrace ;;
     -u) MODE=${MODE:-one};  USER_NAME=$2; shift ;;
     -p) USER_PASS=$2; shift ;;
     -A) MODE=all; ;;
     -P) ADDPASS="yes" ;;
-    -C) MODE=create; TENANT=$2; shift ;;
+    -C) MODE=create; PROJECT=$2; shift ;;
     -r) ROLE=$2; shift ;;
     (--) shift; break ;;
     (-*) echo "$0: error - unrecognized option $1" >&2; display_help; exit 1 ;;
@@ -101,16 +132,34 @@ if [ -z "$OS_PASSWORD" ]; then
     fi
 fi
 
-if [ -z "$OS_TENANT_NAME" -a -z "$OS_TENANT_ID" ]; then
-   export OS_TENANT_NAME=admin
+if [ -z "$OS_PROJECT_ID" -a "$OS_TENANT_ID" ]; then
+    export OS_PROJECT_ID=$OS_TENANT_ID
+fi
+
+if [ -z "$OS_PROJECT_NAME" -a "$OS_TENANT_NAME" ]; then
+    export OS_PROJECT_NAME=$OS_TENANT_NAME
+fi
+
+if [ -z "$OS_PROJECT_NAME" -a -z "$OS_PROJECT_ID" ]; then
+    export OS_PROJECT_NAME=admin
 fi
 
 if [ -z "$OS_USERNAME" ]; then
-   export OS_USERNAME=admin
+    export OS_USERNAME=admin
 fi
 
 if [ -z "$OS_AUTH_URL" ]; then
-   export OS_AUTH_URL=http://localhost:5000/v2.0/
+    export OS_AUTH_URL=http://localhost:5000/v2.0/
+fi
+
+if [ -z "$OS_USER_DOMAIN_ID" -a -z "$OS_USER_DOMAIN_NAME" ]; then
+    # purposefully not exported as it would force v3 auth within this file.
+    OS_USER_DOMAIN_ID=default
+fi
+
+if [ -z "$OS_PROJECT_DOMAIN_ID" -a -z "$OS_PROJECT_DOMAIN_NAME" ]; then
+    # purposefully not exported as it would force v3 auth within this file.
+    OS_PROJECT_DOMAIN_ID=default
 fi
 
 USER_PASS=${USER_PASS:-$OS_PASSWORD}
@@ -123,136 +172,98 @@ if [ -z "$MODE" ]; then
     exit 3
 fi
 
-export -n SERVICE_TOKEN SERVICE_ENDPOINT OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
-
-EC2_URL=http://localhost:8773/service/Cloud
-S3_URL=http://localhost:3333
-
-ec2=`keystone endpoint-get --service ec2 | awk '/\|[[:space:]]*ec2.publicURL/ {print $4}'`
-[ -n "$ec2" ] && EC2_URL=$ec2
-
-s3=`keystone endpoint-get --service s3 | awk '/\|[[:space:]]*s3.publicURL/ {print $4}'`
-[ -n "$s3" ] && S3_URL=$s3
-
-
-mkdir -p "$ACCOUNT_DIR"
-ACCOUNT_DIR=`readlink -f "$ACCOUNT_DIR"`
-EUCALYPTUS_CERT=$ACCOUNT_DIR/cacert.pem
-mv "$EUCALYPTUS_CERT" "$EUCALYPTUS_CERT.old" &>/dev/null
-if ! nova x509-get-root-cert "$EUCALYPTUS_CERT"; then
-    echo "Failed to update the root certificate: $EUCALYPTUS_CERT" >&2
-    mv "$EUCALYPTUS_CERT.old" "$EUCALYPTUS_CERT" &>/dev/null
-fi
-
-
-function add_entry(){
+function add_entry {
     local user_id=$1
     local user_name=$2
-    local tenant_id=$3
-    local tenant_name=$4
+    local project_id=$3
+    local project_name=$4
     local user_passwd=$5
 
-    # The admin user can see all user's secret AWS keys, it does not looks good
-    local line=`keystone ec2-credentials-list --user_id $user_id | grep -E "^\\|[[:space:]]*($tenant_name|$tenant_id)[[:space:]]*\\|" | head -n 1`
-    if [ -z "$line" ]; then
-        keystone ec2-credentials-create --user-id $user_id --tenant-id $tenant_id 1>&2
-        line=`keystone ec2-credentials-list --user_id $user_id | grep -E "^\\|[[:space:]]*($tenant_name|$tenant_id)[[:space:]]*\\|" | head -n 1`
-    fi
-    local ec2_access_key ec2_secret_key
-    read ec2_access_key ec2_secret_key <<<  `echo $line | awk '{print $4 " " $6 }'`
-    mkdir -p "$ACCOUNT_DIR/$tenant_name"
-    local rcfile="$ACCOUNT_DIR/$tenant_name/$user_name"
-    # The certs subject part are the tenant ID "dash" user ID, but the CN should be the first part of the DN
-    # Generally the subject DN parts should be in reverse order like the Issuer
-    # The Serial does not seams correctly marked either
-    local ec2_cert="$rcfile-cert.pem"
-    local ec2_private_key="$rcfile-pk.pem"
-    # Try to preserve the original file on fail (best effort)
-    mv -f "$ec2_private_key" "$ec2_private_key.old" &>/dev/null
-    mv -f "$ec2_cert" "$ec2_cert.old" &>/dev/null
-    # It will not create certs when the password is incorrect
-    if ! nova --os-password "$user_passwd" --os-username "$user_name" --os-tenant-name "$tenant_name" x509-create-cert "$ec2_private_key" "$ec2_cert"; then
-        mv -f "$ec2_private_key.old" "$ec2_private_key" &>/dev/null
-        mv -f "$ec2_cert.old" "$ec2_cert" &>/dev/null
-    fi
+    mkdir -p "$ACCOUNT_DIR/$project_name"
+    local rcfile="$ACCOUNT_DIR/$project_name/$user_name"
+
     cat >"$rcfile" <<EOF
-# you can source this file
-export EC2_ACCESS_KEY="$ec2_access_key"
-export EC2_SECRET_KEY="$ec2_secret_key"
-export EC2_URL="$EC2_URL"
-export S3_URL="$S3_URL"
 # OpenStack USER ID = $user_id
 export OS_USERNAME="$user_name"
-# Openstack Tenant ID = $tenant_id
-export OS_TENANT_NAME="$tenant_name"
+# OpenStack project ID = $project_id
+export OS_PROJECT_NAME="$project_name"
 export OS_AUTH_URL="$OS_AUTH_URL"
-export EC2_CERT="$ec2_cert"
-export EC2_PRIVATE_KEY="$ec2_private_key"
-export EC2_USER_ID=42 #not checked by nova (can be a 12-digit id)
-export EUCALYPTUS_CERT="$ACCOUNT_DIR/cacert.pem"
+export OS_CACERT="$OS_CACERT"
 export NOVA_CERT="$ACCOUNT_DIR/cacert.pem"
+export OS_AUTH_TYPE=v2password
 EOF
     if [ -n "$ADDPASS" ]; then
         echo "export OS_PASSWORD=\"$user_passwd\"" >>"$rcfile"
     fi
+    if [ -n "$HEAT_URL" ]; then
+        echo "export HEAT_URL=\"$HEAT_URL/$project_id\"" >>"$rcfile"
+        echo "export OS_NO_CLIENT_AUTH=True" >>"$rcfile"
+    fi
+    for v in OS_USER_DOMAIN_ID OS_USER_DOMAIN_NAME OS_PROJECT_DOMAIN_ID OS_PROJECT_DOMAIN_NAME; do
+        if [ ${!v} ]; then
+            echo "export $v=${!v}" >>"$rcfile"
+        else
+            echo "unset $v" >>"$rcfile"
+        fi
+    done
 }
 
 #admin users expected
-function create_or_get_tenant(){
-    local tenant_name=$1
-    local tenant_id=`keystone tenant-list | awk '/\|[[:space:]]*'"$tenant_name"'[[:space:]]*\|.*\|/ {print $2}'`
-    if [ -n "$tenant_id" ]; then
-        echo $tenant_id
-    else
-        keystone tenant-create --name "$tenant_name" | awk '/\|[[:space:]]*id[[:space:]]*\|.*\|/ {print $4}'
+function create_or_get_project {
+    local name=$1
+    local id
+    eval $(openstack project show -f shell -c id $name)
+    if [[ -z $id ]]; then
+        eval $(openstack project create -f shell -c id $name)
     fi
+    echo $id
 }
 
-function create_or_get_role(){
-    local role_name=$1
-    local role_id=`keystone role-list| awk '/\|[[:space:]]*'"$role_name"'[[:space:]]*\|/ {print $2}'`
-    if [ -n "$role_id" ]; then
-        echo $role_id
-    else
-        keystone role-create --name "$role_name" |awk '/\|[[:space:]]*id[[:space:]]*\|.*\|/ {print $4}'
+function create_or_get_role {
+    local name=$1
+    local id
+    eval $(openstack role show -f shell -c id $name)
+    if [[ -z $id ]]; then
+        eval $(openstack role create -f shell -c id $name)
     fi
+    echo $id
 }
 
 # Provides empty string when the user does not exists
-function get_user_id(){
-    local user_name=$1
-    keystone user-list | awk '/^\|[^|]*\|[[:space:]]*'"$user_name"'[[:space:]]*\|.*\|/ {print $2}'
+function get_user_id {
+    openstack user list | grep " $1 " | cut -d " " -f2
 }
 
 if [ $MODE != "create" ]; then
-# looks like I can't ask for all tenant related to a specified  user
-    for tenant_id_at_name in `keystone tenant-list | awk 'BEGIN {IGNORECASE = 1} /true[[:space:]]*\|$/ {print  $2 "@" $4}'`; do
-        read tenant_id tenant_name <<< `echo "$tenant_id_at_name" | sed 's/@/ /'`
-        if echo $SKIP_TENANT| grep -q ",$tenant_name,"; then
-            continue;
-        fi
-        for user_id_at_name in `keystone user-list --tenant-id $tenant_id | awk 'BEGIN {IGNORECASE = 1} /true[[:space:]]*\|[^|]*\|$/ {print  $2 "@" $4}'`; do
-            read user_id user_name <<< `echo "$user_id_at_name" | sed 's/@/ /'`
+    # looks like I can't ask for all project related to a specified user
+    openstack project list --long --quote none -f csv | grep ',True' | grep -v "${SKIP_PROJECT}" | while IFS=, read project_id project_name desc enabled; do
+        openstack user list --project $project_id --long --quote none -f csv | grep ',True' | while IFS=, read user_id user_name project email enabled; do
             if [ $MODE = one -a "$user_name" != "$USER_NAME" ]; then
-               continue;
+                continue;
             fi
-            add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
+
+            # Checks for a specific password defined for an user.
+            # Example for an username johndoe: JOHNDOE_PASSWORD=1234
+            # This mechanism is used by lib/swift
+            eval SPECIFIC_UPASSWORD="\$${user_name}_password"
+            if [ -n "$SPECIFIC_UPASSWORD" ]; then
+                USER_PASS=$SPECIFIC_UPASSWORD
+            fi
+            add_entry "$user_id" "$user_name" "$project_id" "$project_name" "$USER_PASS"
         done
     done
 else
-    tenant_name=$TENANT
-    tenant_id=`create_or_get_tenant "$TENANT"`
+    project_name=$PROJECT
+    project_id=$(create_or_get_project "$PROJECT")
     user_name=$USER_NAME
     user_id=`get_user_id $user_name`
     if [ -z "$user_id" ]; then
-        #new user
-        user_id=`keystone user-create --name "$user_name" --tenant-id "$tenant_id" --pass "$USER_PASS" --email "$user_name@example.com" | awk '/\|[[:space:]]*id[[:space:]]*\|.*\|/ {print $4}'`
-        #The password is in the cmd line. It is not a good thing
-        add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
+        eval $(openstack user create "$user_name" --project "$project_id" --password "$USER_PASS" --email "$user_name@example.com" -f shell -c id)
+        user_id=$id
+        add_entry "$user_id" "$user_name" "$project_id" "$project_name" "$USER_PASS"
     else
-        #new role
-        role_id=`create_or_get_role "$ROLE"`
-        keystone user-role-add --user-id "$user_id" --tenant-id "$tenant_id" --role-id "$role_id"
-        add_entry "$user_id" "$user_name" "$tenant_id" "$tenant_name" "$USER_PASS"
+        role_id=$(create_or_get_role "$ROLE")
+        openstack role add "$role_id" --user "$user_id" --project "$project_id"
+        add_entry "$user_id" "$user_name" "$project_id" "$project_name" "$USER_PASS"
     fi
 fi

@@ -1,6 +1,8 @@
-# Stuff for diablo volumes
+cryptsetup
 genisoimage
+libosinfo
 lvm2
 open-iscsi
-sysfsutils
 sg3_utils
+# Stuff for diablo volumes
+sysfsutils

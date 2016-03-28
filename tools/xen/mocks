@@ -35,7 +35,7 @@ function mktemp {
 
 function wget {
     if [[ $@ =~ "failurl" ]]; then
-        exit 1
+        return 1
     fi
     echo "wget $@" >> $LIST_OF_ACTIONS
 }
@@ -73,8 +73,12 @@ function [ {
         done
         return 1
     fi
-    echo "Mock test does not implement the requested function"
+    echo "Mock test does not implement the requested function: ${1:-}"
     exit 1
+}
+
+function die_with_error {
+    echo "$1" >> $DEAD_MESSAGES
 }
 
 function xe {

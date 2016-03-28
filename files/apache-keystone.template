@@ -1,0 +1,55 @@
+Listen %PUBLICPORT%
+Listen %ADMINPORT%
+LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" keystone_combined
+
+<Directory %KEYSTONE_BIN%>
+    Require all granted
+</Directory>
+
+<VirtualHost *:%PUBLICPORT%>
+    WSGIDaemonProcess keystone-public processes=5 threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
+    WSGIProcessGroup keystone-public
+    WSGIScriptAlias / %KEYSTONE_BIN%/keystone-wsgi-public
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    ErrorLogFormat "%M"
+    ErrorLog /var/log/%APACHE_NAME%/keystone.log
+    CustomLog /var/log/%APACHE_NAME%/keystone_access.log keystone_combined
+    %SSLENGINE%
+    %SSLCERTFILE%
+    %SSLKEYFILE%
+</VirtualHost>
+
+<VirtualHost *:%ADMINPORT%>
+    WSGIDaemonProcess keystone-admin processes=5 threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
+    WSGIProcessGroup keystone-admin
+    WSGIScriptAlias / %KEYSTONE_BIN%/keystone-wsgi-admin
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    ErrorLogFormat "%M"
+    ErrorLog /var/log/%APACHE_NAME%/keystone.log
+    CustomLog /var/log/%APACHE_NAME%/keystone_access.log keystone_combined
+    %SSLENGINE%
+    %SSLCERTFILE%
+    %SSLKEYFILE%
+</VirtualHost>
+
+Alias /identity %KEYSTONE_BIN%/keystone-wsgi-public
+<Location /identity>
+    SetHandler wsgi-script
+    Options +ExecCGI
+
+    WSGIProcessGroup keystone-public
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+</Location>
+
+Alias /identity_admin %KEYSTONE_BIN%/keystone-wsgi-admin
+<Location /identity_admin>
+    SetHandler wsgi-script
+    Options +ExecCGI
+
+    WSGIProcessGroup keystone-admin
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+</Location>

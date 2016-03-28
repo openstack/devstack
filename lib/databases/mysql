@@ -1,57 +1,76 @@
+#!/bin/bash
+#
 # lib/databases/mysql
 # Functions to control the configuration and operation of the **MySQL** database backend
 
 # Dependencies:
-# DATABASE_{HOST,USER,PASSWORD} must be defined
+#
+# - DATABASE_{HOST,USER,PASSWORD} must be defined
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+_XTRACE_DB_MYSQL=$(set +o | grep xtrace)
 set +o xtrace
 
+MYSQL_DRIVER=${MYSQL_DRIVER:-PyMySQL}
 
 register_database mysql
 
+# Linux distros, thank you for being incredibly consistent
+MYSQL=mysql
+if is_fedora && ! is_oraclelinux; then
+    MYSQL=mariadb
+fi
 
 # Functions
 # ---------
 
+function get_database_type_mysql {
+    if [[ "$MYSQL_DRIVER" == "PyMySQL" ]]; then
+        echo mysql+pymysql
+    else
+        echo mysql
+    fi
+}
+
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database_mysql {
+    stop_service $MYSQL
     if is_ubuntu; then
         # Get ruthless with mysql
-        stop_service $MYSQL
-        sudo aptitude purge -y ~nmysql-server
+        apt_get purge -y mysql* mariadb*
         sudo rm -rf /var/lib/mysql
+        sudo rm -rf /etc/mysql
         return
+    elif is_suse || is_oraclelinux; then
+        uninstall_package mysql-community-server
+        sudo rm -rf /var/lib/mysql
     elif is_fedora; then
-        MYSQL=mysqld
-    elif is_suse; then
-        MYSQL=mysql
+        uninstall_package mariadb-server
+        sudo rm -rf /var/lib/mysql
     else
         return
     fi
-    stop_service $MYSQL
 }
 
 function recreate_database_mysql {
     local db=$1
-    local charset=$2
     mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "DROP DATABASE IF EXISTS $db;"
-    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "CREATE DATABASE $db CHARACTER SET $charset;"
+    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$MYSQL_HOST -e "CREATE DATABASE $db CHARACTER SET utf8;"
 }
 
 function configure_database_mysql {
+    local my_conf mysql slow_log
     echo_summary "Configuring and starting MySQL"
 
     if is_ubuntu; then
-        MY_CONF=/etc/mysql/my.cnf
-        MYSQL=mysql
+        my_conf=/etc/mysql/my.cnf
+        mysql=mysql
+    elif is_suse || is_oraclelinux; then
+        my_conf=/etc/my.cnf
+        mysql=mysql
     elif is_fedora; then
-        MY_CONF=/etc/my.cnf
-        MYSQL=mysqld
-    elif is_suse; then
-        MY_CONF=/etc/my.cnf
-        MYSQL=mysql
+        mysql=mariadb
+        my_conf=/etc/my.cnf
     else
         exit_distro_not_supported "mysql configuration"
     fi
@@ -59,7 +78,7 @@ function configure_database_mysql {
     # Start mysql-server
     if is_fedora || is_suse; then
         # service is not started by default
-        start_service $MYSQL
+        start_service $mysql
     fi
 
     # Set the root password - only works the first time. For Ubuntu, we already
@@ -68,50 +87,51 @@ function configure_database_mysql {
         sudo mysqladmin -u root password $DATABASE_PASSWORD || true
     fi
 
-    # Update the DB to give user ‘$DATABASE_USER’@’%’ full control of the all databases:
+    # Update the DB to give user '$DATABASE_USER'@'%' full control of the all databases:
     sudo mysql -uroot -p$DATABASE_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
 
     # Now update ``my.cnf`` for some local needs and restart the mysql service
 
-    # Change ‘bind-address’ from localhost (127.0.0.1) to any (0.0.0.0)
-    sudo sed -i '/^bind-address/s/127.0.0.1/0.0.0.0/g' $MY_CONF
+    # Change bind-address from localhost (127.0.0.1) to any (::) and
+    # set default db type to InnoDB
+    iniset -sudo $my_conf mysqld bind-address "$SERVICE_LISTEN_ADDRESS"
+    iniset -sudo $my_conf mysqld sql_mode STRICT_ALL_TABLES
+    iniset -sudo $my_conf mysqld default-storage-engine InnoDB
+    iniset -sudo $my_conf mysqld max_connections 1024
+    iniset -sudo $my_conf mysqld query_cache_type OFF
+    iniset -sudo $my_conf mysqld query_cache_size 0
 
-    # Set default db type to InnoDB
-    if sudo grep -q "default-storage-engine" $MY_CONF; then
-        # Change it
-        sudo bash -c "source $TOP_DIR/functions; iniset $MY_CONF mysqld default-storage-engine InnoDB"
-    else
-        # Add it
-        sudo sed -i -e "/^\[mysqld\]/ a \
-default-storage-engine = InnoDB" $MY_CONF
+    if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
+        echo_summary "Enabling MySQL query logging"
+        if is_fedora; then
+            slow_log=/var/log/mariadb/mariadb-slow.log
+        else
+            slow_log=/var/log/mysql/mysql-slow.log
+        fi
+        sudo sed -e '/log.slow.queries/d' \
+            -e '/long.query.time/d' \
+            -e '/log.queries.not.using.indexes/d' \
+            -i $my_conf
+
+        # Turn on slow query log, log all queries (any query taking longer than
+        # 0 seconds) and log all non-indexed queries
+        iniset -sudo $my_conf mysqld slow-query-log 1
+        iniset -sudo $my_conf mysqld slow-query-log-file $slow_log
+        iniset -sudo $my_conf mysqld long-query-time 0
+        iniset -sudo $my_conf mysqld log-queries-not-using-indexes 1
     fi
 
-    # Turn on slow query log
-    sudo sed -i '/log.slow.queries/d' $MY_CONF
-    sudo sed -i -e "/^\[mysqld\]/ a \
-log-slow-queries = /var/log/mysql/mysql-slow.log" $MY_CONF
-
-    # Log all queries (any query taking longer than 0 seconds)
-    sudo sed -i '/long.query.time/d' $MY_CONF
-    sudo sed -i -e "/^\[mysqld\]/ a \
-long-query-time = 0" $MY_CONF
-
-    # Log all non-indexed queries
-    sudo sed -i '/log.queries.not.using.indexes/d' $MY_CONF
-    sudo sed -i -e "/^\[mysqld\]/ a \
-log-queries-not-using-indexes" $MY_CONF
-
-    restart_service $MYSQL
+    restart_service $mysql
 }
 
 function install_database_mysql {
     if is_ubuntu; then
         # Seed configuration with mysql password so that apt-get install doesn't
         # prompt us for a password upon install.
-        cat <<MYSQL_PRESEED | sudo debconf-set-selections
-mysql-server-5.1 mysql-server/root_password password $DATABASE_PASSWORD
-mysql-server-5.1 mysql-server/root_password_again password $DATABASE_PASSWORD
-mysql-server-5.1 mysql-server/start_on_boot boolean true
+        sudo debconf-set-selections <<MYSQL_PRESEED
+mysql-server mysql-server/root_password password $DATABASE_PASSWORD
+mysql-server mysql-server/root_password_again password $DATABASE_PASSWORD
+mysql-server mysql-server/start_on_boot boolean true
 MYSQL_PRESEED
     fi
 
@@ -123,19 +143,32 @@ MYSQL_PRESEED
 [client]
 user=$DATABASE_USER
 password=$DATABASE_PASSWORD
-host=$DATABASE_HOST
+host=$MYSQL_HOST
 EOF
         chmod 0600 $HOME/.my.cnf
     fi
     # Install mysql-server
-    if is_ubuntu || is_fedora; then
-        install_package mysql-server
-    elif is_suse; then
+    if is_suse || is_oraclelinux; then
         if ! is_package_installed mariadb; then
             install_package mysql-community-server
         fi
+    elif is_fedora; then
+        install_package mariadb-server
+        sudo systemctl enable mariadb
+    elif is_ubuntu; then
+        install_package mysql-server
     else
         exit_distro_not_supported "mysql installation"
+    fi
+}
+
+function install_database_python_mysql {
+    # Install Python client module
+    pip_install_gr $MYSQL_DRIVER
+    if [[ "$MYSQL_DRIVER" == "MySQL-python" ]]; then
+        ADDITIONAL_VENV_PACKAGES+=",MySQL-python"
+    elif [[ "$MYSQL_DRIVER" == "PyMySQL" ]]; then
+        ADDITIONAL_VENV_PACKAGES+=",PyMySQL"
     fi
 }
 
@@ -146,7 +179,7 @@ function database_connection_url_mysql {
 
 
 # Restore xtrace
-$MY_XTRACE
+$_XTRACE_DB_MYSQL
 
 # Local variables:
 # mode: shell-script

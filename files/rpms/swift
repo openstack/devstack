@@ -1,18 +1,8 @@
 curl
-gcc
+liberasurecode-devel
 memcached
-python-configobj
-python-coverage
-python-devel
-python-eventlet
-python-greenlet
-python-netifaces
-python-nose
-python-paste-deploy # dist:f16,f17,f18,f19
-python-setuptools   # dist:f16,f17,f18,f19
-python-simplejson
-python-webob
 pyxattr
+rsync-daemon # dist:f22,f23
 sqlite
 xfsprogs
 xinetd

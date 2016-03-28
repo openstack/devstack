@@ -1,0 +1,24 @@
+..
+  Note to patch submitters: this file is covered by a periodic proposal
+  job.  You should edit the files data/devstack-plugins-registry.footer
+  data/devstack-plugins-registry.header instead of this one.
+
+==========================
+ DevStack Plugin Registry
+==========================
+
+Since we've created the external plugin mechanism, it's gotten used by
+a lot of projects. The following is a list of plugins that currently
+exist. Any project that wishes to list their plugin here is welcomed
+to.
+
+Detected Plugins
+================
+
+The following are plugins that a script has found in the openstack/
+namespace, which includes but is not limited to official OpenStack
+projects.
+
++----------------------------+-------------------------------------------------------------------------+
+|Plugin Name                 |URL                                                                      |
++----------------------------+-------------------------------------------------------------------------+

@@ -1,0 +1,21 @@
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcArgsFile: /var/run/slapd/slapd.args
+olcAuthzRegexp: {0}gidNumber=0\+uidNumber=0,cn=peercred,cn=external,cn=auth dn
+ :cn=config
+olcPidFile: /var/run/slapd/slapd.pid
+olcSizeLimit: 10000
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file:///etc/openldap/schema/core.ldif
+include: file:///etc/openldap/schema/cosine.ldif
+include: file:///etc/openldap/schema/inetorgperson.ldif
+
+dn: olcDatabase={1}hdb,cn=config
+objectClass: olcHdbConfig
+olcDbDirectory: /var/lib/ldap
+olcSuffix: ${BASE_DN}

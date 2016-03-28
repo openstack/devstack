@@ -30,10 +30,9 @@ source $TOP_DIR/functions
 # Import configuration
 source $TOP_DIR/openrc
 
-# Import neutron functions if needed
-if is_service_enabled neutron; then
-    source $TOP_DIR/lib/neutron
-fi
+# Import project functions
+source $TOP_DIR/lib/cinder
+source $TOP_DIR/lib/neutron-legacy
 
 # Import exercise configuration
 source $TOP_DIR/exerciserc
@@ -41,6 +40,9 @@ source $TOP_DIR/exerciserc
 # If cinder is not enabled we exit with exitcode 55 which mean
 # exercise is skipped.
 is_service_enabled cinder || exit 55
+
+# Ironic does not currently support volume attachment.
+[ "$VIRT_DRIVER" == "ironic" ] && exit 55
 
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
@@ -66,10 +68,10 @@ nova list
 # ------
 
 # List the images available
-glance image-list
+openstack image list
 
 # Grab the id of the image to launch
-IMAGE=$(glance image-list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
+IMAGE=$(openstack image list | egrep " $DEFAULT_IMAGE_NAME " | get_field 1)
 die_if_not_set $LINENO IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 
 # Security Groups
@@ -78,12 +80,18 @@ die_if_not_set $LINENO IMAGE "Failure getting image $DEFAULT_IMAGE_NAME"
 # List security groups
 nova secgroup-list
 
-# Create a secgroup
-if ! nova secgroup-list | grep -q $SECGROUP; then
-    nova secgroup-create $SECGROUP "$SECGROUP description"
-    if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova secgroup-list | grep -q $SECGROUP; do sleep 1; done"; then
-        echo "Security group not created"
-        exit 1
+if is_service_enabled n-cell; then
+    # Cells does not support security groups, so force the use of "default"
+    SECGROUP="default"
+    echo "Using the default security group because of Cells."
+else
+    # Create a secgroup
+    if ! nova secgroup-list | grep -q $SECGROUP; then
+        nova secgroup-create $SECGROUP "$SECGROUP description"
+        if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova secgroup-list | grep -q $SECGROUP; do sleep 1; done"; then
+            echo "Security group not created"
+            exit 1
+        fi
     fi
 fi
 
@@ -108,7 +116,8 @@ nova flavor-list
 INSTANCE_TYPE=$(nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1)
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
+    INSTANCE_TYPE=$(nova flavor-list | head -n 4 | tail -n 1 | get_field 1)
+    die_if_not_set $LINENO INSTANCE_TYPE "Failure retrieving INSTANCE_TYPE"
 fi
 
 # Clean-up from previous runs
@@ -120,7 +129,7 @@ fi
 # Boot instance
 # -------------
 
-VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security_groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
+VM_UUID=$(nova boot --flavor $INSTANCE_TYPE --image $IMAGE --security-groups=$SECGROUP $VM_NAME | grep ' id ' | get_field 2)
 die_if_not_set $LINENO VM_UUID "Failure launching $VM_NAME"
 
 # Check that the status is active within ACTIVE_TIMEOUT seconds
@@ -129,11 +138,12 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | g
 fi
 
 # Get the instance IP
-IP=$(nova show $VM_UUID | grep "$PRIVATE_NETWORK_NAME" | get_field 2)
+IP=$(get_instance_ip $VM_UUID $PRIVATE_NETWORK_NAME)
+
 die_if_not_set $LINENO IP "Failure retrieving IP address"
 
 # Private IPs can be pinged in single node deployments
-ping_check "$PRIVATE_NETWORK_NAME" $IP $BOOT_TIMEOUT
+ping_check $IP $BOOT_TIMEOUT "$PRIVATE_NETWORK_NAME"
 
 # Volumes
 # -------
@@ -145,7 +155,7 @@ fi
 
 # Create a new volume
 start_time=$(date +%s)
-cinder create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
+cinder create --display-name $VOL_NAME --display-description "test volume: $VOL_NAME" $DEFAULT_VOLUME_SIZE || \
     die $LINENO "Failure creating volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! cinder list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     die $LINENO "Volume $VOL_NAME not created"
@@ -201,8 +211,12 @@ if ! timeout $TERMINATE_TIMEOUT sh -c "while nova list | grep -q $VM_UUID; do sl
     die $LINENO "Server $VM_NAME not deleted"
 fi
 
-# Delete secgroup
-nova secgroup-delete $SECGROUP || die $LINENO "Failure deleting security group $SECGROUP"
+if [[ $SECGROUP = "default" ]] ; then
+    echo "Skipping deleting default security group"
+else
+    # Delete secgroup
+    nova secgroup-delete $SECGROUP || die $LINENO "Failure deleting security group $SECGROUP"
+fi
 
 set +o xtrace
 echo "*********************************************************************"

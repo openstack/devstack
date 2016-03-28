@@ -1,0 +1,282 @@
+#!/bin/bash
+#
+# **inc/ini-config** - Configuration/INI functions
+#
+# Support for manipulating INI-style configuration files
+#
+# These functions have no external dependencies and no side-effects
+
+# Save trace setting
+INC_CONF_TRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Config Functions
+# ================
+
+# Append a new option in an ini file without replacing the old value
+# iniadd [-sudo] config-file section option value1 value2 value3 ...
+function iniadd {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="-sudo "
+        shift
+    fi
+    local file=$1
+    local section=$2
+    local option=$3
+    shift 3
+
+    local values
+    values="$(iniget_multiline $file $section $option) $@"
+    iniset_multiline $sudo $file $section $option $values
+    $xtrace
+}
+
+# Comment an option in an INI file
+# inicomment [-sudo] config-file section option
+function inicomment {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
+    local file=$1
+    local section=$2
+    local option=$3
+
+    $sudo sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
+    $xtrace
+}
+
+# Get an option from an INI file
+# iniget config-file section option
+function iniget {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local line
+
+    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
+    echo ${line#*=}
+    $xtrace
+}
+
+# Get a multiple line option from an INI file
+# iniget_multiline config-file section option
+function iniget_multiline {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local values
+
+    values=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { s/^$option[ \t]*=[ \t]*//gp; }" "$file")
+    echo ${values}
+    $xtrace
+}
+
+# Determinate is the given option present in the INI file
+# ini_has_option config-file section option
+function ini_has_option {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+    local section=$2
+    local option=$3
+    local line
+
+    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
+    $xtrace
+    [ -n "$line" ]
+}
+
+# Add another config line for a multi-line option.
+# It's normally called after iniset of the same option and assumes
+# that the section already exists.
+#
+# Note that iniset_multiline requires all the 'lines' to be supplied
+# in the argument list. Doing that will cause incorrect configuration
+# if spaces are used in the config values.
+#
+# iniadd_literal [-sudo] config-file section option value
+function iniadd_literal {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
+    local file=$1
+    local section=$2
+    local option=$3
+    local value=$4
+
+    if [[ -z $section || -z $option ]]; then
+        $xtrace
+        return
+    fi
+
+    # Add it
+    $sudo sed -i -e "/^\[$section\]/ a\\
+$option = $value
+" "$file"
+
+    $xtrace
+}
+
+# Remove an option from an INI file
+# inidelete [-sudo] config-file section option
+function inidelete {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
+    local file=$1
+    local section=$2
+    local option=$3
+
+    if [[ -z $section || -z $option ]]; then
+        $xtrace
+        return
+    fi
+
+    # Remove old values
+    $sudo sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
+
+    $xtrace
+}
+
+# Set an option in an INI file
+# iniset [-sudo] config-file section option value
+#  - if the file does not exist, it is created
+function iniset {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
+    local file=$1
+    local section=$2
+    local option=$3
+    local value=$4
+
+    if [[ -z $section || -z $option ]]; then
+        $xtrace
+        return
+    fi
+
+    if ! grep -q "^\[$section\]" "$file" 2>/dev/null; then
+        # Add section at the end
+        echo -e "\n[$section]" | $sudo tee --append "$file" > /dev/null
+    fi
+    if ! ini_has_option "$file" "$section" "$option"; then
+        # Add it
+        $sudo sed -i -e "/^\[$section\]/ a\\
+$option = $value
+" "$file"
+    else
+        local sep
+        sep=$(echo -ne "\x01")
+        # Replace it
+        $sudo sed -i -e '/^\['${section}'\]/,/^\[.*\]/ s'${sep}'^\('${option}'[ \t]*=[ \t]*\).*$'${sep}'\1'"${value}"${sep} "$file"
+    fi
+    $xtrace
+}
+
+# Set a multiple line option in an INI file
+# iniset_multiline [-sudo] config-file section option value1 value2 value3 ...
+function iniset_multiline {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
+    local file=$1
+    local section=$2
+    local option=$3
+
+    shift 3
+    local values
+    for v in $@; do
+        # The later sed command inserts each new value in the line next to
+        # the section identifier, which causes the values to be inserted in
+        # the reverse order. Do a reverse here to keep the original order.
+        values="$v ${values}"
+    done
+    if ! grep -q "^\[$section\]" "$file"; then
+        # Add section at the end
+        echo -e "\n[$section]" | $sudo tee --append "$file" > /dev/null
+    else
+        # Remove old values
+        $sudo sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
+    fi
+    # Add new ones
+    for v in $values; do
+        $sudo sed -i -e "/^\[$section\]/ a\\
+$option = $v
+" "$file"
+    done
+    $xtrace
+}
+
+# Uncomment an option in an INI file
+# iniuncomment config-file section option
+function iniuncomment {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
+    local file=$1
+    local section=$2
+    local option=$3
+    $sudo sed -i -e "/^\[$section\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" "$file"
+    $xtrace
+}
+
+# Get list of sections from an INI file
+# iniget_sections config-file
+function iniget_sections {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local file=$1
+
+    echo $(sed -ne "s/^\[\(.*\)\]/\1/p" "$file")
+    $xtrace
+}
+
+# Restore xtrace
+$INC_CONF_TRACE
+
+# Local variables:
+# mode: shell-script
+# End:

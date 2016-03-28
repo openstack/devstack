@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# lib/dstat
+# Functions to start and stop dstat
+
+# Dependencies:
+#
+# - ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# - start_dstat
+# - stop_dstat
+
+# Save trace setting
+_XTRACE_DSTAT=$(set +o | grep xtrace)
+set +o xtrace
+
+# start_dstat() - Start running processes, including screen
+function start_dstat {
+    # A better kind of sysstat, with the top process per time slice
+    run_process dstat "$TOP_DIR/tools/dstat.sh $LOGDIR"
+
+    # To enable peakmem_tracker add:
+    #    enable_service peakmem_tracker
+    # to your localrc
+    run_process peakmem_tracker "$TOP_DIR/tools/peakmem_tracker.sh"
+}
+
+# stop_dstat() stop dstat process
+function stop_dstat {
+    stop_process dstat
+    stop_process peakmem_tracker
+}
+
+# Restore xtrace
+$_XTRACE_DSTAT

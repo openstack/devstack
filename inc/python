@@ -1,0 +1,378 @@
+#!/bin/bash
+#
+# **inc/python** - Python-related functions
+#
+# Support for pip/setuptools interfaces and virtual environments
+#
+# External functions used:
+# - GetOSVersion
+# - is_fedora
+# - is_suse
+# - safe_chown
+
+# Save trace setting
+INC_PY_TRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Global Config Variables
+
+# PROJECT_VENV contains the name of the virtual environment for each
+# project.  A null value installs to the system Python directories.
+declare -A PROJECT_VENV
+
+
+# Python Functions
+# ================
+
+# Get the path to the pip command.
+# get_pip_command
+function get_pip_command {
+    local version="$1"
+    # NOTE(dhellmann): I don't know if we actually get a pip3.4-python
+    # under any circumstances.
+    which pip${version} || which pip${version}-python
+
+    if [ $? -ne 0 ]; then
+        die $LINENO "Unable to find pip${version}; cannot continue"
+    fi
+}
+
+# Get the path to the directory where python executables are installed.
+# get_python_exec_prefix
+function get_python_exec_prefix {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    $xtrace
+
+    if is_fedora || is_suse; then
+        echo "/usr/bin"
+    else
+        echo "/usr/local/bin"
+    fi
+}
+
+# Wrapper for ``pip install`` that only installs versions of libraries
+# from the global-requirements specification.
+#
+# Uses globals ``REQUIREMENTS_DIR``
+#
+# pip_install_gr packagename
+function pip_install_gr {
+    local name=$1
+    local clean_name
+    clean_name=$(get_from_global_requirements $name)
+    pip_install $clean_name
+}
+
+# Determine the python versions supported by a package
+function get_python_versions_for_package {
+    local name=$1
+    cd $name && python setup.py --classifiers \
+        | grep 'Language' | cut -f5 -d: | grep '\.' | tr '\n' ' '
+}
+
+# Wrapper for ``pip install`` to set cache and proxy environment variables
+# Uses globals ``OFFLINE``, ``PIP_VIRTUAL_ENV``,
+# ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``,
+# pip_install package [package ...]
+function pip_install {
+    local xtrace result
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local upgrade=""
+    local offline=${OFFLINE:-False}
+    if [[ "$offline" == "True" || -z "$@" ]]; then
+        $xtrace
+        return
+    fi
+
+    time_start "pip_install"
+
+    PIP_UPGRADE=$(trueorfalse False PIP_UPGRADE)
+    if [[ "$PIP_UPGRADE" = "True" ]] ; then
+        upgrade="--upgrade"
+    fi
+
+    if [[ -z "$os_PACKAGE" ]]; then
+        GetOSVersion
+    fi
+    if [[ $TRACK_DEPENDS = True && ! "$@" =~ virtualenv ]]; then
+        # TRACK_DEPENDS=True installation creates a circular dependency when
+        # we attempt to install virtualenv into a virtualenv, so we must global
+        # that installation.
+        source $DEST/.venv/bin/activate
+        local cmd_pip=$DEST/.venv/bin/pip
+        local sudo_pip="env"
+    else
+        if [[ -n ${PIP_VIRTUAL_ENV:=} && -d ${PIP_VIRTUAL_ENV} ]]; then
+            local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
+            local sudo_pip="env"
+        else
+            local cmd_pip
+            cmd_pip=$(get_pip_command $PYTHON2_VERSION)
+            local sudo_pip="sudo -H"
+            if python3_enabled; then
+                # Look at the package classifiers to find the python
+                # versions supported, and if we find the version of
+                # python3 we've been told to use, use that instead of the
+                # default pip
+                local package_dir=${!#}
+                local python_versions
+                if [[ -d "$package_dir" ]]; then
+                    python_versions=$(get_python_versions_for_package $package_dir)
+                    if [[ $python_versions =~ $PYTHON3_VERSION ]]; then
+                        cmd_pip=$(get_pip_command $PYTHON3_VERSION)
+                    fi
+                fi
+            fi
+        fi
+    fi
+
+    cmd_pip="$cmd_pip install"
+    # Always apply constraints
+    cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
+
+    # FIXME(dhellmann): Need to force multiple versions of pip for
+    # packages like setuptools?
+    local pip_version
+    pip_version=$(python -c "import pip; \
+                        print(pip.__version__.strip('.')[0])")
+    if (( pip_version<6 )); then
+        die $LINENO "Currently installed pip version ${pip_version} does not" \
+            "meet minimum requirements (>=6)."
+    fi
+
+    $xtrace
+    $sudo_pip \
+        http_proxy="${http_proxy:-}" \
+        https_proxy="${https_proxy:-}" \
+        no_proxy="${no_proxy:-}" \
+        PIP_FIND_LINKS=$PIP_FIND_LINKS \
+        $cmd_pip $upgrade \
+        $@
+    result=$?
+
+    # Also install test requirements
+    local test_req="${!#}/test-requirements.txt"
+    if [[ $result == 0 ]] && [[ -e "$test_req" ]]; then
+        echo "Installing test-requirements for $test_req"
+        $sudo_pip \
+            http_proxy=${http_proxy:-} \
+            https_proxy=${https_proxy:-} \
+            no_proxy=${no_proxy:-} \
+            PIP_FIND_LINKS=$PIP_FIND_LINKS \
+            $cmd_pip $upgrade \
+            -r $test_req
+        result=$?
+    fi
+
+    time_stop "pip_install"
+    return $result
+}
+
+# get version of a package from global requirements file
+# get_from_global_requirements <package>
+function get_from_global_requirements {
+    local package=$1
+    local required_pkg
+    required_pkg=$(grep -i -h ^${package} $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1)
+    if [[ $required_pkg == ""  ]]; then
+        die $LINENO "Can't find package $package in requirements"
+    fi
+    echo $required_pkg
+}
+
+# should we use this library from their git repo, or should we let it
+# get pulled in via pip dependencies.
+function use_library_from_git {
+    local name=$1
+    local enabled=1
+    [[ ,${LIBS_FROM_GIT}, =~ ,${name}, ]] && enabled=0
+    return $enabled
+}
+
+# determine if a package was installed from git
+function lib_installed_from_git {
+    local name=$1
+    pip freeze 2>/dev/null | grep -- "$name" | grep -q -- '-e git'
+}
+
+# check that everything that's in LIBS_FROM_GIT was actually installed
+# correctly, this helps double check issues with library fat fingering.
+function check_libs_from_git {
+    local lib=""
+    local not_installed=""
+    for lib in $(echo ${LIBS_FROM_GIT} | tr "," " "); do
+        if ! lib_installed_from_git "$lib"; then
+            not_installed+=" $lib"
+        fi
+    done
+    # if anything is not installed, say what it is.
+    if [[ -n "$not_installed" ]]; then
+        die $LINENO "The following LIBS_FROM_GIT were not installed correct: $not_installed"
+    fi
+}
+
+# setup a library by name. If we are trying to use the library from
+# git, we'll do a git based install, otherwise we'll punt and the
+# library should be installed by a requirements pull from another
+# project.
+function setup_lib {
+    local name=$1
+    local dir=${GITDIR[$name]}
+    setup_install $dir
+}
+
+# setup a library by name in editable mode. If we are trying to use
+# the library from git, we'll do a git based install, otherwise we'll
+# punt and the library should be installed by a requirements pull from
+# another project.
+#
+# use this for non namespaced libraries
+function setup_dev_lib {
+    local name=$1
+    local dir=${GITDIR[$name]}
+    setup_develop $dir
+}
+
+# this should be used if you want to install globally, all libraries should
+# use this, especially *oslo* ones
+#
+# setup_install project_dir [extras]
+# project_dir: directory of project repo (e.g., /opt/stack/keystone)
+# extras: comma-separated list of optional dependencies to install
+#         (e.g., ldap,memcache).
+#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+# The command is like "pip install <project_dir>[<extras>]"
+function setup_install {
+    local project_dir=$1
+    local extras=$2
+    _setup_package_with_constraints_edit $project_dir "" $extras
+}
+
+# this should be used for projects which run services, like all services
+#
+# setup_develop project_dir [extras]
+# project_dir: directory of project repo (e.g., /opt/stack/keystone)
+# extras: comma-separated list of optional dependencies to install
+#         (e.g., ldap,memcache).
+#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+# The command is like "pip install -e <project_dir>[<extras>]"
+function setup_develop {
+    local project_dir=$1
+    local extras=$2
+    _setup_package_with_constraints_edit $project_dir -e $extras
+}
+
+# determine if a project as specified by directory is in
+# projects.txt. This will not be an exact match because we throw away
+# the namespacing when we clone, but it should be good enough in all
+# practical ways.
+function is_in_projects_txt {
+    local project_dir=$1
+    local project_name
+    project_name=$(basename $project_dir)
+    grep -q "/$project_name\$" $REQUIREMENTS_DIR/projects.txt
+}
+
+# ``pip install -e`` the package, which processes the dependencies
+# using pip before running `setup.py develop`
+#
+# Updates the constraints from REQUIREMENTS_DIR to reflect the
+# future installed state of this package. This ensures when we
+# install this package we get the from source version.
+#
+# Uses globals ``REQUIREMENTS_DIR``
+# _setup_package_with_constraints_edit project_dir flags [extras]
+# project_dir: directory of project repo (e.g., /opt/stack/keystone)
+# flags: pip CLI options/flags
+# extras: comma-separated list of optional dependencies to install
+#         (e.g., ldap,memcache).
+#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+# The command is like "pip install <flags> <project_dir>[<extras>]"
+function _setup_package_with_constraints_edit {
+    local project_dir=$1
+    local flags=$2
+    local extras=$3
+
+    # Normalize the directory name to avoid
+    # "installation from path or url cannot be constrained to a version"
+    # error.
+    # REVISIT(yamamoto): Remove this when fixed in pip.
+    # https://github.com/pypa/pip/pull/3582
+    project_dir=$(cd $project_dir && pwd)
+
+    if [ -n "$REQUIREMENTS_DIR" ]; then
+        # Constrain this package to this project directory from here on out.
+        local name
+        name=$(awk '/^name.*=/ {print $3}' $project_dir/setup.cfg)
+        $REQUIREMENTS_DIR/.venv/bin/edit-constraints \
+            $REQUIREMENTS_DIR/upper-constraints.txt -- $name \
+            "$flags file://$project_dir#egg=$name"
+    fi
+
+    setup_package $project_dir "$flags" $extras
+
+}
+
+# ``pip install -e`` the package, which processes the dependencies
+# using pip before running `setup.py develop`
+#
+# Uses globals ``STACK_USER``
+# setup_package project_dir [flags] [extras]
+# project_dir: directory of project repo (e.g., /opt/stack/keystone)
+# flags: pip CLI options/flags
+# extras: comma-separated list of optional dependencies to install
+#         (e.g., ldap,memcache).
+#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+# The command is like "pip install <flags> <project_dir>[<extras>]"
+function setup_package {
+    local project_dir=$1
+    local flags=$2
+    local extras=$3
+
+    # if the flags variable exists, and it doesn't look like a flag,
+    # assume it's actually the extras list.
+    if [[ -n "$flags" && -z "$extras" && ! "$flags" =~ ^-.* ]]; then
+        extras=$flags
+        flags=""
+    fi
+
+    if [[ ! -z "$extras" ]]; then
+        extras="[$extras]"
+    fi
+
+    pip_install $flags "$project_dir$extras"
+    # ensure that further actions can do things like setup.py sdist
+    if [[ "$flags" == "-e" ]]; then
+        safe_chown -R $STACK_USER $1/*.egg-info
+    fi
+}
+
+# Report whether python 3 should be used
+function python3_enabled {
+    if [[ $USE_PYTHON3 == "True" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Install python3 packages
+function install_python3 {
+    if is_ubuntu; then
+        apt_get install python3.4 python3.4-dev
+    fi
+}
+
+# Restore xtrace
+$INC_PY_TRACE
+
+# Local variables:
+# mode: shell-script
+# End:

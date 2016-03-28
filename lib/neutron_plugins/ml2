@@ -1,44 +1,113 @@
+#!/bin/bash
+#
 # Neutron Modular Layer 2 plugin
 # ------------------------------
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_ML2=$(set +o | grep xtrace)
 set +o xtrace
+
+# Enable this to simply and quickly enable tunneling with ML2.
+# Select either 'gre', 'vxlan', or 'gre,vxlan'
+Q_ML2_TENANT_NETWORK_TYPE=${Q_ML2_TENANT_NETWORK_TYPE:-"vxlan"}
+# This has to be set here since the agent will set this in the config file
+if [[ "$Q_ML2_TENANT_NETWORK_TYPE" == "gre" || "$Q_ML2_TENANT_NETWORK_TYPE" == "vxlan" ]]; then
+    Q_TUNNEL_TYPES=$Q_ML2_TENANT_NETWORK_TYPE
+elif [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
+    Q_TUNNEL_TYPES=gre
+fi
 
 # Default openvswitch L2 agent
 Q_AGENT=${Q_AGENT:-openvswitch}
-source $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent
+if [ -f $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent ]; then
+    source $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent
+fi
 
-function neutron_plugin_configure_common() {
-    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/ml2
-    Q_PLUGIN_CONF_FILENAME=ml2_conf.ini
-    Q_DB_NAME="neutron_ml2"
-    Q_PLUGIN_CLASS="neutron.plugins.ml2.plugin.Ml2Plugin"
+# List of MechanismDrivers to load
+Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_ML2_PLUGIN_MECHANISM_DRIVERS:-openvswitch,linuxbridge}
+# List of Type Drivers to load
+Q_ML2_PLUGIN_TYPE_DRIVERS=${Q_ML2_PLUGIN_TYPE_DRIVERS:-local,flat,vlan,gre,vxlan}
+# Default GRE TypeDriver options
+Q_ML2_PLUGIN_GRE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GRE_TYPE_OPTIONS:-tunnel_id_ranges=$TENANT_TUNNEL_RANGES}
+# Default VXLAN TypeDriver options
+Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS:-vni_ranges=1001:2000}
+# Default VLAN TypeDriver options
+Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS:-}
+# List of extension drivers to load, use '-' instead of ':-' to allow people to
+# explicitly override this to blank
+Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS-port_security}
+
+# L3 Plugin to load for ML2
+ML2_L3_PLUGIN=${ML2_L3_PLUGIN:-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
+
+# Underlying path MTU for physical network managing br-tun; use '-' instead of
+# ':-' to allow people to explicitly override this to blank, to disable
+# automatic MTU calculation for tunnelled tenant networks
+Q_ML2_PLUGIN_PATH_MTU=${Q_ML2_PLUGIN_PATH_MTU-1500}
+
+
+function populate_ml2_config {
+    CONF=$1
+    SECTION=$2
+    OPTS=$3
+
+    if [ -z "$OPTS" ]; then
+        return
+    fi
+    for I in "${OPTS[@]}"; do
+        # Replace the first '=' with ' ' for iniset syntax
+        iniset $CONF $SECTION ${I/=/ }
+    done
 }
 
-function neutron_plugin_configure_service() {
-    if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE ml2 tenant_network_types gre
-        iniset /$Q_PLUGIN_CONF_FILE ml2_type_gre tunnel_id_ranges $TENANT_TUNNEL_RANGES
-    elif [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE ml2 tenant_network_types vlan
+function neutron_plugin_configure_common {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/ml2
+    Q_PLUGIN_CONF_FILENAME=ml2_conf.ini
+    Q_PLUGIN_CLASS="neutron.plugins.ml2.plugin.Ml2Plugin"
+    # The ML2 plugin delegates L3 routing/NAT functionality to
+    # the L3 service plugin which must therefore be specified.
+    _neutron_service_plugin_class_add $ML2_L3_PLUGIN
+}
+
+function neutron_plugin_configure_service {
+    if [[ "$Q_ML2_TENANT_NETWORK_TYPE" != "local" ]]; then
+        Q_SRV_EXTRA_OPTS+=(tenant_network_types=$Q_ML2_TENANT_NETWORK_TYPE)
+    elif [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
+        # This assumes you want a simple configuration, and will overwrite
+        # Q_SRV_EXTRA_OPTS if set in addition to ENABLE_TENANT_TUNNELS.
+        Q_SRV_EXTRA_OPTS+=(tenant_network_types=gre)
+        Q_ML2_PLUGIN_GRE_TYPE_OPTIONS=(tunnel_id_ranges=$TENANT_TUNNEL_RANGES)
+    elif [[ "$ENABLE_TENANT_VLANS" == "True" ]]; then
+        Q_SRV_EXTRA_OPTS+=(tenant_network_types=vlan)
     else
         echo "WARNING - The ml2 plugin is using local tenant networks, with no connectivity between hosts."
     fi
 
-    # Override ``ML2_VLAN_RANGES`` and any needed agent configuration
-    # variables in ``localrc`` for more complex physical network
-    # configurations.
-    if [[ "$ML2_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
-        ML2_VLAN_RANGES=$PHYSICAL_NETWORK
-        if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
-            ML2_VLAN_RANGES=$ML2_VLAN_RANGES:$TENANT_VLAN_RANGE
-        fi
-    fi
-    if [[ "$ML2_VLAN_RANGES" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE ml2_type_vlan network_vlan_ranges $ML2_VLAN_RANGES
+    # Enable ml2 mtu calculation mechanism for networks by providing path mtu
+    # value for physical devices that are used for br-tun traffic
+    if [[ "$ENABLE_TENANT_TUNNELS" == "True" ]] && [[ "$Q_ML2_PLUGIN_PATH_MTU" != "" ]]; then
+        iniset /$Q_PLUGIN_CONF_FILE ml2 path_mtu "$Q_ML2_PLUGIN_PATH_MTU"
     fi
 
+    # Allow for overrding VLAN configuration (for example, to configure provider
+    # VLANs) by first checking if Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS is set.
+    if [ "$Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS" == "" ]; then
+        if [[ "$ML2_VLAN_RANGES" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+            ML2_VLAN_RANGES=$PHYSICAL_NETWORK
+            if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
+                ML2_VLAN_RANGES=$ML2_VLAN_RANGES:$TENANT_VLAN_RANGE
+            fi
+        fi
+        if [[ "$ML2_VLAN_RANGES" != "" ]]; then
+            Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=(network_vlan_ranges=$ML2_VLAN_RANGES)
+        fi
+    fi
+
+
+    # Allow for setup the flat type network
+    if [[ -z "$Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS" && -n "$PHYSICAL_NETWORK" ]]; then
+            Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS="flat_networks=$PHYSICAL_NETWORK"
+    fi
     # REVISIT(rkukura): Setting firewall_driver here for
     # neutron.agent.securitygroups_rpc.is_firewall_enabled() which is
     # used in the server, in case no L2 agent is configured on the
@@ -47,16 +116,37 @@ function neutron_plugin_configure_service() {
     # instead use its own config variable to indicate whether security
     # groups is enabled, and that will need to be set here instead.
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver neutron.agent.not.a.real.FirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.not.a.real.FirewallDriver
     else
-        iniset /$Q_PLUGIN_CONF_FILE SECURITYGROUP firewall_driver neutron.agent.firewall.NoopFirewallDriver
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
     fi
 
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 mechanism_drivers=$Q_ML2_PLUGIN_MECHANISM_DRIVERS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 type_drivers=$Q_ML2_PLUGIN_TYPE_DRIVERS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 extension_drivers=$Q_ML2_PLUGIN_EXT_DRIVERS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 $Q_SRV_EXTRA_OPTS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_gre $Q_ML2_PLUGIN_GRE_TYPE_OPTIONS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vxlan $Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_flat $Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vlan $Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS
+
+    if [[ "$Q_DVR_MODE" != "legacy" ]]; then
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE agent l2_population=True
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE agent tunnel_types=vxlan
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE agent enable_distributed_routing=True
+    fi
 }
 
-function has_neutron_plugin_security_group() {
+function has_neutron_plugin_security_group {
     return 0
 }
 
 # Restore xtrace
-$MY_XTRACE
+$_XTRACE_NEUTRON_ML2

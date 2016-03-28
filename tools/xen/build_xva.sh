@@ -24,6 +24,9 @@ TOP_DIR=$(cd $(dirname "$0") && pwd)
 # Include onexit commands
 . $TOP_DIR/scripts/on_exit.sh
 
+# xapi functions
+. $TOP_DIR/functions
+
 # Source params - override xenrc params in your localrc to suite your taste
 source xenrc
 
@@ -32,7 +35,7 @@ source xenrc
 #
 GUEST_NAME="$1"
 
-function _print_interface_config() {
+function _print_interface_config {
     local device_nr
     local ip_address
     local netmask
@@ -58,7 +61,7 @@ function _print_interface_config() {
     echo "  post-up ethtool -K $device tx off"
 }
 
-function print_interfaces_config() {
+function print_interfaces_config {
     echo "auto lo"
     echo "iface lo inet loopback"
 
@@ -93,13 +96,46 @@ mkdir -p $STAGING_DIR/opt/stack/devstack
 tar xf /tmp/devstack.tar -C $STAGING_DIR/opt/stack/devstack
 cd $TOP_DIR
 
-# Run devstack on launch
-cat <<EOF >$STAGING_DIR/etc/rc.local
-# network restart required for getting the right gateway
-/etc/init.d/networking restart
-chown -R $STACK_USER /opt/stack
-su -c "/opt/stack/run.sh > /opt/stack/run.sh.log" $STACK_USER
-exit 0
+# Create an upstart job (task) for devstack, which can interact with the console
+cat >$STAGING_DIR/etc/init/devstack.conf << EOF
+start on stopped rc RUNLEVEL=[2345]
+
+console output
+task
+
+pre-start script
+    rm -f /opt/stack/runsh.succeeded
+end script
+
+script
+    initctl stop hvc0 || true
+
+    # Read any leftover characters from standard input
+    while read -n 1 -s -t 0.1 -r ignored; do
+        true
+    done
+
+    clear
+
+    chown -R $STACK_USER /opt/stack
+
+    su -c "/opt/stack/run.sh" $STACK_USER
+
+    # Update /etc/issue
+    {
+        echo "OpenStack VM - Installed by DevStack"
+        IPADDR=\$(ip -4 address show eth0 | sed -n 's/.*inet \\([0-9\.]\\+\\).*/\1/p')
+        echo "  Management IP:   \$IPADDR"
+        echo -n "  Devstack run:    "
+        if [ -e /opt/stack/runsh.succeeded ]; then
+            echo "SUCCEEDED"
+        else
+            echo "FAILED"
+        fi
+        echo ""
+    } > /etc/issue
+    initctl start hvc0 > /dev/null 2>&1
+end script
 EOF
 
 # Configure the hostname
@@ -138,8 +174,20 @@ fi
 # Configure run.sh
 cat <<EOF >$STAGING_DIR/opt/stack/run.sh
 #!/bin/bash
-cd /opt/stack/devstack
-killall screen
-VIRT_DRIVER=xenserver FORCE=yes MULTI_HOST=$MULTI_HOST HOST_IP_IFACE=$HOST_IP_IFACE $STACKSH_PARAMS ./stack.sh
+set -eux
+(
+  flock -n 9 || exit 1
+
+  [ -e /opt/stack/runsh.succeeded ] && rm /opt/stack/runsh.succeeded
+  echo \$\$ >> /opt/stack/run_sh.pid
+
+  cd /opt/stack/devstack
+  ./unstack.sh || true
+  ./stack.sh
+
+  # Got to the end - success
+  touch /opt/stack/runsh.succeeded
+  rm /opt/stack/run_sh.pid
+) 9> /opt/stack/.runsh_lock
 EOF
 chmod 755 $STAGING_DIR/opt/stack/run.sh

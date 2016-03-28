@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # **unstack.sh**
 
@@ -6,11 +6,22 @@
 # mysql and rabbit are left running as OpenStack code refreshes
 # do not require them to be restarted.
 #
-# Stop all processes by setting ``UNSTACK_ALL`` or specifying ``--all``
+# Stop all processes by setting ``UNSTACK_ALL`` or specifying ``-a``
 # on the command line
 
-# Keep track of the current devstack directory.
+UNSTACK_ALL=${UNSTACK_ALL:-""}
+
+while getopts ":a" opt; do
+    case $opt in
+        a)
+            UNSTACK_ALL="-1"
+            ;;
+    esac
+done
+
+# Keep track of the current DevStack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
+FILES=$TOP_DIR/files
 
 # Import common functions
 source $TOP_DIR/functions
@@ -19,47 +30,92 @@ source $TOP_DIR/functions
 source $TOP_DIR/lib/database
 
 # Load local configuration
-source $TOP_DIR/stackrc
+source $TOP_DIR/openrc
 
 # Destination path for service data
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 
-# Get project function libraries
-source $TOP_DIR/lib/baremetal
-source $TOP_DIR/lib/cinder
+if [[ $EUID -eq 0 ]]; then
+    echo "You are running this script as root."
+    echo "It might work but you will have a better day running it as $STACK_USER"
+    exit 1
+fi
+
+
+# Configure Projects
+# ==================
+
+# Plugin Phase 0: override_defaults - allow plugins to override
+# defaults before other services are run
+run_phase override_defaults
+
+# Import apache functions
+source $TOP_DIR/lib/apache
+
+# Import TLS functions
+source $TOP_DIR/lib/tls
+
+# Source project function libraries
+source $TOP_DIR/lib/infra
+source $TOP_DIR/lib/oslo
+source $TOP_DIR/lib/lvm
 source $TOP_DIR/lib/horizon
+source $TOP_DIR/lib/keystone
+source $TOP_DIR/lib/glance
+source $TOP_DIR/lib/nova
+source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
-source $TOP_DIR/lib/neutron
+source $TOP_DIR/lib/heat
+source $TOP_DIR/lib/neutron-legacy
+source $TOP_DIR/lib/ldap
+source $TOP_DIR/lib/dstat
+source $TOP_DIR/lib/dlm
+
+# Extras Source
+# --------------
+
+# Phase: source
+if [[ -d $TOP_DIR/extras.d ]]; then
+    for i in $TOP_DIR/extras.d/*.sh; do
+        [[ -r $i ]] && source $i source
+    done
+fi
+
+load_plugin_settings
 
 # Determine what system we are running on.  This provides ``os_VENDOR``,
-# ``os_RELEASE``, ``os_UPDATE``, ``os_PACKAGE``, ``os_CODENAME``
+# ``os_RELEASE``, ``os_PACKAGE``, ``os_CODENAME``
 GetOSVersion
 
-if [[ "$1" == "--all" ]]; then
-    UNSTACK_ALL=${UNSTACK_ALL:-1}
-fi
+set -o xtrace
 
 # Run extras
 # ==========
 
-if [[ -d $TOP_DIR/extras.d ]]; then
-    for i in $TOP_DIR/extras.d/*.sh; do
-        [[ -r $i ]] && source $i unstack
-    done
-fi
+# Phase: unstack
+run_phase unstack
 
 if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
     source $TOP_DIR/openrc
     teardown_neutron_debug
 fi
 
-# Shut down devstack's screen to get the bulk of OpenStack services in one shot
-SCREEN=$(which screen)
-if [[ -n "$SCREEN" ]]; then
-    SESSION=$(screen -ls | awk '/[0-9].stack/ { print $1 }')
-    if [[ -n "$SESSION" ]]; then
-        screen -X -S $SESSION quit
-    fi
+# Call service stop
+
+if is_service_enabled heat; then
+    stop_heat
+fi
+
+if is_service_enabled nova; then
+    stop_nova
+fi
+
+if is_service_enabled glance; then
+    stop_glance
+fi
+
+if is_service_enabled keystone; then
+    stop_keystone
 fi
 
 # Swift runs daemons
@@ -73,21 +129,24 @@ if is_service_enabled horizon; then
     stop_horizon
 fi
 
-# Kill TLS proxies
+# Kill TLS proxies and cleanup certificates
 if is_service_enabled tls-proxy; then
-    killall stud
+    stop_tls_proxy
+    cleanup_CA
 fi
-
-# baremetal might have created a fake environment
-if is_service_enabled baremetal && [[ "$BM_USE_FAKE_ENV" = "True" ]]; then
-    cleanup_fake_baremetal_env
+if [ "$USE_SSL" == "True" ]; then
+    cleanup_CA
 fi
 
 SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*
 
+# BUG: tgt likes to exit 1 on service stop if everything isn't
+# perfect, we should clean up cinder stop paths.
+
 # Get the iSCSI volumes
 if is_service_enabled cinder; then
-    cleanup_cinder
+    stop_cinder || /bin/true
+    cleanup_cinder || /bin/true
 fi
 
 if [[ -n "$UNSTACK_ALL" ]]; then
@@ -110,4 +169,30 @@ if is_service_enabled neutron; then
     stop_neutron
     stop_neutron_third_party
     cleanup_neutron
+fi
+
+if is_service_enabled dstat; then
+    stop_dstat
+fi
+
+if is_service_enabled zookeeper; then
+    stop_zookeeper
+fi
+
+# Clean up the remainder of the screen processes
+SCREEN=$(which screen)
+if [[ -n "$SCREEN" ]]; then
+    SESSION=$(screen -ls | awk "/[0-9]+.${SCREEN_NAME}/"'{ print $1 }')
+    if [[ -n "$SESSION" ]]; then
+        screen -X -S $SESSION quit
+    fi
+fi
+
+# BUG: maybe it doesn't exist? We should isolate this further down.
+# NOTE: Cinder automatically installs the lvm2 package, independently of the
+# enabled backends. So if Cinder is enabled, we are sure lvm (lvremove,
+# /etc/lvm/lvm.conf, etc.) is here.
+if is_service_enabled cinder; then
+    clean_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME || /bin/true
+    clean_lvm_filter
 fi

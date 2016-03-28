@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# lib/cinder_backends/netapp_nfs
+# Configure the NetApp NFS driver
+
+# Enable with:
+#
+#  NFS:
+#   CINDER_ENABLED_BACKENDS+=,netapp_nfs:<volume-type-name>
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# ``CINDER_CONF``
+# ``CINDER_CONF_DIR``
+# ``CINDER_ENABLED_BACKENDS``
+
+# configure_cinder_backend_netapp_nfs - configure NFS
+
+# Save trace setting
+_XTRACE_CINDER_NETAPP=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Entry Points
+# ------------
+
+# configure_cinder_backend_netapp_nfs - Set config files, create data dirs, etc
+function configure_cinder_backend_netapp_nfs {
+    # To use NetApp, set the following in local.conf:
+    # CINDER_ENABLED_BACKENDS+=,netapp_nfs:<volume-type-name>
+    # NETAPP_MODE=ontap_7mode|ontap_cluster
+    # NETAPP_IP=<mgmt-ip>
+    # NETAPP_LOGIN=<admin-account>
+    # NETAPP_PASSWORD=<admin-password>
+    # NETAPP_NFS_VOLUME_LIST=<export-volumes>
+
+    # In ontap_cluster mode, the following also needs to be defined:
+    # NETAPP_NFS_VSERVER=<vserver-name>
+
+    local be_name=$1
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.netapp.common.NetAppDriver"
+    iniset $CINDER_CONF $be_name netapp_storage_family ${NETAPP_MODE:-ontap_7mode}
+    iniset $CINDER_CONF $be_name netapp_server_hostname $NETAPP_IP
+    iniset $CINDER_CONF $be_name netapp_login $NETAPP_LOGIN
+    iniset $CINDER_CONF $be_name netapp_password $NETAPP_PASSWORD
+
+    iniset $CINDER_CONF $be_name netapp_storage_protocol nfs
+    iniset $CINDER_CONF $be_name netapp_transport_type https
+    iniset $CINDER_CONF $be_name nfs_shares_config $CINDER_CONF_DIR/netapp_shares.conf
+
+    echo "$NETAPP_NFS_VOLUME_LIST" | tee "$CINDER_CONF_DIR/netapp_shares.conf"
+
+    if [[ "$NETAPP_MODE" == "ontap_cluster" ]]; then
+        iniset $CINDER_CONF $be_name netapp_vserver $NETAPP_NFS_VSERVER
+    fi
+}
+
+function cleanup_cinder_backend_netapp_nfs {
+    # Clean up remaining NFS mounts
+    # Be blunt and do them all
+    local m
+    for m in $CINDER_STATE_PATH/mnt/*; do
+        sudo umount $m
+    done
+}
+
+
+# Restore xtrace
+$_XTRACE_CINDER_NETAPP
+
+# Local variables:
+# mode: shell-script
+# End:

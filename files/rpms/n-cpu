@@ -1,7 +1,8 @@
-# Stuff for diablo volumes
-iscsi-initiator-utils
-lvm2
+cryptsetup
 genisoimage
-sysfsutils
+iscsi-initiator-utils
+libosinfo
+lvm2
 sg3_utils
-python-libguestfs
+# Stuff for diablo volumes
+sysfsutils

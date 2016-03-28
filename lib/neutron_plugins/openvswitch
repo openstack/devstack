@@ -1,24 +1,28 @@
-# Neutron Open vSwitch plugin
-# ---------------------------
+#!/bin/bash
+#
+# Common code used by cisco and embrane plugins
+# ---------------------------------------------
+
+# This module used to be for Open vSwitch monolithic plugin,
+# which has been removed in Juno.
 
 # Save trace setting
-MY_XTRACE=$(set +o | grep xtrace)
+_XTRACE_NEUTRON_OVS=$(set +o | grep xtrace)
 set +o xtrace
 
 source $TOP_DIR/lib/neutron_plugins/openvswitch_agent
 
-function neutron_plugin_configure_common() {
+function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_PATH=etc/neutron/plugins/openvswitch
     Q_PLUGIN_CONF_FILENAME=ovs_neutron_plugin.ini
-    Q_DB_NAME="ovs_neutron"
     Q_PLUGIN_CLASS="neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2"
 }
 
-function neutron_plugin_configure_service() {
-    if [[ "$ENABLE_TENANT_TUNNELS" = "True" ]]; then
+function neutron_plugin_configure_service {
+    if [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs tenant_network_type gre
         iniset /$Q_PLUGIN_CONF_FILE ovs tunnel_id_ranges $TENANT_TUNNEL_RANGES
-    elif [[ "$ENABLE_TENANT_VLANS" = "True" ]]; then
+    elif [[ "$ENABLE_TENANT_VLANS" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs tenant_network_type vlan
     else
         echo "WARNING - The openvswitch plugin is using local tenant networks, with no connectivity between hosts."
@@ -26,7 +30,7 @@ function neutron_plugin_configure_service() {
 
     # Override ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc``
     # for more complex physical network configurations.
-    if [[ "$OVS_VLAN_RANGES" = "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
+    if [[ "$OVS_VLAN_RANGES" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]]; then
         OVS_VLAN_RANGES=$PHYSICAL_NETWORK
         if [[ "$TENANT_VLAN_RANGE" != "" ]]; then
             OVS_VLAN_RANGES=$OVS_VLAN_RANGES:$TENANT_VLAN_RANGE
@@ -34,11 +38,6 @@ function neutron_plugin_configure_service() {
     fi
     if [[ "$OVS_VLAN_RANGES" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE ovs network_vlan_ranges $OVS_VLAN_RANGES
-    fi
-
-    # Enable tunnel networks if selected
-    if [[ $OVS_ENABLE_TUNNELING = "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE ovs enable_tunneling True
     fi
 
     _neutron_ovs_base_configure_firewall_driver
@@ -52,9 +51,10 @@ function neutron_plugin_configure_service() {
     done
 }
 
-function has_neutron_plugin_security_group() {
+function has_neutron_plugin_security_group {
     return 0
 }
 
 # Restore xtrace
-$MY_XTRACE
+$_XTRACE_NEUTRON_OVS
+

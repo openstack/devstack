@@ -1,0 +1,16 @@
+acl
+dnsmasq-base
+dnsmasq-utils # for dhcp_release only available in dist:precise
+ebtables
+iptables
+iputils-arping
+iputils-ping
+libmysqlclient-dev
+mysql-server #NOPRIME
+postgresql-server-dev-all
+python-mysqldb
+rabbitmq-server # NOPRIME
+radvd # NOPRIME
+sqlite3
+sudo
+vlan

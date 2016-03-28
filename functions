@@ -1,1162 +1,80 @@
-# functions - Common functions used by DevStack components
+#!/bin/bash
+#
+# functions - DevStack-specific functions
 #
 # The following variables are assumed to be defined by certain functions:
-# ``ENABLED_SERVICES``
-# ``EROR_ON_CLONE``
-# ``FILES``
-# ``GLANCE_HOSTPORT``
-# ``OFFLINE``
-# ``PIP_DOWNLOAD_CACHE``
-# ``PIP_USE_MIRRORS``
-# ``RECLONE``
-# ``TRACK_DEPENDS``
-# ``http_proxy``, ``https_proxy``, ``no_proxy``
+#
+# - ``DATABASE_BACKENDS``
+# - ``ENABLED_SERVICES``
+# - ``FILES``
+# - ``GLANCE_HOSTPORT``
+#
 
+# ensure we don't re-source this in the same environment
+[[ -z "$_DEVSTACK_FUNCTIONS" ]] || return 0
+declare -r _DEVSTACK_FUNCTIONS=1
+
+# Include the common functions
+FUNC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
+source ${FUNC_DIR}/functions-common
+source ${FUNC_DIR}/inc/ini-config
+source ${FUNC_DIR}/inc/python
+source ${FUNC_DIR}/inc/rootwrap
 
 # Save trace setting
-XTRACE=$(set +o | grep xtrace)
+_XTRACE_FUNCTIONS=$(set +o | grep xtrace)
 set +o xtrace
 
+# Check if a function already exists
+function function_exists {
+    declare -f -F $1 > /dev/null
+}
 
-# Exit 0 if address is in network or 1 if address is not in
-# network or netaddr library is not installed.
-# address_in_net ip-address ip-range
-function address_in_net() {
-    python -c "
-import netaddr
-import sys
-sys.exit(netaddr.IPAddress('$1') not in netaddr.IPNetwork('$2'))
-"
+# short_source prints out the current location of the caller in a way
+# that strips redundant directories. This is useful for PS4 usage.
+function short_source {
+    saveIFS=$IFS
+    IFS=" "
+    called=($(caller 0))
+    IFS=$saveIFS
+    file=${called[2]}
+    file=${file#$RC_DIR/}
+    printf "%-40s " "$file:${called[1]}:${called[0]}"
 }
 
 
-# Wrapper for ``apt-get`` to set cache and proxy environment variables
-# Uses globals ``OFFLINE``, ``*_proxy`
-# apt_get operation package [package ...]
-function apt_get() {
-    [[ "$OFFLINE" = "True" || -z "$@" ]] && return
-    local sudo="sudo"
-    [[ "$(id -u)" = "0" ]] && sudo="env"
-    $sudo DEBIAN_FRONTEND=noninteractive \
-        http_proxy=$http_proxy https_proxy=$https_proxy \
-        no_proxy=$no_proxy \
-        apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
-}
-
-
-# Gracefully cp only if source file/dir exists
-# cp_it source destination
-function cp_it {
-    if [ -e $1 ] || [ -d $1 ]; then
-        cp -pRL $1 $2
-    fi
-}
-
-
-# Prints line number and "message" then exits
-# die $LINENO "message"
-function die() {
-    local exitcode=$?
-    set +o xtrace
-    local line=$1; shift
-    if [ $exitcode == 0 ]; then
-        exitcode=1
-    fi
-    err $line "$*"
-    exit $exitcode
-}
-
-
-# Checks an environment variable is not set or has length 0 OR if the
-# exit code is non-zero and prints "message" and exits
-# NOTE: env-var is the variable name without a '$'
-# die_if_not_set $LINENO env-var "message"
-function die_if_not_set() {
-    local exitcode=$?
-    FXTRACE=$(set +o | grep xtrace)
-    set +o xtrace
-    local line=$1; shift
-    local evar=$1; shift
-    if ! is_set $evar || [ $exitcode != 0 ]; then
-        die $line "$*"
-    fi
-    $FXTRACE
-}
-
-
-# Prints line number and "message" in error format
-# err $LINENO "message"
-function err() {
-    local exitcode=$?
-    errXTRACE=$(set +o | grep xtrace)
-    set +o xtrace
-    local msg="[ERROR] $0:$1 $2"
-    echo $msg 1>&2;
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        echo $msg >> "${SCREEN_LOGDIR}/error.log"
-    fi
-    $errXTRACE
-    return $exitcode
-}
-
-
-# Checks an environment variable is not set or has length 0 OR if the
-# exit code is non-zero and prints "message"
-# NOTE: env-var is the variable name without a '$'
-# err_if_not_set $LINENO env-var "message"
-function err_if_not_set() {
-    local exitcode=$?
-    errinsXTRACE=$(set +o | grep xtrace)
-    set +o xtrace
-    local line=$1; shift
-    local evar=$1; shift
-    if ! is_set $evar || [ $exitcode != 0 ]; then
-        err $line "$*"
-    fi
-    $errinsXTRACE
-    return $exitcode
-}
-
-
-# HTTP and HTTPS proxy servers are supported via the usual environment variables [1]
-# ``http_proxy``, ``https_proxy`` and ``no_proxy``. They can be set in
-# ``localrc`` or on the command line if necessary::
-#
-# [1] http://www.w3.org/Daemon/User/Proxies/ProxyClients.html
-#
-#     http_proxy=http://proxy.example.com:3128/ no_proxy=repo.example.net ./stack.sh
-
-function export_proxy_variables() {
-    if [[ -n "$http_proxy" ]]; then
-        export http_proxy=$http_proxy
-    fi
-    if [[ -n "$https_proxy" ]]; then
-        export https_proxy=$https_proxy
-    fi
-    if [[ -n "$no_proxy" ]]; then
-        export no_proxy=$no_proxy
-    fi
-}
-
-
-# Grab a numbered field from python prettytable output
-# Fields are numbered starting with 1
-# Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
-# get_field field-number
-function get_field() {
-    while read data; do
-        if [ "$1" -lt 0 ]; then
-            field="(\$(NF$1))"
-        else
-            field="\$$(($1 + 1))"
-        fi
-        echo "$data" | awk -F'[ \t]*\\|[ \t]*' "{print $field}"
-    done
-}
-
-
-# Get the default value for HOST_IP
-# get_default_host_ip fixed_range floating_range host_ip_iface host_ip
-function get_default_host_ip() {
-    local fixed_range=$1
-    local floating_range=$2
-    local host_ip_iface=$3
-    local host_ip=$4
-
-    # Find the interface used for the default route
-    host_ip_iface=${host_ip_iface:-$(ip route | sed -n '/^default/{ s/.*dev \(\w\+\)\s\+.*/\1/; p; }' | head -1)}
-    # Search for an IP unless an explicit is set by ``HOST_IP`` environment variable
-    if [ -z "$host_ip" -o "$host_ip" == "dhcp" ]; then
-        host_ip=""
-        host_ips=`LC_ALL=C ip -f inet addr show ${host_ip_iface} | awk '/inet/ {split($2,parts,"/");  print parts[1]}'`
-        for IP in $host_ips; do
-            # Attempt to filter out IP addresses that are part of the fixed and
-            # floating range. Note that this method only works if the ``netaddr``
-            # python library is installed. If it is not installed, an error
-            # will be printed and the first IP from the interface will be used.
-            # If that is not correct set ``HOST_IP`` in ``localrc`` to the correct
-            # address.
-            if ! (address_in_net $IP $fixed_range || address_in_net $IP $floating_range); then
-                host_ip=$IP
-                break;
-            fi
-        done
-    fi
-    echo $host_ip
-}
-
-
-function _get_package_dir() {
-    local pkg_dir
-    if is_ubuntu; then
-        pkg_dir=$FILES/apts
-    elif is_fedora; then
-        pkg_dir=$FILES/rpms
-    elif is_suse; then
-        pkg_dir=$FILES/rpms-suse
-    else
-        exit_distro_not_supported "list of packages"
-    fi
-    echo "$pkg_dir"
-}
-
-
-# get_packages() collects a list of package names of any type from the
-# prerequisite files in ``files/{apts|rpms}``.  The list is intended
-# to be passed to a package installer such as apt or yum.
-#
-# Only packages required for the services in 1st argument will be
-# included.  Two bits of metadata are recognized in the prerequisite files:
-# - ``# NOPRIME`` defers installation to be performed later in stack.sh
-# - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
-#   of the package to the distros listed.  The distro names are case insensitive.
-function get_packages() {
-    local services=$1
-    local package_dir=$(_get_package_dir)
-    local file_to_parse
-    local service
-
-    if [[ -z "$package_dir" ]]; then
-        echo "No package directory supplied"
-        return 1
-    fi
-    if [[ -z "$DISTRO" ]]; then
-        GetDistro
-    fi
-    for service in general ${services//,/ }; do
-        # Allow individual services to specify dependencies
-        if [[ -e ${package_dir}/${service} ]]; then
-            file_to_parse="${file_to_parse} $service"
-        fi
-        # NOTE(sdague) n-api needs glance for now because that's where
-        # glance client is
-        if [[ $service == n-api ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
-                file_to_parse="${file_to_parse} nova"
-            fi
-            if [[ ! $file_to_parse =~ glance ]]; then
-                file_to_parse="${file_to_parse} glance"
-            fi
-        elif [[ $service == c-* ]]; then
-            if [[ ! $file_to_parse =~ cinder ]]; then
-                file_to_parse="${file_to_parse} cinder"
-            fi
-        elif [[ $service == ceilometer-* ]]; then
-            if [[ ! $file_to_parse =~ ceilometer ]]; then
-                file_to_parse="${file_to_parse} ceilometer"
-            fi
-        elif [[ $service == s-* ]]; then
-            if [[ ! $file_to_parse =~ swift ]]; then
-                file_to_parse="${file_to_parse} swift"
-            fi
-        elif [[ $service == n-* ]]; then
-            if [[ ! $file_to_parse =~ nova ]]; then
-                file_to_parse="${file_to_parse} nova"
-            fi
-        elif [[ $service == g-* ]]; then
-            if [[ ! $file_to_parse =~ glance ]]; then
-                file_to_parse="${file_to_parse} glance"
-            fi
-        elif [[ $service == key* ]]; then
-            if [[ ! $file_to_parse =~ keystone ]]; then
-                file_to_parse="${file_to_parse} keystone"
-            fi
-        elif [[ $service == q-* ]]; then
-            if [[ ! $file_to_parse =~ neutron ]]; then
-                file_to_parse="${file_to_parse} neutron"
-            fi
-        fi
-    done
-
-    for file in ${file_to_parse}; do
-        local fname=${package_dir}/${file}
-        local OIFS line package distros distro
-        [[ -e $fname ]] || continue
-
-        OIFS=$IFS
-        IFS=$'\n'
-        for line in $(<${fname}); do
-            if [[ $line =~ "NOPRIME" ]]; then
-                continue
-            fi
-
-            if [[ $line =~ (.*)#.*dist:([^ ]*) ]]; then
-                # We are using BASH regexp matching feature.
-                package=${BASH_REMATCH[1]}
-                distros=${BASH_REMATCH[2]}
-                # In bash ${VAR,,} will lowecase VAR
-                [[ ${distros,,} =~ ${DISTRO,,} ]] && echo $package
-                continue
-            fi
-
-            echo ${line%#*}
-        done
-        IFS=$OIFS
-    done
-}
-
-
-# Determine OS Vendor, Release and Update
-# Tested with OS/X, Ubuntu, RedHat, CentOS, Fedora
-# Returns results in global variables:
-# os_VENDOR - vendor name
-# os_RELEASE - release
-# os_UPDATE - update
-# os_PACKAGE - package type
-# os_CODENAME - vendor's codename for release
-# GetOSVersion
-GetOSVersion() {
-    # Figure out which vendor we are
-    if [[ -n "`which sw_vers 2>/dev/null`" ]]; then
-        # OS/X
-        os_VENDOR=`sw_vers -productName`
-        os_RELEASE=`sw_vers -productVersion`
-        os_UPDATE=${os_RELEASE##*.}
-        os_RELEASE=${os_RELEASE%.*}
-        os_PACKAGE=""
-        if [[ "$os_RELEASE" =~ "10.7" ]]; then
-            os_CODENAME="lion"
-        elif [[ "$os_RELEASE" =~ "10.6" ]]; then
-            os_CODENAME="snow leopard"
-        elif [[ "$os_RELEASE" =~ "10.5" ]]; then
-            os_CODENAME="leopard"
-        elif [[ "$os_RELEASE" =~ "10.4" ]]; then
-            os_CODENAME="tiger"
-        elif [[ "$os_RELEASE" =~ "10.3" ]]; then
-            os_CODENAME="panther"
-        else
-            os_CODENAME=""
-        fi
-    elif [[ -x $(which lsb_release 2>/dev/null) ]]; then
-        os_VENDOR=$(lsb_release -i -s)
-        os_RELEASE=$(lsb_release -r -s)
-        os_UPDATE=""
-        os_PACKAGE="rpm"
-        if [[ "Debian,Ubuntu,LinuxMint" =~ $os_VENDOR ]]; then
-            os_PACKAGE="deb"
-        elif [[ "SUSE LINUX" =~ $os_VENDOR ]]; then
-            lsb_release -d -s | grep -q openSUSE
-            if [[ $? -eq 0 ]]; then
-                os_VENDOR="openSUSE"
-            fi
-        elif [[ $os_VENDOR == "openSUSE project" ]]; then
-            os_VENDOR="openSUSE"
-        elif [[ $os_VENDOR =~ Red.*Hat ]]; then
-            os_VENDOR="Red Hat"
-        fi
-        os_CODENAME=$(lsb_release -c -s)
-    elif [[ -r /etc/redhat-release ]]; then
-        # Red Hat Enterprise Linux Server release 5.5 (Tikanga)
-        # CentOS release 5.5 (Final)
-        # CentOS Linux release 6.0 (Final)
-        # Fedora release 16 (Verne)
-        os_CODENAME=""
-        for r in "Red Hat" CentOS Fedora; do
-            os_VENDOR=$r
-            if [[ -n "`grep \"$r\" /etc/redhat-release`" ]]; then
-                ver=`sed -e 's/^.* \(.*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release`
-                os_CODENAME=${ver#*|}
-                os_RELEASE=${ver%|*}
-                os_UPDATE=${os_RELEASE##*.}
-                os_RELEASE=${os_RELEASE%.*}
-                break
-            fi
-            os_VENDOR=""
-        done
-        os_PACKAGE="rpm"
-    elif [[ -r /etc/SuSE-release ]]; then
-        for r in openSUSE "SUSE Linux"; do
-            if [[ "$r" = "SUSE Linux" ]]; then
-                os_VENDOR="SUSE LINUX"
-            else
-                os_VENDOR=$r
-            fi
-
-            if [[ -n "`grep \"$r\" /etc/SuSE-release`" ]]; then
-                os_CODENAME=`grep "CODENAME = " /etc/SuSE-release | sed 's:.* = ::g'`
-                os_RELEASE=`grep "VERSION = " /etc/SuSE-release | sed 's:.* = ::g'`
-                os_UPDATE=`grep "PATCHLEVEL = " /etc/SuSE-release | sed 's:.* = ::g'`
-                break
-            fi
-            os_VENDOR=""
-        done
-        os_PACKAGE="rpm"
-    # If lsb_release is not installed, we should be able to detect Debian OS
-    elif [[ -f /etc/debian_version ]] && [[ $(cat /proc/version) =~ "Debian" ]]; then
-        os_VENDOR="Debian"
-        os_PACKAGE="deb"
-        os_CODENAME=$(awk '/VERSION=/' /etc/os-release | sed 's/VERSION=//' | sed -r 's/\"|\(|\)//g' | awk '{print $2}')
-        os_RELEASE=$(awk '/VERSION_ID=/' /etc/os-release | sed 's/VERSION_ID=//' | sed 's/\"//g')
-    fi
-    export os_VENDOR os_RELEASE os_UPDATE os_PACKAGE os_CODENAME
-}
-
-
-# Translate the OS version values into common nomenclature
-# Sets ``DISTRO`` from the ``os_*`` values
-function GetDistro() {
-    GetOSVersion
-    if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) ]]; then
-        # 'Everyone' refers to Ubuntu / Debian releases by the code name adjective
-        DISTRO=$os_CODENAME
-    elif [[ "$os_VENDOR" =~ (Fedora) ]]; then
-        # For Fedora, just use 'f' and the release
-        DISTRO="f$os_RELEASE"
-    elif [[ "$os_VENDOR" =~ (openSUSE) ]]; then
-        DISTRO="opensuse-$os_RELEASE"
-    elif [[ "$os_VENDOR" =~ (SUSE LINUX) ]]; then
-        # For SLE, also use the service pack
-        if [[ -z "$os_UPDATE" ]]; then
-            DISTRO="sle${os_RELEASE}"
-        else
-            DISTRO="sle${os_RELEASE}sp${os_UPDATE}"
-        fi
-    elif [[ "$os_VENDOR" =~ (Red Hat) || "$os_VENDOR" =~ (CentOS) ]]; then
-        # Drop the . release as we assume it's compatible
-        DISTRO="rhel${os_RELEASE::1}"
-    else
-        # Catch-all for now is Vendor + Release + Update
-        DISTRO="$os_VENDOR-$os_RELEASE.$os_UPDATE"
-    fi
-    export DISTRO
-}
-
-
-# Determine if current distribution is a Fedora-based distribution
-# (Fedora, RHEL, CentOS, etc).
-# is_fedora
-function is_fedora {
-    if [[ -z "$os_VENDOR" ]]; then
-        GetOSVersion
-    fi
-
-    [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || [ "$os_VENDOR" = "CentOS" ]
-}
-
-
-# Determine if current distribution is a SUSE-based distribution
-# (openSUSE, SLE).
-# is_suse
-function is_suse {
-    if [[ -z "$os_VENDOR" ]]; then
-        GetOSVersion
-    fi
-
-    [ "$os_VENDOR" = "openSUSE" ] || [ "$os_VENDOR" = "SUSE LINUX" ]
-}
-
-
-# Determine if current distribution is an Ubuntu-based distribution
-# It will also detect non-Ubuntu but Debian-based distros
-# is_ubuntu
-function is_ubuntu {
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-    [ "$os_PACKAGE" = "deb" ]
-}
-
-
-# Exit after outputting a message about the distribution not being supported.
-# exit_distro_not_supported [optional-string-telling-what-is-missing]
-function exit_distro_not_supported {
-    if [[ -z "$DISTRO" ]]; then
-        GetDistro
-    fi
-
-    if [ $# -gt 0 ]; then
-        die $LINENO "Support for $DISTRO is incomplete: no support for $@"
-    else
-        die $LINENO "Support for $DISTRO is incomplete."
-    fi
-}
-
-# Utility function for checking machine architecture
-# is_arch arch-type
-function is_arch {
-    ARCH_TYPE=$1
-
-    [ "($uname -m)" = "$ARCH_TYPE" ]
-}
-
-# git clone only if directory doesn't exist already.  Since ``DEST`` might not
-# be owned by the installation user, we create the directory and change the
-# ownership to the proper user.
-# Set global RECLONE=yes to simulate a clone when dest-dir exists
-# Set global ERROR_ON_CLONE=True to abort execution with an error if the git repo
-# does not exist (default is False, meaning the repo will be cloned).
-# Uses global ``OFFLINE``
-# git_clone remote dest-dir branch
-function git_clone {
-    [[ "$OFFLINE" = "True" ]] && return
-
-    GIT_REMOTE=$1
-    GIT_DEST=$2
-    GIT_REF=$3
-
-    if echo $GIT_REF | egrep -q "^refs"; then
-        # If our branch name is a gerrit style refs/changes/...
-        if [[ ! -d $GIT_DEST ]]; then
-            [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
-            git clone $GIT_REMOTE $GIT_DEST
-        fi
-        cd $GIT_DEST
-        git fetch $GIT_REMOTE $GIT_REF && git checkout FETCH_HEAD
-    else
-        # do a full clone only if the directory doesn't exist
-        if [[ ! -d $GIT_DEST ]]; then
-            [[ "$ERROR_ON_CLONE" = "True" ]] && exit 1
-            git clone $GIT_REMOTE $GIT_DEST
-            cd $GIT_DEST
-            # This checkout syntax works for both branches and tags
-            git checkout $GIT_REF
-        elif [[ "$RECLONE" == "yes" ]]; then
-            # if it does exist then simulate what clone does if asked to RECLONE
-            cd $GIT_DEST
-            # set the url to pull from and fetch
-            git remote set-url origin $GIT_REMOTE
-            git fetch origin
-            # remove the existing ignored files (like pyc) as they cause breakage
-            # (due to the py files having older timestamps than our pyc, so python
-            # thinks the pyc files are correct using them)
-            find $GIT_DEST -name '*.pyc' -delete
-
-            # handle GIT_REF accordingly to type (tag, branch)
-            if [[ -n "`git show-ref refs/tags/$GIT_REF`" ]]; then
-                git_update_tag $GIT_REF
-            elif [[ -n "`git show-ref refs/heads/$GIT_REF`" ]]; then
-                git_update_branch $GIT_REF
-            elif [[ -n "`git show-ref refs/remotes/origin/$GIT_REF`" ]]; then
-                git_update_remote_branch $GIT_REF
-            else
-                echo $GIT_REF is neither branch nor tag
-                exit 1
-            fi
-
-        fi
-    fi
-}
-
-
-# git update using reference as a branch.
-# git_update_branch ref
-function git_update_branch() {
-
-    GIT_BRANCH=$1
-
-    git checkout -f origin/$GIT_BRANCH
-    # a local branch might not exist
-    git branch -D $GIT_BRANCH || true
-    git checkout -b $GIT_BRANCH
-}
-
-
-# git update using reference as a branch.
-# git_update_remote_branch ref
-function git_update_remote_branch() {
-
-    GIT_BRANCH=$1
-
-    git checkout -b $GIT_BRANCH -t origin/$GIT_BRANCH
-}
-
-
-# git update using reference as a tag. Be careful editing source at that repo
-# as working copy will be in a detached mode
-# git_update_tag ref
-function git_update_tag() {
-
-    GIT_TAG=$1
-
-    git tag -d $GIT_TAG
-    # fetching given tag only
-    git fetch origin tag $GIT_TAG
-    git checkout -f $GIT_TAG
-}
-
-
-# Comment an option in an INI file
-# inicomment config-file section option
-function inicomment() {
-    local file=$1
-    local section=$2
-    local option=$3
-    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=.*$\)|#\1|" "$file"
-}
-
-
-# Uncomment an option in an INI file
-# iniuncomment config-file section option
-function iniuncomment() {
-    local file=$1
-    local section=$2
-    local option=$3
-    sed -i -e "/^\[$section\]/,/^\[.*\]/ s|[^ \t]*#[ \t]*\($option[ \t]*=.*$\)|\1|" "$file"
-}
-
-
-# Get an option from an INI file
-# iniget config-file section option
-function iniget() {
-    local file=$1
-    local section=$2
-    local option=$3
-    local line
-    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
-    echo ${line#*=}
-}
-
-
-# Determinate is the given option present in the INI file
-# ini_has_option config-file section option
-function ini_has_option() {
-    local file=$1
-    local section=$2
-    local option=$3
-    local line
-    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
-    [ -n "$line" ]
-}
-
-
-# Set an option in an INI file
-# iniset config-file section option value
-function iniset() {
-    local file=$1
-    local section=$2
-    local option=$3
-    local value=$4
-    if ! grep -q "^\[$section\]" "$file"; then
-        # Add section at the end
-        echo -e "\n[$section]" >>"$file"
-    fi
-    if ! ini_has_option "$file" "$section" "$option"; then
-        # Add it
-        sed -i -e "/^\[$section\]/ a\\
-$option = $value
-" "$file"
-    else
-        # Replace it
-        sed -i -e "/^\[$section\]/,/^\[.*\]/ s|^\($option[ \t]*=[ \t]*\).*$|\1$value|" "$file"
-    fi
-}
-
-
-# Get a multiple line option from an INI file
-# iniget_multiline config-file section option
-function iniget_multiline() {
-    local file=$1
-    local section=$2
-    local option=$3
-    local values
-    values=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { s/^$option[ \t]*=[ \t]*//gp; }" "$file")
-    echo ${values}
-}
-
-
-# Set a multiple line option in an INI file
-# iniset_multiline config-file section option value1 value2 valu3 ...
-function iniset_multiline() {
-    local file=$1
-    local section=$2
-    local option=$3
-    shift 3
-    local values
-    for v in $@; do
-        # The later sed command inserts each new value in the line next to
-        # the section identifier, which causes the values to be inserted in
-        # the reverse order. Do a reverse here to keep the original order.
-        values="$v ${values}"
-    done
-    if ! grep -q "^\[$section\]" "$file"; then
-        # Add section at the end
-        echo -e "\n[$section]" >>"$file"
-    else
-        # Remove old values
-        sed -i -e "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ d; }" "$file"
-    fi
-    # Add new ones
-    for v in $values; do
-        sed -i -e "/^\[$section\]/ a\\
-$option = $v
-" "$file"
-    done
-}
-
-
-# Append a new option in an ini file without replacing the old value
-# iniadd config-file section option value1 value2 value3 ...
-function iniadd() {
-    local file=$1
-    local section=$2
-    local option=$3
-    shift 3
-    local values="$(iniget_multiline $file $section $option) $@"
-    iniset_multiline $file $section $option $values
-}
-
-# Find out if a process exists by partial name.
-# is_running name
-function is_running() {
-    local name=$1
-    ps auxw | grep -v grep | grep ${name} > /dev/null
-    RC=$?
-    # some times I really hate bash reverse binary logic
-    return $RC
-}
-
-
-# is_service_enabled() checks if the service(s) specified as arguments are
-# enabled by the user in ``ENABLED_SERVICES``.
-#
-# Multiple services specified as arguments are ``OR``'ed together; the test
-# is a short-circuit boolean, i.e it returns on the first match.
-#
-# There are special cases for some 'catch-all' services::
-#   **nova** returns true if any service enabled start with **n-**
-#   **cinder** returns true if any service enabled start with **c-**
-#   **ceilometer** returns true if any service enabled start with **ceilometer**
-#   **glance** returns true if any service enabled start with **g-**
-#   **neutron** returns true if any service enabled start with **q-**
-#   **swift** returns true if any service enabled start with **s-**
-#   For backward compatibility if we have **swift** in ENABLED_SERVICES all the
-#   **s-** services will be enabled. This will be deprecated in the future.
-#
-# Uses global ``ENABLED_SERVICES``
-# is_service_enabled service [service ...]
-function is_service_enabled() {
-    services=$@
-    for service in ${services}; do
-        [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
-        [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && return 0
-        [[ ${service} == "cinder" && ${ENABLED_SERVICES} =~ "c-" ]] && return 0
-        [[ ${service} == "ceilometer" && ${ENABLED_SERVICES} =~ "ceilometer-" ]] && return 0
-        [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && return 0
-        [[ ${service} == "neutron" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
-        [[ ${service} == "swift" && ${ENABLED_SERVICES} =~ "s-" ]] && return 0
-        [[ ${service} == s-* && ${ENABLED_SERVICES} =~ "swift" ]] && return 0
-    done
-    return 1
-}
-
-
-# remove extra commas from the input string (i.e. ``ENABLED_SERVICES``)
-# _cleanup_service_list service-list
-function _cleanup_service_list () {
-    echo "$1" | sed -e '
-        s/,,/,/g;
-        s/^,//;
-        s/,$//
-    '
-}
-
-
-# enable_service() adds the services passed as argument to the
-# ``ENABLED_SERVICES`` list, if they are not already present.
-#
-# For example:
-#   enable_service qpid
-#
-# This function does not know about the special cases
-# for nova, glance, and neutron built into is_service_enabled().
-# Uses global ``ENABLED_SERVICES``
-# enable_service service [service ...]
-function enable_service() {
-    local tmpsvcs="${ENABLED_SERVICES}"
-    for service in $@; do
-        if ! is_service_enabled $service; then
-            tmpsvcs+=",$service"
-        fi
-    done
-    ENABLED_SERVICES=$(_cleanup_service_list "$tmpsvcs")
-    disable_negated_services
-}
-
-
-# disable_service() removes the services passed as argument to the
-# ``ENABLED_SERVICES`` list, if they are present.
-#
-# For example:
-#   disable_service rabbit
-#
-# This function does not know about the special cases
-# for nova, glance, and neutron built into is_service_enabled().
-# Uses global ``ENABLED_SERVICES``
-# disable_service service [service ...]
-function disable_service() {
-    local tmpsvcs=",${ENABLED_SERVICES},"
-    local service
-    for service in $@; do
-        if is_service_enabled $service; then
-            tmpsvcs=${tmpsvcs//,$service,/,}
-        fi
-    done
-    ENABLED_SERVICES=$(_cleanup_service_list "$tmpsvcs")
-}
-
-
-# disable_all_services() removes all current services
-# from ``ENABLED_SERVICES`` to reset the configuration
-# before a minimal installation
-# Uses global ``ENABLED_SERVICES``
-# disable_all_services
-function disable_all_services() {
-    ENABLED_SERVICES=""
-}
-
-
-# Remove all services starting with '-'.  For example, to install all default
-# services except rabbit (rabbit) set in ``localrc``:
-# ENABLED_SERVICES+=",-rabbit"
-# Uses global ``ENABLED_SERVICES``
-# disable_negated_services
-function disable_negated_services() {
-    local tmpsvcs="${ENABLED_SERVICES}"
-    local service
-    for service in ${tmpsvcs//,/ }; do
-        if [[ ${service} == -* ]]; then
-            tmpsvcs=$(echo ${tmpsvcs}|sed -r "s/(,)?(-)?${service#-}(,)?/,/g")
-        fi
-    done
-    ENABLED_SERVICES=$(_cleanup_service_list "$tmpsvcs")
-}
-
-
-# Distro-agnostic package installer
-# install_package package [package ...]
-function install_package() {
-    if is_ubuntu; then
-        [[ "$NO_UPDATE_REPOS" = "True" ]] || apt_get update
-        NO_UPDATE_REPOS=True
-
-        apt_get install "$@"
-    elif is_fedora; then
-        yum_install "$@"
-    elif is_suse; then
-        zypper_install "$@"
-    else
-        exit_distro_not_supported "installing packages"
-    fi
-}
-
-
-# Distro-agnostic package uninstaller
-# uninstall_package package [package ...]
-function uninstall_package() {
-    if is_ubuntu; then
-        apt_get purge "$@"
-    elif is_fedora; then
-        sudo yum remove -y "$@"
-    elif is_suse; then
-        sudo rpm -e "$@"
-    else
-        exit_distro_not_supported "uninstalling packages"
-    fi
-}
-
-
-# Distro-agnostic function to tell if a package is installed
-# is_package_installed package [package ...]
-function is_package_installed() {
-    if [[ -z "$@" ]]; then
-        return 1
-    fi
-
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-
-    if [[ "$os_PACKAGE" = "deb" ]]; then
-        dpkg -l "$@" > /dev/null
-    elif [[ "$os_PACKAGE" = "rpm" ]]; then
-        rpm --quiet -q "$@"
-    else
-        exit_distro_not_supported "finding if a package is installed"
-    fi
-}
-
-
-# Test if the named environment variable is set and not zero length
-# is_set env-var
-function is_set() {
-    local var=\$"$1"
-    eval "[ -n \"$var\" ]" # For ex.: sh -c "[ -n \"$var\" ]" would be better, but several exercises depends on this
-}
-
-
-# Wrapper for ``pip install`` to set cache and proxy environment variables
-# Uses globals ``OFFLINE``, ``PIP_DOWNLOAD_CACHE``, ``PIP_USE_MIRRORS``,
-#   ``TRACK_DEPENDS``, ``*_proxy`
-# pip_install package [package ...]
-function pip_install {
-    [[ "$OFFLINE" = "True" || -z "$@" ]] && return
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-    if [[ $TRACK_DEPENDS = True ]]; then
-        source $DEST/.venv/bin/activate
-        CMD_PIP=$DEST/.venv/bin/pip
-        SUDO_PIP="env"
-    else
-        SUDO_PIP="sudo"
-        CMD_PIP=$(get_pip_command)
-    fi
-
-    if [[ is_fedora && $DISTRO =~ (rhel6) ]]; then
-        # RHEL6 pip by default doesn't have this (was introduced
-        # around 0.8.1 or so)
-        PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-False}
-    else
-        PIP_USE_MIRRORS=${PIP_USE_MIRRORS:-True}
-    fi
-    if [[ "$PIP_USE_MIRRORS" != "False" ]]; then
-        PIP_MIRROR_OPT="--use-mirrors"
-    fi
-
-    $SUDO_PIP PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-/var/cache/pip} \
-        HTTP_PROXY=$http_proxy \
-        HTTPS_PROXY=$https_proxy \
-        NO_PROXY=$no_proxy \
-        $CMD_PIP install $PIP_MIRROR_OPT $@
-}
-
-
-# Service wrapper to restart services
-# restart_service service-name
-function restart_service() {
-    if is_ubuntu; then
-        sudo /usr/sbin/service $1 restart
-    else
-        sudo /sbin/service $1 restart
-    fi
-}
-
-
-# _run_process() is designed to be backgrounded by run_process() to simulate a
-# fork.  It includes the dirty work of closing extra filehandles and preparing log
-# files to produce the same logs as screen_it().  The log filename is derived
-# from the service name and global-and-now-misnamed SCREEN_LOGDIR
-# _run_process service "command-line"
-function _run_process() {
-    local service=$1
-    local command="$2"
-
-    # Undo logging redirections and close the extra descriptors
-    exec 1>&3
-    exec 2>&3
-    exec 3>&-
-    exec 6>&-
-
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        exec 1>&${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log 2>&1
-        ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
-
-        # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
-        export PYTHONUNBUFFERED=1
-    fi
-
-    exec /bin/bash -c "$command"
-    die "$service exec failure: $command"
-}
-
-
-# run_process() launches a child process that closes all file descriptors and
-# then exec's the passed in command.  This is meant to duplicate the semantics
-# of screen_it() without screen.  PIDs are written to
-# $SERVICE_DIR/$SCREEN_NAME/$service.pid
-# run_process service "command-line"
-function run_process() {
-    local service=$1
-    local command="$2"
-
-    # Spawn the child process
-    _run_process "$service" "$command" &
-    echo $!
-}
-
-
-# Helper to launch a service in a named screen
-# screen_it service "command-line"
-function screen_it {
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-    USE_SCREEN=$(trueorfalse True $USE_SCREEN)
-
-    if is_service_enabled $1; then
-        # Append the service to the screen rc file
-        screen_rc "$1" "$2"
-
-        if [[ "$USE_SCREEN" = "True" ]]; then
-            screen -S $SCREEN_NAME -X screen -t $1
-
-            if [[ -n ${SCREEN_LOGDIR} ]]; then
-                screen -S $SCREEN_NAME -p $1 -X logfile ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log
-                screen -S $SCREEN_NAME -p $1 -X log on
-                ln -sf ${SCREEN_LOGDIR}/screen-${1}.${CURRENT_LOG_TIME}.log ${SCREEN_LOGDIR}/screen-${1}.log
-            fi
-
-            # sleep to allow bash to be ready to be send the command - we are
-            # creating a new window in screen and then sends characters, so if
-            # bash isn't running by the time we send the command, nothing happens
-            sleep 1.5
-
-            NL=`echo -ne '\015'`
-            screen -S $SCREEN_NAME -p $1 -X stuff "$2 || touch \"$SERVICE_DIR/$SCREEN_NAME/$1.failure\"$NL"
-        else
-            # Spawn directly without screen
-            run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$service.pid
-        fi
-    fi
-}
-
-
-# Screen rc file builder
-# screen_rc service "command-line"
-function screen_rc {
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SCREENRC=$TOP_DIR/$SCREEN_NAME-screenrc
-    if [[ ! -e $SCREENRC ]]; then
-        # Name the screen session
-        echo "sessionname $SCREEN_NAME" > $SCREENRC
-        # Set a reasonable statusbar
-        echo "hardstatus alwayslastline '$SCREEN_HARDSTATUS'" >> $SCREENRC
-        # Some distributions override PROMPT_COMMAND for the screen terminal type - turn that off
-        echo "setenv PROMPT_COMMAND /bin/true" >> $SCREENRC
-        echo "screen -t shell bash" >> $SCREENRC
-    fi
-    # If this service doesn't already exist in the screenrc file
-    if ! grep $1 $SCREENRC 2>&1 > /dev/null; then
-        NL=`echo -ne '\015'`
-        echo "screen -t $1 bash" >> $SCREENRC
-        echo "stuff \"$2$NL\"" >> $SCREENRC
-    fi
-}
-
-
-# Helper to remove the *.failure files under $SERVICE_DIR/$SCREEN_NAME
-# This is used for service_check when all the screen_it are called finished
-# init_service_check
-function init_service_check() {
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-
-    if [[ ! -d "$SERVICE_DIR/$SCREEN_NAME" ]]; then
-        mkdir -p "$SERVICE_DIR/$SCREEN_NAME"
-    fi
-
-    rm -f "$SERVICE_DIR/$SCREEN_NAME"/*.failure
-}
-
-
-# Helper to get the status of each running service
-# service_check
-function service_check() {
-    local service
-    local failures
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-
-
-    if [[ ! -d "$SERVICE_DIR/$SCREEN_NAME" ]]; then
-        echo "No service status directory found"
-        return
-    fi
-
-    # Check if there is any falure flag file under $SERVICE_DIR/$SCREEN_NAME
-    failures=`ls "$SERVICE_DIR/$SCREEN_NAME"/*.failure 2>/dev/null`
-
-    for service in $failures; do
-        service=`basename $service`
-        service=${service::-8}
-        echo "Error: Service $service is not running"
-    done
-
-    if [ -n "$failures" ]; then
-        echo "More details about the above errors can be found with screen, with ./rejoin-stack.sh"
-    fi
-}
-
-
-# ``pip install`` the dependencies of the package before ``setup.py develop``
-# so pip and not distutils processes the dependency chain
-# Uses globals ``TRACK_DEPENDES``, ``*_proxy`
-# setup_develop directory
-function setup_develop() {
-    if [[ $TRACK_DEPENDS = True ]]; then
-        SUDO_CMD="env"
-    else
-        SUDO_CMD="sudo"
-    fi
-    for reqs_file in $1/requirements.txt $1/tools/pip-requires ; do
-        if [ -f $reqs_file ] ; then
-            pip_install -r $reqs_file
-        fi
-    done
-    (cd $1; \
-        python setup.py egg_info; \
-        $SUDO_CMD \
-            HTTP_PROXY=$http_proxy \
-            HTTPS_PROXY=$https_proxy \
-            NO_PROXY=$no_proxy \
-            python setup.py develop \
-    )
-}
-
-
-# Service wrapper to start services
-# start_service service-name
-function start_service() {
-    if is_ubuntu; then
-        sudo /usr/sbin/service $1 start
-    else
-        sudo /sbin/service $1 start
-    fi
-}
-
-
-# Service wrapper to stop services
-# stop_service service-name
-function stop_service() {
-    if is_ubuntu; then
-        sudo /usr/sbin/service $1 stop
-    else
-        sudo /sbin/service $1 stop
-    fi
-}
-
-
-# Normalize config values to True or False
-# Accepts as False: 0 no false False FALSE
-# Accepts as True: 1 yes true True TRUE
-# VAR=$(trueorfalse default-value test-value)
-function trueorfalse() {
-    local default=$1
-    local testval=$2
-
-    [[ -z "$testval" ]] && { echo "$default"; return; }
-    [[ "0 no false False FALSE" =~ "$testval" ]] && { echo "False"; return; }
-    [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
-    echo "$default"
-}
-
-
-# Retrieve an image from a URL and upload into Glance
+# Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:
-#   ``FILES`` must be set to the cache dir
-#   ``GLANCE_HOSTPORT``
-# upload_image image-url glance-token
-function upload_image() {
+#
+# - ``FILES`` must be set to the cache dir
+# - ``GLANCE_HOSTPORT``
+#
+# upload_image image-url
+function upload_image {
     local image_url=$1
-    local token=$2
+
+    local image image_fname image_name
 
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
-
-    # Downloads the image (uec ami+aki style), then extracts it.
-    IMAGE_FNAME=`basename "$image_url"`
-    if [[ ! -f $FILES/$IMAGE_FNAME || "$(stat -c "%s" $FILES/$IMAGE_FNAME)" = "0" ]]; then
-        wget -c $image_url -O $FILES/$IMAGE_FNAME
-        if [[ $? -ne 0 ]]; then
+    image_fname=`basename "$image_url"`
+    if [[ $image_url != file* ]]; then
+        # Downloads the image (uec ami+akistyle), then extracts it.
+        if [[ ! -f $FILES/$image_fname || "$(stat -c "%s" $FILES/$image_fname)" = "0" ]]; then
+            wget --progress=dot:giga -c $image_url -O $FILES/$image_fname
+            if [[ $? -ne 0 ]]; then
+                echo "Not found: $image_url"
+                return
+            fi
+        fi
+        image="$FILES/${image_fname}"
+    else
+        # File based URL (RFC 1738): ``file://host/path``
+        # Remote files are not considered here.
+        # unix: ``file:///home/user/path/file``
+        # windows: ``file:///C:/Documents%20and%20Settings/user/path/file``
+        image=$(echo $image_url | sed "s/^file:\/\///g")
+        if [[ ! -f $image || "$(stat -c "%s" $image)" == "0" ]]; then
             echo "Not found: $image_url"
             return
         fi
@@ -1164,97 +82,267 @@ function upload_image() {
 
     # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
     if [[ "$image_url" =~ 'openvz' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
-        IMAGE_NAME="${IMAGE_FNAME%.tar.gz}"
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format ami --disk-format ami < "${IMAGE}"
+        image_name="${image_fname%.tar.gz}"
+        openstack --os-cloud=devstack-admin image create "$image_name" --public --container-format ami --disk-format ami < "${image}"
         return
     fi
 
-    # XenServer-ovf-format images are provided as .vhd.tgz as well
+    # vmdk format images
+    if [[ "$image_url" =~ '.vmdk' ]]; then
+        image_name="${image_fname%.vmdk}"
+
+        # Before we can upload vmdk type images to glance, we need to know it's
+        # disk type, storage adapter, and networking adapter. These values are
+        # passed to glance as custom properties.
+        # We take these values from the vmdk file if populated. Otherwise, we use
+        # vmdk filename, which is expected in the following format:
+        #
+        #     <name>-<disk type>;<storage adapter>;<network adapter>
+        #
+        # If the filename does not follow the above format then the vsphere
+        # driver will supply default values.
+
+        local vmdk_disktype=""
+        local vmdk_net_adapter="e1000"
+        local path_len
+
+        # vmdk adapter type
+        local vmdk_adapter_type
+        vmdk_adapter_type="$(head -25 $image | { grep -a -F -m 1 'ddb.adapterType =' $image || true; })"
+        vmdk_adapter_type="${vmdk_adapter_type#*\"}"
+        vmdk_adapter_type="${vmdk_adapter_type%?}"
+
+        # vmdk disk type
+        local vmdk_create_type
+        vmdk_create_type="$(head -25 $image | { grep -a -F -m 1 'createType=' $image || true; })"
+        vmdk_create_type="${vmdk_create_type#*\"}"
+        vmdk_create_type="${vmdk_create_type%\"*}"
+
+        descriptor_data_pair_msg="Monolithic flat and VMFS disks "`
+                                    `"should use a descriptor-data pair."
+        if [[ "$vmdk_create_type" = "monolithicSparse" ]]; then
+            vmdk_disktype="sparse"
+        elif [[ "$vmdk_create_type" = "monolithicFlat" || "$vmdk_create_type" = "vmfs" ]]; then
+            # Attempt to retrieve the ``*-flat.vmdk``
+            local flat_fname
+            flat_fname="$(head -25 $image | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $image || true; })"
+            flat_fname="${flat_fname#*\"}"
+            flat_fname="${flat_fname%?}"
+            if [[ -z "$flat_fname" ]]; then
+                flat_fname="$image_name-flat.vmdk"
+            fi
+            path_len=`expr ${#image_url} - ${#image_fname}`
+            local flat_url="${image_url:0:$path_len}$flat_fname"
+            warn $LINENO "$descriptor_data_pair_msg"`
+                            `" Attempt to retrieve the *-flat.vmdk: $flat_url"
+            if [[ $flat_url != file* ]]; then
+                if [[ ! -f $FILES/$flat_fname || \
+                "$(stat -c "%s" $FILES/$flat_fname)" = "0" ]]; then
+                    wget --progress=dot:giga -c $flat_url -O $FILES/$flat_fname
+                fi
+                image="$FILES/${flat_fname}"
+            else
+                image=$(echo $flat_url | sed "s/^file:\/\///g")
+                if [[ ! -f $image || "$(stat -c "%s" $image)" == "0" ]]; then
+                    echo "Flat disk not found: $flat_url"
+                    return 1
+                fi
+            fi
+            image_name="${flat_fname}"
+            vmdk_disktype="preallocated"
+        elif [[ "$vmdk_create_type" = "streamOptimized" ]]; then
+            vmdk_disktype="streamOptimized"
+        elif [[ -z "$vmdk_create_type" ]]; then
+            # *-flat.vmdk provided: attempt to retrieve the descriptor (*.vmdk)
+            # to retrieve appropriate metadata
+            if [[ ${image_name: -5} != "-flat" ]]; then
+                warn $LINENO "Expected filename suffix: '-flat'."`
+                            `" Filename provided: ${image_name}"
+            else
+                descriptor_fname="${image_name:0:${#image_name} - 5}.vmdk"
+                path_len=`expr ${#image_url} - ${#image_fname}`
+                local flat_path="${image_url:0:$path_len}"
+                local descriptor_url=$flat_path$descriptor_fname
+                warn $LINENO "$descriptor_data_pair_msg"`
+                                `" Attempt to retrieve the descriptor *.vmdk: $descriptor_url"
+                if [[ $flat_path != file* ]]; then
+                    if [[ ! -f $FILES/$descriptor_fname || \
+                    "$(stat -c "%s" $FILES/$descriptor_fname)" = "0" ]]; then
+                        wget -c $descriptor_url -O $FILES/$descriptor_fname
+                    fi
+                    descriptor_url="$FILES/$descriptor_fname"
+                else
+                    descriptor_url=$(echo $descriptor_url | sed "s/^file:\/\///g")
+                    if [[ ! -f $descriptor_url || \
+                    "$(stat -c "%s" $descriptor_url)" == "0" ]]; then
+                        echo "Descriptor not found: $descriptor_url"
+                        return 1
+                    fi
+                fi
+                vmdk_adapter_type="$(head -25 $descriptor_url | { grep -a -F -m 1 'ddb.adapterType =' $descriptor_url || true; })"
+                vmdk_adapter_type="${vmdk_adapter_type#*\"}"
+                vmdk_adapter_type="${vmdk_adapter_type%?}"
+            fi
+            vmdk_disktype="preallocated"
+        else
+            vmdk_disktype="preallocated"
+        fi
+
+        # NOTE: For backwards compatibility reasons, colons may be used in place
+        # of semi-colons for property delimiters but they are not permitted
+        # characters in NTFS filesystems.
+        property_string=`echo "$image_name" | { grep -oP '(?<=-)(?!.*-).*[:;].*[:;].*$' || true; }`
+        IFS=':;' read -a props <<< "$property_string"
+        vmdk_disktype="${props[0]:-$vmdk_disktype}"
+        vmdk_adapter_type="${props[1]:-$vmdk_adapter_type}"
+        vmdk_net_adapter="${props[2]:-$vmdk_net_adapter}"
+
+        openstack --os-cloud=devstack-admin image create "$image_name" --public --container-format bare --disk-format vmdk --property vmware_disktype="$vmdk_disktype" --property vmware_adaptertype="$vmdk_adapter_type" --property hw_vif_model="$vmdk_net_adapter" < "${image}"
+        return
+    fi
+
+    # XenServer-vhd-ovf-format images are provided as .vhd.tgz
     # and should not be decompressed prior to loading
     if [[ "$image_url" =~ '.vhd.tgz' ]]; then
-        IMAGE="$FILES/${IMAGE_FNAME}"
-        IMAGE_NAME="${IMAGE_FNAME%.vhd.tgz}"
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --is-public=True --container-format=ovf --disk-format=vhd < "${IMAGE}"
+        image_name="${image_fname%.vhd.tgz}"
+        local force_vm_mode=""
+        if [[ "$image_name" =~ 'cirros' ]]; then
+            # Cirros VHD image currently only boots in PV mode.
+            # Nova defaults to PV for all VHD images, but
+            # the glance setting is needed for booting
+            # directly from volume.
+            force_vm_mode="--property vm_mode=xen"
+        fi
+        openstack \
+            --os-cloud=devstack-admin \
+            image create \
+            "$image_name" --public \
+            --container-format=ovf --disk-format=vhd \
+            $force_vm_mode < "${image}"
         return
     fi
 
-    KERNEL=""
-    RAMDISK=""
-    DISK_FORMAT=""
-    CONTAINER_FORMAT=""
-    UNPACK=""
-    case "$IMAGE_FNAME" in
+    # .xen-raw.tgz suggests a Xen capable raw image inside a tgz.
+    # and should not be decompressed prior to loading.
+    # Setting metadata, so PV mode is used.
+    if [[ "$image_url" =~ '.xen-raw.tgz' ]]; then
+        image_name="${image_fname%.xen-raw.tgz}"
+        openstack \
+            --os-cloud=devstack-admin \
+            image create \
+            "$image_name" --public \
+            --container-format=tgz --disk-format=raw \
+            --property vm_mode=xen < "${image}"
+        return
+    fi
+
+    if [[ "$image_url" =~ '.hds' ]]; then
+        image_name="${image_fname%.hds}"
+        vm_mode=${image_name##*-}
+        if [[ $vm_mode != 'exe' && $vm_mode != 'hvm' ]]; then
+            die $LINENO "Unknown vm_mode=${vm_mode} for Virtuozzo image"
+        fi
+
+        openstack \
+            --os-cloud=devstack-admin \
+            image create \
+            "$image_name" --public \
+            --container-format=bare --disk-format=ploop \
+            --property vm_mode=$vm_mode < "${image}"
+        return
+    fi
+
+    local kernel=""
+    local ramdisk=""
+    local disk_format=""
+    local container_format=""
+    local unpack=""
+    local img_property=""
+    case "$image_fname" in
         *.tar.gz|*.tgz)
             # Extract ami and aki files
-            [ "${IMAGE_FNAME%.tar.gz}" != "$IMAGE_FNAME" ] &&
-                IMAGE_NAME="${IMAGE_FNAME%.tar.gz}" ||
-                IMAGE_NAME="${IMAGE_FNAME%.tgz}"
-            xdir="$FILES/images/$IMAGE_NAME"
+            [ "${image_fname%.tar.gz}" != "$image_fname" ] &&
+                image_name="${image_fname%.tar.gz}" ||
+                image_name="${image_fname%.tgz}"
+            local xdir="$FILES/images/$image_name"
             rm -Rf "$xdir";
             mkdir "$xdir"
-            tar -zxf $FILES/$IMAGE_FNAME -C "$xdir"
-            KERNEL=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
-            RAMDISK=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
-            IMAGE=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
-                     [ -f "$f" ] && echo "$f" && break; done; true)
-            if [[ -z "$IMAGE_NAME" ]]; then
-                IMAGE_NAME=$(basename "$IMAGE" ".img")
+            tar -zxf $image -C "$xdir"
+            kernel=$(for f in "$xdir/"*-vmlinuz* "$xdir/"aki-*/image; do
+                [ -f "$f" ] && echo "$f" && break; done; true)
+            ramdisk=$(for f in "$xdir/"*-initrd* "$xdir/"ari-*/image; do
+                [ -f "$f" ] && echo "$f" && break; done; true)
+            image=$(for f in "$xdir/"*.img "$xdir/"ami-*/image; do
+                [ -f "$f" ] && echo "$f" && break; done; true)
+            if [[ -z "$image_name" ]]; then
+                image_name=$(basename "$image" ".img")
             fi
             ;;
         *.img)
-            IMAGE="$FILES/$IMAGE_FNAME";
-            IMAGE_NAME=$(basename "$IMAGE" ".img")
-            format=$(qemu-img info ${IMAGE} | awk '/^file format/ { print $3; exit }')
+            image_name=$(basename "$image" ".img")
+            local format
+            format=$(qemu-img info ${image} | awk '/^file format/ { print $3; exit }')
             if [[ ",qcow2,raw,vdi,vmdk,vpc," =~ ",$format," ]]; then
-                DISK_FORMAT=$format
+                disk_format=$format
             else
-                DISK_FORMAT=raw
+                disk_format=raw
             fi
-            CONTAINER_FORMAT=bare
+            container_format=bare
             ;;
         *.img.gz)
-            IMAGE="$FILES/${IMAGE_FNAME}"
-            IMAGE_NAME=$(basename "$IMAGE" ".img.gz")
-            DISK_FORMAT=raw
-            CONTAINER_FORMAT=bare
-            UNPACK=zcat
+            image_name=$(basename "$image" ".img.gz")
+            disk_format=raw
+            container_format=bare
+            unpack=zcat
             ;;
         *.qcow2)
-            IMAGE="$FILES/${IMAGE_FNAME}"
-            IMAGE_NAME=$(basename "$IMAGE" ".qcow2")
-            DISK_FORMAT=qcow2
-            CONTAINER_FORMAT=bare
+            image_name=$(basename "$image" ".qcow2")
+            disk_format=qcow2
+            container_format=bare
             ;;
         *.iso)
-            IMAGE="$FILES/${IMAGE_FNAME}"
-            IMAGE_NAME=$(basename "$IMAGE" ".iso")
-            DISK_FORMAT=iso
-            CONTAINER_FORMAT=bare
+            image_name=$(basename "$image" ".iso")
+            disk_format=iso
+            container_format=bare
             ;;
-        *) echo "Do not know what to do with $IMAGE_FNAME"; false;;
+        *.vhd|*.vhdx|*.vhd.gz|*.vhdx.gz)
+            local extension="${image_fname#*.}"
+            image_name=$(basename "$image" ".$extension")
+            disk_format=vhd
+            container_format=bare
+            if [ "${image_fname##*.}" == "gz" ]; then
+                unpack=zcat
+            fi
+            ;;
+        *) echo "Do not know what to do with $image_fname"; false;;
     esac
 
-    if [ "$CONTAINER_FORMAT" = "bare" ]; then
-        if [ "$UNPACK" = "zcat" ]; then
-            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --public --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < <(zcat --force "${IMAGE}")
+    if is_arch "ppc64le" || is_arch "ppc64" || is_arch "ppc"; then
+        img_property="--property hw_disk_bus=scsi --property hw_scsi_model=virtio-scsi --property hw_cdrom_bus=scsi --property os_command_line=console=hvc0"
+    fi
+
+    if is_arch "aarch64"; then
+        img_property="--property hw_machine_type=virt --property hw_cdrom_bus=virtio --property os_command_line='console=ttyAMA0'"
+    fi
+
+    if [ "$container_format" = "bare" ]; then
+        if [ "$unpack" = "zcat" ]; then
+            openstack --os-cloud=devstack-admin image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(zcat --force "${image}")
         else
-            glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME" --public --container-format=$CONTAINER_FORMAT --disk-format $DISK_FORMAT < "${IMAGE}"
+            openstack --os-cloud=devstack-admin image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < "${image}"
         fi
     else
         # Use glance client to add the kernel the root filesystem.
         # We parse the results of the first upload to get the glance ID of the
         # kernel for use when uploading the root filesystem.
-        KERNEL_ID=""; RAMDISK_ID="";
-        if [ -n "$KERNEL" ]; then
-            KERNEL_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-kernel" --public --container-format aki --disk-format aki < "$KERNEL" | grep ' id ' | get_field 2)
+        local kernel_id="" ramdisk_id="";
+        if [ -n "$kernel" ]; then
+            kernel_id=$(openstack --os-cloud=devstack-admin image create "$image_name-kernel" $img_property --public --container-format aki --disk-format aki < "$kernel" | grep ' id ' | get_field 2)
         fi
-        if [ -n "$RAMDISK" ]; then
-            RAMDISK_ID=$(glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "$IMAGE_NAME-ramdisk" --public --container-format ari --disk-format ari < "$RAMDISK" | grep ' id ' | get_field 2)
+        if [ -n "$ramdisk" ]; then
+            ramdisk_id=$(openstack --os-cloud=devstack-admin image create "$image_name-ramdisk" $img_property --public --container-format ari --disk-format ari < "$ramdisk" | grep ' id ' | get_field 2)
         fi
-        glance --os-auth-token $token --os-image-url http://$GLANCE_HOSTPORT image-create --name "${IMAGE_NAME%.img}" --public --container-format ami --disk-format ami ${KERNEL_ID:+--property kernel_id=$KERNEL_ID} ${RAMDISK_ID:+--property ramdisk_id=$RAMDISK_ID} < "${IMAGE}"
+        openstack --os-cloud=devstack-admin image create "${image_name%.img}" $img_property --public --container-format ami --disk-format ami ${kernel_id:+--property kernel_id=$kernel_id} ${ramdisk_id:+--property ramdisk_id=$ramdisk_id} < "${image}"
     fi
 }
 
@@ -1263,114 +351,94 @@ function upload_image() {
 # When called from stackrc/localrc DATABASE_BACKENDS has not been
 # initialized yet, just save the configuration selection and call back later
 # to validate it.
-#  $1 The name of the database backend to use (mysql, postgresql, ...)
+#
+# ``$1`` - the name of the database backend to use (mysql, postgresql, ...)
 function use_database {
     if [[ -z "$DATABASE_BACKENDS" ]]; then
         # No backends registered means this is likely called from ``localrc``
         # This is now deprecated usage
         DATABASE_TYPE=$1
-        DEPRECATED_TEXT="$DEPRECATED_TEXT\nThe database backend needs to be properly set in ENABLED_SERVICES; use_database is deprecated localrc\n"
+        deprecated "The database backend needs to be properly set in ENABLED_SERVICES; use_database is deprecated localrc"
     else
         # This should no longer get called...here for posterity
         use_exclusive_service DATABASE_BACKENDS DATABASE_TYPE $1
     fi
 }
 
-
-# Toggle enable/disable_service for services that must run exclusive of each other
-#  $1 The name of a variable containing a space-separated list of services
-#  $2 The name of a variable in which to store the enabled service's name
-#  $3 The name of the service to enable
-function use_exclusive_service {
-    local options=${!1}
-    local selection=$3
-    out=$2
-    [ -z $selection ] || [[ ! "$options" =~ "$selection" ]] && return 1
-    for opt in $options;do
-        [[ "$opt" = "$selection" ]] && enable_service $opt || disable_service $opt
-    done
-    eval "$out=$selection"
-    return 0
-}
-
+#Macro for curl statements. curl requires -g option for literal IPv6 addresses.
+CURL_GET="${CURL_GET:-curl -g}"
 
 # Wait for an HTTP server to start answering requests
 # wait_for_service timeout url
-function wait_for_service() {
+function wait_for_service {
     local timeout=$1
     local url=$2
-    timeout $timeout sh -c "while ! http_proxy= https_proxy= curl -s $url >/dev/null; do sleep 1; done"
-}
-
-
-# Wrapper for ``yum`` to set proxy environment variables
-# Uses globals ``OFFLINE``, ``*_proxy`
-# yum_install package [package ...]
-function yum_install() {
-    [[ "$OFFLINE" = "True" ]] && return
-    local sudo="sudo"
-    [[ "$(id -u)" = "0" ]] && sudo="env"
-    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
-        no_proxy=$no_proxy \
-        yum install -y "$@"
-}
-
-
-# zypper wrapper to set arguments correctly
-# zypper_install package [package ...]
-function zypper_install() {
-    [[ "$OFFLINE" = "True" ]] && return
-    local sudo="sudo"
-    [[ "$(id -u)" = "0" ]] && sudo="env"
-    $sudo http_proxy=$http_proxy https_proxy=$https_proxy \
-        zypper --non-interactive install --auto-agree-with-licenses "$@"
+    time_start "wait_for_service"
+    timeout $timeout sh -c "while ! $CURL_GET -k --noproxy '*' -s $url >/dev/null; do sleep 1; done"
+    time_stop "wait_for_service"
 }
 
 
 # ping check
-# Uses globals ``ENABLED_SERVICES``
-# ping_check from-net ip boot-timeout expected
-function ping_check() {
-    if is_service_enabled neutron; then
-        _ping_check_neutron  "$1" $2 $3 $4
-        return
-    fi
-    _ping_check_novanet "$1" $2 $3 $4
-}
+# Uses globals ``ENABLED_SERVICES``, ``TOP_DIR``, ``MULTI_HOST``, ``PRIVATE_NETWORK``
+# ping_check <ip> [boot-timeout] [from_net] [expected]
+function ping_check {
+    local ip=$1
+    local timeout=${2:-30}
+    local from_net=${3:-""}
+    local expected=${4:-True}
+    local op="!"
+    local failmsg="[Fail] Couldn't ping server"
+    local ping_cmd="ping"
 
-# ping check for nova
-# Uses globals ``MULTI_HOST``, ``PRIVATE_NETWORK``
-function _ping_check_novanet() {
-    local from_net=$1
-    local ip=$2
-    local boot_timeout=$3
-    local expected=${4:-"True"}
-    local check_command=""
-    MULTI_HOST=`trueorfalse False $MULTI_HOST`
-    if [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
-        sleep $boot_timeout
-        return
-    fi
-    if [[ "$expected" = "True" ]]; then
-        check_command="while ! ping -c1 -w1 $ip; do sleep 1; done"
-    else
-        check_command="while ping -c1 -w1 $ip; do sleep 1; done"
-    fi
-    if ! timeout $boot_timeout sh -c "$check_command"; then
-        if [[ "$expected" = "True" ]]; then
-            die $LINENO "[Fail] Couldn't ping server"
-        else
-            die $LINENO "[Fail] Could ping server"
+    # if we don't specify a from_net we're expecting things to work
+    # fine from our local box.
+    if [[ -n "$from_net" ]]; then
+        if is_service_enabled neutron; then
+            ping_cmd="$TOP_DIR/tools/ping_neutron.sh $from_net"
+        elif [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
+            # there is no way to address the multihost / private case, bail here for compatibility.
+            # TODO: remove this cruft and redo code to handle this at the caller level.
+            return
         fi
-        exit 1
+    fi
+
+    # inverse the logic if we're testing no connectivity
+    if [[ "$expected" != "True" ]]; then
+        op=""
+        failmsg="[Fail] Could ping server"
+    fi
+
+    # Because we've transformed this command so many times, print it
+    # out at the end.
+    local check_command="while $op $ping_cmd -c1 -w1 $ip; do sleep 1; done"
+    echo "Checking connectivity with $check_command"
+
+    if ! timeout $timeout sh -c "$check_command"; then
+        die $LINENO $failmsg
     fi
 }
 
+# Get ip of instance
+function get_instance_ip {
+    local vm_id=$1
+    local network_name=$2
+    local nova_result
+    local ip
+
+    nova_result="$(nova show $vm_id)"
+    ip=$(echo "$nova_result" | grep "$network_name" | get_field 2)
+    if [[ $ip = "" ]];then
+        echo "$nova_result"
+        die $LINENO "[Fail] Couldn't get ipaddress of VM"
+    fi
+    echo $ip
+}
 
 # ssh check
 
 # ssh_check net-name key-file floating-ip default-user active-timeout
-function ssh_check() {
+function ssh_check {
     if is_service_enabled neutron; then
         _ssh_check_neutron  "$1" $2 $3 $4 $5
         return
@@ -1378,7 +446,7 @@ function ssh_check() {
     _ssh_check_novanet "$1" $2 $3 $4 $5
 }
 
-function _ssh_check_novanet() {
+function _ssh_check_novanet {
     local NET_NAME=$1
     local KEY_FILE=$2
     local FLOATING_IP=$3
@@ -1391,70 +459,26 @@ function _ssh_check_novanet() {
 }
 
 
-# Add a user to a group.
-# add_user_to_group user group
-function add_user_to_group() {
-    local user=$1
-    local group=$2
-
-    if [[ -z "$os_VENDOR" ]]; then
-        GetOSVersion
-    fi
-
-    # SLE11 and openSUSE 12.2 don't have the usual usermod
-    if ! is_suse || [[ "$os_VENDOR" = "openSUSE" && "$os_RELEASE" != "12.2" ]]; then
-        sudo usermod -a -G "$group" "$user"
-    else
-        sudo usermod -A "$group" "$user"
-    fi
-}
-
-
-# Get the path to the direcotry where python executables are installed.
-# get_python_exec_prefix
-function get_python_exec_prefix() {
-    if is_fedora || is_suse; then
-        echo "/usr/bin"
-    else
-        echo "/usr/local/bin"
-    fi
-}
-
-
 # Get the location of the $module-rootwrap executables, where module is cinder
 # or nova.
 # get_rootwrap_location module
-function get_rootwrap_location() {
+function get_rootwrap_location {
     local module=$1
 
     echo "$(get_python_exec_prefix)/$module-rootwrap"
 }
 
 
-# Get the path to the pip command.
-# get_pip_command
-function get_pip_command() {
-    if is_fedora; then
-        which pip-python
-    else
-        which pip
-    fi
-
-    if [ $? -ne 0 ]; then
-        die $LINENO "Unable to find pip; cannot continue"
-    fi
-}
-
-
 # Path permissions sanity check
 # check_path_perm_sanity path
-function check_path_perm_sanity() {
+function check_path_perm_sanity {
     # Ensure no element of the path has 0700 permissions, which is very
     # likely to cause issues for daemons.  Inspired by default 0700
     # homedir permissions on RHEL and common practice of making DEST in
     # the stack user's homedir.
 
-    local real_path=$(readlink -f $1)
+    local real_path
+    real_path=$(readlink -f $1)
     local rebuilt_path=""
     for i in $(echo ${real_path} | tr "/" " "); do
         rebuilt_path=$rebuilt_path"/"$i
@@ -1463,7 +487,7 @@ function check_path_perm_sanity() {
             echo "*** DEST path element"
             echo "***    ${rebuilt_path}"
             echo "*** appears to have 0700 permissions."
-            echo "*** This is very likely to cause fatal issues for devstack daemons."
+            echo "*** This is very likely to cause fatal issues for DevStack daemons."
 
             if [[ -n "$SKIP_PATH_SANITY" ]]; then
                 return
@@ -1482,23 +506,23 @@ function check_path_perm_sanity() {
 #
 # _vercmp_r sep ver1 ver2
 function _vercmp_r {
-  typeset sep
-  typeset -a ver1=() ver2=()
-  sep=$1; shift
-  ver1=("${@:1:sep}")
-  ver2=("${@:sep+1}")
+    typeset sep
+    typeset -a ver1=() ver2=()
+    sep=$1; shift
+    ver1=("${@:1:sep}")
+    ver2=("${@:sep+1}")
 
-  if ((ver1 > ver2)); then
-    echo 1; return 0
-  elif ((ver2 > ver1)); then
-    echo -1; return 0
-  fi
+    if ((ver1 > ver2)); then
+        echo 1; return 0
+    elif ((ver2 > ver1)); then
+        echo -1; return 0
+    fi
 
-  if ((sep <= 1)); then
-    echo 0; return 0
-  fi
+    if ((sep <= 1)); then
+        echo 0; return 0
+    fi
 
-  _vercmp_r $((sep-1)) "${ver1[@]:1}" "${ver2[@]:1}"
+    _vercmp_r $((sep-1)) "${ver1[@]:1}" "${ver2[@]:1}"
 }
 
 
@@ -1519,20 +543,133 @@ function _vercmp_r {
 # The above will return "0", as the versions are equal.
 #
 # vercmp_numbers ver1 ver2
-vercmp_numbers() {
-  typeset v1=$1 v2=$2 sep
-  typeset -a ver1 ver2
+function vercmp_numbers {
+    typeset v1=$1 v2=$2 sep
+    typeset -a ver1 ver2
 
-  IFS=. read -ra ver1 <<< "$v1"
-  IFS=. read -ra ver2 <<< "$v2"
+    deprecated "vercmp_numbers is deprecated for more generic vercmp"
 
-  _vercmp_r "${#ver1[@]}" "${ver1[@]}" "${ver2[@]}"
+    IFS=. read -ra ver1 <<< "$v1"
+    IFS=. read -ra ver2 <<< "$v2"
+
+    _vercmp_r "${#ver1[@]}" "${ver1[@]}" "${ver2[@]}"
 }
 
+# vercmp ver1 op ver2
+#  Compare VER1 to VER2
+#   - op is one of < <= == >= >
+#   - returns true if satisified
+#  e.g.
+#  if vercmp 1.0 "<" 2.0; then
+#    ...
+#  fi
+function vercmp {
+    local v1=$1
+    local op=$2
+    local v2=$3
+    local result
+
+    # sort the two numbers with sort's "-V" argument.  Based on if v2
+    # swapped places with v1, we can determine ordering.
+    result=$(echo -e "$v1\n$v2" | sort -V | head -1)
+
+    case $op in
+        "==")
+            [ "$v1" = "$v2" ]
+            return
+            ;;
+        ">")
+            [ "$v1" != "$v2" ] && [ "$result" = "$v2" ]
+            return
+            ;;
+        "<")
+            [ "$v1" != "$v2" ] && [ "$result" = "$v1" ]
+            return
+            ;;
+        ">=")
+            [ "$result" = "$v2" ]
+            return
+            ;;
+        "<=")
+            [ "$result" = "$v1" ]
+            return
+            ;;
+        *)
+            die $LINENO "unrecognised op: $op"
+            ;;
+    esac
+}
+
+# This function sets log formatting options for colorizing log
+# output to stdout. It is meant to be called by lib modules.
+# The last two parameters are optional and can be used to specify
+# non-default value for project and user format variables.
+# Defaults are respectively 'project_name' and 'user_name'
+#
+# setup_colorized_logging something.conf SOMESECTION
+function setup_colorized_logging {
+    local conf_file=$1
+    local conf_section=$2
+    local project_var=${3:-"project_name"}
+    local user_var=${4:-"user_name"}
+    # Add color to logging output
+    iniset $conf_file $conf_section logging_context_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%("$user_var")s %("$project_var")s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    iniset $conf_file $conf_section logging_default_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    iniset $conf_file $conf_section logging_debug_format_suffix "[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
+    iniset $conf_file $conf_section logging_exception_prefix "%(color)s%(asctime)s.%(msecs)03d TRACE %(name)s [01;35m%(instance)s[00m"
+}
+
+# These functions are provided for basic fall-back functionality for
+# projects that include parts of DevStack (Grenade).  stack.sh will
+# override these with more specific versions for DevStack (with fancy
+# spinners, etc).  We never override an existing version
+if ! function_exists echo_summary; then
+    function echo_summary {
+        echo $@
+    }
+fi
+if ! function_exists echo_nolog; then
+    function echo_nolog {
+        echo $@
+    }
+fi
+
+
+# create_disk - Create backing disk
+function create_disk {
+    local node_number
+    local disk_image=${1}
+    local storage_data_dir=${2}
+    local loopback_disk_size=${3}
+
+    # Create a loopback disk and format it to XFS.
+    if [[ -e ${disk_image} ]]; then
+        if egrep -q ${storage_data_dir} /proc/mounts; then
+            sudo umount ${storage_data_dir}/drives/sdb1
+            sudo rm -f ${disk_image}
+        fi
+    fi
+
+    sudo mkdir -p ${storage_data_dir}/drives/images
+
+    sudo truncate -s ${loopback_disk_size} ${disk_image}
+
+    # Make a fresh XFS filesystem. Use bigger inodes so xattr can fit in
+    # a single inode. Keeping the default inode size (256) will result in multiple
+    # inodes being used to store xattr. Retrieving the xattr will be slower
+    # since we have to read multiple inodes. This statement is true for both
+    # Swift and Ceph.
+    sudo mkfs.xfs -f -i size=1024 ${disk_image}
+
+    # Mount the disk with mount options to make it as efficient as possible
+    if ! egrep -q ${storage_data_dir} /proc/mounts; then
+        sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
+            ${disk_image} ${storage_data_dir}
+    fi
+}
 
 # Restore xtrace
-$XTRACE
-
+$_XTRACE_FUNCTIONS
 
 # Local variables:
 # mode: shell-script

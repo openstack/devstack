@@ -1,46 +1,27 @@
-MySQL-python
+conntrack-tools
 curl
+dnsmasq # for nova-network
 dnsmasq-utils # for dhcp_release
 ebtables
 gawk
 genisoimage # required for config_drive
 iptables
 iputils
+kernel-modules # dist:f22,f23
 kpartx
 kvm # NOPRIME
 libvirt-bin # NOPRIME
+libvirt-devel # NOPRIME
 libvirt-python # NOPRIME
 libxml2-python
-numpy # needed by websockify for spice console
 m2crypto
+mysql-devel
+MySQL-python
 mysql-server # NOPRIME
+numpy # needed by websockify for spice console
 parted
 polkit
-python-boto
-python-carrot
-python-cheetah
-python-eventlet
-python-feedparser
-python-gflags
-python-greenlet
-python-iso8601
-python-kombu
-python-lockfile
-python-migrate
-python-mox
-python-netaddr
-python-paramiko # dist:f16,f17,f18,f19
-# ^ on RHEL, brings in python-crypto which conflicts with version from
-# pip we need
-python-paste        # dist:f16,f17,f18,f19
-python-paste-deploy # dist:f16,f17,f18,f19
-python-qpid
-python-routes
-python-sqlalchemy
-python-suds
-python-tempita
+qemu-kvm # NOPRIME
 rabbitmq-server # NOPRIME
-qpid-cpp-server # NOPRIME
 sqlite
 sudo
-vconfig
