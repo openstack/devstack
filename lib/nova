@@ -708,6 +708,10 @@ function init_nova {
 
         recreate_database $NOVA_API_DB
         $NOVA_BIN_DIR/nova-manage api_db sync
+
+        # Run online migrations on the new databases
+        # Needed for flavor conversion
+        $NOVA_BIN_DIR/nova-manage db online_data_migrations
     fi
 
     create_nova_cache_dir
