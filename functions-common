@@ -2322,8 +2322,9 @@ function sudo_with_proxies {
 # Resolution is only in whole seconds, so should be used for long
 # running activities.
 
-declare -A TOTAL_TIME
-declare -A START_TIME
+declare -A _TIME_TOTAL
+declare -A _TIME_START
+declare -r _TIME_BEGIN=$(date +%s)
 
 # time_start $name
 #
@@ -2331,11 +2332,11 @@ declare -A START_TIME
 # already started.
 function time_start {
     local name=$1
-    local start_time=${START_TIME[$name]}
+    local start_time=${_TIME_START[$name]}
     if [[ -n "$start_time" ]]; then
         die $LINENO "Trying to start the clock on $name, but it's already been started"
     fi
-    START_TIME[$name]=$(date +%s)
+    _TIME_START[$name]=$(date +%s)
 }
 
 # time_stop $name
@@ -2351,32 +2352,53 @@ function time_stop {
     local start_time
 
     name=$1
-    start_time=${START_TIME[$name]}
+    start_time=${_TIME_START[$name]}
 
     if [[ -z "$start_time" ]]; then
         die $LINENO "Trying to stop the clock on $name, but it was never started"
     fi
     end_time=$(date +%s)
     elapsed_time=$(($end_time - $start_time))
-    total=${TOTAL_TIME[$name]:-0}
+    total=${_TIME_TOTAL[$name]:-0}
     # reset the clock so we can start it in the future
-    START_TIME[$name]=""
-    TOTAL_TIME[$name]=$(($total + $elapsed_time))
+    _TIME_START[$name]=""
+    _TIME_TOTAL[$name]=$(($total + $elapsed_time))
 }
 
 # time_totals
-#
-# prints out total time
+#  Print out total time summary
 function time_totals {
-    echo
-    echo "========================"
-    echo "DevStack Components Timed"
-    echo "========================"
-    echo
-    for t in ${!TOTAL_TIME[*]}; do
-        local v=${TOTAL_TIME[$t]}
-        echo "$t - $v secs"
+    local elapsed_time
+    local end_time
+    local len=15
+    local xtrace
+
+    end_time=$(date +%s)
+    elapsed_time=$(($end_time - $_TIME_BEGIN))
+
+    # pad 1st column this far
+    for t in ${!_TIME_TOTAL[*]}; do
+        if [[ ${#t} -gt $len ]]; then
+            len=${#t}
+        fi
     done
+
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    echo
+    echo "========================="
+    echo "DevStack Component Timing"
+    echo "========================="
+    printf "%-${len}s %3d\n" "Total runtime" "$elapsed_time"
+    echo
+    for t in ${!_TIME_TOTAL[*]}; do
+        local v=${_TIME_TOTAL[$t]}
+        printf "%-${len}s %3d\n" "$t" "$v"
+    done
+    echo "========================="
+
+    $xtrace
 }
 
 # Restore xtrace
