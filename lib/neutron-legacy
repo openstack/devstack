@@ -1453,9 +1453,13 @@ function delete_probe {
 function setup_neutron_debug {
     if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
         public_net_id=`_get_net_id $PUBLIC_NETWORK_NAME`
-        neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $public_net_id
+        if [[ -n $public_net_id ]]; then
+            neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $public_net_id
+        fi
         private_net_id=`_get_net_id $PRIVATE_NETWORK_NAME`
-        neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $private_net_id
+        if [[ -n $private_net_id ]]; then
+            neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $private_net_id
+        fi
     fi
 }
 
