@@ -1004,10 +1004,6 @@ if is_service_enabled keystone; then
         bootstrap_keystone
     fi
 
-    if is_service_enabled tls-proxy; then
-        export OS_CACERT=$INT_CA_DIR/ca-chain.pem
-    fi
-
     # Rather than just export these, we write them out to a
     # intermediate userrc file that can also be used to debug if
     # something goes wrong between here and running
@@ -1027,6 +1023,10 @@ export OS_PROJECT_DOMAIN_ID=default
 export OS_REGION_NAME=$REGION_NAME
 
 EOF
+
+    if is_service_enabled tls-proxy; then
+        echo "export OS_CACERT=$INT_CA_DIR/ca-chain.pem" >> $TOP_DIR/userrc_early
+    fi
 
     source $TOP_DIR/userrc_early
 
