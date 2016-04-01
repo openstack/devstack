@@ -493,6 +493,8 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT bindir "/usr/bin"
     fi
 
+    iniset $NOVA_CONF privsep_osbrick helper_command "sudo nova-rootwrap \$rootwrap_config privsep-helper --config-file $NOVA_CONF"
+
     if is_service_enabled n-api; then
         if is_service_enabled n-api-meta; then
             # If running n-api-meta as a separate service
