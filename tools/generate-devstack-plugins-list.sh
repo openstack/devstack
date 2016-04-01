@@ -38,6 +38,17 @@
 # current working directory, it will be prepended or appended to
 # the generated reStructuredText plugins table respectively.
 
+# Print the title underline for a RST table.  Argument is the length
+# of the first column, second column is assumed to be "URL"
+function title_underline {
+    local len=$1
+    while [[ $len -gt 0 ]]; do
+        printf "="
+        len=$(( len - 1))
+    done
+    printf " ===\n"
+}
+
 (
 declare -A plugins
 
@@ -47,11 +58,24 @@ fi
 
 sorted_plugins=$(python tools/generate-devstack-plugins-list.py)
 
-for k in ${sorted_plugins}; do
-    project=${k:0:28}
-    giturl="git://git.openstack.org/openstack/${k:0:26}"
-    printf "|%-28s|%-73s|\n" "${project}" "${giturl}"
-    printf "+----------------------------+-------------------------------------------------------------------------+\n"
+# find the length of the name column & pad
+name_col_len=$(echo "${sorted_plugins}" | wc -L)
+name_col_len=$(( name_col_len + 2 ))
+
+# ====================== ===
+# Plugin Name            URL
+# ====================== ===
+# foobar                 `git://... <http://...>`__
+# ...
+
+title_underline ${name_col_len}
+printf "%-${name_col_len}s %s\n" "Plugin Name" "URL"
+title_underline ${name_col_len}
+
+for plugin in ${sorted_plugins}; do
+    giturl="git://git.openstack.org/openstack/${plugin}"
+    gitlink="https://git.openstack.org/cgit/openstack/${plugin}"
+    printf "%-${name_col_len}s %s\n" "${p}" "\`${giturl} <${gitlink}>\`__"
 done
 
 if [[ -r data/devstack-plugins-registry.footer ]]; then

@@ -18,7 +18,3 @@ Detected Plugins
 The following are plugins that a script has found in the openstack/
 namespace, which includes but is not limited to official OpenStack
 projects.
-
-+----------------------------+-------------------------------------------------------------------------+
-|Plugin Name                 |URL                                                                      |
-+----------------------------+-------------------------------------------------------------------------+
