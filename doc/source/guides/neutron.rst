@@ -455,13 +455,18 @@ Miscellaneous Tips
 Non-Standard MTU on the Physical Network
 ----------------------------------------
 
-DevStack defaults to assume that the MTU on the physical network
-is 1500.  A different MTU can be specified by adding the following to
-the `localrc` part of `local.conf` on each machine.
+Neutron by default uses a MTU of 1500 bytes, which is
+the standard MTU for Ethernet.
+
+A different MTU can be specified by adding the following to
+the Neutron section of `local.conf`. For example,
+if you have network equipment that supports jumbo frames, you could
+set the MTU to 9000 bytes by adding the following
 
 ::
 
-    Q_ML2_PLUGIN_PATH_MTU=1500
+    [[post-config|/$Q_PLUGIN_CONF_FILE]]
+    global_physnet_mtu = 9000
 
 
 Disabling Next Generation Firewall Tools
