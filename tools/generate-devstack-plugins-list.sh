@@ -75,7 +75,7 @@ title_underline ${name_col_len}
 for plugin in ${sorted_plugins}; do
     giturl="git://git.openstack.org/openstack/${plugin}"
     gitlink="https://git.openstack.org/cgit/openstack/${plugin}"
-    printf "%-${name_col_len}s %s\n" "${p}" "\`${giturl} <${gitlink}>\`__"
+    printf "%-${name_col_len}s %s\n" "${plugin}" "\`${giturl} <${gitlink}>\`__"
 done
 
 if [[ -r data/devstack-plugins-registry.footer ]]; then
