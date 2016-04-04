@@ -495,21 +495,21 @@ EOF
         iniset ${swift_node_config} DEFAULT bind_ip ${SWIFT_SERVICE_LISTEN_ADDRESS}
     done
 
-    # Set new accounts in tempauth to match keystone tenant/user (to make testing easier)
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swifttenanttest1_swiftusertest1 "testing .admin"
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swifttenanttest2_swiftusertest2 "testing2 .admin"
-    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swifttenanttest1_swiftusertest3 "testing3 .admin"
+    # Set new accounts in tempauth to match keystone project/user (to make testing easier)
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swiftprojecttest1_swiftusertest1 "testing .admin"
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swiftprojecttest2_swiftusertest2 "testing2 .admin"
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth user_swiftprojecttest1_swiftusertest3 "testing3 .admin"
 
     testfile=${SWIFT_CONF_DIR}/test.conf
     cp ${SWIFT_DIR}/test/sample.conf ${testfile}
 
     # Set accounts for functional tests
-    iniset ${testfile} func_test account swifttenanttest1
+    iniset ${testfile} func_test account swiftprojecttest1
     iniset ${testfile} func_test username swiftusertest1
     iniset ${testfile} func_test username3 swiftusertest3
-    iniset ${testfile} func_test account2 swifttenanttest2
+    iniset ${testfile} func_test account2 swiftprojecttest2
     iniset ${testfile} func_test username2 swiftusertest2
-    iniset ${testfile} func_test account4 swifttenanttest4
+    iniset ${testfile} func_test account4 swiftprojecttest4
     iniset ${testfile} func_test username4 swiftusertest4
     iniset ${testfile} func_test password4 testing4
     iniset ${testfile} func_test domain4 swift_test
@@ -603,13 +603,13 @@ function create_swift_disk {
 # since we want to make it compatible with tempauth which use
 # underscores for separators.
 
-# Tenant             User               Roles          Domain
-# ------------------------------------------------------------------
-# service            swift              service        default
-# swifttenanttest1   swiftusertest1     admin          default
-# swifttenanttest1   swiftusertest3     anotherrole    default
-# swifttenanttest2   swiftusertest2     admin          default
-# swifttenanttest4   swiftusertest4     admin          swift_test
+# Project             User               Roles          Domain
+# -------------------------------------------------------------------
+# service             swift              service        default
+# swiftprojecttest1   swiftusertest1     admin          default
+# swiftprojecttest1   swiftusertest3     anotherrole    default
+# swiftprojecttest2   swiftusertest2     admin          default
+# swiftprojecttest4   swiftusertest4     admin          swift_test
 
 function create_swift_accounts {
     # Defines specific passwords used by ``tools/create_userrc.sh``
@@ -635,43 +635,43 @@ function create_swift_accounts {
         "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT" \
         "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(project_id)s"
 
-    local swift_tenant_test1
-    swift_tenant_test1=$(get_or_create_project swifttenanttest1 default)
-    die_if_not_set $LINENO swift_tenant_test1 "Failure creating swift_tenant_test1"
+    local swift_project_test1
+    swift_project_test1=$(get_or_create_project swiftprojecttest1 default)
+    die_if_not_set $LINENO swift_project_test1 "Failure creating swift_project_test1"
     SWIFT_USER_TEST1=$(get_or_create_user swiftusertest1 $swiftusertest1_password \
                         "default" "test@example.com")
     die_if_not_set $LINENO SWIFT_USER_TEST1 "Failure creating SWIFT_USER_TEST1"
-    get_or_add_user_project_role admin $SWIFT_USER_TEST1 $swift_tenant_test1
+    get_or_add_user_project_role admin $SWIFT_USER_TEST1 $swift_project_test1
 
     local swift_user_test3
     swift_user_test3=$(get_or_create_user swiftusertest3 $swiftusertest3_password \
                                 "default" "test3@example.com")
     die_if_not_set $LINENO swift_user_test3 "Failure creating swift_user_test3"
-    get_or_add_user_project_role $another_role $swift_user_test3 $swift_tenant_test1
+    get_or_add_user_project_role $another_role $swift_user_test3 $swift_project_test1
 
-    local swift_tenant_test2
-    swift_tenant_test2=$(get_or_create_project swifttenanttest2 default)
-    die_if_not_set $LINENO swift_tenant_test2 "Failure creating swift_tenant_test2"
+    local swift_project_test2
+    swift_project_test2=$(get_or_create_project swiftprojecttest2 default)
+    die_if_not_set $LINENO swift_project_test2 "Failure creating swift_project_test2"
 
     local swift_user_test2
     swift_user_test2=$(get_or_create_user swiftusertest2 $swiftusertest2_password \
                                 "default" "test2@example.com")
     die_if_not_set $LINENO swift_user_test2 "Failure creating swift_user_test2"
-    get_or_add_user_project_role admin $swift_user_test2 $swift_tenant_test2
+    get_or_add_user_project_role admin $swift_user_test2 $swift_project_test2
 
     local swift_domain
     swift_domain=$(get_or_create_domain swift_test 'Used for swift functional testing')
     die_if_not_set $LINENO swift_domain "Failure creating swift_test domain"
 
-    local swift_tenant_test4
-    swift_tenant_test4=$(get_or_create_project swifttenanttest4 $swift_domain)
-    die_if_not_set $LINENO swift_tenant_test4 "Failure creating swift_tenant_test4"
+    local swift_project_test4
+    swift_project_test4=$(get_or_create_project swiftprojecttest4 $swift_domain)
+    die_if_not_set $LINENO swift_project_test4 "Failure creating swift_project_test4"
 
     local swift_user_test4
     swift_user_test4=$(get_or_create_user swiftusertest4 $swiftusertest4_password \
                                 $swift_domain "test4@example.com")
     die_if_not_set $LINENO swift_user_test4 "Failure creating swift_user_test4"
-    get_or_add_user_project_role admin $swift_user_test4 $swift_tenant_test4
+    get_or_add_user_project_role admin $swift_user_test4 $swift_project_test4
 }
 
 # init_swift() - Initialize rings
