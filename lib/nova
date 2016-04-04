@@ -421,17 +421,17 @@ function create_nova_accounts {
         get_or_create_endpoint \
             "compute_legacy" \
             "$REGION_NAME" \
-            "$nova_api_url/v2/\$(tenant_id)s" \
-            "$nova_api_url/v2/\$(tenant_id)s" \
-            "$nova_api_url/v2/\$(tenant_id)s"
+            "$nova_api_url/v2/\$(project_id)s" \
+            "$nova_api_url/v2/\$(project_id)s" \
+            "$nova_api_url/v2/\$(project_id)s"
 
         get_or_create_service "nova" "compute" "Nova Compute Service"
         get_or_create_endpoint \
             "compute" \
             "$REGION_NAME" \
-            "$nova_api_url/v2.1/\$(tenant_id)s" \
-            "$nova_api_url/v2.1/\$(tenant_id)s" \
-            "$nova_api_url/v2.1/\$(tenant_id)s"
+            "$nova_api_url/v2.1/\$(project_id)s" \
+            "$nova_api_url/v2.1/\$(project_id)s" \
+            "$nova_api_url/v2.1/\$(project_id)s"
     fi
 
     if is_service_enabled n-api; then
