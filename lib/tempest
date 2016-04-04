@@ -180,14 +180,14 @@ function configure_tempest {
 
     # See ``lib/keystone`` where these users and tenants are set up
     local admin_username=${ADMIN_USERNAME:-admin}
-    local admin_tenant_name=${ADMIN_TENANT_NAME:-admin}
+    local admin_project_name=${ADMIN_TENANT_NAME:-admin}
     local admin_domain_name=${ADMIN_DOMAIN_NAME:-Default}
     local tempest_username=${TEMPEST_USERNAME:-demo}
-    local tempest_tenant_name=${TEMPEST_TENANT_NAME:-demo}
+    local tempest_project_name=${TEMPEST_TENANT_NAME:-demo}
     local alt_username=${ALT_USERNAME:-alt_demo}
-    local alt_tenant_name=${ALT_TENANT_NAME:-alt_demo}
-    local admin_tenant_id
-    admin_tenant_id=$(openstack project list | awk "/ admin / { print \$2 }")
+    local alt_project_name=${ALT_TENANT_NAME:-alt_demo}
+    local admin_project_id
+    admin_project_id=$(openstack project list | awk "/ admin / { print \$2 }")
 
     if is_service_enabled nova; then
         # If ``DEFAULT_INSTANCE_TYPE`` is not declared, use the new behavior
@@ -263,8 +263,8 @@ function configure_tempest {
     if [[ "$TEMPEST_HAS_ADMIN" == "True" ]]; then
         iniset $TEMPEST_CONFIG auth admin_username $admin_username
         iniset $TEMPEST_CONFIG auth admin_password "$password"
-        iniset $TEMPEST_CONFIG auth admin_tenant_name $admin_tenant_name
-        iniset $TEMPEST_CONFIG auth admin_tenant_id $admin_tenant_id
+        iniset $TEMPEST_CONFIG auth admin_tenant_name $admin_project_name
+        iniset $TEMPEST_CONFIG auth admin_tenant_id $admin_project_id
         iniset $TEMPEST_CONFIG auth admin_domain_name $admin_domain_name
     fi
     if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
@@ -330,9 +330,9 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG auth tempest_roles "Member"
     if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
         if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
-            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_tenant_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
+            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
         else
-            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_tenant_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
+            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
         fi
         iniset $TEMPEST_CONFIG auth use_dynamic_credentials False
         iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
