@@ -76,6 +76,24 @@ def _header(name):
     print
 
 
+# This method gets a max openflow version supported by openvswitch.
+# For example 'ovs-ofctl --version' displays the following:
+#
+#     ovs-ofctl (Open vSwitch) 2.0.2
+#     Compiled Dec  9 2015 14:08:08
+#     OpenFlow versions 0x1:0x4
+#
+# The above shows that openvswitch supports from OpenFlow11 to OpenFlow13.
+# This method gets max version searching 'OpenFlow versions 0x1:0x'.
+# And return a version value converted to an integer type.
+def _get_ofp_version():
+    process = subprocess.Popen(['ovs-ofctl', '--version'], stdout=subprocess.PIPE)
+    stdout, _ = process.communicate()
+    find_str = 'OpenFlow versions 0x1:0x'
+    offset = stdout.find(find_str)
+    return int(stdout[offset + len(find_str):-1]) - 1
+
+
 def disk_space():
     # the df output
     _header("File System Summary")
@@ -143,11 +161,16 @@ def ovs_dump():
     # grenade), so there is no single place to determine the bridge names from.
     # Hardcode for now.
     bridges = ('br-int', 'br-tun', 'br-ex')
+    ofctl_cmds = ('show', 'dump-ports-desc', 'dump-ports', 'dump-flows')
+    ofp_max = _get_ofp_version()
+    vers = 'OpenFlow10'
+    for i in range(ofp_max + 1):
+        vers += ',OpenFlow1' + str(i)
     _dump_cmd("sudo ovs-vsctl show")
-    for bridge in bridges:
-        _dump_cmd("sudo ovs-ofctl show %s" % bridge)
-    for bridge in bridges:
-        _dump_cmd("sudo ovs-ofctl dump-flows %s" % bridge)
+    for ofctl_cmd in ofctl_cmds:
+        for bridge in bridges:
+            args = {'vers': vers, 'cmd': ofctl_cmd, 'bridge': bridge}
+            _dump_cmd("sudo ovs-ofctl --protocols=%(vers)s %(cmd)s %(bridge)s" % args)
 
 
 def process_list():
