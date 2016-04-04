@@ -631,9 +631,9 @@ function create_swift_accounts {
     get_or_create_endpoint \
         "object-store" \
         "$REGION_NAME" \
-        "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s" \
+        "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(project_id)s" \
         "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT" \
-        "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(tenant_id)s"
+        "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(project_id)s"
 
     local swift_tenant_test1
     swift_tenant_test1=$(get_or_create_project swifttenanttest1 default)
