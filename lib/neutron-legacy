@@ -544,8 +544,9 @@ function create_neutron_accounts {
 }
 
 function create_neutron_initial_network {
-    TENANT_ID=$(openstack project list | grep " demo " | get_field 1)
-    die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for demo"
+    local project_id
+    project_id=$(openstack project list | grep " demo " | get_field 1)
+    die_if_not_set $LINENO project_id "Failure retrieving project_id for demo"
 
     # Allow drivers that need to create an initial network to do so here
     if type -p neutron_plugin_create_initial_network_profile > /dev/null; then
@@ -555,17 +556,17 @@ function create_neutron_initial_network {
     if is_provider_network; then
         die_if_not_set $LINENO PHYSICAL_NETWORK "You must specify the PHYSICAL_NETWORK"
         die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specify the PROVIDER_NETWORK_TYPE"
-        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
-        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
+        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $project_id --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
-            SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
-            die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $TENANT_ID"
+            SUBNET_ID=$(neutron subnet-create --tenant_id $project_id --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+            die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $project_id"
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]] && [[ -n "$IPV6_PROVIDER_FIXED_RANGE" ]] && [[ -n "$IPV6_PROVIDER_NETWORK_GATEWAY" ]]; then
-            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
-            die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $TENANT_ID"
+            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $project_id --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
+            die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
         fi
 
         if [[ $Q_AGENT == "openvswitch" ]]; then
@@ -574,17 +575,17 @@ function create_neutron_initial_network {
             sudo ip link set $PUBLIC_INTERFACE up
         fi
     else
-        NET_ID=$(neutron net-create --tenant-id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
-        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $TENANT_ID"
+        NET_ID=$(neutron net-create --tenant-id $project_id "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
             # Create IPv4 private subnet
-            SUBNET_ID=$(_neutron_create_private_subnet_v4)
+            SUBNET_ID=$(_neutron_create_private_subnet_v4 $project_id)
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]]; then
             # Create IPv6 private subnet
-            IPV6_SUBNET_ID=$(_neutron_create_private_subnet_v6)
+            IPV6_SUBNET_ID=$(_neutron_create_private_subnet_v6 $project_id)
         fi
     fi
 
@@ -594,8 +595,8 @@ function create_neutron_initial_network {
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
             # create a tenant-owned router.
-            ROUTER_ID=$(neutron router-create --tenant-id $TENANT_ID $Q_ROUTER_NAME | grep ' id ' | get_field 2)
-            die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $TENANT_ID $Q_ROUTER_NAME"
+            ROUTER_ID=$(neutron router-create --tenant-id $project_id $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $project_id $Q_ROUTER_NAME"
         else
             # Plugin only supports creating a single router, which should be admin owned.
             ROUTER_ID=$(neutron router-create $Q_ROUTER_NAME | grep ' id ' | get_field 2)
@@ -1287,30 +1288,32 @@ function _neutron_setup_interface_driver {
 
 # Create private IPv4 subnet
 function _neutron_create_private_subnet_v4 {
-    local subnet_params="--tenant-id $TENANT_ID "
+    local project_id=$1
+    local subnet_params="--tenant-id $project_id "
     subnet_params+="--ip_version 4 "
     subnet_params+="--gateway $NETWORK_GATEWAY "
     subnet_params+="--name $PRIVATE_SUBNET_NAME "
     subnet_params+="$NET_ID $FIXED_RANGE"
     local subnet_id
     subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
-    die_if_not_set $LINENO subnet_id "Failure creating private IPv4 subnet for $TENANT_ID"
+    die_if_not_set $LINENO subnet_id "Failure creating private IPv4 subnet for $project_id"
     echo $subnet_id
 }
 
 # Create private IPv6 subnet
 function _neutron_create_private_subnet_v6 {
+    local project_id=$1
     die_if_not_set $LINENO IPV6_RA_MODE "IPV6 RA Mode not set"
     die_if_not_set $LINENO IPV6_ADDRESS_MODE "IPV6 Address Mode not set"
     local ipv6_modes="--ipv6-ra-mode $IPV6_RA_MODE --ipv6-address-mode $IPV6_ADDRESS_MODE"
-    local subnet_params="--tenant-id $TENANT_ID "
+    local subnet_params="--tenant-id $project_id "
     subnet_params+="--ip_version 6 "
     subnet_params+="--gateway $IPV6_PRIVATE_NETWORK_GATEWAY "
     subnet_params+="--name $IPV6_PRIVATE_SUBNET_NAME "
     subnet_params+="$NET_ID $FIXED_RANGE_V6 $ipv6_modes"
     local ipv6_subnet_id
     ipv6_subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
-    die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $TENANT_ID"
+    die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $project_id"
     echo $ipv6_subnet_id
 }
 
