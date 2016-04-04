@@ -60,6 +60,8 @@ projects.
 +----------------------------+-------------------------------------------------------------------------+
 |devstack-plugin-hdfs        |git://git.openstack.org/openstack/devstack-plugin-hdfs                   |
 +----------------------------+-------------------------------------------------------------------------+
+|devstack-plugin-kafka       |git://git.openstack.org/openstack/devstack-plugin-kafka                  |
++----------------------------+-------------------------------------------------------------------------+
 |devstack-plugin-pika        |git://git.openstack.org/openstack/devstack-plugin-pika                   |
 +----------------------------+-------------------------------------------------------------------------+
 |devstack-plugin-sheepdog    |git://git.openstack.org/openstack/devstack-plugin-sheepdog               |
