@@ -391,9 +391,9 @@ function create_heat_accounts {
         get_or_create_endpoint \
             "orchestration" \
             "$REGION_NAME" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s"
+            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(project_id)s" \
+            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(project_id)s" \
+            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(project_id)s"
 
         get_or_create_service "heat-cfn" "cloudformation" "Heat CloudFormation Service"
         get_or_create_endpoint \
