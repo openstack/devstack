@@ -520,7 +520,7 @@ function create_nova_conf {
     fi
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$NOVA_USE_MOD_WSGI" == "False" ]  ; then
-        setup_colorized_logging $NOVA_CONF DEFAULT
+        setup_colorized_logging $NOVA_CONF
     else
         # Show user_name and project_name instead of user_id and project_id
         iniset $NOVA_CONF DEFAULT logging_user_identity_format "%(user_name)s %(project_name)s"

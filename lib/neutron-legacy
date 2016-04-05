@@ -733,7 +733,7 @@ function _configure_neutron_common {
 
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $NEUTRON_CONF DEFAULT project_id
+        setup_colorized_logging $NEUTRON_CONF
     else
         # Show user_name and project_name by default like in nova
         iniset $NEUTRON_CONF DEFAULT logging_user_identity_format "%(user_name)s %(project_name)s"
