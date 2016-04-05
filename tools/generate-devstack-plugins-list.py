@@ -53,7 +53,7 @@ def has_devstack_plugin(proj):
     if len(r.text) > 0:
         return True
     else:
-        False
+        return False
 
 logging.debug("Getting project list from %s" % url)
 r = requests.get(url)
@@ -64,4 +64,4 @@ found_plugins = filter(has_devstack_plugin, projects)
 
 for project in found_plugins:
     # strip of openstack/
-    print project[10:]
+    print(project[10:])
