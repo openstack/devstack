@@ -1190,14 +1190,7 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
 
-    iniset $NEUTRON_CONF nova auth_type password
-    iniset $NEUTRON_CONF nova auth_url $KEYSTONE_AUTH_URI
-    iniset $NEUTRON_CONF nova username nova
-    iniset $NEUTRON_CONF nova password $SERVICE_PASSWORD
-    iniset $NEUTRON_CONF nova user_domain_id default
-    iniset $NEUTRON_CONF nova project_name $SERVICE_PROJECT_NAME
-    iniset $NEUTRON_CONF nova project_domain_id default
-    iniset $NEUTRON_CONF nova region_name $REGION_NAME
+    configure_auth_token_middleware $NEUTRON_CONF nova $NEUTRON_AUTH_CACHE_DIR nova
 
     # Configure plugin
     neutron_plugin_configure_service
