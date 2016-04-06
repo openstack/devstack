@@ -398,6 +398,8 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute-feature-enabled shelve False
         # Cells doesn't support hot-plugging virtual interfaces.
         iniset $TEMPEST_CONFIG compute-feature-enabled interface_attach False
+        # Cells v1 doesn't support the rescue/unrescue tests in Tempest
+        iniset $TEMPEST_CONFIG compute-feature-enabled rescue False
 
         if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
             # Cells supports resize but does not currently work with devstack
