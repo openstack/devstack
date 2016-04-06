@@ -51,7 +51,7 @@ HOST\_IP, SERVICE\_HOST
 OS\_AUTH\_URL
     Authenticating against an OpenStack cloud using Keystone returns a
     *Token* and *Service Catalog*. The catalog contains the endpoints
-    for all services the user/tenant has access to - including Nova,
+    for all services the user/project has access to - including Nova,
     Glance, Keystone and Swift.
 
     ::
