@@ -83,7 +83,7 @@ def _header(name):
 #     Compiled Dec  9 2015 14:08:08
 #     OpenFlow versions 0x1:0x4
 #
-# The above shows that openvswitch supports from OpenFlow11 to OpenFlow13.
+# The above shows that openvswitch supports from OpenFlow10 to OpenFlow13.
 # This method gets max version searching 'OpenFlow versions 0x1:0x'.
 # And return a version value converted to an integer type.
 def _get_ofp_version():
