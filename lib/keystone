@@ -634,9 +634,9 @@ function bootstrap_keystone {
         --bootstrap-role-name admin \
         --bootstrap-service-name keystone \
         --bootstrap-region-id "$REGION_NAME" \
-        --bootstrap-admin-url "$KEYSTONE_AUTH_URI" \
-        --bootstrap-public-url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT" \
-        --bootstrap-internal-url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT"
+        --bootstrap-admin-url "$KEYSTONE_AUTH_URI/v$IDENTITY_API_VERSION" \
+        --bootstrap-public-url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION" \
+        --bootstrap-internal-url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v$IDENTITY_API_VERSION"
 }
 
 # Restore xtrace
