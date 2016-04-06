@@ -429,9 +429,9 @@ function create_nova_accounts {
         get_or_create_endpoint \
             "compute" \
             "$REGION_NAME" \
-            "$nova_api_url/v2.1/\$(project_id)s" \
-            "$nova_api_url/v2.1/\$(project_id)s" \
-            "$nova_api_url/v2.1/\$(project_id)s"
+            "$nova_api_url/v2.1" \
+            "$nova_api_url/v2.1" \
+            "$nova_api_url/v2.1"
     fi
 
     if is_service_enabled n-api; then
