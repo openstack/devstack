@@ -42,6 +42,12 @@ fi
 # Specify region name Region
 REGION_NAME=${REGION_NAME:-RegionOne}
 
+# Specify name of region where identity service endpoint is registered.
+# When deploying multiple DevStack instances in different regions with shared
+# Keystone, set KEYSTONE_REGION_NAME to the region where Keystone is running
+# for DevStack instances which do not host Keystone.
+KEYSTONE_REGION_NAME=${KEYSTONE_REGION_NAME:-$REGION_NAME}
+
 # Specify which services to launch.  These generally correspond to
 # screen tabs. To change the default list, use the ``enable_service`` and
 # ``disable_service`` functions in ``local.conf``.
