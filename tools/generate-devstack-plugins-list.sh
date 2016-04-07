@@ -78,6 +78,9 @@ for plugin in ${sorted_plugins}; do
     gitlink="https://git.openstack.org/cgit/openstack/${plugin}"
     printf "%-${name_col_len}s %s\n" "${plugin}" "\`${giturl} <${gitlink}>\`__"
 done
+
+title_underline ${name_col_len}
+
 printf "\n\n"
 
 if [[ -r data/devstack-plugins-registry.footer ]]; then
