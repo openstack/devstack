@@ -257,6 +257,14 @@ function make_cert {
     local common_name=$3
     local alt_names=$4
 
+    if [ "$common_name" != "$SERVICE_HOST" ]; then
+        if [[ -z "$alt_names" ]]; then
+            alt_names="DNS:$SERVICE_HOST"
+        else
+            alt_names="$alt_names,DNS:$SERVICE_HOST"
+        fi
+    fi
+
     # Only generate the certificate if it doesn't exist yet on the disk
     if [ ! -r "$ca_dir/$cert_name.crt" ]; then
         # Generate a signing request

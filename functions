@@ -30,6 +30,19 @@ function function_exists {
     declare -f -F $1 > /dev/null
 }
 
+# short_source prints out the current location of the caller in a way
+# that strips redundant directories. This is useful for PS4 usage.
+function short_source {
+    saveIFS=$IFS
+    IFS=" "
+    called=($(caller 0))
+    IFS=$saveIFS
+    file=${called[2]}
+    file=${file#$RC_DIR/}
+    printf "%-40s " "$file:${called[1]}:${called[0]}"
+}
+
+
 # Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:
 #
@@ -94,12 +107,14 @@ function upload_image {
         local path_len
 
         # vmdk adapter type
-        local vmdk_adapter_type="$(head -25 $image | { grep -a -F -m 1 'ddb.adapterType =' $image || true; })"
+        local vmdk_adapter_type
+        vmdk_adapter_type="$(head -25 $image | { grep -a -F -m 1 'ddb.adapterType =' $image || true; })"
         vmdk_adapter_type="${vmdk_adapter_type#*\"}"
         vmdk_adapter_type="${vmdk_adapter_type%?}"
 
         # vmdk disk type
-        local vmdk_create_type="$(head -25 $image | { grep -a -F -m 1 'createType=' $image || true; })"
+        local vmdk_create_type
+        vmdk_create_type="$(head -25 $image | { grep -a -F -m 1 'createType=' $image || true; })"
         vmdk_create_type="${vmdk_create_type#*\"}"
         vmdk_create_type="${vmdk_create_type%\"*}"
 
@@ -109,7 +124,8 @@ function upload_image {
             vmdk_disktype="sparse"
         elif [[ "$vmdk_create_type" = "monolithicFlat" || "$vmdk_create_type" = "vmfs" ]]; then
             # Attempt to retrieve the ``*-flat.vmdk``
-            local flat_fname="$(head -25 $image | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $image || true; })"
+            local flat_fname
+            flat_fname="$(head -25 $image | { grep -G 'RW\|RDONLY [0-9]+ FLAT\|VMFS' $image || true; })"
             flat_fname="${flat_fname#*\"}"
             flat_fname="${flat_fname%?}"
             if [[ -z "$flat_fname" ]]; then
@@ -301,8 +317,8 @@ function upload_image {
         *) echo "Do not know what to do with $image_fname"; false;;
     esac
 
-    if is_arch "ppc64"; then
-        img_property="--property hw_cdrom_bus=scsi"
+    if is_arch "ppc64le" || is_arch "ppc64" || is_arch "ppc"; then
+        img_property="--property hw_disk_bus=scsi --property hw_scsi_model=virtio-scsi --property hw_cdrom_bus=scsi --property os_command_line=console=hvc0"
     fi
 
     if is_arch "aarch64"; then
@@ -407,8 +423,10 @@ function ping_check {
 function get_instance_ip {
     local vm_id=$1
     local network_name=$2
-    local nova_result="$(nova show $vm_id)"
+    local nova_result
     local ip
+
+    nova_result="$(nova show $vm_id)"
     ip=$(echo "$nova_result" | grep "$network_name" | get_field 2)
     if [[ $ip = "" ]];then
         echo "$nova_result"

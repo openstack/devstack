@@ -78,7 +78,6 @@ fi
 if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     if [[ "$SKIP_EXERCISES" =~ "n-api" ]]; then
         STATUS_NOVA="Skipped"
-        STATUS_EC2="Skipped"
     else
         # Test OSAPI
         echo -e "\nTest Nova"
@@ -89,17 +88,6 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
             RETURN=1
         fi
 
-        # Test EC2 API
-        echo -e "\nTest EC2"
-        # Get EC2 creds
-        source $TOP_DIR/eucarc
-
-        if euca-describe-images; then
-            STATUS_EC2="Succeeded"
-        else
-            STATUS_EC2="Failed"
-            RETURN=1
-        fi
     fi
 fi
 
@@ -170,7 +158,6 @@ function report {
 echo -e "\n"
 report "Keystone" $STATUS_KEYSTONE
 report "Nova" $STATUS_NOVA
-report "EC2" $STATUS_EC2
 report "Cinder" $STATUS_CINDER
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT

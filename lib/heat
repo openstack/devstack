@@ -166,9 +166,6 @@ function configure_heat {
     # clients_keystone
     iniset $HEAT_CONF clients_keystone auth_uri $KEYSTONE_AUTH_URI
 
-    # ec2authtoken
-    iniset $HEAT_CONF ec2authtoken auth_uri $KEYSTONE_SERVICE_URI/v2.0
-
     # OpenStack API
     iniset $HEAT_CONF heat_api bind_port $HEAT_API_PORT
     iniset $HEAT_CONF heat_api workers "$API_WORKERS"
@@ -195,6 +192,9 @@ function configure_heat {
         iniset $HEAT_CONF DEFAULT enable_stack_adopt true
         iniset $HEAT_CONF DEFAULT enable_stack_abandon true
     fi
+
+    iniset $HEAT_CONF cache enabled "True"
+    iniset $HEAT_CONF cache backend "dogpile.cache.memory"
 
     sudo install -d -o $STACK_USER $HEAT_ENV_DIR $HEAT_TEMPLATES_DIR
 
@@ -391,9 +391,9 @@ function create_heat_accounts {
         get_or_create_endpoint \
             "orchestration" \
             "$REGION_NAME" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s" \
-            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(tenant_id)s"
+            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(project_id)s" \
+            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(project_id)s" \
+            "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(project_id)s"
 
         get_or_create_service "heat-cfn" "cloudformation" "Heat CloudFormation Service"
         get_or_create_endpoint \

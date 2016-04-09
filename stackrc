@@ -14,9 +14,6 @@ unset LANGUAGE
 LC_ALL=C
 export LC_ALL
 
-# Make tracing more educational
-export PS4='+ ${BASH_SOURCE:-}:${FUNCNAME[0]:-}:L${LINENO:-}:   '
-
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 
@@ -67,7 +64,7 @@ if ! isset ENABLED_SERVICES ; then
     # Keystone - nothing works without keystone
     ENABLED_SERVICES=key
     # Nova - services to support libvirt based openstack clouds
-    ENABLED_SERVICES+=,n-api,n-cpu,n-net,n-cond,n-sch,n-novnc,n-crt,n-cauth
+    ENABLED_SERVICES+=,n-api,n-cpu,n-net,n-cond,n-sch,n-novnc,n-cauth
     # Glance services needed for Nova
     ENABLED_SERVICES+=,g-api,g-reg
     # Cinder
@@ -130,6 +127,16 @@ if [[ -f $RC_DIR/localrc ]]; then
 elif [[ -f $RC_DIR/.localrc.auto ]]; then
     # New-style user-supplied config extracted from local.conf
     source $RC_DIR/.localrc.auto
+fi
+
+# Use color for logging output (only available if syslog is not used)
+LOG_COLOR=$(trueorfalse True LOG_COLOR)
+
+# Make tracing more educational
+if [[ "$LOG_COLOR" == "True" ]]; then
+    export PS4='+\[$(tput setaf 242)\]$(short_source)\[$(tput sgr0)\] '
+else
+    export PS4='+ $(short_source):   '
 fi
 
 # Configure Identity API version: 2.0, 3
@@ -477,6 +484,10 @@ GITDIR["ceilometermiddleware"]=$DEST/ceilometermiddleware
 GITREPO["os-brick"]=${OS_BRICK_REPO:-${GIT_BASE}/openstack/os-brick.git}
 GITBRANCH["os-brick"]=${OS_BRICK_BRANCH:-master}
 
+# os-vif library to communicate between Neutron to Nova
+GITREPO["os-vif"]=${OS_VIF_REPO:-${GIT_BASE}/openstack/os-vif.git}
+GITBRANCH["os-vif"]=${OS_VIF_BRANCH:-master}
+
 # ironic common lib
 GITREPO["ironic-lib"]=${IRONIC_LIB_REPO:-${GIT_BASE}/openstack/ironic-lib.git}
 GITBRANCH["ironic-lib"]=${IRONIC_LIB_BRANCH:-master}
@@ -625,7 +636,7 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
         ironic)
             # Ironic can do both partition and full disk images, depending on the driver
-            if [[ "$IRONIC_DEPLOY_DRIVER" == "agent_ssh" ]]; then
+            if [[ -z "${IRONIC_DEPLOY_DRIVER%%agent*}" ]]; then
                 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-disk}
             else
                 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-uec}
@@ -639,11 +650,17 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
     DOWNLOAD_DEFAULT_IMAGES=False
 fi
 
-# Staging Area for New Images, have them here for at least 24hrs for nodepool
-# to cache them otherwise the failure rates in the gate are too high
+# Staging area for new images.  These images are cached by a run of
+# ./tools/image_list.sh during CI image build (see
+# project-config:nodepool/elements/cache-devstack/extra-data.d/55-cache-devstack-repos).
+#
+# To avoid CI failures grabbing the images, new images should be here
+# for at least 24hrs (nodepool builds images at 14:00UTC) so the they
+# are in the cache.
 PRECACHE_IMAGES=$(trueorfalse False PRECACHE_IMAGES)
 if [[ "$PRECACHE_IMAGES" == "True" ]]; then
-
+    # required for trove devstack tests; see
+    #  git.openstack.org/cgit/openstack/trove/tree/devstack/plugin.sh
     IMAGE_URL="http://tarballs.openstack.org/trove/images/ubuntu/mysql.qcow2"
     if ! [[ "$IMAGE_URLS"  =~ "$IMAGE_URL" ]]; then
         IMAGE_URLS+=",$IMAGE_URL"
@@ -778,9 +795,6 @@ REGION_NAME=${REGION_NAME:-RegionOne}
 SYSLOG=$(trueorfalse False SYSLOG)
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
 SYSLOG_PORT=${SYSLOG_PORT:-516}
-
-# Use color for logging output (only available if syslog is not used)
-LOG_COLOR=$(trueorfalse True LOG_COLOR)
 
 # Set global ``GIT_DEPTH=<number>`` to limit the history depth of the git clone
 # Set to 0 to disable shallow cloning

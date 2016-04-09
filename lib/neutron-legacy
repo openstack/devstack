@@ -73,6 +73,16 @@ PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.1}
 PRIVATE_SUBNET_NAME=${PRIVATE_SUBNET_NAME:-"private-subnet"}
 PUBLIC_SUBNET_NAME=${PUBLIC_SUBNET_NAME:-"public-subnet"}
 
+# Subnetpool defaults
+SUBNETPOOL_NAME=${SUBNETPOOL_NAME:-"shared-default-subnetpool"}
+
+SUBNETPOOL_PREFIX_V4=${SUBNETPOOL_PREFIX_V4:-10.0.0.0/8}
+SUBNETPOOL_PREFIX_V6=${SUBNETPOOL_PREFIX_V6:-2001:db8:8000::/48}
+
+SUBNETPOOL_SIZE_V4=${SUBNETPOOL_SIZE_V4:-24}
+SUBNETPOOL_SIZE_V6=${SUBNETPOOL_SIZE_V6:-64}
+
+
 if is_ssl_enabled_service "neutron" || is_service_enabled tls-proxy; then
     Q_PROTOCOL="https"
 fi
@@ -476,14 +486,13 @@ function configure_neutron {
 }
 
 function create_nova_conf_neutron {
-    iniset $NOVA_CONF DEFAULT network_api_class "nova.network.neutronv2.api.API"
-
-    iniset $NOVA_CONF neutron auth_plugin "v3password"
+    iniset $NOVA_CONF DEFAULT use_neutron True
+    iniset $NOVA_CONF neutron auth_type "password"
     iniset $NOVA_CONF neutron auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v3"
     iniset $NOVA_CONF neutron username "$Q_ADMIN_USERNAME"
     iniset $NOVA_CONF neutron password "$SERVICE_PASSWORD"
     iniset $NOVA_CONF neutron user_domain_name "Default"
-    iniset $NOVA_CONF neutron project_name "$SERVICE_TENANT_NAME"
+    iniset $NOVA_CONF neutron project_name "$SERVICE_PROJECT_NAME"
     iniset $NOVA_CONF neutron project_domain_name "Default"
     iniset $NOVA_CONF neutron auth_strategy "$Q_AUTH_STRATEGY"
     iniset $NOVA_CONF neutron region_name "$REGION_NAME"
@@ -492,7 +501,6 @@ function create_nova_conf_neutron {
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
         iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
-        iniset $NOVA_CONF DEFAULT security_group_api neutron
     fi
 
     # optionally set options in nova_conf
@@ -536,8 +544,9 @@ function create_neutron_accounts {
 }
 
 function create_neutron_initial_network {
-    TENANT_ID=$(openstack project list | grep " demo " | get_field 1)
-    die_if_not_set $LINENO TENANT_ID "Failure retrieving TENANT_ID for demo"
+    local project_id
+    project_id=$(openstack project list | grep " demo " | get_field 1)
+    die_if_not_set $LINENO project_id "Failure retrieving project_id for demo"
 
     # Allow drivers that need to create an initial network to do so here
     if type -p neutron_plugin_create_initial_network_profile > /dev/null; then
@@ -547,17 +556,17 @@ function create_neutron_initial_network {
     if is_provider_network; then
         die_if_not_set $LINENO PHYSICAL_NETWORK "You must specify the PHYSICAL_NETWORK"
         die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specify the PROVIDER_NETWORK_TYPE"
-        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $TENANT_ID --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
-        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $TENANT_ID"
+        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $project_id --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
-            SUBNET_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY --subnetpool None $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
-            die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $TENANT_ID"
+            SUBNET_ID=$(neutron subnet-create --tenant_id $project_id --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+            die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $project_id"
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]] && [[ -n "$IPV6_PROVIDER_FIXED_RANGE" ]] && [[ -n "$IPV6_PROVIDER_NETWORK_GATEWAY" ]]; then
-            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $TENANT_ID --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME --subnetpool None $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
-            die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $TENANT_ID"
+            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $project_id --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
+            die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
         fi
 
         if [[ $Q_AGENT == "openvswitch" ]]; then
@@ -566,37 +575,51 @@ function create_neutron_initial_network {
             sudo ip link set $PUBLIC_INTERFACE up
         fi
     else
-        NET_ID=$(neutron net-create --tenant-id $TENANT_ID "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
-        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $TENANT_ID"
+        NET_ID=$(neutron net-create --tenant-id $project_id "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
+        die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
             # Create IPv4 private subnet
-            SUBNET_ID=$(_neutron_create_private_subnet_v4)
+            SUBNET_ID=$(_neutron_create_private_subnet_v4 $project_id)
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]]; then
             # Create IPv6 private subnet
-            IPV6_SUBNET_ID=$(_neutron_create_private_subnet_v6)
+            IPV6_SUBNET_ID=$(_neutron_create_private_subnet_v6 $project_id)
         fi
     fi
 
+    AUTO_ALLOCATE_EXT=$(neutron ext-list | grep 'auto-allocated-topology' | get_field 1)
+    SUBNETPOOL_EXT=$(neutron ext-list | grep 'subnet_allocation' | get_field 1)
     if [[ "$Q_L3_ENABLED" == "True" ]]; then
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
             # create a tenant-owned router.
-            ROUTER_ID=$(neutron router-create --tenant-id $TENANT_ID $Q_ROUTER_NAME | grep ' id ' | get_field 2)
-            die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $TENANT_ID $Q_ROUTER_NAME"
+            ROUTER_ID=$(neutron router-create --tenant-id $project_id $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $project_id $Q_ROUTER_NAME"
         else
             # Plugin only supports creating a single router, which should be admin owned.
             ROUTER_ID=$(neutron router-create $Q_ROUTER_NAME | grep ' id ' | get_field 2)
             die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $Q_ROUTER_NAME"
         fi
 
+        # if the extension is available, then mark the external
+        # network as default, and provision default subnetpools
+        EXTERNAL_NETWORK_FLAGS="--router:external"
+        if [[ -n $AUTO_ALLOCATE_EXT && -n $SUBNETPOOL_EXT ]]; then
+            EXTERNAL_NETWORK_FLAGS="$EXTERNAL_NETWORK_FLAGS --is-default"
+            if [[ "$IP_VERSION" =~ 4.* ]]; then
+                SUBNETPOOL_V4_ID=$(neutron subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
+            fi
+            if [[ "$IP_VERSION" =~ .*6 ]]; then
+                SUBNETPOOL_V6_ID=$(neutron subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --shared --is-default=True | grep ' id ' | get_field 2)
+            fi
+        fi
         # Create an external network, and a subnet. Configure the external network as router gw
         if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
-            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True --provider:network_type=flat --provider:physical_network=${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- $EXTERNAL_NETWORK_FLAGS --provider:network_type=flat --provider:physical_network=${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
         else
-            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- --router:external=True | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- $EXTERNAL_NETWORK_FLAGS | grep ' id ' | get_field 2)
         fi
         die_if_not_set $LINENO EXT_NET_ID "Failure creating EXT_NET_ID for $PUBLIC_NETWORK_NAME"
 
@@ -689,9 +712,12 @@ function install_neutron_agent_packages {
 
 # Start running processes, including screen
 function start_neutron_service_and_check {
-    local cfg_file_options="$(determine_config_files neutron-server)"
     local service_port=$Q_PORT
     local service_protocol=$Q_PROTOCOL
+    local cfg_file_options
+
+    cfg_file_options="$(determine_config_files neutron-server)"
+
     if is_service_enabled tls-proxy; then
         service_port=$Q_PORT_INT
         service_protocol="http"
@@ -772,7 +798,11 @@ function stop_neutron_other {
     fi
 
     stop_process q-svc
-    stop_process q-l3
+
+    if is_service_enabled q-l3; then
+        sudo pkill -f "radvd -C $DATA_DIR/neutron/ra"
+        stop_process q-l3
+    fi
 
     if is_service_enabled q-meta; then
         sudo pkill -9 -f neutron-ns-metadata-proxy || :
@@ -1160,14 +1190,7 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
 
-    iniset $NEUTRON_CONF nova auth_plugin password
-    iniset $NEUTRON_CONF nova auth_url $KEYSTONE_AUTH_URI
-    iniset $NEUTRON_CONF nova username nova
-    iniset $NEUTRON_CONF nova password $SERVICE_PASSWORD
-    iniset $NEUTRON_CONF nova user_domain_id default
-    iniset $NEUTRON_CONF nova project_name $SERVICE_TENANT_NAME
-    iniset $NEUTRON_CONF nova project_domain_id default
-    iniset $NEUTRON_CONF nova region_name $REGION_NAME
+    configure_auth_token_middleware $NEUTRON_CONF nova $NEUTRON_AUTH_CACHE_DIR nova
 
     # Configure plugin
     neutron_plugin_configure_service
@@ -1258,32 +1281,32 @@ function _neutron_setup_interface_driver {
 
 # Create private IPv4 subnet
 function _neutron_create_private_subnet_v4 {
-    local subnet_params="--tenant-id $TENANT_ID "
+    local project_id=$1
+    local subnet_params="--tenant-id $project_id "
     subnet_params+="--ip_version 4 "
     subnet_params+="--gateway $NETWORK_GATEWAY "
     subnet_params+="--name $PRIVATE_SUBNET_NAME "
-    subnet_params+="--subnetpool None "
     subnet_params+="$NET_ID $FIXED_RANGE"
     local subnet_id
     subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
-    die_if_not_set $LINENO subnet_id "Failure creating private IPv4 subnet for $TENANT_ID"
+    die_if_not_set $LINENO subnet_id "Failure creating private IPv4 subnet for $project_id"
     echo $subnet_id
 }
 
 # Create private IPv6 subnet
 function _neutron_create_private_subnet_v6 {
+    local project_id=$1
     die_if_not_set $LINENO IPV6_RA_MODE "IPV6 RA Mode not set"
     die_if_not_set $LINENO IPV6_ADDRESS_MODE "IPV6 Address Mode not set"
     local ipv6_modes="--ipv6-ra-mode $IPV6_RA_MODE --ipv6-address-mode $IPV6_ADDRESS_MODE"
-    local subnet_params="--tenant-id $TENANT_ID "
+    local subnet_params="--tenant-id $project_id "
     subnet_params+="--ip_version 6 "
     subnet_params+="--gateway $IPV6_PRIVATE_NETWORK_GATEWAY "
     subnet_params+="--name $IPV6_PRIVATE_SUBNET_NAME "
-    subnet_params+="--subnetpool None "
     subnet_params+="$NET_ID $FIXED_RANGE_V6 $ipv6_modes"
     local ipv6_subnet_id
     ipv6_subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
-    die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $TENANT_ID"
+    die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $project_id"
     echo $ipv6_subnet_id
 }
 
@@ -1293,7 +1316,6 @@ function _neutron_create_public_subnet_v4 {
     subnet_params+="${Q_FLOATING_ALLOCATION_POOL:+--allocation-pool $Q_FLOATING_ALLOCATION_POOL} "
     subnet_params+="--gateway $PUBLIC_NETWORK_GATEWAY "
     subnet_params+="--name $PUBLIC_SUBNET_NAME "
-    subnet_params+="--subnetpool None "
     subnet_params+="$EXT_NET_ID $FLOATING_RANGE "
     subnet_params+="-- --enable_dhcp=False"
     local id_and_ext_gw_ip
@@ -1307,7 +1329,6 @@ function _neutron_create_public_subnet_v6 {
     local subnet_params="--ip_version 6 "
     subnet_params+="--gateway $IPV6_PUBLIC_NETWORK_GATEWAY "
     subnet_params+="--name $IPV6_PUBLIC_SUBNET_NAME "
-    subnet_params+="--subnetpool None "
     subnet_params+="$EXT_NET_ID $IPV6_PUBLIC_RANGE "
     subnet_params+="-- --enable_dhcp=False"
     local ipv6_id_and_ext_gw_ip
@@ -1428,9 +1449,13 @@ function delete_probe {
 function setup_neutron_debug {
     if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
         public_net_id=`_get_net_id $PUBLIC_NETWORK_NAME`
-        neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $public_net_id
+        if [[ -n $public_net_id ]]; then
+            neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $public_net_id
+        fi
         private_net_id=`_get_net_id $PRIVATE_NETWORK_NAME`
-        neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $private_net_id
+        if [[ -n $private_net_id ]]; then
+            neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $private_net_id
+        fi
     fi
 }
 

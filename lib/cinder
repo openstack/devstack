@@ -272,6 +272,8 @@ function configure_cinder {
 
     iniset $CINDER_CONF DEFAULT os_region_name "$REGION_NAME"
 
+    iniset $CINDER_CONF privsep_osbrick helper_command "sudo cinder-rootwrap \$rootwrap_config privsep-helper --config-file $CINDER_CONF"
+
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
         local enabled_backends=""
         local default_name=""
@@ -351,7 +353,7 @@ function configure_cinder {
     # Set os_privileged_user credentials (used for os-assisted-snapshots)
     iniset $CINDER_CONF DEFAULT os_privileged_user_name nova
     iniset $CINDER_CONF DEFAULT os_privileged_user_password "$SERVICE_PASSWORD"
-    iniset $CINDER_CONF DEFAULT os_privileged_user_tenant "$SERVICE_TENANT_NAME"
+    iniset $CINDER_CONF DEFAULT os_privileged_user_tenant "$SERVICE_PROJECT_NAME"
     iniset $CINDER_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 }
 
@@ -373,17 +375,17 @@ function create_cinder_accounts {
         get_or_create_endpoint \
             "volume" \
             "$REGION_NAME" \
-            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
-            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s" \
-            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(tenant_id)s"
+            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(project_id)s" \
+            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(project_id)s" \
+            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(project_id)s"
 
         get_or_create_service "cinderv2" "volumev2" "Cinder Volume Service V2"
         get_or_create_endpoint \
             "volumev2" \
             "$REGION_NAME" \
-            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
-            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s" \
-            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(tenant_id)s"
+            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(project_id)s" \
+            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(project_id)s" \
+            "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(project_id)s"
     fi
 }
 

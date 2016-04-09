@@ -159,6 +159,14 @@ if is_fedora; then
             pip_install --upgrade --force-reinstall requests
         fi
     fi
+
+    if [[ "$os_VENDOR" == "Fedora" ]] && [[ "$os_RELEASE" -ge "23" ]]; then
+        # work-around broken rabbitmq-server 3.6.1 packages
+        #  https://bugzilla.redhat.com/show_bug.cgi?id=1323610
+        # Will be removed when this bug is fixed.
+        sudo dnf -y install \
+             https://kojipkgs.fedoraproject.org/packages/rabbitmq-server/3.5.7/4.fc23/noarch/rabbitmq-server-3.5.7-4.fc23.noarch.rpm
+    fi
 fi
 
 # The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has

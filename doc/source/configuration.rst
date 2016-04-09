@@ -104,7 +104,7 @@ values that most often need to be set.
 ::
 
     [[local|localrc]]
-    ADMIN_PASSWORD=secrete
+    ADMIN_PASSWORD=secret
     DATABASE_PASSWORD=$ADMIN_PASSWORD
     RABBIT_PASSWORD=$ADMIN_PASSWORD
     SERVICE_PASSWORD=$ADMIN_PASSWORD

@@ -312,20 +312,20 @@ declare os_VENDOR os_RELEASE os_PACKAGE os_CODENAME
 # user if not available.  Note can't use generic install_package*
 # because they depend on this!
 function _ensure_lsb_release {
-    if [[ -x $(which lsb_release 2>/dev/null) ]]; then
+    if [[ -x $(command -v lsb_release 2>/dev/null) ]]; then
         return
     fi
 
-    if [[ -x $(which apt-get 2>/dev/null) ]]; then
+    if [[ -x $(command -v apt-get 2>/dev/null) ]]; then
         sudo apt-get install -y lsb-release
-    elif [[ -x $(which zypper 2>/dev/null) ]]; then
+    elif [[ -x $(command -v zypper 2>/dev/null) ]]; then
         # XXX: old code paths seem to have assumed SUSE platforms also
         # had "yum".  Keep this ordered above yum so we don't try to
         # install the rh package.  suse calls it just "lsb"
-        sudo zypper -y install lsb
-    elif [[ -x $(which dnf 2>/dev/null) ]]; then
+        sudo zypper -n install lsb
+    elif [[ -x $(command -v dnf 2>/dev/null) ]]; then
         sudo dnf install -y redhat-lsb-core
-    elif [[ -x $(which yum 2>/dev/null) ]]; then
+    elif [[ -x $(command -v yum 2>/dev/null) ]]; then
         # all rh patforms (fedora, centos, rhel) have this pkg
         sudo yum install -y redhat-lsb-core
     else
@@ -380,7 +380,8 @@ function GetDistro {
         DISTRO="sle${os_RELEASE%.*}"
     elif [[ "$os_VENDOR" =~ (Red.*Hat) || \
         "$os_VENDOR" =~ (CentOS) || \
-        "$os_VENDOR" =~ (OracleLinux) ]]; then
+        "$os_VENDOR" =~ (OracleLinux) || \
+        "$os_VENDOR" =~ (Virtuozzo) ]]; then
         # Drop the . release as we assume it's compatible
         # XXX re-evaluate when we get RHEL10
         DISTRO="rhel${os_RELEASE::1}"
@@ -389,7 +390,26 @@ function GetDistro {
     elif [[ "$os_VENDOR" =~ (kvmibm) ]]; then
         DISTRO="${os_VENDOR}${os_RELEASE::1}"
     else
-        die $LINENO "Unable to determine DISTRO"
+        # We can't make a good choice here.  Setting a sensible DISTRO
+        # is part of the problem, but not the major issue -- we really
+        # only use DISTRO in the code as a fine-filter.
+        #
+        # The bigger problem is categorising the system into one of
+        # our two big categories as Ubuntu/Debian-ish or
+        # Fedora/CentOS-ish.
+        #
+        # The setting of os_PACKAGE above is only set to "deb" based
+        # on a hard-coded list of vendor names ... thus we will
+        # default to thinking unknown distros are RPM based
+        # (ie. is_ubuntu does not match).  But the platform will then
+        # also not match in is_fedora, because that also has a list of
+        # names.
+        #
+        # So, if you are reading this, getting your distro supported
+        # is really about making sure it matches correctly in these
+        # functions.  Then you can choose a sensible way to construct
+        # DISTRO based on your distros release approach.
+        die $LINENO "Unable to determine DISTRO, can not continue."
     fi
     typeset -xr DISTRO
 }
@@ -420,8 +440,9 @@ function is_fedora {
     fi
 
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
+        [ "$os_VENDOR" = "RedHatEnterpriseServer" ] || \
         [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleLinux" ] || \
-        [ "$os_VENDOR" = "CloudLinux" ] || [ "$os_VENDOR" = "kvmibm" ]
+        [ "$os_VENDOR" = "Virtuozzo" ] || [ "$os_VENDOR" = "kvmibm" ]
 }
 
 
@@ -433,7 +454,7 @@ function is_suse {
         GetOSVersion
     fi
 
-    [ "$os_VENDOR" = "openSUSE" ] || [ "$os_VENDOR" = "SUSE LINUX" ]
+    [[ "$os_VENDOR" =~ (openSUSE) || "$os_VENDOR" == "SUSE LINUX" ]]
 }
 
 
@@ -994,7 +1015,7 @@ function get_endpoint_url {
 # out of tree, as it is used by nova and neutron.
 # figure out a way to refactor nova/neutron code to eliminate this
 function is_ironic_hardware {
-    is_service_enabled ironic && [[ -n "${IRONIC_DEPLOY_DRIVER##*_ssh}" ]] && return 0
+    is_service_enabled ironic && [[ "$IRONIC_IS_HARDWARE" == "True" ]] && return 0
     return 1
 }
 
@@ -1096,8 +1117,9 @@ function _parse_package_files {
                 continue
             fi
 
-            # Assume we want this package
-            package=${line%#*}
+            # Assume we want this package; free-form
+            # comments allowed after a #
+            package=${line%%#*}
             inst_pkg=1
 
             # Look for # dist:xxx in comment
@@ -1212,7 +1234,7 @@ function get_plugin_packages {
     local files_to_parse=""
     local package_dir=""
     for plugin in ${DEVSTACK_PLUGINS//,/ }; do
-        local package_dir="$(_get_package_dir ${GITDIR[$plugin]}/devstack/files)"
+        package_dir="$(_get_package_dir ${GITDIR[$plugin]}/devstack/files)"
         files_to_parse+=" $package_dir/$plugin"
     done
     echo "$(_parse_package_files $files_to_parse)"
@@ -1285,7 +1307,7 @@ function uninstall_package {
     elif is_fedora; then
         sudo ${YUM:-yum} remove -y "$@" ||:
     elif is_suse; then
-        sudo zypper rm "$@"
+        sudo zypper rm "$@" ||:
     else
         exit_distro_not_supported "uninstalling packages"
     fi
@@ -1301,27 +1323,35 @@ function yum_install {
 
     time_start "yum_install"
 
-    # Warning: this would not work if yum output message
-    # have been translated to another language
-    parse_yum_result='\
-        BEGIN { result=0 }\
-        /^YUM_FAILED/ { exit $2 }\
-        /^No package/ { result=1 }\
-        //{ print }\
+    # - We run with LC_ALL=C so string matching *should* be OK
+    # - Exit 1 if the failure might get better with a retry.
+    # - Exit 2 if it is fatal.
+    parse_yum_result='             \
+        BEGIN { result=0 }         \
+        /^YUM_FAILED/ { exit $2 }  \
+        /^No package/ { result=2 } \
+        /^Failed:/    { result=2 } \
+        //{ print }                \
         END { exit result }'
 
     # The manual check for missing packages is because yum -y assumes
-    # missing packages are OK.
+    # missing or failed packages are OK.
     # See https://bugzilla.redhat.com/show_bug.cgi?id=965567
     (sudo_with_proxies "${YUM:-yum}" install -y "$@" 2>&1 || echo YUM_FAILED $?) \
-        | awk "$parse_yum_result"
-    result=$?
-
-    if [ "$result" != 0 ]; then
-        echo $LINENO "${YUM:-yum}" install failure: $result
-    fi
+        | awk "$parse_yum_result" && result=$? || result=$?
 
     time_stop "yum_install"
+
+    # if we return 1, then the wrapper functions will run an update
+    # and try installing the package again as a defense against bad
+    # mirrors.  This can hide failures, especially when we have
+    # packages that are in the "Failed:" section because their rpm
+    # install scripts failed to run correctly (in this case, the
+    # package looks installed, so when the retry happens we just think
+    # the package is OK, and incorrectly continue on).
+    if [ "$result" == 2 ]; then
+        die "Detected fatal package install failure"
+    fi
 
     return "$result"
 }
@@ -1429,14 +1459,17 @@ function run_process {
     local service=$1
     local command="$2"
     local group=$3
+    local subservice=$4
+
+    local name=${subservice:-$service}
 
     time_start "run_process"
     if is_service_enabled $service; then
         if [[ "$USE_SCREEN" = "True" ]]; then
-            screen_process "$service" "$command" "$group"
+            screen_process "$name" "$command" "$group"
         else
             # Spawn directly without screen
-            _run_process "$service" "$command" "$group" &
+            _run_process "$name" "$command" "$group" &
         fi
     fi
     time_stop "run_process"
@@ -1619,7 +1652,7 @@ function service_check {
     done
 
     if [ -n "$failures" ]; then
-        die $LINENO "More details about the above errors can be found with screen, with ./rejoin-stack.sh"
+        die $LINENO "More details about the above errors can be found with screen"
     fi
 }
 
@@ -2289,8 +2322,9 @@ function sudo_with_proxies {
 # Resolution is only in whole seconds, so should be used for long
 # running activities.
 
-declare -A TOTAL_TIME
-declare -A START_TIME
+declare -A _TIME_TOTAL
+declare -A _TIME_START
+declare -r _TIME_BEGIN=$(date +%s)
 
 # time_start $name
 #
@@ -2298,11 +2332,11 @@ declare -A START_TIME
 # already started.
 function time_start {
     local name=$1
-    local start_time=${START_TIME[$name]}
+    local start_time=${_TIME_START[$name]}
     if [[ -n "$start_time" ]]; then
         die $LINENO "Trying to start the clock on $name, but it's already been started"
     fi
-    START_TIME[$name]=$(date +%s)
+    _TIME_START[$name]=$(date +%s)
 }
 
 # time_stop $name
@@ -2318,32 +2352,53 @@ function time_stop {
     local start_time
 
     name=$1
-    start_time=${START_TIME[$name]}
+    start_time=${_TIME_START[$name]}
 
     if [[ -z "$start_time" ]]; then
         die $LINENO "Trying to stop the clock on $name, but it was never started"
     fi
     end_time=$(date +%s)
     elapsed_time=$(($end_time - $start_time))
-    total=${TOTAL_TIME[$name]:-0}
+    total=${_TIME_TOTAL[$name]:-0}
     # reset the clock so we can start it in the future
-    START_TIME[$name]=""
-    TOTAL_TIME[$name]=$(($total + $elapsed_time))
+    _TIME_START[$name]=""
+    _TIME_TOTAL[$name]=$(($total + $elapsed_time))
 }
 
 # time_totals
-#
-# prints out total time
+#  Print out total time summary
 function time_totals {
-    echo
-    echo "========================"
-    echo "DevStack Components Timed"
-    echo "========================"
-    echo
-    for t in ${!TOTAL_TIME[*]}; do
-        local v=${TOTAL_TIME[$t]}
-        echo "$t - $v secs"
+    local elapsed_time
+    local end_time
+    local len=15
+    local xtrace
+
+    end_time=$(date +%s)
+    elapsed_time=$(($end_time - $_TIME_BEGIN))
+
+    # pad 1st column this far
+    for t in ${!_TIME_TOTAL[*]}; do
+        if [[ ${#t} -gt $len ]]; then
+            len=${#t}
+        fi
     done
+
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    echo
+    echo "========================="
+    echo "DevStack Component Timing"
+    echo "========================="
+    printf "%-${len}s %3d\n" "Total runtime" "$elapsed_time"
+    echo
+    for t in ${!_TIME_TOTAL[*]}; do
+        local v=${_TIME_TOTAL[$t]}
+        printf "%-${len}s %3d\n" "$t" "$v"
+    done
+    echo "========================="
+
+    $xtrace
 }
 
 # Restore xtrace

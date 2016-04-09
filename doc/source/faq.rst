@@ -85,7 +85,7 @@ through bash for this
 
    function sourceopenrc {
        pushd ~/devstack >/dev/null
-       eval $(bash -c ". openrc $1 $2;env|sed -n '/OS_/ { s/^/export /;p}'")
+       eval $(bash -c ". openrc $1 $2 >/dev/null;env|sed -n '/OS_/ { s/^/export /;p}'")
        popd >/dev/null
    }
 

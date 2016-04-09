@@ -4,6 +4,7 @@
 *.log.[1-9]
 *.pem
 .localrc.auto
+.localrc.password
 .prereqs
 .tox
 .stackenv
@@ -11,6 +12,9 @@ accrc
 doc/files
 doc/build
 files/*.gz
+files/*.vmdk
+files/*.rpm
+files/*.rpm.*
 files/*.qcow2
 files/*.img
 files/images
@@ -25,3 +29,5 @@ shocco
 src
 stack-screenrc
 userrc_early
+AUTHORS
+ChangeLog

@@ -34,6 +34,7 @@ set +o xtrace
 
 # Set up default directories
 GITDIR["python-novaclient"]=$DEST/python-novaclient
+GITDIR["os-vif"]=$DEST/os-vif
 NOVA_DIR=$DEST/nova
 
 # Nova virtual environment
@@ -74,9 +75,6 @@ NOVA_USE_MOD_WSGI=${NOVA_USE_MOD_WSGI:-False}
 
 if is_ssl_enabled_service "nova" || is_service_enabled tls-proxy; then
     NOVA_SERVICE_PROTOCOL="https"
-    EC2_SERVICE_PROTOCOL="https"
-else
-    EC2_SERVICE_PROTOCOL="http"
 fi
 
 # Public facing bits
@@ -86,8 +84,6 @@ NOVA_SERVICE_PORT_INT=${NOVA_SERVICE_PORT_INT:-18774}
 NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 NOVA_SERVICE_LOCAL_HOST=${NOVA_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
 NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
-EC2_SERVICE_PORT=${EC2_SERVICE_PORT:-8773}
-EC2_SERVICE_PORT_INT=${EC2_SERVICE_PORT_INT:-18773}
 METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 
 # Option to enable/disable config drive
@@ -140,7 +136,6 @@ NETWORK_MANAGER=${NETWORK_MANAGER:-${NET_MAN:-FlatDHCPManager}}
 PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
 VLAN_INTERFACE=${VLAN_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
-EC2_DMZ_HOST=${EC2_DMZ_HOST:-$SERVICE_HOST}
 
 # If you are using the FlatDHCP network mode on multiple hosts, set the
 # ``FLAT_INTERFACE`` variable but make sure that the interface doesn't already
@@ -404,8 +399,8 @@ function configure_nova {
 #
 # Project              User         Roles
 # ------------------------------------------------------------------
-# SERVICE_TENANT_NAME  nova         admin
-# SERVICE_TENANT_NAME  nova         ResellerAdmin (if Swift is enabled)
+# SERVICE_PROJECT_NAME  nova         admin
+# SERVICE_PROJECT_NAME  nova         ResellerAdmin (if Swift is enabled)
 function create_nova_accounts {
 
     # Nova
@@ -426,17 +421,17 @@ function create_nova_accounts {
         get_or_create_endpoint \
             "compute_legacy" \
             "$REGION_NAME" \
-            "$nova_api_url/v2/\$(tenant_id)s" \
-            "$nova_api_url/v2/\$(tenant_id)s" \
-            "$nova_api_url/v2/\$(tenant_id)s"
+            "$nova_api_url/v2/\$(project_id)s" \
+            "$nova_api_url/v2/\$(project_id)s" \
+            "$nova_api_url/v2/\$(project_id)s"
 
         get_or_create_service "nova" "compute" "Nova Compute Service"
         get_or_create_endpoint \
             "compute" \
             "$REGION_NAME" \
-            "$nova_api_url/v2.1/\$(tenant_id)s" \
-            "$nova_api_url/v2.1/\$(tenant_id)s" \
-            "$nova_api_url/v2.1/\$(tenant_id)s"
+            "$nova_api_url/v2.1" \
+            "$nova_api_url/v2.1" \
+            "$nova_api_url/v2.1"
     fi
 
     if is_service_enabled n-api; then
@@ -444,7 +439,7 @@ function create_nova_accounts {
         if is_service_enabled swift; then
             # Nova needs ResellerAdmin role to download images when accessing
             # swift through the s3 api.
-            get_or_add_user_project_role ResellerAdmin nova $SERVICE_TENANT_NAME
+            get_or_add_user_project_role ResellerAdmin nova $SERVICE_PROJECT_NAME
         fi
     fi
 
@@ -497,6 +492,8 @@ function create_nova_conf {
         # install things in /usr/bin
         iniset $NOVA_CONF DEFAULT bindir "/usr/bin"
     fi
+
+    iniset $NOVA_CONF privsep_osbrick helper_command "sudo nova-rootwrap \$rootwrap_config privsep-helper --config-file $NOVA_CONF"
 
     if is_service_enabled n-api; then
         if is_service_enabled n-api-meta; then
@@ -575,7 +572,7 @@ function create_nova_conf {
         iniset $NOVA_CONF vnc enabled true
         iniset $NOVA_CONF vnc vncserver_listen "$VNCSERVER_LISTEN"
         iniset $NOVA_CONF vnc vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
-        iniset $NOVA_CONF DEFAULT novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $NOVA_CONF vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $NOVA_CONF vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
     else
         iniset $NOVA_CONF vnc enabled false
@@ -594,7 +591,6 @@ function create_nova_conf {
         iniset $NOVA_CONF spice enabled false
     fi
 
-    iniset $NOVA_CONF DEFAULT ec2_dmz_host "$EC2_DMZ_HOST"
     iniset_rpc_backend nova $NOVA_CONF
     iniset $NOVA_CONF glance api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
 
@@ -714,6 +710,10 @@ function init_nova {
 
         recreate_database $NOVA_API_DB
         $NOVA_BIN_DIR/nova-manage api_db sync
+
+        # Run online migrations on the new databases
+        # Needed for flavor conversion
+        $NOVA_BIN_DIR/nova-manage db online_data_migrations
     fi
 
     create_nova_cache_dir
@@ -735,6 +735,13 @@ function install_novaclient {
 
 # install_nova() - Collect source and prepare
 function install_nova {
+
+    # Install os-vif
+    if use_library_from_git "os-vif"; then
+        git_clone_by_name "os-vif"
+        setup_dev_lib "os-vif"
+    fi
+
     if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
         install_nova_hypervisor
     fi
@@ -810,7 +817,6 @@ function start_nova_api {
     # Start proxies if enabled
     if is_service_enabled tls-proxy; then
         start_tls_proxy '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT &
-        start_tls_proxy '*' $EC2_SERVICE_PORT $NOVA_SERVICE_HOST $EC2_SERVICE_PORT_INT &
     fi
 
     export PATH=$old_path
@@ -926,6 +932,27 @@ function stop_nova {
     stop_nova_compute
 }
 
+# create_instance_types(): Create default flavors
+function create_flavors {
+    if is_service_enabled n-api; then
+        if ! openstack flavor list | grep -q ds512M; then
+            # Note that danms hates these flavors and apologizes for sdague
+            openstack flavor create --id c1 --ram 256 --disk 0 --vcpus 1 cirros256
+            openstack flavor create --id d1 --ram 512 --disk 5 --vcpus 1 ds512M
+            openstack flavor create --id d2 --ram 1024 --disk 10 --vcpus 1 ds1G
+            openstack flavor create --id d3 --ram 2048 --disk 10 --vcpus 2 ds2G
+            openstack flavor create --id d4 --ram 4096 --disk 20 --vcpus 4 ds4G
+        fi
+
+        if ! openstack flavor list | grep -q m1.tiny; then
+            openstack flavor create --id 1 --ram 512 --disk 1 --vcpus 1 m1.tiny
+            openstack flavor create --id 2 --ram 2048 --disk 20 --vcpus 1 m1.small
+            openstack flavor create --id 3 --ram 4096 --disk 40 --vcpus 2 m1.medium
+            openstack flavor create --id 4 --ram 8192 --disk 80 --vcpus 4 m1.large
+            openstack flavor create --id 5 --ram 16384 --disk 160 --vcpus 8 m1.xlarge
+        fi
+    fi
+}
 
 # Restore xtrace
 $_XTRACE_LIB_NOVA

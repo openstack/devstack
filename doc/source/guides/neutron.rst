@@ -19,6 +19,18 @@ physical interface can be used to transmit tenant network traffic,
 the OpenStack API traffic, and management traffic.
 
 
+.. warning::
+
+    When using a single interface networking setup, there will be a
+    temporary network outage as your IP address is moved from the
+    physical NIC of your machine, to the OVS bridge. If you are SSH'd
+    into the machine from another computer, there is a risk of being
+    disconnected from your ssh session (due to arp cache
+    invalidation), which would stop the stack.sh or leave it in an
+    unfinished state. In these cases, start stack.sh inside its own
+    screen session so it can continue to run.
+
+
 Physical Network Setup
 ----------------------
 
@@ -59,10 +71,10 @@ serving as a hypervisor for guest instances.
         MYSQL_HOST=172.18.161.6
         RABBIT_HOST=172.18.161.6
         GLANCE_HOSTPORT=172.18.161.6:9292
-        ADMIN_PASSWORD=secrete
-        DATABASE_PASSWORD=secrete
-        RABBIT_PASSWORD=secrete
-        SERVICE_PASSWORD=secrete
+        ADMIN_PASSWORD=secret
+        DATABASE_PASSWORD=secret
+        RABBIT_PASSWORD=secret
+        SERVICE_PASSWORD=secret
 
         # Do not use Nova-Network
         disable_service n-net
@@ -232,10 +244,10 @@ The host `devstack-2` has a very minimal `local.conf`.
     MYSQL_HOST=172.18.161.6
     RABBIT_HOST=172.18.161.6
     GLANCE_HOSTPORT=172.18.161.6:9292
-    ADMIN_PASSWORD=secrete
-    MYSQL_PASSWORD=secrete
-    RABBIT_PASSWORD=secrete
-    SERVICE_PASSWORD=secrete
+    ADMIN_PASSWORD=secret
+    MYSQL_PASSWORD=secret
+    RABBIT_PASSWORD=secret
+    SERVICE_PASSWORD=secret
 
     ## Neutron options
     PUBLIC_INTERFACE=eth0
@@ -362,10 +374,10 @@ controller node.
         GLANCE_HOSTPORT=10.0.0.2:9292
         PUBLIC_INTERFACE=eth1
 
-        ADMIN_PASSWORD=secrete
-        MYSQL_PASSWORD=secrete
-        RABBIT_PASSWORD=secrete
-        SERVICE_PASSWORD=secrete
+        ADMIN_PASSWORD=secret
+        MYSQL_PASSWORD=secret
+        RABBIT_PASSWORD=secret
+        SERVICE_PASSWORD=secret
 
         ## Neutron options
         Q_USE_SECGROUP=True
@@ -409,10 +421,10 @@ compute node 1.
         MYSQL_HOST=10.0.0.2
         RABBIT_HOST=10.0.0.2
         GLANCE_HOSTPORT=10.0.0.2:9292
-        ADMIN_PASSWORD=secrete
-        MYSQL_PASSWORD=secrete
-        RABBIT_PASSWORD=secrete
-        SERVICE_PASSWORD=secrete
+        ADMIN_PASSWORD=secret
+        MYSQL_PASSWORD=secret
+        RABBIT_PASSWORD=secret
+        SERVICE_PASSWORD=secret
 
         # Services that a compute node runs
         ENABLED_SERVICES=n-cpu,rabbit,q-agt
@@ -443,13 +455,18 @@ Miscellaneous Tips
 Non-Standard MTU on the Physical Network
 ----------------------------------------
 
-DevStack defaults to assume that the MTU on the physical network
-is 1500.  A different MTU can be specified by adding the following to
-the `localrc` part of `local.conf` on each machine.
+Neutron by default uses a MTU of 1500 bytes, which is
+the standard MTU for Ethernet.
+
+A different MTU can be specified by adding the following to
+the Neutron section of `local.conf`. For example,
+if you have network equipment that supports jumbo frames, you could
+set the MTU to 9000 bytes by adding the following
 
 ::
 
-    Q_ML2_PLUGIN_PATH_MTU=1500
+    [[post-config|/$Q_PLUGIN_CONF_FILE]]
+    global_physnet_mtu = 9000
 
 
 Disabling Next Generation Firewall Tools
@@ -509,10 +526,10 @@ setup, with small modifications for the interface mappings.
     MYSQL_HOST=172.18.161.6
     RABBIT_HOST=172.18.161.6
     GLANCE_HOSTPORT=172.18.161.6:9292
-    ADMIN_PASSWORD=secrete
-    DATABASE_PASSWORD=secrete
-    RABBIT_PASSWORD=secrete
-    SERVICE_PASSWORD=secrete
+    ADMIN_PASSWORD=secret
+    DATABASE_PASSWORD=secret
+    RABBIT_PASSWORD=secret
+    SERVICE_PASSWORD=secret
 
     # Do not use Nova-Network
     disable_service n-net
@@ -537,18 +554,3 @@ setup, with small modifications for the interface mappings.
     PUBLIC_PHYSICAL_NETWORK=default
     LB_INTERFACE_MAPPINGS=default:eth0
 
-Creating specific OVS bridges for physical networks
----------------------------------------------------
-
-When using the Open vSwitch ML2 mechanism driver, it is possible to
-have multiple Open vSwitch bridges meant for physical networking be
-automatically created by setting the ``OVS_BRIDGE_MAPPINGS`` to a list of
-physical network to bridge name associations with the following syntax:
-
-::
-    OVS_BRIDGE_MAPPINGS=net1name:bridge1name,net2name:bridge2name,<...>
-
-Also, ``OVS_BRIDGE_MAPPINGS`` has precedence over ``PHYSICAL_NETWORK`` and
-``OVS_PHYSICAL_BRIDGE``, meaning that if the former is set, the latter
-ones will be ignored. When ``OVS_BRIDGE_MAPPINGS`` is not set, the other
-variables will still be evaluated.

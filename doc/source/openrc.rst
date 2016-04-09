@@ -35,7 +35,7 @@ OS\_PASSWORD
 
     ::
 
-        OS_PASSWORD=secrete
+        OS_PASSWORD=secret
 
 HOST\_IP, SERVICE\_HOST
     Set API endpoint host using ``HOST_IP``. ``SERVICE_HOST`` may also

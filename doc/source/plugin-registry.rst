@@ -1,7 +1,7 @@
 ..
-  Note to reviewers: the intent of this file is to be easy for
-  community members to update. As such fast approving (single core +2)
-  is fine as long as you've identified that the plugin listed actually exists.
+  Note to patch submitters: this file is covered by a periodic proposal
+  job.  You should edit the files data/devstack-plugins-registry.footer
+  data/devstack-plugins-registry.header instead of this one.
 
 ==========================
  DevStack Plugin Registry
@@ -12,100 +12,112 @@ a lot of projects. The following is a list of plugins that currently
 exist. Any project that wishes to list their plugin here is welcomed
 to.
 
-Official OpenStack Projects
-===========================
+Detected Plugins
+================
 
-The following are plugins that exist for official OpenStack projects.
-
-+------------------+---------------------------------------------+--------------------+
-|Plugin Name       |URL                                          |Comments            |
-+------------------+---------------------------------------------+--------------------+
-|aodh              |git://git.openstack.org/openstack/aodh       | alarming           |
-+------------------+---------------------------------------------+--------------------+
-|barbican          |git://git.openstack.org/openstack/barbican   | key management     |
-+------------------+---------------------------------------------+--------------------+
-|ceilometer        |git://git.openstack.org/openstack/ceilometer | metering           |
-+------------------+---------------------------------------------+--------------------+
-|congress          |git://git.openstack.org/openstack/congress   | governance         |
-+------------------+---------------------------------------------+--------------------+
-|cue               |git://git.openstack.org/openstack/cue        | message-broker     |
-+------------------+---------------------------------------------+--------------------+
-|gnocchi           |git://git.openstack.org/openstack/gnocchi    | metric             |
-+------------------+---------------------------------------------+--------------------+
-|ironic            |git://git.openstack.org/openstack/ironic     | baremetal          |
-+------------------+---------------------------------------------+--------------------+
-|magnum            |git://git.openstack.org/openstack/magnum     |                    |
-+------------------+---------------------------------------------+--------------------+
-|manila            |git://git.openstack.org/openstack/manila     | file shares        |
-+------------------+---------------------------------------------+--------------------+
-|mistral           |git://git.openstack.org/openstack/mistral    |                    |
-+------------------+---------------------------------------------+--------------------+
-|rally             |git://git.openstack.org/openstack/rally      |                    |
-+------------------+---------------------------------------------+--------------------+
-|sahara            |git://git.openstack.org/openstack/sahara     |                    |
-+------------------+---------------------------------------------+--------------------+
-|trove             |git://git.openstack.org/openstack/trove      |                    |
-+------------------+---------------------------------------------+--------------------+
-|zaqar             |git://git.openstack.org/openstack/zaqar      |                    |
-+------------------+---------------------------------------------+--------------------+
+The following are plugins that a script has found in the openstack/
+namespace, which includes but is not limited to official OpenStack
+projects.
 
 
+====================================== ===
+Plugin Name                            URL
+====================================== ===
+aodh                                   `git://git.openstack.org/openstack/aodh <https://git.openstack.org/cgit/openstack/aodh>`__
+app-catalog-ui                         `git://git.openstack.org/openstack/app-catalog-ui <https://git.openstack.org/cgit/openstack/app-catalog-ui>`__
+astara                                 `git://git.openstack.org/openstack/astara <https://git.openstack.org/cgit/openstack/astara>`__
+barbican                               `git://git.openstack.org/openstack/barbican <https://git.openstack.org/cgit/openstack/barbican>`__
+blazar                                 `git://git.openstack.org/openstack/blazar <https://git.openstack.org/cgit/openstack/blazar>`__
+broadview-collector                    `git://git.openstack.org/openstack/broadview-collector <https://git.openstack.org/cgit/openstack/broadview-collector>`__
+ceilometer                             `git://git.openstack.org/openstack/ceilometer <https://git.openstack.org/cgit/openstack/ceilometer>`__
+ceilometer-powervm                     `git://git.openstack.org/openstack/ceilometer-powervm <https://git.openstack.org/cgit/openstack/ceilometer-powervm>`__
+cerberus                               `git://git.openstack.org/openstack/cerberus <https://git.openstack.org/cgit/openstack/cerberus>`__
+cloudkitty                             `git://git.openstack.org/openstack/cloudkitty <https://git.openstack.org/cgit/openstack/cloudkitty>`__
+collectd-ceilometer-plugin             `git://git.openstack.org/openstack/collectd-ceilometer-plugin <https://git.openstack.org/cgit/openstack/collectd-ceilometer-plugin>`__
+congress                               `git://git.openstack.org/openstack/congress <https://git.openstack.org/cgit/openstack/congress>`__
+cue                                    `git://git.openstack.org/openstack/cue <https://git.openstack.org/cgit/openstack/cue>`__
+designate                              `git://git.openstack.org/openstack/designate <https://git.openstack.org/cgit/openstack/designate>`__
+devstack-plugin-additional-pkg-repos   `git://git.openstack.org/openstack/devstack-plugin-additional-pkg-repos <https://git.openstack.org/cgit/openstack/devstack-plugin-additional-pkg-repos>`__
+devstack-plugin-amqp1                  `git://git.openstack.org/openstack/devstack-plugin-amqp1 <https://git.openstack.org/cgit/openstack/devstack-plugin-amqp1>`__
+devstack-plugin-bdd                    `git://git.openstack.org/openstack/devstack-plugin-bdd <https://git.openstack.org/cgit/openstack/devstack-plugin-bdd>`__
+devstack-plugin-ceph                   `git://git.openstack.org/openstack/devstack-plugin-ceph <https://git.openstack.org/cgit/openstack/devstack-plugin-ceph>`__
+devstack-plugin-glusterfs              `git://git.openstack.org/openstack/devstack-plugin-glusterfs <https://git.openstack.org/cgit/openstack/devstack-plugin-glusterfs>`__
+devstack-plugin-hdfs                   `git://git.openstack.org/openstack/devstack-plugin-hdfs <https://git.openstack.org/cgit/openstack/devstack-plugin-hdfs>`__
+devstack-plugin-kafka                  `git://git.openstack.org/openstack/devstack-plugin-kafka <https://git.openstack.org/cgit/openstack/devstack-plugin-kafka>`__
+devstack-plugin-nfs                    `git://git.openstack.org/openstack/devstack-plugin-nfs <https://git.openstack.org/cgit/openstack/devstack-plugin-nfs>`__
+devstack-plugin-pika                   `git://git.openstack.org/openstack/devstack-plugin-pika <https://git.openstack.org/cgit/openstack/devstack-plugin-pika>`__
+devstack-plugin-sheepdog               `git://git.openstack.org/openstack/devstack-plugin-sheepdog <https://git.openstack.org/cgit/openstack/devstack-plugin-sheepdog>`__
+devstack-plugin-zmq                    `git://git.openstack.org/openstack/devstack-plugin-zmq <https://git.openstack.org/cgit/openstack/devstack-plugin-zmq>`__
+dragonflow                             `git://git.openstack.org/openstack/dragonflow <https://git.openstack.org/cgit/openstack/dragonflow>`__
+drbd-devstack                          `git://git.openstack.org/openstack/drbd-devstack <https://git.openstack.org/cgit/openstack/drbd-devstack>`__
+ec2-api                                `git://git.openstack.org/openstack/ec2-api <https://git.openstack.org/cgit/openstack/ec2-api>`__
+freezer                                `git://git.openstack.org/openstack/freezer <https://git.openstack.org/cgit/openstack/freezer>`__
+freezer-api                            `git://git.openstack.org/openstack/freezer-api <https://git.openstack.org/cgit/openstack/freezer-api>`__
+freezer-web-ui                         `git://git.openstack.org/openstack/freezer-web-ui <https://git.openstack.org/cgit/openstack/freezer-web-ui>`__
+gce-api                                `git://git.openstack.org/openstack/gce-api <https://git.openstack.org/cgit/openstack/gce-api>`__
+gnocchi                                `git://git.openstack.org/openstack/gnocchi <https://git.openstack.org/cgit/openstack/gnocchi>`__
+ironic                                 `git://git.openstack.org/openstack/ironic <https://git.openstack.org/cgit/openstack/ironic>`__
+ironic-inspector                       `git://git.openstack.org/openstack/ironic-inspector <https://git.openstack.org/cgit/openstack/ironic-inspector>`__
+kingbird                               `git://git.openstack.org/openstack/kingbird <https://git.openstack.org/cgit/openstack/kingbird>`__
+kuryr                                  `git://git.openstack.org/openstack/kuryr <https://git.openstack.org/cgit/openstack/kuryr>`__
+magnum                                 `git://git.openstack.org/openstack/magnum <https://git.openstack.org/cgit/openstack/magnum>`__
+magnum-ui                              `git://git.openstack.org/openstack/magnum-ui <https://git.openstack.org/cgit/openstack/magnum-ui>`__
+manila                                 `git://git.openstack.org/openstack/manila <https://git.openstack.org/cgit/openstack/manila>`__
+mistral                                `git://git.openstack.org/openstack/mistral <https://git.openstack.org/cgit/openstack/mistral>`__
+monasca-api                            `git://git.openstack.org/openstack/monasca-api <https://git.openstack.org/cgit/openstack/monasca-api>`__
+murano                                 `git://git.openstack.org/openstack/murano <https://git.openstack.org/cgit/openstack/murano>`__
+networking-6wind                       `git://git.openstack.org/openstack/networking-6wind <https://git.openstack.org/cgit/openstack/networking-6wind>`__
+networking-bagpipe                     `git://git.openstack.org/openstack/networking-bagpipe <https://git.openstack.org/cgit/openstack/networking-bagpipe>`__
+networking-bgpvpn                      `git://git.openstack.org/openstack/networking-bgpvpn <https://git.openstack.org/cgit/openstack/networking-bgpvpn>`__
+networking-brocade                     `git://git.openstack.org/openstack/networking-brocade <https://git.openstack.org/cgit/openstack/networking-brocade>`__
+networking-calico                      `git://git.openstack.org/openstack/networking-calico <https://git.openstack.org/cgit/openstack/networking-calico>`__
+networking-cisco                       `git://git.openstack.org/openstack/networking-cisco <https://git.openstack.org/cgit/openstack/networking-cisco>`__
+networking-fortinet                    `git://git.openstack.org/openstack/networking-fortinet <https://git.openstack.org/cgit/openstack/networking-fortinet>`__
+networking-generic-switch              `git://git.openstack.org/openstack/networking-generic-switch <https://git.openstack.org/cgit/openstack/networking-generic-switch>`__
+networking-infoblox                    `git://git.openstack.org/openstack/networking-infoblox <https://git.openstack.org/cgit/openstack/networking-infoblox>`__
+networking-l2gw                        `git://git.openstack.org/openstack/networking-l2gw <https://git.openstack.org/cgit/openstack/networking-l2gw>`__
+networking-midonet                     `git://git.openstack.org/openstack/networking-midonet <https://git.openstack.org/cgit/openstack/networking-midonet>`__
+networking-mlnx                        `git://git.openstack.org/openstack/networking-mlnx <https://git.openstack.org/cgit/openstack/networking-mlnx>`__
+networking-nec                         `git://git.openstack.org/openstack/networking-nec <https://git.openstack.org/cgit/openstack/networking-nec>`__
+networking-odl                         `git://git.openstack.org/openstack/networking-odl <https://git.openstack.org/cgit/openstack/networking-odl>`__
+networking-ofagent                     `git://git.openstack.org/openstack/networking-ofagent <https://git.openstack.org/cgit/openstack/networking-ofagent>`__
+networking-ovn                         `git://git.openstack.org/openstack/networking-ovn <https://git.openstack.org/cgit/openstack/networking-ovn>`__
+networking-ovs-dpdk                    `git://git.openstack.org/openstack/networking-ovs-dpdk <https://git.openstack.org/cgit/openstack/networking-ovs-dpdk>`__
+networking-plumgrid                    `git://git.openstack.org/openstack/networking-plumgrid <https://git.openstack.org/cgit/openstack/networking-plumgrid>`__
+networking-powervm                     `git://git.openstack.org/openstack/networking-powervm <https://git.openstack.org/cgit/openstack/networking-powervm>`__
+networking-sfc                         `git://git.openstack.org/openstack/networking-sfc <https://git.openstack.org/cgit/openstack/networking-sfc>`__
+networking-vsphere                     `git://git.openstack.org/openstack/networking-vsphere <https://git.openstack.org/cgit/openstack/networking-vsphere>`__
+neutron                                `git://git.openstack.org/openstack/neutron <https://git.openstack.org/cgit/openstack/neutron>`__
+neutron-lbaas                          `git://git.openstack.org/openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas>`__
+neutron-lbaas-dashboard                `git://git.openstack.org/openstack/neutron-lbaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard>`__
+neutron-vpnaas                         `git://git.openstack.org/openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas>`__
+nova-docker                            `git://git.openstack.org/openstack/nova-docker <https://git.openstack.org/cgit/openstack/nova-docker>`__
+nova-powervm                           `git://git.openstack.org/openstack/nova-powervm <https://git.openstack.org/cgit/openstack/nova-powervm>`__
+octavia                                `git://git.openstack.org/openstack/octavia <https://git.openstack.org/cgit/openstack/octavia>`__
+osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
+python-freezerclient                   `git://git.openstack.org/openstack/python-freezerclient <https://git.openstack.org/cgit/openstack/python-freezerclient>`__
+rally                                  `git://git.openstack.org/openstack/rally <https://git.openstack.org/cgit/openstack/rally>`__
+sahara                                 `git://git.openstack.org/openstack/sahara <https://git.openstack.org/cgit/openstack/sahara>`__
+sahara-dashboard                       `git://git.openstack.org/openstack/sahara-dashboard <https://git.openstack.org/cgit/openstack/sahara-dashboard>`__
+scalpels                               `git://git.openstack.org/openstack/scalpels <https://git.openstack.org/cgit/openstack/scalpels>`__
+searchlight                            `git://git.openstack.org/openstack/searchlight <https://git.openstack.org/cgit/openstack/searchlight>`__
+searchlight-ui                         `git://git.openstack.org/openstack/searchlight-ui <https://git.openstack.org/cgit/openstack/searchlight-ui>`__
+senlin                                 `git://git.openstack.org/openstack/senlin <https://git.openstack.org/cgit/openstack/senlin>`__
+smaug                                  `git://git.openstack.org/openstack/smaug <https://git.openstack.org/cgit/openstack/smaug>`__
+smaug-dashboard                        `git://git.openstack.org/openstack/smaug-dashboard <https://git.openstack.org/cgit/openstack/smaug-dashboard>`__
+solum                                  `git://git.openstack.org/openstack/solum <https://git.openstack.org/cgit/openstack/solum>`__
+tacker                                 `git://git.openstack.org/openstack/tacker <https://git.openstack.org/cgit/openstack/tacker>`__
+tap-as-a-service                       `git://git.openstack.org/openstack/tap-as-a-service <https://git.openstack.org/cgit/openstack/tap-as-a-service>`__
+tricircle                              `git://git.openstack.org/openstack/tricircle <https://git.openstack.org/cgit/openstack/tricircle>`__
+trove                                  `git://git.openstack.org/openstack/trove <https://git.openstack.org/cgit/openstack/trove>`__
+trove-dashboard                        `git://git.openstack.org/openstack/trove-dashboard <https://git.openstack.org/cgit/openstack/trove-dashboard>`__
+vitrage                                `git://git.openstack.org/openstack/vitrage <https://git.openstack.org/cgit/openstack/vitrage>`__
+vitrage-dashboard                      `git://git.openstack.org/openstack/vitrage-dashboard <https://git.openstack.org/cgit/openstack/vitrage-dashboard>`__
+vmware-nsx                             `git://git.openstack.org/openstack/vmware-nsx <https://git.openstack.org/cgit/openstack/vmware-nsx>`__
+watcher                                `git://git.openstack.org/openstack/watcher <https://git.openstack.org/cgit/openstack/watcher>`__
+watcher-dashboard                      `git://git.openstack.org/openstack/watcher-dashboard <https://git.openstack.org/cgit/openstack/watcher-dashboard>`__
+zaqar                                  `git://git.openstack.org/openstack/zaqar <https://git.openstack.org/cgit/openstack/zaqar>`__
+zaqar-ui                               `git://git.openstack.org/openstack/zaqar-ui <https://git.openstack.org/cgit/openstack/zaqar-ui>`__
+====================================== ===
 
-Drivers
-=======
 
-+--------------------+-------------------------------------------------+------------------+
-|Plugin Name         |URL                                              |Comments          |
-+--------------------+-------------------------------------------------+------------------+
-|dragonflow          |git://git.openstack.org/openstack/dragonflow     |[d1]_             |
-+--------------------+-------------------------------------------------+------------------+
-|odl                 |git://git.openstack.org/openstack/networking-odl |[d2]_             |
-+--------------------+-------------------------------------------------+------------------+
-
-.. [d1] demonstrates example of installing 3rd party SDN controller
-.. [d2] demonstrates a pretty advanced set of modes that that allow
-        one to run OpenDayLight either from a pre-existing install, or
-        also from source
-
-Alternate Configs
-=================
-
-+-------------+------------------------------------------------------------+------------+
-| Plugin Name | URL                                                        | Comments   |
-|             |                                                            |            |
-+-------------+------------------------------------------------------------+------------+
-|glusterfs    |git://git.openstack.org/openstack/devstack-plugin-glusterfs |            |
-+-------------+------------------------------------------------------------+------------+
-|             |                                                            |            |
-+-------------+------------------------------------------------------------+------------+
-
-Additional Services
-===================
-
-+-----------------+------------------------------------------------------------+------------+
-| Plugin Name     | URL                                                        | Comments   |
-|                 |                                                            |            |
-+-----------------+------------------------------------------------------------+------------+
-|amqp1            |git://git.openstack.org/openstack/devstack-plugin-amqp1     |            |
-+-----------------+------------------------------------------------------------+------------+
-|bdd              |git://git.openstack.org/openstack/devstack-plugin-bdd       |            |
-+-----------------+------------------------------------------------------------+------------+
-|ec2-api          |git://git.openstack.org/openstack/ec2-api                   |[as1]_      |
-+-----------------+------------------------------------------------------------+------------+
-|glusterfs        |git://git.openstack.org/openstack/devstack-plugin-glusterfs |            |
-+-----------------+------------------------------------------------------------+------------+
-|hdfs             |git://git.openstack.org/openstack/devstack-plugin-hdfs      |            |
-+-----------------+------------------------------------------------------------+------------+
-|ironic-inspector |git://git.openstack.org/openstack/ironic-inspector          |            |
-+-----------------+------------------------------------------------------------+------------+
-|pika             |git://git.openstack.org/openstack/devstack-plugin-pika      |            |
-+-----------------+------------------------------------------------------------+------------+
-|sheepdog         |git://git.openstack.org/openstack/devstack-plugin-sheepdog  |            |
-+-----------------+------------------------------------------------------------+------------+
-|zmq              |git://git.openstack.org/openstack/devstack-plugin-zmq       |            |
-+-----------------+------------------------------------------------------------+------------+
-|                 |                                                            |            |
-+-----------------+------------------------------------------------------------+------------+
-
-.. [as1] first functional devstack plugin, hence why used in most of
-         the examples.

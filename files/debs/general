@@ -1,5 +1,6 @@
 bc
 bridge-utils
+bsdmainutils
 curl
 g++
 gcc
@@ -28,6 +29,7 @@ screen
 tar
 tcpdump
 unzip
+uuid-runtime
 wget
 wget
 zlib1g-dev

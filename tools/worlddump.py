@@ -18,6 +18,7 @@
 
 import argparse
 import datetime
+from distutils import spawn
 import fnmatch
 import os
 import os.path
@@ -57,8 +58,15 @@ def _dump_cmd(cmd):
     try:
         subprocess.check_call(cmd, shell=True)
         print
-    except subprocess.CalledProcessError:
-        print "*** Failed to run: %s" % cmd
+    except subprocess.CalledProcessError as e:
+        print "*** Failed to run '%(cmd)s': %(err)s" % {'cmd': cmd, 'err': e}
+
+
+def _find_cmd(cmd):
+    if not spawn.find_executable(cmd):
+        print "*** %s not found: skipping" % cmd
+        return False
+    return True
 
 
 def _header(name):
@@ -66,6 +74,24 @@ def _header(name):
     print name
     print "=" * len(name)
     print
+
+
+# This method gets a max openflow version supported by openvswitch.
+# For example 'ovs-ofctl --version' displays the following:
+#
+#     ovs-ofctl (Open vSwitch) 2.0.2
+#     Compiled Dec  9 2015 14:08:08
+#     OpenFlow versions 0x1:0x4
+#
+# The above shows that openvswitch supports from OpenFlow10 to OpenFlow13.
+# This method gets max version searching 'OpenFlow versions 0x1:0x'.
+# And return a version value converted to an integer type.
+def _get_ofp_version():
+    process = subprocess.Popen(['ovs-ofctl', '--version'], stdout=subprocess.PIPE)
+    stdout, _ = process.communicate()
+    find_str = 'OpenFlow versions 0x1:0x'
+    offset = stdout.find(find_str)
+    return int(stdout[offset + len(find_str):-1]) - 1
 
 
 def disk_space():
@@ -89,6 +115,8 @@ def disk_space():
 def ebtables_dump():
     tables = ['filter', 'nat', 'broute']
     _header("EB Tables Dump")
+    if not _find_cmd('ebtables'):
+        return
     for table in tables:
         _dump_cmd("sudo ebtables -t %s -L" % table)
 
@@ -101,28 +129,48 @@ def iptables_dump():
         _dump_cmd("sudo iptables --line-numbers -L -nv -t %s" % table)
 
 
+def _netns_list():
+    process = subprocess.Popen(['ip', 'netns'], stdout=subprocess.PIPE)
+    stdout, _ = process.communicate()
+    return stdout.split()
+
+
 def network_dump():
     _header("Network Dump")
 
     _dump_cmd("brctl show")
     _dump_cmd("arp -n")
-    _dump_cmd("ip addr")
-    _dump_cmd("ip link")
-    _dump_cmd("ip route")
+    ip_cmds = ["addr", "link", "route"]
+    for cmd in ip_cmds + ['netns']:
+        _dump_cmd("ip %s" % cmd)
+    for netns_ in _netns_list():
+        for cmd in ip_cmds:
+            args = {'netns': netns_, 'cmd': cmd}
+            _dump_cmd('sudo ip netns exec %(netns)s ip %(cmd)s' % args)
 
 
 def ovs_dump():
     _header("Open vSwitch Dump")
 
+    # NOTE(cdent): If we're not using neutron + ovs these commands
+    # will not be present so
+    if not _find_cmd('ovs-vsctl'):
+        return
+
     # NOTE(ihrachys): worlddump is used outside of devstack context (f.e. in
     # grenade), so there is no single place to determine the bridge names from.
     # Hardcode for now.
     bridges = ('br-int', 'br-tun', 'br-ex')
+    ofctl_cmds = ('show', 'dump-ports-desc', 'dump-ports', 'dump-flows')
+    ofp_max = _get_ofp_version()
+    vers = 'OpenFlow10'
+    for i in range(ofp_max + 1):
+        vers += ',OpenFlow1' + str(i)
     _dump_cmd("sudo ovs-vsctl show")
-    for bridge in bridges:
-        _dump_cmd("sudo ovs-ofctl show %s" % bridge)
-    for bridge in bridges:
-        _dump_cmd("sudo ovs-ofctl dump-flows %s" % bridge)
+    for ofctl_cmd in ofctl_cmds:
+        for bridge in bridges:
+            args = {'vers': vers, 'cmd': ofctl_cmd, 'bridge': bridge}
+            _dump_cmd("sudo ovs-ofctl --protocols=%(vers)s %(cmd)s %(bridge)s" % args)
 
 
 def process_list():

@@ -176,17 +176,18 @@ function configure_tempest {
     sudo install -d -o $STACK_USER $TEMPEST_CONFIG_DIR
     rm -f $TEMPEST_CONFIG
 
-    password=${ADMIN_PASSWORD:-secrete}
+    local password=${ADMIN_PASSWORD:-secret}
 
     # See ``lib/keystone`` where these users and tenants are set up
-    ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-    ADMIN_TENANT_NAME=${ADMIN_TENANT_NAME:-admin}
-    ADMIN_DOMAIN_NAME=${ADMIN_DOMAIN_NAME:-Default}
-    TEMPEST_USERNAME=${TEMPEST_USERNAME:-demo}
-    TEMPEST_TENANT_NAME=${TEMPEST_TENANT_NAME:-demo}
-    ALT_USERNAME=${ALT_USERNAME:-alt_demo}
-    ALT_TENANT_NAME=${ALT_TENANT_NAME:-alt_demo}
-    ADMIN_TENANT_ID=$(openstack project list | awk "/ admin / { print \$2 }")
+    local admin_username=${ADMIN_USERNAME:-admin}
+    local admin_project_name=${ADMIN_TENANT_NAME:-admin}
+    local admin_domain_name=${ADMIN_DOMAIN_NAME:-Default}
+    local tempest_username=${TEMPEST_USERNAME:-demo}
+    local tempest_project_name=${TEMPEST_TENANT_NAME:-demo}
+    local alt_username=${ALT_USERNAME:-alt_demo}
+    local alt_project_name=${ALT_TENANT_NAME:-alt_demo}
+    local admin_project_id
+    admin_project_id=$(openstack project list | awk "/ admin / { print \$2 }")
 
     if is_service_enabled nova; then
         # If ``DEFAULT_INSTANCE_TYPE`` is not declared, use the new behavior
@@ -260,11 +261,11 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG identity uri "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:5000/v2.0/"
     iniset $TEMPEST_CONFIG identity uri_v3 "$KEYSTONE_SERVICE_URI_V3"
     if [[ "$TEMPEST_HAS_ADMIN" == "True" ]]; then
-        iniset $TEMPEST_CONFIG auth admin_username $ADMIN_USERNAME
+        iniset $TEMPEST_CONFIG auth admin_username $admin_username
         iniset $TEMPEST_CONFIG auth admin_password "$password"
-        iniset $TEMPEST_CONFIG auth admin_tenant_name $ADMIN_TENANT_NAME
-        iniset $TEMPEST_CONFIG auth admin_tenant_id $ADMIN_TENANT_ID
-        iniset $TEMPEST_CONFIG auth admin_domain_name $ADMIN_DOMAIN_NAME
+        iniset $TEMPEST_CONFIG auth admin_tenant_name $admin_project_name
+        iniset $TEMPEST_CONFIG auth admin_tenant_id $admin_project_id
+        iniset $TEMPEST_CONFIG auth admin_domain_name $admin_domain_name
     fi
     if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
         # Only Identity v3 is available; then skip Identity API v2 tests
@@ -321,7 +322,30 @@ function configure_tempest {
     local tmp_cfg_file
     tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
-    tox -revenv -- tempest verify-config -u -r -o $tmp_cfg_file
+    if [[ "$OFFLINE" != "True" ]]; then
+        tox -revenv --notest
+    fi
+
+    # Auth
+    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
+    if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
+        if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
+            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
+        else
+            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
+        fi
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials False
+        iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
+    elif [[ $TEMPEST_HAS_ADMIN == "False" ]]; then
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
+
+    else
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
+    fi
+
+    # NOTE(mtreinish): Respect constraints on tempest verify-config venv
+    tox -evenv -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
+    tox -evenv -- tempest verify-config -uro $tmp_cfg_file
 
     local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
@@ -374,6 +398,8 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute-feature-enabled shelve False
         # Cells doesn't support hot-plugging virtual interfaces.
         iniset $TEMPEST_CONFIG compute-feature-enabled interface_attach False
+        # Cells v1 doesn't support the rescue/unrescue tests in Tempest
+        iniset $TEMPEST_CONFIG compute-feature-enabled rescue False
 
         if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
             # Cells supports resize but does not currently work with devstack
@@ -408,12 +434,15 @@ function configure_tempest {
         if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
             iniset $TEMPEST_CONFIG orchestration image_ref $(basename "${HEAT_CFN_IMAGE_URL%.*}")
         fi
-        # build a specialized heat flavor
-        available_flavors=$(nova flavor-list)
-        if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
-            nova flavor-create m1.heat 451 512 0 1
+        # Nova might not be enabled, especially when we want to test tempest scenario/API that only create Neutron resources
+        if is_service_enabled nova; then
+            # build a specialized heat flavor
+            available_flavors=$(nova flavor-list)
+            if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
+                nova flavor-create m1.heat 451 512 0 1
+            fi
+            iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
         fi
-        iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
         iniset $TEMPEST_CONFIG orchestration build_timeout 900
         iniset $TEMPEST_CONFIG orchestration stack_owner_role "_member_"
     fi
@@ -450,10 +479,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG validation network_for_ssh $PRIVATE_NETWORK_NAME
 
     # Volume
-    # TODO(dkranz): Remove the bootable flag when Juno is end of life.
-    iniset $TEMPEST_CONFIG volume-feature-enabled bootable True
-    # TODO(jordanP): Remove the extend_with_snapshot flag when Juno is end of life.
-    iniset $TEMPEST_CONFIG volume-feature-enabled extend_with_snapshot True
     # TODO(obutenko): Remove the incremental_backup_force flag when Kilo and Juno is end of life.
     iniset $TEMPEST_CONFIG volume-feature-enabled incremental_backup_force True
     # TODO(ynesenenko): Remove the volume_services flag when Liberty and Kilo will correct work with host info.
@@ -532,8 +557,9 @@ function configure_tempest {
     # this tempest service list needs to be all the services that
     # tempest supports, otherwise we can have an erroneous set of
     # defaults (something defaulting true in Tempest, but not listed here).
-    TEMPEST_SERVICES="key,glance,nova,neutron,cinder,swift,heat,ceilometer,horizon,sahara,ironic,trove"
-    for service in ${TEMPEST_SERVICES//,/ }; do
+    local service
+    local tempest_services="key,glance,nova,neutron,cinder,swift,heat,ceilometer,horizon,sahara,ironic,trove"
+    for service in ${tempest_services//,/ }; do
         if is_service_enabled $service ; then
             iniset $TEMPEST_CONFIG service_available $service "True"
         else
@@ -545,23 +571,6 @@ function configure_tempest {
         # libvirt-lxc does not support boot from volume or attaching volumes
         # so basically anything with cinder is out of the question.
         iniset $TEMPEST_CONFIG service_available cinder "False"
-    fi
-
-    # Auth
-    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
-    if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
-        if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
-            tempest-account-generator -c $TEMPEST_CONFIG --os-username $ADMIN_USERNAME --os-password $ADMIN_PASSWORD --os-tenant-name $ADMIN_TENANT_NAME -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
-        else
-            tempest-account-generator -c $TEMPEST_CONFIG --os-username $ADMIN_USERNAME --os-password $ADMIN_PASSWORD --os-tenant-name $ADMIN_TENANT_NAME -r $TEMPEST_CONCURRENCY etc/accounts.yaml
-        fi
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials False
-        iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
-    elif [[ $TEMPEST_HAS_ADMIN == "False" ]]; then
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
-
-    else
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
     fi
 
     # Restore IFS
@@ -588,6 +597,10 @@ function install_tempest {
     pip_install tox
     pushd $TEMPEST_DIR
     tox --notest -efull
+    # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
+    # are using a tox job other than full will not be respecting constraints but
+    # running pip install -U on tempest requirements
+    $TEMPEST_DIR/.tox/full/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
     PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/full
     install_tempest_lib
     popd

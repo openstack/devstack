@@ -9,12 +9,12 @@
 # Stop all processes by setting ``UNSTACK_ALL`` or specifying ``-a``
 # on the command line
 
-UNSTACK_ALL=""
+UNSTACK_ALL=${UNSTACK_ALL:-""}
 
 while getopts ":a" opt; do
     case $opt in
         a)
-            UNSTACK_ALL=""
+            UNSTACK_ALL="-1"
             ;;
     esac
 done
@@ -175,14 +175,10 @@ if is_service_enabled dstat; then
     stop_dstat
 fi
 
-if is_service_enabled zookeeper; then
-    stop_zookeeper
-fi
-
 # Clean up the remainder of the screen processes
 SCREEN=$(which screen)
 if [[ -n "$SCREEN" ]]; then
-    SESSION=$(screen -ls | awk '/[0-9].stack/ { print $1 }')
+    SESSION=$(screen -ls | awk "/[0-9]+.${SCREEN_NAME}/"'{ print $1 }')
     if [[ -n "$SESSION" ]]; then
         screen -X -S $SESSION quit
     fi
