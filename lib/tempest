@@ -414,12 +414,17 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG scenario aki_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-vmlinuz"
     iniset $TEMPEST_CONFIG scenario img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img"
 
+    # If using provider networking, use the physical network for validation rather than private
+    TEMPEST_SSH_NETWORK_NAME=$PRIVATE_NETWORK_NAME
+    if is_provider_network; then
+        TEMPEST_SSH_NETWORK_NAME=$PHYSICAL_NETWORK
+    fi
     # Validation
     iniset $TEMPEST_CONFIG validation run_validation ${TEMPEST_RUN_VALIDATION:-False}
     iniset $TEMPEST_CONFIG validation ip_version_for_ssh 4
     iniset $TEMPEST_CONFIG validation ssh_timeout $BUILD_TIMEOUT
     iniset $TEMPEST_CONFIG validation image_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
-    iniset $TEMPEST_CONFIG validation network_for_ssh $PRIVATE_NETWORK_NAME
+    iniset $TEMPEST_CONFIG validation network_for_ssh $TEMPEST_SSH_NETWORK_NAME
 
     # Volume
     # TODO(obutenko): Remove snapshot_backup when liberty-eol happens.

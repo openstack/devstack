@@ -434,13 +434,6 @@ function _neutron_configure_router_v6 {
     fi
 }
 
-function is_provider_network {
-    if [ "$Q_USE_PROVIDER_NETWORKING" == "True" ]; then
-        return 0
-    fi
-    return 1
-}
-
 function is_networking_extension_supported {
     local extension=$1
     # TODO(sc68cal) cache this instead of calling every time
