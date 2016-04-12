@@ -185,7 +185,7 @@ source $TOP_DIR/stackrc
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (trusty|vivid|wily|7.0|wheezy|sid|testing|jessie|f22|f23|rhel7|kvmibm1) ]]; then
+if [[ ! ${DISTRO} =~ (trusty|wily|xenial|7.0|wheezy|sid|testing|jessie|f22|f23|rhel7|kvmibm1) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         die $LINENO "If you wish to run this script anyway run with FORCE=yes"
