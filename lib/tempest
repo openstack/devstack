@@ -317,44 +317,6 @@ function configure_tempest {
     fi
 
     # Compute Features
-    # Run ``verify_tempest_config -ur`` to retrieve enabled extensions on API endpoints
-    # NOTE(mtreinish): This must be done after auth settings are added to the tempest config
-    local tmp_cfg_file
-    tmp_cfg_file=$(mktemp)
-    cd $TEMPEST_DIR
-    if [[ "$OFFLINE" != "True" ]]; then
-        tox -revenv --notest
-    fi
-
-    # Auth
-    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
-    if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
-        if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
-            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
-        else
-            tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
-        fi
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials False
-        iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
-    elif [[ $TEMPEST_HAS_ADMIN == "False" ]]; then
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
-
-    else
-        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
-    fi
-
-    # NOTE(mtreinish): Respect constraints on tempest verify-config venv
-    tox -evenv -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
-    tox -evenv -- tempest verify-config -uro $tmp_cfg_file
-
-    local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
-    if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
-        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
-        compute_api_extensions=${COMPUTE_API_EXTENSIONS:-$(iniget $tmp_cfg_file compute-feature-enabled api_extensions | tr -d " ")}
-        # Remove disabled extensions
-        compute_api_extensions=$(remove_disabled_extensions $compute_api_extensions $DISABLE_COMPUTE_API_EXTENSIONS)
-    fi
-
     # Set the microversion range for compute tests.
     # This is used to run the Nova microversions tests.
     # Setting [None, latest] range of microversion which allow Tempest to run all microversions tests.
@@ -383,7 +345,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
-    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions $compute_api_extensions
     # TODO(mriedem): Remove the preserve_ports flag when Juno is end of life.
     iniset $TEMPEST_CONFIG compute-feature-enabled preserve_ports True
     # TODO(gilliard): Remove the live_migrate_paused_instances flag when Juno is end of life.
@@ -420,15 +381,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6 "$IPV6_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
 
-    local network_api_extensions=${NETWORK_API_EXTENSIONS:-"all"}
-    if [[ ! -z "$DISABLE_NETWORK_API_EXTENSIONS" ]]; then
-        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
-        network_api_extensions=${NETWORK_API_EXTENSIONS:-$(iniget $tmp_cfg_file network-feature-enabled api_extensions | tr -d " ")}
-        # Remove disabled extensions
-        network_api_extensions=$(remove_disabled_extensions $network_api_extensions $DISABLE_NETWORK_API_EXTENSIONS)
-    fi
-    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions $network_api_extensions
-
     # Orchestration Tests
     if is_service_enabled heat; then
         if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
@@ -461,16 +413,6 @@ function configure_tempest {
     # Telemetry
     iniset $TEMPEST_CONFIG telemetry-feature-enabled events "True"
 
-    # Object Store
-    local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
-    if [[ ! -z "$DISABLE_OBJECT_STORAGE_API_EXTENSIONS" ]]; then
-        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
-        object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$(iniget $tmp_cfg_file object-storage-feature-enabled discoverable_apis | tr -d " ")}
-        # Remove disabled extensions
-        object_storage_api_extensions=$(remove_disabled_extensions $object_storage_api_extensions $DISABLE_STORAGE_API_EXTENSIONS)
-    fi
-    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis $object_storage_api_extensions
-
     # Validation
     iniset $TEMPEST_CONFIG validation run_validation ${TEMPEST_RUN_VALIDATION:-False}
     iniset $TEMPEST_CONFIG validation ip_version_for_ssh 4
@@ -483,15 +425,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG volume-feature-enabled incremental_backup_force True
     # TODO(ynesenenko): Remove the volume_services flag when Liberty and Kilo will correct work with host info.
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_services True
-
-    local volume_api_extensions=${VOLUME_API_EXTENSIONS:-"all"}
-    if [[ ! -z "$DISABLE_VOLUME_API_EXTENSIONS" ]]; then
-        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
-        volume_api_extensions=${VOLUME_API_EXTENSIONS:-$(iniget $tmp_cfg_file volume-feature-enabled api_extensions | tr -d " ")}
-        # Remove disabled extensions
-        volume_api_extensions=$(remove_disabled_extensions $volume_api_extensions $DISABLE_VOLUME_API_EXTENSIONS)
-    fi
-    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions $volume_api_extensions
 
     if ! is_service_enabled c-bak; then
         iniset $TEMPEST_CONFIG volume-feature-enabled backup False
@@ -572,6 +505,76 @@ function configure_tempest {
         # so basically anything with cinder is out of the question.
         iniset $TEMPEST_CONFIG service_available cinder "False"
     fi
+
+    # Run tempest configuration utilities. This must be done last during configuration to
+    # ensure as complete a config as possible already exists
+
+    # NOTE(mtreinish): Respect constraints on tempest verify-config venv
+    local tmp_cfg_file
+    tmp_cfg_file=$(mktemp)
+    cd $TEMPEST_DIR
+    if [[ "$OFFLINE" != "True" ]]; then
+        tox -revenv --notest
+    fi
+    tox -evenv -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
+
+    # Auth:
+    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
+    if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
+        if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
+            tox -evenv -- tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
+        else
+            tox -evenv -- tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
+        fi
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials False
+        iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
+    elif [[ $TEMPEST_HAS_ADMIN == "False" ]]; then
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-False}
+
+    else
+        iniset $TEMPEST_CONFIG auth use_dynamic_credentials ${TEMPEST_ALLOW_TENANT_ISOLATION:-True}
+    fi
+
+    # API Extensions
+    # Run ``verify_tempest_config -ur`` to retrieve enabled extensions on API endpoints
+    # NOTE(mtreinish): This must be done after auth settings are added to the tempest config
+    tox -evenv -- tempest verify-config -uro $tmp_cfg_file
+    # Nova API extensions
+    local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
+    if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
+        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
+        compute_api_extensions=${COMPUTE_API_EXTENSIONS:-$(iniget $tmp_cfg_file compute-feature-enabled api_extensions | tr -d " ")}
+        # Remove disabled extensions
+        compute_api_extensions=$(remove_disabled_extensions $compute_api_extensions $DISABLE_COMPUTE_API_EXTENSIONS)
+    fi
+    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions $compute_api_extensions
+    # Neutron API Extensions
+    local network_api_extensions=${NETWORK_API_EXTENSIONS:-"all"}
+    if [[ ! -z "$DISABLE_NETWORK_API_EXTENSIONS" ]]; then
+        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
+        network_api_extensions=${NETWORK_API_EXTENSIONS:-$(iniget $tmp_cfg_file network-feature-enabled api_extensions | tr -d " ")}
+        # Remove disabled extensions
+        network_api_extensions=$(remove_disabled_extensions $network_api_extensions $DISABLE_NETWORK_API_EXTENSIONS)
+    fi
+    iniset $TEMPEST_CONFIG network-feature-enabled api_extensions $network_api_extensions
+    # Swift API Extensions
+    local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
+    if [[ ! -z "$DISABLE_OBJECT_STORAGE_API_EXTENSIONS" ]]; then
+        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
+        object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$(iniget $tmp_cfg_file object-storage-feature-enabled discoverable_apis | tr -d " ")}
+        # Remove disabled extensions
+        object_storage_api_extensions=$(remove_disabled_extensions $object_storage_api_extensions $DISABLE_STORAGE_API_EXTENSIONS)
+    fi
+    iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis $object_storage_api_extensions
+    # Cinder API Extensions
+    local volume_api_extensions=${VOLUME_API_EXTENSIONS:-"all"}
+    if [[ ! -z "$DISABLE_VOLUME_API_EXTENSIONS" ]]; then
+        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
+        volume_api_extensions=${VOLUME_API_EXTENSIONS:-$(iniget $tmp_cfg_file volume-feature-enabled api_extensions | tr -d " ")}
+        # Remove disabled extensions
+        volume_api_extensions=$(remove_disabled_extensions $volume_api_extensions $DISABLE_VOLUME_API_EXTENSIONS)
+    fi
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_extensions $volume_api_extensions
 
     # Restore IFS
     IFS=$ifs
