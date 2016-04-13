@@ -108,6 +108,9 @@ KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 KEYSTONE_ADMIN_BIND_HOST=${KEYSTONE_ADMIN_BIND_HOST:-$KEYSTONE_SERVICE_HOST}
 # Set the project for service accounts in Keystone
 SERVICE_PROJECT_NAME=${SERVICE_PROJECT_NAME:-service}
+
+# Note 2016-03 : SERVICE_TENANT_NAME is kept for backwards
+# compatibility; we should be using SERVICE_PROJECT_NAME now
 SERVICE_TENANT_NAME=${SERVICE_PROJECT_NAME:-service}
 
 # if we are running with SSL use https protocols
