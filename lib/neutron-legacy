@@ -107,6 +107,7 @@ GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 
 NEUTRON_DIR=$DEST/neutron
 NEUTRON_FWAAS_DIR=$DEST/neutron-fwaas
+NEUTRON_LBAAS_DIR=$DEST/neutron-lbaas
 NEUTRON_VPNAAS_DIR=$DEST/neutron-vpnaas
 NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
@@ -120,6 +121,9 @@ fi
 NEUTRON_CONF_DIR=/etc/neutron
 NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
+
+# Default provider for load balancer service
+DEFAULT_LB_PROVIDER=LOADBALANCER:Haproxy:neutron_lbaas.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
 
 # Default provider for VPN service
 DEFAULT_VPN_PROVIDER=VPN:openswan:neutron_vpnaas.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
@@ -343,6 +347,12 @@ if [ -f $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN ]; then
     source $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN
 fi
 
+# Agent loadbalancer service plugin functions
+# -------------------------------------------
+
+# Hardcoding for 1 service plugin for now
+source $TOP_DIR/lib/neutron_plugins/services/loadbalancer
+
 # Agent metering service plugin functions
 # -------------------------------------------
 
@@ -432,6 +442,10 @@ function configure_neutron {
     iniset_rpc_backend neutron $NEUTRON_CONF
 
     # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
+    if is_service_enabled q-lbaas; then
+        deprecated "Configuring q-lbaas through devstack is deprecated"
+        _configure_neutron_lbaas
+    fi
     if is_service_enabled q-metering; then
         _configure_neutron_metering
     fi
@@ -642,6 +656,10 @@ function install_neutron {
         git_clone $NEUTRON_FWAAS_REPO $NEUTRON_FWAAS_DIR $NEUTRON_FWAAS_BRANCH
         setup_develop $NEUTRON_FWAAS_DIR
     fi
+    if is_service_enabled q-lbaas; then
+        git_clone $NEUTRON_LBAAS_REPO $NEUTRON_LBAAS_DIR $NEUTRON_LBAAS_BRANCH
+        setup_develop $NEUTRON_LBAAS_DIR
+    fi
     if is_service_enabled q-vpn; then
         git_clone $NEUTRON_VPNAAS_REPO $NEUTRON_VPNAAS_DIR $NEUTRON_VPNAAS_BRANCH
         setup_develop $NEUTRON_VPNAAS_DIR
@@ -684,6 +702,10 @@ function install_neutron_agent_packages {
     # install packages that are specific to plugin agent(s)
     if is_service_enabled q-agt q-dhcp q-l3; then
         neutron_plugin_install_agent_packages
+    fi
+
+    if is_service_enabled q-lbaas; then
+        neutron_agent_lbaas_install_agent_packages
     fi
 }
 
@@ -747,6 +769,7 @@ function start_neutron_other_agents {
     fi
 
     run_process q-meta "$AGENT_META_BINARY --config-file $NEUTRON_CONF --config-file=$Q_META_CONF_FILE"
+    run_process q-lbaas "$AGENT_LBAAS_BINARY --config-file $NEUTRON_CONF --config-file=$LBAAS_AGENT_CONF_FILENAME"
     run_process q-metering "$AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
 
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
@@ -785,6 +808,9 @@ function stop_neutron_other {
         stop_process q-meta
     fi
 
+    if is_service_enabled q-lbaas; then
+        neutron_lbaas_stop
+    fi
     if is_service_enabled q-fwaas; then
         neutron_fwaas_stop
     fi
@@ -889,7 +915,7 @@ function cleanup_neutron {
     fi
 
     # delete all namespaces created by neutron
-    for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|fip|snat)-[0-9a-f-]*'); do
+    for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|qlbaas|fip|snat)-[0-9a-f-]*'); do
         sudo ip netns delete ${ns}
     done
 }
@@ -1080,6 +1106,18 @@ function _configure_neutron_metadata_agent {
 
 function _configure_neutron_ceilometer_notifications {
     iniset $NEUTRON_CONF oslo_messaging_notifications driver messaging
+}
+
+function _configure_neutron_lbaas {
+    # Uses oslo config generator to generate LBaaS sample configuration files
+    (cd $NEUTRON_LBAAS_DIR && exec ./tools/generate_config_file_samples.sh)
+
+    if [ -f $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf.sample ]; then
+        cp $NEUTRON_LBAAS_DIR/etc/neutron_lbaas.conf.sample $NEUTRON_CONF_DIR/neutron_lbaas.conf
+        iniset $NEUTRON_CONF_DIR/neutron_lbaas.conf service_providers service_provider $DEFAULT_LB_PROVIDER
+    fi
+    neutron_agent_lbaas_configure_common
+    neutron_agent_lbaas_configure_agent
 }
 
 function _configure_neutron_metering {
