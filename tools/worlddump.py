@@ -77,6 +77,12 @@ def _header(name):
     print()
 
 
+def _bridge_list():
+    process = subprocess.Popen(['ovs-vsctl', 'list-br'], stdout=subprocess.PIPE)
+    stdout, _ = process.communicate()
+    return stdout.split()
+
+
 # This method gets a max openflow version supported by openvswitch.
 # For example 'ovs-ofctl --version' displays the following:
 #
@@ -158,14 +164,11 @@ def ovs_dump():
     if not _find_cmd('ovs-vsctl'):
         return
 
-    # NOTE(ihrachys): worlddump is used outside of devstack context (f.e. in
-    # grenade), so there is no single place to determine the bridge names from.
-    # Hardcode for now.
-    bridges = ('br-int', 'br-tun', 'br-ex')
+    bridges = _bridge_list()
     ofctl_cmds = ('show', 'dump-ports-desc', 'dump-ports', 'dump-flows')
     ofp_max = _get_ofp_version()
     vers = 'OpenFlow10'
-    for i in range(ofp_max + 1):
+    for i in range(1, ofp_max + 1):
         vers += ',OpenFlow1' + str(i)
     _dump_cmd("sudo ovs-vsctl show")
     for ofctl_cmd in ofctl_cmds:
