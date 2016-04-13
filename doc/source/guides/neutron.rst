@@ -15,8 +15,8 @@ In some instances, like on a developer laptop, there is only one
 network interface that is available. In this scenario, the physical
 interface is added to the Open vSwitch bridge, and the IP address of
 the laptop is migrated onto the bridge interface. That way, the
-physical interface can be used to transmit tenant network traffic,
-the OpenStack API traffic, and management traffic.
+physical interface can be used to transmit self service project
+network traffic, the OpenStack API traffic, and management traffic.
 
 
 .. warning::
@@ -222,12 +222,12 @@ it over the `br-ex` bridge, where `eth0` is attached.
 which is used as the "integration bridge" where ports are created, and
 plugged into the virtual switching fabric. `br-ex` is an OVS bridge
 that is used to connect physical ports (like `eth0`), so that floating
-IP traffic for tenants can be received from the physical network
-infrastructure (and the internet), and routed to tenant network ports.
-`br-tun` is a tunnel bridge that is used to connect OpenStack nodes
-(like `devstack-2`) together. This bridge is used so that tenant
-network traffic, using the VXLAN tunneling protocol, flows between
-each compute node where tenant instances run.
+IP traffic for project networks can be received from the physical
+network infrastructure (and the internet), and routed to self service
+project network ports.  `br-tun` is a tunnel bridge that is used to
+connect OpenStack nodes (like `devstack-2`) together. This bridge is
+used so that project network traffic, using the VXLAN tunneling
+protocol, flows between each compute node where project instances run.
 
 
 
@@ -381,8 +381,8 @@ controller node.
 
         ## Neutron options
         Q_USE_SECGROUP=True
-        ENABLE_TENANT_VLANS=True
-        TENANT_VLAN_RANGE=3001:4000
+        ENABLE_PROJECT_VLANS=True
+        PROJECT_VLAN_RANGE=3001:4000
         PHYSICAL_NETWORK=default
         OVS_PHYSICAL_BRIDGE=br-ex
 
@@ -553,4 +553,3 @@ setup, with small modifications for the interface mappings.
     LB_PHYSICAL_INTERFACE=eth0
     PUBLIC_PHYSICAL_NETWORK=default
     LB_INTERFACE_MAPPINGS=default:eth0
-
