@@ -648,7 +648,7 @@ function init_nova_cells {
     if is_service_enabled n-cell; then
         cp $NOVA_CONF $NOVA_CELLS_CONF
         iniset $NOVA_CELLS_CONF database connection `database_connection_url $NOVA_CELLS_DB`
-        iniset $NOVA_CELLS_CONF DEFAULT rabbit_virtual_host child_cell
+        iniset $NOVA_CELLS_CONF oslo_messaging_rabbit rabbit_virtual_host child_cell
         iniset $NOVA_CELLS_CONF DEFAULT dhcpbridge_flagfile $NOVA_CELLS_CONF
         iniset $NOVA_CELLS_CONF cells enable True
         iniset $NOVA_CELLS_CONF cells cell_type compute
