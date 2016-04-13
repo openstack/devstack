@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+
 """Dump the state of the world for post mortem."""
 
 import argparse
@@ -48,32 +49,32 @@ def filename(dirname, name=""):
 
 
 def warn(msg):
-    print "WARN: %s" % msg
+    print("WARN: %s" % msg)
 
 
 def _dump_cmd(cmd):
-    print cmd
-    print "-" * len(cmd)
-    print
+    print(cmd)
+    print("-" * len(cmd))
+    print()
     try:
         subprocess.check_call(cmd, shell=True)
-        print
+        print()
     except subprocess.CalledProcessError as e:
-        print "*** Failed to run '%(cmd)s': %(err)s" % {'cmd': cmd, 'err': e}
+        print("*** Failed to run '%(cmd)s': %(err)s" % {'cmd': cmd, 'err': e})
 
 
 def _find_cmd(cmd):
     if not spawn.find_executable(cmd):
-        print "*** %s not found: skipping" % cmd
+        print("*** %s not found: skipping" % cmd)
         return False
     return True
 
 
 def _header(name):
-    print
-    print name
-    print "=" * len(name)
-    print
+    print()
+    print(name)
+    print("=" * len(name))
+    print()
 
 
 # This method gets a max openflow version supported by openvswitch.
@@ -109,7 +110,7 @@ def disk_space():
             # if it doesn't look like an int, that's fine
             pass
 
-    print dfraw
+    print(dfraw)
 
 
 def ebtables_dump():
@@ -193,17 +194,17 @@ def guru_meditation_report():
     try:
         subprocess.check_call(["pgrep","nova-compute"])
     except subprocess.CalledProcessError:
-        print "Skipping as nova-compute does not appear to be running"
+        print("Skipping as nova-compute does not appear to be running")
         return
 
     _dump_cmd("kill -s USR2 `pgrep nova-compute`")
-    print "guru meditation report in nova-compute log"
+    print("guru meditation report in nova-compute log")
 
 
 def main():
     opts = get_options()
     fname = filename(opts.dir, opts.name)
-    print "World dumping... see %s for details" % fname
+    print("World dumping... see %s for details" % fname)
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     with open(fname, 'w') as f:
         os.dup2(f.fileno(), sys.stdout.fileno())
