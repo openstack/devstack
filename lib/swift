@@ -149,6 +149,11 @@ SWIFT_TEMPURL_KEY=${SWIFT_TEMPURL_KEY:-}
 # Toggle for deploying Swift under HTTPD + mod_wsgi
 SWIFT_USE_MOD_WSGI=${SWIFT_USE_MOD_WSGI:-False}
 
+# A space-separated list of storage node IPs that
+# should be used to create the Swift rings
+SWIFT_STORAGE_IPS=${SWIFT_STORAGE_IPS:-}
+
+
 # Functions
 # ---------
 
@@ -693,14 +698,35 @@ function init_swift {
         swift-ring-builder container.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
         swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
 
-        for node_number in ${SWIFT_REPLICAS_SEQ}; do
-            swift-ring-builder object.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( OBJECT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
-            swift-ring-builder container.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( CONTAINER_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
-            swift-ring-builder account.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
-        done
-        swift-ring-builder object.builder rebalance
-        swift-ring-builder container.builder rebalance
-        swift-ring-builder account.builder rebalance
+        # The ring will be created on each node, and because the order of
+        # nodes is identical we can use a seed for rebalancing, making it
+        # possible to get a ring on each node that uses the same partition
+        # assignment.
+        if [[ -n $SWIFT_STORAGE_IPS ]]; then
+            local node_number
+            node_number=1
+
+            for node in ${SWIFT_STORAGE_IPS}; do
+                swift-ring-builder object.builder add z${node_number}-${node}:${OBJECT_PORT_BASE}/sdb1 1
+                swift-ring-builder container.builder add z${node_number}-${node}:${CONTAINER_PORT_BASE}/sdb1 1
+                swift-ring-builder account.builder add z${node_number}-${node}:${ACCOUNT_PORT_BASE}/sdb1 1
+                let "node_number=node_number+1"
+            done
+
+        else
+
+            for node_number in ${SWIFT_REPLICAS_SEQ}; do
+                swift-ring-builder object.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( OBJECT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+                swift-ring-builder container.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( CONTAINER_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+                swift-ring-builder account.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+            done
+        fi
+
+        # We use a seed for rebalancing. Doing this allows us to create
+        # identical rings on multiple nodes if SWIFT_STORAGE_IPS is the same
+        swift-ring-builder object.builder rebalance 42
+        swift-ring-builder container.builder rebalance 42
+        swift-ring-builder account.builder rebalance 42
     } && popd >/dev/null
 
     # Create cache dir

@@ -513,6 +513,18 @@ If you only want to do some testing of a real normal swift cluster
 with multiple replicas you can do so by customizing the variable
 ``SWIFT_REPLICAS`` in your ``localrc`` section (usually to 3).
 
+You can manually override the ring building to use specific storage
+nodes, for example when you want to test a multinode environment. In
+this case you have to set a space-separated list of IPs in
+``SWIFT_STORAGE_IPS`` in your ``localrc`` section that should be used
+as Swift storage nodes.
+Please note that this does not create a multinode setup, it is only
+used when adding nodes to the Swift rings.
+
+::
+
+    SWIFT_STORAGE_IPS="192.168.1.10 192.168.1.11 192.168.1.12"
+
 Swift S3
 ++++++++
 
