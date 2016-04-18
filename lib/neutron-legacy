@@ -946,10 +946,11 @@ function _configure_neutron_common {
 
     # Set plugin-specific variables ``Q_DB_NAME``, ``Q_PLUGIN_CLASS``.
     # For main plugin config file, set ``Q_PLUGIN_CONF_PATH``, ``Q_PLUGIN_CONF_FILENAME``.
-    # For addition plugin config files, set ``Q_PLUGIN_EXTRA_CONF_PATH``,
+    # For addition plugin config files, set ``Q_PLUGIN_EXTRA_CONF_PATH`` and
     # ``Q_PLUGIN_EXTRA_CONF_FILES``.  For example:
     #
-    #    ``Q_PLUGIN_EXTRA_CONF_FILES=(file1, file2)``
+    #    ``Q_PLUGIN_CONF_PATH=/path/to/plugins``
+    #    ``Q_PLUGIN_EXTRA_CONF_FILES=(file1 file2)``
     neutron_plugin_configure_common
 
     if [[ "$Q_PLUGIN_CONF_PATH" == '' || "$Q_PLUGIN_CONF_FILENAME" == '' || "$Q_PLUGIN_CLASS" == '' ]]; then
