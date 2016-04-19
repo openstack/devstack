@@ -299,10 +299,10 @@ $THIS_DIR/build_xva.sh "$GUEST_NAME"
 # kernel parameter for DomU
 attach_network "$XEN_INT_BRIDGE_OR_NET_NAME"
 
-XEN_INTEGRATION_BRIDGE=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
+XEN_INTEGRATION_BRIDGE_DEFAULT=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
 append_kernel_cmdline \
     "$GUEST_NAME" \
-    "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE}"
+    "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE_DEFAULT}"
 
 FLAT_NETWORK_BRIDGE="${FLAT_NETWORK_BRIDGE:-$(bridge_for "$VM_BRIDGE_OR_NET_NAME")}"
 append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"

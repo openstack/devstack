@@ -170,3 +170,9 @@ VM as `TEMPLATE_FILENAME`:
     xe vm-import filename="$mountdir/$TEMPLATE_FILENAME"
     umount "$mountdir"
     rm -rf "$mountdir"
+
+### Migrate OpenStack DomU to another host
+
+Given you need to migrate your DomU with OpenStack installed to another host,
+you need to set `XEN_INTEGRATION_BRIDGE` in localrc if neutron network is used.
+It is the bridge for `XEN_INT_BRIDGE_OR_NET_NAME` network created in Dom0
