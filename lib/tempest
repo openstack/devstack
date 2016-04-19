@@ -425,6 +425,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG volume-feature-enabled incremental_backup_force True
     # TODO(ynesenenko): Remove the volume_services flag when Liberty and Kilo will correct work with host info.
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_services True
+    # TODO(ameade): Remove the api_v3 flag when Mitaka and Liberty are end of life.
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_v3 True
 
     if ! is_service_enabled c-bak; then
         iniset $TEMPEST_CONFIG volume-feature-enabled backup False
