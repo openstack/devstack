@@ -387,7 +387,7 @@ function _determine_config_server {
     local cfg_file
     local opts="--config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
     for cfg_file in ${Q_PLUGIN_EXTRA_CONF_FILES[@]}; do
-        opts+=" --config-file /$cfg_file"
+        opts+=" --config-file $cfg_file"
     done
     echo "$opts"
 }
