@@ -106,7 +106,9 @@ KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
 # Bind hosts
 KEYSTONE_ADMIN_BIND_HOST=${KEYSTONE_ADMIN_BIND_HOST:-$KEYSTONE_SERVICE_HOST}
+
 # Set the project for service accounts in Keystone
+SERVICE_DOMAIN_NAME=${SERVICE_DOMAIN_NAME:-Default}
 SERVICE_PROJECT_NAME=${SERVICE_PROJECT_NAME:-service}
 
 # Note 2016-03 : SERVICE_TENANT_NAME is kept for backwards
@@ -373,6 +375,7 @@ function create_keystone_accounts {
     get_or_add_user_domain_role $admin_role $admin_user default
 
     # Create service project/role
+    get_or_create_domain "$SERVICE_DOMAIN_NAME"
     get_or_create_project "$SERVICE_PROJECT_NAME" default
 
     # Service role, so service users do not have to be admins
@@ -445,9 +448,8 @@ function create_keystone_accounts {
 function create_service_user {
     local role=${2:-service}
 
-    local user
-    user=$(get_or_create_user "$1" "$SERVICE_PASSWORD" default)
-    get_or_add_user_project_role "$role" "$user" "$SERVICE_PROJECT_NAME"
+    get_or_create_user "$1" "$SERVICE_PASSWORD" "$SERVICE_DOMAIN_NAME"
+    get_or_add_user_project_role "$role" "$1" "$SERVICE_PROJECT_NAME" "$SERVICE_DOMAIN_NAME" "$SERVICE_DOMAIN_NAME"
 }
 
 # Configure the service to use the auth token middleware.
@@ -467,9 +469,9 @@ function configure_auth_token_middleware {
     iniset $conf_file $section auth_url $KEYSTONE_AUTH_URI
     iniset $conf_file $section username $admin_user
     iniset $conf_file $section password $SERVICE_PASSWORD
-    iniset $conf_file $section user_domain_id default
+    iniset $conf_file $section user_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $conf_file $section project_name $SERVICE_PROJECT_NAME
-    iniset $conf_file $section project_domain_id default
+    iniset $conf_file $section project_domain_name "$SERVICE_DOMAIN_NAME"
 
     iniset $conf_file $section auth_uri $KEYSTONE_SERVICE_URI
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE

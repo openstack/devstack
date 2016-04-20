@@ -840,27 +840,49 @@ function get_or_create_role {
     echo $role_id
 }
 
+# Returns the domain parts of a function call if present
+# Usage: _get_domain_args [<user_domain> <project_domain>]
+function _get_domain_args {
+    local domain
+    domain=""
+
+    if [[ -n "$1" ]]; then
+        domain="$domain --user-domain $1"
+    fi
+    if [[ -n "$2" ]]; then
+        domain="$domain --project-domain $2"
+    fi
+
+    echo $domain
+}
+
 # Gets or adds user role to project
-# Usage: get_or_add_user_project_role <role> <user> <project>
+# Usage: get_or_add_user_project_role <role> <user> <project> [<user_domain> <project_domain>]
 function get_or_add_user_project_role {
     local user_role_id
+
+    domain_args=$(_get_domain_args $4 $5)
+
     # Gets user role id
     user_role_id=$(openstack role list \
         --user $2 \
         --column "ID" \
         --project $3 \
         --column "Name" \
+        $domain_args \
         | grep " $1 " | get_field 1)
     if [[ -z "$user_role_id" ]]; then
         # Adds role to user and get it
         openstack role add $1 \
             --user $2 \
-            --project $3
+            --project $3 \
+            $domain_args
         user_role_id=$(openstack role list \
             --user $2 \
             --column "ID" \
             --project $3 \
             --column "Name" \
+            $domain_args \
             | grep " $1 " | get_field 1)
     fi
     echo $user_role_id
