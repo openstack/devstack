@@ -742,6 +742,16 @@ In RegionTwo:
     KEYSTONE_SERVICE_HOST=<KEYSTONE_IP_ADDRESS_FROM_REGION_ONE>
     KEYSTONE_AUTH_HOST=<KEYSTONE_IP_ADDRESS_FROM_REGION_ONE>
     REGION_NAME=RegionTwo
+    KEYSTONE_REGION_NAME=RegionOne
+
+In the devstack for RegionOne, we set REGION_NAME as RegionOne, so region of
+the services started in this devstack are registered as RegionOne. In devstack
+for RegionTwo, similarly, we set REGION_NAME as RegionTwo since we want
+services started in this devstack to be registered in RegionTwo. But Keystone
+service is started and registered in RegionOne, not RegionTwo, so we use
+KEYSTONE_REGION_NAME to specify the region of Keystone service.
+KEYSTONE_REGION_NAME has a default value the same as REGION_NAME thus we omit
+it in the configuration of RegionOne.
 
 Disabling Identity API v2
 +++++++++++++++++++++++++
