@@ -133,8 +133,3 @@ pip_install -U "virtualenv<14"
 # NOTE(mkoderer): PBR has a missing requirement to testrepository
 # Can be removed when bug #1530026 is fixed.
 pip_install testrepository
-
-# FIXME(tonyb): Manually for testresources to <2.0.0 so we can land g-r patches
-# to fix this correctly.  See:
-#       https://bugs.launchpad.net/openstack-gate/+bug/1572417
-pip_install 'testresources<2.0.0'
