@@ -388,7 +388,7 @@ function create_heat_accounts {
 
         create_service_user "heat" "admin"
         get_or_create_service "heat" "orchestration" "Heat Orchestration Service"
-        get_or_create_endpoint \
+        create_endpoint \
             "orchestration" \
             "$REGION_NAME" \
             "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(project_id)s" \
@@ -396,7 +396,7 @@ function create_heat_accounts {
             "$SERVICE_PROTOCOL://$HEAT_API_HOST:$HEAT_API_PORT/v1/\$(project_id)s"
 
         get_or_create_service "heat-cfn" "cloudformation" "Heat CloudFormation Service"
-        get_or_create_endpoint \
+        create_endpoint \
             "cloudformation"  \
             "$REGION_NAME" \
             "$SERVICE_PROTOCOL://$HEAT_API_CFN_HOST:$HEAT_API_CFN_PORT/v1" \

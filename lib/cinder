@@ -372,7 +372,7 @@ function create_cinder_accounts {
         create_service_user "cinder"
 
         get_or_create_service "cinder" "volume" "Cinder Volume Service"
-        get_or_create_endpoint \
+        create_endpoint \
             "volume" \
             "$REGION_NAME" \
             "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(project_id)s" \
@@ -380,7 +380,7 @@ function create_cinder_accounts {
             "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/\$(project_id)s"
 
         get_or_create_service "cinderv2" "volumev2" "Cinder Volume Service V2"
-        get_or_create_endpoint \
+        create_endpoint \
             "volumev2" \
             "$REGION_NAME" \
             "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(project_id)s" \
@@ -388,7 +388,7 @@ function create_cinder_accounts {
             "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v2/\$(project_id)s"
 
         get_or_create_service "cinderv3" "volumev3" "Cinder Volume Service V3"
-        get_or_create_endpoint \
+        create_endpoint \
             "volumev3" \
             "$REGION_NAME" \
             "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3/\$(project_id)s" \

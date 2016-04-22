@@ -418,7 +418,7 @@ function create_nova_accounts {
         fi
 
         get_or_create_service "nova_legacy" "compute_legacy" "Nova Compute Service (Legacy 2.0)"
-        get_or_create_endpoint \
+        create_endpoint \
             "compute_legacy" \
             "$REGION_NAME" \
             "$nova_api_url/v2/\$(project_id)s" \
@@ -426,7 +426,7 @@ function create_nova_accounts {
             "$nova_api_url/v2/\$(project_id)s"
 
         get_or_create_service "nova" "compute" "Nova Compute Service"
-        get_or_create_endpoint \
+        create_endpoint \
             "compute" \
             "$REGION_NAME" \
             "$nova_api_url/v2.1" \
@@ -446,7 +446,7 @@ function create_nova_accounts {
     # S3
     if is_service_enabled swift3; then
         get_or_create_service "s3" "s3" "S3"
-        get_or_create_endpoint \
+        create_endpoint \
             "s3" \
             "$REGION_NAME" \
             "http://$SERVICE_HOST:$S3_SERVICE_PORT" \

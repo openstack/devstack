@@ -987,38 +987,35 @@ function get_or_create_service {
 }
 
 # Create an endpoint with a specific interface
-# Usage: _get_or_create_endpoint_with_interface <service> <interface> <url> <region>
-function _get_or_create_endpoint_with_interface {
+# Usage: _create_endpoint_with_interface <service> <interface> <url> <region>
+function _create_endpoint_with_interface {
+    # Creates new endpoint
     local endpoint_id
-    endpoint_id=$(openstack endpoint list \
-        --service $1 \
-        --interface $2 \
-        --region $4 \
-        -c ID -f value)
-    if [[ -z "$endpoint_id" ]]; then
-        # Creates new endpoint
-        endpoint_id=$(openstack endpoint create \
-            $1 $2 $3 --region $4 -f value -c id)
-    fi
-
+    endpoint_id=$(openstack endpoint create \
+                            $1 $2 $3 --region $4 -f value -c id)
     echo $endpoint_id
 }
 
-# Gets or creates endpoint
-# Usage: get_or_create_endpoint <service> <region> <publicurl> <adminurl> <internalurl>
+# TODO(sdague): remove in O
 function get_or_create_endpoint {
+    deprecated "get_or_create_endpoint is deprecated. Use create_endpoint instead"
+    create_endpoint $@
+}
+
+# Gets or creates endpoint
+# Usage: create_endpoint <service> <region> <publicurl> <adminurl>
+function create_endpoint {
     # NOTE(jamielennnox): when converting to v3 endpoint creation we go from
     # creating one endpoint with multiple urls to multiple endpoints each with
     # a different interface.  To maintain the existing function interface we
-    # create 3 endpoints and return the id of the public one. In reality
+    # create 2 endpoints and return the id of the public one. In reality
     # returning the public id will not make a lot of difference as there are no
     # scenarios currently that use the returned id. Ideally this behaviour
     # should be pushed out to the service setups and let them create the
     # endpoints they need.
     local public_id
-    public_id=$(_get_or_create_endpoint_with_interface $1 public $3 $2)
-    _get_or_create_endpoint_with_interface $1 admin $4 $2
-    _get_or_create_endpoint_with_interface $1 internal $5 $2
+    public_id=$(_create_endpoint_with_interface $1 public $3 $2)
+    _create_endpoint_with_interface $1 admin $4 $2
 
     # return the public id to indicate success, and this is the endpoint most likely wanted
     echo $public_id

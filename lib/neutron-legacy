@@ -534,7 +534,7 @@ function create_neutron_accounts {
         create_service_user "neutron"
 
         get_or_create_service "neutron" "network" "Neutron Service"
-        get_or_create_endpoint \
+        create_endpoint \
             "network" \
             "$REGION_NAME" \
             "$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/" \

@@ -292,7 +292,7 @@ function create_glance_accounts {
         fi
 
         get_or_create_service "glance" "image" "Glance Image Service"
-        get_or_create_endpoint \
+        create_endpoint \
             "image" \
             "$REGION_NAME" \
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
@@ -305,7 +305,7 @@ function create_glance_accounts {
         create_service_user "glare"
         get_or_create_service "glare" "artifact" "Glance Artifact Service"
 
-        get_or_create_endpoint "artifact" \
+        create_endpoint "artifact" \
             "$REGION_NAME" \
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT" \
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT" \

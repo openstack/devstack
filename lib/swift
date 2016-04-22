@@ -633,7 +633,7 @@ function create_swift_accounts {
     create_service_user "swift" "admin"
 
     get_or_create_service "swift" "object-store" "Swift Service"
-    get_or_create_endpoint \
+    create_endpoint \
         "object-store" \
         "$REGION_NAME" \
         "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_\$(project_id)s" \
