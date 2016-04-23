@@ -182,8 +182,6 @@ function configure_tempest {
     local admin_username=${ADMIN_USERNAME:-admin}
     local admin_project_name=${ADMIN_TENANT_NAME:-admin}
     local admin_domain_name=${ADMIN_DOMAIN_NAME:-Default}
-    local tempest_username=${TEMPEST_USERNAME:-demo}
-    local tempest_project_name=${TEMPEST_TENANT_NAME:-demo}
     local alt_username=${ALT_USERNAME:-alt_demo}
     local alt_project_name=${ALT_TENANT_NAME:-alt_demo}
     local admin_project_id
