@@ -560,7 +560,7 @@ function create_volume_types {
         local be be_name
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
             be_name=${be##*:}
-            openstack volume type create --property volume_backend_name="${be_name}" ${be_name}
+            openstack --os-region-name="$REGION_NAME" volume type create --property volume_backend_name="${be_name}" ${be_name}
         done
     fi
 }

@@ -935,21 +935,21 @@ function stop_nova {
 # create_instance_types(): Create default flavors
 function create_flavors {
     if is_service_enabled n-api; then
-        if ! openstack flavor list | grep -q ds512M; then
+        if ! openstack --os-region-name="$REGION_NAME" flavor list | grep -q ds512M; then
             # Note that danms hates these flavors and apologizes for sdague
-            openstack flavor create --id c1 --ram 256 --disk 0 --vcpus 1 cirros256
-            openstack flavor create --id d1 --ram 512 --disk 5 --vcpus 1 ds512M
-            openstack flavor create --id d2 --ram 1024 --disk 10 --vcpus 1 ds1G
-            openstack flavor create --id d3 --ram 2048 --disk 10 --vcpus 2 ds2G
-            openstack flavor create --id d4 --ram 4096 --disk 20 --vcpus 4 ds4G
+            openstack --os-region-name="$REGION_NAME" flavor create --id c1 --ram 256 --disk 0 --vcpus 1 cirros256
+            openstack --os-region-name="$REGION_NAME" flavor create --id d1 --ram 512 --disk 5 --vcpus 1 ds512M
+            openstack --os-region-name="$REGION_NAME" flavor create --id d2 --ram 1024 --disk 10 --vcpus 1 ds1G
+            openstack --os-region-name="$REGION_NAME" flavor create --id d3 --ram 2048 --disk 10 --vcpus 2 ds2G
+            openstack --os-region-name="$REGION_NAME" flavor create --id d4 --ram 4096 --disk 20 --vcpus 4 ds4G
         fi
 
-        if ! openstack flavor list | grep -q m1.tiny; then
-            openstack flavor create --id 1 --ram 512 --disk 1 --vcpus 1 m1.tiny
-            openstack flavor create --id 2 --ram 2048 --disk 20 --vcpus 1 m1.small
-            openstack flavor create --id 3 --ram 4096 --disk 40 --vcpus 2 m1.medium
-            openstack flavor create --id 4 --ram 8192 --disk 80 --vcpus 4 m1.large
-            openstack flavor create --id 5 --ram 16384 --disk 160 --vcpus 8 m1.xlarge
+        if ! openstack --os-region-name="$REGION_NAME" flavor list | grep -q m1.tiny; then
+            openstack --os-region-name="$REGION_NAME" flavor create --id 1 --ram 512 --disk 1 --vcpus 1 m1.tiny
+            openstack --os-region-name="$REGION_NAME" flavor create --id 2 --ram 2048 --disk 20 --vcpus 1 m1.small
+            openstack --os-region-name="$REGION_NAME" flavor create --id 3 --ram 4096 --disk 40 --vcpus 2 m1.medium
+            openstack --os-region-name="$REGION_NAME" flavor create --id 4 --ram 8192 --disk 80 --vcpus 4 m1.large
+            openstack --os-region-name="$REGION_NAME" flavor create --id 5 --ram 16384 --disk 160 --vcpus 8 m1.xlarge
         fi
     fi
 }

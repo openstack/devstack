@@ -556,16 +556,16 @@ function create_neutron_initial_network {
     if is_provider_network; then
         die_if_not_set $LINENO PHYSICAL_NETWORK "You must specify the PHYSICAL_NETWORK"
         die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specify the PROVIDER_NETWORK_TYPE"
-        NET_ID=$(neutron net-create $PHYSICAL_NETWORK --tenant_id $project_id --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
+        NET_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" net-create $PHYSICAL_NETWORK --tenant_id $project_id --provider:network_type $PROVIDER_NETWORK_TYPE --provider:physical_network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider:segmentation_id $SEGMENTATION_ID} --shared | grep ' id ' | get_field 2)
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
-            SUBNET_ID=$(neutron subnet-create --tenant_id $project_id --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+            SUBNET_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create --tenant_id $project_id --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
             die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $project_id"
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]] && [[ -n "$IPV6_PROVIDER_FIXED_RANGE" ]] && [[ -n "$IPV6_PROVIDER_NETWORK_GATEWAY" ]]; then
-            SUBNET_V6_ID=$(neutron subnet-create --tenant_id $project_id --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
+            SUBNET_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create --tenant_id $project_id --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
             die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
         fi
 
@@ -575,7 +575,7 @@ function create_neutron_initial_network {
             sudo ip link set $PUBLIC_INTERFACE up
         fi
     else
-        NET_ID=$(neutron net-create --tenant-id $project_id "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
+        NET_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" net-create --tenant-id $project_id "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
@@ -589,17 +589,17 @@ function create_neutron_initial_network {
         fi
     fi
 
-    AUTO_ALLOCATE_EXT=$(neutron ext-list | grep 'auto-allocated-topology' | get_field 1)
-    SUBNETPOOL_EXT=$(neutron ext-list | grep 'subnet_allocation' | get_field 1)
+    AUTO_ALLOCATE_EXT=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" ext-list | grep 'auto-allocated-topology' | get_field 1)
+    SUBNETPOOL_EXT=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" ext-list | grep 'subnet_allocation' | get_field 1)
     if [[ "$Q_L3_ENABLED" == "True" ]]; then
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
             # create a tenant-owned router.
-            ROUTER_ID=$(neutron router-create --tenant-id $project_id $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            ROUTER_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" router-create --tenant-id $project_id $Q_ROUTER_NAME | grep ' id ' | get_field 2)
             die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $project_id $Q_ROUTER_NAME"
         else
             # Plugin only supports creating a single router, which should be admin owned.
-            ROUTER_ID=$(neutron router-create $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            ROUTER_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" router-create $Q_ROUTER_NAME | grep ' id ' | get_field 2)
             die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $Q_ROUTER_NAME"
         fi
 
@@ -609,17 +609,17 @@ function create_neutron_initial_network {
         if [[ -n $AUTO_ALLOCATE_EXT && -n $SUBNETPOOL_EXT ]]; then
             EXTERNAL_NETWORK_FLAGS="$EXTERNAL_NETWORK_FLAGS --is-default"
             if [[ "$IP_VERSION" =~ 4.* ]]; then
-                SUBNETPOOL_V4_ID=$(neutron subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
+                SUBNETPOOL_V4_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
             fi
             if [[ "$IP_VERSION" =~ .*6 ]]; then
-                SUBNETPOOL_V6_ID=$(neutron subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --shared --is-default=True | grep ' id ' | get_field 2)
+                SUBNETPOOL_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --shared --is-default=True | grep ' id ' | get_field 2)
             fi
         fi
         # Create an external network, and a subnet. Configure the external network as router gw
         if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
-            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- $EXTERNAL_NETWORK_FLAGS --provider:network_type=flat --provider:physical_network=${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" net-create "$PUBLIC_NETWORK_NAME" -- $EXTERNAL_NETWORK_FLAGS --provider:network_type=flat --provider:physical_network=${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
         else
-            EXT_NET_ID=$(neutron net-create "$PUBLIC_NETWORK_NAME" -- $EXTERNAL_NETWORK_FLAGS | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" net-create "$PUBLIC_NETWORK_NAME" -- $EXTERNAL_NETWORK_FLAGS | grep ' id ' | get_field 2)
         fi
         die_if_not_set $LINENO EXT_NET_ID "Failure creating EXT_NET_ID for $PUBLIC_NETWORK_NAME"
 
@@ -974,6 +974,9 @@ function _configure_neutron_common {
     iniset $NEUTRON_CONF DEFAULT bind_host $Q_LISTEN_ADDRESS
     iniset $NEUTRON_CONF oslo_concurrency lock_path $DATA_DIR/neutron/lock
 
+    # NOTE(freerunner): Need to adjust Region Name for nova in multiregion installation
+    iniset $NEUTRON_CONF nova region_name $REGION_NAME
+
     # If addition config files are set, make sure their path name is set as well
     if [[ ${#Q_PLUGIN_EXTRA_CONF_FILES[@]} > 0 && $Q_PLUGIN_EXTRA_CONF_PATH == '' ]]; then
         die $LINENO "Neutron additional plugin config not set.. exiting"
@@ -1289,7 +1292,7 @@ function _neutron_create_private_subnet_v4 {
     subnet_params+="--name $PRIVATE_SUBNET_NAME "
     subnet_params+="$NET_ID $FIXED_RANGE"
     local subnet_id
-    subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
+    subnet_id=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO subnet_id "Failure creating private IPv4 subnet for $project_id"
     echo $subnet_id
 }
@@ -1306,7 +1309,7 @@ function _neutron_create_private_subnet_v6 {
     subnet_params+="--name $IPV6_PRIVATE_SUBNET_NAME "
     subnet_params+="$NET_ID $FIXED_RANGE_V6 $ipv6_modes"
     local ipv6_subnet_id
-    ipv6_subnet_id=$(neutron subnet-create $subnet_params | grep ' id ' | get_field 2)
+    ipv6_subnet_id=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $project_id"
     echo $ipv6_subnet_id
 }
@@ -1320,7 +1323,7 @@ function _neutron_create_public_subnet_v4 {
     subnet_params+="$EXT_NET_ID $FLOATING_RANGE "
     subnet_params+="-- --enable_dhcp=False"
     local id_and_ext_gw_ip
-    id_and_ext_gw_ip=$(neutron subnet-create $subnet_params | grep -e 'gateway_ip' -e ' id ')
+    id_and_ext_gw_ip=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create $subnet_params | grep -e 'gateway_ip' -e ' id ')
     die_if_not_set $LINENO id_and_ext_gw_ip "Failure creating public IPv4 subnet"
     echo $id_and_ext_gw_ip
 }
@@ -1333,14 +1336,14 @@ function _neutron_create_public_subnet_v6 {
     subnet_params+="$EXT_NET_ID $IPV6_PUBLIC_RANGE "
     subnet_params+="-- --enable_dhcp=False"
     local ipv6_id_and_ext_gw_ip
-    ipv6_id_and_ext_gw_ip=$(neutron subnet-create $subnet_params | grep -e 'gateway_ip' -e ' id ')
+    ipv6_id_and_ext_gw_ip=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create $subnet_params | grep -e 'gateway_ip' -e ' id ')
     die_if_not_set $LINENO ipv6_id_and_ext_gw_ip "Failure creating an IPv6 public subnet"
     echo $ipv6_id_and_ext_gw_ip
 }
 
 # Configure neutron router for IPv4 public access
 function _neutron_configure_router_v4 {
-    neutron router-interface-add $ROUTER_ID $SUBNET_ID
+    neutron --os-cloud devstack-admin --os-region "$REGION_NAME" router-interface-add $ROUTER_ID $SUBNET_ID
     # Create a public subnet on the external network
     local id_and_ext_gw_ip
     id_and_ext_gw_ip=$(_neutron_create_public_subnet_v4 $EXT_NET_ID)
@@ -1348,7 +1351,7 @@ function _neutron_configure_router_v4 {
     ext_gw_ip=$(echo $id_and_ext_gw_ip  | get_field 2)
     PUB_SUBNET_ID=$(echo $id_and_ext_gw_ip | get_field 5)
     # Configure the external network as the default router gateway
-    neutron router-gateway-set $ROUTER_ID $EXT_NET_ID
+    neutron --os-cloud devstack-admin --os-region "$REGION_NAME" router-gateway-set $ROUTER_ID $EXT_NET_ID
 
     # This logic is specific to using the l3-agent for layer 3
     if is_service_enabled q-l3; then
@@ -1370,7 +1373,7 @@ function _neutron_configure_router_v4 {
                 sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
                 sudo ip link set $ext_gw_interface up
             fi
-            ROUTER_GW_IP=`neutron port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F'ip_address'  '{ print $2 }' | cut -f3 -d\" | tr '\n' ' '`
+            ROUTER_GW_IP=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F'ip_address'  '{ print $2 }' | cut -f3 -d\" | tr '\n' ' ')
             die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
             sudo ip route replace  $FIXED_RANGE via $ROUTER_GW_IP
         fi
@@ -1380,7 +1383,7 @@ function _neutron_configure_router_v4 {
 
 # Configure neutron router for IPv6 public access
 function _neutron_configure_router_v6 {
-    neutron router-interface-add $ROUTER_ID $IPV6_SUBNET_ID
+    neutron --os-cloud devstack-admin --os-region "$REGION_NAME" router-interface-add $ROUTER_ID $IPV6_SUBNET_ID
     # Create a public subnet on the external network
     local ipv6_id_and_ext_gw_ip
     ipv6_id_and_ext_gw_ip=$(_neutron_create_public_subnet_v6 $EXT_NET_ID)
@@ -1392,7 +1395,7 @@ function _neutron_configure_router_v6 {
     # If the external network has not already been set as the default router
     # gateway when configuring an IPv4 public subnet, do so now
     if [[ "$IP_VERSION" == "6" ]]; then
-        neutron router-gateway-set $ROUTER_ID $EXT_NET_ID
+        neutron --os-cloud devstack-admin --os-region "$REGION_NAME" router-gateway-set $ROUTER_ID $EXT_NET_ID
     fi
 
     # This logic is specific to using the l3-agent for layer 3
@@ -1401,7 +1404,7 @@ function _neutron_configure_router_v6 {
         sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # Configure and enable public bridge
         # Override global IPV6_ROUTER_GW_IP with the true value from neutron
-        IPV6_ROUTER_GW_IP=`neutron port-list -c fixed_ips | grep $ipv6_pub_subnet_id | awk -F'ip_address' '{ print $2 }' | cut -f3 -d\" | tr '\n' ' '`
+        IPV6_ROUTER_GW_IP=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" port-list -c fixed_ips | grep $ipv6_pub_subnet_id | awk -F'ip_address' '{ print $2 }' | cut -f3 -d\" | tr '\n' ' ')
         die_if_not_set $LINENO IPV6_ROUTER_GW_IP "Failure retrieving IPV6_ROUTER_GW_IP"
 
         if is_neutron_ovs_base_plugin; then
@@ -1466,7 +1469,7 @@ function teardown_neutron_debug {
 }
 
 function _get_net_id {
-    neutron --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD net-list | grep $1 | awk '{print $2}'
+    neutron --os-cloud devstack-admin --os-region "$REGION_NAME" --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD net-list | grep $1 | awk '{print $2}'
 }
 
 function _get_probe_cmd_prefix {
