@@ -89,7 +89,7 @@ KEYSTONE_RESOURCE_BACKEND=${KEYSTONE_RESOURCE_BACKEND:-sql}
 
 # Select Keystone's token provider (and format)
 # Choose from 'uuid', 'pki', 'pkiz', or 'fernet'
-KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-}
+KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-fernet}
 KEYSTONE_TOKEN_FORMAT=$(echo ${KEYSTONE_TOKEN_FORMAT} | tr '[:upper:]' '[:lower:]')
 
 # Set Keystone interface configuration
