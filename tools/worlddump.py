@@ -88,7 +88,8 @@ def _header(name):
 
 
 def _bridge_list():
-    process = subprocess.Popen(['ovs-vsctl', 'list-br'], stdout=subprocess.PIPE)
+    process = subprocess.Popen(['sudo', 'ovs-vsctl', 'list-br'],
+                               stdout=subprocess.PIPE)
     stdout, _ = process.communicate()
     return stdout.split()
 
