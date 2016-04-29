@@ -248,10 +248,6 @@ NEUTRON_FWAAS_BRANCH=${NEUTRON_FWAAS_BRANCH:-master}
 NEUTRON_LBAAS_REPO=${NEUTRON_LBAAS_REPO:-${GIT_BASE}/openstack/neutron-lbaas.git}
 NEUTRON_LBAAS_BRANCH=${NEUTRON_LBAAS_BRANCH:-master}
 
-# neutron vpnaas service
-NEUTRON_VPNAAS_REPO=${NEUTRON_VPNAAS_REPO:-${GIT_BASE}/openstack/neutron-vpnaas.git}
-NEUTRON_VPNAAS_BRANCH=${NEUTRON_VPNAAS_BRANCH:-master}
-
 # compute service
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
 NOVA_BRANCH=${NOVA_BRANCH:-master}
