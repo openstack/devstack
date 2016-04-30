@@ -86,6 +86,7 @@ networking-mlnx                        `git://git.openstack.org/openstack/networ
 networking-nec                         `git://git.openstack.org/openstack/networking-nec <https://git.openstack.org/cgit/openstack/networking-nec>`__
 networking-odl                         `git://git.openstack.org/openstack/networking-odl <https://git.openstack.org/cgit/openstack/networking-odl>`__
 networking-ofagent                     `git://git.openstack.org/openstack/networking-ofagent <https://git.openstack.org/cgit/openstack/networking-ofagent>`__
+networking-onos                        `git://git.openstack.org/openstack/networking-onos <https://git.openstack.org/cgit/openstack/networking-onos>`__
 networking-ovn                         `git://git.openstack.org/openstack/networking-ovn <https://git.openstack.org/cgit/openstack/networking-ovn>`__
 networking-ovs-dpdk                    `git://git.openstack.org/openstack/networking-ovs-dpdk <https://git.openstack.org/cgit/openstack/networking-ovs-dpdk>`__
 networking-plumgrid                    `git://git.openstack.org/openstack/networking-plumgrid <https://git.openstack.org/cgit/openstack/networking-plumgrid>`__
@@ -93,7 +94,6 @@ networking-powervm                     `git://git.openstack.org/openstack/networ
 networking-sfc                         `git://git.openstack.org/openstack/networking-sfc <https://git.openstack.org/cgit/openstack/networking-sfc>`__
 networking-vsphere                     `git://git.openstack.org/openstack/networking-vsphere <https://git.openstack.org/cgit/openstack/networking-vsphere>`__
 neutron                                `git://git.openstack.org/openstack/neutron <https://git.openstack.org/cgit/openstack/neutron>`__
-neutron-dynamic-routing                `git://git.openstack.org/openstack/neutron-dynamic-routing <https://git.openstack.org/cgit/openstack/neutron-dynamic-routing>`__
 neutron-lbaas                          `git://git.openstack.org/openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas>`__
 neutron-lbaas-dashboard                `git://git.openstack.org/openstack/neutron-lbaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard>`__
 neutron-vpnaas                         `git://git.openstack.org/openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas>`__
