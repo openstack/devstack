@@ -45,8 +45,6 @@ set +o xtrace
 # --------
 
 # Set up default directories
-GITDIR["tempest-lib"]=$DEST/tempest-lib
-
 TEMPEST_DIR=$DEST/tempest
 TEMPEST_CONFIG_DIR=${TEMPEST_CONFIG_DIR:-$TEMPEST_DIR/etc}
 TEMPEST_CONFIG=$TEMPEST_CONFIG_DIR/tempest.conf
@@ -587,20 +585,6 @@ function configure_tempest {
     IFS=$ifs
 }
 
-
-# install_tempest_lib() - Collect source, prepare, and install ``tempest-lib``
-function install_tempest_lib {
-    if use_library_from_git "tempest-lib"; then
-        git_clone_by_name "tempest-lib"
-        setup_dev_lib "tempest-lib"
-        # NOTE(mtreinish) For testing ``tempest-lib`` from git with Tempest we need to
-        # put the git version of ``tempest-lib`` in the Tempest job's tox venv
-        export PIP_VIRTUAL_ENV=${PROJECT_VENV["tempest"]}
-        setup_dev_lib "tempest-lib"
-        unset PIP_VIRTUAL_ENV
-    fi
-}
-
 # install_tempest() - Collect source and prepare
 function install_tempest {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
@@ -612,7 +596,6 @@ function install_tempest {
     # running pip install -U on tempest requirements
     $TEMPEST_DIR/.tox/full/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
     PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/full
-    install_tempest_lib
     popd
 }
 

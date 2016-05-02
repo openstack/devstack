@@ -270,10 +270,6 @@ REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-master}
 TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
 TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
-# TODO(sdague): this should end up as a library component like below
-GITREPO["tempest-lib"]=${TEMPEST_LIB_REPO:-${GIT_BASE}/openstack/tempest-lib.git}
-GITBRANCH["tempest-lib"]=${TEMPEST_LIB_BRANCH:-master}
-
 
 ##############
 #
