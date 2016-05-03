@@ -31,6 +31,7 @@ source $TOP_DIR/functions
 source $TOP_DIR/openrc
 
 # Import project functions
+source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/neutron-legacy
 
 # Import exercise configuration
