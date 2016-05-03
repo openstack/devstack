@@ -457,9 +457,7 @@ function configure_swift {
         cat <<EOF >>${SWIFT_CONFIG_PROXY_SERVER}
 [filter:s3token]
 paste.filter_factory = keystonemiddleware.s3_token:filter_factory
-auth_port = ${KEYSTONE_AUTH_PORT}
-auth_host = ${KEYSTONE_AUTH_HOST}
-auth_protocol = ${KEYSTONE_AUTH_PROTOCOL}
+auth_uri = ${KEYSTONE_AUTH_URI}
 cafile = ${SSL_BUNDLE_FILE}
 admin_user = swift
 admin_tenant_name = ${SERVICE_PROJECT_NAME}

@@ -96,7 +96,7 @@ function configure_horizon {
     _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
 
     _horizon_config_set $local_settings "" OPENSTACK_API_VERSIONS {\"identity\":3}
-    _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}/v3\""
+    _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_URI}/v3\""
 
     if [ -f $SSL_BUNDLE_FILE ]; then
         _horizon_config_set $local_settings "" OPENSTACK_SSL_CACERT \"${SSL_BUNDLE_FILE}\"
