@@ -362,11 +362,6 @@ function install_glance {
 
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
 
-    if is_service_enabled g-search; then
-        ${TOP_DIR}/pkg/elasticsearch.sh download
-        ${TOP_DIR}/pkg/elasticsearch.sh install
-    fi
-
     setup_develop $GLANCE_DIR
 }
 
@@ -386,7 +381,7 @@ function start_glance {
         die $LINENO "g-api did not start"
     fi
 
-    #Start g-glare after g-reg/g-api/g-search
+    #Start g-glare after g-reg/g-api
     if is_service_enabled g-glare; then
         run_process g-glare "$GLANCE_BIN_DIR/glance-glare --config-file=$GLANCE_CONF_DIR/glance-glare.conf"
         echo "Waiting for Glare [g-glare] ($GLANCE_GLARE_HOSTPORT) to start..."
