@@ -592,8 +592,13 @@ function install_tempest {
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but
     # running pip install -U on tempest requirements
-    $TEMPEST_DIR/.tox/full/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
-    PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/full
+    if [[ -d .tox/tempest ]] ; then
+        $TEMPEST_DIR/.tox/tempest/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
+        PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/tempest
+    else
+        $TEMPEST_DIR/.tox/full/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
+        PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/full
+    fi
     popd
 }
 
