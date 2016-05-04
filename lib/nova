@@ -59,11 +59,6 @@ NOVA_API_DB=${NOVA_API_DB:-nova_api}
 
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 
-# NOVA_V2_LEGACY defines whether we force the Nova v2.0 enpoint onto
-# the Nova v2.0 legacy code base. Remove this option once the Nova
-# v2.0 legacy codebase is removed.
-NOVA_V2_LEGACY=$(trueorfalse False NOVA_V2_LEGACY)
-
 if is_suse; then
     NOVA_WSGI_DIR=${NOVA_WSGI_DIR:-/srv/www/htdocs/nova}
 else
@@ -311,13 +306,6 @@ function configure_nova {
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
         # Get the sample configuration file in place
         cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
-
-        # For setting up an environment where v2.0 is running on the
-        # v2.0 legacy code base.
-        if [[ "$NOVA_V2_LEGACY" == "True" ]]; then
-            sed -i s@"^/v2: openstack_compute_api_v21_legacy_v2_compatible$"@"/v2: openstack_compute_api_legacy_v2"@ \
-                "$NOVA_API_PASTE_INI"
-        fi
     fi
 
     if is_service_enabled n-cpu; then
