@@ -702,18 +702,18 @@ function init_nova {
         recreate_database nova
 
         # Migrate nova database
-        $NOVA_BIN_DIR/nova-manage db sync
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
 
         if is_service_enabled n-cell; then
             recreate_database $NOVA_CELLS_DB
         fi
 
         recreate_database $NOVA_API_DB
-        $NOVA_BIN_DIR/nova-manage api_db sync
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF api_db sync
 
         # Run online migrations on the new databases
         # Needed for flavor conversion
-        $NOVA_BIN_DIR/nova-manage db online_data_migrations
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db online_data_migrations
     fi
 
     create_nova_cache_dir

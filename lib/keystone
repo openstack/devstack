@@ -489,16 +489,16 @@ function init_keystone {
     recreate_database keystone
 
     # Initialize keystone database
-    $KEYSTONE_BIN_DIR/keystone-manage db_sync
+    $KEYSTONE_BIN_DIR/keystone-manage --config-file $KEYSTONE_CONF db_sync
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" == "pki" || "$KEYSTONE_TOKEN_FORMAT" == "pkiz" ]]; then
         # Set up certificates
         rm -rf $KEYSTONE_CONF_DIR/ssl
-        $KEYSTONE_BIN_DIR/keystone-manage pki_setup
+        $KEYSTONE_BIN_DIR/keystone-manage --config-file $KEYSTONE_CONF pki_setup
     fi
     if [[ "$KEYSTONE_TOKEN_FORMAT" == "fernet" ]]; then
         rm -rf "$KEYSTONE_CONF_DIR/fernet-keys/"
-        $KEYSTONE_BIN_DIR/keystone-manage fernet_setup
+        $KEYSTONE_BIN_DIR/keystone-manage --config-file $KEYSTONE_CONF fernet_setup
     fi
 }
 

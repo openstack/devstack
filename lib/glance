@@ -334,10 +334,10 @@ function init_glance {
     recreate_database glance
 
     # Migrate glance database
-    $GLANCE_BIN_DIR/glance-manage db_sync
+    $GLANCE_BIN_DIR/glance-manage --config-file $GLANCE_CONF_DIR/glance-api.conf db_sync
 
     # Load metadata definitions
-    $GLANCE_BIN_DIR/glance-manage db_load_metadefs
+    $GLANCE_BIN_DIR/glance-manage --config-file $GLANCE_CONF_DIR/glance-api.conf db_load_metadefs
 
     create_glance_cache_dir
 }
