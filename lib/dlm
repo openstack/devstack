@@ -93,6 +93,8 @@ function install_dlm {
     if is_dlm_enabled; then
         if is_ubuntu; then
             install_package zookeeperd
+        elif is_fedora; then
+            install_package zookeeper
         else
             die $LINENO "Don't know how to install zookeeper on this platform"
         fi
