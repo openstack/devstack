@@ -66,6 +66,10 @@ BUILD_TIMEOUT=${BUILD_TIMEOUT:-196}
 # have tempest installed in DevStack by default.
 INSTALL_TEMPEST=${INSTALL_TEMPEST:-"True"}
 
+# This variable is passed directly to pip install inside the common tox venv
+# that is created
+TEMPEST_PLUGINS=${TEMPEST_PLUGINS:-0}
+
 # Cinder/Volume variables
 TEMPEST_VOLUME_DRIVER=${TEMPEST_VOLUME_DRIVER:-default}
 TEMPEST_DEFAULT_VOLUME_VENDOR="Open Source"
@@ -323,11 +327,9 @@ function configure_tempest {
     tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
     if [[ "$OFFLINE" != "True" ]]; then
-        tox -revenv --notest
+        tox -revenv-tempest --notest
     fi
-    # NOTE(mtreinish): Respect constraints on tempest verify-config venv
-    tox -evenv -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
-    tox -evenv -- tempest verify-config -uro $tmp_cfg_file
+    tox -evenv-tempest -- tempest verify-config -uro $tmp_cfg_file
 
     local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
@@ -594,15 +596,9 @@ function install_tempest {
     pip_install tox
     pushd $TEMPEST_DIR
     tox --notest -efull
-    # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
-    # are using a tox job other than full will not be respecting constraints but
-    # running pip install -U on tempest requirements
-    if [[ -d .tox/tempest ]] ; then
-        $TEMPEST_DIR/.tox/tempest/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
-        PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/tempest
-    else
-        $TEMPEST_DIR/.tox/full/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
-        PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/full
+    PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/tempest
+    if [[ $TEMPEST_PLUGINS != 0 ]] ; then
+        tox -evenv-tempest -- pip install $TEMPEST_PLUGINS
     fi
     install_tempest_lib
     popd
