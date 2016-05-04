@@ -68,9 +68,8 @@ CINDER_SERVICE_PROTOCOL=${CINDER_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 CINDER_SERVICE_LISTEN_ADDRESS=${CINDER_SERVICE_LISTEN_ADDRESS:-$SERVICE_LISTEN_ADDRESS}
 
 # What type of LVM device should Cinder use for LVM backend
-# Defaults to default, which is thick, the other valid choice
-# is thin, which as the name implies utilizes lvm thin provisioning.
-CINDER_LVM_TYPE=${CINDER_LVM_TYPE:-default}
+# Defaults to thin. For thick provisioning change to 'default'
+CINDER_LVM_TYPE=${CINDER_LVM_TYPE:-thin}
 
 # Default backends
 # The backend format is type:name where type is one of the supported backend
@@ -128,6 +127,17 @@ fi
 CINDER_NOVA_CATALOG_INFO=${CINDER_NOVA_CATALOG_INFO:-compute:nova:publicURL}
 CINDER_NOVA_CATALOG_ADMIN_INFO=${CINDER_NOVA_CATALOG_ADMIN_INFO:-compute:nova:adminURL}
 
+# Environment variables to configure the image-volume cache
+CINDER_IMG_CACHE_ENABLED=${CINDER_IMG_CACHE_ENABLED:-True}
+
+# For limits, if left unset, it will use cinder defaults of 0 for unlimited
+CINDER_IMG_CACHE_SIZE_GB=${CINDER_IMG_CACHE_SIZE_GB:-}
+CINDER_IMG_CACHE_SIZE_COUNT=${CINDER_IMG_CACHE_SIZE_COUNT:-}
+
+# Configure which cinder backends will have the image-volume cache, this takes the same
+# form as the CINDER_ENABLED_BACKENDS config option. By default it will
+# enable the cache for all cinder backends.
+CINDER_CACHE_ENABLED_FOR_BACKENDS=${CINDER_CACHE_ENABLED_FOR_BACKENDS:-$CINDER_ENABLED_BACKENDS}
 
 # Functions
 # ---------
@@ -293,6 +303,7 @@ function configure_cinder {
         if [[ -n "$default_name" ]]; then
             iniset $CINDER_CONF DEFAULT default_volume_type ${default_name}
         fi
+        configure_cinder_image_volume_cache
     fi
 
     if is_service_enabled swift; then
@@ -394,6 +405,8 @@ function create_cinder_accounts {
             "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3/\$(project_id)s" \
             "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3/\$(project_id)s" \
             "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3/\$(project_id)s"
+
+        configure_cinder_internal_tenant
     fi
 }
 
@@ -571,6 +584,31 @@ function create_cinder_volume_group {
     # During a transition period Grenade needs to have this function defined
     # It is effectively a no-op in the Grenade 'target' use case
     :
+}
+
+function configure_cinder_internal_tenant {
+    # Re-use the Cinder service account for simplicity.
+    iniset $CINDER_CONF DEFAULT cinder_internal_tenant_project_id $(get_or_create_project $SERVICE_PROJECT_NAME)
+    iniset $CINDER_CONF DEFAULT cinder_internal_tenant_user_id $(get_or_create_user "cinder")
+}
+
+function configure_cinder_image_volume_cache {
+    # Expect CINDER_CACHE_ENABLED_FOR_BACKENDS to be a list of backends
+    # similar to CINDER_ENABLED_BACKENDS with NAME:TYPE where NAME will
+    # be the backend specific configuration stanza in cinder.conf.
+    for be in ${CINDER_CACHE_ENABLED_FOR_BACKENDS//,/ }; do
+        local be_name=${be##*:}
+
+        iniset $CINDER_CONF $be_name image_volume_cache_enabled $CINDER_IMG_CACHE_ENABLED
+
+        if [[ -n $CINDER_IMG_CACHE_SIZE_GB ]]; then
+            iniset $CINDER_CONF $be_name image_volume_cache_max_size_gb $CINDER_IMG_CACHE_SIZE_GB
+        fi
+
+        if [[ -n $CINDER_IMG_CACHE_SIZE_COUNT ]]; then
+            iniset $CINDER_CONF $be_name image_volume_cache_max_count $CINDER_IMG_CACHE_SIZE_COUNT
+        fi
+    done
 }
 
 
