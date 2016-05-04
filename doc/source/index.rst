@@ -63,14 +63,11 @@ Quick Start
 
        devstack/tools/create-stack-user.sh; su stack
 
-#. Start the install
+#. Start the install, this will take a few minutes.
 
    ::
 
        cd devstack; ./stack.sh
-
-   It takes a few minutes, we recommend `reading the
-   script <stack.sh.html>`__ while it is building.
 
 Guides
 ======
