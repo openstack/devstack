@@ -10,7 +10,7 @@ source $TOP_DIR/stackrc
 
 # Package source and version, all pkg files are expected to have
 # something like this, as well as a way to override them.
-ELASTICSEARCH_VERSION=${ELASTICSEARCH_VERSION:-1.4.2}
+ELASTICSEARCH_VERSION=${ELASTICSEARCH_VERSION:-1.7.5}
 ELASTICSEARCH_BASEURL=${ELASTICSEARCH_BASEURL:-https://download.elasticsearch.org/elasticsearch/elasticsearch}
 
 # Elastic search actual implementation
