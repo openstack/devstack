@@ -45,10 +45,12 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
     iniset $NOVA_CONF DEFAULT reserved_host_memory_mb 0
     # ironic section
-    iniset $NOVA_CONF ironic admin_username admin
-    iniset $NOVA_CONF ironic admin_password $ADMIN_PASSWORD
-    iniset $NOVA_CONF ironic admin_url $KEYSTONE_AUTH_URI/v2.0
-    iniset $NOVA_CONF ironic admin_tenant_name demo
+    iniset $NOVA_CONF ironic username admin
+    iniset $NOVA_CONF ironic password $ADMIN_PASSWORD
+    iniset $NOVA_CONF ironic auth_url $KEYSTONE_AUTH_URI/v3
+    iniset $NOVA_CONF ironic project_domain_id default
+    iniset $NOVA_CONF ironic user_domain_id default
+    iniset $NOVA_CONF ironic project_name demo
     iniset $NOVA_CONF ironic api_endpoint $IRONIC_SERVICE_PROTOCOL://$IRONIC_HOSTPORT/v1
 }
 
