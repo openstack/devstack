@@ -381,12 +381,24 @@ CURL_GET="${CURL_GET:-curl -g}"
 
 # Wait for an HTTP server to start answering requests
 # wait_for_service timeout url
+#
+# If the service we want is behind a proxy, the proxy may be available
+# before the service. Compliant proxies will return a 503 in this case
+# Loop until we get something else.
+# Also check for the case where there is no proxy and the service just
+# hasn't started yet. curl returns 7 for Failed to connect to host.
 function wait_for_service {
     local timeout=$1
     local url=$2
+    local rval=0
     time_start "wait_for_service"
-    timeout $timeout sh -c "while ! $CURL_GET -k --noproxy '*' -s $url >/dev/null; do sleep 1; done"
+    timeout $timeout bash -x <<EOF || rval=$?
+        while [[ \$( ${CURL_GET} -k --noproxy '*' -s -o /dev/null -w '%{http_code}' ${url} ) == 503 || \$? -eq 7 ]]; do
+            sleep 1
+        done
+EOF
     time_stop "wait_for_service"
+    return $rval
 }
 
 
