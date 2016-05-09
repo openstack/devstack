@@ -44,16 +44,10 @@ def is_in_openstack_namespace(proj):
     # stackforge, etc)
     return proj.startswith('openstack/')
 
-# Rather than returning a 404 for a nonexistent file, cgit delivers a
-# 0-byte response to a GET request.  It also does not provide a
-# Content-Length in a HEAD response, so the way we tell if a file exists
-# is to check the length of the entire GET response body.
+# Check if this project has a plugin file
 def has_devstack_plugin(proj):
     r = requests.get("https://git.openstack.org/cgit/%s/plain/devstack/plugin.sh" % proj)
-    if len(r.text) > 0:
-        return True
-    else:
-        return False
+    return r.status_code == 200
 
 logging.debug("Getting project list from %s" % url)
 r = requests.get(url)
