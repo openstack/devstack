@@ -41,6 +41,9 @@ function short_source {
     file=${file#$RC_DIR/}
     printf "%-40s " "$file:${called[1]}:${called[0]}"
 }
+# PS4 is exported to child shells and uses the 'short_source' function, so
+# export it so child shells have access to the 'short_source' function also.
+export -f short_source
 
 
 # Retrieve an image from a URL and upload into Glance.
