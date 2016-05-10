@@ -64,6 +64,10 @@ BUILD_TIMEOUT=${BUILD_TIMEOUT:-196}
 # have tempest installed in DevStack by default.
 INSTALL_TEMPEST=${INSTALL_TEMPEST:-"True"}
 
+# This variable is passed directly to pip install inside the common tox venv
+# that is created
+TEMPEST_PLUGINS=${TEMPEST_PLUGINS:-0}
+
 # Cinder/Volume variables
 TEMPEST_VOLUME_DRIVER=${TEMPEST_VOLUME_DRIVER:-default}
 TEMPEST_DEFAULT_VOLUME_VENDOR="Open Source"
@@ -517,17 +521,17 @@ function configure_tempest {
     tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
     if [[ "$OFFLINE" != "True" ]]; then
-        tox -revenv --notest
+        tox -revenv-tempest --notest
     fi
-    tox -evenv -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
+    tox -evenv-tempest -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
 
     # Auth:
     iniset $TEMPEST_CONFIG auth tempest_roles "Member"
     if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
         if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
-            tox -evenv -- tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
+            tox -evenv-tempest -- tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
         else
-            tox -evenv -- tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
+            tox -evenv-tempest -- tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY etc/accounts.yaml
         fi
         iniset $TEMPEST_CONFIG auth use_dynamic_credentials False
         iniset $TEMPEST_CONFIG auth test_accounts_file "etc/accounts.yaml"
@@ -592,12 +596,10 @@ function install_tempest {
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but
     # running pip install -U on tempest requirements
-    if [[ -d .tox/tempest ]] ; then
-        $TEMPEST_DIR/.tox/tempest/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
-        PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/tempest
-    else
-        $TEMPEST_DIR/.tox/full/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
-        PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/full
+    $TEMPEST_DIR/.tox/tempest/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
+    PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/tempest
+    if [[ $TEMPEST_PLUGINS != 0 ]] ; then
+        tox -evenv-tempest -- pip install $TEMPEST_PLUGINS
     fi
     popd
 }
