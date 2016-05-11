@@ -342,6 +342,10 @@ function configure_cinder {
         iniset $CINDER_CONF DEFAULT glance_ca_certificates_file $SSL_BUNDLE_FILE
     fi
 
+    if [ "$GLANCE_V1_ENABLED" != "True" ]; then
+        iniset $CINDER_CONF DEFAULT glance_api_version 2
+    fi
+
     # Register SSL certificates if provided
     if is_ssl_enabled_service cinder; then
         ensure_certificates CINDER
