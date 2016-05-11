@@ -204,7 +204,7 @@ function configure_neutron_new {
     fi
 
     # Metadata
-    if is_service_enabled neutron-meta; then
+    if is_service_enabled neutron-metadata-agent; then
         cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $NEUTRON_META_CONF
 
         iniset $NEUTRON_META_CONF DEFAULT verbose True
@@ -290,7 +290,7 @@ function configure_neutron_nova_new {
 
     iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
 
-    if is_service_enabled neutron-meta; then
+    if is_service_enabled neutron-metadata-agent; then
         iniset $NOVA_CONF neutron service_metadata_proxy "True"
     fi
 
@@ -425,8 +425,8 @@ function start_neutron_new {
             create_neutron_initial_network
         fi
     fi
-    if is_service_enabled neutron-meta; then
-        run_process neutron-meta "$NEUTRON_BIN_DIR/$NEUTRON_META_BINARY $NEUTRON_CONFIG_ARG"
+    if is_service_enabled neutron-metadata-agent; then
+        run_process neutron-metadata-agent "$NEUTRON_BIN_DIR/$NEUTRON_META_BINARY $NEUTRON_CONFIG_ARG"
     fi
 }
 
@@ -442,9 +442,9 @@ function stop_neutron_new {
         [ ! -z "$pid" ] && sudo kill -9 $pid
     fi
 
-    if is_service_enabled neutron-meta; then
+    if is_service_enabled neutron-metadata-agent; then
         sudo pkill -9 -f neutron-ns-metadata-proxy || :
-        stop_process neutron-meta
+        stop_process neutron-metadata-agent
     fi
 }
 
@@ -470,7 +470,7 @@ function _set_config_files {
         NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_L3_CONF"
     fi
 
-    if is_service_enabled neutron-meta; then
+    if is_service_enabled neutron-metadata-agent; then
         NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_META_CONF"
     fi
 
