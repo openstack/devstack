@@ -35,8 +35,8 @@ XXXX_DIR=$DEST/XXXX
 XXX_CONF_DIR=/etc/XXXX
 
 
-# Entry Points
-# ------------
+# Functions
+# ---------
 
 # Test if any XXXX services are enabled
 # is_XXXX_enabled
@@ -59,6 +59,11 @@ function configure_XXXX {
     # sudo python setup.py deploy
     # iniset $XXXX_CONF ...
     # This function intentionally left blank
+    :
+}
+
+# create_XXXX_accounts() - Create required service accounts
+function create_XXXX_accounts {
     :
 }
 
