@@ -358,7 +358,7 @@ function _neutron_configure_router_v6 {
             local ipv6_cidr_len=${IPV6_PUBLIC_RANGE#*/}
 
             # Configure interface for public bridge
-            sudo ip -6 addr add $ipv6_ext_gw_ip/$ipv6_cidr_len dev $ext_gw_interface
+            sudo ip -6 addr replace $ipv6_ext_gw_ip/$ipv6_cidr_len dev $ext_gw_interface
             sudo ip -6 route replace $FIXED_RANGE_V6 via $IPV6_ROUTER_GW_IP dev $ext_gw_interface
         fi
         _neutron_set_router_id
