@@ -625,11 +625,6 @@ function _move_neutron_addresses_route {
 
         IP_BRD=$(ip -f $af a s dev $from_intf scope global primary | grep inet | awk '{ print $2, $3, $4; exit }')
 
-        if [[ "$af" == "inet" ]]; then
-            IP=$(echo $IP_BRD | awk '{ print $1; exit }' | grep -o -E '(.*)/' | cut -d "/" -f1)
-            ARP_CMD="arping -A -c 3 -w 4.5 -I $to_intf $IP "
-        fi
-
         if [ "$DEFAULT_ROUTE_GW" != "" ]; then
             ADD_DEFAULT_ROUTE="sudo ip -f $af r replace default via $DEFAULT_ROUTE_GW dev $to_intf"
         fi
@@ -646,6 +641,10 @@ function _move_neutron_addresses_route {
             IP_DEL="sudo ip addr del $IP_BRD dev $from_intf"
             IP_ADD="sudo ip addr add $IP_BRD dev $to_intf"
             IP_UP="sudo ip link set $to_intf up"
+            if [[ "$af" == "inet" ]]; then
+                IP=$(echo $IP_BRD | awk '{ print $1; exit }' | grep -o -E '(.*)/' | cut -d "/" -f1)
+                ARP_CMD="arping -A -c 3 -w 4.5 -I $to_intf $IP "
+            fi
         fi
 
         # The add/del OVS port calls have to happen either before or
