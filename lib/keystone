@@ -376,7 +376,7 @@ function create_keystone_accounts {
 
     # Create service project/role
     get_or_create_domain "$SERVICE_DOMAIN_NAME"
-    get_or_create_project "$SERVICE_PROJECT_NAME" default
+    get_or_create_project "$SERVICE_PROJECT_NAME" "$SERVICE_DOMAIN_NAME"
 
     # Service role, so service users do not have to be admins
     get_or_create_role service
