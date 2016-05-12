@@ -126,6 +126,8 @@ function configure_neutron_new {
     iniset $NEUTRON_CONF oslo_concurrency lock_path $NEUTRON_STATE_PATH/lock
     iniset $NEUTRON_CONF DEFAULT use_syslog $SYSLOG
 
+    iniset_rpc_backend neutron $NEUTRON_CONF
+
     # Neutron API server & Neutron plugin
     if is_service_enabled neutron-api; then
         local policy_file=$NEUTRON_CONF_DIR/policy.json
