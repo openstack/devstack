@@ -428,6 +428,7 @@ function configure_swift {
     sed -i "/^pipeline/ { s/proxy-server/${SWIFT_EXTRAS_MIDDLEWARE_LAST} proxy-server/ ; }" ${SWIFT_CONFIG_PROXY_SERVER}
 
     iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server account_autocreate true
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} app:proxy-server allow_account_management true
 
     # Configure Crossdomain
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:crossdomain use "egg:swift#crossdomain"
