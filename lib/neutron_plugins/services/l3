@@ -360,3 +360,10 @@ function _neutron_configure_router_v6 {
         _neutron_set_router_id
     fi
 }
+
+function is_provider_network {
+    if [ "$Q_USE_PROVIDER_NETWORKING" == "True" ] && [ "$Q_L3_ENABLED" == "False" ]; then
+        return 0
+    fi
+    return 1
+}
