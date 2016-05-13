@@ -88,7 +88,6 @@ serving as a hypervisor for guest instances.
         FIXED_RANGE="10.0.0.0/24"
         Q_FLOATING_ALLOCATION_POOL=start=172.18.161.250,end=172.18.161.254
         PUBLIC_NETWORK_GATEWAY="172.18.161.1"
-        Q_L3_ENABLED=True
         PUBLIC_INTERFACE=eth0
 
         # Open vSwitch provider networking configuration
@@ -387,7 +386,6 @@ controller node.
         OVS_PHYSICAL_BRIDGE=br-ex
 
         Q_USE_PROVIDER_NETWORKING=True
-        Q_L3_ENABLED=False
 
         # Do not use Nova-Network
         disable_service n-net
@@ -434,13 +432,12 @@ compute node 1.
         OVS_PHYSICAL_BRIDGE=br-ex
         PUBLIC_INTERFACE=eth1
         Q_USE_PROVIDER_NETWORKING=True
-        Q_L3_ENABLED=False
 
 Compute node 2's configuration will be exactly the same, except
 ``HOST_IP`` will be ``10.0.0.4``
 
 When DevStack is configured to use provider networking (via
-``Q_USE_PROVIDER_NETWORKING`` is True and ``Q_L3_ENABLED`` is False) -
+``Q_USE_PROVIDER_NETWORKING`` is True) -
 DevStack will automatically add the network interface defined in
 ``PUBLIC_INTERFACE`` to the ``OVS_PHYSICAL_BRIDGE``
 
@@ -543,7 +540,6 @@ setup, with small modifications for the interface mappings.
     FIXED_RANGE="10.0.0.0/24"
     Q_FLOATING_ALLOCATION_POOL=start=172.18.161.250,end=172.18.161.254
     PUBLIC_NETWORK_GATEWAY="172.18.161.1"
-    Q_L3_ENABLED=True
     PUBLIC_INTERFACE=eth0
 
     Q_USE_PROVIDERNET_FOR_PUBLIC=True

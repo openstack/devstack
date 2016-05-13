@@ -23,11 +23,9 @@ Q_USE_PUBLIC_VETH=${Q_USE_PUBLIC_VETH:-False}
 Q_PUBLIC_VETH_EX=${Q_PUBLIC_VETH_EX:-veth-pub-ex}
 Q_PUBLIC_VETH_INT=${Q_PUBLIC_VETH_INT:-veth-pub-int}
 
-# The next two variables are configured by plugin
+# The next variable is configured by plugin
 # e.g.  _configure_neutron_l3_agent or lib/neutron_plugins/*
 #
-# The plugin supports L3.
-Q_L3_ENABLED=${Q_L3_ENABLED:-True}
 # L3 routers exist per tenant
 Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-True}
 
@@ -90,7 +88,6 @@ function _determine_config_l3 {
 }
 
 function _configure_neutron_l3_agent {
-    Q_L3_ENABLED=True
 
     cp $NEUTRON_DIR/etc/l3_agent.ini.sample $Q_L3_CONF_FILE
 
@@ -180,7 +177,7 @@ function create_neutron_initial_network {
 
     AUTO_ALLOCATE_EXT=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" ext-list | grep 'auto-allocated-topology' | get_field 1)
     SUBNETPOOL_EXT=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" ext-list | grep 'subnet_allocation' | get_field 1)
-    if [[ "$Q_L3_ENABLED" == "True" ]]; then
+    if is_service_enabled q-l3; then
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
             # create a tenant-owned router.
@@ -362,7 +359,7 @@ function _neutron_configure_router_v6 {
 }
 
 function is_provider_network {
-    if [ "$Q_USE_PROVIDER_NETWORKING" == "True" ] && [ "$Q_L3_ENABLED" == "False" ]; then
+    if [ "$Q_USE_PROVIDER_NETWORKING" == "True" ]; then
         return 0
     fi
     return 1
