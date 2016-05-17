@@ -330,14 +330,14 @@ function configure_tempest {
         tempest_compute_max_microversion=None
     fi
     if [ "$tempest_compute_min_microversion" == "None" ]; then
-        inicomment $TEMPEST_CONFIG compute-feature-enabled min_microversion
+        inicomment $TEMPEST_CONFIG compute min_microversion
     else
-        iniset $TEMPEST_CONFIG compute-feature-enabled min_microversion $tempest_compute_min_microversion
+        iniset $TEMPEST_CONFIG compute min_microversion $tempest_compute_min_microversion
     fi
     if [ "$tempest_compute_max_microversion" == "None" ]; then
-        inicomment $TEMPEST_CONFIG compute-feature-enabled max_microversion
+        inicomment $TEMPEST_CONFIG compute max_microversion
     else
-        iniset $TEMPEST_CONFIG compute-feature-enabled max_microversion $tempest_compute_max_microversion
+        iniset $TEMPEST_CONFIG compute max_microversion $tempest_compute_max_microversion
     fi
 
     iniset $TEMPEST_CONFIG compute-feature-enabled resize True
@@ -373,7 +373,7 @@ function configure_tempest {
 
     # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
-    iniset $TEMPEST_CONFIG network tenant_networks_reachable false
+    iniset $TEMPEST_CONFIG network project_networks_reachable false
     iniset $TEMPEST_CONFIG network public_network_id "$public_network_id"
     iniset $TEMPEST_CONFIG network public_router_id "$public_router_id"
     iniset $TEMPEST_CONFIG network default_network "$FIXED_RANGE"
