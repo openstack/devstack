@@ -66,7 +66,6 @@ source $TOP_DIR/lib/nova
 source $TOP_DIR/lib/placement
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
-source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
@@ -98,10 +97,6 @@ set -o xtrace
 run_phase unstack
 
 # Call service stop
-
-if is_service_enabled heat; then
-    stop_heat
-fi
 
 if is_service_enabled nova; then
     stop_nova
