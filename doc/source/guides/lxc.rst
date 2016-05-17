@@ -88,7 +88,7 @@ You can login using the username ``ubuntu`` and password ``ubuntu``.
 
 You can also ssh into your container. On your host, run
 ``sudo lxc-info -n devstack`` to get the IP address (e.g. 
-``ssh ubuntu@$(sudo lxc-info -n p2 | awk '/IP/ { print $2 }')``).
+``ssh ubuntu@$(sudo lxc-info -n devstack | awk '/IP/ { print $2 }')``).
 
 Run Devstack
 -------------
