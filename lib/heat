@@ -241,7 +241,7 @@ function init_heat {
     # (re)create heat database
     recreate_database heat
 
-    $HEAT_BIN_DIR/heat-manage db_sync
+    $HEAT_BIN_DIR/heat-manage --config-file $HEAT_CONF db_sync
     create_heat_cache_dir
 }
 

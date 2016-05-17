@@ -415,7 +415,7 @@ function init_cinder {
         recreate_database cinder
 
         # Migrate cinder database
-        $CINDER_BIN_DIR/cinder-manage db sync
+        $CINDER_BIN_DIR/cinder-manage --config-file $CINDER_CONF db sync
     fi
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
