@@ -451,11 +451,7 @@ function stop_neutron_new {
 # Compile the lost of enabled config files
 function _set_config_files {
 
-    #TODO(sc68cal) - see if we can clean up this and only
-    # pass in config files that make sense for certain agents
-    if is_service_enabled neutron-api; then
-        NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_CONF"
-    fi
+    NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_CONF"
 
     #TODO(sc68cal) OVS and LB agent uses settings in NEUTRON_PLUGIN_CONF (ml2_conf.ini) but others may not
     if is_service_enabled neutron-agent; then
