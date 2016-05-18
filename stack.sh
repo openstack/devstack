@@ -335,6 +335,13 @@ fi
 # to speed things up
 SKIP_EPEL_INSTALL=$(trueorfalse False SKIP_EPEL_INSTALL)
 
+# If we have /etc/nodepool/provider assume we're on a OpenStack CI
+# node, where EPEL is already pointing at our internal mirror and RDO
+# is pre-installed.
+if [[ -f /etc/nodepool/provider ]]; then
+    SKIP_EPEL_INSTALL=True
+fi
+
 if is_fedora && [[ $DISTRO == "rhel7" ]] && \
         [[ ${SKIP_EPEL_INSTALL} != True ]]; then
     _install_epel_and_rdo
