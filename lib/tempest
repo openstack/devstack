@@ -240,8 +240,7 @@ function configure_tempest {
 
     # the public network (for floating ip access) is only available
     # if the extension is enabled.
-    EXTERNAL_NETWORK_EXT=$(neutron ext-list | grep 'external-net' | get_field 1)
-    if [[ -n $EXTERNAL_NETWORK_EXT ]]; then
+    if is_networking_extension_supported 'external-net'; then
         public_network_id=$(neutron net-list | grep $PUBLIC_NETWORK_NAME | \
             awk '{print $2}')
     fi
