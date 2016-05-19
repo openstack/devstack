@@ -1250,7 +1250,6 @@ fi
 if is_service_enabled q-svc && [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]]; then
     echo_summary "Creating initial neutron network elements"
     create_neutron_initial_network
-    setup_neutron_debug
 fi
 
 if is_service_enabled nova; then
