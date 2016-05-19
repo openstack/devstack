@@ -298,6 +298,12 @@ function upload_image {
             container_format=bare
             unpack=zcat
             ;;
+        *.img.bz2)
+            image_name=$(basename "$image" ".img.bz2")
+            disk_format=qcow2
+            container_format=bare
+            unpack=bunzip2
+            ;;
         *.qcow2)
             image_name=$(basename "$image" ".qcow2")
             disk_format=qcow2
@@ -331,6 +337,8 @@ function upload_image {
     if [ "$container_format" = "bare" ]; then
         if [ "$unpack" = "zcat" ]; then
             openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(zcat --force "${image}")
+        elif [ "$unpack" = "bunzip2" ]; then
+            openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(bunzip2 -cdk "${image}")
         else
             openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < "${image}"
         fi
