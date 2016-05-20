@@ -380,6 +380,7 @@ function GetDistro {
         DISTRO="sle${os_RELEASE%.*}"
     elif [[ "$os_VENDOR" =~ (Red.*Hat) || \
         "$os_VENDOR" =~ (CentOS) || \
+        "$os_VENDOR" =~ (Scientific) || \
         "$os_VENDOR" =~ (OracleServer) || \
         "$os_VENDOR" =~ (Virtuozzo) ]]; then
         # Drop the . release as we assume it's compatible
