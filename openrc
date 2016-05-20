@@ -90,6 +90,13 @@ export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-2.0}
 #
 export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:5000/v${OS_IDENTITY_API_VERSION}
 
+# Currently, in order to use openstackclient with Identity API v3,
+# we need to set the domain which the user and project belong to.
+if [ "$OS_IDENTITY_API_VERSION" = "3" ]; then
+    export OS_USER_DOMAIN_ID=${OS_USER_DOMAIN_ID:-"default"}
+    export OS_PROJECT_DOMAIN_ID=${OS_PROJECT_DOMAIN_ID:-"default"}
+fi
+
 # Set OS_CACERT to a default CA certificate chain if it exists.
 if [[ ! -v OS_CACERT ]] ; then
     DEFAULT_OS_CACERT=$INT_CA_DIR/ca-chain.pem
