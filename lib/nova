@@ -589,14 +589,6 @@ function create_nova_conf {
 
     iniset $NOVA_CONF cinder os_region_name "$REGION_NAME"
 
-    if [[ "$NOVA_BACKEND" == "LVM" ]]; then
-        iniset $NOVA_CONF libvirt images_type "lvm"
-        iniset $NOVA_CONF libvirt images_volume_group $DEFAULT_VOLUME_GROUP_NAME
-        if isset LVM_VOLUME_CLEAR; then
-            iniset $NOVA_CONF libvirt volume_clear "$LVM_VOLUME_CLEAR"
-        fi
-    fi
-
     if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
         iniset $NOVA_CONF DEFAULT glance_protocol https
     fi

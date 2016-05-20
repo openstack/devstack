@@ -68,6 +68,12 @@ function configure_nova_hypervisor {
         iniset $NOVA_CONF vnc vncserver_proxyclient_address  $HOST_IP
         iniset $NOVA_CONF vnc vncserver_listen $HOST_IP
         iniset $NOVA_CONF vnc keymap
+    elif [[ "$NOVA_BACKEND" == "LVM" ]]; then
+        iniset $NOVA_CONF libvirt images_type "lvm"
+        iniset $NOVA_CONF libvirt images_volume_group $DEFAULT_VOLUME_GROUP_NAME
+        if isset LVM_VOLUME_CLEAR; then
+            iniset $NOVA_CONF libvirt volume_clear "$LVM_VOLUME_CLEAR"
+        fi
     fi
 }
 
