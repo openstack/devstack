@@ -427,6 +427,9 @@ can be specified as a comma separated list.
 
       LIBS_FROM_GIT=python-keystoneclient,oslo.config
 
+Setting the variable to ``ALL`` will activate the download for all
+libraries.
+
 Virtual Environments
 --------------------
 

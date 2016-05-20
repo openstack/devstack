@@ -192,7 +192,7 @@ function get_from_global_requirements {
 function use_library_from_git {
     local name=$1
     local enabled=1
-    [[ ,${LIBS_FROM_GIT}, =~ ,${name}, ]] && enabled=0
+    [[ ${LIBS_FROM_GIT} = 'ALL' ]] || [[ ,${LIBS_FROM_GIT}, =~ ,${name}, ]] && enabled=0
     return $enabled
 }
 

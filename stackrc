@@ -208,6 +208,9 @@ REQUIREMENTS_DIR=$DEST/requirements
 # ex: LIBS_FROM_GIT=python-keystoneclient,oslo.config
 #
 # Will install those 2 libraries from git, the rest from pypi.
+#
+# Setting the variable to 'ALL' will activate the download for all
+# libraries.
 
 
 ##############
