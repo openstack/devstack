@@ -27,7 +27,7 @@ components.  For older, stable versions, look for branches named
 stable/[release] in the DevStack repo.  For example, you can do the
 following to create a juno OpenStack cloud:
 
-    git checkout stable/juno
+    git checkout stable/mitaka
     ./stack.sh
 
 You can also pick specific OpenStack project releases by setting the appropriate
