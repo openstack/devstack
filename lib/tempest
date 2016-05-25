@@ -602,6 +602,8 @@ function install_tempest {
     PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/tempest
     if [[ $TEMPEST_PLUGINS != 0 ]] ; then
         tox -evenv-tempest -- pip install $TEMPEST_PLUGINS
+        echo "Checking installed Tempest plugins:"
+        tox -evenv-tempest -- tempest list-plugins
     fi
     popd
 }
