@@ -126,6 +126,8 @@ function configure_neutron_new {
     iniset $NEUTRON_CONF oslo_concurrency lock_path $NEUTRON_STATE_PATH/lock
     iniset $NEUTRON_CONF DEFAULT use_syslog $SYSLOG
 
+    iniset $NEUTRON_CONF DEFAULT debug True
+
     iniset_rpc_backend neutron $NEUTRON_CONF
 
     # Neutron API server & Neutron plugin
@@ -139,8 +141,6 @@ function configure_neutron_new {
 
         iniset $NEUTRON_CONF DEFAULT core_plugin ml2
 
-        iniset $NEUTRON_CONF DEFAULT verbose True
-        iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         iniset $NEUTRON_CONF DEFAULT policy_file $policy_file
         iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips True
 
@@ -171,6 +171,7 @@ function configure_neutron_new {
     # Neutron OVS or LB agent
     if is_service_enabled neutron-agent; then
         iniset $NEUTRON_PLUGIN_CONF agent tunnel_types vxlan
+        iniset $NEUTRON_PLUGIN_CONF DEFAULT debug True
 
         # Configure the neutron agent
         if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
@@ -186,7 +187,6 @@ function configure_neutron_new {
     if is_service_enabled neutron-dhcp; then
         cp $NEUTRON_DIR/etc/dhcp_agent.ini.sample $NEUTRON_DHCP_CONF
 
-        iniset $NEUTRON_DHCP_CONF DEFAULT verbose True
         iniset $NEUTRON_DHCP_CONF DEFAULT debug True
         iniset $NEUTRON_DHCP_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
         iniset $NEUTRON_DHCP_CONF DEFAULT interface_driver $NEUTRON_AGENT
@@ -199,7 +199,6 @@ function configure_neutron_new {
         iniset $NEUTRON_CONF DEFAULT service_plugins router
         iniset $NEUTRON_L3_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
         iniset $NEUTRON_L3_CONF DEFAULT debug True
-        iniset $NEUTRON_L3_CONF DEFAULT verbose True
         neutron_plugin_configure_l3_agent $NEUTRON_L3_CONF
     fi
 
@@ -207,8 +206,7 @@ function configure_neutron_new {
     if is_service_enabled neutron-metadata-agent; then
         cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $NEUTRON_META_CONF
 
-        iniset $NEUTRON_META_CONF DEFAULT verbose True
-        iniset $NEUTRON_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+        iniset $NEUTRON_META_CONF DEFAULT debug True
         iniset $NEUTRON_META_CONF DEFAULT nova_metadata_ip $SERVICE_HOST
         iniset $NEUTRON_META_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
 
