@@ -130,8 +130,6 @@ Q_USE_ROOTWRAP_DAEMON=$(trueorfalse True Q_USE_ROOTWRAP_DAEMON)
 Q_META_DATA_IP=${Q_META_DATA_IP:-$SERVICE_HOST}
 # Allow Overlapping IP among subnets
 Q_ALLOW_OVERLAPPING_IP=${Q_ALLOW_OVERLAPPING_IP:-True}
-# Use neutron-debug command
-Q_USE_DEBUG_COMMAND=${Q_USE_DEBUG_COMMAND:-False}
 # The name of the default q-l3 router
 Q_ROUTER_NAME=${Q_ROUTER_NAME:-router1}
 Q_NOTIFY_NOVA_PORT_STATUS_CHANGES=${Q_NOTIFY_NOVA_PORT_STATUS_CHANGES:-True}
@@ -360,8 +358,6 @@ function configure_mutnauq {
     if is_service_enabled ceilometer; then
         _configure_neutron_ceilometer_notifications
     fi
-
-    _configure_neutron_debug_command
 
     iniset $NEUTRON_CONF DEFAULT api_workers "$API_WORKERS"
 }
@@ -798,24 +794,6 @@ function _configure_neutron_common {
     _neutron_setup_rootwrap
 }
 
-function _configure_neutron_debug_command {
-    if [[ "$Q_USE_DEBUG_COMMAND" != "True" ]]; then
-        return
-    fi
-
-    cp $NEUTRON_DIR/etc/l3_agent.ini.sample $NEUTRON_TEST_CONFIG_FILE
-
-    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT debug False
-    iniset $NEUTRON_TEST_CONFIG_FILE AGENT root_helper "$Q_RR_COMMAND"
-    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
-        iniset $NEUTRON_TEST_CONFIG_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
-    fi
-
-    _neutron_setup_interface_driver $NEUTRON_TEST_CONFIG_FILE
-
-    neutron_plugin_configure_debug_command
-}
-
 function _configure_neutron_dhcp_agent {
 
     cp $NEUTRON_DIR/etc/dhcp_agent.ini.sample $Q_DHCP_CONF_FILE
@@ -1024,24 +1002,6 @@ function delete_probe {
     net_id=`_get_net_id $from_net`
     probe_id=`neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}'`
     neutron-debug --os-tenant-name admin --os-username admin probe-delete $probe_id
-}
-
-function setup_neutron_debug {
-    if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
-        public_net_id=`_get_net_id $PUBLIC_NETWORK_NAME`
-        if [[ -n $public_net_id ]]; then
-            neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $public_net_id
-        fi
-        private_net_id=`_get_net_id $PRIVATE_NETWORK_NAME`
-        if [[ -n $private_net_id ]]; then
-            neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-create --device-owner compute $private_net_id
-        fi
-    fi
-}
-
-function teardown_neutron_debug {
-    delete_probe $PUBLIC_NETWORK_NAME
-    delete_probe $PRIVATE_NETWORK_NAME
 }
 
 function _get_net_id {
