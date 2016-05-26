@@ -2371,7 +2371,7 @@ function time_start {
 function time_stop {
     local name
     local end_time
-    local elpased_time
+    local elapsed_time
     local total
     local start_time
 
