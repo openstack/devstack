@@ -1263,6 +1263,7 @@ if is_service_enabled nova; then
     echo_summary "Starting Nova"
     start_nova
     create_flavors
+    create_cell
 fi
 if is_service_enabled cinder; then
     echo_summary "Starting Cinder"
