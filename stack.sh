@@ -275,7 +275,7 @@ EOF
     is_package_installed yum-utils || install_package yum-utils
     sudo yum-config-manager --enable rhel-7-server-optional-rpms
 
-    RHEL_RDO_REPO_RPM=${RHEL7_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-kilo/rdo-release-kilo-1.noarch.rpm"}
+    RHEL_RDO_REPO_RPM=${RHEL7_RDO_REPO_RPM:-"https://repos.fedorapeople.org/repos/openstack/openstack-kilo/rdo-release-kilo-2.noarch.rpm"}
 
     if ! sudo yum repolist enabled 'openstack-*' | grep -q 'openstack-'; then
         echo "RDO repo not detected; installing"
