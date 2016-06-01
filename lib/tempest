@@ -600,6 +600,12 @@ function install_tempest {
     # running pip install -U on tempest requirements
     $TEMPEST_DIR/.tox/tempest/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
     PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/tempest
+    popd
+}
+
+# install_tempest_plugins() - Install any specified plugins into the tempest venv
+function install_tempest_plugins {
+    pushd $TEMPEST_DIR
     if [[ $TEMPEST_PLUGINS != 0 ]] ; then
         tox -evenv-tempest -- pip install $TEMPEST_PLUGINS
         echo "Checking installed Tempest plugins:"
