@@ -2,7 +2,7 @@ curl
 liberasurecode-devel
 memcached
 pyxattr
-rsync-daemon # dist:f22,f23
+rsync-daemon # dist:f22,f23,f24
 sqlite
 xfsprogs
 xinetd
