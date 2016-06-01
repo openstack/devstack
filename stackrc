@@ -285,6 +285,10 @@ TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 GITREPO["python-cinderclient"]=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
 GITBRANCH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-master}
 
+# os-brick client for local volume attachement
+GITREPO["python-brick-cinderclient-ext"]=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-brick-cinderclient-ext.git}
+GITBRANCH["python-brick-cinderclient-ext"]=${CINDERCLIENT_BRANCH:-master}
+
 # python glance client library
 GITREPO["python-glanceclient"]=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
 GITBRANCH["python-glanceclient"]=${GLANCECLIENT_BRANCH:-master}

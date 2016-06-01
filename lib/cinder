@@ -40,6 +40,7 @@ fi
 # set up default directories
 GITDIR["python-cinderclient"]=$DEST/python-cinderclient
 GITDIR["os-brick"]=$DEST/os-brick
+GITDIR["python-brick-cinderclient-ext"]=$DEST/python-brick-cinderclient-ext
 CINDER_DIR=$DEST/cinder
 
 # Cinder virtual environment
@@ -466,6 +467,11 @@ function install_cinder {
 
 # install_cinderclient() - Collect source and prepare
 function install_cinderclient {
+    if use_library_from_git "python-brick-cinderclient-ext"; then
+        git_clone_by_name "python-brick-cinderclient-ext"
+        setup_dev_lib "python-brick-cinderclient-ext"
+    fi
+
     if use_library_from_git "python-cinderclient"; then
         git_clone_by_name "python-cinderclient"
         setup_dev_lib "python-cinderclient"
