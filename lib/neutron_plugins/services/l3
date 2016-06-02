@@ -91,7 +91,6 @@ function _configure_neutron_l3_agent {
 
     cp $NEUTRON_DIR/etc/l3_agent.ini.sample $Q_L3_CONF_FILE
 
-    iniset $Q_L3_CONF_FILE DEFAULT verbose True
     iniset $Q_L3_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_L3_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
