@@ -116,7 +116,7 @@ get_versions
 
 # Eradicate any and all system packages
 
-# Python in f23 and f22 depends on the python-pip package so removing it
+# Python in fedora depends on the python-pip package so removing it
 # results in a nonfunctional system. pip on fedora installs to /usr so pip
 # can safely override the system pip for all versions of fedora
 if ! is_fedora ; then
