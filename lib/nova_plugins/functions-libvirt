@@ -121,18 +121,9 @@ EOF
         fi
     fi
 
-    # Update the libvirt cpu map with a gate64 cpu model. This enables nova
-    # live migration for 64bit guest OSes on heterogenous cloud "hardware".
-    if [[ -f /usr/share/libvirt/cpu_map.xml ]] ; then
-        sudo $TOP_DIR/tools/cpu_map_update.py /usr/share/libvirt/cpu_map.xml
-    fi
-
-    # libvirt detects various settings on startup, as we potentially changed
-    # the system configuration (modules, filesystems), we need to restart
-    # libvirt to detect those changes. Use a stop start as otherwise the new
-    # cpu_map is not loaded properly on some systems (Ubuntu).
-    stop_service $LIBVIRT_DAEMON
-    start_service $LIBVIRT_DAEMON
+    # Service needs to be started on redhat/fedora -- do a restart for
+    # sanity after fiddling the config.
+    restart_service $LIBVIRT_DAEMON
 }
 
 
