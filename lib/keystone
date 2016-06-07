@@ -236,7 +236,7 @@ function configure_keystone {
     # Enable caching
     iniset $KEYSTONE_CONF cache enabled "True"
     iniset $KEYSTONE_CONF cache backend "oslo_cache.memcache_pool"
-    iniset $KEYSTONE_CONF cache memcache_servers $SERVICE_HOST:11211
+    iniset $KEYSTONE_CONF cache memcache_servers localhost:11211
 
     # Do not cache the catalog backend due to https://bugs.launchpad.net/keystone/+bug/1537617
     iniset $KEYSTONE_CONF catalog caching "False"
