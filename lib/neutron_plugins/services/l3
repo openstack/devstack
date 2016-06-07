@@ -174,9 +174,7 @@ function create_neutron_initial_network {
         fi
     fi
 
-    AUTO_ALLOCATE_EXT=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" ext-list | grep 'auto-allocated-topology' | get_field 1)
-    SUBNETPOOL_EXT=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" ext-list | grep 'subnet_allocation' | get_field 1)
-    if is_service_enabled q-l3; then
+    if is_networking_extension_supported "router" && is_networking_extension_supported "external-net"; then
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
             # create a tenant-owned router.
@@ -188,10 +186,8 @@ function create_neutron_initial_network {
             die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $Q_ROUTER_NAME"
         fi
 
-        # if the extension is available, then mark the external
-        # network as default, and provision default subnetpools
         EXTERNAL_NETWORK_FLAGS="--router:external"
-        if [[ -n $AUTO_ALLOCATE_EXT && -n $SUBNETPOOL_EXT ]]; then
+        if is_networking_extension_supported "auto-allocated-topology" && is_networking_extension_supported "subnet_allocation"; then
             EXTERNAL_NETWORK_FLAGS="$EXTERNAL_NETWORK_FLAGS --is-default"
             if [[ "$IP_VERSION" =~ 4.* ]]; then
                 SUBNETPOOL_V4_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
@@ -362,4 +358,11 @@ function is_provider_network {
         return 0
     fi
     return 1
+}
+
+function is_networking_extension_supported {
+    local extension=$1
+    # TODO(sc68cal) cache this instead of calling every time
+    EXT_LIST=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" ext-list -c alias -f value)
+    [[ $EXT_LIST =~ $extension ]] && return 0
 }
