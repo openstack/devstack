@@ -274,6 +274,170 @@ function iniget_sections {
     $xtrace
 }
 
+# Set a localrc var
+function localrc_set {
+    local file=$1
+    local group="local"
+    local conf="localrc"
+    local section=""
+    local option=$2
+    local value=$3
+    localconf_set "$file" "$group" "$conf" "$section" "$option" "$value"
+}
+
+# Check if local.conf has section.
+function localconf_has_section {
+    local file=$1
+    local group=$2
+    local conf=$3
+    local section=$4
+    local sep
+    sep=$(echo -ne "\x01")
+    local line
+    line=$(sed -ne "\\${sep}^\[\[${group}|${conf}\]\]${sep},\\${sep}\[\[.*\]\]${sep}{
+        /\[${section}\]/p
+    }" "$file")
+    [ -n "$line" ]
+}
+
+# Check if local.conf has option.
+function localconf_has_option {
+    local file=$1
+    local group=$2
+    local conf=$3
+    local section=$4
+    local option=$5
+    local sep
+    sep=$(echo -ne "\x01")
+    local line
+    if [[ -z "$section" ]]; then
+        line=$(sed -ne "\\${sep}^\[\[${group}|${conf}\]\]${sep},\\${sep}\[\[.*\]\]${sep}{
+            /${option}[ \t]*=.*$/p
+        }" "$file")
+    else
+        line=$(sed -ne "\\${sep}^\[\[${group}|${conf}\]\]${sep},\\${sep}\[\[.*\]\]${sep}{
+            /\[${section}\]/,/\[\[.*\]\]\|\[.*\]/{
+                /${option}[ \t]*=.*$/p}
+        }" "$file")
+    fi
+    [ -n "$line" ]
+}
+
+# Update option in local.conf.
+function localconf_update_option {
+    local sudo=$1
+    local file=$2
+    local group=$3
+    local conf=$4
+    local section=$5
+    local option=$6
+    local value=$7
+    local sep
+    sep=$(echo -ne "\x01")
+    if [[ -z "$section" ]]; then
+        $sudo sed -i -e "\\${sep}^\[\[${group}|${conf}\]\]${sep},\\${sep}\[\[.*\]\]${sep}{
+            s${sep}^\(${option}[ \t]*=[ \t]*\).*\$${sep}\1${value}${sep}
+        }" "$file"
+    else
+        $sudo sed -i -e "\\${sep}^\[\[${group}|${conf}\]\]${sep},\\${sep}\[\[.*\]\]${sep}{
+            /\[${section}\]/,/\[\[.*\]\]\|\[.*\]/s${sep}^\(${option}[ \t]*=[ \t]*\).*\$${sep}\1${value}${sep}
+        }" "$file"
+    fi
+}
+
+# Add option in local.conf.
+function localconf_add_option {
+    local sudo=$1
+    local file=$2
+    local group=$3
+    local conf=$4
+    local section=$5
+    local option=$6
+    local value=$7
+    local sep
+    sep=$(echo -ne "\x01")
+    if [[ -z "$section" ]]; then
+        $sudo sed -i -e "\\${sep}^\[\[${group}|${conf}\]\]${sep} a $option=$value" "$file"
+    else
+        $sudo sed -i -e "\\${sep}^\[\[${group}|${conf}\]\]${sep},\\${sep}\[\[.*\]\]${sep}{
+            /\[${section}\]/ a $option=$value
+        }" "$file"
+    fi
+}
+
+# Add section and option in local.conf.
+function localconf_add_section_and_option {
+    local sudo=$1
+    local file=$2
+    local group=$3
+    local conf=$4
+    local section=$5
+    local option=$6
+    local value=$7
+    local sep
+    sep=$(echo -ne "\x01")
+    $sudo sed -i -e "\\${sep}^\[\[${group}|${conf}\]\]${sep} {
+        a [$section]
+        a $option=$value
+    }" "$file"
+}
+
+# Set an option in a local.conf file.
+# localconf_set [-sudo] config-file group conf-name section option value
+#  - if the file does not exist, it is created
+function localconf_set {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    local sep
+    sep=$(echo -ne "\x01")
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
+    local file=$1
+    local group=$2
+    local conf=$3
+    local section=$4
+    local option=$5
+    local value=$6
+
+    if [[ -z $group || -z $conf || -z $option || -z $value ]]; then
+        $xtrace
+        return
+    fi
+
+    if ! grep -q "^\[\[${group}|${conf}\]\]" "$file" 2>/dev/null; then
+        # Add meta section at the end if it does not exist
+        echo -e "\n[[${group}|${conf}]]" | $sudo tee --append "$file" > /dev/null
+        # Add section at the end
+        if [[ -n "$section" ]]; then
+            echo -e "[$section]" | $sudo tee --append "$file" > /dev/null
+        fi
+        # Add option at the end
+        echo -e "$option=$value" | $sudo tee --append "$file" > /dev/null
+    elif [[ -z "$section" ]]; then
+        if ! localconf_has_option "$file" "$group" "$conf" "$section" "$option"; then
+            # Add option
+            localconf_add_option "$sudo" "$file" "$group" "$conf" "$section" "$option" "$value"
+        else
+            # Replace it
+            localconf_update_option "$sudo" "$file" "$group" "$conf" "$section" "$option" "$value"
+        fi
+    elif ! localconf_has_section "$file" "$group" "$conf" "$section"; then
+        # Add section and option in specified meta section
+        localconf_add_section_and_option "$sudo" "$file" "$group" "$conf" "$section" "$option" "$value"
+    elif ! localconf_has_option "$file" "$group" "$conf" "$section" "$option"; then
+        # Add option
+        localconf_add_option "$sudo" "$file" "$group" "$conf" "$section" "$option" "$value"
+    else
+        # Replace it
+        localconf_update_option "$sudo" "$file" "$group" "$conf" "$section" "$option" "$value"
+    fi
+    $xtrace
+}
+
 # Restore xtrace
 $INC_CONF_TRACE
 
