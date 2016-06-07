@@ -150,7 +150,9 @@ function create_neutron_initial_network {
             die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $project_id"
         fi
 
-        if [[ "$IP_VERSION" =~ .*6 ]] && [[ -n "$IPV6_PROVIDER_FIXED_RANGE" ]] && [[ -n "$IPV6_PROVIDER_NETWORK_GATEWAY" ]]; then
+        if [[ "$IP_VERSION" =~ .*6 ]]; then
+            die_if_not_set $LINENO IPV6_PROVIDER_FIXED_RANGE "IPV6_PROVIDER_FIXED_RANGE has not been set, but Q_USE_PROVIDERNET_FOR_PUBLIC is true and IP_VERSION includes 6"
+            die_if_not_set $LINENO IPV6_PROVIDER_NETWORK_GATEWAY "IPV6_PROVIDER_NETWORK_GATEWAY has not been set, but Q_USE_PROVIDERNET_FOR_PUBLIC is true and IP_VERSION includes 6"
             SUBNET_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create --tenant_id $project_id --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
             die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
         fi
