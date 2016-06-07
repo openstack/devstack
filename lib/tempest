@@ -292,6 +292,7 @@ function configure_tempest {
     fi
     if [ "$VIRT_DRIVER" = "xenserver" ]; then
         iniset $TEMPEST_CONFIG image disk_formats "ami,ari,aki,vhd,raw,iso"
+        iniset $TEMPEST_CONFIG scenario img_disk_format vhd
     fi
 
     # Image Features
