@@ -103,6 +103,7 @@ neutron-lbaas                          `git://git.openstack.org/openstack/neutro
 neutron-lbaas-dashboard                `git://git.openstack.org/openstack/neutron-lbaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard>`__
 neutron-vpnaas                         `git://git.openstack.org/openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas>`__
 nova-docker                            `git://git.openstack.org/openstack/nova-docker <https://git.openstack.org/cgit/openstack/nova-docker>`__
+nova-lxd                               `git://git.openstack.org/openstack/nova-lxd <https://git.openstack.org/cgit/openstack/nova-lxd>`__
 nova-powervm                           `git://git.openstack.org/openstack/nova-powervm <https://git.openstack.org/cgit/openstack/nova-powervm>`__
 octavia                                `git://git.openstack.org/openstack/octavia <https://git.openstack.org/cgit/openstack/octavia>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
