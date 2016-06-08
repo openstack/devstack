@@ -179,9 +179,9 @@ fi
 # GRE tunnels are only supported by the openvswitch.
 ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-True}
 
-# If using GRE tunnels for tenant networks, specify the range of
-# tunnel IDs from which tenant networks are allocated. Can be
-# overridden in ``localrc`` in necessary.
+# If using GRE, VXLAN or GENEVE tunnels for tenant networks,
+# specify the range of IDs from which tenant networks are
+# allocated. Can be overridden in ``localrc`` if necessary.
 TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGES:-1:1000}
 
 # To use VLANs for tenant networks, set to True in localrc. VLANs

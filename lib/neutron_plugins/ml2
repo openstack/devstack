@@ -25,14 +25,14 @@ fi
 
 # List of MechanismDrivers to load
 Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_ML2_PLUGIN_MECHANISM_DRIVERS:-openvswitch,linuxbridge}
-# List of Type Drivers to load
-Q_ML2_PLUGIN_TYPE_DRIVERS=${Q_ML2_PLUGIN_TYPE_DRIVERS:-local,flat,vlan,gre,vxlan}
 # Default GRE TypeDriver options
 Q_ML2_PLUGIN_GRE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GRE_TYPE_OPTIONS:-tunnel_id_ranges=$TENANT_TUNNEL_RANGES}
 # Default VXLAN TypeDriver options
-Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS:-vni_ranges=1001:2000}
+Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS:-vni_ranges=$TENANT_TUNNEL_RANGES}
 # Default VLAN TypeDriver options
 Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS:-}
+# Default GENEVE TypeDriver options
+Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS:-vni_ranges=$TENANT_TUNNEL_RANGES}
 # List of extension drivers to load, use '-' instead of ':-' to allow people to
 # explicitly override this to blank
 Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS-port_security}
@@ -111,7 +111,9 @@ function neutron_plugin_configure_service {
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 mechanism_drivers=$Q_ML2_PLUGIN_MECHANISM_DRIVERS
 
-    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 type_drivers=$Q_ML2_PLUGIN_TYPE_DRIVERS
+    if [[ -n "$Q_ML2_PLUGIN_TYPE_DRIVERS" ]]; then
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 type_drivers=$Q_ML2_PLUGIN_TYPE_DRIVERS
+    fi
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 extension_drivers=$Q_ML2_PLUGIN_EXT_DRIVERS
 
@@ -124,6 +126,8 @@ function neutron_plugin_configure_service {
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_flat $Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vlan $Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_geneve $Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS
 
     if [[ "$Q_DVR_MODE" != "legacy" ]]; then
         populate_ml2_config /$Q_PLUGIN_CONF_FILE agent l2_population=True
