@@ -104,8 +104,9 @@ function restart_rpc_backend {
 
 # builds transport url string
 function get_transport_url {
+    local virtual_host=$1
     if is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
-        echo "rabbit://$RABBIT_USERID:$RABBIT_PASSWORD@$RABBIT_HOST:5672/"
+        echo "rabbit://$RABBIT_USERID:$RABBIT_PASSWORD@$RABBIT_HOST:5672/$virtual_host"
     fi
 }
 
@@ -114,11 +115,9 @@ function iniset_rpc_backend {
     local package=$1
     local file=$2
     local section=${3:-DEFAULT}
+    local virtual_host=$4
     if is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
-        iniset $file $section rpc_backend "rabbit"
-        iniset $file oslo_messaging_rabbit rabbit_hosts $RABBIT_HOST
-        iniset $file oslo_messaging_rabbit rabbit_password $RABBIT_PASSWORD
-        iniset $file oslo_messaging_rabbit rabbit_userid $RABBIT_USERID
+        iniset $file $section transport_url $(get_transport_url "$virtual_host")
         if [ -n "$RABBIT_HEARTBEAT_TIMEOUT_THRESHOLD" ]; then
             iniset $file oslo_messaging_rabbit heartbeat_timeout_threshold $RABBIT_HEARTBEAT_TIMEOUT_THRESHOLD
         fi
