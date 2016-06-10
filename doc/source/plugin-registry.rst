@@ -64,6 +64,7 @@ group-based-policy                     `git://git.openstack.org/openstack/group-
 higgins                                `git://git.openstack.org/openstack/higgins <https://git.openstack.org/cgit/openstack/higgins>`__
 ironic                                 `git://git.openstack.org/openstack/ironic <https://git.openstack.org/cgit/openstack/ironic>`__
 ironic-inspector                       `git://git.openstack.org/openstack/ironic-inspector <https://git.openstack.org/cgit/openstack/ironic-inspector>`__
+ironic-staging-drivers                 `git://git.openstack.org/openstack/ironic-staging-drivers <https://git.openstack.org/cgit/openstack/ironic-staging-drivers>`__
 kingbird                               `git://git.openstack.org/openstack/kingbird <https://git.openstack.org/cgit/openstack/kingbird>`__
 kuryr                                  `git://git.openstack.org/openstack/kuryr <https://git.openstack.org/cgit/openstack/kuryr>`__
 magnum                                 `git://git.openstack.org/openstack/magnum <https://git.openstack.org/cgit/openstack/magnum>`__
