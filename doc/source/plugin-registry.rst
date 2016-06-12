@@ -84,6 +84,7 @@ networking-calico                      `git://git.openstack.org/openstack/networ
 networking-cisco                       `git://git.openstack.org/openstack/networking-cisco <https://git.openstack.org/cgit/openstack/networking-cisco>`__
 networking-fortinet                    `git://git.openstack.org/openstack/networking-fortinet <https://git.openstack.org/cgit/openstack/networking-fortinet>`__
 networking-generic-switch              `git://git.openstack.org/openstack/networking-generic-switch <https://git.openstack.org/cgit/openstack/networking-generic-switch>`__
+networking-huawei                      `git://git.openstack.org/openstack/networking-huawei <https://git.openstack.org/cgit/openstack/networking-huawei>`__
 networking-infoblox                    `git://git.openstack.org/openstack/networking-infoblox <https://git.openstack.org/cgit/openstack/networking-infoblox>`__
 networking-l2gw                        `git://git.openstack.org/openstack/networking-l2gw <https://git.openstack.org/cgit/openstack/networking-l2gw>`__
 networking-midonet                     `git://git.openstack.org/openstack/networking-midonet <https://git.openstack.org/cgit/openstack/networking-midonet>`__
