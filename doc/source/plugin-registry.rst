@@ -71,6 +71,7 @@ magnum                                 `git://git.openstack.org/openstack/magnum
 magnum-ui                              `git://git.openstack.org/openstack/magnum-ui <https://git.openstack.org/cgit/openstack/magnum-ui>`__
 manila                                 `git://git.openstack.org/openstack/manila <https://git.openstack.org/cgit/openstack/manila>`__
 mistral                                `git://git.openstack.org/openstack/mistral <https://git.openstack.org/cgit/openstack/mistral>`__
+monasca-analytics                      `git://git.openstack.org/openstack/monasca-analytics <https://git.openstack.org/cgit/openstack/monasca-analytics>`__
 monasca-api                            `git://git.openstack.org/openstack/monasca-api <https://git.openstack.org/cgit/openstack/monasca-api>`__
 monasca-ceilometer                     `git://git.openstack.org/openstack/monasca-ceilometer <https://git.openstack.org/cgit/openstack/monasca-ceilometer>`__
 monasca-log-api                        `git://git.openstack.org/openstack/monasca-log-api <https://git.openstack.org/cgit/openstack/monasca-log-api>`__
