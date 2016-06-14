@@ -296,6 +296,9 @@ function configure_tempest {
 
     # Image Features
     iniset $TEMPEST_CONFIG image-feature-enabled deactivate_image True
+    if [ "$GLANCE_V1_ENABLED" != "True" ]; then
+        iniset $TEMPEST_CONFIG image-feature-enabled api_v1 False
+    fi
 
     # Compute
     iniset $TEMPEST_CONFIG compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
