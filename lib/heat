@@ -156,7 +156,7 @@ function configure_heat {
     # If HEAT_DEFERRED_AUTH is unset or explicitly set to trusts, configure
     # the section for the client plugin associated with the trustee
     if [ -z "$HEAT_DEFERRED_AUTH" -o "trusts" == "$HEAT_DEFERRED_AUTH" ]; then
-        iniset $HEAT_CONF trustee auth_plugin password
+        iniset $HEAT_CONF trustee auth_type password
         iniset $HEAT_CONF trustee auth_url $KEYSTONE_AUTH_URI
         iniset $HEAT_CONF trustee username $HEAT_TRUSTEE_USER
         iniset $HEAT_CONF trustee password $HEAT_TRUSTEE_PASSWORD
