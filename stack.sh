@@ -1378,6 +1378,12 @@ if is_service_enabled cinder; then
     fi
 fi
 
+# Run test-config
+# ---------------
+
+# Phase: test-config
+run_phase stack test-config
+
 
 # Fin
 # ===
