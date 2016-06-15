@@ -240,6 +240,13 @@ function configure_neutron_new {
         iniset $NEUTRON_CONF DEFAULT ssl_key_file "$NEUTRON_SSL_KEY"
     fi
 
+    # Metering
+    if is_service_enabled neutron-metering; then
+        source $TOP_DIR/neutron_plugins/services/metering
+        neutron_agent_metering_configure_common
+        neutron_agent_metering_configure_agent
+    fi
+
 }
 
 # configure_neutron_rootwrap() - configure Neutron's rootwrap
@@ -425,6 +432,10 @@ function start_neutron_new {
     fi
     if is_service_enabled neutron-metadata-agent; then
         run_process neutron-metadata-agent "$NEUTRON_BIN_DIR/$NEUTRON_META_BINARY $NEUTRON_CONFIG_ARG"
+    fi
+
+    if is_service_enabled neutron-metering; then
+        run_process neutron-metering "$AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
     fi
 }
 
