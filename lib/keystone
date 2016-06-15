@@ -318,10 +318,10 @@ function configure_keystone {
         fi
 
         iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi wsgi-file "$KEYSTONE_BIN_DIR/keystone-wsgi-public"
-        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi threads $(nproc)
+        iniset "$KEYSTONE_PUBLIC_UWSGI_FILE" uwsgi processes $(nproc)
 
         iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi wsgi-file "$KEYSTONE_BIN_DIR/keystone-wsgi-admin"
-        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi threads $API_WORKERS
+        iniset "$KEYSTONE_ADMIN_UWSGI_FILE" uwsgi processes $API_WORKERS
 
         # Common settings
         for file in "$KEYSTONE_PUBLIC_UWSGI_FILE" "$KEYSTONE_ADMIN_UWSGI_FILE"; do
