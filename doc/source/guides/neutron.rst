@@ -361,6 +361,8 @@ the compute service ``nova-compute``.
 DevStack Configuration
 ----------------------
 
+.. _ovs-provider-network-controller:
+
 The following is a snippet of the DevStack configuration on the
 controller node.
 
@@ -549,3 +551,101 @@ setup, with small modifications for the interface mappings.
     LB_PHYSICAL_INTERFACE=eth0
     PUBLIC_PHYSICAL_NETWORK=default
     LB_INTERFACE_MAPPINGS=default:eth0
+
+Using MacVTap instead of Open vSwitch
+------------------------------------------
+
+Security groups are not supported by the MacVTap agent. Due to that, devstack
+configures the NoopFirewall driver on the compute node.
+
+MacVTap agent does not support l3, dhcp and metadata agent. Due to that you can
+chose between the following deployment scenarios:
+
+Single node with provider networks using config drive and external l3, dhcp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This scenario applies, if l3 and dhcp services are provided externally, or if
+you do not require them.
+
+
+::
+
+    [[local|localrc]]
+    HOST_IP=10.0.0.2
+    SERVICE_HOST=10.0.0.2
+    MYSQL_HOST=10.0.0.2
+    RABBIT_HOST=10.0.0.2
+    ADMIN_PASSWORD=secret
+    MYSQL_PASSWORD=secret
+    RABBIT_PASSWORD=secret
+    SERVICE_PASSWORD=secret
+
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS=macvtap
+    Q_USE_PROVIDER_NETWORKING=True
+
+    #Enable Neutron services
+    disable_service n-net
+    enable_plugin neutron git://git.openstack.org/openstack/neutron
+    ENABLED_SERVICES+=,q-agt,q-svc
+
+    ## MacVTap agent options
+    Q_AGENT=macvtap
+    PHYSICAL_NETWORK=default
+
+    FIXED_RANGE="203.0.113.0/24"
+    NETWORK_GATEWAY=203.0.113.1
+    PROVIDER_SUBNET_NAME="provider_net"
+    PROVIDER_NETWORK_TYPE="vlan"
+    SEGMENTATION_ID=2010
+
+    [[post-config|/$Q_PLUGIN_CONF_FILE]]
+    [macvtap]
+    physical_interface_mappings = $PHYSICAL_NETWORK:eth1
+
+    [[post-config|$NOVA_CONF]]
+    force_config_drive = True
+
+
+Multi node with MacVTap compute node
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This scenario applies, if you require OpenStack provided l3, dhcp or metadata
+services. Those are hosted on a separate controller and network node, running
+some other l2 agent technology (in this example Open vSwitch). This node needs
+to be configured for VLAN tenant networks.
+
+For OVS, a similar configuration like described in the
+:ref:`OVS Provider Network <ovs-provider-network-controller>` section can be
+used. Just add the the following line to this local.conf, which also loads
+the MacVTap mechanism driver:
+
+::
+
+    [[local|localrc]]
+    ...
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,linuxbridge,macvtap
+    ...
+
+For the MacVTap compute node, use this local.conf:
+
+::
+
+    HOST_IP=10.0.0.3
+    SERVICE_HOST=10.0.0.2
+    MYSQL_HOST=10.0.0.2
+    RABBIT_HOST=10.0.0.2
+    ADMIN_PASSWORD=secret
+    MYSQL_PASSWORD=secret
+    RABBIT_PASSWORD=secret
+    SERVICE_PASSWORD=secret
+
+    # Services that a compute node runs
+    disable_all_services
+    enable_plugin neutron git://git.openstack.org/openstack/neutron
+    ENABLED_SERVICES+=n-cpu,q-agt
+
+    ## MacVTap agent options
+    Q_AGENT=macvtap
+    PHYSICAL_NETWORK=default
+
+    [[post-config|/$Q_PLUGIN_CONF_FILE]]
+    [macvtap]
+    physical_interface_mappings = $PHYSICAL_NETWORK:eth1
