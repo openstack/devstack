@@ -242,7 +242,7 @@ function configure_neutron_new {
 
     # Metering
     if is_service_enabled neutron-metering; then
-        source $TOP_DIR/neutron_plugins/services/metering
+        source $TOP_DIR/lib/neutron_plugins/services/metering
         neutron_agent_metering_configure_common
         neutron_agent_metering_configure_agent
     fi
