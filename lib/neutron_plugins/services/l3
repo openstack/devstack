@@ -99,7 +99,7 @@ function _configure_neutron_l3_agent {
 
     _neutron_setup_interface_driver $Q_L3_CONF_FILE
 
-    neutron_plugin_configure_l3_agent
+    neutron_plugin_configure_l3_agent $Q_L3_CONF_FILE
 
     _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True False "inet"
 
