@@ -121,7 +121,7 @@ IRONIC_HOSTPORT=${IRONIC_HOSTPORT:-$SERVICE_HOST:$IRONIC_SERVICE_PORT}
 IRONIC_IPXE_ENABLED=$(trueorfalse False IRONIC_IPXE_ENABLED)
 IRONIC_HTTP_DIR=${IRONIC_HTTP_DIR:-$IRONIC_DATA_DIR/httpboot}
 IRONIC_HTTP_SERVER=${IRONIC_HTTP_SERVER:-$HOST_IP}
-IRONIC_HTTP_PORT=${IRONIC_HTTP_PORT:-8088}
+IRONIC_HTTP_PORT=${IRONIC_HTTP_PORT:-3928}
 
 # NOTE(lucasagomes): This flag is used to differentiate the nodes that
 # uses IPA as their deploy ramdisk from nodes that uses the agent_* drivers
