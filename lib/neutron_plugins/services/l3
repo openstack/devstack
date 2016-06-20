@@ -289,7 +289,7 @@ function _neutron_configure_router_v4 {
     neutron --os-cloud devstack-admin --os-region "$REGION_NAME" router-gateway-set $ROUTER_ID $EXT_NET_ID
 
     # This logic is specific to using the l3-agent for layer 3
-    if is_service_enabled q-l3; then
+    if is_service_enabled q-l3 || is_service_enabled neutron-l3;  then
         # Configure and enable public bridge
         local ext_gw_interface="none"
         if is_neutron_ovs_base_plugin; then
@@ -334,7 +334,7 @@ function _neutron_configure_router_v6 {
     fi
 
     # This logic is specific to using the l3-agent for layer 3
-    if is_service_enabled q-l3; then
+    if is_service_enabled q-l3 || is_service_enabled neutron-l3; then
         # Ensure IPv6 forwarding is enabled on the host
         sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # Configure and enable public bridge
