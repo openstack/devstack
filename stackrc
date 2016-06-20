@@ -135,12 +135,29 @@ elif [[ -f $RC_DIR/.localrc.auto ]]; then
     source $RC_DIR/.localrc.auto
 fi
 
+# Default for log coloring is based on interactive-or-not.
+# Baseline assumption is that non-interactive invocations are for CI,
+# where logs are to be presented as browsable text files; hence color
+# codes should be omitted.
+# Simply override LOG_COLOR if your environment is different.
+if [ -t 1 ]; then
+    _LOG_COLOR_DEFAULT=True
+else
+    _LOG_COLOR_DEFAULT=False
+fi
+
 # Use color for logging output (only available if syslog is not used)
-LOG_COLOR=$(trueorfalse True LOG_COLOR)
+LOG_COLOR=$(trueorfalse $_LOG_COLOR_DEFAULT LOG_COLOR)
 
 # Make tracing more educational
 if [[ "$LOG_COLOR" == "True" ]]; then
-    export PS4='+\[$(tput setaf 242)\]$(short_source)\[$(tput sgr0)\] '
+    # tput requires TERM or -T.  If neither is present, use vt100, a
+    # no-frills least common denominator supported everywhere.
+    TPUT_T=
+    if ! [ $TERM ]; then
+        TPUT_T='-T vt100'
+    fi
+    export PS4='+\[$(tput '$TPUT_T' setaf 242)\]$(short_source)\[$(tput '$TPUT_T' sgr0)\] '
 else
     export PS4='+ $(short_source):   '
 fi
