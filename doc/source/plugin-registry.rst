@@ -48,6 +48,7 @@ devstack-plugin-ceph                   `git://git.openstack.org/openstack/devsta
 devstack-plugin-glusterfs              `git://git.openstack.org/openstack/devstack-plugin-glusterfs <https://git.openstack.org/cgit/openstack/devstack-plugin-glusterfs>`__
 devstack-plugin-hdfs                   `git://git.openstack.org/openstack/devstack-plugin-hdfs <https://git.openstack.org/cgit/openstack/devstack-plugin-hdfs>`__
 devstack-plugin-kafka                  `git://git.openstack.org/openstack/devstack-plugin-kafka <https://git.openstack.org/cgit/openstack/devstack-plugin-kafka>`__
+devstack-plugin-mariadb                `git://git.openstack.org/openstack/devstack-plugin-mariadb <https://git.openstack.org/cgit/openstack/devstack-plugin-mariadb>`__
 devstack-plugin-nfs                    `git://git.openstack.org/openstack/devstack-plugin-nfs <https://git.openstack.org/cgit/openstack/devstack-plugin-nfs>`__
 devstack-plugin-pika                   `git://git.openstack.org/openstack/devstack-plugin-pika <https://git.openstack.org/cgit/openstack/devstack-plugin-pika>`__
 devstack-plugin-sheepdog               `git://git.openstack.org/openstack/devstack-plugin-sheepdog <https://git.openstack.org/cgit/openstack/devstack-plugin-sheepdog>`__
