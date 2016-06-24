@@ -331,7 +331,7 @@ function upload_image {
     fi
 
     if is_arch "aarch64"; then
-        img_property="--property hw_machine_type=virt --property hw_cdrom_bus=virtio --property os_command_line='console=ttyAMA0'"
+        img_property="--property hw_machine_type=virt --property hw_cdrom_bus=scsi --property hw_scsi_model=virtio-scsi --property os_command_line='console=ttyAMA0'"
     fi
 
     if [ "$container_format" = "bare" ]; then
