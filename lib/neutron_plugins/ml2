@@ -38,7 +38,9 @@ Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS:-vni_ranges=
 Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS-port_security}
 
 # L3 Plugin to load for ML2
-ML2_L3_PLUGIN=${ML2_L3_PLUGIN:-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
+# For some flat network environment, they not want to extend L3 plugin.
+# Make sure it is able to set empty to ML2_L3_PLUGIN.
+ML2_L3_PLUGIN=${ML2_L3_PLUGIN-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
 
 function populate_ml2_config {
     CONF=$1
