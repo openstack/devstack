@@ -570,6 +570,7 @@ source $TOP_DIR/lib/neutron-legacy
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 source $TOP_DIR/lib/dlm
+source $TOP_DIR/lib/os_brick
 
 # Extras Source
 # --------------
@@ -794,6 +795,11 @@ if is_service_enabled neutron nova horizon; then
 fi
 if is_service_enabled heat horizon; then
     install_heatclient
+fi
+
+# Install shared libraries
+if is_service_enabled cinder nova; then
+    install_os_brick
 fi
 
 # Install middleware
