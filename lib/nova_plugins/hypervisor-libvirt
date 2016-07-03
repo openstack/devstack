@@ -57,6 +57,14 @@ function configure_nova_hypervisor {
         iniset $NOVA_CONF vnc enabled "false"
     fi
 
+    if isset ENABLE_FILE_INJECTION; then
+        if [ "$ENABLE_FILE_INJECTION" == "True" ]; then
+            # -1 means use libguestfs to inspect the guest OS image for the
+            # root partition to use for file injection.
+            iniset $NOVA_CONF libvirt inject_partition '-1'
+        fi
+    fi
+
     if [[ "$LIBVIRT_TYPE" = "parallels" ]]; then
         iniset $NOVA_CONF libvirt connection_uri "parallels+unix:///system"
         iniset $NOVA_CONF libvirt images_type "ploop"

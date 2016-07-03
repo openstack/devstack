@@ -348,6 +348,7 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute max_microversion $tempest_compute_max_microversion
     fi
 
+    iniset $TEMPEST_CONFIG compute-feature-enabled personality ${ENABLE_FILE_INJECTION:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled resize True
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
