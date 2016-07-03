@@ -301,7 +301,6 @@ function configure_ceph_nova {
     iniset $NOVA_CONF libvirt rbd_user ${CINDER_CEPH_USER}
     iniset $NOVA_CONF libvirt rbd_secret_uuid ${CINDER_CEPH_UUID}
     iniset $NOVA_CONF libvirt inject_key false
-    iniset $NOVA_CONF libvirt inject_partition -2
     iniset $NOVA_CONF libvirt disk_cachemodes "network=writeback"
     iniset $NOVA_CONF libvirt images_type rbd
     iniset $NOVA_CONF libvirt images_rbd_pool ${NOVA_CEPH_POOL}

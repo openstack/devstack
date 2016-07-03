@@ -57,10 +57,6 @@ function configure_nova_hypervisor {
         iniset $NOVA_CONF vnc enabled "false"
     fi
 
-    # File injection is being disabled by default in the near future -
-    # disable it here for now to avoid surprises later.
-    iniset $NOVA_CONF libvirt inject_partition '-2'
-
     if [[ "$LIBVIRT_TYPE" = "parallels" ]]; then
         iniset $NOVA_CONF libvirt connection_uri "parallels+unix:///system"
         iniset $NOVA_CONF libvirt images_type "ploop"
