@@ -634,9 +634,9 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
                 lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
                     DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs}
                     IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs.img.gz";;
-                *) # otherwise, use the uec style image (with kernel, ramdisk, disk)
-                    DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec}
-                    IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec.tar.gz";;
+                *) # otherwise, use the qcow image
+                    DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
+                    IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img";;
                 esac
             ;;
         vsphere)
@@ -650,9 +650,9 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             # NOTE(lucasagomes): The logic setting the default image
             # now lives in the Ironic tree
             ;;
-        *) # Default to Cirros with kernel, ramdisk and disk image
-            DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec}
-            IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec.tar.gz";;
+        *) # Default to Cirros qcow2 image file
+            DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
+            IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img";;
     esac
     DOWNLOAD_DEFAULT_IMAGES=False
 fi

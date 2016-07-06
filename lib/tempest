@@ -416,14 +416,11 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG scenario img_disk_format vhd
         iniset $TEMPEST_CONFIG scenario img_container_format ovf
     else
-        SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES/images/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec}
-        SCENARIO_IMAGE_FILE="cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img"
+        SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
+        SCENARIO_IMAGE_FILE=$DEFAULT_IMAGE_NAME
     fi
     iniset $TEMPEST_CONFIG scenario img_dir $SCENARIO_IMAGE_DIR
     iniset $TEMPEST_CONFIG scenario img_file $SCENARIO_IMAGE_FILE
-    iniset $TEMPEST_CONFIG scenario ami_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-blank.img"
-    iniset $TEMPEST_CONFIG scenario ari_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-initrd"
-    iniset $TEMPEST_CONFIG scenario aki_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-vmlinuz"
 
     # If using provider networking, use the physical network for validation rather than private
     TEMPEST_SSH_NETWORK_NAME=$PRIVATE_NETWORK_NAME
