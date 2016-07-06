@@ -423,9 +423,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG scenario aki_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-vmlinuz"
     iniset $TEMPEST_CONFIG scenario img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img"
 
-    # Large Ops Number
-    iniset $TEMPEST_CONFIG scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
-
     # Telemetry
     iniset $TEMPEST_CONFIG telemetry-feature-enabled events "True"
 
