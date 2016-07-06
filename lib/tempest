@@ -283,6 +283,10 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG identity ca_certificates_file $SSL_BUNDLE_FILE
     fi
 
+    # Identity Features
+    # TODO(rodrigods): Remove the reseller flag when Kilo and Liberty are end of life.
+    iniset $TEMPEST_CONFIG identity-feature-enabled reseller True
+
     # Image
     # We want to be able to override this variable in the gate to avoid
     # doing an external HTTP fetch for this test.
