@@ -462,12 +462,9 @@ function configure_tempest {
     fi
 
     # Scenario
-    SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES/images/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec}
+    SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
     iniset $TEMPEST_CONFIG scenario img_dir $SCENARIO_IMAGE_DIR
-    iniset $TEMPEST_CONFIG scenario ami_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-blank.img"
-    iniset $TEMPEST_CONFIG scenario ari_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-initrd"
-    iniset $TEMPEST_CONFIG scenario aki_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-vmlinuz"
-    iniset $TEMPEST_CONFIG scenario img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img"
+    iniset $TEMPEST_CONFIG scenario img_file $DEFAULT_IMAGE_NAME
 
     # Large Ops Number
     iniset $TEMPEST_CONFIG scenario large_ops_number ${TEMPEST_LARGE_OPS_NUMBER:-0}
