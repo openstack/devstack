@@ -162,7 +162,11 @@ if is_fedora; then
 fi
 
 # The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has
-# connection issues under proxy, hence uninstalling python-virtualenv package
-# and installing the latest version using pip.
-uninstall_package python-virtualenv
-pip_install -U virtualenv
+# connection issues under proxy so re-install the latest version using
+# pip. To avoid having pip's virtualenv overwritten by the distro's
+# package (e.g. due to installing a distro package with a dependency
+# on python-virtualenv), first install the distro python-virtualenv
+# to satisfy any dependencies then use pip to overwrite it.
+
+install_package python-virtualenv
+pip_install -U --force-reinstall virtualenv
