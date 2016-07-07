@@ -145,3 +145,8 @@ for file in $FILES_TO_CLEAN; do
 done
 
 rm -rf ~/.config/openstack
+
+# Clean up all *.pyc files
+if [[ -n "$DEST" ]] && [[ -d "$DEST" ]]; then
+    sudo find $DEST -name "*.pyc" -print0 | xargs -0 rm
+fi
