@@ -610,7 +610,7 @@ function _move_neutron_addresses_route {
         # on configure we will also add $from_intf as a port on $to_intf,
         # assuming it is an OVS bridge.
 
-        local IP_ADD=""
+        local IP_REPLACE=""
         local IP_DEL=""
         local IP_UP=""
         local DEFAULT_ROUTE_GW
@@ -635,7 +635,7 @@ function _move_neutron_addresses_route {
 
         if [[ "$IP_BRD" != "" ]]; then
             IP_DEL="sudo ip addr del $IP_BRD dev $from_intf"
-            IP_ADD="sudo ip addr add $IP_BRD dev $to_intf"
+            IP_REPLACE="sudo ip addr replace $IP_BRD dev $to_intf"
             IP_UP="sudo ip link set $to_intf up"
             if [[ "$af" == "inet" ]]; then
                 IP=$(echo $IP_BRD | awk '{ print $1; exit }' | grep -o -E '(.*)/' | cut -d "/" -f1)
@@ -645,7 +645,7 @@ function _move_neutron_addresses_route {
 
         # The add/del OVS port calls have to happen either before or
         # after the address is moved in order to not leave it orphaned.
-        $DEL_OVS_PORT; $IP_DEL; $IP_ADD; $IP_UP; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE; $ARP_CMD
+        $DEL_OVS_PORT; $IP_DEL; $IP_REPLACE; $IP_UP; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE; $ARP_CMD
     fi
 }
 
