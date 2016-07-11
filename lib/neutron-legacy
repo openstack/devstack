@@ -817,7 +817,7 @@ function _configure_neutron_dhcp_agent {
 
     _neutron_setup_interface_driver $Q_DHCP_CONF_FILE
 
-    neutron_plugin_configure_dhcp_agent
+    neutron_plugin_configure_dhcp_agent $Q_DHCP_CONF_FILE
 }
 
 
