@@ -1,0 +1,201 @@
+#!/bin/bash
+#
+# lib/placement
+# Functions to control the configuration and operation of the **Placement** service
+#
+# Currently the placement service is embedded in nova. Eventually we
+# expect this to change so this file is started as a separate entity
+# despite making use of some *NOVA* variables and files.
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+# - ``FILES``
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# - install_placement
+# - cleanup_placement
+# - configure_placement
+# - init_placement
+# - start_placement
+# - stop_placement
+
+# Save trace setting
+_XTRACE_LIB_PLACEMENT=$(set +o | grep xtrace)
+set +o xtrace
+
+# Defaults
+# --------
+
+PLACEMENT_CONF_DIR=/etc/nova
+PLACEMENT_CONF=$PLACEMENT_CONF_DIR/nova.conf
+PLACEMENT_AUTH_STRATEGY=${PLACEMENT_AUTH_STRATEGY:-placement}
+
+
+# The placement service can optionally use a separate database
+# connection. Set PLACEMENT_DB_ENABLED to True to use it.
+# NOTE(cdent): This functionality depends on some code that is not
+# yet merged in nova but is coming soon.
+PLACEMENT_DB_ENABLED=$(trueorfalse False PLACEMENT_DB_ENABLED)
+
+if is_suse; then
+    PLACEMENT_WSGI_DIR=${PLACEMENT_WSGI_DIR:-/srv/www/htdocs/placement}
+else
+    PLACEMENT_WSGI_DIR=${PLACEMENT_WSGI_DIR:-/var/www/placement}
+fi
+
+if is_ssl_enabled_service "placement-api" || is_service_enabled tls-proxy; then
+    PLACEMENT_SERVICE_PROTOCOL="https"
+fi
+
+# Public facing bits
+PLACEMENT_SERVICE_PROTOCOL=${PLACEMENT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+PLACEMENT_SERVICE_HOST=${PLACEMENT_SERVICE_HOST:-$SERVICE_HOST}
+PLACEMENT_SERVICE_PORT=${PLACEMENT_SERVICE_PORT:-8778}
+
+# Functions
+# ---------
+
+# Test if any placement services are enabled
+# is_placement_enabled
+function is_placement_enabled {
+    [[ ,${ENABLED_SERVICES} =~ ,"placement-" ]] && return 0
+    return 1
+}
+
+# cleanup_placement() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_placement {
+    sudo rm -f $(apache_site_config_for placement-api)
+}
+
+# _config_placement_apache_wsgi() - Set WSGI config files
+function _config_placement_apache_wsgi {
+    sudo mkdir -p $PLACEMENT_WSGI_DIR
+
+    local placement_api_apache_conf
+    local placement_api_port=$PLACEMENT_SERVICE_PORT
+    local venv_path=""
+    placement_api_apache_conf=$(apache_site_config_for placement-api)
+
+    # reuse nova's cert if a cert is being used
+    if is_ssl_enabled_service "placement-api"; then
+        placement_ssl="SSLEngine On"
+        placement_certfile="SSLCertificateFile $NOVA_SSL_CERT"
+        placement_keyfile="SSLCertificateKeyFile $NOVA_SSL_KEY"
+    fi
+    # reuse nova's venv if there is one as placement code lives
+    # there
+    if [[ ${USE_VENV} = True ]]; then
+        venv_path="python-path=${PROJECT_VENV["nova"]}/lib/$(python_version)/site-packages"
+    fi
+
+    # copy wsgi application file
+    sudo cp $NOVA_DIR/nova/api/openstack/placement/placement-api.py $PLACEMENT_WSGI_DIR/placement-api
+
+    sudo cp $FILES/apache-placement-api.template $placement_api_apache_conf
+    sudo sed -e "
+        s|%PUBLICPORT%|$placement_api_port|g;
+        s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%PUBLICWSGI%|$PLACEMENT_WSGI_DIR/placement-api|g;
+        s|%SSLENGINE%|$placement_ssl|g;
+        s|%SSLCERTFILE%|$placement_certfile|g;
+        s|%SSLKEYFILE%|$placement_keyfile|g;
+        s|%USER%|$STACK_USER|g;
+        s|%VIRTUALENV%|$venv_path|g
+        s|%APIWORKERS%|$API_WORKERS|g
+    " -i $placement_api_apache_conf
+}
+
+# configure_placement() - Set config files, create data dirs, etc
+function configure_placement {
+    if [ "$PLACEMENT_DB_ENABLED" != False ]; then
+        iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
+    fi
+
+    iniset $NOVA_CONF placement auth_type "password"
+    iniset $NOVA_CONF placement auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v3"
+    iniset $NOVA_CONF placement username placement
+    iniset $NOVA_CONF placement password "$SERVICE_PASSWORD"
+    iniset $NOVA_CONF placement user_domain_name "Default"
+    iniset $NOVA_CONF placement project_name "$SERVICE_TENANT_NAME"
+    iniset $NOVA_CONF placement project_domain_name "Default"
+    iniset $NOVA_CONF placement region_name "$REGION_NAME"
+    # TODO(cdent): auth_strategy, which is common to see in these
+    # blocks is not currently used here. For the time being the
+    # placement api uses the auth_strategy configuration setting
+    # established by the nova api. This avoids, for the time, being,
+    # creating redundant configuration items that are just used for
+    # testing.
+
+    _config_placement_apache_wsgi
+}
+
+# create_placement_accounts() - Set up required placement accounts
+# and service and endpoints.
+function create_placement_accounts {
+    create_service_user "placement" "admin"
+    local placement_api_url="$PLACEMENT_SERVICE_PROTOCOL://$PLACEMENT_SERVICE_HOST/placement"
+    get_or_create_service "placement" "placement" "Placement Service"
+    get_or_create_endpoint \
+        "placement" \
+        "$REGION_NAME" \
+        "$placement_api_url" \
+        "$placement_api_url" \
+        "$placement_api_url"
+}
+
+# init_placement() - Create service user and endpoints
+# If PLACEMENT_DB_ENABLED is true, create the separate placement db
+# using, for now, the api_db migrations.
+function init_placement {
+    if [ "$PLACEMENT_DB_ENABLED" != False ]; then
+        recreate_database placement
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF api_db sync
+    fi
+    create_placement_accounts
+}
+
+# install_placement() - Collect source and prepare
+function install_placement {
+    install_apache_wsgi
+    if is_ssl_enabled_service "placement-api"; then
+        enable_mod_ssl
+    fi
+}
+
+# start_placement_api() - Start the API processes ahead of other things
+function start_placement_api {
+    # Get right service port for testing
+    local service_port=$PLACEMENT_SERVICE_PORT
+    local placement_api_port=$PLACEMENT_SERVICE_PORT
+
+    enable_apache_site placement-api
+    restart_apache_server
+    tail_log placement-api /var/log/$APACHE_NAME/placement-api.log
+
+    echo "Waiting for placement-api to start..."
+    if ! wait_for_service $SERVICE_TIMEOUT $PLACEMENT_SERVICE_PROTOCOL://$PLACEMENT_SERVICE_HOST/placement; then
+        die $LINENO "placement-api did not start"
+    fi
+}
+
+function start_placement {
+    start_placement_api
+}
+
+# stop_placement() - Disable the api service and stop it.
+function stop_placement {
+    disable_apache_site placement-api
+    restart_apache_server
+}
+
+# Restore xtrace
+$_XTRACE_LIB_PLACEMENT
+
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

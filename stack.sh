@@ -569,6 +569,7 @@ source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
 source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
+source $TOP_DIR/lib/placement
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/heat
@@ -857,6 +858,13 @@ if is_service_enabled nova; then
     stack_install_service nova
     cleanup_nova
     configure_nova
+fi
+
+if is_service_enabled placement; then
+    # placement api
+    stack_install_service placement
+    cleanup_placement
+    configure_placement
 fi
 
 if is_service_enabled horizon; then
@@ -1160,6 +1168,11 @@ if is_service_enabled nova; then
     init_nova_cells
 fi
 
+if is_service_enabled placement; then
+    echo_summary "Configuring placement"
+    init_placement
+fi
+
 
 # Extras Configuration
 # ====================
@@ -1264,6 +1277,10 @@ if is_service_enabled nova; then
     echo_summary "Starting Nova"
     start_nova
     create_flavors
+fi
+if is_service_enabled placement; then
+    echo_summary "Starting Placement"
+    start_placement
 fi
 if is_service_enabled cinder; then
     echo_summary "Starting Cinder"

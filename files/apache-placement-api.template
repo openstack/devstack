@@ -1,0 +1,25 @@
+Listen %PUBLICPORT%
+
+<VirtualHost *:%PUBLICPORT%>
+    WSGIDaemonProcess placement-api processes=%APIWORKERS% threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
+    WSGIProcessGroup placement-api
+    WSGIScriptAlias / %PUBLICWSGI%
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    <IfVersion >= 2.4>
+      ErrorLogFormat "%M"
+    </IfVersion>
+    ErrorLog /var/log/%APACHE_NAME%/placement-api.log
+    %SSLENGINE%
+    %SSLCERTFILE%
+    %SSLKEYFILE%
+</VirtualHost>
+
+Alias /placement %PUBLICWSGI%
+<Location /placement>
+    SetHandler wsgi-script
+    Options +ExecCGI
+    WSGIProcessGroup placement-api
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+</Location>
