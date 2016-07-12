@@ -356,15 +356,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
-    # TODO(mriedem): Remove the preserve_ports flag when Juno is end of life.
-    iniset $TEMPEST_CONFIG compute-feature-enabled preserve_ports True
-    # TODO(gilliard): Remove the live_migrate_paused_instances flag when Juno is end of life.
-    iniset $TEMPEST_CONFIG compute-feature-enabled live_migrate_paused_instances True
     iniset $TEMPEST_CONFIG compute-feature-enabled attach_encrypted_volume ${ATTACH_ENCRYPTED_VOLUME_AVAILABLE:-True}
-    # TODO(mriedem): Remove this when kilo-eol happens since the
-    # neutron.allow_duplicate_networks option was removed from nova in Liberty
-    # and is now the default behavior.
-    iniset $TEMPEST_CONFIG compute-feature-enabled allow_duplicate_networks ${NOVA_ALLOW_DUPLICATE_NETWORKS:-True}
     if is_service_enabled n-cell; then
         # Cells doesn't support shelving/unshelving
         iniset $TEMPEST_CONFIG compute-feature-enabled shelve False
@@ -434,8 +426,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG validation network_for_ssh $PRIVATE_NETWORK_NAME
 
     # Volume
-    # TODO(obutenko): Remove the incremental_backup_force flag when Kilo and Juno is end of life.
-    iniset $TEMPEST_CONFIG volume-feature-enabled incremental_backup_force True
     # TODO(ynesenenko): Remove the volume_services flag when Liberty and Kilo will correct work with host info.
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_services True
     # TODO(ameade): Remove the api_v3 flag when Mitaka and Liberty are end of life.
