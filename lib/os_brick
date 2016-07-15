@@ -13,7 +13,7 @@
 # - install_os_brick
 
 # Save trace setting
-_XTRACE_CINDER=$(set +o | grep xtrace)
+_XTRACE_OS_BRICK=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -27,3 +27,6 @@ function install_os_brick {
         setup_dev_lib "os-brick"
     fi
 }
+
+# Restore xtrace
+$_XTRACE_OS_BRICK
