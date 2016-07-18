@@ -203,7 +203,7 @@ TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
 # agent, as described below.
 #
 # Example: ``PHYSICAL_NETWORK=default``
-PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
+PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-public}
 
 # With the openvswitch agent, if using VLANs for tenant networks,
 # or if using flat or VLAN provider networks, set in ``localrc`` to
@@ -213,7 +213,7 @@ PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-}
 # port for external connectivity.
 #
 # Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
-OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-}
+OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-br-ex}
 
 # With the linuxbridge agent, if using VLANs for tenant networks,
 # or if using flat or VLAN provider networks, set in ``localrc`` to
