@@ -104,7 +104,7 @@ function neutron_plugin_configure_plugin_agent {
         sudo ovs-vsctl -- --may-exist add-port "br-$VLAN_INTERFACE" $VLAN_INTERFACE
 
         # Create external bridge and add port
-        _neutron_ovs_base_add_bridge $PUBLIC_BRIDGE
+        _neutron_ovs_base_add_public_bridge
         sudo ovs-vsctl -- --may-exist add-port $PUBLIC_BRIDGE $PUBLIC_INTERFACE
 
         # Set bridge mappings to "physnet1:br-$GUEST_INTERFACE_DEFAULT"
