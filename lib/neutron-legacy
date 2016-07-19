@@ -171,6 +171,7 @@ PROVIDER_SUBNET_NAME=${PROVIDER_SUBNET_NAME:-"provider_net"}
 # Define the public bridge that will transmit traffic from VMs to the
 # physical network - used by both the OVS and Linux Bridge drivers.
 PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
+PUBLIC_BRIDGE_MTU=${PUBLIC_BRIDGE_MTU:-1500}
 
 # Use flat providernet for public network
 #

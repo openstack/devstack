@@ -645,6 +645,15 @@ function create_disk {
     fi
 }
 
+
+# set_mtu - Set MTU on a device
+function set_mtu {
+    local dev=$1
+    local mtu=$2
+    sudo ip link set mtu $mtu dev $dev
+}
+
+
 # Restore xtrace
 $XTRACE
 
