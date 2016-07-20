@@ -34,6 +34,12 @@ LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" 
     %SSLKEYFILE%
 </VirtualHost>
 
+%SSLLISTEN%<VirtualHost *:443>
+%SSLLISTEN%    %SSLENGINE%
+%SSLLISTEN%    %SSLCERTFILE%
+%SSLLISTEN%    %SSLKEYFILE%
+%SSLLISTEN%</VirtualHost>
+
 Alias /identity %KEYSTONE_BIN%/keystone-wsgi-public
 <Location /identity>
     SetHandler wsgi-script

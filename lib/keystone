@@ -161,6 +161,7 @@ function _cleanup_keystone_apache_wsgi {
 function _config_keystone_apache_wsgi {
     local keystone_apache_conf
     keystone_apache_conf=$(apache_site_config_for keystone)
+    keystone_ssl_listen="#"
     local keystone_ssl=""
     local keystone_certfile=""
     local keystone_keyfile=""
@@ -169,6 +170,7 @@ function _config_keystone_apache_wsgi {
     local venv_path=""
 
     if is_ssl_enabled_service key; then
+        keystone_ssl_listen=""
         keystone_ssl="SSLEngine On"
         keystone_certfile="SSLCertificateFile $KEYSTONE_SSL_CERT"
         keystone_keyfile="SSLCertificateKeyFile $KEYSTONE_SSL_KEY"
@@ -186,6 +188,7 @@ function _config_keystone_apache_wsgi {
         s|%PUBLICPORT%|$keystone_service_port|g;
         s|%ADMINPORT%|$keystone_auth_port|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
+        s|%SSLLISTEN%|$keystone_ssl_listen|g;
         s|%SSLENGINE%|$keystone_ssl|g;
         s|%SSLCERTFILE%|$keystone_certfile|g;
         s|%SSLKEYFILE%|$keystone_keyfile|g;
