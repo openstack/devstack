@@ -245,6 +245,12 @@ function configure_neutron_new {
         source $TOP_DIR/lib/neutron_plugins/services/metering
         neutron_agent_metering_configure_common
         neutron_agent_metering_configure_agent
+        # TODO(sc68cal) hack because we don't pass around
+        # $Q_SERVICE_PLUGIN_CLASSES like -legacy does
+        local plugins=""
+        plugins=$(iniget $NEUTRON_CONF DEFAULT service_plugins)
+        plugins+=",metering"
+        iniset $NEUTRON_CONF DEFAULT service_plugins $plugins
     fi
 
 }
