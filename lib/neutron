@@ -425,16 +425,16 @@ function start_neutron_new {
     fi
     if is_service_enabled neutron-l3; then
         run_process neutron-l3 "$NEUTRON_BIN_DIR/$NEUTRON_L3_BINARY $NEUTRON_CONFIG_ARG"
-        # XXX(sc68cal) - Here's where plugins can wire up their own networks instead
-        # of the code in lib/neutron_plugins/services/l3
-        if type -p neutron_plugin_create_initial_networks > /dev/null; then
-            neutron_plugin_create_initial_networks
-        else
-            # XXX(sc68cal) Load up the built in Neutron networking code and build a topology
-            source $TOP_DIR/lib/neutron_plugins/services/l3
-            # Create the networks using servic
-            create_neutron_initial_network
-        fi
+    fi
+    # XXX(sc68cal) - Here's where plugins can wire up their own networks instead
+    # of the code in lib/neutron_plugins/services/l3
+    if type -p neutron_plugin_create_initial_networks > /dev/null; then
+        neutron_plugin_create_initial_networks
+    else
+        # XXX(sc68cal) Load up the built in Neutron networking code and build a topology
+        source $TOP_DIR/lib/neutron_plugins/services/l3
+        # Create the networks using servic
+        create_neutron_initial_network
     fi
     if is_service_enabled neutron-metadata-agent; then
         run_process neutron-metadata-agent "$NEUTRON_BIN_DIR/$NEUTRON_META_BINARY $NEUTRON_CONFIG_ARG"
