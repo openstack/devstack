@@ -200,7 +200,7 @@ function configure_neutron_new {
     if is_service_enabled neutron-l3; then
         cp $NEUTRON_DIR/etc/l3_agent.ini.sample $NEUTRON_L3_CONF
         iniset $NEUTRON_L3_CONF DEFAULT interface_driver $NEUTRON_AGENT
-        iniset $NEUTRON_CONF DEFAULT service_plugins router
+        neutron_service_plugin_class_add router
         iniset $NEUTRON_L3_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
         iniset $NEUTRON_L3_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         neutron_plugin_configure_l3_agent $NEUTRON_L3_CONF
@@ -249,14 +249,8 @@ function configure_neutron_new {
         source $TOP_DIR/lib/neutron_plugins/services/metering
         neutron_agent_metering_configure_common
         neutron_agent_metering_configure_agent
-        # TODO(sc68cal) hack because we don't pass around
-        # $Q_SERVICE_PLUGIN_CLASSES like -legacy does
-        local plugins=""
-        plugins=$(iniget $NEUTRON_CONF DEFAULT service_plugins)
-        plugins+=",metering"
-        iniset $NEUTRON_CONF DEFAULT service_plugins $plugins
+        neutron_service_plugin_class_add metering
     fi
-
 }
 
 # configure_neutron_rootwrap() - configure Neutron's rootwrap
@@ -496,6 +490,16 @@ function _set_config_files {
 
 }
 
+# neutron_service_plugin_class_add() - add service plugin class
+function neutron_service_plugin_class_add_new {
+    local service_plugin_class=$1
+    local plugins=""
+
+    plugins=$(iniget $NEUTRON_CONF DEFAULT service_plugins)
+    plugins+=",${service_plugin_class}"
+    iniset $NEUTRON_CONF DEFAULT service_plugins $plugins
+}
+
 # Dispatch functions
 # These are needed for compatibility between the old and new implementations
 # where there are function name overlaps.  These will be removed when
@@ -552,6 +556,15 @@ function install_neutron {
         install_mutnauq "$@"
     else
         install_neutron_new "$@"
+    fi
+}
+
+function neutron_service_plugin_class_add {
+    if is_neutron_legacy_enabled; then
+        # Call back to old function
+        _neutron_service_plugin_class_add "$@"
+    else
+        neutron_service_plugin_class_add_new "$@"
     fi
 }
 
