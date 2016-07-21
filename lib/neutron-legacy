@@ -423,7 +423,7 @@ function install_mutnauq {
 }
 
 # install_neutron_agent_packages() - Collect source and prepare
-function install_neutron_agent_packages {
+function install_neutron_agent_packages_mutnauq {
     # radvd doesn't come with the OS. Install it if the l3 service is enabled.
     if is_service_enabled q-l3; then
         install_package radvd
