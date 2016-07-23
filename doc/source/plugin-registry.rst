@@ -69,7 +69,6 @@ ironic                                 `git://git.openstack.org/openstack/ironic
 ironic-inspector                       `git://git.openstack.org/openstack/ironic-inspector <https://git.openstack.org/cgit/openstack/ironic-inspector>`__
 ironic-staging-drivers                 `git://git.openstack.org/openstack/ironic-staging-drivers <https://git.openstack.org/cgit/openstack/ironic-staging-drivers>`__
 kingbird                               `git://git.openstack.org/openstack/kingbird <https://git.openstack.org/cgit/openstack/kingbird>`__
-kuryr                                  `git://git.openstack.org/openstack/kuryr <https://git.openstack.org/cgit/openstack/kuryr>`__
 kuryr-libnetwork                       `git://git.openstack.org/openstack/kuryr-libnetwork <https://git.openstack.org/cgit/openstack/kuryr-libnetwork>`__
 magnum                                 `git://git.openstack.org/openstack/magnum <https://git.openstack.org/cgit/openstack/magnum>`__
 magnum-ui                              `git://git.openstack.org/openstack/magnum-ui <https://git.openstack.org/cgit/openstack/magnum-ui>`__
