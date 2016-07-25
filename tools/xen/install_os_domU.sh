@@ -247,7 +247,7 @@ else
 fi
 
 if [ -n "${EXIT_AFTER_JEOS_INSTALLATION:-}" ]; then
-    echo "User requested to quit after JEOS instalation"
+    echo "User requested to quit after JEOS installation"
     exit 0
 fi
 
