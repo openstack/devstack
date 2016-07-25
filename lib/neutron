@@ -166,6 +166,7 @@ function configure_neutron_new {
         iniset $NEUTRON_PLUGIN_CONF ml2 type_drivers vxlan
         iniset $NEUTRON_PLUGIN_CONF ml2 mechanism_drivers openvswitch,linuxbridge
         iniset $NEUTRON_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
+        iniset $NEUTRON_PLUGIN_CONF ml2 extension_drivers port_security
     fi
 
     # Neutron OVS or LB agent
