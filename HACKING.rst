@@ -219,7 +219,7 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
     set -o errexit
 
     # Print the commands being run so that we can see the command that triggers
-    # an error.  It is also useful for following allowing as the install occurs.
+    # an error.  It is also useful for following as the install occurs.
     set -o xtrace
 
 * Settings and configuration are stored in ``exerciserc``, which must be
