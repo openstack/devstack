@@ -292,9 +292,6 @@ function _determine_config_server {
 
 function _determine_config_l3 {
     local opts="--config-file $NEUTRON_CONF --config-file $Q_L3_CONF_FILE"
-    if is_service_enabled q-fwaas; then
-        opts+=" --config-file $Q_FWAAS_CONF_FILE"
-    fi
     echo "$opts"
 }
 
