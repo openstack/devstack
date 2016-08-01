@@ -602,7 +602,8 @@ function read_password {
     if [ ! $pw ]; then
         # If there is no localrc file, create one
         if [ ! -e $localrc ]; then
-            touch $localrc
+            sudo touch $localrc
+            chmod 666 $localrc
         fi
 
         # Presumably if we got this far it can only be that our
