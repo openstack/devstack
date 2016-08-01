@@ -602,7 +602,7 @@ function read_password {
     if [ ! $pw ]; then
         # If there is no localrc file, create one
         if [ ! -e $localrc ]; then
-            sudo touch $localrc
+            sudo touch $localrc 
             chmod 666 $localrc
         fi
 
