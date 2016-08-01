@@ -24,8 +24,6 @@ set +o xtrace
 # Defaults
 # --------
 
-PUBLIC_INTERFACE_DEFAULT=eth2
-GUEST_INTERFACE_DEFAULT=eth1
 # Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
 FLAT_NETWORK_BRIDGE_DEFAULT=$(sed -e 's/.* flat_network_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
 if is_service_enabled neutron; then
