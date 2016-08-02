@@ -95,6 +95,7 @@ cleanup_keystone
 cleanup_nova
 cleanup_neutron
 cleanup_swift
+cleanup_horizon
 
 if is_service_enabled ldap; then
     cleanup_ldap

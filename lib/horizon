@@ -69,9 +69,8 @@ function _horizon_config_set {
 # cleanup_horizon() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_horizon {
-    local horizon_conf
-    horizon_conf=$(apache_site_config_for horizon)
-    sudo rm -f $horizon_conf
+    disable_apache_site horizon
+    sudo rm -f $(apache_site_config_for horizon)
 }
 
 # configure_horizon() - Set config files, create data dirs, etc
