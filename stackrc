@@ -586,6 +586,9 @@ case "$VIRT_DRIVER" in
             LIBVIRT_GROUP=libvirtd
         fi
         ;;
+    lxd)
+        LXD_GROUP=${LXD_GROUP:-"lxd"}
+        ;;
     fake)
         NUMBER_FAKE_NOVA_COMPUTE=${NUMBER_FAKE_NOVA_COMPUTE:-1}
         ;;
