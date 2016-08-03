@@ -843,7 +843,6 @@ fi
 if is_service_enabled neutron; then
     # Network service
     stack_install_service neutron
-    install_neutron_third_party
 fi
 
 if is_service_enabled nova; then
@@ -1093,15 +1092,6 @@ if is_service_enabled neutron; then
     fi
 fi
 
-# Some Neutron plugins require network controllers which are not
-# a part of the OpenStack project. Configure and start them.
-if is_service_enabled neutron; then
-    configure_neutron_third_party
-    init_neutron_third_party
-    start_neutron_third_party
-fi
-
-
 # Nova
 # ----
 
@@ -1235,11 +1225,9 @@ fi
 if is_service_enabled neutron-api; then
     echo_summary "Starting Neutron"
     start_neutron_api
-    # check_neutron_third_party_integration
 elif is_service_enabled q-svc; then
     echo_summary "Starting Neutron"
     start_neutron_service_and_check
-    check_neutron_third_party_integration
 elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     NM_CONF=${NOVA_CONF}
     if is_service_enabled n-cell; then

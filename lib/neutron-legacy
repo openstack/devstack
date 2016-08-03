@@ -1003,55 +1003,6 @@ function _ssh_check_neutron {
     test_with_retry "$testcmd" "server $ip didn't become ssh-able" $timeout_sec
 }
 
-# Neutron 3rd party programs
-#---------------------------
-
-# please refer to ``lib/neutron_thirdparty/README.md`` for details
-NEUTRON_THIRD_PARTIES=""
-for f in $TOP_DIR/lib/neutron_thirdparty/*; do
-    third_party=$(basename $f)
-    if is_service_enabled $third_party; then
-        source $TOP_DIR/lib/neutron_thirdparty/$third_party
-        NEUTRON_THIRD_PARTIES="$NEUTRON_THIRD_PARTIES,$third_party"
-    fi
-done
-
-function _neutron_third_party_do {
-    for third_party in ${NEUTRON_THIRD_PARTIES//,/ }; do
-        ${1}_${third_party}
-    done
-}
-
-# configure_neutron_third_party() - Set config files, create data dirs, etc
-function configure_neutron_third_party {
-    _neutron_third_party_do configure
-}
-
-# init_neutron_third_party() - Initialize databases, etc.
-function init_neutron_third_party {
-    _neutron_third_party_do init
-}
-
-# install_neutron_third_party() - Collect source and prepare
-function install_neutron_third_party {
-    _neutron_third_party_do install
-}
-
-# start_neutron_third_party() - Start running processes, including screen
-function start_neutron_third_party {
-    _neutron_third_party_do start
-}
-
-# stop_neutron_third_party - Stop running processes (non-screen)
-function stop_neutron_third_party {
-    _neutron_third_party_do stop
-}
-
-# check_neutron_third_party_integration() - Check that third party integration is sane
-function check_neutron_third_party_integration {
-    _neutron_third_party_do check
-}
-
 # Restore xtrace
 $_XTRACE_NEUTRON
 
