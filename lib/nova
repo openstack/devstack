@@ -128,7 +128,7 @@ fi
 # --------------------------
 
 NETWORK_MANAGER=${NETWORK_MANAGER:-${NET_MAN:-FlatDHCPManager}}
-PUBLIC_INTERFACE=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
+
 VLAN_INTERFACE=${VLAN_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
 FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
 
@@ -659,8 +659,9 @@ function create_nova_cache_dir {
 }
 
 function create_nova_conf_nova_network {
+    local public_interface=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
     iniset $NOVA_CONF DEFAULT network_manager "nova.network.manager.$NETWORK_MANAGER"
-    iniset $NOVA_CONF DEFAULT public_interface "$PUBLIC_INTERFACE"
+    iniset $NOVA_CONF DEFAULT public_interface "$public_interface"
     iniset $NOVA_CONF DEFAULT vlan_interface "$VLAN_INTERFACE"
     iniset $NOVA_CONF DEFAULT flat_network_bridge "$FLAT_NETWORK_BRIDGE"
     if [ -n "$FLAT_INTERFACE" ]; then

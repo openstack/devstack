@@ -70,11 +70,13 @@ if ! isset ENABLED_SERVICES ; then
     # Keystone - nothing works without keystone
     ENABLED_SERVICES=key
     # Nova - services to support libvirt based openstack clouds
-    ENABLED_SERVICES+=,n-api,n-cpu,n-net,n-cond,n-sch,n-novnc,n-cauth
+    ENABLED_SERVICES+=,n-api,n-cpu,n-cond,n-sch,n-novnc,n-cauth
     # Glance services needed for Nova
     ENABLED_SERVICES+=,g-api,g-reg
     # Cinder
     ENABLED_SERVICES+=,c-sch,c-api,c-vol
+    # Neutron
+    ENABLED_SERVICES+=,q-svc,q-dhcp,q-meta,q-agt,q-l3
     # Dashboard
     ENABLED_SERVICES+=,horizon
     # Additional services
@@ -709,6 +711,8 @@ S3_SERVICE_PORT=${S3_SERVICE_PORT:-3333}
 # Common network names
 PRIVATE_NETWORK_NAME=${PRIVATE_NETWORK_NAME:-"private"}
 PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME:-"public"}
+
+PUBLIC_INTERFACE=""
 
 # Set default screen name
 SCREEN_NAME=${SCREEN_NAME:-stack}
