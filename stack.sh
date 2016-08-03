@@ -1021,21 +1021,12 @@ start_dstat
 # Keystone
 # --------
 
-if is_service_enabled keystone; then
-    echo_summary "Starting Keystone"
-
-    if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
-        init_keystone
-        start_keystone
-        bootstrap_keystone
-    fi
-
-    # Rather than just export these, we write them out to a
-    # intermediate userrc file that can also be used to debug if
-    # something goes wrong between here and running
-    # tools/create_userrc.sh (this script relies on services other
-    # than keystone being available, so we can't call it right now)
-    cat > $TOP_DIR/userrc_early <<EOF
+# Rather than just export these, we write them out to a
+# intermediate userrc file that can also be used to debug if
+# something goes wrong between here and running
+# tools/create_userrc.sh (this script relies on services other
+# than keystone being available, so we can't call it right now)
+cat > $TOP_DIR/userrc_early <<EOF
 # Use this for debugging issues before files in accrc are created
 
 # Set up password auth credentials now that Keystone is bootstrapped
@@ -1050,12 +1041,21 @@ export OS_REGION_NAME=$KEYSTONE_REGION_NAME
 
 EOF
 
-    if is_service_enabled tls-proxy; then
-        echo "export OS_CACERT=$INT_CA_DIR/ca-chain.pem" >> $TOP_DIR/userrc_early
-        start_tls_proxy http-services '*' 443 $SERVICE_HOST 80
-    fi
+if is_service_enabled tls-proxy; then
+    echo "export OS_CACERT=$INT_CA_DIR/ca-chain.pem" >> $TOP_DIR/userrc_early
+    start_tls_proxy http-services '*' 443 $SERVICE_HOST 80
+fi
 
-    source $TOP_DIR/userrc_early
+source $TOP_DIR/userrc_early
+
+if is_service_enabled keystone; then
+    echo_summary "Starting Keystone"
+
+    if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
+        init_keystone
+        start_keystone
+        bootstrap_keystone
+    fi
 
     create_keystone_accounts
     create_nova_accounts
