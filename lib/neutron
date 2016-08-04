@@ -188,6 +188,9 @@ function configure_neutron_new {
         cp $NEUTRON_DIR/etc/dhcp_agent.ini.sample $NEUTRON_DHCP_CONF
 
         iniset $NEUTRON_DHCP_CONF DEFAULT debug True
+        # make it so we have working DNS from guests
+        iniset $NEUTRON_DHCP_CONF DEFAULT dnsmasq_local_resolv True
+
         iniset $NEUTRON_DHCP_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
         iniset $NEUTRON_DHCP_CONF DEFAULT interface_driver $NEUTRON_AGENT
         neutron_plugin_configure_dhcp_agent $NEUTRON_DHCP_CONF
