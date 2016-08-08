@@ -87,6 +87,7 @@ CRONTAB
         cat $TOP_DIR/tools/xen/functions
         echo "create_directory_for_images"
         echo "create_directory_for_kernels"
+        echo "install_conntrack_tools"
     } | $ssh_dom0
 
 }
