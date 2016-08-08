@@ -569,6 +569,12 @@ function configure_tempest {
     fi
     iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions $compute_api_extensions
     # Neutron API Extensions
+
+    # disable metering if we didn't enable the service
+    if ! is_service_enabled q-metering; then
+        DISABLE_NETWORK_API_EXTENSIONS+=", metering"
+    fi
+
     local network_api_extensions=${NETWORK_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_NETWORK_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
