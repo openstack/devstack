@@ -168,7 +168,6 @@ fi
 
 if is_service_enabled neutron; then
     stop_neutron
-    stop_neutron_third_party
     cleanup_neutron
 fi
 
