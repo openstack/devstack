@@ -113,6 +113,9 @@ You can ``source openrc`` in your shell, and then use the
 You can ``cd /opt/stack/tempest`` and run tempest tests that have
 been configured to work with your devstack.
 
+You can :doc:`make code changes to OpenStack and validate them
+<development>`.
+
 Going further
 -------------
 

@@ -17,5 +17,6 @@
    plugins
    plugin-registry
    faq
+   development
    hacking
    guides
