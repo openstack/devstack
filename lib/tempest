@@ -561,15 +561,7 @@ function configure_tempest {
     # Run ``verify_tempest_config -ur`` to retrieve enabled extensions on API endpoints
     # NOTE(mtreinish): This must be done after auth settings are added to the tempest config
     tox -evenv -- tempest verify-config -uro $tmp_cfg_file
-    # Nova API extensions
-    local compute_api_extensions=${COMPUTE_API_EXTENSIONS:-"all"}
-    if [[ ! -z "$DISABLE_COMPUTE_API_EXTENSIONS" ]]; then
-        # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
-        compute_api_extensions=${COMPUTE_API_EXTENSIONS:-$(iniget $tmp_cfg_file compute-feature-enabled api_extensions | tr -d " ")}
-        # Remove disabled extensions
-        compute_api_extensions=$(remove_disabled_extensions $compute_api_extensions $DISABLE_COMPUTE_API_EXTENSIONS)
-    fi
-    iniset $TEMPEST_CONFIG compute-feature-enabled api_extensions $compute_api_extensions
+
     # Neutron API Extensions
 
     # disable metering if we didn't enable the service
