@@ -508,9 +508,18 @@ GITDIR["ceilometermiddleware"]=$DEST/ceilometermiddleware
 GITREPO["os-brick"]=${OS_BRICK_REPO:-${GIT_BASE}/openstack/os-brick.git}
 GITBRANCH["os-brick"]=${OS_BRICK_BRANCH:-master}
 
+# os-client-config to manage clouds.yaml and friends
+GITREPO["os-client-config"]=${OS_CLIENT_CONFIG_REPO:-${GIT_BASE}/openstack/os-client-config.git}
+GITBRANCH["os-client-config"]=${OS_CLIENT_CONFIG_BRANCH:-master}
+GITDIR["os-client-config"]=$DEST/os-client-config
+
 # os-vif library to communicate between Neutron to Nova
 GITREPO["os-vif"]=${OS_VIF_REPO:-${GIT_BASE}/openstack/os-vif.git}
 GITBRANCH["os-vif"]=${OS_VIF_BRANCH:-master}
+
+# osc-lib OpenStackClient common lib
+GITREPO["osc-lib"]=${OSC_LIB_REPO:-${GIT_BASE}/openstack/osc-lib.git}
+GITBRANCH["osc-lib"]=${OSC_LIB_BRANCH:-master}
 
 # ironic common lib
 GITREPO["ironic-lib"]=${IRONIC_LIB_REPO:-${GIT_BASE}/openstack/ironic-lib.git}
