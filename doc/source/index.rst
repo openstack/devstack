@@ -120,7 +120,8 @@ Going further
 -------------
 
 Learn more about our :doc:`configuration system <configuration>` to
-customize devstack for your needs.
+customize devstack for your needs. Including making adjustments to the
+default :doc:`networking <networking>`.
 
 Read :doc:`guides <guides>` for specific setups people have (note:
 guides are point in time contributions, and may not always be kept
