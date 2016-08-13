@@ -44,14 +44,13 @@ function neutron_plugin_configure_debug_command {
 
 function neutron_plugin_configure_dhcp_agent {
     local conf_file=$1
-    iniset $conf_file DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
+    :
 }
 
 function neutron_plugin_configure_l3_agent {
     local conf_file=$1
     sudo brctl addbr $PUBLIC_BRIDGE
     iniset $conf_file DEFAULT external_network_bridge
-    iniset $conf_file DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
 }
 
 function neutron_plugin_configure_plugin_agent {
