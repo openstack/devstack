@@ -452,15 +452,26 @@ function configure_tempest {
     fi
 
     # Using ``CINDER_ENABLED_BACKENDS``
+    # Cinder uses a comma separated list with "type:backend_name":
+    #  CINDER_ENABLED_BACKENDS = ceph:cephBE1,lvm:lvmBE2,foo:my_foo
     if [[ -n "$CINDER_ENABLED_BACKENDS" ]] && [[ $CINDER_ENABLED_BACKENDS =~ .*,.* ]]; then
+        # We have at least 2 backends
         iniset $TEMPEST_CONFIG volume-feature-enabled multi_backend "True"
-        local i=1
+        local add_comma_seperator=0
+        local backends_list=''
         local be
+        # Tempest uses a comma separated list of backend_names:
+        #   backend_names = BACKEND_1,BACKEND_2
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
-            local be_name=${be##*:}
-            iniset $TEMPEST_CONFIG volume "backend${i}_name" "$be_name"
-            i=$(( i + 1 ))
+            if [ "$add_comma_seperator" -eq "1" ]; then
+                backends_list+=,${be##*:}
+            else
+            # first element in the list
+                backends_list+=${be##*:}
+                add_comma_seperator=1
+            fi
         done
+        iniset $TEMPEST_CONFIG volume "backend_names" "$backends_list"
     fi
 
     if [ $TEMPEST_VOLUME_DRIVER != "default" -o \
