@@ -305,6 +305,9 @@ function configure_neutron_nova_new {
 
     iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
 
+    # optionally set options in nova_conf
+    neutron_plugin_create_nova_conf
+
     if is_service_enabled neutron-metadata-agent; then
         iniset $NOVA_CONF neutron service_metadata_proxy "True"
     fi
