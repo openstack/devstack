@@ -936,11 +936,6 @@ function create_flavors {
     fi
 }
 
-# create_cell(): Group the available hosts into a cell
-function create_cell {
-    nova-manage cell_v2 simple_cell_setup --transport-url $(get_transport_url)
-}
-
 # Restore xtrace
 $_XTRACE_LIB_NOVA
 
