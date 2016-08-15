@@ -1379,6 +1379,14 @@ service_check
 check_libs_from_git
 
 
+# Configure nova cellsv2
+# ----------------------
+
+# Do this late because it requires compute hosts to have started
+if is_service_enabled n-api && [ "$NOVA_CONFIGURE_CELLSV2" == "True" ]; then
+    create_cell
+fi
+
 # Bash completion
 # ===============
 

@@ -946,6 +946,15 @@ function create_flavors {
     fi
 }
 
+# create_cell(): Group the available hosts into a cell
+function create_cell {
+    if ! is_service_enabled n-cell; then
+        nova-manage cell_v2 simple_cell_setup --transport-url $(get_transport_url)
+    else
+        echo 'Skipping cellsv2 setup for this cellsv1 configuration'
+    fi
+}
+
 # Restore xtrace
 $_XTRACE_LIB_NOVA
 
