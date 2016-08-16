@@ -14,6 +14,7 @@
 
    overview
    configuration
+   networking
    plugins
    plugin-registry
    faq
