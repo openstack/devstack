@@ -236,6 +236,8 @@ function configure_tempest {
         fi
     fi
 
+    iniset $TEMPEST_CONFIG network project_network_cidr $FIXED_RANGE
+
     ssh_connect_method=${TEMPEST_SSH_CONNECT_METHOD:-$ssh_connect_method}
 
     # the public network (for floating ip access) is only available
