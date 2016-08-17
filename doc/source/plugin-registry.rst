@@ -73,6 +73,7 @@ kuryr-libnetwork                       `git://git.openstack.org/openstack/kuryr-
 magnum                                 `git://git.openstack.org/openstack/magnum <https://git.openstack.org/cgit/openstack/magnum>`__
 magnum-ui                              `git://git.openstack.org/openstack/magnum-ui <https://git.openstack.org/cgit/openstack/magnum-ui>`__
 manila                                 `git://git.openstack.org/openstack/manila <https://git.openstack.org/cgit/openstack/manila>`__
+masakari                               `git://git.openstack.org/openstack/masakari <https://git.openstack.org/cgit/openstack/masakari>`__
 mistral                                `git://git.openstack.org/openstack/mistral <https://git.openstack.org/cgit/openstack/mistral>`__
 monasca-analytics                      `git://git.openstack.org/openstack/monasca-analytics <https://git.openstack.org/cgit/openstack/monasca-analytics>`__
 monasca-api                            `git://git.openstack.org/openstack/monasca-api <https://git.openstack.org/cgit/openstack/monasca-api>`__
