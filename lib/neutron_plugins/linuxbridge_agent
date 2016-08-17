@@ -44,7 +44,7 @@ function neutron_plugin_configure_debug_command {
 
 function neutron_plugin_configure_dhcp_agent {
     local conf_file=$1
-    iniset $conf_file DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
+    :
 }
 
 function neutron_plugin_configure_l3_agent {
@@ -52,7 +52,6 @@ function neutron_plugin_configure_l3_agent {
     sudo brctl addbr $PUBLIC_BRIDGE
     set_mtu $PUBLIC_BRIDGE $PUBLIC_BRIDGE_MTU
     iniset $conf_file DEFAULT external_network_bridge
-    iniset $conf_file DEFAULT l3_agent_manager neutron.agent.l3_agent.L3NATAgentWithStateReport
 }
 
 function neutron_plugin_configure_plugin_agent {
