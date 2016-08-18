@@ -536,7 +536,6 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT instance_usage_audit "True"
         iniset $NOVA_CONF DEFAULT instance_usage_audit_period "hour"
         iniset $NOVA_CONF DEFAULT notify_on_state_change "vm_and_task_state"
-        iniset $NOVA_CONF oslo_messaging_notifications driver "messaging"
     fi
 
     # All nova-compute workers need to know the vnc configuration options
@@ -577,6 +576,9 @@ function create_nova_conf {
         iniset $NOVA_CONF spice enabled false
     fi
 
+    # Set the oslo messaging driver to the typical default. This does not
+    # enable notifications, but it will allow them to function when enabled.
+    iniset $NOVA_CONF oslo_messaging_notifications driver "messaging"
     iniset_rpc_backend nova $NOVA_CONF
     iniset $NOVA_CONF glance api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
 
