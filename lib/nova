@@ -83,7 +83,7 @@ METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 
 # Option to enable/disable config drive
 # NOTE: Set ``FORCE_CONFIG_DRIVE="False"`` to turn OFF config drive
-FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"True"}
+FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"False"}
 
 # Nova supports pluggable schedulers.  The default ``FilterScheduler``
 # should work in most cases.
