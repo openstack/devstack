@@ -370,7 +370,7 @@ function python3_enabled {
 # Install python3 packages
 function install_python3 {
     if is_ubuntu; then
-        apt_get install python3.4 python3.4-dev
+        apt_get install python${PYTHON3_VERSION} python${PYTHON3_VERSION}-dev
     fi
 }
 
