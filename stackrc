@@ -23,15 +23,6 @@ source $RC_DIR/functions
 # Destination path for installation
 DEST=/opt/stack
 
-# Destination for working data
-DATA_DIR=${DEST}/data
-
-# Destination for status files
-SERVICE_DIR=${DEST}/status
-
-# Path for subunit output file
-SUBUNIT_OUTPUT=${DEST}/devstack.subunit
-
 # Determine stack user
 if [[ $EUID -eq 0 ]]; then
     STACK_USER=stack
@@ -136,6 +127,15 @@ elif [[ -f $RC_DIR/.localrc.auto ]]; then
     # New-style user-supplied config extracted from local.conf
     source $RC_DIR/.localrc.auto
 fi
+
+# Destination for working data
+DATA_DIR=${DATA_DIR:-$DEST/data}
+
+# Destination for status files
+SERVICE_DIR=${SERVICE_DIR:-$DEST/status}
+
+# Path for subunit output file
+SUBUNIT_OUTPUT=${SUBUNIT_OUTPUT:-$DEST/devstack.subunit}
 
 # Default for log coloring is based on interactive-or-not.
 # Baseline assumption is that non-interactive invocations are for CI,
