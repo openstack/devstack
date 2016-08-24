@@ -8,7 +8,7 @@
 # Output types are git,localrc,os,pip,pkg:
 #
 #   git|<project>|<branch>[<shaq>]
-#   localtc|<var>=<value>
+#   localrc|<var>=<value>
 #   os|<var>=<value>
 #   pip|<package>|<version>
 #   pkg|<package>|<version>
