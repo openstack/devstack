@@ -83,6 +83,9 @@ SUBNETPOOL_PREFIX_V6=${SUBNETPOOL_PREFIX_V6:-2001:db8:8000::/48}
 SUBNETPOOL_SIZE_V4=${SUBNETPOOL_SIZE_V4:-24}
 SUBNETPOOL_SIZE_V6=${SUBNETPOOL_SIZE_V6:-64}
 
+default_route_dev=$(ip route | grep ^default | awk '{print $5}')
+die_if_not_set $LINENO default_route_dev "Failure retrieving default route device"
+
 function _determine_config_l3 {
     local opts="--config-file $NEUTRON_CONF --config-file $Q_L3_CONF_FILE"
     echo "$opts"
@@ -113,9 +116,7 @@ function _configure_neutron_l3_agent {
             _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" False False "inet6"
         fi
     else
-        local default_dev=""
-        default_dev=$(ip route | grep ^default | awk '{print $5}')
-        sudo iptables -t nat -A POSTROUTING -o $default_dev -s $FLOATING_RANGE -j MASQUERADE
+        sudo iptables -t nat -A POSTROUTING -o $default_route_dev -s $FLOATING_RANGE -j MASQUERADE
     fi
 }
 
@@ -351,6 +352,11 @@ function _neutron_configure_router_v6 {
 
     # This logic is specific to using the l3-agent for layer 3
     if is_service_enabled q-l3 || is_service_enabled neutron-l3; then
+        # Ensure IPv6 RAs are accepted on the interface with the default route.
+        # This is needed for neutron-based devstack clouds to work in
+        # IPv6-only clouds in the gate. Please do not remove this without
+        # talking to folks in Infra.
+        sudo sysctl -w net.ipv6.conf.$default_route_dev.accept_ra=2
         # Ensure IPv6 forwarding is enabled on the host
         sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # Configure and enable public bridge
