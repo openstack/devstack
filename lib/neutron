@@ -47,10 +47,10 @@ NEUTRON_STATE_PATH=${NEUTRON_STATE_PATH:=$DATA_DIR/neutron}
 NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 # By default, use the ML2 plugin
-NEUTRON_PLUGIN=${NEUTRON_PLUGIN:-ml2}
-NEUTRON_PLUGIN_CONF_FILENAME=${NEUTRON_PLUGIN_CONF_FILENAME:-ml2_conf.ini}
-NEUTRON_PLUGIN_CONF_PATH=$NEUTRON_CONF_DIR/plugins/$NEUTRON_PLUGIN
-NEUTRON_PLUGIN_CONF=$NEUTRON_PLUGIN_CONF_PATH/$NEUTRON_PLUGIN_CONF_FILENAME
+NEUTRON_CORE_PLUGIN=${NEUTRON_CORE_PLUGIN:-ml2}
+NEUTRON_CORE_PLUGIN_CONF_FILENAME=${NEUTRON_CORE_PLUGIN_CONF_FILENAME:-ml2_conf.ini}
+NEUTRON_CORE_PLUGIN_CONF_PATH=$NEUTRON_CONF_DIR/plugins/$NEUTRON_CORE_PLUGIN
+NEUTRON_CORE_PLUGIN_CONF=$NEUTRON_CORE_PLUGIN_CONF_PATH/$NEUTRON_CORE_PLUGIN_CONF_FILENAME
 
 NEUTRON_AGENT_BINARY=${NEUTRON_AGENT_BINARY:-neutron-$NEUTRON_AGENT-agent}
 NEUTRON_L3_BINARY=${NEUTRON_L3_BINARY:-neutron-l3-agent}
@@ -117,9 +117,9 @@ function configure_neutron_new {
 
     configure_neutron_rootwrap
 
-    mkdir -p $NEUTRON_PLUGIN_CONF_PATH
+    mkdir -p $NEUTRON_CORE_PLUGIN_CONF_PATH
 
-    cp $NEUTRON_DIR/etc/neutron/plugins/$NEUTRON_PLUGIN/$NEUTRON_PLUGIN_CONF_FILENAME.sample $NEUTRON_PLUGIN_CONF
+    cp $NEUTRON_DIR/etc/neutron/plugins/$NEUTRON_CORE_PLUGIN/$NEUTRON_CORE_PLUGIN_CONF_FILENAME.sample $NEUTRON_CORE_PLUGIN_CONF
 
     iniset $NEUTRON_CONF database connection `database_connection_url neutron`
     iniset $NEUTRON_CONF DEFAULT state_path $NEUTRON_STATE_PATH
@@ -139,7 +139,7 @@ function configure_neutron_new {
 
         cp $NEUTRON_DIR/etc/api-paste.ini $NEUTRON_CONF_DIR/api-paste.ini
 
-        iniset $NEUTRON_CONF DEFAULT core_plugin $NEUTRON_PLUGIN
+        iniset $NEUTRON_CONF DEFAULT core_plugin $NEUTRON_CORE_PLUGIN
 
         iniset $NEUTRON_CONF DEFAULT policy_file $policy_file
         iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips True
@@ -162,25 +162,25 @@ function configure_neutron_new {
 
         # Configure VXLAN
         # TODO(sc68cal) not hardcode?
-        iniset $NEUTRON_PLUGIN_CONF ml2 tenant_network_types vxlan
-        iniset $NEUTRON_PLUGIN_CONF ml2 type_drivers vxlan
-        iniset $NEUTRON_PLUGIN_CONF ml2 mechanism_drivers openvswitch,linuxbridge
-        iniset $NEUTRON_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
-        iniset $NEUTRON_PLUGIN_CONF ml2 extension_drivers port_security
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 tenant_network_types vxlan
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 type_drivers vxlan
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 mechanism_drivers openvswitch,linuxbridge
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 extension_drivers port_security
     fi
 
     # Neutron OVS or LB agent
     if is_service_enabled neutron-agent; then
-        iniset $NEUTRON_PLUGIN_CONF agent tunnel_types vxlan
-        iniset $NEUTRON_PLUGIN_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+        iniset $NEUTRON_CORE_PLUGIN_CONF agent tunnel_types vxlan
+        iniset $NEUTRON_CORE_PLUGIN_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
         # Configure the neutron agent
         if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
-            iniset $NEUTRON_PLUGIN_CONF securitygroup iptables
-            iniset $NEUTRON_PLUGIN_CONF vxlan local_ip $HOST_IP
+            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup iptables
+            iniset $NEUTRON_CORE_PLUGIN_CONF vxlan local_ip $HOST_IP
         else
-            iniset $NEUTRON_PLUGIN_CONF securitygroup iptables_hybrid
-            iniset $NEUTRON_PLUGIN_CONF ovs local_ip $HOST_IP
+            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup iptables_hybrid
+            iniset $NEUTRON_CORE_PLUGIN_CONF ovs local_ip $HOST_IP
         fi
     fi
 
@@ -397,7 +397,7 @@ function start_neutron_api {
 
     # Start the Neutron service
     # TODO(sc68cal) Stop hard coding this
-    run_process neutron-api "$NEUTRON_BIN_DIR/neutron-server --config-file $NEUTRON_CONF --config-file $NEUTRON_PLUGIN_CONF"
+    run_process neutron-api "$NEUTRON_BIN_DIR/neutron-server --config-file $NEUTRON_CONF --config-file $NEUTRON_CORE_PLUGIN_CONF"
 
     if is_ssl_enabled_service "neutron"; then
         ssl_ca="--ca-certificate=${SSL_BUNDLE_FILE}"
@@ -475,9 +475,9 @@ function _set_config_files {
 
     NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_CONF"
 
-    #TODO(sc68cal) OVS and LB agent uses settings in NEUTRON_PLUGIN_CONF (ml2_conf.ini) but others may not
+    #TODO(sc68cal) OVS and LB agent uses settings in NEUTRON_CORE_PLUGIN_CONF (ml2_conf.ini) but others may not
     if is_service_enabled neutron-agent; then
-        NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_PLUGIN_CONF"
+        NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_CORE_PLUGIN_CONF"
     fi
 
     if is_service_enabled neutron-dhcp; then
