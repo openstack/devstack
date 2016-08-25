@@ -20,7 +20,7 @@ echo "*********************************************************************"
 set -o errtrace
 
 # Print the commands being run so that we can see the command that triggers
-# an error.  It is also useful for following allowing as the install occurs.
+# an error.  It is also useful for following as the install occurs.
 set -o xtrace
 
 # Environment
