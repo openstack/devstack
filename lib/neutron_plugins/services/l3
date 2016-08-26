@@ -63,14 +63,14 @@ IPV6_ADDRESS_MODE=${IPV6_ADDRESS_MODE:-slaac}
 IPV6_PUBLIC_SUBNET_NAME=${IPV6_PUBLIC_SUBNET_NAME:-ipv6-public-subnet}
 IPV6_PRIVATE_SUBNET_NAME=${IPV6_PRIVATE_SUBNET_NAME:-ipv6-private-subnet}
 FIXED_RANGE_V6=${FIXED_RANGE_V6:-fd$IPV6_GLOBAL_ID::/64}
-IPV6_PRIVATE_NETWORK_GATEWAY=${IPV6_PRIVATE_NETWORK_GATEWAY:-fd$IPV6_GLOBAL_ID::1}
+IPV6_PRIVATE_NETWORK_GATEWAY=${IPV6_PRIVATE_NETWORK_GATEWAY:-}
 IPV6_PUBLIC_RANGE=${IPV6_PUBLIC_RANGE:-2001:db8::/64}
 IPV6_PUBLIC_NETWORK_GATEWAY=${IPV6_PUBLIC_NETWORK_GATEWAY:-2001:db8::2}
 IPV6_ROUTER_GW_IP=${IPV6_ROUTER_GW_IP:-2001:db8::1}
 
 # Gateway and subnet defaults, in case they are not customized in localrc
-NETWORK_GATEWAY=${NETWORK_GATEWAY:-10.0.0.1}
-PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-172.24.4.1}
+NETWORK_GATEWAY=${NETWORK_GATEWAY:-}
+PUBLIC_NETWORK_GATEWAY=${PUBLIC_NETWORK_GATEWAY:-}
 PRIVATE_SUBNET_NAME=${PRIVATE_SUBNET_NAME:-"private-subnet"}
 PUBLIC_SUBNET_NAME=${PUBLIC_SUBNET_NAME:-"public-subnet"}
 
@@ -235,7 +235,9 @@ function _neutron_create_private_subnet_v4 {
     local project_id=$1
     local subnet_params="--tenant-id $project_id "
     subnet_params+="--ip_version 4 "
-    subnet_params+="--gateway $NETWORK_GATEWAY "
+    if [[ -n "$NETWORK_GATEWAY" ]]; then
+        subnet_params+="--gateway $NETWORK_GATEWAY "
+    fi
     subnet_params+="--name $PRIVATE_SUBNET_NAME "
     subnet_params+="$NET_ID $FIXED_RANGE"
     local subnet_id
@@ -252,7 +254,9 @@ function _neutron_create_private_subnet_v6 {
     local ipv6_modes="--ipv6-ra-mode $IPV6_RA_MODE --ipv6-address-mode $IPV6_ADDRESS_MODE"
     local subnet_params="--tenant-id $project_id "
     subnet_params+="--ip_version 6 "
-    subnet_params+="--gateway $IPV6_PRIVATE_NETWORK_GATEWAY "
+    if [[ -n "$IPV6_PRIVATE_NETWORK_GATEWAY" ]]; then
+        subnet_params+="--gateway $IPV6_PRIVATE_NETWORK_GATEWAY "
+    fi
     subnet_params+="--name $IPV6_PRIVATE_SUBNET_NAME "
     subnet_params+="$NET_ID $FIXED_RANGE_V6 $ipv6_modes"
     local ipv6_subnet_id
@@ -263,9 +267,11 @@ function _neutron_create_private_subnet_v6 {
 
 # Create public IPv4 subnet
 function _neutron_create_public_subnet_v4 {
-    local subnet_params+="--ip_version 4 "
+    local subnet_params="--ip_version 4 "
     subnet_params+="${Q_FLOATING_ALLOCATION_POOL:+--allocation-pool $Q_FLOATING_ALLOCATION_POOL} "
-    subnet_params+="--gateway $PUBLIC_NETWORK_GATEWAY "
+    if [[ -n "$PUBLIC_NETWORK_GATEWAY" ]]; then
+        subnet_params+="--gateway $PUBLIC_NETWORK_GATEWAY "
+    fi
     subnet_params+="--name $PUBLIC_SUBNET_NAME "
     subnet_params+="$EXT_NET_ID $FLOATING_RANGE "
     subnet_params+="-- --enable_dhcp=False"
