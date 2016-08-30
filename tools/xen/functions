@@ -305,3 +305,25 @@ function get_domid {
 
     xe vm-list name-label="$vm_name_label" params=dom-id minimal=true
 }
+
+function install_conntrack_tools {
+    local xs_host
+    local xs_ver_major
+    local centos_ver
+    local conntrack_conf
+    xs_host=$(xe host-list --minimal)
+    xs_ver_major=$(xe host-param-get uuid=$xs_host param-name=software-version param-key=product_version_text_short | cut -d'.' -f 1)
+    if [ $xs_ver_major -gt 6 ]; then
+        # Only support conntrack-tools in Dom0 with XS7.0 and above
+        if [ ! -f /usr/sbin/conntrackd ]; then
+            sed -i s/#baseurl=/baseurl=/g /etc/yum.repos.d/CentOS-Base.repo
+            centos_ver=$(yum version nogroups |grep Installed | cut -d' ' -f 2 | cut -d'.' -f1-2 | tr '-' '.')
+            yum install -y --enablerepo=base --releasever=$centos_ver conntrack-tools
+            # Backup conntrackd.conf after install conntrack-tools, use the one with statistic mode
+            mv /etc/conntrackd/conntrackd.conf /etc/conntrackd/conntrackd.conf.back
+            conntrack_conf=$(find /usr/share/doc -name conntrackd.conf |grep stats)
+            cp $conntrack_conf /etc/conntrackd/conntrackd.conf
+        fi
+        service conntrackd restart
+    fi
+}
