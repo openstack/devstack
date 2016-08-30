@@ -58,7 +58,9 @@ function _clean_lvm_backing_file {
     if [[ -n "$backing_file" ]] && [[ -e "$backing_file" ]]; then
         local vg_dev
         vg_dev=$(sudo losetup -j $backing_file | awk -F':' '/'$BACKING_FILE_SUFFIX'/ { print $1}')
-        sudo losetup -d $vg_dev
+        if [[ -n "$vg_dev" ]]; then
+            sudo losetup -d $vg_dev
+        fi
         rm -f $backing_file
     fi
 }
