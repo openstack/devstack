@@ -1880,7 +1880,7 @@ function run_phase {
             # white listed elements in tree. We want these to move out
             # over time as well, but they are in tree, so we need to
             # manage that.
-            local exceptions="60-ceph.sh 80-tempest.sh"
+            local exceptions="80-tempest.sh"
             local extra
             extra=$(basename $extra_plugin_file_name)
             if [[ ! ( $exceptions =~ "$extra" ) ]]; then
