@@ -40,12 +40,6 @@ PLACEMENT_AUTH_STRATEGY=${PLACEMENT_AUTH_STRATEGY:-placement}
 # yet merged in nova but is coming soon.
 PLACEMENT_DB_ENABLED=$(trueorfalse False PLACEMENT_DB_ENABLED)
 
-if is_suse; then
-    PLACEMENT_WSGI_DIR=${PLACEMENT_WSGI_DIR:-/srv/www/htdocs/placement}
-else
-    PLACEMENT_WSGI_DIR=${PLACEMENT_WSGI_DIR:-/var/www/placement}
-fi
-
 if is_ssl_enabled_service "placement-api" || is_service_enabled tls-proxy; then
     PLACEMENT_SERVICE_PROTOCOL="https"
 fi
@@ -73,11 +67,11 @@ function cleanup_placement {
 
 # _config_placement_apache_wsgi() - Set WSGI config files
 function _config_placement_apache_wsgi {
-    sudo mkdir -p $PLACEMENT_WSGI_DIR
-
     local placement_api_apache_conf
     local placement_api_port=$PLACEMENT_SERVICE_PORT
     local venv_path=""
+    local nova_bin_dir=""
+    nova_bin_dir=$(get_python_exec_prefix)
     placement_api_apache_conf=$(apache_site_config_for placement-api)
 
     # reuse nova's cert if a cert is being used
@@ -90,16 +84,14 @@ function _config_placement_apache_wsgi {
     # there
     if [[ ${USE_VENV} = True ]]; then
         venv_path="python-path=${PROJECT_VENV["nova"]}/lib/$(python_version)/site-packages"
+        nova_bin_dir=${PROJECT_VENV["nova"]}/bin
     fi
-
-    # copy wsgi application file
-    sudo cp $NOVA_DIR/nova/api/openstack/placement/placement-api.py $PLACEMENT_WSGI_DIR/placement-api
 
     sudo cp $FILES/apache-placement-api.template $placement_api_apache_conf
     sudo sed -e "
         s|%PUBLICPORT%|$placement_api_port|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
-        s|%PUBLICWSGI%|$PLACEMENT_WSGI_DIR/placement-api|g;
+        s|%PUBLICWSGI%|$nova_bin_dir/nova-placement-api|g;
         s|%SSLENGINE%|$placement_ssl|g;
         s|%SSLCERTFILE%|$placement_certfile|g;
         s|%SSLKEYFILE%|$placement_keyfile|g;
