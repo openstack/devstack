@@ -24,6 +24,8 @@
 _XTRACE_RPC_BACKEND=$(set +o | grep xtrace)
 set +o xtrace
 
+RABBIT_USERID=${RABBIT_USERID:-stackrabbit}
+
 # Functions
 # ---------
 
