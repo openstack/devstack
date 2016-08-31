@@ -114,7 +114,7 @@ function configure_placement {
     iniset $NOVA_CONF placement user_domain_name "Default"
     iniset $NOVA_CONF placement project_name "$SERVICE_TENANT_NAME"
     iniset $NOVA_CONF placement project_domain_name "Default"
-    iniset $NOVA_CONF placement region_name "$REGION_NAME"
+    iniset $NOVA_CONF placement os_region_name "$REGION_NAME"
     # TODO(cdent): auth_strategy, which is common to see in these
     # blocks is not currently used here. For the time being the
     # placement api uses the auth_strategy configuration setting
