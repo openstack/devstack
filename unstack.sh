@@ -189,11 +189,13 @@ if [[ -n "$SCREEN" ]]; then
     fi
 fi
 
-# BUG: maybe it doesn't exist? We should isolate this further down.
 # NOTE: Cinder automatically installs the lvm2 package, independently of the
-# enabled backends. So if Cinder is enabled, we are sure lvm (lvremove,
-# /etc/lvm/lvm.conf, etc.) is here.
-if is_service_enabled cinder; then
+# enabled backends. So if Cinder is enabled, and installed successfully we are
+# sure lvm2 (lvremove, /etc/lvm/lvm.conf, etc.) is here.
+if is_service_enabled cinder && is_package_installed lvm2; then
+    # Using /bin/true here indicates a BUG - maybe the
+    # DEFAULT_VOLUME_GROUP_NAME doesn't exist?  We should
+    # isolate this further down in lib/cinder cleanup.
     clean_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME || /bin/true
     clean_lvm_filter
 fi
