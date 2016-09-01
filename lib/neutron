@@ -409,7 +409,7 @@ function start_neutron_api {
 
     # Start proxy if enabled
     if is_service_enabled tls-proxy; then
-        start_tls_proxy '*' $NEUTRON_SERVICE_PORT $NEUTRON_SERVICE_HOST $NEUTRON_SERVICE_PORT_INT &
+        start_tls_proxy neutron '*' $NEUTRON_SERVICE_PORT $NEUTRON_SERVICE_HOST $NEUTRON_SERVICE_PORT_INT
     fi
 }
 

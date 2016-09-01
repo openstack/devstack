@@ -383,8 +383,8 @@ function install_glance {
 function start_glance {
     local service_protocol=$GLANCE_SERVICE_PROTOCOL
     if is_service_enabled tls-proxy; then
-        start_tls_proxy '*' $GLANCE_SERVICE_PORT $GLANCE_SERVICE_HOST $GLANCE_SERVICE_PORT_INT &
-        start_tls_proxy '*' $GLANCE_REGISTRY_PORT $GLANCE_SERVICE_HOST $GLANCE_REGISTRY_PORT_INT &
+        start_tls_proxy glance-service '*' $GLANCE_SERVICE_PORT $GLANCE_SERVICE_HOST $GLANCE_SERVICE_PORT_INT
+        start_tls_proxy glance-registry '*' $GLANCE_REGISTRY_PORT $GLANCE_SERVICE_HOST $GLANCE_REGISTRY_PORT_INT
     fi
 
     run_process g-reg "$GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"

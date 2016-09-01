@@ -305,8 +305,8 @@ function configure_cinder {
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
         iniset $CINDER_CONF DEFAULT osapi_volume_listen_port $CINDER_SERVICE_PORT_INT
-
         iniset $CINDER_CONF DEFAULT public_endpoint $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT
+        iniset $CINDER_CONF DEFAULT osapi_volume_base_URL $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT
     fi
 
     if [ "$SYSLOG" != "False" ]; then
@@ -534,7 +534,7 @@ function start_cinder {
 
     # Start proxies if enabled
     if is_service_enabled c-api && is_service_enabled tls-proxy; then
-        start_tls_proxy '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_PORT_INT &
+        start_tls_proxy cinder '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_PORT_INT
     fi
 }
 
