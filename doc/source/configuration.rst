@@ -521,16 +521,14 @@ created flavors as follows:
 IP Version
 ----------
 
-``IP_VERSION`` can be used to configure DevStack to create either an
-IPv4, IPv6, or dual-stack self service project data-network by with
+``IP_VERSION`` can be used to configure Neutron to create either an
+IPv4, IPv6, or dual-stack self-service project data-network by with
 either ``IP_VERSION=4``, ``IP_VERSION=6``, or ``IP_VERSION=4+6``
-respectively.  This functionality requires that the Neutron networking
-service is enabled by setting the following options:
+respectively.
 
     ::
 
-        disable_service n-net
-        enable_service q-svc q-agt q-dhcp q-l3
+        IP_VERSION=4+6
 
 The following optional variables can be used to alter the default IPv6
 behavior:
