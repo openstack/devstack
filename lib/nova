@@ -85,6 +85,9 @@ METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 # NOTE: Set ``FORCE_CONFIG_DRIVE="False"`` to turn OFF config drive
 FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"False"}
 
+# Option to initialize CellsV2 environment
+NOVA_CONFIGURE_CELLSV2=$(trueorfalse False NOVA_CONFIGURE_CELLSV2)
+
 # Nova supports pluggable schedulers.  The default ``FilterScheduler``
 # should work in most cases.
 SCHEDULER=${SCHEDULER:-filter_scheduler}
@@ -682,10 +685,15 @@ function init_nova {
     # All nova components talk to a central database.
     # Only do this step once on the API node for an entire cluster.
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-api; then
-        # (Re)create nova database
+        # (Re)create nova databases
         recreate_database nova
+        if [ "$NOVA_CONFIGURE_CELLSV2" != "False" ]; then
+            recreate_database nova_api_cell0
+        fi
 
-        # Migrate nova database
+        # Migrate nova database. If "nova-manage cell_v2 simple_cell_setup" has
+        # been run this migrates the "nova" and "nova_api_cell0" database.
+        # Otherwise it just migrates the "nova" database.
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
 
         if is_service_enabled n-cell; then
