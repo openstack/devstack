@@ -461,7 +461,6 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
     iniset $NOVA_CONF DEFAULT scheduler_driver "$SCHEDULER"
     iniset $NOVA_CONF DEFAULT scheduler_default_filters "$FILTERS"
-    iniset $NOVA_CONF DEFAULT force_dhcp_release "True"
     iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
     iniset $NOVA_CONF DEFAULT s3_host "$SERVICE_HOST"
     iniset $NOVA_CONF DEFAULT s3_port "$S3_SERVICE_PORT"
@@ -557,7 +556,6 @@ function create_nova_conf {
         # For multi-host, this should be the management ip of the compute host.
         VNCSERVER_LISTEN=${VNCSERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
         VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
-        iniset $NOVA_CONF vnc enabled true
         iniset $NOVA_CONF vnc vncserver_listen "$VNCSERVER_LISTEN"
         iniset $NOVA_CONF vnc vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
         iniset $NOVA_CONF vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
@@ -575,8 +573,6 @@ function create_nova_conf {
         iniset $NOVA_CONF spice server_listen "$SPICESERVER_LISTEN"
         iniset $NOVA_CONF spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
         iniset $NOVA_CONF spice html5proxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-    else
-        iniset $NOVA_CONF spice enabled false
     fi
 
     # Set the oslo messaging driver to the typical default. This does not
