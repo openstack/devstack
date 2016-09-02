@@ -45,7 +45,7 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF DEFAULT quota_fixed_ips -1
     iniset $NOVA_CONF DEFAULT quota_metadata_items -1
     iniset $NOVA_CONF DEFAULT quota_injected_files -1
-    iniset $NOVA_CONF DEFAULT quota_injected_file_path_bytes -1
+    iniset $NOVA_CONF DEFAULT quota_injected_file_path_length -1
     iniset $NOVA_CONF DEFAULT quota_security_groups -1
     iniset $NOVA_CONF DEFAULT quota_security_group_rules -1
     iniset $NOVA_CONF DEFAULT quota_key_pairs -1
