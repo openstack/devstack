@@ -24,7 +24,20 @@ set -o xtrace
 
 FILES=$TOP_DIR/files
 
-PIP_GET_PIP_URL=https://bootstrap.pypa.io/get-pip.py
+# The URL from where the get-pip.py file gets downloaded. If a local
+# get-pip.py mirror is available, PIP_GET_PIP_URL can be set to that
+# mirror in local.conf to avoid download timeouts.
+# Example:
+#  PIP_GET_PIP_URL="http://local-server/get-pip.py"
+#
+# Note that if get-pip.py already exists in $FILES this script will
+# not re-download or check for a new version.  For example, this is
+# done by openstack-infra diskimage-builder elements as part of image
+# preparation [1].  This prevents any network access, which can be
+# unreliable in CI situations.
+# [1] http://git.openstack.org/cgit/openstack-infra/project-config/tree/nodepool/elements/cache-devstack/source-repository-pip
+
+PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/get-pip.py"}
 LOCAL_PIP="$FILES/$(basename $PIP_GET_PIP_URL)"
 
 GetDistro
