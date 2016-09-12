@@ -100,6 +100,14 @@ function install_nova_hypervisor {
             yum_install libcgroup-tools
         fi
     fi
+
+    if [[ "$ENABLE_FILE_INJECTION" == "True" ]] ; then
+        if is_ubuntu; then
+            install_package python-guestfs
+        elif is_fedora || is_suse; then
+            install_package python-libguestfs
+        fi
+    fi
 }
 
 # start_nova_hypervisor - Start any required external services
