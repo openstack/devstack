@@ -46,6 +46,9 @@ def is_in_openstack_namespace(proj):
 
 # Check if this project has a plugin file
 def has_devstack_plugin(proj):
+    # Don't link in the deb packaging repos
+    if "openstack/deb-" in proj:
+        return False
     r = requests.get("https://git.openstack.org/cgit/%s/plain/devstack/plugin.sh" % proj)
     return r.status_code == 200
 
