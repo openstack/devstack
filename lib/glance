@@ -187,8 +187,6 @@ function configure_glance {
 
         iniset $GLANCE_SWIFT_STORE_CONF ref1 key $SERVICE_PASSWORD
         iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
-        iniset $GLANCE_SWIFT_STORE_CONF ref1 user_domain_name $SERVICE_DOMAIN_NAME
-        iniset $GLANCE_SWIFT_STORE_CONF ref1 project_domain_name $SERVICE_DOMAIN_NAME
         iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_version 3
 
         # commenting is not strictly necessary but it's confusing to have bad values in conf
@@ -312,6 +310,11 @@ function create_glance_accounts {
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
+
+        # Note(frickler): Crude workaround for https://bugs.launchpad.net/glance-store/+bug/1620999
+        service_domain_id=$(get_or_create_domain $SERVICE_DOMAIN_NAME)
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 project_domain_id $service_domain_id
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 user_domain_id $service_domain_id
     fi
 
     # Add glance-glare service and endpoints
