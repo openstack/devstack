@@ -363,6 +363,8 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute-feature-enabled max_microversion $tempest_compute_max_microversion
     fi
 
+    # TODO(mriedem): Remove allow_port_security_disabled after liberty-eol.
+    iniset $TEMPEST_CONFIG compute-feature-enabled allow_port_security_disabled True
     iniset $TEMPEST_CONFIG compute-feature-enabled resize True
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migration ${LIVE_MIGRATION_AVAILABLE:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
