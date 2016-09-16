@@ -103,6 +103,7 @@ networking-ovs-dpdk                    `git://git.openstack.org/openstack/networ
 networking-plumgrid                    `git://git.openstack.org/openstack/networking-plumgrid <https://git.openstack.org/cgit/openstack/networking-plumgrid>`__
 networking-powervm                     `git://git.openstack.org/openstack/networking-powervm <https://git.openstack.org/cgit/openstack/networking-powervm>`__
 networking-sfc                         `git://git.openstack.org/openstack/networking-sfc <https://git.openstack.org/cgit/openstack/networking-sfc>`__
+networking-vpp                         `git://git.openstack.org/openstack/networking-vpp <https://git.openstack.org/cgit/openstack/networking-vpp>`__
 networking-vsphere                     `git://git.openstack.org/openstack/networking-vsphere <https://git.openstack.org/cgit/openstack/networking-vsphere>`__
 neutron                                `git://git.openstack.org/openstack/neutron <https://git.openstack.org/cgit/openstack/neutron>`__
 neutron-dynamic-routing                `git://git.openstack.org/openstack/neutron-dynamic-routing <https://git.openstack.org/cgit/openstack/neutron-dynamic-routing>`__
