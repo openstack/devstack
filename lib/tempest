@@ -387,6 +387,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network default_network "$FIXED_RANGE"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6 "$IPV6_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
+    iniset $TEMPEST_CONFIG network-feature-enabled port_security $NEUTRON_PORT_SECURITY
 
     # Orchestration Tests
     if is_service_enabled heat; then

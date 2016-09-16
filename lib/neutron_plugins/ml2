@@ -35,7 +35,11 @@ Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS:-}
 Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS:-vni_ranges=$TENANT_TUNNEL_RANGES}
 # List of extension drivers to load, use '-' instead of ':-' to allow people to
 # explicitly override this to blank
-Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS-port_security}
+if [[ "$NEUTRON_PORT_SECURITY" = "True" ]]; then
+    Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS-port_security}
+else
+    Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS:-}
+fi
 
 # L3 Plugin to load for ML2
 # For some flat network environment, they not want to extend L3 plugin.
