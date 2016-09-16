@@ -129,6 +129,7 @@ solum                                  `git://git.openstack.org/openstack/solum 
 tacker                                 `git://git.openstack.org/openstack/tacker <https://git.openstack.org/cgit/openstack/tacker>`__
 tap-as-a-service                       `git://git.openstack.org/openstack/tap-as-a-service <https://git.openstack.org/cgit/openstack/tap-as-a-service>`__
 tricircle                              `git://git.openstack.org/openstack/tricircle <https://git.openstack.org/cgit/openstack/tricircle>`__
+trio2o                                 `git://git.openstack.org/openstack/trio2o <https://git.openstack.org/cgit/openstack/trio2o>`__
 trove                                  `git://git.openstack.org/openstack/trove <https://git.openstack.org/cgit/openstack/trove>`__
 trove-dashboard                        `git://git.openstack.org/openstack/trove-dashboard <https://git.openstack.org/cgit/openstack/trove-dashboard>`__
 vitrage                                `git://git.openstack.org/openstack/vitrage <https://git.openstack.org/cgit/openstack/vitrage>`__
