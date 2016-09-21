@@ -42,24 +42,40 @@ fi
 
 # Functions
 # ---------
+
+# Enable apache mod and restart apache if it isn't already enabled.
+function enable_apache_mod {
+    local mod=$1
+    # Apache installation, because we mark it NOPRIME
+    if is_ubuntu || is_suse ; then
+        if ! a2query -m $mod ; then
+            sudo a2enmod $mod
+            restart_apache_server
+        fi
+    elif is_fedora; then
+        # pass
+        true
+    else
+        exit_distro_not_supported "apache enable mod"
+    fi
+}
+
 # install_apache_wsgi() - Install Apache server and wsgi module
 function install_apache_wsgi {
     # Apache installation, because we mark it NOPRIME
     if is_ubuntu; then
         # Install apache2, which is NOPRIME'd
         install_package apache2 libapache2-mod-wsgi
-        # WSGI isn't enabled by default, enable it
-        sudo a2enmod wsgi
     elif is_fedora; then
         sudo rm -f /etc/httpd/conf.d/000-*
         install_package httpd mod_wsgi
     elif is_suse; then
         install_package apache2 apache2-mod_wsgi
-        # WSGI isn't enabled by default, enable it
-        sudo a2enmod wsgi
     else
-        exit_distro_not_supported "apache installation"
+        exit_distro_not_supported "apache wsgi installation"
     fi
+    # WSGI isn't enabled by default, enable it
+    enable_apache_mod wsgi
 
     # ensure mod_version enabled for <IfVersion ...>.  This is
     # built-in statically on anything recent, but precise (2.2)
@@ -190,6 +206,11 @@ function restart_apache_server {
     sleep 3
     start_service $APACHE_NAME
     time_stop "restart_apache_server"
+}
+
+# reload_apache_server
+function reload_apache_server {
+    reload_service $APACHE_NAME
 }
 
 # Restore xtrace

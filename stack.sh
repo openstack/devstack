@@ -1052,6 +1052,7 @@ EOF
 
     if is_service_enabled tls-proxy; then
         echo "export OS_CACERT=$INT_CA_DIR/ca-chain.pem" >> $TOP_DIR/userrc_early
+        start_tls_proxy http-services '*' 443 $SERVICE_HOST 80
     fi
 
     source $TOP_DIR/userrc_early

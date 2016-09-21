@@ -808,7 +808,7 @@ function start_nova_api {
 
     # Start proxies if enabled
     if is_service_enabled tls-proxy; then
-        start_tls_proxy '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT &
+        start_tls_proxy nova '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT
     fi
 
     export PATH=$old_path

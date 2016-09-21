@@ -611,8 +611,8 @@ function start_keystone {
 
     # Start proxies if enabled
     if is_service_enabled tls-proxy; then
-        start_tls_proxy '*' $KEYSTONE_SERVICE_PORT $KEYSTONE_SERVICE_HOST $KEYSTONE_SERVICE_PORT_INT &
-        start_tls_proxy '*' $KEYSTONE_AUTH_PORT $KEYSTONE_AUTH_HOST $KEYSTONE_AUTH_PORT_INT &
+        start_tls_proxy keystone-service '*' $KEYSTONE_SERVICE_PORT $KEYSTONE_SERVICE_HOST $KEYSTONE_SERVICE_PORT_INT
+        start_tls_proxy keystone-auth '*' $KEYSTONE_AUTH_PORT $KEYSTONE_AUTH_HOST $KEYSTONE_AUTH_PORT_INT
     fi
 
     # (re)start memcached to make sure we have a clean memcache.

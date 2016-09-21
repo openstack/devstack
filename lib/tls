@@ -16,7 +16,6 @@
 #
 # - configure_CA
 # - init_CA
-# - cleanup_CA
 
 # - configure_proxy
 # - start_tls_proxy
@@ -217,19 +216,6 @@ function init_CA {
     elif is_ubuntu; then
         sudo cp $INT_CA_DIR/ca-chain.pem /usr/local/share/ca-certificates/devstack-int.crt
         sudo cp $ROOT_CA_DIR/cacert.pem /usr/local/share/ca-certificates/devstack-root.crt
-        sudo update-ca-certificates
-    fi
-}
-
-# Clean up the CA files
-# cleanup_CA
-function cleanup_CA {
-    if is_fedora; then
-        sudo rm -f /usr/share/pki/ca-trust-source/anchors/devstack-chain.pem
-        sudo update-ca-trust
-    elif is_ubuntu; then
-        sudo rm -f /usr/local/share/ca-certificates/devstack-int.crt
-        sudo rm -f /usr/local/share/ca-certificates/devstack-root.crt
         sudo update-ca-certificates
     fi
 }
@@ -455,26 +441,72 @@ function enable_mod_ssl {
 # Starts the TLS proxy for the given IP/ports
 # start_tls_proxy front-host front-port back-host back-port
 function start_tls_proxy {
-    local f_host=$1
-    local f_port=$2
-    local b_host=$3
-    local b_port=$4
+    local b_service="$1-tls-proxy"
+    local f_host=$2
+    local f_port=$3
+    local b_host=$4
+    local b_port=$5
 
-    stud $STUD_PROTO -f $f_host,$f_port -b $b_host,$b_port $DEVSTACK_CERT 2>/dev/null
+    local config_file
+    config_file=$(apache_site_config_for $b_service)
+    local listen_string
+    # Default apache configs on ubuntu and centos listen on 80 and 443
+    # newer apache seems fine with duplicate listen directive but older
+    # apache does not so special case 80 and 443.
+    if [[ "$f_port" == "80" ]] || [[ "$f_port" == "443" ]]; then
+        listen_string=""
+    elif [[ "$f_host" == '*' ]] ; then
+        listen_string="Listen $f_port"
+    else
+        listen_string="Listen $f_host:$f_port"
+    fi
+    sudo bash -c "cat >$config_file" << EOF
+$listen_string
+
+<VirtualHost $f_host:$f_port>
+    SSLEngine On
+    SSLCertificateFile $DEVSTACK_CERT
+
+    <Location />
+        ProxyPass http://$b_host:$b_port/ retry=5 nocanon
+        ProxyPassReverse http://$b_host:$b_port/
+    </Location>
+</VirtualHost>
+EOF
+    for mod in ssl proxy proxy_http; do
+        enable_apache_mod $mod
+    done
+    enable_apache_site $b_service
+    # Only a reload is required to pull in new vhosts
+    # Note that a restart reliably fails on centos7 and trusty
+    # because apache can't open port 80 because the old apache
+    # still has it open. Using reload fixes trusty but centos7
+    # still doesn't work.
+    reload_apache_server
 }
 
 
 # Cleanup Functions
 # =================
 
-# Stops all stud processes. This should be done only after all services
+# Stops the apache service. This should be done only after all services
 # using tls configuration are down.
 function stop_tls_proxy {
-    killall stud
+    stop_apache_server
 }
 
-# Remove CA along with configuration, as well as the local server certificate
+# Clean up the CA files
+# cleanup_CA
 function cleanup_CA {
+    if is_fedora; then
+        sudo rm -f /usr/share/pki/ca-trust-source/anchors/devstack-chain.pem
+        sudo update-ca-trust
+    elif is_ubuntu; then
+        sudo rm -f /usr/local/share/ca-certificates/devstack-int.crt
+        sudo rm -f /usr/local/share/ca-certificates/devstack-root.crt
+        sudo update-ca-certificates
+    fi
+
     rm -rf "$DATA_DIR/CA" "$DEVSTACK_CERT"
 }
 
