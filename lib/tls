@@ -322,15 +322,17 @@ function make_root_CA {
     create_CA_base $ca_dir
     create_CA_config $ca_dir 'Root CA'
 
-    # Create a self-signed certificate valid for 5 years
-    $OPENSSL req -config $ca_dir/ca.conf \
-        -x509 \
-        -nodes \
-        -newkey rsa \
-        -days 21360 \
-        -keyout $ca_dir/private/cacert.key \
-        -out $ca_dir/cacert.pem \
-        -outform PEM
+    if [ ! -r "$ca_dir/cacert.pem" ]; then
+        # Create a self-signed certificate valid for 5 years
+        $OPENSSL req -config $ca_dir/ca.conf \
+            -x509 \
+            -nodes \
+            -newkey rsa \
+            -days 21360 \
+            -keyout $ca_dir/private/cacert.key \
+            -out $ca_dir/cacert.pem \
+            -outform PEM
+    fi
 }
 
 # If a non-system python-requests is installed then it will use the
@@ -507,7 +509,7 @@ function cleanup_CA {
         sudo update-ca-certificates
     fi
 
-    rm -rf "$DATA_DIR/CA" "$DEVSTACK_CERT"
+    rm -rf "$INT_CA_DIR" "$ROOT_CA_DIR" "$DEVSTACK_CERT"
 }
 
 # Tell emacs to use shell-script-mode
