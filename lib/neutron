@@ -139,7 +139,7 @@ function configure_neutron_new {
 
         cp $NEUTRON_DIR/etc/api-paste.ini $NEUTRON_CONF_DIR/api-paste.ini
 
-        iniset $NEUTRON_CONF DEFAULT core_plugin ml2
+        iniset $NEUTRON_CONF DEFAULT core_plugin $NEUTRON_PLUGIN
 
         iniset $NEUTRON_CONF DEFAULT policy_file $policy_file
         iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips True
