@@ -226,7 +226,7 @@ function init_cert {
     if [[ ! -r $DEVSTACK_CERT ]]; then
         if [[ -n "$TLS_IP" ]]; then
             # Lie to let incomplete match routines work
-            TLS_IP="DNS:$TLS_IP"
+            TLS_IP="DNS:$TLS_IP,IP:$TLS_IP"
         fi
         make_cert $INT_CA_DIR $DEVSTACK_CERT_NAME $DEVSTACK_HOSTNAME "$TLS_IP"
 
@@ -248,6 +248,9 @@ function make_cert {
             alt_names="DNS:$SERVICE_HOST"
         else
             alt_names="$alt_names,DNS:$SERVICE_HOST"
+        fi
+        if is_ipv4_address "$SERVICE_HOST" ; then
+            alt_names="$alt_names,IP:$SERVICE_HOST"
         fi
     fi
 
