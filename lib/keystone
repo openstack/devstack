@@ -335,6 +335,8 @@ function configure_keystone {
             iniset "$file" uwsgi buffer-size 65535
             # Make sure the client doesn't try to re-use the connection.
             iniset "$file" uwsgi add-header "Connection: close"
+            # This ensures that file descriptors aren't shared between processes.
+            iniset "$file" uwsgi lazy-apps true
         done
     fi
 
