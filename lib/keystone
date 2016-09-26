@@ -245,7 +245,7 @@ function configure_keystone {
 
     # Enable caching
     iniset $KEYSTONE_CONF cache enabled "True"
-    iniset $KEYSTONE_CONF cache backend "oslo_cache.memcache_pool"
+    iniset $KEYSTONE_CONF cache backend "dogpile.cache.memcached"
     iniset $KEYSTONE_CONF cache memcache_servers localhost:11211
 
     iniset_rpc_backend keystone $KEYSTONE_CONF
