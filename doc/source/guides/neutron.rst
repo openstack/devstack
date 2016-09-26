@@ -76,12 +76,6 @@ serving as a hypervisor for guest instances.
         RABBIT_PASSWORD=secret
         SERVICE_PASSWORD=secret
 
-        # Do not use Nova-Network
-        disable_service n-net
-        # Enable Neutron
-        ENABLED_SERVICES+=,q-svc,q-dhcp,q-meta,q-agt,q-l3
-
-
         ## Neutron options
         Q_USE_SECGROUP=True
         FLOATING_RANGE="172.18.161.0/24"
@@ -389,11 +383,7 @@ controller node.
 
         Q_USE_PROVIDER_NETWORKING=True
 
-        # Do not use Nova-Network
-        disable_service n-net
-
-        # Neutron
-        ENABLED_SERVICES+=,q-svc,q-dhcp,q-meta,q-agt
+        disable_service q-l3
 
         ## Neutron Networking options used to create Neutron Subnets
 
@@ -530,12 +520,6 @@ setup, with small modifications for the interface mappings.
     RABBIT_PASSWORD=secret
     SERVICE_PASSWORD=secret
 
-    # Do not use Nova-Network
-    disable_service n-net
-    # Enable Neutron
-    ENABLED_SERVICES+=,q-svc,q-dhcp,q-meta,q-agt,q-l3
-
-
     ## Neutron options
     Q_USE_SECGROUP=True
     FLOATING_RANGE="172.18.161.0/24"
@@ -582,10 +566,7 @@ you do not require them.
     Q_ML2_PLUGIN_MECHANISM_DRIVERS=macvtap
     Q_USE_PROVIDER_NETWORKING=True
 
-    #Enable Neutron services
-    disable_service n-net
     enable_plugin neutron git://git.openstack.org/openstack/neutron
-    ENABLED_SERVICES+=,q-agt,q-svc
 
     ## MacVTap agent options
     Q_AGENT=macvtap
