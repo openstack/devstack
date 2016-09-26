@@ -167,6 +167,15 @@ function create_neutron_initial_network {
         neutron_plugin_create_initial_network_profile $PHYSICAL_NETWORK
     fi
 
+    if is_networking_extension_supported "auto-allocated-topology"; then
+        if [[ "$IP_VERSION" =~ 4.* ]]; then
+            SUBNETPOOL_V4_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
+        fi
+        if [[ "$IP_VERSION" =~ .*6 ]]; then
+            SUBNETPOOL_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --shared --is-default=True | grep ' id ' | get_field 2)
+        fi
+    fi
+
     if is_provider_network; then
         die_if_not_set $LINENO PHYSICAL_NETWORK "You must specify the PHYSICAL_NETWORK"
         die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specify the PROVIDER_NETWORK_TYPE"
@@ -174,14 +183,20 @@ function create_neutron_initial_network {
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
-            SUBNET_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create --tenant_id $project_id --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY $NET_ID $FIXED_RANGE | grep ' id ' | get_field 2)
+            if [ -z $SUBNETPOOL_V4_ID ]; then
+                fixed_range_v4=$FIXED_RANGE
+            fi
+            SUBNET_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create --tenant_id $project_id --ip_version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} --name $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY ${SUBNETPOOL_V4_ID:+--subnetpool $SUBNETPOOL_V4_ID} $NET_ID $fixed_range_v4 | grep ' id ' | get_field 2)
             die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $project_id"
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]]; then
             die_if_not_set $LINENO IPV6_PROVIDER_FIXED_RANGE "IPV6_PROVIDER_FIXED_RANGE has not been set, but Q_USE_PROVIDERNET_FOR_PUBLIC is true and IP_VERSION includes 6"
             die_if_not_set $LINENO IPV6_PROVIDER_NETWORK_GATEWAY "IPV6_PROVIDER_NETWORK_GATEWAY has not been set, but Q_USE_PROVIDERNET_FOR_PUBLIC is true and IP_VERSION includes 6"
-            SUBNET_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create --tenant_id $project_id --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME $NET_ID $IPV6_PROVIDER_FIXED_RANGE | grep 'id' | get_field 2)
+            if [ -z $SUBNETPOOL_V6_ID ]; then
+                fixed_range_v6=$IPV6_PROVIDER_FIXED_RANGE
+            fi
+            SUBNET_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create --tenant_id $project_id --ip_version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY --name $IPV6_PROVIDER_SUBNET_NAME ${SUBNETPOOL_V6_ID:+--subnetpool $SUBNETPOOL_V6_ID} $NET_ID $fixed_range_v6 | grep 'id' | get_field 2)
             die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
         fi
 
@@ -218,14 +233,8 @@ function create_neutron_initial_network {
         fi
 
         EXTERNAL_NETWORK_FLAGS="--router:external"
-        if is_networking_extension_supported "auto-allocated-topology" && is_networking_extension_supported "subnet_allocation"; then
+        if is_networking_extension_supported "auto-allocated-topology"; then
             EXTERNAL_NETWORK_FLAGS="$EXTERNAL_NETWORK_FLAGS --is-default"
-            if [[ "$IP_VERSION" =~ 4.* ]]; then
-                SUBNETPOOL_V4_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
-            fi
-            if [[ "$IP_VERSION" =~ .*6 ]]; then
-                SUBNETPOOL_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --shared --is-default=True | grep ' id ' | get_field 2)
-            fi
         fi
         # Create an external network, and a subnet. Configure the external network as router gw
         if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
@@ -250,13 +259,17 @@ function create_neutron_initial_network {
 # Create private IPv4 subnet
 function _neutron_create_private_subnet_v4 {
     local project_id=$1
+    if [ -z $SUBNETPOOL_V4_ID ]; then
+        fixed_range_v4=$FIXED_RANGE
+    fi
     local subnet_params="--tenant-id $project_id "
     subnet_params+="--ip_version 4 "
     if [[ -n "$NETWORK_GATEWAY" ]]; then
         subnet_params+="--gateway $NETWORK_GATEWAY "
     fi
     subnet_params+="--name $PRIVATE_SUBNET_NAME "
-    subnet_params+="$NET_ID $FIXED_RANGE"
+    subnet_params+="${SUBNETPOOL_V4_ID:+--subnetpool $SUBNETPOOL_V4_ID} "
+    subnet_params+="$NET_ID $fixed_range_v4"
     local subnet_id
     subnet_id=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO subnet_id "Failure creating private IPv4 subnet for $project_id"
@@ -269,13 +282,17 @@ function _neutron_create_private_subnet_v6 {
     die_if_not_set $LINENO IPV6_RA_MODE "IPV6 RA Mode not set"
     die_if_not_set $LINENO IPV6_ADDRESS_MODE "IPV6 Address Mode not set"
     local ipv6_modes="--ipv6-ra-mode $IPV6_RA_MODE --ipv6-address-mode $IPV6_ADDRESS_MODE"
+    if [ -z $SUBNETPOOL_V6_ID ]; then
+        fixed_range_v6=$FIXED_RANGE_V6
+    fi
     local subnet_params="--tenant-id $project_id "
     subnet_params+="--ip_version 6 "
     if [[ -n "$IPV6_PRIVATE_NETWORK_GATEWAY" ]]; then
         subnet_params+="--gateway $IPV6_PRIVATE_NETWORK_GATEWAY "
     fi
     subnet_params+="--name $IPV6_PRIVATE_SUBNET_NAME "
-    subnet_params+="$NET_ID $FIXED_RANGE_V6 $ipv6_modes"
+    subnet_params+="${SUBNETPOOL_V6_ID:+--subnetpool $SUBNETPOOL_V6_ID} "
+    subnet_params+="$NET_ID $fixed_range_v6 $ipv6_modes"
     local ipv6_subnet_id
     ipv6_subnet_id=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnet-create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $project_id"
@@ -350,7 +367,11 @@ function _neutron_configure_router_v4 {
             fi
             ROUTER_GW_IP=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F'ip_address'  '{ print $2 }' | cut -f3 -d\" | tr '\n' ' ')
             die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
-            sudo ip route replace  $FIXED_RANGE via $ROUTER_GW_IP
+            local replace_range=${SUBNETPOOL_PREFIX_V4}
+            if [[ -z "${SUBNETPOOL_V4_ID}" ]]; then
+                replace_range=${FIXED_RANGE}
+            fi
+            sudo ip route replace $replace_range via $ROUTER_GW_IP
         fi
         _neutron_set_router_id
     fi
@@ -396,7 +417,11 @@ function _neutron_configure_router_v6 {
 
             # Configure interface for public bridge
             sudo ip -6 addr replace $ipv6_ext_gw_ip/$ipv6_cidr_len dev $ext_gw_interface
-            sudo ip -6 route replace $FIXED_RANGE_V6 via $IPV6_ROUTER_GW_IP dev $ext_gw_interface
+            local replace_range=${SUBNETPOOL_PREFIX_V6}
+            if [[ -z "${SUBNETPOOL_V6_ID}" ]]; then
+                replace_range=${FIXED_RANGE_V6}
+            fi
+            sudo ip -6 route replace $replace_range via $IPV6_ROUTER_GW_IP dev $ext_gw_interface
         fi
         _neutron_set_router_id
     fi
