@@ -392,6 +392,7 @@ controller node.
         PROVIDER_SUBNET_NAME="provider_net"
         PROVIDER_NETWORK_TYPE="vlan"
         SEGMENTATION_ID=2010
+        USE_SUBNETPOOL=False
 
 In this configuration we are defining FIXED_RANGE to be a
 publicly routed IPv4 subnet. In this specific instance we are using
@@ -577,6 +578,7 @@ you do not require them.
     PROVIDER_SUBNET_NAME="provider_net"
     PROVIDER_NETWORK_TYPE="vlan"
     SEGMENTATION_ID=2010
+    USE_SUBNETPOOL=False
 
     [[post-config|/$Q_PLUGIN_CONF_FILE]]
     [macvtap]

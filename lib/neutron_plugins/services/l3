@@ -80,6 +80,7 @@ PRIVATE_SUBNET_NAME=${PRIVATE_SUBNET_NAME:-"private-subnet"}
 PUBLIC_SUBNET_NAME=${PUBLIC_SUBNET_NAME:-"public-subnet"}
 
 # Subnetpool defaults
+USE_SUBNETPOOL=${USE_SUBNETPOOL:-True}
 SUBNETPOOL_NAME=${SUBNETPOOL_NAME:-"shared-default-subnetpool"}
 
 SUBNETPOOL_PREFIX_V4=${SUBNETPOOL_PREFIX_V4:-10.0.0.0/8}
@@ -168,11 +169,13 @@ function create_neutron_initial_network {
     fi
 
     if is_networking_extension_supported "auto-allocated-topology"; then
-        if [[ "$IP_VERSION" =~ 4.* ]]; then
-            SUBNETPOOL_V4_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
-        fi
-        if [[ "$IP_VERSION" =~ .*6 ]]; then
-            SUBNETPOOL_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --shared --is-default=True | grep ' id ' | get_field 2)
+        if [[ "$USE_SUBNETPOOL" == "True" ]]; then
+            if [[ "$IP_VERSION" =~ 4.* ]]; then
+                SUBNETPOOL_V4_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --shared --is-default=True | grep ' id ' | get_field 2)
+            fi
+            if [[ "$IP_VERSION" =~ .*6 ]]; then
+                SUBNETPOOL_V6_ID=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" subnetpool-create $SUBNETPOOL_NAME --default-prefixlen $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --shared --is-default=True | grep ' id ' | get_field 2)
+            fi
         fi
     fi
 
