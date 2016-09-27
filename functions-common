@@ -2207,6 +2207,18 @@ function cidr2netmask {
     echo ${1-0}.${2-0}.${3-0}.${4-0}
 }
 
+# Check if this is a valid ipv4 address string
+function is_ipv4_address {
+    local address=$1
+    local regex='([0-9]{1,3}.){3}[0-9]{1,3}'
+    # TODO(clarkb) make this more robust
+    if [[ "$address" =~ $regex ]] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Gracefully cp only if source file/dir exists
 # cp_it source destination
 function cp_it {
