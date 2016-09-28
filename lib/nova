@@ -302,8 +302,6 @@ function configure_nova {
     # Put config files in ``/etc/nova`` for everyone to find
     sudo install -d -o $STACK_USER $NOVA_CONF_DIR
 
-    install_default_policy nova
-
     configure_rootwrap nova
 
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
