@@ -595,7 +595,7 @@ to be configured for VLAN tenant networks.
 
 For OVS, a similar configuration like described in the
 :ref:`OVS Provider Network <ovs-provider-network-controller>` section can be
-used. Just add the the following line to this local.conf, which also loads
+used. Just add the following line to this local.conf, which also loads
 the MacVTap mechanism driver:
 
 ::
