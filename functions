@@ -646,6 +646,24 @@ function set_mtu {
 }
 
 
+# enable_kernel_bridge_firewall - Enable kernel support for bridge firewalling
+function enable_kernel_bridge_firewall {
+    # Load bridge module. This module provides access to firewall for bridged
+    # frames; and also on older kernels (pre-3.18) it provides sysctl knobs to
+    # enable/disable bridge firewalling
+    sudo modprobe bridge
+    # For newer kernels (3.18+), those sysctl settings are split into a separate
+    # kernel module (br_netfilter). Load it too, if present.
+    sudo modprobe br_netfilter 2>> /dev/null || :
+    # Enable bridge firewalling in case it's disabled in kernel (upstream
+    # default is enabled, but some distributions may decide to change it).
+    # This is at least needed for RHEL 7.2 and earlier releases.
+    for proto in arp ip ip6; do
+        sudo sysctl -w net.bridge.bridge-nf-call-${proto}tables=1
+    done
+}
+
+
 # Restore xtrace
 $_XTRACE_FUNCTIONS
 

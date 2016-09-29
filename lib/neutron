@@ -182,6 +182,8 @@ function configure_neutron_new {
             iniset $NEUTRON_PLUGIN_CONF securitygroup iptables_hybrid
             iniset $NEUTRON_PLUGIN_CONF ovs local_ip $HOST_IP
         fi
+
+        enable_kernel_bridge_firewall
     fi
 
     # DHCP Agent
