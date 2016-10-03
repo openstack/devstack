@@ -148,7 +148,7 @@ function get_user_id {
 function get_role_id {
     local ROLE_NAME=$1
     local ROLE_ID
-    ROLE_ID=`openstack role list | grep $ROLE_NAME | awk '{print $2}'`
+    ROLE_ID=`openstack role assignment list | grep $ROLE_NAME | awk '{print $2}'`
     die_if_not_set $LINENO ROLE_ID "Failure retrieving ROLE_ID for $ROLE_NAME"
     echo "$ROLE_ID"
 }
