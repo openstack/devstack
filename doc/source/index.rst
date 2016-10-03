@@ -45,31 +45,6 @@ as well as Debian and OpenSUSE.
 If you do not have a preference, Ubuntu 16.04 is the most tested, and
 will probably go the smoothest.
 
-Download DevStack
------------------
-
-::
-
-   git clone https://git.openstack.org/openstack-dev/devstack
-
-The ``devstack`` repo contains a script that installs OpenStack and
-templates for configuration files
-
-Create a local.conf
--------------------
-
-Create a ``local.conf`` file with 4 passwords preset
-
-::
-
-   [[local|localrc]]
-   ADMIN_PASSWORD=secret
-   DATABASE_PASSWORD=$ADMIN_PASSWORD
-   RABBIT_PASSWORD=$ADMIN_PASSWORD
-   SERVICE_PASSWORD=$ADMIN_PASSWORD
-
-This is the minimum required config to get started with DevStack.
-
 Add Stack User
 --------------
 
@@ -81,14 +56,48 @@ You can quickly create a separate `stack` user to run DevStack with
 
 ::
 
-   devstack/tools/create-stack-user.sh; su stack
+   $ adduser stack
+
+Since this user will be making many changes to your system, it should
+have sudo privileges:
+
+::
+
+    $ echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    $ su stack
+
+Download DevStack
+-----------------
+
+::
+
+   $ git clone https://git.openstack.org/openstack-dev/devstack
+   $ cd devstack
+
+The ``devstack`` repo contains a script that installs OpenStack and
+templates for configuration files
+
+Create a local.conf
+-------------------
+
+Create a ``local.conf`` file with 4 passwords preset at the root of the
+devstack git repo.
+::
+
+   [[local|localrc]]
+   ADMIN_PASSWORD=secret
+   DATABASE_PASSWORD=$ADMIN_PASSWORD
+   RABBIT_PASSWORD=$ADMIN_PASSWORD
+   SERVICE_PASSWORD=$ADMIN_PASSWORD
+
+This is the minimum required config to get started with DevStack.
 
 Start the install
 -----------------
 
 ::
 
-   cd devstack; ./stack.sh
+   ./stack.sh
 
 This will take a 15 - 20 minutes, largely depending on the speed of
 your internet connection. Many git trees and packages will be
