@@ -404,7 +404,10 @@ function _neutron_configure_router_v6 {
         # IPv6-only clouds in the gate. Please do not remove this without
         # talking to folks in Infra.
         for d in $default_v6_route_devs; do
-            sudo sysctl -w net.ipv6.conf.$d.accept_ra=2
+            # Slashes must be used in this sysctl command because route devices
+            # can have dots in their names. If dots were used, dots in the
+            # device name would be reinterpreted as a slash, causing an error.
+            sudo sysctl -w net/ipv6/conf/$d/accept_ra=2
         done
         # Ensure IPv6 forwarding is enabled on the host
         sudo sysctl -w net.ipv6.conf.all.forwarding=1
