@@ -59,6 +59,7 @@ freezer                                `git://git.openstack.org/openstack/freeze
 freezer-api                            `git://git.openstack.org/openstack/freezer-api <https://git.openstack.org/cgit/openstack/freezer-api>`__
 freezer-web-ui                         `git://git.openstack.org/openstack/freezer-web-ui <https://git.openstack.org/cgit/openstack/freezer-web-ui>`__
 gce-api                                `git://git.openstack.org/openstack/gce-api <https://git.openstack.org/cgit/openstack/gce-api>`__
+glare                                  `git://git.openstack.org/openstack/glare <https://git.openstack.org/cgit/openstack/glare>`__
 gnocchi                                `git://git.openstack.org/openstack/gnocchi <https://git.openstack.org/cgit/openstack/gnocchi>`__
 group-based-policy                     `git://git.openstack.org/openstack/group-based-policy <https://git.openstack.org/cgit/openstack/group-based-policy>`__
 heat                                   `git://git.openstack.org/openstack/heat <https://git.openstack.org/cgit/openstack/heat>`__
@@ -69,6 +70,7 @@ ironic-staging-drivers                 `git://git.openstack.org/openstack/ironic
 karbor                                 `git://git.openstack.org/openstack/karbor <https://git.openstack.org/cgit/openstack/karbor>`__
 karbor-dashboard                       `git://git.openstack.org/openstack/karbor-dashboard <https://git.openstack.org/cgit/openstack/karbor-dashboard>`__
 kingbird                               `git://git.openstack.org/openstack/kingbird <https://git.openstack.org/cgit/openstack/kingbird>`__
+kuryr-kubernetes                       `git://git.openstack.org/openstack/kuryr-kubernetes <https://git.openstack.org/cgit/openstack/kuryr-kubernetes>`__
 kuryr-libnetwork                       `git://git.openstack.org/openstack/kuryr-libnetwork <https://git.openstack.org/cgit/openstack/kuryr-libnetwork>`__
 magnum                                 `git://git.openstack.org/openstack/magnum <https://git.openstack.org/cgit/openstack/magnum>`__
 magnum-ui                              `git://git.openstack.org/openstack/magnum-ui <https://git.openstack.org/cgit/openstack/magnum-ui>`__
@@ -111,6 +113,7 @@ neutron-fwaas                          `git://git.openstack.org/openstack/neutro
 neutron-lbaas                          `git://git.openstack.org/openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas>`__
 neutron-lbaas-dashboard                `git://git.openstack.org/openstack/neutron-lbaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard>`__
 neutron-vpnaas                         `git://git.openstack.org/openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas>`__
+nimble                                 `git://git.openstack.org/openstack/nimble <https://git.openstack.org/cgit/openstack/nimble>`__
 nova-docker                            `git://git.openstack.org/openstack/nova-docker <https://git.openstack.org/cgit/openstack/nova-docker>`__
 nova-lxd                               `git://git.openstack.org/openstack/nova-lxd <https://git.openstack.org/cgit/openstack/nova-lxd>`__
 nova-mksproxy                          `git://git.openstack.org/openstack/nova-mksproxy <https://git.openstack.org/cgit/openstack/nova-mksproxy>`__
