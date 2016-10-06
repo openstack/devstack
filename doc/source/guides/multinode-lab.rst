@@ -260,7 +260,7 @@ for scripting:
     openstack user create $NAME --password=$PASSWORD --project $PROJECT
     openstack role add Member --user $NAME --project $PROJECT
     # The Member role is created by stack.sh
-    # openstack role list
+    # openstack role assignment list
 
 Swift
 -----

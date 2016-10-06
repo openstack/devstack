@@ -865,11 +865,9 @@ function get_or_add_user_project_role {
     domain_args=$(_get_domain_args $4 $5)
 
     # Gets user role id
-    user_role_id=$(openstack role list \
+    user_role_id=$(openstack role assignment list \
         --user $2 \
-        --column "ID" \
         --project $3 \
-        --column "Name" \
         $domain_args \
         | grep " $1 " | get_field 1)
     if [[ -z "$user_role_id" ]]; then
@@ -878,11 +876,9 @@ function get_or_add_user_project_role {
             --user $2 \
             --project $3 \
             $domain_args
-        user_role_id=$(openstack role list \
+        user_role_id=$(openstack role assignment list \
             --user $2 \
-            --column "ID" \
             --project $3 \
-            --column "Name" \
             $domain_args \
             | grep " $1 " | get_field 1)
     fi
@@ -894,22 +890,18 @@ function get_or_add_user_project_role {
 function get_or_add_user_domain_role {
     local user_role_id
     # Gets user role id
-    user_role_id=$(openstack role list \
+    user_role_id=$(openstack role assignment list \
         --user $2 \
-        --column "ID" \
         --domain $3 \
-        --column "Name" \
         | grep " $1 " | get_field 1)
     if [[ -z "$user_role_id" ]]; then
         # Adds role to user and get it
         openstack role add $1 \
             --user $2 \
             --domain $3
-        user_role_id=$(openstack role list \
+        user_role_id=$(openstack role assignment list \
             --user $2 \
-            --column "ID" \
             --domain $3 \
-            --column "Name" \
             | grep " $1 " | get_field 1)
     fi
     echo $user_role_id
@@ -920,13 +912,11 @@ function get_or_add_user_domain_role {
 function get_or_add_user_domain_role {
     local user_role_id
     # Gets user role id
-    user_role_id=$(openstack role list \
+    user_role_id=$(openstack role assignment list \
         --user $2 \
         --os-url=$KEYSTONE_SERVICE_URI_V3 \
         --os-identity-api-version=3 \
-        --column "ID" \
         --domain $3 \
-        --column "Name" \
         | grep " $1 " | get_field 1)
     if [[ -z "$user_role_id" ]]; then
         # Adds role to user and get it
@@ -935,13 +925,11 @@ function get_or_add_user_domain_role {
             --domain $3 \
             --os-url=$KEYSTONE_SERVICE_URI_V3 \
             --os-identity-api-version=3
-        user_role_id=$(openstack role list \
+        user_role_id=$(openstack role assignment list \
             --user $2 \
             --os-url=$KEYSTONE_SERVICE_URI_V3 \
             --os-identity-api-version=3 \
-            --column "ID" \
             --domain $3 \
-            --column "Name" \
             | grep " $1 " | get_field 1)
     fi
     echo $user_role_id
@@ -952,19 +940,19 @@ function get_or_add_user_domain_role {
 function get_or_add_group_project_role {
     local group_role_id
     # Gets group role id
-    group_role_id=$(openstack role list \
+    group_role_id=$(openstack role assignment list \
         --group $2 \
         --project $3 \
-        -c "ID" -f value)
+        -f value)
     if [[ -z "$group_role_id" ]]; then
         # Adds role to group and get it
         openstack role add $1 \
             --group $2 \
             --project $3
-        group_role_id=$(openstack role list \
+        group_role_id=$(openstack role assignment list \
             --group $2 \
             --project $3 \
-            -c "ID" -f value)
+            -f value)
     fi
     echo $group_role_id
 }
