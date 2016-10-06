@@ -25,7 +25,6 @@
 # - create_keystone_accounts
 # - stop_keystone
 # - cleanup_keystone
-# - _cleanup_keystone_apache_wsgi
 
 # Save trace setting
 _XTRACE_KEYSTONE=$(set +o | grep xtrace)
@@ -149,11 +148,7 @@ function is_keystone_enabled {
 # cleanup_keystone() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_keystone {
-    _cleanup_keystone_apache_wsgi
-}
-
-# _cleanup_keystone_apache_wsgi() - Remove wsgi files, disable and remove apache vhost file
-function _cleanup_keystone_apache_wsgi {
+    disable_apache_site keystone
     sudo rm -f $(apache_site_config_for keystone)
 }
 
