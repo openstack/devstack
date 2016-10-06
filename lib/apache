@@ -39,6 +39,7 @@ elif is_suse; then
     APACHE_NAME=apache2
     APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/vhosts.d}
 fi
+APACHE_LOG_DIR="/var/log/${APACHE_NAME}"
 
 # Functions
 # ---------
