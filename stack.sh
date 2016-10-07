@@ -993,6 +993,10 @@ if [[ "$USE_SCREEN" == "True" ]]; then
     fi
     screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
     screen -r $SCREEN_NAME -X setenv PROMPT_COMMAND /bin/true
+
+    if is_service_enabled tls-proxy; then
+        follow_tls_proxy
+    fi
 fi
 
 # Clear ``screenrc`` file
