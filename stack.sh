@@ -1388,12 +1388,7 @@ fi
 # ===============
 
 # Prepare bash completion for OSC
-#
-# BUG: https://bugs.launchpad.net/python-openstackclient/+bug/1619274
-# the os-cloud param should not be required but if we don't provide it
-# then this command hangs indefinitely if something is wrong with
-# default environment credentials.
-openstack --os-cloud=devstack complete | sudo tee /etc/bash_completion.d/osc.bash_completion > /dev/null
+openstack complete | sudo tee /etc/bash_completion.d/osc.bash_completion > /dev/null
 
 # If cinder is configured, set global_filter for PV devices
 if is_service_enabled cinder; then
