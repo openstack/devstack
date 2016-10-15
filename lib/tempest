@@ -405,7 +405,19 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6 "$IPV6_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
 
-    local network_api_extensions=${NETWORK_API_EXTENSIONS:-"all"}
+    DEFAULT_NET_EXT="address-scope,agent,allowed-address-pairs,binding"
+    DEFAULT_NET_EXT+=",allowed-address-pairs,auto-allocated-topology"
+    DEFAULT_NET_EXT+=",availability_zone,binding,default-subnetpool"
+    DEFAULT_NET_EXT+=",dhcp_agent_scheduler,dns-integration"
+    DEFAULT_NET_EXT+=",dvr,ext-gw-mode,external-net"
+    DEFAULT_NET_EXT+=",extra_dhcp_opt,extraroute,flavors,fwaas"
+    DEFAULT_NET_EXT+=",fwaasrouterinsertion,l3-ha,l3_agent_scheduler,lbaas"
+    DEFAULT_NET_EXT+=",lbaas_agent_scheduler,metering,multi-provider,net-mtu"
+    DEFAULT_NET_EXT+="network-ip-availability,network_availability_zone,port-security"
+    DEFAULT_NET_EXT+=",provider,quotas,rbac-policies,router,router_availability_zone"
+    DEFAULT_NET_EXT+=",security-group,service-type,standard-attr-description"
+    DEFAULT_NET_EXT+=",subnet_allocation,tag,timestamp_core,vpnaas"
+    local network_api_extensions="${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}"
     if [[ ! -z "$DISABLE_NETWORK_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         network_api_extensions=${NETWORK_API_EXTENSIONS:-$(iniget $tmp_cfg_file network-feature-enabled api_extensions | tr -d " ")}
@@ -447,7 +459,11 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG telemetry-feature-enabled events "True"
 
     # Object Store
-    local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
+    DEFAULT_SWIFT_OPT="account_quotas,bulk,bulk_delete,bulk_upload,container_quotas"
+    DEFAULT_SWIFT_OPT+=",container_sync,crossdomain,formpost,ratelimit,slo"
+    DEFAULT_SWIFT_OPT+=",staticweb,tempauth,tempurl"
+
+    local object_storage_api_extensions="${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_OPT}"
     if [[ ! -z "$DISABLE_OBJECT_STORAGE_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$(iniget $tmp_cfg_file object-storage-feature-enabled discoverable_apis | tr -d " ")}
@@ -469,7 +485,18 @@ function configure_tempest {
     # TODO(ynesenenko): Remove the volume_services flag when Liberty and Kilo will correct work with host info.
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_services True
 
-    local volume_api_extensions=${VOLUME_API_EXTENSIONS:-"all"}
+    DEFAULT_VOL_EXT="OS-SCH-HNT,backups,capabilities,cgsnapshots,consistencygroups"
+    DEFAULT_VOL_EXT+=",encryption,os-admin-actions,os-availability-zone"
+    DEFAULT_VOL_EXT+=",os-extended-services,os-extended-snapshot-attributes"
+    DEFAULT_VOL_EXT+=",os-hosts,os-image-create,os-quota-class-sets,os-quota-sets"
+    DEFAULT_VOL_EXT+=",os-services,os-snapshot-actions,os-snapshot-manage,os-snapshot-unmanage"
+    DEFAULT_VOL_EXT+=",os-types-extra-specs"
+    DEFAULT_VOL_EXT+=",os-types-manage,os-used-limits,os-vol-host-attr,os-vol-image-meta"
+    DEFAULT_VOL_EXT+=",os-vol-mig-status-attr,os-vol-tenant-attr,os-volume-actions"
+    DEFAULT_VOL_EXT+=",os-volume-encryption-metadata,os-volume-manage"
+    DEFAULT_VOL_EXT+=",os-volume-replication,os-volume-transfer,os-volume-type-access"
+    DEFAULT_VOL_EXT+=",os-volume-unmanage,qos-specs,scheduler-stats"
+    local volume_api_extensions="${VOLUME_API_EXTENSIONS:-$DEFAULT_VOL_EXT}"
     if [[ ! -z "$DISABLE_VOLUME_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         volume_api_extensions=${VOLUME_API_EXTENSIONS:-$(iniget $tmp_cfg_file volume-feature-enabled api_extensions | tr -d " ")}
