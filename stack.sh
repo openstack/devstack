@@ -1267,7 +1267,10 @@ if is_service_enabled neutron; then
     start_neutron
 fi
 # Once neutron agents are started setup initial network elements
-create_neutron_initial_network
+if is_service_enabled q-svc && [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]]; then
+    echo_summary "Creating initial neutron network elements"
+    create_neutron_initial_network
+fi
 
 if is_service_enabled nova; then
     echo_summary "Starting Nova"
