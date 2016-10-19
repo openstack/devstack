@@ -121,7 +121,6 @@ nova-powervm                           `git://git.openstack.org/openstack/nova-p
 octavia                                `git://git.openstack.org/openstack/octavia <https://git.openstack.org/cgit/openstack/octavia>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
-python-freezerclient                   `git://git.openstack.org/openstack/python-freezerclient <https://git.openstack.org/cgit/openstack/python-freezerclient>`__
 rally                                  `git://git.openstack.org/openstack/rally <https://git.openstack.org/cgit/openstack/rally>`__
 sahara                                 `git://git.openstack.org/openstack/sahara <https://git.openstack.org/cgit/openstack/sahara>`__
 sahara-dashboard                       `git://git.openstack.org/openstack/sahara-dashboard <https://git.openstack.org/cgit/openstack/sahara-dashboard>`__
