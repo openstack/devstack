@@ -45,7 +45,7 @@ function configure_cinder_backend_ceph {
 
     iniset $CINDER_CONF $be_name volume_backend_name $be_name
     iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.rbd.RBDDriver"
-    iniset $CINDER_CONF $be_name rbd_ceph_conf "$CEPH_CONF"
+    iniset $CINDER_CONF $be_name rbd_ceph_conf "$CEPH_CONF_FILE"
     iniset $CINDER_CONF $be_name rbd_pool "$CINDER_CEPH_POOL"
     iniset $CINDER_CONF $be_name rbd_user "$CINDER_CEPH_USER"
     iniset $CINDER_CONF $be_name rbd_uuid "$CINDER_CEPH_UUID"
@@ -66,7 +66,7 @@ function configure_cinder_backend_ceph {
         sudo chown $(whoami):$(whoami) ${CEPH_CONF_DIR}/ceph.client.${CINDER_BAK_CEPH_USER}.keyring
 
         iniset $CINDER_CONF DEFAULT backup_driver "cinder.backup.drivers.ceph"
-        iniset $CINDER_CONF DEFAULT backup_ceph_conf "$CEPH_CONF"
+        iniset $CINDER_CONF DEFAULT backup_ceph_conf "$CEPH_CONF_FILE"
         iniset $CINDER_CONF DEFAULT backup_ceph_pool "$CINDER_BAK_CEPH_POOL"
         iniset $CINDER_CONF DEFAULT backup_ceph_user "$CINDER_BAK_CEPH_USER"
         iniset $CINDER_CONF DEFAULT backup_ceph_stripe_unit 0
