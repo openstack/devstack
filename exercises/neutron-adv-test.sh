@@ -156,7 +156,7 @@ function get_role_id {
 function get_network_id {
     local NETWORK_NAME="$1"
     local NETWORK_ID
-    NETWORK_ID=`neutron net-list -F id  -- --name=$NETWORK_NAME | awk "NR==4" | awk '{print $2}'`
+    NETWORK_ID=`openstack network list | grep $NETWORK_NAME | awk '{print $2}'`
     echo $NETWORK_ID
 }
 
@@ -234,9 +234,9 @@ function create_network {
     PROJECT_ID=$(get_project_id $PROJECT)
     source $TOP_DIR/openrc $PROJECT $PROJECT
     local NET_ID
-    NET_ID=$(neutron net-create --project-id $PROJECT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
+    NET_ID=$(openstack network create --project $PROJECT_ID $NET_NAME $EXTRA| grep ' id ' | awk '{print $4}' )
     die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PROJECT_ID $NET_NAME $EXTRA"
-    neutron subnet-create --ip-version 4 --project-id $PROJECT_ID --gateway $GATEWAY --subnetpool None $NET_ID $CIDR
+    openstack subnet create --ip-version 4 --project $PROJECT_ID --gateway $GATEWAY --subnet-pool None --network $NET_ID --subnet-range $CIDR "${NET_NAME}_subnet"
     neutron_debug_admin probe-create --device-owner compute $NET_ID
     source $TOP_DIR/openrc demo demo
 }
@@ -325,10 +325,10 @@ function delete_network {
     PROJECT_ID=$(get_project_id $PROJECT)
     #TODO(nati) comment out until l3-agent merged
     #for res in port subnet net router;do
-    for net_id in `neutron net-list -c id -c name | grep $NET_NAME | awk '{print $2}'`;do
+    for net_id in `openstack network list -c ID -c Name | grep $NET_NAME | awk '{print $2}'`;do
         delete_probe $net_id
-        neutron subnet-list | grep $net_id | awk '{print $2}' | xargs -I% neutron subnet-delete %
-        neutron net-delete $net_id
+        openstack subnet list | grep $net_id | awk '{print $2}' | xargs -I% openstack subnet delete %
+        openstack network delete $net_id
     done
     source $TOP_DIR/openrc demo demo
 }
