@@ -1380,7 +1380,7 @@ check_libs_from_git
 # ----------------------
 
 # Do this late because it requires compute hosts to have started
-if is_service_enabled n-api && [ "$NOVA_CONFIGURE_CELLSV2" == "True" ]; then
+if is_service_enabled n-api; then
     create_cell
 fi
 
