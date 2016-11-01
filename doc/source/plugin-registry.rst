@@ -69,6 +69,7 @@ ironic-inspector                       `git://git.openstack.org/openstack/ironic
 ironic-staging-drivers                 `git://git.openstack.org/openstack/ironic-staging-drivers <https://git.openstack.org/cgit/openstack/ironic-staging-drivers>`__
 karbor                                 `git://git.openstack.org/openstack/karbor <https://git.openstack.org/cgit/openstack/karbor>`__
 karbor-dashboard                       `git://git.openstack.org/openstack/karbor-dashboard <https://git.openstack.org/cgit/openstack/karbor-dashboard>`__
+keystone                               `git://git.openstack.org/openstack/keystone <https://git.openstack.org/cgit/openstack/keystone>`__
 kingbird                               `git://git.openstack.org/openstack/kingbird <https://git.openstack.org/cgit/openstack/kingbird>`__
 kuryr-kubernetes                       `git://git.openstack.org/openstack/kuryr-kubernetes <https://git.openstack.org/cgit/openstack/kuryr-kubernetes>`__
 kuryr-libnetwork                       `git://git.openstack.org/openstack/kuryr-libnetwork <https://git.openstack.org/cgit/openstack/kuryr-libnetwork>`__
