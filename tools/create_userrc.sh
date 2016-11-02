@@ -193,7 +193,6 @@ export OS_PROJECT_NAME="$project_name"
 export OS_AUTH_URL="$OS_AUTH_URL"
 export OS_CACERT="$OS_CACERT"
 export NOVA_CERT="$ACCOUNT_DIR/cacert.pem"
-export OS_AUTH_TYPE=v2password
 EOF
     if [ -n "$ADDPASS" ]; then
         echo "export OS_PASSWORD=\"$user_passwd\"" >>"$rcfile"
