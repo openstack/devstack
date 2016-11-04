@@ -119,6 +119,7 @@ nova-docker                            `git://git.openstack.org/openstack/nova-d
 nova-lxd                               `git://git.openstack.org/openstack/nova-lxd <https://git.openstack.org/cgit/openstack/nova-lxd>`__
 nova-mksproxy                          `git://git.openstack.org/openstack/nova-mksproxy <https://git.openstack.org/cgit/openstack/nova-mksproxy>`__
 nova-powervm                           `git://git.openstack.org/openstack/nova-powervm <https://git.openstack.org/cgit/openstack/nova-powervm>`__
+oaktree                                `git://git.openstack.org/openstack/oaktree <https://git.openstack.org/cgit/openstack/oaktree>`__
 octavia                                `git://git.openstack.org/openstack/octavia <https://git.openstack.org/cgit/openstack/octavia>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
