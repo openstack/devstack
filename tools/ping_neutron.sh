@@ -54,7 +54,7 @@ fi
 REMAINING_ARGS="${@:2}"
 
 # BUG: with duplicate network names, this fails pretty hard.
-NET_ID=$(openstack network list | grep "$NET_NAME" | awk '{print $2}')
+NET_ID=$(openstack network show -f value -c id "$NET_NAME")
 PROBE_ID=$(neutron-debug probe-list -c id -c network_id | grep "$NET_ID" | awk '{print $2}' | head -n 1)
 
 # This runs a command inside the specific netns
