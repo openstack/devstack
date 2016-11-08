@@ -703,13 +703,13 @@ Cinder
 ~~~~~~
 
 The logical volume group used to hold the Cinder-managed volumes is
-set by ``VOLUME_GROUP``, the logical volume name prefix is set with
+set by ``VOLUME_GROUP_NAME``, the logical volume name prefix is set with
 ``VOLUME_NAME_PREFIX`` and the size of the volume backing file is set
 with ``VOLUME_BACKING_FILE_SIZE``.
 
     ::
 
-        VOLUME_GROUP="stack-volumes"
+        VOLUME_GROUP_NAME="stack-volumes"
         VOLUME_NAME_PREFIX="volume-"
         VOLUME_BACKING_FILE_SIZE=10250M
 
