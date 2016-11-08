@@ -81,8 +81,11 @@ function neutron_plugin_configure_plugin_agent {
         # integration bridge.  This is enabled by using a root wrapper
         # that executes commands on dom0 via a XenAPI plugin.
         # XenAPI does not support daemon rootwrap now, so set root_helper_daemon empty
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper "$Q_RR_DOM0_COMMAND"
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper_daemon ""
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper ""
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper_daemon "xenapi_root_helper"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" xenapi connection_url "$XENAPI_CONNECTION_URL"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" xenapi connection_username "$XENAPI_USER"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" xenapi connection_password "$XENAPI_PASSWORD"
 
         # Disable minimize polling, so that it can always detect OVS and Port changes
         # This is a problem of xenserver + neutron, bug has been reported
