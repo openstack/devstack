@@ -82,6 +82,10 @@ if is_service_enabled tls-proxy; then
     NOVA_SERVICE_PROTOCOL="https"
 fi
 
+# Whether to use TLS for comms between the VNC/SPICE/serial proxy
+# services and the compute node
+NOVA_CONSOLE_PROXY_COMPUTE_TLS=${NOVA_CONSOLE_PROXY_COMPUTE_TLS:-False}
+
 # Public facing bits
 NOVA_SERVICE_HOST=${NOVA_SERVICE_HOST:-$SERVICE_HOST}
 NOVA_SERVICE_PORT=${NOVA_SERVICE_PORT:-8774}
@@ -194,6 +198,13 @@ function is_nova_enabled {
 # is_nova_enabled
 function is_n-cell_enabled {
     [[ ,${ENABLED_SERVICES} =~ ,"n-cell" ]] && return 0
+    return 1
+}
+
+# is_nova_console_proxy_compute_tls_enabled() - Test if the Nova Console Proxy
+# service has TLS enabled
+function is_nova_console_proxy_compute_tls_enabled {
+    [[ ${NOVA_CONSOLE_PROXY_COMPUTE_TLS} = "True" ]] && return 0
     return 1
 }
 
@@ -524,6 +535,17 @@ function create_nova_conf {
         iniset $NOVA_CONF vnc server_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
         iniset $NOVA_CONF vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $NOVA_CONF vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+
+        if is_nova_console_proxy_compute_tls_enabled ; then
+            iniset $NOVA_CONF vnc auth_schemes "vencrypt"
+            iniset $NOVA_CONF vnc vencrypt_client_key "/etc/pki/nova-novnc/client-key.pem"
+            iniset $NOVA_CONF vnc vencrypt_client_cert "/etc/pki/nova-novnc/client-cert.pem"
+            iniset $NOVA_CONF vnc vencrypt_ca_certs "/etc/pki/nova-novnc/ca-cert.pem"
+
+            sudo mkdir -p /etc/pki/nova-novnc
+            deploy_int_CA /etc/pki/nova-novnc/ca-cert.pem
+            deploy_int_cert /etc/pki/nova-novnc/client-cert.pem /etc/pki/nova-novnc/client-key.pem
+        fi
     else
         iniset $NOVA_CONF vnc enabled false
     fi

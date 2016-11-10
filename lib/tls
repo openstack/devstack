@@ -340,6 +340,24 @@ function make_root_CA {
     fi
 }
 
+# Deploy the service cert & key to a service specific
+# location
+function deploy_int_cert {
+    local cert_target_file=$1
+    local key_target_file=$2
+
+    sudo cp "$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt" "$cert_target_file"
+    sudo cp "$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key" "$key_target_file"
+}
+
+# Deploy the intermediate CA cert bundle file to a service
+# specific location
+function deploy_int_CA {
+    local ca_target_file=$1
+
+    sudo cp "$INT_CA_DIR/ca-chain.pem" "$ca_target_file"
+}
+
 # If a non-system python-requests is installed then it will use the
 # built-in CA certificate store rather than the distro-specific
 # CA certificate store. Detect this and symlink to the correct
