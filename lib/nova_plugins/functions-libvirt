@@ -149,6 +149,18 @@ EOF
         fi
     fi
 
+    if is_nova_console_proxy_compute_tls_enabled ; then
+        if is_service_enabled n-novnc ; then
+            echo "vnc_tls = 1" | sudo tee -a $QEMU_CONF
+            echo "vnc_tls_x509_verify = 1" | sudo tee -a $QEMU_CONF
+
+            sudo mkdir -p /etc/pki/libvirt-vnc
+            sudo chown libvirt-qemu:libvirt-qemu /etc/pki/libvirt-vnc
+            deploy_int_CA /etc/pki/libvirt-vnc/ca-cert.pem
+            deploy_int_cert /etc/pki/libvirt-vnc/server-cert.pem /etc/pki/libvirt-vnc/server-key.pem
+        fi
+    fi
+
     # Service needs to be started on redhat/fedora -- do a restart for
     # sanity after fiddling the config.
     restart_service $LIBVIRT_DAEMON
