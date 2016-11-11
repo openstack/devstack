@@ -36,7 +36,7 @@ if is_service_enabled nova; then
     # Add first keypair found in localhost:$HOME/.ssh
     for i in $HOME/.ssh/id_rsa.pub $HOME/.ssh/id_dsa.pub; do
         if [[ -r $i ]]; then
-            nova keypair-add --pub_key=$i `hostname`
+            openstack keypair create --public-key $i `hostname`
             break
         fi
     done
@@ -53,8 +53,8 @@ if is_service_enabled nova; then
     MI_NAME=m1.micro
 
     # Create micro flavor if not present
-    if [[ -z $(nova flavor-list | grep $MI_NAME) ]]; then
-        nova flavor-create $MI_NAME 6 128 0 1
+    if [[ -z $(openstack flavor list | grep $MI_NAME) ]]; then
+        openstack flavor create $MI_NAME --id 6 --ram 128 --disk 0 --vcpus 1
     fi
 
 
@@ -62,7 +62,7 @@ if is_service_enabled nova; then
     # ----------
 
     # Add tcp/22 and icmp to default security group
-    nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
-    nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+    openstack security group rule create --project $OS_PROJECT_NAME default --protocol tcp --ingress --dst-port 22
+    openstack security group rule create --project $OS_PROJECT_NAME default --protocol icmp
 
 fi
