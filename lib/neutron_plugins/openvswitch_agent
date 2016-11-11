@@ -81,19 +81,19 @@ function neutron_plugin_configure_plugin_agent {
         # integration bridge.  This is enabled by using a root wrapper
         # that executes commands on dom0 via a XenAPI plugin.
         # XenAPI does not support daemon rootwrap now, so set root_helper_daemon empty
-        iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_DOM0_COMMAND"
-        iniset /$Q_PLUGIN_CONF_FILE agent root_helper_daemon ""
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper "$Q_RR_DOM0_COMMAND"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper_daemon ""
 
         # Disable minimize polling, so that it can always detect OVS and Port changes
         # This is a problem of xenserver + neutron, bug has been reported
         # https://bugs.launchpad.net/neutron/+bug/1495423
-        iniset /$Q_PLUGIN_CONF_FILE agent minimize_polling False
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent minimize_polling False
 
         # Set "physical" mapping
-        iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings "physnet1:$FLAT_NETWORK_BRIDGE"
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs bridge_mappings "physnet1:$FLAT_NETWORK_BRIDGE"
 
         # XEN_INTEGRATION_BRIDGE is the integration bridge in dom0
-        iniset /$Q_PLUGIN_CONF_FILE ovs integration_bridge $XEN_INTEGRATION_BRIDGE
+        iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs integration_bridge $XEN_INTEGRATION_BRIDGE
 
         # Set up domU's L2 agent:
 
@@ -107,11 +107,11 @@ function neutron_plugin_configure_plugin_agent {
         sudo ovs-vsctl -- --may-exist add-port $PUBLIC_BRIDGE $PUBLIC_INTERFACE
 
         # Set bridge mappings to "physnet1:br-$GUEST_INTERFACE_DEFAULT"
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs bridge_mappings "physnet1:br-$VLAN_INTERFACE,physnet-ex:$PUBLIC_BRIDGE"
+        iniset /$Q_PLUGIN_CONF_FILE ovs bridge_mappings "physnet1:br-$VLAN_INTERFACE,physnet-ex:$PUBLIC_BRIDGE"
         # Set integration bridge to domU's
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" ovs integration_bridge $OVS_BRIDGE
+        iniset /$Q_PLUGIN_CONF_FILE ovs integration_bridge $OVS_BRIDGE
         # Set root wrap
-        iniset "/$Q_PLUGIN_CONF_FILE.domU" agent root_helper "$Q_RR_COMMAND"
+        iniset /$Q_PLUGIN_CONF_FILE agent root_helper "$Q_RR_COMMAND"
     fi
     iniset /$Q_PLUGIN_CONF_FILE agent tunnel_types $Q_TUNNEL_TYPES
     iniset /$Q_PLUGIN_CONF_FILE ovs datapath_type $OVS_DATAPATH_TYPE
