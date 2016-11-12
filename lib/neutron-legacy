@@ -24,11 +24,9 @@
 # - check_neutron_third_party_integration
 # - start_neutron_agents
 # - create_neutron_initial_network
-# - setup_neutron_debug
 #
 # ``unstack.sh`` calls the entry points in this order:
 #
-# - teardown_neutron_debug
 # - stop_neutron
 # - stop_neutron_third_party
 # - cleanup_neutron

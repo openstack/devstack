@@ -97,11 +97,6 @@ set -o xtrace
 # Phase: unstack
 run_phase unstack
 
-if [[ "$Q_USE_DEBUG_COMMAND" == "True" ]]; then
-    source $TOP_DIR/openrc
-    teardown_neutron_debug
-fi
-
 # Call service stop
 
 if is_service_enabled heat; then
