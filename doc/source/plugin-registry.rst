@@ -78,6 +78,7 @@ magnum-ui                              `git://git.openstack.org/openstack/magnum
 manila                                 `git://git.openstack.org/openstack/manila <https://git.openstack.org/cgit/openstack/manila>`__
 masakari                               `git://git.openstack.org/openstack/masakari <https://git.openstack.org/cgit/openstack/masakari>`__
 mistral                                `git://git.openstack.org/openstack/mistral <https://git.openstack.org/cgit/openstack/mistral>`__
+mixmatch                               `git://git.openstack.org/openstack/mixmatch <https://git.openstack.org/cgit/openstack/mixmatch>`__
 monasca-analytics                      `git://git.openstack.org/openstack/monasca-analytics <https://git.openstack.org/cgit/openstack/monasca-analytics>`__
 monasca-api                            `git://git.openstack.org/openstack/monasca-api <https://git.openstack.org/cgit/openstack/monasca-api>`__
 monasca-ceilometer                     `git://git.openstack.org/openstack/monasca-ceilometer <https://git.openstack.org/cgit/openstack/monasca-ceilometer>`__
@@ -85,6 +86,7 @@ monasca-log-api                        `git://git.openstack.org/openstack/monasc
 monasca-transform                      `git://git.openstack.org/openstack/monasca-transform <https://git.openstack.org/cgit/openstack/monasca-transform>`__
 murano                                 `git://git.openstack.org/openstack/murano <https://git.openstack.org/cgit/openstack/murano>`__
 networking-6wind                       `git://git.openstack.org/openstack/networking-6wind <https://git.openstack.org/cgit/openstack/networking-6wind>`__
+networking-arista                      `git://git.openstack.org/openstack/networking-arista <https://git.openstack.org/cgit/openstack/networking-arista>`__
 networking-bagpipe                     `git://git.openstack.org/openstack/networking-bagpipe <https://git.openstack.org/cgit/openstack/networking-bagpipe>`__
 networking-bgpvpn                      `git://git.openstack.org/openstack/networking-bgpvpn <https://git.openstack.org/cgit/openstack/networking-bgpvpn>`__
 networking-brocade                     `git://git.openstack.org/openstack/networking-brocade <https://git.openstack.org/cgit/openstack/networking-brocade>`__
