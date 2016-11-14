@@ -267,8 +267,7 @@ function configure_tempest {
     if [[ "$TEMPEST_HAS_ADMIN" == "True" ]]; then
         iniset $TEMPEST_CONFIG auth admin_username $admin_username
         iniset $TEMPEST_CONFIG auth admin_password "$password"
-        iniset $TEMPEST_CONFIG auth admin_tenant_name $admin_project_name
-        iniset $TEMPEST_CONFIG auth admin_tenant_id $admin_project_id
+        iniset $TEMPEST_CONFIG auth admin_project_name $admin_project_name
         iniset $TEMPEST_CONFIG auth admin_domain_name $admin_domain_name
     fi
     if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
@@ -306,15 +305,10 @@ function configure_tempest {
     fi
 
     # Compute
-    iniset $TEMPEST_CONFIG compute ssh_user ${DEFAULT_INSTANCE_USER:-cirros} # DEPRECATED
     iniset $TEMPEST_CONFIG compute image_ref $image_uuid
     iniset $TEMPEST_CONFIG compute image_ref_alt $image_uuid_alt
-    iniset $TEMPEST_CONFIG compute image_alt_ssh_user ${ALT_INSTANCE_USER:-cirros}
     iniset $TEMPEST_CONFIG compute flavor_ref $flavor_ref
     iniset $TEMPEST_CONFIG compute flavor_ref_alt $flavor_ref_alt
-    iniset $TEMPEST_CONFIG compute ssh_connect_method $ssh_connect_method
-    # set the equiv validation option here as well to ensure they are
-    # in sync. They shouldn't be separate options.
     iniset $TEMPEST_CONFIG validation connect_method $ssh_connect_method
     if ! is_service_enabled n-cell && ! is_service_enabled neutron; then
         iniset $TEMPEST_CONFIG compute fixed_network_name $PRIVATE_NETWORK_NAME
@@ -419,9 +413,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG scenario ari_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-initrd"
     iniset $TEMPEST_CONFIG scenario aki_img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-vmlinuz"
     iniset $TEMPEST_CONFIG scenario img_file "cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img"
-
-    # Telemetry
-    iniset $TEMPEST_CONFIG telemetry-feature-enabled events "True"
 
     # Validation
     iniset $TEMPEST_CONFIG validation run_validation ${TEMPEST_RUN_VALIDATION:-False}
