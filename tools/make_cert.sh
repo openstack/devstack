@@ -45,6 +45,7 @@ DEVSTACK_CERT=$DATA_DIR/$DEVSTACK_CERT_NAME.pem
 
 # Make sure the CA is set up
 configure_CA
+fix_system_ca_bundle_path
 init_CA
 
 # Create the server cert
