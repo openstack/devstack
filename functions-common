@@ -1334,20 +1334,26 @@ function yum_install {
 
     time_start "yum_install"
 
-    # - We run with LC_ALL=C so string matching *should* be OK
-    # - Exit 1 if the failure might get better with a retry.
-    # - Exit 2 if it is fatal.
-    parse_yum_result='             \
-        BEGIN { result=0 }         \
-        /^YUM_FAILED/ { exit $2 }  \
-        /^No package/ { result=2 } \
-        /^Failed:/    { result=2 } \
-        //{ print }                \
+    # This is a bit tricky, because yum -y assumes missing or failed
+    # packages are OK (see [1]).  We want devstack to stop if we are
+    # installing missing packages.
+    #
+    # Thus we manually match on the output (stack.sh runs in a fixed
+    # locale, so lang shouldn't change).
+    #
+    # If yum returns !0, we echo the result as "YUM_FAILED" and return
+    # that from the awk (we're subverting -e with this trick).
+    # Otherwise we use awk to look for failure strings and return "2"
+    # to indicate a terminal failure.
+    #
+    # [1] https://bugzilla.redhat.com/show_bug.cgi?id=965567
+    parse_yum_result='              \
+        BEGIN { result=0 }          \
+        /^YUM_FAILED/ { result=$2 } \
+        /^No package/ { result=2 }  \
+        /^Failed:/    { result=2 }  \
+        //{ print }                 \
         END { exit result }'
-
-    # The manual check for missing packages is because yum -y assumes
-    # missing or failed packages are OK.
-    # See https://bugzilla.redhat.com/show_bug.cgi?id=965567
     (sudo_with_proxies "${YUM:-yum}" install -y "$@" 2>&1 || echo YUM_FAILED $?) \
         | awk "$parse_yum_result" && result=$? || result=$?
 
