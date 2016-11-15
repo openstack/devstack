@@ -66,21 +66,21 @@ Run stack.sh and do some sanity checks
     ./stack.sh
     . ./openrc
 
-    neutron net-list  # should show public and private networks
+    openstack network list  # should show public and private networks
 
 Create two nova instances that we can use as test http servers:
 
   ::
 
     #create nova instances on private network
-    nova boot --image $(nova image-list | awk '/ cirros-.*-x86_64-uec / {print $2}') --flavor 1 --nic net-id=$(neutron net-list | awk '/ private / {print $2}') node1
-    nova boot --image $(nova image-list | awk '/ cirros-.*-x86_64-uec / {print $2}') --flavor 1 --nic net-id=$(neutron net-list | awk '/ private / {print $2}') node2
+    nova boot --image $(nova image-list | awk '/ cirros-.*-x86_64-uec / {print $2}') --flavor 1 --nic net-id=$(openstack network list | awk '/ private / {print $2}') node1
+    nova boot --image $(nova image-list | awk '/ cirros-.*-x86_64-uec / {print $2}') --flavor 1 --nic net-id=$(openstack network list | awk '/ private / {print $2}') node2
     nova list # should show the nova instances just created
 
     #add secgroup rules to allow ssh etc..
-    neutron security-group-rule-create default --protocol icmp
-    neutron security-group-rule-create default --protocol tcp --port-range-min 22 --port-range-max 22
-    neutron security-group-rule-create default --protocol tcp --port-range-min 80 --port-range-max 80
+    openstack security group rule create default --protocol icmp
+    openstack security group rule create default --protocol tcp --dst-port 22:22
+    openstack security group rule create default --protocol tcp --dst-port 80:80
 
 Set up a simple web server on each of these instances. ssh into each instance (username 'cirros', password 'cubswin:)') and run
 
