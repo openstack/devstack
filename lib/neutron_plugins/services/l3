@@ -373,11 +373,6 @@ function _neutron_configure_router_v4 {
             fi
             ROUTER_GW_IP=$(neutron --os-cloud devstack-admin --os-region "$REGION_NAME" port-list -c fixed_ips -c device_owner | grep router_gateway | awk -F'ip_address'  '{ print $2 }' | cut -f3 -d\" | tr '\n' ' ')
             die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
-            local replace_range=${SUBNETPOOL_PREFIX_V4}
-            if [[ -z "${SUBNETPOOL_V4_ID}" ]]; then
-                replace_range=${FIXED_RANGE}
-            fi
-            sudo ip route replace $replace_range via $ROUTER_GW_IP
         fi
         _neutron_set_router_id
     fi
