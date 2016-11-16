@@ -337,8 +337,8 @@ function configure_keystone {
     # Configure the project created by the 'keystone-manage bootstrap' as the cloud-admin project.
     # The users from this project are globally admin as before, but it also
     # allows policy changes in order to clarify the adminess scope.
-    iniset $KEYSTONE_CONF resource admin_project_domain_name Default
-    iniset $KEYSTONE_CONF resource admin_project_name admin
+    #iniset $KEYSTONE_CONF resource admin_project_domain_name Default
+    #iniset $KEYSTONE_CONF resource admin_project_name admin
 }
 
 # create_keystone_accounts() - Sets up common required keystone accounts
