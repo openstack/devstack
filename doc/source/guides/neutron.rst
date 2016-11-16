@@ -79,7 +79,7 @@ serving as a hypervisor for guest instances.
         ## Neutron options
         Q_USE_SECGROUP=True
         FLOATING_RANGE="172.18.161.0/24"
-        FIXED_RANGE="10.0.0.0/24"
+        IPV4_ADDRS_SAFE_TO_USE="10.0.0.0/22"
         Q_FLOATING_ALLOCATION_POOL=start=172.18.161.250,end=172.18.161.254
         PUBLIC_NETWORK_GATEWAY="172.18.161.1"
         PUBLIC_INTERFACE=eth0
@@ -387,17 +387,17 @@ controller node.
 
         ## Neutron Networking options used to create Neutron Subnets
 
-        FIXED_RANGE="203.0.113.0/24"
+        IPV4_ADDRS_SAFE_TO_USE="203.0.113.0/24"
         NETWORK_GATEWAY=203.0.113.1
         PROVIDER_SUBNET_NAME="provider_net"
         PROVIDER_NETWORK_TYPE="vlan"
         SEGMENTATION_ID=2010
         USE_SUBNETPOOL=False
 
-In this configuration we are defining FIXED_RANGE to be a
+In this configuration we are defining IPV4_ADDRS_SAFE_TO_USE to be a
 publicly routed IPv4 subnet. In this specific instance we are using
 the special TEST-NET-3 subnet defined in `RFC 5737 <http://tools.ietf.org/html/rfc5737>`_,
-which is used for documentation.  In your DevStack setup, FIXED_RANGE
+which is used for documentation.  In your DevStack setup, IPV4_ADDRS_SAFE_TO_USE
 would be a public IP address range that you or your organization has
 allocated to you, so that you could access your instances from the
 public internet.
@@ -524,7 +524,7 @@ setup, with small modifications for the interface mappings.
     ## Neutron options
     Q_USE_SECGROUP=True
     FLOATING_RANGE="172.18.161.0/24"
-    FIXED_RANGE="10.0.0.0/24"
+    IPV4_ADDRS_SAFE_TO_USE="10.0.0.0/24"
     Q_FLOATING_ALLOCATION_POOL=start=172.18.161.250,end=172.18.161.254
     PUBLIC_NETWORK_GATEWAY="172.18.161.1"
     PUBLIC_INTERFACE=eth0
@@ -573,7 +573,7 @@ you do not require them.
     Q_AGENT=macvtap
     PHYSICAL_NETWORK=default
 
-    FIXED_RANGE="203.0.113.0/24"
+    IPV4_ADDRS_SAFE_TO_USE="203.0.113.0/24"
     NETWORK_GATEWAY=203.0.113.1
     PROVIDER_SUBNET_NAME="provider_net"
     PROVIDER_NETWORK_TYPE="vlan"

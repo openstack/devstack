@@ -15,7 +15,8 @@ If you don't specify any configuration you will get the following:
 * neutron (including l3 with openvswitch)
 * private project networks for each openstack project
 * a floating ip range of 172.24.4.0/24 with the gateway of 172.24.4.1
-* the demo project configured with fixed ips on 10.0.0.0/24
+* the demo project configured with fixed ips on a subnet allocated from
+  the 10.0.0.0/22 range
 * a ``br-ex`` interface controlled by neutron for all it's networking
   (this is not connected to any physical interfaces).
 * DNS resolution for guests based on the resolv.conf for you host
@@ -95,3 +96,21 @@ the range of floating ips that will be handed out. As we are sharing
 your existing network, you'll want to give it a slice that your local
 dhcp server is not allocating. Otherwise you could easily have
 conflicting ip addresses, and cause havoc with your local network.
+
+
+Private Network Addressing
+==========================
+
+The private networks addresses are controlled by the ``IPV4_ADDRS_SAFE_TO_USE``
+and the ``IPV6_ADDRS_SAFE_TO_USE`` variables. This allows users to specify one
+single variable of safe internal IPs to use that will be referenced whether or
+not subnetpools are in use.
+
+For IPv4, ``FIXED_RANGE`` and ``SUBNETPOOL_PREFIX_V4`` will just default to
+the value of ``IPV4_ADDRS_SAFE_TO_USE`` directly.
+
+For IPv6, ``FIXED_RANGE`` will default to the first /64 of the value of
+``IPV6_ADDRS_SAFE_TO_USE``. If ``IPV6_ADDRS_SAFE_TO_USE`` is /64 or smaller,
+``FIXED_RANGE`` will just use the value of that directly.
+``SUBNETPOOL_PREFIX_V6`` will just default to the value of
+``IPV6_ADDRS_SAFE_TO_USE`` directly.

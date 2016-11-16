@@ -765,7 +765,8 @@ ENABLE_DEBUG_LOG_LEVEL=$(trueorfalse True ENABLE_DEBUG_LOG_LEVEL)
 # Note that setting ``FIXED_RANGE`` may be necessary when running DevStack
 # in an OpenStack cloud that uses either of these address ranges internally.
 FLOATING_RANGE=${FLOATING_RANGE:-172.24.4.0/24}
-FIXED_RANGE=${FIXED_RANGE:-10.0.0.0/24}
+IPV4_ADDRS_SAFE_TO_USE=${IPV4_ADDRS_SAFE_TO_USE:-10.0.0.0/22}
+FIXED_RANGE=${FIXED_RANGE:-$IPV4_ADDRS_SAFE_TO_USE}
 FIXED_NETWORK_SIZE=${FIXED_NETWORK_SIZE:-256}
 HOST_IP_IFACE=${HOST_IP_IFACE:-}
 HOST_IP=${HOST_IP:-}
