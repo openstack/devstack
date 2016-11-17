@@ -201,7 +201,6 @@ subjectAltName          = \$ENV::SUBJECT_ALT_NAME
 # Create root and intermediate CAs
 # init_CA
 function init_CA {
-    fix_system_ca_bundle_path
     # Ensure CAs are built
     make_root_CA $ROOT_CA_DIR
     make_int_CA $INT_CA_DIR $ROOT_CA_DIR

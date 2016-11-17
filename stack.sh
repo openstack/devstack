@@ -809,6 +809,13 @@ if is_service_enabled cinder nova; then
     install_os_brick
 fi
 
+# Setup TLS certs
+if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
+    configure_CA
+    init_CA
+    init_cert
+fi
+
 # Install middleware
 install_keystonemiddleware
 
@@ -881,13 +888,8 @@ if is_service_enabled heat; then
 fi
 
 if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
-    configure_CA
-    init_CA
-    init_cert
-    # Add name to ``/etc/hosts``.
-    # Don't be naive and add to existing line!
+    fix_system_ca_bundle_path
 fi
-
 
 # Extras Install
 # --------------
