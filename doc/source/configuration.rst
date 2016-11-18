@@ -63,7 +63,7 @@ exists it will be used instead to preserve backward-compatibility.
 ::
 
     [[local|localrc]]
-    FIXED_RANGE=10.254.1.0/24
+    IPV4_ADDRS_SAFE_TO_USE=10.254.1.0/24
     ADMIN_PASSWORD=speciale
     LOGFILE=$DEST/logs/stack.sh.log
 
@@ -161,8 +161,8 @@ values that most often need to be set.
 
 -  no logging
 -  pre-set the passwords to prevent interactive prompts
--  move network ranges away from the local network (``FIXED_RANGE`` and
-   ``FLOATING_RANGE``, commented out below)
+-  move network ranges away from the local network (``IPV4_ADDRS_SAFE_TO_USE``
+   and ``FLOATING_RANGE``, commented out below)
 -  set the host IP if detection is unreliable (``HOST_IP``, commented
    out below)
 
@@ -173,7 +173,7 @@ values that most often need to be set.
     DATABASE_PASSWORD=$ADMIN_PASSWORD
     RABBIT_PASSWORD=$ADMIN_PASSWORD
     SERVICE_PASSWORD=$ADMIN_PASSWORD
-    #FIXED_RANGE=172.31.1.0/24
+    #IPV4_ADDRS_SAFE_TO_USE=172.31.1.0/24
     #FLOATING_RANGE=192.168.20.0/25
     #HOST_IP=10.3.4.5
 
@@ -537,12 +537,12 @@ behavior:
 
         IPV6_RA_MODE=slaac
         IPV6_ADDRESS_MODE=slaac
-        FIXED_RANGE_V6=fd$IPV6_GLOBAL_ID::/64
+        IPV6_ADDRS_SAFE_TO_USE=fd$IPV6_GLOBAL_ID::/56
         IPV6_PRIVATE_NETWORK_GATEWAY=fd$IPV6_GLOBAL_ID::1
 
-*Note*: ``FIXED_RANGE_V6`` and ``IPV6_PRIVATE_NETWORK_GATEWAY`` can be
-configured with any valid IPv6 prefix. The default values make use of
-an auto-generated ``IPV6_GLOBAL_ID`` to comply with RFC4193.
+*Note*: ``IPV6_ADDRS_SAFE_TO_USE`` and ``IPV6_PRIVATE_NETWORK_GATEWAY``
+can be configured with any valid IPv6 prefix. The default values make
+use of an auto-generated ``IPV6_GLOBAL_ID`` to comply with RFC4193.
 
 Service Version
 ~~~~~~~~~~~~~~~
