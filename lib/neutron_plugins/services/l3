@@ -73,7 +73,7 @@ IPV6_PRIVATE_SUBNET_NAME=${IPV6_PRIVATE_SUBNET_NAME:-ipv6-private-subnet}
 IPV6_ADDRS_SAFE_TO_USE=${IPV6_ADDRS_SAFE_TO_USE:-fd$IPV6_GLOBAL_ID::/56}
 # if we got larger than a /64 safe to use, we only use the first /64 to
 # avoid side effects outlined in rfc7421
-FIXED_RANGE_V6=${FIXED_RANGE_V6:-$(echo $IPV6_ADDRS_SAFE_TO_USE | awk -F '/' '{ print ($2>63 ? $2 : 64) }')}
+FIXED_RANGE_V6=${FIXED_RANGE_V6:-$(echo $IPV6_ADDRS_SAFE_TO_USE | awk -F '/' '{ print $1"/"($2>63 ? $2 : 64) }')}
 IPV6_PRIVATE_NETWORK_GATEWAY=${IPV6_PRIVATE_NETWORK_GATEWAY:-}
 IPV6_PUBLIC_RANGE=${IPV6_PUBLIC_RANGE:-2001:db8::/64}
 IPV6_PUBLIC_NETWORK_GATEWAY=${IPV6_PUBLIC_NETWORK_GATEWAY:-2001:db8::2}
