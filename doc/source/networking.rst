@@ -4,7 +4,7 @@
 
 An important part of the DevStack experience is networking that works
 by default for created guests. This might not be optimal for your
-particular testing environment, so this document tries it's best to
+particular testing environment, so this document tries its best to
 explain what's going on.
 
 Defaults
@@ -17,9 +17,9 @@ If you don't specify any configuration you will get the following:
 * a floating ip range of 172.24.4.0/24 with the gateway of 172.24.4.1
 * the demo project configured with fixed ips on a subnet allocated from
   the 10.0.0.0/22 range
-* a ``br-ex`` interface controlled by neutron for all it's networking
+* a ``br-ex`` interface controlled by neutron for all its networking
   (this is not connected to any physical interfaces).
-* DNS resolution for guests based on the resolv.conf for you host
+* DNS resolution for guests based on the resolv.conf for your host
 * an ip masq rule that allows created guests to route out
 
 This creates an environment which is isolated to the single
@@ -40,7 +40,7 @@ updates. Tempest tests will work in this environment.
 Locally Accessible Guests
 =========================
 
-If you want to make you guests accessible other machines on your
+If you want to make you guests accessible from other machines on your
 network, we have to connect ``br-ex`` to a physical interface.
 
 Dedicated Guest Interface
@@ -109,8 +109,8 @@ not subnetpools are in use.
 For IPv4, ``FIXED_RANGE`` and ``SUBNETPOOL_PREFIX_V4`` will just default to
 the value of ``IPV4_ADDRS_SAFE_TO_USE`` directly.
 
-For IPv6, ``FIXED_RANGE`` will default to the first /64 of the value of
+For IPv6, ``FIXED_RANGE_V6`` will default to the first /64 of the value of
 ``IPV6_ADDRS_SAFE_TO_USE``. If ``IPV6_ADDRS_SAFE_TO_USE`` is /64 or smaller,
-``FIXED_RANGE`` will just use the value of that directly.
+``FIXED_RANGE_V6`` will just use the value of that directly.
 ``SUBNETPOOL_PREFIX_V6`` will just default to the value of
 ``IPV6_ADDRS_SAFE_TO_USE`` directly.
