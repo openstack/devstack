@@ -51,9 +51,6 @@ KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
 
-# NOTE(sdague): remove in Newton
-KEYSTONE_CATALOG_BACKEND="sql"
-
 # Toggle for deploying Keystone under HTTPD + mod_wsgi
 # Deprecated in Mitaka, use KEYSTONE_DEPLOY instead.
 KEYSTONE_USE_MOD_WSGI=${KEYSTONE_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}}
