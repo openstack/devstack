@@ -15,7 +15,7 @@
 
 echo "Ensuring we don't have crazy refs"
 
-REFS=`grep BRANCH stackrc | grep -v -- '-master'`
+REFS=`grep BRANCH stackrc | grep -v -- '-master' | grep -v -- '-stable/newton'`
 rc=$?
 if [[ $rc -eq 0 ]]; then
     echo "Branch defaults must be master. Found:"
