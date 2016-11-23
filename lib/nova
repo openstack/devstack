@@ -868,9 +868,13 @@ function start_nova_rest {
     run_process n-cond "$NOVA_BIN_DIR/nova-conductor --config-file $compute_cell_conf"
     run_process n-cell-region "$NOVA_BIN_DIR/nova-cells --config-file $api_cell_conf"
     run_process n-cell-child "$NOVA_BIN_DIR/nova-cells --config-file $compute_cell_conf"
-
     run_process n-crt "$NOVA_BIN_DIR/nova-cert --config-file $api_cell_conf"
+
+    if is_service_enabled n-net; then
+        enable_kernel_bridge_firewall
+    fi
     run_process n-net "$NOVA_BIN_DIR/nova-network --config-file $compute_cell_conf"
+
     run_process n-sch "$NOVA_BIN_DIR/nova-scheduler --config-file $compute_cell_conf"
     run_process n-api-meta "$NOVA_BIN_DIR/nova-api-metadata --config-file $compute_cell_conf"
 
