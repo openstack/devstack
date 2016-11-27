@@ -2310,11 +2310,12 @@ function stop_service {
     fi
 }
 
-# Service wrapper to stop services
+# Service wrapper to reload services
+# If the service was not in running state it will start it
 # reload_service service-name
 function reload_service {
     if [ -x /bin/systemctl ]; then
-        sudo /bin/systemctl reload $1
+        sudo /bin/systemctl reload-or-restart $1
     else
         sudo service $1 reload
     fi
