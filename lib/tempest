@@ -193,11 +193,11 @@ function configure_tempest {
         available_flavors=$(nova flavor-list)
         if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
             if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
-                nova flavor-create m1.nano 42 64 0 1
+                openstack flavor create --id 42 --ram 64 --disk 0 --vcpus 1 m1.nano
             fi
             flavor_ref=42
             if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
-                nova flavor-create m1.micro 84 128 0 1
+                openstack flavor create --id 84 --ram 128 --disk 0 --vcpus 1 m1.micro
             fi
             flavor_ref_alt=84
         else
@@ -397,7 +397,7 @@ function configure_tempest {
             # build a specialized heat flavor
             available_flavors=$(nova flavor-list)
             if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
-                nova flavor-create m1.heat 451 512 0 1
+                openstack flavor create --id 451 --ram 512 --disk 0 --vcpus 1 m1.heat
             fi
             iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
         fi
