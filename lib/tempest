@@ -242,8 +242,7 @@ function configure_tempest {
     # the public network (for floating ip access) is only available
     # if the extension is enabled.
     if is_networking_extension_supported 'external-net'; then
-        public_network_id=$(openstack network list | grep $PUBLIC_NETWORK_NAME | \
-            awk '{print $2}')
+        public_network_id=$(openstack network show -f value -c id $PUBLIC_NETWORK_NAME)
     fi
 
     iniset $TEMPEST_CONFIG DEFAULT use_syslog $SYSLOG

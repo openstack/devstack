@@ -156,7 +156,7 @@ function get_role_id {
 function get_network_id {
     local NETWORK_NAME="$1"
     local NETWORK_ID
-    NETWORK_ID=`openstack network list | grep $NETWORK_NAME | awk '{print $2}'`
+    NETWORK_ID=`openstack network show -f value -c id $NETWORK_NAME`
     echo $NETWORK_ID
 }
 
