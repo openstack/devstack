@@ -44,20 +44,10 @@ KEYSTONE_REGION_NAME=${KEYSTONE_REGION_NAME:-$REGION_NAME}
 # Specify which services to launch.  These generally correspond to
 # screen tabs. To change the default list, use the ``enable_service`` and
 # ``disable_service`` functions in ``local.conf``.
-# For example, to enable Swift add this to ``local.conf``:
-#  enable_service s-proxy s-object s-container s-account
-# In order to enable Neutron (a single node setup) add the following
+# For example, to enable Swift as part of DevStack add the following
 # settings in ``local.conf``:
 #  [[local|localrc]]
-#  disable_service n-net
-#  enable_service q-svc
-#  enable_service q-agt
-#  enable_service q-dhcp
-#  enable_service q-l3
-#  enable_service q-meta
-#  # Optional, to enable tempest configuration as part of DevStack
-#  enable_service tempest
-
+#  enable_service s-proxy s-object s-container s-account
 # This allows us to pass ``ENABLED_SERVICES``
 if ! isset ENABLED_SERVICES ; then
     # Keystone - nothing works without keystone
