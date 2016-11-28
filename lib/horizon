@@ -81,7 +81,7 @@ function configure_horizon {
     # Horizon is installed as develop mode, so we can compile here.
     # Message catalog compilation is handled by Django admin script,
     # so compiling them after the installation avoids Django installation twice.
-    (cd $HORIZON_DIR; ./run_tests.sh -N --compilemessages)
+    (cd $HORIZON_DIR; python manage.py compilemessages)
 
     # ``local_settings.py`` is used to override horizon default settings.
     local local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
