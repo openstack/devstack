@@ -294,10 +294,10 @@ created inside OpenStack. The size can be overridden by setting
 
 ``stack-volumes`` can be pre-created on any physical volume supported by
 Linux's LVM. The name of the volume group can be changed by setting
-``VOLUME_GROUP`` in ``localrc``. ``stack.sh`` deletes all logical
-volumes in ``VOLUME_GROUP`` that begin with ``VOLUME_NAME_PREFIX`` as
+``VOLUME_GROUP_NAME`` in ``localrc``. ``stack.sh`` deletes all logical
+volumes in ``VOLUME_GROUP_NAME`` that begin with ``VOLUME_NAME_PREFIX`` as
 part of cleaning up from previous runs. It is recommended to not use the
-root volume group as ``VOLUME_GROUP``.
+root volume group as ``VOLUME_GROUP_NAME``.
 
 The details of creating the volume group depends on the server hardware
 involved but looks something like this:
