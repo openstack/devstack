@@ -30,7 +30,7 @@ function _neutron_ovs_base_add_bridge {
 
 function _neutron_ovs_base_setup_bridge {
     local bridge=$1
-    neutron-ovs-cleanup
+    neutron-ovs-cleanup --config-file $NEUTRON_CONF
     _neutron_ovs_base_add_bridge $bridge
     sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
 }
@@ -97,7 +97,7 @@ function _neutron_ovs_base_configure_l3_agent {
         iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
     fi
 
-    neutron-ovs-cleanup
+    neutron-ovs-cleanup --config-file $NEUTRON_CONF
     if [[ "$Q_USE_PUBLIC_VETH" = "True" ]]; then
         ip link show $Q_PUBLIC_VETH_INT > /dev/null 2>&1 ||
         sudo ip link add $Q_PUBLIC_VETH_INT type veth \
