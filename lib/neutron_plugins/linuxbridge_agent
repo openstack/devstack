@@ -62,7 +62,9 @@ function neutron_plugin_configure_plugin_agent {
         LB_INTERFACE_MAPPINGS=$PHYSICAL_NETWORK:$LB_PHYSICAL_INTERFACE
     fi
     if [[ "$PUBLIC_BRIDGE" != "" ]] && [[ "$PUBLIC_PHYSICAL_NETWORK" != "" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE linux_bridge bridge_mappings "$PUBLIC_PHYSICAL_NETWORK:$PUBLIC_BRIDGE"
+        if is_service_enabled q-l3 || is_service_enabled neutron-l3; then
+            iniset /$Q_PLUGIN_CONF_FILE linux_bridge bridge_mappings "$PUBLIC_PHYSICAL_NETWORK:$PUBLIC_BRIDGE"
+        fi
     fi
     if [[ "$LB_INTERFACE_MAPPINGS" != "" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE linux_bridge physical_interface_mappings $LB_INTERFACE_MAPPINGS
