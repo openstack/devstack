@@ -29,15 +29,20 @@ APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
 
 
 # Set up apache name and configuration directory
+# Note that APACHE_CONF_DIR is really more accurately apache's vhost
+# configuration dir but we can't just change this because public interfaces.
 if is_ubuntu; then
     APACHE_NAME=apache2
     APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/sites-available}
+    APACHE_SETTINGS_DIR=${APACHE_SETTINGS_DIR:-/etc/$APACHE_NAME/conf-enabled}
 elif is_fedora; then
     APACHE_NAME=httpd
     APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/conf.d}
+    APACHE_SETTINGS_DIR=${APACHE_SETTINGS_DIR:-/etc/$APACHE_NAME/conf.d}
 elif is_suse; then
     APACHE_NAME=apache2
     APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/vhosts.d}
+    APACHE_SETTINGS_DIR=${APACHE_SETTINGS_DIR:-/etc/$APACHE_NAME/conf.d}
 fi
 APACHE_LOG_DIR="/var/log/${APACHE_NAME}"
 

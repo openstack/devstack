@@ -442,6 +442,52 @@ function enable_mod_ssl {
 # Proxy Functions
 # ===============
 
+function tune_apache_connections {
+    local tuning_file=$APACHE_SETTINGS_DIR/connection-tuning.conf
+    if ! [ -f $tuning_file ] ; then
+        sudo bash -c "cat > $tuning_file" << EOF
+# worker MPM
+# StartServers: initial number of server processes to start
+# MinSpareThreads: minimum number of worker threads which are kept spare
+# MaxSpareThreads: maximum number of worker threads which are kept spare
+# ThreadLimit: ThreadsPerChild can be changed to this maximum value during a
+#              graceful restart. ThreadLimit can only be changed by stopping
+#              and starting Apache.
+# ThreadsPerChild: constant number of worker threads in each server process
+# MaxClients: maximum number of simultaneous client connections
+# MaxRequestsPerChild: maximum number of requests a server process serves
+#
+# The apache defaults are too conservative if we want reliable tempest
+# testing. Bump these values up from ~400 max clients to 1024 max clients.
+<IfModule mpm_worker_module>
+# Note that the next three conf values must be changed together.
+# MaxClients = ServerLimit * ThreadsPerChild
+ServerLimit          32
+ThreadsPerChild      32
+MaxClients         1024
+StartServers          3
+MinSpareThreads      96
+MaxSpareThreads     192
+ThreadLimit          64
+MaxRequestsPerChild   0
+</IfModule>
+<IfModule mpm_event_module>
+# Note that the next three conf values must be changed together.
+# MaxClients = ServerLimit * ThreadsPerChild
+ServerLimit          32
+ThreadsPerChild      32
+MaxClients         1024
+StartServers          3
+MinSpareThreads      96
+MaxSpareThreads     192
+ThreadLimit          64
+MaxRequestsPerChild   0
+</IfModule>
+EOF
+        restart_apache_server
+    fi
+}
+
 # Starts the TLS proxy for the given IP/ports
 # start_tls_proxy front-host front-port back-host back-port
 function start_tls_proxy {
@@ -450,6 +496,8 @@ function start_tls_proxy {
     local f_port=$3
     local b_host=$4
     local b_port=$5
+
+    tune_apache_connections
 
     local config_file
     config_file=$(apache_site_config_for $b_service)
