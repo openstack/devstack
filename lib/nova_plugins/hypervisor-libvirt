@@ -105,6 +105,16 @@ function install_nova_hypervisor {
     if [[ "$ENABLE_FILE_INJECTION" == "True" ]] ; then
         if is_ubuntu; then
             install_package python-guestfs
+            # NOTE(andreaf) Ubuntu kernel can only be read by root, which breaks libguestfs:
+            # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/759725)
+            INSTALLED_KERNELS="$(ls /boot/vmlinuz-*)"
+            for kernel in $INSTALLED_KERNELS; do
+                STAT_OVERRIDE="root root 644 ${kernel}"
+                # unstack won't remove the statoverride, so make this idempotent
+                if [[ ! $(dpkg-statoverride --list | grep "$STAT_OVERRIDE") ]]; then
+                    sudo dpkg-statoverride --add --update $STAT_OVERRIDE
+                fi
+            done
         elif is_fedora || is_suse; then
             install_package python-libguestfs
         fi
