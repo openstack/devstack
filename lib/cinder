@@ -425,11 +425,7 @@ function create_cinder_cache_dir {
 }
 
 # init_cinder() - Initialize database and volume group
-# Uses global ``NOVA_ENABLED_APIS``
 function init_cinder {
-    # Force nova volumes off
-    NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/osapi_volume,//")
-
     if is_service_enabled $DATABASE_BACKENDS; then
         # (Re)create cinder database
         recreate_database cinder
