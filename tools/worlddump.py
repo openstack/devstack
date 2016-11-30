@@ -34,6 +34,7 @@ GMR_PROCESSES = (
     'neutron-linuxbridge-agent',
     'neutron-metadata-agent',
     'neutron-openvswitch-agent',
+    'cinder-volume',
 )
 
 
