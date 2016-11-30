@@ -48,7 +48,7 @@ function configure_cinder_backend_ceph {
     iniset $CINDER_CONF $be_name rbd_ceph_conf "$CEPH_CONF_FILE"
     iniset $CINDER_CONF $be_name rbd_pool "$CINDER_CEPH_POOL"
     iniset $CINDER_CONF $be_name rbd_user "$CINDER_CEPH_USER"
-    iniset $CINDER_CONF $be_name rbd_uuid "$CINDER_CEPH_UUID"
+    iniset $CINDER_CONF $be_name rbd_secret_uuid "$CINDER_CEPH_UUID"
     iniset $CINDER_CONF $be_name rbd_flatten_volume_from_snapshot False
     iniset $CINDER_CONF $be_name rbd_max_clone_depth 5
     iniset $CINDER_CONF DEFAULT glance_api_version 2
