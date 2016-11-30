@@ -90,6 +90,10 @@ CRONTAB
         echo "install_conntrack_tools"
     } | $ssh_dom0
 
+    if is_service_enabled neutron; then
+        # Remove restriction on linux bridge in Dom0 when neutron is enabled
+        $ssh_dom0 "rm -f /etc/modprobe.d/blacklist-bridge*"
+    fi
 }
 
 # install_nova_hypervisor() - Install external components
