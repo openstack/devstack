@@ -509,6 +509,10 @@ function start_neutron_agents {
 
 function stop_mutnauq_l2_agent {
     stop_process q-agt
+
+    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
+        stop_process q-domua
+    fi
 }
 
 # stop_mutnauq_other() - Stop running processes (non-screen)
