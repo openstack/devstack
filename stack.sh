@@ -1411,6 +1411,9 @@ fi
 # Phase: test-config
 run_phase stack test-config
 
+# Apply late configuration from ``local.conf`` if it exists for layer 2 services
+# Phase: test-config
+merge_config_group $TOP_DIR/local.conf test-config
 
 # Fin
 # ===
