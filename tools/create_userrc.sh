@@ -152,7 +152,7 @@ if [ -z "$OS_USERNAME" ]; then
 fi
 
 if [ -z "$OS_AUTH_URL" ]; then
-    export OS_AUTH_URL=http://localhost:5000/v2.0/
+    export OS_AUTH_URL=http://localhost:5000/v3/
 fi
 
 if [ -z "$OS_USER_DOMAIN_ID" -a -z "$OS_USER_DOMAIN_NAME" ]; then
