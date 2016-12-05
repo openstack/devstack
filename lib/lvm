@@ -101,7 +101,7 @@ function _create_lvm_volume_group {
 # init_lvm_volume_group() initializes the volume group creating the backing
 # file if necessary
 #
-# Usage: init_lvm_volume_group() $vg
+# Usage: init_lvm_volume_group() $vg $size
 function init_lvm_volume_group {
     local vg=$1
     local size=$2
