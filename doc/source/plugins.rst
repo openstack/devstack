@@ -99,7 +99,7 @@ The current full list of ``mode`` and ``phase`` are:
       should exist at this point.
    -  **extra** - Called near the end after layer 1 and 2 services have
       been started.
-   - **test-config** - Called at the end of devstack used to configure tempest
+   -  **test-config** - Called at the end of devstack used to configure tempest
       or any other test environments
 
 -  **unstack** - Called by ``unstack.sh`` before other services are shut
