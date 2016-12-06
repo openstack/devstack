@@ -49,7 +49,6 @@ source $TOP_DIR/lib/nova
 source $TOP_DIR/lib/placement
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
-source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/neutron-legacy
 
@@ -108,7 +107,7 @@ if is_service_enabled nova && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; th
 fi
 
 # Clean out /etc
-sudo rm -rf /etc/keystone /etc/glance /etc/nova /etc/cinder /etc/swift /etc/heat /etc/neutron /etc/openstack/
+sudo rm -rf /etc/keystone /etc/glance /etc/nova /etc/cinder /etc/swift /etc/neutron /etc/openstack/
 
 # Clean out tgt
 sudo rm -f /etc/tgt/conf.d/*
