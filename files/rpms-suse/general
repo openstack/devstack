@@ -21,6 +21,7 @@ postgresql-devel  # psycopg2
 psmisc
 python-cmd2 # dist:opensuse-12.3
 python-devel  # pyOpenSSL
+python-xml
 screen
 tar
 tcpdump
