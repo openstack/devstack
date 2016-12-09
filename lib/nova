@@ -161,6 +161,14 @@ NOVA_ALLOW_MOVE_TO_SAME_HOST=$(trueorfalse True NOVA_ALLOW_MOVE_TO_SAME_HOST)
 TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
 TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 
+# Other Nova configurations
+# ----------------------------
+
+# ``NOVA_USE_SERVICE_TOKEN`` is a mode where service token is passed along with
+# user token while communicating to external RESP API's like Neutron, Cinder
+# and Glance.
+NOVA_USE_SERVICE_TOKEN=$(trueorfalse False NOVA_USE_SERVICE_TOKEN)
+
 # Functions
 # ---------
 
@@ -619,6 +627,22 @@ function create_nova_conf {
     fi
 
     iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF_DIR/nova-dhcpbridge.conf"
+
+    if [ "$NOVA_USE_SERVICE_TOKEN" == "True" ]; then
+        init_nova_service_user_conf
+    fi
+}
+
+function init_nova_service_user_conf {
+    iniset $NOVA_CONF service_user send_service_user_token True
+    iniset $NOVA_CONF service_user auth_type password
+    iniset $NOVA_CONF service_user auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT"
+    iniset $NOVA_CONF service_user username nova
+    iniset $NOVA_CONF service_user password "$SERVICE_PASSWORD"
+    iniset $NOVA_CONF service_user user_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $NOVA_CONF service_user project_name "$SERVICE_PROJECT_NAME"
+    iniset $NOVA_CONF service_user project_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $NOVA_CONF service_user auth_strategy keystone
 }
 
 function init_nova_cells {
