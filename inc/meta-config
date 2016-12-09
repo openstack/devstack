@@ -181,7 +181,8 @@ function merge_config_group {
 
             realconfigfile=$(eval "echo $configfile")
             if [[ -z $realconfigfile ]]; then
-                die $LINENO "bogus config file specification: $configfile is undefined"
+                warn $LINENO "unknown config file specification: $configfile is undefined"
+                break
             fi
             dir=$(dirname $realconfigfile)
             if [[ -d $dir ]]; then
