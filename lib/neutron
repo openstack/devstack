@@ -161,6 +161,7 @@ function configure_neutron_new {
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2 tenant_network_types vxlan
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2 mechanism_drivers openvswitch,linuxbridge
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks public
         if [[ "$NEUTRON_PORT_SECURITY" = "True" ]]; then
             iniset $NEUTRON_CORE_PLUGIN_CONF ml2 extension_drivers port_security
         fi
@@ -173,10 +174,10 @@ function configure_neutron_new {
 
         # Configure the neutron agent
         if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
-            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup iptables
+            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver iptables
             iniset $NEUTRON_CORE_PLUGIN_CONF vxlan local_ip $HOST_IP
         else
-            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup iptables_hybrid
+            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver iptables_hybrid
             iniset $NEUTRON_CORE_PLUGIN_CONF ovs local_ip $HOST_IP
         fi
 
