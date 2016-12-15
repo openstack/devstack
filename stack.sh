@@ -869,6 +869,16 @@ if is_service_enabled placement; then
     configure_placement
 fi
 
+# create a placement-client fake service to know we need to configure
+# placement connectivity. We configure the placement service for nova
+# if placement-api or placement-client is active, and n-cpu on the
+# same box.
+if is_service_enabled placement placement-client; then
+    if is_service_enabled n-cpu; then
+        configure_placement_nova_compute
+    fi
+fi
+
 if is_service_enabled horizon; then
     # django openstack_auth
     install_django_openstack_auth

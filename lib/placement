@@ -55,7 +55,7 @@ PLACEMENT_SERVICE_PORT=${PLACEMENT_SERVICE_PORT:-8778}
 # Test if any placement services are enabled
 # is_placement_enabled
 function is_placement_enabled {
-    [[ ,${ENABLED_SERVICES} =~ ,"placement-" ]] && return 0
+    [[ ,${ENABLED_SERVICES} =~ ,"placement-api" ]] && return 0
     return 1
 }
 
@@ -101,12 +101,7 @@ function _config_placement_apache_wsgi {
     " -i $placement_api_apache_conf
 }
 
-# configure_placement() - Set config files, create data dirs, etc
-function configure_placement {
-    if [ "$PLACEMENT_DB_ENABLED" != False ]; then
-        iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
-    fi
-
+function configure_placement_nova_compute {
     iniset $NOVA_CONF placement auth_type "password"
     iniset $NOVA_CONF placement auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v3"
     iniset $NOVA_CONF placement username placement
@@ -121,7 +116,13 @@ function configure_placement {
     # established by the nova api. This avoids, for the time, being,
     # creating redundant configuration items that are just used for
     # testing.
+}
 
+# configure_placement() - Set config files, create data dirs, etc
+function configure_placement {
+    if [ "$PLACEMENT_DB_ENABLED" != False ]; then
+        iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
+    fi
     _config_placement_apache_wsgi
 }
 
