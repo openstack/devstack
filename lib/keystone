@@ -498,8 +498,10 @@ function init_keystone {
         init_ldap
     fi
 
-    # (Re)create keystone database
-    recreate_database keystone
+    if [[ "$RECREATE_KEYSTONE_DB" == True ]]; then
+        # (Re)create keystone database
+        recreate_database keystone
+    fi
 
     # Initialize keystone database
     $KEYSTONE_BIN_DIR/keystone-manage --config-file $KEYSTONE_CONF db_sync

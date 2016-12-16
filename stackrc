@@ -827,6 +827,10 @@ GIT_DEPTH=${GIT_DEPTH:-0}
 # Use native SSL for servers in ``SSL_ENABLED_SERVICES``
 USE_SSL=$(trueorfalse False USE_SSL)
 
+# We may not need to recreate database in case 2 Keystone services
+# sharing the same database. It would be useful for multinode Grenade tests.
+RECREATE_KEYSTONE_DB=$(trueorfalse True RECREATE_KEYSTONE_DB)
+
 # ebtables is inherently racey. If you run it by two or more processes
 # simultaneously it will collide, badly, in the kernel and produce
 # failures or corruption of ebtables. The only way around it is for
