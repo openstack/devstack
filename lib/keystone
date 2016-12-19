@@ -445,14 +445,16 @@ function create_keystone_accounts {
 #
 # create_service_user <name> [role]
 #
-# The role defaults to the service role. It is allowed to be provided as optional as historically
+# We always add the service role, other roles are also allowed to be added as historically
 # a lot of projects have configured themselves with the admin or other role here if they are
 # using this user for other purposes beyond simply auth_token middleware.
 function create_service_user {
-    local role=${2:-service}
-
     get_or_create_user "$1" "$SERVICE_PASSWORD" "$SERVICE_DOMAIN_NAME"
-    get_or_add_user_project_role "$role" "$1" "$SERVICE_PROJECT_NAME" "$SERVICE_DOMAIN_NAME" "$SERVICE_DOMAIN_NAME"
+    get_or_add_user_project_role service "$1" "$SERVICE_PROJECT_NAME" "$SERVICE_DOMAIN_NAME" "$SERVICE_DOMAIN_NAME"
+
+    if [[ -n "$2" ]]; then
+        get_or_add_user_project_role "$2" "$1" "$SERVICE_PROJECT_NAME" "$SERVICE_DOMAIN_NAME" "$SERVICE_DOMAIN_NAME"
+    fi
 }
 
 # Configure the service to use the auth token middleware.
