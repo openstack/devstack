@@ -81,7 +81,11 @@ function configure_horizon {
     # Horizon is installed as develop mode, so we can compile here.
     # Message catalog compilation is handled by Django admin script,
     # so compiling them after the installation avoids Django installation twice.
-    (cd $HORIZON_DIR; python manage.py compilemessages)
+    if python3_enabled; then
+        (cd $HORIZON_DIR; python${PYTHON3_VERSION} manage.py compilemessages)
+    else
+        (cd $HORIZON_DIR; python manage.py compilemessages)
+    fi
 
     # ``local_settings.py`` is used to override horizon default settings.
     local local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
@@ -162,7 +166,11 @@ function install_django_openstack_auth {
         git_clone_by_name "django_openstack_auth"
         # Compile message catalogs before installation
         _prepare_message_catalog_compilation
-        (cd $dir; python setup.py compile_catalog)
+        if python3_enabled; then
+            (cd $dir; python${PYTHON3_VERSION} setup.py compile_catalog)
+        else
+            (cd $dir; python setup.py compile_catalog)
+        fi
         setup_dev_lib "django_openstack_auth"
     fi
     # if we aren't using this library from git, then we just let it

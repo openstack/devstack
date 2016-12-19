@@ -71,7 +71,15 @@ function install_apache_wsgi {
     # Apache installation, because we mark it NOPRIME
     if is_ubuntu; then
         # Install apache2, which is NOPRIME'd
-        install_package apache2 libapache2-mod-wsgi
+        install_package apache2
+        if python3_enabled; then
+            if is_package_installed libapache2-mod-wsgi; then
+                uninstall_package libapache2-mod-wsgi
+            fi
+            install_package libapache2-mod-wsgi-py3
+        else
+            install_package libapache2-mod-wsgi
+        fi
     elif is_fedora; then
         sudo rm -f /etc/httpd/conf.d/000-*
         install_package httpd mod_wsgi
