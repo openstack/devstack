@@ -2,6 +2,7 @@ bc
 bridge-utils
 bsdmainutils
 curl
+default-jre-headless  # NOPRIME
 g++
 gcc
 gettext  # used for compiling message catalogs
@@ -17,7 +18,6 @@ libxml2-dev  # lxml
 libxslt1-dev  # lxml
 libyaml-dev
 lsof # useful when debugging
-openjdk-7-jre-headless  # NOPRIME
 openssh-server
 openssl
 pkg-config
