@@ -664,7 +664,6 @@ initialize_database_backends && echo "Using $DATABASE_TYPE database backend" || 
 # In multi node DevStack, second node needs ``RABBIT_USERID``, but rabbit
 # isn't enabled.
 if is_service_enabled rabbit; then
-    RABBIT_HOST=${RABBIT_HOST:-$SERVICE_HOST}
     read_password RABBIT_PASSWORD "ENTER A PASSWORD TO USE FOR RABBIT."
 fi
 

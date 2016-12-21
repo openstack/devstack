@@ -25,6 +25,9 @@ _XTRACE_RPC_BACKEND=$(set +o | grep xtrace)
 set +o xtrace
 
 RABBIT_USERID=${RABBIT_USERID:-stackrabbit}
+if is_service_enabled rabbit; then
+    RABBIT_HOST=${RABBIT_HOST:-$SERVICE_HOST}
+fi
 
 # Functions
 # ---------
