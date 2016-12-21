@@ -95,6 +95,7 @@ networking-bgpvpn                      `git://git.openstack.org/openstack/networ
 networking-brocade                     `git://git.openstack.org/openstack/networking-brocade <https://git.openstack.org/cgit/openstack/networking-brocade>`__
 networking-calico                      `git://git.openstack.org/openstack/networking-calico <https://git.openstack.org/cgit/openstack/networking-calico>`__
 networking-cisco                       `git://git.openstack.org/openstack/networking-cisco <https://git.openstack.org/cgit/openstack/networking-cisco>`__
+networking-dpm                         `git://git.openstack.org/openstack/networking-dpm <https://git.openstack.org/cgit/openstack/networking-dpm>`__
 networking-fortinet                    `git://git.openstack.org/openstack/networking-fortinet <https://git.openstack.org/cgit/openstack/networking-fortinet>`__
 networking-generic-switch              `git://git.openstack.org/openstack/networking-generic-switch <https://git.openstack.org/cgit/openstack/networking-generic-switch>`__
 networking-huawei                      `git://git.openstack.org/openstack/networking-huawei <https://git.openstack.org/cgit/openstack/networking-huawei>`__
@@ -121,6 +122,7 @@ neutron-lbaas-dashboard                `git://git.openstack.org/openstack/neutro
 neutron-vpnaas                         `git://git.openstack.org/openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas>`__
 nimble                                 `git://git.openstack.org/openstack/nimble <https://git.openstack.org/cgit/openstack/nimble>`__
 nova-docker                            `git://git.openstack.org/openstack/nova-docker <https://git.openstack.org/cgit/openstack/nova-docker>`__
+nova-dpm                               `git://git.openstack.org/openstack/nova-dpm <https://git.openstack.org/cgit/openstack/nova-dpm>`__
 nova-lxd                               `git://git.openstack.org/openstack/nova-lxd <https://git.openstack.org/cgit/openstack/nova-lxd>`__
 nova-mksproxy                          `git://git.openstack.org/openstack/nova-mksproxy <https://git.openstack.org/cgit/openstack/nova-mksproxy>`__
 nova-powervm                           `git://git.openstack.org/openstack/nova-powervm <https://git.openstack.org/cgit/openstack/nova-powervm>`__
