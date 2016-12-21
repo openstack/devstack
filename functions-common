@@ -1678,7 +1678,7 @@ function tail_log {
     local logfile=$2
 
     if [[ "$USE_SCREEN" = "True" ]]; then
-        screen_process "$name" "sudo tail -f $logfile | sed 's/\\\\\\\\x1b/\o033/g'"
+        screen_process "$name" "sudo tail -f $logfile | sed -u 's/\\\\\\\\x1b/\o033/g'"
     fi
 }
 
