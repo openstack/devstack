@@ -1,6 +1,8 @@
-Listen %PUBLICPORT%
-
-<VirtualHost *:%PUBLICPORT%>
+# NOTE(sbauza): This virtualhost is only here because some directives can
+# only be set by a virtualhost or server context, so that's why the port is not bound.
+# TODO(sbauza): Find a better way to identify a free port that is not corresponding to an existing
+# vhost.
+<VirtualHost *:8780>
     WSGIDaemonProcess placement-api processes=%APIWORKERS% threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
     WSGIProcessGroup placement-api
     WSGIScriptAlias / %PUBLICWSGI%

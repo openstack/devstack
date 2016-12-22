@@ -47,7 +47,6 @@ fi
 # Public facing bits
 PLACEMENT_SERVICE_PROTOCOL=${PLACEMENT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 PLACEMENT_SERVICE_HOST=${PLACEMENT_SERVICE_HOST:-$SERVICE_HOST}
-PLACEMENT_SERVICE_PORT=${PLACEMENT_SERVICE_PORT:-8778}
 
 # Functions
 # ---------
@@ -68,7 +67,6 @@ function cleanup_placement {
 # _config_placement_apache_wsgi() - Set WSGI config files
 function _config_placement_apache_wsgi {
     local placement_api_apache_conf
-    local placement_api_port=$PLACEMENT_SERVICE_PORT
     local venv_path=""
     local nova_bin_dir=""
     nova_bin_dir=$(get_python_exec_prefix)
@@ -89,7 +87,6 @@ function _config_placement_apache_wsgi {
 
     sudo cp $FILES/apache-placement-api.template $placement_api_apache_conf
     sudo sed -e "
-        s|%PUBLICPORT%|$placement_api_port|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
         s|%PUBLICWSGI%|$nova_bin_dir/nova-placement-api|g;
         s|%SSLENGINE%|$placement_ssl|g;
@@ -161,10 +158,6 @@ function install_placement {
 
 # start_placement_api() - Start the API processes ahead of other things
 function start_placement_api {
-    # Get right service port for testing
-    local service_port=$PLACEMENT_SERVICE_PORT
-    local placement_api_port=$PLACEMENT_SERVICE_PORT
-
     enable_apache_site placement-api
     restart_apache_server
     tail_log placement-api /var/log/$APACHE_NAME/placement-api.log
