@@ -573,7 +573,7 @@ case "$VIRT_DRIVER" in
     lxd)
         LXD_GROUP=${LXD_GROUP:-"lxd"}
         ;;
-    docker)
+    docker|zun)
         DOCKER_GROUP=${DOCKER_GROUP:-"docker"}
         ;;
     fake)

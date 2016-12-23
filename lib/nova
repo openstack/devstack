@@ -823,7 +823,7 @@ function start_nova_compute {
         run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf" $LIBVIRT_GROUP
     elif [[ "$VIRT_DRIVER" = 'lxd' ]]; then
         run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf" $LXD_GROUP
-    elif [[ "$VIRT_DRIVER" = 'docker' ]]; then
+    elif [[ "$VIRT_DRIVER" = 'docker' || "$VIRT_DRIVER" = 'zun' ]]; then
         run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf" $DOCKER_GROUP
     elif [[ "$VIRT_DRIVER" = 'fake' ]]; then
         local i
