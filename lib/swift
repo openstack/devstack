@@ -454,7 +454,6 @@ function configure_swift {
     # out. Make sure we uncomment Tempauth after we uncomment Keystoneauth
     # otherwise, this code also sets the reseller_prefix for Keystoneauth.
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth account_autocreate
-    iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix "TEMPAUTH"
 
     if is_service_enabled swift3; then
