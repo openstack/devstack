@@ -149,7 +149,9 @@ function pip_install {
                 # support for python3 in progress, but don't claim support
                 # in their classifier
                 echo "Check python version for : $package_dir"
-                if [[ ${package_dir##*/} == "nova" || ${package_dir##*/} == "glance" || ${package_dir##*/} == "cinder" ]]; then
+                if [[ ${package_dir##*/} == "nova" || ${package_dir##*/} == "glance" || \
+                        ${package_dir##*/} == "cinder" || ${package_dir##*/} == "swift" || \
+                        ${package_dir##*/} == "uwsgi" ]]; then
                     echo "Using $PYTHON3_VERSION version to install $package_dir"
                     sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                     cmd_pip=$(get_pip_command $PYTHON3_VERSION)
