@@ -95,6 +95,7 @@ networking-bgpvpn                      `git://git.openstack.org/openstack/networ
 networking-brocade                     `git://git.openstack.org/openstack/networking-brocade <https://git.openstack.org/cgit/openstack/networking-brocade>`__
 networking-calico                      `git://git.openstack.org/openstack/networking-calico <https://git.openstack.org/cgit/openstack/networking-calico>`__
 networking-cisco                       `git://git.openstack.org/openstack/networking-cisco <https://git.openstack.org/cgit/openstack/networking-cisco>`__
+networking-cumulus                     `git://git.openstack.org/openstack/networking-cumulus <https://git.openstack.org/cgit/openstack/networking-cumulus>`__
 networking-dpm                         `git://git.openstack.org/openstack/networking-dpm <https://git.openstack.org/cgit/openstack/networking-dpm>`__
 networking-fortinet                    `git://git.openstack.org/openstack/networking-fortinet <https://git.openstack.org/cgit/openstack/networking-fortinet>`__
 networking-generic-switch              `git://git.openstack.org/openstack/networking-generic-switch <https://git.openstack.org/cgit/openstack/networking-generic-switch>`__
@@ -130,6 +131,7 @@ oaktree                                `git://git.openstack.org/openstack/oaktre
 octavia                                `git://git.openstack.org/openstack/octavia <https://git.openstack.org/cgit/openstack/octavia>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
+picasso                                `git://git.openstack.org/openstack/picasso <https://git.openstack.org/cgit/openstack/picasso>`__
 rally                                  `git://git.openstack.org/openstack/rally <https://git.openstack.org/cgit/openstack/rally>`__
 sahara                                 `git://git.openstack.org/openstack/sahara <https://git.openstack.org/cgit/openstack/sahara>`__
 sahara-dashboard                       `git://git.openstack.org/openstack/sahara-dashboard <https://git.openstack.org/cgit/openstack/sahara-dashboard>`__
