@@ -29,6 +29,10 @@ function die {
     exit -1
 }
 
+function warn {
+    return 0
+}
+
 TEST_1C_ADD="[eee]
 type=new
 multi = foo2"
@@ -92,7 +96,7 @@ $TEST_1C_ADD
 [[test3|test-space.conf]]
 [DEFAULT]
 attribute=value
- 
+
 # the above line has a single space
 
 [[test4|\$TEST4_DIR/\$TEST4_FILE]]
@@ -378,11 +382,10 @@ set -e
 
 echo -n "merge_config_group test9 undefined conf file: "
 set +e
-# function is expected to fail and exit, running it
-# in a subprocess to let this script proceed
+# function is expected to trigger warn and continue
 (merge_config_group test.conf test9)
 VAL=$?
-EXPECT_VAL=255
+EXPECT_VAL=0
 check_result "$VAL" "$EXPECT_VAL"
 set -e
 
