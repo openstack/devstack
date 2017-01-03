@@ -216,7 +216,7 @@ function die_if_not_set {
 function deprecated {
     local text=$1
     DEPRECATED_TEXT+="\n$text"
-    echo "WARNING: $text"
+    echo "WARNING: $text" >&2
 }
 
 # Prints line number and "message" in error format
