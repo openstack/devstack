@@ -192,8 +192,8 @@ function create_neutron_initial_network {
         fi
 
         if [[ "$IP_VERSION" =~ .*6 ]]; then
-            die_if_not_set $LINENO IPV6_PROVIDER_FIXED_RANGE "IPV6_PROVIDER_FIXED_RANGE has not been set, but Q_USE_PROVIDERNET_FOR_PUBLIC is true and IP_VERSION includes 6"
-            die_if_not_set $LINENO IPV6_PROVIDER_NETWORK_GATEWAY "IPV6_PROVIDER_NETWORK_GATEWAY has not been set, but Q_USE_PROVIDERNET_FOR_PUBLIC is true and IP_VERSION includes 6"
+            die_if_not_set $LINENO IPV6_PROVIDER_FIXED_RANGE "IPV6_PROVIDER_FIXED_RANGE has not been set, but Q_USE_PROVIDER_NETWORKING is true and IP_VERSION includes 6"
+            die_if_not_set $LINENO IPV6_PROVIDER_NETWORK_GATEWAY "IPV6_PROVIDER_NETWORK_GATEWAY has not been set, but Q_USE_PROVIDER_NETWORKING is true and IP_VERSION includes 6"
             if [ -z $SUBNETPOOL_V6_ID ]; then
                 fixed_range_v6=$IPV6_PROVIDER_FIXED_RANGE
             fi
