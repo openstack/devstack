@@ -663,6 +663,7 @@ function create_nova_conf_nova_network {
     if [ -n "$FLAT_INTERFACE" ]; then
         iniset $NOVA_CONF DEFAULT flat_interface "$FLAT_INTERFACE"
     fi
+    iniset $NOVA_CONF DEFAULT use_neutron False
 }
 
 # create_nova_keys_dir() - Part of the init_nova() process
