@@ -948,7 +948,11 @@ function create_cell {
     if ! is_service_enabled n-cell; then
         nova-manage cell_v2 simple_cell_setup --transport-url $(get_transport_url)
     else
-        echo 'Skipping cellsv2 setup for this cellsv1 configuration'
+        # NOTE(danms): map_cell0 always returns 1 right now; remove this when that is fixed
+        (nova-manage cell_v2 map_cell0 || true)
+        nova-manage --config-file $NOVA_CELLS_CONF  --verbose cell_v2 map_cell_and_hosts \
+                --transport-url $(get_transport_url child_cell) --name 'cell1'
+        nova-manage db sync
     fi
 }
 
