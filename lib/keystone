@@ -131,6 +131,12 @@ fi
 KEYSTONE_AUTH_URI_V3=$KEYSTONE_AUTH_URI/v3
 KEYSTONE_SERVICE_URI_V3=$KEYSTONE_SERVICE_URI/v3
 
+# Security compliance
+KEYSTONE_SECURITY_COMPLIANCE_ENABLED=${KEYSTONE_SECURITY_COMPLIANCE_ENABLED:-True}
+KEYSTONE_LOCKOUT_FAILURE_ATTEMPTS=${KEYSTONE_LOCKOUT_FAILURE_ATTEMPTS:-2}
+KEYSTONE_LOCKOUT_DURATION=${KEYSTONE_LOCKOUT_DURATION:-5}
+KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT=${KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT:-2}
+
 
 # Functions
 # ---------
@@ -339,6 +345,12 @@ function configure_keystone {
     # allows policy changes in order to clarify the adminess scope.
     #iniset $KEYSTONE_CONF resource admin_project_domain_name Default
     #iniset $KEYSTONE_CONF resource admin_project_name admin
+
+    if [[ "$KEYSTONE_SECURITY_COMPLIANCE_ENABLED" = True ]]; then
+        iniset $KEYSTONE_CONF security_compliance lockout_failure_attempts $KEYSTONE_LOCKOUT_FAILURE_ATTEMPTS
+        iniset $KEYSTONE_CONF security_compliance lockout_duration $KEYSTONE_LOCKOUT_DURATION
+        iniset $KEYSTONE_CONF security_compliance unique_last_password_count $KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT
+    fi
 }
 
 # create_keystone_accounts() - Sets up common required keystone accounts
