@@ -163,7 +163,6 @@ function configure_neutron_new {
         # Configure VXLAN
         # TODO(sc68cal) not hardcode?
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2 tenant_network_types vxlan
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 type_drivers vxlan
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2 mechanism_drivers openvswitch,linuxbridge
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
         if [[ "$NEUTRON_PORT_SECURITY" = "True" ]]; then
