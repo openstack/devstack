@@ -105,7 +105,7 @@ function neutron_plugin_configure_service {
             if [[ -n "$PHYSICAL_NETWORK" ]]; then
                 Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS+="${PHYSICAL_NETWORK},"
             fi
-            if [[ -n "$PUBLIC_PHYSICAL_NETWORK" ]]; then
+            if [[ -n "$PUBLIC_PHYSICAL_NETWORK" ]] && [[ "${PHYSICAL_NETWORK}" != "$PUBLIC_PHYSICAL_NETWORK" ]]; then
                 Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS+="${PUBLIC_PHYSICAL_NETWORK},"
             fi
         fi
