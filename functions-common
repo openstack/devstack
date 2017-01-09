@@ -87,7 +87,7 @@ function write_clouds_yaml {
         CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
     fi
     # demo -> devstack
-    $TOP_DIR/tools/update_clouds_yaml.py \
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack \
         --os-region-name $REGION_NAME \
@@ -99,7 +99,7 @@ function write_clouds_yaml {
         --os-project-name demo
 
     # alt_demo -> devstack-alt
-    $TOP_DIR/tools/update_clouds_yaml.py \
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack-alt \
         --os-region-name $REGION_NAME \
@@ -111,7 +111,7 @@ function write_clouds_yaml {
         --os-project-name alt_demo
 
     # admin -> devstack-admin
-    $TOP_DIR/tools/update_clouds_yaml.py \
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack-admin \
         --os-region-name $REGION_NAME \
