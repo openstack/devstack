@@ -97,6 +97,111 @@ function check_python3_support_for_package_remote {
     echo $classifier
 }
 
+# python3_enabled_for() checks if the service(s) specified as arguments are
+# enabled by the user in ``ENABLED_PYTHON3_PACKAGES``.
+#
+# Multiple services specified as arguments are ``OR``'ed together; the test
+# is a short-circuit boolean, i.e it returns on the first match.
+#
+# Uses global ``ENABLED_PYTHON3_PACKAGES``
+# python3_enabled_for dir [dir ...]
+function python3_enabled_for {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    local enabled=1
+    local dirs=$@
+    local dir
+    for dir in ${dirs}; do
+        [[ ,${ENABLED_PYTHON3_PACKAGES}, =~ ,${dir}, ]] && enabled=0
+    done
+
+    $xtrace
+    return $enabled
+}
+
+# python3_disabled_for() checks if the service(s) specified as arguments are
+# disabled by the user in ``DISABLED_PYTHON3_PACKAGES``.
+#
+# Multiple services specified as arguments are ``OR``'ed together; the test
+# is a short-circuit boolean, i.e it returns on the first match.
+#
+# Uses global ``DISABLED_PYTHON3_PACKAGES``
+# python3_disabled_for dir [dir ...]
+function python3_disabled_for {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    local enabled=1
+    local dirs=$@
+    local dir
+    for dir in ${dirs}; do
+        [[ ,${DISABLED_PYTHON3_PACKAGES}, =~ ,${dir}, ]] && enabled=0
+    done
+
+    $xtrace
+    return $enabled
+}
+
+# enable_python3_package() adds the repositories passed as argument to the
+# ``ENABLED_PYTHON3_PACKAGES`` list, if they are not already present.
+#
+# For example:
+#   enable_python3_package nova
+#
+# Uses global ``ENABLED_PYTHON3_PACKAGES``
+# enable_python3_package dir [dir ...]
+function enable_python3_package {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    local tmpsvcs="${ENABLED_PYTHON3_PACKAGES}"
+    local python3
+    for dir in $@; do
+        if [[ ,${DISABLED_PYTHON3_PACKAGES}, =~ ,${dir}, ]]; then
+            warn $LINENO "Attempt to enable_python3_package ${dir} when it has been disabled"
+            continue
+        fi
+        if ! python3_enabled_for $dir; then
+            tmpsvcs+=",$dir"
+        fi
+    done
+    ENABLED_PYTHON3_PACKAGES=$(_cleanup_service_list "$tmpsvcs")
+
+    $xtrace
+}
+
+# disable_python3_package() prepares the services passed as argument to be
+# removed from the ``ENABLED_PYTHON3_PACKAGES`` list, if they are present.
+#
+# For example:
+#   disable_python3_package swift
+#
+# Uses globals ``ENABLED_PYTHON3_PACKAGES`` and ``DISABLED_PYTHON3_PACKAGES``
+# disable_python3_package dir [dir ...]
+function disable_python3_package {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    local disabled_svcs="${DISABLED_PYTHON3_PACKAGES}"
+    local enabled_svcs=",${ENABLED_PYTHON3_PACKAGES},"
+    local dir
+    for dir in $@; do
+        disabled_svcs+=",$dir"
+        if python3_enabled_for $dir; then
+            enabled_svcs=${enabled_svcs//,$dir,/,}
+        fi
+    done
+    DISABLED_PYTHON3_PACKAGES=$(_cleanup_service_list "$disabled_svcs")
+    ENABLED_PYTHON3_PACKAGES=$(_cleanup_service_list "$enabled_svcs")
+
+    $xtrace
+}
+
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_VIRTUAL_ENV``,
 # ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``,
@@ -149,16 +254,16 @@ function pip_install {
                 # support for python3 in progress, but don't claim support
                 # in their classifier
                 echo "Check python version for : $package_dir"
-                if [[ ${package_dir##*/} == "nova" || ${package_dir##*/} == "glance" || \
-                        ${package_dir##*/} == "cinder" || ${package_dir##*/} == "swift" || \
-                        ${package_dir##*/} == "uwsgi" ]]; then
-                    echo "Using $PYTHON3_VERSION version to install $package_dir"
+                if python3_disabled_for ${package_dir##*/}; then
+                    echo "Explicitly using $PYTHON2_VERSION version to install $package_dir based on DISABLED_PYTHON3_PACKAGES"
+                elif python3_enabled_for ${package_dir##*/}; then
+                    echo "Explicitly using $PYTHON3_VERSION version to install $package_dir based on ENABLED_PYTHON3_PACKAGES"
                     sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                     cmd_pip=$(get_pip_command $PYTHON3_VERSION)
                 elif [[ -d "$package_dir" ]]; then
                     python_versions=$(get_python_versions_for_package $package_dir)
                     if [[ $python_versions =~ $PYTHON3_VERSION ]]; then
-                        echo "Using $PYTHON3_VERSION version to install $package_dir"
+                        echo "Automatically using $PYTHON3_VERSION version to install $package_dir based on classifiers"
                         sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                         cmd_pip=$(get_pip_command $PYTHON3_VERSION)
                     else
@@ -167,7 +272,7 @@ function pip_install {
                         # a warning.
                         python3_classifier=$(check_python3_support_for_package_local $package_dir)
                         if [[ ! -z "$python3_classifier" ]]; then
-                            echo "Using $PYTHON3_VERSION version to install $package_dir"
+                            echo "Automatically using $PYTHON3_VERSION version to install $package_dir based on local package settings"
                             sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                             cmd_pip=$(get_pip_command $PYTHON3_VERSION)
                         fi
@@ -177,7 +282,7 @@ function pip_install {
                     package=$(echo $package_dir | grep -o '^[.a-zA-Z0-9_-]*')
                     python3_classifier=$(check_python3_support_for_package_remote $package)
                     if [[ ! -z "$python3_classifier" ]]; then
-                        echo "Using $PYTHON3_VERSION version to install $package"
+                        echo "Automatically using $PYTHON3_VERSION version to install $package based on remote package settings"
                         sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                         cmd_pip=$(get_pip_command $PYTHON3_VERSION)
                     fi
