@@ -101,6 +101,7 @@ set +u
 
 ## Note that the lines below are coming from stackrc to support
 ## new-style config files
+source $RC_DIR/functions-common
 
 # allow local overrides of env variables, including repo config
 if [[ -f $RC_DIR/localrc ]]; then
