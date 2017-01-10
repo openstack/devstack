@@ -73,7 +73,7 @@ back:
 ::
 
     sudo rmmod kvm-amd
-    sudo sh -c "echo 'options amd nested=1' >> /etc/modprobe.d/dist.conf"
+    sudo sh -c "echo 'options kvm-amd nested=1' >> /etc/modprobe.d/dist.conf"
     sudo modprobe kvm-amd
 
 Ensure the Nested KVM Kernel module parameter for AMD is enabled on the
