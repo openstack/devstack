@@ -73,6 +73,9 @@ NEUTRON_ROOTWRAP_DAEMON_CMD="sudo $NEUTRON_ROOTWRAP-daemon $NEUTRON_ROOTWRAP_CON
 # Add all enabled config files to a single config arg
 NEUTRON_CONFIG_ARG=${NEUTRON_CONFIG_ARG:-""}
 
+# Additional neutron api config files
+declare -a _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
+
 # Functions
 # ---------
 
@@ -393,9 +396,17 @@ function start_neutron_api {
         service_protocol="http"
     fi
 
+    local opts = ""
+    opts+="--config-file $NEUTRON_CONF"
+    opts+="--config-file $NEUTRON_CORE_PLUGIN_CONF"
+    local cfg_file
+    for cfg_file in ${_NEUTRON_SERVER_EXTRA_CONF_FILES_ABS[@]}; do
+        opts+=" --config-file $cfg_file"
+    done
+
     # Start the Neutron service
     # TODO(sc68cal) Stop hard coding this
-    run_process neutron-api "$NEUTRON_BIN_DIR/neutron-server --config-file $NEUTRON_CONF --config-file $NEUTRON_CORE_PLUGIN_CONF"
+    run_process neutron-api "$NEUTRON_BIN_DIR/neutron-server $ops"
 
     if is_ssl_enabled_service "neutron"; then
         ssl_ca="--ca-certificate=${SSL_BUNDLE_FILE}"
@@ -504,6 +515,10 @@ function neutron_service_plugin_class_add_new {
     iniset $NEUTRON_CONF DEFAULT service_plugins $plugins
 }
 
+function neutron_server_config_add_new {
+    _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS+=($1)
+}
+
 # Dispatch functions
 # These are needed for compatibility between the old and new implementations
 # where there are function name overlaps.  These will be removed when
@@ -578,6 +593,15 @@ function install_neutron_agent_packages {
         install_neutron_agent_packages_mutnauq "$@"
     else
         :
+    fi
+}
+
+function neutron_server_config_add {
+    if is_neutron_legacy_enabled; then
+        # Call back to old function
+        mutnauq_server_config_add "$@"
+    else
+        neutron_server_config_add_new "$@"
     fi
 }
 
