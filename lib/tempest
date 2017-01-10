@@ -291,8 +291,6 @@ function configure_tempest {
     if [[ "$KEYSTONE_SECURITY_COMPLIANCE_ENABLED" = True ]]; then
         iniset $TEMPEST_CONFIG identity-feature-enabled security_compliance True
     fi
-    # TODO(rodrigods): Remove the reseller flag when Kilo and Liberty are end of life.
-    iniset $TEMPEST_CONFIG identity-feature-enabled reseller True
 
     # Image
     # We want to be able to override this variable in the gate to avoid
