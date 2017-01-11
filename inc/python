@@ -69,6 +69,20 @@ function pip_install_gr {
     pip_install $clean_name
 }
 
+# Wrapper for ``pip install`` that only installs versions of libraries
+# from the global-requirements specification with extras.
+#
+# Uses globals ``REQUIREMENTS_DIR``
+#
+# pip_install_gr_extras packagename extra1,extra2,...
+function pip_install_gr_extras {
+    local name=$1
+    local extras=$2
+    local clean_name
+    clean_name=$(get_from_global_requirements $name)
+    pip_install $clean_name[$extras]
+}
+
 # Determine the python versions supported by a package
 function get_python_versions_for_package {
     local name=$1

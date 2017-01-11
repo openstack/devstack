@@ -91,6 +91,7 @@ function configure_dlm {
 # install_dlm() - Collect source and prepare
 function install_dlm {
     if is_dlm_enabled; then
+        pip_install_gr_extras tooz zookeeper
         if is_ubuntu; then
             install_package zookeeperd
         elif is_fedora; then
