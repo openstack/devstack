@@ -658,7 +658,7 @@ function enable_kernel_bridge_firewall {
     # Enable bridge firewalling in case it's disabled in kernel (upstream
     # default is enabled, but some distributions may decide to change it).
     # This is at least needed for RHEL 7.2 and earlier releases.
-    for proto in arp ip ip6; do
+    for proto in ip ip6; do
         sudo sysctl -w net.bridge.bridge-nf-call-${proto}tables=1
     done
 }
