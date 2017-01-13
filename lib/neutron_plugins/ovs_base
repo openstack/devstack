@@ -77,14 +77,6 @@ function _neutron_ovs_base_install_agent_packages {
     fi
 }
 
-function _neutron_ovs_base_configure_debug_command {
-    if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
-        iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge ""
-    else
-        iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
-    fi
-}
-
 function _neutron_ovs_base_configure_firewall_driver {
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver iptables_hybrid

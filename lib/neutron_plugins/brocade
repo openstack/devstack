@@ -49,10 +49,6 @@ function neutron_plugin_configure_service {
 
 }
 
-function neutron_plugin_configure_debug_command {
-    iniset $NEUTRON_TEST_CONFIG_FILE DEFAULT external_network_bridge
-}
-
 function neutron_plugin_configure_dhcp_agent {
     iniset $Q_DHCP_CONF_FILE DEFAULT dhcp_agent_manager neutron.agent.dhcp_agent.DhcpAgentWithStateReport
 }

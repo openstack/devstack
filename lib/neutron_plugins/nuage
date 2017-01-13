@@ -33,10 +33,6 @@ function neutron_plugin_configure_common {
     NUAGE_CNA_DEF_NETPART_NAME=${NUAGE_CNA_DEF_NETPART_NAME:-''}
 }
 
-function neutron_plugin_configure_debug_command {
-    :
-}
-
 function neutron_plugin_configure_dhcp_agent {
     :
 }
