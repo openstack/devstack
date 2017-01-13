@@ -677,6 +677,9 @@ function init_nova {
     # All nova components talk to a central database.
     # Only do this step once on the API node for an entire cluster.
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-api; then
+        recreate_database $NOVA_API_DB
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF api_db sync
+
         # (Re)create nova databases
         recreate_database nova
         recreate_database nova_api_cell0
@@ -689,9 +692,6 @@ function init_nova {
         if is_service_enabled n-cell; then
             recreate_database $NOVA_CELLS_DB
         fi
-
-        recreate_database $NOVA_API_DB
-        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF api_db sync
 
         # Run online migrations on the new databases
         # Needed for flavor conversion
