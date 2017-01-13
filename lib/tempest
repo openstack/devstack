@@ -434,6 +434,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG validation network_for_ssh $TEMPEST_SSH_NETWORK_NAME
 
     # Volume
+    iniset $TEMPEST_CONFIG volume-feature-enabled manage_snapshot $(trueorfalse True TEMPEST_VOLUME_MANAGE_SNAPSHOT)
     # TODO(ynesenenko): Remove the volume_services flag when Liberty and Kilo will correct work with host info.
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_services True
     # TODO(ameade): Remove the api_v3 flag when Mitaka and Liberty are end of life.
