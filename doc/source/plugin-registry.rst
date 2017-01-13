@@ -82,6 +82,7 @@ masakari                               `git://git.openstack.org/openstack/masaka
 meteos                                 `git://git.openstack.org/openstack/meteos <https://git.openstack.org/cgit/openstack/meteos>`__
 mistral                                `git://git.openstack.org/openstack/mistral <https://git.openstack.org/cgit/openstack/mistral>`__
 mixmatch                               `git://git.openstack.org/openstack/mixmatch <https://git.openstack.org/cgit/openstack/mixmatch>`__
+mogan                                  `git://git.openstack.org/openstack/mogan <https://git.openstack.org/cgit/openstack/mogan>`__
 monasca-analytics                      `git://git.openstack.org/openstack/monasca-analytics <https://git.openstack.org/cgit/openstack/monasca-analytics>`__
 monasca-api                            `git://git.openstack.org/openstack/monasca-api <https://git.openstack.org/cgit/openstack/monasca-api>`__
 monasca-ceilometer                     `git://git.openstack.org/openstack/monasca-ceilometer <https://git.openstack.org/cgit/openstack/monasca-ceilometer>`__
@@ -121,7 +122,6 @@ neutron-fwaas                          `git://git.openstack.org/openstack/neutro
 neutron-lbaas                          `git://git.openstack.org/openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas>`__
 neutron-lbaas-dashboard                `git://git.openstack.org/openstack/neutron-lbaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard>`__
 neutron-vpnaas                         `git://git.openstack.org/openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas>`__
-nimble                                 `git://git.openstack.org/openstack/nimble <https://git.openstack.org/cgit/openstack/nimble>`__
 nova-docker                            `git://git.openstack.org/openstack/nova-docker <https://git.openstack.org/cgit/openstack/nova-docker>`__
 nova-dpm                               `git://git.openstack.org/openstack/nova-dpm <https://git.openstack.org/cgit/openstack/nova-dpm>`__
 nova-lxd                               `git://git.openstack.org/openstack/nova-lxd <https://git.openstack.org/cgit/openstack/nova-lxd>`__
@@ -129,6 +129,7 @@ nova-mksproxy                          `git://git.openstack.org/openstack/nova-m
 nova-powervm                           `git://git.openstack.org/openstack/nova-powervm <https://git.openstack.org/cgit/openstack/nova-powervm>`__
 oaktree                                `git://git.openstack.org/openstack/oaktree <https://git.openstack.org/cgit/openstack/oaktree>`__
 octavia                                `git://git.openstack.org/openstack/octavia <https://git.openstack.org/cgit/openstack/octavia>`__
+os-xenapi                              `git://git.openstack.org/openstack/os-xenapi <https://git.openstack.org/cgit/openstack/os-xenapi>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
 picasso                                `git://git.openstack.org/openstack/picasso <https://git.openstack.org/cgit/openstack/picasso>`__
