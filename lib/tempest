@@ -241,7 +241,9 @@ function configure_tempest {
 
     # the public network (for floating ip access) is only available
     # if the extension is enabled.
-    if is_networking_extension_supported 'external-net'; then
+    # If NEUTRON_CREATE_INITIAL_NETWORKS is not true, there is no network created
+    # and the public_network_id should not be set.
+    if [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]] && is_networking_extension_supported 'external-net'; then
         public_network_id=$(openstack network show -f value -c id $PUBLIC_NETWORK_NAME)
     fi
 
