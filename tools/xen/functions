@@ -317,7 +317,7 @@ function install_conntrack_tools {
         # Only support conntrack-tools in Dom0 with XS7.0 and above
         if [ ! -f /usr/sbin/conntrackd ]; then
             sed -i s/#baseurl=/baseurl=/g /etc/yum.repos.d/CentOS-Base.repo
-            centos_ver=$(yum version nogroups |grep Installed | cut -d' ' -f 2 | cut -d'.' -f1-2 | tr '-' '.')
+            centos_ver=$(yum version nogroups |grep Installed | cut -d' ' -f 2 | cut -d'/' -f 1 | cut -d'-' -f 1)
             yum install -y --enablerepo=base --releasever=$centos_ver conntrack-tools
             # Backup conntrackd.conf after install conntrack-tools, use the one with statistic mode
             mv /etc/conntrackd/conntrackd.conf /etc/conntrackd/conntrackd.conf.back
