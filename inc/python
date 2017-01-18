@@ -367,6 +367,13 @@ function install_python3 {
     fi
 }
 
+function install_devstack_tools {
+    # intentionally old to ensure devstack-gate has control
+    local dstools_version=${DSTOOLS_VERSION:-0.1.2}
+    install_python3
+    sudo pip3 install -U devstack-tools==${dstools_version}
+}
+
 # Restore xtrace
 $INC_PY_TRACE
 
