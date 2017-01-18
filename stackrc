@@ -647,14 +647,9 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             IMAGE_URLS+="http://ca.downloads.xensource.com/OpenStack/cirros-0.3.4-x86_64-disk.vhd.tgz"
             IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
         ironic)
-            # Ironic can do both partition and full disk images, depending on the driver
-            if [[ -z "${IRONIC_DEPLOY_DRIVER%%agent*}" ]]; then
-                DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-disk}
-            else
-                DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-x86_64-uec}
-            fi
-            IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz"
-            IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-disk.img";;
+            # NOTE(lucasagomes): The logic setting the default image
+            # now lives in the Ironic tree
+            ;;
         *) # Default to Cirros with kernel, ramdisk and disk image
             DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec}
             IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-uec.tar.gz";;
