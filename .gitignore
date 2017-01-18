@@ -23,7 +23,6 @@ files/images
 files/pip-*
 files/get-pip.py*
 files/ir-deploy*
-local.conf
 local.sh
 localrc
 proto

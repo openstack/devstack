@@ -1,0 +1,9 @@
+export OS_USERNAME=admin
+export OS_PASSWORD=secrete
+export OS_TENANT_NAME=admin
+export OS_AUTH_URL=http://your.ip.address:5000/v3
+export OS_PROJECT_NAME=admin
+export OS_VOLUME_API_VERSION=2
+export OS_SERVICE_TOKEN=a682f596-76f3-11e3-b3b2-e716f9080d50
+export OS_SERVICE_ENDPOINT=http://your.ip.address:5000/v3
+
