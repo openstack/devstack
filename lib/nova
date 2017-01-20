@@ -465,8 +465,6 @@ function create_nova_conf {
     else
         iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
     fi
-    iniset $NOVA_CONF database connection `database_connection_url nova`
-    iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF DEFAULT osapi_compute_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
@@ -476,6 +474,14 @@ function create_nova_conf {
         # nova defaults to /usr/local/bin, but fedora and suse pip like to
         # install things in /usr/bin
         iniset $NOVA_CONF DEFAULT bindir "/usr/bin"
+    fi
+
+    # only setup database connections if there are services that
+    # require them running on the host. The ensures that n-cpu doesn't
+    # leak a need to use the db in a multinode scenario.
+    if is_service_enabled n-api n-cond n-sched; then
+        iniset $NOVA_CONF database connection `database_connection_url nova`
+        iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
     fi
 
     if is_service_enabled n-api; then
