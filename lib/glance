@@ -230,8 +230,8 @@ function configure_glance {
 
     # Format logging
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $GLANCE_API_CONF DEFAULT tenant user
-        setup_colorized_logging $GLANCE_REGISTRY_CONF DEFAULT tenant user
+        setup_colorized_logging $GLANCE_API_CONF
+        setup_colorized_logging $GLANCE_REGISTRY_CONF
     fi
 
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
@@ -273,7 +273,7 @@ function configure_glance {
     if is_service_enabled g-glare; then
         local dburl
         dburl=`database_connection_url glance`
-        setup_colorized_logging $GLANCE_GLARE_CONF DEFAULT tenant user
+        setup_colorized_logging $GLANCE_GLARE_CONF
         iniset $GLANCE_GLARE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         iniset $GLANCE_GLARE_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
         iniset $GLANCE_GLARE_CONF DEFAULT bind_port $GLANCE_GLARE_PORT
