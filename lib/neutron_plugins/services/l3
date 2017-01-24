@@ -197,8 +197,8 @@ function create_neutron_initial_network {
             if [ -z $SUBNETPOOL_V6_ID ]; then
                 fixed_range_v6=$IPV6_PROVIDER_FIXED_RANGE
             fi
-            SUBNET_V6_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 6 --ipv6-address-mode $IPV6_ADDRESS_MODE --gateway $IPV6_PROVIDER_NETWORK_GATEWAY $IPV6_PROVIDER_SUBNET_NAME ${SUBNETPOOL_V6_ID:+--subnet-pool $SUBNETPOOL_V6_ID} --network $NET_ID $fixed_range_v6 | grep 'id' | get_field 2)
-            die_if_not_set $LINENO SUBNET_V6_ID "Failure creating SUBNET_V6_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
+            IPV6_SUBNET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 6 --gateway $IPV6_PROVIDER_NETWORK_GATEWAY $IPV6_PROVIDER_SUBNET_NAME ${SUBNETPOOL_V6_ID:+--subnet-pool $SUBNETPOOL_V6_ID} --network $NET_ID --subnet-range $fixed_range_v6 | grep ' id ' | get_field 2)
+            die_if_not_set $LINENO IPV6_SUBNET_ID "Failure creating IPV6_SUBNET_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
         fi
 
         if [[ $Q_AGENT == "openvswitch" ]]; then
