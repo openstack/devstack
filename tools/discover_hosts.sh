@@ -15,4 +15,6 @@
 # In other words this should be run on the primary
 # (API) node in a multi-node setup.
 
-nova-manage cell_v2 discover_hosts --verbose
+if [[ -x $(which nova-manage) ]]; then
+    nova-manage cell_v2 discover_hosts --verbose
+fi
