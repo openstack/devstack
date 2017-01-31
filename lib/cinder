@@ -333,12 +333,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT volume_clear $CINDER_VOLUME_CLEAR
 
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
-        setup_colorized_logging $CINDER_CONF
-    else
-        # Set req-id, project-name and resource in log format
-        iniset $CINDER_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(levelname)s %(name)s [%(request_id)s %(project_name)s] %(resource)s%(message)s"
-    fi
+    setup_logging $CINDER_CONF $CINDER_USE_MOD_WSGI
 
     if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
         _cinder_config_apache_wsgi

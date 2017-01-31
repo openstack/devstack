@@ -522,12 +522,8 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT force_config_drive "$FORCE_CONFIG_DRIVE"
     fi
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$NOVA_USE_MOD_WSGI" == "False" ]  ; then
-        setup_colorized_logging $NOVA_CONF
-    else
-        # Show user_name and project_name instead of user_id and project_id
-        iniset $NOVA_CONF DEFAULT logging_user_identity_format "%(user_name)s %(project_name)s"
-    fi
+    setup_logging $NOVA_CONF $NOVA_USE_MOD_WSGI
+
     if [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
         _config_nova_apache_wsgi
     fi

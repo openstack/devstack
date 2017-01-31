@@ -732,12 +732,7 @@ function _configure_neutron_common {
     fi
 
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $NEUTRON_CONF
-    else
-        # Show user_name and project_name by default like in nova
-        iniset $NEUTRON_CONF DEFAULT logging_user_identity_format "%(user_name)s %(project_name)s"
-    fi
+    setup_logging $NEUTRON_CONF
 
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original

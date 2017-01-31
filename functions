@@ -569,6 +569,19 @@ function vercmp {
     esac
 }
 
+# This sets up defaults we like in devstack for logging for tracking
+# down issues, and makes sure everything is done the same between
+# projects.
+function setup_logging {
+    local conf_file=$1
+    local other_cond=${2:-"False"}
+    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ] && [ "$other_cond" == "False" ]; then
+        setup_colorized_logging $conf_file
+    else
+        setup_standard_logging_identity $conf_file
+    fi
+}
+
 # This function sets log formatting options for colorizing log
 # output to stdout. It is meant to be called by lib modules.
 # The last two parameters are optional and can be used to specify
@@ -586,6 +599,11 @@ function setup_colorized_logging {
     iniset $conf_file $conf_section logging_default_format_string "%(asctime)s.%(msecs)03d %(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
     iniset $conf_file $conf_section logging_debug_format_suffix "[00;33mfrom (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d[00m"
     iniset $conf_file $conf_section logging_exception_prefix "%(color)s%(asctime)s.%(msecs)03d TRACE %(name)s [01;35m%(instance)s[00m"
+}
+
+function setup_standard_logging_identity {
+    local conf_file=$1
+    iniset $conf_file DEFAULT logging_user_identity_format "%(project_name)s %(user_name)s"
 }
 
 # These functions are provided for basic fall-back functionality for
