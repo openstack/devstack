@@ -683,9 +683,13 @@ function init_nova {
         recreate_database nova
         recreate_database nova_cell0
 
-        # Migrate nova database. If "nova-manage cell_v2 simple_cell_setup" has
-        # been run this migrates the "nova" and "nova_cell0" database.
-        # Otherwise it just migrates the "nova" database.
+        # map_cell0 will create the cell mapping record in the nova_api DB so
+        # this needs to come after the api_db sync happens. We also want to run
+        # this before the db sync below since that will migrate both the nova
+        # and nova_cell0 databases.
+        nova-manage cell_v2 map_cell0 --database_connection `database_connection_url nova_cell0`
+
+        # Migrate nova and nova_cell0 databases.
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
 
         if is_service_enabled n-cell; then
@@ -945,9 +949,6 @@ function create_flavors {
 
 # create_cell(): Group the available hosts into a cell
 function create_cell {
-    # NOTE(danms): map_cell0 always returns 1 right now; remove this when that is fixed
-    (nova-manage cell_v2 map_cell0 --database_connection `database_connection_url nova_cell0`|| true)
-
     if ! is_service_enabled n-cell; then
         nova-manage cell_v2 simple_cell_setup --transport-url $(get_transport_url)
     else
