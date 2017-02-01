@@ -80,6 +80,7 @@ manila                                 `git://git.openstack.org/openstack/manila
 manila-ui                              `git://git.openstack.org/openstack/manila-ui <https://git.openstack.org/cgit/openstack/manila-ui>`__
 masakari                               `git://git.openstack.org/openstack/masakari <https://git.openstack.org/cgit/openstack/masakari>`__
 meteos                                 `git://git.openstack.org/openstack/meteos <https://git.openstack.org/cgit/openstack/meteos>`__
+meteos-ui                              `git://git.openstack.org/openstack/meteos-ui <https://git.openstack.org/cgit/openstack/meteos-ui>`__
 mistral                                `git://git.openstack.org/openstack/mistral <https://git.openstack.org/cgit/openstack/mistral>`__
 mixmatch                               `git://git.openstack.org/openstack/mixmatch <https://git.openstack.org/cgit/openstack/mixmatch>`__
 mogan                                  `git://git.openstack.org/openstack/mogan <https://git.openstack.org/cgit/openstack/mogan>`__
