@@ -290,6 +290,10 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG identity-feature-enabled security_compliance True
     fi
 
+    # TODO(rodrigods): This is a feature flag for bug 1590578 which is fixed in
+    # Newton and Ocata. This option can be removed after Mitaka is end of life.
+    iniset $TEMPEST_CONFIG identity-feature-enabled forbid_global_implied_dsr True
+
     # Image
     # We want to be able to override this variable in the gate to avoid
     # doing an external HTTP fetch for this test.
