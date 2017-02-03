@@ -292,8 +292,8 @@ function _neutron_create_private_subnet_v6 {
         subnet_params+="--gateway $IPV6_PRIVATE_NETWORK_GATEWAY "
     fi
     subnet_params+="${SUBNETPOOL_V6_ID:+--subnet-pool $SUBNETPOOL_V6_ID} "
-    subnet_params+="${fixed_range_v6:+--subnet-range $fixed_range_v6 $ipv6_modes} "
-    subnet_params+="--network $NET_ID $IPV6_PRIVATE_SUBNET_NAME "
+    subnet_params+="${fixed_range_v6:+--subnet-range $fixed_range_v6} "
+    subnet_params+="$ipv6_modes --network $NET_ID $IPV6_PRIVATE_SUBNET_NAME "
     local ipv6_subnet_id
     ipv6_subnet_id=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $project_id"
