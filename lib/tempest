@@ -377,6 +377,10 @@ function configure_tempest {
         fi
     fi
 
+    if is_service_enabled n-novnc; then
+        iniset $TEMPEST_CONFIG compute-feature-enabled vnc_console True
+    fi
+
     # Network
     iniset $TEMPEST_CONFIG network api_version 2.0
     iniset $TEMPEST_CONFIG network project_networks_reachable false
