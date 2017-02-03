@@ -359,6 +359,10 @@ function configure_mutnauq {
     fi
 
     iniset $NEUTRON_CONF DEFAULT api_workers "$API_WORKERS"
+    # devstack is not a tool for running uber scale OpenStack
+    # clouds, therefore running without a dedicated RPC worker
+    # for state reports is more than adequate.
+    iniset $NEUTRON_CONF DEFAULT rpc_state_report_workers 0
 }
 
 function create_nova_conf_neutron {
@@ -788,6 +792,7 @@ function _configure_neutron_metadata_agent {
 
     iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
+    iniset $Q_META_CONF_FILE DEFAULT metadata_workers $API_WORKERS
     iniset $Q_META_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
         iniset $Q_META_CONF_FILE AGENT root_helper_daemon "$Q_RR_DAEMON_COMMAND"
