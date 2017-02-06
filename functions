@@ -646,6 +646,16 @@ function set_mtu {
 }
 
 
+# running_in_container - Returns true otherwise false
+function running_in_container {
+    if grep -q lxc /proc/1/cgroup; then
+        return 0
+    fi
+
+    return 1
+}
+
+
 # enable_kernel_bridge_firewall - Enable kernel support for bridge firewalling
 function enable_kernel_bridge_firewall {
     # Load bridge module. This module provides access to firewall for bridged
