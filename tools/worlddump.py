@@ -151,7 +151,11 @@ def iptables_dump():
 def _netns_list():
     process = subprocess.Popen(['ip', 'netns'], stdout=subprocess.PIPE)
     stdout, _ = process.communicate()
-    return stdout.split()
+    # NOTE(jlvillal): Sometimes 'ip netns list' can return output like:
+    #   qrouter-0805fd7d-c493-4fa6-82ca-1c6c9b23cd9e (id: 1)
+    #   qdhcp-bb2cc6ae-2ae8-474f-adda-a94059b872b5 (id: 0)
+    output = [x.split()[0] for x in stdout.splitlines()]
+    return output
 
 
 def network_dump():
