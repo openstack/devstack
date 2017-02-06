@@ -188,7 +188,9 @@ function configure_neutron_new {
             iniset $NEUTRON_CORE_PLUGIN_CONF ovs local_ip $HOST_IP
         fi
 
-        enable_kernel_bridge_firewall
+        if ! running_in_container; then
+            enable_kernel_bridge_firewall
+        fi
     fi
 
     # DHCP Agent
