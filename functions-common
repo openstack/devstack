@@ -1552,7 +1552,7 @@ function screen_process {
     # Append the process to the screen rc file
     screen_rc "$name" "$command"
 
-    screen -S $SCREEN_NAME -p $name -X stuff "$command & echo \$! >$SERVICE_DIR/$SCREEN_NAME/${name}.pid; fg || echo \"$name failed to start\" | tee \"$SERVICE_DIR/$SCREEN_NAME/${name}.failure\"$NL"
+    screen -S $SCREEN_NAME -p $name -X stuff "$command & echo \$! >$SERVICE_DIR/$SCREEN_NAME/${name}.pid; fg || echo \"$name failed to start. Exit code: \$?\" | tee \"$SERVICE_DIR/$SCREEN_NAME/${name}.failure\"$NL"
 }
 
 # Screen rc file builder
