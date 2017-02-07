@@ -382,7 +382,6 @@ function configure_tempest {
     fi
 
     # Network
-    iniset $TEMPEST_CONFIG network api_version 2.0
     iniset $TEMPEST_CONFIG network project_networks_reachable false
     iniset $TEMPEST_CONFIG network public_network_id "$public_network_id"
     iniset $TEMPEST_CONFIG network public_router_id "$public_router_id"
