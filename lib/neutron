@@ -219,6 +219,7 @@ function configure_neutron_new {
 
         iniset $NEUTRON_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         iniset $NEUTRON_META_CONF DEFAULT nova_metadata_ip $SERVICE_HOST
+        iniset $NEUTRON_META_CONF DEFAULT metadata_workers $API_WORKERS
         iniset $NEUTRON_META_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
 
         # TODO(dtroyer): remove the v2.0 hard code below
