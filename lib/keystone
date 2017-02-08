@@ -384,8 +384,7 @@ function create_keystone_accounts {
     admin_project=$(openstack project show "admin" -f value -c id)
     local admin_user
     admin_user=$(openstack user show "admin" -f value -c id)
-    local admin_role
-    admin_role=$(openstack role show "admin" -f value -c id)
+    local admin_role="admin"
 
     get_or_add_user_domain_role $admin_role $admin_user default
 
@@ -403,13 +402,20 @@ function create_keystone_accounts {
     get_or_create_role ResellerAdmin
 
     # The Member role is used by Horizon and Swift so we need to keep it:
-    local member_role
-    member_role=$(get_or_create_role "Member")
+    local member_role="member"
+
+    # Captial Member role is legacy hard coded in Horizon / Swift
+    # configs. Keep it around.
+    get_or_create_role "Member"
+
+    # The reality is that the rest of the roles listed below honestly
+    # should work by symbolic names.
+    get_or_create_role $member_role
 
     # another_role demonstrates that an arbitrary role may be created and used
     # TODO(sleepsonthefloor): show how this can be used for rbac in the future!
-    local another_role
-    another_role=$(get_or_create_role "anotherrole")
+    local another_role="anotherrole"
+    get_or_create_role $another_role
 
     # invisible project - admin can't see this one
     local invis_project
