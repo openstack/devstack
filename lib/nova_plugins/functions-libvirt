@@ -26,7 +26,7 @@ function install_libvirt {
         install_package qemu-system
         install_package libvirt-bin libvirt-dev
         pip_install_gr libvirt-python
-        if [[ "$EBTABLES_RACE_FIX" == "True" ]]; then
+        if [[ ${DISTRO} == "trusty" && ${EBTABLES_RACE_FIX} == "True" ]]; then
             # Work around for bug #1501558. We can remove this once we
             # get to a version of Ubuntu that has new enough libvirt.
             TOP_DIR=$TOP_DIR $TOP_DIR/tools/install_ebtables_workaround.sh
