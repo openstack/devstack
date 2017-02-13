@@ -132,8 +132,6 @@ function create_placement_accounts {
     get_or_create_endpoint \
         "placement" \
         "$REGION_NAME" \
-        "$placement_api_url" \
-        "$placement_api_url" \
         "$placement_api_url"
 }
 

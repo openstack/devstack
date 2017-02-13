@@ -314,8 +314,6 @@ function create_glance_accounts {
         get_or_create_endpoint \
             "image" \
             "$REGION_NAME" \
-            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
-            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT" \
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
 
         # Note(frickler): Crude workaround for https://bugs.launchpad.net/glance-store/+bug/1620999
@@ -331,8 +329,6 @@ function create_glance_accounts {
 
         get_or_create_endpoint "artifact" \
             "$REGION_NAME" \
-            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT" \
-            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT" \
             "$GLANCE_SERVICE_PROTOCOL://$GLANCE_GLARE_HOSTPORT"
     fi
 }

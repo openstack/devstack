@@ -992,7 +992,7 @@ function _get_or_create_endpoint_with_interface {
 }
 
 # Gets or creates endpoint
-# Usage: get_or_create_endpoint <service> <region> <publicurl> <adminurl> <internalurl>
+# Usage: get_or_create_endpoint <service> <region> <publicurl> [adminurl] [internalurl]
 function get_or_create_endpoint {
     # NOTE(jamielennnox): when converting to v3 endpoint creation we go from
     # creating one endpoint with multiple urls to multiple endpoints each with
@@ -1004,9 +1004,13 @@ function get_or_create_endpoint {
     # endpoints they need.
     local public_id
     public_id=$(_get_or_create_endpoint_with_interface $1 public $3 $2)
-    _get_or_create_endpoint_with_interface $1 admin $4 $2
-    _get_or_create_endpoint_with_interface $1 internal $5 $2
-
+    # only create admin/internal urls if provided content for them
+    if [[ -n "$4" ]]; then
+        _get_or_create_endpoint_with_interface $1 admin $4 $2
+    fi
+    if [[ -n "$5" ]]; then
+        _get_or_create_endpoint_with_interface $1 internal $5 $2
+    fi
     # return the public id to indicate success, and this is the endpoint most likely wanted
     echo $public_id
 }
