@@ -467,6 +467,10 @@ $listen_string
     SSLEngine On
     SSLCertificateFile $DEVSTACK_CERT
 
+    # Disable KeepAlive to fix bug #1630664 a.k.a the
+    # ('Connection aborted.', BadStatusLine("''",)) error
+    KeepAlive Off
+
     <Location />
         ProxyPass http://$b_host:$b_port/ retry=5 nocanon
         ProxyPassReverse http://$b_host:$b_port/
