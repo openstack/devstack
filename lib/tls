@@ -520,7 +520,7 @@ $listen_string
     SSLCertificateFile $DEVSTACK_CERT
 
     <Location />
-        ProxyPass http://$b_host:$b_port/ retry=5 disablereuse=on keepalive=off nocanon
+        ProxyPass http://$b_host:$b_port/ retry=5 nocanon
         ProxyPassReverse http://$b_host:$b_port/
     </Location>
     ErrorLog $APACHE_LOG_DIR/tls-proxy_error.log
