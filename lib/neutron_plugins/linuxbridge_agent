@@ -8,6 +8,7 @@ _XTRACE_NEUTRON_LB=$(set +o | grep xtrace)
 set +o xtrace
 
 function neutron_lb_cleanup {
+    sudo ip link set $PUBLIC_BRIDGE down
     sudo brctl delbr $PUBLIC_BRIDGE
 
     if [[ "$Q_ML2_TENANT_NETWORK_TYPE" = "vxlan" ]]; then
