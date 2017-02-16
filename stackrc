@@ -640,17 +640,21 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             case "$LIBVIRT_TYPE" in
                 lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
                     DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs}
-                    IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs.img.gz";;
+                    DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs.img.gz}
+                    IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
                 *) # otherwise, use the qcow image
-                    DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
-                    IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img";;
+                    DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk}
+                    DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
+                    IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
                 esac
             ;;
         vsphere)
             DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.2-i386-disk.vmdk}
-            IMAGE_URLS+="http://partnerweb.vmware.com/programs/vmdkimage/cirros-0.3.2-i386-disk.vmdk";;
+            DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-$DEFAULT_IMAGE_NAME}
+            IMAGE_URLS+="http://partnerweb.vmware.com/programs/vmdkimage/${DEFAULT_IMAGE_FILE_NAME}";;
         xenserver)
             DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.4-x86_64-disk}
+            DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.4-x86_64-disk.vhd.tgz}
             IMAGE_URLS+="http://ca.downloads.xensource.com/OpenStack/cirros-0.3.4-x86_64-disk.vhd.tgz"
             IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
     esac

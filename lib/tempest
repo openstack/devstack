@@ -11,6 +11,7 @@
 #   - ``DEST``, ``FILES``
 #   - ``ADMIN_PASSWORD``
 #   - ``DEFAULT_IMAGE_NAME``
+#   - ``DEFAULT_IMAGE_FILE_NAME``
 #   - ``S3_SERVICE_PORT``
 #   - ``SERVICE_HOST``
 #   - ``BASE_SQL_CONN`` ``lib/database`` declares
@@ -412,7 +413,7 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG scenario img_container_format ovf
     else
         SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
-        SCENARIO_IMAGE_FILE=$DEFAULT_IMAGE_NAME
+        SCENARIO_IMAGE_FILE=$DEFAULT_IMAGE_FILE_NAME
     fi
     iniset $TEMPEST_CONFIG scenario img_dir $SCENARIO_IMAGE_DIR
     iniset $TEMPEST_CONFIG scenario img_file $SCENARIO_IMAGE_FILE
