@@ -2,6 +2,7 @@ acl
 dnsmasq-base
 dnsmasq-utils # for dhcp_release only available in dist:precise
 ebtables
+haproxy # to serve as metadata proxy inside router/dhcp namespaces
 iptables
 iputils-arping
 iputils-ping
