@@ -410,8 +410,6 @@ function create_mutnauq_accounts {
         get_or_create_endpoint \
             "network" \
             "$REGION_NAME" \
-            "$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/" \
-            "$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/" \
             "$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/"
     fi
 }

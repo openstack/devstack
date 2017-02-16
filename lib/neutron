@@ -330,8 +330,6 @@ function create_neutron_accounts_new {
             "network" "Neutron Service")
         get_or_create_endpoint $neutron_service \
             "$REGION_NAME" \
-            "$NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST:$NEUTRON_SERVICE_PORT/" \
-            "$NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST:$NEUTRON_SERVICE_PORT/" \
             "$NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST:$NEUTRON_SERVICE_PORT/"
     fi
 }
