@@ -125,12 +125,6 @@ if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
     done
 fi
 
-# Change the default nova_catalog_info and nova_catalog_admin_info values in
-# cinder so that the service name cinder is searching for matches that set for
-# nova in keystone.
-CINDER_NOVA_CATALOG_INFO=${CINDER_NOVA_CATALOG_INFO:-compute:nova:publicURL}
-CINDER_NOVA_CATALOG_ADMIN_INFO=${CINDER_NOVA_CATALOG_ADMIN_INFO:-compute:nova:adminURL}
-
 # Environment variables to configure the image-volume cache
 CINDER_IMG_CACHE_ENABLED=${CINDER_IMG_CACHE_ENABLED:-True}
 
@@ -268,8 +262,15 @@ function configure_cinder {
 
     configure_auth_token_middleware $CINDER_CONF cinder $CINDER_AUTH_CACHE_DIR
 
-    iniset $CINDER_CONF DEFAULT nova_catalog_info $CINDER_NOVA_CATALOG_INFO
-    iniset $CINDER_CONF DEFAULT nova_catalog_admin_info $CINDER_NOVA_CATALOG_ADMIN_INFO
+    # Change the default nova_catalog_info and nova_catalog_admin_info values in
+    # cinder so that the service name cinder is searching for matches that set for
+    # nova in keystone.
+    if [[ -n "$CINDER_NOVA_CATALOG_INFO" ]]; then
+        iniset $CINDER_CONF DEFAULT nova_catalog_info $CINDER_NOVA_CATALOG_INFO
+    fi
+    if [[ -n "$CINDER_NOVA_CATALOG_ADMIN_INFO" ]]; then
+        iniset $CINDER_CONF DEFAULT nova_catalog_admin_info $CINDER_NOVA_CATALOG_ADMIN_INFO
+    fi
 
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
