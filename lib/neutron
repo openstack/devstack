@@ -399,9 +399,9 @@ function start_neutron_api {
         service_protocol="http"
     fi
 
-    local opts = ""
-    opts+="--config-file $NEUTRON_CONF"
-    opts+="--config-file $NEUTRON_CORE_PLUGIN_CONF"
+    local opts=""
+    opts+=" --config-file $NEUTRON_CONF"
+    opts+=" --config-file $NEUTRON_CORE_PLUGIN_CONF"
     local cfg_file
     for cfg_file in ${_NEUTRON_SERVER_EXTRA_CONF_FILES_ABS[@]}; do
         opts+=" --config-file $cfg_file"
@@ -409,7 +409,7 @@ function start_neutron_api {
 
     # Start the Neutron service
     # TODO(sc68cal) Stop hard coding this
-    run_process neutron-api "$NEUTRON_BIN_DIR/neutron-server $ops"
+    run_process neutron-api "$NEUTRON_BIN_DIR/neutron-server $opts"
 
     if is_ssl_enabled_service "neutron"; then
         ssl_ca="--ca-certificate=${SSL_BUNDLE_FILE}"
