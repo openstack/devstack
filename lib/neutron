@@ -510,7 +510,10 @@ function neutron_service_plugin_class_add_new {
     local plugins=""
 
     plugins=$(iniget $NEUTRON_CONF DEFAULT service_plugins)
-    plugins+=",${service_plugin_class}"
+    if [ $plugins ]; then
+        plugins+=","
+    fi
+    plugins+="${service_plugin_class}"
     iniset $NEUTRON_CONF DEFAULT service_plugins $plugins
 }
 
