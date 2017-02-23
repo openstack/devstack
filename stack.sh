@@ -761,6 +761,7 @@ install_infra
 run_phase stack pre-install
 
 install_rpc_backend
+restart_rpc_backend
 
 # NOTE(sdague): dlm install is conditional on one being enabled by configuration
 install_dlm
@@ -950,11 +951,6 @@ EOF
     echo_summary "Starting rsyslog"
     restart_service rsyslog
 fi
-
-
-# Finalize queue installation
-# ----------------------------
-restart_rpc_backend
 
 
 # Export Certificate Authority Bundle
