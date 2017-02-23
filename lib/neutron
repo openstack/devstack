@@ -70,9 +70,6 @@ NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
 NEUTRON_ROOTWRAP_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
 NEUTRON_ROOTWRAP_DAEMON_CMD="sudo $NEUTRON_ROOTWRAP-daemon $NEUTRON_ROOTWRAP_CONF_FILE"
 
-# Add all enabled config files to a single config arg
-NEUTRON_CONFIG_ARG=${NEUTRON_CONFIG_ARG:-""}
-
 # Additional neutron api config files
 declare -a _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
 
@@ -347,7 +344,7 @@ function init_neutron_new {
     recreate_database neutron
 
     # Run Neutron db migrations
-    $NEUTRON_BIN_DIR/neutron-db-manage $NEUTRON_CONFIG_ARG upgrade heads
+    $NEUTRON_BIN_DIR/neutron-db-manage upgrade heads
 
     create_neutron_cache_dir
 }
@@ -426,20 +423,19 @@ function start_neutron_api {
 
 # start_neutron() - Start running processes, including screen
 function start_neutron_new {
-    _set_config_files
-
     # Start up the neutron agents if enabled
     # TODO(sc68cal) Make this pluggable so different DevStack plugins for different Neutron plugins
     # can resolve the $NEUTRON_AGENT_BINARY
     if is_service_enabled neutron-agent; then
-        run_process neutron-agent "$NEUTRON_BIN_DIR/$NEUTRON_AGENT_BINARY $NEUTRON_CONFIG_ARG"
+        # TODO(ihrachys) stop loading ml2_conf.ini into agents, instead load agent specific files
+        run_process neutron-agent "$NEUTRON_BIN_DIR/$NEUTRON_AGENT_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_CORE_PLUGIN_CONF"
     fi
     if is_service_enabled neutron-dhcp; then
         neutron_plugin_configure_dhcp_agent $NEUTRON_DHCP_CONF
-        run_process neutron-dhcp "$NEUTRON_BIN_DIR/$NEUTRON_DHCP_BINARY $NEUTRON_CONFIG_ARG"
+        run_process neutron-dhcp "$NEUTRON_BIN_DIR/$NEUTRON_DHCP_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_DHCP_CONF"
     fi
     if is_service_enabled neutron-l3; then
-        run_process neutron-l3 "$NEUTRON_BIN_DIR/$NEUTRON_L3_BINARY $NEUTRON_CONFIG_ARG"
+        run_process neutron-l3 "$NEUTRON_BIN_DIR/$NEUTRON_L3_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_L3_CONF"
     fi
     if is_service_enabled neutron-api; then
         # XXX(sc68cal) - Here's where plugins can wire up their own networks instead
@@ -454,7 +450,7 @@ function start_neutron_new {
         fi
     fi
     if is_service_enabled neutron-metadata-agent; then
-        run_process neutron-metadata-agent "$NEUTRON_BIN_DIR/$NEUTRON_META_BINARY $NEUTRON_CONFIG_ARG"
+        run_process neutron-metadata-agent "$NEUTRON_BIN_DIR/$NEUTRON_META_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_META_CONF"
     fi
 
     if is_service_enabled neutron-metering; then
@@ -478,30 +474,6 @@ function stop_neutron_new {
         sudo pkill -9 -f neutron-ns-metadata-proxy || :
         stop_process neutron-metadata-agent
     fi
-}
-
-# Compile the lost of enabled config files
-function _set_config_files {
-
-    NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_CONF"
-
-    #TODO(sc68cal) OVS and LB agent uses settings in NEUTRON_CORE_PLUGIN_CONF (ml2_conf.ini) but others may not
-    if is_service_enabled neutron-agent; then
-        NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_CORE_PLUGIN_CONF"
-    fi
-
-    if is_service_enabled neutron-dhcp; then
-        NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_DHCP_CONF"
-    fi
-
-    if is_service_enabled neutron-l3; then
-        NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_L3_CONF"
-    fi
-
-    if is_service_enabled neutron-metadata-agent; then
-        NEUTRON_CONFIG_ARG+=" --config-file $NEUTRON_META_CONF"
-    fi
-
 }
 
 # neutron_service_plugin_class_add() - add service plugin class
