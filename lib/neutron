@@ -52,9 +52,13 @@ NEUTRON_CORE_PLUGIN_CONF_FILENAME=${NEUTRON_CORE_PLUGIN_CONF_FILENAME:-ml2_conf.
 NEUTRON_CORE_PLUGIN_CONF_PATH=$NEUTRON_CONF_DIR/plugins/$NEUTRON_CORE_PLUGIN
 NEUTRON_CORE_PLUGIN_CONF=$NEUTRON_CORE_PLUGIN_CONF_PATH/$NEUTRON_CORE_PLUGIN_CONF_FILENAME
 
+NEUTRON_METERING_AGENT_CONF_FILENAME=${NEUTRON_METERING_AGENT_CONF_FILENAME:-metering_agent.ini}
+NEUTRON_METERING_AGENT_CONF=$NEUTRON_CONF_DIR/$NEUTRON_METERING_AGENT_CONF_FILENAME
+
 NEUTRON_AGENT_BINARY=${NEUTRON_AGENT_BINARY:-neutron-$NEUTRON_AGENT-agent}
 NEUTRON_L3_BINARY=${NEUTRON_L3_BINARY:-neutron-l3-agent}
 NEUTRON_META_BINARY=${NEUTRON_META_BINARY:-neutron-metadata-agent}
+NEUTRON_METERING_BINARY=${NEUTRON_METERING_BINARY:-neutron-metering-agent}
 
 # Public facing bits
 if is_ssl_enabled_service "neutron" || is_service_enabled tls-proxy; then
@@ -251,9 +255,7 @@ function configure_neutron_new {
 
     # Metering
     if is_service_enabled neutron-metering; then
-        source $TOP_DIR/lib/neutron_plugins/services/metering
-        neutron_agent_metering_configure_common
-        neutron_agent_metering_configure_agent
+        cp $NEUTRON_DIR/etc/metering_agent.ini.sample $NEUTRON_METERING_AGENT_CONF
         neutron_service_plugin_class_add metering
     fi
 }
@@ -454,7 +456,7 @@ function start_neutron_new {
     fi
 
     if is_service_enabled neutron-metering; then
-        run_process neutron-metering "$AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
+        run_process neutron-metering "$NEUTRON_METERING_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_METERING_AGENT_CONF"
     fi
 }
 
