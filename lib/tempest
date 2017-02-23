@@ -439,8 +439,7 @@ function configure_tempest {
         TEMPEST_VOLUME_MANAGE_SNAPSHOT=${TEMPEST_VOLUME_MANAGE_SNAPSHOT:-True}
     fi
     iniset $TEMPEST_CONFIG volume-feature-enabled manage_snapshot $(trueorfalse False TEMPEST_VOLUME_MANAGE_SNAPSHOT)
-    # TODO(ynesenenko): Remove the volume_services flag when Liberty and Kilo will correct work with host info.
-    iniset $TEMPEST_CONFIG volume-feature-enabled volume_services True
+
     # TODO(ameade): Remove the api_v3 flag when Mitaka and Liberty are end of life.
     iniset $TEMPEST_CONFIG volume-feature-enabled api_v3 True
     local tempest_volume_min_microversion=${TEMPEST_VOLUME_MIN_MICROVERSION:-None}
