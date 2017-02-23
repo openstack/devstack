@@ -70,6 +70,14 @@ NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
 NEUTRON_ROOTWRAP_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
 NEUTRON_ROOTWRAP_DAEMON_CMD="sudo $NEUTRON_ROOTWRAP-daemon $NEUTRON_ROOTWRAP_CONF_FILE"
 
+# This is needed because _neutron_ovs_base_configure_l3_agent will set
+# external_network_bridge
+Q_USE_PROVIDERNET_FOR_PUBLIC=${Q_USE_PROVIDERNET_FOR_PUBLIC:-True}
+# This is needed because _neutron_ovs_base_configure_l3_agent uses it to create
+# an external network bridge
+PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
+PUBLIC_BRIDGE_MTU=${PUBLIC_BRIDGE_MTU:-1500}
+
 # Additional neutron api config files
 declare -a _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
 
