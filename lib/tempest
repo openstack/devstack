@@ -48,10 +48,6 @@ TEMPEST_CONFIG_DIR=${TEMPEST_CONFIG_DIR:-$TEMPEST_DIR/etc}
 TEMPEST_CONFIG=$TEMPEST_CONFIG_DIR/tempest.conf
 TEMPEST_STATE_PATH=${TEMPEST_STATE_PATH:=$DATA_DIR/tempest}
 
-NOVA_SOURCE_DIR=$DEST/nova
-
-BUILD_INTERVAL=1
-
 # This is the timeout that tempest will wait for a VM to change state,
 # spawn, delete, etc.
 # The default is set to 196 seconds.
@@ -442,6 +438,7 @@ function configure_tempest {
 
     # TODO(ameade): Remove the api_v3 flag when Mitaka and Liberty are end of life.
     iniset $TEMPEST_CONFIG volume-feature-enabled api_v3 True
+    iniset $TEMPEST_CONFIG volume-feature-enabled api_v1 $(trueorfalse False TEMPEST_VOLUME_API_V1)
     local tempest_volume_min_microversion=${TEMPEST_VOLUME_MIN_MICROVERSION:-None}
     local tempest_volume_max_microversion=${TEMPEST_VOLUME_MAX_MICROVERSION:-"latest"}
     if [ "$tempest_volume_min_microversion" == "None" ]; then
