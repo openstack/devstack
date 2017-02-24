@@ -872,7 +872,7 @@ fi
 # if placement-api or placement-client is active, and n-cpu on the
 # same box.
 if is_service_enabled placement placement-client; then
-    if is_service_enabled n-cpu; then
+    if is_service_enabled n-cpu || is_service_enabled n-sch; then
         configure_placement_nova_compute
     fi
 fi
