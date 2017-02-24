@@ -153,15 +153,7 @@ function configure_neutron_new {
 
         iniset $NEUTRON_CONF DEFAULT auth_strategy $NEUTRON_AUTH_STRATEGY
         configure_auth_token_middleware $NEUTRON_CONF neutron $NEUTRON_AUTH_CACHE_DIR keystone_authtoken
-
-        iniset $NEUTRON_CONF nova auth_type password
-        iniset $NEUTRON_CONF nova auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT/v3"
-        iniset $NEUTRON_CONF nova username nova
-        iniset $NEUTRON_CONF nova password $SERVICE_PASSWORD
-        iniset $NEUTRON_CONF nova user_domain_id default
-        iniset $NEUTRON_CONF nova project_name $SERVICE_TENANT_NAME
-        iniset $NEUTRON_CONF nova project_domain_id default
-        iniset $NEUTRON_CONF nova region_name $REGION_NAME
+        configure_auth_token_middleware $NEUTRON_CONF nova $NEUTRON_AUTH_CACHE_DIR nova
 
         # Configure VXLAN
         # TODO(sc68cal) not hardcode?
@@ -238,10 +230,6 @@ function configure_neutron_new {
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
         iniset $NEUTRON_CONF DEFAULT bind_port "$NEUTRON_SERVICE_PORT_INT"
-    fi
-
-    if is_ssl_enabled_service "nova"; then
-        iniset $NEUTRON_CONF nova cafile $SSL_BUNDLE_FILE
     fi
 
     if is_ssl_enabled_service "neutron"; then
