@@ -97,13 +97,20 @@ function restart_rpc_backend {
 
             break
         done
-        if is_service_enabled n-cell; then
-            # Add partitioned access for the child cell
-            if [ -z `sudo rabbitmqctl list_vhosts | grep child_cell` ]; then
-                sudo rabbitmqctl add_vhost child_cell
-                sudo rabbitmqctl set_permissions -p child_cell $RABBIT_USERID ".*" ".*" ".*"
-            fi
+    fi
+}
+
+# adds a vhost to the rpc backend
+function rpc_backend_add_vhost {
+    local vhost="$1"
+    if is_service_enabled rabbit; then
+        if [ -z `sudo rabbitmqctl list_vhosts | grep $vhost` ]; then
+            sudo rabbitmqctl add_vhost $vhost
+            sudo rabbitmqctl set_permissions -p $vhost $RABBIT_USERID ".*" ".*" ".*"
         fi
+    else
+        echo 'RPC backend does not support vhosts'
+        return 1
     fi
 }
 
