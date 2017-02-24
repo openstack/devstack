@@ -631,7 +631,7 @@ function create_nova_conf {
 function init_nova_service_user_conf {
     iniset $NOVA_CONF service_user send_service_user_token True
     iniset $NOVA_CONF service_user auth_type password
-    iniset $NOVA_CONF service_user auth_url "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_AUTH_PORT"
+    iniset $NOVA_CONF service_user auth_url "$KEYSTONE_SERVICE_URI"
     iniset $NOVA_CONF service_user username nova
     iniset $NOVA_CONF service_user password "$SERVICE_PASSWORD"
     iniset $NOVA_CONF service_user user_domain_name "$SERVICE_DOMAIN_NAME"
