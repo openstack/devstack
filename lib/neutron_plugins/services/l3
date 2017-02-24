@@ -385,7 +385,7 @@ function _neutron_configure_router_v6 {
     # If the external network has not already been set as the default router
     # gateway when configuring an IPv4 public subnet, do so now
     if [[ "$IP_VERSION" == "6" ]]; then
-        openstack --os-cloud devstack-admin --os-region "$REGION_NAME" set --external-gateway $EXT_NET_ID $ROUTER_ID
+        openstack --os-cloud devstack-admin --os-region "$REGION_NAME" router set --external-gateway $EXT_NET_ID $ROUTER_ID
     fi
 
     # This logic is specific to using the l3-agent for layer 3
