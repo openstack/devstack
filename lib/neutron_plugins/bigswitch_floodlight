@@ -26,10 +26,6 @@ function neutron_plugin_configure_common {
     BS_FL_CONTROLLER_TIMEOUT=${BS_FL_CONTROLLER_TIMEOUT:-10}
 }
 
-function neutron_plugin_configure_debug_command {
-    _neutron_ovs_base_configure_debug_command
-}
-
 function neutron_plugin_configure_dhcp_agent {
     :
 }
