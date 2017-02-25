@@ -12,7 +12,7 @@
 # a multi-node developer install.
 
 # To keep this script simple we assume you are running on a recent **Ubuntu**
-# (14.04 Trusty or newer), **Fedora** (F20 or newer), or **CentOS/RHEL**
+# (16.04 Xenial or newer), **Fedora** (F24 or newer), or **CentOS/RHEL**
 # (7 or newer) machine. (It may work on other platforms but support for those
 # platforms is left to those who added them to DevStack.) It should work in
 # a VM or physical server. Additionally, we maintain a list of ``deb`` and
@@ -192,7 +192,7 @@ source $TOP_DIR/stackrc
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (trusty|xenial|yakkety|7.0|wheezy|sid|testing|jessie|f23|f24|f25|rhel7|kvmibm1) ]]; then
+if [[ ! ${DISTRO} =~ (xenial|yakkety|zesty|sid|testing|jessie|f24|f25|rhel7|kvmibm1) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         die $LINENO "If you wish to run this script anyway run with FORCE=yes"
