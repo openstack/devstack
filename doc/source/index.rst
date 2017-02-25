@@ -56,15 +56,15 @@ You can quickly create a separate `stack` user to run DevStack with
 
 ::
 
-   $ adduser stack
+   $ sudo adduser stack
 
 Since this user will be making many changes to your system, it should
 have sudo privileges:
 
 ::
 
-    $ echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-    $ su stack
+    $ sudo tee <<<"stack ALL=(ALL) NOPASSWD: ALL" /etc/sudoers
+    $ sudo su - stack
 
 Download DevStack
 -----------------
