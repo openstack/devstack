@@ -96,47 +96,26 @@ mkdir -p $STAGING_DIR/opt/stack/devstack
 tar xf /tmp/devstack.tar -C $STAGING_DIR/opt/stack/devstack
 cd $TOP_DIR
 
-# Create an upstart job (task) for devstack, which can interact with the console
-cat >$STAGING_DIR/etc/init/devstack.conf << EOF
-start on stopped rc RUNLEVEL=[2345]
+# Create an systemd task for devstack
+cat >$STAGING_DIR/etc/systemd/system/devstack.service << EOF
+[Unit]
+Description=Install OpenStack by DevStack
 
-console output
-task
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/rm -f /opt/stack/runsh.succeeded
+ExecStart=/bin/su -c "/opt/stack/run.sh" stack
+StandardOutput=tty
+StandardError=tty
 
-pre-start script
-    rm -f /opt/stack/runsh.succeeded
-end script
+[Install]
+WantedBy=multi-user.target
 
-script
-    initctl stop hvc0 || true
-
-    # Read any leftover characters from standard input
-    while read -n 1 -s -t 0.1 -r ignored; do
-        true
-    done
-
-    clear
-
-    chown -R $STACK_USER /opt/stack
-
-    su -c "/opt/stack/run.sh" $STACK_USER
-
-    # Update /etc/issue
-    {
-        echo "OpenStack VM - Installed by DevStack"
-        IPADDR=\$(ip -4 address show eth0 | sed -n 's/.*inet \\([0-9\.]\\+\\).*/\1/p')
-        echo "  Management IP:   \$IPADDR"
-        echo -n "  Devstack run:    "
-        if [ -e /opt/stack/runsh.succeeded ]; then
-            echo "SUCCEEDED"
-        else
-            echo "FAILED"
-        fi
-        echo ""
-    } > /etc/issue
-    initctl start hvc0 > /dev/null 2>&1
-end script
 EOF
+
+# enable this service
+ln -s $STAGING_DIR/etc/systemd/system/devstack.service $STAGING_DIR/etc/systemd/system/multi-user.target.wants/devstack.service
 
 # Configure the hostname
 echo $GUEST_NAME > $STAGING_DIR/etc/hostname
@@ -178,6 +157,8 @@ set -eux
 (
   flock -n 9 || exit 1
 
+  sudo chown -R stack /opt/stack
+
   [ -e /opt/stack/runsh.succeeded ] && rm /opt/stack/runsh.succeeded
   echo \$\$ >> /opt/stack/run_sh.pid
 
@@ -187,7 +168,24 @@ set -eux
 
   # Got to the end - success
   touch /opt/stack/runsh.succeeded
+
+  # Update /etc/issue
+  (
+      echo "OpenStack VM - Installed by DevStack"
+      IPADDR=$(ip -4 address show eth0 | sed -n 's/.*inet \([0-9\.]\+\).*/\1/p')
+      echo "  Management IP:   $IPADDR"
+      echo -n "  Devstack run:    "
+      if [ -e /opt/stack/runsh.succeeded ]; then
+          echo "SUCCEEDED"
+      else
+          echo "FAILED"
+      fi
+      echo ""
+  ) > /opt/stack/issue
+  sudo cp /opt/stack/issue /etc/issue
+
   rm /opt/stack/run_sh.pid
 ) 9> /opt/stack/.runsh_lock
 EOF
+
 chmod 755 $STAGING_DIR/opt/stack/run.sh

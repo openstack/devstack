@@ -50,7 +50,7 @@ disk_size=$(($OSDOMU_VDI_GB * 1024 * 1024 * 1024))
 # however these need to be answered before the netinstall
 # is ready to fetch the preseed file, and as such must be here
 # to get a fully automated install
-pvargs="-- quiet console=hvc0 partman/default_filesystem=ext3 \
+pvargs="quiet console=hvc0 partman/default_filesystem=ext3 \
 console-setup/ask_detect=false locale=${UBUNTU_INST_LOCALE} \
 keyboard-configuration/layoutcode=${UBUNTU_INST_KEYBOARD} \
 netcfg/choose_interface=eth0 \

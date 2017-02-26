@@ -424,7 +424,7 @@ else
     echo "looking at the console of your domU / checking the log files."
     echo ""
     echo "ssh into your domU now: 'ssh stack@$OS_VM_MANAGEMENT_ADDRESS' using your password"
-    echo "and then do: 'sudo service devstack status' to check if devstack is still running."
+    echo "and then do: 'sudo systemctl status devstack' to check if devstack is still running."
     echo "Check that /opt/stack/runsh.succeeded exists"
     echo ""
     echo "When devstack completes, you can visit the OpenStack Dashboard"
