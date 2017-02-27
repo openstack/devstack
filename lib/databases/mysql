@@ -96,9 +96,190 @@ function configure_database_mysql {
     iniset -sudo $my_conf mysqld bind-address "$SERVICE_LISTEN_ADDRESS"
     iniset -sudo $my_conf mysqld sql_mode TRADITIONAL
     iniset -sudo $my_conf mysqld default-storage-engine InnoDB
-    iniset -sudo $my_conf mysqld max_connections 1024
+
+    # the number of connections has been throttled to 256. In the
+    # event that the gate jobs report "Too many connections" it is
+    # indicative of a problem that could be the result of one of many
+    # things. For more details about debugging this error, refer
+    # https://dev.mysql.com/doc/refman/5.5/en/too-many-connections.html.
+    # Note that the problem may not ONLY be an issue with MySQL
+    # connections. If the number of fd's at the OS is too low, you
+    # could see errors manifest as MySQL "too many connections".
+    iniset -sudo $my_conf mysqld max_connections 256
     iniset -sudo $my_conf mysqld query_cache_type OFF
     iniset -sudo $my_conf mysqld query_cache_size 0
+
+    # Additional settings to put MySQL on a memory diet. These
+    # settings are used in conjunction with the cap on max_connections
+    # as the total memory used by MySQL can be simply viewed as
+    # fixed-allocations + max_connections * variable-allocations. A
+    # nifty tool to help with this is
+    # http://www.mysqlcalculator.com/. A short description of each of
+    # the settings follows.
+
+    # binlog_cache_size, determines the size of cache to hold changes
+    # to the binary log during a transaction, for each connection. For
+    # more details, refer
+    # https://dev.mysql.com/doc/refman/5.6/en/replication-options-binary-log.html#sysvar_binlog_cache_size
+    # When binary logging is enabled, a smaller binlog cache could
+    # result in more frequent flushes to the disk and a larger value
+    # would result in less flushes to the disk but higher memory
+    # usage. This however only has to do with large transactions; if
+    # you have a small transaction the binlog cache is necessarily
+    # flushed on a transaction commit. This is a per-connection cache.
+    iniset -sudo $my_conf mysqld binlog_cache_size 4K
+
+    # binlog_stmt_cache_size determines the size of cache to hold non
+    # transactional statements in the binary log. For more details,
+    # refer
+    # https://dev.mysql.com/doc/refman/5.6/en/replication-options-binary-log.html#sysvar_binlog_stmt_cache_size
+    # This cache holds changes to non-transactional tables (read:
+    # MyISAM) or any non-transactional statements which cause
+    # modifications to data (truncate is an example). These are
+    # written to disk immediately on completion of the statement or
+    # when the cache is full. If the cache is too small, you get
+    # frequent writes to the disk (flush) and if the cache is too
+    # large, it takes up more memory. This is a per-connection cache.
+    iniset -sudo $my_conf mysqld binlog_stmt_cache_size 4K
+
+    # bulk_insert_buffer_size for MyISAM tables that use a special
+    # cache for insert statements and load statements, this cache is
+    # used to optimize writes to the disk. If the value is set to 0,
+    # the optimization is disabled. For more details refer
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_bulk_insert_buffer_size
+    # We set this to 0 which could result in higher disk I/O (I/O on
+    # each insert block completion).
+    iniset -sudo $my_conf mysqld bulk_insert_buffer_size 0
+
+    # host_cache_size controls a DNS lookup optimization. For more
+    # details refer
+    # https://dev.mysql.com/doc/refman/5.6/en/host-cache.html
+    iniset -sudo $my_conf mysqld host_cache_size 0
+
+    # innodb_buffer_pool_size This is the size of the server wide
+    # buffer pool. It is the cache for all data blocks being used by
+    # the server and is managed as a LRU chain. Dirty blocks either
+    # age off the list or are forced off when the list is
+    # full. Setting this to 5MB (default 128MB) reduces the amount of
+    # memory used by the server and this will result in more disk I/O
+    # in cases where (a) there is considerable write activity that
+    # overwhelms the allocated cache, or (b) there is considerable
+    # read activity on a data set that exceeds the allocated
+    # cache. For more details, refer
+    # https://dev.mysql.com/doc/refman/5.6/en/innodb-parameters.html#sysvar_innodb_buffer_pool_size
+    iniset -sudo $my_conf mysqld innodb_buffer_pool_size 5M
+
+    # innodb_ft_cache_size and innodb_ft_total_cache_size control the
+    # per-connection full text search cache and the server wide
+    # maximum full text search cache. We should not be using full text
+    # search and the value is set to the minimum allowable. The former
+    # is a per-connection cache size and the latter is server
+    # wide. For more details, refer
+    # https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_ft_cache_size
+    # and
+    # https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_ft_total_cache_size
+    iniset -sudo $my_conf mysqld innodb_ft_cache_size 1600000
+    iniset -sudo $my_conf mysqld innodb_ft_total_cache_size 32000000
+
+    # innodb_log_buffer_size This buffer is used to buffer
+    # transactions in-memory before writing them to the innodb
+    # internal transaction log. Large transactions, or high amounts of
+    # concurrency, will cause the system to fill this faster and thus
+    # make the system more disk-bound. For more details, refer
+    # https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_log_buffer_size
+    iniset -sudo $my_conf mysqld innodb_log_buffer_size 256K
+
+    # innodb_sort_buffer_size, This buffer is used for sorting when
+    # InnoDB is creating indexes. Could cause that to be slower, but
+    # only if tables are large. This is a per-connection setting. For
+    # more details, refer
+    # https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_sort_buffer_size
+    iniset -sudo $my_conf mysqld innodb_sort_buffer_size 64K
+
+    # join_buffer_size, This buffer makes table and index scans
+    # faster. So this setting could make some queries more disk
+    # bound. This is a per-connection setting. For more details refer
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_join_buffer_size.
+    iniset -sudo $my_conf mysqld join_buffer_size 128
+
+    # key_buffer_size defines the index blocks used for MyISAM tables
+    # and shared between threads. This is a server wide setting. For
+    # more details see
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_key_buffer_size
+    iniset -sudo $my_conf mysqld key_buffer_size 8
+
+    # max_heap_table_size sets the maximum amount of memory for MEMORY
+    # tables (which we don't use). The value is set to 16k, the
+    # minimum allowed. For more details, see
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_max_heap_table_size
+    iniset -sudo $my_conf mysqld max_heap_table_size 16K
+
+    # net_buffer_length Each client has a buffer for incoming and
+    # outgoing data, both start with a size of net_buffer_length and
+    # can grow (in steps of 2x) upto a size of max_allowed_packet. For
+    # more details see
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_net_buffer_length
+    iniset -sudo $my_conf mysqld net_buffer_length 1K
+
+    # read_buffer_size, read_rnd_buffer_size are per-thread buffer
+    # used for scans on MyISAM tables. It is a per-connection setting
+    # and so we set it to the minimum value allowable. Same for
+    # read_rnd_buffer_size. For more details refer
+    # https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_read_buffer_size
+    # and
+    # https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_read_rnd_buffer_size
+    iniset -sudo $my_conf mysqld read_buffer_size 8200
+    iniset -sudo $my_conf mysqld read_rnd_buffer_size 8200
+
+    # sort_buffer_size when a sort is requested, it will be performed
+    # in memory in a buffer of this size (allocated per connection)
+    # and if the data exceeds this size it will spill to disk. The
+    # innodb and myisam variables are used in computing indices for
+    # tables using the specified storage engine. Since we don't
+    # dynamically reindex (except during upgrade) these values should
+    # never be material. Obviously performance of disk based sorts is
+    # worse than in memory sorts and therefore a high value here will
+    # improve sort performance for large data. For more details,
+    # refer:
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_sort_buffer_size
+    # and
+    # https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_sort_buffer_size
+    # and
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_myisam_sort_buffer_size
+    iniset -sudo $my_conf mysqld sort_buffer_size 32K
+    iniset -sudo $my_conf mysqld innodb_sort_buffer_size 64K
+    iniset -sudo $my_conf mysqld myisam_sort_buffer_size 4K
+
+    # thread_cache_size specifies how many internal threads to cache
+    # for use with incoming connections. We set this to 0 whic means
+    # that each connection will cause a new thread to be created. This
+    # could cause connections to take marginally longer on os'es with
+    # slow pthread_create calls. For more details, refer
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_thread_cache_size
+    iniset -sudo $my_conf mysqld thread_cache_size 0
+
+    # thread_stack is the per connection stack size, the minimum is
+    # 128k and the default is 192k on 32bit and 256k on 64bit
+    # systems. We set this to 192k. Complex queries which require
+    # recursion, stored procedures or other memory intensive
+    # operations could exhaust this and generate a very characteristic
+    # failure ("stack overflow") which is cleanly detected and the
+    # query is killed. For more details see
+    # https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_thread_stack
+    iniset -sudo $my_conf mysqld thread_stack 196608
+
+    # tmp_table_size is the maximum size of an in-memory temporary
+    # table. Temporary tables are created by MySQL as part of a
+    # multi-step query plan. The actual size of the temp table will be
+    # the lesser of tmp_table_size and max_heap_table_size. If a
+    # temporary table exceeds this size, it will be spooled to disk
+    # using the internal_tmp_disk_storage_engine (default
+    # MyISAM). Queries that often generate in-memory temporary tables
+    # include queries that have sorts, distinct, or group by
+    # operations, also queries that perform IN joins. For more details
+    # see
+    # https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_tmp_table_size
+    iniset -sudo $my_conf mysqld tmp_table_size 1K
 
     if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
         echo_summary "Enabling MySQL query logging"
