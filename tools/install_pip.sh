@@ -144,6 +144,9 @@ if [[ -n $PYPI_ALTERNATIVE_URL ]]; then
 fi
 
 set -x
-pip_install -U setuptools
+
+# Note setuptools is part of requirements.txt and we want to make sure
+# we obey any versioning as described there.
+pip_install_gr setuptools
 
 get_versions
