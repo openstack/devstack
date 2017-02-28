@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# lib/cinder_backends/fake
+# Configure the Fake backend
+
+# Enable with:
+#
+#   CINDER_ENABLED_BACKENDS+=,fake:fake
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# CINDER_CONF
+
+# clean_cinder_backend_fake - called from clean_cinder()
+# configure_cinder_backend_fake - called from configure_cinder()
+# init_cinder_backend_fake - called from init_cinder()
+
+
+# Save trace setting
+_XTRACE_CINDER_FAKE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+function cleanup_cinder_backend_fake {
+    local be_name=$1
+}
+
+function configure_cinder_backend_fake {
+    local be_name=$1
+
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver "cinder.tests.fake_driver.FakeLoggingVolumeDriver"
+
+}
+
+function init_cinder_backend_fake {
+    local be_name=$1
+}
+
+# Restore xtrace
+$_XTRACE_CINDER_FAKE
+
+# mode: shell-script
+# End:
