@@ -247,7 +247,7 @@ function _cleanup_nova_apache_wsgi {
     sudo rm -f $(apache_site_config_for nova-metadata)
 }
 
-# _config_nova_apache_wsgi() - Set WSGI config files of Keystone
+# _config_nova_apache_wsgi() - Set WSGI config files of Nova API
 function _config_nova_apache_wsgi {
     sudo mkdir -p $NOVA_WSGI_DIR
 
