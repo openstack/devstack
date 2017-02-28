@@ -125,6 +125,14 @@ foo=bar
 [[test10|does-not-exist-dir/test.conf]]
 foo=bar
 
+[[test11|test-same.conf]]
+[DEFAULT]
+foo=bar
+
+[[test11|test-same.conf]]
+[some]
+random=config
+
 [[test-multi-sections|test-multi-sections.conf]]
 [sec-1]
 cfg_item1 = abcd
@@ -147,6 +155,9 @@ cfg_item1 = abcd
 cfg_item2 = efgh
 cfg_item2 = \${FOO_BAR_BAZ}
 
+[[test11|test-same.conf]]
+[another]
+non = sense
 EOF
 
 echo -n "get_meta_section_files: test0 doesn't exist: "
@@ -385,8 +396,24 @@ EXPECT_VAL=255
 check_result "$VAL" "$EXPECT_VAL"
 set -e
 
+echo -n "merge_config_file test11 same section: "
+rm -f test-same.conf
+merge_config_group test.conf test11
+VAL=$(cat test-same.conf)
+EXPECT_VAL='
+[DEFAULT]
+foo = bar
+
+[some]
+random = config
+
+[another]
+non = sense'
+check_result "$VAL" "$EXPECT_VAL"
+
+
 rm -f test.conf test1c.conf test2a.conf \
     test-space.conf test-equals.conf test-strip.conf \
     test-colon.conf test-env.conf test-multiline.conf \
-    test-multi-sections.conf
+    test-multi-sections.conf test-same.conf
 rm -rf test-etc

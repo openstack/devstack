@@ -40,12 +40,10 @@ function get_meta_section {
     $CONFIG_AWK_CMD -v matchgroup=$matchgroup -v configfile=$configfile '
         BEGIN { group = "" }
         /^\[\[.+\|.*\]\]/ {
-            if (group == "") {
-                gsub("[][]", "", $1);
-                split($1, a, "|");
-                if (a[1] == matchgroup && a[2] == configfile) {
-                    group=a[1]
-                }
+            gsub("[][]", "", $1);
+            split($1, a, "|");
+            if (a[1] == matchgroup && a[2] == configfile) {
+                group=a[1]
             } else {
                 group=""
             }
