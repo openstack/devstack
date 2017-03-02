@@ -39,13 +39,11 @@ function install_libvirt {
         fi
 
         if [[ ${DISTRO} =~ "rhel7" ]]; then
-            # On centos7 install the qemu-kvm-ev package, which is a
-            # later version of qemu-kvm rebuilt from the qemu-kvm-rhev
-            # package by the virt SIG (as required by nova).  This
-            # package is only provided for RHOS (openstack) or RHV
-            # (ovirt) in RHEL.  We have already insalled the RDO
-            # repositories which provide this.
-            install_package qemu-kvm-ev
+            # This should install the latest qemu-kvm build,
+            # which is called qemu-kvm-ev in centos7
+            # (as the default OS qemu-kvm package is usually rather old,
+            # and should be updated by above)
+            install_package qemu-kvm
         fi
 
         install_package libvirt libvirt-devel
