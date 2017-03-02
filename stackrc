@@ -636,9 +636,6 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
         IMAGE_URLS+=","
     fi
     case "$VIRT_DRIVER" in
-        openvz)
-            DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ubuntu-12.04-x86_64}
-            IMAGE_URLS+="http://download.openvz.org/template/precreated/ubuntu-12.04-x86_64.tar.gz";;
         libvirt)
             case "$LIBVIRT_TYPE" in
                 lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
@@ -656,13 +653,6 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.4-x86_64-disk}
             IMAGE_URLS+="http://ca.downloads.xensource.com/OpenStack/cirros-0.3.4-x86_64-disk.vhd.tgz"
             IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
-        ironic)
-            # NOTE(lucasagomes): The logic setting the default image
-            # now lives in the Ironic tree
-            ;;
-        *) # Default to Cirros qcow2 image file
-            DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
-            IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img";;
     esac
     DOWNLOAD_DEFAULT_IMAGES=False
 fi
