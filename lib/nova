@@ -664,6 +664,10 @@ function init_nova_cells {
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF db sync
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF cell create --name=region --cell_type=parent --username=$RABBIT_USERID --hostname=$RABBIT_HOST --port=5672 --password=$RABBIT_PASSWORD --virtual_host=/ --woffset=0 --wscale=1
         $NOVA_BIN_DIR/nova-manage cell create --name=child --cell_type=child --username=$RABBIT_USERID --hostname=$RABBIT_HOST --port=5672 --password=$RABBIT_PASSWORD --virtual_host=child_cell --woffset=0 --wscale=1
+
+        # Creates the single cells v2 cell for the child cell (v1) nova db.
+        nova-manage --config-file $NOVA_CELLS_CONF cell_v2 create_cell \
+            --transport-url $(get_transport_url child_cell) --name 'cell1'
     fi
 }
 
@@ -720,6 +724,10 @@ function init_nova {
         # Run online migrations on the new databases
         # Needed for flavor conversion
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db online_data_migrations
+
+        # create the cell1 cell for the main nova db where the hosts live
+        nova-manage cell_v2 create_cell --transport-url $(get_transport_url) \
+            --name 'cell1'
     fi
 
     create_nova_cache_dir
@@ -967,17 +975,6 @@ function create_flavors {
             openstack --os-region-name="$REGION_NAME" flavor create --id 4 --ram 8192 --disk 80 --vcpus 4 m1.large
             openstack --os-region-name="$REGION_NAME" flavor create --id 5 --ram 16384 --disk 160 --vcpus 8 m1.xlarge
         fi
-    fi
-}
-
-# create_cell(): Group the available hosts into a cell
-function create_cell {
-    if ! is_service_enabled n-cell; then
-        nova-manage cell_v2 simple_cell_setup --transport-url $(get_transport_url)
-    else
-        nova-manage --config-file $NOVA_CELLS_CONF  --verbose cell_v2 map_cell_and_hosts \
-                --transport-url $(get_transport_url child_cell) --name 'cell1'
-        nova-manage db sync
     fi
 }
 
