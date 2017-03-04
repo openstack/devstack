@@ -277,13 +277,11 @@ function configure_tempest {
     if [ "$ENABLE_IDENTITY_V2" == "True" ]; then
         # Run Identity API v2 tests ONLY if needed
         iniset $TEMPEST_CONFIG identity-feature-enabled api_v2 True
-        iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v2}
     else
         # Skip Identity API v2 tests by default
         iniset $TEMPEST_CONFIG identity-feature-enabled api_v2 False
-        # Use v3 auth tokens for running all Tempest tests
-        iniset $TEMPEST_CONFIG identity auth_version v3
     fi
+    iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v3}
 
     if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
         iniset $TEMPEST_CONFIG identity ca_certificates_file $SSL_BUNDLE_FILE
