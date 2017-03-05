@@ -798,7 +798,7 @@ function _configure_neutron_metadata_agent {
 }
 
 function _configure_neutron_ceilometer_notifications {
-    iniset $NEUTRON_CONF oslo_messaging_notifications driver messaging
+    iniset $NEUTRON_CONF oslo_messaging_notifications driver messagingv2
 }
 
 function _configure_neutron_metering {
