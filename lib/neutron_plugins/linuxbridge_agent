@@ -71,7 +71,9 @@ function neutron_plugin_configure_plugin_agent {
     fi
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
-        enable_kernel_bridge_firewall
+        if ! running_in_container; then
+            enable_kernel_bridge_firewall
+        fi
     else
         iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
     fi
