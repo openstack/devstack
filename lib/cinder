@@ -315,7 +315,7 @@ function configure_cinder {
     fi
 
     if is_service_enabled ceilometer; then
-        iniset $CINDER_CONF oslo_messaging_notifications driver "messaging"
+        iniset $CINDER_CONF oslo_messaging_notifications driver "messagingv2"
     fi
 
     if is_service_enabled tls-proxy; then
