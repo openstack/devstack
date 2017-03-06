@@ -141,10 +141,10 @@ _Q_PLUGIN_EXTRA_CONF_PATH=/etc/neutron
 # These config files are relative to ``/etc/neutron``.  The above
 # example would specify ``--config-file /etc/neutron/file1`` for
 # neutron server.
-declare -a Q_PLUGIN_EXTRA_CONF_FILES
+declare -a -g Q_PLUGIN_EXTRA_CONF_FILES
 
 # same as Q_PLUGIN_EXTRA_CONF_FILES, but with absolute path.
-declare -a _Q_PLUGIN_EXTRA_CONF_FILES_ABS
+declare -a -g _Q_PLUGIN_EXTRA_CONF_FILES_ABS
 
 
 Q_RR_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf

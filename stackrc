@@ -5,7 +5,7 @@
 
 # ensure we don't re-source this in the same environment
 [[ -z "$_DEVSTACK_STACKRC" ]] || return 0
-declare -r _DEVSTACK_STACKRC=1
+declare -r -g _DEVSTACK_STACKRC=1
 
 # Find the other rc files
 RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)

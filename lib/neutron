@@ -74,7 +74,7 @@ NEUTRON_ROOTWRAP_DAEMON_CMD="sudo $NEUTRON_ROOTWRAP-daemon $NEUTRON_ROOTWRAP_CON
 NEUTRON_CONFIG_ARG=${NEUTRON_CONFIG_ARG:-""}
 
 # Additional neutron api config files
-declare -a _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
+declare -a -g _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
 
 # Functions
 # ---------
