@@ -134,7 +134,7 @@ VIF_PLUGGING_TIMEOUT=${VIF_PLUGGING_TIMEOUT:-300}
 
 # List of config file names in addition to the main plugin config file
 # See _configure_neutron_common() for details about setting it up
-declare -a Q_PLUGIN_EXTRA_CONF_FILES
+declare -a -g Q_PLUGIN_EXTRA_CONF_FILES
 
 
 Q_RR_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
