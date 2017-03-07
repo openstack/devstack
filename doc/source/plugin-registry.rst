@@ -108,7 +108,6 @@ networking-midonet                     `git://git.openstack.org/openstack/networ
 networking-mlnx                        `git://git.openstack.org/openstack/networking-mlnx <https://git.openstack.org/cgit/openstack/networking-mlnx>`__
 networking-nec                         `git://git.openstack.org/openstack/networking-nec <https://git.openstack.org/cgit/openstack/networking-nec>`__
 networking-odl                         `git://git.openstack.org/openstack/networking-odl <https://git.openstack.org/cgit/openstack/networking-odl>`__
-networking-ofagent                     `git://git.openstack.org/openstack/networking-ofagent <https://git.openstack.org/cgit/openstack/networking-ofagent>`__
 networking-onos                        `git://git.openstack.org/openstack/networking-onos <https://git.openstack.org/cgit/openstack/networking-onos>`__
 networking-ovn                         `git://git.openstack.org/openstack/networking-ovn <https://git.openstack.org/cgit/openstack/networking-ovn>`__
 networking-ovs-dpdk                    `git://git.openstack.org/openstack/networking-ovs-dpdk <https://git.openstack.org/cgit/openstack/networking-ovs-dpdk>`__
