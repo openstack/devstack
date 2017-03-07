@@ -163,7 +163,7 @@ function configure_neutron_new {
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks public
         if [[ "$NEUTRON_PORT_SECURITY" = "True" ]]; then
-            iniset $NEUTRON_CORE_PLUGIN_CONF ml2 extension_drivers port_security
+            neutron_ml2_extension_driver_add port_security
         fi
     fi
 
@@ -481,6 +481,18 @@ function neutron_service_plugin_class_add_new {
     iniset $NEUTRON_CONF DEFAULT service_plugins $plugins
 }
 
+function _neutron_ml2_extension_driver_add {
+    local driver=$1
+    local drivers=""
+
+    drivers=$(iniget $NEUTRON_CORE_PLUGIN_CONF ml2 extension_drivers)
+    if [ $drivers ]; then
+        drivers+=","
+    fi
+    drivers+="${driver}"
+    iniset $NEUTRON_CORE_PLUGIN_CONF ml2 extension_drivers $drivers
+}
+
 function neutron_server_config_add_new {
     _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS+=($1)
 }
@@ -550,6 +562,15 @@ function neutron_service_plugin_class_add {
         _neutron_service_plugin_class_add "$@"
     else
         neutron_service_plugin_class_add_new "$@"
+    fi
+}
+
+function neutron_ml2_extension_driver_add {
+    if is_neutron_legacy_enabled; then
+        # Call back to old function
+        _neutron_ml2_extension_driver_add_old "$@"
+    else
+        _neutron_ml2_extension_driver_add "$@"
     fi
 }
 
