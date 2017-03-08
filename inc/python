@@ -19,7 +19,7 @@ set +o xtrace
 
 # PROJECT_VENV contains the name of the virtual environment for each
 # project.  A null value installs to the system Python directories.
-declare -A PROJECT_VENV
+declare -A -g PROJECT_VENV
 
 
 # Python Functions

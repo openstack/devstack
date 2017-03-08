@@ -37,12 +37,12 @@ set +o xtrace
 
 # ensure we don't re-source this in the same environment
 [[ -z "$_DEVSTACK_FUNCTIONS_COMMON" ]] || return 0
-declare -r _DEVSTACK_FUNCTIONS_COMMON=1
+declare -r -g _DEVSTACK_FUNCTIONS_COMMON=1
 
 # Global Config Variables
-declare -A GITREPO
-declare -A GITBRANCH
-declare -A GITDIR
+declare -A -g GITREPO
+declare -A -g GITBRANCH
+declare -A -g GITDIR
 
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
@@ -306,7 +306,7 @@ function warn {
 # ``os_PACKAGE`` - package type: ``deb`` or ``rpm``
 # ``os_CODENAME`` - vendor's codename for release: ``xenial``
 
-declare os_VENDOR os_RELEASE os_PACKAGE os_CODENAME
+declare -g os_VENDOR os_RELEASE os_PACKAGE os_CODENAME
 
 # Make a *best effort* attempt to install lsb_release packages for the
 # user if not available.  Note can't use generic install_package*
@@ -361,7 +361,7 @@ function GetOSVersion {
 
 # Translate the OS version values into common nomenclature
 # Sets global ``DISTRO`` from the ``os_*`` values
-declare DISTRO
+declare -g DISTRO
 
 function GetDistro {
     GetOSVersion
@@ -2376,9 +2376,9 @@ function sudo_with_proxies {
 # Resolution is only in whole seconds, so should be used for long
 # running activities.
 
-declare -A _TIME_TOTAL
-declare -A _TIME_START
-declare -r _TIME_BEGIN=$(date +%s)
+declare -A -g _TIME_TOTAL
+declare -A -g _TIME_START
+declare -r -g _TIME_BEGIN=$(date +%s)
 
 # time_start $name
 #
