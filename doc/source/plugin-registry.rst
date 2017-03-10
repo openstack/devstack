@@ -149,6 +149,7 @@ trove-dashboard                        `git://git.openstack.org/openstack/trove-
 vitrage                                `git://git.openstack.org/openstack/vitrage <https://git.openstack.org/cgit/openstack/vitrage>`__
 vitrage-dashboard                      `git://git.openstack.org/openstack/vitrage-dashboard <https://git.openstack.org/cgit/openstack/vitrage-dashboard>`__
 vmware-nsx                             `git://git.openstack.org/openstack/vmware-nsx <https://git.openstack.org/cgit/openstack/vmware-nsx>`__
+vmware-vspc                            `git://git.openstack.org/openstack/vmware-vspc <https://git.openstack.org/cgit/openstack/vmware-vspc>`__
 watcher                                `git://git.openstack.org/openstack/watcher <https://git.openstack.org/cgit/openstack/watcher>`__
 watcher-dashboard                      `git://git.openstack.org/openstack/watcher-dashboard <https://git.openstack.org/cgit/openstack/watcher-dashboard>`__
 zaqar                                  `git://git.openstack.org/openstack/zaqar <https://git.openstack.org/cgit/openstack/zaqar>`__
