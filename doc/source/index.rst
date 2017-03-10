@@ -63,7 +63,7 @@ have sudo privileges:
 
 ::
 
-    $ sudo tee <<<"stack ALL=(ALL) NOPASSWD: ALL" /etc/sudoers
+    $ sudo tee -a <<<"stack ALL=(ALL) NOPASSWD: ALL" /etc/sudoers
     $ sudo su - stack
 
 Download DevStack
