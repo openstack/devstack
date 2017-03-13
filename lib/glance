@@ -57,7 +57,7 @@ GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
 GLANCE_SWIFT_STORE_CONF=$GLANCE_CONF_DIR/glance-swift-store.conf
 GLANCE_GLARE_CONF=$GLANCE_CONF_DIR/glance-glare.conf
 GLANCE_GLARE_PASTE_INI=$GLANCE_CONF_DIR/glance-glare-paste.ini
-GLANCE_V1_ENABLED=${GLANCE_V1_ENABLED:-True}
+GLANCE_V1_ENABLED=${GLANCE_V1_ENABLED:-False}
 
 if is_ssl_enabled_service "glance" || is_service_enabled tls-proxy; then
     GLANCE_SERVICE_PROTOCOL="https"
