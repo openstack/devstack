@@ -65,7 +65,7 @@ if ! isset ENABLED_SERVICES ; then
     # Dashboard
     ENABLED_SERVICES+=,horizon
     # Additional services
-    ENABLED_SERVICES+=,rabbit,tempest,mysql,dstat
+    ENABLED_SERVICES+=,rabbit,tempest,mysql,etcd3,dstat
 fi
 
 # Global toggle for enabling services under mod_wsgi. If this is set to

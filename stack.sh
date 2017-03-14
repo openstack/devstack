@@ -574,6 +574,7 @@ source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 source $TOP_DIR/lib/dlm
+source $TOP_DIR/lib/etcd3
 source $TOP_DIR/lib/os_brick
 
 # Extras Source
@@ -1043,6 +1044,11 @@ fi
 # A better kind of sysstat, with the top process per time slice
 start_dstat
 
+# Etcd
+# -----
+
+# etcd is a distributed key value store that provides a reliable way to store data across a cluster of machines
+start_etcd3
 
 # Keystone
 # --------
