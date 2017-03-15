@@ -1057,11 +1057,18 @@ if is_service_enabled keystone; then
     fi
 
     create_keystone_accounts
-    create_nova_accounts
-    create_glance_accounts
-    create_cinder_accounts
-    create_neutron_accounts
-
+    if is_service_enabled nova; then
+        create_nova_accounts
+    fi
+    if is_service_enabled glance; then
+        create_glance_accounts
+    fi
+    if is_service_enabled cinder; then
+        create_cinder_accounts
+    fi
+    if is_service_enabled neutron; then
+        create_neutron_accounts
+    fi
     if is_service_enabled swift; then
         create_swift_accounts
     fi
