@@ -666,7 +666,7 @@ function set_mtu {
 
 # running_in_container - Returns true otherwise false
 function running_in_container {
-    if grep -q lxc /proc/1/cgroup; then
+    if [[ $(systemd-detect-virt --container) == 'none' ]]; then
         return 0
     fi
 
