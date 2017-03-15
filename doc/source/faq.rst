@@ -130,8 +130,8 @@ How do I run a specific OpenStack release?
 DevStack master tracks the upstream master of all the projects. If you
 would like to run a stable branch of OpenStack, you should use the
 corresponding stable branch of DevStack as well. For instance the
-``stable/kilo`` version of DevStack will already default to all the
-projects running at ``stable/kilo`` levels.
+``stable/ocata`` version of DevStack will already default to all the
+projects running at ``stable/ocata`` levels.
 
 Note: it's also possible to manually adjust the ``*_BRANCH`` variables
 further if you would like to test specific milestones, or even custom
