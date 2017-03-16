@@ -457,29 +457,30 @@ function tune_apache_connections {
 # MaxClients: maximum number of simultaneous client connections
 # MaxRequestsPerChild: maximum number of requests a server process serves
 #
-# The apache defaults are too conservative if we want reliable tempest
-# testing. Bump these values up from ~400 max clients to 1024 max clients.
+# We want to be memory thrifty so tune down apache to allow 256 total
+# connections. This should still be plenty for a dev env yet lighter than
+# apache defaults.
 <IfModule mpm_worker_module>
 # Note that the next three conf values must be changed together.
 # MaxClients = ServerLimit * ThreadsPerChild
-ServerLimit          32
+ServerLimit           8
 ThreadsPerChild      32
-MaxClients         1024
-StartServers          3
-MinSpareThreads      96
-MaxSpareThreads     192
+MaxClients          256
+StartServers          2
+MinSpareThreads      32
+MaxSpareThreads      96
 ThreadLimit          64
 MaxRequestsPerChild   0
 </IfModule>
 <IfModule mpm_event_module>
 # Note that the next three conf values must be changed together.
 # MaxClients = ServerLimit * ThreadsPerChild
-ServerLimit          32
+ServerLimit           8
 ThreadsPerChild      32
-MaxClients         1024
-StartServers          3
-MinSpareThreads      96
-MaxSpareThreads     192
+MaxClients          256
+StartServers          2
+MinSpareThreads      32
+MaxSpareThreads      96
 ThreadLimit          64
 MaxRequestsPerChild   0
 </IfModule>
