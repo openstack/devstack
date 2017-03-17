@@ -21,16 +21,22 @@ function start_dstat {
     # A better kind of sysstat, with the top process per time slice
     run_process dstat "$TOP_DIR/tools/dstat.sh $LOGDIR"
 
-    # To enable peakmem_tracker add:
-    #    enable_service peakmem_tracker
+    # To enable memory_tracker add:
+    #    enable_service memory_tracker
     # to your localrc
-    run_process peakmem_tracker "$TOP_DIR/tools/peakmem_tracker.sh"
+    run_process memory_tracker "$TOP_DIR/tools/memory_tracker.sh"
+
+    # remove support for the old name when it's no longer used (sometime in Queens)
+    if is_service_enabled peakmem_tracker; then
+        deprecated "Use of peakmem_tracker in devstack is deprecated, use memory_tracker instead"
+        run_process peakmem_tracker "$TOP_DIR/tools/memory_tracker.sh"
+    fi
 }
 
 # stop_dstat() stop dstat process
 function stop_dstat {
     stop_process dstat
-    stop_process peakmem_tracker
+    stop_process memory_tracker
 }
 
 # Restore xtrace
