@@ -24,7 +24,11 @@ DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
 function install_libvirt {
     if is_ubuntu; then
         install_package qemu-system
-        install_package libvirt-bin libvirt-dev
+        if [[ ${DISTRO} == "xenial" ]]; then
+            install_package libvirt-bin libvirt-dev
+        else
+            install_package libvirt-clients libvirt-daemon-system libvirt-dev
+        fi
         pip_install_gr libvirt-python
         if [[ ${DISTRO} == "trusty" && ${EBTABLES_RACE_FIX} == "True" ]]; then
             # Work around for bug #1501558. We can remove this once we

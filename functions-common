@@ -1148,6 +1148,19 @@ function _parse_package_files {
                 fi
             fi
 
+            # Look for # not:xxx in comment
+            if [[ $line =~ (.*)#.*not:([^ ]*) ]]; then
+                # We are using BASH regexp matching feature.
+                package=${BASH_REMATCH[1]}
+                distros=${BASH_REMATCH[2]}
+                # In bash ${VAR,,} will lowercase VAR
+                # Look for a match in the distro list
+                if [[ ${distros,,} =~ ${DISTRO,,} ]]; then
+                    # If match then skip this package
+                    inst_pkg=0
+                fi
+            fi
+
             if [[ $inst_pkg = 1 ]]; then
                 echo $package
             fi
@@ -1166,6 +1179,8 @@ function _parse_package_files {
 # - ``# NOPRIME`` defers installation to be performed later in `stack.sh`
 # - ``# dist:DISTRO`` or ``dist:DISTRO1,DISTRO2`` limits the selection
 #   of the package to the distros listed.  The distro names are case insensitive.
+# - ``# not:DISTRO`` or ``not:DISTRO1,DISTRO2`` limits the selection
+#   of the package to the distros not listed. The distro names are case insensitive.
 function get_packages {
     local xtrace
     xtrace=$(set +o | grep xtrace)
