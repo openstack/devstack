@@ -47,7 +47,7 @@ below)
 
 ::
 
-    adduser stack
+    useradd -s /bin/bash -d /opt/stack -m stack
 
 Since this user will be making many changes to your system, it will need
 to have sudo privileges:

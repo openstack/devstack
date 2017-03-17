@@ -56,7 +56,7 @@ You can quickly create a separate `stack` user to run DevStack with
 
 ::
 
-   $ sudo adduser stack
+   $ sudo useradd -s /bin/bash -d /opt/stack -m stack
 
 Since this user will be making many changes to your system, it should
 have sudo privileges:
