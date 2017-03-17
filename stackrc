@@ -104,6 +104,14 @@ if [[ "$USE_SYSTEMD" == "True" ]]; then
     USE_SCREEN=False
 fi
 
+# Whether or not to enable Kernel Samepage Merging (KSM) if available.
+# This allows programs that mark their memory as mergeable to share
+# memory pages if they are identical. This is particularly useful with
+# libvirt backends. This reduces memory useage at the cost of CPU overhead
+# to scan memory. We default to enabling it because we tend to be more
+# memory constrained than CPU bound.
+ENABLE_KSM=$(trueorfalse True ENABLE_KSM)
+
 # When using screen, should we keep a log file on disk?  You might
 # want this False if you have a long-running setup where verbose logs
 # can fill-up the host.
