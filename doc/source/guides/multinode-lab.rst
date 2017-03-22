@@ -73,8 +73,7 @@ Otherwise create the stack user:
 
 ::
 
-    groupadd stack
-    useradd -g stack -s /bin/bash -d /opt/stack -m stack
+    useradd -s /bin/bash -d /opt/stack -m stack
 
 This user will be making many changes to your system during installation
 and operation so it needs to have sudo privileges to root without a
