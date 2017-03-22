@@ -38,6 +38,15 @@ fi
 # Set up default directories
 GITDIR["python-swiftclient"]=$DEST/python-swiftclient
 
+# Swift virtual environment
+if [[ ${USE_VENV} = True ]]; then
+    PROJECT_VENV["swift"]=${SWIFT_DIR}.venv
+    SWIFT_BIN_DIR=${PROJECT_VENV["swift"]}/bin
+else
+    SWIFT_BIN_DIR=$(get_python_exec_prefix)
+fi
+
+
 SWIFT_DIR=$DEST/swift
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
@@ -807,10 +816,10 @@ function start_swift {
         local proxy_port=${SWIFT_DEFAULT_BIND_PORT}
         start_tls_proxy swift '*' $proxy_port $SERVICE_HOST $SWIFT_DEFAULT_BIND_PORT_INT
     fi
-    run_process s-proxy "swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
+    run_process s-proxy "$SWIFT_BIN_DIR/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
     if [[ ${SWIFT_REPLICAS} == 1 ]]; then
         for type in object container account; do
-            run_process s-${type} "swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
+            run_process s-${type} "$SWIFT_BIN_DIR/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
         done
     fi
 
