@@ -666,11 +666,7 @@ function set_mtu {
 
 # running_in_container - Returns true otherwise false
 function running_in_container {
-    if [[ $(systemd-detect-virt --container) == 'none' ]]; then
-        return 0
-    fi
-
-    return 1
+    [[ $(systemd-detect-virt --container) != 'none' ]]
 }
 
 
