@@ -24,12 +24,12 @@ function start_dstat {
     # To enable memory_tracker add:
     #    enable_service memory_tracker
     # to your localrc
-    run_process memory_tracker "$TOP_DIR/tools/memory_tracker.sh"
+    run_process memory_tracker "sudo $TOP_DIR/tools/memory_tracker.sh"
 
     # remove support for the old name when it's no longer used (sometime in Queens)
     if is_service_enabled peakmem_tracker; then
         deprecated "Use of peakmem_tracker in devstack is deprecated, use memory_tracker instead"
-        run_process peakmem_tracker "$TOP_DIR/tools/memory_tracker.sh"
+        run_process peakmem_tracker "sudo $TOP_DIR/tools/memory_tracker.sh"
     fi
 }
 

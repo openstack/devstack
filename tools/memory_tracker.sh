@@ -86,7 +86,7 @@ function tracker {
             # list processes that lock memory from swap
             if [[ $unevictable -ne $unevictable_point ]]; then
                 unevictable_point=$unevictable
-                sudo ./tools/mlock_report.py
+                ./tools/mlock_report.py
             fi
 
             echo "]]]"
