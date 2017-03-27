@@ -493,6 +493,11 @@ function exit_trap {
         kill 2>&1 $jobs
     fi
 
+    #Remove timing data file
+    if [ -f "$OSCWRAP_TIMER_FILE" ] ; then
+        rm "$OSCWRAP_TIMER_FILE"
+    fi
+
     # Kill the last spinner process
     kill_spinner
 
@@ -902,6 +907,10 @@ if use_library_from_git "python-openstackclient"; then
 else
     pip_install_gr python-openstackclient
 fi
+
+# Installs alias for osc so that we can collect timing for all
+# osc commands. Alias dies with stack.sh.
+install_oscwrap
 
 if [[ $TRACK_DEPENDS = True ]]; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip

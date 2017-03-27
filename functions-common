@@ -2459,7 +2459,7 @@ function time_start {
     if [[ -n "$start_time" ]]; then
         die $LINENO "Trying to start the clock on $name, but it's already been started"
     fi
-    _TIME_START[$name]=$(date +%s)
+    _TIME_START[$name]=$(date +%s%3N)
 }
 
 # time_stop $name
@@ -2480,12 +2480,55 @@ function time_stop {
     if [[ -z "$start_time" ]]; then
         die $LINENO "Trying to stop the clock on $name, but it was never started"
     fi
-    end_time=$(date +%s)
+    end_time=$(date +%s%3N)
     elapsed_time=$(($end_time - $start_time))
     total=${_TIME_TOTAL[$name]:-0}
     # reset the clock so we can start it in the future
     _TIME_START[$name]=""
     _TIME_TOTAL[$name]=$(($total + $elapsed_time))
+}
+
+function oscwrap {
+    local out
+    local rc
+    local start
+    local end
+    # Cannot use timer_start and timer_stop as we run in subshells
+    # and those rely on modifying vars in the same process (which cannot
+    # happen from a subshell.
+    start=$(date +%s%3N)
+    out=$(command openstack "$@")
+    rc=$?
+    end=$(date +%s%3N)
+    echo $((end - start)) >> $OSCWRAP_TIMER_FILE
+
+    echo "$out"
+    return $rc
+}
+
+function install_oscwrap {
+    # File to accumulate our timing data
+    OSCWRAP_TIMER_FILE=$(mktemp)
+    # Bash by default doesn't expand aliases, allow it for the aliases
+    # we want to whitelist.
+    shopt -s expand_aliases
+    # Remove all aliases that might be expanded to preserve old unexpanded
+    # behavior
+    unalias -a
+    # Add only the alias we want for openstack
+    alias openstack=oscwrap
+}
+
+function cleanup_oscwrap {
+    local total=0
+    if python3_enabled ; then
+        local python=python3
+    else
+        local python=python
+    fi
+    total=$(cat $OSCWRAP_TIMER_FILE | $python -c "import sys; print(sum(int(l) for l in sys.stdin))")
+    _TIME_TOTAL["osc"]=$total
+    rm $OSCWRAP_TIMER_FILE
 }
 
 # time_totals
@@ -2506,6 +2549,8 @@ function time_totals {
         fi
     done
 
+    cleanup_oscwrap
+
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
@@ -2517,6 +2562,8 @@ function time_totals {
     echo
     for t in ${!_TIME_TOTAL[*]}; do
         local v=${_TIME_TOTAL[$t]}
+        # because we're recording in milliseconds
+        v=$(($v / 1000))
         printf "%-${len}s %3d\n" "$t" "$v"
     done
     echo "========================="
