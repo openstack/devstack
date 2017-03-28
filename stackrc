@@ -87,6 +87,23 @@ HORIZON_APACHE_ROOT="/dashboard"
 # be disabled for automated testing by setting this value to False.
 USE_SCREEN=$(trueorfalse True USE_SCREEN)
 
+# Whether to use SYSTEMD to manage services
+USE_SYSTEMD=$(trueorfalse False USE_SYSTEMD)
+USER_UNITS=$(trueorfalse False USER_UNITS)
+if [[ "$USER_UNITS" == "True" ]]; then
+    SYSTEMD_DIR="$HOME/.local/share/systemd/user"
+    SYSTEMCTL="systemctl --user"
+    JOURNALCTL_F="journalctl -f -o short-precise --user-unit"
+else
+    SYSTEMD_DIR="/etc/systemd/system"
+    SYSTEMCTL="sudo systemctl"
+    JOURNALCTL_F="journalctl -f -o short-precise --unit"
+fi
+
+if [[ "$USE_SYSTEMD" == "True" ]]; then
+    USE_SCREEN=False
+fi
+
 # When using screen, should we keep a log file on disk?  You might
 # want this False if you have a long-running setup where verbose logs
 # can fill-up the host.

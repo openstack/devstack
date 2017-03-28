@@ -1443,6 +1443,59 @@ function _run_process {
     exit 0
 }
 
+function write_user_unit_file {
+    local service=$1
+    local command="$2"
+    local group=$3
+    local user=$4
+    local extra=""
+    if [[ -n "$group" ]]; then
+        extra="Group=$group"
+    fi
+    local unitfile="$SYSTEMD_DIR/$service"
+    mkdir -p $SYSTEMD_DIR
+
+    iniset -sudo $unitfile "Unit" "Description" "Devstack $service"
+    iniset -sudo $unitfile "Service" "User" "$user"
+    iniset -sudo $unitfile "Service" "ExecStart" "$command"
+    if [[ -n "$group" ]]; then
+        iniset -sudo $unitfile "Service" "Group" "$group"
+    fi
+    iniset -sudo $unitfile "Install" "WantedBy" "multi-user.target"
+
+    # changes to existing units sometimes need a refresh
+    $SYSTEMCTL daemon-reload
+}
+
+function _run_under_systemd {
+    local service=$1
+    local command="$2"
+    local cmd=$command
+    local systemd_service="devstack@$service.service"
+    local group=$3
+    local user=${4:-$STACK_USER}
+    write_user_unit_file $systemd_service "$cmd" "$group" "$user"
+
+    $SYSTEMCTL enable $systemd_service
+    $SYSTEMCTL start $systemd_service
+    _journal_log $service $systemd_service
+}
+
+function _journal_log {
+    local service=$1
+    local unit=$2
+    local logfile="${service}.log.${CURRENT_LOG_TIME}"
+    local real_logfile="${LOGDIR}/${logfile}"
+    if [[ -n ${LOGDIR} ]]; then
+        $JOURNALCTL_F $2 > "$real_logfile" &
+        bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${service}.log"
+        if [[ -n ${SCREEN_LOGDIR} ]]; then
+            # Drop the backward-compat symlink
+            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${service}.log
+        fi
+    fi
+}
+
 # Helper to remove the ``*.failure`` files under ``$SERVICE_DIR/$SCREEN_NAME``.
 # This is used for ``service_check`` when all the ``screen_it`` are called finished
 # Uses globals ``SCREEN_NAME``, ``SERVICE_DIR``
@@ -1478,16 +1531,24 @@ function run_process {
     local service=$1
     local command="$2"
     local group=$3
-    local subservice=$4
+    local user=$4
 
-    local name=${subservice:-$service}
+    local name=$service
 
     time_start "run_process"
     if is_service_enabled $service; then
-        if [[ "$USE_SCREEN" = "True" ]]; then
+        if [[ "$USE_SYSTEMD" = "True" ]]; then
+            _run_under_systemd "$name" "$command" "$group" "$user"
+        elif [[ "$USE_SCREEN" = "True" ]]; then
+            if [[ "$user" == "root" ]]; then
+                command="sudo $command"
+            fi
             screen_process "$name" "$command" "$group"
         else
             # Spawn directly without screen
+            if [[ "$user" == "root" ]]; then
+                command="sudo $command"
+            fi
             _run_process "$name" "$command" "$group" &
         fi
     fi
@@ -1618,6 +1679,14 @@ function stop_process {
 
     if is_service_enabled $service; then
         # Kill via pid if we have one available
+        if [[ "$USE_SYSTEMD" == "True" ]]; then
+            # Only do this for units which appear enabled, this also
+            # catches units that don't really exist for cases like
+            # keystone without a failure.
+            $SYSTEMCTL stop devstack@$service.service
+            $SYSTEMCTL disable devstack@$service.service
+        fi
+
         if [[ -r $SERVICE_DIR/$SCREEN_NAME/$service.pid ]]; then
             pkill -g $(cat $SERVICE_DIR/$SCREEN_NAME/$service.pid)
             # oslo.service tends to stop actually shutting down
