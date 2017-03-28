@@ -870,6 +870,16 @@ function _neutron_service_plugin_class_add {
     fi
 }
 
+# _neutron_ml2_extension_driver_add_old() - add ML2 extension driver
+function _neutron_ml2_extension_driver_add_old {
+    local extension=$1
+    if [[ $Q_ML2_PLUGIN_EXT_DRIVERS == '' ]]; then
+        Q_ML2_PLUGIN_EXT_DRIVERS=$extension
+    elif [[ ! ,${Q_ML2_PLUGIN_EXT_DRIVERS}, =~ ,${extension}, ]]; then
+        Q_ML2_PLUGIN_EXT_DRIVERS="$Q_ML2_PLUGIN_EXT_DRIVERS,$extension"
+    fi
+}
+
 # mutnauq_server_config_add() - add server config file
 function mutnauq_server_config_add {
     _Q_PLUGIN_EXTRA_CONF_FILES_ABS+=($1)
