@@ -39,7 +39,7 @@ Install Linux
 -------------
 
 Start with a clean and minimal install of a Linux system. Devstack
-attempts to support Ubuntu 14.04/16.04, Fedora 23/24, CentOS/RHEL 7,
+attempts to support Ubuntu 16.04/17.04, Fedora 24/25, CentOS/RHEL 7,
 as well as Debian and OpenSUSE.
 
 If you do not have a preference, Ubuntu 16.04 is the most tested, and
