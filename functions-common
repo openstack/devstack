@@ -1467,6 +1467,32 @@ function write_user_unit_file {
     $SYSTEMCTL daemon-reload
 }
 
+function write_uwsgi_user_unit_file {
+    local service=$1
+    local command="$2"
+    local group=$3
+    local user=$4
+    local unitfile="$SYSTEMD_DIR/$service"
+    mkdir -p $SYSTEMD_DIR
+
+    iniset -sudo $unitfile "Unit" "Description" "Devstack $service"
+    iniset -sudo $unitfile "Service" "User" "$user"
+    iniset -sudo $unitfile "Service" "ExecStart" "$command"
+    iniset -sudo $unitfile "Service" "Type" "notify"
+    iniset -sudo $unitfile "Service" "KillSignal" "SIGQUIT"
+    iniset -sudo $unitfile "Service" "Restart" "Always"
+    iniset -sudo $unitfile "Service" "NotifyAccess" "all"
+    iniset -sudo $unitfile "Service" "RestartForceExitStatus" "100"
+
+    if [[ -n "$group" ]]; then
+        iniset -sudo $unitfile "Service" "Group" "$group"
+    fi
+    iniset -sudo $unitfile "Install" "WantedBy" "multi-user.target"
+
+    # changes to existing units sometimes need a refresh
+    $SYSTEMCTL daemon-reload
+}
+
 function _run_under_systemd {
     local service=$1
     local command="$2"
@@ -1474,7 +1500,11 @@ function _run_under_systemd {
     local systemd_service="devstack@$service.service"
     local group=$3
     local user=${4:-$STACK_USER}
-    write_user_unit_file $systemd_service "$cmd" "$group" "$user"
+    if [[ "$command" =~ "uwsgi" ]] ; then
+        write_uwsgi_user_unit_file $systemd_service "$cmd" "$group" "$user"
+    else
+        write_user_unit_file $systemd_service "$cmd" "$group" "$user"
+    fi
 
     $SYSTEMCTL enable $systemd_service
     $SYSTEMCTL start $systemd_service

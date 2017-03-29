@@ -604,8 +604,8 @@ function start_keystone {
         # TODO(sdague): we should really get down to a single keystone here
         enable_service key-p
         enable_service key-a
-        run_process key-p "$KEYSTONE_BIN_DIR/uwsgi $KEYSTONE_PUBLIC_UWSGI_FILE" ""
-        run_process key-a "$KEYSTONE_BIN_DIR/uwsgi $KEYSTONE_ADMIN_UWSGI_FILE" ""
+        run_process key-p "$KEYSTONE_BIN_DIR/uwsgi --ini $KEYSTONE_PUBLIC_UWSGI_FILE" ""
+        run_process key-a "$KEYSTONE_BIN_DIR/uwsgi --ini $KEYSTONE_ADMIN_UWSGI_FILE" ""
     fi
 
     echo "Waiting for keystone to start..."
@@ -638,6 +638,9 @@ function stop_keystone {
     if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         disable_apache_site keystone
         restart_apache_server
+    else
+        stop_process key-p
+        stop_process key-a
     fi
     # Kill the Keystone screen window
     stop_process key
