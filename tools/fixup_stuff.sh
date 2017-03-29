@@ -67,6 +67,33 @@ else
     echo_summary "WARNING: unable to reserve keystone ports"
 fi
 
+# Ubuntu Cloud Archive
+#---------------------
+# We've found that Libvirt on Xenial is flaky and crashes enough to be
+# a regular top e-r bug. Opt into Ubuntu Cloud Archive if on Xenial to
+# get newer Libvirt.
+if [[ "$DISTRO" = "xenial" ]]; then
+    # This pulls in apt-add-repository
+    install_package "software-properties-common"
+    # Use UCA for newer libvirt. Should give us libvirt 2.5.0.
+    if [[ -f /etc/ci/mirror_info.sh ]] ; then
+        # If we are on a nodepool provided host and it has told us about where
+        # we can find local mirrors then use that mirror.
+        source /etc/ci/mirror_info.sh
+
+        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR xenial-updates/ocata main"
+
+        # Disable use of libvirt wheel here as presence of mirror implies
+        # presence of cached wheel build against older libvirt binary.
+        # TODO(clarkb) figure out how to use wheel again.
+        sudo bash -c 'echo "no-binary = libvirt-python" >> /etc/pip.conf'
+    else
+        # Otherwise use upstream UCA
+        sudo add-apt-repository -y cloud-archive:ocata
+    fi
+    sudo apt-get update
+fi
+
 
 # Python Packages
 # ---------------
