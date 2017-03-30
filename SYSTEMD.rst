@@ -74,6 +74,20 @@ See status of a unit::
 
   sudo systemctl status devstack@n-cpu.service
 
+Operating on more than one unit at a time
+-----------------------------------------
+
+Systemd supports wildcarding for unit operations. To restart every
+service in devstack you can do that following::
+
+  sudo systemctl restart devstack@*
+
+Or to see the status of all Nova processes you can do::
+
+  sudo systemctl status devstack@n-*
+
+We'll eventually make the unit names a bit more meaningful so that
+it's easier to understand what you are restarting.
 
 Querying Logs
 =============
@@ -92,8 +106,12 @@ Follow logs for a specific service::
 
 Following logs for multiple services simultaneously::
 
-  journalctl -f --unit devstack@n-cpu.service --user-unit
+  journalctl -f --unit devstack@n-cpu.service --unit
   devstack@n-cond.service
+
+or you can even do wild cards to follow all the nova services::
+
+  journalctl -f --unit devstack@n-*
 
 Use higher precision time stamps::
 
@@ -138,14 +156,8 @@ that. It would let us do things like::
 
   journalctl INSTANCE_ID=......
 
-And get all lines related to the request id or instance id.
-
-sub targets/slices
-------------------
-
-We might want to create per project slices so that it's easy to
-follow, restart all services of a single project (like swift) without
-impacting other services.
+And get all lines related to the request id or instance id. (Note:
+this work has been started at https://review.openstack.org/#/c/451525/)
 
 log colorizing
 --------------
