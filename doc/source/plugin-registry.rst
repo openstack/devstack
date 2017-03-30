@@ -68,6 +68,7 @@ horizon-mellanox                       `git://git.openstack.org/openstack/horizo
 ironic                                 `git://git.openstack.org/openstack/ironic <https://git.openstack.org/cgit/openstack/ironic>`__
 ironic-inspector                       `git://git.openstack.org/openstack/ironic-inspector <https://git.openstack.org/cgit/openstack/ironic-inspector>`__
 ironic-staging-drivers                 `git://git.openstack.org/openstack/ironic-staging-drivers <https://git.openstack.org/cgit/openstack/ironic-staging-drivers>`__
+ironic-ui                              `git://git.openstack.org/openstack/ironic-ui <https://git.openstack.org/cgit/openstack/ironic-ui>`__
 karbor                                 `git://git.openstack.org/openstack/karbor <https://git.openstack.org/cgit/openstack/karbor>`__
 karbor-dashboard                       `git://git.openstack.org/openstack/karbor-dashboard <https://git.openstack.org/cgit/openstack/karbor-dashboard>`__
 keystone                               `git://git.openstack.org/openstack/keystone <https://git.openstack.org/cgit/openstack/keystone>`__
