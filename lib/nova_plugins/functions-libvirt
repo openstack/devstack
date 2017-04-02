@@ -20,8 +20,46 @@ set +o xtrace
 # extremely verbose.)
 DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
 
+# Try to enable coredumps for libvirt
+# Currently fairly specific to OpenStackCI hosts
+DEBUG_LIBVIRT_COREDUMPS=$(trueorfalse False DEBUG_LIBVIRT_COREDUMPS)
+
+# Only Xenial is left with libvirt-bin.  Everywhere else is libvirtd
+if is_ubuntu && [ ! -f /etc/init.d/libvirtd ]; then
+    LIBVIRT_DAEMON=libvirt-bin
+else
+    LIBVIRT_DAEMON=libvirtd
+fi
+
+# Enable coredumps for libvirt
+#  Bug: https://bugs.launchpad.net/nova/+bug/1643911
+function _enable_coredump {
+    local confdir=/etc/systemd/system/${LIBVIRT_DAEMON}.service.d
+    local conffile=${confdir}/coredump.conf
+
+    # Create a coredump directory, and instruct the kernel to save to
+    # here
+    sudo mkdir -p /var/core
+    sudo chmod a+wrx /var/core
+    echo '/var/core/core.%e.%p.%h.%t' | \
+        sudo tee /proc/sys/kernel/core_pattern
+
+    # Drop a config file to up the core ulimit
+    sudo mkdir -p ${confdir}
+    sudo tee ${conffile} <<EOF
+[Service]
+LimitCORE=infinity
+EOF
+
+    # Tell systemd to reload the unit (service restarts later after
+    # config anyway)
+    sudo systemctl daemon-reload
+}
+
+
 # Installs required distro-specific libvirt packages.
 function install_libvirt {
+
     if is_ubuntu; then
         install_package qemu-system
         install_package libvirt-bin libvirt-dev
@@ -48,7 +86,10 @@ function install_libvirt {
 
         install_package libvirt libvirt-devel
         pip_install_gr libvirt-python
+    fi
 
+    if [[ $DEBUG_LIBVIRT_COREDUMPS == True ]]; then
+        _enable_coredump
     fi
 }
 
@@ -66,14 +107,6 @@ cgroup_device_acl = [
     "/dev/vfio/vfio",
 ]
 EOF
-    fi
-
-    # Since the release of Debian Wheezy the libvirt init script is libvirtd
-    # and not libvirtd-bin anymore.
-    if is_ubuntu && [ ! -f /etc/init.d/libvirtd ]; then
-        LIBVIRT_DAEMON=libvirt-bin
-    else
-        LIBVIRT_DAEMON=libvirtd
     fi
 
     if is_fedora || is_suse; then
