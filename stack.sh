@@ -328,6 +328,7 @@ fi
 DATA_DIR=${DATA_DIR:-${DEST}/data}
 sudo mkdir -p $DATA_DIR
 safe_chown -R $STACK_USER $DATA_DIR
+safe_chmod 0755 $DATA_DIR
 
 # Configure proper hostname
 # Certain services such as rabbitmq require that the local hostname resolves
