@@ -14,6 +14,8 @@
 
 set -o errexit
 
+PYTHON=${PYTHON:-python}
+
 # time to sleep between checks
 SLEEP_TIME=20
 
@@ -86,7 +88,7 @@ function tracker {
             # list processes that lock memory from swap
             if [[ $unevictable -ne $unevictable_point ]]; then
                 unevictable_point=$unevictable
-                ./tools/mlock_report.py
+                ${PYTHON} ./tools/mlock_report.py
             fi
 
             echo "]]]"

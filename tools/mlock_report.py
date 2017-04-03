@@ -8,14 +8,15 @@ import subprocess
 import psutil
 
 
-SUMMARY_REGEX = re.compile(r".*\s+(?P<locked>[\d]+)\s+KB")
+SUMMARY_REGEX = re.compile(b".*\s+(?P<locked>[\d]+)\s+KB")
 
 
 def main():
     try:
-        print _get_report()
+        print(_get_report())
     except Exception as e:
-        print "Failure listing processes locking memory: %s" % str(e)
+        print("Failure listing processes locking memory: %s" % str(e))
+        raise
 
 
 def _get_report():
