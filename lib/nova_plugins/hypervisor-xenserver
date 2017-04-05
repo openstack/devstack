@@ -96,20 +96,6 @@ CRONTAB
         echo "create_directory_for_kernels"
         echo "install_conntrack_tools"
     } | $ssh_dom0
-
-    if is_service_enabled neutron; then
-        # Remove restriction on linux bridge in Dom0 when neutron is enabled
-        $ssh_dom0 "rm -f /etc/modprobe.d/blacklist-bridge*"
-
-        count=`$ssh_dom0 "iptables -t filter -L XenServerDevstack |wc -l"`
-        if [ "$count" = "0" ]; then
-        {
-            echo "iptables -t filter --new XenServerDevstack"
-            echo "iptables -t filter -I INPUT -j XenServerDevstack"
-            echo "iptables -t filter -I XenServerDevstack -p tcp --dport 6640 -j ACCEPT"
-        } | $ssh_dom0
-        fi
-    fi
 }
 
 # install_nova_hypervisor() - Install external components
