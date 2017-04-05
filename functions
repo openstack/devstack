@@ -606,11 +606,13 @@ function setup_colorized_logging {
 function setup_systemd_logging {
     local conf_file=$1
     local conf_section="DEFAULT"
-    local project_var="project_name"
-    local user_var="user_name"
-    iniset $conf_file $conf_section logging_context_format_string "%(levelname)s %(name)s [%(request_id)s %("$project_var")s %("$user_var")s] %(instance)s%(message)s"
-    iniset $conf_file $conf_section logging_default_format_string "%(levelname)s %(name)s [-] %(instance)s%(color)s%(message)s"
-    iniset $conf_file $conf_section logging_debug_format_suffix "from (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d"
+    iniset $conf_file $conf_section use_journal "True"
+    iniset $conf_file $conf_section logging_context_format_string \
+           "%(levelname)s %(name)s [%(request_id)s %(project_name)s %(user_name)s] %(instance)s%(message)s"
+    iniset $conf_file $conf_section logging_default_format_string \
+           "%(levelname)s %(name)s [-] %(instance)s%(color)s%(message)s"
+    iniset $conf_file $conf_section logging_debug_format_suffix \
+           "from (pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d"
     iniset $conf_file $conf_section logging_exception_prefix "ERROR %(name)s %(instance)s"
 }
 
