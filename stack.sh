@@ -161,16 +161,16 @@ rm -f $TOP_DIR/.localrc.auto
 extract_localrc_section $TOP_DIR/local.conf $TOP_DIR/localrc $TOP_DIR/.localrc.auto
 
 # ``stack.sh`` is customizable by setting environment variables.  Override a
-# default setting via export::
+# default setting via export:
 #
 #     export DATABASE_PASSWORD=anothersecret
 #     ./stack.sh
 #
-# or by setting the variable on the command line::
+# or by setting the variable on the command line:
 #
 #     DATABASE_PASSWORD=simple ./stack.sh
 #
-# Persistent variables can be placed in a ``local.conf`` file::
+# Persistent variables can be placed in a ``local.conf`` file:
 #
 #     [[local|localrc]]
 #     DATABASE_PASSWORD=anothersecret
