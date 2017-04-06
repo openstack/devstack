@@ -25,6 +25,7 @@ psmisc
 python2.7
 python-dev
 python-gdbm # needed for testr
+python-systemd
 screen
 tar
 tcpdump
