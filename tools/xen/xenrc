@@ -29,7 +29,6 @@ OSDOMU_VDI_GB=8
 # Get the management network from the XS installation
 VM_BRIDGE_OR_NET_NAME="OpenStack VM Network"
 PUB_BRIDGE_OR_NET_NAME="OpenStack Public Network"
-XEN_INT_BRIDGE_OR_NET_NAME="OpenStack VM Integration Network"
 
 # VM Password
 GUEST_PASSWORD=${GUEST_PASSWORD:-secret}

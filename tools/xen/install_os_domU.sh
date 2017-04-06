@@ -66,10 +66,6 @@ setup_network "$VM_BRIDGE_OR_NET_NAME"
 setup_network "$MGT_BRIDGE_OR_NET_NAME"
 setup_network "$PUB_BRIDGE_OR_NET_NAME"
 
-# With neutron, one more network is required, which is internal to the
-# hypervisor, and used by the VMs
-setup_network "$XEN_INT_BRIDGE_OR_NET_NAME"
-
 if parameter_is_specified "FLAT_NETWORK_BRIDGE"; then
     if [ "$(bridge_for "$VM_BRIDGE_OR_NET_NAME")" != "$(bridge_for "$FLAT_NETWORK_BRIDGE")" ]; then
         cat >&2 << EOF
@@ -292,15 +288,9 @@ add_interface "$GUEST_NAME" "$PUB_BRIDGE_OR_NET_NAME" "$PUB_DEV_NR"
 #
 $THIS_DIR/build_xva.sh "$GUEST_NAME"
 
-# Attach a network interface for the integration network (so that the bridge
-# is created by XenServer). This is required for Neutron. Also pass that as a
-# kernel parameter for DomU
-attach_network "$XEN_INT_BRIDGE_OR_NET_NAME"
-
 XEN_INTEGRATION_BRIDGE_DEFAULT=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
 append_kernel_cmdline \
-    "$GUEST_NAME" \
-    "xen_integration_bridge=${XEN_INTEGRATION_BRIDGE_DEFAULT}"
+    "$GUEST_NAME"
 
 FLAT_NETWORK_BRIDGE="${FLAT_NETWORK_BRIDGE:-$(bridge_for "$VM_BRIDGE_OR_NET_NAME")}"
 append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
