@@ -48,6 +48,7 @@ GITDIR["oslo.versionedobjects"]=$DEST/oslo.versionedobjects
 GITDIR["oslo.vmware"]=$DEST/oslo.vmware
 GITDIR["osprofiler"]=$DEST/osprofiler
 GITDIR["pycadf"]=$DEST/pycadf
+GITDIR["python-openstacksdk"]=$DEST/python-openstacksdk
 GITDIR["stevedore"]=$DEST/stevedore
 GITDIR["taskflow"]=$DEST/taskflow
 GITDIR["tooz"]=$DEST/tooz
@@ -95,6 +96,7 @@ function install_oslo {
     _do_install_oslo_lib "oslo.vmware"
     _do_install_oslo_lib "osprofiler"
     _do_install_oslo_lib "pycadf"
+    _do_install_oslo_lib "python-openstacksdk"
     _do_install_oslo_lib "stevedore"
     _do_install_oslo_lib "taskflow"
     _do_install_oslo_lib "tooz"
