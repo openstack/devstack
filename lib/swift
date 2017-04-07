@@ -128,6 +128,11 @@ SWIFT_PARTITION_POWER_SIZE=${SWIFT_PARTITION_POWER_SIZE:-9}
 SWIFT_REPLICAS=${SWIFT_REPLICAS:-1}
 SWIFT_REPLICAS_SEQ=$(seq ${SWIFT_REPLICAS})
 
+# Set ``SWIFT_START_ALL_SERVICES`` to control whether all Swift
+# services (including the *-auditor, *-replicator, *-reconstructor, etc.
+# daemons) should be started.
+SWIFT_START_ALL_SERVICES=$(trueorfalse True SWIFT_START_ALL_SERVICES)
+
 # Set ``SWIFT_LOG_TOKEN_LENGTH`` to configure how many characters of an auth
 # token should be placed in the logs. When keystone is used with PKI tokens,
 # the token values can be huge, seemingly larger the 2K, at the least. We
@@ -786,8 +791,11 @@ function start_swift {
     fi
 
     if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
+        # Apache should serve the "PACO" a.k.a "main" services
         restart_apache_server
+        # The rest of the services should be started in backgroud
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
+        # Be we still want the logs of Swift Proxy in our screen session
         tail_log s-proxy /var/log/$APACHE_NAME/proxy-server
         if [[ ${SWIFT_REPLICAS} == 1 ]]; then
             for type in object container account; do
@@ -797,31 +805,42 @@ function start_swift {
         return 0
     fi
 
-    # By default with only one replica we are launching the proxy,
-    # container, account and object server in screen in foreground and
-    # other services in background. If we have ``SWIFT_REPLICAS`` set to something
-    # greater than one we first spawn all the Swift services then kill the proxy
-    # service so we can run it in foreground in screen.  ``swift-init ...
-    # {stop|restart}`` exits with '1' if no servers are running, ignore it just
-    # in case
-    local todo type
-    swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
+
+    # By default with only one replica we are launching the proxy, container
+    # account and object server in screen in foreground. Then, the rest of
+    # the services is optionally started.
+    #
+    # If we have ``SWIFT_REPLICAS`` set to something greater than one
+    # we first spawn *all* the Swift services then kill the proxy service
+    # so we can run it in foreground in screen.
+    #
+    # ``swift-init ... {stop|restart}`` exits with '1' if no servers are
+    #  running, ignore it just in case
     if [[ ${SWIFT_REPLICAS} == 1 ]]; then
-        todo="object container account"
+        local foreground_services type
+
+        foreground_services="object container account"
+        for type in ${foreground_services}; do
+            run_process s-${type} "$SWIFT_BIN_DIR/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
+        done
+
+        if [[ "$SWIFT_START_ALL_SERVICES" == "True" ]]; then
+            swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
+        else
+            # The container-sync daemon is strictly needed to pass the container
+            # sync Tempest tests.
+            swift-init --run-dir=${SWIFT_DATA_DIR}/run container-sync start
+        fi
+    else
+        swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
+        swift-init --run-dir=${SWIFT_DATA_DIR}/run proxy stop || true
     fi
-    for type in proxy ${todo}; do
-        swift-init --run-dir=${SWIFT_DATA_DIR}/run ${type} stop || true
-    done
+
     if is_service_enabled tls-proxy; then
         local proxy_port=${SWIFT_DEFAULT_BIND_PORT}
         start_tls_proxy swift '*' $proxy_port $SERVICE_HOST $SWIFT_DEFAULT_BIND_PORT_INT
     fi
     run_process s-proxy "$SWIFT_BIN_DIR/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
-    if [[ ${SWIFT_REPLICAS} == 1 ]]; then
-        for type in object container account; do
-            run_process s-${type} "$SWIFT_BIN_DIR/swift-${type}-server ${SWIFT_CONF_DIR}/${type}-server/1.conf -v"
-        done
-    fi
 
     if [[ "$SWIFT_ENABLE_TEMPURLS" == "True" ]]; then
         swift_configure_tempurls
