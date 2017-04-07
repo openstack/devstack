@@ -62,7 +62,11 @@ function install_libvirt {
 
     if is_ubuntu; then
         install_package qemu-system
-        install_package libvirt-bin libvirt-dev
+        if [[ ${DISTRO} == "xenial" ]]; then
+            install_package libvirt-bin libvirt-dev
+        else
+            install_package libvirt-clients libvirt-daemon-system libvirt-dev
+        fi
         pip_install_gr libvirt-python
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
