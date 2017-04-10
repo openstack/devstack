@@ -529,6 +529,10 @@ GITBRANCH["os-vif"]=${OS_VIF_BRANCH:-master}
 GITREPO["osc-lib"]=${OSC_LIB_REPO:-${GIT_BASE}/openstack/osc-lib.git}
 GITBRANCH["osc-lib"]=${OSC_LIB_BRANCH:-master}
 
+# python-openstacksdk OpenStack Python SDK
+GITREPO["python-openstacksdk"]=${OPENSTACKSDK_REPO:-${GIT_BASE}/openstack/python-openstacksdk.git}
+GITBRANCH["python-openstacksdk"]=${OPENSTACKSDK_BRANCH:-master}
+
 # ironic common lib
 GITREPO["ironic-lib"]=${IRONIC_LIB_REPO:-${GIT_BASE}/openstack/ironic-lib.git}
 GITBRANCH["ironic-lib"]=${IRONIC_LIB_BRANCH:-master}
