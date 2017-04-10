@@ -288,10 +288,6 @@ add_interface "$GUEST_NAME" "$PUB_BRIDGE_OR_NET_NAME" "$PUB_DEV_NR"
 #
 $THIS_DIR/build_xva.sh "$GUEST_NAME"
 
-XEN_INTEGRATION_BRIDGE_DEFAULT=$(bridge_for "$XEN_INT_BRIDGE_OR_NET_NAME")
-append_kernel_cmdline \
-    "$GUEST_NAME"
-
 FLAT_NETWORK_BRIDGE="${FLAT_NETWORK_BRIDGE:-$(bridge_for "$VM_BRIDGE_OR_NET_NAME")}"
 append_kernel_cmdline "$GUEST_NAME" "flat_network_bridge=${FLAT_NETWORK_BRIDGE}"
 
