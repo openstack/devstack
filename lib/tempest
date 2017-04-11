@@ -622,7 +622,7 @@ function install_tempest {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
     pip_install tox
     pushd $TEMPEST_DIR
-    tox --notest -efull
+    tox -r --notest -efull
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but
     # running pip install -U on tempest requirements
