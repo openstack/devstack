@@ -9,7 +9,7 @@
 # Assumes:
 #  - dstat command is installed
 
-# Retreive log directory as argument from calling script.
+# Retrieve log directory as argument from calling script.
 LOGDIR=$1
 
 # Command line arguments for primary DStat process.
