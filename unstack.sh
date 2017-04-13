@@ -129,9 +129,6 @@ if is_service_enabled tls-proxy; then
     stop_tls_proxy
     cleanup_CA
 fi
-if [ "$USE_SSL" == "True" ]; then
-    cleanup_CA
-fi
 
 SCSI_PERSIST_DIR=$CINDER_STATE_PATH/volumes/*
 

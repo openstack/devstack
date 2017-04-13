@@ -116,7 +116,7 @@ SERVICE_PROJECT_NAME=${SERVICE_PROJECT_NAME:-service}
 SERVICE_TENANT_NAME=${SERVICE_PROJECT_NAME:-service}
 
 # if we are running with SSL use https protocols
-if is_ssl_enabled_service "key" || is_service_enabled tls-proxy; then
+if is_service_enabled tls-proxy; then
     KEYSTONE_AUTH_PROTOCOL="https"
     KEYSTONE_SERVICE_PROTOCOL="https"
 fi
@@ -171,12 +171,6 @@ function _config_keystone_apache_wsgi {
     local keystone_auth_port=$KEYSTONE_AUTH_PORT
     local venv_path=""
 
-    if is_ssl_enabled_service key; then
-        keystone_ssl_listen=""
-        keystone_ssl="SSLEngine On"
-        keystone_certfile="SSLCertificateFile $KEYSTONE_SSL_CERT"
-        keystone_keyfile="SSLCertificateKeyFile $KEYSTONE_SSL_KEY"
-    fi
     if is_service_enabled tls-proxy; then
         keystone_service_port=$KEYSTONE_SERVICE_PORT_INT
         keystone_auth_port=$KEYSTONE_AUTH_PORT_INT
@@ -247,11 +241,6 @@ function configure_keystone {
 
     iniset_rpc_backend keystone $KEYSTONE_CONF
 
-    # Register SSL certificates if provided
-    if is_ssl_enabled_service key; then
-        ensure_certificates KEYSTONE
-    fi
-
     local service_port=$KEYSTONE_SERVICE_PORT
     local auth_port=$KEYSTONE_AUTH_PORT
 
@@ -297,7 +286,6 @@ function configure_keystone {
         _config_keystone_apache_wsgi
     else # uwsgi
         # iniset creates these files when it's called if they don't exist.
-
         write_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI" "/identity" "$KEYSTONE_SERVICE_HOST:$service_port"
         write_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI" "/identity_admin" "$KEYSTONE_ADMIN_BIND_HOST:$auth_port"
     fi
@@ -546,9 +534,6 @@ function install_keystone {
 
     if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         install_apache_wsgi
-        if is_ssl_enabled_service "key"; then
-            enable_mod_ssl
-        fi
     elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
         pip_install uwsgi
     fi

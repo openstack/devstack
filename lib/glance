@@ -57,7 +57,7 @@ GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
 GLANCE_SWIFT_STORE_CONF=$GLANCE_CONF_DIR/glance-swift-store.conf
 GLANCE_V1_ENABLED=${GLANCE_V1_ENABLED:-False}
 
-if is_ssl_enabled_service "glance" || is_service_enabled tls-proxy; then
+if is_service_enabled tls-proxy; then
     GLANCE_SERVICE_PROTOCOL="https"
 fi
 
@@ -187,18 +187,7 @@ function configure_glance {
         iniset $GLANCE_REGISTRY_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
     fi
 
-    # Register SSL certificates if provided
-    if is_ssl_enabled_service glance; then
-        ensure_certificates GLANCE
-
-        iniset $GLANCE_API_CONF DEFAULT cert_file "$GLANCE_SSL_CERT"
-        iniset $GLANCE_API_CONF DEFAULT key_file "$GLANCE_SSL_KEY"
-
-        iniset $GLANCE_REGISTRY_CONF DEFAULT cert_file "$GLANCE_SSL_CERT"
-        iniset $GLANCE_REGISTRY_CONF DEFAULT key_file "$GLANCE_SSL_KEY"
-    fi
-
-    if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
+    if is_service_enabled tls-proxy; then
         iniset $GLANCE_API_CONF DEFAULT registry_client_protocol https
     fi
 
@@ -233,7 +222,7 @@ function configure_glance {
 
     cp -p $GLANCE_DIR/etc/metadefs/*.json $GLANCE_METADEF_DIR
 
-    if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+    if is_service_enabled tls-proxy; then
         CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
         CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
 

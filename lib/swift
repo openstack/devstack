@@ -31,7 +31,7 @@ set +o xtrace
 # Defaults
 # --------
 
-if is_ssl_enabled_service "s-proxy" || is_service_enabled tls-proxy; then
+if is_service_enabled tls-proxy; then
     SWIFT_SERVICE_PROTOCOL="https"
 fi
 
@@ -396,13 +396,6 @@ function configure_swift {
         iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT_INT}
     else
         iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT bind_port ${SWIFT_DEFAULT_BIND_PORT}
-    fi
-
-    if is_ssl_enabled_service s-proxy; then
-        ensure_certificates SWIFT
-
-        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT cert_file "$SWIFT_SSL_CERT"
-        iniset ${SWIFT_CONFIG_PROXY_SERVER} DEFAULT key_file "$SWIFT_SSL_KEY"
     fi
 
     # DevStack is commonly run in a small slow environment, so bump the timeouts up.

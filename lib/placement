@@ -40,7 +40,7 @@ PLACEMENT_AUTH_STRATEGY=${PLACEMENT_AUTH_STRATEGY:-placement}
 # yet merged in nova but is coming soon.
 PLACEMENT_DB_ENABLED=$(trueorfalse False PLACEMENT_DB_ENABLED)
 
-if is_ssl_enabled_service "placement-api" || is_service_enabled tls-proxy; then
+if is_service_enabled tls-proxy; then
     PLACEMENT_SERVICE_PROTOCOL="https"
 fi
 
@@ -72,12 +72,6 @@ function _config_placement_apache_wsgi {
     nova_bin_dir=$(get_python_exec_prefix)
     placement_api_apache_conf=$(apache_site_config_for placement-api)
 
-    # reuse nova's cert if a cert is being used
-    if is_ssl_enabled_service "placement-api"; then
-        placement_ssl="SSLEngine On"
-        placement_certfile="SSLCertificateFile $NOVA_SSL_CERT"
-        placement_keyfile="SSLCertificateKeyFile $NOVA_SSL_KEY"
-    fi
     # reuse nova's venv if there is one as placement code lives
     # there
     if [[ ${USE_VENV} = True ]]; then
@@ -149,9 +143,6 @@ function init_placement {
 # install_placement() - Collect source and prepare
 function install_placement {
     install_apache_wsgi
-    if is_ssl_enabled_service "placement-api"; then
-        enable_mod_ssl
-    fi
 }
 
 # start_placement_api() - Start the API processes ahead of other things

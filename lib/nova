@@ -68,7 +68,7 @@ fi
 # Toggle for deploying Nova-API under HTTPD + mod_wsgi
 NOVA_USE_MOD_WSGI=${NOVA_USE_MOD_WSGI:-False}
 
-if is_ssl_enabled_service "nova" || is_service_enabled tls-proxy; then
+if is_service_enabled tls-proxy; then
     NOVA_SERVICE_PROTOCOL="https"
 fi
 
@@ -262,11 +262,6 @@ function _config_nova_apache_wsgi {
     local nova_metadata_port=$METADATA_SERVICE_PORT
     local venv_path=""
 
-    if is_ssl_enabled_service nova-api; then
-        nova_ssl="SSLEngine On"
-        nova_certfile="SSLCertificateFile $NOVA_SSL_CERT"
-        nova_keyfile="SSLCertificateKeyFile $NOVA_SSL_KEY"
-    fi
     if [[ ${USE_VENV} = True ]]; then
         venv_path="python-path=${PROJECT_VENV["nova"]}/lib/$(python_version)/site-packages"
     fi
@@ -501,7 +496,7 @@ function create_nova_conf {
     fi
 
     if is_service_enabled cinder; then
-        if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+        if is_service_enabled tls-proxy; then
             CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
             CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
             iniset $NOVA_CONF cinder cafile $SSL_BUNDLE_FILE
@@ -586,18 +581,8 @@ function create_nova_conf {
 
     iniset $NOVA_CONF cinder os_region_name "$REGION_NAME"
 
-    if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
+    if is_service_enabled tls-proxy; then
         iniset $NOVA_CONF DEFAULT glance_protocol https
-    fi
-
-    # Register SSL certificates if provided
-    if is_ssl_enabled_service nova; then
-        ensure_certificates NOVA
-
-        iniset $NOVA_CONF DEFAULT ssl_cert_file "$NOVA_SSL_CERT"
-        iniset $NOVA_CONF DEFAULT ssl_key_file "$NOVA_SSL_KEY"
-
-        iniset $NOVA_CONF DEFAULT enabled_ssl_apis "$NOVA_ENABLED_APIS"
     fi
 
     if is_service_enabled n-sproxy; then
@@ -790,9 +775,6 @@ function install_nova {
 
     if [ "$NOVA_USE_MOD_WSGI" == "True" ]; then
         install_apache_wsgi
-        if is_ssl_enabled_service "nova-api"; then
-            enable_mod_ssl
-        fi
     fi
 }
 

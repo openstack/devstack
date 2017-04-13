@@ -539,13 +539,6 @@ rm -f $SSL_BUNDLE_FILE
 source $TOP_DIR/lib/database
 source $TOP_DIR/lib/rpc_backend
 
-# Service to enable with SSL if ``USE_SSL`` is True
-SSL_ENABLED_SERVICES="key,nova,cinder,glance,s-proxy,neutron"
-
-if is_service_enabled tls-proxy && [ "$USE_SSL" == "True" ]; then
-    die $LINENO "tls-proxy and SSL are mutually exclusive"
-fi
-
 # Configure Projects
 # ==================
 
@@ -806,7 +799,7 @@ if is_service_enabled cinder nova; then
 fi
 
 # Setup TLS certs
-if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
+if is_service_enabled tls-proxy; then
     configure_CA
     init_CA
     init_cert
@@ -886,7 +879,7 @@ if is_service_enabled horizon; then
     stack_install_service horizon
 fi
 
-if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
+if is_service_enabled tls-proxy; then
     fix_system_ca_bundle_path
 fi
 

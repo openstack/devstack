@@ -61,7 +61,7 @@
 
 deprecated "Using lib/neutron-legacy is deprecated, and it will be removed in the future"
 
-if is_ssl_enabled_service "neutron" || is_service_enabled tls-proxy; then
+if is_service_enabled tls-proxy; then
     Q_PROTOCOL="https"
 fi
 
@@ -461,9 +461,6 @@ function start_neutron_service_and_check {
     # Start the Neutron service
     run_process q-svc "$NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
     echo "Waiting for Neutron to start..."
-    if is_ssl_enabled_service "neutron"; then
-        ssl_ca="--ca-certificate=${SSL_BUNDLE_FILE}"
-    fi
 
     local testcmd="wget ${ssl_ca} --no-proxy -q -O- $service_protocol://$Q_HOST:$service_port"
     test_with_retry "$testcmd" "Neutron did not start" $SERVICE_TIMEOUT
@@ -712,18 +709,6 @@ function _configure_neutron_common {
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
         iniset $NEUTRON_CONF DEFAULT bind_port "$Q_PORT_INT"
-    fi
-
-    if is_ssl_enabled_service "nova"; then
-        iniset $NEUTRON_CONF nova cafile $SSL_BUNDLE_FILE
-    fi
-
-    if is_ssl_enabled_service "neutron"; then
-        ensure_certificates NEUTRON
-
-        iniset $NEUTRON_CONF DEFAULT use_ssl True
-        iniset $NEUTRON_CONF DEFAULT ssl_cert_file "$NEUTRON_SSL_CERT"
-        iniset $NEUTRON_CONF DEFAULT ssl_key_file "$NEUTRON_SSL_KEY"
     fi
 
     _neutron_setup_rootwrap

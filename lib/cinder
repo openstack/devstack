@@ -58,7 +58,7 @@ CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
 CINDER_API_PASTE_INI=$CINDER_CONF_DIR/api-paste.ini
 
 # Public facing bits
-if is_ssl_enabled_service "cinder" || is_service_enabled tls-proxy; then
+if is_service_enabled tls-proxy; then
     CINDER_SERVICE_PROTOCOL="https"
 fi
 CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
@@ -215,11 +215,6 @@ function _cinder_config_apache_wsgi {
     local cinder_api_port=$CINDER_SERVICE_PORT
     local venv_path=""
 
-    if is_ssl_enabled_service c-api; then
-        cinder_ssl="SSLEngine On"
-        cinder_certfile="SSLCertificateFile $CINDER_SSL_CERT"
-        cinder_keyfile="SSLCertificateKeyFile $CINDER_SSL_KEY"
-    fi
     if [[ ${USE_VENV} = True ]]; then
         venv_path="python-path=${PROJECT_VENV["cinder"]}/lib/python2.7/site-packages"
     fi
@@ -347,21 +342,13 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT osapi_volume_workers "$API_WORKERS"
 
     iniset $CINDER_CONF DEFAULT glance_api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
-    if is_ssl_enabled_service glance || is_service_enabled tls-proxy; then
+    if is_service_enabled tls-proxy; then
         iniset $CINDER_CONF DEFAULT glance_protocol https
         iniset $CINDER_CONF DEFAULT glance_ca_certificates_file $SSL_BUNDLE_FILE
     fi
 
     if [ "$GLANCE_V1_ENABLED" != "True" ]; then
         iniset $CINDER_CONF DEFAULT glance_api_version 2
-    fi
-
-    # Register SSL certificates if provided
-    if is_ssl_enabled_service cinder; then
-        ensure_certificates CINDER
-
-        iniset $CINDER_CONF DEFAULT ssl_cert_file "$CINDER_SSL_CERT"
-        iniset $CINDER_CONF DEFAULT ssl_key_file "$CINDER_SSL_KEY"
     fi
 
     # Set os_privileged_user credentials (used for os-assisted-snapshots)
@@ -464,9 +451,6 @@ function install_cinder {
 
     if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
         install_apache_wsgi
-        if is_ssl_enabled_service "c-api"; then
-            enable_mod_ssl
-        fi
     fi
 }
 

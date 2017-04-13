@@ -343,7 +343,7 @@ function make_root_CA {
 # one. If the value for the CA is not rooted in /etc then we know
 # we need to change it.
 function fix_system_ca_bundle_path {
-    if is_service_enabled tls-proxy || [ "$USE_SSL" == "True" ]; then
+    if is_service_enabled tls-proxy; then
         local capath
         capath=$(python -c $'try:\n from requests import certs\n print certs.where()\nexcept ImportError: pass')
 
@@ -362,26 +362,13 @@ function fix_system_ca_bundle_path {
 }
 
 
+# Only for compatibility, return if the tls-proxy is enabled
+function is_ssl_enabled_service {
+    return is_service_enabled tls-proxy
+}
+
 # Certificate Input Configuration
 # ===============================
-
-# check to see if the service(s) specified are to be SSL enabled.
-#
-# Multiple services specified as arguments are ``OR``'ed together; the test
-# is a short-circuit boolean, i.e it returns on the first match.
-#
-# Uses global ``SSL_ENABLED_SERVICES``
-function is_ssl_enabled_service {
-    local services=$@
-    local service=""
-    if [ "$USE_SSL" == "False" ]; then
-        return 1
-    fi
-    for service in ${services}; do
-        [[ ,${SSL_ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
-    done
-    return 1
-}
 
 # Ensure that the certificates for a service are in place. This function does
 # not check that a service is SSL enabled, this should already have been

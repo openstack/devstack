@@ -846,9 +846,6 @@ SYSLOG_PORT=${SYSLOG_PORT:-516}
 # Set to 0 to disable shallow cloning
 GIT_DEPTH=${GIT_DEPTH:-0}
 
-# Use native SSL for servers in ``SSL_ENABLED_SERVICES``
-USE_SSL=$(trueorfalse False USE_SSL)
-
 # We may not need to recreate database in case 2 Keystone services
 # sharing the same database. It would be useful for multinode Grenade tests.
 RECREATE_KEYSTONE_DB=$(trueorfalse True RECREATE_KEYSTONE_DB)
