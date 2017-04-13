@@ -224,7 +224,7 @@ fi
 
 # test against removed package...was a bug on Ubuntu
 if is_ubuntu; then
-    PKG=cowsay
+    PKG=cowsay-off
     if ! (dpkg -s $PKG >/dev/null 2>&1); then
         # it was never installed...set up the condition
         sudo apt-get install -y cowsay >/dev/null 2>&1

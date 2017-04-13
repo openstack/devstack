@@ -7,6 +7,8 @@ gcc-c++
 gettext  # used for compiling message catalogs
 git-core
 graphviz # needed only for docs
+httpd
+httpd-devel
 iptables-services  # NOPRIME f23,f24,f25
 java-1.7.0-openjdk-headless  # NOPRIME rhel7
 java-1.8.0-openjdk-headless  # NOPRIME f23,f24,f25

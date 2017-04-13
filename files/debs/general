@@ -1,3 +1,5 @@
+apache2
+apache2-dev
 bc
 bridge-utils
 bsdmainutils
@@ -9,6 +11,7 @@ gettext  # used for compiling message catalogs
 git
 graphviz # needed for docs
 iputils-ping
+libapache2-mod-proxy-uwsgi
 libffi-dev # for pyOpenSSL
 libjpeg-dev # Pillow 3.0.0
 libmysqlclient-dev  # MySQL-python
