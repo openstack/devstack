@@ -66,6 +66,48 @@ function enable_apache_mod {
     fi
 }
 
+# NOTE(sdague): Install uwsgi including apache module, we need to get
+# to 2.0.6+ to get a working mod_proxy_uwsgi. We can probably build a
+# check for that and do it differently for different platforms.
+function install_apache_uwsgi {
+    local apxs="apxs2"
+    if is_fedora; then
+        apxs="apxs"
+    fi
+
+    # Ubuntu xenial is back level on uwsgi so the proxy doesn't
+    # actually work. Hence we have to build from source for now.
+    #
+    # Centos 7 actually has the module in epel, but there was a big
+    # push to disable epel by default. As such, compile from source
+    # there as well.
+
+    local dir
+    dir=$(mktemp -d)
+    pushd $dir
+    pip_install uwsgi
+    pip download uwsgi -c $REQUIREMENTS_DIR/upper-constraints.txt
+    local uwsgi
+    uwsgi=$(ls uwsgi*)
+    tar xvf $uwsgi
+    cd uwsgi*/apache2
+    sudo $apxs -i -c mod_proxy_uwsgi.c
+    popd
+    # delete the temp directory
+    sudo rm -rf $dir
+
+    if is_ubuntu; then
+        # we've got to enable proxy and proxy_uwsgi for this to work
+        sudo a2enmod proxy
+        sudo a2enmod proxy_uwsgi
+    elif is_fedora; then
+        # redhat is missing a nice way to turn on/off modules
+        echo "LoadModule proxy_uwsgi_module modules/mod_proxy_uwsgi.so" \
+            | sudo tee /etc/httpd/conf.modules.d/02-proxy-uwsgi.conf
+    fi
+    restart_apache_server
+}
+
 # install_apache_wsgi() - Install Apache server and wsgi module
 function install_apache_wsgi {
     # Apache installation, because we mark it NOPRIME
