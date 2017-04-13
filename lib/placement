@@ -32,7 +32,15 @@ set +o xtrace
 PLACEMENT_CONF_DIR=/etc/nova
 PLACEMENT_CONF=$PLACEMENT_CONF_DIR/nova.conf
 PLACEMENT_AUTH_STRATEGY=${PLACEMENT_AUTH_STRATEGY:-placement}
-
+# Nova virtual environment
+if [[ ${USE_VENV} = True ]]; then
+    PROJECT_VENV["nova"]=${NOVA_DIR}.venv
+    PLACEMENT_BIN_DIR=${PROJECT_VENV["nova"]}/bin
+else
+    PLACEMENT_BIN_DIR=$(get_python_exec_prefix)
+fi
+PLACEMENT_UWSGI=$PLACEMENT_BIN_DIR/nova-placement-api
+PLACEMENT_UWSGI_CONF=$PLACEMENT_CONF_DIR/placement-uwsgi.ini
 
 # The placement service can optionally use a separate database
 # connection. Set PLACEMENT_DB_ENABLED to True to use it.
@@ -114,7 +122,13 @@ function configure_placement {
     if [ "$PLACEMENT_DB_ENABLED" != False ]; then
         iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
     fi
-    _config_placement_apache_wsgi
+    # TODO(sdague): this really should flag off of something else, but
+    # it won't really work without systemd today.
+    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+        write_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI" "/placement"
+    else
+        _config_placement_apache_wsgi
+    fi
 }
 
 # create_placement_accounts() - Set up required placement accounts
@@ -147,9 +161,13 @@ function install_placement {
 
 # start_placement_api() - Start the API processes ahead of other things
 function start_placement_api {
-    enable_apache_site placement-api
-    restart_apache_server
-    tail_log placement-api /var/log/$APACHE_NAME/placement-api.log
+    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+        run_process "placement-api" "$PLACEMENT_BIN_DIR/uwsgi --ini $PLACEMENT_UWSGI_CONF"
+    else
+        enable_apache_site placement-api
+        restart_apache_server
+        tail_log placement-api /var/log/$APACHE_NAME/placement-api.log
+    fi
 
     echo "Waiting for placement-api to start..."
     if ! wait_for_service $SERVICE_TIMEOUT $PLACEMENT_SERVICE_PROTOCOL://$PLACEMENT_SERVICE_HOST/placement; then
@@ -163,8 +181,13 @@ function start_placement {
 
 # stop_placement() - Disable the api service and stop it.
 function stop_placement {
-    disable_apache_site placement-api
-    restart_apache_server
+    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+        stop_process "placement-api"
+        remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI"
+    else
+        disable_apache_site placement-api
+        restart_apache_server
+    fi
 }
 
 # Restore xtrace
