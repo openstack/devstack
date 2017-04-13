@@ -347,6 +347,10 @@ SKIP_EPEL_INSTALL=$(trueorfalse False SKIP_EPEL_INSTALL)
 # is pre-installed.
 if [[ -f /etc/nodepool/provider ]]; then
     SKIP_EPEL_INSTALL=True
+    if is_fedora; then
+        # However, EPEL is not enabled by default.
+        sudo yum-config-manager --enable epel
+    fi
 fi
 
 if is_fedora && [[ $DISTRO == "rhel7" ]] && \
