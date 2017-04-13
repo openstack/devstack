@@ -55,21 +55,13 @@ KEYSTONE_ADMIN_UWSGI_CONF=$KEYSTONE_CONF_DIR/keystone-uwsgi-admin.ini
 KEYSTONE_PUBLIC_UWSGI=$KEYSTONE_BIN_DIR/keystone-wsgi-public
 KEYSTONE_ADMIN_UWSGI=$KEYSTONE_BIN_DIR/keystone-wsgi-admin
 
-# Toggle for deploying Keystone under HTTPD + mod_wsgi
-# Deprecated in Mitaka, use KEYSTONE_DEPLOY instead.
-KEYSTONE_USE_MOD_WSGI=${KEYSTONE_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}}
-
 # KEYSTONE_DEPLOY defines how keystone is deployed, allowed values:
 # - mod_wsgi : Run keystone under Apache HTTPd mod_wsgi
 # - uwsgi : Run keystone under uwsgi
-if [ -z "$KEYSTONE_DEPLOY" ]; then
-    if [ -z "$KEYSTONE_USE_MOD_WSGI" ]; then
-        KEYSTONE_DEPLOY=mod_wsgi
-    elif [ "$KEYSTONE_USE_MOD_WSGI" == True ]; then
-        KEYSTONE_DEPLOY=mod_wsgi
-    else
-        KEYSTONE_DEPLOY=uwsgi
-    fi
+if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+    KEYSTONE_DEPLOY=uwsgi
+else
+    KEYSTONE_DEPLOY=mod_wsgi
 fi
 
 # Select the token persistence backend driver
@@ -121,15 +113,8 @@ if is_service_enabled tls-proxy; then
     KEYSTONE_SERVICE_PROTOCOL="https"
 fi
 
-# complete URIs
-if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-    # If running in Apache, use path access rather than port.
-    KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_PROTOCOL}://${KEYSTONE_AUTH_HOST}/identity_admin
-    KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity
-else
-    KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_PROTOCOL}://${KEYSTONE_AUTH_HOST}:${KEYSTONE_AUTH_PORT}
-    KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}:${KEYSTONE_SERVICE_PORT}
-fi
+KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_PROTOCOL}://${KEYSTONE_AUTH_HOST}/identity_admin
+KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity
 
 # V3 URIs
 KEYSTONE_AUTH_URI_V3=$KEYSTONE_AUTH_URI/v3
@@ -155,8 +140,15 @@ function is_keystone_enabled {
 # cleanup_keystone() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_keystone {
-    disable_apache_site keystone
-    sudo rm -f $(apache_site_config_for keystone)
+    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+        remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
+        remove_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI"
+        sudo rm -f $(apache_site_config_for keystone-wsgi-public)
+        sudo rm -f $(apache_site_config_for keystone-wsgi-admin)
+    else
+        disable_apache_site keystone
+        sudo rm -f $(apache_site_config_for keystone)
+    fi
 }
 
 # _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
@@ -256,10 +248,8 @@ function configure_keystone {
     # work when you want to use a different port (in the case of proxy), or you
     # don't want the port (in the case of putting keystone on a path in
     # apache).
-    if is_service_enabled tls-proxy || [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-        iniset $KEYSTONE_CONF DEFAULT public_endpoint $KEYSTONE_SERVICE_URI
-        iniset $KEYSTONE_CONF DEFAULT admin_endpoint $KEYSTONE_AUTH_URI
-    fi
+    iniset $KEYSTONE_CONF DEFAULT public_endpoint $KEYSTONE_SERVICE_URI
+    iniset $KEYSTONE_CONF DEFAULT admin_endpoint $KEYSTONE_AUTH_URI
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" != "" ]]; then
         iniset $KEYSTONE_CONF token provider $KEYSTONE_TOKEN_FORMAT
@@ -285,9 +275,8 @@ function configure_keystone {
         iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(asctime)s.%(msecs)03d %(process)d TRACE %(name)s %(instance)s"
         _config_keystone_apache_wsgi
     else # uwsgi
-        # iniset creates these files when it's called if they don't exist.
-        write_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI" "/identity" "$KEYSTONE_SERVICE_HOST:$service_port"
-        write_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI" "/identity_admin" "$KEYSTONE_ADMIN_BIND_HOST:$auth_port"
+        write_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI" "/identity"
+        write_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI" "/identity_admin"
     fi
 
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
@@ -568,10 +557,7 @@ function start_keystone {
     # unencryted traffic at this point.
     # If running in Apache, use the path rather than port.
 
-    local service_uri=$auth_protocol://$KEYSTONE_SERVICE_HOST:$service_port/v$IDENTITY_API_VERSION/
-    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-        service_uri=$auth_protocol://$KEYSTONE_SERVICE_HOST/identity/v$IDENTITY_API_VERSION/
-    fi
+    local service_uri=$auth_protocol://$KEYSTONE_SERVICE_HOST/identity/v$IDENTITY_API_VERSION/
 
     if ! wait_for_service $SERVICE_TIMEOUT $service_uri; then
         die $LINENO "keystone did not start"
@@ -595,6 +581,8 @@ function stop_keystone {
     else
         stop_process key-p
         stop_process key-a
+        remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
+        remove_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI"
     fi
     # Kill the Keystone screen window
     stop_process key

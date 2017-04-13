@@ -73,8 +73,6 @@ else
 fi
 
 SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
-KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
-KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
 
 # Identity API version
 export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
@@ -84,7 +82,7 @@ export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
 # the user/project has access to - including nova, glance, keystone, swift, ...
 # We currently recommend using the version 3 *identity api*.
 #
-export OS_AUTH_URL=$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:5000/v${OS_IDENTITY_API_VERSION}
+export OS_AUTH_URL=$KEYSTONE_AUTH_URI
 
 # Currently, in order to use openstackclient with Identity API v3,
 # we need to set the domain which the user and project belong to.
