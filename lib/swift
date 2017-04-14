@@ -538,6 +538,7 @@ EOF
         auth_vers=$(iniget ${testfile} func_test auth_version)
         iniset ${testfile} func_test auth_host ${KEYSTONE_SERVICE_HOST}
         iniset ${testfile} func_test auth_port ${KEYSTONE_AUTH_PORT}
+        iniset ${testfile} func_test auth_uri ${KEYSTONE_AUTH_URI}
         if [[ $auth_vers == "3" ]]; then
             iniset ${testfile} func_test auth_prefix /v3/
         else
