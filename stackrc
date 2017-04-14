@@ -483,6 +483,10 @@ GITBRANCH["pbr"]=${PBR_BRANCH:-master}
 #
 ##################
 
+# cursive library
+GITREPO["cursive"]=${CURSIVE_REPO:-${GIT_BASE}/openstack/cursive.git}
+GITBRANCH["cursive"]=${CURSIVE_BRANCH:-master}
+
 # glance store library
 GITREPO["glance_store"]=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
 GITBRANCH["glance_store"]=${GLANCE_STORE_BRANCH:-master}
