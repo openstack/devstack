@@ -364,6 +364,10 @@ GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 #
 ###################
 
+# castellan key manager interface
+GITREPO["castellan"]=${CASTELLAN_REPO:-${GIT_BASE}/openstack/castellan.git}
+GITBRANCH["castellan"]=${CASTELLAN_BRANCH:-master}
+
 # cliff command line framework
 GITREPO["cliff"]=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
 GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
