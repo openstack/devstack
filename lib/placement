@@ -122,8 +122,7 @@ function configure_placement {
     if [ "$PLACEMENT_DB_ENABLED" != False ]; then
         iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
     fi
-    # TODO(sdague): this really should flag off of something else, but
-    # it won't really work without systemd today.
+
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
         write_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI" "/placement"
     else
