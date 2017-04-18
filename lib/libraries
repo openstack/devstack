@@ -30,6 +30,7 @@ GITDIR["debtcollector"]=$DEST/debtcollector
 GITDIR["futurist"]=$DEST/futurist
 GITDIR["os-client-config"]=$DEST/os-client-config
 GITDIR["osc-lib"]=$DEST/osc-lib
+GITDIR["osc-placement"]=$DEST/osc-placement
 GITDIR["oslo.cache"]=$DEST/oslo.cache
 GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
 GITDIR["oslo.config"]=$DEST/oslo.config
@@ -91,6 +92,7 @@ function install_libs {
     _install_lib_from_source "debtcollector"
     _install_lib_from_source "futurist"
     _install_lib_from_source "osc-lib"
+    _install_lib_from_source "osc-placement"
     _install_lib_from_source "os-client-config"
     _install_lib_from_source "oslo.cache"
     _install_lib_from_source "oslo.concurrency"
