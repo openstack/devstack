@@ -905,34 +905,6 @@ function get_or_add_user_domain_role {
     echo $user_role_id
 }
 
-# Gets or adds user role to domain
-# Usage: get_or_add_user_domain_role <role> <user> <domain>
-function get_or_add_user_domain_role {
-    local user_role_id
-    # Gets user role id
-    user_role_id=$(openstack role assignment list \
-        --user $2 \
-        --os-url=$KEYSTONE_SERVICE_URI_V3 \
-        --os-identity-api-version=3 \
-        --domain $3 \
-        | grep " $1 " | get_field 1)
-    if [[ -z "$user_role_id" ]]; then
-        # Adds role to user and get it
-        openstack role add $1 \
-            --user $2 \
-            --domain $3 \
-            --os-url=$KEYSTONE_SERVICE_URI_V3 \
-            --os-identity-api-version=3
-        user_role_id=$(openstack role assignment list \
-            --user $2 \
-            --os-url=$KEYSTONE_SERVICE_URI_V3 \
-            --os-identity-api-version=3 \
-            --domain $3 \
-            | grep " $1 " | get_field 1)
-    fi
-    echo $user_role_id
-}
-
 # Gets or adds group role to project
 # Usage: get_or_add_group_project_role <role> <group> <project>
 function get_or_add_group_project_role {
