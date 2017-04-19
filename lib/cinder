@@ -109,7 +109,16 @@ CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 # https://bugs.launchpad.net/cinder/+bug/1180976
 CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 
-CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-tgtadm}
+# Centos7 switched to using LIO and that's all that's supported,
+# although the tgt bits are in EPEL we don't want that for CI
+if is_fedora; then
+    CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-lioadm}
+    if [[ ${CINDER_ISCSI_HELPER} != "lioadm" ]]; then
+        die "lioadm is the only valid Cinder iscsi_helper config on this platform"
+    fi
+else
+    CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-tgtadm}
+fi
 
 # Toggle for deploying Cinder under HTTPD + mod_wsgi
 CINDER_USE_MOD_WSGI=${CINDER_USE_MOD_WSGI:-False}
@@ -443,12 +452,10 @@ function init_cinder {
 function install_cinder {
     git_clone $CINDER_REPO $CINDER_DIR $CINDER_BRANCH
     setup_develop $CINDER_DIR
-    if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
-        if is_fedora; then
-            install_package scsi-target-utils
-        else
-            install_package tgt
-        fi
+    if [[ "$CINDER_ISCSI_HELPER" == "tgtadm" ]]; then
+        install_package tgt
+    elif [[ "$CINDER_ISCI_HELPER" == "lioadm" ]]; then
+        install_package targetcli
     fi
 
     if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
