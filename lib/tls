@@ -524,7 +524,7 @@ $listen_string
     KeepAlive Off
 
     <Location />
-        ProxyPass http://$b_host:$b_port/ retry=5 nocanon
+        ProxyPass http://$b_host:$b_port/ retry=0 nocanon
         ProxyPassReverse http://$b_host:$b_port/
     </Location>
     ErrorLog $APACHE_LOG_DIR/tls-proxy_error.log
