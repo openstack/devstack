@@ -44,6 +44,7 @@ devstack-plugin-additional-pkg-repos   `git://git.openstack.org/openstack/devsta
 devstack-plugin-amqp1                  `git://git.openstack.org/openstack/devstack-plugin-amqp1 <https://git.openstack.org/cgit/openstack/devstack-plugin-amqp1>`__
 devstack-plugin-bdd                    `git://git.openstack.org/openstack/devstack-plugin-bdd <https://git.openstack.org/cgit/openstack/devstack-plugin-bdd>`__
 devstack-plugin-ceph                   `git://git.openstack.org/openstack/devstack-plugin-ceph <https://git.openstack.org/cgit/openstack/devstack-plugin-ceph>`__
+devstack-plugin-container              `git://git.openstack.org/openstack/devstack-plugin-container <https://git.openstack.org/cgit/openstack/devstack-plugin-container>`__
 devstack-plugin-glusterfs              `git://git.openstack.org/openstack/devstack-plugin-glusterfs <https://git.openstack.org/cgit/openstack/devstack-plugin-glusterfs>`__
 devstack-plugin-hdfs                   `git://git.openstack.org/openstack/devstack-plugin-hdfs <https://git.openstack.org/cgit/openstack/devstack-plugin-hdfs>`__
 devstack-plugin-kafka                  `git://git.openstack.org/openstack/devstack-plugin-kafka <https://git.openstack.org/cgit/openstack/devstack-plugin-kafka>`__
@@ -86,6 +87,7 @@ meteos-ui                              `git://git.openstack.org/openstack/meteos
 mistral                                `git://git.openstack.org/openstack/mistral <https://git.openstack.org/cgit/openstack/mistral>`__
 mixmatch                               `git://git.openstack.org/openstack/mixmatch <https://git.openstack.org/cgit/openstack/mixmatch>`__
 mogan                                  `git://git.openstack.org/openstack/mogan <https://git.openstack.org/cgit/openstack/mogan>`__
+mogan-ui                               `git://git.openstack.org/openstack/mogan-ui <https://git.openstack.org/cgit/openstack/mogan-ui>`__
 monasca-analytics                      `git://git.openstack.org/openstack/monasca-analytics <https://git.openstack.org/cgit/openstack/monasca-analytics>`__
 monasca-api                            `git://git.openstack.org/openstack/monasca-api <https://git.openstack.org/cgit/openstack/monasca-api>`__
 monasca-ceilometer                     `git://git.openstack.org/openstack/monasca-ceilometer <https://git.openstack.org/cgit/openstack/monasca-ceilometer>`__
