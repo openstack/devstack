@@ -43,6 +43,7 @@ ALL_LIBS+=" debtcollector os-brick automaton futurist oslo.service"
 ALL_LIBS+=" oslo.cache oslo.reports osprofiler"
 ALL_LIBS+=" keystoneauth ironic-lib neutron-lib oslo.privsep"
 ALL_LIBS+=" diskimage-builder os-vif python-brick-cinderclient-ext"
+ALL_LIBS+=" castellan"
 
 # Generate the above list with
 # echo ${!GITREPO[@]}
