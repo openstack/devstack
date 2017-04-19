@@ -186,7 +186,7 @@ function enable_apache_site {
 function disable_apache_site {
     local site=$@
     if is_ubuntu; then
-        sudo a2dissite ${site}
+        sudo a2dissite ${site} || true
     elif is_fedora || is_suse; then
         local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
         # Do nothing if no site config exists
