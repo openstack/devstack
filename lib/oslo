@@ -25,6 +25,7 @@ set +o xtrace
 GITDIR["automaton"]=$DEST/automaton
 GITDIR["castellan"]=$DEST/castellan
 GITDIR["cliff"]=$DEST/cliff
+GITDIR["cursive"]=$DEST/cursive
 GITDIR["debtcollector"]=$DEST/debtcollector
 GITDIR["futurist"]=$DEST/futurist
 GITDIR["os-client-config"]=$DEST/os-client-config
@@ -74,6 +75,7 @@ function install_oslo {
     _do_install_oslo_lib "automaton"
     _do_install_oslo_lib "castellan"
     _do_install_oslo_lib "cliff"
+    _do_install_oslo_lib "cursive"
     _do_install_oslo_lib "debtcollector"
     _do_install_oslo_lib "futurist"
     _do_install_oslo_lib "osc-lib"
