@@ -554,6 +554,7 @@ EOF
     if [[ $SYSLOG != "False" ]]; then
         sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
             tee /etc/rsyslog.d/10-swift.conf
+        echo "MaxMessageSize 6k" | sudo tee /etc/rsyslog.d/99-maxsize.conf
         # restart syslog to take the changes
         sudo killall -HUP rsyslogd
     fi
