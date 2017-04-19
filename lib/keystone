@@ -434,14 +434,13 @@ function configure_auth_token_middleware {
     local section=${4:-keystone_authtoken}
 
     iniset $conf_file $section auth_type password
-    iniset $conf_file $section auth_url $KEYSTONE_AUTH_URI
+    iniset $conf_file $section auth_url $KEYSTONE_SERVICE_URI
     iniset $conf_file $section username $admin_user
     iniset $conf_file $section password $SERVICE_PASSWORD
     iniset $conf_file $section user_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $conf_file $section project_name $SERVICE_PROJECT_NAME
     iniset $conf_file $section project_domain_name "$SERVICE_DOMAIN_NAME"
 
-    iniset $conf_file $section auth_uri $KEYSTONE_SERVICE_URI
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     iniset $conf_file $section signing_dir $signing_dir
     iniset $conf_file $section memcached_servers $SERVICE_HOST:11211
