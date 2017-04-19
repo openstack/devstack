@@ -512,10 +512,11 @@ function start_cinder {
         tail_log c-api /var/log/$APACHE_NAME/c-api.log
     else
         run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
-        echo "Waiting for Cinder API to start..."
-        if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$CINDER_SERVICE_HOST:$service_port; then
-            die $LINENO "c-api did not start"
-        fi
+    fi
+
+    echo "Waiting for Cinder API to start..."
+    if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$CINDER_SERVICE_HOST:$service_port; then
+        die $LINENO "c-api did not start"
     fi
 
     run_process c-sch "$CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
