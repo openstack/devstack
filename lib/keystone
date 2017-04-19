@@ -113,8 +113,9 @@ if is_service_enabled tls-proxy; then
     KEYSTONE_SERVICE_PROTOCOL="https"
 fi
 
-KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_PROTOCOL}://${KEYSTONE_AUTH_HOST}/identity_admin
 KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity
+# for compat
+KEYSTONE_AUTH_URI=$KEYSTONE_SERVICE_URI
 
 # V3 URIs
 KEYSTONE_AUTH_URI_V3=$KEYSTONE_AUTH_URI/v3
@@ -141,6 +142,7 @@ function is_keystone_enabled {
 # runs that a clean run would need to clean up
 function cleanup_keystone {
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+        # TODO: remove admin at pike-2
         remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
         remove_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI"
         sudo rm -f $(apache_site_config_for keystone-wsgi-public)
@@ -543,11 +545,7 @@ function start_keystone {
         tail_log key /var/log/$APACHE_NAME/keystone.log
         tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
     else # uwsgi
-        # TODO(sdague): we should really get down to a single keystone here
-        enable_service key-p
-        enable_service key-a
-        run_process key-p "$KEYSTONE_BIN_DIR/uwsgi --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
-        run_process key-a "$KEYSTONE_BIN_DIR/uwsgi --ini $KEYSTONE_ADMIN_UWSGI_CONF" ""
+        run_process keystone "$KEYSTONE_BIN_DIR/uwsgi --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
     fi
 
     echo "Waiting for keystone to start..."
@@ -578,9 +576,9 @@ function stop_keystone {
         disable_apache_site keystone
         restart_apache_server
     else
-        stop_process key-p
-        stop_process key-a
+        stop_process keystone
         remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
+        # TODO(remove in at pike-2)
         remove_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI"
     fi
     # Kill the Keystone screen window
