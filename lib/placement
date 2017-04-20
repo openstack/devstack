@@ -102,7 +102,7 @@ function _config_placement_apache_wsgi {
 
 function configure_placement_nova_compute {
     iniset $NOVA_CONF placement auth_type "password"
-    iniset $NOVA_CONF placement auth_url "$KEYSTONE_SERVICE_URI/v3"
+    iniset $NOVA_CONF placement auth_url "$KEYSTONE_SERVICE_URI"
     iniset $NOVA_CONF placement username placement
     iniset $NOVA_CONF placement password "$SERVICE_PASSWORD"
     iniset $NOVA_CONF placement user_domain_name "$SERVICE_DOMAIN_NAME"

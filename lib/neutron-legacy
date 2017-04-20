@@ -368,7 +368,7 @@ function configure_mutnauq {
 function create_nova_conf_neutron {
     iniset $NOVA_CONF DEFAULT use_neutron True
     iniset $NOVA_CONF neutron auth_type "password"
-    iniset $NOVA_CONF neutron auth_url "$KEYSTONE_AUTH_URI/v3"
+    iniset $NOVA_CONF neutron auth_url "$KEYSTONE_AUTH_URI"
     iniset $NOVA_CONF neutron username "$Q_ADMIN_USERNAME"
     iniset $NOVA_CONF neutron password "$SERVICE_PASSWORD"
     iniset $NOVA_CONF neutron user_domain_name "$SERVICE_DOMAIN_NAME"
