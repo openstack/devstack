@@ -82,7 +82,12 @@ export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
 # the user/project has access to - including nova, glance, keystone, swift, ...
 # We currently recommend using the version 3 *identity api*.
 #
-export OS_AUTH_URL=$KEYSTONE_AUTH_URI
+
+# If you don't have a working .stackenv, this is the backup possition
+KEYSTONE_BACKUP=$SERVICE_PROTOCOL://$SERVICE_HOST:5000
+KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_URI:-$KEYSTONE_BACKUP}
+
+export OS_AUTH_URL=${OS_AUTH_URL:-$KEYSTONE_AUTH_URI}
 
 # Currently, in order to use openstackclient with Identity API v3,
 # we need to set the domain which the user and project belong to.
