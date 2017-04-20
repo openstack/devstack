@@ -230,7 +230,12 @@ function write_uwsgi_config {
     local http=$4
     local name=""
     name=$(basename $wsgi)
-    local socket="/tmp/${name}.socket"
+
+    # create a home for the sockets; note don't use /tmp -- apache has
+    # a private view of it on some platforms.
+    local socket_dir='/var/run/uwsgi'
+    sudo install -d -o $STACK_USER -m 755 $socket_dir
+    local socket="$socket_dir/${name}.socket"
 
     # always cleanup given that we are using iniset here
     rm -rf $file
