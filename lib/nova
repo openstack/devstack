@@ -574,7 +574,7 @@ function create_nova_conf {
     # enable notifications, but it will allow them to function when enabled.
     iniset $NOVA_CONF oslo_messaging_notifications driver "messagingv2"
     iniset_rpc_backend nova $NOVA_CONF
-    iniset $NOVA_CONF glance api_servers "${GLANCE_SERVICE_PROTOCOL}://${GLANCE_HOSTPORT}"
+    iniset $NOVA_CONF glance api_servers "$GLANCE_URL"
 
     iniset $NOVA_CONF DEFAULT osapi_compute_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"

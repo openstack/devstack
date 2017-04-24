@@ -71,6 +71,16 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT}
 GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 GLANCE_REGISTRY_PORT=${GLANCE_REGISTRY_PORT:-9191}
 GLANCE_REGISTRY_PORT_INT=${GLANCE_REGISTRY_PORT_INT:-19191}
+GLANCE_UWSGI=$GLANCE_BIN_DIR/glance-wsgi-api
+GLANCE_UWSGI_CONF=$GLANCE_CONF_DIR/glance-uswgi.ini
+# If wsgi mode is uwsgi run glance under uwsgi, else default to eventlet
+# TODO(mtreinish): Remove the eventlet path here and in all the similar
+# conditionals below after the Pike release
+if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+    GLANCE_URL="$GLANCE_SERVICE_PROTOCOL://$GLANCE_SERVICE_HOST/image"
+else
+    GLANCE_URL="$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
+fi
 
 # Functions
 # ---------
@@ -103,16 +113,13 @@ function configure_glance {
     dburl=`database_connection_url glance`
     iniset $GLANCE_REGISTRY_CONF database connection $dburl
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
-    iniset $GLANCE_REGISTRY_CONF DEFAULT workers "$API_WORKERS"
     iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
     configure_auth_token_middleware $GLANCE_REGISTRY_CONF glance $GLANCE_AUTH_CACHE_DIR/registry
     iniset $GLANCE_REGISTRY_CONF oslo_messaging_notifications driver messagingv2
     iniset_rpc_backend glance $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
-    cp $GLANCE_DIR/etc/glance-api.conf $GLANCE_API_CONF
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    iniset $GLANCE_API_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
     inicomment $GLANCE_API_CONF DEFAULT log_file
     iniset $GLANCE_API_CONF database connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
@@ -139,8 +146,6 @@ function configure_glance {
     # Store specific configs
     iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
     iniset $GLANCE_API_CONF DEFAULT registry_host $GLANCE_SERVICE_HOST
-
-    iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
 
     # CORS feature support - to allow calls from Horizon by default
     if [ -n "$GLANCE_CORS_ALLOWED_ORIGIN" ]; then
@@ -198,7 +203,6 @@ function configure_glance {
     setup_logging $GLANCE_REGISTRY_CONF
 
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
-
     cp -p $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
 
     cp $GLANCE_DIR/etc/glance-cache.conf $GLANCE_CACHE_CONF
@@ -231,6 +235,13 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
         iniset $GLANCE_CACHE_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
     fi
+
+    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+        write_local_uwsgi_http_config "$GLANCE_UWSGI_CONF" "$GLANCE_UWSGI" "/image"
+    else
+        iniset $GLANCE_API_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
+        iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
+    fi
 }
 
 # create_glance_accounts() - Set up common required glance accounts
@@ -255,7 +266,7 @@ function create_glance_accounts {
         get_or_create_endpoint \
             "image" \
             "$REGION_NAME" \
-            "$GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT"
+            "$GLANCE_URL"
 
         # Note(frickler): Crude workaround for https://bugs.launchpad.net/glance-store/+bug/1620999
         service_domain_id=$(get_or_create_domain $SERVICE_DOMAIN_NAME)
@@ -320,15 +331,21 @@ function install_glance {
 function start_glance {
     local service_protocol=$GLANCE_SERVICE_PROTOCOL
     if is_service_enabled tls-proxy; then
-        start_tls_proxy glance-service '*' $GLANCE_SERVICE_PORT $GLANCE_SERVICE_HOST $GLANCE_SERVICE_PORT_INT
+        if [[ "$WSGI_MODE" != "uwsgi" ]]; then
+            start_tls_proxy glance-service '*' $GLANCE_SERVICE_PORT $GLANCE_SERVICE_HOST $GLANCE_SERVICE_PORT_INT
+        fi
         start_tls_proxy glance-registry '*' $GLANCE_REGISTRY_PORT $GLANCE_SERVICE_HOST $GLANCE_REGISTRY_PORT_INT
     fi
 
     run_process g-reg "$GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
-    run_process g-api "$GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
+    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
+        run_process g-api "$GLANCE_BIN_DIR/uwsgi --ini $GLANCE_UWSGI_CONF"
+    else
+        run_process g-api "$GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
+    fi
 
-    echo "Waiting for g-api ($GLANCE_HOSTPORT) to start..."
-    if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT; then
+    echo "Waiting for g-api ($GLANCE_SERVICE_HOST) to start..."
+    if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_URL; then
         die $LINENO "g-api did not start"
     fi
 }

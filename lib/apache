@@ -260,10 +260,62 @@ function write_uwsgi_config {
     else
         local apache_conf=""
         apache_conf=$(apache_site_config_for $name)
-        echo "ProxyPass \"${url}\" \"unix:${socket}|uwsgi://uwsgi-uds-${name}/\" retry=0 " | sudo tee $apache_conf
+        echo "SetEnv proxy-sendcl 1" | sudo tee $apache_conf
+        echo "ProxyPass \"${url}\" \"unix:${socket}|uwsgi://uwsgi-uds-${name}/\" retry=0 " | sudo tee -a $apache_conf
         enable_apache_site $name
         restart_apache_server
     fi
+}
+
+# For services using chunked encoding, the only services known to use this
+# currently are Glance and Swift, we need to use an http proxy instead of
+# mod_proxy_uwsgi because the chunked encoding gets dropped. See:
+# https://github.com/unbit/uwsgi/issues/1540 You can workaround this on python2
+# but that involves having apache buffer the request before sending it to
+# uswgi.
+function write_local_uwsgi_http_config {
+    local file=$1
+    local wsgi=$2
+    local url=$3
+    name=$(basename $wsgi)
+
+    # create a home for the sockets; note don't use /tmp -- apache has
+    # a private view of it on some platforms.
+
+    # always cleanup given that we are using iniset here
+    rm -rf $file
+    iniset "$file" uwsgi wsgi-file "$wsgi"
+    port=$(get_random_port)
+    iniset "$file" uwsgi http "127.0.0.1:$port"
+    iniset "$file" uwsgi processes $API_WORKERS
+    # This is running standalone
+    iniset "$file" uwsgi master true
+    # Set die-on-term & exit-on-reload so that uwsgi shuts down
+    iniset "$file" uwsgi die-on-term true
+    iniset "$file" uwsgi exit-on-reload true
+    iniset "$file" uwsgi enable-threads true
+    iniset "$file" uwsgi plugins python
+    # uwsgi recommends this to prevent thundering herd on accept.
+    iniset "$file" uwsgi thunder-lock true
+    # Override the default size for headers from the 4k default.
+    iniset "$file" uwsgi buffer-size 65535
+    # Make sure the client doesn't try to re-use the connection.
+    iniset "$file" uwsgi add-header "Connection: close"
+    # This ensures that file descriptors aren't shared between processes.
+    iniset "$file" uwsgi lazy-apps true
+    iniset "$file" uwsgi chmod-socket 666
+    iniset "$file" uwsgi http-raw-body true
+    iniset "$file" uwsgi http-chunked-input true
+    iniset "$file" uwsgi http-auto-chunked true
+
+    enable_apache_mod proxy
+    enable_apache_mod proxy_http
+    local apache_conf=""
+    apache_conf=$(apache_site_config_for $name)
+    echo "KeepAlive Off" | sudo tee $apache_conf
+    echo "ProxyPass \"${url}\" \"http://127.0.0.1:$port\" retry=0 " | sudo tee -a $apache_conf
+    enable_apache_site $name
+    restart_apache_server
 }
 
 function remove_uwsgi_config {
