@@ -122,6 +122,15 @@ function get_transport_url {
     fi
 }
 
+# Repeat the definition, in case get_transport_url is overriden for RPC purpose.
+# get_notification_url can then be used to talk to rabbit for notifications.
+function get_notification_url {
+    local virtual_host=$1
+    if is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
+        echo "rabbit://$RABBIT_USERID:$RABBIT_PASSWORD@$RABBIT_HOST:5672/$virtual_host"
+    fi
+}
+
 # iniset configuration
 function iniset_rpc_backend {
     local package=$1

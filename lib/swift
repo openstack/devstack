@@ -412,7 +412,7 @@ function configure_swift {
         iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer "set log_level" "WARN"
         iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer paste.filter_factory "ceilometermiddleware.swift:filter_factory"
         iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer control_exchange "swift"
-        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer url $(get_transport_url)
+        iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer url $(get_notification_url)
         iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer driver "messaging"
         iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:ceilometer topic "notifications"
         SWIFT_EXTRAS_MIDDLEWARE_LAST="${SWIFT_EXTRAS_MIDDLEWARE_LAST} ceilometer"
