@@ -1495,22 +1495,6 @@ function _run_under_systemd {
 
     $SYSTEMCTL enable $systemd_service
     $SYSTEMCTL start $systemd_service
-    _journal_log $service $systemd_service
-}
-
-function _journal_log {
-    local service=$1
-    local unit=$2
-    local logfile="${service}.log.${CURRENT_LOG_TIME}"
-    local real_logfile="${LOGDIR}/${logfile}"
-    if [[ -n ${LOGDIR} ]]; then
-        $JOURNALCTL_F $2 > "$real_logfile" &
-        bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${service}.log"
-        if [[ -n ${SCREEN_LOGDIR} ]]; then
-            # Drop the backward-compat symlink
-            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${service}.log
-        fi
-    fi
 }
 
 # Helper to remove the ``*.failure`` files under ``$SERVICE_DIR/$SCREEN_NAME``.
@@ -1700,8 +1684,10 @@ function stop_process {
             # Only do this for units which appear enabled, this also
             # catches units that don't really exist for cases like
             # keystone without a failure.
-            $SYSTEMCTL stop devstack@$service.service
-            $SYSTEMCTL disable devstack@$service.service
+            if $SYSTEMCTL is-enabled devstack@$service.service; then
+                $SYSTEMCTL stop devstack@$service.service
+                $SYSTEMCTL disable devstack@$service.service
+            fi
         fi
 
         if [[ -r $SERVICE_DIR/$SCREEN_NAME/$service.pid ]]; then

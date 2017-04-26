@@ -157,6 +157,15 @@ elif [[ -f $RC_DIR/.localrc.auto ]]; then
     source $RC_DIR/.localrc.auto
 fi
 
+# if we are forcing off USE_SCREEN (as we do in the gate), force on
+# systemd. This allows us to drop one of 3 paths through the code.
+if [[ "$USE_SCREEN" == "False" ]]; then
+    # Remove in Pike: this gets us through grenade upgrade
+    if [[ "$GRENADE_PHASE" != "target" ]]; then
+        USE_SYSTEMD="True"
+    fi
+fi
+
 # Default for log coloring is based on interactive-or-not.
 # Baseline assumption is that non-interactive invocations are for CI,
 # where logs are to be presented as browsable text files; hence color
