@@ -20,6 +20,7 @@
 # - init_neutron_third_party
 # - start_neutron_third_party
 # - create_nova_conf_neutron
+# - configure_neutron_after_post_config
 # - start_neutron_service_and_check
 # - check_neutron_third_party_integration
 # - start_neutron_agents
@@ -331,7 +332,6 @@ function configure_mutnauq {
     _configure_neutron_common
     iniset_rpc_backend neutron $NEUTRON_CONF
 
-    # goes before q-svc to init Q_SERVICE_PLUGIN_CLASSES
     if is_service_enabled q-metering; then
         _configure_neutron_metering
     fi
@@ -443,6 +443,13 @@ function install_neutron_agent_packages_mutnauq {
     # install packages that are specific to plugin agent(s)
     if is_service_enabled q-agt q-dhcp q-l3; then
         neutron_plugin_install_agent_packages
+    fi
+}
+
+# Finish neutron configuration
+function configure_neutron_after_post_config {
+    if [[ $Q_SERVICE_PLUGIN_CLASSES != '' ]]; then
+        iniset $NEUTRON_CONF DEFAULT service_plugins $Q_SERVICE_PLUGIN_CLASSES
     fi
 }
 
@@ -793,10 +800,6 @@ function _configure_neutron_service {
 
     # Update either configuration file with plugin
     iniset $NEUTRON_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
-
-    if [[ $Q_SERVICE_PLUGIN_CLASSES != '' ]]; then
-        iniset $NEUTRON_CONF DEFAULT service_plugins $Q_SERVICE_PLUGIN_CLASSES
-    fi
 
     iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $NEUTRON_CONF oslo_policy policy_file $Q_POLICY_FILE
