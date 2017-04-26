@@ -570,7 +570,7 @@ function _move_neutron_addresses_route {
         local IP_DEL=""
         local IP_UP=""
         local DEFAULT_ROUTE_GW
-        DEFAULT_ROUTE_GW=$(ip -f $af r | awk "/default.+$from_intf/ { print \$3; exit }")
+        DEFAULT_ROUTE_GW=$(ip -f $af r | awk "/default.+$from_intf\s/ { print \$3; exit }")
         local ADD_OVS_PORT=""
         local DEL_OVS_PORT=""
         local ARP_CMD=""
