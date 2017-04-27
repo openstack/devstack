@@ -526,12 +526,7 @@ EOF
         enable_apache_mod $mod
     done
     enable_apache_site $b_service
-    # Only a reload is required to pull in new vhosts
-    # Note that a restart reliably fails on centos7 and trusty
-    # because apache can't open port 80 because the old apache
-    # still has it open. Using reload fixes trusty but centos7
-    # still doesn't work.
-    reload_apache_server
+    restart_apache_server
 }
 
 # Follow TLS proxy
