@@ -77,6 +77,9 @@ SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 # Identity API version
 export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
 
+# Ask keystoneauth1 to use keystone
+export OS_AUTH_TYPE=password
+
 # Authenticating against an OpenStack cloud using Keystone returns a **Token**
 # and **Service Catalog**.  The catalog contains the endpoints for all services
 # the user/project has access to - including nova, glance, keystone, swift, ...
