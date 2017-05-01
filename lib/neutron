@@ -226,7 +226,7 @@ function configure_neutron_new {
         iniset $NEUTRON_META_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
 
         # TODO(dtroyer): remove the v2.0 hard code below
-        iniset $NEUTRON_META_CONF DEFAULT auth_url $KEYSTONE_SERVICE_URI/v2.0
+        iniset $NEUTRON_META_CONF DEFAULT auth_url $KEYSTONE_SERVICE_URI
         configure_auth_token_middleware $NEUTRON_META_CONF neutron $NEUTRON_AUTH_CACHE_DIR DEFAULT
     fi
 
@@ -284,7 +284,7 @@ function configure_neutron_rootwrap {
 function configure_neutron_nova_new {
     iniset $NOVA_CONF DEFAULT use_neutron True
     iniset $NOVA_CONF neutron auth_type "password"
-    iniset $NOVA_CONF neutron auth_url "$KEYSTONE_SERVICE_URI/v3"
+    iniset $NOVA_CONF neutron auth_url "$KEYSTONE_SERVICE_URI"
     iniset $NOVA_CONF neutron username neutron
     iniset $NOVA_CONF neutron password "$SERVICE_PASSWORD"
     iniset $NOVA_CONF neutron user_domain_name "Default"

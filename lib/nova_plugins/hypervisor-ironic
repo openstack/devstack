@@ -49,7 +49,7 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF ironic auth_type password
     iniset $NOVA_CONF ironic username admin
     iniset $NOVA_CONF ironic password $ADMIN_PASSWORD
-    iniset $NOVA_CONF ironic auth_url $KEYSTONE_AUTH_URI/v3
+    iniset $NOVA_CONF ironic auth_url $KEYSTONE_AUTH_URI
     iniset $NOVA_CONF ironic project_domain_id default
     iniset $NOVA_CONF ironic user_domain_id default
     iniset $NOVA_CONF ironic project_name demo
