@@ -29,7 +29,7 @@ pyOpenSSL # version in pip uses too much memory
 python-devel
 redhat-rpm-config # missing dep for gcc hardening flags, see rhbz#1217376
 screen
-systemd-python
+systemd-devel # for systemd-python
 tar
 tcpdump
 unzip

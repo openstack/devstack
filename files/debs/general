@@ -17,6 +17,7 @@ libjpeg-dev # Pillow 3.0.0
 libmysqlclient-dev  # MySQL-python
 libpq-dev  # psycopg2
 libssl-dev # for pyOpenSSL
+libsystemd-dev # for systemd-python
 libxml2-dev  # lxml
 libxslt1-dev  # lxml
 libyaml-dev
@@ -26,10 +27,8 @@ openssl
 pkg-config
 psmisc
 python2.7
-python3-systemd
 python-dev
 python-gdbm # needed for testr
-python-systemd
 screen
 tar
 tcpdump
