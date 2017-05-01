@@ -135,7 +135,11 @@ function configure_neutron_new {
 
     mkdir -p $NEUTRON_CORE_PLUGIN_CONF_PATH
 
-    cp $NEUTRON_DIR/etc/neutron/plugins/$NEUTRON_CORE_PLUGIN/$NEUTRON_CORE_PLUGIN_CONF_FILENAME.sample $NEUTRON_CORE_PLUGIN_CONF
+    # NOTE(yamamoto): A decomposed plugin should prepare the config file in
+    # its devstack plugin.
+    if [ -f $NEUTRON_DIR/etc/neutron/plugins/$NEUTRON_CORE_PLUGIN/$NEUTRON_CORE_PLUGIN_CONF_FILENAME.sample ]; then
+        cp $NEUTRON_DIR/etc/neutron/plugins/$NEUTRON_CORE_PLUGIN/$NEUTRON_CORE_PLUGIN_CONF_FILENAME.sample $NEUTRON_CORE_PLUGIN_CONF
+    fi
 
     iniset $NEUTRON_CONF database connection `database_connection_url neutron`
     iniset $NEUTRON_CONF DEFAULT state_path $NEUTRON_STATE_PATH
