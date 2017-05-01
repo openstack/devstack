@@ -69,6 +69,7 @@ function is_placement_enabled {
 # cleanup_placement() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_placement {
+    sudo rm -f $(apache_site_config_for nova-placement-api)
     sudo rm -f $(apache_site_config_for placement-api)
 }
 

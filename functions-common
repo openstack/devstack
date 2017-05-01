@@ -1679,15 +1679,12 @@ function stop_process {
     SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
 
     if is_service_enabled $service; then
-        # Kill via pid if we have one available
-        if [[ "$USE_SYSTEMD" == "True" ]]; then
-            # Only do this for units which appear enabled, this also
-            # catches units that don't really exist for cases like
-            # keystone without a failure.
-            if $SYSTEMCTL is-enabled devstack@$service.service; then
-                $SYSTEMCTL stop devstack@$service.service
-                $SYSTEMCTL disable devstack@$service.service
-            fi
+        # Only do this for units which appear enabled, this also
+        # catches units that don't really exist for cases like
+        # keystone without a failure.
+        if $SYSTEMCTL is-enabled devstack@$service.service; then
+            $SYSTEMCTL stop devstack@$service.service
+            $SYSTEMCTL disable devstack@$service.service
         fi
 
         if [[ -r $SERVICE_DIR/$SCREEN_NAME/$service.pid ]]; then
