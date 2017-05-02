@@ -394,24 +394,6 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled port_security $NEUTRON_PORT_SECURITY
 
-    # Orchestration Tests
-    if is_service_enabled heat; then
-        if [[ ! -z "$HEAT_CFN_IMAGE_URL" ]]; then
-            iniset $TEMPEST_CONFIG orchestration image_ref $(basename "${HEAT_CFN_IMAGE_URL%.*}")
-        fi
-        # Nova might not be enabled, especially when we want to test tempest scenario/API that only create Neutron resources
-        if is_service_enabled nova; then
-            # build a specialized heat flavor
-            available_flavors=$(nova flavor-list)
-            if [[ ! ( $available_flavors =~ 'm1.heat' ) ]]; then
-                openstack flavor create --id 451 --ram 512 --disk 0 --vcpus 1 m1.heat
-            fi
-            iniset $TEMPEST_CONFIG orchestration instance_type "m1.heat"
-        fi
-        iniset $TEMPEST_CONFIG orchestration build_timeout 900
-        iniset $TEMPEST_CONFIG orchestration stack_owner_role Member
-    fi
-
     # Scenario
     if [ "$VIRT_DRIVER" = "xenserver" ]; then
         SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}

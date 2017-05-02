@@ -2,7 +2,7 @@
 
 # ``stack.sh`` is an opinionated OpenStack developer installation.  It
 # installs and configures various combinations of **Cinder**, **Glance**,
-# **Heat**, **Horizon**, **Keystone**, **Nova**, **Neutron**, and **Swift**
+# **Horizon**, **Keystone**, **Nova**, **Neutron**, and **Swift**
 
 # This script's options can be changed by setting appropriate environment
 # variables.  You can configure things like which git repositories to use,
@@ -1326,10 +1326,6 @@ if is_service_enabled nova && is_service_enabled keystone; then
 
     if [ -f $SSL_BUNDLE_FILE ]; then
         USERRC_PARAMS="$USERRC_PARAMS --os-cacert $SSL_BUNDLE_FILE"
-    fi
-
-    if [[ "$HEAT_STANDALONE" = "True" ]]; then
-        USERRC_PARAMS="$USERRC_PARAMS --heat-url http://$HEAT_API_HOST:$HEAT_API_PORT/v1"
     fi
 
     $TOP_DIR/tools/create_userrc.sh $USERRC_PARAMS
