@@ -1,6 +1,7 @@
 DevStack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
 
-# Goals
+Goals
+=====
 
 * To quickly build dev OpenStack environments in a clean Ubuntu or Fedora
   environment
@@ -20,12 +21,13 @@ execute before you run them, as they install software and will alter your
 networking configuration.  We strongly recommend that you run `stack.sh`
 in a clean and disposable vm when you are first getting started.
 
-# Versions
+Versions
+========
 
 The DevStack master branch generally points to trunk versions of OpenStack
 components.  For older, stable versions, look for branches named
 stable/[release] in the DevStack repo.  For example, you can do the
-following to create a Newton OpenStack cloud:
+following to create a Newton OpenStack cloud::
 
     git checkout stable/newton
     ./stack.sh
@@ -38,7 +40,8 @@ milestone-proposed branches that need to be tested::
     GLANCE_REPO=git://git.openstack.org/openstack/glance.git
     GLANCE_BRANCH=milestone-proposed
 
-# Start A Dev Cloud
+Start A Dev Cloud
+=================
 
 Installing in a dedicated disposable VM is safer than installing on your
 dev machine!  Plus you can pick one of the supported Linux distros for
@@ -54,14 +57,15 @@ endpoints, like so:
 * Keystone: http://myhost:5000/v2.0/
 
 We also provide an environment file that you can use to interact with your
-cloud via CLI:
+cloud via CLI::
 
     # source openrc file to load your environment with OpenStack CLI creds
     . openrc
     # list instances
-    nova list
+    openstack server list
 
-# DevStack Execution Environment
+DevStack Execution Environment
+==============================
 
 DevStack runs rampant over the system it runs on, installing things and
 uninstalling other things.  Running this on a system you care about is a recipe
@@ -81,10 +85,12 @@ check it out to see what DevStack's expectations are for the account
 it runs under.  Many people simply use their usual login (the default
 'ubuntu' login on a UEC image for example).
 
-# Customizing
+Customizing
+===========
 
 DevStack can be extensively configured via the configuration file
 `local.conf`.  It is likely that you will need to provide and modify
 this file if you want anything other than the most basic setup.  Start
-by reading the [configuration guide](doc/source/configuration.rst) for
-details of the configuration file and the many available options.
+by reading the `configuration guide
+<https://docs.openstack.org/developer/devstack/configuration.html>_`
+for details of the configuration file and the many available options.
