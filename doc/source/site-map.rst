@@ -21,3 +21,4 @@
    development
    hacking
    guides
+   systemd

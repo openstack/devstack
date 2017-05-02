@@ -41,8 +41,9 @@ Why not use packages?
 ~~~~~~~~~~~~~~~~~~~~~
 
 Unlike packages, DevStack leaves your cloud ready to develop -
-checkouts of the code and services running in screen. However, many
-people are doing the hard work of packaging and recipes for production
+checkouts of the code and services running locally under systemd,
+making it easy to hack on and test new patches. However, many people
+are doing the hard work of packaging and recipes for production
 deployments.
 
 Why isn't $MY\_FAVORITE\_DISTRO supported?

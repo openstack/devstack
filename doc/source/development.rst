@@ -8,56 +8,33 @@ with it?
 Inspecting Services
 ===================
 
-By default most services in DevStack are running in a `screen
-<https://www.gnu.org/software/screen/manual/screen.html>`_
-session.
+By default most services in DevStack are running as `systemd` units
+named `devstack@$servicename.service`. You can see running services
+with.
 
 .. code-block:: bash
 
-   os3:~> screen -list
-   There is a screen on:
-        28994.stack	(08/10/2016 09:01:33 PM)	(Detached)
-   1 Socket in /var/run/screen/S-sdague.
+   sudo systemctl status --unit="devstack@*"
 
-You can attach to this screen session using ``screen -r`` which gives
-you a view of the services in action.
-
-.. image:: assets/images/screen_session_1.png
-   :width: 100%
-
-Basic Screen Commands
----------------------
-
-The following minimal commands will be useful to using screen:
-
-* ``ctrl-a n`` - go to next window. Next is assumed to be right of
-  current window.
-* ``ctrl-a p`` - go to previous window. Previous is assumed to be left
-  of current window.
-* ``ctrl-a [`` - entry copy/scrollback mode. This allows you to
-  navigate back through the logs with the up arrow.
-* ``ctrl-a d`` - detach from screen. Gets you back to a normal
-  terminal, while leaving everything running.
-
-For more about using screen, see the excellent `screen manual
-<https://www.gnu.org/software/screen/manual/screen.html>`_.
+To learn more about the basics of systemd, see :doc:`/systemd`
 
 Patching a Service
 ==================
 
 If you want to make a quick change to a running service the easiest
-way to do this is:
+way to do that is to change the code directly in /opt/stack/$service
+and then restart the affected daemons.
 
-* attach to screen
-* navigate to the window in question
-* ``ctrl-c`` to kill the service
-* make appropriate changes to the code
-* ``up arrow`` in the screen window to display the command used to run
-  that service
-* ``enter`` to restart the service
+.. code-block:: bash
 
-This works for services, except those running under Apache (currently
-just ``keystone`` by default).
+   sudo systemctl restart --unit=devstack@n-cpu.service
+
+If your change impacts more than one daemon you can restart by
+wildcard as well.
+
+.. code-block:: bash
+
+   sudo systemctl restart --unit="devstack@n-*"
 
 .. warning::
 
@@ -102,14 +79,6 @@ in gerrit by using the ref name that gerrit assigns to each change.
    NOVA_BRANCH=refs/changes/10/353710/1
 
 
-Testing Changes to Apache Based Services
-========================================
-
-When testing changes to Apache based services, such as ``keystone``,
-you can either use the Testing a Patch Series approach above, or make
-changes in the code tree and issue an apache restart.
-
-
 Testing Changes to Libraries
 ============================
 
@@ -132,9 +101,17 @@ your changes instead of just upstream master.
    OSLOPOLICY_REPO=/home/sdague/oslo.policy
    OSLOPOLICY_BRANCH=better_exception
 
-Because libraries are used by many services, library changes really
-need to go through a full ``./unstack.sh && ./stack.sh`` to see your
-changes in action.
+As libraries are not installed `editable` by pip, after you make any
+local changes you will need to:
 
-To figure out the repo / branch names for every library that's
-supported, you'll need to read the devstack source.
+* cd to top of library path
+* sudo pip install -U .
+* restart all services you want to use the new library
+
+You can do that with wildcards such as
+
+.. code-block:: bash
+
+   sudo systemctl restart --unit="devstack@n-*"
+
+which will restart all nova services.

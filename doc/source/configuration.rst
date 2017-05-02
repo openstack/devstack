@@ -278,43 +278,22 @@ number of days of old log files to keep.
 
         LOGDAYS=1
 
-The some of the project logs (Nova, Cinder, etc) will be colorized by
-default (if ``SYSLOG`` is not set below); this can be turned off by
-setting ``LOG_COLOR`` to ``False``.
-
-    ::
+Some coloring is used during the DevStack runs to make it easier to
+see what is going on. This can be disabled with::
 
         LOG_COLOR=False
 
 Logging the Service Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-DevStack will log the ``stdout`` output of the services it starts.
-When using ``screen`` this logs the output in the screen windows to a
-file.  Without ``screen`` this simply redirects stdout of the service
-process to a file in ``LOGDIR``.
+By default, services run under ``systemd`` and are natively logging to
+the systemd journal.
 
-    ::
+To query the logs use the ``journalctl`` command, such as::
 
-        LOGDIR=$DEST/logs
+  journalctl --unit devstack@*
 
-Note the use of ``DEST`` to locate the main install directory; this
-is why we suggest setting it in ``local.conf``.
-
-Enabling Syslog
-~~~~~~~~~~~~~~~
-
-Logging all services to a single syslog can be convenient. Enable
-syslogging by setting ``SYSLOG`` to ``True``. If the destination log
-host is not localhost ``SYSLOG_HOST`` and ``SYSLOG_PORT`` can be used
-to direct the message stream to the log host.
-
-    ::
-
-        SYSLOG=True
-        SYSLOG_HOST=$HOST_IP
-        SYSLOG_PORT=516
-
+More examples can be found in :ref:`journalctl-examples`.
 
 Example Logging Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -326,7 +305,6 @@ a file, keep service logs and disable color in the stored files.
 
        [[local|localrc]]
        DEST=/opt/stack/
-       LOGDIR=$DEST/logs
        LOGFILE=$LOGDIR/stack.sh.log
        LOG_COLOR=False
 
@@ -587,9 +565,7 @@ Swift
 
 Swift is disabled by default.  When enabled, it is configured with
 only one replica to avoid being IO/memory intensive on a small
-VM. When running with only one replica the account, container and
-object services will run directly in screen. The others services like
-replicator, updaters or auditor runs in background.
+VM.
 
 If you would like to enable Swift you can add this to your ``localrc``
 section:
@@ -630,7 +606,7 @@ install the swift3 middleware emulation. Swift will be configured to
 act as a S3 endpoint for Keystone so effectively replacing the
 ``nova-objectstore``.
 
-Only Swift proxy server is launched in the screen session all other
+Only Swift proxy server is launched in the systemd system all other
 services are started in background and managed by ``swift-init`` tool.
 
 Heat

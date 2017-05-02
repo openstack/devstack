@@ -1474,6 +1474,13 @@ if [[ -n "$DEPRECATED_TEXT" ]]; then
     echo_summary "WARNING: $DEPRECATED_TEXT"
 fi
 
+# If USE_SYSTEMD is enabled, tell the user about using it.
+if [[ "$USE_SYSTEMD" == "True" ]]; then
+    echo "Services are running under systemd unit files."
+    echo "For more information see: "
+    echo "https://docs.openstack.org/developer/devstack/systemd.html"
+fi
+
 # Indicate how long this took to run (bash maintained variable ``SECONDS``)
 echo_summary "stack.sh completed in $SECONDS seconds."
 

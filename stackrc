@@ -80,12 +80,19 @@ NOVA_ENABLED_APIS=osapi_compute,metadata
 # Set the root URL for Horizon
 HORIZON_APACHE_ROOT="/dashboard"
 
+# TODO(sdague): Queens
+#
+# All the non systemd paths should be removed in queens, they only
+# exist in Pike to support testing from grenade. Ensure that all this
+# is cleaned up and purged, which should dramatically simplify the
+# devstack codebase.
+
 # Whether to use 'dev mode' for screen windows. Dev mode works by
 # stuffing text into the screen windows so that a developer can use
 # ctrl-c, up-arrow, enter to restart the service. Starting services
 # this way is slightly unreliable, and a bit slower, so this can
 # be disabled for automated testing by setting this value to False.
-USE_SCREEN=$(trueorfalse True USE_SCREEN)
+USE_SCREEN=$(trueorfalse False USE_SCREEN)
 
 # Whether to use SYSTEMD to manage services
 USE_SYSTEMD=$(trueorfalse False USE_SYSTEMD)
@@ -100,9 +107,6 @@ else
     JOURNALCTL_F="journalctl -f -o short-precise --unit"
 fi
 
-if [[ "$USE_SYSTEMD" == "True" ]]; then
-    USE_SCREEN=False
-fi
 
 # Whether or not to enable Kernel Samepage Merging (KSM) if available.
 # This allows programs that mark their memory as mergeable to share
@@ -157,6 +161,10 @@ elif [[ -f $RC_DIR/.localrc.auto ]]; then
     source $RC_DIR/.localrc.auto
 fi
 
+# TODO(sdague): Delete all this in Queens.
+if [[ "$USE_SYSTEMD" == "True" ]]; then
+    USE_SCREEN=False
+fi
 # if we are forcing off USE_SCREEN (as we do in the gate), force on
 # systemd. This allows us to drop one of 3 paths through the code.
 if [[ "$USE_SCREEN" == "False" ]]; then

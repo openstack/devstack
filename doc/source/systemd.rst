@@ -2,12 +2,7 @@
  Using Systemd in DevStack
 ===========================
 
-.. note::
-
-   This is an in progress document as we work out the way forward here
-   with DevStack and systemd.
-
-DevStack can be run with all the services as systemd unit
+By default DevStack is run with all the services as systemd unit
 files. Systemd is now the default init system for nearly every Linux
 distro, and systemd encodes and solves many of the problems related to
 poorly running processes.
@@ -25,12 +20,6 @@ There is also a common developer workflow of changing code in more
 than one service, and needing to restart a bunch of services for that
 to take effect.
 
-To enable this add the following to your local.conf::
-
-  USE_SYSTEMD=True
-
-
-
 Unit Structure
 ==============
 
@@ -42,8 +31,9 @@ Unit Structure
    code is left in place in case we can switch back later.
 
 All DevStack user units are created as a part of the DevStack slice
-given the name ``devstack@$servicename.service``. This lets us do
-certain operations at the slice level.
+given the name ``devstack@$servicename.service``. This makes it easy
+to understand which services are part of the devstack run, and lets us
+disable / stop them in a single command.
 
 Manipulating Units
 ==================
@@ -89,6 +79,8 @@ Or to see the status of all Nova processes you can do::
 We'll eventually make the unit names a bit more meaningful so that
 it's easier to understand what you are restarting.
 
+.. _journalctl-examples:
+
 Querying Logs
 =============
 
@@ -126,7 +118,7 @@ pypi, and they are all very different. They unfortunately all install
 into the ``systemd`` namespace, which can cause some issues.
 
 - ``systemd-python`` - this is the upstream maintained library, it has
-  a version number like systemd itself (currently ``233``). This is
+  a version number like systemd itself (currently ``234``). This is
   the one you want.
 - ``systemd`` - a python 3 only library, not what you want.
 - ``python-systemd`` - another library you don't want. Installing it
@@ -144,20 +136,6 @@ system units.
 
 Future Work
 ===========
-
-oslo.log journald
------------------
-
-Journald has an extremely rich mechanism for direct logging including
-structured metadata. We should enhance oslo.log to take advantage of
-that. It would let us do things like::
-
-  journalctl REQUEST_ID=......
-
-  journalctl INSTANCE_ID=......
-
-And get all lines related to the request id or instance id. (Note:
-this work has been started at https://review.openstack.org/#/c/451525/)
 
 log colorizing
 --------------
