@@ -20,11 +20,11 @@ Base OS
 
 *The OpenStack Technical Committee (TC) has defined the current CI
 strategy to include the latest Ubuntu release and the latest RHEL
-release (for Python 2.6 testing).*
+release.*
 
 -  Ubuntu: current LTS release plus current development release
 -  Fedora: current release plus previous release
--  RHEL: current major release
+-  RHEL/Centos: current major release
 -  Other OS platforms may continue to be included but the maintenance of
    those platforms shall not be assumed simply due to their presence.
    Having a listed point-of-contact for each additional OS will greatly
@@ -38,7 +38,6 @@ Databases
 *As packaged by the host OS*
 
 -  MySQL
--  PostgreSQL
 
 Queues
 ------
@@ -46,7 +45,6 @@ Queues
 *As packaged by the host OS*
 
 -  Rabbit
--  Qpid
 
 Web Server
 ----------
@@ -58,9 +56,6 @@ Web Server
 OpenStack Network
 -----------------
 
-*Defaults to nova network, optionally use neutron*
-
--  Nova Network: FlatDHCP
 -  Neutron: A basic configuration approximating the original FlatDHCP
    mode using linuxbridge or OpenVSwitch.
 
@@ -68,9 +63,9 @@ Services
 --------
 
 The default services configured by DevStack are Identity (keystone),
-Object Storage (swift), Image Service (glance), Block Storage (cinder),
-Compute (nova), Networking (nova), Dashboard (horizon), Orchestration
-(heat)
+Object Storage (swift), Image Service (glance), Block Storage
+(cinder), Compute (nova), Networking (neutron), Dashboard (horizon),
+Orchestration (heat)
 
 Additional services not included directly in DevStack can be tied in to
 ``stack.sh`` using the :doc:`plugin mechanism <plugins>` to call
@@ -80,8 +75,7 @@ Node Configurations
 -------------------
 
 -  single node
--  multi-node is not tested regularly by the core team, and even then
-   only minimal configurations are reviewed
+-  multi-node configurations as are tested by the gate
 
 Exercises
 ---------
