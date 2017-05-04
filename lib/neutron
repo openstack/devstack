@@ -231,12 +231,7 @@ function configure_neutron_new {
     fi
 
     # Format logging
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $NEUTRON_CONF DEFAULT project_id
-    else
-        # Show user_name and project_name by default
-        iniset $NEUTRON_CONF DEFAULT logging_context_format_string "%(asctime)s.%(msecs)03d %(levelname)s %(name)s [%(request_id)s %(user_name)s %(project_name)s] %(instance)s%(message)s"
-    fi
+    setup_logging $NEUTRON_CONF
 
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
