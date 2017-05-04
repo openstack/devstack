@@ -14,7 +14,7 @@ with.
 
 .. code-block:: bash
 
-   sudo systemctl status --unit="devstack@*"
+   sudo systemctl status "devstack@*"
 
 To learn more about the basics of systemd, see :doc:`/systemd`
 
@@ -27,14 +27,14 @@ and then restart the affected daemons.
 
 .. code-block:: bash
 
-   sudo systemctl restart --unit=devstack@n-cpu.service
+   sudo systemctl restart devstack@n-cpu.service
 
 If your change impacts more than one daemon you can restart by
 wildcard as well.
 
 .. code-block:: bash
 
-   sudo systemctl restart --unit="devstack@n-*"
+   sudo systemctl restart "devstack@n-*"
 
 .. warning::
 
@@ -112,6 +112,6 @@ You can do that with wildcards such as
 
 .. code-block:: bash
 
-   sudo systemctl restart --unit="devstack@n-*"
+   sudo systemctl restart "devstack@n-*"
 
 which will restart all nova services.
