@@ -64,13 +64,8 @@ if [[ -d $TOP_DIR/extras.d ]]; then
     done
 fi
 
-# See if there is anything running...
-# need to adapt when run_service is merged
-SESSION=$(screen -ls | awk '/[0-9].stack/ { print $1 }')
-if [[ -n "$SESSION" ]]; then
-    # Let unstack.sh do its thing first
-    $TOP_DIR/unstack.sh --all
-fi
+# Let unstack.sh do its thing first
+$TOP_DIR/unstack.sh --all
 
 # Run extras
 # ==========
