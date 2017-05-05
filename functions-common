@@ -1480,10 +1480,41 @@ function write_uwsgi_user_unit_file {
     $SYSTEMCTL daemon-reload
 }
 
+function _common_systemd_pitfalls {
+    local cmd=$1
+    # do some sanity checks on $cmd to see things we don't expect to work
+
+    if [[ "$cmd" =~ "sudo" ]]; then
+        local msg=<<EOF
+You are trying to use run_process with sudo, this is not going to work under systemd.
+
+If you need to run a service as a user other than $STACK_USER call it with:
+
+   run_process \$name \$cmd \$group \$user
+EOF
+        die $LINENO $msg
+    fi
+
+    if [[ ! "$cmd" =~ ^/ ]]; then
+        local msg=<<EOF
+The cmd="$cmd" does not start with an absolute path. It will fail to
+start under systemd.
+
+Please update your run_process stanza to have an absolute path.
+EOF
+        die $LINENO $msg
+    fi
+
+}
+
+# Helper function to build a basic unit file and run it under systemd.
 function _run_under_systemd {
     local service=$1
     local command="$2"
     local cmd=$command
+    # sanity check the command
+    _common_systemd_pitfalls "$cmd"
+
     local systemd_service="devstack@$service.service"
     local group=$3
     local user=${4:-$STACK_USER}
@@ -1527,7 +1558,7 @@ function is_running {
 # If an optional group is provided sg will be used to run the
 # command as that group.
 # Uses globals ``USE_SCREEN``
-# run_process service "command-line" [group]
+# run_process service "command-line" [group] [user]
 function run_process {
     local service=$1
     local command="$2"
