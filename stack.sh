@@ -748,6 +748,10 @@ source $TOP_DIR/tools/fixup_stuff.sh
 
 if [[ "$USE_SYSTEMD" == "True" ]]; then
     pip_install_gr systemd-python
+    # the default rate limit of 1000 messages / 30 seconds is not
+    # sufficient given how verbose our logging is.
+    iniset -sudo /etc/systemd/journald.conf "Journal" "RateLimitBurst" "0"
+    sudo systemctl restart systemd-journald
 fi
 
 # Virtual Environment
