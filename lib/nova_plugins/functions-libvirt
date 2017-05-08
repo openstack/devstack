@@ -67,6 +67,8 @@ function install_libvirt {
         else
             install_package libvirt-clients libvirt-daemon-system libvirt-dev
         fi
+        # uninstall in case the libvirt version changed
+        pip_uninstall libvirt-python
         pip_install_gr libvirt-python
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
@@ -84,6 +86,7 @@ function install_libvirt {
         fi
 
         install_package libvirt libvirt-devel
+        pip_uninstall libvirt-python
         pip_install_gr libvirt-python
     fi
 

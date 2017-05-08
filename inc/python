@@ -351,6 +351,20 @@ function pip_install {
     return $result
 }
 
+function pip_uninstall {
+    local name=$1
+    if [[ -n ${PIP_VIRTUAL_ENV:=} && -d ${PIP_VIRTUAL_ENV} ]]; then
+        local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
+        local sudo_pip="env"
+    else
+        local cmd_pip
+        cmd_pip=$(get_pip_command $PYTHON2_VERSION)
+        local sudo_pip="sudo -H"
+    fi
+    # don't error if we can't uninstall, it might not be there
+    $sudo_pip $cmd_pip uninstall $name || /bin/true
+}
+
 # get version of a package from global requirements file
 # get_from_global_requirements <package>
 function get_from_global_requirements {
