@@ -82,15 +82,17 @@ if [[ "$DISTRO" = "xenial" ]]; then
         source /etc/ci/mirror_info.sh
 
         sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR xenial-updates/ocata main"
-
-        # Disable use of libvirt wheel here as presence of mirror implies
-        # presence of cached wheel build against older libvirt binary.
-        # TODO(clarkb) figure out how to use wheel again.
-        sudo bash -c 'echo "no-binary = libvirt-python" >> /etc/pip.conf'
     else
         # Otherwise use upstream UCA
         sudo add-apt-repository -y cloud-archive:ocata
     fi
+
+    # Disable use of libvirt wheel since a cached wheel build might be
+    # against older libvirt binary.  Particularly a problem if using
+    # the openstack wheel mirrors, but can hit locally too.
+    # TODO(clarkb) figure out how to use upstream wheel again.
+    iniset -sudo /etc/pip.conf "global" "no-binary" "libvirt-python"
+
     # Force update our APT repos, since we added UCA above.
     REPOS_UPDATED=False
     apt_get_update
