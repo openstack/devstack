@@ -72,7 +72,10 @@ fi
 # We've found that Libvirt on Xenial is flaky and crashes enough to be
 # a regular top e-r bug. Opt into Ubuntu Cloud Archive if on Xenial to
 # get newer Libvirt.
-if [[ "$DISTRO" = "xenial" ]]; then
+# Make it possible to switch this based on an environment variable as
+# libvirt 2.5.0 doesn't handle nested virtualization quite well and this
+# is required for the trove development environment.
+if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "True" && "$DISTRO" = "xenial" ]]; then
     # This pulls in apt-add-repository
     install_package "software-properties-common"
     # Use UCA for newer libvirt. Should give us libvirt 2.5.0.
