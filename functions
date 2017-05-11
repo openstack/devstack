@@ -310,6 +310,11 @@ function upload_image {
             disk_format=qcow2
             container_format=bare
             ;;
+        *.raw)
+            image_name=$(basename "$image" ".raw")
+            disk_format=raw
+            container_format=bare
+            ;;
         *.iso)
             image_name=$(basename "$image" ".iso")
             disk_format=iso
