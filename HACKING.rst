@@ -322,7 +322,7 @@ Variables and Functions
 
 
 Review Criteria
-===============
+---------------
 
 There are some broad criteria that will be followed when reviewing
 your change
@@ -364,3 +364,26 @@ your change
 
 * **Reviewers** -- please see ``MAINTAINERS.rst`` for a list of people
   that should be added to reviews of various sub-systems.
+
+
+Making Changes, Testing, and CI
+-------------------------------
+
+Changes to Devstack are tested by automated continuous integration jobs
+that run on a variety of Linux Distros using a handful of common
+configurations. What this means is that every change to Devstack is
+self testing. One major benefit of this is that developers do not
+typically need to add new non voting test jobs to add features to
+Devstack. Instead the features can be added, then if testing passes
+with the feature enabled the change is ready to merge (pending code
+review).
+
+A concrete example of this was the switch from screen based service
+management to systemd based service management. No new jobs were
+created for this. Instead the features were added to devstack, tested
+locally and in CI using a change that enabled the feature, then once
+the enabling change was passing and the new behavior communicated and
+documented it was merged.
+
+Using this process has been proven to be effective and leads to
+quicker implementation of desired features.
