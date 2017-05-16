@@ -609,29 +609,6 @@ act as a S3 endpoint for Keystone so effectively replacing the
 Only Swift proxy server is launched in the systemd system all other
 services are started in background and managed by ``swift-init`` tool.
 
-Heat
-~~~~
-
-Heat is disabled by default (see ``stackrc`` file). To enable it
-explicitly you'll need the following settings in your ``localrc``
-section
-
-::
-
-    enable_service heat h-api h-api-cfn h-api-cw h-eng
-
-Heat can also run in standalone mode, and be configured to orchestrate
-on an external OpenStack cloud. To launch only Heat in standalone mode
-you'll need the following settings in your ``localrc`` section
-
-::
-
-    disable_all_services
-    enable_service rabbit mysql heat h-api h-api-cfn h-api-cw h-eng
-    HEAT_STANDALONE=True
-    KEYSTONE_SERVICE_HOST=...
-    KEYSTONE_AUTH_HOST=...
-
 Tempest
 ~~~~~~~
 

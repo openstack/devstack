@@ -159,16 +159,6 @@ to a working IP address; setting it to 127.0.0.1 in ``/etc/hosts`` is
 often good enough for a single-node installation. And in an extreme
 case, use ``clean.sh`` to eradicate it and try again.
 
-Configure ``local.conf`` thusly:
-
-    ::
-
-        [[local|localrc]]
-        HEAT_STANDALONE=True
-        ENABLED_SERVICES=rabbit,mysql,heat,h-api,h-api-cfn,h-api-cw,h-eng
-        KEYSTONE_SERVICE_HOST=<keystone-host>
-        KEYSTONE_AUTH_HOST=<keystone-host>
-
 Why are my configuration changes ignored?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
