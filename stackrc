@@ -100,11 +100,9 @@ USER_UNITS=$(trueorfalse False USER_UNITS)
 if [[ "$USER_UNITS" == "True" ]]; then
     SYSTEMD_DIR="$HOME/.local/share/systemd/user"
     SYSTEMCTL="systemctl --user"
-    JOURNALCTL_F="journalctl -f -o short-precise --user-unit"
 else
     SYSTEMD_DIR="/etc/systemd/system"
     SYSTEMCTL="sudo systemctl"
-    JOURNALCTL_F="journalctl -f -o short-precise --unit"
 fi
 
 
