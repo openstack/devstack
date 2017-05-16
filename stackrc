@@ -925,6 +925,9 @@ fi
 # ``LOGDIR`` is always set at this point so it is not useful as a 'enable' for service logs
 # ``SCREEN_LOGDIR`` may be set, it is useful to enable the compat symlinks
 
+# System-wide ulimit file descriptors override
+ULIMIT_NOFILE=${ULIMIT_NOFILE:-2048}
+
 # Local variables:
 # mode: shell-script
 # End:

@@ -765,6 +765,9 @@ install_infra
 # Phase: pre-install
 run_phase stack pre-install
 
+# NOTE(danms): Set global limits before installing anything
+set_systemd_override DefaultLimitNOFILE ${ULIMIT_NOFILE}
+
 install_rpc_backend
 restart_rpc_backend
 
