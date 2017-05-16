@@ -23,6 +23,7 @@ files/images
 files/pip-*
 files/get-pip.py*
 files/ir-deploy*
+files/ironic-inspector*
 local.conf
 local.sh
 localrc
