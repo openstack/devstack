@@ -616,21 +616,18 @@ function setup_systemd_logging {
     # request-id. However, there may be an eventlet interaction here,
     # so going off for now.
     USE_JOURNAL=$(trueorfalse USE_JOURNAL False)
+    local pidstr=""
     if [[ "$USE_JOURNAL" == "True" ]]; then
         iniset $conf_file $conf_section use_journal "True"
         # if we are using the journal directly, our process id is already correct
-        iniset $conf_file $conf_section logging_debug_format_suffix \
-               "{{%(funcName)s %(pathname)s:%(lineno)d}}"
     else
-        iniset $conf_file $conf_section logging_debug_format_suffix \
-               "{{(pid=%(process)d) %(funcName)s %(pathname)s:%(lineno)d}}"
+        pidstr="(pid=%(process)d) "
     fi
+    iniset $conf_file $conf_section logging_debug_format_suffix "[00;33m{{${pidstr}%(funcName)s %(pathname)s:%(lineno)d}}[00m"
 
-    iniset $conf_file $conf_section logging_context_format_string \
-           "%(levelname)s %(name)s [%(request_id)s %(project_name)s %(user_name)s] %(instance)s%(message)s"
-    iniset $conf_file $conf_section logging_default_format_string \
-           "%(levelname)s %(name)s [-] %(instance)s%(color)s%(message)s"
-    iniset $conf_file $conf_section logging_exception_prefix "ERROR %(name)s %(instance)s"
+    iniset $conf_file $conf_section logging_context_format_string "%(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(project_name)s %(user_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    iniset $conf_file $conf_section logging_default_format_string "%(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    iniset $conf_file $conf_section logging_exception_prefix "ERROR %(name)s [01;35m%(instance)s[00m"
 }
 
 function setup_standard_logging_identity {

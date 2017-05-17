@@ -109,6 +109,17 @@ Use higher precision time stamps::
 
   journalctl -f -o short-precise --unit devstack@n-cpu.service
 
+By default, journalctl strips out "unprintable" characters, including
+ASCII color codes. To keep the color codes (which can be interpreted by
+an appropriate terminal/pager - e.g. ``less``, the default)::
+
+  journalctl -a --unit devstack@n-cpu.service
+
+When outputting to the terminal using the default pager, long lines
+appear to be truncated, but horizontal scrolling is supported via the
+left/right arrow keys.
+
+See ``man 1 journalctl`` for more.
 
 Known Issues
 ============
@@ -136,13 +147,6 @@ system units.
 
 Future Work
 ===========
-
-log colorizing
---------------
-
-We lose log colorization through this process. We might want to build
-a custom colorizer that we could run journalctl output through
-optionally for people.
 
 user units
 ----------
