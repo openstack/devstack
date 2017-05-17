@@ -362,7 +362,7 @@ function pip_uninstall {
         local sudo_pip="sudo -H"
     fi
     # don't error if we can't uninstall, it might not be there
-    $sudo_pip $cmd_pip uninstall $name || /bin/true
+    $sudo_pip $cmd_pip uninstall -y $name || /bin/true
 }
 
 # get version of a package from global requirements file
