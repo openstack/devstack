@@ -84,20 +84,6 @@ CINDER_LVM_TYPE=${CINDER_LVM_TYPE:-default}
 # CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1,lvm:lvmdriver-2}
 CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1}
 
-
-# Should cinder perform secure deletion of volumes?
-# Defaults to zero. Can also be set to none or shred.
-# This was previously CINDER_SECURE_DELETE (True or False).
-# Equivalents using CINDER_VOLUME_CLEAR are zero and none, respectively.
-# Set to none to avoid this bug when testing:
-# https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1023755
-if [[ -n $CINDER_SECURE_DELETE ]]; then
-    CINDER_SECURE_DELETE=$(trueorfalse True CINDER_SECURE_DELETE)
-    if [[ $CINDER_SECURE_DELETE == "False" ]]; then
-        CINDER_VOLUME_CLEAR_DEFAULT="none"
-    fi
-    deprecated "Configure secure Cinder volume deletion using CINDER_VOLUME_CLEAR instead of CINDER_SECURE_DELETE."
-fi
 CINDER_VOLUME_CLEAR=${CINDER_VOLUME_CLEAR:-${CINDER_VOLUME_CLEAR_DEFAULT:-zero}}
 CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 
