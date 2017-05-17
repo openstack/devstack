@@ -244,6 +244,10 @@ function configure_cinder {
 
     configure_rootwrap cinder
 
+    if [[ -f "$CINDER_DIR/etc/cinder/resource_filters.json" ]]; then
+        cp -p "$CINDER_DIR/etc/cinder/resource_filters.json" "$CINDER_CONF_DIR/resource_filters.json"
+    fi
+
     cp $CINDER_DIR/etc/cinder/api-paste.ini $CINDER_API_PASTE_INI
 
     inicomment $CINDER_API_PASTE_INI filter:authtoken auth_host
