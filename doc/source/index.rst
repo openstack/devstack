@@ -142,3 +142,12 @@ services, features, and configuration not present in base devstack.
 Get :doc:`the big picture <overview>` of what we are trying to do
 with devstack, and help us by :doc:`contributing to the project
 <hacking>`.
+
+Contents
+--------
+
+.. toctree::
+   :glob:
+   :maxdepth: 2
+
+   *
