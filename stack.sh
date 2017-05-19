@@ -573,7 +573,6 @@ source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
-source $TOP_DIR/lib/dlm
 source $TOP_DIR/lib/etcd3
 source $TOP_DIR/lib/os_brick
 
@@ -771,10 +770,6 @@ set_systemd_override DefaultLimitNOFILE ${ULIMIT_NOFILE}
 
 install_rpc_backend
 restart_rpc_backend
-
-# NOTE(sdague): dlm install is conditional on one being enabled by configuration
-install_dlm
-configure_dlm
 
 if is_service_enabled $DATABASE_BACKENDS; then
     install_database
