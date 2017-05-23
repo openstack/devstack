@@ -732,6 +732,24 @@ function set_systemd_override {
     sudo systemctl daemon-reload
 }
 
+# Get a random port from the local port range
+#
+# This function returns an available port in the local port range. The search
+# order is not truly random, but should be considered a random value by the
+# user because it depends on the state of your local system.
+function get_random_port {
+    read lower_port upper_port < /proc/sys/net/ipv4/ip_local_port_range
+    while true; do
+        for (( port = upper_port ; port >= lower_port ; port-- )); do
+            sudo lsof -i ":$port" &> /dev/null
+            if [[ $? > 0 ]] ; then
+                break 2
+            fi
+        done
+    done
+    echo $port
+}
+
 
 # Restore xtrace
 $_XTRACE_FUNCTIONS
