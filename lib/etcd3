@@ -29,6 +29,10 @@ ETCD_VERSION=${ETCD_VERSION:-v3.1.7}
 ETCD_DATA_DIR="$DEST/data/etcd"
 ETCD_SYSTEMD_SERVICE="devstack@etcd.service"
 ETCD_BIN_DIR="$DEST/bin"
+ETCD_SHA256_AMD64="4fde194bbcd259401e2b5c462dfa579ee7f6af539f13f130b8f5b4f52e3b3c52"
+# NOTE(sdague): etcd v3.1.7 doesn't have anything for these architectures, though 3.2.0 does.
+ETCD_SHA256_ARM64=""
+ETCD_SHA256_PPC64=""
 
 if is_ubuntu ; then
     UBUNTU_RELEASE_BASE_NUM=`lsb_release -r | awk '{print $2}' | cut -d '.' -f 1`
@@ -82,13 +86,18 @@ function _install_etcd {
     # Make sure etcd3 downloads the correct architecture
     if is_arch "x86_64"; then
         ETCD_ARCH="amd64"
+        ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_AMD64}
     elif is_arch "aarch64"; then
         ETCD_ARCH="arm64"
+        ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_ARM64}
     elif is_arch "ppc64le"; then
         ETCD_ARCH="ppc64le"
+        ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_PPC64}
     else
         exit_distro_not_supported "invalid hardware type - $ETCD_ARCH"
     fi
+
+    ETCD_NAME=etcd-$ETCD_VERSION-linux-$ETCD_ARCH
 
     # Install the libraries needed. Note: tooz for example does not have a hard dependency on these libraries
     pip_install etcd3
@@ -99,21 +108,18 @@ function _install_etcd {
     sudo mkdir -p $ETCD_DATA_DIR
 
     # Download and cache the etcd tgz for subsequent use
-    if [ ! -f "$DEST/etcd/etcd-$ETCD_VERSION-linux-$ETCD_ARCH/etcd" ]; then
-        mkdir -p $DEST/etcd
-        ETCD_DOWNLOAD_FILE=etcd-$ETCD_VERSION-linux-$ETCD_ARCH.tar.gz
-        wget $ETCD_DOWNLOAD_URL/$ETCD_VERSION/$ETCD_DOWNLOAD_FILE -O $DEST/etcd/$ETCD_DOWNLOAD_FILE
-        wget $ETCD_DOWNLOAD_URL/$ETCD_VERSION/$ETCD_DOWNLOAD_FILE.asc -O $DEST/etcd/$ETCD_DOWNLOAD_FILE.asc
+    if [ ! -f "files/etcd-$ETCD_VERSION-linux-$ETCD_ARCH/etcd" ]; then
+        ETCD_DOWNLOAD_FILE=$ETCD_NAME.tar.gz
+        wget $ETCD_DOWNLOAD_URL/$ETCD_VERSION/$ETCD_DOWNLOAD_FILE -O files/$ETCD_DOWNLOAD_FILE
+        echo "${ETCD_SHA256} files/${ETCD_DOWNLOAD_FILE}" > files/etcd.sha256sum
+        # NOTE(sdague): this should go fatal if this fails
+        sha256sum -c files/etcd.sha256sum
 
-        # use gpg to verify the artifact, use a backup key server in case the first one is down for some reason
-        gpg --keyserver hkps.pool.sks-keyservers.net --recv-key FC8A365E || gpg --keyserver pgpkeys.mit.edu --recv-key FC8A365E
-        gpg --verify $DEST/etcd/$ETCD_DOWNLOAD_FILE.asc $DEST/etcd/$ETCD_DOWNLOAD_FILE
-
-        tar xzvf $DEST/etcd/$ETCD_DOWNLOAD_FILE -C $DEST/etcd
-        sudo cp $DEST/etcd/etcd-$ETCD_VERSION-linux-$ETCD_ARCH/etcd $ETCD_BIN_DIR/etcd
+        tar xzvf files/$ETCD_DOWNLOAD_FILE -C files
+        sudo cp files/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd
     fi
     if [ ! -f "$ETCD_BIN_DIR/etcd" ]; then
-        sudo cp $DEST/etcd/etcd-$ETCD_VERSION-linux-$ETCD_ARCH/etcd $ETCD_BIN_DIR/etcd
+        sudo cp files/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd
     fi
 }
 
