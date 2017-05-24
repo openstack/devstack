@@ -69,6 +69,7 @@ source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
+source $TOP_DIR/lib/etcd3
 source $TOP_DIR/lib/dlm
 
 # Extras Source
@@ -160,6 +161,11 @@ fi
 if is_service_enabled neutron; then
     stop_neutron
     cleanup_neutron
+fi
+
+if is_service_enabled etcd3; then
+    stop_etcd3
+    cleanup_etcd3
 fi
 
 if is_service_enabled dstat; then
