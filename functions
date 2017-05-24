@@ -323,7 +323,7 @@ function upload_image {
         *.vhd|*.vhdx|*.vhd.gz|*.vhdx.gz)
             local extension="${image_fname#*.}"
             image_name=$(basename "$image" ".$extension")
-            disk_format=vhd
+            disk_format=$(echo $image_fname | grep -oP '(?<=\.)vhdx?(?=\.|$)')
             container_format=bare
             if [ "${image_fname##*.}" == "gz" ]; then
                 unpack=zcat
