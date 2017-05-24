@@ -1048,7 +1048,9 @@ start_dstat
 # -----
 
 # etcd is a distributed key value store that provides a reliable way to store data across a cluster of machines
-start_etcd3
+if is_service_enabled etcd3; then
+    start_etcd3
+fi
 
 # Keystone
 # --------
