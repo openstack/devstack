@@ -79,7 +79,7 @@ function stop_etcd3 {
     $SYSTEMCTL stop $ETCD_SYSTEMD_SERVICE
 }
 
-function cleanup_etcd {
+function cleanup_etcd3 {
     # Don't install in sub nodes (multinode scenario)
     if [ "$SERVICE_HOST" != "$HOST_IP" ]; then
         return
