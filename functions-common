@@ -93,7 +93,7 @@ function write_clouds_yaml {
         --os-region-name $REGION_NAME \
         --os-identity-api-version 3 \
         $CA_CERT_ARG \
-        --os-auth-url $KEYSTONE_AUTH_URI \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
         --os-username demo \
         --os-password $ADMIN_PASSWORD \
         --os-project-name demo
@@ -105,7 +105,7 @@ function write_clouds_yaml {
         --os-region-name $REGION_NAME \
         --os-identity-api-version 3 \
         $CA_CERT_ARG \
-        --os-auth-url $KEYSTONE_AUTH_URI \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
         --os-username alt_demo \
         --os-password $ADMIN_PASSWORD \
         --os-project-name alt_demo
@@ -117,7 +117,7 @@ function write_clouds_yaml {
         --os-region-name $REGION_NAME \
         --os-identity-api-version 3 \
         $CA_CERT_ARG \
-        --os-auth-url $KEYSTONE_AUTH_URI \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
         --os-username admin \
         --os-password $ADMIN_PASSWORD \
         --os-project-name admin
