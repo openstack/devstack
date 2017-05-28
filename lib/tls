@@ -345,7 +345,8 @@ function make_root_CA {
 function fix_system_ca_bundle_path {
     if is_service_enabled tls-proxy; then
         local capath
-        capath=$(python -c $'try:\n from requests import certs\n print certs.where()\nexcept ImportError: pass')
+        local python_cmd=${1:-python}
+        capath=$($python_cmd -c $'try:\n from requests import certs\n print (certs.where())\nexcept ImportError: pass')
 
         if [[ ! $capath == "" && ! $capath =~ ^/etc/.* && ! -L $capath ]]; then
             if is_fedora; then
