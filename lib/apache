@@ -53,8 +53,15 @@ APACHE_LOG_DIR="/var/log/${APACHE_NAME}"
 function enable_apache_mod {
     local mod=$1
     # Apache installation, because we mark it NOPRIME
-    if is_ubuntu || is_suse ; then
-        if ! a2query -m $mod ; then
+    if is_ubuntu; then
+        # Skip mod_version as it is not a valid mod to enable
+        # on debuntu, instead it is built in.
+        if [[ "$mod" != "version" ]] && ! a2query -m $mod ; then
+            sudo a2enmod $mod
+            restart_apache_server
+        fi
+    elif is_suse; then
+        if ! a2enmod -q $mod ; then
             sudo a2enmod $mod
             restart_apache_server
         fi
@@ -171,6 +178,8 @@ function apache_site_config_for {
 # enable_apache_site() - Enable a particular apache site
 function enable_apache_site {
     local site=$@
+    # Many of our sites use mod version. Just enable it.
+    enable_apache_mod version
     if is_ubuntu; then
         sudo a2ensite ${site}
     elif is_fedora || is_suse; then

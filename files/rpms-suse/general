@@ -1,3 +1,5 @@
+apache2
+apache2-devel
 bc
 bridge-utils
 ca-certificates-mozilla
@@ -23,9 +25,11 @@ python-cmd2 # dist:opensuse-12.3
 python-devel  # pyOpenSSL
 python-xml
 screen
+systemd-devel # for systemd-python
 tar
 tcpdump
 unzip
 util-linux
 wget
+which
 zlib-devel
