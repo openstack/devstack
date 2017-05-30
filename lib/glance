@@ -78,6 +78,7 @@ GLANCE_REGISTRY_PORT_INT=${GLANCE_REGISTRY_PORT_INT:-19191}
 # Test if any Glance services are enabled
 # is_glance_enabled
 function is_glance_enabled {
+    [[ ,${DISABLED_SERVICES} =~ ,"glance" ]] && return 1
     [[ ,${ENABLED_SERVICES} =~ ,"g-" ]] && return 0
     return 1
 }

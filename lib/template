@@ -41,6 +41,7 @@ XXX_CONF_DIR=/etc/XXXX
 # Test if any XXXX services are enabled
 # is_XXXX_enabled
 function is_XXXX_enabled {
+    [[ ,${DISABLED_SERVICES} =~ ,"XXXX" ]] && return 1
     [[ ,${ENABLED_SERVICES} =~ ,"XX-" ]] && return 0
     return 1
 }

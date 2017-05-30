@@ -129,6 +129,7 @@ CINDER_CACHE_ENABLED_FOR_BACKENDS=${CINDER_CACHE_ENABLED_FOR_BACKENDS:-$CINDER_E
 # Test if any Cinder services are enabled
 # is_cinder_enabled
 function is_cinder_enabled {
+    [[ ,${DISABLED_SERVICES} =~ ,"cinder" ]] && return 1
     [[ ,${ENABLED_SERVICES} =~ ,"c-" ]] && return 0
     return 1
 }

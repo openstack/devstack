@@ -91,6 +91,7 @@ declare -a -g _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
 # Test if any Neutron services are enabled
 # is_neutron_enabled
 function is_neutron_enabled {
+    [[ ,${DISABLED_SERVICES} =~ ,"neutron" ]] && return 1
     [[ ,${ENABLED_SERVICES} =~ ,"neutron-" || ,${ENABLED_SERVICES} =~ ,"q-" ]] && return 0
     return 1
 }
@@ -98,6 +99,7 @@ function is_neutron_enabled {
 # Test if any Neutron services are enabled
 # is_neutron_enabled
 function is_neutron_legacy_enabled {
+    [[ ,${DISABLED_SERVICES} =~ ,"neutron" ]] && return 1
     [[ ,${ENABLED_SERVICES} =~ ,"q-" ]] && return 0
     return 1
 }

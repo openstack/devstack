@@ -175,6 +175,7 @@ NOVA_USE_SERVICE_TOKEN=$(trueorfalse False NOVA_USE_SERVICE_TOKEN)
 # Test if any Nova services are enabled
 # is_nova_enabled
 function is_nova_enabled {
+    [[ ,${DISABLED_SERVICES} =~ ,"nova" ]] && return 1
     [[ ,${ENABLED_SERVICES} =~ ,"n-" ]] && return 0
     return 1
 }
