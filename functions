@@ -625,7 +625,7 @@ function setup_systemd_logging {
     fi
     iniset $conf_file $conf_section logging_debug_format_suffix "[00;33m{{${pidstr}%(funcName)s %(pathname)s:%(lineno)d}}[00m"
 
-    iniset $conf_file $conf_section logging_context_format_string "%(color)s%(levelname)s %(name)s [[01;36m%(request_id)s [00;36m%(project_name)s %(user_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
+    iniset $conf_file $conf_section logging_context_format_string "%(color)s%(levelname)s %(name)s [[01;36m%(global_request_id)s %(request_id)s [00;36m%(project_name)s %(user_name)s%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
     iniset $conf_file $conf_section logging_default_format_string "%(color)s%(levelname)s %(name)s [[00;36m-%(color)s] [01;35m%(instance)s%(color)s%(message)s[00m"
     iniset $conf_file $conf_section logging_exception_prefix "ERROR %(name)s [01;35m%(instance)s[00m"
 }
