@@ -289,6 +289,9 @@ function configure_cinder {
                 default_name=$be_name
             fi
             enabled_backends+=$be_name,
+
+            iniset $CINDER_CONF $be_name volume_clear $CINDER_VOLUME_CLEAR
+
         done
         iniset $CINDER_CONF DEFAULT enabled_backends ${enabled_backends%,*}
         if [[ -n "$default_name" ]]; then
@@ -317,8 +320,6 @@ function configure_cinder {
     fi
 
     iniset_rpc_backend cinder $CINDER_CONF
-
-    iniset $CINDER_CONF DEFAULT volume_clear $CINDER_VOLUME_CLEAR
 
     # Format logging
     setup_logging $CINDER_CONF $CINDER_USE_MOD_WSGI
