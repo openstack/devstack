@@ -570,6 +570,10 @@ GITREPO["neutron-lib"]=${NEUTRON_LIB_REPO:-${GIT_BASE}/openstack/neutron-lib.git
 GITBRANCH["neutron-lib"]=${NEUTRON_LIB_BRANCH:-master}
 GITDIR["neutron-lib"]=$DEST/neutron-lib
 
+# os-traits library for resource provider traits in the placement service
+GITREPO["os-traits"]=${OS_TRAITS_REPO:-${GIT_BASE}/openstack/os-traits.git}
+GITBRANCH["os-traits"]=${OS_TRAITS_BRANCH:-master}
+
 ##################
 #
 #  TripleO / Heat Agent Components
