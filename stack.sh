@@ -833,6 +833,18 @@ if is_service_enabled etcd3; then
     install_etcd3
 fi
 
+# Setup TLS certs
+# ---------------
+
+# Do this early, before any webservers are set up to ensure
+# we don't run into problems with missing certs when apache
+# is restarted.
+if is_service_enabled tls-proxy; then
+    configure_CA
+    init_CA
+    init_cert
+fi
+
 # Check Out and Install Source
 # ----------------------------
 
@@ -855,13 +867,6 @@ if is_service_enabled swift glance horizon; then
 fi
 if is_service_enabled neutron nova horizon; then
     install_neutronclient
-fi
-
-# Setup TLS certs
-if is_service_enabled tls-proxy; then
-    configure_CA
-    init_CA
-    init_cert
 fi
 
 # Install middleware
