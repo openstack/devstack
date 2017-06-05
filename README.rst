@@ -92,5 +92,5 @@ DevStack can be extensively configured via the configuration file
 `local.conf`.  It is likely that you will need to provide and modify
 this file if you want anything other than the most basic setup.  Start
 by reading the `configuration guide
-<https://docs.openstack.org/developer/devstack/configuration.html>_`
+<https://docs.openstack.org/developer/devstack/configuration.html>`_
 for details of the configuration file and the many available options.
