@@ -498,17 +498,24 @@ function start_cinder {
         fi
     fi
 
-    if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
-        enable_apache_site osapi-volume
-        restart_apache_server
-        tail_log c-api /var/log/$APACHE_NAME/c-api.log
-    else
-        run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
-    fi
+    if is_service_enabled c-api ; then
+        if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
+            enable_apache_site osapi-volume
+            restart_apache_server
+            tail_log c-api /var/log/$APACHE_NAME/c-api.log
+        else
+            run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
+        fi
 
-    echo "Waiting for Cinder API to start..."
-    if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$CINDER_SERVICE_HOST:$service_port; then
-        die $LINENO "c-api did not start"
+        echo "Waiting for Cinder API to start..."
+        if ! wait_for_service $SERVICE_TIMEOUT $service_protocol://$CINDER_SERVICE_HOST:$service_port; then
+            die $LINENO "c-api did not start"
+        fi
+
+        # Start proxies if enabled
+        if is_service_enabled tls-proxy; then
+            start_tls_proxy cinder '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_PORT_INT
+        fi
     fi
 
     run_process c-sch "$CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
@@ -518,11 +525,6 @@ function start_cinder {
     # NOTE(jdg): For cinder, startup order matters.  To ensure that repor_capabilities is received
     # by the scheduler start the cinder-volume service last (or restart it) after the scheduler
     # has started.  This is a quick fix for lp bug/1189595
-
-    # Start proxies if enabled
-    if is_service_enabled c-api && is_service_enabled tls-proxy; then
-        start_tls_proxy cinder '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_PORT_INT
-    fi
 }
 
 # stop_cinder() - Stop running processes
