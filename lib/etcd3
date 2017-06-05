@@ -33,6 +33,7 @@ ETCD_SHA256_AMD64="4fde194bbcd259401e2b5c462dfa579ee7f6af539f13f130b8f5b4f52e3b3
 # NOTE(sdague): etcd v3.1.7 doesn't have anything for these architectures, though 3.2.0 does.
 ETCD_SHA256_ARM64=""
 ETCD_SHA256_PPC64=""
+ETCD_PORT=2379
 
 if is_ubuntu ; then
     UBUNTU_RELEASE_BASE_NUM=`lsb_release -r | awk '{print $2}' | cut -d '.' -f 1`
@@ -52,9 +53,9 @@ function start_etcd3 {
     cmd+=" --initial-cluster-state new --initial-cluster-token etcd-cluster-01"
     cmd+=" --initial-cluster $HOSTNAME=http://$SERVICE_HOST:2380"
     cmd+=" --initial-advertise-peer-urls http://$SERVICE_HOST:2380"
-    cmd+=" --advertise-client-urls http://$SERVICE_HOST:2379"
+    cmd+=" --advertise-client-urls http://$SERVICE_HOST:$ETCD_PORT"
     cmd+=" --listen-peer-urls http://0.0.0.0:2380 "
-    cmd+=" --listen-client-urls http://$SERVICE_HOST:2379"
+    cmd+=" --listen-client-urls http://$SERVICE_HOST:$ETCD_PORT"
 
     local unitfile="$SYSTEMD_DIR/$ETCD_SYSTEMD_SERVICE"
     write_user_unit_file $ETCD_SYSTEMD_SERVICE "$cmd" "" "root"
