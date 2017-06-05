@@ -453,7 +453,7 @@ function create_nova_conf {
     fi
     iniset $NOVA_CONF wsgi api_paste_config "$NOVA_API_PASTE_INI"
     iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
-    iniset $NOVA_CONF DEFAULT scheduler_driver "$SCHEDULER"
+    iniset $NOVA_CONF scheduler driver "$SCHEDULER"
     iniset $NOVA_CONF filter_scheduler enabled_filters "$FILTERS"
     iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
     if [[ $SERVICE_IP_VERSION == 6 ]]; then
