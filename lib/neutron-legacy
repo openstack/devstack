@@ -62,7 +62,7 @@
 # -----------------------------
 
 # Subnet IP version
-IP_VERSION=${IP_VERSION:-4}
+IP_VERSION=${IP_VERSION:-"4+6"}
 # Validate IP_VERSION
 if [[ $IP_VERSION != "4" ]] && [[ $IP_VERSION != "6" ]] && [[ $IP_VERSION != "4+6" ]]; then
     die $LINENO "IP_VERSION must be either 4, 6, or 4+6"
@@ -1092,7 +1092,7 @@ function _configure_neutron_service {
 
     iniset $NEUTRON_CONF DEFAULT verbose True
     iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    iniset $NEUTRON_CONF DEFAULT policy_file $Q_POLICY_FILE
+    iniset $NEUTRON_CONF oslo_policy policy_file $Q_POLICY_FILE
     iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips $Q_ALLOW_OVERLAPPING_IP
 
     iniset $NEUTRON_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY

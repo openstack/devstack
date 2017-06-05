@@ -1,15 +1,15 @@
 =================
-Nova and devstack
+Nova and DevStack
 =================
 
 This is a rough guide to various configuration parameters for nova
-running with devstack.
+running with DevStack.
 
 
 nova-serialproxy
 ================
 
-In Juno nova implemented a `spec
+In Juno, nova implemented a `spec
 <http://specs.openstack.org/openstack/nova-specs/specs/juno/implemented/serial-ports.html>`_
 to allow read/write access to the serial console of an instance via
 `nova-serialproxy
@@ -60,7 +60,7 @@ The service can be enabled by adding ``n-sproxy`` to
     #proxyclient_address=127.0.0.1
 
 
-Enabling the service is enough to be functional for a single machine devstack.
+Enabling the service is enough to be functional for a single machine DevStack.
 
 These config options are defined in `nova.console.serial
 <https://github.com/openstack/nova/blob/master/nova/console/serial.py#L33-L52>`_

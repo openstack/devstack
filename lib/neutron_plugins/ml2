@@ -31,6 +31,8 @@ Q_ML2_PLUGIN_GRE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GRE_TYPE_OPTIONS:-tunnel_id_ranges=
 Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS:-vni_ranges=1001:2000}
 # Default VLAN TypeDriver options
 Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=${Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS:-}
+# Default Bulk operation for mechanism drivers
+Q_ML2_PLUGIN_BULK_SUPPORT=${Q_ML2_PLUGIN_BULK_SUPPORT:-True}
 
 # L3 Plugin to load for ML2
 ML2_L3_PLUGIN=${ML2_L3_PLUGIN:-neutron.services.l3_router.l3_router_plugin.L3RouterPlugin}
@@ -89,7 +91,7 @@ function neutron_plugin_configure_service {
 
     # Allow for setup the flat type network
     if [[ -z "$Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS" && -n "$PHYSICAL_NETWORK" ]]; then
-            Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS="flat_networks=$Q_ML2_FLAT_PHYSNET_OPTIONS"
+            Q_ML2_PLUGIN_FLAT_TYPE_OPTIONS="flat_networks=$PHYSICAL_NETWORK"
     fi
     # REVISIT(rkukura): Setting firewall_driver here for
     # neutron.agent.securitygroups_rpc.is_firewall_enabled() which is
@@ -113,6 +115,8 @@ function neutron_plugin_configure_service {
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 $Q_SRV_EXTRA_OPTS
 
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 bulk_support=$Q_ML2_PLUGIN_BULK_SUPPORT
+
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_gre $Q_ML2_PLUGIN_GRE_TYPE_OPTIONS
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vxlan $Q_ML2_PLUGIN_VXLAN_TYPE_OPTIONS
@@ -121,6 +125,9 @@ function neutron_plugin_configure_service {
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_vlan $Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS
 
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE restproxy servers=$BS_FL_CONTROLLERS_PORT
+
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE restproxy server_ssl=False
     if [[ "$Q_DVR_MODE" != "legacy" ]]; then
         populate_ml2_config /$Q_PLUGIN_CONF_FILE agent l2_population=True
         populate_ml2_config /$Q_PLUGIN_CONF_FILE agent tunnel_types=vxlan

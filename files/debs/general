@@ -17,6 +17,7 @@ tcpdump
 tar
 python-dev
 python2.7
+python-gdbm # needed for testr
 bc
 libyaml-dev
 libffi-dev
