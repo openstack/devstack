@@ -1468,7 +1468,7 @@ function write_uwsgi_user_unit_file {
     iniset -sudo $unitfile "Service" "ExecStart" "$command"
     iniset -sudo $unitfile "Service" "Type" "notify"
     iniset -sudo $unitfile "Service" "KillSignal" "SIGQUIT"
-    iniset -sudo $unitfile "Service" "Restart" "Always"
+    iniset -sudo $unitfile "Service" "Restart" "always"
     iniset -sudo $unitfile "Service" "NotifyAccess" "all"
     iniset -sudo $unitfile "Service" "RestartForceExitStatus" "100"
 
