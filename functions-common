@@ -937,8 +937,8 @@ function get_or_create_service {
         openstack service show $2 -f value -c id 2>/dev/null ||
         # Creates new service if not exists
         openstack service create \
-            $2 \
-            --name $1 \
+            $1 \
+            --type $2 \
             --description="$3" \
             -f value -c id
     )
