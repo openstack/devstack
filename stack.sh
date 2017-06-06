@@ -1300,6 +1300,13 @@ elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
     $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
 
+# Start placement before any of the service that are likely to want
+# to use it to manage resource providers.
+if is_service_enabled placement; then
+    echo_summary "Starting Placement"
+    start_placement
+fi
+
 if is_service_enabled neutron; then
     start_neutron
 fi
@@ -1313,10 +1320,6 @@ if is_service_enabled nova; then
     echo_summary "Starting Nova"
     start_nova
     create_flavors
-fi
-if is_service_enabled placement; then
-    echo_summary "Starting Placement"
-    start_placement
 fi
 if is_service_enabled cinder; then
     echo_summary "Starting Cinder"
