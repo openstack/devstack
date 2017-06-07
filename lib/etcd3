@@ -124,18 +124,18 @@ function _install_etcd {
     sudo mkdir -p $ETCD_DATA_DIR
 
     # Download and cache the etcd tgz for subsequent use
-    if [ ! -f "files/etcd-$ETCD_VERSION-linux-$ETCD_ARCH/etcd" ]; then
+    if [ ! -f "$FILES/etcd-$ETCD_VERSION-linux-$ETCD_ARCH/etcd" ]; then
         ETCD_DOWNLOAD_FILE=$ETCD_NAME.tar.gz
-        wget $ETCD_DOWNLOAD_URL/$ETCD_VERSION/$ETCD_DOWNLOAD_FILE -O files/$ETCD_DOWNLOAD_FILE
-        echo "${ETCD_SHA256} files/${ETCD_DOWNLOAD_FILE}" > files/etcd.sha256sum
+        wget $ETCD_DOWNLOAD_URL/$ETCD_VERSION/$ETCD_DOWNLOAD_FILE -O $FILES/$ETCD_DOWNLOAD_FILE
+        echo "${ETCD_SHA256} $FILES/${ETCD_DOWNLOAD_FILE}" > $FILES/etcd.sha256sum
         # NOTE(sdague): this should go fatal if this fails
-        sha256sum -c files/etcd.sha256sum
+        sha256sum -c $FILES/etcd.sha256sum
 
-        tar xzvf files/$ETCD_DOWNLOAD_FILE -C files
-        sudo cp files/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd
+        tar xzvf $FILES/$ETCD_DOWNLOAD_FILE -C $FILES
+        sudo cp $FILES/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd
     fi
     if [ ! -f "$ETCD_BIN_DIR/etcd" ]; then
-        sudo cp files/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd
+        sudo cp $FILES/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd
     fi
 }
 
