@@ -134,6 +134,7 @@ KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT=${KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT:-2}
 # Test if Keystone is enabled
 # is_keystone_enabled
 function is_keystone_enabled {
+    [[ ,${DISABLED_SERVICES} =~ ,"keystone" ]] && return 1
     [[ ,${ENABLED_SERVICES}, =~ ,"key", ]] && return 0
     return 1
 }
