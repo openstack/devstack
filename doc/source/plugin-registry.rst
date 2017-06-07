@@ -48,6 +48,7 @@ devstack-plugin-container              `git://git.openstack.org/openstack/devsta
 devstack-plugin-glusterfs              `git://git.openstack.org/openstack/devstack-plugin-glusterfs <https://git.openstack.org/cgit/openstack/devstack-plugin-glusterfs>`__
 devstack-plugin-hdfs                   `git://git.openstack.org/openstack/devstack-plugin-hdfs <https://git.openstack.org/cgit/openstack/devstack-plugin-hdfs>`__
 devstack-plugin-kafka                  `git://git.openstack.org/openstack/devstack-plugin-kafka <https://git.openstack.org/cgit/openstack/devstack-plugin-kafka>`__
+devstack-plugin-libvirt-qemu           `git://git.openstack.org/openstack/devstack-plugin-libvirt-qemu <https://git.openstack.org/cgit/openstack/devstack-plugin-libvirt-qemu>`__
 devstack-plugin-mariadb                `git://git.openstack.org/openstack/devstack-plugin-mariadb <https://git.openstack.org/cgit/openstack/devstack-plugin-mariadb>`__
 devstack-plugin-nfs                    `git://git.openstack.org/openstack/devstack-plugin-nfs <https://git.openstack.org/cgit/openstack/devstack-plugin-nfs>`__
 devstack-plugin-pika                   `git://git.openstack.org/openstack/devstack-plugin-pika <https://git.openstack.org/cgit/openstack/devstack-plugin-pika>`__
@@ -62,7 +63,6 @@ freezer-web-ui                         `git://git.openstack.org/openstack/freeze
 fuxi                                   `git://git.openstack.org/openstack/fuxi <https://git.openstack.org/cgit/openstack/fuxi>`__
 gce-api                                `git://git.openstack.org/openstack/gce-api <https://git.openstack.org/cgit/openstack/gce-api>`__
 glare                                  `git://git.openstack.org/openstack/glare <https://git.openstack.org/cgit/openstack/glare>`__
-gnocchi                                `git://git.openstack.org/openstack/gnocchi <https://git.openstack.org/cgit/openstack/gnocchi>`__
 group-based-policy                     `git://git.openstack.org/openstack/group-based-policy <https://git.openstack.org/cgit/openstack/group-based-policy>`__
 heat                                   `git://git.openstack.org/openstack/heat <https://git.openstack.org/cgit/openstack/heat>`__
 horizon-mellanox                       `git://git.openstack.org/openstack/horizon-mellanox <https://git.openstack.org/cgit/openstack/horizon-mellanox>`__
@@ -136,6 +136,7 @@ octavia-dashboard                      `git://git.openstack.org/openstack/octavi
 os-xenapi                              `git://git.openstack.org/openstack/os-xenapi <https://git.openstack.org/cgit/openstack/os-xenapi>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
+patrole                                `git://git.openstack.org/openstack/patrole <https://git.openstack.org/cgit/openstack/patrole>`__
 picasso                                `git://git.openstack.org/openstack/picasso <https://git.openstack.org/cgit/openstack/picasso>`__
 rally                                  `git://git.openstack.org/openstack/rally <https://git.openstack.org/cgit/openstack/rally>`__
 sahara                                 `git://git.openstack.org/openstack/sahara <https://git.openstack.org/cgit/openstack/sahara>`__
@@ -145,6 +146,7 @@ searchlight                            `git://git.openstack.org/openstack/search
 searchlight-ui                         `git://git.openstack.org/openstack/searchlight-ui <https://git.openstack.org/cgit/openstack/searchlight-ui>`__
 senlin                                 `git://git.openstack.org/openstack/senlin <https://git.openstack.org/cgit/openstack/senlin>`__
 solum                                  `git://git.openstack.org/openstack/solum <https://git.openstack.org/cgit/openstack/solum>`__
+stackube                               `git://git.openstack.org/openstack/stackube <https://git.openstack.org/cgit/openstack/stackube>`__
 tacker                                 `git://git.openstack.org/openstack/tacker <https://git.openstack.org/cgit/openstack/tacker>`__
 tap-as-a-service                       `git://git.openstack.org/openstack/tap-as-a-service <https://git.openstack.org/cgit/openstack/tap-as-a-service>`__
 tricircle                              `git://git.openstack.org/openstack/tricircle <https://git.openstack.org/cgit/openstack/tricircle>`__
