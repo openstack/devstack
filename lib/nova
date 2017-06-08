@@ -53,9 +53,17 @@ NOVA_AUTH_CACHE_DIR=${NOVA_AUTH_CACHE_DIR:-/var/cache/nova}
 NOVA_CONF_DIR=/etc/nova
 NOVA_CONF=$NOVA_CONF_DIR/nova.conf
 NOVA_CELLS_CONF=$NOVA_CONF_DIR/nova-cells.conf
+NOVA_CPU_CONF=$NOVA_CONF_DIR/nova-cpu.conf
 NOVA_FAKE_CONF=$NOVA_CONF_DIR/nova-fake.conf
 NOVA_CELLS_DB=${NOVA_CELLS_DB:-nova_cell}
 NOVA_API_DB=${NOVA_API_DB:-nova_api}
+
+# The total number of cells we expect. Must be greater than one and doesn't
+# count cell0.
+NOVA_NUM_CELLS=${NOVA_NUM_CELLS:-1}
+# Our cell index, so we know what rabbit vhost to connect to.
+# This should be in the range of 1-$NOVA_NUM_CELLS
+NOVA_CPU_CELL=${NOVA_CPU_CELL:-1}
 
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 
@@ -479,7 +487,7 @@ function create_nova_conf {
     # require them running on the host. The ensures that n-cpu doesn't
     # leak a need to use the db in a multinode scenario.
     if is_service_enabled n-api n-cond n-sched; then
-        iniset $NOVA_CONF database connection `database_connection_url nova`
+        iniset $NOVA_CONF database connection `database_connection_url nova_cell0`
         iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
     fi
 
@@ -614,6 +622,20 @@ function create_nova_conf {
     if [ "$NOVA_USE_SERVICE_TOKEN" == "True" ]; then
         init_nova_service_user_conf
     fi
+
+    if is_service_enabled n-cond; then
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            local conf
+            local vhost
+            conf=$(conductor_conf $i)
+            vhost="nova_cell${i}"
+            iniset $conf database connection `database_connection_url nova_cell${i}`
+            iniset $conf conductor workers "$API_WORKERS"
+            iniset $conf DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
+            rpc_backend_add_vhost $vhost
+            iniset_rpc_backend nova $conf DEFAULT $vhost
+        done
+    fi
 }
 
 function init_nova_service_user_conf {
@@ -626,6 +648,11 @@ function init_nova_service_user_conf {
     iniset $NOVA_CONF service_user project_name "$SERVICE_PROJECT_NAME"
     iniset $NOVA_CONF service_user project_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $NOVA_CONF service_user auth_strategy keystone
+}
+
+function conductor_conf {
+    local cell="$1"
+    echo "${NOVA_CONF_DIR}/nova_cell${cell}.conf"
 }
 
 function init_nova_cells {
@@ -692,8 +719,6 @@ function init_nova {
         recreate_database $NOVA_API_DB
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF api_db sync
 
-        # (Re)create nova databases
-        recreate_database nova
         recreate_database nova_cell0
 
         # map_cell0 will create the cell mapping record in the nova_api DB so
@@ -705,6 +730,12 @@ function init_nova {
         # Migrate nova and nova_cell0 databases.
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
 
+        # (Re)create nova databases
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            recreate_database nova_cell${i}
+            $NOVA_BIN_DIR/nova-manage --config-file $(conductor_conf $i) db sync
+        done
+
         if is_service_enabled n-cell; then
             recreate_database $NOVA_CELLS_DB
         fi
@@ -713,9 +744,13 @@ function init_nova {
         # Needed for flavor conversion
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db online_data_migrations
 
+        # FIXME(danms): Should this be configurable?
+        iniset $NOVA_CONF workarounds disable_group_policy_check_upcall True
+
         # create the cell1 cell for the main nova db where the hosts live
-        nova-manage cell_v2 create_cell --transport-url $(get_transport_url) \
-            --name 'cell1'
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            nova-manage --config-file $NOVA_CONF --config-file $(conductor_conf $i) cell_v2 create_cell --name "cell$i"
+        done
     fi
 
     create_nova_cache_dir
@@ -823,25 +858,38 @@ function start_nova_api {
 
 # start_nova_compute() - Start the compute process
 function start_nova_compute {
+    local nomulticellflag="$1"
     # Hack to set the path for rootwrap
     local old_path=$PATH
     export PATH=$NOVA_BIN_DIR:$PATH
 
     if is_service_enabled n-cell; then
         local compute_cell_conf=$NOVA_CELLS_CONF
+        # NOTE(danms): Don't setup conductor fleet for cellsv1
+        nomulticellflag='nomulticell'
     else
         local compute_cell_conf=$NOVA_CONF
+    fi
+
+    if [ "$nomulticellflag" = 'nomulticell' ]; then
+        # NOTE(danms): Grenade doesn't setup multi-cell rabbit, so
+        # skip these bits and use the normal config.
+        NOVA_CPU_CONF=$compute_cell_conf
+        echo "Skipping multi-cell conductor fleet setup"
+    else
+        cp $compute_cell_conf $NOVA_CPU_CONF
+        iniset_rpc_backend nova $NOVA_CPU_CONF DEFAULT "nova_cell${NOVA_CPU_CELL}"
     fi
 
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
         # The group **$LIBVIRT_GROUP** is added to the current user in this script.
         # ``sg`` is used in run_process to execute nova-compute as a member of the
         # **$LIBVIRT_GROUP** group.
-        run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf" $LIBVIRT_GROUP
+        run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CPU_CONF" $LIBVIRT_GROUP
     elif [[ "$VIRT_DRIVER" = 'lxd' ]]; then
-        run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf" $LXD_GROUP
+        run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CPU_CONF" $LXD_GROUP
     elif [[ "$VIRT_DRIVER" = 'docker' || "$VIRT_DRIVER" = 'zun' ]]; then
-        run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf" $DOCKER_GROUP
+        run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CPU_CONF" $DOCKER_GROUP
     elif [[ "$VIRT_DRIVER" = 'fake' ]]; then
         local i
         for i in `seq 1 $NUMBER_FAKE_NOVA_COMPUTE`; do
@@ -850,13 +898,13 @@ function start_nova_compute {
             # gets its own configuration and own log file.
             local fake_conf="${NOVA_FAKE_CONF}-${i}"
             iniset $fake_conf DEFAULT nhost "${HOSTNAME}${i}"
-            run_process "n-cpu-${i}" "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf --config-file $fake_conf"
+            run_process "n-cpu-${i}" "$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CPU_CONF --config-file $fake_conf"
         done
     else
         if is_service_enabled n-cpu && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; then
             start_nova_hypervisor
         fi
-        run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf"
+        run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CPU_CONF"
     fi
 
     export PATH=$old_path
@@ -876,7 +924,6 @@ function start_nova_rest {
     fi
 
     # ``run_process`` checks ``is_service_enabled``, it is not needed here
-    run_process n-cond "$NOVA_BIN_DIR/nova-conductor --config-file $compute_cell_conf"
     run_process n-cell-region "$NOVA_BIN_DIR/nova-cells --config-file $api_cell_conf"
     run_process n-cell-child "$NOVA_BIN_DIR/nova-cells --config-file $compute_cell_conf"
 
@@ -899,8 +946,38 @@ function start_nova_rest {
     export PATH=$old_path
 }
 
+function enable_nova_fleet {
+    if is_service_enabled n-cond; then
+        enable_service n-super-cond
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            enable_service n-cond-cell${i}
+        done
+    fi
+}
+
+function start_nova_conductor {
+    if is_service_enabled n-cell; then
+        echo "Starting nova-conductor in a cellsv1-compatible way"
+        run_process n-cond "$NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CELLS_CONF"
+        return
+    fi
+
+    enable_nova_fleet
+    if is_service_enabled n-super-cond; then
+        run_process n-super-cond "$NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CONF"
+    fi
+    for i in $(seq 1 $NOVA_NUM_CELLS); do
+        if is_service_enabled n-cond-cell${i}; then
+            local conf
+            conf=$(conductor_conf $i)
+            run_process n-cond-cell${i} "$NOVA_BIN_DIR/nova-conductor --config-file $conf"
+        fi
+    done
+}
+
 function start_nova {
     start_nova_rest
+    start_nova_conductor
     start_nova_compute
 }
 
@@ -929,14 +1006,24 @@ function stop_nova_rest {
     # Kill the nova screen windows
     # Some services are listed here twice since more than one instance
     # of a service may be running in certain configs.
-    for serv in n-api n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cond n-cell n-cell n-api-meta n-sproxy; do
+    for serv in n-api n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cell n-cell n-api-meta n-sproxy; do
         stop_process $serv
+    done
+}
+
+function stop_nova_conductor {
+    enable_nova_fleet
+    for srv in n-super-cond $(seq -f n-cond-cell%0.f 1 $NOVA_NUM_CELLS); do
+        if is_service_enabled $srv; then
+            stop_process $srv
+        fi
     done
 }
 
 # stop_nova() - Stop running processes (non-screen)
 function stop_nova {
     stop_nova_rest
+    stop_nova_conductor
     stop_nova_compute
 }
 
