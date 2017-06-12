@@ -320,6 +320,14 @@ function pip_install {
     fi
 
     $xtrace
+
+    # Also install test requirements
+    local install_test_reqs=""
+    local test_req="${!#}/test-requirements.txt"
+    if [[ -e "$test_req" ]]; then
+        install_test_reqs="-r $test_req"
+    fi
+
     # adding SETUPTOOLS_SYS_PATH_TECHNIQUE is a workaround to keep
     # the same behaviour of setuptools before version 25.0.0.
     # related issue: https://github.com/pypa/pip/issues/3874
@@ -329,23 +337,9 @@ function pip_install {
         no_proxy="${no_proxy:-}" \
         PIP_FIND_LINKS=$PIP_FIND_LINKS \
         SETUPTOOLS_SYS_PATH_TECHNIQUE=rewrite \
-        $cmd_pip $upgrade \
+        $cmd_pip $upgrade $install_test_reqs \
         $@
     result=$?
-
-    # Also install test requirements
-    local test_req="${!#}/test-requirements.txt"
-    if [[ $result == 0 ]] && [[ -e "$test_req" ]]; then
-        echo "Installing test-requirements for $test_req"
-        $sudo_pip \
-            http_proxy=${http_proxy:-} \
-            https_proxy=${https_proxy:-} \
-            no_proxy=${no_proxy:-} \
-            PIP_FIND_LINKS=$PIP_FIND_LINKS \
-            $cmd_pip $upgrade \
-            -r $test_req
-        result=$?
-    fi
 
     time_stop "pip_install"
     return $result
