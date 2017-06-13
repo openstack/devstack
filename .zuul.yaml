@@ -511,6 +511,16 @@
     #    changes to devstack w/o gating on it for all devstack changes.
     # * nova-next: maintained by nova for unreleased/undefaulted
     #    things like cellsv2 and placement-api
+    # * neutron-fullstack-with-uwsgi: maintained by neutron for fullstack test
+    #    when neutron-api is served by uwsgi, it's in exprimental for testing.
+    #    the next cycle we can remove this  job if things turn out to be
+    #    stable enough.
+    # * neutron-functional-with-uwsgi: maintained by neutron for functional
+    #    test. Next cycle we can remove this one if things turn out to be
+    #    stable engouh with uwsgi.
+    # * neutron-tempest-with-uwsgi: maintained by neutron for tempest test.
+    #    Next cycle we can remove this if everything run out stable enough.
+
     experimental:
       jobs:
         - nova-cells-v1:
@@ -518,3 +528,6 @@
               - ^.*\.rst$
               - ^doc/.*$
         - nova-next
+        - neutron-fullstack-with-uwsgi
+        - neutron-functional-with-uwsgi
+        - neutron-tempest-with-uwsgi
