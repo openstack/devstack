@@ -27,11 +27,37 @@ set -o xtrace
 # Make sure custom grep options don't get in the way
 unset GREP_OPTIONS
 
-# Sanitize language settings to avoid commands bailing out
-# with "unsupported locale setting" errors.
+# NOTE(sdague): why do we explicitly set locale when running stack.sh?
+#
+# Devstack is written in bash, and many functions used throughout
+# devstack process text comming off a command (like the ip command)
+# and do transforms using grep, sed, cut, awk on the strings that are
+# returned. Many of these programs are interationalized, which is
+# great for end users, but means that the strings that devstack
+# functions depend upon might not be there in other locales. We thus
+# need to pin the world to an english basis during the runs.
+#
+# Previously we used the C locale for this, every system has it, and
+# it gives us a stable sort order. It does however mean that we
+# effectively drop unicode support.... boo!  :(
+#
+# With python3 being more unicode aware by default, that's not the
+# right option. While there is a C.utf8 locale, some distros are
+# shipping it as C.UTF8 for extra confusingness. And it's support
+# isn't super clear across distros. This is made more challenging when
+# trying to support both out of the box distros, and the gate which
+# uses diskimage builder to build disk images in a different way than
+# the distros do.
+#
+# So... en_US.utf8 it is. That's existed for a very long time. It is a
+# compromise position, but it is the least worse idea at the time of
+# this comment.
+#
+# We also have to unset other variables that might impact LC_ALL
+# taking effect.
 unset LANG
 unset LANGUAGE
-LC_ALL=C
+LC_ALL=en_US.utf8
 export LC_ALL
 
 # Make sure umask is sane
