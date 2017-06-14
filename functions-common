@@ -864,10 +864,11 @@ function get_or_add_user_project_role {
 
     # Gets user role id
     user_role_id=$(openstack role assignment list \
+        --role $1 \
         --user $2 \
         --project $3 \
         $domain_args \
-        | grep " $1 " | get_field 1)
+        | grep '^|\s[a-f0-9]\+' | get_field 1)
     if [[ -z "$user_role_id" ]]; then
         # Adds role to user and get it
         openstack role add $1 \
@@ -875,10 +876,11 @@ function get_or_add_user_project_role {
             --project $3 \
             $domain_args
         user_role_id=$(openstack role assignment list \
+            --role $1 \
             --user $2 \
             --project $3 \
             $domain_args \
-            | grep " $1 " | get_field 1)
+            | grep '^|\s[a-f0-9]\+' | get_field 1)
     fi
     echo $user_role_id
 }
@@ -889,18 +891,20 @@ function get_or_add_user_domain_role {
     local user_role_id
     # Gets user role id
     user_role_id=$(openstack role assignment list \
+        --role $1 \
         --user $2 \
         --domain $3 \
-        | grep " $1 " | get_field 1)
+        | grep '^|\s[a-f0-9]\+' | get_field 1)
     if [[ -z "$user_role_id" ]]; then
         # Adds role to user and get it
         openstack role add $1 \
             --user $2 \
             --domain $3
         user_role_id=$(openstack role assignment list \
+            --role $1 \
             --user $2 \
             --domain $3 \
-            | grep " $1 " | get_field 1)
+            | grep '^|\s[a-f0-9]\+' | get_field 1)
     fi
     echo $user_role_id
 }
@@ -911,6 +915,7 @@ function get_or_add_group_project_role {
     local group_role_id
     # Gets group role id
     group_role_id=$(openstack role assignment list \
+        --role $1 \
         --group $2 \
         --project $3 \
         -f value)
@@ -920,6 +925,7 @@ function get_or_add_group_project_role {
             --group $2 \
             --project $3
         group_role_id=$(openstack role assignment list \
+            --role $1 \
             --group $2 \
             --project $3 \
             -f value)
