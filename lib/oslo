@@ -54,6 +54,11 @@ GITDIR["python-openstacksdk"]=$DEST/python-openstacksdk
 GITDIR["stevedore"]=$DEST/stevedore
 GITDIR["taskflow"]=$DEST/taskflow
 GITDIR["tooz"]=$DEST/tooz
+# TODO(mriedem): This is a common pattern so even though os-traits isn't
+# officially an oslo library, it is nice to re-use this script for non-oslo
+# things like os-traits. We should rename this script to be more generic
+# and then fold os-brick into it also.
+GITDIR["os-traits"]=$DEST/os-traits
 
 # Support entry points installation of console scripts
 OSLO_BIN_DIR=$(get_python_exec_prefix)
@@ -104,6 +109,7 @@ function install_oslo {
     _do_install_oslo_lib "stevedore"
     _do_install_oslo_lib "taskflow"
     _do_install_oslo_lib "tooz"
+    _do_install_oslo_lib "os-traits"
 }
 
 # Restore xtrace
