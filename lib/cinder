@@ -407,8 +407,10 @@ function init_cinder {
         # (Re)create cinder database
         recreate_database cinder
 
+        time_start "dbsync"
         # Migrate cinder database
         $CINDER_BIN_DIR/cinder-manage --config-file $CINDER_CONF db sync
+        time_stop "dbsync"
     fi
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then

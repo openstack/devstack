@@ -417,8 +417,10 @@ function create_mutnauq_accounts {
 # init_mutnauq() - Initialize databases, etc.
 function init_mutnauq {
     recreate_database $Q_DB_NAME
+    time_start "dbsync"
     # Run Neutron db migrations
     $NEUTRON_BIN_DIR/neutron-db-manage --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE upgrade head
+    time_stop "dbsync"
 }
 
 # install_mutnauq() - Collect source and prepare

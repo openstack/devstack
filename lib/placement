@@ -149,7 +149,9 @@ function create_placement_accounts {
 function init_placement {
     if [ "$PLACEMENT_DB_ENABLED" != False ]; then
         recreate_database placement
+        time_start "dbsync"
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF api_db sync
+        time_stop "dbsync"
     fi
     create_placement_accounts
 }
