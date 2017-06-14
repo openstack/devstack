@@ -238,7 +238,13 @@ function write_uwsgi_config {
     # create a home for the sockets; note don't use /tmp -- apache has
     # a private view of it on some platforms.
     local socket_dir='/var/run/uwsgi'
-    sudo install -d -o $STACK_USER -m 755 $socket_dir
+
+    # /var/run will be empty on ubuntu after reboot, so we can use systemd-temptiles
+    # to automatically create $socket_dir.
+    sudo mkdir -p /etc/tmpfiles.d/
+    echo "d $socket_dir 0755 $STACK_USER root" | sudo tee /etc/tmpfiles.d/uwsgi.conf
+    sudo systemd-tmpfiles --create /etc/tmpfiles.d/uwsgi.conf
+
     local socket="$socket_dir/${name}.socket"
 
     # always cleanup given that we are using iniset here
