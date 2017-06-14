@@ -60,14 +60,6 @@ export_proxy_variables
 # Install Packages
 # ================
 
-if [[ "${DISTRO}" == "opensuse-42.2" ]]; then
-    # temporary workaround until https://bugzilla.suse.com/show_bug.cgi?id=1041161 is fixed
-    sudo zypper ar -f http://download.opensuse.org/update/leap/42.2-test/ leap42.2-test-updates
-    sudo zypper --non-interactive --gpg-auto-import-keys --no-gpg-checks ref
-    sudo zypper --non-interactive install liberasurecode-devel
-    sudo zypper rr leap42.2-test-updates
-fi
-
 # Install package requirements
 PACKAGES=$(get_packages general,$ENABLED_SERVICES)
 PACKAGES="$PACKAGES $(get_plugin_packages)"
