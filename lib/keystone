@@ -127,6 +127,12 @@ KEYSTONE_LOCKOUT_FAILURE_ATTEMPTS=${KEYSTONE_LOCKOUT_FAILURE_ATTEMPTS:-2}
 KEYSTONE_LOCKOUT_DURATION=${KEYSTONE_LOCKOUT_DURATION:-5}
 KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT=${KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT:-2}
 
+# Number of bcrypt hashing rounds, increasing number exponentially increases required
+# resources to generate password hash. This is very effective way to protect from
+# bruteforce attacks. 4 is minimal value that can be specified for bcrypt and
+# it works way faster than default 12. Minimal value is great for CI and development
+# however may not be suitable for real production.
+KEYSTONE_PASSWORD_HASH_ROUNDS=${KEYSTONE_PASSWORD_HASH_ROUNDS:-4}
 
 # Functions
 # ---------
@@ -225,6 +231,7 @@ function configure_keystone {
     fi
 
     iniset $KEYSTONE_CONF identity driver "$KEYSTONE_IDENTITY_BACKEND"
+    iniset $KEYSTONE_CONF identity password_hash_rounds $KEYSTONE_PASSWORD_HASH_ROUNDS
     iniset $KEYSTONE_CONF assignment driver "$KEYSTONE_ASSIGNMENT_BACKEND"
     iniset $KEYSTONE_CONF role driver "$KEYSTONE_ROLE_BACKEND"
     iniset $KEYSTONE_CONF resource driver "$KEYSTONE_RESOURCE_BACKEND"
