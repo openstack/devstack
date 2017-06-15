@@ -336,8 +336,10 @@ function init_neutron_new {
 
     recreate_database neutron
 
+    time_start "dbsync"
     # Run Neutron db migrations
     $NEUTRON_BIN_DIR/neutron-db-manage upgrade heads
+    time_stop "dbsync"
 
     create_neutron_cache_dir
 }

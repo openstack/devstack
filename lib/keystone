@@ -465,8 +465,10 @@ function init_keystone {
         recreate_database keystone
     fi
 
+    time_start "dbsync"
     # Initialize keystone database
     $KEYSTONE_BIN_DIR/keystone-manage --config-file $KEYSTONE_CONF db_sync
+    time_stop "dbsync"
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" == "pki" || "$KEYSTONE_TOKEN_FORMAT" == "pkiz" ]]; then
         # Set up certificates
