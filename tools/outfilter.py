@@ -50,15 +50,13 @@ def main():
     opts = get_options()
     outfile = None
     if opts.outfile:
-        outfile = open(opts.outfile, 'a', 0)
+        # note, binary mode so we can do unbuffered output.
+        outfile = open(opts.outfile, 'ab', 0)
 
     # Otherwise fileinput reprocess args as files
     sys.argv = []
-    while True:
-        line = sys.stdin.readline()
-        if not line:
-            return 0
 
+    for line in iter(sys.stdin.readline, ''):
         # put skip lines here
         if skip_line(line):
             continue
@@ -75,8 +73,16 @@ def main():
         if opts.verbose:
             sys.stdout.write(line)
             sys.stdout.flush()
+
         if outfile:
-            outfile.write(line)
+            # We've opened outfile as a binary file to get the
+            # non-buffered behaviour.  on python3, sys.stdin was
+            # opened with the system encoding and made the line into
+            # utf-8, so write the logfile out in utf-8 bytes.
+            if sys.version_info < (3,):
+                outfile.write(line)
+            else:
+                outfile.write(line.encode('utf-8'))
             outfile.flush()
 
 
