@@ -195,6 +195,9 @@ will not be set if there is no IPv6 address on the default Ethernet interface.
 Setting it here also makes it available for ``openrc`` to set ``OS_AUTH_URL``.
 ``HOST_IPV6`` is not set by default.
 
+For architecture specific configurations which differ from the x86 default
+here, see `arch-configuration`_.
+
 Historical Notes
 ================
 
@@ -749,3 +752,60 @@ overridden by setting them in the ``localrc`` section.
     ::
 
         TERMINATE_TIMEOUT=30
+
+
+.. _arch-configuration:
+
+Architectures
+-------------
+
+The upstream CI runs exclusively on nodes with x86 architectures, but
+OpenStack supports even more architectures. Some of them need to configure
+Devstack in a certain way.
+
+KVM on s390x (IBM z Systems)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+KVM on s390x (IBM z Systems) is supported since the *Kilo* release. For
+an all-in-one setup, these minimal settings in the ``local.conf`` file
+are needed::
+
+    [[local|localrc]]
+    ADMIN_PASSWORD=secret
+    DATABASE_PASSWORD=$ADMIN_PASSWORD
+    RABBIT_PASSWORD=$ADMIN_PASSWORD
+    SERVICE_PASSWORD=$ADMIN_PASSWORD
+
+    DOWNLOAD_DEFAULT_IMAGES=False
+    IMAGE_URLS="https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-s390x-disk1.img"
+
+    enable_service n-sproxy
+    disable_service n-novnc
+    disable_service etcd3  # https://bugs.launchpad.net/devstack/+bug/1693192
+
+    [[post-config|$NOVA_CONF]]
+
+    [serial_console]
+    base_url=ws://$HOST_IP:6083/  # optional
+
+Reasoning:
+
+* The default image of Devstack is x86 only, so we deactivate the download
+  with ``DOWNLOAD_DEFAULT_IMAGES``. The referenced guest image
+  in the code above (``IMAGE_URLS``) serves as an example. The list of
+  possible s390x guest images is not limited to that.
+
+* This platform doesn't support a graphical console like VNC or SPICE.
+  The technical reason is the missing framebuffer on the platform. This
+  means we rely on the substitute feature *serial console* which needs the
+  proxy service ``n-sproxy``. We also disable VNC's proxy ``n-novnc`` for
+  that reason . The configuration in the ``post-config`` section is only
+  needed if you want to use the *serial console* outside of the all-in-one
+  setup.
+
+* The service ``etcd3`` needs to be disabled as long as bug report
+  https://bugs.launchpad.net/devstack/+bug/1693192 is not resolved.
+
+.. note:: To run *Tempest* against this *Devstack* all-in-one, you'll need
+   to use a guest image which is smaller than 1GB when uncompressed.
+   The example image from above is bigger than that!
