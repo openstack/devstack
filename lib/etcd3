@@ -41,13 +41,6 @@ fi
 
 # start_etcd3() - Starts to run the etcd process
 function start_etcd3 {
-    # Don't install in sub nodes (multinode scenario)
-    if [ "$SERVICE_HOST" != "$HOST_IP" ]; then
-        return
-    fi
-
-    _install_etcd
-
     local cmd="$ETCD_BIN_DIR/etcd"
     cmd+=" --name $HOSTNAME --data-dir $ETCD_DATA_DIR"
     cmd+=" --initial-cluster-state new --initial-cluster-token etcd-cluster-01"
@@ -96,7 +89,7 @@ function cleanup_etcd3 {
     sudo rm -rf $ETCD_DATA_DIR
 }
 
-function _install_etcd {
+function install_etcd3 {
     echo "Installing etcd"
 
     # Make sure etcd3 downloads the correct architecture
@@ -114,10 +107,6 @@ function _install_etcd {
     fi
 
     ETCD_NAME=etcd-$ETCD_VERSION-linux-$ETCD_ARCH
-
-    # Install the libraries needed. Note: tooz for example does not have a hard dependency on these libraries
-    pip_install etcd3
-    pip_install etcd3gw
 
     # Create the necessary directories
     sudo mkdir -p $ETCD_BIN_DIR

@@ -109,7 +109,14 @@ function install_oslo {
     _do_install_oslo_lib "stevedore"
     _do_install_oslo_lib "taskflow"
     _do_install_oslo_lib "tooz"
+    # installation of additional libraries
+    #
+    # os-traits for nova
     _do_install_oslo_lib "os-traits"
+
+    # etcd (because tooz does not have a hard dependency on these)
+    pip_install etcd3
+    pip_install etcd3gw
 }
 
 # Restore xtrace
