@@ -121,6 +121,9 @@ function install_libs {
     # os-traits for nova
     _install_lib_from_source "os-brick"
     _install_lib_from_source "os-traits"
+    #
+    # python client libraries we might need from git can go here
+    _install_lib_from_source "python-barbicanclient"
 
 
     # etcd (because tooz does not have a hard dependency on these)
