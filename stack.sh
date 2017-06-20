@@ -813,6 +813,10 @@ if is_service_enabled neutron; then
     install_neutron_agent_packages
 fi
 
+if is_service_enabled etcd3; then
+    install_etcd3
+fi
+
 # Check Out and Install Source
 # ----------------------------
 
