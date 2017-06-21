@@ -2,7 +2,7 @@
 #
 # lib/oslo
 #
-# Functions to install **Oslo** libraries from git
+# Functions to install libraries from git
 #
 # We need this to handle the fact that projects would like to use
 # pre-released versions of oslo libraries.
@@ -13,10 +13,10 @@
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# - install_oslo
+# - install_libraries
 
 # Save trace setting
-_XTRACE_LIB_OSLO=$(set +o | grep xtrace)
+_XTRACE_LIB_LIBRARIES=$(set +o | grep xtrace)
 set +o xtrace
 
 
@@ -54,12 +54,11 @@ GITDIR["python-openstacksdk"]=$DEST/python-openstacksdk
 GITDIR["stevedore"]=$DEST/stevedore
 GITDIR["taskflow"]=$DEST/taskflow
 GITDIR["tooz"]=$DEST/tooz
-# TODO(mriedem): This is a common pattern so even though os-traits isn't
-# officially an oslo library, it is nice to re-use this script for non-oslo
-# things like os-traits. We should rename this script to be more generic
-# and then fold os-brick into it also.
-GITDIR["os-traits"]=$DEST/os-traits
+
+# Non oslo libraries are welcomed below as well, this prevents
+# duplication of this code.
 GITDIR["os-brick"]=$DEST/os-brick
+GITDIR["os-traits"]=$DEST/os-traits
 
 # Support entry points installation of console scripts
 OSLO_BIN_DIR=$(get_python_exec_prefix)
@@ -120,18 +119,20 @@ function install_libs {
     # installation of additional libraries
     #
     # os-traits for nova
-    _install_lib_from_source "os-traits"
-    # os-brick for nova/cinder
     _install_lib_from_source "os-brick"
+    _install_lib_from_source "os-traits"
 
 
     # etcd (because tooz does not have a hard dependency on these)
+    #
+    # NOTE(sdague): this is currently a work around because tooz
+    # doesn't pull in etcd3.
     pip_install etcd3
     pip_install etcd3gw
 }
 
 # Restore xtrace
-$_XTRACE_LIB_OSLO
+$_XTRACE_LIB_LIBRARIES
 
 # Tell emacs to use shell-script-mode
 ## Local variables:
