@@ -605,7 +605,6 @@ source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 source $TOP_DIR/lib/etcd3
-source $TOP_DIR/lib/os_brick
 
 # Extras Source
 # --------------
@@ -839,11 +838,6 @@ if is_service_enabled swift glance horizon; then
 fi
 if is_service_enabled neutron nova horizon; then
     install_neutronclient
-fi
-
-# Install shared libraries
-if is_service_enabled cinder nova; then
-    install_os_brick
 fi
 
 # Setup TLS certs
