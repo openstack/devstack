@@ -186,9 +186,12 @@ function configure_glance {
         inicomment $GLANCE_API_CONF glance_store swift_store_auth_address
     fi
 
+    # We need to tell glance what it's public endpoint is so that the version
+    # discovery document will be correct
+    iniset $GLANCE_API_CONF DEFAULT public_endpoint $GLANCE_URL
+
     if is_service_enabled tls-proxy; then
         iniset $GLANCE_API_CONF DEFAULT bind_port $GLANCE_SERVICE_PORT_INT
-        iniset $GLANCE_API_CONF DEFAULT public_endpoint $GLANCE_SERVICE_PROTOCOL://$GLANCE_HOSTPORT
         iniset $GLANCE_REGISTRY_CONF DEFAULT bind_port $GLANCE_REGISTRY_PORT_INT
 
         iniset $GLANCE_API_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
