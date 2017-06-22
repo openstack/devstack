@@ -59,6 +59,7 @@ GITDIR["tooz"]=$DEST/tooz
 # things like os-traits. We should rename this script to be more generic
 # and then fold os-brick into it also.
 GITDIR["os-traits"]=$DEST/os-traits
+GITDIR["os-brick"]=$DEST/os-brick
 
 # Support entry points installation of console scripts
 OSLO_BIN_DIR=$(get_python_exec_prefix)
@@ -120,6 +121,9 @@ function install_libs {
     #
     # os-traits for nova
     _install_lib_from_source "os-traits"
+    # os-brick for nova/cinder
+    _install_lib_from_source "os-brick"
+
 
     # etcd (because tooz does not have a hard dependency on these)
     pip_install etcd3
