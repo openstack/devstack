@@ -1,0 +1,135 @@
+#!/bin/bash
+#
+# lib/oslo
+#
+# Functions to install **Oslo** libraries from git
+#
+# We need this to handle the fact that projects would like to use
+# pre-released versions of oslo libraries.
+
+# Dependencies:
+#
+# - ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# - install_oslo
+
+# Save trace setting
+_XTRACE_LIB_OSLO=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+GITDIR["automaton"]=$DEST/automaton
+GITDIR["castellan"]=$DEST/castellan
+GITDIR["cliff"]=$DEST/cliff
+GITDIR["cursive"]=$DEST/cursive
+GITDIR["debtcollector"]=$DEST/debtcollector
+GITDIR["futurist"]=$DEST/futurist
+GITDIR["os-client-config"]=$DEST/os-client-config
+GITDIR["osc-lib"]=$DEST/osc-lib
+GITDIR["oslo.cache"]=$DEST/oslo.cache
+GITDIR["oslo.concurrency"]=$DEST/oslo.concurrency
+GITDIR["oslo.config"]=$DEST/oslo.config
+GITDIR["oslo.context"]=$DEST/oslo.context
+GITDIR["oslo.db"]=$DEST/oslo.db
+GITDIR["oslo.i18n"]=$DEST/oslo.i18n
+GITDIR["oslo.log"]=$DEST/oslo.log
+GITDIR["oslo.messaging"]=$DEST/oslo.messaging
+GITDIR["oslo.middleware"]=$DEST/oslo.middleware
+GITDIR["oslo.policy"]=$DEST/oslo.policy
+GITDIR["oslo.privsep"]=$DEST/oslo.privsep
+GITDIR["oslo.reports"]=$DEST/oslo.reports
+GITDIR["oslo.rootwrap"]=$DEST/oslo.rootwrap
+GITDIR["oslo.serialization"]=$DEST/oslo.serialization
+GITDIR["oslo.service"]=$DEST/oslo.service
+GITDIR["oslo.utils"]=$DEST/oslo.utils
+GITDIR["oslo.versionedobjects"]=$DEST/oslo.versionedobjects
+GITDIR["oslo.vmware"]=$DEST/oslo.vmware
+GITDIR["osprofiler"]=$DEST/osprofiler
+GITDIR["pycadf"]=$DEST/pycadf
+GITDIR["python-openstacksdk"]=$DEST/python-openstacksdk
+GITDIR["stevedore"]=$DEST/stevedore
+GITDIR["taskflow"]=$DEST/taskflow
+GITDIR["tooz"]=$DEST/tooz
+# TODO(mriedem): This is a common pattern so even though os-traits isn't
+# officially an oslo library, it is nice to re-use this script for non-oslo
+# things like os-traits. We should rename this script to be more generic
+# and then fold os-brick into it also.
+GITDIR["os-traits"]=$DEST/os-traits
+
+# Support entry points installation of console scripts
+OSLO_BIN_DIR=$(get_python_exec_prefix)
+
+
+# Functions
+# ---------
+
+function _install_lib_from_source {
+    local name=$1
+    if use_library_from_git "$name"; then
+        git_clone_by_name "$name"
+        setup_dev_lib "$name"
+    fi
+}
+
+# install_oslo - install libraries that oslo needs
+function install_oslo {
+    install_libs
+}
+
+# install_libs() - Install additional libraries that we need and want
+# on all environments. Some will only install here if from source,
+# others will always install.
+function install_libs {
+    _install_lib_from_source "automaton"
+    _install_lib_from_source "castellan"
+    _install_lib_from_source "cliff"
+    _install_lib_from_source "cursive"
+    _install_lib_from_source "debtcollector"
+    _install_lib_from_source "futurist"
+    _install_lib_from_source "osc-lib"
+    _install_lib_from_source "os-client-config"
+    _install_lib_from_source "oslo.cache"
+    _install_lib_from_source "oslo.concurrency"
+    _install_lib_from_source "oslo.config"
+    _install_lib_from_source "oslo.context"
+    _install_lib_from_source "oslo.db"
+    _install_lib_from_source "oslo.i18n"
+    _install_lib_from_source "oslo.log"
+    _install_lib_from_source "oslo.messaging"
+    _install_lib_from_source "oslo.middleware"
+    _install_lib_from_source "oslo.policy"
+    _install_lib_from_source "oslo.privsep"
+    _install_lib_from_source "oslo.reports"
+    _install_lib_from_source "oslo.rootwrap"
+    _install_lib_from_source "oslo.serialization"
+    _install_lib_from_source "oslo.service"
+    _install_lib_from_source "oslo.utils"
+    _install_lib_from_source "oslo.versionedobjects"
+    _install_lib_from_source "oslo.vmware"
+    _install_lib_from_source "osprofiler"
+    _install_lib_from_source "pycadf"
+    _install_lib_from_source "python-openstacksdk"
+    _install_lib_from_source "stevedore"
+    _install_lib_from_source "taskflow"
+    _install_lib_from_source "tooz"
+    # installation of additional libraries
+    #
+    # os-traits for nova
+    _install_lib_from_source "os-traits"
+
+    # etcd (because tooz does not have a hard dependency on these)
+    pip_install etcd3
+    pip_install etcd3gw
+}
+
+# Restore xtrace
+$_XTRACE_LIB_OSLO
+
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

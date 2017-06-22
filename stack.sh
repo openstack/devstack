@@ -592,7 +592,7 @@ source $TOP_DIR/lib/tls
 
 # Source project function libraries
 source $TOP_DIR/lib/infra
-source $TOP_DIR/lib/oslo
+source $TOP_DIR/lib/libraries
 source $TOP_DIR/lib/lvm
 source $TOP_DIR/lib/horizon
 source $TOP_DIR/lib/keystone
@@ -822,8 +822,8 @@ fi
 
 echo_summary "Installing OpenStack project source"
 
-# Install Oslo libraries
-install_oslo
+# Install additional libraries
+install_libs
 
 # Install uwsgi
 install_apache_uwsgi
