@@ -893,7 +893,6 @@ fi
 if is_service_enabled nova; then
     # Compute service
     stack_install_service nova
-    cleanup_nova
     configure_nova
 fi
 
