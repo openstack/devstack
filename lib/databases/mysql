@@ -71,6 +71,10 @@ function configure_database_mysql {
     elif is_fedora; then
         mysql=mariadb
         my_conf=/etc/my.cnf
+        local cracklib_conf=/etc/my.cnf.d/cracklib_password_check.cnf
+        if [ -f "$cracklib_conf" ]; then
+            inicomment -sudo "$cracklib_conf" "mariadb" "plugin-load-add"
+        fi
     else
         exit_distro_not_supported "mysql configuration"
     fi
