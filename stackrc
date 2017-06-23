@@ -341,6 +341,11 @@ GITBRANCH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-master}
 GITREPO["python-brick-cinderclient-ext"]=${BRICK_CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-brick-cinderclient-ext.git}
 GITBRANCH["python-brick-cinderclient-ext"]=${BRICK_CINDERCLIENT_BRANCH:-master}
 
+# python barbican client library
+GITREPO["python-barbicanclient"]=${BARBICANCLIENT_REPO:-${GIT_BASE}/openstack/python-barbicanclient.git}
+GITBRANCH["python-barbicanclient"]=${BARBICANCLIENT_BRANCH:-master}
+GITDIR["python-barbicanclient"]=$DEST/python-barbicanclient
+
 # python glance client library
 GITREPO["python-glanceclient"]=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
 GITBRANCH["python-glanceclient"]=${GLANCECLIENT_BRANCH:-master}
