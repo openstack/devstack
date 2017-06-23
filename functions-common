@@ -1508,13 +1508,8 @@ EOF
 
 }
 
-# Defines a systemd service which can be enabled and started later on.
-# arg1: The openstack service name ('n-cpu', 'c-sch', ...).
-# arg2: The command to start (e.g. path to service binary + config files).
-# arg3: The group which owns the process.
-# arg4: The user which owns the process.
-# Returns: The systemd service name which got defined.
-function _define_systemd_service {
+# Helper function to build a basic unit file and run it under systemd.
+function _run_under_systemd {
     local service=$1
     local command="$2"
     local cmd=$command
@@ -1529,7 +1524,9 @@ function _define_systemd_service {
     else
         write_user_unit_file $systemd_service "$cmd" "$group" "$user"
     fi
-    echo $systemd_service
+
+    $SYSTEMCTL enable $systemd_service
+    $SYSTEMCTL start $systemd_service
 }
 
 # Helper to remove the ``*.failure`` files under ``$SERVICE_DIR/$SCREEN_NAME``.
@@ -1570,19 +1567,11 @@ function run_process {
     local user=$4
 
     local name=$service
-    local systemd_service
 
     time_start "run_process"
-    # Note we deliberately make all service files, even if the service
-    # isn't enabled, so it can be enabled by a dev manually on command
-    # line.
-    if [[ "$USE_SYSTEMD" = "True" ]]; then
-        systemd_service=$(_define_systemd_service "$name" "$command" "$group" "$user")
-    fi
     if is_service_enabled $service; then
         if [[ "$USE_SYSTEMD" = "True" ]]; then
-            $SYSTEMCTL enable $systemd_service
-            $SYSTEMCTL start $systemd_service
+            _run_under_systemd "$name" "$command" "$group" "$user"
         elif [[ "$USE_SCREEN" = "True" ]]; then
             if [[ "$user" == "root" ]]; then
                 command="sudo $command"
