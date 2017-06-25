@@ -53,6 +53,7 @@ devstack-plugin-mariadb                `git://git.openstack.org/openstack/devsta
 devstack-plugin-nfs                    `git://git.openstack.org/openstack/devstack-plugin-nfs <https://git.openstack.org/cgit/openstack/devstack-plugin-nfs>`__
 devstack-plugin-pika                   `git://git.openstack.org/openstack/devstack-plugin-pika <https://git.openstack.org/cgit/openstack/devstack-plugin-pika>`__
 devstack-plugin-sheepdog               `git://git.openstack.org/openstack/devstack-plugin-sheepdog <https://git.openstack.org/cgit/openstack/devstack-plugin-sheepdog>`__
+devstack-plugin-vmax                   `git://git.openstack.org/openstack/devstack-plugin-vmax <https://git.openstack.org/cgit/openstack/devstack-plugin-vmax>`__
 devstack-plugin-zmq                    `git://git.openstack.org/openstack/devstack-plugin-zmq <https://git.openstack.org/cgit/openstack/devstack-plugin-zmq>`__
 dragonflow                             `git://git.openstack.org/openstack/dragonflow <https://git.openstack.org/cgit/openstack/dragonflow>`__
 drbd-devstack                          `git://git.openstack.org/openstack/drbd-devstack <https://git.openstack.org/cgit/openstack/drbd-devstack>`__
@@ -123,9 +124,11 @@ networking-vsphere                     `git://git.openstack.org/openstack/networ
 neutron                                `git://git.openstack.org/openstack/neutron <https://git.openstack.org/cgit/openstack/neutron>`__
 neutron-dynamic-routing                `git://git.openstack.org/openstack/neutron-dynamic-routing <https://git.openstack.org/cgit/openstack/neutron-dynamic-routing>`__
 neutron-fwaas                          `git://git.openstack.org/openstack/neutron-fwaas <https://git.openstack.org/cgit/openstack/neutron-fwaas>`__
+neutron-fwaas-dashboard                `git://git.openstack.org/openstack/neutron-fwaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-fwaas-dashboard>`__
 neutron-lbaas                          `git://git.openstack.org/openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas>`__
 neutron-lbaas-dashboard                `git://git.openstack.org/openstack/neutron-lbaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard>`__
 neutron-vpnaas                         `git://git.openstack.org/openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas>`__
+neutron-vpnaas-dashboard               `git://git.openstack.org/openstack/neutron-vpnaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-vpnaas-dashboard>`__
 nova-dpm                               `git://git.openstack.org/openstack/nova-dpm <https://git.openstack.org/cgit/openstack/nova-dpm>`__
 nova-lxd                               `git://git.openstack.org/openstack/nova-lxd <https://git.openstack.org/cgit/openstack/nova-lxd>`__
 nova-mksproxy                          `git://git.openstack.org/openstack/nova-mksproxy <https://git.openstack.org/cgit/openstack/nova-mksproxy>`__
@@ -154,6 +157,7 @@ tricircle                              `git://git.openstack.org/openstack/tricir
 trio2o                                 `git://git.openstack.org/openstack/trio2o <https://git.openstack.org/cgit/openstack/trio2o>`__
 trove                                  `git://git.openstack.org/openstack/trove <https://git.openstack.org/cgit/openstack/trove>`__
 trove-dashboard                        `git://git.openstack.org/openstack/trove-dashboard <https://git.openstack.org/cgit/openstack/trove-dashboard>`__
+valet                                  `git://git.openstack.org/openstack/valet <https://git.openstack.org/cgit/openstack/valet>`__
 vitrage                                `git://git.openstack.org/openstack/vitrage <https://git.openstack.org/cgit/openstack/vitrage>`__
 vitrage-dashboard                      `git://git.openstack.org/openstack/vitrage-dashboard <https://git.openstack.org/cgit/openstack/vitrage-dashboard>`__
 vmware-nsx                             `git://git.openstack.org/openstack/vmware-nsx <https://git.openstack.org/cgit/openstack/vmware-nsx>`__
