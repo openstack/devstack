@@ -313,7 +313,6 @@ function configure_cinder {
         # Set the service port for a proxy to take the original
         iniset $CINDER_CONF DEFAULT osapi_volume_listen_port $CINDER_SERVICE_PORT_INT
         iniset $CINDER_CONF DEFAULT public_endpoint $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT
-        iniset $CINDER_CONF DEFAULT osapi_volume_base_URL $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT
     fi
 
     if [ "$SYSLOG" != "False" ]; then
