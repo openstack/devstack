@@ -216,6 +216,9 @@ if [[ ! -r $TOP_DIR/stackrc ]]; then
 fi
 source $TOP_DIR/stackrc
 
+# this installs a devstack-version script to make it easy to report the version back
+write_devstack_version
+
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
 if [[ ! ${DISTRO} =~ (xenial|yakkety|zesty|stretch|jessie|f24|f25|opensuse-42.2|rhel7|kvmibm1) ]]; then
@@ -1521,18 +1524,27 @@ fi
 
 # Warn that a deprecated feature was used
 if [[ -n "$DEPRECATED_TEXT" ]]; then
-    echo_summary "WARNING: $DEPRECATED_TEXT"
+    echo
+    echo -e "WARNING: $DEPRECATED_TEXT"
+    echo
 fi
 
 # If USE_SYSTEMD is enabled, tell the user about using it.
 if [[ "$USE_SYSTEMD" == "True" ]]; then
+    echo
     echo "Services are running under systemd unit files."
     echo "For more information see: "
     echo "https://docs.openstack.org/developer/devstack/systemd.html"
+    echo
 fi
+
+# devstack version
+devstack-version
+echo
 
 # Indicate how long this took to run (bash maintained variable ``SECONDS``)
 echo_summary "stack.sh completed in $SECONDS seconds."
+
 
 # Restore/close logging file descriptors
 exec 1>&3
