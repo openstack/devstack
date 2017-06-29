@@ -842,7 +842,7 @@ function start_swift {
 
     if is_service_enabled tls-proxy; then
         local proxy_port=${SWIFT_DEFAULT_BIND_PORT}
-        start_tls_proxy swift '*' $proxy_port $SERVICE_HOST $SWIFT_DEFAULT_BIND_PORT_INT
+        start_tls_proxy swift '*' $proxy_port $SERVICE_HOST $SWIFT_DEFAULT_BIND_PORT_INT $SWIFT_MAX_HEADER_SIZE
     fi
     run_process s-proxy "$SWIFT_BIN_DIR/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
 

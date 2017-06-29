@@ -494,6 +494,8 @@ function start_tls_proxy {
     local f_port=$3
     local b_host=$4
     local b_port=$5
+    # 8190 is the default apache size.
+    local f_header_size=${6:-8190}
 
     tune_apache_connections
 
@@ -520,6 +522,11 @@ $listen_string
     # Disable KeepAlive to fix bug #1630664 a.k.a the
     # ('Connection aborted.', BadStatusLine("''",)) error
     KeepAlive Off
+
+    # This increase in allowed request header sizes is required
+    # for swift functional testing to work with tls enabled. It is 2 bytes
+    # larger than the apache default of 8190.
+    LimitRequestFieldSize $f_header_size
 
     <Location />
         ProxyPass http://$b_host:$b_port/ retry=0 nocanon
