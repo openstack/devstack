@@ -322,6 +322,7 @@ function write_local_uwsgi_http_config {
     iniset "$file" uwsgi http-raw-body true
     iniset "$file" uwsgi http-chunked-input true
     iniset "$file" uwsgi http-auto-chunked true
+    iniset "$file" uwsgi http-keepalive false
 
     enable_apache_mod proxy
     enable_apache_mod proxy_http
