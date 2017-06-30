@@ -301,7 +301,7 @@ function write_local_uwsgi_http_config {
     rm -rf $file
     iniset "$file" uwsgi wsgi-file "$wsgi"
     port=$(get_random_port)
-    iniset "$file" uwsgi http "127.0.0.1:$port"
+    iniset "$file" uwsgi http-socket "127.0.0.1:$port"
     iniset "$file" uwsgi processes $API_WORKERS
     # This is running standalone
     iniset "$file" uwsgi master true
