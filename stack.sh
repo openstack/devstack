@@ -190,7 +190,7 @@ if [[ ! -r $TOP_DIR/stackrc ]]; then
 fi
 source $TOP_DIR/stackrc
 
-# this installs a devstack-version script to make it easy to report the version back
+# write /etc/devstack-version
 write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
@@ -1468,8 +1468,8 @@ if [[ -n "$DEPRECATED_TEXT" ]]; then
     echo
 fi
 
-# devstack version
-devstack-version
+# Useful info on current state
+cat /etc/devstack-version
 echo
 
 # Indicate how long this took to run (bash maintained variable ``SECONDS``)
