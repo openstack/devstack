@@ -323,6 +323,8 @@ function write_local_uwsgi_http_config {
     iniset "$file" uwsgi http-chunked-input true
     iniset "$file" uwsgi http-auto-chunked true
     iniset "$file" uwsgi http-keepalive false
+    # Increase socket timeout for slow chunked uploads
+    iniset "$file" uwsgi socket-timeout 30
 
     enable_apache_mod proxy
     enable_apache_mod proxy_http
