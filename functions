@@ -754,7 +754,7 @@ function get_random_port {
 function write_devstack_version {
     pushd $TOP_DIR
     local git_version=""
-    git_version=$(git log --format="%H %s %ci" -1)
+    git_version=$(git log --format="%H %ci" -1)
     cat - > /tmp/devstack-version <<EOF
 #!/bin/bash
 
