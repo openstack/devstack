@@ -1,6 +1,6 @@
 DevStack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
 
-# Goals
+# Goalss
 
 * To quickly build dev OpenStack environments in a clean Ubuntu or Fedora
   environment
