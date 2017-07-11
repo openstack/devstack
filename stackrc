@@ -661,23 +661,6 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
     DOWNLOAD_DEFAULT_IMAGES=False
 fi
 
-# Staging area for new images.  These images are cached by a run of
-# ./tools/image_list.sh during CI image build (see
-# project-config:nodepool/elements/cache-devstack/extra-data.d/55-cache-devstack-repos).
-#
-# To avoid CI failures grabbing the images, new images should be here
-# for at least 24hrs (nodepool builds images at 14:00UTC) so the they
-# are in the cache.
-PRECACHE_IMAGES=$(trueorfalse False PRECACHE_IMAGES)
-if [[ "$PRECACHE_IMAGES" == "True" ]]; then
-    # required for trove devstack tests; see
-    #  git.openstack.org/cgit/openstack/trove/tree/devstack/plugin.sh
-    IMAGE_URL="http://tarballs.openstack.org/trove/images/ubuntu/mysql.qcow2"
-    if ! [[ "$IMAGE_URLS"  =~ "$IMAGE_URL" ]]; then
-        IMAGE_URLS+=",$IMAGE_URL"
-    fi
-fi
-
 # Detect duplicate values in IMAGE_URLS
 for image_url in ${IMAGE_URLS//,/ }; do
     if [ $(echo "$IMAGE_URLS" | grep -o -F "$image_url" | wc -l) -gt 1 ]; then
