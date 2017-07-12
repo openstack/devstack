@@ -72,7 +72,7 @@ GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 GLANCE_REGISTRY_PORT=${GLANCE_REGISTRY_PORT:-9191}
 GLANCE_REGISTRY_PORT_INT=${GLANCE_REGISTRY_PORT_INT:-19191}
 GLANCE_UWSGI=$GLANCE_BIN_DIR/glance-wsgi-api
-GLANCE_UWSGI_CONF=$GLANCE_CONF_DIR/glance-uswgi.ini
+GLANCE_UWSGI_CONF=$GLANCE_CONF_DIR/glance-uwsgi.ini
 # If wsgi mode is uwsgi run glance under uwsgi, else default to eventlet
 # TODO(mtreinish): Remove the eventlet path here and in all the similar
 # conditionals below after the Pike release

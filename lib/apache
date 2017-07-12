@@ -287,7 +287,7 @@ function write_uwsgi_config {
 # mod_proxy_uwsgi because the chunked encoding gets dropped. See:
 # https://github.com/unbit/uwsgi/issues/1540 You can workaround this on python2
 # but that involves having apache buffer the request before sending it to
-# uswgi.
+# uwsgi.
 function write_local_uwsgi_http_config {
     local file=$1
     local wsgi=$2
