@@ -36,7 +36,7 @@ echo $ALL_IMAGES | tr ',' '\n' | sort | uniq
 
 # Sanity check - ensure we have a minimum number of images
 num=$(echo $ALL_IMAGES | tr ',' '\n' | sort | uniq | wc -l)
-if [[ "$num" -lt 5 ]]; then
+if [[ "$num" -lt 4 ]]; then
     echo "ERROR: We only found $num images in $ALL_IMAGES, which can't be right."
     exit 1
 fi
