@@ -35,12 +35,22 @@ BACKING_FILE_SUFFIX=-backing-file
 
 # _clean_lvm_volume_group removes all default LVM volumes
 #
-# Usage: clean_lvm_volume_group $vg
+# Usage: _clean_lvm_volume_group $vg
 function _clean_lvm_volume_group {
     local vg=$1
 
     # Clean out existing volumes
     sudo lvremove -f $vg
+}
+
+# _remove_lvm_volume_group removes the volume group
+#
+# Usage: _remove_lvm_volume_group $vg
+function _remove_lvm_volume_group {
+    local vg=$1
+
+    # Remove the volume group
+    sudo vgremove -f $vg
 }
 
 # _clean_lvm_backing_file() removes the backing file of the
@@ -69,6 +79,7 @@ function clean_lvm_volume_group {
     local vg=$1
 
     _clean_lvm_volume_group $vg
+    _remove_lvm_volume_group $vg
     # if there is no logical volume left, it's safe to attempt a cleanup
     # of the backing file
     if [[ -z "$(sudo lvs --noheadings -o lv_name $vg 2>/dev/null)" ]]; then
