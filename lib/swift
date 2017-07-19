@@ -846,6 +846,14 @@ function start_swift {
     fi
     run_process s-proxy "$SWIFT_BIN_DIR/swift-proxy-server ${SWIFT_CONF_DIR}/proxy-server.conf -v"
 
+    # We also started the storage services, but proxy started last and
+    # will take the longest to start, so by the time it comes up, we're
+    # probably fine.
+    echo "Waiting for swift proxy to start..."
+    if ! wait_for_service $SERVICE_TIMEOUT $SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/info; then
+        die $LINENO "swift proxy did not start"
+    fi
+
     if [[ "$SWIFT_ENABLE_TEMPURLS" == "True" ]]; then
         swift_configure_tempurls
     fi
