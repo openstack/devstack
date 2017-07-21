@@ -88,6 +88,22 @@ else
     export PYTHON=$(which python 2>/dev/null)
 fi
 
+if is_suse; then
+    # novnc has an extraneous dependency on pyOpenSSL, which causes symbol conflicts
+    # in the bundled libssl of python-cryptography. when both are loaded into the same
+    # process, they start hanging or segfaulting.
+    install_package novnc
+    # deinstall the extra but irrelevant dependencies
+    sudo rpm -e --nodeps python-cffi python-cryptography python-pyOpenSSL
+    # reinstall cffi which got overwriten by the package.
+    sudo pip install -I cffi
+    # now reinstall cryptography from source, in order to rebuilt it against the
+    # system libssl rather than the bundled openSSL 1.1, which segfaults when combined
+    # with the system provided (which libpython links against) openSSL 1.0
+    sudo pip install cryptography --no-binary :all:
+fi
+
+
 # Mark end of run
 # ---------------
 
