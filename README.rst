@@ -14,7 +14,7 @@ Goals
 * To provide an environment for the OpenStack CI testing on every commit
   to the projects
 
-Read more at http://docs.openstack.org/developer/devstack
+Read more at https://docs.openstack.org/devstack/latest
 
 IMPORTANT: Be sure to carefully read `stack.sh` and any other scripts you
 execute before you run them, as they install software and will alter your
@@ -92,5 +92,5 @@ DevStack can be extensively configured via the configuration file
 `local.conf`.  It is likely that you will need to provide and modify
 this file if you want anything other than the most basic setup.  Start
 by reading the `configuration guide
-<https://docs.openstack.org/developer/devstack/configuration.html>`_
+<https://docs.openstack.org/devstack/latest/configuration.html>`_
 for details of the configuration file and the many available options.

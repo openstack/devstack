@@ -157,7 +157,7 @@ if is_fedora; then
         # [1] https://bugzilla.redhat.com/show_bug.cgi?id=1099031
         # [2] https://bugs.launchpad.net/neutron/+bug/1455303
         # [3] https://github.com/redhat-openstack/openstack-puppet-modules/blob/master/firewall/manifests/linux/redhat.pp
-        # [4] http://docs.openstack.org/developer/devstack/guides/neutron.html
+        # [4] https://docs.openstack.org/devstack/latest/guides/neutron.html
         if is_package_installed firewalld; then
             sudo systemctl disable firewalld
             # The iptables service files are no longer included by default,
