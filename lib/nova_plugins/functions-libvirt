@@ -73,15 +73,7 @@ function install_libvirt {
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
         # On "KVM for IBM z Systems", kvm does not have its own package
-        if [[ ! ${DISTRO} =~ "kvmibm1" && ! ${DISTRO} =~ "rhel7" ]]; then
-            install_package kvm
-        fi
-
-        if [[ ${DISTRO} =~ "rhel7" ]]; then
-            # This should install the latest qemu-kvm build,
-            # which is called qemu-kvm-ev in centos7
-            # (as the default OS qemu-kvm package is usually rather old,
-            # and should be updated by above)
+        if [[ ! ${DISTRO} =~ "kvmibm1" ]]; then
             install_package qemu-kvm
         fi
 
