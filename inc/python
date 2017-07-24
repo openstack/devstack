@@ -441,7 +441,7 @@ function setup_dev_lib {
 # project_dir: directory of project repo (e.g., /opt/stack/keystone)
 # extras: comma-separated list of optional dependencies to install
 #         (e.g., ldap,memcache).
-#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+#         See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
 # The command is like "pip install <project_dir>[<extras>]"
 function setup_install {
     local project_dir=$1
@@ -455,7 +455,7 @@ function setup_install {
 # project_dir: directory of project repo (e.g., /opt/stack/keystone)
 # extras: comma-separated list of optional dependencies to install
 #         (e.g., ldap,memcache).
-#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+#         See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
 # The command is like "pip install -e <project_dir>[<extras>]"
 function setup_develop {
     local project_dir=$1
@@ -487,7 +487,7 @@ function is_in_projects_txt {
 # flags: pip CLI options/flags
 # extras: comma-separated list of optional dependencies to install
 #         (e.g., ldap,memcache).
-#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+#         See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
 # The command is like "pip install <flags> <project_dir>[<extras>]"
 function _setup_package_with_constraints_edit {
     local project_dir=$1
@@ -523,7 +523,7 @@ function _setup_package_with_constraints_edit {
 # flags: pip CLI options/flags
 # extras: comma-separated list of optional dependencies to install
 #         (e.g., ldap,memcache).
-#         See http://docs.openstack.org/developer/pbr/#extra-requirements
+#         See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
 # The command is like "pip install <flags> <project_dir>[<extras>]"
 function setup_package {
     local project_dir=$1

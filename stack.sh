@@ -1534,7 +1534,7 @@ if [[ "$USE_SYSTEMD" == "True" ]]; then
     echo
     echo "Services are running under systemd unit files."
     echo "For more information see: "
-    echo "https://docs.openstack.org/developer/devstack/systemd.html"
+    echo "https://docs.openstack.org/devstack/latest/systemd.html"
     echo
 fi
 
