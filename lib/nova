@@ -795,6 +795,13 @@ function start_nova_compute {
         fi
         run_process n-cpu "$NOVA_BIN_DIR/nova-compute --config-file $compute_cell_conf"
     fi
+    # NOTE(sdague): with cells v2 all the compute services must be up
+    # and checked into the database before discover_hosts is run. This
+    # happens in all in one installs by accident, because > 30 seconds
+    # happen between here and the script ending. However, in multinode
+    # tests this can very often not be the case. So ensure that the
+    # compute is up before we move on.
+    wait_for_compute 60
 
     export PATH=$old_path
 }
