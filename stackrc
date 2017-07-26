@@ -77,6 +77,14 @@ ENABLE_HTTPD_MOD_WSGI_SERVICES=True
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=osapi_compute,metadata
 
+# CELLSV2_SETUP - how we should configure services with cells v2
+#
+# - superconductor - this is one conductor for the api services, and
+#   one per cell managing the compute services. This is prefered
+# - singleconductor - this is one conductor for the whole deployment,
+#   this is not recommended, and will be removed in the future.
+CELLSV2_SETUP=${CELLSV2_SETUP:-"superconductor"}
+
 # Set the root URL for Horizon
 HORIZON_APACHE_ROOT="/dashboard"
 

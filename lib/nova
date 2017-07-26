@@ -432,7 +432,16 @@ function create_nova_conf {
     # require them running on the host. The ensures that n-cpu doesn't
     # leak a need to use the db in a multinode scenario.
     if is_service_enabled n-api n-cond n-sched; then
-        iniset $NOVA_CONF database connection `database_connection_url nova_cell0`
+        # If we're in multi-tier cells mode, we want our control services pointing
+        # at cell0 instead of cell1 to ensure isolation. If not, we point everything
+        # at the main database like normal.
+        if [[ "$CELLSV2_SETUP" == "singleconductor" ]]; then
+            local db="nova_cell1"
+        else
+            local db="nova_cell0"
+        fi
+
+        iniset $NOVA_CONF database connection `database_connection_url $db`
         iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
     fi
 
@@ -676,14 +685,14 @@ function init_nova {
         # and nova_cell0 databases.
         nova-manage cell_v2 map_cell0 --database_connection `database_connection_url nova_cell0`
 
-        # Migrate nova and nova_cell0 databases.
-        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
-
         # (Re)create nova databases
         for i in $(seq 1 $NOVA_NUM_CELLS); do
             recreate_database nova_cell${i}
             $NOVA_BIN_DIR/nova-manage --config-file $(conductor_conf $i) db sync
         done
+
+        # Migrate nova and nova_cell0 databases.
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
 
         if is_service_enabled n-cell; then
             recreate_database $NOVA_CELLS_DB
@@ -795,7 +804,6 @@ function start_nova_api {
 
 # start_nova_compute() - Start the compute process
 function start_nova_compute {
-    local nomulticellflag="$1"
     # Hack to set the path for rootwrap
     local old_path=$PATH
     export PATH=$NOVA_BIN_DIR:$PATH
@@ -803,17 +811,18 @@ function start_nova_compute {
     if is_service_enabled n-cell; then
         local compute_cell_conf=$NOVA_CELLS_CONF
         # NOTE(danms): Don't setup conductor fleet for cellsv1
-        nomulticellflag='nomulticell'
+        CELLSV2_SETUP="singleconductor"
     else
         local compute_cell_conf=$NOVA_CONF
     fi
 
-    if [ "$nomulticellflag" = 'nomulticell' ]; then
+    if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
         # NOTE(danms): Grenade doesn't setup multi-cell rabbit, so
         # skip these bits and use the normal config.
         NOVA_CPU_CONF=$compute_cell_conf
         echo "Skipping multi-cell conductor fleet setup"
     else
+        # "${CELLSV2_SETUP}" is "superconductor"
         cp $compute_cell_conf $NOVA_CPU_CONF
         # FIXME(danms): Should this be configurable?
         iniset $NOVA_CPU_CONF workarounds disable_group_policy_check_upcall True
