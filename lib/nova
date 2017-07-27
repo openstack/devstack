@@ -51,6 +51,7 @@ NOVA_AUTH_CACHE_DIR=${NOVA_AUTH_CACHE_DIR:-/var/cache/nova}
 NOVA_CONF_DIR=/etc/nova
 NOVA_CONF=$NOVA_CONF_DIR/nova.conf
 NOVA_CELLS_CONF=$NOVA_CONF_DIR/nova-cells.conf
+NOVA_COND_CONF=$NOVA_CONF_DIR/nova.conf
 NOVA_CPU_CONF=$NOVA_CONF_DIR/nova-cpu.conf
 NOVA_FAKE_CONF=$NOVA_CONF_DIR/nova-fake.conf
 NOVA_CELLS_DB=${NOVA_CELLS_DB:-nova_cell}
@@ -588,8 +589,13 @@ function create_nova_conf {
             iniset $conf database connection `database_connection_url nova_cell${i}`
             iniset $conf conductor workers "$API_WORKERS"
             iniset $conf DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
-            rpc_backend_add_vhost $vhost
-            iniset_rpc_backend nova $conf DEFAULT $vhost
+            # if we have a singleconductor, we don't have per host message queues.
+            if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
+                iniset_rpc_backend nova $conf DEFAULT
+            else
+                rpc_backend_add_vhost $vhost
+                iniset_rpc_backend nova $conf DEFAULT $vhost
+            fi
         done
     fi
 }
@@ -631,6 +637,9 @@ function init_nova_cells {
             iniset $NOVA_CONF DEFAULT enabled_apis $NOVA_ENABLED_APIS
             iniset $NOVA_CELLS_CONF DEFAULT enabled_apis metadata
         fi
+
+        # Cells v1 conductor should be the nova-cells.conf
+        NOVA_COND_CONF=$NOVA_CELLS_CONF
 
         time_start "dbsync"
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF db sync
@@ -802,6 +811,16 @@ function start_nova_api {
     export PATH=$old_path
 }
 
+# Detect and setup conditions under which singleconductor setup is
+# needed. Notably cellsv1.
+function _set_singleconductor {
+    # NOTE(danms): Don't setup conductor fleet for cellsv1
+    if is_service_enabled n-cell; then
+        CELLSV2_SETUP="singleconductor"
+    fi
+}
+
+
 # start_nova_compute() - Start the compute process
 function start_nova_compute {
     # Hack to set the path for rootwrap
@@ -810,8 +829,6 @@ function start_nova_compute {
 
     if is_service_enabled n-cell; then
         local compute_cell_conf=$NOVA_CELLS_CONF
-        # NOTE(danms): Don't setup conductor fleet for cellsv1
-        CELLSV2_SETUP="singleconductor"
     else
         local compute_cell_conf=$NOVA_CONF
     fi
@@ -915,15 +932,15 @@ function enable_nova_fleet {
 }
 
 function start_nova_conductor {
-    if is_service_enabled n-cell; then
+    if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
         echo "Starting nova-conductor in a cellsv1-compatible way"
-        run_process n-cond "$NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CELLS_CONF"
+        run_process n-cond "$NOVA_BIN_DIR/nova-conductor --config-file $NOVA_COND_CONF"
         return
     fi
 
     enable_nova_fleet
     if is_service_enabled n-super-cond; then
-        run_process n-super-cond "$NOVA_BIN_DIR/nova-conductor --config-file $NOVA_CONF"
+        run_process n-super-cond "$NOVA_BIN_DIR/nova-conductor --config-file $NOVA_COND_CONF"
     fi
     for i in $(seq 1 $NOVA_NUM_CELLS); do
         if is_service_enabled n-cond-cell${i}; then
@@ -935,9 +952,16 @@ function start_nova_conductor {
 }
 
 function start_nova {
+    # this catches the cells v1 case early
+    _set_singleconductor
     start_nova_rest
     start_nova_conductor
     start_nova_compute
+    if is_service_enabled n-api; then
+        # dump the cell mapping to ensure life is good
+        echo "Dumping cells_v2 mapping"
+        nova-manage cell_v2 list_cells --verbose
+    fi
 }
 
 function stop_nova_compute {
