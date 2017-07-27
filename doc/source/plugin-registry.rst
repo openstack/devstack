@@ -92,6 +92,7 @@ mogan-ui                               `git://git.openstack.org/openstack/mogan-
 monasca-analytics                      `git://git.openstack.org/openstack/monasca-analytics <https://git.openstack.org/cgit/openstack/monasca-analytics>`__
 monasca-api                            `git://git.openstack.org/openstack/monasca-api <https://git.openstack.org/cgit/openstack/monasca-api>`__
 monasca-ceilometer                     `git://git.openstack.org/openstack/monasca-ceilometer <https://git.openstack.org/cgit/openstack/monasca-ceilometer>`__
+monasca-events-api                     `git://git.openstack.org/openstack/monasca-events-api <https://git.openstack.org/cgit/openstack/monasca-events-api>`__
 monasca-log-api                        `git://git.openstack.org/openstack/monasca-log-api <https://git.openstack.org/cgit/openstack/monasca-log-api>`__
 monasca-transform                      `git://git.openstack.org/openstack/monasca-transform <https://git.openstack.org/cgit/openstack/monasca-transform>`__
 murano                                 `git://git.openstack.org/openstack/murano <https://git.openstack.org/cgit/openstack/murano>`__
