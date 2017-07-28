@@ -197,6 +197,22 @@ A stream of activity ensues. When complete you will see a summary of
 to poke at your shiny new OpenStack. The most recent log file is
 available in ``stack.sh.log``.
 
+Starting in the Ocata release, Nova requires a `Cells v2`_ deployment. Compute
+node services must be mapped to a cell before they can be used.
+
+After each compute node is stacked, verify it shows up in the
+``nova service-list --binary nova-compute`` output. The compute service is
+registered in the cell database asynchronously so this may require polling.
+
+Once the compute node services shows up, run the ``./tools/discover_hosts.sh``
+script from the control node to map compute hosts to the single cell.
+
+The compute service running on the primary control node will be
+discovered automatically when the control node is stacked so this really
+only needs to be performed for subnodes.
+
+.. _Cells v2: https://docs.openstack.org/nova/latest/user/cells.html
+
 Cleaning Up After DevStack
 --------------------------
 
