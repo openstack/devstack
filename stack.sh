@@ -1433,6 +1433,13 @@ fi
 # Sanity checks
 # =============
 
+# Check that computes are all ready
+#
+# TODO(sdague): there should be some generic phase here.
+if is_service_enabled n-cpu; then
+    is_nova_ready
+fi
+
 # Check the status of running services
 service_check
 
