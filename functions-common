@@ -1779,6 +1779,9 @@ function enable_plugin {
     local name=$1
     local url=$2
     local branch=${3:-master}
+    if [[ ",${DEVSTACK_PLUGINS}," =~ ,${name}, ]]; then
+        die $LINENO "Plugin attempted to be enabled twice: ${name} ${url} ${branch}"
+    fi
     DEVSTACK_PLUGINS+=",$name"
     GITREPO[$name]=$url
     GITDIR[$name]=$DEST/$name
