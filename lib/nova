@@ -884,6 +884,28 @@ function start_nova_rest {
     export PATH=$old_path
 }
 
+function is_nova_ready {
+    # NOTE(sdague): with cells v2 all the compute services must be up
+    # and checked into the database before discover_hosts is run. This
+    # happens in all in one installs by accident, because > 30 seconds
+    # happen between here and the script ending. However, in multinode
+    # tests this can very often not be the case. So ensure that the
+    # compute is up before we move on.
+    if is_service_enabled n-cell; then
+        # cells v1 can't complete the check below because it munges
+        # hostnames with cell information (grumble grumble).
+        return
+    fi
+    # TODO(sdague): honestly, this probably should be a plug point for
+    # an external system.
+    if [[ "$VIRT_DRIVER" == 'xenserver' ]]; then
+        # xenserver encodes information in the hostname of the compute
+        # because of the dom0/domU split. Just ignore for now.
+        return
+    fi
+    wait_for_compute 60
+}
+
 function start_nova {
     start_nova_rest
     start_nova_compute

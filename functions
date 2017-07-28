@@ -402,6 +402,26 @@ EOF
     return $rval
 }
 
+function wait_for_compute {
+    local timeout=$1
+    local rval=0
+    time_start "wait_for_service"
+    timeout $timeout bash -x <<EOF || rval=$?
+        ID=""
+        while [[ "\$ID" == "" ]]; do
+            sleep 1
+            ID=\$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" compute service list --host `hostname` --service nova-compute -c ID -f value)
+        done
+EOF
+    time_stop "wait_for_service"
+    # Figure out what's happening on platforms where this doesn't work
+    if [[ "$rval" != 0 ]]; then
+        echo "Didn't find service registered by hostname after $timeout seconds"
+        openstack --os-cloud devstack-admin --os-region "$REGION_NAME" compute service list
+    fi
+    return $rval
+}
+
 
 # ping check
 # Uses globals ``ENABLED_SERVICES``, ``TOP_DIR``, ``MULTI_HOST``, ``PRIVATE_NETWORK``
