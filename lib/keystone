@@ -219,17 +219,10 @@ function configure_keystone {
     fi
 
     # Rewrite stock ``keystone.conf``
-
     if is_service_enabled ldap; then
-        #Set all needed ldap values
-        iniset $KEYSTONE_CONF ldap password $LDAP_PASSWORD
-        iniset $KEYSTONE_CONF ldap user $LDAP_MANAGER_DN
-        iniset $KEYSTONE_CONF ldap suffix $LDAP_BASE_DN
-        iniset $KEYSTONE_CONF ldap user_tree_dn "ou=Users,$LDAP_BASE_DN"
-        iniset $KEYSTONE_CONF DEFAULT member_role_id "9fe2ff9ee4384b1894a90878d3e92bab"
-        iniset $KEYSTONE_CONF DEFAULT member_role_name "_member_"
+        iniset $KEYSTONE_CONF identity domain_config_dir "$KEYSTONE_CONF_DIR/domains"
+        iniset $KEYSTONE_CONF identity domain_specific_drivers_enabled "True"
     fi
-
     iniset $KEYSTONE_CONF identity driver "$KEYSTONE_IDENTITY_BACKEND"
     iniset $KEYSTONE_CONF identity password_hash_rounds $KEYSTONE_PASSWORD_HASH_ROUNDS
     iniset $KEYSTONE_CONF assignment driver "$KEYSTONE_ASSIGNMENT_BACKEND"
@@ -410,6 +403,10 @@ function create_keystone_accounts {
     get_or_add_group_project_role $member_role $non_admin_group $alt_demo_project
     get_or_add_group_project_role $another_role $non_admin_group $alt_demo_project
     get_or_add_group_project_role $admin_role $admin_group $admin_project
+
+    if is_service_enabled ldap; then
+        create_ldap_domain
+    fi
 }
 
 # Create a user that is capable of verifying keystone tokens for use with auth_token middleware.
@@ -613,6 +610,63 @@ function bootstrap_keystone {
         --bootstrap-region-id "$REGION_NAME" \
         --bootstrap-admin-url "$KEYSTONE_AUTH_URI" \
         --bootstrap-public-url "$KEYSTONE_SERVICE_URI"
+}
+
+# create_ldap_domain() - Create domain file and initialize domain with a user
+function create_ldap_domain {
+    # Creates domain Users
+    openstack --os-identity-api-version=3 domain create --description "LDAP domain" Users
+
+    # Create domain file inside etc/keystone/domains
+    KEYSTONE_LDAP_DOMAIN_FILE=$KEYSTONE_CONF_DIR/domains/keystone.Users.conf
+    mkdir -p "$KEYSTONE_CONF_DIR/domains"
+    touch "$KEYSTONE_LDAP_DOMAIN_FILE"
+
+    # Set identity driver 'ldap'
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE identity driver "ldap"
+
+    # LDAP settings for Users domain
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_allow_delete "False"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_allow_update "False"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_allow_create "False"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_allow_delete "False"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_allow_update "False"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_allow_create "False"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_tree_dn "ou=Users,$LDAP_BASE_DN"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_objectclass "inetOrgPerson"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_name_attribute "cn"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_mail_attribute "mail"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_id_attribute "uid"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user "cn=Manager,dc=openstack,dc=org"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap url "ldap://localhost"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap suffix $LDAP_BASE_DN
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap password $LDAP_PASSWORD
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_tree_dn "ou=Groups,$LDAP_BASE_DN"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_objectclass "groupOfNames"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_name_attribute "cn"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_id_attribute "cn"
+
+    # Restart apache and identity services to associate domain and conf file
+    sudo service apache2 reload
+    sudo systemctl restart devstack@keystone
+
+    # Create LDAP user.ldif and add user to LDAP backend
+    local tmp_ldap_dir
+    tmp_ldap_dir=$(mktemp -d -t ldap.$$.XXXXXXXXXX)
+
+    _ldap_varsubst $FILES/ldap/user.ldif.in $slappass >$tmp_ldap_dir/user.ldif
+    sudo ldapadd -x -w $LDAP_PASSWORD -D "$LDAP_MANAGER_DN" -H $LDAP_URL -c -f $tmp_ldap_dir/user.ldif
+    rm -rf $tmp_ldap_dir
+
+    local admin_project
+    admin_project=$(get_or_create_project "admin" default)
+    local ldap_user
+    ldap_user=$(openstack user show --domain=Users demo -f value -c id)
+    local admin_role="admin"
+    get_or_create_role $admin_role
+
+    # Grant demo LDAP user access to project and role
+    get_or_add_user_project_role $admin_role $ldap_user $admin_project
 }
 
 # Restore xtrace
