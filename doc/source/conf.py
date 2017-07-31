@@ -26,7 +26,13 @@ import os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = [ 'oslosphinx', 'sphinxcontrib.blockdiag', 'sphinxcontrib.nwdiag' ]
+extensions = [ 'openstackdocstheme', 'sphinxcontrib.blockdiag', 'sphinxcontrib.nwdiag' ]
+
+# openstackdocstheme options
+repository_name = 'openstack-dev/devstack'
+bug_project = 'devstack'
+bug_tag = ''
+html_last_updated_fmt = '%Y-%m-%d %H:%M'
 
 todo_include_todos = True
 
@@ -87,7 +93,7 @@ man_pages = []
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'nature'
+html_theme = 'openstackdocs'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
