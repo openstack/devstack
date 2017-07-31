@@ -190,6 +190,9 @@ if [[ ! -r $TOP_DIR/stackrc ]]; then
 fi
 source $TOP_DIR/stackrc
 
+# write /etc/devstack-version
+write_devstack_version
+
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
 if [[ ! ${DISTRO} =~ (trusty|xenial|yakkety|7.0|wheezy|sid|testing|jessie|f23|f24|f25|rhel7|kvmibm1) ]]; then
@@ -1453,6 +1456,10 @@ fi
 if [[ -n "$DEPRECATED_TEXT" ]]; then
     echo_summary "WARNING: $DEPRECATED_TEXT"
 fi
+
+# Useful info on current state
+cat /etc/devstack-version
+echo
 
 # Indicate how long this took to run (bash maintained variable ``SECONDS``)
 echo_summary "stack.sh completed in $SECONDS seconds."
