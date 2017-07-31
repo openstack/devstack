@@ -88,7 +88,7 @@ function tracker {
             # list processes that lock memory from swap
             if [[ $unevictable -ne $unevictable_point ]]; then
                 unevictable_point=$unevictable
-                ${PYTHON} ./tools/mlock_report.py
+                ${PYTHON} $(dirname $0)/mlock_report.py
             fi
 
             echo "]]]"
