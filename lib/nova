@@ -440,6 +440,9 @@ function create_nova_conf {
             local db="nova_cell1"
         else
             local db="nova_cell0"
+            # When in superconductor mode, nova-compute can't send instance
+            # info updates to the scheduler, so just disable it.
+            iniset $NOVA_CONF filter_scheduler track_instance_changes False
         fi
 
         iniset $NOVA_CONF database connection `database_connection_url $db`
@@ -843,6 +846,9 @@ function start_nova_compute {
         cp $compute_cell_conf $NOVA_CPU_CONF
         # FIXME(danms): Should this be configurable?
         iniset $NOVA_CPU_CONF workarounds disable_group_policy_check_upcall True
+        # Since the nova-compute service cannot reach nova-scheduler over
+        # RPC, we also disable track_instance_changes.
+        iniset $NOVA_CPU_CONF filter_scheduler track_instance_changes False
         iniset_rpc_backend nova $NOVA_CPU_CONF DEFAULT "nova_cell${NOVA_CPU_CELL}"
     fi
 
