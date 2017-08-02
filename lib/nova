@@ -538,7 +538,6 @@ function create_nova_conf {
     iniset $NOVA_CONF oslo_messaging_notifications driver "messagingv2"
     iniset $NOVA_CONF oslo_messaging_notifications transport_url $(get_transport_url)
     iniset_rpc_backend nova $NOVA_CONF
-    iniset $NOVA_CONF glance api_servers "$GLANCE_URL"
 
     iniset $NOVA_CONF DEFAULT osapi_compute_workers "$API_WORKERS"
     iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
