@@ -478,7 +478,7 @@ function start_cinder {
     local service_port=$CINDER_SERVICE_PORT
     local service_protocol=$CINDER_SERVICE_PROTOCOL
     local cinder_url
-    if is_service_enabled tls-proxy && ["$CINDER_USE_MOD_WSGI" == "False"]; then
+    if is_service_enabled tls-proxy && [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
         service_port=$CINDER_SERVICE_PORT_INT
         service_protocol="http"
     fi
