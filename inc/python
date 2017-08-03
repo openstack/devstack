@@ -346,6 +346,9 @@ function pip_install {
 }
 
 function pip_uninstall {
+    # Skip uninstall if offline
+    [[ "${OFFLINE}" = "True" ]] && return
+
     local name=$1
     if [[ -n ${PIP_VIRTUAL_ENV:=} && -d ${PIP_VIRTUAL_ENV} ]]; then
         local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
