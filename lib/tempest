@@ -297,6 +297,12 @@ function configure_tempest {
     # Newton and Ocata. This option can be removed after Mitaka is end of life.
     iniset $TEMPEST_CONFIG identity-feature-enabled forbid_global_implied_dsr True
 
+    # When LDAP is enabled domain specific drivers are also enabled and the users
+    # and groups identity tests must adapt to this scenario
+    if is_service_enabled ldap; then
+        iniset $TEMPEST_CONFIG identity-feature-enabled domain_specific_drivers True
+    fi
+
     # Image
     # We want to be able to override this variable in the gate to avoid
     # doing an external HTTP fetch for this test.
