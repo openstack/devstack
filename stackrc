@@ -778,6 +778,9 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 # Service graceful shutdown timeout
 SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT=${SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT:-5}
 
+# Service graceful shutdown timeout
+WORKER_TIMEOUT=${WORKER_TIMEOUT:-90}
+
 # Support alternative yum -- in future Fedora 'dnf' will become the
 # only supported installer, but for now 'yum' and 'dnf' are both
 # available in parallel with compatible CLIs.  Allow manual switching

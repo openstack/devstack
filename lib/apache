@@ -260,10 +260,15 @@ function write_uwsgi_config {
     # Set die-on-term & exit-on-reload so that uwsgi shuts down
     iniset "$file" uwsgi die-on-term true
     iniset "$file" uwsgi exit-on-reload true
+    # Set worker-reload-mercy so that worker will not exit till the time
+    # configured after graceful shutdown
+    iniset "$file" uwsgi worker-reload-mercy $WORKER_TIMEOUT
     iniset "$file" uwsgi enable-threads true
     iniset "$file" uwsgi plugins python
     # uwsgi recommends this to prevent thundering herd on accept.
     iniset "$file" uwsgi thunder-lock true
+    # Set hook to trigger graceful shutdown on SIGTERM
+    iniset "$file" uwsgi hook-master-start "unix_signal:15 gracefully_kill_them_all"
     # Override the default size for headers from the 4k default.
     iniset "$file" uwsgi buffer-size 65535
     # Make sure the client doesn't try to re-use the connection.
@@ -316,6 +321,11 @@ function write_local_uwsgi_http_config {
     iniset "$file" uwsgi plugins python
     # uwsgi recommends this to prevent thundering herd on accept.
     iniset "$file" uwsgi thunder-lock true
+    # Set hook to trigger graceful shutdown on SIGTERM
+    iniset "$file" uwsgi hook-master-start "unix_signal:15 gracefully_kill_them_all"
+    # Set worker-reload-mercy so that worker will not exit till the time
+    # configured after graceful shutdown
+    iniset "$file" uwsgi worker-reload-mercy $WORKER_TIMEOUT
     # Override the default size for headers from the 4k default.
     iniset "$file" uwsgi buffer-size 65535
     # Make sure the client doesn't try to re-use the connection.

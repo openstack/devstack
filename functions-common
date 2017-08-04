@@ -1451,6 +1451,8 @@ function write_user_unit_file {
     iniset -sudo $unitfile "Unit" "Description" "Devstack $service"
     iniset -sudo $unitfile "Service" "User" "$user"
     iniset -sudo $unitfile "Service" "ExecStart" "$command"
+    iniset -sudo $unitfile "Service" "KillMode" "process"
+    iniset -sudo $unitfile "Service" "TimeoutStopSec" "infinity"
     if [[ -n "$group" ]]; then
         iniset -sudo $unitfile "Service" "Group" "$group"
     fi
@@ -1473,7 +1475,7 @@ function write_uwsgi_user_unit_file {
     iniset -sudo $unitfile "Service" "User" "$user"
     iniset -sudo $unitfile "Service" "ExecStart" "$command"
     iniset -sudo $unitfile "Service" "Type" "notify"
-    iniset -sudo $unitfile "Service" "KillSignal" "SIGQUIT"
+    iniset -sudo $unitfile "Service" "KillMode" "process"
     iniset -sudo $unitfile "Service" "Restart" "always"
     iniset -sudo $unitfile "Service" "NotifyAccess" "all"
     iniset -sudo $unitfile "Service" "RestartForceExitStatus" "100"
