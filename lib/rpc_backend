@@ -114,7 +114,7 @@ function rpc_backend_add_vhost {
     fi
 }
 
-# builds transport url string
+# Returns the address of the RPC backend in URL format.
 function get_transport_url {
     local virtual_host=$1
     if is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
@@ -122,8 +122,9 @@ function get_transport_url {
     fi
 }
 
-# Repeat the definition, in case get_transport_url is overriden for RPC purpose.
-# get_notification_url can then be used to talk to rabbit for notifications.
+# Returns the address of the Notification backend in URL format.  This
+# should be used to set the transport_url option in the
+# oslo_messaging_notifications group.
 function get_notification_url {
     local virtual_host=$1
     if is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
