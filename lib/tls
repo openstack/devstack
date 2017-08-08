@@ -533,10 +533,9 @@ $listen_string
         ProxyPassReverse http://$b_host:$b_port/
     </Location>
     ErrorLog $APACHE_LOG_DIR/tls-proxy_error.log
-    ErrorLogFormat "[%{u}t] [%-m:%l] [pid %P:tid %T] %7F: %E: [client\ %a] [frontend\ %A] %M% ,\ referer\ %{Referer}i"
+    ErrorLogFormat "%{cu}t [%-m:%l] [pid %P:tid %T] %7F: %E: [client\ %a] [frontend\ %A] %M% ,\ referer\ %{Referer}i"
     LogLevel info
-    CustomLog $APACHE_LOG_DIR/tls-proxy_access.log common
-    LogFormat "%v %h %l %u %t \"%r\" %>s %b"
+    CustomLog $APACHE_LOG_DIR/tls-proxy_access.log "%{%Y-%m-%d}t %{%T}t.%{msec_frac}t [%l] %a \"%r\" %>s %b"
 </VirtualHost>
 EOF
     if is_suse ; then
