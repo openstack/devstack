@@ -350,7 +350,7 @@ function create_keystone_accounts {
     # The Member role is used by Horizon and Swift so we need to keep it:
     local member_role="member"
 
-    # Captial Member role is legacy hard coded in Horizon / Swift
+    # Capital Member role is legacy hard coded in Horizon / Swift
     # configs. Keep it around.
     get_or_create_role "Member"
 

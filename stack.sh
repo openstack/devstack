@@ -30,7 +30,7 @@ unset GREP_OPTIONS
 # NOTE(sdague): why do we explicitly set locale when running stack.sh?
 #
 # Devstack is written in bash, and many functions used throughout
-# devstack process text comming off a command (like the ip command)
+# devstack process text coming off a command (like the ip command)
 # and do transforms using grep, sed, cut, awk on the strings that are
 # returned. Many of these programs are interationalized, which is
 # great for end users, but means that the strings that devstack

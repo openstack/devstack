@@ -80,7 +80,7 @@ NOVA_ENABLED_APIS=osapi_compute,metadata
 # CELLSV2_SETUP - how we should configure services with cells v2
 #
 # - superconductor - this is one conductor for the api services, and
-#   one per cell managing the compute services. This is prefered
+#   one per cell managing the compute services. This is preferred
 # - singleconductor - this is one conductor for the whole deployment,
 #   this is not recommended, and will be removed in the future.
 CELLSV2_SETUP=${CELLSV2_SETUP:-"superconductor"}
@@ -117,7 +117,7 @@ fi
 # Whether or not to enable Kernel Samepage Merging (KSM) if available.
 # This allows programs that mark their memory as mergeable to share
 # memory pages if they are identical. This is particularly useful with
-# libvirt backends. This reduces memory useage at the cost of CPU overhead
+# libvirt backends. This reduces memory usage at the cost of CPU overhead
 # to scan memory. We default to enabling it because we tend to be more
 # memory constrained than CPU bound.
 ENABLE_KSM=$(trueorfalse True ENABLE_KSM)
