@@ -277,7 +277,6 @@ function write_uwsgi_config {
     else
         local apache_conf=""
         apache_conf=$(apache_site_config_for $name)
-        echo "SetEnv proxy-sendcl 1" | sudo tee $apache_conf
         iniset "$file" uwsgi socket "$socket"
         iniset "$file" uwsgi chmod-socket 666
         echo "ProxyPass \"${url}\" \"unix:${socket}|uwsgi://uwsgi-uds-${name}/\" retry=0 " | sudo tee -a $apache_conf
@@ -335,6 +334,7 @@ function write_local_uwsgi_http_config {
     local apache_conf=""
     apache_conf=$(apache_site_config_for $name)
     echo "KeepAlive Off" | sudo tee $apache_conf
+    echo "SetEnv proxy-sendchunked 1" | sudo tee -a $apache_conf
     echo "ProxyPass \"${url}\" \"http://127.0.0.1:$port\" retry=0 " | sudo tee -a $apache_conf
     enable_apache_site $name
     restart_apache_server
