@@ -290,35 +290,35 @@ DEVSTACK_SERIES="pike"
 
 # block storage service
 CINDER_REPO=${CINDER_REPO:-${GIT_BASE}/openstack/cinder.git}
-CINDER_BRANCH=${CINDER_BRANCH:-master}
+CINDER_BRANCH=${CINDER_BRANCH:-stable/pike}
 
 # image catalog service
 GLANCE_REPO=${GLANCE_REPO:-${GIT_BASE}/openstack/glance.git}
-GLANCE_BRANCH=${GLANCE_BRANCH:-master}
+GLANCE_BRANCH=${GLANCE_BRANCH:-stable/pike}
 
 # django powered web control panel for openstack
 HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
-HORIZON_BRANCH=${HORIZON_BRANCH:-master}
+HORIZON_BRANCH=${HORIZON_BRANCH:-stable/pike}
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
-KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-master}
+KEYSTONE_BRANCH=${KEYSTONE_BRANCH:-stable/pike}
 
 # neutron service
 NEUTRON_REPO=${NEUTRON_REPO:-${GIT_BASE}/openstack/neutron.git}
-NEUTRON_BRANCH=${NEUTRON_BRANCH:-master}
+NEUTRON_BRANCH=${NEUTRON_BRANCH:-stable/pike}
 
 # neutron fwaas service
 NEUTRON_FWAAS_REPO=${NEUTRON_FWAAS_REPO:-${GIT_BASE}/openstack/neutron-fwaas.git}
-NEUTRON_FWAAS_BRANCH=${NEUTRON_FWAAS_BRANCH:-master}
+NEUTRON_FWAAS_BRANCH=${NEUTRON_FWAAS_BRANCH:-stable/pike}
 
 # compute service
 NOVA_REPO=${NOVA_REPO:-${GIT_BASE}/openstack/nova.git}
-NOVA_BRANCH=${NOVA_BRANCH:-master}
+NOVA_BRANCH=${NOVA_BRANCH:-stable/pike}
 
 # object storage service
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
-SWIFT_BRANCH=${SWIFT_BRANCH:-master}
+SWIFT_BRANCH=${SWIFT_BRANCH:-stable/pike}
 
 ##############
 #
@@ -328,7 +328,7 @@ SWIFT_BRANCH=${SWIFT_BRANCH:-master}
 
 # consolidated openstack requirements
 REQUIREMENTS_REPO=${REQUIREMENTS_REPO:-${GIT_BASE}/openstack/requirements.git}
-REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-master}
+REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-stable/pike}
 
 # Tempest test suite
 TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
@@ -344,50 +344,50 @@ TEMPEST_BRANCH=${TEMPEST_BRANCH:-master}
 
 # volume client
 GITREPO["python-cinderclient"]=${CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-cinderclient.git}
-GITBRANCH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-master}
+GITBRANCH["python-cinderclient"]=${CINDERCLIENT_BRANCH:-stable/pike}
 
 # os-brick client for local volume attachement
 GITREPO["python-brick-cinderclient-ext"]=${BRICK_CINDERCLIENT_REPO:-${GIT_BASE}/openstack/python-brick-cinderclient-ext.git}
-GITBRANCH["python-brick-cinderclient-ext"]=${BRICK_CINDERCLIENT_BRANCH:-master}
+GITBRANCH["python-brick-cinderclient-ext"]=${BRICK_CINDERCLIENT_BRANCH:-stable/pike}
 
 # python barbican client library
 GITREPO["python-barbicanclient"]=${BARBICANCLIENT_REPO:-${GIT_BASE}/openstack/python-barbicanclient.git}
-GITBRANCH["python-barbicanclient"]=${BARBICANCLIENT_BRANCH:-master}
+GITBRANCH["python-barbicanclient"]=${BARBICANCLIENT_BRANCH:-stable/pike}
 GITDIR["python-barbicanclient"]=$DEST/python-barbicanclient
 
 # python glance client library
 GITREPO["python-glanceclient"]=${GLANCECLIENT_REPO:-${GIT_BASE}/openstack/python-glanceclient.git}
-GITBRANCH["python-glanceclient"]=${GLANCECLIENT_BRANCH:-master}
+GITBRANCH["python-glanceclient"]=${GLANCECLIENT_BRANCH:-stable/pike}
 
 # ironic client
 GITREPO["python-ironicclient"]=${IRONICCLIENT_REPO:-${GIT_BASE}/openstack/python-ironicclient.git}
-GITBRANCH["python-ironicclient"]=${IRONICCLIENT_BRANCH:-master}
+GITBRANCH["python-ironicclient"]=${IRONICCLIENT_BRANCH:-stable/pike}
 # ironic plugin is out of tree, but nova uses it. set GITDIR here.
 GITDIR["python-ironicclient"]=$DEST/python-ironicclient
 
 # the base authentication plugins that clients use to authenticate
 GITREPO["keystoneauth"]=${KEYSTONEAUTH_REPO:-${GIT_BASE}/openstack/keystoneauth.git}
-GITBRANCH["keystoneauth"]=${KEYSTONEAUTH_BRANCH:-master}
+GITBRANCH["keystoneauth"]=${KEYSTONEAUTH_BRANCH:-stable/pike}
 
 # python keystone client library to nova that horizon uses
 GITREPO["python-keystoneclient"]=${KEYSTONECLIENT_REPO:-${GIT_BASE}/openstack/python-keystoneclient.git}
-GITBRANCH["python-keystoneclient"]=${KEYSTONECLIENT_BRANCH:-master}
+GITBRANCH["python-keystoneclient"]=${KEYSTONECLIENT_BRANCH:-stable/pike}
 
 # neutron client
 GITREPO["python-neutronclient"]=${NEUTRONCLIENT_REPO:-${GIT_BASE}/openstack/python-neutronclient.git}
-GITBRANCH["python-neutronclient"]=${NEUTRONCLIENT_BRANCH:-master}
+GITBRANCH["python-neutronclient"]=${NEUTRONCLIENT_BRANCH:-stable/pike}
 
 # python client library to nova that horizon (and others) use
 GITREPO["python-novaclient"]=${NOVACLIENT_REPO:-${GIT_BASE}/openstack/python-novaclient.git}
-GITBRANCH["python-novaclient"]=${NOVACLIENT_BRANCH:-master}
+GITBRANCH["python-novaclient"]=${NOVACLIENT_BRANCH:-stable/pike}
 
 # python swift client library
 GITREPO["python-swiftclient"]=${SWIFTCLIENT_REPO:-${GIT_BASE}/openstack/python-swiftclient.git}
-GITBRANCH["python-swiftclient"]=${SWIFTCLIENT_BRANCH:-master}
+GITBRANCH["python-swiftclient"]=${SWIFTCLIENT_BRANCH:-stable/pike}
 
 # consolidated openstack python client
 GITREPO["python-openstackclient"]=${OPENSTACKCLIENT_REPO:-${GIT_BASE}/openstack/python-openstackclient.git}
-GITBRANCH["python-openstackclient"]=${OPENSTACKCLIENT_BRANCH:-master}
+GITBRANCH["python-openstackclient"]=${OPENSTACKCLIENT_BRANCH:-stable/pike}
 # this doesn't exist in a lib file, so set it here
 GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 
@@ -401,115 +401,115 @@ GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 
 # castellan key manager interface
 GITREPO["castellan"]=${CASTELLAN_REPO:-${GIT_BASE}/openstack/castellan.git}
-GITBRANCH["castellan"]=${CASTELLAN_BRANCH:-master}
+GITBRANCH["castellan"]=${CASTELLAN_BRANCH:-stable/pike}
 
 # cliff command line framework
 GITREPO["cliff"]=${CLIFF_REPO:-${GIT_BASE}/openstack/cliff.git}
-GITBRANCH["cliff"]=${CLIFF_BRANCH:-master}
+GITBRANCH["cliff"]=${CLIFF_BRANCH:-stable/pike}
 
 # async framework/helpers
 GITREPO["futurist"]=${FUTURIST_REPO:-${GIT_BASE}/openstack/futurist.git}
-GITBRANCH["futurist"]=${FUTURIST_BRANCH:-master}
+GITBRANCH["futurist"]=${FUTURIST_BRANCH:-stable/pike}
 
 # debtcollector deprecation framework/helpers
 GITREPO["debtcollector"]=${DEBTCOLLECTOR_REPO:-${GIT_BASE}/openstack/debtcollector.git}
-GITBRANCH["debtcollector"]=${DEBTCOLLECTOR_BRANCH:-master}
+GITBRANCH["debtcollector"]=${DEBTCOLLECTOR_BRANCH:-stable/pike}
 
 # helpful state machines
 GITREPO["automaton"]=${AUTOMATON_REPO:-${GIT_BASE}/openstack/automaton.git}
-GITBRANCH["automaton"]=${AUTOMATON_BRANCH:-master}
+GITBRANCH["automaton"]=${AUTOMATON_BRANCH:-stable/pike}
 
 # oslo.cache
 GITREPO["oslo.cache"]=${OSLOCACHE_REPO:-${GIT_BASE}/openstack/oslo.cache.git}
-GITBRANCH["oslo.cache"]=${OSLOCACHE_BRANCH:-master}
+GITBRANCH["oslo.cache"]=${OSLOCACHE_BRANCH:-stable/pike}
 
 # oslo.concurrency
 GITREPO["oslo.concurrency"]=${OSLOCON_REPO:-${GIT_BASE}/openstack/oslo.concurrency.git}
-GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-master}
+GITBRANCH["oslo.concurrency"]=${OSLOCON_BRANCH:-stable/pike}
 
 # oslo.config
 GITREPO["oslo.config"]=${OSLOCFG_REPO:-${GIT_BASE}/openstack/oslo.config.git}
-GITBRANCH["oslo.config"]=${OSLOCFG_BRANCH:-master}
+GITBRANCH["oslo.config"]=${OSLOCFG_BRANCH:-stable/pike}
 
 # oslo.context
 GITREPO["oslo.context"]=${OSLOCTX_REPO:-${GIT_BASE}/openstack/oslo.context.git}
-GITBRANCH["oslo.context"]=${OSLOCTX_BRANCH:-master}
+GITBRANCH["oslo.context"]=${OSLOCTX_BRANCH:-stable/pike}
 
 # oslo.db
 GITREPO["oslo.db"]=${OSLODB_REPO:-${GIT_BASE}/openstack/oslo.db.git}
-GITBRANCH["oslo.db"]=${OSLODB_BRANCH:-master}
+GITBRANCH["oslo.db"]=${OSLODB_BRANCH:-stable/pike}
 
 # oslo.i18n
 GITREPO["oslo.i18n"]=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
-GITBRANCH["oslo.i18n"]=${OSLOI18N_BRANCH:-master}
+GITBRANCH["oslo.i18n"]=${OSLOI18N_BRANCH:-stable/pike}
 
 # oslo.log
 GITREPO["oslo.log"]=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
-GITBRANCH["oslo.log"]=${OSLOLOG_BRANCH:-master}
+GITBRANCH["oslo.log"]=${OSLOLOG_BRANCH:-stable/pike}
 
 # oslo.messaging
 GITREPO["oslo.messaging"]=${OSLOMSG_REPO:-${GIT_BASE}/openstack/oslo.messaging.git}
-GITBRANCH["oslo.messaging"]=${OSLOMSG_BRANCH:-master}
+GITBRANCH["oslo.messaging"]=${OSLOMSG_BRANCH:-stable/pike}
 
 # oslo.middleware
 GITREPO["oslo.middleware"]=${OSLOMID_REPO:-${GIT_BASE}/openstack/oslo.middleware.git}
-GITBRANCH["oslo.middleware"]=${OSLOMID_BRANCH:-master}
+GITBRANCH["oslo.middleware"]=${OSLOMID_BRANCH:-stable/pike}
 
 # oslo.policy
 GITREPO["oslo.policy"]=${OSLOPOLICY_REPO:-${GIT_BASE}/openstack/oslo.policy.git}
-GITBRANCH["oslo.policy"]=${OSLOPOLICY_BRANCH:-master}
+GITBRANCH["oslo.policy"]=${OSLOPOLICY_BRANCH:-stable/pike}
 
 # oslo.privsep
 GITREPO["oslo.privsep"]=${OSLOPRIVSEP_REPO:-${GIT_BASE}/openstack/oslo.privsep.git}
-GITBRANCH["oslo.privsep"]=${OSLOPRIVSEP_BRANCH:-master}
+GITBRANCH["oslo.privsep"]=${OSLOPRIVSEP_BRANCH:-stable/pike}
 
 # oslo.reports
 GITREPO["oslo.reports"]=${OSLOREPORTS_REPO:-${GIT_BASE}/openstack/oslo.reports.git}
-GITBRANCH["oslo.reports"]=${OSLOREPORTS_BRANCH:-master}
+GITBRANCH["oslo.reports"]=${OSLOREPORTS_BRANCH:-stable/pike}
 
 # oslo.rootwrap
 GITREPO["oslo.rootwrap"]=${OSLORWRAP_REPO:-${GIT_BASE}/openstack/oslo.rootwrap.git}
-GITBRANCH["oslo.rootwrap"]=${OSLORWRAP_BRANCH:-master}
+GITBRANCH["oslo.rootwrap"]=${OSLORWRAP_BRANCH:-stable/pike}
 
 # oslo.serialization
 GITREPO["oslo.serialization"]=${OSLOSERIALIZATION_REPO:-${GIT_BASE}/openstack/oslo.serialization.git}
-GITBRANCH["oslo.serialization"]=${OSLOSERIALIZATION_BRANCH:-master}
+GITBRANCH["oslo.serialization"]=${OSLOSERIALIZATION_BRANCH:-stable/pike}
 
 # oslo.service
 GITREPO["oslo.service"]=${OSLOSERVICE_REPO:-${GIT_BASE}/openstack/oslo.service.git}
-GITBRANCH["oslo.service"]=${OSLOSERVICE_BRANCH:-master}
+GITBRANCH["oslo.service"]=${OSLOSERVICE_BRANCH:-stable/pike}
 
 # oslo.utils
 GITREPO["oslo.utils"]=${OSLOUTILS_REPO:-${GIT_BASE}/openstack/oslo.utils.git}
-GITBRANCH["oslo.utils"]=${OSLOUTILS_BRANCH:-master}
+GITBRANCH["oslo.utils"]=${OSLOUTILS_BRANCH:-stable/pike}
 
 # oslo.versionedobjects
 GITREPO["oslo.versionedobjects"]=${OSLOVERSIONEDOBJECTS_REPO:-${GIT_BASE}/openstack/oslo.versionedobjects.git}
-GITBRANCH["oslo.versionedobjects"]=${OSLOVERSIONEDOBJECTS_BRANCH:-master}
+GITBRANCH["oslo.versionedobjects"]=${OSLOVERSIONEDOBJECTS_BRANCH:-stable/pike}
 
 # oslo.vmware
 GITREPO["oslo.vmware"]=${OSLOVMWARE_REPO:-${GIT_BASE}/openstack/oslo.vmware.git}
-GITBRANCH["oslo.vmware"]=${OSLOVMWARE_BRANCH:-master}
+GITBRANCH["oslo.vmware"]=${OSLOVMWARE_BRANCH:-stable/pike}
 
 # osprofiler
 GITREPO["osprofiler"]=${OSPROFILER_REPO:-${GIT_BASE}/openstack/osprofiler.git}
-GITBRANCH["osprofiler"]=${OSPROFILER_BRANCH:-master}
+GITBRANCH["osprofiler"]=${OSPROFILER_BRANCH:-stable/pike}
 
 # pycadf auditing library
 GITREPO["pycadf"]=${PYCADF_REPO:-${GIT_BASE}/openstack/pycadf.git}
-GITBRANCH["pycadf"]=${PYCADF_BRANCH:-master}
+GITBRANCH["pycadf"]=${PYCADF_BRANCH:-stable/pike}
 
 # stevedore plugin manager
 GITREPO["stevedore"]=${STEVEDORE_REPO:-${GIT_BASE}/openstack/stevedore.git}
-GITBRANCH["stevedore"]=${STEVEDORE_BRANCH:-master}
+GITBRANCH["stevedore"]=${STEVEDORE_BRANCH:-stable/pike}
 
 # taskflow plugin manager
 GITREPO["taskflow"]=${TASKFLOW_REPO:-${GIT_BASE}/openstack/taskflow.git}
-GITBRANCH["taskflow"]=${TASKFLOW_BRANCH:-master}
+GITBRANCH["taskflow"]=${TASKFLOW_BRANCH:-stable/pike}
 
 # tooz plugin manager
 GITREPO["tooz"]=${TOOZ_REPO:-${GIT_BASE}/openstack/tooz.git}
-GITBRANCH["tooz"]=${TOOZ_BRANCH:-master}
+GITBRANCH["tooz"]=${TOOZ_BRANCH:-stable/pike}
 
 # pbr drives the setuptools configs
 GITREPO["pbr"]=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
@@ -524,53 +524,53 @@ GITBRANCH["pbr"]=${PBR_BRANCH:-master}
 
 # cursive library
 GITREPO["cursive"]=${CURSIVE_REPO:-${GIT_BASE}/openstack/cursive.git}
-GITBRANCH["cursive"]=${CURSIVE_BRANCH:-master}
+GITBRANCH["cursive"]=${CURSIVE_BRANCH:-stable/pike}
 
 # glance store library
 GITREPO["glance_store"]=${GLANCE_STORE_REPO:-${GIT_BASE}/openstack/glance_store.git}
-GITBRANCH["glance_store"]=${GLANCE_STORE_BRANCH:-master}
+GITBRANCH["glance_store"]=${GLANCE_STORE_BRANCH:-stable/pike}
 
 # django openstack_auth library
 GITREPO["django_openstack_auth"]=${HORIZONAUTH_REPO:-${GIT_BASE}/openstack/django_openstack_auth.git}
-GITBRANCH["django_openstack_auth"]=${HORIZONAUTH_BRANCH:-master}
+GITBRANCH["django_openstack_auth"]=${HORIZONAUTH_BRANCH:-stable/pike}
 
 # keystone middleware
 GITREPO["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/keystonemiddleware.git}
-GITBRANCH["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_BRANCH:-master}
+GITBRANCH["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_BRANCH:-stable/pike}
 
 # s3 support for swift
 SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/openstack/swift3.git}
-SWIFT3_BRANCH=${SWIFT3_BRANCH:-master}
+SWIFT3_BRANCH=${SWIFT3_BRANCH:-stable/pike}
 
 # ceilometer middleware
 GITREPO["ceilometermiddleware"]=${CEILOMETERMIDDLEWARE_REPO:-${GIT_BASE}/openstack/ceilometermiddleware.git}
-GITBRANCH["ceilometermiddleware"]=${CEILOMETERMIDDLEWARE_BRANCH:-master}
+GITBRANCH["ceilometermiddleware"]=${CEILOMETERMIDDLEWARE_BRANCH:-stable/pike}
 GITDIR["ceilometermiddleware"]=$DEST/ceilometermiddleware
 
 # os-brick library to manage local volume attaches
 GITREPO["os-brick"]=${OS_BRICK_REPO:-${GIT_BASE}/openstack/os-brick.git}
-GITBRANCH["os-brick"]=${OS_BRICK_BRANCH:-master}
+GITBRANCH["os-brick"]=${OS_BRICK_BRANCH:-stable/pike}
 
 # os-client-config to manage clouds.yaml and friends
 GITREPO["os-client-config"]=${OS_CLIENT_CONFIG_REPO:-${GIT_BASE}/openstack/os-client-config.git}
-GITBRANCH["os-client-config"]=${OS_CLIENT_CONFIG_BRANCH:-master}
+GITBRANCH["os-client-config"]=${OS_CLIENT_CONFIG_BRANCH:-stable/pike}
 GITDIR["os-client-config"]=$DEST/os-client-config
 
 # os-vif library to communicate between Neutron to Nova
 GITREPO["os-vif"]=${OS_VIF_REPO:-${GIT_BASE}/openstack/os-vif.git}
-GITBRANCH["os-vif"]=${OS_VIF_BRANCH:-master}
+GITBRANCH["os-vif"]=${OS_VIF_BRANCH:-stable/pike}
 
 # osc-lib OpenStackClient common lib
 GITREPO["osc-lib"]=${OSC_LIB_REPO:-${GIT_BASE}/openstack/osc-lib.git}
-GITBRANCH["osc-lib"]=${OSC_LIB_BRANCH:-master}
+GITBRANCH["osc-lib"]=${OSC_LIB_BRANCH:-stable/pike}
 
 # python-openstacksdk OpenStack Python SDK
 GITREPO["python-openstacksdk"]=${OPENSTACKSDK_REPO:-${GIT_BASE}/openstack/python-openstacksdk.git}
-GITBRANCH["python-openstacksdk"]=${OPENSTACKSDK_BRANCH:-master}
+GITBRANCH["python-openstacksdk"]=${OPENSTACKSDK_BRANCH:-stable/pike}
 
 # ironic common lib
 GITREPO["ironic-lib"]=${IRONIC_LIB_REPO:-${GIT_BASE}/openstack/ironic-lib.git}
-GITBRANCH["ironic-lib"]=${IRONIC_LIB_BRANCH:-master}
+GITBRANCH["ironic-lib"]=${IRONIC_LIB_BRANCH:-stable/pike}
 # this doesn't exist in a lib file, so set it here
 GITDIR["ironic-lib"]=$DEST/ironic-lib
 
@@ -581,12 +581,12 @@ GITDIR["diskimage-builder"]=$DEST/diskimage-builder
 
 # neutron-lib library containing neutron stable non-REST interfaces
 GITREPO["neutron-lib"]=${NEUTRON_LIB_REPO:-${GIT_BASE}/openstack/neutron-lib.git}
-GITBRANCH["neutron-lib"]=${NEUTRON_LIB_BRANCH:-master}
+GITBRANCH["neutron-lib"]=${NEUTRON_LIB_BRANCH:-stable/pike}
 GITDIR["neutron-lib"]=$DEST/neutron-lib
 
 # os-traits library for resource provider traits in the placement service
 GITREPO["os-traits"]=${OS_TRAITS_REPO:-${GIT_BASE}/openstack/os-traits.git}
-GITBRANCH["os-traits"]=${OS_TRAITS_BRANCH:-master}
+GITBRANCH["os-traits"]=${OS_TRAITS_BRANCH:-stable/pike}
 
 ##################
 #
