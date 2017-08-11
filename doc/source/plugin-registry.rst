@@ -138,6 +138,7 @@ nova-powervm                           `git://git.openstack.org/openstack/nova-p
 oaktree                                `git://git.openstack.org/openstack/oaktree <https://git.openstack.org/cgit/openstack/oaktree>`__
 octavia                                `git://git.openstack.org/openstack/octavia <https://git.openstack.org/cgit/openstack/octavia>`__
 octavia-dashboard                      `git://git.openstack.org/openstack/octavia-dashboard <https://git.openstack.org/cgit/openstack/octavia-dashboard>`__
+omni                                   `git://git.openstack.org/openstack/omni <https://git.openstack.org/cgit/openstack/omni>`__
 os-xenapi                              `git://git.openstack.org/openstack/os-xenapi <https://git.openstack.org/cgit/openstack/os-xenapi>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
