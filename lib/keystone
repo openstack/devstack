@@ -626,12 +626,6 @@ function create_ldap_domain {
     iniset $KEYSTONE_LDAP_DOMAIN_FILE identity driver "ldap"
 
     # LDAP settings for Users domain
-    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_allow_delete "False"
-    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_allow_update "False"
-    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap group_allow_create "False"
-    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_allow_delete "False"
-    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_allow_update "False"
-    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_allow_create "False"
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_tree_dn "ou=Users,$LDAP_BASE_DN"
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_objectclass "inetOrgPerson"
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_name_attribute "cn"
