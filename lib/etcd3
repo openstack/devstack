@@ -57,6 +57,9 @@ function start_etcd3 {
     iniset -sudo $unitfile "Service" "Type" "notify"
     iniset -sudo $unitfile "Service" "Restart" "on-failure"
     iniset -sudo $unitfile "Service" "LimitNOFILE" "65536"
+    if is_arch "aarch64"; then
+        iniset -sudo $unitfile "Service" "Environment" "ETCD_UNSUPPORTED_ARCH=arm64"
+    fi
 
     $SYSTEMCTL daemon-reload
     $SYSTEMCTL enable $ETCD_SYSTEMD_SERVICE
