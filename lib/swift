@@ -464,6 +464,9 @@ function configure_swift {
     iniuncomment ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth account_autocreate
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:tempauth reseller_prefix "TEMPAUTH"
 
+    # Allow both reseller prefixes to be used with domain_remap
+    iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:domain_remap reseller_prefixes "AUTH, TEMPAUTH"
+
     if is_service_enabled swift3; then
         cat <<EOF >>${SWIFT_CONFIG_PROXY_SERVER}
 [filter:s3token]
