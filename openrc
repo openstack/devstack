@@ -84,7 +84,7 @@ export OS_AUTH_TYPE=password
 # We currently recommend using the version 3 *identity api*.
 #
 
-# If you don't have a working .stackenv, this is the backup possition
+# If you don't have a working .stackenv, this is the backup position
 KEYSTONE_BACKUP=$SERVICE_PROTOCOL://$SERVICE_HOST:5000
 KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_URI:-$KEYSTONE_BACKUP}
 
