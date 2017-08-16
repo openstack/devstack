@@ -99,6 +99,7 @@ murano                                 `git://git.openstack.org/openstack/murano
 networking-6wind                       `git://git.openstack.org/openstack/networking-6wind <https://git.openstack.org/cgit/openstack/networking-6wind>`__
 networking-arista                      `git://git.openstack.org/openstack/networking-arista <https://git.openstack.org/cgit/openstack/networking-arista>`__
 networking-bagpipe                     `git://git.openstack.org/openstack/networking-bagpipe <https://git.openstack.org/cgit/openstack/networking-bagpipe>`__
+networking-baremetal                   `git://git.openstack.org/openstack/networking-baremetal <https://git.openstack.org/cgit/openstack/networking-baremetal>`__
 networking-bgpvpn                      `git://git.openstack.org/openstack/networking-bgpvpn <https://git.openstack.org/cgit/openstack/networking-bgpvpn>`__
 networking-brocade                     `git://git.openstack.org/openstack/networking-brocade <https://git.openstack.org/cgit/openstack/networking-brocade>`__
 networking-calico                      `git://git.openstack.org/openstack/networking-calico <https://git.openstack.org/cgit/openstack/networking-calico>`__
