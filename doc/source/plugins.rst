@@ -12,6 +12,15 @@ tree. They are called through a strong contract, so these plugins can
 be sure that they will continue to work in the future as DevStack
 evolves.
 
+Prerequisites
+=============
+
+If you are planning to create a plugin that is going to host a service in the
+service catalog (that is, your plugin will use the command
+``get_or_create_service``) please make sure that you apply to the `service
+types authority`_ to reserve a valid service-type. This will help to make sure
+that all deployments of your service use the same service-type.
+
 Plugin Interface
 ================
 
@@ -250,3 +259,5 @@ See Also
 
 For additional inspiration on devstack plugins you can check out the
 `Plugin Registry <plugin-registry.html>`_.
+
+.. _service types authority: https://specs.openstack.org/openstack/service-types-authority/
