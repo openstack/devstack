@@ -979,6 +979,11 @@ function stop_nova_rest {
 }
 
 function stop_nova_conductor {
+    if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
+        stop_process n-cond
+        return
+    fi
+
     enable_nova_fleet
     for srv in n-super-cond $(seq -f n-cond-cell%0.f 1 $NOVA_NUM_CELLS); do
         if is_service_enabled $srv; then
