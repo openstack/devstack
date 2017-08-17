@@ -164,7 +164,7 @@ function install_placement {
 # start_placement_api() - Start the API processes ahead of other things
 function start_placement_api {
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
-        run_process "placement-api" "$PLACEMENT_BIN_DIR/uwsgi --ini $PLACEMENT_UWSGI_CONF"
+        run_process "placement-api" "$PLACEMENT_BIN_DIR/uwsgi --procname-prefix placement --ini $PLACEMENT_UWSGI_CONF"
     else
         enable_apache_site placement-api
         restart_apache_server

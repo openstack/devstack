@@ -550,7 +550,7 @@ function start_keystone {
         tail_log key /var/log/$APACHE_NAME/keystone.log
         tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
     else # uwsgi
-        run_process keystone "$KEYSTONE_BIN_DIR/uwsgi --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
+        run_process keystone "$KEYSTONE_BIN_DIR/uwsgi --procname-prefix keystone --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
     fi
 
     echo "Waiting for keystone to start..."
