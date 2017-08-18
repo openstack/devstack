@@ -110,6 +110,7 @@ networking-fortinet                    `git://git.openstack.org/openstack/networ
 networking-generic-switch              `git://git.openstack.org/openstack/networking-generic-switch <https://git.openstack.org/cgit/openstack/networking-generic-switch>`__
 networking-hpe                         `git://git.openstack.org/openstack/networking-hpe <https://git.openstack.org/cgit/openstack/networking-hpe>`__
 networking-huawei                      `git://git.openstack.org/openstack/networking-huawei <https://git.openstack.org/cgit/openstack/networking-huawei>`__
+networking-hyperv                      `git://git.openstack.org/openstack/networking-hyperv <https://git.openstack.org/cgit/openstack/networking-hyperv>`__
 networking-infoblox                    `git://git.openstack.org/openstack/networking-infoblox <https://git.openstack.org/cgit/openstack/networking-infoblox>`__
 networking-l2gw                        `git://git.openstack.org/openstack/networking-l2gw <https://git.openstack.org/cgit/openstack/networking-l2gw>`__
 networking-midonet                     `git://git.openstack.org/openstack/networking-midonet <https://git.openstack.org/cgit/openstack/networking-midonet>`__
@@ -117,6 +118,7 @@ networking-mlnx                        `git://git.openstack.org/openstack/networ
 networking-nec                         `git://git.openstack.org/openstack/networking-nec <https://git.openstack.org/cgit/openstack/networking-nec>`__
 networking-odl                         `git://git.openstack.org/openstack/networking-odl <https://git.openstack.org/cgit/openstack/networking-odl>`__
 networking-onos                        `git://git.openstack.org/openstack/networking-onos <https://git.openstack.org/cgit/openstack/networking-onos>`__
+networking-opencontrail                `git://git.openstack.org/openstack/networking-opencontrail <https://git.openstack.org/cgit/openstack/networking-opencontrail>`__
 networking-ovn                         `git://git.openstack.org/openstack/networking-ovn <https://git.openstack.org/cgit/openstack/networking-ovn>`__
 networking-ovs-dpdk                    `git://git.openstack.org/openstack/networking-ovs-dpdk <https://git.openstack.org/cgit/openstack/networking-ovs-dpdk>`__
 networking-plumgrid                    `git://git.openstack.org/openstack/networking-plumgrid <https://git.openstack.org/cgit/openstack/networking-plumgrid>`__
