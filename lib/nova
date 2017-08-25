@@ -602,6 +602,8 @@ function create_nova_conf {
                 rpc_backend_add_vhost $vhost
                 iniset_rpc_backend nova $conf DEFAULT $vhost
             fi
+            # Format logging
+            setup_logging $conf
         done
     fi
 }
