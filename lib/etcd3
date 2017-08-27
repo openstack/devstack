@@ -26,7 +26,7 @@ set +o xtrace
 # Set up default values for etcd
 ETCD_DOWNLOAD_URL=${ETCD_DOWNLOAD_URL:-https://github.com/coreos/etcd/releases/download}
 ETCD_VERSION=${ETCD_VERSION:-v3.1.7}
-ETCD_DATA_DIR="$DEST/data/etcd"
+ETCD_DATA_DIR="$DATA_DIR/etcd"
 ETCD_SYSTEMD_SERVICE="devstack@etcd.service"
 ETCD_BIN_DIR="$DEST/bin"
 ETCD_SHA256_AMD64="4fde194bbcd259401e2b5c462dfa579ee7f6af539f13f130b8f5b4f52e3b3c52"
