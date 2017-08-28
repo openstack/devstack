@@ -136,7 +136,7 @@ OS\_AUTH\_URL
 
     ::
 
-        OS_AUTH_URL=http://$SERVICE_HOST:5000/v2.0
+        OS_AUTH_URL=http://$SERVICE_HOST:5000/v3.0
 
 KEYSTONECLIENT\_DEBUG, NOVACLIENT\_DEBUG
     Set command-line client log level to ``DEBUG``. These are commented
