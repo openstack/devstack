@@ -506,9 +506,9 @@ function start_cinder {
         if [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
             run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
             cinder_url=$service_protocol://$SERVICE_HOST:$service_port
-            # Start proxy if tsl enabled
-            if is_service_enabled tls_proxy; then
-                start_tls_proxy cinder '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_POR_INT
+            # Start proxy if tls enabled
+            if is_service_enabled tls-proxy; then
+                start_tls_proxy cinder '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_PORT_INT
             fi
         else
             run_process "c-api" "$CINDER_BIN_DIR/uwsgi --ini $CINDER_UWSGI_CONF"
