@@ -574,6 +574,11 @@ function configure_tempest {
         DISABLE_NETWORK_API_EXTENSIONS+=", metering"
     fi
 
+    # disable l3_agent_scheduler if we didn't enable L3 agent
+    if ! is_service_enabled q-l3; then
+        DISABLE_NETWORK_API_EXTENSIONS+=", l3_agent_scheduler"
+    fi
+
     local network_api_extensions=${NETWORK_API_EXTENSIONS:-"all"}
     if [[ ! -z "$DISABLE_NETWORK_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
