@@ -242,6 +242,7 @@ function configure_neutron_new {
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
         iniset $NEUTRON_CONF DEFAULT bind_port "$NEUTRON_SERVICE_PORT_INT"
+        iniset $NEUTRON_CONF oslo_middleware enable_proxy_headers_parsing True
     fi
 
     # Metering

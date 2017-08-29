@@ -555,6 +555,7 @@ function create_nova_conf {
 
     if is_service_enabled tls-proxy; then
         iniset $NOVA_CONF DEFAULT glance_protocol https
+        iniset $NOVA_CONF oslo_middleware enable_proxy_headers_parsing True
     fi
 
     if is_service_enabled n-sproxy; then
