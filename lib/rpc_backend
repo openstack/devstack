@@ -97,6 +97,8 @@ function restart_rpc_backend {
 
             break
         done
+        # NOTE(frickler): Remove the default guest user
+        sudo rabbitmqctl delete_user guest || true
     fi
 }
 
