@@ -1380,62 +1380,6 @@ function zypper_install {
         zypper --non-interactive install --auto-agree-with-licenses "$@"
 }
 
-
-# Process Functions
-# =================
-
-# _run_process() is designed to be backgrounded by run_process() to simulate a
-# fork.  It includes the dirty work of closing extra filehandles and preparing log
-# files to produce the same logs as screen_it().  The log filename is derived
-# from the service name.
-# Uses globals ``CURRENT_LOG_TIME``, ``LOGDIR``, ``SCREEN_LOGDIR``, ``SCREEN_NAME``, ``SERVICE_DIR``
-# If an optional group is provided sg will be used to set the group of
-# the command.
-# _run_process service "command-line" [group]
-function _run_process {
-    # disable tracing through the exec redirects, it's just confusing in the logs.
-    xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-
-    local service=$1
-    local command="$2"
-    local group=$3
-
-    # Undo logging redirections and close the extra descriptors
-    exec 1>&3
-    exec 2>&3
-    exec 3>&-
-    exec 6>&-
-
-    local logfile="${service}.log.${CURRENT_LOG_TIME}"
-    local real_logfile="${LOGDIR}/${logfile}"
-    if [[ -n ${LOGDIR} ]]; then
-        exec 1>&"$real_logfile" 2>&1
-        bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${service}.log"
-        if [[ -n ${SCREEN_LOGDIR} ]]; then
-            # Drop the backward-compat symlink
-            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${service}.log
-        fi
-
-        # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
-        export PYTHONUNBUFFERED=1
-    fi
-
-    # reenable xtrace before we do *real* work
-    $xtrace
-
-    # Run under ``setsid`` to force the process to become a session and group leader.
-    # The pid saved can be used with pkill -g to get the entire process group.
-    if [[ -n "$group" ]]; then
-        setsid sg $group "$command" & echo $! >$SERVICE_DIR/$SCREEN_NAME/$service.pid
-    else
-        setsid $command & echo $! >$SERVICE_DIR/$SCREEN_NAME/$service.pid
-    fi
-
-    # Just silently exit this process
-    exit 0
-}
-
 function write_user_unit_file {
     local service=$1
     local command="$2"
@@ -1535,21 +1479,6 @@ function _run_under_systemd {
     $SYSTEMCTL start $systemd_service
 }
 
-# Helper to remove the ``*.failure`` files under ``$SERVICE_DIR/$SCREEN_NAME``.
-# This is used for ``service_check`` when all the ``screen_it`` are called finished
-# Uses globals ``SCREEN_NAME``, ``SERVICE_DIR``
-# init_service_check
-function init_service_check {
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-
-    if [[ ! -d "$SERVICE_DIR/$SCREEN_NAME" ]]; then
-        mkdir -p "$SERVICE_DIR/$SCREEN_NAME"
-    fi
-
-    rm -f "$SERVICE_DIR/$SCREEN_NAME"/*.failure
-}
-
 # Find out if a process exists by partial name.
 # is_running name
 function is_running {
@@ -1576,133 +1505,9 @@ function run_process {
 
     time_start "run_process"
     if is_service_enabled $service; then
-        if [[ "$USE_SYSTEMD" = "True" ]]; then
-            _run_under_systemd "$name" "$command" "$group" "$user"
-        elif [[ "$USE_SCREEN" = "True" ]]; then
-            if [[ "$user" == "root" ]]; then
-                command="sudo $command"
-            fi
-            screen_process "$name" "$command" "$group"
-        else
-            # Spawn directly without screen
-            if [[ "$user" == "root" ]]; then
-                command="sudo $command"
-            fi
-            _run_process "$name" "$command" "$group" &
-        fi
+        _run_under_systemd "$name" "$command" "$group" "$user"
     fi
     time_stop "run_process"
-}
-
-# Helper to launch a process in a named screen
-# Uses globals ``CURRENT_LOG_TIME``, ```LOGDIR``, ``SCREEN_LOGDIR``, `SCREEN_NAME``,
-# ``SERVICE_DIR``, ``SCREEN_IS_LOGGING``
-# screen_process name "command-line" [group]
-# Run a command in a shell in a screen window, if an optional group
-# is provided, use sg to set the group of the command.
-function screen_process {
-    local name=$1
-    local command="$2"
-    local group=$3
-
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-
-    screen -S $SCREEN_NAME -X screen -t $name
-
-    local logfile="${name}.log.${CURRENT_LOG_TIME}"
-    local real_logfile="${LOGDIR}/${logfile}"
-    echo "LOGDIR: $LOGDIR"
-    echo "SCREEN_LOGDIR: $SCREEN_LOGDIR"
-    echo "log: $real_logfile"
-    if [[ -n ${LOGDIR} ]]; then
-        if [[ "$SCREEN_IS_LOGGING" == "True" ]]; then
-            screen -S $SCREEN_NAME -p $name -X logfile "$real_logfile"
-            screen -S $SCREEN_NAME -p $name -X log on
-        fi
-        # If logging isn't active then avoid a broken symlink
-        touch "$real_logfile"
-        bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${name}.log"
-        if [[ -n ${SCREEN_LOGDIR} ]]; then
-            # Drop the backward-compat symlink
-            ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${1}.log
-        fi
-    fi
-
-    # sleep to allow bash to be ready to be send the command - we are
-    # creating a new window in screen and then sends characters, so if
-    # bash isn't running by the time we send the command, nothing
-    # happens.  This sleep was added originally to handle gate runs
-    # where we needed this to be at least 3 seconds to pass
-    # consistently on slow clouds. Now this is configurable so that we
-    # can determine a reasonable value for the local case which should
-    # be much smaller.
-    sleep ${SCREEN_SLEEP:-3}
-
-    NL=`echo -ne '\015'`
-    # This fun command does the following:
-    # - the passed server command is backgrounded
-    # - the pid of the background process is saved in the usual place
-    # - the server process is brought back to the foreground
-    # - if the server process exits prematurely the fg command errors
-    # and a message is written to stdout and the process failure file
-    #
-    # The pid saved can be used in stop_process() as a process group
-    # id to kill off all child processes
-    if [[ -n "$group" ]]; then
-        command="sg $group '$command'"
-    fi
-
-    # Append the process to the screen rc file
-    screen_rc "$name" "$command"
-
-    screen -S $SCREEN_NAME -p $name -X stuff "$command & echo \$! >$SERVICE_DIR/$SCREEN_NAME/${name}.pid; fg || echo \"$name failed to start. Exit code: \$?\" | tee \"$SERVICE_DIR/$SCREEN_NAME/${name}.failure\"$NL"
-}
-
-# Screen rc file builder
-# Uses globals ``SCREEN_NAME``, ``SCREENRC``, ``SCREEN_IS_LOGGING``
-# screen_rc service "command-line"
-function screen_rc {
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SCREENRC=$TOP_DIR/$SCREEN_NAME-screenrc
-    if [[ ! -e $SCREENRC ]]; then
-        # Name the screen session
-        echo "sessionname $SCREEN_NAME" > $SCREENRC
-        # Set a reasonable statusbar
-        echo "hardstatus alwayslastline '$SCREEN_HARDSTATUS'" >> $SCREENRC
-        # Some distributions override PROMPT_COMMAND for the screen terminal type - turn that off
-        echo "setenv PROMPT_COMMAND /bin/true" >> $SCREENRC
-        echo "screen -t shell bash" >> $SCREENRC
-    fi
-    # If this service doesn't already exist in the screenrc file
-    if ! grep $1 $SCREENRC 2>&1 > /dev/null; then
-        NL=`echo -ne '\015'`
-        echo "screen -t $1 bash" >> $SCREENRC
-        echo "stuff \"$2$NL\"" >> $SCREENRC
-
-        if [[ -n ${LOGDIR} ]] && [[ "$SCREEN_IS_LOGGING" == "True" ]]; then
-            echo "logfile ${LOGDIR}/${1}.log.${CURRENT_LOG_TIME}" >>$SCREENRC
-            echo "log on" >>$SCREENRC
-        fi
-    fi
-}
-
-# Stop a service in screen
-# If a PID is available use it, kill the whole process group via TERM
-# If screen is being used kill the screen window; this will catch processes
-# that did not leave a PID behind
-# Uses globals ``SCREEN_NAME``, ``SERVICE_DIR``
-# screen_stop_service service
-function screen_stop_service {
-    local service=$1
-
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-
-    if is_service_enabled $service; then
-        # Clean up the screen window
-        screen -S $SCREEN_NAME -p $service -X kill || true
-    fi
 }
 
 # Stop a service process
@@ -1724,149 +1529,27 @@ function stop_process {
             $SYSTEMCTL stop devstack@$service.service
             $SYSTEMCTL disable devstack@$service.service
         fi
-
-        if [[ -r $SERVICE_DIR/$SCREEN_NAME/$service.pid ]]; then
-            pkill -g $(cat $SERVICE_DIR/$SCREEN_NAME/$service.pid)
-            # oslo.service tends to stop actually shutting down
-            # reliably in between releases because someone believes it
-            # is dying too early due to some inflight work they
-            # have. This is a tension. It happens often enough we're
-            # going to just account for it in devstack and assume it
-            # doesn't work.
-            #
-            # Set OSLO_SERVICE_WORKS=True to skip this block
-            if [[ -z "$OSLO_SERVICE_WORKS" ]]; then
-                # TODO(danms): Remove this double-kill when we have
-                # this fixed in all services:
-                # https://bugs.launchpad.net/oslo-incubator/+bug/1446583
-                sleep 1
-                # /bin/true because pkill on a non existent process returns an error
-                pkill -g $(cat $SERVICE_DIR/$SCREEN_NAME/$service.pid) || /bin/true
-            fi
-            rm $SERVICE_DIR/$SCREEN_NAME/$service.pid
-        fi
-        if [[ "$USE_SCREEN" = "True" ]]; then
-            # Clean up the screen window
-            screen_stop_service $service
-        fi
     fi
 }
 
-# Helper to get the status of each running service
-# Uses globals ``SCREEN_NAME``, ``SERVICE_DIR``
-# service_check
+# use systemctl to check service status
 function service_check {
     local service
-    local failures
-    SCREEN_NAME=${SCREEN_NAME:-stack}
-    SERVICE_DIR=${SERVICE_DIR:-${DEST}/status}
-
-
-    if [[ ! -d "$SERVICE_DIR/$SCREEN_NAME" ]]; then
-        echo "No service status directory found"
-        return
-    fi
-
-    # Check if there is any failure flag file under $SERVICE_DIR/$SCREEN_NAME
-    # make this -o errexit safe
-    failures=`ls "$SERVICE_DIR/$SCREEN_NAME"/*.failure 2>/dev/null || /bin/true`
-
-    for service in $failures; do
-        service=`basename $service`
-        service=${service%.failure}
-        echo "Error: Service $service is not running"
-    done
-
-    if [ -n "$failures" ]; then
-        die $LINENO "More details about the above errors can be found with screen"
-    fi
-}
-
-# Tail a log file in a screen if USE_SCREEN is true.
-# Uses globals ``USE_SCREEN``
-function tail_log {
-    local name=$1
-    local logfile=$2
-
-    if [[ "$USE_SCREEN" = "True" ]]; then
-        screen_process "$name" "sudo tail -f $logfile | sed -u 's/\\\\\\\\x1b/\o033/g'"
-    fi
-}
-
-
-# Deprecated Functions
-# --------------------
-
-# _old_run_process() is designed to be backgrounded by old_run_process() to simulate a
-# fork.  It includes the dirty work of closing extra filehandles and preparing log
-# files to produce the same logs as screen_it().  The log filename is derived
-# from the service name and global-and-now-misnamed ``SCREEN_LOGDIR``
-# Uses globals ``CURRENT_LOG_TIME``, ``SCREEN_LOGDIR``, ``SCREEN_NAME``, ``SERVICE_DIR``
-# _old_run_process service "command-line"
-function _old_run_process {
-    local service=$1
-    local command="$2"
-
-    # Undo logging redirections and close the extra descriptors
-    exec 1>&3
-    exec 2>&3
-    exec 3>&-
-    exec 6>&-
-
-    if [[ -n ${SCREEN_LOGDIR} ]]; then
-        exec 1>&${SCREEN_LOGDIR}/screen-${1}.log.${CURRENT_LOG_TIME} 2>&1
-        ln -sf ${SCREEN_LOGDIR}/screen-${1}.log.${CURRENT_LOG_TIME} ${SCREEN_LOGDIR}/screen-${1}.log
-
-        # TODO(dtroyer): Hack to get stdout from the Python interpreter for the logs.
-        export PYTHONUNBUFFERED=1
-    fi
-
-    exec /bin/bash -c "$command"
-    die "$service exec failure: $command"
-}
-
-# old_run_process() launches a child process that closes all file descriptors and
-# then exec's the passed in command.  This is meant to duplicate the semantics
-# of screen_it() without screen.  PIDs are written to
-# ``$SERVICE_DIR/$SCREEN_NAME/$service.pid`` by the spawned child process.
-# old_run_process service "command-line"
-function old_run_process {
-    local service=$1
-    local command="$2"
-
-    # Spawn the child process
-    _old_run_process "$service" "$command" &
-    echo $!
-}
-
-# Compatibility for existing start_XXXX() functions
-# Uses global ``USE_SCREEN``
-# screen_it service "command-line"
-function screen_it {
-    if is_service_enabled $1; then
-        # Append the service to the screen rc file
-        screen_rc "$1" "$2"
-
-        if [[ "$USE_SCREEN" = "True" ]]; then
-            screen_process "$1" "$2"
-        else
-            # Spawn directly without screen
-            old_run_process "$1" "$2" >$SERVICE_DIR/$SCREEN_NAME/$1.pid
+    for service in ${ENABLED_SERVICES//,/ }; do
+        # because some things got renamed like key => keystone
+        if $SYSTEMCTL is-enabled devstack@$service.service; then
+            # no-pager is needed because otherwise status dumps to a
+            # pager when in interactive mode, which will stop a manual
+            # devstack run.
+            $SYSTEMCTL status devstack@$service.service --no-pager
         fi
-    fi
+    done
 }
 
-# Compatibility for existing stop_XXXX() functions
-# Stop a service in screen
-# If a PID is available use it, kill the whole process group via TERM
-# If screen is being used kill the screen window; this will catch processes
-# that did not leave a PID behind
-# screen_stop service
-function screen_stop {
-    # Clean up the screen window
-    stop_process $1
-}
 
+function tail_log {
+    deprecated "With the removal of screen support, tail_log is deprecated and will be removed after Queens"
+}
 
 # Plugin Functions
 # =================

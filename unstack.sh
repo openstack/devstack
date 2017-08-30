@@ -171,15 +171,6 @@ if is_service_enabled dstat; then
     stop_dstat
 fi
 
-# Clean up the remainder of the screen processes
-SCREEN=$(which screen)
-if [[ -n "$SCREEN" ]]; then
-    SESSION=$(screen -ls | awk "/[0-9]+.${SCREEN_NAME}/"'{ print $1 }')
-    if [[ -n "$SESSION" ]]; then
-        screen -X -S $SESSION quit
-    fi
-fi
-
 # NOTE: Cinder automatically installs the lvm2 package, independently of the
 # enabled backends. So if Cinder is enabled, and installed successfully we are
 # sure lvm2 (lvremove, /etc/lvm/lvm.conf, etc.) is here.
