@@ -148,16 +148,18 @@ function is_keystone_enabled {
 # cleanup_keystone() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_keystone {
-    # TODO: remove admin at pike-2
-    # These files will be created if we are running WSGI_MODE="uwsgi"
-    remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
-    remove_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI"
-    sudo rm -f $(apache_site_config_for keystone-wsgi-public)
-    sudo rm -f $(apache_site_config_for keystone-wsgi-admin)
-
-    # These files will be created if we are running WSGI_MODE="mod_wsgi"
-    disable_apache_site keystone
-    sudo rm -f $(apache_site_config_for keystone)
+    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
+        # These files will be created if we are running WSGI_MODE="mod_wsgi"
+        disable_apache_site keystone
+        sudo rm -f $(apache_site_config_for keystone)
+    else
+        stop_process "keystone"
+        # TODO: remove admin at pike-2
+        remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
+        remove_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI"
+        sudo rm -f $(apache_site_config_for keystone-wsgi-public)
+        sudo rm -f $(apache_site_config_for keystone-wsgi-admin)
+    fi
 }
 
 # _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
@@ -582,9 +584,6 @@ function stop_keystone {
         restart_apache_server
     else
         stop_process keystone
-        remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
-        # TODO(remove in at pike-2)
-        remove_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI"
     fi
     # Kill the Keystone screen window
     stop_process key

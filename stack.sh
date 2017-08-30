@@ -896,14 +896,12 @@ fi
 if is_service_enabled nova; then
     # Compute service
     stack_install_service nova
-    cleanup_nova
     configure_nova
 fi
 
 if is_service_enabled placement; then
     # placement api
     stack_install_service placement
-    cleanup_placement
     configure_placement
 fi
 
