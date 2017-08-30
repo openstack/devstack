@@ -16,7 +16,7 @@
 _XTRACE_DSTAT=$(set +o | grep xtrace)
 set +o xtrace
 
-# start_dstat() - Start running processes, including screen
+# start_dstat() - Start running processes
 function start_dstat {
     # A better kind of sysstat, with the top process per time slice
     run_process dstat "$TOP_DIR/tools/dstat.sh $LOGDIR"

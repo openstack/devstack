@@ -536,7 +536,7 @@ function install_keystone {
     fi
 }
 
-# start_keystone() - Start running processes, including screen
+# start_keystone() - Start running processes
 function start_keystone {
     # Get right service port for testing
     local service_port=$KEYSTONE_SERVICE_PORT
@@ -549,8 +549,6 @@ function start_keystone {
     if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         enable_apache_site keystone
         restart_apache_server
-        tail_log key /var/log/$APACHE_NAME/keystone.log
-        tail_log key-access /var/log/$APACHE_NAME/keystone_access.log
     else # uwsgi
         run_process keystone "$KEYSTONE_BIN_DIR/uwsgi --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
     fi
@@ -585,8 +583,6 @@ function stop_keystone {
     else
         stop_process keystone
     fi
-    # Kill the Keystone screen window
-    stop_process key
 }
 
 # bootstrap_keystone() - Initialize user, role and project

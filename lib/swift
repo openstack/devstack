@@ -7,7 +7,7 @@
 #
 # - ``functions`` file
 # - ``apache`` file
-# - ``DEST``, ``SCREEN_NAME``, `SWIFT_HASH` must be defined
+# - ``DEST``, `SWIFT_HASH` must be defined
 # - ``STACK_USER`` must be defined
 # - ``SWIFT_DATA_DIR`` or ``DATA_DIR`` must be defined
 # - ``lib/keystone`` file
@@ -780,7 +780,7 @@ function install_ceilometermiddleware {
     fi
 }
 
-# start_swift() - Start running processes, including screen
+# start_swift() - Start running processes
 function start_swift {
     # (re)start memcached to make sure we have a clean memcache.
     restart_service memcached
@@ -799,13 +799,6 @@ function start_swift {
         restart_apache_server
         # The rest of the services should be started in backgroud
         swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
-        # Be we still want the logs of Swift Proxy in our screen session
-        tail_log s-proxy /var/log/$APACHE_NAME/proxy-server
-        if [[ ${SWIFT_REPLICAS} == 1 ]]; then
-            for type in object container account; do
-                tail_log s-${type} /var/log/$APACHE_NAME/${type}-server-1
-            done
-        fi
         return 0
     fi
 
@@ -859,7 +852,7 @@ function start_swift {
     fi
 }
 
-# stop_swift() - Stop running processes (non-screen)
+# stop_swift() - Stop running processes
 function stop_swift {
     local type
 

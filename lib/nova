@@ -882,7 +882,7 @@ function start_nova_compute {
     export PATH=$old_path
 }
 
-# start_nova() - Start running processes, including screen
+# start_nova() - Start running processes
 function start_nova_rest {
     # Hack to set the path for rootwrap
     local old_path=$PATH
@@ -999,7 +999,7 @@ function stop_nova_conductor {
     done
 }
 
-# stop_nova() - Stop running processes (non-screen)
+# stop_nova() - Stop running processes
 function stop_nova {
     stop_nova_rest
     stop_nova_conductor

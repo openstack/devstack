@@ -473,7 +473,7 @@ function _configure_tgt_for_config_d {
     fi
 }
 
-# start_cinder() - Start running processes, including screen
+# start_cinder() - Start running processes
 function start_cinder {
     local service_port=$CINDER_SERVICE_PORT
     local service_protocol=$CINDER_SERVICE_PROTOCOL
@@ -533,12 +533,9 @@ function start_cinder {
 # stop_cinder() - Stop running processes
 function stop_cinder {
     stop_process c-api
-
-    # Kill the cinder screen windows
-    local serv
-    for serv in c-bak c-sch c-vol; do
-        stop_process $serv
-    done
+    stop_process c-bak
+    stop_process c-sch
+    stop_process c-vol
 }
 
 # create_volume_types() - Create Cinder's configured volume types

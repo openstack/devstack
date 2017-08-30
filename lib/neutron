@@ -409,7 +409,7 @@ function start_neutron_api {
     fi
 }
 
-# start_neutron() - Start running processes, including screen
+# start_neutron() - Start running processes
 function start_neutron_new {
     # Start up the neutron agents if enabled
     # TODO(sc68cal) Make this pluggable so different DevStack plugins for different Neutron plugins
@@ -446,7 +446,7 @@ function start_neutron_new {
     fi
 }
 
-# stop_neutron() - Stop running processes (non-screen)
+# stop_neutron() - Stop running processes
 function stop_neutron_new {
     for serv in neutron-api neutron-agent neutron-l3; do
         stop_process $serv
