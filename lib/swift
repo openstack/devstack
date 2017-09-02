@@ -608,15 +608,13 @@ function create_swift_disk {
     # create all of the directories needed to emulate a few different servers
     local node_number
     for node_number in ${SWIFT_REPLICAS_SEQ}; do
-        sudo ln -sf ${SWIFT_DATA_DIR}/drives/sdb1/$node_number ${SWIFT_DATA_DIR}/$node_number;
-        local drive=${SWIFT_DATA_DIR}/drives/sdb1/${node_number}
-        local node=${SWIFT_DATA_DIR}/${node_number}/node
-        local node_device=${node}/sdb1
-        [[ -d $node ]] && continue
-        [[ -d $drive ]] && continue
-        sudo install -o ${STACK_USER} -g $user_group -d $drive
-        sudo install -o ${STACK_USER} -g $user_group -d $node_device
-        sudo chown -R ${STACK_USER}: ${node}
+        # node_devices must match *.conf devices option
+        local node_devices=${SWIFT_DATA_DIR}/${node_number}
+        local real_devices=${SWIFT_DATA_DIR}/drives/sdb1/$node_number
+        sudo ln -sf $real_devices $node_devices;
+        local device=${real_devices}/sdb1
+        [[ -d $device ]] && continue
+        sudo install -o ${STACK_USER} -g $user_group -d $device
     done
 }
 
