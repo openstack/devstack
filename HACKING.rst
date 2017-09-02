@@ -20,7 +20,7 @@ in `How To Contribute`__ in the OpenStack wiki.  `DevStack's LaunchPad project`_
 contains the usual links for blueprints, bugs, etc.
 
 __ contribute_
-.. _contribute: http://docs.openstack.org/infra/manual/developers.html
+.. _contribute: https://docs.openstack.org/infra/manual/developers.html
 
 __ lp_
 .. _lp: https://launchpad.net/~devstack
@@ -255,7 +255,7 @@ These scripts are executed serially by ``exercise.sh`` in testing situations.
 * The ``OS_*`` environment variables should be the only ones used for all
   authentication to OpenStack clients as documented in the CLIAuth_ wiki page.
 
-.. _CLIAuth: http://wiki.openstack.org/CLIAuth
+.. _CLIAuth: https://wiki.openstack.org/CLIAuth
 
 * The exercise MUST clean up after itself if successful.  If it is not successful,
   it is assumed that state will be left behind; this allows a chance for developers
