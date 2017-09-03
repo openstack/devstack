@@ -45,6 +45,37 @@ function short_source {
 # export it so child shells have access to the 'short_source' function also.
 export -f short_source
 
+# Download a file from a URL
+#
+# Will check cache (in $FILES) or download given URL.
+#
+# Argument is the URL to the remote file
+#
+# Will echo the local path to the file as the output.  Will die on
+# failure to download.
+#
+# Files can be pre-cached for CI environments, see EXTRA_CACHE_URLS
+# and tools/image_list.sh
+function get_extra_file {
+    local file_url=$1
+
+    file_name=$(basename "$file_url")
+    if [[ $file_url != file* ]]; then
+        # If the file isn't cache, download it
+        if [[ ! -f $FILES/$file_name ]]; then
+            wget --progress=dot:giga -c $file_url -O $FILES/$file_name
+            if [[ $? -ne 0 ]]; then
+                die "$file_url could not be downloaded"
+            fi
+        fi
+        echo "$FILES/$file_name"
+        return
+    else
+        # just strip the file:// bit and that's the path to the file
+        echo $file_url | sed 's/$file:\/\///g'
+    fi
+}
+
 
 # Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:

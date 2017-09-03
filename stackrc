@@ -732,6 +732,40 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
     DOWNLOAD_DEFAULT_IMAGES=False
 fi
 
+# This is a comma separated list of extra URLS to be listed for
+# download by the tools/image_list.sh script.  CI environments can
+# pre-download these URLS and place them in $FILES.  Later scripts can
+# then use "get_extra_file <url>" which will print out the path to the
+# file; it will either be downloaded on demand or acquired from the
+# cache if there.
+EXTRA_CACHE_URLS=""
+
+# etcd3 defaults
+ETCD_VERSION=${ETCD_VERSION:-v3.1.7}
+ETCD_SHA256_AMD64="4fde194bbcd259401e2b5c462dfa579ee7f6af539f13f130b8f5b4f52e3b3c52"
+# NOTE(sdague): etcd v3.1.7 doesn't have anything for these architectures, though 3.2.0 does.
+ETCD_SHA256_ARM64=""
+ETCD_SHA256_PPC64=""
+# Make sure etcd3 downloads the correct architecture
+if is_arch "x86_64"; then
+    ETCD_ARCH="amd64"
+    ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_AMD64}
+elif is_arch "aarch64"; then
+    ETCD_ARCH="arm64"
+    ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_ARM64}
+elif is_arch "ppc64le"; then
+    ETCD_ARCH="ppc64le"
+    ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_PPC64}
+else
+    exit_distro_not_supported "invalid hardware type - $ETCD_ARCH"
+fi
+ETCD_DOWNLOAD_URL=${ETCD_DOWNLOAD_URL:-https://github.com/coreos/etcd/releases/download}
+ETCD_NAME=etcd-$ETCD_VERSION-linux-$ETCD_ARCH
+ETCD_DOWNLOAD_FILE=$ETCD_NAME.tar.gz
+ETCD_DOWNLOAD_LOCATION=$ETCD_DOWNLOAD_URL/$ETCD_VERSION/$ETCD_DOWNLOAD_FILE
+# etcd is always required, so place it into list of pre-cached downloads
+EXTRA_CACHE_URLS+=",$ETCD_DOWNLOAD_LOCATION"
+
 # Detect duplicate values in IMAGE_URLS
 for image_url in ${IMAGE_URLS//,/ }; do
     if [ $(echo "$IMAGE_URLS" | grep -o -F "$image_url" | wc -l) -gt 1 ]; then
