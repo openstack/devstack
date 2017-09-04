@@ -493,6 +493,13 @@ function neutron_server_config_add_new {
     _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS+=($1)
 }
 
+# neutron_deploy_rootwrap_filters() - deploy rootwrap filters
+function neutron_deploy_rootwrap_filters_new {
+    local srcdir=$1
+    sudo install -d -o root -g root -m 755 $NEUTRON_CONF_DIR/rootwrap.d
+    sudo install -o root -g root -m 644 $srcdir/etc/neutron/rootwrap.d/*.filters $NEUTRON_CONF_DIR/rootwrap.d
+}
+
 # Dispatch functions
 # These are needed for compatibility between the old and new implementations
 # where there are function name overlaps.  These will be removed when
@@ -604,6 +611,15 @@ function stop_neutron {
         stop_mutnauq "$@"
     else
         stop_neutron_new "$@"
+    fi
+}
+
+function neutron_deploy_rootwrap_filters {
+    if is_neutron_legacy_enabled; then
+        # Call back to old function
+        _neutron_deploy_rootwrap_filters "$@"
+    else
+        neutron_deploy_rootwrap_filters_new "$@"
     fi
 }
 
