@@ -32,9 +32,9 @@ That isn't a question, but please do! The source for DevStack is at
 `git.openstack.org
 <https://git.openstack.org/cgit/openstack-dev/devstack>`__ and bug
 reports go to `LaunchPad
-<http://bugs.launchpad.net/devstack/>`__. Contributions follow the
+<https://bugs.launchpad.net/devstack/>`__. Contributions follow the
 usual process as described in the `developer guide
-<http://docs.openstack.org/infra/manual/developers.html>`__. This
+<https://docs.openstack.org/infra/manual/developers.html>`__. This
 Sphinx documentation is housed in the doc directory.
 
 Why not use packages?
