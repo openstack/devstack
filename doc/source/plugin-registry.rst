@@ -144,6 +144,7 @@ octavia-dashboard                      `git://git.openstack.org/openstack/octavi
 omni                                   `git://git.openstack.org/openstack/omni <https://git.openstack.org/cgit/openstack/omni>`__
 os-xenapi                              `git://git.openstack.org/openstack/os-xenapi <https://git.openstack.org/cgit/openstack/os-xenapi>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
+oswin-tempest-plugin                   `git://git.openstack.org/openstack/oswin-tempest-plugin <https://git.openstack.org/cgit/openstack/oswin-tempest-plugin>`__
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
 patrole                                `git://git.openstack.org/openstack/patrole <https://git.openstack.org/cgit/openstack/patrole>`__
 picasso                                `git://git.openstack.org/openstack/picasso <https://git.openstack.org/cgit/openstack/picasso>`__
