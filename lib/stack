@@ -33,5 +33,8 @@ function stack_install_service {
         if [[ ${USE_VENV} = True && -n ${PROJECT_VENV[$service]:-} ]]; then
             unset PIP_VIRTUAL_ENV
         fi
+    else
+        echo "No function declared with name 'install_${service}'."
+        exit 1
     fi
 }
