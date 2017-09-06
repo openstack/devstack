@@ -345,7 +345,7 @@ function start_glance {
 
     run_process g-reg "$GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
-        run_process g-api "$GLANCE_BIN_DIR/uwsgi --ini $GLANCE_UWSGI_CONF"
+        run_process g-api "$GLANCE_BIN_DIR/uwsgi --procname-prefix glance-api --ini $GLANCE_UWSGI_CONF"
     else
         run_process g-api "$GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
     fi
