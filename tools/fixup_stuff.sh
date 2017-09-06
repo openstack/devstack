@@ -84,10 +84,10 @@ if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "True" && "$DISTRO" = "xenial" ]]; the
         # we can find local mirrors then use that mirror.
         source /etc/ci/mirror_info.sh
 
-        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR xenial-updates/ocata main"
+        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR xenial-updates/pike main"
     else
         # Otherwise use upstream UCA
-        sudo add-apt-repository -y cloud-archive:ocata
+        sudo add-apt-repository -y cloud-archive:pike
     fi
 
     # Disable use of libvirt wheel since a cached wheel build might be
