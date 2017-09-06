@@ -799,7 +799,7 @@ function start_nova_api {
             start_tls_proxy nova '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT
         fi
     else
-        run_process "n-api" "$NOVA_BIN_DIR/uwsgi --ini $NOVA_UWSGI_CONF"
+        run_process "n-api" "$NOVA_BIN_DIR/uwsgi --procname-prefix nova-api --ini $NOVA_UWSGI_CONF"
         nova_url=$service_protocol://$SERVICE_HOST/compute/v2.1/
     fi
 
@@ -903,7 +903,7 @@ function start_nova_rest {
     if [ "$NOVA_USE_MOD_WSGI" == "False" ]; then
         run_process n-api-meta "$NOVA_BIN_DIR/nova-api-metadata --config-file $compute_cell_conf"
     else
-        run_process n-api-meta "$NOVA_BIN_DIR/uwsgi --ini $NOVA_METADATA_UWSGI_CONF"
+        run_process n-api-meta "$NOVA_BIN_DIR/uwsgi --procname-prefix nova-api-meta --ini $NOVA_METADATA_UWSGI_CONF"
     fi
 
     run_process n-novnc "$NOVA_BIN_DIR/nova-novncproxy --config-file $api_cell_conf --web $NOVNC_WEB_DIR"

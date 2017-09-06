@@ -511,7 +511,7 @@ function start_cinder {
                 start_tls_proxy cinder '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_POR_INT
             fi
         else
-            run_process "c-api" "$CINDER_BIN_DIR/uwsgi --ini $CINDER_UWSGI_CONF"
+            run_process "c-api" "$CINDER_BIN_DIR/uwsgi --procname-prefix cinder-api --ini $CINDER_UWSGI_CONF"
             cinder_url=$service_protocol://$SERVICE_HOST/volume/v3
         fi
     fi
