@@ -1882,13 +1882,26 @@ function enable_plugin {
     local name=$1
     local url=$2
     local branch=${3:-master}
-    if [[ ",${DEVSTACK_PLUGINS}," =~ ,${name}, ]]; then
+    if is_plugin_enabled $name; then
         die $LINENO "Plugin attempted to be enabled twice: ${name} ${url} ${branch}"
     fi
     DEVSTACK_PLUGINS+=",$name"
     GITREPO[$name]=$url
     GITDIR[$name]=$DEST/$name
     GITBRANCH[$name]=$branch
+}
+
+# is_plugin_enabled <name>
+#
+# Check if the plugin was enabled, e.g. using enable_plugin
+#
+# ``name`` The name with which the plugin was enabled
+function is_plugin_enabled {
+    local name=$1
+    if [[ ",${DEVSTACK_PLUGINS}," =~ ",${name}," ]]; then
+        return 0
+    fi
+    return 1
 }
 
 # fetch_plugins
