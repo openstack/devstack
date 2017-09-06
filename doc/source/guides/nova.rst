@@ -66,5 +66,5 @@ These config options are defined in `nova.conf.serial_console
 <https://github.com/openstack/nova/blob/master/nova/conf/serial_console.py>`_.
 
 For more information on OpenStack configuration see the `OpenStack
-Configuration Reference
-<https://docs.openstack.org/ocata/config-reference/compute.html>`_
+Compute Service Configuration Reference
+<https://docs.openstack.org/nova/latest/admin/configuration/index.html>`_
