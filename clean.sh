@@ -88,6 +88,7 @@ cleanup_cinder || /bin/true
 cleanup_glance
 cleanup_keystone
 cleanup_nova
+cleanup_placement
 cleanup_neutron
 cleanup_swift
 cleanup_horizon
