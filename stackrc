@@ -388,6 +388,10 @@ GITBRANCH["python-openstackclient"]=${OPENSTACKCLIENT_BRANCH:-master}
 # this doesn't exist in a lib file, so set it here
 GITDIR["python-openstackclient"]=$DEST/python-openstackclient
 
+# placement-api CLI
+GITREPO["osc-placement"]=${OSC_PLACEMENT_REPO:-${GIT_BASE}/openstack/osc-placement.git}
+GITBRANCH["osc-placement"]=${OSC_PLACEMENT_BRANCH:-master}
+
 
 ###################
 #

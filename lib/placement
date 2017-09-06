@@ -159,6 +159,9 @@ function init_placement {
 # install_placement() - Collect source and prepare
 function install_placement {
     install_apache_wsgi
+    # Install the openstackclient placement client plugin for CLI
+    # TODO(mriedem): Use pip_install_gr once osc-placement is in g-r.
+    pip_install osc-placement
 }
 
 # start_placement_api() - Start the API processes ahead of other things
