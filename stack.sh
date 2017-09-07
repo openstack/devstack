@@ -228,16 +228,6 @@ if [[ ! ${DISTRO} =~ (xenial|yakkety|zesty|stretch|jessie|f24|f25|f26|opensuse-4
     fi
 fi
 
-# Check to see if we are already running DevStack
-# Note that this may fail if USE_SCREEN=False
-if type -p screen > /dev/null && screen -ls | egrep -q "[0-9]\.$SCREEN_NAME"; then
-    echo "You are already running a stack.sh session."
-    echo "To rejoin this session type 'screen -x stack'."
-    echo "To destroy this session, type './unstack.sh'."
-    exit 1
-fi
-
-
 # Local Settings
 # --------------
 
@@ -489,24 +479,6 @@ else
     fi
     # Always send summary fd to original stdout
     exec 6> >( $TOP_DIR/tools/outfilter.py -v >&3 )
-fi
-
-# Set up logging of screen windows
-# Set ``SCREEN_LOGDIR`` to turn on logging of screen windows to the
-# directory specified in ``SCREEN_LOGDIR``, we will log to the file
-# ``screen-$SERVICE_NAME-$TIMESTAMP.log`` in that dir and have a link
-# ``screen-$SERVICE_NAME.log`` to the latest log file.
-# Logs are kept for as long specified in ``LOGDAYS``.
-# This is deprecated....logs go in ``LOGDIR``, only symlinks will be here now.
-if [[ -n "$SCREEN_LOGDIR" ]]; then
-
-    # We make sure the directory is created.
-    if [[ -d "$SCREEN_LOGDIR" ]]; then
-        # We cleanup the old logs
-        find $SCREEN_LOGDIR -maxdepth 1 -name screen-\*.log -mtime +$LOGDAYS -exec rm {} \;
-    else
-        mkdir -p $SCREEN_LOGDIR
-    fi
 fi
 
 # Basic test for ``$DEST`` path permissions (fatal on error unless skipped)
@@ -1014,38 +986,6 @@ fi
 if is_service_enabled $DATABASE_BACKENDS; then
     configure_database
 fi
-
-
-# Configure screen
-# ----------------
-
-USE_SCREEN=$(trueorfalse True USE_SCREEN)
-if [[ "$USE_SCREEN" == "True" ]]; then
-    # Create a new named screen to run processes in
-    screen -d -m -S $SCREEN_NAME -t shell -s /bin/bash
-    sleep 1
-
-    # Set a reasonable status bar
-    SCREEN_HARDSTATUS=${SCREEN_HARDSTATUS:-}
-    if [ -z "$SCREEN_HARDSTATUS" ]; then
-        SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'
-    fi
-    screen -r $SCREEN_NAME -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
-    screen -r $SCREEN_NAME -X setenv PROMPT_COMMAND /bin/true
-
-    if is_service_enabled tls-proxy; then
-        follow_tls_proxy
-    fi
-fi
-
-# Clear ``screenrc`` file
-SCREENRC=$TOP_DIR/$SCREEN_NAME-screenrc
-if [[ -e $SCREENRC ]]; then
-    rm -f $SCREENRC
-fi
-
-# Initialize the directory for service status check
-init_service_check
 
 # Save configuration values
 save_stackenv $LINENO

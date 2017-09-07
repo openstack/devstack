@@ -29,7 +29,6 @@ psmisc
 python2.7
 python-dev
 python-gdbm # needed for testr
-screen
 tar
 tcpdump
 unzip

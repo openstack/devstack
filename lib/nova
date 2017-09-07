@@ -573,10 +573,6 @@ function create_nova_conf {
         if [[ -n ${LOGDIR} ]]; then
             bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${service}.log"
             iniset "$NOVA_CONF_DIR/nova-dhcpbridge.conf" DEFAULT log_file "$real_logfile"
-            if [[ -n ${SCREEN_LOGDIR} ]]; then
-                # Drop the backward-compat symlink
-                ln -sf "$real_logfile" ${SCREEN_LOGDIR}/screen-${service}.log
-            fi
         fi
 
         iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF_DIR/nova-dhcpbridge.conf"
