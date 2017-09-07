@@ -98,8 +98,7 @@ Follow logs for a specific service::
 
 Following logs for multiple services simultaneously::
 
-  journalctl -f --unit devstack@n-cpu.service --unit
-  devstack@n-cond.service
+  journalctl -f --unit devstack@n-cpu.service --unit devstack@n-cond.service
 
 or you can even do wild cards to follow all the nova services::
 
@@ -120,6 +119,29 @@ appear to be truncated, but horizontal scrolling is supported via the
 left/right arrow keys.
 
 See ``man 1 journalctl`` for more.
+
+Debugging with pdb
+==================
+
+In order to break into a regular pdb session on a systemd-controlled
+service, you need to invoke the process manually - that is, take it out
+of systemd's control.
+
+Discover the command systemd is using to run the service::
+
+  systemctl show devstack@n-sch.service -p ExecStart --no-pager
+
+Stop the systemd service::
+
+  sudo systemctl stop devstack@n-sch.service
+
+Inject your breakpoint in the source, e.g.::
+
+  import pdb; pdb.set_trace()
+
+Invoke the command manually::
+
+  /usr/local/bin/nova-scheduler --config-file /etc/nova/nova.conf
 
 Known Issues
 ============
