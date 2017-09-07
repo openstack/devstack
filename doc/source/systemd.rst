@@ -120,8 +120,11 @@ left/right arrow keys.
 
 See ``man 1 journalctl`` for more.
 
-Debugging with pdb
-==================
+Debugging
+=========
+
+Using pdb
+---------
 
 In order to break into a regular pdb session on a systemd-controlled
 service, you need to invoke the process manually - that is, take it out
@@ -142,6 +145,37 @@ Inject your breakpoint in the source, e.g.::
 Invoke the command manually::
 
   /usr/local/bin/nova-scheduler --config-file /etc/nova/nova.conf
+
+Using remote-pdb
+----------------
+
+`remote-pdb`_ works while the process is under systemd control.
+
+Make sure you have remote-pdb installed::
+
+  sudo pip install remote-pdb
+
+Inject your breakpoint in the source, e.g.::
+
+  import remote_pdb; remote_pdb.set_trace()
+
+Restart the relevant service::
+
+  sudo systemctl restart devstack@n-api.service
+
+The remote-pdb code configures the telnet port when ``set_trace()`` is
+invoked.  Do whatever it takes to hit the instrumented code path, and
+inspect the logs for a message displaying the listening port::
+
+  Sep 07 16:36:12 p8-100-neo devstack@n-api.service[772]: RemotePdb session open at 127.0.0.1:46771, waiting for connection ...
+
+Telnet to that port to enter the pdb session::
+
+  telnet 127.0.0.1 46771
+
+See the `remote-pdb`_ home page for more options.
+
+.. _`remote-pdb`: https://pypi.python.org/pypi/remote-pdb
 
 Known Issues
 ============
