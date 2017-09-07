@@ -39,7 +39,6 @@ Edit your ``local.conf`` to look like
     LOGFILE=$DEST/logs/stack.sh.log
     VERBOSE=True
     LOG_COLOR=True
-    SCREEN_LOGDIR=$DEST/logs
     # Pre-requisite
     ENABLED_SERVICES=rabbit,mysql,key
     # Horizon

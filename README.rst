@@ -1,4 +1,5 @@
-DevStack is a set of scripts and utilities to quickly deploy an OpenStack cloud.
+DevStack is a set of scripts and utilities to quickly deploy an OpenStack cloud
+from git source trees.
 
 Goals
 =====
@@ -27,9 +28,9 @@ Versions
 The DevStack master branch generally points to trunk versions of OpenStack
 components.  For older, stable versions, look for branches named
 stable/[release] in the DevStack repo.  For example, you can do the
-following to create a Newton OpenStack cloud::
+following to create a Pike OpenStack cloud::
 
-    git checkout stable/newton
+    git checkout stable/pike
     ./stack.sh
 
 You can also pick specific OpenStack project releases by setting the appropriate
@@ -54,7 +55,7 @@ When the script finishes executing, you should be able to access OpenStack
 endpoints, like so:
 
 * Horizon: http://myhost/
-* Keystone: http://myhost:5000/v2.0/
+* Keystone: http://myhost/identity/v2.0/
 
 We also provide an environment file that you can use to interact with your
 cloud via CLI::
