@@ -718,6 +718,7 @@ function _configure_neutron_common {
     if is_service_enabled tls-proxy; then
         # Set the service port for a proxy to take the original
         iniset $NEUTRON_CONF DEFAULT bind_port "$Q_PORT_INT"
+        iniset $NEUTRON_CONF oslo_middleware enable_proxy_headers_parsing True
     fi
 
     _neutron_setup_rootwrap
