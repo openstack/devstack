@@ -69,7 +69,7 @@ Shared Guest Interface
 
    This is not a recommended configuration. Because of interactions
    between ovs and bridging, if you reboot your box with active
-   networking you may loose network connectivity to your system.
+   networking you may lose network connectivity to your system.
 
 If you need your guests accessible on the network, but only have 1
 interface (using something like a NUC), you can share your one
