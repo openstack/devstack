@@ -537,14 +537,20 @@ function exit_trap {
 
     if [[ $r -ne 0 ]]; then
         echo "Error on exit"
-        generate-subunit $DEVSTACK_START_TIME $SECONDS 'fail' >> ${SUBUNIT_OUTPUT}
+        # If we error before we've installed os-testr, which will fail.
+        if type -p generate-subunit > /dev/null; then
+            generate-subunit $DEVSTACK_START_TIME $SECONDS 'fail' >> ${SUBUNIT_OUTPUT}
+        fi
         if [[ -z $LOGDIR ]]; then
             $TOP_DIR/tools/worlddump.py
         else
             $TOP_DIR/tools/worlddump.py -d $LOGDIR
         fi
     else
-        generate-subunit $DEVSTACK_START_TIME $SECONDS >> ${SUBUNIT_OUTPUT}
+        # If we error before we've installed os-testr, which will fail.
+        if type -p generate-subunit > /dev/null; then
+            generate-subunit $DEVSTACK_START_TIME $SECONDS >> ${SUBUNIT_OUTPUT}
+        fi
     fi
 
     exit $r
