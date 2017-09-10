@@ -3,12 +3,12 @@
 # This tool lists processes that lock memory pages from swapping to disk.
 
 import re
-import subprocess
 
 import psutil
 
 
-SUMMARY_REGEX = re.compile(b".*\s+(?P<locked>[\d]+)\s+KB")
+LCK_SUMMARY_REGEX = re.compile(
+    "^VmLck:\s+(?P<locked>[\d]+)\s+kB", re.MULTILINE)
 
 
 def main():
@@ -22,28 +22,21 @@ def main():
 def _get_report():
     mlock_users = []
     for proc in psutil.process_iter():
-        pid = proc.pid
         # sadly psutil does not expose locked pages info, that's why we
-        # call to pmap and parse the output here
+        # iterate over the /proc/%pid/status files manually
         try:
-            out = subprocess.check_output(['pmap', '-XX', str(pid)])
-        except subprocess.CalledProcessError as e:
-            # 42 means process just vanished, which is ok
-            if e.returncode == 42:
-                continue
-            raise
-        last_line = out.splitlines()[-1]
-
-        # some processes don't provide a memory map, for example those
-        # running as kernel services, so we need to skip those that don't
-        # match
-        result = SUMMARY_REGEX.match(last_line)
-        if result:
-            locked = int(result.group('locked'))
-            if locked:
-                mlock_users.append({'name': proc.name(),
-                                    'pid': pid,
-                                    'locked': locked})
+            s = open("%s/%d/status" % (psutil.PROCFS_PATH, proc.pid), 'r')
+        except EnvironmentError:
+            continue
+        with s:
+            for line in s:
+                result = LCK_SUMMARY_REGEX.search(line)
+                if result:
+                    locked = int(result.group('locked'))
+                    if locked:
+                        mlock_users.append({'name': proc.name(),
+                                            'pid': proc.pid,
+                                            'locked': locked})
 
     # produce a single line log message with per process mlock stats
     if mlock_users:
