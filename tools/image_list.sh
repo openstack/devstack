@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Print out a list of image and other files to download for caching.
+# This is mostly used by the OpenStack infrasturucture during daily
+# image builds to save the large images to /opt/cache/files (see [1])
+#
+# The two lists of URL's downloaded are the IMAGE_URLS and
+# EXTRA_CACHE_URLS, which are setup in stackrc
+#
+# [1] project-config:nodepool/elements/cache-devstack/extra-data.d/55-cache-devstack-repos
+
 # Keep track of the DevStack directory
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
@@ -31,12 +40,20 @@ for driver in $DRIVERS; do
     ALL_IMAGES+=$URLS
 done
 
-# Make a nice list
-echo $ALL_IMAGES | tr ',' '\n' | sort | uniq
-
 # Sanity check - ensure we have a minimum number of images
 num=$(echo $ALL_IMAGES | tr ',' '\n' | sort | uniq | wc -l)
 if [[ "$num" -lt 4 ]]; then
     echo "ERROR: We only found $num images in $ALL_IMAGES, which can't be right."
     exit 1
 fi
+
+# This is extra non-image files that we want pre-cached.  This is kept
+# in a separate list because devstack loops over the IMAGE_LIST to
+# upload files glance and these aren't images.  (This was a bit of an
+# after-thought which is why the naming around this is very
+# image-centric)
+URLS=$(source $TOP_DIR/stackrc && echo $EXTRA_CACHE_URLS)
+ALL_IMAGES+=$URLS
+
+# Make a nice combined list
+echo $ALL_IMAGES | tr ',' '\n' | sort | uniq
