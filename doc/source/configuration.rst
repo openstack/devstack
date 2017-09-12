@@ -779,9 +779,15 @@ are needed::
     DOWNLOAD_DEFAULT_IMAGES=False
     IMAGE_URLS="https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-s390x-disk1.img"
 
+    # Provide a custom etcd3 binary download URL and ints sha256.
+    # The binary must be located under '/<etcd version>/etcd-<etcd-version>-linux-s390x.tar.gz'
+    # on this URL.
+    # Build instructions for etcd3: https://github.com/linux-on-ibm-z/docs/wiki/Building-etcd
+    ETCD_DOWNLOAD_URL=<your-etcd-download-url>
+    ETCD_SHA256=<your-etcd3-sha256>
+
     enable_service n-sproxy
     disable_service n-novnc
-    disable_service etcd3  # https://bugs.launchpad.net/devstack/+bug/1693192
 
     [[post-config|$NOVA_CONF]]
 
@@ -803,8 +809,11 @@ Reasoning:
   needed if you want to use the *serial console* outside of the all-in-one
   setup.
 
-* The service ``etcd3`` needs to be disabled as long as bug report
-  https://bugs.launchpad.net/devstack/+bug/1693192 is not resolved.
+* A link to an etcd3 binary and its sha256 needs to be provided as the
+  binary for s390x is not hosted on github like it is for other
+  architectures. For more details see
+  https://bugs.launchpad.net/devstack/+bug/1693192. Etcd3 can easily be
+  built along https://github.com/linux-on-ibm-z/docs/wiki/Building-etcd.
 
 .. note:: To run *Tempest* against this *Devstack* all-in-one, you'll need
    to use a guest image which is smaller than 1GB when uncompressed.

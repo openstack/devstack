@@ -719,6 +719,7 @@ ETCD_SHA256_AMD64="4fde194bbcd259401e2b5c462dfa579ee7f6af539f13f130b8f5b4f52e3b3
 # NOTE(sdague): etcd v3.1.7 doesn't have anything for these architectures, though 3.2.0 does.
 ETCD_SHA256_ARM64=""
 ETCD_SHA256_PPC64=""
+ETCD_SHA256_S390X=""
 # Make sure etcd3 downloads the correct architecture
 if is_arch "x86_64"; then
     ETCD_ARCH="amd64"
@@ -729,6 +730,16 @@ elif is_arch "aarch64"; then
 elif is_arch "ppc64le"; then
     ETCD_ARCH="ppc64le"
     ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_PPC64}
+elif is_arch "s390x"; then
+    # An etcd3 binary for s390x is not available on github like it is
+    # for other arches. Only continue if a custom download URL was
+    # provided.
+    if [[ -n "${ETCD_DOWNLOAD_URL}" ]]; then
+        ETCD_ARCH="s390x"
+        ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_S390X}
+    else
+        exit_distro_not_supported "etcd3. No custom ETCD_DOWNLOAD_URL provided."
+    fi
 else
     exit_distro_not_supported "invalid hardware type - $ETCD_ARCH"
 fi
