@@ -519,7 +519,7 @@ function git_clone {
         if [[ ! -d $git_dest ]]; then
             if [[ "$ERROR_ON_CLONE" = "True" ]]; then
                 echo "The $git_dest project was not found; if this is a gate job, add"
-                echo "the project to the \$PROJECTS variable in the job definition."
+                echo "the project to 'required-projects' in the job definition."
                 die $LINENO "Cloning not allowed in this configuration"
             fi
             git_timed clone $git_clone_flags $git_remote $git_dest
