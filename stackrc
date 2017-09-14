@@ -131,11 +131,11 @@ export DISABLED_PYTHON3_PACKAGES=""
 # version of Python 3 to this variable will install the app using that
 # version of the interpreter instead of 2.7.
 _DEFAULT_PYTHON3_VERSION="$(_get_python_version python3)"
-export PYTHON3_VERSION=${PYTHON3_VERSION:-${_DEFAULT_PYTHON3_VERSION}}
+export PYTHON3_VERSION=${PYTHON3_VERSION:-${_DEFAULT_PYTHON3_VERSION:-3.5}}
 
 # Just to be more explicit on the Python 2 version to use.
 _DEFAULT_PYTHON2_VERSION="$(_get_python_version python2)"
-export PYTHON2_VERSION=${PYTHON2_VERSION:-${_DEFAULT_PYTHON2_VERSION}}
+export PYTHON2_VERSION=${PYTHON2_VERSION:-${_DEFAULT_PYTHON2_VERSION:-2.7}}
 
 # allow local overrides of env variables, including repo config
 if [[ -f $RC_DIR/localrc ]]; then
