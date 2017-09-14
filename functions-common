@@ -2080,7 +2080,10 @@ function is_provider_network {
 function _get_python_version {
     local interp=$1
     local version
-    version=$($interp -c 'import sys; print("%s.%s" % sys.version_info[0:2])')
+    # disable erroring out here, otherwise if python 3 doesn't exist we fail hard.
+    if [[ -x $(which $interp) ]]; then
+        version=$($interp -c 'import sys; print("%s.%s" % sys.version_info[0:2])')
+    fi
     echo ${version}
 }
 
