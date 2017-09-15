@@ -39,6 +39,7 @@ cloudkitty                             `git://git.openstack.org/openstack/cloudk
 collectd-ceilometer-plugin             `git://git.openstack.org/openstack/collectd-ceilometer-plugin <https://git.openstack.org/cgit/openstack/collectd-ceilometer-plugin>`__
 congress                               `git://git.openstack.org/openstack/congress <https://git.openstack.org/cgit/openstack/congress>`__
 cue                                    `git://git.openstack.org/openstack/cue <https://git.openstack.org/cgit/openstack/cue>`__
+cyborg                                 `git://git.openstack.org/openstack/cyborg <https://git.openstack.org/cgit/openstack/cyborg>`__
 designate                              `git://git.openstack.org/openstack/designate <https://git.openstack.org/cgit/openstack/designate>`__
 devstack-plugin-additional-pkg-repos   `git://git.openstack.org/openstack/devstack-plugin-additional-pkg-repos <https://git.openstack.org/cgit/openstack/devstack-plugin-additional-pkg-repos>`__
 devstack-plugin-amqp1                  `git://git.openstack.org/openstack/devstack-plugin-amqp1 <https://git.openstack.org/cgit/openstack/devstack-plugin-amqp1>`__
