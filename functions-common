@@ -2014,7 +2014,7 @@ function cidr2netmask {
 # Check if this is a valid ipv4 address string
 function is_ipv4_address {
     local address=$1
-    local regex='([0-9]{1,3}.){3}[0-9]{1,3}'
+    local regex='([0-9]{1,3}\.){3}[0-9]{1,3}'
     # TODO(clarkb) make this more robust
     if [[ "$address" =~ $regex ]] ; then
         return 0
