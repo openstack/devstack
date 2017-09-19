@@ -450,7 +450,7 @@ function configure_auth_token_middleware {
 
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     iniset $conf_file $section signing_dir $signing_dir
-    iniset $conf_file $section memcached_servers $SERVICE_HOST:11211
+    iniset $conf_file $section memcached_servers localhost:11211
 }
 
 # init_keystone() - Initialize databases, etc.
