@@ -168,7 +168,7 @@ fi
 #
 Q_DVR_MODE=${Q_DVR_MODE:-legacy}
 if [[ "$Q_DVR_MODE" != "legacy" ]]; then
-    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,linuxbridge,l2population
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,l2population
 fi
 
 # Provider Network Configurations
