@@ -443,7 +443,7 @@ function start_neutron_new {
     fi
 
     if is_service_enabled neutron-metering; then
-        run_process neutron-metering "$NEUTRON_METERING_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_METERING_AGENT_CONF"
+        run_process neutron-metering "$NEUTRON_BIN_DIR/$NEUTRON_METERING_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_METERING_AGENT_CONF"
     fi
 }
 
