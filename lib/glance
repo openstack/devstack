@@ -333,7 +333,7 @@ function install_glance {
     setup_develop $GLANCE_DIR
 }
 
-# start_glance() - Start running processes, including screen
+# start_glance() - Start running processes
 function start_glance {
     local service_protocol=$GLANCE_SERVICE_PROTOCOL
     if is_service_enabled tls-proxy; then
@@ -358,7 +358,6 @@ function start_glance {
 
 # stop_glance() - Stop running processes
 function stop_glance {
-    # Kill the Glance screen windows
     stop_process g-api
     stop_process g-reg
 }

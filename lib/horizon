@@ -181,13 +181,12 @@ function install_horizon {
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH
 }
 
-# start_horizon() - Start running processes, including screen
+# start_horizon() - Start running processes
 function start_horizon {
     restart_apache_server
-    tail_log horizon /var/log/$APACHE_NAME/horizon_error.log
 }
 
-# stop_horizon() - Stop running processes (non-screen)
+# stop_horizon() - Stop running processes
 function stop_horizon {
     stop_apache_server
 }

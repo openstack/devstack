@@ -455,7 +455,7 @@ function configure_neutron_after_post_config {
     fi
 }
 
-# Start running processes, including screen
+# Start running processes
 function start_neutron_service_and_check {
     local service_port=$Q_PORT
     local service_protocol=$Q_PROTOCOL
@@ -524,7 +524,7 @@ function stop_mutnauq_l2_agent {
     stop_process q-agt
 }
 
-# stop_mutnauq_other() - Stop running processes (non-screen)
+# stop_mutnauq_other() - Stop running processes
 function stop_mutnauq_other {
     if is_service_enabled q-dhcp; then
         stop_process q-dhcp
