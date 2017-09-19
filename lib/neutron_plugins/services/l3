@@ -188,7 +188,7 @@ function create_neutron_initial_network {
             if [ -z $SUBNETPOOL_V4_ID ]; then
                 fixed_range_v4=$FIXED_RANGE
             fi
-            SUBNET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY ${SUBNETPOOL_V4_ID:+--subnet-pool $SUBNETPOOL_V4_ID} --network $NET_ID --subnet-range $fixed_range_v4 | grep ' id ' | get_field 2)
+            SUBNET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY ${SUBNETPOOL_V4_ID:+--subnet-pool $SUBNETPOOL_V4_ID} --network $NET_ID ${fixed_range_v4:+--subnet-range $fixed_range_v4} | grep ' id ' | get_field 2)
             die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $project_id"
         fi
 
@@ -198,7 +198,7 @@ function create_neutron_initial_network {
             if [ -z $SUBNETPOOL_V6_ID ]; then
                 fixed_range_v6=$IPV6_PROVIDER_FIXED_RANGE
             fi
-            IPV6_SUBNET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 6 --gateway $IPV6_PROVIDER_NETWORK_GATEWAY $IPV6_PROVIDER_SUBNET_NAME ${SUBNETPOOL_V6_ID:+--subnet-pool $SUBNETPOOL_V6_ID} --network $NET_ID --subnet-range $fixed_range_v6 | grep ' id ' | get_field 2)
+            IPV6_SUBNET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 6 --gateway $IPV6_PROVIDER_NETWORK_GATEWAY $IPV6_PROVIDER_SUBNET_NAME ${SUBNETPOOL_V6_ID:+--subnet-pool $SUBNETPOOL_V6_ID} --network $NET_ID ${fixed_range_v6:+--subnet-range $fixed_range_v6} | grep ' id ' | get_field 2)
             die_if_not_set $LINENO IPV6_SUBNET_ID "Failure creating IPV6_SUBNET_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
         fi
 
