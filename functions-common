@@ -2083,7 +2083,7 @@ function _get_python_version {
     local interp=$1
     local version
     # disable erroring out here, otherwise if python 3 doesn't exist we fail hard.
-    if [[ -x $(which $interp) ]]; then
+    if [[ -x $(which $interp 2> /dev/null) ]]; then
         version=$($interp -c 'import sys; print("%s.%s" % sys.version_info[0:2])')
     fi
     echo ${version}
