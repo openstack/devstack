@@ -894,10 +894,10 @@ if [[ "$SERVICE_IP_VERSION" == 6 ]]; then
 
     DEF_SERVICE_HOST=[$HOST_IPV6]
     DEF_SERVICE_LOCAL_HOST=::1
-    DEF_SERVICE_LISTEN_ADDRESS=::
+    DEF_SERVICE_LISTEN_ADDRESS="[::]"
 fi
 
-# This is either 0.0.0.0 for IPv4 or :: for IPv6
+# This is either 0.0.0.0 for IPv4 or [::] for IPv6
 SERVICE_LISTEN_ADDRESS=${SERVICE_LISTEN_ADDRESS:-${DEF_SERVICE_LISTEN_ADDRESS}}
 
 # Allow the use of an alternate hostname (such as localhost/127.0.0.1) for
