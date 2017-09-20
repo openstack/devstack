@@ -32,6 +32,17 @@ NEUTRON_AGENT=${NEUTRON_AGENT:-openvswitch}
 NEUTRON_DIR=$DEST/neutron
 NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
+NEUTRON_DISTRIBUTED_ROUTING=$(trueorfalse False NEUTRON_DISTRIBUTED_ROUTING)
+# Distributed Virtual Router (DVR) configuration
+# Can be:
+# - ``legacy``          - No DVR functionality
+# - ``dvr_snat``        - Controller or single node DVR
+# - ``dvr``             - Compute node in multi-node DVR
+# - ``dvr_no_external`` - Compute node in multi-node DVR, no external network
+#
+# Default is 'dvr_snat' since it can handle both DVR and legacy routers
+NEUTRON_DVR_MODE=${NEUTRON_DVR_MODE:-dvr_snat}
+
 NEUTRON_BIN_DIR=$(get_python_exec_prefix)
 NEUTRON_DHCP_BINARY="neutron-dhcp-agent"
 
@@ -173,6 +184,7 @@ function configure_neutron_new {
 
         iniset $NEUTRON_CONF DEFAULT policy_file $policy_file
         iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips True
+        iniset $NEUTRON_CONF DEFAULT router_distributed $NEUTRON_DISTRIBUTED_ROUTING
 
         iniset $NEUTRON_CONF DEFAULT auth_strategy $NEUTRON_AUTH_STRATEGY
         configure_auth_token_middleware $NEUTRON_CONF neutron $NEUTRON_AUTH_CACHE_DIR keystone_authtoken
@@ -181,7 +193,15 @@ function configure_neutron_new {
         # Configure VXLAN
         # TODO(sc68cal) not hardcode?
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2 tenant_network_types vxlan
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 mechanism_drivers openvswitch,linuxbridge
+
+        local mech_drivers="openvswitch"
+        if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
+            mech_drivers+=",l2population"
+        else
+            mech_drivers+=",linuxbridge"
+        fi
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 mechanism_drivers $mech_drivers
+
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks public
         if [[ "$NEUTRON_PORT_SECURITY" = "True" ]]; then
@@ -202,6 +222,11 @@ function configure_neutron_new {
         else
             iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver iptables_hybrid
             iniset $NEUTRON_CORE_PLUGIN_CONF ovs local_ip $HOST_IP
+
+            if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
+                iniset $NEUTRON_CORE_PLUGIN_CONF agent l2_population True
+                iniset $NEUTRON_CORE_PLUGIN_CONF agent enable_distributed_routing True
+            fi
         fi
 
         if ! running_in_container; then
@@ -235,6 +260,10 @@ function configure_neutron_new {
             iniset $NEUTRON_CORE_PLUGIN_CONF linux_bridge bridge_mappings "$PUBLIC_NETWORK_NAME:$PUBLIC_BRIDGE"
         else
             iniset $NEUTRON_CORE_PLUGIN_CONF ovs bridge_mappings "$PUBLIC_NETWORK_NAME:$PUBLIC_BRIDGE"
+        fi
+
+        if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
+            iniset $NEUTRON_L3_CONF DEFAULT agent_mode $NEUTRON_DVR_MODE
         fi
     fi
 
