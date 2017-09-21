@@ -71,8 +71,8 @@ function configure_nova_hypervisor {
         iniset $NOVA_CONF libvirt connection_uri "parallels+unix:///system"
         iniset $NOVA_CONF libvirt images_type "ploop"
         iniset $NOVA_CONF DEFAULT force_raw_images  "False"
-        iniset $NOVA_CONF vnc vncserver_proxyclient_address  $HOST_IP
-        iniset $NOVA_CONF vnc vncserver_listen $HOST_IP
+        iniset $NOVA_CONF vnc server_proxyclient_address  $HOST_IP
+        iniset $NOVA_CONF vnc server_listen $HOST_IP
         iniset $NOVA_CONF vnc keymap
     elif [[ "$NOVA_BACKEND" == "LVM" ]]; then
         iniset $NOVA_CONF libvirt images_type "lvm"

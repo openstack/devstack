@@ -520,8 +520,8 @@ function create_nova_conf {
         # For multi-host, this should be the management ip of the compute host.
         VNCSERVER_LISTEN=${VNCSERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
         VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
-        iniset $NOVA_CONF vnc vncserver_listen "$VNCSERVER_LISTEN"
-        iniset $NOVA_CONF vnc vncserver_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+        iniset $NOVA_CONF vnc server_listen "$VNCSERVER_LISTEN"
+        iniset $NOVA_CONF vnc server_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
         iniset $NOVA_CONF vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $NOVA_CONF vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
     else
