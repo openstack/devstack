@@ -72,7 +72,8 @@ NEUTRON_SERVICE_PROTOCOL=${NEUTRON_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 NEUTRON_AUTH_STRATEGY=${NEUTRON_AUTH_STRATEGY:-keystone}
 NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
 NEUTRON_ROOTWRAP_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
-NEUTRON_ROOTWRAP_DAEMON_CMD="sudo $NEUTRON_ROOTWRAP-daemon $NEUTRON_ROOTWRAP_CONF_FILE"
+NEUTRON_ROOTWRAP_CMD="$NEUTRON_ROOTWRAP $NEUTRON_ROOTWRAP_CONF_FILE"
+NEUTRON_ROOTWRAP_DAEMON_CMD="$NEUTRON_ROOTWRAP-daemon $NEUTRON_ROOTWRAP_CONF_FILE"
 
 # This is needed because _neutron_ovs_base_configure_l3_agent will set
 # external_network_bridge
@@ -123,6 +124,13 @@ function cleanup_neutron_new {
     for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|qlbaas|fip|snat)-[0-9a-f-]*'); do
         sudo ip netns delete ${ns}
     done
+}
+
+# configure_root_helper_options() - Configure agent rootwrap helper options
+function configure_root_helper_options {
+    local conffile=$1
+    iniset $conffile agent root_helper "sudo $NEUTRON_ROOTWRAP_CMD"
+    iniset $conffile agent root_helper_daemon "sudo $NEUTRON_ROOTWRAP_DAEMON_CMD"
 }
 
 # configure_neutron() - Set config files, create data dirs, etc
@@ -185,6 +193,7 @@ function configure_neutron_new {
     if is_service_enabled neutron-agent; then
         iniset $NEUTRON_CORE_PLUGIN_CONF agent tunnel_types vxlan
         iniset $NEUTRON_CORE_PLUGIN_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+        configure_root_helper_options $NEUTRON_CORE_PLUGIN_CONF
 
         # Configure the neutron agent
         if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
@@ -208,7 +217,7 @@ function configure_neutron_new {
         # make it so we have working DNS from guests
         iniset $NEUTRON_DHCP_CONF DEFAULT dnsmasq_local_resolv True
 
-        iniset $NEUTRON_DHCP_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
+        configure_root_helper_options $NEUTRON_DHCP_CONF
         iniset $NEUTRON_DHCP_CONF DEFAULT interface_driver $NEUTRON_AGENT
         neutron_plugin_configure_dhcp_agent $NEUTRON_DHCP_CONF
     fi
@@ -217,7 +226,7 @@ function configure_neutron_new {
         cp $NEUTRON_DIR/etc/l3_agent.ini.sample $NEUTRON_L3_CONF
         iniset $NEUTRON_L3_CONF DEFAULT interface_driver $NEUTRON_AGENT
         neutron_service_plugin_class_add router
-        iniset $NEUTRON_L3_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
+        configure_root_helper_options $NEUTRON_L3_CONF
         iniset $NEUTRON_L3_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         neutron_plugin_configure_l3_agent $NEUTRON_L3_CONF
     fi
@@ -229,7 +238,8 @@ function configure_neutron_new {
         iniset $NEUTRON_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         iniset $NEUTRON_META_CONF DEFAULT nova_metadata_ip $SERVICE_HOST
         iniset $NEUTRON_META_CONF DEFAULT metadata_workers $API_WORKERS
-        iniset $NEUTRON_META_CONF agent root_helper_daemon "$NEUTRON_ROOTWRAP_DAEMON_CMD"
+        # TODO(ihrachys) do we really need to set rootwrap for metadata agent?
+        configure_root_helper_options $NEUTRON_META_CONF
 
         # TODO(dtroyer): remove the v2.0 hard code below
         iniset $NEUTRON_META_CONF DEFAULT auth_url $KEYSTONE_SERVICE_URI
@@ -254,12 +264,6 @@ function configure_neutron_new {
 
 # configure_neutron_rootwrap() - configure Neutron's rootwrap
 function configure_neutron_rootwrap {
-    # Set the paths of certain binaries
-    neutron_rootwrap=$(get_rootwrap_location neutron)
-
-    # Specify ``rootwrap.conf`` as first parameter to neutron-rootwrap
-    local rootwrap_sudoer_cmd="${neutron_rootwrap} $NEUTRON_CONF_DIR/rootwrap.conf"
-
     # Deploy new rootwrap filters files (owned by root).
     # Wipe any existing rootwrap.d files first
     if [[ -d $NEUTRON_CONF_DIR/rootwrap.d ]]; then
@@ -276,7 +280,8 @@ function configure_neutron_rootwrap {
 
     # Set up the rootwrap sudoers for Neutron
     tempfile=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD: $rootwrap_sudoer_cmd *" >$tempfile
+    echo "$STACK_USER ALL=(root) NOPASSWD: $NEUTRON_ROOTWRAP_CMD *" >$tempfile
+    echo "$STACK_USER ALL=(root) NOPASSWD: $NEUTRON_ROOTWRAP_DAEMON_CMD" >>$tempfile
     chmod 0440 $tempfile
     sudo chown root:root $tempfile
     sudo mv $tempfile /etc/sudoers.d/neutron-rootwrap
