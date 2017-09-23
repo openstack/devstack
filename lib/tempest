@@ -293,10 +293,6 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG identity-feature-enabled security_compliance True
     fi
 
-    # TODO(rodrigods): This is a feature flag for bug 1590578 which is fixed in
-    # Newton and Ocata. This option can be removed after Mitaka is end of life.
-    iniset $TEMPEST_CONFIG identity-feature-enabled forbid_global_implied_dsr True
-
     # When LDAP is enabled domain specific drivers are also enabled and the users
     # and groups identity tests must adapt to this scenario
     if is_service_enabled ldap; then
