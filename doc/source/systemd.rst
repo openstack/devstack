@@ -94,25 +94,25 @@ query facilities. We'll start with some common options.
 
 Follow logs for a specific service::
 
-  journalctl -f --unit devstack@n-cpu.service
+  sudo journalctl -f --unit devstack@n-cpu.service
 
 Following logs for multiple services simultaneously::
 
-  journalctl -f --unit devstack@n-cpu.service --unit devstack@n-cond.service
+  sudo journalctl -f --unit devstack@n-cpu.service --unit devstack@n-cond.service
 
 or you can even do wild cards to follow all the nova services::
 
-  journalctl -f --unit devstack@n-*
+  sudo journalctl -f --unit devstack@n-*
 
 Use higher precision time stamps::
 
-  journalctl -f -o short-precise --unit devstack@n-cpu.service
+  sudo journalctl -f -o short-precise --unit devstack@n-cpu.service
 
 By default, journalctl strips out "unprintable" characters, including
 ASCII color codes. To keep the color codes (which can be interpreted by
 an appropriate terminal/pager - e.g. ``less``, the default)::
 
-  journalctl -a --unit devstack@n-cpu.service
+  sudo journalctl -a --unit devstack@n-cpu.service
 
 When outputting to the terminal using the default pager, long lines
 appear to be truncated, but horizontal scrolling is supported via the
