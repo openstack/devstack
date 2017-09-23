@@ -229,6 +229,13 @@ function configure_neutron_new {
         configure_root_helper_options $NEUTRON_L3_CONF
         iniset $NEUTRON_L3_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         neutron_plugin_configure_l3_agent $NEUTRON_L3_CONF
+
+        # Configure the neutron agent to serve external network ports
+        if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
+            iniset $NEUTRON_CORE_PLUGIN_CONF linux_bridge bridge_mappings "$PUBLIC_NETWORK_NAME:$PUBLIC_BRIDGE"
+        else
+            iniset $NEUTRON_CORE_PLUGIN_CONF ovs bridge_mappings "$PUBLIC_NETWORK_NAME:$PUBLIC_BRIDGE"
+        fi
     fi
 
     # Metadata
