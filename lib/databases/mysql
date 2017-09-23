@@ -15,10 +15,9 @@ MYSQL_DRIVER=${MYSQL_DRIVER:-PyMySQL}
 
 register_database mysql
 
-# Linux distros, thank you for being incredibly consistent
-MYSQL=mysql
+MYSQL_SERVICE_NAME=mysql
 if is_fedora && ! is_oraclelinux; then
-    MYSQL=mariadb
+    MYSQL_SERVICE_NAME=mariadb
 fi
 
 # Functions
@@ -34,17 +33,17 @@ function get_database_type_mysql {
 
 # Get rid of everything enough to cleanly change database backends
 function cleanup_database_mysql {
-    stop_service $MYSQL
+    stop_service $MYSQL_SERVICE_NAME
     if is_ubuntu; then
         # Get ruthless with mysql
         apt_get purge -y mysql* mariadb*
         sudo rm -rf /var/lib/mysql
         sudo rm -rf /etc/mysql
         return
-    elif is_suse || is_oraclelinux; then
+    elif is_oraclelinux; then
         uninstall_package mysql-community-server
         sudo rm -rf /var/lib/mysql
-    elif is_fedora; then
+    elif is_suse || is_fedora; then
         uninstall_package mariadb-server
         sudo rm -rf /var/lib/mysql
     else
@@ -64,12 +63,9 @@ function configure_database_mysql {
 
     if is_ubuntu; then
         my_conf=/etc/mysql/my.cnf
-        mysql=mysql
     elif is_suse || is_oraclelinux; then
         my_conf=/etc/my.cnf
-        mysql=mysql
     elif is_fedora; then
-        mysql=mariadb
         my_conf=/etc/my.cnf
         local cracklib_conf=/etc/my.cnf.d/cracklib_password_check.cnf
         if [ -f "$cracklib_conf" ]; then
@@ -82,7 +78,7 @@ function configure_database_mysql {
     # Start mysql-server
     if is_fedora || is_suse; then
         # service is not started by default
-        start_service $mysql
+        start_service $MYSQL_SERVICE_NAME
     fi
 
     # Set the root password - only works the first time. For Ubuntu, we already
@@ -124,7 +120,7 @@ function configure_database_mysql {
         iniset -sudo $my_conf mysqld log-queries-not-using-indexes 1
     fi
 
-    restart_service $mysql
+    restart_service $MYSQL_SERVICE_NAME
 }
 
 function install_database_mysql {
@@ -151,13 +147,11 @@ EOF
         chmod 0600 $HOME/.my.cnf
     fi
     # Install mysql-server
-    if is_suse || is_oraclelinux; then
-        if ! is_package_installed mariadb; then
-            install_package mysql-community-server
-        fi
-    elif is_fedora; then
+    if is_oraclelinux; then
+        install_package mysql-community-server
+    elif is_fedora || is_suse; then
         install_package mariadb-server
-        sudo systemctl enable mariadb
+        sudo systemctl enable $MYSQL_SERVICE_NAME
     elif is_ubuntu; then
         install_package mysql-server
     else
