@@ -12,7 +12,6 @@ kpartx
 libxml2-python
 m2crypto
 mysql-devel
-MySQL-python
 mysql-server # NOPRIME
 numpy # needed by websockify for spice console
 parted
