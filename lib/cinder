@@ -229,16 +229,6 @@ function configure_cinder {
 
     configure_auth_token_middleware $CINDER_CONF cinder $CINDER_AUTH_CACHE_DIR
 
-    # Change the default nova_catalog_info and nova_catalog_admin_info values in
-    # cinder so that the service name cinder is searching for matches that set for
-    # nova in keystone.
-    if [[ -n "$CINDER_NOVA_CATALOG_INFO" ]]; then
-        iniset $CINDER_CONF DEFAULT nova_catalog_info $CINDER_NOVA_CATALOG_INFO
-    fi
-    if [[ -n "$CINDER_NOVA_CATALOG_ADMIN_INFO" ]]; then
-        iniset $CINDER_CONF DEFAULT nova_catalog_admin_info $CINDER_NOVA_CATALOG_ADMIN_INFO
-    fi
-
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
@@ -252,8 +242,6 @@ function configure_cinder {
     iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
     iniset $CINDER_CONF DEFAULT my_ip "$HOST_IP"
-
-    iniset $CINDER_CONF DEFAULT os_region_name "$REGION_NAME"
 
     iniset $CINDER_CONF key_manager api_class cinder.keymgr.conf_key_mgr.ConfKeyManager
 
@@ -331,10 +319,9 @@ function configure_cinder {
         iniset $CINDER_CONF DEFAULT glance_api_version 2
     fi
 
-    # Set os_privileged_user credentials (used for os-assisted-snapshots)
-    iniset $CINDER_CONF DEFAULT os_privileged_user_name nova
-    iniset $CINDER_CONF DEFAULT os_privileged_user_password "$SERVICE_PASSWORD"
-    iniset $CINDER_CONF DEFAULT os_privileged_user_tenant "$SERVICE_PROJECT_NAME"
+    # Set nova credentials (used for os-assisted-snapshots)
+    configure_auth_token_middleware $CINDER_CONF nova $CINDER_AUTH_CACHE_DIR nova
+    iniset $CINDER_CONF nova region_name "$REGION_NAME"
     iniset $CINDER_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
     if [[ ! -z "$CINDER_COORDINATION_URL" ]]; then
