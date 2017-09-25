@@ -243,7 +243,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
     iniset $CINDER_CONF DEFAULT my_ip "$HOST_IP"
 
-    iniset $CINDER_CONF key_manager api_class cinder.keymgr.conf_key_mgr.ConfKeyManager
+    iniset $CINDER_CONF key_manager backend cinder.keymgr.conf_key_mgr.ConfKeyManager
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
         local enabled_backends=""
