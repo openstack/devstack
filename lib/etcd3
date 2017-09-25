@@ -98,8 +98,8 @@ function install_etcd3 {
     etcd_file="$(get_extra_file $ETCD_DOWNLOAD_LOCATION)"
     if [ ! -f "$FILES/etcd-$ETCD_VERSION-linux-$ETCD_ARCH/etcd" ]; then
         echo "${ETCD_SHA256} $etcd_file" > $FILES/etcd.sha256sum
-        # NOTE(sdague): this should go fatal if this fails
-        sha256sum -c $FILES/etcd.sha256sum
+        # NOTE(yuanke wei): rm the damaged file when checksum fails
+        sha256sum -c $FILES/etcd.sha256sum || (sudo rm -f $etcd_file; exit 1)
 
         tar xzvf $etcd_file -C $FILES
         sudo cp $FILES/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd

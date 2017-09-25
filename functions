@@ -63,7 +63,7 @@ function get_extra_file {
     if [[ $file_url != file* ]]; then
         # If the file isn't cache, download it
         if [[ ! -f $FILES/$file_name ]]; then
-            wget --progress=dot:giga -c $file_url -O $FILES/$file_name
+            wget --progress=dot:giga -t 2 -c $file_url -O $FILES/$file_name
             if [[ $? -ne 0 ]]; then
                 die "$file_url could not be downloaded"
             fi
