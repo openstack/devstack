@@ -714,9 +714,9 @@ fi
 EXTRA_CACHE_URLS=""
 
 # etcd3 defaults
-ETCD_VERSION=${ETCD_VERSION:-v3.1.7}
-ETCD_SHA256_AMD64="4fde194bbcd259401e2b5c462dfa579ee7f6af539f13f130b8f5b4f52e3b3c52"
-# NOTE(sdague): etcd v3.1.7 doesn't have anything for these architectures, though 3.2.0 does.
+ETCD_VERSION=${ETCD_VERSION:-v3.1.10}
+ETCD_SHA256_AMD64="2d335f298619c6fb02b1124773a56966e448ad9952b26fea52909da4fe80d2be"
+# NOTE(sdague): etcd v3.1.10 doesn't have anything for these architectures, though 3.2.x does.
 ETCD_SHA256_ARM64=""
 ETCD_SHA256_PPC64=""
 ETCD_SHA256_S390X=""
