@@ -184,7 +184,7 @@ IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
 # will to be set to ``3`` in order to make DevStack register the Identity
 # endpoint as v3. This flag is experimental and will be used as basis to
 # identify the projects which still have issues to operate with Identity v3.
-ENABLE_IDENTITY_V2=$(trueorfalse True ENABLE_IDENTITY_V2)
+ENABLE_IDENTITY_V2=$(trueorfalse False ENABLE_IDENTITY_V2)
 if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
     IDENTITY_API_VERSION=3
 fi
