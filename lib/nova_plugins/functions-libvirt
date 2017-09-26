@@ -72,11 +72,6 @@ function install_libvirt {
         pip_install_gr libvirt-python
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
-        # On "KVM for IBM z Systems", kvm does not have its own package
-        if [[ ! ${DISTRO} =~ "kvmibm1" ]]; then
-            install_package qemu-kvm
-        fi
-
         install_package libvirt libvirt-devel
         pip_uninstall libvirt-python
         pip_install_gr libvirt-python
