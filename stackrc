@@ -701,6 +701,11 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.5-x86_64-disk.vhd.tgz}
             IMAGE_URLS+="http://ca.downloads.xensource.com/OpenStack/cirros-0.3.5-x86_64-disk.vhd.tgz"
             IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
+        fake)
+            # Use the same as the default for libvirt
+            DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk}
+            DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
+            IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
     esac
     DOWNLOAD_DEFAULT_IMAGES=False
 fi
