@@ -40,9 +40,13 @@ function start_etcd3 {
     cmd+=" --initial-cluster-state new --initial-cluster-token etcd-cluster-01"
     cmd+=" --initial-cluster $HOSTNAME=http://$SERVICE_HOST:2380"
     cmd+=" --initial-advertise-peer-urls http://$SERVICE_HOST:2380"
-    cmd+=" --advertise-client-urls http://${HOST_IP}:$ETCD_PORT"
-    cmd+=" --listen-peer-urls http://0.0.0.0:2380 "
-    cmd+=" --listen-client-urls http://${HOST_IP}:$ETCD_PORT"
+    cmd+=" --advertise-client-urls http://$SERVICE_HOST:$ETCD_PORT"
+    if [ "$SERVICE_LISTEN_ADDRESS" == "::" ]; then
+        cmd+=" --listen-peer-urls http://[::]:2380 "
+    else
+        cmd+=" --listen-peer-urls http://0.0.0.0:2380 "
+    fi
+    cmd+=" --listen-client-urls http://$SERVICE_HOST:$ETCD_PORT"
 
     local unitfile="$SYSTEMD_DIR/$ETCD_SYSTEMD_SERVICE"
     write_user_unit_file $ETCD_SYSTEMD_SERVICE "$cmd" "" "root"
