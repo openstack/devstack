@@ -118,6 +118,11 @@ When outputting to the terminal using the default pager, long lines
 appear to be truncated, but horizontal scrolling is supported via the
 left/right arrow keys.
 
+You can pipe the output to another tool, such as ``grep``. For
+example, to find a server instance UUID in the nova logs::
+
+  sudo journalctl -a --unit devstack@n-* | grep 58391b5c-036f-44d5-bd68-21d3c26349e6
+
 See ``man 1 journalctl`` for more.
 
 Debugging
