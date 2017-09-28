@@ -115,8 +115,9 @@ an appropriate terminal/pager - e.g. ``less``, the default)::
   journalctl -a --unit devstack@n-cpu.service
 
 When outputting to the terminal using the default pager, long lines
-appear to be truncated, but horizontal scrolling is supported via the
-left/right arrow keys.
+will be truncated, but horizontal scrolling is supported via the
+left/right arrow keys. You can override this by setting the
+``SYSTEMD_LESS`` environment variable to e.g. ``FRXM``.
 
 See ``man 1 journalctl`` for more.
 
