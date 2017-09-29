@@ -270,7 +270,20 @@ function use_library_from_git {
 # determine if a package was installed from git
 function lib_installed_from_git {
     local name=$1
-    pip freeze 2>/dev/null | grep -- "$name" | grep -q -- '-e git'
+    # Note "pip freeze" doesn't always work here, because it tries to
+    # be smart about finding the remote of the git repo the package
+    # was installed from.  This doesn't work with zuul which clones
+    # repos with no remote.
+    #
+    # The best option seems to be to use "pip list" which will tell
+    # you the path an editable install was installed from; for example
+    # in response to something like
+    #  pip install -e 'git+http://git.openstack.org/openstack-dev/bashate#egg=bashate'
+    # pip list shows
+    #  bashate (0.5.2.dev19, /tmp/env/src/bashate)
+    # Thus we look for "path after a comma" to indicate we were
+    # installed from some local place
+    pip list 2>/dev/null | grep -- "$name" | grep -q -- ', .*)$'
 }
 
 # check that everything that's in LIBS_FROM_GIT was actually installed
