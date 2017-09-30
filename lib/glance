@@ -105,6 +105,11 @@ function cleanup_glance {
 function configure_glance {
     sudo install -d -o $STACK_USER $GLANCE_CONF_DIR $GLANCE_METADEF_DIR
 
+    # We run this here as this configures cache dirs for the auth middleware
+    # which is used in the api server and not in the registry. The api
+    # Server is configured through this function and not init_glance.
+    create_glance_cache_dir
+
     # Copy over our glance configurations and update them
     cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -279,7 +284,7 @@ function create_glance_accounts {
     fi
 }
 
-# create_glance_cache_dir() - Part of the init_glance() process
+# create_glance_cache_dir() - Part of the configure_glance() process
 function create_glance_cache_dir {
     # Create cache dir
     sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry $GLANCE_AUTH_CACHE_DIR/search $GLANCE_AUTH_CACHE_DIR/artifact
@@ -306,8 +311,6 @@ function init_glance {
     # Load metadata definitions
     $GLANCE_BIN_DIR/glance-manage --config-file $GLANCE_CONF_DIR/glance-api.conf db_load_metadefs
     time_stop "dbsync"
-
-    create_glance_cache_dir
 }
 
 # install_glanceclient() - Collect source and prepare
