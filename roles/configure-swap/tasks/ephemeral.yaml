@@ -1,0 +1,110 @@
+# Configure attached ephemeral devices for storage and swap
+
+- assert:
+    that:
+      - "ephemeral_device is defined"
+
+- name: Set partition names
+  set_fact:
+    swap_partition: "{{ ephemeral_device}}1"
+    opt_partition: "{{ ephemeral_device}}2"
+
+- name: Ensure ephemeral device is unmounted
+  become: yes
+  mount:
+    name: "{{ ephemeral_device }}"
+    state: unmounted
+
+- name: Get existing partitions
+  become: yes
+  parted:
+    device: "{{ ephemeral_device }}"
+    unit: MiB
+  register: ephemeral_partitions
+
+- name: Remove any existing partitions
+  become: yes
+  parted:
+    device: "{{ ephemeral_device }}"
+    number: "{{ item.num }}"
+    state: absent
+  with_items:
+    - "{{ ephemeral_partitions.partitions }}"
+
+- name: Create new disk label
+  become: yes
+  parted:
+    label: msdos
+    device: "{{ ephemeral_device }}"
+
+- name: Create swap partition
+  become: yes
+  parted:
+    device: "{{ ephemeral_device }}"
+    number: 1
+    state: present
+    part_start: '0%'
+    part_end: "{{ configure_swap_size }}MiB"
+
+- name: Create opt partition
+  become: yes
+  parted:
+    device: "{{ ephemeral_device }}"
+    number: 2
+    state: present
+    part_start: "{{ configure_swap_size }}MiB"
+    part_end: "100%"
+
+- name: Make swap on partition
+  become: yes
+  command: "mkswap {{ swap_partition }}"
+
+- name: Write swap to fstab
+  become: yes
+  mount:
+    path: none
+    src: "{{ swap_partition }}"
+    fstype: swap
+    opts: sw
+    passno: 0
+    dump: 0
+    state: present
+
+# XXX: does "parted" plugin ensure the partition is available
+# before moving on?  No udev settles here ...
+
+- name: Add all swap
+  become: yes
+  command: swapon -a
+
+- name: Create /opt filesystem
+  become: yes
+  filesystem:
+    fstype: ext4
+    dev: "{{ opt_partition }}"
+
+# Rackspace at least does not have enough room for two devstack
+# installs on the primary partition.  We copy in the existing /opt to
+# the new partition on the ephemeral device, and then overmount /opt
+# to there for the test runs.
+#
+# NOTE(ianw): the existing "mount" touches fstab.  There is currently (Sep2017)
+# work in [1] to split mount & fstab into separate parts, but for now we bundle
+# it into an atomic shell command
+# [1] https://github.com/ansible/ansible/pull/27174
+- name: Copy old /opt
+  become: yes
+  shell: |
+    mount {{ opt_partition }} /mnt
+    find /opt/ -mindepth 1 -maxdepth 1 -exec mv {} /mnt/ \;
+    umount /mnt
+
+# This overmounts any existing /opt
+- name: Add opt to fstab and mount
+  become: yes
+  mount:
+    path: /opt
+    src: "{{ opt_partition }}"
+    fstype: ext4
+    opts: noatime
+    state: mounted

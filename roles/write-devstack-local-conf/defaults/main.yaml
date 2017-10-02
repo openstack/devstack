@@ -1,0 +1,2 @@
+devstack_base_dir: /opt/stack
+devstack_local_conf_path: "{{ devstack_base_dir }}/devstack/local.conf"

@@ -1,0 +1,56 @@
+- name: Check for /bin/journalctl file
+  command: which journalctl
+  changed_when: False
+  failed_when: False
+  register: which_out
+
+- block:
+    - name: Get current date
+      command: date +"%Y-%m-%d %H:%M:%S"
+      register: date_out
+
+    - name: Copy current date to log-start-timestamp.txt
+      copy:
+        dest: "{{ devstack_base_dir }}/log-start-timestamp.txt"
+        content: "{{ date_out.stdout }}"
+  when: which_out.rc == 0
+  become: yes
+
+- block:
+    - name: Stop rsyslog
+      service: name=rsyslog state=stopped
+
+    - name: Save syslog file prior to devstack run
+      command: mv /var/log/syslog /var/log/syslog-pre-devstack
+
+    - name: Save kern.log file prior to devstack run
+      command: mv /var/log/kern.log /var/log/kern_log-pre-devstack
+
+    - name: Recreate syslog file
+      file: name=/var/log/syslog state=touch
+
+    - name: Recreate syslog file owner and group
+      command: chown /var/log/syslog --ref /var/log/syslog-pre-devstack
+
+    - name: Recreate syslog file permissions
+      command: chmod /var/log/syslog --ref /var/log/syslog-pre-devstack
+
+    - name: Add read permissions to all on syslog file
+      file: name=/var/log/syslog mode=a+r
+
+    - name: Recreate kern.log file
+      file: name=/var/log/kern.log state=touch
+
+    - name: Recreate kern.log file owner and group
+      command: chown /var/log/kern.log --ref /var/log/kern_log-pre-devstack
+
+    - name: Recreate kern.log file permissions
+      command: chmod /var/log/kern.log --ref /var/log/kern_log-pre-devstack
+
+    - name: Add read permissions to all on kern.log file
+      file: name=/var/log/kern.log mode=a+r
+
+    - name: Start rsyslog
+      service: name=rsyslog state=started
+  when: which_out.rc == 1
+  become: yes

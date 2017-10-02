@@ -1,0 +1,5 @@
+- name: Collect devstack logs
+  synchronize:
+    dest: "{{ zuul.executor.log_root }}/{{ inventory_hostname }}"
+    mode: pull
+    src: "{{ devstack_base_dir }}/logs"

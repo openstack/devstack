@@ -1,0 +1,6 @@
+- name: Run devstack
+  command: ./stack.sh
+  args:
+    chdir: "{{devstack_base_dir}}/devstack"
+  become: true
+  become_user: stack

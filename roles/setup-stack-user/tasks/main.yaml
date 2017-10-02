@@ -1,0 +1,45 @@
+- name: Create stack group
+  group:
+    name: stack
+  become: yes
+
+# NOTE(andreaf) Create a user home_dir is not safe via
+# the user module since it will fail if the containing
+# folder does not exists. If the folder does exists and
+# it's empty, the skeleton is setup and ownership set.
+- name: Create the stack user home folder
+  file:
+    path: '{{ devstack_stack_home_dir }}'
+    state: directory
+  become: yes
+
+- name: Create stack user
+  user:
+    name: stack
+    shell: /bin/bash
+    home: '{{ devstack_stack_home_dir }}'
+    group: stack
+  become: yes
+
+- name: Set stack user home directory permissions
+  file:
+    path: '{{ devstack_stack_home_dir }}'
+    mode: 0755
+  become: yes
+
+- name: Copy 50_stack_sh file to /etc/sudoers.d
+  copy:
+    src: 50_stack_sh
+    dest: /etc/sudoers.d
+    mode: 0440
+    owner: root
+    group: root
+  become: yes
+
+- name: Create new/.cache folder within BASE
+  file:
+    path: '{{ devstack_stack_home_dir }}/.cache'
+    state: directory
+    owner: stack
+    group: stack
+  become: yes

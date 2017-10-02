@@ -1,0 +1,5 @@
+- name: Create logs directory
+  file:
+    path: '{{ devstack_base_dir }}/logs'
+    state: directory
+  become: yes
