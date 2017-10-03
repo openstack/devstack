@@ -51,6 +51,7 @@ else
 fi
 
 CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
+CINDER_AUTH_CACHE_DIR=${CINDER_AUTH_CACHE_DIR:-/var/cache/cinder}
 
 CINDER_CONF_DIR=/etc/cinder
 CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
@@ -224,8 +225,9 @@ function configure_cinder {
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_tenant_name
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_user
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_password
+    inicomment $CINDER_API_PASTE_INI filter:authtoken signing_dir
 
-    configure_auth_token_middleware $CINDER_CONF cinder
+    configure_auth_token_middleware $CINDER_CONF cinder $CINDER_AUTH_CACHE_DIR
 
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -383,6 +385,13 @@ function create_cinder_accounts {
     fi
 }
 
+# create_cinder_cache_dir() - Part of the init_cinder() process
+function create_cinder_cache_dir {
+    # Create cache dir
+    sudo install -d -o $STACK_USER $CINDER_AUTH_CACHE_DIR
+    rm -f $CINDER_AUTH_CACHE_DIR/*
+}
+
 # init_cinder() - Initialize database and volume group
 function init_cinder {
     if is_service_enabled $DATABASE_BACKENDS; then
@@ -411,6 +420,7 @@ function init_cinder {
     fi
 
     mkdir -p $CINDER_STATE_PATH/volumes
+    create_cinder_cache_dir
 }
 
 # install_cinder() - Collect source and prepare

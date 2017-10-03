@@ -73,6 +73,7 @@ GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 
 NEUTRON_DIR=$DEST/neutron
 NEUTRON_FWAAS_DIR=$DEST/neutron-fwaas
+NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 # Support entry points installation of console scripts
 if [[ -d $NEUTRON_DIR/bin/neutron-server ]]; then
@@ -814,7 +815,7 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
 
-    configure_auth_token_middleware $NEUTRON_CONF nova nova
+    configure_auth_token_middleware $NEUTRON_CONF nova $NEUTRON_AUTH_CACHE_DIR nova
 
     # Configure plugin
     neutron_plugin_configure_service
@@ -905,7 +906,8 @@ function _neutron_setup_keystone {
     local conf_file=$1
     local section=$2
 
-    configure_auth_token_middleware $conf_file $Q_ADMIN_USERNAME $section
+    create_neutron_cache_dir
+    configure_auth_token_middleware $conf_file $Q_ADMIN_USERNAME $NEUTRON_AUTH_CACHE_DIR $section
 }
 
 function _neutron_setup_interface_driver {

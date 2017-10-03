@@ -30,6 +30,7 @@ GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 
 NEUTRON_AGENT=${NEUTRON_AGENT:-openvswitch}
 NEUTRON_DIR=$DEST/neutron
+NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 NEUTRON_BIN_DIR=$(get_python_exec_prefix)
 NEUTRON_DHCP_BINARY="neutron-dhcp-agent"
@@ -43,6 +44,7 @@ NEUTRON_L3_CONF=$NEUTRON_CONF_DIR/l3_agent.ini
 NEUTRON_AGENT_CONF=$NEUTRON_CONF_DIR/
 
 NEUTRON_STATE_PATH=${NEUTRON_STATE_PATH:=$DATA_DIR/neutron}
+NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 # By default, use the ML2 plugin
 NEUTRON_CORE_PLUGIN=${NEUTRON_CORE_PLUGIN:-ml2}
@@ -173,8 +175,8 @@ function configure_neutron_new {
         iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips True
 
         iniset $NEUTRON_CONF DEFAULT auth_strategy $NEUTRON_AUTH_STRATEGY
-        configure_auth_token_middleware $NEUTRON_CONF neutron keystone_authtoken
-        configure_auth_token_middleware $NEUTRON_CONF nova nova
+        configure_auth_token_middleware $NEUTRON_CONF neutron $NEUTRON_AUTH_CACHE_DIR keystone_authtoken
+        configure_auth_token_middleware $NEUTRON_CONF nova $NEUTRON_AUTH_CACHE_DIR nova
 
         # Configure VXLAN
         # TODO(sc68cal) not hardcode?
@@ -248,7 +250,7 @@ function configure_neutron_new {
 
         # TODO(dtroyer): remove the v2.0 hard code below
         iniset $NEUTRON_META_CONF DEFAULT auth_url $KEYSTONE_SERVICE_URI
-        configure_auth_token_middleware $NEUTRON_META_CONF neutron DEFAULT
+        configure_auth_token_middleware $NEUTRON_META_CONF neutron $NEUTRON_AUTH_CACHE_DIR DEFAULT
     fi
 
     # Format logging
@@ -335,6 +337,13 @@ function create_neutron_accounts_new {
     fi
 }
 
+# create_neutron_cache_dir() - Part of the init_neutron() process
+function create_neutron_cache_dir {
+    # Create cache dir
+    sudo install -d -o $STACK_USER $NEUTRON_AUTH_CACHE_DIR
+    rm -f $NEUTRON_AUTH_CACHE_DIR/*
+}
+
 # init_neutron() - Initialize databases, etc.
 function init_neutron_new {
 
@@ -344,6 +353,8 @@ function init_neutron_new {
     # Run Neutron db migrations
     $NEUTRON_BIN_DIR/neutron-db-manage upgrade heads
     time_stop "dbsync"
+
+    create_neutron_cache_dir
 }
 
 # install_neutron() - Collect source and prepare
