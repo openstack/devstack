@@ -44,7 +44,6 @@ fi
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
 GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
 GLANCE_LOCK_DIR=${GLANCE_LOCK_DIR:=$DATA_DIR/glance/locks}
-GLANCE_AUTH_CACHE_DIR=${GLANCE_AUTH_CACHE_DIR:-/var/cache/glance}
 
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
@@ -98,7 +97,7 @@ function is_glance_enabled {
 function cleanup_glance {
     # kill instances (nova)
     # delete image files (glance)
-    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR $GLANCE_AUTH_CACHE_DIR
+    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR
 }
 
 # configure_glance() - Set config files, create data dirs, etc
@@ -115,7 +114,7 @@ function configure_glance {
     iniset $GLANCE_REGISTRY_CONF database connection $dburl
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
-    configure_auth_token_middleware $GLANCE_REGISTRY_CONF glance $GLANCE_AUTH_CACHE_DIR/registry
+    configure_auth_token_middleware $GLANCE_REGISTRY_CONF glance
     iniset $GLANCE_REGISTRY_CONF oslo_messaging_notifications driver messagingv2
     iniset_rpc_backend glance $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
@@ -127,7 +126,7 @@ function configure_glance {
     iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
     iniset $GLANCE_API_CONF DEFAULT lock_path $GLANCE_LOCK_DIR
     iniset $GLANCE_API_CONF paste_deploy flavor keystone+cachemanagement
-    configure_auth_token_middleware $GLANCE_API_CONF glance $GLANCE_AUTH_CACHE_DIR/api
+    configure_auth_token_middleware $GLANCE_API_CONF glance
     iniset $GLANCE_API_CONF oslo_messaging_notifications driver messagingv2
     iniset_rpc_backend glance $GLANCE_API_CONF
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
@@ -279,13 +278,6 @@ function create_glance_accounts {
     fi
 }
 
-# create_glance_cache_dir() - Part of the init_glance() process
-function create_glance_cache_dir {
-    # Create cache dir
-    sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry $GLANCE_AUTH_CACHE_DIR/search $GLANCE_AUTH_CACHE_DIR/artifact
-    rm -f $GLANCE_AUTH_CACHE_DIR/api/* $GLANCE_AUTH_CACHE_DIR/registry/* $GLANCE_AUTH_CACHE_DIR/search/* $GLANCE_AUTH_CACHE_DIR/artifact/*
-}
-
 # init_glance() - Initialize databases, etc.
 function init_glance {
     # Delete existing images
@@ -306,8 +298,6 @@ function init_glance {
     # Load metadata definitions
     $GLANCE_BIN_DIR/glance-manage --config-file $GLANCE_CONF_DIR/glance-api.conf db_load_metadefs
     time_stop "dbsync"
-
-    create_glance_cache_dir
 }
 
 # install_glanceclient() - Collect source and prepare

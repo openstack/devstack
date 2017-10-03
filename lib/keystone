@@ -429,7 +429,7 @@ function create_service_user {
 
 # Configure the service to use the auth token middleware.
 #
-# configure_auth_token_middleware conf_file admin_user signing_dir [section]
+# configure_auth_token_middleware conf_file admin_user [section]
 #
 # section defaults to keystone_authtoken, which is where auth_token looks in
 # the .conf file. If the paste config file is used (api-paste.ini) then
@@ -437,8 +437,7 @@ function create_service_user {
 function configure_auth_token_middleware {
     local conf_file=$1
     local admin_user=$2
-    local signing_dir=$3
-    local section=${4:-keystone_authtoken}
+    local section=${3:-keystone_authtoken}
 
     iniset $conf_file $section auth_type password
     iniset $conf_file $section auth_url $KEYSTONE_SERVICE_URI
@@ -449,7 +448,6 @@ function configure_auth_token_middleware {
     iniset $conf_file $section project_domain_name "$SERVICE_DOMAIN_NAME"
 
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
-    iniset $conf_file $section signing_dir $signing_dir
     iniset $conf_file $section memcached_servers localhost:11211
 }
 
