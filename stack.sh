@@ -1389,11 +1389,7 @@ service_check
 
 # ensure that all the libraries we think we installed from git,
 # actually were.
-#
-# NOTE(ianw) 2017-09-27 : "pip freeze" is currently having issues
-# with zuulv3 and the way it clones remotes.  We will restore this
-# with a slightly different check soon
-#check_libs_from_git
+check_libs_from_git
 
 
 # Configure nova cellsv2
