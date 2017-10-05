@@ -219,7 +219,8 @@ function disable_python3_package {
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_VIRTUAL_ENV``,
 # ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``,
-# pip_install package [package ...]
+# Usage:
+#  pip_install pip_arguments
 function pip_install {
     local xtrace result
     xtrace=$(set +o | grep xtrace)
@@ -241,6 +242,26 @@ function pip_install {
     if [[ -z "$os_PACKAGE" ]]; then
         GetOSVersion
     fi
+
+    # Try to extract the path of the package we are installing into
+    # package_dir.  We need this to check for test-requirements.txt,
+    # at least.
+    #
+    # ${!#} expands to the last positional argument to this function.
+    # With "extras" syntax included, our arguments might be something
+    # like:
+    #  -e /path/to/fooproject[extra]
+    # Thus this magic line grabs just the path without extras
+    #
+    # Note that this makes no sense if this is a pypi (rather than
+    # local path) install; ergo you must check this path exists before
+    # use.  Also, if we had multiple or mixed installs, we would also
+    # likely break.  But for historical reasons, it's basically only
+    # the other wrapper functions in here calling this to install
+    # local packages, and they do so with single call per install.  So
+    # this works (for now...)
+    local package_dir=${!#%\[*\]}
+
     if [[ $TRACK_DEPENDS = True && ! "$@" =~ virtualenv ]]; then
         # TRACK_DEPENDS=True installation creates a circular dependency when
         # we attempt to install virtualenv into a virtualenv, so we must global
@@ -261,7 +282,6 @@ function pip_install {
                 # versions supported, and if we find the version of
                 # python3 we've been told to use, use that instead of the
                 # default pip
-                local package_dir=${!#}
                 local python_versions
 
                 # Special case some services that have experimental
@@ -323,7 +343,7 @@ function pip_install {
 
     # Also install test requirements
     local install_test_reqs=""
-    local test_req="${!#}/test-requirements.txt"
+    local test_req="${package_dir}/test-requirements.txt"
     if [[ -e "$test_req" ]]; then
         install_test_reqs="-r $test_req"
     fi
