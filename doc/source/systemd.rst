@@ -115,8 +115,9 @@ an appropriate terminal/pager - e.g. ``less``, the default)::
   sudo journalctl -a --unit devstack@n-cpu.service
 
 When outputting to the terminal using the default pager, long lines
-appear to be truncated, but horizontal scrolling is supported via the
-left/right arrow keys.
+will be truncated, but horizontal scrolling is supported via the
+left/right arrow keys. You can override this by setting the
+``SYSTEMD_LESS`` environment variable to e.g. ``FRXM``.
 
 You can pipe the output to another tool, such as ``grep``. For
 example, to find a server instance UUID in the nova logs::
