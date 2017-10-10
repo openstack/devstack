@@ -45,6 +45,7 @@ declare -A -g GITBRANCH
 declare -A -g GITDIR
 
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
+KILL_PATH="$(which kill)"
 
 # Save these variables to .stackenv
 STACK_ENV_VARS="BASE_SQL_CONN DATA_DIR DEST ENABLED_SERVICES HOST_IP \
@@ -1394,6 +1395,7 @@ function write_user_unit_file {
     iniset -sudo $unitfile "Service" "ExecStart" "$command"
     iniset -sudo $unitfile "Service" "KillMode" "process"
     iniset -sudo $unitfile "Service" "TimeoutStopSec" "infinity"
+    iniset -sudo $unitfile "Service" "ExecReload" "$KILL_PATH -HUP \$MAINPID"
     if [[ -n "$group" ]]; then
         iniset -sudo $unitfile "Service" "Group" "$group"
     fi
@@ -1415,6 +1417,7 @@ function write_uwsgi_user_unit_file {
     iniset -sudo $unitfile "Service" "SyslogIdentifier" "$service"
     iniset -sudo $unitfile "Service" "User" "$user"
     iniset -sudo $unitfile "Service" "ExecStart" "$command"
+    iniset -sudo $unitfile "Service" "ExecReload" "$KILL_PATH -HUP \$MAINPID"
     iniset -sudo $unitfile "Service" "Type" "notify"
     iniset -sudo $unitfile "Service" "KillMode" "process"
     iniset -sudo $unitfile "Service" "Restart" "always"

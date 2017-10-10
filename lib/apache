@@ -259,7 +259,7 @@ function write_uwsgi_config {
     iniset "$file" uwsgi master true
     # Set die-on-term & exit-on-reload so that uwsgi shuts down
     iniset "$file" uwsgi die-on-term true
-    iniset "$file" uwsgi exit-on-reload true
+    iniset "$file" uwsgi exit-on-reload false
     # Set worker-reload-mercy so that worker will not exit till the time
     # configured after graceful shutdown
     iniset "$file" uwsgi worker-reload-mercy $WORKER_TIMEOUT
@@ -316,7 +316,7 @@ function write_local_uwsgi_http_config {
     iniset "$file" uwsgi master true
     # Set die-on-term & exit-on-reload so that uwsgi shuts down
     iniset "$file" uwsgi die-on-term true
-    iniset "$file" uwsgi exit-on-reload true
+    iniset "$file" uwsgi exit-on-reload false
     iniset "$file" uwsgi enable-threads true
     iniset "$file" uwsgi plugins python
     # uwsgi recommends this to prevent thundering herd on accept.
