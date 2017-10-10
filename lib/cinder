@@ -344,8 +344,15 @@ function create_cinder_accounts {
 
         create_service_user "cinder"
 
+        # block-storage is the official service type
+        get_or_create_service "cinder" "block-storage" "Cinder Volume Service"
         get_or_create_service "cinder" "volume" "Cinder Volume Service"
         if [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
+            get_or_create_endpoint \
+                "block-storage" \
+                "$REGION_NAME" \
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/"
+
             get_or_create_endpoint \
                 "volume" \
                 "$REGION_NAME" \
@@ -363,6 +370,11 @@ function create_cinder_accounts {
                 "$REGION_NAME" \
                 "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3/\$(project_id)s"
         else
+            get_or_create_endpoint \
+                "block-storage" \
+                "$REGION_NAME" \
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST/"
+
             get_or_create_endpoint \
                 "volume" \
                 "$REGION_NAME" \
