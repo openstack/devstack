@@ -1492,7 +1492,6 @@ function is_running {
 # If the command includes shell metachatacters (;<>*) it must be run using a shell
 # If an optional group is provided sg will be used to run the
 # command as that group.
-# Uses globals ``USE_SCREEN``
 # run_process service "command-line" [group] [user]
 function run_process {
     local service=$1
@@ -1513,7 +1512,7 @@ function run_process {
 # If a PID is available use it, kill the whole process group via TERM
 # If screen is being used kill the screen window; this will catch processes
 # that did not leave a PID behind
-# Uses globals ``SERVICE_DIR``, ``USE_SCREEN``
+# Uses globals ``SERVICE_DIR``
 # stop_process service
 function stop_process {
     local service=$1
