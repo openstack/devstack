@@ -243,7 +243,7 @@ function configure_neutron_new {
         cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $NEUTRON_META_CONF
 
         iniset $NEUTRON_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-        iniset $NEUTRON_META_CONF DEFAULT nova_metadata_ip $SERVICE_HOST
+        iniset $NEUTRON_META_CONF DEFAULT nova_metadata_host $SERVICE_HOST
         iniset $NEUTRON_META_CONF DEFAULT metadata_workers $API_WORKERS
         # TODO(ihrachys) do we really need to set rootwrap for metadata agent?
         configure_root_helper_options $NEUTRON_META_CONF
