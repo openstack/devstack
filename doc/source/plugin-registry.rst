@@ -114,6 +114,7 @@ networking-huawei                      `git://git.openstack.org/openstack/networ
 networking-hyperv                      `git://git.openstack.org/openstack/networking-hyperv <https://git.openstack.org/cgit/openstack/networking-hyperv>`__
 networking-infoblox                    `git://git.openstack.org/openstack/networking-infoblox <https://git.openstack.org/cgit/openstack/networking-infoblox>`__
 networking-l2gw                        `git://git.openstack.org/openstack/networking-l2gw <https://git.openstack.org/cgit/openstack/networking-l2gw>`__
+networking-lagopus                     `git://git.openstack.org/openstack/networking-lagopus <https://git.openstack.org/cgit/openstack/networking-lagopus>`__
 networking-midonet                     `git://git.openstack.org/openstack/networking-midonet <https://git.openstack.org/cgit/openstack/networking-midonet>`__
 networking-mlnx                        `git://git.openstack.org/openstack/networking-mlnx <https://git.openstack.org/cgit/openstack/networking-mlnx>`__
 networking-nec                         `git://git.openstack.org/openstack/networking-nec <https://git.openstack.org/cgit/openstack/networking-nec>`__
@@ -159,6 +160,7 @@ searchlight-ui                         `git://git.openstack.org/openstack/search
 senlin                                 `git://git.openstack.org/openstack/senlin <https://git.openstack.org/cgit/openstack/senlin>`__
 solum                                  `git://git.openstack.org/openstack/solum <https://git.openstack.org/cgit/openstack/solum>`__
 stackube                               `git://git.openstack.org/openstack/stackube <https://git.openstack.org/cgit/openstack/stackube>`__
+storlets                               `git://git.openstack.org/openstack/storlets <https://git.openstack.org/cgit/openstack/storlets>`__
 tacker                                 `git://git.openstack.org/openstack/tacker <https://git.openstack.org/cgit/openstack/tacker>`__
 tap-as-a-service                       `git://git.openstack.org/openstack/tap-as-a-service <https://git.openstack.org/cgit/openstack/tap-as-a-service>`__
 tap-as-a-service-dashboard             `git://git.openstack.org/openstack/tap-as-a-service-dashboard <https://git.openstack.org/cgit/openstack/tap-as-a-service-dashboard>`__
