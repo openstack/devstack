@@ -76,10 +76,4 @@
     name: openstack-dev/devstack
     check:
       jobs:
-        - devstack:
-            files:
-              - ^playbooks/pre
-              - ^playbooks/post
-              - ^playbooks/devstack
-              - ^roles/
-              - .zuul.yaml
+        - devstack
