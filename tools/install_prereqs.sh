@@ -88,15 +88,6 @@ else
     export PYTHON=$(which python 2>/dev/null)
 fi
 
-if is_suse; then
-    # now reinstall cryptography from source, in order to rebuilt it against the
-    # system libssl rather than the bundled openSSL 1.1, which segfaults when combined
-    # with a system provided openSSL 1.0
-    # see https://github.com/pyca/cryptography/issues/3804 and followup issues
-    sudo pip install cryptography --no-binary :all:
-fi
-
-
 # Mark end of run
 # ---------------
 
