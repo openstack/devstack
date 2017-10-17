@@ -503,11 +503,7 @@ function start_mutnauq_l2_agent {
 function start_mutnauq_other_agents {
     run_process q-dhcp "$AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file $Q_DHCP_CONF_FILE"
 
-    if is_service_enabled neutron-vpnaas; then
-        :  # Started by plugin
-    else
-        run_process q-l3 "$AGENT_L3_BINARY $(determine_config_files neutron-l3-agent)"
-    fi
+    run_process q-l3 "$AGENT_L3_BINARY $(determine_config_files neutron-l3-agent)"
 
     run_process q-meta "$AGENT_META_BINARY --config-file $NEUTRON_CONF --config-file $Q_META_CONF_FILE"
     run_process q-metering "$AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
