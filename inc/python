@@ -208,7 +208,7 @@ function pip_install {
     # packages like setuptools?
     local pip_version
     pip_version=$(python -c "import pip; \
-                        print(pip.__version__.strip('.')[0])")
+                        print(pip.__version__.split('.')[0])")
     if (( pip_version<6 )); then
         die $LINENO "Currently installed pip version ${pip_version} does not" \
             "meet minimum requirements (>=6)."
