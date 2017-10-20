@@ -38,6 +38,8 @@
       - openstack/nova
       - openstack/requirements
       - openstack/swift
+    roles:
+      - zuul: openstack-infra/openstack-zuul-jobs
     timeout: 7200
     vars:
       devstack_localrc:
