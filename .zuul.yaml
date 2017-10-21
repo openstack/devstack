@@ -61,6 +61,8 @@
         NETWORK_GATEWAY: 10.1.0.1
         NOVNC_FROM_PACKAGE: True
         ERROR_ON_CLONE: True
+        # Gate jobs can't deal with nested virt. Disable it.
+        LIBVIRT_TYPE: qemu
         # NOTE(dims): etcd 3.x is not available in debian/ubuntu
         # etc. As a stop gap measure, devstack uses wget to download
         # from the location below for all the CI jobs.
