@@ -1006,7 +1006,7 @@ save_stackenv $LINENO
 # be memory bound not cpu bound so enable KSM by default but allow people
 # to opt out if the CPU time is more important to them.
 
-if [[ "ENABLE_KSM" == "True" ]] ; then
+if [[ $ENABLE_KSM == "True" ]] ; then
     if [[ -f /sys/kernel/mm/ksm/run ]] ; then
         sudo sh -c "echo 1 > /sys/kernel/mm/ksm/run"
     fi
