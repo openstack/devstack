@@ -73,6 +73,7 @@
         horizon: False
         tempest: False
     pre-run: playbooks/pre
+    run: playbooks/devstack
     post-run: playbooks/post
 
 
