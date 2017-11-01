@@ -67,6 +67,7 @@ gce-api                                `git://git.openstack.org/openstack/gce-ap
 glare                                  `git://git.openstack.org/openstack/glare <https://git.openstack.org/cgit/openstack/glare>`__
 group-based-policy                     `git://git.openstack.org/openstack/group-based-policy <https://git.openstack.org/cgit/openstack/group-based-policy>`__
 heat                                   `git://git.openstack.org/openstack/heat <https://git.openstack.org/cgit/openstack/heat>`__
+heat-dashboard                         `git://git.openstack.org/openstack/heat-dashboard <https://git.openstack.org/cgit/openstack/heat-dashboard>`__
 horizon-mellanox                       `git://git.openstack.org/openstack/horizon-mellanox <https://git.openstack.org/cgit/openstack/horizon-mellanox>`__
 ironic                                 `git://git.openstack.org/openstack/ironic <https://git.openstack.org/cgit/openstack/ironic>`__
 ironic-inspector                       `git://git.openstack.org/openstack/ironic-inspector <https://git.openstack.org/cgit/openstack/ironic-inspector>`__
