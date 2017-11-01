@@ -294,7 +294,7 @@ the systemd journal.
 
 To query the logs use the ``journalctl`` command, such as::
 
-  journalctl --unit devstack@*
+  sudo journalctl --unit devstack@*
 
 More examples can be found in :ref:`journalctl-examples`.
 
