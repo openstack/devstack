@@ -563,6 +563,20 @@ function follow_tls_proxy {
 # using tls configuration are down.
 function stop_tls_proxy {
     stop_apache_server
+
+    # NOTE(jh): Removing all tls-proxy configs is a bit of a hack, but
+    # necessary so that we can restart after an unstack.  A better
+    # solution would be to ensure that each service calling
+    # start_tls_proxy will call stop_tls_proxy with the same
+    # parameters on shutdown so we can use the disable_apache_site
+    # function and remove individual files there.
+    if is_ubuntu; then
+        sudo rm -f /etc/apache2/sites-enabled/*-tls-proxy.conf
+    else
+        for i in $APACHE_CONF_DIR/*-tls-proxy.conf; do
+            sudo mv $i $i.disabled
+        done
+    fi
 }
 
 # Clean up the CA files
