@@ -1,0 +1,22 @@
+- name: Find all source repos used by this job
+  find:
+    paths:
+      - src/git.openstack.org/openstack
+      - src/git.openstack.org/openstack-dev
+      - src/git.openstack.org/openstack-infra
+    file_type: directory
+  register: found_repos
+
+- name: Copy Zuul repos into devstack working directory
+  command: rsync -a {{ item.path }} {{ devstack_base_dir }}
+  with_items: '{{ found_repos.files }}'
+  become: yes
+
+- name: Set ownership of repos
+  file:
+    path: '{{ devstack_base_dir }}'
+    state: directory
+    recurse: true
+    owner: stack
+    group: stack
+  become: yes

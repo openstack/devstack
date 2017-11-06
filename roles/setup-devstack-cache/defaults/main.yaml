@@ -1,0 +1,2 @@
+devstack_base_dir: /opt/stack
+devstack_cache_dir: /opt/cache

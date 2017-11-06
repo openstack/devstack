@@ -1,0 +1,20 @@
+- name: Create tempest group
+  group:
+    name: tempest
+  become: yes
+
+- name: Create tempest user
+  user:
+    name: tempest
+    shell: /bin/bash
+    group: tempest
+  become: yes
+
+- name: Copy 51_tempest_sh to /etc/sudoers.d
+  copy:
+    src: 51_tempest_sh
+    dest: /etc/sudoers.d
+    owner: root
+    group: root
+    mode: 0440
+  become: yes
