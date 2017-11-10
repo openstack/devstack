@@ -757,7 +757,7 @@ function _configure_neutron_metadata_agent {
     cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $Q_META_CONF_FILE
 
     iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
+    iniset $Q_META_CONF_FILE DEFAULT nova_metadata_host $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE DEFAULT metadata_workers $API_WORKERS
     iniset $Q_META_CONF_FILE AGENT root_helper "$Q_RR_COMMAND"
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
