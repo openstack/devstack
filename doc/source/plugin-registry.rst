@@ -151,6 +151,7 @@ oswin-tempest-plugin                   `git://git.openstack.org/openstack/oswin-
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
 patrole                                `git://git.openstack.org/openstack/patrole <https://git.openstack.org/cgit/openstack/patrole>`__
 picasso                                `git://git.openstack.org/openstack/picasso <https://git.openstack.org/cgit/openstack/picasso>`__
+python-openstacksdk                    `git://git.openstack.org/openstack/python-openstacksdk <https://git.openstack.org/cgit/openstack/python-openstacksdk>`__
 qinling                                `git://git.openstack.org/openstack/qinling <https://git.openstack.org/cgit/openstack/qinling>`__
 rally                                  `git://git.openstack.org/openstack/rally <https://git.openstack.org/cgit/openstack/rally>`__
 sahara                                 `git://git.openstack.org/openstack/sahara <https://git.openstack.org/cgit/openstack/sahara>`__
