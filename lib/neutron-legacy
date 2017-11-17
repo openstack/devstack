@@ -71,7 +71,6 @@ GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 
 NEUTRON_DIR=$DEST/neutron
 NEUTRON_FWAAS_DIR=$DEST/neutron-fwaas
-NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 # Support entry points installation of console scripts
 if [[ -d $NEUTRON_DIR/bin/neutron-server ]]; then
@@ -841,13 +840,13 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips $Q_ALLOW_OVERLAPPING_IP
 
     iniset $NEUTRON_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
-    _neutron_setup_keystone $NEUTRON_CONF keystone_authtoken
+    configure_keystone_authtoken_middleware $NEUTRON_CONF $Q_ADMIN_USERNAME
 
     # Configuration for neutron notifications to nova.
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
 
-    configure_auth_token_middleware $NEUTRON_CONF nova $NEUTRON_AUTH_CACHE_DIR nova
+    configure_keystone_authtoken_middleware $NEUTRON_CONF nova nova
 
     # Configure plugin
     neutron_plugin_configure_service
@@ -931,15 +930,6 @@ function _neutron_setup_rootwrap {
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
         iniset $NEUTRON_CONF agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
     fi
-}
-
-# Configures keystone integration for neutron service
-function _neutron_setup_keystone {
-    local conf_file=$1
-    local section=$2
-
-    create_neutron_cache_dir
-    configure_auth_token_middleware $conf_file $Q_ADMIN_USERNAME $NEUTRON_AUTH_CACHE_DIR $section
 }
 
 function _neutron_setup_interface_driver {

@@ -47,7 +47,6 @@ else
     SWIFT_BIN_DIR=$(get_python_exec_prefix)
 fi
 
-SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
 
 SWIFT_SERVICE_PROTOCOL=${SWIFT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
@@ -452,7 +451,7 @@ function configure_swift {
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken log_name swift
 
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken paste.filter_factory keystonemiddleware.auth_token:filter_factory
-    configure_auth_token_middleware $SWIFT_CONFIG_PROXY_SERVER swift $SWIFT_AUTH_CACHE_DIR filter:authtoken
+    configure_keystone_authtoken_middleware $SWIFT_CONFIG_PROXY_SERVER swift filter:authtoken
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken delay_auth_decision 1
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken cache swift.cache
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:authtoken include_service_catalog False
@@ -735,10 +734,6 @@ function init_swift {
         $SWIFT_BIN_DIR/swift-ring-builder container.builder rebalance 42
         $SWIFT_BIN_DIR/swift-ring-builder account.builder rebalance 42
     } && popd >/dev/null
-
-    # Create cache dir
-    sudo install -d -o ${STACK_USER} $SWIFT_AUTH_CACHE_DIR
-    rm -f $SWIFT_AUTH_CACHE_DIR/*
 }
 
 function install_swift {

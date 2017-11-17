@@ -36,7 +36,6 @@ GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse False NEUTRON_DEPLOY_MOD_WSGI)
 NEUTRON_AGENT=${NEUTRON_AGENT:-openvswitch}
 NEUTRON_DIR=$DEST/neutron
-NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 NEUTRON_DISTRIBUTED_ROUTING=$(trueorfalse False NEUTRON_DISTRIBUTED_ROUTING)
 # Distributed Virtual Router (DVR) configuration
@@ -62,7 +61,6 @@ NEUTRON_AGENT_CONF=$NEUTRON_CONF_DIR/
 NEUTRON_CREATE_INITIAL_NETWORKS=${NEUTRON_CREATE_INITIAL_NETWORKS:-True}
 
 NEUTRON_STATE_PATH=${NEUTRON_STATE_PATH:=$DATA_DIR/neutron}
-NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
 
 NEUTRON_UWSGI_CONF=$NEUTRON_CONF_DIR/neutron-api-uwsgi.ini
 
@@ -200,8 +198,8 @@ function configure_neutron_new {
         iniset $NEUTRON_CONF DEFAULT router_distributed $NEUTRON_DISTRIBUTED_ROUTING
 
         iniset $NEUTRON_CONF DEFAULT auth_strategy $NEUTRON_AUTH_STRATEGY
-        configure_auth_token_middleware $NEUTRON_CONF neutron $NEUTRON_AUTH_CACHE_DIR keystone_authtoken
-        configure_auth_token_middleware $NEUTRON_CONF nova $NEUTRON_AUTH_CACHE_DIR nova
+        configure_keystone_authtoken_middleware $NEUTRON_CONF neutron
+        configure_keystone_authtoken_middleware $NEUTRON_CONF nova nova
 
         # Configure VXLAN
         # TODO(sc68cal) not hardcode?
@@ -292,7 +290,7 @@ function configure_neutron_new {
 
         # TODO(dtroyer): remove the v2.0 hard code below
         iniset $NEUTRON_META_CONF DEFAULT auth_url $KEYSTONE_SERVICE_URI
-        configure_auth_token_middleware $NEUTRON_META_CONF neutron $NEUTRON_AUTH_CACHE_DIR DEFAULT
+        configure_keystone_authtoken_middleware $NEUTRON_META_CONF neutron DEFAULT
     fi
 
     # Format logging
@@ -389,13 +387,6 @@ function create_neutron_accounts_new {
     fi
 }
 
-# create_neutron_cache_dir() - Part of the init_neutron() process
-function create_neutron_cache_dir {
-    # Create cache dir
-    sudo install -d -o $STACK_USER $NEUTRON_AUTH_CACHE_DIR
-    rm -f $NEUTRON_AUTH_CACHE_DIR/*
-}
-
 # init_neutron() - Initialize databases, etc.
 function init_neutron_new {
 
@@ -405,8 +396,6 @@ function init_neutron_new {
     # Run Neutron db migrations
     $NEUTRON_BIN_DIR/neutron-db-manage upgrade heads
     time_stop "dbsync"
-
-    create_neutron_cache_dir
 }
 
 # install_neutron() - Collect source and prepare

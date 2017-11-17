@@ -29,7 +29,6 @@ set +o xtrace
 PLACEMENT_DIR=$DEST/placement
 PLACEMENT_CONF_DIR=/etc/placement
 PLACEMENT_CONF=$PLACEMENT_CONF_DIR/placement.conf
-PLACEMENT_AUTH_CACHE_DIR=${PLACEMENT_AUTH_CACHE_DIR:-/var/cache/placement}
 PLACEMENT_AUTH_STRATEGY=${PLACEMENT_AUTH_STRATEGY:-keystone}
 # Placement virtual environment
 if [[ ${USE_VENV} = True ]]; then
@@ -64,7 +63,6 @@ function is_placement_enabled {
 function cleanup_placement {
     sudo rm -f $(apache_site_config_for placement-api)
     remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI"
-    sudo rm -f $PLACEMENT_AUTH_CACHE_DIR/*
 }
 
 # _config_placement_apache_wsgi() - Set WSGI config files
@@ -99,7 +97,7 @@ function create_placement_conf {
     iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
     iniset $PLACEMENT_CONF DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
     iniset $PLACEMENT_CONF api auth_strategy $PLACEMENT_AUTH_STRATEGY
-    configure_auth_token_middleware $PLACEMENT_CONF placement $PLACEMENT_AUTH_CACHE_DIR
+    configure_keystone_authtoken_middleware $PLACEMENT_CONF placement
     setup_logging $PLACEMENT_CONF
 }
 
@@ -127,19 +125,11 @@ function create_placement_accounts {
         "$placement_api_url"
 }
 
-# create_placement_cache_dir() - Create directories for keystone cache
-function create_placement_cache_dir {
-    # Create cache dir
-    sudo install -d -o $STACK_USER $PLACEMENT_AUTH_CACHE_DIR
-    rm -f $PLACEMENT_AUTH_CACHE_DIR/*
-}
-
 # init_placement() - Create service user and endpoints
 function init_placement {
     recreate_database placement
     $PLACEMENT_BIN_DIR/placement-manage db sync
     create_placement_accounts
-    create_placement_cache_dir
 }
 
 # install_placement() - Collect source and prepare

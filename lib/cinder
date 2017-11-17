@@ -51,7 +51,6 @@ else
 fi
 
 CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
-CINDER_AUTH_CACHE_DIR=${CINDER_AUTH_CACHE_DIR:-/var/cache/cinder}
 
 CINDER_CONF_DIR=/etc/cinder
 CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
@@ -217,7 +216,7 @@ function configure_cinder {
     inicomment $CINDER_API_PASTE_INI filter:authtoken admin_password
     inicomment $CINDER_API_PASTE_INI filter:authtoken signing_dir
 
-    configure_auth_token_middleware $CINDER_CONF cinder $CINDER_AUTH_CACHE_DIR
+    configure_keystone_authtoken_middleware $CINDER_CONF cinder
 
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
@@ -314,7 +313,7 @@ function configure_cinder {
     fi
 
     # Set nova credentials (used for os-assisted-snapshots)
-    configure_auth_token_middleware $CINDER_CONF nova $CINDER_AUTH_CACHE_DIR nova
+    configure_keystone_authtoken_middleware $CINDER_CONF nova nova
     iniset $CINDER_CONF nova region_name "$REGION_NAME"
     iniset $CINDER_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
@@ -380,13 +379,6 @@ function create_cinder_accounts {
     fi
 }
 
-# create_cinder_cache_dir() - Part of the init_cinder() process
-function create_cinder_cache_dir {
-    # Create cache dir
-    sudo install -d -o $STACK_USER $CINDER_AUTH_CACHE_DIR
-    rm -f $CINDER_AUTH_CACHE_DIR/*
-}
-
 # init_cinder() - Initialize database and volume group
 function init_cinder {
     if is_service_enabled $DATABASE_BACKENDS; then
@@ -415,7 +407,6 @@ function init_cinder {
     fi
 
     mkdir -p $CINDER_STATE_PATH/volumes
-    create_cinder_cache_dir
 }
 
 # install_cinder() - Collect source and prepare

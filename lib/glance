@@ -44,7 +44,6 @@ fi
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
 GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
 GLANCE_LOCK_DIR=${GLANCE_LOCK_DIR:=$DATA_DIR/glance/locks}
-GLANCE_AUTH_CACHE_DIR=${GLANCE_AUTH_CACHE_DIR:-/var/cache/glance}
 
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
@@ -97,19 +96,13 @@ function is_glance_enabled {
 # cleanup_glance() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_glance {
-    # kill instances (nova)
     # delete image files (glance)
-    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR $GLANCE_AUTH_CACHE_DIR
+    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR
 }
 
 # configure_glance() - Set config files, create data dirs, etc
 function configure_glance {
     sudo install -d -o $STACK_USER $GLANCE_CONF_DIR $GLANCE_METADEF_DIR
-
-    # We run this here as this configures cache dirs for the auth middleware
-    # which is used in the api server and not in the registry. The api
-    # Server is configured through this function and not init_glance.
-    create_glance_cache_dir
 
     # Set non-default configuration options for registry
     iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -120,7 +113,7 @@ function configure_glance {
     iniset $GLANCE_REGISTRY_CONF database connection $dburl
     iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
-    configure_auth_token_middleware $GLANCE_REGISTRY_CONF glance $GLANCE_AUTH_CACHE_DIR/registry
+    configure_keystone_authtoken_middleware $GLANCE_REGISTRY_CONF glance
     iniset $GLANCE_REGISTRY_CONF oslo_messaging_notifications driver messagingv2
     iniset_rpc_backend glance $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
@@ -132,7 +125,7 @@ function configure_glance {
     iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
     iniset $GLANCE_API_CONF oslo_concurrency lock_path $GLANCE_LOCK_DIR
     iniset $GLANCE_API_CONF paste_deploy flavor keystone+cachemanagement
-    configure_auth_token_middleware $GLANCE_API_CONF glance $GLANCE_AUTH_CACHE_DIR/api
+    configure_keystone_authtoken_middleware $GLANCE_API_CONF glance
     iniset $GLANCE_API_CONF oslo_messaging_notifications driver messagingv2
     iniset_rpc_backend glance $GLANCE_API_CONF
     if [ "$VIRT_DRIVER" = 'xenserver' ]; then
@@ -279,22 +272,11 @@ function create_glance_accounts {
     fi
 }
 
-# create_glance_cache_dir() - Part of the configure_glance() process
-function create_glance_cache_dir {
-    # Create cache dir
-    sudo install -d -o $STACK_USER $GLANCE_AUTH_CACHE_DIR/api $GLANCE_AUTH_CACHE_DIR/registry $GLANCE_AUTH_CACHE_DIR/search $GLANCE_AUTH_CACHE_DIR/artifact
-    rm -f $GLANCE_AUTH_CACHE_DIR/api/* $GLANCE_AUTH_CACHE_DIR/registry/* $GLANCE_AUTH_CACHE_DIR/search/* $GLANCE_AUTH_CACHE_DIR/artifact/*
-}
-
 # init_glance() - Initialize databases, etc.
 function init_glance {
     # Delete existing images
     rm -rf $GLANCE_IMAGE_DIR
     mkdir -p $GLANCE_IMAGE_DIR
-
-    # Delete existing cache
-    rm -rf $GLANCE_CACHE_DIR
-    mkdir -p $GLANCE_CACHE_DIR
 
     # (Re)create glance database
     recreate_database glance

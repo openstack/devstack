@@ -46,7 +46,6 @@ fi
 NOVA_STATE_PATH=${NOVA_STATE_PATH:=$DATA_DIR/nova}
 # INSTANCES_PATH is the previous name for this
 NOVA_INSTANCES_PATH=${NOVA_INSTANCES_PATH:=${INSTANCES_PATH:=$NOVA_STATE_PATH/instances}}
-NOVA_AUTH_CACHE_DIR=${NOVA_AUTH_CACHE_DIR:-/var/cache/nova}
 
 NOVA_CONF_DIR=/etc/nova
 NOVA_CONF=$NOVA_CONF_DIR/nova.conf
@@ -215,7 +214,7 @@ function cleanup_nova {
         sudo rm -rf $NOVA_INSTANCES_PATH/*
     fi
 
-    sudo rm -rf $NOVA_STATE_PATH $NOVA_AUTH_CACHE_DIR
+    sudo rm -rf $NOVA_STATE_PATH
 
     # NOTE(dtroyer): This really should be called from here but due to the way
     #                nova abuses the _cleanup() function we're moving it
@@ -443,7 +442,7 @@ function create_nova_conf {
             iniset $NOVA_CONF DEFAULT osapi_compute_link_prefix $NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT
         fi
 
-        configure_auth_token_middleware $NOVA_CONF nova $NOVA_AUTH_CACHE_DIR
+        configure_keystone_authtoken_middleware $NOVA_CONF nova
     fi
 
     if is_service_enabled cinder; then
@@ -690,13 +689,6 @@ function conductor_conf {
     echo "${NOVA_CONF_DIR}/nova_cell${cell}.conf"
 }
 
-# create_nova_cache_dir() - Part of the init_nova() process
-function create_nova_cache_dir {
-    # Create cache dir
-    sudo install -d -o $STACK_USER $NOVA_AUTH_CACHE_DIR
-    rm -f $NOVA_AUTH_CACHE_DIR/*
-}
-
 # create_nova_keys_dir() - Part of the init_nova() process
 function create_nova_keys_dir {
     # Create keys dir
@@ -738,7 +730,6 @@ function init_nova {
         done
     fi
 
-    create_nova_cache_dir
     create_nova_keys_dir
 
     if [[ "$NOVA_BACKEND" == "LVM" ]]; then
