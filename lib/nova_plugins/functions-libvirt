@@ -72,6 +72,13 @@ function install_libvirt {
         pip_install_gr libvirt-python
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
+
+        # Note that in CentOS/RHEL this needs to come from the RDO
+        # repositories (qemu-kvm-ev ... which provides this package)
+        # as the base system version is too old.  We should have
+        # pre-installed these
+        install_package qemu-kvm
+
         install_package libvirt libvirt-devel
         pip_uninstall libvirt-python
         pip_install_gr libvirt-python
