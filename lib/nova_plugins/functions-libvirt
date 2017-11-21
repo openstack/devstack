@@ -25,7 +25,7 @@ DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
 DEBUG_LIBVIRT_COREDUMPS=$(trueorfalse False DEBUG_LIBVIRT_COREDUMPS)
 
 # Only Xenial is left with libvirt-bin.  Everywhere else is libvirtd
-if is_ubuntu && [ ! -f /etc/init.d/libvirtd ]; then
+if is_ubuntu && [ ${DISTRO} == "xenial" ]; then
     LIBVIRT_DAEMON=libvirt-bin
 else
     LIBVIRT_DAEMON=libvirtd
