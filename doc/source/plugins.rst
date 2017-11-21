@@ -54,6 +54,31 @@ directory. Inside this directory there can be 3 files.
   default value only if the variable is unset or empty; e.g. in bash
   syntax ``FOO=${FOO:-default}``.
 
+  The file should include a ``define_plugin`` line to indicate the
+  plugin's name, which is the name that should be used by users on
+  "enable_plugin" lines.  It should generally be the last component of
+  the git repo path (e.g., if the plugin's repo is
+  openstack/devstack-foo, then the name here should be "foo") ::
+
+    define_plugin <YOUR PLUGIN>
+
+  If your plugin depends on another plugin, indicate it in this file
+  with one or more lines like the following::
+
+    plugin_requires <YOUR PLUGIN> <OTHER PLUGIN>
+
+  For a complete example, if the plugin "foo" depends on "bar", the
+  ``settings`` file should include::
+
+    define_plugin foo
+    plugin_requires foo bar
+
+  Devstack does not currently use this dependency information, so it's
+  important that users continue to add enable_plugin lines in the
+  correct order in ``local.conf``, however adding this information
+  allows other tools to consider dependency information when
+  automatically generating ``local.conf`` files.
+
 - ``plugin.sh`` - the actual plugin. It is executed by devstack at
   well defined points during a ``stack.sh`` run. The plugin.sh
   internal structure is discussed below.

@@ -1703,6 +1703,35 @@ function run_phase {
     fi
 }
 
+# define_plugin <name>
+#
+# This function is a no-op.  It allows a plugin to define its name So
+# that other plugins may reference it by name.  It should generally be
+# the last component of the canonical git repo name.  E.g.,
+# openstack/devstack-foo should use "devstack-foo" as the name here.
+#
+# This function is currently a noop, but the value may still be used
+# by external tools (as in plugin_requires) and may be used by
+# devstack in the future.
+#
+# ``name`` is an arbitrary name - (aka: glusterfs, nova-docker, zaqar)
+function define_plugin {
+    :
+}
+
+# plugin_requires <name> <other>
+#
+# This function is a no-op.  It is currently used by external tools
+# (such as the devstack module for Ansible) to automatically generate
+# local.conf files.  It is not currently used by devstack itself to
+# resolve dependencies.
+#
+# ``name`` is an arbitrary name - (aka: glusterfs, nova-docker, zaqar)
+# ``other`` is the name of another plugin
+function plugin_requires {
+    :
+}
+
 
 # Service Functions
 # =================
