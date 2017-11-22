@@ -419,7 +419,7 @@ function lib_installed_from_git {
     #  bashate 0.5.2.dev19 /tmp/env/src/bashate
     # Thus we check the third column to see if we're installed from
     # some local place.
-    [[ -z $(pip list --format=columns 2>/dev/null | awk "/^$name/ {print \$3}") ]]
+    [[ -n $(pip list --format=columns 2>/dev/null | awk "/^$name/ {print \$3}") ]]
 }
 
 # check that everything that's in LIBS_FROM_GIT was actually installed
