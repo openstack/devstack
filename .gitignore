@@ -3,6 +3,7 @@
 *.log
 *.log.[1-9]
 *.pem
+*.pyc
 .localrc.auto
 .localrc.password
 .prereqs

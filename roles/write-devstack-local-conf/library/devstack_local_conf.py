@@ -14,16 +14,69 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import re
 
 
-class VarGraph(object):
+class DependencyGraph(object):
     # This is based on the JobGraph from Zuul.
 
+    def __init__(self):
+        self._names = set()
+        self._dependencies = {}  # dependent_name -> set(parent_names)
+
+    def add(self, name, dependencies):
+        # Append the dependency information
+        self._dependencies.setdefault(name, set())
+        try:
+            for dependency in dependencies:
+                # Make sure a circular dependency is never created
+                ancestors = self._getParentNamesRecursively(
+                    dependency, soft=True)
+                ancestors.add(dependency)
+                if name in ancestors:
+                    raise Exception("Dependency cycle detected in {}".
+                                    format(name))
+                self._dependencies[name].add(dependency)
+        except Exception:
+            del self._dependencies[name]
+            raise
+
+    def getDependenciesRecursively(self, parent):
+        dependencies = []
+
+        current_dependencies = self._dependencies[parent]
+        for current in current_dependencies:
+            if current not in dependencies:
+                dependencies.append(current)
+            for dep in self.getDependenciesRecursively(current):
+                if dep not in dependencies:
+                    dependencies.append(dep)
+        return dependencies
+
+    def _getParentNamesRecursively(self, dependent, soft=False):
+        all_parent_items = set()
+        items_to_iterate = set([dependent])
+        while len(items_to_iterate) > 0:
+            current_item = items_to_iterate.pop()
+            current_parent_items = self._dependencies.get(current_item)
+            if current_parent_items is None:
+                if soft:
+                    current_parent_items = set()
+                else:
+                    raise Exception("Dependent item {} not found: ".format(
+                                    dependent))
+            new_parent_items = current_parent_items - all_parent_items
+            items_to_iterate |= new_parent_items
+            all_parent_items |= new_parent_items
+        return all_parent_items
+
+
+class VarGraph(DependencyGraph):
     def __init__(self, vars):
+        super(VarGraph, self).__init__()
         self.vars = {}
         self._varnames = set()
-        self._dependencies = {}  # dependent_var_name -> set(parent_var_names)
         for k, v in vars.items():
             self._varnames.add(k)
         for k, v in vars.items():
@@ -38,28 +91,21 @@ class VarGraph(object):
             raise Exception("Variable {} already added".format(key))
         self.vars[key] = value
         # Append the dependency information
-        self._dependencies.setdefault(key, set())
+        dependencies = set()
+        for dependency in self.getDependencies(value):
+            if dependency == key:
+                # A variable is allowed to reference itself; no
+                # dependency link needed in that case.
+                continue
+            if dependency not in self._varnames:
+                # It's not necessary to create a link for an
+                # external variable.
+                continue
+            dependencies.add(dependency)
         try:
-            for dependency in self.getDependencies(value):
-                if dependency == key:
-                    # A variable is allowed to reference itself; no
-                    # dependency link needed in that case.
-                    continue
-                if dependency not in self._varnames:
-                    # It's not necessary to create a link for an
-                    # external variable.
-                    continue
-                # Make sure a circular dependency is never created
-                ancestor_vars = self._getParentVarNamesRecursively(
-                    dependency, soft=True)
-                ancestor_vars.add(dependency)
-                if any((key == anc_var) for anc_var in ancestor_vars):
-                    raise Exception("Dependency cycle detected in var {}".
-                                    format(key))
-                self._dependencies[key].add(dependency)
+            self.add(key, dependencies)
         except Exception:
             del self.vars[key]
-            del self._dependencies[key]
             raise
 
     def getVars(self):
@@ -67,48 +113,105 @@ class VarGraph(object):
         keys = sorted(self.vars.keys())
         seen = set()
         for key in keys:
-            dependencies = self.getDependentVarsRecursively(key)
+            dependencies = self.getDependenciesRecursively(key)
             for var in dependencies + [key]:
                 if var not in seen:
                     ret.append((var, self.vars[var]))
                     seen.add(var)
         return ret
 
-    def getDependentVarsRecursively(self, parent_var):
-        dependent_vars = []
 
-        current_dependent_vars = self._dependencies[parent_var]
-        for current_var in current_dependent_vars:
-            if current_var not in dependent_vars:
-                dependent_vars.append(current_var)
-            for dep in self.getDependentVarsRecursively(current_var):
-                if dep not in dependent_vars:
-                    dependent_vars.append(dep)
-        return dependent_vars
+class PluginGraph(DependencyGraph):
+    def __init__(self, base_dir, plugins):
+        super(PluginGraph, self).__init__()
+        # The dependency trees expressed by all the plugins we found
+        # (which may be more than those the job is using).
+        self._plugin_dependencies = {}
+        self.loadPluginNames(base_dir)
 
-    def _getParentVarNamesRecursively(self, dependent_var, soft=False):
-        all_parent_vars = set()
-        vars_to_iterate = set([dependent_var])
-        while len(vars_to_iterate) > 0:
-            current_var = vars_to_iterate.pop()
-            current_parent_vars = self._dependencies.get(current_var)
-            if current_parent_vars is None:
-                if soft:
-                    current_parent_vars = set()
-                else:
-                    raise Exception("Dependent var {} not found: ".format(
-                                    dependent_var))
-            new_parent_vars = current_parent_vars - all_parent_vars
-            vars_to_iterate |= new_parent_vars
-            all_parent_vars |= new_parent_vars
-        return all_parent_vars
+        self.plugins = {}
+        self._pluginnames = set()
+        for k, v in plugins.items():
+            self._pluginnames.add(k)
+        for k, v in plugins.items():
+            self._addPlugin(k, str(v))
+
+    def loadPluginNames(self, base_dir):
+        if base_dir is None:
+            return
+        git_roots = []
+        for root, dirs, files in os.walk(base_dir):
+            if '.git' not in dirs:
+                continue
+            # Don't go deeper than git roots
+            dirs[:] = []
+            git_roots.append(root)
+        for root in git_roots:
+            devstack = os.path.join(root, 'devstack')
+            if not (os.path.exists(devstack) and os.path.isdir(devstack)):
+                continue
+            settings = os.path.join(devstack, 'settings')
+            if not (os.path.exists(settings) and os.path.isfile(settings)):
+                continue
+            self.loadDevstackPluginInfo(settings)
+
+    define_re = re.compile(r'^define_plugin\s+(\w+).*')
+    require_re = re.compile(r'^plugin_requires\s+(\w+)\s+(\w+).*')
+    def loadDevstackPluginInfo(self, fn):
+        name = None
+        reqs = set()
+        with open(fn) as f:
+            for line in f:
+                m = self.define_re.match(line)
+                if m:
+                    name = m.group(1)
+                m = self.require_re.match(line)
+                if m:
+                    if name == m.group(1):
+                        reqs.add(m.group(2))
+        if name and reqs:
+            self._plugin_dependencies[name] = reqs
+
+    def getDependencies(self, value):
+        return self._plugin_dependencies.get(value, [])
+
+    def _addPlugin(self, key, value):
+        if key in self.plugins:
+            raise Exception("Plugin {} already added".format(key))
+        self.plugins[key] = value
+        # Append the dependency information
+        dependencies = set()
+        for dependency in self.getDependencies(key):
+            if dependency == key:
+                continue
+            dependencies.add(dependency)
+        try:
+            self.add(key, dependencies)
+        except Exception:
+            del self.plugins[key]
+            raise
+
+    def getPlugins(self):
+        ret = []
+        keys = sorted(self.plugins.keys())
+        seen = set()
+        for key in keys:
+            dependencies = self.getDependenciesRecursively(key)
+            for plugin in dependencies + [key]:
+                if plugin not in seen:
+                    ret.append((plugin, self.plugins[plugin]))
+                    seen.add(plugin)
+        return ret
 
 
 class LocalConf(object):
 
-    def __init__(self, localrc, localconf, base_services, services, plugins):
+    def __init__(self, localrc, localconf, base_services, services, plugins,
+                 base_dir):
         self.localrc = []
         self.meta_sections = {}
+        self.plugin_deps = {}
+        self.base_dir = base_dir
         if plugins:
             self.handle_plugins(plugins)
         if services or base_services:
@@ -119,7 +222,8 @@ class LocalConf(object):
             self.handle_localconf(localconf)
 
     def handle_plugins(self, plugins):
-        for k, v in plugins.items():
+        pg = PluginGraph(self.base_dir, plugins)
+        for k, v in pg.getPlugins():
             if v:
                 self.localrc.append('enable_plugin {} {}'.format(k, v))
 
@@ -171,6 +275,7 @@ def main():
             services=dict(type='dict'),
             localrc=dict(type='dict'),
             local_conf=dict(type='dict'),
+            base_dir=dict(type='path'),
             path=dict(type='str'),
         )
     )
@@ -180,14 +285,18 @@ def main():
                    p.get('local_conf'),
                    p.get('base_services'),
                    p.get('services'),
-                   p.get('plugins'))
+                   p.get('plugins'),
+                   p.get('base_dir'))
     lc.write(p['path'])
 
     module.exit_json()
 
 
-from ansible.module_utils.basic import *  # noqa
-from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible.module_utils.basic import *  # noqa
+    from ansible.module_utils.basic import AnsibleModule
+except ImportError:
+    pass
 
 if __name__ == '__main__':
     main()
