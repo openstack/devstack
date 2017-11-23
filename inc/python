@@ -406,6 +406,9 @@ function use_library_from_git {
 # determine if a package was installed from git
 function lib_installed_from_git {
     local name=$1
+    local safe_name
+    safe_name=$(python -c "from pkg_resources import safe_name; \
+        print(safe_name('${name}'))")
     # Note "pip freeze" doesn't always work here, because it tries to
     # be smart about finding the remote of the git repo the package
     # was installed from.  This doesn't work with zuul which clones
@@ -419,7 +422,7 @@ function lib_installed_from_git {
     #  bashate 0.5.2.dev19 /tmp/env/src/bashate
     # Thus we check the third column to see if we're installed from
     # some local place.
-    [[ -n $(pip list --format=columns 2>/dev/null | awk "/^$name/ {print \$3}") ]]
+    [[ -n $(pip list --format=columns 2>/dev/null | awk "/^$safe_name/ {print \$3}") ]]
 }
 
 # check that everything that's in LIBS_FROM_GIT was actually installed
