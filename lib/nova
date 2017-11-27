@@ -589,6 +589,8 @@ function create_nova_conf {
             local vhost
             conf=$(conductor_conf $i)
             vhost="nova_cell${i}"
+            # clean old conductor conf
+            rm -f $conf
             iniset $conf database connection `database_connection_url nova_cell${i}`
             iniset $conf conductor workers "$API_WORKERS"
             iniset $conf DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
