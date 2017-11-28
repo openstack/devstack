@@ -327,7 +327,7 @@ function configure_cinder {
     if [[ ! -z "$CINDER_COORDINATION_URL" ]]; then
         iniset $CINDER_CONF coordination backend_url "$CINDER_COORDINATION_URL"
     elif is_service_enabled etcd3; then
-        iniset $CINDER_CONF coordination backend_url "etcd3+http://${SERVICE_HOST}:2379"
+        iniset $CINDER_CONF coordination backend_url "etcd3+http://${SERVICE_HOST}:$ETCD_PORT"
     fi
 }
 

@@ -27,7 +27,6 @@ set +o xtrace
 ETCD_DATA_DIR="$DATA_DIR/etcd"
 ETCD_SYSTEMD_SERVICE="devstack@etcd.service"
 ETCD_BIN_DIR="$DEST/bin"
-ETCD_PORT=2379
 
 if is_ubuntu ; then
     UBUNTU_RELEASE_BASE_NUM=`lsb_release -r | awk '{print $2}' | cut -d '.' -f 1`
@@ -38,13 +37,13 @@ function start_etcd3 {
     local cmd="$ETCD_BIN_DIR/etcd"
     cmd+=" --name $HOSTNAME --data-dir $ETCD_DATA_DIR"
     cmd+=" --initial-cluster-state new --initial-cluster-token etcd-cluster-01"
-    cmd+=" --initial-cluster $HOSTNAME=http://$SERVICE_HOST:2380"
-    cmd+=" --initial-advertise-peer-urls http://$SERVICE_HOST:2380"
+    cmd+=" --initial-cluster $HOSTNAME=http://$SERVICE_HOST:$ETCD_PEER_PORT"
+    cmd+=" --initial-advertise-peer-urls http://$SERVICE_HOST:$ETCD_PEER_PORT"
     cmd+=" --advertise-client-urls http://$SERVICE_HOST:$ETCD_PORT"
     if [ "$SERVICE_LISTEN_ADDRESS" == "::" ]; then
-        cmd+=" --listen-peer-urls http://[::]:2380 "
+        cmd+=" --listen-peer-urls http://[::]:$ETCD_PEER_PORT "
     else
-        cmd+=" --listen-peer-urls http://0.0.0.0:2380 "
+        cmd+=" --listen-peer-urls http://0.0.0.0:$ETCD_PEER_PORT "
     fi
     cmd+=" --listen-client-urls http://$SERVICE_HOST:$ETCD_PORT"
 
