@@ -48,7 +48,7 @@
         ADMIN_PASSWORD: secretadmin
         SERVICE_PASSWORD: secretservice
         NETWORK_GATEWAY: 10.1.0.1
-        Q_USE_DEBUG_COMMAND: True
+        Q_USE_DEBUG_COMMAND: true
         FIXED_RANGE: 10.1.0.0/20
         IPV4_ADDRS_SAFE_TO_USE: 10.1.0.0/20
         FLOATING_RANGE: 172.24.5.0/24
@@ -56,25 +56,24 @@
         FLOATING_HOST_PREFIX: 172.24.4
         FLOATING_HOST_MASK: 23
         SWIFT_REPLICAS: 1
-        SWIFT_START_ALL_SERVICES: False
+        SWIFT_START_ALL_SERVICES: false
         LOGFILE: /opt/stack/logs/devstacklog.txt
-        LOG_COLOR: False
-        VERBOSE: True
-        NETWORK_GATEWAY: 10.1.0.1
-        NOVNC_FROM_PACKAGE: True
-        ERROR_ON_CLONE: True
+        LOG_COLOR: false
+        VERBOSE: true
+        NOVNC_FROM_PACKAGE: true
+        ERROR_ON_CLONE: true
         # Gate jobs can't deal with nested virt. Disable it.
         LIBVIRT_TYPE: qemu
         # NOTE(dims): etcd 3.x is not available in debian/ubuntu
         # etc. As a stop gap measure, devstack uses wget to download
         # from the location below for all the CI jobs.
-        ETCD_DOWNLOAD_URL: "http://tarballs.openstack.org/etcd/"
+        ETCD_DOWNLOAD_URL: http://tarballs.openstack.org/etcd/
       devstack_services:
-        horizon: False
-        tempest: False
-    pre-run: playbooks/pre
-    run: playbooks/devstack
-    post-run: playbooks/post
+        horizon: false
+        tempest: false
+    pre-run: playbooks/pre.yaml
+    run: playbooks/devstack.yaml
+    post-run: playbooks/post.yaml
 
 
 - project:
