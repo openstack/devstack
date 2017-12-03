@@ -121,7 +121,7 @@ export USE_PYTHON3=$(trueorfalse False USE_PYTHON3)
 # base name of the directory from which they are installed. See
 # enable_python3_package to edit this variable and use_python3_for to
 # test membership.
-export ENABLED_PYTHON3_PACKAGES="nova,glance,cinder,uwsgi,python-openstackclient"
+export ENABLED_PYTHON3_PACKAGES="nova,glance,cinder,uwsgi,python-openstackclient,python-openstacksdk"
 
 # Explicitly list services not to run under Python 3. See
 # disable_python3_package to edit this variable.
