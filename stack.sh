@@ -282,7 +282,7 @@ fi
 # Some distros need to add repos beyond the defaults provided by the vendor
 # to pick up required packages.
 
-function _install_epel_and_rdo {
+function _install_epel {
     # NOTE: We always remove and install latest -- some environments
     # use snapshot images, and if EPEL version updates they break
     # unless we update them to latest version.
@@ -313,12 +313,27 @@ EOF
     yum_install epel-release || \
         die $LINENO "Error installing EPEL repo, cannot continue"
     sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
+}
 
-    # ... and also optional to be enabled
+function _install_rdo {
+    # There are multiple options for this, including using CloudSIG
+    # repositories (centos-release-*), trunk versions, etc.  Since
+    # we're not interested in the actual openstack distributions
+    # (since we're using git to run!) but only peripherial packages
+    # like kvm or ovs, this has been reliable.
+
+    # TODO(ianw): figure out how to best mirror -- probably use infra
+    # mirror RDO reverse proxy.  We could either have test
+    # infrastructure set it up disabled like EPEL, or fiddle it here.
+    # Per the point above, it's a bunch of repos so starts getting a
+    # little messy...
+    if ! is_package_installed rdo-release ; then
+        yum_install https://rdoproject.org/repos/rdo-release.rpm
+    fi
+
+    # Also enable optional for RHEL7 proper.  Note this is a silent
+    # no-op on other platforms.
     sudo yum-config-manager --enable rhel-7-server-optional-rpms
-
-    # install the lastest RDO
-    is_package_installed rdo-release || yum_install https://rdoproject.org/repos/rdo-release.rpm
 
     if is_oraclelinux; then
         sudo yum-config-manager --enable ol7_optional_latest ol7_addons ol7_MySQL56
@@ -362,20 +377,22 @@ fi
 # to speed things up
 SKIP_EPEL_INSTALL=$(trueorfalse False SKIP_EPEL_INSTALL)
 
-# If we have /etc/nodepool/provider assume we're on a OpenStack CI
-# node, where EPEL is already pointing at our internal mirror and RDO
-# is pre-installed.
-if [[ -f /etc/nodepool/provider ]]; then
-    SKIP_EPEL_INSTALL=True
-    if is_fedora; then
-        # However, EPEL is not enabled by default.
+if [[ $DISTRO == "rhel7" ]]; then
+    # If we have /etc/ci/mirror_info.sh assume we're on a OpenStack CI
+    # node, where EPEL is installed (but disabled) and already
+    # pointing at our internal mirror
+    if [[ -f /etc/ci/mirror_info.sh ]]; then
+        SKIP_EPEL_INSTALL=True
         sudo yum-config-manager --enable epel
     fi
-fi
 
-if is_fedora && [[ $DISTRO == "rhel7" ]] && \
-        [[ ${SKIP_EPEL_INSTALL} != True ]]; then
-    _install_epel_and_rdo
+    if [[ ${SKIP_EPEL_INSTALL} != True ]]; then
+        _install_epel
+    fi
+    # Along with EPEL, CentOS (and a-likes) require some packages only
+    # available in RDO repositories (e.g. OVS, or later versions of
+    # kvm) to run.
+    _install_rdo
 fi
 
 # Ensure python is installed
