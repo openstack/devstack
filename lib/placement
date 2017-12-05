@@ -71,6 +71,7 @@ function is_placement_enabled {
 function cleanup_placement {
     sudo rm -f $(apache_site_config_for nova-placement-api)
     sudo rm -f $(apache_site_config_for placement-api)
+    remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI"
 }
 
 # _config_placement_apache_wsgi() - Set WSGI config files
@@ -188,7 +189,6 @@ function start_placement {
 function stop_placement {
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
         stop_process "placement-api"
-        remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI"
     else
         disable_apache_site placement-api
         restart_apache_server
