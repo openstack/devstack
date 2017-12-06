@@ -621,6 +621,10 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - openstacksdk-functional-devstack:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
     gate:
       jobs:
         - devstack
@@ -638,6 +642,10 @@
               - ^.*\.rst$
               - ^doc/.*$
         - neutron-grenade:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - openstacksdk-functional-devstack:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
