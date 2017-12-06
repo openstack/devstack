@@ -97,3 +97,6 @@
       jobs:
         - devstack
         - devstack-multinode
+    gate:
+      jobs:
+        - devstack
