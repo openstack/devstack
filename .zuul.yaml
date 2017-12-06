@@ -91,6 +91,60 @@
     # ready yet. Until then this job should stay non-voting.
     voting: false
 
+- job:
+    name: devstack-tox-base
+    parent: devstack
+    description: |
+      Base job for devstack-based functional tests that use tox.
+
+      This job is not intended to be run directly. It's just here
+      for organizational purposes for devstack-tox-functional and
+      devstack-tox-functional-consumer.
+    post-run: playbooks/tox/post.yaml
+    vars:
+      tox_envlist: functional
+      tox_install_siblings: false
+
+- job:
+    name: devstack-tox-functional
+    parent: devstack-tox-base
+    description: |
+      Base job for devstack-based functional tests that use tox.
+
+      Runs devstack, then runs the tox ``functional`` environment,
+      then collects tox/testr build output like normal tox jobs.
+
+      Turns off tox sibling installation. Projects may be involved
+      in the devstack deployment and so may be in the required-projects
+      list, but may not want to test against master of the other
+      projects in their tox env. Child jobs can set tox_install_siblings
+      to True to re-enable sibling processing.
+    run: playbooks/tox/run-both.yaml
+
+- job:
+    name: devstack-tox-functional-consumer
+    parent: devstack
+    description: |
+      Base job for devstack-based functional tests for projects that
+      consume the devstack cloud.
+
+      This base job should only be used by projects that are not involved
+      in the devstack deployment step, but are instead projects that are using
+      devstack to get a cloud against which they can test things.
+
+      Runs devstack in pre-run, then runs the tox ``functional`` environment,
+      then collects tox/testr build output like normal tox jobs.
+
+      Turns off tox sibling installation. Projects may be involved
+      in the devstack deployment and so may be in the required-projects
+      list, but may not want to test against master of the other
+      projects in their tox env. Child jobs can set tox_install_siblings
+      to True to re-enable sibling processing.
+    pre-run:
+      - playbooks/devstack.yaml
+      - playbooks/tox/pre.yaml
+    run: playbooks/tox/run.yaml
+
 - project:
     name: openstack-dev/devstack
     check:
