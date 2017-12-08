@@ -19,6 +19,7 @@
       when: tempest_log.stat.exists
   roles:
     - export-devstack-journal
+    - apache-logs-conf
     - role: stage-output
       zuul_copy_output:
         { '{{ devstack_conf_dir }}/local.conf': 'logs',
@@ -28,7 +29,9 @@
           '{{ devstack_log_dir }}/devstacklog.txt': 'logs',
           '{{ devstack_log_dir }}/devstacklog.txt.summary': 'logs',
           '{{ devstack_full_log}}': 'logs',
-          '{{ stage_dir }}/verify_tempest_conf.log': 'logs' }
+          '{{ stage_dir }}/verify_tempest_conf.log': 'logs',
+          '{{ stage_dir }}/apache': 'logs',
+          '{{ stage_dir }}/apache_config': 'logs' }
       extensions_to_txt:
         - conf
         - log
