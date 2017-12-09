@@ -107,9 +107,11 @@ function install_etcd3 {
 
         tar xzvf $etcd_file -C $FILES
         sudo cp $FILES/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd
+        sudo cp $FILES/$ETCD_NAME/etcdctl $ETCD_BIN_DIR/etcdctl
     fi
     if [ ! -f "$ETCD_BIN_DIR/etcd" ]; then
         sudo cp $FILES/$ETCD_NAME/etcd $ETCD_BIN_DIR/etcd
+        sudo cp $FILES/$ETCD_NAME/etcdctl $ETCD_BIN_DIR/etcdctl
     fi
 }
 
