@@ -386,14 +386,7 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute-feature-enabled volume_multiattach True
     fi
 
-    # TODO(melwitt): If we're running per-cell console proxies, the novnc tests
-    # won't work until the nova patch series lands that converts from the
-    # nova-consoleauth backend -> cell database backend. So disable them unless
-    # we're running Cells v1. Cells v1 will never support the cell database
-    # backend, so it will always run with a global nova-consoleauth.
-    # Once the patch that converts from the nova-consoleauth backend -> cell
-    # database backend lands, we can re-enable the novnc tests for Cells v2.
-    if is_service_enabled n-novnc && is_service_enabled n-cell; then
+    if is_service_enabled n-novnc; then
         iniset $TEMPEST_CONFIG compute-feature-enabled vnc_console True
     fi
 
