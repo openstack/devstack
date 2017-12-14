@@ -47,6 +47,14 @@ Write the local.conf file for use by devstack
             This is a dictionary of key-value pairs which comprise
             this section of the INI file.
 
+.. zuul:rolevar:: devstack_base_services
+   :type: list
+   :default: {{ base_services | default(omit) }}
+
+   A list of base services which are enabled. Services can be added or removed
+   from this list via the ``devstack_services`` variable. This is ignored if
+   ``base`` is set to ``False`` in ``devstack_services``.
+
 .. zuul:rolevar:: devstack_services
    :type: dict
 
@@ -54,11 +62,12 @@ Write the local.conf file for use by devstack
    boolean value is ``false``, a ``disable_service`` line will be
    emitted for the service name.  If it is ``true``, then
    ``enable_service`` will be emitted. All other values are ignored.
+
    The special key ``base`` can be used to enable or disable the base set of
    services enabled by default. If ``base`` is found, it will processed before
    all other keys. If its value is ``False`` a ``disable_all_services`` will be
-   emitted; if its value is ``True`` nothing will be emitted since base
-   services are enabled by default.
+   emitted; if its value is ``True`` services from ``devstack_base_services``
+   will be emitted via ``ENABLED_SERVICES``.
 
 .. zuul:rolevar:: devstack_plugins
    :type: dict

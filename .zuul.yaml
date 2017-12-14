@@ -23,6 +23,9 @@
         nodes:
           - controller
           - compute1
+      - name: subnode
+        nodes:
+          - compute1
 
 - job:
     name: devstack
@@ -39,9 +42,11 @@
       - openstack/requirements
       - openstack/swift
     roles:
+      - zuul: openstack-infra/devstack-gate
       - zuul: openstack-infra/openstack-zuul-jobs
     timeout: 7200
     vars:
+      test_matrix_configs: ['neutron', 'tlsproxy']
       devstack_localrc:
         DATABASE_PASSWORD: secretdatabase
         RABBIT_PASSWORD: secretrabbit
@@ -57,6 +62,7 @@
         FLOATING_HOST_MASK: 23
         SWIFT_REPLICAS: 1
         SWIFT_START_ALL_SERVICES: false
+        SWIFT_HASH: 1234123412341234
         LOGFILE: /opt/stack/logs/devstacklog.txt
         LOG_COLOR: false
         VERBOSE: true
@@ -75,9 +81,19 @@
     run: playbooks/devstack.yaml
     post-run: playbooks/post.yaml
 
+- job:
+    name: devstack-multinode
+    parent: devstack
+    description: Base devstack multinode job
+    nodeset: openstack-two-node
+    # NOTE(andreaf) The multinode job is useful to see the setup of different
+    # services on different nodes, however the subnode configuration is not
+    # ready yet. Until then this job should stay non-voting.
+    voting: false
 
 - project:
     name: openstack-dev/devstack
     check:
       jobs:
         - devstack
+        - devstack-multinode

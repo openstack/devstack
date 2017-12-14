@@ -4,6 +4,7 @@
   devstack_local_conf:
     path: "{{ devstack_local_conf_path }}"
     plugins: "{{ devstack_plugins|default(omit) }}"
+    base_services: "{{ devstack_base_services|default(omit) }}"
     services: "{{ devstack_services|default(omit) }}"
     localrc: "{{ devstack_localrc|default(omit) }}"
     local_conf: "{{ devstack_local_conf|default(omit) }}"

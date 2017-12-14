@@ -1,3 +1,13 @@
+- hosts: controller
+  roles:
+    - role: test-matrix
+      test_matrix_role: primary 
+
+- hosts: subnode
+  roles:
+    - role: test-matrix
+      test_matrix_role: subnode
+
 - hosts: all
   roles:
     - configure-swap
@@ -8,7 +18,7 @@
     - setup-devstack-cache
     - start-fresh-logging
     - write-devstack-local-conf
-  # TODO(jeblair): remove when configure-mirrors is fixed  
+  # TODO(jeblair): remove when configure-mirrors is fixed
   tasks:
     - name: Hack mirror_info
       shell:
