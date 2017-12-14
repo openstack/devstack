@@ -3,18 +3,34 @@
   vars:
     devstack_log_dir: "{{ devstack_base_dir|default('/opt/stack') }}/logs/"
     devstack_conf_dir: "{{ devstack_base_dir|default('/opt/stack') }}/devstack/"
+  tasks:
+    # NOTE(andreaf) If the tempest service is enabled, a tempest.log is
+    # generated as part of lib/tempest, as a result of verify_tempest_config
+    - name: Check if a tempest log exits
+      stat:
+        path: "{{ devstack_conf_dir }}/tempest.log"
+      register: tempest_log
+    - name: Link post-devstack tempest.log
+      file:
+        src: "{{ devstack_conf_dir }}/tempest.log"
+        dest: "{{ stage_dir }}/verify_tempest_conf.log"
+        state: hard
+      when: tempest_log.stat.exists
   roles:
     - export-devstack-journal
     - role: stage-output
       zuul_copy_output:
         { '{{ devstack_conf_dir }}/local.conf': 'logs',
+          '{{ devstack_conf_dir }}/localrc': 'logs',
           '{{ devstack_conf_dir }}/.stackenv': 'logs' ,
           '{{ devstack_log_dir }}/dstat-csv.log': 'logs',
           '{{ devstack_log_dir }}/devstacklog.txt': 'logs',
-          '{{ devstack_log_dir }}/devstacklog.txt.summary': 'logs' }
+          '{{ devstack_log_dir }}/devstacklog.txt.summary': 'logs',
+          '{{ stage_dir }}/verify_tempest_conf.log': 'logs' }
       extensions_to_txt:
         - conf
         - log
+        - localrc
         - summary
     # NOTE(andreaf) We need fetch-devstack-log-dir only as long as the base job
     # starts pulling logs for us from {{ ansible_user_dir }}/logs.
