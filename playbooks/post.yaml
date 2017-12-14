@@ -3,6 +3,7 @@
   vars:
     devstack_log_dir: "{{ devstack_base_dir|default('/opt/stack') }}/logs/"
     devstack_conf_dir: "{{ devstack_base_dir|default('/opt/stack') }}/devstack/"
+    devstack_full_log: "{{ devstack_early_log|default('/opt/stack/logs/devstack-early.txt') }}"
   tasks:
     # NOTE(andreaf) If the tempest service is enabled, a tempest.log is
     # generated as part of lib/tempest, as a result of verify_tempest_config
@@ -26,6 +27,7 @@
           '{{ devstack_log_dir }}/dstat-csv.log': 'logs',
           '{{ devstack_log_dir }}/devstacklog.txt': 'logs',
           '{{ devstack_log_dir }}/devstacklog.txt.summary': 'logs',
+          '{{ devstack_full_log}}': 'logs',
           '{{ stage_dir }}/verify_tempest_conf.log': 'logs' }
       extensions_to_txt:
         - conf
