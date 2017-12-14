@@ -124,6 +124,9 @@ class LocalConf(object):
                 self.localrc.append('enable_plugin {} {}'.format(k, v))
 
     def handle_services(self, services):
+        base_services = services.pop('base', True)
+        if not base_services:
+            self.localrc.append('disable_all_services')
         for k, v in services.items():
             if v is False:
                 self.localrc.append('disable_service {}'.format(k))
