@@ -20,6 +20,7 @@
   roles:
     - export-devstack-journal
     - apache-logs-conf
+    - devstack-project-conf
     - role: stage-output
       zuul_copy_output:
         { '{{ devstack_conf_dir }}/local.conf': 'logs',
@@ -32,6 +33,7 @@
           '{{ stage_dir }}/verify_tempest_conf.log': 'logs',
           '{{ stage_dir }}/apache': 'logs',
           '{{ stage_dir }}/apache_config': 'logs',
+          '{{ stage_dir }}/etc': 'logs',
           '/var/log/rabbitmq': 'logs',
           '/var/log/postgresql': 'logs',
           '/var/log/mysql.err': 'logs',
