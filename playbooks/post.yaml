@@ -21,6 +21,8 @@
     - export-devstack-journal
     - apache-logs-conf
     - devstack-project-conf
+    # capture-system-logs should be the last role before stage-output
+    - capture-system-logs
     - role: stage-output
       zuul_copy_output:
         { '{{ devstack_conf_dir }}/local.conf': 'logs',
@@ -40,7 +42,22 @@
           '/var/log/mysql.log': 'logs',
           '/var/log/libvirt': 'logs',
           '/etc/sudoers': 'logs',
-          '/etc/sudoers.d': 'logs' }
+          '/etc/sudoers.d': 'logs',
+          '{{ stage_dir }}/iptables.txt': 'logs',
+          '{{ stage_dir }}/df.txt': 'logs',
+          '{{ stage_dir }}/pip2-freeze.txt': 'logs',
+          '{{ stage_dir }}/pip3-freeze.txt': 'logs',
+          '{{ stage_dir }}/dpkg-l.txt': 'logs',
+          '{{ stage_dir }}/rpm-qa.txt': 'logs',
+          '{{ stage_dir }}/core': 'logs',
+          '{{ stage_dir }}/listen53.txt': 'logs',
+          '{{ stage_dir }}/deprecations.log': 'logs',
+          '/var/log/ceph': 'logs',
+          '/var/log/openvswitch': 'logs',
+          '/var/log/glusterfs': 'logs',
+          '/etc/glusterfs/glusterd.vol': 'logs',
+          '/etc/resolv.conf': 'logs',
+          '/var/log/unbound.log': 'logs' }
       extensions_to_txt:
         - conf
         - log
