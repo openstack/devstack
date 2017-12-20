@@ -45,6 +45,10 @@ fi
 # Configure Projects
 # ==================
 
+# Determine what system we are running on.  This provides ``os_VENDOR``,
+# ``os_RELEASE``, ``os_PACKAGE``, ``os_CODENAME`` and ``DISTRO``
+GetDistro
+
 # Plugin Phase 0: override_defaults - allow plugins to override
 # defaults before other services are run
 run_phase override_defaults
@@ -82,10 +86,6 @@ if [[ -d $TOP_DIR/extras.d ]]; then
 fi
 
 load_plugin_settings
-
-# Determine what system we are running on.  This provides ``os_VENDOR``,
-# ``os_RELEASE``, ``os_PACKAGE``, ``os_CODENAME``
-GetOSVersion
 
 set -o xtrace
 
