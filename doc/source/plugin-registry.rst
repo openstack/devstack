@@ -26,7 +26,6 @@ Plugin Name                            URL
 ====================================== ===
 almanach                               `git://git.openstack.org/openstack/almanach <https://git.openstack.org/cgit/openstack/almanach>`__
 aodh                                   `git://git.openstack.org/openstack/aodh <https://git.openstack.org/cgit/openstack/aodh>`__
-app-catalog-ui                         `git://git.openstack.org/openstack/app-catalog-ui <https://git.openstack.org/cgit/openstack/app-catalog-ui>`__
 astara                                 `git://git.openstack.org/openstack/astara <https://git.openstack.org/cgit/openstack/astara>`__
 barbican                               `git://git.openstack.org/openstack/barbican <https://git.openstack.org/cgit/openstack/barbican>`__
 bilean                                 `git://git.openstack.org/openstack/bilean <https://git.openstack.org/cgit/openstack/bilean>`__
@@ -127,6 +126,7 @@ networking-ovs-dpdk                    `git://git.openstack.org/openstack/networ
 networking-plumgrid                    `git://git.openstack.org/openstack/networking-plumgrid <https://git.openstack.org/cgit/openstack/networking-plumgrid>`__
 networking-powervm                     `git://git.openstack.org/openstack/networking-powervm <https://git.openstack.org/cgit/openstack/networking-powervm>`__
 networking-sfc                         `git://git.openstack.org/openstack/networking-sfc <https://git.openstack.org/cgit/openstack/networking-sfc>`__
+networking-spp                         `git://git.openstack.org/openstack/networking-spp <https://git.openstack.org/cgit/openstack/networking-spp>`__
 networking-vpp                         `git://git.openstack.org/openstack/networking-vpp <https://git.openstack.org/cgit/openstack/networking-vpp>`__
 networking-vsphere                     `git://git.openstack.org/openstack/networking-vsphere <https://git.openstack.org/cgit/openstack/networking-vsphere>`__
 neutron                                `git://git.openstack.org/openstack/neutron <https://git.openstack.org/cgit/openstack/neutron>`__
@@ -135,6 +135,7 @@ neutron-fwaas                          `git://git.openstack.org/openstack/neutro
 neutron-fwaas-dashboard                `git://git.openstack.org/openstack/neutron-fwaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-fwaas-dashboard>`__
 neutron-lbaas                          `git://git.openstack.org/openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas>`__
 neutron-lbaas-dashboard                `git://git.openstack.org/openstack/neutron-lbaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard>`__
+neutron-tempest-plugin                 `git://git.openstack.org/openstack/neutron-tempest-plugin <https://git.openstack.org/cgit/openstack/neutron-tempest-plugin>`__
 neutron-vpnaas                         `git://git.openstack.org/openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas>`__
 neutron-vpnaas-dashboard               `git://git.openstack.org/openstack/neutron-vpnaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-vpnaas-dashboard>`__
 nova-dpm                               `git://git.openstack.org/openstack/nova-dpm <https://git.openstack.org/cgit/openstack/nova-dpm>`__
