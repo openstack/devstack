@@ -103,14 +103,16 @@ function _config_placement_apache_wsgi {
 }
 
 function configure_placement_nova_compute {
-    iniset $NOVA_CONF placement auth_type "password"
-    iniset $NOVA_CONF placement auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $NOVA_CONF placement username placement
-    iniset $NOVA_CONF placement password "$SERVICE_PASSWORD"
-    iniset $NOVA_CONF placement user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $NOVA_CONF placement project_name "$SERVICE_TENANT_NAME"
-    iniset $NOVA_CONF placement project_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $NOVA_CONF placement os_region_name "$REGION_NAME"
+    # Use the provided config file path or default to $NOVA_CONF.
+    local conf=${1:-$NOVA_CONF}
+    iniset $conf placement auth_type "password"
+    iniset $conf placement auth_url "$KEYSTONE_SERVICE_URI"
+    iniset $conf placement username placement
+    iniset $conf placement password "$SERVICE_PASSWORD"
+    iniset $conf placement user_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $conf placement project_name "$SERVICE_TENANT_NAME"
+    iniset $conf placement project_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $conf placement os_region_name "$REGION_NAME"
     # TODO(cdent): auth_strategy, which is common to see in these
     # blocks is not currently used here. For the time being the
     # placement api uses the auth_strategy configuration setting
