@@ -24,7 +24,7 @@ release.*
 
 -  Ubuntu: current LTS release plus current development release
 -  Fedora: current release plus previous release
--  RHEL/Centos: current major release
+-  RHEL/CentOS: current major release
 -  Other OS platforms may continue to be included but the maintenance of
    those platforms shall not be assumed simply due to their presence.
    Having a listed point-of-contact for each additional OS will greatly
