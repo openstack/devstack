@@ -164,8 +164,7 @@ def network_dump():
     _header("Network Dump")
 
     _dump_cmd("brctl show")
-    _dump_cmd("arp -n")
-    ip_cmds = ["addr", "link", "route"]
+    ip_cmds = ["neigh", "addr", "link", "route"]
     for cmd in ip_cmds + ['netns']:
         _dump_cmd("ip %s" % cmd)
     for netns_ in _netns_list():
