@@ -600,6 +600,12 @@ function create_nova_conf {
             else
                 rpc_backend_add_vhost $vhost
                 iniset_rpc_backend nova $conf DEFAULT $vhost
+                # When running in superconductor mode, the cell conductor
+                # must be configured to talk to the placement service for
+                # reschedules to work.
+                if is_service_enabled placement placement-client; then
+                    configure_placement_nova_compute $conf
+                fi
             fi
             # Format logging
             setup_logging $conf
