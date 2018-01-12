@@ -667,7 +667,7 @@ with ``VOLUME_BACKING_FILE_SIZE``.
 
         VOLUME_GROUP_NAME="stack-volumes"
         VOLUME_NAME_PREFIX="volume-"
-        VOLUME_BACKING_FILE_SIZE=10250M
+        VOLUME_BACKING_FILE_SIZE=24G
 
 
 Keystone
