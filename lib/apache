@@ -133,8 +133,9 @@ function install_apache_wsgi {
         sudo rm -f /etc/httpd/conf.d/000-*
         install_package httpd mod_wsgi
         # For consistency with Ubuntu, switch to the worker mpm, as
-        # the default is prefork
+        # the default is event
         sudo sed -i '/mod_mpm_prefork.so/s/^/#/g' /etc/httpd/conf.modules.d/00-mpm.conf
+        sudo sed -i '/mod_mpm_event.so/s/^/#/g' /etc/httpd/conf.modules.d/00-mpm.conf
         sudo sed -i '/mod_mpm_worker.so/s/^#//g' /etc/httpd/conf.modules.d/00-mpm.conf
     elif is_suse; then
         install_package apache2 apache2-mod_wsgi
