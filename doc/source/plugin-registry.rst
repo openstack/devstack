@@ -167,6 +167,7 @@ storlets                               `git://git.openstack.org/openstack/storle
 tacker                                 `git://git.openstack.org/openstack/tacker <https://git.openstack.org/cgit/openstack/tacker>`__
 tap-as-a-service                       `git://git.openstack.org/openstack/tap-as-a-service <https://git.openstack.org/cgit/openstack/tap-as-a-service>`__
 tap-as-a-service-dashboard             `git://git.openstack.org/openstack/tap-as-a-service-dashboard <https://git.openstack.org/cgit/openstack/tap-as-a-service-dashboard>`__
+telemetry-tempest-plugin               `git://git.openstack.org/openstack/telemetry-tempest-plugin <https://git.openstack.org/cgit/openstack/telemetry-tempest-plugin>`__
 tricircle                              `git://git.openstack.org/openstack/tricircle <https://git.openstack.org/cgit/openstack/tricircle>`__
 trio2o                                 `git://git.openstack.org/openstack/trio2o <https://git.openstack.org/cgit/openstack/trio2o>`__
 trove                                  `git://git.openstack.org/openstack/trove <https://git.openstack.org/cgit/openstack/trove>`__
@@ -174,6 +175,7 @@ trove-dashboard                        `git://git.openstack.org/openstack/trove-
 valet                                  `git://git.openstack.org/openstack/valet <https://git.openstack.org/cgit/openstack/valet>`__
 vitrage                                `git://git.openstack.org/openstack/vitrage <https://git.openstack.org/cgit/openstack/vitrage>`__
 vitrage-dashboard                      `git://git.openstack.org/openstack/vitrage-dashboard <https://git.openstack.org/cgit/openstack/vitrage-dashboard>`__
+vitrage-tempest-plugin                 `git://git.openstack.org/openstack/vitrage-tempest-plugin <https://git.openstack.org/cgit/openstack/vitrage-tempest-plugin>`__
 vmware-nsx                             `git://git.openstack.org/openstack/vmware-nsx <https://git.openstack.org/cgit/openstack/vmware-nsx>`__
 vmware-vspc                            `git://git.openstack.org/openstack/vmware-vspc <https://git.openstack.org/cgit/openstack/vmware-vspc>`__
 watcher                                `git://git.openstack.org/openstack/watcher <https://git.openstack.org/cgit/openstack/watcher>`__
