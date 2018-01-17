@@ -1,5 +1,4 @@
 - hosts: all
   roles:
     - fetch-tox-output
-    - fetch-testr-output
-    - fetch-stestr-output
+    - fetch-subunit-output
