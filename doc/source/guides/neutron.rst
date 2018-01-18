@@ -396,7 +396,7 @@ controller node.
 
 In this configuration we are defining IPV4_ADDRS_SAFE_TO_USE to be a
 publicly routed IPv4 subnet. In this specific instance we are using
-the special TEST-NET-3 subnet defined in `RFC 5737 <http://tools.ietf.org/html/rfc5737>`_,
+the special TEST-NET-3 subnet defined in `RFC 5737 <https://tools.ietf.org/html/rfc5737>`_,
 which is used for documentation.  In your DevStack setup, IPV4_ADDRS_SAFE_TO_USE
 would be a public IP address range that you or your organization has
 allocated to you, so that you could access your instances from the

@@ -2,7 +2,7 @@ Configure Load-Balancer Version 2
 =================================
 
 Starting in the OpenStack Liberty release, the
-`neutron LBaaS v2 API <http://developer.openstack.org/api-ref-networking-v2-ext.html>`_
+`neutron LBaaS v2 API <https://developer.openstack.org/api-ref/network/v2/index.html>`_
 is now stable while the LBaaS v1 API has been deprecated.  The LBaaS v2 reference
 driver is based on Octavia.
 
