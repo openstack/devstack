@@ -1241,16 +1241,17 @@ if is_service_enabled g-reg; then
     done
 fi
 
-# Create a randomized default value for the key manager's fixed_key
-# NOTE(lyarwood): This is currently set to 36 as a workaround to the following
-# libvirt bug that incorrectly pads passphrases that are a multiple of 16 bytes
-# in length.
-# Unable to use LUKS passphrase that is exactly 16 bytes long
-# https://bugzilla.redhat.com/show_bug.cgi?id=1447297
+# NOTE(lyarwood): By default use a single hardcoded fixed_key across devstack
+# deployments.  This ensures the keys match across nova and cinder across all
+# hosts.
+FIXED_KEY=${FIXED_KEY:-bae3516cc1c0eb18b05440eba8012a4a880a2ee04d584a9c1579445e675b12defdc716ec}
 if is_service_enabled nova; then
-    key=$(generate_hex_string 36)
-    iniset $NOVA_CONF key_manager fixed_key "$key"
-    iniset $NOVA_CPU_CONF key_manager fixed_key "$key"
+    iniset $NOVA_CONF key_manager fixed_key "$FIXED_KEY"
+    iniset $NOVA_CPU_CONF key_manager fixed_key "$FIXED_KEY"
+fi
+
+if is_service_enabled cinder; then
+    iniset $CINDER_CONF key_manager fixed_key "$FIXED_KEY"
 fi
 
 # Launch the nova-api and wait for it to answer before continuing
