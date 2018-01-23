@@ -122,9 +122,6 @@ fi
 if [[ -n "$LOGDIR" ]] && [[ -d "$LOGDIR" ]]; then
     sudo rm -rf $LOGDIR
 fi
-if [[ -n "$SCREEN_LOGDIR" ]] && [[ -d "$SCREEN_LOGDIR" ]]; then
-    sudo rm -rf $SCREEN_LOGDIR
-fi
 
 # Clean out the sytemd user unit files if systemd was used.
 if [[ "$USE_SYSTEMD" = "True" ]]; then
