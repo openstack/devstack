@@ -762,8 +762,8 @@ for image_url in ${IMAGE_URLS//,/ }; do
     fi
 done
 
-# 10Gb default volume backing file size
-VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-10250M}
+# 24Gb default volume backing file size
+VOLUME_BACKING_FILE_SIZE=${VOLUME_BACKING_FILE_SIZE:-24G}
 
 # Prefixes for volume and instance names
 VOLUME_NAME_PREFIX=${VOLUME_NAME_PREFIX:-volume-}
