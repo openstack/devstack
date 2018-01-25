@@ -77,7 +77,6 @@
 
 
 - project:
-    name: openstack-dev/devstack
     check:
       jobs:
         - devstack
