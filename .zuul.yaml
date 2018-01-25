@@ -46,7 +46,7 @@
       - zuul: openstack-infra/openstack-zuul-jobs
     timeout: 7200
     vars:
-      test_matrix_configs: ['neutron', 'tlsproxy']
+      test_matrix_configs: [neutron, tlsproxy]
       devstack_localrc:
         DATABASE_PASSWORD: secretdatabase
         RABBIT_PASSWORD: secretrabbit
@@ -154,7 +154,6 @@
     run: playbooks/tox/run.yaml
 
 - project:
-    name: openstack-dev/devstack
     check:
       jobs:
         - devstack
