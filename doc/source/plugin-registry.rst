@@ -33,7 +33,6 @@ blazar                                 `git://git.openstack.org/openstack/blazar
 broadview-collector                    `git://git.openstack.org/openstack/broadview-collector <https://git.openstack.org/cgit/openstack/broadview-collector>`__
 ceilometer                             `git://git.openstack.org/openstack/ceilometer <https://git.openstack.org/cgit/openstack/ceilometer>`__
 ceilometer-powervm                     `git://git.openstack.org/openstack/ceilometer-powervm <https://git.openstack.org/cgit/openstack/ceilometer-powervm>`__
-cerberus                               `git://git.openstack.org/openstack/cerberus <https://git.openstack.org/cgit/openstack/cerberus>`__
 cloudkitty                             `git://git.openstack.org/openstack/cloudkitty <https://git.openstack.org/cgit/openstack/cloudkitty>`__
 collectd-ceilometer-plugin             `git://git.openstack.org/openstack/collectd-ceilometer-plugin <https://git.openstack.org/cgit/openstack/collectd-ceilometer-plugin>`__
 congress                               `git://git.openstack.org/openstack/congress <https://git.openstack.org/cgit/openstack/congress>`__
@@ -95,6 +94,7 @@ monasca-api                            `git://git.openstack.org/openstack/monasc
 monasca-ceilometer                     `git://git.openstack.org/openstack/monasca-ceilometer <https://git.openstack.org/cgit/openstack/monasca-ceilometer>`__
 monasca-events-api                     `git://git.openstack.org/openstack/monasca-events-api <https://git.openstack.org/cgit/openstack/monasca-events-api>`__
 monasca-log-api                        `git://git.openstack.org/openstack/monasca-log-api <https://git.openstack.org/cgit/openstack/monasca-log-api>`__
+monasca-tempest-plugin                 `git://git.openstack.org/openstack/monasca-tempest-plugin <https://git.openstack.org/cgit/openstack/monasca-tempest-plugin>`__
 monasca-transform                      `git://git.openstack.org/openstack/monasca-transform <https://git.openstack.org/cgit/openstack/monasca-transform>`__
 murano                                 `git://git.openstack.org/openstack/murano <https://git.openstack.org/cgit/openstack/murano>`__
 networking-6wind                       `git://git.openstack.org/openstack/networking-6wind <https://git.openstack.org/cgit/openstack/networking-6wind>`__
