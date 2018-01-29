@@ -503,13 +503,13 @@ function ping_check {
 function get_instance_ip {
     local vm_id=$1
     local network_name=$2
-    local nova_result
+    local addresses
     local ip
 
-    nova_result="$(nova show $vm_id)"
-    ip=$(echo "$nova_result" | grep "$network_name" | get_field 2)
+    addresses=$(openstack server show -c addresses -f value "$vm_id")
+    ip=$(echo $addresses | sed -n "s/^.*$network_name=\([0-9\.]*\).*$/\1/p")
     if [[ $ip = "" ]];then
-        echo "$nova_result"
+        echo "addresses of server $vm_id : $addresses"
         die $LINENO "[Fail] Couldn't get ipaddress of VM"
     fi
     echo $ip
