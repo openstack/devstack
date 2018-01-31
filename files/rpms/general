@@ -22,6 +22,7 @@ net-tools
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
+pcre-devel # for python-pcre
 pkgconfig
 postgresql-devel  # psycopg2
 psmisc

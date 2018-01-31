@@ -15,6 +15,7 @@ libapache2-mod-proxy-uwsgi
 libffi-dev # for pyOpenSSL
 libjpeg-dev # Pillow 3.0.0
 libmysqlclient-dev  # MySQL-python
+libpcre3-dev # for python-pcre
 libpq-dev  # psycopg2
 libssl-dev # for pyOpenSSL
 libsystemd-dev # for systemd-python
