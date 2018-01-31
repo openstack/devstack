@@ -111,6 +111,12 @@
         '/etc/glusterfs/glusterd.vol': 'logs'
         '/etc/resolv.conf': 'logs'
         '/var/log/unbound.log': 'logs'
+      extensions_to_txt:
+        conf: True
+        log: True
+        localrc: True
+        stackenv: True
+        summary: True
     pre-run: playbooks/pre.yaml
     run: playbooks/devstack.yaml
     post-run: playbooks/post.yaml
