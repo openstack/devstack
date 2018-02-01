@@ -42,6 +42,7 @@ NEUTRON_META_CONF=$NEUTRON_CONF_DIR/metadata_agent.ini
 NEUTRON_DHCP_CONF=$NEUTRON_CONF_DIR/dhcp_agent.ini
 NEUTRON_L3_CONF=$NEUTRON_CONF_DIR/l3_agent.ini
 NEUTRON_AGENT_CONF=$NEUTRON_CONF_DIR/
+NEUTRON_CREATE_INITIAL_NETWORKS=${NEUTRON_CREATE_INITIAL_NETWORKS:-True}
 
 NEUTRON_STATE_PATH=${NEUTRON_STATE_PATH:=$DATA_DIR/neutron}
 NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
@@ -438,7 +439,7 @@ function start_neutron_new {
     if is_service_enabled neutron-l3; then
         run_process neutron-l3 "$NEUTRON_BIN_DIR/$NEUTRON_L3_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_L3_CONF"
     fi
-    if is_service_enabled neutron-api; then
+    if is_service_enabled neutron-api && [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]]; then
         # XXX(sc68cal) - Here's where plugins can wire up their own networks instead
         # of the code in lib/neutron_plugins/services/l3
         if type -p neutron_plugin_create_initial_networks > /dev/null; then
