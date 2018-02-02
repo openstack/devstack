@@ -77,6 +77,40 @@
       devstack_services:
         horizon: false
         tempest: false
+      zuul_copy_output:
+        '{{ devstack_conf_dir }}/local.conf': 'logs'
+        '{{ devstack_conf_dir }}/localrc': 'logs'
+        '{{ devstack_conf_dir }}/.stackenv': 'logs'
+        '{{ devstack_log_dir }}/dstat-csv.log': 'logs'
+        '{{ devstack_log_dir }}/devstacklog.txt': 'logs'
+        '{{ devstack_log_dir }}/devstacklog.txt.summary': 'logs'
+        '{{ devstack_full_log}}': 'logs'
+        '{{ stage_dir }}/verify_tempest_conf.log': 'logs'
+        '{{ stage_dir }}/apache': 'logs'
+        '{{ stage_dir }}/apache_config': 'logs'
+        '{{ stage_dir }}/etc': 'logs'
+        '/var/log/rabbitmq': 'logs'
+        '/var/log/postgresql': 'logs'
+        '/var/log/mysql.err': 'logs'
+        '/var/log/mysql.log': 'logs'
+        '/var/log/libvirt': 'logs'
+        '/etc/sudoers': 'logs'
+        '/etc/sudoers.d': 'logs'
+        '{{ stage_dir }}/iptables.txt': 'logs'
+        '{{ stage_dir }}/df.txt': 'logs'
+        '{{ stage_dir }}/pip2-freeze.txt': 'logs'
+        '{{ stage_dir }}/pip3-freeze.txt': 'logs'
+        '{{ stage_dir }}/dpkg-l.txt': 'logs'
+        '{{ stage_dir }}/rpm-qa.txt': 'logs'
+        '{{ stage_dir }}/core': 'logs'
+        '{{ stage_dir }}/listen53.txt': 'logs'
+        '{{ stage_dir }}/deprecations.log': 'logs'
+        '/var/log/ceph': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/log/glusterfs': 'logs'
+        '/etc/glusterfs/glusterd.vol': 'logs'
+        '/etc/resolv.conf': 'logs'
+        '/var/log/unbound.log': 'logs'
     pre-run: playbooks/pre.yaml
     run: playbooks/devstack.yaml
     post-run: playbooks/post.yaml
