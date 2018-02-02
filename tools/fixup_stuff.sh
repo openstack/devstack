@@ -75,7 +75,12 @@ fi
 # Make it possible to switch this based on an environment variable as
 # libvirt 2.5.0 doesn't handle nested virtualization quite well and this
 # is required for the trove development environment.
-if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "True" && "$DISTRO" = "xenial" ]]; then
+# The Pike UCA has qemu 2.10 but libvirt 3.6, therefore if
+# ENABLE_VOLUME_MULTIATTACH is True, we can't use the Pike UCA
+# because multiattach won't work with those package versions.
+# We can remove this check when the UCA has libvirt>=3.10.
+if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "True" && "$DISTRO" = "xenial" && \
+        "${ENABLE_VOLUME_MULTIATTACH}" == "False" ]]; then
     # This pulls in apt-add-repository
     install_package "software-properties-common"
     # Use UCA for newer libvirt. Should give us libvirt 2.5.0.

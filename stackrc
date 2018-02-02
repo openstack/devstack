@@ -601,6 +601,11 @@ NOVNC_BRANCH=${NOVNC_BRANCH:-stable/v0.6}
 SPICE_REPO=${SPICE_REPO:-http://anongit.freedesktop.org/git/spice/spice-html5.git}
 SPICE_BRANCH=${SPICE_BRANCH:-master}
 
+# Global flag used to configure Tempest and potentially other services if
+# volume multiattach is supported. In Queens, only the libvirt compute driver
+# and lvm volume driver support multiattach, and qemu must be less than 2.10
+# or libvirt must be greater than or equal to 3.10.
+ENABLE_VOLUME_MULTIATTACH=$(trueorfalse False ENABLE_VOLUME_MULTIATTACH)
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
@@ -612,7 +617,12 @@ VIRT_DRIVER=${VIRT_DRIVER:-$DEFAULT_VIRT_DRIVER}
 case "$VIRT_DRIVER" in
     ironic|libvirt)
         LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
-        if [[ "$os_VENDOR" =~ (Debian|Ubuntu) ]]; then
+        # If ENABLE_VOLUME_MULTIATTACH is True, the Ubuntu Cloud Archive can't
+        # be used until it provides libvirt>=3.10, and with older versions of
+        # Ubuntu the group is "libvirtd".
+        # TODO(mriedem): Remove the ENABLE_VOLUME_MULTIATTACH check when
+        # UCA has libvirt>=3.10.
+        if [[ "$os_VENDOR" =~ (Debian|Ubuntu) && "${ENABLE_VOLUME_MULTIATTACH}" == "False" ]]; then
             # The groups change with newer libvirt. Older Ubuntu used
             # 'libvirtd', but now uses libvirt like Debian. Do a quick check
             # to see if libvirtd group already exists to handle grenade's case.

@@ -382,6 +382,10 @@ function configure_tempest {
         fi
     fi
 
+    if [[ $ENABLE_VOLUME_MULTIATTACH == "True" ]]; then
+        iniset $TEMPEST_CONFIG compute-feature-enabled volume_multiattach True
+    fi
+
     if is_service_enabled n-novnc; then
         iniset $TEMPEST_CONFIG compute-feature-enabled vnc_console True
     fi
