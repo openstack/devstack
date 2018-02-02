@@ -78,6 +78,7 @@ keystone                               `git://git.openstack.org/openstack/keysto
 kingbird                               `git://git.openstack.org/openstack/kingbird <https://git.openstack.org/cgit/openstack/kingbird>`__
 kuryr-kubernetes                       `git://git.openstack.org/openstack/kuryr-kubernetes <https://git.openstack.org/cgit/openstack/kuryr-kubernetes>`__
 kuryr-libnetwork                       `git://git.openstack.org/openstack/kuryr-libnetwork <https://git.openstack.org/cgit/openstack/kuryr-libnetwork>`__
+kuryr-tempest-plugin                   `git://git.openstack.org/openstack/kuryr-tempest-plugin <https://git.openstack.org/cgit/openstack/kuryr-tempest-plugin>`__
 magnum                                 `git://git.openstack.org/openstack/magnum <https://git.openstack.org/cgit/openstack/magnum>`__
 magnum-ui                              `git://git.openstack.org/openstack/magnum-ui <https://git.openstack.org/cgit/openstack/magnum-ui>`__
 manila                                 `git://git.openstack.org/openstack/manila <https://git.openstack.org/cgit/openstack/manila>`__
@@ -130,6 +131,7 @@ networking-spp                         `git://git.openstack.org/openstack/networ
 networking-vpp                         `git://git.openstack.org/openstack/networking-vpp <https://git.openstack.org/cgit/openstack/networking-vpp>`__
 networking-vsphere                     `git://git.openstack.org/openstack/networking-vsphere <https://git.openstack.org/cgit/openstack/networking-vsphere>`__
 neutron                                `git://git.openstack.org/openstack/neutron <https://git.openstack.org/cgit/openstack/neutron>`__
+neutron-classifier                     `git://git.openstack.org/openstack/neutron-classifier <https://git.openstack.org/cgit/openstack/neutron-classifier>`__
 neutron-dynamic-routing                `git://git.openstack.org/openstack/neutron-dynamic-routing <https://git.openstack.org/cgit/openstack/neutron-dynamic-routing>`__
 neutron-fwaas                          `git://git.openstack.org/openstack/neutron-fwaas <https://git.openstack.org/cgit/openstack/neutron-fwaas>`__
 neutron-fwaas-dashboard                `git://git.openstack.org/openstack/neutron-fwaas-dashboard <https://git.openstack.org/cgit/openstack/neutron-fwaas-dashboard>`__
