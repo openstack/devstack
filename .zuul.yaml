@@ -187,11 +187,22 @@
       - playbooks/tox/pre.yaml
     run: playbooks/tox/run.yaml
 
+- job:
+    name: devstack-unit-tests
+    description: |
+      Runs unit tests on devstack project.
+
+      It runs  ``run_tests.sh``.
+    pre-run: playbooks/unit-tests/pre.yaml
+    run: playbooks/unit-tests/run.yaml
+
 - project:
     check:
       jobs:
         - devstack
         - devstack-multinode
+        - devstack-unit-tests
     gate:
       jobs:
         - devstack
+        - devstack-unit-tests
