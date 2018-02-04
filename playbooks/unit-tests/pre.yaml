@@ -1,0 +1,13 @@
+- hosts: all
+
+  tasks:
+
+    - name: Install prerequisites
+      shell:
+        chdir: '{{ zuul.project.src_dir }}'
+        executable: /bin/bash
+        cmd: |
+          set -e
+          set -x
+          echo "IPV4_ADDRS_SAFE_TO_USE=10.1.0.0/20" >> localrc
+          ./tools/install_prereqs.sh
