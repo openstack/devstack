@@ -19,6 +19,7 @@ make
 net-tools
 openssh
 openssl
+pcre-devel # python-pcre
 postgresql-devel  # psycopg2
 psmisc
 python-cmd2 # dist:opensuse-12.3
