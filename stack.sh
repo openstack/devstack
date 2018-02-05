@@ -773,6 +773,7 @@ fi
 
 # Do the ugly hacks for broken packages and distros
 source $TOP_DIR/tools/fixup_stuff.sh
+fixup_all
 
 if [[ "$USE_SYSTEMD" == "True" ]]; then
     pip_install_gr systemd-python
