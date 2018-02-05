@@ -36,6 +36,13 @@ def get_options():
     parser.add_argument('-o', '--outfile',
                         help='Output file for content',
                         default=None)
+    # NOTE(ianw): This is intended for the case where your stdout is
+    # being captured by something like ansible which independently
+    # logs timestamps on the lines it receives.  Note that if using a
+    # output file, those log lines are still timestamped.
+    parser.add_argument('-b', '--no-timestamp', action='store_true',
+                        help='Do not prefix stdout with timestamp (bare)',
+                        default=False)
     parser.add_argument('-v', '--verbose', action='store_true',
                         default=False)
     return parser.parse_args()
@@ -61,17 +68,23 @@ def main():
         if skip_line(line):
             continue
 
-        # This prevents us from nesting date lines, because
-        # we'd like to pull this in directly in Grenade and not double
-        # up on DevStack lines
+        # This prevents us from nesting date lines, because we'd like
+        # to pull this in directly in Grenade and not double up on
+        # DevStack lines.
+        # NOTE(ianw): we could actually strip the extra ts in "bare"
+        # mode (which came after this)? ... as we get more experience
+        # with zuulv3 native jobs and ansible capture it may become
+        # clearer what to do
         if HAS_DATE.search(line) is None:
             now = datetime.datetime.utcnow()
-            line = ("%s | %s" % (
+            ts_line = ("%s | %s" % (
                 now.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
                 line))
+        else:
+            ts_line = line
 
         if opts.verbose:
-            sys.stdout.write(line)
+            sys.stdout.write(line if opts.no_timestamp else ts_line)
             sys.stdout.flush()
 
         if outfile:
@@ -80,9 +93,9 @@ def main():
             # opened with the system encoding and made the line into
             # utf-8, so write the logfile out in utf-8 bytes.
             if sys.version_info < (3,):
-                outfile.write(line)
+                outfile.write(ts_line)
             else:
-                outfile.write(line.encode('utf-8'))
+                outfile.write(ts_line.encode('utf-8'))
             outfile.flush()
 
 

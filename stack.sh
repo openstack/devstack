@@ -405,6 +405,7 @@ is_package_installed python || install_package python
 
 # Set up logging level
 VERBOSE=$(trueorfalse True VERBOSE)
+VERBOSE_NO_TIMESTAMP=$(trueorfalse False VERBOSE)
 
 # Draw a spinner so the user knows something is happening
 function spinner {
@@ -470,8 +471,12 @@ if [[ -n "$LOGFILE" ]]; then
     # stdout later.
     exec 3>&1
     if [[ "$VERBOSE" == "True" ]]; then
+        _of_args="-v"
+        if [[ "$VERBOSE_NO_TIMESTAMP" == "True" ]]; then
+            _of_args="$_of_args --no-timestamp"
+        fi
         # Set fd 1 and 2 to write the log file
-        exec 1> >( $TOP_DIR/tools/outfilter.py -v -o "${LOGFILE}" ) 2>&1
+        exec 1> >( $TOP_DIR/tools/outfilter.py $_of_args -o "${LOGFILE}" ) 2>&1
         # Set fd 6 to summary log file
         exec 6> >( $TOP_DIR/tools/outfilter.py -o "${SUMFILE}" )
     else

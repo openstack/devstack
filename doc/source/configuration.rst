@@ -286,6 +286,18 @@ see what is going on. This can be disabled with::
 
         LOG_COLOR=False
 
+When using the logfile, by default logs are sent to the console and
+the file.  You can set ``VERBOSE`` to ``false`` if you only wish the
+logs to be sent to the file (this may avoid having double-logging in
+some cases where you are capturing the script output and the log
+files).  If ``VERBOSE`` is ``true`` you can additionally set
+``VERBOSE_NO_TIMESTAMP`` to avoid timestamps being added to each
+output line sent to the console.  This can be useful in some
+situations where the console output is being captured by a runner or
+framework (e.g. Ansible) that adds its own timestamps.  Note that the
+log lines sent to the ``LOGFILE`` will still be prefixed with a
+timestamp.
+
 Logging the Service Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
