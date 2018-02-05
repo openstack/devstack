@@ -911,8 +911,6 @@ if is_service_enabled placement placement-client; then
 fi
 
 if is_service_enabled horizon; then
-    # django openstack_auth
-    install_django_openstack_auth
     # dashboard
     stack_install_service horizon
 fi
