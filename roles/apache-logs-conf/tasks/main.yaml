@@ -50,7 +50,7 @@
     with_items: "{{ redhat_apache_deref_logs.results }}"
     when:
       - item.stat.isreg or item.stat.islnk
-  when: ansible_os_family == 'Redhat'
+  when: ansible_os_family == 'RedHat'
   no_log: true
 
 - name: Ensure {{ stage_dir }}/apache_config apache_config exists
