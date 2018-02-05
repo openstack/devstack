@@ -9,6 +9,36 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-centos-7
+    nodes:
+      - name: controller
+        label: centos-7
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
+    name: devstack-single-node-opensuse-423
+    nodes:
+      - name: controller
+        label: opensuse-423
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
+    name: devstack-single-node-fedora-27
+    nodes:
+      - name: controller
+        label: fedora-27
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -140,6 +170,31 @@
     # ready yet. Until then this job should stay non-voting.
     voting: false
 
+# NOTE(ianw) Platform tests have traditionally been non-voting because
+# we often have to rush things through devstack to stabilise the gate,
+# and these platforms don't have the round-the-clock support to avoid
+# becoming blockers in that situation.
+- job:
+    name: devstack-platform-centos-7
+    parent: tempest-full
+    description: Centos 7 platform test
+    nodeset: devstack-single-node-centos-7
+    voting: false
+
+- job:
+    name: devstack-platform-opensuse-423
+    parent: tempest-full
+    description: OpenSuSE 43.2 platform test
+    nodeset: devstack-single-node-opensuse-423
+    voting: false
+
+- job:
+    name: devstack-platform-fedora-27
+    parent: tempest-full
+    description: Fedora 27 platform test
+    nodeset: devstack-single-node-fedora-27
+    voting: false
+
 - job:
     name: devstack-tox-base
     parent: devstack
@@ -207,6 +262,9 @@
     check:
       jobs:
         - devstack
+        - devstack-platform-centos-7
+        - devstack-platform-opensuse-423
+        - devstack-platform-fedora-27
         - devstack-multinode
         - devstack-unit-tests
     gate:
