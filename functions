@@ -446,7 +446,12 @@ function wait_for_compute {
         ID=""
         while [[ "\$ID" == "" ]]; do
             sleep 1
-            ID=\$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" compute service list --host `hostname` --service nova-compute -c ID -f value)
+            if [[ "$VIRT_DRIVER" = 'fake' ]]; then
+                # When using the fake driver the compute hostnames have a suffix of 1 to NUMBER_FAKE_NOVA_COMPUTE
+                ID=\$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" compute service list --host `hostname`1 --service nova-compute -c ID -f value)
+            else
+                ID=\$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" compute service list --host `hostname` --service nova-compute -c ID -f value)
+            fi
         done
 EOF
     time_stop "wait_for_service"

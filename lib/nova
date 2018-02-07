@@ -877,7 +877,7 @@ function start_nova_compute {
             # creating or modifying real configurations. Each fake
             # gets its own configuration and own log file.
             local fake_conf="${NOVA_FAKE_CONF}-${i}"
-            iniset $fake_conf DEFAULT nhost "${HOSTNAME}${i}"
+            iniset $fake_conf DEFAULT host "${HOSTNAME}${i}"
             run_process "n-cpu-${i}" "$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CPU_CONF --config-file $fake_conf"
         done
     else
