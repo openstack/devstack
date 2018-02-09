@@ -827,7 +827,8 @@ function start_swift {
         else
             # The container-sync daemon is strictly needed to pass the container
             # sync Tempest tests.
-            swift-init --run-dir=${SWIFT_DATA_DIR}/run container-sync start
+            enable_service s-container-sync
+            run_process s-container-sync "$SWIFT_BIN_DIR/swift-container-sync ${SWIFT_CONF_DIR}/container-server/1.conf"
         fi
     else
         swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
