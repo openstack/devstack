@@ -24,12 +24,6 @@
     # capture-system-logs should be the last role before stage-output
     - capture-system-logs
     - role: stage-output
-      extensions_to_txt:
-        - conf
-        - log
-        - localrc
-        - stackenv
-        - summary
     # NOTE(andreaf) We need fetch-devstack-log-dir only as long as the base job
     # starts pulling logs for us from {{ ansible_user_dir }}/logs.
     # Meanwhile we already store things in ansible_user_dir and use
