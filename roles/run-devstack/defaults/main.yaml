@@ -1,2 +1,1 @@
 devstack_base_dir: /opt/stack
-devstack_early_log: /opt/stack/logs/devstack-early.txt
