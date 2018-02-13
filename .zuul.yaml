@@ -212,3 +212,6 @@
       jobs:
         - devstack
         - devstack-unit-tests
+    experimental:
+      jobs:
+        - nova-next
