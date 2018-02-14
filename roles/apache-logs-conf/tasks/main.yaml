@@ -64,12 +64,14 @@
     path: "{{ apache_config_paths[ansible_os_family] }}"
     file_type: any
   register: apache_configs
+  no_log: true
 
 - name: Dereference configurations
   stat:
     path: "{{ item.path }}"
   with_items: "{{ apache_configs.files }}"
   register: apache_configs_deref
+  no_log: true
 
 - name: Link configurations
   file:
@@ -78,3 +80,4 @@
     state: hard
   with_items: "{{ apache_configs_deref.results }}"
   when: item.stat.isreg or item.stat.islnk
+  no_log: true
