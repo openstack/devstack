@@ -16,19 +16,24 @@
       - name: compute1
         label: ubuntu-xenial
     groups:
+      # Node where tests are executed and test results collected
       - name: tempest
         nodes:
           - controller
+      # Nodes running the compute service
       - name: compute
         nodes:
           - controller
           - compute1
+      # Nodes that are not the controller
       - name: subnode
         nodes:
           - compute1
+      # Switch node for multinode networking setup
       - name: switch
         nodes:
           - controller
+      # Peer nodes for multinode networking setup
       - name: peers
         nodes:
           - compute1
@@ -45,7 +50,7 @@
       all single Devstack jobs, single or multinode.
       Variables are defined in job.vars, which is what is then used by single
       node jobs and by multi node jobs for the controller, as well as in
-      job.group-vars.peers, which is what is used by multi node jobs for peer
+      job.group-vars.peers, which is what is used by multi node jobs for subnode
       nodes (everything but the controller).
     required-projects:
       - openstack-dev/devstack
@@ -76,7 +81,6 @@
         # from the location below for all the CI jobs.
         ETCD_DOWNLOAD_URL: http://tarballs.openstack.org/etcd/
       devstack_services:
-        # Ignore base set of services setup by test-matrix.
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
       zuul_copy_output:
@@ -119,7 +123,7 @@
         localrc: True
         stackenv: True
     group-vars:
-      peers:
+      subnode:
         devstack_localrc:
           DATABASE_PASSWORD: secretdatabase
           RABBIT_PASSWORD: secretrabbit
@@ -156,7 +160,9 @@
     name: devstack
     parent: devstack-base
     description: |
-      Single or multi node devstack job for integration gate.
+      Base devstack job for integration gate.
+
+      This base job can be used for single node and multinode devstack jobs.
     nodeset: openstack-single-node
     required-projects:
       - openstack/cinder
@@ -178,6 +184,15 @@
         NOVA_VNC_ENABLED: true
         VNCSERVER_LISTEN: 0.0.0.0
         VNCSERVER_PROXYCLIENT_ADDRESS: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
+        # Multinode specific settings
+        SERVICE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+        HOST_IP: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+        PUBLIC_BRIDGE_MTU: "{{ external_bridge_mtu }}"
+      devstack_localconf:
+        post-config:
+          $NEUTRON_CONF:
+            DEFAULT:
+              global_physnet_mtu: "{{ external_bridge_mtu }}"
       devstack_services:
         # Core services enabled for this branch.
         # This list replaces the test-matrix.
@@ -254,16 +269,25 @@
           # Test matrix emits ceilometer but ceilomenter is not installed in the
           # integrated gate, so specifying the services has not effect.
           # ceilometer-*: false
+        devstack_localrc:
+          # Multinode specific settings
+          HOST_IP: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
+          SERVICE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          PUBLIC_BRIDGE_MTU: "{{ external_bridge_mtu }}"
+          # Subnode specific settings
+          DATABASE_TYPE: mysql
+          GLANCE_HOSTPORT: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}:9292"
+          Q_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          RABBIT_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          DATABASE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
 
 - job:
     name: devstack-multinode
-    parent: devstack-base
-    description: Base devstack multinode job
+    parent: devstack
     nodeset: openstack-two-node
-    # NOTE(andreaf) The multinode job is useful to see the setup of different
-    # services on different nodes, however the subnode configuration is not
-    # ready yet. Until then this job should stay non-voting.
-    voting: false
+    description: |
+      Simple multinode test to verify multinode functionality on devstack side.
+      This is not meant to be used as a parent job.
 
 - job:
     name: devstack-tox-base
