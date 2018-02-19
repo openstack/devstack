@@ -1,2 +1,1 @@
-devstack_base_dir: /opt/stack
 stage_dir: "{{ ansible_user_dir }}"

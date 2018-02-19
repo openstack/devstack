@@ -1,5 +1,5 @@
 - name: Run devstack
-  command: ./stack.sh
+  shell: ./stack.sh 2>&1
   args:
     chdir: "{{devstack_base_dir}}/devstack"
   become: true

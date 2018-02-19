@@ -1,3 +1,11 @@
+# NOTE(andreaf) This bypasses the stage-output role
+- name: Ensure {{ stage_dir }}/logs exists
+  become: true
+  file:
+    path: "{{ stage_dir }}/logs"
+    state: directory
+    owner: "{{ ansible_user }}"
+
 # TODO: convert this to ansible
 - name: Export journal files
   become: true
@@ -7,7 +15,7 @@
       name=""
       for u in `systemctl list-unit-files | grep devstack | awk '{print $1}'`; do
         name=$(echo $u | sed 's/devstack@/screen-/' | sed 's/\.service//')
-        journalctl -o short-precise --unit $u | tee {{ devstack_base_dir }}/logs/$name.txt > /dev/null
+        journalctl -o short-precise --unit $u | gzip - > {{ stage_dir }}/logs/$name.txt.gz
       done
 
       # Export the journal in export format to make it downloadable
@@ -16,7 +24,7 @@
       # debugging much easier. We don't do the native conversion here as
       # some distros do not package that tooling.
       journalctl -u 'devstack@*' -o export | \
-          xz --threads=0 - > {{ devstack_base_dir }}/logs/devstack.journal.xz
+          xz --threads=0 - > {{ stage_dir }}/logs/devstack.journal.xz
 
       # The journal contains everything running under systemd, we'll
       # build an old school version of the syslog with just the
@@ -26,4 +34,4 @@
           -t sudo \
           --no-pager \
           --since="$(cat {{ devstack_base_dir }}/log-start-timestamp.txt)" \
-        | tee {{ devstack_base_dir }}/logs/syslog.txt > /dev/null
+        | gzip - > {{ stage_dir }}/logs/syslog.txt.gz

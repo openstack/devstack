@@ -1,3 +1,13 @@
+- hosts: controller
+  roles:
+    - role: test-matrix
+      test_matrix_role: primary 
+
+- hosts: subnode
+  roles:
+    - role: test-matrix
+      test_matrix_role: subnode
+
 - hosts: all
   roles:
     - configure-swap
@@ -8,15 +18,3 @@
     - setup-devstack-cache
     - start-fresh-logging
     - write-devstack-local-conf
-  # TODO(jeblair): remove when configure-mirrors is fixed  
-  tasks:
-    - name: Hack mirror_info
-      shell:
-        _raw_params: |
-          mkdir /etc/ci
-          cat << "EOF" > /etc/ci/mirror_info.sh
-          export NODEPOOL_UCA_MIRROR=http://mirror.dfw.rax.openstack.org/ubuntu-cloud-archive
-          EOF
-      args:
-        executable: /bin/bash
-      become: true

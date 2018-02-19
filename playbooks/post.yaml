@@ -1,4 +1,32 @@
 - hosts: all
+  become: True
+  vars:
+    devstack_log_dir: "{{ devstack_base_dir|default('/opt/stack') }}/logs/"
+    devstack_conf_dir: "{{ devstack_base_dir|default('/opt/stack') }}/devstack/"
+    devstack_full_log: "{{ devstack_early_log|default('/opt/stack/logs/devstack-early.txt') }}"
+  tasks:
+    # NOTE(andreaf) If the tempest service is enabled, a tempest.log is
+    # generated as part of lib/tempest, as a result of verify_tempest_config
+    - name: Check if a tempest log exits
+      stat:
+        path: "{{ devstack_conf_dir }}/tempest.log"
+      register: tempest_log
+    - name: Link post-devstack tempest.log
+      file:
+        src: "{{ devstack_conf_dir }}/tempest.log"
+        dest: "{{ stage_dir }}/verify_tempest_conf.log"
+        state: hard
+      when: tempest_log.stat.exists
   roles:
     - export-devstack-journal
-    - fetch-devstack-log-dir
+    - apache-logs-conf
+    - devstack-project-conf
+    # capture-system-logs should be the last role before stage-output
+    - capture-system-logs
+    - role: stage-output
+    # NOTE(andreaf) We need fetch-devstack-log-dir only as long as the base job
+    # starts pulling logs for us from {{ ansible_user_dir }}/logs.
+    # Meanwhile we already store things in ansible_user_dir and use
+    # fetch-devstack-log-dir setting devstack_base_dir
+    - role: fetch-devstack-log-dir
+      devstack_base_dir: "{{ ansible_user_dir }}"

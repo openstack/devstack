@@ -1,0 +1,83 @@
+- name: Ensure {{ stage_dir }}/apache exists
+  file:
+    path: "{{ stage_dir }}/apache"
+    state: directory
+
+- name: Link apache logs on Debian/SuSE
+  block:
+  - name: Find logs
+    find:
+      path: "/var/log/apache2"
+      file_type: any
+    register: debian_suse_apache_logs
+  - name: Dereference files
+    stat:
+      path: "{{ item.path }}"
+    with_items: "{{ debian_suse_apache_logs.files }}"
+    register: debian_suse_apache_deref_logs
+  - name: Create hard links
+    file:
+      src: "{{ item.stat.lnk_source | default(item.stat.path) }}"
+      dest: "{{ stage_dir }}/apache/{{ item.stat.path | basename }}"
+      state: hard
+    with_items: "{{ debian_suse_apache_deref_logs.results }}"
+    when:
+      - item.stat.isreg or item.stat.islnk
+  when: ansible_os_family in ('Debian', 'Suse')
+
+- name: Link apache logs on RedHat
+  block:
+  - name: Find logs
+    find:
+      path: "/var/log/httpd"
+      file_type: any
+    register: redhat_apache_logs
+  - name: Dereference files
+    stat:
+      path: "{{ item.path }}"
+    with_items: "{{ redhat_apache_logs.files }}"
+    register: redhat_apache_deref_logs
+  - name: Create hard links
+    file:
+      src: "{{ item.stat.lnk_source | default(item.stat.path) }}"
+      dest: "{{ stage_dir }}/apache/{{ item.stat.path | basename }}"
+      state: hard
+    with_items: "{{ redhat_apache_deref_logs.results }}"
+    when:
+      - item.stat.isreg or item.stat.islnk
+  when: ansible_os_family == 'Redhat'
+
+- name: Ensure {{ stage_dir }}/apache_config apache_config exists
+  file:
+    path: "{{ stage_dir }}/apache_config"
+    state: directory
+
+- name: Define config paths
+  set_fact:
+    apache_config_paths:
+      'Debian': '/etc/apache2/sites-enabled/'
+      'Suse': '/etc/apache2/conf.d/'
+      'Redhat': '/etc/httpd/conf.d/'
+
+- name: Discover configurations
+  find:
+    path: "{{ apache_config_paths[ansible_os_family] }}"
+    file_type: any
+  register: apache_configs
+  no_log: true
+
+- name: Dereference configurations
+  stat:
+    path: "{{ item.path }}"
+  with_items: "{{ apache_configs.files }}"
+  register: apache_configs_deref
+  no_log: true
+
+- name: Link configurations
+  file:
+    src: "{{ item.stat.lnk_source | default(item.stat.path) }}"
+    dest: "{{ stage_dir }}/apache_config/{{ item.stat.path | basename }}"
+    state: hard
+  with_items: "{{ apache_configs_deref.results }}"
+  when: item.stat.isreg or item.stat.islnk
+  no_log: true

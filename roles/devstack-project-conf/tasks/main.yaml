@@ -1,0 +1,24 @@
+- name: Ensure {{ stage_dir }}/etc exists
+  file:
+    path: "{{ stage_dir }}/etc"
+    state: directory
+
+- name: Check which projects have a config folder
+  stat:
+    path: "/etc/{{ item.value.short_name }}"
+  with_dict: "{{ zuul.projects }}"
+  register: project_configs
+
+- name: Copy configuration files
+  command: cp -pRL {{ item.stat.path }} {{ stage_dir }}/etc/{{ item.item.value.short_name }}
+  when: item.stat.exists
+  with_items: "{{ project_configs.results }}"
+
+- name: Check if openstack has a config folder
+  stat:
+    path: "/etc/openstack"
+  register: openstack_configs
+
+- name: Copy configuration files
+  command: cp -pRL /etc/openstack {{ stage_dir }}/etc/
+  when: openstack_configs.stat.exists

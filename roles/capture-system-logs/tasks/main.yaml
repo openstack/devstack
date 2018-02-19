@@ -1,0 +1,38 @@
+# TODO(andreaf) Make this into proper Ansible
+- name: Stage various logs and reports
+  shell:
+    cmd: |
+      sudo iptables-save > {{ stage_dir }}/iptables.txt
+      df -h > {{ stage_dir }}/df.txt
+
+      for py_ver in 2 3; do
+          if [[ `which python${py_ver}` ]]; then
+              python${py_ver} -m pip freeze > {{ stage_dir }}/pip${py_ver}-freeze.txt
+          fi
+      done
+
+      if [ `command -v dpkg` ]; then
+          dpkg -l> {{ stage_dir }}/dpkg-l.txt
+      fi
+      if [ `command -v rpm` ]; then
+          rpm -qa | sort > {{ stage_dir }}/rpm-qa.txt
+      fi
+
+      # gzip and save any coredumps in /var/core
+      if [ -d /var/core ]; then
+          sudo gzip -r /var/core
+          sudo cp -r /var/core {{ stage_dir }}/
+      fi
+
+      sudo ss -lntup | grep ':53' > {{ stage_dir }}/listen53.txt
+
+      # NOTE(andreaf) Service logs are already in logs/ thanks for the
+      # export-devstack-journal log. Apache logs are under apache/ thans to the
+      # apache-logs-conf role.
+      grep -i deprecat {{ stage_dir }}/logs/*.txt {{ stage_dir }}/apache/*.log | \
+          sed -r 's/[0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\.[0-9]{1,3}/ /g' | \
+          sed -r 's/[0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}/ /g' | \
+          sed -r 's/[0-9]{1,4}-[0-9]{1,2}-[0-9]{1,4}/ /g' |
+          sed -r 's/\[.*\]/ /g' | \
+          sed -r 's/\s[0-9]+\s/ /g' | \
+          awk '{if ($0 in seen) {seen[$0]++} else {out[++n]=$0;seen[$0]=1}} END { for (i=1; i<=n; i++) print seen[out[i]]" :: " out[i] }' > {{ stage_dir }}/deprecations.log

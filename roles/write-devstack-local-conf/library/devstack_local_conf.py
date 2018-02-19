@@ -106,13 +106,13 @@ class VarGraph(object):
 
 class LocalConf(object):
 
-    def __init__(self, localrc, localconf, services, plugins):
+    def __init__(self, localrc, localconf, base_services, services, plugins):
         self.localrc = []
         self.meta_sections = {}
         if plugins:
             self.handle_plugins(plugins)
-        if services:
-            self.handle_services(services)
+        if services or base_services:
+            self.handle_services(base_services, services or {})
         if localrc:
             self.handle_localrc(localrc)
         if localconf:
@@ -123,7 +123,13 @@ class LocalConf(object):
             if v:
                 self.localrc.append('enable_plugin {} {}'.format(k, v))
 
-    def handle_services(self, services):
+    def handle_services(self, base_services, services):
+        enable_base_services = services.pop('base', True)
+        if enable_base_services and base_services:
+            self.localrc.append('ENABLED_SERVICES={}'.format(
+                ",".join(base_services)))
+        else:
+            self.localrc.append('disable_all_services')
         for k, v in services.items():
             if v is False:
                 self.localrc.append('disable_service {}'.format(k))
@@ -161,6 +167,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             plugins=dict(type='dict'),
+            base_services=dict(type='list'),
             services=dict(type='dict'),
             localrc=dict(type='dict'),
             local_conf=dict(type='dict'),
@@ -171,6 +178,7 @@ def main():
     p = module.params
     lc = LocalConf(p.get('localrc'),
                    p.get('local_conf'),
+                   p.get('base_services'),
                    p.get('services'),
                    p.get('plugins'))
     lc.write(p['path'])

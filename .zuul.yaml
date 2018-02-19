@@ -1,28 +1,31 @@
-# - nodeset:
-#     name: openstack-single-node
-#     nodes:
-#       - name: controller
-#         label: ubuntu-xenial
-#     groups:
-#       - name: tempest
-#         nodes:
-#           - controller
+- nodeset:
+    name: openstack-single-node
+    nodes:
+      - name: controller
+        label: ubuntu-xenial
+    groups:
+      - name: tempest
+        nodes:
+          - controller
 
-# - nodeset:
-#     name: openstack-two-node
-#     nodes:
-#       - name: controller
-#         label: ubuntu-xenial
-#       - name: compute1
-#         label: ubuntu-xenial
-#     groups:
-#       - name: tempest
-#         nodes:
-#           - controller
-#       - name: compute
-#         nodes:
-#           - controller
-#           - compute1
+- nodeset:
+    name: openstack-two-node
+    nodes:
+      - name: controller
+        label: ubuntu-xenial
+      - name: compute1
+        label: ubuntu-xenial
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+      - name: compute
+        nodes:
+          - controller
+          - compute1
+      - name: subnode
+        nodes:
+          - compute1
 
 - job:
     name: devstack
@@ -39,9 +42,11 @@
       - openstack/requirements
       - openstack/swift
     roles:
+      - zuul: openstack-infra/devstack-gate
       - zuul: openstack-infra/openstack-zuul-jobs
     timeout: 7200
     vars:
+      test_matrix_configs: [neutron, tlsproxy]
       devstack_localrc:
         DATABASE_PASSWORD: secretdatabase
         RABBIT_PASSWORD: secretrabbit
@@ -57,6 +62,7 @@
         FLOATING_HOST_MASK: 23
         SWIFT_REPLICAS: 1
         SWIFT_START_ALL_SERVICES: false
+        SWIFT_HASH: 1234123412341234
         LOGFILE: /opt/stack/logs/devstacklog.txt
         LOG_COLOR: false
         VERBOSE: true
@@ -71,12 +77,127 @@
       devstack_services:
         horizon: false
         tempest: false
+      zuul_copy_output:
+        '{{ devstack_conf_dir }}/local.conf': 'logs'
+        '{{ devstack_conf_dir }}/localrc': 'logs'
+        '{{ devstack_conf_dir }}/.stackenv': 'logs'
+        '{{ devstack_log_dir }}/dstat-csv.log': 'logs'
+        '{{ devstack_log_dir }}/devstacklog.txt': 'logs'
+        '{{ devstack_log_dir }}/devstacklog.txt.summary': 'logs'
+        '{{ devstack_full_log}}': 'logs'
+        '{{ stage_dir }}/verify_tempest_conf.log': 'logs'
+        '{{ stage_dir }}/apache': 'logs'
+        '{{ stage_dir }}/apache_config': 'logs'
+        '{{ stage_dir }}/etc': 'logs'
+        '/var/log/rabbitmq': 'logs'
+        '/var/log/postgresql': 'logs'
+        '/var/log/mysql.err': 'logs'
+        '/var/log/mysql.log': 'logs'
+        '/var/log/libvirt': 'logs'
+        '/etc/sudoers': 'logs'
+        '/etc/sudoers.d': 'logs'
+        '{{ stage_dir }}/iptables.txt': 'logs'
+        '{{ stage_dir }}/df.txt': 'logs'
+        '{{ stage_dir }}/pip2-freeze.txt': 'logs'
+        '{{ stage_dir }}/pip3-freeze.txt': 'logs'
+        '{{ stage_dir }}/dpkg-l.txt': 'logs'
+        '{{ stage_dir }}/rpm-qa.txt': 'logs'
+        '{{ stage_dir }}/core': 'logs'
+        '{{ stage_dir }}/listen53.txt': 'logs'
+        '{{ stage_dir }}/deprecations.log': 'logs'
+        '/var/log/ceph': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/log/glusterfs': 'logs'
+        '/etc/glusterfs/glusterd.vol': 'logs'
+        '/etc/resolv.conf': 'logs'
+        '/var/log/unbound.log': 'logs'
+      extensions_to_txt:
+        conf: True
+        log: True
+        localrc: True
+        stackenv: True
+        summary: True
     pre-run: playbooks/pre.yaml
     run: playbooks/devstack.yaml
     post-run: playbooks/post.yaml
+    irrelevant-files:
+      # Documentation related
+      - ^.*\.rst$
+      - ^api-ref/.*$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+      # Translations
+      - ^.*/locale/.*po$
 
+- job:
+    name: devstack-multinode
+    parent: devstack
+    description: Base devstack multinode job
+    nodeset: openstack-two-node
+    # NOTE(andreaf) The multinode job is useful to see the setup of different
+    # services on different nodes, however the subnode configuration is not
+    # ready yet. Until then this job should stay non-voting.
+    voting: false
+
+- job:
+    name: devstack-tox-base
+    parent: devstack
+    description: |
+      Base job for devstack-based functional tests that use tox.
+
+      This job is not intended to be run directly. It's just here
+      for organizational purposes for devstack-tox-functional and
+      devstack-tox-functional-consumer.
+    post-run: playbooks/tox/post.yaml
+    vars:
+      tox_envlist: functional
+      tox_install_siblings: false
+
+- job:
+    name: devstack-tox-functional
+    parent: devstack-tox-base
+    description: |
+      Base job for devstack-based functional tests that use tox.
+
+      Runs devstack, then runs the tox ``functional`` environment,
+      then collects tox/testr build output like normal tox jobs.
+
+      Turns off tox sibling installation. Projects may be involved
+      in the devstack deployment and so may be in the required-projects
+      list, but may not want to test against master of the other
+      projects in their tox env. Child jobs can set tox_install_siblings
+      to True to re-enable sibling processing.
+    run: playbooks/tox/run-both.yaml
+
+- job:
+    name: devstack-tox-functional-consumer
+    parent: devstack
+    description: |
+      Base job for devstack-based functional tests for projects that
+      consume the devstack cloud.
+
+      This base job should only be used by projects that are not involved
+      in the devstack deployment step, but are instead projects that are using
+      devstack to get a cloud against which they can test things.
+
+      Runs devstack in pre-run, then runs the tox ``functional`` environment,
+      then collects tox/testr build output like normal tox jobs.
+
+      Turns off tox sibling installation. Projects may be involved
+      in the devstack deployment and so may be in the required-projects
+      list, but may not want to test against master of the other
+      projects in their tox env. Child jobs can set tox_install_siblings
+      to True to re-enable sibling processing.
+    pre-run:
+      - playbooks/devstack.yaml
+      - playbooks/tox/pre.yaml
+    run: playbooks/tox/run.yaml
 
 - project:
     check:
+      jobs:
+        - devstack
+        - devstack-multinode
+    gate:
       jobs:
         - devstack
