@@ -26,7 +26,7 @@ import os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = [ 'openstackdocstheme', 'sphinxcontrib.blockdiag', 'sphinxcontrib.nwdiag' ]
+extensions = [ 'sphinx.ext.autodoc', 'zuul_sphinx', 'openstackdocstheme', 'sphinxcontrib.blockdiag', 'sphinxcontrib.nwdiag' ]
 
 # openstackdocstheme options
 repository_name = 'openstack-dev/devstack'
