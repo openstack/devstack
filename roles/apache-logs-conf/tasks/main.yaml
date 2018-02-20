@@ -57,7 +57,7 @@
     apache_config_paths:
       'Debian': '/etc/apache2/sites-enabled/'
       'Suse': '/etc/apache2/conf.d/'
-      'Redhat': '/etc/httpd/conf.d/'
+      'RedHat': '/etc/httpd/conf.d/'
 
 - name: Discover configurations
   find:
