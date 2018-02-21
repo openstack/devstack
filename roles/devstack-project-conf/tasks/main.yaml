@@ -8,6 +8,7 @@
     path: "/etc/{{ item.value.short_name }}"
   with_dict: "{{ zuul.projects }}"
   register: project_configs
+  no_log: true
 
 - name: Copy configuration files
   command: cp -pRL {{ item.stat.path }} {{ stage_dir }}/etc/{{ item.item.value.short_name }}
