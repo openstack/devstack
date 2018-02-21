@@ -76,6 +76,8 @@
         # from the location below for all the CI jobs.
         ETCD_DOWNLOAD_URL: http://tarballs.openstack.org/etcd/
       devstack_services:
+        # Ignore base set of services setup by test-matrix.
+        # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
       zuul_copy_output:
         '{{ devstack_conf_dir }}/local.conf': 'logs'
@@ -154,7 +156,7 @@
     name: devstack
     parent: devstack-base
     description: |
-      Single node devstack job for integration gate.
+      Single or multi node devstack job for integration gate.
     nodeset: openstack-single-node
     required-projects:
       - openstack/cinder
@@ -166,7 +168,6 @@
       - openstack/swift
     timeout: 7200
     vars:
-      test_matrix_configs: [neutron, tlsproxy]
       devstack_localrc:
         # Common OpenStack services settings
         SWIFT_REPLICAS: 1
@@ -178,9 +179,81 @@
         VNCSERVER_LISTEN: 0.0.0.0
         VNCSERVER_PROXYCLIENT_ADDRESS: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
       devstack_services:
-        base: true
+        # Core services enabled for this branch.
+        # This list replaces the test-matrix.
+        # Shared services
+        dstat: true
+        etcd3: true
+        mysql: true
+        peakmem_tracker: true
+        rabbit: true
+        tls-proxy: true
+        # Keystone services
+        key: true
+        # Glance services
+        g-api: true
+        g-reg: true
+        # Nova services
+        n-api: true
+        n-api-meta: true
+        n-cauth: true
+        n-cond: true
+        n-cpu: true
+        n-novnc: true
+        n-obj: true
+        n-sch: true
+        placement-api: true
+        # Neutron services
+        neutron-api: true
+        neutron-agent: true
+        neutron-dhcp: true
+        neutron-l3: true
+        neutron-metadata-agent: true
+        neutron-metering: true
+        # Swift services
+        s-account: true
+        s-container: true
+        s-object: true
+        s-proxy: true
+        # Cinder services
+        c-api: true
+        c-bak: true
+        c-sch: true
+        c-vol: true
+        cinder: true
+        # Services we don't need.
+        # This section is not really needed, it's for readability.
         horizon: false
         tempest: false
+        # Test matrix emits ceilometer but ceilomenter is not installed in the
+        # integrated gate, so specifying the services has not effect.
+        # ceilometer-*: false
+    group-vars:
+      subnode:
+        devstack_services:
+          # Core services enabled for this branch.
+          # This list replaces the test-matrix.
+          # Shared services
+          dstat: true
+          peakmem_tracker: true
+          tls-proxy: true
+          # Nova services
+          n-cpu: true
+          placement-client: true
+          # Neutron services
+          neutron-agent: true
+          # Cinder services
+          c-bak: true
+          c-vol: true
+          # Services we don't run at all on subnode.
+          # This section is not really needed, it's for readability.
+          # keystone: false
+          # s-*: false
+          horizon: false
+          tempest: false
+          # Test matrix emits ceilometer but ceilomenter is not installed in the
+          # integrated gate, so specifying the services has not effect.
+          # ceilometer-*: false
 
 - job:
     name: devstack-multinode
