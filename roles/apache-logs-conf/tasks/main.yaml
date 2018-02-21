@@ -10,11 +10,13 @@
       path: "/var/log/apache2"
       file_type: any
     register: debian_suse_apache_logs
+
   - name: Dereference files
     stat:
       path: "{{ item.path }}"
     with_items: "{{ debian_suse_apache_logs.files }}"
     register: debian_suse_apache_deref_logs
+
   - name: Create hard links
     file:
       src: "{{ item.stat.lnk_source | default(item.stat.path) }}"
@@ -24,6 +26,7 @@
     when:
       - item.stat.isreg or item.stat.islnk
   when: ansible_os_family in ('Debian', 'Suse')
+  no_log: true
 
 - name: Link apache logs on RedHat
   block:
@@ -32,11 +35,13 @@
       path: "/var/log/httpd"
       file_type: any
     register: redhat_apache_logs
+
   - name: Dereference files
     stat:
       path: "{{ item.path }}"
     with_items: "{{ redhat_apache_logs.files }}"
     register: redhat_apache_deref_logs
+
   - name: Create hard links
     file:
       src: "{{ item.stat.lnk_source | default(item.stat.path) }}"
@@ -46,6 +51,7 @@
     when:
       - item.stat.isreg or item.stat.islnk
   when: ansible_os_family == 'Redhat'
+  no_log: true
 
 - name: Ensure {{ stage_dir }}/apache_config apache_config exists
   file:
