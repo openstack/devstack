@@ -163,6 +163,25 @@
       Base devstack job for integration gate.
 
       This base job can be used for single node and multinode devstack jobs.
+
+      With a single node nodeset, this job sets up an "all-in-one" (aio)
+      devstack with the six OpenStack services included in the devstack tree:
+      keystone, glance, cinder, neutron, nova and swift.
+
+      With a two node nodeset, this job sets up an aio + compute node.
+      The controller can be customised using host-vars.controller, the
+      sub-nodes can be customised using group-vars.subnode.
+
+      Descendent jobs can enable / disable services, add devstack configuration
+      options, enable devstack plugins, configure log files or directories to be
+      transferred to the log server.
+
+      The job assumes that there is only one controller node. The number of
+      subnodes can be scaled up seamlessly by setting a custom nodeset in
+      job.nodeset.
+
+      The run playbook consists of a single role, so it can be easily rewritten
+      and extended.
     nodeset: openstack-single-node
     required-projects:
       - openstack/cinder
