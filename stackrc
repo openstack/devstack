@@ -813,6 +813,9 @@ fi
 # Service startup timeout
 SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 
+# Timeout for compute node registration in Nova
+NOVA_READY_TIMEOUT=${NOVA_READY_TIMEOUT:-$SERVICE_TIMEOUT}
+
 # Service graceful shutdown timeout
 SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT=${SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT:-5}
 
