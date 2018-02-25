@@ -101,7 +101,7 @@ CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 if is_fedora; then
     CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-lioadm}
     if [[ ${CINDER_ISCSI_HELPER} != "lioadm" ]]; then
-        die "lioadm is the only valid Cinder iscsi_helper config on this platform"
+        die "lioadm is the only valid Cinder target_helper config on this platform"
     fi
 else
     CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-tgtadm}
@@ -230,7 +230,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
-    iniset $CINDER_CONF DEFAULT iscsi_helper "$CINDER_ISCSI_HELPER"
+    iniset $CINDER_CONF DEFAULT target_helper "$CINDER_ISCSI_HELPER"
     iniset $CINDER_CONF database connection `database_connection_url cinder`
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
