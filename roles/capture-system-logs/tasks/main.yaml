@@ -1,6 +1,7 @@
 # TODO(andreaf) Make this into proper Ansible
 - name: Stage various logs and reports
   shell:
+    executable: /bin/bash
     cmd: |
       sudo iptables-save > {{ stage_dir }}/iptables.txt
       df -h > {{ stage_dir }}/df.txt
