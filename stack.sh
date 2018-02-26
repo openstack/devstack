@@ -1385,15 +1385,6 @@ run_phase stack extra
 merge_config_group $TOP_DIR/local.conf post-extra
 
 
-# Run local script
-# ----------------
-
-# Run ``local.sh`` if it exists to perform user-managed tasks
-if [[ -x $TOP_DIR/local.sh ]]; then
-    echo "Running user script $TOP_DIR/local.sh"
-    $TOP_DIR/local.sh
-fi
-
 # Sanity checks
 # =============
 
@@ -1426,6 +1417,15 @@ if is_service_enabled n-api; then
         # environment is up.
         echo_summary "SKIPPING Cell setup because n-cpu is not enabled. You will have to do this manually before you have a working environment."
     fi
+fi
+
+# Run local script
+# ----------------
+
+# Run ``local.sh`` if it exists to perform user-managed tasks
+if [[ -x $TOP_DIR/local.sh ]]; then
+    echo "Running user script $TOP_DIR/local.sh"
+    $TOP_DIR/local.sh
 fi
 
 # Bash completion
