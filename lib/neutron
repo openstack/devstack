@@ -306,7 +306,6 @@ function configure_neutron_nova_new {
     iniset $NOVA_CONF neutron project_domain_name "Default"
     iniset $NOVA_CONF neutron auth_strategy $NEUTRON_AUTH_STRATEGY
     iniset $NOVA_CONF neutron region_name "$REGION_NAME"
-    iniset $NOVA_CONF neutron url $NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST:$NEUTRON_SERVICE_PORT
 
     iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
 
