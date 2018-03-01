@@ -29,6 +29,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-opensuse-tumbleweed
+    nodes:
+      - name: controller
+        label: opensuse-tumbleweed
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-fedora-27
     nodes:
       - name: controller
@@ -238,8 +248,15 @@
 - job:
     name: devstack-platform-opensuse-423
     parent: tempest-full
-    description: OpenSuSE 43.2 platform test
+    description: openSUSE 43.2 platform test
     nodeset: devstack-single-node-opensuse-423
+    voting: false
+
+- job:
+    name: devstack-platform-opensuse-tumbleweed
+    parent: tempest-full
+    description: openSUSE Tumbleweed platform test
+    nodeset: devstack-single-node-opensuse-tumbleweed
     voting: false
 
 - job:
@@ -318,6 +335,7 @@
         - devstack
         - devstack-platform-centos-7
         - devstack-platform-opensuse-423
+        - devstack-platform-opensuse-tumbleweed
         - devstack-platform-fedora-27
         - devstack-multinode
         - devstack-unit-tests
