@@ -962,17 +962,15 @@ fi
 if [[ $SYSLOG != "False" ]]; then
     if [[ "$SYSLOG_HOST" = "$HOST_IP" ]]; then
         # Configure the master host to receive
-        cat <<EOF >/tmp/90-stack-m.conf
+        cat <<EOF | sudo tee /etc/rsyslog.d/90-stack-m.conf >/dev/null
 \$ModLoad imrelp
 \$InputRELPServerRun $SYSLOG_PORT
 EOF
-        sudo mv /tmp/90-stack-m.conf /etc/rsyslog.d
     else
         # Set rsyslog to send to remote host
-        cat <<EOF >/tmp/90-stack-s.conf
+        cat <<EOF | sudo tee /etc/rsyslog.d/90-stack-s.conf >/dev/null
 *.*		:omrelp:$SYSLOG_HOST:$SYSLOG_PORT
 EOF
-        sudo mv /tmp/90-stack-s.conf /etc/rsyslog.d
     fi
 
     RSYSLOGCONF="/etc/rsyslog.conf"
