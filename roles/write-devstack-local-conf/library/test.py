@@ -56,7 +56,8 @@ class TestDevstackLocalConf(unittest.TestCase):
                        p.get('base_services'),
                        p.get('services'),
                        p.get('plugins'),
-                       p.get('base_dir'))
+                       p.get('base_dir'),
+                       p.get('projects'))
         lc.write(p['path'])
 
         plugins = []
@@ -65,6 +66,7 @@ class TestDevstackLocalConf(unittest.TestCase):
                 if line.startswith('enable_plugin'):
                     plugins.append(line.split()[1])
         self.assertEqual(['bar', 'baz', 'foo'], plugins)
+
 
     def test_plugin_deps(self):
         "Test that plugins with dependencies work"
@@ -101,20 +103,80 @@ class TestDevstackLocalConf(unittest.TestCase):
                  plugins=plugins,
                  base_dir=self.tmpdir,
                  path=os.path.join(self.tmpdir, 'test.local.conf'))
+
+    def test_libs_from_git(self):
+        "Test that LIBS_FROM_GIT is auto-generated"
+        projects = {
+            'git.openstack.org/openstack/nova': {
+                'required': True,
+                'short_name': 'nova',
+            },
+            'git.openstack.org/openstack/oslo.messaging': {
+                'required': True,
+                'short_name': 'oslo.messaging',
+            },
+            'git.openstack.org/openstack/devstack-plugin': {
+                'required': False,
+                'short_name': 'devstack-plugin',
+            },
+        }
+        p = dict(base_services=[],
+                 base_dir='./test',
+                 path=os.path.join(self.tmpdir, 'test.local.conf'),
+                 projects=projects)
         lc = LocalConf(p.get('localrc'),
                        p.get('local_conf'),
                        p.get('base_services'),
                        p.get('services'),
                        p.get('plugins'),
-                       p.get('base_dir'))
+                       p.get('base_dir'),
+                       p.get('projects'))
         lc.write(p['path'])
 
-        plugins = []
+        lfg = None
         with open(p['path']) as f:
             for line in f:
-                if line.startswith('enable_plugin'):
-                    plugins.append(line.split()[1])
-        self.assertEqual(['foo', 'bar'], plugins)
+                if line.startswith('LIBS_FROM_GIT'):
+                    lfg = line.strip().split('=')[1]
+        self.assertEqual('nova,oslo.messaging', lfg)
+
+    def test_overridelibs_from_git(self):
+        "Test that LIBS_FROM_GIT can be overridden"
+        localrc = {'LIBS_FROM_GIT': 'oslo.db'}
+        projects = {
+            'git.openstack.org/openstack/nova': {
+                'required': True,
+                'short_name': 'nova',
+            },
+            'git.openstack.org/openstack/oslo.messaging': {
+                'required': True,
+                'short_name': 'oslo.messaging',
+            },
+            'git.openstack.org/openstack/devstack-plugin': {
+                'required': False,
+                'short_name': 'devstack-plugin',
+            },
+        }
+        p = dict(localrc=localrc,
+                 base_services=[],
+                 base_dir='./test',
+                 path=os.path.join(self.tmpdir, 'test.local.conf'),
+                 projects=projects)
+        lc = LocalConf(p.get('localrc'),
+                       p.get('local_conf'),
+                       p.get('base_services'),
+                       p.get('services'),
+                       p.get('plugins'),
+                       p.get('base_dir'),
+                       p.get('projects'))
+        lc.write(p['path'])
+
+        lfg = None
+        with open(p['path']) as f:
+            for line in f:
+                if line.startswith('LIBS_FROM_GIT'):
+                    lfg = line.strip().split('=')[1]
+        self.assertEqual('oslo.db', lfg)
 
     def test_plugin_circular_deps(self):
         "Test that plugins with circular dependencies fail"
