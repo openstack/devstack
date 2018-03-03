@@ -21,10 +21,12 @@
     group: stack
   become: yes
 
-- name: Set stack user home directory permissions
+- name: Set stack user home directory permissions and ownership
   file:
     path: '{{ devstack_stack_home_dir }}'
     mode: 0755
+    owner: stack
+    group: stack
   become: yes
 
 - name: Copy 50_stack_sh file to /etc/sudoers.d
@@ -36,7 +38,7 @@
     group: root
   become: yes
 
-- name: Create new/.cache folder within BASE
+- name: Create .cache folder within BASE
   file:
     path: '{{ devstack_stack_home_dir }}/.cache'
     state: directory
