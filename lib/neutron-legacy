@@ -929,7 +929,7 @@ function delete_probe {
 }
 
 function _get_net_id {
-    neutron --os-cloud devstack-admin --os-region "$REGION_NAME" --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD net-list | grep $1 | awk '{print $2}'
+    openstack --os-cloud devstack-admin --os-region-name="$REGION_NAME" --os-project-name admin --os-username admin --os-password $ADMIN_PASSWORD network list | grep $1 | awk '{print $2}'
 }
 
 function _get_probe_cmd_prefix {
