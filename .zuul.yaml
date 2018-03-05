@@ -56,43 +56,43 @@
       - name: subnode
         nodes:
           - compute1
+      - name: switch
+        nodes:
+          - controller
+      - name: peers
+        nodes:
+          - compute1
 
 - job:
-    name: devstack
+    name: devstack-base
     parent: multinode
-    description: Base devstack job
-    nodeset: openstack-single-node
+    abstract: true
+    description: |
+      Base abstract Devstack job.
+
+      Defines plays and base variables, but it does not include any project
+      and it does not run any service by default. This is a common base for
+      all single Devstack jobs, single or multinode.
+      Variables are defined in job.vars, which is what is then used by single
+      node jobs and by multi node jobs for the controller, as well as in
+      job.group-vars.peers, which is what is used by multi node jobs for peer
+      nodes (everything but the controller).
     required-projects:
       - openstack-dev/devstack
-      - openstack/cinder
-      - openstack/glance
-      - openstack/keystone
-      - openstack/neutron
-      - openstack/nova
-      - openstack/requirements
-      - openstack/swift
     roles:
       - zuul: openstack-infra/devstack-gate
       - zuul: openstack-infra/openstack-zuul-jobs
-    timeout: 7200
     vars:
-      test_matrix_configs: [neutron, tlsproxy]
       devstack_localrc:
         DATABASE_PASSWORD: secretdatabase
         RABBIT_PASSWORD: secretrabbit
         ADMIN_PASSWORD: secretadmin
         SERVICE_PASSWORD: secretservice
         NETWORK_GATEWAY: 10.1.0.1
-        Q_USE_DEBUG_COMMAND: true
         FIXED_RANGE: 10.1.0.0/20
         IPV4_ADDRS_SAFE_TO_USE: 10.1.0.0/20
         FLOATING_RANGE: 172.24.5.0/24
         PUBLIC_NETWORK_GATEWAY: 172.24.5.1
-        FLOATING_HOST_PREFIX: 172.24.4
-        FLOATING_HOST_MASK: 23
-        SWIFT_REPLICAS: 1
-        SWIFT_START_ALL_SERVICES: false
-        SWIFT_HASH: 1234123412341234
         LOGFILE: /opt/stack/logs/devstacklog.txt
         LOG_COLOR: false
         VERBOSE: true
@@ -106,8 +106,7 @@
         # from the location below for all the CI jobs.
         ETCD_DOWNLOAD_URL: http://tarballs.openstack.org/etcd/
       devstack_services:
-        horizon: false
-        tempest: false
+        base: false
       zuul_copy_output:
         '{{ devstack_conf_dir }}/local.conf': 'logs'
         '{{ devstack_conf_dir }}/localrc': 'logs'
@@ -147,7 +146,28 @@
         log: True
         localrc: True
         stackenv: True
-        summary: True
+    group-vars:
+      peers:
+        devstack_localrc:
+          DATABASE_PASSWORD: secretdatabase
+          RABBIT_PASSWORD: secretrabbit
+          ADMIN_PASSWORD: secretadmin
+          SERVICE_PASSWORD: secretservice
+          NETWORK_GATEWAY: 10.1.0.1
+          FIXED_RANGE: 10.1.0.0/20
+          IPV4_ADDRS_SAFE_TO_USE: 10.1.0.0/20
+          FLOATING_RANGE: 172.24.5.0/24
+          PUBLIC_NETWORK_GATEWAY: 172.24.5.1
+          LOGFILE: /opt/stack/logs/devstacklog.txt
+          LOG_COLOR: false
+          VERBOSE: true
+          VERBOSE_NO_TIMESTAMP: true
+          NOVNC_FROM_PACKAGE: true
+          ERROR_ON_CLONE: true
+          LIBVIRT_TYPE: qemu
+          ETCD_DOWNLOAD_URL: http://tarballs.openstack.org/etcd/
+        devstack_services:
+          base: false
     pre-run: playbooks/pre.yaml
     run: playbooks/devstack.yaml
     post-run: playbooks/post.yaml
@@ -161,8 +181,40 @@
       - ^.*/locale/.*po$
 
 - job:
+    name: devstack
+    parent: devstack-base
+    description: |
+      Single node devstack job for integration gate.
+    nodeset: openstack-single-node
+    required-projects:
+      - openstack/cinder
+      - openstack/glance
+      - openstack/keystone
+      - openstack/neutron
+      - openstack/nova
+      - openstack/requirements
+      - openstack/swift
+    timeout: 7200
+    vars:
+      test_matrix_configs: [neutron, tlsproxy]
+      devstack_localrc:
+        # Common OpenStack services settings
+        SWIFT_REPLICAS: 1
+        SWIFT_START_ALL_SERVICES: false
+        SWIFT_HASH: 1234123412341234
+        CINDER_PERIODIC_INTERVAL: 10
+        DEBUG_LIBVIRT_COREDUMPS: True
+        NOVA_VNC_ENABLED: true
+        VNCSERVER_LISTEN: 0.0.0.0
+        VNCSERVER_PROXYCLIENT_ADDRESS: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
+      devstack_services:
+        base: true
+        horizon: false
+        tempest: false
+
+- job:
     name: devstack-multinode
-    parent: devstack
+    parent: devstack-base
     description: Base devstack multinode job
     nodeset: openstack-two-node
     # NOTE(andreaf) The multinode job is useful to see the setup of different
