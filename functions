@@ -810,13 +810,11 @@ function get_random_port {
 #
 # Write out various useful state information to /etc/devstack-version
 function write_devstack_version {
-    cat - > /tmp/devstack-version <<EOF
+    cat - <<EOF | sudo tee /etc/devstack-version >/dev/null
 DevStack Version: ${DEVSTACK_SERIES}
 Change: $(git log --format="%H %s %ci" -1)
 OS Version: ${os_VENDOR} ${os_RELEASE} ${os_CODENAME}
 EOF
-    sudo install -m 644 /tmp/devstack-version /etc/devstack-version
-    rm /tmp/devstack-version
 }
 
 # Restore xtrace
