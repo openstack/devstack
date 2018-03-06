@@ -325,6 +325,12 @@
       jobs:
         - devstack
         - devstack-unit-tests
+    # Please add a note on each job and conditions for the job not
+    # being experimental any more, so we can keep this list somewhat
+    # pruned.
+    #
+    # * nova-next: maintained by nova for unreleased/undefaulted
+    #    things like cellsv2 and placement-api
     experimental:
       jobs:
         - nova-next
