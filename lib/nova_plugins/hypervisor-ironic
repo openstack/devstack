@@ -58,6 +58,9 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF ironic project_domain_id default
     iniset $NOVA_CONF ironic user_domain_id default
     iniset $NOVA_CONF ironic project_name demo
+
+    iniset $NOVA_CONF ironic api_max_retries 300
+    iniset $NOVA_CONF ironic api_retry_interval 5
 }
 
 # install_nova_hypervisor() - Install external components
