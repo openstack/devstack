@@ -32,7 +32,7 @@ unset GREP_OPTIONS
 # Devstack is written in bash, and many functions used throughout
 # devstack process text coming off a command (like the ip command)
 # and do transforms using grep, sed, cut, awk on the strings that are
-# returned. Many of these programs are interationalized, which is
+# returned. Many of these programs are internationalized, which is
 # great for end users, but means that the strings that devstack
 # functions depend upon might not be there in other locales. We thus
 # need to pin the world to an english basis during the runs.
