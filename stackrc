@@ -766,6 +766,8 @@ elif is_arch "s390x"; then
 else
     exit_distro_not_supported "invalid hardware type - $ETCD_ARCH"
 fi
+ETCD_PORT=${ETCD_PORT:-2379}
+ETCD_PEER_PORT=${ETCD_PEER_PORT:-2380}
 ETCD_DOWNLOAD_URL=${ETCD_DOWNLOAD_URL:-https://github.com/coreos/etcd/releases/download}
 ETCD_NAME=etcd-$ETCD_VERSION-linux-$ETCD_ARCH
 ETCD_DOWNLOAD_FILE=$ETCD_NAME.tar.gz
