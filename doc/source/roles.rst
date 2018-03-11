@@ -1,4 +1,0 @@
-Roles
-=====
-
-.. zuul:autoroles::
