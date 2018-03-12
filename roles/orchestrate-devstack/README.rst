@@ -15,6 +15,7 @@ data to sub-nodes and run devstack there. The only requirement for
 this role is for the controller inventory_hostname to be "controller"
 and for all sub-nodes to be defined in a group called "subnode".
 
+This role needs to be invoked from a playbook that uses a "linear" strategy.
 
 **Role Variables**
 
