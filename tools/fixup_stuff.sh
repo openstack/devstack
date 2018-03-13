@@ -45,27 +45,29 @@ fi
 # where Keystone will try and bind to the port and the port will already be
 # in use as an ephemeral port by another process. This places an explicit
 # exception into the Kernel for the Keystone AUTH ports.
-keystone_ports=${KEYSTONE_AUTH_PORT:-35357},${KEYSTONE_AUTH_PORT_INT:-35358}
+function fixup_keystone {
+    keystone_ports=${KEYSTONE_AUTH_PORT:-35357},${KEYSTONE_AUTH_PORT_INT:-35358}
 
-# Only do the reserved ports when available, on some system (like containers)
-# where it's not exposed we are almost pretty sure these ports would be
-# exclusive for our DevStack.
-if sysctl net.ipv4.ip_local_reserved_ports >/dev/null 2>&1; then
-    # Get any currently reserved ports, strip off leading whitespace
-    reserved_ports=$(sysctl net.ipv4.ip_local_reserved_ports | awk -F'=' '{print $2;}' | sed 's/^ //')
+    # Only do the reserved ports when available, on some system (like containers)
+    # where it's not exposed we are almost pretty sure these ports would be
+    # exclusive for our DevStack.
+    if sysctl net.ipv4.ip_local_reserved_ports >/dev/null 2>&1; then
+        # Get any currently reserved ports, strip off leading whitespace
+        reserved_ports=$(sysctl net.ipv4.ip_local_reserved_ports | awk -F'=' '{print $2;}' | sed 's/^ //')
 
-    if [[ -z "${reserved_ports}" ]]; then
-        # If there are no currently reserved ports, reserve the keystone ports
-        sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports}
+        if [[ -z "${reserved_ports}" ]]; then
+            # If there are no currently reserved ports, reserve the keystone ports
+            sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports}
+        else
+            # If there are currently reserved ports, keep those and also reserve the
+            # Keystone specific ports. Duplicate reservations are merged into a single
+            # reservation (or range) automatically by the kernel.
+            sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports},${reserved_ports}
+        fi
     else
-        # If there are currently reserved ports, keep those and also reserve the
-        # Keystone specific ports. Duplicate reservations are merged into a single
-        # reservation (or range) automatically by the kernel.
-        sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports},${reserved_ports}
+        echo_summary "WARNING: unable to reserve keystone ports"
     fi
-else
-    echo_summary "WARNING: unable to reserve keystone ports"
-fi
+}
 
 # Ubuntu Cloud Archive
 #---------------------
@@ -79,8 +81,12 @@ fi
 # ENABLE_VOLUME_MULTIATTACH is True, we can't use the Pike UCA
 # because multiattach won't work with those package versions.
 # We can remove this check when the UCA has libvirt>=3.10.
-if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "True" && "$DISTRO" = "xenial" && \
-        "${ENABLE_VOLUME_MULTIATTACH}" == "False" ]]; then
+function fixup_uca {
+    if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "False" || "$DISTRO" != "xenial" || \
+            "${ENABLE_VOLUME_MULTIATTACH}" == "True" ]]; then
+        return
+    fi
+
     # This pulls in apt-add-repository
     install_package "software-properties-common"
     # Use UCA for newer libvirt. Should give us libvirt 2.5.0.
@@ -104,8 +110,7 @@ if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "True" && "$DISTRO" = "xenial" && \
     # Force update our APT repos, since we added UCA above.
     REPOS_UPDATED=False
     apt_get_update
-fi
-
+}
 
 # Python Packages
 # ---------------
@@ -120,27 +125,32 @@ function get_package_path {
 # Pre-install affected packages so we can fix the permissions
 # These can go away once we are confident that pip 1.4.1+ is available everywhere
 
-# Fix prettytable 0.7.2 permissions
-# Don't specify --upgrade so we use the existing package if present
-pip_install 'prettytable>=0.7'
-PACKAGE_DIR=$(get_package_path prettytable)
-# Only fix version 0.7.2
-dir=$(echo $PACKAGE_DIR/prettytable-0.7.2*)
-if [[ -d $dir ]]; then
-    sudo chmod +r $dir/*
-fi
+function fixup_python_packages {
+    # Fix prettytable 0.7.2 permissions
+    # Don't specify --upgrade so we use the existing package if present
+    pip_install 'prettytable>=0.7'
+    PACKAGE_DIR=$(get_package_path prettytable)
+    # Only fix version 0.7.2
+    dir=$(echo $PACKAGE_DIR/prettytable-0.7.2*)
+    if [[ -d $dir ]]; then
+        sudo chmod +r $dir/*
+    fi
 
-# Fix httplib2 0.8 permissions
-# Don't specify --upgrade so we use the existing package if present
-pip_install httplib2
-PACKAGE_DIR=$(get_package_path httplib2)
-# Only fix version 0.8
-dir=$(echo $PACKAGE_DIR-0.8*)
-if [[ -d $dir ]]; then
-    sudo chmod +r $dir/*
-fi
+    # Fix httplib2 0.8 permissions
+    # Don't specify --upgrade so we use the existing package if present
+    pip_install httplib2
+    PACKAGE_DIR=$(get_package_path httplib2)
+    # Only fix version 0.8
+    dir=$(echo $PACKAGE_DIR-0.8*)
+    if [[ -d $dir ]]; then
+        sudo chmod +r $dir/*
+    fi
+}
 
-if is_fedora; then
+function fixup_fedora {
+    if ! is_fedora; then
+        return
+    fi
     # Disable selinux to avoid configuring to allow Apache access
     # to Horizon files (LP#1175444)
     if selinuxenabled; then
@@ -198,7 +208,7 @@ if is_fedora; then
             pip_install --upgrade --force-reinstall requests
         fi
     fi
-fi
+}
 
 # The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has
 # connection issues under proxy so re-install the latest version using
@@ -222,7 +232,17 @@ fi
 #            install.d/pip-and-virtualenv-source-install/04-install-pip
 # [2] https://bugzilla.redhat.com/show_bug.cgi?id=1477823
 
-if [[ ! -f /etc/ci/mirror_info.sh ]]; then
-    install_package python-virtualenv
-    pip_install -U --force-reinstall virtualenv
-fi
+function fixup_virtualenv {
+    if [[ ! -f /etc/ci/mirror_info.sh ]]; then
+        install_package python-virtualenv
+        pip_install -U --force-reinstall virtualenv
+    fi
+}
+
+function fixup_all {
+    fixup_keystone
+    fixup_uca
+    fixup_python_packages
+    fixup_fedora
+    fixup_virtualenv
+}
