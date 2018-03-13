@@ -280,12 +280,20 @@
         n-sch: true
         placement-api: true
         # Neutron services
-        neutron-api: true
-        neutron-agent: true
-        neutron-dhcp: true
-        neutron-l3: true
-        neutron-metadata-agent: true
-        neutron-metering: true
+        # We need to keep using the neutron-legacy based services for
+        # now until all issues with the new lib/neutron code are solved
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-metering: true
+        q-svc: true
+        # neutron-api: true
+        # neutron-agent: true
+        # neutron-dhcp: true
+        # neutron-l3: true
+        # neutron-metadata-agent: true
+        # neutron-metering: true
         # Swift services
         s-account: true
         s-container: true
