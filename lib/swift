@@ -557,7 +557,11 @@ EOF
 
     local swift_log_dir=${SWIFT_DATA_DIR}/logs
     sudo rm -rf ${swift_log_dir}
-    sudo install -d -o ${STACK_USER} -g adm ${swift_log_dir}/hourly
+    local swift_log_group=adm
+    if is_suse; then
+        swift_log_group=root
+    fi
+    sudo install -d -o ${STACK_USER} -g ${swift_log_group} ${swift_log_dir}/hourly
 
     if [[ $SYSLOG != "False" ]]; then
         sed "s,%SWIFT_LOGDIR%,${swift_log_dir}," $FILES/swift/rsyslog.conf | sudo \
