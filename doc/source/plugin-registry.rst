@@ -31,12 +31,12 @@ barbican                               `git://git.openstack.org/openstack/barbic
 bilean                                 `git://git.openstack.org/openstack/bilean <https://git.openstack.org/cgit/openstack/bilean>`__
 blazar                                 `git://git.openstack.org/openstack/blazar <https://git.openstack.org/cgit/openstack/blazar>`__
 broadview-collector                    `git://git.openstack.org/openstack/broadview-collector <https://git.openstack.org/cgit/openstack/broadview-collector>`__
+castellan-ui                           `git://git.openstack.org/openstack/castellan-ui <https://git.openstack.org/cgit/openstack/castellan-ui>`__
 ceilometer                             `git://git.openstack.org/openstack/ceilometer <https://git.openstack.org/cgit/openstack/ceilometer>`__
 ceilometer-powervm                     `git://git.openstack.org/openstack/ceilometer-powervm <https://git.openstack.org/cgit/openstack/ceilometer-powervm>`__
 cloudkitty                             `git://git.openstack.org/openstack/cloudkitty <https://git.openstack.org/cgit/openstack/cloudkitty>`__
 collectd-ceilometer-plugin             `git://git.openstack.org/openstack/collectd-ceilometer-plugin <https://git.openstack.org/cgit/openstack/collectd-ceilometer-plugin>`__
 congress                               `git://git.openstack.org/openstack/congress <https://git.openstack.org/cgit/openstack/congress>`__
-cue                                    `git://git.openstack.org/openstack/cue <https://git.openstack.org/cgit/openstack/cue>`__
 cyborg                                 `git://git.openstack.org/openstack/cyborg <https://git.openstack.org/cgit/openstack/cyborg>`__
 designate                              `git://git.openstack.org/openstack/designate <https://git.openstack.org/cgit/openstack/designate>`__
 devstack-plugin-additional-pkg-repos   `git://git.openstack.org/openstack/devstack-plugin-additional-pkg-repos <https://git.openstack.org/cgit/openstack/devstack-plugin-additional-pkg-repos>`__
@@ -71,7 +71,6 @@ ironic                                 `git://git.openstack.org/openstack/ironic
 ironic-inspector                       `git://git.openstack.org/openstack/ironic-inspector <https://git.openstack.org/cgit/openstack/ironic-inspector>`__
 ironic-staging-drivers                 `git://git.openstack.org/openstack/ironic-staging-drivers <https://git.openstack.org/cgit/openstack/ironic-staging-drivers>`__
 ironic-ui                              `git://git.openstack.org/openstack/ironic-ui <https://git.openstack.org/cgit/openstack/ironic-ui>`__
-k8s-cloud-provider                     `git://git.openstack.org/openstack/k8s-cloud-provider <https://git.openstack.org/cgit/openstack/k8s-cloud-provider>`__
 karbor                                 `git://git.openstack.org/openstack/karbor <https://git.openstack.org/cgit/openstack/karbor>`__
 karbor-dashboard                       `git://git.openstack.org/openstack/karbor-dashboard <https://git.openstack.org/cgit/openstack/karbor-dashboard>`__
 keystone                               `git://git.openstack.org/openstack/keystone <https://git.openstack.org/cgit/openstack/keystone>`__
