@@ -227,7 +227,6 @@ function configure_cinder {
 
     configure_auth_token_middleware $CINDER_CONF cinder $CINDER_AUTH_CACHE_DIR
 
-    iniset $CINDER_CONF DEFAULT auth_strategy keystone
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
     iniset $CINDER_CONF DEFAULT target_helper "$CINDER_ISCSI_HELPER"
@@ -541,7 +540,17 @@ function create_volume_types {
         local be be_name
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
             be_name=${be##*:}
-            openstack --os-region-name="$REGION_NAME" volume type create --property volume_backend_name="${be_name}" ${be_name}
+            # NOTE (e0ne): openstack client doesn't work with cinder in noauth mode
+            if is_service_enabled keystone; then
+                openstack --os-region-name="$REGION_NAME" volume type create --property volume_backend_name="${be_name}" ${be_name}
+            else
+                # TODO (e0ne): use openstack client once it will support cinder in noauth mode:
+                # https://bugs.launchpad.net/python-cinderclient/+bug/1755279
+                local cinder_url
+                cinder_url=$CINDER_SERVICE_PROTOCOL://$SERVICE_HOST:$CINDER_SERVICE_PORT/v3
+                OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-create ${be_name}
+                OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-key ${be_name} set volume_backend_name=${be_name}
+            fi
         done
     fi
 }
