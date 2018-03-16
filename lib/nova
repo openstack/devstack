@@ -424,6 +424,9 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
     iniset $NOVA_CONF scheduler driver "$SCHEDULER"
     iniset $NOVA_CONF filter_scheduler enabled_filters "$FILTERS"
+    if [[ $SCHEDULER == "filter_scheduler" ]]; then
+        iniset $NOVA_CONF scheduler workers "$API_WORKERS"
+    fi
     iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
     if [[ $SERVICE_IP_VERSION == 6 ]]; then
         iniset $NOVA_CONF DEFAULT my_ip "$HOST_IPV6"
