@@ -376,7 +376,6 @@ function create_nova_conf_neutron {
     iniset $NOVA_CONF neutron project_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $NOVA_CONF neutron auth_strategy "$Q_AUTH_STRATEGY"
     iniset $NOVA_CONF neutron region_name "$REGION_NAME"
-    iniset $NOVA_CONF neutron url "${Q_PROTOCOL}://$Q_HOST:$Q_PORT"
 
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
