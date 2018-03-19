@@ -2304,12 +2304,7 @@ function install_oscwrap {
 
 function cleanup_oscwrap {
     local total=0
-    if python3_enabled ; then
-        local python=python3
-    else
-        local python=python
-    fi
-    total=$(cat $OSCWRAP_TIMER_FILE | $python -c "import sys; print(sum(int(l) for l in sys.stdin))")
+    total=$(cat $OSCWRAP_TIMER_FILE | $PYTHON -c "import sys; print(sum(int(l) for l in sys.stdin))")
     _TIME_TOTAL["osc"]=$total
     rm $OSCWRAP_TIMER_FILE
 }
