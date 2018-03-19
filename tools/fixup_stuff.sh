@@ -77,28 +77,23 @@ function fixup_keystone {
 # Make it possible to switch this based on an environment variable as
 # libvirt 2.5.0 doesn't handle nested virtualization quite well and this
 # is required for the trove development environment.
-# The Pike UCA has qemu 2.10 but libvirt 3.6, therefore if
-# ENABLE_VOLUME_MULTIATTACH is True, we can't use the Pike UCA
-# because multiattach won't work with those package versions.
-# We can remove this check when the UCA has libvirt>=3.10.
 function fixup_uca {
-    if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "False" || "$DISTRO" != "xenial" || \
-            "${ENABLE_VOLUME_MULTIATTACH}" == "True" ]]; then
+    if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "False" || "$DISTRO" != "xenial" ]]; then
         return
     fi
 
     # This pulls in apt-add-repository
     install_package "software-properties-common"
-    # Use UCA for newer libvirt. Should give us libvirt 2.5.0.
+    # Use UCA for newer libvirt.
     if [[ -f /etc/ci/mirror_info.sh ]] ; then
         # If we are on a nodepool provided host and it has told us about where
         # we can find local mirrors then use that mirror.
         source /etc/ci/mirror_info.sh
 
-        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR xenial-updates/pike main"
+        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR xenial-updates/queens main"
     else
         # Otherwise use upstream UCA
-        sudo add-apt-repository -y cloud-archive:pike
+        sudo add-apt-repository -y cloud-archive:queens
     fi
 
     # Disable use of libvirt wheel since a cached wheel build might be
