@@ -299,6 +299,10 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG identity-feature-enabled domain_specific_drivers True
     fi
 
+    # TODO(felipemonteiro): Remove this once Tempest no longer supports Pike
+    # as this is supported in Queens and beyond.
+    iniset $TEMPEST_CONFIG identity-feature-enabled project_tags True
+
     # Image
     # We want to be able to override this variable in the gate to avoid
     # doing an external HTTP fetch for this test.
