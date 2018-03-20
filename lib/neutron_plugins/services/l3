@@ -39,9 +39,9 @@ Q_PUBLIC_VETH_INT=${Q_PUBLIC_VETH_INT:-veth-pub-int}
 Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-True}
 
 
-# Use flat providernet for public network
+# Use providernet for public network
 #
-# If Q_USE_PROVIDERNET_FOR_PUBLIC=True, use a flat provider network
+# If Q_USE_PROVIDERNET_FOR_PUBLIC=True, use a provider network
 # for external interface of neutron l3-agent.  In that case,
 # PUBLIC_PHYSICAL_NETWORK specifies provider:physical_network value
 # used for the network.  In case of ofagent, you should add the
@@ -59,6 +59,10 @@ Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-True}
 #    Q_USE_PROVIDERNET_FOR_PUBLIC=True
 #    PUBLIC_PHYSICAL_NETWORK=public
 #    OVS_BRIDGE_MAPPINGS=public:br-ex
+#
+# The provider-network-type defaults to flat, however, the values
+# PUBLIC_PROVIDERNET_TYPE and PUBLIC_PROVIDERNET_SEGMENTATION_ID could
+# be set to specify the parameters for an alternate network type.
 Q_USE_PROVIDERNET_FOR_PUBLIC=${Q_USE_PROVIDERNET_FOR_PUBLIC:-True}
 PUBLIC_PHYSICAL_NETWORK=${PUBLIC_PHYSICAL_NETWORK:-public}
 
@@ -240,7 +244,7 @@ function create_neutron_initial_network {
         fi
         # Create an external network, and a subnet. Configure the external network as router gw
         if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
-            EXT_NET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" network create "$PUBLIC_NETWORK_NAME" $EXTERNAL_NETWORK_FLAGS --provider-network-type flat --provider-physical-network ${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" network create "$PUBLIC_NETWORK_NAME" $EXTERNAL_NETWORK_FLAGS --provider-network-type ${PUBLIC_PROVIDERNET_TYPE:-flat} ${PUBLIC_PROVIDERNET_SEGMENTATION_ID:+--provider-segment $PUBLIC_PROVIDERNET_SEGMENTATION_ID} --provider-physical-network ${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
         else
             EXT_NET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" network create "$PUBLIC_NETWORK_NAME" $EXTERNAL_NETWORK_FLAGS | grep ' id ' | get_field 2)
         fi
