@@ -656,7 +656,7 @@ the instructions in ``./tools/xen/README.md``.
 Cells
 ~~~~~
 
-`Cells <http://wiki.openstack.org/blueprint-nova-compute-cells>`__ is
+`Cells <https://wiki.openstack.org/wiki/Blueprint-nova-compute-cells>`__ is
 an alternative scaling option.  To setup a cells environment add the
 following to your ``localrc`` section:
 
