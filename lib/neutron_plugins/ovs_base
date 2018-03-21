@@ -72,7 +72,14 @@ function _neutron_ovs_base_install_agent_packages {
         if [[ $DISTRO == "sle12" ]] && [[ $os_RELEASE -lt 12.2 ]]; then
             restart_service openvswitch-switch
         else
-            restart_service openvswitch
+            # workaround for https://bugzilla.suse.com/show_bug.cgi?id=1085971
+            if [[ $DISTRO =~ "tumbleweed" ]]; then
+                sudo sed -i -e "s,^OVS_USER_ID=.*,OVS_USER_ID='root:root'," /etc/sysconfig/openvswitch
+            fi
+            restart_service openvswitch || {
+                journalctl -xe || :
+                systemctl status openvswitch
+            }
         fi
     fi
 }
