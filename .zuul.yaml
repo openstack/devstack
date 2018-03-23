@@ -471,8 +471,15 @@
     # being experimental any more, so we can keep this list somewhat
     # pruned.
     #
+    # * nova-cells-v1: maintained by nova for cells v1 (nova-cells service);
+    #    nova gates on this job, it's in experimental for testing cells v1
+    #    changes to devstack w/o gating on it for all devstack changes.
     # * nova-next: maintained by nova for unreleased/undefaulted
     #    things like cellsv2 and placement-api
     experimental:
       jobs:
+        - nova-cells-v1:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
         - nova-next
