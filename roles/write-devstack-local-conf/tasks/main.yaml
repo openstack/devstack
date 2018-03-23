@@ -8,3 +8,4 @@
     services: "{{ devstack_services|default(omit) }}"
     localrc: "{{ devstack_localrc|default(omit) }}"
     local_conf: "{{ devstack_local_conf|default(omit) }}"
+    base_dir: "{{ devstack_base_dir|default(omit) }}"
