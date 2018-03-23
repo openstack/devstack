@@ -734,7 +734,7 @@ function init_nova {
         # (Re)create nova databases
         for i in $(seq 1 $NOVA_NUM_CELLS); do
             recreate_database nova_cell${i}
-            $NOVA_BIN_DIR/nova-manage --config-file $(conductor_conf $i) db sync
+            $NOVA_BIN_DIR/nova-manage --config-file $(conductor_conf $i) db sync --local_cell
         done
 
         # Migrate nova and nova_cell0 databases.
