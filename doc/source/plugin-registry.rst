@@ -147,13 +147,13 @@ oaktree                                `git://git.openstack.org/openstack/oaktre
 octavia                                `git://git.openstack.org/openstack/octavia <https://git.openstack.org/cgit/openstack/octavia>`__
 octavia-dashboard                      `git://git.openstack.org/openstack/octavia-dashboard <https://git.openstack.org/cgit/openstack/octavia-dashboard>`__
 omni                                   `git://git.openstack.org/openstack/omni <https://git.openstack.org/cgit/openstack/omni>`__
+openstacksdk                           `git://git.openstack.org/openstack/openstacksdk <https://git.openstack.org/cgit/openstack/openstacksdk>`__
 os-xenapi                              `git://git.openstack.org/openstack/os-xenapi <https://git.openstack.org/cgit/openstack/os-xenapi>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
 oswin-tempest-plugin                   `git://git.openstack.org/openstack/oswin-tempest-plugin <https://git.openstack.org/cgit/openstack/oswin-tempest-plugin>`__
 panko                                  `git://git.openstack.org/openstack/panko <https://git.openstack.org/cgit/openstack/panko>`__
 patrole                                `git://git.openstack.org/openstack/patrole <https://git.openstack.org/cgit/openstack/patrole>`__
 picasso                                `git://git.openstack.org/openstack/picasso <https://git.openstack.org/cgit/openstack/picasso>`__
-python-openstacksdk                    `git://git.openstack.org/openstack/python-openstacksdk <https://git.openstack.org/cgit/openstack/python-openstacksdk>`__
 qinling                                `git://git.openstack.org/openstack/qinling <https://git.openstack.org/cgit/openstack/qinling>`__
 rally                                  `git://git.openstack.org/openstack/rally <https://git.openstack.org/cgit/openstack/rally>`__
 rally-openstack                        `git://git.openstack.org/openstack/rally-openstack <https://git.openstack.org/cgit/openstack/rally-openstack>`__
