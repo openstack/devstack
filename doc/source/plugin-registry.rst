@@ -35,7 +35,7 @@ castellan-ui                           `git://git.openstack.org/openstack/castel
 ceilometer                             `git://git.openstack.org/openstack/ceilometer <https://git.openstack.org/cgit/openstack/ceilometer>`__
 ceilometer-powervm                     `git://git.openstack.org/openstack/ceilometer-powervm <https://git.openstack.org/cgit/openstack/ceilometer-powervm>`__
 cloudkitty                             `git://git.openstack.org/openstack/cloudkitty <https://git.openstack.org/cgit/openstack/cloudkitty>`__
-collectd-ceilometer-plugin             `git://git.openstack.org/openstack/collectd-ceilometer-plugin <https://git.openstack.org/cgit/openstack/collectd-ceilometer-plugin>`__
+collectd-openstack-plugins             `git://git.openstack.org/openstack/collectd-openstack-plugins <https://git.openstack.org/cgit/openstack/collectd-openstack-plugins>`__
 congress                               `git://git.openstack.org/openstack/congress <https://git.openstack.org/cgit/openstack/congress>`__
 cyborg                                 `git://git.openstack.org/openstack/cyborg <https://git.openstack.org/cgit/openstack/cyborg>`__
 designate                              `git://git.openstack.org/openstack/designate <https://git.openstack.org/cgit/openstack/designate>`__
