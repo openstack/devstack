@@ -116,10 +116,6 @@
         ERROR_ON_CLONE: true
         # Gate jobs can't deal with nested virt. Disable it.
         LIBVIRT_TYPE: qemu
-        # NOTE(dims): etcd 3.x is not available in debian/ubuntu
-        # etc. As a stop gap measure, devstack uses wget to download
-        # from the location below for all the CI jobs.
-        ETCD_DOWNLOAD_URL: http://tarballs.openstack.org/etcd/
       devstack_services:
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
@@ -183,7 +179,6 @@
           NOVNC_FROM_PACKAGE: true
           ERROR_ON_CLONE: true
           LIBVIRT_TYPE: qemu
-          ETCD_DOWNLOAD_URL: http://tarballs.openstack.org/etcd/
         devstack_services:
           base: false
     pre-run: playbooks/pre.yaml
