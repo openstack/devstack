@@ -75,6 +75,7 @@ karbor                                 `git://git.openstack.org/openstack/karbor
 karbor-dashboard                       `git://git.openstack.org/openstack/karbor-dashboard <https://git.openstack.org/cgit/openstack/karbor-dashboard>`__
 keystone                               `git://git.openstack.org/openstack/keystone <https://git.openstack.org/cgit/openstack/keystone>`__
 kingbird                               `git://git.openstack.org/openstack/kingbird <https://git.openstack.org/cgit/openstack/kingbird>`__
+kolla-cli                              `git://git.openstack.org/openstack/kolla-cli <https://git.openstack.org/cgit/openstack/kolla-cli>`__
 kuryr-kubernetes                       `git://git.openstack.org/openstack/kuryr-kubernetes <https://git.openstack.org/cgit/openstack/kuryr-kubernetes>`__
 kuryr-libnetwork                       `git://git.openstack.org/openstack/kuryr-libnetwork <https://git.openstack.org/cgit/openstack/kuryr-libnetwork>`__
 kuryr-tempest-plugin                   `git://git.openstack.org/openstack/kuryr-tempest-plugin <https://git.openstack.org/cgit/openstack/kuryr-tempest-plugin>`__
