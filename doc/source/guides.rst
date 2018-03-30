@@ -20,6 +20,7 @@ Walk through various setups used by stackers
    guides/devstack-with-nested-kvm
    guides/nova
    guides/devstack-with-lbaas-v2
+   guides/devstack-with-ldap
 
 All-In-One Single VM
 --------------------
@@ -66,3 +67,8 @@ Nova and devstack
 --------------------------------
 
 Guide to working with nova features :doc:`Nova and devstack <guides/nova>`.
+
+Deploying DevStack with LDAP
+----------------------------
+
+Guide to setting up :doc:`DevStack with LDAP <guides/devstack-with-ldap>`.
