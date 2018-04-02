@@ -771,7 +771,12 @@ ETCD_NAME=etcd-$ETCD_VERSION-linux-$ETCD_ARCH
 ETCD_DOWNLOAD_FILE=$ETCD_NAME.tar.gz
 ETCD_DOWNLOAD_LOCATION=$ETCD_DOWNLOAD_URL/$ETCD_VERSION/$ETCD_DOWNLOAD_FILE
 # etcd is always required, so place it into list of pre-cached downloads
-EXTRA_CACHE_URLS+=",$ETCD_DOWNLOAD_LOCATION"
+if is_arch "x86_64"; then
+    # NOTE(pabelanger): Only v3.2.x of ETCD has support for multiarch. This
+    # means on stable branches our version is too old to try and cache and will
+    # 404 DIBs for nodpeool.
+    EXTRA_CACHE_URLS+=",$ETCD_DOWNLOAD_LOCATION"
+fi
 
 # Detect duplicate values in IMAGE_URLS
 for image_url in ${IMAGE_URLS//,/ }; do
