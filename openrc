@@ -29,6 +29,7 @@ source $RC_DIR/stackrc
 # Load the last env variables if available
 if [[ -r $RC_DIR/.stackenv ]]; then
     source $RC_DIR/.stackenv
+    export OS_CACERT
 fi
 
 # Get some necessary configuration
