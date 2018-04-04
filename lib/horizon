@@ -115,6 +115,11 @@ function configure_horizon {
     local horizon_conf
     horizon_conf=$(apache_site_config_for horizon)
 
+    local wsgi_venv_config=""
+    if [[ "$GLOBAL_VENV" == "True" ]] ; then
+        wsgi_venv_config="WSGIPythonHome $DEVSTACK_VENV"
+    fi
+
     # Configure apache to run horizon
     # Set up the django horizon application to serve via apache/wsgi
     sudo sh -c "sed -e \"
@@ -124,6 +129,7 @@ function configure_horizon {
         s,%APACHE_NAME%,$APACHE_NAME,g;
         s,%DEST%,$DEST,g;
         s,%WEBROOT%,$HORIZON_APACHE_ROOT,g;
+        s,%WSGIPYTHONHOME%,$wsgi_venv_config,g;
     \" $FILES/apache-horizon.template >$horizon_conf"
 
     if is_ubuntu; then

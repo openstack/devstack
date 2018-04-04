@@ -32,6 +32,23 @@ function join_extras {
 # Python Functions
 # ================
 
+# Setup the global devstack virtualenvs and the associated environment
+# updates.
+function setup_devstack_virtualenv {
+    # We run devstack out of a global virtualenv.
+    if [[ ! -d $DEVSTACK_VENV ]] ; then
+        # Using system site packages to enable nova to use libguestfs.
+        # This package is currently installed via the distro and not
+        # available on pypi.
+        python$PYTHON3_VERSION -m venv --system-site-packages $DEVSTACK_VENV
+        pip_install -U pip
+    fi
+    if [[ ":$PATH:" != *":$DEVSTACK_VENV/bin:"* ]] ; then
+        export PATH="$DEVSTACK_VENV/bin:$PATH"
+        export PYTHON="$DEVSTACK_VENV/bin/python3"
+    fi
+}
+
 # Get the path to the pip command.
 # get_pip_command
 function get_pip_command {
@@ -60,8 +77,11 @@ function get_python_exec_prefix {
     fi
     $xtrace
 
-    local PYTHON_PATH=/usr/local/bin
-    echo $PYTHON_PATH
+    if [[ "$GLOBAL_VENV" == "True" ]] ; then
+        echo "$DEVSTACK_VENV/bin"
+    else
+        echo "/usr/local/bin"
+    fi
 }
 
 # Wrapper for ``pip install`` that only installs versions of libraries
@@ -166,6 +186,14 @@ function pip_install {
     if [[ -n ${PIP_VIRTUAL_ENV:=} && -d ${PIP_VIRTUAL_ENV} ]]; then
         local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
         local sudo_pip="env"
+    elif [[ "${GLOBAL_VENV}" == "True" && -d ${DEVSTACK_VENV} ]] ; then
+        # We have to check that the DEVSTACK_VENV exists because early
+        # devstack boostrapping needs to operate in a system context
+        # too bootstrap pip. Once pip is bootstrapped we create the
+        # global venv and can start to use it.
+        local cmd_pip=$DEVSTACK_VENV/bin/pip
+        local sudo_pip="env"
+        echo "Using python $PYTHON3_VERSION to install $package_dir"
     else
         local cmd_pip="python$PYTHON3_VERSION -m pip"
         # See
@@ -439,7 +467,7 @@ function setup_package {
 
     pip_install $flags "$project_dir$extras"
     # ensure that further actions can do things like setup.py sdist
-    if [[ "$flags" == "-e" ]]; then
+    if [[ "$flags" == "-e" && "$GLOBAL_VENV" == "False" ]]; then
         safe_chown -R $STACK_USER $1/*.egg-info
     fi
 }

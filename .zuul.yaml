@@ -700,6 +700,9 @@
     # TODO(kopecmartin) n-v until the following is resolved:
     # https://bugs.launchpad.net/neutron/+bug/1979047
     voting: false
+    vars:
+      devstack_localrc:
+        GLOBAL_VENV: false
 
 - job:
     name: devstack-platform-debian-bullseye
@@ -709,6 +712,9 @@
     timeout: 9000
     vars:
       configure_swap_size: 4096
+      devstack_localrc:
+        # TODO(frickler): drop this once wheel build is fixed
+        MYSQL_GATHER_PERFORMANCE: false
 
 - job:
     name: devstack-platform-rocky-blue-onyx
@@ -718,6 +724,8 @@
     timeout: 9000
     vars:
       configure_swap_size: 4096
+      devstack_localrc:
+        GLOBAL_VENV: false
 
 - job:
     name: devstack-platform-ubuntu-focal

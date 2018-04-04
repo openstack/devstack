@@ -79,6 +79,8 @@ if [[ -n "$SYSLOG" && "$SYSLOG" != "False" ]]; then
     fi
 fi
 
+# TODO(clarkb) remove these once we are switched to global venv by default
+export PYTHON=$(which python${PYTHON3_VERSION} 2>/dev/null || which python3 2>/dev/null)
 
 # Mark end of run
 # ---------------
