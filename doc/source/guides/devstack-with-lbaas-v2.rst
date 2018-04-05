@@ -15,7 +15,7 @@ make sure it is updated. Install git and any other developer tools you find usef
 
 Install devstack
 
-  ::
+::
 
     git clone https://git.openstack.org/openstack-dev/devstack
     cd devstack
@@ -23,7 +23,7 @@ Install devstack
 
 Edit your ``local.conf`` to look like
 
-  ::
+::
 
     [[local|localrc]]
     # Load the external LBaaS plugin.
@@ -60,7 +60,7 @@ Edit your ``local.conf`` to look like
 
 Run stack.sh and do some sanity checks
 
-  ::
+::
 
     ./stack.sh
     . ./openrc
@@ -69,7 +69,7 @@ Run stack.sh and do some sanity checks
 
 Create two nova instances that we can use as test http servers:
 
-  ::
+::
 
     #create nova instances on private network
     nova boot --image $(nova image-list | awk '/ cirros-.*-x86_64-uec / {print $2}') --flavor 1 --nic net-id=$(openstack network list | awk '/ private / {print $2}') node1
@@ -83,7 +83,7 @@ Create two nova instances that we can use as test http servers:
 
 Set up a simple web server on each of these instances. ssh into each instance (username 'cirros', password 'cubswin:)') and run
 
- ::
+::
 
     MYIP=$(ifconfig eth0|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
     while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP" | sudo nc -l -p 80 ; done&
@@ -91,7 +91,7 @@ Set up a simple web server on each of these instances. ssh into each instance (u
 Phase 2: Create your load balancers
 ------------------------------------
 
- ::
+::
 
     neutron lbaas-loadbalancer-create --name lb1 private-subnet
     neutron lbaas-loadbalancer-show lb1  # Wait for the provisioning_status to be ACTIVE.
