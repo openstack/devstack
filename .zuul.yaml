@@ -194,8 +194,47 @@
       - ^.*/locale/.*po$
 
 - job:
-    name: devstack
+    name: devstack-minimal
     parent: devstack-base
+    description: |
+      Minimal devstack base job, intended for use by jobs that need
+      less than the normal minimum set of required-projects.
+    nodeset: openstack-single-node
+    required-projects:
+      - openstack/requirements
+    vars:
+      devstack_localrc:
+        # Multinode specific settings
+        SERVICE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+        HOST_IP: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+        PUBLIC_BRIDGE_MTU: "{{ external_bridge_mtu }}"
+      devstack_services:
+        # Shared services
+        dstat: true
+        etcd3: true
+        mysql: true
+        peakmem_tracker: true
+        rabbit: true
+    group-vars:
+      subnode:
+        devstack_services:
+          # Shared services
+          dstat: true
+          peakmem_tracker: true
+        devstack_localrc:
+          # Multinode specific settings
+          HOST_IP: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
+          SERVICE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          PUBLIC_BRIDGE_MTU: "{{ external_bridge_mtu }}"
+          # Subnode specific settings
+          DATABASE_TYPE: mysql
+          RABBIT_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          DATABASE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+
+
+- job:
+    name: devstack
+    parent: devstack-minimal
     description: |
       Base devstack job for integration gate.
 
@@ -226,7 +265,6 @@
       - openstack/keystone
       - openstack/neutron
       - openstack/nova
-      - openstack/requirements
       - openstack/swift
     timeout: 7200
     vars:
@@ -240,10 +278,6 @@
         NOVA_VNC_ENABLED: true
         VNCSERVER_LISTEN: 0.0.0.0
         VNCSERVER_PROXYCLIENT_ADDRESS: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
-        # Multinode specific settings
-        SERVICE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
-        HOST_IP: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
-        PUBLIC_BRIDGE_MTU: "{{ external_bridge_mtu }}"
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -334,16 +368,9 @@
           # integrated gate, so specifying the services has not effect.
           # ceilometer-*: false
         devstack_localrc:
-          # Multinode specific settings
-          HOST_IP: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
-          SERVICE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
-          PUBLIC_BRIDGE_MTU: "{{ external_bridge_mtu }}"
           # Subnode specific settings
-          DATABASE_TYPE: mysql
           GLANCE_HOSTPORT: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}:9292"
           Q_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
-          RABBIT_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
-          DATABASE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
 
 - job:
     name: devstack-multinode
