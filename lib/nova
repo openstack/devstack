@@ -685,7 +685,7 @@ function init_nova_cells {
         $NOVA_BIN_DIR/nova-manage cell create --name=child --cell_type=child --username=$RABBIT_USERID --hostname=$RABBIT_HOST --port=5672 --password=$RABBIT_PASSWORD --virtual_host=child_cell --woffset=0 --wscale=1
 
         # Creates the single cells v2 cell for the child cell (v1) nova db.
-        nova-manage --config-file $NOVA_CELLS_CONF cell_v2 create_cell \
+        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF cell_v2 create_cell \
             --transport-url $(get_transport_url child_cell) --name 'cell1'
     fi
 }
@@ -729,7 +729,7 @@ function init_nova {
         # this needs to come after the api_db sync happens. We also want to run
         # this before the db sync below since that will migrate both the nova
         # and nova_cell0 databases.
-        nova-manage cell_v2 map_cell0 --database_connection `database_connection_url nova_cell0`
+        $NOVA_BIN_DIR/nova-manage cell_v2 map_cell0 --database_connection `database_connection_url nova_cell0`
 
         # (Re)create nova databases
         for i in $(seq 1 $NOVA_NUM_CELLS); do
@@ -750,7 +750,7 @@ function init_nova {
 
         # create the cell1 cell for the main nova db where the hosts live
         for i in $(seq 1 $NOVA_NUM_CELLS); do
-            nova-manage --config-file $NOVA_CONF --config-file $(conductor_conf $i) cell_v2 create_cell --name "cell$i"
+            $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF --config-file $(conductor_conf $i) cell_v2 create_cell --name "cell$i"
         done
     fi
 
@@ -1015,7 +1015,7 @@ function start_nova {
     if is_service_enabled n-api; then
         # dump the cell mapping to ensure life is good
         echo "Dumping cells_v2 mapping"
-        nova-manage cell_v2 list_cells --verbose
+        $NOVA_BIN_DIR/nova-manage cell_v2 list_cells --verbose
     fi
 }
 

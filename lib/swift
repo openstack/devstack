@@ -37,6 +37,7 @@ fi
 
 # Set up default directories
 GITDIR["python-swiftclient"]=$DEST/python-swiftclient
+SWIFT_DIR=$DEST/swift
 
 # Swift virtual environment
 if [[ ${USE_VENV} = True ]]; then
@@ -46,8 +47,6 @@ else
     SWIFT_BIN_DIR=$(get_python_exec_prefix)
 fi
 
-
-SWIFT_DIR=$DEST/swift
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
 SWIFT3_DIR=$DEST/swift3
@@ -341,7 +340,7 @@ function configure_swift {
     local user_group
 
     # Make sure to kill all swift processes first
-    swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
+    $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
     sudo install -d -o ${STACK_USER} ${SWIFT_CONF_DIR}
     sudo install -d -o ${STACK_USER} ${SWIFT_CONF_DIR}/{object,container,account}-server
@@ -704,7 +703,7 @@ function create_swift_accounts {
 function init_swift {
     local node_number
     # Make sure to kill all swift processes first
-    swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
+    $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
 
     # Forcibly re-create the backing filesystem
     create_swift_disk
@@ -715,9 +714,9 @@ function init_swift {
 
         rm -f *.builder *.ring.gz backups/*.builder backups/*.ring.gz
 
-        swift-ring-builder object.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
-        swift-ring-builder container.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
-        swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+        $SWIFT_BIN_DIR/swift-ring-builder object.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+        $SWIFT_BIN_DIR/swift-ring-builder container.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
+        $SWIFT_BIN_DIR/swift-ring-builder account.builder create ${SWIFT_PARTITION_POWER_SIZE} ${SWIFT_REPLICAS} 1
 
         # The ring will be created on each node, and because the order of
         # nodes is identical we can use a seed for rebalancing, making it
@@ -728,26 +727,26 @@ function init_swift {
             node_number=1
 
             for node in ${SWIFT_STORAGE_IPS}; do
-                swift-ring-builder object.builder add z${node_number}-${node}:${OBJECT_PORT_BASE}/sdb1 1
-                swift-ring-builder container.builder add z${node_number}-${node}:${CONTAINER_PORT_BASE}/sdb1 1
-                swift-ring-builder account.builder add z${node_number}-${node}:${ACCOUNT_PORT_BASE}/sdb1 1
+                $SWIFT_BIN_DIR/swift-ring-builder object.builder add z${node_number}-${node}:${OBJECT_PORT_BASE}/sdb1 1
+                $SWIFT_BIN_DIR/swift-ring-builder container.builder add z${node_number}-${node}:${CONTAINER_PORT_BASE}/sdb1 1
+                $SWIFT_BIN_DIR/swift-ring-builder account.builder add z${node_number}-${node}:${ACCOUNT_PORT_BASE}/sdb1 1
                 let "node_number=node_number+1"
             done
 
         else
 
             for node_number in ${SWIFT_REPLICAS_SEQ}; do
-                swift-ring-builder object.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( OBJECT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
-                swift-ring-builder container.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( CONTAINER_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
-                swift-ring-builder account.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+                $SWIFT_BIN_DIR/swift-ring-builder object.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( OBJECT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+                $SWIFT_BIN_DIR/swift-ring-builder container.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( CONTAINER_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
+                $SWIFT_BIN_DIR/swift-ring-builder account.builder add z${node_number}-${SWIFT_SERVICE_LOCAL_HOST}:$(( ACCOUNT_PORT_BASE + 10 * (node_number - 1) ))/sdb1 1
             done
         fi
 
         # We use a seed for rebalancing. Doing this allows us to create
         # identical rings on multiple nodes if SWIFT_STORAGE_IPS is the same
-        swift-ring-builder object.builder rebalance 42
-        swift-ring-builder container.builder rebalance 42
-        swift-ring-builder account.builder rebalance 42
+        $SWIFT_BIN_DIR/swift-ring-builder object.builder rebalance 42
+        $SWIFT_BIN_DIR/swift-ring-builder container.builder rebalance 42
+        $SWIFT_BIN_DIR/swift-ring-builder account.builder rebalance 42
     } && popd >/dev/null
 
     # Create cache dir
@@ -803,7 +802,7 @@ function start_swift {
         # Apache should serve the "PACO" a.k.a "main" services
         restart_apache_server
         # The rest of the services should be started in backgroud
-        swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
+        $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
         return 0
     fi
 
@@ -827,7 +826,7 @@ function start_swift {
         done
 
         if [[ "$SWIFT_START_ALL_SERVICES" == "True" ]]; then
-            swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
+            $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run rest start
         else
             # The container-sync daemon is strictly needed to pass the container
             # sync Tempest tests.
@@ -835,8 +834,8 @@ function start_swift {
             run_process s-container-sync "$SWIFT_BIN_DIR/swift-container-sync ${SWIFT_CONF_DIR}/container-server/1.conf"
         fi
     else
-        swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
-        swift-init --run-dir=${SWIFT_DATA_DIR}/run proxy stop || true
+        $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run all restart || true
+        $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run proxy stop || true
     fi
 
     if is_service_enabled tls-proxy; then
@@ -863,12 +862,12 @@ function stop_swift {
     local type
 
     if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
-        swift-init --run-dir=${SWIFT_DATA_DIR}/run rest stop && return 0
+        $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run rest stop && return 0
     fi
 
     # screen normally killed by ``unstack.sh``
-    if type -p swift-init >/dev/null; then
-        swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
+    if type -p $SWIFT_BIN_DIR/swift-init >/dev/null; then
+        $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
     fi
     # Dump all of the servers
     # Maintain the iteration as stop_process() has some desirable side-effects
