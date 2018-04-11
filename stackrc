@@ -625,12 +625,7 @@ VIRT_DRIVER=${VIRT_DRIVER:-$DEFAULT_VIRT_DRIVER}
 case "$VIRT_DRIVER" in
     ironic|libvirt)
         LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
-        # If ENABLE_VOLUME_MULTIATTACH is True, the Ubuntu Cloud Archive can't
-        # be used until it provides libvirt>=3.10, and with older versions of
-        # Ubuntu the group is "libvirtd".
-        # TODO(mriedem): Remove the ENABLE_VOLUME_MULTIATTACH check when
-        # UCA has libvirt>=3.10.
-        if [[ "$os_VENDOR" =~ (Debian|Ubuntu) && "${ENABLE_VOLUME_MULTIATTACH}" == "False" ]]; then
+        if [[ "$os_VENDOR" =~ (Debian|Ubuntu) ]]; then
             # The groups change with newer libvirt. Older Ubuntu used
             # 'libvirtd', but now uses libvirt like Debian. Do a quick check
             # to see if libvirtd group already exists to handle grenade's case.
