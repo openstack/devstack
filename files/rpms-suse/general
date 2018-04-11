@@ -11,7 +11,6 @@ graphviz # docs
 iputils
 libffi-devel  # pyOpenSSL
 libjpeg8-devel # Pillow 3.0.0
-libmysqlclient-devel # MySQL-python
 libopenssl-devel # to rebuild pyOpenSSL if needed
 libxslt-devel  # lxml
 lsof # useful when debugging
