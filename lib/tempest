@@ -645,7 +645,7 @@ function install_tempest {
 function install_tempest_plugins {
     pushd $TEMPEST_DIR
     if [[ $TEMPEST_PLUGINS != 0 ]] ; then
-        tox -evenv-tempest -- pip install $TEMPEST_PLUGINS
+        tox -evenv-tempest -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt $TEMPEST_PLUGINS
         echo "Checking installed Tempest plugins:"
         tox -evenv-tempest -- tempest list-plugins
     fi
