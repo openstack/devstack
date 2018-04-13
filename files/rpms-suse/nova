@@ -4,7 +4,6 @@ dnsmasq
 dnsmasq-utils # dist:opensuse-12.3,opensuse-13.1
 ebtables
 gawk
-genisoimage # required for config_drive
 iptables
 iputils
 kpartx
@@ -12,6 +11,7 @@ kvm # NOPRIME
 libvirt # NOPRIME
 libvirt-python # NOPRIME
 mariadb # NOPRIME
+mkisofs # required for config_drive
 parted
 polkit
 # qemu as fallback if kvm cannot be used

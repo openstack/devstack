@@ -506,6 +506,12 @@ function create_nova_conf {
     if [ "$FORCE_CONFIG_DRIVE" != "False" ]; then
         iniset $NOVA_CONF DEFAULT force_config_drive "$FORCE_CONFIG_DRIVE"
     fi
+
+    # nova defaults to genisoimage but only mkisofs is available for 15.0+
+    if is_suse; then
+        iniset $NOVA_CONF DEFAULT mkisofs_cmd /usr/bin/mkisofs
+    fi
+
     # Format logging
     setup_logging $NOVA_CONF
 
