@@ -320,14 +320,12 @@
         dstat: true
         etcd3: true
         mysql: true
-        peakmem_tracker: true
         rabbit: true
     group-vars:
       subnode:
         devstack_services:
           # Shared services
           dstat: true
-          peakmem_tracker: true
         devstack_localrc:
           # Multinode specific settings
           HOST_IP: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
@@ -394,7 +392,6 @@
         dstat: true
         etcd3: true
         mysql: true
-        peakmem_tracker: true
         rabbit: true
         tls-proxy: true
         # Keystone services
@@ -450,7 +447,6 @@
           # This list replaces the test-matrix.
           # Shared services
           dstat: true
-          peakmem_tracker: true
           tls-proxy: true
           # Nova services
           n-cpu: true

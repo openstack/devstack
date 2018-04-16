@@ -1,3 +1,2 @@
 dstat # not:f29
 pcp-system-tools # dist:f29
-python-psutil
