@@ -1,3 +1,7 @@
 - hosts: all
+  # This is the default strategy, however since orchestrate-devstack requires
+  # "linear", it is safer to enforce it in case this is running in an
+  # environment configured with a different default strategy.
+  strategy: linear
   roles:
     - orchestrate-devstack
