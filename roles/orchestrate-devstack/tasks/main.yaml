@@ -1,0 +1,38 @@
+- name: Run devstack on the controller
+  include_role:
+    name: run-devstack
+  when: inventory_hostname == 'controller'
+
+- name: Setup devstack on sub-nodes
+  block:
+
+  - name: Sync CA data to subnodes (when any)
+    # Only do this if the tls-proxy service is defined and enabled
+    include_role:
+      name: sync-devstack-data
+    when: devstack_services['tls-proxy']|default(false)
+
+  - name: Run devstack on the sub-nodes
+    include_role:
+      name: run-devstack
+    when: inventory_hostname in groups['subnode']
+
+  - name: Discover hosts
+    # Discovers compute nodes (subnodes) and maps them to cells. Only run
+    # on the controller node.
+    # NOTE(mriedem): We want to remove this if/when nova supports
+    # auto-registration of computes with cells, but that's not happening in
+    # Ocata.
+    # NOTE(andreaf) This is taken (NOTE included) from the discover_hosts
+    # function in devstack gate. Since this is now in devstack, which is
+    # branched, we know that the discover_hosts tool exists.
+    become: true
+    become_user: stack
+    shell: ./tools/discover_hosts.sh
+    args:
+      chdir: "{{ devstack_base_dir }}/devstack"
+    when: inventory_hostname == 'controller'
+
+  when:
+    - '"controller" in hostvars'
+    - '"subnode" in groups'
