@@ -191,7 +191,7 @@
         SERVICE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
         HOST_IP: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
         PUBLIC_BRIDGE_MTU: "{{ external_bridge_mtu }}"
-      devstack_localconf:
+      devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
             DEFAULT:
