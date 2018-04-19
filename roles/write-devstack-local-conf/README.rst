@@ -20,6 +20,14 @@ Write the local.conf file for use by devstack
    bash shell variables, and will be ordered so that variables used by
    later entries appear first.
 
+   As a special case, the variable ``LIBS_FROM_GIT`` will be
+   constructed automatically from the projects which appear in the
+   ``required-projects`` list defined by the job.  To instruct
+   devstack to install a library from source rather than pypi, simply
+   add that library to the job's ``required-projects`` list.  To
+   override the automatically-generated value, set ``LIBS_FROM_GIT``
+   in ``devstack_localrc`` to the desired value.
+
 .. zuul:rolevar:: devstack_local_conf
    :type: dict
 
@@ -75,3 +83,7 @@ Write the local.conf file for use by devstack
    A dictionary mapping a plugin name to a git repo location.  If the
    location is a non-empty string, then an ``enable_plugin`` line will
    be emmitted for the plugin name.
+
+   If a plugin declares a dependency on another plugin (via
+   ``plugin_requires`` in the plugin's settings file), this role will
+   automatically emit ``enable_plugin`` lines in the correct order.

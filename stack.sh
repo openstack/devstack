@@ -1398,11 +1398,6 @@ fi
 # Check the status of running services
 service_check
 
-# ensure that all the libraries we think we installed from git,
-# actually were.
-check_libs_from_git
-
-
 # Configure nova cellsv2
 # ----------------------
 
