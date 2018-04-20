@@ -13,7 +13,6 @@ libxml2-python
 m2crypto
 mysql-devel
 mysql-server # NOPRIME
-numpy # needed by websockify for spice console
 parted
 polkit
 rabbitmq-server # NOPRIME
