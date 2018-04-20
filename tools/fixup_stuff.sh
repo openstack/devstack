@@ -202,7 +202,19 @@ function fixup_fedora {
             # install requests with the bundled urllib3 to avoid conflicts
             pip_install --upgrade --force-reinstall requests
         fi
+
     fi
+
+    # Since pip10, pip will refuse to uninstall files from packages
+    # that were created with distutils (rather than more modern
+    # setuptools).  This is because it technically doesn't have a
+    # manifest of what to remove.  However, in most cases, simply
+    # overwriting works.  So this hacks around those packages that
+    # have been dragged in by some other system dependency
+    sudo rm -rf /usr/lib/python2.7/site-packages/enum34*.egg-info
+    sudo rm -rf /usr/lib/python2.7/site-packages/ipaddress*.egg-info
+    sudo rm -rf /usr/lib/python2.7/site-packages/ply-*.egg-info
+    sudo rm -rf /usr/lib/python2.7/site-packages/typing-*.egg-info
 }
 
 function fixup_suse {
