@@ -202,7 +202,7 @@ function configure_keystone {
     sudo install -d -o $STACK_USER $KEYSTONE_CONF_DIR
 
     if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
-        install -m 600 $KEYSTONE_DIR/etc/keystone.conf.sample $KEYSTONE_CONF
+        install -m 600 /dev/null $KEYSTONE_CONF
         if [[ -f "$KEYSTONE_DIR/etc/keystone-paste.ini" ]]; then
             cp -p "$KEYSTONE_DIR/etc/keystone-paste.ini" "$KEYSTONE_PASTE_INI"
         fi
@@ -220,7 +220,7 @@ function configure_keystone {
         inidelete $KEYSTONE_PASTE_INI composite:admin \\/v2.0
     fi
 
-    # Rewrite stock ``keystone.conf``
+    # Populate ``keystone.conf``
     if is_service_enabled ldap; then
         iniset $KEYSTONE_CONF identity domain_config_dir "$KEYSTONE_CONF_DIR/domains"
         iniset $KEYSTONE_CONF identity domain_specific_drivers_enabled "True"
