@@ -111,11 +111,9 @@ function configure_glance {
     # Server is configured through this function and not init_glance.
     create_glance_cache_dir
 
-    # Copy over our glance configurations and update them
-    cp $GLANCE_DIR/etc/glance-registry.conf $GLANCE_REGISTRY_CONF
+    # Set non-default configuration options for registry
     iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_REGISTRY_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
-    inicomment $GLANCE_REGISTRY_CONF DEFAULT log_file
     local dburl
     dburl=`database_connection_url glance`
     iniset $GLANCE_REGISTRY_CONF database connection $dburl
@@ -126,8 +124,8 @@ function configure_glance {
     iniset_rpc_backend glance $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
+    # Set non-default configuration options for the API server
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    inicomment $GLANCE_API_CONF DEFAULT log_file
     iniset $GLANCE_API_CONF database connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
@@ -185,11 +183,6 @@ function configure_glance {
             iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
         fi
         iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_version 3
-
-        # commenting is not strictly necessary but it's confusing to have bad values in conf
-        inicomment $GLANCE_API_CONF glance_store swift_store_user
-        inicomment $GLANCE_API_CONF glance_store swift_store_key
-        inicomment $GLANCE_API_CONF glance_store swift_store_auth_address
     fi
 
     # We need to tell glance what it's public endpoint is so that the version
@@ -215,18 +208,13 @@ function configure_glance {
     cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
     cp -p $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
 
-    cp $GLANCE_DIR/etc/glance-cache.conf $GLANCE_CACHE_CONF
+    # Set non-default configuration options for the glance-cache
     iniset $GLANCE_CACHE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    inicomment $GLANCE_CACHE_CONF DEFAULT log_file
     iniset $GLANCE_CACHE_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_CACHE_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
-    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_url
     iniset $GLANCE_CACHE_CONF DEFAULT auth_url $KEYSTONE_AUTH_URI
-    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_tenant_name
     iniset $GLANCE_CACHE_CONF DEFAULT admin_tenant_name $SERVICE_PROJECT_NAME
-    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_user
     iniset $GLANCE_CACHE_CONF DEFAULT admin_user glance
-    iniuncomment $GLANCE_CACHE_CONF DEFAULT auth_password
     iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
     iniset $GLANCE_CACHE_CONF DEFAULT registry_host $GLANCE_SERVICE_HOST
 
