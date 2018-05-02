@@ -112,7 +112,6 @@ function configure_placement_nova_compute {
     iniset $conf placement user_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $conf placement project_name "$SERVICE_TENANT_NAME"
     iniset $conf placement project_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $conf placement os_region_name "$REGION_NAME"
     # TODO(cdent): auth_strategy, which is common to see in these
     # blocks is not currently used here. For the time being the
     # placement api uses the auth_strategy configuration setting
