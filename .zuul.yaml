@@ -49,6 +49,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-fedora-latest
+    nodes:
+      - name: controller
+        label: fedora-28
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -406,10 +416,10 @@
     voting: false
 
 - job:
-    name: devstack-platform-fedora-27
+    name: devstack-platform-fedora-latest
     parent: tempest-full
-    description: Fedora 27 platform test
-    nodeset: devstack-single-node-fedora-27
+    description: Fedora latest platform test
+    nodeset: devstack-single-node-fedora-latest
     voting: false
 
 - job:
@@ -482,7 +492,7 @@
         - devstack-platform-centos-7
         - devstack-platform-opensuse-423
         - devstack-platform-opensuse-tumbleweed
-        - devstack-platform-fedora-27
+        - devstack-platform-fedora-latest
         - devstack-multinode
         - devstack-unit-tests
     gate:
