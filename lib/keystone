@@ -504,8 +504,6 @@ function install_keystone {
 
     if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         install_apache_wsgi
-    elif [ "$KEYSTONE_DEPLOY" == "uwsgi" ]; then
-        pip_install uwsgi
     fi
 }
 
