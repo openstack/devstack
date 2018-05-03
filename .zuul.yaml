@@ -619,14 +619,16 @@
     check:
       jobs:
         - devstack
-        - devstack-xenial
+        - devstack-xenial:
+            voting: false
         - devstack-ipv6
         - devstack-platform-centos-7
         - devstack-platform-opensuse-15
         - devstack-platform-fedora-29
         - devstack-platform-xenial
         - devstack-multinode
-        - devstack-multinode-xenial
+        - devstack-multinode-xenial:
+            voting: false
         - devstack-unit-tests
         - openstack-tox-bashate
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
@@ -640,7 +642,13 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - grenade:
+            voting: false
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
         - neutron-grenade-multinode:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -664,16 +672,16 @@
     gate:
       jobs:
         - devstack
-        - devstack-xenial
+        #- devstack-xenial
         - devstack-ipv6
         - devstack-multinode
-        - devstack-multinode-xenial
+        #- devstack-multinode-xenial
         - devstack-unit-tests
         - openstack-tox-bashate
-        - neutron-grenade-multinode:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+        # - neutron-grenade-multinode:
+        #     irrelevant-files:
+        #       - ^.*\.rst$
+        #       - ^doc/.*$
         - neutron-tempest-linuxbridge:
             irrelevant-files:
               - ^.*\.rst$
@@ -682,6 +690,10 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        # - grenade:
+        #     irrelevant-files:
+        #       - ^.*\.rst$
+        #       - ^doc/.*$
         - openstacksdk-functional-devstack:
             irrelevant-files:
               - ^.*\.rst$

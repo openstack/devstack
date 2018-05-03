@@ -523,7 +523,7 @@ function start_keystone {
         enable_apache_site keystone
         restart_apache_server
     else # uwsgi
-        run_process keystone "$KEYSTONE_BIN_DIR/uwsgi --procname-prefix keystone --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
+        run_process keystone "$(which uwsgi) --procname-prefix keystone --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
     fi
 
     echo "Waiting for keystone to start..."
