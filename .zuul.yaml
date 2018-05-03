@@ -632,6 +632,7 @@
               - ^.*\.rst$
               - ^doc/.*$
         - neutron-grenade-multinode:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -669,6 +670,7 @@
         - devstack-unit-tests
         - openstack-tox-bashate
         - neutron-grenade-multinode:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -677,6 +679,7 @@
               - ^.*\.rst$
               - ^doc/.*$
         - grenade:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
