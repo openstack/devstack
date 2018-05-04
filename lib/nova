@@ -952,11 +952,46 @@ function start_nova_rest {
         run_process n-api-meta "$NOVA_BIN_DIR/uwsgi --procname-prefix nova-api-meta --ini $NOVA_METADATA_UWSGI_CONF"
     fi
 
-    run_process n-novnc "$NOVA_BIN_DIR/nova-novncproxy --config-file $api_cell_conf --web $NOVNC_WEB_DIR"
-    run_process n-xvnc "$NOVA_BIN_DIR/nova-xvpvncproxy --config-file $api_cell_conf"
-    run_process n-spice "$NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $api_cell_conf --web $SPICE_WEB_DIR"
+    # nova-consoleauth always runs globally
     run_process n-cauth "$NOVA_BIN_DIR/nova-consoleauth --config-file $api_cell_conf"
-    run_process n-sproxy "$NOVA_BIN_DIR/nova-serialproxy --config-file $api_cell_conf"
+
+    export PATH=$old_path
+}
+
+function enable_nova_console_proxies {
+    for i in $(seq 1 $NOVA_NUM_CELLS); do
+        for srv in n-novnc n-xvnc n-spice n-sproxy; do
+            if is_service_enabled $srv; then
+                enable_service ${srv}-cell${i}
+            fi
+        done
+    done
+}
+
+function start_nova_console_proxies {
+    # Hack to set the path for rootwrap
+    local old_path=$PATH
+    # This is needed to find the nova conf
+    export PATH=$NOVA_BIN_DIR:$PATH
+
+    local api_cell_conf=$NOVA_CONF
+    # console proxies run globally for singleconductor, else they run per cell
+    if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
+        run_process n-novnc "$NOVA_BIN_DIR/nova-novncproxy --config-file $api_cell_conf --web $NOVNC_WEB_DIR"
+        run_process n-xvnc "$NOVA_BIN_DIR/nova-xvpvncproxy --config-file $api_cell_conf"
+        run_process n-spice "$NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $api_cell_conf --web $SPICE_WEB_DIR"
+        run_process n-sproxy "$NOVA_BIN_DIR/nova-serialproxy --config-file $api_cell_conf"
+    else
+        enable_nova_console_proxies
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            local conf
+            conf=$(conductor_conf $i)
+            run_process n-novnc-cell${i} "$NOVA_BIN_DIR/nova-novncproxy --config-file $conf --web $NOVNC_WEB_DIR"
+            run_process n-xvnc-cell${i} "$NOVA_BIN_DIR/nova-xvpvncproxy --config-file $conf"
+            run_process n-spice-cell${i} "$NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $conf --web $SPICE_WEB_DIR"
+            run_process n-sproxy-cell${i} "$NOVA_BIN_DIR/nova-serialproxy --config-file $conf"
+        done
+    fi
 
     export PATH=$old_path
 }
@@ -1016,6 +1051,7 @@ function start_nova {
     # this catches the cells v1 case early
     _set_singleconductor
     start_nova_rest
+    start_nova_console_proxies
     start_nova_conductor
     start_nova_compute
     if is_service_enabled n-api; then
@@ -1041,9 +1077,24 @@ function stop_nova_compute {
 
 function stop_nova_rest {
     # Kill the non-compute nova processes
-    for serv in n-api n-api-meta n-net n-sch n-novnc n-xvnc n-cauth n-spice n-cell n-cell n-sproxy; do
+    for serv in n-api n-api-meta n-net n-sch n-cauth n-cell n-cell; do
         stop_process $serv
     done
+}
+
+function stop_nova_console_proxies {
+    if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
+        for srv in n-novnc n-xvnc n-spice n-sproxy; do
+            stop_process $srv
+        done
+    else
+        enable_nova_console_proxies
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            for srv in n-novnc n-xvnc n-spice n-sproxy; do
+                stop_process ${srv}-cell${i}
+            done
+        done
+    fi
 }
 
 function stop_nova_conductor {
@@ -1063,6 +1114,7 @@ function stop_nova_conductor {
 # stop_nova() - Stop running processes
 function stop_nova {
     stop_nova_rest
+    stop_nova_console_proxies
     stop_nova_conductor
     stop_nova_compute
 }
