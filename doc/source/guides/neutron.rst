@@ -244,7 +244,7 @@ The host `devstack-2` has a very minimal `local.conf`.
 
     ## Neutron options
     PUBLIC_INTERFACE=eth0
-    ENABLED_SERVICES=n-cpu,rabbit,q-agt
+    ENABLED_SERVICES=n-cpu,rabbit,q-agt,placement-client
 
 Network traffic from `eth0` on the compute nodes is then NAT'd by the
 controller node that runs Neutron's `neutron-l3-agent` and provides L3
