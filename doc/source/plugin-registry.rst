@@ -163,6 +163,7 @@ scalpels                               `git://git.openstack.org/openstack/scalpe
 searchlight                            `git://git.openstack.org/openstack/searchlight <https://git.openstack.org/cgit/openstack/searchlight>`__
 searchlight-ui                         `git://git.openstack.org/openstack/searchlight-ui <https://git.openstack.org/cgit/openstack/searchlight-ui>`__
 senlin                                 `git://git.openstack.org/openstack/senlin <https://git.openstack.org/cgit/openstack/senlin>`__
+slogging                               `git://git.openstack.org/openstack/slogging <https://git.openstack.org/cgit/openstack/slogging>`__
 solum                                  `git://git.openstack.org/openstack/solum <https://git.openstack.org/cgit/openstack/solum>`__
 stackube                               `git://git.openstack.org/openstack/stackube <https://git.openstack.org/cgit/openstack/stackube>`__
 storlets                               `git://git.openstack.org/openstack/storlets <https://git.openstack.org/cgit/openstack/storlets>`__
