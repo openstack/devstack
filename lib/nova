@@ -524,52 +524,6 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT notify_on_state_change "vm_and_task_state"
     fi
 
-    # All nova-compute workers need to know the vnc configuration options
-    # These settings don't hurt anything if n-xvnc and n-novnc are disabled
-    if is_service_enabled n-cpu; then
-        NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
-        iniset $NOVA_CONF vnc novncproxy_base_url "$NOVNCPROXY_URL"
-        XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
-        iniset $NOVA_CONF vnc xvpvncproxy_base_url "$XVPVNCPROXY_URL"
-        SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:6082/spice_auto.html"}
-        iniset $NOVA_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
-    fi
-
-    if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
-        # Address on which instance vncservers will listen on compute hosts.
-        # For multi-host, this should be the management ip of the compute host.
-        VNCSERVER_LISTEN=${VNCSERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
-        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
-        iniset $NOVA_CONF vnc server_listen "$VNCSERVER_LISTEN"
-        iniset $NOVA_CONF vnc server_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
-        iniset $NOVA_CONF vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-        iniset $NOVA_CONF vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-
-        if is_nova_console_proxy_compute_tls_enabled ; then
-            iniset $NOVA_CONF vnc auth_schemes "vencrypt"
-            iniset $NOVA_CONF vnc vencrypt_client_key "/etc/pki/nova-novnc/client-key.pem"
-            iniset $NOVA_CONF vnc vencrypt_client_cert "/etc/pki/nova-novnc/client-cert.pem"
-            iniset $NOVA_CONF vnc vencrypt_ca_certs "/etc/pki/nova-novnc/ca-cert.pem"
-
-            sudo mkdir -p /etc/pki/nova-novnc
-            deploy_int_CA /etc/pki/nova-novnc/ca-cert.pem
-            deploy_int_cert /etc/pki/nova-novnc/client-cert.pem /etc/pki/nova-novnc/client-key.pem
-        fi
-    else
-        iniset $NOVA_CONF vnc enabled false
-    fi
-
-    if is_service_enabled n-spice; then
-        # Address on which instance spiceservers will listen on compute hosts.
-        # For multi-host, this should be the management ip of the compute host.
-        SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
-        SPICESERVER_LISTEN=${SPICESERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
-        iniset $NOVA_CONF spice enabled true
-        iniset $NOVA_CONF spice server_listen "$SPICESERVER_LISTEN"
-        iniset $NOVA_CONF spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
-        iniset $NOVA_CONF spice html5proxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-    fi
-
     # Set the oslo messaging driver to the typical default. This does not
     # enable notifications, but it will allow them to function when enabled.
     iniset $NOVA_CONF oslo_messaging_notifications driver "messagingv2"
@@ -588,10 +542,6 @@ function create_nova_conf {
         iniset $NOVA_CONF oslo_middleware enable_proxy_headers_parsing True
     fi
 
-    if is_service_enabled n-sproxy; then
-        iniset $NOVA_CONF serial_console serialproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-        iniset $NOVA_CONF serial_console enabled True
-    fi
     iniset $NOVA_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
     # Setup logging for nova-dhcpbridge command line
@@ -640,6 +590,75 @@ function create_nova_conf {
             # Format logging
             setup_logging $conf
         done
+    fi
+
+    # Console proxy configuration has to go after conductor configuration
+    # because the per cell config file nova_cellN.conf is cleared out as part
+    # of conductor configuration.
+    if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
+        configure_console_proxies
+    else
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            local conf
+            conf=$(conductor_conf $i)
+            configure_console_proxies $conf
+        done
+    fi
+}
+
+function configure_console_proxies {
+    # Use the provided config file path or default to $NOVA_CONF.
+    local conf=${1:-$NOVA_CONF}
+
+    # All nova-compute workers need to know the vnc configuration options
+    # These settings don't hurt anything if n-xvnc and n-novnc are disabled
+    if is_service_enabled n-cpu; then
+        NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
+        iniset $conf vnc novncproxy_base_url "$NOVNCPROXY_URL"
+        XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
+        iniset $conf vnc xvpvncproxy_base_url "$XVPVNCPROXY_URL"
+        SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:6082/spice_auto.html"}
+        iniset $conf spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
+    fi
+
+    if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
+        # Address on which instance vncservers will listen on compute hosts.
+        # For multi-host, this should be the management ip of the compute host.
+        VNCSERVER_LISTEN=${VNCSERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
+        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
+        iniset $conf vnc server_listen "$VNCSERVER_LISTEN"
+        iniset $conf vnc server_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+        iniset $conf vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $conf vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+
+        if is_nova_console_proxy_compute_tls_enabled ; then
+            iniset $conf vnc auth_schemes "vencrypt"
+            iniset $conf vnc vencrypt_client_key "/etc/pki/nova-novnc/client-key.pem"
+            iniset $conf vnc vencrypt_client_cert "/etc/pki/nova-novnc/client-cert.pem"
+            iniset $conf vnc vencrypt_ca_certs "/etc/pki/nova-novnc/ca-cert.pem"
+
+            sudo mkdir -p /etc/pki/nova-novnc
+            deploy_int_CA /etc/pki/nova-novnc/ca-cert.pem
+            deploy_int_cert /etc/pki/nova-novnc/client-cert.pem /etc/pki/nova-novnc/client-key.pem
+        fi
+    else
+        iniset $conf vnc enabled false
+    fi
+
+    if is_service_enabled n-spice; then
+        # Address on which instance spiceservers will listen on compute hosts.
+        # For multi-host, this should be the management ip of the compute host.
+        SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
+        SPICESERVER_LISTEN=${SPICESERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
+        iniset $conf spice enabled true
+        iniset $conf spice server_listen "$SPICESERVER_LISTEN"
+        iniset $conf spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
+        iniset $conf spice html5proxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+    fi
+
+    if is_service_enabled n-sproxy; then
+        iniset $conf serial_console serialproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $conf serial_console enabled True
     fi
 }
 
