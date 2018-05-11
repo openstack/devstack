@@ -614,7 +614,16 @@ function configure_console_compute {
     # All nova-compute workers need to know the vnc configuration options
     # These settings don't hurt anything if n-xvnc and n-novnc are disabled
     if is_service_enabled n-cpu; then
-        NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
+        if [ "$NOVNC_FROM_PACKAGE" == "True" ]; then
+            # Use the old URL when installing novnc packages.
+            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
+        elif vercmp ${NOVNC_BRANCH} "<" "1.0.0"; then
+             # Use the old URL when installing older novnc source.
+            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
+        else
+            # Use the new URL when building >=v1.0.0 from source.
+            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_lite.html"}
+        fi
         iniset $NOVA_CPU_CONF vnc novncproxy_base_url "$NOVNCPROXY_URL"
         XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
         iniset $NOVA_CPU_CONF vnc xvpvncproxy_base_url "$XVPVNCPROXY_URL"
