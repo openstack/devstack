@@ -1,4 +1,5 @@
 cryptsetup
+dosfstools
 libosinfo
 lvm2
 mkisofs
