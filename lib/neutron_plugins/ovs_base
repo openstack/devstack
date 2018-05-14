@@ -86,7 +86,7 @@ function _neutron_ovs_base_install_agent_packages {
 
 function _neutron_ovs_base_configure_firewall_driver {
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver iptables_hybrid
+        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver openvswitch
         if ! running_in_container; then
             enable_kernel_bridge_firewall
         fi
