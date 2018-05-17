@@ -606,19 +606,16 @@ function create_nova_conf {
     fi
 }
 
-function configure_console_proxies {
-    # Use the provided config file path or default to $NOVA_CONF.
-    local conf=${1:-$NOVA_CONF}
-
+function configure_console_compute {
     # All nova-compute workers need to know the vnc configuration options
     # These settings don't hurt anything if n-xvnc and n-novnc are disabled
     if is_service_enabled n-cpu; then
         NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
-        iniset $conf vnc novncproxy_base_url "$NOVNCPROXY_URL"
+        iniset $NOVA_CPU_CONF vnc novncproxy_base_url "$NOVNCPROXY_URL"
         XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
-        iniset $conf vnc xvpvncproxy_base_url "$XVPVNCPROXY_URL"
+        iniset $NOVA_CPU_CONF vnc xvpvncproxy_base_url "$XVPVNCPROXY_URL"
         SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:6082/spice_auto.html"}
-        iniset $conf spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
+        iniset $NOVA_CPU_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
     fi
 
     if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
@@ -626,8 +623,32 @@ function configure_console_proxies {
         # For multi-host, this should be the management ip of the compute host.
         VNCSERVER_LISTEN=${VNCSERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
         VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
-        iniset $conf vnc server_listen "$VNCSERVER_LISTEN"
-        iniset $conf vnc server_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+        iniset $NOVA_CPU_CONF vnc server_listen "$VNCSERVER_LISTEN"
+        iniset $NOVA_CPU_CONF vnc server_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
+    else
+        iniset $NOVA_CPU_CONF vnc enabled false
+    fi
+
+    if is_service_enabled n-spice; then
+        # Address on which instance spiceservers will listen on compute hosts.
+        # For multi-host, this should be the management ip of the compute host.
+        SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
+        SPICESERVER_LISTEN=${SPICESERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
+        iniset $NOVA_CPU_CONF spice enabled true
+        iniset $NOVA_CPU_CONF spice server_listen "$SPICESERVER_LISTEN"
+        iniset $NOVA_CPU_CONF spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
+    fi
+
+    if is_service_enabled n-sproxy; then
+        iniset $NOVA_CPU_CONF serial_console enabled True
+    fi
+}
+
+function configure_console_proxies {
+    # Use the provided config file path or default to $NOVA_CONF.
+    local conf=${1:-$NOVA_CONF}
+
+    if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
         iniset $conf vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $conf vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
 
@@ -641,24 +662,14 @@ function configure_console_proxies {
             deploy_int_CA /etc/pki/nova-novnc/ca-cert.pem
             deploy_int_cert /etc/pki/nova-novnc/client-cert.pem /etc/pki/nova-novnc/client-key.pem
         fi
-    else
-        iniset $conf vnc enabled false
     fi
 
     if is_service_enabled n-spice; then
-        # Address on which instance spiceservers will listen on compute hosts.
-        # For multi-host, this should be the management ip of the compute host.
-        SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
-        SPICESERVER_LISTEN=${SPICESERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
-        iniset $conf spice enabled true
-        iniset $conf spice server_listen "$SPICESERVER_LISTEN"
-        iniset $conf spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
         iniset $conf spice html5proxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
     fi
 
     if is_service_enabled n-sproxy; then
         iniset $conf serial_console serialproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-        iniset $conf serial_console enabled True
     fi
 }
 
@@ -910,6 +921,11 @@ function start_nova_compute {
         iniset $NOVA_CPU_CONF filter_scheduler track_instance_changes False
         iniset_rpc_backend nova $NOVA_CPU_CONF DEFAULT "nova_cell${NOVA_CPU_CELL}"
     fi
+
+    # Console proxies were configured earlier in create_nova_conf. Now that the
+    # nova-cpu.conf has been created, configure the console settings required
+    # by the compute process.
+    configure_console_compute
 
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
         # The group **$LIBVIRT_GROUP** is added to the current user in this script.
