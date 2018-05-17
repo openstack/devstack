@@ -108,5 +108,5 @@ fi
 
 # Currently cinderclient needs you to specify the *volume api* version. This
 # needs to match the config of your catalog returned by Keystone.
-export CINDER_VERSION=${CINDER_VERSION:-2}
+export CINDER_VERSION=${CINDER_VERSION:-3}
 export OS_VOLUME_API_VERSION=${OS_VOLUME_API_VERSION:-$CINDER_VERSION}
