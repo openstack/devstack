@@ -42,14 +42,6 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF DEFAULT compute_driver ironic.IronicDriver
     iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
 
-    if [[ "$IRONIC_USE_RESOURCE_CLASSES" == "False" ]]; then
-        iniset $NOVA_CONF DEFAULT scheduler_host_manager ironic_host_manager
-        iniset $NOVA_CONF filter_scheduler use_baremetal_filters True
-        iniset $NOVA_CONF filter_scheduler host_subset_size 999
-        iniset $NOVA_CONF DEFAULT ram_allocation_ratio 1.0
-        iniset $NOVA_CONF DEFAULT reserved_host_memory_mb 0
-    fi
-
     # ironic section
     iniset $NOVA_CONF ironic auth_type password
     iniset $NOVA_CONF ironic username admin
