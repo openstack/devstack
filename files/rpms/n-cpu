@@ -1,4 +1,5 @@
 cryptsetup
+dosfstools
 genisoimage
 iscsi-initiator-utils
 libosinfo
