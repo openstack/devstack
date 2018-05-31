@@ -433,6 +433,13 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG validation network_for_ssh $TEMPEST_SSH_NETWORK_NAME
 
     # Volume
+    # Set the service catalog entry for Tempest to run on. Typically
+    # used to try different Volume API version targets. The tempest
+    # default it to 'volumev3'(v3 APIs endpoint) , so only set this
+    # if you want to change it.
+    if [[ -n "$TEMPEST_VOLUME_TYPE" ]]; then
+        iniset $TEMPEST_CONFIG volume catalog_type $TEMPEST_VOLUME_TYPE
+    fi
     # Only turn on TEMPEST_VOLUME_MANAGE_SNAPSHOT by default for "lvm" backends
     if [[ "$CINDER_ENABLED_BACKENDS" == *"lvm"* ]]; then
         TEMPEST_VOLUME_MANAGE_SNAPSHOT=${TEMPEST_VOLUME_MANAGE_SNAPSHOT:-True}
@@ -454,6 +461,12 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG volume-feature-enabled api_v1 $(trueorfalse False TEMPEST_VOLUME_API_V1)
     local tempest_volume_min_microversion=${TEMPEST_VOLUME_MIN_MICROVERSION:-None}
     local tempest_volume_max_microversion=${TEMPEST_VOLUME_MAX_MICROVERSION:-"latest"}
+    # Reset microversions to None where v2 is running which does not support microversion.
+    # Both "None" means no microversion testing.
+    if [[ "$TEMPEST_VOLUME_TYPE" == "volumev2" ]]; then
+        tempest_volume_min_microversion=None
+        tempest_volume_max_microversion=None
+    fi
     if [ "$tempest_volume_min_microversion" == "None" ]; then
         inicomment $TEMPEST_CONFIG volume min_microversion
     else
