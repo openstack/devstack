@@ -368,6 +368,7 @@ function configure_swift {
 
     SWIFT_CONFIG_PROXY_SERVER=${SWIFT_CONF_DIR}/proxy-server.conf
     cp ${SWIFT_DIR}/etc/proxy-server.conf-sample ${SWIFT_CONFIG_PROXY_SERVER}
+    cp ${SWIFT_DIR}/etc/internal-client.conf-sample ${SWIFT_CONF_DIR}/internal-client.conf
 
     # To run container sync feature introduced in Swift ver 1.12.0,
     # container sync "realm" is added in container-sync-realms.conf
