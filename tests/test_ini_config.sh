@@ -44,6 +44,9 @@ empty =
 multi = foo1
 multi = foo2
 
+[key_with_spaces]
+rgw special key = something
+
 # inidelete(a)
 [del_separate_options]
 a=b
@@ -82,8 +85,9 @@ fi
 
 # test iniget_sections
 VAL=$(iniget_sections "${TEST_INI}")
-assert_equal "$VAL" "default aaa bbb ccc ddd eee del_separate_options \
-del_same_option del_missing_option del_missing_option_multi del_no_options"
+assert_equal "$VAL" "default aaa bbb ccc ddd eee key_with_spaces \
+del_separate_options del_same_option del_missing_option \
+del_missing_option_multi del_no_options"
 
 # Test with missing arguments
 BEFORE=$(cat ${TEST_INI})
@@ -208,6 +212,20 @@ done
 iniset $SUDO_ARG ${INI_TMP_ETC_DIR}/test.new.ini test foo bar
 VAL=$(iniget ${INI_TMP_ETC_DIR}/test.new.ini test foo)
 assert_equal "$VAL" "bar" "iniset created file"
+
+# test creation of keys with spaces
+iniset ${SUDO_ARG} ${TEST_INI} key_with_spaces "rgw another key" somethingelse
+VAL=$(iniget ${TEST_INI} key_with_spaces "rgw another key")
+assert_equal "$VAL" "somethingelse" "iniset created a key with spaces"
+
+# test update of keys with spaces
+iniset ${SUDO_ARG} ${TEST_INI} key_with_spaces "rgw special key" newvalue
+VAL=$(iniget ${TEST_INI} key_with_spaces "rgw special key")
+assert_equal "$VAL" "newvalue" "iniset updated a key with spaces"
+
+inidelete ${SUDO_ARG} ${TEST_INI} key_with_spaces "rgw another key"
+VAL=$(iniget ${TEST_INI} key_with_spaces "rgw another key")
+assert_empty VAL "inidelete removed a key with spaces"
 
 $SUDO rm -rf ${INI_TMP_DIR}
 
