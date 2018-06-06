@@ -220,8 +220,8 @@ function configure_neutron_new {
         if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
             iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver iptables
             iniset $NEUTRON_CORE_PLUGIN_CONF vxlan local_ip $HOST_IP
-        else
-            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver iptables_hybrid
+        elif [[ $NEUTRON_AGENT == "openvswitch" ]]; then
+            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver openvswitch
             iniset $NEUTRON_CORE_PLUGIN_CONF ovs local_ip $HOST_IP
 
             if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
