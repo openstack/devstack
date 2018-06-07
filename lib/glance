@@ -114,6 +114,7 @@ function configure_glance {
     # Set non-default configuration options for registry
     iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_REGISTRY_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
+    iniset $GLANCE_REGISTRY_CONF DEFAULT workers $API_WORKERS
     local dburl
     dburl=`database_connection_url glance`
     iniset $GLANCE_REGISTRY_CONF database connection $dburl
