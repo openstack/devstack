@@ -6,6 +6,12 @@
 - name: Setup devstack on sub-nodes
   block:
 
+  - name: Distribute the build sshkey for the user "stack"
+    include_role:
+      name: copy-build-sshkey
+    vars:
+      copy_sshkey_target_user: 'stack'
+
   - name: Sync CA data to subnodes (when any)
     # Only do this if the tls-proxy service is defined and enabled
     include_role:
