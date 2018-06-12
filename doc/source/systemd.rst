@@ -152,6 +152,19 @@ Invoke the command manually::
 
   /usr/local/bin/nova-scheduler --config-file /etc/nova/nova.conf
 
+Some executables, such as :program:`nova-compute`, will need to be executed
+with a particular group. This will be shown in the systemd unit file::
+
+  sudo systemctl cat devstack@n-cpu.service | grep Group
+
+::
+
+  Group = libvirt
+
+Use the :program:`sg` tool to execute the command as this group::
+
+  sg libvirt -c '/usr/local/bin/nova-compute --config-file /etc/nova/nova-cpu.conf'
+
 Using remote-pdb
 ----------------
 
