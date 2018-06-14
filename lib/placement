@@ -44,8 +44,6 @@ PLACEMENT_UWSGI_CONF=$PLACEMENT_CONF_DIR/placement-uwsgi.ini
 
 # The placement service can optionally use a separate database
 # connection. Set PLACEMENT_DB_ENABLED to True to use it.
-# NOTE(cdent): This functionality depends on some code that is not
-# yet merged in nova but is coming soon.
 PLACEMENT_DB_ENABLED=$(trueorfalse False PLACEMENT_DB_ENABLED)
 
 if is_service_enabled tls-proxy; then
@@ -151,9 +149,9 @@ function create_placement_accounts {
 function init_placement {
     if [ "$PLACEMENT_DB_ENABLED" != False ]; then
         recreate_database placement
-        time_start "dbsync"
-        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF api_db sync
-        time_stop "dbsync"
+        # Database migration will be handled when nova does an api_db sync
+        # TODO(cdent): When placement is extracted we'll do our own sync
+        # here.
     fi
     create_placement_accounts
 }
