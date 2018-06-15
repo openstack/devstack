@@ -207,12 +207,13 @@ class PluginGraph(DependencyGraph):
 class LocalConf(object):
 
     def __init__(self, localrc, localconf, base_services, services, plugins,
-                 base_dir, projects):
+                 base_dir, projects, project):
         self.localrc = []
         self.meta_sections = {}
         self.plugin_deps = {}
         self.base_dir = base_dir
         self.projects = projects
+        self.project = project
         if plugins:
             self.handle_plugins(plugins)
         if services or base_services:
@@ -249,11 +250,15 @@ class LocalConf(object):
                 if k == 'LIBS_FROM_GIT':
                     lfg = True
 
-        if not lfg and self.projects:
+        if not lfg and (self.projects or self.project):
             required_projects = []
-            for project_name, project_info in self.projects.items():
-                if project_info.get('required'):
-                    required_projects.append(project_info['short_name'])
+            if self.projects:
+                for project_name, project_info in self.projects.items():
+                    if project_info.get('required'):
+                        required_projects.append(project_info['short_name'])
+            if self.project:
+                if self.project['short_name'] not in required_projects:
+                    required_projects.append(self.project['short_name'])
             if required_projects:
                 self.localrc.append('LIBS_FROM_GIT={}'.format(
                     ','.join(required_projects)))
@@ -291,6 +296,7 @@ def main():
             base_dir=dict(type='path'),
             path=dict(type='str'),
             projects=dict(type='dict'),
+            project=dict(type='dict'),
         )
     )
 
@@ -301,7 +307,8 @@ def main():
                    p.get('services'),
                    p.get('plugins'),
                    p.get('base_dir'),
-                   p.get('projects'))
+                   p.get('projects'),
+                   p.get('project'))
     lc.write(p['path'])
 
     module.exit_json()
