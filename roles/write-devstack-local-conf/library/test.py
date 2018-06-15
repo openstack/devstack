@@ -57,7 +57,8 @@ class TestDevstackLocalConf(unittest.TestCase):
                        p.get('services'),
                        p.get('plugins'),
                        p.get('base_dir'),
-                       p.get('projects'))
+                       p.get('projects'),
+                       p.get('project'))
         lc.write(p['path'])
 
         plugins = []
@@ -120,17 +121,22 @@ class TestDevstackLocalConf(unittest.TestCase):
                 'short_name': 'devstack-plugin',
             },
         }
+        project = {
+            'short_name': 'glance',
+        }
         p = dict(base_services=[],
                  base_dir='./test',
                  path=os.path.join(self.tmpdir, 'test.local.conf'),
-                 projects=projects)
+                 projects=projects,
+                 project=project)
         lc = LocalConf(p.get('localrc'),
                        p.get('local_conf'),
                        p.get('base_services'),
                        p.get('services'),
                        p.get('plugins'),
                        p.get('base_dir'),
-                       p.get('projects'))
+                       p.get('projects'),
+                       p.get('project'))
         lc.write(p['path'])
 
         lfg = None
@@ -138,7 +144,7 @@ class TestDevstackLocalConf(unittest.TestCase):
             for line in f:
                 if line.startswith('LIBS_FROM_GIT'):
                     lfg = line.strip().split('=')[1]
-        self.assertEqual('nova,oslo.messaging', lfg)
+        self.assertEqual('nova,oslo.messaging,glance', lfg)
 
     def test_overridelibs_from_git(self):
         "Test that LIBS_FROM_GIT can be overridden"
@@ -168,7 +174,8 @@ class TestDevstackLocalConf(unittest.TestCase):
                        p.get('services'),
                        p.get('plugins'),
                        p.get('base_dir'),
-                       p.get('projects'))
+                       p.get('projects'),
+                       p.get('project'))
         lc.write(p['path'])
 
         lfg = None
