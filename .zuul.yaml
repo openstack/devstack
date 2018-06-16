@@ -287,7 +287,7 @@
         DEBUG_LIBVIRT_COREDUMPS: True
         NOVA_VNC_ENABLED: true
         VNCSERVER_LISTEN: 0.0.0.0
-        VNCSERVER_PROXYCLIENT_ADDRESS: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
+        VNCSERVER_PROXYCLIENT_ADDRESS: $HOST_IP
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -381,6 +381,9 @@
           # Subnode specific settings
           GLANCE_HOSTPORT: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}:9292"
           Q_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          NOVA_VNC_ENABLED: true
+          VNCSERVER_LISTEN: 0.0.0.0
+          VNCSERVER_PROXYCLIENT_ADDRESS: $HOST_IP
 
 - job:
     name: devstack-multinode
