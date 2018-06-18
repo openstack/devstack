@@ -309,30 +309,32 @@ function configure_keystone {
 # service              --         --
 # --                   --         service
 # --                   --         ResellerAdmin
-# --                   --         Member
+# --                   --         member
 # demo                 admin      admin
-# demo                 demo       Member, anotherrole
+# demo                 demo       member, anotherrole
 # alt_demo             admin      admin
-# alt_demo             alt_demo   Member, anotherrole
-# invisible_to_admin   demo       Member
+# alt_demo             alt_demo   member, anotherrole
+# invisible_to_admin   demo       member
 
 # Group                Users            Roles                 Project
 # ------------------------------------------------------------------
 # admins               admin            admin                 admin
-# nonadmins            demo, alt_demo   Member, anotherrole   demo, alt_demo
+# nonadmins            demo, alt_demo   member, anotherrole   demo, alt_demo
 
 
 # Migrated from keystone_data.sh
 function create_keystone_accounts {
 
-    # The keystone bootstrapping process (performed via keystone-manage bootstrap)
-    # creates an admin user, admin role and admin project. As a sanity check
-    # we exercise the CLI to retrieve the IDs for these values.
+    # The keystone bootstrapping process (performed via keystone-manage
+    # bootstrap) creates an admin user, admin role, member role, and admin
+    # project. As a sanity check we exercise the CLI to retrieve the IDs for
+    # these values.
     local admin_project
     admin_project=$(openstack project show "admin" -f value -c id)
     local admin_user
     admin_user=$(openstack user show "admin" -f value -c id)
     local admin_role="admin"
+    local member_role="member"
 
     get_or_add_user_domain_role $admin_role $admin_user default
 
@@ -348,17 +350,6 @@ function create_keystone_accounts {
     # but ResellerAdmin is needed for a user to act as any project. The name of this
     # role is also configurable in swift-proxy.conf
     get_or_create_role ResellerAdmin
-
-    # The Member role is used by Horizon and Swift so we need to keep it:
-    local member_role="member"
-
-    # Capital Member role is legacy hard coded in Horizon / Swift
-    # configs. Keep it around.
-    get_or_create_role "Member"
-
-    # The reality is that the rest of the roles listed below honestly
-    # should work by symbolic names.
-    get_or_create_role $member_role
 
     # another_role demonstrates that an arbitrary role may be created and used
     # TODO(sleepsonthefloor): show how this can be used for rbac in the future!

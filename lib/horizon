@@ -87,7 +87,7 @@ function configure_horizon {
     _horizon_config_set $local_settings "" WEBROOT \"$HORIZON_APACHE_ROOT/\"
 
     _horizon_config_set $local_settings "" COMPRESS_OFFLINE True
-    _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_DEFAULT_ROLE \"Member\"
+    _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_DEFAULT_ROLE \"member\"
 
     _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
 
