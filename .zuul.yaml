@@ -19,10 +19,10 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-opensuse-423
+    name: devstack-single-node-opensuse-150
     nodes:
       - name: controller
-        label: opensuse-423
+        label: opensuse-150
     groups:
       - name: tempest
         nodes:
@@ -395,10 +395,10 @@
     voting: false
 
 - job:
-    name: devstack-platform-opensuse-423
+    name: devstack-platform-opensuse-150
     parent: tempest-full
-    description: openSUSE 43.2 platform test
-    nodeset: devstack-single-node-opensuse-423
+    description: openSUSE 15.0 platform test
+    nodeset: devstack-single-node-opensuse-150
     voting: false
 
 - job:
@@ -487,7 +487,7 @@
       jobs:
         - devstack
         - devstack-platform-centos-7
-        - devstack-platform-opensuse-423
+        - devstack-platform-opensuse-150
         - devstack-platform-opensuse-tumbleweed
         - devstack-platform-fedora-latest
         - devstack-multinode

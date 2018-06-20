@@ -374,8 +374,10 @@ function GetDistro {
     elif [[ "$os_VENDOR" =~ (openSUSE) ]]; then
         DISTRO="opensuse-$os_RELEASE"
         # Tumbleweed uses "n/a" as a codename, and the release is a datestring
-        # like 20180218, so not very useful.
-        [ "$os_CODENAME" = "n/a" ] && DISTRO="opensuse-tumbleweed"
+        # like 20180218, so not very useful. Leap however uses a release
+        # with a "dot", so for example 15.0
+        [ "$os_CODENAME" = "n/a" -a "$os_RELEASE" = "${os_RELEASE/\./}" ] && \
+            DISTRO="opensuse-tumbleweed"
     elif [[ "$os_VENDOR" =~ (SUSE LINUX) ]]; then
         # just use major release
         DISTRO="sle${os_RELEASE%.*}"
@@ -1376,7 +1378,7 @@ function zypper_install {
     [[ "$(id -u)" = "0" ]] && sudo="env"
     $sudo http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}" \
         no_proxy="${no_proxy:-}" \
-        zypper --non-interactive install --auto-agree-with-licenses "$@"
+        zypper --non-interactive install --auto-agree-with-licenses --no-recommends "$@"
 }
 
 function write_user_unit_file {
