@@ -1,0 +1,39 @@
+apache2
+apache2-dev
+bc
+bridge-utils
+bsdmainutils
+curl
+default-jre-headless  # NOPRIME
+g++
+gcc
+gettext  # used for compiling message catalogs
+git
+graphviz # needed for docs
+iputils-ping
+libapache2-mod-proxy-uwsgi
+libffi-dev # for pyOpenSSL
+libjpeg-dev # Pillow 3.0.0
+default-libmysqlclient-dev  # MySQL-python
+libpcre3-dev # for python-pcre
+libpq-dev  # psycopg2
+libssl-dev # for pyOpenSSL
+libsystemd-dev # for systemd-python
+libxml2-dev  # lxml
+libxslt1-dev  # lxml
+libyaml-dev
+lsof # useful when debugging
+openssh-server
+openssl
+pkg-config
+psmisc
+python2.7
+python-dev
+python-gdbm # needed for testr
+tar
+tcpdump
+unzip
+uuid-runtime
+wget
+wget
+zlib1g-dev

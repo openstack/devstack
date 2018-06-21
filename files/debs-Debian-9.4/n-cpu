@@ -1,0 +1,11 @@
+cryptsetup
+dosfstools
+genisoimage
+gir1.2-libosinfo-1.0
+lvm2 # NOPRIME
+netcat-openbsd
+open-iscsi
+python-guestfs # NOPRIME
+qemu-utils
+sg3-utils
+sysfsutils
