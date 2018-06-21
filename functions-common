@@ -1032,7 +1032,6 @@ function _get_package_dir {
     else
         exit_distro_not_supported "list of packages"
     fi
-    echo "testing for ${os_FULLRELEASE} package dir"
     if [ -d "${pkg_dir}-${os_FULLRELEASE}" ]; then
         pkg_dir="$pkg_dir-${os_FULLRELEASE}"
     fi
