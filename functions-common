@@ -350,11 +350,13 @@ function GetOSVersion {
     else
         os_PACKAGE="rpm"
     fi
+    os_FULLRELEASE="${os_VENDOR}-${os_RELEASE}"
 
     typeset -xr os_VENDOR
     typeset -xr os_RELEASE
     typeset -xr os_PACKAGE
     typeset -xr os_CODENAME
+    typeset -xr os_FULLRELEASE
 }
 
 # Translate the OS version values into common nomenclature
@@ -1029,6 +1031,10 @@ function _get_package_dir {
         pkg_dir=$base_dir/rpms-suse
     else
         exit_distro_not_supported "list of packages"
+    fi
+    echo "testing for ${os_FULLRELEASE} package dir"
+    if [ -d "${pkg_dir}-${os_FULLRELEASE}" ]; then
+        pkg_dir="$pkg_dir-${os_FULLRELEASE}"
     fi
     echo "$pkg_dir"
 }
