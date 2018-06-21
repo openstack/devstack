@@ -5,8 +5,9 @@ bridge-utils
 bsdmainutils
 curl
 default-jre-headless  # NOPRIME
-g++
-gcc
+#g++
+#gcc
+build-essential
 gettext  # used for compiling message catalogs
 git
 graphviz # needed for docs
