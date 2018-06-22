@@ -1,5 +1,5 @@
 iscsi-initiator-utils
 lvm2
 qemu-img
-scsi-target-utils # not:rhel7,f25,f26,f27 NOPRIME
-targetcli # dist:rhel7,f25,f26,f27 NOPRIME
+scsi-target-utils # not:rhel7,f25,f26,f27,f28 NOPRIME
+targetcli # dist:rhel7,f25,f26,f27,f28 NOPRIME

@@ -7,7 +7,7 @@ gawk
 genisoimage # required for config_drive
 iptables
 iputils
-kernel-modules # dist:f25,f26,f27
+kernel-modules # dist:f25,f26,f27,f28
 kpartx
 libxml2-python
 m2crypto

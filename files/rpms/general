@@ -9,9 +9,9 @@ git-core
 graphviz # needed only for docs
 httpd
 httpd-devel
-iptables-services  # NOPRIME f25,f26,f27
+iptables-services  # NOPRIME f25,f26,f27,f28
 java-1.7.0-openjdk-headless  # NOPRIME rhel7
-java-1.8.0-openjdk-headless  # NOPRIME f25,f26,f27
+java-1.8.0-openjdk-headless  # NOPRIME f25,f26,f27,f28
 libffi-devel
 libjpeg-turbo-devel # Pillow 3.0.0
 libxml2-devel # lxml
