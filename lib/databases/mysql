@@ -84,7 +84,11 @@ function configure_database_mysql {
     # Set the root password - only works the first time. For Ubuntu, we already
     # did that with debconf before installing the package, but we still try,
     # because the package might have been installed already.
+    # Remove the 'unix_socket' entry from the user table, as it prevents
+    # subsequent logins.
+    (echo 'update user set plugin = "";' | sudo mysql mysql) || true
     sudo mysqladmin -u root password $DATABASE_PASSWORD || true
+    sudo mysqladmin -p$DATABASE_PASSWORD flush-privileges
 
     # Update the DB to give user '$DATABASE_USER'@'%' full control of the all databases:
     sudo mysql -uroot -p$DATABASE_PASSWORD -h127.0.0.1 -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
