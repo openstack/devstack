@@ -1,4 +1,2 @@
-Django
 httpd # NOPRIME
 mod_wsgi  # NOPRIME
-pyxattr
