@@ -2128,7 +2128,7 @@ function python_version {
 function python3_version {
     local python3_version
     python3_version=$(_get_python_version python3)
-    echo "python${python_version}"
+    echo "python${python3_version}"
 }
 
 
