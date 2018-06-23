@@ -1,0 +1,6 @@
+curl
+liberasurecode-dev
+make
+memcached
+sqlite3
+xfsprogs
