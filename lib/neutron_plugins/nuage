@@ -8,10 +8,11 @@ _XTRACE_NEUTRON_NU=$(set +o | grep xtrace)
 set +o xtrace
 
 function neutron_plugin_create_nova_conf {
+    local conf="$1"
     NOVA_OVS_BRIDGE=${NOVA_OVS_BRIDGE:-"br-int"}
-    iniset $NOVA_CONF neutron ovs_bridge $NOVA_OVS_BRIDGE
+    iniset $conf neutron ovs_bridge $NOVA_OVS_BRIDGE
     LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
-    iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
+    iniset $conf DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
 }
 
 function neutron_plugin_install_agent_packages {

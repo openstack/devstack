@@ -325,25 +325,27 @@ function configure_neutron_rootwrap {
 }
 
 # Make Neutron-required changes to nova.conf
+# Takes a single argument which is the config file to update.
 function configure_neutron_nova_new {
-    iniset $NOVA_CONF DEFAULT use_neutron True
-    iniset $NOVA_CONF neutron auth_type "password"
-    iniset $NOVA_CONF neutron auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $NOVA_CONF neutron username neutron
-    iniset $NOVA_CONF neutron password "$SERVICE_PASSWORD"
-    iniset $NOVA_CONF neutron user_domain_name "Default"
-    iniset $NOVA_CONF neutron project_name "$SERVICE_TENANT_NAME"
-    iniset $NOVA_CONF neutron project_domain_name "Default"
-    iniset $NOVA_CONF neutron auth_strategy $NEUTRON_AUTH_STRATEGY
-    iniset $NOVA_CONF neutron region_name "$REGION_NAME"
+    local conf="$1"
+    iniset $conf DEFAULT use_neutron True
+    iniset $conf neutron auth_type "password"
+    iniset $conf neutron auth_url "$KEYSTONE_SERVICE_URI"
+    iniset $conf neutron username neutron
+    iniset $conf neutron password "$SERVICE_PASSWORD"
+    iniset $conf neutron user_domain_name "Default"
+    iniset $conf neutron project_name "$SERVICE_TENANT_NAME"
+    iniset $conf neutron project_domain_name "Default"
+    iniset $conf neutron auth_strategy $NEUTRON_AUTH_STRATEGY
+    iniset $conf neutron region_name "$REGION_NAME"
 
-    iniset $NOVA_CONF DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
+    iniset $conf DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
 
     # optionally set options in nova_conf
-    neutron_plugin_create_nova_conf
+    neutron_plugin_create_nova_conf $conf
 
     if is_service_enabled neutron-metadata-agent; then
-        iniset $NOVA_CONF neutron service_metadata_proxy "True"
+        iniset $conf neutron service_metadata_proxy "True"
     fi
 
 }
@@ -568,9 +570,23 @@ function configure_neutron {
 function configure_neutron_nova {
     if is_neutron_legacy_enabled; then
         # Call back to old function
-        create_nova_conf_neutron "$@"
+        create_nova_conf_neutron $NOVA_CONF
+        if [[ "${CELLSV2_SETUP}" == "superconductor" ]]; then
+            for i in $(seq 1 $NOVA_NUM_CELLS); do
+                local conf
+                conf=$(conductor_conf $i)
+                create_nova_conf_neutron $conf
+            done
+        fi
     else
-        configure_neutron_nova_new "$@"
+        configure_neutron_nova_new $NOVA_CONF
+        if [[ "${CELLSV2_SETUP}" == "superconductor" ]]; then
+            for i in $(seq 1 $NOVA_NUM_CELLS); do
+                local conf
+                conf=$(conductor_conf $i)
+                configure_neutron_nova_new $conf
+            done
+        fi
     fi
 }
 

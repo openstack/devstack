@@ -366,31 +366,32 @@ function configure_mutnauq {
 }
 
 function create_nova_conf_neutron {
-    iniset $NOVA_CONF DEFAULT use_neutron True
-    iniset $NOVA_CONF neutron auth_type "password"
-    iniset $NOVA_CONF neutron auth_url "$KEYSTONE_AUTH_URI"
-    iniset $NOVA_CONF neutron username "$Q_ADMIN_USERNAME"
-    iniset $NOVA_CONF neutron password "$SERVICE_PASSWORD"
-    iniset $NOVA_CONF neutron user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $NOVA_CONF neutron project_name "$SERVICE_PROJECT_NAME"
-    iniset $NOVA_CONF neutron project_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $NOVA_CONF neutron auth_strategy "$Q_AUTH_STRATEGY"
-    iniset $NOVA_CONF neutron region_name "$REGION_NAME"
+    local conf="$1"
+    iniset $conf DEFAULT use_neutron True
+    iniset $conf neutron auth_type "password"
+    iniset $conf neutron auth_url "$KEYSTONE_AUTH_URI"
+    iniset $conf neutron username "$Q_ADMIN_USERNAME"
+    iniset $conf neutron password "$SERVICE_PASSWORD"
+    iniset $conf neutron user_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $conf neutron project_name "$SERVICE_PROJECT_NAME"
+    iniset $conf neutron project_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $conf neutron auth_strategy "$Q_AUTH_STRATEGY"
+    iniset $conf neutron region_name "$REGION_NAME"
 
     if [[ "$Q_USE_SECGROUP" == "True" ]]; then
         LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
-        iniset $NOVA_CONF DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
+        iniset $conf DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
     fi
 
     # optionally set options in nova_conf
-    neutron_plugin_create_nova_conf
+    neutron_plugin_create_nova_conf $conf
 
     if is_service_enabled q-meta; then
-        iniset $NOVA_CONF neutron service_metadata_proxy "True"
+        iniset $conf neutron service_metadata_proxy "True"
     fi
 
-    iniset $NOVA_CONF DEFAULT vif_plugging_is_fatal "$VIF_PLUGGING_IS_FATAL"
-    iniset $NOVA_CONF DEFAULT vif_plugging_timeout "$VIF_PLUGGING_TIMEOUT"
+    iniset $conf DEFAULT vif_plugging_is_fatal "$VIF_PLUGGING_IS_FATAL"
+    iniset $conf DEFAULT vif_plugging_timeout "$VIF_PLUGGING_TIMEOUT"
 }
 
 # create_mutnauq_accounts() - Set up common required neutron accounts
