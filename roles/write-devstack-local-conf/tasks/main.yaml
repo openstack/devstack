@@ -10,3 +10,4 @@
     local_conf: "{{ devstack_local_conf|default(omit) }}"
     base_dir: "{{ devstack_base_dir|default(omit) }}"
     projects: "{{ zuul.projects }}"
+    project: "{{ zuul.project }}"

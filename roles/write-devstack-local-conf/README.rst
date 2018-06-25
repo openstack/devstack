@@ -22,11 +22,12 @@ Write the local.conf file for use by devstack
 
    As a special case, the variable ``LIBS_FROM_GIT`` will be
    constructed automatically from the projects which appear in the
-   ``required-projects`` list defined by the job.  To instruct
-   devstack to install a library from source rather than pypi, simply
-   add that library to the job's ``required-projects`` list.  To
-   override the automatically-generated value, set ``LIBS_FROM_GIT``
-   in ``devstack_localrc`` to the desired value.
+   ``required-projects`` list defined by the job plus the project of
+   the change under test.  To instruct devstack to install a library
+   from source rather than pypi, simply add that library to the job's
+   ``required-projects`` list.  To override the
+   automatically-generated value, set ``LIBS_FROM_GIT`` in
+   ``devstack_localrc`` to the desired value.
 
 .. zuul:rolevar:: devstack_local_conf
    :type: dict
