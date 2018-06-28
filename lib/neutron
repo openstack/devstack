@@ -325,9 +325,10 @@ function configure_neutron_rootwrap {
 }
 
 # Make Neutron-required changes to nova.conf
-# Takes a single argument which is the config file to update.
+# Takes a single optional argument which is the config file to update,
+# if not passed $NOVA_CONF is used.
 function configure_neutron_nova_new {
-    local conf="$1"
+    local conf=${1:-$NOVA_CONF}
     iniset $conf DEFAULT use_neutron True
     iniset $conf neutron auth_type "password"
     iniset $conf neutron auth_url "$KEYSTONE_SERVICE_URI"
