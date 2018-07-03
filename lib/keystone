@@ -49,7 +49,6 @@ fi
 
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
-KEYSTONE_PASTE_INI=${KEYSTONE_PASTE_INI:-$KEYSTONE_CONF_DIR/keystone-paste.ini}
 KEYSTONE_PUBLIC_UWSGI_CONF=$KEYSTONE_CONF_DIR/keystone-uwsgi-public.ini
 KEYSTONE_ADMIN_UWSGI_CONF=$KEYSTONE_CONF_DIR/keystone-uwsgi-admin.ini
 KEYSTONE_PUBLIC_UWSGI=$KEYSTONE_BIN_DIR/keystone-wsgi-public
@@ -203,23 +202,7 @@ function configure_keystone {
 
     if [[ "$KEYSTONE_CONF_DIR" != "$KEYSTONE_DIR/etc" ]]; then
         install -m 600 /dev/null $KEYSTONE_CONF
-        if [[ -f "$KEYSTONE_DIR/etc/keystone-paste.ini" ]]; then
-            cp -p "$KEYSTONE_DIR/etc/keystone-paste.ini" "$KEYSTONE_PASTE_INI"
-        fi
     fi
-    if [[ -f "$KEYSTONE_PASTE_INI" ]]; then
-        iniset "$KEYSTONE_CONF" paste_deploy config_file "$KEYSTONE_PASTE_INI"
-    else
-        # compatibility with mixed cfg and paste.deploy configuration
-        KEYSTONE_PASTE_INI="$KEYSTONE_CONF"
-    fi
-
-    if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
-        # Only Identity v3 API should be available; then disable v2 pipelines
-        inidelete $KEYSTONE_PASTE_INI composite:main \\/v2.0
-        inidelete $KEYSTONE_PASTE_INI composite:admin \\/v2.0
-    fi
-
     # Populate ``keystone.conf``
     if is_service_enabled ldap; then
         iniset $KEYSTONE_CONF identity domain_config_dir "$KEYSTONE_CONF_DIR/domains"
