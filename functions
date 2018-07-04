@@ -282,7 +282,6 @@ function upload_image {
             image create \
             "$image_name" --public \
             --container-format=bare --disk-format=ploop \
-            --property hypervisor_type=vz \
             --property vm_mode=$vm_mode < "${image}"
         return
     fi
