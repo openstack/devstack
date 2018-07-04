@@ -49,7 +49,7 @@ function configure_elasticsearch {
 
 function _check_elasticsearch_ready {
     # poll elasticsearch to see if it's started
-    if ! wait_for_service 30 http://localhost:9200; then
+    if ! wait_for_service 120 http://localhost:9200; then
         die $LINENO "Maximum timeout reached. Could not connect to ElasticSearch"
     fi
 }
