@@ -103,10 +103,10 @@
       job.group-vars.peers, which is what is used by multi node jobs for subnode
       nodes (everything but the controller).
     required-projects:
-      - openstack-dev/devstack
+      - git.openstack.org/openstack-dev/devstack
     roles:
-      - zuul: openstack-infra/devstack-gate
-      - zuul: openstack-infra/openstack-zuul-jobs
+      - zuul: git.openstack.org/openstack-infra/devstack-gate
+      - zuul: git.openstack.org/openstack-infra/openstack-zuul-jobs
     vars:
       devstack_localrc:
         DATABASE_PASSWORD: secretdatabase
@@ -211,7 +211,7 @@
       less than the normal minimum set of required-projects.
     nodeset: openstack-single-node
     required-projects:
-      - openstack/requirements
+      - git.openstack.org/openstack/requirements
     vars:
       devstack_localrc:
         # Multinode specific settings
@@ -270,12 +270,12 @@
       and extended.
     nodeset: openstack-single-node
     required-projects:
-      - openstack/cinder
-      - openstack/glance
-      - openstack/keystone
-      - openstack/neutron
-      - openstack/nova
-      - openstack/swift
+      - git.openstack.org/openstack/cinder
+      - git.openstack.org/openstack/glance
+      - git.openstack.org/openstack/keystone
+      - git.openstack.org/openstack/neutron
+      - git.openstack.org/openstack/nova
+      - git.openstack.org/openstack/swift
     timeout: 7200
     vars:
       devstack_localrc:
