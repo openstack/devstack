@@ -93,7 +93,7 @@ function configure_database_mysql {
 
     # Change bind-address from localhost (127.0.0.1) to any (::) and
     # set default db type to InnoDB
-    iniset -sudo $my_conf mysqld bind-address "$SERVICE_LISTEN_ADDRESS"
+    iniset -sudo $my_conf mysqld bind-address "$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)"
     iniset -sudo $my_conf mysqld sql_mode TRADITIONAL
     iniset -sudo $my_conf mysqld default-storage-engine InnoDB
     iniset -sudo $my_conf mysqld max_connections 1024

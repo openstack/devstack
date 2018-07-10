@@ -2052,6 +2052,11 @@ function is_ipv4_address {
     fi
 }
 
+# Remove "[]" around urlquoted IPv6 addresses
+function ipv6_unquote {
+    echo $1 | tr -d []
+}
+
 # Gracefully cp only if source file/dir exists
 # cp_it source destination
 function cp_it {
