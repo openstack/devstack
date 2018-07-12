@@ -100,6 +100,7 @@ monasca-tempest-plugin                 `git://git.openstack.org/openstack/monasc
 monasca-transform                      `git://git.openstack.org/openstack/monasca-transform <https://git.openstack.org/cgit/openstack/monasca-transform>`__
 murano                                 `git://git.openstack.org/openstack/murano <https://git.openstack.org/cgit/openstack/murano>`__
 networking-6wind                       `git://git.openstack.org/openstack/networking-6wind <https://git.openstack.org/cgit/openstack/networking-6wind>`__
+networking-ansible                     `git://git.openstack.org/openstack/networking-ansible <https://git.openstack.org/cgit/openstack/networking-ansible>`__
 networking-arista                      `git://git.openstack.org/openstack/networking-arista <https://git.openstack.org/cgit/openstack/networking-arista>`__
 networking-bagpipe                     `git://git.openstack.org/openstack/networking-bagpipe <https://git.openstack.org/cgit/openstack/networking-bagpipe>`__
 networking-baremetal                   `git://git.openstack.org/openstack/networking-baremetal <https://git.openstack.org/cgit/openstack/networking-baremetal>`__
