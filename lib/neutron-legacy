@@ -633,7 +633,7 @@ function _move_neutron_addresses_route {
             IP_UP="sudo ip link set $to_intf up"
             if [[ "$af" == "inet" ]]; then
                 IP=$(echo $IP_BRD | awk '{ print $1; exit }' | grep -o -E '(.*)/' | cut -d "/" -f1)
-                ARP_CMD="arping -A -c 3 -w 4.5 -I $to_intf $IP "
+                ARP_CMD="sudo arping -A -c 3 -w 4.5 -I $to_intf $IP "
             fi
         fi
 
