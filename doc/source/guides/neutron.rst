@@ -376,8 +376,8 @@ controller node.
 
         ## Neutron options
         Q_USE_SECGROUP=True
-        ENABLE_PROJECT_VLANS=True
-        PROJECT_VLAN_RANGE=3001:4000
+        ENABLE_TENANT_VLANS=True
+        TENANT_VLAN_RANGE=3001:4000
         PHYSICAL_NETWORK=default
         OVS_PHYSICAL_BRIDGE=br-ex
 
