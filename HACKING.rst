@@ -47,8 +47,7 @@ The DevStack repo generally keeps all of the primary scripts at the root
 level.
 
 ``doc`` - Contains the Sphinx source for the documentation.
-``tools/build_docs.sh`` is used to generate the HTML versions of the
-DevStack scripts.  A complete doc build can be run with ``tox -edocs``.
+A complete doc build can be run with ``tox -edocs``.
 
 ``exercises`` - Contains the test scripts used to sanity-check and
 demonstrate some OpenStack functions. These scripts know how to exit
