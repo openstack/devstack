@@ -268,7 +268,12 @@ function configure_cinder {
         configure_cinder_image_volume_cache
     fi
 
-    if is_service_enabled swift; then
+    if is_service_enabled c-bak; then
+        # NOTE(mriedem): The default backup driver uses swift and if we're
+        # on a subnode we might not know if swift is enabled, but chances are
+        # good that it is on the controller so configure the backup service
+        # to use it. If we want to configure the backup service to use
+        # a non-swift driver, we'll likely need environment variables.
         iniset $CINDER_CONF DEFAULT backup_swift_url "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_"
     fi
 
