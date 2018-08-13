@@ -279,8 +279,8 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG identity-feature-enabled api_v2 False
     fi
     iniset $TEMPEST_CONFIG identity auth_version ${TEMPEST_AUTH_VERSION:-v3}
-    if [[ "$TEMPEST_AUTH_VERSION" != "v2.0" ]]; then
-        # we're going to disable v2 admin unless we're using v2.0 by default.
+    if [[ "$TEMPEST_AUTH_VERSION" != "v2" ]]; then
+        # we're going to disable v2 admin unless we're using v2 by default.
         iniset $TEMPEST_CONFIG identity-feature-enabled api_v2_admin False
     fi
 
