@@ -1,7 +1,9 @@
 *~
 .*.sw?
 *.log
-*.log.[1-9]
+*-log
+*.log.*
+*-log.*
 *.pem
 *.pyc
 .localrc.auto
