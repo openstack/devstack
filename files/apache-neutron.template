@@ -1,0 +1,36 @@
+Listen %PUBLICPORT%
+LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" neutron_combined
+
+<Directory %NEUTRON_BIN%>
+    Require all granted
+</Directory>
+
+<VirtualHost *:%PUBLICPORT%>
+    WSGIDaemonProcess neutron-server processes=%APIWORKERS% threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
+    WSGIProcessGroup neutron-server
+    WSGIScriptAlias / %NEUTRON_BIN%/neutron-api
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    ErrorLogFormat "%M"
+    ErrorLog /var/log/%APACHE_NAME%/neutron.log
+    CustomLog /var/log/%APACHE_NAME%/neutron_access.log neutron_combined
+    %SSLENGINE%
+    %SSLCERTFILE%
+    %SSLKEYFILE%
+</VirtualHost>
+
+
+%SSLLISTEN%<VirtualHost *:443>
+%SSLLISTEN%    %SSLENGINE%
+%SSLLISTEN%    %SSLCERTFILE%
+%SSLLISTEN%    %SSLKEYFILE%
+%SSLLISTEN%</VirtualHost>
+
+Alias /networking %NEUTRON_BIN%/neutron-api
+<Location /networking>
+    SetHandler wsgi-script
+    Options +ExecCGI
+    WSGIProcessGroup neutron-server
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+</Location>
