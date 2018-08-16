@@ -158,6 +158,7 @@ panko                                  `git://git.openstack.org/openstack/panko 
 patrole                                `git://git.openstack.org/openstack/patrole <https://git.openstack.org/cgit/openstack/patrole>`__
 picasso                                `git://git.openstack.org/openstack/picasso <https://git.openstack.org/cgit/openstack/picasso>`__
 qinling                                `git://git.openstack.org/openstack/qinling <https://git.openstack.org/cgit/openstack/qinling>`__
+qinling-dashboard                      `git://git.openstack.org/openstack/qinling-dashboard <https://git.openstack.org/cgit/openstack/qinling-dashboard>`__
 rally                                  `git://git.openstack.org/openstack/rally <https://git.openstack.org/cgit/openstack/rally>`__
 rally-openstack                        `git://git.openstack.org/openstack/rally-openstack <https://git.openstack.org/cgit/openstack/rally-openstack>`__
 sahara                                 `git://git.openstack.org/openstack/sahara <https://git.openstack.org/cgit/openstack/sahara>`__
