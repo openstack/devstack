@@ -581,7 +581,7 @@ function configure_tempest {
     tox -evenv-tempest -- pip install -c u-c-m.txt -r requirements.txt
 
     # Auth:
-    iniset $TEMPEST_CONFIG auth tempest_roles "Member"
+    iniset $TEMPEST_CONFIG auth tempest_roles "member"
     if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
         if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
             tox -evenv-tempest -- tempest-account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-tenant-name $admin_project_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
