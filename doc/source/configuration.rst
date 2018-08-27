@@ -665,8 +665,7 @@ following to your ``localrc`` section:
     enable_service n-cell
 
 Be aware that there are some features currently missing in cells, one
-notable one being security groups.  The exercises have been patched to
-disable functionality not supported by cells.
+notable one being security groups.
 
 Cinder
 ~~~~~~
@@ -728,44 +727,6 @@ use the v3 API. It is possible to setup keystone without v2 API, by doing:
 ::
 
     ENABLE_IDENTITY_V2=False
-
-Exercises
-~~~~~~~~~
-
-``exerciserc`` is used to configure settings for the exercise scripts.
-The values shown below are the default values. These can all be
-overridden by setting them in the ``localrc`` section.
-
-* Max time to wait while vm goes from build to active state
-
-    ::
-
-        ACTIVE_TIMEOUT==30
-
-* Max time to wait for proper IP association and dis-association.
-
-    ::
-
-        ASSOCIATE_TIMEOUT=15
-
-* Max time till the vm is bootable
-
-    ::
-
-        BOOT_TIMEOUT=30
-
-* Max time from run instance command until it is running
-
-    ::
-
-        RUNNING_TIMEOUT=$(($BOOT_TIMEOUT + $ACTIVE_TIMEOUT))
-
-* Max time to wait for a vm to terminate
-
-    ::
-
-        TERMINATE_TIMEOUT=30
-
 
 .. _arch-configuration:
 
