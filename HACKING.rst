@@ -49,10 +49,6 @@ level.
 ``doc`` - Contains the Sphinx source for the documentation.
 A complete doc build can be run with ``tox -edocs``.
 
-``exercises`` - Contains the test scripts used to sanity-check and
-demonstrate some OpenStack functions. These scripts know how to exit
-early or skip services that are not enabled.
-
 ``extras.d`` - Contains the dispatch scripts called by the hooks in
 ``stack.sh``, ``unstack.sh`` and ``clean.sh``. See :doc:`the plugins
 docs <plugins>` for more information.
@@ -180,88 +176,6 @@ uses Markdown headers to divide the script into logical sections.
 The script used to drive <code>shocco</code> is <code>tools/build_docs.sh</code>.
 The complete docs build is also handled with <code>tox -edocs</code> per the
 OpenStack project standard.
-
-
-Exercises
----------
-
-The scripts in the exercises directory are meant to 1) perform basic operational
-checks on certain aspects of OpenStack; and b) document the use of the
-OpenStack command-line clients.
-
-In addition to the guidelines above, exercise scripts MUST follow the structure
-outlined here.  ``swift.sh`` is perhaps the clearest example of these guidelines.
-These scripts are executed serially by ``exercise.sh`` in testing situations.
-
-* Begin and end with a banner that stands out in a sea of script logs to aid
-  in debugging failures, particularly in automated testing situations.  If the
-  end banner is not displayed, the script ended prematurely and can be assumed
-  to have failed.
-
-  ::
-
-    echo "**************************************************"
-    echo "Begin DevStack Exercise: $0"
-    echo "**************************************************"
-    ...
-    set +o xtrace
-    echo "**************************************************"
-    echo "End DevStack Exercise: $0"
-    echo "**************************************************"
-
-* The scripts will generally have the shell ``xtrace`` attribute set to display
-  the actual commands being executed, and the ``errexit`` attribute set to exit
-  the script on non-zero exit codes::
-
-    # This script exits on an error so that errors don't compound and you see
-    # only the first error that occurred.
-    set -o errexit
-
-    # Print the commands being run so that we can see the command that triggers
-    # an error.  It is also useful for following as the install occurs.
-    set -o xtrace
-
-* Settings and configuration are stored in ``exerciserc``, which must be
-  sourced after ``openrc`` or ``stackrc``::
-
-    # Import exercise configuration
-    source $TOP_DIR/exerciserc
-
-* There are a couple of helper functions in the common ``functions`` sub-script
-  that will check for non-zero exit codes and unset environment variables and
-  print a message and exit the script.  These should be called after most client
-  commands that are not otherwise checked to short-circuit long timeouts
-  (instance boot failure, for example)::
-
-    swift post $CONTAINER
-    die_if_error "Failure creating container $CONTAINER"
-
-    FLOATING_IP=`euca-allocate-address | cut -f2`
-    die_if_not_set FLOATING_IP "Failure allocating floating IP"
-
-* If you want an exercise to be skipped when for example a service wasn't
-  enabled for the exercise to be run, you can exit your exercise with the
-  special exitcode 55 and it will be detected as skipped.
-
-* The exercise scripts should only use the various OpenStack client binaries to
-  interact with OpenStack.  This specifically excludes any ``*-manage`` tools
-  as those assume direct access to configuration and databases, as well as direct
-  database access from the exercise itself.
-
-* If specific configuration needs to be present for the exercise to complete,
-  it should be staged in ``stack.sh``, or called from ``stack.sh``.
-
-* The ``OS_*`` environment variables should be the only ones used for all
-  authentication to OpenStack clients as documented in the CLIAuth_ wiki page.
-
-.. _CLIAuth: https://wiki.openstack.org/CLIAuth
-
-* The exercise MUST clean up after itself if successful.  If it is not successful,
-  it is assumed that state will be left behind; this allows a chance for developers
-  to look around and attempt to debug the problem.  The exercise SHOULD clean up
-  or graciously handle possible artifacts left over from previous runs if executed
-  again.  It is acceptable to require a reboot or even a re-install of DevStack
-  to restore a clean test environment.
 
 
 Bash Style Guidelines

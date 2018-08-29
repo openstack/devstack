@@ -171,6 +171,7 @@ slogging                               `git://git.openstack.org/openstack/sloggi
 solum                                  `git://git.openstack.org/openstack/solum <https://git.openstack.org/cgit/openstack/solum>`__
 stackube                               `git://git.openstack.org/openstack/stackube <https://git.openstack.org/cgit/openstack/stackube>`__
 storlets                               `git://git.openstack.org/openstack/storlets <https://git.openstack.org/cgit/openstack/storlets>`__
+stx-config                             `git://git.openstack.org/openstack/stx-config <https://git.openstack.org/cgit/openstack/stx-config>`__
 tacker                                 `git://git.openstack.org/openstack/tacker <https://git.openstack.org/cgit/openstack/tacker>`__
 tap-as-a-service                       `git://git.openstack.org/openstack/tap-as-a-service <https://git.openstack.org/cgit/openstack/tap-as-a-service>`__
 tap-as-a-service-dashboard             `git://git.openstack.org/openstack/tap-as-a-service-dashboard <https://git.openstack.org/cgit/openstack/tap-as-a-service-dashboard>`__

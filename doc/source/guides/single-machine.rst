@@ -127,7 +127,3 @@ computers on the local network. In this example that would be
 http://192.168.1.201/ for the dashboard (aka Horizon). Launch VMs and if
 you give them floating IPs and security group access those VMs will be
 accessible from other machines on your network.
-
-Some examples of using the OpenStack command-line clients ``nova`` and
-``glance`` are in the shakedown scripts in ``devstack/exercises``.
-``exercise.sh`` will run all of those scripts and report on the results.

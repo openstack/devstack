@@ -75,11 +75,3 @@ Node Configurations
 
 -  single node
 -  multi-node configurations as are tested by the gate
-
-Exercises
----------
-
-The DevStack exercise scripts are no longer used as integration and gate
-testing as that job has transitioned to Tempest. They are still
-maintained as a demonstrations of using OpenStack from the command line
-and for quick operational testing.
