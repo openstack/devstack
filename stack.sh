@@ -1442,6 +1442,12 @@ if is_service_enabled n-api; then
         # environment is up.
         echo_summary "SKIPPING Cell setup because n-cpu is not enabled. You will have to do this manually before you have a working environment."
     fi
+    # Run the nova-status upgrade check command which can also be used
+    # to verify the base install. Note that this is good enough in a
+    # single node deployment, but in a multi-node setup it won't verify
+    # any subnodes - that would have to be driven from whatever tooling
+    # is deploying the subnodes, e.g. the zuul v3 devstack-multinode job.
+    $NOVA_BIN_DIR/nova-status --config-file $NOVA_CONF upgrade check
 fi
 
 # Run local script
