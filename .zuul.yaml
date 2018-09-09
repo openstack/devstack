@@ -482,7 +482,7 @@
     templates:
       - integrated-gate
       - integrated-gate-py35
-      - publish-openstack-sphinx-docs
+      - publish-openstack-docs-pti
     check:
       jobs:
         - devstack
