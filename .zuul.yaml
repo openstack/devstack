@@ -1,0 +1,80 @@
+- project:
+    templates:
+      - integrated-gate
+      - integrated-gate-py35
+      - publish-openstack-sphinx-docs
+    check:
+      jobs:
+        - openstack-tox-bashate
+        - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
+            voting: false
+        - legacy-swift-dsvm-functional:
+            voting: false
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-grenade:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-grenade-multinode:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-tempest-linuxbridge:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - tempest-multinode-full:
+            voting: false
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+    gate:
+      jobs:
+        - openstack-tox-bashate
+        - neutron-grenade-multinode:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-tempest-linuxbridge:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-grenade:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+    experimental:
+      jobs:
+        - legacy-tempest-dsvm-full-devstack-plugin-ceph:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-tempest-dvr:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - legacy-tempest-dsvm-neutron-dvr-multinode-full:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-tempest-dvr-ha-multinode-full:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - legacy-tempest-dsvm-lvm-multibackend:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - legacy-tempest-dsvm-neutron-pg-full:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+    periodic:
+      jobs:
+        - legacy-periodic-tempest-dsvm-oslo-latest-full-master:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+
