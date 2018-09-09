@@ -83,46 +83,46 @@
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
       zuul_copy_output:
-        '{{ devstack_conf_dir }}/local.conf': 'logs'
-        '{{ devstack_conf_dir }}/localrc': 'logs'
-        '{{ devstack_conf_dir }}/.localrc.auto': 'logs'
-        '{{ devstack_conf_dir }}/.stackenv': 'logs'
-        '{{ devstack_log_dir }}/dstat-csv.log': 'logs'
-        '{{ devstack_log_dir }}/devstacklog.txt': 'logs'
-        '{{ devstack_log_dir }}/devstacklog.txt.summary': 'logs'
-        '{{ devstack_full_log}}': 'logs'
-        '{{ stage_dir }}/verify_tempest_conf.log': 'logs'
-        '{{ stage_dir }}/apache': 'logs'
-        '{{ stage_dir }}/apache_config': 'logs'
-        '{{ stage_dir }}/etc': 'logs'
-        '/var/log/rabbitmq': 'logs'
-        '/var/log/postgresql': 'logs'
-        '/var/log/mysql.err': 'logs'
-        '/var/log/mysql.log': 'logs'
-        '/var/log/libvirt': 'logs'
-        '/etc/sudoers': 'logs'
-        '/etc/sudoers.d': 'logs'
-        '{{ stage_dir }}/iptables.txt': 'logs'
-        '{{ stage_dir }}/df.txt': 'logs'
-        '{{ stage_dir }}/pip2-freeze.txt': 'logs'
-        '{{ stage_dir }}/pip3-freeze.txt': 'logs'
-        '{{ stage_dir }}/dpkg-l.txt': 'logs'
-        '{{ stage_dir }}/rpm-qa.txt': 'logs'
-        '{{ stage_dir }}/core': 'logs'
-        '{{ stage_dir }}/listen53.txt': 'logs'
-        '{{ stage_dir }}/deprecations.log': 'logs'
-        '/var/log/ceph': 'logs'
-        '/var/log/openvswitch': 'logs'
-        '/var/log/glusterfs': 'logs'
-        '/etc/glusterfs/glusterd.vol': 'logs'
-        '/etc/resolv.conf': 'logs'
-        '/var/log/unbound.log': 'logs'
+        '{{ devstack_conf_dir }}/local.conf': logs
+        '{{ devstack_conf_dir }}/localrc': logs
+        '{{ devstack_conf_dir }}/.localrc.auto': logs
+        '{{ devstack_conf_dir }}/.stackenv': logs
+        '{{ devstack_log_dir }}/dstat-csv.log': logs
+        '{{ devstack_log_dir }}/devstacklog.txt': logs
+        '{{ devstack_log_dir }}/devstacklog.txt.summary': logs
+        '{{ devstack_full_log}}': logs
+        '{{ stage_dir }}/verify_tempest_conf.log': logs
+        '{{ stage_dir }}/apache': logs
+        '{{ stage_dir }}/apache_config': logs
+        '{{ stage_dir }}/etc': logs
+        /var/log/rabbitmq: logs
+        /var/log/postgresql: logs
+        /var/log/mysql.err: logs
+        /var/log/mysql.log: logs
+        /var/log/libvirt: logs
+        /etc/sudoers: logs
+        /etc/sudoers.d: logs
+        '{{ stage_dir }}/iptables.txt': logs
+        '{{ stage_dir }}/df.txt': logs
+        '{{ stage_dir }}/pip2-freeze.txt': logs
+        '{{ stage_dir }}/pip3-freeze.txt': logs
+        '{{ stage_dir }}/dpkg-l.txt': logs
+        '{{ stage_dir }}/rpm-qa.txt': logs
+        '{{ stage_dir }}/core': logs
+        '{{ stage_dir }}/listen53.txt': logs
+        '{{ stage_dir }}/deprecations.log': logs
+        /var/log/ceph: logs
+        /var/log/openvswitch: logs
+        /var/log/glusterfs: logs
+        /etc/glusterfs/glusterd.vol: logs
+        /etc/resolv.conf: logs
+        /var/log/unbound.log: logs
       extensions_to_txt:
-        conf: True
-        log: True
-        localrc: True
-        stackenv: True
-        auto: True
+        conf: true
+        log: true
+        localrc: true
+        stackenv: true
+        auto: true
     group-vars:
       subnode:
         test_matrix_role: subnode
@@ -222,7 +222,7 @@
         SWIFT_START_ALL_SERVICES: false
         SWIFT_HASH: 1234123412341234
         CINDER_PERIODIC_INTERVAL: 10
-        DEBUG_LIBVIRT_COREDUMPS: True
+        DEBUG_LIBVIRT_COREDUMPS: true
         NOVA_VNC_ENABLED: true
         VNCSERVER_LISTEN: 0.0.0.0
         VNCSERVER_PROXYCLIENT_ADDRESS: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
@@ -230,7 +230,7 @@
         post-config:
           $NEUTRON_CONF:
             DEFAULT:
-              global_physnet_mtu: "{{ external_bridge_mtu }}"
+              global_physnet_mtu: '{{ external_bridge_mtu }}'
       devstack_services:
         base: true
         # We need this explicitly here to trigger the sync of the CA data
@@ -368,10 +368,84 @@
     run: playbooks/tox/run.yaml
 
 - project:
+    templates:
+      - integrated-gate
+      - integrated-gate-py35
+      - publish-openstack-sphinx-docs
     check:
       jobs:
         - devstack
         - devstack-multinode
+        - openstack-tox-bashate
+        - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
+            voting: false
+        - legacy-swift-dsvm-functional:
+            voting: false
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-grenade:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-grenade-multinode:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-tempest-linuxbridge:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - tempest-multinode-full:
+            voting: false
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
     gate:
       jobs:
         - devstack
+        - openstack-tox-bashate
+        - neutron-grenade-multinode:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-tempest-linuxbridge:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-grenade:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+    experimental:
+      jobs:
+        - legacy-tempest-dsvm-full-devstack-plugin-ceph:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - legacy-tempest-dsvm-py35-full-devstack-plugin-ceph:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-tempest-dvr:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - legacy-tempest-dsvm-neutron-dvr-multinode-full:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - neutron-tempest-dvr-ha-multinode-full:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - legacy-tempest-dsvm-lvm-multibackend:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - legacy-tempest-dsvm-neutron-pg-full:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+
+
