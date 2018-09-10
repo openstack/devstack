@@ -242,6 +242,9 @@ function configure_tempest {
     # and the public_network_id should not be set.
     if [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]] && is_networking_extension_supported 'external-net'; then
         public_network_id=$(openstack network show -f value -c id $PUBLIC_NETWORK_NAME)
+        # make sure shared network presence does not confuses the tempest tests
+        openstack network create --share shared
+        openstack subnet create --description shared-subnet --subnet-range ${TEMPEST_SHARED_POOL:-192.168.233.0/24} --network shared shared-subnet
     fi
 
     iniset $TEMPEST_CONFIG DEFAULT use_syslog $SYSLOG
