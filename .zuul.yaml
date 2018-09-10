@@ -379,7 +379,7 @@
         - openstack-tox-bashate
         - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
-        - legacy-swift-dsvm-functional:
+        - swift-dsvm-functional:
             voting: false
             irrelevant-files:
               - ^.*\.rst$
@@ -419,11 +419,11 @@
               - ^doc/.*$
     experimental:
       jobs:
-        - legacy-tempest-dsvm-full-devstack-plugin-ceph:
+        - devstack-plugin-ceph-tempest:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - legacy-tempest-dsvm-py35-full-devstack-plugin-ceph:
+        - devstack-plugin-ceph-tempest-py3:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
