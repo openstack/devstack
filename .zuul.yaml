@@ -71,10 +71,3 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-    periodic:
-      jobs:
-        - legacy-periodic-tempest-dsvm-oslo-latest-full-master:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
-
