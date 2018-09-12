@@ -627,8 +627,8 @@ used when adding nodes to the Swift rings.
 Swift S3
 ++++++++
 
-If you are enabling ``swift3`` in ``ENABLED_SERVICES`` DevStack will
-install the swift3 middleware emulation. Swift will be configured to
+If you are enabling ``s3api`` in ``ENABLED_SERVICES`` DevStack will
+install the s3api middleware emulation. Swift will be configured to
 act as a S3 endpoint for Keystone so effectively replacing the
 ``nova-objectstore``.
 

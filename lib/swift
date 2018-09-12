@@ -49,7 +49,6 @@ fi
 
 SWIFT_AUTH_CACHE_DIR=${SWIFT_AUTH_CACHE_DIR:-/var/cache/swift}
 SWIFT_APACHE_WSGI_DIR=${SWIFT_APACHE_WSGI_DIR:-/var/www/swift}
-SWIFT3_DIR=$DEST/swift3
 
 SWIFT_SERVICE_PROTOCOL=${SWIFT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 SWIFT_DEFAULT_BIND_PORT=${SWIFT_DEFAULT_BIND_PORT:-8080}
@@ -68,8 +67,8 @@ SWIFT_DISK_IMAGE=${SWIFT_DATA_DIR}/drives/images/swift.img
 # Default is ``/etc/swift``.
 SWIFT_CONF_DIR=${SWIFT_CONF_DIR:-/etc/swift}
 
-if is_service_enabled s-proxy && is_service_enabled swift3; then
-    # If we are using ``swift3``, we can default the S3 port to swift instead
+if is_service_enabled s-proxy && is_service_enabled s3api; then
+    # If we are using ``s3api``, we can default the S3 port to swift instead
     # of nova-objectstore
     S3_SERVICE_PORT=${S3_SERVICE_PORT:-$SWIFT_DEFAULT_BIND_PORT}
 fi
@@ -423,16 +422,19 @@ function configure_swift {
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:proxy-logging reveal_sensitive_prefix ${SWIFT_LOG_TOKEN_LENGTH}
 
     # By default Swift will be installed with Keystone and tempauth middleware
-    # and add the swift3 middleware if its configured for it. The token for
+    # and add the s3api middleware if its configured for it. The token for
     # tempauth would be prefixed with the reseller_prefix setting `TEMPAUTH_` the
     # token for keystoneauth would have the standard reseller_prefix `AUTH_`
-    if is_service_enabled swift3;then
-        swift_pipeline+=" swift3 s3token "
+    if is_service_enabled s3api;then
+        swift_pipeline+=" s3api"
     fi
-
     if is_service_enabled keystone; then
+        if is_service_enabled s3api;then
+            swift_pipeline+=" s3token"
+        fi
         swift_pipeline+=" authtoken keystoneauth"
     fi
+
     swift_pipeline+=" tempauth "
 
     sed -i "/^pipeline/ { s/tempauth/${swift_pipeline} ${SWIFT_EXTRAS_MIDDLEWARE}/ ;}" ${SWIFT_CONFIG_PROXY_SERVER}
@@ -466,22 +468,6 @@ function configure_swift {
 
     # Allow both reseller prefixes to be used with domain_remap
     iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:domain_remap reseller_prefixes "AUTH, TEMPAUTH"
-
-    if is_service_enabled swift3; then
-        cat <<EOF >>${SWIFT_CONFIG_PROXY_SERVER}
-[filter:s3token]
-paste.filter_factory = keystonemiddleware.s3_token:filter_factory
-auth_uri = ${KEYSTONE_AUTH_URI}
-cafile = ${SSL_BUNDLE_FILE}
-admin_user = swift
-admin_tenant_name = ${SERVICE_PROJECT_NAME}
-admin_password = ${SERVICE_PASSWORD}
-
-[filter:swift3]
-use = egg:swift3#swift3
-location = ${REGION_NAME}
-EOF
-    fi
 
     cp ${SWIFT_DIR}/etc/swift.conf-sample ${SWIFT_CONF_DIR}/swift.conf
     iniset ${SWIFT_CONF_DIR}/swift.conf swift-hash swift_hash_path_suffix ${SWIFT_HASH}
