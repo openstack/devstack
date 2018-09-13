@@ -12,6 +12,35 @@
   with_items: '{{ found_repos.files }}'
   become: yes
 
+- name: Setup refspec for repos into devstack working directory
+  shell:
+    # Copied almost "as-is" from devstack-gate setup-workspace function
+    # but removing the dependency on functions.sh
+    # TODO this should be rewritten as a python module.
+    cmd: |
+      cd {{ devstack_base_dir }}/{{ item.path | basename }}
+      base_branch={{ devstack_sources_branch }}
+      if git branch -a | grep "$base_branch" > /dev/null ; then
+          git checkout $base_branch
+      elif [[ "$base_branch" == stable/* ]]; then
+          # Look for an eol tag for the stable branch.
+          eol_tag=${base_branch#stable/}-eol
+          if git tag -l |grep $eol_tag >/dev/null; then
+              git checkout $eol_tag
+              git reset --hard $eol_tag
+              if ! git clean -x -f -d -q ; then
+                  sleep 1
+                  git clean -x -f -d -q
+              fi
+          fi
+      else
+          git checkout master
+      fi
+  args:
+    executable: /bin/bash
+  with_items: '{{ found_repos.files }}'
+  when: devstack_sources_branch is defined
+
 - name: Set ownership of repos
   file:
     path: '{{ devstack_base_dir }}'

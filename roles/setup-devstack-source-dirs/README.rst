@@ -9,3 +9,8 @@ into it.
    :default: /opt/stack
 
    The devstack base directory.
+
+ .. zuul:rolevar:: devstack_branch
+    :default: None
+
+    The target branch to be setup (where available).
