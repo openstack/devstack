@@ -96,10 +96,6 @@ function _neutron_ovs_base_configure_firewall_driver {
 }
 
 function _neutron_ovs_base_configure_l3_agent {
-    if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" != "True" ]; then
-        iniset $Q_L3_CONF_FILE DEFAULT external_network_bridge $PUBLIC_BRIDGE
-    fi
-
     neutron-ovs-cleanup --config-file $NEUTRON_CONF
     if [[ "$Q_USE_PUBLIC_VETH" = "True" ]]; then
         ip link show $Q_PUBLIC_VETH_INT > /dev/null 2>&1 ||
