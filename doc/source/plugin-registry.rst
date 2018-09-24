@@ -62,7 +62,6 @@ freezer                                `git://git.openstack.org/openstack/freeze
 freezer-api                            `git://git.openstack.org/openstack/freezer-api <https://git.openstack.org/cgit/openstack/freezer-api>`__
 freezer-tempest-plugin                 `git://git.openstack.org/openstack/freezer-tempest-plugin <https://git.openstack.org/cgit/openstack/freezer-tempest-plugin>`__
 freezer-web-ui                         `git://git.openstack.org/openstack/freezer-web-ui <https://git.openstack.org/cgit/openstack/freezer-web-ui>`__
-fuxi                                   `git://git.openstack.org/openstack/fuxi <https://git.openstack.org/cgit/openstack/fuxi>`__
 gce-api                                `git://git.openstack.org/openstack/gce-api <https://git.openstack.org/cgit/openstack/gce-api>`__
 glare                                  `git://git.openstack.org/openstack/glare <https://git.openstack.org/cgit/openstack/glare>`__
 group-based-policy                     `git://git.openstack.org/openstack/group-based-policy <https://git.openstack.org/cgit/openstack/group-based-policy>`__
