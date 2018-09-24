@@ -205,6 +205,19 @@ function fixup_fedora {
     fi
 }
 
+function fixup_suse {
+    if ! is_suse; then
+        return
+    fi
+
+    # Disable apparmor profiles in openSUSE distros
+    # to avoid issues with haproxy and dnsmasq
+    if [ -x /usr/sbin/aa-enabled ] && sudo /usr/sbin/aa-enabled -q; then
+        sudo systemctl disable apparmor
+        sudo /usr/sbin/aa-teardown
+    fi
+}
+
 # The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has
 # connection issues under proxy so re-install the latest version using
 # pip. To avoid having pip's virtualenv overwritten by the distro's
@@ -239,5 +252,6 @@ function fixup_all {
     fixup_uca
     fixup_python_packages
     fixup_fedora
+    fixup_suse
     fixup_virtualenv
 }
