@@ -1439,7 +1439,7 @@ function _common_systemd_pitfalls {
     # do some sanity checks on $cmd to see things we don't expect to work
 
     if [[ "$cmd" =~ "sudo" ]]; then
-        local msg=<<EOF
+        read -r -d '' msg << EOF || true  # read returns 1 for EOF, but it is ok here
 You are trying to use run_process with sudo, this is not going to work under systemd.
 
 If you need to run a service as a user other than $STACK_USER call it with:
@@ -1450,7 +1450,7 @@ EOF
     fi
 
     if [[ ! "$cmd" =~ ^/ ]]; then
-        local msg=<<EOF
+        read -r -d '' msg << EOF || true  # read returns 1 for EOF, but it is ok here
 The cmd="$cmd" does not start with an absolute path. It will fail to
 start under systemd.
 
