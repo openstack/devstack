@@ -103,7 +103,7 @@ SUBNETPOOL_SIZE_V6=${SUBNETPOOL_SIZE_V6:-64}
 default_v4_route_devs=$(ip -4 route | grep ^default | awk '{print $5}')
 die_if_not_set $LINENO default_v4_route_devs "Failure retrieving default IPv4 route devices"
 
-default_v6_route_devs=$(ip -6 route | grep ^default | awk '{print $5}')
+default_v6_route_devs=$(ip -6 route list match default table all | grep via | awk '{print $5}')
 
 function _determine_config_l3 {
     local opts="--config-file $NEUTRON_CONF --config-file $Q_L3_CONF_FILE"
@@ -395,6 +395,10 @@ function _neutron_configure_router_v6 {
 
     # This logic is specific to using the l3-agent for layer 3
     if is_service_enabled q-l3 || is_service_enabled neutron-l3; then
+        # Ensure IPv6 forwarding is enabled on the host
+        sudo sysctl -w net.ipv6.conf.all.forwarding=1
+        # if the Linux host considers itself to be a router then it will
+        # ignore all router advertisements
         # Ensure IPv6 RAs are accepted on interfaces with a default route.
         # This is needed for neutron-based devstack clouds to work in
         # IPv6-only clouds in the gate. Please do not remove this without
@@ -405,8 +409,6 @@ function _neutron_configure_router_v6 {
             # device name would be reinterpreted as a slash, causing an error.
             sudo sysctl -w net/ipv6/conf/$d/accept_ra=2
         done
-        # Ensure IPv6 forwarding is enabled on the host
-        sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # Configure and enable public bridge
         # Override global IPV6_ROUTER_GW_IP with the true value from neutron
         IPV6_ROUTER_GW_IP=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" port list -c 'Fixed IP Addresses' | grep $ipv6_pub_subnet_id | awk -F'ip_address' '{ print $2 }' | cut -f2 -d\' | tr '\n' ' ')
