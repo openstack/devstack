@@ -9,6 +9,16 @@
           - controller
 
 - nodeset:
+    name: openstack-single-node-bionic
+    nodes:
+      - name: controller
+        label: ubuntu-bionic
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-centos-7
     nodes:
       - name: controller
