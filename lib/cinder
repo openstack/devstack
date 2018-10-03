@@ -96,9 +96,9 @@ CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 # https://bugs.launchpad.net/cinder/+bug/1180976
 CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
 
-# Centos7 switched to using LIO and that's all that's supported,
-# although the tgt bits are in EPEL we don't want that for CI
-if is_fedora; then
+# Centos7 and OpenSUSE switched to using LIO and that's all that's supported,
+# although the tgt bits are in EPEL and OpenSUSE we don't want that for CI
+if is_fedora || is_suse; then
     CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-lioadm}
     if [[ ${CINDER_ISCSI_HELPER} != "lioadm" ]]; then
         die "lioadm is the only valid Cinder target_helper config on this platform"
