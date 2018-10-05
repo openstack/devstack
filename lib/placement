@@ -3,9 +3,6 @@
 # lib/placement
 # Functions to control the configuration and operation of the **Placement** service
 #
-# Currently the placement service is embedded in nova. Eventually we
-# expect this to change so this file is started as a separate entity
-# despite making use of some *NOVA* variables and files.
 
 # Dependencies:
 #
@@ -29,22 +26,20 @@ set +o xtrace
 # Defaults
 # --------
 
-PLACEMENT_CONF_DIR=/etc/nova
-PLACEMENT_CONF=$PLACEMENT_CONF_DIR/nova.conf
-PLACEMENT_AUTH_STRATEGY=${PLACEMENT_AUTH_STRATEGY:-placement}
-# Nova virtual environment
+PLACEMENT_DIR=$DEST/placement
+PLACEMENT_CONF_DIR=/etc/placement
+PLACEMENT_CONF=$PLACEMENT_CONF_DIR/placement.conf
+PLACEMENT_AUTH_CACHE_DIR=${PLACEMENT_AUTH_CACHE_DIR:-/var/cache/placement}
+PLACEMENT_AUTH_STRATEGY=${PLACEMENT_AUTH_STRATEGY:-keystone}
+# Placement virtual environment
 if [[ ${USE_VENV} = True ]]; then
-    PROJECT_VENV["nova"]=${NOVA_DIR}.venv
-    PLACEMENT_BIN_DIR=${PROJECT_VENV["nova"]}/bin
+    PROJECT_VENV["placement"]=${PLACEMENT_DIR}.venv
+    PLACEMENT_BIN_DIR=${PROJECT_VENV["placement"]}/bin
 else
     PLACEMENT_BIN_DIR=$(get_python_exec_prefix)
 fi
-PLACEMENT_UWSGI=$PLACEMENT_BIN_DIR/nova-placement-api
+PLACEMENT_UWSGI=$PLACEMENT_BIN_DIR/placement-api
 PLACEMENT_UWSGI_CONF=$PLACEMENT_CONF_DIR/placement-uwsgi.ini
-
-# The placement service can optionally use a separate database
-# connection. Set PLACEMENT_DB_ENABLED to True to use it.
-PLACEMENT_DB_ENABLED=$(trueorfalse False PLACEMENT_DB_ENABLED)
 
 if is_service_enabled tls-proxy; then
     PLACEMENT_SERVICE_PROTOCOL="https"
@@ -70,27 +65,26 @@ function cleanup_placement {
     sudo rm -f $(apache_site_config_for nova-placement-api)
     sudo rm -f $(apache_site_config_for placement-api)
     remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI"
+    sudo rm -f $PLACEMENT_AUTH_CACHE_DIR/*
 }
 
 # _config_placement_apache_wsgi() - Set WSGI config files
 function _config_placement_apache_wsgi {
     local placement_api_apache_conf
     local venv_path=""
-    local nova_bin_dir=""
-    nova_bin_dir=$(get_python_exec_prefix)
+    local placement_bin_dir=""
+    placement_bin_dir=$(get_python_exec_prefix)
     placement_api_apache_conf=$(apache_site_config_for placement-api)
 
-    # reuse nova's venv if there is one as placement code lives
-    # there
     if [[ ${USE_VENV} = True ]]; then
-        venv_path="python-path=${PROJECT_VENV["nova"]}/lib/$(python_version)/site-packages"
-        nova_bin_dir=${PROJECT_VENV["nova"]}/bin
+        venv_path="python-path=${PROJECT_VENV["placement"]}/lib/$(python_version)/site-packages"
+        placement_bin_dir=${PROJECT_VENV["placement"]}/bin
     fi
 
     sudo cp $FILES/apache-placement-api.template $placement_api_apache_conf
     sudo sed -e "
         s|%APACHE_NAME%|$APACHE_NAME|g;
-        s|%PUBLICWSGI%|$nova_bin_dir/nova-placement-api|g;
+        s|%PUBLICWSGI%|$placement_bin_dir/placement-api|g;
         s|%SSLENGINE%|$placement_ssl|g;
         s|%SSLCERTFILE%|$placement_certfile|g;
         s|%SSLKEYFILE%|$placement_keyfile|g;
@@ -110,19 +104,23 @@ function configure_placement_nova_compute {
     iniset $conf placement user_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $conf placement project_name "$SERVICE_TENANT_NAME"
     iniset $conf placement project_domain_name "$SERVICE_DOMAIN_NAME"
-    # TODO(cdent): auth_strategy, which is common to see in these
-    # blocks is not currently used here. For the time being the
-    # placement api uses the auth_strategy configuration setting
-    # established by the nova api. This avoids, for the time, being,
-    # creating redundant configuration items that are just used for
-    # testing.
+    iniset $conf placement auth_strategy $PLACEMENT_AUTH_STRATEGY
+}
+
+# create_placement_conf() - Write confg
+function create_placement_conf {
+    rm -f $PLACEMENT_CONF
+    iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
+    iniset $PLACEMENT_CONF DEFAULT debug "$ENABLE_DEBUG_LOG_LEVEL"
+    iniset $PLACEMENT_CONF api auth_strategy $PLACEMENT_AUTH_STRATEGY
+    configure_auth_token_middleware $PLACEMENT_CONF placement $PLACEMENT_AUTH_CACHE_DIR
+    setup_logging $PLACEMENT_CONF
 }
 
 # configure_placement() - Set config files, create data dirs, etc
 function configure_placement {
-    if [ "$PLACEMENT_DB_ENABLED" != False ]; then
-        iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
-    fi
+    sudo install -d -o $STACK_USER $PLACEMENT_CONF_DIR
+    create_placement_conf
 
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
         write_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI" "/placement"
@@ -143,25 +141,28 @@ function create_placement_accounts {
         "$placement_api_url"
 }
 
+# create_placement_cache_dir() - Create directories for keystone cache
+function create_placement_cache_dir {
+    # Create cache dir
+    sudo install -d -o $STACK_USER $PLACEMENT_AUTH_CACHE_DIR
+    rm -f $PLACEMENT_AUTH_CACHE_DIR/*
+}
+
 # init_placement() - Create service user and endpoints
-# If PLACEMENT_DB_ENABLED is true, create the separate placement db
-# using, for now, the api_db migrations.
 function init_placement {
-    if [ "$PLACEMENT_DB_ENABLED" != False ]; then
-        recreate_database placement
-        # Database migration will be handled when nova does an api_db sync
-        # TODO(cdent): When placement is extracted we'll do our own sync
-        # here.
-    fi
+    recreate_database placement
+    $PLACEMENT_BIN_DIR/placement-manage db sync
     create_placement_accounts
+    create_placement_cache_dir
 }
 
 # install_placement() - Collect source and prepare
 function install_placement {
     install_apache_wsgi
     # Install the openstackclient placement client plugin for CLI
-    # TODO(mriedem): Use pip_install_gr once osc-placement is in g-r.
-    pip_install osc-placement
+    pip_install_gr osc-placement
+    git_clone $PLACEMENT_REPO $PLACEMENT_DIR $PLACEMENT_BRANCH
+    setup_develop $PLACEMENT_DIR
 }
 
 # start_placement_api() - Start the API processes ahead of other things

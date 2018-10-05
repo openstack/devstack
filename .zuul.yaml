@@ -241,8 +241,8 @@
       This base job can be used for single node and multinode devstack jobs.
 
       With a single node nodeset, this job sets up an "all-in-one" (aio)
-      devstack with the six OpenStack services included in the devstack tree:
-      keystone, glance, cinder, neutron, nova and swift.
+      devstack with the seven OpenStack services included in the devstack tree:
+      keystone, glance, cinder, neutron, nova, placement, and swift.
 
       With a two node nodeset, this job sets up an aio + compute node.
       The controller can be customised using host-vars.controller, the
@@ -265,6 +265,7 @@
       - git.openstack.org/openstack/keystone
       - git.openstack.org/openstack/neutron
       - git.openstack.org/openstack/nova
+      - git.openstack.org/openstack/placement
       - git.openstack.org/openstack/swift
     timeout: 7200
     vars:

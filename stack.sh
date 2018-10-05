@@ -894,8 +894,6 @@ if is_service_enabled neutron; then
     stack_install_service neutron
 fi
 
-# Nova configuration is used by placement so we need to create nova.conf
-# first.
 if is_service_enabled nova; then
     # Compute service
     stack_install_service nova

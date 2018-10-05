@@ -298,6 +298,10 @@ NOVA_BRANCH=${NOVA_BRANCH:-$TARGET_BRANCH}
 SWIFT_REPO=${SWIFT_REPO:-${GIT_BASE}/openstack/swift.git}
 SWIFT_BRANCH=${SWIFT_BRANCH:-$TARGET_BRANCH}
 
+# placement service
+PLACEMENT_REPO=${PLACEMENT_REPO:-${GIT_BASE}/openstack/placement.git}
+PLACEMENT_BRANCH=${PLACEMENT_BRANCH:-$TARGET_BRANCH}
+
 ##############
 #
 #  Testing Components
