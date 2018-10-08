@@ -376,6 +376,19 @@
           VNCSERVER_PROXYCLIENT_ADDRESS: $HOST_IP
 
 - job:
+    name: devstack-ipv6
+    parent: devstack
+    description: |
+      Devstack single node job for integration gate with IPv6.
+    vars:
+      devstack_localrc:
+        SERVICE_IP_VERSION: 6
+        SERVICE_HOST: ""
+        # IPv6 and certificates known issue with python2
+        # https://bugs.launchpad.net/devstack/+bug/1794929
+        USE_PYTHON3: true
+
+- job:
     name: devstack-multinode
     parent: devstack
     nodeset: openstack-two-node
@@ -486,6 +499,8 @@
     check:
       jobs:
         - devstack
+        - devstack-ipv6:
+            voting: false
         - devstack-platform-centos-7
         - devstack-platform-opensuse-423
         - devstack-platform-opensuse-tumbleweed
