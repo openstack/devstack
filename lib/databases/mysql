@@ -16,7 +16,7 @@ MYSQL_DRIVER=${MYSQL_DRIVER:-PyMySQL}
 register_database mysql
 
 MYSQL_SERVICE_NAME=mysql
-if is_fedora && ! is_oraclelinux; then
+if is_suse || is_fedora && ! is_oraclelinux; then
     MYSQL_SERVICE_NAME=mariadb
 fi
 
