@@ -922,6 +922,9 @@ function start_nova_compute {
         # RPC, we also disable track_instance_changes.
         iniset $NOVA_CPU_CONF filter_scheduler track_instance_changes False
         iniset_rpc_backend nova $NOVA_CPU_CONF DEFAULT "nova_cell${NOVA_CPU_CELL}"
+        # Make sure we nuke any database config
+        inidelete $NOVA_CPU_CONF database connection
+        inidelete $NOVA_CPU_CONF api_database connection
     fi
 
     # Console proxies were configured earlier in create_nova_conf. Now that the
