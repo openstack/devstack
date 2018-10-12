@@ -597,7 +597,7 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - legacy-tempest-dsvm-neutron-pg-full:
+        - tempest-pg-full:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
