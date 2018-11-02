@@ -275,7 +275,7 @@ function configure_nova {
 
     if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
         # Get the sample configuration file in place
-        cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
+        sudo cp $NOVA_DIR/etc/nova/api-paste.ini $NOVA_CONF_DIR
     fi
 
     if is_service_enabled n-cpu; then
