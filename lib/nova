@@ -303,17 +303,6 @@ function configure_nova {
             # to simulate multiple systems.
             if [[ "$LIBVIRT_TYPE" == "lxc" ]]; then
                 if is_ubuntu; then
-                    if [[ ! "$DISTRO" > natty ]]; then
-                        local cgline="none /cgroup cgroup cpuacct,memory,devices,cpu,freezer,blkio 0 0"
-                        sudo mkdir -p /cgroup
-                        if ! grep -q cgroup /etc/fstab; then
-                            echo "$cgline" | sudo tee -a /etc/fstab
-                        fi
-                        if ! mount -n | grep -q cgroup; then
-                            sudo mount /cgroup
-                        fi
-                    fi
-
                     # enable nbd for lxc unless you're using an lvm backend
                     # otherwise you can't boot instances
                     if [[ "$NOVA_BACKEND" != "LVM" ]]; then
