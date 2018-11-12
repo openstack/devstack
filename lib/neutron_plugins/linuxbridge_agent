@@ -8,21 +8,23 @@ _XTRACE_NEUTRON_LB=$(set +o | grep xtrace)
 set +o xtrace
 
 function neutron_lb_cleanup {
-    sudo ip link set $PUBLIC_BRIDGE down
-    sudo brctl delbr $PUBLIC_BRIDGE
+    sudo ip link delete $PUBLIC_BRIDGE
 
+    bridge_list=`ls /sys/class/net/*/bridge/bridge_id 2>/dev/null | cut -f5 -d/`
+    if [[ -z "$bridge_list" ]]; then
+        return
+    fi
     if [[ "$Q_ML2_TENANT_NETWORK_TYPE" = "vxlan" ]]; then
-        for port in $(sudo brctl show | grep -o -e [a-zA-Z\-]*tap[0-9a-f\-]* -e vxlan-[0-9a-f\-]*); do
+        for port in $(echo $bridge_list | grep -o -e [a-zA-Z\-]*tap[0-9a-f\-]* -e vxlan-[0-9a-f\-]*); do
             sudo ip link delete $port
         done
     elif [[ "$Q_ML2_TENANT_NETWORK_TYPE" = "vlan" ]]; then
-        for port in $(sudo brctl show | grep -o -e [a-zA-Z\-]*tap[0-9a-f\-]* -e ${LB_PHYSICAL_INTERFACE}\.[0-9a-f\-]*); do
+        for port in $(echo $bridge_list | grep -o -e [a-zA-Z\-]*tap[0-9a-f\-]* -e ${LB_PHYSICAL_INTERFACE}\.[0-9a-f\-]*); do
             sudo ip link delete $port
         done
     fi
-    for bridge in $(sudo brctl show |grep -o -e brq[0-9a-f\-]*); do
-        sudo ip link set $bridge down
-        sudo brctl delbr $bridge
+    for bridge in $(echo $bridge_list |grep -o -e brq[0-9a-f\-]*); do
+        sudo ip link delete $bridge
     done
 }
 
