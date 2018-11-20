@@ -62,7 +62,6 @@ function is_placement_enabled {
 # cleanup_placement() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_placement {
-    sudo rm -f $(apache_site_config_for nova-placement-api)
     sudo rm -f $(apache_site_config_for placement-api)
     remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI"
     sudo rm -f $PLACEMENT_AUTH_CACHE_DIR/*
@@ -107,7 +106,7 @@ function configure_placement_nova_compute {
     iniset $conf placement auth_strategy $PLACEMENT_AUTH_STRATEGY
 }
 
-# create_placement_conf() - Write confg
+# create_placement_conf() - Write config
 function create_placement_conf {
     rm -f $PLACEMENT_CONF
     iniset $PLACEMENT_CONF placement_database connection `database_connection_url placement`
