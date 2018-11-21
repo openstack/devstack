@@ -296,6 +296,16 @@ function configure_nova {
             fi
         fi
 
+        if is_fedora; then
+            # There is an iscsi-initiator bug where it inserts
+            # different whitespace that causes a bunch of output
+            # matching to fail.  We have not been able to get
+            # fixed, yet :/  Exists in fedora 29 & 30
+            #  https://bugzilla.redhat.com/show_bug.cgi?id=1676365
+            sudo dnf copr enable -y iwienand/iscsi-initiator-utils
+            sudo dnf update -y
+        fi
+
         if [[ ${ISCSID_DEBUG} == "True" ]]; then
             # Install an override that starts iscsid with debugging
             # enabled.
