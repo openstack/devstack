@@ -69,21 +69,29 @@ function fixup_keystone {
     fi
 }
 
-# Ubuntu Cloud Archive
-#---------------------
+# Ubuntu Repositories
+#--------------------
 # We've found that Libvirt on Xenial is flaky and crashes enough to be
 # a regular top e-r bug. Opt into Ubuntu Cloud Archive if on Xenial to
 # get newer Libvirt.
 # Make it possible to switch this based on an environment variable as
 # libvirt 2.5.0 doesn't handle nested virtualization quite well and this
 # is required for the trove development environment.
-function fixup_uca {
-    if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "False" || "$DISTRO" != "xenial" ]]; then
+# Also enable universe since it is missing when installing from ISO.
+function fixup_ubuntu {
+    if [[ "$DISTRO" != "xenial" && "$DISTRO" != "bionic" ]]; then
         return
     fi
 
     # This pulls in apt-add-repository
     install_package "software-properties-common"
+
+    # Enable universe
+    sudo add-apt-repository -y universe
+
+    if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "False" || "$DISTRO" != "xenial" ]]; then
+        return
+    fi
     # Use UCA for newer libvirt.
     if [[ -f /etc/ci/mirror_info.sh ]] ; then
         # If we are on a nodepool provided host and it has told us about where
@@ -249,7 +257,7 @@ function fixup_virtualenv {
 
 function fixup_all {
     fixup_keystone
-    fixup_uca
+    fixup_ubuntu
     fixup_python_packages
     fixup_fedora
     fixup_suse
