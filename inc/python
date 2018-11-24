@@ -490,17 +490,6 @@ function setup_develop {
     _setup_package_with_constraints_edit $project_dir -e $extras
 }
 
-# determine if a project as specified by directory is in
-# projects.txt. This will not be an exact match because we throw away
-# the namespacing when we clone, but it should be good enough in all
-# practical ways.
-function is_in_projects_txt {
-    local project_dir=$1
-    local project_name
-    project_name=$(basename $project_dir)
-    grep -q "/$project_name\$" $REQUIREMENTS_DIR/projects.txt
-}
-
 # ``pip install -e`` the package, which processes the dependencies
 # using pip before running `setup.py develop`
 #
