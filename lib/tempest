@@ -543,11 +543,15 @@ function configure_tempest {
 
     # ``service_available``
     #
-    # this tempest service list needs to be all the services that
-    # tempest supports, otherwise we can have an erroneous set of
+    # this tempest service list needs to be the services that
+    # tempest own, otherwise we can have an erroneous set of
     # defaults (something defaulting true in Tempest, but not listed here).
+    # services tested by tempest plugins needs to be set on service devstack
+    # plugin side as devstack cannot keep track of all the tempest plugins
+    # services. Refer Bug#1743688 for more details.
+    # 'horizon' is also kept here as no devtack plugin for horizon.
     local service
-    local tempest_services="key,glance,nova,neutron,cinder,swift,heat,ceilometer,horizon,sahara,ironic,trove"
+    local tempest_services="key,glance,nova,neutron,cinder,swift,horizon"
     for service in ${tempest_services//,/ }; do
         if is_service_enabled $service ; then
             iniset $TEMPEST_CONFIG service_available $service "True"
