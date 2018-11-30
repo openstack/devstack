@@ -252,7 +252,11 @@ function make_cert {
 
     if [ "$common_name" != "$SERVICE_HOST" ]; then
         if is_ipv4_address "$SERVICE_HOST" ; then
-            alt_names="$alt_names,IP:$SERVICE_HOST"
+            if [[ -z "$alt_names" ]]; then
+                alt_names="IP:$SERVICE_HOST"
+            else
+                alt_names="$alt_names,IP:$SERVICE_HOST"
+            fi
         fi
     fi
 
