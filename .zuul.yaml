@@ -19,6 +19,16 @@
           - controller
 
 - nodeset:
+    name: openstack-single-node-xenial
+    nodes:
+      - name: controller
+        label: ubuntu-xenial
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-centos-7
     nodes:
       - name: controller
