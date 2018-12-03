@@ -739,7 +739,7 @@ function create_disk {
 
     # Mount the disk with mount options to make it as efficient as possible
     if ! egrep -q ${storage_data_dir} /proc/mounts; then
-        sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
+        sudo mount -t xfs -o loop,noatime,nodiratime,logbufs=8  \
             ${disk_image} ${storage_data_dir}
     fi
 }

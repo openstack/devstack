@@ -607,7 +607,7 @@ function create_swift_disk {
     # Mount the disk with mount options to make it as efficient as possible
     mkdir -p ${SWIFT_DATA_DIR}/drives/sdb1
     if ! egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
-        sudo mount -t xfs -o loop,noatime,nodiratime,nobarrier,logbufs=8  \
+        sudo mount -t xfs -o loop,noatime,nodiratime,logbufs=8  \
             ${SWIFT_DISK_IMAGE} ${SWIFT_DATA_DIR}/drives/sdb1
     fi
 
