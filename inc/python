@@ -115,13 +115,12 @@ function check_python3_support_for_package_remote {
     echo $classifier
 }
 
-# python3_enabled_for() checks if the service(s) specified as arguments are
-# enabled by the user in ``ENABLED_PYTHON3_PACKAGES``.
+# python3_enabled_for() assumes the service(s) specified as arguments are
+# enabled for python 3 unless explicitly disabled. See python3_disabled_for().
 #
 # Multiple services specified as arguments are ``OR``'ed together; the test
 # is a short-circuit boolean, i.e it returns on the first match.
 #
-# Uses global ``ENABLED_PYTHON3_PACKAGES``
 # python3_enabled_for dir [dir ...]
 function python3_enabled_for {
     local xtrace
@@ -132,7 +131,9 @@ function python3_enabled_for {
     local dirs=$@
     local dir
     for dir in ${dirs}; do
-        [[ ,${ENABLED_PYTHON3_PACKAGES}, =~ ,${dir}, ]] && enabled=0
+        if ! python3_disabled_for "${dir}"; then
+            enabled=0
+        fi
     done
 
     $xtrace
@@ -163,42 +164,29 @@ function python3_disabled_for {
     return $enabled
 }
 
-# enable_python3_package() adds the repositories passed as argument to the
-# ``ENABLED_PYTHON3_PACKAGES`` list, if they are not already present.
+# enable_python3_package() -- no-op for backwards compatibility
 #
 # For example:
 #   enable_python3_package nova
 #
-# Uses global ``ENABLED_PYTHON3_PACKAGES``
 # enable_python3_package dir [dir ...]
 function enable_python3_package {
     local xtrace
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
-    local tmpsvcs="${ENABLED_PYTHON3_PACKAGES}"
-    local python3
-    for dir in $@; do
-        if [[ ,${DISABLED_PYTHON3_PACKAGES}, =~ ,${dir}, ]]; then
-            warn $LINENO "Attempt to enable_python3_package ${dir} when it has been disabled"
-            continue
-        fi
-        if ! python3_enabled_for $dir; then
-            tmpsvcs+=",$dir"
-        fi
-    done
-    ENABLED_PYTHON3_PACKAGES=$(_cleanup_service_list "$tmpsvcs")
+    echo "It is no longer necessary to call enable_python3_package()."
 
     $xtrace
 }
 
-# disable_python3_package() prepares the services passed as argument to be
-# removed from the ``ENABLED_PYTHON3_PACKAGES`` list, if they are present.
+# disable_python3_package() adds the services passed as argument to
+# the ``DISABLED_PYTHON3_PACKAGES`` list.
 #
 # For example:
 #   disable_python3_package swift
 #
-# Uses globals ``ENABLED_PYTHON3_PACKAGES`` and ``DISABLED_PYTHON3_PACKAGES``
+# Uses global ``DISABLED_PYTHON3_PACKAGES``
 # disable_python3_package dir [dir ...]
 function disable_python3_package {
     local xtrace
@@ -206,16 +194,11 @@ function disable_python3_package {
     set +o xtrace
 
     local disabled_svcs="${DISABLED_PYTHON3_PACKAGES}"
-    local enabled_svcs=",${ENABLED_PYTHON3_PACKAGES},"
     local dir
     for dir in $@; do
         disabled_svcs+=",$dir"
-        if python3_enabled_for $dir; then
-            enabled_svcs=${enabled_svcs//,$dir,/,}
-        fi
     done
     DISABLED_PYTHON3_PACKAGES=$(_cleanup_service_list "$disabled_svcs")
-    ENABLED_PYTHON3_PACKAGES=$(_cleanup_service_list "$enabled_svcs")
 
     $xtrace
 }
@@ -295,7 +278,7 @@ function pip_install {
                 if python3_disabled_for ${package_dir##*/}; then
                     echo "Explicitly using $PYTHON2_VERSION version to install $package_dir based on DISABLED_PYTHON3_PACKAGES"
                 elif python3_enabled_for ${package_dir##*/}; then
-                    echo "Explicitly using $PYTHON3_VERSION version to install $package_dir based on ENABLED_PYTHON3_PACKAGES"
+                    echo "Using $PYTHON3_VERSION version to install $package_dir based on default behavior"
                     sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                     cmd_pip=$(get_pip_command $PYTHON3_VERSION)
                 elif [[ -d "$package_dir" ]]; then
