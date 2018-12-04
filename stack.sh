@@ -335,6 +335,13 @@ function _install_rdo {
     # no-op on other platforms.
     sudo yum-config-manager --enable rhel-7-server-optional-rpms
 
+    # Enable the Software Collections (SCL) repository for CentOS.
+    # This repository includes useful software (e.g. the Go Toolset)
+    # which is not present in the main repository.
+    if [[ "$os_VENDOR" =~ (CentOS) ]]; then
+        yum_install centos-release-scl
+    fi
+
     if is_oraclelinux; then
         sudo yum-config-manager --enable ol7_optional_latest ol7_addons ol7_MySQL56
     fi
