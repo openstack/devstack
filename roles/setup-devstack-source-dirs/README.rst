@@ -10,7 +10,7 @@ into it.
 
    The devstack base directory.
 
- .. zuul:rolevar:: devstack_branch
+ .. zuul:rolevar:: devstack_sources_branch
     :default: None
 
     The target branch to be setup (where available).
