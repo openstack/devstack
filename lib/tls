@@ -547,6 +547,9 @@ $listen_string
     LimitRequestFieldSize $f_header_size
     RequestHeader set X-Forwarded-Proto "https"
 
+    # Avoid races (at the cost of performance) to re-use a pooled connection
+    # where the connection is closed (bug 1807518).
+    SetEnv proxy-initial-not-pooled
     <Location />
         ProxyPass http://$b_host:$b_port/ retry=0 nocanon
         ProxyPassReverse http://$b_host:$b_port/
