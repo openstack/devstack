@@ -180,6 +180,7 @@ tap-as-a-service                       `git://git.openstack.org/openstack/tap-as
 tap-as-a-service-dashboard             `git://git.openstack.org/openstack/tap-as-a-service-dashboard <https://git.openstack.org/cgit/openstack/tap-as-a-service-dashboard>`__
 tatu                                   `git://git.openstack.org/openstack/tatu <https://git.openstack.org/cgit/openstack/tatu>`__
 telemetry-tempest-plugin               `git://git.openstack.org/openstack/telemetry-tempest-plugin <https://git.openstack.org/cgit/openstack/telemetry-tempest-plugin>`__
+tobiko                                 `git://git.openstack.org/openstack/tobiko <https://git.openstack.org/cgit/openstack/tobiko>`__
 tricircle                              `git://git.openstack.org/openstack/tricircle <https://git.openstack.org/cgit/openstack/tricircle>`__
 trio2o                                 `git://git.openstack.org/openstack/trio2o <https://git.openstack.org/cgit/openstack/trio2o>`__
 trove                                  `git://git.openstack.org/openstack/trove <https://git.openstack.org/cgit/openstack/trove>`__
