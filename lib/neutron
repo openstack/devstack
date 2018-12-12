@@ -183,9 +183,14 @@ function configure_neutron_new {
     # Neutron API server & Neutron plugin
     if is_service_enabled neutron-api; then
         local policy_file=$NEUTRON_CONF_DIR/policy.json
-        cp $NEUTRON_DIR/etc/policy.json $policy_file
         # Allow neutron user to administer neutron to match neutron account
-        sed -i 's/"context_is_admin":  "role:admin"/"context_is_admin":  "role:admin or user_name:neutron"/g' $policy_file
+        # NOTE(amotoki): This is required for nova works correctly with neutron.
+        if [ -f $NEUTRON_DIR/etc/policy.json ]; then
+            cp $NEUTRON_DIR/etc/policy.json $policy_file
+            sed -i 's/"context_is_admin":  "role:admin"/"context_is_admin":  "role:admin or user_name:neutron"/g' $policy_file
+        else
+            echo '{"context_is_admin":  "role:admin or user_name:neutron"}' > $policy_file
+        fi
 
         cp $NEUTRON_DIR/etc/api-paste.ini $NEUTRON_CONF_DIR/api-paste.ini
 

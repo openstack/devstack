@@ -699,10 +699,15 @@ function _configure_neutron_common {
     cp $NEUTRON_DIR/etc/neutron.conf.sample $NEUTRON_CONF
 
     Q_POLICY_FILE=$NEUTRON_CONF_DIR/policy.json
-    cp $NEUTRON_DIR/etc/policy.json $Q_POLICY_FILE
 
     # allow neutron user to administer neutron to match neutron account
-    sed -i 's/"context_is_admin":  "role:admin"/"context_is_admin":  "role:admin or user_name:neutron"/g' $Q_POLICY_FILE
+    # NOTE(amotoki): This is required for nova works correctly with neutron.
+    if [ -f $NEUTRON_DIR/etc/policy.json ]; then
+        cp $NEUTRON_DIR/etc/policy.json $Q_POLICY_FILE
+        sed -i 's/"context_is_admin":  "role:admin"/"context_is_admin":  "role:admin or user_name:neutron"/g' $Q_POLICY_FILE
+    else
+        echo '{"context_is_admin":  "role:admin or user_name:neutron"}' > $Q_POLICY_FILE
+    fi
 
     # Set plugin-specific variables ``Q_DB_NAME``, ``Q_PLUGIN_CLASS``.
     # For main plugin config file, set ``Q_PLUGIN_CONF_PATH``, ``Q_PLUGIN_CONF_FILENAME``.
