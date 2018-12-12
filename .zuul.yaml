@@ -646,7 +646,7 @@
     # pruned.
     #
     # * nova-cells-v1: maintained by nova for cells v1 (nova-cells service);
-    #    nova gates on this job, it's in experimental for testing cells v1
+    #    it's in experimental here (and in nova) for testing cells v1
     #    changes to devstack w/o gating on it for all devstack changes.
     # * nova-next: maintained by nova for unreleased/undefaulted
     #    things like cellsv2 and placement-api
