@@ -801,6 +801,11 @@ fi
 # Install required infra support libraries
 install_infra
 
+# Install bindep
+$VIRTUALENV_CMD $DEST/bindep-venv
+# TODO(ianw) : optionally install from zuul checkout?
+$DEST/bindep-venv/bin/pip install bindep
+
 # Extras Pre-install
 # ------------------
 # Phase: pre-install

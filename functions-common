@@ -1381,6 +1381,35 @@ function zypper_install {
         zypper --non-interactive install --auto-agree-with-licenses --no-recommends "$@"
 }
 
+# Run bindep and install packages it outputs
+#
+# Usage:
+#  install_bindep <path-to-bindep.txt> [profile,profile]
+#
+# Note unlike the bindep command itself, profile(s) specified should
+# be a single, comma-separated string, no spaces.
+function install_bindep {
+    local file=$1
+    local profiles=${2:-""}
+    local pkgs
+
+    if [[ ! -f $file ]]; then
+        die $LINENO "Can not find bindep file: $file"
+    fi
+
+    # converting here makes it much easier to work with passing
+    # arguments
+    profiles=${profiles/,/ /}
+
+    # Note bindep returns 1 when packages need to be installed, so we
+    # have to ignore it's return for "-e"
+    pkgs=$($DEST/bindep-venv/bin/bindep -b --file $file $profiles || true)
+
+    if [[ -n "${pkgs}" ]]; then
+        install_package ${pkgs}
+    fi
+}
+
 function write_user_unit_file {
     local service=$1
     local command="$2"

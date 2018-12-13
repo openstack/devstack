@@ -445,7 +445,14 @@ function setup_lib {
 # another project.
 #
 # use this for non namespaced libraries
+#
+# setup_dev_lib [-bindep] <name>
 function setup_dev_lib {
+    local bindep
+    if [[ $1 == -bindep* ]]; then
+        bindep="${1}"
+        shift
+    fi
     local name=$1
     local dir=${GITDIR[$name]}
     if python3_enabled; then
@@ -455,10 +462,10 @@ function setup_dev_lib {
         # of Python.
         echo "Installing $name again without Python 3 enabled"
         USE_PYTHON3=False
-        setup_develop $dir
+        setup_develop $bindep $dir
         USE_PYTHON3=True
     fi
-    setup_develop $dir
+    setup_develop $bindep $dir
 }
 
 # this should be used if you want to install globally, all libraries should
@@ -469,11 +476,17 @@ function setup_dev_lib {
 # extras: comma-separated list of optional dependencies to install
 #         (e.g., ldap,memcache).
 #         See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
+# bindep: Set "-bindep" as first argument to install bindep.txt packages
 # The command is like "pip install <project_dir>[<extras>]"
 function setup_install {
+    local bindep
+    if [[ $1 == -bindep* ]]; then
+        bindep="${1}"
+        shift
+    fi
     local project_dir=$1
     local extras=$2
-    _setup_package_with_constraints_edit $project_dir "" $extras
+    _setup_package_with_constraints_edit $bindep $project_dir "" $extras
 }
 
 # this should be used for projects which run services, like all services
@@ -485,9 +498,14 @@ function setup_install {
 #         See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
 # The command is like "pip install -e <project_dir>[<extras>]"
 function setup_develop {
+    local bindep
+    if [[ $1 == -bindep* ]]; then
+        bindep="${1}"
+        shift
+    fi
     local project_dir=$1
     local extras=$2
-    _setup_package_with_constraints_edit $project_dir -e $extras
+    _setup_package_with_constraints_edit $bindep $project_dir -e $extras
 }
 
 # ``pip install -e`` the package, which processes the dependencies
@@ -506,6 +524,11 @@ function setup_develop {
 #         See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
 # The command is like "pip install <flags> <project_dir>[<extras>]"
 function _setup_package_with_constraints_edit {
+    local bindep
+    if [[ $1 == -bindep* ]]; then
+        bindep="${1}"
+        shift
+    fi
     local project_dir=$1
     local flags=$2
     local extras=$3
@@ -526,7 +549,7 @@ function _setup_package_with_constraints_edit {
             "$flags file://$project_dir#egg=$name"
     fi
 
-    setup_package $project_dir "$flags" $extras
+    setup_package $bindep $project_dir "$flags" $extras
 
     # If this project is in LIBS_FROM_GIT, verify it was actually installed
     # correctly.  This helps catch errors caused by constraints mismatches.
@@ -538,17 +561,30 @@ function _setup_package_with_constraints_edit {
 }
 
 # ``pip install -e`` the package, which processes the dependencies
-# using pip before running `setup.py develop`
+# using pip before running `setup.py develop`.  The command is like
+# "pip install <flags> <project_dir>[<extras>]"
 #
 # Uses globals ``STACK_USER``
-# setup_package project_dir [flags] [extras]
-# project_dir: directory of project repo (e.g., /opt/stack/keystone)
-# flags: pip CLI options/flags
-# extras: comma-separated list of optional dependencies to install
-#         (e.g., ldap,memcache).
-#         See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
-# The command is like "pip install <flags> <project_dir>[<extras>]"
+#
+# Usage:
+#  setup_package [-bindep[=profile,profile]] <project_dir> <flags> [extras]
+#
+# -bindep     : Use bindep to install dependencies; select extra profiles
+#               as comma separated arguments after "="
+# project_dir : directory of project repo (e.g., /opt/stack/keystone)
+# flags       : pip CLI options/flags
+# extras      : comma-separated list of optional dependencies to install
+#               (e.g., ldap,memcache).
+#               See https://docs.openstack.org/pbr/latest/user/using.html#extra-requirements
 function setup_package {
+    local bindep=0
+    local bindep_flag=""
+    local bindep_profiles=""
+    if [[ $1 == -bindep* ]]; then
+        bindep=1
+        IFS="=" read bindep_flag bindep_profiles <<< ${1}
+        shift
+    fi
     local project_dir=$1
     local flags=$2
     local extras=$3
@@ -562,6 +598,11 @@ function setup_package {
 
     if [[ ! -z "$extras" ]]; then
         extras="[$extras]"
+    fi
+
+    # install any bindep packages
+    if [[ $bindep == 1 ]]; then
+        install_bindep $project_dir/bindep.txt $bindep_profiles
     fi
 
     pip_install $flags "$project_dir$extras"
