@@ -88,17 +88,22 @@ function iniget_multiline {
 }
 
 # Determinate is the given option present in the INI file
-# ini_has_option config-file section option
+# ini_has_option [-sudo] config-file section option
 function ini_has_option {
     local xtrace
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
+    local sudo=""
+    if [ $1 == "-sudo" ]; then
+        sudo="sudo "
+        shift
+    fi
     local file=$1
     local section=$2
     local option=$3
     local line
 
-    line=$(sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
+    line=$($sudo sed -ne "/^\[$section\]/,/^\[.*\]/ { /^$option[ \t]*=/ p; }" "$file")
     $xtrace
     [ -n "$line" ]
 }
@@ -173,8 +178,10 @@ function iniset {
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
     local sudo=""
+    local sudo_option=""
     if [ $1 == "-sudo" ]; then
         sudo="sudo "
+        sudo_option="-sudo "
         shift
     fi
     local file=$1
@@ -187,11 +194,11 @@ function iniset {
         return
     fi
 
-    if ! grep -q "^\[$section\]" "$file" 2>/dev/null; then
+    if ! $sudo grep -q "^\[$section\]" "$file" 2>/dev/null; then
         # Add section at the end
         echo -e "\n[$section]" | $sudo tee --append "$file" > /dev/null
     fi
-    if ! ini_has_option "$file" "$section" "$option"; then
+    if ! ini_has_option $sudo_option "$file" "$section" "$option"; then
         # Add it
         $sudo sed -i -e "/^\[$section\]/ a\\
 $option = $value
@@ -228,7 +235,7 @@ function iniset_multiline {
         # the reverse order. Do a reverse here to keep the original order.
         values="$v ${values}"
     done
-    if ! grep -q "^\[$section\]" "$file"; then
+    if ! $sudo grep -q "^\[$section\]" "$file"; then
         # Add section at the end
         echo -e "\n[$section]" | $sudo tee --append "$file" > /dev/null
     else
