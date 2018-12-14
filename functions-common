@@ -92,7 +92,6 @@ function write_clouds_yaml {
         --file $CLOUDS_YAML \
         --os-cloud devstack \
         --os-region-name $REGION_NAME \
-        --os-identity-api-version 3 \
         $CA_CERT_ARG \
         --os-auth-url $KEYSTONE_SERVICE_URI \
         --os-username demo \
@@ -104,7 +103,6 @@ function write_clouds_yaml {
         --file $CLOUDS_YAML \
         --os-cloud devstack-alt \
         --os-region-name $REGION_NAME \
-        --os-identity-api-version 3 \
         $CA_CERT_ARG \
         --os-auth-url $KEYSTONE_SERVICE_URI \
         --os-username alt_demo \
@@ -116,7 +114,6 @@ function write_clouds_yaml {
         --file $CLOUDS_YAML \
         --os-cloud devstack-admin \
         --os-region-name $REGION_NAME \
-        --os-identity-api-version 3 \
         $CA_CERT_ARG \
         --os-auth-url $KEYSTONE_SERVICE_URI \
         --os-username admin \
