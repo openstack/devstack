@@ -99,8 +99,15 @@ function _create_lvm_volume_group {
     if ! sudo vgs $vg; then
         # Only create if the file doesn't already exists
         [[ -f $backing_file ]] || truncate -s $size $backing_file
+
+        local directio=""
+        # Check to see if we can do direct-io
+        if losetup -h | grep -q direct-io; then
+            directio="--direct-io=on"
+        fi
+
         local vg_dev
-        vg_dev=`sudo losetup -f --show $backing_file`
+        vg_dev=$(sudo losetup -f --show $directio $backing_file)
 
         # Only create volume group if it doesn't already exist
         if ! sudo vgs $vg; then
