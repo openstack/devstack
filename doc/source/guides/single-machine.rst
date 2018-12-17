@@ -45,31 +45,37 @@ We need to add a user to install DevStack. (if you created a user during
 install you can skip this step and just give the user sudo privileges
 below)
 
-::
+.. code-block:: console
 
-    useradd -s /bin/bash -d /opt/stack -m stack
+    $ sudo useradd -s /bin/bash -d /opt/stack -m stack
 
 Since this user will be making many changes to your system, it will need
 to have sudo privileges:
 
-::
+.. code-block:: console
 
-    apt-get install sudo -y || yum install -y sudo
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    $ apt-get install sudo -y || yum install -y sudo
+    $ echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+.. note:: On some systems you may need to use ``sudo visudo``.
 
 From here on you should use the user you created. **Logout** and
-**login** as that user.
+**login** as that user:
+
+.. code-block:: console
+
+    $ sudo su stack && cd ~
 
 Download DevStack
 -----------------
 
 We'll grab the latest version of DevStack via https:
 
-::
+.. code-block:: console
 
-    sudo apt-get install git -y || sudo yum install -y git
-    git clone https://git.openstack.org/openstack-dev/devstack
-    cd devstack
+    $ sudo apt-get install git -y || sudo yum install -y git
+    $ git clone https://git.openstack.org/openstack-dev/devstack
+    $ cd devstack
 
 Run DevStack
 ------------
@@ -97,7 +103,7 @@ do the following:
 
 ``local.conf`` should look something like this:
 
-::
+.. code-block:: ini
 
     [[local|localrc]]
     FLOATING_RANGE=192.168.1.224/27
@@ -109,11 +115,14 @@ do the following:
     RABBIT_PASSWORD=flopsymopsy
     SERVICE_PASSWORD=iheartksl
 
+.. note:: There is a sample :download:`local.conf </assets/local.conf>` file
+    under the *samples* directory in the devstack repository.
+
 Run DevStack:
 
-::
+.. code-block:: console
 
-    ./stack.sh
+    $ ./stack.sh
 
 A seemingly endless stream of activity ensues. When complete you will
 see a summary of ``stack.sh``'s work, including the relevant URLs,
