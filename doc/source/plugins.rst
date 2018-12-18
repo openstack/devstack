@@ -58,7 +58,7 @@ directory. Inside this directory there can be 3 files.
   plugin's name, which is the name that should be used by users on
   "enable_plugin" lines.  It should generally be the last component of
   the git repo path (e.g., if the plugin's repo is
-  openstack/devstack-foo, then the name here should be "foo") ::
+  openstack/foo, then the name here should be "foo") ::
 
     define_plugin <YOUR PLUGIN>
 
@@ -148,7 +148,7 @@ An example plugin would look something as follows.
 
 ``devstack/settings``::
 
-    # settings file for template
+  # settings file for template
   enable_service template
 
 
