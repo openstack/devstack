@@ -155,8 +155,8 @@ class PluginGraph(DependencyGraph):
                 continue
             self.loadDevstackPluginInfo(settings)
 
-    define_re = re.compile(r'^define_plugin\s+(\w+).*')
-    require_re = re.compile(r'^plugin_requires\s+(\w+)\s+(\w+).*')
+    define_re = re.compile(r'^define_plugin\s+(\S+).*')
+    require_re = re.compile(r'^plugin_requires\s+(\S+)\s+(\S+).*')
     def loadDevstackPluginInfo(self, fn):
         name = None
         reqs = set()
