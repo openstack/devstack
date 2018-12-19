@@ -104,6 +104,22 @@ class TestDevstackLocalConf(unittest.TestCase):
                  plugins=plugins,
                  base_dir=self.tmpdir,
                  path=os.path.join(self.tmpdir, 'test.local.conf'))
+        lc = LocalConf(p.get('localrc'),
+                       p.get('local_conf'),
+                       p.get('base_services'),
+                       p.get('services'),
+                       p.get('plugins'),
+                       p.get('base_dir'),
+                       p.get('projects'),
+                       p.get('project'))
+        lc.write(p['path'])
+
+        plugins = []
+        with open(p['path']) as f:
+            for line in f:
+                if line.startswith('enable_plugin'):
+                    plugins.append(line.split()[1])
+        self.assertEqual(['foo', 'bar'], plugins)
 
     def test_libs_from_git(self):
         "Test that LIBS_FROM_GIT is auto-generated"
