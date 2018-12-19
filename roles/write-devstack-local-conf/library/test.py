@@ -78,12 +78,12 @@ class TestDevstackLocalConf(unittest.TestCase):
         with open(os.path.join(
                 self.tmpdir,
                 'foo-plugin', 'devstack', 'settings'), 'w') as f:
-            f.write('define_plugin foo\n')
+            f.write('define_plugin foo-plugin\n')
         with open(os.path.join(
                 self.tmpdir,
                 'bar-plugin', 'devstack', 'settings'), 'w') as f:
-            f.write('define_plugin bar\n')
-            f.write('plugin_requires bar foo\n')
+            f.write('define_plugin bar-plugin\n')
+            f.write('plugin_requires bar-plugin foo-plugin\n')
 
         localrc = {'test_localrc': '1'}
         local_conf = {'install':
@@ -94,8 +94,8 @@ class TestDevstackLocalConf(unittest.TestCase):
         # We use ordereddict here to make sure the plugins are in the
         # *wrong* order for testing.
         plugins = OrderedDict([
-            ('bar', 'git://git.openstack.org/openstack/bar-plugin'),
-            ('foo', 'git://git.openstack.org/openstack/foo-plugin'),
+            ('bar-plugin', 'git://git.openstack.org/openstack/bar-plugin'),
+            ('foo-plugin', 'git://git.openstack.org/openstack/foo-plugin'),
             ])
         p = dict(localrc=localrc,
                  local_conf=local_conf,
@@ -119,7 +119,7 @@ class TestDevstackLocalConf(unittest.TestCase):
             for line in f:
                 if line.startswith('enable_plugin'):
                     plugins.append(line.split()[1])
-        self.assertEqual(['foo', 'bar'], plugins)
+        self.assertEqual(['foo-plugin', 'bar-plugin'], plugins)
 
     def test_libs_from_git(self):
         "Test that LIBS_FROM_GIT is auto-generated"
