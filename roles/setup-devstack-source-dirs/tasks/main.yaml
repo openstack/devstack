@@ -1,4 +1,4 @@
-- name: Find all source repos used by this job
+- name: Find all OpenStack source repos used by this job
   find:
     paths:
       - src/git.openstack.org/openstack
@@ -11,6 +11,30 @@
   command: rsync -a {{ item.path }} {{ devstack_base_dir }}
   with_items: '{{ found_repos.files }}'
   become: yes
+
+# Github projects are github.com/username/repo (username might be a
+# top-level project too), so we have to do a two-step swizzle to just
+# get the full repo path (ansible's find module doesn't help with this
+# :/)
+- name: Find top level github projects
+  find:
+    paths:
+      - src/github.com
+    file_type: directory
+  register: found_github_projects
+
+- name: Find actual github repos
+  find:
+    paths: '{{ found_github_projects.files | map(attribute="path") | list }}'
+    file_type: directory
+  register: found_github_repos
+  when: found_github_projects.files
+
+- name: Copy github repos into devstack working directory
+  command: rsync -a {{ item.path }} {{ devstack_base_dir }}
+  with_items: '{{ found_github_repos.files }}'
+  become: yes
+  when: found_github_projects.files
 
 - name: Setup refspec for repos into devstack working directory
   shell:
