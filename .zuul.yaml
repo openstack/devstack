@@ -581,7 +581,7 @@
 - project:
     templates:
       - integrated-gate
-      - integrated-gate-py35
+      - integrated-gate-py3
       - publish-openstack-docs-pti
     check:
       jobs:
