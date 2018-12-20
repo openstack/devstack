@@ -46,6 +46,9 @@ function start_etcd3 {
         cmd+=" --listen-peer-urls http://0.0.0.0:$ETCD_PEER_PORT "
     fi
     cmd+=" --listen-client-urls http://$SERVICE_HOST:$ETCD_PORT"
+    if [ "$ENABLE_DEBUG_LOG_LEVEL" == "True" ]; then
+        cmd+=" --debug"
+    fi
 
     local unitfile="$SYSTEMD_DIR/$ETCD_SYSTEMD_SERVICE"
     write_user_unit_file $ETCD_SYSTEMD_SERVICE "$cmd" "" "root"
