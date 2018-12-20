@@ -123,7 +123,7 @@ if [[ -n "$LOGDIR" ]] && [[ -d "$LOGDIR" ]]; then
     sudo rm -rf $LOGDIR
 fi
 
-# Clean out the sytemd user unit files if systemd was used.
+# Clean out the systemd user unit files if systemd was used.
 if [[ "$USE_SYSTEMD" = "True" ]]; then
     sudo find $SYSTEMD_DIR -type f -name '*devstack@*service' -delete
     # Make systemd aware of the deletion.
