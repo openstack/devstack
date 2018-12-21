@@ -27,6 +27,10 @@ set +o xtrace
 ETCD_DATA_DIR="$DATA_DIR/etcd"
 ETCD_SYSTEMD_SERVICE="devstack@etcd.service"
 ETCD_BIN_DIR="$DEST/bin"
+# Option below will mount ETCD_DATA_DIR as ramdisk, which is useful to run
+# etcd-heavy services in the gate VM's, e.g. Kubernetes.
+ETCD_USE_RAMDISK=$(trueorfalse False ETCD_USE_RAMDISK)
+ETCD_RAMDISK_MB=${ETCD_RAMDISK_MB:-512}
 
 if is_ubuntu ; then
     UBUNTU_RELEASE_BASE_NUM=`lsb_release -r | awk '{print $2}' | cut -d '.' -f 1`
@@ -89,6 +93,9 @@ function cleanup_etcd3 {
 
     $SYSTEMCTL daemon-reload
 
+    if [[ "$ETCD_USE_RAMDISK" == "True" ]]; then
+        sudo umount $ETCD_DATA_DIR
+    fi
     sudo rm -rf $ETCD_DATA_DIR
 }
 
@@ -98,6 +105,9 @@ function install_etcd3 {
     # Create the necessary directories
     sudo mkdir -p $ETCD_BIN_DIR
     sudo mkdir -p $ETCD_DATA_DIR
+    if [[ "$ETCD_USE_RAMDISK" == "True" ]]; then
+        sudo mount -t tmpfs -o nodev,nosuid,size=${ETCD_RAMDISK_MB}M tmpfs $ETCD_DATA_DIR
+    fi
 
     # Download and cache the etcd tgz for subsequent use
     local etcd_file
