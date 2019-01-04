@@ -12,14 +12,14 @@ Introduction
 LDAP support in keystone is read-only. You can use it to back an entire
 OpenStack deployment to a single LDAP server, or you can use it to back
 separate LDAP servers to specific keystone domains. Users within those domains
-will can authenticate against keystone, assume role assignments, and interact
-with other OpenStack services.
+can authenticate against keystone, assume role assignments, and interact with
+other OpenStack services.
 
 Configuration
 =============
 
 To deploy an OpenLDAP server, make sure ``ldap`` is added to the list of
-``ENABLED_SERVICES``::
+``ENABLED_SERVICES`` in the ``local.conf`` file::
 
     enable_service ldap
 
@@ -35,9 +35,9 @@ Devstack will prompt you for a password when running ``stack.sh`` if
 
 At this point, devstack should have everything it needs to deploy OpenLDAP,
 bootstrap it with a minimal set of users, and configure it to back to a domain
-in keystone::
+in keystone. You can do this by running the ``stack.sh`` script::
 
-    ./stack.sh
+    $ ./stack.sh
 
 Once ``stack.sh`` completes, you should have a running keystone deployment with
 a basic set of users. It is important to note that not all users will live
@@ -63,7 +63,7 @@ Listing Users
 To list all users in LDAP directly, you can use ``ldapsearch`` with the LDAP
 user bootstrapped by devstack::
 
-    ldapsearch -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
+    $ ldapsearch -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
         -H ldap://localhost -b dc=openstack,dc=org
 
 As you can see, devstack creates an OpenStack domain called ``openstack.org``
@@ -93,7 +93,7 @@ example LDIF that can be used to create a new LDAP user, let's call it
 
 Now, we use the ``Manager`` user to create a user for Peter in LDAP::
 
-    ldapadd -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
+    $ ldapadd -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
         -H ldap://localhost -c -f peter.ldif.in
 
 We should be able to assign Peter roles on projects. After Peter has some level
@@ -125,7 +125,7 @@ Deleting Users
 We can use the same basic steps to remove users from LDAP, but instead of using
 LDIFs, we can just pass the ``dn`` of the user we want to delete::
 
-    ldapdelete -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
+    $ ldapdelete -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
         -H ldap://localhost cn=peter,ou=Users,dc=openstack,dc=org
 
 Group Management
@@ -153,7 +153,7 @@ Let's define a specific group with the following LDIF::
 We can create the group using the same ``ldapadd`` command as we did with
 users::
 
-    ldapadd -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
+    $ ldapadd -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
         -H ldap://localhost -c -f guardian-group.ldif.in
 
 If we check the group membership in Horizon, we'll see that only Peter is a
@@ -167,7 +167,7 @@ Deleting Groups
 
 Just like users, groups can be deleted using the ``dn``::
 
-    ldapdelete -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
+    $ ldapdelete -x -w LDAP_PASSWORD -D cn=Manager,dc=openstack,dc=org \
         -H ldap://localhost cn=guardians,ou=UserGroups,dc=openstack,dc=org
 
 Note that this operation will not remove users within that group. It will only
