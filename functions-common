@@ -120,6 +120,17 @@ function write_clouds_yaml {
         --os-password $ADMIN_PASSWORD \
         --os-project-name admin
 
+    # admin with a system-scoped token -> devstack-system
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-system-admin \
+        --os-region-name $REGION_NAME \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username admin \
+        --os-password $ADMIN_PASSWORD \
+        --os-system-scope all
+
     # CLean up any old clouds.yaml files we had laying around
     rm -f $(eval echo ~"$STACK_USER")/.config/openstack/clouds.yaml
 }

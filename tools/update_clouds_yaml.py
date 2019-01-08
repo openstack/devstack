@@ -41,12 +41,19 @@ class UpdateCloudsYaml(object):
                 'auth_url': args.os_auth_url,
                 'username': args.os_username,
                 'password': args.os_password,
-                'project_name': args.os_project_name,
             },
         }
-        if args.os_identity_api_version == '3':
+        if args.os_project_name and args.os_system_scope:
+            print(
+                "WARNING: os_project_name and os_system_scope were both"
+                " given. os_system_scope will take priority.")
+        if args.os_project_name and not args.os_system_scope:
+            self._cloud_data['auth']['project_name'] = args.os_project_name
+        if args.os_identity_api_version == '3' and not args.os_system_scope:
             self._cloud_data['auth']['user_domain_id'] = 'default'
             self._cloud_data['auth']['project_domain_id'] = 'default'
+        if args.os_system_scope:
+            self._cloud_data['auth']['system_scope'] = args.os_system_scope
         if args.os_cacert:
             self._cloud_data['cacert'] = args.os_cacert
 
@@ -88,7 +95,8 @@ def main():
     parser.add_argument('--os-auth-url', required=True)
     parser.add_argument('--os-username', required=True)
     parser.add_argument('--os-password', required=True)
-    parser.add_argument('--os-project-name', required=True)
+    parser.add_argument('--os-project-name')
+    parser.add_argument('--os-system-scope')
 
     args = parser.parse_args()
 
