@@ -150,6 +150,7 @@ octavia                                `git://git.openstack.org/openstack/octavi
 octavia-dashboard                      `git://git.openstack.org/openstack/octavia-dashboard <https://git.openstack.org/cgit/openstack/octavia-dashboard>`__
 omni                                   `git://git.openstack.org/openstack/omni <https://git.openstack.org/cgit/openstack/omni>`__
 openstacksdk                           `git://git.openstack.org/openstack/openstacksdk <https://git.openstack.org/cgit/openstack/openstacksdk>`__
+os-faults                              `git://git.openstack.org/openstack/os-faults <https://git.openstack.org/cgit/openstack/os-faults>`__
 os-xenapi                              `git://git.openstack.org/openstack/os-xenapi <https://git.openstack.org/cgit/openstack/os-xenapi>`__
 osprofiler                             `git://git.openstack.org/openstack/osprofiler <https://git.openstack.org/cgit/openstack/osprofiler>`__
 oswin-tempest-plugin                   `git://git.openstack.org/openstack/oswin-tempest-plugin <https://git.openstack.org/cgit/openstack/oswin-tempest-plugin>`__
@@ -173,6 +174,7 @@ storlets                               `git://git.openstack.org/openstack/storle
 stx-config                             `git://git.openstack.org/openstack/stx-config <https://git.openstack.org/cgit/openstack/stx-config>`__
 stx-fault                              `git://git.openstack.org/openstack/stx-fault <https://git.openstack.org/cgit/openstack/stx-fault>`__
 stx-integ                              `git://git.openstack.org/openstack/stx-integ <https://git.openstack.org/cgit/openstack/stx-integ>`__
+stx-metal                              `git://git.openstack.org/openstack/stx-metal <https://git.openstack.org/cgit/openstack/stx-metal>`__
 stx-nfv                                `git://git.openstack.org/openstack/stx-nfv <https://git.openstack.org/cgit/openstack/stx-nfv>`__
 stx-update                             `git://git.openstack.org/openstack/stx-update <https://git.openstack.org/cgit/openstack/stx-update>`__
 tacker                                 `git://git.openstack.org/openstack/tacker <https://git.openstack.org/cgit/openstack/tacker>`__
