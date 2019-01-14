@@ -93,19 +93,6 @@ function _config_placement_apache_wsgi {
     " -i $placement_api_apache_conf
 }
 
-function configure_placement_nova_compute {
-    # Use the provided config file path or default to $NOVA_CONF.
-    local conf=${1:-$NOVA_CONF}
-    iniset $conf placement auth_type "password"
-    iniset $conf placement auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $conf placement username placement
-    iniset $conf placement password "$SERVICE_PASSWORD"
-    iniset $conf placement user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $conf placement project_name "$SERVICE_TENANT_NAME"
-    iniset $conf placement project_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $conf placement auth_strategy $PLACEMENT_AUTH_STRATEGY
-}
-
 # create_placement_conf() - Write config
 function create_placement_conf {
     rm -f $PLACEMENT_CONF
