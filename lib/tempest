@@ -102,6 +102,14 @@ function remove_disabled_extensions {
     remove_disabled_services "$extensions_list" "$disabled_exts"
 }
 
+# image_size_in_gib - converts an image size from bytes to GiB, rounded up
+# Takes an image ID parameter as input
+function image_size_in_gib {
+    local size
+    size=$(openstack image show $1 -c size -f value)
+    echo $size | python -c "import math; print int(math.ceil(float(int(raw_input()) / 1024.0 ** 3)))"
+}
+
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest {
     if [[ "$INSTALL_TEMPEST" == "True" ]]; then
@@ -125,6 +133,7 @@ function configure_tempest {
     local public_network_id
     local public_router_id
     local ssh_connect_method="floating"
+    local disk
 
     # Save IFS
     ifs=$IFS
@@ -190,11 +199,15 @@ function configure_tempest {
         available_flavors=$(nova flavor-list)
         if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
             if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
-                openstack flavor create --id 42 --ram 64 --disk 0 --vcpus 1 m1.nano
+                # Determine the flavor disk size based on the image size.
+                disk=$(image_size_in_gib $image_uuid)
+                openstack flavor create --id 42 --ram 64 --disk $disk --vcpus 1 m1.nano
             fi
             flavor_ref=42
             if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
-                openstack flavor create --id 84 --ram 128 --disk 0 --vcpus 1 m1.micro
+                # Determine the alt flavor disk size based on the alt image size.
+                disk=$(image_size_in_gib $image_uuid_alt)
+                openstack flavor create --id 84 --ram 128 --disk $disk --vcpus 1 m1.micro
             fi
             flavor_ref_alt=84
         else
