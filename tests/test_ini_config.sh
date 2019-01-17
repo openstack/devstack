@@ -125,14 +125,14 @@ VAL=$(iniget ${TEST_INI} bbb handlers)
 assert_equal "$VAL" "33,44" "inset at EOF"
 
 # test empty option
-if ini_has_option ${TEST_INI} ddd empty; then
+if ini_has_option ${SUDO_ARG} ${TEST_INI} ddd empty; then
     passed "ini_has_option: ddd.empty present"
 else
     failed "ini_has_option failed: ddd.empty not found"
 fi
 
 # test non-empty option
-if ini_has_option ${TEST_INI} bbb handlers; then
+if ini_has_option ${SUDO_ARG} ${TEST_INI} bbb handlers; then
     passed "ini_has_option: bbb.handlers present"
 else
     failed "ini_has_option failed: bbb.handlers not found"
