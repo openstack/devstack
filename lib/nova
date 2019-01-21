@@ -897,24 +897,25 @@ function start_nova_compute {
         local compute_cell_conf=$NOVA_CONF
     fi
 
+    cp $compute_cell_conf $NOVA_CPU_CONF
+
     if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
         # NOTE(danms): Grenade doesn't setup multi-cell rabbit, so
         # skip these bits and use the normal config.
-        NOVA_CPU_CONF=$compute_cell_conf
         echo "Skipping multi-cell conductor fleet setup"
     else
         # "${CELLSV2_SETUP}" is "superconductor"
-        cp $compute_cell_conf $NOVA_CPU_CONF
         # FIXME(danms): Should this be configurable?
         iniset $NOVA_CPU_CONF workarounds disable_group_policy_check_upcall True
         # Since the nova-compute service cannot reach nova-scheduler over
         # RPC, we also disable track_instance_changes.
         iniset $NOVA_CPU_CONF filter_scheduler track_instance_changes False
         iniset_rpc_backend nova $NOVA_CPU_CONF DEFAULT "nova_cell${NOVA_CPU_CELL}"
-        # Make sure we nuke any database config
-        inidelete $NOVA_CPU_CONF database connection
-        inidelete $NOVA_CPU_CONF api_database connection
     fi
+
+    # Make sure we nuke any database config
+    inidelete $NOVA_CPU_CONF database connection
+    inidelete $NOVA_CPU_CONF api_database connection
 
     # Console proxies were configured earlier in create_nova_conf. Now that the
     # nova-cpu.conf has been created, configure the console settings required
