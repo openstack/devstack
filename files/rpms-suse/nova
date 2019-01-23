@@ -1,3 +1,4 @@
+cdrkit-cdrtools-compat # dist:sle12
 conntrack-tools
 curl
 dnsmasq
@@ -11,7 +12,8 @@ kvm # NOPRIME
 libvirt # NOPRIME
 libvirt-python # NOPRIME
 mariadb # NOPRIME
-mkisofs # required for config_drive
+# mkisofs is required for config_drive
+mkisofs # not:sle12
 parted
 polkit
 # qemu as fallback if kvm cannot be used
