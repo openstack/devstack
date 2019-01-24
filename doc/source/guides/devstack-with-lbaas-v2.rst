@@ -1,39 +1,54 @@
-Configure Load-Balancer Version 2
-=================================
+Devstack with Octavia Load Balancing
+====================================
 
-Starting in the OpenStack Liberty release, the
-`neutron LBaaS v2 API <https://developer.openstack.org/api-ref/network/v2/index.html>`_
-is now stable while the LBaaS v1 API has been deprecated.  The LBaaS v2 reference
-driver is based on Octavia.
+Starting with the OpenStack Pike release, Octavia is now a standalone service
+providing load balancing services for OpenStack.
 
+This guide will show you how to create a devstack with `Octavia API`_ enabled.
+
+.. _Octavia API: https://developer.openstack.org/api-ref/load-balancer/v2/index.html
 
 Phase 1: Create DevStack + 2 nova instances
 --------------------------------------------
 
 First, set up a vm of your choice with at least 8 GB RAM and 16 GB disk space,
-make sure it is updated. Install git and any other developer tools you find useful.
+make sure it is updated. Install git and any other developer tools you find
+useful.
 
 Install devstack
 
 ::
 
     git clone https://git.openstack.org/openstack-dev/devstack
-    cd devstack
+    cd devstack/tools
+    sudo ./create-stack-user.sh
+    cd ../..
+    sudo mv devstack /opt/stack
+    sudo chown -R stack.stack /opt/stack/devstack
 
+This will clone the current devstack code locally, then setup the "stack"
+account that devstack services will run under. Finally, it will move devstack
+into its default location in /opt/stack/devstack.
 
-Edit your ``local.conf`` to look like
+Edit your ``/opt/stack/devstack/local.conf`` to look like
 
 ::
 
     [[local|localrc]]
-    # Load the external LBaaS plugin.
-    enable_plugin neutron-lbaas https://git.openstack.org/openstack/neutron-lbaas
     enable_plugin octavia https://git.openstack.org/openstack/octavia
+    # If you are enabling horizon, include the octavia dashboard
+    # enable_plugin octavia-dashboard https://git.openstack.org/openstack/octavia-dashboard.git
+    # If you are enabling barbican for TLS offload in Octavia, include it here.
+    # enable_plugin barbican https://github.com/openstack/barbican.git
+
+    # If you have python3 available:
+    # USE_PYTHON3=True
 
     # ===== BEGIN localrc =====
     DATABASE_PASSWORD=password
     ADMIN_PASSWORD=password
     SERVICE_PASSWORD=password
+    SERVICE_TOKEN=password
     RABBIT_PASSWORD=password
     # Enable Logging
     LOGFILE=$DEST/logs/stack.sh.log
@@ -41,27 +56,30 @@ Edit your ``local.conf`` to look like
     LOG_COLOR=True
     # Pre-requisite
     ENABLED_SERVICES=rabbit,mysql,key
-    # Horizon
-    ENABLED_SERVICES+=,horizon
+    # Horizon - enable for the OpenStack web GUI
+    # ENABLED_SERVICES+=,horizon
     # Nova
-    ENABLED_SERVICES+=,n-api,n-cpu,n-cond,n-sch
+    ENABLED_SERVICES+=,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch,n-api-meta,n-sproxy
+    ENABLED_SERVICES+=,placement-api,placement-client
     # Glance
     ENABLED_SERVICES+=,g-api,g-reg
     # Neutron
-    ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta
-    # Enable LBaaS v2
-    ENABLED_SERVICES+=,q-lbaasv2
+    ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta,neutron
     ENABLED_SERVICES+=,octavia,o-cw,o-hk,o-hm,o-api
     # Cinder
     ENABLED_SERVICES+=,c-api,c-vol,c-sch
     # Tempest
     ENABLED_SERVICES+=,tempest
+    # Barbican - Optionally used for TLS offload in Octavia
+    # ENABLED_SERVICES+=,barbican
     # ===== END localrc =====
 
 Run stack.sh and do some sanity checks
 
 ::
 
+    sudo su - stack
+    cd /opt/stack/devstack
     ./stack.sh
     . ./openrc
 
@@ -72,38 +90,59 @@ Create two nova instances that we can use as test http servers:
 ::
 
     #create nova instances on private network
-    nova boot --image $(nova image-list | awk '/ cirros-.*-x86_64-uec / {print $2}') --flavor 1 --nic net-id=$(openstack network list | awk '/ private / {print $2}') node1
-    nova boot --image $(nova image-list | awk '/ cirros-.*-x86_64-uec / {print $2}') --flavor 1 --nic net-id=$(openstack network list | awk '/ private / {print $2}') node2
-    nova list # should show the nova instances just created
+    openstack server create --image $(openstack image list | awk '/ cirros-.*-x86_64-.* / {print $2}') --flavor 1 --nic net-id=$(openstack network list | awk '/ private / {print $2}') node1
+    openstack server creeate --image $(openstack image list | awk '/ cirros-.*-x86_64-.* / {print $2}') --flavor 1 --nic net-id=$(openstack network list | awk '/ private / {print $2}') node2
+    openstack server list # should show the nova instances just created
 
     #add secgroup rules to allow ssh etc..
     openstack security group rule create default --protocol icmp
     openstack security group rule create default --protocol tcp --dst-port 22:22
     openstack security group rule create default --protocol tcp --dst-port 80:80
 
-Set up a simple web server on each of these instances. ssh into each instance (username 'cirros', password 'cubswin:)') and run
+Set up a simple web server on each of these instances. ssh into each instance (username 'cirros', password 'cubswin:)' or 'gocubsgo') and run
 
 ::
 
     MYIP=$(ifconfig eth0|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
     while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP" | sudo nc -l -p 80 ; done&
 
-Phase 2: Create your load balancers
-------------------------------------
+Phase 2: Create your load balancer
+----------------------------------
+
+Make sure you have the 'openstack loadbalancer' commands:
 
 ::
 
-    neutron lbaas-loadbalancer-create --name lb1 private-subnet
-    neutron lbaas-loadbalancer-show lb1  # Wait for the provisioning_status to be ACTIVE.
-    neutron lbaas-listener-create --loadbalancer lb1 --protocol HTTP --protocol-port 80 --name listener1
-    sleep 10  # Sleep since LBaaS actions can take a few seconds depending on the environment.
-    neutron lbaas-pool-create --lb-algorithm ROUND_ROBIN --listener listener1 --protocol HTTP --name pool1
-    sleep 10
-    neutron lbaas-member-create  --subnet private-subnet --address 10.0.0.3 --protocol-port 80 pool1
-    sleep 10
-    neutron lbaas-member-create  --subnet private-subnet --address 10.0.0.5 --protocol-port 80 pool1
+    pip install python-octaviaclient
 
-Please note here that the "10.0.0.3" and "10.0.0.5" in the above commands are the IPs of the nodes
-(in my test run-thru, they were actually 10.2 and 10.4), and the address of the created LB will be
-reported as "vip_address" from the lbaas-loadbalancer-create, and a quick test of that LB is
-"curl that-lb-ip", which should alternate between showing the IPs of the two nodes.
+Create your load balancer:
+
+::
+
+    openstack loadbalancer create --name lb1 --vip-subnet-id private-subnet
+    openstack loadbalancer show lb1  # Wait for the provisioning_status to be ACTIVE.
+    openstack loadbalancer listener create --protocol HTTP --protocol-port 80 --name listener1 lb1
+    openstack loadbalancer show lb1  # Wait for the provisioning_status to be ACTIVE.
+    openstack loadbalancer pool create --lb-algorithm ROUND_ROBIN --listener listener1 --protocol HTTP --name pool1
+    openstack loadbalancer show lb1  # Wait for the provisioning_status to be ACTIVE.
+    openstack loadbalancer healthmonitor create --delay 5 --timeout 2 --max-retries 1 --type HTTP pool1
+    openstack loadbalancer show lb1  # Wait for the provisioning_status to be ACTIVE.
+    openstack loadbalancer member create --subnet-id private-subnet --address <web server 1 address> --protocol-port 80 pool1
+    openstack loadbalancer show lb1  # Wait for the provisioning_status to be ACTIVE.
+    openstack loadbalancer member create --subnet-id private-subnet --address <web server 2 address> --protocol-port 80 pool1
+
+Please note: The <web server # address> fields are the IP addresses of the nova
+servers created in Phase 1.
+Also note, using the API directly you can do all of the above commands in one
+API call.
+
+Phase 3: Test your load balancer
+--------------------------------
+
+::
+
+    openstack loadbalancer show lb1 # Note the vip_address
+    curl http://<vip_address>
+    curl http://<vip_address>
+
+This should show the "Welcome to <IP>" message from each member server.
