@@ -1,5 +1,10 @@
+# as the user in the guest may not exist on the executor
+# we do not preserve the group or owner of the copied logs.
+
 - name: Collect devstack logs
   synchronize:
     dest: "{{ zuul.executor.log_root }}/{{ inventory_hostname }}"
     mode: pull
     src: "{{ devstack_base_dir }}/logs"
+    group: no
+    owner: no
