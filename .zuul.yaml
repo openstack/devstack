@@ -39,16 +39,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-fedora-latest
-    nodes:
-      - name: controller
-        label: fedora-28
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
