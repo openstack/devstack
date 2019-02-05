@@ -29,7 +29,7 @@ ETCD_SYSTEMD_SERVICE="devstack@etcd.service"
 ETCD_BIN_DIR="$DEST/bin"
 # Option below will mount ETCD_DATA_DIR as ramdisk, which is useful to run
 # etcd-heavy services in the gate VM's, e.g. Kubernetes.
-ETCD_USE_RAMDISK=$(trueorfalse False ETCD_USE_RAMDISK)
+ETCD_USE_RAMDISK=$(trueorfalse True ETCD_USE_RAMDISK)
 ETCD_RAMDISK_MB=${ETCD_RAMDISK_MB:-512}
 
 if is_ubuntu ; then
