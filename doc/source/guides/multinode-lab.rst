@@ -240,8 +240,8 @@ this when it runs but there are times it needs to still be done by hand:
     sudo rm -rf /etc/libvirt/qemu/inst*
     sudo virsh list | grep inst | awk '{print $1}' | xargs -n1 virsh destroy
 
-Options pimp your stack
-=======================
+Going further
+=============
 
 Additional Users
 ----------------
