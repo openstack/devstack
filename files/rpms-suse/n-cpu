@@ -1,8 +1,9 @@
+cdrkit-cdrtools-compat # dist:sle12
 cryptsetup
 dosfstools
 libosinfo
 lvm2
-mkisofs
+mkisofs # not:sle12
 open-iscsi
 sg3_utils
 # Stuff for diablo volumes
