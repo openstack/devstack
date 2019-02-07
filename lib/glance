@@ -236,8 +236,8 @@ function configure_glance {
         CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
         CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
 
-        iniset $GLANCE_API_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
-        iniset $GLANCE_CACHE_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v1/%(project_id)s"
+        iniset $GLANCE_API_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3/%(project_id)s"
+        iniset $GLANCE_CACHE_CONF DEFAULT cinder_endpoint_template "https://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3/%(project_id)s"
     fi
 
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
