@@ -12,8 +12,17 @@
 # Retrieve log directory as argument from calling script.
 LOGDIR=$1
 
+DSTAT_TOP_OPTS="--top-cpu-adv --top-io-adv --top-mem"
+if dstat --version | grep -q 'pcp-dstat' ; then
+    # dstat is unmaintained, and moving to a plugin of performance
+    # co-pilot.  Fedora 29 for example has rolled this out.  It's
+    # mostly compatible, except for a few options which are not
+    # implemented (yet?)
+    DSTAT_TOP_OPTS=""
+fi
+
 # Command line arguments for primary DStat process.
-DSTAT_OPTS="-tcmndrylpg --top-cpu-adv --top-io-adv --top-mem --swap --tcp"
+DSTAT_OPTS="-tcmndrylpg ${DSTAT_TOP_OPTS} --swap --tcp"
 
 # Command-line arguments for secondary background DStat process.
 DSTAT_CSV_OPTS="-tcmndrylpg --tcp --output $LOGDIR/dstat-csv.log"
