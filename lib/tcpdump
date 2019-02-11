@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# lib/tcpdump
+# Functions to start and stop a tcpdump
+
+# Dependencies:
+#
+# - ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# - start_tcpdump
+# - stop_tcpdump
+
+# Save trace setting
+_XTRACE_TCPDUMP=$(set +o | grep xtrace)
+set +o xtrace
+
+TCPDUMP_OUTPUT=${TCPDUMP_OUTPUT:-$LOGDIR/tcpdump.pcap}
+
+# e.g. for iscsi
+#  "-i any tcp port 3260"
+TCPDUMP_ARGS=${TCPDUMP_ARGS:-""}
+
+# start_tcpdump() - Start running processes
+function start_tcpdump {
+    # Run a tcpdump with given arguments and save the packet capture
+    if is_service_enabled tcpdump; then
+        if [[ -z "${TCPDUMP_ARGS}" ]]; then
+            die $LINENO "The tcpdump service requires TCPDUMP_ARGS to be set"
+        fi
+        touch ${TCPDUMP_OUTPUT}
+        run_process tcpdump "/usr/sbin/tcpdump -w $TCPDUMP_OUTPUT $TCPDUMP_ARGS" root root
+    fi
+}
+
+# stop_tcpdump() stop tcpdump process
+function stop_tcpdump {
+    stop_process tcpdump
+}
+
+# Restore xtrace
+$_XTRACE_TCPDUMP

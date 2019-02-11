@@ -614,6 +614,7 @@ source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
+source $TOP_DIR/lib/tcpdump
 source $TOP_DIR/lib/etcd3
 
 # Extras Source
@@ -1052,6 +1053,12 @@ fi
 
 # A better kind of sysstat, with the top process per time slice
 start_dstat
+
+# Run a background tcpdump for debugging
+# Note: must set TCPDUMP_ARGS with the enabled service
+if is_service_enabled tcpdump; then
+    start_tcpdump
+fi
 
 # Etcd
 # -----
