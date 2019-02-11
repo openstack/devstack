@@ -185,7 +185,7 @@ class TestDevstackLocalConf(unittest.TestCase):
             for line in f:
                 if line.startswith('LIBS_FROM_GIT'):
                     lfg = line.strip().split('=')[1]
-        self.assertEqual('oslo.db', lfg)
+        self.assertEqual('"oslo.db"', lfg)
 
     def test_plugin_circular_deps(self):
         "Test that plugins with circular dependencies fail"
@@ -265,7 +265,7 @@ class TestDevstackLocalConf(unittest.TestCase):
         lc.write(p['path'])
 
         tp = self._find_tempest_plugins_value(p['path'])
-        self.assertEqual('someplugin', tp)
+        self.assertEqual('"someplugin"', tp)
         self.assertEqual(len(lc.warnings), 1)
 
 

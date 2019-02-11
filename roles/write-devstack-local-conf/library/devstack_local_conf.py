@@ -252,7 +252,7 @@ class LocalConf(object):
         if localrc:
             vg = VarGraph(localrc)
             for k, v in vg.getVars():
-                self.localrc.append('{}={}'.format(k, v))
+                self.localrc.append('{}="{}"'.format(k, v))
                 if k == 'LIBS_FROM_GIT':
                     lfg = True
                 elif k == 'TEMPEST_PLUGINS':
