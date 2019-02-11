@@ -183,6 +183,10 @@ TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 # and Glance.
 NOVA_USE_SERVICE_TOKEN=$(trueorfalse False NOVA_USE_SERVICE_TOKEN)
 
+# Enable debugging levels for iscsid service (goes from 0-8)
+ISCSID_DEBUG=$(trueorfalse False ISCSID_DEBUG)
+ISCSID_DEBUG_LEVEL=${ISCSID_DEBUG_LEVEL:-4}
+
 # Functions
 # ---------
 
@@ -327,8 +331,22 @@ function configure_nova {
                 sudo chown -R $STACK_USER $NOVA_INSTANCES_PATH
             fi
         fi
+
+        if [[ ${ISCSID_DEBUG} == "True" ]]; then
+            # Install an override that starts iscsid with debugging
+            # enabled.
+            cat > /tmp/iscsid.override <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/sbin/iscsid -d${ISCSID_DEBUG_LEVEL}
+EOF
+            sudo mkdir -p /etc/systemd/system/iscsid.service.d
+            sudo mv /tmp/iscsid.override /etc/systemd/system/iscsid.service.d/override.conf
+            sudo systemctl daemon-reload
+        fi
+
         # ensure that iscsid is started, even when disabled by default
-        start_service iscsid
+        restart_service iscsid
     fi
 
     # Rebuild the config file from scratch
