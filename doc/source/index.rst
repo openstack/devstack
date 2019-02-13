@@ -114,8 +114,8 @@ Profit!
 You now have a working DevStack! Congrats!
 
 Your devstack will have installed ``keystone``, ``glance``, ``nova``,
-``cinder``, ``neutron``, and ``horizon``. Floating IPs will be
-available, guests have access to the external world.
+``placement``, ``cinder``, ``neutron``, and ``horizon``. Floating IPs
+will be available, guests have access to the external world.
 
 You can access horizon to experience the web interface to
 OpenStack, and manage vms, networks, volumes, and images from
