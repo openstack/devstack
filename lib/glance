@@ -345,7 +345,7 @@ function start_glance {
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
         run_process g-api "$GLANCE_BIN_DIR/uwsgi --procname-prefix glance-api --ini $GLANCE_UWSGI_CONF"
     else
-        run_process g-api "$GLANCE_BIN_DIR/glance-api --config-file=$GLANCE_CONF_DIR/glance-api.conf"
+        run_process g-api "$GLANCE_BIN_DIR/glance-api --config-dir=$GLANCE_CONF_DIR"
     fi
 
     echo "Waiting for g-api ($GLANCE_SERVICE_HOST) to start..."
