@@ -16,7 +16,13 @@ MYSQL_DRIVER=${MYSQL_DRIVER:-PyMySQL}
 register_database mysql
 
 MYSQL_SERVICE_NAME=mysql
-if is_suse || is_fedora && ! is_oraclelinux; then
+if is_fedora && ! is_oraclelinux; then
+    MYSQL_SERVICE_NAME=mariadb
+elif is_suse && systemctl list-unit-files | grep -q 'mariadb\.service'; then
+    # Older mariadb packages on SLES 12 provided mysql.service.  The
+    # newer ones on SLES 12 and 15 use mariadb.service; they also
+    # provide a mysql.service symlink for backwards-compatibility, but
+    # let's not rely on that.
     MYSQL_SERVICE_NAME=mariadb
 fi
 
