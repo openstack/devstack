@@ -496,21 +496,21 @@
 
 - job:
     name: devstack-platform-opensuse-150
-    parent: tempest-full
+    parent: tempest-full-py3
     description: openSUSE 15.0 platform test
     nodeset: devstack-single-node-opensuse-150
     voting: false
 
 - job:
     name: devstack-platform-fedora-latest
-    parent: tempest-full
+    parent: tempest-full-py3
     description: Fedora latest platform test
     nodeset: devstack-single-node-fedora-latest
     voting: false
 
 - job:
     name: devstack-platform-xenial
-    parent: tempest-full
+    parent: tempest-full-py3
     description: Ubuntu Xenial platform test
     nodeset: openstack-single-node-xenial
     voting: false
