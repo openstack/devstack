@@ -1167,7 +1167,7 @@ function create_flavors {
     if is_service_enabled n-api; then
         if ! openstack --os-region-name="$REGION_NAME" flavor list | grep -q ds512M; then
             # Note that danms hates these flavors and apologizes for sdague
-            openstack --os-region-name="$REGION_NAME" flavor create --id c1 --ram 256 --disk 0 --vcpus 1 cirros256
+            openstack --os-region-name="$REGION_NAME" flavor create --id c1 --ram 256 --disk 1 --vcpus 1 cirros256
             openstack --os-region-name="$REGION_NAME" flavor create --id d1 --ram 512 --disk 5 --vcpus 1 ds512M
             openstack --os-region-name="$REGION_NAME" flavor create --id d2 --ram 1024 --disk 10 --vcpus 1 ds1G
             openstack --os-region-name="$REGION_NAME" flavor create --id d3 --ram 2048 --disk 10 --vcpus 2 ds2G
