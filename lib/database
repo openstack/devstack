@@ -87,8 +87,6 @@ function initialize_database_backends {
 
     if [ -n "$MYSQL_PASSWORD" ]; then
         DATABASE_PASSWORD=$MYSQL_PASSWORD
-    else
-        read_password DATABASE_PASSWORD "ENTER A PASSWORD TO USE FOR THE DATABASE."
     fi
 
     # We configure Nova, Horizon, Glance and Keystone to use MySQL as their

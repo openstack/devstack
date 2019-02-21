@@ -691,7 +691,14 @@ function read_password {
 # The available database backends are listed in ``DATABASE_BACKENDS`` after
 # ``lib/database`` is sourced. ``mysql`` is the default.
 
-initialize_database_backends && echo "Using $DATABASE_TYPE database backend" || echo "No database enabled"
+if initialize_database_backends; then
+    echo "Using $DATABASE_TYPE database backend"
+    # Last chance for the database password. This must be handled here
+    # because read_password is not a library function.
+    read_password DATABASE_PASSWORD "ENTER A PASSWORD TO USE FOR THE DATABASE."
+else
+    echo "No database enabled"
+fi
 
 
 # Queue Configuration
@@ -726,6 +733,16 @@ if is_service_enabled keystone; then
     if is_service_enabled ldap; then
         read_password LDAP_PASSWORD "ENTER A PASSWORD TO USE FOR LDAP"
     fi
+fi
+
+
+# Nova
+# -----
+
+if is_service_enabled nova && [[ "$VIRT_DRIVER" == 'xenserver' ]]; then
+    # Look for the backend password here because read_password
+    # is not a library function.
+    read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
 fi
 
 
