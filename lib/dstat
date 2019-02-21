@@ -35,10 +35,10 @@ function start_dstat {
     # to your localrc
     run_process memory_tracker "$TOP_DIR/tools/memory_tracker.sh" "" "root"
 
-    # remove support for the old name when it's no longer used (sometime in Queens)
+    # TODO(jh): Fail when using the old service name otherwise consumers might
+    # never notice that is has been removed.
     if is_service_enabled peakmem_tracker; then
-        deprecated "Use of peakmem_tracker in devstack is deprecated, use memory_tracker instead"
-        run_process peakmem_tracker "$TOP_DIR/tools/memory_tracker.sh" "" "root"
+        die $LINENO "The peakmem_tracker service has been removed, use memory_tracker instead"
     fi
 }
 

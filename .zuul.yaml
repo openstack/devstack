@@ -404,6 +404,7 @@
         # Shared services
         dstat: true
         etcd3: true
+        memory_tracker: true
         mysql: true
         rabbit: true
     group-vars:
@@ -411,6 +412,7 @@
         devstack_services:
           # Shared services
           dstat: true
+          memory_tracker: true
         devstack_localrc:
           # Multinode specific settings
           HOST_IP: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
@@ -476,6 +478,7 @@
         # Shared services
         dstat: true
         etcd3: true
+        memory_tracker: true
         mysql: true
         rabbit: true
         tls-proxy: true
@@ -524,6 +527,7 @@
           # This list replaces the test-matrix.
           # Shared services
           dstat: true
+          memory_tracker: true
           tls-proxy: true
           # Nova services
           n-cpu: true
