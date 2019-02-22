@@ -19,6 +19,17 @@
           rpm -qa | sort > {{ stage_dir }}/rpm-qa.txt
       fi
 
+      # NOTE(kchamart) The 'audit.log' can be useful in cases when QEMU
+      # failed to start due to denials from SELinux — useful for CentOS
+      # and Fedora machines.  For Ubuntu (which runs AppArmor), DevStack
+      # already captures the contents of /var/log/kern.log (via
+      # `journalctl -t kernel` redirected into syslog.txt.gz), which
+      # contains AppArmor-related messages.
+      if [ -f /var/log/audit/audit.log ] ; then
+          sudo cp /var/log/audit/audit.log {{stage_dir }}/audit.log &&
+          chmod +r {{ stage_dir }}/audit.log;
+      fi
+
       # gzip and save any coredumps in /var/core
       if [ -d /var/core ]; then
           sudo gzip -r /var/core
