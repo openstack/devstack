@@ -148,6 +148,41 @@
         nodes:
           - compute1
 
+- nodeset:
+    name: openstack-three-node-bionic
+    nodes:
+      - name: controller
+        label: ubuntu-bionic
+      - name: compute1
+        label: ubuntu-bionic
+      - name: compute2
+        label: ubuntu-bionic
+    groups:
+      # Node where tests are executed and test results collected
+      - name: tempest
+        nodes:
+          - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - controller
+          - compute1
+          - compute2
+      # Nodes that are not the controller
+      - name: subnode
+        nodes:
+          - compute1
+          - compute2
+      # Switch node for multinode networking setup
+      - name: switch
+        nodes:
+          - controller
+      # Peer nodes for multinode networking setup
+      - name: peers
+        nodes:
+          - compute1
+          - compute2
+
 - job:
     name: devstack-base
     parent: multinode
