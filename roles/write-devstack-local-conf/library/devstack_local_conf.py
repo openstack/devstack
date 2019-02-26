@@ -214,11 +214,14 @@ class LocalConf(object):
         self.base_dir = base_dir
         self.projects = projects
         self.project = project
-        if plugins:
-            self.handle_plugins(plugins)
         if services or base_services:
             self.handle_services(base_services, services or {})
         self.handle_localrc(localrc)
+        # Plugins must be the last items in localrc, otherwise
+        # the configuration lines which follows them in the file are
+        # not applied to the plugins (for example, the value of DEST.)
+        if plugins:
+            self.handle_plugins(plugins)
         if localconf:
             self.handle_localconf(localconf)
 
