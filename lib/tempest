@@ -673,7 +673,9 @@ function install_tempest {
 function install_tempest_plugins {
     pushd $TEMPEST_DIR
     if [[ $TEMPEST_PLUGINS != 0 ]] ; then
-        tox -evenv-tempest -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt $TEMPEST_PLUGINS
+        # The requirements might be on a different branch, while tempest & tempest plugins needs master requirements.
+        (cd $REQUIREMENTS_DIR && git show master:upper-constraints.txt) > u-c-m.txt
+        tox -evenv-tempest -- pip install -c u-c-m.txt $TEMPEST_PLUGINS
         echo "Checking installed Tempest plugins:"
         tox -evenv-tempest -- tempest list-plugins
     fi
