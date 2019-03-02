@@ -161,6 +161,7 @@ qinling                                `git://git.openstack.org/openstack/qinlin
 qinling-dashboard                      `git://git.openstack.org/openstack/qinling-dashboard <https://git.openstack.org/cgit/openstack/qinling-dashboard>`__
 rally                                  `git://git.openstack.org/openstack/rally <https://git.openstack.org/cgit/openstack/rally>`__
 rally-openstack                        `git://git.openstack.org/openstack/rally-openstack <https://git.openstack.org/cgit/openstack/rally-openstack>`__
+rsd-virt-for-nova                      `git://git.openstack.org/openstack/rsd-virt-for-nova <https://git.openstack.org/cgit/openstack/rsd-virt-for-nova>`__
 sahara                                 `git://git.openstack.org/openstack/sahara <https://git.openstack.org/cgit/openstack/sahara>`__
 sahara-dashboard                       `git://git.openstack.org/openstack/sahara-dashboard <https://git.openstack.org/cgit/openstack/sahara-dashboard>`__
 scalpels                               `git://git.openstack.org/openstack/scalpels <https://git.openstack.org/cgit/openstack/scalpels>`__
