@@ -40,9 +40,9 @@ class TestDevstackLocalConf(unittest.TestCase):
         # We use ordereddict here to make sure the plugins are in the
         # *wrong* order for testing.
         plugins = OrderedDict([
-            ('bar', 'git://git.openstack.org/openstack/bar-plugin'),
-            ('foo', 'git://git.openstack.org/openstack/foo-plugin'),
-            ('baz', 'git://git.openstack.org/openstack/baz-plugin'),
+            ('bar', 'https://git.openstack.org/openstack/bar-plugin'),
+            ('foo', 'https://git.openstack.org/openstack/foo-plugin'),
+            ('baz', 'https://git.openstack.org/openstack/baz-plugin'),
             ])
         p = dict(localrc=localrc,
                  local_conf=local_conf,
@@ -94,8 +94,8 @@ class TestDevstackLocalConf(unittest.TestCase):
         # We use ordereddict here to make sure the plugins are in the
         # *wrong* order for testing.
         plugins = OrderedDict([
-            ('bar-plugin', 'git://git.openstack.org/openstack/bar-plugin'),
-            ('foo-plugin', 'git://git.openstack.org/openstack/foo-plugin'),
+            ('bar-plugin', 'https://git.openstack.org/openstack/bar-plugin'),
+            ('foo-plugin', 'https://git.openstack.org/openstack/foo-plugin'),
             ])
         p = dict(localrc=localrc,
                  local_conf=local_conf,
@@ -227,8 +227,8 @@ class TestDevstackLocalConf(unittest.TestCase):
         # We use ordereddict here to make sure the plugins are in the
         # *wrong* order for testing.
         plugins = OrderedDict([
-            ('bar', 'git://git.openstack.org/openstack/bar-plugin'),
-            ('foo', 'git://git.openstack.org/openstack/foo-plugin'),
+            ('bar', 'https://git.openstack.org/openstack/bar-plugin'),
+            ('foo', 'https://git.openstack.org/openstack/foo-plugin'),
             ])
         p = dict(localrc=localrc,
                  local_conf=local_conf,
