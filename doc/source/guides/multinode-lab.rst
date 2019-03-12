@@ -369,17 +369,6 @@ To pull glance, OpenStack Image service, from an experimental fork:
 Notes stuff you might need to know
 ==================================
 
-Reset the Bridge
-----------------
-
-How to reset the bridge configuration:
-
-::
-
-    sudo brctl delif br100 eth0.926
-    sudo ip link set dev br100 down
-    sudo brctl delbr br100
-
 Set MySQL Password
 ------------------
 
