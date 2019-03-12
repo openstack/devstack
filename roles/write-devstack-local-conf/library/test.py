@@ -23,6 +23,20 @@ from devstack_local_conf import LocalConf
 from collections import OrderedDict
 
 class TestDevstackLocalConf(unittest.TestCase):
+
+    @staticmethod
+    def _init_localconf(p):
+        lc = LocalConf(p.get('localrc'),
+                       p.get('local_conf'),
+                       p.get('base_services'),
+                       p.get('services'),
+                       p.get('plugins'),
+                       p.get('base_dir'),
+                       p.get('projects'),
+                       p.get('project'),
+                       p.get('tempest_plugins'))
+        return lc
+
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
 
@@ -51,14 +65,7 @@ class TestDevstackLocalConf(unittest.TestCase):
                  plugins=plugins,
                  base_dir='./test',
                  path=os.path.join(self.tmpdir, 'test.local.conf'))
-        lc = LocalConf(p.get('localrc'),
-                       p.get('local_conf'),
-                       p.get('base_services'),
-                       p.get('services'),
-                       p.get('plugins'),
-                       p.get('base_dir'),
-                       p.get('projects'),
-                       p.get('project'))
+        lc = self._init_localconf(p)
         lc.write(p['path'])
 
         plugins = []
@@ -104,14 +111,7 @@ class TestDevstackLocalConf(unittest.TestCase):
                  plugins=plugins,
                  base_dir=self.tmpdir,
                  path=os.path.join(self.tmpdir, 'test.local.conf'))
-        lc = LocalConf(p.get('localrc'),
-                       p.get('local_conf'),
-                       p.get('base_services'),
-                       p.get('services'),
-                       p.get('plugins'),
-                       p.get('base_dir'),
-                       p.get('projects'),
-                       p.get('project'))
+        lc = self._init_localconf(p)
         lc.write(p['path'])
 
         plugins = []
@@ -145,14 +145,7 @@ class TestDevstackLocalConf(unittest.TestCase):
                  path=os.path.join(self.tmpdir, 'test.local.conf'),
                  projects=projects,
                  project=project)
-        lc = LocalConf(p.get('localrc'),
-                       p.get('local_conf'),
-                       p.get('base_services'),
-                       p.get('services'),
-                       p.get('plugins'),
-                       p.get('base_dir'),
-                       p.get('projects'),
-                       p.get('project'))
+        lc = self._init_localconf(p)
         lc.write(p['path'])
 
         lfg = None
@@ -184,14 +177,7 @@ class TestDevstackLocalConf(unittest.TestCase):
                  base_dir='./test',
                  path=os.path.join(self.tmpdir, 'test.local.conf'),
                  projects=projects)
-        lc = LocalConf(p.get('localrc'),
-                       p.get('local_conf'),
-                       p.get('base_services'),
-                       p.get('services'),
-                       p.get('plugins'),
-                       p.get('base_dir'),
-                       p.get('projects'),
-                       p.get('project'))
+        lc = self._init_localconf(p)
         lc.write(p['path'])
 
         lfg = None
@@ -238,13 +224,49 @@ class TestDevstackLocalConf(unittest.TestCase):
                  base_dir=self.tmpdir,
                  path=os.path.join(self.tmpdir, 'test.local.conf'))
         with self.assertRaises(Exception):
-            lc = LocalConf(p.get('localrc'),
-                           p.get('local_conf'),
-                           p.get('base_services'),
-                           p.get('services'),
-                           p.get('plugins'),
-                           p.get('base_dir'))
+            lc = self._init_localconf(p)
             lc.write(p['path'])
+
+    def _find_tempest_plugins_value(self, file_path):
+        tp = None
+        with open(file_path) as f:
+            for line in f:
+                if line.startswith('TEMPEST_PLUGINS'):
+                    found = line.strip().split('=')[1]
+                    self.assertIsNone(tp,
+                        "TEMPEST_PLUGIN ({}) found again ({})".format(
+                            tp, found))
+                    tp = found
+        return tp
+
+    def test_tempest_plugins(self):
+        "Test that TEMPEST_PLUGINS is correctly populated."
+        p = dict(base_services=[],
+                 base_dir='./test',
+                 path=os.path.join(self.tmpdir, 'test.local.conf'),
+                 tempest_plugins=['heat-tempest-plugin', 'sahara-tests'])
+        lc = self._init_localconf(p)
+        lc.write(p['path'])
+
+        tp = self._find_tempest_plugins_value(p['path'])
+        self.assertEqual('"./test/heat-tempest-plugin ./test/sahara-tests"', tp)
+        self.assertEqual(len(lc.warnings), 0)
+
+    def test_tempest_plugins_not_overridden(self):
+        """Test that the existing value of TEMPEST_PLUGINS is not overridden
+        by the user-provided value, but a warning is emitted."""
+        localrc = {'TEMPEST_PLUGINS': 'someplugin'}
+        p = dict(localrc=localrc,
+                 base_services=[],
+                 base_dir='./test',
+                 path=os.path.join(self.tmpdir, 'test.local.conf'),
+                 tempest_plugins=['heat-tempest-plugin', 'sahara-tests'])
+        lc = self._init_localconf(p)
+        lc.write(p['path'])
+
+        tp = self._find_tempest_plugins_value(p['path'])
+        self.assertEqual('someplugin', tp)
+        self.assertEqual(len(lc.warnings), 1)
 
 
 if __name__ == '__main__':
