@@ -11,3 +11,4 @@
     base_dir: "{{ devstack_base_dir|default(omit) }}"
     projects: "{{ zuul.projects }}"
     project: "{{ zuul.project }}"
+    tempest_plugins: "{{ tempest_plugins|default(omit) }}"

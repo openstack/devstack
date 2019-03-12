@@ -88,3 +88,12 @@ Write the local.conf file for use by devstack
    If a plugin declares a dependency on another plugin (via
    ``plugin_requires`` in the plugin's settings file), this role will
    automatically emit ``enable_plugin`` lines in the correct order.
+
+.. zuul:rolevar:: tempest_plugins
+   :type: list
+
+   A list of tempest plugins which are installed alongside tempest.
+
+   The list of values will be combined with the base devstack directory
+   and used to populate the ``TEMPEST_PLUGINS`` variable. If the variable
+   already exists, its value is *not* changed.
