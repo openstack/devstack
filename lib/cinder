@@ -435,6 +435,9 @@ function install_cinder {
         install_package tgt
     elif [[ "$CINDER_ISCSI_HELPER" == "lioadm" ]]; then
         if [[ ${DISTRO} == "bionic" ]]; then
+            # TODO(frickler): Workaround for https://launchpad.net/bugs/1819819
+            sudo mkdir -p /etc/target
+
             install_package targetcli-fb
         else
             install_package targetcli
