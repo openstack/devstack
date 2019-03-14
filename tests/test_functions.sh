@@ -272,7 +272,7 @@ function test_export_proxy_variables {
 
     export_proxy_variables
     expected=$(echo -e "http_proxy=$http_proxy\nhttps_proxy=$https_proxy\nno_proxy=$no_proxy")
-    results=$(env | egrep '(http(s)?|no)_proxy=')
+    results=$(env | egrep '(http(s)?|no)_proxy=' | sort)
     if [[ $expected = $results ]]; then
         passed "OK: Proxy variables are exported when proxy variables are set"
     else
