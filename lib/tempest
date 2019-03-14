@@ -560,7 +560,7 @@ function configure_tempest {
     fi
 
     # The requirements might be on a different branch, while tempest needs master requirements.
-    git -C $REQUIREMENTS_DIR show master:upper-constraints.txt > u-c-m.txt
+    (cd $REQUIREMENTS_DIR && git show master:upper-constraints.txt) > u-c-m.txt
     tox -evenv-tempest -- pip install -c u-c-m.txt -r requirements.txt
 
     # Auth:
