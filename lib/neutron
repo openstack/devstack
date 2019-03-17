@@ -33,7 +33,7 @@ GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 # - True : Run neutron under uwsgi
 # TODO(annp): Switching to uwsgi in next cycle if things turn out to be stable
 # enough
-NEUTRON_DEPLOY_MOD_WSGI=${NEUTRON_DEPLOY_MOD_WSGI:-False}
+NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse False NEUTRON_DEPLOY_MOD_WSGI)
 NEUTRON_AGENT=${NEUTRON_AGENT:-openvswitch}
 NEUTRON_DIR=$DEST/neutron
 NEUTRON_AUTH_CACHE_DIR=${NEUTRON_AUTH_CACHE_DIR:-/var/cache/neutron}
