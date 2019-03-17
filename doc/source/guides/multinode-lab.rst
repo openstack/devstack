@@ -177,7 +177,7 @@ machines, create a ``local.conf`` with:
     GLANCE_HOSTPORT=$SERVICE_HOST:9292
     ENABLED_SERVICES=n-cpu,q-agt,n-api-meta,c-vol,placement-client
     NOVA_VNC_ENABLED=True
-    NOVNCPROXY_URL="http://$SERVICE_HOST:6080/vnc_auto.html"
+    NOVNCPROXY_URL="http://$SERVICE_HOST:6080/vnc_lite.html"
     VNCSERVER_LISTEN=$HOST_IP
     VNCSERVER_PROXYCLIENT_ADDRESS=$VNCSERVER_LISTEN
 
