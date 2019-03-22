@@ -101,7 +101,7 @@ function check_python3_support_for_package_local {
     cd $name
     set +e
     classifier=$(python setup.py --classifiers \
-        | grep 'Programming Language :: Python :: 3$')
+        | grep 'Programming Language :: Python :: 3')
     set -e
     echo $classifier
 }
@@ -297,6 +297,8 @@ function pip_install {
                             echo "Automatically using $PYTHON3_VERSION version to install $package_dir based on local package settings"
                             sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                             cmd_pip=$(get_pip_command $PYTHON3_VERSION)
+                        else
+                            echo "WARNING: Did not find python 3 classifier for local package $package_dir"
                         fi
                     fi
                 else
@@ -307,6 +309,8 @@ function pip_install {
                         echo "Automatically using $PYTHON3_VERSION version to install $package based on remote package settings"
                         sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                         cmd_pip=$(get_pip_command $PYTHON3_VERSION)
+                    else
+                        echo "WARNING: Did not find python 3 classifier for remote package $package_dir"
                     fi
                 fi
             fi
