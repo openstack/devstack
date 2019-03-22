@@ -567,7 +567,7 @@ you do not require them.
     Q_ML2_PLUGIN_MECHANISM_DRIVERS=macvtap
     Q_USE_PROVIDER_NETWORKING=True
 
-    enable_plugin neutron git://git.openstack.org/openstack/neutron
+    enable_plugin neutron https://git.openstack.org/openstack/neutron
 
     ## MacVTap agent options
     Q_AGENT=macvtap
@@ -622,7 +622,7 @@ For the MacVTap compute node, use this local.conf:
 
     # Services that a compute node runs
     disable_all_services
-    enable_plugin neutron git://git.openstack.org/openstack/neutron
+    enable_plugin neutron https://git.openstack.org/openstack/neutron
     ENABLED_SERVICES+=n-cpu,q-agt
 
     ## MacVTap agent options
