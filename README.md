@@ -35,7 +35,7 @@ You can also pick specific OpenStack project releases by setting the appropriate
 `stackrc` for the default set).  Usually just before a release there will be
 milestone-proposed branches that need to be tested::
 
-    GLANCE_REPO=git://git.openstack.org/openstack/glance.git
+    GLANCE_REPO=https://git.openstack.org/openstack/glance.git
     GLANCE_BRANCH=milestone-proposed
 
 # Start A Dev Cloud

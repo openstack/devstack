@@ -584,7 +584,7 @@ you do not require them.
 
     #Enable Neutron services
     disable_service n-net
-    enable_plugin neutron git://git.openstack.org/openstack/neutron
+    enable_plugin neutron https://git.openstack.org/openstack/neutron
     ENABLED_SERVICES+=,q-agt,q-svc
 
     ## MacVTap agent options
@@ -639,7 +639,7 @@ For the MacVTap compute node, use this local.conf:
 
     # Services that a compute node runs
     disable_all_services
-    enable_plugin neutron git://git.openstack.org/openstack/neutron
+    enable_plugin neutron https://git.openstack.org/openstack/neutron
     ENABLED_SERVICES+=n-cpu,q-agt
 
     ## MacVTap agent options
