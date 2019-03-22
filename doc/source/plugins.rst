@@ -99,7 +99,7 @@ They are added in the following format::
 
 An example would be as follows::
 
-  enable_plugin ec2-api git://git.openstack.org/openstack/ec2-api
+  enable_plugin ec2-api https://git.openstack.org/openstack/ec2-api
 
 plugin.sh contract
 ==================
@@ -277,7 +277,7 @@ be needed in your ``jenkins/jobs/<project>.yaml`` definition in
   # note the actual url here is somewhat irrelevant because it
   # caches in nodepool, however make it a valid url for
   # documentation purposes.
-  export DEVSTACK_LOCAL_CONFIG="enable_plugin ec2-api git://git.openstack.org/openstack/ec2-api"
+  export DEVSTACK_LOCAL_CONFIG="enable_plugin ec2-api https://git.openstack.org/openstack/ec2-api"
 
 See Also
 ========
