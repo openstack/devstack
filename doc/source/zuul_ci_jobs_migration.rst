@@ -102,7 +102,6 @@ job.parent.
         tox_envlist: 'all'
         devstack_localrc:
           KURYR_K8S_API_PORT: 8080
-          TEMPEST_PLUGINS: '/opt/stack/kuryr-tempest-plugin'
         devstack_services:
           kubernetes-api: true
           kubernetes-controller-manager: true
@@ -114,6 +113,8 @@ job.parent.
           kuryr-kubernetes: https://git.openstack.org/openstack/kuryr
           devstack-plugin-container: https://git.openstack.org/openstack/devstack-plugin-container
           neutron-lbaas: https://git.openstack.org/openstack/neutron-lbaas
+        tempest_plugins:
+          - kuryr-tempest-plugin
         (...)
 
 Job variables
