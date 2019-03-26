@@ -461,6 +461,7 @@
 
 - job:
     name: devstack-unit-tests
+    nodeset: ubuntu-xenial
     description: |
       Runs unit tests on devstack project.
 
