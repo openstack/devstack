@@ -1,0 +1,33 @@
+Devstack systemd journal
+========================
+
+The devstack.journal file is a copy of the systemd journal during the
+devstack run.
+
+To use it, you will need to convert it so journalctl can read it
+locally.  After downloading the file:
+
+ $ /lib/systemd/systemd-journal-remote <(xzcat ./devstack.journal.xz) -o output.journal
+
+Note this binary is not in the regular path.  On Debian/Ubuntu
+platforms, you will need to have the "sytemd-journal-remote" package
+installed.
+
+It should result in something like:
+
+ Finishing after writing <large number> entries
+
+You can then use journalctl to examine this file.  For example, to see
+all devstack services try:
+
+ $ journalctl --file ./output.journal -u 'devstack@*'
+
+To see just cinder API server logs restrict the match with
+
+ $ journalctl --file ./output.journal -u 'devstack@c-api'
+
+There may be many types of logs available in the journal, a command like
+
+ $ journalctl --file ./output.journal --output=json-pretty | grep "_SYSTEMD_UNIT" | sort -u
+
+can help you find interesting things to filter on.
