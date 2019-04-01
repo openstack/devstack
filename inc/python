@@ -81,34 +81,6 @@ function pip_install_gr_extras {
     pip_install $clean_name[$extras]
 }
 
-# Determine the python versions supported by a package
-function get_python_versions_for_package {
-    local name=$1
-    cd $name && python setup.py --classifiers \
-        | grep 'Language' | cut -f5 -d: | grep '\.' | tr '\n' ' '
-}
-
-# Check for python3 classifier in local directory
-function check_python3_support_for_package_local {
-    local name=$1
-    cd $name
-    set +e
-    classifier=$(python setup.py --classifiers \
-        | grep 'Programming Language :: Python :: 3')
-    set -e
-    echo $classifier
-}
-
-# Check for python3 classifier on pypi
-function check_python3_support_for_package_remote {
-    local name=$1
-    set +e
-    classifier=$(curl -s -L "https://pypi.python.org/pypi/$name/json" \
-        | grep '"Programming Language :: Python :: 3"')
-    set -e
-    echo $classifier
-}
-
 # python3_enabled_for() assumes the service(s) specified as arguments are
 # enabled for python 3 unless explicitly disabled. See python3_disabled_for().
 #
@@ -259,52 +231,20 @@ function pip_install {
             cmd_pip=$(get_pip_command $PYTHON2_VERSION)
             local sudo_pip="sudo -H"
             if python3_enabled; then
-                # Look at the package classifiers to find the python
-                # versions supported, and if we find the version of
-                # python3 we've been told to use, use that instead of the
-                # default pip
-                local python_versions
-
                 # Special case some services that have experimental
                 # support for python3 in progress, but don't claim support
                 # in their classifier
                 echo "Check python version for : $package_dir"
                 if python3_disabled_for ${package_dir##*/}; then
                     echo "Explicitly using $PYTHON2_VERSION version to install $package_dir based on DISABLED_PYTHON3_PACKAGES"
-                elif python3_enabled_for ${package_dir##*/}; then
+                else
+                    # For everything that is not explicitly blacklisted with
+                    # DISABLED_PYTHON3_PACKAGES, assume it supports python3
+                    # and we will let pip sort out the install, regardless of
+                    # the package being local or remote.
                     echo "Using $PYTHON3_VERSION version to install $package_dir based on default behavior"
                     sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
                     cmd_pip=$(get_pip_command $PYTHON3_VERSION)
-                elif [[ -d "$package_dir" ]]; then
-                    python_versions=$(get_python_versions_for_package $package_dir)
-                    if [[ $python_versions =~ $PYTHON3_VERSION ]]; then
-                        echo "Automatically using $PYTHON3_VERSION version to install $package_dir based on classifiers"
-                        sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
-                        cmd_pip=$(get_pip_command $PYTHON3_VERSION)
-                    else
-                        # The package may not have yet advertised python3.5
-                        # support so check for just python3 classifier and log
-                        # a warning.
-                        python3_classifier=$(check_python3_support_for_package_local $package_dir)
-                        if [[ ! -z "$python3_classifier" ]]; then
-                            echo "Automatically using $PYTHON3_VERSION version to install $package_dir based on local package settings"
-                            sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
-                            cmd_pip=$(get_pip_command $PYTHON3_VERSION)
-                        else
-                            echo "WARNING: Did not find python 3 classifier for local package $package_dir"
-                        fi
-                    fi
-                else
-                    # Check pypi as we don't have the package on disk
-                    package=$(echo $package_dir | grep -o '^[.a-zA-Z0-9_-]*')
-                    python3_classifier=$(check_python3_support_for_package_remote $package)
-                    if [[ ! -z "$python3_classifier" ]]; then
-                        echo "Automatically using $PYTHON3_VERSION version to install $package based on remote package settings"
-                        sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
-                        cmd_pip=$(get_pip_command $PYTHON3_VERSION)
-                    else
-                        echo "WARNING: Did not find python 3 classifier for remote package $package_dir"
-                    fi
                 fi
             fi
         fi
