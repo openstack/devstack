@@ -136,7 +136,7 @@ if [[ -r $RC_DIR/.localrc.password ]]; then
 fi
 
 # Control whether Python 3 should be used at all.
-export USE_PYTHON3=$(trueorfalse False USE_PYTHON3)
+export USE_PYTHON3=$(trueorfalse True USE_PYTHON3)
 
 # Explicitly list services not to run under Python 3. See
 # disable_python3_package to edit this variable.
