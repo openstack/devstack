@@ -607,8 +607,10 @@ function create_nova_conf {
     else
         for i in $(seq 1 $NOVA_NUM_CELLS); do
             local conf
+            local offset
             conf=$(conductor_conf $i)
-            configure_console_proxies $conf
+            offset=$((i - 1))
+            configure_console_proxies $conf $offset
         done
     fi
 }
@@ -678,10 +680,17 @@ function configure_console_compute {
 function configure_console_proxies {
     # Use the provided config file path or default to $NOVA_CONF.
     local conf=${1:-$NOVA_CONF}
+    local offset=${2:-0}
+    # Stagger the offset based on the total number of possible console proxies
+    # (novnc, xvpvnc, spice, serial) so that their ports will not collide if
+    # all are enabled.
+    offset=$((offset * 4))
 
     if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
         iniset $conf vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $conf vnc novncproxy_port $((6080 + offset))
         iniset $conf vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $conf vnc xvpvncproxy_port $((6081 + offset))
 
         if is_nova_console_proxy_compute_tls_enabled ; then
             iniset $conf vnc auth_schemes "vencrypt"
@@ -713,10 +722,12 @@ function configure_console_proxies {
 
     if is_service_enabled n-spice; then
         iniset $conf spice html5proxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $conf spice html5proxy_port $((6082 + offset))
     fi
 
     if is_service_enabled n-sproxy; then
         iniset $conf serial_console serialproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
+        iniset $conf serial_console serialproxy_port $((6083 + offset))
     fi
 }
 
