@@ -89,6 +89,15 @@ ENABLE_HTTPD_MOD_WSGI_SERVICES=True
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=osapi_compute,metadata
 
+# allow local overrides of env variables, including repo config
+if [[ -f $RC_DIR/localrc ]]; then
+    # Old-style user-supplied config
+    source $RC_DIR/localrc
+elif [[ -f $RC_DIR/.localrc.auto ]]; then
+    # New-style user-supplied config extracted from local.conf
+    source $RC_DIR/.localrc.auto
+fi
+
 # CELLSV2_SETUP - how we should configure services with cells v2
 #
 # - superconductor - this is one conductor for the api services, and
@@ -145,18 +154,9 @@ export PYTHON2_VERSION=${PYTHON2_VERSION:-${_DEFAULT_PYTHON2_VERSION:-2.7}}
 
 # Create a virtualenv with this
 if [[ ${USE_PYTHON3} == True ]]; then
-    export VIRTUALENV_CMD="python3 -m venv"
+    export VIRTUALENV_CMD="virtualenv -p python3"
 else
     export VIRTUALENV_CMD="virtualenv "
-fi
-
-# allow local overrides of env variables, including repo config
-if [[ -f $RC_DIR/localrc ]]; then
-    # Old-style user-supplied config
-    source $RC_DIR/localrc
-elif [[ -f $RC_DIR/.localrc.auto ]]; then
-    # New-style user-supplied config extracted from local.conf
-    source $RC_DIR/.localrc.auto
 fi
 
 # Default for log coloring is based on interactive-or-not.
