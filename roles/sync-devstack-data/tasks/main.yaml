@@ -1,7 +1,7 @@
 - name: Ensure the data folder exists
   become: true
   file:
-    path: "{{ devstack_base_dir }}/data"
+    path: "{{ devstack_data_base_dir }}/data"
     state: directory
     owner: stack
     group: stack
@@ -11,7 +11,7 @@
 - name: Ensure the CA folder exists
   become: true
   file:
-    path: "{{ devstack_base_dir }}/data/CA"
+    path: "{{ devstack_data_base_dir }}/data/CA"
     state: directory
     owner: stack
     group: stack
@@ -25,8 +25,8 @@
     dest: "{{ zuul.executor.work_root }}/{{ item | basename }}"
     mode: pull
   with_items:
-    - "{{ devstack_base_dir }}/data/ca-bundle.pem"
-    - "{{ devstack_base_dir }}/data/CA"
+    - "{{ devstack_data_base_dir }}/data/ca-bundle.pem"
+    - "{{ devstack_data_base_dir }}/data/CA"
   when: inventory_hostname == 'controller'
 
 - name: Push the CA certificate
@@ -34,7 +34,7 @@
   become_user: stack
   synchronize:
     src: "{{ zuul.executor.work_root }}/ca-bundle.pem"
-    dest: "{{ devstack_base_dir }}/data/ca-bundle.pem"
+    dest: "{{ devstack_data_base_dir }}/data/ca-bundle.pem"
     mode: push
   when: 'inventory_hostname in groups["subnode"]|default([])'
 
@@ -43,6 +43,6 @@
   become_user: stack
   synchronize:
     src: "{{ zuul.executor.work_root }}/CA/"
-    dest: "{{ devstack_base_dir }}/data/"
+    dest: "{{ devstack_data_base_dir }}/data/"
     mode: push
   when: 'inventory_hostname in groups["subnode"]|default([])'
