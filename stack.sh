@@ -60,6 +60,9 @@ unset LANGUAGE
 LC_ALL=en_US.utf8
 export LC_ALL
 
+# Clear all OpenStack related envvars
+unset `env | grep -E '^OS_' | cut -d = -f 1`
+
 # Make sure umask is sane
 umask 022
 
