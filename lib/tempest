@@ -107,7 +107,7 @@ function remove_disabled_extensions {
 function image_size_in_gib {
     local size
     size=$(openstack image show $1 -c size -f value)
-    echo $size | python -c "import math; print int(math.ceil(float(int(raw_input()) / 1024.0 ** 3)))"
+    echo $size | python -c "import math; import six; print(int(math.ceil(float(int(six.moves.input()) / 1024.0 ** 3))))"
 }
 
 # configure_tempest() - Set config files, create data dirs, etc
