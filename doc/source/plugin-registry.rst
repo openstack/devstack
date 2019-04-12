@@ -34,6 +34,7 @@ broadview-collector                    `https://git.openstack.org/openstack/broa
 castellan-ui                           `https://git.openstack.org/openstack/castellan-ui <https://git.openstack.org/cgit/openstack/castellan-ui>`__
 ceilometer                             `https://git.openstack.org/openstack/ceilometer <https://git.openstack.org/cgit/openstack/ceilometer>`__
 ceilometer-powervm                     `https://git.openstack.org/openstack/ceilometer-powervm <https://git.openstack.org/cgit/openstack/ceilometer-powervm>`__
+cinderlib                              `https://git.openstack.org/openstack/cinderlib <https://git.openstack.org/cgit/openstack/cinderlib>`__
 cloudkitty                             `https://git.openstack.org/openstack/cloudkitty <https://git.openstack.org/cgit/openstack/cloudkitty>`__
 collectd-openstack-plugins             `https://git.openstack.org/openstack/collectd-openstack-plugins <https://git.openstack.org/cgit/openstack/collectd-openstack-plugins>`__
 congress                               `https://git.openstack.org/openstack/congress <https://git.openstack.org/cgit/openstack/congress>`__
@@ -82,6 +83,7 @@ kuryr-tempest-plugin                   `https://git.openstack.org/openstack/kury
 magnum                                 `https://git.openstack.org/openstack/magnum <https://git.openstack.org/cgit/openstack/magnum>`__
 magnum-ui                              `https://git.openstack.org/openstack/magnum-ui <https://git.openstack.org/cgit/openstack/magnum-ui>`__
 manila                                 `https://git.openstack.org/openstack/manila <https://git.openstack.org/cgit/openstack/manila>`__
+manila-tempest-plugin                  `https://git.openstack.org/openstack/manila-tempest-plugin <https://git.openstack.org/cgit/openstack/manila-tempest-plugin>`__
 manila-ui                              `https://git.openstack.org/openstack/manila-ui <https://git.openstack.org/cgit/openstack/manila-ui>`__
 masakari                               `https://git.openstack.org/openstack/masakari <https://git.openstack.org/cgit/openstack/masakari>`__
 meteos                                 `https://git.openstack.org/openstack/meteos <https://git.openstack.org/cgit/openstack/meteos>`__
@@ -174,6 +176,7 @@ stackube                               `https://git.openstack.org/openstack/stac
 storlets                               `https://git.openstack.org/openstack/storlets <https://git.openstack.org/cgit/openstack/storlets>`__
 stx-config                             `https://git.openstack.org/openstack/stx-config <https://git.openstack.org/cgit/openstack/stx-config>`__
 stx-fault                              `https://git.openstack.org/openstack/stx-fault <https://git.openstack.org/cgit/openstack/stx-fault>`__
+stx-ha                                 `https://git.openstack.org/openstack/stx-ha <https://git.openstack.org/cgit/openstack/stx-ha>`__
 stx-integ                              `https://git.openstack.org/openstack/stx-integ <https://git.openstack.org/cgit/openstack/stx-integ>`__
 stx-metal                              `https://git.openstack.org/openstack/stx-metal <https://git.openstack.org/cgit/openstack/stx-metal>`__
 stx-nfv                                `https://git.openstack.org/openstack/stx-nfv <https://git.openstack.org/cgit/openstack/stx-nfv>`__
