@@ -123,6 +123,7 @@ networking-midonet                     `https://git.openstack.org/openstack/netw
 networking-mlnx                        `https://git.openstack.org/openstack/networking-mlnx <https://git.openstack.org/cgit/openstack/networking-mlnx>`__
 networking-nec                         `https://git.openstack.org/openstack/networking-nec <https://git.openstack.org/cgit/openstack/networking-nec>`__
 networking-odl                         `https://git.openstack.org/openstack/networking-odl <https://git.openstack.org/cgit/openstack/networking-odl>`__
+networking-omnipath                    `https://git.openstack.org/openstack/networking-omnipath <https://git.openstack.org/cgit/openstack/networking-omnipath>`__
 networking-onos                        `https://git.openstack.org/openstack/networking-onos <https://git.openstack.org/cgit/openstack/networking-onos>`__
 networking-opencontrail                `https://git.openstack.org/openstack/networking-opencontrail <https://git.openstack.org/cgit/openstack/networking-opencontrail>`__
 networking-ovn                         `https://git.openstack.org/openstack/networking-ovn <https://git.openstack.org/cgit/openstack/networking-ovn>`__
