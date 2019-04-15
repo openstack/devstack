@@ -117,7 +117,9 @@ function is_neutron_enabled {
 # Test if any Neutron services are enabled
 # is_neutron_enabled
 function is_neutron_legacy_enabled {
-    [[ ,${DISABLED_SERVICES} =~ ,"neutron" ]] && return 1
+    # first we need to remove all "neutron-" from DISABLED_SERVICES list
+    disabled_services_copy=$(echo $DISABLED_SERVICES | sed 's/neutron-//g')
+    [[ ,${disabled_services_copy} =~ ,"neutron" ]] && return 1
     [[ ,${ENABLED_SERVICES} =~ ,"q-" ]] && return 0
     return 1
 }
