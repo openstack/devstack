@@ -53,10 +53,10 @@
       job.group-vars.peers, which is what is used by multi node jobs for subnode
       nodes (everything but the controller).
     required-projects:
-      - git.openstack.org/openstack-dev/devstack
+      - opendev.org/openstack/devstack
     roles:
-      - zuul: git.openstack.org/openstack-infra/devstack-gate
-      - zuul: git.openstack.org/openstack-infra/openstack-zuul-jobs
+      - zuul: opendev.org/openstack/devstack-gate
+      - zuul: opendev.org/openstack/openstack-zuul-jobs
     vars:
       devstack_localrc:
         DATABASE_PASSWORD: secretdatabase
@@ -166,7 +166,7 @@
       less than the normal minimum set of required-projects.
     nodeset: openstack-single-node
     required-projects:
-      - git.openstack.org/openstack/requirements
+      - opendev.org/openstack/requirements
     vars:
       devstack_localrc:
         # Multinode specific settings
@@ -206,13 +206,13 @@
       This base job can be used for single node and multinode devstack jobs.
     nodeset: openstack-single-node
     required-projects:
-      - git.openstack.org/openstack/cinder
-      - git.openstack.org/openstack/glance
-      - git.openstack.org/openstack/keystone
-      - git.openstack.org/openstack/neutron
-      - git.openstack.org/openstack/nova
-      - git.openstack.org/openstack/requirements
-      - git.openstack.org/openstack/swift
+      - opendev.org/openstack/cinder
+      - opendev.org/openstack/glance
+      - opendev.org/openstack/keystone
+      - opendev.org/openstack/neutron
+      - opendev.org/openstack/nova
+      - opendev.org/openstack/requirements
+      - opendev.org/openstack/swift
     timeout: 7200
     vars:
       test_matrix_configs: [neutron, tlsproxy]
