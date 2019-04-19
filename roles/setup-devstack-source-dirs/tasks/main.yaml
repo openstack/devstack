@@ -1,9 +1,9 @@
 - name: Find all source repos used by this job
   find:
     paths:
-      - src/git.openstack.org/openstack
-      - src/git.openstack.org/openstack-dev
-      - src/git.openstack.org/openstack-infra
+      - src/opendev.org/openstack
+      - src/opendev.org/openstack-dev
+      - src/opendev.org/openstack-infra
     file_type: directory
   register: found_repos
 
