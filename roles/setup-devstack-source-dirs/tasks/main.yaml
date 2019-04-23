@@ -1,6 +1,7 @@
 - name: Find all OpenStack source repos used by this job
   find:
     paths:
+      - src/opendev.org/opendev
       - src/opendev.org/openstack
       - src/opendev.org/openstack-dev
       - src/opendev.org/openstack-infra
