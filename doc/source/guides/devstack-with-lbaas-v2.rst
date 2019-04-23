@@ -59,7 +59,7 @@ Edit your ``/opt/stack/devstack/local.conf`` to look like
     # Horizon - enable for the OpenStack web GUI
     # ENABLED_SERVICES+=,horizon
     # Nova
-    ENABLED_SERVICES+=,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch,n-api-meta,n-sproxy
+    ENABLED_SERVICES+=,n-api,n-crt,n-cpu,n-cond,n-sch,n-api-meta,n-sproxy
     ENABLED_SERVICES+=,placement-api,placement-client
     # Glance
     ENABLED_SERVICES+=,g-api,g-reg
