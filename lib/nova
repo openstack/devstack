@@ -103,9 +103,9 @@ FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"False"}
 # should work in most cases.
 SCHEDULER=${SCHEDULER:-filter_scheduler}
 
-# The following FILTERS contains SameHostFilter and DifferentHostFilter with
+# The following NOVA_FILTERS contains SameHostFilter and DifferentHostFilter with
 # the default filters.
-FILTERS="RetryFilter,AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter"
+NOVA_FILTERS="RetryFilter,AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter"
 
 QEMU_CONF=/etc/libvirt/qemu.conf
 
@@ -428,7 +428,7 @@ function create_nova_conf {
     iniset $NOVA_CONF wsgi api_paste_config "$NOVA_API_PASTE_INI"
     iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
     iniset $NOVA_CONF scheduler driver "$SCHEDULER"
-    iniset $NOVA_CONF filter_scheduler enabled_filters "$FILTERS"
+    iniset $NOVA_CONF filter_scheduler enabled_filters "$NOVA_FILTERS"
     if [[ $SCHEDULER == "filter_scheduler" ]]; then
         iniset $NOVA_CONF scheduler workers "$API_WORKERS"
     fi
