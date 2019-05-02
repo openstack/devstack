@@ -237,6 +237,7 @@ function configure_neutron_new {
             if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
                 iniset $NEUTRON_CORE_PLUGIN_CONF agent l2_population True
                 iniset $NEUTRON_CORE_PLUGIN_CONF agent enable_distributed_routing True
+                iniset $NEUTRON_CORE_PLUGIN_CONF agent arp_responder True
             fi
         fi
 
