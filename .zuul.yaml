@@ -412,7 +412,6 @@
         n-cond: true
         n-cpu: true
         n-novnc: true
-        n-obj: true
         n-sch: true
         placement-api: true
         # Neutron services
