@@ -237,7 +237,7 @@ WSGI_MODE=${WSGI_MODE:-"uwsgi"}
 # ------------
 
 # Base GIT Repo URL
-GIT_BASE=${GIT_BASE:-https://git.openstack.org}
+GIT_BASE=${GIT_BASE:-https://opendev.org}
 
 # The location of REQUIREMENTS once cloned
 REQUIREMENTS_DIR=$DEST/requirements
