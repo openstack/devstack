@@ -403,7 +403,7 @@ function create_nova_accounts {
     fi
 
     # S3
-    if is_service_enabled swift3; then
+    if is_service_enabled s3api; then
         get_or_create_service "s3" "s3" "S3"
         get_or_create_endpoint \
             "s3" \

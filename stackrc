@@ -520,10 +520,6 @@ GITBRANCH["glance_store"]=${GLANCE_STORE_BRANCH:-$TARGET_BRANCH}
 GITREPO["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_REPO:-${GIT_BASE}/openstack/keystonemiddleware.git}
 GITBRANCH["keystonemiddleware"]=${KEYSTONEMIDDLEWARE_BRANCH:-$TARGET_BRANCH}
 
-# s3 support for swift
-SWIFT3_REPO=${SWIFT3_REPO:-${GIT_BASE}/openstack/swift3.git}
-SWIFT3_BRANCH=${SWIFT3_BRANCH:-$TARGET_BRANCH}
-
 # ceilometer middleware
 GITREPO["ceilometermiddleware"]=${CEILOMETERMIDDLEWARE_REPO:-${GIT_BASE}/openstack/ceilometermiddleware.git}
 GITBRANCH["ceilometermiddleware"]=${CEILOMETERMIDDLEWARE_BRANCH:-$TARGET_BRANCH}
