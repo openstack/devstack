@@ -50,8 +50,6 @@
 # See "Neutron Network Configuration" below for additional variables
 # that must be set in localrc for connectivity across hosts with
 # Neutron.
-#
-# With Neutron networking the NETWORK_MANAGER variable is ignored.
 
 # Settings
 # --------

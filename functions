@@ -469,7 +469,7 @@ EOF
 
 
 # ping check
-# Uses globals ``ENABLED_SERVICES``, ``TOP_DIR``, ``MULTI_HOST``, ``PRIVATE_NETWORK``
+# Uses globals ``ENABLED_SERVICES``, ``TOP_DIR``, ``PRIVATE_NETWORK``
 # ping_check <ip> [boot-timeout] [from_net] [expected]
 function ping_check {
     local ip=$1
@@ -483,12 +483,9 @@ function ping_check {
     # if we don't specify a from_net we're expecting things to work
     # fine from our local box.
     if [[ -n "$from_net" ]]; then
+        # TODO(stephenfin): Is there any way neutron could be disabled now?
         if is_service_enabled neutron; then
             ping_cmd="$TOP_DIR/tools/ping_neutron.sh $from_net"
-        elif [[ "$MULTI_HOST" = "True" && "$from_net" = "$PRIVATE_NETWORK_NAME" ]]; then
-            # there is no way to address the multihost / private case, bail here for compatibility.
-            # TODO: remove this cruft and redo code to handle this at the caller level.
-            return
         fi
     fi
 

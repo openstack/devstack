@@ -1167,10 +1167,11 @@ if is_service_enabled neutron; then
     fi
 fi
 
+
 # Nova
 # ----
 
-if is_service_enabled n-net q-dhcp; then
+if is_service_enabled q-dhcp; then
     # Delete traces of nova networks from prior runs
     # Do not kill any dnsmasq instance spawned by NetworkManager
     netman_pid=$(pidof NetworkManager || true)
@@ -1181,12 +1182,6 @@ if is_service_enabled n-net q-dhcp; then
     fi
 
     clean_iptables
-
-    if is_service_enabled n-net; then
-        rm -rf ${NOVA_STATE_PATH}/networks
-        sudo mkdir -p ${NOVA_STATE_PATH}/networks
-        safe_chown -R ${STACK_USER} ${NOVA_STATE_PATH}/networks
-    fi
 
     # Force IP forwarding on, just in case
     sudo sysctl -w net.ipv4.ip_forward=1
@@ -1226,13 +1221,11 @@ if is_service_enabled nova; then
     init_nova
 
     # Additional Nova configuration that is dependent on other services
+    # TODO(stephenfin): Is it possible for neutron to *not* be enabled now? If
+    # not, remove the if here
     if is_service_enabled neutron; then
         configure_neutron_nova
-    elif is_service_enabled n-net; then
-        create_nova_conf_nova_network
     fi
-
-    init_nova_cells
 fi
 
 
@@ -1314,20 +1307,6 @@ elif is_service_enabled q-svc; then
     echo_summary "Starting Neutron"
     configure_neutron_after_post_config
     start_neutron_service_and_check
-elif is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-net; then
-    NM_CONF=${NOVA_CONF}
-    if is_service_enabled n-cell; then
-        NM_CONF=${NOVA_CELLS_CONF}
-    fi
-
-    # Create a small network
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF network create "$PRIVATE_NETWORK_NAME" $FIXED_RANGE 1 $FIXED_NETWORK_SIZE $NETWORK_CREATE_ARGS
-
-    # Create some floating ips
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create $FLOATING_RANGE --pool=$PUBLIC_NETWORK_NAME
-
-    # Create a second pool
-    $NOVA_BIN_DIR/nova-manage --config-file $NM_CONF floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
 fi
 
 # Start placement before any of the service that are likely to want

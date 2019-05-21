@@ -24,9 +24,6 @@ set +o xtrace
 # Defaults
 # --------
 
-# Allow ``build_domU.sh`` to specify the flat network bridge via kernel args
-FLAT_NETWORK_BRIDGE_DEFAULT=$(sed -e 's/.* flat_network_bridge=\([[:alnum:]]*\).*$/\1/g' /proc/cmdline)
-
 VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS=169.254.0.1}
 
 

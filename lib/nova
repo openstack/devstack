@@ -50,11 +50,9 @@ NOVA_AUTH_CACHE_DIR=${NOVA_AUTH_CACHE_DIR:-/var/cache/nova}
 
 NOVA_CONF_DIR=/etc/nova
 NOVA_CONF=$NOVA_CONF_DIR/nova.conf
-NOVA_CELLS_CONF=$NOVA_CONF_DIR/nova-cells.conf
 NOVA_COND_CONF=$NOVA_CONF_DIR/nova.conf
 NOVA_CPU_CONF=$NOVA_CONF_DIR/nova-cpu.conf
 NOVA_FAKE_CONF=$NOVA_CONF_DIR/nova-fake.conf
-NOVA_CELLS_DB=${NOVA_CELLS_DB:-nova_cell}
 NOVA_API_DB=${NOVA_API_DB:-nova_api}
 NOVA_UWSGI=$NOVA_BIN_DIR/nova-api-wsgi
 NOVA_METADATA_UWSGI=$NOVA_BIN_DIR/nova-metadata-wsgi
@@ -111,7 +109,6 @@ QEMU_CONF=/etc/libvirt/qemu.conf
 
 # Set default defaults here as some hypervisor drivers override these
 PUBLIC_INTERFACE_DEFAULT=br100
-FLAT_NETWORK_BRIDGE_DEFAULT=br100
 # Set ``GUEST_INTERFACE_DEFAULT`` to some interface on the box so that
 # the default isn't completely crazy. This will match ``eth*``, ``em*``, or
 # the new ``p*`` interfaces, then basically picks the first
@@ -137,44 +134,6 @@ if is_service_enabled nova && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; th
     source $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER
 fi
 
-
-# Nova Network Configuration
-# --------------------------
-
-NETWORK_MANAGER=${NETWORK_MANAGER:-${NET_MAN:-FlatDHCPManager}}
-
-VLAN_INTERFACE=${VLAN_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
-FLAT_NETWORK_BRIDGE=${FLAT_NETWORK_BRIDGE:-$FLAT_NETWORK_BRIDGE_DEFAULT}
-
-# If you are using the FlatDHCP network mode on multiple hosts, set the
-# ``FLAT_INTERFACE`` variable but make sure that the interface doesn't already
-# have an IP or you risk breaking things.
-#
-# **DHCP Warning**:  If your flat interface device uses DHCP, there will be a
-# hiccup while the network is moved from the flat interface to the flat network
-# bridge.  This will happen when you launch your first instance.  Upon launch
-# you will lose all connectivity to the node, and the VM launch will probably
-# fail.
-#
-# If you are running on a single node and don't need to access the VMs from
-# devices other than that node, you can set ``FLAT_INTERFACE=``
-# This will stop nova from bridging any interfaces into ``FLAT_NETWORK_BRIDGE``.
-FLAT_INTERFACE=${FLAT_INTERFACE:-$GUEST_INTERFACE_DEFAULT}
-
-# ``MULTI_HOST`` is a mode where each compute node runs its own network node.  This
-# allows network operations and routing for a VM to occur on the server that is
-# running the VM - removing a SPOF and bandwidth bottleneck.
-MULTI_HOST=$(trueorfalse False MULTI_HOST)
-
-# ``NOVA_ALLOW_MOVE_TO_SAME_HOST`` can be set to False in multi node DevStack,
-# where there are at least two nova-computes.
-NOVA_ALLOW_MOVE_TO_SAME_HOST=$(trueorfalse True NOVA_ALLOW_MOVE_TO_SAME_HOST)
-
-# Test floating pool and range are used for testing.  They are defined
-# here until the admin APIs can replace nova-manage
-TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
-TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
-
 # Other Nova configurations
 # ----------------------------
 
@@ -182,6 +141,10 @@ TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 # user token while communicating to external RESP API's like Neutron, Cinder
 # and Glance.
 NOVA_USE_SERVICE_TOKEN=$(trueorfalse False NOVA_USE_SERVICE_TOKEN)
+
+# ``NOVA_ALLOW_MOVE_TO_SAME_HOST`` can be set to False in multi node DevStack,
+# where there are at least two nova-computes.
+NOVA_ALLOW_MOVE_TO_SAME_HOST=$(trueorfalse True NOVA_ALLOW_MOVE_TO_SAME_HOST)
 
 # Enable debugging levels for iscsid service (goes from 0-8)
 ISCSID_DEBUG=$(trueorfalse False ISCSID_DEBUG)
@@ -195,13 +158,6 @@ ISCSID_DEBUG_LEVEL=${ISCSID_DEBUG_LEVEL:-4}
 function is_nova_enabled {
     [[ ,${DISABLED_SERVICES} =~ ,"nova" ]] && return 1
     [[ ,${ENABLED_SERVICES} =~ ,"n-" ]] && return 0
-    return 1
-}
-
-# Test if any Nova Cell services are enabled
-# is_nova_enabled
-function is_n-cell_enabled {
-    [[ ,${ENABLED_SERVICES} =~ ,"n-cell" ]] && return 0
     return 1
 }
 
@@ -501,10 +457,6 @@ function create_nova_conf {
     if [ -n "$NOVA_INSTANCES_PATH" ]; then
         iniset $NOVA_CONF DEFAULT instances_path "$NOVA_INSTANCES_PATH"
     fi
-    if [ "$MULTI_HOST" != "False" ]; then
-        iniset $NOVA_CONF DEFAULT multi_host "True"
-        iniset $NOVA_CONF DEFAULT send_arp_for_ha "True"
-    fi
     if [ "$SYSLOG" != "False" ]; then
         iniset $NOVA_CONF DEFAULT use_syslog "True"
     fi
@@ -550,21 +502,6 @@ function create_nova_conf {
     fi
 
     iniset $NOVA_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
-
-    # Setup logging for nova-dhcpbridge command line
-    sudo cp "$NOVA_CONF" "$NOVA_CONF_DIR/nova-dhcpbridge.conf"
-
-    if is_service_enabled n-net; then
-        local service="n-dhcp"
-        local logfile="${service}.log.${CURRENT_LOG_TIME}"
-        local real_logfile="${LOGDIR}/${logfile}"
-        if [[ -n ${LOGDIR} ]]; then
-            bash -c "cd '$LOGDIR' && ln -sf '$logfile' ${service}.log"
-            iniset "$NOVA_CONF_DIR/nova-dhcpbridge.conf" DEFAULT log_file "$real_logfile"
-        fi
-
-        iniset $NOVA_CONF DEFAULT dhcpbridge_flagfile "$NOVA_CONF_DIR/nova-dhcpbridge.conf"
-    fi
 
     if [ "$NOVA_USE_SERVICE_TOKEN" == "True" ]; then
         init_nova_service_user_conf
@@ -748,59 +685,11 @@ function conductor_conf {
     echo "${NOVA_CONF_DIR}/nova_cell${cell}.conf"
 }
 
-function init_nova_cells {
-    if is_service_enabled n-cell; then
-        cp $NOVA_CONF $NOVA_CELLS_CONF
-        iniset $NOVA_CELLS_CONF database connection `database_connection_url $NOVA_CELLS_DB`
-        rpc_backend_add_vhost child_cell
-        iniset_rpc_backend nova $NOVA_CELLS_CONF DEFAULT child_cell
-        iniset $NOVA_CELLS_CONF DEFAULT dhcpbridge_flagfile $NOVA_CELLS_CONF
-        iniset $NOVA_CELLS_CONF cells enable True
-        iniset $NOVA_CELLS_CONF cells cell_type compute
-        iniset $NOVA_CELLS_CONF cells name child
-
-        iniset $NOVA_CONF cells enable True
-        iniset $NOVA_CONF cells cell_type api
-        iniset $NOVA_CONF cells name region
-
-        if is_service_enabled n-api-meta; then
-            NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/,metadata//")
-            iniset $NOVA_CONF DEFAULT enabled_apis $NOVA_ENABLED_APIS
-            iniset $NOVA_CELLS_CONF DEFAULT enabled_apis metadata
-        fi
-
-        # Cells v1 conductor should be the nova-cells.conf
-        NOVA_COND_CONF=$NOVA_CELLS_CONF
-
-        time_start "dbsync"
-        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF db sync
-        time_stop "dbsync"
-        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF cell create --name=region --cell_type=parent --username=$RABBIT_USERID --hostname=$RABBIT_HOST --port=5672 --password=$RABBIT_PASSWORD --virtual_host=/ --woffset=0 --wscale=1
-        $NOVA_BIN_DIR/nova-manage cell create --name=child --cell_type=child --username=$RABBIT_USERID --hostname=$RABBIT_HOST --port=5672 --password=$RABBIT_PASSWORD --virtual_host=child_cell --woffset=0 --wscale=1
-
-        # Creates the single cells v2 cell for the child cell (v1) nova db.
-        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CELLS_CONF cell_v2 create_cell \
-            --transport-url $(get_transport_url child_cell) --name 'cell1'
-    fi
-}
-
 # create_nova_cache_dir() - Part of the init_nova() process
 function create_nova_cache_dir {
     # Create cache dir
     sudo install -d -o $STACK_USER $NOVA_AUTH_CACHE_DIR
     rm -f $NOVA_AUTH_CACHE_DIR/*
-}
-
-function create_nova_conf_nova_network {
-    local public_interface=${PUBLIC_INTERFACE:-$PUBLIC_INTERFACE_DEFAULT}
-    iniset $NOVA_CONF DEFAULT network_manager "nova.network.manager.$NETWORK_MANAGER"
-    iniset $NOVA_CONF DEFAULT public_interface "$public_interface"
-    iniset $NOVA_CONF DEFAULT vlan_interface "$VLAN_INTERFACE"
-    iniset $NOVA_CONF DEFAULT flat_network_bridge "$FLAT_NETWORK_BRIDGE"
-    if [ -n "$FLAT_INTERFACE" ]; then
-        iniset $NOVA_CONF DEFAULT flat_interface "$FLAT_INTERFACE"
-    fi
-    iniset $NOVA_CONF DEFAULT use_neutron False
 }
 
 # create_nova_keys_dir() - Part of the init_nova() process
@@ -833,10 +722,6 @@ function init_nova {
 
         # Migrate nova and nova_cell0 databases.
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
-
-        if is_service_enabled n-cell; then
-            recreate_database $NOVA_CELLS_DB
-        fi
 
         # Run online migrations on the new databases
         # Needed for flavor conversion
@@ -942,15 +827,6 @@ function start_nova_api {
     export PATH=$old_path
 }
 
-# Detect and setup conditions under which singleconductor setup is
-# needed. Notably cellsv1.
-function _set_singleconductor {
-    # NOTE(danms): Don't setup conductor fleet for cellsv1
-    if is_service_enabled n-cell; then
-        CELLSV2_SETUP="singleconductor"
-    fi
-}
-
 
 # start_nova_compute() - Start the compute process
 function start_nova_compute {
@@ -958,11 +834,7 @@ function start_nova_compute {
     local old_path=$PATH
     export PATH=$NOVA_BIN_DIR:$PATH
 
-    if is_service_enabled n-cell; then
-        local compute_cell_conf=$NOVA_CELLS_CONF
-    else
-        local compute_cell_conf=$NOVA_CONF
-    fi
+    local compute_cell_conf=$NOVA_CONF
 
     cp $compute_cell_conf $NOVA_CPU_CONF
 
@@ -1025,22 +897,7 @@ function start_nova_rest {
     export PATH=$NOVA_BIN_DIR:$PATH
 
     local api_cell_conf=$NOVA_CONF
-    if is_service_enabled n-cell; then
-        local compute_cell_conf=$NOVA_CELLS_CONF
-    else
-        local compute_cell_conf=$NOVA_CONF
-    fi
-
-    # ``run_process`` checks ``is_service_enabled``, it is not needed here
-    run_process n-cell-region "$NOVA_BIN_DIR/nova-cells --config-file $api_cell_conf"
-    run_process n-cell-child "$NOVA_BIN_DIR/nova-cells --config-file $compute_cell_conf"
-
-    if is_service_enabled n-net; then
-        if ! running_in_container; then
-            enable_kernel_bridge_firewall
-        fi
-    fi
-    run_process n-net "$NOVA_BIN_DIR/nova-network --config-file $compute_cell_conf"
+    local compute_cell_conf=$NOVA_CONF
 
     run_process n-sch "$NOVA_BIN_DIR/nova-scheduler --config-file $compute_cell_conf"
     if [ "$NOVA_USE_MOD_WSGI" == "False" ]; then
@@ -1048,9 +905,6 @@ function start_nova_rest {
     else
         run_process n-api-meta "$NOVA_BIN_DIR/uwsgi --procname-prefix nova-api-meta --ini $NOVA_METADATA_UWSGI_CONF"
     fi
-
-    # nova-consoleauth always runs globally
-    run_process n-cauth "$NOVA_BIN_DIR/nova-consoleauth --config-file $api_cell_conf"
 
     export PATH=$old_path
 }
@@ -1129,11 +983,7 @@ function is_nova_ready {
     # happen between here and the script ending. However, in multinode
     # tests this can very often not be the case. So ensure that the
     # compute is up before we move on.
-    if is_service_enabled n-cell; then
-        # cells v1 can't complete the check below because it munges
-        # hostnames with cell information (grumble grumble).
-        return
-    fi
+
     # TODO(sdague): honestly, this probably should be a plug point for
     # an external system.
     if [[ "$VIRT_DRIVER" == 'xenserver' ]]; then
@@ -1145,8 +995,6 @@ function is_nova_ready {
 }
 
 function start_nova {
-    # this catches the cells v1 case early
-    _set_singleconductor
     start_nova_rest
     start_nova_console_proxies
     start_nova_conductor
@@ -1174,7 +1022,7 @@ function stop_nova_compute {
 
 function stop_nova_rest {
     # Kill the non-compute nova processes
-    for serv in n-api n-api-meta n-net n-sch n-cauth n-cell n-cell; do
+    for serv in n-api n-api-meta n-sch; do
         stop_process $serv
     done
 }
