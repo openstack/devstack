@@ -29,6 +29,10 @@ declare -A -g PROJECT_VENV
 # get_pip_command
 function get_pip_command {
     local version="$1"
+    if [ -z "$version" ]; then
+        die $LINENO "pip python version is not set."
+    fi
+
     # NOTE(dhellmann): I don't know if we actually get a pip3.4-python
     # under any circumstances.
     which pip${version} || which pip${version}-python
