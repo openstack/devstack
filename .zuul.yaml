@@ -701,9 +701,12 @@
     #    stable engouh with uwsgi.
     # * neutron-tempest-with-uwsgi: maintained by neutron for tempest test.
     #    Next cycle we can remove this if everything run out stable enough.
+    # * nova-multi-cell: maintained by nova and currently non-voting in the
+    #    check queue for nova changes but relies on devstack configuration
 
     experimental:
       jobs:
+        - nova-multi-cell
         - nova-next
         - neutron-fullstack-with-uwsgi
         - neutron-functional-with-uwsgi
