@@ -183,6 +183,10 @@ TEST_FLOATING_RANGE=${TEST_FLOATING_RANGE:-192.168.253.0/29}
 # and Glance.
 NOVA_USE_SERVICE_TOKEN=$(trueorfalse False NOVA_USE_SERVICE_TOKEN)
 
+# Format for notifications. Nova defaults to "both".
+# Other options include "versioned" and "unversioned".
+NOVA_NOTIFICATION_FORMAT=${NOVA_NOTIFICATION_FORMAT:-both}
+
 # Functions
 # ---------
 
@@ -517,6 +521,7 @@ function create_nova_conf {
     # enable notifications, but it will allow them to function when enabled.
     iniset $NOVA_CONF oslo_messaging_notifications driver "messagingv2"
     iniset $NOVA_CONF oslo_messaging_notifications transport_url $(get_notification_url)
+    iniset $NOVA_CONF notifications notification_format "$NOVA_NOTIFICATION_FORMAT"
     iniset_rpc_backend nova $NOVA_CONF
 
     iniset $NOVA_CONF DEFAULT osapi_compute_workers "$API_WORKERS"
