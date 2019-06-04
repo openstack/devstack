@@ -28,9 +28,9 @@
 #   * the environment variable git_dir pointing to the location
 #   * of said git repositories
 #   ) OR (
-#   * network access to the review.openstack.org Gerrit API
+#   * network access to the review.opendev.org Gerrit API
 #     working directory
-#   * network access to https://git.openstack.org/cgit
+#   * network access to https://opendev.org
 #   ))
 #
 # If a file named data/devstack-plugins-registry.header or
@@ -50,8 +50,6 @@ function title_underline {
 }
 
 (
-declare -A plugins
-
 if [[ -r data/devstack-plugins-registry.header ]]; then
     cat data/devstack-plugins-registry.header
 fi
@@ -74,8 +72,8 @@ printf "%-${name_col_len}s %s\n" "Plugin Name" "URL"
 title_underline ${name_col_len}
 
 for plugin in ${sorted_plugins}; do
-    giturl="https://git.openstack.org/openstack/${plugin}"
-    gitlink="https://git.openstack.org/cgit/openstack/${plugin}"
+    giturl="https://opendev.org/${plugin}"
+    gitlink="https://opendev.org/${plugin}"
     printf "%-${name_col_len}s %s\n" "${plugin}" "\`${giturl} <${gitlink}>\`__"
 done
 
