@@ -88,14 +88,6 @@ CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1}
 CINDER_VOLUME_CLEAR=${CINDER_VOLUME_CLEAR:-${CINDER_VOLUME_CLEAR_DEFAULT:-zero}}
 CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 
-# Cinder reports allocations back to the scheduler on periodic intervals
-# it turns out we can get an "out of space" issue when we run tests too
-# quickly just because cinder didn't realize we'd freed up resources.
-# Make this configurable so that devstack-gate/tempest can set it to
-# less than the 60 second default
-# https://bugs.launchpad.net/cinder/+bug/1180976
-CINDER_PERIODIC_INTERVAL=${CINDER_PERIODIC_INTERVAL:-60}
-
 # Centos7 and OpenSUSE switched to using LIO and that's all that's supported,
 # although the tgt bits are in EPEL and OpenSUSE we don't want that for CI
 if is_fedora || is_suse; then
@@ -237,7 +229,6 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT osapi_volume_listen $CINDER_SERVICE_LISTEN_ADDRESS
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
     iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
-    iniset $CINDER_CONF DEFAULT periodic_interval $CINDER_PERIODIC_INTERVAL
     iniset $CINDER_CONF DEFAULT my_ip "$HOST_IP"
 
     iniset $CINDER_CONF key_manager backend cinder.keymgr.conf_key_mgr.ConfKeyManager
