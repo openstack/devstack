@@ -458,7 +458,10 @@
           n-cpu: true
           placement-client: true
           # Neutron services
-          neutron-agent: true
+          # We need to keep using the neutron-legacy based services for
+          # now until all issues with the new lib/neutron code are solved
+          q-agt: true
+          # neutron-agent: true
           # Cinder services
           c-bak: true
           c-vol: true
