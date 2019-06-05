@@ -1,6 +1,6 @@
 conntrack-tools
 curl
-dnsmasq # for nova-network
+dnsmasq # for q-dhcp
 dnsmasq-utils # for dhcp_release
 ebtables
 gawk

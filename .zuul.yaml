@@ -407,7 +407,6 @@
         # Nova services
         n-api: true
         n-api-meta: true
-        n-cauth: true
         n-cond: true
         n-cpu: true
         n-novnc: true
@@ -688,11 +687,8 @@
     # being experimental any more, so we can keep this list somewhat
     # pruned.
     #
-    # * nova-cells-v1: maintained by nova for cells v1 (nova-cells service);
-    #    it's in experimental here (and in nova) for testing cells v1
-    #    changes to devstack w/o gating on it for all devstack changes.
     # * nova-next: maintained by nova for unreleased/undefaulted
-    #    things like cellsv2 and placement-api
+    #    things
     # * neutron-fullstack-with-uwsgi: maintained by neutron for fullstack test
     #    when neutron-api is served by uwsgi, it's in exprimental for testing.
     #    the next cycle we can remove this  job if things turn out to be
@@ -705,10 +701,6 @@
 
     experimental:
       jobs:
-        - nova-cells-v1:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         - nova-next
         - neutron-fullstack-with-uwsgi
         - neutron-functional-with-uwsgi

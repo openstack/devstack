@@ -120,11 +120,8 @@ cluster controller's DevStack in ``local.conf``:
 
     [[local|localrc]]
     HOST_IP=192.168.42.11
-    FLAT_INTERFACE=eth0
     FIXED_RANGE=10.4.128.0/20
-    FIXED_NETWORK_SIZE=4096
     FLOATING_RANGE=192.168.42.128/25
-    MULTI_HOST=1
     LOGFILE=/opt/stack/logs/stack.sh.log
     ADMIN_PASSWORD=labstack
     DATABASE_PASSWORD=supersecret
@@ -160,11 +157,8 @@ machines, create a ``local.conf`` with:
 
     [[local|localrc]]
     HOST_IP=192.168.42.12 # change this per compute node
-    FLAT_INTERFACE=eth0
     FIXED_RANGE=10.4.128.0/20
-    FIXED_NETWORK_SIZE=4096
     FLOATING_RANGE=192.168.42.128/25
-    MULTI_HOST=1
     LOGFILE=/opt/stack/logs/stack.sh.log
     ADMIN_PASSWORD=labstack
     DATABASE_PASSWORD=supersecret

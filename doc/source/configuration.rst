@@ -663,20 +663,6 @@ Xenserver
 If you would like to use Xenserver as the hypervisor, please refer to
 the instructions in ``./tools/xen/README.md``.
 
-Cells
-~~~~~
-
-`Cells <https://wiki.openstack.org/wiki/Blueprint-nova-compute-cells>`__ is
-an alternative scaling option.  To setup a cells environment add the
-following to your ``localrc`` section:
-
-::
-
-    enable_service n-cell
-
-Be aware that there are some features currently missing in cells, one
-notable one being security groups.
-
 Cinder
 ~~~~~~
 

@@ -87,11 +87,8 @@ do the following:
 -  Set ``FLOATING_RANGE`` to a range not used on the local network, i.e.
    192.168.1.224/27. This configures IP addresses ending in 225-254 to
    be used as floating IPs.
--  Set ``FIXED_RANGE`` and ``FIXED_NETWORK_SIZE`` to configure the
-   internal address space used by the instances.
--  Set ``FLAT_INTERFACE`` to the Ethernet interface that connects the
-   host to your local network. This is the interface that should be
-   configured with the static IP address mentioned above.
+-  Set ``FIXED_RANGE`` to configure the internal address space used by the
+   instances.
 -  Set the administrative password. This password is used for the
    **admin** and **demo** accounts set up as OpenStack users.
 -  Set the MySQL administrative password. The default here is a random
@@ -108,8 +105,6 @@ do the following:
     [[local|localrc]]
     FLOATING_RANGE=192.168.1.224/27
     FIXED_RANGE=10.11.12.0/24
-    FIXED_NETWORK_SIZE=256
-    FLAT_INTERFACE=eth0
     ADMIN_PASSWORD=supersecret
     DATABASE_PASSWORD=iheartdatabases
     RABBIT_PASSWORD=flopsymopsy
