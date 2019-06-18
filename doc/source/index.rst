@@ -23,8 +23,7 @@ everything from git master.  It is used interactively as a development
 environment and as the basis for much of the OpenStack project's
 functional testing.
 
-The source is available at
-`<https://git.openstack.org/cgit/openstack-dev/devstack>`__.
+The source is available at `<https://opendev.org/openstack/devstack>`__.
 
 .. warning::
 
@@ -73,7 +72,7 @@ Download DevStack
 
 .. code-block:: console
 
-   $ git clone https://git.openstack.org/openstack-dev/devstack
+   $ git clone https://opendev.org/openstack/devstack
    $ cd devstack
 
 The ``devstack`` repo contains a script that installs OpenStack and

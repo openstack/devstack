@@ -205,7 +205,7 @@ Historical Notes
 Historically DevStack obtained all local configuration and
 customizations from a ``localrc`` file.  In Oct 2013 the
 ``local.conf`` configuration method was introduced (in `review 46768
-<https://review.openstack.org/#/c/46768/>`__) to simplify this
+<https://review.opendev.org/#/c/46768/>`__) to simplify this
 process.
 
 Configuration Notes
@@ -232,13 +232,13 @@ proposal. ``GIT_BASE`` points to the primary repository server.
 To pull a branch directly from Gerrit, get the repo and branch from
 the Gerrit review page::
 
-    git fetch https://review.openstack.org/p/openstack/nova \
+    git fetch https://review.opendev.org/openstack/nova \
         refs/changes/50/5050/1 && git checkout FETCH_HEAD
 
 The repo is the stanza following ``fetch`` and the branch is the
 stanza following that::
 
-    NOVA_REPO=https://review.openstack.org/p/openstack/nova
+    NOVA_REPO=https://review.opendev.org/openstack/nova
     NOVA_BRANCH=refs/changes/50/5050/1
 
 

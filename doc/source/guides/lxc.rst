@@ -105,7 +105,7 @@ The commands in this section should all be run inside your container.
 
    ::
 
-       git clone https://git.openstack.org/openstack-dev/devstack
+       git clone https://opendev.org/openstack/devstack
 
 #. Configure
 

@@ -35,7 +35,7 @@ FILES=$TOP_DIR/files
 # done by openstack-infra diskimage-builder elements as part of image
 # preparation [1].  This prevents any network access, which can be
 # unreliable in CI situations.
-# [1] http://git.openstack.org/cgit/openstack-infra/project-config/tree/nodepool/elements/cache-devstack/source-repository-pip
+# [1] https://opendev.org/openstack/project-config/src/branch/master/nodepool/elements/cache-devstack/source-repository-pip
 
 PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/get-pip.py"}
 LOCAL_PIP="$FILES/$(basename $PIP_GET_PIP_URL)"

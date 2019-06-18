@@ -19,7 +19,7 @@ Install devstack
 
 ::
 
-    git clone https://git.openstack.org/openstack-dev/devstack
+    git clone https://opendev.org/openstack/devstack
     cd devstack/tools
     sudo ./create-stack-user.sh
     cd ../..
@@ -35,9 +35,9 @@ Edit your ``/opt/stack/devstack/local.conf`` to look like
 ::
 
     [[local|localrc]]
-    enable_plugin octavia https://git.openstack.org/openstack/octavia
+    enable_plugin octavia https://opendev.org/openstack/octavia
     # If you are enabling horizon, include the octavia dashboard
-    # enable_plugin octavia-dashboard https://git.openstack.org/openstack/octavia-dashboard.git
+    # enable_plugin octavia-dashboard https://opendev.org/openstack/octavia-dashboard.git
     # If you are enabling barbican for TLS offload in Octavia, include it here.
     # enable_plugin barbican https://github.com/openstack/barbican.git
 

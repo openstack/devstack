@@ -83,7 +83,7 @@ some fake resource inventory values and keeps track of the state of the
 compute API but is good enough for most API testing, and is also used within
 the nova functional tests themselves so is fairly robust.
 
-.. _fake virt driver: http://git.openstack.org/cgit/openstack/nova/tree/nova/virt/fake.py
+.. _fake virt driver: https://opendev.org/openstack/nova/src/branch/master/nova/virt/fake.py
 
 Configuration
 -------------
