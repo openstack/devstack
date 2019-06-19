@@ -224,25 +224,22 @@ check out. These may be overridden in ``local.conf`` to pull source
 from a different repo for testing, such as a Gerrit branch
 proposal. ``GIT_BASE`` points to the primary repository server.
 
-    ::
+::
 
-        NOVA_REPO=$GIT_BASE/openstack/nova.git
-        NOVA_BRANCH=master
+    NOVA_REPO=$GIT_BASE/openstack/nova.git
+    NOVA_BRANCH=master
 
 To pull a branch directly from Gerrit, get the repo and branch from
-the Gerrit review page:
+the Gerrit review page::
 
-    ::
+    git fetch https://review.openstack.org/p/openstack/nova \
+        refs/changes/50/5050/1 && git checkout FETCH_HEAD
 
-        git fetch https://review.openstack.org/p/openstack/nova refs/changes/50/5050/1 && git checkout FETCH_HEAD
+The repo is the stanza following ``fetch`` and the branch is the
+stanza following that::
 
-    The repo is the stanza following ``fetch`` and the branch is the
-    stanza following that:
-
-    ::
-
-        NOVA_REPO=https://review.openstack.org/p/openstack/nova
-        NOVA_BRANCH=refs/changes/50/5050/1
+    NOVA_REPO=https://review.openstack.org/p/openstack/nova
+    NOVA_BRANCH=refs/changes/50/5050/1
 
 
 Installation Directory
@@ -255,9 +252,9 @@ By setting it early in the ``localrc`` section you can reference it in
 later variables.  It can be useful to set it even though it is not
 changed from the default value.
 
-    ::
+::
 
-        DEST=/opt/stack
+    DEST=/opt/stack
 
 Logging
 -------
@@ -271,21 +268,21 @@ runs. It can be sent to a file in addition to the console by setting
 timestamp will be appended to the given filename for each run of
 ``stack.sh``.
 
-    ::
+::
 
-        LOGFILE=$DEST/logs/stack.sh.log
+    LOGFILE=$DEST/logs/stack.sh.log
 
 Old log files are cleaned automatically if ``LOGDAYS`` is set to the
 number of days of old log files to keep.
 
-    ::
+::
 
-        LOGDAYS=1
+    LOGDAYS=1
 
 Some coloring is used during the DevStack runs to make it easier to
 see what is going on. This can be disabled with::
 
-        LOG_COLOR=False
+    LOG_COLOR=False
 
 When using the logfile, by default logs are sent to the console and
 the file.  You can set ``VERBOSE`` to ``false`` if you only wish the
@@ -317,12 +314,12 @@ Example Logging Configuration
 For example, non-interactive installs probably wish to save output to
 a file, keep service logs and disable color in the stored files.
 
-   ::
+::
 
-       [[local|localrc]]
-       DEST=/opt/stack/
-       LOGFILE=$LOGDIR/stack.sh.log
-       LOG_COLOR=False
+   [[local|localrc]]
+   DEST=/opt/stack/
+   LOGFILE=$LOGDIR/stack.sh.log
+   LOG_COLOR=False
 
 Database Backend
 ----------------
@@ -330,12 +327,10 @@ Database Backend
 Multiple database backends are available. The available databases are defined
 in the lib/databases directory.
 ``mysql`` is the default database, choose a different one by putting the
-following in the ``localrc`` section:
+following in the ``localrc`` section::
 
-   ::
-
-      disable_service mysql
-      enable_service postgresql
+  disable_service mysql
+  enable_service postgresql
 
 ``mysql`` is the default database.
 
@@ -347,11 +342,9 @@ backends may be available via external plugins.  Enabling or disabling
 RabbitMQ is handled via the usual service functions and
 ``ENABLED_SERVICES``.
 
-Example disabling RabbitMQ in ``local.conf``:
+Example disabling RabbitMQ in ``local.conf``::
 
-::
-
-    disable_service rabbit
+  disable_service rabbit
 
 
 Apache Frontend
@@ -370,34 +363,23 @@ override toggle available that can be set in your ``local.conf``.
 
 Keystone is run under Apache with ``mod_wsgi`` by default.
 
-Example (Keystone)
-
-::
+Example (Keystone)::
 
     KEYSTONE_USE_MOD_WSGI="True"
 
-Example (Nova):
-
-::
+Example (Nova)::
 
     NOVA_USE_MOD_WSGI="True"
 
-Example (Swift):
-
-::
+Example (Swift)::
 
     SWIFT_USE_MOD_WSGI="True"
 
-Example (Heat):
-
-::
+Example (Heat)::
 
     HEAT_USE_MOD_WSGI="True"
 
-
-Example (Cinder):
-
-::
+Example (Cinder)::
 
     CINDER_USE_MOD_WSGI="True"
 
@@ -413,9 +395,9 @@ system you can have devstack install it from upstream, or from local
 git trees by specifying it in ``LIBS_FROM_GIT``.  Multiple libraries
 can be specified as a comma separated list.
 
-   ::
+::
 
-      LIBS_FROM_GIT=python-keystoneclient,oslo.config
+  LIBS_FROM_GIT=python-keystoneclient,oslo.config
 
 Setting the variable to ``ALL`` will activate the download for all
 libraries.
@@ -431,9 +413,9 @@ Each entry in the ``PROJECT_VENV`` array contains the directory name
 of a venv to be used for the project.  The array index is the project
 name.  Multiple projects can use the same venv if desired.
 
-  ::
+::
 
-    PROJECT_VENV["glance"]=${GLANCE_DIR}.venv
+  PROJECT_VENV["glance"]=${GLANCE_DIR}.venv
 
 ``ADDITIONAL_VENV_PACKAGES`` is a comma-separated list of additional
 packages to be installed into each venv.  Often projects will not have
@@ -442,9 +424,9 @@ are 'optional' requirements, i.e. only needed for certain
 configurations.  By default, the enabled databases will have their
 Python bindings added when they are enabled.
 
-  ::
+::
 
-     ADDITIONAL_VENV_PACKAGES="python-foo, python-bar"
+  ADDITIONAL_VENV_PACKAGES="python-foo, python-bar"
 
 Use python3
 ------------
@@ -453,9 +435,9 @@ By default ``stack.sh`` uses python2 (the exact version set by the
 ``PYTHON2_VERSION``). This can be overriden so devstack will run
 python3 (the exact version set by ``PYTHON3_VERSION``).
 
-  ::
+::
 
-     USE_PYTHON3=True
+  USE_PYTHON3=True
 
 A clean install every time
 --------------------------
@@ -465,9 +447,9 @@ exist in ``$DEST``. ``stack.sh`` will freshen each repo on each run if
 ``RECLONE`` is set to ``yes``. This avoids having to manually remove
 repos in order to get the current branch from ``$GIT_BASE``.
 
-    ::
+::
 
-        RECLONE=yes
+  RECLONE=yes
 
 Upgrade packages installed by pip
 ---------------------------------
@@ -478,9 +460,9 @@ requirement. If ``PIP_UPGRADE`` is set to ``True`` then existing
 required Python packages will be upgraded to the most recent version
 that matches requirements.
 
-    ::
+::
 
-        PIP_UPGRADE=True
+  PIP_UPGRADE=True
 
 Guest Images
 ------------
@@ -494,11 +476,11 @@ their testing-requirements in ``stack.sh``.  Setting
 these default images; in that case, you will want to populate
 ``IMAGE_URLS`` with sufficient images to satisfy testing-requirements.
 
-    ::
+::
 
-        DOWNLOAD_DEFAULT_IMAGES=False
-        IMAGE_URLS="http://foo.bar.com/image.qcow,"
-        IMAGE_URLS+="http://foo.bar.com/image2.qcow"
+  DOWNLOAD_DEFAULT_IMAGES=False
+  IMAGE_URLS="http://foo.bar.com/image.qcow,"
+  IMAGE_URLS+="http://foo.bar.com/image2.qcow"
 
 
 Instance Type
@@ -517,9 +499,9 @@ KVM on Power with QEMU 2.4 requires 512 MB to load the firmware -
 running instances on ppc64/ppc64le can choose one of the default
 created flavors as follows:
 
-    ::
+::
 
-        DEFAULT_INSTANCE_TYPE=m1.tiny
+  DEFAULT_INSTANCE_TYPE=m1.tiny
 
 
 IP Version
@@ -530,19 +512,19 @@ IPv4, IPv6, or dual-stack self-service project data-network by with
 either ``IP_VERSION=4``, ``IP_VERSION=6``, or ``IP_VERSION=4+6``
 respectively.
 
-    ::
+::
 
-        IP_VERSION=4+6
+  IP_VERSION=4+6
 
 The following optional variables can be used to alter the default IPv6
 behavior:
 
-    ::
+::
 
-        IPV6_RA_MODE=slaac
-        IPV6_ADDRESS_MODE=slaac
-        IPV6_ADDRS_SAFE_TO_USE=fd$IPV6_GLOBAL_ID::/56
-        IPV6_PRIVATE_NETWORK_GATEWAY=fd$IPV6_GLOBAL_ID::1
+  IPV6_RA_MODE=slaac
+  IPV6_ADDRESS_MODE=slaac
+  IPV6_ADDRS_SAFE_TO_USE=fd$IPV6_GLOBAL_ID::/56
+  IPV6_PRIVATE_NETWORK_GATEWAY=fd$IPV6_GLOBAL_ID::1
 
 *Note*: ``IPV6_ADDRS_SAFE_TO_USE`` and ``IPV6_PRIVATE_NETWORK_GATEWAY``
 can be configured with any valid IPv6 prefix. The default values make
@@ -565,11 +547,9 @@ address.
 
 The default value for this setting is ``4``.  Dual-mode support, for
 example ``4+6`` is not currently supported.  ``HOST_IPV6`` can
-optionally be used to alter the default IPv6 address
+optionally be used to alter the default IPv6 address::
 
-    ::
-
-        HOST_IPV6=${some_local_ipv6_address}
+  HOST_IPV6=${some_local_ipv6_address}
 
 Multi-node setup
 ~~~~~~~~~~~~~~~~
@@ -671,11 +651,11 @@ set by ``VOLUME_GROUP_NAME``, the logical volume name prefix is set with
 ``VOLUME_NAME_PREFIX`` and the size of the volume backing file is set
 with ``VOLUME_BACKING_FILE_SIZE``.
 
-    ::
+::
 
-        VOLUME_GROUP_NAME="stack-volumes"
-        VOLUME_NAME_PREFIX="volume-"
-        VOLUME_BACKING_FILE_SIZE=24G
+  VOLUME_GROUP_NAME="stack-volumes"
+  VOLUME_NAME_PREFIX="volume-"
+  VOLUME_BACKING_FILE_SIZE=24G
 
 
 Keystone
