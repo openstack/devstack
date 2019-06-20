@@ -273,6 +273,8 @@ chmod 0440 $TEMPFILE
 sudo chown root:root $TEMPFILE
 sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
 
+# Make sure bridge-utils is installed (for brctl)
+is_package_installed bridge-utils || install_package bridge-utils
 
 # Configure Distro Repositories
 # -----------------------------
