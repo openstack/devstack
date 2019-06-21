@@ -513,6 +513,24 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG volume storage_protocol "$TEMPEST_STORAGE_PROTOCOL"
     fi
 
+    # Placement Features
+    # Set the microversion range for placement.
+    # Setting [None, latest] range of microversion which allow Tempest to run all microversions tests.
+    # NOTE- To avoid microversion tests failure on stable branch, we need to change "tempest_placement_max_microversion"
+    #       for stable branch on each release which should be changed from "latest" to max supported version of that release.
+    local tempest_placement_min_microversion=${TEMPEST_PLACEMENT_MIN_MICROVERSION:-None}
+    local tempest_placement_max_microversion=${TEMPEST_PLACEMENT_MAX_MICROVERSION:-"latest"}
+    if [ "$tempest_placement_min_microversion" == "None" ]; then
+        inicomment $TEMPEST_CONFIG placement min_microversion
+    else
+        iniset $TEMPEST_CONFIG placement min_microversion $tempest_placement_min_microversion
+    fi
+    if [ "$tempest_placement_max_microversion" == "None" ]; then
+        inicomment $TEMPEST_CONFIG placement max_microversion
+    else
+        iniset $TEMPEST_CONFIG placement max_microversion $tempest_placement_max_microversion
+    fi
+
     # Baremetal
     if [ "$VIRT_DRIVER" = "ironic" ] ; then
         iniset $TEMPEST_CONFIG compute-feature-enabled change_password False
