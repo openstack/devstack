@@ -498,7 +498,7 @@ GITREPO["tooz"]=${TOOZ_REPO:-${GIT_BASE}/openstack/tooz.git}
 GITBRANCH["tooz"]=${TOOZ_BRANCH:-$TARGET_BRANCH}
 
 # pbr drives the setuptools configs
-GITREPO["pbr"]=${PBR_REPO:-${GIT_BASE}/openstack-dev/pbr.git}
+GITREPO["pbr"]=${PBR_REPO:-${GIT_BASE}/openstack/pbr.git}
 GITBRANCH["pbr"]=${PBR_BRANCH:-$TARGET_BRANCH}
 
 
