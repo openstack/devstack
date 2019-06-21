@@ -222,14 +222,20 @@ dependency mechanism is beyond the scope of the current work.
 System Packages
 ===============
 
-Devstack provides a framework for getting packages installed at an early
-phase of its execution. These packages may be defined in a plugin as files
-that contain new-line separated lists of packages required by the plugin
 
-Supported packaging systems include apt and yum across multiple distributions.
-To enable a plugin to hook into this and install package dependencies, packages
-may be listed at the following locations in the top-level of the plugin
-repository:
+
+Devstack based
+--------------
+
+Devstack provides a custom framework for getting packages installed at
+an early phase of its execution.  These packages may be defined in a
+plugin as files that contain new-line separated lists of packages
+required by the plugin
+
+Supported packaging systems include apt and yum across multiple
+distributions.  To enable a plugin to hook into this and install
+package dependencies, packages may be listed at the following
+locations in the top-level of the plugin repository:
 
 - ``./devstack/files/debs/$plugin_name`` - Packages to install when running
   on Ubuntu, Debian or Linux Mint.
@@ -239,6 +245,42 @@ repository:
 
 - ``./devstack/files/rpms-suse/$plugin_name`` - Packages to install when
   running on SUSE Linux or openSUSE.
+
+Although there a no plans to remove this method of installing
+packages, plugins should consider it deprecated for ``bindep`` support
+described below.
+
+bindep
+------
+
+The `bindep <https://docs.openstack.org/infra/bindep>`__ project has
+become the defacto standard for OpenStack projects to specify binary
+dependencies.
+
+A plugin may provide a ``./devstack/files/bindep.txt`` file, which
+will be called with the *default* profile to install packages.  For
+details on the syntax, etc. see the bindep documentation.
+
+It is also possible to use the ``bindep.txt`` of projects that are
+being installed from source with the ``-bindep`` flag available in
+install functions.  For example
+
+.. code-block:: bash
+
+  if use_library_from_git "diskimage-builder"; then
+     GITREPO["diskimage-builder"]=$DISKIMAGE_BUILDER_REPO_URL
+     GITDIR["diskimage-builder"]=$DEST/diskimage-builder
+     GITBRANCH["diskimage-builder"]=$DISKIMAGE_BUILDER_REPO_REF
+     git_clone_by_name "diskimage-builder"
+     setup_dev_lib -bindep "diskimage-builder"
+  fi
+
+will result in any packages required by the ``bindep.txt`` of the
+``diskimage-builder`` project being installed.  Note however that jobs
+that switch projects between source and released/pypi installs
+(e.g. with a ``foo-dsvm`` and a ``foo-dsvm-src`` test to cover both
+released dependencies and master versions) will have to deal with
+``bindep.txt`` being unavailable without the source directory.
 
 
 Using Plugins in the OpenStack Gate

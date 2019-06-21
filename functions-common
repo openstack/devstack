@@ -1275,6 +1275,30 @@ function get_plugin_packages {
     $xtrace
 }
 
+# Search plugins for a bindep.txt file
+#
+# Uses globals ``BINDEP_CMD``, ``GITDIR``, ``DEVSTACK_PLUGINS``
+#
+# Note this is only valid after BINDEP_CMD is setup in stack.sh, and
+# is thus not really intended to be called externally.
+function _get_plugin_bindep_packages {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    local bindep_file
+    local packages
+
+    for plugin in ${DEVSTACK_PLUGINS//,/ }; do
+        bindep_file=${GITDIR[$plugin]}/devstack/files/bindep.txt
+        if [[ -f ${bindep_file} ]]; then
+            packages+=$($BINDEP_CMD -b --file ${bindep_file} || true)
+        fi
+    done
+    echo "${packages}"
+    $xtrace
+}
+
 # Distro-agnostic package installer
 # Uses globals ``NO_UPDATE_REPOS``, ``REPOS_UPDATED``, ``RETRY_UPDATE``
 # install_package package [package ...]
