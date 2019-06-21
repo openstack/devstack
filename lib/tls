@@ -234,6 +234,9 @@ function init_cert {
                 # see https://bugs.python.org/issue23239
                 TLS_IP="DNS:$TLS_IP,IP:$TLS_IP"
             fi
+            if [[ -n "$HOST_IPV6" ]]; then
+                TLS_IP="$TLS_IP,IP:$HOST_IPV6"
+            fi
         fi
         make_cert $INT_CA_DIR $DEVSTACK_CERT_NAME $DEVSTACK_HOSTNAME "$TLS_IP"
 
