@@ -23,13 +23,14 @@
 #     working directory
 #   * network access to https://git.openstack.org/cgit
 
+import functools
 import logging
 import json
 import requests
 
 logging.basicConfig(level=logging.DEBUG)
 
-url = 'https://review.openstack.org/projects/'
+url = 'https://review.opendev.org/projects/'
 
 # This is what a project looks like
 '''
@@ -39,26 +40,30 @@ url = 'https://review.openstack.org/projects/'
   },
 '''
 
-def is_in_openstack_namespace(proj):
-    # only interested in openstack namespace (e.g. not retired
+def is_in_wanted_namespace(proj):
+    # only interested in openstack or x namespace (e.g. not retired
     # stackforge, etc)
-    return proj.startswith('openstack/')
+    if proj.startswith('stackforge/') or \
+       proj.startswith('stackforge-attic/'):
+        return False
+    else:
+        return True
 
 # Check if this project has a plugin file
-def has_devstack_plugin(proj):
+def has_devstack_plugin(session, proj):
     # Don't link in the deb packaging repos
     if "openstack/deb-" in proj:
         return False
-    r = requests.get("https://git.openstack.org/cgit/%s/plain/devstack/plugin.sh" % proj)
+    r = session.get("https://opendev.org/%s/raw/branch/master/devstack/plugin.sh" % proj)
     return r.status_code == 200
 
 logging.debug("Getting project list from %s" % url)
 r = requests.get(url)
-projects = sorted(filter(is_in_openstack_namespace, json.loads(r.text[4:])))
+projects = sorted(filter(is_in_wanted_namespace, json.loads(r.text[4:])))
 logging.debug("Found %d projects" % len(projects))
 
-found_plugins = filter(has_devstack_plugin, projects)
+s = requests.Session()
+found_plugins = filter(functools.partial(has_devstack_plugin, s), projects)
 
 for project in found_plugins:
-    # strip of openstack/
-    print(project[10:])
+    print(project)
