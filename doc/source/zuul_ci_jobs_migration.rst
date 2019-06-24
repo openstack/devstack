@@ -28,7 +28,7 @@ sahara Tempest plugin repo:
 
 .. code:: yaml
 
-  # In http://git.openstack.org/cgit/openstack/sahara-tests/tree/.zuul.yaml:
+  # In https://opendev.org/openstack/sahara-tests/src/branch/master/.zuul.yaml:
   - job:
       name: sahara-tests-tempest
       description: |
@@ -86,7 +86,7 @@ job.parent.
 
 .. code:: yaml
 
-  # https://git.openstack.org/cgit/openstack/kuryr-kubernetes/tree/.zuul.yaml:
+  # https://opendev.org/openstack/kuryr-kubernetes/src/branch/master/.zuul.d/base.yaml:
   - job:
       name: kuryr-kubernetes-tempest-base
       parent: devstack-tempest
@@ -110,9 +110,9 @@ job.parent.
           kuryr-kubernetes: true
           (...)
         devstack_plugins:
-          kuryr-kubernetes: https://git.openstack.org/openstack/kuryr
-          devstack-plugin-container: https://git.openstack.org/openstack/devstack-plugin-container
-          neutron-lbaas: https://git.openstack.org/openstack/neutron-lbaas
+          kuryr-kubernetes: https://opendev.org/openstack/kuryr
+          devstack-plugin-container: https://opendev.org/openstack/devstack-plugin-container
+          neutron-lbaas: https://opendev.org/openstack/neutron-lbaas
         tempest_plugins:
           - kuryr-tempest-plugin
         (...)

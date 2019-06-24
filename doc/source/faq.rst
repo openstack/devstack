@@ -80,8 +80,7 @@ I'd like to help!
 ~~~~~~~~~~~~~~~~~
 
 That isn't a question, but please do! The source for DevStack is at
-`git.openstack.org
-<https://git.openstack.org/cgit/openstack-dev/devstack>`__ and bug
+`opendev.org <https://opendev.org/openstack/devstack>`__ and bug
 reports go to `LaunchPad
 <https://bugs.launchpad.net/devstack/>`__. Contributions follow the
 usual process as described in the `developer guide

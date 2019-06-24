@@ -103,7 +103,7 @@ Grab the latest version of DevStack:
 
 ::
 
-    git clone https://git.openstack.org/openstack-dev/devstack
+    git clone https://opendev.org/openstack/devstack
     cd devstack
 
 Up to this point all of the steps apply to each node in the cluster.

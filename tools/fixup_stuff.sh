@@ -255,7 +255,7 @@ function fixup_suse {
 # looking for the mirror config script before doing this, and just
 # skip it if so.
 
-# [1] https://git.openstack.org/cgit/openstack/diskimage-builder/tree/ \
+# [1] https://opendev.org/openstack/diskimage-builder/src/branch/master/ \
 #        diskimage_builder/elements/pip-and-virtualenv/ \
 #            install.d/pip-and-virtualenv-source-install/04-install-pip
 # [2] https://bugzilla.redhat.com/show_bug.cgi?id=1477823

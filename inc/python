@@ -346,7 +346,7 @@ function lib_installed_from_git {
     # The best option seems to be to use "pip list" which will tell
     # you the path an editable install was installed from; for example
     # in response to something like
-    #  pip install -e 'git+http://git.openstack.org/openstack-dev/bashate#egg=bashate'
+    #  pip install -e 'git+https://opendev.org/openstack/bashate#egg=bashate'
     # pip list --format columns shows
     #  bashate 0.5.2.dev19 /tmp/env/src/bashate
     # Thus we check the third column to see if we're installed from

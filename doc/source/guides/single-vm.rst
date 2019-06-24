@@ -60,7 +60,7 @@ passed as the user-data file when booting the VM.
             DEBIAN_FRONTEND=noninteractive sudo apt-get install -qqy git || sudo yum install -qy git
             sudo chown stack:stack /home/stack
             cd /home/stack
-            git clone https://git.openstack.org/openstack-dev/devstack
+            git clone https://opendev.org/openstack/devstack
             cd devstack
             echo '[[local|localrc]]' > local.conf
             echo ADMIN_PASSWORD=password >> local.conf

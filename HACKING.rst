@@ -11,7 +11,7 @@ Shell script was chosen because it best illustrates the steps used to
 set up and interact with OpenStack components.
 
 DevStack's official repository is located on git.openstack.org at
-https://git.openstack.org/openstack-dev/devstack.  Besides the master branch that
+https://opendev.org/openstack/devstack.  Besides the master branch that
 tracks the OpenStack trunk branches a separate branch is maintained for all
 OpenStack releases starting with Diablo (stable/diablo).
 
@@ -26,7 +26,7 @@ __ lp_
 .. _lp: https://launchpad.net/~devstack
 
 The `Gerrit review
-queue <https://review.openstack.org/#/q/project:openstack-dev/devstack,n,z>`__
+queue <https://review.opendev.org/#/q/project:openstack/devstack>`__
 is used for all commits.
 
 The primary script in DevStack is ``stack.sh``, which performs the bulk of the

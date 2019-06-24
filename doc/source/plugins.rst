@@ -99,7 +99,7 @@ They are added in the following format::
 
 An example would be as follows::
 
-  enable_plugin ec2-api https://git.openstack.org/openstack/ec2-api
+  enable_plugin ec2-api https://opendev.org/openstack/ec2-api
 
 plugin.sh contract
 ==================
@@ -306,10 +306,12 @@ integration of alternate RPC systems (e.g. zmq, qpid). In these cases
 the best practice is to build a dedicated
 ``openstack/devstack-plugin-FOO`` project.
 
+Legacy project-config jobs
+--------------------------
+
 To enable a plugin to be used in a gate job, the following lines will
 be needed in your ``jenkins/jobs/<project>.yaml`` definition in
-`project-config
-<http://git.openstack.org/cgit/openstack-infra/project-config/>`_::
+`project-config <https://opendev.org/openstack/project-config/>`_::
 
   # Because we are testing a non standard project, add the
   # our project repository. This makes zuul do the right
@@ -319,7 +321,12 @@ be needed in your ``jenkins/jobs/<project>.yaml`` definition in
   # note the actual url here is somewhat irrelevant because it
   # caches in nodepool, however make it a valid url for
   # documentation purposes.
-  export DEVSTACK_LOCAL_CONFIG="enable_plugin ec2-api https://git.openstack.org/openstack/ec2-api"
+  export DEVSTACK_LOCAL_CONFIG="enable_plugin ec2-api https://opendev.org/openstack/ec2-api"
+
+Zuul v3 jobs
+------------
+
+See the ``devstack_plugins`` example in :doc:`zuul_ci_jobs_migration`.
 
 See Also
 ========

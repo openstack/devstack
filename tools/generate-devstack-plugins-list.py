@@ -19,9 +19,9 @@
 #
 # In order to function correctly, the environment in which the
 # script runs must have
-#   * network access to the review.openstack.org Gerrit API
+#   * network access to the review.opendev.org Gerrit API
 #     working directory
-#   * network access to https://git.openstack.org/cgit
+#   * network access to https://opendev.org/
 
 import functools
 import logging
