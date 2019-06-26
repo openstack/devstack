@@ -221,7 +221,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (xenial|artful|bionic|stretch|jessie|f28|f29|opensuse-42.3|opensuse-15.0|opensuse-tumbleweed|rhel7) ]]; then
+if [[ ! ${DISTRO} =~ (xenial|artful|bionic|stretch|jessie|f28|f29|opensuse-15.0|opensuse-15.1|opensuse-tumbleweed|rhel7) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         die $LINENO "If you wish to run this script anyway run with FORCE=yes"
