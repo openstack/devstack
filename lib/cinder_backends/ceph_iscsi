@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# lib/cinder_backends/ceph_iscsi
+# Configure the ceph_iscsi backend
+
+# Enable with:
+#
+#   CINDER_ENABLED_BACKENDS+=,ceph_iscsi:ceph_iscsi
+#
+# Optional paramteters:
+#   CEPH_ISCSI_API_URL=<url to the rbd-target-api service>
+#
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# configure_ceph_backend_ceph_iscsi - called from configure_cinder()
+
+
+# Save trace setting
+_XTRACE_CINDER_CEPH_ISCSI=$(set +o | grep xtrace)
+set +o xtrace
+
+# Entry Points
+# ------------
+
+# configure_cinder_backend_ceph_iscsi - Set config files, create data dirs, etc
+# configure_cinder_backend_ceph_iscsi $name
+function configure_cinder_backend_ceph_iscsi {
+    local be_name=$1
+
+    CEPH_ISCSI_API_URL=${CEPH_ISCSI_API_URL:-http://$CEPH_ISCSI_API_HOST:$CEPH_ISCSI_API_PORT}
+
+    iniset $CINDER_CONF $be_name volume_backend_name $be_name
+    iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.ceph.rbd_iscsi.RBDISCSIDriver"
+    iniset $CINDER_CONF $be_name rbd_ceph_conf "$CEPH_CONF_FILE"
+    iniset $CINDER_CONF $be_name rbd_pool "$CINDER_CEPH_POOL"
+    iniset $CINDER_CONF $be_name rbd_user "$CINDER_CEPH_USER"
+    iniset $CINDER_CONF $be_name rbd_iscsi_api_user "$CEPH_ISCSI_API_USER"
+    iniset $CINDER_CONF $be_name rbd_iscsi_api_password "$CEPH_ISCSI_API_PASSWORD"
+    iniset $CINDER_CONF $be_name rbd_iscsi_api_url "$CEPH_ISCSI_API_URL"
+    iniset $CINDER_CONF $be_name rbd_iscsi_target_iqn "$CEPH_ISCSI_TARGET_IQN"
+    iniset $CINDER_CONF $be_name rbd_flatten_volume_from_snapshot False
+    iniset $CINDER_CONF $be_name rbd_max_clone_depth 5
+    iniset $CINDER_CONF DEFAULT glance_api_version 2
+
+    pip_install rbd-iscsi-client
+}
+
+# Restore xtrace
+$_XTRACE_CINDER_CEPH_ISCSI
+
+# Local variables:
+# mode: shell-script
+# End:
