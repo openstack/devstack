@@ -208,7 +208,8 @@ into the ``systemd`` namespace, which can cause some issues.
   the one you want.
 - ``systemd`` - a python 3 only library, not what you want.
 - ``python-systemd`` - another library you don't want. Installing it
-  on a system will break ansible's ability to run.
+  on a system will break ansible's ability to run. The package has now
+  been renamed to ``cysystemd``, which avoids the namespace collision.
 
 
 If we were using user units, the ``[Service]`` - ``Group=`` parameter
