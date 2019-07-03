@@ -204,7 +204,6 @@ x/trio2o                                 `https://opendev.org/x/trio2o <https://
 x/valet                                  `https://opendev.org/x/valet <https://opendev.org/x/valet>`__
 x/vmware-nsx                             `https://opendev.org/x/vmware-nsx <https://opendev.org/x/vmware-nsx>`__
 x/vmware-vspc                            `https://opendev.org/x/vmware-vspc <https://opendev.org/x/vmware-vspc>`__
-zuul/nodepool                            `https://opendev.org/zuul/nodepool <https://opendev.org/zuul/nodepool>`__
 ======================================== ===
 
 
