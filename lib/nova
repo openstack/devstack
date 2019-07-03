@@ -391,7 +391,7 @@ function create_nova_conf {
     if [[ $SCHEDULER == "filter_scheduler" ]]; then
         iniset $NOVA_CONF scheduler workers "$API_WORKERS"
     fi
-    iniset $NOVA_CONF DEFAULT default_floating_pool "$PUBLIC_NETWORK_NAME"
+    iniset $NOVA_CONF neutron default_floating_pool "$PUBLIC_NETWORK_NAME"
     if [[ $SERVICE_IP_VERSION == 6 ]]; then
         iniset $NOVA_CONF DEFAULT my_ip "$HOST_IPV6"
         iniset $NOVA_CONF DEFAULT use_ipv6 "True"
