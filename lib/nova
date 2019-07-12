@@ -187,6 +187,11 @@ NOVA_USE_SERVICE_TOKEN=$(trueorfalse False NOVA_USE_SERVICE_TOKEN)
 # Other options include "versioned" and "unversioned".
 NOVA_NOTIFICATION_FORMAT=${NOVA_NOTIFICATION_FORMAT:-both}
 
+# Timeout for servers to gracefully shutdown the OS during operations
+# like shelve, rescue, stop, rebuild. Defaults to 0 since the default
+# image in devstack is CirrOS.
+NOVA_SHUTDOWN_TIMEOUT=${NOVA_SHUTDOWN_TIMEOUT:-0}
+
 # Functions
 # ---------
 
@@ -428,6 +433,7 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF DEFAULT osapi_compute_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
+    iniset $NOVA_CONF DEFAULT shutdown_timeout $NOVA_SHUTDOWN_TIMEOUT
 
     iniset $NOVA_CONF key_manager backend nova.keymgr.conf_key_mgr.ConfKeyManager
 
