@@ -536,6 +536,7 @@ $listen_string
 <VirtualHost $f_host:$f_port>
     SSLEngine On
     SSLCertificateFile $DEVSTACK_CERT
+    SSLProtocol -all +TLSv1.3 +TLSv1.2
 
     # Disable KeepAlive to fix bug #1630664 a.k.a the
     # ('Connection aborted.', BadStatusLine("''",)) error
