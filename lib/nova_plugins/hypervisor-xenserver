@@ -56,7 +56,6 @@ function configure_nova_hypervisor {
         die $LINENO "os-xenapi plugin is not specified. Please enable this plugin in local.conf"
     fi
 
-    read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
     iniset $NOVA_CONF DEFAULT compute_driver "xenapi.XenAPIDriver"
     iniset $NOVA_CONF xenserver connection_url "$XENAPI_CONNECTION_URL"
     iniset $NOVA_CONF xenserver connection_username "$XENAPI_USER"
