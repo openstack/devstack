@@ -43,8 +43,8 @@ function _horizon_config_set {
     local value=$4
 
     if [ -z "$section" ]; then
-        sed -e "/^$option/d" -i $local_settings
-        echo -e "\n$option=$value" >> $file
+        sed -e "/^$option/d" -i $file
+        echo "$option = $value" >> $file
     elif grep -q "^$section" $file; then
         local line
         line=$(sed -ne "/^$section/,/^}/ { /^ *'$option':/ p; }" $file)
@@ -84,6 +84,9 @@ function configure_horizon {
     local local_settings=$HORIZON_DIR/openstack_dashboard/local/local_settings.py
     cp $HORIZON_SETTINGS $local_settings
 
+    # Ensure local_setting.py file ends with EOL (newline)
+    echo >> $local_settings
+
     _horizon_config_set $local_settings "" WEBROOT \"$HORIZON_APACHE_ROOT/\"
 
     _horizon_config_set $local_settings "" COMPRESS_OFFLINE True
@@ -91,7 +94,6 @@ function configure_horizon {
 
     _horizon_config_set $local_settings "" OPENSTACK_HOST \"${KEYSTONE_SERVICE_HOST}\"
 
-    _horizon_config_set $local_settings "" OPENSTACK_API_VERSIONS {\"identity\":3}
     _horizon_config_set $local_settings "" OPENSTACK_KEYSTONE_URL "\"${KEYSTONE_SERVICE_URI}/v3\""
 
     # note(trebskit): if HOST_IP points at non-localhost ip address, horizon cannot be accessed
