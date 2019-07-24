@@ -186,7 +186,6 @@ x/networking-vpp                         `https://opendev.org/x/networking-vpp <
 x/networking-vsphere                     `https://opendev.org/x/networking-vsphere <https://opendev.org/x/networking-vsphere>`__
 x/neutron-classifier                     `https://opendev.org/x/neutron-classifier <https://opendev.org/x/neutron-classifier>`__
 x/nova-dpm                               `https://opendev.org/x/nova-dpm <https://opendev.org/x/nova-dpm>`__
-x/nova-lxd                               `https://opendev.org/x/nova-lxd <https://opendev.org/x/nova-lxd>`__
 x/nova-mksproxy                          `https://opendev.org/x/nova-mksproxy <https://opendev.org/x/nova-mksproxy>`__
 x/oaktree                                `https://opendev.org/x/oaktree <https://opendev.org/x/oaktree>`__
 x/omni                                   `https://opendev.org/x/omni <https://opendev.org/x/omni>`__
