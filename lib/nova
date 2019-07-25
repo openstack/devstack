@@ -102,7 +102,7 @@ SCHEDULER=${SCHEDULER:-filter_scheduler}
 
 # The following NOVA_FILTERS contains SameHostFilter and DifferentHostFilter with
 # the default filters.
-NOVA_FILTERS="RetryFilter,AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter"
+NOVA_FILTERS="AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter"
 
 QEMU_CONF=/etc/libvirt/qemu.conf
 
