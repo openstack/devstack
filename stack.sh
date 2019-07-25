@@ -167,9 +167,6 @@ LAST_SPINNER_PID=""
 # Import common functions
 source $TOP_DIR/functions
 
-# Import config functions
-source $TOP_DIR/inc/meta-config
-
 # Import 'public' stack.sh functions
 source $TOP_DIR/lib/stack
 
