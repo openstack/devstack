@@ -98,6 +98,17 @@ NEUTRON_ROOTWRAP_DAEMON_CMD="$NEUTRON_ROOTWRAP-daemon $NEUTRON_ROOTWRAP_CONF_FIL
 PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
 PUBLIC_BRIDGE_MTU=${PUBLIC_BRIDGE_MTU:-1500}
 
+# Network type - default vxlan, however enables vlan based jobs to override
+# using the legacy environment variable as well as a new variable in greater
+# alignment with the naming scheme of this plugin.
+NEUTRON_TENANT_NETWORK_TYPE=${NEUTRON_TENANT_NETWORK_TYPE:-vxlan}
+
+NEUTRON_TENANT_VLAN_RANGE=${NEUTRON_TENANT_VLAN_RANGE:-${TENANT_VLAN_RANGE:-100:150}}
+
+# Physical network for VLAN network usage.
+NEUTRON_PHYSICAL_NETWORK=${NEUTRON_PHYSICAL_NETWORK:-}
+
+
 # Additional neutron api config files
 declare -a -g _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
 
@@ -201,9 +212,8 @@ function configure_neutron_new {
         configure_keystone_authtoken_middleware $NEUTRON_CONF neutron
         configure_keystone_authtoken_middleware $NEUTRON_CONF nova nova
 
-        # Configure VXLAN
-        # TODO(sc68cal) not hardcode?
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 tenant_network_types vxlan
+        # Configure tenant network type
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 tenant_network_types $NEUTRON_TENANT_NETWORK_TYPE
 
         local mech_drivers="openvswitch"
         if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
@@ -215,6 +225,9 @@ function configure_neutron_new {
 
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks public
+        if [[ "$NEUTRON_TENANT_NETWORK_TYPE" =~ "vlan" ]] && [[ "$NEUTRON_PHYSICAL_NETWORK" != "" ]]; then
+            iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vlan network_vlan_ranges ${NEUTRON_PHYSICAL_NETWORK}:${NEUTRON_TENANT_VLAN_RANGE}
+        fi
         if [[ "$NEUTRON_PORT_SECURITY" = "True" ]]; then
             neutron_ml2_extension_driver_add port_security
         fi
