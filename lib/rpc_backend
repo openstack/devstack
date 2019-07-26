@@ -66,7 +66,12 @@ EOF
             sudo systemctl restart epmd.socket epmd.service
         fi
         if is_fedora || is_suse; then
-            sudo systemctl enable rabbitmq-server
+            # NOTE(jangutter): If rabbitmq is not running (as in a fresh
+            # install) then rabbit_setuser triggers epmd@0.0.0.0.socket with
+            # socket activation. This fails the first time and does not get
+            # cleared. It is benign, but the workaround is to start rabbitmq a
+            # bit earlier for RPM based distros.
+            sudo systemctl --now enable rabbitmq-server
         fi
     fi
 }
