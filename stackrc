@@ -131,7 +131,7 @@ export USE_PYTHON3=$(trueorfalse False USE_PYTHON3)
 
 # Explicitly list services not to run under Python 3. See
 # disable_python3_package to edit this variable.
-export DISABLED_PYTHON3_PACKAGES="swift"
+export DISABLED_PYTHON3_PACKAGES=""
 
 # When Python 3 is supported by an application, adding the specific
 # version of Python 3 to this variable will install the app using that
