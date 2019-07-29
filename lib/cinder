@@ -228,8 +228,11 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT osapi_volume_listen $CINDER_SERVICE_LISTEN_ADDRESS
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
     iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
-    iniset $CINDER_CONF DEFAULT my_ip "$HOST_IP"
-
+    if [[ $SERVICE_IP_VERSION == 6 ]]; then
+        iniset $CINDER_CONF DEFAULT my_ip "$HOST_IPV6"
+    else
+        iniset $CINDER_CONF DEFAULT my_ip "$HOST_IP"
+    fi
     iniset $CINDER_CONF key_manager backend cinder.keymgr.conf_key_mgr.ConfKeyManager
     iniset $CINDER_CONF key_manager fixed_key $(openssl rand -hex 16)
 
