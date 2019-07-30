@@ -6,7 +6,7 @@ providing load balancing services for OpenStack.
 
 This guide will show you how to create a devstack with `Octavia API`_ enabled.
 
-.. _Octavia API: https://developer.openstack.org/api-ref/load-balancer/v2/index.html
+.. _Octavia API: https://docs.openstack.org/api-ref/load-balancer/v2/index.html
 
 Phase 1: Create DevStack + 2 nova instances
 --------------------------------------------
