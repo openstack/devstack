@@ -624,8 +624,7 @@
       jobs:
         - devstack
         - devstack-xenial
-        - devstack-ipv6:
-            voting: false
+        - devstack-ipv6
         - devstack-platform-centos-7
         - devstack-platform-opensuse-15
         - devstack-platform-fedora-latest
@@ -666,6 +665,7 @@
       jobs:
         - devstack
         - devstack-xenial
+        - devstack-ipv6
         - devstack-multinode
         - devstack-multinode-xenial
         - devstack-unit-tests
