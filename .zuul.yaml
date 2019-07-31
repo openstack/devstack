@@ -657,6 +657,10 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - tempest-ipv6-only:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
     gate:
       jobs:
         - devstack
@@ -679,6 +683,10 @@
               - ^.*\.rst$
               - ^doc/.*$
         - openstacksdk-functional-devstack:
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
+        - tempest-ipv6-only:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
