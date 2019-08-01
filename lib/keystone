@@ -131,6 +131,9 @@ KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT=${KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT:-2}
 # however may not be suitable for real production.
 KEYSTONE_PASSWORD_HASH_ROUNDS=${KEYSTONE_PASSWORD_HASH_ROUNDS:-4}
 
+# Cache settings
+KEYSTONE_ENABLE_CACHE=${KEYSTONE_ENABLE_CACHE:-True}
+
 # Functions
 # ---------
 
@@ -213,9 +216,9 @@ function configure_keystone {
     iniset $KEYSTONE_CONF resource driver "$KEYSTONE_RESOURCE_BACKEND"
 
     # Enable caching
-    iniset $KEYSTONE_CONF cache enabled "True"
-    iniset $KEYSTONE_CONF cache backend "dogpile.cache.memcached"
-    iniset $KEYSTONE_CONF cache memcache_servers localhost:11211
+    iniset $KEYSTONE_CONF cache enabled $KEYSTONE_ENABLE_CACHE
+    iniset $KEYSTONE_CONF cache backend $CACHE_BACKEND
+    iniset $KEYSTONE_CONF cache memcache_servers $MEMCACHE_SERVERS
 
     iniset_rpc_backend keystone $KEYSTONE_CONF oslo_messaging_notifications
 
