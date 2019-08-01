@@ -185,7 +185,25 @@ class TestDevstackLocalConf(unittest.TestCase):
             for line in f:
                 if line.startswith('LIBS_FROM_GIT'):
                     lfg = line.strip().split('=')[1]
-        self.assertEqual('oslo.db', lfg)
+        self.assertEqual('"oslo.db"', lfg)
+
+    def test_avoid_double_quote(self):
+        "Test that there a no duplicated quotes"
+        localrc = {'TESTVAR': '"quoted value"'}
+        p = dict(localrc=localrc,
+                 base_services=[],
+                 base_dir='./test',
+                 path=os.path.join(self.tmpdir, 'test.local.conf'),
+                 projects={})
+        lc = self._init_localconf(p)
+        lc.write(p['path'])
+
+        testvar = None
+        with open(p['path']) as f:
+            for line in f:
+                if line.startswith('TESTVAR'):
+                    testvar = line.strip().split('=')[1]
+        self.assertEqual('"quoted value"', testvar)
 
     def test_plugin_circular_deps(self):
         "Test that plugins with circular dependencies fail"
@@ -265,7 +283,7 @@ class TestDevstackLocalConf(unittest.TestCase):
         lc.write(p['path'])
 
         tp = self._find_tempest_plugins_value(p['path'])
-        self.assertEqual('someplugin', tp)
+        self.assertEqual('"someplugin"', tp)
         self.assertEqual(len(lc.warnings), 1)
 
 
