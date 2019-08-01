@@ -94,6 +94,7 @@ NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 NOVA_SERVICE_LOCAL_HOST=${NOVA_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
 NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)}
 METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
+NOVA_ENABLE_CACHE=${NOVA_ENABLE_CACHE:-True}
 
 # Option to enable/disable config drive
 # NOTE: Set ``FORCE_CONFIG_DRIVE="False"`` to turn OFF config drive
@@ -437,8 +438,8 @@ function create_nova_conf {
         iniset $NOVA_CONF DEFAULT bindir "/usr/bin"
     fi
 
-    # only setup database connections if there are services that
-    # require them running on the host. The ensures that n-cpu doesn't
+    # only setup database connections and cache backend if there are services
+    # that require them running on the host. The ensures that n-cpu doesn't
     # leak a need to use the db in a multinode scenario.
     if is_service_enabled n-api n-cond n-sched; then
         # If we're in multi-tier cells mode, we want our control services pointing
@@ -455,6 +456,13 @@ function create_nova_conf {
 
         iniset $NOVA_CONF database connection `database_connection_url $db`
         iniset $NOVA_CONF api_database connection `database_connection_url nova_api`
+
+        # Cache related settings
+        # Those settings aren't really needed in n-cpu thus it is configured
+        # only on nodes which runs controller services
+        iniset $NOVA_CONF cache enabled $NOVA_ENABLE_CACHE
+        iniset $NOVA_CONF cache backend $CACHE_BACKEND
+        iniset $NOVA_CONF cache memcache_servers $MEMCACHE_SERVERS
     fi
 
     if is_service_enabled n-api; then
