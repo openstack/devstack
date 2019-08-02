@@ -770,6 +770,10 @@ ETCD_DOWNLOAD_LOCATION=$ETCD_DOWNLOAD_URL/$ETCD_VERSION/$ETCD_DOWNLOAD_FILE
 # etcd is always required, so place it into list of pre-cached downloads
 EXTRA_CACHE_URLS+=",$ETCD_DOWNLOAD_LOCATION"
 
+# Cache settings
+CACHE_BACKEND=${CACHE_BACKEND:-"dogpile.cache.memcached"}
+MEMCACHE_SERVERS=${MEMCACHE_SERVERS:-"localhost:11211"}
+
 # Detect duplicate values in IMAGE_URLS
 for image_url in ${IMAGE_URLS//,/ }; do
     if [ $(echo "$IMAGE_URLS" | grep -o -F "$image_url" | wc -l) -gt 1 ]; then
