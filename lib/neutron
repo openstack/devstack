@@ -54,6 +54,7 @@ NEUTRON_DHCP_BINARY="neutron-dhcp-agent"
 NEUTRON_CONF_DIR=/etc/neutron
 NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 NEUTRON_META_CONF=$NEUTRON_CONF_DIR/metadata_agent.ini
+NEUTRON_META_DATA_HOST=${NEUTRON_META_DATA_HOST:-$(ipv6_unquote $SERVICE_HOST)}
 
 NEUTRON_DHCP_CONF=$NEUTRON_CONF_DIR/dhcp_agent.ini
 NEUTRON_L3_CONF=$NEUTRON_CONF_DIR/l3_agent.ini
@@ -296,7 +297,7 @@ function configure_neutron_new {
         cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $NEUTRON_META_CONF
 
         iniset $NEUTRON_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-        iniset $NEUTRON_META_CONF DEFAULT nova_metadata_host $SERVICE_HOST
+        iniset $NEUTRON_META_CONF DEFAULT nova_metadata_host $NEUTRON_META_DATA_HOST
         iniset $NEUTRON_META_CONF DEFAULT metadata_workers $API_WORKERS
         # TODO(ihrachys) do we really need to set rootwrap for metadata agent?
         configure_root_helper_options $NEUTRON_META_CONF
