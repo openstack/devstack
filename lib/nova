@@ -578,23 +578,34 @@ function configure_placement_nova_compute {
 }
 
 function configure_console_compute {
+    # If we are running multiple cells (and thus multiple console proxies) on a
+    # single host, we offset the ports to avoid collisions.  We need to
+    # correspondingly configure the console proxy port for nova-compute and we
+    # can use the NOVA_CPU_CELL variable to know which cell we are for
+    # calculating the offset.
+    # Stagger the offset based on the total number of possible console proxies
+    # (novnc, xvpvnc, spice, serial) so that their ports will not collide if
+    # all are enabled.
+    local offset
+    offset=$(((NOVA_CPU_CELL - 1) * 4))
+
     # All nova-compute workers need to know the vnc configuration options
     # These settings don't hurt anything if n-xvnc and n-novnc are disabled
     if is_service_enabled n-cpu; then
         if [ "$NOVNC_FROM_PACKAGE" == "True" ]; then
             # Use the old URL when installing novnc packages.
-            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
+            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:$((6080 + offset))/vnc_auto.html"}
         elif vercmp ${NOVNC_BRANCH} "<" "1.0.0"; then
-             # Use the old URL when installing older novnc source.
-            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_auto.html"}
+            # Use the old URL when installing older novnc source.
+            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:$((6080 + offset))/vnc_auto.html"}
         else
             # Use the new URL when building >=v1.0.0 from source.
-            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:6080/vnc_lite.html"}
+            NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:$((6080 + offset))/vnc_lite.html"}
         fi
         iniset $NOVA_CPU_CONF vnc novncproxy_base_url "$NOVNCPROXY_URL"
-        XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:6081/console"}
+        XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:$((6081 + offset))/console"}
         iniset $NOVA_CPU_CONF vnc xvpvncproxy_base_url "$XVPVNCPROXY_URL"
-        SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:6082/spice_auto.html"}
+        SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:$((6082 + offset))/spice_auto.html"}
         iniset $NOVA_CPU_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
     fi
 
@@ -621,6 +632,7 @@ function configure_console_compute {
 
     if is_service_enabled n-sproxy; then
         iniset $NOVA_CPU_CONF serial_console enabled True
+        iniset $NOVA_CPU_CONF serial_console base_url "ws://$SERVICE_HOST:$((6083 + offset))/"
     fi
 }
 
