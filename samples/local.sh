@@ -41,6 +41,13 @@ if is_service_enabled nova; then
         fi
     done
 
+    # Update security default group
+    # -----------------------------
+
+    # Add tcp/22 and icmp to default security group
+    default=$(openstack security group list -f value -c ID)
+    openstack security group rule create $default --protocol tcp --dst-port 22
+    openstack security group rule create $default --protocol icmp
 
     # Create A Flavor
     # ---------------
@@ -56,13 +63,5 @@ if is_service_enabled nova; then
     if [[ -z $(openstack flavor list | grep $MI_NAME) ]]; then
         openstack flavor create $MI_NAME --id 6 --ram 128 --disk 0 --vcpus 1
     fi
-
-
-    # Other Uses
-    # ----------
-
-    # Add tcp/22 and icmp to default security group
-    openstack security group rule create --project $OS_PROJECT_NAME default --protocol tcp --ingress --dst-port 22
-    openstack security group rule create --project $OS_PROJECT_NAME default --protocol icmp
 
 fi
