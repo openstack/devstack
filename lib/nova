@@ -88,7 +88,6 @@ NOVA_SERVICE_HOST=${NOVA_SERVICE_HOST:-$SERVICE_HOST}
 NOVA_SERVICE_PORT=${NOVA_SERVICE_PORT:-8774}
 NOVA_SERVICE_PORT_INT=${NOVA_SERVICE_PORT_INT:-18774}
 NOVA_SERVICE_PROTOCOL=${NOVA_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
-NOVA_SERVICE_LOCAL_HOST=${NOVA_SERVICE_LOCAL_HOST:-$SERVICE_LOCAL_HOST}
 NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)}
 METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 NOVA_ENABLE_CACHE=${NOVA_ENABLE_CACHE:-True}
@@ -597,6 +596,11 @@ function configure_console_compute {
     local offset
     offset=$(((NOVA_CPU_CELL - 1) * 4))
 
+    # Use the host IP instead of the service host because for multi-node, the
+    # service host will be the controller only.
+    local default_proxyclient_addr
+    default_proxyclient_addr=$(iniget $NOVA_CPU_CONF DEFAULT my_ip)
+
     # All nova-compute workers need to know the vnc configuration options
     # These settings don't hurt anything if n-xvnc and n-novnc are disabled
     if is_service_enabled n-cpu; then
@@ -620,8 +624,8 @@ function configure_console_compute {
     if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
         # Address on which instance vncservers will listen on compute hosts.
         # For multi-host, this should be the management ip of the compute host.
-        VNCSERVER_LISTEN=${VNCSERVER_LISTEN:-$NOVA_SERVICE_LOCAL_HOST}
-        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS:-$NOVA_SERVICE_LOCAL_HOST}
+        VNCSERVER_LISTEN=${VNCSERVER_LISTEN:-$NOVA_SERVICE_LISTEN_ADDRESS}
+        VNCSERVER_PROXYCLIENT_ADDRESS=${VNCSERVER_PROXYCLIENT_ADDRESS:-$default_proxyclient_addr}
         iniset $NOVA_CPU_CONF vnc server_listen "$VNCSERVER_LISTEN"
         iniset $NOVA_CPU_CONF vnc server_proxyclient_address "$VNCSERVER_PROXYCLIENT_ADDRESS"
     else
@@ -631,8 +635,8 @@ function configure_console_compute {
     if is_service_enabled n-spice; then
         # Address on which instance spiceservers will listen on compute hosts.
         # For multi-host, this should be the management ip of the compute host.
-        SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS=$NOVA_SERVICE_LOCAL_HOST}
-        SPICESERVER_LISTEN=${SPICESERVER_LISTEN=$NOVA_SERVICE_LOCAL_HOST}
+        SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS:-$default_proxyclient_addr}
+        SPICESERVER_LISTEN=${SPICESERVER_LISTEN:-$NOVA_SERVICE_LISTEN_ADDRESS}
         iniset $NOVA_CPU_CONF spice enabled true
         iniset $NOVA_CPU_CONF spice server_listen "$SPICESERVER_LISTEN"
         iniset $NOVA_CPU_CONF spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
