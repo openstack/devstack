@@ -190,7 +190,7 @@ DEVSTACK_GATE_NET_OVERLAY                       zuul-jobs     A bridge called
                                                               br-infra is set up for
                                                               all jobs that inherit
                                                               from multinode with
-                                                              a dedicated `bridge role <https://docs.openstack.org/infra/zuul-jobs/roles.html#role-multi-node-bridge>`_.
+                                                              a dedicated `bridge role <https://zuul-ci.org/docs/zuul-jobs/general-roles.html#role-multi-node-bridge>`_.
 DEVSTACK_GATE_FEATURE_MATRIX                    devstack-gate ``test_matrix_features``
                                                               variable of the
                                                               test-matrix role in

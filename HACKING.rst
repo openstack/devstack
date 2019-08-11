@@ -189,7 +189,7 @@ to enforce basic guidelines, similar to pep8 and flake8 tools for Python. The
 list below is not complete for what bashate checks, nor is it all checked
 by bashate.  So many lines of code, so little time.
 
-.. _bashate: https://pypi.python.org/pypi/bashate
+.. _bashate: https://pypi.org/project/bashate/
 
 Whitespace Rules
 ----------------

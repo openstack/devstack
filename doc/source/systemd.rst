@@ -194,7 +194,7 @@ Telnet to that port to enter the pdb session::
 
 See the `remote-pdb`_ home page for more options.
 
-.. _`remote-pdb`: https://pypi.python.org/pypi/remote-pdb
+.. _`remote-pdb`: https://pypi.org/project/remote-pdb/
 
 Known Issues
 ============

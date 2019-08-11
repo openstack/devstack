@@ -259,6 +259,8 @@ changed from the default value.
 Logging
 -------
 
+.. _enable_logging:
+
 Enable Logging
 ~~~~~~~~~~~~~~
 
@@ -495,7 +497,7 @@ should be specified in the configuration file so Tempest selects the
 default flavors instead.
 
 KVM on Power with QEMU 2.4 requires 512 MB to load the firmware -
-`QEMU 2.4 - PowerPC <http://wiki.qemu.org/ChangeLog/2.4>`__ so users
+`QEMU 2.4 - PowerPC <https://wiki.qemu.org/ChangeLog/2.4>`__ so users
 running instances on ppc64/ppc64le can choose one of the default
 created flavors as follows:
 
