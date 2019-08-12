@@ -168,6 +168,10 @@ if is_service_enabled etcd3; then
     cleanup_etcd3
 fi
 
+if is_service_enabled openstack-cli-server; then
+    stop_service devstack@openstack-cli-server
+fi
+
 stop_dstat
 
 # NOTE: Cinder automatically installs the lvm2 package, independently of the

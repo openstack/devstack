@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+# Copyright 2016 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+import socket
+import sys
+import os
+import json
+
+from openstackclient import shell as osc_shell
+from io import StringIO
+
+server_address = "/tmp/openstack.sock"
+
+try:
+    os.unlink(server_address)
+except OSError:
+    if os.path.exists(server_address):
+        raise
+
+sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+print('starting up on %s' % server_address, file=sys.stderr)
+sock.bind(server_address)
+
+# Listen for incoming connections
+sock.listen(1)
+
+def send(sock, doc):
+    jdoc = json.dumps(doc)
+    sock.send(b'%d\n' % len(jdoc))
+    sock.sendall(jdoc.encode('utf-8'))
+
+def recv(sock):
+    length_str = b''
+    char = sock.recv(1)
+    while char != b'\n':
+        length_str += char
+        char = sock.recv(1)
+
+    total = int(length_str)
+
+    # use a memoryview to receive the data chunk by chunk efficiently
+    jdoc = memoryview(bytearray(total))
+    next_offset = 0
+    while total - next_offset > 0:
+        recv_size = sock.recv_into(jdoc[next_offset:], total - next_offset)
+        next_offset += recv_size
+    try:
+        doc = json.loads(jdoc.tobytes())
+    except (TypeError, ValueError) as e:
+        raise Exception('Data received was not in JSON format')
+    return doc
+
+while True:
+    csock, client_address = sock.accept()
+    try:
+        doc = recv(csock)
+
+        print("%s %s" % (doc["app"], doc["argv"]), file=sys.stderr)
+        oldenv = {}
+        for name in doc["env"].keys():
+            oldenv[name] = os.environ.get(name, None)
+            os.environ[name] = doc["env"][name]
+
+        try:
+            old_stdout = sys.stdout
+            old_stderr = sys.stderr
+            my_stdout = sys.stdout = StringIO()
+            my_stderr = sys.stderr = StringIO()
+
+            class Exit(BaseException):
+                def __init__(self, status):
+                    self.status = status
+
+            def noexit(stat):
+                raise Exit(stat)
+
+            sys.exit = noexit
+
+            if doc["app"] == "openstack":
+                sh = osc_shell.OpenStackShell()
+                ret = sh.run(doc["argv"])
+            else:
+                print("Unknown application %s" % doc["app"], file=sys.stderr)
+                ret = 1
+        except Exit as e:
+            ret = e.status
+        finally:
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
+            for name in oldenv.keys():
+                if oldenv[name] is None:
+                    del os.environ[name]
+                else:
+                    os.environ[name] = oldenv[name]
+
+        send(csock, {
+            "stdout": my_stdout.getvalue(),
+            "stderr": my_stderr.getvalue(),
+            "status": ret,
+        })
+
+    except BaseException as e:
+        print(e, file=sys.stderr)
+    finally:
+        csock.close()

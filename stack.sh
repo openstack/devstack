@@ -1022,6 +1022,9 @@ if use_library_from_git "python-openstackclient"; then
     setup_dev_lib "python-openstackclient"
 else
     pip_install_gr python-openstackclient
+    if is_service_enabled openstack-cli-server; then
+        install_openstack_cli_server
+    fi
 fi
 
 # Installs alias for osc so that we can collect timing for all

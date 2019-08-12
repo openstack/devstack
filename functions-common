@@ -2438,6 +2438,11 @@ function time_stop {
     _TIME_TOTAL[$name]=$(($total + $elapsed_time))
 }
 
+function install_openstack_cli_server {
+    export PATH=$TOP_DIR/files/openstack-cli-server:$PATH
+    run_process openstack-cli-server "$PYTHON $TOP_DIR/files/openstack-cli-server/openstack-cli-server"
+}
+
 function oscwrap {
     local xtrace
     xtrace=$(set +o | grep xtrace)
