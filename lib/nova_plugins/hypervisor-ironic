@@ -54,8 +54,14 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF ironic project_name demo
     iniset $NOVA_CONF ironic region_name $REGION_NAME
 
+    # These are used with crufty legacy ironicclient
     iniset $NOVA_CONF ironic api_max_retries 300
     iniset $NOVA_CONF ironic api_retry_interval 5
+    # These are used with shiny new openstacksdk
+    iniset $NOVA_CONF ironic connect_retries 300
+    iniset $NOVA_CONF ironic connect_retry_delay 5
+    iniset $NOVA_CONF ironic status_code_retries 300
+    iniset $NOVA_CONF ironic status_code_retry_delay 5
 }
 
 # install_nova_hypervisor() - Install external components
