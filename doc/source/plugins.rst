@@ -332,6 +332,6 @@ See Also
 ========
 
 For additional inspiration on devstack plugins you can check out the
-`Plugin Registry <plugin-registry.html>`_.
+:doc:`Plugin Registry <plugin-registry>`.
 
 .. _service types authority: https://specs.openstack.org/openstack/service-types-authority/

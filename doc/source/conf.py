@@ -11,9 +11,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
-import os
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -26,13 +23,16 @@ import os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = [ 'sphinx.ext.autodoc', 'zuul_sphinx', 'openstackdocstheme', 'sphinxcontrib.blockdiag', 'sphinxcontrib.nwdiag' ]
+extensions = [ 'sphinx.ext.autodoc',
+               'zuul_sphinx',
+               'openstackdocstheme',
+               'sphinxcontrib.blockdiag',
+               'sphinxcontrib.nwdiag' ]
 
 # openstackdocstheme options
 repository_name = 'openstack-dev/devstack'
 bug_project = 'devstack'
 bug_tag = ''
-html_last_updated_fmt = '%Y-%m-%d %H:%M'
 
 todo_include_todos = True
 
@@ -119,11 +119,6 @@ html_theme = 'openstackdocs'
 # pixels large.
 #html_favicon = None
 
-# If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
-# using the given strftime format.
-git_cmd = "git log --pretty=format:'%ad, commit %h' --date=local -n1"
-html_last_updated_fmt = os.popen(git_cmd).read()
-
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
 #html_use_smartypants = True
@@ -166,17 +161,6 @@ htmlhelp_basename = 'DevStack-doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
-
-latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
-
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
-
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
-}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).

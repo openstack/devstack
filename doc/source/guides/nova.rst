@@ -10,7 +10,7 @@ nova-serialproxy
 ================
 
 In Juno, nova implemented a `spec
-<http://specs.openstack.org/openstack/nova-specs/specs/juno/implemented/serial-ports.html>`_
+<https://specs.openstack.org/openstack/nova-specs/specs/juno/implemented/serial-ports.html>`_
 to allow read/write access to the serial console of an instance via
 `nova-serialproxy
 <https://docs.openstack.org/nova/latest/cli/nova-serialproxy.html>`_.
@@ -63,7 +63,7 @@ The service can be enabled by adding ``n-sproxy`` to
 Enabling the service is enough to be functional for a single machine DevStack.
 
 These config options are defined in `nova.conf.serial_console
-<https://github.com/openstack/nova/blob/master/nova/conf/serial_console.py>`_.
+<https://opendev.org/openstack/nova/src/master/nova/conf/serial_console.py>`_.
 
 For more information on OpenStack configuration see the `OpenStack
 Compute Service Configuration Reference

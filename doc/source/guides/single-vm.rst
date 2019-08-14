@@ -78,7 +78,7 @@ As DevStack will refuse to run as root, this configures ``cloud-init``
 to create a non-root user and run the ``start.sh`` script as that user.
 
 If you are using cloud-init and you have not
-`enabled custom logging <../configuration.html#enable-logging>`_ of the stack
+:ref:`enabled custom logging <enable_logging>` of the stack
 output, then the stack output can be found in
 ``/var/log/cloud-init-output.log`` by default.
 

@@ -3,7 +3,7 @@ pbr>=2.0.0,!=2.1.0
 Pygments
 docutils
 sphinx>=1.6.2
-openstackdocstheme>=1.11.0
+openstackdocstheme>=1.20.0
 nwdiag
 blockdiag
 sphinxcontrib-blockdiag
