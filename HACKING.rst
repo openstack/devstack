@@ -10,7 +10,7 @@ and so is limited to Bash (version 4 and up) and compatible shells.
 Shell script was chosen because it best illustrates the steps used to
 set up and interact with OpenStack components.
 
-DevStack's official repository is located on git.openstack.org at
+DevStack's official repository is located on opendev.org at
 https://opendev.org/openstack/devstack.  Besides the master branch that
 tracks the OpenStack trunk branches a separate branch is maintained for all
 OpenStack releases starting with Diablo (stable/diablo).
@@ -23,7 +23,7 @@ __ contribute_
 .. _contribute: https://docs.openstack.org/infra/manual/developers.html
 
 __ lp_
-.. _lp: https://launchpad.net/~devstack
+.. _lp: https://launchpad.net/devstack
 
 The `Gerrit review
 queue <https://review.opendev.org/#/q/project:openstack/devstack>`__
@@ -163,7 +163,7 @@ Documentation
 
 The DevStack repo now contains all of the static pages of devstack.org in
 the ``doc/source`` directory. The OpenStack CI system rebuilds the docs after every
-commit and updates devstack.org (now a redirect to docs.openstack.org/developer/devstack).
+commit and updates devstack.org (now a redirect to https://docs.openstack.org/devstack/latest/).
 
 All of the scripts are processed with shocco_ to render them with the comments
 as text describing the script below.  For this reason we tend to be a little
