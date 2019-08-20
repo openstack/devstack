@@ -247,7 +247,7 @@ disable_negated_services
 # --------------
 
 # We're not as **root** so make sure ``sudo`` is available
-is_package_installed sudo || install_package sudo
+is_package_installed sudo || is_package_installed sudo-ldap || install_package sudo
 
 # UEC images ``/etc/sudoers`` does not have a ``#includedir``, add one
 sudo grep -q "^#includedir.*/etc/sudoers.d" /etc/sudoers ||

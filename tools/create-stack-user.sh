@@ -32,7 +32,7 @@ GetDistro
 source $TOP_DIR/stackrc
 
 # Give the non-root user the ability to run as **root** via ``sudo``
-is_package_installed sudo || install_package sudo
+is_package_installed sudo || is_package_installed sudo-ldap || install_package sudo
 
 [[ -z "$STACK_USER" ]] && die "STACK_USER is not set. Exiting."
 
