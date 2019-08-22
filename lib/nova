@@ -861,7 +861,10 @@ function start_nova_compute {
 
     local compute_cell_conf=$NOVA_CONF
 
+    # Bug #1802143: $NOVA_CPU_CONF is constructed by first copying $NOVA_CONF...
     cp $compute_cell_conf $NOVA_CPU_CONF
+    # ...and then adding/overriding anything explicitly set in $NOVA_CPU_CONF
+    merge_config_file $TOP_DIR/local.conf post-config '$NOVA_CPU_CONF'
 
     if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
         # NOTE(danms): Grenade doesn't setup multi-cell rabbit, so

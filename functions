@@ -18,6 +18,7 @@ declare -r -g _DEVSTACK_FUNCTIONS=1
 FUNC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 source ${FUNC_DIR}/functions-common
 source ${FUNC_DIR}/inc/ini-config
+source ${FUNC_DIR}/inc/meta-config
 source ${FUNC_DIR}/inc/python
 source ${FUNC_DIR}/inc/rootwrap
 
