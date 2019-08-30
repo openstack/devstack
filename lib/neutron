@@ -225,7 +225,7 @@ function configure_neutron_new {
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2 mechanism_drivers $mech_drivers
 
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks public
+        iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks $PUBLIC_NETWORK_NAME
         if [[ "$NEUTRON_TENANT_NETWORK_TYPE" =~ "vlan" ]] && [[ "$NEUTRON_PHYSICAL_NETWORK" != "" ]]; then
             iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vlan network_vlan_ranges ${NEUTRON_PHYSICAL_NETWORK}:${NEUTRON_TENANT_VLAN_RANGE}
         fi
