@@ -25,6 +25,7 @@ from distutils import spawn
 import fnmatch
 import os
 import os.path
+import shutil
 import subprocess
 import sys
 
@@ -248,6 +249,14 @@ def main():
         compute_consoles()
         guru_meditation_reports()
         var_core()
+    # Singular name for ease of log retrieval
+    copyname = os.path.join(opts.dir, 'worlddump')
+    if opts.name:
+        copyname += '-' + opts.name
+    copyname += '-latest.txt'
+    # We make a full copy to deal with jobs that may or may not
+    # gzip logs breaking symlinks.
+    shutil.copyfile(fname, copyname)
 
 
 if __name__ == '__main__':

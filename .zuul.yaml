@@ -233,6 +233,7 @@
         '{{ devstack_log_dir }}/devstacklog.txt': logs
         '{{ devstack_log_dir }}/devstacklog.txt.summary': logs
         '{{ devstack_log_dir }}/tcpdump.pcap': logs
+        '{{ devstack_log_dir }}/worlddump-latest.txt': logs
         '{{ devstack_full_log}}': logs
         '{{ stage_dir }}/verify_tempest_conf.log': logs
         '{{ stage_dir }}/apache': logs
