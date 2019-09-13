@@ -2354,6 +2354,10 @@ function time_stop {
 }
 
 function oscwrap {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
     local out
     local rc
     local start
@@ -2368,6 +2372,7 @@ function oscwrap {
     echo $((end - start)) >> $OSCWRAP_TIMER_FILE
 
     echo "$out"
+    $xtrace
     return $rc
 }
 
