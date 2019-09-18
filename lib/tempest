@@ -27,6 +27,7 @@
 # - ``USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION``
 # - ``DEFAULT_INSTANCE_TYPE``
 # - ``DEFAULT_INSTANCE_USER``
+# - ``DEFAULT_INSTANCE_ALT_USER``
 # - ``CINDER_ENABLED_BACKENDS``
 # - ``NOVA_ALLOW_DUPLICATE_NETWORKS``
 #
@@ -443,7 +444,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG validation run_validation ${TEMPEST_RUN_VALIDATION:-True}
     iniset $TEMPEST_CONFIG validation ip_version_for_ssh 4
     iniset $TEMPEST_CONFIG validation ssh_timeout $BUILD_TIMEOUT
-    iniset $TEMPEST_CONFIG validation image_ssh_user ${DEFAULT_INSTANCE_USER:-cirros}
+    iniset $TEMPEST_CONFIG validation image_ssh_user ${DEFAULT_INSTANCE_USER:=cirros}
+    iniset $TEMPEST_CONFIG validation image_alt_ssh_user ${DEFAULT_INSTANCE_ALT_USER:-$DEFAULT_INSTANCE_USER}
     iniset $TEMPEST_CONFIG validation network_for_ssh $TEMPEST_SSH_NETWORK_NAME
 
     # Volume
