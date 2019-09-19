@@ -395,8 +395,6 @@ function _neutron_configure_router_v6 {
 
     # This logic is specific to using the l3-agent for layer 3
     if is_service_enabled q-l3 || is_service_enabled neutron-l3; then
-        # Ensure IPv6 forwarding is enabled on the host
-        sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # if the Linux host considers itself to be a router then it will
         # ignore all router advertisements
         # Ensure IPv6 RAs are accepted on interfaces with a default route.
@@ -409,6 +407,8 @@ function _neutron_configure_router_v6 {
             # device name would be reinterpreted as a slash, causing an error.
             sudo sysctl -w net/ipv6/conf/$d/accept_ra=2
         done
+        # Ensure IPv6 forwarding is enabled on the host
+        sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # Configure and enable public bridge
         # Override global IPV6_ROUTER_GW_IP with the true value from neutron
         IPV6_ROUTER_GW_IP=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" port list -c 'Fixed IP Addresses' | grep $ipv6_pub_subnet_id | awk -F'ip_address' '{ print $2 }' | cut -f2 -d\' | tr '\n' ' ')
