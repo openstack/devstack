@@ -296,11 +296,11 @@ function configure_nova {
             fi
         fi
 
-        if is_fedora; then
+        if is_fedora && [[ $DISTRO =~ f[0-9][0-9] ]]; then
             # There is an iscsi-initiator bug where it inserts
             # different whitespace that causes a bunch of output
             # matching to fail.  We have not been able to get
-            # fixed, yet :/  Exists in fedora 29 & 30
+            # fixed, yet :/  Exists in fedora 29 & 30 at least
             #  https://bugzilla.redhat.com/show_bug.cgi?id=1676365
             sudo dnf copr enable -y iwienand/iscsi-initiator-utils
             sudo dnf update -y
