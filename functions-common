@@ -875,14 +875,9 @@ function policy_add {
 # Usage: get_or_create_domain <name> <description>
 function get_or_create_domain {
     local domain_id
-    # Gets domain id
     domain_id=$(
-        # Gets domain id
-        openstack --os-cloud devstack-system-admin domain show $1 \
-            -f value -c id 2>/dev/null ||
-        # Creates new domain
         openstack --os-cloud devstack-system-admin domain create $1 \
-            --description "$2" \
+            --description "$2" --or-show \
             -f value -c id
     )
     echo $domain_id
