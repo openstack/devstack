@@ -28,6 +28,9 @@ import logging
 import json
 import requests
 
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 logging.basicConfig(level=logging.DEBUG)
 
 url = 'https://review.opendev.org/projects/'
@@ -63,6 +66,12 @@ projects = sorted(filter(is_in_wanted_namespace, json.loads(r.text[4:])))
 logging.debug("Found %d projects" % len(projects))
 
 s = requests.Session()
+# sometimes gitea gives us a 500 error; retry sanely
+#  https://stackoverflow.com/a/35636367
+retries = Retry(total=3, backoff_factor=1,
+                status_forcelist=[ 500 ])
+s.mount('https://', HTTPAdapter(max_retries=retries))
+
 found_plugins = filter(functools.partial(has_devstack_plugin, s), projects)
 
 for project in found_plugins:
