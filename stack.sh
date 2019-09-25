@@ -796,9 +796,6 @@ if [[ "$OFFLINE" != "True" ]]; then
     PYPI_ALTERNATIVE_URL=${PYPI_ALTERNATIVE_URL:-""} $TOP_DIR/tools/install_pip.sh
 fi
 
-# Install subunit for the subunit output stream
-pip_install -U os-testr
-
 TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 
 # Install Python packages into a virtualenv so that we can track them
@@ -815,6 +812,9 @@ fi
 # Do the ugly hacks for broken packages and distros
 source $TOP_DIR/tools/fixup_stuff.sh
 fixup_all
+
+# Install subunit for the subunit output stream
+pip_install -U os-testr
 
 if [[ "$USE_SYSTEMD" == "True" ]]; then
     pip_install_gr systemd-python
