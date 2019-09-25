@@ -221,6 +221,15 @@ function fixup_suse {
     # See https://bugzilla.suse.com/show_bug.cgi?id=1154871
     # May be removed once a new opensuse-15 image is available in nodepool
     sudo zypper up -y p11-kit ca-certificates-mozilla
+
+    # Since pip10, pip will refuse to uninstall files from packages
+    # that were created with distutils (rather than more modern
+    # setuptools).  This is because it technically doesn't have a
+    # manifest of what to remove.  However, in most cases, simply
+    # overwriting works.  So this hacks around those packages that
+    # have been dragged in by some other system dependency
+    sudo rm -rf /usr/lib/python3.6/site-packages/ply-*.egg-info
+    sudo rm -rf /usr/lib/python3.6/site-packages/six-*.egg-info
 }
 
 # The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has
