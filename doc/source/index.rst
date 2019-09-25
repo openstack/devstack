@@ -11,9 +11,8 @@
    and how to go beyond this setup. Both should be a set of quick
    links to other documents to let people explore from there.
 
-==========
- DevStack
-==========
+DevStack
+========
 
 .. image:: assets/images/logo-blue.png
 
@@ -32,7 +31,7 @@ The source is available at `<https://opendev.org/openstack/devstack>`__.
    are dedicated to this purpose.
 
 Quick Start
-===========
++++++++++++
 
 Install Linux
 -------------
@@ -153,7 +152,7 @@ with devstack, and help us by :doc:`contributing to the project
 <hacking>`.
 
 Contents
---------
+++++++++
 
 .. toctree::
    :glob:

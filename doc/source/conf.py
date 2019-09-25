@@ -165,7 +165,7 @@ htmlhelp_basename = 'DevStack-doc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'DevStack-doc.tex', u'DevStack Docs',
+  ('index', 'doc-devstack.tex', u'DevStack Docs',
    u'OpenStack DevStack Team', 'manual'),
 ]
 
