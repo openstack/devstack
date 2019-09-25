@@ -499,7 +499,7 @@ GITBRANCH["tooz"]=${TOOZ_BRANCH:-$TARGET_BRANCH}
 
 # pbr drives the setuptools configs
 GITREPO["pbr"]=${PBR_REPO:-${GIT_BASE}/openstack/pbr.git}
-GITBRANCH["pbr"]=${PBR_BRANCH:-$TARGET_BRANCH}
+GITBRANCH["pbr"]=${PBR_BRANCH:-$BRANCHLESS_TARGET_BRANCH}
 
 
 ##################
@@ -554,7 +554,7 @@ GITDIR["ironic-lib"]=$DEST/ironic-lib
 
 # diskimage-builder tool
 GITREPO["diskimage-builder"]=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
-GITBRANCH["diskimage-builder"]=${DIB_BRANCH:-$TARGET_BRANCH}
+GITBRANCH["diskimage-builder"]=${DIB_BRANCH:-$BRANCHLESS_TARGET_BRANCH}
 GITDIR["diskimage-builder"]=$DEST/diskimage-builder
 
 # neutron-lib library containing neutron stable non-REST interfaces
