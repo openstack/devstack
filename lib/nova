@@ -468,11 +468,7 @@ function create_nova_conf {
     fi
 
     if is_service_enabled cinder; then
-        if is_service_enabled tls-proxy; then
-            CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
-            CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
-            iniset $NOVA_CONF cinder cafile $SSL_BUNDLE_FILE
-        fi
+        configure_cinder_access
     fi
 
     if [ -n "$NOVA_STATE_PATH" ]; then
@@ -519,8 +515,6 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT metadata_workers "$API_WORKERS"
     # don't let the conductor get out of control now that we're using a pure python db driver
     iniset $NOVA_CONF conductor workers "$API_WORKERS"
-
-    iniset $NOVA_CONF cinder os_region_name "$REGION_NAME"
 
     if is_service_enabled tls-proxy; then
         iniset $NOVA_CONF DEFAULT glance_protocol https
@@ -591,6 +585,29 @@ function configure_placement_nova_compute {
     iniset $conf placement project_name "$SERVICE_TENANT_NAME"
     iniset $conf placement project_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $conf placement region_name "$REGION_NAME"
+}
+
+# Configure access to cinder.
+function configure_cinder_access {
+    iniset $NOVA_CONF cinder os_region_name "$REGION_NAME"
+    iniset $NOVA_CONF cinder auth_type "password"
+    iniset $NOVA_CONF cinder auth_url "$KEYSTONE_SERVICE_URI"
+    # NOTE(mriedem): This looks a bit weird but we use the nova user here
+    # since it has the admin role and the cinder user does not. This is
+    # similar to using the nova user in init_nova_service_user_conf. We need
+    # to use a user with the admin role for background tasks in nova to
+    # be able to GET block-storage API resources owned by another project
+    # since cinder has low-level "is_admin" checks in its DB API.
+    iniset $NOVA_CONF cinder username nova
+    iniset $NOVA_CONF cinder password "$SERVICE_PASSWORD"
+    iniset $NOVA_CONF cinder user_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $NOVA_CONF cinder project_name "$SERVICE_TENANT_NAME"
+    iniset $NOVA_CONF cinder project_domain_name "$SERVICE_DOMAIN_NAME"
+    if is_service_enabled tls-proxy; then
+        CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
+        CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
+        iniset $NOVA_CONF cinder cafile $SSL_BUNDLE_FILE
+    fi
 }
 
 function configure_console_compute {
