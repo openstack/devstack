@@ -1,5 +1,12 @@
 - hosts: all
   pre_tasks:
+    - name: Fix the permissions of the zuul home directory
+      # Make sure that the zuul home can be traversed,
+      # so that all users can access the sources placed there.
+      # Some distributions create it with 700 by default.
+      file:
+        path: "{{ ansible_user_dir }}"
+        mode: a+x
     - name: Gather minimum local MTU
       set_fact:
         local_mtu: >
