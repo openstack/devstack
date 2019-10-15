@@ -415,8 +415,11 @@ fi
 
 # Ensure python is installed
 # --------------------------
-is_package_installed python || install_package python
+install_python3
 
+if ! python3_enabled; then
+    is_package_installed python || install_package python
+fi
 
 # Configure Logging
 # -----------------

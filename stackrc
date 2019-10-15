@@ -142,7 +142,7 @@ export USE_PYTHON3=$(trueorfalse True USE_PYTHON3)
 # version of Python 3 to this variable will install the app using that
 # version of the interpreter instead of 2.7.
 _DEFAULT_PYTHON3_VERSION="$(_get_python_version python3)"
-export PYTHON3_VERSION=${PYTHON3_VERSION:-${_DEFAULT_PYTHON3_VERSION:-3.5}}
+export PYTHON3_VERSION=${PYTHON3_VERSION:-${_DEFAULT_PYTHON3_VERSION:-3.6}}
 
 # Just to be more explicit on the Python 2 version to use.
 _DEFAULT_PYTHON2_VERSION="$(_get_python_version python2)"
