@@ -326,22 +326,28 @@ a file, keep service logs and disable color in the stored files.
 Database Backend
 ----------------
 
-Support for the MySQL database backend is included. Addition database backends
-may be available via external plugins. Enabling of disabling MySQL is handled
-via the usual service functions and ``ENABLED_SERVICES``. For example, to
-disable MySQL in ``local.conf``::
+Multiple database backends are available. The available databases are defined
+in the lib/databases directory.
+``mysql`` is the default database, choose a different one by putting the
+following in the ``localrc`` section::
 
   disable_service mysql
+  enable_service postgresql
+
+``mysql`` is the default database.
 
 RPC Backend
 -----------
 
-Support for a RabbitMQ RPC backend is included. Additional RPC backends may be
-available via external plugins.  Enabling or disabling RabbitMQ is handled via
-the usual service functions and ``ENABLED_SERVICES``. For example, to disable
-RabbitMQ in ``local.conf``::
+Support for a RabbitMQ RPC backend is included. Additional RPC
+backends may be available via external plugins.  Enabling or disabling
+RabbitMQ is handled via the usual service functions and
+``ENABLED_SERVICES``.
+
+Example disabling RabbitMQ in ``local.conf``::
 
   disable_service rabbit
+
 
 Apache Frontend
 ---------------

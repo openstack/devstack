@@ -302,7 +302,10 @@ migrated at all.
      - This will probably be implemented on ironic side.
    * - DEVSTACK_GATE_POSTGRES
      - Legacy
-     - This has no effect in d-g.
+     - This flag exists in d-g but the only thing that it does is
+       capture postgres logs. This is already supported by the roles
+       in post, so the flag is useless in the new jobs. postgres
+       itself can be enabled via the devstack_service job variable.
    * - DEVSTACK_GATE_ZEROMQ
      - Legacy
      - This has no effect in d-g.

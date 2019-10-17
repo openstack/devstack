@@ -1,0 +1,137 @@
+#!/bin/bash
+#
+# lib/databases/postgresql
+# Functions to control the configuration and operation of the **PostgreSQL** database backend
+
+# Dependencies:
+#
+# - DATABASE_{HOST,USER,PASSWORD} must be defined
+
+# Save trace setting
+_XTRACE_PG=$(set +o | grep xtrace)
+set +o xtrace
+
+
+MAX_DB_CONNECTIONS=${MAX_DB_CONNECTIONS:-200}
+
+
+register_database postgresql
+
+
+# Functions
+# ---------
+
+function get_database_type_postgresql {
+    echo postgresql
+}
+
+# Get rid of everything enough to cleanly change database backends
+function cleanup_database_postgresql {
+    stop_service postgresql
+    if is_ubuntu; then
+        # Get ruthless with mysql
+        apt_get purge -y postgresql*
+        return
+    elif is_fedora || is_suse; then
+        uninstall_package postgresql-server
+    else
+        return
+    fi
+}
+
+function recreate_database_postgresql {
+    local db=$1
+    # Avoid unsightly error when calling dropdb when the database doesn't exist
+    psql -h$DATABASE_HOST -U$DATABASE_USER -dtemplate1 -c "DROP DATABASE IF EXISTS $db"
+    createdb -h $DATABASE_HOST -U$DATABASE_USER -l C -T template0 -E utf8 $db
+}
+
+function configure_database_postgresql {
+    local pg_conf pg_dir pg_hba check_role version
+    echo_summary "Configuring and starting PostgreSQL"
+    if is_fedora; then
+        pg_hba=/var/lib/pgsql/data/pg_hba.conf
+        pg_conf=/var/lib/pgsql/data/postgresql.conf
+        if ! sudo [ -e $pg_hba ]; then
+            sudo postgresql-setup initdb
+        fi
+    elif is_ubuntu; then
+        version=`psql --version | cut -d ' ' -f3 | cut -d. -f1-2`
+        if vercmp $version '>=' 9.3; then
+            if [ -z "`pg_lsclusters -h`" ]; then
+                echo 'No PostgreSQL clusters exist; will create one'
+                sudo pg_createcluster $version main --start
+            fi
+        fi
+        pg_dir=`find /etc/postgresql -name pg_hba.conf|xargs dirname`
+        pg_hba=$pg_dir/pg_hba.conf
+        pg_conf=$pg_dir/postgresql.conf
+    elif is_suse; then
+        pg_hba=/var/lib/pgsql/data/pg_hba.conf
+        pg_conf=/var/lib/pgsql/data/postgresql.conf
+        # initdb is called when postgresql is first started
+        sudo [ -e $pg_hba ] || start_service postgresql
+    else
+        exit_distro_not_supported "postgresql configuration"
+    fi
+    # Listen on all addresses
+    sudo sed -i "/listen_addresses/s/.*/listen_addresses = '*'/" $pg_conf
+    # Set max_connections
+    sudo sed -i "/max_connections/s/.*/max_connections = $MAX_DB_CONNECTIONS/" $pg_conf
+    # Do password auth from all IPv4 clients
+    sudo sed -i "/^host/s/all\s\+127.0.0.1\/32\s\+ident/$DATABASE_USER\t0.0.0.0\/0\tpassword/" $pg_hba
+    # Do password auth for all IPv6 clients
+    sudo sed -i "/^host/s/all\s\+::1\/128\s\+ident/$DATABASE_USER\t::0\/0\tpassword/" $pg_hba
+    restart_service postgresql
+
+    # Create the role if it's not here or else alter it.
+    check_role=$(sudo -u root sudo -u postgres -i psql -t -c "SELECT 'HERE' from pg_roles where rolname='$DATABASE_USER'")
+    if [[ ${check_role} == *HERE ]];then
+        sudo -u root sudo -u postgres -i psql -c "ALTER ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'"
+    else
+        sudo -u root sudo -u postgres -i psql -c "CREATE ROLE $DATABASE_USER WITH SUPERUSER LOGIN PASSWORD '$DATABASE_PASSWORD'"
+    fi
+}
+
+function install_database_postgresql {
+    echo_summary "Installing postgresql"
+    deprecated "Use of postgresql in devstack is deprecated, and will be removed during the Pike cycle"
+    local pgpass=$HOME/.pgpass
+    if [[ ! -e $pgpass ]]; then
+        cat <<EOF > $pgpass
+*:*:*:$DATABASE_USER:$DATABASE_PASSWORD
+EOF
+        chmod 0600 $pgpass
+    else
+        sed -i "s/:root:\w\+/:root:$DATABASE_PASSWORD/" $pgpass
+    fi
+    if is_ubuntu; then
+        install_package postgresql
+    elif is_fedora || is_suse; then
+        install_package postgresql-server
+        if is_fedora; then
+            sudo systemctl enable postgresql
+        fi
+    else
+        exit_distro_not_supported "postgresql installation"
+    fi
+}
+
+function install_database_python_postgresql {
+    # Install Python client module
+    pip_install_gr psycopg2
+    ADDITIONAL_VENV_PACKAGES+=",psycopg2"
+}
+
+function database_connection_url_postgresql {
+    local db=$1
+    echo "$BASE_SQL_CONN/$db?client_encoding=utf8"
+}
+
+
+# Restore xtrace
+$_XTRACE_PG
+
+# Local variables:
+# mode: shell-script
+# End:

@@ -400,8 +400,7 @@ function upload_image {
 # initialized yet, just save the configuration selection and call back later
 # to validate it.
 #
-# ``$1`` - the name of the database backend to use (only mysql is currently
-# supported)
+# ``$1`` - the name of the database backend to use (mysql, postgresql, ...)
 function use_database {
     if [[ -z "$DATABASE_BACKENDS" ]]; then
         # No backends registered means this is likely called from ``localrc``

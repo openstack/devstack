@@ -695,11 +695,14 @@ function read_password {
 # Database Configuration
 # ----------------------
 
-# DevStack provides a MySQL database backend. Additional backends may be
-# provided by external plugins and can be enabled using the usual service
-# functions and ``ENABLED_SERVICES``. For example, to disable MySQL:
+# To select between database backends, add the following to ``local.conf``:
 #
 #    disable_service mysql
+#    enable_service postgresql
+#
+# The available database backends are listed in ``DATABASE_BACKENDS`` after
+# ``lib/database`` is sourced. ``mysql`` is the default.
+
 if initialize_database_backends; then
     echo "Using $DATABASE_TYPE database backend"
     # Last chance for the database password. This must be handled here
