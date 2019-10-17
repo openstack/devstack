@@ -147,10 +147,6 @@ if [[ -n "$UNSTACK_ALL" ]]; then
         stop_service mysql
     fi
 
-    if is_service_enabled postgresql; then
-        stop_service postgresql
-    fi
-
     # Stop rabbitmq-server
     if is_service_enabled rabbit; then
         stop_service rabbitmq-server
