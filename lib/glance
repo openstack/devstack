@@ -41,9 +41,29 @@ else
     GLANCE_BIN_DIR=$(get_python_exec_prefix)
 fi
 
+# Glance multi-store configuration
+# Boolean flag to enable multiple store configuration for glance
+GLANCE_ENABLE_MULTIPLE_STORES=$(trueorfalse False GLANCE_ENABLE_MULTIPLE_STORES)
+
+# Comma separated list for configuring multiple file stores of glance,
+# for example; GLANCE_MULTIPLE_FILE_STORES = fast,cheap,slow
+GLANCE_MULTIPLE_FILE_STORES=${GLANCE_MULTIPLE_FILE_STORES:-fast}
+
+# Default store/backend for glance, must be one of the store specified
+# in GLANCE_MULTIPLE_FILE_STORES option.
+GLANCE_DEFAULT_BACKEND=${GLANCE_DEFAULT_BACKEND:-fast}
+
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
+
+# File path for each store specified in GLANCE_MULTIPLE_FILE_STORES, the store
+# identifier will be appended to this path at runtime. If GLANCE_MULTIPLE_FILE_STORES
+# has fast,cheap specified then filepath will be generated like $DATA_DIR/glance/fast
+# and $DATA_DIR/glance/cheap.
+GLANCE_MULTISTORE_FILE_IMAGE_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/glance}
 GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
 GLANCE_LOCK_DIR=${GLANCE_LOCK_DIR:=$DATA_DIR/glance/locks}
+GLANCE_STAGING_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_staging_store}
+GLANCE_TASKS_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_tasks_store}
 
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
@@ -97,6 +117,18 @@ function is_glance_enabled {
 function cleanup_glance {
     # delete image files (glance)
     sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR
+
+    # Cleanup multiple stores directories
+    if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
+        local store file_dir
+        for store in $(echo $GLANCE_MULTIPLE_FILE_STORES | tr "," "\n"); do
+            file_dir="${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/${store}/"
+            sudo rm -rf $file_dir
+        done
+
+        # Cleanup reserved stores directories
+        sudo rm -rf $GLANCE_STAGING_DIR $GLANCE_TASKS_DIR
+    fi
 }
 
 # configure_glance() - Set config files, create data dirs, etc
@@ -116,6 +148,16 @@ function configure_glance {
     iniset $GLANCE_REGISTRY_CONF oslo_messaging_notifications driver messagingv2
     iniset_rpc_backend glance $GLANCE_REGISTRY_CONF
     iniset $GLANCE_REGISTRY_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
+
+    # Configure multiple stores
+    if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
+        local store enabled_backends
+        enabled_backends=""
+        for store in $(echo $GLANCE_MULTIPLE_FILE_STORES | tr "," "\n"); do
+            enabled_backends+="${store}:file,"
+        done
+        iniset $GLANCE_API_CONF DEFAULT enabled_backends ${enabled_backends::-1}
+    fi
 
     # Set non-default configuration options for the API server
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -141,8 +183,21 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT enable_v1_api False
     fi
 
-    # Store specific configs
-    iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    # Glance multiple store Store specific configs
+    if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
+        iniset $GLANCE_API_CONF glance_store default_backend $GLANCE_DEFAULT_BACKEND
+        local store
+        for store in $(echo $GLANCE_MULTIPLE_FILE_STORES | tr "," "\n"); do
+            iniset $GLANCE_API_CONF $store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/${store}/"
+        done
+
+        # Glance configure reserved stores
+        iniset $GLANCE_API_CONF os_glance_staging_store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/os_glance_staging_store/"
+        iniset $GLANCE_API_CONF os_glance_tasks_store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/os_glance_tasks_store/"
+    else
+        # Store specific configs
+        iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    fi
     iniset $GLANCE_API_CONF DEFAULT registry_host $(ipv6_unquote $GLANCE_SERVICE_HOST)
 
     # CORS feature support - to allow calls from Horizon by default
@@ -152,6 +207,7 @@ function configure_glance {
         iniset $GLANCE_API_CONF cors allowed_origin "http://$SERVICE_HOST"
     fi
 
+    # No multiple stores for swift yet
     # Store the images in swift if enabled.
     if is_service_enabled s-proxy; then
         iniset $GLANCE_API_CONF glance_store default_store swift
