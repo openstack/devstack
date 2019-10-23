@@ -150,21 +150,19 @@ EOF
     fi
 
     if is_nova_console_proxy_compute_tls_enabled ; then
-        if is_service_enabled n-novnc ; then
-            echo "vnc_tls = 1" | sudo tee -a $QEMU_CONF
-            echo "vnc_tls_x509_verify = 1" | sudo tee -a $QEMU_CONF
+        echo "vnc_tls = 1" | sudo tee -a $QEMU_CONF
+        echo "vnc_tls_x509_verify = 1" | sudo tee -a $QEMU_CONF
 
-            sudo mkdir -p /etc/pki/libvirt-vnc
-            deploy_int_CA /etc/pki/libvirt-vnc/ca-cert.pem
-            deploy_int_cert /etc/pki/libvirt-vnc/server-cert.pem /etc/pki/libvirt-vnc/server-key.pem
-            # OpenSSL 1.1.0 generates the key file with permissions: 600, by
-            # default and the deploy_int* methods use 'sudo cp' to copy the
-            # files, making them owned by root:root.
-            # Change ownership of everything under /etc/pki/libvirt-vnc to
-            # libvirt-qemu:libvirt-qemu so that libvirt-qemu can read the key
-            # file.
-            sudo chown -R libvirt-qemu:libvirt-qemu /etc/pki/libvirt-vnc
-        fi
+        sudo mkdir -p /etc/pki/libvirt-vnc
+        deploy_int_CA /etc/pki/libvirt-vnc/ca-cert.pem
+        deploy_int_cert /etc/pki/libvirt-vnc/server-cert.pem /etc/pki/libvirt-vnc/server-key.pem
+        # OpenSSL 1.1.0 generates the key file with permissions: 600, by
+        # default and the deploy_int* methods use 'sudo cp' to copy the
+        # files, making them owned by root:root.
+        # Change ownership of everything under /etc/pki/libvirt-vnc to
+        # libvirt-qemu:libvirt-qemu so that libvirt-qemu can read the key
+        # file.
+        sudo chown -R libvirt-qemu:libvirt-qemu /etc/pki/libvirt-vnc
     fi
 
     # Service needs to be started on redhat/fedora -- do a restart for
