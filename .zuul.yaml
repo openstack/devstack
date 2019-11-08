@@ -219,8 +219,8 @@
         VERBOSE_NO_TIMESTAMP: true
         NOVNC_FROM_PACKAGE: true
         ERROR_ON_CLONE: true
-        # Gate jobs can't deal with nested virt. Disable it.
-        LIBVIRT_TYPE: qemu
+        # Gate jobs can't deal with nested virt. Disable it by default.
+        LIBVIRT_TYPE: '{{ devstack_libvirt_type | default("qemu") }}'
       devstack_services:
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
