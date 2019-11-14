@@ -52,7 +52,6 @@ GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
 GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
 GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
 GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
-GLANCE_POLICY_JSON=$GLANCE_CONF_DIR/policy.json
 GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
 GLANCE_SWIFT_STORE_CONF=$GLANCE_CONF_DIR/glance-swift-store.conf
 GLANCE_IMAGE_IMPORT_CONF=$GLANCE_CONF_DIR/glance-image-import.conf
@@ -220,7 +219,6 @@ function configure_glance {
     iniset $GLANCE_IMAGE_IMPORT_CONF inject_metadata_properties ignore_user_roles admin
     iniset $GLANCE_IMAGE_IMPORT_CONF inject_metadata_properties inject
 
-    cp -p $GLANCE_DIR/etc/policy.json $GLANCE_POLICY_JSON
     cp -p $GLANCE_DIR/etc/schema-image.json $GLANCE_SCHEMA_JSON
 
     cp -p $GLANCE_DIR/etc/metadefs/*.json $GLANCE_METADEF_DIR
