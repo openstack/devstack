@@ -636,7 +636,7 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-grenade:
+        - grenade-py3:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -678,7 +678,7 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-grenade:
+        - grenade-py3:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
