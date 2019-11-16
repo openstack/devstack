@@ -48,7 +48,7 @@ function neutron_plugin_configure_dhcp_agent {
 
 function neutron_plugin_configure_l3_agent {
     local conf_file=$1
-    sudo brctl addbr $PUBLIC_BRIDGE
+    sudo ip link add $PUBLIC_BRIDGE type bridge
     set_mtu $PUBLIC_BRIDGE $PUBLIC_BRIDGE_MTU
 }
 
