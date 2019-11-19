@@ -492,28 +492,11 @@
         USE_PYTHON3: true
 
 - job:
-    name: devstack-xenial
-    parent: devstack
-    nodeset: openstack-single-node-xenial
-    description: |
-      Simple singlenode test to verify functionality on devstack
-      side running on Xenial.
-
-- job:
     name: devstack-multinode
     parent: devstack
     nodeset: openstack-two-node-bionic
     description: |
       Simple multinode test to verify multinode functionality on devstack side.
-      This is not meant to be used as a parent job.
-
-- job:
-    name: devstack-multinode-xenial
-    parent: devstack
-    nodeset: openstack-two-node-xenial
-    description: |
-      Simple multinode test to verify multinode functionality on devstack
-      side running on Xenial.
       This is not meant to be used as a parent job.
 
 # NOTE(ianw) Platform tests have traditionally been non-voting because
@@ -539,13 +522,6 @@
     parent: tempest-full-py3
     description: Fedora latest platform test
     nodeset: devstack-single-node-fedora-latest
-    voting: false
-
-- job:
-    name: devstack-platform-xenial
-    parent: tempest-full-py3
-    description: Ubuntu Xenial platform test
-    nodeset: openstack-single-node-xenial
     voting: false
 
 - job:
@@ -619,14 +595,11 @@
     check:
       jobs:
         - devstack
-        - devstack-xenial
         - devstack-ipv6
         - devstack-platform-centos-7
         - devstack-platform-opensuse-15
         - devstack-platform-fedora-latest
-        - devstack-platform-xenial
         - devstack-multinode
-        - devstack-multinode-xenial
         - devstack-unit-tests
         - openstack-tox-bashate
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
@@ -664,10 +637,8 @@
     gate:
       jobs:
         - devstack
-        - devstack-xenial
         - devstack-ipv6
         - devstack-multinode
-        - devstack-multinode-xenial
         - devstack-unit-tests
         - openstack-tox-bashate
         - neutron-grenade-multinode:
