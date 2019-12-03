@@ -292,7 +292,7 @@ function upload_image {
     local disk_format=""
     local container_format=""
     local unpack=""
-    local img_property=""
+    local img_property="--property hw_rng_model=virtio"
     case "$image_fname" in
         *.tar.gz|*.tgz)
             # Extract ami and aki files
@@ -364,11 +364,11 @@ function upload_image {
     esac
 
     if is_arch "ppc64le" || is_arch "ppc64" || is_arch "ppc"; then
-        img_property="--property hw_cdrom_bus=scsi --property os_command_line=console=hvc0"
+        img_property="$img_property --property hw_cdrom_bus=scsi --property os_command_line=console=hvc0"
     fi
 
     if is_arch "aarch64"; then
-        img_property="--property hw_machine_type=virt --property hw_cdrom_bus=scsi --property hw_scsi_model=virtio-scsi --property os_command_line='console=ttyAMA0'"
+        img_property="$img_property --property hw_machine_type=virt --property hw_cdrom_bus=scsi --property hw_scsi_model=virtio-scsi --property os_command_line='console=ttyAMA0'"
     fi
 
     if [ "$container_format" = "bare" ]; then
