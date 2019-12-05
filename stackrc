@@ -240,7 +240,7 @@ WSGI_MODE=${WSGI_MODE:-"uwsgi"}
 GIT_BASE=${GIT_BASE:-https://opendev.org}
 
 # The location of REQUIREMENTS once cloned
-REQUIREMENTS_DIR=$DEST/requirements
+REQUIREMENTS_DIR=${REQUIREMENTS_DIR:-$DEST/requirements}
 
 # Which libraries should we install from git instead of using released
 # versions on pypi?
