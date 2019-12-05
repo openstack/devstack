@@ -71,15 +71,9 @@ function fixup_keystone {
 
 # Ubuntu Repositories
 #--------------------
-# We've found that Libvirt on Xenial is flaky and crashes enough to be
-# a regular top e-r bug. Opt into Ubuntu Cloud Archive if on Xenial to
-# get newer Libvirt.
-# Make it possible to switch this based on an environment variable as
-# libvirt 2.5.0 doesn't handle nested virtualization quite well and this
-# is required for the trove development environment.
-# Also enable universe since it is missing when installing from ISO.
+# Enable universe for bionic since it is missing when installing from ISO.
 function fixup_ubuntu {
-    if [[ "$DISTRO" != "xenial" && "$DISTRO" != "bionic" ]]; then
+    if [[ "$DISTRO" != "bionic" ]]; then
         return
     fi
 
@@ -88,31 +82,6 @@ function fixup_ubuntu {
 
     # Enable universe
     sudo add-apt-repository -y universe
-
-    if [[ "${ENABLE_UBUNTU_CLOUD_ARCHIVE}" == "False" || "$DISTRO" != "xenial" ]]; then
-        return
-    fi
-    # Use UCA for newer libvirt.
-    if [[ -f /etc/ci/mirror_info.sh ]] ; then
-        # If we are on a nodepool provided host and it has told us about where
-        # we can find local mirrors then use that mirror.
-        source /etc/ci/mirror_info.sh
-
-        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR xenial-updates/queens main"
-    else
-        # Otherwise use upstream UCA
-        sudo add-apt-repository -y cloud-archive:queens
-    fi
-
-    # Disable use of libvirt wheel since a cached wheel build might be
-    # against older libvirt binary.  Particularly a problem if using
-    # the openstack wheel mirrors, but can hit locally too.
-    # TODO(clarkb) figure out how to use upstream wheel again.
-    iniset -sudo /etc/pip.conf "global" "no-binary" "libvirt-python"
-
-    # Force update our APT repos, since we added UCA above.
-    REPOS_UPDATED=False
-    apt_get_update
 }
 
 # Python Packages

@@ -24,17 +24,10 @@ DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
 # Currently fairly specific to OpenStackCI hosts
 DEBUG_LIBVIRT_COREDUMPS=$(trueorfalse False DEBUG_LIBVIRT_COREDUMPS)
 
-# Only Xenial is left with libvirt-bin.  Everywhere else is libvirtd
-if is_ubuntu && [ ${DISTRO} == "xenial" ]; then
-    LIBVIRT_DAEMON=libvirt-bin
-else
-    LIBVIRT_DAEMON=libvirtd
-fi
-
 # Enable coredumps for libvirt
 #  Bug: https://bugs.launchpad.net/nova/+bug/1643911
 function _enable_coredump {
-    local confdir=/etc/systemd/system/${LIBVIRT_DAEMON}.service.d
+    local confdir=/etc/systemd/system/libvirtd.service.d
     local conffile=${confdir}/coredump.conf
 
     # Create a coredump directory, and instruct the kernel to save to
@@ -61,12 +54,7 @@ EOF
 function install_libvirt {
 
     if is_ubuntu; then
-        install_package qemu-system
-        if [[ ${DISTRO} == "xenial" ]]; then
-            install_package libvirt-bin libvirt-dev
-        else
-            install_package libvirt-clients libvirt-daemon-system libvirt-dev
-        fi
+        install_package qemu-system libvirt-clients libvirt-daemon-system libvirt-dev
         # uninstall in case the libvirt version changed
         pip_uninstall libvirt-python
         pip_install_gr libvirt-python
@@ -167,7 +155,7 @@ EOF
 
     # Service needs to be started on redhat/fedora -- do a restart for
     # sanity after fiddling the config.
-    restart_service $LIBVIRT_DAEMON
+    restart_service libvirtd
 
     # Restart virtlogd companion service to ensure it is running properly
     #  https://bugs.launchpad.net/ubuntu/+source/libvirt/+bug/1577455
