@@ -1,6 +1,6 @@
 acl
 dnsmasq-base
-dnsmasq-utils # for dhcp_release only available in dist:precise
+dnsmasq-utils # for dhcp_release
 ebtables
 haproxy # to serve as metadata proxy inside router/dhcp namespaces
 iptables
