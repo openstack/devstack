@@ -346,11 +346,6 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG image disk_formats "ami,ari,aki,vhd,raw,iso"
     fi
 
-    # Image Features
-    if [ "$GLANCE_V1_ENABLED" != "True" ]; then
-        iniset $TEMPEST_CONFIG image-feature-enabled api_v1 False
-    fi
-
     # Compute
     iniset $TEMPEST_CONFIG compute image_ref $image_uuid
     iniset $TEMPEST_CONFIG compute image_ref_alt $image_uuid_alt
