@@ -41,8 +41,10 @@ function neutron_plugin_configure_plugin_agent {
     # Setup physical network bridge mappings.  Override
     # ``OVS_VLAN_RANGES`` and ``OVS_BRIDGE_MAPPINGS`` in ``localrc`` for more
     # complex physical network configurations.
-    if [[ "$OVS_BRIDGE_MAPPINGS" == "" ]] && [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
-        OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
+    if [[ "$PHYSICAL_NETWORK" != "" ]] && [[ "$OVS_PHYSICAL_BRIDGE" != "" ]]; then
+        if [[ "$OVS_BRIDGE_MAPPINGS" == "" ]]; then
+            OVS_BRIDGE_MAPPINGS=$PHYSICAL_NETWORK:$OVS_PHYSICAL_BRIDGE
+        fi
 
         # Configure bridge manually with physical interface as port for multi-node
         _neutron_ovs_base_add_bridge $OVS_PHYSICAL_BRIDGE
