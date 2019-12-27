@@ -336,6 +336,10 @@ function configure_tempest {
     # so remove this once Tempest no longer supports Pike.
     iniset $TEMPEST_CONFIG identity-feature-enabled application_credentials True
 
+    # In Train and later, access rules for application credentials are enabled
+    # by default so remove this once Tempest no longer supports Stein.
+    iniset $TEMPEST_CONFIG identity-feature-enabled access_rules True
+
     # Image
     # We want to be able to override this variable in the gate to avoid
     # doing an external HTTP fetch for this test.
