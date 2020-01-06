@@ -513,6 +513,16 @@
     voting: false
 
 - job:
+    name: devstack-platform-fedora-latest-virt-preview
+    parent: tempest-full-py3
+    description: Fedora latest platform test using the virt-preview repo.
+    nodeset: devstack-single-node-fedora-latest
+    voting: false
+    vars:
+      devstack_localrc:
+        ENABLE_FEDORA_VIRT_PREVIEW_REPO: true
+
+- job:
     name: devstack-tox-base
     parent: devstack
     description: |
