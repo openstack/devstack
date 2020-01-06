@@ -24,6 +24,10 @@ DEBUG_LIBVIRT=$(trueorfalse True DEBUG_LIBVIRT)
 # Currently fairly specific to OpenStackCI hosts
 DEBUG_LIBVIRT_COREDUMPS=$(trueorfalse False DEBUG_LIBVIRT_COREDUMPS)
 
+# Enable the Fedora Virtualization Preview Copr repo that provides the latest
+# rawhide builds of QEMU, Libvirt and other virt tools.
+ENABLE_FEDORA_VIRT_PREVIEW_REPO=$(trueorfalse False ENABLE_FEDORA_VIRT_PREVIEW_REPO)
+
 # Enable coredumps for libvirt
 #  Bug: https://bugs.launchpad.net/nova/+bug/1643911
 function _enable_coredump {
@@ -60,6 +64,12 @@ function install_libvirt {
         pip_install_gr libvirt-python
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
+
+        # Optionally enable the virt-preview repo when on Fedora
+        if [[ $DISTRO =~ f[0-9][0-9] ]] && [[ ${ENABLE_FEDORA_VIRT_PREVIEW_REPO} == "True" ]]; then
+            # https://copr.fedorainfracloud.org/coprs/g/virtmaint-sig/virt-preview/
+            sudo dnf copr enable -y @virtmaint-sig/virt-preview
+        fi
 
         # Note that in CentOS/RHEL this needs to come from the RDO
         # repositories (qemu-kvm-ev ... which provides this package)
