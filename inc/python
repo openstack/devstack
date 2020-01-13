@@ -175,7 +175,7 @@ function disable_python3_package {
 
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_VIRTUAL_ENV``,
-# ``PIP_UPGRADE``, ``TRACK_DEPENDS``, ``*_proxy``,
+# ``PIP_UPGRADE``, ``*_proxy``,
 # Usage:
 #  pip_install pip_arguments
 function pip_install {
@@ -219,37 +219,28 @@ function pip_install {
     # this works (for now...)
     local package_dir=${!#%\[*\]}
 
-    if [[ $TRACK_DEPENDS = True && ! "$@" =~ virtualenv ]]; then
-        # TRACK_DEPENDS=True installation creates a circular dependency when
-        # we attempt to install virtualenv into a virtualenv, so we must global
-        # that installation.
-        source $DEST/.venv/bin/activate
-        local cmd_pip=$DEST/.venv/bin/pip
+    if [[ -n ${PIP_VIRTUAL_ENV:=} && -d ${PIP_VIRTUAL_ENV} ]]; then
+        local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
         local sudo_pip="env"
     else
-        if [[ -n ${PIP_VIRTUAL_ENV:=} && -d ${PIP_VIRTUAL_ENV} ]]; then
-            local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
-            local sudo_pip="env"
-        else
-            local cmd_pip
-            cmd_pip=$(get_pip_command $PYTHON2_VERSION)
-            local sudo_pip="sudo -H"
-            if python3_enabled; then
-                # Special case some services that have experimental
-                # support for python3 in progress, but don't claim support
-                # in their classifier
-                echo "Check python version for : $package_dir"
-                if python3_disabled_for ${package_dir##*/}; then
-                    echo "Explicitly using $PYTHON2_VERSION version to install $package_dir based on DISABLED_PYTHON3_PACKAGES"
-                else
-                    # For everything that is not explicitly blacklisted with
-                    # DISABLED_PYTHON3_PACKAGES, assume it supports python3
-                    # and we will let pip sort out the install, regardless of
-                    # the package being local or remote.
-                    echo "Using $PYTHON3_VERSION version to install $package_dir based on default behavior"
-                    sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
-                    cmd_pip=$(get_pip_command $PYTHON3_VERSION)
-                fi
+        local cmd_pip
+        cmd_pip=$(get_pip_command $PYTHON2_VERSION)
+        local sudo_pip="sudo -H"
+        if python3_enabled; then
+            # Special case some services that have experimental
+            # support for python3 in progress, but don't claim support
+            # in their classifier
+            echo "Check python version for : $package_dir"
+            if python3_disabled_for ${package_dir##*/}; then
+                echo "Explicitly using $PYTHON2_VERSION version to install $package_dir based on DISABLED_PYTHON3_PACKAGES"
+            else
+                # For everything that is not explicitly blacklisted with
+                # DISABLED_PYTHON3_PACKAGES, assume it supports python3
+                # and we will let pip sort out the install, regardless of
+                # the package being local or remote.
+                echo "Using $PYTHON3_VERSION version to install $package_dir based on default behavior"
+                sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
+                cmd_pip=$(get_pip_command $PYTHON3_VERSION)
             fi
         fi
     fi

@@ -27,7 +27,6 @@
 # - ``RECLONE``
 # - ``REQUIREMENTS_DIR``
 # - ``STACK_USER``
-# - ``TRACK_DEPENDS``
 # - ``http_proxy``, ``https_proxy``, ``no_proxy``
 #
 
@@ -44,7 +43,6 @@ declare -A -g GITREPO
 declare -A -g GITBRANCH
 declare -A -g GITDIR
 
-TRACK_DEPENDS=${TRACK_DEPENDS:-False}
 KILL_PATH="$(which kill)"
 
 # Save these variables to .stackenv
@@ -2075,11 +2073,7 @@ function _safe_permission_operation {
         return 0
     fi
 
-    if [[ $TRACK_DEPENDS = True ]]; then
-        sudo_cmd="env"
-    else
-        sudo_cmd="sudo"
-    fi
+    sudo_cmd="sudo"
 
     $xtrace
     $sudo_cmd $@
