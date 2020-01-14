@@ -14,7 +14,7 @@
       name=""
       for u in $(systemctl list-unit-files | grep devstack | awk '{print $1}'); do
         name=$(echo $u | sed 's/devstack@/screen-/' | sed 's/\.service//')
-        journalctl -o short-precise --unit $u | gzip - > {{ stage_dir }}/logs/$name.txt.gz
+        journalctl -o short-precise --unit $u  > {{ stage_dir }}/logs/$name.txt
       done
 
 - name: Export legacy syslog.txt
@@ -29,7 +29,7 @@
           -t sudo \
           --no-pager \
           --since="$(cat {{ devstack_base_dir }}/log-start-timestamp.txt)" \
-        | gzip - > {{ stage_dir }}/logs/syslog.txt.gz
+         > {{ stage_dir }}/logs/syslog.txt
 
 # TODO: convert this to ansible
 #  - make a list of the above units
