@@ -401,7 +401,6 @@
         key: true
         # Glance services
         g-api: true
-        g-reg: true
         # Nova services
         n-api: true
         n-api-meta: true
