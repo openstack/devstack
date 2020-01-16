@@ -69,7 +69,7 @@ if ! isset ENABLED_SERVICES ; then
     # Placement service needed for Nova
     ENABLED_SERVICES+=,placement-api,placement-client
     # Glance services needed for Nova
-    ENABLED_SERVICES+=,g-api,g-reg
+    ENABLED_SERVICES+=,g-api
     # Cinder
     ENABLED_SERVICES+=,c-sch,c-api,c-vol
     # Neutron
