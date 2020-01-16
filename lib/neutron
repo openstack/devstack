@@ -354,7 +354,6 @@ function configure_neutron_rootwrap {
 # if not passed $NOVA_CONF is used.
 function configure_neutron_nova_new {
     local conf=${1:-$NOVA_CONF}
-    iniset $conf DEFAULT use_neutron True
     iniset $conf neutron auth_type "password"
     iniset $conf neutron auth_url "$KEYSTONE_SERVICE_URI"
     iniset $conf neutron username neutron
