@@ -384,11 +384,6 @@ function create_nova_conf_neutron {
     iniset $conf neutron auth_strategy "$Q_AUTH_STRATEGY"
     iniset $conf neutron region_name "$REGION_NAME"
 
-    if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
-        iniset $conf DEFAULT firewall_driver $LIBVIRT_FIREWALL_DRIVER
-    fi
-
     # optionally set options in nova_conf
     neutron_plugin_create_nova_conf $conf
 

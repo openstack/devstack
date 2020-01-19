@@ -365,8 +365,6 @@ function configure_neutron_nova_new {
     iniset $conf neutron auth_strategy $NEUTRON_AUTH_STRATEGY
     iniset $conf neutron region_name "$REGION_NAME"
 
-    iniset $conf DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
-
     # optionally set options in nova_conf
     neutron_plugin_create_nova_conf $conf
 
