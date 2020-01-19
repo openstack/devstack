@@ -1155,7 +1155,7 @@ fi
 # Glance
 # ------
 
-if is_glance_enabled; then
+if is_service_enabled g-reg; then
     echo_summary "Configuring Glance"
     init_glance
 fi
@@ -1280,7 +1280,7 @@ fi
 # scripts as userdata.
 # See https://help.ubuntu.com/community/CloudInit for more on ``cloud-init``
 
-if is_glance_enabled; then
+if is_service_enabled g-reg; then
 
     echo_summary "Uploading images"
 
