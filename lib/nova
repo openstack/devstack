@@ -259,6 +259,7 @@ function configure_nova {
                 if [ ! -e /dev/kvm ]; then
                     echo "WARNING: Switching to QEMU"
                     LIBVIRT_TYPE=qemu
+                    LIBVIRT_CPU_MODE=none
                     if which selinuxenabled >/dev/null 2>&1 && selinuxenabled; then
                         # https://bugzilla.redhat.com/show_bug.cgi?id=753589
                         sudo setsebool virt_use_execmem on
