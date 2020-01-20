@@ -690,6 +690,13 @@ function install_tempest {
     pip_install 'tox!=2.8.0'
     pushd $TEMPEST_DIR
     tox -r --notest -efull
+    local ver
+    ver=$(tox -evenv-tempest -- python --version)
+    echo Python version installed in Tempest venv: $ver
+    if python3_enabled; then
+        ver=$(tox -evenv-tempest -- python3 --version)
+        echo Python3 version installed in Tempest venv: $ver
+    fi
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but
     # running pip install -U on tempest requirements
