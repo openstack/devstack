@@ -803,13 +803,11 @@ fixup_all
 # Install subunit for the subunit output stream
 pip_install -U os-testr
 
-if [[ "$USE_SYSTEMD" == "True" ]]; then
-    pip_install_gr systemd-python
-    # the default rate limit of 1000 messages / 30 seconds is not
-    # sufficient given how verbose our logging is.
-    iniset -sudo /etc/systemd/journald.conf "Journal" "RateLimitBurst" "0"
-    sudo systemctl restart systemd-journald
-fi
+pip_install_gr systemd-python
+# the default rate limit of 1000 messages / 30 seconds is not
+# sufficient given how verbose our logging is.
+iniset -sudo /etc/systemd/journald.conf "Journal" "RateLimitBurst" "0"
+sudo systemctl restart systemd-journald
 
 # Virtual Environment
 # -------------------
@@ -1521,14 +1519,11 @@ if [[ -n "$DEPRECATED_TEXT" ]]; then
     echo
 fi
 
-# If USE_SYSTEMD is enabled, tell the user about using it.
-if [[ "$USE_SYSTEMD" == "True" ]]; then
-    echo
-    echo "Services are running under systemd unit files."
-    echo "For more information see: "
-    echo "https://docs.openstack.org/devstack/latest/systemd.html"
-    echo
-fi
+echo
+echo "Services are running under systemd unit files."
+echo "For more information see: "
+echo "https://docs.openstack.org/devstack/latest/systemd.html"
+echo
 
 # Useful info on current state
 cat /etc/devstack-version
