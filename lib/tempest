@@ -559,9 +559,8 @@ function configure_tempest {
         tox -revenv-tempest --notest
     fi
 
-    # The requirements might be on a different branch, while tempest needs master requirements.
-    (cd $REQUIREMENTS_DIR && git show origin/master:upper-constraints.txt) > u-c-m.txt
-    tox -evenv-tempest -- pip install -c u-c-m.txt -r requirements.txt
+    # NOTE(gmann): Use branch constraint because Tempest is pinned to the branch release instead of using master.
+    tox -evenv-tempest -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
 
     # Auth:
     iniset $TEMPEST_CONFIG auth tempest_roles "Member"
@@ -671,9 +670,10 @@ function install_tempest {
 function install_tempest_plugins {
     pushd $TEMPEST_DIR
     if [[ $TEMPEST_PLUGINS != 0 ]] ; then
-        # The requirements might be on a different branch, while tempest & tempest plugins needs master requirements.
+        # NOTE(gmann): Use branch constraint because Tempest is pinned to the branch release
+        # instead of using master.
         (cd $REQUIREMENTS_DIR && git show origin/master:upper-constraints.txt) > u-c-m.txt
-        tox -evenv-tempest -- pip install -c u-c-m.txt $TEMPEST_PLUGINS
+        tox -evenv-tempest -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt $TEMPEST_PLUGINS
         echo "Checking installed Tempest plugins:"
         tox -evenv-tempest -- tempest list-plugins
     fi
