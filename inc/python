@@ -85,59 +85,7 @@ function pip_install_gr_extras {
     pip_install $clean_name[$extras]
 }
 
-# python3_enabled_for() assumes the service(s) specified as arguments are
-# enabled for python 3 unless explicitly disabled. See python3_disabled_for().
-#
-# Multiple services specified as arguments are ``OR``'ed together; the test
-# is a short-circuit boolean, i.e it returns on the first match.
-#
-# python3_enabled_for dir [dir ...]
-function python3_enabled_for {
-    local xtrace
-    xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-
-    local enabled=1
-    local dirs=$@
-    local dir
-    for dir in ${dirs}; do
-        if ! python3_disabled_for "${dir}"; then
-            enabled=0
-        fi
-    done
-
-    $xtrace
-    return $enabled
-}
-
-# python3_disabled_for() checks if the service(s) specified as arguments are
-# disabled by the user in ``DISABLED_PYTHON3_PACKAGES``.
-#
-# Multiple services specified as arguments are ``OR``'ed together; the test
-# is a short-circuit boolean, i.e it returns on the first match.
-#
-# Uses global ``DISABLED_PYTHON3_PACKAGES``
-# python3_disabled_for dir [dir ...]
-function python3_disabled_for {
-    local xtrace
-    xtrace=$(set +o | grep xtrace)
-    set +o xtrace
-
-    local enabled=1
-    local dirs=$@
-    local dir
-    for dir in ${dirs}; do
-        [[ ,${DISABLED_PYTHON3_PACKAGES}, =~ ,${dir}, ]] && enabled=0
-    done
-
-    $xtrace
-    return $enabled
-}
-
 # enable_python3_package() -- no-op for backwards compatibility
-#
-# For example:
-#   enable_python3_package nova
 #
 # enable_python3_package dir [dir ...]
 function enable_python3_package {
@@ -150,25 +98,15 @@ function enable_python3_package {
     $xtrace
 }
 
-# disable_python3_package() adds the services passed as argument to
-# the ``DISABLED_PYTHON3_PACKAGES`` list.
+# disable_python3_package() -- no-op for backwards compatibility
 #
-# For example:
-#   disable_python3_package swift
-#
-# Uses global ``DISABLED_PYTHON3_PACKAGES``
 # disable_python3_package dir [dir ...]
 function disable_python3_package {
     local xtrace
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
-    local disabled_svcs="${DISABLED_PYTHON3_PACKAGES}"
-    local dir
-    for dir in $@; do
-        disabled_svcs+=",$dir"
-    done
-    DISABLED_PYTHON3_PACKAGES=$(_cleanup_service_list "$disabled_svcs")
+    echo "It is no longer possible to call disable_python3_package()."
 
     $xtrace
 }
@@ -231,17 +169,9 @@ function pip_install {
             # support for python3 in progress, but don't claim support
             # in their classifier
             echo "Check python version for : $package_dir"
-            if python3_disabled_for ${package_dir##*/}; then
-                echo "Explicitly using $PYTHON2_VERSION version to install $package_dir based on DISABLED_PYTHON3_PACKAGES"
-            else
-                # For everything that is not explicitly blacklisted with
-                # DISABLED_PYTHON3_PACKAGES, assume it supports python3
-                # and we will let pip sort out the install, regardless of
-                # the package being local or remote.
-                echo "Using $PYTHON3_VERSION version to install $package_dir based on default behavior"
-                sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
-                cmd_pip=$(get_pip_command $PYTHON3_VERSION)
-            fi
+            echo "Using $PYTHON3_VERSION version to install $package_dir based on default behavior"
+            sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
+            cmd_pip=$(get_pip_command $PYTHON3_VERSION)
         fi
     fi
 
