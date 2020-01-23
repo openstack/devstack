@@ -147,7 +147,6 @@ x/devstack-plugin-hdfs                   `https://opendev.org/x/devstack-plugin-
 x/devstack-plugin-libvirt-qemu           `https://opendev.org/x/devstack-plugin-libvirt-qemu <https://opendev.org/x/devstack-plugin-libvirt-qemu>`__
 x/devstack-plugin-mariadb                `https://opendev.org/x/devstack-plugin-mariadb <https://opendev.org/x/devstack-plugin-mariadb>`__
 x/devstack-plugin-nfs                    `https://opendev.org/x/devstack-plugin-nfs <https://opendev.org/x/devstack-plugin-nfs>`__
-x/devstack-plugin-sheepdog               `https://opendev.org/x/devstack-plugin-sheepdog <https://opendev.org/x/devstack-plugin-sheepdog>`__
 x/devstack-plugin-vmax                   `https://opendev.org/x/devstack-plugin-vmax <https://opendev.org/x/devstack-plugin-vmax>`__
 x/drbd-devstack                          `https://opendev.org/x/drbd-devstack <https://opendev.org/x/drbd-devstack>`__
 x/fenix                                  `https://opendev.org/x/fenix <https://opendev.org/x/fenix>`__
@@ -203,6 +202,7 @@ x/trio2o                                 `https://opendev.org/x/trio2o <https://
 x/valet                                  `https://opendev.org/x/valet <https://opendev.org/x/valet>`__
 x/vmware-nsx                             `https://opendev.org/x/vmware-nsx <https://opendev.org/x/vmware-nsx>`__
 x/vmware-vspc                            `https://opendev.org/x/vmware-vspc <https://opendev.org/x/vmware-vspc>`__
+x/whitebox-tempest-plugin                `https://opendev.org/x/whitebox-tempest-plugin <https://opendev.org/x/whitebox-tempest-plugin>`__
 ======================================== ===
 
 

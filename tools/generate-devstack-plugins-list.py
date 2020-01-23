@@ -45,9 +45,14 @@ url = 'https://review.opendev.org/projects/'
 
 def is_in_wanted_namespace(proj):
     # only interested in openstack or x namespace (e.g. not retired
-    # stackforge, etc)
+    # stackforge, etc).
+    #
+    # openstack/openstack "super-repo" of openstack projects as
+    # submodules, that can cause gitea to 500 timeout and thus stop
+    # this script.  Skip it.
     if proj.startswith('stackforge/') or \
-       proj.startswith('stackforge-attic/'):
+       proj.startswith('stackforge-attic/') or \
+       proj == "openstack/openstack":
         return False
     else:
         return True
