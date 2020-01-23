@@ -276,18 +276,16 @@ function init_glance {
     rm -rf $GLANCE_IMAGE_DIR
     mkdir -p $GLANCE_IMAGE_DIR
 
-    if is_service_enabled $DATABASE_BACKENDS; then
-        # (Re)create glance database
-        recreate_database glance
+    # (Re)create glance database
+    recreate_database glance
 
-        time_start "dbsync"
-        # Migrate glance database
-        $GLANCE_BIN_DIR/glance-manage --config-file $GLANCE_CONF_DIR/glance-api.conf db_sync
+    time_start "dbsync"
+    # Migrate glance database
+    $GLANCE_BIN_DIR/glance-manage --config-file $GLANCE_CONF_DIR/glance-api.conf db_sync
 
-        # Load metadata definitions
-        $GLANCE_BIN_DIR/glance-manage --config-file $GLANCE_CONF_DIR/glance-api.conf db_load_metadefs
-        time_stop "dbsync"
-    fi
+    # Load metadata definitions
+    $GLANCE_BIN_DIR/glance-manage --config-file $GLANCE_CONF_DIR/glance-api.conf db_load_metadefs
+    time_stop "dbsync"
 }
 
 # install_glanceclient() - Collect source and prepare

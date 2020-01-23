@@ -1155,7 +1155,8 @@ fi
 # Glance
 # ------
 
-if is_service_enabled g-reg; then
+# NOTE(yoctozepto): limited to node hosting the database which is the controller
+if is_service_enabled $DATABASE_BACKENDS && is_service_enabled glance; then
     echo_summary "Configuring Glance"
     init_glance
 fi
@@ -1280,8 +1281,8 @@ fi
 # scripts as userdata.
 # See https://help.ubuntu.com/community/CloudInit for more on ``cloud-init``
 
-if is_service_enabled g-reg; then
-
+# NOTE(yoctozepto): limited to node hosting the database which is the controller
+if is_service_enabled $DATABASE_BACKENDS && is_service_enabled glance; then
     echo_summary "Uploading images"
 
     for image_url in ${IMAGE_URLS//,/ }; do
