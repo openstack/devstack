@@ -1,0 +1,12 @@
+- hosts: all
+
+  tasks:
+
+    - name: Run run_tests.sh
+      shell:
+        chdir: '{{ zuul.project.src_dir }}'
+        executable: /bin/bash
+        cmd: |
+          set -e
+          set -x
+          ./run_tests.sh

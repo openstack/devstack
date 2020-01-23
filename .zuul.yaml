@@ -370,6 +370,15 @@
       - playbooks/tox/pre.yaml
     run: playbooks/tox/run.yaml
 
+- job:
+    name: devstack-unit-tests
+    description: |
+      Runs unit tests on devstack project.
+
+      It runs  ``run_tests.sh``.
+    pre-run: playbooks/unit-tests/pre.yaml
+    run: playbooks/unit-tests/run.yaml
+
 - project:
     templates:
       - integrated-gate
@@ -379,6 +388,7 @@
       jobs:
         - devstack
         - devstack-multinode
+        - devstack-unit-tests
         - openstack-tox-bashate
         - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
@@ -407,6 +417,7 @@
     gate:
       jobs:
         - devstack
+        - devstack-unit-tests
         - openstack-tox-bashate
         - neutron-grenade-multinode:
             irrelevant-files:
