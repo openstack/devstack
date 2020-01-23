@@ -614,6 +614,9 @@ function configure_tempest {
         # Remove disabled extensions
         network_api_extensions=$(remove_disabled_extensions $network_api_extensions $DISABLE_NETWORK_API_EXTENSIONS)
     fi
+    if [[ -n "$ADDITIONAL_NETWORK_API_EXTENSIONS" ]] && [[ "$network_api_extensions" != "all" ]]; then
+        network_api_extensions+=",$ADDITIONAL_NETWORK_API_EXTENSIONS"
+    fi
     iniset $TEMPEST_CONFIG network-feature-enabled api_extensions $network_api_extensions
     # Swift API Extensions
     DEFAULT_SWIFT_OPT="account_quotas,bulk_delete,bulk_upload,container_quotas"
