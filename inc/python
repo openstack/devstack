@@ -162,32 +162,20 @@ function pip_install {
         local sudo_pip="env"
     else
         local cmd_pip
-        cmd_pip=$(get_pip_command $PYTHON2_VERSION)
         local sudo_pip="sudo -H"
         if python3_enabled; then
-            # Special case some services that have experimental
-            # support for python3 in progress, but don't claim support
-            # in their classifier
-            echo "Check python version for : $package_dir"
-            echo "Using $PYTHON3_VERSION version to install $package_dir based on default behavior"
+            echo "Using python $PYTHON3_VERSION to install $package_dir because python3_enabled=True"
             sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
             cmd_pip=$(get_pip_command $PYTHON3_VERSION)
+        else
+            echo "Using python $PYTHON2_VERSION to install $package_dir because python3_enabled=False"
+            cmd_pip=$(get_pip_command $PYTHON2_VERSION)
         fi
     fi
 
     cmd_pip="$cmd_pip install"
     # Always apply constraints
     cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
-
-    # FIXME(dhellmann): Need to force multiple versions of pip for
-    # packages like setuptools?
-    local pip_version
-    pip_version=$(python -c "import pip; \
-                        print(pip.__version__.split('.')[0])")
-    if (( pip_version<6 )); then
-        die $LINENO "Currently installed pip version ${pip_version} does not" \
-            "meet minimum requirements (>=6)."
-    fi
 
     $xtrace
 
@@ -225,8 +213,13 @@ function pip_uninstall {
         local sudo_pip="env"
     else
         local cmd_pip
-        cmd_pip=$(get_pip_command $PYTHON2_VERSION)
         local sudo_pip="sudo -H"
+        if python3_enabled; then
+            sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
+            cmd_pip=$(get_pip_command $PYTHON3_VERSION)
+        else
+            cmd_pip=$(get_pip_command $PYTHON2_VERSION)
+        fi
     fi
     # don't error if we can't uninstall, it might not be there
     $sudo_pip $cmd_pip uninstall -y $name || /bin/true
