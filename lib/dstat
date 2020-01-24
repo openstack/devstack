@@ -9,12 +9,21 @@
 
 # ``stack.sh`` calls the entry points in this order:
 #
+# - install_dstat
 # - start_dstat
 # - stop_dstat
 
 # Save trace setting
 _XTRACE_DSTAT=$(set +o | grep xtrace)
 set +o xtrace
+
+# install_dstat() - Install prerequisites for dstat services
+function install_dstat {
+    if is_service_enabled memory_tracker; then
+        # Install python libraries required by tools/mlock_report.py
+        pip_install_gr psutil
+    fi
+}
 
 # start_dstat() - Start running processes
 function start_dstat {

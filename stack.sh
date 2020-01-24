@@ -867,6 +867,13 @@ if is_service_enabled tls-proxy; then
     init_cert
 fi
 
+# Dstat
+# -----
+
+# Install dstat services prerequisites
+install_dstat
+
+
 # Check Out and Install Source
 # ----------------------------
 
