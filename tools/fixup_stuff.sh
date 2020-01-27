@@ -234,10 +234,32 @@ function fixup_virtualenv {
     fi
 }
 
+# Ubuntu Xenial with py3.6
+#-------------------------
+# Install py3.6 on Xenial for Tempest
+function fixup_tempest_on_xenial {
+    # All the stable branches are tested with Tempest and its plugins master
+    # branch. In ussuri cycle, openstack is dropping the py2.7 support which
+    # make Tempest & its plugin not able to run on py2.7 or sometime <py3.6
+    # venv for code or dependency version compatibility reason
+    # (Example: bug#1860033). Tempest is being installed and run on venv
+    # which give us flexibility to run with any interpreter irrespective of
+    # tested env python version. Stable branches till stable/rocky use
+    # ubuntu xenial which does not have py3.6 and so does need to be
+    # installed separately.
+    if [[ "$DISTRO" == "xenial" ]]; then
+        echo "Installing python 3.6 from ppa"
+        sudo add-apt-repository ppa:deadsnakes/ppa --yes
+        sudo apt-get update
+        sudo apt-get install python3.6 python3.6-dev --yes
+    fi
+}
+
 function fixup_all {
     fixup_keystone
     fixup_uca
     fixup_python_packages
     fixup_fedora
     fixup_virtualenv
+    fixup_tempest_on_xenial
 }
