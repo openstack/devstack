@@ -683,6 +683,10 @@
     #    Next cycle we can remove this if everything run out stable enough.
     # * nova-multi-cell: maintained by nova and currently non-voting in the
     #    check queue for nova changes but relies on devstack configuration
+    # * devstack-platform-fedora-latest-virt-preview: Maintained by lyarwood
+    #    for Nova to allow early testing of the latest versions of Libvirt and
+    #    QEMU. Should only graduate out of experimental if it ever moves into
+    #    the check queue for Nova.
 
     experimental:
       jobs:
@@ -719,3 +723,4 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - devstack-platform-fedora-latest-virt-preview
