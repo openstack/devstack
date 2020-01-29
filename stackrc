@@ -310,8 +310,10 @@ REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-$TARGET_BRANCH}
 
 # Tempest test suite
 TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
-TEMPEST_BRANCH=${TEMPEST_BRANCH:-$BRANCHLESS_TARGET_BRANCH}
-
+# Use Tempest tag 23.0.0) which is Rocky supported version for
+# Xenial jobs running on py3.5.
+# https://docs.openstack.org/releasenotes/tempest/v23.0.0.html
+TEMPEST_BRANCH=${TEMPEST_BRANCH:-23.0.0}
 
 ##############
 #
