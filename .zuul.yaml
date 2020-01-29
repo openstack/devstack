@@ -405,22 +405,15 @@
         n-cpu: true
         n-novnc: true
         n-sch: true
+        # Placement service
         placement-api: true
         # Neutron services
-        # We need to keep using the neutron-legacy based services for
-        # now until all issues with the new lib/neutron code are solved
         q-agt: true
         q-dhcp: true
         q-l3: true
         q-meta: true
         q-metering: true
         q-svc: true
-        # neutron-api: true
-        # neutron-agent: true
-        # neutron-dhcp: true
-        # neutron-l3: true
-        # neutron-metadata-agent: true
-        # neutron-metering: true
         # Swift services
         s-account: true
         s-container: true
@@ -449,12 +442,10 @@
           tls-proxy: true
           # Nova services
           n-cpu: true
+          # Placement services
           placement-client: true
           # Neutron services
-          # We need to keep using the neutron-legacy based services for
-          # now until all issues with the new lib/neutron code are solved
           q-agt: true
-          # neutron-agent: true
           # Cinder services
           c-bak: true
           c-vol: true
@@ -464,7 +455,7 @@
           # s-*: false
           horizon: false
           tempest: false
-          # Test matrix emits ceilometer but ceilomenter is not installed in the
+          # Test matrix emits ceilometer but ceilometer is not installed in the
           # integrated gate, so specifying the services has not effect.
           # ceilometer-*: false
         devstack_localrc:
