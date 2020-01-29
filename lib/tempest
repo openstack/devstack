@@ -635,6 +635,11 @@ function install_tempest {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
     pip_install tox
     pushd $TEMPEST_DIR
+    # NOTE(gmann): checkout the TEMPEST_BRANCH in case TEMPEST_BRANCH
+    # is tag name not master. git_clone would not checkout tag because
+    # TEMPEST_DIR already exist until RECLONE is true.
+    git checkout $TEMPEST_BRANCH
+
     tox -r --notest -efull
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but

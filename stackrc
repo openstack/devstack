@@ -331,11 +331,10 @@ REQUIREMENTS_REPO=${REQUIREMENTS_REPO:-${GIT_BASE}/openstack/requirements.git}
 REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-stable/pike}
 
 # Tempest test suite
-TEMPEST_REPO=${TEMPEST_REPO:-https://review.opendev.org/openstack/tempest}
-# Use Tempest commit (for tag 21.0.0) which is Pike supported version.
+TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
+# Use Tempest tag 21.0.0 which is Pike supported version.
 # https://docs.openstack.org/releasenotes/tempest/v21.0.0.html
-# https://github.com/openstack/tempest/commit/abd07b42ca01319c2e289dc60e0449069e2889df
-TEMPEST_BRANCH=${TEMPEST_BRANCH:-refs/changes/99/670699/4}
+TEMPEST_BRANCH=${TEMPEST_BRANCH:-21.0.0}
 
 
 ##############
