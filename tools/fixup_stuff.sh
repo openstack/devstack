@@ -79,6 +79,8 @@ function fixup_ubuntu {
     # manifest of what to remove.  However, in most cases, simply
     # overwriting works.  So this hacks around those packages that
     # have been dragged in by some other system dependency
+    sudo rm -f /usr/lib/python3/dist-packages/httplib2-*.egg-info
+    sudo rm -f /usr/lib/python3/dist-packages/pyasn1_modules-*.egg-info
     sudo rm -f /usr/lib/python3/dist-packages/PyYAML-*.egg-info
 }
 
