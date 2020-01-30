@@ -380,16 +380,6 @@ function setup_dev_lib {
     fi
     local name=$1
     local dir=${GITDIR[$name]}
-    if python3_enabled; then
-        # Turn off Python 3 mode and install the package again,
-        # forcing a Python 2 installation. This ensures that all libs
-        # being used for development are installed under both versions
-        # of Python.
-        echo "Installing $name again without Python 3 enabled"
-        USE_PYTHON3=False
-        setup_develop $bindep $dir
-        USE_PYTHON3=True
-    fi
     setup_develop $bindep $dir
 }
 
