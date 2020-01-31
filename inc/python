@@ -450,6 +450,31 @@ function python3_enabled {
     fi
 }
 
+# Provide requested python version and sets PYTHON variable
+function install_python {
+    # NOTE: install_python function should finally just do what install_python3
+    # does as soon Python 2 support has been dropped
+    if python3_enabled; then
+        install_python3
+        export PYTHON=$(which python${PYTHON3_VERSION} 2>/dev/null ||
+                        which python3 2>/dev/null)
+        if [[ "${DISTRO}" =~ (rhel8) ]]; then
+            # Use Python 3 as default python command so that we have only one
+            # python alternative to use on the system for either python and
+            # python3
+            sudo alternatives --set python "${PYTHON}"
+        else
+            # Install anyway Python 2 for legacy scripts that still requires
+            # python instead of python3 command
+            install_package python
+        fi
+    else
+        echo "WARNING - Python 2 support has been deprecated in favor of Python 3"
+        install_package python
+        export PYTHON=$(which python 2>/dev/null)
+    fi
+}
+
 # Install python3 packages
 function install_python3 {
     if is_ubuntu; then
