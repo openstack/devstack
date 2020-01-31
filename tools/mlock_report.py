@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This tool lists processes that lock memory pages from swapping to disk.
 
 import re
