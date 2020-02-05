@@ -27,6 +27,7 @@ pkgconfig
 postgresql-devel  # psycopg2
 psmisc
 pyOpenSSL # version in pip uses too much memory
+python3-devel # f29,f30
 python-devel
 redhat-rpm-config # missing dep for gcc hardening flags, see rhbz#1217376
 systemd-devel # for systemd-python
