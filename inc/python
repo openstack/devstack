@@ -457,7 +457,11 @@ function install_python3 {
     elif is_suse; then
         install_package python3-devel python3-dbm
     elif is_fedora; then
-        install_package python3 python3-devel
+        if [ "$os_VENDOR" = "Fedora" ]; then
+            install_package python${PYTHON3_VERSION//.}
+        else
+            install_package python${PYTHON3_VERSION//.} python${PYTHON3_VERSION//.}-devel
+        fi
     fi
 }
 
