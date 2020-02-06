@@ -52,7 +52,7 @@
     name: devstack-single-node-fedora-latest
     nodes:
       - name: controller
-        label: fedora-29
+        label: fedora-30
     groups:
       - name: tempest
         nodes:
