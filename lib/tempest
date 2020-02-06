@@ -647,6 +647,17 @@ function install_tempest {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
     pip_install tox
     pushd $TEMPEST_DIR
+    # NOTE(gmann): checkout the TEMPEST_BRANCH in case TEMPEST_BRANCH
+    # is tag name not master. git_clone would not checkout tag because
+    # TEMPEST_DIR already exist until RECLONE is true.
+    git checkout $TEMPEST_BRANCH
+
+    # NOTE(gmann): Use branch constraint because Tempest is pinned to the branch release
+    # instead of using master. We need to export it via env var UPPER_CONSTRAINTS_FILE
+    # so that initial creation of tempest tox use stable branch constraint
+    # instead of master constraint as defined in tempest/tox.ini
+    export UPPER_CONSTRAINTS_FILE=$REQUIREMENTS_DIR/upper-constraints.txt
+
     tox --notest -efull
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but
