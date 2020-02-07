@@ -9,9 +9,9 @@ git-core
 graphviz # needed only for docs
 httpd
 httpd-devel
-iptables-services  # NOPRIME f25,f26,f27,f28,f29,f30
+iptables-services  # NOPRIME f30
 java-1.7.0-openjdk-headless  # NOPRIME rhel7
-java-1.8.0-openjdk-headless  # NOPRIME f25,f26,f27,f28,f29,f30
+java-1.8.0-openjdk-headless  # NOPRIME f30
 libffi-devel
 libjpeg-turbo-devel # Pillow 3.0.0
 libxml2-devel # lxml
@@ -27,7 +27,7 @@ pkgconfig
 postgresql-devel  # psycopg2
 psmisc
 pyOpenSSL # version in pip uses too much memory
-python3-devel # f29,f30
+python3-devel # f30
 python-devel
 redhat-rpm-config # missing dep for gcc hardening flags, see rhbz#1217376
 systemd-devel # for systemd-python
