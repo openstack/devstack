@@ -297,13 +297,19 @@ function configure_nova {
             fi
         fi
 
-        if is_fedora && [[ $DISTRO =~ f[0-9][0-9] ]]; then
+        if is_fedora && [[ $DISTRO =~ f29 ]]; then
             # There is an iscsi-initiator bug where it inserts
             # different whitespace that causes a bunch of output
             # matching to fail.  We have not been able to get
             # fixed, yet :/  Exists in fedora 29 & 30 at least
             #  https://bugzilla.redhat.com/show_bug.cgi?id=1676365
             sudo dnf copr enable -y iwienand/iscsi-initiator-utils
+            sudo dnf update -y
+        elif is_fedora && [[ $DISTRO =~ f3[0-1] ]]; then
+            # For f30 and f31 use the rebased 2.1.0 version of the package. We
+            # can't use this above as f29 is EOL and as a result we can't
+            # rebuild packages in copr for it.
+            sudo dnf copr enable -y lyarwood/iscsi-initiator-utils
             sudo dnf update -y
         fi
 
