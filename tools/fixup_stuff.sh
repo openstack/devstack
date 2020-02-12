@@ -227,10 +227,14 @@ function fixup_fedora {
 #            install.d/pip-and-virtualenv-source-install/04-install-pip
 # [2] https://bugzilla.redhat.com/show_bug.cgi?id=1477823
 
+# TODO(jh): virtualenv 20.0.1 is breaking things in a yet unknown way.
+# Install previous virtualenv over what infra preinstalls as a hotfix.
 function fixup_virtualenv {
     if [[ ! -f /etc/ci/mirror_info.sh ]]; then
         install_package python-virtualenv
-        pip_install -U --force-reinstall virtualenv
+        pip_install -U --force-reinstall 'virtualenv<20'
+    else
+        pip_install -U --force-reinstall 'virtualenv<20'
     fi
 }
 
