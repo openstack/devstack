@@ -109,8 +109,10 @@ function configure_database_mysql {
         sudo mysql $cmd_args -e "UPDATE mysql.user SET plugin='' WHERE user='$DATABASE_USER' AND host='localhost';"
         sudo mysql $cmd_args -e "FLUSH PRIVILEGES;"
     fi
+    # Create DB user if it does not already exist
+    sudo mysql $cmd_args -e "CREATE USER IF NOT EXISTS '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
     # Update the DB to give user '$DATABASE_USER'@'%' full control of the all databases:
-    sudo mysql $cmd_args -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
+    sudo mysql $cmd_args -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%';"
 
     # Now update ``my.cnf`` for some local needs and restart the mysql service
 
@@ -120,8 +122,6 @@ function configure_database_mysql {
     iniset -sudo $my_conf mysqld sql_mode TRADITIONAL
     iniset -sudo $my_conf mysqld default-storage-engine InnoDB
     iniset -sudo $my_conf mysqld max_connections 1024
-    iniset -sudo $my_conf mysqld query_cache_type OFF
-    iniset -sudo $my_conf mysqld query_cache_size 0
 
     if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
         echo_summary "Enabling MySQL query logging"
