@@ -96,10 +96,11 @@ function install_apache_uwsgi {
     fi
 
     if is_ubuntu; then
-        install_package uwsgi \
-                        uwsgi-plugin-python \
-                        uwsgi-plugin-python3 \
-                        libapache2-mod-proxy-uwsgi
+        local pkg_list="uwsgi uwsgi-plugin-python3 libapache2-mod-proxy-uwsgi"
+        if "$DISTRO" == 'bionic'; then
+            pkg_list="${pkg_list} uwsgi-plugin-python"
+        fi
+        install_package ${pkg_list}
     elif is_fedora; then
         # Note httpd comes with mod_proxy_uwsgi and it is loaded by
         # default; the mod_proxy_uwsgi package actually conflicts now.
