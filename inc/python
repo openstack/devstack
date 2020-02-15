@@ -456,6 +456,8 @@ function install_python3 {
         apt_get install python${PYTHON3_VERSION} python${PYTHON3_VERSION}-dev
     elif is_suse; then
         install_package python3-devel python3-dbm
+    elif is_fedora; then
+        install_package python3 python3-devel
     fi
 }
 
