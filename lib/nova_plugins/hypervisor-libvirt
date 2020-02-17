@@ -39,7 +39,7 @@ function cleanup_nova_hypervisor {
 function configure_nova_hypervisor {
     configure_libvirt
     iniset $NOVA_CONF libvirt virt_type "$LIBVIRT_TYPE"
-    iniset $NOVA_CONF libvirt cpu_mode "none"
+    iniset $NOVA_CONF libvirt cpu_mode "$LIBVIRT_CPU_MODE"
     # Do not enable USB tablet input devices to avoid QEMU CPU overhead.
     iniset $NOVA_CONF DEFAULT pointer_model "ps2mouse"
     iniset $NOVA_CONF libvirt live_migration_uri "qemu+ssh://$STACK_USER@%s/system"
