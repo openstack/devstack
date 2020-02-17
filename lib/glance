@@ -67,9 +67,7 @@ GLANCE_TASKS_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_tasks_s
 
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
-GLANCE_REGISTRY_CONF=$GLANCE_CONF_DIR/glance-registry.conf
 GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
-GLANCE_REGISTRY_PASTE_INI=$GLANCE_CONF_DIR/glance-registry-paste.ini
 GLANCE_API_PASTE_INI=$GLANCE_CONF_DIR/glance-api-paste.ini
 GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
 GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
@@ -88,8 +86,6 @@ GLANCE_SERVICE_PORT=${GLANCE_SERVICE_PORT:-9292}
 GLANCE_SERVICE_PORT_INT=${GLANCE_SERVICE_PORT_INT:-19292}
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT}
 GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
-GLANCE_REGISTRY_PORT=${GLANCE_REGISTRY_PORT:-9191}
-GLANCE_REGISTRY_PORT_INT=${GLANCE_REGISTRY_PORT_INT:-19191}
 GLANCE_UWSGI=$GLANCE_BIN_DIR/glance-wsgi-api
 GLANCE_UWSGI_CONF=$GLANCE_CONF_DIR/glance-uwsgi.ini
 # If wsgi mode is uwsgi run glance under uwsgi, else default to eventlet
@@ -135,31 +131,10 @@ function cleanup_glance {
 function configure_glance {
     sudo install -d -o $STACK_USER $GLANCE_CONF_DIR $GLANCE_METADEF_DIR
 
-    # Set non-default configuration options for registry
-    iniset $GLANCE_REGISTRY_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-    iniset $GLANCE_REGISTRY_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
-    iniset $GLANCE_REGISTRY_CONF DEFAULT workers $API_WORKERS
+    # Set non-default configuration options for the API server
     local dburl
     dburl=`database_connection_url glance`
-    iniset $GLANCE_REGISTRY_CONF database connection $dburl
-    iniset $GLANCE_REGISTRY_CONF DEFAULT use_syslog $SYSLOG
-    iniset $GLANCE_REGISTRY_CONF paste_deploy flavor keystone
-    configure_keystone_authtoken_middleware $GLANCE_REGISTRY_CONF glance
-    iniset $GLANCE_REGISTRY_CONF oslo_messaging_notifications driver messagingv2
-    iniset_rpc_backend glance $GLANCE_REGISTRY_CONF
-    iniset $GLANCE_REGISTRY_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
-    # Configure multiple stores
-    if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
-        local store enabled_backends
-        enabled_backends=""
-        for store in $(echo $GLANCE_MULTIPLE_FILE_STORES | tr "," "\n"); do
-            enabled_backends+="${store}:file,"
-        done
-        iniset $GLANCE_API_CONF DEFAULT enabled_backends ${enabled_backends::-1}
-    fi
-
-    # Set non-default configuration options for the API server
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_API_CONF database connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
@@ -198,7 +173,6 @@ function configure_glance {
         # Store specific configs
         iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
     fi
-    iniset $GLANCE_API_CONF DEFAULT registry_host $(ipv6_unquote $GLANCE_SERVICE_HOST)
 
     # CORS feature support - to allow calls from Horizon by default
     if [ -n "$GLANCE_CORS_ALLOWED_ORIGIN" ]; then
@@ -240,21 +214,13 @@ function configure_glance {
 
     if is_service_enabled tls-proxy; then
         iniset $GLANCE_API_CONF DEFAULT bind_port $GLANCE_SERVICE_PORT_INT
-        iniset $GLANCE_REGISTRY_CONF DEFAULT bind_port $GLANCE_REGISTRY_PORT_INT
 
         iniset $GLANCE_API_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-        iniset $GLANCE_REGISTRY_CONF keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
-    fi
-
-    if is_service_enabled tls-proxy; then
-        iniset $GLANCE_API_CONF DEFAULT registry_client_protocol https
     fi
 
     # Format logging
     setup_logging $GLANCE_API_CONF
-    setup_logging $GLANCE_REGISTRY_CONF
 
-    cp -p $GLANCE_DIR/etc/glance-registry-paste.ini $GLANCE_REGISTRY_PASTE_INI
     cp -p $GLANCE_DIR/etc/glance-api-paste.ini $GLANCE_API_PASTE_INI
 
     # Set non-default configuration options for the glance-cache
@@ -265,7 +231,6 @@ function configure_glance {
     iniset $GLANCE_CACHE_CONF DEFAULT admin_tenant_name $SERVICE_PROJECT_NAME
     iniset $GLANCE_CACHE_CONF DEFAULT admin_user glance
     iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
-    iniset $GLANCE_CACHE_CONF DEFAULT registry_host $(ipv6_unquote $GLANCE_SERVICE_HOST)
 
     # Store specific confs
     iniset $GLANCE_CACHE_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
@@ -387,10 +352,8 @@ function start_glance {
         if [[ "$WSGI_MODE" != "uwsgi" ]]; then
             start_tls_proxy glance-service '*' $GLANCE_SERVICE_PORT $GLANCE_SERVICE_HOST $GLANCE_SERVICE_PORT_INT
         fi
-        start_tls_proxy glance-registry '*' $GLANCE_REGISTRY_PORT $GLANCE_SERVICE_HOST $GLANCE_REGISTRY_PORT_INT
     fi
 
-    run_process g-reg "$GLANCE_BIN_DIR/glance-registry --config-file=$GLANCE_CONF_DIR/glance-registry.conf"
     if [[ "$WSGI_MODE" == "uwsgi" ]]; then
         run_process g-api "$(which uwsgi) --procname-prefix glance-api --ini $GLANCE_UWSGI_CONF"
     else
@@ -406,7 +369,6 @@ function start_glance {
 # stop_glance() - Stop running processes
 function stop_glance {
     stop_process g-api
-    stop_process g-reg
 }
 
 # Restore xtrace
