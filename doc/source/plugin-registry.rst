@@ -75,7 +75,6 @@ openstack/murano                         `https://opendev.org/openstack/murano <
 openstack/networking-bagpipe             `https://opendev.org/openstack/networking-bagpipe <https://opendev.org/openstack/networking-bagpipe>`__
 openstack/networking-baremetal           `https://opendev.org/openstack/networking-baremetal <https://opendev.org/openstack/networking-baremetal>`__
 openstack/networking-bgpvpn              `https://opendev.org/openstack/networking-bgpvpn <https://opendev.org/openstack/networking-bgpvpn>`__
-openstack/networking-calico              `https://opendev.org/openstack/networking-calico <https://opendev.org/openstack/networking-calico>`__
 openstack/networking-generic-switch      `https://opendev.org/openstack/networking-generic-switch <https://opendev.org/openstack/networking-generic-switch>`__
 openstack/networking-hyperv              `https://opendev.org/openstack/networking-hyperv <https://opendev.org/openstack/networking-hyperv>`__
 openstack/networking-l2gw                `https://opendev.org/openstack/networking-l2gw <https://opendev.org/openstack/networking-l2gw>`__
