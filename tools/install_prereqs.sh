@@ -81,12 +81,6 @@ if [[ -n "$SYSLOG" && "$SYSLOG" != "False" ]]; then
     fi
 fi
 
-if python3_enabled; then
-    install_python3
-    export PYTHON=$(which python${PYTHON3_VERSION} 2>/dev/null || which python3 2>/dev/null)
-else
-    export PYTHON=$(which python 2>/dev/null)
-fi
 
 # Mark end of run
 # ---------------

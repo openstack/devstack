@@ -8,7 +8,7 @@ source $TOP/tests/unittest.sh
 
 OUT_DIR=$(mktemp -d)
 
-$TOP/tools/worlddump.py -d $OUT_DIR
+${PYTHON} $TOP/tools/worlddump.py -d $OUT_DIR
 
 if [[ $? -ne 0 ]]; then
     fail "worlddump failed"
