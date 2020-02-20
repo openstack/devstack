@@ -174,7 +174,7 @@ def network_dump():
         _dump_cmd("ip %s" % cmd)
     for netns_ in _netns_list():
         for cmd in ip_cmds:
-            args = {'netns': netns_, 'cmd': cmd}
+            args = {'netns': bytes.decode(netns_), 'cmd': cmd}
             _dump_cmd('sudo ip netns exec %(netns)s ip %(cmd)s' % args)
 
 
@@ -195,7 +195,7 @@ def ovs_dump():
     _dump_cmd("sudo ovs-vsctl show")
     for ofctl_cmd in ofctl_cmds:
         for bridge in bridges:
-            args = {'vers': vers, 'cmd': ofctl_cmd, 'bridge': bridge}
+            args = {'vers': vers, 'cmd': ofctl_cmd, 'bridge': bytes.decode(bridge)}
             _dump_cmd("sudo ovs-ofctl --protocols=%(vers)s %(cmd)s %(bridge)s" % args)
 
 
