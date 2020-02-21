@@ -102,7 +102,6 @@ openstack/panko                          `https://opendev.org/openstack/panko <h
 openstack/patrole                        `https://opendev.org/openstack/patrole <https://opendev.org/openstack/patrole>`__
 openstack/qinling                        `https://opendev.org/openstack/qinling <https://opendev.org/openstack/qinling>`__
 openstack/qinling-dashboard              `https://opendev.org/openstack/qinling-dashboard <https://opendev.org/openstack/qinling-dashboard>`__
-openstack/rally                          `https://opendev.org/openstack/rally <https://opendev.org/openstack/rally>`__
 openstack/rally-openstack                `https://opendev.org/openstack/rally-openstack <https://opendev.org/openstack/rally-openstack>`__
 openstack/sahara                         `https://opendev.org/openstack/sahara <https://opendev.org/openstack/sahara>`__
 openstack/sahara-dashboard               `https://opendev.org/openstack/sahara-dashboard <https://opendev.org/openstack/sahara-dashboard>`__
