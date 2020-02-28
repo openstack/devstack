@@ -695,10 +695,6 @@
         - neutron-fullstack-with-uwsgi
         - neutron-functional-with-uwsgi
         - neutron-tempest-with-uwsgi
-        - devstack-plugin-ceph-tempest:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         - devstack-plugin-ceph-tempest-py3:
             irrelevant-files:
               - ^.*\.rst$
