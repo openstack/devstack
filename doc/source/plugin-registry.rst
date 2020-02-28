@@ -139,7 +139,6 @@ x/bilean                                 `https://opendev.org/x/bilean <https://
 x/broadview-collector                    `https://opendev.org/x/broadview-collector <https://opendev.org/x/broadview-collector>`__
 x/collectd-openstack-plugins             `https://opendev.org/x/collectd-openstack-plugins <https://opendev.org/x/collectd-openstack-plugins>`__
 x/devstack-plugin-additional-pkg-repos   `https://opendev.org/x/devstack-plugin-additional-pkg-repos <https://opendev.org/x/devstack-plugin-additional-pkg-repos>`__
-x/devstack-plugin-bdd                    `https://opendev.org/x/devstack-plugin-bdd <https://opendev.org/x/devstack-plugin-bdd>`__
 x/devstack-plugin-glusterfs              `https://opendev.org/x/devstack-plugin-glusterfs <https://opendev.org/x/devstack-plugin-glusterfs>`__
 x/devstack-plugin-hdfs                   `https://opendev.org/x/devstack-plugin-hdfs <https://opendev.org/x/devstack-plugin-hdfs>`__
 x/devstack-plugin-libvirt-qemu           `https://opendev.org/x/devstack-plugin-libvirt-qemu <https://opendev.org/x/devstack-plugin-libvirt-qemu>`__
