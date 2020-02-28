@@ -877,6 +877,32 @@ SERVICE_HOST=${SERVICE_HOST:-${DEF_SERVICE_HOST}}
 # This is either 127.0.0.1 for IPv4 or ::1 for IPv6
 SERVICE_LOCAL_HOST=${SERVICE_LOCAL_HOST:-${DEF_SERVICE_LOCAL_HOST}}
 
+# TUNNEL IP version
+# This is the IP version to use for tunnel endpoints
+TUNNEL_IP_VERSION=${TUNNEL_IP_VERSION:-4}
+
+# Validate TUNNEL_IP_VERSION
+if [[ $TUNNEL_IP_VERSION != "4" ]] && [[ $TUNNEL_IP_VERSION != "6" ]]; then
+    die $LINENO "TUNNEL_IP_VERSION must be either 4 or 6"
+fi
+
+if [[ "$TUNNEL_IP_VERSION" == 4 ]]; then
+    DEF_TUNNEL_ENDPOINT_IP=$HOST_IP
+fi
+
+if [[ "$TUNNEL_IP_VERSION" == 6 ]]; then
+    # Only die if the user has not over-ridden the endpoint IP
+    if [[ "$HOST_IPV6" == "" ]] && [[ "$TUNNEL_ENDPOINT_IP" == "" ]]; then
+        die $LINENO "Could not determine host IPv6 address.  See local.conf for suggestions on setting HOST_IPV6."
+    fi
+
+    DEF_TUNNEL_ENDPOINT_IP=$HOST_IPV6
+fi
+
+# Allow the use of an alternate address for tunnel endpoints.
+# Default is dependent on TUNNEL_IP_VERSION above.
+TUNNEL_ENDPOINT_IP=${TUNNEL_ENDPOINT_IP:-${DEF_TUNNEL_ENDPOINT_IP}}
+
 REGION_NAME=${REGION_NAME:-RegionOne}
 
 # Configure services to use syslog instead of writing to individual log files

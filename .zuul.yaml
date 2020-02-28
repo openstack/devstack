@@ -625,11 +625,13 @@
     name: devstack-ipv6
     parent: devstack
     description: |
-      Devstack single node job for integration gate with IPv6.
+      Devstack single node job for integration gate with IPv6,
+      all services and tunnels using IPv6 addresses.
     vars:
       devstack_localrc:
         SERVICE_IP_VERSION: 6
         SERVICE_HOST: ""
+        TUNNEL_IP_VERSION: 6
 
 - job:
     name: devstack-enforce-scope
