@@ -50,6 +50,7 @@ openstack/heat                           `https://opendev.org/openstack/heat <ht
 openstack/heat-dashboard                 `https://opendev.org/openstack/heat-dashboard <https://opendev.org/openstack/heat-dashboard>`__
 openstack/ironic                         `https://opendev.org/openstack/ironic <https://opendev.org/openstack/ironic>`__
 openstack/ironic-inspector               `https://opendev.org/openstack/ironic-inspector <https://opendev.org/openstack/ironic-inspector>`__
+openstack/ironic-prometheus-exporter     `https://opendev.org/openstack/ironic-prometheus-exporter <https://opendev.org/openstack/ironic-prometheus-exporter>`__
 openstack/ironic-ui                      `https://opendev.org/openstack/ironic-ui <https://opendev.org/openstack/ironic-ui>`__
 openstack/karbor                         `https://opendev.org/openstack/karbor <https://opendev.org/openstack/karbor>`__
 openstack/karbor-dashboard               `https://opendev.org/openstack/karbor-dashboard <https://opendev.org/openstack/karbor-dashboard>`__
