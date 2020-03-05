@@ -129,6 +129,11 @@ function write_clouds_yaml {
         --os-password $ADMIN_PASSWORD \
         --os-system-scope all
 
+    cat >> $CLOUDS_YAML <<EOF
+functional:
+  image_name: $DEFAULT_IMAGE_NAME
+EOF
+
     # CLean up any old clouds.yaml files we had laying around
     rm -f $(eval echo ~"$STACK_USER")/.config/openstack/clouds.yaml
 }
