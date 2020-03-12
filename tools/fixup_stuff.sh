@@ -202,39 +202,9 @@ function fixup_suse {
     sudo rm -rf /usr/lib/python3.6/site-packages/six-*.egg-info
 }
 
-# The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has
-# connection issues under proxy so re-install the latest version using
-# pip. To avoid having pip's virtualenv overwritten by the distro's
-# package (e.g. due to installing a distro package with a dependency
-# on python-virtualenv), first install the distro python-virtualenv
-# to satisfy any dependencies then use pip to overwrite it.
-
-# ... but, for infra builds, the pip-and-virtualenv [1] element has
-# already done this to ensure the latest pip, virtualenv and
-# setuptools on the base image for all platforms.  It has also added
-# the packages to the yum/dnf ignore list to prevent them being
-# overwritten with old versions.  F26 and dnf 2.0 has changed
-# behaviour that means re-installing python-virtualenv fails [2].
-# Thus we do a quick check if we're in the infra environment by
-# looking for the mirror config script before doing this, and just
-# skip it if so.
-
-# [1] https://opendev.org/openstack/diskimage-builder/src/branch/master/ \
-#        diskimage_builder/elements/pip-and-virtualenv/ \
-#            install.d/pip-and-virtualenv-source-install/04-install-pip
-# [2] https://bugzilla.redhat.com/show_bug.cgi?id=1477823
-
-function fixup_virtualenv {
-    if [[ ! -f /etc/ci/mirror_info.sh ]]; then
-        install_package python-virtualenv
-        pip_install -U --force-reinstall virtualenv
-    fi
-}
-
 function fixup_all {
     fixup_keystone
     fixup_ubuntu
     fixup_fedora
     fixup_suse
-    fixup_virtualenv
 }
