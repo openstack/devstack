@@ -150,7 +150,8 @@ export PYTHON2_VERSION=${PYTHON2_VERSION:-${_DEFAULT_PYTHON2_VERSION:-2.7}}
 
 # Create a virtualenv with this
 if [[ ${USE_PYTHON3} == True ]]; then
-    export VIRTUALENV_CMD="virtualenv -p python3"
+    # Use the built-in venv to avoid more dependencies
+    export VIRTUALENV_CMD="python3 -m venv"
 else
     export VIRTUALENV_CMD="virtualenv "
 fi
