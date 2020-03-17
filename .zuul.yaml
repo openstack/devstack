@@ -617,7 +617,7 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - tempest-multinode-full:
+        - tempest-multinode-full-py3:
             voting: false
             irrelevant-files:
               - ^.*\.rst$
