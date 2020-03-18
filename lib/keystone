@@ -421,7 +421,7 @@ function configure_keystone_authtoken_middleware {
     iniset $conf_file $section project_domain_name "$SERVICE_DOMAIN_NAME"
 
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
-    iniset $conf_file $section memcached_servers localhost:11211
+    iniset $conf_file $section memcached_servers $MEMCACHE_SERVERS
 }
 
 # configure_auth_token_middleware conf_file admin_user IGNORED [section]
