@@ -195,12 +195,6 @@ value defined in the parent job, or the default from DevStack, if any.
      - A bridge called br-infra is set up for all jobs that inherit
        from multinode with a dedicated `bridge role
        <https://zuul-ci.org/docs/zuul-jobs/general-roles.html#role-multi-node-bridge>`_.
-   * - DEVSTACK_GATE_FEATURE_MATRIX
-     - devstack-gate
-     - ``test_matrix_features`` variable of the test-matrix role in
-       devstack-gate. This is a temporary solution, feature matrix
-       will go away. In the future services will be defined in jobs
-       only.
    * - DEVSTACK_CINDER_VOLUME_CLEAR
      - devstack
      - *CINDER_VOLUME_CLEAR: true/false* in devstack_localrc in the

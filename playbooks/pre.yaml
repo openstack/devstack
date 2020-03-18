@@ -26,7 +26,6 @@
       set_fact:
         external_bridge_mtu: "{{ local_mtu | int - 50 }}"
   roles:
-    - test-matrix
     - configure-swap
     - setup-stack-user
     - setup-tempest-user
