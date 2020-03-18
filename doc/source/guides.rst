@@ -69,6 +69,11 @@ Nova and devstack
 
 Guide to working with nova features :doc:`Nova and devstack <guides/nova>`.
 
+Configure Load-Balancer Version 2
+-----------------------------------
+
+Guide on :doc:`Configure Load-Balancer Version 2 <guides/devstack-with-lbaas-v2>`.
+
 Deploying DevStack with LDAP
 ----------------------------
 
