@@ -27,9 +27,6 @@ openssh-server
 openssl
 pkg-config
 psmisc
-python2.7
-python-dev
-python-gdbm # needed for testr
 tar
 tcpdump
 unzip

@@ -9,7 +9,7 @@ iputils-ping
 libmysqlclient-dev
 mysql-server #NOPRIME
 postgresql-server-dev-all
-python-mysqldb
+python3-mysqldb
 rabbitmq-server # NOPRIME
 radvd # NOPRIME
 sqlite3
