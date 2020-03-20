@@ -38,6 +38,7 @@ openstack/devstack-plugin-amqp1          `https://opendev.org/openstack/devstack
 openstack/devstack-plugin-ceph           `https://opendev.org/openstack/devstack-plugin-ceph <https://opendev.org/openstack/devstack-plugin-ceph>`__
 openstack/devstack-plugin-container      `https://opendev.org/openstack/devstack-plugin-container <https://opendev.org/openstack/devstack-plugin-container>`__
 openstack/devstack-plugin-kafka          `https://opendev.org/openstack/devstack-plugin-kafka <https://opendev.org/openstack/devstack-plugin-kafka>`__
+openstack/devstack-plugin-open-cas       `https://opendev.org/openstack/devstack-plugin-open-cas <https://opendev.org/openstack/devstack-plugin-open-cas>`__
 openstack/devstack-plugin-pika           `https://opendev.org/openstack/devstack-plugin-pika <https://opendev.org/openstack/devstack-plugin-pika>`__
 openstack/devstack-plugin-zmq            `https://opendev.org/openstack/devstack-plugin-zmq <https://opendev.org/openstack/devstack-plugin-zmq>`__
 openstack/dragonflow                     `https://opendev.org/openstack/dragonflow <https://opendev.org/openstack/dragonflow>`__
@@ -99,6 +100,7 @@ openstack/openstacksdk                   `https://opendev.org/openstack/openstac
 openstack/os-loganalyze                  `https://opendev.org/openstack/os-loganalyze <https://opendev.org/openstack/os-loganalyze>`__
 openstack/osprofiler                     `https://opendev.org/openstack/osprofiler <https://opendev.org/openstack/osprofiler>`__
 openstack/oswin-tempest-plugin           `https://opendev.org/openstack/oswin-tempest-plugin <https://opendev.org/openstack/oswin-tempest-plugin>`__
+openstack/ovn-octavia-provider           `https://opendev.org/openstack/ovn-octavia-provider <https://opendev.org/openstack/ovn-octavia-provider>`__
 openstack/panko                          `https://opendev.org/openstack/panko <https://opendev.org/openstack/panko>`__
 openstack/patrole                        `https://opendev.org/openstack/patrole <https://opendev.org/openstack/patrole>`__
 openstack/qinling                        `https://opendev.org/openstack/qinling <https://opendev.org/openstack/qinling>`__
