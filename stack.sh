@@ -1421,6 +1421,9 @@ fi
 # Check the status of running services
 service_check
 
+# Run pip check to make sure we're forward compatible with the pip depsolver.
+pip_check
+
 # Configure nova cellsv2
 # ----------------------
 

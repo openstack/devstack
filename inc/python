@@ -111,6 +111,30 @@ function disable_python3_package {
     $xtrace
 }
 
+
+function pip_check {
+    time_start "pip_check"
+
+    if [[ -n ${PIP_VIRTUAL_ENV:=} && -d ${PIP_VIRTUAL_ENV} ]]; then
+        local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
+    else
+        local cmd_pip
+        if python3_enabled; then
+            echo "Using python $PYTHON3_VERSION to check pip install because python3_enabled=True"
+            cmd_pip=$(get_pip_command $PYTHON3_VERSION)
+        else
+            echo "Using python $PYTHON2_VERSION to check pip install because python3_enabled=False"
+            cmd_pip=$(get_pip_command $PYTHON2_VERSION)
+        fi
+    fi
+
+    $cmd_pip check
+    result=$?
+
+    time_stop "pip_check"
+    return $result
+}
+
 # Wrapper for ``pip install`` to set cache and proxy environment variables
 # Uses globals ``OFFLINE``, ``PIP_VIRTUAL_ENV``,
 # ``PIP_UPGRADE``, ``*_proxy``,
