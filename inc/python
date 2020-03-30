@@ -21,6 +21,14 @@ set +o xtrace
 # project.  A null value installs to the system Python directories.
 declare -A -g PROJECT_VENV
 
+# Utility Functions
+# =================
+
+# Joins bash array of extras with commas as expected by other functions
+function join_extras {
+    local IFS=","
+    echo "$*"
+}
 
 # Python Functions
 # ================
@@ -80,9 +88,9 @@ function pip_install_gr {
 function pip_install_gr_extras {
     local name=$1
     local extras=$2
-    local clean_name
-    clean_name=$(get_from_global_requirements $name)
-    pip_install $clean_name[$extras]
+    local version_constraints
+    version_constraints=$(get_version_constraints_from_global_requirements $name)
+    pip_install $name[$extras]$version_constraints
 }
 
 # enable_python3_package() -- no-op for backwards compatibility
@@ -230,6 +238,19 @@ function get_from_global_requirements {
     echo $required_pkg
 }
 
+# get only version constraints of a package from global requirements file
+# get_version_constraints_from_global_requirements <package>
+function get_version_constraints_from_global_requirements {
+    local package=$1
+    local required_pkg_version_constraint
+    # drop the package name from output (\K)
+    required_pkg_version_constraint=$(grep -i -h -o -P "^${package}\K.*" $REQUIREMENTS_DIR/global-requirements.txt | cut -d\# -f1)
+    if [[ $required_pkg_version_constraint == ""  ]]; then
+        die $LINENO "Can't find package $package in requirements"
+    fi
+    echo $required_pkg_version_constraint
+}
+
 # should we use this library from their git repo, or should we let it
 # get pulled in via pip dependencies.
 function use_library_from_git {
@@ -278,7 +299,7 @@ function setup_lib {
 #
 # use this for non namespaced libraries
 #
-# setup_dev_lib [-bindep] <name>
+# setup_dev_lib [-bindep] <name> [<extras>]
 function setup_dev_lib {
     local bindep
     if [[ $1 == -bindep* ]]; then
@@ -287,7 +308,8 @@ function setup_dev_lib {
     fi
     local name=$1
     local dir=${GITDIR[$name]}
-    setup_develop $bindep $dir
+    local extras=$2
+    setup_develop $bindep $dir $extras
 }
 
 # this should be used if you want to install globally, all libraries should

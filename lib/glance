@@ -355,11 +355,24 @@ function install_glanceclient {
 
 # install_glance() - Collect source and prepare
 function install_glance {
+    local glance_store_extras=()
+
+    if is_service_enabled cinder; then
+        glance_store_extras=("cinder" "${glance_store_extras[@]}")
+    fi
+
+    if is_service_enabled swift; then
+        glance_store_extras=("swift" "${glance_store_extras[@]}")
+    fi
+
     # Install glance_store from git so we make sure we're testing
     # the latest code.
     if use_library_from_git "glance_store"; then
         git_clone_by_name "glance_store"
-        setup_dev_lib "glance_store"
+        setup_dev_lib "glance_store" $(join_extras "${glance_store_extras[@]}")
+    else
+        # we still need to pass extras
+        pip_install_gr_extras glance-store $(join_extras "${glance_store_extras[@]}")
     fi
 
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
