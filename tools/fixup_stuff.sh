@@ -200,6 +200,11 @@ function fixup_suse {
     # have been dragged in by some other system dependency
     sudo rm -rf /usr/lib/python3.6/site-packages/ply-*.egg-info
     sudo rm -rf /usr/lib/python3.6/site-packages/six-*.egg-info
+
+    # Ensure trusted CA certificates are up to date
+    # See https://bugzilla.suse.com/show_bug.cgi?id=1154871
+    # May be removed once a new opensuse-15 image is available in nodepool
+    sudo zypper up -y p11-kit ca-certificates-mozilla
 }
 
 # The version of pip(1.5.4) supported by python-virtualenv(1.11.4) has
