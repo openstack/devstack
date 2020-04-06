@@ -27,6 +27,7 @@ openssh-server
 openssl
 pkg-config
 psmisc
+python3-dev
 tar
 tcpdump
 unzip
