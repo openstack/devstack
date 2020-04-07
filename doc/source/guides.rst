@@ -10,6 +10,7 @@ Walk through various setups used by stackers
 
 .. toctree::
    :glob:
+   :hidden:
    :maxdepth: 1
 
    guides/single-vm
