@@ -221,7 +221,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-if [[ ! ${DISTRO} =~ (bionic|stretch|jessie|f30|f31|opensuse-15.0|opensuse-15.1|opensuse-tumbleweed) ]]; then
+if [[ ! ${DISTRO} =~ (bionic|stretch|jessie|f30|f31|opensuse-15.0|opensuse-15.1|opensuse-tumbleweed|rhel8) ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
     if [[ "$FORCE" != "yes" ]]; then
         die $LINENO "If you wish to run this script anyway run with FORCE=yes"
@@ -290,67 +290,20 @@ function _install_epel {
         uninstall_package epel-release || true
     fi
 
-    # This trick installs the latest epel-release from a bootstrap
-    # repo, then removes itself (as epel-release installed the
-    # "real" repo).
-    #
-    # You would think that rather than this, you could use
-    # $releasever directly in .repo file we create below.  However
-    # RHEL gives a $releasever of "6Server" which breaks the path;
-    # see https://bugzilla.redhat.com/show_bug.cgi?id=1150759
-    cat <<EOF | sudo tee /etc/yum.repos.d/epel-bootstrap.repo
-[epel-bootstrap]
-name=Bootstrap EPEL
-mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-7&arch=\$basearch
-failovermethod=priority
-enabled=0
-gpgcheck=0
-EOF
-    # Enable a bootstrap repo.  It is removed after finishing
-    # the epel-release installation.
-    is_package_installed yum-utils || install_package yum-utils
-    sudo yum-config-manager --enable epel-bootstrap
-    yum_install epel-release || \
-        die $LINENO "Error installing EPEL repo, cannot continue"
-    sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
+    # epel-release is in extras repo which is enabled by default
+    install_package epel-release
+
+    # RDO repos are not tested with epel and may have incompatibilities so
+    # let's limit the packages fetched from epel to the ones not in RDO repos.
+    sudo yum-config-manager --save --setopt=includepkgs=debootstrap,dpkg epel
 }
 
 function _install_rdo {
-    # There are multiple options for this, including using CloudSIG
-    # repositories (centos-release-*), trunk versions, etc.  Since
-    # we're not interested in the actual openstack distributions
-    # (since we're using git to run!) but only peripherial packages
-    # like kvm or ovs, this has been reliable.
-
-    # TODO(ianw): figure out how to best mirror -- probably use infra
-    # mirror RDO reverse proxy.  We could either have test
-    # infrastructure set it up disabled like EPEL, or fiddle it here.
-    # Per the point above, it's a bunch of repos so starts getting a
-    # little messy...
-    if ! is_package_installed rdo-release ; then
-        if [[ "$TARGET_BRANCH" == "master" ]]; then
-            yum_install https://rdoproject.org/repos/rdo-release.rpm
-        else
-            # Get latest rdo-release-$rdo_release RPM package version
-            rdo_release=$(echo $TARGET_BRANCH | sed "s|stable/||g")
-            yum_install https://rdoproject.org/repos/openstack-$rdo_release/rdo-release-$rdo_release.rpm
-        fi
-    fi
-
-    # Also enable optional for RHEL7 proper.  Note this is a silent
-    # no-op on other platforms.
-    sudo yum-config-manager --enable rhel-7-server-optional-rpms
-
-    # Enable the Software Collections (SCL) repository for CentOS.
-    # This repository includes useful software (e.g. the Go Toolset)
-    # which is not present in the main repository.
-    if [[ "$os_VENDOR" =~ (CentOS) ]]; then
-        yum_install centos-release-scl
-    fi
-
-    if is_oraclelinux; then
-        sudo yum-config-manager --enable ol7_optional_latest ol7_addons ol7_MySQL56
-    fi
+    # NOTE(ianw) 2020-04-30 : when we have future branches, we
+    # probably want to install the relevant branch RDO release as
+    # well.  But for now it's all master.
+    sudo dnf -y install https://rdoproject.org/repos/rdo-release.el8.rpm
+    sudo dnf -y update
 }
 
 
@@ -395,14 +348,18 @@ fi
 # to speed things up
 SKIP_EPEL_INSTALL=$(trueorfalse False SKIP_EPEL_INSTALL)
 
-if [[ $DISTRO == "rhel7" ]]; then
+if [[ $DISTRO == "rhel8" ]]; then
     # If we have /etc/ci/mirror_info.sh assume we're on a OpenStack CI
     # node, where EPEL is installed (but disabled) and already
     # pointing at our internal mirror
     if [[ -f /etc/ci/mirror_info.sh ]]; then
         SKIP_EPEL_INSTALL=True
-        sudo yum-config-manager --enable epel
+        sudo dnf config-manager --set-enabled epel
     fi
+
+    # PowerTools repo provides libyaml-devel required by devstack itself and
+    # EPEL packages assume that the PowerTools repository is enable.
+    sudo dnf config-manager --set-enabled PowerTools
 
     if [[ ${SKIP_EPEL_INSTALL} != True ]]; then
         _install_epel
@@ -411,6 +368,12 @@ if [[ $DISTRO == "rhel7" ]]; then
     # available in RDO repositories (e.g. OVS, or later versions of
     # kvm) to run.
     _install_rdo
+
+    # NOTE(cgoncalves): workaround RHBZ#1154272
+    # dnf fails for non-privileged users when expired_repos.json doesn't exist.
+    # RHBZ: https://bugzilla.redhat.com/show_bug.cgi?id=1154272
+    # Patch: https://github.com/rpm-software-management/dnf/pull/1448
+    echo "[]" | sudo tee /var/cache/dnf/expired_repos.json
 fi
 
 # Ensure python is installed
