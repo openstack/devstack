@@ -97,6 +97,7 @@ openstack/neutron-vpnaas-dashboard       `https://opendev.org/openstack/neutron-
 openstack/nova-powervm                   `https://opendev.org/openstack/nova-powervm <https://opendev.org/openstack/nova-powervm>`__
 openstack/octavia                        `https://opendev.org/openstack/octavia <https://opendev.org/openstack/octavia>`__
 openstack/octavia-dashboard              `https://opendev.org/openstack/octavia-dashboard <https://opendev.org/openstack/octavia-dashboard>`__
+openstack/octavia-tempest-plugin         `https://opendev.org/openstack/octavia-tempest-plugin <https://opendev.org/openstack/octavia-tempest-plugin>`__
 openstack/openstacksdk                   `https://opendev.org/openstack/openstacksdk <https://opendev.org/openstack/openstacksdk>`__
 openstack/os-loganalyze                  `https://opendev.org/openstack/os-loganalyze <https://opendev.org/openstack/os-loganalyze>`__
 openstack/osprofiler                     `https://opendev.org/openstack/osprofiler <https://opendev.org/openstack/osprofiler>`__
