@@ -117,7 +117,7 @@ function install_nova_hypervisor {
             # Workaround for missing dependencies in python-libguestfs
             install_package python-libguestfs guestfs-data augeas augeas-lenses
         elif is_fedora; then
-            install_package python-libguestfs
+            install_package python3-libguestfs
         fi
     fi
 }
