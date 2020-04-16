@@ -968,9 +968,6 @@ fi
 
 if is_service_enabled tls-proxy; then
     fix_system_ca_bundle_path
-    if python3_enabled ; then
-        fix_system_ca_bundle_path python3
-    fi
 fi
 
 # Extras Install
