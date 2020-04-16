@@ -1,2 +1,1 @@
-dstat # not:f30,f31
-pcp-system-tools # dist:f30,f31
+pcp-system-tools
