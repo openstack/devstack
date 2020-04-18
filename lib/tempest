@@ -570,6 +570,7 @@ function configure_tempest {
             iniset $TEMPEST_CONFIG compute-feature-enabled snapshot False
             iniset $TEMPEST_CONFIG compute-feature-enabled suspend False
         else
+            iniset $TEMPEST_CONFIG compute-feature-enabled stable_rescue True
             iniset $TEMPEST_CONFIG compute-feature-enabled swap_volume True
         fi
     fi
