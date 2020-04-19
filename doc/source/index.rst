@@ -151,6 +151,13 @@ Get :doc:`the big picture <overview>` of what we are trying to do
 with devstack, and help us by :doc:`contributing to the project
 <hacking>`.
 
+If you are a new contributor to devstack please refer: :doc:`contributor/contributing`
+
+.. toctree::
+   :hidden:
+
+   contributor/contributing
+
 Contents
 ++++++++
 
