@@ -341,6 +341,12 @@ function upload_image {
             disk_format=qcow2
             container_format=bare
             ;;
+        *.qcow2.xz)
+            image_name=$(basename "$image" ".qcow2.xz")
+            disk_format=qcow2
+            container_format=bare
+            unpack=unxz
+            ;;
         *.raw)
             image_name=$(basename "$image" ".raw")
             disk_format=raw
@@ -376,6 +382,16 @@ function upload_image {
             openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(zcat --force "${image}")
         elif [ "$unpack" = "bunzip2" ]; then
             openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(bunzip2 -cdk "${image}")
+        elif [ "$unpack" = "unxz" ]; then
+            # NOTE(brtknr): unxz the file first and cleanup afterwards to
+            # prevent timeout while Glance tries to upload image (e.g. to Swift).
+            local tmp_dir
+            local image_path
+            tmp_dir=$(mktemp -d)
+            image_path="$tmp_dir/$image_name"
+            unxz -cv "${image}" > "$image_path"
+            openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format --file "$image_path"
+            rm -rf $tmp_dir
         else
             openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < "${image}"
         fi
