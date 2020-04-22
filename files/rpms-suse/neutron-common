@@ -5,7 +5,6 @@ ebtables
 haproxy # to serve as metadata proxy inside router/dhcp namespaces
 iptables
 iputils
-mariadb # NOPRIME
 rabbitmq-server # NOPRIME
 radvd # NOPRIME
 sqlite3
