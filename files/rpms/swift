@@ -1,8 +1,7 @@
 curl
 liberasurecode-devel
 memcached
-pyxattr
-rsync-daemon # dist:f30,f31
+rsync-daemon
 sqlite
 xfsprogs
 xinetd
