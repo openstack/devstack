@@ -59,6 +59,9 @@ function install_libvirt {
 
     if is_ubuntu; then
         install_package qemu-system libvirt-clients libvirt-daemon-system libvirt-dev
+        if is_arch "aarch64"; then
+            install_package qemu-efi
+        fi
         # uninstall in case the libvirt version changed
         pip_uninstall libvirt-python
         pip_install_gr libvirt-python
@@ -78,6 +81,10 @@ function install_libvirt {
         install_package qemu-kvm
 
         install_package libvirt libvirt-devel
+        if is_arch "aarch64"; then
+            install_package edk2.git-aarch64
+        fi
+
         pip_uninstall libvirt-python
         pip_install_gr libvirt-python
     fi
