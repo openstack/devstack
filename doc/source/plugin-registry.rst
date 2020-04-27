@@ -138,6 +138,7 @@ starlingx/integ                          `https://opendev.org/starlingx/integ <h
 starlingx/metal                          `https://opendev.org/starlingx/metal <https://opendev.org/starlingx/metal>`__
 starlingx/nfv                            `https://opendev.org/starlingx/nfv <https://opendev.org/starlingx/nfv>`__
 starlingx/update                         `https://opendev.org/starlingx/update <https://opendev.org/starlingx/update>`__
+vexxhost/openstack-operator              `https://opendev.org/vexxhost/openstack-operator <https://opendev.org/vexxhost/openstack-operator>`__
 x/almanach                               `https://opendev.org/x/almanach <https://opendev.org/x/almanach>`__
 x/apmec                                  `https://opendev.org/x/apmec <https://opendev.org/x/apmec>`__
 x/bilean                                 `https://opendev.org/x/bilean <https://opendev.org/x/bilean>`__
