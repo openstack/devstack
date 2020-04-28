@@ -229,8 +229,7 @@
         '{{ stage_dir }}/etc': logs
         /var/log/rabbitmq: logs
         /var/log/postgresql: logs
-        /var/log/mysql.err: logs
-        /var/log/mysql.log: logs
+        /var/log/mysql: logs
         /var/log/libvirt: logs
         /etc/sudoers: logs
         /etc/sudoers.d: logs
