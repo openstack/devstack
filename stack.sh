@@ -283,19 +283,12 @@ fi
 # to pick up required packages.
 
 function _install_epel {
-    # NOTE: We always remove and install latest -- some environments
-    # use snapshot images, and if EPEL version updates they break
-    # unless we update them to latest version.
-    if sudo yum repolist enabled epel | grep -q 'epel'; then
-        uninstall_package epel-release || true
-    fi
-
     # epel-release is in extras repo which is enabled by default
     install_package epel-release
 
     # RDO repos are not tested with epel and may have incompatibilities so
     # let's limit the packages fetched from epel to the ones not in RDO repos.
-    sudo yum-config-manager --save --setopt=includepkgs=debootstrap,dpkg epel
+    sudo dnf config-manager --save --setopt=includepkgs=debootstrap,dpkg epel
 }
 
 function _install_rdo {

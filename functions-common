@@ -329,9 +329,6 @@ function _ensure_lsb_release {
         sudo zypper -n install lsb-release
     elif [[ -x $(command -v dnf 2>/dev/null) ]]; then
         sudo dnf install -y redhat-lsb-core
-    elif [[ -x $(command -v yum 2>/dev/null) ]]; then
-        # all rh patforms (fedora, centos, rhel) have this pkg
-        sudo yum install -y redhat-lsb-core
     else
         die $LINENO "Unable to find or auto-install lsb_release"
     fi
@@ -1361,7 +1358,7 @@ function uninstall_package {
     if is_ubuntu; then
         apt_get purge "$@"
     elif is_fedora; then
-        sudo ${YUM:-yum} remove -y "$@" ||:
+        sudo dnf remove -y "$@" ||:
     elif is_suse; then
         sudo zypper remove -y "$@" ||:
     else
@@ -1369,8 +1366,11 @@ function uninstall_package {
     fi
 }
 
-# Wrapper for ``yum`` to set proxy environment variables
-# Uses globals ``OFFLINE``, ``*_proxy``, ``YUM``
+# Wrapper for ``dnf`` to set proxy environment variables
+# Uses globals ``OFFLINE``, ``*_proxy``
+# The name is kept for backwards compatability with external
+# callers, despite none of our supported platforms using yum
+# any more.
 # yum_install package [package ...]
 function yum_install {
     local result parse_yum_result
@@ -1378,44 +1378,8 @@ function yum_install {
     [[ "$OFFLINE" = "True" ]] && return
 
     time_start "yum_install"
-
-    # This is a bit tricky, because yum -y assumes missing or failed
-    # packages are OK (see [1]).  We want devstack to stop if we are
-    # installing missing packages.
-    #
-    # Thus we manually match on the output (stack.sh runs in a fixed
-    # locale, so lang shouldn't change).
-    #
-    # If yum returns !0, we echo the result as "YUM_FAILED" and return
-    # that from the awk (we're subverting -e with this trick).
-    # Otherwise we use awk to look for failure strings and return "2"
-    # to indicate a terminal failure.
-    #
-    # [1] https://bugzilla.redhat.com/show_bug.cgi?id=965567
-    parse_yum_result='              \
-        BEGIN { result=0 }          \
-        /^YUM_FAILED/ { result=$2 } \
-        /^No package/ { result=2 }  \
-        /^Failed:/    { result=2 }  \
-        //{ print }                 \
-        END { exit result }'
-    (sudo_with_proxies "${YUM:-yum}" install -y "$@" 2>&1 || echo YUM_FAILED $?) \
-        | awk "$parse_yum_result" && result=$? || result=$?
-
+    sudo_with_proxies dnf install -y "$@"
     time_stop "yum_install"
-
-    # if we return 1, then the wrapper functions will run an update
-    # and try installing the package again as a defense against bad
-    # mirrors.  This can hide failures, especially when we have
-    # packages that are in the "Failed:" section because their rpm
-    # install scripts failed to run correctly (in this case, the
-    # package looks installed, so when the retry happens we just think
-    # the package is OK, and incorrectly continue on).
-    if [ "$result" == 2 ]; then
-        die "Detected fatal package install failure"
-    fi
-
-    return "$result"
 }
 
 # zypper wrapper to set arguments correctly

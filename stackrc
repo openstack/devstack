@@ -813,15 +813,6 @@ SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT=${SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT:-5}
 # Service graceful shutdown timeout
 WORKER_TIMEOUT=${WORKER_TIMEOUT:-90}
 
-# Choose DNF on RedHat/Fedora platforms with it, or otherwise default
-# to YUM.  Can remove this when only dnf is supported (i.e. centos7
-# disappears)
-if [[ -e /usr/bin/dnf ]]; then
-    YUM=${YUM:-dnf}
-else
-    YUM=${YUM:-yum}
-fi
-
 # Common Configuration
 # --------------------
 
