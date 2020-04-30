@@ -1,7 +1,6 @@
 apache2
 apache2-dev
 bc
-bridge-utils
 bsdmainutils
 curl
 default-jre-headless  # NOPRIME
