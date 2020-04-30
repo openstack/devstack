@@ -1,7 +1,6 @@
 apache2
 apache2-devel
 bc
-bridge-utils
 ca-certificates-mozilla
 curl
 gcc
