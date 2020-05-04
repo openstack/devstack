@@ -627,7 +627,7 @@
         - swift-dsvm-functional-py3:
             voting: false
             irrelevant-files: *dsvm-irrelevant-files
-        - grenade-py3:
+        - grenade:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -676,7 +676,7 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - grenade-py3:
+        - grenade:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
