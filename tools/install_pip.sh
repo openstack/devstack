@@ -133,8 +133,12 @@ get_versions
 # results in a nonfunctional system. pip on fedora installs to /usr so pip
 # can safely override the system pip for all versions of fedora
 if ! is_fedora  && ! is_suse; then
-    uninstall_package python-pip
-    uninstall_package python3-pip
+    if is_package_installed python-pip ; then
+        uninstall_package python-pip
+    fi
+    if is_package_installed python3-pip ; then
+        uninstall_package python3-pip
+    fi
 fi
 
 install_get_pip
