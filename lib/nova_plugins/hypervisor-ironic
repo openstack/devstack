@@ -68,13 +68,6 @@ function install_nova_hypervisor {
         return
     fi
     install_libvirt
-    if [[ "$IRONIC_VM_LOG_CONSOLE" == "True" ]] && is_ubuntu; then
-        # Ubuntu packaging+apparmor issue prevents libvirt from loading
-        # the ROM from /usr/share/misc.  Workaround by installing it directly
-        # to a directory that it can read from. (LP: #1393548)
-        sudo rm -rf /usr/share/qemu/sgabios.bin
-        sudo cp /usr/share/misc/sgabios.bin /usr/share/qemu/sgabios.bin
-    fi
 }
 
 # start_nova_hypervisor - Start any required external services
