@@ -472,6 +472,11 @@ function configure_tempest {
         TEMPEST_EXTEND_ATTACHED_VOLUME=${TEMPEST_EXTEND_ATTACHED_VOLUME:-True}
     fi
     iniset $TEMPEST_CONFIG volume-feature-enabled extend_attached_volume $(trueorfalse False TEMPEST_EXTEND_ATTACHED_VOLUME)
+    # Only turn on TEMPEST_VOLUME_REVERT_TO_SNAPSHOT by default for "lvm" backends
+    if [[ "$CINDER_ENABLED_BACKENDS" == *"lvm"* ]]; then
+        TEMPEST_VOLUME_REVERT_TO_SNAPSHOT=${TEMPEST_VOLUME_REVERT_TO_SNAPSHOT:-True}
+    fi
+    iniset $TEMPEST_CONFIG volume-feature-enabled volume_revert $(trueorfalse False TEMPEST_VOLUME_REVERT_TO_SNAPSHOT)
     local tempest_volume_min_microversion=${TEMPEST_VOLUME_MIN_MICROVERSION:-None}
     local tempest_volume_max_microversion=${TEMPEST_VOLUME_MAX_MICROVERSION:-"latest"}
     # Reset microversions to None where v2 is running which does not support microversion.
