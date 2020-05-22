@@ -201,13 +201,13 @@ function configure_tempest {
             if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
                 # Determine the flavor disk size based on the image size.
                 disk=$(image_size_in_gib $image_uuid)
-                openstack flavor create --id 42 --ram 64 --disk $disk --vcpus 1 m1.nano
+                openstack flavor create --id 42 --ram 128 --disk $disk --vcpus 1 m1.nano
             fi
             flavor_ref=42
             if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
                 # Determine the alt flavor disk size based on the alt image size.
                 disk=$(image_size_in_gib $image_uuid_alt)
-                openstack flavor create --id 84 --ram 128 --disk $disk --vcpus 1 m1.micro
+                openstack flavor create --id 84 --ram 192 --disk $disk --vcpus 1 m1.micro
             fi
             flavor_ref_alt=84
         else
