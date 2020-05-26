@@ -428,10 +428,11 @@ function configure_swift {
         swift_pipeline+=" s3api"
     fi
     if is_service_enabled keystone; then
+        swift_pipeline+=" authtoken"
         if is_service_enabled s3api;then
             swift_pipeline+=" s3token"
         fi
-        swift_pipeline+=" authtoken keystoneauth"
+        swift_pipeline+=" keystoneauth"
     fi
 
     swift_pipeline+=" tempauth "
