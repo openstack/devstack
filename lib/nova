@@ -96,10 +96,6 @@ NOVA_ENABLE_CACHE=${NOVA_ENABLE_CACHE:-True}
 # NOTE: Set ``FORCE_CONFIG_DRIVE="False"`` to turn OFF config drive
 FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"False"}
 
-# Nova supports pluggable schedulers.  The default ``FilterScheduler``
-# should work in most cases.
-SCHEDULER=${SCHEDULER:-filter_scheduler}
-
 # The following NOVA_FILTERS contains SameHostFilter and DifferentHostFilter with
 # the default filters.
 NOVA_FILTERS="AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter"
@@ -398,11 +394,8 @@ function create_nova_conf {
     fi
     iniset $NOVA_CONF wsgi api_paste_config "$NOVA_API_PASTE_INI"
     iniset $NOVA_CONF DEFAULT rootwrap_config "$NOVA_CONF_DIR/rootwrap.conf"
-    iniset $NOVA_CONF scheduler driver "$SCHEDULER"
     iniset $NOVA_CONF filter_scheduler enabled_filters "$NOVA_FILTERS"
-    if [[ $SCHEDULER == "filter_scheduler" ]]; then
-        iniset $NOVA_CONF scheduler workers "$API_WORKERS"
-    fi
+    iniset $NOVA_CONF scheduler workers "$API_WORKERS"
     iniset $NOVA_CONF neutron default_floating_pool "$PUBLIC_NETWORK_NAME"
     if [[ $SERVICE_IP_VERSION == 6 ]]; then
         iniset $NOVA_CONF DEFAULT my_ip "$HOST_IPV6"
