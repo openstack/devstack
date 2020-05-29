@@ -31,7 +31,6 @@ openstack/ceilometer                     `https://opendev.org/openstack/ceilomet
 openstack/ceilometer-powervm             `https://opendev.org/openstack/ceilometer-powervm <https://opendev.org/openstack/ceilometer-powervm>`__
 openstack/cinderlib                      `https://opendev.org/openstack/cinderlib <https://opendev.org/openstack/cinderlib>`__
 openstack/cloudkitty                     `https://opendev.org/openstack/cloudkitty <https://opendev.org/openstack/cloudkitty>`__
-openstack/congress                       `https://opendev.org/openstack/congress <https://opendev.org/openstack/congress>`__
 openstack/cyborg                         `https://opendev.org/openstack/cyborg <https://opendev.org/openstack/cyborg>`__
 openstack/designate                      `https://opendev.org/openstack/designate <https://opendev.org/openstack/designate>`__
 openstack/devstack-plugin-amqp1          `https://opendev.org/openstack/devstack-plugin-amqp1 <https://opendev.org/openstack/devstack-plugin-amqp1>`__
@@ -84,7 +83,6 @@ openstack/networking-l2gw                `https://opendev.org/openstack/networki
 openstack/networking-midonet             `https://opendev.org/openstack/networking-midonet <https://opendev.org/openstack/networking-midonet>`__
 openstack/networking-odl                 `https://opendev.org/openstack/networking-odl <https://opendev.org/openstack/networking-odl>`__
 openstack/networking-onos                `https://opendev.org/openstack/networking-onos <https://opendev.org/openstack/networking-onos>`__
-openstack/networking-ovn                 `https://opendev.org/openstack/networking-ovn <https://opendev.org/openstack/networking-ovn>`__
 openstack/networking-powervm             `https://opendev.org/openstack/networking-powervm <https://opendev.org/openstack/networking-powervm>`__
 openstack/networking-sfc                 `https://opendev.org/openstack/networking-sfc <https://opendev.org/openstack/networking-sfc>`__
 openstack/neutron                        `https://opendev.org/openstack/neutron <https://opendev.org/openstack/neutron>`__
