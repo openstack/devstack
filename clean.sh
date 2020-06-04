@@ -123,12 +123,10 @@ if [[ -n "$LOGDIR" ]] && [[ -d "$LOGDIR" ]]; then
     sudo rm -rf $LOGDIR
 fi
 
-# Clean out the systemd user unit files if systemd was used.
-if [[ "$USE_SYSTEMD" = "True" ]]; then
-    sudo find $SYSTEMD_DIR -type f -name '*devstack@*service' -delete
-    # Make systemd aware of the deletion.
-    $SYSTEMCTL daemon-reload
-fi
+# Clean out the systemd unit files.
+sudo find $SYSTEMD_DIR -type f -name '*devstack@*service' -delete
+# Make systemd aware of the deletion.
+$SYSTEMCTL daemon-reload
 
 # Clean up venvs
 DIRS_TO_CLEAN="$WHEELHOUSE ${PROJECT_VENV[@]} .config/openstack"

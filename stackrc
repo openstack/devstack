@@ -109,9 +109,7 @@ CELLSV2_SETUP=${CELLSV2_SETUP:-"superconductor"}
 # Set the root URL for Horizon
 HORIZON_APACHE_ROOT="/dashboard"
 
-# Whether to use SYSTEMD to manage services, we only do this from
-# Queens forward.
-USE_SYSTEMD="True"
+# Whether to use user specific units for running services or global ones.
 USER_UNITS=$(trueorfalse False USER_UNITS)
 if [[ "$USER_UNITS" == "True" ]]; then
     SYSTEMD_DIR="$HOME/.local/share/systemd/user"
