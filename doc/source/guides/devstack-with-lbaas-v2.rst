@@ -62,7 +62,7 @@ Edit your ``/opt/stack/devstack/local.conf`` to look like
     ENABLED_SERVICES+=,n-api,n-crt,n-cpu,n-cond,n-sch,n-api-meta,n-sproxy
     ENABLED_SERVICES+=,placement-api,placement-client
     # Glance
-    ENABLED_SERVICES+=,g-api,g-reg
+    ENABLED_SERVICES+=,g-api
     # Neutron
     ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta,neutron
     ENABLED_SERVICES+=,octavia,o-cw,o-hk,o-hm,o-api
