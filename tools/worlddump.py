@@ -17,8 +17,6 @@
 
 """Dump the state of the world for post mortem."""
 
-from __future__ import print_function
-
 import argparse
 import datetime
 from distutils import spawn
