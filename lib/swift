@@ -431,6 +431,8 @@ function configure_swift {
         swift_pipeline+=" authtoken"
         if is_service_enabled s3api;then
             swift_pipeline+=" s3token"
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token auth_uri ${KEYSTONE_AUTH_URI_V3}
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token delay_auth_decision true
         fi
         swift_pipeline+=" keystoneauth"
     fi
