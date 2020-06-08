@@ -40,7 +40,7 @@ updates. Tempest tests will work in this environment.
 Locally Accessible Guests
 =========================
 
-If you want to make you guests accessible from other machines on your
+If you want to make your guests accessible from other machines on your
 network, we have to connect ``br-ex`` to a physical interface.
 
 Dedicated Guest Interface
@@ -81,7 +81,7 @@ of addresses, and have them all exactly correct.
    [[local|localrc]]
    PUBLIC_INTERFACE=eth0
    HOST_IP=10.42.0.52
-   FLOATING_RANGE=10.42.0.52/24
+   FLOATING_RANGE=10.42.0.0/24
    PUBLIC_NETWORK_GATEWAY=10.42.0.1
    Q_FLOATING_ALLOCATION_POOL=start=10.42.0.250,end=10.42.0.254
 
