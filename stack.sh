@@ -1267,6 +1267,11 @@ if is_service_enabled n-api; then
     start_nova_api
 fi
 
+if is_service_enabled ovn-controller ovn-controller-vtep; then
+    echo_summary "Starting OVN services"
+    start_ovn_services
+fi
+
 if is_service_enabled neutron-api; then
     echo_summary "Starting Neutron"
     start_neutron_api
