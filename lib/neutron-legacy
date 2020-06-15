@@ -58,8 +58,6 @@
 # Neutron Network Configuration
 # -----------------------------
 
-deprecated "Using lib/neutron-legacy is deprecated, and it will be removed in the future"
-
 if is_service_enabled tls-proxy; then
     Q_PROTOCOL="https"
 fi
