@@ -69,6 +69,9 @@ umask 022
 # Not all distros have sbin in PATH for regular users.
 PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin
 
+# Add for openSUSE
+PATH=$PATH:/usr/local/bin
+
 # Keep track of the DevStack directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
