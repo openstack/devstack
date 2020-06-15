@@ -458,7 +458,7 @@ function start_neutron_api {
     done
 
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        run_process neutron-api "$NEUTRON_BIN_DIR/uwsgi --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
+        run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
         neutron_url=$service_protocol://$NEUTRON_SERVICE_HOST/networking/
         enable_service neutron-rpc-server
         run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $opts"
