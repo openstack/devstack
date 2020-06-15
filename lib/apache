@@ -82,26 +82,52 @@ function install_apache_uwsgi {
         apxs="apxs"
     fi
 
-    # Ubuntu xenial is back level on uwsgi so the proxy doesn't
-    # actually work. Hence we have to build from source for now.
+    # This varies based on packaged/installed.  If we've
+    # pip_installed, then the pip setup will only build a "python"
+    # module that will be either python2 or python3 depending on what
+    # it was built with.
     #
-    # Centos 7 actually has the module in epel, but there was a big
-    # push to disable epel by default. As such, compile from source
-    # there as well.
+    # For package installs, the distro ships both plugins and you need
+    # to select the right one ... it will not be autodetected.
+    if python3_enabled; then
+        UWSGI_PYTHON_PLUGIN=python3
+    else
+        UWSGI_PYTHON_PLUGIN=python
+    fi
 
-    local dir
-    dir=$(mktemp -d)
-    pushd $dir
-    pip_install uwsgi
-    pip download uwsgi -c $REQUIREMENTS_DIR/upper-constraints.txt
-    local uwsgi
-    uwsgi=$(ls uwsgi*)
-    tar xvf $uwsgi
-    cd uwsgi*/apache2
-    sudo $apxs -i -c mod_proxy_uwsgi.c
-    popd
-    # delete the temp directory
-    sudo rm -rf $dir
+    if is_ubuntu; then
+        install_package uwsgi \
+                        uwsgi-plugin-python \
+                        uwsgi-plugin-python3 \
+                        libapache2-mod-proxy-uwsgi
+    elif [[ $os_VENDOR == "Fedora" ]]; then
+        # Note httpd comes with mod_proxy_uwsgi and it is loaded by
+        # default; the mod_proxy_uwsgi package actually conflicts now.
+        # See:
+        #  https://bugzilla.redhat.com/show_bug.cgi?id=1574335
+        #
+        # Thus there is nothing else to do after this install
+        install_package uwsgi \
+                        uwsgi-plugin-python3
+    else
+        # Centos actually has the module in epel, but there was a big
+        # push to disable epel by default. As such, compile from source
+        # there.
+        local dir
+        dir=$(mktemp -d)
+        pushd $dir
+        pip_install uwsgi
+        pip download uwsgi -c $REQUIREMENTS_DIR/upper-constraints.txt
+        local uwsgi
+        uwsgi=$(ls uwsgi*)
+        tar xvf $uwsgi
+        cd uwsgi*/apache2
+        sudo $apxs -i -c mod_proxy_uwsgi.c
+        popd
+        # delete the temp directory
+        sudo rm -rf $dir
+        UWSGI_PYTHON_PLUGIN=python
+    fi
 
     if is_ubuntu || is_suse ; then
         # we've got to enable proxy and proxy_uwsgi for this to work
@@ -265,7 +291,7 @@ function write_uwsgi_config {
     # configured after graceful shutdown
     iniset "$file" uwsgi worker-reload-mercy $WORKER_TIMEOUT
     iniset "$file" uwsgi enable-threads true
-    iniset "$file" uwsgi plugins python
+    iniset "$file" uwsgi plugins http,${UWSGI_PYTHON_PLUGIN}
     # uwsgi recommends this to prevent thundering herd on accept.
     iniset "$file" uwsgi thunder-lock true
     # Set hook to trigger graceful shutdown on SIGTERM
@@ -318,7 +344,7 @@ function write_local_uwsgi_http_config {
     iniset "$file" uwsgi die-on-term true
     iniset "$file" uwsgi exit-on-reload false
     iniset "$file" uwsgi enable-threads true
-    iniset "$file" uwsgi plugins python
+    iniset "$file" uwsgi plugins http,${UWSGI_PYTHON_PLUGIN}
     # uwsgi recommends this to prevent thundering herd on accept.
     iniset "$file" uwsgi thunder-lock true
     # Set hook to trigger graceful shutdown on SIGTERM
