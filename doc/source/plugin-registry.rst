@@ -87,8 +87,6 @@ openstack/networking-powervm             `https://opendev.org/openstack/networki
 openstack/networking-sfc                 `https://opendev.org/openstack/networking-sfc <https://opendev.org/openstack/networking-sfc>`__
 openstack/neutron                        `https://opendev.org/openstack/neutron <https://opendev.org/openstack/neutron>`__
 openstack/neutron-dynamic-routing        `https://opendev.org/openstack/neutron-dynamic-routing <https://opendev.org/openstack/neutron-dynamic-routing>`__
-openstack/neutron-fwaas                  `https://opendev.org/openstack/neutron-fwaas <https://opendev.org/openstack/neutron-fwaas>`__
-openstack/neutron-fwaas-dashboard        `https://opendev.org/openstack/neutron-fwaas-dashboard <https://opendev.org/openstack/neutron-fwaas-dashboard>`__
 openstack/neutron-tempest-plugin         `https://opendev.org/openstack/neutron-tempest-plugin <https://opendev.org/openstack/neutron-tempest-plugin>`__
 openstack/neutron-vpnaas                 `https://opendev.org/openstack/neutron-vpnaas <https://opendev.org/openstack/neutron-vpnaas>`__
 openstack/neutron-vpnaas-dashboard       `https://opendev.org/openstack/neutron-vpnaas-dashboard <https://opendev.org/openstack/neutron-vpnaas-dashboard>`__
