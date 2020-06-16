@@ -77,6 +77,41 @@ function get_extra_file {
     fi
 }
 
+# Upload an image to glance using the configured mechanism
+#
+# Arguments:
+#  image name
+#  container format
+#  disk format
+#  path to image file
+#  optional properties (format of propname=value)
+#
+function _upload_image {
+    local image_name="$1"
+    shift
+    local container="$1"
+    shift
+    local disk="$1"
+    shift
+    local image="$1"
+    shift
+    local properties
+    local useimport
+
+    for prop in $*; do
+        properties+=" --property $prop"
+    done
+
+    if [[ "$GLANCE_USE_IMPORT_WORKFLOW" == "True" ]]; then
+        if [[ "$WSGI_MODE" != "uwsgi" ]]; then
+            useimport="--import"
+        else
+            echo "*** Unable to use glance import workflow because WSGI_MODE=uwsgi! ***"
+        fi
+    fi
+
+    openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" --public --container-format "$container" --disk-format "$disk" $useimport $properties < "${image}"
+}
 
 # Retrieve an image from a URL and upload into Glance.
 # Uses the following variables:
@@ -118,7 +153,7 @@ function upload_image {
     # OpenVZ-format images are provided as .tar.gz, but not decompressed prior to loading
     if [[ "$image_url" =~ 'openvz' ]]; then
         image_name="${image_fname%.tar.gz}"
-        openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" --public --container-format ami --disk-format ami < "${image}"
+        _upload_image "$image_name" ami ami "$image"
         return
     fi
 
@@ -232,7 +267,8 @@ function upload_image {
         vmdk_adapter_type="${props[1]:-$vmdk_adapter_type}"
         vmdk_net_adapter="${props[2]:-$vmdk_net_adapter}"
 
-        openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" --public --container-format bare --disk-format vmdk --property vmware_disktype="$vmdk_disktype" --property vmware_adaptertype="$vmdk_adapter_type" --property hw_vif_model="$vmdk_net_adapter" < "${image}"
+        _upload_image "$image_name" bare vmdk "$image" vmware_disktype="$vmdk_disktype" vmware_adaptertype="$vmdk_adapter_type" hw_vif_model="$vmdk_net_adapter"
+
         return
     fi
 
@@ -246,14 +282,9 @@ function upload_image {
             # Nova defaults to PV for all VHD images, but
             # the glance setting is needed for booting
             # directly from volume.
-            force_vm_mode="--property vm_mode=xen"
+            force_vm_mode="vm_mode=xen"
         fi
-        openstack \
-            --os-cloud=devstack-admin --os-region-name="$REGION_NAME" \
-            image create \
-            "$image_name" --public \
-            --container-format=ovf --disk-format=vhd \
-            $force_vm_mode < "${image}"
+        _upload_image "$image_name" ovf vhd "$image" $force_vm_mode
         return
     fi
 
@@ -262,12 +293,7 @@ function upload_image {
     # Setting metadata, so PV mode is used.
     if [[ "$image_url" =~ '.xen-raw.tgz' ]]; then
         image_name="${image_fname%.xen-raw.tgz}"
-        openstack \
-            --os-cloud=devstack-admin --os-region-name="$REGION_NAME" \
-            image create \
-            "$image_name" --public \
-            --container-format=tgz --disk-format=raw \
-            --property vm_mode=xen < "${image}"
+        _upload_image "$image_name" tgz raw "$image" vm_mode=xen
         return
     fi
 
@@ -278,12 +304,7 @@ function upload_image {
             die $LINENO "Unknown vm_mode=${vm_mode} for Virtuozzo image"
         fi
 
-        openstack \
-            --os-cloud=devstack-admin --os-region-name="$REGION_NAME" \
-            image create \
-            "$image_name" --public \
-            --container-format=bare --disk-format=ploop \
-            --property vm_mode=$vm_mode < "${image}"
+        _upload_image "$image_name" bare ploop "$image" vm_mode=$vm_mode
         return
     fi
 
@@ -292,7 +313,7 @@ function upload_image {
     local disk_format=""
     local container_format=""
     local unpack=""
-    local img_property="--property hw_rng_model=virtio"
+    local img_property="hw_rng_model=virtio"
     case "$image_fname" in
         *.tar.gz|*.tgz)
             # Extract ami and aki files
@@ -370,18 +391,18 @@ function upload_image {
     esac
 
     if is_arch "ppc64le" || is_arch "ppc64" || is_arch "ppc"; then
-        img_property="$img_property --property hw_cdrom_bus=scsi --property os_command_line=console=hvc0"
+        img_property="$img_property hw_cdrom_bus=scsi os_command_line=console=hvc0"
     fi
 
     if is_arch "aarch64"; then
-        img_property="$img_property --property hw_machine_type=virt --property hw_cdrom_bus=scsi --property hw_scsi_model=virtio-scsi --property os_command_line='console=ttyAMA0'"
+        img_property="$img_property hw_machine_type=virt hw_cdrom_bus=scsi hw_scsi_model=virtio-scsi os_command_line='console=ttyAMA0'"
     fi
 
     if [ "$container_format" = "bare" ]; then
         if [ "$unpack" = "zcat" ]; then
-            openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(zcat --force "${image}")
+            _upload_image "$image_name" $container_format $disk_format <(zcat --force "$image") $img_property
         elif [ "$unpack" = "bunzip2" ]; then
-            openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < <(bunzip2 -cdk "${image}")
+            _upload_image "$image_name" $container_format $disk_format <(bunzip2 -cdk "$image") $img_property
         elif [ "$unpack" = "unxz" ]; then
             # NOTE(brtknr): unxz the file first and cleanup afterwards to
             # prevent timeout while Glance tries to upload image (e.g. to Swift).
@@ -390,10 +411,10 @@ function upload_image {
             tmp_dir=$(mktemp -d)
             image_path="$tmp_dir/$image_name"
             unxz -cv "${image}" > "$image_path"
-            openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format --file "$image_path"
+            _upload_image "$image_name" $container_format $disk_format "$image_path" $img_property
             rm -rf $tmp_dir
         else
-            openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" $img_property --public --container-format=$container_format --disk-format $disk_format < "${image}"
+            _upload_image "$image_name" $container_format $disk_format "$image" $img_property
         fi
     else
         # Use glance client to add the kernel the root filesystem.
@@ -406,7 +427,7 @@ function upload_image {
         if [ -n "$ramdisk" ]; then
             ramdisk_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-ramdisk" $img_property --public --container-format ari --disk-format ari < "$ramdisk" | grep ' id ' | get_field 2)
         fi
-        openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "${image_name%.img}" $img_property --public --container-format ami --disk-format ami ${kernel_id:+--property kernel_id=$kernel_id} ${ramdisk_id:+--property ramdisk_id=$ramdisk_id} < "${image}"
+        _upload_image "${image_name%.img}" ami ami "$image" ${kernel_id:+ kernel_id=$kernel_id} ${ramdisk_id:+ ramdisk_id=$ramdisk_id} $img_property
     fi
 }
 
