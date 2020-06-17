@@ -619,16 +619,14 @@
     check:
       jobs:
         - devstack
-        - devstack-xenial:
-            voting: false
+        - devstack-xenial
         - devstack-ipv6
         - devstack-platform-centos-7
         - devstack-platform-opensuse-15
         - devstack-platform-fedora-29
         - devstack-platform-xenial
         - devstack-multinode
-        - devstack-multinode-xenial:
-            voting: false
+        - devstack-multinode-xenial
         - devstack-unit-tests
         - openstack-tox-bashate
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
@@ -672,10 +670,10 @@
     gate:
       jobs:
         - devstack
-        #- devstack-xenial
+        - devstack-xenial
         - devstack-ipv6
         - devstack-multinode
-        #- devstack-multinode-xenial
+        - devstack-multinode-xenial
         - devstack-unit-tests
         - openstack-tox-bashate
         # - neutron-grenade-multinode:
