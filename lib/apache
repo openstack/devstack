@@ -73,15 +73,55 @@ function enable_apache_mod {
     fi
 }
 
+function download_and_compile_uwsgi {
+    local build_dir
+    build_dir="$(mktemp -d)"
+    pip_install uwsgi
+
+    # We need to download uwsgi from pip. Since we don't know the full name
+    # of its tar file we will download it to an empty dir. After download
+    # there should be single tar file.
+    local uwsgidir="$build_dir/uwsgidir"
+    mkdir -p "$uwsgidir"
+    pip download uwsgi -c $REQUIREMENTS_DIR/upper-constraints.txt -d "$uwsgidir"
+
+    local downloaded_files
+    downloaded_files=( $(find $uwsgidir/* ) )
+    if [[ "${#downloaded_files[@]}" != "1" ]] ; then
+        echo "Expected single uwsgi tar file. Got: '${downloaded_files[@]}'"
+        sudo rm -rf $build_dir
+        exit 1
+    fi
+    local uwsgitar="${downloaded_files[@]}"
+
+    # Now we can unwrap it somewhere else.
+    local uwsgiout="$build_dir/uwsgiout"
+    mkdir -p $uwsgiout
+    tar xf $uwsgitar -C "$uwsgiout"
+
+    # Unwrapped uwsgi can be wrapped with additional directory so
+    # we need to resolve a path to it.
+    local extracted_files
+    extracted_files=( $(ls $uwsgiout ) )
+    if [[ "${#extracted_files[@]}" == "1" ]] ; then
+        local uwsgipath="$uwsgiout/${extracted_files[0]}"
+    else
+        local uwsgipath="$uwsgiout"
+    fi
+
+    if is_fedora; then
+        sudo apxs -i -c $uwsgipath/apache2/mod_proxy_uwsgi.c
+    else
+        sudo apxs2 -i -c $uwsgipath/apache2/mod_proxy_uwsgi.c
+    fi
+
+    sudo rm -rf $build_dir
+}
+
 # NOTE(sdague): Install uwsgi including apache module, we need to get
 # to 2.0.6+ to get a working mod_proxy_uwsgi. We can probably build a
 # check for that and do it differently for different platforms.
 function install_apache_uwsgi {
-    local apxs="apxs2"
-    if is_fedora; then
-        apxs="apxs"
-    fi
-
     # This varies based on packaged/installed.  If we've
     # pip_installed, then the pip setup will only build a "python"
     # module that will be either python2 or python3 depending on what
@@ -110,22 +150,7 @@ function install_apache_uwsgi {
         install_package uwsgi \
                         uwsgi-plugin-python3
     else
-        # Centos actually has the module in epel, but there was a big
-        # push to disable epel by default. As such, compile from source
-        # there.
-        local dir
-        dir=$(mktemp -d)
-        pushd $dir
-        pip_install uwsgi
-        pip download uwsgi -c $REQUIREMENTS_DIR/upper-constraints.txt
-        local uwsgi
-        uwsgi=$(ls uwsgi*)
-        tar xvf $uwsgi
-        cd uwsgi*/apache2
-        sudo $apxs -i -c mod_proxy_uwsgi.c
-        popd
-        # delete the temp directory
-        sudo rm -rf $dir
+        download_and_compile_uwsgi
         UWSGI_PYTHON_PLUGIN=python
     fi
 
@@ -215,7 +240,7 @@ function enable_apache_site {
         sudo a2ensite ${site}
     elif is_fedora || is_suse; then
         local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
-        # Do nothing if site already enabled or no site config exists
+        # Do nothing if site already enabled or no site config exists.
         if [[ -f ${enabled_site_file}.disabled ]] && [[ ! -f ${enabled_site_file} ]]; then
             sudo mv ${enabled_site_file}.disabled ${enabled_site_file}
         fi
