@@ -109,6 +109,10 @@ function install_apache_uwsgi {
         # Thus there is nothing else to do after this install
         install_package uwsgi \
                         uwsgi-plugin-python3
+    elif [[ $os_VENDOR =~ openSUSE ]]; then
+        install_package uwsgi \
+                        uwsgi-python3 \
+                        apache2-mod_uwsgi
     else
         # Centos actually has the module in epel, but there was a big
         # push to disable epel by default. As such, compile from source
