@@ -49,16 +49,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-fedora-29
-    nodes:
-      - name: controller
-        label: fedora-29
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -535,13 +525,6 @@
     voting: false
 
 - job:
-    name: devstack-platform-fedora-29
-    parent: tempest-full-py3
-    description: Fedora latest platform test
-    nodeset: devstack-single-node-fedora-29
-    voting: false
-
-- job:
     name: devstack-platform-xenial
     parent: tempest-full-py3
     description: Ubuntu Xenial platform test
@@ -623,7 +606,6 @@
         - devstack-ipv6
         - devstack-platform-centos-7
         - devstack-platform-opensuse-15
-        - devstack-platform-fedora-29
         - devstack-platform-xenial
         - devstack-multinode
         - devstack-multinode-xenial
