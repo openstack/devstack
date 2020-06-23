@@ -41,7 +41,6 @@ openstack/devstack-plugin-nfs            `https://opendev.org/openstack/devstack
 openstack/devstack-plugin-open-cas       `https://opendev.org/openstack/devstack-plugin-open-cas <https://opendev.org/openstack/devstack-plugin-open-cas>`__
 openstack/devstack-plugin-pika           `https://opendev.org/openstack/devstack-plugin-pika <https://opendev.org/openstack/devstack-plugin-pika>`__
 openstack/devstack-plugin-zmq            `https://opendev.org/openstack/devstack-plugin-zmq <https://opendev.org/openstack/devstack-plugin-zmq>`__
-openstack/dragonflow                     `https://opendev.org/openstack/dragonflow <https://opendev.org/openstack/dragonflow>`__
 openstack/ec2-api                        `https://opendev.org/openstack/ec2-api <https://opendev.org/openstack/ec2-api>`__
 openstack/freezer                        `https://opendev.org/openstack/freezer <https://opendev.org/openstack/freezer>`__
 openstack/freezer-api                    `https://opendev.org/openstack/freezer-api <https://opendev.org/openstack/freezer-api>`__
