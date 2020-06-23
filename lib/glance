@@ -186,25 +186,19 @@ function configure_glance {
     if is_service_enabled s-proxy; then
         iniset $GLANCE_API_CONF glance_store default_store swift
         iniset $GLANCE_API_CONF glance_store swift_store_create_container_on_put True
-        if python3_enabled; then
-            iniset $GLANCE_API_CONF glance_store swift_store_auth_insecure True
-        fi
 
         iniset $GLANCE_API_CONF glance_store swift_store_config_file $GLANCE_SWIFT_STORE_CONF
         iniset $GLANCE_API_CONF glance_store default_swift_reference ref1
         iniset $GLANCE_API_CONF glance_store stores "file, http, swift"
+        if is_service_enabled tls-proxy; then
+            iniset $GLANCE_API_CONF glance_store swift_store_cacert $SSL_BUNDLE_FILE
+        fi
         iniset $GLANCE_API_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
         iniset $GLANCE_SWIFT_STORE_CONF ref1 user $SERVICE_PROJECT_NAME:glance-swift
 
         iniset $GLANCE_SWIFT_STORE_CONF ref1 key $SERVICE_PASSWORD
-        if python3_enabled; then
-            # NOTE(dims): Currently the glance_store+swift does not support either an insecure flag
-            # or ability to specify the CACERT. So fallback to http:// url
-            iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address ${KEYSTONE_SERVICE_URI/https/http}/v3
-        else
-            iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
-        fi
+        iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
         iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_version 3
     fi
 
