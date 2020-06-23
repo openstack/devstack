@@ -62,7 +62,7 @@ function get_python_exec_prefix {
     $xtrace
 
     local PYTHON_PATH=/usr/local/bin
-    ( is_fedora && ! python3_enabled ) || is_suse && PYTHON_PATH=/usr/bin
+    is_suse && PYTHON_PATH=/usr/bin
     echo $PYTHON_PATH
 }
 
@@ -169,16 +169,9 @@ function pip_install {
         local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
         local sudo_pip="env"
     else
-        local cmd_pip
-        local sudo_pip="sudo -H"
-        if python3_enabled; then
-            echo "Using python $PYTHON3_VERSION to install $package_dir because python3_enabled=True"
-            sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
-            cmd_pip="python$PYTHON3_VERSION -m pip"
-        else
-            echo "Using python $PYTHON2_VERSION to install $package_dir because python3_enabled=False"
-            cmd_pip=$(get_pip_command $PYTHON2_VERSION)
-        fi
+        local cmd_pip="python$PYTHON3_VERSION -m pip"
+        local sudo_pip="sudo -H LC_ALL=en_US.UTF-8"
+        echo "Using python $PYTHON3_VERSION to install $package_dir"
     fi
 
     cmd_pip="$cmd_pip install"
@@ -213,14 +206,8 @@ function pip_uninstall {
         local cmd_pip=$PIP_VIRTUAL_ENV/bin/pip
         local sudo_pip="env"
     else
-        local cmd_pip
-        local sudo_pip="sudo -H"
-        if python3_enabled; then
-            sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
-            cmd_pip="python$PYTHON3_VERSION -m pip"
-        else
-            cmd_pip=$(get_pip_command $PYTHON2_VERSION)
-        fi
+        local cmd_pip="python$PYTHON3_VERSION -m pip"
+        local sudo_pip="sudo -H LC_ALL=en_US.UTF-8"
     fi
     # don't error if we can't uninstall, it might not be there
     $sudo_pip $cmd_pip uninstall -y $name || /bin/true
@@ -457,37 +444,15 @@ function setup_package {
 }
 
 # Report whether python 3 should be used
+# TODO(frickler): drop this once all legacy uses are removed
 function python3_enabled {
-    if [[ $USE_PYTHON3 == "True" ]]; then
-        return 0
-    else
-        return 1
-    fi
+    return 1
 }
 
 # Provide requested python version and sets PYTHON variable
 function install_python {
-    # NOTE: install_python function should finally just do what install_python3
-    # does as soon Python 2 support has been dropped
-    if python3_enabled; then
-        install_python3
-        export PYTHON=$(which python${PYTHON3_VERSION} 2>/dev/null ||
-                        which python3 2>/dev/null)
-        if [[ "${DISTRO}" =~ (rhel8) ]]; then
-            # Use Python 3 as default python command so that we have only one
-            # python alternative to use on the system for either python and
-            # python3
-            sudo alternatives --set python "${PYTHON}"
-        else
-            # Install anyway Python 2 for legacy scripts that still requires
-            # python instead of python3 command
-            install_package python
-        fi
-    else
-        echo "WARNING - Python 2 support has been deprecated in favor of Python 3"
-        install_package python
-        export PYTHON=$(which python 2>/dev/null)
-    fi
+    install_python3
+    export PYTHON=$(which python${PYTHON3_VERSION} 2>/dev/null)
 }
 
 # Install python3 packages
