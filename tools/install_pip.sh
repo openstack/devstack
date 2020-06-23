@@ -5,7 +5,7 @@
 # Update pip and friends to a known common version
 
 # Assumptions:
-# - if USE_PYTHON3=True, PYTHON3_VERSION refers to a version already installed
+# - PYTHON3_VERSION refers to a version already installed
 
 set -o errexit
 
@@ -53,6 +53,8 @@ function get_versions {
     else
         echo "pip: Not Installed"
     fi
+    # Show python3 module version
+    python${PYTHON3_VERSION} -m pip --version
 }
 
 
@@ -125,7 +127,14 @@ function configure_pypi_alternative_url {
 # Show starting versions
 get_versions
 
-# Do pip
+if [[ -n $PYPI_ALTERNATIVE_URL ]]; then
+    configure_pypi_alternative_url
+fi
+
+# Just use system pkgs on Focal
+if [[ "$DISTRO" == focal ]]; then
+    exit 0
+fi
 
 # Eradicate any and all system packages
 
@@ -142,10 +151,6 @@ if ! is_fedora  && ! is_suse; then
 fi
 
 install_get_pip
-
-if [[ -n $PYPI_ALTERNATIVE_URL ]]; then
-    configure_pypi_alternative_url
-fi
 
 set -x
 
