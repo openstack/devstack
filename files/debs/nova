@@ -17,7 +17,6 @@ mysql-server # NOPRIME
 parted
 pm-utils
 python3-mysqldb
-qemu # dist:wheezy,jessie NOPRIME
 qemu-kvm # NOPRIME
 rabbitmq-server # NOPRIME
 socat # used by ajaxterm
