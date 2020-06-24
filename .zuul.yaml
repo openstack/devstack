@@ -9,6 +9,16 @@
           - controller
 
 - nodeset:
+    name: openstack-single-node-focal
+    nodes:
+      - name: controller
+        label: ubuntu-focal
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-single-node-bionic
     nodes:
       - name: controller
@@ -512,6 +522,14 @@
     parent: tempest-full-py3
     description: openSUSE 15.x platform test
     nodeset: devstack-single-node-opensuse-15
+
+- job:
+    name: devstack-platform-focal
+    parent: tempest-full-py3
+    description: Ubuntu Focal Fossa platform test
+    nodeset: openstack-single-node-focal
+    vars:
+      tempest_black_regex: "(tempest.api.compute.volumes.test_attach_volume.AttachVolumeMultiAttachTest.test_resize_server_with_multiattached_volume|tempest.api.compute.servers.test_server_rescue_negative.ServerRescueNegativeTestJSON|tempest.api.compute.servers.test_server_rescue.ServerStableDeviceRescueTest.test_stable_device_rescue_disk_virtio_with_volume_attached)"
     voting: false
 
 - job:
@@ -605,6 +623,7 @@
         - devstack-platform-opensuse-15
         - devstack-platform-fedora-latest
         - devstack-platform-centos-8
+        - devstack-platform-focal
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
