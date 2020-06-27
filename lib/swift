@@ -527,7 +527,7 @@ function configure_swift {
         else
             iniset ${testfile} func_test auth_port 80
         fi
-        iniset ${testfile} func_test auth_uri ${KEYSTONE_AUTH_URI}
+        iniset ${testfile} func_test auth_uri ${KEYSTONE_SERVICE_URI}
         if [[ "$auth_vers" == "3" ]]; then
             iniset ${testfile} func_test auth_prefix /identity/v3/
         else

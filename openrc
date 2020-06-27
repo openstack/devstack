@@ -87,9 +87,9 @@ export OS_AUTH_TYPE=password
 
 # If you don't have a working .stackenv, this is the backup position
 KEYSTONE_BACKUP=$SERVICE_PROTOCOL://$SERVICE_HOST:5000
-KEYSTONE_AUTH_URI=${KEYSTONE_AUTH_URI:-$KEYSTONE_BACKUP}
+KEYSTONE_SERVICE_URI=${KEYSTONE_SERVICE_URI:-$KEYSTONE_BACKUP}
 
-export OS_AUTH_URL=${OS_AUTH_URL:-$KEYSTONE_AUTH_URI}
+export OS_AUTH_URL=${OS_AUTH_URL:-$KEYSTONE_SERVICE_URI}
 
 # Currently, in order to use openstackclient with Identity API v3,
 # we need to set the domain which the user and project belong to.
