@@ -587,6 +587,7 @@
     parent: tempest-full-py3
     description: openSUSE 15.x platform test
     nodeset: devstack-single-node-opensuse-15
+    voting: false
 
 - job:
     name: devstack-platform-focal
