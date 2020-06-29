@@ -137,7 +137,7 @@ OS\_AUTH\_URL
 
     ::
 
-        OS_AUTH_URL=http://$SERVICE_HOST:5000/v3.0
+        OS_AUTH_URL=http://$SERVICE_HOST/identity/v3.0
 
 KEYSTONECLIENT\_DEBUG, NOVACLIENT\_DEBUG
     Set command-line client log level to ``DEBUG``. These are commented
@@ -430,16 +430,16 @@ Python bindings added when they are enabled.
 
   ADDITIONAL_VENV_PACKAGES="python-foo, python-bar"
 
-Use python3
+Use python2
 ------------
 
-By default ``stack.sh`` uses python2 (the exact version set by the
-``PYTHON2_VERSION``). This can be overriden so devstack will run
-python3 (the exact version set by ``PYTHON3_VERSION``).
+By default ``stack.sh`` uses python3 (the exact version set by the
+``PYTHON3_VERSION``). This can be overriden so devstack will run
+python2 (the exact version set by ``PYTHON2_VERSION``).
 
 ::
 
-  USE_PYTHON3=True
+  USE_PYTHON3=False
 
 A clean install every time
 --------------------------
@@ -695,16 +695,6 @@ service is started and registered in RegionOne, not RegionTwo, so we use
 KEYSTONE_REGION_NAME to specify the region of Keystone service.
 KEYSTONE_REGION_NAME has a default value the same as REGION_NAME thus we omit
 it in the configuration of RegionOne.
-
-Disabling Identity API v2
-+++++++++++++++++++++++++
-
-The Identity API v2 is deprecated as of Mitaka and it is recommended to only
-use the v3 API. It is possible to setup keystone without v2 API, by doing:
-
-::
-
-    ENABLE_IDENTITY_V2=False
 
 .. _arch-configuration:
 
