@@ -446,7 +446,7 @@ function setup_package {
 # Report whether python 3 should be used
 # TODO(frickler): drop this once all legacy uses are removed
 function python3_enabled {
-    return 1
+    return 0
 }
 
 # Provide requested python version and sets PYTHON variable
