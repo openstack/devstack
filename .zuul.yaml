@@ -477,10 +477,12 @@
               - ^.*\.rst$
               - ^doc/.*$
         - neutron-grenade:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
         - neutron-grenade-multinode:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -498,18 +500,18 @@
         - devstack
         - devstack-unit-tests
         - openstack-tox-bashate
-        - neutron-grenade-multinode:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+        #- neutron-grenade-multinode:
+        #    irrelevant-files:
+        #      - ^.*\.rst$
+        #      - ^doc/.*$
         - neutron-tempest-linuxbridge:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-grenade:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+        #- neutron-grenade:
+        #    irrelevant-files:
+        #      - ^.*\.rst$
+        #      - ^doc/.*$
     # Please add a note on each job and conditions for the job not
     # being experimental any more, so we can keep this list somewhat
     # pruned.
