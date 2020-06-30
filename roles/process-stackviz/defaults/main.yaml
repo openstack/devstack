@@ -1,0 +1,3 @@
+devstack_base_dir: /opt/stack
+stage_dir: "{{ ansible_user_dir }}"
+zuul_work_dir: "{{ devstack_base_dir }}/tempest"

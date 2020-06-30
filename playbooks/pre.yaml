@@ -28,3 +28,4 @@
     - setup-devstack-cache
     - start-fresh-logging
     - write-devstack-local-conf
+    - ensure-pip
