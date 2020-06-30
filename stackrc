@@ -134,25 +134,17 @@ if [[ -r $RC_DIR/.localrc.password ]]; then
 fi
 
 # Control whether Python 3 should be used at all.
-export USE_PYTHON3=$(trueorfalse True USE_PYTHON3)
+# TODO(frickler): Drop this when all consumers are fixed
+export USE_PYTHON3=True
 
-# When Python 3 is supported by an application, adding the specific
-# version of Python 3 to this variable will install the app using that
-# version of the interpreter instead of 2.7.
+# Adding the specific version of Python 3 to this variable will install
+# the app using that version of the interpreter instead of just 3.
 _DEFAULT_PYTHON3_VERSION="$(_get_python_version python3)"
 export PYTHON3_VERSION=${PYTHON3_VERSION:-${_DEFAULT_PYTHON3_VERSION:-3}}
 
-# Just to be more explicit on the Python 2 version to use.
-_DEFAULT_PYTHON2_VERSION="$(_get_python_version python2)"
-export PYTHON2_VERSION=${PYTHON2_VERSION:-${_DEFAULT_PYTHON2_VERSION:-2.7}}
-
 # Create a virtualenv with this
-if [[ ${USE_PYTHON3} == True ]]; then
-    # Use the built-in venv to avoid more dependencies
-    export VIRTUALENV_CMD="python3 -m venv"
-else
-    export VIRTUALENV_CMD="virtualenv "
-fi
+# Use the built-in venv to avoid more dependencies
+export VIRTUALENV_CMD="python3 -m venv"
 
 # Default for log coloring is based on interactive-or-not.
 # Baseline assumption is that non-interactive invocations are for CI,

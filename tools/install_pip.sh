@@ -92,9 +92,6 @@ function install_get_pip {
         touch $LOCAL_PIP.downloaded
     fi
     sudo -H -E python${PYTHON3_VERSION} $LOCAL_PIP
-    if ! python3_enabled; then
-        sudo -H -E python $LOCAL_PIP
-    fi
 }
 
 
@@ -142,9 +139,6 @@ fi
 # results in a nonfunctional system. pip on fedora installs to /usr so pip
 # can safely override the system pip for all versions of fedora
 if ! is_fedora  && ! is_suse; then
-    if is_package_installed python-pip ; then
-        uninstall_package python-pip
-    fi
     if is_package_installed python3-pip ; then
         uninstall_package python3-pip
     fi

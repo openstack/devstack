@@ -227,13 +227,7 @@ function init_CA {
 function init_cert {
     if [[ ! -r $DEVSTACK_CERT ]]; then
         if [[ -n "$TLS_IP" ]]; then
-            if python3_enabled; then
-                TLS_IP="IP:$TLS_IP"
-            else
-                # Lie to let incomplete match routines work with python2
-                # see https://bugs.python.org/issue23239
-                TLS_IP="DNS:$TLS_IP,IP:$TLS_IP"
-            fi
+            TLS_IP="IP:$TLS_IP"
             if [[ -n "$HOST_IPV6" ]]; then
                 TLS_IP="$TLS_IP,IP:$HOST_IPV6"
             fi

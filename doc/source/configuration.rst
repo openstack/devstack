@@ -430,17 +430,6 @@ Python bindings added when they are enabled.
 
   ADDITIONAL_VENV_PACKAGES="python-foo, python-bar"
 
-Use python2
-------------
-
-By default ``stack.sh`` uses python3 (the exact version set by the
-``PYTHON3_VERSION``). This can be overriden so devstack will run
-python2 (the exact version set by ``PYTHON2_VERSION``).
-
-::
-
-  USE_PYTHON3=False
-
 A clean install every time
 --------------------------
 

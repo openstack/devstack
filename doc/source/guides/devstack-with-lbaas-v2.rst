@@ -41,9 +41,6 @@ Edit your ``/opt/stack/devstack/local.conf`` to look like
     # If you are enabling barbican for TLS offload in Octavia, include it here.
     # enable_plugin barbican https://opendev.org/openstack/barbican
 
-    # If you have python3 available:
-    # USE_PYTHON3=True
-
     # ===== BEGIN localrc =====
     DATABASE_PASSWORD=password
     ADMIN_PASSWORD=password
