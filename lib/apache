@@ -152,7 +152,7 @@ function install_apache_wsgi {
         install_package libapache2-mod-wsgi-py3
     elif is_fedora; then
         sudo rm -f /etc/httpd/conf.d/000-*
-        install_package httpd mod_wsgi
+        install_package httpd python3-mod_wsgi
         # For consistency with Ubuntu, switch to the worker mpm, as
         # the default is event
         sudo sed -i '/mod_mpm_prefork.so/s/^/#/g' /etc/httpd/conf.modules.d/00-mpm.conf
