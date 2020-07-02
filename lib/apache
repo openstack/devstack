@@ -93,7 +93,7 @@ function install_apache_uwsgi {
 
     if is_ubuntu; then
         local pkg_list="uwsgi uwsgi-plugin-python3 libapache2-mod-proxy-uwsgi"
-        if "$DISTRO" == 'bionic'; then
+        if [[ "$DISTRO" == 'bionic' ]]; then
             pkg_list="${pkg_list} uwsgi-plugin-python"
         fi
         install_package ${pkg_list}
