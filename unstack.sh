@@ -99,6 +99,7 @@ run_phase unstack
 
 if is_service_enabled nova; then
     stop_nova
+    cleanup_nova
 fi
 
 if is_service_enabled placement; then
