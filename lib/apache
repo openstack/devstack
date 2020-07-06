@@ -118,9 +118,9 @@ function install_apache_uwsgi {
         pip_install uwsgi
         pip download uwsgi -c $REQUIREMENTS_DIR/upper-constraints.txt
         local uwsgi
-        uwsgi=$(ls uwsgi*)
+        uwsgi=$(ls uWSGI*)
         tar xvf $uwsgi
-        cd uwsgi*/apache2
+        cd ./apache2
         sudo $apxs -i -c mod_proxy_uwsgi.c
         popd
         # delete the temp directory
