@@ -26,6 +26,39 @@ if [[ -z "$TOP_DIR" ]]; then
     FILES=$TOP_DIR/files
 fi
 
+# Keystone Port Reservation
+# -------------------------
+# Reserve and prevent ``KEYSTONE_AUTH_PORT`` and ``KEYSTONE_AUTH_PORT_INT`` from
+# being used as ephemeral ports by the system. The default(s) are 35357 and
+# 35358 which are in the Linux defined ephemeral port range (in disagreement
+# with the IANA ephemeral port range). This is a workaround for bug #1253482
+# where Keystone will try and bind to the port and the port will already be
+# in use as an ephemeral port by another process. This places an explicit
+# exception into the Kernel for the Keystone AUTH ports.
+function fixup_keystone {
+    keystone_ports=${KEYSTONE_AUTH_PORT:-35357},${KEYSTONE_AUTH_PORT_INT:-35358}
+
+    # Only do the reserved ports when available, on some system (like containers)
+    # where it's not exposed we are almost pretty sure these ports would be
+    # exclusive for our DevStack.
+    if sysctl net.ipv4.ip_local_reserved_ports >/dev/null 2>&1; then
+        # Get any currently reserved ports, strip off leading whitespace
+        reserved_ports=$(sysctl net.ipv4.ip_local_reserved_ports | awk -F'=' '{print $2;}' | sed 's/^ //')
+
+        if [[ -z "${reserved_ports}" ]]; then
+            # If there are no currently reserved ports, reserve the keystone ports
+            sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports}
+        else
+            # If there are currently reserved ports, keep those and also reserve the
+            # Keystone specific ports. Duplicate reservations are merged into a single
+            # reservation (or range) automatically by the kernel.
+            sudo sysctl -w net.ipv4.ip_local_reserved_ports=${keystone_ports},${reserved_ports}
+        fi
+    else
+        echo_summary "WARNING: unable to reserve keystone ports"
+    fi
+}
+
 # Ubuntu Repositories
 #--------------------
 # Enable universe for bionic since it is missing when installing from ISO.
@@ -175,6 +208,7 @@ function fixup_suse {
 }
 
 function fixup_all {
+    fixup_keystone
     fixup_ubuntu
     fixup_fedora
     fixup_suse
