@@ -712,6 +712,11 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - neutron-ovn-tempest-ovs-release:
+            voting: false
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^doc/.*$
         - tempest-multinode-full-py3:
             voting: false
             irrelevant-files:
