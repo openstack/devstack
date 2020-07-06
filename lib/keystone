@@ -83,10 +83,14 @@ KEYSTONE_TOKEN_FORMAT=$(echo ${KEYSTONE_TOKEN_FORMAT} | tr '[:upper:]' '[:lower:
 
 # Set Keystone interface configuration
 KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
+KEYSTONE_AUTH_PORT=${KEYSTONE_AUTH_PORT:-35357}
+KEYSTONE_AUTH_PORT_INT=${KEYSTONE_AUTH_PORT_INT:-35358}
 KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
 
 # Public facing bits
 KEYSTONE_SERVICE_HOST=${KEYSTONE_SERVICE_HOST:-$SERVICE_HOST}
+KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
+KEYSTONE_SERVICE_PORT_INT=${KEYSTONE_SERVICE_PORT_INT:-5001}
 KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
 # Bind hosts
@@ -166,14 +170,22 @@ function _config_keystone_apache_wsgi {
     local keystone_ssl=""
     local keystone_certfile=""
     local keystone_keyfile=""
+    local keystone_service_port=$KEYSTONE_SERVICE_PORT
+    local keystone_auth_port=$KEYSTONE_AUTH_PORT
     local venv_path=""
 
+    if is_service_enabled tls-proxy; then
+        keystone_service_port=$KEYSTONE_SERVICE_PORT_INT
+        keystone_auth_port=$KEYSTONE_AUTH_PORT_INT
+    fi
     if [[ ${USE_VENV} = True ]]; then
         venv_path="python-path=${PROJECT_VENV["keystone"]}/lib/$(python_version)/site-packages"
     fi
 
     sudo cp $FILES/apache-keystone.template $keystone_apache_conf
     sudo sed -e "
+        s|%PUBLICPORT%|$keystone_service_port|g;
+        s|%ADMINPORT%|$keystone_auth_port|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
         s|%SSLLISTEN%|$keystone_ssl_listen|g;
         s|%SSLENGINE%|$keystone_ssl|g;
@@ -210,8 +222,21 @@ function configure_keystone {
 
     iniset_rpc_backend keystone $KEYSTONE_CONF oslo_messaging_notifications
 
+    local service_port=$KEYSTONE_SERVICE_PORT
+    local auth_port=$KEYSTONE_AUTH_PORT
+
+    if is_service_enabled tls-proxy; then
+        # Set the service ports for a proxy to take the originals
+        service_port=$KEYSTONE_SERVICE_PORT_INT
+        auth_port=$KEYSTONE_AUTH_PORT_INT
+    fi
+
     # Override the endpoints advertised by keystone (the public_endpoint and
-    # admin_endpoint) so that clients use the correct endpoint.
+    # admin_endpoint) so that clients use the correct endpoint. By default, the
+    # keystone server uses the public_port and admin_port which isn't going to
+    # work when you want to use a different port (in the case of proxy), or you
+    # don't want the port (in the case of putting keystone on a path in
+    # apache).
     iniset $KEYSTONE_CONF DEFAULT public_endpoint $KEYSTONE_SERVICE_URI
     iniset $KEYSTONE_CONF DEFAULT admin_endpoint $KEYSTONE_AUTH_URI
 
@@ -244,6 +269,12 @@ function configure_keystone {
     iniset $KEYSTONE_CONF fernet_tokens key_repository "$KEYSTONE_CONF_DIR/fernet-keys/"
 
     iniset $KEYSTONE_CONF credential key_repository "$KEYSTONE_CONF_DIR/credential-keys/"
+
+    # Configure the project created by the 'keystone-manage bootstrap' as the cloud-admin project.
+    # The users from this project are globally admin as before, but it also
+    # allows policy changes in order to clarify the adminess scope.
+    #iniset $KEYSTONE_CONF resource admin_project_domain_name Default
+    #iniset $KEYSTONE_CONF resource admin_project_name admin
 
     if [[ "$KEYSTONE_SECURITY_COMPLIANCE_ENABLED" = True ]]; then
         iniset $KEYSTONE_CONF security_compliance lockout_failure_attempts $KEYSTONE_LOCKOUT_FAILURE_ATTEMPTS
@@ -479,6 +510,14 @@ function install_keystone {
 
 # start_keystone() - Start running processes
 function start_keystone {
+    # Get right service port for testing
+    local service_port=$KEYSTONE_SERVICE_PORT
+    local auth_protocol=$KEYSTONE_AUTH_PROTOCOL
+    if is_service_enabled tls-proxy; then
+        service_port=$KEYSTONE_SERVICE_PORT_INT
+        auth_protocol="http"
+    fi
+
     if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
         enable_apache_site keystone
         restart_apache_server
@@ -487,11 +526,21 @@ function start_keystone {
     fi
 
     echo "Waiting for keystone to start..."
-    # Check that the keystone service is running.
+    # Check that the keystone service is running. Even if the tls tunnel
+    # should be enabled, make sure the internal port is checked using
+    # unencryted traffic at this point.
+    # If running in Apache, use the path rather than port.
+
     local service_uri=$auth_protocol://$KEYSTONE_SERVICE_HOST/identity/v$IDENTITY_API_VERSION/
 
     if ! wait_for_service $SERVICE_TIMEOUT $service_uri; then
         die $LINENO "keystone did not start"
+    fi
+
+    # Start proxies if enabled
+    if is_service_enabled tls-proxy; then
+        start_tls_proxy keystone-service '*' $KEYSTONE_SERVICE_PORT $KEYSTONE_SERVICE_HOST $KEYSTONE_SERVICE_PORT_INT
+        start_tls_proxy keystone-auth '*' $KEYSTONE_AUTH_PORT $KEYSTONE_AUTH_HOST $KEYSTONE_AUTH_PORT_INT
     fi
 
     # (re)start memcached to make sure we have a clean memcache.
@@ -512,9 +561,11 @@ function stop_keystone {
 # This function uses the following GLOBAL variables:
 # - ``KEYSTONE_BIN_DIR``
 # - ``ADMIN_PASSWORD``
-# - ``KEYSTONE_AUTH_URI``
+# - ``IDENTITY_API_VERSION``
 # - ``REGION_NAME``
-# - ``KEYSTONE_SERVICE_URI``
+# - ``KEYSTONE_SERVICE_PROTOCOL``
+# - ``KEYSTONE_SERVICE_HOST``
+# - ``KEYSTONE_SERVICE_PORT``
 function bootstrap_keystone {
     $KEYSTONE_BIN_DIR/keystone-manage bootstrap \
         --bootstrap-username admin \
