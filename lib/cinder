@@ -311,10 +311,6 @@ function configure_cinder {
         iniset $CINDER_CONF DEFAULT glance_ca_certificates_file $SSL_BUNDLE_FILE
     fi
 
-    if [ "$GLANCE_V1_ENABLED" != "True" ]; then
-        iniset $CINDER_CONF DEFAULT glance_api_version 2
-    fi
-
     # Set nova credentials (used for os-assisted-snapshots)
     configure_keystone_authtoken_middleware $CINDER_CONF nova nova
     iniset $CINDER_CONF nova region_name "$REGION_NAME"

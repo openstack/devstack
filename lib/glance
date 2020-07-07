@@ -73,7 +73,6 @@ GLANCE_CACHE_CONF=$GLANCE_CONF_DIR/glance-cache.conf
 GLANCE_SCHEMA_JSON=$GLANCE_CONF_DIR/schema-image.json
 GLANCE_SWIFT_STORE_CONF=$GLANCE_CONF_DIR/glance-swift-store.conf
 GLANCE_IMAGE_IMPORT_CONF=$GLANCE_CONF_DIR/glance-image-import.conf
-GLANCE_V1_ENABLED=${GLANCE_V1_ENABLED:-False}
 
 if is_service_enabled tls-proxy; then
     GLANCE_SERVICE_PROTOCOL="https"
@@ -150,12 +149,6 @@ function configure_glance {
     fi
     if [ "$VIRT_DRIVER" = 'libvirt' ] && [ "$LIBVIRT_TYPE" = 'parallels' ]; then
         iniset $GLANCE_API_CONF DEFAULT disk_formats "ami,ari,aki,vhd,vmdk,raw,qcow2,vdi,iso,ploop"
-    fi
-
-    # NOTE(flaper87): To uncomment as soon as all services consuming Glance are
-    # able to consume V2 entirely.
-    if [ "$GLANCE_V1_ENABLED" != "True" ]; then
-        iniset $GLANCE_API_CONF DEFAULT enable_v1_api False
     fi
 
     # Glance multiple store Store specific configs
