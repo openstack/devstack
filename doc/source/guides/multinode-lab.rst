@@ -169,16 +169,11 @@ machines, create a ``local.conf`` with:
     MYSQL_HOST=$SERVICE_HOST
     RABBIT_HOST=$SERVICE_HOST
     GLANCE_HOSTPORT=$SERVICE_HOST:9292
-    ENABLED_SERVICES=n-cpu,q-agt,n-api-meta,c-vol,placement-client
+    ENABLED_SERVICES=n-cpu,q-agt,c-vol,placement-client
     NOVA_VNC_ENABLED=True
     NOVNCPROXY_URL="http://$SERVICE_HOST:6080/vnc_lite.html"
     VNCSERVER_LISTEN=$HOST_IP
     VNCSERVER_PROXYCLIENT_ADDRESS=$VNCSERVER_LISTEN
-
-**Note:** the ``n-api-meta`` service is a version of the api server
-that only serves the metadata service. It's needed because the
-computes created won't have a routing path to the metadata service on
-the controller.
 
 Fire up OpenStack:
 
