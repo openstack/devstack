@@ -1289,7 +1289,14 @@ fi
 # Once neutron agents are started setup initial network elements
 if is_service_enabled q-svc && [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]]; then
     echo_summary "Creating initial neutron network elements"
-    create_neutron_initial_network
+    # Here's where plugins can wire up their own networks instead
+    # of the code in lib/neutron_plugins/services/l3
+    if type -p neutron_plugin_create_initial_networks > /dev/null; then
+        neutron_plugin_create_initial_networks
+    else
+        create_neutron_initial_network
+    fi
+
 fi
 
 if is_service_enabled nova; then
