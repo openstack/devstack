@@ -103,10 +103,10 @@ function _upload_image {
     done
 
     if [[ "$GLANCE_USE_IMPORT_WORKFLOW" == "True" ]]; then
-        if [[ "$WSGI_MODE" != "uwsgi" ]]; then
+        if [[ "$GLANCE_STANDALONE" == "True" ]]; then
             useimport="--import"
         else
-            echo "*** Unable to use glance import workflow because WSGI_MODE=uwsgi! ***"
+            echo "*** Unable to use glance import workflow because glance is not standalone! ***"
         fi
     fi
 

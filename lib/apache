@@ -372,6 +372,25 @@ function write_local_uwsgi_http_config {
     restart_apache_server
 }
 
+# Write a straight-through proxy for a service that runs locally and just needs
+# to be reachable via the main http proxy at $loc
+function write_local_proxy_http_config {
+    local name=$1
+    local url=$2
+    local loc=$3
+    local apache_conf
+    apache_conf=$(apache_site_config_for $name)
+
+    enable_apache_mod proxy
+    enable_apache_mod proxy_http
+
+    echo "KeepAlive Off" | sudo tee $apache_conf
+    echo "SetEnv proxy-sendchunked 1" | sudo tee -a $apache_conf
+    echo "ProxyPass \"${loc}\" \"$url\" retry=0 " | sudo tee -a $apache_conf
+    enable_apache_site $name
+    restart_apache_server
+}
+
 function remove_uwsgi_config {
     local file=$1
     local wsgi=$2
