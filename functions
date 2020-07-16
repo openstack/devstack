@@ -77,6 +77,19 @@ function get_extra_file {
     fi
 }
 
+# Generate image property arguments for OSC
+#
+# Arguments: properties, one per, like propname=value
+#
+# Result is --property propname1=value1 --property propname2=value2
+function _image_properties_to_arg {
+    local result=""
+    for property in $*; do
+        result+=" --property $property"
+    done
+    echo $result
+}
+
 # Upload an image to glance using the configured mechanism
 #
 # Arguments:
@@ -98,9 +111,7 @@ function _upload_image {
     local properties
     local useimport
 
-    for prop in $*; do
-        properties+=" --property $prop"
-    done
+    properties=$(_image_properties_to_arg $*)
 
     if [[ "$GLANCE_USE_IMPORT_WORKFLOW" == "True" ]]; then
         if [[ "$GLANCE_STANDALONE" == "True" ]]; then
@@ -422,10 +433,10 @@ function upload_image {
         # kernel for use when uploading the root filesystem.
         local kernel_id="" ramdisk_id="";
         if [ -n "$kernel" ]; then
-            kernel_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-kernel" $img_property --public --container-format aki --disk-format aki < "$kernel" | grep ' id ' | get_field 2)
+            kernel_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-kernel" $(_image_properties_to_arg $img_property) --public --container-format aki --disk-format aki < "$kernel" | grep ' id ' | get_field 2)
         fi
         if [ -n "$ramdisk" ]; then
-            ramdisk_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-ramdisk" $img_property --public --container-format ari --disk-format ari < "$ramdisk" | grep ' id ' | get_field 2)
+            ramdisk_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-ramdisk" $(_image_properties_to_arg $img_property) --public --container-format ari --disk-format ari < "$ramdisk" | grep ' id ' | get_field 2)
         fi
         _upload_image "${image_name%.img}" ami ami "$image" ${kernel_id:+ kernel_id=$kernel_id} ${ramdisk_id:+ ramdisk_id=$ramdisk_id} $img_property
     fi
