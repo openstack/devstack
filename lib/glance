@@ -143,6 +143,16 @@ function configure_glance {
     local dburl
     dburl=`database_connection_url glance`
 
+    # Configure multiple stores
+    if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
+        local store enabled_backends
+        enabled_backends=""
+        for store in $(echo $GLANCE_MULTIPLE_FILE_STORES | tr "," "\n"); do
+            enabled_backends+="${store}:file,"
+        done
+        iniset $GLANCE_API_CONF DEFAULT enabled_backends ${enabled_backends::-1}
+    fi
+
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_API_CONF database connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
