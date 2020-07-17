@@ -324,7 +324,16 @@ function upload_image {
     local disk_format=""
     local container_format=""
     local unpack=""
-    local img_property="hw_rng_model=virtio"
+    local img_property=""
+
+    # NOTE(danms): If we're on libvirt/qemu or libvirt/kvm, set the hw_rng_model
+    # to libvirt in the image properties.
+    if [[ "$VIRT_DRIVER" == "libvirt" ]]; then
+        if [[ "$LIBVIRT_TYPE" == "qemu" || "$LIBVIRT_TYPE" == "kvm" ]]; then
+            img_property="hw_rng_model=virtio"
+        fi
+    fi
+
     case "$image_fname" in
         *.tar.gz|*.tgz)
             # Extract ami and aki files
