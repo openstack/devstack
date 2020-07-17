@@ -252,6 +252,7 @@ function configure_glance {
     else
         write_local_proxy_http_config glance "http://$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT_INT" "/image"
         iniset $GLANCE_API_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
+        iniset $GLANCE_API_CONF DEFAULT bind_port $GLANCE_SERVICE_PORT_INT
         iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
     fi
 }
