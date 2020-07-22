@@ -195,7 +195,7 @@ function configure_glance {
 
     if [[ "$GLANCE_STANDALONE" == "False" ]]; then
         # NOTE(danms): Do not advertise import methods if we are running in WSGI mode
-        iniset $GLANCE_API_CONF enabled_import_methods []
+        iniset $GLANCE_API_CONF DEFAULT enabled_import_methods []
     fi
 
     # No multiple stores for swift yet
