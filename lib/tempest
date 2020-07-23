@@ -345,7 +345,7 @@ function configure_tempest {
     if [ "$VIRT_DRIVER" = "xenserver" ]; then
         iniset $TEMPEST_CONFIG image disk_formats "ami,ari,aki,vhd,raw,iso"
     fi
-
+    iniset $TEMPEST_CONFIG image-feature-enabled import_image $GLANCE_USE_IMPORT_WORKFLOW
     # Compute
     iniset $TEMPEST_CONFIG compute image_ref $image_uuid
     iniset $TEMPEST_CONFIG compute image_ref_alt $image_uuid_alt
