@@ -751,12 +751,13 @@ if ! function_exists echo_nolog; then
 fi
 
 
-# create_disk - Create backing disk
+# create_disk - Create, configure, and mount a backing disk
 function create_disk {
     local node_number
     local disk_image=${1}
     local storage_data_dir=${2}
     local loopback_disk_size=${3}
+    local key
 
     # Create a loopback disk and format it to XFS.
     if [[ -e ${disk_image} ]]; then
@@ -777,11 +778,34 @@ function create_disk {
     # Swift and Ceph.
     sudo mkfs.xfs -f -i size=1024 ${disk_image}
 
-    # Mount the disk with mount options to make it as efficient as possible
-    if ! egrep -q ${storage_data_dir} /proc/mounts; then
-        sudo mount -t xfs -o loop,noatime,nodiratime,logbufs=8  \
-            ${disk_image} ${storage_data_dir}
+    # Unmount the target, if mounted
+    if egrep -q $storage_data_dir /proc/mounts; then
+        sudo umount $storage_data_dir
     fi
+
+    # Clear any old fstab rules, install a new one for this disk, and mount it
+    key=$(echo $disk_image | sed 's#/.##')
+    key="devstack-$key"
+    sudo sed -i '/.*comment=$key.*/ d' /etc/fstab
+    echo "$disk_image $storage_data_dir xfs loop,noatime,nodiratime,logbufs=8,comment=$key 0 0" | sudo tee -a /etc/fstab
+    sudo mount -v $storage_data_dir
+}
+
+# Unmount, de-configure, and destroy a backing disk
+function destroy_disk {
+    local disk_image=$1
+    local storage_data_dir=$2
+
+    # Unmount the target, if mounted
+    if egrep -q $storage_data_dir /proc/mounts; then
+        sudo umount $storage_data_dir
+    fi
+
+    # Clear any fstab rules
+    sed -i '/.*comment=$key.*/ d' /etc/fstab
+
+    # Delete the file
+    sudo rm $disk_image
 }
 
 
