@@ -193,11 +193,6 @@ function configure_glance {
         iniset $GLANCE_API_CONF cors allowed_origin "http://$SERVICE_HOST"
     fi
 
-    if [[ "$GLANCE_STANDALONE" == "False" ]]; then
-        # NOTE(danms): Do not advertise import methods if we are running in WSGI mode
-        iniset $GLANCE_API_CONF DEFAULT enabled_import_methods []
-    fi
-
     # No multiple stores for swift yet
     # Store the images in swift if enabled.
     if is_service_enabled s-proxy; then

@@ -114,11 +114,7 @@ function _upload_image {
     properties=$(_image_properties_to_arg $*)
 
     if [[ "$GLANCE_USE_IMPORT_WORKFLOW" == "True" ]]; then
-        if [[ "$GLANCE_STANDALONE" == "True" ]]; then
-            useimport="--import"
-        else
-            echo "*** Unable to use glance import workflow because glance is not standalone! ***"
-        fi
+        useimport="--import"
     fi
 
     openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name" --public --container-format "$container" --disk-format "$disk" $useimport $properties < "${image}"
