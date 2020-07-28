@@ -72,7 +72,7 @@ function _install_lib_from_source {
     local name=$1
     if use_library_from_git "$name"; then
         git_clone_by_name "$name"
-        setup_dev_lib "$name"
+        setup_dev_lib -bindep "$name"
     fi
 }
 
