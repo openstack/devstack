@@ -41,6 +41,16 @@ else
     GLANCE_BIN_DIR=$(get_python_exec_prefix)
 fi
 
+# Cinder for Glance
+USE_CINDER_FOR_GLANCE=$(trueorfalse False USE_CINDER_FOR_GLANCE)
+# GLANCE_CINDER_DEFAULT_BACKEND should be one of the values
+# from CINDER_ENABLED_BACKENDS
+GLANCE_CINDER_DEFAULT_BACKEND=${GLANCE_CINDER_DEFAULT_BACKEND:-lvmdriver-1}
+GLANCE_STORE_ROOTWRAP_BASE_DIR=/usr/local/etc/glance
+# NOTE (abhishekk): For opensuse data files are stored in different directory
+if is_opensuse; then
+    GLANCE_STORE_ROOTWRAP_BASE_DIR=/usr/etc/glance
+fi
 # Glance multi-store configuration
 # Boolean flag to enable multiple store configuration for glance
 GLANCE_ENABLE_MULTIPLE_STORES=$(trueorfalse False GLANCE_ENABLE_MULTIPLE_STORES)
@@ -68,6 +78,7 @@ GLANCE_STANDALONE=${GLANCE_STANDALONE:-True}
 # and $DATA_DIR/glance/cheap.
 GLANCE_MULTISTORE_FILE_IMAGE_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/glance}
 GLANCE_IMAGE_DIR=${GLANCE_IMAGE_DIR:=$DATA_DIR/glance/images}
+GLANCE_NFS_MOUNTPOINT=$GLANCE_IMAGE_DIR/mnt
 GLANCE_LOCK_DIR=${GLANCE_LOCK_DIR:=$DATA_DIR/glance/locks}
 GLANCE_STAGING_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_staging_store}
 GLANCE_TASKS_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_tasks_store}
@@ -135,6 +146,122 @@ function cleanup_glance {
     fi
 }
 
+# Set multiple cinder store related config options for each of the cinder store
+#
+function configure_multiple_cinder_stores {
+
+    local be be_name be_type enabled_backends
+    for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
+        be_type=${be%%:*}
+        be_name=${be##*:}
+        enabled_backends+="${be_name}:cinder,"
+
+        set_common_cinder_store_params $be_name
+        iniset $GLANCE_API_CONF $be_name cinder_volume_type ${be_name}
+        if [[ "$be_type" == "nfs" ]]; then
+            mkdir -p "$GLANCE_NFS_MOUNTPOINT"
+            iniset $GLANCE_API_CONF $be_name cinder_mount_point_base "$GLANCE_NFS_MOUNTPOINT"
+        fi
+    done
+    iniset $GLANCE_API_CONF DEFAULT enabled_backends ${enabled_backends::-1}
+    iniset $GLANCE_API_CONF glance_store default_backend $GLANCE_CINDER_DEFAULT_BACKEND
+}
+
+# Set common cinder store options to given config section
+#
+# Arguments:
+# config_section
+#
+function set_common_cinder_store_params {
+    local config_section="$1"
+    iniset $GLANCE_API_CONF $config_section cinder_store_auth_address $KEYSTONE_SERVICE_URI_V3
+    iniset $GLANCE_API_CONF $config_section cinder_store_user_name glance
+    iniset $GLANCE_API_CONF $config_section cinder_store_password $SERVICE_PASSWORD
+    iniset $GLANCE_API_CONF $config_section cinder_store_project_name $SERVICE_PROJECT_NAME
+}
+
+# Configure multiple file stores options for each file store
+#
+# Arguments:
+#
+function configure_multiple_file_stores {
+    local store enabled_backends
+    enabled_backends=""
+    for store in $(echo $GLANCE_MULTIPLE_FILE_STORES | tr "," "\n"); do
+        enabled_backends+="${store}:file,"
+    done
+    iniset $GLANCE_API_CONF DEFAULT enabled_backends ${enabled_backends::-1}
+
+    # Glance multiple store Store specific configs
+    iniset $GLANCE_API_CONF glance_store default_backend $GLANCE_DEFAULT_BACKEND
+    local store
+    for store in $(echo $glance_multiple_file_stores | tr "," "\n"); do
+        iniset $GLANCE_API_CONF $store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/${store}/"
+    done
+}
+
+# Set reserved stores for glance
+function configure_reserved_stores {
+    iniset $GLANCE_API_CONF os_glance_staging_store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/os_glance_staging_store/"
+    iniset $GLANCE_API_CONF os_glance_tasks_store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/os_glance_tasks_store/"
+}
+
+# Copy rootwrap file from glance_store/etc/glance to /etc/glance
+#
+# Arguments:
+# source_path Source path to copy rootwrap files from
+#
+function copy_rootwrap {
+    local source_path="$1"
+    # Make glance configuration directory if it is not exists
+    sudo install -d -o $STACK_USER $GLANCE_CONF_DIR
+    cp -r $source_path/rootwrap.* $GLANCE_CONF_DIR/
+}
+
+# Set glance_store related config options
+#
+# Arguments:
+# USE_CINDER_FOR_GLANCE
+# GLANCE_ENABLE_MULTIPLE_STORES
+#
+function configure_glance_store {
+    local use_cinder_for_glance="$1"
+    local glance_enable_multiple_stores="$2"
+    local be
+
+    if [[ "$glance_enable_multiple_stores" == "False" ]]; then
+        # Configure traditional glance_store
+        if [[ "$use_cinder_for_glance" == "True" ]]; then
+            # set common glance_store parameters
+            iniset $GLANCE_API_CONF glance_store stores "cinder,file,http"
+            iniset $GLANCE_API_CONF glance_store default_store cinder
+
+            # set cinder related store parameters
+            set_common_cinder_store_params glance_store
+            # set nfs mount_point dir
+            for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
+                local be_name=${be##*:}
+                if [[ "$be_name" == "nfs" ]]; then
+                    mkdir -p $GLANCE_NFS_MOUNTPOINT
+                    iniset $GLANCE_API_CONF glance_store cinder_mount_point_base $GLANCE_NFS_MOUNTPOINT
+                fi
+            done
+        fi
+        # Store specific configs
+        iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
+    else
+        if [[ "$use_cinder_for_glance" == "True" ]]; then
+            # Configure multiple cinder stores for glance
+            configure_multiple_cinder_stores
+        else
+            # Configure multiple file stores for glance
+            configure_multiple_file_stores
+        fi
+        # Configure reserved stores
+        configure_reserved_stores
+    fi
+}
+
 # configure_glance() - Set config files, create data dirs, etc
 function configure_glance {
     sudo install -d -o $STACK_USER $GLANCE_CONF_DIR $GLANCE_METADEF_DIR
@@ -142,16 +269,6 @@ function configure_glance {
     # Set non-default configuration options for the API server
     local dburl
     dburl=`database_connection_url glance`
-
-    # Configure multiple stores
-    if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
-        local store enabled_backends
-        enabled_backends=""
-        for store in $(echo $GLANCE_MULTIPLE_FILE_STORES | tr "," "\n"); do
-            enabled_backends+="${store}:file,"
-        done
-        iniset $GLANCE_API_CONF DEFAULT enabled_backends ${enabled_backends::-1}
-    fi
 
     iniset $GLANCE_API_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_API_CONF database connection $dburl
@@ -170,21 +287,8 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT disk_formats "ami,ari,aki,vhd,vmdk,raw,qcow2,vdi,iso,ploop"
     fi
 
-    # Glance multiple store Store specific configs
-    if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
-        iniset $GLANCE_API_CONF glance_store default_backend $GLANCE_DEFAULT_BACKEND
-        local store
-        for store in $(echo $GLANCE_MULTIPLE_FILE_STORES | tr "," "\n"); do
-            iniset $GLANCE_API_CONF $store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/${store}/"
-        done
-
-        # Glance configure reserved stores
-        iniset $GLANCE_API_CONF os_glance_staging_store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/os_glance_staging_store/"
-        iniset $GLANCE_API_CONF os_glance_tasks_store filesystem_store_datadir "${GLANCE_MULTISTORE_FILE_IMAGE_DIR}/os_glance_tasks_store/"
-    else
-        # Store specific configs
-        iniset $GLANCE_API_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
-    fi
+    # Configure glance_store
+    configure_glance_store $USE_CINDER_FOR_GLANCE $GLANCE_ENABLE_MULTIPLE_STORES
 
     # CORS feature support - to allow calls from Horizon by default
     if [ -n "$GLANCE_CORS_ALLOWED_ORIGIN" ]; then
@@ -194,24 +298,26 @@ function configure_glance {
     fi
 
     # No multiple stores for swift yet
-    # Store the images in swift if enabled.
-    if is_service_enabled s-proxy; then
-        iniset $GLANCE_API_CONF glance_store default_store swift
-        iniset $GLANCE_API_CONF glance_store swift_store_create_container_on_put True
+    if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "False" ]]; then
+        # Store the images in swift if enabled.
+        if is_service_enabled s-proxy; then
+            iniset $GLANCE_API_CONF glance_store default_store swift
+            iniset $GLANCE_API_CONF glance_store swift_store_create_container_on_put True
 
-        iniset $GLANCE_API_CONF glance_store swift_store_config_file $GLANCE_SWIFT_STORE_CONF
-        iniset $GLANCE_API_CONF glance_store default_swift_reference ref1
-        iniset $GLANCE_API_CONF glance_store stores "file, http, swift"
-        if is_service_enabled tls-proxy; then
-            iniset $GLANCE_API_CONF glance_store swift_store_cacert $SSL_BUNDLE_FILE
+            iniset $GLANCE_API_CONF glance_store swift_store_config_file $GLANCE_SWIFT_STORE_CONF
+            iniset $GLANCE_API_CONF glance_store default_swift_reference ref1
+            iniset $GLANCE_API_CONF glance_store stores "file, http, swift"
+            if is_service_enabled tls-proxy; then
+                iniset $GLANCE_API_CONF glance_store swift_store_cacert $SSL_BUNDLE_FILE
+            fi
+            iniset $GLANCE_API_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
+
+            iniset $GLANCE_SWIFT_STORE_CONF ref1 user $SERVICE_PROJECT_NAME:glance-swift
+
+            iniset $GLANCE_SWIFT_STORE_CONF ref1 key $SERVICE_PASSWORD
+            iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
+            iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_version 3
         fi
-        iniset $GLANCE_API_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
-
-        iniset $GLANCE_SWIFT_STORE_CONF ref1 user $SERVICE_PROJECT_NAME:glance-swift
-
-        iniset $GLANCE_SWIFT_STORE_CONF ref1 key $SERVICE_PASSWORD
-        iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
-        iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_version 3
     fi
 
     # We need to tell glance what it's public endpoint is so that the version
@@ -342,9 +448,11 @@ function install_glance {
     if use_library_from_git "glance_store"; then
         git_clone_by_name "glance_store"
         setup_dev_lib "glance_store" $(join_extras "${glance_store_extras[@]}")
+        copy_rootwrap ${DEST}/glance_store/etc/glance
     else
         # we still need to pass extras
         pip_install_gr_extras glance-store $(join_extras "${glance_store_extras[@]}")
+        copy_rootwrap $GLANCE_STORE_ROOTWRAP_BASE_DIR
     fi
 
     git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH

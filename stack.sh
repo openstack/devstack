@@ -1222,32 +1222,6 @@ if is_service_enabled swift; then
     start_swift
 fi
 
-# Launch the Glance services
-if is_service_enabled glance; then
-    echo_summary "Starting Glance"
-    start_glance
-fi
-
-
-# Install Images
-# ==============
-
-# Upload an image to Glance.
-#
-# The default image is CirrOS, a small testing image which lets you login as **root**
-# CirrOS has a ``cloud-init`` analog supporting login via keypair and sending
-# scripts as userdata.
-# See https://help.ubuntu.com/community/CloudInit for more on ``cloud-init``
-
-# NOTE(yoctozepto): limited to node hosting the database which is the controller
-if is_service_enabled $DATABASE_BACKENDS && is_service_enabled glance; then
-    echo_summary "Uploading images"
-
-    for image_url in ${IMAGE_URLS//,/ }; do
-        upload_image $image_url
-    done
-fi
-
 # NOTE(lyarwood): By default use a single hardcoded fixed_key across devstack
 # deployments.  This ensures the keys match across nova and cinder across all
 # hosts.
@@ -1313,6 +1287,40 @@ if is_service_enabled cinder; then
     echo_summary "Starting Cinder"
     start_cinder
     create_volume_types
+fi
+
+# This sleep is required for cinder volume service to become active and
+# publish capabilities to cinder scheduler before creating the image-volume
+if [[ "$USE_CINDER_FOR_GLANCE" == "True" ]]; then
+    sleep 30
+fi
+
+# Launch the Glance services
+# NOTE (abhishekk): We need to start glance api service only after cinder
+# service has started as on glance startup glance-api queries cinder for
+# validating volume_type configured for cinder store of glance.
+if is_service_enabled glance; then
+    echo_summary "Starting Glance"
+    start_glance
+fi
+
+# Install Images
+# ==============
+
+# Upload an image to Glance.
+#
+# The default image is CirrOS, a small testing image which lets you login as **root**
+# CirrOS has a ``cloud-init`` analog supporting login via keypair and sending
+# scripts as userdata.
+# See https://help.ubuntu.com/community/CloudInit for more on ``cloud-init``
+
+# NOTE(yoctozepto): limited to node hosting the database which is the controller
+if is_service_enabled $DATABASE_BACKENDS && is_service_enabled glance; then
+    echo_summary "Uploading images"
+
+    for image_url in ${IMAGE_URLS//,/ }; do
+        upload_image $image_url
+    done
 fi
 
 
