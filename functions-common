@@ -1412,7 +1412,8 @@ function install_bindep {
     local pkgs
 
     if [[ ! -f $file ]]; then
-        die $LINENO "Can not find bindep file: $file"
+        warn $LINENO "Can not find bindep file: $file"
+        return
     fi
 
     # converting here makes it much easier to work with passing
