@@ -81,7 +81,6 @@ openstack/networking-hyperv              `https://opendev.org/openstack/networki
 openstack/networking-l2gw                `https://opendev.org/openstack/networking-l2gw <https://opendev.org/openstack/networking-l2gw>`__
 openstack/networking-midonet             `https://opendev.org/openstack/networking-midonet <https://opendev.org/openstack/networking-midonet>`__
 openstack/networking-odl                 `https://opendev.org/openstack/networking-odl <https://opendev.org/openstack/networking-odl>`__
-openstack/networking-onos                `https://opendev.org/openstack/networking-onos <https://opendev.org/openstack/networking-onos>`__
 openstack/networking-powervm             `https://opendev.org/openstack/networking-powervm <https://opendev.org/openstack/networking-powervm>`__
 openstack/networking-sfc                 `https://opendev.org/openstack/networking-sfc <https://opendev.org/openstack/networking-sfc>`__
 openstack/neutron                        `https://opendev.org/openstack/neutron <https://opendev.org/openstack/neutron>`__
@@ -113,7 +112,6 @@ openstack/solum                          `https://opendev.org/openstack/solum <h
 openstack/storlets                       `https://opendev.org/openstack/storlets <https://opendev.org/openstack/storlets>`__
 openstack/tacker                         `https://opendev.org/openstack/tacker <https://opendev.org/openstack/tacker>`__
 openstack/telemetry-tempest-plugin       `https://opendev.org/openstack/telemetry-tempest-plugin <https://opendev.org/openstack/telemetry-tempest-plugin>`__
-openstack/tricircle                      `https://opendev.org/openstack/tricircle <https://opendev.org/openstack/tricircle>`__
 openstack/trove                          `https://opendev.org/openstack/trove <https://opendev.org/openstack/trove>`__
 openstack/trove-dashboard                `https://opendev.org/openstack/trove-dashboard <https://opendev.org/openstack/trove-dashboard>`__
 openstack/vitrage                        `https://opendev.org/openstack/vitrage <https://opendev.org/openstack/vitrage>`__
@@ -121,6 +119,7 @@ openstack/vitrage-dashboard              `https://opendev.org/openstack/vitrage-
 openstack/vitrage-tempest-plugin         `https://opendev.org/openstack/vitrage-tempest-plugin <https://opendev.org/openstack/vitrage-tempest-plugin>`__
 openstack/watcher                        `https://opendev.org/openstack/watcher <https://opendev.org/openstack/watcher>`__
 openstack/watcher-dashboard              `https://opendev.org/openstack/watcher-dashboard <https://opendev.org/openstack/watcher-dashboard>`__
+openstack/whitebox-tempest-plugin        `https://opendev.org/openstack/whitebox-tempest-plugin <https://opendev.org/openstack/whitebox-tempest-plugin>`__
 openstack/zaqar                          `https://opendev.org/openstack/zaqar <https://opendev.org/openstack/zaqar>`__
 openstack/zaqar-ui                       `https://opendev.org/openstack/zaqar-ui <https://opendev.org/openstack/zaqar-ui>`__
 openstack/zun                            `https://opendev.org/openstack/zun <https://opendev.org/openstack/zun>`__
@@ -199,7 +198,6 @@ x/trio2o                                 `https://opendev.org/x/trio2o <https://
 x/valet                                  `https://opendev.org/x/valet <https://opendev.org/x/valet>`__
 x/vmware-nsx                             `https://opendev.org/x/vmware-nsx <https://opendev.org/x/vmware-nsx>`__
 x/vmware-vspc                            `https://opendev.org/x/vmware-vspc <https://opendev.org/x/vmware-vspc>`__
-x/whitebox-tempest-plugin                `https://opendev.org/x/whitebox-tempest-plugin <https://opendev.org/x/whitebox-tempest-plugin>`__
 ======================================== ===
 
 
