@@ -413,6 +413,7 @@ function configure_keystone_authtoken_middleware {
     local section=${3:-keystone_authtoken}
 
     iniset $conf_file $section auth_type password
+    iniset $conf_file $section interface public
     iniset $conf_file $section auth_url $KEYSTONE_SERVICE_URI
     iniset $conf_file $section username $admin_user
     iniset $conf_file $section password $SERVICE_PASSWORD
