@@ -1219,9 +1219,15 @@ function get_packages {
             if [[ ! $file_to_parse =~ $package_dir/glance ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/glance"
             fi
+            if [[ ! $file_to_parse =~ $package_dir/os-brick ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/os-brick"
+            fi
         elif [[ $service == c-* ]]; then
             if [[ ! $file_to_parse =~ $package_dir/cinder ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/cinder"
+            fi
+            if [[ ! $file_to_parse =~ $package_dir/os-brick ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/os-brick"
             fi
         elif [[ $service == s-* ]]; then
             if [[ ! $file_to_parse =~ $package_dir/swift ]]; then
@@ -1230,6 +1236,9 @@ function get_packages {
         elif [[ $service == n-* ]]; then
             if [[ ! $file_to_parse =~ $package_dir/nova ]]; then
                 file_to_parse="${file_to_parse} ${package_dir}/nova"
+            fi
+            if [[ ! $file_to_parse =~ $package_dir/os-brick ]]; then
+                file_to_parse="${file_to_parse} ${package_dir}/os-brick"
             fi
         elif [[ $service == g-* ]]; then
             if [[ ! $file_to_parse =~ $package_dir/glance ]]; then
