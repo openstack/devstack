@@ -7,4 +7,6 @@
       bindep_dir: "{{ zuul_work_dir }}"
     - test-setup
     - ensure-tox
-    - tox
+    - get-devstack-os-environment
+    - role: tox
+      tox_environment: "{{ os_env_vars|default({}) }}"
