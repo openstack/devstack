@@ -1,0 +1,14 @@
+- when: openrc_enable_export
+  block:
+    - name: Extract the OS_ environment variables
+      shell:
+        cmd: |
+          source {{ openrc_file }} {{ openrc_user }} {{ openrc_project }} &>/dev/null
+          env | awk -F= 'BEGIN {print "---" } /^OS_/ { print "  "$1": \""$2"\""} '
+      args:
+        executable: "/bin/bash"
+      register: env_os
+
+    - name: Save the OS_ environment variables as a fact
+      set_fact:
+        os_env_vars: "{{ env_os.stdout|from_yaml }}"

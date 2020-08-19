@@ -1,0 +1,5 @@
+devstack_base_dir: "/opt/stack"
+openrc_file: "{{ devstack_base_dir }}/devstack/openrc"
+openrc_user: admin
+openrc_project: admin
+openrc_enable_export: false
