@@ -362,6 +362,14 @@ function configure_mutnauq {
         _configure_neutron_ceilometer_notifications
     fi
 
+    if [[ $Q_AGENT == "ovn" ]]; then
+        configure_ovn
+        if is_service_enabled q-port-forwarding neutron-port-forwarding; then
+            configure_port_forwarding
+        fi
+        configure_ovn_plugin
+    fi
+
     iniset $NEUTRON_CONF DEFAULT api_workers "$API_WORKERS"
     # devstack is not a tool for running uber scale OpenStack
     # clouds, therefore running without a dedicated RPC worker
@@ -438,6 +446,10 @@ function install_mutnauq {
 
     git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
     setup_develop $NEUTRON_DIR
+
+    if [[ $Q_AGENT == "ovn" ]]; then
+        install_ovn
+    fi
 }
 
 # install_neutron_agent_packages() - Collect source and prepare
@@ -456,6 +468,22 @@ function install_neutron_agent_packages_mutnauq {
 function configure_neutron_after_post_config {
     if [[ $Q_SERVICE_PLUGIN_CLASSES != '' ]]; then
         iniset $NEUTRON_CONF DEFAULT service_plugins $Q_SERVICE_PLUGIN_CLASSES
+    fi
+}
+
+# Start running OVN processes
+function start_ovn_services {
+    if [[ $Q_AGENT == "ovn" ]]; then
+        init_ovn
+        start_ovn
+        if [[ "$OVN_L3_CREATE_PUBLIC_NETWORK" == "True" ]]; then
+            if [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" != "True" ]]; then
+                echo "OVN_L3_CREATE_PUBLIC_NETWORK=True is being ignored "
+                echo "because NEUTRON_CREATE_INITIAL_NETWORKS is set to False"
+            else
+                create_public_bridge
+            fi
+        fi
     fi
 }
 
@@ -575,6 +603,10 @@ function stop_mutnauq_other {
 function stop_mutnauq {
     stop_mutnauq_other
     stop_mutnauq_l2_agent
+
+    if [[ $Q_AGENT == "ovn" ]]; then
+        stop_ovn
+    fi
 }
 
 # _move_neutron_addresses_route() - Move the primary IP to the OVS bridge
@@ -668,6 +700,10 @@ function cleanup_mutnauq {
     for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|fip|snat)-[0-9a-f-]*'); do
         sudo ip netns delete ${ns}
     done
+
+    if [[ $Q_AGENT == "ovn" ]]; then
+        cleanup_ovn
+    fi
 }
 
 

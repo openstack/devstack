@@ -1,0 +1,724 @@
+#!/bin/bash
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+
+# Global Sources
+# --------------
+
+# There are some ovs functions OVN depends on that must be sourced from
+# the ovs neutron plugins.
+source ${TOP_DIR}/lib/neutron_plugins/ovs_base
+source ${TOP_DIR}/lib/neutron_plugins/openvswitch_agent
+
+# Load devstack ovs base functions
+source $NEUTRON_DIR/devstack/lib/ovs
+
+
+# Defaults
+# --------
+
+# Set variables for building OVN from source
+OVN_REPO=${OVN_REPO:-https://github.com/ovn-org/ovn.git}
+OVN_REPO_NAME=$(basename ${OVN_REPO} | cut -f1 -d'.')
+OVN_REPO_NAME=${OVN_REPO_NAME:-ovn}
+OVN_BRANCH=${OVN_BRANCH:-v20.06.1}
+# The commit removing OVN bits from the OVS tree, it is the commit that is not
+# present in OVN tree and is used to distinguish if OVN is part of OVS or not.
+# https://github.com/openvswitch/ovs/commit/05bf1dbb98b0635a51f75e268ef8aed27601401d
+OVN_SPLIT_HASH=05bf1dbb98b0635a51f75e268ef8aed27601401d
+
+if is_service_enabled tls-proxy; then
+    OVN_PROTO=ssl
+else
+    OVN_PROTO=tcp
+fi
+
+# How to connect to ovsdb-server hosting the OVN SB database.
+OVN_SB_REMOTE=${OVN_SB_REMOTE:-$OVN_PROTO:$SERVICE_HOST:6642}
+
+# How to connect to ovsdb-server hosting the OVN NB database
+OVN_NB_REMOTE=${OVN_NB_REMOTE:-$OVN_PROTO:$SERVICE_HOST:6641}
+
+# ml2/config for neutron_sync_mode
+OVN_NEUTRON_SYNC_MODE=${OVN_NEUTRON_SYNC_MODE:-log}
+
+# Configured DNS servers to be used with internal_dns extension, only
+# if the subnet DNS is not configured.
+OVN_DNS_SERVERS=${OVN_DNS_SERVERS:-8.8.8.8}
+
+# The type of OVN L3 Scheduler to use. The OVN L3 Scheduler determines the
+# hypervisor/chassis where a routers gateway should be hosted in OVN. The
+# default OVN L3 scheduler is leastloaded
+OVN_L3_SCHEDULER=${OVN_L3_SCHEDULER:-leastloaded}
+
+# A UUID to uniquely identify this system.  If one is not specified, a random
+# one will be generated.  A randomly generated UUID will be saved in a file
+# 'ovn-uuid' so that the same one will be re-used if you re-run DevStack.
+OVN_UUID=${OVN_UUID:-}
+
+# Whether or not to build the openvswitch kernel module from ovs.  This is required
+# unless the distro kernel includes ovs+conntrack support.
+OVN_BUILD_MODULES=$(trueorfalse False OVN_BUILD_MODULES)
+
+# Whether or not to install the ovs python module from ovs source.  This can be
+# used to test and validate new ovs python features.  This should only be used
+# for development purposes since the ovs python version is controlled by OpenStack
+# requirements.
+OVN_INSTALL_OVS_PYTHON_MODULE=$(trueorfalse False OVN_INSTALL_OVS_PYTHON_MODULE)
+
+# GENEVE overlay protocol overhead. Defaults to 38 bytes plus the IP version
+# overhead (20 bytes for IPv4 (default) or 40 bytes for IPv6) which is determined
+# based on the ML2 overlay_ip_version option. The ML2 framework will use this to
+# configure the MTU DHCP option.
+OVN_GENEVE_OVERHEAD=${OVN_GENEVE_OVERHEAD:-38}
+
+# The log level of the OVN databases (north and south)
+OVN_DBS_LOG_LEVEL=${OVN_DBS_LOG_LEVEL:-info}
+
+OVN_META_CONF=$NEUTRON_CONF_DIR/neutron_ovn_metadata_agent.ini
+OVN_META_DATA_HOST=${OVN_META_DATA_HOST:-$(ipv6_unquote $SERVICE_HOST)}
+
+OVSDB_SERVER_LOCAL_HOST=$SERVICE_LOCAL_HOST
+
+OVN_IGMP_SNOOPING_ENABLE=$(trueorfalse False OVN_IGMP_SNOOPING_ENABLE)
+
+OVS_PREFIX=/usr/local
+OVS_SBINDIR=$OVS_PREFIX/sbin
+OVS_BINDIR=$OVS_PREFIX/bin
+OVS_RUNDIR=$OVS_PREFIX/var/run/openvswitch
+OVS_SHAREDIR=$OVS_PREFIX/share/openvswitch
+OVS_SCRIPTDIR=$OVS_SHAREDIR/scripts
+OVS_DATADIR=$DATA_DIR/ovs
+
+OVN_DATADIR=$DATA_DIR/ovn
+OVN_SHAREDIR=$OVS_PREFIX/share/ovn
+OVN_SCRIPTDIR=$OVN_SHAREDIR/scripts
+OVN_RUNDIR=$OVS_PREFIX/var/run/ovn
+
+NEUTRON_OVN_BIN_DIR=$(get_python_exec_prefix)
+NEUTRON_OVN_METADATA_BINARY="neutron-ovn-metadata-agent"
+
+STACK_GROUP="$( id --group --name "$STACK_USER" )"
+
+# Defaults Overwrite
+# ------------------
+
+Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_ML2_PLUGIN_MECHANISM_DRIVERS:-ovn,logger}
+Q_ML2_PLUGIN_TYPE_DRIVERS=${Q_ML2_PLUGIN_TYPE_DRIVERS:-local,flat,vlan,geneve}
+Q_ML2_TENANT_NETWORK_TYPE=${Q_ML2_TENANT_NETWORK_TYPE:-"geneve"}
+Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS:-"vni_ranges=1:65536"}
+Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS:-port_security,dns,qos}
+# this one allows empty:
+ML2_L3_PLUGIN=${ML2_L3_PLUGIN-"ovn-router"}
+
+
+# Utility Functions
+# -----------------
+
+function use_new_ovn_repository {
+    if [ -z "$is_new_ovn" ]; then
+        local ovs_repo_dir=$DEST/$OVS_REPO_NAME
+        if [ ! -d $ovs_repo_dir ]; then
+            clone_repository $OVS_REPO $ovs_repo_dir $OVS_BRANCH
+        fi
+        # Check the split commit exists in the current branch
+        pushd $ovs_repo_dir
+        git log $OVS_BRANCH --pretty=format:"%H" | grep -q $OVN_SPLIT_HASH
+        is_new_ovn=$?
+        popd
+    fi
+    return $is_new_ovn
+}
+
+# NOTE(rtheis): Function copied from DevStack _neutron_ovs_base_setup_bridge
+# and _neutron_ovs_base_add_bridge with the call to neutron-ovs-cleanup
+# removed. The call is not relevant for OVN, as it is specific to the use
+# of Neutron's OVS agent and hangs when running stack.sh because
+# neutron-ovs-cleanup uses the OVSDB native interface.
+function ovn_base_setup_bridge {
+    local bridge=$1
+    local addbr_cmd="ovs-vsctl --no-wait -- --may-exist add-br $bridge -- set bridge $bridge protocols=OpenFlow13,OpenFlow15"
+
+    if [ "$OVS_DATAPATH_TYPE" != "system" ] ; then
+        addbr_cmd="$addbr_cmd -- set Bridge $bridge datapath_type=${OVS_DATAPATH_TYPE}"
+    fi
+
+    $addbr_cmd
+    ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
+}
+
+function _start_process {
+    $SYSTEMCTL daemon-reload
+    $SYSTEMCTL enable $1
+    $SYSTEMCTL restart $1
+}
+
+function _run_process {
+    local service=$1
+    local cmd="$2"
+    local stop_cmd="$3"
+    local group=$4
+    local user=${5:-$STACK_USER}
+
+    local systemd_service="devstack@$service.service"
+    local unit_file="$SYSTEMD_DIR/$systemd_service"
+    local environment="OVN_RUNDIR=$OVS_RUNDIR OVN_DBDIR=$OVN_DATADIR OVN_LOGDIR=$LOGDIR OVS_RUNDIR=$OVS_RUNDIR OVS_DBDIR=$OVS_DATADIR OVS_LOGDIR=$LOGDIR"
+
+    echo "Starting $service executed command": $cmd
+
+    write_user_unit_file $systemd_service "$cmd" "$group" "$user"
+    iniset -sudo $unit_file "Service" "Type" "forking"
+    iniset -sudo $unit_file "Service" "RemainAfterExit" "yes"
+    iniset -sudo $unit_file "Service" "KillMode" "mixed"
+    iniset -sudo $unit_file "Service" "LimitNOFILE" "65536"
+    iniset -sudo $unit_file "Service" "Environment" "$environment"
+    if [ -n "$stop_cmd" ]; then
+        iniset -sudo $unit_file "Service" "ExecStop" "$stop_cmd"
+    fi
+
+    _start_process $systemd_service
+
+    local testcmd="test -e $OVS_RUNDIR/$service.pid"
+    test_with_retry "$testcmd" "$service did not start" $SERVICE_TIMEOUT 1
+    sudo ovs-appctl -t $service vlog/set console:off syslog:info file:info
+}
+
+function clone_repository {
+    local repo=$1
+    local dir=$2
+    local branch=$3
+    # Set ERROR_ON_CLONE to false to avoid the need of having the
+    # repositories like OVN and OVS in the required_projects of the job
+    # definition.
+    ERROR_ON_CLONE=false git_clone $repo $dir $branch
+}
+
+function get_ext_gw_interface {
+    # Get ext_gw_interface depending on value of Q_USE_PUBLIC_VETH
+    # This function is copied directly from the devstack neutron-legacy script
+    if [[ "$Q_USE_PUBLIC_VETH" == "True" ]]; then
+        echo $Q_PUBLIC_VETH_EX
+    else
+        # Disable in-band as we are going to use local port
+        # to communicate with VMs
+        sudo ovs-vsctl set Bridge $PUBLIC_BRIDGE \
+            other_config:disable-in-band=true
+        echo $PUBLIC_BRIDGE
+    fi
+}
+
+function create_public_bridge {
+    # Create the public bridge that OVN will use
+    # This logic is based on the devstack neutron-legacy _neutron_configure_router_v4 and _v6
+    local ext_gw_ifc
+    ext_gw_ifc=$(get_ext_gw_interface)
+
+    ovs-vsctl --may-exist add-br $ext_gw_ifc -- set bridge $ext_gw_ifc protocols=OpenFlow13,OpenFlow15
+    ovs-vsctl set open . external-ids:ovn-bridge-mappings=$PHYSICAL_NETWORK:$ext_gw_ifc
+    if [ -n "$FLOATING_RANGE" ]; then
+        local cidr_len=${FLOATING_RANGE#*/}
+        sudo ip addr flush dev $ext_gw_ifc
+        sudo ip addr add $PUBLIC_NETWORK_GATEWAY/$cidr_len dev $ext_gw_ifc
+    fi
+
+    # Ensure IPv6 RAs are accepted on the interface with the default route.
+    # This is needed for neutron-based devstack clouds to work in
+    # IPv6-only clouds in the gate. Please do not remove this without
+    # talking to folks in Infra. This fix is based on a devstack fix for
+    # neutron L3 agent: https://review.openstack.org/#/c/359490/.
+    default_route_dev=$(ip route | grep ^default | awk '{print $5}')
+    sudo sysctl -w net.ipv6.conf.$default_route_dev.accept_ra=2
+
+    sudo sysctl -w net.ipv6.conf.all.forwarding=1
+    if [ -n "$IPV6_PUBLIC_RANGE" ]; then
+        local ipv6_cidr_len=${IPV6_PUBLIC_RANGE#*/}
+        sudo ip -6 addr flush dev $ext_gw_ifc
+        sudo ip -6 addr add $IPV6_PUBLIC_NETWORK_GATEWAY/$ipv6_cidr_len dev $ext_gw_ifc
+    fi
+
+    sudo ip link set $ext_gw_ifc up
+}
+
+function _disable_libvirt_apparmor {
+    if ! sudo aa-status --enabled ; then
+        return 0
+    fi
+    # NOTE(arosen): This is used as a work around to allow newer versions
+    # of libvirt to work with ovs configured ports. See LP#1466631.
+    # requires the apparmor-utils
+    install_package apparmor-utils
+    # disables apparmor for libvirtd
+    sudo aa-complain /etc/apparmor.d/usr.sbin.libvirtd
+}
+
+
+# OVN compilation functions
+# -------------------------
+
+
+# compile_ovn() - Compile OVN from source and load needed modules
+#                 Accepts three parameters:
+#                   - first optional is False by default and means that
+#                     modules are built and installed.
+#                   - second optional parameter defines prefix for
+#                     ovn compilation
+#                   - third optional parameter defines localstatedir for
+#                     ovn single machine runtime
+function compile_ovn {
+    local build_modules=${1:-False}
+    local prefix=$2
+    local localstatedir=$3
+
+    if [ -n "$prefix" ]; then
+        prefix="--prefix=$prefix"
+    fi
+
+    if [ -n "$localstatedir" ]; then
+        localstatedir="--localstatedir=$localstatedir"
+    fi
+
+    clone_repository $OVN_REPO $DEST/$OVN_REPO_NAME $OVN_BRANCH
+    pushd $DEST/$OVN_REPO_NAME
+
+    if [ ! -f configure ] ; then
+        ./boot.sh
+    fi
+
+    if [ ! -f config.status ] || [ configure -nt config.status ] ; then
+        ./configure --with-ovs-source=$DEST/$OVS_REPO_NAME $prefix $localstatedir
+    fi
+    make -j$(($(nproc) + 1))
+    sudo make install
+    popd
+}
+
+
+# OVN Neutron driver functions
+# ----------------------------
+
+# OVN service sanity check
+function ovn_sanity_check {
+    if is_service_enabled q-agt neutron-agt; then
+        die $LINENO "The q-agt/neutron-agt service must be disabled with OVN."
+    elif is_service_enabled q-l3 neutron-l3; then
+        die $LINENO "The q-l3/neutron-l3 service must be disabled with OVN."
+    elif is_service_enabled q-svc neutron-api && [[ ! $Q_ML2_PLUGIN_MECHANISM_DRIVERS =~ "ovn" ]]; then
+        die $LINENO "OVN needs to be enabled in \$Q_ML2_PLUGIN_MECHANISM_DRIVERS"
+    elif is_service_enabled q-svc neutron-api && [[ ! $Q_ML2_PLUGIN_TYPE_DRIVERS =~ "geneve" ]]; then
+        die $LINENO "Geneve needs to be enabled in \$Q_ML2_PLUGIN_TYPE_DRIVERS to be used with OVN"
+    fi
+}
+
+# install_ovn() - Collect source and prepare
+function install_ovn {
+    echo "Installing OVN and dependent packages"
+
+    # Check the OVN configuration
+    ovn_sanity_check
+
+    # If OVS is already installed, remove it, because we're about to re-install
+    # it from source.
+    for package in openvswitch openvswitch-switch openvswitch-common; do
+        if is_package_installed $package ; then
+            uninstall_package $package
+        fi
+    done
+
+    # Install tox, used to generate the config (see devstack/override-defaults)
+    pip_install tox
+    remove_ovs_packages
+    sudo rm -f $OVS_RUNDIR/*
+
+    compile_ovs $OVN_BUILD_MODULES
+    if use_new_ovn_repository; then
+        compile_ovn $OVN_BUILD_MODULES
+    fi
+
+    # Ensure that the OVS commands are accessible in the PATH
+    OVS_BINDIR=${OVS_BINDIR:-/usr/local/bin}
+    export PATH=$OVS_BINDIR:$PATH
+
+    sudo mkdir -p $OVS_RUNDIR
+    sudo chown $(whoami) $OVS_RUNDIR
+    sudo mkdir -p $OVS_PREFIX/var/log/openvswitch
+    sudo chown $(whoami) $OVS_PREFIX/var/log/openvswitch
+    sudo mkdir -p $OVS_PREFIX/var/log/ovn
+    sudo chown $(whoami) $OVS_PREFIX/var/log/ovn
+
+    # Archive log files and create new
+    local log_archive_dir=$LOGDIR/archive
+    mkdir -p $log_archive_dir
+    for logfile in ovs-vswitchd.log ovn-northd.log ovn-controller.log ovn-controller-vtep.log ovs-vtep.log ovsdb-server.log ovsdb-server-nb.log ovsdb-server-sb.log; do
+        if [ -f "$LOGDIR/$logfile" ] ; then
+            mv "$LOGDIR/$logfile"  "$log_archive_dir/$logfile.${CURRENT_LOG_TIME}"
+        fi
+    done
+
+    # Install ovsdbapp from source if requested
+    if use_library_from_git "ovsdbapp"; then
+        git_clone_by_name "ovsdbapp"
+        setup_dev_lib "ovsdbapp"
+    fi
+
+    # Install ovs python module from ovs source.
+    if [[ "$OVN_INSTALL_OVS_PYTHON_MODULE" == "True" ]]; then
+        sudo pip uninstall -y ovs
+        # Clone the OVS repository if it's not yet present
+        clone_repository $OVS_REPO $DEST/$OVS_REPO_NAME $OVS_BRANCH
+        sudo pip install -e $DEST/$OVS_REPO_NAME/python
+    fi
+}
+
+# filter_network_api_extensions() - Remove non-supported API extensions by
+# the OVN driver from the list of enabled API extensions
+function filter_network_api_extensions {
+    SUPPORTED_NETWORK_API_EXTENSIONS=$($PYTHON -c \
+        'from neutron.common.ovn import extensions ;\
+        print(",".join(extensions.ML2_SUPPORTED_API_EXTENSIONS))')
+    SUPPORTED_NETWORK_API_EXTENSIONS=$SUPPORTED_NETWORK_API_EXTENSIONS,$($PYTHON -c \
+        'from neutron.common.ovn import extensions ;\
+        print(",".join(extensions.ML2_SUPPORTED_API_EXTENSIONS_OVN_L3))')
+    if is_service_enabled q-qos neutron-qos ; then
+        SUPPORTED_NETWORK_API_EXTENSIONS="$SUPPORTED_NETWORK_API_EXTENSIONS,qos"
+    fi
+    NETWORK_API_EXTENSIONS=${NETWORK_API_EXTENSIONS:-$SUPPORTED_NETWORK_API_EXTENSIONS}
+    extensions=$(echo $NETWORK_API_EXTENSIONS | tr ', ' '\n' | sort -u)
+    supported_ext=$(echo $SUPPORTED_NETWORK_API_EXTENSIONS | tr ', ' '\n' | sort -u)
+    enabled_ext=$(comm -12 <(echo -e "$extensions") <(echo -e "$supported_ext"))
+    disabled_ext=$(comm -3 <(echo -e "$extensions") <(echo -e "$enabled_ext"))
+
+    # Log a message in case some extensions had to be disabled because
+    # they are not supported by the OVN driver
+    if [ ! -z "$disabled_ext" ]; then
+        _disabled=$(echo $disabled_ext | tr ' ' ',')
+        echo "The folling network API extensions have been disabled because they are not supported by OVN: $_disabled"
+    fi
+
+    # Export the final list of extensions that have been enabled and are
+    # supported by OVN
+    export NETWORK_API_EXTENSIONS=$(echo $enabled_ext | tr ' ' ',')
+}
+
+function configure_ovn_plugin {
+    echo "Configuring Neutron for OVN"
+
+    if is_service_enabled q-svc ; then
+        filter_network_api_extensions
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_geneve max_header_size=$OVN_GENEVE_OVERHEAD
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_connection="$OVN_NB_REMOTE"
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_connection="$OVN_SB_REMOTE"
+        if is_service_enabled tls-proxy; then
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_ca_cert="$INT_CA_DIR/ca-chain.pem"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_certificate="$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_private_key="$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_ca_cert="$INT_CA_DIR/ca-chain.pem"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_certificate="$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_private_key="$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key"
+        fi
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn neutron_sync_mode="$OVN_NEUTRON_SYNC_MODE"
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_l3_scheduler="$OVN_L3_SCHEDULER"
+        populate_ml2_config /$Q_PLUGIN_CONF_FILE securitygroup enable_security_group="$Q_USE_SECGROUP"
+        inicomment /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver
+
+        if is_service_enabled q-ovn-metadata-agent; then
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=True
+        else
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=False
+        fi
+
+        if is_service_enabled q-dns neutron-dns ; then
+            iniset $NEUTRON_CONF DEFAULT dns_domain openstackgate.local
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn dns_servers="$OVN_DNS_SERVERS"
+        fi
+
+        iniset $NEUTRON_CONF ovs igmp_snooping_enable $OVN_IGMP_SNOOPING_ENABLE
+    fi
+
+    if is_service_enabled q-dhcp neutron-dhcp ; then
+        iniset $NEUTRON_CONF DEFAULT dhcp_agent_notification True
+    else
+        iniset $NEUTRON_CONF DEFAULT dhcp_agent_notification False
+    fi
+
+    if is_service_enabled n-api-meta ; then
+        if is_service_enabled q-ovn-metadata-agent ; then
+            iniset $NOVA_CONF neutron service_metadata_proxy True
+        fi
+    fi
+}
+
+function configure_ovn {
+    echo "Configuring OVN"
+
+    if [ -z "$OVN_UUID" ] ; then
+        if [ -f ./ovn-uuid ] ; then
+            OVN_UUID=$(cat ovn-uuid)
+        else
+            OVN_UUID=$(uuidgen)
+            echo $OVN_UUID > ovn-uuid
+        fi
+    fi
+
+    # Metadata
+    if is_service_enabled q-ovn-metadata-agent && is_service_enabled ovn-controller; then
+        sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
+
+        mkdir -p $NEUTRON_DIR/etc/neutron/plugins/ml2
+        (cd $NEUTRON_DIR && exec ./tools/generate_config_file_samples.sh)
+
+        cp $NEUTRON_DIR/etc/neutron_ovn_metadata_agent.ini.sample $OVN_META_CONF
+        configure_root_helper_options $OVN_META_CONF
+
+        iniset $OVN_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+        iniset $OVN_META_CONF DEFAULT nova_metadata_host $OVN_META_DATA_HOST
+        iniset $OVN_META_CONF DEFAULT metadata_workers $API_WORKERS
+        iniset $OVN_META_CONF DEFAULT state_path $NEUTRON_STATE_PATH
+        iniset $OVN_META_CONF ovs ovsdb_connection unix:$OVS_RUNDIR/db.sock
+        iniset $OVN_META_CONF ovn ovn_sb_connection $OVN_SB_REMOTE
+        if is_service_enabled tls-proxy; then
+            iniset $OVN_META_CONF ovn \
+                ovn_sb_ca_cert $INT_CA_DIR/ca-chain.pem
+            iniset $OVN_META_CONF ovn \
+                ovn_sb_certificate $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt
+            iniset $OVN_META_CONF ovn \
+                ovn_sb_private_key $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key
+        fi
+    fi
+}
+
+function init_ovn {
+    # clean up from previous (possibly aborted) runs
+    # create required data files
+
+    # Assumption: this is a dedicated test system and there is nothing important
+    # in the ovn, ovn-nb, or ovs databases.  We're going to trash them and
+    # create new ones on each devstack run.
+
+    _disable_libvirt_apparmor
+
+    mkdir -p $OVN_DATADIR
+    mkdir -p $OVS_DATADIR
+
+    rm -f $OVS_DATADIR/*.db
+    rm -f $OVS_DATADIR/.*.db.~lock~
+    rm -f $OVN_DATADIR/*.db
+    rm -f $OVN_DATADIR/.*.db.~lock~
+}
+
+function _start_ovs {
+    echo "Starting OVS"
+    if is_service_enabled ovn-controller ovn-controller-vtep ovn-northd; then
+        # ovsdb-server and ovs-vswitchd are used privately in OVN as openvswitch service names.
+        enable_service ovsdb-server
+        enable_service ovs-vswitchd
+
+        if [ ! -f $OVS_DATADIR/conf.db ]; then
+            ovsdb-tool create $OVS_DATADIR/conf.db $OVS_SHAREDIR/vswitch.ovsschema
+        fi
+
+        if is_service_enabled ovn-controller-vtep; then
+            if [ ! -f $OVS_DATADIR/vtep.db ]; then
+                ovsdb-tool create $OVS_DATADIR/vtep.db $OVS_SHAREDIR/vtep.ovsschema
+            fi
+        fi
+
+        local dbcmd="$OVS_SBINDIR/ovsdb-server --remote=punix:$OVS_RUNDIR/db.sock --remote=ptcp:6640:$OVSDB_SERVER_LOCAL_HOST --pidfile --detach --log-file"
+        dbcmd+=" --remote=db:Open_vSwitch,Open_vSwitch,manager_options"
+        if is_service_enabled ovn-controller-vtep; then
+            dbcmd+=" --remote=db:hardware_vtep,Global,managers $OVS_DATADIR/vtep.db"
+        fi
+        dbcmd+=" $OVS_DATADIR/conf.db"
+        _run_process ovsdb-server "$dbcmd"
+
+        echo "Configuring OVSDB"
+        if is_service_enabled tls-proxy; then
+            ovs-vsctl --no-wait set-ssl \
+                $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
+                $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
+                $INT_CA_DIR/ca-chain.pem
+        fi
+        ovs-vsctl --no-wait set open_vswitch . system-type="devstack"
+        ovs-vsctl --no-wait set open_vswitch . external-ids:system-id="$OVN_UUID"
+        ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-remote="$OVN_SB_REMOTE"
+        ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge="br-int"
+        ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type="geneve"
+        ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-ip="$HOST_IP"
+        # Select this chassis to host gateway routers
+        if [[ "$ENABLE_CHASSIS_AS_GW" == "True" ]]; then
+            ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-cms-options="enable-chassis-as-gw"
+        fi
+
+        # Note: ovn-controller will create and configure br-int once it is started.
+        # So, no need to create it now because nothing depends on that bridge here.
+
+        local ovscmd="$OVS_SBINDIR/ovs-vswitchd --log-file --pidfile --detach"
+        _run_process ovs-vswitchd "$ovscmd" "" "$STACK_GROUP" "root"
+
+        if is_provider_network || [[ $Q_USE_PROVIDERNET_FOR_PUBLIC == "True" ]]; then
+            ovn_base_setup_bridge $OVS_PHYSICAL_BRIDGE
+            ovs-vsctl set open . external-ids:ovn-bridge-mappings=${PHYSICAL_NETWORK}:${OVS_PHYSICAL_BRIDGE}
+        fi
+
+        if is_service_enabled ovn-controller-vtep ; then
+            ovn_base_setup_bridge br-v
+            vtep-ctl add-ps br-v
+            vtep-ctl set Physical_Switch br-v tunnel_ips=$HOST_IP
+
+            enable_service ovs-vtep
+            local vtepcmd="$OVS_SCRIPTDIR/ovs-vtep --log-file --pidfile --detach br-v"
+            _run_process ovs-vtep "$vtepcmd" "" "$STACK_GROUP" "root"
+
+            vtep-ctl set-manager tcp:$HOST_IP:6640
+        fi
+    fi
+}
+
+function _start_ovn_services {
+    _start_process "devstack@ovsdb-server.service"
+    _start_process "devstack@ovs-vswitchd.service"
+
+    if is_service_enabled ovs-vtep ; then
+        _start_process "devstack@ovs-vtep.service"
+    fi
+    if is_service_enabled ovn-northd ; then
+        _start_process "devstack@ovn-northd.service"
+    fi
+    if is_service_enabled ovn-controller ; then
+        _start_process "devstack@ovn-controller.service"
+    fi
+    if is_service_enabled ovn-controller-vtep ; then
+        _start_process "devstack@ovn-controller-vtep.service"
+    fi
+    if is_service_enabled q-ovn-metadata-agent; then
+        _start_process "devstack@q-ovn-metadata-agent.service"
+    fi
+}
+
+# start_ovn() - Start running processes, including screen
+function start_ovn {
+    echo "Starting OVN"
+
+    _start_ovs
+
+    local SCRIPTDIR=$OVN_SCRIPTDIR
+    if ! use_new_ovn_repository; then
+        SCRIPTDIR=$OVS_SCRIPTDIR
+    fi
+
+    if is_service_enabled ovn-northd ; then
+        if is_service_enabled tls-proxy; then
+            local tls_args="\
+                --ovn-nb-db-ssl-ca-cert=$INT_CA_DIR/ca-chain.pem \
+                --ovn-nb-db-ssl-cert=$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
+                --ovn-nb-db-ssl-key=$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
+                --ovn-sb-db-ssl-ca-cert=$INT_CA_DIR/ca-chain.pem \
+                --ovn-sb-db-ssl-cert=$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
+                --ovn-sb-db-ssl-key=$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
+                "
+        else
+            local tls_args=""
+        fi
+        local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor $tls_args start_northd"
+        local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_northd"
+
+        _run_process ovn-northd "$cmd" "$stop_cmd"
+        ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-connection p${OVN_PROTO}:6641:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+        ovn-sbctl --db=unix:$OVS_RUNDIR/ovnsb_db.sock set-connection p${OVN_PROTO}:6642:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+        sudo ovs-appctl -t $OVS_RUNDIR/ovnnb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
+        sudo ovs-appctl -t $OVS_RUNDIR/ovnsb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
+    fi
+
+    if is_service_enabled ovn-controller ; then
+        local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor start_controller"
+        local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_controller"
+
+        _run_process ovn-controller "$cmd" "$stop_cmd" "$STACK_GROUP" "root"
+    fi
+
+    if is_service_enabled ovn-controller-vtep ; then
+        local cmd="$OVS_BINDIR/ovn-controller-vtep --log-file --pidfile --detach --ovnsb-db=$OVN_SB_REMOTE"
+
+        _run_process ovn-controller-vtep "$cmd" "" "$STACK_GROUP" "root"
+    fi
+
+    if is_service_enabled q-ovn-metadata-agent; then
+        run_process q-ovn-metadata-agent "$NEUTRON_OVN_BIN_DIR/$NEUTRON_OVN_METADATA_BINARY --config-file $OVN_META_CONF"
+        # Format logging
+        setup_logging $OVN_META_CONF
+    fi
+
+    # NOTE(lucasagomes): To keep things simpler, let's reuse the same
+    # RUNDIR for both OVS and OVN. This way we avoid having to specify the
+    # --db option in the ovn-{n,s}bctl commands while playing with DevStack
+    if use_new_ovn_repository; then
+        sudo ln -s $OVS_RUNDIR $OVN_RUNDIR
+    fi
+
+    _start_ovn_services
+}
+
+function _stop_ovs_dp {
+    sudo ovs-dpctl dump-dps | sudo xargs -n1 ovs-dpctl del-dp
+    modprobe -q -r vport_geneve vport_vxlan openvswitch || true
+}
+
+function stop_ovn {
+    if is_service_enabled q-ovn-metadata-agent; then
+        sudo pkill -9 -f haproxy || :
+        stop_process neutron-ovn-metadata-agent
+    fi
+    if is_service_enabled ovn-controller-vtep ; then
+        stop_process ovn-controller-vtep
+    fi
+    if is_service_enabled ovn-controller ; then
+        stop_process ovn-controller
+    fi
+    if is_service_enabled ovn-northd ; then
+        stop_process ovn-northd
+    fi
+    if is_service_enabled ovs-vtep ; then
+        stop_process ovs-vtep
+    fi
+
+    stop_process ovs-vswitchd
+    stop_process ovsdb-server
+
+    _stop_ovs_dp
+}
+
+function _cleanup {
+    local path=${1:-$DEST/$OVN_REPO_NAME}
+    pushd $path
+    cd $path
+    sudo make uninstall
+    sudo make distclean
+    popd
+}
+
+# cleanup_ovn() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_ovn {
+    local ovn_path=$DEST/$OVN_REPO_NAME
+    local ovs_path=$DEST/$OVS_REPO_NAME
+
+    if [ -d $ovn_path ]; then
+        _cleanup $ovn_path
+    fi
+
+    if [ -d $ovs_path ]; then
+        _cleanup $ovs_path
+    fi
+
+    sudo rm -f $OVN_RUNDIR
+}

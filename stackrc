@@ -549,6 +549,11 @@ GITDIR["neutron-lib"]=$DEST/neutron-lib
 GITREPO["os-traits"]=${OS_TRAITS_REPO:-${GIT_BASE}/openstack/os-traits.git}
 GITBRANCH["os-traits"]=${OS_TRAITS_BRANCH:-$TARGET_BRANCH}
 
+# ovsdbapp used by neutron
+GITREPO["ovsdbapp"]=${OVSDBAPP_REPO:-${GIT_BASE}/openstack/ovsdbapp.git}
+GITBRANCH["ovsdbapp"]=${OVSDBAPP_BRANCH:-$TARGET_BRANCH}
+GITDIR["ovsdbapp"]=$DEST/ovsdbapp
+
 ##################
 #
 #  TripleO / Heat Agent Components
