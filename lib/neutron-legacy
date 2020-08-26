@@ -364,9 +364,6 @@ function configure_mutnauq {
 
     if [[ $Q_AGENT == "ovn" ]]; then
         configure_ovn
-        if is_service_enabled q-port-forwarding neutron-port-forwarding; then
-            configure_port_forwarding
-        fi
         configure_ovn_plugin
     fi
 
