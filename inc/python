@@ -247,7 +247,13 @@ function pip_install {
                     # and we will let pip sort out the install, regardless of
                     # the package being local or remote.
                     echo "Using $PYTHON3_VERSION version to install $package_dir based on default behavior"
-                    sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8"
+                    # See
+                    #  https://github.com/pypa/setuptools/issues/2232
+                    #  http://lists.openstack.org/pipermail/openstack-discuss/2020-August/016905.html
+                    # this makes setuptools >=50 use the platform distutils.
+                    # We only want to do this on global pip installs, not if
+                    # installing in a virtualenv
+                    sudo_pip="$sudo_pip LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib "
                     cmd_pip=$(get_pip_command $PYTHON3_VERSION)
                 fi
             fi
