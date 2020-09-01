@@ -182,3 +182,5 @@ if is_service_enabled cinder && is_package_installed lvm2; then
     clean_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME || /bin/true
     clean_lvm_filter
 fi
+
+clean_pyc_files

@@ -145,12 +145,3 @@ done
 
 rm -rf ~/.config/openstack
 
-# Clean up all *.pyc files
-if [[ -n "$DEST" ]] && [[ -d "$DEST" ]]; then
-    find_version=`find --version | awk '{ print $NF; exit}'`
-    if vercmp "$find_version" "<" "4.2.3" ; then
-        sudo find $DEST -name "*.pyc" -print0 | xargs -0 rm
-    else
-        sudo find $DEST -name "*.pyc" -delete
-    fi
-fi

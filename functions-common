@@ -2415,6 +2415,13 @@ function time_totals {
     $xtrace
 }
 
+function clean_pyc_files {
+    # Clean up all *.pyc files
+    if [[ -n "$DEST" ]] && [[ -d "$DEST" ]]; then
+        sudo find $DEST -name "*.pyc" -delete
+    fi
+}
+
 # Restore xtrace
 $_XTRACE_FUNCTIONS_COMMON
 
