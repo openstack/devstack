@@ -383,6 +383,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG compute-feature-enabled block_migration_for_live_migration ${USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled live_migrate_back_and_forth ${LIVE_MIGRATE_BACK_AND_FORTH:-False}
     iniset $TEMPEST_CONFIG compute-feature-enabled attach_encrypted_volume ${ATTACH_ENCRYPTED_VOLUME_AVAILABLE:-True}
+    iniset $TEMPEST_CONFIG compute-feature-enabled xenapi_apis True
     if is_service_enabled n-cell; then
         # Cells doesn't support shelving/unshelving
         iniset $TEMPEST_CONFIG compute-feature-enabled shelve False
