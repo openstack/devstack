@@ -54,7 +54,7 @@ if [[ -r data/devstack-plugins-registry.header ]]; then
     cat data/devstack-plugins-registry.header
 fi
 
-sorted_plugins=$(python tools/generate-devstack-plugins-list.py)
+sorted_plugins=$(python3 tools/generate-devstack-plugins-list.py)
 
 # find the length of the name column & pad
 name_col_len=$(echo "${sorted_plugins}" | wc -L)
