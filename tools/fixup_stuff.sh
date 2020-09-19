@@ -87,12 +87,6 @@ function fixup_ubuntu {
 # Python Packages
 # ---------------
 
-# get_package_path python-package    # in import notation
-function get_package_path {
-    local package=$1
-    echo $(python -c "import os; import $package; print(os.path.split(os.path.realpath($package.__file__))[0])")
-}
-
 function fixup_fedora {
     if ! is_fedora; then
         return
@@ -128,32 +122,6 @@ function fixup_fedora {
             sudo systemctl stop firewalld
             sudo systemctl start iptables
         fi
-    fi
-
-    if  [[ "$os_VENDOR" == "Fedora" ]] && [[ "$os_RELEASE" -ge "22" ]]; then
-        # requests ships vendored version of chardet/urllib3, but on
-        # fedora these are symlinked back to the primary versions to
-        # avoid duplication of code on disk.  This is fine when
-        # maintainers keep things in sync, but since devstack takes
-        # over and installs later versions via pip we can end up with
-        # incompatible versions.
-        #
-        # The rpm package is not removed to preserve the dependent
-        # packages like cloud-init; rather we remove the symlinks and
-        # force a re-install of requests so the vendored versions it
-        # wants are present.
-        #
-        # Realted issues:
-        # https://bugs.launchpad.net/glance/+bug/1476770
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1253823
-
-        base_path=$(get_package_path requests)/packages
-        if [ -L $base_path/chardet -o -L $base_path/urllib3 ]; then
-            sudo rm -f $base_path/{chardet,urllib3}
-            # install requests with the bundled urllib3 to avoid conflicts
-            pip_install --upgrade --force-reinstall requests
-        fi
-
     fi
 
     # Since pip10, pip will refuse to uninstall files from packages
