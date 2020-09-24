@@ -391,7 +391,7 @@
     description: |
       Minimal devstack base job, intended for use by jobs that need
       less than the normal minimum set of required-projects.
-    nodeset: openstack-single-node-bionic
+    nodeset: openstack-single-node-focal
     required-projects:
       - opendev.org/openstack/requirements
     vars:
@@ -566,7 +566,7 @@
 - job:
     name: devstack-multinode
     parent: devstack
-    nodeset: openstack-two-node-bionic
+    nodeset: openstack-two-node-focal
     description: |
       Simple multinode test to verify multinode functionality on devstack side.
       This is not meant to be used as a parent job.
@@ -591,12 +591,10 @@
     voting: false
 
 - job:
-    name: devstack-platform-focal
+    name: devstack-platform-bionic
     parent: tempest-full-py3
-    description: Ubuntu Focal Fossa platform test
-    nodeset: openstack-single-node-focal
-    vars:
-      tempest_black_regex: "(tempest.api.compute.volumes.test_attach_volume.AttachVolumeMultiAttachTest.test_resize_server_with_multiattached_volume|tempest.api.compute.servers.test_server_rescue_negative.ServerRescueNegativeTestJSON|tempest.api.compute.servers.test_server_rescue.ServerStableDeviceRescueTest.test_stable_device_rescue_disk_virtio_with_volume_attached)"
+    description: Ubuntu Bionic platform test
+    nodeset: openstack-single-node-bionic
     voting: false
 
 - job:
@@ -690,7 +688,7 @@
         - devstack-platform-opensuse-15
         - devstack-platform-fedora-latest
         - devstack-platform-centos-8
-        - devstack-platform-focal
+        - devstack-platform-bionic
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
