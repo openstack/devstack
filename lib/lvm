@@ -124,13 +124,15 @@ function init_lvm_volume_group {
     local vg=$1
     local size=$2
 
-    # Start the lvmetad and tgtd services
-    if is_fedora || is_suse; then
-        # services is not started by default
+    # Start the lvmetad service
+    if is_fedora ; then
+        # service is not started by default
         start_service lvm2-lvmetad
-        if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
-            start_service tgtd
-        fi
+    fi
+
+    # Start the tgtd service on Fedora and SUSE if tgtadm is used
+    if  is_fedora || is_suse  && [[ "$CINDER_ISCSI_HELPER" = "tgtadm" ]]; then
+        start_service tgtd
     fi
 
     # Start with a clean volume group
