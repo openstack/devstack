@@ -70,7 +70,7 @@ GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
 if [[ "$WSGI_MODE" != "uwsgi" ]]; then
     GLANCE_STANDALONE=True
 fi
-GLANCE_STANDALONE=${GLANCE_STANDALONE:-True}
+GLANCE_STANDALONE=${GLANCE_STANDALONE:-False}
 
 # File path for each store specified in GLANCE_MULTIPLE_FILE_STORES, the store
 # identifier will be appended to this path at runtime. If GLANCE_MULTIPLE_FILE_STORES
