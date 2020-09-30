@@ -18,6 +18,11 @@
       name: sync-devstack-data
     when: devstack_services['tls-proxy']|default(false)
 
+  - name: Sync controller ceph.conf and key rings to subnode
+    include_role:
+      name: sync-controller-ceph-conf-and-keys
+    when: devstack_plugins is defined and 'devstack-plugin-ceph' in devstack_plugins
+
   - name: Run devstack on the sub-nodes
     include_role:
       name: run-devstack

@@ -1,0 +1,15 @@
+- name: Ensure /etc/ceph exists on subnode
+  become: true
+  file:
+    path: /etc/ceph
+    state: directory
+
+- name: Copy /etc/ceph from controller to subnode
+  become: true
+  synchronize:
+    owner: yes
+    group: yes
+    perms: yes
+    src: /etc/ceph/
+    dest: /etc/ceph/
+  delegate_to: controller
