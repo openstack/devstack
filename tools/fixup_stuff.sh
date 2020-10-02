@@ -143,13 +143,6 @@ function fixup_fedora {
     # overwriting works.  So this hacks around those packages that
     # have been dragged in by some other system dependency
     sudo rm -rf /usr/lib64/python3*/site-packages/PyYAML-*.egg-info
-
-    # NOTE(lyarwood): Workaround a known issue on Fedora with dnsmasq >= 2.81
-    # by downgrading to 2.80 for the time being.
-    # https://bugs.launchpad.net/neutron/+bug/1896945
-    if [[ "$DISTRO" == "f32" ]] && [[ $(rpm --queryformat %{VERSION} -q dnsmasq) != "2.80" ]]; then
-        sudo dnf downgrade dnsmasq-2.80 -y
-    fi
 }
 
 function fixup_suse {
