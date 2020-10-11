@@ -8,5 +8,4 @@
     - test-setup
     - ensure-tox
     - get-devstack-os-environment
-    - role: tox
-      tox_environment: "{{ os_env_vars|default({}) }}"
+    - tox
