@@ -165,7 +165,7 @@ def network_dump():
 
     _dump_cmd("bridge link")
     _dump_cmd("ip link show type bridge")
-    ip_cmds = ["neigh", "addr", "link", "route"]
+    ip_cmds = ["neigh", "addr", "route", "route -6"]
     for cmd in ip_cmds + ['netns']:
         _dump_cmd("ip %s" % cmd)
     for netns_ in _netns_list():
