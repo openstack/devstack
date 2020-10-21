@@ -59,6 +59,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-centos-8-stream
+    nodes:
+      - name: controller
+        label: centos-8-stream
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-opensuse-15
     nodes:
       - name: controller
@@ -592,6 +602,14 @@
     timeout: 9000
 
 - job:
+    name: devstack-platform-centos-8-stream
+    parent: tempest-full-py3
+    description: CentOS 8 Stream platform test
+    nodeset: devstack-single-node-centos-8-stream
+    voting: false
+    timeout: 9000
+
+- job:
     name: devstack-async
     parent: tempest-full-py3
     description: Async mode enabled
@@ -704,6 +722,7 @@
         - devstack-ipv6
         - devstack-platform-fedora-latest
         - devstack-platform-centos-8
+        - devstack-platform-centos-8-stream
         - devstack-async
         - devstack-multinode
         - devstack-unit-tests

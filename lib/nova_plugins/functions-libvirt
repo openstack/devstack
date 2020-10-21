@@ -81,7 +81,17 @@ function install_libvirt {
         install_package qemu-kvm
 
         install_package libvirt libvirt-devel
-        if is_arch "aarch64"; then
+        if is_arch "x86_64"; then
+            # NOTE(yoctozepto): recent edk2-ovmf on CentOS Stream 8 x86_64 started failing with
+            # "libvirt.libvirtError: internal error: unknown feature amd-sev-es",
+            # so reinstall a known working version until the relevant bugs get fixed:
+            #   * https://bugzilla.redhat.com/show_bug.cgi?id=1961558
+            #   * https://bugzilla.redhat.com/show_bug.cgi?id=1961562
+            # TODO(yoctozepto): Remove this code when the time is right.
+            if [ "$os_VENDOR" = "CentOSStream" ]; then
+                install_package edk2-ovmf-20200602gitca407c7246bf-4.el8
+            fi
+        elif is_arch "aarch64"; then
             install_package edk2.git-aarch64
         fi
 
