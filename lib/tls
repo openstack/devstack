@@ -570,14 +570,6 @@ EOF
     restart_apache_server
 }
 
-# Follow TLS proxy
-function follow_tls_proxy {
-    sudo touch /var/log/$APACHE_NAME/tls-proxy_error.log
-    tail_log tls-error /var/log/$APACHE_NAME/tls-proxy_error.log
-    sudo touch /var/log/$APACHE_NAME/tls-proxy_access.log
-    tail_log tls-proxy /var/log/$APACHE_NAME/tls-proxy_access.log
-}
-
 # Cleanup Functions
 # =================
 

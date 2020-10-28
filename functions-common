@@ -1609,10 +1609,6 @@ function service_check {
 }
 
 
-function tail_log {
-    deprecated "With the removal of screen support, tail_log is deprecated and will be removed after Queens"
-}
-
 # Plugin Functions
 # =================
 
