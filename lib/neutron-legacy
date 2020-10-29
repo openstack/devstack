@@ -226,15 +226,17 @@ PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-public}
 # Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
 OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-br-ex}
 
-default_route_dev=$(ip route | grep ^default | awk '{print $5}')
-die_if_not_set $LINENO default_route_dev "Failure retrieving default route device"
 # With the linuxbridge agent, if using VLANs for tenant networks,
 # or if using flat or VLAN provider networks, set in ``localrc`` to
 # the name of the network interface to use for the physical
 # network.
 #
 # Example: ``LB_PHYSICAL_INTERFACE=eth1``
-LB_PHYSICAL_INTERFACE=${LB_PHYSICAL_INTERFACE:-$default_route_dev}
+if [[ $Q_AGENT == "linuxbridge" && -z ${LB_PHYSICAL_INTERFACE} ]]; then
+    default_route_dev=$(ip route | grep ^default | awk '{print $5}')
+    die_if_not_set $LINENO default_route_dev "Failure retrieving default route device"
+    LB_PHYSICAL_INTERFACE=$default_route_dev
+fi
 
 # When Neutron tunnels are enabled it is needed to specify the
 # IP address of the end point in the local server. This IP is set
