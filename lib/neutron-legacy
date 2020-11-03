@@ -233,7 +233,7 @@ OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-br-ex}
 #
 # Example: ``LB_PHYSICAL_INTERFACE=eth1``
 if [[ $Q_AGENT == "linuxbridge" && -z ${LB_PHYSICAL_INTERFACE} ]]; then
-    default_route_dev=$(ip route | grep ^default | awk '{print $5}')
+    default_route_dev=$( (ip route; ip -6 route) | grep ^default | head -n 1 | awk '{print $5}')
     die_if_not_set $LINENO default_route_dev "Failure retrieving default route device"
     LB_PHYSICAL_INTERFACE=$default_route_dev
 fi
