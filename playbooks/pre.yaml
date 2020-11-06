@@ -19,12 +19,13 @@
           {% endfor -%}
           {{- mtus|min -}}
     - name: Calculate external_bridge_mtu
-      # 50 bytes is overhead for vxlan (which is greater than GRE
+      # 30 bytes is overhead for vxlan (which is greater than GRE
       # allowing us to use either overlay option with this MTU.
+      # 40 bytes is overhead for IPv6, which will also support an IPv4 overlay.
       # TODO(andreaf) This should work, but it may have to be reconcilied with
       # the MTU setting used by the multinode setup roles in multinode pre.yaml
       set_fact:
-        external_bridge_mtu: "{{ local_mtu | int - 50 }}"
+        external_bridge_mtu: "{{ local_mtu | int - 30 - 40 }}"
   roles:
     - configure-swap
     - setup-stack-user
