@@ -77,10 +77,10 @@ function fixup_ubuntu {
         # If we are on a nodepool provided host and it has told us about
         # where we can find local mirrors then use that mirror.
         source /etc/ci/mirror_info.sh
-        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR bionic-updates/train main"
+        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR bionic-updates/ussuri main"
     else
         # Enable UCA:train for updated versions of QEMU and libvirt
-        sudo add-apt-repository -y cloud-archive:train
+        sudo add-apt-repository -y cloud-archive:ussuri
     fi
     REPOS_UPDATED=False
     apt_get_update
