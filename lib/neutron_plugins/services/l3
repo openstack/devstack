@@ -101,7 +101,6 @@ SUBNETPOOL_SIZE_V4=${SUBNETPOOL_SIZE_V4:-26}
 SUBNETPOOL_SIZE_V6=${SUBNETPOOL_SIZE_V6:-64}
 
 default_v4_route_devs=$(ip -4 route | grep ^default | awk '{print $5}')
-die_if_not_set $LINENO default_v4_route_devs "Failure retrieving default IPv4 route devices"
 
 default_v6_route_devs=$(ip -6 route list match default table all | grep via | awk '{print $5}')
 
