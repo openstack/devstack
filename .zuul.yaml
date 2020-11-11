@@ -619,7 +619,6 @@
         - devstack-ipv6:
             voting: false
         - devstack-platform-centos-7
-        - devstack-platform-opensuse-15
         - devstack-platform-fedora-latest
         - devstack-platform-xenial
         - devstack-multinode
