@@ -340,6 +340,7 @@
         '{{ stage_dir }}/listen53.txt': logs
         '{{ stage_dir }}/deprecations.log': logs
         '{{ stage_dir }}/audit.log': logs
+        /etc/ceph: logs
         /var/log/ceph: logs
         /var/log/openvswitch: logs
         /var/log/glusterfs: logs
