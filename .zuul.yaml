@@ -737,15 +737,6 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        # NOTE(gmann): Remove this job from devstack pipeline once it is
-        # migrated to zuulv3 native. This is legacy job and rely on
-        # devstack-gate + devstack setting so any change in devstack can
-        # break it.
-        - nova-live-migration:
-            voting: false
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
     gate:
       jobs:
         - devstack
