@@ -145,3 +145,5 @@ done
 
 rm -rf ~/.config/openstack
 
+# Clear any fstab entries made
+sudo sed -i '/.*comment=devstack-.*/ d' /etc/fstab
