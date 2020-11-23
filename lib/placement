@@ -148,7 +148,6 @@ function start_placement_api {
     else
         enable_apache_site placement-api
         restart_apache_server
-        tail_log placement-api /var/log/$APACHE_NAME/placement-api.log
     fi
 
     echo "Waiting for placement-api to start..."
