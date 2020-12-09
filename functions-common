@@ -452,8 +452,8 @@ function is_fedora {
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
         [ "$os_VENDOR" = "RedHatEnterpriseServer" ] || \
         [ "$os_VENDOR" = "RedHatEnterprise" ] || \
-        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "OracleServer" ] || \
-        [ "$os_VENDOR" = "Virtuozzo" ]
+        [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "CentOSStream" ] || \
+        [ "$os_VENDOR" = "OracleServer" ] || [ "$os_VENDOR" = "Virtuozzo" ]
 }
 
 
