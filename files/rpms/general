@@ -25,8 +25,8 @@ postgresql-devel  # psycopg2
 psmisc
 python3-devel
 python3-pip
+python3-systemd
 redhat-rpm-config # missing dep for gcc hardening flags, see rhbz#1217376
-systemd-devel # for systemd-python
 tar
 tcpdump
 unzip

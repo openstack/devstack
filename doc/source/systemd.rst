@@ -196,31 +196,6 @@ See the `remote-pdb`_ home page for more options.
 
 .. _`remote-pdb`: https://pypi.org/project/remote-pdb/
 
-Known Issues
-============
-
-Be careful about systemd python libraries. There are 3 of them on
-pypi, and they are all very different. They unfortunately all install
-into the ``systemd`` namespace, which can cause some issues.
-
-- ``systemd-python`` - this is the upstream maintained library, it has
-  a version number like systemd itself (currently ``234``). This is
-  the one you want.
-- ``systemd`` - a python 3 only library, not what you want.
-- ``python-systemd`` - another library you don't want. Installing it
-  on a system will break ansible's ability to run. The package has now
-  been renamed to ``cysystemd``, which avoids the namespace collision.
-
-
-If we were using user units, the ``[Service]`` - ``Group=`` parameter
-doesn't seem to work with user units, even though the documentation
-says that it should. This means that we will need to do an explicit
-``/usr/bin/sg``. This has the downside of making the SYSLOG_IDENTIFIER
-be ``sg``. We can explicitly set that with ``SyslogIdentifier=``, but
-it's really unfortunate that we're going to need this work
-around. This is currently not a problem because we're only using
-system units.
-
 Future Work
 ===========
 
