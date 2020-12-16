@@ -100,7 +100,7 @@ function install_nova_hypervisor {
 
     if [[ "$ENABLE_FILE_INJECTION" == "True" ]] ; then
         if is_ubuntu; then
-            install_package python-guestfs
+            install_package python3-guestfs
             # NOTE(andreaf) Ubuntu kernel can only be read by root, which breaks libguestfs:
             # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/759725)
             INSTALLED_KERNELS="$(ls /boot/vmlinuz-*)"
