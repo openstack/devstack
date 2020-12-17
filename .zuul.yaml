@@ -514,23 +514,6 @@
     voting: false
 
 - job:
-    name: devstack-platform-fedora-latest
-    parent: tempest-full-py3
-    description: Fedora latest platform test
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-
-- job:
-    name: devstack-platform-fedora-latest-virt-preview
-    parent: tempest-full-py3
-    description: Fedora latest platform test using the virt-preview repo.
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-    vars:
-      devstack_localrc:
-        ENABLE_FEDORA_VIRT_PREVIEW_REPO: true
-
-- job:
     name: devstack-tox-base
     parent: devstack
     description: |
@@ -602,7 +585,6 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-opensuse-15
-        - devstack-platform-fedora-latest
         - devstack-platform-centos-8
         - devstack-multinode
         - devstack-unit-tests
@@ -697,10 +679,6 @@
     #    Next cycle we can remove this if everything run out stable enough.
     # * nova-multi-cell: maintained by nova and currently non-voting in the
     #    check queue for nova changes but relies on devstack configuration
-    # * devstack-platform-fedora-latest-virt-preview: Maintained by lyarwood
-    #    for Nova to allow early testing of the latest versions of Libvirt and
-    #    QEMU. Should only graduate out of experimental if it ever moves into
-    #    the check queue for Nova.
 
     experimental:
       jobs:
@@ -729,4 +707,3 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - devstack-platform-fedora-latest-virt-preview
