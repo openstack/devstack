@@ -753,7 +753,9 @@ function init_swift {
 
 function install_swift {
     git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
-    setup_develop $SWIFT_DIR
+    # keystonemiddleware needs to be installed via keystone extras as defined
+    # in setup.cfg, see bug #1909018 for more details.
+    setup_develop $SWIFT_DIR keystone
     if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
         install_apache_wsgi
     fi
