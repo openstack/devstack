@@ -3,7 +3,6 @@ curl
 dnsmasq-base
 dnsmasq-utils # for dhcp_release
 ebtables
-gawk
 genisoimage # required for config_drive
 iptables
 iputils-arping

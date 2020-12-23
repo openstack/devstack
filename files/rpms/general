@@ -1,6 +1,7 @@
 bc
 curl
 dbus
+gawk
 gcc
 gcc-c++
 gettext  # used for compiling message catalogs
