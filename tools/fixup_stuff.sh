@@ -184,6 +184,14 @@ function fixup_suse {
     sudo zypper up -y p11-kit ca-certificates-mozilla
 }
 
+function fixup_ovn_centos {
+    if [[ $os_VENDOR != "CentOS" ]]; then
+        return
+    fi
+    # OVN packages are part of this release for CentOS
+    yum_install centos-release-openstack-victoria
+}
+
 function fixup_all {
     fixup_keystone
     fixup_ubuntu

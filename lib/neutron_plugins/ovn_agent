@@ -72,6 +72,7 @@ OVN_UUID=${OVN_UUID:-}
 # Whether or not to build the openvswitch kernel module from ovs.  This is required
 # unless the distro kernel includes ovs+conntrack support.
 OVN_BUILD_MODULES=$(trueorfalse False OVN_BUILD_MODULES)
+OVN_BUILD_FROM_SOURCE=$(trueorfalse False OVN_BUILD_FROM_SOURCE)
 
 # Whether or not to install the ovs python module from ovs source.  This can be
 # used to test and validate new ovs python features.  This should only be used
@@ -98,7 +99,10 @@ fi
 
 OVN_IGMP_SNOOPING_ENABLE=$(trueorfalse False OVN_IGMP_SNOOPING_ENABLE)
 
-OVS_PREFIX=/usr/local
+OVS_PREFIX=
+if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+    OVS_PREFIX=/usr/local
+fi
 OVS_SBINDIR=$OVS_PREFIX/sbin
 OVS_BINDIR=$OVS_PREFIX/bin
 OVS_RUNDIR=$OVS_PREFIX/var/run/openvswitch
@@ -116,6 +120,24 @@ NEUTRON_OVN_METADATA_BINARY="neutron-ovn-metadata-agent"
 
 STACK_GROUP="$( id --group --name "$STACK_USER" )"
 
+OVN_NORTHD_SERVICE=ovn-northd.service
+if is_ubuntu; then
+    # The ovn-central.service file on Ubuntu is responsible for starting
+    # ovn-northd and the OVN DBs (on CentOS this is done by ovn-northd.service)
+    OVN_NORTHD_SERVICE=ovn-central.service
+fi
+OVSDB_SERVER_SERVICE=ovsdb-server.service
+OVS_VSWITCHD_SERVICE=ovs-vswitchd.service
+OVN_CONTROLLER_SERVICE=ovn-controller.service
+OVN_CONTROLLER_VTEP_SERVICE=ovn-controller-vtep.service
+if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+    OVSDB_SERVER_SERVICE=devstack@ovsdb-server.service
+    OVS_VSWITCHD_SERVICE=devstack@ovs-vswitchd.service
+    OVN_NORTHD_SERVICE=devstack@ovn-northd.service
+    OVN_CONTROLLER_SERVICE=devstack@ovn-controller.service
+    OVN_CONTROLLER_VTEP_SERVICE=devstack@ovn-controller-vtep.service
+fi
+
 # Defaults Overwrite
 # ------------------
 
@@ -131,10 +153,26 @@ ML2_L3_PLUGIN=${ML2_L3_PLUGIN-"ovn-router"}
 # Utility Functions
 # -----------------
 
+function wait_for_sock_file {
+    local count=0
+    while [ ! -S $1 ]; do
+        sleep 1
+        count=$((count+1))
+        if [ "$count" -gt 5 ]; then
+            die $LINENO "Socket $1 not found"
+        fi
+    done
+}
+
 function use_new_ovn_repository {
     if [ -z "$is_new_ovn" ]; then
         local ovs_repo_dir=$DEST/$OVS_REPO_NAME
         if [ ! -d $ovs_repo_dir ]; then
+            git_timed clone $OVS_REPO $ovs_repo_dir
+            pushd $ovs_repo_dir
+            git checkout $OVS_BRANCH
+            popd
+        else
             clone_repository $OVS_REPO $ovs_repo_dir $OVS_BRANCH
         fi
         # Check the split commit exists in the current branch
@@ -153,14 +191,14 @@ function use_new_ovn_repository {
 # neutron-ovs-cleanup uses the OVSDB native interface.
 function ovn_base_setup_bridge {
     local bridge=$1
-    local addbr_cmd="ovs-vsctl --no-wait -- --may-exist add-br $bridge -- set bridge $bridge protocols=OpenFlow13,OpenFlow15"
+    local addbr_cmd="sudo ovs-vsctl --no-wait -- --may-exist add-br $bridge -- set bridge $bridge protocols=OpenFlow13,OpenFlow15"
 
     if [ "$OVS_DATAPATH_TYPE" != "system" ] ; then
         addbr_cmd="$addbr_cmd -- set Bridge $bridge datapath_type=${OVS_DATAPATH_TYPE}"
     fi
 
     $addbr_cmd
-    ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
+    sudo ovs-vsctl --no-wait br-set-external-id $bridge bridge-id $bridge
 }
 
 function _start_process {
@@ -229,8 +267,8 @@ function create_public_bridge {
     local ext_gw_ifc
     ext_gw_ifc=$(get_ext_gw_interface)
 
-    ovs-vsctl --may-exist add-br $ext_gw_ifc -- set bridge $ext_gw_ifc protocols=OpenFlow13,OpenFlow15
-    ovs-vsctl set open . external-ids:ovn-bridge-mappings=$PHYSICAL_NETWORK:$ext_gw_ifc
+    sudo ovs-vsctl --may-exist add-br $ext_gw_ifc -- set bridge $ext_gw_ifc protocols=OpenFlow13,OpenFlow15
+    sudo ovs-vsctl set open . external-ids:ovn-bridge-mappings=$PHYSICAL_NETWORK:$ext_gw_ifc
     if [ -n "$FLOATING_RANGE" ]; then
         local cidr_len=${FLOATING_RANGE#*/}
         sudo ip addr flush dev $ext_gw_ifc
@@ -337,34 +375,45 @@ function install_ovn {
     # Check the OVN configuration
     ovn_sanity_check
 
-    # If OVS is already installed, remove it, because we're about to re-install
-    # it from source.
-    for package in openvswitch openvswitch-switch openvswitch-common; do
-        if is_package_installed $package ; then
-            uninstall_package $package
-        fi
-    done
-
     # Install tox, used to generate the config (see devstack/override-defaults)
     pip_install tox
-    remove_ovs_packages
-    sudo rm -f $OVS_RUNDIR/*
-
-    compile_ovs $OVN_BUILD_MODULES
-    if use_new_ovn_repository; then
-        compile_ovn $OVN_BUILD_MODULES
-    fi
-
-    # Ensure that the OVS commands are accessible in the PATH
-    OVS_BINDIR=${OVS_BINDIR:-/usr/local/bin}
-    export PATH=$OVS_BINDIR:$PATH
 
     sudo mkdir -p $OVS_RUNDIR
     sudo chown $(whoami) $OVS_RUNDIR
-    sudo mkdir -p $OVS_PREFIX/var/log/openvswitch
-    sudo chown $(whoami) $OVS_PREFIX/var/log/openvswitch
-    sudo mkdir -p $OVS_PREFIX/var/log/ovn
-    sudo chown $(whoami) $OVS_PREFIX/var/log/ovn
+    # NOTE(lucasagomes): To keep things simpler, let's reuse the same
+    # RUNDIR for both OVS and OVN. This way we avoid having to specify the
+    # --db option in the ovn-{n,s}bctl commands while playing with DevStack
+    sudo ln -s $OVS_RUNDIR $OVN_RUNDIR
+
+    if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+        # If OVS is already installed, remove it, because we're about to
+        # re-install it from source.
+        for package in openvswitch openvswitch-switch openvswitch-common; do
+            if is_package_installed $package ; then
+                uninstall_package $package
+            fi
+        done
+
+        remove_ovs_packages
+        sudo rm -f $OVS_RUNDIR/*
+
+        compile_ovs $OVN_BUILD_MODULES
+        if use_new_ovn_repository; then
+            compile_ovn $OVN_BUILD_MODULES
+        fi
+
+        sudo mkdir -p $OVS_PREFIX/var/log/openvswitch
+        sudo chown $(whoami) $OVS_PREFIX/var/log/openvswitch
+        sudo mkdir -p $OVS_PREFIX/var/log/ovn
+        sudo chown $(whoami) $OVS_PREFIX/var/log/ovn
+    else
+        fixup_ovn_centos
+        install_package $(get_packages openvswitch)
+        install_package $(get_packages ovn)
+    fi
+
+    # Ensure that the OVS commands are accessible in the PATH
+    export PATH=$OVS_BINDIR:$PATH
 
     # Archive log files and create new
     local log_archive_dir=$LOGDIR/archive
@@ -494,7 +543,7 @@ function configure_ovn {
         iniset $OVN_META_CONF DEFAULT nova_metadata_host $OVN_META_DATA_HOST
         iniset $OVN_META_CONF DEFAULT metadata_workers $API_WORKERS
         iniset $OVN_META_CONF DEFAULT state_path $NEUTRON_STATE_PATH
-        iniset $OVN_META_CONF ovs ovsdb_connection unix:$OVS_RUNDIR/db.sock
+        iniset $OVN_META_CONF ovs ovsdb_connection tcp:$OVSDB_SERVER_LOCAL_HOST:6640
         iniset $OVN_META_CONF ovn ovn_sb_connection $OVN_SB_REMOTE
         if is_service_enabled tls-proxy; then
             iniset $OVN_META_CONF ovn \
@@ -533,51 +582,58 @@ function _start_ovs {
         enable_service ovsdb-server
         enable_service ovs-vswitchd
 
-        if [ ! -f $OVS_DATADIR/conf.db ]; then
-            ovsdb-tool create $OVS_DATADIR/conf.db $OVS_SHAREDIR/vswitch.ovsschema
-        fi
-
-        if is_service_enabled ovn-controller-vtep; then
-            if [ ! -f $OVS_DATADIR/vtep.db ]; then
-                ovsdb-tool create $OVS_DATADIR/vtep.db $OVS_SHAREDIR/vtep.ovsschema
+        if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+            if [ ! -f $OVS_DATADIR/conf.db ]; then
+                ovsdb-tool create $OVS_DATADIR/conf.db $OVS_SHAREDIR/vswitch.ovsschema
             fi
-        fi
 
-        local dbcmd="$OVS_SBINDIR/ovsdb-server --remote=punix:$OVS_RUNDIR/db.sock --remote=ptcp:6640:$OVSDB_SERVER_LOCAL_HOST --pidfile --detach --log-file"
-        dbcmd+=" --remote=db:Open_vSwitch,Open_vSwitch,manager_options"
-        if is_service_enabled ovn-controller-vtep; then
-            dbcmd+=" --remote=db:hardware_vtep,Global,managers $OVS_DATADIR/vtep.db"
+            if is_service_enabled ovn-controller-vtep; then
+                if [ ! -f $OVS_DATADIR/vtep.db ]; then
+                    ovsdb-tool create $OVS_DATADIR/vtep.db $OVS_SHAREDIR/vtep.ovsschema
+                fi
+            fi
+
+            local dbcmd="$OVS_SBINDIR/ovsdb-server --remote=punix:$OVS_RUNDIR/db.sock --remote=ptcp:6640:$OVSDB_SERVER_LOCAL_HOST --pidfile --detach --log-file"
+            dbcmd+=" --remote=db:Open_vSwitch,Open_vSwitch,manager_options"
+            if is_service_enabled ovn-controller-vtep; then
+                dbcmd+=" --remote=db:hardware_vtep,Global,managers $OVS_DATADIR/vtep.db"
+            fi
+            dbcmd+=" $OVS_DATADIR/conf.db"
+            _run_process ovsdb-server "$dbcmd"
+
+            # Note: ovn-controller will create and configure br-int once it is started.
+            # So, no need to create it now because nothing depends on that bridge here.
+            local ovscmd="$OVS_SBINDIR/ovs-vswitchd --log-file --pidfile --detach"
+            _run_process ovs-vswitchd "$ovscmd" "" "$STACK_GROUP" "root"
+        else
+            _start_process "$OVSDB_SERVER_SERVICE"
+            _start_process "$OVS_VSWITCHD_SERVICE"
         fi
-        dbcmd+=" $OVS_DATADIR/conf.db"
-        _run_process ovsdb-server "$dbcmd"
 
         echo "Configuring OVSDB"
         if is_service_enabled tls-proxy; then
-            ovs-vsctl --no-wait set-ssl \
+            sudo ovs-vsctl --no-wait set-ssl \
                 $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
                 $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
                 $INT_CA_DIR/ca-chain.pem
         fi
-        ovs-vsctl --no-wait set open_vswitch . system-type="devstack"
-        ovs-vsctl --no-wait set open_vswitch . external-ids:system-id="$OVN_UUID"
-        ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-remote="$OVN_SB_REMOTE"
-        ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge="br-int"
-        ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type="geneve"
-        ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-ip="$HOST_IP"
+
+        sudo ovs-vsctl --no-wait set-manager ptcp:6640:$OVSDB_SERVER_LOCAL_HOST
+        sudo ovs-vsctl --no-wait set open_vswitch . system-type="devstack"
+        sudo ovs-vsctl --no-wait set open_vswitch . external-ids:system-id="$OVN_UUID"
+        sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-remote="$OVN_SB_REMOTE"
+        sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge="br-int"
+        sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type="geneve"
+        sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-ip="$HOST_IP"
+        sudo ovs-vsctl --no-wait set open_vswitch . external-ids:hostname="$LOCAL_HOSTNAME"
         # Select this chassis to host gateway routers
         if [[ "$ENABLE_CHASSIS_AS_GW" == "True" ]]; then
-            ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-cms-options="enable-chassis-as-gw"
+            sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-cms-options="enable-chassis-as-gw"
         fi
-
-        # Note: ovn-controller will create and configure br-int once it is started.
-        # So, no need to create it now because nothing depends on that bridge here.
-
-        local ovscmd="$OVS_SBINDIR/ovs-vswitchd --log-file --pidfile --detach"
-        _run_process ovs-vswitchd "$ovscmd" "" "$STACK_GROUP" "root"
 
         if is_provider_network || [[ $Q_USE_PROVIDERNET_FOR_PUBLIC == "True" ]]; then
             ovn_base_setup_bridge $OVS_PHYSICAL_BRIDGE
-            ovs-vsctl set open . external-ids:ovn-bridge-mappings=${PHYSICAL_NETWORK}:${OVS_PHYSICAL_BRIDGE}
+            sudo ovs-vsctl set open . external-ids:ovn-bridge-mappings=${PHYSICAL_NETWORK}:${OVS_PHYSICAL_BRIDGE}
         fi
 
         if is_service_enabled ovn-controller-vtep ; then
@@ -595,20 +651,20 @@ function _start_ovs {
 }
 
 function _start_ovn_services {
-    _start_process "devstack@ovsdb-server.service"
-    _start_process "devstack@ovs-vswitchd.service"
+    _start_process "$OVSDB_SERVER_SERVICE"
+    _start_process "$OVS_VSWITCHD_SERVICE"
 
-    if is_service_enabled ovs-vtep ; then
-        _start_process "devstack@ovs-vtep.service"
-    fi
     if is_service_enabled ovn-northd ; then
-        _start_process "devstack@ovn-northd.service"
+        _start_process "$OVN_NORTHD_SERVICE"
     fi
     if is_service_enabled ovn-controller ; then
-        _start_process "devstack@ovn-controller.service"
+        _start_process "$OVN_CONTROLLER_SERVICE"
     fi
     if is_service_enabled ovn-controller-vtep ; then
-        _start_process "devstack@ovn-controller-vtep.service"
+        _start_process "$OVN_CONTROLLER_VTEP_SERVICE"
+    fi
+    if is_service_enabled ovs-vtep ; then
+        _start_process "devstack@ovs-vtep.service"
     fi
     if is_service_enabled q-ovn-metadata-agent; then
         _start_process "devstack@q-ovn-metadata-agent.service"
@@ -627,52 +683,53 @@ function start_ovn {
     fi
 
     if is_service_enabled ovn-northd ; then
-        if is_service_enabled tls-proxy; then
-            local tls_args="\
-                --ovn-nb-db-ssl-ca-cert=$INT_CA_DIR/ca-chain.pem \
-                --ovn-nb-db-ssl-cert=$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
-                --ovn-nb-db-ssl-key=$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
-                --ovn-sb-db-ssl-ca-cert=$INT_CA_DIR/ca-chain.pem \
-                --ovn-sb-db-ssl-cert=$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
-                --ovn-sb-db-ssl-key=$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
-                "
-        else
-            local tls_args=""
-        fi
-        local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor $tls_args start_northd"
-        local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_northd"
+        if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+            local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor start_northd"
+            local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_northd"
 
-        _run_process ovn-northd "$cmd" "$stop_cmd"
-        ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-connection p${OVN_PROTO}:6641:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
-        ovn-sbctl --db=unix:$OVS_RUNDIR/ovnsb_db.sock set-connection p${OVN_PROTO}:6642:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+            _run_process ovn-northd "$cmd" "$stop_cmd"
+        else
+            _start_process "$OVN_NORTHD_SERVICE"
+        fi
+
+        # Wait for the service to be ready
+        wait_for_sock_file $OVS_RUNDIR/ovnnb_db.sock
+        wait_for_sock_file $OVS_RUNDIR/ovnsb_db.sock
+
+        if is_service_enabled tls-proxy; then
+            sudo ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-ssl $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/ca-chain.pem
+            sudo ovn-sbctl --db=unix:$OVS_RUNDIR/ovnsb_db.sock set-ssl $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/ca-chain.pem
+        fi
+        sudo ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-connection p${OVN_PROTO}:6641:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+        sudo ovn-sbctl --db=unix:$OVS_RUNDIR/ovnsb_db.sock set-connection p${OVN_PROTO}:6642:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
         sudo ovs-appctl -t $OVS_RUNDIR/ovnnb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
         sudo ovs-appctl -t $OVS_RUNDIR/ovnsb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
     fi
 
     if is_service_enabled ovn-controller ; then
-        local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor start_controller"
-        local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_controller"
+        if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+            local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor start_controller"
+            local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_controller"
 
-        _run_process ovn-controller "$cmd" "$stop_cmd" "$STACK_GROUP" "root"
+            _run_process ovn-controller "$cmd" "$stop_cmd" "$STACK_GROUP" "root"
+        else
+            _start_process "$OVN_CONTROLLER_SERVICE"
+        fi
     fi
 
     if is_service_enabled ovn-controller-vtep ; then
-        local cmd="$OVS_BINDIR/ovn-controller-vtep --log-file --pidfile --detach --ovnsb-db=$OVN_SB_REMOTE"
-
-        _run_process ovn-controller-vtep "$cmd" "" "$STACK_GROUP" "root"
+        if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+            local cmd="$OVS_BINDIR/ovn-controller-vtep --log-file --pidfile --detach --ovnsb-db=$OVN_SB_REMOTE"
+            _run_process ovn-controller-vtep "$cmd" "" "$STACK_GROUP" "root"
+        else
+            _start_process "$OVN_CONTROLLER_VTEP_SERVICE"
+        fi
     fi
 
     if is_service_enabled q-ovn-metadata-agent; then
         run_process q-ovn-metadata-agent "$NEUTRON_OVN_BIN_DIR/$NEUTRON_OVN_METADATA_BINARY --config-file $OVN_META_CONF"
         # Format logging
         setup_logging $OVN_META_CONF
-    fi
-
-    # NOTE(lucasagomes): To keep things simpler, let's reuse the same
-    # RUNDIR for both OVS and OVN. This way we avoid having to specify the
-    # --db option in the ovn-{n,s}bctl commands while playing with DevStack
-    if use_new_ovn_repository; then
-        sudo ln -s $OVS_RUNDIR $OVN_RUNDIR
     fi
 
     _start_ovn_services
@@ -683,26 +740,35 @@ function _stop_ovs_dp {
     modprobe -q -r vport_geneve vport_vxlan openvswitch || true
 }
 
+function _stop_process {
+    local service=$1
+    echo "Stopping process $service"
+    if $SYSTEMCTL is-enabled $service; then
+        $SYSTEMCTL stop $service
+        $SYSTEMCTL disable $service
+    fi
+}
+
 function stop_ovn {
     if is_service_enabled q-ovn-metadata-agent; then
         sudo pkill -9 -f haproxy || :
-        stop_process neutron-ovn-metadata-agent
+        _stop_process "devstack@q-ovn-metadata-agent.service"
     fi
     if is_service_enabled ovn-controller-vtep ; then
-        stop_process ovn-controller-vtep
+        _stop_process "$OVN_CONTROLLER_VTEP_SERVICE"
     fi
     if is_service_enabled ovn-controller ; then
-        stop_process ovn-controller
+        _stop_process "$OVN_CONTROLLER_SERVICE"
     fi
     if is_service_enabled ovn-northd ; then
-        stop_process ovn-northd
+        _stop_process "$OVN_NORTHD_SERVICE"
     fi
     if is_service_enabled ovs-vtep ; then
-        stop_process ovs-vtep
+        _stop_process "devstack@ovs-vtep.service"
     fi
 
-    stop_process ovs-vswitchd
-    stop_process ovsdb-server
+    _stop_process "$OVS_VSWITCHD_SERVICE"
+    _stop_process "$OVSDB_SERVER_SERVICE"
 
     _stop_ovs_dp
 }
