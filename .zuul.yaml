@@ -193,6 +193,7 @@
       - zuul: opendev.org/openstack/devstack-gate
       - zuul: opendev.org/openstack/openstack-zuul-jobs
     vars:
+      configure_swap_size: 8192
       devstack_localrc:
         DATABASE_PASSWORD: secretdatabase
         RABBIT_PASSWORD: secretrabbit
