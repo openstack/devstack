@@ -236,6 +236,11 @@ function configure_cinder {
     iniset $CINDER_CONF key_manager backend cinder.keymgr.conf_key_mgr.ConfKeyManager
     iniset $CINDER_CONF key_manager fixed_key $(openssl rand -hex 16)
 
+    # Avoid RPC timeouts in slow CI and test environments by doubling the
+    # default response timeout set by RPC clients. See bug #1873234 for more
+    # details and example failures.
+    iniset $CINDER_CONF DEFAULT rpc_response_timeout 120
+
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
         local enabled_backends=""
         local default_name=""
