@@ -31,6 +31,7 @@ set +o xtrace
 CINDER_DRIVER=${CINDER_DRIVER:-default}
 CINDER_PLUGINS=$TOP_DIR/lib/cinder_plugins
 CINDER_BACKENDS=$TOP_DIR/lib/cinder_backends
+CINDER_BACKUPS=$TOP_DIR/lib/cinder_backups
 
 # grab plugin config if specified via cinder_driver
 if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
@@ -98,6 +99,16 @@ else
     CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-tgtadm}
 fi
 
+# For backward compatibility
+# Before CINDER_BACKUP_DRIVER was introduced, ceph backup driver was configured
+# along with ceph backend driver.
+if [[ -z "${CINDER_BACKUP_DRIVER}" && "$CINDER_ENABLED_BACKENDS" =~ "ceph" ]]; then
+    CINDER_BACKUP_DRIVER=ceph
+fi
+
+# Supported backup drivers are in lib/cinder_backups
+CINDER_BACKUP_DRIVER=${CINDER_BACKUP_DRIVER:-swift}
+
 # Toggle for deploying Cinder under a wsgi server. Legacy mod_wsgi
 # reference should be cleaned up to more accurately refer to uwsgi.
 CINDER_USE_MOD_WSGI=${CINDER_USE_MOD_WSGI:-True}
@@ -111,6 +122,15 @@ if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
             source $CINDER_BACKENDS/${be_type}
         fi
     done
+fi
+
+# Source the backup driver
+if is_service_enabled c-bak && [[ -n "$CINDER_BACKUP_DRIVER" ]]; then
+    if [[ -r $CINDER_BACKUPS/$CINDER_BACKUP_DRIVER ]]; then
+        source $CINDER_BACKUPS/$CINDER_BACKUP_DRIVER
+    else
+        die "cinder backup driver $CINDER_BACKUP_DRIVER is not supported"
+    fi
 fi
 
 # Environment variables to configure the image-volume cache
@@ -187,6 +207,12 @@ function cleanup_cinder {
                 cleanup_cinder_backend_${be_type} ${be_name}
             fi
         done
+    fi
+
+    if is_service_enabled c-bak && [[ -n "$CINDER_BACKUP_DRIVER" ]]; then
+        if type cleanup_cinder_backup_$CINDER_BACKUP_DRIVER >/dev/null 2>&1; then
+            cleanup_cinder_backup_$CINDER_BACKUP_DRIVER
+        fi
     fi
 
     stop_process "c-api"
@@ -266,13 +292,12 @@ function configure_cinder {
         configure_cinder_image_volume_cache
     fi
 
-    if is_service_enabled c-bak; then
-        # NOTE(mriedem): The default backup driver uses swift and if we're
-        # on a subnode we might not know if swift is enabled, but chances are
-        # good that it is on the controller so configure the backup service
-        # to use it. If we want to configure the backup service to use
-        # a non-swift driver, we'll likely need environment variables.
-        iniset $CINDER_CONF DEFAULT backup_swift_url "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_"
+    if is_service_enabled c-bak && [[ -n "$CINDER_BACKUP_DRIVER" ]]; then
+        if type configure_cinder_backup_$CINDER_BACKUP_DRIVER >/dev/null 2>&1; then
+            configure_cinder_backup_$CINDER_BACKUP_DRIVER
+        else
+            die "configure_cinder_backup_$CINDER_BACKUP_DRIVER doesn't exist in $CINDER_BACKUPS/$CINDER_BACKUP_DRIVER"
+        fi
     fi
 
     if is_service_enabled ceilometer; then
@@ -408,6 +433,12 @@ function init_cinder {
                 init_cinder_backend_${be_type} ${be_name}
             fi
         done
+    fi
+
+    if is_service_enabled c-bak && [[ -n "$CINDER_BACKUP_DRIVER" ]]; then
+        if type init_cinder_backup_$CINDER_BACKUP_DRIVER >/dev/null 2>&1; then
+            init_cinder_backup_$CINDER_BACKUP_DRIVER
+        fi
     fi
 
     mkdir -p $CINDER_STATE_PATH/volumes

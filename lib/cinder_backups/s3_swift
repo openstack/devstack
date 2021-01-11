@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# lib/cinder_backups/s3_swift
+# Configure the s3 backup driver with swift s3api
+#
+# TODO: create lib/cinder_backup/s3 for external s3 compatible storage
+
+# Enable with:
+#
+#   CINDER_BACKUP_DRIVER=s3_swift
+#   enable_service s3api s-proxy s-object s-container s-account
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# Save trace setting
+_XTRACE_CINDER_S3_SWIFT=$(set +o | grep xtrace)
+set +o xtrace
+
+function configure_cinder_backup_s3_swift {
+    # This configuration requires swift and s3api. If we're
+    # on a subnode we might not know if they are enabled
+    iniset $CINDER_CONF DEFAULT backup_driver "cinder.backup.drivers.s3.S3BackupDriver"
+    iniset $CINDER_CONF DEFAULT backup_s3_endpoint_url "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$S3_SERVICE_PORT"
+}
+
+function init_cinder_backup_s3_swift {
+    openstack ec2 credential create
+    iniset $CINDER_CONF DEFAULT backup_s3_store_access_key "$(openstack ec2 credential list -c Access -f value)"
+    iniset $CINDER_CONF DEFAULT backup_s3_store_secret_key "$(openstack ec2 credential list -c Secret -f value)"
+    if is_service_enabled tls-proxy; then
+        iniset $CINDER_CONF DEFAULT backup_s3_ca_cert_file "$SSL_BUNDLE_FILE"
+    fi
+}
+
+# cleanup_cinder_backup_s3_swift: nothing to do
+
+# Restore xtrace
+$_XTRACE_CINDER_S3_SWIFT
+
+# Local variables:
+# mode: shell-script
+# End:
