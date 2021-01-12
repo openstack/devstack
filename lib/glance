@@ -131,7 +131,7 @@ function is_glance_enabled {
 # runs that a clean run would need to clean up
 function cleanup_glance {
     # delete image files (glance)
-    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR
+    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR $(glance_remote_conf '')
 
     # Cleanup multiple stores directories
     if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
@@ -365,6 +365,11 @@ function configure_glance {
 
     if [[ "$GLANCE_STANDALONE" == False ]]; then
         write_local_uwsgi_http_config "$GLANCE_UWSGI_CONF" "$GLANCE_UWSGI" "/image"
+        # Grab our uwsgi listen address and use that to fill out our
+        # worker_self_reference_url config
+        iniset $GLANCE_API_CONF DEFAULT worker_self_reference_url \
+               $(awk '-F= ' '/^http-socket/ { print "http://"$2}' \
+                    $GLANCE_UWSGI_CONF)
     else
         write_local_proxy_http_config glance "http://$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT_INT" "/image"
         iniset $GLANCE_API_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
@@ -460,6 +465,64 @@ function install_glance {
     setup_develop $GLANCE_DIR
 }
 
+# glance_remote_conf() - Return the path to an alternate config file for
+#                        the remote glance clone
+function glance_remote_conf {
+    echo "$(dirname ${GLANCE_CONF_DIR})/glance-remote/"$(basename "$1")
+}
+
+# start_glance_remote_clone() - Clone the regular glance api worker
+function start_glance_remote_clone {
+    local glance_remote_conf glance_remote_port
+
+    glance_remote_conf_dir=$(glance_remote_conf '')
+    glance_remote_port=$(get_random_port)
+
+    # Clone the existing ready-to-go glance-api setup
+    sudo rm -Rf $glance_remote_conf_dir
+    sudo cp -r "$GLANCE_CONF_DIR" $glance_remote_conf_dir
+    sudo chown $STACK_USER -R $glance_remote_conf_dir
+
+    # Point this worker at different data dirs
+    remote_data="${DATA_DIR}/glance-remote"
+    mkdir -p $remote_data/os_glance_tasks_store \
+          $remote_data/os_glance_staging_store
+    iniset $(glance_remote_conf 'glance-api.conf') os_glance_staging_store \
+           filesystem_store_datadir ${remote_data}/os_glance_staging_store
+    iniset $(glance_remote_conf 'glance-api.conf') os_glance_tasks_store \
+           filesystem_store_datadir ${remote_data}/os_glance_tasks_store
+
+    # Change our uwsgi to our new port
+    sed -ri "s/^(http-socket.*):[0-9]+/\1:$glance_remote_port/" \
+        $(glance_remote_conf $GLANCE_UWSGI_CONF)
+
+    # Update the self-reference url with our new port
+    iniset $(glance_remote_conf $GLANCE_API_CONF) DEFAULT \
+           worker_self_reference_url \
+           $(awk '-F= ' '/^http-socket/ { print "http://"$2 }' \
+                $(glance_remote_conf $GLANCE_UWSGI_CONF))
+
+    # We need to create the systemd service for the clone, but then
+    # change it to include an Environment line to point the WSGI app
+    # at the alternate config directory.
+    write_uwsgi_user_unit_file devstack@g-api-r.service "$(which uwsgi) \
+                               --procname-prefix \
+                               glance-api-remote \
+                               --ini $(glance_remote_conf $GLANCE_UWSGI_CONF)" \
+                               "" "$STACK_USER"
+    iniset -sudo ${SYSTEMD_DIR}/devstack@g-api-r.service \
+           "Service" "Environment" "OS_GLANCE_CONFIG_DIR=$glance_remote_conf_dir"
+
+    # Reload and restart with the new config
+    $SYSTEMCTL daemon-reload
+    $SYSTEMCTL restart devstack@g-api-r
+
+    get_or_create_service glance_remote image_remote "Alternate glance"
+    get_or_create_endpoint image_remote $REGION_NAME \
+                $(awk '-F= ' '/^http-socket/ { print "http://"$2 }' \
+                    $(glance_remote_conf $GLANCE_UWSGI_CONF))
+}
+
 # start_glance() - Start running processes
 function start_glance {
     local service_protocol=$GLANCE_SERVICE_PROTOCOL
@@ -475,6 +538,11 @@ function start_glance {
         run_process g-api "$GLANCE_BIN_DIR/glance-api --config-dir=$GLANCE_CONF_DIR"
     fi
 
+    if is_service_enabled g-api-r; then
+        echo "Starting the g-api-r clone service..."
+        start_glance_remote_clone
+    fi
+
     echo "Waiting for g-api ($GLANCE_SERVICE_HOST) to start..."
     if ! wait_for_service $SERVICE_TIMEOUT $GLANCE_URL; then
         die $LINENO "g-api did not start"
@@ -484,6 +552,7 @@ function start_glance {
 # stop_glance() - Stop running processes
 function stop_glance {
     stop_process g-api
+    stop_process g-api-r
 }
 
 # Restore xtrace
