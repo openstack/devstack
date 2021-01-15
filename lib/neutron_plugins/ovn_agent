@@ -529,6 +529,14 @@ function configure_ovn {
         fi
     fi
 
+    # Erase the pre-set configurations from packages. DevStack will
+    # configure OVS and OVN accordingly for its use.
+    if [[ "$OVN_BUILD_FROM_SOURCE" == "False" ]] && is_fedora; then
+        sudo truncate -s 0 /etc/openvswitch/default.conf
+        sudo truncate -s 0 /etc/sysconfig/openvswitch
+        sudo truncate -s 0 /etc/sysconfig/ovn
+    fi
+
     # Metadata
     if is_service_enabled q-ovn-metadata-agent && is_service_enabled ovn-controller; then
         sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
