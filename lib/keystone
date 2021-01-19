@@ -318,25 +318,25 @@ function create_keystone_accounts {
     local admin_role="admin"
     local member_role="member"
 
-    get_or_add_user_domain_role $admin_role $admin_user default
+    async_run ks-domain-role get_or_add_user_domain_role $admin_role $admin_user default
 
     # Create service project/role
     get_or_create_domain "$SERVICE_DOMAIN_NAME"
-    get_or_create_project "$SERVICE_PROJECT_NAME" "$SERVICE_DOMAIN_NAME"
+    async_run ks-project get_or_create_project "$SERVICE_PROJECT_NAME" "$SERVICE_DOMAIN_NAME"
 
     # Service role, so service users do not have to be admins
-    get_or_create_role service
+    async_run ks-service get_or_create_role service
 
     # The ResellerAdmin role is used by Nova and Ceilometer so we need to keep it.
     # The admin role in swift allows a user to act as an admin for their project,
     # but ResellerAdmin is needed for a user to act as any project. The name of this
     # role is also configurable in swift-proxy.conf
-    get_or_create_role ResellerAdmin
+    async_run ks-reseller get_or_create_role ResellerAdmin
 
     # another_role demonstrates that an arbitrary role may be created and used
     # TODO(sleepsonthefloor): show how this can be used for rbac in the future!
     local another_role="anotherrole"
-    get_or_create_role $another_role
+    async_run ks-anotherrole get_or_create_role $another_role
 
     # invisible project - admin can't see this one
     local invis_project
@@ -349,10 +349,12 @@ function create_keystone_accounts {
     demo_user=$(get_or_create_user "demo" \
         "$ADMIN_PASSWORD" "default" "demo@example.com")
 
-    get_or_add_user_project_role $member_role $demo_user $demo_project
-    get_or_add_user_project_role $admin_role $admin_user $demo_project
-    get_or_add_user_project_role $another_role $demo_user $demo_project
-    get_or_add_user_project_role $member_role $demo_user $invis_project
+    async_wait ks-{domain-role,domain,project,service,reseller,anotherrole}
+
+    async_run ks-demo-member get_or_add_user_project_role $member_role $demo_user $demo_project
+    async_run ks-demo-admin get_or_add_user_project_role $admin_role $admin_user $demo_project
+    async_run ks-demo-another get_or_add_user_project_role $another_role $demo_user $demo_project
+    async_run ks-demo-invis get_or_add_user_project_role $member_role $demo_user $invis_project
 
     # alt_demo
     local alt_demo_project
@@ -361,9 +363,9 @@ function create_keystone_accounts {
     alt_demo_user=$(get_or_create_user "alt_demo" \
         "$ADMIN_PASSWORD" "default" "alt_demo@example.com")
 
-    get_or_add_user_project_role $member_role $alt_demo_user $alt_demo_project
-    get_or_add_user_project_role $admin_role $admin_user $alt_demo_project
-    get_or_add_user_project_role $another_role $alt_demo_user $alt_demo_project
+    async_run ks-alt-member get_or_add_user_project_role $member_role $alt_demo_user $alt_demo_project
+    async_run ks-alt-admin get_or_add_user_project_role $admin_role $admin_user $alt_demo_project
+    async_run ks-alt-another get_or_add_user_project_role $another_role $alt_demo_user $alt_demo_project
 
     # groups
     local admin_group
@@ -373,11 +375,15 @@ function create_keystone_accounts {
     non_admin_group=$(get_or_create_group "nonadmins" \
         "default" "non-admin group")
 
-    get_or_add_group_project_role $member_role $non_admin_group $demo_project
-    get_or_add_group_project_role $another_role $non_admin_group $demo_project
-    get_or_add_group_project_role $member_role $non_admin_group $alt_demo_project
-    get_or_add_group_project_role $another_role $non_admin_group $alt_demo_project
-    get_or_add_group_project_role $admin_role $admin_group $admin_project
+    async_run ks-group-memberdemo get_or_add_group_project_role $member_role $non_admin_group $demo_project
+    async_run ks-group-anotherdemo get_or_add_group_project_role $another_role $non_admin_group $demo_project
+    async_run ks-group-memberalt get_or_add_group_project_role $member_role $non_admin_group $alt_demo_project
+    async_run ks-group-anotheralt get_or_add_group_project_role $another_role $non_admin_group $alt_demo_project
+    async_run ks-group-admin get_or_add_group_project_role $admin_role $admin_group $admin_project
+
+    async_wait ks-demo-{member,admin,another,invis}
+    async_wait ks-alt-{member,admin,another}
+    async_wait ks-group-{memberdemo,anotherdemo,memberalt,anotheralt,admin}
 
     if is_service_enabled ldap; then
         create_ldap_domain

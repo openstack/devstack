@@ -741,30 +741,35 @@ function create_nova_keys_dir {
     sudo install -d -o $STACK_USER ${NOVA_STATE_PATH} ${NOVA_STATE_PATH}/keys
 }
 
+function init_nova_db {
+    local dbname="$1"
+    local conffile="$2"
+    recreate_database $dbname
+    $NOVA_BIN_DIR/nova-manage --config-file $conffile db sync --local_cell
+}
+
 # init_nova() - Initialize databases, etc.
 function init_nova {
     # All nova components talk to a central database.
     # Only do this step once on the API node for an entire cluster.
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-api; then
+        # (Re)create nova databases
+        async_run nova-cell-0 init_nova_db nova_cell0 $NOVA_CONF
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            async_run nova-cell-$i init_nova_db nova_cell${i} $(conductor_conf $i)
+        done
+
         recreate_database $NOVA_API_DB
         $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF api_db sync
 
-        recreate_database nova_cell0
-
         # map_cell0 will create the cell mapping record in the nova_api DB so
-        # this needs to come after the api_db sync happens. We also want to run
-        # this before the db sync below since that will migrate both the nova
-        # and nova_cell0 databases.
+        # this needs to come after the api_db sync happens.
         $NOVA_BIN_DIR/nova-manage cell_v2 map_cell0 --database_connection `database_connection_url nova_cell0`
 
-        # (Re)create nova databases
-        for i in $(seq 1 $NOVA_NUM_CELLS); do
-            recreate_database nova_cell${i}
-            $NOVA_BIN_DIR/nova-manage --config-file $(conductor_conf $i) db sync --local_cell
+        # Wait for DBs to finish from above
+        for i in $(seq 0 $NOVA_NUM_CELLS); do
+            async_wait nova-cell-$i
         done
-
-        # Migrate nova and nova_cell0 databases.
-        $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
 
         # Run online migrations on the new databases
         # Needed for flavor conversion
