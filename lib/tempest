@@ -683,6 +683,17 @@ function configure_tempest {
         object_storage_api_extensions=$(remove_disabled_extensions $object_storage_api_extensions $DISABLE_STORAGE_API_EXTENSIONS)
     fi
     iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis $object_storage_api_extensions
+
+    # This feature list for Neutron used from Victoria, the aim is to skip tests
+    # for features in Neutron that has no API extension, or can't be detected
+    # otherwise from the API.
+    # It is added here to avoid stable gating to run these tests (like for IPv6 metadata
+    # in neutron-tempest-plugin or updating min_bw QoS values for ports already attached
+    # to VMs).
+    # To check new features grep neutron-tempest-plugin and tempest for
+    # is_network_feature_enabled, and please check with Neutron team.
+    local network_available_features=""
+    iniset $TEMPEST_CONFIG network-feature-enabled available_features $network_available_features
     # Cinder API Extensions
     DEFAULT_VOL_EXT="OS-SCH-HNT,backups,capabilities,cgsnapshots,consistencygroups"
     DEFAULT_VOL_EXT+=",encryption,os-admin-actions,os-availability-zone"
