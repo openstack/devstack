@@ -96,19 +96,25 @@ fi
 # templates and other useful files in the ``files`` subdirectory
 FILES=$TOP_DIR/files
 if [ ! -d $FILES ]; then
-    die $LINENO "missing devstack/files"
+    set +o xtrace
+    echo "missing devstack/files"
+    exit 1
 fi
 
 # ``stack.sh`` keeps function libraries here
 # Make sure ``$TOP_DIR/inc`` directory is present
 if [ ! -d $TOP_DIR/inc ]; then
-    die $LINENO "missing devstack/inc"
+    set +o xtrace
+    echo "missing devstack/inc"
+    exit 1
 fi
 
 # ``stack.sh`` keeps project libraries here
 # Make sure ``$TOP_DIR/lib`` directory is present
 if [ ! -d $TOP_DIR/lib ]; then
-    die $LINENO "missing devstack/lib"
+    set +o xtrace
+    echo "missing devstack/lib"
+    exit 1
 fi
 
 # Check if run in POSIX shell
