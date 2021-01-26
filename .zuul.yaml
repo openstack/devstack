@@ -541,6 +541,10 @@
     parent: tempest-full
     description: Ubuntu Xenial platform test
     nodeset: openstack-single-node-xenial
+    vars:
+      devstack_localrc:
+        # use py3.5 compatible Tempest here.
+        TEMPEST_BRANCH: "23.0.0"
     voting: false
 
 - job:

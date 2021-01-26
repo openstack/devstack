@@ -102,6 +102,10 @@ function _install_get_pip {
 function install_get_pip {
     _install_get_pip python $PIP_GET_PIP_PY27_URL $LOCAL_PIP_PY27
     if python3_enabled; then
+        if [[ "$PYTHON3_VERSION" == "3.5" ]]; then
+            PIP_GET_PIP_URL=$(dirname $PIP_GET_PIP_URL)/3.5/$(basename $PIP_GET_PIP_URL)
+            LOCAL_PIP=${LOCAL_PIP}-py35
+        fi
         _install_get_pip python${PYTHON3_VERSION} $PIP_GET_PIP_URL $LOCAL_PIP
     fi
 }
