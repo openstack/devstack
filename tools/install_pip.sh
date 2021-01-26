@@ -38,7 +38,9 @@ FILES=$TOP_DIR/files
 # [1] https://opendev.org/openstack/project-config/src/branch/master/nodepool/elements/cache-devstack/source-repository-pip
 
 PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/get-pip.py"}
+PIP_GET_PIP_PY27_URL=${PIP_GET_PIP_PY27_URL:-"https://bootstrap.pypa.io/2.7/get-pip.py"}
 LOCAL_PIP="$FILES/$(basename $PIP_GET_PIP_URL)"
+LOCAL_PIP_PY27="${LOCAL_PIP}-py27"
 
 GetDistro
 echo "Distro: $DISTRO"
@@ -56,13 +58,17 @@ function get_versions {
 }
 
 
-function install_get_pip {
+function _install_get_pip {
+    local interpreter=$1
+    local pip_get_pip_url=$2
+    local local_pip=$3
+
     # If get-pip.py isn't python, delete it. This was probably an
     # outage on the server.
-    if [[ -r $LOCAL_PIP ]]; then
-        if ! head -1 $LOCAL_PIP | grep -q '#!/usr/bin/env python'; then
-            echo "WARNING: Corrupt $LOCAL_PIP found removing"
-            rm $LOCAL_PIP
+    if [[ -r $local_pip ]]; then
+        if ! head -1 $local_pip | grep -q '#!/usr/bin/env python'; then
+            echo "WARNING: Corrupt $local_pip found removing"
+            rm $local_pip
         fi
     fi
 
@@ -76,22 +82,27 @@ function install_get_pip {
     # Thus we use curl's "-z" feature to always check the modified
     # since and only download if a new version is out -- but only if
     # it seems we downloaded the file originally.
-    if [[ ! -r $LOCAL_PIP || -r $LOCAL_PIP.downloaded ]]; then
+    if [[ ! -r $local_pip || -r $local_pip.downloaded ]]; then
         # only test freshness if LOCAL_PIP is actually there,
         # otherwise we generate a scary warning.
         local timecond=""
-        if [[ -r $LOCAL_PIP ]]; then
-            timecond="-z $LOCAL_PIP"
+        if [[ -r $local_pip ]]; then
+            timecond="-z $local_pip"
         fi
 
         curl -f --retry 6 --retry-delay 5 \
-            $timecond -o $LOCAL_PIP $PIP_GET_PIP_URL || \
+            $timecond -o $local_pip $pip_get_pip_url || \
             die $LINENO "Download of get-pip.py failed"
-        touch $LOCAL_PIP.downloaded
+        touch $local_pip.downloaded
     fi
-    sudo -H -E python $LOCAL_PIP -c $TOOLS_DIR/cap-pip.txt
+    sudo -H -E $interpreter $local_pip -c $TOOLS_DIR/cap-pip.txt
+}
+
+
+function install_get_pip {
+    _install_get_pip python $PIP_GET_PIP_PY27_URL $LOCAL_PIP_PY27
     if python3_enabled; then
-        sudo -H -E python${PYTHON3_VERSION} $LOCAL_PIP -c $TOOLS_DIR/cap-pip.txt
+        _install_get_pip python${PYTHON3_VERSION} $PIP_GET_PIP_URL $LOCAL_PIP
     fi
 }
 
