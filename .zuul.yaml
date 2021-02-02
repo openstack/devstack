@@ -585,13 +585,6 @@
     timeout: 9000
 
 - job:
-    name: devstack-platform-opensuse-15
-    parent: tempest-full-py3
-    description: openSUSE 15.x platform test
-    nodeset: devstack-single-node-opensuse-15
-    voting: false
-
-- job:
     name: devstack-platform-bionic
     parent: tempest-full-py3
     description: Ubuntu Bionic platform test
@@ -686,7 +679,6 @@
       jobs:
         - devstack
         - devstack-ipv6
-        - devstack-platform-opensuse-15
         - devstack-platform-fedora-latest
         - devstack-platform-centos-8
         - devstack-platform-bionic
