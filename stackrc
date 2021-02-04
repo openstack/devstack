@@ -314,7 +314,9 @@ REQUIREMENTS_BRANCH=${REQUIREMENTS_BRANCH:-$TARGET_BRANCH}
 
 # Tempest test suite
 TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
-TEMPEST_BRANCH=${TEMPEST_BRANCH:-$BRANCHLESS_TARGET_BRANCH}
+# Use Tempest tag 26.0.0 which is Stein last supported version
+# https://docs.openstack.org/releasenotes/tempest/v26.0.0.html
+TEMPEST_BRANCH=${TEMPEST_BRANCH:-26.0.0}
 
 
 ##############
