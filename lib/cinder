@@ -539,6 +539,14 @@ function create_volume_types {
                 OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-key ${be_name} set volume_backend_name=${be_name}
             fi
         done
+
+        # Increase quota for the service project if glance is using cinder,
+        # since it's likely to occasionally go above the default 10 in parallel
+        # test execution.
+        if [[ "$USE_CINDER_FOR_GLANCE" == "True" ]]; then
+            openstack --os-region-name="$REGION_NAME" \
+                      quota set --volumes 50 "$SERVICE_PROJECT_NAME"
+        fi
     fi
 }
 
