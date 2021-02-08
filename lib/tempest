@@ -625,7 +625,6 @@ function configure_tempest {
     rm -f $tmp_u_c_m
 
     # Auth:
-    iniset $TEMPEST_CONFIG auth tempest_roles "member"
     if [[ $TEMPEST_USE_TEST_ACCOUNTS == "True" ]]; then
         if [[ $TEMPEST_HAS_ADMIN == "True" ]]; then
             tox -evenv-tempest -- tempest account-generator -c $TEMPEST_CONFIG --os-username $admin_username --os-password "$password" --os-project-name $admin_project_name -r $TEMPEST_CONCURRENCY --with-admin etc/accounts.yaml
