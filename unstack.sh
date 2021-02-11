@@ -184,3 +184,4 @@ if is_service_enabled cinder && is_package_installed lvm2; then
 fi
 
 clean_pyc_files
+rm -Rf $DEST/async

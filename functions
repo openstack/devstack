@@ -21,6 +21,7 @@ source ${FUNC_DIR}/inc/ini-config
 source ${FUNC_DIR}/inc/meta-config
 source ${FUNC_DIR}/inc/python
 source ${FUNC_DIR}/inc/rootwrap
+source ${FUNC_DIR}/inc/async
 
 # Save trace setting
 _XTRACE_FUNCTIONS=$(set +o | grep xtrace)

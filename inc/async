@@ -1,0 +1,225 @@
+#!/bin/bash
+#
+# Symbolic asynchronous tasks for devstack
+#
+# Usage:
+#
+#  async_runfunc my_shell_func foo bar baz
+#
+#  ... do other stuff ...
+#
+#  async_wait my_shell_func
+#
+
+DEVSTACK_PARALLEL=$(trueorfalse False DEVSTACK_PARALLEL)
+_ASYNC_BG_TIME=0
+
+# Keep track of how much total time was spent in background tasks
+# Takes a job runtime in ms.
+function _async_incr_bg_time {
+    local elapsed_ms="$1"
+    _ASYNC_BG_TIME=$(($_ASYNC_BG_TIME + $elapsed_ms))
+}
+
+# Get the PID of a named future to wait on
+function async_pidof {
+    local name="$1"
+    local inifile="${DEST}/async/${name}.ini"
+
+    if [ -f "$inifile" ]; then
+        iniget $inifile job pid
+    else
+        echo 'UNKNOWN'
+        return 1
+    fi
+}
+
+# Log a message about a job. If the message contains "%command" then the
+# full command line of the job will be substituted in the output
+function async_log {
+    local name="$1"
+    shift
+    local message="$*"
+    local inifile=${DEST}/async/${name}.ini
+    local pid
+    local command
+
+    pid=$(iniget $inifile job pid)
+    command=$(iniget $inifile job command | tr '#' '-')
+    message=$(echo "$message" | sed "s#%command#$command#g")
+
+    echo "[Async ${name}:${pid}]: $message"
+}
+
+# Inner function that actually runs the requested task. We wrap it like this
+# just so we can emit a finish message as soon as the work is done, to make
+# it easier to find the tracking just before an error.
+function async_inner {
+    local name="$1"
+    local rc
+    shift
+    set -o xtrace
+    if $* >${DEST}/async/${name}.log 2>&1; then
+        rc=0
+        set +o xtrace
+        async_log "$name" "finished successfully"
+    else
+        rc=$?
+        set +o xtrace
+        async_log "$name" "FAILED with rc $rc"
+    fi
+    iniset ${DEST}/async/${name}.ini job end_time $(date "+%s%3N")
+    return $rc
+}
+
+# Run something async. Takes a symbolic name and a list of arguments of
+# what to run. Ideally this would be rarely used and async_runfunc() would
+# be used everywhere for readability.
+#
+# This spawns the work in a background worker, records a "future" to be
+# collected by a later call to async_wait()
+function async_run {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    local name="$1"
+    shift
+    local inifile=${DEST}/async/${name}.ini
+
+    touch $inifile
+    iniset $inifile job command "$*"
+    iniset $inifile job start_time $(date +%s%3N)
+
+    if [[ "$DEVSTACK_PARALLEL" = "True" ]]; then
+        async_inner $name $* &
+        iniset $inifile job pid $!
+        async_log "$name" "running: %command"
+        $xtrace
+    else
+        iniset $inifile job pid "self"
+        async_log "$name" "Running synchronously: %command"
+        $xtrace
+        $*
+        return $?
+    fi
+}
+
+# Shortcut for running a shell function async. Uses the function name as the
+# async name.
+function async_runfunc {
+    async_run $1 $*
+}
+
+# Wait for an async future to complete. May return immediately if already
+# complete, or of the future has already been waited on (avoid this). May
+# block until the future completes.
+function async_wait {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+
+    local pid rc running inifile runtime
+    rc=0
+    for name in $*; do
+        running=$(ls ${DEST}/async/*.ini 2>/dev/null | wc -l)
+        inifile="${DEST}/async/${name}.ini"
+
+        if pid=$(async_pidof "$name"); then
+            async_log "$name" "Waiting for completion of %command" \
+                      "($running other jobs running)"
+            time_start async_wait
+            if [[ "$pid" != "self" ]]; then
+                # Do not actually call wait if we ran synchronously
+                if wait $pid; then
+                    rc=0
+                else
+                    rc=$?
+                fi
+                cat ${DEST}/async/${name}.log
+            fi
+            time_stop async_wait
+            local start_time
+            local end_time
+            start_time=$(iniget $inifile job start_time)
+            end_time=$(iniget $inifile job end_time)
+            _async_incr_bg_time $(($end_time - $start_time))
+            runtime=$((($end_time - $start_time) / 1000))
+            async_log "$name" "finished %command with result" \
+                      "$rc in $runtime seconds"
+            rm -f $inifile
+            if [ $rc -ne 0 ]; then
+                echo Stopping async wait due to error: $*
+                break
+            fi
+        else
+            # This could probably be removed - it is really just here
+            # to help notice if you wait for something by the wrong
+            # name, but it also shows up for things we didn't start
+            # because they were not enabled.
+            echo Not waiting for async task $name that we never started or \
+                 has already been waited for
+        fi
+    done
+
+    $xtrace
+    return $rc
+}
+
+# Check for uncollected futures and wait on them
+function async_cleanup {
+    local name
+
+    if [[ "$DEVSTACK_PARALLEL" != "True" ]]; then
+        return 0
+    fi
+
+    for inifile in $(find ${DEST}/async -name '*.ini'); do
+        name=$(basename $pidfile .ini)
+        echo "WARNING: uncollected async future $name"
+        async_wait $name || true
+    done
+}
+
+# Make sure our async dir is created and clean
+function async_init {
+    local async_dir=${DEST}/async
+
+    # Clean any residue if present from previous runs
+    rm -Rf $async_dir
+
+    # Make sure we have a state directory
+    mkdir -p $async_dir
+}
+
+function async_print_timing {
+    local bg_time_minus_wait
+    local elapsed_time
+    local serial_time
+    local speedup
+
+    if [[ "$DEVSTACK_PARALLEL" != "True" ]]; then
+        return 0
+    fi
+
+    # The logic here is: All the background task time would be
+    # serialized if we did not do them in the background. So we can
+    # add that to the elapsed time for the whole run. However, time we
+    # spend waiting for async things to finish adds to the elapsed
+    # time, but is time where we're not doing anything useful. Thus,
+    # we substract that from the would-be-serialized time.
+
+    bg_time_minus_wait=$((\
+            ($_ASYNC_BG_TIME - ${_TIME_TOTAL[async_wait]}) / 1000))
+    elapsed_time=$(($(date "+%s") - $_TIME_BEGIN))
+    serial_time=$(($elapsed_time + $bg_time_minus_wait))
+
+    echo
+    echo "================="
+    echo " Async summary"
+    echo "================="
+    echo " Time spent in the background minus waits: $bg_time_minus_wait sec"
+    echo " Elapsed time: $elapsed_time sec"
+    echo " Time if we did everything serially: $serial_time sec"
+    echo " Speedup: " $(echo | awk "{print $serial_time / $elapsed_time}")
+}

@@ -113,7 +113,7 @@ cleanup_rpc_backend
 cleanup_database
 
 # Clean out data and status
-sudo rm -rf $DATA_DIR $DEST/status
+sudo rm -rf $DATA_DIR $DEST/status $DEST/async
 
 # Clean out the log file and log directories
 if [[ -n "$LOGFILE" ]] && [[ -f "$LOGFILE" ]]; then
