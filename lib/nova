@@ -135,7 +135,7 @@ fi
 # ``NOVA_USE_SERVICE_TOKEN`` is a mode where service token is passed along with
 # user token while communicating to external RESP API's like Neutron, Cinder
 # and Glance.
-NOVA_USE_SERVICE_TOKEN=$(trueorfalse False NOVA_USE_SERVICE_TOKEN)
+NOVA_USE_SERVICE_TOKEN=$(trueorfalse True NOVA_USE_SERVICE_TOKEN)
 
 # ``NOVA_ALLOW_MOVE_TO_SAME_HOST`` can be set to False in multi node DevStack,
 # where there are at least two nova-computes.
