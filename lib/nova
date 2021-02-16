@@ -754,7 +754,17 @@ function init_nova {
     # Only do this step once on the API node for an entire cluster.
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled n-api; then
         # (Re)create nova databases
-        async_run nova-cell-0 init_nova_db nova_cell0 $NOVA_CONF
+        if [[ "$CELLSV2_SETUP" == "singleconductor" ]]; then
+            # If we are doing singleconductor mode, we have some strange
+            # interdependencies. in that the main config refers to cell1
+            # instead of cell0. In that case, just make sure the cell0 database
+            # is created before we need it below, but don't db_sync it until
+            # after the cellN databases are there.
+            recreate_database nova_cell0
+        else
+            async_run nova-cell-0 init_nova_db nova_cell0 $NOVA_CONF
+        fi
+
         for i in $(seq 1 $NOVA_NUM_CELLS); do
             async_run nova-cell-$i init_nova_db nova_cell${i} $(conductor_conf $i)
         done
@@ -770,6 +780,11 @@ function init_nova {
         for i in $(seq 0 $NOVA_NUM_CELLS); do
             async_wait nova-cell-$i
         done
+
+        if [[ "$CELLSV2_SETUP" == "singleconductor" ]]; then
+            # We didn't db sync cell0 above, so run it now
+            $NOVA_BIN_DIR/nova-manage --config-file $NOVA_CONF db sync
+        fi
 
         # Run online migrations on the new databases
         # Needed for flavor conversion
