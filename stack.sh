@@ -354,6 +354,9 @@ if [[ $DISTRO == "rhel8" ]]; then
     # EPEL packages assume that the PowerTools repository is enable.
     sudo dnf config-manager --set-enabled PowerTools
 
+    # CentOS 8.3 changed the repository name to lower case.
+    sudo dnf config-manager --set-enabled powertools
+
     if [[ ${SKIP_EPEL_INSTALL} != True ]]; then
         _install_epel
     fi
