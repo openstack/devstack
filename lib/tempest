@@ -709,6 +709,14 @@ function install_tempest {
     # TEMPEST_DIR already exist until RECLONE is true.
     git checkout $TEMPEST_BRANCH
 
+    # NOTE(gmann): Use branch constraint because Tempest is pinned to the branch release
+    # instead of using master. We need to export it via env var UPPER_CONSTRAINTS_FILE
+    # so that initial creation of tempest tox use stable branch constraint
+    # instead of master constraint as defined in tempest/tox.ini
+    # This is needed for legacy jobs as devstack-gate can also recreate the
+    # venv. For zuulv3 native jobs, run-tempest role take care of it.
+    export UPPER_CONSTRAINTS_FILE=$REQUIREMENTS_DIR/upper-constraints.txt
+
     tox -r --notest -efull
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but
