@@ -122,6 +122,9 @@ KEYSTONE_PASSWORD_HASH_ROUNDS=${KEYSTONE_PASSWORD_HASH_ROUNDS:-4}
 # Cache settings
 KEYSTONE_ENABLE_CACHE=${KEYSTONE_ENABLE_CACHE:-True}
 
+# Whether to create a keystone admin endpoint for legacy applications
+KEYSTONE_ADMIN_ENDPOINT=$(trueorfalse True KEYSTONE_ADMIN_ENDPOINT)
+
 # Functions
 # ---------
 
@@ -556,8 +559,16 @@ function bootstrap_keystone {
         --bootstrap-role-name admin \
         --bootstrap-service-name keystone \
         --bootstrap-region-id "$REGION_NAME" \
-        --bootstrap-admin-url "$KEYSTONE_SERVICE_URI" \
         --bootstrap-public-url "$KEYSTONE_SERVICE_URI"
+    if [ "$KEYSTONE_ADMIN_ENDPOINT" == "True" ]; then
+        openstack endpoint create --region "$REGION_NAME" \
+            --os-username admin \
+            --os-user-domain-id default \
+            --os-password "$ADMIN_PASSWORD" \
+            --os-project-name admin \
+            --os-project-domain-id default \
+            keystone admin "$KEYSTONE_SERVICE_URI"
+    fi
 }
 
 # create_ldap_domain() - Create domain file and initialize domain with a user
