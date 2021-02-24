@@ -9,6 +9,6 @@
         executable: "/bin/bash"
       register: env_os
 
-    - name: Save the OS_ environment variables as a fact
+    - name: Append the the OS_ environment variables to tox_environment
       set_fact:
-        os_env_vars: "{{ env_os.stdout|from_yaml }}"
+        tox_environment: "{{ env_os.stdout|from_yaml|default({})|combine(tox_environment) }}"
