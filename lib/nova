@@ -83,6 +83,11 @@ fi
 # services and the compute node
 NOVA_CONSOLE_PROXY_COMPUTE_TLS=${NOVA_CONSOLE_PROXY_COMPUTE_TLS:-False}
 
+# Validate configuration
+if ! is_service_enabled tls-proxy && [ "$NOVA_CONSOLE_PROXY_COMPUTE_TLS" == "True" ]; then
+    die $LINENO "enabling TLS for the console proxy requires the tls-proxy service"
+fi
+
 # Public facing bits
 NOVA_SERVICE_HOST=${NOVA_SERVICE_HOST:-$SERVICE_HOST}
 NOVA_SERVICE_PORT=${NOVA_SERVICE_PORT:-8774}
