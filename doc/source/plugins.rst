@@ -241,7 +241,7 @@ locations in the top-level of the plugin repository:
   on Ubuntu, Debian or Linux Mint.
 
 - ``./devstack/files/rpms/$plugin_name`` - Packages to install when running
-  on Red Hat, Fedora, CentOS or XenServer.
+  on Red Hat, Fedora, or CentOS.
 
 - ``./devstack/files/rpms-suse/$plugin_name`` - Packages to install when
   running on SUSE Linux or openSUSE.

@@ -280,31 +280,6 @@ function upload_image {
         return
     fi
 
-    # XenServer-vhd-ovf-format images are provided as .vhd.tgz
-    # and should not be decompressed prior to loading
-    if [[ "$image_url" =~ '.vhd.tgz' ]]; then
-        image_name="${image_fname%.vhd.tgz}"
-        local force_vm_mode=""
-        if [[ "$image_name" =~ 'cirros' ]]; then
-            # Cirros VHD image currently only boots in PV mode.
-            # Nova defaults to PV for all VHD images, but
-            # the glance setting is needed for booting
-            # directly from volume.
-            force_vm_mode="vm_mode=xen"
-        fi
-        _upload_image "$image_name" ovf vhd "$image" $force_vm_mode
-        return
-    fi
-
-    # .xen-raw.tgz suggests a Xen capable raw image inside a tgz.
-    # and should not be decompressed prior to loading.
-    # Setting metadata, so PV mode is used.
-    if [[ "$image_url" =~ '.xen-raw.tgz' ]]; then
-        image_name="${image_fname%.xen-raw.tgz}"
-        _upload_image "$image_name" tgz raw "$image" vm_mode=xen
-        return
-    fi
-
     if [[ "$image_url" =~ '.hds' ]]; then
         image_name="${image_fname%.hds}"
         vm_mode=${image_name##*-}

@@ -1052,14 +1052,6 @@ function is_nova_ready {
     # happen between here and the script ending. However, in multinode
     # tests this can very often not be the case. So ensure that the
     # compute is up before we move on.
-
-    # TODO(sdague): honestly, this probably should be a plug point for
-    # an external system.
-    if [[ "$VIRT_DRIVER" == 'xenserver' ]]; then
-        # xenserver encodes information in the hostname of the compute
-        # because of the dom0/domU split. Just ignore for now.
-        return
-    fi
     wait_for_compute $NOVA_READY_TIMEOUT
 }
 

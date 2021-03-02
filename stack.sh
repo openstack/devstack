@@ -718,16 +718,6 @@ if is_service_enabled keystone; then
 fi
 
 
-# Nova
-# -----
-
-if is_service_enabled nova && [[ "$VIRT_DRIVER" == 'xenserver' ]]; then
-    # Look for the backend password here because read_password
-    # is not a library function.
-    read_password XENAPI_PASSWORD "ENTER A PASSWORD TO USE FOR XEN."
-fi
-
-
 # Swift
 # -----
 

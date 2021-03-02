@@ -77,10 +77,6 @@ SUSE
 Tempest
 ~~~~~~~
 
-Xen
-~~~
-* Bob Ball <bob.ball@citrix.com>
-
 Zaqar (Marconi)
 ~~~~~~~~~~~~~~~
 

@@ -347,9 +347,6 @@ function configure_tempest {
     if [[ ! -z "$TEMPEST_HTTP_IMAGE" ]]; then
         iniset $TEMPEST_CONFIG image http_image $TEMPEST_HTTP_IMAGE
     fi
-    if [ "$VIRT_DRIVER" = "xenserver" ]; then
-        iniset $TEMPEST_CONFIG image disk_formats "ami,ari,aki,vhd,raw,iso"
-    fi
     iniset $TEMPEST_CONFIG image-feature-enabled import_image $GLANCE_USE_IMPORT_WORKFLOW
     iniset $TEMPEST_CONFIG image-feature-enabled os_glance_reserved True
     # Compute
@@ -425,15 +422,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network-feature-enabled port_security $NEUTRON_PORT_SECURITY
 
     # Scenario
-    if [ "$VIRT_DRIVER" = "xenserver" ]; then
-        SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
-        SCENARIO_IMAGE_FILE="cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.vhd.tgz"
-        iniset $TEMPEST_CONFIG scenario img_disk_format vhd
-        iniset $TEMPEST_CONFIG scenario img_container_format ovf
-    else
-        SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
-        SCENARIO_IMAGE_FILE=$DEFAULT_IMAGE_FILE_NAME
-    fi
+    SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
+    SCENARIO_IMAGE_FILE=$DEFAULT_IMAGE_FILE_NAME
     iniset $TEMPEST_CONFIG scenario img_file $SCENARIO_IMAGE_DIR/$SCENARIO_IMAGE_FILE
 
     # If using provider networking, use the physical network for validation rather than private

@@ -22,7 +22,7 @@ source $TOP_DIR/functions
 
 # Possible virt drivers, if we have more, add them here. Always keep
 # dummy in the end position to trigger the fall through case.
-DRIVERS="openvz ironic libvirt vsphere xenserver dummy"
+DRIVERS="openvz ironic libvirt vsphere dummy"
 
 # Extra variables to trigger getting additional images.
 export ENABLED_SERVICES="h-api,tr-api"

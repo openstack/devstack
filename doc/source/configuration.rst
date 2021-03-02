@@ -628,12 +628,6 @@ outside of tox. If you would like to install it add the following to your
     INSTALL_TEMPEST=True
 
 
-Xenserver
-~~~~~~~~~
-
-If you would like to use Xenserver as the hypervisor, please refer to
-the instructions in ``./tools/xen/README.md``.
-
 Cinder
 ~~~~~~
 

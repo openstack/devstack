@@ -605,10 +605,8 @@ ENABLE_VOLUME_MULTIATTACH=$(trueorfalse False ENABLE_VOLUME_MULTIATTACH)
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will
 # drop back to **qemu** if we are unable to load the kvm module.  ``stack.sh`` can
-# also install an **LXC**, **OpenVZ** or **XenAPI** based system.  If xenserver-core
-# is installed, the default will be XenAPI
+# also install an **LXC** or **OpenVZ** based system.
 DEFAULT_VIRT_DRIVER=libvirt
-is_package_installed xenserver-core && DEFAULT_VIRT_DRIVER=xenserver
 VIRT_DRIVER=${VIRT_DRIVER:-$DEFAULT_VIRT_DRIVER}
 case "$VIRT_DRIVER" in
     ironic|libvirt)
@@ -632,14 +630,6 @@ case "$VIRT_DRIVER" in
         ;;
     fake)
         NUMBER_FAKE_NOVA_COMPUTE=${NUMBER_FAKE_NOVA_COMPUTE:-1}
-        ;;
-    xenserver)
-        # Xen config common to nova and neutron
-        XENAPI_USER=${XENAPI_USER:-"root"}
-        # This user will be used for dom0 - domU communication
-        #   should be able to log in to dom0 without a password
-        #   will be used to install the plugins
-        DOMZERO_USER=${DOMZERO_USER:-"domzero"}
         ;;
     *)
         ;;
@@ -695,11 +685,6 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.2-i386-disk.vmdk}
             DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-$DEFAULT_IMAGE_NAME}
             IMAGE_URLS+="http://partnerweb.vmware.com/programs/vmdkimage/${DEFAULT_IMAGE_FILE_NAME}";;
-        xenserver)
-            DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.5-x86_64-disk}
-            DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_NAME:-cirros-0.3.5-x86_64-disk.vhd.tgz}
-            IMAGE_URLS+="http://ca.downloads.xensource.com/OpenStack/cirros-0.3.5-x86_64-disk.vhd.tgz"
-            IMAGE_URLS+=",http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-x86_64-uec.tar.gz";;
         fake)
             # Use the same as the default for libvirt
             DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk}

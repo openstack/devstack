@@ -279,10 +279,6 @@ function configure_glance {
     configure_keystone_authtoken_middleware $GLANCE_API_CONF glance
     iniset $GLANCE_API_CONF oslo_messaging_notifications driver messagingv2
     iniset_rpc_backend glance $GLANCE_API_CONF
-    if [ "$VIRT_DRIVER" = 'xenserver' ]; then
-        iniset $GLANCE_API_CONF DEFAULT container_formats "ami,ari,aki,bare,ovf,tgz"
-        iniset $GLANCE_API_CONF DEFAULT disk_formats "ami,ari,aki,vhd,raw,iso"
-    fi
     if [ "$VIRT_DRIVER" = 'libvirt' ] && [ "$LIBVIRT_TYPE" = 'parallels' ]; then
         iniset $GLANCE_API_CONF DEFAULT disk_formats "ami,ari,aki,vhd,vmdk,raw,qcow2,vdi,iso,ploop"
     fi

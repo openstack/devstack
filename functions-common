@@ -397,8 +397,6 @@ function GetDistro {
         # Drop the . release as we assume it's compatible
         # XXX re-evaluate when we get RHEL10
         DISTRO="rhel${os_RELEASE::1}"
-    elif [[ "$os_VENDOR" =~ (XenServer) ]]; then
-        DISTRO="xs${os_RELEASE%.*}"
     else
         # We can't make a good choice here.  Setting a sensible DISTRO
         # is part of the problem, but not the major issue -- we really

@@ -74,8 +74,7 @@ of test of specific fragile functions in the ``functions`` and
 
 ``tools`` - Contains a collection of stand-alone scripts. While these
 may reference the top-level DevStack configuration they can generally be
-run alone. There are also some sub-directories to support specific
-environments such as XenServer.
+run alone.
 
 
 Scripts
