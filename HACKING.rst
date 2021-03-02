@@ -274,9 +274,6 @@ your change
   even years from now -- why we were motivated to make a change at the
   time.
 
-* **Reviewers** -- please see ``MAINTAINERS.rst`` for a list of people
-  that should be added to reviews of various sub-systems.
-
 
 Making Changes, Testing, and CI
 -------------------------------
