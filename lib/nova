@@ -612,10 +612,10 @@ function configure_console_compute {
     # can use the NOVA_CPU_CELL variable to know which cell we are for
     # calculating the offset.
     # Stagger the offset based on the total number of possible console proxies
-    # (novnc, xvpvnc, spice, serial) so that their ports will not collide if
+    # (novnc, spice, serial) so that their ports will not collide if
     # all are enabled.
     local offset
-    offset=$(((NOVA_CPU_CELL - 1) * 4))
+    offset=$(((NOVA_CPU_CELL - 1) * 3))
 
     # Use the host IP instead of the service host because for multi-node, the
     # service host will be the controller only.
@@ -623,7 +623,7 @@ function configure_console_compute {
     default_proxyclient_addr=$(iniget $NOVA_CPU_CONF DEFAULT my_ip)
 
     # All nova-compute workers need to know the vnc configuration options
-    # These settings don't hurt anything if n-xvnc and n-novnc are disabled
+    # These settings don't hurt anything if n-novnc is disabled
     if is_service_enabled n-cpu; then
         if [ "$NOVNC_FROM_PACKAGE" == "True" ]; then
             # Use the old URL when installing novnc packages.
@@ -636,13 +636,11 @@ function configure_console_compute {
             NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$SERVICE_HOST:$((6080 + offset))/vnc_lite.html"}
         fi
         iniset $NOVA_CPU_CONF vnc novncproxy_base_url "$NOVNCPROXY_URL"
-        XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$SERVICE_HOST:$((6081 + offset))/console"}
-        iniset $NOVA_CPU_CONF vnc xvpvncproxy_base_url "$XVPVNCPROXY_URL"
-        SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:$((6082 + offset))/spice_auto.html"}
+        SPICEHTML5PROXY_URL=${SPICEHTML5PROXY_URL:-"http://$SERVICE_HOST:$((6081 + offset))/spice_auto.html"}
         iniset $NOVA_CPU_CONF spice html5proxy_base_url "$SPICEHTML5PROXY_URL"
     fi
 
-    if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
+    if is_service_enabled n-novnc || [ "$NOVA_VNC_ENABLED" != False ]; then
         # Address on which instance vncservers will listen on compute hosts.
         # For multi-host, this should be the management ip of the compute host.
         VNCSERVER_LISTEN=${VNCSERVER_LISTEN:-$NOVA_SERVICE_LISTEN_ADDRESS}
@@ -665,7 +663,7 @@ function configure_console_compute {
 
     if is_service_enabled n-sproxy; then
         iniset $NOVA_CPU_CONF serial_console enabled True
-        iniset $NOVA_CPU_CONF serial_console base_url "ws://$SERVICE_HOST:$((6083 + offset))/"
+        iniset $NOVA_CPU_CONF serial_console base_url "ws://$SERVICE_HOST:$((6082 + offset))/"
     fi
 }
 
@@ -674,15 +672,13 @@ function configure_console_proxies {
     local conf=${1:-$NOVA_CONF}
     local offset=${2:-0}
     # Stagger the offset based on the total number of possible console proxies
-    # (novnc, xvpvnc, spice, serial) so that their ports will not collide if
+    # (novnc, spice, serial) so that their ports will not collide if
     # all are enabled.
-    offset=$((offset * 4))
+    offset=$((offset * 3))
 
-    if is_service_enabled n-novnc || is_service_enabled n-xvnc || [ "$NOVA_VNC_ENABLED" != False ]; then
+    if is_service_enabled n-novnc || [ "$NOVA_VNC_ENABLED" != False ]; then
         iniset $conf vnc novncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $conf vnc novncproxy_port $((6080 + offset))
-        iniset $conf vnc xvpvncproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-        iniset $conf vnc xvpvncproxy_port $((6081 + offset))
 
         if is_nova_console_proxy_compute_tls_enabled ; then
             iniset $conf vnc auth_schemes "vencrypt"
@@ -714,12 +710,12 @@ function configure_console_proxies {
 
     if is_service_enabled n-spice; then
         iniset $conf spice html5proxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-        iniset $conf spice html5proxy_port $((6082 + offset))
+        iniset $conf spice html5proxy_port $((6081 + offset))
     fi
 
     if is_service_enabled n-sproxy; then
         iniset $conf serial_console serialproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
-        iniset $conf serial_console serialproxy_port $((6083 + offset))
+        iniset $conf serial_console serialproxy_port $((6082 + offset))
     fi
 }
 
@@ -986,7 +982,7 @@ function start_nova_rest {
 
 function enable_nova_console_proxies {
     for i in $(seq 1 $NOVA_NUM_CELLS); do
-        for srv in n-novnc n-xvnc n-spice n-sproxy; do
+        for srv in n-novnc n-spice n-sproxy; do
             if is_service_enabled $srv; then
                 enable_service ${srv}-cell${i}
             fi
@@ -1004,7 +1000,6 @@ function start_nova_console_proxies {
     # console proxies run globally for singleconductor, else they run per cell
     if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
         run_process n-novnc "$NOVA_BIN_DIR/nova-novncproxy --config-file $api_cell_conf --web $NOVNC_WEB_DIR"
-        run_process n-xvnc "$NOVA_BIN_DIR/nova-xvpvncproxy --config-file $api_cell_conf"
         run_process n-spice "$NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $api_cell_conf --web $SPICE_WEB_DIR"
         run_process n-sproxy "$NOVA_BIN_DIR/nova-serialproxy --config-file $api_cell_conf"
     else
@@ -1013,7 +1008,6 @@ function start_nova_console_proxies {
             local conf
             conf=$(conductor_conf $i)
             run_process n-novnc-cell${i} "$NOVA_BIN_DIR/nova-novncproxy --config-file $conf --web $NOVNC_WEB_DIR"
-            run_process n-xvnc-cell${i} "$NOVA_BIN_DIR/nova-xvpvncproxy --config-file $conf"
             run_process n-spice-cell${i} "$NOVA_BIN_DIR/nova-spicehtml5proxy --config-file $conf --web $SPICE_WEB_DIR"
             run_process n-sproxy-cell${i} "$NOVA_BIN_DIR/nova-serialproxy --config-file $conf"
         done
@@ -1104,13 +1098,13 @@ function stop_nova_rest {
 
 function stop_nova_console_proxies {
     if [[ "${CELLSV2_SETUP}" == "singleconductor" ]]; then
-        for srv in n-novnc n-xvnc n-spice n-sproxy; do
+        for srv in n-novnc n-spice n-sproxy; do
             stop_process $srv
         done
     else
         enable_nova_console_proxies
         for i in $(seq 1 $NOVA_NUM_CELLS); do
-            for srv in n-novnc n-xvnc n-spice n-sproxy; do
+            for srv in n-novnc n-spice n-sproxy; do
                 stop_process ${srv}-cell${i}
             done
         done
