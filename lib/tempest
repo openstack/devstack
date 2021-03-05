@@ -610,6 +610,7 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG auth admin_system 'all'
         iniset $TEMPEST_CONFIG auth admin_project_name ''
     fi
+    iniset $TEMPEST_CONFIG enforce_scope glance "$GLANCE_ENFORCE_SCOPE"
 
     if [ "$VIRT_DRIVER" = "libvirt" ] && [ "$LIBVIRT_TYPE" = "lxc" ]; then
         # libvirt-lxc does not support boot from volume or attaching volumes
