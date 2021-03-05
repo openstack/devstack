@@ -601,6 +601,16 @@ function configure_tempest {
         fi
     done
 
+    # ``enforce_scope``
+    # If services enable the enforce_scope for their policy
+    # we need to enable the same on Tempest side so that
+    # test can be run with scoped token.
+    if [[ "$KEYSTONE_ENFORCE_SCOPE" == True ]] ; then
+        iniset $TEMPEST_CONFIG enforce_scope keystone true
+        iniset $TEMPEST_CONFIG auth admin_system 'all'
+        iniset $TEMPEST_CONFIG auth admin_project_name ''
+    fi
+
     if [ "$VIRT_DRIVER" = "libvirt" ] && [ "$LIBVIRT_TYPE" = "lxc" ]; then
         # libvirt-lxc does not support boot from volume or attaching volumes
         # so basically anything with cinder is out of the question.
