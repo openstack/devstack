@@ -37,8 +37,8 @@ FILES=$TOP_DIR/files
 # unreliable in CI situations.
 # [1] http://git.openstack.org/cgit/openstack-infra/project-config/tree/nodepool/elements/cache-devstack/source-repository-pip
 
-PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/3.5/get-pip.py"}
-PIP_GET_PIP_PY27_URL=${PIP_GET_PIP_PY27_URL:-"https://bootstrap.pypa.io/2.7/get-pip.py"}
+PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/pip/3.5/get-pip.py"}
+PIP_GET_PIP_PY27_URL=${PIP_GET_PIP_PY27_URL:-"https://bootstrap.pypa.io/pip/2.7/get-pip.py"}
 LOCAL_PIP="$FILES/$(basename $PIP_GET_PIP_URL).old"
 LOCAL_PIP_PY27="${LOCAL_PIP}-py27"
 
