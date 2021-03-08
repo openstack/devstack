@@ -38,7 +38,7 @@ FILES=$TOP_DIR/files
 # [1] https://opendev.org/openstack/project-config/src/branch/master/nodepool/elements/cache-devstack/source-repository-pip
 
 PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/get-pip.py"}
-PIP_GET_PIP_PY27_URL=${PIP_GET_PIP_PY27_URL:-"https://bootstrap.pypa.io/2.7/get-pip.py"}
+PIP_GET_PIP_PY27_URL=${PIP_GET_PIP_PY27_URL:-"https://bootstrap.pypa.io/pip/2.7/get-pip.py"}
 LOCAL_PIP="$FILES/$(basename $PIP_GET_PIP_URL)"
 LOCAL_PIP_PY27="${LOCAL_PIP}-py27"
 
