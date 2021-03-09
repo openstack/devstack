@@ -88,15 +88,15 @@ CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1}
 CINDER_VOLUME_CLEAR=${CINDER_VOLUME_CLEAR:-${CINDER_VOLUME_CLEAR_DEFAULT:-zero}}
 CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 
-# Centos7 and OpenSUSE switched to using LIO and that's all that's supported,
-# although the tgt bits are in EPEL and OpenSUSE we don't want that for CI
+# Default to lioadm
+CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-lioadm}
+
+# EL and SUSE should only use lioadm, we continue to allow Ubuntu based
+# deployments to use tgtadm for specific jobs in the cinder-tempest-plugin
 if is_fedora || is_suse; then
-    CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-lioadm}
     if [[ ${CINDER_ISCSI_HELPER} != "lioadm" ]]; then
         die "lioadm is the only valid Cinder target_helper config on this platform"
     fi
-else
-    CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-tgtadm}
 fi
 
 # For backward compatibility

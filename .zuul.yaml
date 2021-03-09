@@ -590,6 +590,9 @@
     description: Ubuntu Bionic platform test
     nodeset: openstack-single-node-bionic
     voting: false
+    vars:
+      devstack_localrc:
+        CINDER_ISCSI_HELPER: tgtadm
 
 - job:
     name: devstack-async
