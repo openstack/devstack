@@ -353,7 +353,9 @@ function configure_cinder {
     # Format logging
     setup_logging $CINDER_CONF $CINDER_USE_MOD_WSGI
 
-    write_uwsgi_config "$CINDER_UWSGI_CONF" "$CINDER_UWSGI" "/volume"
+    if is_service_enabled c-api; then
+        write_uwsgi_config "$CINDER_UWSGI_CONF" "$CINDER_UWSGI" "/volume"
+    fi
 
     if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
         configure_cinder_driver
