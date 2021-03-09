@@ -725,15 +725,11 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - legacy-tempest-dsvm-neutron-dvr-multinode-full:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         - neutron-tempest-dvr-ha-multinode-full:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - legacy-tempest-dsvm-lvm-multibackend:
+        - cinder-tempest-lvm-multibackend:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
