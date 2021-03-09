@@ -130,8 +130,9 @@ function is_glance_enabled {
 # cleanup_glance() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_glance {
-    # delete image files (glance)
-    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR $(glance_remote_conf '')
+    # delete image files (glance) and all of the glance-remote temporary
+    # storage
+    sudo rm -rf $GLANCE_CACHE_DIR $GLANCE_IMAGE_DIR "${DATA_DIR}/glance-remote"
 
     # Cleanup multiple stores directories
     if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "True" ]]; then
@@ -468,39 +469,41 @@ function install_glance {
 # glance_remote_conf() - Return the path to an alternate config file for
 #                        the remote glance clone
 function glance_remote_conf {
-    echo "$(dirname ${GLANCE_CONF_DIR})/glance-remote/"$(basename "$1")
+    echo $(dirname "${GLANCE_CONF_DIR}")/glance-remote/$(basename "$1")
 }
 
 # start_glance_remote_clone() - Clone the regular glance api worker
 function start_glance_remote_clone {
-    local glance_remote_conf glance_remote_port
+    local glance_remote_conf_dir glance_remote_port remote_data
+    local glance_remote_uwsgi
 
-    glance_remote_conf_dir=$(glance_remote_conf '')
+    glance_remote_conf_dir="$(glance_remote_conf "")"
     glance_remote_port=$(get_random_port)
+    glance_remote_uwsgi="$(glance_remote_conf $GLANCE_UWSGI_CONF)"
 
     # Clone the existing ready-to-go glance-api setup
-    sudo rm -Rf $glance_remote_conf_dir
-    sudo cp -r "$GLANCE_CONF_DIR" $glance_remote_conf_dir
-    sudo chown $STACK_USER -R $glance_remote_conf_dir
+    sudo rm -Rf "$glance_remote_conf_dir"
+    sudo cp -r "$GLANCE_CONF_DIR" "$glance_remote_conf_dir"
+    sudo chown $STACK_USER -R "$glance_remote_conf_dir"
 
     # Point this worker at different data dirs
     remote_data="${DATA_DIR}/glance-remote"
     mkdir -p $remote_data/os_glance_tasks_store \
-          $remote_data/os_glance_staging_store
-    iniset $(glance_remote_conf 'glance-api.conf') os_glance_staging_store \
-           filesystem_store_datadir ${remote_data}/os_glance_staging_store
-    iniset $(glance_remote_conf 'glance-api.conf') os_glance_tasks_store \
-           filesystem_store_datadir ${remote_data}/os_glance_tasks_store
+          "${remote_data}/os_glance_staging_store"
+    iniset $(glance_remote_conf "$GLANCE_API_CONF") os_glance_staging_store \
+           filesystem_store_datadir "${remote_data}/os_glance_staging_store"
+    iniset $(glance_remote_conf "$GLANCE_API_CONF") os_glance_tasks_store \
+           filesystem_store_datadir "${remote_data}/os_glance_tasks_store"
 
     # Change our uwsgi to our new port
     sed -ri "s/^(http-socket.*):[0-9]+/\1:$glance_remote_port/" \
-        $(glance_remote_conf $GLANCE_UWSGI_CONF)
+        "$glance_remote_uwsgi"
 
     # Update the self-reference url with our new port
     iniset $(glance_remote_conf $GLANCE_API_CONF) DEFAULT \
            worker_self_reference_url \
            $(awk '-F= ' '/^http-socket/ { print "http://"$2 }' \
-                $(glance_remote_conf $GLANCE_UWSGI_CONF))
+                    "$glance_remote_uwsgi")
 
     # We need to create the systemd service for the clone, but then
     # change it to include an Environment line to point the WSGI app
@@ -508,10 +511,11 @@ function start_glance_remote_clone {
     write_uwsgi_user_unit_file devstack@g-api-r.service "$(which uwsgi) \
                                --procname-prefix \
                                glance-api-remote \
-                               --ini $(glance_remote_conf $GLANCE_UWSGI_CONF)" \
+                               --ini $glance_remote_uwsgi" \
                                "" "$STACK_USER"
     iniset -sudo ${SYSTEMD_DIR}/devstack@g-api-r.service \
-           "Service" "Environment" "OS_GLANCE_CONFIG_DIR=$glance_remote_conf_dir"
+           "Service" "Environment" \
+           "OS_GLANCE_CONFIG_DIR=$glance_remote_conf_dir"
 
     # Reload and restart with the new config
     $SYSTEMCTL daemon-reload
@@ -520,7 +524,7 @@ function start_glance_remote_clone {
     get_or_create_service glance_remote image_remote "Alternate glance"
     get_or_create_endpoint image_remote $REGION_NAME \
                 $(awk '-F= ' '/^http-socket/ { print "http://"$2 }' \
-                    $(glance_remote_conf $GLANCE_UWSGI_CONF))
+                    $glance_remote_uwsgi)
 }
 
 # start_glance() - Start running processes
