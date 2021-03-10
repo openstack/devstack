@@ -110,6 +110,21 @@ function image_size_in_gib {
     echo $size | python -c "import math; print int(math.ceil(float(int(raw_input()) / 1024.0 ** 3)))"
 }
 
+function set_tempest_venv_constraints {
+    local tmp_c
+    tmp_c=$1
+    if [[ $TEMPEST_VENV_UPPER_CONSTRAINTS == "master" ]]; then
+        (cd $REQUIREMENTS_DIR && git show origin/master:upper-constraints.txt) > $tmp_c
+    else
+        echo "Using $TEMPEST_VENV_UPPER_CONSTRAINTS constraints in Tempest virtual env."
+        cat $TEMPEST_VENV_UPPER_CONSTRAINTS > $tmp_c
+        # NOTE: setting both tox env var and once Tempest start using new var
+        # TOX_CONSTRAINTS_FILE then we can remove the old one.
+        export UPPER_CONSTRAINTS_FILE=$TEMPEST_VENV_UPPER_CONSTRAINTS
+        export TOX_CONSTRAINTS_FILE=$TEMPEST_VENV_UPPER_CONSTRAINTS
+    fi
+}
+
 # configure_tempest() - Set config files, create data dirs, etc
 function configure_tempest {
     if [[ "$INSTALL_TEMPEST" == "True" ]]; then
@@ -590,8 +605,11 @@ function configure_tempest {
         tox -revenv-tempest --notest
     fi
 
-    # NOTE(gmann): Use branch constraint because Tempest is pinned to the branch release instead of using master.
-    tox -evenv-tempest -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
+    local tmp_u_c_m
+    tmp_u_c_m=$(mktemp -t tempest_u_c_m.XXXXXXXXXX)
+    set_tempest_venv_constraints $tmp_u_c_m
+    tox -evenv-tempest -- pip install -c $tmp_u_c_m -r requirements.txt
+    rm -f $tmp_u_c_m
 
     # Auth:
     iniset $TEMPEST_CONFIG auth tempest_roles "member"
@@ -709,20 +727,17 @@ function install_tempest {
     # TEMPEST_DIR already exist until RECLONE is true.
     git checkout $TEMPEST_BRANCH
 
-    # NOTE(gmann): Use branch constraint because Tempest is pinned to the branch release
-    # instead of using master. We need to export it via env var UPPER_CONSTRAINTS_FILE
-    # so that initial creation of tempest tox use stable branch constraint
-    # instead of master constraint as defined in tempest/tox.ini
-    # This is needed for legacy jobs as devstack-gate can also recreate the
-    # venv. For zuulv3 native jobs, run-tempest role take care of it.
-    export UPPER_CONSTRAINTS_FILE=$REQUIREMENTS_DIR/upper-constraints.txt
+    local tmp_u_c_m
+    tmp_u_c_m=$(mktemp -t tempest_u_c_m.XXXXXXXXXX)
+    set_tempest_venv_constraints $tmp_u_c_m
 
     tox -r --notest -efull
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but
     # running pip install -U on tempest requirements
-    $TEMPEST_DIR/.tox/tempest/bin/pip install -c $REQUIREMENTS_DIR/upper-constraints.txt -r requirements.txt
+    $TEMPEST_DIR/.tox/tempest/bin/pip install -c $tmp_u_c_m -r requirements.txt
     PROJECT_VENV["tempest"]=${TEMPEST_DIR}/.tox/tempest
+    rm -f $tmp_u_c_m
     popd
 }
 
@@ -730,9 +745,11 @@ function install_tempest {
 function install_tempest_plugins {
     pushd $TEMPEST_DIR
     if [[ $TEMPEST_PLUGINS != 0 ]] ; then
-        # NOTE(gmann): Use branch constraint because Tempest is pinned to the branch release
-        # instead of using master.
-        tox -evenv-tempest -- pip install -c $REQUIREMENTS_DIR/upper-constraints.txt $TEMPEST_PLUGINS
+        local tmp_u_c_m
+        tmp_u_c_m=$(mktemp -t tempest_u_c_m.XXXXXXXXXX)
+        set_tempest_venv_constraints $tmp_u_c_m
+        tox -evenv-tempest -- pip install -c $tmp_u_c_m $TEMPEST_PLUGINS
+        rm -f $tmp_u_c_m
         echo "Checking installed Tempest plugins:"
         tox -evenv-tempest -- tempest list-plugins
     fi

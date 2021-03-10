@@ -317,6 +317,7 @@ TEMPEST_REPO=${TEMPEST_REPO:-${GIT_BASE}/openstack/tempest.git}
 # Use Tempest tag 26.0.0 which is Stein last supported version
 # https://docs.openstack.org/releasenotes/tempest/v26.0.0.html
 TEMPEST_BRANCH=${TEMPEST_BRANCH:-26.0.0}
+TEMPEST_VENV_UPPER_CONSTRAINTS=${TEMPEST_VENV_UPPER_CONSTRAINTS:-$REQUIREMENTS_DIR/upper-constraints.txt}
 
 
 ##############
