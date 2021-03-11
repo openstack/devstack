@@ -1037,6 +1037,11 @@ function is_ironic_hardware {
     return 1
 }
 
+function is_ironic_enforce_scope {
+    is_service_enabled ironic && [[ "$IRONIC_ENFORCE_SCOPE" == "True" ]] && return 0
+    return 1
+}
+
 
 # Package Functions
 # =================

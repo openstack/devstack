@@ -47,9 +47,13 @@ function configure_nova_hypervisor {
     iniset $NOVA_CONF ironic username admin
     iniset $NOVA_CONF ironic password $ADMIN_PASSWORD
     iniset $NOVA_CONF ironic auth_url $KEYSTONE_SERVICE_URI
-    iniset $NOVA_CONF ironic project_domain_id default
+    if is_ironic_enforce_scope; then
+        iniset $NOVA_CONF ironic system_scope all
+    else
+        iniset $NOVA_CONF ironic project_domain_id default
+        iniset $NOVA_CONF ironic project_name demo
+    fi
     iniset $NOVA_CONF ironic user_domain_id default
-    iniset $NOVA_CONF ironic project_name demo
     iniset $NOVA_CONF ironic region_name $REGION_NAME
 
     # These are used with crufty legacy ironicclient
@@ -81,7 +85,6 @@ function stop_nova_hypervisor {
     # This function intentionally left blank
     :
 }
-
 
 # Restore xtrace
 $_XTRACE_HYP_IRONIC
