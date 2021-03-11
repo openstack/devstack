@@ -129,6 +129,28 @@ function write_clouds_yaml {
         --os-password $ADMIN_PASSWORD \
         --os-system-scope all
 
+    # system member
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-system-member \
+        --os-region-name $REGION_NAME \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username system_member \
+        --os-password $ADMIN_PASSWORD \
+        --os-system-scope all
+
+    # system reader
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-system-reader \
+        --os-region-name $REGION_NAME \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username system_reader \
+        --os-password $ADMIN_PASSWORD \
+        --os-system-scope all
+
     cat >> $CLOUDS_YAML <<EOF
 functional:
   image_name: $DEFAULT_IMAGE_NAME
@@ -932,6 +954,37 @@ function get_or_add_user_domain_role {
             --user $2 \
             --domain $3 \
             | grep '^|\s[a-f0-9]\+' | get_field 1)
+    fi
+    echo $user_role_id
+}
+
+# Gets or adds user role to system
+# Usage: get_or_add_user_system_role <role> <user> <system> [<user_domain>]
+function get_or_add_user_system_role {
+    local user_role_id
+    local domain_args
+
+    domain_args=$(_get_domain_args $4)
+
+    # Gets user role id
+    user_role_id=$(openstack role assignment list \
+        --role $1 \
+        --user $2 \
+        --system $3 \
+        $domain_args \
+        -f value -c Role)
+    if [[ -z "$user_role_id" ]]; then
+        # Adds role to user and get it
+        openstack role add $1 \
+            --user $2 \
+            --system $3 \
+            $domain_args
+        user_role_id=$(openstack role assignment list \
+            --role $1 \
+            --user $2 \
+            --system $3 \
+            $domain_args \
+            -f value -c Role)
     fi
     echo $user_role_id
 }

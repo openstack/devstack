@@ -285,20 +285,28 @@ function configure_keystone {
 # admins               admin            admin                 admin
 # nonadmins            demo, alt_demo   member, anotherrole   demo, alt_demo
 
+# System               User            Roles
+# ------------------------------------------------------------------
+# all                  admin           admin
+# all                  system_reader   reader
+# all                  system_member   member
+
 
 # Migrated from keystone_data.sh
 function create_keystone_accounts {
 
     # The keystone bootstrapping process (performed via keystone-manage
-    # bootstrap) creates an admin user, admin role, member role, and admin
+    # bootstrap) creates an admin user and an admin
     # project. As a sanity check we exercise the CLI to retrieve the IDs for
     # these values.
     local admin_project
     admin_project=$(openstack project show "admin" -f value -c id)
     local admin_user
     admin_user=$(openstack user show "admin" -f value -c id)
+    # These roles are also created during bootstrap but we don't need their IDs
     local admin_role="admin"
     local member_role="member"
+    local reader_role="reader"
 
     async_run ks-domain-role get_or_add_user_domain_role $admin_role $admin_user default
 
@@ -349,6 +357,18 @@ function create_keystone_accounts {
     async_run ks-alt-admin get_or_add_user_project_role $admin_role $admin_user $alt_demo_project
     async_run ks-alt-another get_or_add_user_project_role $another_role $alt_demo_user $alt_demo_project
 
+    # Create two users, give one the member role on the system and the other
+    # the reader role on the system. These two users model system-member and
+    # system-reader personas. The admin user already has the admin role on the
+    # system and we can re-use this user as a system-admin.
+    system_member_user=$(get_or_create_user "system_member" \
+        "$ADMIN_PASSWORD" "default" "system_member@example.com")
+    async_run ks-system-member get_or_add_user_system_role $member_role $system_member_user "all"
+
+    system_reader_user=$(get_or_create_user "system_reader" \
+        "$ADMIN_PASSWORD" "default" "system_reader@example.com")
+    async_run ks-system-reader get_or_add_user_system_role $reader_role $system_reader_user "all"
+
     # groups
     local admin_group
     admin_group=$(get_or_create_group "admins" \
@@ -365,6 +385,7 @@ function create_keystone_accounts {
 
     async_wait ks-demo-{member,admin,another,invis}
     async_wait ks-alt-{member,admin,another}
+    async_wait ks-system-{member,reader}
     async_wait ks-group-{memberdemo,anotherdemo,memberalt,anotheralt,admin}
 
     if is_service_enabled ldap; then
