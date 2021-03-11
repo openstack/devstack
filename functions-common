@@ -85,7 +85,7 @@ function write_clouds_yaml {
     if [ -f "$SSL_BUNDLE_FILE" ]; then
         CA_CERT_ARG="--os-cacert $SSL_BUNDLE_FILE"
     fi
-    # demo -> devstack
+    # devstack: user with the member role on demo project
     $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack \
@@ -96,18 +96,7 @@ function write_clouds_yaml {
         --os-password $ADMIN_PASSWORD \
         --os-project-name demo
 
-    # alt_demo -> devstack-alt
-    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
-        --file $CLOUDS_YAML \
-        --os-cloud devstack-alt \
-        --os-region-name $REGION_NAME \
-        $CA_CERT_ARG \
-        --os-auth-url $KEYSTONE_SERVICE_URI \
-        --os-username alt_demo \
-        --os-password $ADMIN_PASSWORD \
-        --os-project-name alt_demo
-
-    # admin -> devstack-admin
+    # devstack-admin: user with the admin role on the admin project
     $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack-admin \
@@ -118,7 +107,51 @@ function write_clouds_yaml {
         --os-password $ADMIN_PASSWORD \
         --os-project-name admin
 
-    # admin with a system-scoped token -> devstack-system
+    # devstack-alt: user with the member role on alt_demo project
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-alt \
+        --os-region-name $REGION_NAME \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username alt_demo \
+        --os-password $ADMIN_PASSWORD \
+        --os-project-name alt_demo
+
+    # devstack-alt-member: user with the member role on alt_demo project
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-alt-member \
+        --os-region-name $REGION_NAME \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username alt_demo_member \
+        --os-password $ADMIN_PASSWORD \
+        --os-project-name alt_demo
+
+    # devstack-alt-reader: user with the reader role on alt_demo project
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-alt-reader \
+        --os-region-name $REGION_NAME \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username alt_demo_reader \
+        --os-password $ADMIN_PASSWORD \
+        --os-project-name alt_demo
+
+    # devstack-reader: user with the reader role on demo project
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-reader \
+        --os-region-name $REGION_NAME \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username demo_reader \
+        --os-password $ADMIN_PASSWORD \
+        --os-project-name demo
+
+    # devstack-system-admin: user with the admin role on the system
     $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack-system-admin \
@@ -129,7 +162,7 @@ function write_clouds_yaml {
         --os-password $ADMIN_PASSWORD \
         --os-system-scope all
 
-    # system member
+    # devstack-system-member: user with the member role on the system
     $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack-system-member \
@@ -140,7 +173,7 @@ function write_clouds_yaml {
         --os-password $ADMIN_PASSWORD \
         --os-system-scope all
 
-    # system reader
+    # devstack-system-reader: user with the reader role on the system
     $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
         --os-cloud devstack-system-reader \

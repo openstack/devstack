@@ -346,19 +346,39 @@ function create_keystone_accounts {
     async_run ks-demo-another get_or_add_user_project_role $another_role $demo_user $demo_project
     async_run ks-demo-invis get_or_add_user_project_role $member_role $demo_user $invis_project
 
-    # alt_demo
+    # Create a user to act as a reader on project demo
+    local demo_reader
+    demo_reader=$(get_or_create_user "demo_reader" \
+        "$ADMIN_PASSWORD" "default" "demo_reader@example.com")
+
+    async_run ks-demo-reader get_or_add_user_project_role $reader_role $demo_reader $demo_project
+
+    # Create a different project called alt_demo
     local alt_demo_project
     alt_demo_project=$(get_or_create_project "alt_demo" default)
+    # Create a user to act as member, admin and anotherrole on project alt_demo
     local alt_demo_user
     alt_demo_user=$(get_or_create_user "alt_demo" \
         "$ADMIN_PASSWORD" "default" "alt_demo@example.com")
 
     async_run ks-alt-member get_or_add_user_project_role $member_role $alt_demo_user $alt_demo_project
-    async_run ks-alt-admin get_or_add_user_project_role $admin_role $admin_user $alt_demo_project
+    async_run ks-alt-admin get_or_add_user_project_role $admin_role $alt_demo_user $alt_demo_project
     async_run ks-alt-another get_or_add_user_project_role $another_role $alt_demo_user $alt_demo_project
 
-    # Create two users, give one the member role on the system and the other
-    # the reader role on the system. These two users model system-member and
+    # Create another user to act as a member on project alt_demo
+    local alt_demo_member
+    alt_demo_member=$(get_or_create_user "alt_demo_member" \
+        "$ADMIN_PASSWORD" "default" "alt_demo_member@example.com")
+    async_run ks-alt-member-user get_or_add_user_project_role $member_role $alt_demo_member $alt_demo_project
+
+    # Create another user to act as a reader on project alt_demo
+    local alt_demo_reader
+    alt_demo_reader=$(get_or_create_user "alt_demo_reader" \
+        "$ADMIN_PASSWORD" "default" "alt_demo_reader@example.com")
+    async_run ks-alt-reader-user get_or_add_user_project_role $reader_role $alt_demo_reader $alt_demo_project
+
+    # Create two users, give one the member role on the system and the other the
+    # reader role on the system. These two users model system-member and
     # system-reader personas. The admin user already has the admin role on the
     # system and we can re-use this user as a system-admin.
     system_member_user=$(get_or_create_user "system_member" \
@@ -383,8 +403,8 @@ function create_keystone_accounts {
     async_run ks-group-anotheralt get_or_add_group_project_role $another_role $non_admin_group $alt_demo_project
     async_run ks-group-admin get_or_add_group_project_role $admin_role $admin_group $admin_project
 
-    async_wait ks-demo-{member,admin,another,invis}
-    async_wait ks-alt-{member,admin,another}
+    async_wait ks-demo-{member,admin,another,invis,reader}
+    async_wait ks-alt-{member,admin,another,member-user,reader-user}
     async_wait ks-system-{member,reader}
     async_wait ks-group-{memberdemo,anotherdemo,memberalt,anotheralt,admin}
 
