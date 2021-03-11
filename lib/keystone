@@ -342,6 +342,7 @@ function create_keystone_accounts {
     async_wait ks-{domain-role,domain,project,service,reseller,anotherrole}
 
     async_run ks-demo-member get_or_add_user_project_role $member_role $demo_user $demo_project
+
     async_run ks-demo-admin get_or_add_user_project_role $admin_role $admin_user $demo_project
     async_run ks-demo-another get_or_add_user_project_role $another_role $demo_user $demo_project
     async_run ks-demo-invis get_or_add_user_project_role $member_role $demo_user $invis_project
@@ -361,7 +362,6 @@ function create_keystone_accounts {
     alt_demo_user=$(get_or_create_user "alt_demo" \
         "$ADMIN_PASSWORD" "default" "alt_demo@example.com")
 
-    async_run ks-alt-member get_or_add_user_project_role $member_role $alt_demo_user $alt_demo_project
     async_run ks-alt-admin get_or_add_user_project_role $admin_role $alt_demo_user $alt_demo_project
     async_run ks-alt-another get_or_add_user_project_role $another_role $alt_demo_user $alt_demo_project
 
@@ -404,7 +404,7 @@ function create_keystone_accounts {
     async_run ks-group-admin get_or_add_group_project_role $admin_role $admin_group $admin_project
 
     async_wait ks-demo-{member,admin,another,invis,reader}
-    async_wait ks-alt-{member,admin,another,member-user,reader-user}
+    async_wait ks-alt-{admin,another,member-user,reader-user}
     async_wait ks-system-{member,reader}
     async_wait ks-group-{memberdemo,anotherdemo,memberalt,anotheralt,admin}
 
