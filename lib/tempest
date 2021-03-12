@@ -107,7 +107,7 @@ function remove_disabled_extensions {
 # Takes an image ID parameter as input
 function image_size_in_gib {
     local size
-    size=$(openstack image show $1 -c size -f value)
+    size=$(openstack --os-cloud devstack-admin image show $1 -c size -f value)
     echo $size | python3 -c "import math; print(int(math.ceil(float(int(input()) / 1024.0 ** 3))))"
 }
 
@@ -173,7 +173,7 @@ function configure_tempest {
                 image_uuid_alt="$IMAGE_UUID"
             fi
             images+=($IMAGE_UUID)
-        done < <(openstack image list --property status=active | awk -F'|' '!/^(+--)|ID|aki|ari/ { print $3,$2 }')
+        done < <(openstack --os-cloud devstack-admin image list --property status=active | awk -F'|' '!/^(+--)|ID|aki|ari/ { print $3,$2 }')
 
         case "${#images[*]}" in
             0)
@@ -209,23 +209,23 @@ function configure_tempest {
     local alt_username=${ALT_USERNAME:-alt_demo}
     local alt_project_name=${ALT_TENANT_NAME:-alt_demo}
     local admin_project_id
-    admin_project_id=$(openstack project list | awk "/ admin / { print \$2 }")
+    admin_project_id=$(openstack --os-cloud devstack-admin project list | awk "/ admin / { print \$2 }")
 
     if is_service_enabled nova; then
         # If ``DEFAULT_INSTANCE_TYPE`` is not declared, use the new behavior
         # Tempest creates its own instance types
-        available_flavors=$(nova flavor-list)
+        available_flavors=$(openstack --os-cloud devstack-admin flavor list)
         if  [[ -z "$DEFAULT_INSTANCE_TYPE" ]]; then
             if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
                 # Determine the flavor disk size based on the image size.
                 disk=$(image_size_in_gib $image_uuid)
-                openstack flavor create --id 42 --ram 128 --disk $disk --vcpus 1 --property hw_rng:allowed=True m1.nano
+                openstack --os-cloud devstack-admin flavor create --id 42 --ram 128 --disk $disk --vcpus 1 --property hw_rng:allowed=True m1.nano
             fi
             flavor_ref=42
             if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
                 # Determine the alt flavor disk size based on the alt image size.
                 disk=$(image_size_in_gib $image_uuid_alt)
-                openstack flavor create --id 84 --ram 192 --disk $disk --vcpus 1 --property hw_rng:allowed=True m1.micro
+                openstack --os-cloud devstack-admin flavor create --id 84 --ram 192 --disk $disk --vcpus 1 --property hw_rng:allowed=True m1.micro
             fi
             flavor_ref_alt=84
         else
@@ -251,7 +251,7 @@ function configure_tempest {
             fi
             flavor_ref=${flavors[0]}
             flavor_ref_alt=$flavor_ref
-            flavor_ref_size=$(openstack flavor show --format value --column disk "${flavor_ref}")
+            flavor_ref_size=$(openstack --os-cloud devstack-admin flavor show --format value --column disk "${flavor_ref}")
 
             # Ensure ``flavor_ref`` and ``flavor_ref_alt`` have different values.
             # Some resize instance in tempest tests depends on this.
@@ -264,7 +264,7 @@ function configure_tempest {
                     #               flavor selected as default, e.g. m1.small,
                     #               we need to perform additional check.
                     #
-                    flavor_ref_alt_size=$(openstack flavor show --format value --column disk "${f}")
+                    flavor_ref_alt_size=$(openstack --os-cloud devstack-admin flavor show --format value --column disk "${f}")
                     if [[ "${flavor_ref_alt_size}" -lt "${flavor_ref_size}" ]]; then
                         continue
                     fi
@@ -285,10 +285,10 @@ function configure_tempest {
     # If NEUTRON_CREATE_INITIAL_NETWORKS is not true, there is no network created
     # and the public_network_id should not be set.
     if [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]] && is_networking_extension_supported 'external-net'; then
-        public_network_id=$(openstack network show -f value -c id $PUBLIC_NETWORK_NAME)
+        public_network_id=$(openstack --os-cloud devstack-admin network show -f value -c id $PUBLIC_NETWORK_NAME)
         # make sure shared network presence does not confuses the tempest tests
-        openstack network create --share shared
-        openstack subnet create --description shared-subnet --subnet-range ${TEMPEST_SHARED_POOL:-192.168.233.0/24} --network shared shared-subnet
+        openstack --os-cloud devstack-admin network create --share shared
+        openstack --os-cloud devstack-admin subnet create --description shared-subnet --subnet-range ${TEMPEST_SHARED_POOL:-192.168.233.0/24} --network shared shared-subnet
     fi
 
     iniset $TEMPEST_CONFIG DEFAULT use_syslog $SYSLOG
