@@ -271,8 +271,7 @@ function create_public_bridge {
     sudo ovs-vsctl set open . external-ids:ovn-bridge-mappings=$PHYSICAL_NETWORK:$ext_gw_ifc
     if [ -n "$FLOATING_RANGE" ]; then
         local cidr_len=${FLOATING_RANGE#*/}
-        sudo ip addr flush dev $ext_gw_ifc
-        sudo ip addr add $PUBLIC_NETWORK_GATEWAY/$cidr_len dev $ext_gw_ifc
+        sudo ip addr replace $PUBLIC_NETWORK_GATEWAY/$cidr_len dev $ext_gw_ifc
     fi
 
     # Ensure IPv6 RAs are accepted on the interface with the default route.
@@ -286,8 +285,7 @@ function create_public_bridge {
     sudo sysctl -w net.ipv6.conf.all.forwarding=1
     if [ -n "$IPV6_PUBLIC_RANGE" ]; then
         local ipv6_cidr_len=${IPV6_PUBLIC_RANGE#*/}
-        sudo ip -6 addr flush dev $ext_gw_ifc
-        sudo ip -6 addr add $IPV6_PUBLIC_NETWORK_GATEWAY/$ipv6_cidr_len dev $ext_gw_ifc
+        sudo ip -6 addr replace $IPV6_PUBLIC_NETWORK_GATEWAY/$ipv6_cidr_len dev $ext_gw_ifc
     fi
 
     sudo ip link set $ext_gw_ifc up
