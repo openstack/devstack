@@ -149,6 +149,9 @@ Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS:-port_security,qos}
 # this one allows empty:
 ML2_L3_PLUGIN=${ML2_L3_PLUGIN-"ovn-router"}
 
+Q_LOG_DRIVER_RATE_LIMIT=${Q_LOG_DRIVER_RATE_LIMIT:-100}
+Q_LOG_DRIVER_BURST_LIMIT=${Q_LOG_DRIVER_BURST_LIMIT:-25}
+Q_LOG_DRIVER_LOG_BASE=${Q_LOG_DRIVER_LOG_BASE:-acl_log_meter}
 
 # Utility Functions
 # -----------------
@@ -487,6 +490,12 @@ function configure_ovn_plugin {
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_l3_scheduler="$OVN_L3_SCHEDULER"
         populate_ml2_config /$Q_PLUGIN_CONF_FILE securitygroup enable_security_group="$Q_USE_SECGROUP"
         inicomment /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver
+
+        if is_service_enabled q-log neutron-log; then
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE network_log rate_limit="$Q_LOG_DRIVER_RATE_LIMIT"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE network_log burst_limit="$Q_LOG_DRIVER_BURST_LIMIT"
+            inicomment /$Q_PLUGIN_CONF_FILE network_log local_output_log_base="$Q_LOG_DRIVER_LOG_BASE"
+        fi
 
         if is_service_enabled q-ovn-metadata-agent; then
             populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=True
