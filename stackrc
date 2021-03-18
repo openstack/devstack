@@ -555,6 +555,11 @@ GITREPO["ovsdbapp"]=${OVSDBAPP_REPO:-${GIT_BASE}/openstack/ovsdbapp.git}
 GITBRANCH["ovsdbapp"]=${OVSDBAPP_BRANCH:-$TARGET_BRANCH}
 GITDIR["ovsdbapp"]=$DEST/ovsdbapp
 
+# os-ken used by neutron
+GITREPO["os-ken"]=${OS_KEN_REPO:-${GIT_BASE}/openstack/os-ken.git}
+GITBRANCH["os-ken"]=${OS_KEN_BRANCH:-$TARGET_BRANCH}
+GITDIR["os-ken"]=$DEST/os-ken
+
 ##################
 #
 #  TripleO / Heat Agent Components
