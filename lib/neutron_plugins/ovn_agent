@@ -66,7 +66,9 @@ OVN_L3_SCHEDULER=${OVN_L3_SCHEDULER:-leastloaded}
 
 # A UUID to uniquely identify this system.  If one is not specified, a random
 # one will be generated.  A randomly generated UUID will be saved in a file
-# 'ovn-uuid' so that the same one will be re-used if you re-run DevStack.
+# $OVS_SYSCONFDIR/system-id.conf (typically /etc/openvswitch/system-id.conf)
+# so that the same one will be re-used if you re-run DevStack or restart
+# Open vSwitch service.
 OVN_UUID=${OVN_UUID:-}
 
 # Whether or not to build the openvswitch kernel module from ovs.  This is required
@@ -109,6 +111,7 @@ OVS_RUNDIR=$OVS_PREFIX/var/run/openvswitch
 OVS_SHAREDIR=$OVS_PREFIX/share/openvswitch
 OVS_SCRIPTDIR=$OVS_SHAREDIR/scripts
 OVS_DATADIR=$DATA_DIR/ovs
+OVS_SYSCONFDIR=${OVS_SYSCONFDIR:-/etc/openvswitch}
 
 OVN_DATADIR=$DATA_DIR/ovn
 OVN_SHAREDIR=$OVS_PREFIX/share/ovn
@@ -528,11 +531,17 @@ function configure_ovn {
     echo "Configuring OVN"
 
     if [ -z "$OVN_UUID" ] ; then
-        if [ -f ./ovn-uuid ] ; then
-            OVN_UUID=$(cat ovn-uuid)
+        if [ -f $OVS_SYSCONFDIR/system-id.conf ]; then
+            OVN_UUID=$(cat $OVS_SYSCONFDIR/system-id.conf)
         else
             OVN_UUID=$(uuidgen)
-            echo $OVN_UUID > ovn-uuid
+            echo $OVN_UUID | sudo tee $OVS_SYSCONFDIR/system-id.conf
+        fi
+    else
+        local ovs_uuid
+        ovs_uuid=$(cat $OVS_SYSCONFDIR/system-id.conf)
+        if [ "$ovs_uuid" != $OVN_UUID ]; then
+            echo $OVN_UUID | sudo tee $OVS_SYSCONFDIR/system-id.conf
         fi
     fi
 
