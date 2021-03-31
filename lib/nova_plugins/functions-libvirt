@@ -90,7 +90,7 @@ function install_libvirt {
         install_package libvirt libvirt-devel python3-libvirt
 
         if is_arch "aarch64"; then
-            install_package edk2.git-aarch64
+            install_package edk2-aarch64
         fi
     fi
 

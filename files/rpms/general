@@ -16,6 +16,7 @@ libjpeg-turbo-devel # Pillow 3.0.0
 libxml2-devel # lxml
 libxslt-devel # lxml
 libyaml-devel
+make # dist:openEuler-20.03
 net-tools
 openssh-server
 openssl
@@ -27,7 +28,8 @@ psmisc
 python3-devel
 python3-pip
 python3-systemd
-redhat-rpm-config # missing dep for gcc hardening flags, see rhbz#1217376
+redhat-rpm-config # not:openEuler-20.03    missing dep for gcc hardening flags, see rhbz#1217376
+systemd-devel # dist:openEuler-20.03
 tar
 tcpdump
 unzip
