@@ -395,7 +395,7 @@ SSH keys need to be exchanged between each compute node:
 
 3. Verify that login via ssh works without a password::
 
-        ssh -i /root/.ssh/id_rsa.pub stack@DESTINATION
+        ssh -i /root/.ssh/id_rsa stack@DESTINATION
 
 In essence, this means that every compute node's root user's public RSA key
 must exist in every other compute node's stack user's authorized_keys file and
