@@ -7,7 +7,7 @@ devstack run.
 To use it, you will need to convert it so journalctl can read it
 locally.  After downloading the file:
 
- $ /lib/systemd/systemd-journal-remote <(xzcat ./devstack.journal.xz) -o output.journal
+ $ /lib/systemd/systemd-journal-remote <(zcat ./devstack.journal.gz) -o output.journal
 
 Note this binary is not in the regular path.  On Debian/Ubuntu
 platforms, you will need to have the "systemd-journal-remote" package
