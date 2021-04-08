@@ -11,7 +11,7 @@
 #  async_wait my_shell_func
 #
 
-DEVSTACK_PARALLEL=$(trueorfalse False DEVSTACK_PARALLEL)
+DEVSTACK_PARALLEL=$(trueorfalse True DEVSTACK_PARALLEL)
 _ASYNC_BG_TIME=0
 
 # Keep track of how much total time was spent in background tasks
