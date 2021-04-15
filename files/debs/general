@@ -5,6 +5,7 @@ bsdmainutils
 curl
 default-jre-headless  # NOPRIME
 g++
+gawk
 gcc
 gettext  # used for compiling message catalogs
 git

@@ -3,6 +3,7 @@ apache2-devel
 bc
 ca-certificates-mozilla
 curl
+gawk
 gcc
 gcc-c++
 git-core
