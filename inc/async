@@ -57,6 +57,7 @@ function async_log {
 function async_inner {
     local name="$1"
     local rc
+    local fifo=${DEST}/async/${name}.fifo
     shift
     set -o xtrace
     if $* >${DEST}/async/${name}.log 2>&1; then
@@ -69,6 +70,8 @@ function async_inner {
         async_log "$name" "FAILED with rc $rc"
     fi
     iniset ${DEST}/async/${name}.ini job end_time $(date "+%s%3N")
+    # Block on the fifo until we are signaled to exit by the main process
+    cat $fifo
     return $rc
 }
 
@@ -86,12 +89,14 @@ function async_run {
     local name="$1"
     shift
     local inifile=${DEST}/async/${name}.ini
+    local fifo=${DEST}/async/${name}.fifo
 
     touch $inifile
     iniset $inifile job command "$*"
     iniset $inifile job start_time $(date +%s%3N)
 
     if [[ "$DEVSTACK_PARALLEL" = "True" ]]; then
+        mkfifo $fifo
         async_inner $name $* &
         iniset $inifile job pid $!
         async_log "$name" "running: %command"
@@ -119,17 +124,23 @@ function async_wait {
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
-    local pid rc running inifile runtime
+    local pid rc running inifile runtime fifo
     rc=0
     for name in $*; do
         running=$(ls ${DEST}/async/*.ini 2>/dev/null | wc -l)
         inifile="${DEST}/async/${name}.ini"
+        fifo=${DEST}/async/${name}.fifo
 
         if pid=$(async_pidof "$name"); then
             async_log "$name" "Waiting for completion of %command" \
                       "($running other jobs running)"
             time_start async_wait
             if [[ "$pid" != "self" ]]; then
+                # Signal the child to go ahead and exit since we are about to
+                # wait for it to collect its status.
+                echo "Signaling exit"
+                echo WAKEUP > $fifo
+                echo "Signaled"
                 # Do not actually call wait if we ran synchronously
                 if wait $pid; then
                     rc=0
@@ -137,6 +148,7 @@ function async_wait {
                     rc=$?
                 fi
                 cat ${DEST}/async/${name}.log
+                rm -f $fifo
             fi
             time_stop async_wait
             local start_time
