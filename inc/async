@@ -48,7 +48,7 @@ function async_log {
     command=$(iniget $inifile job command | tr '#' '-')
     message=$(echo "$message" | sed "s#%command#$command#g")
 
-    echo "[Async ${name}:${pid}]: $message"
+    echo "[$BASHPID Async ${name}:${pid}]: $message"
 }
 
 # Inner function that actually runs the requested task. We wrap it like this
@@ -57,7 +57,7 @@ function async_log {
 function async_inner {
     local name="$1"
     local rc
-    local fifo=${DEST}/async/${name}.fifo
+    local fifo="${DEST}/async/${name}.fifo"
     shift
     set -o xtrace
     if $* >${DEST}/async/${name}.log 2>&1; then
@@ -116,6 +116,24 @@ function async_runfunc {
     async_run $1 $*
 }
 
+# Dump some information to help debug a failed wait
+function async_wait_dump {
+    local failpid=$1
+
+    echo "=== Wait failure dump from $BASHPID ==="
+    echo "Processes:"
+    ps -f
+    echo "Waiting jobs:"
+    for name in $(ls ${DEST}/async/*.ini); do
+        echo "Job $name :"
+        cat "$name"
+    done
+    echo "Failed PID status:"
+    sudo cat /proc/$failpid/status
+    sudo cat /proc/$failpid/cmdline
+    echo "=== End wait failure dump ==="
+}
+
 # Wait for an async future to complete. May return immediately if already
 # complete, or of the future has already been waited on (avoid this). May
 # block until the future completes.
@@ -129,18 +147,18 @@ function async_wait {
     for name in $*; do
         running=$(ls ${DEST}/async/*.ini 2>/dev/null | wc -l)
         inifile="${DEST}/async/${name}.ini"
-        fifo=${DEST}/async/${name}.fifo
+        fifo="${DEST}/async/${name}.fifo"
 
         if pid=$(async_pidof "$name"); then
             async_log "$name" "Waiting for completion of %command" \
-                      "($running other jobs running)"
+                      "running on PID $pid ($running other jobs running)"
             time_start async_wait
             if [[ "$pid" != "self" ]]; then
                 # Signal the child to go ahead and exit since we are about to
                 # wait for it to collect its status.
-                echo "Signaling exit"
+                async_log "$name" "Signaling child to exit"
                 echo WAKEUP > $fifo
-                echo "Signaled"
+                async_log "$name" "Signaled"
                 # Do not actually call wait if we ran synchronously
                 if wait $pid; then
                     rc=0
@@ -161,6 +179,7 @@ function async_wait {
                       "$rc in $runtime seconds"
             rm -f $inifile
             if [ $rc -ne 0 ]; then
+                async_wait_dump $pid
                 echo Stopping async wait due to error: $*
                 break
             fi
