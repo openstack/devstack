@@ -91,8 +91,13 @@ CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 # Default to lioadm
 CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-lioadm}
 
-# EL and SUSE should only use lioadm, we continue to allow Ubuntu based
-# deployments to use tgtadm for specific jobs in the cinder-tempest-plugin
+# Bionic needs to default to tgtadm until support is dropped within devstack
+# as the rtslib-fb-targetctl service doesn't start after installing lioadm.
+if is_ubuntu && [[ "$DISTRO" == "bionic" ]]; then
+    CINDER_ISCSI_HELPER=tgtadm
+fi
+
+# EL and SUSE should only use lioadm
 if is_fedora || is_suse; then
     if [[ ${CINDER_ISCSI_HELPER} != "lioadm" ]]; then
         die "lioadm is the only valid Cinder target_helper config on this platform"
