@@ -91,12 +91,6 @@ CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 # Default to lioadm
 CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-lioadm}
 
-# Bionic needs to default to tgtadm until support is dropped within devstack
-# as the rtslib-fb-targetctl service doesn't start after installing lioadm.
-if is_ubuntu && [[ "$DISTRO" == "bionic" ]]; then
-    CINDER_ISCSI_HELPER=tgtadm
-fi
-
 # EL and SUSE should only use lioadm
 if is_fedora || is_suse; then
     if [[ ${CINDER_ISCSI_HELPER} != "lioadm" ]]; then

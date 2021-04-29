@@ -59,43 +59,6 @@ function fixup_keystone {
     fi
 }
 
-# Ubuntu Repositories
-#--------------------
-# Enable universe for bionic since it is missing when installing from ISO.
-function fixup_ubuntu {
-    if [[ "$DISTRO" != "bionic" ]]; then
-        return
-    fi
-
-    # This pulls in apt-add-repository
-    install_package "software-properties-common"
-
-    # Enable universe
-    sudo add-apt-repository -y universe
-
-    if [[ -f /etc/ci/mirror_info.sh ]] ; then
-        # If we are on a nodepool provided host and it has told us about
-        # where we can find local mirrors then use that mirror.
-        source /etc/ci/mirror_info.sh
-        sudo apt-add-repository -y "deb $NODEPOOL_UCA_MIRROR bionic-updates/ussuri main"
-    else
-        # Enable UCA:ussuri for updated versions of QEMU and libvirt
-        sudo add-apt-repository -y cloud-archive:ussuri
-    fi
-    REPOS_UPDATED=False
-    apt_get_update
-
-    # Since pip10, pip will refuse to uninstall files from packages
-    # that were created with distutils (rather than more modern
-    # setuptools).  This is because it technically doesn't have a
-    # manifest of what to remove.  However, in most cases, simply
-    # overwriting works.  So this hacks around those packages that
-    # have been dragged in by some other system dependency
-    sudo rm -rf /usr/lib/python3/dist-packages/httplib2-*.egg-info
-    sudo rm -rf /usr/lib/python3/dist-packages/pyasn1_modules-*.egg-info
-    sudo rm -rf /usr/lib/python3/dist-packages/PyYAML-*.egg-info
-}
-
 # Python Packages
 # ---------------
 
@@ -194,7 +157,6 @@ function fixup_ovn_centos {
 
 function fixup_all {
     fixup_keystone
-    fixup_ubuntu
     fixup_fedora
     fixup_suse
 }
