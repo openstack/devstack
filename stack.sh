@@ -1238,16 +1238,20 @@ fi
 # deployments.  This ensures the keys match across nova and cinder across all
 # hosts.
 FIXED_KEY=${FIXED_KEY:-bae3516cc1c0eb18b05440eba8012a4a880a2ee04d584a9c1579445e675b12defdc716ec}
-if is_service_enabled nova; then
-    iniset $NOVA_CONF key_manager fixed_key "$FIXED_KEY"
-    iniset $NOVA_CPU_CONF key_manager fixed_key "$FIXED_KEY"
-fi
-
 if is_service_enabled cinder; then
     iniset $CINDER_CONF key_manager fixed_key "$FIXED_KEY"
 fi
 
 async_wait configure_neutron_nova
+
+# NOTE(clarkb): This must come after async_wait configure_neutron_nova because
+# configure_neutron_nova modifies $NOVA_CONF and $NOVA_CPU_CONF as well. If
+# we don't wait then these two ini updates race either other and can result
+# in unexpected configs.
+if is_service_enabled nova; then
+    iniset $NOVA_CONF key_manager fixed_key "$FIXED_KEY"
+    iniset $NOVA_CPU_CONF key_manager fixed_key "$FIXED_KEY"
+fi
 
 # Launch the nova-api and wait for it to answer before continuing
 if is_service_enabled n-api; then
