@@ -24,17 +24,19 @@ def _get_report():
         # iterate over the /proc/%pid/status files manually
         try:
             s = open("%s/%d/status" % (psutil.PROCFS_PATH, proc.pid), 'r')
-        except EnvironmentError:
+            with s:
+                for line in s:
+                    result = LCK_SUMMARY_REGEX.search(line)
+                    if result:
+                        locked = int(result.group('locked'))
+                        if locked:
+                            mlock_users.append({'name': proc.name(),
+                                                'pid': proc.pid,
+                                                'locked': locked})
+        except OSError:
+            # pids can disappear, we're ok with that
             continue
-        with s:
-            for line in s:
-                result = LCK_SUMMARY_REGEX.search(line)
-                if result:
-                    locked = int(result.group('locked'))
-                    if locked:
-                        mlock_users.append({'name': proc.name(),
-                                            'pid': proc.pid,
-                                            'locked': locked})
+
 
     # produce a single line log message with per process mlock stats
     if mlock_users:
