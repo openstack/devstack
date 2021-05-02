@@ -227,7 +227,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-SUPPORTED_DISTROS="focal|f34|opensuse-15.2|opensuse-tumbleweed|rhel8"
+SUPPORTED_DISTROS="bullseye|focal|f34|opensuse-15.2|opensuse-tumbleweed|rhel8"
 
 if [[ ! ${DISTRO} =~ $SUPPORTED_DISTROS ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"

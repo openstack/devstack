@@ -25,6 +25,8 @@ if [[ -z "$MYSQL_SERVICE_NAME" ]]; then
         # provide a mysql.service symlink for backwards-compatibility, but
         # let's not rely on that.
         MYSQL_SERVICE_NAME=mariadb
+    elif [[ "$DISTRO" == "bullseye" ]]; then
+        MYSQL_SERVICE_NAME=mariadb
     fi
 fi
 
@@ -105,7 +107,7 @@ function configure_database_mysql {
     # In mariadb e.g. on Ubuntu socket plugin is used for authentication
     # as root so it works only as sudo. To restore old "mysql like" behaviour,
     # we need to change auth plugin for root user
-    if is_ubuntu && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]; then
+    if is_ubuntu && [[ "$DISTRO" != "bullseye" ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]; then
         sudo mysql $cmd_args -e "UPDATE mysql.user SET plugin='' WHERE user='$DATABASE_USER' AND host='localhost';"
         sudo mysql $cmd_args -e "FLUSH PRIVILEGES;"
     fi
