@@ -214,14 +214,11 @@ function configure_keystone {
         service_port=$KEYSTONE_SERVICE_PORT_INT
     fi
 
-    # Override the endpoints advertised by keystone (the public_endpoint and
-    # admin_endpoint) so that clients use the correct endpoint. By default, the
-    # keystone server uses the public_port and admin_port which isn't going to
-    # work when you want to use a different port (in the case of proxy), or you
-    # don't want the port (in the case of putting keystone on a path in
-    # apache).
+    # Override the endpoints advertised by keystone so that clients use the correct
+    # endpoint. By default, the keystone server uses the public_port which isn't
+    # going to work when you want to use a different port (in the case of proxy),
+    # or you don't want the port (in the case of putting keystone on a path in apache).
     iniset $KEYSTONE_CONF DEFAULT public_endpoint $KEYSTONE_SERVICE_URI
-    iniset $KEYSTONE_CONF DEFAULT admin_endpoint $KEYSTONE_SERVICE_URI
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" != "" ]]; then
         iniset $KEYSTONE_CONF token provider $KEYSTONE_TOKEN_FORMAT
