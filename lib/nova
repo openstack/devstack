@@ -159,6 +159,9 @@ NOVA_NOTIFICATION_FORMAT=${NOVA_NOTIFICATION_FORMAT:-unversioned}
 # image in devstack is CirrOS.
 NOVA_SHUTDOWN_TIMEOUT=${NOVA_SHUTDOWN_TIMEOUT:-0}
 
+# Whether to use Keystone unified limits instead of legacy quota limits.
+NOVA_USE_UNIFIED_LIMITS=$(trueorfalse False NOVA_USE_UNIFIED_LIMITS)
+
 # Functions
 # ---------
 
@@ -383,6 +386,13 @@ function create_nova_accounts {
             "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
             "http://$SERVICE_HOST:$S3_SERVICE_PORT" \
             "http://$SERVICE_HOST:$S3_SERVICE_PORT"
+    fi
+
+    # Unified limits
+    if is_service_enabled n-api; then
+        if [[ "$NOVA_USE_UNIFIED_LIMITS" = True ]]; then
+            configure_nova_unified_limits
+        fi
     fi
 }
 
@@ -717,6 +727,62 @@ function configure_console_proxies {
         iniset $conf serial_console serialproxy_host "$NOVA_SERVICE_LISTEN_ADDRESS"
         iniset $conf serial_console serialproxy_port $((6082 + offset))
     fi
+}
+
+function configure_nova_unified_limits {
+    # Default limits. Mirror the config-based default values.
+    # Note: disk quota is new in nova as of unified limits.
+    bash -c "unset OS_USERNAME OS_TENANT_NAME OS_PROJECT_NAME;
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 10 --region $REGION_NAME \
+                    servers; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 20 --region $REGION_NAME \
+                    class:VCPU; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit $((50 * 1024)) --region $REGION_NAME \
+                    class:MEMORY_MB; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 20 --region $REGION_NAME \
+                    class:DISK_GB; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 128 --region $REGION_NAME \
+                    server_metadata_items; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 5 --region $REGION_NAME \
+                    server_injected_files; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 10240 --region $REGION_NAME \
+                    server_injected_file_content_bytes; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 255 --region $REGION_NAME \
+                    server_injected_file_path_bytes; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 100 --region $REGION_NAME \
+                    server_key_pairs; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 10 --region $REGION_NAME \
+                    server_groups; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                    --service nova --default-limit 10 --region $REGION_NAME \
+                    server_group_members"
+
+    # Tell nova to use these limits
+    iniset $NOVA_CONF quota driver "nova.quota.UnifiedLimitsDriver"
+
+    # Configure oslo_limit so it can talk to keystone
+    iniset $NOVA_CONF oslo_limit user_domain_name $SERVICE_DOMAIN_NAME
+    iniset $NOVA_CONF oslo_limit password $SERVICE_PASSWORD
+    iniset $NOVA_CONF oslo_limit username nova
+    iniset $NOVA_CONF oslo_limit auth_type password
+    iniset $NOVA_CONF oslo_limit auth_url $KEYSTONE_SERVICE_URI
+    iniset $NOVA_CONF oslo_limit system_scope "'all'"
+    iniset $NOVA_CONF oslo_limit endpoint_id \
+           $(openstack endpoint list --service nova -f value -c ID)
+
+    # Allow the nova service user to read quotas
+    openstack role add --user nova --user-domain Default --system all \
+              reader
 }
 
 function init_nova_service_user_conf {
