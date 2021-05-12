@@ -286,9 +286,6 @@ function configure_cinder {
                 default_name=$be_name
             fi
             enabled_backends+=$be_name,
-
-            iniset $CINDER_CONF $be_name volume_clear $CINDER_VOLUME_CLEAR
-
         done
         iniset $CINDER_CONF DEFAULT enabled_backends ${enabled_backends%,*}
         if [[ -n "$default_name" ]]; then
