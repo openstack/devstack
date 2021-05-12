@@ -8,14 +8,14 @@ _XTRACE_NEUTRON_ML2=$(set +o | grep xtrace)
 set +o xtrace
 
 # Default openvswitch L2 agent
-Q_AGENT=${Q_AGENT:-openvswitch}
+Q_AGENT=${Q_AGENT:-ovn}
 if [ -f $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent ]; then
     source $TOP_DIR/lib/neutron_plugins/${Q_AGENT}_agent
 fi
 
 # Enable this to simply and quickly enable tunneling with ML2.
 # Select either 'gre', 'vxlan', or 'gre,vxlan'
-Q_ML2_TENANT_NETWORK_TYPE=${Q_ML2_TENANT_NETWORK_TYPE:-"vxlan"}
+Q_ML2_TENANT_NETWORK_TYPE=${Q_ML2_TENANT_NETWORK_TYPE:-"geneve"}
 # This has to be set here since the agent will set this in the config file
 if [[ "$Q_ML2_TENANT_NETWORK_TYPE" == "gre" || "$Q_ML2_TENANT_NETWORK_TYPE" == "vxlan" ]]; then
     Q_TUNNEL_TYPES=$Q_ML2_TENANT_NETWORK_TYPE
@@ -24,7 +24,7 @@ elif [[ "$ENABLE_TENANT_TUNNELS" == "True" ]]; then
 fi
 
 # List of MechanismDrivers to load
-Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_ML2_PLUGIN_MECHANISM_DRIVERS:-openvswitch,linuxbridge}
+Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_ML2_PLUGIN_MECHANISM_DRIVERS:-ovn}
 # Default GRE TypeDriver options
 Q_ML2_PLUGIN_GRE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GRE_TYPE_OPTIONS:-tunnel_id_ranges=$TENANT_TUNNEL_RANGES}
 # Default VXLAN TypeDriver options
