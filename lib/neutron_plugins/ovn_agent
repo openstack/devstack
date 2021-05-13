@@ -21,6 +21,9 @@
 source ${TOP_DIR}/lib/neutron_plugins/ovs_base
 source ${TOP_DIR}/lib/neutron_plugins/openvswitch_agent
 
+# Load devstack ovs compliation and loading functions
+source ${TOP_DIR}/lib/neutron_plugins/ovs_source
+
 # Defaults
 # --------
 
@@ -395,9 +398,6 @@ function install_ovn {
     sudo ln -s $OVS_RUNDIR $OVN_RUNDIR
 
     if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
-        # Load devstack ovs base functions
-        source $NEUTRON_DIR/devstack/lib/ovs
-
         # If OVS is already installed, remove it, because we're about to
         # re-install it from source.
         for package in openvswitch openvswitch-switch openvswitch-common; do
