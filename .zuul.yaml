@@ -317,6 +317,7 @@
 
 - job:
     name: devstack-unit-tests
+    nodeset: ubuntu-xenial
     description: |
       Runs unit tests on devstack project.
 
@@ -343,7 +344,6 @@
               - ^.*\.rst$
               - ^doc/.*$
         - neutron-grenade:
-            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
