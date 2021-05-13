@@ -587,6 +587,8 @@ function install_devstack_tools {
     # intentionally old to ensure devstack-gate has control
     local dstools_version=${DSTOOLS_VERSION:-0.1.2}
     install_python3
+    # note(elod.illes): preinstall pbr to avoid SNI issue
+    sudo pip3 install pbr==3.1.1
     sudo pip3 install -U devstack-tools==${dstools_version}
 }
 
