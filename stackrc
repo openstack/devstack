@@ -72,8 +72,10 @@ if ! isset ENABLED_SERVICES ; then
     ENABLED_SERVICES+=,g-api
     # Cinder
     ENABLED_SERVICES+=,c-sch,c-api,c-vol
+    # OVN
+    ENABLED_SERVICES+=,ovn-controller,ovn-northd,ovs-vswitchd,ovsdb-server
     # Neutron
-    ENABLED_SERVICES+=,q-svc,q-dhcp,q-meta,q-agt,q-l3
+    ENABLED_SERVICES+=,q-svc,q-ovn-metadata-agent
     # Dashboard
     ENABLED_SERVICES+=,horizon
     # Additional services

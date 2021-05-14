@@ -21,10 +21,6 @@
 source ${TOP_DIR}/lib/neutron_plugins/ovs_base
 source ${TOP_DIR}/lib/neutron_plugins/openvswitch_agent
 
-# Load devstack ovs base functions
-source $NEUTRON_DIR/devstack/lib/ovs
-
-
 # Defaults
 # --------
 
@@ -88,11 +84,17 @@ OVN_INSTALL_OVS_PYTHON_MODULE=$(trueorfalse False OVN_INSTALL_OVS_PYTHON_MODULE)
 # configure the MTU DHCP option.
 OVN_GENEVE_OVERHEAD=${OVN_GENEVE_OVERHEAD:-38}
 
-# The log level of the OVN databases (north and south)
+# The log level of the OVN databases (north and south).
+# Supported log levels are: off, emer, err, warn, info or dbg.
+# More information about log levels can be found at
+# http://www.openvswitch.org/support/dist-docs/ovs-appctl.8.txt
 OVN_DBS_LOG_LEVEL=${OVN_DBS_LOG_LEVEL:-info}
 
 OVN_META_CONF=$NEUTRON_CONF_DIR/neutron_ovn_metadata_agent.ini
 OVN_META_DATA_HOST=${OVN_META_DATA_HOST:-$(ipv6_unquote $SERVICE_HOST)}
+
+# If True (default) the node will be considered a gateway node.
+ENABLE_CHASSIS_AS_GW=$(trueorfalse True ENABLE_CHASSIS_AS_GW)
 
 export OVSDB_SERVER_LOCAL_HOST=$SERVICE_LOCAL_HOST
 if [[ "$SERVICE_IP_VERSION" == 6 ]]; then
@@ -171,6 +173,9 @@ function wait_for_sock_file {
 }
 
 function use_new_ovn_repository {
+    if [[ "$OVN_BUILD_FROM_SOURCE" == "False" ]]; then
+        return 0
+    fi
     if [ -z "$is_new_ovn" ]; then
         local ovs_repo_dir=$DEST/$OVS_REPO_NAME
         if [ ! -d $ovs_repo_dir ]; then
@@ -390,6 +395,9 @@ function install_ovn {
     sudo ln -s $OVS_RUNDIR $OVN_RUNDIR
 
     if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+        # Load devstack ovs base functions
+        source $NEUTRON_DIR/devstack/lib/ovs
+
         # If OVS is already installed, remove it, because we're about to
         # re-install it from source.
         for package in openvswitch openvswitch-switch openvswitch-common; do
