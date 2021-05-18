@@ -585,16 +585,6 @@
     timeout: 9000
 
 - job:
-    name: devstack-platform-bionic
-    parent: tempest-full-py3
-    description: Ubuntu Bionic platform test
-    nodeset: openstack-single-node-bionic
-    voting: false
-    vars:
-      devstack_localrc:
-        CINDER_ISCSI_HELPER: tgtadm
-
-- job:
     name: devstack-async
     parent: tempest-full-py3
     description: Async mode enabled
@@ -695,7 +685,6 @@
         - devstack-ipv6
         - devstack-platform-fedora-latest
         - devstack-platform-centos-8
-        - devstack-platform-bionic
         - devstack-async
         - devstack-multinode
         - devstack-unit-tests
