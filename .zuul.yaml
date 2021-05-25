@@ -670,6 +670,7 @@
 
 - job:
     name: devstack-unit-tests
+    nodeset: ubuntu-focal
     description: |
       Runs unit tests on devstack project.
 
