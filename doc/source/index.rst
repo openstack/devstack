@@ -40,7 +40,7 @@ Start with a clean and minimal install of a Linux system. DevStack
 attempts to support the two latest LTS releases of Ubuntu, the
 latest/current Fedora version, CentOS/RHEL 8 and OpenSUSE.
 
-If you do not have a preference, Ubuntu 18.04 (Bionic Beaver) is the
+If you do not have a preference, Ubuntu 20.04 (Focal Fossa) is the
 most tested, and will probably go the smoothest.
 
 Add Stack User (optional)
