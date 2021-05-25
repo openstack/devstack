@@ -592,6 +592,7 @@
 
 - job:
     name: devstack-unit-tests
+    nodeset: ubuntu-bionic
     description: |
       Runs unit tests on devstack project.
 
