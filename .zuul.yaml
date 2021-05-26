@@ -604,6 +604,17 @@
         /opt/stack/async: logs
 
 - job:
+    name: devstack-no-tls-proxy
+    parent: tempest-full-py3
+    description: |
+      Tempest job with tls-proxy off.
+
+      Some gates run devstack like this and it follows different code paths.
+    vars:
+      devstack_services:
+        tls-proxy: false
+
+- job:
     name: devstack-platform-fedora-latest
     parent: tempest-full-py3
     description: Fedora latest platform test
@@ -823,3 +834,7 @@
               - ^.*\.rst$
               - ^doc/.*$
         - devstack-platform-fedora-latest-virt-preview
+        - devstack-no-tls-proxy
+    periodic:
+      jobs:
+        - devstack-no-tls-proxy
