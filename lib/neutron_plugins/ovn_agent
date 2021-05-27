@@ -95,6 +95,7 @@ OVN_META_DATA_HOST=${OVN_META_DATA_HOST:-$(ipv6_unquote $SERVICE_HOST)}
 
 # If True (default) the node will be considered a gateway node.
 ENABLE_CHASSIS_AS_GW=$(trueorfalse True ENABLE_CHASSIS_AS_GW)
+OVN_L3_CREATE_PUBLIC_NETWORK=$(trueorfalse True OVN_L3_CREATE_PUBLIC_NETWORK)
 
 export OVSDB_SERVER_LOCAL_HOST=$SERVICE_LOCAL_HOST
 if [[ "$SERVICE_IP_VERSION" == 6 ]]; then

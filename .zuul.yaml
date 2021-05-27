@@ -468,7 +468,6 @@
         SWIFT_HASH: 1234123412341234
         DEBUG_LIBVIRT_COREDUMPS: true
         NOVA_VNC_ENABLED: true
-        OVN_L3_CREATE_PUBLIC_NETWORK: true
         OVN_DBS_LOG_LEVEL: dbg
       devstack_local_conf:
         post-config:
