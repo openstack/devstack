@@ -6,4 +6,4 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 source $TOP/functions
 source $TOP/tests/unittest.sh
 
-python ./roles/write-devstack-local-conf/library/test.py
+${PYTHON} $TOP/roles/write-devstack-local-conf/library/test.py

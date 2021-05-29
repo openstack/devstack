@@ -17,6 +17,8 @@ ERROR=0
 PASS=0
 FAILED_FUNCS=""
 
+export PYTHON=$(which python3 2>/dev/null)
+
 # pass a test, printing out MSG
 #  usage: passed message
 function passed {
