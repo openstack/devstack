@@ -1,0 +1,215 @@
+#!/bin/bash
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+# Defaults
+# --------
+
+# Set variables for building OVS from source
+OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
+OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
+OVS_REPO_NAME=${OVS_REPO_NAME:-ovs}
+OVS_BRANCH=${OVS_BRANCH:-0047ca3a0290f1ef954f2c76b31477cf4b9755f5}
+
+# Functions
+
+# load_module() - Load module using modprobe module given by argument and dies
+#                 on failure
+#               - fatal argument is optional and says whether function should
+#                 exit if module can't be loaded
+function load_module {
+    local module=$1
+    local fatal=$2
+
+    if [ "$(trueorfalse True fatal)" == "True" ]; then
+        sudo modprobe $module || (dmesg && die $LINENO "FAILED TO LOAD $module")
+    else
+        sudo modprobe $module || (echo "FAILED TO LOAD $module" && dmesg)
+    fi
+}
+
+# prepare_for_compilation() - Fetch ovs git repository and install packages needed for
+#                             compilation.
+function prepare_for_ovs_compilation {
+    local build_modules=${1:-False}
+    OVS_DIR=$DEST/$OVS_REPO_NAME
+
+    if [ ! -d $OVS_DIR ] ; then
+        # We can't use git_clone here because we want to ignore ERROR_ON_CLONE
+        git_timed clone $OVS_REPO $OVS_DIR
+        cd $OVS_DIR
+        git checkout $OVS_BRANCH
+    else
+        # Even though the directory already exists, call git_clone to update it
+        # if needed based on the RECLONE option
+        git_clone $OVS_REPO $OVS_DIR $OVS_BRANCH
+        cd $OVS_DIR
+    fi
+
+    # TODO: Can you create package list files like you can inside devstack?
+    install_package autoconf automake libtool gcc patch make
+
+    # If build_modules is False, we don't need to install the kernel-*
+    # packages. Just return.
+    if [[ "$build_modules" == "False" ]]; then
+        return
+    fi
+
+    KERNEL_VERSION=`uname -r`
+    if is_fedora ; then
+        # is_fedora covers Fedora, RHEL, CentOS, etc...
+        if [[ "$os_VENDOR" == "Fedora" ]]; then
+            install_package elfutils-libelf-devel
+            KERNEL_VERSION=`echo $KERNEL_VERSION | cut --delimiter='-' --field 1`
+        elif [[ ${KERNEL_VERSION:0:2} != "3." ]]; then
+            # dash is illegal character in rpm version so replace
+            # them with underscore like it is done in the kernel
+            # https://github.com/torvalds/linux/blob/master/scripts/package/mkspec#L25
+            # but only for latest series of the kernel, not 3.x
+
+            KERNEL_VERSION=`echo $KERNEL_VERSION | tr - _`
+        fi
+
+        echo NOTE: if kernel-devel-$KERNEL_VERSION or kernel-headers-$KERNEL_VERSION installation
+        echo failed, please, provide a repository with the package, or yum update / reboot
+        echo your machine to get the latest kernel.
+
+        install_package kernel-devel-$KERNEL_VERSION
+        install_package kernel-headers-$KERNEL_VERSION
+
+    elif is_ubuntu ; then
+        install_package linux-headers-$KERNEL_VERSION
+    fi
+}
+
+# load_ovs_kernel_modules() - load openvswitch kernel module
+function load_ovs_kernel_modules {
+    load_module openvswitch
+    load_module vport-geneve False
+    dmesg | tail
+}
+
+# reload_ovs_kernel_modules() - reload openvswitch kernel module
+function reload_ovs_kernel_modules {
+    set +e
+    ovs_system=$(sudo ovs-dpctl dump-dps | grep ovs-system)
+    if [ -n "$ovs_system" ]; then
+        sudo ovs-dpctl del-dp ovs-system
+    fi
+    set -e
+    sudo modprobe -r vport_geneve
+    sudo modprobe -r openvswitch
+    load_ovs_kernel_modules
+}
+
+# compile_ovs() - Compile OVS from source and load needed modules.
+#                 Accepts two parameters:
+#                   - first one is False by default and means that modules are not built and installed.
+#                   - second optional parameter defines prefix for ovs compilation
+#                   - third optional parameter defines localstatedir for ovs single machine runtime
+#                 Env variables OVS_REPO_NAME, OVS_REPO and OVS_BRANCH must be set
+function compile_ovs {
+    local _pwd=$PWD
+    local build_modules=${1:-False}
+    local prefix=$2
+    local localstatedir=$3
+
+    if [ -n "$prefix" ]; then
+        prefix="--prefix=$prefix"
+    fi
+
+    if [ -n "$localstatedir" ]; then
+        localstatedir="--localstatedir=$localstatedir"
+    fi
+
+    prepare_for_ovs_compilation $build_modules
+
+    KERNEL_VERSION=$(uname -r)
+    major_version=$(echo "${KERNEL_VERSION}" | cut -d '.' -f1)
+    patch_level=$(echo "${KERNEL_VERSION}" | cut -d '.' -f2)
+    if [ "${major_version}" -gt 5 ] || [ "${major_version}" == 5 ] && [ "${patch_level}" -gt 5 ]; then
+        echo "NOTE: KERNEL VERSION is ${KERNEL_VERSION} and OVS doesn't support compiling "
+        echo "Kernel module for version higher than 5.5. Skipping module compilation..."
+        build_modules="False"
+    fi
+
+    if [ ! -f configure ] ; then
+        ./boot.sh
+    fi
+    if [ ! -f config.status ] || [ configure -nt config.status ] ; then
+        if [[ "$build_modules" == "True" ]]; then
+            ./configure $prefix $localstatedir --with-linux=/lib/modules/$(uname -r)/build
+        else
+            ./configure $prefix $localstatedir
+        fi
+    fi
+    make -j$(($(nproc) + 1))
+    sudo make install
+    if [[ "$build_modules" == "True" ]]; then
+        sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
+        reload_ovs_kernel_modules
+    else
+        load_ovs_kernel_modules
+    fi
+
+    cd $_pwd
+}
+
+# action_service - call an action over openvswitch service
+#                  Accepts one parameter that can be either
+#                  'start', 'restart' and 'stop'.
+function action_openvswitch {
+    local action=$1
+
+    if is_ubuntu; then
+        ${action}_service openvswitch-switch
+    elif is_fedora; then
+        ${action}_service openvswitch
+    elif is_suse; then
+        if [[ $DISTRO == "sle12" ]] && [[ $os_RELEASE -lt 12.2 ]]; then
+            ${action}_service openvswitch-switch
+        else
+            ${action}_service openvswitch
+        fi
+    fi
+}
+
+# start_new_ovs() - removes old ovs database, creates a new one and starts ovs
+function start_new_ovs {
+    sudo rm -f /etc/openvswitch/conf.db /etc/openvswitch/.conf.db~lock~
+    sudo /usr/share/openvswitch/scripts/ovs-ctl start
+}
+
+# stop_new_ovs() - stops ovs
+function stop_new_ovs {
+    local ovs_ctl='/usr/share/openvswitch/scripts/ovs-ctl'
+
+    if [ -x $ovs_ctl ] ; then
+        sudo $ovs_ctl stop
+    fi
+}
+
+# remove_ovs_packages() - removes old ovs packages from the system
+function remove_ovs_packages {
+    for package in openvswitch openvswitch-switch openvswitch-common; do
+        if is_package_installed $package; then
+            uninstall_package $package
+        fi
+    done
+}
+
+
+# load_conntrack_gre_module() - loads nf_conntrack_proto_gre kernel module
+function load_conntrack_gre_module {
+    sudo modprobe nf_conntrack_proto_gre
+}
