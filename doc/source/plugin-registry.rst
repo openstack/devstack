@@ -24,6 +24,8 @@ official OpenStack projects.
 ======================================== ===
 Plugin Name                              URL
 ======================================== ===
+inspur/venus                             `https://opendev.org/inspur/venus <https://opendev.org/inspur/venus>`__
+inspur/venus-dashboard                   `https://opendev.org/inspur/venus-dashboard <https://opendev.org/inspur/venus-dashboard>`__
 openstack/aodh                           `https://opendev.org/openstack/aodh <https://opendev.org/openstack/aodh>`__
 openstack/barbican                       `https://opendev.org/openstack/barbican <https://opendev.org/openstack/barbican>`__
 openstack/blazar                         `https://opendev.org/openstack/blazar <https://opendev.org/openstack/blazar>`__
@@ -39,21 +41,18 @@ openstack/devstack-plugin-container      `https://opendev.org/openstack/devstack
 openstack/devstack-plugin-kafka          `https://opendev.org/openstack/devstack-plugin-kafka <https://opendev.org/openstack/devstack-plugin-kafka>`__
 openstack/devstack-plugin-nfs            `https://opendev.org/openstack/devstack-plugin-nfs <https://opendev.org/openstack/devstack-plugin-nfs>`__
 openstack/devstack-plugin-open-cas       `https://opendev.org/openstack/devstack-plugin-open-cas <https://opendev.org/openstack/devstack-plugin-open-cas>`__
-openstack/devstack-plugin-pika           `https://opendev.org/openstack/devstack-plugin-pika <https://opendev.org/openstack/devstack-plugin-pika>`__
-openstack/devstack-plugin-zmq            `https://opendev.org/openstack/devstack-plugin-zmq <https://opendev.org/openstack/devstack-plugin-zmq>`__
 openstack/ec2-api                        `https://opendev.org/openstack/ec2-api <https://opendev.org/openstack/ec2-api>`__
 openstack/freezer                        `https://opendev.org/openstack/freezer <https://opendev.org/openstack/freezer>`__
 openstack/freezer-api                    `https://opendev.org/openstack/freezer-api <https://opendev.org/openstack/freezer-api>`__
 openstack/freezer-tempest-plugin         `https://opendev.org/openstack/freezer-tempest-plugin <https://opendev.org/openstack/freezer-tempest-plugin>`__
 openstack/freezer-web-ui                 `https://opendev.org/openstack/freezer-web-ui <https://opendev.org/openstack/freezer-web-ui>`__
+openstack/glance                         `https://opendev.org/openstack/glance <https://opendev.org/openstack/glance>`__
 openstack/heat                           `https://opendev.org/openstack/heat <https://opendev.org/openstack/heat>`__
 openstack/heat-dashboard                 `https://opendev.org/openstack/heat-dashboard <https://opendev.org/openstack/heat-dashboard>`__
 openstack/ironic                         `https://opendev.org/openstack/ironic <https://opendev.org/openstack/ironic>`__
 openstack/ironic-inspector               `https://opendev.org/openstack/ironic-inspector <https://opendev.org/openstack/ironic-inspector>`__
 openstack/ironic-prometheus-exporter     `https://opendev.org/openstack/ironic-prometheus-exporter <https://opendev.org/openstack/ironic-prometheus-exporter>`__
 openstack/ironic-ui                      `https://opendev.org/openstack/ironic-ui <https://opendev.org/openstack/ironic-ui>`__
-openstack/karbor                         `https://opendev.org/openstack/karbor <https://opendev.org/openstack/karbor>`__
-openstack/karbor-dashboard               `https://opendev.org/openstack/karbor-dashboard <https://opendev.org/openstack/karbor-dashboard>`__
 openstack/keystone                       `https://opendev.org/openstack/keystone <https://opendev.org/openstack/keystone>`__
 openstack/kuryr-kubernetes               `https://opendev.org/openstack/kuryr-kubernetes <https://opendev.org/openstack/kuryr-kubernetes>`__
 openstack/kuryr-libnetwork               `https://opendev.org/openstack/kuryr-libnetwork <https://opendev.org/openstack/kuryr-libnetwork>`__
@@ -65,21 +64,15 @@ openstack/manila-tempest-plugin          `https://opendev.org/openstack/manila-t
 openstack/manila-ui                      `https://opendev.org/openstack/manila-ui <https://opendev.org/openstack/manila-ui>`__
 openstack/masakari                       `https://opendev.org/openstack/masakari <https://opendev.org/openstack/masakari>`__
 openstack/mistral                        `https://opendev.org/openstack/mistral <https://opendev.org/openstack/mistral>`__
-openstack/monasca-analytics              `https://opendev.org/openstack/monasca-analytics <https://opendev.org/openstack/monasca-analytics>`__
 openstack/monasca-api                    `https://opendev.org/openstack/monasca-api <https://opendev.org/openstack/monasca-api>`__
-openstack/monasca-ceilometer             `https://opendev.org/openstack/monasca-ceilometer <https://opendev.org/openstack/monasca-ceilometer>`__
 openstack/monasca-events-api             `https://opendev.org/openstack/monasca-events-api <https://opendev.org/openstack/monasca-events-api>`__
-openstack/monasca-log-api                `https://opendev.org/openstack/monasca-log-api <https://opendev.org/openstack/monasca-log-api>`__
 openstack/monasca-tempest-plugin         `https://opendev.org/openstack/monasca-tempest-plugin <https://opendev.org/openstack/monasca-tempest-plugin>`__
-openstack/monasca-transform              `https://opendev.org/openstack/monasca-transform <https://opendev.org/openstack/monasca-transform>`__
 openstack/murano                         `https://opendev.org/openstack/murano <https://opendev.org/openstack/murano>`__
 openstack/networking-bagpipe             `https://opendev.org/openstack/networking-bagpipe <https://opendev.org/openstack/networking-bagpipe>`__
 openstack/networking-baremetal           `https://opendev.org/openstack/networking-baremetal <https://opendev.org/openstack/networking-baremetal>`__
 openstack/networking-bgpvpn              `https://opendev.org/openstack/networking-bgpvpn <https://opendev.org/openstack/networking-bgpvpn>`__
 openstack/networking-generic-switch      `https://opendev.org/openstack/networking-generic-switch <https://opendev.org/openstack/networking-generic-switch>`__
 openstack/networking-hyperv              `https://opendev.org/openstack/networking-hyperv <https://opendev.org/openstack/networking-hyperv>`__
-openstack/networking-l2gw                `https://opendev.org/openstack/networking-l2gw <https://opendev.org/openstack/networking-l2gw>`__
-openstack/networking-midonet             `https://opendev.org/openstack/networking-midonet <https://opendev.org/openstack/networking-midonet>`__
 openstack/networking-odl                 `https://opendev.org/openstack/networking-odl <https://opendev.org/openstack/networking-odl>`__
 openstack/networking-powervm             `https://opendev.org/openstack/networking-powervm <https://opendev.org/openstack/networking-powervm>`__
 openstack/networking-sfc                 `https://opendev.org/openstack/networking-sfc <https://opendev.org/openstack/networking-sfc>`__
@@ -93,19 +86,13 @@ openstack/octavia                        `https://opendev.org/openstack/octavia 
 openstack/octavia-dashboard              `https://opendev.org/openstack/octavia-dashboard <https://opendev.org/openstack/octavia-dashboard>`__
 openstack/octavia-tempest-plugin         `https://opendev.org/openstack/octavia-tempest-plugin <https://opendev.org/openstack/octavia-tempest-plugin>`__
 openstack/openstacksdk                   `https://opendev.org/openstack/openstacksdk <https://opendev.org/openstack/openstacksdk>`__
-openstack/os-loganalyze                  `https://opendev.org/openstack/os-loganalyze <https://opendev.org/openstack/os-loganalyze>`__
 openstack/osprofiler                     `https://opendev.org/openstack/osprofiler <https://opendev.org/openstack/osprofiler>`__
 openstack/oswin-tempest-plugin           `https://opendev.org/openstack/oswin-tempest-plugin <https://opendev.org/openstack/oswin-tempest-plugin>`__
 openstack/ovn-octavia-provider           `https://opendev.org/openstack/ovn-octavia-provider <https://opendev.org/openstack/ovn-octavia-provider>`__
-openstack/panko                          `https://opendev.org/openstack/panko <https://opendev.org/openstack/panko>`__
 openstack/patrole                        `https://opendev.org/openstack/patrole <https://opendev.org/openstack/patrole>`__
-openstack/qinling                        `https://opendev.org/openstack/qinling <https://opendev.org/openstack/qinling>`__
-openstack/qinling-dashboard              `https://opendev.org/openstack/qinling-dashboard <https://opendev.org/openstack/qinling-dashboard>`__
 openstack/rally-openstack                `https://opendev.org/openstack/rally-openstack <https://opendev.org/openstack/rally-openstack>`__
 openstack/sahara                         `https://opendev.org/openstack/sahara <https://opendev.org/openstack/sahara>`__
 openstack/sahara-dashboard               `https://opendev.org/openstack/sahara-dashboard <https://opendev.org/openstack/sahara-dashboard>`__
-openstack/searchlight                    `https://opendev.org/openstack/searchlight <https://opendev.org/openstack/searchlight>`__
-openstack/searchlight-ui                 `https://opendev.org/openstack/searchlight-ui <https://opendev.org/openstack/searchlight-ui>`__
 openstack/senlin                         `https://opendev.org/openstack/senlin <https://opendev.org/openstack/senlin>`__
 openstack/shade                          `https://opendev.org/openstack/shade <https://opendev.org/openstack/shade>`__
 openstack/solum                          `https://opendev.org/openstack/solum <https://opendev.org/openstack/solum>`__
@@ -143,6 +130,7 @@ x/devstack-plugin-glusterfs              `https://opendev.org/x/devstack-plugin-
 x/devstack-plugin-hdfs                   `https://opendev.org/x/devstack-plugin-hdfs <https://opendev.org/x/devstack-plugin-hdfs>`__
 x/devstack-plugin-libvirt-qemu           `https://opendev.org/x/devstack-plugin-libvirt-qemu <https://opendev.org/x/devstack-plugin-libvirt-qemu>`__
 x/devstack-plugin-mariadb                `https://opendev.org/x/devstack-plugin-mariadb <https://opendev.org/x/devstack-plugin-mariadb>`__
+x/devstack-plugin-tobiko                 `https://opendev.org/x/devstack-plugin-tobiko <https://opendev.org/x/devstack-plugin-tobiko>`__
 x/devstack-plugin-vmax                   `https://opendev.org/x/devstack-plugin-vmax <https://opendev.org/x/devstack-plugin-vmax>`__
 x/drbd-devstack                          `https://opendev.org/x/drbd-devstack <https://opendev.org/x/drbd-devstack>`__
 x/fenix                                  `https://opendev.org/x/fenix <https://opendev.org/x/fenix>`__
@@ -169,6 +157,7 @@ x/networking-fortinet                    `https://opendev.org/x/networking-forti
 x/networking-hpe                         `https://opendev.org/x/networking-hpe <https://opendev.org/x/networking-hpe>`__
 x/networking-huawei                      `https://opendev.org/x/networking-huawei <https://opendev.org/x/networking-huawei>`__
 x/networking-infoblox                    `https://opendev.org/x/networking-infoblox <https://opendev.org/x/networking-infoblox>`__
+x/networking-l2gw                        `https://opendev.org/x/networking-l2gw <https://opendev.org/x/networking-l2gw>`__
 x/networking-lagopus                     `https://opendev.org/x/networking-lagopus <https://opendev.org/x/networking-lagopus>`__
 x/networking-mlnx                        `https://opendev.org/x/networking-mlnx <https://opendev.org/x/networking-mlnx>`__
 x/networking-nec                         `https://opendev.org/x/networking-nec <https://opendev.org/x/networking-nec>`__
@@ -193,7 +182,6 @@ x/stackube                               `https://opendev.org/x/stackube <https:
 x/tap-as-a-service                       `https://opendev.org/x/tap-as-a-service <https://opendev.org/x/tap-as-a-service>`__
 x/tap-as-a-service-dashboard             `https://opendev.org/x/tap-as-a-service-dashboard <https://opendev.org/x/tap-as-a-service-dashboard>`__
 x/tatu                                   `https://opendev.org/x/tatu <https://opendev.org/x/tatu>`__
-x/tobiko                                 `https://opendev.org/x/tobiko <https://opendev.org/x/tobiko>`__
 x/trio2o                                 `https://opendev.org/x/trio2o <https://opendev.org/x/trio2o>`__
 x/valet                                  `https://opendev.org/x/valet <https://opendev.org/x/valet>`__
 x/vmware-nsx                             `https://opendev.org/x/vmware-nsx <https://opendev.org/x/vmware-nsx>`__
