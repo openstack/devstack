@@ -1,10 +1,3 @@
-- pragma:
-   # NOTE(gtema): this is required for the changes in SDK feature/r1 branch to
-   # be using devstack
-   # TODO(gtema): delete this once r1 branch is merged into master
-    implied-branches:
-      - feature/r1
-
 - nodeset:
     name: openstack-single-node
     nodes:
