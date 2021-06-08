@@ -343,8 +343,8 @@ function _neutron_configure_router_v4 {
     # Configure the external network as the default router gateway
     openstack --os-cloud devstack-admin --os-region "$REGION_NAME" router set --external-gateway $EXT_NET_ID $ROUTER_ID
 
-    # This logic is specific to using the l3-agent for layer 3
-    if is_service_enabled q-l3 || is_service_enabled neutron-l3;  then
+    # This logic is specific to using OVN or the l3-agent for layer 3
+    if ([[ $Q_AGENT == "ovn" ]] && [[ "$OVN_L3_CREATE_PUBLIC_NETWORK" == "True" ]] && is_service_enabled q-svc neutron-server) || is_service_enabled q-l3 neutron-l3; then
         # Configure and enable public bridge
         local ext_gw_interface="none"
         if is_neutron_ovs_base_plugin; then
@@ -393,7 +393,7 @@ function _neutron_configure_router_v6 {
     fi
 
     # This logic is specific to using OVN or the l3-agent for layer 3
-    if ([[ $Q_AGENT == "ovn" ]] && is_service_enabled q-svc neutron-server) || is_service_enabled q-l3 neutron-l3; then
+    if ([[ $Q_AGENT == "ovn" ]] && [[ "$OVN_L3_CREATE_PUBLIC_NETWORK" == "True" ]] && is_service_enabled q-svc neutron-server) || is_service_enabled q-l3 neutron-l3; then
         # if the Linux host considers itself to be a router then it will
         # ignore all router advertisements
         # Ensure IPv6 RAs are accepted on interfaces with a default route.
