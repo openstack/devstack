@@ -1,0 +1,4 @@
+- name: Verify the ipv6-only deployments
+  become: true
+  become_user: stack
+  shell: "{{ devstack_base_dir }}/devstack/tools/verify-ipv6-only-deployments.sh"
