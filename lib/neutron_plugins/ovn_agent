@@ -262,48 +262,10 @@ function clone_repository {
     ERROR_ON_CLONE=false git_clone $repo $dir $branch
 }
 
-function get_ext_gw_interface {
-    # Get ext_gw_interface depending on value of Q_USE_PUBLIC_VETH
-    # This function is copied directly from the devstack neutron-legacy script
-    if [[ "$Q_USE_PUBLIC_VETH" == "True" ]]; then
-        echo $Q_PUBLIC_VETH_EX
-    else
-        # Disable in-band as we are going to use local port
-        # to communicate with VMs
-        sudo ovs-vsctl set Bridge $PUBLIC_BRIDGE \
-            other_config:disable-in-band=true
-        echo $PUBLIC_BRIDGE
-    fi
-}
-
 function create_public_bridge {
     # Create the public bridge that OVN will use
-    # This logic is based on the devstack neutron-legacy _neutron_configure_router_v4 and _v6
-    local ext_gw_ifc
-    ext_gw_ifc=$(get_ext_gw_interface)
-
-    sudo ovs-vsctl --may-exist add-br $ext_gw_ifc -- set bridge $ext_gw_ifc protocols=OpenFlow13,OpenFlow15
-    sudo ovs-vsctl set open . external-ids:ovn-bridge-mappings=$PHYSICAL_NETWORK:$ext_gw_ifc
-    if [ -n "$FLOATING_RANGE" ]; then
-        local cidr_len=${FLOATING_RANGE#*/}
-        sudo ip addr replace $PUBLIC_NETWORK_GATEWAY/$cidr_len dev $ext_gw_ifc
-    fi
-
-    # Ensure IPv6 RAs are accepted on the interface with the default route.
-    # This is needed for neutron-based devstack clouds to work in
-    # IPv6-only clouds in the gate. Please do not remove this without
-    # talking to folks in Infra. This fix is based on a devstack fix for
-    # neutron L3 agent: https://review.openstack.org/#/c/359490/.
-    default_route_dev=$(ip route | grep ^default | awk '{print $5}')
-    sudo sysctl -w net.ipv6.conf.$default_route_dev.accept_ra=2
-
-    sudo sysctl -w net.ipv6.conf.all.forwarding=1
-    if [ -n "$IPV6_PUBLIC_RANGE" ]; then
-        local ipv6_cidr_len=${IPV6_PUBLIC_RANGE#*/}
-        sudo ip -6 addr replace $IPV6_PUBLIC_NETWORK_GATEWAY/$ipv6_cidr_len dev $ext_gw_ifc
-    fi
-
-    sudo ip link set $ext_gw_ifc up
+    sudo ovs-vsctl --may-exist add-br $PUBLIC_BRIDGE -- set bridge $PUBLIC_BRIDGE protocols=OpenFlow13,OpenFlow15
+    sudo ovs-vsctl set open . external-ids:ovn-bridge-mappings=$PHYSICAL_NETWORK:$PUBLIC_BRIDGE
 }
 
 function _disable_libvirt_apparmor {
