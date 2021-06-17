@@ -597,6 +597,7 @@ source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 source $TOP_DIR/lib/tcpdump
 source $TOP_DIR/lib/etcd3
+source $TOP_DIR/lib/os-vif
 
 # Extras Source
 # --------------
@@ -1159,6 +1160,11 @@ if is_service_enabled q-dhcp; then
     sudo sysctl -w net.ipv4.ip_forward=1
 fi
 
+# os-vif
+# ------
+if is_service_enabled nova neutron; then
+    configure_os_vif
+fi
 
 # Storage Service
 # ---------------
