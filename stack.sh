@@ -1341,14 +1341,13 @@ if is_service_enabled $DATABASE_BACKENDS && is_service_enabled glance; then
     done
 fi
 
+async_wait create_flavors
 
 if is_service_enabled horizon; then
     echo_summary "Starting Horizon"
     init_horizon
     start_horizon
 fi
-
-async_wait create_flavors
 
 
 # Create account rc files
