@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# support vsctl or native.
+# until bug #1929446 is resolved we override the os-vif default
+# and fall back to the legacy "vsctl" driver.
+OS_VIF_OVS_OVSDB_INTERFACE=${OS_VIF_OVS_OVSDB_INTERFACE:="vsctl"}
+
+function is_ml2_ovs {
+    if [[ "${Q_AGENT}" == "openvswitch" ]]; then
+        echo "True"
+    fi
+    echo "False"
+}
+
+# This should be true for any ml2/ovs job but should be set to false for
+# all other ovs based jobs e.g. ml2/ovn
+OS_VIF_OVS_ISOLATE_VIF=${OS_VIF_OVS_ISOLATE_VIF:=$(is_ml2_ovs)}
+OS_VIF_OVS_ISOLATE_VIF=$(trueorfalse False OS_VIF_OVS_ISOLATE_VIF)
+
+function configure_os_vif {
+    if [[ -e ${NOVA_CONF} ]]; then
+        iniset ${NOVA_CONF} os_vif_ovs ovsdb_interface ${OS_VIF_OVS_OVSDB_INTERFACE}
+        iniset ${NOVA_CONF} os_vif_ovs isolate_vif ${OS_VIF_OVS_ISOLATE_VIF}
+    fi
+    if [[ -e ${NEUTRON_CONF} ]]; then
+        iniset ${NEUTRON_CONF} os_vif_ovs ovsdb_interface ${OS_VIF_OVS_OVSDB_INTERFACE}
+        iniset ${NEUTRON_CONF} os_vif_ovs isolate_vif ${OS_VIF_OVS_ISOLATE_VIF}
+    fi
+}
