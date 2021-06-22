@@ -100,6 +100,11 @@ SUBNETPOOL_PREFIX_V6=${SUBNETPOOL_PREFIX_V6:-$IPV6_ADDRS_SAFE_TO_USE}
 SUBNETPOOL_SIZE_V4=${SUBNETPOOL_SIZE_V4:-26}
 SUBNETPOOL_SIZE_V6=${SUBNETPOOL_SIZE_V6:-64}
 
+NEUTRON_ADMIN_CLOUD_NAME="devstack-admin"
+if [ "$NEUTRON_ENFORCE_SCOPE" == "True" ]; then
+    NEUTRON_ADMIN_CLOUD_NAME="devstack-system-admin"
+fi
+
 default_v4_route_devs=$(ip -4 route | grep ^default | awk '{print $5}')
 
 default_v6_route_devs=$(ip -6 route list match default table all | grep via | awk '{print $5}')
@@ -151,6 +156,10 @@ function create_neutron_initial_network {
     project_id=$(openstack project list | grep " demo " | get_field 1)
     die_if_not_set $LINENO project_id "Failure retrieving project_id for demo"
 
+    local admin_project_id
+    admin_project_id=$(openstack project list | grep " admin " | get_field 1)
+    die_if_not_set $LINENO admin_project_id "Failure retrieving project_id for admin"
+
     # Allow drivers that need to create an initial network to do so here
     if type -p neutron_plugin_create_initial_network_profile > /dev/null; then
         neutron_plugin_create_initial_network_profile $PHYSICAL_NETWORK
@@ -159,10 +168,10 @@ function create_neutron_initial_network {
     if is_networking_extension_supported "auto-allocated-topology"; then
         if [[ "$USE_SUBNETPOOL" == "True" ]]; then
             if [[ "$IP_VERSION" =~ 4.* ]]; then
-                SUBNETPOOL_V4_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet pool create $SUBNETPOOL_NAME_V4 --default-prefix-length $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --share --default -f value -c id)
+                SUBNETPOOL_V4_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet pool create $SUBNETPOOL_NAME_V4 --project "$admin_project_id" --default-prefix-length $SUBNETPOOL_SIZE_V4 --pool-prefix $SUBNETPOOL_PREFIX_V4 --share --default -f value -c id)
             fi
             if [[ "$IP_VERSION" =~ .*6 ]]; then
-                SUBNETPOOL_V6_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet pool create $SUBNETPOOL_NAME_V6 --default-prefix-length $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --share --default -f value -c id)
+                SUBNETPOOL_V6_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet pool create $SUBNETPOOL_NAME_V6 --project "$admin_project_id" --default-prefix-length $SUBNETPOOL_SIZE_V6 --pool-prefix $SUBNETPOOL_PREFIX_V6 --share --default -f value -c id)
             fi
         fi
     fi
@@ -170,14 +179,14 @@ function create_neutron_initial_network {
     if is_provider_network; then
         die_if_not_set $LINENO PHYSICAL_NETWORK "You must specify the PHYSICAL_NETWORK"
         die_if_not_set $LINENO PROVIDER_NETWORK_TYPE "You must specify the PROVIDER_NETWORK_TYPE"
-        NET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" network create $PHYSICAL_NETWORK --project $project_id --provider-network-type $PROVIDER_NETWORK_TYPE --provider-physical-network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider-segment $SEGMENTATION_ID} --share | grep ' id ' | get_field 2)
+        NET_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" network create $PHYSICAL_NETWORK --project $project_id --provider-network-type $PROVIDER_NETWORK_TYPE --provider-physical-network "$PHYSICAL_NETWORK" ${SEGMENTATION_ID:+--provider-segment $SEGMENTATION_ID} --share | grep ' id ' | get_field 2)
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PHYSICAL_NETWORK $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
             if [ -z $SUBNETPOOL_V4_ID ]; then
                 fixed_range_v4=$FIXED_RANGE
             fi
-            SUBNET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY ${SUBNETPOOL_V4_ID:+--subnet-pool $SUBNETPOOL_V4_ID} --network $NET_ID ${fixed_range_v4:+--subnet-range $fixed_range_v4} | grep ' id ' | get_field 2)
+            SUBNET_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 4 ${ALLOCATION_POOL:+--allocation-pool $ALLOCATION_POOL} $PROVIDER_SUBNET_NAME --gateway $NETWORK_GATEWAY ${SUBNETPOOL_V4_ID:+--subnet-pool $SUBNETPOOL_V4_ID} --network $NET_ID ${fixed_range_v4:+--subnet-range $fixed_range_v4} | grep ' id ' | get_field 2)
             die_if_not_set $LINENO SUBNET_ID "Failure creating SUBNET_ID for $PROVIDER_SUBNET_NAME $project_id"
         fi
 
@@ -187,7 +196,7 @@ function create_neutron_initial_network {
             if [ -z $SUBNETPOOL_V6_ID ]; then
                 fixed_range_v6=$IPV6_PROVIDER_FIXED_RANGE
             fi
-            IPV6_SUBNET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 6 --gateway $IPV6_PROVIDER_NETWORK_GATEWAY $IPV6_PROVIDER_SUBNET_NAME ${SUBNETPOOL_V6_ID:+--subnet-pool $SUBNETPOOL_V6_ID} --network $NET_ID ${fixed_range_v6:+--subnet-range $fixed_range_v6} | grep ' id ' | get_field 2)
+            IPV6_SUBNET_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet create --project $project_id --ip-version 6 --gateway $IPV6_PROVIDER_NETWORK_GATEWAY $IPV6_PROVIDER_SUBNET_NAME ${SUBNETPOOL_V6_ID:+--subnet-pool $SUBNETPOOL_V6_ID} --network $NET_ID ${fixed_range_v6:+--subnet-range $fixed_range_v6} | grep ' id ' | get_field 2)
             die_if_not_set $LINENO IPV6_SUBNET_ID "Failure creating IPV6_SUBNET_ID for $IPV6_PROVIDER_SUBNET_NAME $project_id"
         fi
 
@@ -197,7 +206,7 @@ function create_neutron_initial_network {
             sudo ip link set $PUBLIC_INTERFACE up
         fi
     else
-        NET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" network create --project $project_id "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
+        NET_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" network create --project $project_id "$PRIVATE_NETWORK_NAME" | grep ' id ' | get_field 2)
         die_if_not_set $LINENO NET_ID "Failure creating NET_ID for $PRIVATE_NETWORK_NAME $project_id"
 
         if [[ "$IP_VERSION" =~ 4.* ]]; then
@@ -215,11 +224,11 @@ function create_neutron_initial_network {
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
             # create a tenant-owned router.
-            ROUTER_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" router create --project $project_id $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            ROUTER_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" router create --project $project_id $Q_ROUTER_NAME | grep ' id ' | get_field 2)
             die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $project_id $Q_ROUTER_NAME"
         else
             # Plugin only supports creating a single router, which should be admin owned.
-            ROUTER_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" router create $Q_ROUTER_NAME | grep ' id ' | get_field 2)
+            ROUTER_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" router create $Q_ROUTER_NAME --project $admin_project_id | grep ' id ' | get_field 2)
             die_if_not_set $LINENO ROUTER_ID "Failure creating ROUTER_ID for $Q_ROUTER_NAME"
         fi
 
@@ -229,9 +238,9 @@ function create_neutron_initial_network {
         fi
         # Create an external network, and a subnet. Configure the external network as router gw
         if [ "$Q_USE_PROVIDERNET_FOR_PUBLIC" = "True" ]; then
-            EXT_NET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" network create "$PUBLIC_NETWORK_NAME" $EXTERNAL_NETWORK_FLAGS --provider-network-type ${PUBLIC_PROVIDERNET_TYPE:-flat} ${PUBLIC_PROVIDERNET_SEGMENTATION_ID:+--provider-segment $PUBLIC_PROVIDERNET_SEGMENTATION_ID} --provider-physical-network ${PUBLIC_PHYSICAL_NETWORK} | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" network create "$PUBLIC_NETWORK_NAME" $EXTERNAL_NETWORK_FLAGS --provider-network-type ${PUBLIC_PROVIDERNET_TYPE:-flat} ${PUBLIC_PROVIDERNET_SEGMENTATION_ID:+--provider-segment $PUBLIC_PROVIDERNET_SEGMENTATION_ID} --provider-physical-network ${PUBLIC_PHYSICAL_NETWORK} --project $admin_project_id | grep ' id ' | get_field 2)
         else
-            EXT_NET_ID=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" network create "$PUBLIC_NETWORK_NAME" $EXTERNAL_NETWORK_FLAGS | grep ' id ' | get_field 2)
+            EXT_NET_ID=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" network create "$PUBLIC_NETWORK_NAME" $EXTERNAL_NETWORK_FLAGS --project $admin_project_id | grep ' id ' | get_field 2)
         fi
         die_if_not_set $LINENO EXT_NET_ID "Failure creating EXT_NET_ID for $PUBLIC_NETWORK_NAME"
 
@@ -258,11 +267,12 @@ function _neutron_create_private_subnet_v4 {
     if [[ -n "$NETWORK_GATEWAY" ]]; then
         subnet_params+="--gateway $NETWORK_GATEWAY "
     fi
+
     subnet_params+="${SUBNETPOOL_V4_ID:+--subnet-pool $SUBNETPOOL_V4_ID} "
     subnet_params+="${fixed_range_v4:+--subnet-range $fixed_range_v4} "
     subnet_params+="--network $NET_ID $PRIVATE_SUBNET_NAME"
     local subnet_id
-    subnet_id=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create $subnet_params | grep ' id ' | get_field 2)
+    subnet_id=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO subnet_id "Failure creating private IPv4 subnet for $project_id"
     echo $subnet_id
 }
@@ -285,14 +295,17 @@ function _neutron_create_private_subnet_v6 {
     subnet_params+="${fixed_range_v6:+--subnet-range $fixed_range_v6} "
     subnet_params+="$ipv6_modes --network $NET_ID $IPV6_PRIVATE_SUBNET_NAME "
     local ipv6_subnet_id
-    ipv6_subnet_id=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create $subnet_params | grep ' id ' | get_field 2)
+    ipv6_subnet_id=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet create $subnet_params | grep ' id ' | get_field 2)
     die_if_not_set $LINENO ipv6_subnet_id "Failure creating private IPv6 subnet for $project_id"
     echo $ipv6_subnet_id
 }
 
 # Create public IPv4 subnet
 function _neutron_create_public_subnet_v4 {
-    local subnet_params="--ip-version 4 "
+    local admin_project_id
+    admin_project_id=$(openstack project list | grep " admin " | get_field 1)
+    die_if_not_set $LINENO admin_project_id "Failure retrieving project_id for admin"
+    local subnet_params="--ip-version 4 --project $admin_project_id"
     subnet_params+="${Q_FLOATING_ALLOCATION_POOL:+--allocation-pool $Q_FLOATING_ALLOCATION_POOL} "
     if [[ -n "$PUBLIC_NETWORK_GATEWAY" ]]; then
         subnet_params+="--gateway $PUBLIC_NETWORK_GATEWAY "
@@ -300,26 +313,29 @@ function _neutron_create_public_subnet_v4 {
     subnet_params+="--network $EXT_NET_ID --subnet-range $FLOATING_RANGE --no-dhcp "
     subnet_params+="$PUBLIC_SUBNET_NAME"
     local id_and_ext_gw_ip
-    id_and_ext_gw_ip=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create $subnet_params | grep -e 'gateway_ip' -e ' id ')
+    id_and_ext_gw_ip=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet create $subnet_params | grep -e 'gateway_ip' -e ' id ')
     die_if_not_set $LINENO id_and_ext_gw_ip "Failure creating public IPv4 subnet"
     echo $id_and_ext_gw_ip
 }
 
 # Create public IPv6 subnet
 function _neutron_create_public_subnet_v6 {
-    local subnet_params="--ip-version 6 "
+    local admin_project_id
+    admin_project_id=$(openstack project list | grep " admin " | get_field 1)
+    die_if_not_set $LINENO admin_project_id "Failure retrieving project_id for admin"
+    local subnet_params="--ip-version 6 --project $admin_project_id "
     subnet_params+="--gateway $IPV6_PUBLIC_NETWORK_GATEWAY "
     subnet_params+="--network $EXT_NET_ID --subnet-range $IPV6_PUBLIC_RANGE --no-dhcp "
     subnet_params+="$IPV6_PUBLIC_SUBNET_NAME"
     local ipv6_id_and_ext_gw_ip
-    ipv6_id_and_ext_gw_ip=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" subnet create $subnet_params | grep -e 'gateway_ip' -e ' id ')
+    ipv6_id_and_ext_gw_ip=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet create $subnet_params | grep -e 'gateway_ip' -e ' id ')
     die_if_not_set $LINENO ipv6_id_and_ext_gw_ip "Failure creating an IPv6 public subnet"
     echo $ipv6_id_and_ext_gw_ip
 }
 
 # Configure neutron router for IPv4 public access
 function _neutron_configure_router_v4 {
-    openstack --os-cloud devstack-admin --os-region "$REGION_NAME" router add subnet $ROUTER_ID $SUBNET_ID
+    openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" router add subnet $ROUTER_ID $SUBNET_ID
     # Create a public subnet on the external network
     local id_and_ext_gw_ip
     id_and_ext_gw_ip=$(_neutron_create_public_subnet_v4 $EXT_NET_ID)
@@ -327,7 +343,7 @@ function _neutron_configure_router_v4 {
     ext_gw_ip=$(echo $id_and_ext_gw_ip  | get_field 2)
     PUB_SUBNET_ID=$(echo $id_and_ext_gw_ip | get_field 5)
     # Configure the external network as the default router gateway
-    openstack --os-cloud devstack-admin --os-region "$REGION_NAME" router set --external-gateway $EXT_NET_ID $ROUTER_ID
+    openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" router set --external-gateway $EXT_NET_ID $ROUTER_ID
 
     # This logic is specific to using OVN or the l3-agent for layer 3
     if ([[ $Q_AGENT == "ovn" ]] && [[ "$OVN_L3_CREATE_PUBLIC_NETWORK" == "True" ]] && is_service_enabled q-svc neutron-server) || is_service_enabled q-l3 neutron-l3; then
@@ -354,7 +370,7 @@ function _neutron_configure_router_v4 {
                 sudo ip addr add $ext_gw_ip/$cidr_len dev $ext_gw_interface
                 sudo ip link set $ext_gw_interface up
             fi
-            ROUTER_GW_IP=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" port list -c 'Fixed IP Addresses' --device-owner network:router_gateway | awk -F'ip_address'  '{ print $2 }' | cut -f2 -d\' | tr '\n' ' ')
+            ROUTER_GW_IP=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" port list -c 'Fixed IP Addresses' --device-owner network:router_gateway | awk -F'ip_address'  '{ print $2 }' | cut -f2 -d\' | tr '\n' ' ')
             die_if_not_set $LINENO ROUTER_GW_IP "Failure retrieving ROUTER_GW_IP"
         fi
         _neutron_set_router_id
@@ -363,7 +379,7 @@ function _neutron_configure_router_v4 {
 
 # Configure neutron router for IPv6 public access
 function _neutron_configure_router_v6 {
-    openstack --os-cloud devstack-admin --os-region "$REGION_NAME" router add subnet $ROUTER_ID $IPV6_SUBNET_ID
+    openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" router add subnet $ROUTER_ID $IPV6_SUBNET_ID
     # Create a public subnet on the external network
     local ipv6_id_and_ext_gw_ip
     ipv6_id_and_ext_gw_ip=$(_neutron_create_public_subnet_v6 $EXT_NET_ID)
@@ -375,7 +391,7 @@ function _neutron_configure_router_v6 {
     # If the external network has not already been set as the default router
     # gateway when configuring an IPv4 public subnet, do so now
     if [[ "$IP_VERSION" == "6" ]]; then
-        openstack --os-cloud devstack-admin --os-region "$REGION_NAME" router set --external-gateway $EXT_NET_ID $ROUTER_ID
+        openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" router set --external-gateway $EXT_NET_ID $ROUTER_ID
     fi
 
     # This logic is specific to using OVN or the l3-agent for layer 3
@@ -396,7 +412,7 @@ function _neutron_configure_router_v6 {
         sudo sysctl -w net.ipv6.conf.all.forwarding=1
         # Configure and enable public bridge
         # Override global IPV6_ROUTER_GW_IP with the true value from neutron
-        IPV6_ROUTER_GW_IP=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" port list -c 'Fixed IP Addresses' | grep $ipv6_pub_subnet_id | awk -F'ip_address' '{ print $2 }' | cut -f2 -d\' | tr '\n' ' ')
+        IPV6_ROUTER_GW_IP=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" port list -c 'Fixed IP Addresses' | grep $ipv6_pub_subnet_id | awk -F'ip_address' '{ print $2 }' | cut -f2 -d\' | tr '\n' ' ')
         die_if_not_set $LINENO IPV6_ROUTER_GW_IP "Failure retrieving IPV6_ROUTER_GW_IP"
 
         if is_neutron_ovs_base_plugin; then
@@ -424,7 +440,7 @@ function _neutron_configure_router_v6 {
 function is_networking_extension_supported {
     local extension=$1
     # TODO(sc68cal) cache this instead of calling every time
-    EXT_LIST=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" extension list --network -c Alias -f value)
+    EXT_LIST=$(openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" extension list --network -c Alias -f value)
     [[ $EXT_LIST =~ $extension ]] && return 0
 }
 

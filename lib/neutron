@@ -37,6 +37,11 @@ NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse False NEUTRON_DEPLOY_MOD_WSGI)
 NEUTRON_AGENT=${NEUTRON_AGENT:-openvswitch}
 NEUTRON_DIR=$DEST/neutron
 
+# If NEUTRON_ENFORCE_SCOPE == True, it will set "enforce_scope"
+# and "enforce_new_defaults" to True in the Neutron's config to enforce usage
+# of the new RBAC policies and scopes.
+NEUTRON_ENFORCE_SCOPE=$(trueorfalse False NEUTRON_ENFORCE_SCOPE)
+
 NEUTRON_DISTRIBUTED_ROUTING=$(trueorfalse False NEUTRON_DISTRIBUTED_ROUTING)
 # Distributed Virtual Router (DVR) configuration
 # Can be:
@@ -232,6 +237,7 @@ function configure_neutron_new {
         if [[ "$NEUTRON_PORT_SECURITY" = "True" ]]; then
             neutron_ml2_extension_driver_add port_security
         fi
+        configure_rbac_policies
     fi
 
     # Neutron OVS or LB agent
@@ -611,6 +617,19 @@ function configure_neutron {
         write_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_BIN_DIR/neutron-api" "/networking"
     fi
 }
+
+# configure_rbac_policies() - Configure Neutron to enforce new RBAC
+# policies and scopes if NEUTRON_ENFORCE_SCOPE == True
+function configure_rbac_policies {
+    if [ "$NEUTRON_ENFORCE_SCOPE" == "True" ]; then
+        iniset $NEUTRON_CONF oslo_policy enforce_new_defaults True
+        iniset $NEUTRON_CONF oslo_policy enforce_scope True
+    else
+        iniset $NEUTRON_CONF oslo_policy enforce_new_defaults False
+        iniset $NEUTRON_CONF oslo_policy enforce_scope False
+    fi
+}
+
 
 function configure_neutron_nova {
     if is_neutron_legacy_enabled; then

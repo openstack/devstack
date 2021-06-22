@@ -90,6 +90,11 @@ NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse False NEUTRON_DEPLOY_MOD_WSGI)
 
 NEUTRON_UWSGI_CONF=$NEUTRON_CONF_DIR/neutron-api-uwsgi.ini
 
+# If NEUTRON_ENFORCE_SCOPE == True, it will set "enforce_scope"
+# and "enforce_new_defaults" to True in the Neutron's config to enforce usage
+# of the new RBAC policies and scopes.
+NEUTRON_ENFORCE_SCOPE=$(trueorfalse False NEUTRON_ENFORCE_SCOPE)
+
 # Agent binaries.  Note, binary paths for other agents are set in per-service
 # scripts in lib/neutron_plugins/services/
 AGENT_DHCP_BINARY="$NEUTRON_BIN_DIR/neutron-dhcp-agent"
@@ -488,6 +493,19 @@ function install_neutron_agent_packages_mutnauq {
 function configure_neutron_after_post_config {
     if [[ $Q_SERVICE_PLUGIN_CLASSES != '' ]]; then
         iniset $NEUTRON_CONF DEFAULT service_plugins $Q_SERVICE_PLUGIN_CLASSES
+    fi
+    configure_rbac_policies
+}
+
+# configure_rbac_policies() - Configure Neutron to enforce new RBAC
+# policies and scopes if NEUTRON_ENFORCE_SCOPE == True
+function configure_rbac_policies {
+    if [ "$NEUTRON_ENFORCE_SCOPE" == "True" ]; then
+        iniset $NEUTRON_CONF oslo_policy enforce_new_defaults True
+        iniset $NEUTRON_CONF oslo_policy enforce_scope True
+    else
+        iniset $NEUTRON_CONF oslo_policy enforce_new_defaults False
+        iniset $NEUTRON_CONF oslo_policy enforce_scope False
     fi
 }
 

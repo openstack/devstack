@@ -609,6 +609,7 @@
         # Keep enabeling the services here to run with system scope
         CINDER_ENFORCE_SCOPE: true
         GLANCE_ENFORCE_SCOPE: true
+        NEUTRON_ENFORCE_SCOPE: true
 
 - job:
     name: devstack-multinode

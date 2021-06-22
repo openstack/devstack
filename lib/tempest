@@ -90,6 +90,10 @@ TEMPEST_USE_TEST_ACCOUNTS=$(trueorfalse False TEMPEST_USE_TEST_ACCOUNTS)
 # it will run tempest with
 TEMPEST_CONCURRENCY=${TEMPEST_CONCURRENCY:-$(nproc)}
 
+NEUTRON_ADMIN_CLOUD_NAME="devstack-admin"
+if [ "$NEUTRON_ENFORCE_SCOPE" == "True" ]; then
+    NEUTRON_ADMIN_CLOUD_NAME="devstack-system-admin"
+fi
 
 # Functions
 # ---------
@@ -287,8 +291,8 @@ function configure_tempest {
     if [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]] && is_networking_extension_supported 'external-net'; then
         public_network_id=$(openstack --os-cloud devstack-admin network show -f value -c id $PUBLIC_NETWORK_NAME)
         # make sure shared network presence does not confuses the tempest tests
-        openstack --os-cloud devstack-admin network create --share shared
-        openstack --os-cloud devstack-admin subnet create --description shared-subnet --subnet-range ${TEMPEST_SHARED_POOL:-192.168.233.0/24} --network shared shared-subnet
+        openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" network create --share shared --project "$admin_project_id"
+        openstack --os-cloud "$NEUTRON_ADMIN_CLOUD_NAME" --os-region "$REGION_NAME" subnet create --description shared-subnet --subnet-range ${TEMPEST_SHARED_POOL:-192.168.233.0/24} --network shared shared-subnet --project "$admin_project_id"
     fi
 
     iniset $TEMPEST_CONFIG DEFAULT use_syslog $SYSLOG
@@ -442,6 +446,8 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6 "$IPV6_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled port_security $NEUTRON_PORT_SECURITY
+
+    iniset $TEMPEST_CONFIG enforce_scope neutron "$NEUTRON_ENFORCE_SCOPE"
 
     # Scenario
     SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
