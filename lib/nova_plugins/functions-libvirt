@@ -58,13 +58,10 @@ EOF
 function install_libvirt {
 
     if is_ubuntu; then
-        install_package qemu-system libvirt-clients libvirt-daemon-system libvirt-dev
+        install_package qemu-system libvirt-clients libvirt-daemon-system libvirt-dev python3-libvirt
         if is_arch "aarch64"; then
             install_package qemu-efi
         fi
-        # uninstall in case the libvirt version changed
-        pip_uninstall libvirt-python
-        pip_install_gr libvirt-python
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora || is_suse; then
 
@@ -79,14 +76,11 @@ function install_libvirt {
         # as the base system version is too old.  We should have
         # pre-installed these
         install_package qemu-kvm
+        install_package libvirt libvirt-devel python3-libvirt
 
-        install_package libvirt libvirt-devel
         if is_arch "aarch64"; then
             install_package edk2.git-aarch64
         fi
-
-        pip_uninstall libvirt-python
-        pip_install_gr libvirt-python
     fi
 
     if [[ $DEBUG_LIBVIRT_COREDUMPS == True ]]; then
