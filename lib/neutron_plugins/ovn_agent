@@ -24,11 +24,6 @@ source ${TOP_DIR}/lib/neutron_plugins/openvswitch_agent
 # Load devstack ovs compliation and loading functions
 source ${TOP_DIR}/lib/neutron_plugins/ovs_source
 
-# Defaults
-# --------
-
-Q_BUILD_OVS_FROM_GIT=$(trueorfalse True Q_BUILD_OVS_FROM_GIT)
-
 # Set variables for building OVN from source
 OVN_REPO=${OVN_REPO:-https://github.com/ovn-org/ovn.git}
 OVN_REPO_NAME=$(basename ${OVN_REPO} | cut -f1 -d'.')
@@ -74,6 +69,9 @@ OVN_UUID=${OVN_UUID:-}
 # unless the distro kernel includes ovs+conntrack support.
 OVN_BUILD_MODULES=$(trueorfalse False OVN_BUILD_MODULES)
 OVN_BUILD_FROM_SOURCE=$(trueorfalse False OVN_BUILD_FROM_SOURCE)
+if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+    Q_BUILD_OVS_FROM_GIT=True
+fi
 
 # Whether or not to install the ovs python module from ovs source.  This can be
 # used to test and validate new ovs python features.  This should only be used
@@ -341,11 +339,6 @@ function ovn_sanity_check {
 
 # install_ovn() - Collect source and prepare
 function install_ovn {
-    if [[ "$Q_BUILD_OVS_FROM_GIT" == "False" ]]; then
-        echo "Installation of OVS from source disabled."
-        return 0
-    fi
-
     echo "Installing OVN and dependent packages"
 
     # Check the OVN configuration

@@ -14,6 +14,7 @@
 
 # Defaults
 # --------
+Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
 # Set variables for building OVS from source
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
