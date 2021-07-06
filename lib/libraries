@@ -59,6 +59,7 @@ GITDIR["tooz"]=$DEST/tooz
 # Non oslo libraries are welcomed below as well, this prevents
 # duplication of this code.
 GITDIR["os-brick"]=$DEST/os-brick
+GITDIR["os-resource-classes"]=$DEST/os-resource-classes
 GITDIR["os-traits"]=$DEST/os-traits
 
 # Support entry points installation of console scripts
@@ -122,6 +123,7 @@ function install_libs {
     #
     # os-traits for nova
     _install_lib_from_source "os-brick"
+    _install_lib_from_source "os-resource-classes"
     _install_lib_from_source "os-traits"
     #
     # python client libraries we might need from git can go here
