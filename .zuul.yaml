@@ -730,11 +730,11 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-grenade-multinode:
+        - neutron-ovs-grenade-multinode:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-tempest-linuxbridge:
+        - neutron-linuxbridge-tempest:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -767,11 +767,11 @@
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
-        - neutron-grenade-multinode:
+        - neutron-ovs-grenade-multinode:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-tempest-linuxbridge:
+        - neutron-linuxbridge-tempest:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -824,11 +824,11 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-tempest-dvr:
+        - neutron-ovs-tempest-dvr:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-tempest-dvr-ha-multinode-full:
+        - neutron-ovs-tempest-dvr-ha-multinode-full:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
