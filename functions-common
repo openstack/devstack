@@ -391,6 +391,7 @@ function GetDistro {
         DISTRO="sle${os_RELEASE%.*}"
     elif [[ "$os_VENDOR" =~ (Red.*Hat) || \
         "$os_VENDOR" =~ (CentOS) || \
+        "$os_VENDOR" =~ (AlmaLinux) || \
         "$os_VENDOR" =~ (Scientific) || \
         "$os_VENDOR" =~ (OracleServer) || \
         "$os_VENDOR" =~ (Virtuozzo) ]]; then
@@ -451,6 +452,7 @@ function is_fedora {
         [ "$os_VENDOR" = "RedHatEnterpriseServer" ] || \
         [ "$os_VENDOR" = "RedHatEnterprise" ] || \
         [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "CentOSStream" ] || \
+        [ "$os_VENDOR" = "AlmaLinux" ] || \
         [ "$os_VENDOR" = "OracleServer" ] || [ "$os_VENDOR" = "Virtuozzo" ]
 }
 
