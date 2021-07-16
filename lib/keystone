@@ -134,6 +134,12 @@ KEYSTONE_PASSWORD_HASH_ROUNDS=${KEYSTONE_PASSWORD_HASH_ROUNDS:-4}
 # Cache settings
 KEYSTONE_ENABLE_CACHE=${KEYSTONE_ENABLE_CACHE:-True}
 
+# Flag to set the oslo_policy.enforce_scope. This is used to switch
+# the Identity API policies to start checking the scope of token. By Default,
+# this flag is False.
+# For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
+KEYSTONE_ENFORCE_SCOPE=$(trueorfalse False KEYSTONE_ENFORCE_SCOPE)
+
 # Functions
 # ---------
 
@@ -280,6 +286,11 @@ function configure_keystone {
         iniset $KEYSTONE_CONF security_compliance lockout_failure_attempts $KEYSTONE_LOCKOUT_FAILURE_ATTEMPTS
         iniset $KEYSTONE_CONF security_compliance lockout_duration $KEYSTONE_LOCKOUT_DURATION
         iniset $KEYSTONE_CONF security_compliance unique_last_password_count $KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT
+    fi
+    if [[ "$KEYSTONE_ENFORCE_SCOPE" == True ]] ; then
+        iniset $KEYSTONE_CONF oslo_policy enforce_scope true
+        iniset $KEYSTONE_CONF oslo_policy enforce_new_defaults true
+        iniset $KEYSTONE_CONF oslo_policy policy_file policy.yaml
     fi
 }
 
