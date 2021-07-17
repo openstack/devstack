@@ -84,6 +84,7 @@ GLANCE_STAGING_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_stagi
 GLANCE_TASKS_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_tasks_store}
 
 GLANCE_USE_IMPORT_WORKFLOW=$(trueorfalse False GLANCE_USE_IMPORT_WORKFLOW)
+GLANCE_ENABLE_QUOTAS=$(trueorfalse True GLANCE_ENABLE_QUOTAS)
 
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
@@ -263,6 +264,45 @@ function configure_glance_store {
     fi
 }
 
+function configure_glance_quotas {
+
+    # NOTE(danms): We need to have some of the OS_ things unset in
+    # order to use system scope, which is required for creating these
+    # limits. This is a hack, but I dunno how else to get osc to use
+    # system scope.
+
+    bash -c "unset OS_USERNAME OS_TENANT_NAME OS_PROJECT_NAME;
+        openstack --os-cloud devstack-system-admin registered limit create \
+                --service glance --default-limit 1000 --region $REGION_NAME \
+                image_size_total; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                --service glance --default-limit 1000 --region $REGION_NAME \
+                image_stage_total; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                --service glance --default-limit 100 --region $REGION_NAME \
+                image_count_total; \
+        openstack --os-cloud devstack-system-admin registered limit create \
+                --service glance --default-limit 100 --region $REGION_NAME \
+                image_count_uploading"
+
+    # Tell glance to use these limits
+    iniset $GLANCE_API_CONF DEFAULT use_keystone_limits True
+
+    # Configure oslo_limit so it can talk to keystone
+    iniset $GLANCE_API_CONF oslo_limit user_domain_name $SERVICE_DOMAIN_NAME
+    iniset $GLANCE_API_CONF oslo_limit password $SERVICE_PASSWORD
+    iniset $GLANCE_API_CONF oslo_limit username glance
+    iniset $GLANCE_API_CONF oslo_limit auth_type password
+    iniset $GLANCE_API_CONF oslo_limit auth_url $KEYSTONE_SERVICE_URI
+    iniset $GLANCE_API_CONF oslo_limit system_scope "'all'"
+    iniset $GLANCE_API_CONF oslo_limit endpoint_id \
+           $(openstack endpoint list --service glance -f value -c ID)
+
+    # Allow the glance service user to read quotas
+    openstack role add --user glance --user-domain Default --system all \
+              reader
+}
+
 # configure_glance() - Set config files, create data dirs, etc
 function configure_glance {
     sudo install -d -o $STACK_USER $GLANCE_CONF_DIR $GLANCE_METADEF_DIR
@@ -403,6 +443,11 @@ function create_glance_accounts {
         service_domain_id=$(get_or_create_domain $SERVICE_DOMAIN_NAME)
         iniset $GLANCE_SWIFT_STORE_CONF ref1 project_domain_id $service_domain_id
         iniset $GLANCE_SWIFT_STORE_CONF ref1 user_domain_id $service_domain_id
+
+        if [[ "$GLANCE_ENABLE_QUOTAS" = True ]]; then
+            configure_glance_quotas
+        fi
+
     fi
 }
 
