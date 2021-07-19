@@ -108,6 +108,10 @@ GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT}
 GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 GLANCE_UWSGI=$GLANCE_BIN_DIR/glance-wsgi-api
 GLANCE_UWSGI_CONF=$GLANCE_CONF_DIR/glance-uwsgi.ini
+
+# Glance default limit for Devstack
+GLANCE_LIMIT_IMAGE_SIZE_TOTAL=${GLANCE_LIMIT_IMAGE_SIZE_TOTAL:-1000}
+
 # If wsgi mode is uwsgi run glance under uwsgi, else default to eventlet
 # TODO(mtreinish): Remove the eventlet path here and in all the similar
 # conditionals below after the Pike release
@@ -273,11 +277,11 @@ function configure_glance_quotas {
 
     bash -c "unset OS_USERNAME OS_TENANT_NAME OS_PROJECT_NAME;
         openstack --os-cloud devstack-system-admin registered limit create \
-                --service glance --default-limit 1000 --region $REGION_NAME \
-                image_size_total; \
+                --service glance --default-limit $GLANCE_LIMIT_IMAGE_SIZE_TOTAL \
+                --region $REGION_NAME image_size_total; \
         openstack --os-cloud devstack-system-admin registered limit create \
-                --service glance --default-limit 1000 --region $REGION_NAME \
-                image_stage_total; \
+                --service glance --default-limit $GLANCE_LIMIT_IMAGE_SIZE_TOTAL \
+                --region $REGION_NAME image_stage_total; \
         openstack --os-cloud devstack-system-admin registered limit create \
                 --service glance --default-limit 100 --region $REGION_NAME \
                 image_count_total; \
