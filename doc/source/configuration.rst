@@ -689,6 +689,24 @@ use the v3 API. It is possible to setup keystone without v2 API, by doing:
 
     ENABLE_IDENTITY_V2=False
 
+
+Glance
+++++++
+
+The default image size quota of 1GiB may be too small if larger images
+are to be used. Change the default at setup time with:
+
+::
+
+    GLANCE_LIMIT_IMAGE_SIZE_TOTAL=5000
+
+or at runtime via:
+
+::
+
+    openstack --os-cloud devstack-system-admin registered limit update \
+      --service glance --default-limit 5000 --region RegionOne image_size_total
+
 .. _arch-configuration:
 
 Architectures
