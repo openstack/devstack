@@ -606,6 +606,7 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG auth admin_system 'all'
         iniset $TEMPEST_CONFIG auth admin_project_name ''
     fi
+    iniset $TEMPEST_CONFIG enforce_scope glance "$GLANCE_ENFORCE_SCOPE"
 
     iniset $TEMPEST_CONFIG enforce_scope cinder "$CINDER_ENFORCE_SCOPE"
 
