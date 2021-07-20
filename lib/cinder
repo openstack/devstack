@@ -144,6 +144,12 @@ CINDER_IMG_CACHE_SIZE_COUNT=${CINDER_IMG_CACHE_SIZE_COUNT:-}
 # enable the cache for all cinder backends.
 CINDER_CACHE_ENABLED_FOR_BACKENDS=${CINDER_CACHE_ENABLED_FOR_BACKENDS:-$CINDER_ENABLED_BACKENDS}
 
+# Flag to set the oslo_policy.enforce_scope. This is used to switch
+# the  Volume API policies to start checking the scope of token. by default,
+# this flag is False.
+# For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
+CINDER_ENFORCE_SCOPE=$(trueorfalse False CINDER_ENFORCE_SCOPE)
+
 # Functions
 # ---------
 
@@ -346,6 +352,11 @@ function configure_cinder {
         iniset $CINDER_CONF coordination backend_url "$CINDER_COORDINATION_URL"
     elif is_service_enabled etcd3; then
         iniset $CINDER_CONF coordination backend_url "etcd3+http://${SERVICE_HOST}:$ETCD_PORT"
+    fi
+
+    if [[ "$CINDER_ENFORCE_SCOPE" == True ]] ; then
+        iniset $CINDER_CONF oslo_policy enforce_scope true
+        iniset $CINDER_CONF oslo_policy enforce_new_defaults true
     fi
 }
 
