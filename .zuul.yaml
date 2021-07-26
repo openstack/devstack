@@ -336,6 +336,7 @@
         /var/log/postgresql: logs
         /var/log/mysql: logs
         /var/log/libvirt: logs
+        /etc/libvirt: logs
         /etc/sudoers: logs
         /etc/sudoers.d: logs
         '{{ stage_dir }}/iptables.txt': logs
