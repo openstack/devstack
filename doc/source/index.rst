@@ -63,7 +63,7 @@ have sudo privileges:
 .. code-block:: console
 
     $ echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
-    $ sudo su - stack
+    $ sudo -u stack -i
 
 Download DevStack
 -----------------
