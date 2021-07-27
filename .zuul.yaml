@@ -69,16 +69,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-fedora-latest
-    nodes:
-      - name: controller
-        label: fedora-32
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -603,23 +593,6 @@
         /opt/stack/async: logs
 
 - job:
-    name: devstack-platform-fedora-latest
-    parent: tempest-full-py3
-    description: Fedora latest platform test
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-
-- job:
-    name: devstack-platform-fedora-latest-virt-preview
-    parent: tempest-full-py3
-    description: Fedora latest platform test using the virt-preview repo.
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-    vars:
-      devstack_localrc:
-        ENABLE_FEDORA_VIRT_PREVIEW_REPO: true
-
-- job:
     name: devstack-tox-base
     parent: devstack
     description: |
@@ -691,7 +664,6 @@
       jobs:
         - devstack
         - devstack-ipv6
-        - devstack-platform-fedora-latest
         - devstack-platform-centos-8
         - devstack-platform-bionic
         - devstack-async
@@ -822,4 +794,3 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - devstack-platform-fedora-latest-virt-preview
