@@ -718,9 +718,6 @@ function install_tempest {
     set_tempest_venv_constraints $tmp_u_c_m
 
     tox -r --notest -efull
-    # TODO: remove the trailing pip constraint when a proper fix
-    # arrives for bug https://bugs.launchpad.net/devstack/+bug/1906322
-    $TEMPEST_DIR/.tox/tempest/bin/pip install -U -r $RC_DIR/tools/cap-pip.txt
     # NOTE(mtreinish) Respect constraints in the tempest full venv, things that
     # are using a tox job other than full will not be respecting constraints but
     # running pip install -U on tempest requirements

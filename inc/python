@@ -378,12 +378,13 @@ function _setup_package_with_constraints_edit {
     project_dir=$(cd $project_dir && pwd)
 
     if [ -n "$REQUIREMENTS_DIR" ]; then
-        # Constrain this package to this project directory from here on out.
+        # Remove this package from constraints before we install it.
+        # That way, later installs won't "downgrade" the install from
+        # source we are about to do.
         local name
         name=$(awk '/^name.*=/ {print $3}' $project_dir/setup.cfg)
         $REQUIREMENTS_DIR/.venv/bin/edit-constraints \
-            $REQUIREMENTS_DIR/upper-constraints.txt -- $name \
-            "$flags file://$project_dir#egg=$name"
+            $REQUIREMENTS_DIR/upper-constraints.txt -- $name
     fi
 
     setup_package $bindep $project_dir "$flags" $extras
