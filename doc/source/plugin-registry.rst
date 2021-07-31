@@ -98,6 +98,7 @@ openstack/shade                          `https://opendev.org/openstack/shade <h
 openstack/solum                          `https://opendev.org/openstack/solum <https://opendev.org/openstack/solum>`__
 openstack/storlets                       `https://opendev.org/openstack/storlets <https://opendev.org/openstack/storlets>`__
 openstack/tacker                         `https://opendev.org/openstack/tacker <https://opendev.org/openstack/tacker>`__
+openstack/tap-as-a-service               `https://opendev.org/openstack/tap-as-a-service <https://opendev.org/openstack/tap-as-a-service>`__
 openstack/telemetry-tempest-plugin       `https://opendev.org/openstack/telemetry-tempest-plugin <https://opendev.org/openstack/telemetry-tempest-plugin>`__
 openstack/trove                          `https://opendev.org/openstack/trove <https://opendev.org/openstack/trove>`__
 openstack/trove-dashboard                `https://opendev.org/openstack/trove-dashboard <https://opendev.org/openstack/trove-dashboard>`__
@@ -179,7 +180,6 @@ x/rsd-virt-for-nova                      `https://opendev.org/x/rsd-virt-for-nov
 x/scalpels                               `https://opendev.org/x/scalpels <https://opendev.org/x/scalpels>`__
 x/slogging                               `https://opendev.org/x/slogging <https://opendev.org/x/slogging>`__
 x/stackube                               `https://opendev.org/x/stackube <https://opendev.org/x/stackube>`__
-x/tap-as-a-service                       `https://opendev.org/x/tap-as-a-service <https://opendev.org/x/tap-as-a-service>`__
 x/tap-as-a-service-dashboard             `https://opendev.org/x/tap-as-a-service-dashboard <https://opendev.org/x/tap-as-a-service-dashboard>`__
 x/tatu                                   `https://opendev.org/x/tatu <https://opendev.org/x/tatu>`__
 x/trio2o                                 `https://opendev.org/x/trio2o <https://opendev.org/x/trio2o>`__
