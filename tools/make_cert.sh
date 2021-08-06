@@ -27,7 +27,7 @@ function usage {
 }
 
 CN=$1
-if [ -z "$CN" ]]; then
+if [ -z "$CN" ]; then
     usage
 fi
 ORG_UNIT_NAME=${2:-$ORG_UNIT_NAME}
@@ -52,5 +52,5 @@ init_CA
 make_cert $INT_CA_DIR $DEVSTACK_CERT_NAME $DEVSTACK_HOSTNAME
 
 # Create a cert bundle
-cat $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/cacert.pem >$DEVSTACK_CERT
-
+cat $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
+    $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/cacert.pem >$DEVSTACK_CERT
