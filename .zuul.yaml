@@ -599,6 +599,8 @@
     nodeset: devstack-single-node-centos-8-stream
     voting: false
     timeout: 9000
+    vars:
+      configure_swap_size: 4096
 
 - job:
     name: devstack-async
