@@ -552,6 +552,11 @@ function start_glance_remote_clone {
     iniset $(glance_remote_conf "$GLANCE_API_CONF") os_glance_tasks_store \
            filesystem_store_datadir "${remote_data}/os_glance_tasks_store"
 
+    # Point this worker to use different cache dir
+    mkdir -p "$remote_data/cache"
+    iniset $(glance_remote_conf "$GLANCE_API_CONF") DEFAULT \
+           image_cache_dir "${remote_data}/cache"
+
     # Change our uwsgi to our new port
     sed -ri "s/^(http-socket.*):[0-9]+/\1:$glance_remote_port/" \
         "$glance_remote_uwsgi"
