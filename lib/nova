@@ -298,12 +298,6 @@ function configure_nova {
             fi
         fi
 
-        if is_fedora && [[ $DISTRO =~ f31] ]]; then
-            # For f31 use the rebased 2.1.0 version of the package.
-            sudo dnf copr enable -y lyarwood/iscsi-initiator-utils
-            sudo dnf update -y
-        fi
-
         if [[ ${ISCSID_DEBUG} == "True" ]]; then
             # Install an override that starts iscsid with debugging
             # enabled.
