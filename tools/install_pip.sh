@@ -46,15 +46,13 @@ echo "Distro: $DISTRO"
 function get_versions {
     # FIXME(dhellmann): Deal with multiple python versions here? This
     # is just used for reporting, so maybe not?
-    PIP=$(which pip 2>/dev/null || which pip-python 2>/dev/null || true)
+    PIP=$(which pip 2>/dev/null || which pip-python 2>/dev/null || which pip3 2>/dev/null || true)
     if [[ -n $PIP ]]; then
         PIP_VERSION=$($PIP --version | awk '{ print $2}')
         echo "pip: $PIP_VERSION"
     else
         echo "pip: Not Installed"
     fi
-    # Show python3 module version
-    python${PYTHON3_VERSION} -m pip --version
 }
 
 
