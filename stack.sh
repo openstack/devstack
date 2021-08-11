@@ -752,7 +752,19 @@ git_clone $REQUIREMENTS_REPO $REQUIREMENTS_DIR $REQUIREMENTS_BRANCH
 echo_summary "Installing package prerequisites"
 source $TOP_DIR/tools/install_prereqs.sh
 
-# Configure an appropriate Python environment
+# Configure an appropriate Python environment.
+#
+# NOTE(ianw) 2021-08-11 : We install the latest pip here because pip
+# is very active and changes are not generally reflected in the LTS
+# distros.  This often involves important things like dependency or
+# conflict resolution, and has often been required because the
+# complicated constraints etc. used by openstack have tickled bugs in
+# distro versions of pip.  We want to find these problems as they
+# happen, rather than years later when we try to update our LTS
+# distro.  Whilst it is clear that global installations of upstream
+# pip are less and less common, with virtualenv's being the general
+# approach now; there are a lot of devstack plugins that assume a
+# global install environment.
 if [[ "$OFFLINE" != "True" ]]; then
     PYPI_ALTERNATIVE_URL=${PYPI_ALTERNATIVE_URL:-""} $TOP_DIR/tools/install_pip.sh
 fi
