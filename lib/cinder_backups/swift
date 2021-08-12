@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# lib/cinder_backups/swift
+# Configure the swift backup driver
+
+# Enable with:
+#
+#   CINDER_BACKUP_DRIVER=swift
+
+# Dependencies:
+#
+# - ``functions`` file
+# - ``cinder`` configurations
+
+# Save trace setting
+_XTRACE_CINDER_SWIFT=$(set +o | grep xtrace)
+set +o xtrace
+
+
+function configure_cinder_backup_swift {
+    # NOTE(mriedem): The default backup driver uses swift and if we're
+    # on a subnode we might not know if swift is enabled, but chances are
+    # good that it is on the controller so configure the backup service
+    # to use it.
+    iniset $CINDER_CONF DEFAULT backup_driver "cinder.backup.drivers.swift.SwiftBackupDriver"
+    iniset $CINDER_CONF DEFAULT backup_swift_url "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$SWIFT_DEFAULT_BIND_PORT/v1/AUTH_"
+}
+
+# init_cinder_backup_swift: nothing to do
+# cleanup_cinder_backup_swift: nothing to do
+
+
+# Restore xtrace
+$_XTRACE_CINDER_SWIFT
+
+# Local variables:
+# mode: shell-script
+# End:
